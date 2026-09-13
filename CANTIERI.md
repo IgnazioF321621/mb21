@@ -10,18 +10,26 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 4. Import dei dati da Glide
+## 5. Dopo l'import — da verificare e da decidere
 *Aperto il 13 settembre 2026.*
 
-- Export CSV di tutte le 18 tabelle in `/Users/ignaziofiorito/mb21-import/` (fuori dal repo: contiene dati personali)
-- **Importare tutti gli utenti, anche quelli oggi non attivi**: possono tornare attivi da un giorno all'altro, con i loro contatti, azioni e note
-- Da lasciare fuori: i 3 contatti di `(email esclusa)` e `(email esclusa)` (non sono in User)
-- Normalizzare le categorie `Ex Partner` e `Ex P/C` → `Ex Partner/Cliente`
-- Date di Glide in formato `GG/MM/AAAA, HH:MM:SS`, ora di Roma
+- **Ora delle azioni**: confrontare con Glide un'azione nota. Esempio: PM 1a1 · Presentazione del **13/09/2026 alle 19:00**. Se in Glide l'ora è diversa, il fuso va corretto
+- **32 telefoni non puliti**: due numeri nella stessa casella, prefissi esteri scritti `44-…`, lettera `O` al posto dello zero, un cognome al posto del numero. Lasciati come in Glide; da sistemare nella Fase 2 (Lista)
+- **28 azioni con data futura** (fino al 21/09/2027), quasi tutte Riordino: sembrano riordini programmati, non errori. Da confermare
+- Le altre 13 tabelle di Glide si importano nelle loro fasi
 
 ---
 
 # Cantieri chiusi
+
+## 4. Import dei dati da Glide
+*Chiuso il 13 settembre 2026.*
+
+- Export CSV delle 18 tabelle in `/Users/ignaziofiorito/mb21-import/` (fuori dal repo: dati personali)
+- `scripts/import_glide.py` genera un'unica transazione: parte solo su tabelle vuote e si annulla se i conteggi non tornano
+- Importati **tutti gli 11 utenti, anche i non attivi**, con contatti, azioni e note
+- Lasciati fuori i 3 contatti di `(email esclusa)` e `(email esclusa)`; `Ex Partner` ed `Ex P/C` → `Ex Partner/Cliente`
+- Controllato: conteggi uguali ai CSV; 1.142 azioni agganciate alla fase come in Glide; 57 azioni con script YesApp
 
 ## 3. Fase 0 · Passo 3 — schema dati minimo
 *Chiuso il 13 settembre 2026.*

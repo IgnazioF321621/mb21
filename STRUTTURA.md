@@ -29,6 +29,12 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **coach_note** — `user_id` · `contatto_id` · `tipo_azione` · `testo` · `scritta_il`
 
+**Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze · 2.920 contatti · 1.647 azioni · 60 coach note.
+- Nelle azioni importate `categoria` è quella del contatto in Glide al 13/09 (`Categoria<Lista`), la stessa che Glide usava nella chiave: 1.142 azioni trovano la fase in `sequenze`, come in Glide
+- Date lette come ora di Roma; telefoni ripuliti solo dai caratteri invisibili, per il resto come in Glide
+- `contatti.rientro_il` vuoto per tutti: lo calcola la coda (Fase 1)
+- `contatti.creato_il` = giorno dell'import (Lista Nomi non ha una data di creazione)
+
 **Non riportati da Glide:**
 - ramo step (StepNr, SequenzaKey, CategoriaKey, NextAction_js, Prefisso) — zavorra indicata nel brief
 - colonne calcolate (conteggi, badge, link agenda, chiavi anno/mese, Coach_Badge)
@@ -51,3 +57,4 @@ _Da definire._
 | 2026.09.13 · 21:11 | Brief di sviluppo in docs/, passo 1 chiuso in CANTIERI |
 | 2026.09.13 · 21:16 | Progetto Supabase mb21 creato e collegato, nessuna tabella |
 | 2026.09.13 · 21:56 | Schema minimo: utenti, sequenze, contatti, azioni, coach_note (vuote) |
+| 2026.09.13 · 22:02 | Import dei dati da Glide nelle 5 tabelle |
