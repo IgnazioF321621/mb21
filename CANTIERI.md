@@ -10,12 +10,13 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 5. Dopo l'import — da verificare e da decidere
+## 5. Dopo l'import
 *Aperto il 13 settembre 2026.*
 
-- **Ora delle azioni**: confrontare con Glide un'azione nota. Esempio: PM 1a1 · Presentazione del **13/09/2026 alle 19:00**. Se in Glide l'ora è diversa, il fuso va corretto
-- **32 telefoni non puliti**: due numeri nella stessa casella, prefissi esteri scritti `44-…`, lettera `O` al posto dello zero, un cognome al posto del numero. Lasciati come in Glide; da sistemare nella Fase 2 (Lista)
-- **28 azioni con data futura** (fino al 21/09/2027), quasi tutte Riordino: sembrano riordini programmati, non errori. Da confermare
+- ~~Ora delle azioni~~ — **confermata da Ignazio il 13 settembre**: il PM 1a1 · Presentazione del 13/09/2026 è alle 19:00 anche in Glide. Il fuso (ora di Roma) è giusto
+- ~~28 azioni con data futura~~ — **confermate da Ignazio**: sono riordini programmati, non errori
+- **32 telefoni non puliti**: due numeri nella stessa casella, prefissi esteri scritti `44-…`, lettera `O` al posto dello zero, un cognome al posto del numero. Lasciati come in Glide; **da sistemare nella Fase 2 (Lista)**, come deciso da Ignazio
+- **Due email personali nella cronologia di GitHub** (commit `5673b4b` e `1dab376`): tolte dai file, restano nelle versioni vecchie. Ignazio ha detto sì alla pulizia; la riscrittura della cronologia è bloccata dai permessi di Claude Code e va autorizzata
 - Le altre 13 tabelle di Glide si importano nelle loro fasi
 
 ---
