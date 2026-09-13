@@ -10,16 +10,23 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 2. Fase 0 · Passo 2 — progetto Supabase
+## 3. Fase 0 · Passo 3 — schema dati minimo
 *Aperto il 13 settembre 2026.*
 
-- Creare il progetto Supabase di MB21, separato da quello di Zona Tracker
-- Collegarlo alla cartella locale (strumento `supabase`)
-- Niente tabelle in questo passo: lo schema minimo (Contatti, Azioni, Sequenze, Utenti) è il passo successivo
+- Prime tabelle: Contatti, Azioni, Sequenze, Utenti (migrazioni in `supabase/migrations/`)
 
 ---
 
 # Cantieri chiusi
+
+## 2. Fase 0 · Passo 2 — progetto Supabase
+*Chiuso il 13 settembre 2026.*
+
+- Strumento `supabase` 2.117.0 installato con Homebrew, login fatto dal browser
+- Progetto `mb21` (ref `exwgjlhbhlgebkgxtanq`), regione `eu-central-1` (Francoforte), stessa organizzazione di Zona Tracker, che resta intatto (`eu-west-1`)
+- Cartella collegata al progetto (`supabase init` + `supabase link`)
+- Password del database in `.env` sul Mac, esclusa da git
+- **Da sapere:** sul piano gratuito i progetti attivi sono al massimo 2 (ora sono 2), e un progetto fermo 7 giorni va in pausa e si riaccende dal pannello
 
 ## 1. Fase 0 · Passo 1 — repo e struttura iniziale
 *Chiuso il 13 settembre 2026.*
