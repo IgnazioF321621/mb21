@@ -10,6 +10,29 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 6. Fase 1 · OGGI
+*Aperto il 13 settembre 2026. Brief: `docs/MB21_v4_Brief_F1_Oggi.md`.*
+
+**Fatto (sul Mac e su GitHub):**
+- Motore della coda `coda.js` + 11 prove superate (`node tools/banco/prova_coda.js`): capienza, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
+- Pagina `index.html`: accesso con codice, tab bar, OGGI con card e coach, offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone
+- Migrazione `20260913230000_fase1_oggi.sql` scritta: `accesso_attivo`, controllo sugli account, `in_coda_dal`, rientro iniziale, vista `contatti_coda`, `registra_esito` / `annulla_esito`
+- Impostazioni di accesso in `supabase/config.toml` + modello email con codice (`supabase/templates/accesso.html`), controllate con `supabase config diff`: cambiano solo indirizzo del sito, redirect, lunghezza codice (8 → 6), oggetto e testo dell'email
+- `git config user.email` del repo = indirizzo noreply di GitHub (`271630094+IgnazioF321621@users.noreply.github.com`)
+
+**Bloccato dai permessi di Claude Code** (il classificatore di sicurezza ferma le operazioni su risorse condivise; servono regole di permesso o l'esecuzione a mano):
+1. Riscrittura della cronologia (email → noreply, via le due email escluse) + `push --force` — Ignazio ha già detto sì
+2. `supabase config push` (impostazioni di accesso)
+3. `supabase db push` (migrazione Fase 1)
+4. Lettura della chiave pubblica (`supabase projects api-keys`) da mettere in `SUPABASE_KEY`
+
+**Da decidere con Ignazio (⏸):**
+- **Bottoni esito**: tabella bottone → fase di Sequenze, e quali bottoni per Partner e Cliente. Bottoni non ancora costruiti
+- **Ordine della coda sui dati veri**: dei 1.346 contatti di Ignazio che entrerebbero oggi, 1.150 sono mai contattati e 196 rientrati dopo l'attesa. Con la priorità del brief (mai contattati prima dei rientrati) i rientrati non arriverebbero mai nei 5 finché restano mai contattati. E i mai contattati escono in ordine alfabetico
+- **Categorie in coda**: tra i mai contattati ci sono 225 Unlinked, 63 Ex Partner/Cliente, 800 senza categoria. Oggi entrano tutti; esce solo Archiviato
+
+**Dopo lo sblocco:** chiave nella pagina → prova dell'accesso come Ignazio e delle regole con `auth.uid()` → coda reale dal telefono → bottoni.
+
 ## 5. Dopo l'import
 *Aperto il 13 settembre 2026.*
 

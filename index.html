@@ -1,21 +1,272 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MB21 v4.0</title>
-  <style>
-    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: -apple-system, system-ui, sans-serif; background: #f7f7f5; color: #222; }
-    h1 { margin: 0 0 .5rem; font-size: 2rem; }
-    #ver { color: #777; font-size: .9rem; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MB21">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<title>MB21</title>
+<style>
+  :root {
+    --sfondo: #F2F2F7; --card: #FFFFFF; --testo: #1C1C1E; --grigio: #6B7280; --grigio-chiaro: #9CA3AF;
+    --linea: #E5E7EB; --blu: #2563EB; --coach: #8B5CF6; --verde: #059669; --rosso: #DC2626;
+    --prospect: #F97316; --cliente: #3B82F6; --partner: #8B5CF6; --ex: #9CA3AF; --unlinked: #D1D5DB;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--sfondo); color: var(--testo);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  main { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 16px) 16px 110px; }
+  h1 { font-size: 32px; margin: 8px 0 2px; letter-spacing: -0.5px; }
+  .sotto { color: var(--grigio); font-size: 14px; margin-bottom: 18px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--grigio); margin: 22px 4px 8px; }
+
+  .card { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.04); }
+  .strip { height: 4px; background: var(--unlinked); }
+  .corpo { padding: 14px 16px 16px; }
+  .nome { font-size: 17px; font-weight: 700; }
+  .prof { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .luogo { font-size: 12px; color: var(--grigio-chiaro); margin-top: 2px; }
+  .riga { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .tel { color: var(--blu); font-size: 16px; font-weight: 600; text-decoration: none; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #F3F4F6; color: #374151; }
+  .badge.scaduto { background: #FEE2E2; color: var(--rosso); }
+  .coach { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #F5F3FF; color: #5B21B6;
+    font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .coach small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--coach); margin-bottom: 2px; }
+
+  .vuoto, .avviso { text-align: center; color: var(--grigio); padding: 28px 16px; font-size: 15px; }
+  .avviso { background: #FFFBEB; color: #92400E; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 14px; }
+
+  .accesso { max-width: 360px; margin: 12vh auto 0; }
+  .accesso p { color: var(--grigio); font-size: 15px; }
+  input { width: 100%; font-size: 17px; padding: 14px; border-radius: 12px; border: 1px solid var(--linea); background: #fff; margin: 6px 0 12px; }
+  input.codice { letter-spacing: 8px; text-align: center; font-size: 26px; font-weight: 700; }
+  button.primario { width: 100%; font-size: 17px; font-weight: 600; padding: 14px; border: 0; border-radius: 12px; background: var(--testo); color: #fff; }
+  button.primario:disabled { opacity: .5; }
+  button.link { background: none; border: 0; color: var(--blu); font-size: 15px; padding: 10px 0; }
+  .errore { color: var(--rosso); font-size: 14px; min-height: 20px; }
+
+  nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--linea); display: flex; justify-content: space-around;
+    padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
+  nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 18px; }
+  nav button.attiva { color: var(--testo); }
+  .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
+</style>
 </head>
 <body>
-  <h1>MB21 v4.0</h1>
-  <div id="ver"></div>
-  <script>
-    const APP_VERSION = '2026.09.13 · 22:24';
-    document.getElementById('ver').textContent = 'Versione ' + APP_VERSION;
-  </script>
+<main id="app"></main>
+<nav id="tab" hidden>
+  <button data-tab="oggi" class="attiva">OGGI</button>
+  <button data-tab="lista">LISTA</button>
+  <button data-tab="progressi">PROGRESSI</button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="coda.js"></script>
+<script>
+const APP_VERSION = '2026.09.13 · 23:02';
+
+const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
+// Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
+const SUPABASE_KEY = 'DA_INSERIRE';
+
+const COLORI = { 'Prospect': 'var(--prospect)', 'Cliente': 'var(--cliente)', 'Partner': 'var(--partner)',
+  'Ex Partner/Cliente': 'var(--ex)', 'Archiviato': 'var(--ex)', 'Referral': 'var(--ex)', 'Unlinked': 'var(--unlinked)' };
+const CHIAVE_CACHE = 'mb21_coda';
+
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById('app');
+const ST = { email: '', utente: null, tab: 'oggi' };
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function versione() { return `<div class="versione">Versione ${APP_VERSION}</div>`; }
+function dataEstesa(iso) {
+  return new Date(iso + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+}
+
+// supabase-js non lancia eccezioni sugli errori: si controlla sempre `error` (lezione di Zona Tracker).
+async function dbq(cosa, promessa) {
+  const res = await promessa;
+  if (res.error) console.error('[MB21] ' + cosa, res.error);
+  return res;
+}
+
+// ── Accesso ──────────────────────────────────────────────
+function mostraEmail(errore) {
+  document.getElementById('tab').hidden = true;
+  app.innerHTML = `
+    <div class="accesso">
+      <h1>MB21</h1>
+      <p>Scrivi la tua email: ti mandiamo un codice di accesso.</p>
+      <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.it" value="${esc(ST.email)}">
+      <div class="errore">${esc(errore || '')}</div>
+      <button class="primario" id="invia">Mandami il codice</button>
+      ${versione()}
+    </div>`;
+  document.getElementById('invia').onclick = inviaCodice;
+}
+
+async function inviaCodice() {
+  const btn = document.getElementById('invia');
+  ST.email = document.getElementById('email').value.trim().toLowerCase();
+  if (!ST.email.includes('@')) return mostraEmail('Controlla l\'email.');
+  btn.disabled = true; btn.textContent = 'Invio…';
+  const { error } = await dbq('invio codice', supa.auth.signInWithOtp({
+    email: ST.email, options: { emailRedirectTo: location.origin + location.pathname } }));
+  if (error) return mostraEmail(messaggioAccesso(error));
+  mostraCodice();
+}
+
+function messaggioAccesso(error) {
+  const m = (error.message || '').toLowerCase();
+  if (m.includes('database error') || m.includes('non abilitato') || m.includes('signups not allowed')) return 'Utente non abilitato.';
+  if (m.includes('rate limit') || error.status === 429) return 'Troppi tentativi: riprova tra un\'ora.';
+  return 'Non è andata: ' + error.message;
+}
+
+function mostraCodice(errore) {
+  app.innerHTML = `
+    <div class="accesso">
+      <h1>Codice</h1>
+      <p>L'abbiamo mandato a <b>${esc(ST.email)}</b>. Scrivi le 6 cifre.</p>
+      <input id="codice" class="codice" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+      <div class="errore">${esc(errore || '')}</div>
+      <button class="primario" id="entra">Entra</button>
+      <button class="link" id="indietro">Cambia email</button>
+    </div>`;
+  const campo = document.getElementById('codice');
+  campo.focus();
+  campo.oninput = () => { if (campo.value.length === 6) verificaCodice(); };
+  document.getElementById('entra').onclick = verificaCodice;
+  document.getElementById('indietro').onclick = () => mostraEmail();
+}
+
+async function verificaCodice() {
+  const token = document.getElementById('codice').value.trim();
+  const { error } = await dbq('verifica codice', supa.auth.verifyOtp({ email: ST.email, token, type: 'email' }));
+  if (error) return mostraCodice('Codice non valido o scaduto.');
+  // il resto lo fa onAuthStateChange
+}
+
+async function dopoAccesso(sessione) {
+  const { data, error } = await dbq('lettura utente',
+    supa.from('utenti').select('id, nome, nome_cognome').eq('auth_id', sessione.user.id).maybeSingle());
+  if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
+  if (!data) {
+    ST.motivoUscita = 'Utente non abilitato.';
+    return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
+  }
+  ST.utente = data;
+  mostraTab();
+}
+
+// ── Tab ──────────────────────────────────────────────────
+function mostraTab() {
+  const nav = document.getElementById('tab');
+  nav.hidden = false;
+  nav.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('attiva', b.dataset.tab === ST.tab);
+    b.onclick = () => { ST.tab = b.dataset.tab; mostraTab(); };
+  });
+  if (ST.tab === 'oggi') return caricaOggi();
+  app.innerHTML = `<h1>${ST.tab === 'lista' ? 'Lista' : 'Progressi'}</h1><div class="vuoto">In arrivo.</div>${versione()}`;
+}
+
+// ── OGGI ─────────────────────────────────────────────────
+async function leggiCandidati(oggi) {
+  const righe = [];
+  for (let da = 0; ; da += 1000) {   // PostgREST restituisce al massimo 1000 righe per volta
+    const { data, error } = await dbq('lettura coda',
+      supa.from('contatti_coda').select('*').lte('rientro_il', oggi).order('id').range(da, da + 999));
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < 1000) return righe;
+  }
+}
+
+async function caricaOggi() {
+  const oggi = MB21Coda.oggiRoma();
+  app.innerHTML = `<h1>Oggi</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
+  let risultato, offline = false;
+  try {
+    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi);
+    if (risultato.nuoviInCoda.length) {
+      await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
+        .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
+    }
+    try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi, risultato, salvata: new Date().toISOString() })); } catch (e) {}
+  } catch (e) {
+    let cache = null;
+    try { cache = JSON.parse(localStorage.getItem(CHIAVE_CACHE)); } catch (e2) {}
+    if (!cache) {
+      app.innerHTML = `<h1>Oggi</h1><div class="avviso">Non riesco a caricare la coda. Controlla la connessione e riapri l'app.</div>${versione()}`;
+      return;
+    }
+    risultato = cache.risultato; offline = cache.salvata;
+  }
+  disegnaOggi(oggi, risultato, offline);
+}
+
+function cardContatto(r, dareSeguito) {
+  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
+  const fase = r.contattato ? (r.ultima_fase || 'Senza esito') : 'Mai contattato';
+  const badge = dareSeguito
+    ? `<span class="badge scaduto">${esc(fase)} · scaduto da ${r.scadutoDa} ${r.scadutoDa === 1 ? 'giorno' : 'giorni'}</span>`
+    : `<span class="badge">${esc(fase)}</span>`;
+  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span></span>';
+  return `
+    <div class="card">
+      <div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>
+      <div class="corpo">
+        <div class="nome">${esc(r.nome)}</div>
+        ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
+        ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
+        <div class="riga">${tel}${badge}</div>
+        ${r.coach ? `<div class="coach"><small>Coach</small>${esc(r.coach)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function disegnaOggi(oggi, r, offline) {
+  let html = `<h1>Oggi</h1><div class="sotto">${esc(dataEstesa(oggi))}</div>`;
+  if (offline) {
+    const ora = new Date(offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
+  }
+  if (r.dareSeguito.length) {
+    html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
+  }
+  html += `<h2>La tua coda · ${r.coda.length} di ${MB21Coda.CAPIENZA}</h2>`;
+  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('') : `<div class="vuoto">Nessuno da chiamare oggi.</div>`;
+  app.innerHTML = html + versione();
+}
+
+// ── Avvio ────────────────────────────────────────────────
+// INITIAL_SESSION arriva all'apertura (già letto anche il link dell'email, #access_token);
+// SIGNED_IN dopo il codice. Callback sincrona: le chiamate al DB partono fuori (setTimeout),
+// altrimenti supabase-js si blocca aspettando se stesso.
+let accessoInCorso = false;
+supa.auth.onAuthStateChange((evento, sessione) => {
+  setTimeout(() => {
+    if (evento === 'SIGNED_OUT') { ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
+    if (evento !== 'INITIAL_SESSION' && evento !== 'SIGNED_IN') return;
+    if (!sessione) return mostraEmail();
+    if (ST.utente || accessoInCorso) return;
+    accessoInCorso = true;
+    dopoAccesso(sessione).finally(() => { accessoInCorso = false; });
+  }, 0);
+});
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
 </body>
 </html>
