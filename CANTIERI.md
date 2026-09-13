@@ -10,20 +10,23 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 1. Fase 0 · Passo 1 — repo e struttura iniziale
+## 2. Fase 0 · Passo 2 — progetto Supabase
 *Aperto il 13 settembre 2026.*
 
-- ~~Cartella locale, git, struttura, documenti vivi~~ — **fatto il 13 settembre**
-- ~~Cartella aggiunta al Filesystem MCP~~ — **fatto il 13 settembre** (serve riavviare Claude Desktop)
-- **Repo remoto `IgnazioF321621/mb21`**: da creare a mano sul sito (manca lo strumento `gh`), poi push
-- **GitHub Pages** da `main` / root: da attivare dopo il push
-- **Copiare `MB21_v4_Brief_Sviluppo.md` in `docs/`**: il file non è sul Mac
-
-## 2. Fase 0 · Passo 2 — progetto Supabase
-*Aperto il 13 settembre 2026.* Da avviare dopo l'ok sul Passo 1.
+- Creare il progetto Supabase di MB21, separato da quello di Zona Tracker
+- Collegarlo alla cartella locale (strumento `supabase`)
+- Niente tabelle in questo passo: lo schema minimo (Contatti, Azioni, Sequenze, Utenti) è il passo successivo
 
 ---
 
 # Cantieri chiusi
 
-_Nessuno ancora._
+## 1. Fase 0 · Passo 1 — repo e struttura iniziale
+*Chiuso il 13 settembre 2026.*
+
+- Cartella locale, git, struttura, documenti vivi
+- Filesystem MCP: cartella `mb21` aggiunta (serve riavviare Claude Desktop)
+- `gh` installato con Homebrew, login come `IgnazioF321621`
+- Repo pubblico https://github.com/IgnazioF321621/mb21, commit di apertura `738b83d`
+- GitHub Pages attivo: https://ignaziof321621.github.io/mb21/
+- Brief di sviluppo copiato in `docs/MB21_v4_Brief_Sviluppo.md`

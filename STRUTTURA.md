@@ -23,3 +23,4 @@ _Da definire._
 | APP_VERSION | Cosa |
 |---|---|
 | 2026.09.13 · 20:52 | Apertura: struttura iniziale, nessuna logica |
+| 2026.09.13 · 21:11 | Brief di sviluppo in docs/, passo 1 chiuso in CANTIERI |
