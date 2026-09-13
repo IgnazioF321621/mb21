@@ -28,7 +28,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - Export CSV delle 18 tabelle in `/Users/ignaziofiorito/mb21-import/` (fuori dal repo: dati personali)
 - `scripts/import_glide.py` genera un'unica transazione: parte solo su tabelle vuote e si annulla se i conteggi non tornano
 - Importati **tutti gli 11 utenti, anche i non attivi**, con contatti, azioni e note
-- Lasciati fuori i 3 contatti di `(email esclusa)` e `(email esclusa)`; `Ex Partner` ed `Ex P/C` → `Ex Partner/Cliente`
+- Lasciati fuori i 3 contatti di due email che non sono in User; `Ex Partner` ed `Ex P/C` → `Ex Partner/Cliente`
 - Controllato: conteggi uguali ai CSV; 1.142 azioni agganciate alla fase come in Glide; 57 azioni con script YesApp
 
 ## 3. Fase 0 · Passo 3 — schema dati minimo

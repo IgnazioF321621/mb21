@@ -16,7 +16,6 @@ import unicodedata
 from datetime import datetime
 
 CARTELLA = '/Users/ignaziofiorito/mb21-import/'
-ESCLUSE = {'(email esclusa)', '(email esclusa)'}  # non sono in User
 CATEGORIE = {'Ex Partner': 'Ex Partner/Cliente', 'Ex P/C': 'Ex Partner/Cliente'}
 
 
@@ -67,7 +66,8 @@ def valori(righe):
 
 utenti = leggi('User.csv')
 sequenze = leggi('Sequenze.csv')
-contatti = [r for r in leggi('Lista Nomi.csv') if r['UtenteEmail'] not in ESCLUSE]
+email_utenti = {r['UtenteEmail'] for r in utenti}
+contatti = [r for r in leggi('Lista Nomi.csv') if r['UtenteEmail'] in email_utenti]  # fuori chi non è in User
 azioni = leggi('Azioni.csv')
 note = leggi('CoachNote.csv')
 

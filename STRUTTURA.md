@@ -58,3 +58,4 @@ _Da definire._
 | 2026.09.13 · 21:16 | Progetto Supabase mb21 creato e collegato, nessuna tabella |
 | 2026.09.13 · 21:56 | Schema minimo: utenti, sequenze, contatti, azioni, coach_note (vuote) |
 | 2026.09.13 · 22:02 | Import dei dati da Glide nelle 5 tabelle |
+| 2026.09.13 · 22:03 | Tolte due email personali da CANTIERI e dallo script di import |
