@@ -10,14 +10,26 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 3. Fase 0 · Passo 3 — schema dati minimo
+## 4. Import dei dati da Glide
 *Aperto il 13 settembre 2026.*
 
-- Prime tabelle: Contatti, Azioni, Sequenze, Utenti (migrazioni in `supabase/migrations/`)
+- Export CSV di tutte le 18 tabelle in `/Users/ignaziofiorito/mb21-import/` (fuori dal repo: contiene dati personali)
+- **Importare tutti gli utenti, anche quelli oggi non attivi**: possono tornare attivi da un giorno all'altro, con i loro contatti, azioni e note
+- Da lasciare fuori: i 3 contatti di `(email esclusa)` e `(email esclusa)` (non sono in User)
+- Normalizzare le categorie `Ex Partner` e `Ex P/C` → `Ex Partner/Cliente`
+- Date di Glide in formato `GG/MM/AAAA, HH:MM:SS`, ora di Roma
 
 ---
 
 # Cantieri chiusi
+
+## 3. Fase 0 · Passo 3 — schema dati minimo
+*Chiuso il 13 settembre 2026.*
+
+- Campi ricavati dall'export CSV di Glide; decisioni di Ignazio: giorni di rientro di Glide, Sequenze tenuta intera, checklist `*_onb` alla fase Partner
+- Aggiunta `coach_note` (chat YesApp) e `azioni.coach_script`
+- Migrazione applicata con `supabase db push`; tabelle vuote
+- Regole di accesso provate con 3 utenti finti in una transazione annullata: A vede solo il suo contatto e sé stesso, non modifica i contatti di B, non vede le note di B; Admin vede tutto; anonimo 0 contatti e 0 sequenze
 
 ## 2. Fase 0 · Passo 2 — progetto Supabase
 *Chiuso il 13 settembre 2026.*
