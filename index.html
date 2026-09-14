@@ -170,7 +170,7 @@
 <script src="coda.js"></script>
 <script src="lista.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 15:39';
+const APP_VERSION = '2026.09.14 · 15:53';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -922,7 +922,9 @@ function moduloSemplice(titolo, campi) {
 function apriModulo(c) {
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
-  const miei = LS.righe.filter(r => r.user_id === ST.utente.id && r.categoria !== 'Archiviato');
+  // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner loggato)
+  const proprietario = c ? c.user_id : ST.utente.id;
+  const miei = LS.righe.filter(r => r.user_id === proprietario && r.categoria !== 'Archiviato' && (!c || r.id !== c.id));
   const opz = (lista, valore, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : '') +
     lista.map(o => `<option ${o === valore ? 'selected' : ''}>${esc(o)}</option>`).join('');
   // valori storici fuori elenco (es. fascia «36-45») restano sceglibili in modifica
