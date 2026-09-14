@@ -2,7 +2,7 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 13 settembre 2026.*
+*Aggiornato: 14 settembre 2026.*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
@@ -13,28 +13,24 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 6. Fase 1 · OGGI
 *Aperto il 13 settembre 2026. Brief: `docs/MB21_v4_Brief_F1_Oggi.md`.*
 
-**Fatto (sul Mac e su GitHub):**
-- Motore della coda `coda.js` + 11 prove superate (`node tools/banco/prova_coda.js`): capienza, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
-- Pagina `index.html`: accesso con link via email, tab bar, OGGI con card e coach, offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone
-- Migrazione `20260913230000_fase1_oggi.sql` scritta: `accesso_attivo`, controllo sugli account, `in_coda_dal`, rientro iniziale, vista `contatti_coda`, `registra_esito` / `annulla_esito`
-- Impostazioni di accesso in `supabase/config.toml`, controllate con `supabase config diff`: cambiano solo indirizzo del sito, redirect, lunghezza codice (8 → 6)
-- 14/09: il primo `config push` di Ignazio è fallito, **il piano gratuito non permette di cambiare il testo dell'email**. Tolto il modello personalizzato: l'accesso passa dal codice al **link** → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)
-- `git config user.email` del repo = indirizzo noreply di GitHub (`271630094+IgnazioF321621@users.noreply.github.com`)
+**Fatto:**
+- Motore della coda `coda.js` + **15 prove** superate (`node tools/banco/prova_coda.js`): capienza, divisione 3 rientri + 2 mai contattati, categorie escluse, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
+- Pagina `index.html`: accesso con link via email, tab bar, OGGI con card, coach e **bottoni esito** (foglio data/ora, Annulla 6 s), offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone; chiave pubblica inserita
+- Migrazioni applicate (i primi due `push` li ha lanciati Ignazio il 14/09): `fase1_oggi` (accesso, `in_coda_dal`, rientro iniziale, vista, esiti) e `bottoni_esito` (4 righe Sequenze Partner/Cliente, `azioni.data_scelta`)
+- Impostazioni di accesso applicate (indirizzo del sito, redirect, codice a 6). Il testo email personalizzato non è ammesso sul piano gratuito → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)
+- **Prova sul database come Ignazio** (transazione annullata): account di email sconosciuta e di utente non abilitato rifiutati; account di Ignazio accettato e collegato; vista coda = solo i suoi 1.561 contatti (l'Admin ne vede 2.920 nelle tabelle); `registra_esito` No Risposta → rientro +2, fuori coda; Appuntamento → rientro al giorno scelto con ora salvata; `annulla_esito` → azione cancellata e contatto ripristinato
+- **Coda reale del 14/09**: 1.346 contatti con rientro a oggi, **1.058 in gara** dopo le esclusioni (196 rientri · 862 mai contattati), **0 Dare Seguito scaduti**
+- Cronologia GitHub riscritta con l'ok di Ignazio: tutti i commit con l'indirizzo noreply, via le due email escluse; push forzato il 14/09. Copia di sicurezza del repo prima della riscrittura nella cartella temporanea della sessione
 
-**Bloccato dai permessi di Claude Code** (il classificatore di sicurezza ferma le operazioni su risorse condivise; servono regole di permesso o l'esecuzione a mano):
-1. Riscrittura della cronologia (email → noreply, via le due email escluse) + `push --force` — Ignazio ha già detto sì
-2. `supabase config push` (impostazioni di accesso) — da rilanciare da Ignazio dopo la correzione del 14/09
-3. `supabase db push` (migrazione Fase 1)
-4. Lettura della chiave pubblica (`supabase projects api-keys`) da mettere in `SUPABASE_KEY`
+**Da provare con Ignazio:**
+- Primo accesso da **Safari** sull'iPhone: arriva l'email? contiene solo il link o anche un codice? il link riporta dentro l'app?
+- Un giro vero: 5 card, un esito, Annulla, riapertura (stessi contatti in coda)
+- App **installata** sulla schermata Home: con il solo link potrebbe non ricevere l'accesso (Safari e app installata non lo condividono). Se serve: servizio email proprio (SMTP) per rimettere il codice
 
-**Da decidere con Ignazio (⏸):**
-- **Bottoni esito**: tabella bottone → fase di Sequenze, e quali bottoni per Partner e Cliente. Bottoni non ancora costruiti
-- **Ordine della coda sui dati veri**: dei 1.346 contatti di Ignazio che entrerebbero oggi, 1.150 sono mai contattati e 196 rientrati dopo l'attesa. Con la priorità del brief (mai contattati prima dei rientrati) i rientrati non arriverebbero mai nei 5 finché restano mai contattati. E i mai contattati escono in ordine alfabetico
-- **Categorie in coda**: tra i mai contattati ci sono 225 Unlinked, 63 Ex Partner/Cliente, 800 senza categoria. Oggi entrano tutti; esce solo Archiviato
-
-**Da verificare:** con il link, l'app **installata** sulla schermata Home dell'iPhone potrebbe non ricevere l'accesso (il link si apre in Safari, che non condivide l'accesso con l'app installata). Prima prova: da Safari. Se serve l'app installata, la strada è un servizio email proprio (SMTP) che sblocca il testo dell'email e riporta il codice.
-
-**Dopo lo sblocco:** chiave nella pagina → prova dell'accesso come Ignazio e delle regole con `auth.uid()` → coda reale dal telefono → bottoni.
+**Aperti:**
+- Coach delle 4 nuove righe Partner/Cliente scritto da Claude: da rivedere
+- I Dare Seguito scaduti (fase Piano Marketing) hanno i bottoni del Contatto: da rivedere quando ce ne saranno
+- Le vecchie versioni dei commit possono restare raggiungibili su GitHub da un link diretto finché GitHub non le elimina; per toglierle subito serve una richiesta al supporto GitHub
 
 ## 5. Dopo l'import
 *Aperto il 13 settembre 2026.*
@@ -42,7 +38,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Ora delle azioni~~ — **confermata da Ignazio il 13 settembre**: il PM 1a1 · Presentazione del 13/09/2026 è alle 19:00 anche in Glide. Il fuso (ora di Roma) è giusto
 - ~~28 azioni con data futura~~ — **confermate da Ignazio**: sono riordini programmati, non errori
 - **32 telefoni non puliti**: due numeri nella stessa casella, prefissi esteri scritti `44-…`, lettera `O` al posto dello zero, un cognome al posto del numero. Lasciati come in Glide; **da sistemare nella Fase 2 (Lista)**, come deciso da Ignazio
-- **Due email personali nella cronologia di GitHub** (commit `5673b4b` e `1dab376`): tolte dai file, restano nelle versioni vecchie. Ignazio ha detto sì alla pulizia; la riscrittura della cronologia è bloccata dai permessi di Claude Code e va autorizzata
+- ~~Due email personali nella cronologia di GitHub~~ — **cronologia riscritta il 14/09** (vedi cantiere 6)
 - Le altre 13 tabelle di Glide si importano nelle loro fasi
 
 ---

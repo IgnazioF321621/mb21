@@ -56,6 +56,27 @@
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
   nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 18px; }
   nav button.attiva { color: var(--testo); }
+  .bottoni { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .bottoni button { font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: 12px; border: 0; background: #F3F4F6; color: var(--testo); }
+  .bottoni button:active { transform: scale(.97); }
+  .bottoni .appuntamento { background: #DCFCE7; color: #166534; }
+  .bottoni .no { background: #FEF2F2; color: #991B1B; }
+  .bottoni button:disabled { opacity: .45; }
+  .bottoni button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .card.via { opacity: 0; transform: translateX(40px); transition: all .25s ease; }
+
+  .velo { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; z-index: 20; }
+  .foglio { background: #fff; width: 100%; max-width: 520px; margin: 0 auto; border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(env(safe-area-inset-bottom) + 20px); }
+  .foglio h3 { margin: 0 0 4px; font-size: 20px; }
+  .foglio p { margin: 0 0 12px; color: var(--grigio); font-size: 14px; }
+  .foglio .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 78px); max-width: 488px; margin: 0 auto;
+    background: #1C1C1E; color: #fff; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; font-size: 15px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .toast button { background: none; border: 0; color: #FBBF24; font-size: 15px; font-weight: 700; padding: 4px 0; }
+
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -70,11 +91,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="coda.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 09:05';
+const APP_VERSION = '2026.09.14 · 09:31';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
-const SUPABASE_KEY = 'DA_INSERIRE';
+const SUPABASE_KEY = 'sb_publishable_i9kxRdnrgk2fvk71P3VV9g_GJA1-r26';
 
 const COLORI = { 'Prospect': 'var(--prospect)', 'Cliente': 'var(--cliente)', 'Partner': 'var(--partner)',
   'Ex Partner/Cliente': 'var(--ex)', 'Archiviato': 'var(--ex)', 'Referral': 'var(--ex)', 'Unlinked': 'var(--unlinked)' };
@@ -186,7 +207,6 @@ async function caricaOggi() {
       await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
     }
-    try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi, risultato, salvata: new Date().toISOString() })); } catch (e) {}
   } catch (e) {
     let cache = null;
     try { cache = JSON.parse(localStorage.getItem(CHIAVE_CACHE)); } catch (e2) {}
@@ -196,7 +216,27 @@ async function caricaOggi() {
     }
     risultato = cache.risultato; offline = cache.salvata;
   }
-  disegnaOggi(oggi, risultato, offline);
+  ST.oggi = oggi; ST.risultato = risultato; ST.offline = offline;
+  if (!offline) salvaCache();
+  disegnaOggi();
+}
+
+// ── Bottoni esito (tabella confermata da Ignazio il 14/09, STRUTTURA.md → Bottoni esito) ──
+// Prospect, Referral e senza categoria: 5 bottoni sulle fasi Prospect · Contatto.
+// Partner e Cliente: in Sequenze non hanno fasi di telefonata → solo i due con data.
+const BOTTONI_PROSPECT = [
+  { etichetta: 'Appuntamento', chiave: 'Prospect-Contatto-PM Fissato', data: 'giorno-ora', classe: 'appuntamento' },
+  { etichetta: 'Richiamare', chiave: 'Prospect-Contatto-Richiamare', data: 'giorno' },
+  { etichetta: 'Non risponde', chiave: 'Prospect-Contatto-No Risposta' },
+  { etichetta: 'Non ora', chiave: 'Prospect-Contatto-Relazione' },
+  { etichetta: 'Non interessato', chiave: 'Prospect-Contatto-No Interesse', classe: 'no' },
+];
+function bottoniPer(categoria) {
+  if (categoria === 'Partner' || categoria === 'Cliente') return [
+    { etichetta: 'Appuntamento', chiave: `${categoria}-Contatto-Appuntamento`, data: 'giorno-ora', classe: 'appuntamento' },
+    { etichetta: 'Richiamare', chiave: `${categoria}-Contatto-Richiamare`, data: 'giorno' },
+  ];
+  return BOTTONI_PROSPECT;
 }
 
 function cardContatto(r, dareSeguito) {
@@ -206,8 +246,10 @@ function cardContatto(r, dareSeguito) {
     ? `<span class="badge scaduto">${esc(fase)} · scaduto da ${r.scadutoDa} ${r.scadutoDa === 1 ? 'giorno' : 'giorni'}</span>`
     : `<span class="badge">${esc(fase)}</span>`;
   const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span></span>';
+  const bottoni = bottoniPer(r.categoria).map((b, i) =>
+    `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
-    <div class="card">
+    <div class="card" id="card-${esc(r.id)}">
       <div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>
       <div class="corpo">
         <div class="nome">${esc(r.nome)}</div>
@@ -215,22 +257,117 @@ function cardContatto(r, dareSeguito) {
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         <div class="riga">${tel}${badge}</div>
         ${r.coach ? `<div class="coach"><small>Coach</small>${esc(r.coach)}</div>` : ''}
+        <div class="bottoni">${bottoni}</div>
       </div>
     </div>`;
 }
 
-function disegnaOggi(oggi, r, offline) {
-  let html = `<h1>Oggi</h1><div class="sotto">${esc(dataEstesa(oggi))}</div>`;
-  if (offline) {
-    const ora = new Date(offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+function disegnaOggi() {
+  const r = ST.risultato;
+  let html = `<h1>Oggi</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>`;
+  if (ST.offline) {
+    const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
-  html += `<h2>La tua coda · ${r.coda.length} di ${MB21Coda.CAPIENZA}</h2>`;
-  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('') : `<div class="vuoto">Nessuno da chiamare oggi.</div>`;
+  html += `<h2>La tua coda · ${r.coda.length} da chiamare</h2>`;
+  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('') : `<div class="vuoto">Per oggi hai finito.</div>`;
   app.innerHTML = html + versione();
+  app.querySelectorAll('.bottoni button').forEach(btn => {
+    btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
+  });
+}
+
+function trovaInCoda(id) {
+  for (const lista of ['dareSeguito', 'coda']) {
+    const i = ST.risultato[lista].findIndex(x => x.id === id);
+    if (i >= 0) return { lista, i, contatto: ST.risultato[lista][i] };
+  }
+  return null;
+}
+
+async function toccaBottone(id, indice) {
+  const pos = trovaInCoda(id);
+  if (!pos) return;
+  const bottone = bottoniPer(pos.contatto.categoria)[indice];
+  let data = null;
+  if (bottone.data) {
+    data = await chiediData(bottone, pos.contatto.nome);
+    if (!data) return;                       // annullato dal foglio
+  }
+  const card = document.getElementById('card-' + id);
+  card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const { data: esito, error } = await dbq('registra esito', supa.rpc('registra_esito',
+    { p_contatto: id, p_chiave: bottone.chiave, p_data: data }));
+  if (error) {
+    card.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    return mostraToast('Non salvato: controlla la connessione e riprova.');
+  }
+  card.classList.add('via');
+  setTimeout(() => {
+    ST.risultato[pos.lista].splice(pos.i, 1);
+    salvaCache();
+    disegnaOggi();
+    mostraToast(`${pos.contatto.nome} · ${bottone.etichetta}`, () => annulla(pos, esito));
+  }, 250);
+}
+
+async function annulla(pos, esito) {
+  const { error } = await dbq('annulla esito', supa.rpc('annulla_esito',
+    { p_azione: esito.azione_id, p_rientro: esito.rientro_prec, p_in_coda: esito.in_coda_prec }));
+  if (error) return mostraToast('Annullamento non riuscito: riprova.');
+  ST.risultato[pos.lista].splice(pos.i, 0, pos.contatto);
+  salvaCache();
+  disegnaOggi();
+  mostraToast('Annullato');
+}
+
+function salvaCache() {
+  try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi: ST.oggi, risultato: ST.risultato, salvata: new Date().toISOString() })); } catch (e) {}
+}
+
+// Foglio in basso per scegliere il giorno (e l'ora per l'appuntamento). Restituisce un ISO o null.
+function chiediData(bottone, nome) {
+  const domani = MB21Coda.oggiRoma(new Date(Date.now() + 86400000));
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `
+      <div class="foglio">
+        <h3>${esc(bottone.etichetta)}</h3>
+        <p>${esc(nome)}</p>
+        <input id="scelta-giorno" type="date" value="${domani}" min="${MB21Coda.oggiRoma()}">
+        ${bottone.data === 'giorno-ora' ? '<input id="scelta-ora" type="time" value="18:30">' : ''}
+        <div class="due">
+          <button class="link" id="scelta-no">Annulla</button>
+          <button class="primario" id="scelta-si">Conferma</button>
+        </div>
+      </div>`;
+    document.body.appendChild(velo);
+    const chiudi = valore => { velo.remove(); risolvi(valore); };
+    velo.onclick = e => { if (e.target === velo) chiudi(null); };
+    velo.querySelector('#scelta-no').onclick = () => chiudi(null);
+    velo.querySelector('#scelta-si').onclick = () => {
+      const giorno = velo.querySelector('#scelta-giorno').value;
+      if (!giorno) return;
+      const ora = bottone.data === 'giorno-ora' ? (velo.querySelector('#scelta-ora').value || '12:00') : '12:00';
+      chiudi(new Date(`${giorno}T${ora}:00`).toISOString());   // ora del telefono (Italia)
+    };
+  });
+}
+
+let timerToast;
+function mostraToast(testo, suAnnulla) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  clearTimeout(timerToast);
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${esc(testo)}</span>${suAnnulla ? '<button>Annulla</button>' : ''}`;
+  if (suAnnulla) t.querySelector('button').onclick = () => { t.remove(); clearTimeout(timerToast); suAnnulla(); };
+  document.body.appendChild(t);
+  timerToast = setTimeout(() => t.remove(), suAnnulla ? 6000 : 3500);
 }
 
 // ── Avvio ────────────────────────────────────────────────

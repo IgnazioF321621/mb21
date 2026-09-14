@@ -17,9 +17,9 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
 
-**Fase 1** (`supabase/migrations/20260913230000_fase1_oggi.sql` — ⚠️ scritta, **non ancora applicata**, vedi CANTIERI):
+**Fase 1** (migrazioni `20260913230000_fase1_oggi.sql` e `20260914100000_bottoni_esito.sql`, applicate):
 - vista `contatti_coda` (security_invoker): i contatti **dell'utente loggato** (anche per l'Admin) con fase attuale = ultima azione (`ultima_fase`, `ultimo_tipo`, `ultima_il`, `contattato`, `ultimi_giorni`) e `coach`
-- `registra_esito(p_contatto, p_chiave, p_data, p_modalita)` → scrive l'azione, sposta `rientro_il`, azzera `in_coda_dal`; restituisce i valori di prima per «Annulla»
+- `registra_esito(p_contatto, p_chiave, p_data, p_modalita)` → scrive l'azione (con `data_scelta`), sposta `rientro_il`, azzera `in_coda_dal`; restituisce i valori di prima per «Annulla»
 - `annulla_esito(p_azione, p_rientro, p_in_coda)` → cancella l'azione e ripristina il contatto
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
@@ -31,11 +31,11 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **contatti** — `user_id` · `nome` · `professione` · `fascia_eta` · `citta` · `telefono` · `categoria` (`Prospect` · `Cliente` · `Partner` · `Unlinked` · `Ex Partner/Cliente` · `Archiviato` · `Referral`, oppure vuota) · `area` · `brand` · `referral_di` · `note` · `rientro_il` (giorno di rientro in coda; vuoto = fuori coda) · `in_coda_dal` (Fase 1: giorno di ingresso nei 5 di OGGI; vuoto dopo un esito) · `glide_id`
 
-**azioni** — `user_id` · `contatto_id` · `categoria` · `tipo_azione` (Contatto · Piano Marketing · …) · `modalita` (Telefonata · PM 1a1 · …) · `esito` · `chiave` (calcolata: `categoria-tipo_azione-esito`, per trovare la fase in `sequenze`) · `inizio` · `fine` · `completata` · `area` · `brand` · `ospite` · `note` · `coach_script` (azione preparata con YesApp) · `glide_id`
+**azioni** — `user_id` · `contatto_id` · `categoria` · `tipo_azione` (Contatto · Piano Marketing · …) · `modalita` (Telefonata · PM 1a1 · …) · `esito` · `chiave` (calcolata: `categoria-tipo_azione-esito`, per trovare la fase in `sequenze`) · `inizio` · `fine` · `completata` · `area` · `brand` · `ospite` · `note` · `coach_script` (azione preparata con YesApp) · `data_scelta` (Fase 1: giorno e ora scelti con Appuntamento / Richiamare) · `glide_id`
 
 **coach_note** — `user_id` · `contatto_id` · `tipo_azione` · `testo` · `scritta_il`
 
-**Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze · 2.920 contatti · 1.647 azioni · 60 coach note.
+**Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze (+4 aggiunte in Fase 1, vedi Bottoni esito) · 2.920 contatti · 1.647 azioni · 60 coach note.
 - Nelle azioni importate `categoria` è quella del contatto in Glide al 13/09 (`Categoria<Lista`), la stessa che Glide usava nella chiave: 1.142 azioni trovano la fase in `sequenze`, come in Glide
 - Date lette come ora di Roma; telefoni ripuliti solo dai caratteri invisibili, per il resto come in Glide
 - `contatti.rientro_il` iniziale: vedi Logiche → Rientro iniziale
@@ -58,13 +58,26 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **Coda OGGI** (`coda.js`, funzione pura `calcolaCoda(righe, oggi)`; prove in `tools/banco/prova_coda.js`):
 - si ricalcola a ogni apertura, nessuna tabella «coda». L'app legge `contatti_coda` con `rientro_il <= oggi` (a pagine da 1000)
 - **Dare Seguito scaduti**: `ultima_fase` in (Dare Seguito, DS Fissato) e `rientro_il < oggi` → sempre, sopra la capienza, con «scaduto da N giorni»
-- **capienza 5**, ordine: (1) già in coda (`in_coda_dal` pieno, il più vecchio prima: così chi non viene chiamato slitta in cima e riaprire l'app lo stesso giorno non cambia i 5) · (2) richiami di oggi (fase senza giorni e `rientro_il = oggi`) · (3) mai contattati · (4) rientrati dopo l'attesa; a parità `rientro_il`, poi nome
+- **fuori coda** le categorie `Unlinked`, `Ex Partner/Cliente`, `Archiviato` (decisione di Ignazio, 14/09); i senza categoria restano
+- **capienza 5**: prima chi è già in coda (`in_coda_dal` pieno, il più vecchio prima: chi non viene chiamato slitta in cima, e riaprire l'app lo stesso giorno non cambia i 5). I posti liberi si dividono **3 rientri + 2 mai contattati** (proporzione mantenuta se i posti liberi sono meno di 5; se un gruppo non basta, i posti vanno all'altro). Nei rientri: prima i richiami di oggi (fase senza giorni e `rientro_il = oggi`), poi i rientrati dopo l'attesa. A parità: `rientro_il` più vecchio, poi nome
 - chi entra nei 5 riceve `in_coda_dal = oggi`; un esito lo azzera
 - oggi = data a Roma (`Intl`, `Europe/Rome`)
 
 **Coach sulla card**: `sequenze.coach` della fase attuale (ultima azione); mai contattato → riga `Prospect-Contatto-Mai contattato o 2+ anni`; fase non trovata → nessuna riga.
 
 **Esito** (`registra_esito`): rientro = giorno della data scelta se c'è (Appuntamento, Richiamare); altrimenti oggi + `giorni_rientro`; fase senza giorni → vuoto.
+
+**Bottoni esito** (tabella confermata da Ignazio il 14/09; in `index.html` → `BOTTONI_PROSPECT` / `bottoniPer`):
+
+| Bottone | Prospect, Referral, senza categoria | Partner / Cliente | Rientro |
+|---|---|---|---|
+| Appuntamento | `Prospect-Contatto-PM Fissato` | `<Categoria>-Contatto-Appuntamento` | giorno e ora scelti |
+| Richiamare | `Prospect-Contatto-Richiamare` | `<Categoria>-Contatto-Richiamare` | giorno scelto |
+| Non risponde | `Prospect-Contatto-No Risposta` | — | +2 giorni |
+| Non ora | `Prospect-Contatto-Relazione` | — | +20 giorni |
+| Non interessato | `Prospect-Contatto-No Interesse` | — | +365 giorni |
+
+Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state aggiunte a `sequenze` (senza giorni, coach scritto in Fase 1: da rivedere con Ignazio). I Dare Seguito scaduti usano gli stessi bottoni della loro categoria.
 
 ## Componenti UI
 File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore, separato per poterlo provare con node) · `sw.js` · `manifest.webmanifest` · `icone/`.
@@ -73,10 +86,10 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore,
 - **Tab bar**: OGGI · LISTA · PROGRESSI (le ultime due: «In arrivo»)
 - **OGGI**: sezione «Dare Seguito scaduti» + «La tua coda · N di 5»
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
-- **Bottoni esito**: non ancora costruiti (in attesa della conferma della tabella bottone → fase)
+- **Bottoni esito** a 1 tap sotto il coach; Appuntamento e Richiamare aprono un foglio in basso con giorno (e ora, predefinita 18:30). Dopo il tap la card esce e compare un avviso di 6 s con **Annulla** (`annulla_esito`). Offline i bottoni sono spenti. La coda non si riempie dopo un esito: si ricalcola alla prossima apertura
 - **Offline**: la coda caricata si salva in `localStorage` (`mb21_coda`); senza rete si mostra quella, in sola lettura, con avviso
 - **Service worker** `mb21-v1`: pagina e `coda.js` rete-poi-copia; supabase-js copia-poi-rete; `*.supabase.co` mai intercettato
-- **Chiave pubblica Supabase** in `index.html` (`SUPABASE_KEY`): ⚠️ ancora `DA_INSERIRE`
+- **Chiave pubblica Supabase** (publishable) in `index.html` (`SUPABASE_KEY`)
 
 ## Import CSV Amway
 _Da definire._
@@ -93,3 +106,4 @@ _Da definire._
 | 2026.09.13 · 22:24 | Confermati ora delle azioni e riordini futuri |
 | 2026.09.13 · 23:02 | Fase 1 (parte locale): coda.js + prove, pagina OGGI, PWA, migrazione e accesso preparati (non applicati) |
 | 2026.09.14 · 09:05 | Accesso con link invece del codice: tolto il modello email (non ammesso sul piano gratuito) |
+| 2026.09.14 · 09:31 | Bottoni esito, coda 3 rientri + 2 mai contattati, categorie escluse, chiave pubblica |

@@ -2,27 +2,30 @@
 // Funzione pura: riceve le righe della vista `contatti_coda` e la data di oggi (Roma),
 // restituisce cosa mostrare. Nessun accesso alla rete: la usano l'app e tools/banco/prova_coda.js.
 //
-// Regole (brief sez. 2, STRUTTURA.md → Logiche):
+// Regole (brief sez. 2 + decisioni di Ignazio del 14/09, STRUTTURA.md → Logiche):
+//   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato (i senza categoria restano)
 //   - Dare Seguito scaduti (fase Dare Seguito / DS Fissato, rientro prima di oggi): sempre, sopra la capienza
-//   - capienza 5, tra chi ha rientro_il <= oggi, in quest'ordine:
-//       1. già in coda (in_coda_dal pieno): i più vecchi prima → chi non è stato chiamato slitta in cima
-//       2. richiami con data odierna (fase senza giorni e rientro = oggi)
-//       3. mai contattati
-//       4. rientrati dopo l'attesa
+//   - capienza 5, tra chi ha rientro_il <= oggi:
+//       1. già in coda (in_coda_dal pieno), i più vecchi prima: chi non è stato chiamato slitta in cima
+//       2. posti liberi divisi in 3 rientri + 2 mai contattati. Nei rientri: prima i richiami con data
+//          odierna, poi i rientrati dopo l'attesa. Se un gruppo non basta, i posti vanno all'altro
 //   - a parità: rientro più vecchio, poi nome
 (function (radice) {
   const CAPIENZA = 5;
+  const POSTI_RIENTRI = 3;          // gli altri (5 - 3) ai mai contattati
   const FASI_DARE_SEGUITO = ['Dare Seguito', 'DS Fissato'];
+  const CATEGORIE_ESCLUSE = ['Unlinked', 'Ex Partner/Cliente', 'Archiviato'];
 
   function giorniTra(da, a) {
     return Math.round((Date.parse(a + 'T00:00:00Z') - Date.parse(da + 'T00:00:00Z')) / 86400000);
   }
 
+  // 1 già in coda · 2 richiamo di oggi · 3 rientrato · 4 mai contattato
   function gruppo(r, oggi) {
     if (r.in_coda_dal) return 1;
-    if (r.contattato && r.ultimi_giorni == null && r.rientro_il === oggi) return 2;
-    if (!r.contattato) return 3;
-    return 4;
+    if (!r.contattato) return 4;
+    if (r.ultimi_giorni == null && r.rientro_il === oggi) return 2;
+    return 3;
   }
 
   function confronta(a, b) {
@@ -39,6 +42,7 @@
 
     for (const r of righe) {
       if (!r.rientro_il || r.rientro_il > oggi) continue;
+      if (CATEGORIE_ESCLUSE.includes(r.categoria)) continue;
       if (FASI_DARE_SEGUITO.includes(r.ultima_fase) && r.rientro_il < oggi) {
         dareSeguito.push(Object.assign({}, r, { scadutoDa: giorniTra(r.rientro_il, oggi) }));
       } else {
@@ -48,7 +52,19 @@
 
     dareSeguito.sort((a, b) => a.rientro_il.localeCompare(b.rientro_il));
     candidati.sort(confronta);
-    const coda = candidati.slice(0, capienza);
+
+    const giaInCoda = candidati.filter(r => r.gruppo === 1).slice(0, capienza);
+    const rientri = candidati.filter(r => r.gruppo === 2 || r.gruppo === 3);
+    const nuovi = candidati.filter(r => r.gruppo === 4);
+
+    const liberi = capienza - giaInCoda.length;
+    const postiRientri = Math.round(liberi * POSTI_RIENTRI / capienza);
+    let presiRientri = rientri.slice(0, postiRientri);
+    let presiNuovi = nuovi.slice(0, liberi - presiRientri.length);
+    // un gruppo non basta: i posti avanzati vanno all'altro
+    presiRientri = rientri.slice(0, liberi - presiNuovi.length);
+
+    const coda = giaInCoda.concat(presiRientri, presiNuovi);
 
     return {
       dareSeguito,
@@ -56,6 +72,8 @@
       // chi entra adesso nei 5: l'app gli scrive in_coda_dal = oggi
       nuoviInCoda: coda.filter(r => !r.in_coda_dal).map(r => r.id),
       candidati: candidati.length,
+      rientri: rientri.length,
+      maiContattati: nuovi.length,
     };
   }
 
@@ -64,7 +82,7 @@
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(adesso || new Date());
   }
 
-  const api = { calcolaCoda, oggiRoma, CAPIENZA, FASI_DARE_SEGUITO };
+  const api = { calcolaCoda, oggiRoma, CAPIENZA, POSTI_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;
 })(this);

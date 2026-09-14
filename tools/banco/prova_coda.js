@@ -68,19 +68,56 @@ prova('Dare Seguito che scade oggi: nella coda normale, non sopra', () => {
   assert.equal(r.coda[0].id, 'ds');
 });
 
-prova('priorità: già in coda → richiamo di oggi → mai contattato → rientrato', () => {
+prova('priorità: già in coda → richiamo di oggi → rientrato → mai contattato', () => {
   const righe = [
-    c('rientrato', { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -5) }),
     c('mai'),
+    c('rientrato', { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -5) }),
     c('richiamo', { contattato: true, ultima_fase: 'Richiamare', ultimi_giorni: null }),
     c('slittato', { in_coda_dal: IERI, contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -1) }),
   ];
-  assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['slittato', 'richiamo', 'mai', 'rientrato']);
+  assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['slittato', 'richiamo', 'rientrato', 'mai']);
 });
 
-prova('richiamo con data passata: non è «di oggi», va tra i rientrati', () => {
-  const righe = [c('mai'), c('richiamo-vecchio', { contattato: true, ultima_fase: 'Richiamare', ultimi_giorni: null, rientro_il: IERI })];
-  assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['mai', 'richiamo-vecchio']);
+prova('divisione: 3 rientri + 2 mai contattati', () => {
+  const righe = [];
+  for (let i = 0; i < 10; i++) righe.push(c('m' + i));
+  for (let i = 0; i < 10; i++) righe.push(c('r' + i, { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -i) }));
+  const r = calcolaCoda(righe, OGGI);
+  assert.deepEqual(r.coda.map(x => x.id), ['r9', 'r8', 'r7', 'm0', 'm1']);   // rientri: il più vecchio prima
+  assert.equal(r.rientri, 10);
+  assert.equal(r.maiContattati, 10);
+});
+
+prova('divisione: se mancano rientri, i posti vanno ai mai contattati (e viceversa)', () => {
+  const soloNuovi = Array.from({ length: 9 }, (_, i) => c('m' + i));
+  soloNuovi.push(c('r', { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: IERI }));
+  assert.deepEqual(calcolaCoda(soloNuovi, OGGI).coda.map(x => x.id), ['r', 'm0', 'm1', 'm2', 'm3']);
+
+  const soloRientri = Array.from({ length: 9 }, (_, i) => c('r' + i, { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: IERI }));
+  soloRientri.push(c('m'));
+  assert.deepEqual(calcolaCoda(soloRientri, OGGI).coda.map(x => x.id), ['r0', 'r1', 'r2', 'r3', 'm']);
+});
+
+prova('divisione con slittati: i posti rimasti si dividono in proporzione', () => {
+  const righe = [c('s1', { in_coda_dal: IERI }), c('s2', { in_coda_dal: IERI })];
+  for (let i = 0; i < 5; i++) righe.push(c('m' + i));
+  for (let i = 0; i < 5; i++) righe.push(c('r' + i, { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: IERI }));
+  assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['s1', 's2', 'r0', 'r1', 'm0']);
+});
+
+prova('categorie escluse: Unlinked, Ex Partner/Cliente, Archiviato fuori; senza categoria dentro', () => {
+  const righe = [c('u', { categoria: 'Unlinked' }), c('e', { categoria: 'Ex Partner/Cliente' }), c('a', { categoria: 'Archiviato' }),
+    c('ds-unlinked', { categoria: 'Unlinked', contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: IERI }),
+    c('senza', { categoria: null }), c('p', { categoria: 'Prospect' })];
+  const r = calcolaCoda(righe, OGGI);
+  assert.deepEqual(r.coda.map(x => x.id).sort(), ['p', 'senza']);
+  assert.equal(r.dareSeguito.length, 0);
+});
+
+prova('richiamo con data passata: non è «di oggi», va dopo i richiami di oggi', () => {
+  const righe = [c('vecchio', { contattato: true, ultima_fase: 'Richiamare', ultimi_giorni: null, rientro_il: IERI }),
+    c('oggi', { contattato: true, ultima_fase: 'Richiamare', ultimi_giorni: null })];
+  assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['oggi', 'vecchio']);
 });
 
 prova('slittamento: chi non viene chiamato resta, in cima, e i nuovi entrano solo nei posti liberi', () => {
