@@ -15,6 +15,8 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `contatti` | Lista Nomi | I nominativi | i propri · Admin tutti |
 | `azioni` | Azioni | Lo storico, una riga per azione | le proprie · Admin tutte |
 | `coach_note` | CoachNote | Chat con YesApp su un contatto | le proprie · Admin tutte |
+| `check_giorno` | Day | Fase 3: il Check del Giorno, una riga per check (più check sulla stessa data si sommano) | i propri · Admin tutti; scrive il proprietario o l'Admin |
+| `obiettivi_mese` | Check | Fase 3: obiettivi del mese, partenza di BBS/WES/CEP, VPP/VPG Amway; una riga per partner e mese | i propri · Admin tutti |
 
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
 
@@ -34,6 +36,11 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
+**Fase 3** (migrazione `20260914190000_fase3_dashboard.sql`, applicata):
+- `utenti.abbonamento_scadenza`
+- tabelle `check_giorno` e `obiettivi_mese` (regole: propri + Admin)
+- vista `check_mesi` (security_invoker): per partner e mese `check_fatti`, `ultimo_check` e le somme dei 10 numeri del check
+
 ## Campi
 
 **utenti** — `email` (unica) · `accesso_attivo` (Fase 1: può entrare nell'app; per ora solo l'Admin) · `contatti_al_giorno` (1-10, predefinito 5: massimo giornaliero della coda; l'utente lo cambia con `imposta_contatti_al_giorno`) · `nome_cognome` · `nome` · `partner_id` (PartnerID Amway, unico) · `ruolo` (`ABO` · `Admin`) · `foto` · `auth_id`
@@ -46,6 +53,12 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **coach_note** — `user_id` · `contatto_id` · `tipo_azione` · `testo` · `scritta_il`
 
+**utenti** (Fase 3) — `abbonamento_scadenza` (Glide: `Abb_Preavviso` + 7 giorni; attivo se non è passata)
+
+**check_giorno** — `user_id` (predefinito: chi scrive) · `data` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `vp_clienti` (decimali) · `cep` · `bbs` · `wes` · `tracce` · `pagine` (tutti ≥ 0) · `libro` · `note_libro` (max 150) · `glide_ora` (data e ora originali, solo righe importate) · `creato_il`
+
+**obiettivi_mese** — `user_id` · `mese` (primo giorno del mese, unico per partner) · obiettivi `vpp` · `vpv` (VP Clienti) · `vpg` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `bbs` · `wes` · `cep` · `tracce` · `pagine` (vuoti o 0 = non impostati) · `bbs_partenza` · `wes_partenza` · `cep_partenza` (vuoti = automatici) · `vpp_amway` · `vpg_amway` (dati Amway del mese, fermi all'export)
+
 **Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze (+4 aggiunte in Fase 1, vedi Bottoni esito) · 2.920 contatti · 1.647 azioni · 60 coach note.
 - Nelle azioni importate `categoria` è quella del contatto in Glide al 13/09 (`Categoria<Lista`), la stessa che Glide usava nella chiave: 1.142 azioni trovano la fase in `sequenze`, come in Glide
 - Date lette come ora di Roma; telefoni normalizzati in Fase 2 (vedi Logiche → Telefoni)
@@ -56,6 +69,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - ramo step (StepNr, SequenzaKey, CategoriaKey, NextAction_js, Prefisso) — zavorra indicata nel brief
 - colonne calcolate (conteggi, badge, link agenda, chiavi anno/mese, Coach_Badge)
 - checklist di avvio partner (`*_onb` in Lista Nomi) — importata in Fase 2 (`scripts/import_onboarding.py`: 101 passi su 19 contatti, uguali al CSV)
+- Check del Giorno, obiettivi, abbonamento — importati in Fase 3 (`scripts/import_dashboard.py`, 14/09): **809 check** (7 partner), **65 mesi di obiettivi** (10 partner), **11 scadenze**. Una data dell'export senza anno («28/02») presa dal mese della riga. Colonne calcolate di Check.csv (%, delta, /giorno, banner HTML) non riportate: si calcolano
 
 ## Logiche (coda, sequenze)
 - **Giorni di rientro: valgono quelli di Glide**, non la tabella del brief. Differenze: Prospect · No BuonFine **365** (brief 90); Prospect · Follow Up · Iscrizione **2** (brief vuoto).
@@ -108,13 +122,33 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **doppione**: stesso nome (senza maiuscole/spazi) o stesso telefono tra i nomi del partner → avviso con elenco e «Salvo lo stesso?»
 - **Onboarding**: contatore calcolato «fatti/14»
 
+**Dashboard** (`dashboard.js`, funzioni pure; prove in `tools/banco/prova_dashboard.js`; regole ricostruite nel brief Fase 3 → allegato, confermate da Ignazio 14/09):
+- l'app legge `check_mesi` e `obiettivi_mese` del **partner loggato** (anche l'Admin vede i suoi) e calcola tutto sul telefono
+- **numeri**: Contatti · PM · Sponsor · VP Clienti · Tracce · Pagine = somma dei check del mese; BBS · WES · CEP = partenza + check; VPP · VPG = `vpp_amway` / `vpg_amway`
+- **Nuovi Iscritti** = Sponsor Gruppo (come in Glide)
+- **partenza** BBS/WES/CEP: quella salvata nel mese, altrimenti il totale del mese precedente (a catena)
+- **riquadro**: % = numero ÷ obiettivo · «N per obiettivo» · «/giorno» = quanto manca ÷ giorni rimasti nel mese (oggi compreso). Segni Vitali senza /giorno. **Obiettivo superato** → complimento (Grande!/Ottimo!/Bravo!/Super!/Fantastico!) + «Prossimo traguardo: obiettivo +10%» arrotondato in su. Obiettivo vuoto/0 → «Obiettivo da impostare»
+- **banner obiettivi**: nessuna riga del mese, o tutti gli obiettivi vuoti/0
+- **abbonamento**: attivo se `abbonamento_scadenza >= oggi`
+- **Segni Vitali**: 12 mesi fino a quello in corso; totali: Contatti e PM somma e «~N/mese» (÷12), BBS/WES/CEP «record» con il mese; colore più acceso col numero (35%-100% del massimo della colonna)
+- **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
+
 ## Componenti UI
-File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
+File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
 
 - **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
 - **Tab bar**: **Dashboard** (la home, prima «OGGI»: stesso comportamento) · **Lista Nomi** · Progressi («In arrivo»)
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
-- **Dashboard**: sezione «Dare Seguito scaduti» + «La tua coda · N di 5»
+- **Dashboard** (Fase 3, copia della Dashboard di Glide → `docs/MB21_v3_Dashboard_Agenda_come_e.md`), dall'alto:
+  - **Partner Select** (solo Admin): riquadro scuro col proprio nome, «In arrivo ▾»
+  - banner abbonamento: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto · Accesso limitato alle funzionalità» + «Rinnova subito →» (in arrivo)
+  - banner rosso «🎯 Imposta gli obiettivi del mese!» (in arrivo) quando mancano
+  - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (13 campi, Invia salva; avviso «Check salvato» con **Annulla** che cancella il check)
+  - riquadro con le **4 schede** 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita (scelta non salvata): riquadri con titolo, numero, barra di avanzamento, righe %/per obiettivo/giorno o complimento in verde
+  - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
+  - **OGGI** (al posto di «Azioni da completare» di Glide): «Dare Seguito scaduti» + «La tua coda · Fatti X di N»
+  - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), «👁️ Mostra di più!» (in arrivo: sezione Report)
+  - i tocchi «in arrivo» mostrano un avviso breve. Se i numeri non si caricano, la coda si vede lo stesso con un avviso
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
 - **Bottoni esito** a 1 tap sotto il coach; Appuntamento e Richiamare aprono un foglio in basso con giorno (e ora, predefinita 18:30). Dopo il tap la card esce e compare un avviso di 6 s con **Annulla** (`annulla_esito`). Offline i bottoni sono spenti. La coda non si riempie dopo un esito: si ricalcola alla prossima apertura
 - **Offline**: la coda caricata si salva in `localStorage` (`mb21_coda`); senza rete si mostra quella, in sola lettura, con avviso
@@ -165,3 +199,4 @@ _Da definire._
 | 2026.09.14 · 17:44 | Rilievo Dashboard v3: banner abbonamento scaduto e obiettivi del mese |
 | 2026.09.14 · 18:09 | Rilievo Dashboard v3 chiuso: banner obiettivi, Rinnova subito, obiettivi da semplificare |
 | 2026.09.14 · 18:13 | Brief Fase 3 Dashboard (bozza) |
+| 2026.09.14 · 18:54 | Fase 3 Dashboard: check_giorno, obiettivi_mese, check_mesi, abbonamento; import; pagina Dashboard e Check del Giorno |
