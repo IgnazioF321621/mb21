@@ -132,7 +132,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **banner obiettivi**: nessuna riga del mese, o tutti gli obiettivi vuoti/0
 - **abbonamento**: attivo se `abbonamento_scadenza >= oggi`
 - **Segni Vitali**: 12 mesi fino a quello in corso; totali: Contatti e PM somma e «~N/mese» (÷12), BBS/WES/CEP «record» con il mese; colore più acceso col numero (35%-100% del massimo della colonna)
-- **Obiettivi del mese** (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi (Sponsor Personali compreso) raggruppati come le schede; il foglio si apre con quelli già salvati nel mese, altrimenti con quelli dell'ultimo mese con obiettivi (`propostaObiettivi`); «Come <mese>» · «<mese> +10%» (arrotondato in su) · «Scelgo io» (svuota). Nessun mese precedente → campi vuoti. Interi ≥ 0 (VP con decimali), almeno uno > 0 (`validaObiettivi`). Mesi con obiettivi tutti a 0 contano come non impostati. Salvataggio: upsert su (`user_id`, `mese`) dei soli 12 obiettivi (vuoto = null): partenza e VPP/VPG Amway restano
+- **Obiettivi del mese** (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi (Sponsor Personali compreso) raggruppati come le schede; il foglio si apre con quelli già salvati nel mese, altrimenti con quelli dell'ultimo mese con obiettivi (`propostaObiettivi`); «Come <mese>» · «Scelgo io» (svuota) · barra **«Crescita su <mese>»** con 6 scelte **5 · 10 · 20 · 30 · 40 · 50%** (`CRESCITE`, decisione di Ignazio 14/09): spostandola tutti i 12 campi diventano l'ultimo mese + la percentuale, arrotondati in su; **sopra il 20%** compare «💪 Obiettivo ambizioso: parlane con il tuo upline» (`SOGLIA_AMBIZIOSO`). Nessun mese precedente → campi vuoti. Interi ≥ 0 (VP con decimali), almeno uno > 0 (`validaObiettivi`). Mesi con obiettivi tutti a 0 contano come non impostati. Salvataggio: upsert su (`user_id`, `mese`) dei soli 12 obiettivi (vuoto = null): partenza e VPP/VPG Amway restano
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
 ## Componenti UI
@@ -206,3 +206,4 @@ _Da definire._
 | 2026.09.14 · 19:13 | Coda della Dashboard a righe compatte che si aprono col tocco |
 | 2026.09.14 · 19:18 | Righe della coda con le parole di Glide (modalità • area \| esito) e coach sotto |
 | 2026.09.14 · 20:07 | Obiettivi del mese: foglio semplice (come il mese scorso / +10% / scelgo io) |
+| 2026.09.14 · 20:21 | Obiettivi: barra di crescita 5-50% (5·10·20·30·40·50) con avviso sopra il 20% |
