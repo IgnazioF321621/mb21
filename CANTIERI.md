@@ -29,7 +29,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Vendite** e **Sharing** della scheda contatto: «In arrivo»
 - **Partner Select** per l'Admin: Fase 3
 - Collegamenti tra le parti dell'app che Ignazio chiarirà usandola: raccogliere qui le domande che emergono
-- **Rilievo Dashboard di Glide** (14/09, sola lettura) in `docs/MB21_v3_Dashboard_Agenda_come_e.md`, 14 screenshot + ripresa grezza fuori dal repo (`mb21-import/screenshot-dashboard-agenda/`). Indicazione di Ignazio: nella v4 «Azioni da completare» è sostituito da **OGGI**. Da discutere: l'azione aperta dalla Dashboard; **semplificare l'inserimento degli obiettivi del mese** (oggi complicato; si vedono obiettivi «impostati» a zero). Da confermare: «Rinnova subito» apre il profilo. Da rilevare, una sessione alla volta: **Agenda**, sezione **Check**, sezione **Report**, «Apri Contatto!»
+- **Rilievo Dashboard di Glide** (14/09, sola lettura) in `docs/MB21_v3_Dashboard_Agenda_come_e.md`, 14 screenshot + ripresa grezza fuori dal repo (`mb21-import/screenshot-dashboard-agenda/`). Indicazione di Ignazio: nella v4 «Azioni da completare» è sostituito da **OGGI**. Da discutere: l'azione aperta dalla Dashboard; **semplificare l'inserimento degli obiettivi del mese** (oggi complicato; si vedono obiettivi «impostati» a zero). Da confermare: «Rinnova subito» apre il profilo. Da rilevare, una sessione alla volta: sezione **Check**, sezione **Report**, «Apri Contatto!». ~~Agenda~~ rilevata il 14/09 (§7 del documento, 20 screenshot in `mb21-import/screenshot-agenda/`): Ignazio aperto a una **proposta più intuitiva** per la divisione alto (contatti del giorno) / basso (appuntamenti)
 
 ## 7. Dopo la Fase 1
 *Aperto il 14 settembre 2026.*
