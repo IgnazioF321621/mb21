@@ -149,6 +149,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - **OGGI** (al posto di «Azioni da completare» di Glide): «Dare Seguito scaduti» + «La tua coda · Fatti X di N»
   - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), «👁️ Mostra di più!» (in arrivo: sezione Report)
   - i tocchi «in arrivo» mostrano un avviso breve. Se i numeri non si caricano, la coda si vede lo stesso con un avviso
+- **Righe della coda** (Fase 3, richiesta di Ignazio 14/09: la pagina era troppo lunga): ogni contatto è una **riga compatta** con strip del colore della categoria, nome, badge fase (rosso se DS scaduto) e **frase del coach** su una riga; il tocco la **apre** (una sola alla volta, `ST.aperta`): professione, città · età, telefono, coach intero e bottoni esito. Nella card aperta valgono le regole sotto
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
 - **Bottoni esito** a 1 tap sotto il coach; Appuntamento e Richiamare aprono un foglio in basso con giorno (e ora, predefinita 18:30). Dopo il tap la card esce e compare un avviso di 6 s con **Annulla** (`annulla_esito`). Offline i bottoni sono spenti. La coda non si riempie dopo un esito: si ricalcola alla prossima apertura
 - **Offline**: la coda caricata si salva in `localStorage` (`mb21_coda`); senza rete si mostra quella, in sola lettura, con avviso
@@ -200,3 +201,4 @@ _Da definire._
 | 2026.09.14 · 18:09 | Rilievo Dashboard v3 chiuso: banner obiettivi, Rinnova subito, obiettivi da semplificare |
 | 2026.09.14 · 18:13 | Brief Fase 3 Dashboard (bozza) |
 | 2026.09.14 · 18:54 | Fase 3 Dashboard: check_giorno, obiettivi_mese, check_mesi, abbonamento; import; pagina Dashboard e Check del Giorno |
+| 2026.09.14 · 19:13 | Coda della Dashboard a righe compatte che si aprono col tocco |

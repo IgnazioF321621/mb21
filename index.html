@@ -63,6 +63,15 @@
   .bottoni .no { background: #FEF2F2; color: #991B1B; }
   .bottoni button:disabled { opacity: .45; }
   .bottoni button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .card.compatta { margin-bottom: 8px; border-radius: 14px; }
+  .riga-coda { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 36px 10px 14px; position: relative; font-family: inherit; color: var(--testo); }
+  .riga-coda .rc-alto { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .riga-coda .nome { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .badge { flex: none; }
+  .riga-coda .rc-coach { display: block; margin-top: 3px; font-size: 13px; font-weight: 600; color: #6D28D9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .rc-freccia { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--grigio-chiaro); }
+  .card.aperta .rc-coach { white-space: normal; }
+  .card.aperta .corpo { padding-top: 0; }
   .card.via { opacity: 0; transform: translateX(40px); transition: all .25s ease; }
 
   .testa-coda { display: flex; align-items: center; justify-content: space-between; margin: 22px 4px 8px; }
@@ -220,7 +229,7 @@
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 18:54';
+const APP_VERSION = '2026.09.14 · 19:13';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -375,24 +384,34 @@ function bottoniPer(categoria) {
   return BOTTONI_PROSPECT;
 }
 
+// Riga compatta: nome, fase, frase del coach. Il tocco la apre (una sola aperta): dati, telefono, coach intero, bottoni.
 function cardContatto(r, dareSeguito) {
-  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const fase = r.contattato ? (r.ultima_fase || 'Senza esito') : 'Mai contattato';
   const badge = dareSeguito
     ? `<span class="badge scaduto">${esc(fase)} · scaduto da ${r.scadutoDa} ${r.scadutoDa === 1 ? 'giorno' : 'giorni'}</span>`
     : `<span class="badge">${esc(fase)}</span>`;
-  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span></span>';
+  const aperta = ST.aperta === r.id;
+  const testa = `
+    <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
+      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span>${badge}</span>
+      ${r.coach ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
+      <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
+    </button>`;
+  if (!aperta) {
+    return `<div class="card compatta" id="card-${esc(r.id)}"><div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>${testa}</div>`;
+  }
+  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
+  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '';
   const bottoni = bottoniPer(r.categoria).map((b, i) =>
     `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
-    <div class="card" id="card-${esc(r.id)}">
+    <div class="card compatta aperta" id="card-${esc(r.id)}">
       <div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>
+      ${testa}
       <div class="corpo">
-        <div class="nome">${esc(r.nome)}</div>
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
-        <div class="riga">${tel}${badge}</div>
-        ${r.coach ? `<div class="coach"><small>Coach</small>${esc(r.coach)}</div>` : ''}
+        ${tel ? `<div class="riga">${tel}</div>` : ''}
         <div class="bottoni">${bottoni}</div>
       </div>
     </div>`;
@@ -418,6 +437,9 @@ function disegnaOggi() {
   collegaDashboard();
   const contatore = document.getElementById('contatore');
   if (contatore) contatore.onclick = scegliNumero;
+  app.querySelectorAll('.riga-coda').forEach(b => {
+    b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
+  });
   app.querySelectorAll('.bottoni button').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
