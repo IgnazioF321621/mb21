@@ -158,3 +158,4 @@ _Da definire._
 | 2026.09.14 · 15:22 | Fase 2 aperta: brief in docs/, verifica proprietà dei contatti |
 | 2026.09.14 · 15:39 | Fase 2 Lista Nomi: elenco, filtri, ricerca, scheda, Nuovo Contatto, Archiviati, Onboarding, telefoni internazionali, home «Dashboard» |
 | 2026.09.14 · 15:53 | Fase 2 provata da Ignazio; «Contatto e/o Incaricato di» dalla lista del proprietario |
+| 2026.09.14 · 16:09 | Fase 2 chiusa; prefisso a tendina confermato |
