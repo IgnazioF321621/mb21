@@ -41,7 +41,7 @@
 ## 3. Le 4 schede degli indicatori
 📷 `1-dashboard-alto.png` (Volume) · `5-scheda-azione.png` · `6-scheda-segni-vitali.png` · `7-scheda-crescita.png`
 
-Un riquadro per indicatore: **titolo**, **numero grande** (del periodo in corso, probabilmente il mese), poi un elenco puntato: **percentuale** raggiunta · **quanto manca «per obiettivo»** · **media «/giorno»**. Colore del testo come la scheda.
+Un riquadro per indicatore: **titolo**, **numero grande** (somma dei Check del mese), poi un elenco puntato: **percentuale** dell'obiettivo raggiunta · **quanto manca «per obiettivo»** · **quanto serve «/giorno»**. Colore del testo come la scheda.
 
 | Scheda | Riquadri | Esempio (Ignazio, 14/09) | Righe sotto il numero |
 |---|---|---|---|
