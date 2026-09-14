@@ -2,13 +2,14 @@
 
 Mappa viva di tabelle, campi e logiche. Si aggiorna nello stesso commit di ogni modifica di schema o logica.
 
-*Aggiornato: 13 settembre 2026.*
+*Aggiornato: 14 settembre 2026.*
 
 ## Tabelle
 Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Schema in `supabase/migrations/20260913193000_schema_minimo.sql`.
 
 | Tabella | Da Glide | Cosa contiene | Chi vede |
 |---|---|---|---|
+| `telefoni_prima` | — | Fase 2: copia dei telefoni e delle note prima della normalizzazione (nessuna policy: non si legge dall'app) | nessuno |
 | `utenti` | User | Una riga per persona. Esiste prima dell'account: `auth_id` si collega al primo login | sé stesso · Admin tutti; scrive solo Admin |
 | `sequenze` | Sequenze | Il motore: una riga per fase N21 | tutti gli utenti loggati; scrive solo Admin |
 | `contatti` | Lista Nomi | I nominativi | i propri · Admin tutti |
@@ -23,6 +24,14 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `imposta_contatti_al_giorno(n)` (security definer) → cambia solo il numero del proprio utente, da 1 a 10
 - `registra_esito(p_contatto, p_chiave, p_data, p_modalita, p_da_coda)` → scrive l'azione (con `data_scelta` e `da_coda`), sposta `rientro_il`, azzera `in_coda_dal`; restituisce i valori di prima per «Annulla»
 - `annulla_esito(p_azione, p_rientro, p_in_coda)` → cancella l'azione e ripristina il contatto
+**Fase 2** (migrazione `20260914160000_fase2_lista.sql`, applicata):
+- vista `contatti_lista` (security_invoker): `contatti.*` + `partner` (nome del proprietario) + ultima azione (`ultima_area`, `ultima_modalita`, `ultimo_tipo`, `ultima_fase`, `ultima_il`, `fase_icona`) + `contatti_fatti` (azioni con `tipo_azione = 'Contatto'`). L'Admin vede tutti, gli altri solo i propri
+- `archivia_contatto(p_contatto)` → `categoria_prec` = categoria attuale, categoria `Archiviato`, fuori coda
+- `ripristina_contatto(p_contatto)` → torna a `categoria_prec`; Prospect o senza categoria rientrano in coda da oggi. Solo su archiviati
+- «Elimina definitivamente»: `delete` dall'app, solo su archiviati (azioni e note se ne vanno con il contatto)
+- trigger `mb21_nuovo_contatto_in_coda` (prima dell'insert su `contatti`): nuovo contatto non da Glide, Prospect o senza categoria → `rientro_il = oggi`
+- `contatti.user_id` predefinito = `utente_corrente()`
+- `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
 ## Campi
@@ -31,7 +40,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **sequenze** — `categoria` (`Prospect` · `Partner` · `Cliente`) · `tipo_azione` · `fase` · `chiave` (calcolata: `categoria-tipo_azione-fase`, unica) · `coach` · `giorni_rientro` (vuoto = esce dalla coda) · `icona` · `area` · `tipo_suggerimento` (`data` · `data_o_archivia` · `partner` · `cliente`) · `suggerimento_1/2/3`
 
-**contatti** — `user_id` · `nome` · `professione` · `fascia_eta` · `citta` · `telefono` · `categoria` (`Prospect` · `Cliente` · `Partner` · `Unlinked` · `Ex Partner/Cliente` · `Archiviato` · `Referral`, oppure vuota) · `area` · `brand` · `referral_di` · `note` · `rientro_il` (giorno di rientro in coda; vuoto = fuori coda) · `in_coda_dal` (Fase 1: giorno di ingresso nei 5 di OGGI; vuoto dopo un esito) · `glide_id`
+**contatti** — `user_id` · `nome` · `professione` · `fascia_eta` · `citta` · `telefono` · `categoria` (`Prospect` · `Cliente` · `Partner` · `Unlinked` · `Ex Partner/Cliente` · `Archiviato` · `Referral`, oppure vuota) · `area` · `brand` · `referral_di` · `note` · `rientro_il` (giorno di rientro in coda; vuoto = fuori coda) · `in_coda_dal` (Fase 1: giorno di ingresso nei 5 di OGGI; vuoto dopo un esito) · `categoria_prec` (Fase 2: categoria prima dell'archiviazione) · `onb_amway` · `onb_ordine` · `onb_n21` · `onb_sogno` · `onb_starter_pack` · `onb_lista_start` · `onb_role_play` · `onb_contatti` · `onb_pack_ds` · `onb_bbs` · `onb_wes` · `onb_cep` · `onb_primo_pm` · `onb_primo_abo` (Fase 2: 14 passi di Onboarding dei Partner, sì/no) · `glide_id`
 
 **azioni** — `user_id` · `contatto_id` · `categoria` · `tipo_azione` (Contatto · Piano Marketing · …) · `modalita` (Telefonata · PM 1a1 · …) · `esito` · `chiave` (calcolata: `categoria-tipo_azione-esito`, per trovare la fase in `sequenze`) · `inizio` · `fine` · `completata` · `area` · `brand` · `ospite` · `note` · `coach_script` (azione preparata con YesApp) · `data_scelta` (Fase 1: giorno e ora scelti con Appuntamento / Richiamare) · `da_coda` (esito dato da una card della coda; i Dare Seguito no: serve al conto dei contatti al giorno) · `glide_id`
 
@@ -39,14 +48,14 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze (+4 aggiunte in Fase 1, vedi Bottoni esito) · 2.920 contatti · 1.647 azioni · 60 coach note.
 - Nelle azioni importate `categoria` è quella del contatto in Glide al 13/09 (`Categoria<Lista`), la stessa che Glide usava nella chiave: 1.142 azioni trovano la fase in `sequenze`, come in Glide
-- Date lette come ora di Roma; telefoni ripuliti solo dai caratteri invisibili, per il resto come in Glide
+- Date lette come ora di Roma; telefoni normalizzati in Fase 2 (vedi Logiche → Telefoni)
 - `contatti.rientro_il` iniziale: vedi Logiche → Rientro iniziale
 - `contatti.creato_il` = giorno dell'import (Lista Nomi non ha una data di creazione)
 
 **Non riportati da Glide:**
 - ramo step (StepNr, SequenzaKey, CategoriaKey, NextAction_js, Prefisso) — zavorra indicata nel brief
 - colonne calcolate (conteggi, badge, link agenda, chiavi anno/mese, Coach_Badge)
-- checklist di avvio partner (`*_onb` in Lista Nomi) — rimandata alla fase Partner
+- checklist di avvio partner (`*_onb` in Lista Nomi) — importata in Fase 2 (`scripts/import_onboarding.py`: 101 passi su 19 contatti, uguali al CSV)
 
 ## Logiche (coda, sequenze)
 - **Giorni di rientro: valgono quelli di Glide**, non la tabella del brief. Differenze: Prospect · No BuonFine **365** (brief 90); Prospect · Follow Up · Iscrizione **2** (brief vuoto).
@@ -81,17 +90,44 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state aggiunte a `sequenze` (senza giorni, coach scritto in Fase 1: da rivedere con Ignazio). I Dare Seguito scaduti usano gli stessi bottoni della loro categoria.
 
+**Telefoni** (Fase 2, decisione di Ignazio 14/09): **tutti in formato internazionale**, `+39…` / `+44…`, senza spazi.
+- Glide non accettava il +39; ora WhatsApp, SMS e chiamate partono dal numero salvato
+- due numeri nella stessa casella → il primo resta, il secondo va in `note` («Altro numero: …»)
+- «44-7…», «41-…» (prefisso estero con trattino) → `+44…`; «00…» → `+…`; lettera `O` iniziale al posto dello 0 → corretta
+- nessuna cifra (una parola) → telefono vuoto, parola nelle note
+- **7 numeri dubbi lasciati com'erano** (cifre in più o in meno, prefisso incerto): non hanno il «+», e nella scheda i bottoni Call/SMS/WhatsApp/Telegram sono spenti
+- esito sul 14/09: 2.350 numeri convertiti su 2.358, 18 secondi numeri spostati nelle note, 1 parola spostata nelle note
+- nel modulo il telefono ha un **prefisso a scelta** (+39 predefinito) e `lista.js → componiTelefono` salva sempre `+prefisso+numero`
+
+**Lista Nomi** (`lista.js`, funzioni pure; prove in `tools/banco/prova_lista.js`):
+- l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
+- **filtri**: `All` (solo Admin, tutti i partner) · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
+- **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
+- **banner**: contatti del partner (archiviati compresi); con All, di tutti
+- **ordine**: alfabetico, maiuscole e accenti ignorati
+- **doppione**: stesso nome (senza maiuscole/spazi) o stesso telefono tra i nomi del partner → avviso con elenco e «Salvo lo stesso?»
+- **Onboarding**: contatore calcolato «fatti/14»
+
 ## Componenti UI
-File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore, separato per poterlo provare con node) · `sw.js` · `manifest.webmanifest` · `icone/`.
+File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
 
 - **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
-- **Tab bar**: OGGI · LISTA · PROGRESSI (le ultime due: «In arrivo»)
+- **Tab bar**: **Dashboard** (la home, prima «OGGI»: stesso comportamento) · **Lista Nomi** · Progressi («In arrivo»)
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
-- **OGGI**: sezione «Dare Seguito scaduti» + «La tua coda · N di 5»
+- **Dashboard**: sezione «Dare Seguito scaduti» + «La tua coda · N di 5»
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
 - **Bottoni esito** a 1 tap sotto il coach; Appuntamento e Richiamare aprono un foglio in basso con giorno (e ora, predefinita 18:30). Dopo il tap la card esce e compare un avviso di 6 s con **Annulla** (`annulla_esito`). Offline i bottoni sono spenti. La coda non si riempie dopo un esito: si ricalcola alla prossima apertura
 - **Offline**: la coda caricata si salva in `localStorage` (`mb21_coda`); senza rete si mostra quella, in sola lettura, con avviso
 - **Service worker** `mb21-v1`: pagina e `coda.js` rete-poi-copia; supabase-js copia-poi-rete; `*.supabase.co` mai intercettato
+- **Lista Nomi** (Fase 2, copia della tab di Glide → `docs/MB21_v3_Lista_come_e.md`):
+  - elenco: banner «Hai un totale di N contatti registrati», «+ Nuovo Contatto», chip dei filtri (un chip alla volta; «Altri ▾» apre un foglio), campo Cerca con ×, card a una colonna **tutte alte 112 px** (strip colore categoria, etichetta blu «AREA • MODALITÀ gg/mm/aaaa», nome, professione, telefono cliccabile, «…»). Card a blocchi da 40 mentre si scorre. Filtro e ricerca restano tornando dalla scheda
+  - menu «…»: Modifica · Archivia; negli Archiviati: Ripristina · Elimina definitivamente (con conferma)
+  - **scheda**: «‹ Lista Nomi», testata con strip e categoria, nome, telefono, Modifica, Call · SMS · WhatsApp (`wa.me/<cifre>`) · Telegram (`t.me/+…`); per l'Admin, se il nome è di un altro partner, «Nome di …». Sezioni: Partner = Onboarding · Dati · Azioni · Coach Yes; gli altri = Dati · Azioni · Coach Yes; «Vendite · in arrivo» spento. Si apre sempre su **Dati**
+  - **Dati**: Professione · Età · Località · Area · Note · Contatto e/o Incaricato di · Contatti fatti (solo i campi pieni)
+  - **Azioni**: riquadro FASE con **solo icona e titolo** («FASE CONTATTO: RICHIAMARE»; suggerimenti N21 sospesi, niente Indietro/Avanti) · «Azione +» → foglio con **gli stessi bottoni esito della Dashboard** (`registraEsito` / `annullaEsito`, stesso Annulla; `da_coda = false`) · elenco azioni dalla più recente: «tipo • gg/mm/aa», «modalità • area», «esito • nota», interruttore Completato, Modifica (data e ora, nota)
+  - **Coach Yes**: «Coach+» (tipo di azione + testo) · elenco note del **partner loggato** (tipo, data e ora) · tocco → testo intero con Modifica
+  - **Onboarding**: «Passi di base per il successo», contatore «fatti/14», barra, 14 interruttori (il tocco salva)
+  - **Nuovo Contatto / Modifica**: foglio «Aggiungi un nuovo contatto» / «Modifica contatto», **9 campi di Glide nell'ordine**: Nominativo* · Telefono (prefisso + numero) · Fascia Età · Professione (40) · Località (40) · Categoria* · Contatto e/o Incaricato di (testo con suggerimenti tra i propri nomi) · Area · Note (50). Invia spento finché mancano gli obbligatori. I valori storici fuori elenco e i testi più lunghi dei limiti restano modificabili
 - **Chiave pubblica Supabase** (publishable) in `index.html` (`SUPABASE_KEY`)
 
 ## Import CSV Amway
@@ -120,3 +156,4 @@ _Da definire._
 | 2026.09.14 · 15:00 | Rilievo Lista v3: sezione Onboarding dei Partner |
 | 2026.09.14 · 15:02 | Decisioni Fase 2: suggerimenti N21 a richiesta, checklist Partner di 14 passi |
 | 2026.09.14 · 15:22 | Fase 2 aperta: brief in docs/, verifica proprietà dei contatti |
+| 2026.09.14 · 15:39 | Fase 2 Lista Nomi: elenco, filtri, ricerca, scheda, Nuovo Contatto, Archiviati, Onboarding, telefoni internazionali, home «Dashboard» |
