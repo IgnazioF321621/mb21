@@ -13,8 +13,22 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 8. Fase 2 · LISTA NOMI
 *Aperto il 14 settembre 2026. Brief: `docs/MB21_v4_Brief_F2_ListaNomi.md` (sostituisce i precedenti).*
 
-- **Punto 1 · proprietà dei contatti — verificata (sola lettura)**: CSV di Lista Nomi e `contatti` confrontati riga per riga. 2.920 contatti, **0 senza proprietario, 0 disaccordi**, conteggi per partner identici al CSV. Uniche anomalie: le 3 righe del CSV di due email che non sono in User, già lasciate fuori all'import. ⏸ In attesa dell'ok di Ignazio
-- **Punto 7 · telefoni — elenco pronto**: 32 da sistemare, 14 senza dubbi (prefisso estero scritto «44-», asterisco iniziale), 18 dubbi (due numeri nella stessa casella, lettera O al posto dello zero, cifre mancanti, nessun numero). ⏸ In attesa dell'ok di Ignazio. Da decidere anche il formato degli altri numeri: 2.226 cellulari senza prefisso, 58 con +39, 88 con spazi
+**Fatto:**
+- **Proprietà dei contatti**: CSV e database confrontati riga per riga, 0 senza proprietario, 0 disaccordi, conteggi identici. Nessuna correzione (ok di Ignazio). Tabella finale nel resoconto della fase
+- **Telefoni** (decisioni di Ignazio): tutti in formato internazionale; secondo numero nelle note; lettera O → 0. 2.350 convertiti, 18 secondi numeri e 1 parola nelle note, copia di prima in `telefoni_prima`
+- **Onboarding** importato da Glide (101 passi, uguale al CSV)
+- Migrazione `fase2_lista`: vista `contatti_lista`, archivia/ripristina, nuovo contatto in coda, 14 colonne Onboarding
+- `lista.js` + **9 prove** (`node tools/banco/prova_lista.js`): filtri, All solo Admin, ricerca, banner, doppioni, telefono dal modulo, Onboarding, etichette
+- Pagina: tab **Dashboard** · **Lista Nomi**; elenco, scheda (Dati · Azioni · Coach Yes · Onboarding), Nuovo Contatto / Modifica, Archiviati
+- **Prove sul database** (transazione annullata), come Ignazio e come Isabella: Admin 2.920 righe / 1.561 proprie; nuovo Prospect di Ignazio con rientro oggi ed entra nella vista della coda; nuovo Cliente con rientro vuoto; archivia → Archiviato con categoria di prima; ripristina → Prospect in coda da oggi; ripristina su non archiviato rifiutato; elimina definitivamente → 0 azioni e 0 note orfane; Isabella vede solo i suoi 783, 0 note di altri, 0 modifiche a nomi altrui, non può creare nomi per Ignazio
+
+**Da provare con Ignazio (dall'iPhone)**: elenco e filtri, ricerca, una scheda con azioni, Azione + e Annulla, una nota Coach, Nuovo Contatto (anche il doppione), Archivia e Ripristina, un interruttore di Onboarding
+
+**Aperti:**
+- **7 telefoni dubbi** lasciati com'erano (cifre in più o in meno, prefisso incerto): da correggere a mano dalla scheda
+- **Prefisso nel Nuovo Contatto**: scelto a tendina, +39 predefinito (proposta di Claude su richiesta di Ignazio «scegliere il prefisso quando si registra»): da confermare dopo la prova
+- «Contatto e/o Incaricato di» è testo con suggerimenti tra i propri nomi (in Glide era un collegamento al contatto): va bene così?
+- Suggerimenti N21 sospesi (decisione 4 del brief), Vendite e Sharing «In arrivo», Partner Select in Fase 3
 
 ## 7. Dopo la Fase 1
 *Aperto il 14 settembre 2026.*
@@ -36,7 +50,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 - ~~Ora delle azioni~~ — **confermata da Ignazio il 13 settembre**: il PM 1a1 · Presentazione del 13/09/2026 è alle 19:00 anche in Glide. Il fuso (ora di Roma) è giusto
 - ~~28 azioni con data futura~~ — **confermate da Ignazio**: sono riordini programmati, non errori
-- **32 telefoni non puliti**: due numeri nella stessa casella, prefissi esteri scritti `44-…`, lettera `O` al posto dello zero, un cognome al posto del numero. Lasciati come in Glide; **da sistemare nella Fase 2 (Lista)**, come deciso da Ignazio
+- ~~32 telefoni non puliti~~ — **sistemati in Fase 2** (cantiere 8); restano 7 dubbi
 - ~~Due email personali nella cronologia di GitHub~~ — **cronologia riscritta il 14/09** (vedi cantiere 6)
 - Le altre 13 tabelle di Glide si importano nelle loro fasi
 
