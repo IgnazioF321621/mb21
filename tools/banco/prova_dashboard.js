@@ -103,4 +103,30 @@ prova('Modulo Check: 11 numeri obbligatori, VP con decimali, note max 150', () =
   assert.equal(D.CAMPI_CHECK.length, 10);   // + Data, Libro, Note = 13 campi
 });
 
+prova('Obiettivi: come il mese scorso, +10%, attuali; partner nuovo = campi vuoti', () => {
+  const uguale = D.propostaObiettivi(obiettivi, '2026-10-01', 'uguale');
+  assert.equal(uguale.mesePrima, '2026-09-01');
+  assert.deepEqual([uguale.valori.vpg, uguale.valori.contatti, uguale.valori.sponsor_personali, uguale.valori.pagine], [2400, 30, 4, 300]);
+  const piu = D.propostaObiettivi(obiettivi, '2026-10-01', 'piu10').valori;
+  assert.deepEqual([piu.vpg, piu.contatti, piu.pm, piu.sponsor_personali, piu.bbs], [2640, 33, 17, 5, 8]);
+  assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'attuali').valori.wes, 12);      // già salvati nel mese
+  assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'uguale').valori.wes, 10);       // agosto
+  const aZero = [{ mese: '2026-09-01', vpp: 0, contatti: 0 }];
+  assert.equal(D.propostaObiettivi(aZero, '2026-10-01', 'uguale').mesePrima, null);           // mesi a zero non contano
+  assert.deepEqual(Object.values(D.propostaObiettivi([], '2026-10-01', 'piu10').valori), Array(12).fill(''));
+  assert.equal(D.nomeMese('2026-09-01'), 'Settembre');
+});
+
+prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
+  assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 12);
+  assert.ok(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).some(c => c[0] === 'sponsor_personali'));
+  assert.deepEqual(D.validaObiettivi({ contatti: '0', pm: '' }), { errore: 'Scrivi almeno un obiettivo.' });
+  assert.deepEqual(D.validaObiettivi({ contatti: '2,5' }), { errore: 'Numero non valido: Contatti.' });
+  assert.deepEqual(D.validaObiettivi({ vpg: '-1' }), { errore: 'Numero non valido: VPG.' });
+  const ok1 = D.validaObiettivi({ vpp: '360,5', contatti: '30', pagine: '' });
+  assert.equal(ok1.valori.vpp, 360.5);
+  assert.equal(ok1.valori.contatti, 30);
+  assert.equal(ok1.valori.pagine, null);
+});
+
 console.log(`\n${ok} prove superate`);
