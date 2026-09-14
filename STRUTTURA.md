@@ -210,3 +210,4 @@ _Da definire._
 | 2026.09.14 · 23:05 | Rilievo Agenda v3 (Glide): contatti del giorno, calendario, Aggiungi Appuntamento |
 | 2026.09.14 · 23:09 | Rilievo Agenda: mappa categoria → tipi di azione → fasi (Scelte + Sequenze) |
 | 2026.09.14 · 23:13 | Rilievo Agenda: fasi per sottotipo di Appuntamento (risposte di Ignazio + storico) |
+| 2026.09.14 · 23:26 | Brief Fase 4 Agenda (bozza): giornata a linea del tempo |
