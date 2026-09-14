@@ -27,7 +27,7 @@
 📷 `1-dashboard-alto.png` · `2-dashboard-azioni.png` · `3-dashboard-fondo.png` · `4-segni-vitali-fondo.png`
 
 1. **Partner Select** (solo Admin), fascia scura in alto: foto + nome, X per svuotare, freccia per scegliere.
-2. **Riquadro stato e check**:
+2. **Riquadro stato e check** (dal giorno 1 del mese, finché non sono compilati, qui compare anche il **banner degli obiettivi**, [§3](#3-le-4-schede-degli-indicatori)):
    - banner verde **«✅ Abbonamento attivo · Buon lavoro!»**;
    - riquadro azzurro con fulmine **«Compila il Check del Giorno!»**, sotto «Ultimo check: **13/09/2026** · Tocca per aprire» (data sottolineata), freccia «›» → [§5](#5-check-del-giorno).
 3. **Riquadro indicatori** con 4 schede ([§3](#3-le-4-schede-degli-indicatori)): 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita.
@@ -51,8 +51,9 @@ Un riquadro per indicatore: **titolo**, **numero grande** (del periodo in corso,
 | 🟣 **Crescita** | **Tracce audio** · **Pagine libro** | 35 · 193 | % · per obiettivo · /giorno |
 
 - Esempio completo di un riquadro: `VPG 325,83 • 13,6% • 2074,17 per obiettivo • 122,01/giorno`.
-- «/giorno» sembra essere **quanto serve al giorno** per arrivare all'obiettivo (es. Contatti 9, mancano 21, «1/giorno»). **Da verificare** con Ignazio: media fatta o ritmo necessario.
-- Gli obiettivi non si vedono qui: **da verificare** dove si impostano.
+- «/giorno» è **quanto serve al giorno** per arrivare all'obiettivo (confermato da Ignazio il 14/09).
+- **Da dove vengono i numeri** (confermato da Ignazio il 14/09): i Check del Giorno si **sommano** nella tabella Check e si **confrontano con gli obiettivi** del mese.
+- **Obiettivi**: si impostano **a inizio mese in Check**. Dal **giorno 1** del mese in Dashboard compare un **banner** che resta finché gli obiettivi non sono compilati. Oggi (14/09, obiettivi già fatti) il banner non si vede: screenshot **da recuperare**.
 - Le schede cambiano solo i riquadri; il resto della pagina resta uguale.
 
 ---
@@ -120,7 +121,7 @@ Dal riquadro «Compila il Check del Giorno!» si apre un **pannello da destra**,
 
 In fondo **Invia** (spento finché mancano i campi obbligatori) e **Annulla**.
 
-- I campi del Check sono gli stessi numeri delle 4 schede ([§3](#3-le-4-schede-degli-indicatori)) e dei Segni Vitali: **il Check è la fonte degli indicatori della Dashboard** (probabile; **da verificare** per VPP/VPG e Nuovi Iscritti).
+- **Il Check è la fonte degli indicatori della Dashboard** ([§3](#3-le-4-schede-degli-indicatori)): i check si sommano e si confrontano con gli obiettivi del mese (confermato da Ignazio il 14/09).
 - «Ultimo check: 13/09/2026» sul riquadro mostra l'ultima data compilata.
 
 ---
@@ -150,7 +151,7 @@ Solo osservazioni, nessuna decisione presa salvo dove indicato:
 1. **«Azioni da completare» → OGGI** (indicazione di Ignazio, 14/09): nella v4 questo elenco viene **sostituito da OGGI**, cioè da cosa c'è da fare oggi. In Glide l'elenco era ragionato in un altro modo (azioni non completate, anche vecchie di mesi o future); OGGI è più intuitivo. Collegato al cantiere «OGGI dovrà contenere anche le altre azioni… e quindi un'agenda».
 2. **Azione aperta**: si apre già in modifica, con Completato, Pianifica nuova data, NotePlan e Google Calendar. **Da discutere** con Ignazio cosa tenere.
 3. **Check del Giorno**: compito serale del Partner, 11 numeri obbligatori + libro. Da portare nella v4 (tabella Check già vista nel CSV); probabilmente alimenta indicatori e Segni Vitali.
-4. **4 schede indicatori** (Volume, Azione, Segni Vitali, Crescita) con obiettivo, percentuale e ritmo al giorno: serve sapere **dove stanno gli obiettivi**.
+4. **4 schede indicatori** (Volume, Azione, Segni Vitali, Crescita): somma dei Check del mese confrontata con gli **obiettivi mensili** (impostati in Check a inizio mese, con banner in Dashboard finché mancano); percentuale, quanto manca e quanto serve al giorno.
 5. **Segni Vitali**: oggi è una pagina esterna incorporata; nella v4 può diventare parte dell'app.
 6. **Collegamenti ad altre sezioni** da rilevare in giri a parte: «Clicca qui per una visione completa!» → **Check**; «Mostra di più!» → **Report**.
 7. Il pannello del Check si chiama «Aggiungi articolo» (nome di serie di Glide): nella v4 un titolo chiaro.
