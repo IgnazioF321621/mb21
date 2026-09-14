@@ -207,3 +207,4 @@ _Da definire._
 | 2026.09.14 · 19:18 | Righe della coda con le parole di Glide (modalità • area \| esito) e coach sotto |
 | 2026.09.14 · 20:07 | Obiettivi del mese: foglio semplice (come il mese scorso / +10% / scelgo io) |
 | 2026.09.14 · 20:21 | Obiettivi: barra di crescita 5-50% (5·10·20·30·40·50) con avviso sopra il 20% |
+| 2026.09.14 · 23:05 | Rilievo Agenda v3 (Glide): contatti del giorno, calendario, Aggiungi Appuntamento |
