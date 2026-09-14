@@ -119,3 +119,4 @@ _Da definire._
 | 2026.09.14 · 14:52 | Rilievo Lista v3 aggiornato con la vista da telefono e gli screenshot |
 | 2026.09.14 · 15:00 | Rilievo Lista v3: sezione Onboarding dei Partner |
 | 2026.09.14 · 15:02 | Decisioni Fase 2: suggerimenti N21 a richiesta, checklist Partner di 14 passi |
+| 2026.09.14 · 15:22 | Fase 2 aperta: brief in docs/, verifica proprietà dei contatti |

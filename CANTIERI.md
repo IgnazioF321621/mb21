@@ -10,6 +10,12 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 8. Fase 2 · LISTA NOMI
+*Aperto il 14 settembre 2026. Brief: `docs/MB21_v4_Brief_F2_ListaNomi.md` (sostituisce i precedenti).*
+
+- **Punto 1 · proprietà dei contatti — verificata (sola lettura)**: CSV di Lista Nomi e `contatti` confrontati riga per riga. 2.920 contatti, **0 senza proprietario, 0 disaccordi**, conteggi per partner identici al CSV. Uniche anomalie: le 3 righe del CSV di due email che non sono in User, già lasciate fuori all'import. ⏸ In attesa dell'ok di Ignazio
+- **Punto 7 · telefoni — elenco pronto**: 32 da sistemare, 14 senza dubbi (prefisso estero scritto «44-», asterisco iniziale), 18 dubbi (due numeri nella stessa casella, lettera O al posto dello zero, cifre mancanti, nessun numero). ⏸ In attesa dell'ok di Ignazio. Da decidere anche il formato degli altri numeri: 2.226 cellulari senza prefisso, 58 con +39, 88 con spazi
+
 ## 7. Dopo la Fase 1
 *Aperto il 14 settembre 2026.*
 
