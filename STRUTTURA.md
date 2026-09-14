@@ -211,3 +211,4 @@ _Da definire._
 | 2026.09.14 · 23:09 | Rilievo Agenda: mappa categoria → tipi di azione → fasi (Scelte + Sequenze) |
 | 2026.09.14 · 23:13 | Rilievo Agenda: fasi per sottotipo di Appuntamento (risposte di Ignazio + storico) |
 | 2026.09.14 · 23:26 | Brief Fase 4 Agenda (bozza): giornata a linea del tempo |
+| 2026.09.14 · 23:30 | Fase 4 Agenda: brief approvato, bozza delle scelte (categoria → tipo → sottotipo → fasi) |
