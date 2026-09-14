@@ -112,3 +112,4 @@ _Da definire._
 | 2026.09.14 · 09:31 | Bottoni esito, coda 3 rientri + 2 mai contattati, categorie escluse, chiave pubblica |
 | 2026.09.14 · 11:26 | Fase 1 chiusa dopo la prova di Ignazio dall'iPhone; codice a 6 cifre rimandato |
 | 2026.09.14 · 11:38 | Contatti al giorno (1-10), massimo giornaliero; Dare Seguito fuori dal conto |
+| 2026.09.14 · 11:53 | Contatti al giorno provati da Ignazio dall'iPhone |
