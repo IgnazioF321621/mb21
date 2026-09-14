@@ -10,25 +10,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 8. Fase 2 · LISTA NOMI
-*Aperto il 14 settembre 2026. Brief: `docs/MB21_v4_Brief_F2_ListaNomi.md` (sostituisce i precedenti).*
+## 9. Dopo la Fase 2
+*Aperto il 14 settembre 2026.*
 
-**Fatto:**
-- **Proprietà dei contatti**: CSV e database confrontati riga per riga, 0 senza proprietario, 0 disaccordi, conteggi identici. Nessuna correzione (ok di Ignazio). Tabella finale nel resoconto della fase
-- **Telefoni** (decisioni di Ignazio): tutti in formato internazionale; secondo numero nelle note; lettera O → 0. 2.350 convertiti, 18 secondi numeri e 1 parola nelle note, copia di prima in `telefoni_prima`
-- **Onboarding** importato da Glide (101 passi, uguale al CSV)
-- Migrazione `fase2_lista`: vista `contatti_lista`, archivia/ripristina, nuovo contatto in coda, 14 colonne Onboarding
-- `lista.js` + **9 prove** (`node tools/banco/prova_lista.js`): filtri, All solo Admin, ricerca, banner, doppioni, telefono dal modulo, Onboarding, etichette
-- Pagina: tab **Dashboard** · **Lista Nomi**; elenco, scheda (Dati · Azioni · Coach Yes · Onboarding), Nuovo Contatto / Modifica, Archiviati
-- **Prove sul database** (transazione annullata), come Ignazio e come Isabella: Admin 2.920 righe / 1.561 proprie; nuovo Prospect di Ignazio con rientro oggi ed entra nella vista della coda; nuovo Cliente con rientro vuoto; archivia → Archiviato con categoria di prima; ripristina → Prospect in coda da oggi; ripristina su non archiviato rifiutato; elimina definitivamente → 0 azioni e 0 note orfane; Isabella vede solo i suoi 783, 0 note di altri, 0 modifiche a nomi altrui, non può creare nomi per Ignazio
-
-**Provato da Ignazio dall'iPhone il 14/09**: «sembra funzionare tutto». Alcuni collegamenti tra le parti gli saranno chiari usandola
-
-**Aperti:**
-- **7 telefoni dubbi** lasciati com'erano (cifre in più o in meno, prefisso incerto): da correggere a mano dalla scheda
-- **Prefisso nel Nuovo Contatto**: scelto a tendina, +39 predefinito (proposta di Claude su richiesta di Ignazio «scegliere il prefisso quando si registra»): da confermare dopo la prova
-- ~~«Contatto e/o Incaricato di»~~ — **confermato da Ignazio il 14/09**: i suggerimenti vengono dalla lista del partner che inserisce il nome. In modifica (anche per l'Admin su nomi altrui) vale la lista del proprietario del contatto
-- Suggerimenti N21 sospesi (decisione 4 del brief), Vendite e Sharing «In arrivo», Partner Select in Fase 3
+- **7 telefoni dubbi** lasciati com'erano (cifre in più o in meno, prefisso incerto): senza «+», bottoni di contatto spenti nella scheda. Da correggere a mano con Modifica
+- **Suggerimenti N21 sospesi** nel riquadro FASE (decisione 4 del brief Fase 2). La decisione precedente («Come fare ▸» a richiesta, cantiere 7) resta da riprendere quando Ignazio vorrà riattivarli
+- **Vendite** e **Sharing** della scheda contatto: «In arrivo»
+- **Partner Select** per l'Admin: Fase 3
+- Collegamenti tra le parti dell'app che Ignazio chiarirà usandola: raccogliere qui le domande che emergono
 
 ## 7. Dopo la Fase 1
 *Aperto il 14 settembre 2026.*
@@ -57,6 +46,26 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 8. Fase 2 · LISTA NOMI
+*Aperto il 14 settembre 2026, **chiuso il 14 settembre 2026**. Brief: `docs/MB21_v4_Brief_F2_ListaNomi.md` (sostituisce i precedenti).*
+
+**Fatto:**
+- **Proprietà dei contatti**: CSV e database confrontati riga per riga, 0 senza proprietario, 0 disaccordi, conteggi identici. Nessuna correzione (ok di Ignazio). Tabella finale nel resoconto della fase
+- **Telefoni** (decisioni di Ignazio): tutti in formato internazionale; secondo numero nelle note; lettera O → 0. 2.350 convertiti, 18 secondi numeri e 1 parola nelle note, copia di prima in `telefoni_prima`
+- **Onboarding** importato da Glide (101 passi, uguale al CSV)
+- Migrazione `fase2_lista`: vista `contatti_lista`, archivia/ripristina, nuovo contatto in coda, 14 colonne Onboarding
+- `lista.js` + **9 prove** (`node tools/banco/prova_lista.js`): filtri, All solo Admin, ricerca, banner, doppioni, telefono dal modulo, Onboarding, etichette
+- Pagina: tab **Dashboard** · **Lista Nomi**; elenco, scheda (Dati · Azioni · Coach Yes · Onboarding), Nuovo Contatto / Modifica, Archiviati
+- **Prove sul database** (transazione annullata), come Ignazio e come Isabella: Admin 2.920 righe / 1.561 proprie; nuovo Prospect di Ignazio con rientro oggi ed entra nella vista della coda; nuovo Cliente con rientro vuoto; archivia → Archiviato con categoria di prima; ripristina → Prospect in coda da oggi; ripristina su non archiviato rifiutato; elimina definitivamente → 0 azioni e 0 note orfane; Isabella vede solo i suoi 783, 0 note di altri, 0 modifiche a nomi altrui, non può creare nomi per Ignazio
+
+**Provato da Ignazio dall'iPhone il 14/09**: «sembra funzionare tutto». Alcuni collegamenti tra le parti gli saranno chiari usandola
+
+**Decisioni chiuse:**
+- ~~Prefisso nel Nuovo Contatto~~ — **confermato da Ignazio il 14/09**: a tendina, +39 predefinito
+- ~~«Contatto e/o Incaricato di»~~ — **confermato da Ignazio il 14/09**: i suggerimenti vengono dalla lista del partner che inserisce il nome. In modifica (anche per l'Admin su nomi altrui) vale la lista del proprietario del contatto
+
+**Passati al cantiere 9.**
 
 ## 6. Fase 1 · OGGI
 *Aperto il 13 settembre 2026, **chiuso il 14 settembre 2026**. Brief: `docs/MB21_v4_Brief_F1_Oggi.md`.*
