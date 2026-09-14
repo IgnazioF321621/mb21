@@ -209,3 +209,4 @@ _Da definire._
 | 2026.09.14 · 20:21 | Obiettivi: barra di crescita 5-50% (5·10·20·30·40·50) con avviso sopra il 20% |
 | 2026.09.14 · 23:05 | Rilievo Agenda v3 (Glide): contatti del giorno, calendario, Aggiungi Appuntamento |
 | 2026.09.14 · 23:09 | Rilievo Agenda: mappa categoria → tipi di azione → fasi (Scelte + Sequenze) |
+| 2026.09.14 · 23:13 | Rilievo Agenda: fasi per sottotipo di Appuntamento (risposte di Ignazio + storico) |

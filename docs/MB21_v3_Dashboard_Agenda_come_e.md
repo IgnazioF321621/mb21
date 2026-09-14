@@ -250,7 +250,21 @@ Confermato da Ignazio (14/09): **ogni categoria ha le sue azioni, i suoi tipi e 
 
 `Scelte.csv` ha anche elenchi di esiti per tipo, non legati alla categoria: `EsitoCT` (PM Fissato · No Risposta · Telefono OFF · No Interesse · Richiamare · Consult Prodotti), `EsitoPM`, `EsitoFUp`, `EsitoAPT` (Fatto · Rimandato · No Show), `EsitoPRD` (Vendita · No Vendita).
 
-**Da chiarire con Ignazio** (se servirà per costruire): quale elenco usa davvero il modulo per «Fase/Esito attuale» (Sequenze per categoria o `Esito*` per tipo: per Prospect · PM coincidono), e se dentro Appuntamento le fasi dipendono dal sottotipo (Avvio, Counseling…).
+**Risposte di Ignazio (14/09):**
+- **Dentro Appuntamento le fasi cambiano col sottotipo** (Avvio, Counseling…).
+- Quale elenco usi esattamente «Fase/Esito attuale» in Glide Ignazio non lo ricorda: **le scelte per categoria · tipo · sottotipo si predisporranno quando si costruisce l'Agenda v4** (proposta di Claude, conferma di Ignazio).
+
+**Fasi usate davvero per sottotipo di Appuntamento** (storico `azioni` importato, 56 azioni; è un indizio, non la regola di Glide — ci sono anche valori vecchi come «Iscr+Ordine», «Team Meeting»):
+
+| Sottotipo | Fasi trovate |
+|---|---|
+| Avvio | Lista nomi · ListaStart · Motivazione · OrdineStart · RolePlay · Telefonate · Prodotti · Iscr+Ordine |
+| Counseling | c/Downline · c/Upline · Motivazione |
+| Lista/Contatti | Lista nomi · Motivazione · Telefonate |
+| Meeting/Evento | Incontro N21 |
+| Ordine | OrdineStart · VP Personali · Cliente · Iscr+Ordine |
+
+(«Inaugurazione» è in Sequenze ma non compare nello storico.)
 
 ---
 
