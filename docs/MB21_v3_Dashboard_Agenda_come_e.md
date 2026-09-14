@@ -27,14 +27,26 @@
 📷 `1-dashboard-alto.png` · `2-dashboard-azioni.png` · `3-dashboard-fondo.png` · `4-segni-vitali-fondo.png`
 
 1. **Partner Select** (solo Admin), fascia scura in alto: foto + nome, X per svuotare, freccia per scegliere.
-2. **Riquadro stato e check** (dal giorno 1 del mese, finché non sono compilati, qui compare anche il **banner degli obiettivi**, [§3](#3-le-4-schede-degli-indicatori)):
-   - banner verde **«✅ Abbonamento attivo · Buon lavoro!»**;
-   - riquadro azzurro con fulmine **«Compila il Check del Giorno!»**, sotto «Ultimo check: **13/09/2026** · Tocca per aprire» (data sottolineata), freccia «›» → [§5](#5-check-del-giorno).
+2. **Riquadro stato e check** — due banner, che cambiano con la situazione del partner ([§2.1](#21-i-banner-in-cima)):
+   - banner **abbonamento**: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto»;
+   - banner **check/obiettivi**: azzurro «⚡ Compila il Check del Giorno!» con «Ultimo check: **13/09/2026** · Tocca per aprire» e freccia «›» → [§5](#5-check-del-giorno); oppure rosso «🎯 Imposta gli obiettivi del mese!».
 3. **Riquadro indicatori** con 4 schede ([§3](#3-le-4-schede-degli-indicatori)): 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita.
 4. Bottone con occhio **«Clicca qui per una visione completa!»** → porta alla sezione **Check** (da rilevare in un giro a parte).
 5. **«⚡ Azioni da completare»** ([§4](#4-azioni-da-completare)).
 6. **Segni Vitali** (riquadro scuro, [§6](#6-riquadro-segni-vitali)).
 7. **«Mostra di più!»** (con occhio, in fondo a destra) → porta alla sezione **Report** (da rilevare in un giro a parte; per Ignazio apre «uno scenario futuro» importante).
+
+### 2.1 I banner in cima
+📷 `1-dashboard-alto.png` (tutto a posto) · `12-banner-scaduto-obiettivi.png` (abbonamento scaduto + obiettivi da impostare)
+
+| Situazione | Banner abbonamento | Banner sotto |
+|---|---|---|
+| **Tutto a posto** (Ignazio, 14/09) | verde, «✅ Abbonamento attivo · Buon lavoro!» | azzurro, fulmine, **«Compila il Check del Giorno!»** · «Ultimo check: <data> · Tocca per aprire» › |
+| **Abbonamento scaduto + obiettivi mancanti** (un altro partner, 14/09) | rosa con bordo rosso, pallino rosso, **«Abbonamento scaduto»** · «Accesso limitato alle funzionalità», bottone rosso pieno **«Rinnova subito →»** | rosa con barra rossa a sinistra, bersaglio 🎯, **«Imposta gli obiettivi del mese!»** · «Clicca su questo banner» |
+
+- Il banner **obiettivi** compare **dal giorno 1 del mese** finché gli obiettivi non sono impostati (in Check), e in quel caso **al posto** di «Compila il Check del Giorno!».
+- Con abbonamento scaduto e obiettivi mancanti i riquadri indicatori sono **vuoti** (solo i puntini e «/giorno»).
+- Non toccati: «Rinnova subito →» e il banner obiettivi (dove portano: **da rilevare**).
 
 ---
 
@@ -53,7 +65,7 @@ Un riquadro per indicatore: **titolo**, **numero grande** (somma dei Check del m
 - Esempio completo di un riquadro: `VPG 325,83 • 13,6% • 2074,17 per obiettivo • 122,01/giorno`.
 - «/giorno» è **quanto serve al giorno** per arrivare all'obiettivo (confermato da Ignazio il 14/09).
 - **Da dove vengono i numeri** (confermato da Ignazio il 14/09): i Check del Giorno si **sommano** nella tabella Check e si **confrontano con gli obiettivi** del mese.
-- **Obiettivi**: si impostano **a inizio mese in Check**. Dal **giorno 1** del mese in Dashboard compare un **banner** che resta finché gli obiettivi non sono compilati. Oggi (14/09, obiettivi già fatti) il banner non si vede: screenshot **da recuperare**.
+- **Obiettivi**: si impostano **a inizio mese in Check**. Dal **giorno 1** del mese in Dashboard compare il banner **«Imposta gli obiettivi del mese!»**, che resta finché non sono compilati ([§2.1](#21-i-banner-in-cima)).
 - Le schede cambiano solo i riquadri; il resto della pagina resta uguale.
 
 ---
@@ -154,7 +166,8 @@ Solo osservazioni, nessuna decisione presa salvo dove indicato:
 4. **4 schede indicatori** (Volume, Azione, Segni Vitali, Crescita): somma dei Check del mese confrontata con gli **obiettivi mensili** (impostati in Check a inizio mese, con banner in Dashboard finché mancano); percentuale, quanto manca e quanto serve al giorno.
 5. **Segni Vitali**: oggi è una pagina esterna incorporata; nella v4 può diventare parte dell'app.
 6. **Collegamenti ad altre sezioni** da rilevare in giri a parte: «Clicca qui per una visione completa!» → **Check**; «Mostra di più!» → **Report**.
-7. Il pannello del Check si chiama «Aggiungi articolo» (nome di serie di Glide): nella v4 un titolo chiaro.
+7. **Banner di stato**: abbonamento (attivo/scaduto con «Rinnova subito») e obiettivi del mese da impostare: da prevedere nella v4 (l'abbonamento riguarda la parte a pagamento).
+8. Il pannello del Check si chiama «Aggiungi articolo» (nome di serie di Glide): nella v4 un titolo chiaro.
 
 ---
 
@@ -175,5 +188,6 @@ In `/Users/ignaziofiorito/mb21-import/screenshot-dashboard-agenda/` (fuori dal r
 | `9-azione-aperta-fondo.png` | azione aperta, parte bassa |
 | `10-check-giorno.png` | Check del Giorno, parte alta |
 | `11-check-giorno-fondo.png` | Check del Giorno, parte bassa |
+| `12-banner-scaduto-obiettivi.png` | banner «Abbonamento scaduto» e «Imposta gli obiettivi del mese!» (altro partner) |
 
 Non fatti: sezione Check (da «visione completa»), sezione Report (da «Mostra di più!»), Agenda.
