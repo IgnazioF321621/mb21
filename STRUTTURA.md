@@ -163,3 +163,4 @@ _Da definire._
 | 2026.09.14 · 17:35 | Rilievo Dashboard v3: obiettivi mensili, /giorno e origine dei numeri chiariti da Ignazio |
 | 2026.09.14 · 17:35 | Rilievo Dashboard v3: corretta la descrizione dei riquadri |
 | 2026.09.14 · 17:44 | Rilievo Dashboard v3: banner abbonamento scaduto e obiettivi del mese |
+| 2026.09.14 · 18:09 | Rilievo Dashboard v3 chiuso: banner obiettivi, Rinnova subito, obiettivi da semplificare |
