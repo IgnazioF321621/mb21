@@ -69,7 +69,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 ## Componenti UI
 File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore, separato per poterlo provare con node) · `sw.js` · `manifest.webmanifest` · `icone/`.
 
-- **Accesso**: email → codice a 6 cifre (`signInWithOtp` + `verifyOtp type email`, come Zona Tracker: su iPhone l'app installata non riceve il link). L'email contiene anche il link (`supabase/templates/accesso.html`), che la pagina legge da sola. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
+- **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
 - **Tab bar**: OGGI · LISTA · PROGRESSI (le ultime due: «In arrivo»)
 - **OGGI**: sezione «Dare Seguito scaduti» + «La tua coda · N di 5»
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
@@ -92,3 +92,4 @@ _Da definire._
 | 2026.09.13 · 22:03 | Tolte due email personali da CANTIERI e dallo script di import |
 | 2026.09.13 · 22:24 | Confermati ora delle azioni e riordini futuri |
 | 2026.09.13 · 23:02 | Fase 1 (parte locale): coda.js + prove, pagina OGGI, PWA, migrazione e accesso preparati (non applicati) |
+| 2026.09.14 · 09:05 | Accesso con link invece del codice: tolto il modello email (non ammesso sul piano gratuito) |

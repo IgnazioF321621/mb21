@@ -244,11 +244,6 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# MB21: l'email di accesso contiene il codice a 6 cifre (per l'app installata su iPhone) e il link.
-[auth.email.template.magic_link]
-subject = "MB21 · il tuo codice di accesso"
-content_path = "./supabase/templates/accesso.html"
-
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

@@ -46,7 +46,6 @@
   .accesso { max-width: 360px; margin: 12vh auto 0; }
   .accesso p { color: var(--grigio); font-size: 15px; }
   input { width: 100%; font-size: 17px; padding: 14px; border-radius: 12px; border: 1px solid var(--linea); background: #fff; margin: 6px 0 12px; }
-  input.codice { letter-spacing: 8px; text-align: center; font-size: 26px; font-weight: 700; }
   button.primario { width: 100%; font-size: 17px; font-weight: 600; padding: 14px; border: 0; border-radius: 12px; background: var(--testo); color: #fff; }
   button.primario:disabled { opacity: .5; }
   button.link { background: none; border: 0; color: var(--blu); font-size: 15px; padding: 10px 0; }
@@ -71,7 +70,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="coda.js"></script>
 <script>
-const APP_VERSION = '2026.09.13 · 23:02';
+const APP_VERSION = '2026.09.14 · 09:05';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -106,24 +105,32 @@ function mostraEmail(errore) {
   app.innerHTML = `
     <div class="accesso">
       <h1>MB21</h1>
-      <p>Scrivi la tua email: ti mandiamo un codice di accesso.</p>
+      <p>Scrivi la tua email: ti mandiamo un link per entrare.</p>
       <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.it" value="${esc(ST.email)}">
       <div class="errore">${esc(errore || '')}</div>
-      <button class="primario" id="invia">Mandami il codice</button>
+      <button class="primario" id="invia">Mandami il link</button>
       ${versione()}
     </div>`;
-  document.getElementById('invia').onclick = inviaCodice;
+  document.getElementById('invia').onclick = inviaLink;
 }
 
-async function inviaCodice() {
+// Piano gratuito di Supabase: il testo dell'email non si può cambiare, quindi arriva solo il link
+// (niente codice a 6 cifre). Il link riapre questa pagina e supabase-js legge l'accesso da solo.
+async function inviaLink() {
   const btn = document.getElementById('invia');
   ST.email = document.getElementById('email').value.trim().toLowerCase();
   if (!ST.email.includes('@')) return mostraEmail('Controlla l\'email.');
   btn.disabled = true; btn.textContent = 'Invio…';
-  const { error } = await dbq('invio codice', supa.auth.signInWithOtp({
+  const { error } = await dbq('invio link', supa.auth.signInWithOtp({
     email: ST.email, options: { emailRedirectTo: location.origin + location.pathname } }));
   if (error) return mostraEmail(messaggioAccesso(error));
-  mostraCodice();
+  app.innerHTML = `
+    <div class="accesso">
+      <h1>Controlla l'email</h1>
+      <p>Abbiamo mandato un link a <b>${esc(ST.email)}</b>. Aprilo <b>su questo telefono</b>: ti riporta qui già dentro.</p>
+      <button class="link" id="indietro">Cambia email</button>
+    </div>`;
+  document.getElementById('indietro').onclick = () => mostraEmail();
 }
 
 function messaggioAccesso(error) {
@@ -131,30 +138,6 @@ function messaggioAccesso(error) {
   if (m.includes('database error') || m.includes('non abilitato') || m.includes('signups not allowed')) return 'Utente non abilitato.';
   if (m.includes('rate limit') || error.status === 429) return 'Troppi tentativi: riprova tra un\'ora.';
   return 'Non è andata: ' + error.message;
-}
-
-function mostraCodice(errore) {
-  app.innerHTML = `
-    <div class="accesso">
-      <h1>Codice</h1>
-      <p>L'abbiamo mandato a <b>${esc(ST.email)}</b>. Scrivi le 6 cifre.</p>
-      <input id="codice" class="codice" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
-      <div class="errore">${esc(errore || '')}</div>
-      <button class="primario" id="entra">Entra</button>
-      <button class="link" id="indietro">Cambia email</button>
-    </div>`;
-  const campo = document.getElementById('codice');
-  campo.focus();
-  campo.oninput = () => { if (campo.value.length === 6) verificaCodice(); };
-  document.getElementById('entra').onclick = verificaCodice;
-  document.getElementById('indietro').onclick = () => mostraEmail();
-}
-
-async function verificaCodice() {
-  const token = document.getElementById('codice').value.trim();
-  const { error } = await dbq('verifica codice', supa.auth.verifyOtp({ email: ST.email, token, type: 'email' }));
-  if (error) return mostraCodice('Codice non valido o scaduto.');
-  // il resto lo fa onAuthStateChange
 }
 
 async function dopoAccesso(sessione) {
@@ -252,7 +235,7 @@ function disegnaOggi(oggi, r, offline) {
 
 // ── Avvio ────────────────────────────────────────────────
 // INITIAL_SESSION arriva all'apertura (già letto anche il link dell'email, #access_token);
-// SIGNED_IN dopo il codice. Callback sincrona: le chiamate al DB partono fuori (setTimeout),
+// SIGNED_IN dopo il link. Callback sincrona: le chiamate al DB partono fuori (setTimeout),
 // altrimenti supabase-js si blocca aspettando se stesso.
 let accessoInCorso = false;
 supa.auth.onAuthStateChange((evento, sessione) => {
