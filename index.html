@@ -54,7 +54,7 @@
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--linea); display: flex; justify-content: space-around;
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
-  nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 18px; }
+  nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 10px; }
   nav button.attiva { color: var(--testo); }
   .bottoni { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .bottoni button { font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: 12px; border: 0; background: #F3F4F6; color: var(--testo); }
@@ -226,6 +226,48 @@
   .sv .totali span { display: block; font-size: 9px; font-weight: 700; color: #D1D5DB; }
   .sv .totali small { display: block; font-size: 9px; color: #9CA3AF; }
 
+  /* ── Agenda (Fase 4) ── */
+  .ag-testa { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+  .ag-testa h1 { margin: 0; flex: 1; }
+  .ag-mese { border: 0; background: none; font-size: 15px; font-weight: 700; color: var(--blu); padding: 6px 0; position: relative; }
+  .ag-mese input { position: absolute; inset: 0; opacity: 0; width: 100%; }
+  .ag-oggi { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; padding: 6px 12px; color: var(--testo); }
+  .ag-piu { border: 0; background: var(--testo); color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; line-height: 1; }
+  .ag-settimana { display: flex; align-items: stretch; gap: 2px; background: #fff; border-radius: 16px; padding: 8px 4px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 14px; }
+  .ag-settimana .freccia { border: 0; background: none; color: var(--grigio); font-size: 20px; padding: 0 4px; }
+  .ag-giorno { flex: 1; border: 0; background: none; border-radius: 12px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--testo); font-family: inherit; }
+  .ag-giorno small { font-size: 11px; font-weight: 700; color: var(--grigio); }
+  .ag-giorno b { font-size: 17px; }
+  .ag-giorno i { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+  .ag-giorno i.si { background: var(--blu); }
+  .ag-giorno.oggi b { color: var(--blu); }
+  .ag-giorno.scelto { background: var(--testo); }
+  .ag-giorno.scelto small, .ag-giorno.scelto b { color: #fff; }
+  .ag-giorno.scelto i.si { background: #fff; }
+  .ag-evento { display: flex; background: #fff; border-radius: 14px; margin-bottom: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .ag-evento .ora { width: 64px; flex: none; padding: 12px 0 12px 12px; font-size: 13px; font-weight: 700; color: var(--testo); line-height: 1.3; }
+  .ag-evento .ora small { display: block; font-weight: 500; color: var(--grigio); }
+  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 10px 0; border-radius: 4px; }
+  .ag-evento .dentro { flex: 1; min-width: 0; }
+  .ag-evento .apri { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; font-family: inherit; color: var(--testo); }
+  .ag-evento .t { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-evento .s { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .ag-evento .extra { padding: 0 12px 12px; }
+  .ag-evento .extra .note-ev { font-size: 13px; color: var(--grigio); margin-bottom: 8px; }
+  .ag-esiti { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .ag-esiti button { border: 0; border-radius: 10px; background: #F3F4F6; font-size: 14px; font-weight: 600; padding: 9px 11px; color: var(--testo); }
+  .ag-esiti button.attuale { background: #DBEAFE; color: #1D4ED8; }
+  .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ag-comandi button { border: 1px solid var(--linea); background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; padding: 8px 10px; color: var(--testo); }
+  .ag-comandi button.pericolo { color: var(--rosso); }
+  .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: 14px; padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
+  .ag-blocco.telefonate { background: #EEF2FF; color: #3730A3; }
+  .ag-blocco.passati { background: #FEF3C7; color: #92400E; }
+  .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+  .ag-scelte button { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 14px; font-weight: 600; padding: 8px 12px; color: var(--testo); }
+  .ag-scelte button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
+
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -233,6 +275,7 @@
 <main id="app"></main>
 <nav id="tab" hidden>
   <button data-tab="oggi" class="attiva">Dashboard</button>
+  <button data-tab="agenda">Agenda</button>
   <button data-tab="lista">Lista Nomi</button>
   <button data-tab="progressi">Progressi</button>
 </nav>
@@ -241,8 +284,9 @@
 <script src="coda.js"></script>
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
+<script src="agenda.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 23:30';
+const APP_VERSION = '2026.09.14 · 23:44';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -334,6 +378,7 @@ function mostraTab() {
   });
   if (ST.tab === 'oggi') return caricaOggi();
   if (ST.tab === 'lista') return apriLista();
+  if (ST.tab === 'agenda') return apriAgenda();
   app.innerHTML = `<h1>Progressi</h1><div class="vuoto">In arrivo.</div>${versione()}`;
 }
 
@@ -796,6 +841,350 @@ function apriCheck() {
       mostraToast('Check annullato');
     });
   };
+}
+
+// ── AGENDA (Fase 4) ──────────────────────────────────────
+// Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
+// telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
+// Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
+const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null };
+const CAMPI_AZIONE = '*, contatti(nome, categoria), utenti(nome, nome_cognome)';
+
+async function apriAgenda(giorno) {
+  AG.giorno = giorno || AG.giorno || MB21Coda.oggiRoma();
+  if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>Agenda</h1><div class="vuoto">Carico l'agenda…</div>`;
+  try { await caricaAgenda(); }
+  catch (e) {
+    app.innerHTML = `<h1>Agenda</h1><div class="avviso">Non riesco a caricare l'agenda. Controlla la connessione e riprova.</div>${versione()}`;
+    return;
+  }
+  disegnaAgenda();
+}
+
+async function caricaAgenda() {
+  const A = MB21Agenda;
+  AG.settimana = A.settimana(AG.giorno);
+  const da = A.isoDaRoma(AG.settimana[0], '00:00'), a = A.isoDaRoma(A.spostaGiorno(AG.settimana[6], 1), '00:00');
+  const oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
+  const richieste = [
+    dbq('agenda appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
+    // Contatti: richiami/appuntamenti dati dalla coda (data scelta) e telefonate programmate dall'Agenda (non completate)
+    dbq('agenda contatti', supa.from('azioni').select(CAMPI_AZIONE).eq('tipo_azione', 'Contatto')
+      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
+    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
+  ];
+  if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi')));
+  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('rientro_il', AG.giorno)));
+  const [app1, ric, pas, tel] = await Promise.all(richieste);
+  for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
+  AG.azioni = [...app1.data, ...ric.data];
+  AG.passati = pas.data;
+  AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
+}
+
+function disegnaAgenda() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const conEventi = A.giorniConEventi(AG.azioni);
+  const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
+  const opz = { mioId: ST.utente.id, admin: eAdmin() };
+  const titoloGiorno = new Date(AG.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  let html = `
+    <div class="ag-testa"><h1>Agenda</h1>
+      ${AG.giorno !== oggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
+      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    <button class="ag-mese">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button>
+    <div class="ag-settimana">
+      <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
+      ${AG.settimana.map((g, i) => `<button class="ag-giorno ${g === AG.giorno ? 'scelto' : ''} ${g === oggi ? 'oggi' : ''}" data-giorno="${g}">
+        <small>${A.GIORNI[i]}</small><b>${Number(g.slice(8))}</b><i class="${conEventi.has(g) ? 'si' : ''}"></i></button>`).join('')}
+      <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
+    </div>
+    <div class="sotto">${esc(titoloGiorno)}</div>`;
+  html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
+    : `<div class="vuoto">Nessun appuntamento. Tocca <b>+</b> per fissarne uno.</div>`;
+  const t = AG.telefonate;
+  if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 Telefonate del giorno · Fatte ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
+  else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
+  if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>⚠️ ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
+  app.innerHTML = html + versione();
+  collegaAgenda(eventi);
+}
+
+function eventoAgenda(e, opz) {
+  const A = MB21Agenda;
+  const r = A.riga(e, opz);
+  const aperta = AG.aperta === e.id;
+  const [inizio, fine] = A.orario(e).split('–');
+  let extra = '';
+  if (aperta) {
+    const richiamo = e.tipo_azione === 'Contatto' && !!e.data_scelta;   // dato dalla coda: si guarda, non si chiude qui
+    const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
+    extra = `<div class="extra">
+      ${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
+      ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
+      ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
+        : fasi.length ? `<div class="ag-esiti">${fasi.map(f => `<button data-esito="${esc(f)}" class="${e.esito === f && e.completata ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`
+        : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
+      <div class="ag-comandi">
+        ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">🕑 Sposta</button>`}
+        <button data-cmd="contatto">👤 Apri contatto</button>
+        ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
+      </div></div>`;
+  }
+  return `<div class="ag-evento" data-evento="${esc(e.id)}">
+    <div class="ora">${esc(inizio)}${fine ? `<small>${esc(fine)}</small>` : ''}</div>
+    <div class="barra-tipo" style="background:${r.colore}"></div>
+    <div class="dentro"><button class="apri"><div class="t">${esc(r.titolo)}</div><div class="s">${esc(r.sotto)}</div></button>${extra}</div>
+  </div>`;
+}
+
+function collegaAgenda(eventi) {
+  const A = MB21Agenda;
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ag-oggi', () => apriAgenda(MB21Coda.oggiRoma()));
+  su('ag-prima', () => apriAgenda(A.spostaGiorno(AG.giorno, -7)));
+  su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
+  su('ag-nuovo', () => nuovoAppuntamento({ giorno: AG.giorno }));
+  su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ag-passati', scegliPassato);
+  const scegli = document.getElementById('ag-scegli');
+  if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
+  app.querySelectorAll('.ag-giorno').forEach(b => {
+    b.onclick = () => { AG.aperta = null; apriAgenda(b.dataset.giorno); };
+  });
+  app.querySelectorAll('.ag-evento').forEach(el => {
+    const e = eventi.find(x => x.id === el.dataset.evento);
+    el.querySelector('.apri').onclick = () => { AG.aperta = AG.aperta === e.id ? null : e.id; disegnaAgenda(); };
+    el.querySelectorAll('[data-esito]').forEach(b => { b.onclick = () => chiudiAppuntamento(e, b.dataset.esito); });
+    el.querySelectorAll('[data-cmd]').forEach(b => {
+      b.onclick = () => {
+        if (b.dataset.cmd === 'sposta') return spostaAppuntamento(e);
+        if (b.dataset.cmd === 'elimina') return eliminaAppuntamento(e);
+        if (b.dataset.cmd === 'contatto') return apriContattoDa(e.contatto_id);
+        if (b.dataset.cmd === 'fissa') return nuovoAppuntamento({ giorno: A.partiRoma(e.quando).giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } });
+      };
+    });
+  });
+}
+
+async function apriContattoDa(id) {
+  ST.tab = 'lista';
+  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'lista'));
+  if (!LS.righe.length) {
+    app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico il contatto…</div>`;
+    try { LS.righe = await leggiLista(); } catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
+  }
+  apriScheda(id);
+}
+
+// Esito di un appuntamento (decisione C: poi si chiede sempre il prossimo, con «Salta»)
+async function chiudiAppuntamento(e, esito) {
+  const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
+  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  const annulla = async creato => {
+    const { error: e2 } = await dbq('riapri appuntamento', supa.rpc('riapri_appuntamento', {
+      p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
+      p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
+    if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato));
+    if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+    await apriAgenda();
+    mostraToast('Annullato');
+  };
+  AG.aperta = null;
+  const creato = await nuovoAppuntamento({
+    titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
+    giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
+    contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
+  });
+  await apriAgenda();
+  mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${esito} salvato`, () => annulla(creato));
+}
+
+function spostaAppuntamento(e) {
+  const A = MB21Agenda;
+  const { giorno, ora } = A.partiRoma(e.inizio);
+  const durata = e.fine ? (Date.parse(e.fine) - Date.parse(e.inizio)) : 0;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>🕑 Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
+    <div class="ag-due-campi"><input id="sp-giorno" type="date" value="${giorno}"><input id="sp-ora" type="time" value="${ora}"></div>
+    <div class="due"><button class="link" id="sp-no">Annulla</button><button class="primario" id="sp-si">Sposta</button></div></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  velo.querySelector('#sp-no').onclick = () => velo.remove();
+  velo.querySelector('#sp-si').onclick = async () => {
+    const g = velo.querySelector('#sp-giorno').value, o = velo.querySelector('#sp-ora').value;
+    if (!g || !o) return;
+    const inizio = A.isoDaRoma(g, o);
+    const nuovo = { inizio, fine: durata ? new Date(Date.parse(inizio) + durata).toISOString() : null };
+    velo.remove();
+    const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
+    if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
+    AG.aperta = e.id;
+    await apriAgenda(g);
+    mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
+      await dbq('annulla sposta', supa.from('azioni').update({ inizio: e.inizio, fine: e.fine }).eq('id', e.id));
+      await apriAgenda(giorno);
+    });
+  };
+}
+
+async function eliminaAppuntamento(e) {
+  if (!confirm('Eliminare questo appuntamento?')) return;
+  const { error } = await dbq('elimina appuntamento', supa.from('azioni').delete().eq('id', e.id));
+  if (error) return mostraToast('Non eliminato: controlla la connessione e riprova.');
+  AG.aperta = null;
+  await apriAgenda();
+  const copia = { ...e };
+  for (const k of ['quando', 'contatti', 'utenti', 'chiave']) delete copia[k];
+  mostraToast('Appuntamento eliminato', async () => {
+    await dbq('ripristina appuntamento', supa.from('azioni').insert(copia));
+    await apriAgenda();
+  });
+}
+
+function scegliPassato() {
+  const A = MB21Agenda, opz = { mioId: ST.utente.id, admin: eAdmin() };
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>⚠️ Senza esito</h3><button id="ps-x">×</button></div>
+    <p>Tocca un appuntamento per dargli l'esito.</p>
+    <div class="altri-voci">${AG.passati.map(e => { const r = A.riga(e, opz), p = A.partiRoma(e.inizio);
+      return `<button data-id="${esc(e.id)}"><b>${esc(p.giorno.split('-').reverse().join('/'))} ${esc(p.ora)}</b> · ${esc(r.titolo)}</button>`; }).join('')}</div></div>`;
+  document.body.appendChild(velo);
+  velo.querySelector('#ps-x').onclick = () => velo.remove();
+  velo.querySelectorAll('[data-id]').forEach(b => {
+    b.onclick = () => {
+      const e = AG.passati.find(x => x.id === b.dataset.id);
+      velo.remove();
+      AG.aperta = e.id;
+      apriAgenda(A.partiRoma(e.inizio).giorno);
+    };
+  });
+}
+
+let contattiMiei = null;   // per l'elenco del nuovo appuntamento: solo i nomi del partner loggato
+async function leggiContattiMiei() {
+  if (contattiMiei) return contattiMiei;
+  const righe = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq('contatti per appuntamento', supa.from('contatti').select('id, nome, categoria')
+      .eq('user_id', ST.utente.id).neq('categoria', 'Archiviato').order('nome').range(da, da + 999));
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < 1000) break;
+  }
+  return (contattiMiei = righe);
+}
+
+// Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
+// opz: { giorno, ora, contatto:{id,nome,categoria}, tipo, modalita, area, titolo, sottotitolo, salta, userId }
+async function nuovoAppuntamento(opz = {}) {
+  const A = MB21Agenda;
+  let elenco = [];
+  if (!opz.contatto) {
+    try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
+  }
+  const st = {
+    contatto: opz.contatto || null, categoria: opz.contatto ? opz.contatto.categoria : null,
+    area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
+    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60,
+  };
+  if (st.tipo && !A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+  const eventiGiorno = A.eventiDelGiorno(AG.azioni, opz.giorno || MB21Coda.oggiRoma());
+  const oraIniziale = opz.ora || A.oraProposta(eventiGiorno, opz.giorno || MB21Coda.oggiRoma(), new Date().toISOString());
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio alto">
+      <div class="testa-foglio"><h3>${esc(opz.titolo || 'Nuovo appuntamento')}</h3><button id="na-x" aria-label="Chiudi">×</button></div>
+      ${opz.sottotitolo ? `<p>${esc(opz.sottotitolo)}</p>` : ''}
+      <div id="na-corpo"></div>
+      <div class="errore" id="na-errore"></div>
+      <div class="due"><button class="link" id="na-no">${opz.salta ? 'Salta' : 'Annulla'}</button><button class="primario" id="na-si">Salva</button></div></div>`;
+    document.body.appendChild(velo);
+    const chiudi = valore => { velo.remove(); risolvi(valore); };
+    velo.querySelector('#na-x').onclick = () => chiudi(null);
+    velo.querySelector('#na-no').onclick = () => chiudi(null);
+    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, ospite: '', note: '' };
+    const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
+      `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
+    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
+    function disegna() {
+      const tipi = A.tipiPer(st.categoria);
+      let h = '';
+      h += st.contatto && opz.contatto
+        ? `<div class="campo"><label>Contatto</label><div class="banner">${esc(st.contatto.nome)}</div></div>`
+        : `<div class="campo"><label>Contatto <small>Obbligatorio</small></label>
+            <input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off">
+            <datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
+      if (st.contatto) {
+        h += `<div class="campo"><label>Categoria <small>dal contatto</small></label>${scelte('categoria', A.CATEGORIE, st.categoria)}
+          ${!tipi.length ? `<div class="errore">${esc(st.categoria || 'Senza categoria')}: nessun appuntamento. Scegli Prospect, Partner o Cliente.</div>` : ''}</div>`;
+      }
+      if (tipi.length) {
+        h += `<div class="campo"><label>Area</label>${scelte('area', ['Attività', 'Prodotti'], st.area)}</div>`;
+        h += `<div class="campo"><label>Tipo di azione <small>Obbligatorio</small></label>${scelte('tipo', tipi, st.tipo)}</div>`;
+      }
+      if (st.tipo) {
+        h += `<div class="campo"><label>Sottotipo <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
+          <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
+        h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
+        if (A.conOspite(st.tipo)) h += `<div class="campo"><label>Ospite</label><input id="na-ospite" maxlength="50" value="${esc(campi.ospite)}"></div>`;
+        h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
+      }
+      velo.querySelector('#na-corpo').innerHTML = h;
+      const inp = velo.querySelector('#na-contatto');
+      if (inp) inp.onchange = () => {
+        const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
+        st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
+        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+        leggiCampi(); disegna();
+      };
+      velo.querySelectorAll('[data-scelta]').forEach(g => g.querySelectorAll('button').forEach(b => {
+        b.onclick = () => {
+          leggiCampi();
+          const nome = g.dataset.scelta, v = b.dataset.v;
+          if (nome === 'durata') st.durata = Number(v);
+          else st[nome] = v;
+          if (nome === 'categoria' && !A.tipiPer(v).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+          if (nome === 'tipo') st.modalita = null;
+          disegna();
+        };
+      }));
+    }
+    disegna();
+    velo.querySelector('#na-si').onclick = async () => {
+      leggiCampi();
+      const v = { contatto_id: st.contatto && st.contatto.id, categoria: st.categoria, area: st.area, tipo_azione: st.tipo, modalita: st.modalita,
+        giorno: campi.giorno, ora: campi.ora, ospite: A.conOspite(st.tipo) ? campi.ospite.trim() : '', note: campi.note.trim() };
+      const errore = A.validaAppuntamento(v);
+      if (errore) { velo.querySelector('#na-errore').textContent = errore; return; }
+      const inizio = A.isoDaRoma(v.giorno, v.ora);
+      const riga = { contatto_id: v.contatto_id, user_id: opz.userId || ST.utente.id, categoria: v.categoria, tipo_azione: v.tipo_azione,
+        modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + st.durata * 60000).toISOString(),
+        completata: false, ospite: v.ospite || null, note: v.note || null };
+      const btn = velo.querySelector('#na-si');
+      btn.disabled = true; btn.textContent = 'Salvo…';
+      if (st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
+        const { error: ec } = await dbq('categoria contatto', supa.from('contatti').update({ categoria: v.categoria }).eq('id', v.contatto_id));
+        if (ec) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: riprova.'; return; }
+        contattiMiei = null; LS.righe = [];
+      }
+      const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
+      if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+      chiudi(data.id);
+      if (!opz.salta) {
+        AG.aperta = data.id;
+        await apriAgenda(v.giorno);
+        mostraToast('Appuntamento fissato', async () => {
+          await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', data.id));
+          await apriAgenda();
+        });
+      }
+    };
+  });
 }
 
 // ── LISTA NOMI (Fase 2) ──────────────────────────────────
