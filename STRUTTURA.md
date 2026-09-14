@@ -117,3 +117,4 @@ _Da definire._
 | 2026.09.14 · 12:13 | Tolto docs/MB21_v3_Lista_come_e.md su richiesta di Ignazio |
 | 2026.09.14 · 12:14 | Rimesso docs/MB21_v3_Lista_come_e.md (ultima versione) su richiesta di Ignazio |
 | 2026.09.14 · 14:52 | Rilievo Lista v3 aggiornato con la vista da telefono e gli screenshot |
+| 2026.09.14 · 15:00 | Rilievo Lista v3: sezione Onboarding dei Partner |

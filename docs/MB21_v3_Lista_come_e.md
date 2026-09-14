@@ -124,7 +124,29 @@ All'apertura può non esserci nessuna sezione selezionata (area vuota).
 
 **Vendite** (primo giro) — tre barre colorate vuote (blu, viola, verde), bottone **«Vendita +»**, tabella con ricerca: **Data · Area · Prodotto/i · VP · Provvigione**.
 
-**Onboarding** (solo Partner) — visto solo il nome della sezione: è la checklist di avvio (`*_onb` nell'export), rimandata alla fase Partner.
+**Onboarding** (solo Partner) — 📷 `10a-onboarding.png`, `10b-onboarding-fondo.png`
+- In alto **«Passi di base per il successo»** con contatore (**0/13** sul Partner provato) e barra di avanzamento.
+- Elenco di **interruttori sì/no**, ognuno con nome e descrizione:
+
+| # | Passo | Descrizione | Colonna export |
+|---|---|---|---|
+| 1 | Amway | Registrazione | `Amway_onb` |
+| 2 | Ordine | Primo ordine | `Ordine_onb` |
+| 3 | Network 21 | Registrazione | `N21_onb` |
+| 4 | Sogno | Motivo e/o incubo | `Sogno_onb` |
+| 5 | Starter Pack | Acquisto SPN21 | `StarterPack_onb` |
+| 6 | Lista Start | Nomi cerchia ristretta | `ListaStart_onb` |
+| 7 | Role Play | Esercitazione e prove | `RolePlay_onb` |
+| 8 | Contatti | Telefonate di contatto | `Contatti_onb` |
+| 9 | Pack Dare Seguito | Acquisto DS 1 e 2 | `PackDS_onb` |
+| 10 | BBS | Partecipazione al BBS | `BBS_onb` |
+| 11 | WES | Partecipazione al WES | `WES_onb` |
+| 12 | CEP | Abbonamento al CEP | `CEP_onb` |
+| 13 | Primo PM | 1° PM personale | `PrimoPM_onb` |
+| 14 | Primo ABO | 1° ABO personale | `PrimoABO_onb` |
+
+- **Gli interruttori sono 14 ma il contatore dice «/13»**: un passo non viene contato (nell'export c'è anche `Completati_onb`). **Da verificare con Ignazio.**
+- Toccare un interruttore segna il passo come fatto (non toccato). Rimandata alla fase Partner.
 
 **Sharing** — non aperta.
 
@@ -192,5 +214,7 @@ In `/Users/ignaziofiorito/mb21-import/screenshot-lista/` (fuori dal repo, dati v
 | `7b-coach-nota.png` | nota YesApp aperta |
 | `8a-nuovo-contatto.png` | Nuovo Contatto, parte alta |
 | `8b-nuovo-contatto-fondo.png` | Nuovo Contatto, parte bassa |
+| `10a-onboarding.png` | sezione Onboarding di un Partner, parte alta |
+| `10b-onboarding-fondo.png` | Onboarding, parte bassa |
 
 Non fatto: menu Partner Select aperto (solo Admin, spiegato da Ignazio).
