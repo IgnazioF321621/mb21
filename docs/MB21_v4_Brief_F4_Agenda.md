@@ -2,7 +2,7 @@
 
 > Redatto il 14/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Dashboard_Agenda_come_e.md` §7 (l'Agenda di Glide, 20 screenshot in `mb21-import/screenshot-agenda/`), `docs/MB21_v4_Brief_Sviluppo.md` (sez. 6 design), `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: approvato da Ignazio il 14/09 (risposte A, B, C sotto). Lavoro 1 in corso.**
+> **Stato: approvato da Ignazio il 14/09. Lavori 1-5 fatti il 14/09 (scelte: `docs/MB21_v4_Scelte_Agenda.md`).**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -20,6 +20,7 @@
 6. **B**: l'Admin vede gli appuntamenti di **tutti** i partner, con «[Partner]» come in Glide (i partner solo i propri).
 7. **C**: dopo l'esito di un appuntamento, se la fase lo prevede, l'app **chiede la prossima data** (come «Pianifica nuova data»).
 8. **Ospite** (max 50) in **Piano Marketing e Follow Up**.
+9. Scelte (lavoro 1): PRD Vendita/No Vendita · Contatto di Partner/Cliente Appuntamento/Richiamare · Appuntamento con fasi per sottotipo (da migliorare) · **dopo ogni esito si chiede sempre il prossimo appuntamento** (con Salta) · niente appuntamenti per Ex/Referral/Unlinked/Archiviato.
 
 ## Com'è fatta l'Agenda v4
 ```
@@ -50,7 +51,7 @@ Settembre ▾                          [+]
 ## Lavori, in ordine
 
 ### 1. Scelte categoria → tipo → sottotipo → fasi
-- Tabella delle scelte nel database, riempita da `Scelte.csv` + `Sequenze` + storico (rilievo §7.5).
+- Scelte riempite da `Scelte.csv` + `Sequenze` + storico (rilievo §7.5). **Tenute nel file `agenda.js`**, non in una tabella: sono poche e si ritoccano quando Ignazio cambia i nomi (soluzione più semplice).
 - ⏸ **Mostra a Ignazio la tabella per esteso** (una riga per categoria · tipo · sottotipo con le sue fasi): lui conferma, toglie, aggiunge. Si importa solo dopo il suo ok.
 
 ### 2. Dati

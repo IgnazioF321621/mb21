@@ -36,6 +36,10 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
+**Fase 4** (migrazione `20260914233000_fase4_agenda.sql`, applicata):
+- `chiudi_appuntamento(p_azione, p_esito)` → esito e completata; rientro in coda secondo `sequenze`; restituisce i valori di prima
+- `riapri_appuntamento(...)` → l'Annulla
+
 **Fase 3** (migrazione `20260914190000_fase3_dashboard.sql`, applicata):
 - `utenti.abbonamento_scadenza`
 - tabelle `check_giorno` e `obiettivi_mese` (regole: propri + Admin)
@@ -123,6 +127,16 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **doppione**: stesso nome (senza maiuscole/spazi) o stesso telefono tra i nomi del partner → avviso con elenco e «Salvo lo stesso?»
 - **Onboarding**: contatore calcolato «fatti/14»
 
+**Agenda** (Fase 4, `agenda.js`, funzioni pure; prove in `tools/banco/prova_agenda.js`; scelte in `docs/MB21_v4_Scelte_Agenda.md`):
+- **appuntamenti = righe di `azioni`**: tipo ≠ Contatto per `inizio`; tipo Contatto se ha `data_scelta` (Richiamare / PM Fissato dalla coda: si guardano, non si chiudono in Agenda) oppure è programmato dall'Agenda (`completata = false`, per `inizio`). Nuovi appuntamenti: `completata = false`, `esito` vuoto, `fine = inizio + durata`
+- **scelte** (`TIPI`, `SOTTOTIPI`): Prospect → Contatto · Piano Marketing · Follow Up · Consulenza PRD; Partner → Contatto · Piano Marketing · Follow Up · Appuntamento; Cliente → Contatto · Consulenza PRD; altre categorie nessuna. Fasi per categoria e tipo, per Appuntamento per sottotipo. `modalita` = sottotipo
+- **Admin** vede gli appuntamenti di tutti (regole di accesso di `azioni`), con «[Partner]» su quelli degli altri
+- **esito** (`chiudi_appuntamento`): `esito` + `completata = true`; se la chiave `categoria-tipo-esito` ha giorni in `sequenze`, `rientro_il = oggi + giorni` e `in_coda_dal` vuoto. Poi si apre sempre «Fissa il prossimo appuntamento» (stesso contatto, tipo e sottotipo proposti, domani, **Salta**); l'avviso ha **Annulla** (`riapri_appuntamento` + cancella il prossimo)
+- **ora proposta**: dopo la fine dell'ultimo impegno del giorno arrotondata alla mezz'ora, mai prima di adesso, altrimenti 18:30
+- **passati senza esito**: tipo ≠ Contatto, non completati, iniziati prima di adesso (ultimi 50)
+- **categoria** del nuovo appuntamento: quella del contatto; se la si cambia, cambia anche sul contatto (come in Glide)
+- ora di Roma con `Intl` (`partiRoma`, `isoDaRoma`), anche al cambio d'ora
+
 **Dashboard** (`dashboard.js`, funzioni pure; prove in `tools/banco/prova_dashboard.js`; regole ricostruite nel brief Fase 3 → allegato, confermate da Ignazio 14/09):
 - l'app legge `check_mesi` e `obiettivi_mese` del **partner loggato** (anche l'Admin vede i suoi) e calcola tutto sul telefono
 - **numeri**: Contatti · PM · Sponsor · VP Clienti · Tracce · Pagine = somma dei check del mese; BBS · WES · CEP = partenza + check; VPP · VPG = `vpp_amway` / `vpg_amway`
@@ -136,10 +150,12 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
 ## Componenti UI
-File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
+File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) · `agenda.js` (logica dell'Agenda) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
 
 - **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
-- **Tab bar**: **Dashboard** (la home, prima «OGGI»: stesso comportamento) · **Lista Nomi** · Progressi («In arrivo»)
+- **Tab bar**: **Dashboard** (la home, prima «OGGI») · **Agenda** · **Lista Nomi** · Progressi («In arrivo»)
+- **Agenda** (Fase 4): «Agenda» + «Oggi» (se non si è su oggi) + **＋**; «Settembre 2026 ▾» apre il calendario; **striscia 7 giorni** (L-D, ‹ › di settimana in settimana, pallino se ci sono impegni, oggi in blu, scelto in nero); sotto il giorno per esteso e le **righe** in ordine d'ora: ora inizio/fine, barra colore del tipo (PM blu · Follow Up verde · Appuntamento viola · Consulenza PRD arancio · Contatto grigio), «sottotipo · contatto», «area \| esito • ✅ Completato / ⏳ Da completare [Partner]». Tocco → si apre: ospite, note, **bottoni esito** del suo tipo/sottotipo (quello attuale in blu), **🕑 Sposta** (giorno e ora, stessa durata, Annulla), **👤 Apri contatto** (scheda della Lista), **Elimina** (conferma, Annulla). Righe «dalla coda»: «＋ Fissa appuntamento» e Apri contatto. In fondo: «📞 Telefonate del giorno · Fatte X di N» (oggi, porta alla Dashboard) o «N contatti rientrano in coda» (giorni futuri); «⚠️ N appuntamenti passati senza esito» → foglio con l'elenco
+  - **Nuovo appuntamento** (foglio): Contatto (nome con suggerimenti tra i propri, archiviati esclusi) · Categoria (dal contatto) · Area · Tipo · Sottotipo · Giorno e ora (ora proposta) · Durata (5 min… 2 ore, predefinita 1 ora) · Ospite (PM e Follow Up, 50) · Note (100). I campi compaiono man mano. Categorie senza appuntamenti: avviso
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
 - **Dashboard** (Fase 3, copia della Dashboard di Glide → `docs/MB21_v3_Dashboard_Agenda_come_e.md`), dall'alto:
   - **Partner Select** (solo Admin): riquadro scuro col proprio nome, «In arrivo ▾»
@@ -212,3 +228,4 @@ _Da definire._
 | 2026.09.14 · 23:13 | Rilievo Agenda: fasi per sottotipo di Appuntamento (risposte di Ignazio + storico) |
 | 2026.09.14 · 23:26 | Brief Fase 4 Agenda (bozza): giornata a linea del tempo |
 | 2026.09.14 · 23:30 | Fase 4 Agenda: brief approvato, bozza delle scelte (categoria → tipo → sottotipo → fasi) |
+| 2026.09.14 · 23:44 | Fase 4 Agenda: pagina a linea del tempo, esiti con prossimo appuntamento, sposta, nuovo appuntamento |
