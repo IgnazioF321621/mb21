@@ -114,3 +114,4 @@ _Da definire._
 | 2026.09.14 · 11:38 | Contatti al giorno (1-10), massimo giornaliero; Dare Seguito fuori dal conto |
 | 2026.09.14 · 11:53 | Contatti al giorno provati da Ignazio dall'iPhone |
 | 2026.09.14 · 12:08 | Rilievo della Lista di MB21 v3 (Glide) in docs/ |
+| 2026.09.14 · 12:13 | Tolto docs/MB21_v3_Lista_come_e.md su richiesta di Ignazio |
