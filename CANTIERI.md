@@ -10,6 +10,16 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 10. Fase 3 · DASHBOARD
+*Aperto il 14 settembre 2026. Brief: `docs/MB21_v4_Brief_F3_Dashboard.md`.*
+
+- ~~Lavoro 1: come nascono i numeri di Glide~~ — fatto, confermato da Ignazio (allegato del brief)
+- ~~Lavori 2-4: tabelle, import, pagina, Check del Giorno~~ — fatti il 14/09: 809 check e 65 mesi importati, numeri di Ignazio uguali all'export, 10 prove, regole di accesso provate sul DB. **Da provare da Ignazio sul telefono**
+- ⏸ **Lavoro 5: modulo obiettivi del mese più semplice** — proposta da mostrare a Ignazio
+- Bottoni «in arrivo»: Partner Select · Rinnova subito · Imposta obiettivi · visione completa (Check) · Mostra di più (Report)
+- **VPP/VPG fermi all'export**: serve l'import dei dati Amway
+- Finché si usa anche Glide, il Check del Giorno va scritto in tutti e due
+
 ## 9. Dopo la Fase 2
 *Aperto il 14 settembre 2026.*
 
@@ -18,7 +28,6 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Vendite** e **Sharing** della scheda contatto: «In arrivo»
 - **Partner Select** per l'Admin: Fase 3
 - Collegamenti tra le parti dell'app che Ignazio chiarirà usandola: raccogliere qui le domande che emergono
-- **Brief Fase 3 DASHBOARD** in bozza (`docs/MB21_v4_Brief_F3_Dashboard.md`, 14/09): copia della Dashboard di Glide con bottoni «In arrivo», numeri veri dall'export (Check e obiettivi), Check del Giorno che salva, OGGI al posto di «Azioni da completare». In attesa dell'ok di Ignazio
 - **Rilievo Dashboard di Glide** (14/09, sola lettura) in `docs/MB21_v3_Dashboard_Agenda_come_e.md`, 14 screenshot + ripresa grezza fuori dal repo (`mb21-import/screenshot-dashboard-agenda/`). Indicazione di Ignazio: nella v4 «Azioni da completare» è sostituito da **OGGI**. Da discutere: l'azione aperta dalla Dashboard; **semplificare l'inserimento degli obiettivi del mese** (oggi complicato; si vedono obiettivi «impostati» a zero). Da confermare: «Rinnova subito» apre il profilo. Da rilevare, una sessione alla volta: **Agenda**, sezione **Check**, sezione **Report**, «Apri Contatto!»
 
 ## 7. Dopo la Fase 1

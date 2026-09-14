@@ -155,6 +155,55 @@
   .telefono-campo { display: flex; gap: 6px; }
   .telefono-campo select { width: 118px; flex: none; }
 
+  /* ── Dashboard (Fase 3) ── */
+  .partner-select { background: #111827; color: #fff; border-radius: 16px; padding: 12px 14px; margin: 8px 0 12px; }
+  .partner-select small { display: block; font-size: 12px; font-weight: 700; color: #9CA3AF; margin-bottom: 6px; }
+  .partner-select button { width: 100%; display: flex; justify-content: space-between; align-items: center; background: #1F2937; color: #fff;
+    border: 1px solid #374151; border-radius: 12px; padding: 10px 12px; font-size: 16px; font-weight: 600; }
+  .partner-select button span { font-size: 12px; color: #9CA3AF; font-weight: 600; }
+  .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .banner-abb.attivo { background: rgba(5,150,105,.1); border: 1.5px solid #10B981; color: var(--verde); }
+  .banner-abb.scaduto { border-radius: 16px; display: block; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #B91C1C; padding: 12px 14px; }
+  .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: #EF4444; }
+  .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: 12px; background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
+  .banner-grande { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; font-family: inherit; }
+  .banner-grande .ico { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+  .banner-grande b { display: block; font-size: 16px; }
+  .banner-grande small { font-size: 12px; }
+  .banner-grande .freccia { margin-left: auto; font-size: 22px; }
+  .banner-grande.check { background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 2px solid #3B82F6; color: #1D4ED8; }
+  .banner-grande.check .ico { background: #3B82F6; }
+  .banner-grande.obiettivi { background: #FEF2F2; border: 1.5px solid #FCA5A5; border-left: 5px solid var(--rosso); color: #991B1B; }
+  .banner-grande.obiettivi .ico { background: #FEE2E2; }
+  .schede-dash { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
+  .schede-dash::-webkit-scrollbar { display: none; }
+  .schede-dash button { flex: none; font-size: 13px; font-weight: 600; padding: 7px 8px; border-radius: 10px; border: 0; background: transparent; color: var(--grigio); }
+  .schede-dash button.scelto { background: #F3F4F6; color: var(--testo); }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+  .kpi > div { min-width: 0; border: 1px solid var(--linea); border-radius: 14px; padding: 10px; background: #fff; }
+  .kpi .t { font-size: 14px; font-weight: 600; }
+  .kpi .v { font-size: clamp(19px, 5.6vw, 26px); white-space: nowrap; font-weight: 800; letter-spacing: -.5px; margin: 4px 0; }
+  .kpi ul { margin: 6px 0 0; padding-left: 14px; font-size: 12px; line-height: 1.4; }
+  .kpi .barra div { transition: width .4s ease; }
+  .kpi .complimento { color: var(--verde); font-weight: 700; }
+  .visione { display: block; margin: 14px auto; border: 0; background: none; font-size: 15px; font-weight: 600; color: #334155; }
+  .sv { background: #1F2937; color: #fff; border-radius: 16px; padding: 14px; margin: 16px 0 6px; }
+  .sv h3 { margin: 0; font-size: 20px; }
+  .sv .sotto-sv { font-size: 12px; color: #9CA3AF; margin: 2px 0 10px; }
+  .sv .legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .sv .legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .sv table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+  .sv th { font-size: 10px; font-weight: 700; color: #9CA3AF; }
+  .sv th.mese { width: 34px; text-align: right; line-height: 1.1; }
+  .sv td { height: 34px; color: #fff; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 800; }
+  .sv td.zero { background: #374151 !important; color: #6B7280; font-weight: 600; }
+  .sv .totali { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+  .sv .totali div { background: #374151; border-radius: 10px; padding: 8px 2px; text-align: center; }
+  .sv .totali b { display: block; font-size: 17px; }
+  .sv .totali div { min-width: 0; overflow: hidden; }
+  .sv .totali span { display: block; font-size: 9px; font-weight: 700; color: #D1D5DB; }
+  .sv .totali small { display: block; font-size: 9px; color: #9CA3AF; }
+
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -169,8 +218,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="coda.js"></script>
 <script src="lista.js"></script>
+<script src="dashboard.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 18:13';
+const APP_VERSION = '2026.09.14 · 18:54';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -242,7 +292,7 @@ function messaggioAccesso(error) {
 
 async function dopoAccesso(sessione) {
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, ruolo').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
   if (!data) {
     ST.motivoUscita = 'Utente non abilitato.';
@@ -303,6 +353,7 @@ async function caricaOggi() {
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline) salvaCache();
+  await caricaDashboard(oggi);
   disegnaOggi();
 }
 
@@ -349,7 +400,7 @@ function cardContatto(r, dareSeguito) {
 
 function disegnaOggi() {
   const r = ST.risultato;
-  let html = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>`;
+  let html = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
   if (ST.offline) {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
@@ -363,7 +414,8 @@ function disegnaOggi() {
     <button class="contatore" id="contatore" ${ST.offline ? 'disabled' : ''}>Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</button></div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
     : `<div class="vuoto">${finito ? `Per oggi hai finito: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
-  app.innerHTML = html + versione();
+  app.innerHTML = html + dashboardBasso() + versione();
+  collegaDashboard();
   const contatore = document.getElementById('contatore');
   if (contatore) contatore.onclick = scegliNumero;
   app.querySelectorAll('.bottoni button').forEach(btn => {
@@ -499,6 +551,140 @@ function mostraToast(testo, suAnnulla) {
   if (suAnnulla) t.querySelector('button').onclick = () => { t.remove(); clearTimeout(timerToast); suAnnulla(); };
   document.body.appendChild(t);
   timerToast = setTimeout(() => t.remove(), suAnnulla ? 6000 : 3500);
+}
+
+// ── DASHBOARD (Fase 3) ───────────────────────────────────
+// Copia della Dashboard di Glide (docs/MB21_v3_Dashboard_Agenda_come_e.md), brief Fase 3. Calcoli in dashboard.js.
+// Ordine: Partner Select · banner · 4 schede · visione completa · [OGGI] · Segni Vitali · Mostra di più.
+const DS = { dati: null, scheda: 'volume' };
+
+async function caricaDashboard(oggi) {
+  try {
+    const mio = ST.utente.id;
+    const [cm, ob] = await Promise.all([
+      dbq('check dei mesi', supa.from('check_mesi').select('*').eq('user_id', mio)),
+      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', mio)),
+    ]);
+    if (cm.error || ob.error) throw cm.error || ob.error;
+    DS.dati = MB21Dashboard.calcola({ checkMesi: cm.data, obiettivi: ob.data, oggi, scadenza: ST.utente.abbonamento_scadenza });
+  } catch (e) {
+    DS.dati = null;   // la coda si mostra lo stesso
+  }
+}
+
+const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);
+const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
+
+function dashboardAlto() {
+  const d = DS.dati;
+  let html = eAdmin() ? `<div class="partner-select"><small>Partner Select</small>
+    <button id="ds-partner">${esc(ST.utente.nome || ST.utente.nome_cognome || '')}<span>In arrivo ▾</span></button></div>` : '';
+  if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
+  html += d.abbonamentoAttivo
+    ? `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`
+    : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
+        <button id="ds-rinnova">Rinnova subito →</button></div>`;
+  if (d.obiettiviMancanti) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
+    <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
+  html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">⚡</span>
+    <span><b>Compila il Check del Giorno!</b><small>Ultimo check: <u>${esc(dataBreve(d.ultimoCheck))}</u> · Tocca per aprire</small></span>
+    <span class="freccia">›</span></button>`;
+  const s = d.schede.find(x => x.chiave === DS.scheda);
+  html += `<div class="riquadro"><div class="schede-dash">${d.schede.map(x =>
+    `<button data-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}">${x.pallino} ${esc(x.etichetta)}</button>`).join('')}</div>
+    <div class="kpi">${s.riquadri.map(r => `<div>
+      <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
+      <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
+      ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
+      <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
+    </div>`).join('')}</div></div>
+    <button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`;
+  return html;
+}
+
+const COLORI_SV = { contatti: '#9CA3AF', pm: '#EA580C', bbs: '#3B82F6', wes: '#DC2626', cep: '#16A34A' };
+function dashboardBasso() {
+  const d = DS.dati;
+  if (!d) return '';
+  const sv = d.segniVitali;
+  const colonne = [['contatti', 'Contatti'], ['pm', 'PM'], ['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
+  const cella = (k, v) => {
+    if (!v) return `<td class="zero">0</td>`;
+    const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
+    const [rr, gg, bb] = [1, 3, 5].map(i => parseInt(COLORI_SV[k].slice(i, i + 2), 16));
+    return `<td style="background:rgba(${rr},${gg},${bb},${forza.toFixed(2)})">${v}</td>`;
+  };
+  return `<div class="sv">
+      <h3>📊 Segni Vitali</h3>
+      <div class="sotto-sv">Ultimi 12 mesi · 👤 ${esc(ST.utente.nome_cognome || '')}</div>
+      <div class="legenda">${colonne.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
+      <table><tr><th class="mese"></th>${colonne.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
+      ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${colonne.map(([k]) => cella(k, r[k])).join('')}</tr>`).join('')}
+      </table>
+      <div class="totali">${colonne.map(([k, t]) => `<div><b style="color:${COLORI_SV[k]}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
+    </div>
+    <button class="visione" id="ds-altro">👁️ Mostra di più!</button>`;
+}
+
+function collegaDashboard() {
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ds-partner', () => inArrivo('Partner Select'));
+  su('ds-rinnova', () => inArrivo('Rinnovo abbonamento'));
+  su('ds-obiettivi', () => inArrivo('Obiettivi del mese'));
+  su('ds-visione', () => inArrivo('Sezione Check'));
+  su('ds-altro', () => inArrivo('Sezione Report'));
+  su('ds-check', apriCheck);
+  app.querySelectorAll('.schede-dash button').forEach(b => {
+    b.onclick = () => { DS.scheda = b.dataset.scheda; disegnaOggi(); };
+  });
+}
+
+// Check del Giorno: 13 campi come in Glide. Più check sulla stessa data si sommano (decisione 9).
+function apriCheck() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto">
+    <div class="testa-foglio"><h3>Check del Giorno</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
+    <div class="campo"><label>📅 Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
+    ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo">
+      <label>${esc(etichetta)} <small>Obbligatorio</small></label>
+      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>`).join('')}
+    <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
+    <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
+    <div class="errore" id="ck-errore"></div>
+    <div class="due"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Invia</button></div>
+  </div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.querySelector('#ck-x').onclick = chiudi;
+  velo.querySelector('#ck-no').onclick = chiudi;
+  const note = velo.querySelector('#ck-note');
+  note.oninput = () => { velo.querySelector('#ck-conta').textContent = `${note.value.length}/150`; };
+  velo.querySelector('#ck-si').onclick = async () => {
+    const v = { data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
+    for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
+    const errore = MB21Dashboard.validaCheck(v);
+    if (errore) { velo.querySelector('#ck-errore').textContent = errore; return; }
+    for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = Number(String(v[k]).trim().replace(',', '.'));
+    const btn = velo.querySelector('#ck-si');
+    btn.disabled = true; btn.textContent = 'Invio…';
+    const { data, error } = await dbq('salva check', supa.from('check_giorno').insert(v).select('id').single());
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Invia';
+      velo.querySelector('#ck-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
+      return;
+    }
+    chiudi();
+    await caricaDashboard(ST.oggi);
+    disegnaOggi();
+    mostraToast('Check salvato', async () => {
+      const { error: e2 } = await dbq('annulla check', supa.from('check_giorno').delete().eq('id', data.id));
+      if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+      await caricaDashboard(ST.oggi);
+      disegnaOggi();
+      mostraToast('Check annullato');
+    });
+  };
 }
 
 // ── LISTA NOMI (Fase 2) ──────────────────────────────────

@@ -2,7 +2,7 @@
 
 > Redatto il 14/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Dashboard_Agenda_come_e.md` (il modello da copiare, con 14 screenshot in `mb21-import/screenshot-dashboard-agenda/`), `docs/MB21_v4_Brief_Sviluppo.md` (sez. 6 design), `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: bozza, in attesa dell'ok di Ignazio.**
+> **Stato: approvato da Ignazio il 14/09. Lavori 1-4 e prove fatti il 14/09 (regole dei numeri: [allegato](#allegato--come-nascono-i-numeri-in-glide)). Lavoro 5 in attesa.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -13,10 +13,14 @@
 
 ## Decisioni di Ignazio (14/09/2026)
 1. **Tutto come in Glide**, anche i pezzi senza collegamento (bottoni «In arrivo»).
-2. **Numeri veri**: si importano dall'export di Glide i **Check del Giorno** (`Day.csv`, 5.707 righe) e gli **obiettivi mensili** (`Check.csv`, 64 righe). Sono fermi alla data dell'export (13/09/2026).
+2. **Numeri veri**: si importano dall'export di Glide i **Check del Giorno** (`Day.csv`, 809 check) e gli **obiettivi mensili** (`Check.csv`, 64 righe). Sono fermi alla data dell'export (13/09/2026).
 3. **Il Check del Giorno salva davvero** nella v4 e aggiorna i numeri. Finché si usa anche Glide va compilato in due posti (Ignazio lo sa).
 4. «Azioni da completare» **è sostituito da OGGI** (la coda che c'è già).
 5. L'inserimento degli **obiettivi del mese** va **semplificato** rispetto a Glide: in questa fase si **mostra** il banner; il modulo semplice è un lavoro a parte (⏸ lavoro 5).
+6. **Numero di partenza di BBS · WES · CEP** (risposta al lavoro 1): è il numero con cui si è **chiuso il mese precedente**. Nella v4 è **automatico**: parte dal totale dell'ultimo mese del partner. I mesi importati da Glide tengono il loro valore.
+7. **VPP e VPG**: vengono dai dati Amway, non dal Check. Per ora **valori fermi all'export**; l'import Amway è un lavoro successivo.
+8. **Obiettivo superato**: niente «/giorno». Al suo posto una **parola di complimento** (una o due parole) e un **nuovo traguardo +10%** in una piccola frase (es. «Grande! Prossimo traguardo: 396»).
+9. **Due check sulla stessa data**: si **sommano**, come in Glide (nell'export ci sono 6 date doppie). **Elenco libri**: i 44 titoli di Glide (`Scelte.csv`).
 
 ## Com'è fatta la Dashboard v4 (dall'alto in basso)
 | # | Parte | Da Glide (§ del rilievo) | In v4 |
@@ -51,7 +55,7 @@ Leggi `Check.csv`, `Day.csv`, `User.csv`, `Segni Vitali.csv`, `Periodi.csv` e ri
 ### 4. Check del Giorno
 - Stesso modulo di Glide: **13 campi, stesso ordine**, 11 obbligatori (Data Check · Contatti · PM · Sponsor Personali · Sponsor Gruppo · VP Clienti · CEP · BBS · WES · Tracce · Pagine), Libro e Note del libro (max 150) facoltativi. Titolo chiaro al posto di «Aggiungi articolo».
 - Invia salva, i numeri si aggiornano, «Ultimo check» cambia.
-- ⏸ **Da chiedere a Ignazio**: due check sulla stessa data (si somma, si sostituisce, si blocca?) e l'elenco dei libri.
+- Due check sulla stessa data si sommano; libri dall'elenco di Glide (decisione 9).
 
 ### 5. Obiettivi del mese (solo proposta)
 - ⏸ **Proponi a Ignazio** un modulo obiettivi più semplice di quello di Glide (quanti campi, valori suggeriti dal mese prima…). Non costruire prima del suo ok.
@@ -63,3 +67,17 @@ Leggi `Check.csv`, `Day.csv`, `User.csv`, `Segni Vitali.csv`, `Periodi.csv` e ri
 
 ## Fuori da questa fase
 Sezione Check, sezione Report, Agenda, «Apri Contatto!» dalla Dashboard, Partner Select, pagamento dell'abbonamento, NotePlan / Google Calendar.
+
+## Allegato — come nascono i numeri in Glide
+Ricostruito il 14/09 dall'export (`Check.csv`, `Day.csv`, `Partners.csv`), confermato da Ignazio.
+
+| Numero | Regola | Verifica sull'export |
+|---|---|---|
+| Contatti · PM · Sponsor Personali · Sponsor Gruppo · VP Clienti (= VPV) · Tracce · Pagine | somma dei Check del Giorno del mese | 644 valori uguali su 650 (6 diversi: novembre 2025, 2 partner) |
+| BBS · WES · CEP | partenza del mese + somma dei check | uguale |
+| VPP · VPG | dati Amway del mese (`Partners.csv` per il mese in corso; per i mesi passati il valore salvato nella riga del mese) | uguale |
+| % | numero ÷ obiettivo × 100 | uguale |
+| per obiettivo / oltre obiettivo | obiettivo − numero | uguale |
+| /giorno | (obiettivo − numero) ÷ giorni rimasti nel mese, oggi compreso; in Glide anche quando si è oltre | uguale |
+| Segni Vitali | per mese: Contatti · PM · BBS · WES · CEP (tot) | uguale |
+| Abbonamento | scadenza = preavviso + 7 giorni; scaduto se la scadenza è passata | uguale |
