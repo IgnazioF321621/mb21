@@ -4,14 +4,14 @@
 > (`if-team-21-6x21.glide.page`), con l'utente di Ignazio (Admin), **Partner Select = Ignazio**.
 > Browser di Claude Desktop (pannello accanto alla sessione), navigato da Ignazio, screenshot di Claude.
 >
-> **Stato: Dashboard chiusa il 14/09. Agenda da fare.** Le sezioni raggiunte dai bottoni della Dashboard (Check, Report, scheda contatto) vanno rilevate in sessioni a parte (decisione di Ignazio: una cosa per volta).
+> **Stato: Dashboard chiusa il 14/09. Agenda rilevata il 14/09 (sera, due riprese automatiche, tema scuro).** Le sezioni raggiunte dai bottoni della Dashboard (Check, Report, scheda contatto) vanno rilevate in sessioni a parte (decisione di Ignazio: una cosa per volta).
 >
 > **Nessun dato è stato modificato.** Moduli aperti e chiusi con «Annulla» o con la freccia «‹»;
 > mai toccati «Invia», «Salva», «Elimina», «Completato», «Pianifica nuova data».
 >
 > **Niente dati personali in questo file** (il repo è pubblico): nomi sostituiti da segnaposto.
 > Gli **screenshot** hanno dati veri e stanno **fuori dal repo**, in
-> `/Users/ignaziofiorito/mb21-import/screenshot-dashboard-agenda/`.
+> `/Users/ignaziofiorito/mb21-import/screenshot-dashboard-agenda/` (Dashboard) e `/Users/ignaziofiorito/mb21-import/screenshot-agenda/` (Agenda).
 
 ---
 
@@ -153,14 +153,78 @@ In fondo **Invia** (spento finché mancano i campi obbligatori) e **Annulla**.
 ---
 
 ## 7. Agenda
+📷 in `mb21-import/screenshot-agenda/` (nomi dei file nei paragrafi; tutte le foto delle due riprese in `ripresa-grezza/` e `ripresa-grezza-2/`)
 
-**Da rilevare.** Fermata decisa da Ignazio il 14/09 prima di aprire l'Agenda.
+Seconda tab del menu. Rilevata con **Ignazio Admin**: vede gli appuntamenti di **tutti i partner** (quelli degli altri hanno il nome del partner tra parentesi quadre, i suoi no); **gli altri partner vedono solo i propri** (confermato da Ignazio). In cima non si vede il Partner Select.
+
+### 7.1 Schermata, dall'alto in basso
+📷 `1-agenda-vuota.png` · `3-contatti-del-giorno.png` · `5-lista-agenda.png`
+
+1. **Riquadro saluto** con diamante: «<Nome>, Ecco i tuoi prossimi appuntamenti e/o azioni per far crescere la tua attività».
+2. **«Contatti del giorno»** (parte alta, in azzurro) — sottotitolo «Seleziona la data per vedere i contatti programmati»:
+   - campo **data** con calendario (📷 `2-scegli-data.png`: mese, frecce, griglia L-D, Annulla / OK) e X per svuotare; si apre su **oggi**;
+   - sotto, le **azioni di tipo Contatto** di quel giorno, **card a 3 colonne**: icona «Attività», riga blu maiuscola `<PARTNER> ✅ COMPLETATO • 18:29` oppure `<PARTNER> ⏳ DA COMPLETARE • 18:34`, **nome del contatto**, «Telefonata • Attività», esito / nota (es. «Mai contattato o 2+ anni • Telefonata di riallaccio contatto»). Nessuna card se il giorno è vuoto.
+3. Bottone **«Appuntamento»** → [§7.4](#74-aggiungi-appuntamento).
+4. **Riquadro arancio del calendario** (parte bassa) = **gli appuntamenti presi**:
+   - **Cerca** · titolo **«Settembre 2026»** · **Oggi** · menu vista **Mese / Settimana / Giorno / Agenda** (📷 `4-menu-viste.png`) · frecce **‹ ›**;
+   - vista **Agenda** (predefinita): a sinistra il giorno («11 set, ven»), a destra una riga per appuntamento: `<Contatto> - <Modalità> • <Area> | <Fase> • ✅ Completato [<Partner>]` oppure `⏳ Da completare`, sotto l'orario («09:45 - 10:45»). Esempi di forma: `PM 1a1 • Attività | No Show`, `Prodotti | Promo/Sconto • eSpring`, `Counseling • Attività | c/Downline`, `Lista/Contatti • Attività | Telefonate`;
+   - vista **Mese** (📷 `14-vista-mese.png`): griglia lun-dom, etichette blu con il nome accorciato («Carolina C…»), oggi evidenziato;
+   - vista **Settimana** (📷 `15-vista-settimana.png`): «Settembre 2026 W36», colonne «31 lun … 06 dom», ore 12 AM → 11 PM (formato americano), blocchi con nome e modalità;
+   - vista **Giorno** (📷 `16-vista-giorno.png`): «1 Settembre 2026 martedì», colonna unica di ore;
+   - con periodo vuoto: «No events available for this period» (testo inglese di Glide).
+
+### 7.2 Distinzione alto / basso
+Spiegata da Ignazio: **in alto le azioni di tipo Contatto** (le telefonate del giorno), **in basso gli appuntamenti presi**. Fatta così in Glide perché sembrava più interessante; **si può cambiare** se c'è una proposta più intuitiva.
+
+### 7.3 Appuntamento aperto
+📷 `12-appuntamento-aperto.png` · `13-appuntamento-aperto-fondo.png`
+
+Toccando una riga del calendario si apre un **pannello da destra «Azione»**, **già modificabile**: è lo **stesso modulo** dell'azione aperta dalla Dashboard ([§4.1](#41-azione-aperta)). Esempio visto (categoria Partner, tipo Appuntamento):
+- NotePlan · Google Calendar · Nome · Partner Amway · «Apri Contatto!» · Categoria (Partner, viola) + avviso
+- Area* · **Scegli il tipo di Azione*** = menu (qui «Appuntamento»)
+- **Tipo di Appuntamento***: **Avvio · Counseling · Lista/Contatti · Meeting/Evento · Ordine**
+- Data* · Durata (5 min · 30 min · 1 ora · 1h 30 · 2 ore)
+- riquadro **Fase/Esito attuale*** (es. «c/Downline») con «💡 Il suggerimento N21 è nella scheda contatto»
+- Coach Script · Note (100) · Completato · «Pianifica nuova data» · Salva · Elimina
+
+### 7.4 Aggiungi Appuntamento
+📷 `6-appuntamento-vuoto.png` · `7-scegli-contatto.png` · `18-categorie.png` · `8-appuntamento-contatto.png` · `9-appuntamento-pm.png` · `10-fase-pm.png` · `11-suggerimenti-pm.png` · `17-pm-fondo.png` · `19-follow-up.png` · `20-consulenza-prd.png`
+
+Pannello da destra **«Aggiungi Appuntamento»**, X, in fondo **Invia** (spento finché mancano gli obbligatori) e **Annulla**. **I campi compaiono uno dopo l'altro** mano a mano che si sceglie:
+
+| # | Campo | Scelte |
+|---|---|---|
+| 1 | **Scegli Contatto** | elenco con **Cerca**, in ordine alfabetico, tutti i nomi |
+| 2 | **Scegli Categoria*** | Prospect · Partner · Cliente · Ex Partner/Cliente · Referral · Unlinked · Archiviato (con icona); sotto l'avviso «I passi successivi sono in funzione della categoria…» |
+| 3 | **Area*** | Attività · Prodotti |
+| 4 | **Scegli il tipo di azione*** | con Prospect: **Contatto · Piano Marketing · Follow Up · Consulenza PRD** (con Partner nell'azione aperta compare anche «Appuntamento»: i tipi probabilmente **cambiano con la categoria**, da verificare) |
+
+Poi, **secondo il tipo**:
+
+| Tipo | Campi successivi |
+|---|---|
+| **Contatto** | **Tipo di contatto***: Telefonata · Messaggio · Presenza → **Data*** (calendario + ore e minuti) → **Fase/Esito attuale*** → Note (100) → Completato |
+| **Piano Marketing** | **Tipo di PM***: PM 1a1 · PM Upline · PM Casa/Pull · PM Open → **Data*** → **Fase/Esito attuale***: Presentazione · No BuonFine · Rimandato · No Show · Prodotti · Dare Seguito · Iscrizione (con icona) → **Suggerimenti (cliccaci)*** (scelta tra «—» e i testi N21 della fase, es. 🟢 «Connettiti con il candidato attraverso domande sulle sue motivazioni…» 🔵 … 🔴 … «p. 15, 16, 25 Manuale N21») → **Durata del PM** (menu, predefinito «1 ora») → **Ospite** (testo, max 50) → Note (100) → Completato |
+| **Follow Up** | **Tipo di follow up***: Personale · Upline · Meeting/Evento → **Data*** → **Fase/Esito attuale*** → Note (100) → Completato |
+| **Consulenza PRD** | **Data*** → Note (100) → Completato (niente tipo né fase) |
+
+- La data scelta nel calendario ha **ore e minuti** a rotella.
+- Qui i **suggerimenti N21 sono una scelta obbligatoria** del modulo, non solo testo da leggere.
 
 ---
 
 ## 8. Osservazioni per la v4
 
 Solo osservazioni, nessuna decisione presa salvo dove indicato:
+
+**Agenda**
+- A1. **Alto/basso** (Contatti del giorno / appuntamenti presi): Ignazio è aperto a una proposta più intuitiva e coinvolgente.
+- A2. Admin vede gli appuntamenti di tutti con «[Partner]»; i partner solo i propri: stesso schema delle regole di accesso v4.
+- A3. Il modulo «Aggiungi Appuntamento» e l'«Azione» aperta sono **lo stesso modulo** di Glide, con campi che dipendono da categoria e tipo: in v4 i bottoni esito della coda coprono solo la parte Contatto.
+- A4. Testi inglesi del calendario («No events available for this period», ore AM/PM): in v4 in italiano, ore 24h.
+- A5. Suggerimenti N21 **da scegliere** nel modulo PM: in v4 sono sospesi (decisione Fase 2).
+
+**Dashboard**
 
 1. **«Azioni da completare» → OGGI** (indicazione di Ignazio, 14/09): nella v4 questo elenco viene **sostituito da OGGI**, cioè da cosa c'è da fare oggi. In Glide l'elenco era ragionato in un altro modo (azioni non completate, anche vecchie di mesi o future); OGGI è più intuitivo. Collegato al cantiere «OGGI dovrà contenere anche le altre azioni… e quindi un'agenda».
 2. **Azione aperta**: si apre già in modifica, con Completato, Pianifica nuova data, NotePlan e Google Calendar. **Da discutere** con Ignazio cosa tenere.
@@ -196,4 +260,6 @@ In `/Users/ignaziofiorito/mb21-import/screenshot-dashboard-agenda/` (fuori dal r
 | `14-rinnova-profilo.png` | scheda profilo aperta (da «Rinnova subito», da confermare) |
 | `ripresa-grezza/001…018.png` | ripresa automatica: Check (parte alta), Dashboard di altri partner, inizio del Report — materiale per le sessioni Check e Report |
 
-Da fare in sessioni a parte: **sezione Check** (intera), **sezione Report** (intera), **«Apri Contatto!»**, **Agenda**.
+Da fare in sessioni a parte: **sezione Check** (intera), **sezione Report** (intera), **«Apri Contatto!»**.
+
+Agenda: 20 screenshot scelti in `mb21-import/screenshot-agenda/` (numerati 1-20, nomi nei paragrafi di §7) + `ripresa-grezza/` (24) e `ripresa-grezza-2/` (31).
