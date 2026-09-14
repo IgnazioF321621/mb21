@@ -134,7 +134,7 @@ Dal bottone «Modifica» della scheda o da «…» → Modifica sulla card. Fine
 | Campo | Tipo | Suggerimento nel campo | Limiti |
 |---|---|---|---|
 | **Nome** | testo | «Nome Cognome» | **obbligatorio** |
-| Telefono | testo | «es. 3396663124» | — |
+| Telefono | testo | «es. 33x xxxxxxx» (un numero di esempio) | — |
 | Professione | testo | «Mansione (Settore)» | max 40 caratteri (contatore) |
 | Località | testo | «Città (Prov)» | max 40 |
 | **Contatto e/o Incaricato di** | scelta da elenco con ricerca | «—» | l'elenco sono i **nominativi della Lista** (referral) |
@@ -154,7 +154,7 @@ Pannello che scorre da destra, titolo **«Aggiungi un nuovo contatto»**. Stessi
 | Campo | Suggerimento | Note |
 |---|---|---|
 | **Nominativo** | «Nome Cognome» | **obbligatorio** |
-| Telefono | «(es.) 3396663124» | tastiera telefonica |
+| Telefono | «(es.) 33x xxxxxxx» (un numero di esempio) | tastiera telefonica |
 | Professione | «Mansione (Settore)» | max 40 |
 | Località | «Città (Prov)» | max 40 |
 | Contatto e/o Incaricato di | «—» | scelta tra i nominativi, con campo Cerca (lista lunga, «cerca per trovarne altri») |
