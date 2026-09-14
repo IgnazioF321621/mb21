@@ -196,6 +196,12 @@
   .kpi ul { margin: 6px 0 0; padding-left: 14px; font-size: 12px; line-height: 1.4; }
   .kpi .barra div { transition: width .4s ease; }
   .kpi .complimento { color: var(--verde); font-weight: 700; }
+  .obiettivi-mod { display: block; margin: 8px auto 0; font-weight: 600; }
+  .ob-modi { margin-bottom: 10px; }
+  .ob-gruppo h4 { margin: 14px 0 6px; font-size: 15px; }
+  .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
+  .ob-campi input { margin: 4px 0 0; padding: 10px; font-size: 17px; }
   .visione { display: block; margin: 14px auto; border: 0; background: none; font-size: 15px; font-weight: 600; color: #334155; }
   .sv { background: #1F2937; color: #fff; border-radius: 16px; padding: 14px; margin: 16px 0 6px; }
   .sv h3 { margin: 0; font-size: 20px; }
@@ -230,7 +236,7 @@
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 19:18';
+const APP_VERSION = '2026.09.14 · 20:07';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -584,7 +590,7 @@ function mostraToast(testo, suAnnulla) {
 // ── DASHBOARD (Fase 3) ───────────────────────────────────
 // Copia della Dashboard di Glide (docs/MB21_v3_Dashboard_Agenda_come_e.md), brief Fase 3. Calcoli in dashboard.js.
 // Ordine: Partner Select · banner · 4 schede · visione completa · [OGGI] · Segni Vitali · Mostra di più.
-const DS = { dati: null, scheda: 'volume' };
+const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 
 async function caricaDashboard(oggi) {
   try {
@@ -594,6 +600,7 @@ async function caricaDashboard(oggi) {
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', mio)),
     ]);
     if (cm.error || ob.error) throw cm.error || ob.error;
+    DS.obiettivi = ob.data;
     DS.dati = MB21Dashboard.calcola({ checkMesi: cm.data, obiettivi: ob.data, oggi, scadenza: ST.utente.abbonamento_scadenza });
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
@@ -626,6 +633,7 @@ function dashboardAlto() {
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
+    ${d.obiettiviMancanti ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>🎯 Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
     <button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`;
   return html;
 }
@@ -658,13 +666,69 @@ function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ds-partner', () => inArrivo('Partner Select'));
   su('ds-rinnova', () => inArrivo('Rinnovo abbonamento'));
-  su('ds-obiettivi', () => inArrivo('Obiettivi del mese'));
+  su('ds-obiettivi', apriObiettivi);
+  su('ds-obiettivi-mod', apriObiettivi);
   su('ds-visione', () => inArrivo('Sezione Check'));
   su('ds-altro', () => inArrivo('Sezione Report'));
   su('ds-check', apriCheck);
   app.querySelectorAll('.schede-dash button').forEach(b => {
     b.onclick = () => { DS.scheda = b.dataset.scheda; disegnaOggi(); };
   });
+}
+
+// Obiettivi del mese (lavoro 5): un foglio con i 12 obiettivi raggruppati come le schede, già compilati
+// con quelli del mese (o del mese scorso). «Come <mese>» / «<mese> +10%» riempiono tutto, «Scelgo io» svuota.
+// Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
+function apriObiettivi() {
+  if (ST.offline || !DS.dati) return;
+  const D = MB21Dashboard, mese = DS.dati.mese;
+  const { valori, mesePrima } = D.propostaObiettivi(DS.obiettivi, mese, 'attuali');
+  const prima = mesePrima ? D.nomeMese(mesePrima) : null;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto">
+    <div class="testa-foglio"><h3>🎯 Obiettivi di ${esc(D.nomeMese(mese))}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
+    ${prima ? `<p>Come vuoi partire?</p><div class="chips ob-modi">
+      <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
+      <button data-modo="piu10">${esc(prima)} +10%</button>
+      <button data-modo="vuoti">Scelgo io</button></div>` : `<p>Scrivi i tuoi obiettivi per questo mese.</p>`}
+    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<div class="ob-gruppo"><h4>${pallino} ${esc(gruppo)}</h4><div class="ob-campi">
+      ${campi.map(([k, etichetta, decimale]) => `<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
+    </div></div>`).join('')}
+    <div class="errore" id="ob-errore"></div>
+    <div class="due"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
+  </div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.querySelector('#ob-x').onclick = chiudi;
+  velo.querySelector('#ob-no').onclick = chiudi;
+  velo.querySelectorAll('.ob-modi button').forEach(b => {
+    b.onclick = () => {
+      velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
+      const nuovi = b.dataset.modo === 'vuoti' ? null : D.propostaObiettivi(DS.obiettivi, mese, b.dataset.modo).valori;
+      for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) velo.querySelector('#ob-' + k).value = nuovi ? nuovi[k] : '';
+    };
+  });
+  velo.querySelector('#ob-si').onclick = async () => {
+    const letti = {};
+    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
+    const { errore, valori: v } = D.validaObiettivi(letti);
+    if (errore) { velo.querySelector('#ob-errore').textContent = errore; return; }
+    const btn = velo.querySelector('#ob-si');
+    btn.disabled = true; btn.textContent = 'Salvo…';
+    // upsert sulla coppia partner+mese: tocca solo gli obiettivi (partenza e dati Amway restano)
+    const { error } = await dbq('salva obiettivi', supa.from('obiettivi_mese')
+      .upsert({ user_id: ST.utente.id, mese, ...v }, { onConflict: 'user_id,mese' }));
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Salva obiettivi';
+      velo.querySelector('#ob-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
+      return;
+    }
+    chiudi();
+    await caricaDashboard(ST.oggi);
+    disegnaOggi();
+    mostraToast(`Obiettivi di ${D.nomeMese(mese)} salvati`);
+  };
 }
 
 // Check del Giorno: 13 campi come in Glide. Più check sulla stessa data si sommano (decisione 9).

@@ -132,6 +132,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **banner obiettivi**: nessuna riga del mese, o tutti gli obiettivi vuoti/0
 - **abbonamento**: attivo se `abbonamento_scadenza >= oggi`
 - **Segni Vitali**: 12 mesi fino a quello in corso; totali: Contatti e PM somma e «~N/mese» (÷12), BBS/WES/CEP «record» con il mese; colore più acceso col numero (35%-100% del massimo della colonna)
+- **Obiettivi del mese** (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi (Sponsor Personali compreso) raggruppati come le schede; il foglio si apre con quelli già salvati nel mese, altrimenti con quelli dell'ultimo mese con obiettivi (`propostaObiettivi`); «Come <mese>» · «<mese> +10%» (arrotondato in su) · «Scelgo io» (svuota). Nessun mese precedente → campi vuoti. Interi ≥ 0 (VP con decimali), almeno uno > 0 (`validaObiettivi`). Mesi con obiettivi tutti a 0 contano come non impostati. Salvataggio: upsert su (`user_id`, `mese`) dei soli 12 obiettivi (vuoto = null): partenza e VPP/VPG Amway restano
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
 ## Componenti UI
@@ -143,7 +144,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 - **Dashboard** (Fase 3, copia della Dashboard di Glide → `docs/MB21_v3_Dashboard_Agenda_come_e.md`), dall'alto:
   - **Partner Select** (solo Admin): riquadro scuro col proprio nome, «In arrivo ▾»
   - banner abbonamento: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto · Accesso limitato alle funzionalità» + «Rinnova subito →» (in arrivo)
-  - banner rosso «🎯 Imposta gli obiettivi del mese!» (in arrivo) quando mancano
+  - banner rosso «🎯 Imposta gli obiettivi del mese!» quando mancano → foglio **Obiettivi di <mese>**; quando ci sono, sotto le schede il link «🎯 Obiettivi di <mese>» riapre lo stesso foglio
   - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (13 campi, Invia salva; avviso «Check salvato» con **Annulla** che cancella il check)
   - riquadro con le **4 schede** 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita (scelta non salvata): riquadri con titolo, numero, barra di avanzamento, righe %/per obiettivo/giorno o complimento in verde
   - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
@@ -204,3 +205,4 @@ _Da definire._
 | 2026.09.14 · 18:54 | Fase 3 Dashboard: check_giorno, obiettivi_mese, check_mesi, abbonamento; import; pagina Dashboard e Check del Giorno |
 | 2026.09.14 · 19:13 | Coda della Dashboard a righe compatte che si aprono col tocco |
 | 2026.09.14 · 19:18 | Righe della coda con le parole di Glide (modalità • area \| esito) e coach sotto |
+| 2026.09.14 · 20:07 | Obiettivi del mese: foglio semplice (come il mese scorso / +10% / scelgo io) |

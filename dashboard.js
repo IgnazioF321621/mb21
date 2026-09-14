@@ -54,6 +54,14 @@
     'Psicocibernetica', 'Sette strategie per la ricchezza e la felicità', 'Strategie per il successo', 'Sviluppa la tua personalità',
     'Terre di diamanti', 'The E-myth', 'Tutti comunicano, pochi si connettono', 'Vivi una vita ispirata',
     'Cambia paradigma. Cambia la tua vita', 'Libro no N21'];
+  // Modulo obiettivi (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi, raggruppati come le 4 schede
+  const CAMPI_OBIETTIVI = [
+    ['Volume', '🔵', [['vpp', 'VPP', true], ['vpv', 'VP Clienti', true], ['vpg', 'VPG', true]]],
+    ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_personali', 'Sponsor Personali'], ['sponsor_gruppo', 'Nuovi Iscritti']]],
+    ['Segni Vitali', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
+    ['Crescita', '🟣', [['tracce', 'Tracce audio'], ['pagine', 'Pagine libro']]],
+  ];
+  const NOMI_MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
   const MESI = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
 
   const n = v => (v == null || v === '' ? 0 : Number(v));
@@ -133,7 +141,7 @@
       mese, giorni, schede,
       abbonamentoAttivo: !!scadenza && scadenza >= oggi,
       scadenza,
-      obiettiviMancanti: !o || OBIETTIVI.every(k => !n(o[k])),
+      obiettiviMancanti: !haObiettivi(o),
       ultimoCheck: ultimo,
       segniVitali: segniVitali(checkMesi, tot, mese),
     };
@@ -166,6 +174,42 @@
     };
   }
 
+  const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
+
+  // Valori con cui si apre il modulo obiettivi del mese.
+  // modo 'attuali': quelli già salvati nel mese, se ci sono, altrimenti come il mese scorso · 'uguale': come l'ultimo mese
+  // con obiettivi · 'piu10': quelli +10% arrotondati in su. Nessun mese precedente: campi vuoti (decisione A).
+  function propostaObiettivi(obiettivi, mese, modo) {
+    const attuale = obiettivi.find(o => o.mese === mese);
+    const prima = obiettivi.filter(o => o.mese < mese && haObiettivi(o)).sort((a, b) => (a.mese < b.mese ? 1 : -1))[0] || null;
+    const base = modo === 'attuali' && haObiettivi(attuale) ? attuale : prima;
+    const valori = {};
+    for (const k of OBIETTIVI) {
+      const v = base && base[k] != null && base[k] !== '' ? Number(base[k]) : null;
+      valori[k] = v == null ? '' : modo === 'piu10' ? Math.ceil(Number((v * AUMENTO).toFixed(6))) : v;
+    }
+    return { valori, mesePrima: prima ? prima.mese : null };
+  }
+
+  function nomeMese(mese) { return NOMI_MESI[Number(mese.slice(5, 7)) - 1]; }
+
+  // Controllo del modulo obiettivi: numeri ≥ 0 (interi, VP con decimali), almeno uno maggiore di zero.
+  // Restituisce { errore } oppure { valori } pronti da salvare (vuoto = null).
+  function validaObiettivi(v) {
+    const valori = {};
+    for (const [, , campi] of CAMPI_OBIETTIVI) {
+      for (const [k, etichetta, decimale] of campi) {
+        const s = String(v[k] ?? '').trim().replace(',', '.');
+        if (s === '') { valori[k] = null; continue; }
+        const x = Number(s);
+        if (!Number.isFinite(x) || x < 0 || (!decimale && !Number.isInteger(x))) return { errore: `Numero non valido: ${etichetta}.` };
+        valori[k] = x;
+      }
+    }
+    if (!OBIETTIVI.some(k => valori[k] > 0)) return { errore: 'Scrivi almeno un obiettivo.' };
+    return { valori };
+  }
+
   // Controllo del modulo Check: 11 numeri obbligatori, niente negativi, note al massimo 150
   function validaCheck(v) {
     if (!v.data) return 'Manca la data del check.';
@@ -179,7 +223,7 @@
     return null;
   }
 
-  const api = { SCHEDE, CAMPI_CHECK, LIBRI, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato };
+  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
