@@ -2,7 +2,7 @@
 
 > Redatto il 14/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Dashboard_Agenda_come_e.md` §7 (l'Agenda di Glide, 20 screenshot in `mb21-import/screenshot-agenda/`), `docs/MB21_v4_Brief_Sviluppo.md` (sez. 6 design), `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: bozza, in attesa dell'ok di Ignazio.**
+> **Stato: approvato da Ignazio il 14/09 (risposte A, B, C sotto). Lavoro 1 in corso.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -16,6 +16,10 @@
 2. Appuntamenti e telefonate **nella stessa vista**, non più divisi in «Contatti del giorno» (alto) e calendario (basso).
 3. **Ogni categoria ha le sue azioni, tipi ed esiti**; dentro Appuntamento **le fasi cambiano col sottotipo**.
 4. I **nomi delle fasi** si decidono strada facendo: Ignazio dirà quali tenere, togliere, aggiungere (bozza dallo storico: rilievo §7.5).
+5. **A**: barra in basso **Dashboard · Agenda · Lista Nomi · Progressi**.
+6. **B**: l'Admin vede gli appuntamenti di **tutti** i partner, con «[Partner]» come in Glide (i partner solo i propri).
+7. **C**: dopo l'esito di un appuntamento, se la fase lo prevede, l'app **chiede la prossima data** (come «Pianifica nuova data»).
+8. **Ospite** (max 50) in **Piano Marketing e Follow Up**.
 
 ## Com'è fatta l'Agenda v4
 ```
@@ -51,7 +55,7 @@ Settembre ▾                          [+]
 
 ### 2. Dati
 - Gli appuntamenti sono già in `azioni` (373 importati da Glide): nessuna tabella nuova per loro.
-- Regole: ogni partner vede i propri; Admin → vedi domanda B.
+- Regole: ogni partner vede i propri; l'Admin tutti (decisione 6).
 
 ### 3. Pagina Agenda
 - Parti 1–7 della tabella sopra. Vista da telefono per prima. Testi in italiano, ore 24h.
@@ -61,18 +65,13 @@ Settembre ▾                          [+]
   - la **categoria si prende dal contatto** scelto (modificabile), invece di chiederla sempre;
   - **tipi** secondo la categoria, **sottotipi** secondo il tipo, **fasi** secondo sottotipo (lavoro 1);
   - **data e ora** con proposta dell'ora dopo il prossimo impegno; **durata** 5 min · 30 min · 1 ora · 1h 30 · 2 ore;
-  - **Ospite** (max 50) solo per Piano Marketing; **Note** (max 100);
+  - **Ospite** (max 50) per Piano Marketing e Follow Up (decisione 8); **Note** (max 100);
   - niente «Completato» alla creazione: l'esito si dà dopo, dalla riga.
 - Suggerimenti N21: sospesi (decisione Fase 2).
 
 ### 5. Prove
 - Tipi/sottotipi/fasi corretti per ogni categoria; appuntamento creato, spostato, chiuso con esito e annullato.
 - Un partner vede solo i suoi.
-
-## Domande per Ignazio (prima di partire)
-- **A.** Dove va l'Agenda nella barra in basso? Proposta: **Dashboard · Agenda · Lista Nomi · Progressi** (come l'ordine di Glide).
-- **B.** Tu come Admin: in Agenda vedi **tutti** gli appuntamenti con «[Partner]» come in Glide, o **solo i tuoi** finché non c'è il Partner Select?
-- **C.** Il tocco sull'esito di un appuntamento deve anche **chiedere la prossima data** (come «Pianifica nuova data» di Glide) quando la fase lo prevede (es. Dare Seguito)?
 
 ## Fuori da questa fase
 NotePlan / Google Calendar, Coach Script, suggerimenti N21, Partner Select, promemoria/notifiche.
