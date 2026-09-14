@@ -160,3 +160,4 @@ _Da definire._
 | 2026.09.14 · 15:53 | Fase 2 provata da Ignazio; «Contatto e/o Incaricato di» dalla lista del proprietario |
 | 2026.09.14 · 16:09 | Fase 2 chiusa; prefisso a tendina confermato |
 | 2026.09.14 · 17:09 | Rilievo Dashboard v3 (Glide) in docs/MB21_v3_Dashboard_Agenda_come_e.md; Agenda da fare |
+| 2026.09.14 · 17:35 | Rilievo Dashboard v3: obiettivi mensili, /giorno e origine dei numeri chiariti da Ignazio |
