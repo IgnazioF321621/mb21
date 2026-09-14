@@ -68,6 +68,7 @@
   .riga-coda .rc-alto { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .riga-coda .nome { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .badge { flex: none; }
+  .riga-coda .rc-glide { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; color: #1D4ED8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .rc-coach { display: block; margin-top: 3px; font-size: 13px; font-weight: 600; color: #6D28D9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .rc-freccia { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--grigio-chiaro); }
   .card.aperta .rc-coach { white-space: normal; }
@@ -229,7 +230,7 @@
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 19:13';
+const APP_VERSION = '2026.09.14 · 19:18';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -384,7 +385,11 @@ function bottoniPer(categoria) {
   return BOTTONI_PROSPECT;
 }
 
-// Riga compatta: nome, fase, frase del coach. Il tocco la apre (una sola aperta): dati, telefono, coach intero, bottoni.
+// Riga compatta con le parole di Glide («Azioni da completare»): nome · «modalità • area | esito» dell'ultima azione · frase del coach. Il tocco la apre (una sola aperta): dati, telefono, coach intero, bottoni.
+function rigaGlide(r) {
+  const prima = [r.ultima_modalita || (r.contattato ? r.ultimo_tipo : 'Telefonata'), r.ultima_area || 'Attività'].filter(Boolean).join(' • ');
+  return `${prima} | ${r.contattato ? (r.ultima_fase || 'Senza esito') : 'Mai contattato o 2+ anni'}`;
+}
 function cardContatto(r, dareSeguito) {
   const fase = r.contattato ? (r.ultima_fase || 'Senza esito') : 'Mai contattato';
   const badge = dareSeguito
@@ -393,7 +398,8 @@ function cardContatto(r, dareSeguito) {
   const aperta = ST.aperta === r.id;
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
-      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span>${badge}</span>
+      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span>${dareSeguito ? badge : ''}</span>
+      <span class="rc-glide">${esc(rigaGlide(r))}</span>
       ${r.coach ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
