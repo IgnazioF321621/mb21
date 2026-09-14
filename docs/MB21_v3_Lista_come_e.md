@@ -145,7 +145,7 @@ All'apertura può non esserci nessuna sezione selezionata (area vuota).
 | 13 | Primo PM | 1° PM personale | `PrimoPM_onb` |
 | 14 | Primo ABO | 1° ABO personale | `PrimoABO_onb` |
 
-- **Gli interruttori sono 14 ma il contatore dice «/13»**: un passo non viene contato (nell'export c'è anche `Completati_onb`). **Da verificare con Ignazio.**
+- **Gli interruttori sono 14 ma il contatore dice «/13»**: il totale nel contatore è sbagliato in Glide (confermato da Ignazio il 14/09: i passi sono **14**). In v4 il totale va contato dai passi, non scritto a mano.
 - Toccare un interruttore segna il passo come fatto (non toccato). Rimandata alla fase Partner.
 
 **Sharing** — non aperta.
@@ -190,7 +190,7 @@ Solo osservazioni, nessuna decisione presa:
 4. **Telefono non cliccabile in elenco**; Call/SMS/WhatsApp/Telegram solo in scheda.
 5. **Ricerca** su nome + professione + telefono: da mantenere.
 6. **Nuovo contatto**: 9 campi, obbligatori Nominativo e Categoria. Il brief v4 ne chiede 4 (nome, professione, fascia età, telefono): da decidere quali tenere.
-7. **Riquadro FASE**: la parte utile sono **suggerimenti N21 + pagina del Manuale** (in v4: `sequenze.suggerimento_1/2/3`, già importati); Indietro/Avanti sono il ramo step da non riportare.
+7. **Riquadro FASE**: la parte utile sono **suggerimenti N21 + pagina del Manuale** (in v4: `sequenze.suggerimento_1/2/3`, già importati); Indietro/Avanti sono il ramo step da non riportare. **Deciso da Ignazio il 14/09**: riga di coach sempre visibile, i 3 suggerimenti **a richiesta** con «Come fare ▸» ([CANTIERI](../CANTIERI.md)).
 8. **Coach Yes**: note per contatto e per utente, con apertura del testo intero: in v4 `coach_note`, già importate.
 9. **Sezioni che cambiano per categoria** (Onboarding per i Partner, Vendite per chi compra).
 10. **Date** brevi in scheda (`21/03/26`), lunghe in elenco (`21/03/2026`).
