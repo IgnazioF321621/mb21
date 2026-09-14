@@ -4,7 +4,7 @@
 > (`if-team-21-6x21.glide.page`), con l'utente di Ignazio (Admin), **Partner Select = Ignazio**.
 > Browser di Claude Desktop (pannello accanto alla sessione), navigato da Ignazio, screenshot di Claude.
 >
-> **Stato: Dashboard fatta. Agenda da fare** (fermata decisa da Ignazio, vedi [§8](#8-osservazioni-per-la-v4)).
+> **Stato: Dashboard chiusa il 14/09. Agenda da fare.** Le sezioni raggiunte dai bottoni della Dashboard (Check, Report, scheda contatto) vanno rilevate in sessioni a parte (decisione di Ignazio: una cosa per volta).
 >
 > **Nessun dato è stato modificato.** Moduli aperti e chiusi con «Annulla» o con la freccia «‹»;
 > mai toccati «Invia», «Salva», «Elimina», «Completato», «Pianifica nuova data».
@@ -29,7 +29,8 @@
 1. **Partner Select** (solo Admin), fascia scura in alto: foto + nome, X per svuotare, freccia per scegliere.
 2. **Riquadro stato e check** — due banner, che cambiano con la situazione del partner ([§2.1](#21-i-banner-in-cima)):
    - banner **abbonamento**: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto»;
-   - banner **check/obiettivi**: azzurro «⚡ Compila il Check del Giorno!» con «Ultimo check: **13/09/2026** · Tocca per aprire» e freccia «›» → [§5](#5-check-del-giorno); oppure rosso «🎯 Imposta gli obiettivi del mese!».
+   - banner rosso «🎯 Imposta gli obiettivi del mese!» (solo quando mancano);
+   - riquadro azzurro «⚡ Compila il Check del Giorno!» con «Ultimo check: **13/09/2026** · Tocca per aprire» e freccia «›» → [§5](#5-check-del-giorno).
 3. **Riquadro indicatori** con 4 schede ([§3](#3-le-4-schede-degli-indicatori)): 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita.
 4. Bottone con occhio **«Clicca qui per una visione completa!»** → porta alla sezione **Check** (da rilevare in un giro a parte).
 5. **«⚡ Azioni da completare»** ([§4](#4-azioni-da-completare)).
@@ -42,11 +43,12 @@
 | Situazione | Banner abbonamento | Banner sotto |
 |---|---|---|
 | **Tutto a posto** (Ignazio, 14/09) | verde, «✅ Abbonamento attivo · Buon lavoro!» | azzurro, fulmine, **«Compila il Check del Giorno!»** · «Ultimo check: <data> · Tocca per aprire» › |
-| **Abbonamento scaduto + obiettivi mancanti** (un altro partner, 14/09) | rosa con bordo rosso, pallino rosso, **«Abbonamento scaduto»** · «Accesso limitato alle funzionalità», bottone rosso pieno **«Rinnova subito →»** | rosa con barra rossa a sinistra, bersaglio 🎯, **«Imposta gli obiettivi del mese!»** · «Clicca su questo banner» |
+| **Abbonamento scaduto + obiettivi mancanti** (altri partner, 14/09) | rosa con bordo rosso, pallino rosso, **«Abbonamento scaduto»** · «Accesso limitato alle funzionalità», bottone rosso pieno **«Rinnova subito →»** | rosa con barra rossa a sinistra, bersaglio 🎯, **«Imposta gli obiettivi del mese!»** · «Clicca su questo banner»; **sotto resta** «Compila il Check del Giorno!» |
 
-- Il banner **obiettivi** compare **dal giorno 1 del mese** finché gli obiettivi non sono impostati (in Check), e in quel caso **al posto** di «Compila il Check del Giorno!».
-- Con abbonamento scaduto e obiettivi mancanti i riquadri indicatori sono **vuoti** (solo i puntini e «/giorno»).
-- Non toccati: «Rinnova subito →» e il banner obiettivi (dove portano: **da rilevare**).
+- Il banner **obiettivi** compare **dal giorno 1 del mese** finché gli obiettivi non sono impostati (in Check); **non sostituisce** «Compila il Check del Giorno!», che resta sotto (`ripresa-grezza/002.png`; nel n. 12 la parte bassa è fuori inquadratura).
+- Con obiettivi **a zero** i riquadri indicatori mostrano «**oltre obiettivo**» (es. `VPP 102,12 • 102,12 oltre obiettivo • 6,01/giorno`); in un caso si sono visti **vuoti** (solo puntini e «/giorno»).
+- **«Imposta gli obiettivi del mese!»** → porta alla sezione **Check** (📷 `13-obiettivi-mese.png`). Stranezza: lì compare «🎉 Obiettivi impostati! Buon mese!» ma gli obiettivi sono tutti **Tgt: 0**; il selettore lì si chiama «**User Select**».
+- **«Rinnova subito →»** → apre la **scheda profilo** «Dashboard / <utente>»: foto, ruolo (Admin), Email, PartnerID, Abbonamento MB21, Data scadenza MB21 (📷 `14-rinnova-profilo.png`). Mostra il profilo di **chi usa l'app**, non del partner scelto. **Da confermare** con Ignazio che venga da «Rinnova subito».
 
 ---
 
@@ -166,8 +168,9 @@ Solo osservazioni, nessuna decisione presa salvo dove indicato:
 4. **4 schede indicatori** (Volume, Azione, Segni Vitali, Crescita): somma dei Check del mese confrontata con gli **obiettivi mensili** (impostati in Check a inizio mese, con banner in Dashboard finché mancano); percentuale, quanto manca e quanto serve al giorno.
 5. **Segni Vitali**: oggi è una pagina esterna incorporata; nella v4 può diventare parte dell'app.
 6. **Collegamenti ad altre sezioni** da rilevare in giri a parte: «Clicca qui per una visione completa!» → **Check**; «Mostra di più!» → **Report**.
-7. **Banner di stato**: abbonamento (attivo/scaduto con «Rinnova subito») e obiettivi del mese da impostare: da prevedere nella v4 (l'abbonamento riguarda la parte a pagamento).
-8. Il pannello del Check si chiama «Aggiungi articolo» (nome di serie di Glide): nella v4 un titolo chiaro.
+7. **Obiettivi del mese da semplificare** (indicazione di Ignazio, 14/09): in Glide l'inserimento è articolato e complicato per un partner non ancora avviato; nella v4 va reso semplice. In più oggi si possono avere «obiettivi impostati» tutti a zero.
+8. **Banner di stato**: abbonamento (attivo/scaduto con «Rinnova subito») e obiettivi del mese da impostare: da prevedere nella v4 (l'abbonamento riguarda la parte a pagamento).
+9. Il pannello del Check si chiama «Aggiungi articolo» (nome di serie di Glide): nella v4 un titolo chiaro.
 
 ---
 
@@ -189,5 +192,8 @@ In `/Users/ignaziofiorito/mb21-import/screenshot-dashboard-agenda/` (fuori dal r
 | `10-check-giorno.png` | Check del Giorno, parte alta |
 | `11-check-giorno-fondo.png` | Check del Giorno, parte bassa |
 | `12-banner-scaduto-obiettivi.png` | banner «Abbonamento scaduto» e «Imposta gli obiettivi del mese!» (altro partner) |
+| `13-obiettivi-mese.png` | sezione Check aperta dal banner obiettivi |
+| `14-rinnova-profilo.png` | scheda profilo aperta (da «Rinnova subito», da confermare) |
+| `ripresa-grezza/001…018.png` | ripresa automatica: Check (parte alta), Dashboard di altri partner, inizio del Report — materiale per le sessioni Check e Report |
 
-Non fatti: sezione Check (da «visione completa»), sezione Report (da «Mostra di più!»), Agenda.
+Da fare in sessioni a parte: **sezione Check** (intera), **sezione Report** (intera), **«Apri Contatto!»**, **Agenda**.
