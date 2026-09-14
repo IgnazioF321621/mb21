@@ -120,6 +120,29 @@ prova('richiamo con data passata: non è «di oggi», va dopo i richiami di oggi
   assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['oggi', 'vecchio']);
 });
 
+prova('contatti al giorno: 10 → 6 rientri + 4 mai contattati; 1 → un rientro', () => {
+  const righe = [];
+  for (let i = 0; i < 10; i++) righe.push(c('m' + i));
+  for (let i = 0; i < 10; i++) righe.push(c('r' + i, { contattato: true, ultima_fase: 'No Risposta', ultimi_giorni: 2, rientro_il: IERI }));
+  const dieci = calcolaCoda(righe, OGGI, 10).coda.map(x => x.id);
+  assert.equal(dieci.filter(id => id.startsWith('r')).length, 6);
+  assert.equal(dieci.filter(id => id.startsWith('m')).length, 4);
+  assert.deepEqual(calcolaCoda(righe, OGGI, 1).coda.map(x => x.id), ['r0']);
+});
+
+prova('massimo giornaliero raggiunto: coda vuota, Dare Seguito scaduti restano', () => {
+  const righe = [c('m'), c('ds', { contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: IERI })];
+  const r = calcolaCoda(righe, OGGI, 0);
+  assert.equal(r.coda.length, 0);
+  assert.deepEqual(r.dareSeguito.map(x => x.id), ['ds']);
+  assert.deepEqual(r.nuoviInCoda, []);
+});
+
+prova('massimo giornaliero con slittati: 5 al giorno, 3 esiti dati → restano 2 posti, ai già in coda', () => {
+  const righe = [c('s1', { in_coda_dal: OGGI }), c('s2', { in_coda_dal: OGGI }), c('m1'), c('m2')];
+  assert.deepEqual(calcolaCoda(righe, OGGI, 5 - 3).coda.map(x => x.id), ['s1', 's2']);
+});
+
 prova('slittamento: chi non viene chiamato resta, in cima, e i nuovi entrano solo nei posti liberi', () => {
   const righe = Array.from({ length: 10 }, (_, i) => c('n' + i, { rientro_il: IERI }));
   const giorno1 = apri(righe, IERI);

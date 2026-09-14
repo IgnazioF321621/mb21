@@ -65,6 +65,14 @@
   .bottoni button:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .card.via { opacity: 0; transform: translateX(40px); transition: all .25s ease; }
 
+  .testa-coda { display: flex; align-items: center; justify-content: space-between; margin: 22px 4px 8px; }
+  .testa-coda h2 { margin: 0; }
+  .contatore { background: #fff; border: 1px solid var(--linea); border-radius: 999px; padding: 6px 12px;
+    font-size: 13px; font-weight: 700; color: var(--testo); }
+  .numeri { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 8px; }
+  .numeri button { font-size: 20px; font-weight: 700; padding: 14px 0; border-radius: 12px; border: 0; background: #F3F4F6; color: var(--testo); }
+  .numeri button.scelto { background: var(--testo); color: #fff; }
+
   .velo { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; z-index: 20; }
   .foglio { background: #fff; width: 100%; max-width: 520px; margin: 0 auto; border-radius: 20px 20px 0 0;
     padding: 20px 16px calc(env(safe-area-inset-bottom) + 20px); }
@@ -91,7 +99,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="coda.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 11:26';
+const APP_VERSION = '2026.09.14 · 11:38';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -200,9 +208,13 @@ async function leggiCandidati(oggi) {
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   app.innerHTML = `<h1>Oggi</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
-  let risultato, offline = false;
+  let risultato, stato, offline = false;
   try {
-    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi);
+    const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi'));
+    if (error) throw error;
+    stato = data;   // { contatti_al_giorno, fatti_oggi }
+    const posti = stato.contatti_al_giorno - stato.fatti_oggi;
+    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti);
     if (risultato.nuoviInCoda.length) {
       await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
@@ -215,8 +227,9 @@ async function caricaOggi() {
       return;
     }
     risultato = cache.risultato; offline = cache.salvata;
+    stato = cache.stato || { contatti_al_giorno: MB21Coda.CAPIENZA, fatti_oggi: 0 };   // copia salvata da una versione precedente
   }
-  ST.oggi = oggi; ST.risultato = risultato; ST.offline = offline;
+  ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline) salvaCache();
   disegnaOggi();
 }
@@ -272,9 +285,15 @@ function disegnaOggi() {
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
-  html += `<h2>La tua coda · ${r.coda.length} da chiamare</h2>`;
-  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('') : `<div class="vuoto">Per oggi hai finito.</div>`;
+  const st = ST.stato;
+  const finito = st.fatti_oggi >= st.contatti_al_giorno;
+  html += `<div class="testa-coda"><h2>La tua coda</h2>
+    <button class="contatore" id="contatore" ${ST.offline ? 'disabled' : ''}>Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</button></div>`;
+  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
+    : `<div class="vuoto">${finito ? `Per oggi hai finito: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
   app.innerHTML = html + versione();
+  const contatore = document.getElementById('contatore');
+  if (contatore) contatore.onclick = scegliNumero;
   app.querySelectorAll('.bottoni button').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
@@ -299,8 +318,9 @@ async function toccaBottone(id, indice) {
   }
   const card = document.getElementById('card-' + id);
   card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const daCoda = pos.lista === 'coda';   // i Dare Seguito non contano nei contatti al giorno
   const { data: esito, error } = await dbq('registra esito', supa.rpc('registra_esito',
-    { p_contatto: id, p_chiave: bottone.chiave, p_data: data }));
+    { p_contatto: id, p_chiave: bottone.chiave, p_data: data, p_da_coda: daCoda }));
   if (error) {
     card.querySelectorAll('button').forEach(b => { b.disabled = false; });
     return mostraToast('Non salvato: controlla la connessione e riprova.');
@@ -308,6 +328,7 @@ async function toccaBottone(id, indice) {
   card.classList.add('via');
   setTimeout(() => {
     ST.risultato[pos.lista].splice(pos.i, 1);
+    if (daCoda) ST.stato.fatti_oggi++;
     salvaCache();
     disegnaOggi();
     mostraToast(`${pos.contatto.nome} · ${bottone.etichetta}`, () => annulla(pos, esito));
@@ -319,13 +340,14 @@ async function annulla(pos, esito) {
     { p_azione: esito.azione_id, p_rientro: esito.rientro_prec, p_in_coda: esito.in_coda_prec }));
   if (error) return mostraToast('Annullamento non riuscito: riprova.');
   ST.risultato[pos.lista].splice(pos.i, 0, pos.contatto);
+  if (pos.lista === 'coda') ST.stato.fatti_oggi--;
   salvaCache();
   disegnaOggi();
   mostraToast('Annullato');
 }
 
 function salvaCache() {
-  try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi: ST.oggi, risultato: ST.risultato, salvata: new Date().toISOString() })); } catch (e) {}
+  try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi: ST.oggi, risultato: ST.risultato, stato: ST.stato, salvata: new Date().toISOString() })); } catch (e) {}
 }
 
 // Foglio in basso per scegliere il giorno (e l'ora per l'appuntamento). Restituisce un ISO o null.
@@ -354,6 +376,35 @@ function chiediData(bottone, nome) {
       if (!giorno) return;
       const ora = bottone.data === 'giorno-ora' ? (velo.querySelector('#scelta-ora').value || '12:00') : '12:00';
       chiudi(new Date(`${giorno}T${ora}:00`).toISOString());   // ora del telefono (Italia)
+    };
+  });
+}
+
+// Contatti al giorno (1-10): è il massimo di esiti dalla coda in un giorno.
+function scegliNumero() {
+  const attuale = ST.stato.contatti_al_giorno;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `
+    <div class="foglio">
+      <h3>Contatti al giorno</h3>
+      <p>Quanti contatti vuoi lavorare ogni giorno. I Dare Seguito scaduti si aggiungono sempre.</p>
+      <div class="numeri">${Array.from({ length: 10 }, (_, i) => i + 1).map(n =>
+        `<button class="${n === attuale ? 'scelto' : ''}" data-n="${n}">${n}</button>`).join('')}</div>
+      <button class="link" id="numero-no">Annulla</button>
+    </div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) velo.remove(); };
+  velo.querySelector('#numero-no').onclick = () => velo.remove();
+  velo.querySelectorAll('.numeri button').forEach(b => {
+    b.onclick = async () => {
+      const n = Number(b.dataset.n);
+      velo.remove();
+      if (n === attuale) return;
+      const { error } = await dbq('contatti al giorno', supa.rpc('imposta_contatti_al_giorno', { p_numero: n }));
+      if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+      mostraToast(`Contatti al giorno: ${n}`);
+      caricaOggi();   // con un numero più alto la coda si riempie
     };
   });
 }

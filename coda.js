@@ -5,14 +5,15 @@
 // Regole (brief sez. 2 + decisioni di Ignazio del 14/09, STRUTTURA.md → Logiche):
 //   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato (i senza categoria restano)
 //   - Dare Seguito scaduti (fase Dare Seguito / DS Fissato, rientro prima di oggi): sempre, sopra la capienza
-//   - capienza 5, tra chi ha rientro_il <= oggi:
+//   - capienza = contatti al giorno scelti dall'utente (1-10, predefinito 5) meno gli esiti già dati oggi
+//     dalla coda (i Dare Seguito non contano), tra chi ha rientro_il <= oggi:
 //       1. già in coda (in_coda_dal pieno), i più vecchi prima: chi non è stato chiamato slitta in cima
-//       2. posti liberi divisi in 3 rientri + 2 mai contattati. Nei rientri: prima i richiami con data
+//       2. posti liberi divisi 60% rientri + 40% mai contattati (3+2 su 5). Nei rientri: prima i richiami con data
 //          odierna, poi i rientrati dopo l'attesa. Se un gruppo non basta, i posti vanno all'altro
 //   - a parità: rientro più vecchio, poi nome
 (function (radice) {
-  const CAPIENZA = 5;
-  const POSTI_RIENTRI = 3;          // gli altri (5 - 3) ai mai contattati
+  const CAPIENZA = 5;               // predefinita, se l'utente non ha scelto
+  const QUOTA_RIENTRI = 3 / 5;      // il resto ai mai contattati
   const FASI_DARE_SEGUITO = ['Dare Seguito', 'DS Fissato'];
   const CATEGORIE_ESCLUSE = ['Unlinked', 'Ex Partner/Cliente', 'Archiviato'];
 
@@ -36,7 +37,7 @@
   }
 
   function calcolaCoda(righe, oggi, capienza) {
-    capienza = capienza || CAPIENZA;
+    capienza = capienza == null ? CAPIENZA : Math.max(0, capienza);
     const dareSeguito = [];
     const candidati = [];
 
@@ -58,7 +59,7 @@
     const nuovi = candidati.filter(r => r.gruppo === 4);
 
     const liberi = capienza - giaInCoda.length;
-    const postiRientri = Math.round(liberi * POSTI_RIENTRI / capienza);
+    const postiRientri = Math.round(liberi * QUOTA_RIENTRI);
     let presiRientri = rientri.slice(0, postiRientri);
     let presiNuovi = nuovi.slice(0, liberi - presiRientri.length);
     // un gruppo non basta: i posti avanzati vanno all'altro
@@ -82,7 +83,7 @@
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(adesso || new Date());
   }
 
-  const api = { calcolaCoda, oggiRoma, CAPIENZA, POSTI_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
+  const api = { calcolaCoda, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;
 })(this);

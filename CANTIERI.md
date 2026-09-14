@@ -14,8 +14,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Aperto il 14 settembre 2026.*
 
 - **Codice a 6 cifre nell'email: rimandato** (decisione di Ignazio, 14/09). Oggi l'email ha solo il link; per rimettere il codice serve un servizio email proprio (SMTP) che sblocchi il testo dell'email sul piano gratuito → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link). Collegato: l'app **installata** sulla schermata Home potrebbe non ricevere l'accesso dal link (non ancora provata)
-- **Un esito rimasto registrato dopo la prova**: No Risposta del 14/09 alle 11:23, contatto con rientro al 16/09. Da chiarire con Ignazio se è un tocco voluto o un Annulla non andato a buon fine
-- **Coda che si riempie alla riapertura**: dopo un esito il posto libero si riempie alla prossima apertura dello stesso giorno (i 5 restano 5 in lista, ma in un giorno si possono lavorare più di 5 contatti). Da decidere se va bene o se i 5 sono il massimo giornaliero
+- ~~Un esito rimasto registrato dopo la prova~~ — **voluto**, confermato da Ignazio (No Risposta del 14/09 alle 11:23)
+- ~~Coda che si riempie alla riapertura~~ — **deciso e fatto il 14/09**: ogni utente sceglie i **contatti al giorno (1-10)**, che sono un **massimo giornaliero**; Dare Seguito scaduti fuori dal conto. Migrazione `contatti_al_giorno`, contatore «Fatti X di N» in OGGI, 18 prove; verificato sul DB come Ignazio (numero 1-10, 11 rifiutato, esiti dalla coda contati, Dare Seguito no). Da provare dal telefono
+- **OGGI dovrà contenere anche le altre azioni** (appuntamenti, Piano Marketing, follow up, consulenze…) e quindi un'**agenda**, oltre alla coda delle telefonate. Da progettare: la coda dei contatti al giorno è solo una parte di OGGI
 - Coach delle 4 nuove righe Partner/Cliente scritto da Claude: da rivedere
 - I Dare Seguito scaduti (fase Piano Marketing) hanno i bottoni del Contatto: da rivedere quando ce ne saranno
 - Le vecchie versioni dei commit possono restare raggiungibili su GitHub da un link diretto finché GitHub non le elimina; per toglierle subito serve una richiesta al supporto GitHub
