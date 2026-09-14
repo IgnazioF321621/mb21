@@ -211,6 +211,47 @@ Poi, **secondo il tipo**:
 - La data scelta nel calendario ha **ore e minuti** a rotella.
 - Qui i **suggerimenti N21 sono una scelta obbligatoria** del modulo, non solo testo da leggere.
 
+### 7.5 Categoria → tipo di azione → fasi/esiti
+Confermato da Ignazio (14/09): **ogni categoria ha le sue azioni, i suoi tipi e i suoi esiti**. Ricostruito dall'export, senza editor di Glide: `Scelte.csv` (quali tipi per categoria e i sottotipi) + `Sequenze` (le fasi per categoria e tipo, già nel DB v4).
+
+**Tipi di azione per categoria** (`Scelte.csv`: `TipoAzione` + `CategTipoAzione`):
+
+| Categoria | Tipi di azione |
+|---|---|
+| **Prospect** | Contatto · Piano Marketing · Follow Up · Consulenza PRD |
+| **Partner** | Contatto · Piano Marketing · Follow Up · **Appuntamento** |
+| **Cliente** | Contatto · Consulenza PRD |
+| Ex Partner/Cliente · Referral · Unlinked · Archiviato | nessun tipo in `Scelte.csv` |
+
+**Sottotipi** (il secondo gruppo di bottoni del modulo):
+
+| Tipo | Sottotipi (`Scelte.csv`) |
+|---|---|
+| Contatto | Telefonata · Messaggio · Presenza (`TipoCT`) |
+| Piano Marketing | PM 1a1 · PM Upline · PM Casa/Pull · PM Open (`TipoPM`) |
+| Follow Up | Personale · Upline · Meeting/Evento (`TipoFUp`) |
+| Appuntamento | Avvio · Counseling · Lista/Contatti · Meeting/Evento · Ordine (`TipoAPT`) |
+| Consulenza PRD | Assistenza · Demo · Promo/Sconto · Riordino (`TipoPRD`) |
+
+**Fasi/esiti per categoria e tipo** (`Sequenze` di Glide):
+
+| Categoria · Tipo | Fasi/esiti |
+|---|---|
+| Prospect · Contatto | Mai contattato o 2+ anni · PM Fissato · No Risposta · Telefono OFF · No Interesse · Richiamare · Relazione · Consult Prodotti |
+| Prospect · Piano Marketing | Presentazione · Iscrizione · No BuonFine · Rimandato · No Show · Dare Seguito · Prodotti |
+| Prospect · Follow Up | DS Fissato · Iscrizione · No BuonFine · Rimandato · No Show · Prodotti |
+| Prospect · Consulenza PRD | **nessuna** (nel modulo infatti non compare la fase: 📷 `20-consulenza-prd.png`) |
+| Partner · Piano Marketing | come Prospect |
+| Partner · Follow Up | come Prospect |
+| Partner · Appuntamento | c/Downline · c/Upline · Inaugurazione · Incontro N21 · Lista nomi · ListaStart · Motivazione · OrdineStart · RolePlay · Telefonate · VP Personali |
+| Partner · Contatto | **nessuna in Glide** (in v4 aggiunte in Fase 1: Appuntamento · Richiamare) |
+| Cliente · Contatto | **nessuna in Glide** (in v4 aggiunte in Fase 1: Appuntamento · Richiamare) |
+| Cliente · Consulenza PRD | Assistenza · Demo · Promo/Sconto · Riordino |
+
+`Scelte.csv` ha anche elenchi di esiti per tipo, non legati alla categoria: `EsitoCT` (PM Fissato · No Risposta · Telefono OFF · No Interesse · Richiamare · Consult Prodotti), `EsitoPM`, `EsitoFUp`, `EsitoAPT` (Fatto · Rimandato · No Show), `EsitoPRD` (Vendita · No Vendita).
+
+**Da chiarire con Ignazio** (se servirà per costruire): quale elenco usa davvero il modulo per «Fase/Esito attuale» (Sequenze per categoria o `Esito*` per tipo: per Prospect · PM coincidono), e se dentro Appuntamento le fasi dipendono dal sottotipo (Avvio, Counseling…).
+
 ---
 
 ## 8. Osservazioni per la v4
@@ -220,7 +261,7 @@ Solo osservazioni, nessuna decisione presa salvo dove indicato:
 **Agenda**
 - A1. **Alto/basso** (Contatti del giorno / appuntamenti presi): Ignazio è aperto a una proposta più intuitiva e coinvolgente.
 - A2. Admin vede gli appuntamenti di tutti con «[Partner]»; i partner solo i propri: stesso schema delle regole di accesso v4.
-- A3. Il modulo «Aggiungi Appuntamento» e l'«Azione» aperta sono **lo stesso modulo** di Glide, con campi che dipendono da categoria e tipo: in v4 i bottoni esito della coda coprono solo la parte Contatto.
+- A3. Il modulo «Aggiungi Appuntamento» e l'«Azione» aperta sono **lo stesso modulo** di Glide, con campi che dipendono da categoria e tipo (mappa completa in [§7.5](#75-categoria--tipo-di-azione--fasiesiti)): in v4 i bottoni esito della coda coprono solo la parte Contatto.
 - A4. Testi inglesi del calendario («No events available for this period», ore AM/PM): in v4 in italiano, ore 24h.
 - A5. Suggerimenti N21 **da scegliere** nel modulo PM: in v4 sono sospesi (decisione Fase 2).
 
