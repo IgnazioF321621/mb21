@@ -61,6 +61,8 @@
     ['Segni Vitali', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
     ['Crescita', '🟣', [['tracce', 'Tracce audio'], ['pagine', 'Pagine libro']]],
   ];
+  const CRESCITE = [5, 10, 20, 30, 40, 50];   // scelte della barra (decisione di Ignazio 14/09), si parte da 10
+  const SOGLIA_AMBIZIOSO = 20;                // sopra: «Obiettivo ambizioso: parlane con il tuo upline»
   const NOMI_MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
   const MESI = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
 
@@ -178,15 +180,15 @@
 
   // Valori con cui si apre il modulo obiettivi del mese.
   // modo 'attuali': quelli già salvati nel mese, se ci sono, altrimenti come il mese scorso · 'uguale': come l'ultimo mese
-  // con obiettivi · 'piu10': quelli +10% arrotondati in su. Nessun mese precedente: campi vuoti (decisione A).
-  function propostaObiettivi(obiettivi, mese, modo) {
+  // con obiettivi · 'crescita': quelli + `percento`% arrotondati in su. Nessun mese precedente: campi vuoti (decisione A).
+  function propostaObiettivi(obiettivi, mese, modo, percento) {
     const attuale = obiettivi.find(o => o.mese === mese);
     const prima = obiettivi.filter(o => o.mese < mese && haObiettivi(o)).sort((a, b) => (a.mese < b.mese ? 1 : -1))[0] || null;
     const base = modo === 'attuali' && haObiettivi(attuale) ? attuale : prima;
     const valori = {};
     for (const k of OBIETTIVI) {
       const v = base && base[k] != null && base[k] !== '' ? Number(base[k]) : null;
-      valori[k] = v == null ? '' : modo === 'piu10' ? Math.ceil(Number((v * AUMENTO).toFixed(6))) : v;
+      valori[k] = v == null ? '' : modo === 'crescita' ? Math.ceil(Number((v * (1 + percento / 100)).toFixed(6))) : v;
     }
     return { valori, mesePrima: prima ? prima.mese : null };
   }
@@ -223,7 +225,7 @@
     return null;
   }
 
-  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato };
+  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

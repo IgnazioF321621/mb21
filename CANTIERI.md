@@ -16,7 +16,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Lavoro 1: come nascono i numeri di Glide~~ — fatto, confermato da Ignazio (allegato del brief)
 - ~~Lavori 2-4: tabelle, import, pagina, Check del Giorno~~ — fatti il 14/09: 809 check e 65 mesi importati, numeri di Ignazio uguali all'export, 10 prove, regole di accesso provate sul DB. **Da provare da Ignazio sul telefono**
 - ~~Dashboard troppo lunga sul telefono~~ — fatto il 14/09: la coda è fatta di righe compatte (nome, fase, frase del coach) che si aprono col tocco
-- ~~Lavoro 5: modulo obiettivi del mese più semplice~~ — fatto il 14/09: un foglio con i 12 obiettivi già compilati, «Come il mese scorso» / «+10%» / «Scelgo io», partenza automatica, niente obiettivi tutti a zero. **Da provare da Ignazio**
+- ~~Lavoro 5: modulo obiettivi del mese più semplice~~ — fatto il 14/09: un foglio con i 12 obiettivi già compilati, «Come il mese scorso» / «Scelgo io» / barra di crescita 5-10-20-30-40-50% con avviso sopra il 20%, partenza automatica, niente obiettivi tutti a zero. **Da provare da Ignazio**
 - Bottoni «in arrivo»: Partner Select · Rinnova subito · visione completa (Check) · Mostra di più (Report)
 - **VPP/VPG fermi all'export**: serve l'import dei dati Amway
 - Finché si usa anche Glide, il Check del Giorno va scritto in tutti e due

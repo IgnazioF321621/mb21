@@ -198,6 +198,12 @@
   .kpi .complimento { color: var(--verde); font-weight: 700; }
   .obiettivi-mod { display: block; margin: 8px auto 0; font-weight: 600; }
   .ob-modi { margin-bottom: 10px; }
+  .ob-crescita { background: #F5F3FF; border-radius: 14px; padding: 12px 14px; margin-bottom: 6px; }
+  .ob-crescita-testa { font-size: 15px; font-weight: 600; color: #5B21B6; }
+  .ob-crescita-testa b { font-size: 20px; }
+  .ob-crescita input[type=range] { width: 100%; margin: 10px 0 2px; padding: 0; border: 0; background: none; accent-color: var(--coach); height: 28px; }
+  .ob-tacche { display: flex; justify-content: space-between; font-size: 11px; color: var(--grigio); }
+  .ob-ambizioso { margin-top: 8px; font-size: 13px; font-weight: 600; color: #92400E; background: #FEF3C7; border-radius: 10px; padding: 8px 10px; }
   .ob-gruppo h4 { margin: 14px 0 6px; font-size: 15px; }
   .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
@@ -236,7 +242,7 @@
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
 <script>
-const APP_VERSION = '2026.09.14 · 20:07';
+const APP_VERSION = '2026.09.14 · 20:21';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -677,7 +683,8 @@ function collegaDashboard() {
 }
 
 // Obiettivi del mese (lavoro 5): un foglio con i 12 obiettivi raggruppati come le schede, già compilati
-// con quelli del mese (o del mese scorso). «Come <mese>» / «<mese> +10%» riempiono tutto, «Scelgo io» svuota.
+// con quelli del mese (o del mese scorso). «Come <mese>» riempie, «Scelgo io» svuota, la barra «Crescita su <mese>»
+// (5 · 10 · 20 · 30 · 40 · 50%) ricalcola tutti i campi mentre si sposta; sopra il 20% un avviso.
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 function apriObiettivi() {
   if (ST.offline || !DS.dati) return;
@@ -690,8 +697,13 @@ function apriObiettivi() {
     <div class="testa-foglio"><h3>🎯 Obiettivi di ${esc(D.nomeMese(mese))}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
     ${prima ? `<p>Come vuoi partire?</p><div class="chips ob-modi">
       <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
-      <button data-modo="piu10">${esc(prima)} +10%</button>
-      <button data-modo="vuoti">Scelgo io</button></div>` : `<p>Scrivi i tuoi obiettivi per questo mese.</p>`}
+      <button data-modo="vuoti">Scelgo io</button></div>
+      <div class="ob-crescita">
+        <div class="ob-crescita-testa">Crescita su ${esc(prima.toLowerCase())}: <b id="ob-perc">scegli</b></div>
+        <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
+        <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
+        <div class="ob-ambizioso" id="ob-ambizioso" hidden>💪 Obiettivo ambizioso: parlane con il tuo upline</div>
+      </div>` : `<p>Scrivi i tuoi obiettivi per questo mese.</p>`}
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<div class="ob-gruppo"><h4>${pallino} ${esc(gruppo)}</h4><div class="ob-campi">
       ${campi.map(([k, etichetta, decimale]) => `<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
     </div></div>`).join('')}
@@ -702,13 +714,20 @@ function apriObiettivi() {
   const chiudi = () => velo.remove();
   velo.querySelector('#ob-x').onclick = chiudi;
   velo.querySelector('#ob-no').onclick = chiudi;
+  const scrivi = nuovi => { for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) velo.querySelector('#ob-' + k).value = nuovi ? nuovi[k] : ''; };
+  const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   velo.querySelectorAll('.ob-modi button').forEach(b => {
-    b.onclick = () => {
-      velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
-      const nuovi = b.dataset.modo === 'vuoti' ? null : D.propostaObiettivi(DS.obiettivi, mese, b.dataset.modo).valori;
-      for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) velo.querySelector('#ob-' + k).value = nuovi ? nuovi[k] : '';
-    };
+    b.onclick = () => { sceltaModo(b); scrivi(b.dataset.modo === 'vuoti' ? null : D.propostaObiettivi(DS.obiettivi, mese, b.dataset.modo).valori); };
   });
+  const barra = velo.querySelector('#ob-barra');
+  if (barra) barra.oninput = () => {
+    const p = D.CRESCITE[Number(barra.value)];
+    velo.querySelector('#ob-perc').textContent = `+${p}%`;
+    velo.querySelector('#ob-ambizioso').hidden = p <= D.SOGLIA_AMBIZIOSO;
+    sceltaModo(null);
+    scrivi(D.propostaObiettivi(DS.obiettivi, mese, 'crescita', p).valori);
+  };
+  if (barra) barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
   velo.querySelector('#ob-si').onclick = async () => {
     const letti = {};
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
