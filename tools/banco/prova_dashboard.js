@@ -103,17 +103,20 @@ prova('Modulo Check: 11 numeri obbligatori, VP con decimali, note max 150', () =
   assert.equal(D.CAMPI_CHECK.length, 10);   // + Data, Libro, Note = 13 campi
 });
 
-prova('Obiettivi: come il mese scorso, +10%, attuali; partner nuovo = campi vuoti', () => {
+prova('Obiettivi: come il mese scorso, crescita 10% e 50%, attuali; partner nuovo = campi vuoti', () => {
   const uguale = D.propostaObiettivi(obiettivi, '2026-10-01', 'uguale');
   assert.equal(uguale.mesePrima, '2026-09-01');
   assert.deepEqual([uguale.valori.vpg, uguale.valori.contatti, uguale.valori.sponsor_personali, uguale.valori.pagine], [2400, 30, 4, 300]);
-  const piu = D.propostaObiettivi(obiettivi, '2026-10-01', 'piu10').valori;
+  const piu = D.propostaObiettivi(obiettivi, '2026-10-01', 'crescita', 10).valori;
   assert.deepEqual([piu.vpg, piu.contatti, piu.pm, piu.sponsor_personali, piu.bbs], [2640, 33, 17, 5, 8]);
+  const piu50 = D.propostaObiettivi(obiettivi, '2026-10-01', 'crescita', 50).valori;
+  assert.deepEqual([piu50.vpg, piu50.contatti, piu50.pm, piu50.pagine], [3600, 45, 23, 450]);
+  assert.deepEqual(D.CRESCITE, [5, 10, 20, 30, 40, 50]);
   assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'attuali').valori.wes, 12);      // già salvati nel mese
   assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'uguale').valori.wes, 10);       // agosto
   const aZero = [{ mese: '2026-09-01', vpp: 0, contatti: 0 }];
   assert.equal(D.propostaObiettivi(aZero, '2026-10-01', 'uguale').mesePrima, null);           // mesi a zero non contano
-  assert.deepEqual(Object.values(D.propostaObiettivi([], '2026-10-01', 'piu10').valori), Array(12).fill(''));
+  assert.deepEqual(Object.values(D.propostaObiettivi([], '2026-10-01', 'crescita', 10).valori), Array(12).fill(''));
   assert.equal(D.nomeMese('2026-09-01'), 'Settembre');
 });
 
