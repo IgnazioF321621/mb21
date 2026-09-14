@@ -14,7 +14,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Aperto il 14 settembre 2026. Brief in bozza: `docs/MB21_v4_Brief_F4_Agenda.md`.*
 
 - Forma scelta da Ignazio: **giornata a linea del tempo** (striscia 7 giorni, appuntamenti e telefonate insieme, esiti dalla riga)
-- In attesa: ok al brief e risposte A (posto nella barra) · B (Admin vede tutti o i suoi) · C (prossima data dopo l'esito)
+- ~~Brief e risposte A · B · C~~ — approvati il 14/09 (Agenda seconda nella barra · Admin vede tutti · prossima data dopo l'esito · Ospite anche nel Follow Up)
+- ⏸ **Lavoro 1: scelte categoria → tipo → sottotipo → fasi** — bozza in `docs/MB21_v4_Scelte_Agenda_bozza.md`, 5 punti da decidere con Ignazio
 
 ## 10. Fase 3 · DASHBOARD
 *Aperto il 14 settembre 2026. Brief: `docs/MB21_v4_Brief_F3_Dashboard.md`.*
