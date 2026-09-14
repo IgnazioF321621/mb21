@@ -15,7 +15,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Fatto (sul Mac e su GitHub):**
 - Motore della coda `coda.js` + 11 prove superate (`node tools/banco/prova_coda.js`): capienza, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
-- Pagina `index.html`: accesso con codice, tab bar, OGGI con card e coach, offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone
+- Pagina `index.html`: accesso con link via email, tab bar, OGGI con card e coach, offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone
 - Migrazione `20260913230000_fase1_oggi.sql` scritta: `accesso_attivo`, controllo sugli account, `in_coda_dal`, rientro iniziale, vista `contatti_coda`, `registra_esito` / `annulla_esito`
 - Impostazioni di accesso in `supabase/config.toml`, controllate con `supabase config diff`: cambiano solo indirizzo del sito, redirect, lunghezza codice (8 → 6)
 - 14/09: il primo `config push` di Ignazio è fallito, **il piano gratuito non permette di cambiare il testo dell'email**. Tolto il modello personalizzato: l'accesso passa dal codice al **link** → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)
