@@ -127,7 +127,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - **Azioni**: riquadro FASE con **solo icona e titolo** («FASE CONTATTO: RICHIAMARE»; suggerimenti N21 sospesi, niente Indietro/Avanti) · «Azione +» → foglio con **gli stessi bottoni esito della Dashboard** (`registraEsito` / `annullaEsito`, stesso Annulla; `da_coda = false`) · elenco azioni dalla più recente: «tipo • gg/mm/aa», «modalità • area», «esito • nota», interruttore Completato, Modifica (data e ora, nota)
   - **Coach Yes**: «Coach+» (tipo di azione + testo) · elenco note del **partner loggato** (tipo, data e ora) · tocco → testo intero con Modifica
   - **Onboarding**: «Passi di base per il successo», contatore «fatti/14», barra, 14 interruttori (il tocco salva)
-  - **Nuovo Contatto / Modifica**: foglio «Aggiungi un nuovo contatto» / «Modifica contatto», **9 campi di Glide nell'ordine**: Nominativo* · Telefono (prefisso + numero) · Fascia Età · Professione (40) · Località (40) · Categoria* · Contatto e/o Incaricato di (testo con suggerimenti tra i propri nomi) · Area · Note (50). Invia spento finché mancano gli obbligatori. I valori storici fuori elenco e i testi più lunghi dei limiti restano modificabili
+  - **Nuovo Contatto / Modifica**: foglio «Aggiungi un nuovo contatto» / «Modifica contatto», **9 campi di Glide nell'ordine**: Nominativo* · Telefono (prefisso + numero) · Fascia Età · Professione (40) · Località (40) · Categoria* · Contatto e/o Incaricato di (testo con suggerimenti tra i nomi del partner proprietario: il partner loggato per un nuovo contatto) · Area · Note (50). Invia spento finché mancano gli obbligatori. I valori storici fuori elenco e i testi più lunghi dei limiti restano modificabili
 - **Chiave pubblica Supabase** (publishable) in `index.html` (`SUPABASE_KEY`)
 
 ## Import CSV Amway
@@ -157,3 +157,4 @@ _Da definire._
 | 2026.09.14 · 15:02 | Decisioni Fase 2: suggerimenti N21 a richiesta, checklist Partner di 14 passi |
 | 2026.09.14 · 15:22 | Fase 2 aperta: brief in docs/, verifica proprietà dei contatti |
 | 2026.09.14 · 15:39 | Fase 2 Lista Nomi: elenco, filtri, ricerca, scheda, Nuovo Contatto, Archiviati, Onboarding, telefoni internazionali, home «Dashboard» |
+| 2026.09.14 · 15:53 | Fase 2 provata da Ignazio; «Contatto e/o Incaricato di» dalla lista del proprietario |

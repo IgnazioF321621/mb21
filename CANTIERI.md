@@ -22,12 +22,12 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - Pagina: tab **Dashboard** · **Lista Nomi**; elenco, scheda (Dati · Azioni · Coach Yes · Onboarding), Nuovo Contatto / Modifica, Archiviati
 - **Prove sul database** (transazione annullata), come Ignazio e come Isabella: Admin 2.920 righe / 1.561 proprie; nuovo Prospect di Ignazio con rientro oggi ed entra nella vista della coda; nuovo Cliente con rientro vuoto; archivia → Archiviato con categoria di prima; ripristina → Prospect in coda da oggi; ripristina su non archiviato rifiutato; elimina definitivamente → 0 azioni e 0 note orfane; Isabella vede solo i suoi 783, 0 note di altri, 0 modifiche a nomi altrui, non può creare nomi per Ignazio
 
-**Da provare con Ignazio (dall'iPhone)**: elenco e filtri, ricerca, una scheda con azioni, Azione + e Annulla, una nota Coach, Nuovo Contatto (anche il doppione), Archivia e Ripristina, un interruttore di Onboarding
+**Provato da Ignazio dall'iPhone il 14/09**: «sembra funzionare tutto». Alcuni collegamenti tra le parti gli saranno chiari usandola
 
 **Aperti:**
 - **7 telefoni dubbi** lasciati com'erano (cifre in più o in meno, prefisso incerto): da correggere a mano dalla scheda
 - **Prefisso nel Nuovo Contatto**: scelto a tendina, +39 predefinito (proposta di Claude su richiesta di Ignazio «scegliere il prefisso quando si registra»): da confermare dopo la prova
-- «Contatto e/o Incaricato di» è testo con suggerimenti tra i propri nomi (in Glide era un collegamento al contatto): va bene così?
+- ~~«Contatto e/o Incaricato di»~~ — **confermato da Ignazio il 14/09**: i suggerimenti vengono dalla lista del partner che inserisce il nome. In modifica (anche per l'Admin su nomi altrui) vale la lista del proprietario del contatto
 - Suggerimenti N21 sospesi (decisione 4 del brief), Vendite e Sharing «In arrivo», Partner Select in Fase 3
 
 ## 7. Dopo la Fase 1
