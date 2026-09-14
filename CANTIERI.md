@@ -10,24 +10,12 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 6. Fase 1 · OGGI
-*Aperto il 13 settembre 2026. Brief: `docs/MB21_v4_Brief_F1_Oggi.md`.*
+## 7. Dopo la Fase 1
+*Aperto il 14 settembre 2026.*
 
-**Fatto:**
-- Motore della coda `coda.js` + **15 prove** superate (`node tools/banco/prova_coda.js`): capienza, divisione 3 rientri + 2 mai contattati, categorie escluse, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
-- Pagina `index.html`: accesso con link via email, tab bar, OGGI con card, coach e **bottoni esito** (foglio data/ora, Annulla 6 s), offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone; chiave pubblica inserita
-- Migrazioni applicate (i primi due `push` li ha lanciati Ignazio il 14/09): `fase1_oggi` (accesso, `in_coda_dal`, rientro iniziale, vista, esiti) e `bottoni_esito` (4 righe Sequenze Partner/Cliente, `azioni.data_scelta`)
-- Impostazioni di accesso applicate (indirizzo del sito, redirect, codice a 6). Il testo email personalizzato non è ammesso sul piano gratuito → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)
-- **Prova sul database come Ignazio** (transazione annullata): account di email sconosciuta e di utente non abilitato rifiutati; account di Ignazio accettato e collegato; vista coda = solo i suoi 1.561 contatti (l'Admin ne vede 2.920 nelle tabelle); `registra_esito` No Risposta → rientro +2, fuori coda; Appuntamento → rientro al giorno scelto con ora salvata; `annulla_esito` → azione cancellata e contatto ripristinato
-- **Coda reale del 14/09**: 1.346 contatti con rientro a oggi, **1.058 in gara** dopo le esclusioni (196 rientri · 862 mai contattati), **0 Dare Seguito scaduti**
-- Cronologia GitHub riscritta con l'ok di Ignazio: tutti i commit con l'indirizzo noreply, via le due email escluse; push forzato il 14/09. Copia di sicurezza del repo prima della riscrittura nella cartella temporanea della sessione
-
-**Da provare con Ignazio:**
-- Primo accesso da **Safari** sull'iPhone: arriva l'email? contiene solo il link o anche un codice? il link riporta dentro l'app?
-- Un giro vero: 5 card, un esito, Annulla, riapertura (stessi contatti in coda)
-- App **installata** sulla schermata Home: con il solo link potrebbe non ricevere l'accesso (Safari e app installata non lo condividono). Se serve: servizio email proprio (SMTP) per rimettere il codice
-
-**Aperti:**
+- **Codice a 6 cifre nell'email: rimandato** (decisione di Ignazio, 14/09). Oggi l'email ha solo il link; per rimettere il codice serve un servizio email proprio (SMTP) che sblocchi il testo dell'email sul piano gratuito → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link). Collegato: l'app **installata** sulla schermata Home potrebbe non ricevere l'accesso dal link (non ancora provata)
+- **Un esito rimasto registrato dopo la prova**: No Risposta del 14/09 alle 11:23, contatto con rientro al 16/09. Da chiarire con Ignazio se è un tocco voluto o un Annulla non andato a buon fine
+- **Coda che si riempie alla riapertura**: dopo un esito il posto libero si riempie alla prossima apertura dello stesso giorno (i 5 restano 5 in lista, ma in un giorno si possono lavorare più di 5 contatti). Da decidere se va bene o se i 5 sono il massimo giornaliero
 - Coach delle 4 nuove righe Partner/Cliente scritto da Claude: da rivedere
 - I Dare Seguito scaduti (fase Piano Marketing) hanno i bottoni del Contatto: da rivedere quando ce ne saranno
 - Le vecchie versioni dei commit possono restare raggiungibili su GitHub da un link diretto finché GitHub non le elimina; per toglierle subito serve una richiesta al supporto GitHub
@@ -44,6 +32,22 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 6. Fase 1 · OGGI
+*Aperto il 13 settembre 2026, **chiuso il 14 settembre 2026**. Brief: `docs/MB21_v4_Brief_F1_Oggi.md`.*
+
+**Fatto:**
+- Motore della coda `coda.js` + **15 prove** superate (`node tools/banco/prova_coda.js`): capienza, divisione 3 rientri + 2 mai contattati, categorie escluse, slittamento, Dare Seguito fuori capienza, priorità, rientro dopo esito, data di Roma
+- Pagina `index.html`: accesso con link via email, tab bar, OGGI con card, coach e **bottoni esito** (foglio data/ora, Annulla 6 s), offline in sola lettura; `sw.js`, `manifest.webmanifest`, icone; chiave pubblica inserita
+- Migrazioni applicate (i primi due `push` li ha lanciati Ignazio il 14/09): `fase1_oggi` (accesso, `in_coda_dal`, rientro iniziale, vista, esiti) e `bottoni_esito` (4 righe Sequenze Partner/Cliente, `azioni.data_scelta`)
+- Impostazioni di accesso applicate (indirizzo del sito, redirect, codice a 6). Il testo email personalizzato non è ammesso sul piano gratuito → [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)
+- **Prova sul database come Ignazio** (transazione annullata): account di email sconosciuta e di utente non abilitato rifiutati; account di Ignazio accettato e collegato; vista coda = solo i suoi 1.561 contatti (l'Admin ne vede 2.920 nelle tabelle); `registra_esito` No Risposta → rientro +2, fuori coda; Appuntamento → rientro al giorno scelto con ora salvata; `annulla_esito` → azione cancellata e contatto ripristinato
+- **Coda reale del 14/09**: 1.346 contatti con rientro a oggi, **1.058 in gara** dopo le esclusioni (196 rientri · 862 mai contattati), **0 Dare Seguito scaduti**
+- Cronologia GitHub riscritta con l'ok di Ignazio: tutti i commit con l'indirizzo noreply, via le due email escluse; push forzato il 14/09. Copia di sicurezza del repo prima della riscrittura nella cartella temporanea della sessione
+
+**Provato da Ignazio dall'iPhone il 14/09** (Safari): l'email contiene **solo il link**; accesso riuscito (account creato e collegato a `utenti`); Non risponde e Annulla funzionano; alla riapertura la coda si ritrova.
+
+**Passati al cantiere 7.**
 
 ## 4. Import dei dati da Glide
 *Chiuso il 13 settembre 2026.*

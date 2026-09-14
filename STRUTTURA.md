@@ -107,3 +107,4 @@ _Da definire._
 | 2026.09.13 · 23:02 | Fase 1 (parte locale): coda.js + prove, pagina OGGI, PWA, migrazione e accesso preparati (non applicati) |
 | 2026.09.14 · 09:05 | Accesso con link invece del codice: tolto il modello email (non ammesso sul piano gratuito) |
 | 2026.09.14 · 09:31 | Bottoni esito, coda 3 rientri + 2 mai contattati, categorie escluse, chiave pubblica |
+| 2026.09.14 · 11:26 | Fase 1 chiusa dopo la prova di Ignazio dall'iPhone; codice a 6 cifre rimandato |
