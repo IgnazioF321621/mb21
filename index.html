@@ -273,6 +273,75 @@
   .ag-scelte button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
   .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
 
+  /* ── Report (Fase 5) ── */
+  .rp-periodi { display: flex; gap: 6px; margin: 8px 0 10px; }
+  .rp-periodi button { flex: 1; font-size: 15px; font-weight: 600; padding: 9px 0; border-radius: 999px; border: 1px solid var(--linea); background: #fff; color: var(--testo); }
+  .rp-periodi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .rp-naviga { display: flex; align-items: center; justify-content: space-between; background: #fff; border-radius: 14px; padding: 4px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .rp-naviga b { font-size: 16px; text-align: center; flex: 1; }
+  .rp-naviga button { border: 0; background: none; font-size: 24px; color: var(--blu); padding: 4px 16px; }
+  .rp-naviga button:disabled { color: var(--linea); }
+  .rp-lista { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
+  .rp-riga { display: grid; grid-template-columns: 1fr 52px 48px 18px; align-items: center; gap: 4px; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea);
+    background: none; padding: 13px 12px 13px 14px; font-family: inherit; color: var(--testo); font-size: 16px; }
+  .rp-riga:first-child { border-top: 0; }
+  .rp-riga .n { text-align: right; font-weight: 800; font-size: 18px; }
+  .rp-riga .p { text-align: right; font-size: 13px; color: var(--grigio); font-weight: 600; }
+  .rp-riga .f { text-align: right; color: var(--grigio-chiaro); font-size: 18px; }
+  .rp-riga.tipo { font-weight: 700; }
+  .rp-riga.tipo.aperto { background: #F9FAFB; }
+  .rp-riga.esito { background: #F9FAFB; padding-left: 28px; font-size: 15px; }
+  .rp-riga.esito .n { font-size: 16px; }
+  .rp-riga.esito.verde, .rp-riga.esito.verde .n { color: var(--verde); }
+  .rp-riga.esito.zero, .rp-riga.esito.zero .n { color: var(--grigio-chiaro); }
+  .rp-riga.nome { background: #F3F4F6; padding-left: 42px; font-size: 14px; grid-template-columns: 1fr auto 18px; }
+  .rp-riga.nome small { color: var(--grigio); font-size: 12px; }
+  .rp-altre { background: #F3F4F6; padding: 8px 14px 10px 42px; font-size: 13px; color: var(--grigio); border-top: 1px solid var(--linea); }
+  .rp-grafico { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
+  .rp-grafico h3 { margin: 0; font-size: 15px; }
+  .rp-grafico .legenda { font-size: 12px; color: var(--grigio); margin: 2px 0 10px; }
+  .rp-grafico .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+  .rp-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 120px; }
+  .rp-barre div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+  .rp-barre small { font-size: 10px; font-weight: 700; color: var(--grigio); margin-bottom: 2px; }
+  .rp-barre span { width: 100%; background: #93C5FD; border-radius: 4px 4px 0 0; position: relative; overflow: hidden; }
+  .rp-barre span i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--verde); }
+  .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
+  .rp-mesi .futuro { color: var(--linea); }
+  .rp-apri { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 14px; padding: 14px; margin-bottom: 12px;
+    background: #EDE9FE; color: #5B21B6; font-size: 16px; font-weight: 700; font-family: inherit; }
+  .rp-wes { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
+  .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
+  .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
+  .rp-wes .w button { border: 0; background: none; color: var(--rosso); font-size: 14px; font-weight: 600; }
+  .rp-wes .nuovo-wes { display: flex; gap: 8px; margin-top: 8px; }
+  .rp-wes .nuovo-wes input { margin: 0; padding: 10px; font-size: 16px; }
+  .rp-wes .nuovo-wes button { flex: none; border: 0; border-radius: 12px; background: var(--testo); color: #fff; font-weight: 600; padding: 0 14px; }
+  .gp-obiettivi { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .gp-obiettivi button { font-size: 16px; font-weight: 700; min-width: 54px; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--linea); background: #fff; color: var(--testo); }
+  .gp-obiettivi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .gp-numeri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .gp-numeri div { background: #F3F4F6; border-radius: 12px; padding: 10px 4px; text-align: center; }
+  .gp-numeri b { display: block; font-size: 22px; }
+  .gp-numeri small { font-size: 11px; color: var(--grigio); font-weight: 600; }
+  .gp-sotto { display: flex; justify-content: space-between; font-size: 12px; color: var(--grigio); margin-top: 6px; }
+  .gp-celle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .gp-celle button { aspect-ratio: 1; min-width: 0; border-radius: 10px; border: 1px solid var(--linea); background: #fff; color: var(--grigio-chiaro); font-size: 14px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; font-family: inherit; overflow: hidden; }
+  .gp-celle button.fatta { border-width: 2.5px; color: var(--testo); font-size: 10px; line-height: 1.15; }
+  .gp-celle button.fatta b { font-size: 15px; }
+  .gp-celle button.fatta span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gp-celle button.prossima { border: 2px dashed var(--blu); color: var(--blu); }
+  .gp-celle button.scelta { outline: 3px solid #FBBF24; }
+  .gp-dettaglio { background: #F3F4F6; border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+  .gp-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--grigio); margin-top: 10px; }
+  .gp-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .gp-altro { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .gp-altro input { margin: 0; padding: 0; border: 0; accent-color: var(--testo); }
+  .gp-altro b { min-width: 34px; text-align: right; font-size: 18px; }
+  .ds-griglia { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 14px; padding: 12px 14px; margin: 10px 0 0;
+    background: #EDE9FE; color: #5B21B6; font-size: 15px; font-weight: 700; font-family: inherit; }
+
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -282,7 +351,7 @@
   <button data-tab="oggi" class="attiva">Dashboard</button>
   <button data-tab="agenda">Agenda</button>
   <button data-tab="lista">Lista Nomi</button>
-  <button data-tab="progressi">Progressi</button>
+  <button data-tab="report">Report</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -290,8 +359,9 @@
 <script src="lista.js"></script>
 <script src="dashboard.js"></script>
 <script src="agenda.js"></script>
+<script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 09:04';
+const APP_VERSION = '2026.09.15 · 15:45';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -379,12 +449,12 @@ function mostraTab() {
   nav.hidden = false;
   nav.querySelectorAll('button').forEach(b => {
     b.classList.toggle('attiva', b.dataset.tab === ST.tab);
-    b.onclick = () => { ST.tab = b.dataset.tab; mostraTab(); };
+    b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; mostraTab(); };
   });
   if (ST.tab === 'oggi') return caricaOggi();
   if (ST.tab === 'lista') return apriLista();
   if (ST.tab === 'agenda') return apriAgenda();
-  app.innerHTML = `<h1>Progressi</h1><div class="vuoto">In arrivo.</div>${versione()}`;
+  if (ST.tab === 'report') return apriReport();
 }
 
 // ── OGGI ─────────────────────────────────────────────────
@@ -744,6 +814,20 @@ async function caricaDashboard(oggi) {
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
+  await caricaRichiamoGriglia(oggi);
+}
+
+// Richiamo della Griglia PM in Dashboard (decisione 8 del Report): «PM fatti di obiettivo», apre la griglia
+async function caricaRichiamoGriglia(oggi) {
+  DS.griglia = null;
+  try {
+    const { data: imp, error } = await dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', ST.utente.id).maybeSingle());
+    if (error || !imp) return;
+    const { data: pm, error: e2 } = await dbq('PM della griglia', supa.from('azioni').select('id, inizio')
+      .eq('user_id', ST.utente.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
+    if (e2) return;
+    DS.griglia = MB21Report.griglia(pm, imp, oggi);
+  } catch (e) { /* il richiamo manca, la Dashboard resta */ }
 }
 
 const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);
@@ -798,6 +882,7 @@ function dashboardBasso() {
       </table>
       <div class="totali">${colonne.map(([k, t]) => `<div><b style="color:${COLORI_SV[k]}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
     </div>
+    ${DS.griglia ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
     <button class="visione" id="ds-altro">👁️ Mostra di più!</button>`;
 }
 
@@ -808,7 +893,8 @@ function collegaDashboard() {
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
   su('ds-visione', () => inArrivo('Sezione Check'));
-  su('ds-altro', () => inArrivo('Sezione Report'));
+  su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
+  su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
   app.querySelectorAll('.schede-dash button').forEach(b => {
     b.onclick = () => { DS.scheda = b.dataset.scheda; disegnaOggi(); };
@@ -1059,7 +1145,8 @@ function collegaAgenda(eventi) {
   });
 }
 
-async function apriContattoDa(id) {
+async function apriContattoDa(id, ritorno) {
+  LS.ritorno = ritorno || null;   // 'report' / 'griglia': la freccia della scheda torna lì
   ST.tab = 'lista';
   document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'lista'));
   if (!LS.righe.length) {
@@ -1481,7 +1568,7 @@ function disegnaScheda() {
   const cifre = tel ? tel.replace(/[^0-9]/g, '') : '';
   const link = (href, testo) => `<a href="${href}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ Lista Nomi</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata">
       <div class="strip" style="background:${coloreCategoria(c.categoria)}"></div>
       <div class="corpo">
@@ -1504,7 +1591,13 @@ function disegnaScheda() {
       <button disabled title="In arrivo">Vendite · in arrivo</button></div>
     <div id="sezione"></div>
     ${versione()}`;
-  document.getElementById('indietro').onclick = () => { LS.contatto = null; disegnaLista(); };
+  document.getElementById('indietro').onclick = () => {
+    LS.contatto = null;
+    if (!LS.ritorno) return disegnaLista();
+    ST.tab = 'report'; RP.vista = LS.ritorno === 'griglia' ? 'griglia' : 'report'; LS.ritorno = null;
+    document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'report'));
+    RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
+  };
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
@@ -1772,6 +1865,225 @@ function apriModulo(c) {
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : 'Modifiche salvate');
     ricaricaERidisegna();
+  };
+}
+
+// ── REPORT (Fase 5) ──────────────────────────────────────
+// Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi
+// (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
+// Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
+const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
+const CAMPI_REPORT = 'id, contatto_id, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
+
+async function leggiAzioniMie() {
+  const righe = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq('azioni del report', supa.from('azioni').select(CAMPI_REPORT)
+      .eq('user_id', ST.utente.id).not('inizio', 'is', null).order('id').range(da, da + 999));
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < 1000) return righe;
+  }
+}
+
+async function apriReport(vista) {
+  RP.vista = vista || RP.vista;
+  if (!RP.azioni) app.innerHTML = `<h1>Report</h1><div class="vuoto">Carico i numeri…</div>`;
+  try {
+    const [azioni, wes, gr] = await Promise.all([
+      leggiAzioniMie(),
+      dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
+      dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', ST.utente.id).maybeSingle()),
+    ]);
+    if (wes.error || gr.error) throw wes.error || gr.error;
+    RP.azioni = azioni; RP.wes = wes.data; RP.griglia = gr.data;
+  } catch (e) {
+    app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
+    return;
+  }
+  const oggi = MB21Coda.oggiRoma();
+  if (!RP.periodo) RP.periodo = MB21Report.periodoIniziale(RP.tipo, oggi, RP.wes.map(w => w.data));
+  RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
+}
+
+function disegnaReport() {
+  const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data), p = RP.periodo;
+  const riga = (classe, attr, testo, n, perc, freccia) =>
+    `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
+  let html = `<h1>Report</h1>
+    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
+      `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
+  if (!p) {
+    html += `<div class="vuoto">Nessun Wes ancora. ${eAdmin() ? 'Aggiungi la data qui sotto.' : "L'Admin aggiunge le date dei Wes."}</div>`;
+  } else {
+    html += `<div class="rp-naviga">
+      <button id="rp-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, date) ? '' : 'disabled'}>‹</button>
+      <b>${esc(R.testoPeriodo(p))}</b>
+      <button id="rp-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, date) ? '' : 'disabled'}>›</button></div>`;
+    const gruppi = R.numeri(RP.azioni, p, oggi);
+    html += `<div class="rp-lista">${gruppi.map(g => {
+      const aperto = RP.aperto === g.chiave;
+      let h = riga(`tipo ${aperto ? 'aperto' : ''}`, `data-gruppo="${g.chiave}"`, esc(g.etichetta), g.totale, '', aperto ? '⌄' : '›');
+      if (!aperto) return h;
+      if (!g.esiti.length) return h + `<div class="rp-altre">Nessuna azione nel periodo</div>`;
+      for (const e of g.esiti) {
+        const scelto = RP.esito === e.esito;
+        h += riga(`esito ${e.verde ? 'verde' : ''} ${e.n ? '' : 'zero'}`, `data-esito="${esc(e.esito)}" ${e.n ? '' : 'disabled'}`,
+          esc(e.esito), e.n, `${e.percentuale}%`, e.n ? (scelto ? '⌄' : '›') : '');
+        if (!scelto) continue;
+        h += e.persone.map(x => `<button class="rp-riga nome" data-contatto="${esc(x.contatto_id)}">
+          <span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}</small></span><span></span><span class="f">›</span></button>`).join('');
+        if (e.altre) h += `<div class="rp-altre">e altri ${e.altre}: scegli un periodo più corto</div>`;
+      }
+      return h;
+    }).join('')}</div>`;
+    const anno = R.periodoAnno(p.da), aperto = gruppi.find(g => g.chiave === RP.aperto);
+    const mesi = R.grafico(RP.azioni, anno, oggi, RP.aperto), max = Math.max(1, ...mesi.map(m => m.azioni));
+    html += `<div class="rp-grafico"><h3>📈 Anno ${esc(anno.etichetta)}${aperto ? ' · ' + esc(aperto.etichetta) : ''}</h3>
+      <div class="legenda"><i style="background:#93C5FD;margin-left:0"></i>azioni fatte<i style="background:var(--verde)"></i>risultati che contano</div>
+      <div class="rp-barre">${mesi.map(m => `<div><small>${m.azioni || ''}</small><span style="height:${m.azioni / max * 100}%">
+        <i style="height:${m.azioni ? m.verdi / m.azioni * 100 : 0}%"></i></span></div>`).join('')}</div>
+      <div class="rp-mesi">${mesi.map(m => `<span class="${m.futuro ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div></div>`;
+  }
+  const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
+  html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
+  if (eAdmin()) html += `<div class="rp-wes"><h3>Date dei Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
+    ${[...RP.wes].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>`;
+  app.innerHTML = html + versione();
+  collegaReport();
+}
+
+function collegaReport() {
+  const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data);
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  app.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => {
+    RP.tipo = b.dataset.periodo; RP.periodo = R.periodoIniziale(RP.tipo, oggi, date); RP.esito = null; disegnaReport();
+  });
+  const sposta = n => { const q = R.spostaPeriodo(RP.periodo, n, oggi, date); if (q) { RP.periodo = q; RP.esito = null; disegnaReport(); } };
+  su('rp-prima', () => sposta(-1));
+  su('rp-dopo', () => sposta(1));
+  app.querySelectorAll('[data-gruppo]').forEach(b => b.onclick = () => {
+    RP.aperto = RP.aperto === b.dataset.gruppo ? null : b.dataset.gruppo; RP.esito = null; disegnaReport();
+  });
+  app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
+  app.querySelectorAll('[data-contatto]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.contatto, 'report'));
+  su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
+  su('rp-piu-wes', async () => {
+    const data = document.getElementById('rp-data-wes').value;
+    if (!data) return mostraToast('Scegli la data del Wes');
+    const { error } = await dbq('nuovo Wes', supa.from('wes').insert({ data }));
+    if (error) return mostraToast(error.code === '23505' ? 'Questa data c\'è già' : 'Non salvato: riprova.');
+    mostraToast(`Wes del ${R.dataLunga(data)} aggiunto`);
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
+    apriReport();
+  });
+  app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
+    const w = RP.wes.find(x => x.id === b.dataset.togli);
+    if (!confirm(`Elimino il Wes del ${R.dataLunga(w.data)}?`)) return;
+    const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast('Wes eliminato');
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
+    apriReport();
+  });
+}
+
+// Griglia PM (decisioni 8-10): obiettivo 8 · 15 · 30 · Altro (fino a 100), inizio + durata 1-12 mesi, caselle dei PM fatti
+function disegnaGriglia() {
+  const R = MB21Report, oggi = MB21Coda.oggiRoma();
+  const imp = RP.griglia;
+  let html = `<button class="indietro" id="gp-indietro">‹ Report</button><h1>Griglia PM</h1>`;
+  if (!imp) {
+    html += `<div class="riquadro"><p style="margin:0 0 12px">Scegli quanti Piani Marketing vuoi fare e in quanto tempo.</p>
+      <button class="primario" id="gp-imposta">Imposta la griglia</button></div>`;
+    app.innerHTML = html + versione();
+    document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
+    document.getElementById('gp-imposta').onclick = impostaGriglia;
+    return;
+  }
+  const g = R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), imp, oggi);
+  const cella = g.celle.find(c => c.numero === RP.cella);
+  html += `<div class="riquadro">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div><b style="font-size:18px">Obiettivo ${g.obiettivo} PM</b>
+          <div class="sotto" style="margin:2px 0 0">${esc(R.dataLunga(g.inizio))} → ${esc(R.dataLunga(g.fine))} · ${g.mesi} ${g.mesi === 1 ? 'mese' : 'mesi'}</div></div>
+        <button class="modifica" id="gp-cambia">Cambia</button></div></div>
+    <div class="riquadro">
+      <div class="gp-numeri"><div><b>${g.fatti}</b><small>PM fatti</small></div><div><b>${g.mancanti}</b><small>Mancanti</small></div>
+        <div><b>${g.alMese}</b><small>PM al mese</small></div></div>
+      <div class="barra"><div style="width:${g.percentuale}%;background:${g.mancanti ? 'var(--blu)' : 'var(--verde)'}"></div></div>
+      <div class="gp-sotto"><span>${g.percentuale}% completato</span><span>Ritmo: ${String(g.ritmo).replace('.', ',')} PM al mese</span></div>
+      ${g.mancanti ? '' : `<div class="gp-dettaglio" style="color:var(--verde);font-weight:700">🎉 Obiettivo raggiunto!</div>`}
+    </div>
+    <div class="riquadro">
+      <div class="gp-celle">${g.celle.map((c, i) => c.id
+        ? `<button class="fatta ${RP.cella === c.numero ? 'scelta' : ''}" data-cella="${c.numero}" style="border-color:${R.coloreCella(c.esito)}">
+            <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span></button>`
+        : `<button class="${i === g.fatti ? 'prossima' : ''}" disabled>${c.numero}</button>`).join('')}</div>
+      <div class="gp-dettaglio">${cella ? `<b>${esc(cella.nome)}</b>${cella.ospite ? ` · ospite: ${esc(cella.ospite)}` : ''} · ${esc(R.dataLunga(cella.giorno))}
+          ${cella.esito ? ` · <b style="color:${R.coloreCella(cella.esito)}">${esc(cella.esito)}</b>` : ''}
+          <div style="margin-top:8px"><button class="piccolo" style="margin:0" id="gp-contatto">👤 Apri contatto</button></div>`
+        : 'Tocca una casella per i dettagli'}</div>
+      <div class="gp-legenda">${Object.entries(R.COLORI_GRIGLIA).map(([e, c]) => `<span><i style="background:${c}"></i>${esc(e)}</span>`).join('')}</div>
+    </div>`;
+  app.innerHTML = html + versione();
+  document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
+  document.getElementById('gp-cambia').onclick = impostaGriglia;
+  app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => { RP.cella = RP.cella === Number(b.dataset.cella) ? null : Number(b.dataset.cella); disegnaGriglia(); });
+  const ac = document.getElementById('gp-contatto');
+  if (ac) ac.onclick = () => apriContattoDa(cella.contatto_id, 'griglia');
+}
+
+function impostaGriglia() {
+  const R = MB21Report, imp = RP.griglia || { obiettivo: 8, inizio: MB21Coda.oggiRoma().slice(0, 8) + '01', mesi: 6 };
+  let obiettivo = imp.obiettivo;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto">
+    <div class="testa-foglio"><h3>🟪 Griglia PM</h3><button id="gi-x" aria-label="Chiudi">×</button></div>
+    <div class="campo"><label>Obiettivo PM</label>
+      <div class="gp-obiettivi">${R.OBIETTIVI_PM.map(n => `<button data-ob="${n}">${n}</button>`).join('')}<button data-ob="altro">Altro</button></div>
+      <div class="gp-altro" id="gi-altro" hidden><input type="range" id="gi-barra" min="1" max="100" step="1" value="${obiettivo}"><b id="gi-valore">${obiettivo}</b></div></div>
+    <div class="campo"><label>Data di inizio</label><input type="date" id="gi-inizio" value="${esc(imp.inizio)}"></div>
+    <div class="campo"><label>Durata</label><select id="gi-mesi">${Array.from({ length: 12 }, (_, i) => i + 1).map(m =>
+      `<option value="${m}" ${m === imp.mesi ? 'selected' : ''}>${m} ${m === 1 ? 'mese' : 'mesi'}</option>`).join('')}</select></div>
+    <p id="gi-fine" style="margin:6px 0 0"></p>
+    <div class="errore" id="gi-errore"></div>
+    <div class="due"><button class="link" id="gi-no">Annulla</button><button class="primario" id="gi-si">Salva</button></div>
+  </div>`;
+  document.body.appendChild(velo);
+  const $ = id => velo.querySelector('#' + id);
+  const chiudi = () => velo.remove();
+  $('gi-x').onclick = chiudi; $('gi-no').onclick = chiudi;
+  const aggiorna = () => {
+    const altro = !R.OBIETTIVI_PM.includes(obiettivo) || !$('gi-altro').hidden;
+    velo.querySelectorAll('[data-ob]').forEach(b => b.classList.toggle('scelto', altro ? b.dataset.ob === 'altro' : Number(b.dataset.ob) === obiettivo));
+    $('gi-valore').textContent = obiettivo;
+    const v = { obiettivo, inizio: $('gi-inizio').value, mesi: Number($('gi-mesi').value) };
+    $('gi-fine').textContent = R.validaGriglia(v) ? '' : `Fino al ${R.dataLunga(R.griglia([], v, MB21Coda.oggiRoma()).fine)}`;
+  };
+  if (!R.OBIETTIVI_PM.includes(obiettivo)) $('gi-altro').hidden = false;
+  velo.querySelectorAll('[data-ob]').forEach(b => b.onclick = () => {
+    if (b.dataset.ob === 'altro') { $('gi-altro').hidden = false; obiettivo = Number($('gi-barra').value); }
+    else { $('gi-altro').hidden = true; obiettivo = Number(b.dataset.ob); $('gi-barra').value = obiettivo; }
+    aggiorna();
+  });
+  $('gi-barra').oninput = () => { obiettivo = Number($('gi-barra').value); aggiorna(); };
+  $('gi-inizio').onchange = aggiorna; $('gi-mesi').onchange = aggiorna;
+  aggiorna();
+  $('gi-si').onclick = async () => {
+    const v = { obiettivo, inizio: $('gi-inizio').value, mesi: Number($('gi-mesi').value) };
+    const errore = R.validaGriglia(v);
+    if (errore) { $('gi-errore').textContent = errore; return; }
+    $('gi-si').disabled = true;
+    const { error } = await dbq('salva griglia PM', supa.from('griglia_pm')
+      .upsert({ user_id: ST.utente.id, ...v, aggiornata_il: new Date().toISOString() }, { onConflict: 'user_id' }));
+    if (error) { $('gi-si').disabled = false; $('gi-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+    chiudi();
+    RP.griglia = v; RP.cella = null;
+    mostraToast('Griglia PM salvata');
+    disegnaGriglia();
   };
 }
 

@@ -17,6 +17,8 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `coach_note` | CoachNote | Chat con YesApp su un contatto | le proprie · Admin tutte |
 | `check_giorno` | Day | Fase 3: il Check del Giorno, una riga per check (più check sulla stessa data si sommano) | i propri · Admin tutti; scrive il proprietario o l'Admin |
 | `obiettivi_mese` | Check | Fase 3: obiettivi del mese, partenza di BBS/WES/CEP, VPP/VPG Amway; una riga per partner e mese | i propri · Admin tutti |
+| `wes` | Periodi | Fase 5: date dei Wes (weekend seminar N21), una riga per data | tutti gli utenti loggati; scrive solo Admin |
+| `griglia_pm` | Report (GridPM_*) | Fase 5: impostazioni della Griglia PM, una riga per partner | i propri · Admin tutti |
 
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
 
@@ -35,6 +37,10 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `contatti.user_id` predefinito = `utente_corrente()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
+
+**Fase 5** (migrazione `20260915150000_fase5_report.sql`, applicata):
+- tabelle `wes` (3 date dall'export: 13/10/2025, 14/02/2026, 05/06/2026) e `griglia_pm` (importata la griglia dell'Admin: 50 PM dal 01/07/2026 per 6 mesi; nell'export gli altri non l'avevano)
+- regole provate sul DB (15/09): un partner legge i Wes ma non li scrive; salva solo la propria griglia e non vede quelle altrui; obiettivo fuori da 1-100 rifiutato
 
 **Conferme** (migrazione `20260915090000_conferme_appuntamenti.sql`, applicata):
 - `azioni.confermato_il` (vuoto = da confermare)
@@ -65,6 +71,10 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **utenti** (Fase 3) — `abbonamento_scadenza` (Glide: `Abb_Preavviso` + 7 giorni; attivo se non è passata)
 
 **check_giorno** — `user_id` (predefinito: chi scrive) · `data` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `vp_clienti` (decimali) · `cep` · `bbs` · `wes` · `tracce` · `pagine` (tutti ≥ 0) · `libro` · `note_libro` (max 150) · `glide_ora` (data e ora originali, solo righe importate) · `creato_il`
+
+**wes** — `data` (unica: giorno del Wes) · `creato_il`
+
+**griglia_pm** — `user_id` (chiave) · `obiettivo` (1-100) · `inizio` (data) · `mesi` (1-12) · `aggiornata_il`
 
 **obiettivi_mese** — `user_id` · `mese` (primo giorno del mese, unico per partner) · obiettivi `vpp` · `vpv` (VP Clienti) · `vpg` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `bbs` · `wes` · `cep` · `tracce` · `pagine` (vuoti o 0 = non impostati) · `bbs_partenza` · `wes_partenza` · `cep_partenza` (vuoti = automatici) · `vpp_amway` · `vpg_amway` (dati Amway del mese, fermi all'export)
 
@@ -143,6 +153,17 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **bottone «Appuntamento» della coda e di «Azione +»** (dal 15/09): invece del foglio giorno/ora apre «Nuovo appuntamento» già compilato (`tipoDaCoda`: Prospect, Referral e senza categoria → Piano Marketing · PM 1a1 con categoria proposta Prospect; Partner → Appuntamento; Cliente → Consulenza PRD; domani 18:30). Salvato l'appuntamento, l'esito (PM Fissato / Appuntamento) si registra con `data_scelta` = inizio dell'appuntamento; se l'esito non si salva, l'appuntamento si cancella. Annulla (`annullaEsito`) cancella anche l'appuntamento. In Agenda l'esito «dalla coda» non si mostra se c'è l'appuntamento vero dello stesso contatto alla stessa ora (`senzaDoppioniCoda`)
 - ora di Roma con `Intl` (`partiRoma`, `isoDaRoma`), anche al cambio d'ora
 
+**Report** (Fase 5, `report.js`, funzioni pure; prove in `tools/banco/prova_report.js`; decisioni di Ignazio 15/09 in `docs/MB21_v4_Brief_F5_Report.md`):
+- l'app legge tutte le azioni **del partner loggato** con `inizio` (anche l'Admin vede le sue, come la Dashboard; a pagine da 1000) e calcola sul telefono. Nessuna tabella di conteggi
+- **azioni fatte** = giorno di `inizio` (ora di Roma) fino a oggi compreso; le future non contano (anche per i Contatto dalla coda conta il giorno dell'esito, non la data scelta)
+- **periodi**: Mese (dal primo del mese, niente mesi futuri) · **Wes** = da una data di `wes` alla successiva, l'ultimo «in corso»; date future ignorate · **Anno** = Performance Year **1/9 → 31/8**. Si parte dal periodo in corso; ‹ › spostano
+- **gruppi** (`GRUPPI`): Contatti = Contatto · Piani Marketing · Follow Up · **Consulenze = Consulenza PRD + Prodotti** (tipo di Glide) · Appuntamenti. Esito vuoto = «Senza esito»
+- **risultati che contano** (verde, sempre visibili anche a 0): Contatto → PM Fissato · Piano Marketing e Follow Up → Iscrizione, Prodotti · Consulenze → Vendita · Appuntamenti nessuno
+- esiti in ordine: verdi, poi per numero; «Senza esito» in fondo. % sul totale del gruppo, arrotondata. Nomi dal più recente, al massimo 50 («e altri N»)
+- **grafico**: 12 mesi del Performance Year del periodo scelto; barra = azioni fatte, parte verde = risultati che contano; segue il gruppo aperto (nessuno = tutti)
+- **Griglia PM** (`griglia`): fine = inizio + mesi − 1 giorno (giorno limitato alla fine del mese); PM fatti = azioni Piano Marketing con giorno tra inizio e fine e fino a oggi, in ordine di data; mancanti = obiettivo − fatti; **PM al mese** = mancanti ÷ mesi rimasti (mese in corso compreso), in su; **ritmo** = fatti ÷ mesi passati (mese in corso compreso), un decimale; caselle = obiettivo (o più se superato); colore per esito (Iscrizione `#2E7D32` · No BuonFine `#C62828` · Presentazione `#1565C0` · Dare Seguito `#7B1FA2` · altri grigio)
+- **confronto con Glide** (aprile 2026, Ignazio): Piani Marketing 15 (Iscrizione 4 · Dare Seguito 1 · No BuonFine 4 · No Show 1 · Presentazione 5) e Appuntamenti 7 uguali. In Glide Contatti e Follow Up mostravano 15 perché restava il numero della scheda precedente: nella v4 aprile ha 35 contatti e 1 follow up
+
 **Dashboard** (`dashboard.js`, funzioni pure; prove in `tools/banco/prova_dashboard.js`; regole ricostruite nel brief Fase 3 → allegato, confermate da Ignazio 14/09):
 - l'app legge `check_mesi` e `obiettivi_mese` del **partner loggato** (anche l'Admin vede i suoi) e calcola tutto sul telefono
 - **numeri**: Contatti · PM · Sponsor · VP Clienti · Tracce · Pagine = somma dei check del mese; BBS · WES · CEP = partenza + check; VPP · VPG = `vpp_amway` / `vpg_amway`
@@ -156,10 +177,13 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
 ## Componenti UI
-File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) · `agenda.js` (logica dell'Agenda) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
+File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) · `agenda.js` (logica dell'Agenda) · `report.js` (calcoli del Report) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
 
 - **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
-- **Tab bar**: **Dashboard** (la home, prima «OGGI») · **Agenda** · **Lista Nomi** · Progressi («In arrivo»)
+- **Tab bar**: **Dashboard** (la home, prima «OGGI») · **Agenda** · **Lista Nomi** · **Report** (prima «Progressi», decisione di Ignazio 15/09)
+- **Report** (Fase 5): «Report» · tre bottoni **Mese · Wes · Anno** · riga ‹ periodo › (Wes: «Wes Giu 2026 · 05/06 → in corso») · elenco a scalini: righe dei 5 gruppi con il totale; tocco → esiti sotto (colonne separate **numero** e **%**, verdi i risultati che contano, a 0 in grigio); tocco su un esito → nomi con data e modalità; tocco su un nome → scheda contatto con «‹ Report» che torna qui · riquadro **📈 Anno** (12 barre con numeri, legenda) · «🟪 Griglia PM · X di N ›» · per l'Admin **Date dei Wes** (elenco con Elimina, data + «+ Wes»)
+  - **Griglia PM**: «‹ Report», obiettivo e periodo con **Cambia** · tre caselle PM fatti · Mancanti · PM al mese, barra, «% completato» e «Ritmo» · caselle 5 per riga (fatte: bordo del colore dell'esito, numero, gg/mm, nome abbreviato; prossima tratteggiata) · tocco → nome, ospite, data, esito, «👤 Apri contatto» · legenda. Senza impostazioni: «Imposta la griglia»
+  - foglio **Griglia PM**: Obiettivo **8 · 15 · 30 · Altro** (barra 1-100) · Data di inizio · Durata 1-12 mesi · «Fino al gg/mm/aaaa» · Salva (upsert)
 - **Agenda** (Fase 4): «Agenda» + «Oggi» (se non si è su oggi) + **＋**; «Settembre 2026 ▾» apre il calendario; **striscia 7 giorni** (L-D, ‹ › di settimana in settimana, pallino se ci sono impegni, oggi in blu, scelto in nero); sotto il giorno per esteso e le **righe** in ordine d'ora: ora inizio/fine, barra colore del tipo (PM blu · Follow Up verde · Appuntamento viola · Consulenza PRD arancio · Contatto grigio), «sottotipo · contatto», «area \| esito • ✅ Completato / ⏳ Da completare [Partner]». Tocco → si apre: ospite, note, **bottoni esito** del suo tipo/sottotipo (quello attuale in blu), **🕑 Sposta** (giorno e ora, stessa durata, Annulla), **👤 Apri contatto** (scheda della Lista), **Elimina** (conferma, Annulla). Righe «dalla coda»: «＋ Fissa appuntamento» e Apri contatto. In fondo: «📞 Telefonate del giorno · Fatte X di N» (oggi, porta alla Dashboard) o «N contatti rientrano in coda» (giorni futuri); «📅 N conferme da fare» (oggi, porta alla Dashboard) · «⚠️ N appuntamenti passati senza esito» → foglio con l'elenco. Sulle righe confermate «· 👍 confermato»
   - **Nuovo appuntamento** (foglio): Contatto (nome con suggerimenti tra i propri, archiviati esclusi) · Categoria (dal contatto) · Area · Tipo · Sottotipo · Giorno e ora (ora proposta) · Durata (5 min… 2 ore, predefinita 1 ora) · Ospite (PM e Follow Up, 50) · Note (100). I campi compaiono man mano. Categorie senza appuntamenti: avviso
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
@@ -172,7 +196,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
   - **📅 Conferme · N** (15/09): card per appuntamento da confermare (strip colore del tipo, nome, «Conferma appuntamento · … ore …», telefono), bottoni **Confermato** (salva `confermato_il`, avviso con Annulla) · **Sposta** (foglio giorno/ora) · **Non risponde** (resta, in fondo, con «📵 riprova più tardi», solo sul telefono). Non contano nei contatti al giorno
   - **OGGI** (al posto di «Azioni da completare» di Glide): «Dare Seguito scaduti» + «La tua coda · Fatti X di N»
-  - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), «👁️ Mostra di più!» (in arrivo: sezione Report)
+  - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), sotto il richiamo **«🟪 Griglia PM · X di N ›»** (se impostata: apre la griglia) e «👁️ Mostra di più!» → **Report**
   - i tocchi «in arrivo» mostrano un avviso breve. Se i numeri non si caricano, la coda si vede lo stesso con un avviso
 - **Righe della coda** (Fase 3, richiesta di Ignazio 14/09: la pagina era troppo lunga): ogni contatto è una **riga compatta** con strip del colore della categoria, nome (+ badge rosso «scaduto da N giorni» per i DS), **le parole di Glide** «modalità • area | esito» dell'ultima azione (mai contattato: «Telefonata • <area del contatto o Attività> | Mai contattato o 2+ anni»; `index.html → rigaGlide`) e la **frase del coach** su una riga; il tocco la **apre** (una sola alla volta, `ST.aperta`): professione, città · età, telefono, coach intero e bottoni esito. Nella card aperta valgono le regole sotto
 - **Card**: strip 4px per categoria (Prospect `#F97316` · Cliente `#3B82F6` · Partner `#8B5CF6` · Ex/Archiviato/Referral `#9CA3AF` · Unlinked `#D1D5DB`), nome 17px bold, professione 13px, città · età 12px, telefono blu `tel:`, badge fase (rosso se DS scaduto), riquadro Coach viola
@@ -240,3 +264,4 @@ _Da definire._
 | 2026.09.15 · 08:30 | Bottone «Appuntamento» della coda crea l'appuntamento vero in Agenda |
 | 2026.09.15 · 08:55 | Conferme appuntamenti (12 ore prima) in Dashboard e Agenda; appuntamento fissato = fuori coda |
 | 2026.09.15 · 09:04 | CANTIERI: prossimo passo rilievo Report |
+| 2026.09.15 · 15:45 | Fase 5 Report: Mese/Wes/Anno, numeri a scalini con i nomi, grafico dell'anno, Griglia PM, date dei Wes; «Progressi» → «Report»; richiamo Griglia PM in Dashboard |

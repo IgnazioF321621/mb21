@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Report_come_e.md` (il Report di Glide, §8 risposte di Ignazio; 17 screenshot in `mb21-import/screenshot-report/`), `docs/MB21_v4_Brief_Sviluppo.md` (sez. 6 design, colori Griglia PM), `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: bozza, decisioni prese con Ignazio il 15/09. Da rivedere insieme prima di costruire; grafica da ripassare con lo strumento Design.**
+> **Stato: decisioni prese con Ignazio il 15/09, costruzione avviata da Ignazio lo stesso giorno. Lavori 1-5 fatti il 15/09. Grafica da ripassare con lo strumento Design.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -49,6 +49,8 @@ Appuntamenti           7   ›
 📈 Anno 2026-2027 · azioni e risultati che contano, mese per mese
 🟦 Griglia PM · 2 di 50   ›
 ```
+Partner Select: non costruito (in Dashboard è ancora «in arrivo»); ognuno vede i propri numeri.
+
 | # | Parte | Cosa fa |
 |---|---|---|
 | 1 | **Periodo** | Mese (default: mese in corso) · Wes (default: in corso) · Anno (default: Performance Year in corso); ‹ › per spostarsi |
@@ -62,7 +64,7 @@ Appuntamenti           7   ›
 
 ### 1. Dati
 - I numeri si calcolano dalle **azioni già in `azioni`** (tipo, modalità, esito, data): nessuna tabella di conteggi come in Glide.
-- Data dell'azione per il periodo: come in Agenda (`data_scelta` per i Contatto dalla coda, altrimenti `inizio`).
+- Data dell'azione per il periodo: `inizio` (il giorno in cui è stata fatta, anche per i Contatto dalla coda); le azioni future non contano.
 - Tabella nuova **`wes`**: data del Wes (una riga per Wes). Leggono tutti, scrive solo l'Admin. Import delle 3 date dall'export (`Periodi.csv`).
 - Impostazioni Griglia PM **per partner**: obiettivo, data di inizio, mesi (1-12). Import da `Report.csv` dove c'è.
 - Regole: ogni partner vede i propri numeri; l'Admin tutti (Partner Select).
