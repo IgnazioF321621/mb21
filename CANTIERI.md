@@ -13,7 +13,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 12. Prossimo passo: rilievo REPORT
 *Deciso il 15/09.* Seguendo l'ordine delle tab di Glide (Dashboard · Agenda · Lista Nomi · **Report** · Check · Mappa): rilievo della tab **Report** in sola lettura, stesso metodo dell'Agenda (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, screenshot in `mb21-import/screenshot-report/`, documento `docs/MB21_v3_Report_come_e.md`, Partner Select = Ignazio). Dati già nell'export: `Report.csv`. Poi proposte per il Report v4
 
-- ~~Rilievo della tab Report~~ — fatto il 15/09 (ripresa automatica, 51 foto): `docs/MB21_v3_Report_come_e.md`. Filtri Mese/Wes, 5 schede, tabella, grafico dell'anno, Griglia PM. **Da discutere con Ignazio** le 6 domande del §8, poi proposte per il Report v4
+- ~~Rilievo della tab Report~~ — fatto il 15/09 (ripresa automatica, 51 foto): `docs/MB21_v3_Report_come_e.md`. Filtri Mese/Wes, 5 schede, tabella, grafico dell'anno, Griglia PM. ~~6 domande~~ risposte da Ignazio il 15/09 (§8). **Prossimo: proposte per il Report v4** (stessi contenuti, più semplice da navigare; nomi dietro ogni casella; mesi/Wes automatici; esiti positivi; Griglia PM con richiamo in Dashboard)
 - Accesso a MB21 v4 dal pannello di Claude Desktop: il link dell'email si apre in un altro browser → copiarlo e incollarlo nel pannello (il codice a 6 cifre è rimandato, cantiere 7)
 
 ## 11. Fase 4 · AGENDA

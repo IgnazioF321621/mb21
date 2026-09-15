@@ -69,7 +69,7 @@ Esempio (Ignazio, Apr 2026, scheda Piani Marketing): `PM Totali 15 · Iscrizione
 ### 4.1 Stranezze viste
 📷 `10-numeri-a-zero.png`
 
-- **Numeri che non tornano tra le schede**: con Apr 2026 il totale è **15** in Contatti, Piani Marketing, Follow Up e Consulenze, e la **tabella sotto è la stessa** (tutti PM 1a1/PM Upline); in Contatti però «PM Fissati 0». Solo Appuntamenti mostra 7 e un elenco diverso. **Sembra** che numeri e tabella seguano la scheda aperta prima e si aggiornino in ritardo. **Da verificare con Ignazio.**
+- **Numeri che non tornano tra le schede**: con Apr 2026 il totale è **15** in Contatti, Piani Marketing, Follow Up e Consulenze, e la **tabella sotto è la stessa** (tutti PM 1a1/PM Upline); in Contatti però «PM Fissati 0». Solo Appuntamenti mostra 7 e un elenco diverso. **Sembra** che numeri e tabella seguano la scheda aperta prima e si aggiornino in ritardo. **Risposta di Ignazio (15/09):** l'elenco sotto mostra le persone della **casella toccata** (es. Iscrizione → i nomi degli iscritti); nel rilievo erano state toccate solo le schede. Resta **da verificare** il 15 uguale in quattro schede.
 - **Tornando** su Consulenze e Piani Marketing dopo Appuntamenti, **tutto a 0** e tabella vuota, pur con lo stesso mese.
 - Testi: in Follow Up manca il «%» («26,7 del totale»); in Prodotti «0,0% del totale **il**»; con valore 0 a volte solo «del totale» senza percentuale.
 
@@ -121,10 +121,10 @@ Dal bottone **«Griglia PM»** (scheda Piani Marketing) si apre la pagina **«�
 
 ---
 
-## 8. Da discutere con Ignazio
-1. **Numeri instabili tra le schede** ([§4.1](#41-stranezze-viste)): conferma che in Glide è un difetto noto, non una regola?
-2. **Menu mese fermo ad Apr 2026** e **Wes** con due sole voci: i periodi vanno creati a mano?
-3. **Esito Positivo** nel grafico: quali esiti contano (Iscrizione, Prodotti, Vendita…)?
-4. **Performance Year** da settembre ad agosto: confermi?
-5. **Griglia PM**: in v4 va dentro il Report o resta a parte? Obiettivi fissi 8-15-30-50-75-100 o liberi?
-6. Cosa serve davvero nel Report v4: numeri per esito, tabella, grafico, Griglia PM — **cosa usi e cosa no?**
+## 8. Domande e risposte di Ignazio (15/09/2026)
+1. **Numeri tra le schede** → bisogna **toccare la casella** (PM Totali, Iscrizione…) per vedere sotto i nomi di quell'esito; toccando solo la scheda l'elenco resta quello di prima. Da ricontrollare: il 15 uguale in quattro schede e il «tutto a 0» tornando indietro.
+2. **Menu mese e Wes** → mesi e Wes si **aggiungevano a mano**, lavoro scomodo: fermo ad **Apr 2026**. Il **Wes** è il **weekend seminar** di N21, **ogni 4 mesi**, periodo di riferimento del lavoro; dopo Feb 2026 veniva **Giu 2026**. In v4: periodi creati da soli.
+3. **Esito Positivo** → sono positivi l'**Iscrizione** (dopo Piano Marketing **o** dopo Follow Up) e la **Vendita**. Elenco completo da migliorare e verificare nelle proposte.
+4. **Performance Year** → anno fiscale **da settembre ad agosto**; dal 01/09/2026 è in corso il **2026-2027**.
+5. **Griglia PM** → resta nel **Report o in una pagina dedicata** (è importante); in **Dashboard un richiamo** a che punto si è. Obiettivo: tappe del manuale N21 **8 · 15 · 30**, poi forse **libero fino a 100** con una **barra da far scorrere** come negli obiettivi del mese. Da decidere nelle proposte.
+6. **Cosa serve** → **tutto è fondamentale** (numeri, tabella, grafico, Griglia PM). L'idea: toccando una scheda o casella si vedono **i nomi delle persone** di quell'esito (es. chi non si è presentato). Il problema di Glide è che è **complicato**: le persone **non si orientano**. Obiettivo del Report v4: stessi contenuti, **più semplice da navigare**.
