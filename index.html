@@ -391,7 +391,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 22:25';
+const APP_VERSION = '2026.09.15 · 22:31';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -552,6 +552,19 @@ async function leggiCandidati(oggi) {
   }
 }
 
+// Senza categoria del partner visto (cantiere 16 · Da catalogare)
+async function leggiSenzaCategoria() {
+  const righe = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq('lettura da catalogare',
+      supa.from('contatti').select('id,nome,professione,fascia_eta,citta,telefono,note,referral_di,categoria,user_id')
+        .eq('user_id', visto().id).is('categoria', null).order('id').range(da, da + 999));
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < 1000) return righe;
+  }
+}
+
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   app.innerHTML = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
@@ -590,12 +603,16 @@ async function caricaOggi() {
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline && !altro) salvaCache();
+  ST.catalogo = null;   // offline o errore: il riquadro Da catalogare non si mostra
+  if (!offline) {
+    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi); } catch (e) {}
+  }
   await Promise.all([caricaDashboard(oggi), caricaConferme()]);
   disegnaOggi();
 }
 
 // ── Bottoni esito (tabella confermata da Ignazio il 14/09, STRUTTURA.md → Bottoni esito) ──
-// Prospect, Referral e senza categoria: 5 bottoni sulle fasi Prospect · Contatto.
+// Prospect e Referral (e senza categoria, se capitano): 5 bottoni sulle fasi Prospect · Contatto.
 // Partner e Cliente: in Sequenze non hanno fasi di telefonata → solo i due con data.
 const BOTTONI_PROSPECT = [
   { etichetta: 'Appuntamento', chiave: 'Prospect-Contatto-PM Fissato', data: 'giorno-ora', classe: 'appuntamento' },
@@ -674,6 +691,7 @@ function disegnaOggi() {
   if (altro) html += `<div class="sotto">👁️ Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
     : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
+  html += catalogoHtml();
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaConferme();
@@ -685,6 +703,88 @@ function disegnaOggi() {
   app.querySelectorAll('.bottoni button[data-contatto]').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
+  app.querySelectorAll('.bottoni button[data-cataloga]').forEach(btn => {
+    btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
+  });
+}
+
+// ── DA CATALOGARE (cantiere 16, decisioni di Ignazio 15/09 · brief F7 §4c) ──
+// 5 senza categoria al giorno in ordine alfabetico, in più della coda. Il tocco sceglie la categoria
+// (`cataloga_contatto`), con Annulla. Referral non c'è. Per ora l'Admin su un altro partner guarda soltanto.
+const CATEGORIE_CATALOGO = [
+  { etichetta: 'Prospect', categoria: 'Prospect' }, { etichetta: 'Partner', categoria: 'Partner' },
+  { etichetta: 'Cliente', categoria: 'Cliente' }, { etichetta: 'Ex Partner/Cliente', categoria: 'Ex Partner/Cliente' },
+  { etichetta: 'Unlinked', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
+];
+function catalogoHtml() {
+  const cat = ST.catalogo;
+  const fatti = ST.stato.catalogati_oggi || 0;
+  if (!cat || (!cat.totale && !fatti)) return '';
+  const altro = guardoAltri();
+  let h = `<div class="testa-coda"><h2>🗂️ Da catalogare</h2>
+    <span class="contatore">Fatti ${Math.min(fatti, MB21Coda.QUOTA_CATALOGO)} di ${MB21Coda.QUOTA_CATALOGO}</span></div>
+    <div class="sotto">${cat.totale} ancora da catalogare</div>`;
+  if (altro) h += `<div class="sotto">👁️ Solo da guardare, per ora.</div>`;
+  if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
+  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${MB21Coda.QUOTA_CATALOGO}. 👏` : 'Tutti catalogati. 👏'}</div>`;
+}
+function cardCatalogo(r) {
+  const aperta = ST.aperta === r.id;
+  const testa = `
+    <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
+      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span></span>
+      <span class="rc-glide">${esc(r.professione || 'Senza categoria')}</span>
+      <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
+    </button>`;
+  const strip = `<div class="strip" style="background:var(--unlinked)"></div>`;
+  if (!aperta) return `<div class="card compatta" id="card-${esc(r.id)}">${strip}${testa}</div>`;
+  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
+  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span class="sotto">Senza telefono</span>';
+  const bottoni = CATEGORIE_CATALOGO.map((b, i) =>
+    `<button class="${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
+  return `
+    <div class="card compatta aperta" id="card-${esc(r.id)}">
+      ${strip}${testa}
+      <div class="corpo">
+        ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
+        <div class="riga">${tel}</div>
+        ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
+        ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
+        <div class="bottoni">${bottoni}</div>
+      </div>
+    </div>`;
+}
+async function toccaCategoria(id, indice) {
+  const i = ST.catalogo.righe.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const contatto = ST.catalogo.righe[i];
+  const scelta = CATEGORIE_CATALOGO[indice];
+  const card = document.getElementById('card-' + id);
+  card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const { data: prima, error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: id, p_categoria: scelta.categoria }));
+  if (error) {
+    card.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    return mostraToast('Non salvato: controlla la connessione e riprova.');
+  }
+  card.classList.add('via');
+  setTimeout(() => {
+    ST.catalogo.righe.splice(i, 1);
+    ST.catalogo.totale--;
+    ST.stato.catalogati_oggi = (ST.stato.catalogati_oggi || 0) + 1;
+    ST.aperta = null;
+    disegnaOggi();
+    mostraToast(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(i, contatto, prima));
+  }, 250);
+}
+async function annullaCatalogo(i, contatto, prima) {
+  const { error } = await dbq('annulla catalogo', supa.rpc('annulla_catalogo',
+    { p_contatto: contatto.id, p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec }));
+  if (error) return mostraToast('Annullamento non riuscito: riprova.');
+  ST.catalogo.righe.splice(i, 0, contatto);
+  ST.catalogo.totale++;
+  ST.stato.catalogati_oggi--;
+  disegnaOggi();
+  mostraToast('Annullato');
 }
 
 function trovaInCoda(id) {
