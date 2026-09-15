@@ -284,3 +284,4 @@ _Da definire._
 | 2026.09.15 · 16:10 | Foglio unico «Modifica azione» (sottotipo, esito, giorno e ora, ospite, note) da Report, Griglia PM, scheda contatto e Agenda; coda ricalcolata solo sull'ultima azione |
 | 2026.09.15 · 16:28 | «Portato da»: l'azione è di chi ascolta; «L'esito è dell'ospite» sposta le vecchie azioni; scelta contatto con «＋ aggiungi»; «Ha portato» nella scheda |
 | 2026.09.15 · 16:34 | «Tipo di piano / contatto / …» al posto di «Sottotipo»; «Portato da» solo dopo lo spostamento sull'ospite; ricerca: «è già il contatto» |
+| 2026.09.15 · 16:41 | «Portato da» provato da Ignazio |
