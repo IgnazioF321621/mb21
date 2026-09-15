@@ -67,7 +67,8 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
 - **G. Segni Vitali sulla persona, a cascata** (idea di Ignazio, 15/09, sostituirebbe D e riaprirebbe F). Invece di scrivere numeri nel check giornaliero, il segno vitale si mette **sulla persona** che ha comprato il biglietto o è abbonata, nella sua **scheda contatto**: 🎟 **BBS** (quale evento) · 🎟 **WES** (quale Wes) · **CEP** (abbonato dal … / uscito il …). **Lo scrive Ignazio** (Admin, anche sui contatti degli altri partner), quindi funziona anche se i partner non usano l'app. L'app conta da sola e **risale a cascata**: persona → partner che l'ha in lista → il suo sponsor → … fino a Ignazio.
   - **Vantaggi:** niente azzeramenti a mano (il biglietto è legato al suo evento: finito l'evento, si conta il successivo) · niente numeri negativi per il CEP (l'uscita è una data) · si sa **chi** ha il biglietto, non solo quanti · niente doppi conteggi.
   - **Cosa serve:** (1) **l'albero** chi è sotto chi tra i partner: nella v4 non c'è, nell'export c'è `Partners.csv` con `Sponsor_ID`; (2) le **date degli eventi BBS** (quelle dei Wes ci sono già nella tabella `wes`); (3) ogni persona con biglietto o abbonamento **deve essere in una lista** (anche un cliente di un partner).
-  - **Da chiarire:** i numeri di partenza di oggi (BBS 5 · WES 10 · CEP 6) vanno ricollegati alle persone, o si parte da zero col prossimo evento? Il check giornaliero continua a chiedere BBS/WES/CEP o no?
+  - ~~Numeri di partenza di oggi~~ → **Ignazio (15/09): li ricollega alle persone** (BBS 5 · WES 10 · CEP 6 diventano biglietti e abbonamenti sulle schede).
+  - **Da chiarire:** il check giornaliero continua a chiedere BBS/WES/CEP o no?
 
 ## Lavori (dopo le decisioni)
 1. Calcoli del Check in un file a parte (`check.js`) con prove: periodi, stesso tratto, somme e stati, andamento.
