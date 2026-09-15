@@ -2,7 +2,7 @@
 
 Mappa viva di tabelle, campi e logiche. Si aggiorna nello stesso commit di ogni modifica di schema o logica.
 
-*Aggiornato: 14 settembre 2026.*
+*Aggiornato: 15 settembre 2026.*
 
 ## Tabelle
 Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Schema in `supabase/migrations/20260913193000_schema_minimo.sql`.
@@ -37,6 +37,9 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `contatti.user_id` predefinito = `utente_corrente()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
+
+**Partner Select** (migrazione `20260915200000_partner_select.sql`, applicata; cantiere 15):
+- `utenti.nel_partner_select` (predefinito sì): chi compare nel menu dell'Admin. Fuori i 2 utenti non attivi indicati da Ignazio il 15/09. Nessuna regola di accesso nuova
 
 **Portato da** (migrazione `20260915180000_portato_da.sql`, applicata; decisioni di Ignazio 15/09):
 - `azioni.portato_da`: contatto che ha portato chi ascolta (PM, Follow Up). **Senza vincolo verso `contatti`** di proposito: un secondo collegamento renderebbe ambigue le letture `contatti(nome)`
@@ -79,6 +82,8 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **coach_note** — `user_id` · `contatto_id` · `tipo_azione` · `testo` · `scritta_il`
 
 **utenti** (Fase 3) — `abbonamento_scadenza` (Glide: `Abb_Preavviso` + 7 giorni; attivo se non è passata)
+
+**utenti** (cantiere 15) — `nel_partner_select` (nel menu Partner Select dell'Admin)
 
 **check_giorno** — `user_id` (predefinito: chi scrive) · `data` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `vp_clienti` (decimali) · `cep` · `bbs` · `wes` · `tracce` · `pagine` (tutti ≥ 0) · `libro` · `note_libro` (max 150) · `glide_ora` (data e ora originali, solo righe importate) · `creato_il`
 
@@ -144,7 +149,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 
 **Lista Nomi** (`lista.js`, funzioni pure; prove in `tools/banco/prova_lista.js`):
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
-- **filtri**: `All` (solo Admin, tutti i partner) · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
+- **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
 - **banner**: contatti del partner (archiviati compresi); con All, di tutti
 - **ordine**: alfabetico, maiuscole e accenti ignorati
@@ -198,6 +203,14 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **Obiettivi del mese** (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi (Sponsor Personali compreso) raggruppati come le schede; il foglio si apre con quelli già salvati nel mese, altrimenti con quelli dell'ultimo mese con obiettivi (`propostaObiettivi`); «Come <mese>» · «Scelgo io» (svuota) · barra **«Crescita su <mese>»** con 6 scelte **5 · 10 · 20 · 30 · 40 · 50%** (`CRESCITE`, decisione di Ignazio 14/09): spostandola tutti i 12 campi diventano l'ultimo mese + la percentuale, arrotondati in su; **sopra il 20%** compare «💪 Obiettivo ambizioso: parlane con il tuo upline» (`SOGLIA_AMBIZIOSO`). Nessun mese precedente → campi vuoti. Interi ≥ 0 (VP con decimali), almeno uno > 0 (`validaObiettivi`). Mesi con obiettivi tutti a 0 contano come non impostati. Salvataggio: upsert su (`user_id`, `mese`) dei soli 12 obiettivi (vuoto = null): partenza e VPP/VPG Amway restano
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
+**Partner Select** (cantiere 15, decisioni di Ignazio 15/09; `index.html` → `PS`, logica pura in `dashboard.js` e `lista.js`):
+- **solo Admin**, riquadro scuro in cima a **Dashboard, Lista Nomi, Report e Check** (non in Agenda: l'Admin vede già tutti). Menu: sé stesso «(tu)» per primo, poi gli utenti con `nel_partner_select` in ordine di nome, poi **👥 Tutti**. La scelta vale in tutte e 4 le pagine finché non si cambia (non si salva: riaprendo l'app si riparte da sé)
+- **solo lettura** con un altro partner o Tutti (decisione A): accanto al nome «👁️ solo lettura»; ogni modifica (Check del Giorno, Obiettivi, Nuovo/Modifica contatto, menu «…», Azione +, Completato, Onboarding, Coach+, foglio Modifica azione, Griglia PM) mostra «Stai guardando <nome>: per modificare torna su di te» (`soloGuardo`). In Agenda le modifiche restano libere. Date dei Wes: restano all'Admin
+- **Dashboard**: numeri, banner e Segni Vitali del partner scelto; la **coda di OGGI e le conferme non si mostrano** (sono di chi le lavora: «La coda di OGGI e le conferme sono personali…»). Con Tutti niente banner abbonamento né richiamo Griglia PM
+- **Tutti** = somma dei partner del menu (`unisciPartner`): check sommati per mese, obiettivi e VPP/VPG Amway sommati, **partenze di BBS/WES/CEP calcolate per ogni partner e poi sommate** (così la catena di chi non ha la partenza salvata non si mescola). Nel Check i check giornalieri di tutti insieme, obiettivi uniti allo stesso modo (`mesiDaGiorni`). Verificato il 15/09 sui dati veri: Tutti = somma dei 9 partner (settembre: Contatti 15 · BBS 11 · WES 14 · CEP 13 · VPG 602,63), uguale in Dashboard e Check
+- **Lista Nomi**: filtri e ricerca sui nomi del partner scelto (Tutti: dei partner del menu); banner «<nome>: un totale di N contatti». Il chip **All** non c'è più (lo sostituisce Tutti). Coach Yes mostra le note del **proprietario del contatto**
+- **Report**: azioni del partner scelto (Tutti: di tutti); Griglia PM del partner scelto, nascosta con Tutti
+
 ## Componenti UI
 File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore della coda) · `lista.js` (logica della Lista Nomi) · `dashboard.js` (calcoli della Dashboard) · `agenda.js` (logica dell'Agenda) · `report.js` (calcoli del Report) · `check.js` (calcoli del Check) — separati per provarli con node · `sw.js` · `manifest.webmanifest` · `icone/`.
 
@@ -213,7 +226,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - **Nuovo appuntamento** (foglio): Contatto (nome con suggerimenti tra i propri, archiviati esclusi) · Categoria (dal contatto) · Area · Tipo · Sottotipo · Giorno e ora (ora proposta) · Durata (5 min… 2 ore, predefinita 1 ora) · **Portato da** (PM e Follow Up: scelta contatto, al posto dell'ospite scritto a mano) · Note (100). I campi compaiono man mano. Categorie senza appuntamenti: avviso
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
 - **Dashboard** (Fase 3, copia della Dashboard di Glide → `docs/MB21_v3_Dashboard_Agenda_come_e.md`), dall'alto:
-  - **Partner Select** (solo Admin): riquadro scuro col proprio nome, «In arrivo ▾»
+  - **Partner Select** (solo Admin): riquadro scuro col nome scelto e «▾», vedi Logiche → Partner Select
   - banner abbonamento: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto · Accesso limitato alle funzionalità» + «Rinnova subito →» (in arrivo)
   - banner rosso «🎯 Imposta gli obiettivi del mese!» quando mancano → foglio **Obiettivi di <mese>**; quando ci sono, sotto le schede il link «🎯 Obiettivi di <mese>» riapre lo stesso foglio
   - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (13 campi, Invia salva; avviso «Check salvato» con **Annulla** che cancella il check)
@@ -300,3 +313,4 @@ _Da definire._
 | 2026.09.15 · 17:07 | «Portato da» in tutte le parti provato da Ignazio |
 | 2026.09.15 · 17:13 | CANTIERI: Design e Laboratorio in attesa; prossimo passo rilievo Check |
 | 2026.09.15 · 18:57 | Fase 6 Check: pagina dal bottone «visione completa» (Mese · Wes · Anno, adesso · prima a pari giorni · andamento, periodo prima intero, grafico dei 12 mesi), Segni Vitali a 12 mesi nel Check e solo il mese in corso in Dashboard |
+| 2026.09.15 · 19:45 | Partner Select (solo Admin) in Dashboard, Lista Nomi, Report e Check: un partner o «Tutti», in sola lettura; `utenti.nel_partner_select` |

@@ -388,7 +388,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 18:57';
+const APP_VERSION = '2026.09.15 · 19:45';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -467,6 +467,55 @@ async function dopoAccesso(sessione) {
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
   ST.utente = data;
+  await caricaPersone();
+  mostraTab();
+}
+
+// ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
+// Solo Admin. La scelta vale in Dashboard, Lista Nomi, Report e Check finché non si cambia (in Agenda no).
+// Nel menu: gli utenti con `nel_partner_select`, più «Tutti» (somma). Con un altro partner o «Tutti» si guarda
+// soltanto (decisione A): ogni modifica avvisa di tornare su di sé. Correggere i dati degli altri è il lavoro dopo.
+const PS = { persone: [], scelto: null };   // scelto: null = sé stesso · id di utenti · 'tutti'
+
+async function caricaPersone() {
+  PS.persone = []; PS.scelto = null;
+  if (!eAdmin()) return;
+  const { data, error } = await dbq('Partner Select', supa.from('utenti')
+    .select('id, nome, nome_cognome, abbonamento_scadenza').eq('nel_partner_select', true));
+  if (error) return;
+  PS.persone = data.sort((a, b) => (a.id === ST.utente.id ? -1 : b.id === ST.utente.id ? 1 : nomeDi(a).localeCompare(nomeDi(b), 'it')));
+}
+const nomeDi = p => String(p.nome_cognome || p.nome || '').trim();
+const vediTutti = () => PS.scelto === 'tutti';
+const guardoAltri = () => !!PS.scelto;
+const visto = () => (PS.scelto && !vediTutti() && PS.persone.find(p => p.id === PS.scelto)) || ST.utente;   // con «Tutti»: sé stesso, non usarlo
+const idVisti = () => (vediTutti() ? PS.persone.map(p => p.id) : [visto().id]);
+const nomeVisto = () => (vediTutti() ? 'Tutti' : nomeDi(visto()));
+
+function soloGuardo() {
+  if (!guardoAltri() || ST.tab === 'agenda') return false;   // l'Agenda non segue il Partner Select
+  mostraToast(`Stai guardando ${nomeVisto()}: per modificare torna su di te`);
+  return true;
+}
+function partnerSelect() {
+  if (!eAdmin() || !PS.persone.length) return '';
+  return `<div class="partner-select"><small>Partner Select</small>
+    <button id="ps-scegli">${esc(nomeVisto())}<span>${guardoAltri() ? '👁️ solo lettura ' : ''}▾</span></button></div>`;
+}
+function collegaPartnerSelect() {
+  const b = document.getElementById('ps-scegli');
+  if (b) b.onclick = scegliPartner;
+}
+async function scegliPartner() {
+  const voci = [...PS.persone.map(p => ({ etichetta: nomeDi(p) + (p.id === ST.utente.id ? ' (tu)' : ''), id: p.id })),
+    { etichetta: '👥 Tutti', id: 'tutti' }];
+  const v = await sceltaDa('Partner Select', voci);
+  if (!v) return;
+  const nuovo = v.id === ST.utente.id ? null : v.id;
+  if (nuovo === PS.scelto) return;
+  PS.scelto = nuovo;
+  CK.giorni = null; RP.azioni = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  window.scrollTo(0, 0);
   mostraTab();
 }
 
@@ -500,6 +549,11 @@ async function leggiCandidati(oggi) {
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   app.innerHTML = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
+  if (guardoAltri()) {   // Partner Select: solo i numeri, la coda è di chi la lavora
+    ST.oggi = oggi; ST.offline = false;
+    await caricaDashboard(oggi);
+    return disegnaOggi();
+  }
   let risultato, stato, offline = false;
   try {
     const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi'));
@@ -586,6 +640,11 @@ function cardContatto(r, dareSeguito) {
 function disegnaOggi() {
   const r = ST.risultato;
   let html = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
+  if (guardoAltri()) {
+    html += `<div class="vuoto">La coda di OGGI e le conferme sono personali: si vedono solo dall'app di chi le lavora.</div>`;
+    app.innerHTML = html + dashboardBasso() + versione();
+    return collegaDashboard();
+  }
   if (ST.offline) {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
@@ -831,14 +890,15 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 
 async function caricaDashboard(oggi) {
   try {
-    const mio = ST.utente.id;
+    const ids = idVisti();   // Partner Select: il partner scelto, o tutti
     const [cm, ob] = await Promise.all([
-      dbq('check dei mesi', supa.from('check_mesi').select('*').eq('user_id', mio)),
-      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', mio)),
+      dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
+      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
     ]);
     if (cm.error || ob.error) throw cm.error || ob.error;
-    DS.obiettivi = ob.data;
-    DS.dati = MB21Dashboard.calcola({ checkMesi: cm.data, obiettivi: ob.data, oggi, scadenza: ST.utente.abbonamento_scadenza });
+    const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01') : { checkMesi: cm.data, obiettivi: ob.data };
+    DS.obiettivi = dati.obiettivi;
+    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: visto().abbonamento_scadenza });
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
@@ -848,11 +908,12 @@ async function caricaDashboard(oggi) {
 // Richiamo della Griglia PM in Dashboard (decisione 8 del Report): «PM fatti di obiettivo», apre la griglia
 async function caricaRichiamoGriglia(oggi) {
   DS.griglia = null;
+  if (vediTutti()) return;   // la griglia è di un partner
   try {
-    const { data: imp, error } = await dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', ST.utente.id).maybeSingle());
+    const { data: imp, error } = await dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle());
     if (error || !imp) return;
     const { data: pm, error: e2 } = await dbq('PM della griglia', supa.from('azioni').select('id, inizio')
-      .eq('user_id', ST.utente.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
+      .eq('user_id', visto().id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
     if (e2) return;
     DS.griglia = MB21Report.griglia(pm, imp, oggi);
   } catch (e) { /* il richiamo manca, la Dashboard resta */ }
@@ -863,10 +924,9 @@ const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
 
 function dashboardAlto() {
   const d = DS.dati;
-  let html = eAdmin() ? `<div class="partner-select"><small>Partner Select</small>
-    <button id="ds-partner">${esc(ST.utente.nome || ST.utente.nome_cognome || '')}<span>In arrivo ▾</span></button></div>` : '';
+  let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
-  html += d.abbonamentoAttivo
+  if (!vediTutti()) html += d.abbonamentoAttivo
     ? `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
@@ -901,7 +961,7 @@ function cellaSv(sv, k, v, tag) {
 function tabellaSv(sv) {
   return `<div class="sv">
       <h3>📊 Segni Vitali</h3>
-      <div class="sotto-sv">Ultimi 12 mesi · 👤 ${esc(ST.utente.nome_cognome || '')}</div>
+      <div class="sotto-sv">Ultimi 12 mesi · 👤 ${esc(nomeVisto())}</div>
       <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
       <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr>`).join('')}
@@ -915,7 +975,7 @@ function dashboardBasso() {
   const sv = d.segniVitali, r = sv.righe[sv.righe.length - 1];
   return `<div class="sv">
       <h3>📊 Segni Vitali</h3>
-      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · 👤 ${esc(ST.utente.nome_cognome || '')}</div>
+      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · 👤 ${esc(nomeVisto())}</div>
       <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
@@ -925,7 +985,7 @@ function dashboardBasso() {
 
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
-  su('ds-partner', () => inArrivo('Partner Select'));
+  collegaPartnerSelect();
   su('ds-rinnova', () => inArrivo('Rinnovo abbonamento'));
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
@@ -943,7 +1003,7 @@ function collegaDashboard() {
 // (5 · 10 · 20 · 30 · 40 · 50%) ricalcola tutti i campi mentre si sposta; sopra il 20% un avviso.
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 function apriObiettivi() {
-  if (ST.offline || !DS.dati) return;
+  if (ST.offline || !DS.dati || soloGuardo()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
   const { valori, mesePrima } = D.propostaObiettivi(DS.obiettivi, mese, 'attuali');
   const prima = mesePrima ? D.nomeMese(mesePrima) : null;
@@ -1008,6 +1068,7 @@ function apriObiettivi() {
 
 // Check del Giorno: 13 campi come in Glide. Più check sulla stessa data si sommano (decisione 9).
 function apriCheck() {
+  if (soloGuardo()) return;
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
@@ -1447,6 +1508,9 @@ async function apriLista() {
   disegnaLista();
 }
 
+// Nomi di chi è scelto nel Partner Select (un partner o l'elenco di «Tutti»)
+const utentiLista = () => (vediTutti() ? idVisti() : visto().id);
+
 function coloreCategoria(c) { return COLORI[c] || 'var(--unlinked)'; }
 
 function linkTelefono(tel, classe) {
@@ -1455,17 +1519,18 @@ function linkTelefono(tel, classe) {
 }
 
 function disegnaLista() {
-  const admin = eAdmin();
+  if (LS.filtro === 'all') LS.filtro = 'lista';   // dal cantiere 15 «All» = Partner Select «Tutti»
   const f = MB21Lista.FILTRI[LS.filtro];
-  const totale = MB21Lista.totaleContatti(LS.righe, { filtro: LS.filtro, utenteId: ST.utente.id, admin });
+  const totale = MB21Lista.totaleContatti(LS.righe, { filtro: LS.filtro, utenteId: utentiLista(), admin: eAdmin() });
   const chip = (k) => `<button data-filtro="${k}" class="${LS.filtro === k ? 'scelto' : ''}">${MB21Lista.FILTRI[k].etichetta}</button>`;
   const altriScelto = f.altri ? `Altri: ${f.etichetta} ▾` : 'Altri ▾';
   app.innerHTML = `
     <h1>Lista Nomi</h1>
-    <div class="banner">Hai un totale di <b>${totale.toLocaleString('it-IT')}</b> contatti registrati</div>
+    ${partnerSelect()}
+    <div class="banner">${guardoAltri() ? `${esc(nomeVisto())}: ` : 'Hai '}un totale di <b>${totale.toLocaleString('it-IT')}</b> contatti registrati</div>
     <button class="nuovo" id="nuovo">+ Nuovo Contatto</button>
     <div class="chips">
-      ${admin ? chip('all') : ''}${chip('lista')}${chip('prospect')}${chip('partner')}${chip('clienti')}
+      ${chip('lista')}${chip('prospect')}${chip('partner')}${chip('clienti')}
       <button id="altri" class="${f.altri ? 'scelto' : ''}">${altriScelto}</button>
     </div>
     <div class="cerca">
@@ -1475,6 +1540,7 @@ function disegnaLista() {
     <div id="elenco"></div>
     <div id="fondo"></div>
     ${versione()}`;
+  collegaPartnerSelect();
   document.getElementById('nuovo').onclick = () => apriModulo(null);
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });
   document.getElementById('altri').onclick = scegliAltri;
@@ -1489,7 +1555,7 @@ function disegnaLista() {
 }
 
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: ST.utente.id, admin: eAdmin() });
+  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin() });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
   elenco.innerHTML = trovati.length
@@ -1548,6 +1614,7 @@ async function scegliAltri() {
 }
 
 async function menuCard(id) {
+  if (soloGuardo()) return;
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
   const voci = r.categoria === 'Archiviato'
@@ -1694,6 +1761,7 @@ async function sezioneAzioni() {
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   box.querySelectorAll('[data-completata]').forEach(i => i.onchange = async () => {
+    if (soloGuardo()) { i.checked = !i.checked; return; }
     const { error } = await dbq('completata', supa.from('azioni').update({ completata: i.checked }).eq('id', i.dataset.completata));
     if (error) { i.checked = !i.checked; return mostraToast('Non salvato: riprova.'); }
     LS.azioni.find(a => a.id === i.dataset.completata).completata = i.checked;
@@ -1703,6 +1771,7 @@ async function sezioneAzioni() {
 
 // «Azione +»: gli stessi bottoni esito della Dashboard, stesso codice e stesso Annulla
 async function azionePiu() {
+  if (soloGuardo()) return;
   const c = LS.contatto;
   const scelta = await sceltaDa('Nuova azione · ' + c.nome, bottoniPer(c.categoria).map(b => ({ etichetta: b.etichetta, b })));
   if (!scelta) return;
@@ -1738,7 +1807,7 @@ async function sezioneCoach() {
   box.innerHTML = piu + '<div class="vuoto">Carico le note…</div>';
   if (!LS.note) {
     const { data, error } = await dbq('lettura note', supa.from('coach_note')
-      .select('id, tipo_azione, testo, scritta_il').eq('contatto_id', c.id).eq('user_id', ST.utente.id)
+      .select('id, tipo_azione, testo, scritta_il').eq('contatto_id', c.id).eq('user_id', c.user_id)
       .order('scritta_il', { ascending: false }));
     if (error) { box.innerHTML = piu + '<div class="avviso">Non riesco a caricare le note.</div>'; return; }
     LS.note = data;
@@ -1771,6 +1840,7 @@ function leggiNota(n, quando) {
 }
 
 async function notaCoach(n) {
+  if (soloGuardo()) return;
   const valori = await moduloSemplice(n ? 'Modifica nota' : 'Nuova nota Coach', [
     { k: 'tipo', etichetta: 'Tipo di azione', tipo: 'select', opzioni: TIPI_COACH, valore: n ? n.tipo_azione : 'Contatto' },
     { k: 'testo', etichetta: 'Testo', tipo: 'textarea', valore: n ? n.testo : '', obbligatorio: true, righe: 10 },
@@ -1799,6 +1869,7 @@ function sezioneOnboarding() {
           <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${c.categoria === 'Archiviato' ? 'disabled' : ''}></label>`).join('')}
       </div>`;
     box.querySelectorAll('[data-passo]').forEach(i => i.onchange = async () => {
+      if (soloGuardo()) { i.checked = !i.checked; return; }
       const col = i.dataset.passo;
       const { error } = await dbq('onboarding', supa.from('contatti').update({ [col]: i.checked }).eq('id', c.id));
       if (error) { i.checked = !i.checked; return mostraToast('Non salvato: riprova.'); }
@@ -1839,6 +1910,7 @@ function moduloSemplice(titolo, campi) {
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
 function apriModulo(c) {
+  if (soloGuardo()) return;
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
   // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner loggato)
@@ -1923,6 +1995,7 @@ const rigaPortato = nome => nome ? `🤝 Portato da ${esc(nome)}` : '';
 // Coda: se è l'ultima azione del contatto e cambia l'esito o il contatto, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
 // opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' per «Apri contatto» (senza = niente bottone) }
 async function foglioAzione(id, opz = {}) {
+  if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
     .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, ospite, note, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
@@ -2058,7 +2131,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // adesso · prima (a pari giorni) · andamento, riga grigia col periodo prima intero (B), grafico dei 12 mesi, Segni Vitali a 12 mesi (C).
 // Numeri del partner loggato. Calcoli in check.js.
 const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], aperta: null };
-const CAMPI_CK = 'data, ' + MB21Check.CAMPI_GIORNO.join(', ');
+const CAMPI_CK = 'user_id, data, ' + MB21Check.CAMPI_GIORNO.join(', ');
 
 async function apriPaginaCheck() {
   if (!CK.giorni) app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1><div class="vuoto">Carico i numeri…</div>`;
@@ -2068,17 +2141,21 @@ async function apriPaginaCheck() {
     const giorni = [];
     for (let da = 0; ; da += 1000) {
       const { data, error } = await dbq('check giornalieri', supa.from('check_giorno').select(CAMPI_CK)
-        .eq('user_id', ST.utente.id).order('id').range(da, da + 999));
+        .in('user_id', idVisti()).order('id').range(da, da + 999));
       if (error) throw error;
       giorni.push(...data);
       if (data.length < 1000) break;
     }
     const [ob, wes] = await Promise.all([
-      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', ST.utente.id)),
+      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
       dbq('date dei Wes', supa.from('wes').select('data').order('data')),
     ]);
     if (ob.error || wes.error) throw ob.error || wes.error;
-    CK.giorni = giorni; CK.obiettivi = ob.data; CK.wes = wes.data.map(w => w.data);
+    // «Tutti»: check di tutti insieme, obiettivi sommati con le partenze calcolate per ognuno (dashboard.js → unisciPartner)
+    CK.obiettivi = vediTutti()
+      ? MB21Dashboard.unisciPartner(MB21Dashboard.mesiDaGiorni(giorni, ['bbs', 'wes', 'cep']), ob.data, MB21Coda.oggiRoma().slice(0, 8) + '01').obiettivi
+      : ob.data;
+    CK.giorni = giorni; CK.wes = wes.data.map(w => w.data);
   } catch (e) {
     app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>
       <div class="avviso">Non riesco a caricare il Check. Controlla la connessione e riprova.</div>${versione()}`;
@@ -2092,7 +2169,7 @@ async function apriPaginaCheck() {
 function disegnaCheck() {
   const R = MB21Report, C = MB21Check, oggi = MB21Coda.oggiRoma(), p = CK.periodo;
   const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi };
-  let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>
+  let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>${partnerSelect()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
@@ -2135,6 +2212,7 @@ function collegaCheck() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
+  collegaPartnerSelect();
   app.querySelectorAll('[data-ckperiodo]').forEach(b => b.onclick = () => {
     CK.tipo = b.dataset.ckperiodo; CK.periodo = R.periodoIniziale(CK.tipo, oggi, CK.wes); disegnaCheck();
   });
@@ -2155,7 +2233,7 @@ async function leggiAzioniMie() {
   const righe = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('azioni del report', supa.from('azioni').select(CAMPI_REPORT)
-      .eq('user_id', ST.utente.id).not('inizio', 'is', null).order('id').range(da, da + 999));
+      .in('user_id', idVisti()).not('inizio', 'is', null).order('id').range(da, da + 999));
     if (error) throw error;
     righe.push(...data);
     if (data.length < 1000) return righe;
@@ -2169,7 +2247,7 @@ async function apriReport(vista) {
     const [azioni, wes, gr] = await Promise.all([
       leggiAzioniMie(),
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
-      dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', ST.utente.id).maybeSingle()),
+      vediTutti() ? { data: null } : dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle()),
     ]);
     if (wes.error || gr.error) throw wes.error || gr.error;
     RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data;
@@ -2186,7 +2264,7 @@ function disegnaReport() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data), p = RP.periodo;
   const riga = (classe, attr, testo, n, perc, freccia) =>
     `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
-  let html = `<h1>Report</h1>
+  let html = `<h1>Report</h1>${partnerSelect()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
@@ -2222,7 +2300,7 @@ function disegnaReport() {
       <div class="rp-mesi">${mesi.map(m => `<span class="${m.futuro ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div></div>`;
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
-  html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
+  if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
   if (eAdmin()) html += `<div class="rp-wes"><h3>Date dei Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
     ${[...RP.wes].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
     <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>`;
@@ -2233,6 +2311,7 @@ function disegnaReport() {
 function collegaReport() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data);
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  collegaPartnerSelect();
   app.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => {
     RP.tipo = b.dataset.periodo; RP.periodo = R.periodoIniziale(RP.tipo, oggi, date); RP.esito = null; disegnaReport();
   });
@@ -2305,6 +2384,7 @@ function disegnaGriglia() {
 }
 
 function impostaGriglia() {
+  if (soloGuardo()) return;
   const R = MB21Report, imp = RP.griglia || { obiettivo: 8, inizio: MB21Coda.oggiRoma().slice(0, 8) + '01', mesi: 6 };
   let obiettivo = imp.obiettivo;
   const velo = document.createElement('div');
