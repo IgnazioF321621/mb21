@@ -341,6 +341,10 @@
   .ds-griglia { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 14px; padding: 12px 14px; margin: 10px 0 0;
     background: #EDE9FE; color: #5B21B6; font-size: 15px; font-weight: 700; font-family: inherit; }
 
+  .fa-persona { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #F9FAFB; border: 1px solid var(--linea); border-radius: 12px; padding: 4px 6px 4px 12px; margin-top: 6px; font-size: 16px; min-height: 46px; }
+  .fa-persona .link { padding: 6px 8px; flex: none; }
+  .fa-ospite { margin: 6px 0 0; width: 100%; background: #FEF3C7; color: #92400E; }
+
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -360,7 +364,7 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 16:10';
+const APP_VERSION = '2026.09.15 · 16:28';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1275,7 +1279,7 @@ async function nuovoAppuntamento(opz = {}) {
   const st = {
     contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
-    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60,
+    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60, portato: null,
   };
   if (st.tipo && !A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
   const eventiGiorno = A.eventiDelGiorno(AG.azioni, opz.giorno || MB21Coda.oggiRoma());
@@ -1318,10 +1322,14 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
-        if (A.conOspite(st.tipo)) h += `<div class="campo"><label>Ospite</label><input id="na-ospite" maxlength="50" value="${esc(campi.ospite)}"></div>`;
+        if (A.conOspite(st.tipo)) h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
+          ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">×</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
       }
       velo.querySelector('#na-corpo').innerHTML = h;
+      const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
+      if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
+      if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
       const inp = velo.querySelector('#na-contatto');
       if (inp) inp.onchange = () => {
         const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
@@ -1352,7 +1360,7 @@ async function nuovoAppuntamento(opz = {}) {
       const inizio = A.isoDaRoma(v.giorno, v.ora);
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || ST.utente.id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + st.durata * 60000).toISOString(),
-        completata: false, ospite: v.ospite || null, note: v.note || null };
+        completata: false, portato_da: A.conOspite(st.tipo) && st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
@@ -1623,18 +1631,31 @@ async function sezioneAzioni() {
     ${c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="azione-piu">Azione +</button>'}`;
   box.innerHTML = faseHtml + '<div class="vuoto">Carico le azioni…</div>';
   if (!LS.azioni) {
+    // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
     const { data, error } = await dbq('lettura azioni', supa.from('azioni')
-      .select('id, tipo_azione, modalita, esito, area, note, inizio, completata, data_scelta')
-      .eq('contatto_id', c.id).order('inizio', { ascending: false, nullsFirst: false }));
+      .select('id, contatto_id, portato_da, tipo_azione, modalita, esito, area, note, inizio, completata, data_scelta, contatti(nome)')
+      .or(`contatto_id.eq.${c.id},portato_da.eq.${c.id}`).order('inizio', { ascending: false, nullsFirst: false }));
     if (error) { box.innerHTML = faseHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
-    LS.azioni = data;
+    const ids = [...new Set(data.filter(a => a.portato_da && a.portato_da !== c.id).map(a => a.portato_da))];
+    const nomi = {};
+    if (ids.length) {
+      const { data: pd } = await dbq('nomi portato da', supa.from('contatti').select('id, nome').in('id', ids));
+      for (const x of pd || []) nomi[x.id] = x.nome;
+    }
+    LS.azioni = data.map(a => ({ ...a, portatoNome: nomi[a.portato_da] || null }));
   }
   if (LS.sezione !== 'azioni') return;
-  box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => `
+  box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
+    <div class="azione">
+      <div class="t">🤝 Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
+      <div class="s">${esc([a.modalita, a.esito].filter(Boolean).join(' • '))}</div>
+      <div class="comandi"><button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
+    </div>` : `
     <div class="azione">
       <div class="t">${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.area].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>
+      ${a.portatoNome ? `<div class="s">Portato da ${esc(a.portatoNome)}</div>` : ''}
       <div class="comandi">
         <label class="interruttore" style="border:0;padding:0"><input type="checkbox" data-completata="${a.id}" ${a.completata ? 'checked' : ''}></label>
         <span class="s">Completato</span>
@@ -1850,27 +1871,33 @@ function apriModulo(c) {
 }
 
 // ── Foglio unico «Modifica azione» (decisioni di Ignazio 15/09) ──────────
-// Stesso foglio da Report, Griglia PM, scheda contatto e Agenda: sottotipo, esito, giorno e ora, ospite, note.
+// Stesso foglio da Report, Griglia PM, scheda contatto e Agenda: contatto, portato da, sottotipo, esito, giorno e ora, note.
 // Serve a correggere un passo (per andare avanti si chiude con l'esito e se ne apre uno nuovo).
 // Scelte da MB21Agenda.sceltePerModifica: un tipo nuovo aggiunto in agenda.js compare anche qui.
-// Coda: se è l'ultima azione del contatto e l'esito cambia, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
-// opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' | … per «Apri contatto» (senza = niente bottone) }
+// L'azione è di chi ascolta; chi l'ha portato va in «Portato da». Le vecchie azioni con l'ospite scritto a mano
+// si spostano sull'ospite con «L'esito è dell'ospite» (il contatto di prima diventa «Portato da»).
+// Coda: se è l'ultima azione del contatto e cambia l'esito o il contatto, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
+// opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' per «Apri contatto» (senza = niente bottone) }
 async function foglioAzione(id, opz = {}) {
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
-    .select('id, contatto_id, categoria, tipo_azione, modalita, esito, inizio, fine, ospite, note, contatti(nome)').eq('id', id).maybeSingle());
+    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, ospite, note, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
+  let portato = null;
+  if (a.portato_da) {
+    const { data } = await dbq('portato da', supa.from('contatti').select('id, nome, categoria').eq('id', a.portato_da).maybeSingle());
+    portato = data || { id: a.portato_da, nome: '—' };
+  }
   const A = MB21Agenda, s = A.sceltePerModifica(a);
   const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
-  let sottotipo = a.modalita, esito = a.esito;
+  const st = { contatto: { id: a.contatto_id, ...(a.contatti || { nome: '—' }) }, portato, ospite: a.ospite, sottotipo: a.modalita, esito: a.esito };
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
     <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
-    <div style="font-size:18px;font-weight:700;margin-bottom:6px">${esc(a.contatti ? a.contatti.nome : '—')}</div>
+    <div id="fa-persone"></div>
     ${s.sottotipi.length ? `<div class="campo"><label>Sottotipo</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label>Esito</label><div class="ag-scelte" id="fa-esiti"></div></div>
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
-    ${s.ospite ? `<div class="campo"><label>Ospite</label><input id="fa-ospite" maxlength="${Math.max(50, (a.ospite || '').length)}" value="${esc(a.ospite || '')}"></div>` : ''}
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     <div class="errore" id="fa-errore"></div>
     <div class="due">${opz.ritorno ? '<button class="link" id="fa-contatto">👤 Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
@@ -1882,33 +1909,100 @@ async function foglioAzione(id, opz = {}) {
   velo.onclick = e => { if (e.target === velo) chiudi(); };
   $('fa-x').onclick = chiudi;
   if ($('fa-no')) $('fa-no').onclick = chiudi;
-  if ($('fa-contatto')) $('fa-contatto').onclick = () => { chiudi(); apriContattoDa(a.contatto_id, opz.ritorno); };
-  const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
-    const esiti = A.sceltePerModifica({ ...a, modalita: sottotipo, esito }).esiti;
-    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === esito ? 'scelto' : ''}">${esc(x)}</button>`).join('');
-    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => { esito = b.dataset.v; disegnaScelte(); });
-    velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === sottotipo));
+  if ($('fa-contatto')) $('fa-contatto').onclick = () => { chiudi(); apriContattoDa(st.contatto.id, opz.ritorno); };
+  const disegnaPersone = () => {
+    const riga = (etichetta, persona, cmd, extra = '') => `<div class="campo"><label>${etichetta}</label>
+      <div class="fa-persona"><span>${persona}</span>${cmd}</div>${extra}</div>`;
+    let h = riga('Contatto <small>l\'esito è suo</small>', esc(st.contatto.nome), '<button class="link" data-cmd="contatto">Cambia</button>');
+    if (s.ospite) {
+      if (st.ospite && !st.portato) h += riga('Ospite <small>scritto a mano</small>', esc(st.ospite), '',
+        `<button class="piccolo fa-ospite" data-cmd="ospite">⇄ L'esito è dell'ospite</button>`);
+      h += riga('Portato da', st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>',
+        st.portato ? '<button class="link" data-cmd="togli" aria-label="Togli">×</button>' : '<button class="link" data-cmd="portato">＋ Scegli</button>');
+    }
+    $('fa-persone').innerHTML = h;
+    $('fa-persone').querySelectorAll('[data-cmd]').forEach(b => b.onclick = async () => {
+      const cmd = b.dataset.cmd;
+      if (cmd === 'togli') { st.portato = null; return disegnaPersone(); }
+      const scelto = await sceltaContatto(cmd === 'ospite' ? 'Chi è l\'ospite?' : cmd === 'portato' ? 'Portato da' : 'Contatto',
+        cmd === 'ospite' ? st.ospite : '', [st.contatto.id]);
+      if (!scelto) return;
+      if (cmd === 'ospite') { st.portato = st.contatto; st.contatto = scelto; st.ospite = null; }
+      else if (cmd === 'portato') st.portato = scelto;
+      else st.contatto = scelto;
+      disegnaPersone();
+    });
   };
-  velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { sottotipo = b.dataset.v; disegnaScelte(); });
+  const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
+    const esiti = A.sceltePerModifica({ ...a, modalita: st.sottotipo, esito: st.esito }).esiti;
+    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === st.esito ? 'scelto' : ''}">${esc(x)}</button>`).join('');
+    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => { st.esito = b.dataset.v; disegnaScelte(); });
+    velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === st.sottotipo));
+  };
+  velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { st.sottotipo = b.dataset.v; disegnaScelte(); });
+  disegnaPersone();
   disegnaScelte();
   $('fa-si').onclick = async () => {
     if (!$('fa-giorno').value || !$('fa-ora').value) { $('fa-errore').textContent = 'Scegli giorno e ora.'; return; }
+    if (st.portato && st.portato.id === st.contatto.id) { $('fa-errore').textContent = 'Contatto e «Portato da» sono la stessa persona.'; return; }
     const inizio = A.isoDaRoma($('fa-giorno').value, $('fa-ora').value);
     const fine = a.fine && a.inizio ? new Date(Date.parse(inizio) + Date.parse(a.fine) - Date.parse(a.inizio)).toISOString() : a.fine;   // stessa durata
     $('fa-si').disabled = true;
     const { data: prima, error: e2 } = await dbq('modifica azione', supa.rpc('modifica_azione', {
-      p_azione: a.id, p_modalita: sottotipo || null, p_esito: esito || null, p_inizio: inizio, p_fine: fine || null,
-      p_ospite: $('fa-ospite') ? ($('fa-ospite').value.trim() || null) : a.ospite, p_note: $('fa-note').value.trim() || null }));
+      p_azione: a.id, p_contatto: st.contatto.id, p_portato_da: st.portato ? st.portato.id : null,
+      p_modalita: st.sottotipo || null, p_esito: st.esito || null, p_inizio: inizio, p_fine: fine || null,
+      p_ospite: st.ospite || null, p_note: $('fa-note').value.trim() || null }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     chiudi();
+    LS.righe = [];   // la Lista si ricarica: fase e coda possono essere cambiate
     if (opz.dopo) await opz.dopo();
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+      LS.righe = [];
       if (opz.dopo) await opz.dopo();
       mostraToast('Annullato');
     });
   };
+}
+
+// Scelta di un contatto tra i propri (ricerca come la Lista) o «＋ Aggiungi» come Prospect. Restituisce {id, nome, categoria} o null.
+async function sceltaContatto(titolo, testo = '', escludi = []) {
+  let elenco;
+  try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.style.zIndex = 25;   // sopra il foglio Modifica azione
+    velo.innerHTML = `<div class="foglio alto">
+      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      <input id="sc-testo" placeholder="Scrivi il nome" value="${esc(testo)}" autocomplete="off">
+      <div class="altri-voci" id="sc-elenco"></div></div>`;
+    document.body.appendChild(velo);
+    const chiudi = v => { velo.remove(); risolvi(v); };
+    velo.onclick = e => { if (e.target === velo) chiudi(null); };
+    velo.querySelector('#sc-x').onclick = () => chiudi(null);
+    const inp = velo.querySelector('#sc-testo');
+    const disegna = () => {
+      const t = inp.value.trim();
+      const trovati = t ? elenco.filter(c => !escludi.includes(c.id) && MB21Lista.corrisponde(c, t)).slice(0, 20) : [];
+      velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria || 'Senza categoria')}</small></button>`).join('')
+        + (t ? `<button data-nuovo="1">＋ Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
+      velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
+      const n = velo.querySelector('[data-nuovo]');
+      if (n) n.onclick = async () => {
+        n.disabled = true;
+        const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert({ nome: t, categoria: 'Prospect' }).select('id, nome, categoria').single());
+        if (error) { n.disabled = false; return mostraToast('Non salvato: riprova.'); }
+        contattiMiei = null; LS.righe = [];
+        mostraToast(`${t} aggiunto alla Lista`);
+        chiudi(data);
+      };
+    };
+    inp.oninput = disegna;
+    disegna();
+    inp.focus();
+  });
 }
 
 // ── REPORT (Fase 5) ──────────────────────────────────────
