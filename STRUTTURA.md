@@ -36,6 +36,10 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
+**Conferme** (migrazione `20260915090000_conferme_appuntamenti.sql`, applicata):
+- `azioni.confermato_il` (vuoto = da confermare)
+- `registra_esito`: con le fasi **PM Fissato / Appuntamento** il rientro resta **vuoto** (il contatto esce dalla coda: lo segue l'appuntamento). Richiamare e le altre fasi come prima
+
 **Fase 4** (migrazione `20260914233000_fase4_agenda.sql`, applicata):
 - `chiudi_appuntamento(p_azione, p_esito)` → esito e completata; rientro in coda secondo `sequenze`; restituisce i valori di prima
 - `riapri_appuntamento(...)` → l'Annulla
@@ -134,6 +138,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **esito** (`chiudi_appuntamento`): `esito` + `completata = true`; se la chiave `categoria-tipo-esito` ha giorni in `sequenze`, `rientro_il = oggi + giorni` e `in_coda_dal` vuoto. Poi si apre sempre «Fissa il prossimo appuntamento» (stesso contatto, tipo e sottotipo proposti, domani, **Salta**); l'avviso ha **Annulla** (`riapri_appuntamento` + cancella il prossimo)
 - **ora proposta**: dopo la fine dell'ultimo impegno del giorno arrotondata alla mezz'ora, mai prima di adesso, altrimenti 18:30
 - **passati senza esito**: tipo ≠ Contatto, non completati, iniziati prima di adesso (ultimi 50)
+- **conferme** (decisioni di Ignazio 15/09, `confermeDaFare`): appuntamenti **del partner loggato** non completati e non confermati, più gli esiti dalla coda PM Fissato / Appuntamento senza appuntamento vero, che iniziano **tra adesso e 12 ore** (`ORE_CONFERMA`); scaduto l'orario spariscono (l'appuntamento va tra i passati senza esito). Testo: «Conferma appuntamento · <sottotipo> · oggi/domani ore HH:MM». Spostare un appuntamento azzera la conferma
 - **categoria** del nuovo appuntamento: quella del contatto; se la si cambia toccandola, cambia anche sul contatto (come in Glide)
 - **bottone «Appuntamento» della coda e di «Azione +»** (dal 15/09): invece del foglio giorno/ora apre «Nuovo appuntamento» già compilato (`tipoDaCoda`: Prospect, Referral e senza categoria → Piano Marketing · PM 1a1 con categoria proposta Prospect; Partner → Appuntamento; Cliente → Consulenza PRD; domani 18:30). Salvato l'appuntamento, l'esito (PM Fissato / Appuntamento) si registra con `data_scelta` = inizio dell'appuntamento; se l'esito non si salva, l'appuntamento si cancella. Annulla (`annullaEsito`) cancella anche l'appuntamento. In Agenda l'esito «dalla coda» non si mostra se c'è l'appuntamento vero dello stesso contatto alla stessa ora (`senzaDoppioniCoda`)
 - ora di Roma con `Intl` (`partiRoma`, `isoDaRoma`), anche al cambio d'ora
@@ -155,7 +160,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 
 - **Accesso**: email → **link** via email (`signInWithOtp`); il link riapre la pagina e supabase-js legge l'accesso dall'indirizzo. Niente codice a 6 cifre: sul piano gratuito il testo dell'email non si può cambiare e quello standard contiene solo il link. Utente senza riga in `utenti` → «Utente non abilitato» ed esce
 - **Tab bar**: **Dashboard** (la home, prima «OGGI») · **Agenda** · **Lista Nomi** · Progressi («In arrivo»)
-- **Agenda** (Fase 4): «Agenda» + «Oggi» (se non si è su oggi) + **＋**; «Settembre 2026 ▾» apre il calendario; **striscia 7 giorni** (L-D, ‹ › di settimana in settimana, pallino se ci sono impegni, oggi in blu, scelto in nero); sotto il giorno per esteso e le **righe** in ordine d'ora: ora inizio/fine, barra colore del tipo (PM blu · Follow Up verde · Appuntamento viola · Consulenza PRD arancio · Contatto grigio), «sottotipo · contatto», «area \| esito • ✅ Completato / ⏳ Da completare [Partner]». Tocco → si apre: ospite, note, **bottoni esito** del suo tipo/sottotipo (quello attuale in blu), **🕑 Sposta** (giorno e ora, stessa durata, Annulla), **👤 Apri contatto** (scheda della Lista), **Elimina** (conferma, Annulla). Righe «dalla coda»: «＋ Fissa appuntamento» e Apri contatto. In fondo: «📞 Telefonate del giorno · Fatte X di N» (oggi, porta alla Dashboard) o «N contatti rientrano in coda» (giorni futuri); «⚠️ N appuntamenti passati senza esito» → foglio con l'elenco
+- **Agenda** (Fase 4): «Agenda» + «Oggi» (se non si è su oggi) + **＋**; «Settembre 2026 ▾» apre il calendario; **striscia 7 giorni** (L-D, ‹ › di settimana in settimana, pallino se ci sono impegni, oggi in blu, scelto in nero); sotto il giorno per esteso e le **righe** in ordine d'ora: ora inizio/fine, barra colore del tipo (PM blu · Follow Up verde · Appuntamento viola · Consulenza PRD arancio · Contatto grigio), «sottotipo · contatto», «area \| esito • ✅ Completato / ⏳ Da completare [Partner]». Tocco → si apre: ospite, note, **bottoni esito** del suo tipo/sottotipo (quello attuale in blu), **🕑 Sposta** (giorno e ora, stessa durata, Annulla), **👤 Apri contatto** (scheda della Lista), **Elimina** (conferma, Annulla). Righe «dalla coda»: «＋ Fissa appuntamento» e Apri contatto. In fondo: «📞 Telefonate del giorno · Fatte X di N» (oggi, porta alla Dashboard) o «N contatti rientrano in coda» (giorni futuri); «📅 N conferme da fare» (oggi, porta alla Dashboard) · «⚠️ N appuntamenti passati senza esito» → foglio con l'elenco. Sulle righe confermate «· 👍 confermato»
   - **Nuovo appuntamento** (foglio): Contatto (nome con suggerimenti tra i propri, archiviati esclusi) · Categoria (dal contatto) · Area · Tipo · Sottotipo · Giorno e ora (ora proposta) · Durata (5 min… 2 ore, predefinita 1 ora) · Ospite (PM e Follow Up, 50) · Note (100). I campi compaiono man mano. Categorie senza appuntamenti: avviso
 - **Contatore** «Fatti X di N» accanto a «La tua coda»: toccandolo si apre il foglio con i numeri 1-10. Raggiunto N: «Per oggi hai finito»
 - **Dashboard** (Fase 3, copia della Dashboard di Glide → `docs/MB21_v3_Dashboard_Agenda_come_e.md`), dall'alto:
@@ -165,6 +170,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (13 campi, Invia salva; avviso «Check salvato» con **Annulla** che cancella il check)
   - riquadro con le **4 schede** 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita (scelta non salvata): riquadri con titolo, numero, barra di avanzamento, righe %/per obiettivo/giorno o complimento in verde
   - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
+  - **📅 Conferme · N** (15/09): card per appuntamento da confermare (strip colore del tipo, nome, «Conferma appuntamento · … ore …», telefono), bottoni **Confermato** (salva `confermato_il`, avviso con Annulla) · **Sposta** (foglio giorno/ora) · **Non risponde** (resta, in fondo, con «📵 riprova più tardi», solo sul telefono). Non contano nei contatti al giorno
   - **OGGI** (al posto di «Azioni da completare» di Glide): «Dare Seguito scaduti» + «La tua coda · Fatti X di N»
   - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), «👁️ Mostra di più!» (in arrivo: sezione Report)
   - i tocchi «in arrivo» mostrano un avviso breve. Se i numeri non si caricano, la coda si vede lo stesso con un avviso
@@ -232,3 +238,4 @@ _Da definire._
 | 2026.09.14 · 23:44 | Fase 4 Agenda: pagina a linea del tempo, esiti con prossimo appuntamento, sposta, nuovo appuntamento |
 | 2026.09.15 · 08:18 | Agenda provata da Ignazio: da affinare usandola |
 | 2026.09.15 · 08:30 | Bottone «Appuntamento» della coda crea l'appuntamento vero in Agenda |
+| 2026.09.15 · 08:55 | Conferme appuntamenti (12 ore prima) in Dashboard e Agenda; appuntamento fissato = fuori coda |

@@ -100,4 +100,27 @@ prova('Bottone «Appuntamento» della coda: tipo proposto per categoria; niente 
   assert.deepEqual(A.senzaDoppioniCoda(lista).map(a => a.id), ['pm', 'vecchio']);
 });
 
+prova('Conferme: da 12 ore prima fino all\'inizio; esclusi confermati, completati e passati', () => {
+  const adesso = '2026-09-15T17:00:00Z';   // 19:00 a Roma
+  const lista = [
+    { id: 'domattina', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', completata: false, inizio: '2026-09-16T07:00:00Z' },   // 09:00 domani: tra 14 ore
+    { id: 'stasera', tipo_azione: 'Appuntamento', modalita: 'Avvio', completata: false, inizio: '2026-09-15T19:30:00Z' },       // 21:30 oggi
+    { id: 'notte', tipo_azione: 'Follow Up', modalita: 'Personale', completata: false, inizio: '2026-09-16T04:30:00Z' },        // 06:30 domani: tra 11h30
+    { id: 'confermato', tipo_azione: 'Piano Marketing', completata: false, confermato_il: '2026-09-15T10:00:00Z', inizio: '2026-09-15T19:00:00Z' },
+    { id: 'completato', tipo_azione: 'Piano Marketing', completata: true, inizio: '2026-09-15T19:00:00Z' },
+    { id: 'passato', tipo_azione: 'Piano Marketing', completata: false, inizio: '2026-09-15T16:00:00Z' },
+    { id: 'coda', tipo_azione: 'Contatto', esito: 'PM Fissato', completata: true, data_scelta: '2026-09-15T20:00:00Z' },
+    { id: 'richiamo', tipo_azione: 'Contatto', esito: 'Richiamare', completata: true, data_scelta: '2026-09-15T20:00:00Z' },
+  ];
+  assert.deepEqual(A.confermeDaFare(lista, adesso).map(a => a.id), ['stasera', 'coda', 'notte']);
+  assert.deepEqual(A.confermeDaFare(lista, '2026-09-15T19:00:01Z').map(a => a.id), ['stasera', 'coda', 'notte', 'domattina']);   // alle 21:00 entra il PM delle 9
+  const [stasera, coda, notte] = A.confermeDaFare(lista, adesso);
+  assert.equal(A.testoConferma(stasera, adesso), 'Conferma appuntamento · Avvio · oggi ore 21:30');
+  assert.equal(A.testoConferma(notte, adesso), 'Conferma appuntamento · Personale · domani ore 06:30');
+  assert.equal(A.testoConferma(coda, adesso), 'Conferma appuntamento · PM · oggi ore 22:00');
+  assert.equal(A.ORE_CONFERMA, 12);
+  assert.equal(A.riga({ tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', area: 'Attività', completata: false, confermato_il: 'x', contatti: { nome: 'M' } }, { mioId: 'io', admin: false }).sotto,
+    'Attività • ⏳ Da completare · 👍 confermato');
+});
+
 console.log(`\n${ok} prove superate`);

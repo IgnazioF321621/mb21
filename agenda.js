@@ -90,7 +90,7 @@
     const nome = (a.contatti && a.contatti.nome) || '—';
     const titolo = `${a.modalita || a.tipo_azione || ''} · ${nome}`;
     const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;   // Richiamare / PM Fissato dati dalla coda
-    const stato = dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare';
+    const stato = (dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare') + (a.confermato_il && !a.completata ? ' · 👍 confermato' : '');
     const partner = admin && a.user_id !== mioId && a.utenti ? ` [${a.utenti.nome || a.utenti.nome_cognome}]` : '';
     const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito].filter(Boolean).join(' | ');
     return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}${partner}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
@@ -131,6 +131,31 @@
     return azioni.filter(a => !(a.tipo_azione === 'Contatto' && a.data_scelta && veri.has(`${a.contatto_id}|${Date.parse(a.data_scelta)}`)));
   }
 
+  // ── Conferme (decisione di Ignazio 15/09): compaiono 12 ore prima dell'appuntamento, fino all'inizio ──
+  const ORE_CONFERMA = 12;
+  const FASI_DA_CONFERMARE = ['PM Fissato', 'Appuntamento'];   // esiti dalla coda senza appuntamento vero (vecchi)
+  // `azioni`: appuntamenti e esiti dalla coda del partner (già senza doppioni). Ordine d'ora.
+  function confermeDaFare(azioni, adessoIso) {
+    const adesso = Date.parse(adessoIso), limite = adesso + ORE_CONFERMA * 3600000;
+    return azioni
+      .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
+      .filter(a => {
+        if (a.confermato_il || !a.quando) return false;
+        const t = Date.parse(a.quando);
+        if (t <= adesso || t > limite) return false;
+        if (a.tipo_azione === 'Contatto') return !!a.data_scelta && FASI_DA_CONFERMARE.includes(a.esito);
+        return !a.completata;
+      })
+      .sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
+  }
+  // «Conferma appuntamento · PM 1a1 · oggi ore 18:30» (o «domani»)
+  function testoConferma(a, adessoIso) {
+    const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
+    const giorno = quando.giorno === oggi ? 'oggi' : quando.giorno === spostaGiorno(oggi, 1) ? 'domani' : quando.giorno.split('-').reverse().join('/');
+    const cosa = a.tipo_azione === 'Contatto' ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione);
+    return `Conferma appuntamento · ${cosa} · ${giorno} ore ${quando.ora}`;
+  }
+
   // Appuntamenti passati senza esito: non completati, tipo ≠ Contatto, iniziati prima di adesso
   const passatiSenzaEsito = (azioni, adessoIso) =>
     azioni.filter(a => a.tipo_azione !== 'Contatto' && !a.completata && a.inizio && a.inizio < adessoIso);
@@ -149,7 +174,7 @@
 
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda };
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
