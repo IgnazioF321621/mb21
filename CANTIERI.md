@@ -13,7 +13,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 13. Fase 5 · REPORT
 *Aperto il 15 settembre 2026. Brief: `docs/MB21_v4_Brief_F5_Report.md`.*
 
-- ~~Lavori 1-5: dati, pagina Report, date dei Wes, Griglia PM, prove~~ — fatti il 15/09: tabelle `wes` e `griglia_pm`, `report.js` con 7 prove, pagina provata con i dati veri, regole di accesso provate sul DB. Confronto con Glide (aprile 2026): Piani Marketing 15 e Appuntamenti 7 uguali; il «15» di Contatti e Follow Up in Glide era il numero rimasto della scheda prima. **Da provare da Ignazio sul telefono**
+- ~~Lavori 1-5: dati, pagina Report, date dei Wes, Griglia PM, prove~~ — fatti il 15/09: tabelle `wes` e `griglia_pm`, `report.js` con 7 prove, pagina provata con i dati veri, regole di accesso provate sul DB. Confronto con Glide (aprile 2026): Piani Marketing 15 e Appuntamenti 7 uguali; il «15» di Contatti e Follow Up in Glide era il numero rimasto della scheda prima. **Provato da Ignazio il 15/09 sul telefono e nel browser: «sembra andare tutto bene»**; situazioni da affinare man mano che lo usa (raccoglierle qui)
 - **Grafica da ripassare con lo strumento Design** (16/09)
 - Partner Select nel Report: come in Dashboard, ancora «in arrivo» (oggi ognuno vede i propri numeri)
 
