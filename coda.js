@@ -80,12 +80,13 @@
   }
 
   // Da catalogare (cantiere 16): i senza categoria del partner in ordine alfabetico,
-  // tanti quanti ne restano dei 5 al giorno (QUOTA_CATALOGO meno quelli già catalogati oggi)
+  // tanti quanti ne restano dei 5 al giorno (QUOTA_CATALOGO meno quelli già catalogati oggi);
+  // `altri`: posti in più chiesti con «Altri 5» (lavoro 4)
   const QUOTA_CATALOGO = 5;
-  function daCatalogare(righe, catalogatiOggi) {
+  function daCatalogare(righe, catalogatiOggi, altri) {
     const senza = righe.filter(r => !r.categoria)
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }));
-    const posti = Math.max(0, QUOTA_CATALOGO - (catalogatiOggi || 0));
+    const posti = Math.max(0, QUOTA_CATALOGO + (altri || 0) - (catalogatiOggi || 0));
     return { righe: senza.slice(0, posti), totale: senza.length };
   }
 
