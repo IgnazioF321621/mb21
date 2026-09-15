@@ -96,7 +96,7 @@ Il bottone apre **al posto del titolo** un modulo a passi, nel colore del riquad
 ## 6. Domande per Ignazio
 1. ~~Nel passo 5 «Conferma» o uscito?~~ → **Conferma**, con gli stessi numeri. **Indicazione di Ignazio (15/09):** nella v4 le percentuali sugli obiettivi ci sono già in **Dashboard**; il Check può servire come **base** e come **confronto con i mesi precedenti** sul **lavoro personale** (diverso dal Report).
 2. ~~Il check del giorno dove si compila?~~ → **Risposta di Ignazio (15/09):** dal **check giornaliero** della Dashboard, la sera; ogni aggiornamento finiva nelle tabelle di Glide e da lì al Check. Giro ricostruito dall'export in [§7](#7-il-giro-completo-ricostruito-dallexport).
-3. **VPP, VPV, VPG**: da dove arrivano i punti? Li scrivi tu o arrivano da N21?
+3. ~~VPP, VPG: da dove arrivano?~~ → **Risposta di Ignazio (15/09):** dal **file CSV di Amway**, convertito da uno script, **a inizio mese** (anche con pochi punti); poi **a mano** man mano che il gruppo fa ordini. (VPV invece è la somma dei VP Clienti del check giornaliero.) **Proposta di Claude, da decidere:** nella v4 un bottone Admin **«Carica file Amway»** che legge il CSV direttamente nell'app, da usare **quando si vuole** (es. ogni settimana): ogni caricamento aggiorna i punti del mese di tutti i partner; correzione a mano solo per un singolo numero. Serve un **file Amway di esempio** e sapere dov'è lo script di conversione (non è in questo repo).
 4. **BBS, WES, CEP «Start»**: cosa sono esattamente (biglietti venduti nel gruppo per il prossimo evento, abbonati)? Si azzerano a ogni evento?
 5. Cosa ti serve davvero dal Check: il confronto col mese prima, le percentuali, o anche **«quanto ti manca al giorno»** (è già calcolato ma non si vede)?
 
