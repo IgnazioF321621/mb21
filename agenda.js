@@ -46,6 +46,21 @@
     return Array.isArray(f) ? f : (f[sottotipo] || []);
   }
   const conOspite = tipo => CON_OSPITE.includes(tipo);
+  // Scelte del foglio unico «Modifica azione» (15/09): sottotipi ed esiti dagli stessi elenchi dell'Agenda,
+  // così un tipo nuovo (es. Laboratorio) aggiunto qui compare ovunque. Se la categoria non ha quel tipo
+  // (Referral, senza categoria, tipi di Glide) si prendono gli esiti del tipo in tutte le categorie.
+  // I valori già salvati restano sempre sceglibili, anche se fuori elenco.
+  function sceltePerModifica(azione) {
+    const tipo = azione.tipo_azione, sottotipo = azione.modalita;
+    let esiti = fasiPer(azione.categoria, tipo, sottotipo);
+    if (!esiti.length) esiti = CATEGORIE.flatMap(c => fasiPer(c, tipo, sottotipo));
+    if (!esiti.length) esiti = CATEGORIE.flatMap(c => { const f = (TIPI[c] || {})[tipo]; return f && !Array.isArray(f) ? Object.values(f).flat() : []; });
+    const sottotipi = [...sottotipiPer(tipo)];
+    if (sottotipo && !sottotipi.includes(sottotipo)) sottotipi.push(sottotipo);
+    const unici = [...new Set(esiti)];
+    if (azione.esito && !unici.includes(azione.esito)) unici.push(azione.esito);
+    return { sottotipi, esiti: unici, ospite: conOspite(tipo) || !!azione.ospite };
+  }
 
   // ── Date (Europe/Rome) ──
   const FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
@@ -172,7 +187,7 @@
     return null;
   }
 
-  const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite,
+  const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
