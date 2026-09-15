@@ -91,4 +91,12 @@ prova('etichette: card con data lunga, fase con tipo e fase in maiuscolo', () =>
   assert.equal(L.titoloFase({ ultima_fase: null }), '');
 });
 
+prova('Partner Select: un partner scelto o «Tutti» (elenco di partner)', () => {
+  assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: ALTRO, admin: true })), ['8']);
+  assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: [IO, ALTRO], admin: true })), ['8', '1']);
+  assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: [ALTRO], admin: true })), ['8']);
+  assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: [IO, ALTRO], admin: true }), 8);
+  assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: ALTRO, admin: true }), 1);
+});
+
 console.log(`\n${ok} prove superate`);

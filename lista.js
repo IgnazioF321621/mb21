@@ -55,18 +55,21 @@
     return piega(a.nome).localeCompare(piega(b.nome), 'it');
   }
 
+  // utenteId: un partner, oppure un elenco di partner (Partner Select «Tutti», cantiere 15)
+  const diChi = (r, utenteId) => (Array.isArray(utenteId) ? utenteId.includes(r.user_id) : r.user_id === utenteId);
+
   // righe: tutte quelle visibili all'utente (per l'Admin: di tutti i partner)
   function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     return righe
-      .filter(r => (tutti || r.user_id === utenteId) && f.prova(r) && corrisponde(r, testo))
+      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo))
       .sort(ordinaPerNome);
   }
 
   // Totale del banner: contatti del partner (con All, di tutti)
   function totaleContatti(righe, { filtro, utenteId, admin }) {
-    return FILTRI[filtro] && FILTRI[filtro].tutti && admin ? righe.length : righe.filter(r => r.user_id === utenteId).length;
+    return FILTRI[filtro] && FILTRI[filtro].tutti && admin ? righe.length : righe.filter(r => diChi(r, utenteId)).length;
   }
 
   // Telefono dal modulo: prefisso scelto + numero scritto → «+39…» senza spazi. Numero vuoto → null.
