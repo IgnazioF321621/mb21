@@ -90,12 +90,12 @@ Esempio (Ignazio, Apr 2026, scheda Piani Marketing): `PM Totali 15 · Iscrizione
 ## 6. Grafico dell'anno
 📷 `4-grafico-anno.png` · `9-appuntamenti-grafico.png` · `14-wes-grafico.png`
 
-- Menu **«Seleziona il Performance Year»** (2025-2026). L'asse va da 2025/09 o 2025/10 a 2026/07 o 2026/08: **sembra** un anno da settembre ad agosto (da confermare, §8).
+- Menu **«Seleziona il Performance Year»** (2025-2026). L'asse va da 2025/09 o 2025/10 a 2026/07 o 2026/08: è l'anno fiscale **da settembre ad agosto** (confermato da Ignazio, §8).
 - **Barre blu = «Totale azione»** per mese, **linea verde = «Esito Positivo»**; legenda sotto.
 - Toccando una barra: riquadro con mese (`2026/02`), Totale azione `5`, Esito Positivo `0,00`.
 - Il grafico **segue la scheda** (con Appuntamenti le barre sono diverse, fino a 8 in 2026/06).
 - Con **Periodo Wes** acceso il grafico mostra **solo i mesi di quel Wes** (es. 2025/09, 2025/11, 2026/01, 2026/02) e la linea verde ha valori (1-2).
-- ⚠️ Esito Positivo **quasi sempre 0** con Periodo Mese. **Da capire** cosa conta come positivo.
+- ⚠️ Esito Positivo **quasi sempre 0** con Periodo Mese. Positivi per Ignazio: **Iscrizione** e **Vendita** (§8).
 
 ---
 
