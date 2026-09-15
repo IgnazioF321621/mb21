@@ -14,6 +14,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Aperto il 15 settembre 2026. Brief: `docs/MB21_v4_Brief_F5_Report.md`.*
 
 - ~~Lavori 1-5: dati, pagina Report, date dei Wes, Griglia PM, prove~~ — fatti il 15/09: tabelle `wes` e `griglia_pm`, `report.js` con 7 prove, pagina provata con i dati veri, regole di accesso provate sul DB. Confronto con Glide (aprile 2026): Piani Marketing 15 e Appuntamenti 7 uguali; il «15» di Contatti e Follow Up in Glide era il numero rimasto della scheda prima. **Provato da Ignazio il 15/09 sul telefono e nel browser: «sembra andare tutto bene»**; situazioni da affinare man mano che lo usa (raccoglierle qui)
+- ~~Dettaglio della casella Griglia PM in fondo alla pagina~~ — fatto il 15/09 (foglio sopra la griglia), poi sostituito dal foglio unico
+- ~~Azioni modificabili ovunque~~ — fatto il 15/09: **foglio unico «Modifica azione»** (sottotipo, esito, giorno e ora, ospite, note) da Report, Griglia PM, scheda contatto e Agenda, con Annulla. Decisioni di Ignazio: **un'azione per ogni passo del percorso** (le statistiche si fermano quando l'azione si chiude; il foglio serve a correggere); coda ricalcolata **solo se si corregge l'ultima azione**; il **tipo** non si cambia (si elimina e se ne crea una nuova). Tutto **modulare**: sottotipi ed esiti da un solo elenco (`agenda.js`), un tipo nuovo come **Laboratorio** si aggiunge lì. **Da provare**
+- **Laboratorio**: nuovo tipo di azione in arrivo nelle prossime revisioni (nomi di sottotipi ed esiti da Ignazio)
 - **Grafica da ripassare con lo strumento Design** (16/09)
 - Partner Select nel Report: come in Dashboard, ancora «in arrivo» (oggi ognuno vede i propri numeri)
 
