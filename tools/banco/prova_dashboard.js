@@ -132,4 +132,39 @@ prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di z
   assert.equal(ok1.valori.pagine, null);
 });
 
+prova('Partner Select «Tutti»: somma dei partner, partenze calcolate per ognuno', () => {
+  // A: partenza BBS salvata ad agosto (5), a settembre automatica. B: nessuna partenza, 3 BBS ad agosto.
+  const cm = [
+    { user_id: 'A', mese: '2026-08-01', ultimo_check: '2026-08-31', contatti: 4, bbs: 1, vp_clienti: 10.5 },
+    { user_id: 'A', mese: '2026-09-01', ultimo_check: '2026-09-06', contatti: 5, bbs: 0 },
+    { user_id: 'B', mese: '2026-08-01', ultimo_check: '2026-08-20', contatti: 2, bbs: 3, vp_clienti: 1.25 },
+    { user_id: 'B', mese: '2026-09-01', ultimo_check: '2026-09-10', contatti: 1, bbs: 1 },
+  ];
+  const ob = [
+    { user_id: 'A', mese: '2026-08-01', bbs_partenza: 5, contatti: 30, vpg_amway: 100 },
+    { user_id: 'A', mese: '2026-09-01', contatti: 30, vpg_amway: 50 },
+    { user_id: 'B', mese: '2026-09-01', contatti: 10, vpg_amway: 20.5 },
+  ];
+  const u = D.unisciPartner(cm, ob, '2026-09-01');
+  const set = u.checkMesi.find(x => x.mese === '2026-09-01'), obSet = u.obiettivi.find(x => x.mese === '2026-09-01');
+  assert.equal(set.contatti, 6);
+  assert.equal(set.ultimo_check, '2026-09-10');
+  assert.equal(u.checkMesi.find(x => x.mese === '2026-08-01').vp_clienti, 11.75);
+  assert.equal(obSet.contatti, 40);
+  assert.equal(obSet.vpg_amway, 70.5);
+  // partenza di settembre: A = 5 + 1 = 6 · B = 0 + 3 = 3 → 9; totale BBS settembre = 9 + 1
+  assert.equal(obSet.bbs_partenza, 9);
+  const d = D.calcola({ checkMesi: u.checkMesi, obiettivi: u.obiettivi, oggi: '2026-09-14', scadenza: null });
+  assert.equal(riq(d, 'BBS').numero, '10');
+  assert.equal(riq(d, 'Contatti').numero, '6');
+  // un solo partner: stessi numeri che senza unire
+  const soloA = D.unisciPartner(cm.filter(x => x.user_id === 'A'), ob.filter(x => x.user_id === 'A'), '2026-09-01');
+  const dA = D.calcola({ checkMesi: soloA.checkMesi, obiettivi: soloA.obiettivi, oggi: '2026-09-14', scadenza: null });
+  const dA0 = D.calcola({ checkMesi: cm.filter(x => x.user_id === 'A'), obiettivi: ob.filter(x => x.user_id === 'A'), oggi: '2026-09-14', scadenza: null });
+  assert.deepEqual(dA.schede, dA0.schede);
+  // dai check giornalieri alle somme per partner e mese
+  const mesi = D.mesiDaGiorni([{ user_id: 'A', data: '2026-09-02', bbs: 1 }, { user_id: 'A', data: '2026-09-05', bbs: 2 }, { user_id: 'B', data: '2026-09-05', bbs: 4 }], ['bbs']);
+  assert.deepEqual(mesi, [{ user_id: 'A', mese: '2026-09-01', bbs: 3 }, { user_id: 'B', mese: '2026-09-01', bbs: 4 }]);
+});
+
 console.log(`\n${ok} prove superate`);

@@ -103,6 +103,47 @@
     return tot;
   }
 
+  // Partner Select «Tutti» (cantiere 15): somma dei mesi di più partner. checkMesi e obiettivi hanno `user_id`.
+  // Le partenze di BBS/WES/CEP si calcolano per ogni partner e si sommano già scritte: la catena di chi non ha
+  // la partenza salvata non si mescola con quella di chi ce l'ha. Restituisce { checkMesi, obiettivi } come per un partner.
+  const CAMPI_SOMMA_OB = [...OBIETTIVI, 'vpp_amway', 'vpg_amway'];
+  function unisciPartner(checkMesi, obiettivi, finoA) {
+    const cm = {}, ob = {};
+    const riga = (dove, mese) => dove[mese] || (dove[mese] = { mese });
+    for (const c of checkMesi) {
+      const r = riga(cm, c.mese);
+      for (const [k, v] of Object.entries(c)) {
+        if (k === 'mese' || k === 'user_id') continue;
+        if (k === 'ultimo_check') { if (v && (!r[k] || v > r[k])) r[k] = v; continue; }
+        r[k] = n(r[k]) + n(v);
+      }
+    }
+    for (const o of obiettivi) {
+      const r = riga(ob, o.mese);
+      for (const k of CAMPI_SOMMA_OB) if (o[k] != null && o[k] !== '') r[k] = n(r[k]) + n(o[k]);
+    }
+    const utenti = new Set([...checkMesi, ...obiettivi].map(x => x.user_id));
+    for (const u of utenti) {
+      const tot = totaliMesi(checkMesi.filter(x => x.user_id === u), obiettivi.filter(x => x.user_id === u), finoA);
+      for (const [mese, t] of Object.entries(tot)) {
+        const r = riga(ob, mese);
+        for (const k of ['bbs', 'wes', 'cep']) r[k + '_partenza'] = n(r[k + '_partenza']) + t[k + '_partenza'];
+      }
+    }
+    return { checkMesi: Object.values(cm), obiettivi: Object.values(ob) };
+  }
+
+  // Check giornalieri → somme per partner e mese (come la vista check_mesi), per unisciPartner nel Check
+  function mesiDaGiorni(giorni, campi) {
+    const perChiave = {};
+    for (const g of giorni) {
+      const mese = g.data.slice(0, 8) + '01', chiave = g.user_id + mese;
+      const r = perChiave[chiave] || (perChiave[chiave] = { user_id: g.user_id, mese });
+      for (const k of campi) r[k] = n(r[k]) + n(g[k]);
+    }
+    return Object.values(perChiave);
+  }
+
   const formato = (v, decimali) => Number(v).toLocaleString('it-IT', { minimumFractionDigits: decimali || 0, maximumFractionDigits: decimali || 0 });
   const formatoLibero = v => Number(v).toLocaleString('it-IT', { maximumFractionDigits: 2 });
 
@@ -225,7 +266,7 @@
     return null;
   }
 
-  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato };
+  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
