@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, da aprire in una **sessione nuova**.
 > Contesto: `CANTIERI.md` (cantiere 16), `docs/MB21_v3_Lista_come_e.md` (la Lista di Glide), `docs/MB21_v4_Brief_F2_ListaNomi.md`, `docs/MB21_v4_Brief_F1_Oggi.md`, `STRUTTURA.md` (Lista Nomi, Coda OGGI, Bottoni esito), `CLAUDE.md`.
-> **Stato: domande chiuse (sez. 4b) e proposta approvata da Ignazio il 16/09 (sez. 4c). Prossimo: lavori, uno alla volta.**
+> **Stato: domande chiuse (sez. 4b) e proposta approvata da Ignazio il 15/09 (sez. 4c). Prossimo: lavori, uno alla volta.**
 
 ## Modalità di lavoro
 - Prima le domande (sez. 4), **una alla volta**, aspettando la risposta. Poi le proposte, poi i lavori.
@@ -63,7 +63,7 @@ Da leggere: i senza categoria **non sono quasi mai stati lavorati** (5 su 1.180 
 7. **Senza telefono** (222 tra Ignazio e Isabella): archiviarli, tenerli per completarli, o trattarli a parte?
 8. **Referral** (3): è ancora una categoria che serve?
 
-## 4b. Risposte di Ignazio (16/09)
+## 4b. Risposte di Ignazio (15/09)
 1. **Criterio**: di base **tutti sono Prospect**. **Unlinked** se non c'è modo di contattarlo o non si sa chi sia (nome, numero, conoscenza). Chi è stato sentito **più di 2 anni fa**, anche se ex partner o ex cliente, rivedendolo **torna Prospect**. La scelta si fa **guardando il nome**, senza chiamare
 2. **Tutti da chiamare?** Non si sa: i senza categoria **non sono contatti nuovi**, molti sono già ex o Prospect che in Glide nessuno aveva ancora catalogato. Vanno rivisti **uno per uno**. (Offerto: cercare nel DB indizi utili allo smistamento, es. note o date; non ancora fatto)
 3. **Coda**: **5 senza categoria al giorno da smistare, in più** delle chiamate scelte dal partner (`contatti_al_giorno` resta com'è). Finiti i 5, si può **continuare** («Altri 5»)
@@ -73,7 +73,7 @@ Da leggere: i senza categoria **non sono quasi mai stati lavorati** (5 su 1.180 
 7. **Senza telefono**: **nello smistamento come gli altri** (si decide caso per caso: Unlinked, oppure si aggiunge il numero)
 8. **Referral**: non è una vera categoria (il «segnalato da» è il campo `referral_di`, che resta). I contatti già Referral **restano come sono**, ma **Referral non compare più tra le scelte** (smistamento, Modifica, Nuovo contatto)
 
-## 4c. Proposta approvata (16/09) · «Da catalogare» in Dashboard
+## 4c. Proposta approvata (15/09) · «Da catalogare» in Dashboard
 - **Dove**: Dashboard, sotto «La tua coda», riquadro **🗂️ Da catalogare · Fatti X di 5** con «N ancora da catalogare»
 - **5 righe** compatte come la coda, **ordine alfabetico**; tocco → apre: nome, professione, città, telefono, note, «Contatto e/o Incaricato di»
 - **Bottoni categoria**: Prospect · Partner · Cliente · Ex Partner/Cliente · Unlinked · Archivia (Referral no)

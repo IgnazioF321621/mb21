@@ -3,8 +3,8 @@
 // Nessun accesso alla rete: la usano l'app e tools/banco/prova_lista.js.
 // Modello: la tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md), decisioni di Ignazio del 14/09.
 (function (radice) {
-  // Categorie sceglibili nel modulo (Archiviato si ottiene solo con «Archivia»)
-  const CATEGORIE = ['Prospect', 'Partner', 'Cliente', 'Ex Partner/Cliente', 'Referral', 'Unlinked'];
+  // Categorie sceglibili nel modulo (Archiviato solo con «Archivia»; Referral non più sceglibile, cantiere 16: i contatti già Referral restano)
+  const CATEGORIE = ['Prospect', 'Partner', 'Cliente', 'Ex Partner/Cliente', 'Unlinked'];
   const FASCE_ETA = ['18-20', '21-30', '31-40', '41-50', '51-60', '61+'];
   const AREE = ['Attività', 'Prodotti', 'eSpring', 'Nutrilite', 'Mix Prodotti', 'Artistry', 'Home', 'Persona'];
   const PREFISSI = [
