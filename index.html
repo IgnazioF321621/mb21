@@ -331,6 +331,7 @@
   .gp-celle button.fatta { border-width: 2.5px; color: var(--testo); font-size: 10px; line-height: 1.15; }
   .gp-celle button.fatta b { font-size: 15px; }
   .gp-celle button.fatta span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gp-celle button.fatta .gp-portato { font-size: 9px; color: var(--grigio); }
   .gp-celle button.prossima { border: 2px dashed var(--blu); color: var(--blu); }
   .gp-dettaglio { background: #F3F4F6; border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
   .gp-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--grigio); margin-top: 10px; }
@@ -364,7 +365,7 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 16:41';
+const APP_VERSION = '2026.09.15 · 16:55';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1058,6 +1059,7 @@ async function caricaAgenda() {
   for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
+  await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
 }
 
@@ -1114,7 +1116,7 @@ function eventoAgenda(e, opz) {
   return `<div class="ag-evento" data-evento="${esc(e.id)}">
     <div class="ora">${esc(inizio)}${fine ? `<small>${esc(fine)}</small>` : ''}</div>
     <div class="barra-tipo" style="background:${r.colore}"></div>
-    <div class="dentro"><button class="apri"><div class="t">${esc(r.titolo)}</div><div class="s">${esc(r.sotto)}</div></button>${extra}</div>
+    <div class="dentro"><button class="apri"><div class="t">${esc(r.titolo)}</div><div class="s">${esc(r.sotto)}</div>${e.portatoNome ? `<div class="s">${rigaPortato(e.portatoNome)}</div>` : ''}</button>${extra}</div>
   </div>`;
 }
 
@@ -1636,13 +1638,7 @@ async function sezioneAzioni() {
       .select('id, contatto_id, portato_da, tipo_azione, modalita, esito, area, note, inizio, completata, data_scelta, contatti(nome)')
       .or(`contatto_id.eq.${c.id},portato_da.eq.${c.id}`).order('inizio', { ascending: false, nullsFirst: false }));
     if (error) { box.innerHTML = faseHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
-    const ids = [...new Set(data.filter(a => a.portato_da && a.portato_da !== c.id).map(a => a.portato_da))];
-    const nomi = {};
-    if (ids.length) {
-      const { data: pd } = await dbq('nomi portato da', supa.from('contatti').select('id, nome').in('id', ids));
-      for (const x of pd || []) nomi[x.id] = x.nome;
-    }
-    LS.azioni = data.map(a => ({ ...a, portatoNome: nomi[a.portato_da] || null }));
+    LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
@@ -1655,7 +1651,7 @@ async function sezioneAzioni() {
       <div class="t">${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.area].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>
-      ${a.portatoNome ? `<div class="s">Portato da ${esc(a.portatoNome)}</div>` : ''}
+      ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       <div class="comandi">
         <label class="interruttore" style="border:0;padding:0"><input type="checkbox" data-completata="${a.id}" ${a.completata ? 'checked' : ''}></label>
         <span class="s">Completato</span>
@@ -1870,6 +1866,21 @@ function apriModulo(c) {
   };
 }
 
+// «Portato da» uguale dappertutto (decisione di Ignazio 15/09): Agenda, Report, Griglia PM, scheda contatto.
+// Aggiunge `portatoNome` alle azioni con portato_da (una lettura sola dei nomi). Senza rete i nomi restano vuoti.
+async function aggiungiPortatoDa(azioni) {
+  const ids = [...new Set(azioni.map(a => a.portato_da).filter(Boolean))];
+  if (!ids.length) return azioni;
+  const nomi = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await dbq('nomi portato da', supa.from('contatti').select('id, nome').in('id', ids.slice(i, i + 200)));
+    for (const x of data || []) nomi[x.id] = x.nome;
+  }
+  for (const a of azioni) a.portatoNome = nomi[a.portato_da] || null;
+  return azioni;
+}
+const rigaPortato = nome => nome ? `🤝 Portato da ${esc(nome)}` : '';
+
 // ── Foglio unico «Modifica azione» (decisioni di Ignazio 15/09) ──────────
 // Stesso foglio da Report, Griglia PM, scheda contatto e Agenda: contatto, portato da, sottotipo, esito, giorno e ora, note.
 // Serve a correggere un passo (per andare avanti si chiude con l'esito e se ne apre uno nuovo).
@@ -2014,7 +2025,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
 const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
-const CAMPI_REPORT = 'id, contatto_id, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
+const CAMPI_REPORT = 'id, contatto_id, portato_da, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
 
 async function leggiAzioniMie() {
   const righe = [];
@@ -2037,7 +2048,7 @@ async function apriReport(vista) {
       dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', ST.utente.id).maybeSingle()),
     ]);
     if (wes.error || gr.error) throw wes.error || gr.error;
-    RP.azioni = azioni; RP.wes = wes.data; RP.griglia = gr.data;
+    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data;
   } catch (e) {
     app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -2073,7 +2084,7 @@ function disegnaReport() {
           esc(e.esito), e.n, `${e.percentuale}%`, e.n ? (scelto ? '⌄' : '›') : '');
         if (!scelto) continue;
         h += e.persone.map(x => `<button class="rp-riga nome" data-azione="${esc(x.id)}">
-          <span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}</small></span><span></span><span class="f">›</span></button>`).join('');
+          <span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}${x.portato ? ' · ' + rigaPortato(x.portato) : ''}</small></span><span></span><span class="f">›</span></button>`).join('');
         if (e.altre) h += `<div class="rp-altre">e altri ${e.altre}: scegli un periodo più corto</div>`;
       }
       return h;
@@ -2159,7 +2170,7 @@ function disegnaGriglia() {
     <div class="riquadro">
       <div class="gp-celle">${g.celle.map((c, i) => c.id
         ? `<button class="fatta" data-cella="${c.numero}" style="border-color:${R.coloreCella(c.esito)}">
-            <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span></button>`
+            <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span>${c.portato ? `<span class="gp-portato">🤝 ${esc(c.portato)}</span>` : ''}</button>`
         : `<button class="${i === g.fatti ? 'prossima' : ''}" disabled>${c.numero}</button>`).join('')}</div>
       <div class="gp-legenda">${Object.entries(R.COLORI_GRIGLIA).map(([e, c]) => `<span><i style="background:${c}"></i>${esc(e)}</span>`).join('')}</div>
     </div>`;
