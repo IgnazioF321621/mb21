@@ -288,3 +288,4 @@ _Da definire._
 | 2026.09.15 · 16:41 | «Portato da» provato da Ignazio |
 | 2026.09.15 · 16:55 | «🤝 Portato da» uguale in Agenda, Report, Griglia PM e scheda contatto |
 | 2026.09.15 · 17:07 | «Portato da» in tutte le parti provato da Ignazio |
+| 2026.09.15 · 17:13 | CANTIERI: Design e Laboratorio in attesa; prossimo passo rilievo Check |
