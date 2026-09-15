@@ -83,7 +83,7 @@ prova('Grafico: 12 mesi set → ago, azioni fatte e verdi, segue il gruppo apert
 
 prova('Griglia PM come in Glide il 15/09: 50 PM dal 01/07 per 6 mesi → fine 31/12, 2 fatti, 48 mancanti, 12 al mese', () => {
   const pm = [
-    az(1, 'Piano Marketing', 'Dare Seguito', '2026-07-15T16:00:00Z', { contatti: { nome: 'Filippo Rossi Arcoraci' }, ospite: 'Sonia' }),
+    az(1, 'Piano Marketing', 'Dare Seguito', '2026-07-15T16:00:00Z', { contatti: { nome: 'Filippo Rossi Arcoraci' }, ospite: 'Sonia', portatoNome: 'Marco Neri' }),
     az(2, 'Piano Marketing', 'Presentazione', '2026-09-11T16:00:00Z', { contatti: { nome: 'Samantha Alberti' } }),
     az(3, 'Piano Marketing', 'Iscrizione', '2026-06-30T16:00:00Z'),    // prima dell'inizio
     az(4, 'Piano Marketing', null, '2026-09-25T16:00:00Z'),            // futuro
@@ -94,6 +94,7 @@ prova('Griglia PM come in Glide il 15/09: 50 PM dal 01/07 per 6 mesi → fine 31
   assert.equal(g.ritmo, 0.7);   // 2 PM in 3 mesi (luglio, agosto, settembre)
   assert.equal(g.celle.length, 50);
   assert.deepEqual([g.celle[0].breve, g.celle[0].ospite, g.celle[1].giorno], ['Filippo A.', 'Sonia', '2026-09-11']);
+  assert.deepEqual([g.celle[0].portato, g.celle[1].portato], ['Marco N.', '']);
   assert.equal(g.celle[2].id, undefined);
   assert.equal(R.coloreCella('Dare Seguito'), '#7B1FA2');
 });
