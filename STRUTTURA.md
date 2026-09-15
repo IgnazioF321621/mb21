@@ -287,3 +287,4 @@ _Da definire._
 | 2026.09.15 · 16:34 | «Tipo di piano / contatto / …» al posto di «Sottotipo»; «Portato da» solo dopo lo spostamento sull'ospite; ricerca: «è già il contatto» |
 | 2026.09.15 · 16:41 | «Portato da» provato da Ignazio |
 | 2026.09.15 · 16:55 | «🤝 Portato da» uguale in Agenda, Report, Griglia PM e scheda contatto |
+| 2026.09.15 · 17:07 | «Portato da» in tutte le parti provato da Ignazio |
