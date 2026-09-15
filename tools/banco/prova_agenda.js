@@ -135,6 +135,9 @@ prova('Foglio unico Modifica azione: scelte dagli elenchi dell\'Agenda, valori s
   assert.ok(vecchio.sottotipi.includes('Vecchio') && vecchio.esiti.includes('Iscr+Ordine') && vecchio.esiti.includes('c/Upline'));
   const glide = A.sceltePerModifica({ categoria: 'Cliente', tipo_azione: 'Prodotti', modalita: null, esito: 'Vendita', ospite: 'X' });
   assert.deepEqual([glide.sottotipi, glide.esiti, glide.ospite], [[], ['Vendita'], true]);
+  assert.equal(A.etichettaSottotipo('Piano Marketing'), 'Tipo di piano');
+  assert.equal(A.etichettaSottotipo('Contatto'), 'Tipo di contatto');
+  assert.equal(A.etichettaSottotipo('Laboratorio'), 'Tipo di laboratorio');   // un tipo nuovo ha già un nome
 });
 
 console.log(`\n${ok} prove superate`);

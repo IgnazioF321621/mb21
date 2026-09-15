@@ -10,6 +10,12 @@
     'Appuntamento': ['Avvio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'],
     'Consulenza PRD': ['Assistenza', 'Demo', 'Promo/Sconto', 'Riordino'],
   };
+  // Nome del campo sottotipo per ogni tipo, stile Glide «Tipo di contatto» (decisione di Ignazio 15/09)
+  const ETICHETTE_SOTTOTIPO = {
+    'Contatto': 'Tipo di contatto', 'Piano Marketing': 'Tipo di piano', 'Follow Up': 'Tipo di follow up',
+    'Appuntamento': 'Tipo di appuntamento', 'Consulenza PRD': 'Tipo di consulenza',
+  };
+  const etichettaSottotipo = tipo => ETICHETTE_SOTTOTIPO[tipo] || (tipo ? `Tipo di ${tipo.toLowerCase()}` : 'Tipo');
   const FASI_PM = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
   const FASI_FU = ['DS Fissato', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
   const FASI_PRD = ['Vendita', 'No Vendita'];                                   // decisione 1
@@ -187,7 +193,7 @@
     return null;
   }
 
-  const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica,
+  const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

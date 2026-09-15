@@ -364,7 +364,7 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 16:28';
+const APP_VERSION = '2026.09.15 · 16:34';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1318,7 +1318,7 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Tipo di azione <small>Obbligatorio</small></label>${scelte('tipo', tipi, st.tipo)}</div>`;
       }
       if (st.tipo) {
-        h += `<div class="campo"><label>Sottotipo <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))} <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
@@ -1895,7 +1895,7 @@ async function foglioAzione(id, opz = {}) {
   velo.innerHTML = `<div class="foglio alto">
     <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
     <div id="fa-persone"></div>
-    ${s.sottotipi.length ? `<div class="campo"><label>Sottotipo</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
+    ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label>Esito</label><div class="ag-scelte" id="fa-esiti"></div></div>
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
@@ -1915,9 +1915,10 @@ async function foglioAzione(id, opz = {}) {
       <div class="fa-persona"><span>${persona}</span>${cmd}</div>${extra}</div>`;
     let h = riga('Contatto <small>l\'esito è suo</small>', esc(st.contatto.nome), '<button class="link" data-cmd="contatto">Cambia</button>');
     if (s.ospite) {
+      // con l'ospite scritto a mano e l'azione ancora sul contatto sbagliato, «Portato da» non serve: prima si sposta
       if (st.ospite && !st.portato) h += riga('Ospite <small>scritto a mano</small>', esc(st.ospite), '',
         `<button class="piccolo fa-ospite" data-cmd="ospite">⇄ L'esito è dell'ospite</button>`);
-      h += riga('Portato da', st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>',
+      else h += riga('Portato da', st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>',
         st.portato ? '<button class="link" data-cmd="togli" aria-label="Togli">×</button>' : '<button class="link" data-cmd="portato">＋ Scegli</button>');
     }
     $('fa-persone').innerHTML = h;
@@ -1967,7 +1968,7 @@ async function foglioAzione(id, opz = {}) {
 }
 
 // Scelta di un contatto tra i propri (ricerca come la Lista) o «＋ Aggiungi» come Prospect. Restituisce {id, nome, categoria} o null.
-async function sceltaContatto(titolo, testo = '', escludi = []) {
+async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è già il contatto') {
   let elenco;
   try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   return new Promise(risolvi => {
@@ -1985,9 +1986,12 @@ async function sceltaContatto(titolo, testo = '', escludi = []) {
     const inp = velo.querySelector('#sc-testo');
     const disegna = () => {
       const t = inp.value.trim();
-      const trovati = t ? elenco.filter(c => !escludi.includes(c.id) && MB21Lista.corrisponde(c, t)).slice(0, 20) : [];
-      velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria || 'Senza categoria')}</small></button>`).join('')
-        + (t ? `<button data-nuovo="1">＋ Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
+      const trovati = t ? elenco.filter(c => MB21Lista.corrisponde(c, t)).slice(0, 20) : [];
+      const uguale = trovati.some(c => MB21Lista.piega(c.nome) === MB21Lista.piega(t));
+      velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => escludi.includes(c.id)
+          ? `<button disabled>${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(motivo)}</small></button>`
+          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria || 'Senza categoria')}</small></button>`).join('')
+        + (t && !uguale ? `<button data-nuovo="1">＋ Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
       velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
       const n = velo.querySelector('[data-nuovo]');
       if (n) n.onclick = async () => {
