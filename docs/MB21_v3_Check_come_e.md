@@ -95,7 +95,33 @@ Il bottone apre **al posto del titolo** un modulo a passi, nel colore del riquad
 
 ## 6. Domande per Ignazio
 1. ~~Nel passo 5 «Conferma» o uscito?~~ → **Conferma**, con gli stessi numeri. **Indicazione di Ignazio (15/09):** nella v4 le percentuali sugli obiettivi ci sono già in **Dashboard**; il Check può servire come **base** e come **confronto con i mesi precedenti** sul **lavoro personale** (diverso dal Report).
-2. Il **check del giorno** (contatti, PM, tracce, pagine… di ogni giorno) dove si compila in Glide?
+2. ~~Il check del giorno dove si compila?~~ → **Risposta di Ignazio (15/09):** dal **check giornaliero** della Dashboard, la sera; ogni aggiornamento finiva nelle tabelle di Glide e da lì al Check. Giro ricostruito dall'export in [§7](#7-il-giro-completo-ricostruito-dallexport).
 3. **VPP, VPV, VPG**: da dove arrivano i punti? Li scrivi tu o arrivano da N21?
 4. **BBS, WES, CEP «Start»**: cosa sono esattamente (biglietti venduti nel gruppo per il prossimo evento, abbonati)? Si azzerano a ogni evento?
 5. Cosa ti serve davvero dal Check: il confronto col mese prima, le percentuali, o anche **«quanto ti manca al giorno»** (è già calcolato ma non si vede)?
+
+---
+
+## 7. Il giro completo, ricostruito dall'export
+Verificato il 15/09/2026 sui file `Day.csv`, `Check.csv`, `LOS.csv`, `Segni Vitali.csv` (ultimo export di Glide).
+
+```
+Dashboard → check giornaliero (la sera)
+   → una riga in Day  (una per check: 809 righe)
+   → Check (una riga per partner e mese: 65 righe) somma i giorni del mese
+   → la pagina Check e le percentuali in Dashboard
+Punti Amway (VPP, VPG) → tabella LOS (una riga per partner e mese) → Check
+```
+
+| Cosa | Da dove arriva | Verifica sull'export |
+|---|---|---|
+| **Contatti · PM · Sponsor Personali · Sponsor Gruppo · VP Clienti (= VPV) · Tracce · Pagine** | **somma dei check giornalieri** del mese | somme di `Day` = numeri di `Check` in **65 righe su 65** per tutte e 10 le voci |
+| **BBS · WES · CEP** | **partenza** (Step 3) + somma dei check del mese | `tot = start + now` in 54 righe su 54 |
+| **VPP · VPG** | **non** dal check: dalla tabella **LOS** (dati Amway del mese) | `Check` = `LOS` in 65 righe su 65 |
+| **percentuale** | fatto ÷ obiettivo (Segni Vitali: partenza + fatto ÷ obiettivo) | tornano in tutte le righe con obiettivo |
+| **mese precedente** (▼▲→) | il «fatto» dello **stesso partner nel mese prima** | in pagina torna (es. VPP AGO 343,12 = LOS di agosto); nel file le colonne `…Prec` sono **vuote o vecchie** (calcolate solo a schermo) |
+| **quanto serve al giorno** (`…day`) | mancante ÷ giorni che restano (`DayValidi`) | torna nella maggior parte delle righe; **non si vede** in pagina |
+
+- **Voci del check giornaliero** nel file `Day`: data, **10 numeri** (contatti, PM, sponsor personali, sponsor gruppo, VP clienti, CEP, BBS, WES, tracce, pagine), **libro** e **nota sul libro**.
+- `Segni Vitali.csv` (8 righe, fino a nov 2025) sembra una vecchia tabella di controllo (sì/no per CEP, BBS, WES, LC1 e VPP del mese): **non usata** dalla pagina Check di oggi.
+- **Nella v4 c'è già tutto questo** (Fase 3, `STRUTTURA.md` → Dashboard): `check_giorno` = Day, `obiettivi_mese` = Check (obiettivi, partenze, VPP/VPG Amway), stesse regole di calcolo. VPP/VPG sono **fermi all'export**.
