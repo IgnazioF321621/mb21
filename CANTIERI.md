@@ -10,6 +10,10 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 16. Prossimo passo: LISTA NOMI E CATEGORIE (contatti senza categoria)
+*Deciso il 15/09, da fare in una sessione nuova.* Ignazio e gli altri partner hanno molti contatti non ancora catalogati (in Glide si faceva a mano in ordine alfabetico): **Ignazio 803, Isabella 377, Carolina 31, Ornella 6, Andrea 1** (DB, 15/09). Quasi nessuno è stato lavorato (5 su 1.180 tra Ignazio e Isabella hanno un'azione). Oggi nella v4 entrano in coda come mai contattati (in ordine alfabetico), si trovano in Lista → Altri → Senza categoria e si cambiano uno alla volta da Modifica.
+Brief in bozza: `docs/MB21_v4_Brief_F7_Categorie.md` (situazione, 8 domande a Ignazio, strade possibili). **Prossimo: domande a Ignazio una alla volta**
+
 ## 15. Prossimo passo: PARTNER SELECT e primo partner in prova
 *Deciso il 15/09, da fare in una sessione nuova (deviazione: prima della Mappa).* A breve Ignazio fa installare l'app a una partner (Isabella) per provarla. **Lei deve vedere solo il suo lavoro; Ignazio (Admin) vede il suo, quello di lei e di tutto il gruppo.**
 
