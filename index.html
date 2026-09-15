@@ -308,6 +308,28 @@
   .rp-barre span i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--verde); }
   .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
   .rp-mesi .futuro { color: var(--linea); }
+  .ck-confronto { font-size: 13px; color: var(--grigio); text-align: center; margin: -4px 0 12px; }
+  .ck-gruppo { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; border-left: 5px solid; }
+  .ck-gruppo h3 { margin: 0; padding: 12px 14px 4px; font-size: 16px; }
+  .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px; align-items: center; gap: 4px; }
+  .ck-testa { padding: 0 12px 6px 14px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
+  .ck-riga { width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea); background: none; padding: 11px 12px 11px 14px;
+    font-family: inherit; color: var(--testo); font-size: 15px; }
+  .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; }
+  .ck-riga .pr { text-align: right; font-size: 14px; color: var(--grigio); white-space: nowrap; }
+  .ck-riga .an { text-align: right; font-size: 13px; font-weight: 700; color: var(--grigio); white-space: nowrap; }
+  .ck-riga .an.su { color: var(--verde); } .ck-riga .an.giu { color: var(--rosso); }
+  .ck-riga small { grid-column: 1 / -1; font-size: 12px; color: var(--grigio-chiaro); margin-top: 1px; }
+  .ck-riga.aperta { background: #F9FAFB; }
+  .ck-grafico { background: #F9FAFB; padding: 4px 14px 12px; }
+  .ck-grafico .legenda { font-size: 12px; color: var(--grigio); margin: 0 0 8px; }
+  .ck-grafico .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+  .ck-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 110px; }
+  .ck-barre div { display: flex; justify-content: center; align-items: flex-end; gap: 1px; height: 100%; min-width: 0; }
+  .ck-barre span { flex: 1; border-radius: 3px 3px 0 0; min-height: 1px; }
+  .ck-barre .prima { background: #D1D5DB; }
+  .ck-valori { font-size: 11px; color: var(--grigio); margin-top: 6px; }
+  .sv-oggi { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
   .rp-apri { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 14px; padding: 14px; margin-bottom: 12px;
     background: #EDE9FE; color: #5B21B6; font-size: 16px; font-weight: 700; font-family: inherit; }
   .rp-wes { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
@@ -364,8 +386,9 @@
 <script src="dashboard.js"></script>
 <script src="agenda.js"></script>
 <script src="report.js"></script>
+<script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 17:13';
+const APP_VERSION = '2026.09.15 · 18:57';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -459,6 +482,7 @@ function mostraTab() {
   if (ST.tab === 'lista') return apriLista();
   if (ST.tab === 'agenda') return apriAgenda();
   if (ST.tab === 'report') return apriReport();
+  if (ST.tab === 'check') return apriPaginaCheck();
 }
 
 // ── OGGI ─────────────────────────────────────────────────
@@ -866,25 +890,34 @@ function dashboardAlto() {
 }
 
 const COLORI_SV = { contatti: '#9CA3AF', pm: '#EA580C', bbs: '#3B82F6', wes: '#DC2626', cep: '#16A34A' };
-function dashboardBasso() {
-  const d = DS.dati;
-  if (!d) return '';
-  const sv = d.segniVitali;
-  const colonne = [['contatti', 'Contatti'], ['pm', 'PM'], ['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
-  const cella = (k, v) => {
-    if (!v) return `<td class="zero">0</td>`;
-    const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
-    const [rr, gg, bb] = [1, 3, 5].map(i => parseInt(COLORI_SV[k].slice(i, i + 2), 16));
-    return `<td style="background:rgba(${rr},${gg},${bb},${forza.toFixed(2)})">${v}</td>`;
-  };
+// Tabella dei Segni Vitali a 12 mesi: dal 15/09 sta nel Check (decisione C); in Dashboard solo il mese in corso
+const COLONNE_SV = [['contatti', 'Contatti'], ['pm', 'PM'], ['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
+function cellaSv(sv, k, v, tag) {
+  if (!v) return `<${tag} class="zero">0</${tag}>`;
+  const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
+  const [rr, gg, bb] = [1, 3, 5].map(i => parseInt(COLORI_SV[k].slice(i, i + 2), 16));
+  return `<${tag} style="background:rgba(${rr},${gg},${bb},${forza.toFixed(2)})">${v}</${tag}>`;
+}
+function tabellaSv(sv) {
   return `<div class="sv">
       <h3>📊 Segni Vitali</h3>
       <div class="sotto-sv">Ultimi 12 mesi · 👤 ${esc(ST.utente.nome_cognome || '')}</div>
-      <div class="legenda">${colonne.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
-      <table><tr><th class="mese"></th>${colonne.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
-      ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${colonne.map(([k]) => cella(k, r[k])).join('')}</tr>`).join('')}
+      <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
+      <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
+      ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr>`).join('')}
       </table>
-      <div class="totali">${colonne.map(([k, t]) => `<div><b style="color:${COLORI_SV[k]}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
+      <div class="totali">${COLONNE_SV.map(([k, t]) => `<div><b style="color:${COLORI_SV[k]}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
+    </div>`;
+}
+function dashboardBasso() {
+  const d = DS.dati;
+  if (!d) return '';
+  const sv = d.segniVitali, r = sv.righe[sv.righe.length - 1];
+  return `<div class="sv">
+      <h3>📊 Segni Vitali</h3>
+      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · 👤 ${esc(ST.utente.nome_cognome || '')}</div>
+      <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
+      <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
     ${DS.griglia ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
     <button class="visione" id="ds-altro">👁️ Mostra di più!</button>`;
@@ -896,7 +929,7 @@ function collegaDashboard() {
   su('ds-rinnova', () => inArrivo('Rinnovo abbonamento'));
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
-  su('ds-visione', () => inArrivo('Sezione Check'));
+  su('ds-visione', () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
@@ -2018,6 +2051,97 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
     disegna();
     inp.focus();
   });
+}
+
+// ── CHECK (Fase 6) ───────────────────────────────────────
+// Brief docs/MB21_v4_Brief_F6_Check.md: si apre dal bottone «visione completa» della Dashboard (decisione A), periodi Mese · Wes · Anno,
+// adesso · prima (a pari giorni) · andamento, riga grigia col periodo prima intero (B), grafico dei 12 mesi, Segni Vitali a 12 mesi (C).
+// Numeri del partner loggato. Calcoli in check.js.
+const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], aperta: null };
+const CAMPI_CK = 'data, ' + MB21Check.CAMPI_GIORNO.join(', ');
+
+async function apriPaginaCheck() {
+  if (!CK.giorni) app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1><div class="vuoto">Carico i numeri…</div>`;
+  const indietro = document.getElementById('ck-indietro');
+  if (indietro) indietro.onclick = () => { ST.tab = 'oggi'; mostraTab(); };
+  try {
+    const giorni = [];
+    for (let da = 0; ; da += 1000) {
+      const { data, error } = await dbq('check giornalieri', supa.from('check_giorno').select(CAMPI_CK)
+        .eq('user_id', ST.utente.id).order('id').range(da, da + 999));
+      if (error) throw error;
+      giorni.push(...data);
+      if (data.length < 1000) break;
+    }
+    const [ob, wes] = await Promise.all([
+      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', ST.utente.id)),
+      dbq('date dei Wes', supa.from('wes').select('data').order('data')),
+    ]);
+    if (ob.error || wes.error) throw ob.error || wes.error;
+    CK.giorni = giorni; CK.obiettivi = ob.data; CK.wes = wes.data.map(w => w.data);
+  } catch (e) {
+    app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>
+      <div class="avviso">Non riesco a caricare il Check. Controlla la connessione e riprova.</div>${versione()}`;
+    document.getElementById('ck-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
+    return;
+  }
+  if (!CK.periodo) CK.periodo = MB21Report.periodoIniziale(CK.tipo, MB21Coda.oggiRoma(), CK.wes);
+  disegnaCheck();
+}
+
+function disegnaCheck() {
+  const R = MB21Report, C = MB21Check, oggi = MB21Coda.oggiRoma(), p = CK.periodo;
+  const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi };
+  let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>
+    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
+      `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
+  if (!p) {
+    html += `<div class="vuoto">Nessun Wes ancora: l'Admin aggiunge le date dei Wes nel Report.</div>`;
+  } else {
+    const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p });
+    html += `<div class="rp-naviga">
+      <button id="ck-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, CK.wes) ? '' : 'disabled'}>‹</button>
+      <b>${esc(R.testoPeriodo(p))}</b>
+      <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
+      <div class="ck-confronto">${esc(r.confronto)}</div>`;
+    html += r.gruppi.map(g => `<div class="ck-gruppo" style="border-left-color:${g.colore}">
+      <h3 style="color:${g.colore}">${g.pallino} ${esc(g.etichetta)}</h3>
+      <div class="ck-testa"><span></span><span>adesso</span><span>prima</span><span>▲▼</span></div>
+      ${g.voci.map(v => {
+        const aperta = CK.aperta === v.chiave;
+        let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}"><span>${esc(v.titolo)}</span>
+          <span class="n">${esc(v.adesso)}</span><span class="pr">${esc(v.prima)}</span><span class="an ${v.andamento.segno}">${esc(v.andamento.testo)}</span>
+          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}</button>`;
+        if (!aperta) return h;
+        const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
+        const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });
+        h += `<div class="ck-grafico">
+          <div class="legenda"><i style="background:${g.colore};margin-left:0"></i>${esc(gr.anno)}<i style="background:#D1D5DB"></i>${esc(gr.annoPrima)}</div>
+          <div class="ck-barre">${gr.mesi.map(m => `<div>
+            <span class="prima" style="height:${(m.prima || 0) / gr.max * 100}%"></span>
+            <span style="height:${(m.valore || 0) / gr.max * 100}%;background:${g.colore}"></span></div>`).join('')}</div>
+          <div class="rp-mesi">${gr.mesi.map(m => `<span class="${m.valore == null ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div>
+          <div class="ck-valori">${gr.mesi.filter(m => m.valore != null).map(m => `${m.etichetta} ${fmt(m.valore)} <span style="color:var(--grigio-chiaro)">(${fmt(m.prima)})</span>`).join(' · ')}</div>
+        </div>`;
+        return h;
+      }).join('')}</div>`).join('');
+  }
+  html += tabellaSv(C.segniVitali(dati));
+  app.innerHTML = html + versione();
+  collegaCheck();
+}
+
+function collegaCheck() {
+  const R = MB21Report, oggi = MB21Coda.oggiRoma();
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
+  app.querySelectorAll('[data-ckperiodo]').forEach(b => b.onclick = () => {
+    CK.tipo = b.dataset.ckperiodo; CK.periodo = R.periodoIniziale(CK.tipo, oggi, CK.wes); disegnaCheck();
+  });
+  const sposta = n => { const q = R.spostaPeriodo(CK.periodo, n, oggi, CK.wes); if (q) { CK.periodo = q; disegnaCheck(); } };
+  su('ck-prima', () => sposta(-1));
+  su('ck-dopo', () => sposta(1));
+  app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
 }
 
 // ── REPORT (Fase 5) ──────────────────────────────────────

@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Check_come_e.md` (il Check di Glide, §6 risposte di Ignazio, §7 giro dei numeri; 8 screenshot in `mb21-import/screenshot-check/`), `docs/MB21_v4_Brief_F3_Dashboard.md`, `docs/MB21_v4_Brief_F5_Report.md`, `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: decisioni A-G prese con Ignazio il 15/09 (D sostituita da G). Da ripassare: lavori e ordine. Nessun lavoro avviato.**
+> **Stato: decisioni A-G prese con Ignazio il 15/09 (D sostituita da G). Lavori 1-4 fatti il 15/09 (da provare da Ignazio); 5 e 6 in attesa.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.

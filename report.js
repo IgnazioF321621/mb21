@@ -155,7 +155,7 @@
     return null;
   }
 
-  const api = { GRUPPI, SENZA_ESITO, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
+  const api = { GRUPPI, SENZA_ESITO, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
     spostaPeriodo, periodoIniziale, testoPeriodo, numeri, grafico, abbrevia, griglia, coloreCella, COLORI_GRIGLIA, validaGriglia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Report = api;
