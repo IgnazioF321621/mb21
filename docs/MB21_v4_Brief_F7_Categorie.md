@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, da aprire in una **sessione nuova**.
 > Contesto: `CANTIERI.md` (cantiere 16), `docs/MB21_v3_Lista_come_e.md` (la Lista di Glide), `docs/MB21_v4_Brief_F2_ListaNomi.md`, `docs/MB21_v4_Brief_F1_Oggi.md`, `STRUTTURA.md` (Lista Nomi, Coda OGGI, Bottoni esito), `CLAUDE.md`.
-> **Stato: bozza. Domande a Ignazio chiuse il 16/09 (sez. 4b); prossimo: proposta di come fare lo smistamento.**
+> **Stato: domande chiuse (sez. 4b) e proposta approvata da Ignazio il 16/09 (sez. 4c). Prossimo: lavori, uno alla volta.**
 
 ## Modalità di lavoro
 - Prima le domande (sez. 4), **una alla volta**, aspettando la risposta. Poi le proposte, poi i lavori.
@@ -72,6 +72,19 @@ Da leggere: i senza categoria **non sono quasi mai stati lavorati** (5 su 1.180 
 6. **Ritmo**: 5 al giorno, con possibilità di farne altri (vedi 3)
 7. **Senza telefono**: **nello smistamento come gli altri** (si decide caso per caso: Unlinked, oppure si aggiunge il numero)
 8. **Referral**: non è una vera categoria (il «segnalato da» è il campo `referral_di`, che resta). I contatti già Referral **restano come sono**, ma **Referral non compare più tra le scelte** (smistamento, Modifica, Nuovo contatto)
+
+## 4c. Proposta approvata (16/09) · «Da catalogare» in Dashboard
+- **Dove**: Dashboard, sotto «La tua coda», riquadro **🗂️ Da catalogare · Fatti X di 5** con «N ancora da catalogare»
+- **5 righe** compatte come la coda, **ordine alfabetico**; tocco → apre: nome, professione, città, telefono, note, «Contatto e/o Incaricato di»
+- **Bottoni categoria**: Prospect · Partner · Cliente · Ex Partner/Cliente · Unlinked · Archivia (Referral no)
+  - Ex Partner/Cliente, Unlinked, Archivia → la riga esce (fuori coda come oggi)
+  - Prospect, Partner, Cliente → nella stessa card compaiono **i bottoni esito** della categoria; se non si chiama, **dal giorno dopo entra nella coda normale** (mai contattato)
+- **Annulla** su ogni scelta, come nella coda. Finiti i 5 → **«Altri 5»**
+- **I senza categoria escono dalla coda normale** (hanno i loro 5): nel 40% dei mai contattati restano i Prospect mai chiamati
+- **Admin con Partner Select**: sceglie la categoria a nome del partner; bottoni esito spenti come nella coda («la chiamata la fa il partner»)
+- **Referral** tolto dalle scelte anche in Modifica e Nuovo contatto (i contatti già Referral restano)
+- Lista → Altri → Senza categoria **resta** com'è
+- Da definire nei lavori (verificare, non dare per scontato): come si contano i «fatti oggi» e come restano fermi i 5 riaprendo l'app lo stesso giorno (come `in_coda_dal` della coda); provare sui numeri veri (LEZIONI L3)
 
 ## 5. Strade possibili (da proporre dopo le risposte, non decise)
 - **A. Smistamento rapido**: una pagina «Da catalogare» che mostra un nome alla volta (nome, professione, telefono, note) con bottoni grandi Prospect · Partner · Cliente · Unlinked · Archivia · Salta, e il contatore «N da catalogare». Avanza da solo, con Annulla
