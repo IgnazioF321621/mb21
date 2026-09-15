@@ -239,3 +239,4 @@ _Da definire._
 | 2026.09.15 · 08:18 | Agenda provata da Ignazio: da affinare usandola |
 | 2026.09.15 · 08:30 | Bottone «Appuntamento» della coda crea l'appuntamento vero in Agenda |
 | 2026.09.15 · 08:55 | Conferme appuntamenti (12 ore prima) in Dashboard e Agenda; appuntamento fissato = fuori coda |
+| 2026.09.15 · 09:04 | CANTIERI: prossimo passo rilievo Report |
