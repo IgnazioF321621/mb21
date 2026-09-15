@@ -10,6 +10,17 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 15. Prossimo passo: PARTNER SELECT e primo partner in prova
+*Deciso il 15/09, da fare in una sessione nuova (deviazione: prima della Mappa).* A breve Ignazio fa installare l'app a una partner (Isabella) per provarla. **Lei deve vedere solo il suo lavoro; Ignazio (Admin) vede il suo, quello di lei e di tutto il gruppo.**
+
+Punto di partenza (da verificare nel codice e sul DB, non dare per scontato):
+- regole di accesso sulle tabelle già «i propri · Admin tutti» (`utente_corrente()`, `is_admin()` in `STRUTTURA.md`)
+- `utenti.accesso_attivo`: oggi entra **solo l'Admin** → per lei serve la riga in `utenti` con accesso attivo (email da Ignazio, **non nel repo**)
+- **Partner Select** oggi è «in arrivo» in Dashboard e Report; Lista ha già il filtro `All` (solo Admin); Agenda: Admin vede tutti; Check: numeri del partner loggato
+- rilievo di Glide: Partner Select è solo dell'Admin (`docs/MB21_v3_Lista_come_e.md`, `docs/MB21_v3_Report_come_e.md`); nel Check si chiama «User Select»
+
+Da chiarire con Ignazio: dove serve il Partner Select (Dashboard, Agenda, Lista, Report, Check…) · «tutto il gruppo» = tutti i partner o solo la sua squadra (albero, vedi cantiere 14 lavoro 5) · cosa intende con «nella mappa può verificare il lavoro» (tab Mappa o l'app in generale) · cosa può **modificare** l'Admin sui dati di un altro partner · prova dell'accesso di lei (link dell'email, app installata: cantiere 7)
+
 ## 14. Prossimo passo: rilievo CHECK
 *Deciso il 15/09, da fare in una sessione nuova.* Seguendo l'ordine delle tab di Glide (Dashboard · Agenda · Lista Nomi · Report · **Check** · Mappa): rilievo della tab **Check** in sola lettura, stesso metodo di Agenda e Report (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-check/`; documento `docs/MB21_v3_Check_come_e.md`; Partner Select = Ignazio). Per Ignazio la tab Check dà **gli obiettivi del mese e lo scostamento**. Dati già nell'export: `Check.csv`, `Day.csv`. Già noto dal rilievo Dashboard (§2.1): «Imposta gli obiettivi del mese!» porta a Check, dove il selettore si chiama «User Select» e compaiono obiettivi «impostati» a zero. Nella v4 esistono già `check_giorno`, `obiettivi_mese` e il foglio Obiettivi del mese (Fase 3). Poi domande a Ignazio una alla volta e proposte per il Check v4
 
