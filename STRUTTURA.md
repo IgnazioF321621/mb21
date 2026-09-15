@@ -134,7 +134,8 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **esito** (`chiudi_appuntamento`): `esito` + `completata = true`; se la chiave `categoria-tipo-esito` ha giorni in `sequenze`, `rientro_il = oggi + giorni` e `in_coda_dal` vuoto. Poi si apre sempre «Fissa il prossimo appuntamento» (stesso contatto, tipo e sottotipo proposti, domani, **Salta**); l'avviso ha **Annulla** (`riapri_appuntamento` + cancella il prossimo)
 - **ora proposta**: dopo la fine dell'ultimo impegno del giorno arrotondata alla mezz'ora, mai prima di adesso, altrimenti 18:30
 - **passati senza esito**: tipo ≠ Contatto, non completati, iniziati prima di adesso (ultimi 50)
-- **categoria** del nuovo appuntamento: quella del contatto; se la si cambia, cambia anche sul contatto (come in Glide)
+- **categoria** del nuovo appuntamento: quella del contatto; se la si cambia toccandola, cambia anche sul contatto (come in Glide)
+- **bottone «Appuntamento» della coda e di «Azione +»** (dal 15/09): invece del foglio giorno/ora apre «Nuovo appuntamento» già compilato (`tipoDaCoda`: Prospect, Referral e senza categoria → Piano Marketing · PM 1a1 con categoria proposta Prospect; Partner → Appuntamento; Cliente → Consulenza PRD; domani 18:30). Salvato l'appuntamento, l'esito (PM Fissato / Appuntamento) si registra con `data_scelta` = inizio dell'appuntamento; se l'esito non si salva, l'appuntamento si cancella. Annulla (`annullaEsito`) cancella anche l'appuntamento. In Agenda l'esito «dalla coda» non si mostra se c'è l'appuntamento vero dello stesso contatto alla stessa ora (`senzaDoppioniCoda`)
 - ora di Roma con `Intl` (`partiRoma`, `isoDaRoma`), anche al cambio d'ora
 
 **Dashboard** (`dashboard.js`, funzioni pure; prove in `tools/banco/prova_dashboard.js`; regole ricostruite nel brief Fase 3 → allegato, confermate da Ignazio 14/09):
@@ -230,3 +231,4 @@ _Da definire._
 | 2026.09.14 · 23:30 | Fase 4 Agenda: brief approvato, bozza delle scelte (categoria → tipo → sottotipo → fasi) |
 | 2026.09.14 · 23:44 | Fase 4 Agenda: pagina a linea del tempo, esiti con prossimo appuntamento, sposta, nuovo appuntamento |
 | 2026.09.15 · 08:18 | Agenda provata da Ignazio: da affinare usandola |
+| 2026.09.15 · 08:30 | Bottone «Appuntamento» della coda crea l'appuntamento vero in Agenda |
