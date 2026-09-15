@@ -90,7 +90,7 @@
       return { ...g, totale: sue.length, esiti };
     });
   }
-  const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', giorno: a.giorno, modalita: a.modalita || '' });
+  const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', giorno: a.giorno, modalita: a.modalita || '', portato: a.portatoNome || '' });
 
   // ── Grafico dell'anno: 12 mesi (set → ago) del Performance Year, azioni fatte e risultati che contano ──
   function grafico(azioni, annoPeriodo, oggi, chiaveGruppo) {
@@ -134,7 +134,8 @@
     const celle = Array.from({ length: Math.max(obiettivo, fatti.length) }, (_, i) => {
       const a = fatti[i];
       return a ? { numero: i + 1, id: a.id, contatto_id: a.contatto_id, giorno: a.giorno, nome: (a.contatti && a.contatti.nome) || '—',
-        breve: abbrevia(a.contatti && a.contatti.nome), ospite: a.ospite || '', esito: a.esito || '' } : { numero: i + 1 };
+        breve: abbrevia(a.contatti && a.contatti.nome), ospite: a.ospite || '', esito: a.esito || '',
+        portato: a.portatoNome ? abbrevia(a.portatoNome) : '' } : { numero: i + 1 };
     });
     return {
       obiettivo, inizio, fine, mesi, fatti: fatti.length, mancanti,
