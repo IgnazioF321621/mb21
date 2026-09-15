@@ -86,4 +86,18 @@ prova('Nuovo appuntamento: controlli', () => {
   assert.equal(A.validaAppuntamento({ ...v, ospite: 'x'.repeat(51) }), 'Ospite: massimo 50 caratteri.');
 });
 
+prova('Bottone «Appuntamento» della coda: tipo proposto per categoria; niente doppione in Agenda', () => {
+  assert.deepEqual(A.tipoDaCoda('Prospect'), { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' });
+  assert.deepEqual(A.tipoDaCoda(null), { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' });
+  assert.deepEqual(A.tipoDaCoda('Referral').tipo, 'Piano Marketing');
+  assert.deepEqual(A.tipoDaCoda('Partner'), { categoria: 'Partner', tipo: 'Appuntamento', modalita: null });
+  assert.deepEqual(A.tipoDaCoda('Cliente').tipo, 'Consulenza PRD');
+  const lista = [
+    { id: 'pm', contatto_id: 'c1', tipo_azione: 'Piano Marketing', inizio: '2026-09-16T16:30:00+00:00' },
+    { id: 'esito', contatto_id: 'c1', tipo_azione: 'Contatto', esito: 'PM Fissato', data_scelta: '2026-09-16T16:30:00.000Z' },
+    { id: 'vecchio', contatto_id: 'c2', tipo_azione: 'Contatto', esito: 'PM Fissato', data_scelta: '2026-09-16T17:00:00.000Z' },
+  ];
+  assert.deepEqual(A.senzaDoppioniCoda(lista).map(a => a.id), ['pm', 'vecchio']);
+});
+
 console.log(`\n${ok} prove superate`);

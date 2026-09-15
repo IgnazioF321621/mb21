@@ -117,6 +117,20 @@
     return `${String(Math.floor(minimo / 60)).padStart(2, '0')}:${String(minimo % 60).padStart(2, '0')}`;
   }
 
+  // Tipo proposto quando l'appuntamento nasce dal bottone «Appuntamento» della coda (esito PM Fissato / Appuntamento)
+  function tipoDaCoda(categoria) {
+    if (categoria === 'Partner') return { categoria: 'Partner', tipo: 'Appuntamento', modalita: null };
+    if (categoria === 'Cliente') return { categoria: 'Cliente', tipo: 'Consulenza PRD', modalita: null };
+    return { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' };   // Prospect, Referral, senza categoria
+  }
+
+  // Un esito «dalla coda» con data (PM Fissato, Appuntamento) non si mostra se c'è già l'appuntamento vero
+  // dello stesso contatto alla stessa ora (lo crea il bottone «Appuntamento» dal 15/09)
+  function senzaDoppioniCoda(azioni) {
+    const veri = new Set(azioni.filter(a => a.tipo_azione !== 'Contatto' && a.inizio).map(a => `${a.contatto_id}|${Date.parse(a.inizio)}`));
+    return azioni.filter(a => !(a.tipo_azione === 'Contatto' && a.data_scelta && veri.has(`${a.contatto_id}|${Date.parse(a.data_scelta)}`)));
+  }
+
   // Appuntamenti passati senza esito: non completati, tipo ≠ Contatto, iniziati prima di adesso
   const passatiSenzaEsito = (azioni, adessoIso) =>
     azioni.filter(a => a.tipo_azione !== 'Contatto' && !a.completata && a.inizio && a.inizio < adessoIso);
@@ -135,7 +149,7 @@
 
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento };
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

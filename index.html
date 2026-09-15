@@ -286,7 +286,7 @@
 <script src="dashboard.js"></script>
 <script src="agenda.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 08:18';
+const APP_VERSION = '2026.09.15 · 08:30';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -520,8 +520,12 @@ async function toccaBottone(id, indice) {
   const pos = trovaInCoda(id);
   if (!pos) return;
   const bottone = bottoniPer(pos.contatto.categoria)[indice];
-  let data = null;
-  if (bottone.data) {
+  let data = null, appuntamento = null;
+  if (bottone.classe === 'appuntamento') {   // dal 15/09 crea l'appuntamento vero in Agenda
+    appuntamento = await appuntamentoDaCoda(pos.contatto);
+    if (!appuntamento) return;
+    data = appuntamento.inizio;
+  } else if (bottone.data) {
     data = await chiediData(bottone, pos.contatto.nome);
     if (!data) return;                       // annullato dal foglio
   }
@@ -530,17 +534,31 @@ async function toccaBottone(id, indice) {
   const daCoda = pos.lista === 'coda';   // i Dare Seguito non contano nei contatti al giorno
   const { data: esito, error } = await registraEsito(id, bottone, data, daCoda);
   if (error) {
+    if (appuntamento) await dbq('togli appuntamento', supa.from('azioni').delete().eq('id', appuntamento.id));
     card.querySelectorAll('button').forEach(b => { b.disabled = false; });
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
+  if (appuntamento) esito.appuntamento_id = appuntamento.id;
   card.classList.add('via');
   setTimeout(() => {
     ST.risultato[pos.lista].splice(pos.i, 1);
     if (daCoda) ST.stato.fatti_oggi++;
     salvaCache();
     disegnaOggi();
-    mostraToast(`${pos.contatto.nome} · ${bottone.etichetta}`, () => annulla(pos, esito));
+    mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}`, () => annulla(pos, esito));
   }, 250);
+}
+
+// Bottone «Appuntamento» (coda e «Azione +»): foglio Nuovo appuntamento dell'Agenda, già compilato.
+// Restituisce { id, inizio } dell'appuntamento creato, o null se annullato.
+function appuntamentoDaCoda(contatto) {
+  const proposta = MB21Agenda.tipoDaCoda(contatto.categoria);
+  return nuovoAppuntamento({
+    titolo: `Appuntamento · ${contatto.nome}`, resta: true,
+    giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1), ora: '18:30',
+    contatto: { id: contatto.id, nome: contatto.nome, categoria: contatto.categoria },
+    categoria: proposta.categoria, tipo: proposta.tipo, modalita: proposta.modalita,
+  });
 }
 
 // Un esito (Dashboard e scheda contatto usano lo stesso codice) e il suo annullamento.
@@ -548,8 +566,9 @@ function registraEsito(contattoId, bottone, data, daCoda) {
   return dbq('registra esito', supa.rpc('registra_esito',
     { p_contatto: contattoId, p_chiave: bottone.chiave, p_data: data, p_da_coda: daCoda }));
 }
-function annullaEsito(esito) {
-  return dbq('annulla esito', supa.rpc('annulla_esito',
+async function annullaEsito(esito) {
+  if (esito.appuntamento_id) await dbq('annulla appuntamento', supa.from('azioni').delete().eq('id', esito.appuntamento_id));
+  return await dbq('annulla esito', supa.rpc('annulla_esito',
     { p_azione: esito.azione_id, p_rientro: esito.rientro_prec, p_in_coda: esito.in_coda_prec }));
 }
 
@@ -877,7 +896,7 @@ async function caricaAgenda() {
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('rientro_il', AG.giorno)));
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
-  AG.azioni = [...app1.data, ...ric.data];
+  AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
 }
@@ -985,7 +1004,7 @@ async function chiudiAppuntamento(e, esito) {
     const { error: e2 } = await dbq('riapri appuntamento', supa.rpc('riapri_appuntamento', {
       p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
       p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
-    if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato));
+    if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
     await apriAgenda();
     mostraToast('Annullato');
@@ -1078,7 +1097,8 @@ async function leggiContattiMiei() {
 }
 
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
-// opz: { giorno, ora, contatto:{id,nome,categoria}, tipo, modalita, area, titolo, sottotitolo, salta, userId }
+// opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId }
+// Restituisce { id, inizio } o null. `salta`: il bottone in basso dice «Salta»; `salta`/`resta`: non si va in Agenda dopo il salvataggio.
 async function nuovoAppuntamento(opz = {}) {
   const A = MB21Agenda;
   let elenco = [];
@@ -1086,7 +1106,7 @@ async function nuovoAppuntamento(opz = {}) {
     try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   }
   const st = {
-    contatto: opz.contatto || null, categoria: opz.contatto ? opz.contatto.categoria : null,
+    contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
     tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60,
   };
@@ -1148,6 +1168,7 @@ async function nuovoAppuntamento(opz = {}) {
           const nome = g.dataset.scelta, v = b.dataset.v;
           if (nome === 'durata') st.durata = Number(v);
           else st[nome] = v;
+          if (nome === 'categoria') st.categoriaToccata = true;
           if (nome === 'categoria' && !A.tipiPer(v).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
           if (nome === 'tipo') st.modalita = null;
           disegna();
@@ -1167,15 +1188,15 @@ async function nuovoAppuntamento(opz = {}) {
         completata: false, ospite: v.ospite || null, note: v.note || null };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
-      if (st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
+      if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
         const { error: ec } = await dbq('categoria contatto', supa.from('contatti').update({ categoria: v.categoria }).eq('id', v.contatto_id));
         if (ec) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: riprova.'; return; }
         contattiMiei = null; LS.righe = [];
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
-      chiudi(data.id);
-      if (!opz.salta) {
+      chiudi({ id: data.id, inizio });
+      if (!opz.salta && !opz.resta) {
         AG.aperta = data.id;
         await apriAgenda(v.giorno);
         mostraToast('Appuntamento fissato', async () => {
@@ -1462,10 +1483,18 @@ async function azionePiu() {
   const c = LS.contatto;
   const scelta = await sceltaDa('Nuova azione · ' + c.nome, bottoniPer(c.categoria).map(b => ({ etichetta: b.etichetta, b })));
   if (!scelta) return;
-  let data = null;
-  if (scelta.b.data) { data = await chiediData(scelta.b, c.nome); if (!data) return; }
+  let data = null, appuntamento = null;
+  if (scelta.b.classe === 'appuntamento') {
+    appuntamento = await appuntamentoDaCoda(c);
+    if (!appuntamento) return;
+    data = appuntamento.inizio;
+  } else if (scelta.b.data) { data = await chiediData(scelta.b, c.nome); if (!data) return; }
   const { data: esito, error } = await registraEsito(c.id, scelta.b, data, false);
-  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  if (error) {
+    if (appuntamento) await dbq('togli appuntamento', supa.from('azioni').delete().eq('id', appuntamento.id));
+    return mostraToast('Non salvato: controlla la connessione e riprova.');
+  }
+  if (appuntamento) esito.appuntamento_id = appuntamento.id;
   LS.azioni = null;
   await ricaricaERidisegna();
   mostraToast(`${c.nome} · ${scelta.b.etichetta}`, async () => {
