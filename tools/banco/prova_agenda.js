@@ -123,4 +123,18 @@ prova('Conferme: da 12 ore prima fino all\'inizio; esclusi confermati, completat
     'Attività • ⏳ Da completare · 👍 confermato');
 });
 
+prova('Foglio unico Modifica azione: scelte dagli elenchi dell\'Agenda, valori salvati sempre sceglibili', () => {
+  const pm = A.sceltePerModifica({ categoria: 'Prospect', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Presentazione' });
+  assert.ok(pm.esiti.includes('Iscrizione') && pm.esiti.includes('No BuonFine'));
+  assert.equal(pm.sottotipi[0], 'PM 1a1');
+  assert.equal(pm.ospite, true);
+  const ref = A.sceltePerModifica({ categoria: 'Referral', tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'No Risposta' });
+  assert.ok(ref.esiti.includes('No Interesse') && ref.esiti.includes('Richiamare'));
+  assert.equal(new Set(ref.esiti).size, ref.esiti.length);
+  const vecchio = A.sceltePerModifica({ categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Vecchio', esito: 'Iscr+Ordine' });
+  assert.ok(vecchio.sottotipi.includes('Vecchio') && vecchio.esiti.includes('Iscr+Ordine') && vecchio.esiti.includes('c/Upline'));
+  const glide = A.sceltePerModifica({ categoria: 'Cliente', tipo_azione: 'Prodotti', modalita: null, esito: 'Vendita', ospite: 'X' });
+  assert.deepEqual([glide.sottotipi, glide.esiti, glide.ospite], [[], ['Vendita'], true]);
+});
+
 console.log(`\n${ok} prove superate`);

@@ -360,7 +360,7 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 15:54';
+const APP_VERSION = '2026.09.15 · 16:10';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1102,7 +1102,7 @@ function eventoAgenda(e, opz) {
         : fasi.length ? `<div class="ag-esiti">${fasi.map(f => `<button data-esito="${esc(f)}" class="${e.esito === f && e.completata ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
-        ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">🕑 Sposta</button>`}
+        ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">🕑 Sposta</button><button data-cmd="modifica">✏️ Modifica</button>`}
         <button data-cmd="contatto">👤 Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div></div>`;
@@ -1136,6 +1136,7 @@ function collegaAgenda(eventi) {
     el.querySelectorAll('[data-cmd]').forEach(b => {
       b.onclick = () => {
         if (b.dataset.cmd === 'sposta') return spostaAppuntamento(e);
+        if (b.dataset.cmd === 'modifica') return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() });
         if (b.dataset.cmd === 'elimina') return eliminaAppuntamento(e);
         if (b.dataset.cmd === 'contatto') return apriContattoDa(e.contatto_id);
         if (b.dataset.cmd === 'fissa') return nuovoAppuntamento({ giorno: A.partiRoma(e.quando).giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } });
@@ -1647,7 +1648,7 @@ async function sezioneAzioni() {
     if (error) { i.checked = !i.checked; return mostraToast('Non salvato: riprova.'); }
     LS.azioni.find(a => a.id === i.dataset.completata).completata = i.checked;
   });
-  box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => modificaAzione(LS.azioni.find(a => a.id === b.dataset.modificaAzione)));
+  box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
 }
 
 // «Azione +»: gli stessi bottoni esito della Dashboard, stesso codice e stesso Annulla
@@ -1676,25 +1677,6 @@ async function azionePiu() {
     await ricaricaERidisegna();
     mostraToast('Annullato');
   });
-}
-
-async function modificaAzione(a) {
-  const valori = await moduloSemplice('Modifica azione', [
-    { k: 'data', etichetta: 'Data e ora', tipo: 'datetime-local', valore: a.inizio ? dataOraLocale(a.inizio) : '' },
-    { k: 'note', etichetta: 'Nota', tipo: 'textarea', valore: a.note || '' },
-  ]);
-  if (!valori) return;
-  const { error } = await dbq('modifica azione', supa.from('azioni').update({
-    inizio: valori.data ? new Date(valori.data).toISOString() : a.inizio, note: valori.note.trim() || null }).eq('id', a.id));
-  if (error) return mostraToast('Non salvato: riprova.');
-  LS.azioni = null;
-  ricaricaERidisegna();
-}
-
-function dataOraLocale(iso) {
-  const d = new Date(iso);
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 const TIPI_COACH = ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento', 'Counseling', 'Avvio', 'Consulenza PRD'];
@@ -1867,6 +1849,68 @@ function apriModulo(c) {
   };
 }
 
+// ── Foglio unico «Modifica azione» (decisioni di Ignazio 15/09) ──────────
+// Stesso foglio da Report, Griglia PM, scheda contatto e Agenda: sottotipo, esito, giorno e ora, ospite, note.
+// Serve a correggere un passo (per andare avanti si chiude con l'esito e se ne apre uno nuovo).
+// Scelte da MB21Agenda.sceltePerModifica: un tipo nuovo aggiunto in agenda.js compare anche qui.
+// Coda: se è l'ultima azione del contatto e l'esito cambia, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
+// opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' | … per «Apri contatto» (senza = niente bottone) }
+async function foglioAzione(id, opz = {}) {
+  const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
+    .select('id, contatto_id, categoria, tipo_azione, modalita, esito, inizio, fine, ospite, note, contatti(nome)').eq('id', id).maybeSingle());
+  if (error || !a) return mostraToast('Azione non trovata: riprova.');
+  const A = MB21Agenda, s = A.sceltePerModifica(a);
+  const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
+  let sottotipo = a.modalita, esito = a.esito;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto">
+    <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">${esc(a.contatti ? a.contatti.nome : '—')}</div>
+    ${s.sottotipi.length ? `<div class="campo"><label>Sottotipo</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
+    <div class="campo"><label>Esito</label><div class="ag-scelte" id="fa-esiti"></div></div>
+    <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
+    ${s.ospite ? `<div class="campo"><label>Ospite</label><input id="fa-ospite" maxlength="${Math.max(50, (a.ospite || '').length)}" value="${esc(a.ospite || '')}"></div>` : ''}
+    <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
+    <div class="errore" id="fa-errore"></div>
+    <div class="due">${opz.ritorno ? '<button class="link" id="fa-contatto">👤 Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
+      <button class="primario" id="fa-si">Salva</button></div>
+  </div>`;
+  document.body.appendChild(velo);
+  const $ = x => velo.querySelector('#' + x);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  $('fa-x').onclick = chiudi;
+  if ($('fa-no')) $('fa-no').onclick = chiudi;
+  if ($('fa-contatto')) $('fa-contatto').onclick = () => { chiudi(); apriContattoDa(a.contatto_id, opz.ritorno); };
+  const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
+    const esiti = A.sceltePerModifica({ ...a, modalita: sottotipo, esito }).esiti;
+    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === esito ? 'scelto' : ''}">${esc(x)}</button>`).join('');
+    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => { esito = b.dataset.v; disegnaScelte(); });
+    velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === sottotipo));
+  };
+  velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { sottotipo = b.dataset.v; disegnaScelte(); });
+  disegnaScelte();
+  $('fa-si').onclick = async () => {
+    if (!$('fa-giorno').value || !$('fa-ora').value) { $('fa-errore').textContent = 'Scegli giorno e ora.'; return; }
+    const inizio = A.isoDaRoma($('fa-giorno').value, $('fa-ora').value);
+    const fine = a.fine && a.inizio ? new Date(Date.parse(inizio) + Date.parse(a.fine) - Date.parse(a.inizio)).toISOString() : a.fine;   // stessa durata
+    $('fa-si').disabled = true;
+    const { data: prima, error: e2 } = await dbq('modifica azione', supa.rpc('modifica_azione', {
+      p_azione: a.id, p_modalita: sottotipo || null, p_esito: esito || null, p_inizio: inizio, p_fine: fine || null,
+      p_ospite: $('fa-ospite') ? ($('fa-ospite').value.trim() || null) : a.ospite, p_note: $('fa-note').value.trim() || null }));
+    if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+    chiudi();
+    if (opz.dopo) await opz.dopo();
+    mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
+      const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
+      if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+      if (opz.dopo) await opz.dopo();
+      mostraToast('Annullato');
+    });
+  };
+}
+
 // ── REPORT (Fase 5) ──────────────────────────────────────
 // Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
@@ -1930,7 +1974,7 @@ function disegnaReport() {
         h += riga(`esito ${e.verde ? 'verde' : ''} ${e.n ? '' : 'zero'}`, `data-esito="${esc(e.esito)}" ${e.n ? '' : 'disabled'}`,
           esc(e.esito), e.n, `${e.percentuale}%`, e.n ? (scelto ? '⌄' : '›') : '');
         if (!scelto) continue;
-        h += e.persone.map(x => `<button class="rp-riga nome" data-contatto="${esc(x.contatto_id)}">
+        h += e.persone.map(x => `<button class="rp-riga nome" data-azione="${esc(x.id)}">
           <span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}</small></span><span></span><span class="f">›</span></button>`).join('');
         if (e.altre) h += `<div class="rp-altre">e altri ${e.altre}: scegli un periodo più corto</div>`;
       }
@@ -1966,7 +2010,7 @@ function collegaReport() {
     RP.aperto = RP.aperto === b.dataset.gruppo ? null : b.dataset.gruppo; RP.esito = null; disegnaReport();
   });
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
-  app.querySelectorAll('[data-contatto]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.contatto, 'report'));
+  app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
   su('rp-piu-wes', async () => {
     const data = document.getElementById('rp-data-wes').value;
@@ -2024,26 +2068,7 @@ function disegnaGriglia() {
   app.innerHTML = html + versione();
   document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
   document.getElementById('gp-cambia').onclick = impostaGriglia;
-  app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => dettaglioCella(g.celle.find(c => c.numero === Number(b.dataset.cella))));
-}
-
-// Dettaglio di una casella in un foglio dal basso (richiesta di Ignazio 15/09: con 100 caselle il dettaglio in fondo non si vedeva)
-function dettaglioCella(c) {
-  const R = MB21Report;
-  const velo = document.createElement('div');
-  velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio">
-    <div class="testa-foglio"><h3>PM n. ${c.numero}</h3><button id="dc-x" aria-label="Chiudi">×</button></div>
-    <div style="font-size:18px;font-weight:700;margin-bottom:4px">${esc(c.nome)}</div>
-    ${c.ospite ? `<p style="margin:0 0 4px">Ospite: ${esc(c.ospite)}</p>` : ''}
-    <p>${esc(R.dataLunga(c.giorno))}${c.esito ? ` · <b style="color:${R.coloreCella(c.esito)}">${esc(c.esito)}</b>` : ''}</p>
-    <button class="primario" id="dc-contatto">👤 Apri contatto</button>
-  </div>`;
-  document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
-  velo.onclick = e => { if (e.target === velo) chiudi(); };   // tocco fuori dal foglio
-  velo.querySelector('#dc-x').onclick = chiudi;
-  velo.querySelector('#dc-contatto').onclick = () => { chiudi(); apriContattoDa(c.contatto_id, 'griglia'); };
+  app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => foglioAzione(g.celle.find(c => c.numero === Number(b.dataset.cella)).id, { ritorno: 'griglia', dopo: () => apriReport('griglia') }));
 }
 
 function impostaGriglia() {
