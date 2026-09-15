@@ -196,6 +196,8 @@ prova('da catalogare: solo senza categoria, alfabetico, 5 meno i catalogati di o
   assert.deepEqual(daCatalogare(righe, 3).righe.map(x => x.id), [2, 4]);
   assert.equal(daCatalogare(righe, 5).righe.length, 0);
   assert.equal(daCatalogare(righe, 8).righe.length, 0);
+  assert.deepEqual(daCatalogare(righe, 5, 5).righe.map(x => x.id), [2, 4, 5, 6, 7]);   // «Altri 5»
+  assert.deepEqual(daCatalogare(righe, 7, 5).righe.map(x => x.id), [2, 4, 5]);
 });
 
 console.log(`\n${ok} prove superate`);

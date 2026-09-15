@@ -16,7 +16,8 @@ Brief in bozza: `docs/MB21_v4_Brief_F7_Categorie.md` (situazione, 8 domande a Ig
 - ~~Lavoro 1~~ — fatto il 15/09: Referral non compare più in Nuovo contatto e Modifica; chi l'aveva già lo vede ancora selezionato (valore storico). Prove lista 10. Provato da Ignazio il 15/09
 - ~~Lavoro 2~~ — fatto il 15/09: migrazione `da_catalogare` applicata e provata sul DB (poi annullata); riquadro in Dashboard sotto la coda; senza categoria fuori dalla coda normale. Prove coda 19. Provato da Ignazio il 15/09 (all'inizio il riquadro non compariva sul telefono, poi sì dopo qualche minuto: probabile pezzo vecchio dell'app ancora in uso, non verificato)
 - **Aggiunta (richiesta di Ignazio 15/09):** «👤 Apri contatto» dalla coda e da «Da catalogare», con ritorno alla Dashboard; categoria messa da Modifica su un senza categoria conta nei Fatti. Provato da Ignazio il 15/09 («sembra funzionare tutto»)
-- ~~Lavoro 3~~ — fatto il 15/09: dopo Prospect/Partner/Cliente la card resta con i bottoni esito (non contano nei contatti al giorno); se non lo si chiama, domani in coda. **Da provare da Ignazio**. **Prossimo: lavoro 4 («Altri 5»)**
+- ~~Lavoro 3~~ — fatto il 15/09: dopo Prospect/Partner/Cliente la card resta con i bottoni esito (non contano nei contatti al giorno); se non lo si chiama, domani in coda. Provato da Ignazio il 15/09 («poi solo lavorando riuscirò a capire di più»)
+- ~~Lavoro 4~~ — fatto il 15/09: «Altri 5» quando i 5 sono finiti (vale per oggi, solo nell'app). Prove coda 19. **Da provare da Ignazio**. **Prossimo: lavoro 5 (Admin con Partner Select)**
 
 ## 15. Prossimo passo: PARTNER SELECT e primo partner in prova
 *Deciso il 15/09, da fare in una sessione nuova (deviazione: prima della Mappa).* A breve Ignazio fa installare l'app a una partner (Isabella) per provarla. **Lei deve vedere solo il suo lavoro; Ignazio (Admin) vede il suo, quello di lei e di tutto il gruppo.**

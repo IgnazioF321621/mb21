@@ -391,7 +391,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 22:54';
+const APP_VERSION = '2026.09.15 · 23:09';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -605,7 +605,8 @@ async function caricaOggi() {
   if (!offline && !altro) salvaCache();
   ST.catalogo = null;   // offline o errore: il riquadro Da catalogare non si mostra
   if (!offline) {
-    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi); } catch (e) {}
+    if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
+    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
   }
   await Promise.all([caricaDashboard(oggi), caricaConferme()]);
   disegnaOggi();
@@ -707,6 +708,8 @@ function disegnaOggi() {
   app.querySelectorAll('.bottoni button[data-cataloga]').forEach(btn => {
     btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
   });
+  const altri = document.getElementById('altri-catalogo');
+  if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; caricaOggi(); };
   app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
     btn.onclick = () => apriContattoDa(btn.dataset.scheda, 'oggi');
   });
@@ -725,12 +728,14 @@ function catalogoHtml() {
   const fatti = ST.stato.catalogati_oggi || 0;
   if (!cat || (!cat.totale && !fatti)) return '';
   const altro = guardoAltri();
+  const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
   let h = `<div class="testa-coda"><h2>🗂️ Da catalogare</h2>
-    <span class="contatore">Fatti ${Math.min(fatti, MB21Coda.QUOTA_CATALOGO)} di ${MB21Coda.QUOTA_CATALOGO}</span></div>
+    <span class="contatore">Fatti ${Math.min(fatti, quota)} di ${quota}</span></div>
     <div class="sotto">${cat.totale} ancora da catalogare</div>`;
   if (altro) h += `<div class="sotto">👁️ Solo da guardare, per ora.</div>`;
   if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
-  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${MB21Coda.QUOTA_CATALOGO}. 👏` : 'Tutti catalogati. 👏'}</div>`;
+  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${quota}. 👏` : 'Tutti catalogati. 👏'}</div>`
+    + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
 }
 function cardCatalogo(r) {
   const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
