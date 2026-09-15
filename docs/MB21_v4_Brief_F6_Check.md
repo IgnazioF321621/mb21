@@ -55,7 +55,7 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
 | 6 | **Obiettivi** | link al foglio Obiettivi del mese già fatto (Fase 3) |
 
 ## Decisioni da prendere con Ignazio
-- **A. Come si arriva al Check.** Proposta: dal bottone **«👁️ visione completa»** della Dashboard (oggi «in arrivo»), senza una quinta voce nella barra in basso. In alternativa: quinta voce «Check».
+- ~~**A. Come si arriva al Check.**~~ → **Deciso da Ignazio (15/09):** per ora **solo dal bottone «👁️ visione completa»** della Dashboard; il Check si apre a tutto schermo con «‹ Dashboard» in alto (come la Griglia PM nel Report). **Quinta voce «Check» nella barra: eventualmente più avanti** (in Glide le voci sono 6, più quelle Admin).
 - **B. Il confronto «stesso tratto».** Proposta: sì, come al punto 3 (mese in corso con lo stesso numero di giorni del mese prima).
 - **C. Segni Vitali.** Proposta: la tabella a 12 mesi **si sposta** nel Check (punto 5); in Dashboard resta solo un richiamo che apre il Check.
 - **D. Azzerare BBS/WES/CEP dopo un evento.** Proposta: nel foglio Obiettivi del mese una riga **«Partenza»** con i tre numeri già proposti dall'app, modificabili, e un bottone **«Evento fatto: riparti da 0»**. Da chiarire: **quali eventi** azzerano quale numero (BBS, WES, CEP).
