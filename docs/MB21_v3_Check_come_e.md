@@ -5,7 +5,7 @@
 > Pannello accanto alla sessione di Claude Desktop, navigato da Ignazio; ripresa automatica
 > (`mb21-import/strumenti/ripresa.py`, 18 foto in circa 2 minuti, tema chiaro).
 >
-> **Nessun dato cambiato di proposito.** Aperto «Modifica Obiettivi» e sfogliati i 5 passi senza cambiare numeri (vedi domanda 1 in §6).
+> **Nessun numero cambiato.** Aperto «Modifica Obiettivi», sfogliati i 5 passi senza cambiare numeri e premuto «Conferma» (stessi valori di prima).
 >
 > **Niente dati personali in questo file** (il repo è pubblico). Gli **screenshot** stanno **fuori dal repo**, in
 > `/Users/ignaziofiorito/mb21-import/screenshot-check/` (8 scelti e rinominati) e `.../screenshot-check/ripresa-grezza/` (tutte le 18 foto).
@@ -94,7 +94,7 @@ Il bottone apre **al posto del titolo** un modulo a passi, nel colore del riquad
 ---
 
 ## 6. Domande per Ignazio
-1. Nel passo 5 hai premuto **«Conferma»** o sei uscito? (I numeri erano gli stessi, quindi nessun dato è cambiato in ogni caso.)
+1. ~~Nel passo 5 «Conferma» o uscito?~~ → **Conferma**, con gli stessi numeri. **Indicazione di Ignazio (15/09):** nella v4 le percentuali sugli obiettivi ci sono già in **Dashboard**; il Check può servire come **base** e come **confronto con i mesi precedenti** sul **lavoro personale** (diverso dal Report).
 2. Il **check del giorno** (contatti, PM, tracce, pagine… di ogni giorno) dove si compila in Glide?
 3. **VPP, VPV, VPG**: da dove arrivano i punti? Li scrivi tu o arrivano da N21?
 4. **BBS, WES, CEP «Start»**: cosa sono esattamente (biglietti venduti nel gruppo per il prossimo evento, abbonati)? Si azzerano a ogni evento?
