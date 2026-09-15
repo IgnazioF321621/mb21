@@ -29,6 +29,7 @@ Decisioni di Ignazio (15/09, domande chiuse):
 - **Giorni mancanti:** i dati di Isabella arrivano all'export del 13/09; quello scritto in Glide dopo lo **riscrive lei a mano** nella v4 (A, niente secondo import)
 
 Lavori: ~~1) Partner Select (sola lettura) nelle 4 pagine + «Tutti»~~ · ~~3) Admin vede e corregge i dati del partner scelto~~ (anticipato) · 2) accesso di Isabella e prove
+- Lavoro 2 — **accesso di Isabella attivato il 15/09** (`utenti.accesso_attivo`, sul DB) dopo che al primo tentativo le era apparso «Utente non abilitato»: l'accesso non era ancora stato attivato e Ignazio non era stato avvisato. Da verificare: che entri col link e che veda solo i suoi dati (LEZIONI L5)
 
 Decisioni di Ignazio per il lavoro 3 (15/09, dopo il lavoro 1: «se non vedo la coda di Isabella non so come aiutarla»): l'Admin deve **vedere tutto di ogni incaricato** (coda, dati, agenda…). Coda di OGGI: **la vede, gli esiti li preme il partner** (A). **Partner Select anche in Agenda** (con Tutti il nome del partner all'inizio della riga). Correzioni: **tutto come sui propri dati, a nome del partner**, riquadro arancione; Tutti solo lettura
 - ~~Lavoro 3~~ — fatto il 15/09: migrazione `admin_su_partner` (coda e stato di oggi del partner per l'Admin, esito al proprietario del contatto), regole provate sul DB (Admin / partner, poi annullate), Agenda con Partner Select, salvataggi a nome del partner scelto. Prove: agenda 18, dashboard 13, lista 10. **Pagina non vista nel browser da Claude: da provare da Ignazio**
