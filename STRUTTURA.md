@@ -75,7 +75,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 ## Campi
 
-**utenti** — `email` (unica) · `accesso_attivo` (Fase 1: può entrare nell'app; per ora solo l'Admin) · `contatti_al_giorno` (1-10, predefinito 5: massimo giornaliero della coda; l'utente lo cambia con `imposta_contatti_al_giorno`) · `nome_cognome` · `nome` · `partner_id` (PartnerID Amway, unico) · `ruolo` (`ABO` · `Admin`) · `foto` · `auth_id`
+**utenti** — `email` (unica) · `accesso_attivo` (Fase 1: può entrare nell'app; Admin e, dal 15/09, Isabella Sammito) · `contatti_al_giorno` (1-10, predefinito 5: massimo giornaliero della coda; l'utente lo cambia con `imposta_contatti_al_giorno`) · `nome_cognome` · `nome` · `partner_id` (PartnerID Amway, unico) · `ruolo` (`ABO` · `Admin`) · `foto` · `auth_id`
 
 **sequenze** — `categoria` (`Prospect` · `Partner` · `Cliente`) · `tipo_azione` · `fase` · `chiave` (calcolata: `categoria-tipo_azione-fase`, unica) · `coach` · `giorni_rientro` (vuoto = esce dalla coda) · `icona` · `area` · `tipo_suggerimento` (`data` · `data_o_archivia` · `partner` · `cliente`) · `suggerimento_1/2/3`
 

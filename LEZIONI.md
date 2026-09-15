@@ -12,3 +12,7 @@
 
 ## L4 — Sul piano gratuito l'email di accesso contiene solo il link
 *14 settembre 2026.* `supabase config push` con un modello email personalizzato (per mettere il codice a 6 cifre) è stato rifiutato: sul piano gratuito il testo delle email di accesso non si cambia senza un servizio email proprio (SMTP). L'email standard ha solo il link, quindi l'accesso di MB21 usa il link. `supabase config diff` non lo segnala: il limite si scopre solo al push.
+
+## L5 — Prima di dire a qualcuno di entrare, controllare che possa entrare
+*15 settembre 2026.* Deciso che Isabella usava l'app da stasera, il lavoro «accesso» è stato messo dopo il Partner Select senza avvisare che fino ad allora lei non poteva entrare. Ha provato e ha visto «Utente non abilitato», davanti a lei.
+**Regola:** quando una decisione ha una data per una persona esterna (prova, uso, installazione), dire subito cosa manca perché funzioni e fare prima quello; nel resoconto scrivere sempre chi può entrare e chi no.
