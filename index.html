@@ -332,7 +332,6 @@
   .gp-celle button.fatta b { font-size: 15px; }
   .gp-celle button.fatta span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gp-celle button.prossima { border: 2px dashed var(--blu); color: var(--blu); }
-  .gp-celle button.scelta { outline: 3px solid #FBBF24; }
   .gp-dettaglio { background: #F3F4F6; border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
   .gp-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--grigio); margin-top: 10px; }
   .gp-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
@@ -361,7 +360,7 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 15:51';
+const APP_VERSION = '2026.09.15 · 15:54';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2003,7 +2002,6 @@ function disegnaGriglia() {
     return;
   }
   const g = R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), imp, oggi);
-  const cella = g.celle.find(c => c.numero === RP.cella);
   html += `<div class="riquadro">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <div><b style="font-size:18px">Obiettivo ${g.obiettivo} PM</b>
@@ -2018,21 +2016,34 @@ function disegnaGriglia() {
     </div>
     <div class="riquadro">
       <div class="gp-celle">${g.celle.map((c, i) => c.id
-        ? `<button class="fatta ${RP.cella === c.numero ? 'scelta' : ''}" data-cella="${c.numero}" style="border-color:${R.coloreCella(c.esito)}">
+        ? `<button class="fatta" data-cella="${c.numero}" style="border-color:${R.coloreCella(c.esito)}">
             <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span></button>`
         : `<button class="${i === g.fatti ? 'prossima' : ''}" disabled>${c.numero}</button>`).join('')}</div>
-      <div class="gp-dettaglio">${cella ? `<b>${esc(cella.nome)}</b>${cella.ospite ? ` · ospite: ${esc(cella.ospite)}` : ''} · ${esc(R.dataLunga(cella.giorno))}
-          ${cella.esito ? ` · <b style="color:${R.coloreCella(cella.esito)}">${esc(cella.esito)}</b>` : ''}
-          <div style="margin-top:8px"><button class="piccolo" style="margin:0" id="gp-contatto">👤 Apri contatto</button></div>`
-        : 'Tocca una casella per i dettagli'}</div>
       <div class="gp-legenda">${Object.entries(R.COLORI_GRIGLIA).map(([e, c]) => `<span><i style="background:${c}"></i>${esc(e)}</span>`).join('')}</div>
     </div>`;
   app.innerHTML = html + versione();
   document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
   document.getElementById('gp-cambia').onclick = impostaGriglia;
-  app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => { RP.cella = RP.cella === Number(b.dataset.cella) ? null : Number(b.dataset.cella); disegnaGriglia(); });
-  const ac = document.getElementById('gp-contatto');
-  if (ac) ac.onclick = () => apriContattoDa(cella.contatto_id, 'griglia');
+  app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => dettaglioCella(g.celle.find(c => c.numero === Number(b.dataset.cella))));
+}
+
+// Dettaglio di una casella in un foglio dal basso (richiesta di Ignazio 15/09: con 100 caselle il dettaglio in fondo non si vedeva)
+function dettaglioCella(c) {
+  const R = MB21Report;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio">
+    <div class="testa-foglio"><h3>PM n. ${c.numero}</h3><button id="dc-x" aria-label="Chiudi">×</button></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:4px">${esc(c.nome)}</div>
+    ${c.ospite ? `<p style="margin:0 0 4px">Ospite: ${esc(c.ospite)}</p>` : ''}
+    <p>${esc(R.dataLunga(c.giorno))}${c.esito ? ` · <b style="color:${R.coloreCella(c.esito)}">${esc(c.esito)}</b>` : ''}</p>
+    <button class="primario" id="dc-contatto">👤 Apri contatto</button>
+  </div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };   // tocco fuori dal foglio
+  velo.querySelector('#dc-x').onclick = chiudi;
+  velo.querySelector('#dc-contatto').onclick = () => { chiudi(); apriContattoDa(c.contatto_id, 'griglia'); };
 }
 
 function impostaGriglia() {
