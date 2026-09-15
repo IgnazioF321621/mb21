@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Check_come_e.md` (il Check di Glide, §6 risposte di Ignazio, §7 giro dei numeri; 8 screenshot in `mb21-import/screenshot-check/`), `docs/MB21_v4_Brief_F3_Dashboard.md`, `docs/MB21_v4_Brief_F5_Report.md`, `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: BOZZA — proposte di Claude, decisioni A-E da prendere con Ignazio una alla volta. Nessun lavoro avviato.**
+> **Stato: BOZZA — proposte di Claude, decisioni A-F da prendere con Ignazio una alla volta. Nessun lavoro avviato.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -59,7 +59,8 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
 ## Decisioni da prendere con Ignazio
 - ~~**A. Come si arriva al Check.**~~ → **Deciso da Ignazio (15/09):** per ora **solo dal bottone «👁️ visione completa»** della Dashboard; il Check si apre a tutto schermo con «‹ Dashboard» in alto (come la Griglia PM nel Report). **Quinta voce «Check» nella barra: eventualmente più avanti** (in Glide le voci sono 6, più quelle Admin).
 - ~~**B. Il confronto «stesso tratto».**~~ → **Deciso da Ignazio (15/09), da aggiustare con l'uso:** **parziale e totale**. Periodo in corso: sulla riga il confronto **a pari giorni** (1-15 set con 1-15 ago; stesso vale per Wes e anno fiscale); **sotto, riga grigia piccola** con il periodo prima **intero** e «mancano N» (o «superato ✓»). Periodi chiusi: solo confronto intero, niente riga grigia. BBS/WES/CEP: la riga grigia mostra il numero di chiusura del periodo prima.
-- **C. Segni Vitali.** Proposta: la tabella a 12 mesi **si sposta** nel Check (punto 5); in Dashboard resta solo un richiamo che apre il Check.
+- ~~**C. Segni Vitali.**~~ → **Deciso da Ignazio (15/09):** in **Dashboard restano**, ma **una sola riga**: il mese in corso. La **tabella dei 12 mesi va nel Check**. Nota: la pagina esterna `mb21-segni-vitali` (online, da non toccare) serviva a Glide; la v4 ha **già rifatto la tabella dentro l'app** con i numeri veri (Fase 3), quindi «incastrarla» nel Check vuol dire **spostare quella già fatta**.
+- **F. Numeri del gruppo quando il gruppo cresce** (domanda di Ignazio, 15/09). Oggi BBS · WES · CEP «nel Gruppo» e Sponsor Gruppo li scrive Ignazio a mano per tutto il gruppo; Network 21, sotto un certo livello, non dà file. **Proposta, da decidere:** ogni partner scrive nel **proprio** check solo i **suoi** numeri; l'app **somma a cascata** verso l'upline seguendo l'albero (chi è sotto chi: nell'export c'è `Partners.csv` con `Sponsor_ID`, nella v4 **non c'è ancora**). Per chi non usa ancora l'app l'upline continua a scrivere a mano, attenzione a **non contare due volte**. VPG resta dal file Amway, che copre già tutto il gruppo.
 - **D. Azzerare BBS/WES/CEP dopo un evento.** Proposta: nel foglio Obiettivi del mese una riga **«Partenza»** con i tre numeri già proposti dall'app, modificabili, e un bottone **«Evento fatto: riparti da 0»**. Da chiarire: **quali eventi** azzerano quale numero (BBS, WES, CEP).
 - **E. Punti Amway.** Proposta: bottone Admin **«Carica file Amway»** da usare quando si vuole (inizio mese e poi ogni settimana), aggiorna i punti del mese di tutti; correzione a mano per un solo numero. È un **lavoro a parte**, serve un **file di esempio** e lo script di conversione attuale.
 
