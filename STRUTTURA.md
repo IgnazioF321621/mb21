@@ -229,3 +229,4 @@ _Da definire._
 | 2026.09.14 · 23:26 | Brief Fase 4 Agenda (bozza): giornata a linea del tempo |
 | 2026.09.14 · 23:30 | Fase 4 Agenda: brief approvato, bozza delle scelte (categoria → tipo → sottotipo → fasi) |
 | 2026.09.14 · 23:44 | Fase 4 Agenda: pagina a linea del tempo, esiti con prossimo appuntamento, sposta, nuovo appuntamento |
+| 2026.09.15 · 08:18 | Agenda provata da Ignazio: da affinare usandola |
