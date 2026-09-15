@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, da aprire in una **sessione nuova**.
 > Contesto: `CANTIERI.md` (cantiere 16), `docs/MB21_v3_Lista_come_e.md` (la Lista di Glide), `docs/MB21_v4_Brief_F2_ListaNomi.md`, `docs/MB21_v4_Brief_F1_Oggi.md`, `STRUTTURA.md` (Lista Nomi, Coda OGGI, Bottoni esito), `CLAUDE.md`.
-> **Stato: bozza. Nessuna decisione presa: si parte dalle domande a Ignazio, una alla volta.**
+> **Stato: bozza. Domande a Ignazio chiuse il 16/09 (sez. 4b); prossimo: proposta di come fare lo smistamento.**
 
 ## Modalità di lavoro
 - Prima le domande (sez. 4), **una alla volta**, aspettando la risposta. Poi le proposte, poi i lavori.
@@ -62,6 +62,16 @@ Da leggere: i senza categoria **non sono quasi mai stati lavorati** (5 su 1.180 
 6. **Ritmo**: un tanto al giorno (come la coda) o sessioni di smistamento quando c'è tempo?
 7. **Senza telefono** (222 tra Ignazio e Isabella): archiviarli, tenerli per completarli, o trattarli a parte?
 8. **Referral** (3): è ancora una categoria che serve?
+
+## 4b. Risposte di Ignazio (16/09)
+1. **Criterio**: di base **tutti sono Prospect**. **Unlinked** se non c'è modo di contattarlo o non si sa chi sia (nome, numero, conoscenza). Chi è stato sentito **più di 2 anni fa**, anche se ex partner o ex cliente, rivedendolo **torna Prospect**. La scelta si fa **guardando il nome**, senza chiamare
+2. **Tutti da chiamare?** Non si sa: i senza categoria **non sono contatti nuovi**, molti sono già ex o Prospect che in Glide nessuno aveva ancora catalogato. Vanno rivisti **uno per uno**. (Offerto: cercare nel DB indizi utili allo smistamento, es. note o date; non ancora fatto)
+3. **Coda**: **5 senza categoria al giorno da smistare, in più** delle chiamate scelte dal partner (`contatti_al_giorno` resta com'è). Finiti i 5, si può **continuare** («Altri 5»)
+4. **Categoria prima dell'esito**: quando compare un senza categoria **prima si sceglie la categoria**; se resta da chiamare (es. Prospect) **si chiama lo stesso giorno** e si tratta come gli altri; **se quel giorno non si riesce, entra nella coda normale**
+5. **Chi**: ogni partner sulla sua lista **e** l'Admin per loro con il Partner Select
+6. **Ritmo**: 5 al giorno, con possibilità di farne altri (vedi 3)
+7. **Senza telefono**: **nello smistamento come gli altri** (si decide caso per caso: Unlinked, oppure si aggiunge il numero)
+8. **Referral**: non è una vera categoria (il «segnalato da» è il campo `referral_di`, che resta). I contatti già Referral **restano come sono**, ma **Referral non compare più tra le scelte** (smistamento, Modifica, Nuovo contatto)
 
 ## 5. Strade possibili (da proporre dopo le risposte, non decise)
 - **A. Smistamento rapido**: una pagina «Da catalogare» che mostra un nome alla volta (nome, professione, telefono, note) con bottoni grandi Prospect · Partner · Cliente · Unlinked · Archivia · Salta, e il contatore «N da catalogare». Avanza da solo, con Annulla
