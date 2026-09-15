@@ -262,6 +262,11 @@
   .ag-comandi button.pericolo { color: var(--rosso); }
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: 14px; padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
   .ag-blocco.telefonate { background: #EEF2FF; color: #3730A3; }
+  .ag-blocco.conferme { background: #DCFCE7; color: #166534; }
+  .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: #166534; margin-top: 2px; }
+  .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
+  .conf-bottoni { grid-template-columns: 1fr 1fr 1fr; }
+  .conf-bottoni button:last-child:nth-child(odd) { grid-column: auto; }
   .ag-blocco.passati { background: #FEF3C7; color: #92400E; }
   .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
   .ag-scelte button { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 14px; font-weight: 600; padding: 8px 12px; color: var(--testo); }
@@ -286,7 +291,7 @@
 <script src="dashboard.js"></script>
 <script src="agenda.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 08:30';
+const APP_VERSION = '2026.09.15 · 08:55';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -420,7 +425,7 @@ async function caricaOggi() {
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline) salvaCache();
-  await caricaDashboard(oggi);
+  await Promise.all([caricaDashboard(oggi), caricaConferme()]);
   disegnaOggi();
 }
 
@@ -487,6 +492,7 @@ function disegnaOggi() {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
+  html += confermeHtml();
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
@@ -498,12 +504,13 @@ function disegnaOggi() {
     : `<div class="vuoto">${finito ? `Per oggi hai finito: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
+  collegaConferme();
   const contatore = document.getElementById('contatore');
   if (contatore) contatore.onclick = scegliNumero;
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });
-  app.querySelectorAll('.bottoni button').forEach(btn => {
+  app.querySelectorAll('.bottoni button[data-contatto]').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
 }
@@ -655,6 +662,68 @@ function mostraToast(testo, suAnnulla) {
   if (suAnnulla) t.querySelector('button').onclick = () => { t.remove(); clearTimeout(timerToast); suAnnulla(); };
   document.body.appendChild(t);
   timerToast = setTimeout(() => t.remove(), suAnnulla ? 6000 : 3500);
+}
+
+// ── CONFERME (15/09) ─────────────────────────────────────
+// Appuntamenti del partner loggato da confermare: compaiono 12 ore prima, fino all'inizio (agenda.js → confermeDaFare).
+// In Dashboard sopra la coda, non contano nei contatti al giorno. In Agenda, per oggi, il riepilogo.
+const CONF = { righe: [], nonRisponde: new Set() };
+const CAMPI_AZIONE = '*, contatti(nome, categoria, telefono), utenti(nome, nome_cognome)';
+
+async function caricaConferme() {
+  try {
+    const A = MB21Agenda, adesso = new Date(), limite = new Date(adesso.getTime() + A.ORE_CONFERMA * 3600000);
+    const [app1, coda] = await Promise.all([
+      dbq('conferme appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', ST.utente.id).neq('tipo_azione', 'Contatto')
+        .eq('completata', false).is('confermato_il', null).gt('inizio', adesso.toISOString()).lte('inizio', limite.toISOString())),
+      dbq('conferme dalla coda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', ST.utente.id).eq('tipo_azione', 'Contatto')
+        .in('esito', ['PM Fissato', 'Appuntamento']).is('confermato_il', null).gt('data_scelta', adesso.toISOString()).lte('data_scelta', limite.toISOString())),
+    ]);
+    if (app1.error || coda.error) throw app1.error || coda.error;
+    CONF.righe = A.confermeDaFare(A.senzaDoppioniCoda([...app1.data, ...coda.data]), adesso.toISOString());
+  } catch (e) {
+    CONF.righe = [];
+  }
+}
+
+function confermeHtml() {
+  if (!CONF.righe.length) return '';
+  const ordinate = [...CONF.righe].sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
+  return `<h2>📅 Conferme · ${CONF.righe.length}</h2>` + ordinate.map(c => {
+    const tel = c.contatti && c.contatti.telefono;
+    return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || '#6B7280'}"></div>
+      <div class="corpo">
+        <div class="nome">${esc(c.contatti ? c.contatti.nome : '')}</div>
+        <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
+        ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
+        ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
+        <div class="bottoni conf-bottoni">
+          <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
+          <button data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
+          <button data-conferma="nr" data-id="${esc(c.id)}">Non risponde</button>
+        </div>
+      </div></div>`;
+  }).join('');
+}
+
+function collegaConferme() {
+  app.querySelectorAll('[data-conferma]').forEach(b => {
+    b.onclick = async () => {
+      const c = CONF.righe.find(x => x.id === b.dataset.id);
+      if (!c) return;
+      if (b.dataset.conferma === 'nr') { CONF.nonRisponde.add(c.id); return disegnaOggi(); }
+      if (b.dataset.conferma === 'sposta') return spostaAppuntamento(c, async () => { await caricaConferme(); disegnaOggi(); });
+      const { error } = await dbq('conferma', supa.from('azioni').update({ confermato_il: new Date().toISOString() }).eq('id', c.id));
+      if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+      CONF.righe = CONF.righe.filter(x => x.id !== c.id);
+      disegnaOggi();
+      mostraToast(`${c.contatti ? c.contatti.nome : ''} · confermato`, async () => {
+        await dbq('annulla conferma', supa.from('azioni').update({ confermato_il: null }).eq('id', c.id));
+        await caricaConferme();
+        disegnaOggi();
+      });
+    };
+  });
 }
 
 // ── DASHBOARD (Fase 3) ───────────────────────────────────
@@ -867,7 +936,7 @@ function apriCheck() {
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
 const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null };
-const CAMPI_AZIONE = '*, contatti(nome, categoria), utenti(nome, nome_cognome)';
+
 
 async function apriAgenda(giorno) {
   AG.giorno = giorno || AG.giorno || MB21Coda.oggiRoma();
@@ -892,9 +961,11 @@ async function caricaAgenda() {
       .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
     dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
   ];
+  const conferme = AG.giorno === oggi ? caricaConferme() : null;
   if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi')));
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('rientro_il', AG.giorno)));
   const [app1, ric, pas, tel] = await Promise.all(richieste);
+  await conferme;
   for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
@@ -924,6 +995,7 @@ function disegnaAgenda() {
   const t = AG.telefonate;
   if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 Telefonate del giorno · Fatte ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
   else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
+  if (AG.giorno === oggi && CONF.righe.length) html += `<button class="ag-blocco conferme" id="ag-conferme"><span>📅 ${CONF.righe.length} ${CONF.righe.length === 1 ? 'conferma' : 'conferme'} da fare</span><span>›</span></button>`;
   if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>⚠️ ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
@@ -966,6 +1038,7 @@ function collegaAgenda(eventi) {
   su('ag-nuovo', () => nuovoAppuntamento({ giorno: AG.giorno }));
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
   su('ag-passati', scegliPassato);
+  su('ag-conferme', () => { ST.tab = 'oggi'; mostraTab(); });
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
   app.querySelectorAll('.ag-giorno').forEach(b => {
@@ -1019,10 +1092,15 @@ async function chiudiAppuntamento(e, esito) {
   mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${esito} salvato`, () => annulla(creato));
 }
 
-function spostaAppuntamento(e) {
+// Sposta un appuntamento (inizio/fine) o un esito dalla coda (data_scelta). `dopo(giorno)`: cosa ridisegnare
+// (predefinito: l'Agenda su quel giorno). Spostando, la conferma torna da fare.
+function spostaAppuntamento(e, dopo) {
   const A = MB21Agenda;
-  const { giorno, ora } = A.partiRoma(e.inizio);
-  const durata = e.fine ? (Date.parse(e.fine) - Date.parse(e.inizio)) : 0;
+  const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
+  const quando = dallaCoda ? e.data_scelta : e.inizio;
+  const { giorno, ora } = A.partiRoma(quando);
+  const durata = !dallaCoda && e.fine ? (Date.parse(e.fine) - Date.parse(e.inizio)) : 0;
+  dopo = dopo || (async g => { AG.aperta = e.id; await apriAgenda(g); });
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>🕑 Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
@@ -1034,16 +1112,18 @@ function spostaAppuntamento(e) {
   velo.querySelector('#sp-si').onclick = async () => {
     const g = velo.querySelector('#sp-giorno').value, o = velo.querySelector('#sp-ora').value;
     if (!g || !o) return;
-    const inizio = A.isoDaRoma(g, o);
-    const nuovo = { inizio, fine: durata ? new Date(Date.parse(inizio) + durata).toISOString() : null };
+    const nuovaData = A.isoDaRoma(g, o);
+    const nuovo = dallaCoda ? { data_scelta: nuovaData, confermato_il: null }
+      : { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata).toISOString() : null, confermato_il: null };
+    const prima = dallaCoda ? { data_scelta: e.data_scelta, confermato_il: e.confermato_il || null }
+      : { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
     velo.remove();
     const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
-    AG.aperta = e.id;
-    await apriAgenda(g);
+    await dopo(g);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
-      await dbq('annulla sposta', supa.from('azioni').update({ inizio: e.inizio, fine: e.fine }).eq('id', e.id));
-      await apriAgenda(giorno);
+      await dbq('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id));
+      await dopo(giorno);
     });
   };
 }
