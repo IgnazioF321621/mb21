@@ -52,10 +52,12 @@ prova('Eventi del giorno in ordine d\'ora; il Contatto conta alla data scelta; p
   assert.deepEqual([...A.giorniConEventi(azioni)].sort(), ['2026-09-11', '2026-09-12']);
 });
 
-prova('Riga con le parole di Glide; [Partner] solo per l\'Admin sugli appuntamenti degli altri', () => {
+prova('Riga con le parole di Glide; [Partner] all\'inizio solo per l\'Admin sugli appuntamenti degli altri', () => {
   const [carolina, samantha] = A.eventiDelGiorno(azioni, '2026-09-11');
   assert.deepEqual(A.riga(carolina, { mioId: 'io', admin: true }),
-    { titolo: 'Counseling · Carolina C.', sotto: 'Attività | c/Downline • ✅ Completato [Carolina]', colore: '#7C3AED' });
+    { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | c/Downline • ✅ Completato', colore: '#7C3AED' });
+  assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).titolo, 'Counseling · Carolina C.');
+  assert.equal(A.riga(carolina, { mioId: carolina.user_id, admin: true }).titolo, 'Counseling · Carolina C.');   // Partner Select su di lei
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).sotto, 'Attività | c/Downline • ✅ Completato');
   assert.equal(A.riga(samantha, { mioId: 'io', admin: true }).sotto, 'Attività • ⏳ Da completare');
   assert.equal(A.orario(carolina), '09:45–10:45');

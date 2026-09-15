@@ -28,7 +28,10 @@ Decisioni di Ignazio (15/09, domande chiuse):
 - **Prova:** 1) attivare l'accesso di Isabella; 2) Ignazio controlla dal menu i dati di lei; 3) verifica sul DB che con il suo account si vedano solo i suoi dati; 4) link a Isabella, entra con la **stessa email di Glide**, installa l'app. **Da stasera (15/09) Isabella usa solo la v4 e smette con Glide**
 - **Giorni mancanti:** i dati di Isabella arrivano all'export del 13/09; quello scritto in Glide dopo lo **riscrive lei a mano** nella v4 (A, niente secondo import)
 
-Lavori: ~~1) Partner Select (sola lettura) nelle 4 pagine + «Tutti»~~ · 2) accesso di Isabella e prove · 3) Admin corregge i dati del partner scelto
+Lavori: ~~1) Partner Select (sola lettura) nelle 4 pagine + «Tutti»~~ · ~~3) Admin vede e corregge i dati del partner scelto~~ (anticipato) · 2) accesso di Isabella e prove
+
+Decisioni di Ignazio per il lavoro 3 (15/09, dopo il lavoro 1: «se non vedo la coda di Isabella non so come aiutarla»): l'Admin deve **vedere tutto di ogni incaricato** (coda, dati, agenda…). Coda di OGGI: **la vede, gli esiti li preme il partner** (A). **Partner Select anche in Agenda** (con Tutti il nome del partner all'inizio della riga). Correzioni: **tutto come sui propri dati, a nome del partner**, riquadro arancione; Tutti solo lettura
+- ~~Lavoro 3~~ — fatto il 15/09: migrazione `admin_su_partner` (coda e stato di oggi del partner per l'Admin, esito al proprietario del contatto), regole provate sul DB (Admin / partner, poi annullate), Agenda con Partner Select, salvataggi a nome del partner scelto. Prove: agenda 18, dashboard 13, lista 10. **Pagina non vista nel browser da Claude: da provare da Ignazio**
 - ~~Lavoro 1~~ — fatto il 15/09: `utenti.nel_partner_select` (migrazione applicata), menu in Dashboard · Lista · Report · Check, «👁️ solo lettura» con un altro partner o Tutti; in Dashboard di un altro partner niente coda né conferme (sono personali). «Tutti» controllato sui dati veri: uguale alla somma dei 9 partner in Dashboard e Check. Prove: dashboard 13, lista 10. **Pagina non vista nel browser da Claude** (serve l'accesso Admin): **da provare da Ignazio**
 
 ## 14. Prossimo passo: rilievo CHECK
