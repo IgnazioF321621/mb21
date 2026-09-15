@@ -265,3 +265,4 @@ _Da definire._
 | 2026.09.15 · 08:55 | Conferme appuntamenti (12 ore prima) in Dashboard e Agenda; appuntamento fissato = fuori coda |
 | 2026.09.15 · 09:04 | CANTIERI: prossimo passo rilievo Report |
 | 2026.09.15 · 15:45 | Fase 5 Report: Mese/Wes/Anno, numeri a scalini con i nomi, grafico dell'anno, Griglia PM, date dei Wes; «Progressi» → «Report»; richiamo Griglia PM in Dashboard |
+| 2026.09.15 · 15:51 | Report provato da Ignazio (telefono e browser) |
