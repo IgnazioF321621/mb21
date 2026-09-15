@@ -391,7 +391,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 22:48';
+const APP_VERSION = '2026.09.15 · 22:54';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -733,19 +733,22 @@ function catalogoHtml() {
   return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${MB21Coda.QUOTA_CATALOGO}. 👏` : 'Tutti catalogati. 👏'}</div>`;
 }
 function cardCatalogo(r) {
-  const aperta = ST.aperta === r.id;
+  const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
       <span class="rc-alto"><span class="nome">${esc(r.nome)}</span></span>
-      <span class="rc-glide">${esc(r.professione || 'Senza categoria')}</span>
+      <span class="rc-glide">${esc(r.categoria ? `✓ ${r.categoria} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
-  const strip = `<div class="strip" style="background:var(--unlinked)"></div>`;
+  const strip = `<div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>`;
   if (!aperta) return `<div class="card compatta" id="card-${esc(r.id)}">${strip}${testa}</div>`;
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span class="sotto">Senza telefono</span>';
-  const bottoni = CATEGORIE_CATALOGO.map((b, i) =>
-    `<button class="${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
+  const bottoni = r.categoria
+    ? bottoniPer(r.categoria).map((b, i) =>   // come la coda, ma non conta nei contatti al giorno
+      `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('')
+    : CATEGORIE_CATALOGO.map((b, i) =>
+      `<button class="${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
     <div class="card compatta aperta" id="card-${esc(r.id)}">
       ${strip}${testa}
@@ -760,9 +763,8 @@ function cardCatalogo(r) {
     </div>`;
 }
 async function toccaCategoria(id, indice) {
-  const i = ST.catalogo.righe.findIndex(x => x.id === id);
-  if (i < 0) return;
-  const contatto = ST.catalogo.righe[i];
+  const contatto = ST.catalogo.righe.find(x => x.id === id);
+  if (!contatto) return;
   const scelta = CATEGORIE_CATALOGO[indice];
   const card = document.getElementById('card-' + id);
   card.querySelectorAll('button').forEach(b => { b.disabled = true; });
@@ -771,31 +773,44 @@ async function toccaCategoria(id, indice) {
     card.querySelectorAll('button').forEach(b => { b.disabled = false; });
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
-  card.classList.add('via');
-  setTimeout(() => {
-    ST.catalogo.righe.splice(i, 1);
+  const daChiamare = ['Prospect', 'Partner', 'Cliente'].includes(scelta.categoria);
+  const dopo = () => {
+    // da chiamare: la card resta con i bottoni esito (se non lo chiami, domani entra in coda); gli altri escono
+    if (daChiamare) { contatto.categoria = scelta.categoria; contatto.user_id = contatto.user_id || visto().id; }
+    else ST.catalogo.righe.splice(ST.catalogo.righe.indexOf(contatto), 1);
     ST.catalogo.totale--;
     ST.stato.catalogati_oggi = (ST.stato.catalogati_oggi || 0) + 1;
-    ST.aperta = null;
+    ST.aperta = daChiamare ? id : null;
     disegnaOggi();
-    mostraToast(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(i, contatto, prima));
-  }, 250);
+    mostraToast(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(contatto, prima, daChiamare, indice));
+  };
+  if (daChiamare) return dopo();
+  card.classList.add('via');
+  setTimeout(dopo, 250);
 }
-async function annullaCatalogo(i, contatto, prima) {
+async function annullaCatalogo(contatto, prima, daChiamare, indice) {
   const { error } = await dbq('annulla catalogo', supa.rpc('annulla_catalogo',
     { p_contatto: contatto.id, p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec }));
   if (error) return mostraToast('Annullamento non riuscito: riprova.');
-  ST.catalogo.righe.splice(i, 0, contatto);
+  contatto.categoria = null;
+  if (!daChiamare) {   // rimetti il nome in ordine alfabetico
+    const righe = ST.catalogo.righe;
+    const i = righe.findIndex(x => !x.categoria && (x.nome || '').localeCompare(contatto.nome || '', 'it', { sensitivity: 'base' }) > 0);
+    righe.splice(i < 0 ? righe.length : i, 0, contatto);
+  }
   ST.catalogo.totale++;
   ST.stato.catalogati_oggi--;
   disegnaOggi();
   mostraToast('Annullato');
 }
 
+// 'catalogo' = i catalogati in «Da catalogare» che si chiamano subito (cantiere 16, lavoro 3)
+function listaDi(nome) { return nome === 'catalogo' ? ST.catalogo.righe : ST.risultato[nome]; }
 function trovaInCoda(id) {
-  for (const lista of ['dareSeguito', 'coda']) {
-    const i = ST.risultato[lista].findIndex(x => x.id === id);
-    if (i >= 0) return { lista, i, contatto: ST.risultato[lista][i] };
+  for (const lista of ['dareSeguito', 'coda', 'catalogo']) {
+    if (lista === 'catalogo' && !ST.catalogo) continue;
+    const i = listaDi(lista).findIndex(x => x.id === id);
+    if (i >= 0) return { lista, i, contatto: listaDi(lista)[i] };
   }
   return null;
 }
@@ -825,7 +840,7 @@ async function toccaBottone(id, indice) {
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
   card.classList.add('via');
   setTimeout(() => {
-    ST.risultato[pos.lista].splice(pos.i, 1);
+    listaDi(pos.lista).splice(pos.i, 1);
     if (daCoda) ST.stato.fatti_oggi++;
     salvaCache();
     disegnaOggi();
@@ -860,7 +875,7 @@ async function annullaEsito(esito) {
 async function annulla(pos, esito) {
   const { error } = await annullaEsito(esito);
   if (error) return mostraToast('Annullamento non riuscito: riprova.');
-  ST.risultato[pos.lista].splice(pos.i, 0, pos.contatto);
+  listaDi(pos.lista).splice(pos.i, 0, pos.contatto);
   if (pos.lista === 'coda') ST.stato.fatti_oggi--;
   salvaCache();
   disegnaOggi();
