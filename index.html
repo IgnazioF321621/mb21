@@ -391,7 +391,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 22:31';
+const APP_VERSION = '2026.09.15 · 22:48';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -663,6 +663,7 @@ function cardContatto(r, dareSeguito) {
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${tel ? `<div class="riga">${tel}</div>` : ''}
         <div class="bottoni">${bottoni}</div>
+        <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
       </div>
     </div>`;
 }
@@ -705,6 +706,9 @@ function disegnaOggi() {
   });
   app.querySelectorAll('.bottoni button[data-cataloga]').forEach(btn => {
     btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
+  });
+  app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
+    btn.onclick = () => apriContattoDa(btn.dataset.scheda, 'oggi');
   });
 }
 
@@ -751,6 +755,7 @@ function cardCatalogo(r) {
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
         <div class="bottoni">${bottoni}</div>
+        <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
       </div>
     </div>`;
 }
@@ -1366,10 +1371,10 @@ function collegaAgenda(eventi) {
 }
 
 async function apriContattoDa(id, ritorno) {
-  LS.ritorno = ritorno || null;   // 'report' / 'griglia': la freccia della scheda torna lì
+  LS.ritorno = ritorno || null;   // 'report' / 'griglia' / 'oggi': la freccia della scheda torna lì
   ST.tab = 'lista';
   document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'lista'));
-  if (!LS.righe.length) {
+  if (!LS.righe.find(x => x.id === id)) {   // lista mai letta o senza questo contatto
     app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico il contatto…</div>`;
     try { LS.righe = await leggiLista(); } catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
   }
@@ -1798,7 +1803,7 @@ function disegnaScheda() {
   const cifre = tel ? tel.replace(/[^0-9]/g, '') : '';
   const link = (href, testo) => `<a href="${href}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata">
       <div class="strip" style="background:${coloreCategoria(c.categoria)}"></div>
       <div class="corpo">
@@ -1824,6 +1829,11 @@ function disegnaScheda() {
   document.getElementById('indietro').onclick = () => {
     LS.contatto = null;
     if (!LS.ritorno) return disegnaLista();
+    if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
+      LS.ritorno = null; ST.tab = 'oggi'; ST.aperta = null;
+      document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'oggi'));
+      return caricaOggi();
+    }
     ST.tab = 'report'; RP.vista = LS.ritorno === 'griglia' ? 'griglia' : 'report'; LS.ritorno = null;
     document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'report'));
     RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
@@ -2083,8 +2093,12 @@ function apriModulo(c) {
     if (nuovo) riga.user_id = proprietario;
     if (doppi.length && !confirm(`Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già\n\n${doppi.slice(0, 3).map(d => `• ${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join('\n')}\n\nSalvo lo stesso?`)) return;
     $('invia').disabled = true;
-    const q = nuovo ? supa.from('contatti').insert(riga) : supa.from('contatti').update({ ...riga, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
-    const { error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', q);
+    // da senza categoria a una categoria: la sceglie `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani)
+    const catalogo = !nuovo && !c.categoria && riga.categoria;
+    const q = nuovo ? supa.from('contatti').insert(riga)
+      : supa.from('contatti').update({ ...riga, categoria: catalogo ? null : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
+    let { error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', q);
+    if (!error && catalogo) ({ error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
     if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : 'Modifiche salvate');
