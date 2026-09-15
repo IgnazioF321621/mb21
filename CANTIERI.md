@@ -16,7 +16,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - Forma scelta da Ignazio: **giornata a linea del tempo** (striscia 7 giorni, appuntamenti e telefonate insieme, esiti dalla riga)
 - ~~Brief e risposte A · B · C~~ — approvati il 14/09 (Agenda seconda nella barra · Admin vede tutti · prossima data dopo l'esito · Ospite anche nel Follow Up)
 - ~~Lavoro 1: scelte~~ — confermate il 14/09 (`docs/MB21_v4_Scelte_Agenda.md`)
-- ~~Lavori 2-5: pagina Agenda, esiti, sposta, nuovo appuntamento, prove~~ — fatti il 14/09: 9 prove, giro esito/annulla provato sul DB. **Da provare da Ignazio sul telefono**
+- ~~Lavori 2-5: pagina Agenda, esiti, sposta, nuovo appuntamento, prove~~ — fatti il 14/09: 9 prove, giro esito/annulla provato sul DB. **Provata da Ignazio il 15/09: «ottima, intuitiva»**; situazioni da affinare man mano che la usa (raccoglierle qui)
 - **Fasi di Appuntamento per sottotipo da migliorare** con Ignazio (nomi da tenere/togliere/aggiungere)
 - Il bottone esito «Appuntamento» della coda non crea ancora un appuntamento: compare in Agenda come «dalla coda» con «＋ Fissa appuntamento»
 
