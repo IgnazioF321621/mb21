@@ -19,7 +19,16 @@ Punto di partenza (da verificare nel codice e sul DB, non dare per scontato):
 - **Partner Select** oggi è «in arrivo» in Dashboard e Report; Lista ha già il filtro `All` (solo Admin); Agenda: Admin vede tutti; Check: numeri del partner loggato
 - rilievo di Glide: Partner Select è solo dell'Admin (`docs/MB21_v3_Lista_come_e.md`, `docs/MB21_v3_Report_come_e.md`); nel Check si chiama «User Select»
 
-Da chiarire con Ignazio: dove serve il Partner Select (Dashboard, Agenda, Lista, Report, Check…) · «tutto il gruppo» = tutti i partner o solo la sua squadra (albero, vedi cantiere 14 lavoro 5) · cosa intende con «nella mappa può verificare il lavoro» (tab Mappa o l'app in generale) · cosa può **modificare** l'Admin sui dati di un altro partner · prova dell'accesso di lei (link dell'email, app installata: cantiere 7)
+Verificato il 15/09: in Dashboard il bottone c'è (solo Admin) ma mostra «in arrivo»; in `utenti` ci sono già **tutti gli 11 utenti di Glide** con i loro dati (import cantiere 4), Isabella compresa → per lei basta `accesso_attivo`, nessuna email da chiedere.
+
+Decisioni di Ignazio (15/09, domande chiuse):
+- **Dove:** Partner Select in **Dashboard, Lista Nomi, Report e Check** (non in Agenda: l'Admin continua a vedere tutti, il partner i suoi). La scelta vale in tutte le pagine finché non si cambia
+- **Chi nel menu:** gli utenti dell'app (quelli di Glide), **9 persone + «Tutti»** (somma): Ignazio, Isabella Sammito, Carolina Carnemolla, Ornella Miceli, Maria Elisa Petruso, Andrea Colombo, Luca e Michaela Caccamo, Tonya e Filippo, Valentina Spadaro. **Fuori: Sandra Celestre e Belinda Vaccaro** (non attive). Tonya e Filippo e Valentina restano anche se mai attivi («vediamo se si attivano»). Albero/squadra: più avanti (cantiere 14)
+- **Cosa fa l'Admin su un altro partner:** si parte con **solo guardare** (A); **correggere i suoi dati (B) è il lavoro subito dopo**, serve spesso. «Tutti» sempre solo lettura
+- **Prova:** 1) attivare l'accesso di Isabella; 2) Ignazio controlla dal menu i dati di lei; 3) verifica sul DB che con il suo account si vedano solo i suoi dati; 4) link a Isabella, entra con la **stessa email di Glide**, installa l'app. **Da stasera (15/09) Isabella usa solo la v4 e smette con Glide**
+- **Giorni mancanti:** i dati di Isabella arrivano all'export del 13/09; quello scritto in Glide dopo lo **riscrive lei a mano** nella v4 (A, niente secondo import)
+
+Lavori: 1) Partner Select (sola lettura) nelle 4 pagine + «Tutti» · 2) accesso di Isabella e prove · 3) Admin corregge i dati del partner scelto
 
 ## 14. Prossimo passo: rilievo CHECK
 *Deciso il 15/09, da fare in una sessione nuova.* Seguendo l'ordine delle tab di Glide (Dashboard · Agenda · Lista Nomi · Report · **Check** · Mappa): rilievo della tab **Check** in sola lettura, stesso metodo di Agenda e Report (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-check/`; documento `docs/MB21_v3_Check_come_e.md`; Partner Select = Ignazio). Per Ignazio la tab Check dà **gli obiettivi del mese e lo scostamento**. Dati già nell'export: `Check.csv`, `Day.csv`. Già noto dal rilievo Dashboard (§2.1): «Imposta gli obiettivi del mese!» porta a Check, dove il selettore si chiama «User Select» e compaiono obiettivi «impostati» a zero. Nella v4 esistono già `check_giorno`, `obiettivi_mese` e il foglio Obiettivi del mese (Fase 3). Poi domande a Ignazio una alla volta e proposte per il Check v4
