@@ -18,6 +18,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Lavoro 1: scelte~~ — confermate il 14/09 (`docs/MB21_v4_Scelte_Agenda.md`)
 - ~~Lavori 2-5: pagina Agenda, esiti, sposta, nuovo appuntamento, prove~~ — fatti il 14/09: 9 prove, giro esito/annulla provato sul DB. **Provata da Ignazio il 15/09: «ottima, intuitiva»**; situazioni da affinare man mano che la usa (raccoglierle qui)
 - **Fasi di Appuntamento per sottotipo da migliorare** con Ignazio (nomi da tenere/togliere/aggiungere)
+- ~~Conferme degli appuntamenti~~ — fatto il 15/09: in Dashboard «📅 Conferme» da **12 ore prima** fino all'inizio (Confermato · Sposta · Non risponde), in Agenda «👍 confermato» e il riepilogo di oggi; fissando un appuntamento il contatto **esce dalla coda**. Decisione di Ignazio: coda (eseguire, Dashboard) e Agenda (pianificare) **restano separate ma collegate**. **Da provare**
 - ~~Il bottone «Appuntamento» della coda non crea un appuntamento~~ — fatto il 15/09: apre il foglio Nuovo appuntamento già compilato (Prospect → Piano Marketing · PM 1a1, Partner → Appuntamento, Cliente → Consulenza PRD), salva l'appuntamento in Agenda e l'esito in coda; Annulla toglie tutti e due. Vale anche per «Azione +» nella scheda contatto
 
 ## 10. Fase 3 · DASHBOARD
