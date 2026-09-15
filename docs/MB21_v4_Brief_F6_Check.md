@@ -2,7 +2,7 @@
 
 > Redatto il 15/09/2026 (Europe/Rome). Per Claude Code, **modalità autonoma per fase**.
 > Contesto: `docs/MB21_v3_Check_come_e.md` (il Check di Glide, §6 risposte di Ignazio, §7 giro dei numeri; 8 screenshot in `mb21-import/screenshot-check/`), `docs/MB21_v4_Brief_F3_Dashboard.md`, `docs/MB21_v4_Brief_F5_Report.md`, `STRUTTURA.md`, `CLAUDE.md`, `CANTIERI.md`.
-> **Stato: BOZZA — proposte di Claude, decisioni A-G da prendere con Ignazio una alla volta. Nessun lavoro avviato.**
+> **Stato: decisioni A-G prese con Ignazio il 15/09 (D sostituita da G). Da ripassare: lavori e ordine. Nessun lavoro avviato.**
 
 ## Modalità di lavoro
 - Esegui i lavori in fila. Fermati **solo** ai punti ⏸ o se qualcosa non è certo.
@@ -62,7 +62,7 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
 - ~~**C. Segni Vitali.**~~ → **Deciso da Ignazio (15/09):** in **Dashboard restano**, ma **una sola riga**: il mese in corso. La **tabella dei 12 mesi va nel Check**. Nota: la pagina esterna `mb21-segni-vitali` (online, da non toccare) serviva a Glide; la v4 ha **già rifatto la tabella dentro l'app** con i numeri veri (Fase 3), quindi «incastrarla» nel Check vuol dire **spostare quella già fatta**.
 - ~~**F. Numeri del gruppo quando il gruppo cresce** (domanda di Ignazio, 15/09).~~ Oggi BBS · WES · CEP «nel Gruppo» e Sponsor Gruppo li scrive Ignazio a mano per tutto il gruppo; Network 21, sotto un certo livello, non dà file. **Proposta, da decidere:** ogni partner scrive nel **proprio** check solo i **suoi** numeri; l'app **somma a cascata** verso l'upline seguendo l'albero (chi è sotto chi: nell'export c'è `Partners.csv` con `Sponsor_ID`, nella v4 **non c'è ancora**). Per chi non usa ancora l'app l'upline continua a scrivere a mano, attenzione a **non contare due volte**. VPG resta dal file Amway, che copre già tutto il gruppo. → **Deciso con Ignazio (15/09): per ora niente cascata.** I partner dimenticano o saltano i giorni, l'unico costante è Ignazio: i numeri del gruppo **restano scritti da Ignazio** come oggi. La cascata si riprende **se e quando** più partner useranno l'app con costanza.
 - ~~**D.**~~ **Sostituita da G (15/09).** **D. Azzerare BBS/WES/CEP dopo un evento.** Proposta: nel foglio Obiettivi del mese una riga **«Partenza»** con i tre numeri già proposti dall'app, modificabili, e un bottone **«Evento fatto: riparti da 0»** per BBS e WES. **Risposte di Ignazio (15/09):** **BBS** si azzera dopo ogni BBS (una volta al mese) · **WES** dopo ogni Wes (ogni 4 mesi) · **CEP non si azzera**: gli abbonati restano finché non disdicono, il numero cala solo quando qualcuno esce; entrate **e uscite** le scrive Ignazio. ⚠️ **Nella v4 oggi il CEP del check giornaliero non può essere negativo** (regola `cep >= 0` in `check_giorno`; anche in Glide nessun valore negativo in 809 check): un'uscita non si può registrare. **Proposta:** nel check giornaliero il CEP accetta anche numeri **negativi** (es. −1 = un abbonato uscito), solo il CEP. Da confermare.
-- **E. Punti Amway.** Proposta: bottone Admin **«Carica file Amway»** da usare quando si vuole (inizio mese e poi ogni settimana), aggiorna i punti del mese di tutti; correzione a mano per un solo numero. È un **lavoro a parte**, serve un **file di esempio** e lo script di conversione attuale.
+- ~~**E. Punti Amway.**~~ → **Deciso da Ignazio (15/09):** bottone Admin **«Carica file Amway»**, da usare quando si vuole (inizio mese, poi es. ogni settimana): aggiorna i punti del mese di tutto il gruppo; correzione a mano per un solo numero. Se il file contiene lo sponsor, lo stesso caricamento porta anche l'**albero** (G). **Lavoro a parte:** servono un **file Amway di esempio** e lo **script di conversione** attuale.
 
 - **G. Segni Vitali sulla persona, a cascata** (idea di Ignazio, 15/09, sostituirebbe D e riaprirebbe F). Invece di scrivere numeri nel check giornaliero, il segno vitale si mette **sulla persona** che ha comprato il biglietto o è abbonata, nella sua **scheda contatto**: 🎟 **BBS** (quale evento) · 🎟 **WES** (quale Wes) · **CEP** (abbonato dal … / uscito il …). **Lo scrive Ignazio** (Admin, anche sui contatti degli altri partner), quindi funziona anche se i partner non usano l'app. L'app conta da sola e **risale a cascata**: persona → partner che l'ha in lista → il suo sponsor → … fino a Ignazio.
   - **Vantaggi:** niente azzeramenti a mano (il biglietto è legato al suo evento: finito l'evento, si conta il successivo) · niente numeri negativi per il CEP (l'uscita è una data) · si sa **chi** ha il biglietto, non solo quanti · niente doppi conteggi.
@@ -73,9 +73,9 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
   - **Stato: direzione G scelta da Ignazio al posto di D.**
 
 ## Lavori (dopo le decisioni)
-1. Calcoli del Check in un file a parte (`check.js`) con prove: periodi, stesso tratto, somme e stati, andamento.
-2. Pagina Check e accesso (decisione A).
-3. Grafico dei 12 mesi e spostamento dei Segni Vitali (decisione C).
-4. Partenza e azzeramento nel foglio Obiettivi (decisione D).
-5. Prove con i dati veri: settembre e agosto 2026 di Ignazio uguali al Check di Glide.
-6. ⏸ Import Amway (decisione E), quando c'è il file di esempio.
+1. Calcoli del Check in un file a parte (`check.js`) con prove: periodi Mese · Wes · Anno, confronto a pari giorni e totale del periodo prima, «mancano / superato».
+2. Pagina Check a tutto schermo dal bottone «👁️ visione completa» con «‹ Dashboard» (A).
+3. Tabella dei Segni Vitali a 12 mesi spostata nel Check; in Dashboard una sola riga, il mese in corso (C).
+4. Prove con i dati veri: settembre e agosto 2026 di Ignazio uguali al Check di Glide.
+5. ⏸ **Segni vitali sulla persona** (G): biglietti BBS/WES e abbonamento CEP nella scheda contatto, date dei BBS, conteggio a cascata sull'albero, BBS/WES/CEP tolti dal check giornaliero, ricollegamento dei numeri di oggi (BBS 5 · WES 10 · CEP 6). Serve prima l'**albero** (LOS o Partners) → lavoro a parte, da verificare.
+6. ⏸ **Import Amway** (E), quando ci sono file di esempio e script.
