@@ -10,6 +10,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 14. Prossimo passo: rilievo CHECK
+*Deciso il 15/09, da fare in una sessione nuova.* Seguendo l'ordine delle tab di Glide (Dashboard · Agenda · Lista Nomi · Report · **Check** · Mappa): rilievo della tab **Check** in sola lettura, stesso metodo di Agenda e Report (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-check/`; documento `docs/MB21_v3_Check_come_e.md`; Partner Select = Ignazio). Per Ignazio la tab Check dà **gli obiettivi del mese e lo scostamento**. Dati già nell'export: `Check.csv`, `Day.csv`. Già noto dal rilievo Dashboard (§2.1): «Imposta gli obiettivi del mese!» porta a Check, dove il selettore si chiama «User Select» e compaiono obiettivi «impostati» a zero. Nella v4 esistono già `check_giorno`, `obiettivi_mese` e il foglio Obiettivi del mese (Fase 3). Poi domande a Ignazio una alla volta e proposte per il Check v4
+
 ## 13. Fase 5 · REPORT
 *Aperto il 15 settembre 2026. Brief: `docs/MB21_v4_Brief_F5_Report.md`.*
 
@@ -17,8 +20,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Dettaglio della casella Griglia PM in fondo alla pagina~~ — fatto il 15/09 (foglio sopra la griglia), poi sostituito dal foglio unico
 - ~~Azioni modificabili ovunque~~ — fatto il 15/09: **foglio unico «Modifica azione»** (sottotipo, esito, giorno e ora, ospite, note) da Report, Griglia PM, scheda contatto e Agenda, con Annulla. Decisioni di Ignazio: **un'azione per ogni passo del percorso** (le statistiche si fermano quando l'azione si chiude; il foglio serve a correggere); coda ricalcolata **solo se si corregge l'ultima azione**; il **tipo** non si cambia (si elimina e se ne crea una nuova). Tutto **modulare**: sottotipi ed esiti da un solo elenco (`agenda.js`), un tipo nuovo come **Laboratorio** si aggiunge lì. **Da provare**
 - ~~Esito del PM sull'ospite~~ — fatto il 15/09 (caso: PM a Sonia portata da Filippo, registrato su Filippo): **l'azione è di chi ascolta**, chi l'ha portato va in **«Portato da»** (contatto della Lista, al posto dell'ospite scritto). Vecchie azioni: «⇄ L'esito è dell'ospite» nel foglio. Nella scheda di chi porta: «🤝 Ha portato …». Ritocchi dopo la prova di Ignazio: «Portato da» si vede solo dopo lo spostamento; «Sottotipo» diventa «Tipo di piano / contatto / follow up / appuntamento / consulenza»; nella ricerca chi è già il contatto si vede spento con il motivo. **Provato da Ignazio il 15/09: funziona.** Ignazio trova utile che l'ospite entri in Lista come Prospect (con la sua storia e la coda) per seguirlo in futuro. ~~Mostrare «Portato da» anche in Agenda e Griglia PM~~ fatto il 15/09: «🤝 Portato da» uguale in Agenda, Report, Griglia PM e scheda. **Provato da Ignazio: funziona.** Più avanti: contare quanti ospiti porta ogni partner
-- **Laboratorio**: nuovo tipo di azione in arrivo nelle prossime revisioni (nomi di sottotipi ed esiti da Ignazio)
-- **Grafica da ripassare con lo strumento Design** (16/09)
+- ⏸ **In attesa (decisione di Ignazio 15/09) · Laboratorio**: nuovo tipo di azione in arrivo nelle prossime revisioni (nomi di tipi ed esiti da Ignazio)
+- ⏸ **In attesa (decisione di Ignazio 15/09) · Grafica accattivante con lo strumento Design**: da fare quando ci saranno token a disposizione, non subito
 - Partner Select nel Report: come in Dashboard, ancora «in arrivo» (oggi ognuno vede i propri numeri)
 
 ## 12. Prossimo passo: rilievo REPORT
