@@ -25,14 +25,16 @@ Check                                 [Partner ▾ solo Admin]
 [ Mese ] [ Wes ] [ Anno ]       ‹ Settembre 2026 ›
 fino al 15 · confronto con 1-15 agosto
 
-                  adesso   prima    andamento
+                  adesso   1-15 ago  andamento
 🔵 Volume
   VPP              0      120,40    ▼ 100%
-  VPV             12,5     10,0     ▲ 25%
-  VPG            325,83   980,10    ▼ 67%
+                  agosto intero: 343,12 · mancano 343,12
+  …
 🟠 Azione
   Contatti          9        4      ▲ 125%
+                  agosto intero: 18 · mancano 9
   PM                1        2      ▼ 50%
+                  agosto intero: 3 · mancano 2
   …
 🟢 Segni Vitali N21
   BBS               5        5      = 
@@ -56,7 +58,7 @@ tocco su una voce → 📈 i 12 mesi dell'anno fiscale, con l'anno prima in grig
 
 ## Decisioni da prendere con Ignazio
 - ~~**A. Come si arriva al Check.**~~ → **Deciso da Ignazio (15/09):** per ora **solo dal bottone «👁️ visione completa»** della Dashboard; il Check si apre a tutto schermo con «‹ Dashboard» in alto (come la Griglia PM nel Report). **Quinta voce «Check» nella barra: eventualmente più avanti** (in Glide le voci sono 6, più quelle Admin).
-- **B. Il confronto «stesso tratto».** Proposta: sì, come al punto 3 (mese in corso con lo stesso numero di giorni del mese prima).
+- ~~**B. Il confronto «stesso tratto».**~~ → **Deciso da Ignazio (15/09), da aggiustare con l'uso:** **parziale e totale**. Periodo in corso: sulla riga il confronto **a pari giorni** (1-15 set con 1-15 ago; stesso vale per Wes e anno fiscale); **sotto, riga grigia piccola** con il periodo prima **intero** e «mancano N» (o «superato ✓»). Periodi chiusi: solo confronto intero, niente riga grigia. BBS/WES/CEP: la riga grigia mostra il numero di chiusura del periodo prima.
 - **C. Segni Vitali.** Proposta: la tabella a 12 mesi **si sposta** nel Check (punto 5); in Dashboard resta solo un richiamo che apre il Check.
 - **D. Azzerare BBS/WES/CEP dopo un evento.** Proposta: nel foglio Obiettivi del mese una riga **«Partenza»** con i tre numeri già proposti dall'app, modificabili, e un bottone **«Evento fatto: riparti da 0»**. Da chiarire: **quali eventi** azzerano quale numero (BBS, WES, CEP).
 - **E. Punti Amway.** Proposta: bottone Admin **«Carica file Amway»** da usare quando si vuole (inizio mese e poi ogni settimana), aggiorna i punti del mese di tutti; correzione a mano per un solo numero. È un **lavoro a parte**, serve un **file di esempio** e lo script di conversione attuale.
