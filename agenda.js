@@ -1,7 +1,7 @@
 // MB21 · logica dell'Agenda (Fase 4)
 // Funzioni pure: scelte categoria → tipo → sottotipo → fasi, settimana, righe, ora proposta.
 // Nessun accesso alla rete: la usano l'app e tools/banco/prova_agenda.js.
-// Scelte: docs/MB21_v4_Scelte_Agenda_bozza.md, decisioni di Ignazio del 14/09 (le fasi di Appuntamento sono da migliorare).
+// Scelte: docs/MB21_v4_Scelte_Agenda.md, decisioni di Ignazio del 14/09 (le fasi di Appuntamento sono da migliorare).
 (function (radice) {
   const SOTTOTIPI = {
     'Contatto': ['Telefonata', 'Messaggio', 'Presenza'],
