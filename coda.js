@@ -3,7 +3,8 @@
 // restituisce cosa mostrare. Nessun accesso alla rete: la usano l'app e tools/banco/prova_coda.js.
 //
 // Regole (brief sez. 2 + decisioni di Ignazio del 14/09, STRUTTURA.md → Logiche):
-//   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato (i senza categoria restano)
+//   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato e i senza categoria
+//     (dal 15/09 hanno il loro riquadro «Da catalogare», cantiere 16)
 //   - Dare Seguito scaduti (fase Dare Seguito / DS Fissato, rientro prima di oggi): sempre, sopra la capienza
 //   - capienza = contatti al giorno scelti dall'utente (1-10, predefinito 5) meno gli esiti già dati oggi
 //     dalla coda (i Dare Seguito non contano), tra chi ha rientro_il <= oggi:
@@ -43,7 +44,7 @@
 
     for (const r of righe) {
       if (!r.rientro_il || r.rientro_il > oggi) continue;
-      if (CATEGORIE_ESCLUSE.includes(r.categoria)) continue;
+      if (!r.categoria || CATEGORIE_ESCLUSE.includes(r.categoria)) continue;
       if (FASI_DARE_SEGUITO.includes(r.ultima_fase) && r.rientro_il < oggi) {
         dareSeguito.push(Object.assign({}, r, { scadutoDa: giorniTra(r.rientro_il, oggi) }));
       } else {
@@ -78,12 +79,22 @@
     };
   }
 
+  // Da catalogare (cantiere 16): i senza categoria del partner in ordine alfabetico,
+  // tanti quanti ne restano dei 5 al giorno (QUOTA_CATALOGO meno quelli già catalogati oggi)
+  const QUOTA_CATALOGO = 5;
+  function daCatalogare(righe, catalogatiOggi) {
+    const senza = righe.filter(r => !r.categoria)
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }));
+    const posti = Math.max(0, QUOTA_CATALOGO - (catalogatiOggi || 0));
+    return { righe: senza.slice(0, posti), totale: senza.length };
+  }
+
   // Data di oggi a Roma, AAAA-MM-GG
   function oggiRoma(adesso) {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(adesso || new Date());
   }
 
-  const api = { calcolaCoda, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
+  const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;
 })(this);

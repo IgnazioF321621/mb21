@@ -55,6 +55,13 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `annulla_modifica_azione(p_prima)` → l'Annulla
 - provata sul DB (15/09, poi annullata): ultima azione → No BuonFine = rientro +365 dal giorno dell'azione; azione vecchia = coda invariata; Annulla rimette tutto
 
+**Da catalogare** (cantiere 16, migrazione `20260915223000_da_catalogare.sql`, applicata):
+- `contatti.catalogato_il` (giorno di Roma in cui la categoria è stata scelta da «Da catalogare»)
+- `cataloga_contatto(p_contatto, p_categoria)` → solo su un senza categoria; categorie ammesse Prospect · Partner · Cliente · Ex Partner/Cliente · Unlinked · Archiviato (Referral no). Prospect/Partner/Cliente → `rientro_il` = domani; Archiviato → rientro vuoto e `categoria_prec` vuota (Ripristina lo riporta senza categoria); Ex/Unlinked → rientro invariato (sono fuori coda). `in_coda_dal` vuoto, `catalogato_il` = oggi. Restituisce `{rientro_prec, in_coda_prec}`
+- `annulla_catalogo(p_contatto, p_rientro, p_in_coda)` → torna senza categoria con rientro e in_coda di prima, `catalogato_il` vuoto
+- `stato_oggi(p_utente)` → in più `catalogati_oggi` (contatti del partner con `catalogato_il` = oggi)
+- provata sul DB (15/09, poi annullata): Prospect → rientro domani, catalogati_oggi 1; Annulla rimette tutto
+
 **Fase 5** (migrazione `20260915150000_fase5_report.sql`, applicata):
 - tabelle `wes` (3 date dall'export: 13/10/2025, 14/02/2026, 05/06/2026) e `griglia_pm` (importata la griglia dell'Admin: 50 PM dal 01/07/2026 per 6 mesi; nell'export gli altri non l'avevano)
 - regole provate sul DB (15/09): un partner legge i Wes ma non li scrive; salva solo la propria griglia e non vede quelle altrui; obiettivo fuori da 1-100 rifiutato
@@ -79,7 +86,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **sequenze** — `categoria` (`Prospect` · `Partner` · `Cliente`) · `tipo_azione` · `fase` · `chiave` (calcolata: `categoria-tipo_azione-fase`, unica) · `coach` · `giorni_rientro` (vuoto = esce dalla coda) · `icona` · `area` · `tipo_suggerimento` (`data` · `data_o_archivia` · `partner` · `cliente`) · `suggerimento_1/2/3`
 
-**contatti** — `user_id` · `nome` · `professione` · `fascia_eta` · `citta` · `telefono` · `categoria` (`Prospect` · `Cliente` · `Partner` · `Unlinked` · `Ex Partner/Cliente` · `Archiviato` · `Referral` (non più sceglibile nel modulo dal 15/09, cantiere 16: restano solo i contatti che l'avevano già), oppure vuota) · `area` · `brand` · `referral_di` · `note` · `rientro_il` (giorno di rientro in coda; vuoto = fuori coda) · `in_coda_dal` (Fase 1: giorno di ingresso nei 5 di OGGI; vuoto dopo un esito) · `categoria_prec` (Fase 2: categoria prima dell'archiviazione) · `onb_amway` · `onb_ordine` · `onb_n21` · `onb_sogno` · `onb_starter_pack` · `onb_lista_start` · `onb_role_play` · `onb_contatti` · `onb_pack_ds` · `onb_bbs` · `onb_wes` · `onb_cep` · `onb_primo_pm` · `onb_primo_abo` (Fase 2: 14 passi di Onboarding dei Partner, sì/no) · `glide_id`
+**contatti** — `user_id` · `nome` · `professione` · `fascia_eta` · `citta` · `telefono` · `categoria` (`Prospect` · `Cliente` · `Partner` · `Unlinked` · `Ex Partner/Cliente` · `Archiviato` · `Referral` (non più sceglibile nel modulo dal 15/09, cantiere 16: restano solo i contatti che l'avevano già), oppure vuota) · `area` · `brand` · `referral_di` · `note` · `rientro_il` (giorno di rientro in coda; vuoto = fuori coda) · `in_coda_dal` (Fase 1: giorno di ingresso nei 5 di OGGI; vuoto dopo un esito) · `categoria_prec` (Fase 2: categoria prima dell'archiviazione) · `catalogato_il` (cantiere 16: giorno in cui è stato catalogato da «Da catalogare») · `onb_amway` · `onb_ordine` · `onb_n21` · `onb_sogno` · `onb_starter_pack` · `onb_lista_start` · `onb_role_play` · `onb_contatti` · `onb_pack_ds` · `onb_bbs` · `onb_wes` · `onb_cep` · `onb_primo_pm` · `onb_primo_abo` (Fase 2: 14 passi di Onboarding dei Partner, sì/no) · `glide_id`
 
 **azioni** — `user_id` · `contatto_id` · `categoria` · `tipo_azione` (Contatto · Piano Marketing · …) · `modalita` (Telefonata · PM 1a1 · …) · `esito` · `chiave` (calcolata: `categoria-tipo_azione-esito`, per trovare la fase in `sequenze`) · `inizio` · `fine` · `completata` · `area` · `brand` · `ospite` · `note` · `coach_script` (azione preparata con YesApp) · `data_scelta` (Fase 1: giorno e ora scelti con Appuntamento / Richiamare) · `da_coda` (esito dato da una card della coda; i Dare Seguito no: serve al conto dei contatti al giorno) · `glide_id`
 
@@ -121,10 +128,12 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **Coda OGGI** (`coda.js`, funzione pura `calcolaCoda(righe, oggi)`; prove in `tools/banco/prova_coda.js`):
 - si ricalcola a ogni apertura, nessuna tabella «coda». L'app legge `contatti_coda` con `rientro_il <= oggi` (a pagine da 1000)
 - **Dare Seguito scaduti**: `ultima_fase` in (Dare Seguito, DS Fissato) e `rientro_il < oggi` → sempre, sopra la capienza, con «scaduto da N giorni»
-- **fuori coda** le categorie `Unlinked`, `Ex Partner/Cliente`, `Archiviato` (decisione di Ignazio, 14/09); i senza categoria restano
+- **fuori coda** le categorie `Unlinked`, `Ex Partner/Cliente`, `Archiviato` (decisione di Ignazio, 14/09) e, dal 15/09, **i senza categoria** (cantiere 16: hanno il riquadro «Da catalogare»)
 - **capienza** = `contatti_al_giorno` − esiti dalla coda già dati oggi (**massimo giornaliero**, decisione di Ignazio 14/09): raggiunto il numero, per oggi la coda resta vuota anche riaprendo l'app. Dentro la capienza: prima chi è già in coda (`in_coda_dal` pieno, il più vecchio prima: chi non viene chiamato slitta in cima, e riaprire l'app lo stesso giorno non cambia i 5). I posti liberi si dividono **60% rientri + 40% mai contattati**, arrotondato (3+2 su 5, 6+4 su 10, 1 rientro su 1; se un gruppo non basta, i posti vanno all'altro). Nei rientri: prima i richiami di oggi (fase senza giorni e `rientro_il = oggi`), poi i rientrati dopo l'attesa. A parità: `rientro_il` più vecchio, poi nome
 - chi entra nei 5 riceve `in_coda_dal = oggi`; un esito lo azzera
 - oggi = data a Roma (`Intl`, `Europe/Rome`)
+
+**Da catalogare** (`coda.js → daCatalogare(righe, catalogatiOggi)`, cantiere 16, decisioni di Ignazio 15/09): i senza categoria del partner visto (`contatti` con categoria vuota, tutti, a pagine da 1000) in **ordine alfabetico** (`localeCompare` it, senza distinguere maiuscole e accenti); se ne mostrano `QUOTA_CATALOGO` (5) meno `catalogati_oggi`. Non contano nei contatti al giorno. I 5 restano gli stessi riaprendo l'app perché l'ordine è fisso e i catalogati escono
 
 **Coach sulla card**: `sequenze.coach` della fase attuale (ultima azione); mai contattato → riga `Prospect-Contatto-Mai contattato o 2+ anni`; fase non trovata → nessuna riga.
 
@@ -240,6 +249,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
   - **📅 Conferme · N** (15/09): card per appuntamento da confermare (strip colore del tipo, nome, «Conferma appuntamento · … ore …», telefono), bottoni **Confermato** (salva `confermato_il`, avviso con Annulla) · **Sposta** (foglio giorno/ora) · **Non risponde** (resta, in fondo, con «📵 riprova più tardi», solo sul telefono). Non contano nei contatti al giorno
   - **OGGI** (al posto di «Azioni da completare» di Glide): «Dare Seguito scaduti» + «La tua coda · Fatti X di N»
+  - **🗂️ Da catalogare · Fatti X di 5** (cantiere 16, sotto la coda; non offline, non con «Tutti»; nascosto se non ci sono senza categoria): «N ancora da catalogare», righe compatte (strip grigia, nome, professione) che si aprono (città · età, telefono o «Senza telefono», note, «Contatto e/o Incaricato di») con i bottoni **Prospect · Partner · Cliente · Ex Partner/Cliente · Unlinked · Archivia** (`CATEGORIE_CATALOGO` → `cataloga_contatto`); la riga esce e l'avviso ha **Annulla** (`annulla_catalogo`). Finiti i 5: «Per oggi hai finito: 5 di 5. 👏». Admin su un altro partner: «👁️ Solo da guardare, per ora», bottoni spenti
   - riquadro scuro **📊 Segni Vitali** (tabella 12 mesi × 5 colonne + totali), sotto il richiamo **«🟪 Griglia PM · X di N ›»** (se impostata: apre la griglia) e «👁️ Mostra di più!» → **Report**
   - i tocchi «in arrivo» mostrano un avviso breve. Se i numeri non si caricano, la coda si vede lo stesso con un avviso
 - **Righe della coda** (Fase 3, richiesta di Ignazio 14/09: la pagina era troppo lunga): ogni contatto è una **riga compatta** con strip del colore della categoria, nome (+ badge rosso «scaduto da N giorni» per i DS), **le parole di Glide** «modalità • area | esito» dell'ultima azione (mai contattato: «Telefonata • <area del contatto o Attività> | Mai contattato o 2+ anni»; `index.html → rigaGlide`) e la **frase del coach** su una riga; il tocco la **apre** (una sola alla volta, `ST.aperta`): professione, città · età, telefono, coach intero e bottoni esito. Nella card aperta valgono le regole sotto
@@ -322,3 +332,4 @@ _Da definire._
 | 2026.09.15 · 19:45 | Partner Select (solo Admin) in Dashboard, Lista Nomi, Report e Check: un partner o «Tutti», in sola lettura; `utenti.nel_partner_select` |
 | 2026.09.15 · 20:51 | Partner Select anche in Agenda; con un partner scelto l'Admin vede coda e conferme e modifica a nome suo (riquadro arancione); esiti al proprietario del contatto; «Tutti» in sola lettura |
 | 2026.09.15 · 22:25 | Referral tolto dalle categorie sceglibili in Nuovo contatto e Modifica (`lista.js → CATEGORIE`); i contatti già Referral lo tengono |
+| 2026.09.15 · 22:31 | Riquadro «Da catalogare» in Dashboard (5 senza categoria al giorno, bottoni categoria con Annulla); senza categoria fuori dalla coda; `contatti.catalogato_il`, `cataloga_contatto`, `annulla_catalogo`, `stato_oggi.catalogati_oggi` |

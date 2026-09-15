@@ -1,7 +1,7 @@
 // Prova del motore della coda OGGI (coda.js) con dati finti.
 // Uso: node tools/banco/prova_coda.js
 const assert = require('node:assert/strict');
-const { calcolaCoda, oggiRoma } = require('../../coda.js');
+const { calcolaCoda, daCatalogare, oggiRoma } = require('../../coda.js');
 
 let ok = 0;
 function prova(nome, fn) {
@@ -16,9 +16,9 @@ function piuGiorni(data, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// contatto finto: di default mai contattato, rientro oggi
+// contatto finto: di default Prospect mai contattato, rientro oggi
 function c(id, extra) {
-  return Object.assign({ id, nome: id, rientro_il: OGGI, in_coda_dal: null, contattato: false,
+  return Object.assign({ id, nome: id, categoria: 'Prospect', rientro_il: OGGI, in_coda_dal: null, contattato: false,
     ultima_fase: null, ultimi_giorni: null }, extra);
 }
 
@@ -105,12 +105,12 @@ prova('divisione con slittati: i posti rimasti si dividono in proporzione', () =
   assert.deepEqual(calcolaCoda(righe, OGGI).coda.map(x => x.id), ['s1', 's2', 'r0', 'r1', 'm0']);
 });
 
-prova('categorie escluse: Unlinked, Ex Partner/Cliente, Archiviato fuori; senza categoria dentro', () => {
+prova('categorie escluse: Unlinked, Ex Partner/Cliente, Archiviato e senza categoria fuori (Da catalogare)', () => {
   const righe = [c('u', { categoria: 'Unlinked' }), c('e', { categoria: 'Ex Partner/Cliente' }), c('a', { categoria: 'Archiviato' }),
     c('ds-unlinked', { categoria: 'Unlinked', contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: IERI }),
     c('senza', { categoria: null }), c('p', { categoria: 'Prospect' })];
   const r = calcolaCoda(righe, OGGI);
-  assert.deepEqual(r.coda.map(x => x.id).sort(), ['p', 'senza']);
+  assert.deepEqual(r.coda.map(x => x.id).sort(), ['p']);
   assert.equal(r.dareSeguito.length, 0);
 });
 
@@ -185,6 +185,17 @@ prova('esito senza giorni e senza data (Iscrizione): esce dalla coda', () => {
 prova('oggi a Roma: dopo le 22 UTC è già domani', () => {
   assert.equal(oggiRoma(new Date('2026-09-13T21:59:00Z')), '2026-09-13');
   assert.equal(oggiRoma(new Date('2026-09-13T22:01:00Z')), '2026-09-14');
+});
+
+prova('da catalogare: solo senza categoria, alfabetico, 5 meno i catalogati di oggi', () => {
+  const righe = [{ id: 1, nome: 'zeta' }, { id: 2, nome: 'Àlfa' }, { id: 3, nome: 'beta', categoria: 'Prospect' },
+    { id: 4, nome: 'Bruno' }, { id: 5, nome: 'carla' }, { id: 6, nome: 'Dino' }, { id: 7, nome: 'elena' }, { id: 8, nome: 'Fabio' }];
+  let r = daCatalogare(righe, 0);
+  assert.deepEqual(r.righe.map(x => x.id), [2, 4, 5, 6, 7]);
+  assert.equal(r.totale, 7);
+  assert.deepEqual(daCatalogare(righe, 3).righe.map(x => x.id), [2, 4]);
+  assert.equal(daCatalogare(righe, 5).righe.length, 0);
+  assert.equal(daCatalogare(righe, 8).righe.length, 0);
 });
 
 console.log(`\n${ok} prove superate`);
