@@ -171,6 +171,9 @@
   .partner-select button { width: 100%; display: flex; justify-content: space-between; align-items: center; background: #1F2937; color: #fff;
     border: 1px solid #374151; border-radius: 12px; padding: 10px 12px; font-size: 16px; font-weight: 600; }
   .partner-select button span { font-size: 12px; color: #9CA3AF; font-weight: 600; }
+  .partner-select.altro { background: #C2410C; }   /* dati di un altro partner: si scrive a nome suo */
+  .partner-select.altro small, .partner-select.altro button span { color: #FFEDD5; }
+  .partner-select.altro button { background: #9A3412; border-color: #FDBA74; }
   .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
   .banner-abb.attivo { background: rgba(5,150,105,.1); border: 1.5px solid #10B981; color: var(--verde); }
   .banner-abb.scaduto { border-radius: 16px; display: block; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #B91C1C; padding: 12px 14px; }
@@ -388,7 +391,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 19:45';
+const APP_VERSION = '2026.09.15 · 20:51';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -473,8 +476,9 @@ async function dopoAccesso(sessione) {
 
 // ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
 // Solo Admin. La scelta vale in Dashboard, Lista Nomi, Report e Check finché non si cambia (in Agenda no).
-// Nel menu: gli utenti con `nel_partner_select`, più «Tutti» (somma). Con un altro partner o «Tutti» si guarda
-// soltanto (decisione A): ogni modifica avvisa di tornare su di sé. Correggere i dati degli altri è il lavoro dopo.
+// Nel menu: gli utenti con `nel_partner_select`, più «Tutti» (somma). Dal lavoro 3: con un altro partner l'Admin
+// vede tutto (anche coda e Agenda) e modifica a nome suo (riquadro arancione), tranne gli esiti della coda.
+// Con «Tutti» si guarda soltanto: ogni modifica avvisa di scegliere un partner (in Agenda si modifica come prima).
 const PS = { persone: [], scelto: null };   // scelto: null = sé stesso · id di utenti · 'tutti'
 
 async function caricaPersone() {
@@ -491,16 +495,18 @@ const guardoAltri = () => !!PS.scelto;
 const visto = () => (PS.scelto && !vediTutti() && PS.persone.find(p => p.id === PS.scelto)) || ST.utente;   // con «Tutti»: sé stesso, non usarlo
 const idVisti = () => (vediTutti() ? PS.persone.map(p => p.id) : [visto().id]);
 const nomeVisto = () => (vediTutti() ? 'Tutti' : nomeDi(visto()));
+const aNome = () => (guardoAltri() && !vediTutti() ? ` · ${nomeDi(visto())}` : '');   // nei titoli dei fogli: a nome di chi si scrive
 
 function soloGuardo() {
-  if (!guardoAltri() || ST.tab === 'agenda') return false;   // l'Agenda non segue il Partner Select
-  mostraToast(`Stai guardando ${nomeVisto()}: per modificare torna su di te`);
+  if (!vediTutti() || ST.tab === 'agenda') return false;
+  mostraToast('Con «Tutti» si guarda soltanto: scegli un partner per modificare');
   return true;
 }
 function partnerSelect() {
   if (!eAdmin() || !PS.persone.length) return '';
-  return `<div class="partner-select"><small>Partner Select</small>
-    <button id="ps-scegli">${esc(nomeVisto())}<span>${guardoAltri() ? '👁️ solo lettura ' : ''}▾</span></button></div>`;
+  const nota = vediTutti() ? '👁️ solo lettura ' : guardoAltri() ? '✏️ modifiche a suo nome ' : '';
+  return `<div class="partner-select ${guardoAltri() && !vediTutti() ? 'altro' : ''}"><small>Partner Select</small>
+    <button id="ps-scegli">${esc(nomeVisto())}<span>${nota}▾</span></button></div>`;
 }
 function collegaPartnerSelect() {
   const b = document.getElementById('ps-scegli');
@@ -514,7 +520,7 @@ async function scegliPartner() {
   const nuovo = v.id === ST.utente.id ? null : v.id;
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
-  CK.giorni = null; RP.azioni = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  CK.giorni = null; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
   window.scrollTo(0, 0);
   mostraTab();
 }
@@ -539,7 +545,7 @@ async function leggiCandidati(oggi) {
   const righe = [];
   for (let da = 0; ; da += 1000) {   // PostgREST restituisce al massimo 1000 righe per volta
     const { data, error } = await dbq('lettura coda',
-      supa.from('contatti_coda').select('*').lte('rientro_il', oggi).order('id').range(da, da + 999));
+      supa.from('contatti_coda').select('*').eq('user_id', visto().id).lte('rientro_il', oggi).order('id').range(da, da + 999));
     if (error) throw error;
     righe.push(...data);
     if (data.length < 1000) return righe;
@@ -549,23 +555,30 @@ async function leggiCandidati(oggi) {
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   app.innerHTML = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
-  if (guardoAltri()) {   // Partner Select: solo i numeri, la coda è di chi la lavora
+  if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     ST.oggi = oggi; ST.offline = false;
     await caricaDashboard(oggi);
     return disegnaOggi();
   }
+  // Partner Select su un altro partner: la sua coda si guarda (gli esiti li preme lui, decisione A) e non si tocca:
+  // niente `in_coda_dal` scritto da qui, niente copia offline
+  const altro = guardoAltri();
   let risultato, stato, offline = false;
   try {
-    const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi'));
+    const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
     if (error) throw error;
     stato = data;   // { contatti_al_giorno, fatti_oggi }
     const posti = stato.contatti_al_giorno - stato.fatti_oggi;
     risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti);
-    if (risultato.nuoviInCoda.length) {
+    if (!altro && risultato.nuoviInCoda.length) {
       await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
     }
   } catch (e) {
+    if (altro) {
+      app.innerHTML = `<h1>Dashboard</h1>${partnerSelect()}<div class="avviso">Non riesco a caricare la coda di ${esc(nomeVisto())}. Controlla la connessione e riprova.</div>${versione()}`;
+      return collegaPartnerSelect();
+    }
     let cache = null;
     try { cache = JSON.parse(localStorage.getItem(CHIAVE_CACHE)); } catch (e2) {}
     if (!cache) {
@@ -576,7 +589,7 @@ async function caricaOggi() {
     stato = cache.stato || { contatti_al_giorno: MB21Coda.CAPIENZA, fatti_oggi: 0 };   // copia salvata da una versione precedente
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
-  if (!offline) salvaCache();
+  if (!offline && !altro) salvaCache();
   await Promise.all([caricaDashboard(oggi), caricaConferme()]);
   disegnaOggi();
 }
@@ -623,7 +636,7 @@ function cardContatto(r, dareSeguito) {
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '';
   const bottoni = bottoniPer(r.categoria).map((b, i) =>
-    `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
+    `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline || guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
     <div class="card compatta aperta" id="card-${esc(r.id)}">
       <div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>
@@ -640,8 +653,8 @@ function cardContatto(r, dareSeguito) {
 function disegnaOggi() {
   const r = ST.risultato;
   let html = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
-  if (guardoAltri()) {
-    html += `<div class="vuoto">La coda di OGGI e le conferme sono personali: si vedono solo dall'app di chi le lavora.</div>`;
+  if (vediTutti()) {
+    html += `<div class="vuoto">La coda di OGGI e le conferme sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
     app.innerHTML = html + dashboardBasso() + versione();
     return collegaDashboard();
   }
@@ -655,10 +668,12 @@ function disegnaOggi() {
   }
   const st = ST.stato;
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
-  html += `<div class="testa-coda"><h2>La tua coda</h2>
-    <button class="contatore" id="contatore" ${ST.offline ? 'disabled' : ''}>Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</button></div>`;
+  const altro = guardoAltri();
+  html += `<div class="testa-coda"><h2>${altro ? `La coda di ${esc(nomeDi(visto()))}` : 'La tua coda'}</h2>
+    <button class="contatore" id="contatore" ${ST.offline || altro ? 'disabled' : ''}>Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</button></div>`;
+  if (altro) html += `<div class="sotto">👁️ Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
-    : `<div class="vuoto">${finito ? `Per oggi hai finito: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
+    : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaConferme();
@@ -722,6 +737,7 @@ function appuntamentoDaCoda(contatto) {
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1), ora: '18:30',
     contatto: { id: contatto.id, nome: contatto.nome, categoria: contatto.categoria },
     categoria: proposta.categoria, tipo: proposta.tipo, modalita: proposta.modalita,
+    userId: contatto.user_id,   // l'appuntamento è del proprietario del contatto (come l'esito)
   });
 }
 
@@ -831,9 +847,9 @@ async function caricaConferme() {
   try {
     const A = MB21Agenda, adesso = new Date(), limite = new Date(adesso.getTime() + A.ORE_CONFERMA * 3600000);
     const [app1, coda] = await Promise.all([
-      dbq('conferme appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', ST.utente.id).neq('tipo_azione', 'Contatto')
+      dbq('conferme appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).neq('tipo_azione', 'Contatto')
         .eq('completata', false).is('confermato_il', null).gt('inizio', adesso.toISOString()).lte('inizio', limite.toISOString())),
-      dbq('conferme dalla coda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', ST.utente.id).eq('tipo_azione', 'Contatto')
+      dbq('conferme dalla coda', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto')
         .in('esito', ['PM Fissato', 'Appuntamento']).is('confermato_il', null).gt('data_scelta', adesso.toISOString()).lte('data_scelta', limite.toISOString())),
     ]);
     if (app1.error || coda.error) throw app1.error || coda.error;
@@ -1010,7 +1026,7 @@ function apriObiettivi() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>🎯 Obiettivi di ${esc(D.nomeMese(mese))}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
+    <div class="testa-foglio"><h3>🎯 Obiettivi di ${esc(D.nomeMese(mese))}${esc(aNome())}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
     ${prima ? `<p>Come vuoi partire?</p><div class="chips ob-modi">
       <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
       <button data-modo="vuoti">Scelgo io</button></div>
@@ -1053,7 +1069,7 @@ function apriObiettivi() {
     btn.disabled = true; btn.textContent = 'Salvo…';
     // upsert sulla coppia partner+mese: tocca solo gli obiettivi (partenza e dati Amway restano)
     const { error } = await dbq('salva obiettivi', supa.from('obiettivi_mese')
-      .upsert({ user_id: ST.utente.id, mese, ...v }, { onConflict: 'user_id,mese' }));
+      .upsert({ user_id: visto().id, mese, ...v }, { onConflict: 'user_id,mese' }));   // Partner Select: a nome del partner scelto
     if (error) {
       btn.disabled = false; btn.textContent = 'Salva obiettivi';
       velo.querySelector('#ob-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
@@ -1072,7 +1088,7 @@ function apriCheck() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>Check del Giorno</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
+    <div class="testa-foglio"><h3>Check del Giorno${esc(aNome())}</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
     <div class="campo"><label>📅 Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo">
       <label>${esc(etichetta)} <small>Obbligatorio</small></label>
@@ -1089,7 +1105,7 @@ function apriCheck() {
   const note = velo.querySelector('#ck-note');
   note.oninput = () => { velo.querySelector('#ck-conta').textContent = `${note.value.length}/150`; };
   velo.querySelector('#ck-si').onclick = async () => {
-    const v = { data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
+    const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
     const errore = MB21Dashboard.validaCheck(v);
     if (errore) { velo.querySelector('#ck-errore').textContent = errore; return; }
@@ -1138,16 +1154,18 @@ async function caricaAgenda() {
   AG.settimana = A.settimana(AG.giorno);
   const da = A.isoDaRoma(AG.settimana[0], '00:00'), a = A.isoDaRoma(A.spostaGiorno(AG.settimana[6], 1), '00:00');
   const oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
+  const ids = idVisti();   // Partner Select (lavoro 3): il partner scelto, o tutti
   const richieste = [
-    dbq('agenda appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
+    dbq('agenda appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
     // Contatti: richiami/appuntamenti dati dalla coda (data scelta) e telefonate programmate dall'Agenda (non completate)
-    dbq('agenda contatti', supa.from('azioni').select(CAMPI_AZIONE).eq('tipo_azione', 'Contatto')
+    dbq('agenda contatti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).eq('tipo_azione', 'Contatto')
       .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
-    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
+    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
   ];
   const conferme = AG.giorno === oggi ? caricaConferme() : null;
-  if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi')));
-  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('rientro_il', AG.giorno)));
+  if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
+  else if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
+  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('user_id', visto().id).eq('rientro_il', AG.giorno)));
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   await conferme;
   for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
@@ -1161,12 +1179,13 @@ function disegnaAgenda() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const conEventi = A.giorniConEventi(AG.azioni);
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
-  const opz = { mioId: ST.utente.id, admin: eAdmin() };
+  const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
   const titoloGiorno = new Date(AG.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   let html = `
     <div class="ag-testa"><h1>Agenda</h1>
       ${AG.giorno !== oggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
       <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    ${partnerSelect()}
     <button class="ag-mese">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button>
     <div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
@@ -1220,7 +1239,8 @@ function collegaAgenda(eventi) {
   su('ag-oggi', () => apriAgenda(MB21Coda.oggiRoma()));
   su('ag-prima', () => apriAgenda(A.spostaGiorno(AG.giorno, -7)));
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
-  su('ag-nuovo', () => nuovoAppuntamento({ giorno: AG.giorno }));
+  collegaPartnerSelect();
+  su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
   su('ag-passati', scegliPassato);
   su('ag-conferme', () => { ST.tab = 'oggi'; mostraTab(); });
@@ -1330,7 +1350,7 @@ async function eliminaAppuntamento(e) {
 }
 
 function scegliPassato() {
-  const A = MB21Agenda, opz = { mioId: ST.utente.id, admin: eAdmin() };
+  const A = MB21Agenda, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>⚠️ Senza esito</h3><button id="ps-x">×</button></div>
@@ -1349,13 +1369,13 @@ function scegliPassato() {
   });
 }
 
-let contattiMiei = null;   // per l'elenco del nuovo appuntamento: solo i nomi del partner loggato
+let contattiMiei = null;   // per l'elenco del nuovo appuntamento: solo i nomi del partner scelto (Partner Select; «Tutti» = sé stesso)
 async function leggiContattiMiei() {
   if (contattiMiei) return contattiMiei;
   const righe = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('contatti per appuntamento', supa.from('contatti').select('id, nome, categoria')
-      .eq('user_id', ST.utente.id).neq('categoria', 'Archiviato').order('nome').range(da, da + 999));
+      .eq('user_id', visto().id).neq('categoria', 'Archiviato').order('nome').range(da, da + 999));
     if (error) throw error;
     righe.push(...data);
     if (data.length < 1000) break;
@@ -1454,7 +1474,7 @@ async function nuovoAppuntamento(opz = {}) {
       const errore = A.validaAppuntamento(v);
       if (errore) { velo.querySelector('#na-errore').textContent = errore; return; }
       const inizio = A.isoDaRoma(v.giorno, v.ora);
-      const riga = { contatto_id: v.contatto_id, user_id: opz.userId || ST.utente.id, categoria: v.categoria, tipo_azione: v.tipo_azione,
+      const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + st.durata * 60000).toISOString(),
         completata: false, portato_da: A.conOspite(st.tipo) && st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
       const btn = velo.querySelector('#na-si');
@@ -1848,7 +1868,7 @@ async function notaCoach(n) {
   if (!valori) return;
   const riga = { tipo_azione: valori.tipo, testo: valori.testo.trim() };
   const q = n ? supa.from('coach_note').update(riga).eq('id', n.id)
-    : supa.from('coach_note').insert({ ...riga, contatto_id: LS.contatto.id, user_id: ST.utente.id });
+    : supa.from('coach_note').insert({ ...riga, contatto_id: LS.contatto.id, user_id: LS.contatto.user_id });
   const { error } = await dbq('nota coach', q);
   if (error) return mostraToast('Non salvata: riprova.');
   LS.note = null;
@@ -1913,8 +1933,8 @@ function apriModulo(c) {
   if (soloGuardo()) return;
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
-  // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner loggato)
-  const proprietario = c ? c.user_id : ST.utente.id;
+  // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner scelto nel Partner Select)
+  const proprietario = c ? c.user_id : visto().id;
   const miei = LS.righe.filter(r => r.user_id === proprietario && r.categoria !== 'Archiviato' && (!c || r.id !== c.id));
   const opz = (lista, valore, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : '') +
     lista.map(o => `<option ${o === valore ? 'selected' : ''}>${esc(o)}</option>`).join('');
@@ -1925,7 +1945,7 @@ function apriModulo(c) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${nuovo ? 'Aggiungi un nuovo contatto' : 'Modifica contatto'}</h3><button id="chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</h3><button id="chiudi">×</button></div>
     <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"></div>
     <div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
@@ -1959,8 +1979,9 @@ function apriModulo(c) {
       categoria: $('f-cat').value, referral_di: $('f-ref').value.trim() || null,
       area: $('f-area').value || null, note: $('f-note').value.trim() || null,
     };
-    const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: ST.utente.id, escludiId: c && c.id });
-    if (doppi.length && !confirm(`Attenzione: tra i tuoi nomi c'è già\n\n${doppi.slice(0, 3).map(d => `• ${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join('\n')}\n\nSalvo lo stesso?`)) return;
+    const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
+    if (nuovo) riga.user_id = proprietario;
+    if (doppi.length && !confirm(`Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già\n\n${doppi.slice(0, 3).map(d => `• ${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join('\n')}\n\nSalvo lo stesso?`)) return;
     $('invia').disabled = true;
     const q = nuovo ? supa.from('contatti').insert(riga) : supa.from('contatti').update({ ...riga, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
     const { error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', q);
@@ -2113,7 +2134,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
       const n = velo.querySelector('[data-nuovo]');
       if (n) n.onclick = async () => {
         n.disabled = true;
-        const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert({ nome: t, categoria: 'Prospect' }).select('id, nome, categoria').single());
+        const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert({ nome: t, categoria: 'Prospect', user_id: visto().id }).select('id, nome, categoria').single());
         if (error) { n.disabled = false; return mostraToast('Non salvato: riprova.'); }
         contattiMiei = null; LS.righe = [];
         mostraToast(`${t} aggiunto alla Lista`);
@@ -2427,7 +2448,7 @@ function impostaGriglia() {
     if (errore) { $('gi-errore').textContent = errore; return; }
     $('gi-si').disabled = true;
     const { error } = await dbq('salva griglia PM', supa.from('griglia_pm')
-      .upsert({ user_id: ST.utente.id, ...v, aggiornata_il: new Date().toISOString() }, { onConflict: 'user_id' }));
+      .upsert({ user_id: visto().id, ...v, aggiornata_il: new Date().toISOString() }, { onConflict: 'user_id' }));
     if (error) { $('gi-si').disabled = false; $('gi-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     chiudi();
     RP.griglia = v; RP.cella = null;

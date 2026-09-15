@@ -109,12 +109,13 @@
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
     const nome = (a.contatti && a.contatti.nome) || '—';
-    const titolo = `${a.modalita || a.tipo_azione || ''} · ${nome}`;
+    // [Partner] all'inizio (decisione di Ignazio 15/09, Partner Select «Tutti»): solo Admin, appuntamenti non di mioId
+    const partner = admin && a.user_id !== mioId && a.utenti ? `[${a.utenti.nome || a.utenti.nome_cognome}] ` : '';
+    const titolo = `${partner}${a.modalita || a.tipo_azione || ''} · ${nome}`;
     const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;   // Richiamare / PM Fissato dati dalla coda
     const stato = (dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare') + (a.confermato_il && !a.completata ? ' · 👍 confermato' : '');
-    const partner = admin && a.user_id !== mioId && a.utenti ? ` [${a.utenti.nome || a.utenti.nome_cognome}]` : '';
     const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito].filter(Boolean).join(' | ');
-    return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}${partner}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
+    return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
   }
   function orario(a) {
     const inizio = partiRoma(a.quando || a.inizio).ora;

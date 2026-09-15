@@ -24,7 +24,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **Fase 1** (migrazioni `20260913230000_fase1_oggi.sql`, `20260914100000_bottoni_esito.sql`, `20260914120000_contatti_al_giorno.sql`, applicate):
 - vista `contatti_coda` (security_invoker): i contatti **dell'utente loggato** (anche per l'Admin) con fase attuale = ultima azione (`ultima_fase`, `ultimo_tipo`, `ultima_il`, `contattato`, `ultimi_giorni`) e `coach`
-- `stato_oggi()` → `{contatti_al_giorno, fatti_oggi}` (esiti `da_coda` di oggi, ora di Roma)
+- `stato_oggi()` → `{contatti_al_giorno, fatti_oggi}` (dal cantiere 15 `stato_oggi(p_utente)`, vedi Partner Select) (esiti `da_coda` di oggi, ora di Roma)
 - `imposta_contatti_al_giorno(n)` (security definer) → cambia solo il numero del proprio utente, da 1 a 10
 - `registra_esito(p_contatto, p_chiave, p_data, p_modalita, p_da_coda)` → scrive l'azione (con `data_scelta` e `da_coda`), sposta `rientro_il`, azzera `in_coda_dal`; restituisce i valori di prima per «Annulla»
 - `annulla_esito(p_azione, p_rientro, p_in_coda)` → cancella l'azione e ripristina il contatto
@@ -38,8 +38,12 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `normalizza_telefono(text)` → `{numero, secondo, esito}` (usata una volta sui dati: vedi Logiche → Telefoni)
 - trigger su `auth.users`: `mb21_controlla_account` (prima: rifiuta le email non in `utenti` con `accesso_attivo`) · `mb21_collega_account` (dopo: scrive `utenti.auth_id`)
 
-**Partner Select** (migrazione `20260915200000_partner_select.sql`, applicata; cantiere 15):
-- `utenti.nel_partner_select` (predefinito sì): chi compare nel menu dell'Admin. Fuori i 2 utenti non attivi indicati da Ignazio il 15/09. Nessuna regola di accesso nuova
+**Partner Select** (migrazioni `20260915200000_partner_select.sql` e `20260915210000_admin_su_partner.sql`, applicate; cantiere 15):
+- `utenti.nel_partner_select` (predefinito sì): chi compare nel menu dell'Admin. Fuori i 2 utenti non attivi indicati da Ignazio il 15/09
+- `contatti_coda`: righe del proprio utente **o di tutti per l'Admin** (l'app filtra sempre per `user_id`, colonna aggiunta in fondo)
+- `stato_oggi(p_utente)`: numeri di oggi di un altro partner (vuoto = chi è loggato; gli altri si leggono solo da Admin)
+- `registra_esito`: l'azione va al **proprietario del contatto** (prima: a chi preme)
+- provate sul DB (15/09, poi annullate): Admin legge la coda di Isabella (783 righe) e il suo stato di oggi, un esito su un suo contatto va a lei; un partner vede solo la sua coda, niente di Isabella, `stato_oggi` di altri vuoto. Coda dell'Admin letta in 0,05 s
 
 **Portato da** (migrazione `20260915180000_portato_da.sql`, applicata; decisioni di Ignazio 15/09):
 - `azioni.portato_da`: contatto che ha portato chi ascolta (PM, Follow Up). **Senza vincolo verso `contatti`** di proposito: un secondo collegamento renderebbe ambigue le letture `contatti(nome)`
@@ -159,7 +163,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 **Agenda** (Fase 4, `agenda.js`, funzioni pure; prove in `tools/banco/prova_agenda.js`; scelte in `docs/MB21_v4_Scelte_Agenda.md`):
 - **appuntamenti = righe di `azioni`**: tipo ≠ Contatto per `inizio`; tipo Contatto se ha `data_scelta` (Richiamare / PM Fissato dalla coda: si guardano, non si chiudono in Agenda) oppure è programmato dall'Agenda (`completata = false`, per `inizio`). Nuovi appuntamenti: `completata = false`, `esito` vuoto, `fine = inizio + durata`
 - **scelte** (`TIPI`, `SOTTOTIPI`): Prospect → Contatto · Piano Marketing · Follow Up · Consulenza PRD; Partner → Contatto · Piano Marketing · Follow Up · Appuntamento; Cliente → Contatto · Consulenza PRD; altre categorie nessuna. Fasi per categoria e tipo, per Appuntamento per sottotipo. `modalita` = sottotipo
-- **Admin** vede gli appuntamenti di tutti (regole di accesso di `azioni`), con «[Partner]» su quelli degli altri
+- **Admin** vede gli appuntamenti del partner scelto nel Partner Select; con Tutti di tutti, con «[Partner]» all'inizio della riga
 - **esito** (`chiudi_appuntamento`): `esito` + `completata = true`; se la chiave `categoria-tipo-esito` ha giorni in `sequenze`, `rientro_il = oggi + giorni` e `in_coda_dal` vuoto. Poi si apre sempre «Fissa il prossimo appuntamento» (stesso contatto, tipo e sottotipo proposti, domani, **Salta**); l'avviso ha **Annulla** (`riapri_appuntamento` + cancella il prossimo)
 - **ora proposta**: dopo la fine dell'ultimo impegno del giorno arrotondata alla mezz'ora, mai prima di adesso, altrimenti 18:30
 - **passati senza esito**: tipo ≠ Contatto, non completati, iniziati prima di adesso (ultimi 50)
@@ -204,9 +208,11 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **Check del Giorno**: 10 numeri + data obbligatori (interi, VP Clienti con decimali, ≥ 0), Libro dall'elenco di Glide (44 titoli), note max 150
 
 **Partner Select** (cantiere 15, decisioni di Ignazio 15/09; `index.html` → `PS`, logica pura in `dashboard.js` e `lista.js`):
-- **solo Admin**, riquadro scuro in cima a **Dashboard, Lista Nomi, Report e Check** (non in Agenda: l'Admin vede già tutti). Menu: sé stesso «(tu)» per primo, poi gli utenti con `nel_partner_select` in ordine di nome, poi **👥 Tutti**. La scelta vale in tutte e 4 le pagine finché non si cambia (non si salva: riaprendo l'app si riparte da sé)
-- **solo lettura** con un altro partner o Tutti (decisione A): accanto al nome «👁️ solo lettura»; ogni modifica (Check del Giorno, Obiettivi, Nuovo/Modifica contatto, menu «…», Azione +, Completato, Onboarding, Coach+, foglio Modifica azione, Griglia PM) mostra «Stai guardando <nome>: per modificare torna su di te» (`soloGuardo`). In Agenda le modifiche restano libere. Date dei Wes: restano all'Admin
-- **Dashboard**: numeri, banner e Segni Vitali del partner scelto; la **coda di OGGI e le conferme non si mostrano** (sono di chi le lavora: «La coda di OGGI e le conferme sono personali…»). Con Tutti niente banner abbonamento né richiamo Griglia PM
+- **solo Admin**, riquadro in cima a **Dashboard, Lista Nomi, Agenda, Report e Check**. Menu: sé stesso «(tu)» per primo, poi gli utenti con `nel_partner_select` in ordine di nome, poi **👥 Tutti**. La scelta vale in tutte le pagine finché non si cambia (non si salva: riaprendo l'app si riparte da sé)
+- **un altro partner** (lavoro 3, decisioni di Ignazio 15/09): riquadro **arancione** con «✏️ modifiche a suo nome»; l'Admin vede tutto e modifica come sui propri dati, **a nome del partner**: Check del Giorno e Obiettivi (`user_id` del partner, titolo «… · <nome>»), nuovo contatto (nella sua lista, doppioni cercati tra i suoi nomi), note Coach (del proprietario del contatto), Griglia PM, nuovo appuntamento (tra i suoi contatti, `contattiMiei` del partner scelto), esiti da «Azione +» (`registra_esito` scrive l'azione al proprietario del contatto). **Coda di OGGI: si vede ma non si tocca** (decisione A): bottoni esito e contatore spenti, «Gli esiti della coda li preme <nome> dalla sua app»; da qui non si scrive `in_coda_dal` né la copia offline, quindi fino alla prima apertura del partner i 5 possono cambiare se cambiano i dati. Conferme del partner in Dashboard (Confermato/Sposta attivi)
+- **Tutti**: solo lettura. Ogni modifica mostra «Con «Tutti» si guarda soltanto: scegli un partner per modificare» (`soloGuardo`); in Agenda gli appuntamenti esistenti si modificano come prima, il **+** chiede di scegliere il partner. Dashboard senza coda né conferme, banner abbonamento e richiamo Griglia PM
+- **Agenda**: appuntamenti, passati senza esito e conferme del partner scelto; telefonate del giorno e rientri del partner (con Tutti non si mostrano). Con Tutti **«[Partner]» all'inizio della riga** (`agenda.js → riga`, `mioId` vuoto)
+- **Dashboard**: numeri, banner, coda e Segni Vitali del partner scelto
 - **Tutti** = somma dei partner del menu (`unisciPartner`): check sommati per mese, obiettivi e VPP/VPG Amway sommati, **partenze di BBS/WES/CEP calcolate per ogni partner e poi sommate** (così la catena di chi non ha la partenza salvata non si mescola). Nel Check i check giornalieri di tutti insieme, obiettivi uniti allo stesso modo (`mesiDaGiorni`). Verificato il 15/09 sui dati veri: Tutti = somma dei 9 partner (settembre: Contatti 15 · BBS 11 · WES 14 · CEP 13 · VPG 602,63), uguale in Dashboard e Check
 - **Lista Nomi**: filtri e ricerca sui nomi del partner scelto (Tutti: dei partner del menu); banner «<nome>: un totale di N contatti». Il chip **All** non c'è più (lo sostituisce Tutti). Coach Yes mostra le note del **proprietario del contatto**
 - **Report**: azioni del partner scelto (Tutti: di tutti); Griglia PM del partner scelto, nascosta con Tutti
@@ -314,3 +320,4 @@ _Da definire._
 | 2026.09.15 · 17:13 | CANTIERI: Design e Laboratorio in attesa; prossimo passo rilievo Check |
 | 2026.09.15 · 18:57 | Fase 6 Check: pagina dal bottone «visione completa» (Mese · Wes · Anno, adesso · prima a pari giorni · andamento, periodo prima intero, grafico dei 12 mesi), Segni Vitali a 12 mesi nel Check e solo il mese in corso in Dashboard |
 | 2026.09.15 · 19:45 | Partner Select (solo Admin) in Dashboard, Lista Nomi, Report e Check: un partner o «Tutti», in sola lettura; `utenti.nel_partner_select` |
+| 2026.09.15 · 20:51 | Partner Select anche in Agenda; con un partner scelto l'Admin vede coda e conferme e modifica a nome suo (riquadro arancione); esiti al proprietario del contatto; «Tutti» in sola lettura |
