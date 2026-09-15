@@ -14,7 +14,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Deciso il 15/09.* Seguendo l'ordine delle tab di Glide (Dashboard · Agenda · Lista Nomi · **Report** · Check · Mappa): rilievo della tab **Report** in sola lettura, stesso metodo dell'Agenda (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, screenshot in `mb21-import/screenshot-report/`, documento `docs/MB21_v3_Report_come_e.md`, Partner Select = Ignazio). Dati già nell'export: `Report.csv`. Poi proposte per il Report v4
 
 - ~~Rilievo della tab Report~~ — fatto il 15/09 (ripresa automatica, 51 foto): `docs/MB21_v3_Report_come_e.md`. Filtri Mese/Wes, 5 schede, tabella, grafico dell'anno, Griglia PM. **Da discutere con Ignazio** le 6 domande del §8, poi proposte per il Report v4
-- Accesso a MB21 v4 dal pannello di Claude Desktop: il link dell'email si apre in un altro browser → copiarlo e incollarlo nel pannello. Se non basta, valutare il codice a 6 cifre nell'email
+- Accesso a MB21 v4 dal pannello di Claude Desktop: il link dell'email si apre in un altro browser → copiarlo e incollarlo nel pannello (il codice a 6 cifre è rimandato, cantiere 7)
 
 ## 11. Fase 4 · AGENDA
 *Aperto il 14 settembre 2026. Brief in bozza: `docs/MB21_v4_Brief_F4_Agenda.md`.*
