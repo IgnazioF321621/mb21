@@ -194,4 +194,22 @@ prova('bonus successivo nella scala Amway', () => {
   assert.equal(M.bonusSuccessivo(21), null);
 });
 
+prova('file Amway: mese, albero e volumi come lo script import_mappa.py', () => {
+  // File finto con la forma di quello della LOS (apostrofi, virgole nei nomi, decimali italiani, percentuale)
+  const csv = '\uFEFF"Mese di competenza","\'202609"\r\n\r\n'
+    + '"Qualifica Amway Partner","Codice Amway Partner","Codice Amway Partner Sponsor","Nome","Data di ingresso","VPP","VPG","Percentuale di bonus"," Clienti","Data di rinnovo"\r\n'
+    + '"\'1","\'111","\'","\'ROSSI, MARIO","\'15 marzo 2010","\'1.221,50","\'539,93","\'3%","\'4","\'"\r\n'
+    + '"\'2","\'222","\'111","\'BIANCHI, ANNA","\'1 settembre 2026","\'0","\'0","\'0%","",""\r\n\r\n';
+  const f = M.leggiFileAmway(csv);
+  assert.equal(f.mese, 202609);
+  assert.deepEqual(f.squadra.map(p => [p.partner_id, p.sponsor_id, p.nome, p.livello, p.data_ingresso]),
+    [['111', null, 'ROSSI, MARIO', 1, '2010-03-15'], ['222', '111', 'BIANCHI, ANNA', 2, '2026-09-01']]);
+  assert.deepEqual([f.volumi[0].vpp, f.volumi[0].vpg, f.volumi[0].bonus, f.volumi[0].clienti, f.volumi[0].mese], [1221.5, 539.93, 3, 4, 202609]);
+  assert.equal(f.volumi[1].clienti, null);
+  assert.ok(M.leggiFileAmway('a,b\n1,2').errore);
+  assert.ok(M.leggiFileAmway('"Mese di competenza",202609\n"Qualifica Amway Partner","Codice Amway Partner"\n').errore);
+  const c = M.confrontoSquadra([{ partner_id: '111' }, { partner_id: '999' }], f.squadra);
+  assert.deepEqual([c.nuovi.map(p => p.partner_id), c.usciti.map(p => p.partner_id)], [['222'], ['999']]);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
