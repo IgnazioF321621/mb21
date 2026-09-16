@@ -456,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 16:21';
+const APP_VERSION = '2026.09.16 · 16:27';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3093,10 +3093,11 @@ function disegnaReport() {
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
   if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
-  if (eAdmin()) html += `<div class="rp-wes"><h3>Date dei Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
-    ${[...RP.wes].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>
-    <div class="rp-wes"><h3>Date dei BBS <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
+  if (eAdmin()) html += `<div class="rp-wes"><h3>Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
+    ${[...RP.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
+    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>
+    <div class="rp-wes"><h3>BBS <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
     ${[...RP.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
     <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
     <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
@@ -3121,11 +3122,12 @@ function collegaReport() {
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
   su('rp-piu-wes', async () => {
-    const data = document.getElementById('rp-data-wes').value;
-    if (!data) return mostraToast('Scegli la data del Wes');
+    const mese = document.getElementById('rp-data-wes').value;   // «2026-10»
+    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del Wes');
+    const data = mese + '-01';
     const { error } = await dbq('nuovo Wes', supa.from('wes').insert({ data }));
-    if (error) return mostraToast(error.code === '23505' ? 'Questa data c\'è già' : 'Non salvato: riprova.');
-    mostraToast(`Wes del ${R.dataLunga(data)} aggiunto`);
+    if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
+    mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
     apriReport();
   });
@@ -3134,7 +3136,7 @@ function collegaReport() {
     if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del BBS');
     const data = mese + '-01';
     const { error } = await dbq('nuovo BBS', supa.from('bbs').insert({ data }));
-    if (error) return mostraToast(error.code === '23505' ? 'Questa data c\'è già' : 'Non salvato: riprova.');
+    if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
     mostraToast(`BBS ${MB21Lista.etichettaEvento(data)} aggiunto`);
     apriReport();
   });
@@ -3152,7 +3154,7 @@ function collegaReport() {
     const w = RP.wes.find(x => x.id === b.dataset.togli);
     const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
-    if (!confirm(`Elimino il Wes del ${R.dataLunga(w.data)}?`)) return;
+    if (!confirm(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`)) return;
     const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('Wes eliminato');
