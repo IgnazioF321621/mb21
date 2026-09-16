@@ -340,7 +340,12 @@
   .rp-wes { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
   .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
   .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
+  .ad-voce { margin-bottom: 10px; }
+  .foglio.nu { max-height: 90vh; overflow-y: auto; font-size: 14px; }
+  .foglio.nu select { display: block; width: 100%; font-size: 16px; padding: 12px; border-radius: 12px; border: 1px solid var(--linea); background: #fff; margin: 6px 0 12px; }
+  .ad-voce small { display: block; color: var(--grigio); font-size: 12px; font-weight: 400; margin-top: 2px; }
   .ad-utente { border-top: 1px solid var(--linea); }
+  .ad-utente:first-child { border-top: 0; }
   .ad-riga { width: 100%; display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; align-items: center; background: none; border: 0; padding: 10px 0; text-align: left; color: var(--testo); font-size: 15px; }
   .ad-riga small { grid-column: 2; color: var(--grigio); font-size: 12px; }
   .ad-riga .f { grid-column: 3; grid-row: 1 / span 2; color: var(--grigio); font-size: 18px; }
@@ -469,7 +474,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 18:41';
+const APP_VERSION = '2026.09.16 · 18:55';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -612,7 +617,7 @@ function mostraTab() {
   nav.querySelectorAll('button').forEach(b => {
     if (b.dataset.tab === 'admin') b.hidden = !eAdmin();   // pagina Admin: solo per l'Admin
     b.classList.toggle('attiva', b.dataset.tab === ST.tab);
-    b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; mostraTab(); };
+    b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab(); };
   });
   if (ST.tab === 'oggi') return caricaOggi();
   if (ST.tab === 'lista') return apriLista();
@@ -3162,7 +3167,7 @@ function collegaReport() {
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [], utenti: [], aperti: new Set() };   // aperti: righe utente aperte (all'inizio tutte chiuse)
+const AD = { wes: [], bbs: [], utenti: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
@@ -3215,29 +3220,104 @@ function rigaUtenteAdmin(u) {
   return h + `</div></div>`;
 }
 
+// Sottopagine (richiesta di Ignazio 16/09: sul telefono una pagina sola diventa caotica):
+// AD.sezione null = menu · 'utenti' · 'wes' · 'bbs'. «Carica file Amway» apre subito la scelta del file.
 function disegnaAdmin() {
-  let html = `<h1>Admin</h1>
-    <div class="rp-wes"><h3>📄 Carica file Amway</h3>
-      <div class="sotto" style="margin:0 0 8px">Il file CSV scaricato dalla LOS di amway.it: aggiorna l'albero della Mappa e i volumi del mese.</div>
+  const D = MB21Dashboard, oggi = MB21Coda.oggiRoma();
+  const indietro = `<button class="indietro" id="ad-indietro">‹ Admin</button>`;
+  let html;
+  if (AD.sezione === 'utenti') {
+    html = `${indietro}<h1>Utenti dell'app</h1>
+      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟢 attivo · 🟠 scade entro ${D.GIORNI_PREAVVISO} giorni · 🔴 scaduto. Tocca un nome per aprirlo.</div>
+      <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
+      <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>`;
+  } else if (AD.sezione === 'wes') {
+    html = `${indietro}<h1>Wes</h1><div class="rp-wes">
+      ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
+      <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
+      <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>`;
+  } else if (AD.sezione === 'bbs') {
+    html = `${indietro}<h1>BBS</h1><div class="rp-wes">
+      ${[...AD.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
+      <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
+      <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
+  } else {
+    const stati = AD.utenti.map(u => D.statoAbbonamento(D.scadenzaDi(u, AD.utenti), oggi));
+    const ultimo = l => (l.length ? MB21Lista.etichettaEvento(l[l.length - 1].data) : 'nessuno');
+    const voce = (id, titolo, sotto) => `<button class="rp-apri ad-voce" id="${id}"><span>${titolo}<small>${sotto}</small></span><span>›</span></button>`;
+    html = `<h1>Admin</h1>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
-      <button class="primario" id="ad-scegli">Scegli il file</button></div>
-    <div class="rp-wes"><h3>👥 Utenti dell'app</h3>
-      <div class="sotto" style="margin:0 0 4px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟢 attivo · 🟠 scade entro ${MB21Dashboard.GIORNI_PREAVVISO} giorni · 🔴 scaduto. Tocca un nome per aprirlo.</div>
-      ${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
-    <div class="rp-wes"><h3>🎟 Wes</h3>
-    ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
-    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>
-    <div class="rp-wes"><h3>🎟 BBS</h3>
-    ${[...AD.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
-    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
+      ${voce('ad-scegli', '📄 Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
+      ${voce('ad-vai-utenti', "👥 Utenti dell'app", `entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟠 ${stati.filter(x => x === 'in_scadenza').length} · 🔴 ${stati.filter(x => x === 'scaduto').length}`)}
+      ${voce('ad-vai-wes', '🎟 Wes', `ultimo ${ultimo(AD.wes)}`)}
+      ${voce('ad-vai-bbs', '🎟 BBS', `ultimo ${ultimo(AD.bbs)}`)}`;
+  }
   app.innerHTML = html + versione();
   collegaAdmin();
 }
 
+// Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
+// email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
+function foglioNuovoUtente() {
+  const st = { nome: '', codice: '', email: '', comune: '' };
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio nu"><h3>＋ Nuovo utente</h3>
+    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Filippo" autocomplete="off"></label>
+    <div id="nu-trovati"></div>
+    <label>Nome e cognome<input id="nu-nome" autocomplete="off"></label>
+    <label>Codice Amway <small style="color:var(--grigio)">(anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off"></label>
+    <label>Email con cui entrerà<input id="nu-email" type="email" autocomplete="off" autocapitalize="off"></label>
+    <label>Abbonamento in comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
+      .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label>
+    <div class="errore" id="nu-errore"></div>
+    <button class="primario" id="nu-crea">Crea</button>
+    <button class="link" id="nu-annulla">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  const $ = id => velo.querySelector('#' + id);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  $('nu-annulla').onclick = chiudi;
+  let giro = 0;
+  $('nu-cerca').oninput = async () => {
+    const q = $('nu-cerca').value.trim(), mio = ++giro;
+    if (q.length < 2) { $('nu-trovati').innerHTML = ''; return; }
+    const { data, error } = await dbq('cerca nella Lista', supa.from('contatti').select('id, nome, codice_amway, user_id, categoria')
+      .ilike('nome', `%${q.replace(/[%_]/g, '')}%`).neq('categoria', 'Archiviato').order('nome').limit(10));
+    if (mio !== giro || error) return;
+    const di = id => { const u = AD.utenti.find(x => x.id === id); return u ? nomeDi(u) : ''; };
+    $('nu-trovati').innerHTML = data.length ? data.map(c => `<button class="rp-riga nome" data-c="${esc(c.id)}"><span>${esc(c.nome)}<br>
+      <small>${esc(c.categoria || 'senza categoria')}${c.codice_amway ? ' · codice ' + esc(c.codice_amway) : ''} · lista di ${esc(di(c.user_id))}</small></span><span></span><span class="f">›</span></button>`).join('')
+      : '<div class="sotto">Nessun nome trovato: scrivilo qui sotto.</div>';
+    $('nu-trovati').querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
+      const c = data.find(x => x.id === b.dataset.c);
+      $('nu-nome').value = c.nome; if (c.codice_amway) $('nu-codice').value = c.codice_amway;
+      $('nu-trovati').innerHTML = ''; $('nu-cerca').value = '';
+      $('nu-email').focus();
+    });
+  };
+  $('nu-crea').onclick = async () => {
+    const nome = $('nu-nome').value.trim(), codice = $('nu-codice').value.trim(), email = $('nu-email').value.trim().toLowerCase();
+    if (!nome) return ($('nu-errore').textContent = 'Scrivi nome e cognome');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ($('nu-errore').textContent = "Scrivi un'email valida");
+    if (AD.utenti.some(u => (u.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
+    $('nu-crea').disabled = true; $('nu-crea').textContent = 'Creo…';
+    const { data, error } = await dbq('nuovo utente', supa.from('utenti').insert({ nome_cognome: nome, nome: nome.split(/\s+/)[0], email,
+      partner_id: codice || null, abbonamento_con: $('nu-comune').value || null, accesso_attivo: false }).select('id').single());
+    if (error) { $('nu-crea').disabled = false; $('nu-crea').textContent = 'Crea'; $('nu-errore').textContent = error.code === '23505' ? 'Questa email è già di un utente' : 'Non creato: riprova.'; return; }
+    chiudi();
+    mostraToast(`${nome} aggiunto: accendi «Può entrare» quando è pronto`);
+    AD.aperti.add(data.id);
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;   // nel Partner Select
+  };
+}
+
 function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
+  [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  su('ad-nuovo-utente', foglioNuovoUtente);
   su('ad-scegli', () => document.getElementById('ad-file').click());
   app.querySelectorAll('[data-ut]').forEach(b => b.onchange = async () => {
     const u = AD.utenti.find(x => x.id === b.dataset.ut), campo = b.dataset.campo, valore = b.checked;
@@ -3282,7 +3362,8 @@ function collegaAdmin() {
     mostraToast(valore ? `${nomeDi(u)}: abbonamento in comune con ${nomeDi(AD.utenti.find(x => x.id === valore))}` : `${nomeDi(u)}: paga per sé`);
     disegnaAdmin();
   });
-  document.getElementById('ad-file').onchange = async e => {
+  const inputFile = document.getElementById('ad-file');
+  if (inputFile) inputFile.onchange = async e => {
     const file = e.target.files[0];
     e.target.value = '';
     if (file) foglioFileAmway(MB21Mappa.leggiFileAmway(await file.text()));
