@@ -114,6 +114,18 @@
     return { fatti, totale: PASSI_ONBOARDING.length };
   }
 
+  // Segni vitali (cantiere 18): posti di un biglietto = contatto + compagno/a + ospiti senza nome
+  function postiBiglietto(b) {
+    if (!b) return 0;
+    return (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + Math.max(0, Number(b.ospiti) || 0);
+  }
+
+  // Date degli eventi (BBS o Wes) che il contatto non ha ancora, dalla più recente
+  function eventiLiberi(date, biglietti, tipo) {
+    const presi = new Set((biglietti || []).filter(b => b.tipo === tipo).map(b => b.evento));
+    return [...new Set(date || [])].filter(d => !presi.has(d)).sort().reverse();
+  }
+
   // Date nel fuso di Roma: lunga «11/12/2024», breve «11/12/24»
   function data(iso, breve) {
     if (!iso) return '';
@@ -135,7 +147,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -394,6 +394,16 @@
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
   .mp-sv span.bbs.on { background: #3B82F6; } .mp-sv span.wes.on { background: #EF4444; } .mp-sv span.cep.on { background: #22C55E; }
+  .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sv-pill { font-size: 11px; font-weight: 700; letter-spacing: .3px; color: #fff; border-radius: 5px; padding: 3px 7px; }
+  .sv-pill.bbs { background: #3B82F6; } .sv-pill.wes { background: #EF4444; } .sv-pill.cep { background: #22C55E; }
+  .sv-evento { border-top: 1px solid var(--linea); padding-top: 8px; margin-top: 8px; }
+  .sv-evento .quando { display: flex; justify-content: space-between; font-weight: 600; font-size: 15px; }
+  .sv-evento .quando small { color: var(--grigio); font-weight: 400; }
+  .sv-riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; }
+  .sv-riga input { width: 90px; margin: 0; padding: 8px; font-size: 16px; text-align: center; }
+  .sv-riga input[type="date"] { width: 160px; }
+  .sv-piu { border: 0; background: none; color: var(--blu); font-size: 15px; font-weight: 600; padding: 10px 0 2px; }
   .mp-completa { flex: 0 0 auto; align-self: center; background: none; border: 0; padding: 6px 4px 6px 10px;
     font-size: 20px; line-height: 1; color: var(--grigio-chiaro); }
   .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -431,7 +441,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 11:26';
+const APP_VERSION = '2026.09.16 · 13:56';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1857,7 +1867,7 @@ function apriScheda(id) {
 }
 
 function sezioniPer(c) {
-  const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes']];
+  const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'], ['segni', 'Segni vitali']];
   return c.categoria === 'Partner' ? [['onboarding', 'Onboarding'], ...base] : base;
 }
 
@@ -1906,7 +1916,7 @@ function disegnaScheda() {
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
-  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding }[LS.sezione] || sezioneDati)();
+  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
 }
 
 function sezioneDati() {
@@ -2074,6 +2084,133 @@ function sezioneOnboarding() {
       disegna();
     });
   };
+  disegna();
+}
+
+// Segni vitali sulla persona (cantiere 18): compagno/a, biglietti BBS e WES, CEP solo per i Partner.
+// Biglietti, CEP e date dei BBS li scrive solo l'Admin; il compagno/a chi può modificare il contatto.
+async function sezioneSegni() {
+  const c = LS.contatto;
+  const box = document.getElementById('sezione');
+  box.innerHTML = '<div class="vuoto">Carico…</div>';
+  const [ana, big, cep, bbs, wes] = await Promise.all([
+    dbq('compagno', supa.from('contatti').select('compagno_nome, compagno_telefono').eq('id', c.id).maybeSingle()),
+    dbq('biglietti', supa.from('biglietti').select('*').eq('contatto_id', c.id)),
+    dbq('cep', supa.from('cep').select('*').eq('contatto_id', c.id).maybeSingle()),
+    dbq('date dei BBS', supa.from('bbs').select('data').order('data')),
+    dbq('date dei Wes', supa.from('wes').select('data').order('data')),
+  ]);
+  if (LS.contatto !== c || LS.sezione !== 'segni') return;
+  if (ana.error || big.error || cep.error || bbs.error || wes.error) {
+    box.innerHTML = '<div class="vuoto">Segni vitali non caricati: riprova.</div>';
+    return;
+  }
+  const SV = { comp: ana.data || {}, biglietti: big.data, cep: cep.data, date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
+  const admin = eAdmin(), archiviato = c.categoria === 'Archiviato';
+  const nomeBreve = n => esc(String(n || '').trim().split(/\s+/)[0] || '');
+  const dis = admin && !archiviato ? '' : 'disabled';
+
+  const riquadroEventi = tipo => {
+    const miei = SV.biglietti.filter(b => b.tipo === tipo).sort((a, b) => b.evento.localeCompare(a.evento));
+    const righe = miei.map(b => `<div class="sv-evento" data-big="${esc(b.id)}">
+        <div class="quando"><span>${tipo === 'BBS' ? 'BBS' : 'Wes'} ${esc(MB21Report.dataLunga(b.evento))}</span>
+          <small>${MB21Lista.postiBiglietto(b)} ${MB21Lista.postiBiglietto(b) === 1 ? 'biglietto' : 'biglietti'}</small></div>
+        <label class="interruttore"><span>${esc(c.nome)}</span><input type="checkbox" data-campo="contatto" ${b.contatto ? 'checked' : ''} ${dis}></label>
+        ${SV.comp.compagno_nome || b.compagno ? `<label class="interruttore"><span>${esc(SV.comp.compagno_nome || 'Compagno/a')} <small>compagno/a</small></span>
+          <input type="checkbox" data-campo="compagno" ${b.compagno ? 'checked' : ''} ${dis}></label>` : ''}
+        <div class="sv-riga"><span>Ospiti senza nome</span><input type="number" min="0" max="50" data-campo="ospiti" value="${b.ospiti}" ${dis}></div>
+      </div>`).join('');
+    return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill ${tipo.toLowerCase()}">${tipo}</span></div>
+      ${righe || '<div class="sotto" style="margin:4px 0">Nessun biglietto</div>'}
+      ${admin && !archiviato ? `<button class="sv-piu" data-piu="${tipo}">+ Biglietto ${tipo}</button>` : ''}</div>`;
+  };
+
+  const disegna = () => {
+    const comp = SV.comp;
+    box.innerHTML = `
+      <div class="riquadro">
+        <div class="sv-testa"><b>Compagno/a</b>${archiviato ? '' : '<button class="sv-piu" id="sv-comp" style="padding:0">Modifica</button>'}</div>
+        ${comp.compagno_nome || comp.compagno_telefono
+          ? `<div>${esc(comp.compagno_nome || '')}</div><div class="sotto" style="margin:0">${esc(comp.compagno_telefono || '')}</div>`
+          : '<div class="sotto" style="margin:0">Nessuno</div>'}
+      </div>
+      ${riquadroEventi('BBS')}
+      ${riquadroEventi('WES')}
+      ${c.categoria === 'Partner' ? `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span></div>
+        <div class="sv-riga"><span>Abbonato dal</span><input type="date" id="sv-cep-dal" value="${esc(SV.cep ? SV.cep.dal : '')}" ${dis}></div>
+        <div class="sv-riga"><span>Uscito il</span><input type="date" id="sv-cep-uscito" value="${esc(SV.cep && SV.cep.uscito_il || '')}" ${dis || (SV.cep ? '' : 'disabled')}></div>
+      </div>` : ''}
+      ${admin ? '' : '<div class="sotto" style="text-align:center">Biglietti e CEP li scrive l\'Admin</div>'}`;
+    collega();
+  };
+
+  const collega = () => {
+    const bComp = document.getElementById('sv-comp');
+    if (bComp) bComp.onclick = async () => {
+      if (soloGuardo()) return;
+      const v = await moduloSemplice('Compagno/a', [
+        { k: 'nome', etichetta: 'Nome e cognome', tipo: 'text', valore: SV.comp.compagno_nome || '' },
+        { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: SV.comp.compagno_telefono || '' },
+      ]);
+      if (!v) return;
+      const nuovo = { compagno_nome: v.nome.trim() || null, compagno_telefono: v.telefono.trim() || null };
+      const { error } = await dbq('salva compagno', supa.from('contatti').update(nuovo).eq('id', c.id));
+      if (error) return mostraToast('Non salvato: riprova.');
+      SV.comp = nuovo; mostraToast('Compagno/a salvato'); disegna();
+    };
+
+    box.querySelectorAll('[data-piu]').forEach(b => b.onclick = async () => {
+      if (soloGuardo()) return;
+      const tipo = b.dataset.piu;
+      const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
+      if (!liberi.length) return mostraToast(SV.date[tipo].length
+        ? `Ha già un biglietto per tutti i ${tipo === 'BBS' ? 'BBS' : 'Wes'}`
+        : `Prima aggiungi le date dei ${tipo === 'BBS' ? 'BBS' : 'Wes'} nel Report`);
+      const etichette = liberi.map(d => MB21Report.dataLunga(d));
+      const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: tipo === 'BBS' ? 'Quale BBS' : 'Quale Wes', tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
+      if (!v) return;
+      const evento = liberi[etichette.indexOf(v.evento)];
+      const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
+        .insert({ contatto_id: c.id, tipo, evento, contatto: true }).select().single());
+      if (error) return mostraToast(error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.');
+      SV.biglietti.push(data); disegna();
+    });
+
+    box.querySelectorAll('[data-big] [data-campo]').forEach(el => el.onchange = async () => {
+      if (soloGuardo()) return disegna();
+      const b = SV.biglietti.find(x => x.id === el.closest('[data-big]').dataset.big);
+      const campo = el.dataset.campo;
+      const valore = campo === 'ospiti' ? Math.min(50, Math.max(0, Math.round(Number(el.value) || 0))) : el.checked;
+      const prova = { ...b, [campo]: valore };
+      if (!MB21Lista.postiBiglietto(prova)) {   // niente posti: il biglietto si toglie
+        if (!confirm(`Tolgo il biglietto ${b.tipo} del ${MB21Report.dataLunga(b.evento)}?`)) return disegna();
+        const { error } = await dbq('togli biglietto', supa.from('biglietti').delete().eq('id', b.id));
+        if (error) { mostraToast('Non salvato: riprova.'); return disegna(); }
+        SV.biglietti = SV.biglietti.filter(x => x.id !== b.id); mostraToast('Biglietto tolto'); return disegna();
+      }
+      const { error } = await dbq('salva biglietto', supa.from('biglietti').update({ [campo]: valore }).eq('id', b.id));
+      if (error) mostraToast('Non salvato: riprova.'); else b[campo] = valore;
+      disegna();
+    });
+
+    const dal = document.getElementById('sv-cep-dal'), uscito = document.getElementById('sv-cep-uscito');
+    if (dal) dal.onchange = uscito.onchange = async () => {
+      if (soloGuardo()) return disegna();
+      if (!dal.value) {
+        if (!SV.cep) return;
+        if (!confirm('Tolgo l\'abbonamento CEP?')) return disegna();
+        const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('contatto_id', c.id));
+        if (error) mostraToast('Non salvato: riprova.'); else SV.cep = null;
+        return disegna();
+      }
+      if (uscito.value && uscito.value < dal.value) { mostraToast('L\'uscita non può essere prima dell\'abbonamento'); return disegna(); }
+      const riga = { contatto_id: c.id, dal: dal.value, uscito_il: uscito.value || null, aggiornato_il: new Date().toISOString() };
+      const { data, error } = await dbq('salva CEP', supa.from('cep').upsert(riga).select().single());
+      if (error) mostraToast('Non salvato: riprova.'); else SV.cep = data;
+      disegna();
+    };
+  };
+
   disegna();
 }
 
@@ -2619,7 +2756,7 @@ function collegaMappa() {
 // Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
-const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
+const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], bbs: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
 const CAMPI_REPORT = 'id, contatto_id, portato_da, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
 
 async function leggiAzioniMie() {
@@ -2637,13 +2774,14 @@ async function apriReport(vista) {
   RP.vista = vista || RP.vista;
   if (!RP.azioni) app.innerHTML = `<h1>Report</h1><div class="vuoto">Carico i numeri…</div>`;
   try {
-    const [azioni, wes, gr] = await Promise.all([
+    const [azioni, wes, gr, bbs] = await Promise.all([
       leggiAzioniMie(),
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       vediTutti() ? { data: null } : dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle()),
+      eAdmin() ? dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')) : { data: [] },
     ]);
-    if (wes.error || gr.error) throw wes.error || gr.error;
-    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data;
+    if (wes.error || gr.error || bbs.error) throw wes.error || gr.error || bbs.error;
+    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data; RP.bbs = bbs.data;
   } catch (e) {
     app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -2696,7 +2834,10 @@ function disegnaReport() {
   if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
   if (eAdmin()) html += `<div class="rp-wes"><h3>Date dei Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
     ${[...RP.wes].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>`;
+    <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>
+    <div class="rp-wes"><h3>Date dei BBS <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
+    ${[...RP.bbs].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="date" id="rp-data-bbs"><button id="rp-piu-bbs">+ BBS</button></div></div>`;
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -2726,8 +2867,28 @@ function collegaReport() {
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
     apriReport();
   });
+  su('rp-piu-bbs', async () => {
+    const data = document.getElementById('rp-data-bbs').value;
+    if (!data) return mostraToast('Scegli la data del BBS');
+    const { error } = await dbq('nuovo BBS', supa.from('bbs').insert({ data }));
+    if (error) return mostraToast(error.code === '23505' ? 'Questa data c\'è già' : 'Non salvato: riprova.');
+    mostraToast(`BBS del ${R.dataLunga(data)} aggiunto`);
+    apriReport();
+  });
+  app.querySelectorAll('[data-togli-bbs]').forEach(b => b.onclick = async () => {
+    const w = RP.bbs.find(x => x.id === b.dataset.togliBbs);
+    const { count } = await dbq('biglietti del BBS', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'BBS').eq('evento', w.data));
+    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo BBS`);
+    if (!confirm(`Elimino il BBS del ${R.dataLunga(w.data)}?`)) return;
+    const { error } = await dbq('elimina BBS', supa.from('bbs').delete().eq('id', w.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast('BBS eliminato');
+    apriReport();
+  });
   app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
     const w = RP.wes.find(x => x.id === b.dataset.togli);
+    const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', w.data));
+    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
     if (!confirm(`Elimino il Wes del ${R.dataLunga(w.data)}?`)) return;
     const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
