@@ -123,4 +123,15 @@ prova('segni vitali: posti del biglietto ed eventi ancora da scegliere', () => {
   assert.deepEqual(L.eventiLiberi([], b, 'BBS'), []);
 });
 
+prova('CEP a periodi: date, un solo periodo aperto, niente sovrapposizioni', () => {
+  const vecchio = { id: 'a', dal: '2023-01-10', uscito_il: '2024-03-01' };
+  assert.equal(L.controllaPeriodoCep([], { dal: '' }), 'Scrivi da quando è abbonato');
+  assert.equal(L.controllaPeriodoCep([], { dal: '0002-01-01' }), "Controlla l'anno della data");
+  assert.equal(L.controllaPeriodoCep([], { dal: '2024-05-01', uscito_il: '2024-04-01' }), "L'uscita non può essere prima dell'abbonamento");
+  assert.equal(L.controllaPeriodoCep([vecchio], { dal: '2026-02-01' }), '');
+  assert.equal(L.controllaPeriodoCep([vecchio], { dal: '2024-01-01', uscito_il: '2024-06-01' }), 'Si sovrappone a un altro periodo');
+  assert.equal(L.controllaPeriodoCep([vecchio, { id: 'b', dal: '2026-02-01' }], { dal: '2025-01-01' }), "C'è già un periodo aperto: prima scrivi la sua uscita");
+  assert.equal(L.controllaPeriodoCep([vecchio], { id: 'a', dal: '2023-01-10', uscito_il: '2024-05-01' }), '');   // modifica di sé stesso
+});
+
 console.log(`\n${ok} prove superate`);
