@@ -88,3 +88,41 @@ Entrando ancora si scende di un altro livello: il percorso diventa `Mappa / Part
 - Come arriva e si aggiorna l'albero nella v4 (caricamento del file Amway, cantiere 14 lavoro 6, o import una tantum di `Partners.csv`).
 - Se la Mappa v4 ordina le prime linee per **stato** (prima gli attivi) invece che come Glide.
 - Se dalla riga di un partner si può **aprire la sua scheda contatto** (come «👤 Apri contatto» della Dashboard).
+
+---
+
+## 8. La LOS ufficiale di Amway (rilievo del 16/09)
+
+Ignazio ha aperto `amway.it/business-centre/los-map` (ripresa automatica, 38 foto in `mb21-import/screenshot-mappa/amway-grezza/`, 6 scelte `a1…a6`).
+È la **fonte vera** dei dati che Glide mostra nella Mappa, e ha una forma migliore di quella di Glide.
+
+### 8.1 L'elenco (albero)
+- In cima: **«Linea di Sponsorizzazione»**, «**Ultimo aggiornamento alle 7:05 del 2026/09/16**» e il **mese** («Set 2026»).
+- Barra: **vista elenco / vista albero (organigramma)**, **impostazioni**, **filtri** (badge col numero attivo), **Cerca**, bottone **scarica**.
+- Ogni riga: cerchietto **+** (apre il sottogruppo) o **−** (chiude) oppure **○** se non ha nessuno sotto; **numero di livello**; `COGNOME, Nome #ID`;
+  **VPP · VPG · BONUS % · Punti al livello successivo · Dimensioni gruppo**; menu **«…»** a destra.
+- Il sottogruppo si apre **dentro la stessa pagina**, con il rientro: 2 → 3 → 4 → 5. Niente pagine da navigare.
+- Un'**👁 icona occhio** accanto a qualche nome: **persone tenute sotto osservazione** (Ignazio, 16/09). Non ci interessa per ora.
+
+### 8.2 La scheda di una persona (foto a1-a5)
+Si apre come foglio sopra l'elenco: foto, `COGNOME, NOME`, `#ID`, «**Massimo riconoscimento PY26: 15%**»
+e quattro bottoni: **telefona · messaggia · email · copia**. Tre schede:
+
+1. **Metriche di performance** — grafici con **tre anni sovrapposti** (PY26 · PY25 · PY24) e il valore dell'**ultimo mese chiuso**:
+   **VP Personale** `343,12` · **VP Gruppo** `2.106,78` · **VP Cliente** `0,00` · **Ordini personali** `3`, ognuno col confronto sullo stesso mese dell'anno prima (↑/↓).
+   Si può passare alla **tabella** (mese per mese, PY26/PY25/PY24) e scegliere **quali indicatori vedere** («KPI selezionabili 4/8»):
+   VP Personale · VP Gruppo · VP Cliente · Ordini personali · Ordini multicarrello · Sponsorizzazione · Dimensioni gruppo · VP Leadership · VP Rubino · Nuovi Clienti Personali · Ordini Clienti Personali · Totale Clienti Personali · Bonus di Performance.
+2. **Informazioni principali** —
+   - *Informazioni qualifica*: **Livello di qualifica PY26** (15%) · Tracciamento PY27 · **Massimo livello di qualifica** (Produttore Argento, marzo 2013)
+   - *Date importanti*: **Compleanno** (23 ottobre) · Rinnovo/scadenza (31 dicembre 2027) · **Data di ingresso** (15 marzo 2010) · **Data ultima sponsorizzazione** (15 aprile 2026) · **Data ultimo ordine** (21 agosto 2026)
+   - *Informazioni aggiuntive*: Blocco ordini · Blocco sponsorizzazione · Contratto firmato
+   - *Collaboratore* e **Sponsor** (con i loro contatti): CAMPO, Danilo `5010380` (Sponsor) · LENTINELLO, Carmelo `2502631` (Platino)
+3. **Note** — Amway ha già le note sulla persona: «Nessuna nota creata. **Aggiungi nuova**».
+
+### 8.3 Cosa ci serve per la v4
+- **Data ultimo ordine** e **data ultima sponsorizzazione**: dicono molto più del pallino attivo/inattivo (chi si è fermato e da quando).
+- **Dimensioni gruppo** e **Punti al livello successivo**: già in `Partners.csv`.
+- **Compleanno**: utile per la Lista Nomi.
+- **Sponsor**: conferma l'albero.
+- Le **Note di Amway** restano lì: le nostre note stanno sulla scheda contatto della v4 (da non duplicare).
+⚠️ Questi dati oggi **non sono nell'export di Glide**: arriverebbero solo col caricamento del file Amway (se il file li contiene: **da verificare**).
