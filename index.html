@@ -36,6 +36,7 @@
   .tel { color: var(--blu); font-size: 16px; font-weight: 600; text-decoration: none; }
   .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: #F3F4F6; color: #374151; }
   .badge.scaduto { background: #FEE2E2; color: var(--rosso); }
+  .badge.new { background: #DCFCE7; color: #166534; }
   .coach { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #F5F3FF; color: #5B21B6;
     font-size: 15px; font-weight: 600; line-height: 1.3; }
   .coach small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--coach); margin-bottom: 2px; }
@@ -391,7 +392,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.15 · 23:09';
+const APP_VERSION = '2026.09.16 · 06:01';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -557,7 +558,7 @@ async function leggiSenzaCategoria() {
   const righe = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('lettura da catalogare',
-      supa.from('contatti').select('id,nome,professione,fascia_eta,citta,telefono,note,referral_di,categoria,user_id')
+      supa.from('contatti').select('id,nome,professione,fascia_eta,citta,telefono,note,referral_di,categoria,user_id,creato_il,glide_id')
         .eq('user_id', visto().id).is('categoria', null).order('id').range(da, da + 999));
     if (error) throw error;
     righe.push(...data);
@@ -643,7 +644,7 @@ function cardContatto(r, dareSeguito) {
   const aperta = ST.aperta === r.id;
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
-      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span>${dareSeguito ? badge : ''}</span>
+      <span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span>${dareSeguito ? badge : ''}</span>
       <span class="rc-glide">${esc(rigaGlide(r))}</span>
       ${r.coach ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
@@ -741,7 +742,7 @@ function cardCatalogo(r) {
   const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
-      <span class="rc-alto"><span class="nome">${esc(r.nome)}</span></span>
+      <span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span></span>
       <span class="rc-glide">${esc(r.categoria ? `✓ ${r.categoria} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
@@ -1657,6 +1658,8 @@ async function apriLista() {
 const utentiLista = () => (vediTutti() ? idVisti() : visto().id);
 
 function coloreCategoria(c) { return COLORI[c] || 'var(--unlinked)'; }
+// Targhetta NEW: contatto creato dentro l'app negli ultimi 30 giorni (richiesta di Ignazio 16/09)
+function nuovoBadge(r) { return MB21Lista.eNuovo(r, MB21Coda.oggiRoma()) ? ' <span class="badge new">NEW</span>' : ''; }
 
 function linkTelefono(tel, classe) {
   if (!tel) return `<span class="${classe || 'tel'}"></span>`;
@@ -1700,7 +1703,7 @@ function disegnaLista() {
 }
 
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin() });
+  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma() });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
   elenco.innerHTML = trovati.length
@@ -1728,7 +1731,7 @@ function cardNome(r) {
       <div class="striscia" style="background:${coloreCategoria(r.categoria)}"></div>
       <div class="dentro">
         <div class="etichetta">${esc(etichetta)}</div>
-        <div class="nome">${esc(r.nome)}</div>
+        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}</div>
         <div class="prof">${esc(r.professione || '')}</div>
         <div>${linkTelefono(r.telefono)}</div>
       </div>
@@ -1830,7 +1833,7 @@ function disegnaScheda() {
         <div class="alto">
           <div>
             <div class="cat" style="color:${coloreCategoria(c.categoria)}">${esc(c.categoria || 'Senza categoria')}</div>
-            <h1>${esc(c.nome)}</h1>
+            <h1>${esc(c.nome)}${nuovoBadge(c)}</h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
