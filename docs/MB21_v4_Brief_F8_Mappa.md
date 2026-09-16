@@ -49,7 +49,7 @@ Il conteggio risale a cascata: persona → partner che l'ha in lista → sponsor
 - **Admin**: tutto l'albero, dal livello 1 in giù.
 - **Partner**: sé stesso e chi sta sotto di lui (la sua porzione), non chi gli sta sopra né i rami degli altri.
 - Con Partner Select su un altro partner o «Tutti»: **solo lettura**, come nelle altre pagine.
-→ da confermare, decisione **E**.
+→ **deciso il 16/09 (E): così.** Ogni partner vede la sua porzione di albero; l'Admin tutto.
 
 ## 6. Decisioni da prendere
 
@@ -57,7 +57,18 @@ Il conteggio risale a cascata: persona → partner che l'ha in lista → sponsor
 - ~~**B. Ordine delle linee**~~ → **struttura dell'albero mantenuta, filtri per stato** (16/09).
 - ~~**C. Storico e grafico**~~ → **dietro «👁️ visione completa»** (16/09).
 - ~~**D. Ordine dei lavori**~~ → **prima la Mappa**, pillole grigie finché non arrivano i segni vitali (16/09).
-- **E. Cosa vede un partner**: la sua porzione di albero (proposta) o, per ora, solo l'Admin vede la Mappa.
+- ~~**E. Cosa vede un partner**~~ → **la sua porzione di albero** (sé stesso e chi sta sotto), Admin tutto (16/09).
+
+**Decisioni A-E chiuse.**
+
+## 8. Lavori proposti
+1. Tabelle `squadra` e `volumi_mese` + import dell'export (32 partner, 473 mesi), con prove sui numeri.
+2. Pagina **Mappa**: albero apri/chiudi, riga con stato · VPP/VPG/Bonus · al livello successivo · gruppo, nome che apre la scheda contatto, pillole BBS/WES/CEP grigie.
+3. Filtri **Tutti · Attivi · Warning · Inattivi** e ricerca per nome.
+4. **«👁️ visione completa»**: storico dei 13 mesi e grafico dell'anno.
+5. Regole di accesso: la propria porzione di albero, Admin tutto, Partner Select in sola lettura; prove sul DB.
+6. ⏸ Segni vitali sulle persone (cantiere 14 lavoro 5) → accende le pillole.
+7. ⏸ Caricamento del file Amway (cantiere 14 lavoro 6) → tiene veri volumi e albero.
 
 ## 7. Da verificare (non dare per scontato)
 
