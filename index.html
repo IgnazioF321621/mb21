@@ -340,6 +340,9 @@
   .rp-wes { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
   .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
   .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
+  .ad-utente { border-top: 1px solid var(--linea); padding: 10px 0 2px; }
+  .ad-utente > small { display: block; color: var(--grigio); font-size: 12px; margin-top: 2px; word-break: break-all; }
+  .ad-utente .interruttore { border-top: 0; padding: 6px 0; font-size: 15px; }
   .rp-wes .w button { border: 0; background: none; color: var(--rosso); font-size: 14px; font-weight: 600; }
   .rp-wes .nuovo-wes { display: flex; gap: 8px; margin-top: 8px; }
   .rp-wes .nuovo-wes input { margin: 0; padding: 10px; font-size: 16px; }
@@ -458,7 +461,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 17:05';
+const APP_VERSION = '2026.09.16 · 18:26';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -530,9 +533,9 @@ function messaggioAccesso(error) {
 
 async function dopoAccesso(sessione) {
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
-  if (!data) {
+  if (!data || !data.accesso_attivo) {   // accesso tolto dall'Admin (pagina Admin → Utenti): esce anche chi era già entrato
     ST.motivoUscita = 'Utente non abilitato.';
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
@@ -3151,18 +3154,22 @@ function collegaReport() {
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [] };
+const AD = { wes: [], bbs: [], utenti: [] };
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
-    const [wes, bbs] = await Promise.all([
+    const [wes, bbs, ut] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id')),
     ]);
-    if (wes.error || bbs.error) throw wes.error || bbs.error;
+    if (wes.error || bbs.error || ut.error) throw wes.error || bbs.error || ut.error;
     AD.wes = wes.data; AD.bbs = bbs.data;
+    // Admin per primo, poi chi può entrare, poi per nome
+    AD.utenti = ut.data.sort((a, b) => (b.ruolo === 'Admin') - (a.ruolo === 'Admin') || b.accesso_attivo - a.accesso_attivo
+      || nomeDi(a).localeCompare(nomeDi(b), 'it'));
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -3172,6 +3179,14 @@ async function apriAdmin() {
       <div class="sotto" style="margin:0 0 8px">Il file CSV scaricato dalla LOS di amway.it: aggiorna l'albero della Mappa e i volumi del mese.</div>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       <button class="primario" id="ad-scegli">Scegli il file</button></div>
+    <div class="rp-wes"><h3>👥 Utenti dell'app</h3>
+      <div class="sotto" style="margin:0 0 4px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}. «Può entrare» spento: al prossimo avvio l'app lo fa uscire.</div>
+      ${AD.utenti.map(u => { const io = u.id === ST.utente.id; return `<div class="ad-utente">
+        <b>${esc(nomeDi(u))}${io ? ' (tu, Admin)' : ''}</b>
+        <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
+        <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
+        <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
+      </div>`; }).join('')}</div>
     <div class="rp-wes"><h3>🎟 Wes</h3>
     ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
     <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
@@ -3187,6 +3202,18 @@ async function apriAdmin() {
 function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-scegli', () => document.getElementById('ad-file').click());
+  app.querySelectorAll('[data-ut]').forEach(b => b.onchange = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.ut), campo = b.dataset.campo, valore = b.checked;
+    if (campo === 'accesso_attivo' && valore && !u.email) { b.checked = false; return mostraToast('Manca l\'email: senza non può entrare'); }
+    b.disabled = true;
+    const { error } = await dbq('cambia utente', supa.from('utenti').update({ [campo]: valore }).eq('id', u.id));
+    b.disabled = false;
+    if (error) { b.checked = !valore; return mostraToast('Non salvato: riprova.'); }
+    u[campo] = valore;
+    if (campo === 'nel_partner_select') { const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto; }   // il menu si aggiorna subito, la scelta resta
+    mostraToast(`${nomeDi(u)}: ${campo === 'accesso_attivo' ? (valore ? 'può entrare' : 'non può più entrare') : (valore ? 'nel Partner Select' : 'fuori dal Partner Select')}`);
+    if (campo === 'accesso_attivo') apriAdmin();   // aggiorna il conteggio
+  });
   document.getElementById('ad-file').onchange = async e => {
     const file = e.target.files[0];
     e.target.value = '';
