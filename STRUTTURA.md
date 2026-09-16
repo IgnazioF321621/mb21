@@ -404,3 +404,4 @@ _Da definire._
 | 2026.09.16 · 16:38 | Mappa: la scheda del partner si cerca in tutte le liste leggibili (evita schede doppie col Partner Select) |
 | 2026.09.16 · 16:42 | Nessun cambio all'app: sistemata nel database la scheda doppia di Ornella Miceli |
 | 2026.09.16 · 16:45 | Segni vitali su una scheda sola: le schede doppie dei partner rimandano a quella col codice Amway; avviso se lo stesso nome ha già il biglietto in un'altra lista |
+| 2026.09.16 · 16:50 | Nessun cambio all'app: cantiere 18 chiuso |
