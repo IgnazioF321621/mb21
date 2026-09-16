@@ -27,6 +27,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - `nel_mio_ramo(partner_id)` (security definer): risale gli sponsor del partner chiesto fino a 20 passi; vero se incontra il `partner_id` di chi è loggato (o se è Admin). È la regola di lettura di tutte e due le tabelle
 - caricamento con `scripts/import_mappa.py <file Amway> <file sql fuori dal repo>` → 33 partner, 359 righe di volumi su 13 mesi (16/09). Il file Amway è **confidenziale, fuori dal repo**
 - provato sul DB (16/09): albero completo (33 partner raggiunti dalla cima, livelli coerenti); Admin vede 33 partner e 359 volumi; **Isabella vede 8 partner** (sé e i 7 sotto) **e non vede Ignazio**
+- prove della pagina sul DB (16/09, lavoro 5): con l'account di Isabella la Mappa legge **8 partner e 8 volumi del mese**; la «visione completa» di uno del suo ramo dà **13 mesi**, quella di un partner di un'altra linea **0 mesi**; un partner che prova a scrivere in `squadra` viene **rifiutato** dalle regole. Tutti e 9 gli utenti del Partner Select hanno un posto nell'albero Amway
 
 **Pagina Mappa** (`mappa.js` + index.html, cantiere 17 lavoro 2, 16/09):
 - quinta tab **Mappa**. `mappa.js`: `stato(vpp)` (≥50 attivo · >0 warning · 0 inattivo), `nomeLeggibile` («FIORITO, IGNAZIO» → «Ignazio Fiorito»), `albero(squadra, volumi)`, `righe(cime, {aperti, filtro, cerca})`, `conta`, `tuttiGliId`. 10 prove in `tools/banco/prova_mappa.js`
