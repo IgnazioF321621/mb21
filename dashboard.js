@@ -279,7 +279,32 @@
     return null;
   }
 
-  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  // ── Abbonamento (cantiere 19, decisioni di Ignazio 16/09) ──
+  // Stato: 'scaduto' (manca o passata) · 'in_scadenza' (mancano 7 giorni o meno, come il preavviso di Glide) · 'attivo'
+  const GIORNI_PREAVVISO = 7;
+  function statoAbbonamento(scadenza, oggi) {
+    if (!scadenza || scadenza < oggi) return 'scaduto';
+    const giorni = Math.round((Date.parse(scadenza + 'T00:00:00Z') - Date.parse(oggi + 'T00:00:00Z')) / 86400000);
+    return giorni <= GIORNI_PREAVVISO ? 'in_scadenza' : 'attivo';
+  }
+  // Pagamento ricevuto: scadenza al 5 del mese dopo oggi (vale dal 5 del mese corrente, anche se paga in ritardo);
+  // se aveva già pagato più avanti, un mese in più sulla sua scadenza.
+  function scadenzaDopoPagamento(scadenza, oggi) {
+    const [a, m] = oggi.split('-').map(Number);
+    const base = `${m === 12 ? a + 1 : a}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}-05`;
+    if (!scadenza || scadenza < base) return base;
+    const [sa, sm, sg] = scadenza.split('-').map(Number);
+    const na = sm === 12 ? sa + 1 : sa, nm = sm === 12 ? 1 : sm + 1;
+    const ultimo = new Date(Date.UTC(na, nm, 0)).getUTCDate();
+    return `${na}-${String(nm).padStart(2, '0')}-${String(Math.min(sg, ultimo)).padStart(2, '0')}`;
+  }
+  // Scadenza che conta: quella di chi paga (abbonamento in comune) o la propria
+  function scadenzaDi(utente, utenti) {
+    const chiPaga = utente && utente.abbonamento_con && (utenti || []).find(u => u.id === utente.abbonamento_con);
+    return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
+  }
+
+  const api = { GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

@@ -340,9 +340,17 @@
   .rp-wes { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 12px; }
   .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
   .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
-  .ad-utente { border-top: 1px solid var(--linea); padding: 10px 0 2px; }
-  .ad-utente > small { display: block; color: var(--grigio); font-size: 12px; margin-top: 2px; word-break: break-all; }
-  .ad-utente .interruttore { border-top: 0; padding: 6px 0; font-size: 15px; }
+  .ad-utente { border-top: 1px solid var(--linea); }
+  .ad-riga { width: 100%; display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; align-items: center; background: none; border: 0; padding: 10px 0; text-align: left; color: var(--testo); font-size: 15px; }
+  .ad-riga small { grid-column: 2; color: var(--grigio); font-size: 12px; }
+  .ad-riga .f { grid-column: 3; grid-row: 1 / span 2; color: var(--grigio); font-size: 18px; }
+  .ad-dettaglio { padding: 0 0 10px 26px; }
+  .ad-dettaglio > small { display: block; color: var(--grigio); font-size: 12px; word-break: break-all; }
+  .ad-dettaglio .interruttore { border-top: 0; padding: 6px 0; font-size: 15px; }
+  .ad-abb { margin-top: 6px; font-size: 14px; }
+  .ad-abb .primario { font-size: 15px; padding: 10px; margin-top: 8px; }
+  .ad-comune { display: block; margin-top: 8px; font-size: 14px; color: var(--grigio); }
+  .ad-comune select { display: block; width: 100%; margin-top: 4px; font-size: 16px; padding: 8px; }
   .rp-wes .w button { border: 0; background: none; color: var(--rosso); font-size: 14px; font-weight: 600; }
   .rp-wes .nuovo-wes { display: flex; gap: 8px; margin-top: 8px; }
   .rp-wes .nuovo-wes input { margin: 0; padding: 10px; font-size: 16px; }
@@ -461,7 +469,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 18:26';
+const APP_VERSION = '2026.09.16 · 18:41';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3154,7 +3162,7 @@ function collegaReport() {
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [], utenti: [] };
+const AD = { wes: [], bbs: [], utenti: [], aperti: new Set() };   // aperti: righe utente aperte (all'inizio tutte chiuse)
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
@@ -3163,7 +3171,7 @@ async function apriAdmin() {
     const [wes, bbs, ut] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
-      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con')),
     ]);
     if (wes.error || bbs.error || ut.error) throw wes.error || bbs.error || ut.error;
     AD.wes = wes.data; AD.bbs = bbs.data;
@@ -3174,19 +3182,48 @@ async function apriAdmin() {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
+  disegnaAdmin();
+}
+
+// Una riga per utente, chiusa: pallino dell'abbonamento, nome, scadenza. Tocco → si apre sul posto.
+function rigaUtenteAdmin(u) {
+  const D = MB21Dashboard, oggi = MB21Coda.oggiRoma(), io = u.id === ST.utente.id, aperto = AD.aperti.has(u.id);
+  const chiPaga = u.abbonamento_con && AD.utenti.find(x => x.id === u.abbonamento_con);
+  const perChi = AD.utenti.filter(x => x.abbonamento_con === u.id);
+  const scad = D.scadenzaDi(u, AD.utenti), stato = D.statoAbbonamento(scad, oggi);
+  const pallino = { attivo: '🟢', in_scadenza: '🟠', scaduto: '🔴' }[stato];
+  const data = d => (d ? d.split('-').reverse().join('/') : '—');
+  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span>${pallino}</span><b>${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
+    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+  if (!aperto) return h;
+  h += `<div class="ad-dettaglio">
+    <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
+    <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
+    <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
+    <div class="ad-abb"><b>Abbonamento</b>`;
+  if (chiPaga) {
+    h += `<div>In comune con <b>${esc(nomeDi(chiPaga))}</b>: vale la sua scadenza (${data(scad)}).</div>`;
+  } else {
+    h += `<div>Pagato fino al <b>${data(u.abbonamento_scadenza)}</b>${perChi.length ? ` · vale anche per ${perChi.map(x => esc(nomeDi(x))).join(', ')}` : ''}</div>
+      <button class="primario" data-paga="${esc(u.id)}">✓ Pagamento ricevuto → ${data(D.scadenzaDopoPagamento(u.abbonamento_scadenza, oggi))}</button>
+      <div class="nuovo-wes"><input type="date" data-scad-data="${esc(u.id)}" value="${esc(u.abbonamento_scadenza || '')}" aria-label="Scadenza"><button data-scad="${esc(u.id)}">Salva data</button></div>`;
+  }
+  if (!perChi.length) {
+    h += `<label class="ad-comune">In comune con <select data-comune="${esc(u.id)}"><option value="">nessuno (paga per sé)</option>${AD.utenti
+      .filter(x => x.id !== u.id && !x.abbonamento_con).map(x => `<option value="${esc(x.id)}" ${x.id === u.abbonamento_con ? 'selected' : ''}>${esc(nomeDi(x))}</option>`).join('')}</select></label>`;
+  }
+  return h + `</div></div>`;
+}
+
+function disegnaAdmin() {
   let html = `<h1>Admin</h1>
     <div class="rp-wes"><h3>📄 Carica file Amway</h3>
       <div class="sotto" style="margin:0 0 8px">Il file CSV scaricato dalla LOS di amway.it: aggiorna l'albero della Mappa e i volumi del mese.</div>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       <button class="primario" id="ad-scegli">Scegli il file</button></div>
     <div class="rp-wes"><h3>👥 Utenti dell'app</h3>
-      <div class="sotto" style="margin:0 0 4px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}. «Può entrare» spento: al prossimo avvio l'app lo fa uscire.</div>
-      ${AD.utenti.map(u => { const io = u.id === ST.utente.id; return `<div class="ad-utente">
-        <b>${esc(nomeDi(u))}${io ? ' (tu, Admin)' : ''}</b>
-        <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
-        <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
-        <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
-      </div>`; }).join('')}</div>
+      <div class="sotto" style="margin:0 0 4px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟢 attivo · 🟠 scade entro ${MB21Dashboard.GIORNI_PREAVVISO} giorni · 🔴 scaduto. Tocca un nome per aprirlo.</div>
+      ${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
     <div class="rp-wes"><h3>🎟 Wes</h3>
     ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
     <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
@@ -3212,7 +3249,38 @@ function collegaAdmin() {
     u[campo] = valore;
     if (campo === 'nel_partner_select') { const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto; }   // il menu si aggiorna subito, la scelta resta
     mostraToast(`${nomeDi(u)}: ${campo === 'accesso_attivo' ? (valore ? 'può entrare' : 'non può più entrare') : (valore ? 'nel Partner Select' : 'fuori dal Partner Select')}`);
-    if (campo === 'accesso_attivo') apriAdmin();   // aggiorna il conteggio
+    if (campo === 'accesso_attivo') disegnaAdmin();   // aggiorna il conteggio
+  });
+  app.querySelectorAll('[data-apri-ut]').forEach(b => b.onclick = () => {
+    const id = b.dataset.apriUt;
+    AD.aperti.has(id) ? AD.aperti.delete(id) : AD.aperti.add(id);
+    disegnaAdmin();
+  });
+  const salvaScadenza = async (u, scadenza, testo) => {
+    const { error } = await dbq('scadenza abbonamento', supa.from('utenti').update({ abbonamento_scadenza: scadenza }).eq('id', u.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    u.abbonamento_scadenza = scadenza;
+    if (u.id === ST.utente.id) ST.utente.abbonamento_scadenza = scadenza;
+    mostraToast(testo);
+    disegnaAdmin();
+  };
+  app.querySelectorAll('[data-paga]').forEach(b => b.onclick = () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.paga);
+    const nuova = MB21Dashboard.scadenzaDopoPagamento(u.abbonamento_scadenza, MB21Coda.oggiRoma());
+    salvaScadenza(u, nuova, `${nomeDi(u)}: pagato fino al ${nuova.split('-').reverse().join('/')}`);
+  });
+  app.querySelectorAll('[data-scad]').forEach(b => b.onclick = () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.scad), v = app.querySelector(`[data-scad-data="${b.dataset.scad}"]`).value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return mostraToast('Scegli la data');
+    salvaScadenza(u, v, `${nomeDi(u)}: scadenza ${v.split('-').reverse().join('/')}`);
+  });
+  app.querySelectorAll('[data-comune]').forEach(sel => sel.onchange = async () => {
+    const u = AD.utenti.find(x => x.id === sel.dataset.comune), valore = sel.value || null;
+    const { error } = await dbq('abbonamento in comune', supa.from('utenti').update({ abbonamento_con: valore }).eq('id', u.id));
+    if (error) { sel.value = u.abbonamento_con || ''; return mostraToast('Non salvato: riprova.'); }
+    u.abbonamento_con = valore;
+    mostraToast(valore ? `${nomeDi(u)}: abbonamento in comune con ${nomeDi(AD.utenti.find(x => x.id === valore))}` : `${nomeDi(u)}: paga per sé`);
+    disegnaAdmin();
   });
   document.getElementById('ad-file').onchange = async e => {
     const file = e.target.files[0];
