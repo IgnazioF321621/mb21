@@ -10,9 +10,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 18. Targhetta NEW sui contatti nuovi
+## 18. Targhetta «nuovo» sui contatti nuovi
 *Richiesta di Ignazio 16/09* («inserisco un nome nuovo e dopo qualche giorno non mi ricordo chi è»). Scartate: note più lunghe, un campo «come l'ho conosciuto», la foto. Scelta: una **targhetta automatica NEW** per **30 giorni** sui contatti creati dentro l'app (quelli importati da Glide non la prendono mai, sono 2.920 su 2.921) e la parola **new** in **Cerca** per farli uscire tutti. Si vede in Lista Nomi, coda, «Da catalogare» e nella scheda.
-- ~~Fatto il 16/09~~: migrazione `coda_new` (in `contatti_coda` arrivano `creato_il` e `glide_id`), `lista.js → eNuovo`, targhetta e ricerca. Prove lista 11. **Da provare da Ignazio**
+- ~~Fatto il 16/09~~: migrazione `coda_new` (in `contatti_coda` arrivano `creato_il` e `glide_id`), `lista.js → eNuovo`, targhetta e ricerca. Prove lista 11. Provato da Ignazio il 16/09; su sua richiesta la targhetta dice «nuovo» minuscolo (prima NEW) e in Cerca valgono sia «nuovo» sia «new»
 
 ## 17. Prossimo passo: rilievo MAPPA
 *Deciso il 15/09, da fare in una sessione nuova.* Sulla scia di Glide (Dashboard · Agenda · Lista Nomi · Report · Check · **Mappa**): le prime cinque tab sono nella v4, manca la **Mappa**. Rilievo della tab **Mappa** in sola lettura, stesso metodo di Report e Check (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-mappa/`; documento `docs/MB21_v3_Mappa_come_e.md`; Partner Select = Ignazio). Guardare anche quali dati dell'export servono (da verificare, non dare per scontato). Poi domande a Ignazio una alla volta e proposte per la Mappa v4
