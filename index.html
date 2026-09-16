@@ -392,7 +392,7 @@
 <script src="report.js"></script>
 <script src="check.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 06:01';
+const APP_VERSION = '2026.09.16 · 06:13';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1659,7 +1659,7 @@ const utentiLista = () => (vediTutti() ? idVisti() : visto().id);
 
 function coloreCategoria(c) { return COLORI[c] || 'var(--unlinked)'; }
 // Targhetta NEW: contatto creato dentro l'app negli ultimi 30 giorni (richiesta di Ignazio 16/09)
-function nuovoBadge(r) { return MB21Lista.eNuovo(r, MB21Coda.oggiRoma()) ? ' <span class="badge new">NEW</span>' : ''; }
+function nuovoBadge(r) { return MB21Lista.eNuovo(r, MB21Coda.oggiRoma()) ? ' <span class="badge new">nuovo</span>' : ''; }
 
 function linkTelefono(tel, classe) {
   if (!tel) return `<span class="${classe || 'tel'}"></span>`;
