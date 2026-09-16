@@ -390,8 +390,6 @@
   .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
   .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
-  .mp-segni { font-size: 12px; margin-top: 2px; color: var(--grigio); }
-  .mp-segni b.bbs { color: #2563EB; } .mp-segni b.wes { color: #DC2626; } .mp-segni b.cep { color: #16A34A; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
@@ -457,7 +455,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:31';
+const APP_VERSION = '2026.09.16 · 15:51';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2150,8 +2148,10 @@ async function caricaSegni(c) {
     date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
 }
 
-function targheHtml(t) {
-  return ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}</span>`).join('');
+// t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
+function targheHtml(t, numeri) {
+  return ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}${
+    numeri && numeri[k] ? ' ' + numeri[k] : ''}</span>`).join('');
 }
 function mostraTarghe(SV) {
   const el = document.getElementById('sv-targhe');
@@ -2820,11 +2820,10 @@ function disegnaMappa() {
           <span class="mp-liv">${r.livello ?? ''}</span>
           <span title="${esc(s.titolo)}">${s.pallino}</span>
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
-          <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })())}</span>
+          <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
+            MP.segni && MP.segni.gruppo[r.id])}</span>
           <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
             r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
-          ${(() => { const g = MP.segni && MP.segni.gruppo[r.id];
-            return g && (g.bbs || g.wes || g.cep) ? `<div class="mp-segni"><b class="bbs">BBS ${g.bbs}</b> · <b class="wes">WES ${g.wes}</b> · <b class="cep">CEP ${g.cep}</b>${r.haFigli ? ' <small>nel gruppo</small>' : ''}</div>` : ''; })()}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('');
