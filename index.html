@@ -455,7 +455,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:06';
+const APP_VERSION = '2026.09.16 · 15:08';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1694,7 +1694,7 @@ async function nuovoAppuntamento(opz = {}) {
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati' };
+const LS = { righe: [], targhe: {}, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati' };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -1708,10 +1708,23 @@ async function leggiLista() {
   }
 }
 
+// Targhette BBS · WES · CEP della Lista: biglietti per eventi non ancora passati, periodi CEP, coppie collegate.
+// Se la lettura non riesce la Lista si apre lo stesso, senza targhette colorate.
+async function leggiTarghe() {
+  const oggi = MB21Coda.oggiRoma();
+  const [big, cep, coppie] = await Promise.all([
+    dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').gte('evento', oggi).limit(5000)),
+    dbq('targhe CEP', supa.from('cep').select('contatto_id, dal, uscito_il').limit(5000)),
+    dbq('targhe coppie', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
+  ]);
+  if (big.error || cep.error || coppie.error) return {};
+  return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi);
+}
+
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
-  try { LS.righe = await leggiLista(); }
+  try { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe()]); }
   catch (e) {
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -1789,6 +1802,13 @@ function disegnaElenco() {
   }
 }
 
+// Targhette sulla card: per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa
+function targheCard(r) {
+  const t = LS.targhe && LS.targhe[r.id];
+  const accesa = t && (t.bbs || t.wes || t.cep);
+  return r.categoria === 'Partner' || accesa ? `<span class="sv-targhe">${targheHtml(t)}</span>` : '';
+}
+
 function cardNome(r) {
   const etichetta = MB21Lista.etichettaCard(r);
   return `
@@ -1796,7 +1816,7 @@ function cardNome(r) {
       <div class="striscia" style="background:${coloreCategoria(r.categoria)}"></div>
       <div class="dentro">
         <div class="etichetta">${esc(etichetta)}</div>
-        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}</div>
+        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
         <div class="prof">${esc(r.professione || '')}</div>
         <div>${linkTelefono(r.telefono)}</div>
       </div>
@@ -2133,7 +2153,11 @@ function targheHtml(t) {
 }
 function mostraTarghe(SV) {
   const el = document.getElementById('sv-targhe');
-  if (el && LS.contatto && SV && SV.id === LS.contatto.id) el.innerHTML = targheHtml(MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma()));
+  if (!SV || !LS.contatto || SV.id !== LS.contatto.id) return;
+  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma());
+  LS.targhe = LS.targhe || {};
+  for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
+  if (el) el.innerHTML = targheHtml(t);
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);

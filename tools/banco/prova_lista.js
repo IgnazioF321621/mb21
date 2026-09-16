@@ -144,4 +144,16 @@ prova('targhette BBS · WES · CEP: evento non ancora passato, CEP abbonato oggi
   assert.deepEqual(L.targheSegni(null, null, OGGI), { bbs: false, wes: false, cep: false });
 });
 
+prova('targhette della Lista: la coppia collegata condivide i segni', () => {
+  const OGGI = '2026-09-16';
+  const t = L.targhePerContatto(
+    [{ contatto_id: 'tonya', tipo: 'WES', evento: '2026-10-09', contatto: true, compagno: true }],
+    [{ contatto_id: 'tonya', dal: '2024-01-01' }, { contatto_id: 'altro', dal: '2020-01-01', uscito_il: '2021-01-01' }],
+    [{ id: 'tonya', compagno_id: 'filippo' }, { id: 'filippo', compagno_id: 'tonya' }], OGGI);
+  assert.deepEqual(t.tonya, { bbs: false, wes: true, cep: true });
+  assert.deepEqual(t.filippo, { bbs: false, wes: true, cep: true });
+  assert.deepEqual(t.altro, { bbs: false, wes: false, cep: false });
+  assert.equal(t.nessuno, undefined);
+});
+
 console.log(`\n${ok} prove superate`);
