@@ -46,7 +46,7 @@ prova('albero: una sola cima (Ignazio, il suo sponsor è fuori dal gruppo)', () 
   assert.equal(cime.length, 1);
   assert.equal(cime[0].nome, 'Ignazio Fiorito');
   assert.equal(cime[0].figli.length, 3);
-  assert.deepEqual(cime[0].figli.map(f => f.nome), ['Isabella Sammito', 'Luca Caccamo', 'Simone Giavatto']);
+  assert.deepEqual(cime[0].figli.map(f => f.nome), ['Simone Giavatto', 'Isabella Sammito', 'Luca Caccamo']);   // gruppo 10 · 7 · 3
 });
 
 prova('albero: i livelli di Amway tornano con la profondità', () => {
@@ -72,11 +72,11 @@ prova('righe: aperta la cima si vedono le 3 prime linee, rientrate di uno', () =
   assert.deepEqual(r.map(x => x.profondita), [0, 1, 1, 1]);
 });
 
-prova('righe: aperto tutto, l’ordine è quello dell’albero (non per stato)', () => {
+prova('righe: aperto tutto, l’ordine è quello dell’albero, team più grandi prima (come Amway)', () => {
   const r = M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) });
   assert.deepEqual(r.map(x => x.nome), [
-    'Ignazio Fiorito', 'Isabella Sammito', 'Luca Caccamo', 'Simone Giavatto',
-    'Ornella Miceli', 'Carolina Carnemolla', 'Orazio Zocco',
+    'Ignazio Fiorito', 'Simone Giavatto', 'Ornella Miceli', 'Carolina Carnemolla', 'Orazio Zocco',
+    'Isabella Sammito', 'Luca Caccamo',
   ]);
 });
 
