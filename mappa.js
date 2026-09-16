@@ -3,6 +3,7 @@
 // Nessun accesso alla rete: la usano l'app e tools/banco/prova_mappa.js.
 // Decisioni di Ignazio del 16/09: docs/MB21_v4_Brief_F8_Mappa.md.
 (function (radice) {
+  const L = typeof module !== 'undefined' && module.exports ? require('./lista.js') : radice.MB21Lista;
 
   // Stato dai VPP personali del mese, come in Glide (verificato sui dati il 16/09)
   const SOGLIA_ATTIVO = 50;
@@ -123,7 +124,7 @@
   // Segni vitali a cascata (cantiere 18). Ogni biglietto e ogni periodo CEP va a un partner della squadra:
   //   la scheda del partner (codice Amway o nome) o quella del suo compagno/a collegato → quel partner;
   //   altrimenti (clienti, ospiti con scheda) → il partner che ha il nome in lista (utenti.partner_id).
-  // Si contano i posti dei biglietti del prossimo BBS e del prossimo Wes e gli abbonati CEP di oggi.
+  // Si contano i posti dei biglietti dell'evento in vendita (attivoBbs, attivoWes: mesi) e gli abbonati CEP del giorno `oggi`.
   // Restituisce { proprio, gruppo }: per partner_id, gruppo = lui + tutti quelli sotto.
   function segniGruppo(d) {
     const zero = () => ({ bbs: 0, wes: 0, cep: 0 });
@@ -143,8 +144,8 @@
     for (const b of d.biglietti || []) {
       const t = a(b);
       if (!t) continue;
-      if (b.tipo === 'BBS' && d.prossimoBbs && b.evento === d.prossimoBbs) t.bbs += posti(b);
-      if (b.tipo === 'WES' && d.prossimoWes && b.evento === d.prossimoWes) t.wes += posti(b);
+      if (b.tipo === 'BBS' && d.attivoBbs && b.evento === d.attivoBbs) t.bbs += posti(b);
+      if (b.tipo === 'WES' && d.attivoWes && b.evento === d.attivoWes) t.wes += posti(b);
     }
     for (const p of d.cep || []) {
       const t = a(p);
@@ -170,12 +171,19 @@
     return SCALA_BONUS.find(x => x > (Number(bonus) || 0)) || null;
   }
 
-  // Prima data da oggi in poi (prossimo BBS o Wes), null se non ce ne sono
-  function prossimaData(date, oggi) {
-    return [...(date || [])].filter(x => x >= oggi).sort()[0] || null;
+  // Segni vitali del gruppo di `pid` alla fine del giorno `giorno` (vuoto = adesso). g: dati grezzi
+  // { squadra, schede, coppie, utenti, biglietti (con creato_il e user_id), cep (con user_id), bbs, wes (data, creato_il), oggi }.
+  // Fotografia: eventi e biglietti caricati entro quel giorno (fine giornata calcolata a +01:00, al massimo un'ora di scarto d'estate)
+  function segniAl(g, pid, giorno, preferito) {
+    const quando = giorno ? Date.parse(giorno + 'T23:59:59+01:00') : null;
+    const attivoBbs = L.eventoAttivo(g.bbs, quando), attivoWes = L.eventoAttivo(g.wes, quando);
+    const biglietti = quando == null ? g.biglietti : (g.biglietti || []).filter(b => !b.creato_il || L.momento(b.creato_il) <= quando);
+    const r = segniGruppo({ squadra: g.squadra, schede: g.schede, preferito, coppie: g.coppie, utenti: g.utenti,
+      biglietti, cep: g.cep, attivoBbs, attivoWes, oggi: giorno || g.oggi });
+    return { ...(r.gruppo[pid] || { bbs: 0, wes: 0, cep: 0 }), attivoBbs, attivoWes };
   }
 
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
-    segniGruppo, prossimaData, bonusSuccessivo };
+    segniGruppo, segniAl, bonusSuccessivo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

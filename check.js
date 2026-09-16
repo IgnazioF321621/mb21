@@ -7,7 +7,8 @@
   const R = typeof module !== 'undefined' && module.exports ? require('./report.js') : radice.MB21Report;
   const D = typeof module !== 'undefined' && module.exports ? require('./dashboard.js') : radice.MB21Dashboard;
 
-  // Le 12 voci, raggruppate come le schede. tipo: 'somma' (check giornalieri) · 'amway' (un numero al mese) · 'stato' (partenza + check)
+  // Le 12 voci, raggruppate come le schede. tipo: 'somma' (check giornalieri) · 'amway' (un numero al mese)
+  // · 'stato' (fino ad agosto 2026 partenza + check; da settembre 2026 dalle persone, `segniAl`)
   const GRUPPI = [
     { etichetta: 'Volume', pallino: '🔵', colore: '#2563EB', voci: [
       { chiave: 'vpp', titolo: 'VPP', tipo: 'amway', campo: 'vpp_amway', decimali: 2 },
@@ -40,7 +41,7 @@
   const giorniTra = (da, a) => Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(da + 'T12:00:00Z')) / 86400000);
 
   // Prepara i dati una volta: check giornalieri, obiettivi per mese, totali dei mesi (per le partenze)
-  function prepara(giorni, obiettivi, oggi) {
+  function prepara(giorni, obiettivi, oggi, segniAl) {
     const perMese = {};
     for (const g of giorni) {
       const m = g.data.slice(0, 8) + '01';
@@ -49,10 +50,10 @@
     }
     const ob = {};
     for (const o of obiettivi) ob[o.mese] = o;
-    const tot = D.totaliMesi(Object.values(perMese), obiettivi, oggi.slice(0, 8) + '01');
+    const tot = D.applicaPersone(D.totaliMesi(Object.values(perMese), obiettivi, oggi.slice(0, 8) + '01'), oggi.slice(0, 8) + '01', oggi, segniAl);
     // primo giorno con dati: prima di questo il confronto non esiste («—»), non è uno 0
     const inizio = [...giorni.map(g => g.data), ...obiettivi.map(o => o.mese)].sort()[0] || oggi;
-    return { giorni, ob, tot, oggi, inizio };
+    return { giorni, ob, tot, oggi, inizio, segniAl };
   }
 
   // Valore di una voce da `da` a `fino` compresi
@@ -63,7 +64,8 @@
       for (let m = da.slice(0, 8) + '01'; m <= fino; m = R.spostaMese(m, 1)) s += n((dati.ob[m] || {})[voce.campo]);
       return tondo(s);
     }
-    // stato: il numero raggiunto il giorno `fino` = partenza del mese + check del mese fino a quel giorno
+    // stato: il numero raggiunto il giorno `fino`. Dalle persone da settembre 2026, prima partenza del mese + check fino a quel giorno
+    if (dati.segniAl && fino >= D.INIZIO_PERSONE) return dati.segniAl(fino)[voce.chiave];
     const m = fino.slice(0, 8) + '01';
     const t = dati.tot[m];
     if (!t) return 0;
@@ -84,8 +86,8 @@
 
   // Tutte le voci del periodo p. Periodo in corso: confronto a pari giorni + riga col periodo prima intero (decisione B).
   // VPP e VPG hanno un numero al mese: nel periodo in corso niente pari giorni, solo il periodo prima intero.
-  function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi }) {
-    const dati = prepara(giorni, obiettivi, oggi);
+  function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi, segniAl }) {
+    const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const fine = ultimoGiorno(p);
     const inCorso = !fine || fine >= oggi;
     const fino = inCorso ? oggi : fine;
@@ -122,8 +124,8 @@
   }
 
   // Grafico di una voce: i 12 mesi dell'anno fiscale del periodo, con lo stesso mese dell'anno prima
-  function grafico({ giorni, obiettivi, oggi }, chiave, annoDi) {
-    const dati = prepara(giorni, obiettivi, oggi);
+  function grafico({ giorni, obiettivi, oggi, segniAl }, chiave, annoDi) {
+    const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const v = VOCI.find(x => x.chiave === chiave);
     const anno = R.periodoAnno(annoDi);
     const mese = m => {
@@ -141,8 +143,8 @@
   }
 
   // Segni Vitali a 12 mesi (tabella della Dashboard, spostata qui: decisione C)
-  function segniVitali({ giorni, obiettivi, oggi }) {
-    const dati = prepara(giorni, obiettivi, oggi);
+  function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
+    const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
     for (const g of giorni) {
       const m = g.data.slice(0, 8) + '01';

@@ -142,13 +142,13 @@ prova('segni vitali a cascata: partner, compagno/a, clienti del partner, somma s
     { id: 'c-tonya', nome: 'Tonya Abela', user_id: 'u-ign', codice_amway: 'T' },
   ];
   const d = {
-    squadra, schede, preferito: 'u-ign', oggi: '2026-09-16', prossimoBbs: '2026-10-18', prossimoWes: '2026-10-09',
+    squadra, schede, preferito: 'u-ign', oggi: '2026-09-16', attivoBbs: '2026-10-01', attivoWes: '2026-10-01',
     coppie: [{ id: 'c-filippo', compagno_id: 'c-tonya' }, { id: 'c-tonya', compagno_id: 'c-filippo' }],
     utenti: [{ id: 'u-ign', partner_id: 'I' }, { id: 'u-luca', partner_id: 'L' }],
     biglietti: [
-      { contatto_id: 'c-filippo', user_id: 'u-ign', tipo: 'WES', evento: '2026-10-09', contatto: true, compagno: true, ospiti: 1 },   // Tonya: 3
-      { contatto_id: 'c-cliente', user_id: 'u-luca', tipo: 'BBS', evento: '2026-10-18', contatto: true },                               // Luca: 1
-      { contatto_id: 'c-ign', user_id: 'u-ign', tipo: 'BBS', evento: '2026-12-01', contatto: true },                                    // non è il prossimo
+      { contatto_id: 'c-filippo', user_id: 'u-ign', tipo: 'WES', evento: '2026-10-01', contatto: true, compagno: true, ospiti: 1 },   // Tonya: 3
+      { contatto_id: 'c-cliente', user_id: 'u-luca', tipo: 'BBS', evento: '2026-10-01', contatto: true },                               // Luca: 1
+      { contatto_id: 'c-ign', user_id: 'u-ign', tipo: 'BBS', evento: '2026-09-01', contatto: true },                                    // evento già chiuso
     ],
     cep: [
       { contatto_id: 'c-tonya', user_id: 'u-ign', dal: '2024-01-01' },
@@ -161,8 +161,28 @@ prova('segni vitali a cascata: partner, compagno/a, clienti del partner, somma s
   assert.deepEqual(proprio.I, { bbs: 0, wes: 0, cep: 0 });
   assert.deepEqual(gruppo.L, { bbs: 1, wes: 3, cep: 1 });
   assert.deepEqual(gruppo.I, { bbs: 1, wes: 3, cep: 1 });
-  assert.equal(M.prossimaData(['2026-06-05', '2026-10-09', '2026-09-16'], '2026-09-16'), '2026-09-16');
-  assert.equal(M.prossimaData(['2026-06-05'], '2026-09-16'), null);
+});
+
+prova('segni vitali alla fine di un giorno: evento in vendita e biglietti caricati entro quel giorno', () => {
+  const g = {
+    oggi: '2026-10-05',
+    squadra: [{ partner_id: 'I', sponsor_id: null, nome: 'FIORITO, IGNAZIO' }],
+    schede: [{ id: 'c-ign', nome: 'Ignazio Fiorito', user_id: 'u', codice_amway: 'I' }],
+    utenti: [{ id: 'u', partner_id: 'I' }], coppie: [],
+    bbs: [{ data: '2026-09-01', creato_il: '2026-09-01T08:00:00Z' }, { data: '2026-10-01', creato_il: '2026-09-20T08:00:00Z' }],
+    wes: [{ data: '2026-10-16', creato_il: '2026-09-15T08:00:00Z' }],
+    biglietti: [
+      { contatto_id: 'c-ign', user_id: 'u', tipo: 'BBS', evento: '2026-09-01', contatto: true, compagno: true, creato_il: '2026-09-10T08:00:00Z' },
+      { contatto_id: 'c-ign', user_id: 'u', tipo: 'BBS', evento: '2026-10-01', contatto: true, creato_il: '2026-09-20T09:00:00Z' },
+      { contatto_id: 'c-x', user_id: 'u', tipo: 'BBS', evento: '2026-10-01', ospiti: 3, creato_il: '2026-10-02T09:00:00Z' },
+      { contatto_id: 'c-x', user_id: 'u', tipo: 'WES', evento: '2026-10-01', contatto: true, creato_il: '2026-09-16T09:00:00Z' },
+    ],
+    cep: [{ contatto_id: 'c-ign', user_id: 'u', dal: '2026-09-10' }, { contatto_id: 'c-x', user_id: 'u', dal: '2026-01-01', uscito_il: '2026-09-30' }],
+  };
+  assert.deepEqual(M.segniAl(g, 'I', '2026-09-15', 'u'), { bbs: 2, wes: 0, cep: 2, attivoBbs: '2026-09-01', attivoWes: '2026-10-01' });
+  assert.deepEqual(M.segniAl(g, 'I', '2026-09-30', 'u'), { bbs: 1, wes: 1, cep: 2, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
+  assert.deepEqual(M.segniAl(g, 'I', null, 'u'), { bbs: 4, wes: 1, cep: 1, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
+  assert.deepEqual(M.segniAl(g, 'nessuno', null, 'u'), { bbs: 0, wes: 0, cep: 0, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
 });
 
 prova('bonus successivo nella scala Amway', () => {

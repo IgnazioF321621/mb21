@@ -29,16 +29,14 @@
   const COMPLIMENTI = ['Grande!', 'Ottimo!', 'Bravo!', 'Super!', 'Fantastico!'];
   const AUMENTO = 1.10;   // nuovo traguardo quando l'obiettivo è superato (decisione 8)
 
-  // 13 campi del Check del Giorno, ordine di Glide
+  // Campi del Check del Giorno, ordine di Glide. BBS, WES e CEP non si chiedono più (cantiere 18, 16/09):
+  // da settembre 2026 arrivano dalle persone (biglietti e CEP sulle schede), i check vecchi restano per i mesi prima
   const CAMPI_CHECK = [
     ['contatti', '📞 Contatti', 'Nr. contatti effettuati nella giornata'],
     ['pm', '🗓️ PM', 'Nr. PM effettuati nella giornata'],
     ['sponsor_personali', '⭐ Sponsor Personali', 'Nr. iscritti personali nella giornata'],
     ['sponsor_gruppo', '👥 Sponsor Gruppo', 'Nr. iscritti di gruppo nella giornata'],
     ['vp_clienti', '🛒 VP Clienti', 'VP da vendite effettuate nella giornata', true],
-    ['cep', '🎓 CEP', 'Nr. iscritti al CEP nella giornata'],
-    ['bbs', '🎟️ BBS', 'Nr. ticket BBS nel gruppo nella giornata'],
-    ['wes', '🌍 WES', 'Nr. ticket WES nel gruppo nella giornata'],
     ['tracce', '🎧 Tracce', 'Nr. tracce audio ascoltate nella giornata'],
     ['pagine', '📖 Pagine', 'Nr. pagine lette nella giornata'],
   ];
@@ -77,6 +75,21 @@
   function giorniRimasti(oggi) {
     const [a, m, g] = oggi.split('-').map(Number);
     return new Date(Date.UTC(a, m, 0)).getUTCDate() - g + 1;
+  }
+
+  // Primo mese in cui BBS/WES/CEP vengono dalle persone invece che dai check (decisione di Ignazio 16/09)
+  const INIZIO_PERSONE = '2026-09-01';
+
+  // Da INIZIO_PERSONE a `finoA`: BBS/WES/CEP del mese = fotografia a fine mese (o a `oggi` se il mese è in corso).
+  // segniAl(giorno) → { bbs, wes, cep } del gruppo (mappa.js → segniAl). Modifica `tot` sul posto.
+  function applicaPersone(tot, finoA, oggi, segniAl) {
+    if (!segniAl) return tot;
+    for (let m = INIZIO_PERSONE; m <= finoA; m = meseSpostato(m, 1)) {
+      const fine = new Date(Date.parse(meseSpostato(m, 1) + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10);
+      const s = segniAl(fine < oggi ? fine : oggi);
+      tot[m] = { ...(tot[m] || {}), bbs: s.bbs, wes: s.wes, cep: s.cep };
+    }
+    return tot;
   }
 
   // Totale di BBS/WES/CEP per ogni mese: partenza + check. Partenza vuota = totale del mese precedente (decisione 6).
@@ -167,12 +180,12 @@
   }
 
   // Tutto quello che serve alla Dashboard per il mese di `oggi`
-  function calcola({ checkMesi, obiettivi, oggi, scadenza }) {
+  function calcola({ checkMesi, obiettivi, oggi, scadenza, segniAl }) {
     const mese = primoDelMese(oggi);
     const giorni = giorniRimasti(oggi);
     const c = checkMesi.find(x => x.mese === mese) || {};
     const o = obiettivi.find(x => x.mese === mese) || null;
-    const tot = totaliMesi(checkMesi, obiettivi, mese);
+    const tot = applicaPersone(totaliMesi(checkMesi, obiettivi, mese), mese, oggi, segniAl);
     let i = 0;
     const schede = SCHEDE.map(s => ({ ...s, riquadri: s.riquadri.map(def => {
       const [fonte, campo] = def.da.split(':');
@@ -253,7 +266,7 @@
     return { valori };
   }
 
-  // Controllo del modulo Check: 11 numeri obbligatori, niente negativi, note al massimo 150
+  // Controllo del modulo Check: numeri obbligatori (CAMPI_CHECK), niente negativi, note al massimo 150
   function validaCheck(v) {
     if (!v.data) return 'Manca la data del check.';
     for (const [k, etichetta, , decimale] of CAMPI_CHECK) {
@@ -266,7 +279,7 @@
     return null;
   }
 
-  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
