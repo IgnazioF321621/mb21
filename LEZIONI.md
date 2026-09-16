@@ -30,3 +30,7 @@
 **Regola:** controllo e pubblicazione sempre legati con `&&` (se il controllo fallisce non si pubblica), e rileggere l'esito del controllo prima di scrivere il resoconto.
 
 - **Campi data: non salvare a ogni cambio** (16/09, CEP). Sul computer, mentre si scrive l'anno, «0002» è già una data valida: il salvataggio automatico ridisegnava il campo e interrompeva la scrittura. Per le date usare un bottone Salva
+
+## L9 — Una regola che deve valere sempre va nel database, non solo nella pagina
+*16/09/2026.* «VPP e VPG del file Amway anche in Dashboard» lo faceva solo la pagina Admin. Il file è stato caricato 4 minuti dopo la pubblicazione: la Mappa si è aggiornata, la Dashboard no (probabilmente il telefono aveva ancora la pagina di prima).
+**Regola:** quando due dati devono restare uguali in automatico, la copia la fa il database (trigger), così vale per ogni strada di caricamento: app nuova, app vecchia, script dal computer.
