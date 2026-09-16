@@ -487,7 +487,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 22:35';
+const APP_VERSION = '2026.09.16 · 22:45';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1393,7 +1393,7 @@ function apriCheck() {
     <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     <div class="errore" id="ck-errore"></div>
-    <div class="due"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Invia</button></div>
+    <div class="due"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -1408,10 +1408,10 @@ function apriCheck() {
     if (errore) { velo.querySelector('#ck-errore').textContent = errore; return; }
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = Number(String(v[k]).trim().replace(',', '.'));
     const btn = velo.querySelector('#ck-si');
-    btn.disabled = true; btn.textContent = 'Invio…';
+    btn.disabled = true; btn.textContent = 'Salvo…';
     const { data, error } = await dbq('salva check', supa.from('check_giorno').insert(v).select('id').single());
     if (error) {
-      btn.disabled = false; btn.textContent = 'Invia';
+      btn.disabled = false; btn.textContent = 'Salva';
       velo.querySelector('#ck-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
       return;
     }
@@ -2601,7 +2601,7 @@ function apriModulo(c) {
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
     <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>
-    <div class="due" style="margin-top:12px"><button class="primario" id="invia" disabled>Invia</button><button class="link" id="annulla">Annulla</button></div>
+    <div class="due" style="margin-top:12px"><button class="primario" id="invia" disabled>Salva</button><button class="link" id="annulla">Annulla</button></div>
   </div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
