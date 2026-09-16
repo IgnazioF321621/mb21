@@ -25,6 +25,11 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
 | `cep` | — | Cantiere 18: abbonamento CEP di un Partner, una riga per **periodo** (dal / uscito il; si può uscire e rientrare) | chi vede il contatto; scrive solo Admin |
 
+**Prova gratuita** (migrazione `20260916220000_prova_gratuita.sql`, applicata; richiesta di Ignazio 16/09):
+- trigger `mb21_prova_gratuita` prima dell'insert su `utenti`: se `abbonamento_scadenza` e `abbonamento_con` sono vuoti e non è Admin → **scadenza = oggi (Roma) + 15 giorni**. Vale per `approva_richiesta` (link di registrazione) e «＋ Nuovo utente»
+- non vale per chi viene **ripristinato** (è un update), per l'abbonamento in comune (conta chi paga), se la data è già scritta
+- provato sul DB il 16/09 (poi annullato): nuovo utente → 01/10/2026; con data a mano → resta la sua; in comune → vuota
+
 **Abbonamento scaduto** (cantiere 19 lavoro 6, decisione di Ignazio 16/09; solo app, nessuna migrazione):
 - all'accesso `controllaAbbonamento()` legge `scadenza_abbonamento(utente)` (con abbonamento in comune: quella di chi paga) → `ST.scaduto` se `statoAbbonamento` è «scaduto» (nessuna data o data passata). L'Admin mai. Offline: resta com'era
 - scaduto = **solo Dashboard e Lista Nomi**: `aggiornaTab()` nasconde le altre tab; `mostraTab()` riporta alla Dashboard con l'avviso «Abbonamento scaduto: rinnova per usare anche le altre pagine»; in Dashboard spariscono «visione completa», «Griglia PM» e «Mostra di più»
