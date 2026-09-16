@@ -475,7 +475,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 19:20';
+const APP_VERSION = '2026.09.16 · 19:24';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -569,7 +569,7 @@ async function caricaPersone() {
   PS.persone = []; PS.scelto = null;
   if (!eAdmin()) return;
   const { data, error } = await dbq('Partner Select', supa.from('utenti')
-    .select('id, nome, nome_cognome, abbonamento_scadenza, partner_id').eq('nel_partner_select', true));
+    .select('id, nome, nome_cognome, abbonamento_scadenza, partner_id, ruolo').eq('nel_partner_select', true));
   if (error) return;
   PS.persone = data.sort((a, b) => (a.id === ST.utente.id ? -1 : b.id === ST.utente.id ? 1 : nomeDi(a).localeCompare(nomeDi(b), 'it')));
 }
@@ -1157,7 +1157,7 @@ function dashboardAlto() {
   const d = DS.dati;
   let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
-  if (!vediTutti()) html += d.abbonamentoAttivo
+  if (!vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09)
     ? `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
@@ -3184,7 +3184,7 @@ async function apriAdmin() {
     // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
     const oggi = MB21Coda.oggiRoma(), ordine = { attivo: 0, in_scadenza: 1, scaduto: 2 };
     const gruppo = u => ordine[MB21Dashboard.statoAbbonamento(MB21Dashboard.scadenzaDi(u, ut.data), oggi)];
-    AD.utenti = ut.data.sort((a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin').sort(   // l'Admin non è nell'elenco e non ha scadenza (Ignazio 16/09)(a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
