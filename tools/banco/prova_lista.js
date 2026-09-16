@@ -118,7 +118,7 @@ prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', ()
   assert.equal(L.postiBiglietto({ contatto: true, ospiti: -1 }), 1);
   assert.equal(L.postiBiglietto(null), 0);
   assert.equal(L.meseEvento('2026-09-20'), '2026-09-01');
-  assert.equal(L.etichettaEvento('2026-09-01'), '09/2026');
+  assert.equal(L.etichettaEvento('2026-09-01'), '09-2026');
   const b = [{ tipo: 'BBS', evento: '2026-10-01' }, { tipo: 'WES', evento: '2026-06-01' }];
   assert.deepEqual(L.eventiLiberi(['2026-06-01', '2026-10-01', '2026-12-01'], b, 'BBS'), ['2026-12-01', '2026-06-01']);
   assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-02-14'], b, 'WES'), ['2026-02-01']);   // giorni dei Wes → mesi
@@ -127,6 +127,11 @@ prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', ()
   assert.equal(L.eventoAttivo(eventi), '2026-10-01');                                          // adesso: l'ultimo caricato
   assert.equal(L.eventoAttivo(eventi, Date.parse('2026-09-19T23:00:00Z')), '2026-09-01');      // prima che arrivasse ottobre
   assert.equal(L.eventoAttivo(eventi, Date.parse('2026-08-31T23:00:00Z')), null);
+  // Wes di ottobre e Wes di febbraio già caricato: nel mese di ottobre conta ottobre, adesso (Mappa) febbraio
+  const wes = [{ data: '2026-10-01', creato_il: '2026-09-01T10:00:00Z' }, { data: '2027-02-01', creato_il: '2026-09-20T10:00:00Z' }];
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-10-10T22:00:00Z'), '2026-10-10'), '2026-10-01');
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-11-30T22:00:00Z'), '2026-11-30'), '2027-02-01');
+  assert.equal(L.eventoAttivo(wes), '2027-02-01');
   assert.equal(L.eventoAttivo([{ data: '2026-10-16', creato_il: '2026-09-15T13:48:26Z' }]), '2026-10-01');
   assert.equal(L.momento('2026-09-16T11:58:12.55943+00:00'), Date.parse('2026-09-16T11:58:12.559Z'));
   assert.equal(L.momento('2026-09-16 11:58:12.55943+00'), Date.parse('2026-09-16T11:58:12.559Z'));

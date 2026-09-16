@@ -122,16 +122,19 @@
 
   // Eventi al mese (Ignazio 16/09: il BBS cade in giorni diversi nelle città): «2026-09-20» → «2026-09-01», etichetta «09/2026»
   const meseEvento = d => String(d || '').slice(0, 8) + '01';
-  const etichettaEvento = m => `${String(m).slice(5, 7)}/${String(m).slice(0, 4)}`;
+  const etichettaEvento = m => `${String(m).slice(5, 7)}-${String(m).slice(0, 4)}`;   // «10-2026» (Ignazio 16/09)
 
   // Millisecondi da una data del database («2026-09-16T11:58:12.55943+00:00»): Safari non legge più di 3 decimali
   const momento = t => Date.parse(String(t).replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1').replace(/([+-]\d{2})$/, '$1:00'));
 
   // Evento in vendita: l'ultimo caricato (data più alta) tra quelli già caricati a `quando` (millisecondi; vuoto = adesso).
+  // Con `mese` (Dashboard e Check, un mese alla volta): se quel mese ha il suo evento conta quello
+  // (Ignazio 16/09: un biglietto del Wes preso il 10 ottobre va sul Wes di ottobre, anche se è già caricato quello dopo).
   // eventi: righe di `bbs` o `wes` con data e creato_il. Restituisce il mese («2026-10-01») o null
-  function eventoAttivo(eventi, quando) {
+  function eventoAttivo(eventi, quando, mese) {
     const presi = (eventi || []).filter(e => quando == null || !e.creato_il || momento(e.creato_il) <= quando);
     if (!presi.length) return null;
+    if (mese && presi.some(e => meseEvento(e.data) === meseEvento(mese))) return meseEvento(mese);
     return meseEvento(presi.map(e => e.data).sort().pop());
   }
 

@@ -173,10 +173,11 @@
 
   // Segni vitali del gruppo di `pid` alla fine del giorno `giorno` (vuoto = adesso). g: dati grezzi
   // { squadra, schede, coppie, utenti, biglietti (con creato_il e user_id), cep (con user_id), bbs, wes (data, creato_il), oggi }.
-  // Fotografia: eventi e biglietti caricati entro quel giorno (fine giornata calcolata a +01:00, al massimo un'ora di scarto d'estate)
+  // Fotografia: eventi e biglietti caricati entro quel giorno (fine giornata calcolata a +01:00, al massimo un'ora di scarto d'estate).
+  // Con un giorno, se il suo mese ha un evento conta quello; senza giorno (Mappa) conta l'ultimo caricato
   function segniAl(g, pid, giorno, preferito) {
     const quando = giorno ? Date.parse(giorno + 'T23:59:59+01:00') : null;
-    const attivoBbs = L.eventoAttivo(g.bbs, quando), attivoWes = L.eventoAttivo(g.wes, quando);
+    const attivoBbs = L.eventoAttivo(g.bbs, quando, giorno), attivoWes = L.eventoAttivo(g.wes, quando, giorno);
     const biglietti = quando == null ? g.biglietti : (g.biglietti || []).filter(b => !b.creato_il || L.momento(b.creato_il) <= quando);
     const r = segniGruppo({ squadra: g.squadra, schede: g.schede, preferito, coppie: g.coppie, utenti: g.utenti,
       biglietti, cep: g.cep, attivoBbs, attivoWes, oggi: giorno || g.oggi });

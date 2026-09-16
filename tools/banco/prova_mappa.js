@@ -180,7 +180,7 @@ prova('segni vitali alla fine di un giorno: evento in vendita e biglietti carica
     cep: [{ contatto_id: 'c-ign', user_id: 'u', dal: '2026-09-10' }, { contatto_id: 'c-x', user_id: 'u', dal: '2026-01-01', uscito_il: '2026-09-30' }],
   };
   assert.deepEqual(M.segniAl(g, 'I', '2026-09-15', 'u'), { bbs: 2, wes: 0, cep: 2, attivoBbs: '2026-09-01', attivoWes: '2026-10-01' });
-  assert.deepEqual(M.segniAl(g, 'I', '2026-09-30', 'u'), { bbs: 1, wes: 1, cep: 2, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
+  assert.deepEqual(M.segniAl(g, 'I', '2026-09-30', 'u'), { bbs: 2, wes: 1, cep: 2, attivoBbs: '2026-09-01', attivoWes: '2026-10-01' });   // settembre ha il suo BBS
   assert.deepEqual(M.segniAl(g, 'I', null, 'u'), { bbs: 4, wes: 1, cep: 1, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
   assert.deepEqual(M.segniAl(g, 'nessuno', null, 'u'), { bbs: 0, wes: 0, cep: 0, attivoBbs: '2026-10-01', attivoWes: '2026-10-01' });
 });
