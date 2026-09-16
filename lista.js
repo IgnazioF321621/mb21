@@ -152,6 +152,19 @@
     };
   }
 
+  // Targhette per tutta la Lista Nomi: { id contatto: {bbs, wes, cep} }. Le coppie collegate (id, compagno_id)
+  // condividono i segni: un biglietto sulla scheda di uno accende anche l'altro
+  function targhePerContatto(biglietti, periodiCep, coppie, oggi) {
+    const altro = {};
+    for (const c of coppie || []) if (c.compagno_id) { altro[c.id] = c.compagno_id; altro[c.compagno_id] = c.id; }
+    const perId = {}, aggiungi = (id, chiave, riga) => { for (const x of [id, altro[id]]) if (x) ((perId[x] = perId[x] || { b: [], p: [] })[chiave]).push(riga); };
+    for (const b of biglietti || []) aggiungi(b.contatto_id, 'b', b);
+    for (const p of periodiCep || []) aggiungi(p.contatto_id, 'p', p);
+    const esito = {};
+    for (const id of Object.keys(perId)) esito[id] = targheSegni(perId[id].b, perId[id].p, oggi);
+    return esito;
+  }
+
   // Date nel fuso di Roma: lunga «11/12/2024», breve «11/12/24»
   function data(iso, breve) {
     if (!iso) return '';
@@ -173,7 +186,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, targheSegni, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
