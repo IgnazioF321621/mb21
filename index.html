@@ -390,6 +390,8 @@
   .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
   .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
+  .mp-segni { font-size: 12px; margin-top: 2px; color: var(--grigio); }
+  .mp-segni b.bbs { color: #2563EB; } .mp-segni b.wes { color: #DC2626; } .mp-segni b.cep { color: #16A34A; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
@@ -455,7 +457,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:23';
+const APP_VERSION = '2026.09.16 · 15:31';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2760,8 +2762,24 @@ async function caricaSchedeMappa() {
     schede.push(...data);
     if (data.length < 1000) break;
   }
-  const targhe = await leggiTarghe();
-  MP.schede = schede; MP.targhe = targhe;
+  const oggi = MB21Coda.oggiRoma();
+  const [big, cep, coppie, ut, bbs, wes] = await Promise.all([
+    dbq('biglietti della Mappa', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti, contatti(user_id)').gte('evento', oggi).limit(5000)),
+    dbq('CEP della Mappa', supa.from('cep').select('contatto_id, dal, uscito_il, contatti(user_id)').limit(5000)),
+    dbq('coppie della Mappa', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
+    dbq('utenti della Mappa', supa.from('utenti').select('id, partner_id')),
+    dbq('prossimo BBS', supa.from('bbs').select('data').gte('data', oggi).order('data').limit(1)),
+    dbq('prossimo Wes', supa.from('wes').select('data').gte('data', oggi).order('data').limit(1)),
+  ]);
+  const errore = [big, cep, coppie, ut, bbs, wes].find(r => r.error);
+  if (errore) throw errore.error;
+  const conUtente = righe => righe.map(r => ({ ...r, user_id: r.contatti && r.contatti.user_id }));
+  const M = MB21Mappa;
+  MP.prossimi = { bbs: bbs.data.length ? bbs.data[0].data : null, wes: wes.data.length ? wes.data[0].data : null };
+  MP.schede = schede;
+  MP.targhe = MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi);
+  MP.segni = M.segniGruppo({ squadra: MP.squadra, schede, preferito: visto().id, coppie: coppie.data, utenti: ut.data,
+    biglietti: conUtente(big.data), cep: conUtente(cep.data), prossimoBbs: MP.prossimi.bbs, prossimoWes: MP.prossimi.wes, oggi });
 }
 const schedaMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, visto().id) : null);
 
@@ -2780,6 +2798,7 @@ function disegnaMappa() {
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
+    ${MP.prossimi ? `<div class="mp-testa"><span>Segni vitali del gruppo: prossimo BBS ${MP.prossimi.bbs ? esc(MB21Report.dataLunga(MP.prossimi.bbs)) : '—'} · prossimo Wes ${MP.prossimi.wes ? esc(MB21Report.dataLunga(MP.prossimi.wes)) : '—'} · CEP oggi</span></div>` : ''}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${t} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
@@ -2804,6 +2823,8 @@ function disegnaMappa() {
           <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })())}</span>
           <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
             r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
+          ${(() => { const g = MP.segni && MP.segni.gruppo[r.id];
+            return g && (g.bbs || g.wes || g.cep) ? `<div class="mp-segni"><b class="bbs">BBS ${g.bbs}</b> · <b class="wes">WES ${g.wes}</b> · <b class="cep">CEP ${g.cep}</b>${r.haFigli ? ' <small>nel gruppo</small>' : ''}</div>` : ''; })()}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('');
@@ -2924,9 +2945,17 @@ function collegaMappa() {
     if (sc) return apriContattoDa(sc.id, 'mappa');
     // nessuna scheda con quel codice o quel nome: l'Admin la collega (es. Amway «Antonina», in lista «Tonya»)
     if (!eAdmin() || vediTutti()) return mostraToast(`${r.nome} non ha una scheda collegata nella lista`);
-    const scelta = await scegliScheda({ titolo: `Scheda di ${r.nome}`, userId: visto().id,
+    const scelta = await scegliScheda({ titolo: `Scheda di ${r.nome}`, userId: visto().id, mano: `Non è in lista: crea la scheda di ${r.nome}`,
       sottotitolo: `Nella lista non c'è una scheda con questo nome. Cercala con il nome che usi tu: resterà collegata al codice ${r.id}.` });
     if (!scelta) return;
+    if (scelta === 'mano') {   // scheda nuova: Partner, già collegata al codice, fuori dalla coda (Partner senza rientro)
+      const { data, error } = await dbq('crea scheda dalla Mappa', supa.from('contatti')
+        .insert({ user_id: visto().id, nome: r.nome, categoria: 'Partner', codice_amway: r.id }).select('id').single());
+      if (error) return mostraToast('Scheda non creata: riprova.');
+      mostraToast(`Scheda di ${r.nome} creata`);
+      LS.righe = [];   // la Lista si rilegge con la scheda nuova
+      return apriContattoDa(data.id, 'mappa');
+    }
     const { error } = await dbq('collega codice Amway', supa.from('contatti').update({ codice_amway: r.id }).eq('id', scelta.id));
     if (error) return mostraToast('Non collegata: riprova.');
     mostraToast(`${scelta.nome} collegata a ${r.nome}`);

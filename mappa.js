@@ -120,6 +120,55 @@
       || scegli((contatti || []).filter(c => !c.codice_amway && piega(c.nome) === piega(partner.nome)));
   }
 
-  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner };
+  // Segni vitali a cascata (cantiere 18). Ogni biglietto e ogni periodo CEP va a un partner della squadra:
+  //   la scheda del partner (codice Amway o nome) o quella del suo compagno/a collegato → quel partner;
+  //   altrimenti (clienti, ospiti con scheda) → il partner che ha il nome in lista (utenti.partner_id).
+  // Si contano i posti dei biglietti del prossimo BBS e del prossimo Wes e gli abbonati CEP di oggi.
+  // Restituisce { proprio, gruppo }: per partner_id, gruppo = lui + tutti quelli sotto.
+  function segniGruppo(d) {
+    const zero = () => ({ bbs: 0, wes: 0, cep: 0 });
+    const posti = b => (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + Math.max(0, Number(b.ospiti) || 0);
+    const squadra = d.squadra || [];
+    const delContatto = {};
+    for (const p of squadra) {
+      const sc = schedaDelPartner({ id: p.partner_id, nome: nomeLeggibile(p.nome) }, d.schede, d.preferito);
+      if (sc) delContatto[sc.id] = p.partner_id;
+    }
+    for (const c of d.coppie || []) if (!delContatto[c.id] && delContatto[c.compagno_id]) delContatto[c.id] = delContatto[c.compagno_id];
+    const dellUtente = {};
+    for (const u of d.utenti || []) if (u.partner_id) dellUtente[u.id] = u.partner_id;
+    const proprio = {};
+    for (const p of squadra) proprio[p.partner_id] = zero();
+    const a = x => { const pid = delContatto[x.contatto_id] || dellUtente[x.user_id]; return proprio[pid] || null; };
+    for (const b of d.biglietti || []) {
+      const t = a(b);
+      if (!t) continue;
+      if (b.tipo === 'BBS' && d.prossimoBbs && b.evento === d.prossimoBbs) t.bbs += posti(b);
+      if (b.tipo === 'WES' && d.prossimoWes && b.evento === d.prossimoWes) t.wes += posti(b);
+    }
+    for (const p of d.cep || []) {
+      const t = a(p);
+      if (t && p.dal <= d.oggi && (!p.uscito_il || p.uscito_il >= d.oggi)) t.cep += 1;
+    }
+    const figli = {};
+    for (const p of squadra) if (p.sponsor_id) (figli[p.sponsor_id] = figli[p.sponsor_id] || []).push(p.partner_id);
+    const gruppo = {};
+    const somma = (pid, giro) => {
+      if (gruppo[pid]) return gruppo[pid];
+      const t = { ...proprio[pid] };
+      if (giro < 30) for (const f of figli[pid] || []) { const g = somma(f, giro + 1); t.bbs += g.bbs; t.wes += g.wes; t.cep += g.cep; }
+      return (gruppo[pid] = t);
+    };
+    for (const p of squadra) somma(p.partner_id, 0);
+    return { proprio, gruppo };
+  }
+
+  // Prima data da oggi in poi (prossimo BBS o Wes), null se non ce ne sono
+  function prossimaData(date, oggi) {
+    return [...(date || [])].filter(x => x >= oggi).sort()[0] || null;
+  }
+
+  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
+    segniGruppo, prossimaData };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
