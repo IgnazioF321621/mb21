@@ -99,4 +99,17 @@ prova('Partner Select: un partner scelto o «Tutti» (elenco di partner)', () =>
   assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: ALTRO, admin: true }), 1);
 });
 
+prova('NEW: creato dentro l\'app negli ultimi 30 giorni; «new» in Cerca trova solo quelli', () => {
+  const OGGI = '2026-09-16';
+  const giorniFa = n => new Date(Date.parse(OGGI + 'T10:00:00Z') - n * 86400000).toISOString();
+  const nuovo = { id: 'n', nome: 'Nuovo', user_id: 'u', categoria: 'Prospect', creato_il: giorniFa(3) };
+  const vecchio = { id: 'v', nome: 'Vecchio', user_id: 'u', categoria: 'Prospect', creato_il: giorniFa(40) };
+  const daGlide = { id: 'g', nome: 'Glide', user_id: 'u', categoria: 'Prospect', creato_il: giorniFa(1), glide_id: 'x' };
+  assert.equal(L.eNuovo(nuovo, OGGI), true);
+  assert.equal(L.eNuovo(vecchio, OGGI), false);
+  assert.equal(L.eNuovo(daGlide, OGGI), false);
+  assert.equal(L.eNuovo({ nome: 'senza data' }, OGGI), false);
+  assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'NEW', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);
+});
+
 console.log(`\n${ok} prove superate`);
