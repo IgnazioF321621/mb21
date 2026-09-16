@@ -163,6 +163,19 @@ prova('segni vitali a cascata: partner, compagno/a, clienti del partner, somma s
   assert.deepEqual(gruppo.I, { bbs: 1, wes: 3, cep: 1 });
 });
 
+prova('segni vitali: il biglietto conta sul partner anche se la scheda col codice non è quella della lista preferita', () => {
+  const squadra = [{ partner_id: 'I', sponsor_id: null, nome: 'FIORITO, IGNAZIO' }, { partner_id: 'M', sponsor_id: 'I', nome: 'ROSSI, MARIO' }];
+  const schede = [
+    { id: 'c-mario-isa', nome: 'Mario Rossi', user_id: 'u-isa', codice_amway: 'M' },   // preferita (lista di chi guarda)
+    { id: 'c-mario-ign', nome: 'Mario Rossi', user_id: 'u-ign', codice_amway: 'M' },   // qui c'è il biglietto
+  ];
+  const r = M.segniGruppo({ squadra, schede, preferito: 'u-isa', oggi: '2026-09-16', attivoBbs: '2026-10-01', coppie: [], cep: [],
+    utenti: [{ id: 'u-ign', partner_id: 'I' }],
+    biglietti: [{ contatto_id: 'c-mario-ign', user_id: 'u-ign', tipo: 'BBS', evento: '2026-10-01', contatto: true }] });
+  assert.deepEqual(r.proprio.M, { bbs: 1, wes: 0, cep: 0 });
+  assert.deepEqual(r.proprio.I, { bbs: 0, wes: 0, cep: 0 });
+});
+
 prova('segni vitali alla fine di un giorno: evento in vendita e biglietti caricati entro quel giorno', () => {
   const g = {
     oggi: '2026-10-05',
