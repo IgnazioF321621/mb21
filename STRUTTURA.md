@@ -25,10 +25,11 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
 | `cep` | — | Cantiere 18: abbonamento CEP di un Partner, una riga per **periodo** (dal / uscito il; si può uscire e rientrare) | chi vede il contatto; scrive solo Admin |
 
-**Prova gratuita** (migrazione `20260916220000_prova_gratuita.sql`, applicata; richiesta di Ignazio 16/09):
-- trigger `mb21_prova_gratuita` prima dell'insert su `utenti`: se `abbonamento_scadenza` e `abbonamento_con` sono vuoti e non è Admin → **scadenza = oggi (Roma) + 15 giorni**. Vale per `approva_richiesta` (link di registrazione) e «＋ Nuovo utente»
-- non vale per chi viene **ripristinato** (è un update), per l'abbonamento in comune (conta chi paga), se la data è già scritta
-- provato sul DB il 16/09 (poi annullato): nuovo utente → 01/10/2026; con data a mano → resta la sua; in comune → vuota
+**Prova gratuita** (migrazioni `20260916220000_prova_gratuita.sql` e `20260916223000_prova_da_abilitazione.sql`, applicate; richieste di Ignazio 16/09):
+- trigger `mb21_prova_gratuita` prima di insert o update di `accesso_attivo` su `utenti`: quando «Può entrare» **si accende** (utente che nasce già abilitato, come in `approva_richiesta`, o da spento ad acceso) e l'utente **non ha mai avuto una scadenza** → **scadenza = oggi (Roma) + 15 giorni**. Conta dall'abilitazione, non dalla creazione («se io perdo tempo, loro perdono la possibilità di lavorarci»)
+- non vale per l'abbonamento in comune (conta chi paga), per l'Admin, se la scadenza c'è già (anche passata: chi ha già pagato in passato non riceve altri giorni gratis)
+- Admin → Utenti: accendendo «Può entrare» la riga mostra subito la nuova scadenza e l'avviso «prova gratuita fino al …»
+- provato sul DB il 16/09 (poi annullato): creato spento → nessuna data; abilitato → 01/10/2026; approvato dal link → 01/10/2026; riabilitato con scadenza vecchia → resta la vecchia
 
 **Abbonamento scaduto** (cantiere 19 lavoro 6, decisione di Ignazio 16/09; solo app, nessuna migrazione):
 - all'accesso `controllaAbbonamento()` legge `scadenza_abbonamento(utente)` (con abbonamento in comune: quella di chi paga) → `ST.scaduto` se `statoAbbonamento` è «scaduto» (nessuna data o data passata). L'Admin mai. Offline: resta com'era

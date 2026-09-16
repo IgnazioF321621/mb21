@@ -487,7 +487,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 21:40';
+const APP_VERSION = '2026.09.16 · 22:06';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3593,12 +3593,14 @@ function collegaAdmin() {
     const u = AD.utenti.find(x => x.id === b.dataset.ut), campo = b.dataset.campo, valore = b.checked;
     if (campo === 'accesso_attivo' && valore && !u.email) { b.checked = false; return mostraToast('Manca l\'email: senza non può entrare'); }
     b.disabled = true;
-    const { error } = await dbq('cambia utente', supa.from('utenti').update({ [campo]: valore }).eq('id', u.id));
+    const { data: dopo, error } = await dbq('cambia utente', supa.from('utenti').update({ [campo]: valore }).eq('id', u.id).select('abbonamento_scadenza').single());
     b.disabled = false;
     if (error) { b.checked = !valore; return mostraToast('Non salvato: riprova.'); }
+    const prova = campo === 'accesso_attivo' && valore && !u.abbonamento_scadenza && dopo && dopo.abbonamento_scadenza;   // 15 giorni gratis dal database
     u[campo] = valore;
+    if (dopo) u.abbonamento_scadenza = dopo.abbonamento_scadenza;
     if (campo === 'nel_partner_select') { const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto; }   // il menu si aggiorna subito, la scelta resta
-    mostraToast(`${nomeDi(u)}: ${campo === 'accesso_attivo' ? (valore ? 'può entrare' : 'non può più entrare') : (valore ? 'nel Partner Select' : 'fuori dal Partner Select')}`);
+    mostraToast(`${nomeDi(u)}: ${campo === 'accesso_attivo' ? (valore ? (prova ? `può entrare · prova gratuita fino al ${dopo.abbonamento_scadenza.split('-').reverse().join('/')}` : 'può entrare') : 'non può più entrare') : (valore ? 'nel Partner Select' : 'fuori dal Partner Select')}`);
     if (campo === 'accesso_attivo') disegnaAdmin();   // aggiorna il conteggio
   });
   app.querySelectorAll('[data-apri-ut]').forEach(b => b.onclick = () => {
