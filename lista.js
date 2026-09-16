@@ -36,6 +36,15 @@
     senza:    { etichetta: 'Senza categoria', altri: true, prova: r => !r.categoria },
   };
 
+  // Targhetta NEW (richiesta di Ignazio 16/09): contatti creati dentro l'app (non importati da Glide)
+  // nei primi GIORNI_NEW giorni. `oggi` in AAAA-MM-GG; scritto «new» in Cerca, escono solo loro.
+  const GIORNI_NEW = 30;
+  function eNuovo(r, oggi) {
+    if (!r || !r.creato_il || r.glide_id) return false;
+    const giorni = (Date.parse(oggi + 'T23:59:59Z') - Date.parse(r.creato_il)) / 86400000;
+    return giorni >= 0 && giorni < GIORNI_NEW;
+  }
+
   // minuscole, senza accenti né spazi doppi
   function piega(s) {
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -43,9 +52,10 @@
   function soloCifre(s) { return String(s || '').replace(/[^0-9]/g, ''); }
 
   // Ricerca come Glide: nome + professione + telefono, in qualunque punto del testo
-  function corrisponde(r, testo) {
+  function corrisponde(r, testo, oggi) {
     const t = piega(testo);
     if (!t) return true;
+    if (t === 'new') return eNuovo(r, oggi);
     if (piega(r.nome).includes(t) || piega(r.professione).includes(t)) return true;
     const cifre = soloCifre(t);
     return cifre.length >= 3 && /^[+\d\s]+$/.test(t) && soloCifre(r.telefono).includes(cifre);
@@ -59,11 +69,11 @@
   const diChi = (r, utenteId) => (Array.isArray(utenteId) ? utenteId.includes(r.user_id) : r.user_id === utenteId);
 
   // righe: tutte quelle visibili all'utente (per l'Admin: di tutti i partner)
-  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false } = {}) {
+  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo))
+      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo, oggi))
       .sort(ordinaPerNome);
   }
 
@@ -124,7 +134,7 @@
     return ('Fase ' + (r.ultimo_tipo ? r.ultimo_tipo + ': ' : ': ') + r.ultima_fase).toUpperCase();
   }
 
-  const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, piega, corrisponde, filtraContatti,
+  const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;

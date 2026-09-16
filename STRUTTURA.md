@@ -55,6 +55,13 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 - `annulla_modifica_azione(p_prima)` → l'Annulla
 - provata sul DB (15/09, poi annullata): ultima azione → No BuonFine = rientro +365 dal giorno dell'azione; azione vecchia = coda invariata; Annulla rimette tutto
 
+**Targhetta NEW** (richiesta di Ignazio 16/09, migrazione `20260916090000_coda_new.sql`, applicata):
+- `contatti_coda`: aggiunte in fondo `creato_il` e `glide_id` (il resto invariato)
+- `lista.js → eNuovo(r, oggi)`: vero se il contatto **non viene da Glide** (`glide_id` vuoto) ed è stato creato da meno di `GIORNI_NEW` = **30 giorni**. Nessun campo da compilare a mano
+- **Cerca**: scrivendo `new` (anche NEW) escono **solo** i nuovi (`corrisponde(r, testo, oggi)`); le altre ricerche sono invariate
+- **Dove si vede**: targhetta verde `NEW` accanto al nome in Lista Nomi, coda di OGGI, «Da catalogare» e testata della scheda (`nuovoBadge`)
+- Al 16/09: 2.920 contatti vengono da Glide (mai NEW), 1 è nato nella v4
+
 **Da catalogare** (cantiere 16, migrazione `20260915223000_da_catalogare.sql`, applicata):
 - `contatti.catalogato_il` (giorno di Roma in cui la categoria è stata scelta da «Da catalogare»)
 - `cataloga_contatto(p_contatto, p_categoria)` → solo su un senza categoria; categorie ammesse Prospect · Partner · Cliente · Ex Partner/Cliente · Unlinked · Archiviato (Referral no). Prospect/Partner/Cliente → `rientro_il` = domani; Archiviato → rientro vuoto e `categoria_prec` vuota (Ripristina lo riporta senza categoria); Ex/Unlinked → rientro invariato (sono fuori coda). `in_coda_dal` vuoto, `catalogato_il` = oggi. Restituisce `{rientro_prec, in_coda_prec}`
@@ -338,3 +345,4 @@ _Da definire._
 | 2026.09.15 · 22:48 | «👤 Apri contatto» dalla coda e da «Da catalogare», ritorno «‹ Dashboard»; Modifica di un senza categoria → `cataloga_contatto` |
 | 2026.09.15 · 22:54 | «Da catalogare»: dopo Prospect/Partner/Cliente la card resta con i bottoni esito (chiamalo ora, fuori dai contatti al giorno) |
 | 2026.09.15 · 23:09 | «Da catalogare»: bottone «Altri 5» a fine giornata (`daCatalogare(righe, catalogatiOggi, altri)`) |
+| 2026.09.16 · 06:01 | Targhetta NEW per 30 giorni sui contatti creati nell'app (non quelli da Glide); «new» in Cerca li trova |
