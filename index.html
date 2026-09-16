@@ -455,7 +455,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:08';
+const APP_VERSION = '2026.09.16 · 15:23';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -585,7 +585,7 @@ async function scegliPartner() {
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
   CK.giorni = null; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
-  MP.contatti = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
+  MP.schede = null; MP.targhe = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
   mostraTab();
 }
@@ -2168,27 +2168,30 @@ function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sez
   return promessa;
 }
 
-// Foglio per scegliere il compagno/a tra le schede della stessa lista. Restituisce {id, nome} · 'mano' · null
-function scegliCompagno(c) {
+// Foglio per scegliere una scheda della lista di `userId` (compagno/a, partner della Mappa).
+// opz: { titolo, sottotitolo, userId, escludi, mano (testo del bottone «non è in lista») }. Restituisce {id, nome} · 'mano' · null
+function scegliScheda(opz) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>Compagno/a</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      <div class="testa-foglio"><h3>${esc(opz.titolo)}</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      ${opz.sottotitolo ? `<p>${esc(opz.sottotitolo)}</p>` : ''}
       <div class="campo"><label>Cerca nella lista</label><input id="sc-cerca" type="search" placeholder="Nome o cognome" autocomplete="off"></div>
       <div id="sc-elenco" class="sc-elenco"></div>
-      <button class="link" id="sc-mano" style="width:100%">Non è in lista: scrivo nome e telefono</button></div>`;
+      ${opz.mano ? `<button class="link" id="sc-mano" style="width:100%">${esc(opz.mano)}</button>` : ''}</div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
     velo.querySelector('#sc-x').onclick = () => chiudi(null);
-    velo.querySelector('#sc-mano').onclick = () => chiudi('mano');
+    if (opz.mano) velo.querySelector('#sc-mano').onclick = () => chiudi('mano');
     const input = velo.querySelector('#sc-cerca'), elenco = velo.querySelector('#sc-elenco');
     let giro = 0;
     input.oninput = async () => {
       const testo = input.value.trim(), mio = ++giro;
       if (testo.length < 2) { elenco.innerHTML = ''; return; }
-      const { data, error } = await dbq('cerca compagno', supa.from('contatti').select('id, nome, categoria')
-        .eq('user_id', c.user_id).neq('id', c.id).ilike('nome', `%${testo.replace(/[%_,]/g, ' ')}%`).order('nome').limit(15));
+      let q = supa.from('contatti').select('id, nome, categoria').eq('user_id', opz.userId);
+      if (opz.escludi) q = q.neq('id', opz.escludi);
+      const { data, error } = await dbq('cerca scheda', q.ilike('nome', `%${testo.replace(/[%_,]/g, ' ')}%`).order('nome').limit(15));
       if (mio !== giro) return;
       if (error) { elenco.innerHTML = '<div class="sotto">Ricerca non riuscita: riprova.</div>'; return; }
       elenco.innerHTML = data.length
@@ -2284,7 +2287,7 @@ async function sezioneSegni() {
     const bComp = document.getElementById('sv-comp');
     if (bComp) bComp.onclick = async () => {
       if (soloGuardo()) return;
-      const scelta = await scegliCompagno(c);
+      const scelta = await scegliScheda({ titolo: 'Compagno/a', userId: c.user_id, escludi: c.id, mano: 'Non è in lista: scrivo nome e telefono' });
       if (!scelta) return;
       if (scelta === 'mano') {
         const v = await moduloSemplice('Compagno/a non in lista', [
@@ -2721,7 +2724,7 @@ function collegaCheck() {
 // Brief docs/MB21_v4_Brief_F8_Mappa.md: l'albero del gruppo Amway che si apre e si chiude sul posto (come la LOS
 // ufficiale), stato dai VPP del mese (≥50 attivo · >0 warning · 0 inattivo), filtri per stato e ricerca,
 // pillole BBS/WES/CEP (grigie finché i segni vitali non stanno sulle persone). Calcoli in mappa.js.
-const MP = { squadra: null, volumi: null, mese: null, contatti: null, aperti: new Set(), filtro: 'tutti', cerca: '', completa: null, storico: {} };
+const MP = { squadra: null, volumi: null, mese: null, schede: null, targhe: null, aperti: new Set(), filtro: 'tutti', cerca: '', completa: null, storico: {} };
 
 async function apriMappa() {
   if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
@@ -2742,17 +2745,25 @@ async function apriMappa() {
     }
   }
   disegnaMappa();
+  // schede e targhette si rileggono a ogni apertura (possono essere cambiate nella scheda contatto)
+  caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
 }
 
-// Un partner della Mappa si apre come scheda contatto solo se quel nome è in una lista che posso vedere
-async function contattiPerNome() {
-  if (MP.contatti) return MP.contatti;
-  const { data, error } = await dbq('contatti per la Mappa',
-    supa.from('contatti').select('id, nome, user_id').in('user_id', idVisti()).limit(5000));
-  MP.contatti = {};
-  if (!error) for (const c of data) MP.contatti[String(c.nome || '').trim().toLowerCase()] = c.id;
-  return MP.contatti;
+// Schede dei partner della Mappa (cantiere 18): contatti Partner o con il codice Amway, nelle liste che posso vedere,
+// e le loro targhette BBS · WES · CEP. `MB21Mappa.schedaDelPartner` sceglie la scheda: codice Amway, poi nome.
+async function caricaSchedeMappa() {
+  const schede = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq('schede dei partner', supa.from('contatti').select('id, nome, user_id, codice_amway')
+      .in('user_id', idVisti()).or('categoria.eq.Partner,codice_amway.not.is.null').order('id').range(da, da + 999));
+    if (error) throw error;
+    schede.push(...data);
+    if (data.length < 1000) break;
+  }
+  const targhe = await leggiTarghe();
+  MP.schede = schede; MP.targhe = targhe;
 }
+const schedaMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, visto().id) : null);
 
 function mesePulito(m) {
   return m ? `${String(m).slice(4, 6)}/${String(m).slice(0, 4)}` : '—';
@@ -2789,8 +2800,8 @@ function disegnaMappa() {
         <div class="mp-corpo">
           <span class="mp-liv">${r.livello ?? ''}</span>
           <span title="${esc(s.titolo)}">${s.pallino}</span>
-          <button class="mp-nome" data-mpnome="${esc(r.nome)}">${esc(r.nome)}</button>
-          <span class="mp-sv" title="Segni vitali: in arrivo"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span>
+          <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
+          <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })())}</span>
           <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
             r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
         </div>
@@ -2903,10 +2914,24 @@ function collegaMappa() {
   };
   app.querySelectorAll('[data-mpcompleta]').forEach(b => b.onclick = () => apriCompleta(b.dataset.mpcompleta));
   app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
-    const per = await contattiPerNome();
-    const id = per[b.dataset.mpnome.trim().toLowerCase()];
-    if (!id) return mostraToast(`${b.dataset.mpnome} non è in lista: aggiungilo da Lista Nomi`);
-    apriContattoDa(id, 'mappa');
+    const partner = (MP.squadra || []).find(x => x.partner_id === b.dataset.mpnome);
+    if (!partner) return;
+    const r = { id: partner.partner_id, nome: MB21Mappa.nomeLeggibile(partner.nome) };
+    if (!MP.schede) {
+      try { await caricaSchedeMappa(); } catch (e) { return mostraToast('Schede non caricate: riprova.'); }
+    }
+    const sc = schedaMappa(r);
+    if (sc) return apriContattoDa(sc.id, 'mappa');
+    // nessuna scheda con quel codice o quel nome: l'Admin la collega (es. Amway «Antonina», in lista «Tonya»)
+    if (!eAdmin() || vediTutti()) return mostraToast(`${r.nome} non ha una scheda collegata nella lista`);
+    const scelta = await scegliScheda({ titolo: `Scheda di ${r.nome}`, userId: visto().id,
+      sottotitolo: `Nella lista non c'è una scheda con questo nome. Cercala con il nome che usi tu: resterà collegata al codice ${r.id}.` });
+    if (!scelta) return;
+    const { error } = await dbq('collega codice Amway', supa.from('contatti').update({ codice_amway: r.id }).eq('id', scelta.id));
+    if (error) return mostraToast('Non collegata: riprova.');
+    mostraToast(`${scelta.nome} collegata a ${r.nome}`);
+    try { await caricaSchedeMappa(); } catch (e) { /* si riprova alla prossima apertura */ }
+    if (ST.tab === 'mappa' && !MP.completa) disegnaMappa();
   });
 }
 

@@ -111,6 +111,15 @@
     return { righe, max, mediaVpp: Math.round(media('vpp') * 100) / 100, mediaVpg: Math.round(media('vpg') * 100) / 100 };
   }
 
-  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico };
+  // Scheda contatto di un partner della Mappa: prima quella col suo codice Amway, poi per nome
+  // (senza maiuscole e spazi doppi). A parità vince la lista di `preferito` (chi guarda la Mappa).
+  function schedaDelPartner(partner, contatti, preferito) {
+    const piega = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const scegli = trovati => (trovati.find(c => c.user_id === preferito) || trovati[0] || null);
+    return scegli((contatti || []).filter(c => c.codice_amway && c.codice_amway === partner.id))
+      || scegli((contatti || []).filter(c => !c.codice_amway && piega(c.nome) === piega(partner.nome)));
+  }
+
+  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
