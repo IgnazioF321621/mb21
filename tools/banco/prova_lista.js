@@ -112,4 +112,15 @@ prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca tr
   assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'Nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);
 });
 
+prova('segni vitali: posti del biglietto ed eventi ancora da scegliere', () => {
+  assert.equal(L.postiBiglietto({ contatto: true, compagno: true, ospiti: 1 }), 3);
+  assert.equal(L.postiBiglietto({ contatto: false, compagno: false, ospiti: 2 }), 2);
+  assert.equal(L.postiBiglietto({ contatto: true, ospiti: -1 }), 1);
+  assert.equal(L.postiBiglietto(null), 0);
+  const b = [{ tipo: 'BBS', evento: '2026-10-18' }, { tipo: 'WES', evento: '2026-06-05' }];
+  assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-10-18', '2026-12-06'], b, 'BBS'), ['2026-12-06', '2026-06-05']);
+  assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-02-14'], b, 'WES'), ['2026-02-14']);
+  assert.deepEqual(L.eventiLiberi([], b, 'BBS'), []);
+});
+
 console.log(`\n${ok} prove superate`);
