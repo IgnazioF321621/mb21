@@ -178,4 +178,23 @@ prova('BBS/WES/CEP dalle persone da settembre 2026: fotografia a fine mese, prim
   assert.deepEqual(D.applicaPersone({ x: 1 }, '2026-10-01', '2026-10-12', null), { x: 1 });
 });
 
+prova('Abbonamento: stato, pagamento al 5 del mese dopo, abbonamento in comune', () => {
+  assert.equal(D.statoAbbonamento(null, '2026-09-16'), 'scaduto');
+  assert.equal(D.statoAbbonamento('2026-09-15', '2026-09-16'), 'scaduto');
+  assert.equal(D.statoAbbonamento('2026-09-16', '2026-09-16'), 'in_scadenza');
+  assert.equal(D.statoAbbonamento('2026-09-23', '2026-09-16'), 'in_scadenza');
+  assert.equal(D.statoAbbonamento('2026-09-24', '2026-09-16'), 'attivo');
+  // paga il 10 in ritardo → 5 del mese dopo; paga prima del 5 → sempre 5 del mese dopo
+  assert.equal(D.scadenzaDopoPagamento('2026-09-05', '2026-09-10'), '2026-10-05');
+  assert.equal(D.scadenzaDopoPagamento('2026-04-10', '2026-09-16'), '2026-10-05');
+  assert.equal(D.scadenzaDopoPagamento(null, '2026-12-20'), '2027-01-05');
+  assert.equal(D.scadenzaDopoPagamento('2026-10-05', '2026-10-03'), '2026-11-05');
+  // già pagato più avanti: un mese in più
+  assert.equal(D.scadenzaDopoPagamento('2026-12-10', '2026-09-16'), '2027-01-10');
+  assert.equal(D.scadenzaDopoPagamento('2027-01-31', '2026-09-16'), '2027-02-28');
+  const utenti = [{ id: 'T', abbonamento_scadenza: '2026-10-05' }, { id: 'F', abbonamento_scadenza: '2026-07-05', abbonamento_con: 'T' }];
+  assert.equal(D.scadenzaDi(utenti[1], utenti), '2026-10-05');
+  assert.equal(D.scadenzaDi(utenti[0], utenti), '2026-10-05');
+});
+
 console.log(`\n${ok} prove superate`);
