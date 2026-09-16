@@ -18,7 +18,7 @@ Quello che c'è già: `utenti` (gli 11 utenti dell'app), `obiettivi_mese` (VPP/V
 
 - L'albero si ricostruisce da `sponsor_id` (Ignazio è il livello 1; nell'export ha a sua volta uno sponsor, che resta fuori).
 - Lo **stato** non si salva: si calcola dai VPP del mese (≥50 attivo · >0 warning · 0 inattivo), così una correzione dei volumi lo aggiorna da sola.
-- **Come entrano e come si aggiornano** → decisione **A**.
+- **Come entrano e come si aggiornano: già deciso il 15/09** (decisione **E** del `Brief_F6_Check`): bottone Admin **«Carica file Amway»**, aggiorna i punti di tutto il gruppo quando si vuole, correzione a mano per un solo numero; **se il file contiene lo sponsor, lo stesso caricamento porta anche l'albero**. Fermo solo perché servono un **file Amway di esempio** e lo **script di conversione** (cantiere 14 lavoro 6, Apps Script `IF_Team21_Mapper v2.1.0`).
 
 ## 3. La pagina Mappa v4
 
@@ -51,7 +51,7 @@ Il conteggio risale a cascata: persona → partner che l'ha in lista → sponsor
 
 ## 6. Decisioni da prendere
 
-- **A. Come entrano e si aggiornano i dati.** (1) Import una tantum dell'export (32 partner + 473 mesi) e poi a mano; (2) bottone **«Carica file Amway»** dell'Admin (cantiere 14 lavoro 6), che aggiorna volumi **e** albero; (3) prima (1) subito, poi (2) quando ci sono un file di esempio e lo script.
+- ~~**A. Come entrano e si aggiornano i dati.**~~ → **già deciso il 15/09** (E): «Carica file Amway». Resta solo da capire **da dove si parte**: l'export del 13/09 (32 partner + 473 mesi) basta per far vedere la Mappa subito, senza aspettare il file Amway.
 - **B. Ordine delle linee**: prima gli attivi (proposta) o come Glide.
 - **C. Storico e grafico**: in fondo alla pagina o dietro «visione completa».
 - **D. Ordine dei lavori**: prima la Mappa con le pillole spente, o prima i segni vitali sulle persone e poi la Mappa già accesa.

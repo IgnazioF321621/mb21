@@ -20,3 +20,7 @@
 ## L6 — Appena pubblicato, il telefono può usare pezzi vecchi e nuovi insieme
 *15 settembre 2026.* Subito dopo la pubblicazione del riquadro «Da catalogare», sul telefono di Ignazio l'app aveva la versione nuova ma il riquadro non compariva: verosimilmente `index.html` era già aggiornato e `coda.js` no (un errore silenzioso lasciava il riquadro vuoto). Dopo qualche minuto è comparso da solo, senza nessuna modifica. Non verificato con certezza.
 **Regola:** prima di cercare l'errore, far aspettare qualche minuto e riaprire l'app; e nel codice, quando un pezzo nuovo può mancare, farlo fallire in modo visibile invece che in silenzio.
+
+## L7 — Cercare le decisioni già prese prima di fare domande
+*16/09/2026.* Due volte nella stessa sessione (segni vitali, import Amway) ho chiesto a Ignazio cose già decise il 15/09 e scritte nei brief.
+**Regola:** prima di fare una domanda o proporre una decisione, cercare nei documenti (`grep -rn` su `CANTIERI.md`, `LEZIONI.md`, `STRUTTURA.md`, `docs/*.md`) le parole chiave dell'argomento. Le decisioni stanno nei brief di fase, non solo in `CANTIERI.md`.
