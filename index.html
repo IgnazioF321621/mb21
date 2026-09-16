@@ -483,7 +483,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 20:43';
+const APP_VERSION = '2026.09.16 · 20:50';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -599,6 +599,7 @@ async function dopoAccesso(sessione) {
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
   ST.utente = data;
+  dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
   mostraTab();
 }
@@ -3220,7 +3221,7 @@ function collegaReport() {
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [], utenti: [], tutti: [], richieste: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
+const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
@@ -3229,7 +3230,7 @@ async function apriAdmin() {
     const [wes, bbs, ut, rich, sq] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
-      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
     ]);
@@ -3241,13 +3242,17 @@ async function apriAdmin() {
     const oggi = MB21Coda.oggiRoma(), ordine = { attivo: 0, in_scadenza: 1, scaduto: 2 };
     const gruppo = u => ordine[MB21Dashboard.statoAbbonamento(MB21Dashboard.scadenzaDi(u, ut.data), oggi)];
     // l'Admin non è nell'elenco e non ha scadenza (Ignazio 16/09)
-    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin').sort((a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    AD.eliminati = ut.data.filter(u => u.eliminato_il).sort((a, b) => nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin' && !u.eliminato_il).sort((a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
   disegnaAdmin();
 }
+
+// «16/09/2026 · 20:51» nell'ora di Roma
+const dataOra = t => new Date(MB21Lista.momento(t)).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(', ', ' · ');
 
 // Una riga per utente, chiusa: pallino dell'abbonamento, nome, scadenza. Tocco → si apre sul posto.
 function rigaUtenteAdmin(u) {
@@ -3261,8 +3266,9 @@ function rigaUtenteAdmin(u) {
     <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
-    <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
-    <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica nome, codice, email</button>
+    <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')}</small>
+    <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
+    <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica</button>
     <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">🗑 Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
@@ -3299,6 +3305,10 @@ function disegnaAdmin() {
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
+      ${AD.eliminati.length ? `<button class="rp-apri ad-voce" id="ad-vedi-eliminati" style="margin-top:10px"><span>🗂 Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
+        ${AD.vediEliminati ? `<div class="rp-wes">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
+          <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
+          <button class="link" data-ripristina="${esc(u.id)}">↩︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
       <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>🔗 Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>Wes</h1><div class="rp-wes">
@@ -3447,7 +3457,8 @@ function foglioNuovoUtente(u) {
     if (!nome) return ($('nu-errore').textContent = 'Scrivi nome e cognome');
     if (!/^\d+$/.test(codice)) return ($('nu-errore').textContent = codice ? 'Il codice Amway è fatto solo di numeri' : 'Il codice Amway è obbligatorio');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ($('nu-errore').textContent = "Scrivi un'email valida");
-    if (AD.utenti.some(x => x !== u && (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
+    if (AD.eliminati.some(x => (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è di un utente eliminato: ripristinalo da «Utenti eliminati», ritrova i suoi dati');
+    if (AD.tutti.some(x => x !== u && x.id !== (u && u.id) && (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
     const testo = u ? 'Salva' : 'Crea';
     $('nu-crea').disabled = true; $('nu-crea').textContent = u ? 'Salvo…' : 'Creo…';
     const campi = { nome_cognome: nome, nome: nome.split(' ')[0], partner_id: codice || null };
@@ -3490,21 +3501,27 @@ function collegaAdmin() {
     mostraToast('Richiesta rifiutata');
     apriAdmin();
   });
-  // Elimina utente: solo se non ha dati suoi (contatti, azioni, check). Con i dati si cancellerebbero tutti: meglio spegnere «Può entrare».
+  // Elimina (Ignazio 16/09): toglie dall'app ma NON cancella lista, azioni e check; se rientra ritrova tutto
   app.querySelectorAll('[data-elimina-ut]').forEach(b => b.onclick = async () => {
     const u = AD.utenti.find(x => x.id === b.dataset.eliminaUt);
-    const conta = t => dbq('dati dell\'utente', supa.from(t).select('id', { count: 'exact', head: true }).eq('user_id', u.id));
-    const [c, a, k] = await Promise.all([conta('contatti'), conta('azioni'), conta('check_giorno')]);
-    if (c.error || a.error || k.error) return mostraToast('Non riesco a controllare i suoi dati: riprova.');
-    if (c.count || a.count || k.count) {
-      return chiediConferma(`${nomeDi(u)} non si elimina`, `Ha ${c.count} contatti, ${a.count} azioni e ${k.count} check: eliminandolo si cancellerebbero tutti. Per non farlo entrare spegni «Può entrare».`, 'Ho capito');
-    }
     const perChi = AD.utenti.filter(x => x.abbonamento_con === u.id);
-    if (!await chiediConferma(`Elimino ${nomeDi(u)}?`, `Non ha dati nell'app.${perChi.length ? ` ${perChi.map(nomeDi).join(', ')} tornerà a pagare per sé.` : ''} Non si può annullare.`, 'Elimina', true)) return;
-    const { error } = await dbq('elimina utente', supa.from('utenti').delete().eq('id', u.id));
+    if (!await chiediConferma(`Elimino ${nomeDi(u)} dall'app?`, `Non potrà più entrare e sparisce dal Partner Select. La sua lista, le azioni e i check restano: se rientra li ritrova.${perChi.length ? ` ${perChi.map(nomeDi).join(', ')} tornerà a pagare per sé.` : ''}`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina utente', supa.from('utenti').update({ eliminato_il: new Date().toISOString(), accesso_attivo: false, nel_partner_select: false, abbonamento_con: null }).eq('id', u.id));
     if (error) return mostraToast('Non eliminato: riprova.');
-    mostraToast(`${nomeDi(u)} eliminato`);
+    for (const x of perChi) await dbq('abbonamento in comune', supa.from('utenti').update({ abbonamento_con: null }).eq('id', x.id));
+    mostraToast(`${nomeDi(u)} eliminato: i suoi dati restano`);
     AD.aperti.delete(u.id);
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
+  });
+  su('ad-vedi-eliminati', () => { AD.vediEliminati = !AD.vediEliminati; disegnaAdmin(); });
+  app.querySelectorAll('[data-ripristina]').forEach(b => b.onclick = async () => {
+    const u = AD.eliminati.find(x => x.id === b.dataset.ripristina);
+    if (!await chiediConferma(`Ripristino ${nomeDi(u)}?`, 'Torna tra gli utenti con la sua lista e le sue azioni, e può entrare di nuovo.', 'Ripristina')) return;
+    const { error } = await dbq('ripristina utente', supa.from('utenti').update({ eliminato_il: null, accesso_attivo: true, nel_partner_select: true }).eq('id', u.id));
+    if (error) return mostraToast('Non ripristinato: riprova.');
+    mostraToast(`${nomeDi(u)} ripristinato`);
+    AD.aperti.add(u.id);
     await apriAdmin();
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
