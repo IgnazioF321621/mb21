@@ -401,3 +401,4 @@ _Da definire._
 | 2026.09.16 · 16:27 | Wes al mese («WES 10-2026»): inserimento nel Report con mese e anno, periodi Wes dal primo del mese |
 | 2026.09.16 · 16:32 | Eventi scritti «10-2026»; in Dashboard e Check un mese con il suo evento conta i biglietti di quell'evento |
 | 2026.09.16 · 16:38 | Mappa: la scheda del partner si cerca in tutte le liste leggibili (evita schede doppie col Partner Select) |
+| 2026.09.16 · 16:42 | Nessun cambio all'app: sistemata nel database la scheda doppia di Ornella Miceli |
