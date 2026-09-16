@@ -61,6 +61,8 @@ prova('Obiettivo vuoto o a zero: «Obiettivo da impostare» (in Glide diceva «o
 prova('Banner: abbonamento attivo/scaduto, obiettivi mancanti se il mese non ha righe o sono tutte a zero', () => {
   const d = D.calcola({ checkMesi, obiettivi, oggi: '2026-09-14', scadenza: '2026-12-10' });
   assert.equal(d.abbonamentoAttivo, true);
+  assert.equal(d.abbonamento, 'attivo');
+  assert.equal(D.calcola({ checkMesi, obiettivi, oggi: '2026-09-30', scadenza: '2026-10-05' }).abbonamento, 'in_scadenza');
   assert.equal(d.obiettiviMancanti, false);
   assert.equal(d.ultimoCheck, '2026-09-06');
   assert.equal(D.calcola({ checkMesi, obiettivi, oggi: '2026-09-14', scadenza: '2026-09-05' }).abbonamentoAttivo, false);
