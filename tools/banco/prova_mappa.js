@@ -117,4 +117,18 @@ prova('storico: tiene solo gli ultimi mesi chiesti', () => {
   assert.deepEqual(st.righe.map(r => r.mese), [202607, 202608, 202609]);
 });
 
+prova('scheda del partner: prima il codice Amway, poi il nome; vince la lista di chi guarda', () => {
+  const contatti = [
+    { id: 'tonya', nome: 'Tonya Abela', user_id: 'ignazio', codice_amway: '7027598793' },
+    { id: 'fil-luca', nome: 'Filippo Arcoraci', user_id: 'luca' },
+    { id: 'fil-ign', nome: 'Filippo  arcoraci', user_id: 'ignazio' },
+    { id: 'vecchio', nome: 'Mario Rossi', user_id: 'ignazio', codice_amway: '999' },
+  ];
+  assert.equal(M.schedaDelPartner({ id: '7027598793', nome: 'Antonina Abela' }, contatti, 'ignazio').id, 'tonya');
+  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Filippo Arcoraci' }, contatti, 'ignazio').id, 'fil-ign');
+  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Filippo Arcoraci' }, contatti, 'luca').id, 'fil-luca');
+  assert.equal(M.schedaDelPartner({ id: '2', nome: 'Mario Rossi' }, contatti, 'ignazio'), null);   // quella scheda è di un altro codice
+  assert.equal(M.schedaDelPartner({ id: '3', nome: 'Nessuno' }, contatti, 'ignazio'), null);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
