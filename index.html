@@ -390,6 +390,7 @@
   .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
   .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
+  .mp-numeri .mp-bonus { color: var(--testo); font-weight: 700; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
@@ -455,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:51';
+const APP_VERSION = '2026.09.16 · 15:55';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2822,8 +2823,8 @@ function disegnaMappa() {
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
-          <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
-            r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
+          <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
+            r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano ${num(r.alLivelloSuccessivo)}` : ''}</div>
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('');
@@ -2873,7 +2874,7 @@ function disegnaCompleta() {
         <div><small>VPG</small><b>${num(ultimo.vpg)}</b></div>
         <div><small>Bonus</small><b>${num(bonus, 0)}%</b></div></div>
       ${manca ? `<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:#C7CBD4">
-        <span>VP mancanti al livello dopo</span><span>${num(manca)}</span></div>
+        <span>${MB21Mappa.bonusSuccessivo(bonus) ? `Per il ${MB21Mappa.bonusSuccessivo(bonus)}% mancano` : 'Per il livello successivo mancano'}</span><span>${num(manca)}</span></div>
         <div class="mp-barra"><i style="width:${fatta.toFixed(1)}%"></i></div>` : ''}
     </div>`;
 
