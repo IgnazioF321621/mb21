@@ -1,7 +1,7 @@
 // MB21 · pagina Admin (cantiere 19). Solo per l'Admin: menu a sottopagine (Carica file Amway · Utenti · Schede dei partner · Wes · BBS).
 // Spostata da index.html il 16/09 (pausa di sistemazione, la pagina unica era ~3.900 righe). Nessun cambiamento di funzionamento.
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, MP, LS, esc, mostraToast, chiediConferma, foglioLinkInvito, caricaPersone…):
-// si carica dopo lo script della pagina e le sue funzioni partono solo quando l'Admin apre la tab.
+// si carica prima dello script della pagina (solo definizioni): le sue funzioni partono quando l'Admin apre la tab.
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
