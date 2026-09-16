@@ -456,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 16:04';
+const APP_VERSION = '2026.09.16 · 16:21';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1099,14 +1099,15 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob] = await Promise.all([
+    const [cm, ob, segniAl] = await Promise.all([
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
+      calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
     ]);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01') : { checkMesi: cm.data, obiettivi: ob.data };
     DS.obiettivi = dati.obiettivi;
-    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: visto().abbonamento_scadenza });
+    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: visto().abbonamento_scadenza, segniAl });
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
@@ -1713,16 +1714,18 @@ async function leggiLista() {
 // Se la lettura non riesce la Lista si apre lo stesso, senza targhette colorate.
 async function leggiTarghe() {
   const oggi = MB21Coda.oggiRoma();
-  const [big, cep, coppie] = await Promise.all([
-    dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').gte('evento', oggi).limit(5000)),
+  const [big, cep, coppie, bbs, wes] = await Promise.all([
+    dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').limit(10000)),
     dbq('targhe CEP', supa.from('cep').select('contatto_id, dal, uscito_il').limit(5000)),
     dbq('targhe coppie', supa.from('contatti').select('id, compagno_id, compagno_nome')
       .or('compagno_id.not.is.null,compagno_nome.not.is.null').limit(5000)),
+    dbq('targhe BBS', supa.from('bbs').select('data')),
+    dbq('targhe Wes', supa.from('wes').select('data')),
   ]);
-  if (big.error || cep.error || coppie.error) return {};
+  if (big.error || cep.error || coppie.error || bbs.error || wes.error) return {};
   LS.coppie = {};
   for (const r of coppie.data) LS.coppie[r.id] = r;
-  return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi);
+  return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi, { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) });
 }
 
 async function apriLista() {
@@ -2213,7 +2216,8 @@ async function caricaSegni(c) {
   ]);
   if (big.error || cep.error || bbs.error || wes.error) throw big.error || cep.error || bbs.error || wes.error;
   return { id: c.id, ana, compagno, biglietti: big.data, cep: cep.data, cepNuovo: false,
-    date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
+    date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) },
+    attivi: { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) } };
 }
 
 // t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
@@ -2224,7 +2228,7 @@ function targheHtml(t, numeri) {
 function mostraTarghe(SV) {
   const el = document.getElementById('sv-targhe');
   if (!SV || !LS.contatto || SV.id !== LS.contatto.id) return;
-  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma());
+  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
   LS.targhe = LS.targhe || {};
   for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
   if (el) el.innerHTML = targheHtml(t);
@@ -2286,7 +2290,7 @@ async function sezioneSegni() {
   const admin = eAdmin(), archiviato = c.categoria === 'Archiviato';
   const dis = admin && !archiviato ? '' : 'disabled';
   const primo = n => String(n || '').trim().split(/\s+/)[0] || '';
-  const breve = d => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}`;
+  const breve = d => MB21Lista.etichettaEvento(d);
   const nomeDi = id => (id === c.id ? c.nome : SV.compagno && SV.compagno.id === id ? SV.compagno.nome : '');
   // l'altra persona della coppia rispetto a chi ha il biglietto
   const altroDi = b => SV.compagno
@@ -2340,7 +2344,7 @@ async function sezioneSegni() {
       const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'Wes';
       const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
       if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nel Report`);
-      const etichette = liberi.map(d => MB21Report.dataLunga(d));
+      const etichette = liberi.map(d => MB21Lista.etichettaEvento(d));
       const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
       if (!v) return;
       const evento = liberi[etichette.indexOf(v.evento)];
@@ -2354,7 +2358,7 @@ async function sezioneSegni() {
       if (soloGuardo()) return disegna();
       const b = SV.biglietti.find(x => x.id === el.closest('[data-big]').dataset.big);
       if (!MB21Lista.postiBiglietto({ ...b, [campo]: valore })) {   // niente posti: il biglietto si toglie
-        if (!confirm(`Tolgo il biglietto ${b.tipo} del ${MB21Report.dataLunga(b.evento)}?`)) return disegna();
+        if (!confirm(`Tolgo il biglietto ${b.tipo} ${MB21Lista.etichettaEvento(b.evento)}?`)) return disegna();
         const { error } = await dbq('togli biglietto', supa.from('biglietti').delete().eq('id', b.id));
         if (error) { mostraToast('Non salvato: riprova.'); return disegna(); }
         SV.biglietti = SV.biglietti.filter(x => x.id !== b.id); return disegna();
@@ -2668,10 +2672,12 @@ async function apriPaginaCheck() {
       giorni.push(...data);
       if (data.length < 1000) break;
     }
-    const [ob, wes] = await Promise.all([
+    const [ob, wes, segniAl] = await Promise.all([
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
       dbq('date dei Wes', supa.from('wes').select('data').order('data')),
+      calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
     ]);
+    CK.segniAl = segniAl;
     if (ob.error || wes.error) throw ob.error || wes.error;
     // «Tutti»: check di tutti insieme, obiettivi sommati con le partenze calcolate per ognuno (dashboard.js → unisciPartner)
     CK.obiettivi = vediTutti()
@@ -2690,7 +2696,7 @@ async function apriPaginaCheck() {
 
 function disegnaCheck() {
   const R = MB21Report, C = MB21Check, oggi = MB21Coda.oggiRoma(), p = CK.periodo;
-  const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi };
+  const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi, segniAl: CK.segniAl };
   let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>${partnerSelect()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
@@ -2773,9 +2779,10 @@ async function apriMappa() {
   caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
 }
 
-// Schede dei partner della Mappa (cantiere 18): contatti Partner o con il codice Amway, nelle liste che posso vedere,
-// e le loro targhette BBS · WES · CEP. `MB21Mappa.schedaDelPartner` sceglie la scheda: codice Amway, poi nome.
-async function caricaSchedeMappa() {
+// Segni vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway nelle liste visibili),
+// biglietti e periodi CEP con il proprietario della lista, coppie, utenti, eventi BBS e Wes con la data di caricamento.
+// Servono alla Mappa (adesso) e a Dashboard e Check (fotografia a fine mese, `MB21Mappa.segniAl`).
+async function leggiSegniGrezzi() {
   const schede = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('schede dei partner', supa.from('contatti').select('id, nome, user_id, codice_amway')
@@ -2784,24 +2791,45 @@ async function caricaSchedeMappa() {
     schede.push(...data);
     if (data.length < 1000) break;
   }
-  const oggi = MB21Coda.oggiRoma();
-  const [big, cep, coppie, ut, bbs, wes] = await Promise.all([
-    dbq('biglietti della Mappa', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti, contatti(user_id)').gte('evento', oggi).limit(5000)),
-    dbq('CEP della Mappa', supa.from('cep').select('contatto_id, dal, uscito_il, contatti(user_id)').limit(5000)),
-    dbq('coppie della Mappa', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
-    dbq('utenti della Mappa', supa.from('utenti').select('id, partner_id')),
-    dbq('prossimo BBS', supa.from('bbs').select('data').gte('data', oggi).order('data').limit(1)),
-    dbq('prossimo Wes', supa.from('wes').select('data').gte('data', oggi).order('data').limit(1)),
+  const [sq, big, cep, coppie, ut, bbs, wes] = await Promise.all([
+    MP.squadra ? { data: MP.squadra } : dbq('squadra per i segni', supa.from('squadra').select('partner_id, sponsor_id, nome')),
+    dbq('biglietti per i segni', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti, creato_il, contatti(user_id)').limit(10000)),
+    dbq('CEP per i segni', supa.from('cep').select('contatto_id, dal, uscito_il, contatti(user_id)').limit(10000)),
+    dbq('coppie per i segni', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
+    dbq('utenti per i segni', supa.from('utenti').select('id, partner_id')),
+    dbq('BBS per i segni', supa.from('bbs').select('data, creato_il')),
+    dbq('Wes per i segni', supa.from('wes').select('data, creato_il')),
   ]);
-  const errore = [big, cep, coppie, ut, bbs, wes].find(r => r.error);
+  const errore = [sq, big, cep, coppie, ut, bbs, wes].find(r => r.error);
   if (errore) throw errore.error;
   const conUtente = righe => righe.map(r => ({ ...r, user_id: r.contatti && r.contatti.user_id }));
-  const M = MB21Mappa;
-  MP.prossimi = { bbs: bbs.data.length ? bbs.data[0].data : null, wes: wes.data.length ? wes.data[0].data : null };
-  MP.schede = schede;
-  MP.targhe = MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi);
-  MP.segni = M.segniGruppo({ squadra: MP.squadra, schede, preferito: visto().id, coppie: coppie.data, utenti: ut.data,
-    biglietti: conUtente(big.data), cep: conUtente(cep.data), prossimoBbs: MP.prossimi.bbs, prossimoWes: MP.prossimi.wes, oggi });
+  return { squadra: sq.data, schede, biglietti: conUtente(big.data), cep: conUtente(cep.data), coppie: coppie.data,
+    utenti: ut.data, bbs: bbs.data, wes: wes.data, oggi: MB21Coda.oggiRoma() };
+}
+
+// Partner di cui si contano i segni: quello scelto; con «Tutti» il gruppo intero (l'Admin in cima), così non si conta due volte
+const partnerDeiSegni = () => (vediTutti() ? ST.utente.partner_id : visto().partner_id);
+
+// segniAl(giorno) per Dashboard e Check, con i risultati tenuti a mente per giorno. null se la lettura non riesce
+async function calcolatoreSegni() {
+  try {
+    const g = await leggiSegniGrezzi(), pid = partnerDeiSegni(), preferito = visto().id, fatti = {};
+    if (!pid) return null;
+    return giorno => fatti[giorno] || (fatti[giorno] = MB21Mappa.segniAl(g, pid, giorno, preferito));
+  } catch (e) {
+    return null;
+  }
+}
+
+// Mappa: schede, targhette e segni del gruppo per l'evento in vendita
+async function caricaSchedeMappa() {
+  const g = await leggiSegniGrezzi();
+  const L = MB21Lista, attivi = { bbs: L.eventoAttivo(g.bbs), wes: L.eventoAttivo(g.wes) };
+  MP.attivi = attivi;
+  MP.schede = g.schede;
+  MP.targhe = L.targhePerContatto(g.biglietti, g.cep, g.coppie, g.oggi, attivi);
+  MP.segni = MB21Mappa.segniGruppo({ squadra: MP.squadra || g.squadra, schede: g.schede, preferito: visto().id, coppie: g.coppie,
+    utenti: g.utenti, biglietti: g.biglietti, cep: g.cep, attivoBbs: attivi.bbs, attivoWes: attivi.wes, oggi: g.oggi });
 }
 const schedaMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, visto().id) : null);
 
@@ -2820,7 +2848,7 @@ function disegnaMappa() {
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
-    ${MP.prossimi ? `<div class="mp-testa"><span>Segni vitali del gruppo: prossimo BBS ${MP.prossimi.bbs ? esc(MB21Report.dataLunga(MP.prossimi.bbs)) : '—'} · prossimo Wes ${MP.prossimi.wes ? esc(MB21Report.dataLunga(MP.prossimi.wes)) : '—'} · CEP oggi</span></div>` : ''}
+    ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${t} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
@@ -3069,8 +3097,9 @@ function disegnaReport() {
     ${[...RP.wes].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
     <div class="nuovo-wes"><input type="date" id="rp-data-wes"><button id="rp-piu-wes">+ Wes</button></div></div>
     <div class="rp-wes"><h3>Date dei BBS <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
-    ${[...RP.bbs].reverse().map(w => `<div class="w"><span>${esc(R.dataLunga(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="date" id="rp-data-bbs"><button id="rp-piu-bbs">+ BBS</button></div></div>`;
+    ${[...RP.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
+    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -3101,18 +3130,19 @@ function collegaReport() {
     apriReport();
   });
   su('rp-piu-bbs', async () => {
-    const data = document.getElementById('rp-data-bbs').value;
-    if (!data) return mostraToast('Scegli la data del BBS');
+    const mese = document.getElementById('rp-data-bbs').value;   // «2026-10»
+    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del BBS');
+    const data = mese + '-01';
     const { error } = await dbq('nuovo BBS', supa.from('bbs').insert({ data }));
     if (error) return mostraToast(error.code === '23505' ? 'Questa data c\'è già' : 'Non salvato: riprova.');
-    mostraToast(`BBS del ${R.dataLunga(data)} aggiunto`);
+    mostraToast(`BBS ${MB21Lista.etichettaEvento(data)} aggiunto`);
     apriReport();
   });
   app.querySelectorAll('[data-togli-bbs]').forEach(b => b.onclick = async () => {
     const w = RP.bbs.find(x => x.id === b.dataset.togliBbs);
     const { count } = await dbq('biglietti del BBS', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'BBS').eq('evento', w.data));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo BBS`);
-    if (!confirm(`Elimino il BBS del ${R.dataLunga(w.data)}?`)) return;
+    if (!confirm(`Elimino il BBS ${MB21Lista.etichettaEvento(w.data)}?`)) return;
     const { error } = await dbq('elimina BBS', supa.from('bbs').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('BBS eliminato');
@@ -3120,7 +3150,7 @@ function collegaReport() {
   });
   app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
     const w = RP.wes.find(x => x.id === b.dataset.togli);
-    const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', w.data));
+    const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
     if (!confirm(`Elimino il Wes del ${R.dataLunga(w.data)}?`)) return;
     const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));

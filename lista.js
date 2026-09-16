@@ -120,10 +120,25 @@
     return (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + Math.max(0, Number(b.ospiti) || 0);
   }
 
-  // Date degli eventi (BBS o Wes) che il contatto non ha ancora, dalla più recente
+  // Eventi al mese (Ignazio 16/09: il BBS cade in giorni diversi nelle città): «2026-09-20» → «2026-09-01», etichetta «09/2026»
+  const meseEvento = d => String(d || '').slice(0, 8) + '01';
+  const etichettaEvento = m => `${String(m).slice(5, 7)}/${String(m).slice(0, 4)}`;
+
+  // Millisecondi da una data del database («2026-09-16T11:58:12.55943+00:00»): Safari non legge più di 3 decimali
+  const momento = t => Date.parse(String(t).replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1').replace(/([+-]\d{2})$/, '$1:00'));
+
+  // Evento in vendita: l'ultimo caricato (data più alta) tra quelli già caricati a `quando` (millisecondi; vuoto = adesso).
+  // eventi: righe di `bbs` o `wes` con data e creato_il. Restituisce il mese («2026-10-01») o null
+  function eventoAttivo(eventi, quando) {
+    const presi = (eventi || []).filter(e => quando == null || !e.creato_il || momento(e.creato_il) <= quando);
+    if (!presi.length) return null;
+    return meseEvento(presi.map(e => e.data).sort().pop());
+  }
+
+  // Mesi degli eventi (BBS o Wes) che il contatto non ha ancora, dal più recente
   function eventiLiberi(date, biglietti, tipo) {
-    const presi = new Set((biglietti || []).filter(b => b.tipo === tipo).map(b => b.evento));
-    return [...new Set(date || [])].filter(d => !presi.has(d)).sort().reverse();
+    const presi = new Set((biglietti || []).filter(b => b.tipo === tipo).map(b => meseEvento(b.evento)));
+    return [...new Set((date || []).map(meseEvento))].filter(d => !presi.has(d)).sort().reverse();
   }
 
   // CEP a periodi: messaggio d'errore per il periodo p (dal, uscito_il) rispetto agli altri del contatto, '' se va bene
@@ -140,11 +155,11 @@
     return '';
   }
 
-  // Targhette BBS · WES · CEP accanto al nome: BBS/WES accese se c'è un biglietto per un evento non ancora passato
-  // (si spengono da sole dopo l'evento), CEP accesa se oggi è dentro un periodo di abbonamento
-  function targheSegni(biglietti, periodiCep, oggi) {
-    const b = biglietti || [];
-    const conPosti = tipo => b.some(x => x.tipo === tipo && x.evento >= oggi && postiBiglietto(x) > 0);
+  // Targhette BBS · WES · CEP accanto al nome: BBS/WES accese se c'è un biglietto per l'evento in vendita
+  // (attivi = { bbs, wes }, mesi da eventoAttivo), CEP accesa se oggi è dentro un periodo di abbonamento
+  function targheSegni(biglietti, periodiCep, oggi, attivi) {
+    const b = biglietti || [], a = attivi || {};
+    const conPosti = tipo => { const m = a[tipo.toLowerCase()]; return !!m && b.some(x => x.tipo === tipo && x.evento === m && postiBiglietto(x) > 0); };
     return {
       bbs: conPosti('BBS'),
       wes: conPosti('WES'),
@@ -154,14 +169,14 @@
 
   // Targhette per tutta la Lista Nomi: { id contatto: {bbs, wes, cep} }. Le coppie collegate (id, compagno_id)
   // condividono i segni: un biglietto sulla scheda di uno accende anche l'altro
-  function targhePerContatto(biglietti, periodiCep, coppie, oggi) {
+  function targhePerContatto(biglietti, periodiCep, coppie, oggi, attivi) {
     const altro = {};
     for (const c of coppie || []) if (c.compagno_id) { altro[c.id] = c.compagno_id; altro[c.compagno_id] = c.id; }
     const perId = {}, aggiungi = (id, chiave, riga) => { for (const x of [id, altro[id]]) if (x) ((perId[x] = perId[x] || { b: [], p: [] })[chiave]).push(riga); };
     for (const b of biglietti || []) aggiungi(b.contatto_id, 'b', b);
     for (const p of periodiCep || []) aggiungi(p.contatto_id, 'p', p);
     const esito = {};
-    for (const id of Object.keys(perId)) esito[id] = targheSegni(perId[id].b, perId[id].p, oggi);
+    for (const id of Object.keys(perId)) esito[id] = targheSegni(perId[id].b, perId[id].p, oggi, attivi);
     return esito;
   }
 
@@ -186,7 +201,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
