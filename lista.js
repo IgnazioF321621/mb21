@@ -140,6 +140,18 @@
     return '';
   }
 
+  // Targhette BBS · WES · CEP accanto al nome: BBS/WES accese se c'è un biglietto per un evento non ancora passato
+  // (si spengono da sole dopo l'evento), CEP accesa se oggi è dentro un periodo di abbonamento
+  function targheSegni(biglietti, periodiCep, oggi) {
+    const b = biglietti || [];
+    const conPosti = tipo => b.some(x => x.tipo === tipo && x.evento >= oggi && postiBiglietto(x) > 0);
+    return {
+      bbs: conPosti('BBS'),
+      wes: conPosti('WES'),
+      cep: (periodiCep || []).some(p => p.dal <= oggi && (!p.uscito_il || p.uscito_il >= oggi)),
+    };
+  }
+
   // Date nel fuso di Roma: lunga «11/12/2024», breve «11/12/24»
   function data(iso, breve) {
     if (!iso) return '';
@@ -161,7 +173,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, targheSegni, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

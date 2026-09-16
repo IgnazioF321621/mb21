@@ -134,4 +134,14 @@ prova('CEP a periodi: date, un solo periodo aperto, niente sovrapposizioni', () 
   assert.equal(L.controllaPeriodoCep([vecchio], { id: 'a', dal: '2023-01-10', uscito_il: '2024-05-01' }), '');   // modifica di sé stesso
 });
 
+prova('targhette BBS · WES · CEP: evento non ancora passato, CEP abbonato oggi', () => {
+  const OGGI = '2026-09-16';
+  const big = [{ tipo: 'BBS', evento: '2026-10-18', contatto: true }, { tipo: 'WES', evento: '2026-06-05', contatto: true }];
+  assert.deepEqual(L.targheSegni(big, [], OGGI), { bbs: true, wes: false, cep: false });
+  assert.deepEqual(L.targheSegni([{ tipo: 'WES', evento: OGGI, ospiti: 1 }], [{ dal: '2024-01-01' }], OGGI), { bbs: false, wes: true, cep: true });
+  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }], OGGI).cep, false);
+  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }, { dal: '2026-02-01' }], OGGI).cep, true);
+  assert.deepEqual(L.targheSegni(null, null, OGGI), { bbs: false, wes: false, cep: false });
+});
+
 console.log(`\n${ok} prove superate`);

@@ -394,16 +394,30 @@
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
   .mp-sv span.bbs.on { background: #3B82F6; } .mp-sv span.wes.on { background: #EF4444; } .mp-sv span.cep.on { background: #22C55E; }
-  .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
   .sv-pill { font-size: 11px; font-weight: 700; letter-spacing: .3px; color: #fff; border-radius: 5px; padding: 3px 7px; }
   .sv-pill.bbs { background: #3B82F6; } .sv-pill.wes { background: #EF4444; } .sv-pill.cep { background: #22C55E; }
-  .sv-evento { border-top: 1px solid var(--linea); padding-top: 8px; margin-top: 8px; }
-  .sv-evento .quando { display: flex; justify-content: space-between; font-weight: 600; font-size: 15px; }
-  .sv-evento .quando small { color: var(--grigio); font-weight: 400; }
-  .sv-riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; }
-  .sv-riga input { width: 90px; margin: 0; padding: 8px; font-size: 16px; text-align: center; }
-  .sv-riga input[type="date"] { width: 160px; }
-  .sv-piu { border: 0; background: none; color: var(--blu); font-size: 15px; font-weight: 600; padding: 10px 0 2px; }
+  .sv-targhe { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+  .sv-targa { font-size: 10px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB; border-radius: 4px; padding: 2px 5px; }
+  .sv-targa.bbs.on { background: #3B82F6; } .sv-targa.wes.on { background: #EF4444; } .sv-targa.cep.on { background: #22C55E; }
+  .sv-ev { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 0; border-top: 1px solid var(--linea); }
+  .sv-testa + .sv-ev { border-top: 0; }
+  .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
+  .sv-ev input[type="date"] { width: auto; margin: 0; padding: 6px 8px; font-size: 15px; }
+  .sv-chip { border: 1px solid var(--linea); background: #fff; color: var(--grigio); border-radius: 999px; padding: 5px 11px; font-size: 14px; font-weight: 600; }
+  .sv-chip.on.bbs { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+  .sv-chip.on.wes { background: #EF4444; border-color: #EF4444; color: #fff; }
+  .sv-chip:disabled { opacity: 1; }
+  .sv-osp { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--grigio); margin-left: auto; }
+  .sv-osp input { width: 46px; margin: 0; padding: 5px; font-size: 15px; text-align: center; }
+  .sv-ico { border: 0; background: var(--testo); color: #fff; border-radius: 8px; width: 34px; height: 34px; font-size: 16px; }
+  .sv-ico.no { background: #F3F4F6; color: var(--grigio); }
+  .sv-piu { border: 0; background: none; color: var(--blu); font-size: 14px; font-weight: 600; padding: 4px 0; }
+  .sv-comp { display: flex; align-items: center; gap: 10px; }
+  .sv-comp .sv-piu { margin-left: auto; }
+  .sv-link { border: 0; background: none; padding: 0; color: var(--blu); font-size: 15px; font-weight: 600; text-align: left; }
+  .sc-elenco button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea); background: none; padding: 10px 2px; font-size: 15px; }
+  .sc-elenco button small { color: var(--grigio); }
   .mp-completa { flex: 0 0 auto; align-self: center; background: none; border: 0; padding: 6px 4px 6px 10px;
     font-size: 20px; line-height: 1; color: var(--grigio-chiaro); }
   .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -1861,7 +1875,7 @@ function apriScheda(id) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = 'dati';
-  LS.azioni = null; LS.note = null;
+  LS.azioni = null; LS.note = null; LS.sv = null;
   window.scrollTo(0, 0);
   disegnaScheda();
 }
@@ -1884,7 +1898,7 @@ function disegnaScheda() {
         <div class="alto">
           <div>
             <div class="cat" style="color:${coloreCategoria(c.categoria)}">${esc(c.categoria || 'Senza categoria')}</div>
-            <h1>${esc(c.nome)}${nuovoBadge(c)}</h1>
+            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targheHtml(null)}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
@@ -1916,6 +1930,8 @@ function disegnaScheda() {
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
+  if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
+  else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
 }
 
@@ -2087,102 +2103,194 @@ function sezioneOnboarding() {
   disegna();
 }
 
-// Segni vitali sulla persona (cantiere 18): compagno/a, biglietti BBS e WES, CEP solo per i Partner.
+// Segni vitali sulla persona (cantiere 18): compagno/a, biglietti BBS e WES, CEP.
+// Compagno/a: una scheda della lista collegata nei due sensi (`collega_compagno`) oppure nome e telefono a mano.
+// Con la scheda collegata i biglietti e il CEP della coppia si vedono e si modificano da tutte e due le schede.
 // Biglietti, CEP e date dei BBS li scrive solo l'Admin; il compagno/a chi può modificare il contatto.
-async function sezioneSegni() {
-  const c = LS.contatto;
-  const box = document.getElementById('sezione');
-  box.innerHTML = '<div class="vuoto">Carico…</div>';
-  const [ana, big, cep, bbs, wes] = await Promise.all([
-    dbq('compagno', supa.from('contatti').select('compagno_nome, compagno_telefono').eq('id', c.id).maybeSingle()),
-    dbq('biglietti', supa.from('biglietti').select('*').eq('contatto_id', c.id)),
-    dbq('cep', supa.from('cep').select('*').eq('contatto_id', c.id).order('dal', { ascending: false })),
+async function caricaSegni(c) {
+  const { data: ana, error } = await dbq('compagno', supa.from('contatti')
+    .select('compagno_id, compagno_nome, compagno_telefono').eq('id', c.id).maybeSingle());
+  if (error || !ana) throw error || new Error('contatto');
+  let compagno = null;
+  if (ana.compagno_id) {
+    const r = await dbq('scheda del compagno', supa.from('contatti').select('id, nome, categoria').eq('id', ana.compagno_id).maybeSingle());
+    compagno = r.data || null;
+  }
+  const ids = [c.id, compagno && compagno.id].filter(Boolean);
+  const [big, cep, bbs, wes] = await Promise.all([
+    dbq('biglietti', supa.from('biglietti').select('*').in('contatto_id', ids)),
+    dbq('cep', supa.from('cep').select('*').in('contatto_id', ids).order('dal', { ascending: false })),
     dbq('date dei BBS', supa.from('bbs').select('data').order('data')),
     dbq('date dei Wes', supa.from('wes').select('data').order('data')),
   ]);
-  if (LS.contatto !== c || LS.sezione !== 'segni') return;
-  if (ana.error || big.error || cep.error || bbs.error || wes.error) {
-    box.innerHTML = '<div class="vuoto">Segni vitali non caricati: riprova.</div>';
+  if (big.error || cep.error || bbs.error || wes.error) throw big.error || cep.error || bbs.error || wes.error;
+  return { id: c.id, ana, compagno, biglietti: big.data, cep: cep.data, cepNuovo: false,
+    date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
+}
+
+function targheHtml(t) {
+  return ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}</span>`).join('');
+}
+function mostraTarghe(SV) {
+  const el = document.getElementById('sv-targhe');
+  if (el && LS.contatto && SV && SV.id === LS.contatto.id) el.innerHTML = targheHtml(MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma()));
+}
+function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
+  if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);
+  if (LS.svLettura && LS.svLettura.id === c.id) return LS.svLettura.promessa;
+  const promessa = caricaSegni(c).then(SV => { if (LS.contatto && LS.contatto.id === c.id) LS.sv = SV; return SV; })
+    .finally(() => { if (LS.svLettura && LS.svLettura.promessa === promessa) LS.svLettura = null; });
+  LS.svLettura = { id: c.id, promessa };
+  return promessa;
+}
+
+// Foglio per scegliere il compagno/a tra le schede della stessa lista. Restituisce {id, nome} · 'mano' · null
+function scegliCompagno(c) {
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio alto">
+      <div class="testa-foglio"><h3>Compagno/a</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      <div class="campo"><label>Cerca nella lista</label><input id="sc-cerca" type="search" placeholder="Nome o cognome" autocomplete="off"></div>
+      <div id="sc-elenco" class="sc-elenco"></div>
+      <button class="link" id="sc-mano" style="width:100%">Non è in lista: scrivo nome e telefono</button></div>`;
+    document.body.appendChild(velo);
+    const chiudi = v => { velo.remove(); risolvi(v); };
+    velo.querySelector('#sc-x').onclick = () => chiudi(null);
+    velo.querySelector('#sc-mano').onclick = () => chiudi('mano');
+    const input = velo.querySelector('#sc-cerca'), elenco = velo.querySelector('#sc-elenco');
+    let giro = 0;
+    input.oninput = async () => {
+      const testo = input.value.trim(), mio = ++giro;
+      if (testo.length < 2) { elenco.innerHTML = ''; return; }
+      const { data, error } = await dbq('cerca compagno', supa.from('contatti').select('id, nome, categoria')
+        .eq('user_id', c.user_id).neq('id', c.id).ilike('nome', `%${testo.replace(/[%_,]/g, ' ')}%`).order('nome').limit(15));
+      if (mio !== giro) return;
+      if (error) { elenco.innerHTML = '<div class="sotto">Ricerca non riuscita: riprova.</div>'; return; }
+      elenco.innerHTML = data.length
+        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc(r.categoria || 'Senza categoria')}</small></button>`).join('')
+        : '<div class="sotto">Nessun nome trovato</div>';
+      elenco.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(data.find(r => r.id === b.dataset.id)));
+    };
+    setTimeout(() => input.focus(), 50);
+  });
+}
+
+async function sezioneSegni() {
+  const c = LS.contatto;
+  const box = document.getElementById('sezione');
+  let SV;
+  if (!(LS.sv && LS.sv.id === c.id)) box.innerHTML = '<div class="vuoto">Carico…</div>';
+  try { SV = await segniDellaScheda(c); } catch (e) {
+    if (LS.contatto === c) box.innerHTML = '<div class="vuoto">Segni vitali non caricati: riprova.</div>';
     return;
   }
-  const SV = { comp: ana.data || {}, biglietti: big.data, cep: cep.data, cepNuovo: false, date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
+  if (LS.contatto !== c || LS.sezione !== 'segni') return;
   const admin = eAdmin(), archiviato = c.categoria === 'Archiviato';
-  const nomeBreve = n => esc(String(n || '').trim().split(/\s+/)[0] || '');
   const dis = admin && !archiviato ? '' : 'disabled';
+  const primo = n => String(n || '').trim().split(/\s+/)[0] || '';
+  const breve = d => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}`;
+  const nomeDi = id => (id === c.id ? c.nome : SV.compagno && SV.compagno.id === id ? SV.compagno.nome : '');
+  // l'altra persona della coppia rispetto a chi ha il biglietto
+  const altroDi = b => SV.compagno
+    ? (b.contatto_id === c.id ? SV.compagno.nome : c.nome)
+    : SV.ana.compagno_nome || (b.compagno ? 'Compagno/a' : '');
 
   const riquadroEventi = tipo => {
+    const k = tipo.toLowerCase();
     const miei = SV.biglietti.filter(b => b.tipo === tipo).sort((a, b) => b.evento.localeCompare(a.evento));
-    const righe = miei.map(b => `<div class="sv-evento" data-big="${esc(b.id)}">
-        <div class="quando"><span>${tipo === 'BBS' ? 'BBS' : 'Wes'} ${esc(MB21Report.dataLunga(b.evento))}</span>
-          <small>${MB21Lista.postiBiglietto(b)} ${MB21Lista.postiBiglietto(b) === 1 ? 'biglietto' : 'biglietti'}</small></div>
-        <label class="interruttore"><span>${esc(c.nome)}</span><input type="checkbox" data-campo="contatto" ${b.contatto ? 'checked' : ''} ${dis}></label>
-        ${SV.comp.compagno_nome || b.compagno ? `<label class="interruttore"><span>${esc(SV.comp.compagno_nome || 'Compagno/a')} <small>compagno/a</small></span>
-          <input type="checkbox" data-campo="compagno" ${b.compagno ? 'checked' : ''} ${dis}></label>` : ''}
-        <div class="sv-riga"><span>Ospiti senza nome</span><input type="number" min="0" max="50" data-campo="ospiti" value="${b.ospiti}" ${dis}></div>
-      </div>`).join('');
-    return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill ${tipo.toLowerCase()}">${tipo}</span></div>
-      ${righe || '<div class="sotto" style="margin:4px 0">Nessun biglietto</div>'}
-      ${admin && !archiviato ? `<button class="sv-piu" data-piu="${tipo}">+ Biglietto ${tipo}</button>` : ''}</div>`;
+    return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill ${k}">${tipo}</span>
+        ${dis ? '' : `<button class="sv-piu" data-piu="${tipo}">+ Biglietto</button>`}</div>
+      ${miei.map(b => `<div class="sv-ev" data-big="${esc(b.id)}">
+        <span class="quando">${esc(breve(b.evento))}</span>
+        <button class="sv-chip ${k} ${b.contatto ? 'on' : ''}" data-campo="contatto" ${dis}>${esc(primo(nomeDi(b.contatto_id)))}</button>
+        ${altroDi(b) ? `<button class="sv-chip ${k} ${b.compagno ? 'on' : ''}" data-campo="compagno" ${dis}>${esc(primo(altroDi(b)))}</button>` : ''}
+        <label class="sv-osp">+<input type="number" min="0" max="50" data-campo="ospiti" value="${b.ospiti}" ${dis}>ospiti</label>
+      </div>`).join('') || '<div class="sotto" style="margin:0">Nessun biglietto</div>'}
+    </div>`;
   };
 
-  // CEP a periodi (Ignazio 16/09: si esce e si rientra). Ogni periodo si salva col suo bottone:
+  // CEP a periodi (si esce e si rientra). Ogni periodo si salva col suo bottone:
   // salvando a ogni cambio, mentre si scrive l'anno «0002» sembrava già una data
-  const bloccoCep = p => `<div class="sv-evento" data-cep="${esc(p.id || 'nuovo')}">
-      <div class="sv-riga"><span>Abbonato dal</span><input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis}></div>
-      <div class="sv-riga"><span>Uscito il</span><input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis}></div>
-      ${dis ? '' : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0">
-        <button class="link" data-cep-togli>${p.id ? 'Elimina' : 'Annulla'}</button><button class="primario" data-cep-salva>Salva</button></div>`}
+  const bloccoCep = p => `<div class="sv-ev" data-cep="${esc(p.id || 'nuovo')}">
+      <input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis} aria-label="Abbonato dal">
+      <span class="sotto" style="margin:0">→</span>
+      <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">
+      ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
     </div>`;
   const riquadroCep = () => {
-    const aperto = SV.cep.some(p => !p.uscito_il);
+    const aperto = MB21Lista.targheSegni([], SV.cep, MB21Coda.oggiRoma()).cep;
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
-        <small style="color:var(--grigio)">${aperto ? 'Abbonato ora' : SV.cep.length ? 'Non abbonato ora' : ''}</small></div>
-      ${SV.cepNuovo ? bloccoCep({}) : ''}
-      ${SV.cep.map(bloccoCep).join('')}
-      ${!SV.cep.length && !SV.cepNuovo ? '<div class="sotto" style="margin:4px 0">Nessun abbonamento</div>' : ''}
-      ${dis || SV.cepNuovo ? '' : '<button class="sv-piu" id="sv-cep-nuovo">+ Nuovo periodo</button>'}</div>`;
+        <small class="sotto" style="margin:0">${SV.cep.length ? (aperto ? 'Abbonato ora' : 'Non abbonato ora') : 'dal → uscito il'}</small>
+        ${dis || SV.cepNuovo ? '' : '<button class="sv-piu" id="sv-cep-nuovo">+ Periodo</button>'}</div>
+      ${SV.cepNuovo ? bloccoCep({}) : ''}${SV.cep.map(bloccoCep).join('')}
+      ${!SV.cep.length && !SV.cepNuovo ? '<div class="sotto" style="margin:0">Nessun abbonamento</div>' : ''}</div>`;
   };
 
   const disegna = () => {
-    const comp = SV.comp;
+    const a = SV.ana;
+    const conCep = c.categoria === 'Partner' || (SV.compagno && SV.compagno.categoria === 'Partner') || SV.cep.length;
+    const compagno = SV.compagno
+      ? `<button class="sv-link" id="sv-apri-comp">${esc(SV.compagno.nome)} ›</button>`
+      : a.compagno_nome || a.compagno_telefono
+        ? `<span>${esc(a.compagno_nome || '')}${a.compagno_telefono ? ` <small class="sotto">${esc(a.compagno_telefono)}</small>` : ''}</span>`
+        : '<span class="sotto" style="margin:0">Nessuno</span>';
     box.innerHTML = `
-      <div class="riquadro">
-        <div class="sv-testa"><b>Compagno/a</b>${archiviato ? '' : '<button class="sv-piu" id="sv-comp" style="padding:0">Modifica</button>'}</div>
-        ${comp.compagno_nome || comp.compagno_telefono
-          ? `<div>${esc(comp.compagno_nome || '')}</div><div class="sotto" style="margin:0">${esc(comp.compagno_telefono || '')}</div>`
-          : '<div class="sotto" style="margin:0">Nessuno</div>'}
-      </div>
-      ${riquadroEventi('BBS')}
-      ${riquadroEventi('WES')}
-      ${c.categoria === 'Partner' ? riquadroCep() : ''}
-      ${admin ? '' : '<div class="sotto" style="text-align:center">Biglietti e CEP li scrive l\'Admin</div>'}`;
+      <div class="riquadro sv-comp"><span class="sotto" style="margin:0">Compagno/a</span>${compagno}
+        ${archiviato ? '' : `<button class="sv-piu" id="sv-comp">${SV.compagno || a.compagno_nome || a.compagno_telefono ? 'Cambia' : 'Scegli'}</button>`}</div>
+      ${riquadroEventi('BBS')}${riquadroEventi('WES')}${conCep ? riquadroCep() : ''}`;
+    mostraTarghe(SV);
     collega();
   };
 
+  const ricarica = async () => {   // dopo un cambio del compagno: la coppia cambia, si rilegge tutto
+    LS.sv = null; LS.svLettura = null;
+    try { SV = await segniDellaScheda(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
+    if (LS.contatto === c && LS.sezione === 'segni') disegna();
+  };
+
   const collega = () => {
+    const apri = document.getElementById('sv-apri-comp');
+    if (apri) apri.onclick = async () => {
+      const id = SV.compagno.id, ritorno = LS.ritorno;
+      await apriContattoDa(id, ritorno);
+      if (LS.contatto && LS.contatto.id === id) { LS.sezione = 'segni'; disegnaScheda(); }
+    };
+
     const bComp = document.getElementById('sv-comp');
     if (bComp) bComp.onclick = async () => {
       if (soloGuardo()) return;
-      const v = await moduloSemplice('Compagno/a', [
-        { k: 'nome', etichetta: 'Nome e cognome', tipo: 'text', valore: SV.comp.compagno_nome || '' },
-        { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: SV.comp.compagno_telefono || '' },
-      ]);
-      if (!v) return;
-      const nuovo = { compagno_nome: v.nome.trim() || null, compagno_telefono: v.telefono.trim() || null };
-      const { error } = await dbq('salva compagno', supa.from('contatti').update(nuovo).eq('id', c.id));
-      if (error) return mostraToast('Non salvato: riprova.');
-      SV.comp = nuovo; mostraToast('Compagno/a salvato'); disegna();
+      const scelta = await scegliCompagno(c);
+      if (!scelta) return;
+      if (scelta === 'mano') {
+        const v = await moduloSemplice('Compagno/a non in lista', [
+          { k: 'nome', etichetta: 'Nome e cognome', tipo: 'text', valore: SV.ana.compagno_nome || '' },
+          { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: SV.ana.compagno_telefono || '' },
+        ]);
+        if (!v) return;
+        if (SV.compagno) {
+          const { error } = await dbq('scollega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: null }));
+          if (error) return mostraToast('Non salvato: riprova.');
+        }
+        const { error } = await dbq('salva compagno', supa.from('contatti')
+          .update({ compagno_nome: v.nome.trim() || null, compagno_telefono: v.telefono.trim() || null }).eq('id', c.id));
+        if (error) return mostraToast('Non salvato: riprova.');
+        mostraToast(v.nome.trim() || v.telefono.trim() ? 'Compagno/a salvato' : 'Compagno/a tolto');
+        return ricarica();
+      }
+      const { error } = await dbq('collega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: scelta.id }));
+      if (error) return mostraToast('Non collegato: riprova.');
+      mostraToast(`Collegato a ${scelta.nome}`);
+      ricarica();
     };
 
     box.querySelectorAll('[data-piu]').forEach(b => b.onclick = async () => {
       if (soloGuardo()) return;
-      const tipo = b.dataset.piu;
+      const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'Wes';
       const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
-      if (!liberi.length) return mostraToast(SV.date[tipo].length
-        ? `Ha già un biglietto per tutti i ${tipo === 'BBS' ? 'BBS' : 'Wes'}`
-        : `Prima aggiungi le date dei ${tipo === 'BBS' ? 'BBS' : 'Wes'} nel Report`);
+      if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nel Report`);
       const etichette = liberi.map(d => MB21Report.dataLunga(d));
-      const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: tipo === 'BBS' ? 'Quale BBS' : 'Quale Wes', tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
+      const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
       if (!v) return;
       const evento = liberi[etichette.indexOf(v.evento)];
       const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
@@ -2191,22 +2299,23 @@ async function sezioneSegni() {
       SV.biglietti.push(data); disegna();
     });
 
-    box.querySelectorAll('[data-big] [data-campo]').forEach(el => el.onchange = async () => {
+    const salvaBiglietto = async (el, campo, valore) => {
       if (soloGuardo()) return disegna();
       const b = SV.biglietti.find(x => x.id === el.closest('[data-big]').dataset.big);
-      const campo = el.dataset.campo;
-      const valore = campo === 'ospiti' ? Math.min(50, Math.max(0, Math.round(Number(el.value) || 0))) : el.checked;
-      const prova = { ...b, [campo]: valore };
-      if (!MB21Lista.postiBiglietto(prova)) {   // niente posti: il biglietto si toglie
+      if (!MB21Lista.postiBiglietto({ ...b, [campo]: valore })) {   // niente posti: il biglietto si toglie
         if (!confirm(`Tolgo il biglietto ${b.tipo} del ${MB21Report.dataLunga(b.evento)}?`)) return disegna();
         const { error } = await dbq('togli biglietto', supa.from('biglietti').delete().eq('id', b.id));
         if (error) { mostraToast('Non salvato: riprova.'); return disegna(); }
-        SV.biglietti = SV.biglietti.filter(x => x.id !== b.id); mostraToast('Biglietto tolto'); return disegna();
+        SV.biglietti = SV.biglietti.filter(x => x.id !== b.id); return disegna();
       }
       const { error } = await dbq('salva biglietto', supa.from('biglietti').update({ [campo]: valore }).eq('id', b.id));
       if (error) mostraToast('Non salvato: riprova.'); else b[campo] = valore;
       disegna();
-    });
+    };
+    box.querySelectorAll('[data-big] button[data-campo]').forEach(el => el.onclick = () =>
+      salvaBiglietto(el, el.dataset.campo, !el.classList.contains('on')));
+    box.querySelectorAll('[data-big] input[data-campo]').forEach(el => el.onchange = () =>
+      salvaBiglietto(el, 'ospiti', Math.min(50, Math.max(0, Math.round(Number(el.value) || 0)))));
 
     const nuovoCep = document.getElementById('sv-cep-nuovo');
     if (nuovoCep) nuovoCep.onclick = () => { if (!soloGuardo()) { SV.cepNuovo = true; disegna(); } };
@@ -2217,10 +2326,10 @@ async function sezioneSegni() {
         const p = { id, dal: blocco.querySelector('[data-k="dal"]').value, uscito_il: blocco.querySelector('[data-k="uscito_il"]').value || null };
         const errore = MB21Lista.controllaPeriodoCep(SV.cep, p);
         if (errore) return mostraToast(errore);
-        const riga = { contatto_id: c.id, dal: p.dal, uscito_il: p.uscito_il, aggiornato_il: new Date().toISOString() };
+        const riga = { dal: p.dal, uscito_il: p.uscito_il, aggiornato_il: new Date().toISOString() };
         const { data, error } = await dbq('salva CEP', id
           ? supa.from('cep').update(riga).eq('id', id).select().single()
-          : supa.from('cep').insert(riga).select().single());
+          : supa.from('cep').insert({ ...riga, contatto_id: c.id }).select().single());
         if (error) return mostraToast('Non salvato: riprova.');
         SV.cep = [data, ...SV.cep.filter(x => x.id !== id)].sort((a, b) => b.dal.localeCompare(a.dal));
         if (!id) SV.cepNuovo = false;
@@ -2231,7 +2340,7 @@ async function sezioneSegni() {
         if (soloGuardo() || !confirm('Elimino questo periodo di CEP?')) return;
         const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('id', id));
         if (error) return mostraToast('Non eliminato: riprova.');
-        SV.cep = SV.cep.filter(x => x.id !== id); mostraToast('Periodo eliminato'); disegna();
+        SV.cep = SV.cep.filter(x => x.id !== id); disegna();
       };
     });
   };
