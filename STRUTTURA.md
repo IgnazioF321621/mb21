@@ -30,7 +30,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 
 **Pagina Mappa** (`mappa.js` + index.html, cantiere 17 lavoro 2, 16/09):
 - quinta tab **Mappa**. `mappa.js`: `stato(vpp)` (≥50 attivo · >0 warning · 0 inattivo), `nomeLeggibile` («FIORITO, IGNAZIO» → «Ignazio Fiorito»), `albero(squadra, volumi)`, `righe(cime, {aperti, filtro, cerca})`, `conta`, `tuttiGliId`. 10 prove in `tools/banco/prova_mappa.js`
-- la riga si apre e si chiude sul posto (**+** / **−**), rientro per livello; ordine dell'albero, mai per stato
+- la riga si apre e si chiude sul posto (**+** / **−**), rientro per livello; ordine dell'albero, mai per stato: dentro ogni livello **prima i team più grandi** (`dimensioni_gruppo`, come Amway), a pari numero per nome. Chi non ha nessuno sotto: cerchietto piccolo vuoto
 - filtri **Tutti · Attivi · Warning · Inattivi** con i conteggi, «Apri tutto», ricerca per nome o codice: chi non passa sparisce ma **chi sta sopra resta, spento**
 - riga: livello · pallino · nome · pillole **BBS/WES/CEP grigie** (si accendono col cantiere 14 lavoro 5) · VPP · VPG · bonus · gruppo · al livello dopo
 - **tocco sul nome** → scheda contatto se quel nome è in una lista visibile (torna alla Mappa), altrimenti avviso

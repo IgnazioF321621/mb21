@@ -381,9 +381,10 @@
     border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
   .mp-riga { display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--bordo); }
   .mp-riga.spento { opacity: .45; }
-  .mp-apri { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--bordo);
-    background: #fff; font-size: 14px; font-weight: 700; color: var(--grigio); line-height: 1; }
-  .mp-apri.vuoto { border-style: dashed; color: var(--bordo); }
+  .mp-apri { flex: 0 0 auto; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--bordo);
+    background: #fff; font-size: 15px; font-weight: 700; color: var(--grigio); line-height: 1; padding: 0; }
+  .mp-apri.vuoto { width: 12px; height: 12px; margin: 6px; border-color: #E5E7EB; }
   .mp-corpo { flex: 1; min-width: 0; }
   .mp-nome { background: none; border: 0; padding: 0; font-size: 15px; font-weight: 600; color: var(--testo); text-align: left; }
   .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
@@ -416,7 +417,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 08:05';
+const APP_VERSION = '2026.09.16 · 08:24';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2472,7 +2473,7 @@ function disegnaMappa() {
       const s = M.STATI[r.stato];
       const apri = r.haFigli
         ? `<button class="mp-apri" data-mpapri="${esc(r.id)}" aria-label="${r.aperto ? 'Chiudi' : 'Apri'} il gruppo di ${esc(r.nome)}">${r.aperto ? '−' : '+'}</button>`
-        : `<span class="mp-apri vuoto">·</span>`;
+        : `<span class="mp-apri vuoto"></span>`;
       return `<div class="mp-riga ${r.spento ? 'spento' : ''}" style="padding-left:${10 + r.profondita * 18}px">
         ${apri}
         <div class="mp-corpo">

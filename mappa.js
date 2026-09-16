@@ -49,8 +49,10 @@
       const sopra = n.sponsor && perId[n.sponsor];
       if (sopra) sopra.figli.push(n); else cime.push(n);
     }
-    const ordina = n => { n.figli.sort((a, b) => a.nome.localeCompare(b.nome, 'it')); n.figli.forEach(ordina); };
-    cime.sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+    // Ordine di Amway: prima i team più grandi (quante persone sotto), a pari numero per nome
+    const perGruppo = (a, b) => (Number(b.gruppo) || 0) - (Number(a.gruppo) || 0) || a.nome.localeCompare(b.nome, 'it');
+    const ordina = n => { n.figli.sort(perGruppo); n.figli.forEach(ordina); };
+    cime.sort(perGruppo);
     cime.forEach(ordina);
     return cime;
   }
