@@ -483,7 +483,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 19:45';
+const APP_VERSION = '2026.09.16 · 20:00';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -905,6 +905,7 @@ async function toccaCategoria(id, indice) {
   const contatto = ST.catalogo.righe.find(x => x.id === id);
   if (!contatto) return;
   const scelta = CATEGORIE_CATALOGO[indice];
+  const eraPartner = contatto.categoria === 'Partner';
   const card = document.getElementById('card-' + id);
   card.querySelectorAll('button').forEach(b => { b.disabled = true; });
   const { data: prima, error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: id, p_categoria: scelta.categoria }));
@@ -922,6 +923,7 @@ async function toccaCategoria(id, indice) {
     ST.aperta = daChiamare ? id : null;
     disegnaOggi();
     mostraToast(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(contatto, prima, daChiamare, indice));
+    if (scelta.categoria === 'Partner' && !eraPartner) domandaInvito(contatto);
   };
   if (daChiamare) return dopo();
   card.classList.add('via');
@@ -1743,6 +1745,7 @@ async function nuovoAppuntamento(opz = {}) {
         const { error: ec } = await dbq('categoria contatto', supa.from('contatti').update({ categoria: v.categoria }).eq('id', v.contatto_id));
         if (ec) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: riprova.'; return; }
         contattiMiei = null; LS.righe = [];
+        if (v.categoria === 'Partner') setTimeout(() => domandaInvito({ ...st.contatto, user_id: riga.user_id }), 400);
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
@@ -2012,6 +2015,7 @@ function disegnaScheda() {
           ${link('https://wa.me/' + cifre, 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}
         </div>
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
+        ${c.categoria === 'Partner' ? '<button class="link" id="invita-app">🔗 Invita nell\'app MB21</button>' : ''}
       </div>
     </div>
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}
@@ -2033,6 +2037,8 @@ function disegnaScheda() {
   };
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
+  const inv = document.getElementById('invita-app');
+  if (inv) inv.onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
@@ -2589,6 +2595,7 @@ function apriModulo(c) {
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : 'Modifiche salvate');
     ricaricaERidisegna();
+    if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
   };
 }
 
@@ -3219,13 +3226,15 @@ async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
-    const [wes, bbs, ut, rich] = await Promise.all([
+    const [wes, bbs, ut, rich, sq] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
+      dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
     ]);
-    if (wes.error || bbs.error || ut.error || rich.error) throw wes.error || bbs.error || ut.error || rich.error;
+    if (wes.error || bbs.error || ut.error || rich.error || sq.error) throw wes.error || bbs.error || ut.error || rich.error || sq.error;
+    AD.codiciMappa = new Set(sq.data.map(x => x.partner_id));
     AD.richieste = rich.data; AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
     AD.wes = wes.data; AD.bbs = bbs.data;
     // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
@@ -3286,6 +3295,7 @@ function disegnaAdmin() {
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
           <small>${esc(r.email)}${r.telefono ? ' · ' + esc(r.telefono) : ''} · codice ${esc(r.codice_amway)}</small>
           <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ⚠️ codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
+          ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>⚠️ codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
@@ -3336,18 +3346,20 @@ function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
 
 // Link di registrazione di chi è entrato («da» = lui): si vede scritto, si copia, e sul telefono si manda con Condividi.
 // Il foglio serve perché la copia automatica non funziona dappertutto (Ignazio 16/09: «non si può copiare il link»).
-function foglioLinkInvito() {
-  const link = `${location.origin}${location.pathname}?registrati&da=${ST.utente.id}`;
-  const messaggio = `Registrati a MB21 da questo link: ${link}`;
+// opz: { da: id di chi invita (predefinito: chi è entrato), nome, telefono } → WhatsApp e SMS già indirizzati alla persona
+function foglioLinkInvito(opz = {}) {
+  const link = `${location.origin}${location.pathname}?registrati&da=${opz.da || ST.utente.id}`;
+  const messaggio = `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link: ${link}`;
+  const tel = opz.telefono && opz.telefono.startsWith('+') ? opz.telefono : '';   // i numeri dubbi non partono
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>🔗 Link di registrazione</h3>
-    <p>Mandalo a chi si deve registrare: la richiesta arriva all'Admin, che la approva.</p>
+  velo.innerHTML = `<div class="foglio"><h3>🔗 ${opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione'}</h3>
+    <p>${opz.nome ? 'Mandagli il link: si registra, e l\'Admin approva la richiesta.' : 'Mandalo a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
     <textarea id="li-testo" readonly rows="3" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(link)}</textarea>
     <div class="li-canali">
-      <a href="https://wa.me/?text=${encodeURIComponent(messaggio)}" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(messaggio)}" target="_blank" rel="noopener">WhatsApp</a>
       <a href="https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Registrati a MB21 da questo link:')}" target="_blank" rel="noopener">Telegram</a>
-      <a href="sms:?&body=${encodeURIComponent(messaggio)}">SMS</a>
+      <a href="sms:${tel}?&body=${encodeURIComponent(messaggio)}">SMS</a>
     </div>
     ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Altre app</button>' : ''}
     <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia</button>
@@ -3367,7 +3379,14 @@ function foglioLinkInvito() {
     if (!ok) { testo.focus(); testo.select(); }
   };
   const cond = velo.querySelector('#li-condividi');
-  if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: 'Registrati a MB21 da questo link:', url: link }).catch(() => {});
+  if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: messaggio }).catch(() => {});
+}
+
+// Contatto appena diventato Partner (Ignazio 16/09): domanda «Vuoi invitarlo nell'app MB21?». Invitato da = proprietario della lista.
+async function domandaInvito(c) {
+  if (!c || !c.nome) return;
+  const si = await chiediConferma(`${c.nome} è diventato Partner`, "Vuoi invitarlo nell'app MB21? Puoi farlo anche dopo, dalla sua scheda.", "🔗 Invita nell'app MB21");
+  if (si) foglioLinkInvito({ da: c.user_id || visto().id, nome: c.nome, telefono: c.telefono });
 }
 
 // Stesso foglio per ✏️ Modifica (u = utente): nome, codice, email (solo se non è mai entrato: il suo accesso è legato all'email).
