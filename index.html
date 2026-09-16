@@ -456,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 16:32';
+const APP_VERSION = '2026.09.16 · 16:38';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2779,14 +2779,15 @@ async function apriMappa() {
   caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
 }
 
-// Segni vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway nelle liste visibili),
+// Segni vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway in tutte le liste che posso
+// leggere: l'Admin tutte, anche con il Partner Select su un altro partner, così non si crea una scheda che c'è già altrove),
 // biglietti e periodi CEP con il proprietario della lista, coppie, utenti, eventi BBS e Wes con la data di caricamento.
 // Servono alla Mappa (adesso) e a Dashboard e Check (fotografia a fine mese, `MB21Mappa.segniAl`).
 async function leggiSegniGrezzi() {
   const schede = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('schede dei partner', supa.from('contatti').select('id, nome, user_id, codice_amway')
-      .in('user_id', idVisti()).or('categoria.eq.Partner,codice_amway.not.is.null').order('id').range(da, da + 999));
+      .or('categoria.eq.Partner,codice_amway.not.is.null').order('id').range(da, da + 999));
     if (error) throw error;
     schede.push(...data);
     if (data.length < 1000) break;
