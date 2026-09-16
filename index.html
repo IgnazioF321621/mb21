@@ -456,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 16:42';
+const APP_VERSION = '2026.09.16 · 16:45';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2198,10 +2198,21 @@ function sezioneOnboarding() {
 // Compagno/a: una scheda della lista collegata nei due sensi (`collega_compagno`) oppure nome e telefono a mano.
 // Con la scheda collegata i biglietti e il CEP della coppia si vedono e si modificano da tutte e due le schede.
 // Biglietti, CEP e date dei BBS li scrive solo l'Admin; il compagno/a chi può modificare il contatto.
+// Nome per un confronto esatto senza maiuscole (ilike senza caratteri jolly)
+const nomeEsatto = nome => String(nome || '').trim().replace(/[\\%_]/g, x => '\\' + x);
+
 async function caricaSegni(c) {
   const { data: ana, error } = await dbq('compagno', supa.from('contatti')
-    .select('compagno_id, compagno_nome, compagno_telefono').eq('id', c.id).maybeSingle());
+    .select('compagno_id, compagno_nome, compagno_telefono, codice_amway').eq('id', c.id).maybeSingle());
   if (error || !ana) throw error || new Error('contatto');
+  // Regola di Ignazio (16/09): i segni vitali di una persona si scrivono su una scheda sola.
+  // Per un partner vale la scheda col codice Amway: se è un'altra (stesso nome, altra lista) questa rimanda lì
+  let ufficiale = null;
+  if (!ana.codice_amway) {
+    const r = await dbq('scheda col codice', supa.from('contatti').select('id, user_id, utenti(nome)')
+      .not('codice_amway', 'is', null).neq('id', c.id).ilike('nome', nomeEsatto(c.nome)).limit(1));
+    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, lista: r.data[0].utenti ? r.data[0].utenti.nome : '' };
+  }
   let compagno = null;
   if (ana.compagno_id) {
     const r = await dbq('scheda del compagno', supa.from('contatti').select('id, nome, categoria').eq('id', ana.compagno_id).maybeSingle());
@@ -2215,7 +2226,7 @@ async function caricaSegni(c) {
     dbq('date dei Wes', supa.from('wes').select('data').order('data')),
   ]);
   if (big.error || cep.error || bbs.error || wes.error) throw big.error || cep.error || bbs.error || wes.error;
-  return { id: c.id, ana, compagno, biglietti: big.data, cep: cep.data, cepNuovo: false,
+  return { id: c.id, ana, compagno, ufficiale, biglietti: big.data, cep: cep.data, cepNuovo: false,
     date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) },
     attivi: { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) } };
 }
@@ -2330,6 +2341,15 @@ async function sezioneSegni() {
 
   const disegna = () => {
     const a = SV.ana;
+    if (SV.ufficiale) {   // partner con la scheda ufficiale in un'altra lista: qui non si scrive
+      box.innerHTML = `<div class="riquadro"><div class="sotto" style="margin:0 0 8px">I segni vitali di ${esc(c.nome)} si scrivono su una scheda sola, quella collegata al codice Amway.</div>
+        <button class="sv-link" id="sv-ufficiale">Scheda della lista di ${esc(SV.ufficiale.lista || 'un altro partner')} ›</button></div>`;
+      document.getElementById('sv-ufficiale').onclick = async () => {
+        await apriContattoDa(SV.ufficiale.id, LS.ritorno);
+        if (LS.contatto && LS.contatto.id === SV.ufficiale.id) { LS.sezione = 'segni'; disegnaScheda(); }
+      };
+      return;
+    }
     const conCep = c.categoria === 'Partner' || (SV.compagno && SV.compagno.categoria === 'Partner') || SV.cep.length;
     box.innerHTML = `
       ${SV.compagno || a.compagno_nome ? '' : '<div class="sotto" style="margin:0 0 8px">Per i biglietti della coppia collega il compagno/a in Dati.</div>'}
@@ -2348,6 +2368,14 @@ async function sezioneSegni() {
       const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
       if (!v) return;
       const evento = liberi[etichette.indexOf(v.evento)];
+      // stessa persona (stesso nome) con un biglietto per questo evento in un'altra scheda: si avvisa (Ignazio 16/09)
+      const doppi = await dbq('biglietti con lo stesso nome', supa.from('biglietti').select('contatto_id, contatti!inner(nome, utenti(nome))')
+        .eq('tipo', tipo).eq('evento', evento).ilike('contatti.nome', nomeEsatto(c.nome)).limit(5));
+      const altrove = (doppi.data || []).filter(x => !SV.biglietti.some(b => b.contatto_id === x.contatto_id));
+      if (altrove.length) {
+        const liste = [...new Set(altrove.map(x => (x.contatti && x.contatti.utenti ? x.contatti.utenti.nome : 'un altro partner')))].join(', ');
+        if (!confirm(`${c.nome} ha già un biglietto ${tipo} ${MB21Lista.etichettaEvento(evento)} nella lista di ${liste}.\n\nLo aggiungo lo stesso?`)) return;
+      }
       const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
         .insert({ contatto_id: c.id, tipo, evento, contatto: true }).select().single());
       if (error) return mostraToast(error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.');
