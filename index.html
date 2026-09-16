@@ -341,6 +341,9 @@
   .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
   .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
   .ad-voce { margin-bottom: 10px; }
+  .li-canali { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .li-canali a { text-align: center; padding: 12px 4px; border-radius: 12px; font-weight: 600; font-size: 15px; text-decoration: none; color: #fff; }
+  .li-canali a:nth-child(1) { background: #16A34A; } .li-canali a:nth-child(2) { background: #0EA5E9; } .li-canali a:nth-child(3) { background: #6B7280; }
   .ad-richiesta { border-top: 1px solid var(--linea); padding: 10px 0; }
   .ad-richieste h3 + .ad-richiesta { border-top: 0; }
   .ad-richiesta small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
@@ -480,7 +483,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 19:37';
+const APP_VERSION = '2026.09.16 · 19:45';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3251,6 +3254,7 @@ function rigaUtenteAdmin(u) {
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
     <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica nome, codice, email</button>
+    <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">🗑 Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <div class="ad-abb"><b>Abbonamento</b>`;
@@ -3313,16 +3317,39 @@ function disegnaAdmin() {
 
 // Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
 // email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
+// Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
+// e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
+function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${testo ? `<p>${esc(testo)}</p>` : ''}
+      <button class="primario" id="cf-si" ${pericolo ? 'style="background:var(--rosso)"' : ''}>${esc(si)}</button>
+      <button class="link" id="cf-no">Annulla</button></div>`;
+    document.body.appendChild(velo);
+    const fine = v => { velo.remove(); risolvi(v); };
+    velo.onclick = e => { if (e.target === velo) fine(false); };
+    velo.querySelector('#cf-no').onclick = () => fine(false);
+    velo.querySelector('#cf-si').onclick = () => fine(true);
+  });
+}
+
 // Link di registrazione di chi è entrato («da» = lui): si vede scritto, si copia, e sul telefono si manda con Condividi.
 // Il foglio serve perché la copia automatica non funziona dappertutto (Ignazio 16/09: «non si può copiare il link»).
 function foglioLinkInvito() {
   const link = `${location.origin}${location.pathname}?registrati&da=${ST.utente.id}`;
+  const messaggio = `Registrati a MB21 da questo link: ${link}`;
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>🔗 Link di registrazione</h3>
     <p>Mandalo a chi si deve registrare: la richiesta arriva all'Admin, che la approva.</p>
     <textarea id="li-testo" readonly rows="3" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(link)}</textarea>
-    ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Condividi (WhatsApp, messaggi…)</button>' : ''}
+    <div class="li-canali">
+      <a href="https://wa.me/?text=${encodeURIComponent(messaggio)}" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Registrati a MB21 da questo link:')}" target="_blank" rel="noopener">Telegram</a>
+      <a href="sms:?&body=${encodeURIComponent(messaggio)}">SMS</a>
+    </div>
+    ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Altre app</button>' : ''}
     <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia</button>
     <button class="link" id="li-chiudi">Chiudi</button></div>`;
   document.body.appendChild(velo);
@@ -3417,7 +3444,7 @@ function collegaAdmin() {
   su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
-    if (!confirm(`Approvo ${r.nome_cognome}? Potrà entrare con ${r.email}.`)) return;
+    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}.`, 'Approva')) return;
     b.disabled = true;
     const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
     if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
@@ -3428,11 +3455,29 @@ function collegaAdmin() {
   });
   app.querySelectorAll('[data-rifiuta]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.rifiuta);
-    if (!confirm(`Rifiuto la richiesta di ${r.nome_cognome}?`)) return;
+    if (!await chiediConferma(`Rifiuto la richiesta di ${r.nome_cognome}?`, '', 'Rifiuta', true)) return;
     const { error } = await dbq('rifiuta richiesta', supa.from('richieste_accesso').update({ stato: 'rifiutata', gestita_il: new Date().toISOString() }).eq('id', r.id));
     if (error) return mostraToast('Non salvato: riprova.');
     mostraToast('Richiesta rifiutata');
     apriAdmin();
+  });
+  // Elimina utente: solo se non ha dati suoi (contatti, azioni, check). Con i dati si cancellerebbero tutti: meglio spegnere «Può entrare».
+  app.querySelectorAll('[data-elimina-ut]').forEach(b => b.onclick = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.eliminaUt);
+    const conta = t => dbq('dati dell\'utente', supa.from(t).select('id', { count: 'exact', head: true }).eq('user_id', u.id));
+    const [c, a, k] = await Promise.all([conta('contatti'), conta('azioni'), conta('check_giorno')]);
+    if (c.error || a.error || k.error) return mostraToast('Non riesco a controllare i suoi dati: riprova.');
+    if (c.count || a.count || k.count) {
+      return chiediConferma(`${nomeDi(u)} non si elimina`, `Ha ${c.count} contatti, ${a.count} azioni e ${k.count} check: eliminandolo si cancellerebbero tutti. Per non farlo entrare spegni «Può entrare».`, 'Ho capito');
+    }
+    const perChi = AD.utenti.filter(x => x.abbonamento_con === u.id);
+    if (!await chiediConferma(`Elimino ${nomeDi(u)}?`, `Non ha dati nell'app.${perChi.length ? ` ${perChi.map(nomeDi).join(', ')} tornerà a pagare per sé.` : ''} Non si può annullare.`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina utente', supa.from('utenti').delete().eq('id', u.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast(`${nomeDi(u)} eliminato`);
+    AD.aperti.delete(u.id);
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
   app.querySelectorAll('[data-modifica-ut]').forEach(b => b.onclick = () => foglioNuovoUtente(AD.utenti.find(x => x.id === b.dataset.modificaUt)));
   su('ad-scegli', () => document.getElementById('ad-file').click());
@@ -3508,7 +3553,7 @@ function collegaAdmin() {
     const w = AD.bbs.find(x => x.id === b.dataset.togliBbs);
     const { count } = await dbq('biglietti del BBS', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'BBS').eq('evento', w.data));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo BBS`);
-    if (!confirm(`Elimino il BBS ${MB21Lista.etichettaEvento(w.data)}?`)) return;
+    if (!await chiediConferma(`Elimino il BBS ${MB21Lista.etichettaEvento(w.data)}?`, '', 'Elimina', true)) return;
     const { error } = await dbq('elimina BBS', supa.from('bbs').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('BBS eliminato');
@@ -3518,7 +3563,7 @@ function collegaAdmin() {
     const w = AD.wes.find(x => x.id === b.dataset.togli);
     const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
-    if (!confirm(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`)) return;
+    if (!await chiediConferma(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`, '', 'Elimina', true)) return;
     const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('Wes eliminato');
