@@ -196,6 +196,7 @@
     return {
       mese, giorni, schede,
       abbonamentoAttivo: !!scadenza && scadenza >= oggi,
+      abbonamento: statoAbbonamento(scadenza, oggi),   // attivo · in_scadenza · scaduto
       scadenza,
       obiettiviMancanti: !haObiettivi(o),
       ultimoCheck: ultimo,

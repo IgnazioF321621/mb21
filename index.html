@@ -180,7 +180,10 @@
   .banner-abb.attivo { background: rgba(5,150,105,.1); border: 1.5px solid #10B981; color: var(--verde); }
   .banner-abb.scaduto { border-radius: 16px; display: block; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #B91C1C; padding: 12px 14px; }
   .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: #EF4444; }
+  .banner-abb.in-scadenza { background: #FFF7ED; border-color: #FDBA74; color: #C2410C; }
+  .banner-abb.in-scadenza small { color: #EA580C; }
   .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: 12px; background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
+  .banner-abb.in-scadenza button { background: #EA580C; }
   .banner-grande { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; font-family: inherit; }
   .banner-grande .ico { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
   .banner-grande b { display: block; font-size: 16px; }
@@ -484,7 +487,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 20:58';
+const APP_VERSION = '2026.09.16 · 21:07';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1170,15 +1173,16 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl] = await Promise.all([
+    const [cm, ob, segniAl, scad] = await Promise.all([
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
+      vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
     ]);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01') : { checkMesi: cm.data, obiettivi: ob.data };
     DS.obiettivi = dati.obiettivi;
-    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: visto().abbonamento_scadenza, segniAl });
+    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl });
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
@@ -1207,7 +1211,10 @@ function dashboardAlto() {
   let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
   if (!vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09)
-    ? `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`
+    ? (d.abbonamento === 'in_scadenza'
+      ? `<div class="banner-abb scaduto in-scadenza">🟠 Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Rinnova entro la scadenza per continuare a usare tutta l'app</small>
+        <button id="ds-rinnova">Rinnova subito →</button></div>`
+      : `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`)
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   if (d.obiettiviMancanti) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
@@ -1266,7 +1273,7 @@ function dashboardBasso() {
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
-  su('ds-rinnova', () => inArrivo('Rinnovo abbonamento'));
+  su('ds-rinnova', foglioRinnovo);
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
   su('ds-visione', () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); });
@@ -3338,6 +3345,34 @@ function disegnaAdmin() {
 
 // Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
 // email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
+// Rinnovo abbonamento (cantiere 19 lavoro 5): come il riquadro di Glide. € 5/mese entro il 5, pagamento su Revolut con causale;
+// il pagamento lo controlla l'Admin a mano (Admin → Utenti → ✓ Pagamento ricevuto).
+const REVOLUT = 'https://revolut.me/ignafio2310/pocket/tSaRdpBNVk';
+function foglioRinnovo() {
+  const oggi = MB21Coda.oggiRoma(), mese = MB21Dashboard.nomeMese(oggi.slice(0, 8) + '01');
+  const causale = `${nomeDi(visto())} - MB21 ${mese} ${oggi.slice(0, 4)}`;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>Rinnovo abbonamento MB21</h3>
+    <p>Costo: <b>€ 5,00 al mese</b> · da pagare <b>entro il 5 di ogni mese</b>.</p>
+    <p>Causale da scrivere su Revolut:</p>
+    <textarea id="rn-causale" readonly rows="2" style="width:100%;font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(causale)}</textarea>
+    <button class="primario" id="rn-copia" style="margin-top:8px;background:#F3F4F6;color:var(--testo)">⧉ Copia la causale</button>
+    <a class="primario" href="${REVOLUT}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:8px;background:#185FA5;color:#fff;font-size:17px;font-weight:600;padding:14px;border-radius:12px">Paga su Revolut</a>
+    <p style="margin-top:12px">Dopo il pagamento l'abbonamento viene rinnovato da Ignazio appena lo vede.</p>
+    <button class="link" id="rn-chiudi">Chiudi</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#rn-chiudi').onclick = chiudi;
+  velo.querySelector('#rn-copia').onclick = async () => {
+    const t = velo.querySelector('#rn-causale');
+    let ok = false;
+    try { await navigator.clipboard.writeText(causale); ok = true; } catch (e) { t.focus(); t.select(); try { ok = document.execCommand('copy'); } catch (e2) {} }
+    mostraToast(ok ? 'Causale copiata' : 'Tieni premuto sulla causale e scegli Copia');
+  };
+}
+
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
 // e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
 function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
