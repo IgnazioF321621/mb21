@@ -322,7 +322,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 - **File della LOS di amway.it** (`<data>_<mese>.csv`, confidenziale: telefoni ed email, mai nel repo). Riga «Mese di competenza» (AAAAMM) nelle prime 3, poi la riga dei titoli che inizia con «Qualifica Amway Partner» e un partner per riga; ogni valore ha un apostrofo davanti, decimali con la virgola, bonus con «%», date «15 marzo 2010»
 - **Dall'app** (cantiere 19 lavoro 2, 16/09): pagina **Admin → 📄 Carica file Amway → Scegli il file**. `MB21Mappa.leggiFileAmway(testo)` → `{ mese, squadra, volumi }` o `{ errore }`; `MB21Mappa.confrontoSquadra(prima, nuova)` → `{ nuovi, usciti }`. Foglio di riepilogo: mese, partner nel file, «mese già caricato: numeri sostituiti», chi entra, chi non c'è più (**resta**, non si cancella nessuno) → **Carica**: `upsert` di `squadra` (per `partner_id`) e poi di `volumi_mese` (per `partner_id, mese`), come lo script. Il file resta nel telefono/computer, non viene salvato. Dopo il caricamento la Mappa si rilegge. Prova in `prova_mappa.js` con un file finto
 - **Da computer** (resta come riserva): `scripts/import_mappa.py`, che in più aggiunge lo storico da `LOS.csv` di Glide
-- **Non aggiornati dal file**: VPP/VPG di Dashboard e Check (`obiettivi_mese.vpp_amway`, `vpg_amway`)
+- **VPP/VPG di Dashboard e Check** (Ignazio 16/09: «si aggiornano in automatico dove sono richiesti»): dopo albero e volumi, `MB21Mappa.amwayPerUtenti(utenti, volumi, mese)` → `upsert` in `obiettivi_mese` (`user_id, mese`) di **solo** `vpp_amway` e `vpg_amway` per ogni utente con `partner_id` nel file. Gli obiettivi non si toccano; una riga nuova senza obiettivi non spegne il banner «Imposta gli obiettivi»
 
 ## Versioni
 | APP_VERSION | Cosa |
