@@ -126,6 +126,20 @@
     return [...new Set(date || [])].filter(d => !presi.has(d)).sort().reverse();
   }
 
+  // CEP a periodi: messaggio d'errore per il periodo p (dal, uscito_il) rispetto agli altri del contatto, '' se va bene
+  function controllaPeriodoCep(periodi, p) {
+    const annoOk = d => { const a = Number(String(d).slice(0, 4)); return a >= 1990 && a <= 2100; };
+    if (!p.dal) return 'Scrivi da quando è abbonato';
+    if (!annoOk(p.dal) || (p.uscito_il && !annoOk(p.uscito_il))) return "Controlla l'anno della data";
+    if (p.uscito_il && p.uscito_il < p.dal) return "L'uscita non può essere prima dell'abbonamento";
+    const fine = x => x.uscito_il || '9999-12-31';
+    for (const q of (periodi || []).filter(q => q.id !== p.id)) {
+      if (!p.uscito_il && !q.uscito_il) return "C'è già un periodo aperto: prima scrivi la sua uscita";
+      if (p.dal <= fine(q) && q.dal <= fine(p)) return 'Si sovrappone a un altro periodo';
+    }
+    return '';
+  }
+
   // Date nel fuso di Roma: lunga «11/12/2024», breve «11/12/24»
   function data(iso, breve) {
     if (!iso) return '';
@@ -147,7 +161,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, eventiLiberi, controllaPeriodoCep, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

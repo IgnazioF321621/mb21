@@ -441,7 +441,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 14:10';
+const APP_VERSION = '2026.09.16 · 14:39';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2096,7 +2096,7 @@ async function sezioneSegni() {
   const [ana, big, cep, bbs, wes] = await Promise.all([
     dbq('compagno', supa.from('contatti').select('compagno_nome, compagno_telefono').eq('id', c.id).maybeSingle()),
     dbq('biglietti', supa.from('biglietti').select('*').eq('contatto_id', c.id)),
-    dbq('cep', supa.from('cep').select('*').eq('contatto_id', c.id).maybeSingle()),
+    dbq('cep', supa.from('cep').select('*').eq('contatto_id', c.id).order('dal', { ascending: false })),
     dbq('date dei BBS', supa.from('bbs').select('data').order('data')),
     dbq('date dei Wes', supa.from('wes').select('data').order('data')),
   ]);
@@ -2105,7 +2105,7 @@ async function sezioneSegni() {
     box.innerHTML = '<div class="vuoto">Segni vitali non caricati: riprova.</div>';
     return;
   }
-  const SV = { comp: ana.data || {}, biglietti: big.data, cep: cep.data, date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
+  const SV = { comp: ana.data || {}, biglietti: big.data, cep: cep.data, cepNuovo: false, date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) } };
   const admin = eAdmin(), archiviato = c.categoria === 'Archiviato';
   const nomeBreve = n => esc(String(n || '').trim().split(/\s+/)[0] || '');
   const dis = admin && !archiviato ? '' : 'disabled';
@@ -2125,6 +2125,24 @@ async function sezioneSegni() {
       ${admin && !archiviato ? `<button class="sv-piu" data-piu="${tipo}">+ Biglietto ${tipo}</button>` : ''}</div>`;
   };
 
+  // CEP a periodi (Ignazio 16/09: si esce e si rientra). Ogni periodo si salva col suo bottone:
+  // salvando a ogni cambio, mentre si scrive l'anno «0002» sembrava già una data
+  const bloccoCep = p => `<div class="sv-evento" data-cep="${esc(p.id || 'nuovo')}">
+      <div class="sv-riga"><span>Abbonato dal</span><input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis}></div>
+      <div class="sv-riga"><span>Uscito il</span><input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis}></div>
+      ${dis ? '' : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0">
+        <button class="link" data-cep-togli>${p.id ? 'Elimina' : 'Annulla'}</button><button class="primario" data-cep-salva>Salva</button></div>`}
+    </div>`;
+  const riquadroCep = () => {
+    const aperto = SV.cep.some(p => !p.uscito_il);
+    return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
+        <small style="color:var(--grigio)">${aperto ? 'Abbonato ora' : SV.cep.length ? 'Non abbonato ora' : ''}</small></div>
+      ${SV.cepNuovo ? bloccoCep({}) : ''}
+      ${SV.cep.map(bloccoCep).join('')}
+      ${!SV.cep.length && !SV.cepNuovo ? '<div class="sotto" style="margin:4px 0">Nessun abbonamento</div>' : ''}
+      ${dis || SV.cepNuovo ? '' : '<button class="sv-piu" id="sv-cep-nuovo">+ Nuovo periodo</button>'}</div>`;
+  };
+
   const disegna = () => {
     const comp = SV.comp;
     box.innerHTML = `
@@ -2136,11 +2154,7 @@ async function sezioneSegni() {
       </div>
       ${riquadroEventi('BBS')}
       ${riquadroEventi('WES')}
-      ${c.categoria === 'Partner' ? `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span></div>
-        <div class="sv-riga"><span>Abbonato dal</span><input type="date" id="sv-cep-dal" value="${esc(SV.cep ? SV.cep.dal : '')}" ${dis}></div>
-        <div class="sv-riga"><span>Uscito il</span><input type="date" id="sv-cep-uscito" value="${esc(SV.cep && SV.cep.uscito_il || '')}" ${dis}></div>
-        ${dis ? '' : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">${SV.cep ? '<button class="link" id="sv-cep-togli">Togli CEP</button>' : '<span></span>'}<button class="primario" id="sv-cep-salva">Salva CEP</button></div>`}
-      </div>` : ''}
+      ${c.categoria === 'Partner' ? riquadroCep() : ''}
       ${admin ? '' : '<div class="sotto" style="text-align:center">Biglietti e CEP li scrive l\'Admin</div>'}`;
     collega();
   };
@@ -2194,27 +2208,32 @@ async function sezioneSegni() {
       disegna();
     });
 
-    // CEP: si salva solo col bottone (salvando a ogni cambio, mentre si scrive l'anno «0002» sembrava già una data)
-    const annoOk = d => { const a = Number(d.slice(0, 4)); return a >= 1990 && a <= 2100; };
-    const salvaCep = document.getElementById('sv-cep-salva');
-    if (salvaCep) salvaCep.onclick = async () => {
-      if (soloGuardo()) return;
-      const dal = document.getElementById('sv-cep-dal').value, uscito = document.getElementById('sv-cep-uscito').value;
-      if (!dal) return mostraToast('Scrivi da quando è abbonato');
-      if (!annoOk(dal) || (uscito && !annoOk(uscito))) return mostraToast('Controlla l\'anno della data');
-      if (uscito && uscito < dal) return mostraToast('L\'uscita non può essere prima dell\'abbonamento');
-      const riga = { contatto_id: c.id, dal, uscito_il: uscito || null, aggiornato_il: new Date().toISOString() };
-      const { data, error } = await dbq('salva CEP', supa.from('cep').upsert(riga).select().single());
-      if (error) return mostraToast('Non salvato: riprova.');
-      SV.cep = data; mostraToast('CEP salvato'); disegna();
-    };
-    const togliCep = document.getElementById('sv-cep-togli');
-    if (togliCep) togliCep.onclick = async () => {
-      if (soloGuardo() || !confirm('Tolgo l\'abbonamento CEP?')) return;
-      const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('contatto_id', c.id));
-      if (error) return mostraToast('Non salvato: riprova.');
-      SV.cep = null; mostraToast('CEP tolto'); disegna();
-    };
+    const nuovoCep = document.getElementById('sv-cep-nuovo');
+    if (nuovoCep) nuovoCep.onclick = () => { if (!soloGuardo()) { SV.cepNuovo = true; disegna(); } };
+    if (!dis) box.querySelectorAll('[data-cep]').forEach(blocco => {
+      const id = blocco.dataset.cep === 'nuovo' ? null : blocco.dataset.cep;
+      blocco.querySelector('[data-cep-salva]').onclick = async () => {
+        if (soloGuardo()) return;
+        const p = { id, dal: blocco.querySelector('[data-k="dal"]').value, uscito_il: blocco.querySelector('[data-k="uscito_il"]').value || null };
+        const errore = MB21Lista.controllaPeriodoCep(SV.cep, p);
+        if (errore) return mostraToast(errore);
+        const riga = { contatto_id: c.id, dal: p.dal, uscito_il: p.uscito_il, aggiornato_il: new Date().toISOString() };
+        const { data, error } = await dbq('salva CEP', id
+          ? supa.from('cep').update(riga).eq('id', id).select().single()
+          : supa.from('cep').insert(riga).select().single());
+        if (error) return mostraToast('Non salvato: riprova.');
+        SV.cep = [data, ...SV.cep.filter(x => x.id !== id)].sort((a, b) => b.dal.localeCompare(a.dal));
+        if (!id) SV.cepNuovo = false;
+        mostraToast('CEP salvato'); disegna();
+      };
+      blocco.querySelector('[data-cep-togli]').onclick = async () => {
+        if (!id) { SV.cepNuovo = false; return disegna(); }
+        if (soloGuardo() || !confirm('Elimino questo periodo di CEP?')) return;
+        const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('id', id));
+        if (error) return mostraToast('Non eliminato: riprova.');
+        SV.cep = SV.cep.filter(x => x.id !== id); mostraToast('Periodo eliminato'); disegna();
+      };
+    });
   };
 
   disegna();
