@@ -441,7 +441,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 13:56';
+const APP_VERSION = '2026.09.16 · 14:10';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2138,7 +2138,8 @@ async function sezioneSegni() {
       ${riquadroEventi('WES')}
       ${c.categoria === 'Partner' ? `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span></div>
         <div class="sv-riga"><span>Abbonato dal</span><input type="date" id="sv-cep-dal" value="${esc(SV.cep ? SV.cep.dal : '')}" ${dis}></div>
-        <div class="sv-riga"><span>Uscito il</span><input type="date" id="sv-cep-uscito" value="${esc(SV.cep && SV.cep.uscito_il || '')}" ${dis || (SV.cep ? '' : 'disabled')}></div>
+        <div class="sv-riga"><span>Uscito il</span><input type="date" id="sv-cep-uscito" value="${esc(SV.cep && SV.cep.uscito_il || '')}" ${dis}></div>
+        ${dis ? '' : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">${SV.cep ? '<button class="link" id="sv-cep-togli">Togli CEP</button>' : '<span></span>'}<button class="primario" id="sv-cep-salva">Salva CEP</button></div>`}
       </div>` : ''}
       ${admin ? '' : '<div class="sotto" style="text-align:center">Biglietti e CEP li scrive l\'Admin</div>'}`;
     collega();
@@ -2193,21 +2194,26 @@ async function sezioneSegni() {
       disegna();
     });
 
-    const dal = document.getElementById('sv-cep-dal'), uscito = document.getElementById('sv-cep-uscito');
-    if (dal) dal.onchange = uscito.onchange = async () => {
-      if (soloGuardo()) return disegna();
-      if (!dal.value) {
-        if (!SV.cep) return;
-        if (!confirm('Tolgo l\'abbonamento CEP?')) return disegna();
-        const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('contatto_id', c.id));
-        if (error) mostraToast('Non salvato: riprova.'); else SV.cep = null;
-        return disegna();
-      }
-      if (uscito.value && uscito.value < dal.value) { mostraToast('L\'uscita non può essere prima dell\'abbonamento'); return disegna(); }
-      const riga = { contatto_id: c.id, dal: dal.value, uscito_il: uscito.value || null, aggiornato_il: new Date().toISOString() };
+    // CEP: si salva solo col bottone (salvando a ogni cambio, mentre si scrive l'anno «0002» sembrava già una data)
+    const annoOk = d => { const a = Number(d.slice(0, 4)); return a >= 1990 && a <= 2100; };
+    const salvaCep = document.getElementById('sv-cep-salva');
+    if (salvaCep) salvaCep.onclick = async () => {
+      if (soloGuardo()) return;
+      const dal = document.getElementById('sv-cep-dal').value, uscito = document.getElementById('sv-cep-uscito').value;
+      if (!dal) return mostraToast('Scrivi da quando è abbonato');
+      if (!annoOk(dal) || (uscito && !annoOk(uscito))) return mostraToast('Controlla l\'anno della data');
+      if (uscito && uscito < dal) return mostraToast('L\'uscita non può essere prima dell\'abbonamento');
+      const riga = { contatto_id: c.id, dal, uscito_il: uscito || null, aggiornato_il: new Date().toISOString() };
       const { data, error } = await dbq('salva CEP', supa.from('cep').upsert(riga).select().single());
-      if (error) mostraToast('Non salvato: riprova.'); else SV.cep = data;
-      disegna();
+      if (error) return mostraToast('Non salvato: riprova.');
+      SV.cep = data; mostraToast('CEP salvato'); disegna();
+    };
+    const togliCep = document.getElementById('sv-cep-togli');
+    if (togliCep) togliCep.onclick = async () => {
+      if (soloGuardo() || !confirm('Tolgo l\'abbonamento CEP?')) return;
+      const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('contatto_id', c.id));
+      if (error) return mostraToast('Non salvato: riprova.');
+      SV.cep = null; mostraToast('CEP tolto'); disegna();
     };
   };
 
