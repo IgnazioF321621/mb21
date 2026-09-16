@@ -480,7 +480,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 19:32';
+const APP_VERSION = '2026.09.16 · 19:37';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3285,7 +3285,7 @@ function disegnaAdmin() {
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
-      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>🔗 Copia il link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>⧉</span></button>`;
+      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>🔗 Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>Wes</h1><div class="rp-wes">
       ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
@@ -3313,6 +3313,36 @@ function disegnaAdmin() {
 
 // Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
 // email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
+// Link di registrazione di chi è entrato («da» = lui): si vede scritto, si copia, e sul telefono si manda con Condividi.
+// Il foglio serve perché la copia automatica non funziona dappertutto (Ignazio 16/09: «non si può copiare il link»).
+function foglioLinkInvito() {
+  const link = `${location.origin}${location.pathname}?registrati&da=${ST.utente.id}`;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>🔗 Link di registrazione</h3>
+    <p>Mandalo a chi si deve registrare: la richiesta arriva all'Admin, che la approva.</p>
+    <textarea id="li-testo" readonly rows="3" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(link)}</textarea>
+    ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Condividi (WhatsApp, messaggi…)</button>' : ''}
+    <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia</button>
+    <button class="link" id="li-chiudi">Chiudi</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#li-chiudi').onclick = chiudi;
+  const testo = velo.querySelector('#li-testo');
+  velo.querySelector('#li-copia').onclick = async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {
+      testo.focus(); testo.select(); testo.setSelectionRange(0, link.length);
+      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    }
+    mostraToast(ok ? 'Link copiato: incollalo in un messaggio' : 'Tieni premuto sul link e scegli Copia');
+    if (!ok) { testo.focus(); testo.select(); }
+  };
+  const cond = velo.querySelector('#li-condividi');
+  if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: 'Registrati a MB21 da questo link:', url: link }).catch(() => {});
+}
+
 // Stesso foglio per ✏️ Modifica (u = utente): nome, codice, email (solo se non è mai entrato: il suo accesso è legato all'email).
 function foglioNuovoUtente(u) {
   const bloccaEmail = u && u.auth_id;
@@ -3384,11 +3414,7 @@ function collegaAdmin() {
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
   su('ad-nuovo-utente', () => foglioNuovoUtente());
-  su('ad-copia-link', async () => {
-    const link = `${location.origin}${location.pathname}?registrati&da=${ST.utente.id}`;
-    try { await navigator.clipboard.writeText(link); mostraToast('Link copiato: incollalo in un messaggio'); }
-    catch (e) { prompt('Copia il link:', link); }
-  });
+  su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
     if (!confirm(`Approvo ${r.nome_cognome}? Potrà entrare con ${r.email}.`)) return;
