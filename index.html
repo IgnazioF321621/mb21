@@ -483,7 +483,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 20:00';
+const APP_VERSION = '2026.09.16 · 20:43';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3349,37 +3349,47 @@ function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
 // opz: { da: id di chi invita (predefinito: chi è entrato), nome, telefono } → WhatsApp e SMS già indirizzati alla persona
 function foglioLinkInvito(opz = {}) {
   const link = `${location.origin}${location.pathname}?registrati&da=${opz.da || ST.utente.id}`;
-  const messaggio = `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link: ${link}`;
+  // Messaggio con il saluto, modificabile nel riquadro: Copia e tutti i bottoni mandano il testo com'è in quel momento (Ignazio 16/09)
+  const messaggio = `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link:\n${link}`;
   const tel = opz.telefono && opz.telefono.startsWith('+') ? opz.telefono : '';   // i numeri dubbi non partono
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>🔗 ${opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione'}</h3>
-    <p>${opz.nome ? 'Mandagli il link: si registra, e l\'Admin approva la richiesta.' : 'Mandalo a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
-    <textarea id="li-testo" readonly rows="3" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(link)}</textarea>
+    <p>${opz.nome ? 'Mandagli il messaggio (puoi cambiarlo): si registra, e l\'Admin approva la richiesta.' : 'Manda il messaggio (puoi cambiarlo) a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
+    <textarea id="li-testo" rows="4" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(messaggio)}</textarea>
     <div class="li-canali">
-      <a href="https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(messaggio)}" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Registrati a MB21 da questo link:')}" target="_blank" rel="noopener">Telegram</a>
-      <a href="sms:${tel}?&body=${encodeURIComponent(messaggio)}">SMS</a>
+      <a href="#" data-canale="wa">WhatsApp</a><a href="#" data-canale="tg">Telegram</a><a href="#" data-canale="sms">SMS</a>
     </div>
     ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Altre app</button>' : ''}
-    <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia</button>
+    <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia il messaggio</button>
     <button class="link" id="li-chiudi">Chiudi</button></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.onclick = e => { if (e.target === velo) chiudi(); };
   velo.querySelector('#li-chiudi').onclick = chiudi;
   const testo = velo.querySelector('#li-testo');
+  const attuale = () => testo.value.trim() || messaggio;
+  // Il link del bottone si prepara al tocco, con il testo del riquadro
+  velo.querySelectorAll('[data-canale]').forEach(a => a.onclick = () => {
+    const t = encodeURIComponent(attuale());
+    a.target = a.dataset.canale === 'sms' ? '' : '_blank';
+    a.rel = 'noopener';
+    a.href = a.dataset.canale === 'wa' ? `https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${t}`
+      : a.dataset.canale === 'tg' ? `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(attuale().replace(link, '').trim())}`
+      : `sms:${tel}?&body=${t}`;
+  });
   velo.querySelector('#li-copia').onclick = async () => {
+    const m = attuale();
     let ok = false;
-    try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {
-      testo.focus(); testo.select(); testo.setSelectionRange(0, link.length);
+    try { await navigator.clipboard.writeText(m); ok = true; } catch (e) {
+      testo.focus(); testo.select(); testo.setSelectionRange(0, testo.value.length);
       try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
     }
-    mostraToast(ok ? 'Link copiato: incollalo in un messaggio' : 'Tieni premuto sul link e scegli Copia');
+    mostraToast(ok ? 'Messaggio copiato: incollalo dove vuoi' : 'Tieni premuto sul messaggio e scegli Copia');
     if (!ok) { testo.focus(); testo.select(); }
   };
   const cond = velo.querySelector('#li-condividi');
-  if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: messaggio }).catch(() => {});
+  if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: attuale() }).catch(() => {});
 }
 
 // Contatto appena diventato Partner (Ignazio 16/09): domanda «Vuoi invitarlo nell'app MB21?». Invitato da = proprietario della lista.
