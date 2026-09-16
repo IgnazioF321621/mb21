@@ -24,7 +24,12 @@ Punto di partenza (16/09):
 - numeri di partenza da ricollegare alle persone: **BBS 5 · WES 10 · CEP 6** (Ignazio, 15/09)
 
 Richiesta di Ignazio (16/09): **inserirli dalla Mappa sarebbe l'ideale**.
-⚠️ Da chiarire prima di partire: nella Mappa ci sono **solo i 33 partner Amway**, ma un biglietto BBS o un abbonamento CEP può essere di un **cliente o di un ospite** che partner non è. Probabile che servano **tutti e due i posti** (dalla Mappa per i partner, dalla scheda contatto per gli altri): da decidere con Ignazio.
+- ~~Dove si scrivono~~ — **deciso con Ignazio il 16/09**: BBS e WES possono essere del partner, del compagno/a o di un ospite (a volte senza nome); CEP solo dei Partner. **Un posto solo: la scheda contatto**, nuova sezione **Segni vitali** (per i partner ci si arriva dalla Mappa toccando il nome): riquadro **Compagno/a** facoltativo (nome, telefono); per ogni BBS/Wes spunte **contatto** e **compagno/a** + numero di **ospiti senza nome**; **CEP** (abbonato dal / uscito il) solo se Partner. Disegno visto e approvato da Ignazio. Da ricordare: se il compagno/a diventa un contatto a parte, i dati vanno sistemati a mano
+- ~~Lavoro 1 · tabelle~~ — fatto il 16/09: migrazione `20260916112520_segni_vitali.sql` applicata (`bbs`, `biglietti`, `cep`, `contatti.compagno_*`). Regole provate sul DB e annullate: scrive solo l'Admin, Isabella legge ma non scrive
+- Lavoro 2 · sezione «Segni vitali» nella scheda contatto (+ date dei BBS per l'Admin)
+- Lavoro 3 · conteggio a cascata sull'albero e pillole della Mappa accese
+- Lavoro 4 · BBS/WES/CEP fuori dal check giornaliero, Dashboard e Check leggono dalle persone
+- Lavoro 5 · ricollegare i numeri di oggi (BBS 5 · WES 10 · CEP 6) alle persone, con Ignazio
 
 ## 17. Prossimo passo: rilievo MAPPA
 *Deciso il 15/09, da fare in una sessione nuova.* Sulla scia di Glide (Dashboard · Agenda · Lista Nomi · Report · Check · **Mappa**): le prime cinque tab sono nella v4, manca la **Mappa**. Rilievo della tab **Mappa** in sola lettura, stesso metodo di Report e Check (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-mappa/`; documento `docs/MB21_v3_Mappa_come_e.md`; Partner Select = Ignazio). Guardare anche quali dati dell'export servono (da verificare, non dare per scontato). Poi domande a Ignazio una alla volta e proposte per la Mappa v4

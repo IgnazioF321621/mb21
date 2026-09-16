@@ -21,6 +21,9 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `griglia_pm` | Report (GridPM_*) | Fase 5: impostazioni della Griglia PM, una riga per partner | i propri · Admin tutti |
 | `squadra` | — (file Amway) | Fase 8: l'albero Amway, una riga per partner (`sponsor_id` = chi lo ha sponsorizzato) + dati anagrafici | il proprio ramo · Admin tutti; scrive solo Admin |
 | `volumi_mese` | LOS + file Amway | Fase 8: volumi per partner e mese (AAAAMM): VPP, VPG, bonus, clienti, gruppo… | il proprio ramo · Admin tutti; scrive solo Admin |
+| `bbs` | — | Cantiere 18: date degli eventi BBS, una riga per data (come `wes`) | tutti gli utenti loggati; scrive solo Admin |
+| `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
+| `cep` | — | Cantiere 18: abbonamento CEP di un Partner (dal / uscito il), una riga per contatto | chi vede il contatto; scrive solo Admin |
 
 **Fase 8 · Mappa** (migrazione `20260916100000_fase8_mappa.sql`, applicata; cantiere 17):
 - `squadra` e `volumi_mese` (vedi tabelle sopra). Lo **stato del partner non si salva**: si calcola dai VPP del mese (**≥50 attivo · >0 warning · 0 inattivo**)
@@ -28,6 +31,12 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - caricamento con `scripts/import_mappa.py <file Amway> <file sql fuori dal repo>` → 33 partner, 359 righe di volumi su 13 mesi (16/09). Il file Amway è **confidenziale, fuori dal repo**
 - provato sul DB (16/09): albero completo (33 partner raggiunti dalla cima, livelli coerenti); Admin vede 33 partner e 359 volumi; **Isabella vede 8 partner** (sé e i 7 sotto) **e non vede Ignazio**
 - prove della pagina sul DB (16/09, lavoro 5): con l'account di Isabella la Mappa legge **8 partner e 8 volumi del mese**; la «visione completa» di uno del suo ramo dà **13 mesi**, quella di un partner di un'altra linea **0 mesi**; un partner che prova a scrivere in `squadra` viene **rifiutato** dalle regole. Tutti e 9 gli utenti del Partner Select hanno un posto nell'albero Amway
+
+**Segni vitali sulle persone** (migrazione `20260916112520_segni_vitali.sql`, applicata; cantiere 18 lavoro 1, 16/09):
+- `contatti.compagno_nome` · `contatti.compagno_telefono`: riquadro «Compagno/a» facoltativo (scrive chi può modificare il contatto)
+- `biglietti`: uno per contatto, tipo (`BBS`/`WES`) ed evento (data); `contatto` sì/no · `compagno` sì/no · `ospiti` 0-50; niente biglietti vuoti. `cep`: `dal` · `uscito_il` (vuoto = abbonato); solo per i Partner (lo controlla la pagina)
+- provato sul DB (16/09, tutto annullato dopo): l'Admin scrive date BBS, biglietti e CEP; biglietto vuoto rifiutato; Isabella vede biglietti e CEP dei suoi contatti, **non** scrive biglietti né date BBS
+- ancora da fare: sezione «Segni vitali» nella scheda contatto, conteggio a cascata sull'albero e pillole della Mappa, BBS/WES/CEP fuori dal check giornaliero
 
 **Pagina Mappa** (`mappa.js` + index.html, cantiere 17 lavoro 2, 16/09):
 - quinta tab **Mappa**. `mappa.js`: `stato(vpp)` (≥50 attivo · >0 warning · 0 inattivo), `nomeLeggibile` («FIORITO, IGNAZIO» → «Ignazio Fiorito»), `albero(squadra, volumi)`, `righe(cime, {aperti, filtro, cerca})`, `conta`, `tuttiGliId`. 10 prove in `tools/banco/prova_mappa.js`
@@ -365,3 +374,4 @@ _Da definire._
 | 2026.09.15 · 23:09 | «Da catalogare»: bottone «Altri 5» a fine giornata (`daCatalogare(righe, catalogatiOggi, altri)`) |
 | 2026.09.16 · 06:01 | Targhetta NEW per 30 giorni sui contatti creati nell'app (non quelli da Glide); «new» in Cerca li trova |
 | 2026.09.16 · 06:12 | La targhetta si chiama «nuovo» (minuscolo) invece di NEW; in Cerca vale «nuovo» e anche «new» |
+| 2026.09.16 · 11:26 | Segni vitali sulle persone, lavoro 1: tabelle `bbs`, `biglietti`, `cep` e compagno/a sul contatto (solo database, pagine invariate) |
