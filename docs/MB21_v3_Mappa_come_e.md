@@ -66,3 +66,25 @@ Entrando ancora si scende di un altro livello: il percorso diventa `Mappa / Part
 
 - Cantiere 14 lavoro 5 (**segni vitali sulla persona, contati a cascata sull'albero**) aspetta proprio questo albero: LOS o Partners.
 - Cantiere 15 (**albero/squadra nel Partner Select**) era rimandato «più avanti»: la Mappa ne è la base.
+
+---
+
+## 6. Domande a Ignazio (16/09) — risposte
+
+1. ~~**A cosa serve la Mappa nella v4?**~~ → **Tutte e due, ma prima chi è attivo**: si guarda il gruppo per capire chi chiamare; i volumi (VPP/VPG/bonus) vengono dopo.
+2. ~~**Cosa vuol dire «attivo»?**~~ → Ignazio ricordava «50 VP, oppure ticket BBS/WES o CEP attivo» (con riserva). **Verificato sui dati** (`Partners.csv`, 33 partner, mese 09/2026): in Glide lo stato guarda **solo i VPP personali del mese** —
+   **VPP ≥ 50 → 🟢 attivo** (107,38 · 102,12 · 87,34) · **0 < VPP < 50 → 🔴 warning** (28,99) · **VPP = 0 → ⚪ inattivo** (anche chi ha VPG di gruppo). Di BBS/WES/CEP nessuna traccia nel calcolo.
+   ⚠️ Un solo mese con pochi casi: la soglia dei 50 è molto probabile, non certa.
+3. ~~**Teniamo questa regola nella v4?**~~ → **Sì, soglie giuste.** I segni vitali **non** cambiano il pallino: si mostrano **a parte**.
+4. ~~**Quali segni vitali sulla riga?**~~ → **BBS · WES · CEP**, sono quelli.
+5. ~~**Con che simbolo?**~~ → Le emoji standard «sono svalutate e non dicono nulla». Scelta **A**: tre **pillole con la sigla**, accanto al nome — **BBS blu · WES rossa · CEP verde**, **grigie se spente**.
+   (Colori già fissati nel brief di sviluppo: BBS `#3B82F6` · WES `#EF4444` · CEP `#22C55E`.)
+6. ~~**Chi scrive BBS/WES/CEP e si azzerano?**~~ → **Già deciso il 15/09**, decisione **G** in `docs/MB21_v4_Brief_F6_Check.md`: il segno vitale sta **sulla persona** (scheda contatto: BBS quale evento · WES quale Wes · CEP abbonato dal… / uscito il…), **lo scrive Ignazio (Admin)** anche sui contatti degli altri partner, **niente azzeramenti a mano** (il biglietto è legato al suo evento, l'uscita dal CEP è una data), l'app **risale a cascata** persona → partner → sponsor → Ignazio, e BBS/WES/CEP **escono dal check giornaliero**.
+
+**Quello che mancava a G era l'albero: il rilievo di oggi lo trova.** `Partners.csv` ha `Sponsor_ID` (32 partner, livelli 1-6): è la base sia per la Mappa v4 sia per la cascata dei segni vitali (cantiere 14 lavoro 5).
+
+## 7. Da decidere ancora
+
+- Come arriva e si aggiorna l'albero nella v4 (caricamento del file Amway, cantiere 14 lavoro 6, o import una tantum di `Partners.csv`).
+- Se la Mappa v4 ordina le prime linee per **stato** (prima gli attivi) invece che come Glide.
+- Se dalla riga di un partner si può **aprire la sua scheda contatto** (come «👤 Apri contatto» della Dashboard).
