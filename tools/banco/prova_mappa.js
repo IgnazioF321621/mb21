@@ -212,4 +212,10 @@ prova('file Amway: mese, albero e volumi come lo script import_mappa.py', () => 
   assert.deepEqual([c.nuovi.map(p => p.partner_id), c.usciti.map(p => p.partner_id)], [['222'], ['999']]);
 });
 
+prova('file Amway: VPP e VPG vanno agli utenti dell\'app col loro codice', () => {
+  const r = M.amwayPerUtenti([{ id: 'u1', partner_id: '111' }, { id: 'u2', partner_id: null }, { id: 'u3', partner_id: '999' }],
+    [{ partner_id: '111', vpp: 1221.5, vpg: 539.93 }, { partner_id: '222', vpp: 0, vpg: 0 }], 202609);
+  assert.deepEqual(r, [{ user_id: 'u1', mese: '2026-09-01', vpp_amway: 1221.5, vpg_amway: 539.93 }]);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);

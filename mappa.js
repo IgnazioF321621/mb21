@@ -256,7 +256,15 @@
     return { nuovi: nuova.filter(p => !a.has(p.partner_id)), usciti: (prima || []).filter(p => !b.has(p.partner_id)) };
   }
 
+  // VPP/VPG del file per Dashboard e Check (obiettivi_mese.vpp_amway / vpg_amway): una riga per utente dell'app col suo codice
+  function amwayPerUtenti(utenti, volumi, mese) {
+    const per = new Map(volumi.map(v => [String(v.partner_id), v]));
+    const giorno = `${Math.floor(mese / 100)}-${String(mese % 100).padStart(2, '0')}-01`;
+    return (utenti || []).filter(u => u.partner_id && per.has(String(u.partner_id)))
+      .map(u => ({ user_id: u.id, mese: giorno, vpp_amway: per.get(String(u.partner_id)).vpp, vpg_amway: per.get(String(u.partner_id)).vpg }));
+  }
+
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
-    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra };
+    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

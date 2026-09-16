@@ -14,7 +14,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Aperto il 16 settembre 2026 (richiesta di Ignazio).* Una tab **solo per l'Admin** dove mettere i lavori che fa solo lui: date dei **Wes e BBS** (tolte dal Report), **Carica file Amway** (cantiere 14 lavoro 6) e altro che servirà.
 - ~~Lavoro 1 · tab Admin~~ — fatto il 16/09: sesta tab «Admin», visibile solo all'Admin; Wes e BBS spostati dal Report; riquadro «Carica file Amway» ancora «in arrivo». **Pagina non vista nel browser da Claude: da provare da Ignazio**
 - ~~Lavoro 2 · Carica file Amway dall'app~~ (cantiere 14 lavoro 6) — fatto il 16/09: «Scegli il file» → riepilogo (mese, partner, chi entra, chi non c'è più, mese già caricato) → Carica: albero e volumi del mese come `scripts/import_mappa.py`, nessuno cancellato. Prove mappa 17 (file finto: il file vero non era sul computer). **Da provare da Ignazio con il file vero**
-- Da decidere con Ignazio: il file deve aggiornare anche **VPP/VPG di Dashboard e Check** (oggi scritti a mano / fermi all'export)?
+- ~~VPP/VPG di Dashboard e Check dal file~~ — deciso e fatto il 16/09 («si aggiornano in automatico dove sono richiesti»): il caricamento scrive VPP e VPG del mese per ogni utente dell'app col suo codice Amway, gli obiettivi restano. Prove mappa 18. **Da provare da Ignazio con il file vero**
 
 ## 17. Prossimo passo: rilievo MAPPA
 *Deciso il 15/09, da fare in una sessione nuova.* Sulla scia di Glide (Dashboard · Agenda · Lista Nomi · Report · Check · **Mappa**): le prime cinque tab sono nella v4, manca la **Mappa**. Rilievo della tab **Mappa** in sola lettura, stesso metodo di Report e Check (pannello di Claude Desktop navigato da Ignazio + ripresa automatica `mb21-import/strumenti/ripresa.py`, controllo del ritaglio con una foto dello schermo; screenshot in `mb21-import/screenshot-mappa/`; documento `docs/MB21_v3_Mappa_come_e.md`; Partner Select = Ignazio). Guardare anche quali dati dell'export servono (da verificare, non dare per scontato). Poi domande a Ignazio una alla volta e proposte per la Mappa v4
@@ -103,7 +103,7 @@ Decisioni di Ignazio per il lavoro 3 (15/09, dopo il lavoro 1: «se non vedo la 
 - ~~Dashboard troppo lunga sul telefono~~ — fatto il 14/09: la coda è fatta di righe compatte (nome, fase, frase del coach) che si aprono col tocco
 - ~~Lavoro 5: modulo obiettivi del mese più semplice~~ — fatto il 14/09: un foglio con i 12 obiettivi già compilati, «Come il mese scorso» / «Scelgo io» / barra di crescita 5-10-20-30-40-50% con avviso sopra il 20%, partenza automatica, niente obiettivi tutti a zero. **Da provare da Ignazio**
 - Bottoni «in arrivo»: Partner Select · Rinnova subito · visione completa (Check) · Mostra di più (Report)
-- **VPP/VPG fermi all'export**: serve l'import dei dati Amway
+- ~~**VPP/VPG fermi all'export**~~: dal 16/09 arrivano dal file Amway caricato nella pagina Admin (cantiere 19)
 - Finché si usa anche Glide, il Check del Giorno va scritto in tutti e due
 
 ## 9. Dopo la Fase 2
