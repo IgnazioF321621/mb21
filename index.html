@@ -394,6 +394,19 @@
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
   .mp-sv span.bbs.on { background: #3B82F6; } .mp-sv span.wes.on { background: #EF4444; } .mp-sv span.cep.on { background: #22C55E; }
+  .mp-completa { background: none; border: 0; padding: 0 2px; font-size: 13px; opacity: .55; }
+  .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .mp-riquadro { background: var(--testo); color: #fff; border-radius: 14px; padding: 14px; margin: 10px 0; }
+  .mp-riquadro .tre { display: flex; gap: 10px; }
+  .mp-riquadro .tre > div { flex: 1; background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 10px; }
+  .mp-riquadro small { display: block; color: #C7CBD4; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  .mp-riquadro b { font-size: 18px; font-weight: 700; }
+  .mp-barra { height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); margin-top: 12px; overflow: hidden; }
+  .mp-barra i { display: block; height: 100%; background: #60A5FA; }
+  .mp-tabella { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mp-tabella th { text-align: right; color: var(--grigio-chiaro); font-size: 11px; text-transform: uppercase; padding: 4px 6px; }
+  .mp-tabella th:first-child, .mp-tabella td:first-child { text-align: left; }
+  .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); }
   .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
@@ -417,7 +430,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 08:24';
+const APP_VERSION = '2026.09.16 · 08:47';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -547,7 +560,7 @@ async function scegliPartner() {
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
   CK.giorni = null; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
-  MP.contatti = null; MP.aperti = new Set(); MP.cerca = '';
+  MP.contatti = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
   mostraTab();
 }
@@ -2412,7 +2425,7 @@ function collegaCheck() {
 // Brief docs/MB21_v4_Brief_F8_Mappa.md: l'albero del gruppo Amway che si apre e si chiude sul posto (come la LOS
 // ufficiale), stato dai VPP del mese (≥50 attivo · >0 warning · 0 inattivo), filtri per stato e ricerca,
 // pillole BBS/WES/CEP (grigie finché i segni vitali non stanno sulle persone). Calcoli in mappa.js.
-const MP = { squadra: null, volumi: null, mese: null, contatti: null, aperti: new Set(), filtro: 'tutti', cerca: '' };
+const MP = { squadra: null, volumi: null, mese: null, contatti: null, aperti: new Set(), filtro: 'tutti', cerca: '', completa: null, storico: {} };
 
 async function apriMappa() {
   if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
@@ -2451,6 +2464,7 @@ function mesePulito(m) {
 
 function disegnaMappa() {
   const M = MB21Mappa;
+  if (MP.completa) return disegnaCompleta();
   const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
   const conta = M.conta(cime);
   const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
@@ -2481,6 +2495,7 @@ function disegnaMappa() {
           <span title="${esc(s.titolo)}">${s.pallino}</span>
           <button class="mp-nome" data-mpnome="${esc(r.nome)}">${esc(r.nome)}</button>
           <span class="mp-sv" title="Segni vitali: in arrivo"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span>
+          <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Visione completa di ${esc(r.nome)}">👁️</button>
           <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
             r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
         </div></div>`;
@@ -2488,6 +2503,73 @@ function disegnaMappa() {
   }
   app.innerHTML = html + versione();
   collegaMappa();
+}
+
+// «👁️ Visione completa» di un partner: storico dei 13 mesi e grafico (decisione C del 16/09)
+async function apriCompleta(id) {
+  MP.completa = id;
+  if (!MP.storico[id]) {
+    app.innerHTML = `<button class="indietro" id="mp-indietro">‹ Mappa</button><h1>Mappa</h1><div class="vuoto">Carico i mesi…</div>`;
+    document.getElementById('mp-indietro').onclick = () => { MP.completa = null; disegnaMappa(); };
+    const { data, error } = await dbq('storico del partner',
+      supa.from('volumi_mese').select('mese, vpp, vpg, bonus, al_livello_successivo, dimensioni_gruppo').eq('partner_id', id).order('mese'));
+    if (error) {
+      app.innerHTML = `<button class="indietro" id="mp-indietro">‹ Mappa</button><h1>Mappa</h1>
+        <div class="avviso">Non riesco a caricare i mesi di questo partner. Riprova.</div>${versione()}`;
+      document.getElementById('mp-indietro').onclick = () => { MP.completa = null; disegnaMappa(); };
+      return;
+    }
+    MP.storico[id] = data;
+  }
+  disegnaCompleta();
+}
+
+function disegnaCompleta() {
+  const M = MB21Mappa, id = MP.completa;
+  const chi = (MP.squadra || []).find(x => x.partner_id === id) || {};
+  const nome = M.nomeLeggibile(chi.nome);
+  const mesi = MP.storico[id] || [];
+  const st = M.storico(mesi);
+  const ultimo = mesi.length ? mesi[mesi.length - 1] : {};
+  const s = M.STATI[M.stato(ultimo.vpp)];
+  const num = (v, d = 2) => (v == null ? '—' : Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const manca = Number(ultimo.al_livello_successivo) || 0;
+  const bonus = Number(ultimo.bonus) || 0;
+  const fatta = manca ? Math.max(0, Math.min(100, 100 * (Number(ultimo.vpg) || 0) / ((Number(ultimo.vpg) || 0) + manca))) : 100;
+
+  let html = `<button class="indietro" id="mp-indietro">‹ Mappa</button>
+    <div class="mp-scheda-testa"><h1>${s.pallino} ${esc(nome)}</h1><span style="color:var(--grigio-chiaro);font-size:12px">#${esc(id)}</span></div>
+    <div class="mp-testa"><span>${chi.livello ? 'Livello ' + chi.livello : ''}${chi.data_ingresso ? ' · dal ' + esc(chi.data_ingresso.split('-').reverse().join('/')) : ''}</span>
+      <span>mese ${esc(mesePulito(ultimo.mese))}</span></div>
+    <div class="mp-riquadro">
+      <div class="tre"><div><small>VPP</small><b>${num(ultimo.vpp)}</b></div>
+        <div><small>VPG</small><b>${num(ultimo.vpg)}</b></div>
+        <div><small>Bonus</small><b>${num(bonus, 0)}%</b></div></div>
+      ${manca ? `<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:#C7CBD4">
+        <span>VP mancanti al livello dopo</span><span>${num(manca)}</span></div>
+        <div class="mp-barra"><i style="width:${fatta.toFixed(1)}%"></i></div>` : ''}
+    </div>`;
+
+  if (!st.righe.length) {
+    html += `<div class="vuoto">Nessun mese caricato per questo partner.</div>`;
+  } else {
+    html += `<div class="ck-grafico">
+      <div class="legenda"><i style="background:#2563EB;margin-left:0"></i>VPG<i style="background:#93C5FD"></i>VPP</div>
+      <div class="ck-barre">${st.righe.map(r => `<div>
+        <span class="prima" style="height:${(r.vpg || 0) / st.max * 100}%;background:#2563EB"></span>
+        <span style="height:${(r.vpp || 0) / st.max * 100}%;background:#93C5FD"></span></div>`).join('')}</div>
+      <div class="rp-mesi">${st.righe.map(r => `<span>${esc(r.etichetta)}</span>`).join('')}</div>
+      <div class="ck-valori">media VPP ${num(st.mediaVpp)} · media VPG ${num(st.mediaVpg)} su ${st.righe.length} mesi</div>
+    </div>
+    <h3>Storico mensile</h3>
+    <table class="mp-tabella"><tr><th>Mese</th><th>VPP</th><th>VPG</th><th>Bonus</th></tr>
+      ${[...st.righe].reverse().map(r => `<tr><td>${M.STATI[r.stato].pallino} ${esc(r.etichetta)}</td>
+        <td>${num(r.vpp)}</td><td>${num(r.vpg)}</td><td>${num(r.bonus, 0)}%</td></tr>`).join('')}
+    </table>`;
+  }
+  app.innerHTML = html + versione();
+  const su = document.getElementById('mp-indietro');
+  if (su) su.onclick = () => { MP.completa = null; disegnaMappa(); };
 }
 
 // Con Partner Select su un altro partner, la Mappa parte da lui (l'Admin vede tutto l'albero)
@@ -2523,6 +2605,7 @@ function collegaMappa() {
     const nuovo = document.getElementById('mp-cerca');
     if (nuovo) { nuovo.focus(); nuovo.setSelectionRange(dove, dove); }
   };
+  app.querySelectorAll('[data-mpcompleta]').forEach(b => b.onclick = () => apriCompleta(b.dataset.mpcompleta));
   app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
     const per = await contattiPerNome();
     const id = per[b.dataset.mpnome.trim().toLowerCase()];
