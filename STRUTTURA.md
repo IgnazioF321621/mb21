@@ -34,7 +34,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - filtri **Tutti · Attivi · Warning · Inattivi** con i conteggi, «Apri tutto», ricerca per nome o codice: chi non passa sparisce ma **chi sta sopra resta, spento**
 - riga: livello · pallino · nome · pillole **BBS/WES/CEP grigie** (si accendono col cantiere 14 lavoro 5) · VPP · VPG · bonus · gruppo · al livello dopo
 - **tocco sul nome** → scheda contatto se quel nome è in una lista visibile (torna alla Mappa), altrimenti avviso
-- **👁️ su ogni riga → «visione completa»** di quel partner: riquadro del mese (VPP · VPG · bonus + barra «VP mancanti al livello dopo»), grafico dei 13 mesi (VPG e VPP) con le medie, tabella dello storico dal mese più recente. `mappa.js → storico(volumi, quanti)`; la freccia ‹ torna all'elenco
+- **freccia `›` a destra della riga → «visione completa»** di quel partner: riquadro del mese (VPP · VPG · bonus + barra «VP mancanti al livello dopo»), grafico dei 13 mesi (VPG e VPP) con le medie, tabella dello storico dal mese più recente. `mappa.js → storico(volumi, quanti)`; la freccia ‹ torna all'elenco
 - Partner Select: con un altro partner la Mappa parte da lui (`utenti.partner_id`); mese = l'ultimo caricato in `volumi_mese`
 
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
