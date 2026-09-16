@@ -25,4 +25,8 @@
 *16/09/2026.* Due volte nella stessa sessione (segni vitali, import Amway) ho chiesto a Ignazio cose già decise il 15/09 e scritte nei brief.
 **Regola:** prima di fare una domanda o proporre una decisione, cercare nei documenti (`grep -rn` su `CANTIERI.md`, `LEZIONI.md`, `STRUTTURA.md`, `docs/*.md`) le parole chiave dell'argomento. Le decisioni stanno nei brief di fase, non solo in `CANTIERI.md`.
 
+## L8 — Il controllo della sintassi deve fermare la pubblicazione
+*16/09/2026.* Una riga con un commento finito in mezzo al codice ha rotto la pagina: il controllo (`node --check`) l'aveva segnalato, ma i comandi erano concatenati con `;` e commit e push sono partiti lo stesso. Corretto e ripubblicato 21 secondi dopo.
+**Regola:** controllo e pubblicazione sempre legati con `&&` (se il controllo fallisce non si pubblica), e rileggere l'esito del controllo prima di scrivere il resoconto.
+
 - **Campi data: non salvare a ogni cambio** (16/09, CEP). Sul computer, mentre si scrive l'anno, «0002» è già una data valida: il salvataggio automatico ridisegnava il campo e interrompeva la scrittura. Per le date usare un bottone Salva
