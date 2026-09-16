@@ -350,7 +350,8 @@
   .ad-riga small { grid-column: 2; color: var(--grigio); font-size: 12px; }
   .ad-riga .f { grid-column: 3; grid-row: 1 / span 2; color: var(--grigio); font-size: 18px; }
   .ad-dettaglio { padding: 0 0 10px 26px; }
-  .ad-dettaglio > small { display: block; color: var(--grigio); font-size: 12px; word-break: break-all; }
+  .ad-dettaglio > small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
+  .ad-dettaglio .link { padding: 6px 0; font-size: 14px; }
   .ad-dettaglio .interruttore { border-top: 0; padding: 6px 0; font-size: 15px; }
   .ad-abb { margin-top: 6px; font-size: 14px; }
   .ad-abb .primario { font-size: 15px; padding: 10px; margin-top: 8px; }
@@ -474,7 +475,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 18:55';
+const APP_VERSION = '2026.09.16 · 19:12';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3203,6 +3204,7 @@ function rigaUtenteAdmin(u) {
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')} · ${u.auth_id ? '✅ già entrato' : 'mai entrato'}</small>
+    <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica nome, codice, email</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <div class="ad-abb"><b>Abbonamento</b>`;
@@ -3258,20 +3260,21 @@ function disegnaAdmin() {
 
 // Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
 // email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
-function foglioNuovoUtente() {
-  const st = { nome: '', codice: '', email: '', comune: '' };
+// Stesso foglio per ✏️ Modifica (u = utente): nome, codice, email (solo se non è mai entrato: il suo accesso è legato all'email).
+function foglioNuovoUtente(u) {
+  const bloccaEmail = u && u.auth_id;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio nu"><h3>＋ Nuovo utente</h3>
-    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Filippo" autocomplete="off"></label>
+  velo.innerHTML = `<div class="foglio nu"><h3>${u ? '✏️ Modifica utente' : '＋ Nuovo utente'}</h3>
+    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Filippo Arcoraci" autocomplete="off"></label>
     <div id="nu-trovati"></div>
-    <label>Nome e cognome<input id="nu-nome" autocomplete="off"></label>
-    <label>Codice Amway <small style="color:var(--grigio)">(anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off"></label>
-    <label>Email con cui entrerà<input id="nu-email" type="email" autocomplete="off" autocapitalize="off"></label>
-    <label>Abbonamento in comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
-      .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label>
+    <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
+    <label>Codice Amway <small style="color:var(--grigio)">(solo numeri, anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off" value="${esc(u ? u.partner_id || '' : '')}"></label>
+    <label>Email con cui entrerà${bloccaEmail ? ' <small style="color:var(--grigio)">(è già entrato: non si cambia)</small>' : ''}<input id="nu-email" type="email" autocomplete="off" autocapitalize="off" value="${esc(u ? u.email || '' : '')}" ${bloccaEmail ? 'disabled' : ''}></label>
+    ${u ? '' : `<label>Abbonamento in comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
+      .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label>`}
     <div class="errore" id="nu-errore"></div>
-    <button class="primario" id="nu-crea">Crea</button>
+    <button class="primario" id="nu-crea">${u ? 'Salva' : 'Crea'}</button>
     <button class="link" id="nu-annulla">Annulla</button></div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
@@ -3282,9 +3285,13 @@ function foglioNuovoUtente() {
   $('nu-cerca').oninput = async () => {
     const q = $('nu-cerca').value.trim(), mio = ++giro;
     if (q.length < 2) { $('nu-trovati').innerHTML = ''; return; }
-    const { data, error } = await dbq('cerca nella Lista', supa.from('contatti').select('id, nome, codice_amway, user_id, categoria')
-      .ilike('nome', `%${q.replace(/[%_]/g, '')}%`).neq('categoria', 'Archiviato').order('nome').limit(10));
-    if (mio !== giro || error) return;
+    // più parole («Filippo Arcoraci», «Arcoraci Filippo»): si cerca la più lunga e si tengono i nomi che le hanno tutte
+    const parole = q.toLowerCase().replace(/[%_,]/g, ' ').split(/\s+/).filter(Boolean);
+    const lunga = [...parole].sort((a, b) => b.length - a.length)[0] || '';
+    const r = await dbq('cerca nella Lista', supa.from('contatti').select('id, nome, codice_amway, user_id, categoria')
+      .ilike('nome', `%${lunga}%`).neq('categoria', 'Archiviato').order('nome').limit(200));
+    if (mio !== giro || r.error) return;
+    const data = r.data.filter(c => parole.every(w => String(c.nome || '').toLowerCase().includes(w))).slice(0, 10);
     const di = id => { const u = AD.utenti.find(x => x.id === id); return u ? nomeDi(u) : ''; };
     $('nu-trovati').innerHTML = data.length ? data.map(c => `<button class="rp-riga nome" data-c="${esc(c.id)}"><span>${esc(c.nome)}<br>
       <small>${esc(c.categoria || 'senza categoria')}${c.codice_amway ? ' · codice ' + esc(c.codice_amway) : ''} · lista di ${esc(di(c.user_id))}</small></span><span></span><span class="f">›</span></button>`).join('')
@@ -3297,16 +3304,22 @@ function foglioNuovoUtente() {
     });
   };
   $('nu-crea').onclick = async () => {
-    const nome = $('nu-nome').value.trim(), codice = $('nu-codice').value.trim(), email = $('nu-email').value.trim().toLowerCase();
+    const nome = $('nu-nome').value.trim().replace(/\s+/g, ' '), codice = $('nu-codice').value.replace(/\s/g, ''), email = $('nu-email').value.trim().toLowerCase();
     if (!nome) return ($('nu-errore').textContent = 'Scrivi nome e cognome');
+    if (codice && !/^\d+$/.test(codice)) return ($('nu-errore').textContent = 'Il codice Amway è fatto solo di numeri');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ($('nu-errore').textContent = "Scrivi un'email valida");
-    if (AD.utenti.some(u => (u.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
-    $('nu-crea').disabled = true; $('nu-crea').textContent = 'Creo…';
-    const { data, error } = await dbq('nuovo utente', supa.from('utenti').insert({ nome_cognome: nome, nome: nome.split(/\s+/)[0], email,
-      partner_id: codice || null, abbonamento_con: $('nu-comune').value || null, accesso_attivo: false }).select('id').single());
-    if (error) { $('nu-crea').disabled = false; $('nu-crea').textContent = 'Crea'; $('nu-errore').textContent = error.code === '23505' ? 'Questa email è già di un utente' : 'Non creato: riprova.'; return; }
+    if (AD.utenti.some(x => x !== u && (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
+    const testo = u ? 'Salva' : 'Crea';
+    $('nu-crea').disabled = true; $('nu-crea').textContent = u ? 'Salvo…' : 'Creo…';
+    const campi = { nome_cognome: nome, nome: nome.split(' ')[0], partner_id: codice || null };
+    if (!bloccaEmail) campi.email = email;
+    const { data, error } = u
+      ? await dbq('modifica utente', supa.from('utenti').update(campi).eq('id', u.id).select('id').single())
+      : await dbq('nuovo utente', supa.from('utenti').insert({ ...campi, abbonamento_con: $('nu-comune').value || null, accesso_attivo: false }).select('id').single());
+    if (error) { $('nu-crea').disabled = false; $('nu-crea').textContent = testo; $('nu-errore').textContent = error.code === '23505' ? 'Questa email è già di un utente' : 'Non salvato: riprova.'; return; }
     chiudi();
-    mostraToast(`${nome} aggiunto: accendi «Può entrare» quando è pronto`);
+    mostraToast(u ? `${nome}: salvato` : `${nome} aggiunto: accendi «Può entrare» quando è pronto`);
+    if (u && u.id === ST.utente.id) Object.assign(ST.utente, campi);
     AD.aperti.add(data.id);
     await apriAdmin();
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;   // nel Partner Select
@@ -3317,7 +3330,8 @@ function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
-  su('ad-nuovo-utente', foglioNuovoUtente);
+  su('ad-nuovo-utente', () => foglioNuovoUtente());
+  app.querySelectorAll('[data-modifica-ut]').forEach(b => b.onclick = () => foglioNuovoUtente(AD.utenti.find(x => x.id === b.dataset.modificaUt)));
   su('ad-scegli', () => document.getElementById('ad-file').click());
   app.querySelectorAll('[data-ut]').forEach(b => b.onchange = async () => {
     const u = AD.utenti.find(x => x.id === b.dataset.ut), campo = b.dataset.campo, valore = b.checked;
