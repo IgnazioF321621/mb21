@@ -100,7 +100,7 @@ prova('Modulo Check: 11 numeri obbligatori, VP con decimali, note max 150', () =
   assert.equal(D.validaCheck({ ...pieno, data: '' }), 'Manca la data del check.');
   assert.equal(D.validaCheck({ ...pieno, note_libro: 'x'.repeat(151) }), 'Note del libro: massimo 150 caratteri.');
   assert.equal(D.LIBRI.length, 44);
-  assert.equal(D.CAMPI_CHECK.length, 10);   // + Data, Libro, Note = 13 campi
+  assert.equal(D.CAMPI_CHECK.length, 7);    // + Data, Libro, Note; BBS/WES/CEP tolti (cantiere 18)
 });
 
 prova('Obiettivi: come il mese scorso, crescita 10% e 50%, attuali; partner nuovo = campi vuoti', () => {
@@ -165,6 +165,17 @@ prova('Partner Select «Tutti»: somma dei partner, partenze calcolate per ognun
   // dai check giornalieri alle somme per partner e mese
   const mesi = D.mesiDaGiorni([{ user_id: 'A', data: '2026-09-02', bbs: 1 }, { user_id: 'A', data: '2026-09-05', bbs: 2 }, { user_id: 'B', data: '2026-09-05', bbs: 4 }], ['bbs']);
   assert.deepEqual(mesi, [{ user_id: 'A', mese: '2026-09-01', bbs: 3 }, { user_id: 'B', mese: '2026-09-01', bbs: 4 }]);
+});
+
+prova('BBS/WES/CEP dalle persone da settembre 2026: fotografia a fine mese, prima i check', () => {
+  const chiesti = [];
+  const segniAl = giorno => { chiesti.push(giorno); return giorno === '2026-09-30' ? { bbs: 4, wes: 8, cep: 6 } : { bbs: 2, wes: 7, cep: 5 }; };
+  const tot = D.applicaPersone({ '2026-08-01': { bbs: 5, wes: 10, cep: 6 } }, '2026-10-01', '2026-10-12', segniAl);
+  assert.deepEqual(chiesti, ['2026-09-30', '2026-10-12']);            // settembre chiuso a fine mese, ottobre a oggi
+  assert.deepEqual(tot['2026-08-01'], { bbs: 5, wes: 10, cep: 6 });   // agosto: i numeri dei check restano
+  assert.deepEqual([tot['2026-09-01'].bbs, tot['2026-09-01'].wes, tot['2026-09-01'].cep], [4, 8, 6]);
+  assert.deepEqual([tot['2026-10-01'].bbs, tot['2026-10-01'].wes, tot['2026-10-01'].cep], [2, 7, 5]);
+  assert.deepEqual(D.applicaPersone({ x: 1 }, '2026-10-01', '2026-10-12', null), { x: 1 });
 });
 
 console.log(`\n${ok} prove superate`);

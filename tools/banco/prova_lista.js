@@ -112,15 +112,24 @@ prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca tr
   assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'Nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);
 });
 
-prova('segni vitali: posti del biglietto ed eventi ancora da scegliere', () => {
+prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', () => {
   assert.equal(L.postiBiglietto({ contatto: true, compagno: true, ospiti: 1 }), 3);
   assert.equal(L.postiBiglietto({ contatto: false, compagno: false, ospiti: 2 }), 2);
   assert.equal(L.postiBiglietto({ contatto: true, ospiti: -1 }), 1);
   assert.equal(L.postiBiglietto(null), 0);
-  const b = [{ tipo: 'BBS', evento: '2026-10-18' }, { tipo: 'WES', evento: '2026-06-05' }];
-  assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-10-18', '2026-12-06'], b, 'BBS'), ['2026-12-06', '2026-06-05']);
-  assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-02-14'], b, 'WES'), ['2026-02-14']);
+  assert.equal(L.meseEvento('2026-09-20'), '2026-09-01');
+  assert.equal(L.etichettaEvento('2026-09-01'), '09/2026');
+  const b = [{ tipo: 'BBS', evento: '2026-10-01' }, { tipo: 'WES', evento: '2026-06-01' }];
+  assert.deepEqual(L.eventiLiberi(['2026-06-01', '2026-10-01', '2026-12-01'], b, 'BBS'), ['2026-12-01', '2026-06-01']);
+  assert.deepEqual(L.eventiLiberi(['2026-06-05', '2026-02-14'], b, 'WES'), ['2026-02-01']);   // giorni dei Wes → mesi
   assert.deepEqual(L.eventiLiberi([], b, 'BBS'), []);
+  const eventi = [{ data: '2026-09-01', creato_il: '2026-09-01T10:00:00Z' }, { data: '2026-10-01', creato_il: '2026-09-20T18:00:00Z' }];
+  assert.equal(L.eventoAttivo(eventi), '2026-10-01');                                          // adesso: l'ultimo caricato
+  assert.equal(L.eventoAttivo(eventi, Date.parse('2026-09-19T23:00:00Z')), '2026-09-01');      // prima che arrivasse ottobre
+  assert.equal(L.eventoAttivo(eventi, Date.parse('2026-08-31T23:00:00Z')), null);
+  assert.equal(L.eventoAttivo([{ data: '2026-10-16', creato_il: '2026-09-15T13:48:26Z' }]), '2026-10-01');
+  assert.equal(L.momento('2026-09-16T11:58:12.55943+00:00'), Date.parse('2026-09-16T11:58:12.559Z'));
+  assert.equal(L.momento('2026-09-16 11:58:12.55943+00'), Date.parse('2026-09-16T11:58:12.559Z'));
 });
 
 prova('CEP a periodi: date, un solo periodo aperto, niente sovrapposizioni', () => {
@@ -134,22 +143,23 @@ prova('CEP a periodi: date, un solo periodo aperto, niente sovrapposizioni', () 
   assert.equal(L.controllaPeriodoCep([vecchio], { id: 'a', dal: '2023-01-10', uscito_il: '2024-05-01' }), '');   // modifica di sé stesso
 });
 
-prova('targhette BBS · WES · CEP: evento non ancora passato, CEP abbonato oggi', () => {
-  const OGGI = '2026-09-16';
-  const big = [{ tipo: 'BBS', evento: '2026-10-18', contatto: true }, { tipo: 'WES', evento: '2026-06-05', contatto: true }];
-  assert.deepEqual(L.targheSegni(big, [], OGGI), { bbs: true, wes: false, cep: false });
-  assert.deepEqual(L.targheSegni([{ tipo: 'WES', evento: OGGI, ospiti: 1 }], [{ dal: '2024-01-01' }], OGGI), { bbs: false, wes: true, cep: true });
-  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }], OGGI).cep, false);
-  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }, { dal: '2026-02-01' }], OGGI).cep, true);
+prova('targhette BBS · WES · CEP: biglietto per l\'evento in vendita, CEP abbonato oggi', () => {
+  const OGGI = '2026-09-16', ATTIVI = { bbs: '2026-10-01', wes: '2026-10-01' };
+  const big = [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-06-01', contatto: true }];
+  assert.deepEqual(L.targheSegni(big, [], OGGI, ATTIVI), { bbs: true, wes: false, cep: false });
+  assert.deepEqual(L.targheSegni(big, [], OGGI, { bbs: '2026-11-01' }), { bbs: false, wes: false, cep: false });   // è arrivato l'evento dopo
+  assert.deepEqual(L.targheSegni([{ tipo: 'WES', evento: '2026-10-01', ospiti: 1 }], [{ dal: '2024-01-01' }], OGGI, ATTIVI), { bbs: false, wes: true, cep: true });
+  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }], OGGI, ATTIVI).cep, false);
+  assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }, { dal: '2026-02-01' }], OGGI, ATTIVI).cep, true);
   assert.deepEqual(L.targheSegni(null, null, OGGI), { bbs: false, wes: false, cep: false });
 });
 
 prova('targhette della Lista: la coppia collegata condivide i segni', () => {
   const OGGI = '2026-09-16';
   const t = L.targhePerContatto(
-    [{ contatto_id: 'tonya', tipo: 'WES', evento: '2026-10-09', contatto: true, compagno: true }],
+    [{ contatto_id: 'tonya', tipo: 'WES', evento: '2026-10-01', contatto: true, compagno: true }],
     [{ contatto_id: 'tonya', dal: '2024-01-01' }, { contatto_id: 'altro', dal: '2020-01-01', uscito_il: '2021-01-01' }],
-    [{ id: 'tonya', compagno_id: 'filippo' }, { id: 'filippo', compagno_id: 'tonya' }], OGGI);
+    [{ id: 'tonya', compagno_id: 'filippo' }, { id: 'filippo', compagno_id: 'tonya' }], OGGI, { wes: '2026-10-01' });
   assert.deepEqual(t.tonya, { bbs: false, wes: true, cep: true });
   assert.deepEqual(t.filippo, { bbs: false, wes: true, cep: true });
   assert.deepEqual(t.altro, { bbs: false, wes: false, cep: false });
