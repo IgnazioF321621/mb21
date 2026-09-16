@@ -95,3 +95,26 @@ prova('cerca: per nome e per codice', () => {
 });
 
 console.log(`\n${ok} prove passate.`);
+
+// ── «Visione completa»: storico dei mesi (lavoro 4)
+const mesiVeri = [
+  { mese: 202509, vpp: 679.05, vpg: 4024.99, bonus: 15 },
+  { mese: 202510, vpp: 617.00, vpg: 1780.00, bonus: 9 },
+  { mese: 202607, vpp: 519.86, vpg: 1924.18, bonus: 9 },
+  { mese: 202608, vpp: 343.12, vpg: 2106.78, bonus: 9 },
+  { mese: 202609, vpp: 0, vpg: 325.83, bonus: 3 },
+];
+
+prova('storico: ordinato dal più vecchio, etichette dei mesi e massimo per le barre', () => {
+  const st = M.storico([...mesiVeri].reverse());
+  assert.deepEqual(st.righe.map(r => r.etichetta), ['Set 25', 'Ott 25', 'Lug 26', 'Ago 26', 'Set 26']);
+  assert.equal(st.max, 4024.99);
+  assert.deepEqual(st.righe.map(r => r.stato), ['attivo', 'attivo', 'attivo', 'attivo', 'inattivo']);
+});
+
+prova('storico: tiene solo gli ultimi mesi chiesti', () => {
+  const st = M.storico(mesiVeri, 3);
+  assert.deepEqual(st.righe.map(r => r.mese), [202607, 202608, 202609]);
+});
+
+console.log(`\n${ok} prove passate in tutto.`);
