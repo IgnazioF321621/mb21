@@ -487,7 +487,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 22:06';
+const APP_VERSION = '2026.09.16 · 22:35';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2316,7 +2316,13 @@ async function caricaSegni(c) {
   // Regola di Ignazio (16/09): i segni vitali di una persona si scrivono su una scheda sola.
   // Per un partner vale la scheda col codice Amway: se è un'altra (stesso nome, altra lista) questa rimanda lì
   let ufficiale = null;
-  if (!ana.codice_amway) {
+  if (eAdmin() && c.user_id !== ST.utente.id) {
+    // Scelta A di Ignazio (16/09): con le schede a cascata i segni vitali di un partner si scrivono sulla scheda nella lista dell'Admin
+    let q = supa.from('contatti').select('id').eq('user_id', ST.utente.id).neq('id', c.id);
+    q = ana.codice_amway ? q.eq('codice_amway', ana.codice_amway) : q.not('codice_amway', 'is', null).ilike('nome', nomeEsatto(c.nome));
+    const r = await dbq('scheda dell\'Admin', q.limit(1));
+    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, lista: ST.utente.nome };
+  } else if (!ana.codice_amway) {
     const r = await dbq('scheda col codice', supa.from('contatti').select('id, user_id, utenti(nome)')
       .not('codice_amway', 'is', null).neq('id', c.id).ilike('nome', nomeEsatto(c.nome)).limit(1));
     if (r.data && r.data.length) ufficiale = { id: r.data[0].id, lista: r.data[0].utenti ? r.data[0].utenti.nome : '' };
@@ -3344,6 +3350,21 @@ function disegnaAdmin() {
           <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
           <button class="link" data-ripristina="${esc(u.id)}">↩︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
       <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>🔗 Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
+  } else if (AD.sezione === 'schede') {
+    const p = AD.schede;
+    html = `${indietro}<h1>Schede dei partner</h1>
+      <div class="sotto" style="margin:0 0 8px">Regola di Ignazio (16/09): ogni partner della Mappa ha una scheda Partner, collegata al codice, nella lista di <b>ogni utente che gli sta sopra</b> (tutti i livelli), mai fuori dal ramo. Fuori coda. Non si cancella niente. Si fa da sola dopo «Carica file Amway».</div>`;
+    if (!p) html += `<div class="vuoto">Controllo le liste…</div>`;
+    else if (p.errore) html += `<div class="avviso">${esc(p.errore)}</div>`;
+    else if (!p.righe.length) html += `<div class="riquadro">✅ Tutto allineato: ogni partner è già nelle liste giuste.</div>`;
+    else {
+      const perUtente = {};
+      for (const r of p.righe) (perUtente[r.utente] = perUtente[r.utente] || []).push(r);
+      html += `<div class="riquadro" style="margin-bottom:10px">Da fare: <b>${p.create} schede nuove</b> · <b>${p.collegate} schede già in lista da collegare al codice</b></div>
+        ${Object.entries(perUtente).map(([ut, righe]) => `<div class="rp-wes"><h3>Lista di ${esc(ut)}</h3>${righe.map(r => `<div class="ad-richiesta">
+          <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(r.categoria) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
+        <button class="primario" id="ad-allinea">✓ Allinea adesso</button>`;
+    }
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>Wes</h1><div class="rp-wes">
       ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
@@ -3362,11 +3383,36 @@ function disegnaAdmin() {
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', '📄 Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${voce('ad-vai-utenti', "👥 Utenti dell'app", `${AD.richieste.length ? `📨 ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟠 ${stati.filter(x => x === 'in_scadenza').length} · 🔴 ${stati.filter(x => x === 'scaduto').length}`)}
+      ${voce('ad-vai-schede', '🔗 Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-wes', '🎟 Wes', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', '🎟 BBS', `ultimo ${ultimo(AD.bbs)}`)}`;
   }
   app.innerHTML = html + versione();
   collegaAdmin();
+}
+
+// Schede dei partner a cascata (cantiere 19, Ignazio 16/09): anteprima (senza scrivere) e allineamento, nel database.
+async function allineaSchede(prova = false) {
+  const { data, error } = await dbq('schede dei partner', supa.rpc('allinea_schede_partner', { p_prova: prova }));
+  if (error) { mostraToast('Schede dei partner non allineate: riprova da Admin.'); return null; }
+  if (!prova && (data.create || data.collegate)) { LS.righe = []; contattiMiei = null; MP.schede = null; }
+  return data;
+}
+async function anteprimaSchede() {
+  const d = await allineaSchede(true);
+  if (!d) { AD.schede = { errore: 'Non riesco a controllare le liste: riprova.' }; return AD.sezione === 'schede' && disegnaAdmin(); }
+  const codici = [...new Set(d.dettaglio.map(x => x.codice))], schede = d.dettaglio.map(x => x.scheda).filter(Boolean);
+  const [sq, sc] = await Promise.all([
+    codici.length ? dbq('nomi della Mappa', supa.from('squadra').select('partner_id, nome').in('partner_id', codici)) : { data: [] },
+    schede.length ? dbq('schede trovate', supa.from('contatti').select('id, nome, categoria').in('id', schede)) : { data: [] },
+  ]);
+  const nomeP = id => { const x = (sq.data || []).find(y => y.partner_id === id); return x ? MB21Mappa.nomeLeggibile(x.nome) : id; };
+  const utente = id => { const u = AD.tutti.find(y => y.id === id); return u ? nomeDi(u) : '?'; };
+  AD.schede = { create: d.create, collegate: d.collegate, righe: d.dettaglio.map(x => {
+    const s = (sc.data || []).find(y => y.id === x.scheda);
+    return { utente: utente(x.utente), partner: nomeP(x.codice), azione: x.azione, scheda: s ? s.nome : '', categoria: s ? s.categoria : '' };
+  }).sort((a, b) => a.utente.localeCompare(b.utente, 'it') || a.partner.localeCompare(b.partner, 'it')) };
+  if (AD.sezione === 'schede') disegnaAdmin();
 }
 
 // Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
@@ -3542,6 +3588,13 @@ function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
+  su('ad-allinea', async () => {
+    if (!await chiediConferma('Allineo le liste?', `Crea ${AD.schede.create} schede Partner (fuori coda) e collega ${AD.schede.collegate} schede al codice. Non cancella niente.`, 'Allinea')) return;
+    const r = await allineaSchede();
+    if (r) mostraToast(`Fatto: ${r.create} schede create, ${r.collegate} collegate`);
+    anteprimaSchede();
+  });
   su('ad-nuovo-utente', () => foglioNuovoUtente());
   su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
@@ -3721,6 +3774,8 @@ async function foglioFileAmway(f) {
     if (r1.error || r2.error || r3.error) { bottone.disabled = false; bottone.textContent = 'Carica'; return mostraToast('Non caricato: riprova.'); }
     chiudi();
     MP.squadra = null; MP.volumi = null; MP.storico = {};   // la Mappa si rilegge alla prossima apertura
+    const al = await allineaSchede();   // schede dei partner a cascata per chi è entrato nella squadra
+    if (al && (al.create || al.collegate)) setTimeout(() => mostraToast(`Schede dei partner: ${al.create} create, ${al.collegate} collegate`), 2500);
     mostraToast(`File Amway di ${meseTesto} caricato: ${f.squadra.length} partner`);
   };
 }

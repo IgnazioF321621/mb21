@@ -131,6 +131,9 @@
     const posti = b => (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + Math.max(0, Number(b.ospiti) || 0);
     const squadra = d.squadra || [];
     const delContatto = {};
+    // Dal 16/09 lo stesso partner ha una scheda col codice in più liste (schede a cascata): valgono tutte
+    const codici = new Set(squadra.map(p => p.partner_id));
+    for (const sc of d.schede || []) if (sc.codice_amway && codici.has(sc.codice_amway)) delContatto[sc.id] = sc.codice_amway;
     for (const p of squadra) {
       const sc = schedaDelPartner({ id: p.partner_id, nome: nomeLeggibile(p.nome) }, d.schede, d.preferito);
       if (sc) delContatto[sc.id] = p.partner_id;
