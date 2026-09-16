@@ -184,7 +184,79 @@
     return { ...(r.gruppo[pid] || { bbs: 0, wes: 0, cep: 0 }), attivoBbs, attivoWes };
   }
 
+  // ── File Amway (cantiere 19 lavoro 2): stessa lettura di scripts/import_mappa.py, dentro l'app
+  // Righe CSV con le virgolette di Amway («"a, b"»); ogni valore può avere un apostrofo davanti.
+  function righeCsv(testo) {
+    const righe = []; let riga = [], campo = '', dentro = false;
+    const t = String(testo || '').replace(/^﻿/, '');
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (dentro) {
+        if (c === '"' && t[i + 1] === '"') { campo += '"'; i++; }
+        else if (c === '"') dentro = false;
+        else campo += c;
+      } else if (c === '"') dentro = true;
+      else if (c === ',') { riga.push(campo); campo = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && t[i + 1] === '\n') i++;
+        riga.push(campo); righe.push(riga); riga = []; campo = '';
+      } else campo += c;
+    }
+    if (campo !== '' || riga.length) { riga.push(campo); righe.push(riga); }
+    return righe;
+  }
+
+  const pulisci = v => String(v == null ? '' : v).trim().replace(/^'+/, '').trim();
+  const testoAmway = v => pulisci(v) || null;
+  // 539,93 → 539.93 · 1221.23 → 1221.23 · 3% → 3 · vuoto o non numero → null
+  function numeroAmway(v) {
+    let s = pulisci(v).replace(/%/g, '').replace(/\s/g, '');
+    if (!s) return null;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : null;
+  }
+  const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+  // '15 marzo 2010' → '2010-03-15'
+  function dataAmway(v) {
+    const p = pulisci(v).split(/\s+/), m = p.length === 3 ? MESI_LUNGHI.indexOf(p[1].toLowerCase()) : -1;
+    if (m < 0 || !/^\d+$/.test(p[0]) || !/^\d{4}$/.test(p[2])) return null;
+    return `${p[2]}-${String(m + 1).padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+  }
+
+  // → { mese, squadra: [...], volumi: [...] } oppure { errore }
+  function leggiFileAmway(testo) {
+    const righe = righeCsv(testo);
+    let mese = null;
+    for (const r of righe.slice(0, 3)) if (r[0] && r[0].trim().toLowerCase().startsWith('mese di competenza')) mese = Number(pulisci(r[1]));
+    if (!mese || !/^\d{6}$/.test(String(mese))) return { errore: 'Nel file manca «Mese di competenza»: è il file della LOS di Amway?' };
+    const i = righe.findIndex(r => r[0] && r[0].trim() === 'Qualifica Amway Partner');
+    if (i < 0) return { errore: 'Nel file manca la riga dei titoli: è il file della LOS di Amway?' };
+    const titoli = righe[i].map(x => x.trim());
+    const dati = righe.slice(i + 1).filter(r => r.some(c => c.trim())).map(r => Object.fromEntries(titoli.map((t, k) => [t, r[k]])));
+    const squadra = [], volumi = [];
+    for (const d of dati) {
+      const partner_id = testoAmway(d['Codice Amway Partner']);
+      if (!partner_id) continue;
+      squadra.push({ partner_id, sponsor_id: testoAmway(d['Codice Amway Partner Sponsor']), nome: testoAmway(d['Nome']) || partner_id,
+        livello: numeroAmway(d['Qualifica Amway Partner']), data_ingresso: dataAmway(d['Data di ingresso']), telefono: testoAmway(d['Telefono']),
+        email: testoAmway(d['Email']), indirizzo: testoAmway(d['Indirizzo']), data_rinnovo: dataAmway(d['Data di rinnovo']) });
+      volumi.push({ partner_id, mese, vpp: numeroAmway(d['VPP']), vpg: numeroAmway(d['VPG']), bonus: numeroAmway(d['Percentuale di bonus']),
+        vvg: numeroAmway(d['VVG']), vp_cliente: numeroAmway(d['VP Cliente']), vp_rubino: numeroAmway(d['VP Rubino']), clienti: numeroAmway(d['Clienti']),
+        al_livello_successivo: numeroAmway(d['Punti al livello successivo']), dimensioni_gruppo: numeroAmway(d['Dimensioni gruppo']),
+        ordini: numeroAmway(d['Numero ordini personali']), ordini_multicarrello: numeroAmway(d['Numero ordini multicarrello']),
+        vpp_annuali: numeroAmway(d['VPP annuali']), vp_organizzazione: numeroAmway(d['Totale VP organizzazione']) });
+    }
+    if (!squadra.length) return { errore: 'Nel file non ci sono partner.' };
+    return { mese, squadra, volumi };
+  }
+
+  // Confronto con l'albero già caricato: chi entra e chi non c'è più nel file (non si cancella nessuno)
+  function confrontoSquadra(prima, nuova) {
+    const a = new Set((prima || []).map(p => p.partner_id)), b = new Set(nuova.map(p => p.partner_id));
+    return { nuovi: nuova.filter(p => !a.has(p.partner_id)), usciti: (prima || []).filter(p => !b.has(p.partner_id)) };
+  }
+
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
-    segniGruppo, segniAl, bonusSuccessivo };
+    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
