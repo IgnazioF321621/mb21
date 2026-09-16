@@ -394,7 +394,8 @@
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
   .mp-sv span.bbs.on { background: #3B82F6; } .mp-sv span.wes.on { background: #EF4444; } .mp-sv span.cep.on { background: #22C55E; }
-  .mp-completa { background: none; border: 0; padding: 0 2px; font-size: 13px; opacity: .55; }
+  .mp-completa { flex: 0 0 auto; align-self: center; background: none; border: 0; padding: 6px 4px 6px 10px;
+    font-size: 20px; line-height: 1; color: var(--grigio-chiaro); }
   .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .mp-riquadro { background: var(--testo); color: #fff; border-radius: 14px; padding: 14px; margin: 10px 0; }
   .mp-riquadro .tre { display: flex; gap: 10px; }
@@ -430,7 +431,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 08:47';
+const APP_VERSION = '2026.09.16 · 08:58';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2495,10 +2496,10 @@ function disegnaMappa() {
           <span title="${esc(s.titolo)}">${s.pallino}</span>
           <button class="mp-nome" data-mpnome="${esc(r.nome)}">${esc(r.nome)}</button>
           <span class="mp-sv" title="Segni vitali: in arrivo"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span>
-          <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Visione completa di ${esc(r.nome)}">👁️</button>
           <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
             r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
-        </div></div>`;
+        </div>
+        <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('');
   }
   app.innerHTML = html + versione();
