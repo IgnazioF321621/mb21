@@ -456,7 +456,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 15:55';
+const APP_VERSION = '2026.09.16 · 16:04';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1695,7 +1695,7 @@ async function nuovoAppuntamento(opz = {}) {
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati' };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati' };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -1716,9 +1716,12 @@ async function leggiTarghe() {
   const [big, cep, coppie] = await Promise.all([
     dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').gte('evento', oggi).limit(5000)),
     dbq('targhe CEP', supa.from('cep').select('contatto_id, dal, uscito_il').limit(5000)),
-    dbq('targhe coppie', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
+    dbq('targhe coppie', supa.from('contatti').select('id, compagno_id, compagno_nome')
+      .or('compagno_id.not.is.null,compagno_nome.not.is.null').limit(5000)),
   ]);
   if (big.error || cep.error || coppie.error) return {};
+  LS.coppie = {};
+  for (const r of coppie.data) LS.coppie[r.id] = r;
   return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi);
 }
 
@@ -1810,6 +1813,15 @@ function targheCard(r) {
   return r.categoria === 'Partner' || accesa ? `<span class="sv-targhe">${targheHtml(t)}</span>` : '';
 }
 
+// «Coppia con …» sulla card: nome della scheda collegata (se visibile) o scritto a mano
+function coppiaCard(r) {
+  const cp = LS.coppie && LS.coppie[r.id];
+  if (!cp) return '';
+  const altra = cp.compagno_id && LS.righe.find(x => x.id === cp.compagno_id);
+  const nome = altra ? altra.nome : cp.compagno_nome;
+  return nome ? `<div class="prof">Coppia con ${esc(nome)}</div>` : '';
+}
+
 function cardNome(r) {
   const etichetta = MB21Lista.etichettaCard(r);
   return `
@@ -1819,6 +1831,7 @@ function cardNome(r) {
         <div class="etichetta">${esc(etichetta)}</div>
         <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
         <div class="prof">${esc(r.professione || '')}</div>
+        ${coppiaCard(r)}
         <div>${linkTelefono(r.telefono)}</div>
       </div>
       <button class="menu" data-id="${esc(r.id)}" aria-label="Menu">…</button>
@@ -1961,8 +1974,62 @@ function sezioneDati() {
   const campi = [['Professione', c.professione], ['Età', c.fascia_eta], ['Località', c.citta], ['Area', c.area],
     ['Note', c.note], ['Contatto e/o Incaricato di', c.referral_di], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
     .filter(([, v]) => v);
-  document.getElementById('sezione').innerHTML = `<div class="riquadro dati">
+  document.getElementById('sezione').innerHTML = `<div id="coppia"></div><div class="riquadro dati">
     ${campi.map(([k, v]) => `<div><small>${k}</small>${esc(v)}</div>`).join('')}</div>`;
+  riquadroCoppia(c);
+}
+
+// Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
+// Scheda della lista collegata nei due sensi (`collega_compagno`) oppure nome e telefono a mano.
+// Con la scheda collegata i segni vitali della coppia valgono per tutte e due.
+async function riquadroCoppia(c) {
+  let SV;
+  try { SV = await segniDellaScheda(c); } catch (e) { return; }
+  const box = document.getElementById('coppia');
+  if (!box || LS.contatto !== c || LS.sezione !== 'dati') return;
+  const a = SV.ana, archiviato = c.categoria === 'Archiviato';
+  const chi = SV.compagno
+    ? `<button class="sv-link" id="cp-apri">${esc(SV.compagno.nome)} ›</button>`
+    : a.compagno_nome || a.compagno_telefono
+      ? `<span>${esc(a.compagno_nome || '')}${a.compagno_telefono ? ` <small class="sotto">${esc(a.compagno_telefono)}</small>` : ''}</span>`
+      : '<span class="sotto" style="margin:0">—</span>';
+  const presente = SV.compagno || a.compagno_nome || a.compagno_telefono;
+  box.innerHTML = `<div class="riquadro sv-comp"><span class="sotto" style="margin:0">Coppia con</span>${chi}
+    ${archiviato ? '' : `<button class="sv-piu" id="cp-cambia">${presente ? 'Cambia' : 'Collega'}</button>`}</div>`;
+
+  const apri = document.getElementById('cp-apri');
+  if (apri) apri.onclick = () => apriContattoDa(SV.compagno.id, LS.ritorno);
+
+  const cambia = document.getElementById('cp-cambia');
+  if (cambia) cambia.onclick = async () => {
+    if (soloGuardo()) return;
+    const scelta = await scegliScheda({ titolo: 'Coppia con', userId: c.user_id, escludi: c.id,
+      mano: presente ? 'Non è in lista (o togli il collegamento): scrivo nome e telefono' : 'Non è in lista: scrivo nome e telefono' });
+    if (!scelta) return;
+    if (scelta === 'mano') {
+      const v = await moduloSemplice('Coppia con (non in lista)', [
+        { k: 'nome', etichetta: 'Nome e cognome (vuoto = nessuno)', tipo: 'text', valore: a.compagno_nome || '' },
+        { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: a.compagno_telefono || '' },
+      ]);
+      if (!v) return;
+      if (SV.compagno) {
+        const { error } = await dbq('scollega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: null }));
+        if (error) return mostraToast('Non salvato: riprova.');
+      }
+      const { error } = await dbq('salva compagno', supa.from('contatti')
+        .update({ compagno_nome: v.nome.trim() || null, compagno_telefono: v.telefono.trim() || null }).eq('id', c.id));
+      if (error) return mostraToast('Non salvato: riprova.');
+      mostraToast(v.nome.trim() || v.telefono.trim() ? 'Salvato' : 'Collegamento tolto');
+    } else {
+      const { error } = await dbq('collega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: scelta.id }));
+      if (error) return mostraToast('Non collegato: riprova.');
+      mostraToast(`Coppia con ${scelta.nome}`);
+    }
+    LS.sv = null; LS.svLettura = null; LS.coppie = null;   // la coppia è cambiata: si rilegge
+    leggiTarghe().then(t => { LS.targhe = t; }).catch(() => {});
+    riquadroCoppia(c);
+    segniDellaScheda(c).then(mostraTarghe).catch(() => {});
+  };
 }
 
 async function sezioneAzioni() {
@@ -2260,60 +2327,14 @@ async function sezioneSegni() {
   const disegna = () => {
     const a = SV.ana;
     const conCep = c.categoria === 'Partner' || (SV.compagno && SV.compagno.categoria === 'Partner') || SV.cep.length;
-    const compagno = SV.compagno
-      ? `<button class="sv-link" id="sv-apri-comp">${esc(SV.compagno.nome)} ›</button>`
-      : a.compagno_nome || a.compagno_telefono
-        ? `<span>${esc(a.compagno_nome || '')}${a.compagno_telefono ? ` <small class="sotto">${esc(a.compagno_telefono)}</small>` : ''}</span>`
-        : '<span class="sotto" style="margin:0">Nessuno</span>';
     box.innerHTML = `
-      <div class="riquadro sv-comp"><span class="sotto" style="margin:0">Compagno/a</span>${compagno}
-        ${archiviato ? '' : `<button class="sv-piu" id="sv-comp">${SV.compagno || a.compagno_nome || a.compagno_telefono ? 'Cambia' : 'Scegli'}</button>`}</div>
+      ${SV.compagno || a.compagno_nome ? '' : '<div class="sotto" style="margin:0 0 8px">Per i biglietti della coppia collega il compagno/a in Dati.</div>'}
       ${riquadroEventi('BBS')}${riquadroEventi('WES')}${conCep ? riquadroCep() : ''}`;
     mostraTarghe(SV);
     collega();
   };
 
-  const ricarica = async () => {   // dopo un cambio del compagno: la coppia cambia, si rilegge tutto
-    LS.sv = null; LS.svLettura = null;
-    try { SV = await segniDellaScheda(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
-    if (LS.contatto === c && LS.sezione === 'segni') disegna();
-  };
-
   const collega = () => {
-    const apri = document.getElementById('sv-apri-comp');
-    if (apri) apri.onclick = async () => {
-      const id = SV.compagno.id, ritorno = LS.ritorno;
-      await apriContattoDa(id, ritorno);
-      if (LS.contatto && LS.contatto.id === id) { LS.sezione = 'segni'; disegnaScheda(); }
-    };
-
-    const bComp = document.getElementById('sv-comp');
-    if (bComp) bComp.onclick = async () => {
-      if (soloGuardo()) return;
-      const scelta = await scegliScheda({ titolo: 'Compagno/a', userId: c.user_id, escludi: c.id, mano: 'Non è in lista: scrivo nome e telefono' });
-      if (!scelta) return;
-      if (scelta === 'mano') {
-        const v = await moduloSemplice('Compagno/a non in lista', [
-          { k: 'nome', etichetta: 'Nome e cognome', tipo: 'text', valore: SV.ana.compagno_nome || '' },
-          { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: SV.ana.compagno_telefono || '' },
-        ]);
-        if (!v) return;
-        if (SV.compagno) {
-          const { error } = await dbq('scollega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: null }));
-          if (error) return mostraToast('Non salvato: riprova.');
-        }
-        const { error } = await dbq('salva compagno', supa.from('contatti')
-          .update({ compagno_nome: v.nome.trim() || null, compagno_telefono: v.telefono.trim() || null }).eq('id', c.id));
-        if (error) return mostraToast('Non salvato: riprova.');
-        mostraToast(v.nome.trim() || v.telefono.trim() ? 'Compagno/a salvato' : 'Compagno/a tolto');
-        return ricarica();
-      }
-      const { error } = await dbq('collega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: scelta.id }));
-      if (error) return mostraToast('Non collegato: riprova.');
-      mostraToast(`Collegato a ${scelta.nome}`);
-      ricarica();
-    };
-
     box.querySelectorAll('[data-piu]').forEach(b => b.onclick = async () => {
       if (soloGuardo()) return;
       const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'Wes';
