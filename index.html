@@ -55,7 +55,8 @@
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--linea); display: flex; justify-content: space-around;
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
-  nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 10px; }
+  nav button { background: none; border: 0; font-size: 12px; font-weight: 600; color: var(--grigio-chiaro); padding: 6px 6px; }
+  nav button[hidden] { display: none; }
   nav button.attiva { color: var(--testo); }
   .bottoni { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .bottoni button { font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: 12px; border: 0; background: #F3F4F6; color: var(--testo); }
@@ -445,6 +446,7 @@
   <button data-tab="lista">Lista Nomi</button>
   <button data-tab="report">Report</button>
   <button data-tab="mappa">Mappa</button>
+  <button data-tab="admin" hidden>Admin</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -456,7 +458,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 16:50';
+const APP_VERSION = '2026.09.16 · 16:54';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -595,7 +597,9 @@ async function scegliPartner() {
 function mostraTab() {
   const nav = document.getElementById('tab');
   nav.hidden = false;
+  if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   nav.querySelectorAll('button').forEach(b => {
+    if (b.dataset.tab === 'admin') b.hidden = !eAdmin();   // pagina Admin: solo per l'Admin
     b.classList.toggle('attiva', b.dataset.tab === ST.tab);
     b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; mostraTab(); };
   });
@@ -605,6 +609,7 @@ function mostraTab() {
   if (ST.tab === 'report') return apriReport();
   if (ST.tab === 'mappa') return apriMappa();
   if (ST.tab === 'check') return apriPaginaCheck();
+  if (ST.tab === 'admin') return apriAdmin();
 }
 
 // ── OGGI ─────────────────────────────────────────────────
@@ -2363,7 +2368,7 @@ async function sezioneSegni() {
       if (soloGuardo()) return;
       const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'Wes';
       const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
-      if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nel Report`);
+      if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nella pagina Admin`);
       const etichette = liberi.map(d => MB21Lista.etichettaEvento(d));
       const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
       if (!v) return;
@@ -2729,7 +2734,7 @@ function disegnaCheck() {
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
-    html += `<div class="vuoto">Nessun Wes ancora: l'Admin aggiunge le date dei Wes nel Report.</div>`;
+    html += `<div class="vuoto">Nessun Wes ancora: l'Admin aggiunge le date dei Wes.</div>`;
   } else {
     const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p });
     html += `<div class="rp-naviga">
@@ -3046,7 +3051,7 @@ function collegaMappa() {
 // Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
-const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], bbs: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
+const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
 const CAMPI_REPORT = 'id, contatto_id, portato_da, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
 
 async function leggiAzioniMie() {
@@ -3064,14 +3069,13 @@ async function apriReport(vista) {
   RP.vista = vista || RP.vista;
   if (!RP.azioni) app.innerHTML = `<h1>Report</h1><div class="vuoto">Carico i numeri…</div>`;
   try {
-    const [azioni, wes, gr, bbs] = await Promise.all([
+    const [azioni, wes, gr] = await Promise.all([
       leggiAzioniMie(),
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       vediTutti() ? { data: null } : dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle()),
-      eAdmin() ? dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')) : { data: [] },
     ]);
-    if (wes.error || gr.error || bbs.error) throw wes.error || gr.error || bbs.error;
-    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data; RP.bbs = bbs.data;
+    if (wes.error || gr.error) throw wes.error || gr.error;
+    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data;
   } catch (e) {
     app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -3089,7 +3093,7 @@ function disegnaReport() {
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
-    html += `<div class="vuoto">Nessun Wes ancora. ${eAdmin() ? 'Aggiungi la data qui sotto.' : "L'Admin aggiunge le date dei Wes."}</div>`;
+    html += `<div class="vuoto">Nessun Wes ancora. ${eAdmin() ? 'Aggiungi la data nella pagina Admin.' : "L'Admin aggiunge le date dei Wes."}</div>`;
   } else {
     html += `<div class="rp-naviga">
       <button id="rp-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, date) ? '' : 'disabled'}>‹</button>
@@ -3122,14 +3126,6 @@ function disegnaReport() {
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
   if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
-  if (eAdmin()) html += `<div class="rp-wes"><h3>Wes <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
-    ${[...RP.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
-    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>
-    <div class="rp-wes"><h3>BBS <small style="color:var(--grigio);font-weight:400">(solo Admin)</small></h3>
-    ${[...RP.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
-    <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
-    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -3150,6 +3146,43 @@ function collegaReport() {
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
+}
+
+// ── Admin ─────────────────────────────────────────────────
+// Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
+// Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
+const AD = { wes: [], bbs: [] };
+
+async function apriAdmin() {
+  if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
+  app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
+  try {
+    const [wes, bbs] = await Promise.all([
+      dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
+      dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
+    ]);
+    if (wes.error || bbs.error) throw wes.error || bbs.error;
+    AD.wes = wes.data; AD.bbs = bbs.data;
+  } catch (e) {
+    app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
+    return;
+  }
+  let html = `<h1>Admin</h1>
+    <div class="rp-wes"><h3>📄 Carica file Amway</h3><div class="sotto" style="margin:0">In arrivo. Oggi il file si carica dal computer.</div></div>
+    <div class="rp-wes"><h3>🎟 Wes</h3>
+    ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
+    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>
+    <div class="rp-wes"><h3>🎟 BBS</h3>
+    ${[...AD.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
+    <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
+    <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
+  app.innerHTML = html + versione();
+  collegaAdmin();
+}
+
+function collegaAdmin() {
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('rp-piu-wes', async () => {
     const mese = document.getElementById('rp-data-wes').value;   // «2026-10»
     if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del Wes');
@@ -3157,8 +3190,8 @@ function collegaReport() {
     const { error } = await dbq('nuovo Wes', supa.from('wes').insert({ data }));
     if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
     mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
-    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
-    apriReport();
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
+    apriAdmin();
   });
   su('rp-piu-bbs', async () => {
     const mese = document.getElementById('rp-data-bbs').value;   // «2026-10»
@@ -3167,28 +3200,28 @@ function collegaReport() {
     const { error } = await dbq('nuovo BBS', supa.from('bbs').insert({ data }));
     if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
     mostraToast(`BBS ${MB21Lista.etichettaEvento(data)} aggiunto`);
-    apriReport();
+    apriAdmin();
   });
   app.querySelectorAll('[data-togli-bbs]').forEach(b => b.onclick = async () => {
-    const w = RP.bbs.find(x => x.id === b.dataset.togliBbs);
+    const w = AD.bbs.find(x => x.id === b.dataset.togliBbs);
     const { count } = await dbq('biglietti del BBS', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'BBS').eq('evento', w.data));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo BBS`);
     if (!confirm(`Elimino il BBS ${MB21Lista.etichettaEvento(w.data)}?`)) return;
     const { error } = await dbq('elimina BBS', supa.from('bbs').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('BBS eliminato');
-    apriReport();
+    apriAdmin();
   });
   app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
-    const w = RP.wes.find(x => x.id === b.dataset.togli);
+    const w = AD.wes.find(x => x.id === b.dataset.togli);
     const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
     if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
     if (!confirm(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`)) return;
     const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('Wes eliminato');
-    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo;
-    apriReport();
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
+    apriAdmin();
   });
 }
 
