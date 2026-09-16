@@ -25,6 +25,13 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
 | `cep` | — | Cantiere 18: abbonamento CEP di un Partner, una riga per **periodo** (dal / uscito il; si può uscire e rientrare) | chi vede il contatto; scrive solo Admin |
 
+**Abbonamento scaduto** (cantiere 19 lavoro 6, decisione di Ignazio 16/09; solo app, nessuna migrazione):
+- all'accesso `controllaAbbonamento()` legge `scadenza_abbonamento(utente)` (con abbonamento in comune: quella di chi paga) → `ST.scaduto` se `statoAbbonamento` è «scaduto» (nessuna data o data passata). L'Admin mai. Offline: resta com'era
+- scaduto = **solo Dashboard e Lista Nomi**: `aggiornaTab()` nasconde le altre tab; `mostraTab()` riporta alla Dashboard con l'avviso «Abbonamento scaduto: rinnova per usare anche le altre pagine»; in Dashboard spariscono «visione completa», «Griglia PM» e «Mostra di più»
+- la Dashboard ricontrolla la scadenza a ogni apertura: dopo il pagamento si sblocca senza uscire dall'app
+- ⚠️ è un controllo dell'app: le regole del database non cambiano (un utente scaduto potrebbe ancora leggere i propri dati per altre strade)
+- verificato il 16/09 con gli account veri: Isabella (05/10/2026) e Carolina (05/01/2027), le due abilitate, **non sono bloccate**. Nota: `scadenza_abbonamento` risponde solo a chi è entrato (o all'Admin); letta da fuori dà sempre vuoto
+
 **VPP/VPG automatici** (migrazione `20260916212000_volumi_in_dashboard.sql`, applicata; richiesta di Ignazio 16/09):
 - trigger `mb21_volumi_in_obiettivi` (security definer) dopo insert/update di `vpp`, `vpg` su `volumi_mese`: scrive `obiettivi_mese.vpp_amway/vpg_amway` del mese per **ogni utente con quel `partner_id`** (le coppie condividono il codice). Tocca solo i dati Amway, mai gli obiettivi. Vale per qualunque caricamento: pagina Admin, `scripts/import_mappa.py`, versione vecchia dell'app
 - allineati una volta tutti i mesi già caricati (il 16/09 differiva solo settembre 2026: Ignazio, Carolina, Ornella). Provato sul DB: un cambio in `volumi_mese` compare subito nella Dashboard (poi annullato)
