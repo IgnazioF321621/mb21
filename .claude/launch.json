@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mb21",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "python3 -m http.server \"${PORT:-8321}\" --bind 127.0.0.1"],
+      "port": 8321,
+      "autoPort": true
+    }
+  ]
+}

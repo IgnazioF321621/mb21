@@ -372,6 +372,28 @@
   .fa-persona .link { padding: 6px 8px; flex: none; }
   .fa-ospite { margin: 6px 0 0; width: 100%; background: #FEF3C7; color: #92400E; }
 
+  /* Mappa (Fase 8) */
+  .mp-filtri { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0; }
+  .mp-filtri button { flex: 0 0 auto; border: 1px solid var(--bordo); background: #fff; border-radius: 999px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--grigio); }
+  .mp-filtri button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .mp-cerca { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--bordo);
+    border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
+  .mp-riga { display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--bordo); }
+  .mp-riga.spento { opacity: .45; }
+  .mp-apri { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--bordo);
+    background: #fff; font-size: 14px; font-weight: 700; color: var(--grigio); line-height: 1; }
+  .mp-apri.vuoto { border-style: dashed; color: var(--bordo); }
+  .mp-corpo { flex: 1; min-width: 0; }
+  .mp-nome { background: none; border: 0; padding: 0; font-size: 15px; font-weight: 600; color: var(--testo); text-align: left; }
+  .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
+  .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
+  .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
+  .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+  .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
+    border-radius: 4px; padding: 2px 4px; }
+  .mp-sv span.bbs.on { background: #3B82F6; } .mp-sv span.wes.on { background: #EF4444; } .mp-sv span.cep.on { background: #22C55E; }
+  .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
 </head>
@@ -382,6 +404,7 @@
   <button data-tab="agenda">Agenda</button>
   <button data-tab="lista">Lista Nomi</button>
   <button data-tab="report">Report</button>
+  <button data-tab="mappa">Mappa</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -391,8 +414,9 @@
 <script src="agenda.js"></script>
 <script src="report.js"></script>
 <script src="check.js"></script>
+<script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 06:13';
+const APP_VERSION = '2026.09.16 · 08:05';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -464,7 +488,7 @@ function messaggioAccesso(error) {
 
 async function dopoAccesso(sessione) {
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
   if (!data) {
     ST.motivoUscita = 'Utente non abilitato.';
@@ -486,7 +510,7 @@ async function caricaPersone() {
   PS.persone = []; PS.scelto = null;
   if (!eAdmin()) return;
   const { data, error } = await dbq('Partner Select', supa.from('utenti')
-    .select('id, nome, nome_cognome, abbonamento_scadenza').eq('nel_partner_select', true));
+    .select('id, nome, nome_cognome, abbonamento_scadenza, partner_id').eq('nel_partner_select', true));
   if (error) return;
   PS.persone = data.sort((a, b) => (a.id === ST.utente.id ? -1 : b.id === ST.utente.id ? 1 : nomeDi(a).localeCompare(nomeDi(b), 'it')));
 }
@@ -522,6 +546,7 @@ async function scegliPartner() {
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
   CK.giorni = null; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  MP.contatti = null; MP.aperti = new Set(); MP.cerca = '';
   window.scrollTo(0, 0);
   mostraTab();
 }
@@ -538,6 +563,7 @@ function mostraTab() {
   if (ST.tab === 'lista') return apriLista();
   if (ST.tab === 'agenda') return apriAgenda();
   if (ST.tab === 'report') return apriReport();
+  if (ST.tab === 'mappa') return apriMappa();
   if (ST.tab === 'check') return apriPaginaCheck();
 }
 
@@ -1826,7 +1852,7 @@ function disegnaScheda() {
   const cifre = tel ? tel.replace(/[^0-9]/g, '') : '';
   const link = (href, testo) => `<a href="${href}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata">
       <div class="strip" style="background:${coloreCategoria(c.categoria)}"></div>
       <div class="corpo">
@@ -1852,6 +1878,7 @@ function disegnaScheda() {
   document.getElementById('indietro').onclick = () => {
     LS.contatto = null;
     if (!LS.ritorno) return disegnaLista();
+    if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
       LS.ritorno = null; ST.tab = 'oggi'; ST.aperta = null;
       document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'oggi'));
@@ -2378,6 +2405,129 @@ function collegaCheck() {
   su('ck-prima', () => sposta(-1));
   su('ck-dopo', () => sposta(1));
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
+}
+
+// ── MAPPA (Fase 8) ───────────────────────────────────────
+// Brief docs/MB21_v4_Brief_F8_Mappa.md: l'albero del gruppo Amway che si apre e si chiude sul posto (come la LOS
+// ufficiale), stato dai VPP del mese (≥50 attivo · >0 warning · 0 inattivo), filtri per stato e ricerca,
+// pillole BBS/WES/CEP (grigie finché i segni vitali non stanno sulle persone). Calcoli in mappa.js.
+const MP = { squadra: null, volumi: null, mese: null, contatti: null, aperti: new Set(), filtro: 'tutti', cerca: '' };
+
+async function apriMappa() {
+  if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
+  if (!MP.squadra) {
+    try {
+      const ultimo = await dbq('ultimo mese dei volumi', supa.from('volumi_mese').select('mese').order('mese', { ascending: false }).limit(1));
+      if (ultimo.error) throw ultimo.error;
+      MP.mese = ultimo.data.length ? ultimo.data[0].mese : null;
+      const [sq, vol] = await Promise.all([
+        dbq('squadra', supa.from('squadra').select('partner_id, sponsor_id, nome, livello, data_ingresso, telefono, email')),
+        MP.mese ? dbq('volumi del mese', supa.from('volumi_mese').select('*').eq('mese', MP.mese)) : { data: [] },
+      ]);
+      if (sq.error || vol.error) throw sq.error || vol.error;
+      MP.squadra = sq.data; MP.volumi = vol.data || [];
+    } catch (e) {
+      app.innerHTML = `<h1>Mappa</h1><div class="avviso">Non riesco a caricare il gruppo. Controlla la connessione e riprova.</div>${versione()}`;
+      return;
+    }
+  }
+  disegnaMappa();
+}
+
+// Un partner della Mappa si apre come scheda contatto solo se quel nome è in una lista che posso vedere
+async function contattiPerNome() {
+  if (MP.contatti) return MP.contatti;
+  const { data, error } = await dbq('contatti per la Mappa',
+    supa.from('contatti').select('id, nome, user_id').in('user_id', idVisti()).limit(5000));
+  MP.contatti = {};
+  if (!error) for (const c of data) MP.contatti[String(c.nome || '').trim().toLowerCase()] = c.id;
+  return MP.contatti;
+}
+
+function mesePulito(m) {
+  return m ? `${String(m).slice(4, 6)}/${String(m).slice(0, 4)}` : '—';
+}
+
+function disegnaMappa() {
+  const M = MB21Mappa;
+  const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
+  const conta = M.conta(cime);
+  const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
+  const num = (v, d = 2) => (v == null ? '—' : Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const etichette = [['tutti', 'Tutti'], ['attivo', '🟢 Attivi'], ['warning', '🔴 Warning'], ['inattivo', '⚪ Inattivi']];
+
+  let html = `<h1>Mappa</h1>${partnerSelect()}
+    <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
+    <div class="mp-filtri">${etichette.map(([k, t]) =>
+      `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${t} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
+      <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
+    <input class="mp-cerca" id="mp-cerca" type="search" placeholder="Cerca un nome o un codice" value="${esc(MP.cerca)}">`;
+
+  if (!cime.length) {
+    html += `<div class="vuoto">Nessun dato del gruppo. L'Admin carica il file Amway del mese.</div>`;
+  } else if (!righe.length) {
+    html += `<div class="vuoto">Nessuno con questo filtro.</div>`;
+  } else {
+    html += righe.map(r => {
+      const s = M.STATI[r.stato];
+      const apri = r.haFigli
+        ? `<button class="mp-apri" data-mpapri="${esc(r.id)}" aria-label="${r.aperto ? 'Chiudi' : 'Apri'} il gruppo di ${esc(r.nome)}">${r.aperto ? '−' : '+'}</button>`
+        : `<span class="mp-apri vuoto">·</span>`;
+      return `<div class="mp-riga ${r.spento ? 'spento' : ''}" style="padding-left:${10 + r.profondita * 18}px">
+        ${apri}
+        <div class="mp-corpo">
+          <span class="mp-liv">${r.livello ?? ''}</span>
+          <span title="${esc(s.titolo)}">${s.pallino}</span>
+          <button class="mp-nome" data-mpnome="${esc(r.nome)}">${esc(r.nome)}</button>
+          <span class="mp-sv" title="Segni vitali: in arrivo"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span>
+          <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}${
+            r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · al livello dopo ${num(r.alLivelloSuccessivo)}` : ''}</div>
+        </div></div>`;
+    }).join('');
+  }
+  app.innerHTML = html + versione();
+  collegaMappa();
+}
+
+// Con Partner Select su un altro partner, la Mappa parte da lui (l'Admin vede tutto l'albero)
+function radiceVista(cime) {
+  const pid = vediTutti() ? null : (visto().partner_id || null);
+  if (!pid) return cime;
+  let trovato = null;
+  const cerca = n => { if (n.id === pid) trovato = n; else n.figli.forEach(cerca); };
+  cime.forEach(cerca);
+  return trovato ? [trovato] : cime;
+}
+
+function collegaMappa() {
+  collegaPartnerSelect();
+  app.querySelectorAll('[data-mpfiltro]').forEach(b => b.onclick = () => { MP.filtro = b.dataset.mpfiltro; disegnaMappa(); });
+  app.querySelectorAll('[data-mpapri]').forEach(b => b.onclick = () => {
+    const id = b.dataset.mpapri;
+    if (MP.aperti.has(id)) MP.aperti.delete(id); else MP.aperti.add(id);
+    disegnaMappa();
+  });
+  const tutto = document.getElementById('mp-tutto');
+  if (tutto) tutto.onclick = () => {
+    const cime = radiceVista(MB21Mappa.albero(MP.squadra || [], MP.volumi || []));
+    MP.aperti = MP.aperti.size ? new Set() : new Set(MB21Mappa.tuttiGliId(cime));
+    disegnaMappa();
+  };
+  const cerca = document.getElementById('mp-cerca');
+  if (cerca) cerca.oninput = () => {
+    MP.cerca = cerca.value;
+    if (MP.cerca.trim() && !MP.aperti.size) MP.aperti = new Set(MB21Mappa.tuttiGliId(MB21Mappa.albero(MP.squadra || [], MP.volumi || [])));
+    const dove = cerca.selectionStart;
+    disegnaMappa();
+    const nuovo = document.getElementById('mp-cerca');
+    if (nuovo) { nuovo.focus(); nuovo.setSelectionRange(dove, dove); }
+  };
+  app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
+    const per = await contattiPerNome();
+    const id = per[b.dataset.mpnome.trim().toLowerCase()];
+    if (!id) return mostraToast(`${b.dataset.mpnome} non è in lista: aggiungilo da Lista Nomi`);
+    apriContattoDa(id, 'mappa');
+  });
 }
 
 // ── REPORT (Fase 5) ──────────────────────────────────────

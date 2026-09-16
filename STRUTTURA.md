@@ -28,6 +28,14 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - caricamento con `scripts/import_mappa.py <file Amway> <file sql fuori dal repo>` → 33 partner, 359 righe di volumi su 13 mesi (16/09). Il file Amway è **confidenziale, fuori dal repo**
 - provato sul DB (16/09): albero completo (33 partner raggiunti dalla cima, livelli coerenti); Admin vede 33 partner e 359 volumi; **Isabella vede 8 partner** (sé e i 7 sotto) **e non vede Ignazio**
 
+**Pagina Mappa** (`mappa.js` + index.html, cantiere 17 lavoro 2, 16/09):
+- quinta tab **Mappa**. `mappa.js`: `stato(vpp)` (≥50 attivo · >0 warning · 0 inattivo), `nomeLeggibile` («FIORITO, IGNAZIO» → «Ignazio Fiorito»), `albero(squadra, volumi)`, `righe(cime, {aperti, filtro, cerca})`, `conta`, `tuttiGliId`. 10 prove in `tools/banco/prova_mappa.js`
+- la riga si apre e si chiude sul posto (**+** / **−**), rientro per livello; ordine dell'albero, mai per stato
+- filtri **Tutti · Attivi · Warning · Inattivi** con i conteggi, «Apri tutto», ricerca per nome o codice: chi non passa sparisce ma **chi sta sopra resta, spento**
+- riga: livello · pallino · nome · pillole **BBS/WES/CEP grigie** (si accendono col cantiere 14 lavoro 5) · VPP · VPG · bonus · gruppo · al livello dopo
+- **tocco sul nome** → scheda contatto se quel nome è in una lista visibile (torna alla Mappa), altrimenti avviso
+- Partner Select: con un altro partner la Mappa parte da lui (`utenti.partner_id`); mese = l'ultimo caricato in `volumi_mese`
+
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
 
 **Fase 1** (migrazioni `20260913230000_fase1_oggi.sql`, `20260914100000_bottoni_esito.sql`, `20260914120000_contatti_al_giorno.sql`, applicate):
