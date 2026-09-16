@@ -117,6 +117,7 @@ Decisioni di Ignazio per il lavoro 3 (15/09, dopo il lavoro 1: «se non vedo la 
 - ~~Lavoro 5: modulo obiettivi del mese più semplice~~ — fatto il 14/09: un foglio con i 12 obiettivi già compilati, «Come il mese scorso» / «Scelgo io» / barra di crescita 5-10-20-30-40-50% con avviso sopra il 20%, partenza automatica, niente obiettivi tutti a zero. **Da provare da Ignazio**
 - Bottoni «in arrivo»: Partner Select · Rinnova subito · visione completa (Check) · Mostra di più (Report)
 - ~~**VPP/VPG fermi all'export**~~: dal 16/09 arrivano dal file Amway caricato nella pagina Admin (cantiere 19)
+- ~~**VPP/VPG di settembre non aggiornati in Dashboard**~~ (segnalato da Ignazio 16/09): il file caricato alle 17:09 aveva aggiornato la Mappa ma non Dashboard e Check; la copia automatica era nell'app solo dalle 17:05, verosimilmente il telefono aveva ancora la versione di prima (non certo). Corretto il 16/09: la copia la fa **il database** a ogni caricamento (migrazione `20260916212000_volumi_in_dashboard.sql`), settembre riallineato, tutti i 13 mesi coincidono
 - Finché si usa anche Glide, il Check del Giorno va scritto in tutti e due
 
 ## 9. Dopo la Fase 2
