@@ -94,6 +94,23 @@
     return ids;
   }
 
-  const api = { SOGLIA_ATTIVO, STATI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId };
+  const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+  // Storico di un partner per la «visione completa»: ultimi `quanti` mesi, dal più vecchio, con le barre già in scala.
+  function storico(volumi, quanti = 13) {
+    const righe = [...volumi].sort((a, b) => a.mese - b.mese).slice(-quanti).map(v => ({
+      mese: Number(v.mese),
+      etichetta: MESI_BREVI[Number(String(v.mese).slice(4, 6)) - 1] + ' ' + String(v.mese).slice(2, 4),
+      vpp: v.vpp == null ? null : Number(v.vpp),
+      vpg: v.vpg == null ? null : Number(v.vpg),
+      bonus: v.bonus == null ? null : Number(v.bonus),
+      stato: stato(v.vpp),
+    }));
+    const max = Math.max(1, ...righe.map(r => Math.max(r.vpp || 0, r.vpg || 0)));
+    const media = m => (righe.length ? righe.reduce((s, r) => s + (r[m] || 0), 0) / righe.length : 0);
+    return { righe, max, mediaVpp: Math.round(media('vpp') * 100) / 100, mediaVpg: Math.round(media('vpg') * 100) / 100 };
+  }
+
+  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
