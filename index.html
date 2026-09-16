@@ -487,7 +487,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 21:07';
+const APP_VERSION = '2026.09.16 · 21:40';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -603,6 +603,7 @@ async function dopoAccesso(sessione) {
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
   ST.utente = data;
+  await controllaAbbonamento();
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
   mostraTab();
@@ -661,12 +662,36 @@ async function scegliPartner() {
 }
 
 // ── Tab ──────────────────────────────────────────────────
+// ── Abbonamento scaduto (cantiere 19 lavoro 6, decisione di Ignazio 16/09) ──
+// Scaduto = solo Dashboard e propria Lista Nomi: le altre tab spariscono e i collegamenti verso altre pagine pure.
+// Controllo nell'app (come «Può entrare»): le regole del database non cambiano.
+const TAB_SCADUTO = ['oggi', 'lista'];
+const limitato = () => !!ST.scaduto;
+
+async function controllaAbbonamento() {
+  if (!ST.utente || !ST.utente.id || ST.utente.ruolo === 'Admin') { ST.scaduto = false; return; }
+  const { data, error } = await dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: ST.utente.id }));
+  if (error && !navigator.onLine) return;   // offline: resta com'era
+  const scadenza = error ? ST.utente.abbonamento_scadenza : data;
+  ST.scaduto = MB21Dashboard.statoAbbonamento(scadenza, MB21Coda.oggiRoma()) === 'scaduto';
+}
+
+function aggiornaTab() {
+  document.querySelectorAll('#tab button').forEach(b => {
+    b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
+  });
+}
+
 function mostraTab() {
   const nav = document.getElementById('tab');
   nav.hidden = false;
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
+  if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
+    ST.tab = 'oggi'; LS.ritorno = null;
+    mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
+  }
+  aggiornaTab();
   nav.querySelectorAll('button').forEach(b => {
-    if (b.dataset.tab === 'admin') b.hidden = !eAdmin();   // pagina Admin: solo per l'Admin
     b.classList.toggle('attiva', b.dataset.tab === ST.tab);
     b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab(); };
   });
@@ -1183,6 +1208,7 @@ async function caricaDashboard(oggi) {
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01') : { checkMesi: cm.data, obiettivi: ob.data };
     DS.obiettivi = dati.obiettivi;
     DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl });
+    if (!guardoAltri() && ST.utente.ruolo !== 'Admin' && !scad.error) { ST.scaduto = DS.dati.abbonamento === 'scaduto'; aggiornaTab(); }
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
@@ -1232,7 +1258,7 @@ function dashboardAlto() {
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
     ${d.obiettiviMancanti ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>🎯 Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
-    <button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`;
+    ${limitato() ? '' : `<button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`}`;
   return html;
 }
 
@@ -1266,8 +1292,8 @@ function dashboardBasso() {
       <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
-    ${DS.griglia ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    <button class="visione" id="ds-altro">👁️ Mostra di più!</button>`;
+    ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
+    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}`;
 }
 
 function collegaDashboard() {
