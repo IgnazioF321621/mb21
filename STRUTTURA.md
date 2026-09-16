@@ -19,6 +19,14 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `obiettivi_mese` | Check | Fase 3: obiettivi del mese, partenza di BBS/WES/CEP, VPP/VPG Amway; una riga per partner e mese | i propri · Admin tutti |
 | `wes` | Periodi | Fase 5: date dei Wes (weekend seminar N21), una riga per data | tutti gli utenti loggati; scrive solo Admin |
 | `griglia_pm` | Report (GridPM_*) | Fase 5: impostazioni della Griglia PM, una riga per partner | i propri · Admin tutti |
+| `squadra` | — (file Amway) | Fase 8: l'albero Amway, una riga per partner (`sponsor_id` = chi lo ha sponsorizzato) + dati anagrafici | il proprio ramo · Admin tutti; scrive solo Admin |
+| `volumi_mese` | LOS + file Amway | Fase 8: volumi per partner e mese (AAAAMM): VPP, VPG, bonus, clienti, gruppo… | il proprio ramo · Admin tutti; scrive solo Admin |
+
+**Fase 8 · Mappa** (migrazione `20260916100000_fase8_mappa.sql`, applicata; cantiere 17):
+- `squadra` e `volumi_mese` (vedi tabelle sopra). Lo **stato del partner non si salva**: si calcola dai VPP del mese (**≥50 attivo · >0 warning · 0 inattivo**)
+- `nel_mio_ramo(partner_id)` (security definer): risale gli sponsor del partner chiesto fino a 20 passi; vero se incontra il `partner_id` di chi è loggato (o se è Admin). È la regola di lettura di tutte e due le tabelle
+- caricamento con `scripts/import_mappa.py <file Amway> <file sql fuori dal repo>` → 33 partner, 359 righe di volumi su 13 mesi (16/09). Il file Amway è **confidenziale, fuori dal repo**
+- provato sul DB (16/09): albero completo (33 partner raggiunti dalla cima, livelli coerenti); Admin vede 33 partner e 359 volumi; **Isabella vede 8 partner** (sé e i 7 sotto) **e non vede Ignazio**
 
 Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()` (ruolo `Admin`). Anonimi: nessun accesso.
 
