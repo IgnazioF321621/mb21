@@ -25,6 +25,10 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
 | `cep` | — | Cantiere 18: abbonamento CEP di un Partner, una riga per **periodo** (dal / uscito il; si può uscire e rientrare) | chi vede il contatto; scrive solo Admin |
 
+**VPP/VPG automatici** (migrazione `20260916212000_volumi_in_dashboard.sql`, applicata; richiesta di Ignazio 16/09):
+- trigger `mb21_volumi_in_obiettivi` (security definer) dopo insert/update di `vpp`, `vpg` su `volumi_mese`: scrive `obiettivi_mese.vpp_amway/vpg_amway` del mese per **ogni utente con quel `partner_id`** (le coppie condividono il codice). Tocca solo i dati Amway, mai gli obiettivi. Vale per qualunque caricamento: pagina Admin, `scripts/import_mappa.py`, versione vecchia dell'app
+- allineati una volta tutti i mesi già caricati (il 16/09 differiva solo settembre 2026: Ignazio, Carolina, Ornella). Provato sul DB: un cambio in `volumi_mese` compare subito nella Dashboard (poi annullato)
+
 **Fase 8 · Mappa** (migrazione `20260916100000_fase8_mappa.sql`, applicata; cantiere 17):
 - `squadra` e `volumi_mese` (vedi tabelle sopra). Lo **stato del partner non si salva**: si calcola dai VPP del mese (**≥50 attivo · >0 warning · 0 inattivo**)
 - `nel_mio_ramo(partner_id)` (security definer): risale gli sponsor del partner chiesto fino a 20 passi; vero se incontra il `partner_id` di chi è loggato (o se è Admin). È la regola di lettura di tutte e due le tabelle
