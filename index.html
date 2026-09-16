@@ -416,7 +416,7 @@
   .mp-nome.collegato { color: #2563EB; text-decoration: underline; }
   .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
-  .mp-numeri .mp-bonus { color: var(--testo); font-weight: 700; }
+  .mp-numeri .mp-bonus, .mp-numeri b { color: var(--testo); font-weight: 700; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
   .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB;
     border-radius: 4px; padding: 2px 4px; }
@@ -458,7 +458,8 @@
   .mp-tabella { width: 100%; border-collapse: collapse; font-size: 13px; }
   .mp-tabella th { text-align: right; color: var(--grigio-chiaro); font-size: 11px; text-transform: uppercase; padding: 4px 6px; }
   .mp-tabella th:first-child, .mp-tabella td:first-child { text-align: left; }
-  .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); }
+  .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); font-weight: 700; }
+  .mp-tabella td:first-child { font-weight: 400; }
   .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
 </style>
@@ -483,7 +484,7 @@
 <script src="check.js"></script>
 <script src="mappa.js"></script>
 <script>
-const APP_VERSION = '2026.09.16 · 20:50';
+const APP_VERSION = '2026.09.16 · 20:58';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -2976,8 +2977,8 @@ function disegnaMappa() {
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
-          <div class="mp-numeri">VPP ${num(r.vpp)} · VPG ${num(r.vpg)} · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
-            r.gruppo ? ` · gruppo ${r.gruppo}` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano ${num(r.alLivelloSuccessivo)}` : ''}</div>
+          <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
+            r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano <b>${num(r.alLivelloSuccessivo)}</b>` : ''}</div>
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('');
@@ -3027,7 +3028,7 @@ function disegnaCompleta() {
         <div><small>VPG</small><b>${num(ultimo.vpg)}</b></div>
         <div><small>Bonus</small><b>${num(bonus, 0)}%</b></div></div>
       ${manca ? `<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:#C7CBD4">
-        <span>${MB21Mappa.bonusSuccessivo(bonus) ? `Per il ${MB21Mappa.bonusSuccessivo(bonus)}% mancano` : 'Per il livello successivo mancano'}</span><span>${num(manca)}</span></div>
+        <span>${MB21Mappa.bonusSuccessivo(bonus) ? `Per il ${MB21Mappa.bonusSuccessivo(bonus)}% mancano` : 'Per il livello successivo mancano'}</span><b>${num(manca)}</b></div>
         <div class="mp-barra"><i style="width:${fatta.toFixed(1)}%"></i></div>` : ''}
     </div>`;
 
@@ -3040,7 +3041,7 @@ function disegnaCompleta() {
         <span class="prima" style="height:${(r.vpg || 0) / st.max * 100}%;background:#2563EB"></span>
         <span style="height:${(r.vpp || 0) / st.max * 100}%;background:#93C5FD"></span></div>`).join('')}</div>
       <div class="rp-mesi">${st.righe.map(r => `<span>${esc(r.etichetta)}</span>`).join('')}</div>
-      <div class="ck-valori">media VPP ${num(st.mediaVpp)} · media VPG ${num(st.mediaVpg)} su ${st.righe.length} mesi</div>
+      <div class="ck-valori">media VPP <b>${num(st.mediaVpp)}</b> · media VPG <b>${num(st.mediaVpg)}</b> su <b>${st.righe.length}</b> mesi</div>
     </div>
     <h3>Storico mensile</h3>
     <table class="mp-tabella"><tr><th>Mese</th><th>VPP</th><th>VPG</th><th>Bonus</th></tr>
