@@ -163,12 +163,19 @@
     return { proprio, gruppo };
   }
 
+  // Percentuale di bonus successiva nella scala Amway (3 · 6 · 9 · 12 · 15 · 18 · 21), null oltre il 21%.
+  // Dai dati: bonus 0 → mancano fino a 200 VP (3%), bonus 3 → fino a 600 (6%)
+  const SCALA_BONUS = [3, 6, 9, 12, 15, 18, 21];
+  function bonusSuccessivo(bonus) {
+    return SCALA_BONUS.find(x => x > (Number(bonus) || 0)) || null;
+  }
+
   // Prima data da oggi in poi (prossimo BBS o Wes), null se non ce ne sono
   function prossimaData(date, oggi) {
     return [...(date || [])].filter(x => x >= oggi).sort()[0] || null;
   }
 
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
-    segniGruppo, prossimaData };
+    segniGruppo, prossimaData, bonusSuccessivo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

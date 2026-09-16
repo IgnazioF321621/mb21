@@ -165,4 +165,13 @@ prova('segni vitali a cascata: partner, compagno/a, clienti del partner, somma s
   assert.equal(M.prossimaData(['2026-06-05'], '2026-09-16'), null);
 });
 
+prova('bonus successivo nella scala Amway', () => {
+  assert.equal(M.bonusSuccessivo(0), 3);
+  assert.equal(M.bonusSuccessivo(null), 3);
+  assert.equal(M.bonusSuccessivo(3), 6);
+  assert.equal(M.bonusSuccessivo(2), 3);
+  assert.equal(M.bonusSuccessivo(15), 18);
+  assert.equal(M.bonusSuccessivo(21), null);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
