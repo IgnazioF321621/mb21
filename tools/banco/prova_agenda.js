@@ -163,6 +163,7 @@ prova('Passi dell\'esito: PM in due passi (Fatto = Presentazione, poi i risultat
   assert.deepEqual(A.passiEsito(fu, 'Prospect', true)[1].bottoni, ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine']);
   assert.equal(A.fattoDi('Piano Marketing'), 'Presentazione');
   assert.equal(A.fattoDi('Follow Up'), null);
+  assert.equal(A.chiudeRelazione('No Interesse'), true); assert.equal(A.chiudeRelazione('No BuonFine'), true); assert.equal(A.chiudeRelazione('Dare Seguito'), false);
   const ct = { tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', completata: false, esito: null };
   assert.equal(A.passiEsito(ct, 'Prospect')[0].passo, 'unico');
   assert.equal(A.passiEsito({ ...ct, esito: 'Richiamare', completata: true }, 'Prospect')[0].passo, 'cambia');

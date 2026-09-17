@@ -214,6 +214,11 @@
     return gruppi;
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
+  // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,
+  // si chiede invece «Quando risentirlo?» con la data già a un anno, cambiabile a mano (7-8 mesi…)
+  const ESITI_CHIUSURA = ['No Interesse', 'No BuonFine'];
+  const GIORNI_CHIUSURA = 365;
+  const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
 
   function validaAppuntamento(v) {
     if (!v.contatto_id) return 'Scegli il contatto dall\'elenco.';
