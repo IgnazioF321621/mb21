@@ -490,19 +490,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171515"></script>
-<script src="lista.js?v=202609171515"></script>
-<script src="dashboard.js?v=202609171515"></script>
-<script src="agenda.js?v=202609171515"></script>
-<script src="report.js?v=202609171515"></script>
-<script src="check.js?v=202609171515"></script>
-<script src="mappa.js?v=202609171515"></script>
-<script src="pagina-dashboard.js?v=202609171515"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171515"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171515"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171515"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171523"></script>
+<script src="lista.js?v=202609171523"></script>
+<script src="dashboard.js?v=202609171523"></script>
+<script src="agenda.js?v=202609171523"></script>
+<script src="report.js?v=202609171523"></script>
+<script src="check.js?v=202609171523"></script>
+<script src="mappa.js?v=202609171523"></script>
+<script src="pagina-dashboard.js?v=202609171523"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171523"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171523"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171523"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 15:15';
+const APP_VERSION = '2026.09.17 · 15:23';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1299,7 +1299,7 @@ async function foglioAzione(id, opz = {}) {
     <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
     <div id="fa-persone"></div>
     ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
-    <div class="campo"><label>Esito</label><div class="ag-scelte" id="fa-esiti"></div></div>
+    <div class="campo"><label id="fa-esito-titolo">Esito</label><div class="ag-scelte" id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     <div class="errore" id="fa-errore"></div>
@@ -1338,9 +1338,21 @@ async function foglioAzione(id, opz = {}) {
     });
   };
   const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
-    const esiti = A.sceltePerModifica({ ...a, modalita: st.sottotipo, esito: st.esito }).esiti;
-    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === st.esito ? 'scelto' : ''}">${esc(x)}</button>`).join('');
-    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => { st.esito = b.dataset.v; disegnaScelte(); });
+    // Piano Marketing e Follow Up: gli stessi due passi di Agenda e scheda (Ignazio 17/09, dalla Griglia PM: «seguire il flusso che stiamo creando»)
+    const stato = { ...a, modalita: st.sottotipo, esito: st.esito, completata: !!st.esito, data_scelta: null };
+    const p = A.RISULTATI[a.tipo_azione] ? A.passiEsito(stato, a.contatti ? a.contatti.categoria : null, st.fattoAperto) : null;
+    const esiti = p ? p.bottoni : A.sceltePerModifica(stato).esiti;
+    $('fa-esito-titolo').textContent = p ? p.titolo : 'Esito';
+    $('fa-esito-nota').textContent = p && p.passo === 'risultato' ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
+    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === st.esito ? 'scelto' : ''}">${esc(x)}</button>`).join('')
+      + (p && p.passo === 'risultato' ? '<button data-v="" style="background:none;color:var(--grigio)">↩︎ Non è avvenuto</button>' : '');
+    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => {
+      const x = b.dataset.v;
+      if (p && p.passo === 'avvenuto' && x === 'Fatto') { const f = A.fattoDi(a.tipo_azione); if (f) st.esito = f; else st.fattoAperto = true; }
+      else if (x === '') { st.esito = null; st.fattoAperto = false; }
+      else { st.esito = x; st.fattoAperto = false; }
+      disegnaScelte();
+    });
     velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === st.sottotipo));
   };
   velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { st.sottotipo = b.dataset.v; disegnaScelte(); });
