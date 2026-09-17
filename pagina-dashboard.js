@@ -496,8 +496,8 @@ async function caricaDashboard(oggi) {
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
-      // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il biglietto del partner (solo sulla propria Dashboard)
-      guardoAltri() || ST.utente.ruolo === 'Admin' ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
+      // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
+      vediTutti() || visto().id !== ST.utente.id ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
     ]);
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
