@@ -11,6 +11,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 # Cantieri aperti
 
 ## 20. SEGNI VITALI ACCESI NELLA MAPPA DEI PARTNER
+*Il prossimo (Ignazio 17/09 sera, chiuso il 24): «completiamo il cantiere 20 con i segni vitali nella Mappa per ogni partner attivo nell'app», in una sessione nuova.*
 *Aperto il 17 settembre 2026 (segnalato dagli utenti a Ignazio).* Nella Mappa dei partner le targhette **BBS · WES · CEP** non si accendono anche quando i segni ci sono.
 - ~~Verifica~~ — fatta il 17/09 sul DB nei panni di Isabella: **0 biglietti, 0 CEP**, 7 schede (solo la sua lista), 1 utente. Causa confermata: biglietti e CEP stanno sulle schede della lista di Ignazio e le regole di `contatti` fanno leggere a ogni partner solo la propria lista
 - **Decisioni di Ignazio (17/09)**: strada **A** (funzione che dà solo i segni, non le schede); **la Mappa Amway fa fede**: a cascata ognuno vede la propria squadra, segni vitali e punti, **in automatico**, nessun interruttore
