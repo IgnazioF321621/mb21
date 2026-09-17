@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, mb21: null };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -40,20 +40,20 @@ async function leggiTarghe() {
   return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi, { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) });
 }
 
-// Schede che sono utenti dell'app (`schede_utenti_mb21`: aggancio Amway o collegamento dell'Admin): targhetta «MB21» sulle card
-// e parola «mb21» in Cerca. Se la lettura non riesce, niente targhette.
-async function leggiMb21() {
-  const { data, error } = await dbq('schede utenti MB21', supa.rpc('schede_utenti_mb21'));
-  LS.mb21 = new Set(error ? [] : data);
-  segnaMb21();
+// Schede che sono utenti dell'app (`schede_utenti_app`: aggancio Amway o collegamento dell'Admin) con ultimo uso e nomi in lista:
+// targhetta 📱 sulle card e nella scheda, parola «app» in Cerca (cantiere 20 lavoro 4). Se la lettura non riesce, niente targhette.
+async function leggiUsoApp() {
+  const { data, error } = await dbq('schede utenti app', supa.rpc('schede_utenti_app'));
+  LS.usoApp = {};
+  for (const u of error ? [] : data) LS.usoApp[u.contatto_id] = { ultimo_uso: u.ultimo_uso, nomi: u.nomi };
+  segnaApp();
 }
-function segnaMb21() { if (LS.mb21) for (const r of LS.righe) r.mb21 = LS.mb21.has(r.id); }
-function mb21Badge(r) { return r.mb21 ? ' <span class="badge mb21">MB21</span>' : ''; }
+function segnaApp() { if (LS.usoApp) for (const r of LS.righe) r.app = LS.usoApp[r.id] || null; }
 
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
-  try { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiMb21()]); segnaMb21(); }
+  try { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]); segnaApp(); }
   catch (e) {
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -131,11 +131,12 @@ function disegnaElenco() {
   }
 }
 
-// Targhette sulla card: per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa
+// Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa
 function targheCard(r) {
   const t = LS.targhe && LS.targhe[r.id];
   const accesa = t && (t.bbs || t.wes || t.cep);
-  return r.categoria === 'Partner' || accesa ? `<span class="sv-targhe">${targheHtml(t)}</span>` : '';
+  const segni = r.categoria === 'Partner' || accesa ? targheHtml(t) : '';
+  return r.app || segni ? `<span class="sv-targhe">${targaAppHtml(r.app)}${segni}</span>` : '';
 }
 
 // «Coppia con …» sulla card: nome della scheda collegata (se visibile) o scritto a mano
@@ -154,7 +155,7 @@ function cardNome(r) {
       <div class="striscia" style="background:${coloreCategoria(r.categoria)}"></div>
       <div class="dentro">
         <div class="etichetta">${esc(etichetta)}</div>
-        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${mb21Badge(r)}${targheCard(r)}</div>
+        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
         <div class="prof">${esc(r.professione || '')}</div>
         ${coppiaCard(r)}
         <div>${linkTelefono(r.telefono)}</div>
@@ -198,7 +199,7 @@ async function menuCard(id) {
 
 async function ricaricaERidisegna() {
   try { LS.righe = await leggiLista(); } catch (e) { return mostraToast('Non riesco a ricaricare i nomi.'); }
-  segnaMb21();
+  segnaApp();
   if (LS.contatto) {
     LS.contatto = LS.righe.find(x => x.id === LS.contatto.id) || null;
     return LS.contatto ? disegnaScheda() : disegnaLista();
@@ -258,7 +259,7 @@ function disegnaScheda() {
         <div class="alto">
           <div>
             <div class="cat" style="color:${coloreCategoria(c.categoria)}">${esc(c.categoria || 'Senza categoria')}</div>
-            <h1>${esc(c.nome)}${nuovoBadge(c)}${mb21Badge(c)}<span class="sv-targhe" id="sv-targhe">${targheHtml(null)}</span></h1>
+            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${targheHtml(null)}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
@@ -297,7 +298,8 @@ function disegnaScheda() {
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
 }
 
-// Scheda di un Partner: «✅ Utente MB21» (e niente «Invita») se la persona è già utente dell'app, altrimenti «🔗 Invita nell'app MB21».
+// Scheda di un Partner: riga «📱 Usa l'app · ultimo uso … · N nomi in lista» (e niente «Invita») se la persona è già utente
+// dell'app (cantiere 20 lavoro 4: al posto di «✅ Utente MB21»), altrimenti «🔗 Invita nell'app».
 // Lo dice il database (`e_utente_mb21`): 'amway' = codice Amway della scheda → email nel file Amway → utente con quella email
 // (Ignazio 17/09; niente nome, niente solo codice: la coppia lo condivide); 'collegato' = a mano dall'Admin (`collega_utente_mb21`),
 // per chi non si aggancia così (es. il compagno/a senza codice). Risposta ricordata per scheda finché la Lista resta aperta.
@@ -311,10 +313,12 @@ async function mostraInvito(c) {
   }
   if (LS.contatto !== c || !posto.isConnected) return;
   const come = LS.utenteMb21[c.id];
-  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? '✕ Scollega dall\'utente' : '🔗 È già utente MB21: collega'}</button>` : '';
+  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? '✕ Scollega dall\'utente' : '🔗 È già utente dell\'app: collega'}</button>` : '';
+  const uso = c.app || (LS.usoApp && LS.usoApp[c.id]);
+  const dettaglio = uso ? `ultimo uso ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())} · ${uso.nomi} nomi in lista` : 'ultimo uso non disponibile';
   posto.innerHTML = come
-    ? `<div class="sotto" style="margin:10px 0 0;color:var(--partner);font-weight:600">✅ Utente MB21${come === 'collegato' ? ' · collegato dall\'Admin' : ''}</div>${come === 'collegato' ? collega : ''}`
-    : `<button class="link" id="invita-app">🔗 Invita nell'app MB21</button>${collega}`;
+    ? `<div class="app-riga"><span class="ico">📱</span><div>Usa l'app<small>${esc(dettaglio)}</small></div></div>${come === 'collegato' ? collega : ''}`
+    : `<button class="link" id="invita-app">🔗 Invita nell'app</button>${collega}`;
   const inv = document.getElementById('invita-app');
   if (inv) inv.onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
   const col = document.getElementById('collega-mb21');
@@ -333,7 +337,7 @@ async function collegaUtenteMb21(c, scollega) {
   const { error } = await dbq('collega utente MB21', supa.rpc('collega_utente_mb21', { p_contatto: c.id, p_utente: scollega ? null : utente.u.id }));
   if (error) return mostraToast('Non salvato: riprova.');
   delete LS.utenteMb21[c.id];
-  if (LS.mb21) { scollega ? LS.mb21.delete(c.id) : LS.mb21.add(c.id); segnaMb21(); }
+  await leggiUsoApp();   // targhetta 📱 e riga «Usa l'app» aggiornate
   disegnaScheda();
   mostraToast(scollega ? `${c.nome} scollegato` : `${c.nome} = ${utente.u.nome_cognome}`);
 }
@@ -605,7 +609,7 @@ function mostraTarghe(SV) {
   const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
   LS.targhe = LS.targhe || {};
   for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
-  if (el) el.innerHTML = targheHtml(t);
+  if (el) el.innerHTML = targaAppHtml(LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id])) + targheHtml(t);
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);
