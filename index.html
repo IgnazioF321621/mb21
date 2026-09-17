@@ -145,6 +145,8 @@
   .azione .s { font-size: 13px; color: #6B7280; }
   .azione .comandi { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
   .stato-az { font-size: 13px; color: var(--grigio); }
+  .come-andata { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #FCD34D; font-size: 14px; font-weight: 700; color: var(--testo); }
+  .come-andata small { font-weight: 400; color: var(--grigio); }
   .stato-az.fatto { color: #166534; }
   .arancio { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 14px; padding: 4px 14px; margin-bottom: 12px; }
   .interruttore { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
@@ -500,7 +502,7 @@
 <script src="pagina-mappa.js"></script>   <!-- pagina Mappa: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 14:36';
+const APP_VERSION = '2026.09.17 · 14:47';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1129,7 +1131,8 @@ async function nuovoAppuntamento(opz = {}) {
       const tipi = A.tipiPer(st.categoria);
       let h = '';
       h += st.contatto && opz.contatto
-        ? `<div class="campo"><label>Contatto</label><div class="banner">${esc(st.contatto.nome)}</div></div>`
+        ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}</span>
+            ${st.portato ? '' : '<button class="link" id="na-porta">⇄ Porta qualcuno</button>'}</div></div>`
         : `<div class="campo"><label>Contatto <small>Obbligatorio</small></label>
             <input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off">
             <datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
@@ -1146,7 +1149,7 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
-        if (A.conOspite(st.tipo)) h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
+        h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">×</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
       }
@@ -1154,6 +1157,16 @@ async function nuovoAppuntamento(opz = {}) {
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
+      // Dalla scheda (Ignazio 17/09, in entrambe le direzioni): è questa persona che porta qualcuno → l'azione va sull'ospite, lei diventa «Portato da»
+      const porta = velo.querySelector('#na-porta');
+      if (porta) porta.onclick = async () => {
+        leggiCampi();
+        const g = await sceltaContatto(`Chi porta ${st.contatto.nome}?`, '', [st.contatto.id]);
+        if (!g) return;
+        st.portato = st.contatto; st.contatto = g; st.categoria = g.categoria; st.categoriaToccata = false;
+        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+        disegna();
+      };
       const inp = velo.querySelector('#na-contatto');
       if (inp) inp.onchange = () => {
         const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
@@ -1184,7 +1197,7 @@ async function nuovoAppuntamento(opz = {}) {
       const inizio = A.isoDaRoma(v.giorno, v.ora);
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + st.durata * 60000).toISOString(),
-        completata: false, portato_da: A.conOspite(st.tipo) && st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
+        completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
