@@ -188,6 +188,8 @@
   .banner-big { border-radius: 16px; background: #fff; border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .banner-big.bbs { border-color: #93C5FD; background: #EFF6FF; }
   .banner-big.wes { border-color: #FCA5A5; background: #FEF2F2; }
+  .banner-big.avvisi { border-color: #FDE68A; background: #FFFBEB; }
+  .banner-big .riga button.link { padding: 6px 0; font-size: 14px; }
   .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
@@ -490,19 +492,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171902"></script>
-<script src="lista.js?v=202609171902"></script>
-<script src="dashboard.js?v=202609171902"></script>
-<script src="agenda.js?v=202609171902"></script>
-<script src="report.js?v=202609171902"></script>
-<script src="check.js?v=202609171902"></script>
-<script src="mappa.js?v=202609171902"></script>
-<script src="pagina-dashboard.js?v=202609171902"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171902"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171902"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171902"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171921"></script>
+<script src="lista.js?v=202609171921"></script>
+<script src="dashboard.js?v=202609171921"></script>
+<script src="agenda.js?v=202609171921"></script>
+<script src="report.js?v=202609171921"></script>
+<script src="check.js?v=202609171921"></script>
+<script src="mappa.js?v=202609171921"></script>
+<script src="pagina-dashboard.js?v=202609171921"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171921"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171921"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171921"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609171921"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:02';
+const APP_VERSION = '2026.09.17 · 19:21';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -727,6 +730,8 @@ async function dopoAccesso(sessione) {
   await controllaAbbonamento();
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
+  // Toccando un avviso push «…/?apri=check» si apre direttamente il Check del Giorno (cantiere 24)
+  if (REGISTRAZIONE.get('apri') === 'check' && !limitato()) { ST.tab = 'check'; REGISTRAZIONE.delete('apri'); history.replaceState(null, '', location.pathname); }
   mostraTab();
   if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true);
 }

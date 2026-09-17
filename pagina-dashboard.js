@@ -491,13 +491,15 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl, scad, seg] = await Promise.all([
+    const [cm, ob, segniAl, scad, seg] = await Promise.all([   // il sesto (avvisi) scrive da solo AV.stato
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
       vediTutti() || visto().id !== ST.utente.id ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
+      // cantiere 24: stato degli avvisi push di questo dispositivo (solo sulla propria Dashboard)
+      vediTutti() || visto().id !== ST.utente.id ? Promise.resolve(AV.stato = null) : leggiStatoAvvisi().catch(() => (AV.stato = null)),
     ]);
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
@@ -570,6 +572,7 @@ function dashboardAlto() {
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   html += riquadriBiglietto();
+  html += riquadroAvvisi();   // cantiere 24: «🔔 Avvisi sul telefono»
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
@@ -629,6 +632,7 @@ function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
+  collegaAvvisi();
   document.querySelectorAll('[data-seg]').forEach(box => {
     box.querySelectorAll('.sv-chip').forEach(ch => { ch.onclick = () => ch.classList.toggle('on'); });
     box.querySelector('[data-si]').onclick = () => rispondiBiglietto(box, true);
