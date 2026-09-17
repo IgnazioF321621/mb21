@@ -732,8 +732,9 @@ async function dopoAccesso(sessione) {
   await controllaAbbonamento();
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
-  // Toccando un avviso push «…/?apri=check» si apre direttamente il Check del Giorno (cantiere 24)
-  if (REGISTRAZIONE.get('apri') === 'check' && !limitato()) { ST.tab = 'check'; REGISTRAZIONE.delete('apri'); history.replaceState(null, '', location.pathname); }
+  // Toccando un avviso push «…/?apri=check» (o «agenda») si apre direttamente quella pagina (cantiere 24)
+  const apri = REGISTRAZIONE.get('apri');
+  if (['check', 'agenda'].includes(apri) && !limitato()) { ST.tab = apri; if (apri === 'agenda') AG.giorno = null; REGISTRAZIONE.delete('apri'); history.replaceState(null, '', location.pathname); }
   mostraTab();
   if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true);
 }

@@ -3,6 +3,7 @@
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
+//    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare)»
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -16,6 +17,13 @@ const db = createClient(URL_SUPABASE, CHIAVE_SERVIZIO, { auth: { persistSession:
 const aRoma = (opzioni: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', ...opzioni }).format(new Date());
 const oggiRoma = () => aRoma({ year: 'numeric', month: '2-digit', day: '2-digit' });             // «2026-09-17»
 const oraRoma = () => Number(aRoma({ hour: '2-digit', hour12: false }).slice(0, 2));             // 0..23
+// Inizio e fine del giorno di Roma (ISO): Roma è UTC+2 con l'ora legale, UTC+1 con quella solare
+function giornoRoma(giorno: string) {
+  const scarto = (new Date(giorno + 'T12:00:00Z').getTime() - new Date(new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(giorno + 'T12:00:00Z')).replace(' ', 'T') + 'Z').getTime()) / 3600000;
+  const inizio = new Date(new Date(giorno + 'T00:00:00Z').getTime() + scarto * 3600000);
+  return { inizio: inizio.toISOString(), fine: new Date(inizio.getTime() + 86400000).toISOString() };
+}
+const plurale = (n: number, uno: string, tanti: string) => `${n} ${n === 1 ? uno : tanti}`;
 
 type Dispositivo = { id: string; endpoint: string; p256dh: string; auth: string };
 type Avviso = { titolo: string; testo: string; url: string; tag: string };
@@ -75,6 +83,39 @@ Deno.serve(async (req) => {
     const daAvvisare = (attivi ?? []).map(x => x.id).filter(id => !giaFatto.has(id));
     const esito = await spedisciA(daAvvisare, { titolo: '⚡ Hai fatto il Check di oggi?', testo: 'Due minuti per chiudere la giornata: tocca per aprire il Check del Giorno.', url: './?apri=check', tag: 'check_sera' });
     return risposta({ oggi, utenti: daAvvisare.length, ...esito });
+  }
+
+  // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
+  if (tipo === 'mattino') {
+    if (oraRoma() !== 8 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 8` });
+    const oggi = oggiRoma(), g = giornoRoma(oggi), adesso = Date.now(), limiteConferme = new Date(adesso + 12 * 3600000).toISOString();
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }] = await Promise.all([
+      db.from('utenti').select('id, contatti_al_giorno').eq('accesso_attivo', true).is('eliminato_il', null),
+      db.from('azioni').select('user_id').eq('da_coda', true).gte('inizio', g.inizio).lt('inizio', g.fine),   // esiti dalla coda già dati oggi
+      db.from('azioni').select('user_id, contatto_id, inizio, confermato_il').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', g.inizio).lt('inizio', g.fine),
+      db.from('azioni').select('user_id, contatto_id, data_scelta, confermato_il').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', g.inizio).lt('data_scelta', g.fine),
+    ]);
+    const err = e1 || e2 || e3 || e4;
+    if (err) return risposta({ errore: err.message }, 500);
+    const { data: dispositivi } = await db.from('avvisi_dispositivi').select('user_id');
+    const conDispositivo = new Set((dispositivi ?? []).map(x => x.user_id));
+    const veri = new Set((appuntamenti ?? []).map(a => `${a.contatto_id}|${Date.parse(a.inizio)}`));
+    const tutti = [
+      ...(appuntamenti ?? []).map(a => ({ user_id: a.user_id, quando: a.inizio, confermato: !!a.confermato_il })),
+      ...(daCoda ?? []).filter(a => !veri.has(`${a.contatto_id}|${Date.parse(a.data_scelta)}`)).map(a => ({ user_id: a.user_id, quando: a.data_scelta, confermato: !!a.confermato_il })),   // senza doppioni della coda
+    ];
+    const esiti: Record<string, unknown>[] = [];
+    for (const u of attivi ?? []) {
+      if (!conDispositivo.has(u.id)) continue;
+      const telefonate = Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length);
+      const miei = tutti.filter(a => a.user_id === u.id);
+      const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
+      const pezzi = [plurale(telefonate, 'telefonata', 'telefonate')];
+      if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
+      const testo = `Oggi ${pezzi.join(' e ')}. Tocca per aprire l'Agenda.`;
+      esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
+    }
+    return risposta({ oggi, utenti: esiti.length, esiti: corpo.forza ? esiti : undefined });
   }
 
   return risposta({ errore: `tipo sconosciuto: ${tipo}` }, 400);
