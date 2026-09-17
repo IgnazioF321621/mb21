@@ -11,8 +11,11 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 # Cantieri aperti
 
 ## 20. SEGNI VITALI ACCESI NELLA MAPPA DEI PARTNER
-*Aperto il 17 settembre 2026 (segnalato dagli utenti a Ignazio).* Nella Mappa dei partner le targhette **BBS · WES · CEP** non si accendono anche quando i segni ci sono. Da affrontare in una **sessione nuova**.
-- Ipotesi **non verificata** (Claude 17/09): biglietti e CEP stanno quasi tutti sulle schede della **lista di Ignazio** (decisione A del 16/09, cantiere 19 «Schede dei partner a cascata») e le regole del database fanno leggere a ogni partner **solo i contatti della sua lista**. Prima verificare sul DB con l'account di un partner, poi decidere con Ignazio cosa può vedere un partner (riservatezza)
+*Aperto il 17 settembre 2026 (segnalato dagli utenti a Ignazio).* Nella Mappa dei partner le targhette **BBS · WES · CEP** non si accendono anche quando i segni ci sono.
+- ~~Verifica~~ — fatta il 17/09 sul DB nei panni di Isabella: **0 biglietti, 0 CEP**, 7 schede (solo la sua lista), 1 utente. Causa confermata: biglietti e CEP stanno sulle schede della lista di Ignazio e le regole di `contatti` fanno leggere a ogni partner solo la propria lista
+- **Decisioni di Ignazio (17/09)**: strada **A** (funzione che dà solo i segni, non le schede); **la Mappa Amway fa fede**: a cascata ognuno vede la propria squadra, segni vitali e punti, **in automatico**, nessun interruttore
+- ~~Lavoro 1 · segni del ramo~~ — fatto il 17/09: migrazione `20260917113000_segni_del_ramo.sql` applicata (`segni_del_ramo()`), `leggiSegniGrezzi()` la usa per Mappa, Dashboard e Check. Provato sul DB nei panni di Isabella: 2 biglietti · 1 CEP · 16 schede · 2 utenti, contatti leggibili invariati (783). **Da provare da Ignazio con l'account di un partner (o chiedendo a Isabella)**
+- Lavoro 2 · **il partner segna da solo il proprio biglietto** (Ignazio 17/09): quando l'Admin carica un BBS o un Wes nuovo, il partner dentro l'app conferma di avere il biglietto; per il CEP resta la regola di adesso (scrive solo l'Admin). Da disegnare: dove tocca (Dashboard? Mappa?), cosa può scrivere (solo il biglietto suo e del compagno/a, sulla sua scheda), regola nel database
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
