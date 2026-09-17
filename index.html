@@ -488,7 +488,7 @@
 <script src="mappa.js"></script>
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 07:24';
+const APP_VERSION = '2026.09.17 · 07:40';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -898,8 +898,14 @@ function disegnaOggi() {
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
     : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
   html += catalogoHtml();
+  // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
+  if (limitato()) html = html.replace('<div class="testa-coda">', '<div class="sotto">🔒 Abbonamento scaduto: la coda si guarda soltanto. Rinnova per lavorarla.</div><div class="testa-coda">');
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
+  if (limitato()) {
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #contatore, #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    return;
+  }
   collegaConferme();
   const contatore = document.getElementById('contatore');
   if (contatore) contatore.onclick = scegliNumero;
@@ -1283,9 +1289,10 @@ function dashboardAlto() {
       : `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`)
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
-  if (d.obiettiviMancanti) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
+  // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
+  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
-  html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">⚡</span>
+  if (!limitato()) html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">⚡</span>
     <span><b>Compila il Check del Giorno!</b><small>Ultimo check: <u>${esc(dataBreve(d.ultimoCheck))}</u> · Tocca per aprire</small></span>
     <span class="freccia">›</span></button>`;
   const s = d.schede.find(x => x.chiave === DS.scheda);
@@ -1297,7 +1304,7 @@ function dashboardAlto() {
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
-    ${d.obiettiviMancanti ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>🎯 Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
+    ${d.obiettiviMancanti || limitato() ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>🎯 Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
     ${limitato() ? '' : `<button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`}`;
   return html;
 }
