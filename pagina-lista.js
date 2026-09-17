@@ -222,7 +222,7 @@ async function ripristina(r) {
 }
 
 async function eliminaDefinitivamente(r) {
-  if (!confirm(`Eliminare definitivamente ${r.nome}?\n\nSi cancellano anche tutte le sue azioni e note. Non si può annullare.`)) return;
+  if (!await chiediConferma(`Eliminare definitivamente ${r.nome}?`, 'Si cancellano anche tutte le sue azioni e note. Non si può annullare.', 'Elimina', true)) return;
   const { error } = await dbq('elimina', supa.from('contatti').delete().eq('id', r.id).eq('categoria', 'Archiviato'));
   if (error) return mostraToast('Non eliminato: riprova.');
   mostraToast(`${r.nome} eliminato`);
@@ -732,7 +732,7 @@ async function sezioneSegni() {
       const altrove = (doppi.data || []).filter(x => !SV.biglietti.some(b => b.contatto_id === x.contatto_id));
       if (altrove.length) {
         const liste = [...new Set(altrove.map(x => (x.contatti && x.contatti.utenti ? x.contatti.utenti.nome : 'un altro partner')))].join(', ');
-        if (!confirm(`${c.nome} ha già un biglietto ${tipo} ${MB21Lista.etichettaEvento(evento)} nella lista di ${liste}.\n\nLo aggiungo lo stesso?`)) return;
+        if (!await chiediConferma('Lo aggiungo lo stesso?', `${c.nome} ha già un biglietto ${tipo} ${MB21Lista.etichettaEvento(evento)} nella lista di ${liste}.`, 'Aggiungi')) return;
       }
       const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
         .insert({ contatto_id: c.id, tipo, evento, contatto: true }).select().single());
@@ -744,7 +744,7 @@ async function sezioneSegni() {
       if (soloGuardo()) return disegna();
       const b = SV.biglietti.find(x => x.id === el.closest('[data-big]').dataset.big);
       if (!MB21Lista.postiBiglietto({ ...b, [campo]: valore })) {   // niente posti: il biglietto si toglie
-        if (!confirm(`Tolgo il biglietto ${b.tipo} ${MB21Lista.etichettaEvento(b.evento)}?`)) return disegna();
+        if (!await chiediConferma(`Tolgo il biglietto ${b.tipo} ${MB21Lista.etichettaEvento(b.evento)}?`, '', 'Togli', true)) return disegna();
         const { error } = await dbq('togli biglietto', supa.from('biglietti').delete().eq('id', b.id));
         if (error) { mostraToast('Non salvato: riprova.'); return disegna(); }
         SV.biglietti = SV.biglietti.filter(x => x.id !== b.id); return disegna();
@@ -782,7 +782,7 @@ async function sezioneSegni() {
       if (esci) esci.onclick = () => salvaCep(MB21Lista.dataUscitaCep(blocco.querySelector('[data-k="dal"]').value, MB21Coda.oggiRoma()));
       blocco.querySelector('[data-cep-togli]').onclick = async () => {
         if (!id) { SV.cepNuovo = false; return disegna(); }
-        if (soloGuardo() || !confirm('Elimino questo periodo di CEP?')) return;
+        if (soloGuardo() || !await chiediConferma('Elimino questo periodo di CEP?', '', 'Elimina', true)) return;
         const { error } = await dbq('togli CEP', supa.from('cep').delete().eq('id', id));
         if (error) return mostraToast('Non eliminato: riprova.');
         SV.cep = SV.cep.filter(x => x.id !== id); disegna();
@@ -872,7 +872,7 @@ function apriModulo(c) {
     };
     const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
-    if (doppi.length && !confirm(`Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già\n\n${doppi.slice(0, 3).map(d => `• ${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join('\n')}\n\nSalvo lo stesso?`)) return;
+    if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva')) return;
     $('invia').disabled = true;
     // da senza categoria a una categoria: la sceglie `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani)
     const catalogo = !nuovo && !c.categoria && riga.categoria;

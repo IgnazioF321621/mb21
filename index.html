@@ -490,19 +490,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171845"></script>
-<script src="lista.js?v=202609171845"></script>
-<script src="dashboard.js?v=202609171845"></script>
-<script src="agenda.js?v=202609171845"></script>
-<script src="report.js?v=202609171845"></script>
-<script src="check.js?v=202609171845"></script>
-<script src="mappa.js?v=202609171845"></script>
-<script src="pagina-dashboard.js?v=202609171845"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171845"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171845"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171845"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171855"></script>
+<script src="lista.js?v=202609171855"></script>
+<script src="dashboard.js?v=202609171855"></script>
+<script src="agenda.js?v=202609171855"></script>
+<script src="report.js?v=202609171855"></script>
+<script src="check.js?v=202609171855"></script>
+<script src="mappa.js?v=202609171855"></script>
+<script src="pagina-dashboard.js?v=202609171855"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171855"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171855"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171855"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 18:45';
+const APP_VERSION = '2026.09.17 · 18:55';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1106,7 +1106,7 @@ function spostaAppuntamento(e, dopo) {
 }
 
 async function eliminaAppuntamento(e) {
-  if (!confirm('Eliminare questo appuntamento?')) return;
+  if (!await chiediConferma('Eliminare questo appuntamento?', '', 'Elimina', true)) return;   // conferma dell'app, non confirm(): in Arc/Claude non compariva (Ignazio 17/09)
   const { error } = await dbq('elimina appuntamento', supa.from('azioni').delete().eq('id', e.id));
   if (error) return mostraToast('Non eliminato: controlla la connessione e riprova.');
   AG.aperta = null;
