@@ -488,7 +488,7 @@
 <script src="mappa.js"></script>
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.16 · 23:01';
+const APP_VERSION = '2026.09.17 · 06:33';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -3308,15 +3308,16 @@ function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
 // Link di registrazione di chi è entrato («da» = lui): si vede scritto, si copia, e sul telefono si manda con Condividi.
 // Il foglio serve perché la copia automatica non funziona dappertutto (Ignazio 16/09: «non si può copiare il link»).
 // opz: { da: id di chi invita (predefinito: chi è entrato), nome, telefono } → WhatsApp e SMS già indirizzati alla persona
+// Con opz.link · messaggio · titolo · spiega lo stesso foglio manda altro (es. «Avvisa» dopo l'approvazione in Admin)
 function foglioLinkInvito(opz = {}) {
-  const link = `${location.origin}${location.pathname}?registrati&da=${opz.da || ST.utente.id}`;
+  const link = opz.link || `${location.origin}${location.pathname}?registrati&da=${opz.da || ST.utente.id}`;
   // Messaggio con il saluto, modificabile nel riquadro: Copia e tutti i bottoni mandano il testo com'è in quel momento (Ignazio 16/09)
-  const messaggio = `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link:\n${link}`;
+  const messaggio = opz.messaggio || `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link:\n${link}`;
   const tel = opz.telefono && opz.telefono.startsWith('+') ? opz.telefono : '';   // i numeri dubbi non partono
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>🔗 ${opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione'}</h3>
-    <p>${opz.nome ? 'Mandagli il messaggio (puoi cambiarlo): si registra, e l\'Admin approva la richiesta.' : 'Manda il messaggio (puoi cambiarlo) a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
+  velo.innerHTML = `<div class="foglio"><h3>${opz.titolo ? esc(opz.titolo) : '🔗 ' + (opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione')}</h3>
+    <p>${opz.spiega ? esc(opz.spiega) : opz.nome ? 'Mandagli il messaggio (puoi cambiarlo): si registra, e l\'Admin approva la richiesta.' : 'Manda il messaggio (puoi cambiarlo) a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
     <textarea id="li-testo" rows="4" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(messaggio)}</textarea>
     <div class="li-canali">
       <a href="#" data-canale="wa">WhatsApp</a><a href="#" data-canale="tg">Telegram</a><a href="#" data-canale="sms">SMS</a>

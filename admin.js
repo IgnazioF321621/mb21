@@ -247,9 +247,13 @@ function collegaAdmin() {
     b.disabled = true;
     const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
     if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
-    mostraToast(`${r.nome_cognome} può entrare: mandagli il link dell'app`);
     AD.aperti.add(data);
     await apriAdmin();
+    // Avviso già pronto (Ignazio 17/09: dopo «Approva» il passaggio successivo non c'era): numero del modulo con +39 se scritto senza prefisso
+    const app = `${location.origin}${location.pathname}`;
+    foglioLinkInvito({ link: app, nome: r.nome_cognome, telefono: MB21Lista.componiTelefono('+39', r.telefono || ''),
+      titolo: `✅ Avvisa ${r.nome_cognome}`, spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): apre l\'app, scrive la sua email e riceve il link per entrare.',
+      messaggio: `Ciao ${r.nome_cognome.split(' ')[0]}, la tua richiesta per MB21 è approvata. Apri ${app} , scrivi la tua email e premi «Mandami il link».` });
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
   app.querySelectorAll('[data-rifiuta]').forEach(b => b.onclick = async () => {
