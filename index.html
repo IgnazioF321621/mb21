@@ -180,6 +180,12 @@
   .banner-abb.attivo { background: rgba(5,150,105,.1); border: 1.5px solid #10B981; color: var(--verde); }
   .banner-abb.scaduto { border-radius: 16px; display: block; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #B91C1C; padding: 12px 14px; }
   .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: #EF4444; }
+  .banner-big { border-radius: 16px; background: #fff; border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+  .banner-big.bbs { border-color: #93C5FD; background: #EFF6FF; }
+  .banner-big.wes { border-color: #FCA5A5; background: #FEF2F2; }
+  .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
   .banner-abb.in-scadenza { background: #FFF7ED; border-color: #FDBA74; color: #C2410C; }
   .banner-abb.in-scadenza small { color: #EA580C; }
   .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: 12px; background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
@@ -490,7 +496,7 @@
 <script src="pagina-lista.js"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 11:35';
+const APP_VERSION = '2026.09.17 · 12:05';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
