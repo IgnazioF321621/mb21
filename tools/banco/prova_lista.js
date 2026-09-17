@@ -110,6 +110,8 @@ prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca tr
   assert.equal(L.eNuovo(daGlide, OGGI), false);
   assert.equal(L.eNuovo({ nome: 'senza data' }, OGGI), false);
   assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'Nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);
+  const utente = { id: 'm', nome: 'Utente', user_id: 'u', categoria: 'Partner', mb21: true };
+  assert.deepEqual(L.filtraContatti([nuovo, vecchio, utente], { testo: 'mb21', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['m']);
 });
 
 prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', () => {
