@@ -31,7 +31,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 # Cantieri chiusi
 
 ## 25. PAGINA PERSONALE «PROFILO»
-*Aperto il 17 settembre 2026 (Ignazio, sera: «una pagina personale dove inserire i dati della persona, l'abilitazione agli avvisi e quant'altro non riguardi il lavoro ma la persona, la foto, il cambia password»). Da fare in una sessione nuova, un passo alla volta. Il prossimo cantiere è questo (il 20 resta in attesa della prova di Ignazio con l'account di un partner).*
+*Aperto il 17 settembre 2026 (Ignazio, sera: «una pagina personale dove inserire i dati della persona, l'abilitazione agli avvisi e quant'altro non riguardi il lavoro ma la persona, la foto, il cambia password»). Da fare in una sessione nuova, un passo alla volta. Il prossimo cantiere è questo.*
 - Oggi nell'app manca un bottone **«Esci»** per chi è entrato; `utenti.foto` esiste nel database ma non si vede né si carica; su Supabase non c'è ancora uno spazio per le immagini (Storage, da creare)
 - **Proposta di Claude (da confermare con Ignazio all'apertura)**: si arriva da un **cerchietto in alto a destra in Dashboard** con la foto o le iniziali (niente settima tab). Contiene: (1) foto scelta dal telefono, salvata su Supabase; (2) nome e cognome, **telefono (nuovo campo)**, email e codice Amway solo in lettura (li cambia l'Admin); (3) **avvisi sul telefono**: riquadro e riga escono dalla Dashboard e vivono qui (`avvisi.js`, stesso codice); (4) Contatti al giorno con lo stesso foglio della Dashboard (`scegliNumero`); (5) Cambia password (`foglioPassword`); (6) Esci
 - **Domande aperte per Ignazio**: altri dati personali oltre al telefono (città, data di nascita…)? Contatti al giorno anche in Dashboard o solo nel Profilo?
