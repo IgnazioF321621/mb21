@@ -41,7 +41,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 ## 24. AZIONI PER OGNI CATEGORIA (chiuso il 17/09)
 *Richiesta di Ignazio 17/09: «l'azione si possa inserire in un contatto qualsiasi sia la categoria; semplifichiamo; unica cosa: deve avere una categoria».* Prima (decisione 5 del 14/09) Ex, Referral, Unlinked e Archiviato non avevano appuntamenti.
-- ~~Fatto il 17/09~~: in `agenda.js` le quattro categorie hanno gli stessi tipi ed esiti del Prospect; solo i senza categoria restano fuori (messaggio «Il contatto non ha una categoria»). Nel modulo la riga Categoria resta a tre scelte (Prospect · Partner · Cliente) più quella attuale del contatto. Scelta di Claude da confermare: la **scheda di un Archiviato resta di sola lettura** (Azione + nascosto: prima si ripristina) e gli archiviati non compaiono nell'elenco dei nomi dell'Agenda. Prove automatiche aggiornate. **Da provare da Ignazio**
+- ~~Fatto il 17/09~~: in `agenda.js` le quattro categorie hanno gli stessi tipi ed esiti del Prospect; solo i senza categoria restano fuori (messaggio «Il contatto non ha una categoria»). Nel modulo la riga Categoria resta a tre scelte (Prospect · Partner · Cliente) più quella attuale del contatto. Scelta di Claude da confermare: la **scheda di un Archiviato resta di sola lettura** (Azione + nascosto: prima si ripristina) e gli archiviati non compaiono nell'elenco dei nomi dell'Agenda. Prove automatiche aggiornate. **Provato da Ignazio il 17/09: «funziona»**. Poi: dopo l'esito l'azione **si chiude** e si vede solo l'esito; «Cambia esito ›» riapre i bottoni (Agenda e scheda, stesso codice). **Da provare da Ignazio**
 
 
 ## 23. APPUNTAMENTI NEL CALENDARIO (Google · NotePlan) (chiuso il 17/09)

@@ -494,20 +494,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171928"></script>
-<script src="lista.js?v=202609171928"></script>
-<script src="dashboard.js?v=202609171928"></script>
-<script src="agenda.js?v=202609171928"></script>
-<script src="report.js?v=202609171928"></script>
-<script src="check.js?v=202609171928"></script>
-<script src="mappa.js?v=202609171928"></script>
-<script src="pagina-dashboard.js?v=202609171928"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171928"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171928"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171928"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609171928"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609171931"></script>
+<script src="lista.js?v=202609171931"></script>
+<script src="dashboard.js?v=202609171931"></script>
+<script src="agenda.js?v=202609171931"></script>
+<script src="report.js?v=202609171931"></script>
+<script src="check.js?v=202609171931"></script>
+<script src="mappa.js?v=202609171931"></script>
+<script src="pagina-dashboard.js?v=202609171931"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171931"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171931"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171931"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609171931"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:28';
+const APP_VERSION = '2026.09.17 · 19:31';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1007,11 +1007,16 @@ async function apriContattoDa(id, ritorno) {
 // Fatto del PM = fase «Presentazione» (chiudi_appuntamento senza «prossimo appuntamento»); del Follow Up = apre solo il secondo passo.
 const daChiudere = MB21Agenda.daChiudere;
 const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa del risultato (solo a video)
-function bloccoEsiti(a, categoria) {
+// Azione già chiusa: il blocco resta chiuso (si vede solo l'esito nella riga) e si apre con «Cambia esito ›» (Ignazio 17/09)
+function bloccoEsiti(a, categoria, aperto = false) {
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
-  return gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}${p.passo.startsWith('cambia') ? ' <small>· tocca per cambiare</small>' : ''}</div>
+  const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
+  const dentro = chiusa && !aperto
+    ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
+    : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}${p.passo.startsWith('cambia') ? ' <small>· tocca per cambiare</small>' : ''}</div>
     <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${p.attuale === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`).join('');
+  return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
 // Stato scritto accanto all'azione
 function statoAzione(a) {
@@ -1020,6 +1025,12 @@ function statoAzione(a) {
 }
 // Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
 function collegaEsiti(el, a, contatto, dopo) {
+  const apri = el.querySelector('[data-apri-esiti]');
+  if (apri) apri.onclick = () => {   // si apre sul posto, senza ricaricare
+    const blocco = apri.closest('.blocco-esiti');
+    blocco.outerHTML = bloccoEsiti(a, contatto.categoria, true);
+    collegaEsiti(el.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`) || el, a, contatto, dopo);
+  };
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
     if (soloGuardo() || b.classList.contains('attuale')) return;
     const passo = b.closest('.ag-esiti').dataset.passo, esito = b.dataset.esito;
