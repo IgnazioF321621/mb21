@@ -471,6 +471,6 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 19:22 | Azioni per ogni categoria: Ex, Referral, Unlinked e Archiviato hanno i tipi ed esiti del Prospect; solo i senza categoria restano fuori |
 | 2026.09.17 · 19:28 | Avvisi: riquadro solo da spenti con «Non ora» (7 giorni); riga piccola in fondo alla Dashboard «Avvisi accesi · Spegni · Prova» |
 | 2026.09.17 · 19:31 | Azione chiusa: blocco esiti chiuso, si vede solo l'esito; «Cambia esito ›» lo apre (Agenda e scheda) |
-| 2026.09.17 · 19:37 | Archiviato tra le categorie del modulo (Nuovo contatto e Modifica), con lo stesso percorso di «Archivia» |
 | 2026.09.17 · 19:31 | Cantiere 24, passo 2: avviso delle 8 «Buongiorno! Oggi N telefonate e N appuntamenti (N da confermare)», tocco → Agenda di oggi |
 | 2026.09.17 · 19:37 | Cantiere 24, passo 3: promemoria 30 minuti prima dell'appuntamento (ogni 5 minuti, `azioni.promemoria_il`), tocco → l'appuntamento aperto in Agenda |
+| 2026.09.17 · 19:37 | Archiviato tra le categorie del modulo (Nuovo contatto e Modifica), con lo stesso percorso di «Archivia» |
