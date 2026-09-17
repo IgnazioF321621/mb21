@@ -19,6 +19,12 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Pagina Mappa in un file suo~~ — fatto il 17/09 (Ignazio, prima di chiudere): `pagina-mappa.js` (259 righe) spostato da `index.html` come Dashboard e Lista, codice identico; `index.html` da 2014 a 1762 righe. Restano dentro: Agenda (370 righe), Check e Report (100 ciascuna)
 - ~~Lavoro 3 · CEP nella scheda contatto~~ — fatto il 17/09 (Ignazio): sotto «CEP» «dal 01/06/2026 · abbonato fino al 30/09/2026» = ultimo giorno del mese in corso finché il periodo è aperto (a ottobre 31/10). Solo la scritta, dati e regole invariati. Prove lista 16. **Provato da Ignazio il 17/09.** Poi (Ignazio 17/09: il campo «uscito il» confondeva; il CEP si paga il 1° a Network 21 e si scopre dopo chi non rinnova): periodo aperto = solo «dal» + bottone **«Non ha rinnovato»** che chiude all'**ultimo giorno del mese prima**; **fino al 20 del mese** «rinnovo del 1° da verificare». Prove lista 17. **Provato da Ignazio il 17/09: «ci siamo»**
 
+## 23. APPUNTAMENTI NEL CALENDARIO (Google · Apple · NotePlan)
+*Aperto il 17 settembre 2026 (Ignazio: «come su Glide»). Da fare in una sessione nuova.* Salvare un appuntamento di MB21 nel calendario del telefono, dall'evento aperto in Agenda e dal foglio dopo il salvataggio (stesso codice nei due posti, regola in `CLAUDE.md`).
+- Possibile senza collegare account: **Google Calendar** = link che apre l'evento già compilato (come Glide) · **Calendario di Apple** = file `.ics` da scaricare e «Aggiungi a Calendario» (un passaggio in più; da verificare nell'app installata) · **NotePlan** = collegamento `noteplan://` che aggiunge una riga nella nota del giorno («18:30 PM 1a1 · Pino Manolo»); NotePlan mostra anche gli eventi di Apple Calendar
+- Da decidere con Ignazio: (1) quali bottoni (tutti e tre?) · (2) testo dell'evento («MB21 · PM 1a1 · Pino Manolo», durata, note, telefono?) · (3) spostando l'appuntamento in MB21 l'evento nel calendario non si sposta da solo: accettabile?
+- Non sugli appuntamenti già chiusi (Fatto / esito): il calendario non serve più
+
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
