@@ -1,7 +1,8 @@
 // MB21 · pagina personale «Profilo» (cantiere 25, decisioni di Ignazio 17/09): si apre dal cerchietto con le iniziali
 // in alto a destra in Dashboard, niente settima tab. È sempre la pagina di chi è entrato (il Partner Select non conta).
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
-// avvisi sul telefono (da qui, non più in Dashboard), Cambia password, Esci. La foto arriva col passo 2.
+// avvisi sul telefono (da qui, non più in Dashboard), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
+// nel database»): rimpicciolita dall'app a 200×200 JPEG e salvata come testo in `utenti.foto` con `imposta_foto`.
 // Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword, versione…),
 // pagina-dashboard.js (scegliNumero) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
 // Si carica prima dello script della pagina: solo definizioni.
@@ -12,9 +13,14 @@ function inizialiDi(u) {
   return (parti.length ? parti.slice(0, 2).map(p => p[0]).join('') : '?').toUpperCase();
 }
 
-// Cerchietto in alto a destra in Dashboard (con la foto quando ci sarà)
+// Dentro il cerchietto: la foto se c'è, altrimenti le iniziali (stesso disegno in Dashboard e nel Profilo)
+function dentroCerchio(u) {
+  return u && u.foto ? `<img src="${esc(u.foto)}" alt="">` : esc(inizialiDi(u));
+}
+
+// Cerchietto in alto a destra in Dashboard
 function cerchiettoProfilo() {
-  return `<button class="cerchio" id="ds-profilo" aria-label="Profilo">${esc(inizialiDi(ST.utente))}</button>`;
+  return `<button class="cerchio" id="ds-profilo" aria-label="Profilo">${dentroCerchio(ST.utente)}</button>`;
 }
 
 async function apriProfilo() {
@@ -23,7 +29,7 @@ async function apriProfilo() {
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
   const [dati, stato] = await Promise.all([
-    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, contatti_al_giorno').eq('id', u.id).maybeSingle()),
+    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', u.id).maybeSingle()),
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
   ]);
   if (dati.data) { Object.assign(u, dati.data); ST.stato = { ...(ST.stato || { fatti_oggi: 0 }), contatti_al_giorno: dati.data.contatti_al_giorno }; }
@@ -42,8 +48,11 @@ function disegnaProfilo() {
     no_supporto: `<div>🔔 Questo dispositivo non supporta gli avvisi.</div>`,
   };
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
-    <div class="testa-pagina"><h1>Profilo</h1><span class="cerchio grande">${esc(inizialiDi(u))}</span></div>
+    <div class="testa-pagina"><h1>Profilo</h1><span class="cerchio grande">${dentroCerchio(u)}</span></div>
     <div class="sotto">La tua pagina personale</div>
+    <div class="pf-box"><h3>📷 Foto</h3>
+      <div class="pf-avvisi"><div class="riga"><label class="primario pf-foto">${u.foto ? 'Cambia foto' : 'Scegli la foto'}<input type="file" id="pf-foto" accept="image/*" hidden></label>${u.foto ? b('pf-foto-via', 'Togli') : ''}</div></div>
+      <small>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</small></div>
     <div class="pf-box"><h3>👤 I tuoi dati</h3>
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
@@ -63,6 +72,8 @@ function disegnaProfilo() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('pf-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
   su('pf-tel-salva', salvaTelefono);
+  const foto = document.getElementById('pf-foto'); if (foto) foto.onchange = () => salvaFoto(foto.files[0]);
+  su('pf-foto-via', () => salvaFoto(null));
   su('pf-numero', () => scegliNumero(disegnaProfilo));
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
@@ -77,4 +88,34 @@ async function salvaTelefono() {
   if (error) return mostraToast(error.message || 'Non salvato: controlla la connessione e riprova.');
   ST.utente.telefono = tel || null;
   mostraToast(tel ? 'Telefono salvato' : 'Telefono tolto');
+}
+
+// Foto → quadrato 200×200 (taglio al centro) → JPEG come testo → `imposta_foto`. `null` = togli la foto.
+const LATO_FOTO = 200;
+function rimpicciolisci(file) {
+  return new Promise((ok, no) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = c.height = LATO_FOTO;
+      const lato = Math.min(img.naturalWidth, img.naturalHeight);
+      c.getContext('2d').drawImage(img, (img.naturalWidth - lato) / 2, (img.naturalHeight - lato) / 2, lato, lato, 0, 0, LATO_FOTO, LATO_FOTO);
+      URL.revokeObjectURL(img.src);
+      ok(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => no(new Error('Non riesco a leggere questa immagine'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function salvaFoto(file) {
+  if (file === undefined) return;
+  let foto = null;
+  try {
+    if (file) { mostraToast('Preparo la foto…'); foto = await rimpicciolisci(file); }
+  } catch (e) { return mostraToast(e.message || 'Foto non letta'); }
+  const { error } = await dbq('foto del profilo', supa.rpc('imposta_foto', { p_foto: foto }));
+  if (error) return mostraToast(error.message || 'Non salvata: controlla la connessione e riprova.');
+  ST.utente.foto = foto;
+  mostraToast(foto ? 'Foto salvata' : 'Foto tolta');
+  disegnaProfilo();
 }

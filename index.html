@@ -196,6 +196,8 @@
   .cerchio { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--blu); color: #fff; font-size: 15px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; margin-top: 8px; flex: none; }
   .cerchio.grande { width: 56px; height: 56px; font-size: 20px; }
+  .cerchio { overflow: hidden; padding: 0; } .cerchio img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  label.pf-foto { display: inline-block; width: auto; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: #fff; background: var(--testo); border-radius: 12px; text-align: center; }
   .pf-box { background: #fff; border: 1.5px solid var(--linea); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .pf-box h3 { margin: 0 0 8px; font-size: 16px; }
   .pf-box small { display: block; color: var(--grigio); font-size: 12px; margin-top: 6px; }
@@ -508,21 +510,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609172304"></script>
-<script src="lista.js?v=202609172304"></script>
-<script src="dashboard.js?v=202609172304"></script>
-<script src="agenda.js?v=202609172304"></script>
-<script src="report.js?v=202609172304"></script>
-<script src="check.js?v=202609172304"></script>
-<script src="mappa.js?v=202609172304"></script>
-<script src="pagina-dashboard.js?v=202609172304"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609172304"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609172304"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609172304"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609172304"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609172304"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609172314"></script>
+<script src="lista.js?v=202609172314"></script>
+<script src="dashboard.js?v=202609172314"></script>
+<script src="agenda.js?v=202609172314"></script>
+<script src="report.js?v=202609172314"></script>
+<script src="check.js?v=202609172314"></script>
+<script src="mappa.js?v=202609172314"></script>
+<script src="pagina-dashboard.js?v=202609172314"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609172314"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609172314"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609172314"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609172314"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609172314"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 23:04';
+const APP_VERSION = '2026.09.17 · 23:14';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -733,7 +735,7 @@ async function dopoAccesso(sessione) {
   ST.emailAccount = sessione.user.email;   // per il foglio della password (i telefoni la salvano con l'email)
   await dbq('collega account', supa.rpc('collega_account'));   // primo accesso col link dell'email: collega l'account all'utente
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, email, telefono, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
   if (!data && !error) {   // entrato con la password del modulo: richiesta ancora da approvare
     const { data: stato } = await dbq('stato della richiesta', supa.rpc('mia_richiesta'));
