@@ -15,7 +15,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `contatti` | Lista Nomi | I nominativi | i propri · Admin tutti |
 | `azioni` | Azioni | Lo storico, una riga per azione | le proprie · Admin tutte |
 | `coach_note` | CoachNote | Chat con YesApp su un contatto | le proprie · Admin tutte |
-| `check_giorno` | Day | Fase 3: il Check del Giorno, una riga per check (più check sulla stessa data si sommano) | i propri · Admin tutti; scrive il proprietario o l'Admin |
+| `check_giorno` | Day | Fase 3: il Check del Giorno, una riga per check; dal 17/09 un giorno ha **un Check solo** (l'app corregge quello esistente; i giorni di Glide con più Check restano e si sommano) | i propri · Admin tutti; scrive il proprietario o l'Admin |
 | `obiettivi_mese` | Check | Fase 3: obiettivi del mese, partenza di BBS/WES/CEP, VPP/VPG Amway; una riga per partner e mese | i propri · Admin tutti |
 | `wes` | Periodi | Fase 5: Wes (weekend seminar N21), una riga per evento; dal 16/09 **al mese** (primo giorno del mese, «WES 10-2026») | tutti gli utenti loggati; scrive solo Admin |
 | `griglia_pm` | Report (GridPM_*) | Fase 5: impostazioni della Griglia PM, una riga per partner | i propri · Admin tutti |
@@ -317,7 +317,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
   - **Partner Select** (solo Admin): riquadro scuro col nome scelto e «▾», vedi Logiche → Partner Select
   - banner abbonamento: verde «✅ Abbonamento attivo · Buon lavoro!» oppure rosso «Abbonamento scaduto · Accesso limitato alle funzionalità» + «Rinnova subito →» (in arrivo)
   - banner rosso «🎯 Imposta gli obiettivi del mese!» quando mancano → foglio **Obiettivi di <mese>**; quando ci sono, sotto le schede il link «🎯 Obiettivi di <mese>» riapre lo stesso foglio
-  - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (10 campi: 7 numeri, data, libro, note; **Salva** (prima «Invia», Ignazio 16/09); avviso «Check salvato» con **Annulla** che cancella il check)
+  - banner blu «⚡ Compila il Check del Giorno!» · «Ultimo check: gg/mm/aaaa» → foglio **Check del Giorno** (10 campi: 7 numeri, data, libro, note; **Salva** (prima «Invia», Ignazio 16/09); avviso «Check salvato» con **Annulla** che cancella il check). **Dal 17/09 (Ignazio): se la data scelta ha già un Check** il foglio si riempie con i suoi numeri, scritta arancione «✏️ Stai modificando il Check del gg/mm/aaaa» (con più Check di Glide nello stesso giorno: «si modifica il più recente»), «Salva» **aggiorna** quella riga e l'avviso «Check corretto» ha Annulla che rimette i numeri di prima; cambiando la data i campi si ricaricano. Date passate sì, future no (`max` = oggi)
   - riquadro con le **4 schede** 🔵 Volume · 🟠 Azione · 🟢 Segni Vitali · 🟣 Crescita (scelta non salvata): riquadri con titolo, numero, barra di avanzamento, righe %/per obiettivo/giorno o complimento in verde
   - «👁️ Clicca qui per una visione completa!» (in arrivo: sezione Check)
   - **📅 Conferme · N** (15/09): card per appuntamento da confermare (strip colore del tipo, nome, «Conferma appuntamento · … ore …», telefono), bottoni **Confermato** (salva `confermato_il`, avviso con Annulla) · **Sposta** (foglio giorno/ora) · **Non risponde** (resta, in fondo, con «📵 riprova più tardi», solo sul telefono). Non contano nei contatti al giorno

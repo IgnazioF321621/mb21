@@ -126,6 +126,7 @@ Decisioni di Ignazio per il lavoro 3 (15/09, dopo il lavoro 1: «se non vedo la 
 - Bottoni «in arrivo»: Partner Select · Rinnova subito · visione completa (Check) · Mostra di più (Report)
 - ~~**VPP/VPG fermi all'export**~~: dal 16/09 arrivano dal file Amway caricato nella pagina Admin (cantiere 19)
 - ~~**VPP/VPG di settembre non aggiornati in Dashboard**~~ (segnalato da Ignazio 16/09): il file caricato alle 17:09 aveva aggiornato la Mappa ma non Dashboard e Check; la copia automatica era nell'app solo dalle 17:05, verosimilmente il telefono aveva ancora la versione di prima (non certo). Corretto il 16/09: la copia la fa **il database** a ogni caricamento (migrazione `20260916212000_volumi_in_dashboard.sql`), settembre riallineato, tutti i 13 mesi coincidono
+- ~~Correggere un Check già fatto~~ — fatto il 17/09 (Ignazio: «inserisco contatti 0 alle 22 e alle 23 mi ricordo di metterne uno»; nato dal dubbio sull'ultimo check del 16/09, che sul DB non c'era: ultimo del 14/09, nessun check di nessuno il 15 e il 16): scegliendo una data che ha già un Check il foglio si apre compilato e «Salva» lo corregge, niente più Check doppi. **Da provare da Ignazio.** Notato: **Isabella non ha salvato nessun Check nella v4** (ultimo 13/09 da Glide), da chiederle
 - Finché si usa anche Glide, il Check del Giorno va scritto in tutti e due
 
 ## 9. Dopo la Fase 2
