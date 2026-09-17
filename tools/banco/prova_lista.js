@@ -175,10 +175,18 @@ prova('CEP: «abbonato fino a» fine del mese in corso', () => {
   assert.equal(L.fineMese('2026-09-17'), '2026-09-30');
   assert.equal(L.fineMese('2026-10-05'), '2026-10-31');
   assert.equal(L.fineMese('2028-02-10'), '2028-02-29');
-  assert.equal(L.descrizioneCep([{ dal: '2026-06-01' }], '2026-09-17'), 'dal 01/06/2026 · abbonato fino al 30/09/2026');
-  assert.equal(L.descrizioneCep([{ dal: '2026-06-01' }], '2026-10-05'), 'dal 01/06/2026 · abbonato fino al 31/10/2026');
+  assert.equal(L.descrizioneCep([{ dal: '2026-06-01' }], '2026-09-17'), 'dal 01/06/2026 · abbonato fino al 30/09/2026 · rinnovo del 1° da verificare');
+  assert.equal(L.descrizioneCep([{ dal: '2026-06-01' }], '2026-09-21'), 'dal 01/06/2026 · abbonato fino al 30/09/2026');
+  assert.equal(L.descrizioneCep([{ dal: '2026-10-01' }], '2026-10-05'), 'dal 01/10/2026 · abbonato fino al 31/10/2026');   // appena entrato: niente da verificare
   assert.equal(L.descrizioneCep([{ dal: '2026-06-01', uscito_il: '2026-08-31' }], '2026-09-17'), 'Non abbonato ora');
   assert.equal(L.descrizioneCep([], '2026-09-17'), 'dal → uscito il');
+});
+
+prova('CEP: «Non ha rinnovato» chiude alla fine del mese prima', () => {
+  assert.equal(L.fineMesePrecedente('2026-10-05'), '2026-09-30');
+  assert.equal(L.fineMesePrecedente('2026-01-03'), '2025-12-31');
+  assert.equal(L.dataUscitaCep('2026-06-01', '2026-10-05'), '2026-09-30');
+  assert.equal(L.dataUscitaCep('2026-10-01', '2026-10-05'), '2026-10-01');   // iniziato questo mese: si chiude il giorno di inizio
 });
 
 console.log(`\n${ok} prove superate`);

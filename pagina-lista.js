@@ -645,12 +645,14 @@ async function sezioneSegni() {
 
   // CEP a periodi (si esce e si rientra). Ogni periodo si salva col suo bottone:
   // salvando a ogni cambio, mentre si scrive l'anno «0002» sembrava già una data
-  const bloccoCep = p => `<div class="sv-ev" data-cep="${esc(p.id || 'nuovo')}">
+  // Periodo aperto (cantiere 20, Ignazio 17/09): solo «dal» e il bottone «Non ha rinnovato», che chiude il periodo
+  // alla fine del mese prima (il CEP si paga il 1°). Chiuso o nuovo: le due date, correggibili a mano
+  const bloccoCep = p => { const aperto = !!p.id && !p.uscito_il; return `<div class="sv-ev" data-cep="${esc(p.id || 'nuovo')}">
       <input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis} aria-label="Abbonato dal">
-      <span class="sotto" style="margin:0">→</span>
-      <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">
+      ${aperto ? (dis ? '' : '<button class="sv-piu" data-cep-esci>Non ha rinnovato</button>') : `<span class="sotto" style="margin:0">→</span>
+      <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">`}
       ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
-    </div>`;
+    </div>`; };
   const riquadroCep = () => {
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
         <small class="sotto" style="margin:0">${esc(MB21Lista.descrizioneCep(SV.cep, MB21Coda.oggiRoma()))}</small>
@@ -724,9 +726,10 @@ async function sezioneSegni() {
     if (nuovoCep) nuovoCep.onclick = () => { if (!soloGuardo()) { SV.cepNuovo = true; disegna(); } };
     if (!dis) box.querySelectorAll('[data-cep]').forEach(blocco => {
       const id = blocco.dataset.cep === 'nuovo' ? null : blocco.dataset.cep;
-      blocco.querySelector('[data-cep-salva]').onclick = async () => {
+      const salvaCep = async uscita => {
         if (soloGuardo()) return;
-        const p = { id, dal: blocco.querySelector('[data-k="dal"]').value, uscito_il: blocco.querySelector('[data-k="uscito_il"]').value || null };
+        const campoUscita = blocco.querySelector('[data-k="uscito_il"]');
+        const p = { id, dal: blocco.querySelector('[data-k="dal"]').value, uscito_il: uscita || (campoUscita && campoUscita.value) || null };
         const errore = MB21Lista.controllaPeriodoCep(SV.cep, p);
         if (errore) return mostraToast(errore);
         const riga = { dal: p.dal, uscito_il: p.uscito_il, aggiornato_il: new Date().toISOString() };
@@ -736,8 +739,11 @@ async function sezioneSegni() {
         if (error) return mostraToast('Non salvato: riprova.');
         SV.cep = [data, ...SV.cep.filter(x => x.id !== id)].sort((a, b) => b.dal.localeCompare(a.dal));
         if (!id) SV.cepNuovo = false;
-        mostraToast('CEP salvato'); disegna();
+        mostraToast(uscita ? `CEP chiuso al ${MB21Lista.data(uscita)}` : 'CEP salvato'); disegna();
       };
+      blocco.querySelector('[data-cep-salva]').onclick = () => salvaCep(null);
+      const esci = blocco.querySelector('[data-cep-esci]');
+      if (esci) esci.onclick = () => salvaCep(MB21Lista.dataUscitaCep(blocco.querySelector('[data-k="dal"]').value, MB21Coda.oggiRoma()));
       blocco.querySelector('[data-cep-togli]').onclick = async () => {
         if (!id) { SV.cepNuovo = false; return disegna(); }
         if (soloGuardo() || !confirm('Elimino questo periodo di CEP?')) return;
