@@ -10,15 +10,6 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 25. PAGINA PERSONALE «PROFILO»
-*Aperto il 17 settembre 2026 (Ignazio, sera: «una pagina personale dove inserire i dati della persona, l'abilitazione agli avvisi e quant'altro non riguardi il lavoro ma la persona, la foto, il cambia password»). Un passo alla volta.*
-- Oggi nell'app manca un bottone **«Esci»** per chi è entrato; `utenti.foto` esiste nel database ma non si vede né si carica; su Supabase non c'è ancora uno spazio per le immagini (Storage, da creare)
-- **Proposta di Claude, confermata da Ignazio il 17/09 sera**: si arriva da un **cerchietto in alto a destra in Dashboard** con la foto o le iniziali (niente settima tab). Contiene: (1) foto scelta dal telefono, salvata su Supabase; (2) nome e cognome, **telefono (nuovo campo)**, email e codice Amway solo in lettura (li cambia l'Admin); (3) **avvisi sul telefono**: riquadro e riga escono dalla Dashboard e vivono qui (`avvisi.js`, stesso codice); (4) Contatti al giorno con lo stesso foglio della Dashboard (`scegliNumero`); (5) Cambia password (`foglioPassword`); (6) Esci
-- **Decisioni di Ignazio (17/09)**: cerchietto ok · nessun altro dato oltre al telefono · Contatti al giorno **solo nel Profilo** (in Dashboard resta la scritta «Fatti N di M») · avvisi **solo nel Profilo** (via il riquadro e «Non ora» dalla Dashboard)
-- ~~Passo 1 · pagina con dati, telefono, Contatti al giorno, avvisi, password ed Esci~~ — fatto il 17/09: `pagina-profilo.js`, migrazione `20260917230500_profilo_telefono.sql` applicata (`utenti.telefono`, `imposta_telefono`, `approva_richiesta` copia il telefono dalla richiesta), telefono anche in Admin → Utenti. **Da provare da Ignazio** (cerchietto, telefono, avvisi dal telefono, Esci)
-- ~~Passo 2 · foto~~ — fatto il 17/09 (Ignazio: «una foto piccola nel database», niente spazio immagini: 100 utenti ≈ 3 MB): riquadro «📷 Foto» nel Profilo, foto rimpicciolita a 200×200 dall'app e salvata in `utenti.foto` con `imposta_foto` (migrazione `20260917231500_profilo_foto.sql` applicata), «Togli»; nel cerchietto in Dashboard e nel Profilo. **Provato da Ignazio il 17/09: «funziona tutto»**
-- ~~Foto anche in Admin → Utenti~~ — fatto il 17/09 (Ignazio: «la stessa foto, senza usare altri KB»): cerchietto piccolo con la foto o le iniziali in ogni riga, letto da `utenti.foto`. Da provare
-
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
@@ -38,6 +29,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 25. PAGINA PERSONALE «PROFILO» (chiuso il 17/09)
+*Aperto e chiuso il 17 settembre 2026 (Ignazio, sera: «funziona tutto, chiudiamo il 25»); aperto (Ignazio, sera: «una pagina personale dove inserire i dati della persona, l'abilitazione agli avvisi e quant'altro non riguardi il lavoro ma la persona, la foto, il cambia password»). Un passo alla volta.*
+- Oggi nell'app manca un bottone **«Esci»** per chi è entrato; `utenti.foto` esiste nel database ma non si vede né si carica; su Supabase non c'è ancora uno spazio per le immagini (Storage, da creare)
+- **Proposta di Claude, confermata da Ignazio il 17/09 sera**: si arriva da un **cerchietto in alto a destra in Dashboard** con la foto o le iniziali (niente settima tab). Contiene: (1) foto scelta dal telefono, salvata su Supabase; (2) nome e cognome, **telefono (nuovo campo)**, email e codice Amway solo in lettura (li cambia l'Admin); (3) **avvisi sul telefono**: riquadro e riga escono dalla Dashboard e vivono qui (`avvisi.js`, stesso codice); (4) Contatti al giorno con lo stesso foglio della Dashboard (`scegliNumero`); (5) Cambia password (`foglioPassword`); (6) Esci
+- **Decisioni di Ignazio (17/09)**: cerchietto ok · nessun altro dato oltre al telefono · Contatti al giorno **solo nel Profilo** (in Dashboard resta la scritta «Fatti N di M») · avvisi **solo nel Profilo** (via il riquadro e «Non ora» dalla Dashboard)
+- ~~Passo 1 · pagina con dati, telefono, Contatti al giorno, avvisi, password ed Esci~~ — fatto il 17/09: `pagina-profilo.js`, migrazione `20260917230500_profilo_telefono.sql` applicata (`utenti.telefono`, `imposta_telefono`, `approva_richiesta` copia il telefono dalla richiesta), telefono anche in Admin → Utenti. **Da provare da Ignazio** (cerchietto, telefono, avvisi dal telefono, Esci)
+- ~~Passo 2 · foto~~ — fatto il 17/09 (Ignazio: «una foto piccola nel database», niente spazio immagini: 100 utenti ≈ 3 MB): riquadro «📷 Foto» nel Profilo, foto rimpicciolita a 200×200 dall'app e salvata in `utenti.foto` con `imposta_foto` (migrazione `20260917231500_profilo_foto.sql` applicata), «Togli»; nel cerchietto in Dashboard e nel Profilo. **Provato da Ignazio il 17/09: «funziona tutto»**
+- ~~Foto anche in Admin → Utenti~~ — fatto il 17/09 (Ignazio: «la stessa foto, senza usare altri KB»): cerchietto piccolo con la foto o le iniziali in ogni riga, letto da `utenti.foto`. **Provato da Ignazio il 17/09: «funziona tutto»**
 
 ## 20. SEGNI VITALI ACCESI NELLA MAPPA DEI PARTNER (chiuso il 17/09)
 *Aperto il 17 settembre 2026 (segnalato dagli utenti a Ignazio), **chiuso il 17 settembre 2026 sera** da Ignazio dopo la prova dal vivo (targhette accese con l'account di un partner; targhetta 📱 in Mappa, Lista e scheda).* Nella Mappa dei partner le targhette **BBS · WES · CEP** non si accendono anche quando i segni ci sono.
