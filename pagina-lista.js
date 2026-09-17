@@ -876,13 +876,17 @@ function apriModulo(c) {
     $('invia').disabled = true;
     // da senza categoria a una categoria: la sceglie `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani)
     const catalogo = !nuovo && !c.categoria && riga.categoria;
+    // Archiviato scelto nel modulo (17/09): la categoria la scrive `archivia_contatto`, che tiene quella di prima per il Ripristina
+    const archiviare = !nuovo && !catalogo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
     const q = nuovo ? supa.from('contatti').insert(riga)
-      : supa.from('contatti').update({ ...riga, categoria: catalogo ? null : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
+      : supa.from('contatti').update({ ...riga, categoria: catalogo ? null : archiviare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
     let { error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', q);
     if (!error && catalogo) ({ error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
+    // stesso percorso di «Archivia» dal menu: categoria di prima in `categoria_prec`, fuori coda
+    else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
     if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
     chiudi();
-    mostraToast(nuovo ? `${riga.nome} aggiunto` : 'Modifiche salvate');
+    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati` : 'Modifiche salvate');
     ricaricaERidisegna();
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
   };

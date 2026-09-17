@@ -494,20 +494,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171931"></script>
-<script src="lista.js?v=202609171931"></script>
-<script src="dashboard.js?v=202609171931"></script>
-<script src="agenda.js?v=202609171931"></script>
-<script src="report.js?v=202609171931"></script>
-<script src="check.js?v=202609171931"></script>
-<script src="mappa.js?v=202609171931"></script>
-<script src="pagina-dashboard.js?v=202609171931"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171931"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171931"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171931"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609171931"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609171937"></script>
+<script src="lista.js?v=202609171937"></script>
+<script src="dashboard.js?v=202609171937"></script>
+<script src="agenda.js?v=202609171937"></script>
+<script src="report.js?v=202609171937"></script>
+<script src="check.js?v=202609171937"></script>
+<script src="mappa.js?v=202609171937"></script>
+<script src="pagina-dashboard.js?v=202609171937"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171937"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171937"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171937"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609171937"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:31';
+const APP_VERSION = '2026.09.17 · 19:37';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -734,7 +734,11 @@ async function dopoAccesso(sessione) {
   await caricaPersone();
   // Toccando un avviso push «…/?apri=check» (o «agenda») si apre direttamente quella pagina (cantiere 24)
   const apri = REGISTRAZIONE.get('apri');
-  if (['check', 'agenda'].includes(apri) && !limitato()) { ST.tab = apri; if (apri === 'agenda') AG.giorno = null; REGISTRAZIONE.delete('apri'); history.replaceState(null, '', location.pathname); }
+  if (['check', 'agenda'].includes(apri) && !limitato()) {
+    ST.tab = apri;
+    if (apri === 'agenda') { AG.giorno = null; AG.aperta = REGISTRAZIONE.get('azione') || null; }   // «&azione=<id>»: l'appuntamento del promemoria si apre già aperto
+    history.replaceState(null, '', location.pathname);
+  }
   mostraTab();
   if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true);
 }

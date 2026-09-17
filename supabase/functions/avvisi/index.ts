@@ -4,6 +4,8 @@
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
 //    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare)»
+//    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
+//      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -116,6 +118,32 @@ Deno.serve(async (req) => {
       esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
     }
     return risposta({ oggi, utenti: esiti.length, esiti: corpo.forza ? esiti : undefined });
+  }
+
+  // Promemoria prima dell'appuntamento (cantiere 24 passo 3): stesso titolo dell'Agenda («PM 1a1 · Pino Manolo»)
+  if (tipo === 'promemoria') {
+    const ANTICIPO = 30, adesso = Date.now();
+    const da = new Date(adesso + (ANTICIPO - 5) * 60000).toISOString(), a = new Date(adesso + (ANTICIPO + 5) * 60000).toISOString();
+    const [{ data: appuntamenti, error: e1 }, { data: daCoda, error: e2 }] = await Promise.all([
+      db.from('azioni').select('id, user_id, contatto_id, inizio, tipo_azione, modalita, esito, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).is('promemoria_il', null).gte('inizio', da).lt('inizio', a),
+      db.from('azioni').select('id, user_id, contatto_id, data_scelta, tipo_azione, modalita, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).is('promemoria_il', null).gte('data_scelta', da).lt('data_scelta', a),
+    ]);
+    if (e1 || e2) return risposta({ errore: (e1 || e2)!.message }, 500);
+    const veri = new Set((appuntamenti ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));
+    const tutti = [...(appuntamenti ?? []), ...(daCoda ?? []).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta)}`))];   // senza doppioni della coda
+    const esiti: Record<string, unknown>[] = [];
+    for (const az of tutti) {
+      const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
+      const cosa = az.tipo_azione === 'Contatto' ? (az.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (az.modalita || az.tipo_azione);
+      const quando = az.tipo_azione === 'Contatto' ? az.data_scelta : az.inizio;
+      const minuti = Math.round((Date.parse(quando) - adesso) / 60000);
+      const testo = `${cosa} · ${nome}`;
+      if (corpo.prova) { esiti.push({ azione: az.id, minuti, testo }); continue; }
+      const esito = await spedisciA([az.user_id], { titolo: `⏰ Tra ${minuti} minuti`, testo, url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}` });
+      await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).eq('id', az.id);
+      esiti.push({ azione: az.id, minuti, ...esito });
+    }
+    return risposta({ appuntamenti: esiti.length, esiti });
   }
 
   return risposta({ errore: `tipo sconosciuto: ${tipo}` }, 400);
