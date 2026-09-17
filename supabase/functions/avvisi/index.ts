@@ -6,6 +6,8 @@
 //    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare)»
 //    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
 //      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
+//    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
+//      ancora senza esito, una volta sola (azioni.senza_esito_avvisato_il); non più vecchi di un giorno
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -25,6 +27,7 @@ function giornoRoma(giorno: string) {
   const inizio = new Date(new Date(giorno + 'T00:00:00Z').getTime() + scarto * 3600000);
   return { inizio: inizio.toISOString(), fine: new Date(inizio.getTime() + 86400000).toISOString() };
 }
+const giornoDi = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
 const plurale = (n: number, uno: string, tanti: string) => `${n} ${n === 1 ? uno : tanti}`;
 
 type Dispositivo = { id: string; endpoint: string; p256dh: string; auth: string };
@@ -142,6 +145,28 @@ Deno.serve(async (req) => {
       const esito = await spedisciA([az.user_id], { titolo: `⏰ Tra ${minuti} minuti`, testo, url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}` });
       await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).eq('id', az.id);
       esiti.push({ azione: az.id, minuti, ...esito });
+    }
+    return risposta({ appuntamenti: esiti.length, esiti });
+  }
+
+  // Appuntamento passato senza esito (cantiere 24 passo 4): un'ora dopo la fine, «Com'è andata?»
+  if (tipo === 'senza_esito') {
+    const adesso = Date.now(), ORA = 3600000;
+    // Candidati: iniziati tra 1 giorno e 1 ora fa (la fine, o l'inizio + 1 ora, deve essere passata da almeno un'ora)
+    const { data, error } = await db.from('azioni').select('id, user_id, inizio, fine, tipo_azione, modalita, contatti(nome)')
+      .neq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).is('senza_esito_avvisato_il', null)
+      .gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso - ORA).toISOString());
+    if (error) return risposta({ errore: error.message }, 500);
+    const esiti: Record<string, unknown>[] = [];
+    for (const az of data ?? []) {
+      const fine = az.fine ? Date.parse(az.fine) : Date.parse(az.inizio) + ORA;
+      if (fine + ORA > adesso) continue;   // è finito da meno di un'ora: si aspetta
+      const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
+      const testo = `${az.modalita || az.tipo_azione} · ${nome}`;
+      if (corpo.prova) { esiti.push({ azione: az.id, testo }); continue; }
+      const esito = await spedisciA([az.user_id], { titolo: '❓ Com\'è andata?', testo, url: `./?apri=agenda&azione=${az.id}&giorno=${giornoDi(az.inizio)}`, tag: `senza-esito-${az.id}` });
+      await db.from('azioni').update({ senza_esito_avvisato_il: new Date().toISOString() }).eq('id', az.id);
+      esiti.push({ azione: az.id, testo, ...esito });
     }
     return risposta({ appuntamenti: esiti.length, esiti });
   }

@@ -69,7 +69,7 @@ async function nonOra() { try { localStorage.setItem(CHIAVE_NON_ORA, String(Date
 function riquadroAvvisi() {
   if (AV.stato !== 'spento' || rimandato()) return '';
   return `<div class="banner-big avvisi"><b>🔔 Avvisi sul telefono</b>
-    <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
+    <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
     <div class="riga"><button class="primario" id="av-attiva">Attiva gli avvisi</button><button class="link" id="av-nonora">Non ora</button></div></div>`;
 }
 
