@@ -1,12 +1,15 @@
 // MB21 · avvisi push sul telefono (cantiere 24): riquadro «🔔 Avvisi» in Dashboard.
 // Ogni dispositivo che dice «sì» diventa una riga in avvisi_dispositivi; spedisce la funzione Edge «avvisi».
 // Su iPhone/iPad gli avvisi funzionano solo con l'app aggiunta alla schermata Home (iOS 16.4+).
+// Solo telefoni e tablet (Ignazio 17/09: da Arc sul Mac «Attiva» non faceva nulla; «per me va bene solo sul cellulare,
+// però deve scomparire la scritta dal browser»): sul computer niente riquadro e niente riga.
 const VAPID_PUBLIC = 'BPVIFab868X7amUZYY9wyHmCZxxi4jtSUjg9dona5Hs71odbvcP27p60X4Wg3POsIcqubQ3u8DKWg1ODF2mxuBU';   // chiave pubblica: identifica MB21 presso il servizio push (la privata sta su Supabase)
 const AV = { stato: null, dispositivi: [] };
 
 const avvisiSupportati = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const appInstallata = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const eIphone = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const eTelefono = () => eIphone() || /Android/.test(navigator.userAgent);
 
 function base64aBytes(s) {
   const b = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
@@ -20,8 +23,9 @@ function nomeDispositivo() {
   return cosa + ' · ' + dove + (appInstallata() ? ' · app' : '');
 }
 
-// Stato di questo dispositivo: 'no_supporto' · 'da_installare' (iPhone dal browser) · 'negato' · 'acceso' · 'spento'
+// Stato di questo dispositivo: 'computer' (niente da mostrare) · 'no_supporto' · 'da_installare' (iPhone dal browser) · 'negato' · 'acceso' · 'spento'
 async function leggiStatoAvvisi() {
+  if (!eTelefono()) return (AV.stato = 'computer');
   if (!avvisiSupportati()) return (AV.stato = eIphone() && !appInstallata() ? 'da_installare' : 'no_supporto');
   if (Notification.permission === 'denied') return (AV.stato = 'negato');
   const reg = await navigator.serviceWorker.ready;
@@ -73,7 +77,7 @@ function riquadroAvvisi() {
     <div class="riga"><button class="primario" id="av-attiva">Attiva gli avvisi</button><button class="link" id="av-nonora">Non ora</button></div></div>`;
 }
 
-// Riga piccola in fondo alla Dashboard, accanto a «Cambia password»: c'è sempre (tranne dove gli avvisi non esistono)
+// Riga piccola in fondo alla Dashboard, accanto a «Cambia password»: su telefoni e tablet (sul computer e dove gli avvisi non esistono, niente)
 function rigaAvvisi() {
   const s = AV.stato, b = (id, t) => `<button class="link" id="${id}">${t}</button>`;
   const testi = {
