@@ -244,12 +244,12 @@
   }
 
   // Cantiere 23: collegamento noteplan:// che aggiunge una riga nella nota del giorno di NotePlan («16:30-17:30 PM 1a1 · Pino Manolo»,
-  // con telefono/ospite/note dopo un «·»). encodeURIComponent, non URLSearchParams: NotePlan vuole gli spazi come %20, non «+».
+  // con ospite/note dopo un «·», senza telefono). encodeURIComponent, non URLSearchParams: NotePlan vuole gli spazi come %20, non «+».
   function linkNotePlan(a) {
     const { giorno, ora } = partiRoma(a.inizio);
     const nome = (a.contatti && a.contatti.nome) || '—';
     const quando = a.fine ? `${ora}-${partiRoma(a.fine).ora}` : ora;
-    const extra = [a.contatti && a.contatti.telefono ? a.contatti.telefono : '', a.ospite ? `ospite ${a.ospite}` : '', a.note || ''].filter(Boolean);
+    const extra = [a.ospite ? `ospite ${a.ospite}` : '', a.note || ''].filter(Boolean);   // niente telefono (Ignazio 17/09: le note di NotePlan viaggiano su iCloud)
     const testo = [`${quando} ${a.modalita || a.tipo_azione || ''} · ${nome} (MB21)`, ...extra].join(' · ');
     return `noteplan://x-callback-url/addText?noteDate=${giorno.replace(/-/g, '')}&mode=append&openNote=yes&text=${encodeURIComponent(testo)}`;
   }
