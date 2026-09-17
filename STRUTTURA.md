@@ -457,3 +457,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 15:43 | Cantiere 23, passo 1: bottone «📆 Google Calendar» nell'evento aperto in Agenda (`linkGoogleCalendar` in agenda.js) |
 | 2026.09.17 · 15:53 | Bottone Google Calendar anche sugli appuntamenti chiusi; icona «G» di Google al posto dell'emoji |
 | 2026.09.17 · 18:45 | Cantiere 23, passo 2: bottone NotePlan nell'evento aperto in Agenda (`linkNotePlan` in agenda.js) |
+| 2026.09.17 · 18:55 | Niente più confirm() del browser: Elimina in Agenda e le 5 conferme della Lista (elimina contatto, biglietti, CEP, doppioni) usano `chiediConferma` |
