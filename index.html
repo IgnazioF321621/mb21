@@ -490,19 +490,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171504"></script>
-<script src="lista.js?v=202609171504"></script>
-<script src="dashboard.js?v=202609171504"></script>
-<script src="agenda.js?v=202609171504"></script>
-<script src="report.js?v=202609171504"></script>
-<script src="check.js?v=202609171504"></script>
-<script src="mappa.js?v=202609171504"></script>
-<script src="pagina-dashboard.js?v=202609171504"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171504"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171504"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171504"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171515"></script>
+<script src="lista.js?v=202609171515"></script>
+<script src="dashboard.js?v=202609171515"></script>
+<script src="agenda.js?v=202609171515"></script>
+<script src="report.js?v=202609171515"></script>
+<script src="check.js?v=202609171515"></script>
+<script src="mappa.js?v=202609171515"></script>
+<script src="pagina-dashboard.js?v=202609171515"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171515"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171515"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171515"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 15:04';
+const APP_VERSION = '2026.09.17 · 15:15';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -987,23 +987,36 @@ async function apriContattoDa(id, ritorno) {
 // Esito di un appuntamento (decisione C: poi si chiede sempre il prossimo, con «Salta»)
 // ── Esito di un'azione: stesso blocco in Agenda e nella scheda contatto (Ignazio 17/09: «il modulo deve essere uguale
 // in tutte le parti, altrimenti ci si confonde come su Glide») ──
-// Azione senza esito → «Com'è andata?» e i bottoni della fase (chiudiAppuntamento: esito, coda, «Fissa il prossimo appuntamento»);
-// azione già chiusa → «Esito · tocca per cambiarlo», l'attuale evidenziato (cambiaEsito = modifica_azione, avviso con Annulla).
-// I richiami dalla coda (Contatto con data_scelta) non si chiudono da qui. Restituisce '' se non ci sono esiti previsti.
-const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+// I passi li decide MB21Agenda.passiEsito: «È avvenuto?» (Fatto · Rimandato · No Show) per Piano Marketing e Follow Up,
+// poi «Com'è andata?» con i risultati; un passo solo per gli altri tipi; azione già chiusa → «Esito · tocca per cambiarlo».
+// Fatto del PM = fase «Presentazione» (chiudi_appuntamento senza «prossimo appuntamento»); del Follow Up = apre solo il secondo passo.
+const daChiudere = MB21Agenda.daChiudere;
+const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa del risultato (solo a video)
 function bloccoEsiti(a, categoria) {
-  if (a.tipo_azione === 'Contatto' && a.data_scelta) return '';
-  const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
-  if (!fasi.length) return '';
-  return `<div class="come-andata">${daChiudere(a) ? 'Com\'è andata?' : 'Esito <small>· tocca per cambiarlo</small>'}</div>
-    <div class="ag-esiti" data-azione="${esc(a.id)}">${fasi.map(f => `<button data-esito="${esc(f)}" class="${a.esito === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`;
+  const p = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
+  if (!p) return '';
+  return `<div class="come-andata">${esc(p.titolo)}${p.passo === 'cambia' ? ' <small>· tocca per cambiarlo</small>' : ''}</div>
+    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${a.esito === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`;
+}
+// Stato scritto accanto all'azione
+function statoAzione(a) {
+  if (!a.completata && !a.esito) return '<span class="stato-az">⏳ Da completare</span>';
+  return a.esito === MB21Agenda.fattoDi(a.tipo_azione) ? '<span class="stato-az fatto">✅ Fatto · risultato da dare</span>' : '<span class="stato-az fatto">✅ Completato</span>';
 }
 // Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
 function collegaEsiti(el, a, contatto, dopo) {
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
     if (soloGuardo() || b.dataset.esito === a.esito) return;
-    if (daChiudere(a)) return chiudiAppuntamento({ ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } }, b.dataset.esito, { dopo });
-    cambiaEsito(a, b.dataset.esito, dopo);
+    const passo = b.closest('.ag-esiti').dataset.passo, esito = b.dataset.esito;
+    const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
+    if (passo === 'cambia') return cambiaEsito(a, esito, dopo);
+    if (passo === 'avvenuto' && esito === 'Fatto') {
+      const fase = MB21Agenda.fattoDi(a.tipo_azione);
+      if (fase) return chiudiAppuntamento(e, fase, { dopo, senzaProssimo: true, testo: 'Fatto' });   // PM: «Presentazione», poi il risultato
+      FATTO_APERTO.add(a.id); return dopo();                                                       // Follow Up: si passa al risultato
+    }
+    FATTO_APERTO.delete(a.id);
+    chiudiAppuntamento(e, esito, { dopo });
   });
 }
 async function cambiaEsito(a, esito, dopo) {
@@ -1020,7 +1033,7 @@ async function cambiaEsito(a, esito, dopo) {
   });
 }
 
-// opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda)
+// opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda) · senzaProssimo: niente «Fissa il prossimo appuntamento» · testo: parola dell'avviso
 async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
   const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
@@ -1035,13 +1048,13 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     mostraToast('Annullato');
   };
   AG.aperta = null;
-  const creato = await nuovoAppuntamento({
+  const creato = opz.senzaProssimo ? null : await nuovoAppuntamento({
     titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
   });
   await ridisegna();
-  mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${esito} salvato`, () => annulla(creato));
+  mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`, () => annulla(creato));
 }
 
 // Sposta un appuntamento (inizio/fine) o un esito dalla coda (data_scelta). `dopo(giorno)`: cosa ridisegnare
