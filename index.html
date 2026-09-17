@@ -490,7 +490,7 @@
 <script src="pagina-lista.js"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 08:16';
+const APP_VERSION = '2026.09.17 · 10:13';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -599,7 +599,7 @@ function mostraRegistrazione(esito) {
     if (data !== 'ok') return mostraRegistrazione(data);
     // Account con password: si resta dentro in attesa (mostraAttesa). Se non riesce (es. email già con un account), vale il link dell'email
     history.replaceState(null, '', location.pathname);
-    const iscr = await dbq('account con password', supa.auth.signUp({ email: v('rg-email').toLowerCase(), password }));
+    const iscr = await dbq('account con password', supa.auth.signUp({ email: v('rg-email').toLowerCase(), password, options: { data: { password_scelta: true } } }));
     if (!iscr.error && iscr.data.session) return;   // SIGNED_IN → dopoAccesso → mostraAttesa
     mostraRegistrazione('ok');
   };
@@ -631,7 +631,41 @@ function messaggioAccesso(error) {
   return 'Non è andata: ' + error.message;
 }
 
+// Password scelta da chi è entrato (Ignazio 17/09: chi entra col link non ne ha una, e nell'app installata il link non arriva).
+// Pagina web normale: uguale su iPhone, iPad, Android e computer; autocomplete="new-password" fa proporre al telefono di salvarla.
+// primaVolta: foglio che compare dopo l'accesso a chi non l'ha ancora scelta (segno `password_scelta` sull'account), con «Più tardi».
+function foglioPassword(primaVolta) {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>🔑 ${primaVolta ? 'Scegli la tua password' : 'Cambia password'}</h3>
+    <p>${primaVolta ? 'Così la prossima volta entri con email e password, anche dall\'app installata sul telefono o sul tablet.' : 'Scrivi la nuova password due volte.'}</p>
+    <input type="email" autocomplete="username" value="${esc(ST.emailAccount || ST.email || '')}" hidden>
+    <label>Password (almeno 8 caratteri)<input id="pw-1" type="password" autocomplete="new-password"></label>
+    <label>Ripeti la password<input id="pw-2" type="password" autocomplete="new-password"></label>
+    <div class="errore" id="pw-errore"></div>
+    <div class="due"><button class="link" id="pw-no">${primaVolta ? 'Più tardi' : 'Annulla'}</button><button class="primario" id="pw-si">Salva</button></div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.querySelector('#pw-no').onclick = chiudi;
+  velo.querySelector('#pw-si').onclick = async () => {
+    const p1 = velo.querySelector('#pw-1').value, p2 = velo.querySelector('#pw-2').value;
+    const errore = velo.querySelector('#pw-errore');
+    if (p1.length < 8) { errore.textContent = 'La password deve avere almeno 8 caratteri.'; return; }
+    if (p1 !== p2) { errore.textContent = 'Le due password non sono uguali.'; return; }
+    const btn = velo.querySelector('#pw-si'); btn.disabled = true; btn.textContent = 'Salvo…';
+    const { error } = await dbq('scelta password', supa.auth.updateUser({ password: p1, data: { password_scelta: true } }));
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Salva';
+      errore.textContent = /different from the old/i.test(error.message || '') ? 'È uguale a quella di prima: scegline un\'altra.' : 'Non salvata: controlla la connessione e riprova.';
+      return;
+    }
+    chiudi();
+    mostraToast('Password salvata: da ora entri con email e password');
+  };
+}
+
 async function dopoAccesso(sessione) {
+  ST.emailAccount = sessione.user.email;   // per il foglio della password (i telefoni la salvano con l'email)
   await dbq('collega account', supa.rpc('collega_account'));   // primo accesso col link dell'email: collega l'account all'utente
   const { data, error } = await dbq('lettura utente',
     supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
@@ -649,6 +683,7 @@ async function dopoAccesso(sessione) {
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
   mostraTab();
+  if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true);
 }
 
 // ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
