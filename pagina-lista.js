@@ -435,13 +435,14 @@ async function sezioneAzioni() {
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${bloccoEsiti(a, c.categoria)}
-      <div class="comandi">${statoAzione(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
+      <div class="comandi">${statoAzione(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button><button class="link" data-elimina-azione="${a.id}" style="color:var(--rosso)">Elimina</button></div>
     </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
   box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo));
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
+  box.querySelectorAll('[data-elimina-azione]').forEach(b => b.onclick = () => { if (!soloGuardo()) eliminaAppuntamento(LS.azioni.find(x => x.id === b.dataset.eliminaAzione), dopo); });
 }
 
 // «Azione +» (Ignazio 17/09): apre subito «Nuovo appuntamento» con la persona già scelta e tutti i tipi della sua categoria.
