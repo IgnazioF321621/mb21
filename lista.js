@@ -177,12 +177,31 @@
     return `${a}-${String(m).padStart(2, '0')}-${String(ultimo).padStart(2, '0')}`;
   }
 
+  // Ultimo giorno del mese prima di `giorno`, es. 2026-10-05 → 2026-09-30
+  function fineMesePrecedente(giorno) {
+    const [a, m] = String(giorno).split('-').map(Number);
+    return fineMese(`${m === 1 ? a - 1 : a}-${String(m === 1 ? 12 : m - 1).padStart(2, '0')}-01`);
+  }
+
+  // Il CEP si paga il 1° del mese a Network 21 e l'Admin lo scopre qualche giorno dopo (Ignazio 17/09):
+  // fino al 20 del mese il rinnovo del mese in corso non è ancora sicuro
+  const GIORNO_RINNOVO_SICURO = 20;
+  const rinnovoDaVerificare = oggi => Number(String(oggi).slice(8, 10)) <= GIORNO_RINNOVO_SICURO;
+
+  // «Non ha rinnovato» (cantiere 20, Ignazio 17/09): chi non paga il 1° è stato abbonato fino alla fine del mese
+  // prima; mai prima dell'inizio del periodo (ha appena pagato: si chiude il giorno stesso)
+  function dataUscitaCep(dal, oggi) {
+    const fine = fineMesePrecedente(oggi);
+    return fine < dal ? dal : fine;
+  }
+
   // Riga sotto «CEP» nella scheda (cantiere 20 lavoro 3, Ignazio 17/09): con un periodo aperto oggi
   // «dal 01/06/2026 · abbonato fino al 30/09/2026» (fine del mese in corso, si sposta da sola ogni mese finché
-  // l'Admin non chiude il periodo); altrimenti «Non abbonato ora»; senza periodi «dal → uscito il»
+  // l'Admin non chiude il periodo), fino al 20 del mese con «· rinnovo del 1° da verificare»;
+  // altrimenti «Non abbonato ora»; senza periodi «dal → uscito il»
   function descrizioneCep(periodiCep, oggi) {
     const p = (periodiCep || []).find(x => x.dal <= oggi && (!x.uscito_il || x.uscito_il >= oggi));
-    if (p) return `dal ${data(p.dal)} · abbonato fino al ${data(fineMese(oggi))}`;
+    if (p) return `dal ${data(p.dal)} · abbonato fino al ${data(fineMese(oggi))}${rinnovoDaVerificare(oggi) && p.dal < oggi.slice(0, 8) + '01' ? ' · rinnovo del 1° da verificare' : ''}`;
     return (periodiCep || []).length ? 'Non abbonato ora' : 'dal → uscito il';
   }
 
@@ -220,7 +239,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, descrizioneCep, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
