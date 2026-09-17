@@ -241,6 +241,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 
 **Agenda** (Fase 4, `agenda.js`, funzioni pure; prove in `tools/banco/prova_agenda.js`; scelte in `docs/MB21_v4_Scelte_Agenda.md`):
 - **categorie con azioni** (dal 17/09, Ignazio: «qualsiasi categoria, basta che ne abbia una»): Prospect, Partner e Cliente con i loro tipi (`TIPI` in `agenda.js`); **Ex Partner/Cliente, Referral, Unlinked e Archiviato come il Prospect**. Senza categoria: nessuna azione (messaggio «Il contatto non ha una categoria»). Nel modulo la riga Categoria mostra Prospect · Partner · Cliente (`CATEGORIE`) più quella attuale se è un'altra. La scheda di un Archiviato resta di sola lettura; in Agenda gli archiviati non sono nell'elenco dei nomi
+- **controllo dell'anno** (`MB21Agenda.controllaGiorno`, 17/09): nei fogli Nuovo appuntamento, Modifica azione e Sposta l'anno deve stare tra 2000 e 2100, altrimenti «Controlla l'anno (0023): scrivilo con 4 cifre, es. 2023». Motivo in `LEZIONI.md`
 - **appuntamenti = righe di `azioni`**: tipo ≠ Contatto per `inizio`; tipo Contatto se ha `data_scelta` (Richiamare / PM Fissato dalla coda: si guardano, non si chiudono in Agenda) oppure è programmato dall'Agenda (`completata = false`, per `inizio`). Nuovi appuntamenti: `completata = false`, `esito` vuoto, `fine = inizio + durata`
 - **scelte** (`TIPI`, `SOTTOTIPI`): Prospect → Contatto · Piano Marketing · Follow Up · Consulenza PRD; Partner → Contatto · Piano Marketing · Follow Up · Appuntamento; Cliente → Contatto · Consulenza PRD; altre categorie nessuna. Fasi per categoria e tipo, per Appuntamento per sottotipo. `modalita` = sottotipo
 - **Admin** vede gli appuntamenti del partner scelto nel Partner Select; con Tutti di tutti, con «[Partner]» all'inizio della riga
@@ -477,3 +478,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 19:40 | «Elimina» sulle azioni della scheda contatto (stesso codice dell'Agenda) |
 | 2026.09.17 · 19:43 | Cantiere 24, passo 4: «Com'è andata?» un'ora dopo la fine di un appuntamento senza esito (`azioni.senza_esito_avvisato_il`), tocco → l'appuntamento aperto in Agenda |
 | 2026.09.17 · 19:44 | No Interesse / No BuonFine: «Quando risentirlo?» (un anno, cambiabile) al posto del prossimo appuntamento, in coda, Agenda e scheda |
+| 2026.09.17 · 20:39 | Controllo dell'anno nelle date (Nuovo appuntamento, Modifica azione, Sposta): «23» → 0023 non passa più in silenzio |
