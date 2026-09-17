@@ -502,7 +502,7 @@
 <script src="pagina-mappa.js"></script>   <!-- pagina Mappa: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 14:58';
+const APP_VERSION = '2026.09.17 · 15:01';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1168,8 +1168,9 @@ async function nuovoAppuntamento(opz = {}) {
       h += st.contatto && opz.contatto
         ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}</span>
             ${st.portato ? '' : '<button class="link" id="na-porta">⇄ Porta qualcuno</button>'}</div></div>`
-        : `<div class="campo"><label>Contatto <small>Obbligatorio</small></label>
-            <input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off">
+        : `<div class="campo"><label>Contatto <small>${st.contatto ? 'l\'esito è suo' : 'Obbligatorio'}</small></label>
+            <div class="fa-persona"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off" style="flex:1">
+            ${st.contatto && !st.portato ? '<button class="link" id="na-porta">⇄ Porta qualcuno</button>' : ''}</div>
             <datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
       if (st.contatto) {
         h += `<div class="campo"><label>Categoria <small>dal contatto</small></label>${scelte('categoria', A.CATEGORIE, st.categoria)}
@@ -1192,7 +1193,7 @@ async function nuovoAppuntamento(opz = {}) {
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
-      // Dalla scheda (Ignazio 17/09, in entrambe le direzioni): è questa persona che porta qualcuno → l'azione va sull'ospite, lei diventa «Portato da»
+      // Dalla scheda o dall'Agenda (Ignazio 17/09, in entrambe le direzioni): è questa persona che porta qualcuno → l'azione va sull'ospite, lei diventa «Portato da»
       const porta = velo.querySelector('#na-porta');
       if (porta) porta.onclick = async () => {
         leggiCampi();
