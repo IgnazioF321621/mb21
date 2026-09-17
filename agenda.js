@@ -182,6 +182,30 @@
   const passatiSenzaEsito = (azioni, adessoIso) =>
     azioni.filter(a => a.tipo_azione !== 'Contatto' && !a.completata && a.inizio && a.inizio < adessoIso);
 
+  // Passi per chiudere un'azione (Ignazio 17/09: «la presentazione ci può essere oppure no; se c'è stata, gli esiti»).
+  // Piano Marketing e Follow Up in due passi: «È avvenuto?» Fatto · Rimandato · No Show → se Fatto «Com'è andata?» con i risultati.
+  // Per il PM «Fatto» si salva come fase «Presentazione» (conta nel Report e nella Griglia PM); il Follow Up non ha una fase «fatto»,
+  // quindi Fatto apre solo il secondo passo (fattoAperto). Gli altri tipi: un passo solo. Azione già chiusa: «cambia» tra tutte le fasi.
+  const AVVENUTO = ['Fatto', 'Rimandato', 'No Show'];
+  const RISULTATI = {
+    'Piano Marketing': { fatto: 'Presentazione', esiti: ['Dare Seguito', 'Iscrizione', 'Prodotti', 'No BuonFine'] },
+    'Follow Up': { fatto: null, esiti: ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine'] },
+  };
+  const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+  function passiEsito(a, categoria, fattoAperto) {
+    if (a.tipo_azione === 'Contatto' && a.data_scelta) return null;   // richiamo dalla coda: si guarda, non si chiude qui
+    const fasi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    if (!fasi.length) return null;
+    const due = RISULTATI[a.tipo_azione];
+    if (daChiudere(a)) {
+      if (due && fattoAperto) return { passo: 'risultato', titolo: 'Com\'è andata?', bottoni: due.esiti };
+      return due ? { passo: 'avvenuto', titolo: 'È avvenuto?', bottoni: AVVENUTO } : { passo: 'unico', titolo: 'Com\'è andata?', bottoni: fasi };
+    }
+    if (due && due.fatto && a.esito === due.fatto) return { passo: 'risultato', titolo: 'Com\'è andata?', bottoni: due.esiti };
+    return { passo: 'cambia', titolo: 'Esito', bottoni: fasi };
+  }
+  const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
+
   function validaAppuntamento(v) {
     if (!v.contatto_id) return 'Scegli il contatto dall\'elenco.';
     if (!TIPI[v.categoria]) return 'Categoria senza appuntamenti: scegli Prospect, Partner o Cliente.';
@@ -196,7 +220,8 @@
 
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma };
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

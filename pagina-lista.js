@@ -422,7 +422,6 @@ async function sezioneAzioni() {
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
-  const stato = a => a.completata || a.esito ? '<span class="stato-az fatto">✅ Completato</span>' : '<span class="stato-az">⏳ Da completare</span>';
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
     <div class="azione">
       <div class="t">🤝 Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
@@ -436,7 +435,7 @@ async function sezioneAzioni() {
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${bloccoEsiti(a, c.categoria)}
-      <div class="comandi">${stato(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
+      <div class="comandi">${statoAzione(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
     </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
