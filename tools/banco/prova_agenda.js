@@ -143,20 +143,27 @@ prova('Foglio unico Modifica azione: scelte dagli elenchi dell\'Agenda, valori s
   assert.equal(A.etichettaSottotipo('Laboratorio'), 'Tipo di laboratorio');   // un tipo nuovo ha già un nome
 });
 
-prova('Passi dell\'esito: PM in due passi (Fatto = Presentazione, poi i risultati), Follow Up con Fatto solo a video, Contatto un passo, chiusa = cambia', () => {
+prova('Passi dell\'esito: PM in due passi (Fatto = Presentazione, poi i risultati), Follow Up con Fatto solo a video, Contatto un passo, chiusa = due righe', () => {
   const pm = { tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', categoria: 'Prospect', completata: false, esito: null };
-  assert.deepEqual(A.passiEsito(pm, 'Prospect'), { passo: 'avvenuto', titolo: 'È avvenuto?', bottoni: ['Fatto', 'Rimandato', 'No Show'] });
-  assert.equal(A.passiEsito({ ...pm, esito: 'Presentazione', completata: true }, 'Prospect').passo, 'risultato');
-  assert.deepEqual(A.passiEsito({ ...pm, esito: 'Presentazione', completata: true }, 'Prospect').bottoni, ['Dare Seguito', 'Iscrizione', 'Prodotti', 'No BuonFine']);
-  assert.equal(A.passiEsito({ ...pm, esito: 'Dare Seguito', completata: true }, 'Prospect').passo, 'cambia');
+  assert.deepEqual(A.passiEsito(pm, 'Prospect'), [{ passo: 'avvenuto', titolo: 'È avvenuto?', bottoni: ['Fatto', 'Rimandato', 'No Show'], attuale: null }]);
+  const pres = A.passiEsito({ ...pm, esito: 'Presentazione', completata: true }, 'Prospect');
+  assert.deepEqual(pres.map(x => x.passo), ['cambia-avvenuto', 'risultato']);
+  assert.equal(pres[0].attuale, 'Fatto');
+  assert.deepEqual(pres[1].bottoni, ['Dare Seguito', 'Iscrizione', 'Prodotti', 'No BuonFine']);
+  const ds = A.passiEsito({ ...pm, esito: 'Dare Seguito', completata: true }, 'Prospect');
+  assert.deepEqual(ds.map(x => [x.passo, x.attuale]), [['cambia-avvenuto', 'Fatto'], ['cambia', 'Dare Seguito']]);
+  const rim = A.passiEsito({ ...pm, esito: 'Rimandato', completata: true }, 'Prospect');
+  assert.deepEqual(rim.map(x => [x.passo, x.attuale]), [['cambia-avvenuto', 'Rimandato']]);
   const fu = { tipo_azione: 'Follow Up', modalita: 'Personale', categoria: 'Prospect', completata: false, esito: null };
-  assert.equal(A.passiEsito(fu, 'Prospect').passo, 'avvenuto');
-  assert.deepEqual(A.passiEsito(fu, 'Prospect', true).bottoni, ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine']);
+  assert.equal(A.passiEsito(fu, 'Prospect')[0].passo, 'avvenuto');
+  assert.deepEqual(A.passiEsito(fu, 'Prospect', true)[1].bottoni, ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine']);
   assert.equal(A.fattoDi('Piano Marketing'), 'Presentazione');
   assert.equal(A.fattoDi('Follow Up'), null);
   const ct = { tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', completata: false, esito: null };
-  assert.equal(A.passiEsito(ct, 'Prospect').passo, 'unico');
+  assert.equal(A.passiEsito(ct, 'Prospect')[0].passo, 'unico');
+  assert.equal(A.passiEsito({ ...ct, esito: 'Richiamare', completata: true }, 'Prospect')[0].passo, 'cambia');
   assert.equal(A.passiEsito({ ...ct, data_scelta: '2026-09-18T10:00:00Z' }, 'Prospect'), null);
 });
+
 
 console.log(`\n${ok} prove superate`);
