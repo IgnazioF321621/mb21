@@ -14,7 +14,7 @@ async function apriAdmin() {
     const [wes, bbs, ut, rich, sq, disp] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
-      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
       dbq('dispositivi con gli avvisi', supa.from('avvisi_dispositivi').select('user_id, dispositivo')),   // cantiere 24: chi ha gli avvisi accesi
@@ -53,7 +53,7 @@ function rigaUtenteAdmin(u) {
     <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · 🔔' : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
-    <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')}</small>
+    <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
     <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
     <small>${(AD.dispositivi[u.id] || []).length ? `🔔 Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : '🔕 Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
     <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica</button>
