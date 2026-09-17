@@ -11,7 +11,7 @@ Contesto completo del progetto: `docs/MB21_v4_Brief_Sviluppo.md`.
 
 ## Regole tecniche
 - Timezone: **Europe/Rome**.
-- `APP_VERSION` in `index.html`, formato `AAAA.MM.GG · HH:MM` (ora di Roma), aggiornata a ogni modifica.
+- `APP_VERSION` in `index.html`, formato `AAAA.MM.GG · HH:MM` (ora di Roma), aggiornata a ogni modifica. **Insieme** va aggiornato il `?v=AAAAMMGGHHMM` degli `<script src="….js?v=…">` in `index.html` (stesse cifre): altrimenti il telefono tiene gli script vecchi.
 - `STRUTTURA.md` va aggiornato a **ogni** modifica di schema o logica, **nello stesso commit**.
 - Lavori aperti/chiusi in `CANTIERI.md`; lezioni apprese in `LEZIONI.md`.
 - Migrazioni del database in `supabase/migrations/`.
