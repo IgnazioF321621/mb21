@@ -30,7 +30,7 @@ async function leggiSenzaCategoria() {
 
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
-  app.innerHTML = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
+  app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     ST.oggi = oggi; ST.offline = false;
     await caricaDashboard(oggi);
@@ -52,13 +52,13 @@ async function caricaOggi() {
     }
   } catch (e) {
     if (altro) {
-      app.innerHTML = `<h1>Dashboard</h1>${partnerSelect()}<div class="avviso">Non riesco a caricare la coda di ${esc(nomeVisto())}. Controlla la connessione e riprova.</div>${versione()}`;
+      app.innerHTML = `${testataDashboard()}${partnerSelect()}<div class="avviso">Non riesco a caricare la coda di ${esc(nomeVisto())}. Controlla la connessione e riprova.</div>${versione()}`;
       return collegaPartnerSelect();
     }
     let cache = null;
     try { cache = JSON.parse(localStorage.getItem(CHIAVE_CACHE)); } catch (e2) {}
     if (!cache) {
-      app.innerHTML = `<h1>Dashboard</h1><div class="avviso">Non riesco a caricare la coda. Controlla la connessione e riapri l'app.</div>${versione()}`;
+      app.innerHTML = `${testataDashboard()}<div class="avviso">Non riesco a caricare la coda. Controlla la connessione e riapri l'app.</div>${versione()}`;
       return;
     }
     risultato = cache.risultato; offline = cache.salvata;
@@ -134,7 +134,7 @@ function cardContatto(r, dareSeguito) {
 
 function disegnaOggi() {
   const r = ST.risultato;
-  let html = `<h1>Dashboard</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
+  let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
   if (vediTutti()) {
     html += `<div class="vuoto">La coda di OGGI e le conferme sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
     app.innerHTML = html + dashboardBasso() + versione();
@@ -152,7 +152,7 @@ function disegnaOggi() {
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
   const altro = guardoAltri();
   html += `<div class="testa-coda"><h2>${altro ? `La coda di ${esc(nomeDi(visto()))}` : 'La tua coda'}</h2>
-    <button class="contatore" id="contatore" ${ST.offline || altro ? 'disabled' : ''}>Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</button></div>`;
+    <span class="contatore">Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</span></div>`;
   if (altro) html += `<div class="sotto">👁️ Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
     : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
@@ -161,12 +161,10 @@ function disegnaOggi() {
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   if (limitato()) {
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #contatore, #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
     return;
   }
   collegaConferme();
-  const contatore = document.getElementById('contatore');
-  if (contatore) contatore.onclick = scegliNumero;
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });
@@ -405,8 +403,9 @@ function chiediData(bottone, nome) {
   });
 }
 
-// Contatti al giorno (1-10): è il massimo di esiti dalla coda in un giorno.
-function scegliNumero() {
+// Contatti al giorno (1-10): è il massimo di esiti dalla coda in un giorno. Dal cantiere 25 si cambia nel Profilo
+// (Ignazio 17/09: «solo profilo»); in Dashboard resta la scritta «Fatti N di M». `dopo` = cosa ridisegnare.
+function scegliNumero(dopo = caricaOggi) {
   const attuale = ST.stato.contatti_al_giorno;
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -429,7 +428,8 @@ function scegliNumero() {
       const { error } = await dbq('contatti al giorno', supa.rpc('imposta_contatti_al_giorno', { p_numero: n }));
       if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
       mostraToast(`Contatti al giorno: ${n}`);
-      caricaOggi();   // con un numero più alto la coda si riempie
+      ST.stato.contatti_al_giorno = n;
+      dopo();   // dalla Dashboard la coda si riempie con un numero più alto
     };
   });
 }
@@ -505,15 +505,13 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl, scad, seg] = await Promise.all([   // il sesto (avvisi) scrive da solo AV.stato
+    const [cm, ob, segniAl, scad, seg] = await Promise.all([
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
       vediTutti() || visto().id !== ST.utente.id ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
-      // cantiere 24: stato degli avvisi push di questo dispositivo (solo sulla propria Dashboard)
-      vediTutti() || visto().id !== ST.utente.id ? Promise.resolve(AV.stato = null) : leggiStatoAvvisi().catch(() => (AV.stato = null)),
     ]);
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
@@ -574,6 +572,9 @@ async function rispondiBiglietto(box, si) {
   ST.tab = 'oggi'; mostraTab();   // la Dashboard si ridisegna e i segni si aggiornano
 }
 
+// Testata con il cerchietto del Profilo (cantiere 25): sempre di chi è entrato, anche col Partner Select
+function testataDashboard() { return `<div class="testa-pagina"><h1>Dashboard</h1>${cerchiettoProfilo()}</div>`; }
+
 function dashboardAlto() {
   const d = DS.dati;
   let html = partnerSelect();
@@ -586,7 +587,6 @@ function dashboardAlto() {
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   html += riquadriBiglietto();
-  html += riquadroAvvisi();   // cantiere 24: «🔔 Avvisi sul telefono», solo se spenti e non rimandati con «Non ora»
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
@@ -638,15 +638,14 @@ function dashboardBasso() {
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
     ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}
-    ${guardoAltri() ? '' : `<button class="link" id="ds-password" style="display:block;margin:18px auto 0">🔑 Cambia password</button>` + rigaAvvisi()}`;
+    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}`;
 }
 
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
-  collegaAvvisi();
+  su('ds-profilo', () => { ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25
   document.querySelectorAll('[data-seg]').forEach(box => {
     box.querySelectorAll('.sv-chip').forEach(ch => { ch.onclick = () => ch.classList.toggle('on'); });
     box.querySelector('[data-si]').onclick = () => rispondiBiglietto(box, true);
@@ -658,7 +657,6 @@ function collegaDashboard() {
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
-  su('ds-password', () => foglioPassword(false));
   // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
   app.querySelectorAll('.schede-dash button').forEach(b => {
     b.onclick = () => { DS.scheda = b.dataset.dsScheda; disegnaOggi(); };

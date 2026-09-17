@@ -1,8 +1,8 @@
-// MB21 · avvisi push sul telefono (cantiere 24): riquadro «🔔 Avvisi» in Dashboard.
+// MB21 · avvisi push sul telefono (cantiere 24): dal cantiere 25 si accendono e spengono nella pagina «Profilo» (pagina-profilo.js).
 // Ogni dispositivo che dice «sì» diventa una riga in avvisi_dispositivi; spedisce la funzione Edge «avvisi».
 // Su iPhone/iPad gli avvisi funzionano solo con l'app aggiunta alla schermata Home (iOS 16.4+).
 // Solo telefoni e tablet (Ignazio 17/09: da Arc sul Mac «Attiva» non faceva nulla; «per me va bene solo sul cellulare,
-// però deve scomparire la scritta dal browser»): sul computer niente riquadro e niente riga.
+// però deve scomparire la scritta dal browser»): sul computer nel Profilo solo la scritta «accendili dal telefono».
 const VAPID_PUBLIC = 'BPVIFab868X7amUZYY9wyHmCZxxi4jtSUjg9dona5Hs71odbvcP27p60X4Wg3POsIcqubQ3u8DKWg1ODF2mxuBU';   // chiave pubblica: identifica MB21 presso il servizio push (la privata sta su Supabase)
 const AV = { stato: null, dispositivi: [] };
 
@@ -64,35 +64,10 @@ async function mandaAvvisoDiProva() {
   mostraToast(data.ok ? 'Avviso di prova inviato: guarda le notifiche' : 'Nessun dispositivo ha ricevuto l\'avviso');
 }
 
-// «Non ora» (Ignazio 17/09): il riquadro sparisce per 7 giorni su questo dispositivo, poi si ripresenta
-const NON_ORA_GIORNI = 7, CHIAVE_NON_ORA = 'mb21_avvisi_non_ora';
-function rimandato() { try { return Date.now() < Number(localStorage.getItem(CHIAVE_NON_ORA) || 0); } catch (e) { return false; } }
-async function nonOra() { try { localStorage.setItem(CHIAVE_NON_ORA, String(Date.now() + NON_ORA_GIORNI * 86400000)); } catch (e) { /* senza memoria: torna alla prossima apertura */ } }
-
-// Riquadro in alto: solo quando gli avvisi sono spenti e non si è detto «Non ora»
-function riquadroAvvisi() {
-  if (AV.stato !== 'spento' || rimandato()) return '';
-  return `<div class="banner-big avvisi"><b>🔔 Avvisi sul telefono</b>
-    <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
-    <div class="riga"><button class="primario" id="av-attiva">Attiva gli avvisi</button><button class="link" id="av-nonora">Non ora</button></div></div>`;
-}
-
-// Riga piccola in fondo alla Dashboard, accanto a «Cambia password»: su telefoni e tablet (sul computer e dove gli avvisi non esistono, niente)
-function rigaAvvisi() {
-  const s = AV.stato, b = (id, t) => `<button class="link" id="${id}">${t}</button>`;
-  const testi = {
-    acceso: `🔔 Avvisi accesi · ${b('av-spegni', 'Spegni')} · ${b('av-prova', 'Prova')}`,
-    spento: `🔔 Avvisi spenti · ${b('av-attiva', 'Attiva')}`,
-    da_installare: '🔔 Avvisi: aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home) per riceverli',
-    negato: '🔔 Avvisi bloccati: riaccendili nelle Impostazioni del telefono (Notifiche → MB21)',
-  };
-  return testi[s] ? `<div class="riga-avvisi">${testi[s]}</div>` : '';
-}
-
+// Bottoni della pagina Profilo: dopo ogni azione la pagina si ridisegna con lo stato nuovo
 function collegaAvvisi() {
-  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = () => { el.disabled = true; fn().catch(e => mostraToast(e.message || 'Errore')).finally(() => { ST.tab = 'oggi'; mostraTab(); }); }; };
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = () => { el.disabled = true; fn().catch(e => mostraToast(e.message || 'Errore')).finally(disegnaProfilo); }; };
   su('av-attiva', attivaAvvisi);
   su('av-spegni', spegniAvvisi);
   su('av-prova', mandaAvvisoDiProva);
-  su('av-nonora', nonOra);
 }

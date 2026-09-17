@@ -190,10 +190,21 @@
   .banner-big { border-radius: 16px; background: #fff; border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .banner-big.bbs { border-color: #93C5FD; background: #EFF6FF; }
   .banner-big.wes { border-color: #FCA5A5; background: #FEF2F2; }
-  .banner-big.avvisi { border-color: #FDE68A; background: #FFFBEB; }
   .banner-big .riga button.link { padding: 6px 0; font-size: 14px; }
-  .riga-avvisi { text-align: center; color: var(--grigio); font-size: 13px; margin-top: 6px; }
-  .riga-avvisi button.link { font-size: 13px; padding: 4px 0; }
+  /* Profilo (cantiere 25): cerchietto con le iniziali in Dashboard, riquadri della pagina */
+  .testa-pagina { display: flex; align-items: center; justify-content: space-between; }
+  .cerchio { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--blu); color: #fff; font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 8px; flex: none; }
+  .cerchio.grande { width: 56px; height: 56px; font-size: 20px; }
+  .pf-box { background: #fff; border: 1.5px solid var(--linea); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+  .pf-box h3 { margin: 0 0 8px; font-size: 16px; }
+  .pf-box small { display: block; color: var(--grigio); font-size: 12px; margin-top: 6px; }
+  .pf-box label { display: block; margin-top: 10px; color: var(--grigio); font-size: 13px; }
+  .pf-box input { margin: 4px 0 8px; }
+  .pf-riga { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--linea); }
+  .pf-riga span { color: var(--grigio); } .pf-riga b { text-align: right; word-break: break-all; }
+  .pf-avvisi { margin-top: 8px; } .pf-avvisi .riga { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .pf-avvisi .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
@@ -497,20 +508,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609172237"></script>
-<script src="lista.js?v=202609172237"></script>
-<script src="dashboard.js?v=202609172237"></script>
-<script src="agenda.js?v=202609172237"></script>
-<script src="report.js?v=202609172237"></script>
-<script src="check.js?v=202609172237"></script>
-<script src="mappa.js?v=202609172237"></script>
-<script src="pagina-dashboard.js?v=202609172237"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609172237"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609172237"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609172237"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609172237"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609172304"></script>
+<script src="lista.js?v=202609172304"></script>
+<script src="dashboard.js?v=202609172304"></script>
+<script src="agenda.js?v=202609172304"></script>
+<script src="report.js?v=202609172304"></script>
+<script src="check.js?v=202609172304"></script>
+<script src="mappa.js?v=202609172304"></script>
+<script src="pagina-dashboard.js?v=202609172304"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609172304"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609172304"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609172304"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609172304"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609172304"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 22:37';
+const APP_VERSION = '2026.09.17 · 23:04';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -721,7 +733,7 @@ async function dopoAccesso(sessione) {
   ST.emailAccount = sessione.user.email;   // per il foglio della password (i telefoni la salvano con l'email)
   await dbq('collega account', supa.rpc('collega_account'));   // primo accesso col link dell'email: collega l'account all'utente
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, email, telefono, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
   if (!data && !error) {   // entrato con la password del modulo: richiesta ancora da approvare
     const { data: stato } = await dbq('stato della richiesta', supa.rpc('mia_richiesta'));
@@ -802,7 +814,7 @@ async function scegliPartner() {
 // ── Abbonamento scaduto (cantiere 19 lavoro 6, decisione di Ignazio 16/09) ──
 // Scaduto = solo Dashboard e propria Lista Nomi: le altre tab spariscono e i collegamenti verso altre pagine pure.
 // Controllo nell'app (come «Può entrare»): le regole del database non cambiano.
-const TAB_SCADUTO = ['oggi', 'lista'];
+const TAB_SCADUTO = ['oggi', 'lista', 'profilo'];   // scaduto: anche il Profilo (password, Esci)
 const limitato = () => !!ST.scaduto;
 
 async function controllaAbbonamento() {
@@ -839,6 +851,7 @@ function mostraTab() {
   if (ST.tab === 'mappa') return apriMappa();
   if (ST.tab === 'check') return apriPaginaCheck();
   if (ST.tab === 'admin') return apriAdmin();
+  if (ST.tab === 'profilo') return apriProfilo();   // cantiere 25: dal cerchietto in Dashboard
 }
 
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine
