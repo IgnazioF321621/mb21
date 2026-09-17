@@ -652,9 +652,8 @@ async function sezioneSegni() {
       ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
     </div>`;
   const riquadroCep = () => {
-    const aperto = MB21Lista.targheSegni([], SV.cep, MB21Coda.oggiRoma()).cep;
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
-        <small class="sotto" style="margin:0">${SV.cep.length ? (aperto ? 'Abbonato ora' : 'Non abbonato ora') : 'dal → uscito il'}</small>
+        <small class="sotto" style="margin:0">${esc(MB21Lista.descrizioneCep(SV.cep, MB21Coda.oggiRoma()))}</small>
         ${dis || SV.cepNuovo ? '' : '<button class="sv-piu" id="sv-cep-nuovo">+ Periodo</button>'}</div>
       ${SV.cepNuovo ? bloccoCep({}) : ''}${SV.cep.map(bloccoCep).join('')}
       ${!SV.cep.length && !SV.cepNuovo ? '<div class="sotto" style="margin:0">Nessun abbonamento</div>' : ''}</div>`;

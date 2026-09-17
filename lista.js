@@ -170,6 +170,22 @@
     };
   }
 
+  // Ultimo giorno del mese di `giorno` (AAAA-MM-GG), es. 2026-09-17 → 2026-09-30
+  function fineMese(giorno) {
+    const [a, m] = String(giorno).split('-').map(Number);
+    const ultimo = new Date(Date.UTC(a, m, 0)).getUTCDate();
+    return `${a}-${String(m).padStart(2, '0')}-${String(ultimo).padStart(2, '0')}`;
+  }
+
+  // Riga sotto «CEP» nella scheda (cantiere 20 lavoro 3, Ignazio 17/09): con un periodo aperto oggi
+  // «dal 01/06/2026 · abbonato fino al 30/09/2026» (fine del mese in corso, si sposta da sola ogni mese finché
+  // l'Admin non chiude il periodo); altrimenti «Non abbonato ora»; senza periodi «dal → uscito il»
+  function descrizioneCep(periodiCep, oggi) {
+    const p = (periodiCep || []).find(x => x.dal <= oggi && (!x.uscito_il || x.uscito_il >= oggi));
+    if (p) return `dal ${data(p.dal)} · abbonato fino al ${data(fineMese(oggi))}`;
+    return (periodiCep || []).length ? 'Non abbonato ora' : 'dal → uscito il';
+  }
+
   // Targhette per tutta la Lista Nomi: { id contatto: {bbs, wes, cep} }. Le coppie collegate (id, compagno_id)
   // condividono i segni: un biglietto sulla scheda di uno accende anche l'altro
   function targhePerContatto(biglietti, periodiCep, coppie, oggi, attivi) {
@@ -204,7 +220,7 @@
   }
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, descrizioneCep, data, etichettaCard, titoloFase };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
