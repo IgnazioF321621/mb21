@@ -165,5 +165,19 @@ prova('Passi dell\'esito: PM in due passi (Fatto = Presentazione, poi i risultat
   assert.equal(A.passiEsito({ ...ct, data_scelta: '2026-09-18T10:00:00Z' }, 'Prospect'), null);
 });
 
+prova('linkGoogleCalendar: titolo, ora di Roma → UTC, durata, note', () => {
+  const a = { modalita: 'PM 1a1', tipo_azione: 'Piano Marketing', inizio: '2026-09-18T16:30:00Z', fine: '2026-09-18T17:30:00Z',
+    ospite: 'Anna', note: 'portare il libro', contatti: { nome: 'Pino Manolo', telefono: '+39 333 1234567' } };
+  const u = new URL(A.linkGoogleCalendar(a));
+  assert.equal(u.origin + u.pathname, 'https://calendar.google.com/calendar/render');
+  assert.equal(u.searchParams.get('text'), 'MB21 · PM 1a1 · Pino Manolo');
+  assert.equal(u.searchParams.get('dates'), '20260918T163000Z/20260918T173000Z');
+  assert.equal(u.searchParams.get('details'), 'Telefono: +39 333 1234567\nOspite: Anna\nportare il libro');
+  assert.equal(u.searchParams.get('ctz'), 'Europe/Rome');
+  const senzaFine = new URL(A.linkGoogleCalendar({ tipo_azione: 'Appuntamento', inizio: '2026-09-18T16:30:00Z', contatti: { nome: 'X' } }));
+  assert.equal(senzaFine.searchParams.get('dates'), '20260918T163000Z/20260918T173000Z');   // 1 ora
+  assert.equal(senzaFine.searchParams.get('text'), 'MB21 · Appuntamento · X');
+  assert.equal(senzaFine.searchParams.get('details'), null);
+});
 
 console.log(`\n${ok} prove superate`);
