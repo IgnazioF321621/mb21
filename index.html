@@ -494,20 +494,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171937"></script>
-<script src="lista.js?v=202609171937"></script>
-<script src="dashboard.js?v=202609171937"></script>
-<script src="agenda.js?v=202609171937"></script>
-<script src="report.js?v=202609171937"></script>
-<script src="check.js?v=202609171937"></script>
-<script src="mappa.js?v=202609171937"></script>
-<script src="pagina-dashboard.js?v=202609171937"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171937"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171937"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171937"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609171937"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609171940"></script>
+<script src="lista.js?v=202609171940"></script>
+<script src="dashboard.js?v=202609171940"></script>
+<script src="agenda.js?v=202609171940"></script>
+<script src="report.js?v=202609171940"></script>
+<script src="check.js?v=202609171940"></script>
+<script src="mappa.js?v=202609171940"></script>
+<script src="pagina-dashboard.js?v=202609171940"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171940"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171940"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171940"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609171940"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:37';
+const APP_VERSION = '2026.09.17 · 19:40';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1128,17 +1128,19 @@ function spostaAppuntamento(e, dopo) {
   };
 }
 
-async function eliminaAppuntamento(e) {
-  if (!await chiediConferma('Eliminare questo appuntamento?', '', 'Elimina', true)) return;   // conferma dell'app, non confirm(): in Arc/Claude non compariva (Ignazio 17/09)
-  const { error } = await dbq('elimina appuntamento', supa.from('azioni').delete().eq('id', e.id));
-  if (error) return mostraToast('Non eliminato: controlla la connessione e riprova.');
+// Elimina un'azione (Agenda e scheda contatto, stesso codice; `dopo()` ridisegna chi l'ha aperto). Avviso con Annulla che la rimette.
+async function eliminaAppuntamento(e, dopo) {
+  const ridisegna = dopo || apriAgenda;
+  if (!await chiediConferma('Eliminare questa azione?', `${e.tipo_azione || 'Azione'}${e.modalita ? ' · ' + e.modalita : ''}${e.esito ? ' · ' + e.esito : ''}`, 'Elimina', true)) return;   // conferma dell'app, non confirm(): in Arc/Claude non compariva (Ignazio 17/09)
+  const { error } = await dbq('elimina azione', supa.from('azioni').delete().eq('id', e.id));
+  if (error) return mostraToast('Non eliminata: controlla la connessione e riprova.');
   AG.aperta = null;
-  await apriAgenda();
+  await ridisegna();
   const copia = { ...e };
-  for (const k of ['quando', 'contatti', 'utenti', 'chiave']) delete copia[k];
-  mostraToast('Appuntamento eliminato', async () => {
-    await dbq('ripristina appuntamento', supa.from('azioni').insert(copia));
-    await apriAgenda();
+  for (const k of ['quando', 'contatti', 'utenti', 'chiave', 'portatoNome']) delete copia[k];
+  mostraToast('Azione eliminata', async () => {
+    await dbq('ripristina azione', supa.from('azioni').insert(copia));
+    await ridisegna();
   });
 }
 
