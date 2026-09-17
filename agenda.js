@@ -225,10 +225,28 @@
     return null;
   }
 
+  // Cantiere 23: link che apre Google Calendar con l'evento già compilato (come Glide). Titolo «MB21 · PM 1a1 · Pino Manolo»,
+  // stessa durata di MB21 (senza fine: 1 ora), nelle note telefono, ospite e note dell'azione. Nessun account collegato:
+  // l'utente preme «Salva» in Google Calendar; se poi sposta in MB21, lo sposta a mano anche lì (decisione di Ignazio 17/09).
+  function linkGoogleCalendar(a) {
+    const compatto = iso => new Date(iso).toISOString().replace(/[-:]|\.\d{3}/g, '');
+    const inizio = a.inizio, fine = a.fine || new Date(Date.parse(a.inizio) + 3600000).toISOString();
+    const nome = (a.contatti && a.contatti.nome) || '—';
+    const dettagli = [
+      a.contatti && a.contatti.telefono ? `Telefono: ${a.contatti.telefono}` : '',
+      a.ospite ? `Ospite: ${a.ospite}` : '',
+      a.note || '',
+    ].filter(Boolean).join('\n');
+    const q = new URLSearchParams({ action: 'TEMPLATE', text: `MB21 · ${a.modalita || a.tipo_azione || ''} · ${nome}`,
+      dates: `${compatto(inizio)}/${compatto(fine)}`, ctz: 'Europe/Rome' });
+    if (dettagli) q.set('details', dettagli);
+    return 'https://calendar.google.com/calendar/render?' + q.toString();
+  }
+
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, linkGoogleCalendar };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

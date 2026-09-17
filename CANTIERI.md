@@ -22,7 +22,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 23. APPUNTAMENTI NEL CALENDARIO (Google · Apple · NotePlan)
 *Aperto il 17 settembre 2026 (Ignazio: «come su Glide»). Da fare in una sessione nuova.* Salvare un appuntamento di MB21 nel calendario del telefono, dall'evento aperto in Agenda e dal foglio dopo il salvataggio (stesso codice nei due posti, regola in `CLAUDE.md`).
 - Possibile senza collegare account: **Google Calendar** = link che apre l'evento già compilato (come Glide) · **Calendario di Apple** = file `.ics` da scaricare e «Aggiungi a Calendario» (un passaggio in più; da verificare nell'app installata) · **NotePlan** = collegamento `noteplan://` che aggiunge una riga nella nota del giorno («18:30 PM 1a1 · Pino Manolo»); NotePlan mostra anche gli eventi di Apple Calendar
-- Da decidere con Ignazio: (1) quali bottoni (tutti e tre?) · (2) testo dell'evento («MB21 · PM 1a1 · Pino Manolo», durata, note, telefono?) · (3) spostando l'appuntamento in MB21 l'evento nel calendario non si sposta da solo: accettabile?
+- Deciso il 17/09 (Ignazio: «facciamo prima 23 in automatico», con le proposte di Claude): (1) **Google Calendar + NotePlan**, Apple fuori (NotePlan mostra già il Calendario di Apple; Google Calendar va anche su Android e computer) · (2) titolo «MB21 · PM 1a1 · Pino Manolo», stessa durata di MB21, telefono + ospite + note nelle note · (3) spostando in MB21 si sposta a mano anche nel calendario: accettato
+- ~~Passo 1 · bottone Google Calendar~~ — fatto il 17/09: «📆 Google Calendar» nell'evento aperto in Agenda (anche dopo «Salva» di un nuovo appuntamento, che apre lì). Funzione pura `linkGoogleCalendar` in `agenda.js` + prova nel banco. **Da provare da Ignazio sul telefono**
+- Passo 2 · bottone NotePlan (`noteplan://` che aggiunge la riga nella nota del giorno), da fare dopo la prova del passo 1
 - Non sugli appuntamenti già chiusi (Fatto / esito): il calendario non serve più
 
 ## 24. AVVISI PUSH SUL TELEFONO
