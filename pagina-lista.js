@@ -440,7 +440,7 @@ async function sezioneAzioni() {
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
-  box.querySelectorAll('.ag-esiti[data-azione]').forEach(div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.azione), c, dopo));
+  box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo));
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
 }
 
