@@ -144,6 +144,8 @@
   .azione .t { font-weight: 700; font-size: 15px; }
   .azione .s { font-size: 13px; color: #6B7280; }
   .azione .comandi { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .stato-az { font-size: 13px; color: var(--grigio); }
+  .stato-az.fatto { color: #166534; }
   .arancio { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 14px; padding: 4px 14px; margin-bottom: 12px; }
   .interruttore { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
   .interruttore:first-child { border-top: 0; }
@@ -498,7 +500,7 @@
 <script src="pagina-mappa.js"></script>   <!-- pagina Mappa: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 14:31';
+const APP_VERSION = '2026.09.17 · 14:36';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -981,7 +983,9 @@ async function apriContattoDa(id, ritorno) {
 }
 
 // Esito di un appuntamento (decisione C: poi si chiede sempre il prossimo, con «Salta»)
-async function chiudiAppuntamento(e, esito) {
+// opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda)
+async function chiudiAppuntamento(e, esito, opz = {}) {
+  const ridisegna = opz.dopo || apriAgenda;
   const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
   const annulla = async creato => {
@@ -990,7 +994,7 @@ async function chiudiAppuntamento(e, esito) {
       p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
     if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
-    await apriAgenda();
+    await ridisegna();
     mostraToast('Annullato');
   };
   AG.aperta = null;
@@ -999,7 +1003,7 @@ async function chiudiAppuntamento(e, esito) {
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
   });
-  await apriAgenda();
+  await ridisegna();
   mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${esito} salvato`, () => annulla(creato));
 }
 

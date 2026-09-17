@@ -401,6 +401,9 @@ async function riquadroCoppia(c) {
   };
 }
 
+// Azioni della scheda col criterio di Glide (cantiere 22 lavoro 3, Ignazio 17/09): un'azione nasce «da completare»,
+// si chiude con l'esito (stessi bottoni dell'Agenda, `chiudiAppuntamento` → poi «Fissa il prossimo appuntamento»),
+// niente interruttore Completato a mano: completata = ha l'esito. Per correggere resta Modifica.
 async function sezioneAzioni() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
@@ -413,12 +416,15 @@ async function sezioneAzioni() {
   if (!LS.azioni) {
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
     const { data, error } = await dbq('lettura azioni', supa.from('azioni')
-      .select('id, contatto_id, portato_da, tipo_azione, modalita, esito, area, note, inizio, completata, data_scelta, contatti(nome)')
+      .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, area, ospite, note, inizio, completata, data_scelta, contatti(nome)')
       .or(`contatto_id.eq.${c.id},portato_da.eq.${c.id}`).order('inizio', { ascending: false, nullsFirst: false }));
     if (error) { box.innerHTML = faseHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
+  const A = MB21Agenda;
+  const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);   // i richiami dalla coda non si chiudono qui
+  const stato = a => a.completata || a.esito ? '<span class="stato-az fatto">✅ Completato</span>' : '<span class="stato-az">⏳ Da completare</span>';
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
     <div class="azione">
       <div class="t">🤝 Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
@@ -428,31 +434,46 @@ async function sezioneAzioni() {
     <div class="azione">
       <div class="t">${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.area].filter(Boolean).join(' • '))}</div>
-      <div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>
+      ${a.esito || a.note ? `<div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>` : ''}
+      ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
-      <div class="comandi">
-        <label class="interruttore" style="border:0;padding:0"><input type="checkbox" data-completata="${a.id}" ${a.completata ? 'checked' : ''}></label>
-        <span class="s">Completato</span>
-        <button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button>
-      </div>
+      ${daChiudere(a) ? (() => { const fasi = A.fasiPer(a.categoria || c.categoria, a.tipo_azione, a.modalita);
+        return fasi.length ? `<div class="s" style="margin-top:6px">Com'è andata?</div><div class="ag-esiti" data-azione="${a.id}">${fasi.map(f => `<button data-esito="${esc(f)}">${esc(f)}</button>`).join('')}</div>` : ''; })() : ''}
+      <div class="comandi">${stato(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
     </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
-  box.querySelectorAll('[data-completata]').forEach(i => i.onchange = async () => {
-    if (soloGuardo()) { i.checked = !i.checked; return; }
-    const { error } = await dbq('completata', supa.from('azioni').update({ completata: i.checked }).eq('id', i.dataset.completata));
-    if (error) { i.checked = !i.checked; return mostraToast('Non salvato: riprova.'); }
-    LS.azioni.find(a => a.id === i.dataset.completata).completata = i.checked;
+  box.querySelectorAll('.ag-esiti[data-azione]').forEach(div => {
+    const a = LS.azioni.find(x => x.id === div.dataset.azione);
+    div.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => {
+      if (soloGuardo()) return;
+      chiudiAppuntamento({ ...a, categoria: a.categoria || c.categoria, contatti: { nome: c.nome, categoria: c.categoria } }, b.dataset.esito,
+        { dopo: async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); } });
+    });
   });
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
 }
 
-// «Azione +»: gli stessi bottoni esito della Dashboard, stesso codice e stesso Annulla
+// «Azione +»: «Nuovo appuntamento» (tutti i tipi della categoria, come in Agenda) oppure gli stessi bottoni esito rapidi della Dashboard
 async function azionePiu() {
   if (soloGuardo()) return;
   const c = LS.contatto;
-  const scelta = await sceltaDa('Nuova azione · ' + c.nome, bottoniPer(c.categoria).map(b => ({ etichetta: b.etichetta, b })));
+  const voci = bottoniPer(c.categoria).map(b => ({ etichetta: b.etichetta, b }));
+  if (MB21Agenda.tipiPer(c.categoria).length) voci.unshift({ etichetta: '📅 Nuovo appuntamento (da completare con l\'esito)', nuovo: true });
+  const scelta = await sceltaDa('Nuova azione · ' + c.nome, voci);
   if (!scelta) return;
+  if (scelta.nuovo) {
+    const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
+    if (!creato) return;
+    LS.azioni = null;
+    await ricaricaERidisegna();
+    mostraToast('Appuntamento fissato', async () => {
+      await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', creato.id));
+      LS.azioni = null;
+      await ricaricaERidisegna();
+    });
+    return;
+  }
   let data = null, appuntamento = null;
   if (scelta.b.classe === 'appuntamento') {
     appuntamento = await appuntamentoDaCoda(c);
