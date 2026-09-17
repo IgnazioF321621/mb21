@@ -187,7 +187,7 @@
     if (!TIPI[v.categoria]) return 'Categoria senza appuntamenti: scegli Prospect, Partner o Cliente.';
     if (!v.area) return 'Scegli l\'area.';
     if (!tipiPer(v.categoria).includes(v.tipo_azione)) return 'Scegli il tipo di azione.';
-    if (!sottotipiPer(v.tipo_azione).includes(v.modalita)) return 'Scegli il sottotipo.';
+    if (!sottotipiPer(v.tipo_azione).includes(v.modalita)) return `Scegli il ${etichettaSottotipo(v.tipo_azione).toLowerCase()}.`;   // «Scegli il tipo di piano.»
     if (!v.giorno || !/^\d\d:\d\d$/.test(v.ora || '')) return 'Scegli giorno e ora.';
     if ((v.ospite || '').length > 50) return 'Ospite: massimo 50 caratteri.';
     if ((v.note || '').length > 100) return 'Note: massimo 100 caratteri.';

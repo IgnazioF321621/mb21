@@ -502,7 +502,7 @@
 <script src="pagina-mappa.js"></script>   <!-- pagina Mappa: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 14:47';
+const APP_VERSION = '2026.09.17 · 14:58';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -926,7 +926,7 @@ function eventoAgenda(e, opz) {
       ${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
-        : fasi.length ? `<div class="ag-esiti">${fasi.map(f => `<button data-esito="${esc(f)}" class="${e.esito === f && e.completata ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`
+        : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
         ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">🕑 Sposta</button><button data-cmd="modifica">✏️ Modifica</button>`}
@@ -960,7 +960,7 @@ function collegaAgenda(eventi) {
   app.querySelectorAll('.ag-evento').forEach(el => {
     const e = eventi.find(x => x.id === el.dataset.evento);
     el.querySelector('.apri').onclick = () => { AG.aperta = AG.aperta === e.id ? null : e.id; disegnaAgenda(); };
-    el.querySelectorAll('[data-esito]').forEach(b => { b.onclick = () => chiudiAppuntamento(e, b.dataset.esito); });
+    collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, () => apriAgenda());
     el.querySelectorAll('[data-cmd]').forEach(b => {
       b.onclick = () => {
         if (b.dataset.cmd === 'sposta') return spostaAppuntamento(e);
@@ -985,6 +985,41 @@ async function apriContattoDa(id, ritorno) {
 }
 
 // Esito di un appuntamento (decisione C: poi si chiede sempre il prossimo, con «Salta»)
+// ── Esito di un'azione: stesso blocco in Agenda e nella scheda contatto (Ignazio 17/09: «il modulo deve essere uguale
+// in tutte le parti, altrimenti ci si confonde come su Glide») ──
+// Azione senza esito → «Com'è andata?» e i bottoni della fase (chiudiAppuntamento: esito, coda, «Fissa il prossimo appuntamento»);
+// azione già chiusa → «Esito · tocca per cambiarlo», l'attuale evidenziato (cambiaEsito = modifica_azione, avviso con Annulla).
+// I richiami dalla coda (Contatto con data_scelta) non si chiudono da qui. Restituisce '' se non ci sono esiti previsti.
+const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+function bloccoEsiti(a, categoria) {
+  if (a.tipo_azione === 'Contatto' && a.data_scelta) return '';
+  const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+  if (!fasi.length) return '';
+  return `<div class="come-andata">${daChiudere(a) ? 'Com\'è andata?' : 'Esito <small>· tocca per cambiarlo</small>'}</div>
+    <div class="ag-esiti" data-azione="${esc(a.id)}">${fasi.map(f => `<button data-esito="${esc(f)}" class="${a.esito === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`;
+}
+// Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
+function collegaEsiti(el, a, contatto, dopo) {
+  el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
+    if (soloGuardo() || b.dataset.esito === a.esito) return;
+    if (daChiudere(a)) return chiudiAppuntamento({ ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } }, b.dataset.esito, { dopo });
+    cambiaEsito(a, b.dataset.esito, dopo);
+  });
+}
+async function cambiaEsito(a, esito, dopo) {
+  const { data: prima, error } = await dbq('cambia esito', supa.rpc('modifica_azione', {
+    p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito,
+    p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
+  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  await dopo();
+  mostraToast(`Esito: ${esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
+    const { error: e3 } = await dbq('annulla cambio esito', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
+    if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+    await dopo();
+    mostraToast('Annullato');
+  });
+}
+
 // opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda)
 async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
