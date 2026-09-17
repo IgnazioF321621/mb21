@@ -589,6 +589,11 @@ async function caricaSegni(c) {
     attivi: { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) } };
 }
 
+// Targhetta 📱 dell'app, bianca e senza colore (cantiere 20 lavoro 4): uso = { ultimo_uso } dell'utente, vuoto = non ha l'app.
+// Stessa targhetta in Mappa, card della Lista e scheda contatto.
+function targaAppHtml(uso) {
+  return uso ? `<span class="sv-targa app" title="Ultimo uso dell'app">📱 ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())}</span>` : '';
+}
 // t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
 function targheHtml(t, numeri) {
   return ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}${

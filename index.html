@@ -445,6 +445,7 @@
   .sv-targhe { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
   .sv-targa { font-size: 10px; font-weight: 700; letter-spacing: .3px; color: #fff; background: #D1D5DB; border-radius: 4px; padding: 2px 5px; }
   .sv-targa.bbs.on { background: #3B82F6; } .sv-targa.wes.on { background: #EF4444; } .sv-targa.cep.on { background: #22C55E; }
+  .sv-targa.app { background: #fff; color: var(--testo); border: 1px solid #9CA3AF; padding: 1px 5px; font-weight: 600; letter-spacing: 0; }
   .sv-ev { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 0; border-top: 1px solid var(--linea); }
   .sv-testa + .sv-ev { border-top: 0; }
   .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
@@ -494,20 +495,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609172104"></script>
-<script src="lista.js?v=202609172104"></script>
-<script src="dashboard.js?v=202609172104"></script>
-<script src="agenda.js?v=202609172104"></script>
-<script src="report.js?v=202609172104"></script>
-<script src="check.js?v=202609172104"></script>
-<script src="mappa.js?v=202609172104"></script>
-<script src="pagina-dashboard.js?v=202609172104"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609172104"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609172104"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609172104"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609172104"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609172156"></script>
+<script src="lista.js?v=202609172156"></script>
+<script src="dashboard.js?v=202609172156"></script>
+<script src="agenda.js?v=202609172156"></script>
+<script src="report.js?v=202609172156"></script>
+<script src="check.js?v=202609172156"></script>
+<script src="mappa.js?v=202609172156"></script>
+<script src="pagina-dashboard.js?v=202609172156"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609172156"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609172156"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609172156"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609172156"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 21:04';
+const APP_VERSION = '2026.09.17 · 21:56';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
