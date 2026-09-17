@@ -38,3 +38,6 @@
 ## L10 — I bottoni di pagina non devono condividere lo stesso segno interno
 *17/09/2026.* In Dashboard i bottoni Volume · Azione e «👤 Apri contatto» della coda avevano lo stesso segno (`data-scheda`). Il codice della coda prende tutti i bottoni con quel segno, quindi toccando «Azione» si apriva la Lista Nomi alla ricerca di un contatto «azione» (trovato da Ignazio).
 **Regola:** ogni gruppo di bottoni ha un segno suo con il prefisso della sezione (`data-ds-…` per la Dashboard), e prima di usare un nome si cerca con grep se esiste già.
+
+## Gli script si caricano con il numero di versione
+*17 settembre 2026.* Ignazio vedeva ancora «Scegli il sottotipo» dopo la correzione: online `agenda.js` era giusto, ma il telefono usava la copia salvata dal browser (gli script erano `<script src="agenda.js">` senza versione; il Service Worker ricarica la pagina, non forza gli script). Da oggi ogni script locale ha `?v=AAAAMMGGHHMM` (stesse cifre di `APP_VERSION`), da aggiornare **a ogni modifica insieme ad APP_VERSION**: il browser vede un indirizzo nuovo e ricarica il file.
