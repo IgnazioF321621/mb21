@@ -422,8 +422,6 @@ async function sezioneAzioni() {
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
-  const A = MB21Agenda;
-  const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);   // i richiami dalla coda non si chiudono qui
   const stato = a => a.completata || a.esito ? '<span class="stato-az fatto">✅ Completato</span>' : '<span class="stato-az">⏳ Da completare</span>';
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
     <div class="azione">
@@ -437,41 +435,14 @@ async function sezioneAzioni() {
       ${a.esito || a.note ? `<div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>` : ''}
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
-      ${(() => { if (a.tipo_azione === 'Contatto' && a.data_scelta) return '';   // richiamo dalla coda: si guarda, non si chiude qui
-        const fasi = A.fasiPer(a.categoria || c.categoria, a.tipo_azione, a.modalita);
-        if (!fasi.length) return '';
-        return `<div class="come-andata">${daChiudere(a) ? 'Com\'è andata?' : 'Esito <small>· tocca per cambiarlo</small>'}</div>
-          <div class="ag-esiti" data-azione="${a.id}">${fasi.map(f => `<button data-esito="${esc(f)}" class="${a.esito === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`; })()}
+      ${bloccoEsiti(a, c.categoria)}
       <div class="comandi">${stato(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
     </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
-  box.querySelectorAll('.ag-esiti[data-azione]').forEach(div => {
-    const a = LS.azioni.find(x => x.id === div.dataset.azione);
-    div.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => {
-      if (soloGuardo() || b.dataset.esito === a.esito) return;
-      const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
-      if (daChiudere(a)) return chiudiAppuntamento({ ...a, categoria: a.categoria || c.categoria, contatti: { nome: c.nome, categoria: c.categoria } }, b.dataset.esito, { dopo });
-      cambiaEsito(a, b.dataset.esito, dopo);   // azione già chiusa: un tocco cambia l'esito (Ignazio 17/09: niente passaggi in più)
-    });
-  });
+  const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
+  box.querySelectorAll('.ag-esiti[data-azione]').forEach(div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.azione), c, dopo));
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
-}
-
-// Esito cambiato con un tocco su un'azione già chiusa: stesso salvataggio del foglio Modifica (`modifica_azione`, coda ricalcolata
-// se è l'ultima azione del contatto), avviso con Annulla
-async function cambiaEsito(a, esito, dopo) {
-  const { data: prima, error } = await dbq('cambia esito', supa.rpc('modifica_azione', {
-    p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito,
-    p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
-  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
-  await dopo();
-  mostraToast(`Esito: ${esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
-    const { error: e3 } = await dbq('annulla cambio esito', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
-    if (e3) return mostraToast('Annullamento non riuscito: riprova.');
-    await dopo();
-    mostraToast('Annullato');
-  });
 }
 
 // «Azione +» (Ignazio 17/09): apre subito «Nuovo appuntamento» con la persona già scelta e tutti i tipi della sua categoria.
