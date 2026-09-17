@@ -39,6 +39,11 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri chiusi
 
+## 24. AZIONI PER OGNI CATEGORIA (chiuso il 17/09)
+*Richiesta di Ignazio 17/09: «l'azione si possa inserire in un contatto qualsiasi sia la categoria; semplifichiamo; unica cosa: deve avere una categoria».* Prima (decisione 5 del 14/09) Ex, Referral, Unlinked e Archiviato non avevano appuntamenti.
+- ~~Fatto il 17/09~~: in `agenda.js` le quattro categorie hanno gli stessi tipi ed esiti del Prospect; solo i senza categoria restano fuori (messaggio «Il contatto non ha una categoria»). Nel modulo la riga Categoria resta a tre scelte (Prospect · Partner · Cliente) più quella attuale del contatto. Scelta di Claude da confermare: la **scheda di un Archiviato resta di sola lettura** (Azione + nascosto: prima si ripristina) e gli archiviati non compaiono nell'elenco dei nomi dell'Agenda. Prove automatiche aggiornate. **Da provare da Ignazio**
+
+
 ## 23. APPUNTAMENTI NEL CALENDARIO (Google · NotePlan) (chiuso il 17/09)
 *Aperto e chiuso il 17 settembre 2026 (Ignazio: «come su Glide»; a fine giornata «sembra funzionare»).* Salvare un appuntamento di MB21 nel calendario del telefono, dall'evento aperto in Agenda e dal foglio dopo il salvataggio (stesso codice nei due posti, regola in `CLAUDE.md`).
 - Possibile senza collegare account: **Google Calendar** = link che apre l'evento già compilato (come Glide) · **Calendario di Apple** = file `.ics` da scaricare e «Aggiungi a Calendario» (un passaggio in più; da verificare nell'app installata) · **NotePlan** = collegamento `noteplan://` che aggiunge una riga nella nota del giorno («18:30 PM 1a1 · Pino Manolo»); NotePlan mostra anche gli eventi di Apple Calendar

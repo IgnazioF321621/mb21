@@ -42,7 +42,7 @@ Nessun tipo di azione in `Scelte.csv`. ❓ Proposta: **nessun appuntamento** per
 2. Contatto di Partner e Cliente: **Appuntamento · Richiamare** — sì
 3. Appuntamento: **fasi per sottotipo**, da migliorare più avanti. In uso la tabella senza i nomi vecchi non in Sequenze (Iscr+Ordine, Cliente, Prodotti); Inaugurazione sotto Avvio
 4. Prossima data: **chiedere sempre**, per avere un flusso di lavoro (nell'app: foglio «Fissa il prossimo appuntamento» dopo ogni esito, con **Salta**)
-5. Ex/Referral/Unlinked/Archiviato: **nessun appuntamento** — ok
+5. Ex/Referral/Unlinked/Archiviato: **nessun appuntamento** — ok. **Cambiata il 17/09** (Ignazio: «l'azione in qualsiasi categoria, semplifichiamo; basta che ne abbia una»): hanno gli stessi tipi ed esiti del Prospect; solo i **senza categoria** non hanno azioni. La scheda di un Archiviato resta di sola lettura (prima si ripristina)
 
 ## Punti che erano da decidere (❓)
 1. Consulenza PRD: fasi **Vendita · No Vendita** per Prospect e Cliente?
