@@ -494,20 +494,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171944"></script>
-<script src="lista.js?v=202609171944"></script>
-<script src="dashboard.js?v=202609171944"></script>
-<script src="agenda.js?v=202609171944"></script>
-<script src="report.js?v=202609171944"></script>
-<script src="check.js?v=202609171944"></script>
-<script src="mappa.js?v=202609171944"></script>
-<script src="pagina-dashboard.js?v=202609171944"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171944"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171944"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171944"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609171944"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609172039"></script>
+<script src="lista.js?v=202609172039"></script>
+<script src="dashboard.js?v=202609172039"></script>
+<script src="agenda.js?v=202609172039"></script>
+<script src="report.js?v=202609172039"></script>
+<script src="check.js?v=202609172039"></script>
+<script src="mappa.js?v=202609172039"></script>
+<script src="pagina-dashboard.js?v=202609172039"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609172039"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609172039"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609172039"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609172039"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:44';
+const APP_VERSION = '2026.09.17 · 20:39';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1117,6 +1117,7 @@ function spostaAppuntamento(e, dopo) {
   velo.querySelector('#sp-si').onclick = async () => {
     const g = velo.querySelector('#sp-giorno').value, o = velo.querySelector('#sp-ora').value;
     if (!g || !o) return;
+    if (A.controllaGiorno(g)) return mostraToast(A.controllaGiorno(g));
     const nuovaData = A.isoDaRoma(g, o);
     const nuovo = dallaCoda ? { data_scelta: nuovaData, confermato_il: null }
       : { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata).toISOString() : null, confermato_il: null };
@@ -1402,6 +1403,7 @@ async function foglioAzione(id, opz = {}) {
   disegnaScelte();
   $('fa-si').onclick = async () => {
     if (!$('fa-giorno').value || !$('fa-ora').value) { $('fa-errore').textContent = 'Scegli giorno e ora.'; return; }
+    if (A.controllaGiorno($('fa-giorno').value)) { $('fa-errore').textContent = A.controllaGiorno($('fa-giorno').value); return; }
     if (st.portato && st.portato.id === st.contatto.id) { $('fa-errore').textContent = 'Contatto e «Portato da» sono la stessa persona.'; return; }
     const inizio = A.isoDaRoma($('fa-giorno').value, $('fa-ora').value);
     const fine = a.fine && a.inizio ? new Date(Date.parse(inizio) + Date.parse(a.fine) - Date.parse(a.inizio)).toISOString() : a.fine;   // stessa durata
