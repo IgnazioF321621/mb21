@@ -49,7 +49,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Non sugli appuntamenti già chiusi~~ → Ignazio 17/09: anche sui chiusi, per sicurezza
 
 ## 24. AVVISI PUSH SUL TELEFONO
-*Aperto il 17 settembre 2026 (Ignazio: «MB21 può fare un push sul cellulare per un avviso?» — sì). Da studiare bene insieme, dopo il cantiere 23.* Un avviso che arriva anche con l'app chiusa: «Tra 30 minuti: PM 1a1 · Pino Manolo», la mattina «Oggi 3 telefonate e 2 conferme da fare», «Un appuntamento passato senza esito».
+*Aperto il 17 settembre 2026 (Ignazio: «MB21 può fare un push sul cellulare per un avviso?» — sì). Da studiare bene insieme in una sessione nuova (Ignazio 17/09, chiuso il 23: «partiamo dal 24»). Prima di scrivere codice: studio con le decisioni sotto, poi un passo alla volta.* Un avviso che arriva anche con l'app chiusa: «Tra 30 minuti: PM 1a1 · Pino Manolo», la mattina «Oggi 3 telefonate e 2 conferme da fare», «Un appuntamento passato senza esito».
 - **Vale per tutti, non solo Apple** (Ignazio): iPhone/iPad, **Android**, e **browser** sul computer (Chrome, Edge, Firefox; Safari su Mac)
 - Condizioni sul dispositivo: su iPhone/iPad l'app deve essere **aggiunta alla schermata Home** e serve iOS 16.4+; su Android va bene anche da Chrome (meglio installata); la prima volta l'app chiede il permesso e l'utente deve dire sì. Se le notifiche sono spente nelle Impostazioni non si può forzare
 - Da costruire: un programma su Supabase che gira a orari fissi (es. ogni mattina, o pochi minuti prima di un appuntamento), guarda l'Agenda e spedisce gli avvisi (Web Push, chiavi VAPID = la «firma» che autorizza MB21 a mandare avvisi); una tabella con le «iscrizioni» dei dispositivi; in `sw.js` la ricezione dell'avviso. Più sessioni, non una
