@@ -491,12 +491,15 @@ const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl, scad] = await Promise.all([
+    const [cm, ob, segniAl, scad, seg] = await Promise.all([
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
+      // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il biglietto del partner (solo sulla propria Dashboard)
+      guardoAltri() || ST.utente.ruolo === 'Admin' ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
     ]);
+    DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01') : { checkMesi: cm.data, obiettivi: ob.data };
     DS.obiettivi = dati.obiettivi;
@@ -525,6 +528,36 @@ async function caricaRichiamoGriglia(oggi) {
 const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);
 const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
 
+// «Nuovo BBS 10-2026 · Hai il biglietto?» (cantiere 20 lavoro 2, Ignazio 17/09): il partner risponde una volta sola
+// (io · compagno/a · ospiti insieme); dopo, correzioni e aggiunte le fa l'Admin dalla scheda
+function riquadriBiglietto() {
+  return (DS.daSegnare || []).map(x => {
+    const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'Wes';
+    return `<div class="banner-big ${k}" data-seg="${esc(x.tipo)}|${esc(x.evento)}">
+      <b>🎟 Nuovo ${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · Hai il biglietto?</b>
+      <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">Io</button>
+        ${x.compagno ? `<button class="sv-chip ${k}" data-campo="compagno">${esc(x.compagno)}</button>` : ''}
+        <label class="sv-osp">+<input type="number" min="0" max="50" value="0" data-campo="ospiti">ospiti</label></div>
+      <div class="riga"><button class="primario" data-si>Sì, segna il biglietto</button><button class="link" data-no>No, niente biglietto</button></div>
+      <small>Si risponde una volta: altri ospiti o correzioni le fa l'Admin</small></div>`;
+  }).join('');
+}
+
+async function rispondiBiglietto(box, si) {
+  const [tipo, evento] = box.dataset.seg.split('|');
+  const on = campo => { const el = box.querySelector(`[data-campo="${campo}"]`); return !!el && el.classList.contains('on'); };
+  const ospiti = Math.max(0, Number(box.querySelector('[data-campo="ospiti"]').value) || 0);
+  const contatto = si && on('contatto'), compagno = si && on('compagno'), osp = si ? ospiti : 0;
+  if (si && !contatto && !compagno && !osp) return mostraToast('Scegli almeno un biglietto, oppure premi «No»');
+  box.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const { error } = await dbq('segna il mio biglietto', supa.rpc('segna_mio_biglietto',
+    { p_tipo: tipo, p_evento: evento, p_contatto: contatto, p_compagno: compagno, p_ospiti: osp }));
+  if (error) { box.querySelectorAll('button').forEach(b => { b.disabled = false; }); return mostraToast(error.message || 'Non salvato: riprova.'); }
+  DS.daSegnare = (DS.daSegnare || []).filter(x => !(x.tipo === tipo && x.evento === evento));
+  mostraToast(si ? 'Biglietto segnato ✅' : 'Va bene, non te lo chiedo più');
+  ST.tab = 'oggi'; mostraTab();   // la Dashboard si ridisegna e i segni si aggiornano
+}
+
 function dashboardAlto() {
   const d = DS.dati;
   let html = partnerSelect();
@@ -536,6 +569,7 @@ function dashboardAlto() {
       : `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`)
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
+  html += riquadriBiglietto();
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
@@ -595,6 +629,11 @@ function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
+  document.querySelectorAll('[data-seg]').forEach(box => {
+    box.querySelectorAll('.sv-chip').forEach(ch => { ch.onclick = () => ch.classList.toggle('on'); });
+    box.querySelector('[data-si]').onclick = () => rispondiBiglietto(box, true);
+    box.querySelector('[data-no]').onclick = () => rispondiBiglietto(box, false);
+  });
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
   su('ds-visione', () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); });
