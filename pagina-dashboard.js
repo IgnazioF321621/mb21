@@ -83,7 +83,7 @@ const BOTTONI_PROSPECT = [
   { etichetta: 'Richiamare', chiave: 'Prospect-Contatto-Richiamare', data: 'giorno' },
   { etichetta: 'Non risponde', chiave: 'Prospect-Contatto-No Risposta' },
   { etichetta: 'Non ora', chiave: 'Prospect-Contatto-Relazione' },
-  { etichetta: 'Non interessato', chiave: 'Prospect-Contatto-No Interesse', classe: 'no' },
+  { etichetta: 'Non interessato', chiave: 'Prospect-Contatto-No Interesse', classe: 'no', rientro: true },   // poi «Quando risentirlo?» (17/09)
 ];
 function bottoniPer(categoria) {
   if (categoria === 'Partner' || categoria === 'Cliente') return [
@@ -313,13 +313,14 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
+  const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, 'Non interessato') : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
   setTimeout(() => {
     listaDi(pos.lista).splice(pos.i, 1);
     if (daCoda) ST.stato.fatti_oggi++;
     salvaCache();
     disegnaOggi();
-    mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}`, () => annulla(pos, esito));
+    mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
   }, 250);
 }
 
@@ -361,17 +362,30 @@ function salvaCache() {
   try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi: ST.oggi, risultato: ST.risultato, stato: ST.stato, salvata: new Date().toISOString() })); } catch (e) {}
 }
 
+// «Quando risentirlo?» dopo un esito che chiude la relazione (No Interesse, No BuonFine): data già a un anno, cambiabile.
+// Scrive `rientro_il` del contatto (il giorno in cui rientra in coda). Stesso foglio da coda, Agenda e scheda. Restituisce il giorno o null.
+async function chiediRientro(contattoId, nome, esito) {
+  const A = MB21Agenda;
+  const iso = await chiediData({ etichetta: 'Quando risentirlo?', data: 'giorno', giorni: A.GIORNI_CHIUSURA, testo: `${esito}: rientra in coda tra un anno, o quando vuoi tu` }, nome);
+  if (!iso) return null;
+  const giorno = MB21Coda.oggiRoma(new Date(iso));
+  const { error } = await dbq('giorno di rientro', supa.from('contatti').update({ rientro_il: giorno, in_coda_dal: null }).eq('id', contattoId));
+  if (error) { mostraToast('Data non salvata: resta un anno.'); return null; }
+  return giorno;
+}
+
 // Foglio in basso per scegliere il giorno (e l'ora per l'appuntamento). Restituisce un ISO o null.
+// bottone.giorni: giorno proposto = oggi + giorni (predefinito domani); bottone.testo: riga sotto il nome
 function chiediData(bottone, nome) {
-  const domani = MB21Coda.oggiRoma(new Date(Date.now() + 86400000));
+  const proposto = MB21Coda.oggiRoma(new Date(Date.now() + (bottone.giorni || 1) * 86400000));
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `
       <div class="foglio">
         <h3>${esc(bottone.etichetta)}</h3>
-        <p>${esc(nome)}</p>
-        <input id="scelta-giorno" type="date" value="${domani}" min="${MB21Coda.oggiRoma()}">
+        <p>${esc(nome)}${bottone.testo ? `<br><small>${esc(bottone.testo)}</small>` : ''}</p>
+        <input id="scelta-giorno" type="date" value="${proposto}" min="${MB21Coda.oggiRoma()}">
         ${bottone.data === 'giorno-ora' ? '<input id="scelta-ora" type="time" value="18:30">' : ''}
         <div class="due">
           <button class="link" id="scelta-no">Annulla</button>

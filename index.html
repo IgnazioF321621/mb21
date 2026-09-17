@@ -494,20 +494,20 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171943"></script>
-<script src="lista.js?v=202609171943"></script>
-<script src="dashboard.js?v=202609171943"></script>
-<script src="agenda.js?v=202609171943"></script>
-<script src="report.js?v=202609171943"></script>
-<script src="check.js?v=202609171943"></script>
-<script src="mappa.js?v=202609171943"></script>
-<script src="pagina-dashboard.js?v=202609171943"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171943"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171943"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171943"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609171943"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="coda.js?v=202609171944"></script>
+<script src="lista.js?v=202609171944"></script>
+<script src="dashboard.js?v=202609171944"></script>
+<script src="agenda.js?v=202609171944"></script>
+<script src="report.js?v=202609171944"></script>
+<script src="check.js?v=202609171944"></script>
+<script src="mappa.js?v=202609171944"></script>
+<script src="pagina-dashboard.js?v=202609171944"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171944"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171944"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171944"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609171944"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.17 · 19:43';
+const APP_VERSION = '2026.09.17 · 19:44';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1083,6 +1083,11 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     mostraToast('Annullato');
   };
   AG.aperta = null;
+  if (MB21Agenda.chiudeRelazione(esito)) {   // No Interesse / No BuonFine: niente prossimo appuntamento, «Quando risentirlo?»
+    const giorno = await chiediRientro(e.contatto_id, e.contatti ? e.contatti.nome : '', esito);
+    await ridisegna();
+    return mostraToast(`${esito}${giorno ? ' · risentirlo il ' + dataBreve(giorno) : ' salvato'}`, () => annulla(null));
+  }
   const creato = opz.senzaProssimo ? null : await nuovoAppuntamento({
     titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
