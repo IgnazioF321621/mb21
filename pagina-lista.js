@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati' };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', giaUtente: {} };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -257,7 +257,7 @@ function disegnaScheda() {
           ${link('https://wa.me/' + cifre, 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}
         </div>
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
-        ${c.categoria === 'Partner' ? '<button class="link" id="invita-app">🔗 Invita nell\'app MB21</button>' : ''}
+        ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}
       </div>
     </div>
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}
@@ -279,12 +279,26 @@ function disegnaScheda() {
   };
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
-  const inv = document.getElementById('invita-app');
-  if (inv) inv.onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
+  mostraInvito(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
+}
+
+// «🔗 Invita nell'app MB21» solo se la persona non è già utente dell'app (Ignazio 17/09): lo dice il database
+// (`e_gia_utente`, confronto per nome in tutte le liste; il codice Amway non conta, la coppia lo condivide). Risposta ricordata per nome.
+async function mostraInvito(c) {
+  const posto = document.getElementById('invita-posto');
+  if (!posto) return;
+  if (!(c.nome in LS.giaUtente)) {
+    const { data, error } = await dbq('già utente?', supa.rpc('e_gia_utente', { p_nome: c.nome }));
+    if (error) return;   // in dubbio niente bottone: si riprova riaprendo la scheda
+    LS.giaUtente[c.nome] = data === true;
+  }
+  if (LS.giaUtente[c.nome] || LS.contatto !== c || !posto.isConnected) return;
+  posto.innerHTML = '<button class="link" id="invita-app">🔗 Invita nell\'app MB21</button>';
+  document.getElementById('invita-app').onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
 }
 
 function sezioneDati() {

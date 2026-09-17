@@ -19,6 +19,11 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Pagina Mappa in un file suo~~ — fatto il 17/09 (Ignazio, prima di chiudere): `pagina-mappa.js` (259 righe) spostato da `index.html` come Dashboard e Lista, codice identico; `index.html` da 2014 a 1762 righe. Restano dentro: Agenda (370 righe), Check e Report (100 ciascuna)
 - ~~Lavoro 3 · CEP nella scheda contatto~~ — fatto il 17/09 (Ignazio): sotto «CEP» «dal 01/06/2026 · abbonato fino al 30/09/2026» = ultimo giorno del mese in corso finché il periodo è aperto (a ottobre 31/10). Solo la scritta, dati e regole invariati. Prove lista 16. **Provato da Ignazio il 17/09.** Poi (Ignazio 17/09: il campo «uscito il» confondeva; il CEP si paga il 1° a Network 21 e si scopre dopo chi non rinnova): periodo aperto = solo «dal» + bottone **«Non ha rinnovato»** che chiude all'**ultimo giorno del mese prima**; **fino al 20 del mese** «rinnovo del 1° da verificare». Prove lista 17. **Provato da Ignazio il 17/09: «ci siamo»**
 
+## 22. LISTA NOMI: INVITO E AZIONI
+*Aperto il 17 settembre 2026 (Ignazio).*
+- ~~Lavoro 1 · «Invita nell'app MB21» sparisce se è già utente~~ — fatto il 17/09: confronto **per nome** in tutte le liste (Ignazio: il codice Amway non conta, la coppia lo condivide ma non è detto che siano registrati tutti e due), utenti eliminati esclusi; funzione `e_gia_utente`, migrazione applicata e provata sul DB (Arcoraci sì, Vaccaro eliminata no, «Elisa Petruso» no perché l'utente si chiama «Maria Elisa Petruso»). **Da provare da Ignazio**
+- **Lavoro 2 · Azioni della scheda col criterio di Glide** (azione che nasce da completare → esito → data successiva): Ignazio vuole vederlo sul pratico. Idea di Claude: «Azione +» apre «Nuovo appuntamento» con la persona già scelta (tutti i tipi della categoria); le azioni senza esito mostrano i bottoni esito e poi «Fissa il prossimo appuntamento»; l'interruttore Completato sparisce (completata = ha l'esito)
+
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
