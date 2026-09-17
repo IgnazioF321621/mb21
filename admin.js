@@ -14,7 +14,7 @@ async function apriAdmin() {
     const [wes, bbs, ut, rich, sq] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
-      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
     ]);
@@ -243,7 +243,10 @@ function collegaAdmin() {
   su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
-    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}.`, 'Approva')) return;
+    // Stessa regola di approva_richiesta (Ignazio 17/09): stesso codice Amway di un utente che paga per sé → in comune con il primo registrato
+    const paga = AD.utenti.filter(x => x.partner_id === r.codice_amway && !x.abbonamento_con).sort((a, b) => String(a.creato_il).localeCompare(String(b.creato_il)))[0];
+    const abb = paga ? `In comune con ${nomeDi(paga)}: nessun giorno gratis.` : '15 giorni gratis da oggi.';
+    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}. ${abb}`, 'Approva')) return;
     b.disabled = true;
     const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
     if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
