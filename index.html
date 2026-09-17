@@ -490,7 +490,7 @@
 <script src="pagina-lista.js"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 10:38';
+const APP_VERSION = '2026.09.17 · 11:35';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1470,28 +1470,19 @@ async function apriMappa() {
 // biglietti e periodi CEP con il proprietario della lista, coppie, utenti, eventi BBS e Wes con la data di caricamento.
 // Servono alla Mappa (adesso) e a Dashboard e Check (fotografia a fine mese, `MB21Mappa.segniAl`).
 async function leggiSegniGrezzi() {
-  const schede = [];
-  for (let da = 0; ; da += 1000) {
-    const { data, error } = await dbq('schede dei partner', supa.from('contatti').select('id, nome, user_id, codice_amway')
-      .or('categoria.eq.Partner,codice_amway.not.is.null').order('id').range(da, da + 999));
-    if (error) throw error;
-    schede.push(...data);
-    if (data.length < 1000) break;
-  }
-  const [sq, big, cep, coppie, ut, bbs, wes] = await Promise.all([
+  // Cantiere 20: schede, biglietti, CEP, coppie e utenti arrivano da `segni_del_ramo()` (solo il ramo di chi guarda,
+  // l'Admin tutto): un partner non legge le schede delle altre liste, ma i segni del suo ramo sì
+  const [sq, segni, bbs, wes] = await Promise.all([
     MP.squadra ? { data: MP.squadra } : dbq('squadra per i segni', supa.from('squadra').select('partner_id, sponsor_id, nome')),
-    dbq('biglietti per i segni', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti, creato_il, contatti(user_id)').limit(10000)),
-    dbq('CEP per i segni', supa.from('cep').select('contatto_id, dal, uscito_il, contatti(user_id)').limit(10000)),
-    dbq('coppie per i segni', supa.from('contatti').select('id, compagno_id').not('compagno_id', 'is', null).limit(5000)),
-    dbq('utenti per i segni', supa.from('utenti').select('id, partner_id')),
+    dbq('segni del ramo', supa.rpc('segni_del_ramo')),
     dbq('BBS per i segni', supa.from('bbs').select('data, creato_il')),
     dbq('Wes per i segni', supa.from('wes').select('data, creato_il')),
   ]);
-  const errore = [sq, big, cep, coppie, ut, bbs, wes].find(r => r.error);
+  const errore = [sq, segni, bbs, wes].find(r => r.error);
   if (errore) throw errore.error;
-  const conUtente = righe => righe.map(r => ({ ...r, user_id: r.contatti && r.contatti.user_id }));
-  return { squadra: sq.data, schede, biglietti: conUtente(big.data), cep: conUtente(cep.data), coppie: coppie.data,
-    utenti: ut.data, bbs: bbs.data, wes: wes.data, oggi: MB21Coda.oggiRoma() };
+  const r = segni.data || {};
+  return { squadra: sq.data, schede: r.schede || [], biglietti: r.biglietti || [], cep: r.cep || [], coppie: r.coppie || [],
+    utenti: r.utenti || [], bbs: bbs.data, wes: wes.data, oggi: MB21Coda.oggiRoma() };
 }
 
 // Partner di cui si contano i segni: quello scelto; con «Tutti» il gruppo intero (l'Admin in cima), così non si conta due volte
