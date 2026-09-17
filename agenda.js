@@ -28,7 +28,8 @@
     'Meeting/Evento': ['Incontro N21'],
     'Ordine': ['OrdineStart', 'VP Personali'],
   };
-  // Tipi per categoria (Scelte.csv). Ex/Referral/Unlinked/Archiviato: nessun appuntamento (decisione 5)
+  // Tipi per categoria (Scelte.csv). Dal 17/09 (Ignazio: «l'azione in qualsiasi categoria, semplifichiamo; basta che ne abbia una»)
+  // Ex Partner/Cliente, Referral, Unlinked e Archiviato hanno gli stessi tipi ed esiti del Prospect (prima: nessun appuntamento, decisione 5).
   const TIPI = {
     'Prospect': {
       'Contatto': ['Mai contattato o 2+ anni', 'PM Fissato', 'No Risposta', 'Telefono OFF', 'No Interesse', 'Richiamare', 'Relazione', 'Consult Prodotti'],
@@ -37,7 +38,8 @@
     'Partner': { 'Contatto': FASI_CONTATTO_PC, 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
     'Cliente': { 'Contatto': FASI_CONTATTO_PC, 'Consulenza PRD': FASI_PRD },
   };
-  const CATEGORIE = Object.keys(TIPI);
+  for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
+  const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
   const CON_OSPITE = ['Piano Marketing', 'Follow Up'];                          // decisione 8
   const DURATE = [[5, '5 min'], [30, '30 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];
   const COLORI = { 'Piano Marketing': '#2563EB', 'Follow Up': '#16A34A', 'Appuntamento': '#7C3AED', 'Consulenza PRD': '#EA580C', 'Contatto': '#6B7280' };
@@ -215,7 +217,7 @@
 
   function validaAppuntamento(v) {
     if (!v.contatto_id) return 'Scegli il contatto dall\'elenco.';
-    if (!TIPI[v.categoria]) return 'Categoria senza appuntamenti: scegli Prospect, Partner o Cliente.';
+    if (!TIPI[v.categoria]) return 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.';
     if (!v.area) return 'Scegli l\'area.';
     if (!tipiPer(v.categoria).includes(v.tipo_azione)) return 'Scegli il tipo di azione.';
     if (!sottotipiPer(v.tipo_azione).includes(v.modalita)) return `Scegli il ${etichettaSottotipo(v.tipo_azione).toLowerCase()}.`;   // «Scegli il tipo di piano.»

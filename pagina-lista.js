@@ -449,7 +449,7 @@ async function sezioneAzioni() {
 async function azionePiu() {
   if (soloGuardo()) return;
   const c = LS.contatto;
-  if (!MB21Agenda.tipiPer(c.categoria).length) return mostraToast(`${c.categoria || 'Senza categoria'}: nessun tipo di azione. Cambia categoria con Modifica.`);
+  if (!MB21Agenda.tipiPer(c.categoria).length) return mostraToast('Il contatto non ha una categoria: dagliela con Modifica o da «Da catalogare».');
   const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
   if (!creato) return;
   LS.azioni = null; LS.righe = [];
