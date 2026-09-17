@@ -47,3 +47,6 @@
 
 ## Mai confirm() del browser: sempre `chiediConferma`
 *17 settembre 2026.* In Arc la finestra di sistema «Eliminare?» non compariva al primo tocco e nel browser interno di Claude mai: il bottone sembrava rotto. Era già successo il 16/09 in Admin. Regola: ogni conferma passa da `chiediConferma` (index.html), che è un foglio dell'app e funziona ovunque. Prima di aggiungerne una, `grep confirm(` deve dare zero risultati.
+
+## Anno con due cifre nel campo data
+*17 settembre 2026.* Ignazio scriveva «23» per 2023 in un campo data da computer: il browser salva l'anno **0023**, l'app non se ne accorge e il salvataggio fallisce con un messaggio generico («controlla la connessione»). Regola: ogni campo data che scrive nel database passa da `MB21Agenda.controllaGiorno` (anno tra 2000 e 2100) con un messaggio che dice cosa correggere. Quando un salvataggio «non va» senza motivo, chiedere a Ignazio una **foto dello schermo**: qui la causa si vedeva solo lì.

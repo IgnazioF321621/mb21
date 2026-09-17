@@ -220,6 +220,14 @@
   const GIORNI_CHIUSURA = 365;
   const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
 
+  // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
+  function controllaGiorno(giorno) {
+    if (!giorno) return 'Scegli il giorno.';
+    const anno = Number(String(giorno).slice(0, 4));
+    if (!(anno >= 2000 && anno <= 2100)) return `Controlla l'anno (${String(giorno).slice(0, 4)}): scrivilo con 4 cifre, es. 2023.`;
+    return null;
+  }
+
   function validaAppuntamento(v) {
     if (!v.contatto_id) return 'Scegli il contatto dall\'elenco.';
     if (!TIPI[v.categoria]) return 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.';
@@ -227,6 +235,7 @@
     if (!tipiPer(v.categoria).includes(v.tipo_azione)) return 'Scegli il tipo di azione.';
     if (!sottotipiPer(v.tipo_azione).includes(v.modalita)) return `Scegli il ${etichettaSottotipo(v.tipo_azione).toLowerCase()}.`;   // «Scegli il tipo di piano.»
     if (!v.giorno || !/^\d\d:\d\d$/.test(v.ora || '')) return 'Scegli giorno e ora.';
+    if (controllaGiorno(v.giorno)) return controllaGiorno(v.giorno);
     if ((v.ospite || '').length > 50) return 'Ospite: massimo 50 caratteri.';
     if ((v.note || '').length > 100) return 'Note: massimo 100 caratteri.';
     return null;
@@ -264,7 +273,7 @@
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, linkGoogleCalendar, linkNotePlan };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

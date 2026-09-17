@@ -91,6 +91,8 @@ prova('Nuovo appuntamento: controlli', () => {
   assert.equal(A.validaAppuntamento({ ...v, modalita: 'PM 1a1' }), 'Scegli il tipo di appuntamento.');
   assert.equal(A.validaAppuntamento({ ...v, categoria: 'Prospect', tipo_azione: 'Piano Marketing', modalita: 'Avvio' }), 'Scegli il tipo di piano.');
   assert.equal(A.validaAppuntamento({ ...v, ospite: 'x'.repeat(51) }), 'Ospite: massimo 50 caratteri.');
+  assert.equal(A.validaAppuntamento({ ...v, giorno: '0023-04-20' }), 'Controlla l\'anno (0023): scrivilo con 4 cifre, es. 2023.');
+  assert.equal(A.controllaGiorno('2023-04-20'), null);
 });
 
 prova('Bottone «Appuntamento» della coda: tipo proposto per categoria; niente doppione in Agenda', () => {
