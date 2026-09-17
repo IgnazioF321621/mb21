@@ -490,7 +490,7 @@
 <script src="pagina-lista.js"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 10:13';
+const APP_VERSION = '2026.09.17 · 10:32';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -536,6 +536,7 @@ function mostraEmail(errore) {
     </div>`;
   document.getElementById('invia').onclick = inviaLink;
   document.getElementById('entra').onclick = entraConPassword;
+  mostraPassword(app);
 }
 
 // Accesso con password (Ignazio 17/09: «dobbiamo essere rapidi»); funziona anche dentro l'app installata sull'iPhone
@@ -585,6 +586,7 @@ function mostraRegistrazione(esito) {
     <button class="link" id="rg-entra">Sono già registrato: entra</button>
     ${versione()}</div>`;
   document.getElementById('rg-entra').onclick = () => { history.replaceState(null, '', location.pathname); mostraEmail(); };
+  mostraPassword(app);
   document.getElementById('rg-invia').onclick = async () => {
     const v = id => document.getElementById(id).value.trim();
     const codice = v('rg-codice').replace(/\s/g, '');
@@ -634,6 +636,30 @@ function messaggioAccesso(error) {
 // Password scelta da chi è entrato (Ignazio 17/09: chi entra col link non ne ha una, e nell'app installata il link non arriva).
 // Pagina web normale: uguale su iPhone, iPad, Android e computer; autocomplete="new-password" fa proporre al telefono di salvarla.
 // primaVolta: foglio che compare dopo l'accesso a chi non l'ha ancora scelta (segno `password_scelta` sull'account), con «Più tardi».
+// Occhio dentro ogni campo password (Ignazio 17/09: vederla mentre si scrive evita errori). Tocco: mostra / nasconde.
+function mostraPassword(dove) {
+  dove.querySelectorAll('input[type="password"]').forEach(campo => {
+    const box = document.createElement('span');
+    box.style.cssText = 'position:relative;display:block';
+    box.style.margin = `${campo.style.marginTop || '6px'} 0 12px`; campo.style.margin = '0';   // il margine va fuori, così l'occhio resta al centro
+    campo.parentNode.insertBefore(box, campo);
+    box.appendChild(campo);
+    campo.style.paddingRight = '48px';
+    const occhio = document.createElement('button');
+    occhio.type = 'button';
+    occhio.textContent = '👁️';
+    occhio.setAttribute('aria-label', 'Mostra la password');
+    occhio.style.cssText = 'position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:20px;padding:8px;width:auto;margin:0;box-shadow:none';
+    occhio.onclick = () => {
+      const visibile = campo.type === 'password';
+      campo.type = visibile ? 'text' : 'password';
+      occhio.textContent = visibile ? '🙈' : '👁️';
+      occhio.setAttribute('aria-label', visibile ? 'Nascondi la password' : 'Mostra la password');
+    };
+    box.appendChild(occhio);
+  });
+}
+
 function foglioPassword(primaVolta) {
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -647,6 +673,7 @@ function foglioPassword(primaVolta) {
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.querySelector('#pw-no').onclick = chiudi;
+  mostraPassword(velo);
   velo.querySelector('#pw-si').onclick = async () => {
     const p1 = velo.querySelector('#pw-1').value, p2 = velo.querySelector('#pw-2').value;
     const errore = velo.querySelector('#pw-errore');
