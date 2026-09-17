@@ -73,6 +73,7 @@ async function caricaSchedeMappa() {
   MP.attivi = attivi;
   MP.schede = g.schede;
   MP.targhe = L.targhePerContatto(g.biglietti, g.cep, g.coppie, g.oggi, attivi);
+  MP.usoApp = MB21Mappa.usoApp(g.utenti);   // targhetta 📱: chi ha l'app e da quanto non la apre
   MP.segni = MB21Mappa.segniGruppo({ squadra: MP.squadra || g.squadra, schede: g.schede, preferito: visto().id, coppie: g.coppie,
     utenti: g.utenti, biglietti: g.biglietti, cep: g.cep, attivoBbs: attivi.bbs, attivoWes: attivi.wes, oggi: g.oggi });
 }
@@ -115,7 +116,7 @@ function disegnaMappa() {
           <span class="mp-liv">${r.livello ?? ''}</span>
           <span title="${esc(s.titolo)}">${s.pallino}</span>
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
-          <span class="sv-targhe" style="margin-left:6px">${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
+          <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano <b>${num(r.alLivelloSuccessivo)}</b>` : ''}</div>

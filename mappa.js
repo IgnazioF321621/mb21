@@ -267,7 +267,29 @@
       .map(u => ({ user_id: u.id, mese: giorno, vpp_amway: per.get(String(u.partner_id)).vpp, vpg_amway: per.get(String(u.partner_id)).vpg }));
   }
 
+  // ── Targhetta 📱 dell'app (cantiere 20 lavoro 4, Ignazio 17/09): un modo solo, senza colori, per dire chi usa l'app.
+  // usoApp(utenti) → per codice partner { ultimo_uso, nomi }: gli utenti eliminati non contano; con due utenti sullo stesso
+  // codice (la coppia) vale l'uso più recente e i nomi in lista si sommano. Chi non è nell'elenco non ha l'app.
+  function usoApp(utenti) {
+    const per = {};
+    for (const u of utenti || []) {
+      if (!u.partner_id || u.eliminato_il) continue;
+      const t = per[u.partner_id] || (per[u.partner_id] = { ultimo_uso: null, nomi: 0 });
+      if (u.ultimo_uso && (!t.ultimo_uso || u.ultimo_uso > t.ultimo_uso)) t.ultimo_uso = u.ultimo_uso;
+      t.nomi += Number(u.nomi) || 0;
+    }
+    return per;
+  }
+  // etichettaUso(ultimo_uso, oggi) → «oggi» · «ieri» · «12 gg» · «mai» (giorni contati a Roma; oggi = 'AAAA-MM-GG')
+  function etichettaUso(ultimoUso, oggi) {
+    if (!ultimoUso) return 'mai';
+    const giorno = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date(ultimoUso));
+    const [a, m, g] = giorno.split('-').map(Number), [oa, om, og] = String(oggi).split('-').map(Number);
+    const giorni = Math.round((Date.UTC(oa, om - 1, og) - Date.UTC(a, m - 1, g)) / 86400000);
+    return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} gg`;
+  }
+
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
-    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti };
+    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
