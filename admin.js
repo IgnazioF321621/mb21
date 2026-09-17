@@ -11,15 +11,18 @@ async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
-    const [wes, bbs, ut, rich, sq] = await Promise.all([
+    const [wes, bbs, ut, rich, sq, disp] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
+      dbq('dispositivi con gli avvisi', supa.from('avvisi_dispositivi').select('user_id, dispositivo')),   // cantiere 24: chi ha gli avvisi accesi
     ]);
     if (wes.error || bbs.error || ut.error || rich.error || sq.error) throw wes.error || bbs.error || ut.error || rich.error || sq.error;
     AD.codiciMappa = new Set(sq.data.map(x => x.partner_id));
+    AD.dispositivi = {};   // utente → dispositivi con gli avvisi accesi («iPhone · Safari · app»)
+    (disp.error ? [] : disp.data).forEach(d => { (AD.dispositivi[d.user_id] = AD.dispositivi[d.user_id] || []).push(d.dispositivo || 'dispositivo'); });
     AD.richieste = rich.data; AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
     AD.wes = wes.data; AD.bbs = bbs.data;
     // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
@@ -47,11 +50,12 @@ function rigaUtenteAdmin(u) {
   const pallino = { attivo: '🟢', in_scadenza: '🟠', scaduto: '🔴' }[stato];
   const data = d => (d ? d.split('-').reverse().join('/') : '—');
   let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span>${pallino}</span><b>${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
-    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · 🔔' : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')} · codice ${esc(u.partner_id || '—')}</small>
     <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
+    <small>${(AD.dispositivi[u.id] || []).length ? `🔔 Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : '🔕 Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
     <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica</button>
     <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">🗑 Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
