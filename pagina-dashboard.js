@@ -572,7 +572,7 @@ function dashboardAlto() {
     : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   html += riquadriBiglietto();
-  html += riquadroAvvisi();   // cantiere 24: «🔔 Avvisi sul telefono»
+  html += riquadroAvvisi();   // cantiere 24: «🔔 Avvisi sul telefono», solo se spenti e non rimandati con «Non ora»
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
@@ -625,7 +625,7 @@ function dashboardBasso() {
     </div>
     ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
     ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}
-    ${guardoAltri() ? '' : `<button class="link" id="ds-password" style="display:block;margin:18px auto 0">🔑 Cambia password</button>`}`;
+    ${guardoAltri() ? '' : `<button class="link" id="ds-password" style="display:block;margin:18px auto 0">🔑 Cambia password</button>` + rigaAvvisi()}`;
 }
 
 function collegaDashboard() {
