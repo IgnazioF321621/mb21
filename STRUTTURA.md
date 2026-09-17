@@ -240,6 +240,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **Onboarding**: contatore calcolato «fatti/14»
 
 **Agenda** (Fase 4, `agenda.js`, funzioni pure; prove in `tools/banco/prova_agenda.js`; scelte in `docs/MB21_v4_Scelte_Agenda.md`):
+- **categorie con azioni** (dal 17/09, Ignazio: «qualsiasi categoria, basta che ne abbia una»): Prospect, Partner e Cliente con i loro tipi (`TIPI` in `agenda.js`); **Ex Partner/Cliente, Referral, Unlinked e Archiviato come il Prospect**. Senza categoria: nessuna azione (messaggio «Il contatto non ha una categoria»). Nel modulo la riga Categoria mostra Prospect · Partner · Cliente (`CATEGORIE`) più quella attuale se è un'altra. La scheda di un Archiviato resta di sola lettura; in Agenda gli archiviati non sono nell'elenco dei nomi
 - **appuntamenti = righe di `azioni`**: tipo ≠ Contatto per `inizio`; tipo Contatto se ha `data_scelta` (Richiamare / PM Fissato dalla coda: si guardano, non si chiudono in Agenda) oppure è programmato dall'Agenda (`completata = false`, per `inizio`). Nuovi appuntamenti: `completata = false`, `esito` vuoto, `fine = inizio + durata`
 - **scelte** (`TIPI`, `SOTTOTIPI`): Prospect → Contatto · Piano Marketing · Follow Up · Consulenza PRD; Partner → Contatto · Piano Marketing · Follow Up · Appuntamento; Cliente → Contatto · Consulenza PRD; altre categorie nessuna. Fasi per categoria e tipo, per Appuntamento per sottotipo. `modalita` = sottotipo
 - **Admin** vede gli appuntamenti del partner scelto nel Partner Select; con Tutti di tutti, con «[Partner]» all'inizio della riga
@@ -467,3 +468,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 18:58 | Riga di NotePlan senza telefono (Ignazio) |
 | 2026.09.17 · 19:02 | Riga di NotePlan con «- » davanti; logo vero di NotePlan al posto della N |
 | 2026.09.17 · 19:21 | Cantiere 24, passo 1: impianto degli avvisi push (tabella dispositivi, funzione Edge `avvisi`, orologio) e avviso delle 22 «Hai fatto il Check di oggi?»; riquadro «🔔 Avvisi sul telefono» in Dashboard |
+| 2026.09.17 · 19:22 | Azioni per ogni categoria: Ex, Referral, Unlinked e Archiviato hanno i tipi ed esiti del Prospect; solo i senza categoria restano fuori |

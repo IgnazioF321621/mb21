@@ -6,11 +6,14 @@ const A = require('../../agenda.js');
 let ok = 0;
 function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
 
-prova('Tipi per categoria (Scelte.csv); Ex/Referral/Unlinked/Archiviato senza appuntamenti', () => {
+prova('Tipi per categoria (Scelte.csv); Ex/Referral/Unlinked/Archiviato come Prospect (17/09); senza categoria niente', () => {
   assert.deepEqual(A.tipiPer('Prospect'), ['Contatto', 'Piano Marketing', 'Follow Up', 'Consulenza PRD']);
   assert.deepEqual(A.tipiPer('Partner'), ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento']);
   assert.deepEqual(A.tipiPer('Cliente'), ['Contatto', 'Consulenza PRD']);
-  for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato', null]) assert.deepEqual(A.tipiPer(c), []);
+  for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) assert.deepEqual(A.tipiPer(c), A.tipiPer('Prospect'));
+  assert.deepEqual(A.fasiPer('Unlinked', 'Piano Marketing', 'PM 1a1'), A.fasiPer('Prospect', 'Piano Marketing', 'PM 1a1'));
+  assert.deepEqual(A.tipiPer(null), []);
+  assert.deepEqual(A.CATEGORIE, ['Prospect', 'Partner', 'Cliente']);
 });
 
 prova('Fasi: per tipo, per sottotipo dentro Appuntamento; PRD Vendita/No Vendita; Contatto di Partner/Cliente', () => {
@@ -82,7 +85,8 @@ prova('Nuovo appuntamento: controlli', () => {
   const v = { contatto_id: 'c', categoria: 'Partner', area: 'Attività', tipo_azione: 'Appuntamento', modalita: 'Avvio', giorno: '2026-09-15', ora: '18:30' };
   assert.equal(A.validaAppuntamento(v), null);
   assert.equal(A.validaAppuntamento({ ...v, contatto_id: null }), 'Scegli il contatto dall\'elenco.');
-  assert.equal(A.validaAppuntamento({ ...v, categoria: 'Unlinked' }), 'Categoria senza appuntamenti: scegli Prospect, Partner o Cliente.');
+  assert.equal(A.validaAppuntamento({ ...v, categoria: null }), 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.');
+  assert.equal(A.validaAppuntamento({ ...v, categoria: 'Unlinked', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1' }), null);
   assert.equal(A.validaAppuntamento({ ...v, categoria: 'Cliente' }), 'Scegli il tipo di azione.');
   assert.equal(A.validaAppuntamento({ ...v, modalita: 'PM 1a1' }), 'Scegli il tipo di appuntamento.');
   assert.equal(A.validaAppuntamento({ ...v, categoria: 'Prospect', tipo_azione: 'Piano Marketing', modalita: 'Avvio' }), 'Scegli il tipo di piano.');
