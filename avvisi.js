@@ -60,20 +60,29 @@ async function mandaAvvisoDiProva() {
   mostraToast(data.ok ? 'Avviso di prova inviato: guarda le notifiche' : 'Nessun dispositivo ha ricevuto l\'avviso');
 }
 
+// «Non ora» (Ignazio 17/09): il riquadro sparisce per 7 giorni su questo dispositivo, poi si ripresenta
+const NON_ORA_GIORNI = 7, CHIAVE_NON_ORA = 'mb21_avvisi_non_ora';
+function rimandato() { try { return Date.now() < Number(localStorage.getItem(CHIAVE_NON_ORA) || 0); } catch (e) { return false; } }
+async function nonOra() { try { localStorage.setItem(CHIAVE_NON_ORA, String(Date.now() + NON_ORA_GIORNI * 86400000)); } catch (e) { /* senza memoria: torna alla prossima apertura */ } }
+
+// Riquadro in alto: solo quando gli avvisi sono spenti e non si è detto «Non ora»
 function riquadroAvvisi() {
-  const s = AV.stato;
-  if (!s) return '';
+  if (AV.stato !== 'spento' || rimandato()) return '';
+  return `<div class="banner-big avvisi"><b>🔔 Avvisi sul telefono</b>
+    <small>Alle <b>22</b> un promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
+    <div class="riga"><button class="primario" id="av-attiva">Attiva gli avvisi</button><button class="link" id="av-nonora">Non ora</button></div></div>`;
+}
+
+// Riga piccola in fondo alla Dashboard, accanto a «Cambia password»: c'è sempre (tranne dove gli avvisi non esistono)
+function rigaAvvisi() {
+  const s = AV.stato, b = (id, t) => `<button class="link" id="${id}">${t}</button>`;
   const testi = {
-    no_supporto: 'Questo browser non supporta gli avvisi. Su iPhone/iPad servono l\'app sulla schermata Home e iOS 16.4 o più recente.',
-    da_installare: 'Su iPhone/iPad gli avvisi arrivano solo dall\'app sulla schermata Home: in Safari tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>, poi apri MB21 da lì.',
-    negato: 'Gli avvisi sono bloccati per MB21: riaccendili nelle Impostazioni del telefono (Notifiche → MB21) e riapri l\'app.',
-    acceso: 'Accesi su questo dispositivo: alle <b>22</b> ti ricordo il Check del Giorno se non l\'hai ancora fatto.',
-    spento: 'Alle <b>22</b> un promemoria per il Check del Giorno, anche con l\'app chiusa. Ogni dispositivo si accende da solo.',
+    acceso: `🔔 Avvisi accesi · ${b('av-spegni', 'Spegni')} · ${b('av-prova', 'Prova')}`,
+    spento: `🔔 Avvisi spenti · ${b('av-attiva', 'Attiva')}`,
+    da_installare: '🔔 Avvisi: aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home) per riceverli',
+    negato: '🔔 Avvisi bloccati: riaccendili nelle Impostazioni del telefono (Notifiche → MB21)',
   };
-  const bottoni = s === 'acceso'
-    ? '<div class="riga"><button class="link" id="av-prova">Manda un avviso di prova</button><button class="link" id="av-spegni">Spegni</button></div>'
-    : s === 'spento' ? '<div class="riga"><button class="primario" id="av-attiva">Attiva gli avvisi</button></div>' : '';
-  return `<div class="banner-big avvisi"><b>🔔 Avvisi sul telefono</b><small>${testi[s]}</small>${bottoni}</div>`;
+  return testi[s] ? `<div class="riga-avvisi">${testi[s]}</div>` : '';
 }
 
 function collegaAvvisi() {
@@ -81,4 +90,5 @@ function collegaAvvisi() {
   su('av-attiva', attivaAvvisi);
   su('av-spegni', spegniAvvisi);
   su('av-prova', mandaAvvisoDiProva);
+  su('av-nonora', nonOra);
 }
