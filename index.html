@@ -488,7 +488,7 @@
 <script src="mappa.js"></script>
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 07:21';
+const APP_VERSION = '2026.09.17 · 07:24';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1290,7 +1290,7 @@ function dashboardAlto() {
     <span class="freccia">›</span></button>`;
   const s = d.schede.find(x => x.chiave === DS.scheda);
   html += `<div class="riquadro"><div class="schede-dash">${d.schede.map(x =>
-    `<button data-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}">${x.pallino} ${esc(x.etichetta)}</button>`).join('')}</div>
+    `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}">${x.pallino} ${esc(x.etichetta)}</button>`).join('')}</div>
     <div class="kpi">${s.riquadri.map(r => `<div>
       <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
       <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
@@ -1346,8 +1346,9 @@ function collegaDashboard() {
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
+  // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
   app.querySelectorAll('.schede-dash button').forEach(b => {
-    b.onclick = () => { DS.scheda = b.dataset.scheda; disegnaOggi(); };
+    b.onclick = () => { DS.scheda = b.dataset.dsScheda; disegnaOggi(); };
   });
 }
 
