@@ -450,3 +450,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 14:47 | Azioni della scheda: «Azione +» apre subito Nuovo appuntamento; «⇄ Porta qualcuno»; esito cambiabile con un tocco anche sulle azioni chiuse |
 | 2026.09.17 · 14:58 | Blocco esiti uguale in Agenda e scheda contatto; «Scegli il tipo di piano» al posto di «sottotipo» |
 | 2026.09.17 · 15:01 | «⇄ Porta qualcuno» anche nel Nuovo appuntamento dall'Agenda |
+| 2026.09.17 · 15:04 | Script locali caricati con `?v=<cifre di APP_VERSION>`: il telefono ricarica i file nuovi a ogni versione |
