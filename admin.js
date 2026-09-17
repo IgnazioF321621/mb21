@@ -14,7 +14,7 @@ async function apriAdmin() {
     const [wes, bbs, ut, rich, sq, disp] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
-      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
       dbq('dispositivi con gli avvisi', supa.from('avvisi_dispositivi').select('user_id, dispositivo')),   // cantiere 24: chi ha gli avvisi accesi
@@ -49,7 +49,8 @@ function rigaUtenteAdmin(u) {
   const scad = D.scadenzaDi(u, AD.utenti), stato = D.statoAbbonamento(scad, oggi);
   const pallino = { attivo: '🟢', in_scadenza: '🟠', scaduto: '🔴' }[stato];
   const data = d => (d ? d.split('-').reverse().join('/') : '—');
-  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span>${pallino}</span><b>${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
+  // cantiere 25 (Ignazio 17/09): la foto del Profilo anche qui, letta da `utenti.foto` (stesso cerchietto della Dashboard)
+  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${pallino} ${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
     <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · 🔔' : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
