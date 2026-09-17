@@ -587,7 +587,8 @@ function dashboardBasso() {
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
     ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}`;
+    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}
+    ${guardoAltri() ? '' : `<button class="link" id="ds-password" style="display:block;margin:18px auto 0">🔑 Cambia password</button>`}`;
 }
 
 function collegaDashboard() {
@@ -600,6 +601,7 @@ function collegaDashboard() {
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
+  su('ds-password', () => foglioPassword(false));
   // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
   app.querySelectorAll('.schede-dash button').forEach(b => {
     b.onclick = () => { DS.scheda = b.dataset.dsScheda; disegnaOggi(); };
