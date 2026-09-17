@@ -488,7 +488,7 @@
 <script src="mappa.js"></script>
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 06:49';
+const APP_VERSION = '2026.09.17 · 07:21';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1419,7 +1419,9 @@ function apriObiettivi() {
   };
 }
 
-// Check del Giorno: 13 campi come in Glide. Più check sulla stessa data si sommano (decisione 9).
+// Check del Giorno: 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
+// e «Salva» lo corregge invece di aggiungerne un altro (prima si sommavano, decisione 9). I giorni di Glide con
+// più Check restano come sono: si modifica il più recente, con l'avviso.
 function apriCheck() {
   if (soloGuardo()) return;
   const velo = document.createElement('div');
@@ -1427,6 +1429,7 @@ function apriCheck() {
   velo.innerHTML = `<div class="foglio alto">
     <div class="testa-foglio"><h3>Check del Giorno${esc(aNome())}</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
     <div class="campo"><label>📅 Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
+    <div id="ck-modifica" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px"></div>
     ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo">
       <label>${esc(etichetta)} <small>Obbligatorio</small></label>
       <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>`).join('')}
@@ -1441,6 +1444,28 @@ function apriCheck() {
   velo.querySelector('#ck-no').onclick = chiudi;
   const note = velo.querySelector('#ck-note');
   note.oninput = () => { velo.querySelector('#ck-conta').textContent = `${note.value.length}/150`; };
+  // Check già salvato nel giorno scelto: si carica nei campi (esistente = riga più recente, null = Check nuovo)
+  let esistente = null, giro = 0;
+  const campoData = velo.querySelector('#ck-data');
+  const caricaGiorno = async () => {
+    const mio = ++giro, data = campoData.value;
+    const avviso = velo.querySelector('#ck-modifica');
+    const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
+      .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
+    if (mio !== giro) return;   // nel frattempo è cambiata la data
+    if (error) { avviso.style.display = 'block'; avviso.textContent = 'Non riesco a controllare se questo giorno ha già un Check: riprova.'; return; }
+    esistente = righe[0] || null;
+    for (const [k] of MB21Dashboard.CAMPI_CHECK) velo.querySelector('#ck-' + k).value = esistente ? String(esistente[k] ?? '') : '';
+    const libro = velo.querySelector('#ck-libro');
+    if (esistente && esistente.libro && ![...libro.options].some(o => o.value === esistente.libro)) libro.add(new Option(esistente.libro, esistente.libro));
+    libro.value = esistente ? esistente.libro || '' : '';
+    note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
+    avviso.style.display = esistente ? 'block' : 'none';
+    avviso.textContent = !esistente ? '' : `✏️ Stai modificando il Check del ${dataBreve(data)}` +
+      (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : '');
+  };
+  campoData.onchange = caricaGiorno;
+  caricaGiorno();
   velo.querySelector('#ck-si').onclick = async () => {
     const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
@@ -1449,13 +1474,29 @@ function apriCheck() {
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = Number(String(v[k]).trim().replace(',', '.'));
     const btn = velo.querySelector('#ck-si');
     btn.disabled = true; btn.textContent = 'Salvo…';
-    const { data, error } = await dbq('salva check', supa.from('check_giorno').insert(v).select('id').single());
+    const prima = esistente;
+    const { data, error } = prima
+      ? await dbq('correggi check', supa.from('check_giorno').update(v).eq('id', prima.id).select('id').single())
+      : await dbq('salva check', supa.from('check_giorno').insert(v).select('id').single());
     if (error) {
       btn.disabled = false; btn.textContent = 'Salva';
       velo.querySelector('#ck-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
       return;
     }
     chiudi();
+    if (prima) {   // Annulla rimette i numeri di prima
+      await caricaDashboard(ST.oggi);
+      disegnaOggi();
+      return mostraToast('Check corretto', async () => {
+        const vecchi = { libro: prima.libro, note_libro: prima.note_libro };
+        for (const [k] of MB21Dashboard.CAMPI_CHECK) vecchi[k] = prima[k];
+        const { error: e2 } = await dbq('annulla correzione check', supa.from('check_giorno').update(vecchi).eq('id', prima.id));
+        if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+        await caricaDashboard(ST.oggi);
+        disegnaOggi();
+        mostraToast('Correzione annullata');
+      });
+    }
     await caricaDashboard(ST.oggi);
     disegnaOggi();
     mostraToast('Check salvato', async () => {
