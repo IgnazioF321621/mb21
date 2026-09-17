@@ -490,19 +490,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171543"></script>
-<script src="lista.js?v=202609171543"></script>
-<script src="dashboard.js?v=202609171543"></script>
-<script src="agenda.js?v=202609171543"></script>
-<script src="report.js?v=202609171543"></script>
-<script src="check.js?v=202609171543"></script>
-<script src="mappa.js?v=202609171543"></script>
-<script src="pagina-dashboard.js?v=202609171543"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171543"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171543"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171543"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171553"></script>
+<script src="lista.js?v=202609171553"></script>
+<script src="dashboard.js?v=202609171553"></script>
+<script src="agenda.js?v=202609171553"></script>
+<script src="report.js?v=202609171553"></script>
+<script src="check.js?v=202609171553"></script>
+<script src="mappa.js?v=202609171553"></script>
+<script src="pagina-dashboard.js?v=202609171553"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171553"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171553"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171553"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 15:43';
+const APP_VERSION = '2026.09.17 · 15:53';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -913,6 +913,8 @@ function disegnaAgenda() {
   collegaAgenda(eventi);
 }
 
+// La «G» di Google (Ignazio 17/09: «invece dell'emoji usiamo la G di Google»), disegnata in linea: nessun file da scaricare
+const ICONA_G = `<svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:2px" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.1 38 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-8-6.2C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l8-6.2z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.2C6.5 42.6 14.6 48 24 48z"/></svg>`;
 function eventoAgenda(e, opz) {
   const A = MB21Agenda;
   const r = A.riga(e, opz);
@@ -933,7 +935,7 @@ function eventoAgenda(e, opz) {
         <button data-cmd="contatto">👤 Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>
-      ${richiamo || e.completata ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">📆 Google Calendar</button></div>`}
+      ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button></div>`}
       </div>`;
   }
   return `<div class="ag-evento" data-evento="${esc(e.id)}">
