@@ -8,6 +8,7 @@ Contesto completo del progetto: `docs/MB21_v4_Brief_Sviluppo.md`.
 - **Ignazio non è programmatore:** spiegare in modo semplice, zero gergo in chat. Se serve un termine tecnico, dire in una frase cosa significa.
 - **Onestà sulla confidenza:** se non sei certo di qualcosa, fermati e proponi come verificarlo. Mai tirare a indovinare.
 - **Niente over-engineering:** una soluzione sola, la più semplice che funziona.
+- **Stessa schermata, stesso codice ovunque:** prima di cambiare un modulo, un formato o un flusso, cercare con grep tutti i posti che lo mostrano (Agenda, scheda, Report/Griglia, Dashboard…) e cambiarli tutti nello stesso commit con una funzione condivisa (vedi LEZIONI.md).
 
 ## Regole tecniche
 - Timezone: **Europe/Rome**.

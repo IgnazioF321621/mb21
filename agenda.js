@@ -192,17 +192,24 @@
     'Follow Up': { fatto: null, esiti: ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine'] },
   };
   const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+  // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.
+  // passo: avvenuto (azione aperta) · risultato (dopo Fatto) · unico (un passo solo) · cambia (chiusa: cambia il risultato) · cambia-avvenuto (chiusa: cambia se è avvenuto)
   function passiEsito(a, categoria, fattoAperto) {
     if (a.tipo_azione === 'Contatto' && a.data_scelta) return null;   // richiamo dalla coda: si guarda, non si chiude qui
     const fasi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     if (!fasi.length) return null;
     const due = RISULTATI[a.tipo_azione];
+    const g = (passo, titolo, bottoni, attuale) => ({ passo, titolo, bottoni, attuale: attuale || null });
     if (daChiudere(a)) {
-      if (due && fattoAperto) return { passo: 'risultato', titolo: 'Com\'è andata?', bottoni: due.esiti };
-      return due ? { passo: 'avvenuto', titolo: 'È avvenuto?', bottoni: AVVENUTO } : { passo: 'unico', titolo: 'Com\'è andata?', bottoni: fasi };
+      if (!due) return [g('unico', 'Com\'è andata?', fasi)];
+      if (fattoAperto) return [g('avvenuto', 'È avvenuto?', AVVENUTO, 'Fatto'), g('risultato', 'Com\'è andata?', due.esiti)];
+      return [g('avvenuto', 'È avvenuto?', AVVENUTO)];
     }
-    if (due && due.fatto && a.esito === due.fatto) return { passo: 'risultato', titolo: 'Com\'è andata?', bottoni: due.esiti };
-    return { passo: 'cambia', titolo: 'Esito', bottoni: fasi };
+    if (!due) return [g('cambia', 'Esito', fasi, a.esito)];
+    const nonAvvenuto = AVVENUTO.includes(a.esito) ? a.esito : null;   // Rimandato / No Show
+    const gruppi = [g('cambia-avvenuto', 'È avvenuto?', AVVENUTO, nonAvvenuto || 'Fatto')];
+    if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', 'Com\'è andata?', due.esiti) : g('cambia', 'Com\'è andata?', due.esiti, a.esito));
+    return gruppi;
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
 

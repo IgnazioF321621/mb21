@@ -490,19 +490,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609171523"></script>
-<script src="lista.js?v=202609171523"></script>
-<script src="dashboard.js?v=202609171523"></script>
-<script src="agenda.js?v=202609171523"></script>
-<script src="report.js?v=202609171523"></script>
-<script src="check.js?v=202609171523"></script>
-<script src="mappa.js?v=202609171523"></script>
-<script src="pagina-dashboard.js?v=202609171523"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609171523"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609171523"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609171523"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="coda.js?v=202609171528"></script>
+<script src="lista.js?v=202609171528"></script>
+<script src="dashboard.js?v=202609171528"></script>
+<script src="agenda.js?v=202609171528"></script>
+<script src="report.js?v=202609171528"></script>
+<script src="check.js?v=202609171528"></script>
+<script src="mappa.js?v=202609171528"></script>
+<script src="pagina-dashboard.js?v=202609171528"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609171528"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609171528"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609171528"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 15:23';
+const APP_VERSION = '2026.09.17 · 15:28';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -993,10 +993,10 @@ async function apriContattoDa(id, ritorno) {
 const daChiudere = MB21Agenda.daChiudere;
 const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa del risultato (solo a video)
 function bloccoEsiti(a, categoria) {
-  const p = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
-  if (!p) return '';
-  return `<div class="come-andata">${esc(p.titolo)}${p.passo === 'cambia' ? ' <small>· tocca per cambiarlo</small>' : ''}</div>
-    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${a.esito === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`;
+  const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
+  if (!gruppi) return '';
+  return gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}${p.passo.startsWith('cambia') ? ' <small>· tocca per cambiare</small>' : ''}</div>
+    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${p.attuale === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`).join('');
 }
 // Stato scritto accanto all'azione
 function statoAzione(a) {
@@ -1006,26 +1006,30 @@ function statoAzione(a) {
 // Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
 function collegaEsiti(el, a, contatto, dopo) {
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
-    if (soloGuardo() || b.dataset.esito === a.esito) return;
+    if (soloGuardo() || b.classList.contains('attuale')) return;
     const passo = b.closest('.ag-esiti').dataset.passo, esito = b.dataset.esito;
     const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
-    if (passo === 'cambia') return cambiaEsito(a, esito, dopo);
+    const fase = MB21Agenda.fattoDi(a.tipo_azione);
     if (passo === 'avvenuto' && esito === 'Fatto') {
-      const fase = MB21Agenda.fattoDi(a.tipo_azione);
       if (fase) return chiudiAppuntamento(e, fase, { dopo, senzaProssimo: true, testo: 'Fatto' });   // PM: «Presentazione», poi il risultato
       FATTO_APERTO.add(a.id); return dopo();                                                       // Follow Up: si passa al risultato
     }
+    if (passo === 'cambia-avvenuto' && esito === 'Fatto') {   // era Rimandato / No Show: torna «fatto», poi il risultato
+      if (!fase) FATTO_APERTO.add(a.id);
+      return cambiaEsito(a, fase, dopo, 'Fatto');
+    }
     FATTO_APERTO.delete(a.id);
+    if (passo.startsWith('cambia')) return cambiaEsito(a, esito, dopo);
     chiudiAppuntamento(e, esito, { dopo });
   });
 }
-async function cambiaEsito(a, esito, dopo) {
+async function cambiaEsito(a, esito, dopo, testo) {
   const { data: prima, error } = await dbq('cambia esito', supa.rpc('modifica_azione', {
-    p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito,
+    p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito || null,
     p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
   await dopo();
-  mostraToast(`Esito: ${esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
+  mostraToast(`Esito: ${testo || esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
     const { error: e3 } = await dbq('annulla cambio esito', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
     if (e3) return mostraToast('Annullamento non riuscito: riprova.');
     await dopo();
@@ -1299,7 +1303,7 @@ async function foglioAzione(id, opz = {}) {
     <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
     <div id="fa-persone"></div>
     ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
-    <div class="campo"><label id="fa-esito-titolo">Esito</label><div class="ag-scelte" id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
+    <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     <div class="errore" id="fa-errore"></div>
@@ -1338,18 +1342,17 @@ async function foglioAzione(id, opz = {}) {
     });
   };
   const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
-    // Piano Marketing e Follow Up: gli stessi due passi di Agenda e scheda (Ignazio 17/09, dalla Griglia PM: «seguire il flusso che stiamo creando»)
+    // Piano Marketing e Follow Up: gli stessi passi di Agenda e scheda (Ignazio 17/09, dalla Griglia PM: «seguire il flusso che stiamo creando»)
     const stato = { ...a, modalita: st.sottotipo, esito: st.esito, completata: !!st.esito, data_scelta: null };
-    const p = A.RISULTATI[a.tipo_azione] ? A.passiEsito(stato, a.contatti ? a.contatti.categoria : null, st.fattoAperto) : null;
-    const esiti = p ? p.bottoni : A.sceltePerModifica(stato).esiti;
-    $('fa-esito-titolo').textContent = p ? p.titolo : 'Esito';
-    $('fa-esito-nota').textContent = p && p.passo === 'risultato' ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
-    $('fa-esiti').innerHTML = esiti.map(x => `<button data-v="${esc(x)}" class="${x === st.esito ? 'scelto' : ''}">${esc(x)}</button>`).join('')
-      + (p && p.passo === 'risultato' ? '<button data-v="" style="background:none;color:var(--grigio)">↩︎ Non è avvenuto</button>' : '');
+    const gruppi = A.RISULTATI[a.tipo_azione] ? A.passiEsito(stato, a.contatti ? a.contatti.categoria : null, st.fattoAperto)
+      : [{ passo: 'cambia', titolo: 'Esito', bottoni: A.sceltePerModifica(stato).esiti, attuale: st.esito }];
+    $('fa-esito-titolo').textContent = gruppi.length === 1 ? gruppi[0].titolo : '';
+    $('fa-esito-nota').textContent = gruppi.some(g => g.passo === 'risultato') ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
+    $('fa-esiti').innerHTML = gruppi.map((g, i) => `${gruppi.length > 1 ? `<div class="come-andata" style="border:0;margin-top:${i ? 8 : 0}px;padding:0">${esc(g.titolo)}</div>` : ''}
+      <div class="ag-scelte" data-passo="${g.passo}">${g.bottoni.map(x => `<button data-v="${esc(x)}" class="${g.attuale === x ? 'scelto' : ''}">${esc(x)}</button>`).join('')}</div>`).join('');
     $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => {
-      const x = b.dataset.v;
-      if (p && p.passo === 'avvenuto' && x === 'Fatto') { const f = A.fattoDi(a.tipo_azione); if (f) st.esito = f; else st.fattoAperto = true; }
-      else if (x === '') { st.esito = null; st.fattoAperto = false; }
+      const x = b.dataset.v, fase = A.fattoDi(a.tipo_azione);
+      if (x === 'Fatto') { st.esito = fase; st.fattoAperto = !fase; }
       else { st.esito = x; st.fattoAperto = false; }
       disegnaScelte();
     });
