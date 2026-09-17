@@ -243,10 +243,21 @@
     return 'https://calendar.google.com/calendar/render?' + q.toString();
   }
 
+  // Cantiere 23: collegamento noteplan:// che aggiunge una riga nella nota del giorno di NotePlan («16:30-17:30 PM 1a1 · Pino Manolo»,
+  // con telefono/ospite/note dopo un «·»). encodeURIComponent, non URLSearchParams: NotePlan vuole gli spazi come %20, non «+».
+  function linkNotePlan(a) {
+    const { giorno, ora } = partiRoma(a.inizio);
+    const nome = (a.contatti && a.contatti.nome) || '—';
+    const quando = a.fine ? `${ora}-${partiRoma(a.fine).ora}` : ora;
+    const extra = [a.contatti && a.contatti.telefono ? a.contatti.telefono : '', a.ospite ? `ospite ${a.ospite}` : '', a.note || ''].filter(Boolean);
+    const testo = [`${quando} ${a.modalita || a.tipo_azione || ''} · ${nome} (MB21)`, ...extra].join(' · ');
+    return `noteplan://x-callback-url/addText?noteDate=${giorno.replace(/-/g, '')}&mode=append&openNote=yes&text=${encodeURIComponent(testo)}`;
+  }
+
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, linkGoogleCalendar };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
