@@ -490,7 +490,7 @@
 <script src="pagina-lista.js"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 10:32';
+const APP_VERSION = '2026.09.17 · 10:38';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -683,7 +683,13 @@ function foglioPassword(primaVolta) {
     const { error } = await dbq('scelta password', supa.auth.updateUser({ password: p1, data: { password_scelta: true } }));
     if (error) {
       btn.disabled = false; btn.textContent = 'Salva';
-      errore.textContent = /different from the old/i.test(error.message || '') ? 'È uguale a quella di prima: scegline un\'altra.' : 'Non salvata: controlla la connessione e riprova.';
+      // motivo vero dell'errore (Ignazio 17/09: «controlla la connessione» compariva anche con la connessione attiva)
+      const m = error.message || '', c = error.code || '';
+      errore.textContent = c === 'same_password' || /different from the old/i.test(m) ? 'È la password che hai già: scegline una diversa, oppure premi Annulla e continua a usare quella.'
+        : c === 'weak_password' || /weak|at least/i.test(m) ? 'Password troppo semplice: allungala o aggiungi numeri e simboli.'
+        : !navigator.onLine ? 'Sei offline: riprova quando c\'è connessione.'
+        : /session|jwt|expired|not authenticated/i.test(m) ? 'Accesso scaduto: esci, rientra e riprova.'
+        : 'Non salvata: ' + m;
       return;
     }
     chiudi();
