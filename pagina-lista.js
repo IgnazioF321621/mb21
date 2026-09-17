@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', giaUtente: {} };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {} };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -286,17 +286,19 @@ function disegnaScheda() {
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
 }
 
-// «🔗 Invita nell'app MB21» solo se la persona non è già utente dell'app (Ignazio 17/09): lo dice il database
-// (`e_gia_utente`, confronto per nome in tutte le liste; il codice Amway non conta, la coppia lo condivide). Risposta ricordata per nome.
+// Scheda di un Partner: «✅ Utente MB21» (e niente «Invita») se la persona è già utente dell'app, altrimenti «🔗 Invita nell'app MB21».
+// Lo dice il database (`e_utente_mb21`): codice Amway della scheda → email nel file Amway → utente con quella email (Ignazio 17/09;
+// niente nome, niente solo codice: la coppia lo condivide). Risposta ricordata per scheda finché la Lista resta aperta.
 async function mostraInvito(c) {
   const posto = document.getElementById('invita-posto');
   if (!posto) return;
-  if (!(c.nome in LS.giaUtente)) {
-    const { data, error } = await dbq('già utente?', supa.rpc('e_gia_utente', { p_nome: c.nome }));
-    if (error) return;   // in dubbio niente bottone: si riprova riaprendo la scheda
-    LS.giaUtente[c.nome] = data === true;
+  if (!(c.id in LS.utenteMb21)) {
+    const { data, error } = await dbq('utente MB21?', supa.rpc('e_utente_mb21', { p_contatto: c.id }));
+    if (error) return;   // in dubbio niente: si riprova riaprendo la scheda
+    LS.utenteMb21[c.id] = data === true;
   }
-  if (LS.giaUtente[c.nome] || LS.contatto !== c || !posto.isConnected) return;
+  if (LS.contatto !== c || !posto.isConnected) return;
+  if (LS.utenteMb21[c.id]) { posto.innerHTML = '<div class="sotto" style="margin:10px 0 0;color:var(--partner);font-weight:600">✅ Utente MB21</div>'; return; }
   posto.innerHTML = '<button class="link" id="invita-app">🔗 Invita nell\'app MB21</button>';
   document.getElementById('invita-app').onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
 }
