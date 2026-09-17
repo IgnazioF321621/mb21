@@ -38,3 +38,24 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
+// ── Avvisi push (cantiere 24) ── l'avviso arriva anche con l'app chiusa: { titolo, testo, url, tag }
+self.addEventListener('push', event => {
+  let a = {};
+  try { a = event.data ? event.data.json() : {}; } catch (e) { a = { testo: event.data && event.data.text() }; }
+  event.waitUntil(self.registration.showNotification(a.titolo || 'MB21', {
+    body: a.testo || '', tag: a.tag || 'mb21', icon: 'icone/icona-192.png', badge: 'icone/icona-192.png',
+    data: { url: a.url || './' },
+  }));
+});
+
+// Toccando l'avviso si apre l'app (se è già aperta la si porta davanti) sulla pagina indicata
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(finestre => {
+    const aperta = finestre.find(f => f.url.startsWith(self.registration.scope));
+    if (aperta) return aperta.navigate(url).then(f => f && f.focus());
+    return clients.openWindow(url);
+  }));
+});
