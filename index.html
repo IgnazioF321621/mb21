@@ -488,7 +488,7 @@
 <script src="mappa.js"></script>
 <script src="admin.js"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
 <script>
-const APP_VERSION = '2026.09.17 · 06:41';
+const APP_VERSION = '2026.09.17 · 06:49';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -523,13 +523,39 @@ function mostraEmail(errore) {
   app.innerHTML = `
     <div class="accesso">
       <h1>MB21</h1>
-      <p>Scrivi la tua email: ti mandiamo un link per entrare.</p>
+      <p>Entra con email e password.</p>
       <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.it" value="${esc(ST.email)}">
+      <input id="password" type="password" autocomplete="current-password" placeholder="password" style="margin-top:8px">
       <div class="errore">${esc(errore || '')}</div>
-      <button class="primario" id="invia">Mandami il link</button>
+      <button class="primario" id="entra">Entra</button>
+      <p style="margin-top:18px">Non hai la password? Scrivi solo l'email:</p>
+      <button class="link" id="invia">Mandami il link</button>
       ${versione()}
     </div>`;
   document.getElementById('invia').onclick = inviaLink;
+  document.getElementById('entra').onclick = entraConPassword;
+}
+
+// Accesso con password (Ignazio 17/09: «dobbiamo essere rapidi»); funziona anche dentro l'app installata sull'iPhone
+async function entraConPassword() {
+  const btn = document.getElementById('entra');
+  ST.email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  if (!ST.email.includes('@') || !password) return mostraEmail('Scrivi email e password.');
+  btn.disabled = true; btn.textContent = 'Entro…';
+  const { error } = await dbq('accesso con password', supa.auth.signInWithPassword({ email: ST.email, password }));
+  if (error) return mostraEmail(/invalid login/i.test(error.message || '') ? 'Email o password sbagliate. Se non hai la password usa «Mandami il link».' : messaggioAccesso(error));
+}
+
+// Entrato con la password dal modulo ma non ancora approvato: resta dentro e aspetta (si apre la Dashboard appena approvato)
+function mostraAttesa(sessione) {
+  document.getElementById('tab').hidden = true;
+  app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ✅</h1>
+    <p>Appena viene approvata entri direttamente: riapri l'app oppure premi il bottone qui sotto.</p>
+    <button class="primario" id="at-controlla">Controlla di nuovo</button>
+    <button class="link" id="at-esci">Esci</button>${versione()}</div>`;
+  document.getElementById('at-controlla').onclick = () => { if (!accessoInCorso) { accessoInCorso = true; dopoAccesso(sessione).finally(() => { accessoInCorso = false; }); } };
+  document.getElementById('at-esci').onclick = () => supa.auth.signOut();
 }
 
 // ── Registrazione con il link (cantiere 19, Ignazio 16/09) ──
@@ -538,7 +564,7 @@ const REGISTRAZIONE = new URLSearchParams(location.search);
 function mostraRegistrazione(esito) {
   document.getElementById('tab').hidden = true;
   const testi = { gia_utente: 'Questa email è già registrata: apri l\'app ed entra.', gia_richiesta: 'Hai già mandato la richiesta con questa email: aspetta l\'approvazione.',
-    troppe: 'Troppe richieste in questo momento: riprova tra un\'ora.', dati: 'Controlla i dati: nome, email e codice Amway (solo numeri) sono obbligatori.' };
+    troppe: 'Troppe richieste in questo momento: riprova tra un\'ora.', password: 'La password deve avere almeno 8 caratteri.', dati: 'Controlla i dati: nome, email e codice Amway (solo numeri) sono obbligatori.' };
   if (esito === 'ok') {
     app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ✅</h1>
       <p>Quando viene approvata, apri <b>${esc(location.origin + location.pathname)}</b> e scrivi la stessa email: ti arriva il link per entrare.</p>${versione()}</div>`;
@@ -551,6 +577,7 @@ function mostraRegistrazione(esito) {
     <label>Email<input id="rg-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off"></label>
     <label>Telefono<input id="rg-tel" type="tel" autocomplete="tel" inputmode="tel"></label>
     <label>Codice Amway<input id="rg-codice" inputmode="numeric" autocomplete="off"></label>
+    <label>Scegli una password (almeno 8 caratteri)<input id="rg-password" type="password" autocomplete="new-password"></label>
     <div class="errore">${esc(testi[esito] || esito || '')}</div>
     <button class="primario" id="rg-invia">Invia la richiesta</button>
     <button class="link" id="rg-entra">Sono già registrato: entra</button>
@@ -559,13 +586,20 @@ function mostraRegistrazione(esito) {
   document.getElementById('rg-invia').onclick = async () => {
     const v = id => document.getElementById(id).value.trim();
     const codice = v('rg-codice').replace(/\s/g, '');
+    const password = document.getElementById('rg-password').value;
     if (v('rg-nome').length < 3 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('rg-email')) || !/^\d{3,15}$/.test(codice)) return mostraRegistrazione('dati');
+    if (password.length < 8) return mostraRegistrazione('password');
     const b = document.getElementById('rg-invia'); b.disabled = true; b.textContent = 'Invio…';
     const da = /^[0-9a-f-]{36}$/.test(REGISTRAZIONE.get('da') || '') ? REGISTRAZIONE.get('da') : null;
     const { data, error } = await dbq('richiesta di registrazione', supa.rpc('richiedi_accesso',
       { p_nome: v('rg-nome'), p_email: v('rg-email'), p_telefono: v('rg-tel'), p_codice: codice, p_invitato_da: da }));
     if (error) { b.disabled = false; b.textContent = 'Invia la richiesta'; document.querySelector('.accesso .errore').textContent = 'Non inviata: controlla la connessione e riprova.'; return; }
-    mostraRegistrazione(data);
+    if (data !== 'ok') return mostraRegistrazione(data);
+    // Account con password: si resta dentro in attesa (mostraAttesa). Se non riesce (es. email già con un account), vale il link dell'email
+    history.replaceState(null, '', location.pathname);
+    const iscr = await dbq('account con password', supa.auth.signUp({ email: v('rg-email').toLowerCase(), password }));
+    if (!iscr.error && iscr.data.session) return;   // SIGNED_IN → dopoAccesso → mostraAttesa
+    mostraRegistrazione('ok');
   };
 }
 
@@ -596,9 +630,14 @@ function messaggioAccesso(error) {
 }
 
 async function dopoAccesso(sessione) {
+  await dbq('collega account', supa.rpc('collega_account'));   // primo accesso col link dell'email: collega l'account all'utente
   const { data, error } = await dbq('lettura utente',
     supa.from('utenti').select('id, nome, nome_cognome, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
+  if (!data && !error) {   // entrato con la password del modulo: richiesta ancora da approvare
+    const { data: stato } = await dbq('stato della richiesta', supa.rpc('mia_richiesta'));
+    if (stato === 'in_attesa') return mostraAttesa(sessione);
+  }
   if (!data || !data.accesso_attivo) {   // accesso tolto dall'Admin (pagina Admin → Utenti): esce anche chi era già entrato
     ST.motivoUscita = 'Utente non abilitato.';
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
