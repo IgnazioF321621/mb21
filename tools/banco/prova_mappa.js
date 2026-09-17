@@ -232,3 +232,15 @@ prova('file Amway: VPP e VPG vanno agli utenti dell\'app col loro codice', () =>
 });
 
 console.log(`\n${ok} prove passate in tutto.`);
+
+prova('targhetta 📱 dell\'app: uso per partner (coppia: uso più recente, nomi sommati; eliminati fuori) ed etichetta dei giorni', () => {
+  const uso = M.usoApp([{ partner_id: '1', ultimo_uso: '2026-09-10T10:00:00+00:00', nomi: 5 }, { partner_id: '1', ultimo_uso: '2026-09-12T10:00:00+00:00', nomi: 7 },
+    { partner_id: '2', ultimo_uso: null, nomi: 3, eliminato_il: '2026-09-16' }, { partner_id: '3', ultimo_uso: null, nomi: 2 }]);
+  assert.deepEqual(uso, { 1: { ultimo_uso: '2026-09-12T10:00:00+00:00', nomi: 12 }, 3: { ultimo_uso: null, nomi: 2 } });
+  assert.equal(M.etichettaUso('2026-09-17T19:08:35+00:00', '2026-09-17'), 'oggi');
+  assert.equal(M.etichettaUso('2026-09-16T22:30:00+00:00', '2026-09-17'), 'oggi');   // 00:30 a Roma del 17
+  assert.equal(M.etichettaUso('2026-09-16T12:00:00+00:00', '2026-09-17'), 'ieri');
+  assert.equal(M.etichettaUso('2026-09-05T10:00:00+00:00', '2026-09-17'), '12 gg');
+  assert.equal(M.etichettaUso(null, '2026-09-17'), 'mai');
+});
+
