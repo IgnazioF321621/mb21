@@ -80,9 +80,12 @@
       .sort(ordinaPerNome);
   }
 
-  // Totale del banner: contatti del partner (con All, di tutti)
-  function totaleContatti(righe, { filtro, utenteId, admin }) {
-    return FILTRI[filtro] && FILTRI[filtro].tutti && admin ? righe.length : righe.filter(r => diChi(r, utenteId)).length;
+  // Numeri dentro le pillole dei filtri (cantiere 30): quanti nomi ha ogni filtro, senza il testo di Cerca.
+  // Stessa regola di `filtraContatti` (un numero, una fonte sola): «Lista» conta senza gli Archiviati.
+  function contaFiltri(righe, { utenteId, admin = false } = {}) {
+    const conti = {};
+    Object.keys(FILTRI).forEach(k => { conti[k] = filtraContatti(righe, { filtro: k, utenteId, admin }).length; });
+    return conti;
   }
 
   // Telefono dal modulo: prefisso scelto + numero scritto → «+39…» senza spazi. Numero vuoto → null.
@@ -307,7 +310,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
