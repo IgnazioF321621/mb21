@@ -213,7 +213,7 @@ prova('Vendite: i totali si sommano interi e si arrotondano solo a schermo (come
 
 prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virgola', () => {
   const base = { data: '2026-09-18', brand: 'eSpring', prodotto: ' Filtro ', vp: '176,94', sconto: '', riordino: '2027-09-18' };
-  assert.deepEqual(L.rigaVendita(base).riga, { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: 176.94, sconto: 0, consegna: null, riordino: '2027-09-18' });
+  assert.deepEqual(L.rigaVendita(base).riga, { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: 176.94, sconto: 0, consegna: null, ordinata_il: null, riordino: '2027-09-18' });
   assert.equal(L.rigaVendita({ ...base, vp: '53.5', sconto: '10,50' }).riga.sconto, 10.5);
   assert.equal(L.rigaVendita({ ...base, brand: '' }).errore, 'Scegli il brand');
   assert.equal(L.rigaVendita({ ...base, brand: 'Nutrilite' }).errore, 'Scegli il brand');
@@ -227,21 +227,28 @@ prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virg
   assert.equal(L.rigaVendita({ ...base, data: '' }).errore, 'Manca la data di vendita');
 });
 
-prova('Vendite: la promo con consegna differita conta il giorno dell\'ordine, prima è «da consegnare»', () => {
+prova('Vendite: la promo differita conta solo con «Ordine fatto»; prima è «da consegnare», dopo la data «da confermare»', () => {
   const oggi = '2026-09-18';
   const v = [
-    { vp: 100, provvigione: 45, guadagno_netto: 45, data: '2026-09-01', conta_il: '2026-09-01', riordino: '2027-09-01' },
-    { vp: 176.94, provvigione: 80, guadagno_netto: 20, data: '2026-09-18', consegna: '2027-03-15', conta_il: '2027-03-15', riordino: '2028-03-15' },
-    { vp: 50, provvigione: 22, guadagno_netto: 22, data: '2025-01-01', conta_il: '2025-01-01', riordino: '2026-01-01' },
+    { vp: 100, provvigione: 45, guadagno_netto: 45, data: '2026-09-01', riordino: '2027-09-01' },
+    { vp: 176.94, provvigione: 80, guadagno_netto: 20, data: '2026-09-18', consegna: '2027-03-15', riordino: '2028-03-15' },
+    { vp: 50, provvigione: 22, guadagno_netto: 22, data: '2025-01-01', riordino: '2026-01-01' },
+    { vp: 30, provvigione: 13, guadagno_netto: 13, data: '2026-05-01', consegna: '2026-08-01', riordino: '2027-08-01' },                          // data passata, mai confermata
+    { vp: 20, provvigione: 9, guadagno_netto: 9, data: '2026-05-01', consegna: '2026-08-01', ordinata_il: '2026-08-20', riordino: '2027-08-01' },   // ordine fatto
   ];
-  const t = L.totaliVendite(v, oggi);
-  assert.equal(t.vp, 150); assert.equal(t.provvigione, 67); assert.equal(t.attesaVp, 176.94);
-  assert.equal(L.daConsegnare(v[1], oggi), true);
-  assert.equal(L.daConsegnare(v[1], '2027-03-15'), false);   // il giorno dell'ordine conta
-  assert.equal(L.prossimoRiordino(v, oggi).riordino, '2027-09-01');
+  const t = L.totaliVendite(v);
+  assert.equal(t.vp, 170); assert.equal(t.provvigione, 76); assert.equal(L.numero(t.attesaVp), '206,94');
+  assert.equal(L.daConsegnare(v[1]), true); assert.equal(L.daConfermare(v[1], oggi), false);
+  assert.equal(L.daConsegnare(v[3]), true); assert.equal(L.daConfermare(v[3], oggi), true);
+  assert.equal(L.daConsegnare(v[4]), false); assert.equal(L.daConsegnare(v[0]), false);
+  assert.equal(L.prossimoRiordino(v, oggi).riordino, '2027-08-01');
   assert.equal(L.prossimoRiordino([v[2]], oggi), null);
   const base = { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: '176,94', sconto: '', consegna: '2027-03-15', riordino: '2028-03-15' };
   assert.equal(L.rigaVendita(base).riga.consegna, '2027-03-15');
+  assert.equal(L.rigaVendita(base).riga.ordinata_il, null);
+  assert.equal(L.rigaVendita({ ...base, ordinata_il: '2027-03-10' }).riga.ordinata_il, '2027-03-10');   // anche prima del previsto
+  assert.equal(L.rigaVendita({ ...base, ordinata_il: '2026-01-01' }).errore, "L'ordine è prima della vendita");
+  assert.equal(L.rigaVendita({ ...base, consegna: '', ordinata_il: '2027-03-10' }).riga.ordinata_il, null);   // Subito: niente ordine a parte
   assert.equal(L.rigaVendita({ ...base, consegna: '2026-09-18' }).riga.consegna, null);   // stesso giorno = subito
   assert.equal(L.rigaVendita({ ...base, consegna: '2026-09-01' }).errore, 'La consegna è prima della vendita');
   assert.equal(L.rigaVendita({ ...base, riordino: '2027-01-01' }).errore, 'Il riordino è prima della consegna');
