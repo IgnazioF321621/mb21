@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 20:26', pagina: 'lista', titolo: 'Porta in MB21 la rubrica del telefono',
+      testo: 'In Lista Nomi tocca il «+» e scegli «Importa dalla rubrica del telefono»: l\'app ti spiega come esportare i contatti dal tuo iPhone o Android e poi li legge da sola. Chi è già in Lista viene saltato, i nuovi entrano tutti in «Da catalogare» e prima di salvare vedi un riepilogo con i nomi da controllare. Se nella rubrica c\'è il compleanno, lo ritrovi nella scheda.' },
     { quando: '2026.09.18 · 18:57', pagina: 'app', titolo: 'Le novità ora sono divise per pagina',
       testo: 'Le novità non sono più una lista unica: le trovi raggruppate per pagina (Dashboard, Agenda, Lista Nomi…), con il solo titolo. Tocca un titolo per leggere la spiegazione.' },
     { quando: '2026.09.18 · 18:51', pagina: 'lista', titolo: 'Solo i nomi con una lettera',
