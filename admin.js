@@ -1,4 +1,4 @@
-// MB21 · pagina Admin (cantiere 19). Solo per l'Admin: menu a sottopagine (Carica file Amway · Utenti · Schede dei partner · Wes · BBS).
+// MB21 · pagina Admin (cantiere 19). Solo per l'Admin: menu a sottopagine (Carica file Amway · Utenti · Schede dei partner · Wes · BBS · Fattore di conversione).
 // Spostata da index.html il 16/09 (pausa di sistemazione, la pagina unica era ~3.900 righe). Nessun cambiamento di funzionamento.
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, MP, LS, esc, mostraToast, chiediConferma, foglioLinkInvito, caricaPersone…):
 // si carica prima dello script della pagina (solo definizioni): le sue funzioni partono quando l'Admin apre la tab.
@@ -11,9 +11,10 @@ async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
-    const [wes, bbs, ut, rich, sq, disp] = await Promise.all([
+    const [wes, bbs, fc, ut, rich, sq, disp] = await Promise.all([
       dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
+      dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore').order('dal')),   // cantiere 26: l'FC di Amway nel tempo
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
       dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
@@ -24,7 +25,7 @@ async function apriAdmin() {
     AD.dispositivi = {};   // utente → dispositivi con gli avvisi accesi («iPhone · Safari · app»)
     (disp.error ? [] : disp.data).forEach(d => { (AD.dispositivi[d.user_id] = AD.dispositivi[d.user_id] || []).push(d.dispositivo || 'dispositivo'); });
     AD.richieste = rich.data; AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
-    AD.wes = wes.data; AD.bbs = bbs.data;
+    AD.wes = wes.data; AD.bbs = bbs.data; AD.fc = fc.error ? [] : fc.data;
     // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
     const oggi = MB21Coda.oggiRoma(), ordine = { attivo: 0, in_scadenza: 1, scaduto: 2 };
     const gruppo = u => ordine[MB21Dashboard.statoAbbonamento(MB21Dashboard.scadenzaDi(u, ut.data), oggi)];
@@ -119,6 +120,16 @@ function disegnaAdmin() {
       ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
       <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
       <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>`;
+  } else if (AD.sezione === 'fc') {
+    // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione = (VP × FC) × 0,20, con l'FC valido il giorno in cui la vendita conta.
+    // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
+    html = `${indietro}<h1>Fattore di conversione</h1>
+      <div class="sotto">Provvigione = (VP × fattore) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
+      <div class="rp-wes">
+      ${[...AD.fc].reverse().map((f, i, tutti) => `<div class="w"><span><b>${esc(MB21Lista.numeroFattore(f.valore))}</b> · ${i === tutti.length - 1 ? 'dall\'inizio' : 'dal ' + esc(MB21Lista.data(f.dal))}</span>
+        <span><button data-fc-cambia="${esc(f.dal)}" style="color:var(--blu)">Cambia</button>${i === tutti.length - 1 ? '' : ` <button data-fc-togli="${esc(f.dal)}">Elimina</button>`}</span></div>`).join('')}
+      <div class="nuovo-wes"><input type="date" id="fc-dal" aria-label="Da che giorno vale"><input id="fc-valore" inputmode="decimal" placeholder="es. 2,26194" aria-label="Fattore"><button id="fc-piu">+ Fattore</button></div>
+      <div class="sotto" style="margin:6px 0 0">Da che giorno vale · il nuovo fattore.</div></div>`;
   } else if (AD.sezione === 'bbs') {
     html = `${indietro}<h1>BBS</h1><div class="rp-wes">
       ${[...AD.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
@@ -134,7 +145,8 @@ function disegnaAdmin() {
       ${voce('ad-vai-utenti', "👥 Utenti dell'app", `${AD.richieste.length ? `📨 ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟠 ${stati.filter(x => x === 'in_scadenza').length} · 🔴 ${stati.filter(x => x === 'scaduto').length}`)}
       ${voce('ad-vai-schede', '🔗 Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-wes', '🎟 Wes', `ultimo ${ultimo(AD.wes)}`)}
-      ${voce('ad-vai-bbs', '🎟 BBS', `ultimo ${ultimo(AD.bbs)}`)}`;
+      ${voce('ad-vai-bbs', '🎟 BBS', `ultimo ${ultimo(AD.bbs)}`)}
+      ${voce('ad-vai-fc', '🛒 Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
   }
   app.innerHTML = html + versione();
   collegaAdmin();
@@ -236,7 +248,7 @@ function foglioNuovoUtente(u) {
 function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
-  [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
   su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
   su('ad-allinea', async () => {
     if (!await chiediConferma('Allineo le liste?', `Crea ${AD.schede.create} schede Partner (fuori coda) e collega ${AD.schede.collegate} schede al codice. Non cancella niente.`, 'Allinea')) return;
@@ -358,6 +370,33 @@ function collegaAdmin() {
     mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
     apriAdmin();
+  });
+  // Fattore di conversione: aggiungi · cambia · elimina. Dopo ogni modifica le vendite già lette si rileggono (la provvigione cambia).
+  const dopoFattore = messaggio => { LS.vendite = null; mostraToast(messaggio); apriAdmin(); };
+  su('fc-piu', async () => {
+    const esito = MB21Lista.rigaFattore(document.getElementById('fc-dal').value, document.getElementById('fc-valore').value);
+    if (esito.errore) return mostraToast(esito.errore);
+    if (MB21Agenda.controllaGiorno(esito.riga.dal)) return mostraToast(MB21Agenda.controllaGiorno(esito.riga.dal));
+    const { error } = await dbq('nuovo fattore', supa.from('fattori_conversione').insert(esito.riga));
+    if (error) return mostraToast(error.code === '23505' ? 'Per questo giorno c\'è già un fattore: usa «Cambia»' : 'Non salvato: riprova.');
+    dopoFattore(`Fattore ${MB21Lista.numeroFattore(esito.riga.valore)} dal ${MB21Lista.data(esito.riga.dal)}`);
+  });
+  app.querySelectorAll('[data-fc-cambia]').forEach(b => b.onclick = async () => {
+    const f = AD.fc.find(x => x.dal === b.dataset.fcCambia);
+    const valori = await moduloSemplice('Cambia il fattore', [{ k: 'valore', etichetta: `Fattore valido dal ${MB21Lista.data(f.dal)}`, tipo: 'text', valore: MB21Lista.numeroFattore(f.valore), obbligatorio: true }]);
+    if (!valori) return;
+    const esito = MB21Lista.rigaFattore(f.dal, valori.valore);
+    if (esito.errore) return mostraToast(esito.errore);
+    const { error } = await dbq('cambia fattore', supa.from('fattori_conversione').update({ valore: esito.riga.valore }).eq('dal', f.dal));
+    if (error) return mostraToast('Non salvato: riprova.');
+    dopoFattore('Fattore cambiato: le provvigioni si sono ricalcolate');
+  });
+  app.querySelectorAll('[data-fc-togli]').forEach(b => b.onclick = async () => {
+    const f = AD.fc.find(x => x.dal === b.dataset.fcTogli);
+    if (!await chiediConferma(`Elimino il fattore ${MB21Lista.numeroFattore(f.valore)}?`, `Le vendite dal ${MB21Lista.data(f.dal)} useranno il fattore di prima.`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina fattore', supa.from('fattori_conversione').delete().eq('dal', f.dal));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    dopoFattore('Fattore eliminato');
   });
   su('rp-piu-bbs', async () => {
     const mese = document.getElementById('rp-data-bbs').value;   // «2026-10»
