@@ -29,7 +29,10 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Regola di Ignazio (18/09)**: «chi è Cliente ha le Vendite», niente spunte; chi ha già una vendita la tiene anche se cambia categoria. Idea da tenere per l'incastro: all'esito «Vendita» di una Consulenza PRD chiedere «Registri la vendita?» e proporre il passaggio a Cliente
 - Lavoro 3a · sezione «Vendite» **in lettura** (tre totali ed elenco) — fatto il 18/09, «ok» di Ignazio
 - Lavoro 3b · «Vendita +», Modifica, Elimina — fatto il 18/09, **da provare con Ignazio**: un modulo solo; la vendita si tocca nell'elenco per cambiarla o eliminarla (niente menu «…»: un tocco in meno)
-- Lavoro 4 · riordino in Agenda
+- **Decisioni di Ignazio per il lavoro 4 (18/09)**: telefonata di riordino **10 giorni prima** (come faceva Glide, scoperto dai dati), ore 10:00, in Agenda del proprietario del cliente · **promo con consegna differita** («mi capita molto, molto spesso»): campo «Ordine e consegna», promemoria in Agenda · «Amway non sa che faccio le promo: i VP sono negli ordini» → VP e provvigione contano il giorno dell'ordine · **riordino obbligatorio** (facoltativo no) · aiuto sotto i campi
+- Lavoro 4 · riordino e consegna in Agenda — fatto il 18/09, **da provare con Ignazio**: migrazione `20260918103000_vendite_agenda.sql` applicata (provata prima in una transazione annullata, 9 controlli; le 147 vendite intatte, nessuna azione creata per lo storico). Primo caso vero: i due filtri di Elisa (pagati a settembre 2026, consegna marzo 2027 e marzo 2028)
+- Lavoro 5 · **incastro con il Check**: VP Clienti per mese dell'ordine; «Hai già registrato la vendita?» nel Check e viceversa; all'esito «Vendita» di una Consulenza PRD «Registri la vendita?»
+- Lavoro 6 · **targhette Brand** nella testata, accese dai brand comprati
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
