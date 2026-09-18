@@ -742,9 +742,9 @@ function apriCheck() {
     <div class="testa-foglio"><h3>Check del Giorno${esc(aNome())}</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
     <div class="campo"><label>📅 Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px"></div>
-    ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo">
+    ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo" id="ck-campo-${k}">
       <label>${esc(etichetta)} <small>Obbligatorio</small></label>
-      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>`).join('')}
+      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : ''}`).join('')}
     <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     <div class="errore" id="ck-errore"></div>
@@ -762,6 +762,7 @@ function apriCheck() {
   const caricaGiorno = async () => {
     const mio = ++giro, data = campoData.value;
     const avviso = velo.querySelector('#ck-modifica');
+    venditeDelGiorno(data, () => mio === giro);
     const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
       .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
     if (mio !== giro) return;   // nel frattempo è cambiata la data
@@ -776,11 +777,35 @@ function apriCheck() {
     avviso.textContent = !esistente ? '' : `✏️ Stai modificando il Check del ${dataBreve(data)}` +
       (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : '');
   };
+  // VP Clienti dal 18/09 (MB21Dashboard.INIZIO_VENDITE): non si scrivono, si leggono dalle vendite del giorno; ogni vendita
+  // porta alla scheda del cliente. Per i giorni prima resta il campo a mano.
+  const venditeDelGiorno = async (data, ancoraValido) => {
+    const campo = velo.querySelector('#ck-campo-vp_clienti'), box = velo.querySelector('#ck-vendite');
+    const dalle = MB21Dashboard.vpDalleVendite(data);
+    campo.style.display = dalle ? 'none' : '';
+    box.style.display = dalle ? '' : 'none';
+    if (!dalle) return;
+    box.innerHTML = '<div class="ck-vn"><b>🛒 VP Clienti</b><div class="vn-aiuto">Carico le vendite del giorno…</div></div>';
+    const { data: righe, error } = await dbq('vendite del giorno', supa.from('vendite_conti')
+      .select('id, contatto_id, prodotto, vp, contatti(nome)').eq('user_id', visto().id).eq('conta_il', data).order('creato_il'));
+    if (!ancoraValido()) return;
+    if (error) { box.innerHTML = '<div class="ck-vn"><b>🛒 VP Clienti</b><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div></div>'; return; }
+    const totale = MB21Lista.totaliVendite(righe).vp;
+    box.innerHTML = `<div class="ck-vn"><b>🛒 VP Clienti: ${MB21Lista.numero(totale)}</b>
+      <div class="vn-aiuto">${righe.length ? 'Dalle vendite registrate. Tocca una vendita per aprire la scheda del cliente.' : 'Nessuna vendita registrata in questo giorno. Le vendite si scrivono nella scheda del cliente, sezione Vendite: qui arrivano da sole.'}</div>
+      ${righe.map(r => `<button type="button" class="ck-vn-riga" data-cliente="${r.contatto_id}"><span>${esc(r.contatti ? r.contatti.nome : 'Cliente')} · ${esc(r.prodotto)}</span><b>${MB21Lista.numero(r.vp)} VP ›</b></button>`).join('')}</div>`;
+    box.querySelectorAll('[data-cliente]').forEach(b => b.onclick = async () => {
+      chiudi();
+      await apriContattoDa(b.dataset.cliente, 'oggi');
+      if (LS.contatto && LS.contatto.id === b.dataset.cliente) { LS.sezione = 'vendite'; disegnaScheda(); }
+    });
+  };
   campoData.onchange = caricaGiorno;
   caricaGiorno();
   velo.querySelector('#ck-si').onclick = async () => {
     const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
+    if (MB21Dashboard.vpDalleVendite(v.data)) v.vp_clienti = '0';   // dal 18/09 i VP Clienti li danno le vendite: nel Check resta 0
     const errore = MB21Dashboard.validaCheck(v);
     if (errore) { velo.querySelector('#ck-errore').textContent = errore; return; }
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = Number(String(v[k]).trim().replace(',', '.'));

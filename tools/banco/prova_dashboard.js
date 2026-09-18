@@ -199,4 +199,12 @@ prova('Abbonamento: stato, pagamento al 5 del mese dopo, abbonamento in comune',
   assert.equal(D.scadenzaDi(utenti[0], utenti), '2026-10-05');
 });
 
+prova('VP Clienti dalle vendite dal 18/09/2026: prima si scrivono nel Check, da quel giorno si leggono', () => {
+  assert.equal(D.INIZIO_VENDITE, '2026-09-18');
+  assert.equal(D.vpDalleVendite('2026-09-17'), false);
+  assert.equal(D.vpDalleVendite('2026-09-18'), true);
+  assert.equal(D.vpDalleVendite('2027-01-01'), true);
+  assert.equal(D.vpDalleVendite(''), false);
+});
+
 console.log(`\n${ok} prove superate`);

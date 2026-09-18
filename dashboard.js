@@ -77,6 +77,12 @@
     return new Date(Date.UTC(a, m, 0)).getUTCDate() - g + 1;
   }
 
+  // Primo GIORNO in cui i VP Clienti vengono dalle vendite registrate invece che dal Check (cantiere 26 lavoro 5, Ignazio 18/09).
+  // Da questo giorno il Check del Giorno non li chiede: li mostra, con le vendite del giorno da toccare.
+  // ⚠️ La stessa data è nelle viste `check_giorni_conti` e `check_mesi` (migrazione 20260918113000): si cambiano insieme.
+  const INIZIO_VENDITE = '2026-09-18';
+  const vpDalleVendite = giorno => !!giorno && giorno >= INIZIO_VENDITE;
+
   // Primo mese in cui BBS/WES/CEP vengono dalle persone invece che dai check (decisione di Ignazio 16/09)
   const INIZIO_PERSONE = '2026-09-01';
 
@@ -305,7 +311,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, vpDalleVendite, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
