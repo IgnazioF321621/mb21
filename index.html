@@ -114,14 +114,19 @@
   .cerca { margin: 10px 0 12px; position: relative; }
   .cerca input { margin: 0; padding-right: 40px; }
   .cerca button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; font-size: 20px; color: var(--grigio); padding: 6px 10px; }
-  .cn { display: flex; background: var(--card); border-radius: 14px; overflow: hidden; margin-bottom: 8px; height: 112px;
+  .cn { display: flex; align-items: center; background: var(--card); border-radius: 14px; overflow: hidden; margin-bottom: 8px; min-height: 64px;
     box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .cn .striscia { width: 4px; flex: none; }
-  .cn .dentro { flex: 1; min-width: 0; padding: 10px 6px 10px 12px; display: flex; flex-direction: column; justify-content: center; }
-  .cn .etichetta { font-size: 11px; font-weight: 700; color: #1D4ED8; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 14px; }
-  .cn .nome, .cn .prof { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cn .tel { font-size: 15px; margin-top: 4px; display: inline-block; min-height: 20px; }
-  .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--grigio); padding: 0 14px; align-self: flex-start; height: 44px; }
+  .cn .striscia { width: 4px; flex: none; align-self: stretch; }
+  .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
+  .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cn .frase { font-size: 14px; color: #374151; margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
+  .cn .chiama { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--linea); display: flex; align-items: center; justify-content: center; }
+  .cn .chiama svg { width: 20px; height: 20px; fill: #34C759; }
+  .cn .chiama.spento { opacity: .3; pointer-events: none; }
+  .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; }
+  .ls-ordina button { border: 0; background: none; color: var(--blu); font-size: 13px; font-weight: 600; padding: 4px 0; }
+  .foglio > .contatta { margin: 4px 0 8px; }
+  .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--grigio); padding: 0 12px 8px 8px; height: 44px; }
   .altri-voci button { display: block; width: 100%; text-align: left; font-size: 17px; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--linea); background: none; color: var(--testo); }
   .altri-voci button.pericolo { color: var(--rosso); }
 
@@ -571,24 +576,24 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181820"></script>
-<script src="lista.js?v=202609181820"></script>
-<script src="dashboard.js?v=202609181820"></script>
-<script src="agenda.js?v=202609181820"></script>
-<script src="report.js?v=202609181820"></script>
-<script src="check.js?v=202609181820"></script>
-<script src="mappa.js?v=202609181820"></script>
-<script src="pagina-dashboard.js?v=202609181820"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181820"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181820"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181820"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181820"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181820"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181820"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181820"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609181820"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609181843"></script>
+<script src="lista.js?v=202609181843"></script>
+<script src="dashboard.js?v=202609181843"></script>
+<script src="agenda.js?v=202609181843"></script>
+<script src="report.js?v=202609181843"></script>
+<script src="check.js?v=202609181843"></script>
+<script src="mappa.js?v=202609181843"></script>
+<script src="pagina-dashboard.js?v=202609181843"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181843"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181843"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181843"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181843"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181843"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181843"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181843"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609181843"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 18:20';
+const APP_VERSION = '2026.09.18 · 18:43';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.

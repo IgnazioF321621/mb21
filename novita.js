@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 18:43', titolo: 'Lista Nomi: la card ti dice chi è fermo',
+      testo: 'Sotto ogni nome ora leggi da quanto non lo senti («Fermo da 10 mesi», «Mai contattato») oppure, con il calendario 📅, cosa hai già in programma. A destra c\'è la cornetta per chiamare con un tocco; SMS, WhatsApp e Telegram sono nei tre puntini. Con «Ordina», sopra i nomi, metti in cima chi è fermo da più tempo, i mai contattati o i nuovi.' },
     { quando: '2026.09.18 · 18:20', titolo: 'Chiama, SMS, WhatsApp e Telegram con i loro simboli',
       testo: 'I quattro bottoni per contattare una persona ora hanno il simbolo colorato e la scritta sotto: la cornetta per chiamare, il fumetto per l\'SMS, i loghi di WhatsApp e Telegram. Li trovi uguali dappertutto: scheda, coda, conferme, riordini e Agenda.' },
     { quando: '2026.09.18 · 17:54', titolo: 'La scheda si apre già su «Azioni»',
