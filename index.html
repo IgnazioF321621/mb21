@@ -542,7 +542,8 @@
   .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); font-weight: 700; }
   .mp-tabella td:first-child { font-weight: 400; }
   .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
-  .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; }
+  .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; padding: 8px 0; cursor: pointer; }
+  .versione.nuova { color: #2563EB; font-size: 14px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -557,23 +558,23 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181558"></script>
-<script src="lista.js?v=202609181558"></script>
-<script src="dashboard.js?v=202609181558"></script>
-<script src="agenda.js?v=202609181558"></script>
-<script src="report.js?v=202609181558"></script>
-<script src="check.js?v=202609181558"></script>
-<script src="mappa.js?v=202609181558"></script>
-<script src="pagina-dashboard.js?v=202609181558"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181558"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181558"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181558"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181558"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181558"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181558"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181558"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="coda.js?v=202609181607"></script>
+<script src="lista.js?v=202609181607"></script>
+<script src="dashboard.js?v=202609181607"></script>
+<script src="agenda.js?v=202609181607"></script>
+<script src="report.js?v=202609181607"></script>
+<script src="check.js?v=202609181607"></script>
+<script src="mappa.js?v=202609181607"></script>
+<script src="pagina-dashboard.js?v=202609181607"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181607"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181607"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181607"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181607"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181607"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181607"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181607"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 15:58';
+const APP_VERSION = '2026.09.18 · 16:07';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -590,7 +591,18 @@ const ST = { email: '', utente: null, tab: 'oggi' };
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-function versione() { return `<div class="versione">Versione ${APP_VERSION}</div>`; }
+const VER = { controllata: 0, rimandata: '', ultima: '' };   // «C'è una versione più recente» (più sotto); ultima: versione pubblicata, se più recente di quella del dispositivo
+// Riga in fondo a ogni pagina (cantiere 28, Ignazio 18/09): si tocca. Di solito «✨ Novità · Versione …» → foglio delle novità;
+// se l'app ha scoperto una versione più recente (VER.ultima) → «🔄 C'è una versione più recente» → foglio per aggiornare.
+function versione() {
+  return MB21Novita.piuRecente(VER.ultima, APP_VERSION)
+    ? `<div class="versione nuova" role="button">🔄 C'è una versione più recente · tocca per aggiornare</div>`
+    : `<div class="versione" role="button">✨ Novità · Versione ${MB21Novita.quandoLeggibile(APP_VERSION)}</div>`;
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('.versione')) return;
+  if (MB21Novita.piuRecente(VER.ultima, APP_VERSION)) foglioVersione(VER.ultima); else foglioNovita();
+});
 function dataEstesa(iso) {
   return new Date(iso + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
@@ -808,7 +820,7 @@ function foglioNovita(r, ultimoUso) {
     <p>${r ? `Ecco cosa è cambiato in MB21${eri}.` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, dalla novità più recente.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
-    ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button>' : ''}</div>`;
+    ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button><p style="text-align:center;margin:10px 0 0;font-size:12px">Le ritrovi quando vuoi: tocca «✨ Novità» in fondo a ogni pagina.</p>' : ''}</div>`;
   document.body.appendChild(velo);
   const su = (id, fn) => { const el = velo.querySelector(id); if (el) el.onclick = fn; };
   su('#nv-x', () => velo.remove());
@@ -830,12 +842,16 @@ function foglioNovita(r, ultimoUso) {
 // All'apertura la pagina è già l'ultima (sw.js: prima la rete). Chi la tiene aperta per giorni resta indietro: quando l'app
 // torna in primo piano (al massimo ogni 30 minuti) si rilegge la pagina pubblicata e si confronta la sua APP_VERSION con
 // quella del dispositivo. Nessun file in più da tenere allineato. Offline o errore: non succede niente.
-const VER = { controllata: 0, rimandata: '' };
 
 async function ultimaVersione() {
   try {
     const r = await fetch(location.pathname, { cache: 'no-store' });
-    return r.ok ? MB21Novita.versioneDa(await r.text()) : '';
+    const ultima = r.ok ? MB21Novita.versioneDa(await r.text()) : '';
+    if (MB21Novita.piuRecente(ultima, APP_VERSION) && ultima !== VER.ultima) {   // la riga in fondo alla pagina lo dice subito
+      VER.ultima = ultima;
+      document.querySelectorAll('.versione').forEach(el => { el.outerHTML = versione(); });
+    }
+    return ultima;
   } catch (e) { return ''; }
 }
 
