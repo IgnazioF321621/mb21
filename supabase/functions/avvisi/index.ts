@@ -3,7 +3,7 @@
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
-//    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare)»
+//    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
 //    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
 //      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
@@ -94,13 +94,19 @@ Deno.serve(async (req) => {
   if (tipo === 'mattino') {
     if (oraRoma() !== 8 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 8` });
     const oggi = oggiRoma(), g = giornoRoma(oggi), adesso = Date.now(), limiteConferme = new Date(adesso + 12 * 3600000).toISOString();
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }] = await Promise.all([
+    // Riordini da sentire (cantiere 29): STESSA REGOLA di `MB21Agenda.riordiniDaSentire` in agenda.js (qui l'app non arriva, va tenuta uguale a mano):
+    // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
+    // (Contatto con glide_id ed esito «Riordino», non completate) dal 1° settembre 2026 (INIZIO_RIORDINI_GLIDE) a oggi.
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }, { data: vendite, error: e5 }, { data: glide, error: e6 }] = await Promise.all([
       db.from('utenti').select('id, contatti_al_giorno').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('azioni').select('user_id').eq('da_coda', true).gte('inizio', g.inizio).lt('inizio', g.fine),   // esiti dalla coda già dati oggi
       db.from('azioni').select('user_id, contatto_id, inizio, confermato_il').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', g.inizio).lt('inizio', g.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, confermato_il').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', g.inizio).lt('data_scelta', g.fine),
+      db.from('vendite').select('user_id, azione:azioni!azione_riordino_id(completata, esito, inizio)').not('azione_riordino_id', 'is', null),
+      db.from('azioni').select('user_id').eq('tipo_azione', 'Contatto').eq('esito', 'Riordino').not('glide_id', 'is', null).or('completata.is.null,completata.eq.false')
+        .gte('inizio', giornoRoma('2026-09-01').inizio).lt('inizio', g.fine),
     ]);
-    const err = e1 || e2 || e3 || e4;
+    const err = e1 || e2 || e3 || e4 || e5 || e6;
     if (err) return risposta({ errore: err.message }, 500);
     const { data: dispositivi } = await db.from('avvisi_dispositivi').select('user_id');
     const conDispositivo = new Set((dispositivi ?? []).map(x => x.user_id));
@@ -109,6 +115,11 @@ Deno.serve(async (req) => {
       ...(appuntamenti ?? []).map(a => ({ user_id: a.user_id, quando: a.inizio, confermato: !!a.confermato_il })),
       ...(daCoda ?? []).filter(a => !veri.has(`${a.contatto_id}|${Date.parse(a.data_scelta)}`)).map(a => ({ user_id: a.user_id, quando: a.data_scelta, confermato: !!a.confermato_il })),   // senza doppioni della coda
     ];
+    const riordiniDi = [
+      // deno-lint-ignore no-explicit-any
+      ...(vendite ?? []).filter((v: any) => v.azione && !v.azione.completata && !v.azione.esito && v.azione.inizio < g.fine),
+      ...(glide ?? []),
+    ].map(r => r.user_id);
     const esiti: Record<string, unknown>[] = [];
     for (const u of attivi ?? []) {
       if (!conDispositivo.has(u.id)) continue;
@@ -117,7 +128,9 @@ Deno.serve(async (req) => {
       const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
       const pezzi = [plurale(telefonate, 'telefonata', 'telefonate')];
       if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
-      const testo = `Oggi ${pezzi.join(' e ')}. Tocca per aprire l'Agenda.`;
+      const riordini = riordiniDi.filter(id => id === u.id).length;
+      if (riordini) pezzi.push(plurale(riordini, 'riordino', 'riordini') + ' da sentire');
+      const testo = `Oggi ${pezzi.length > 1 ? pezzi.slice(0, -1).join(', ') + ' e ' + pezzi[pezzi.length - 1] : pezzi[0]}. Tocca per aprire l'Agenda.`;
       esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
     }
     return risposta({ oggi, utenti: esiti.length, esiti: corpo.forza ? esiti : undefined });

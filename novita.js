@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 17:01', titolo: 'I riordini nell\'avviso del mattino',
+      testo: 'L\'avviso delle 8 ora ti dice anche quanti clienti hai da sentire per il riordino: «Oggi 5 telefonate, 2 appuntamenti e 2 riordini da sentire». Restano nel conto finché non segni com\'è andata.' },
     { quando: '2026.09.18 · 16:57', titolo: 'Riordini da sentire: righe più piccole',
       testo: 'In Dashboard i «🔁 Riordini da sentire» ora sono righe sottili, come la tua coda: tocca il nome per aprire i bottoni per chiamare e per segnare com\'è andata. Così la coda resta a portata di mano.' },
     { quando: '2026.09.18 · 16:35', titolo: 'I riordini anche in Agenda',
