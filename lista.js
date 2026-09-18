@@ -241,8 +241,25 @@
     return ('Fase ' + (r.ultimo_tipo ? r.ultimo_tipo + ': ' : ': ') + r.ultima_fase).toUpperCase();
   }
 
+  // ── Vendite (cantiere 26) ──
+  // I 5 brand del modulo «Vendita» di Glide, con il colore della targhetta.
+  const BRAND = [['Artistry', '#BE185D'], ['eSpring', '#2563EB'], ['Home', '#EA580C'], ['Nutrilite/XS', '#16A34A'], ['Persona', '#7C3AED']];
+  const coloreBrand = b => (BRAND.find(x => x[0] === b) || [null, '#6B7280'])[1];
+
+  // Chi ha la sezione «Vendite» nella scheda (Ignazio 18/09): chi è Cliente; e chi ha già una vendita, anche se cambia categoria.
+  const haVendite = (c, vendite) => c.categoria === 'Cliente' || !!(vendite && vendite.length);
+
+  // Totali della scheda dalle righe di `vendite_conti`: si sommano i numeri interi e si arrotonda solo a schermo (come Glide).
+  function totaliVendite(vendite) {
+    const somma = k => (vendite || []).reduce((t, v) => t + Number(v[k] || 0), 0);
+    return { vp: somma('vp'), provvigione: somma('provvigione'), netto: somma('guadagno_netto') };
+  }
+
+  // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
+  const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
+
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, totaliVendite, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

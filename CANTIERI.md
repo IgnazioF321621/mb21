@@ -26,7 +26,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ~~Lavoro 1 · struttura~~ — fatto il 18/09: migrazione `20260918094500_vendite.sql` **applicata** (tabelle vuote, i 2 FC dentro): tabelle `fattori_conversione` e `vendite`, vista `vendite_conti` con la provvigione. Provata sul DB dentro una transazione annullata: i totali di Glide tornano (101,98 · 41,98), da giugno vale il nuovo FC (53 VP → 23,98), un brand fuori elenco è rifiutato; dopo la prova nel DB non è rimasto niente
 - Lavoro 1 bis · **Admin → Fattore di conversione**: aggiungere, cambiare, cancellare
 - ~~Lavoro 2 · import di `Vendite.csv`~~ — fatto il 18/09 con `scripts/import_vendite.py`: **147 vendite** di 55 clienti (Isabella 111 · Ignazio 17 · Ornella 10 · Carolina 5 · Andrea 4), 8.812,48 VP, 211,90 € di sconti, dal 2019. La vendita **segue il proprietario del contatto** (Ignazio: una vendita registrata da lui su una cliente di Isabella va a Isabella). «Nutrilite» → «Nutrilite/XS»; 66 vendite vecchie senza riordino. Riscontro con Glide sui due clienti fotografati: 229,94 · 101,98 · 41,98 e 88,47 · 39,24 · 0,24, identici. Le righe hanno `da_glide`: l'import si può rilanciare senza toccare le vendite scritte nell'app
-- Lavoro 3 · sezione «Vendite» nella scheda (totali, tabella, «Vendita +», Modifica/Elimina)
+- **Regola di Ignazio (18/09)**: «chi è Cliente ha le Vendite», niente spunte; chi ha già una vendita la tiene anche se cambia categoria. Idea da tenere per l'incastro: all'esito «Vendita» di una Consulenza PRD chiedere «Registri la vendita?» e proporre il passaggio a Cliente
+- Lavoro 3a · sezione «Vendite» **in lettura** (tre totali ed elenco) — fatto il 18/09, **da provare con Ignazio** sui clienti veri
+- Lavoro 3b · «Vendita +», Modifica, Elimina
 - Lavoro 4 · riordino in Agenda
 
 ## 21. DA FARE PIÙ AVANTI
