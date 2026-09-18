@@ -879,16 +879,23 @@ function apriCheck() {
     for (const k of ['contatti', 'pm']) velo.querySelector('#ck-campo-' + k).style.display = dalle ? 'none' : '';
     box.style.display = dalle ? '' : 'none';
     if (!dalle) return;
-    const titolo = (c, p) => `<b>📞 Contatti: ${c} · 🗓️ PM: ${p}</b>`;
-    box.innerHTML = `<div class="ck-vn">${titolo('…', '…')}<div class="vn-aiuto">Carico le azioni del giorno…</div></div>`;
+    // due card azzurre, una per numero (Ignazio 18/09: «separiamole come erano prima»), ognuna con la sua spiegazione e le sue righe
+    const CARD = [
+      { k: 'contatti', titolo: '📞 Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
+        vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «Non risponde» non conta.' },
+      { k: 'pm', titolo: '🗓️ PM', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
+        vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
+    ];
+    const card = (d, numero, aiuto, righe) => `<div class="ck-vn"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;
+    box.innerHTML = CARD.map(d => card(d, '…', 'Carico le azioni del giorno…')).join('');
     const { data: righe, error } = await dbq('azioni del giorno', supa.from('azioni_conti')
-      .select('id, contatto_id, tipo_azione, modalita, esito, contatti, pm, contatto:contatti(nome)').eq('user_id', visto().id).eq('giorno', data).order('tipo_azione'));
+      .select('id, contatto_id, tipo_azione, modalita, esito, contatti, pm, contatto:contatti(nome)').eq('user_id', visto().id).eq('giorno', data));
     if (!ancoraValido()) return;
-    if (error) { box.innerHTML = `<div class="ck-vn">${titolo('?', '?')}<div class="vn-aiuto">Non riesco a leggere le azioni: riprova.</div></div>`; return; }
-    const somma = k => righe.reduce((t, r) => t + (r[k] || 0), 0);
-    box.innerHTML = `<div class="ck-vn">${titolo(somma('contatti'), somma('pm'))}
-      <div class="vn-aiuto">${righe.length ? 'Dalle azioni registrate (coda, Agenda, scheda). Tocca un\'azione per aprire il contatto.' : 'Nessun contatto parlato e nessun PM avvenuto registrati in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli.'}</div>
-      ${righe.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')} · ${esc(r.pm ? (r.modalita || 'PM') : 'Contatto')}</span><b>${esc(r.esito || '')} ›</b></button>`).join('')}</div>`;
+    if (error) { box.innerHTML = CARD.map(d => card(d, '?', 'Non riesco a leggere le azioni: riprova.')).join(''); return; }
+    box.innerHTML = CARD.map(d => {
+      const sue = righe.filter(r => r[d.k]);
+      return card(d, sue.length, sue.length ? d.pieno : d.vuoto, sue.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')}${r.modalita ? ' · ' + esc(r.modalita) : ''}</span><b>${esc(r.esito || '')} ›</b></button>`).join(''));
+    }).join('');
     box.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });
   };
   campoData.onchange = caricaGiorno;
