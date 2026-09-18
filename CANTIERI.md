@@ -35,12 +35,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   - **Pezzo 1 (18/09)**: migrazione `20260918133500_contatti_pm_dalle_azioni.sql` **applicata da Ignazio il 18/09**; verificato: tutti i mesi identici a prima tranne settembre 2026. Confronto 14-18/09, a mano → dalle azioni: Carolina 0→5 contatti e 0→1 PM · Isabella 0→4 · Ignazio 0→4 contatti e 1→0 PM (il suo PM è scritto nel Check ma non è in Agenda con un esito). Poi: pezzo 2 Check del Giorno (campi da leggere, `INIZIO_AZIONI` in dashboard.js) · pezzo 3 Report
   - **Pezzo 2 (18/09, versione 2026.09.18 · 14:33)**: nel Check del Giorno dal 14/09 Contatti e PM si leggono (riquadro con le azioni del giorno da toccare), da provare con Ignazio. Il PM di Ignazio con Samantha Abbate (11/09, fuori dalle due regole) l'ha spostato lui al 15/09 → settembre 9 contatti e 1 PM. Resta il pezzo 3: Report con la stessa regola
   - **Pezzo 3 (18/09, versione 2026.09.18 · 14:39)**: Report con la stessa regola (`contaAzione`), «Non contano nel totale» a parte, grafico compreso; da provare con Ignazio. **Griglia PM allineata** (Ignazio 18/09, versione 2026.09.18 · 14:46): solo i PM avvenuti, anche nel richiamo in Dashboard
+- **Lavoro 3 · i Clienti rientrano in coda** (Ignazio 18/09: «90 giorni e non vale se ha un riordino programmato»; versione 2026.09.18 · 14:56): migrazione `20260918150000_clienti_in_coda.sql` **da applicare** (la lancia Ignazio). Dopo Ordine / Vendita / No Vendita il Cliente torna in coda dopo 90 giorni; chi ha un riordino programmato la coda lo salta (19 clienti su 84 oggi); nella coda il Cliente ha gli stessi 5 bottoni del riordino. ❓ Da decidere: i 58 Clienti oggi senza data di rientro (restano fuori coda finché non hanno un nuovo esito)
+- Spostati in cantiere 21: riordini nell'avviso del mattino e nel riepilogo in cima all'Agenda
 - ⚠️ Stesso prezzo delle vendite: chi non registra le azioni nell'app vede 0
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)
 - **Grafica dei bottoni** (Ignazio 18/09, dal cantiere 27): un aspetto migliore per i bottoni esito e di contatto, uguale ovunque (Riordini, coda, Conferme, Agenda, scheda): una sessione dedicata, con una classe condivisa
+- **Riordini nell'avviso del mattino e in cima all'Agenda** (dal cantiere 27): oggi «Oggi N telefonate…» e il riepilogo dell'Agenda non contano i riordini da sentire
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
 - **Isabella e Carolina**: entrano una volta con «Mandami il link» e scelgono la password; poi provare l'**app installata** sul telefono (dal cantiere 15)
 - **Isabella**: nella v4 non ha salvato nessun Check (ultimo 13/09 da Glide), da chiederle (dal cantiere 10)

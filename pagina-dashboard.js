@@ -85,8 +85,17 @@ const BOTTONI_PROSPECT = [
   { etichetta: 'Non ora', chiave: 'Prospect-Contatto-Relazione' },
   { etichetta: 'Non interessato', chiave: 'Prospect-Contatto-No Interesse', classe: 'no', rientro: true },   // poi «Quando risentirlo?» (17/09)
 ];
+// Cliente (cantiere 27, 18/09): gli stessi esiti del riquadro «Riordini da sentire». «Ordine» propone di registrare la vendita.
+const BOTTONI_CLIENTE = [
+  { etichetta: 'Ordine', chiave: 'Cliente-Contatto-Ordine', classe: 'ordine', vendita: true },
+  { etichetta: 'Appuntamento', chiave: 'Cliente-Contatto-Appuntamento', data: 'giorno-ora', classe: 'appuntamento' },
+  { etichetta: 'Richiamare', chiave: 'Cliente-Contatto-Richiamare', data: 'giorno' },
+  { etichetta: 'Non risponde', chiave: 'Cliente-Contatto-No Risposta' },
+  { etichetta: 'Non interessato', chiave: 'Cliente-Contatto-No Interesse', classe: 'no', rientro: true },
+];
 function bottoniPer(categoria) {
-  if (categoria === 'Partner' || categoria === 'Cliente') return [
+  if (categoria === 'Cliente') return BOTTONI_CLIENTE;
+  if (categoria === 'Partner') return [
     { etichetta: 'Appuntamento', chiave: `${categoria}-Contatto-Appuntamento`, data: 'giorno-ora', classe: 'appuntamento' },
     { etichetta: 'Richiamare', chiave: `${categoria}-Contatto-Richiamare`, data: 'giorno' },
   ];
@@ -319,6 +328,7 @@ async function toccaBottone(id, indice) {
     salvaCache();
     disegnaOggi();
     mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
+    if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria);   // «Ordine»: «La registri adesso?»
   }, 250);
 }
 

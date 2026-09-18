@@ -61,7 +61,7 @@
   .bottoni { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .bottoni button { font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: 12px; border: 0; background: #F3F4F6; color: var(--testo); }
   .bottoni button:active { transform: scale(.97); }
-  .bottoni .appuntamento { background: #DCFCE7; color: #166534; }
+  .bottoni .appuntamento, .bottoni .ordine { background: #DCFCE7; color: #166534; }
   .bottoni .no { background: #FEF2F2; color: #991B1B; }
   .bottoni button:disabled { opacity: .45; }
   .bottoni button:last-child:nth-child(odd) { grid-column: 1 / -1; }
@@ -553,22 +553,22 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181446"></script>
-<script src="lista.js?v=202609181446"></script>
-<script src="dashboard.js?v=202609181446"></script>
-<script src="agenda.js?v=202609181446"></script>
-<script src="report.js?v=202609181446"></script>
-<script src="check.js?v=202609181446"></script>
-<script src="mappa.js?v=202609181446"></script>
-<script src="pagina-dashboard.js?v=202609181446"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181446"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181446"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181446"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181446"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181446"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181446"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181456"></script>
+<script src="lista.js?v=202609181456"></script>
+<script src="dashboard.js?v=202609181456"></script>
+<script src="agenda.js?v=202609181456"></script>
+<script src="report.js?v=202609181456"></script>
+<script src="check.js?v=202609181456"></script>
+<script src="mappa.js?v=202609181456"></script>
+<script src="pagina-dashboard.js?v=202609181456"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181456"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181456"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181456"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181456"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181456"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181456"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 14:46';
+const APP_VERSION = '2026.09.18 · 14:56';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1132,6 +1132,21 @@ async function cambiaEsito(a, esito, dopo, testo) {
   });
 }
 
+// «🛒 Vendita! La registri adesso?»: lo stesso passo per l'esito «Vendita» di una consulenza e per «Ordine» di una telefonata al Cliente
+// (Agenda, scheda, Riordini da sentire, coda). Se sì apre la scheda sulle Vendite con il modulo pronto e restituisce true.
+async function registraVenditaDa(contattoId, nome, categoria, brand) {
+  if (!await chiediConferma('🛒 Vendita! La registri adesso?',
+    'I VP Clienti contano solo dalle vendite registrate. Dalla vendita nasce anche la telefonata di riordino.', 'Registra la vendita')) return false;
+  if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria || 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
+    const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', contattoId));
+    if (ec) mostraToast('Categoria non cambiata: riprova dalla scheda.');
+    else { contattiMiei = null; LS.righe = []; }
+  }
+  await apriContattoDa(contattoId);
+  if (LS.contatto && LS.contatto.id === contattoId) { LS.sezione = 'vendite'; disegnaScheda(); moduloVendita(null, { brand }); }
+  return true;
+}
+
 // opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda) · senzaProssimo: niente «Fissa il prossimo appuntamento» · testo: parola dell'avviso
 async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
@@ -1149,18 +1164,8 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   AG.aperta = null;
   // Consulenza PRD → «Vendita»: «Registri la vendita?». Se sì si va alla scheda del cliente con il modulo Vendita aperto
   // (il riordino lo scrive la vendita in Agenda, quindi niente «prossimo appuntamento»); se no, tutto come prima.
-  if (MB21Agenda.proponeVendita(e.tipo_azione, esito) && await chiediConferma('🛒 Vendita! La registri adesso?',
-      'I VP Clienti contano solo dalle vendite registrate. Dalla vendita nasce anche la telefonata di riordino.', 'Registra la vendita')) {
-    const nome = e.contatti ? e.contatti.nome : 'Il contatto', categoria = e.contatti && e.contatti.categoria;
-    if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria || 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
-      const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', e.contatto_id));
-      if (ec) mostraToast('Categoria non cambiata: riprova dalla scheda.');
-      else { contattiMiei = null; LS.righe = []; }
-    }
-    await apriContattoDa(e.contatto_id);
-    if (LS.contatto && LS.contatto.id === e.contatto_id) { LS.sezione = 'vendite'; disegnaScheda(); moduloVendita(null, { brand: e.brand }); }
-    return;
-  }
+  if (MB21Agenda.proponeVendita(e.tipo_azione, esito)
+      && await registraVenditaDa(e.contatto_id, e.contatti ? e.contatti.nome : 'Il contatto', e.contatti && e.contatti.categoria, e.brand)) return;
   if (MB21Agenda.chiudeRelazione(esito)) {   // No Interesse / No BuonFine: niente prossimo appuntamento, «Quando risentirlo?»
     const giorno = await chiediRientro(e.contatto_id, e.contatti ? e.contatti.nome : '', esito);
     await ridisegna();
