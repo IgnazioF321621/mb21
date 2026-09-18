@@ -88,6 +88,12 @@
     return conti;
   }
 
+  // Sezione con cui si apre la scheda (cantiere 30, Ignazio 18/09: «fare meno azioni possibile»): con telefono e categoria
+  // i dati base ci sono → «Azioni»; se ne manca uno (o la scheda è archiviata) → «Dati», così si vede cosa completare.
+  function sezioneIniziale(c) {
+    return c && c.telefono && c.categoria && c.categoria !== 'Archiviato' ? 'azioni' : 'dati';
+  }
+
   // Telefono dal modulo: prefisso scelto + numero scritto → «+39…» senza spazi. Numero vuoto → null.
   function componiTelefono(prefisso, numero) {
     let n = String(numero || '').trim();
@@ -310,7 +316,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
