@@ -123,6 +123,16 @@ prova('Ordina: A-Z, fermi da più tempo, mai contattati, nuovi', () => {
   assert.deepEqual(Object.keys(L.ORDINI), ['az', 'fermi', 'mai', 'nuovi']);
 });
 
+prova('lettera iniziale: nome così com\'è scritto, senza accenti; si combina con filtro e ordine', () => {
+  assert.equal(L.iniziale({ nome: 'anna Bianchi' }), 'A');
+  assert.equal(L.iniziale({ nome: ' Élodie' }), 'E');
+  assert.equal(L.iniziale({ nome: '3 Fratelli' }), '#');
+  assert.equal(L.iniziale({}), '#');
+  assert.deepEqual(L.lettereConNomi(righe, { filtro: 'lista', utenteId: IO }), ['A', 'B', 'D', 'E', 'N', 'Z']);   // Carla è archiviata
+  assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'lista', utenteId: IO, lettera: 'N' })), ['3']);
+  assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: IO, lettera: 'N' })), []);
+});
+
 prova('etichette: data corta, fase con tipo e fase in maiuscolo', () => {
   assert.equal(L.data('2026-03-21T23:30:00Z', true), '22/03/26');                  // mezzanotte passata a Roma
   assert.equal(L.titoloFase({ ultimo_tipo: 'Contatto', ultima_fase: 'Richiamare' }), 'FASE CONTATTO: RICHIAMARE');

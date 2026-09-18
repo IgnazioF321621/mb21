@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 18:51', titolo: 'Lista Nomi: solo i nomi con una lettera',
+      testo: 'In Lista Nomi tocca «Ordina»: sotto le scelte trovi le lettere dalla A alla Z. Tocca la G e vedi solo i nomi che iniziano per G (il nome così com\'è scritto, di solito quello di battesimo). Per tornare a tutti tocca la lettera con la ✕ sopra i nomi.' },
     { quando: '2026.09.18 · 18:43', titolo: 'Lista Nomi: la card ti dice chi è fermo',
       testo: 'Sotto ogni nome ora leggi da quanto non lo senti («Fermo da 10 mesi», «Mai contattato») oppure, con il calendario 📅, cosa hai già in programma. A destra c\'è la cornetta per chiamare con un tocco; SMS, WhatsApp e Telegram sono nei tre puntini. Con «Ordina», sopra i nomi, metti in cima chi è fermo da più tempo, i mai contattati o i nuovi.' },
     { quando: '2026.09.18 · 18:20', titolo: 'Chiama, SMS, WhatsApp e Telegram con i loro simboli',

@@ -72,12 +72,22 @@
   const diChi = (r, utenteId) => (Array.isArray(utenteId) ? utenteId.includes(r.user_id) : r.user_id === utenteId);
 
   // righe: tutte quelle visibili all'utente (per l'Admin: di tutti i partner)
-  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az' } = {}) {
+  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az', lettera = null } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo, oggi))
+      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo, oggi) && (!lettera || iniziale(r) === lettera))
       .sort(confrontoPer(ordine, oggi));
+  }
+
+  // Lettera con cui inizia il nome così com'è scritto (di solito il nome di battesimo; Ignazio 18/09): A-Z senza accenti, il resto «#»
+  function iniziale(r) {
+    const c = piega(r && r.nome).trim().charAt(0).toUpperCase();
+    return c >= 'A' && c <= 'Z' ? c : '#';
+  }
+  // Lettere che hanno almeno un nome nel filtro scelto (le altre nel foglio restano spente)
+  function lettereConNomi(righe, { filtro, utenteId, admin } = {}) {
+    return [...new Set(filtraContatti(righe, { filtro, utenteId, admin }).map(iniziale))].sort();
   }
 
   // ── Card che parla e «Ordina» (cantiere 30, lavoro 4) ──
@@ -344,7 +354,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
