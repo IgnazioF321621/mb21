@@ -62,10 +62,25 @@ prova('versione più recente: letta dalla pagina pubblicata e confrontata', () =
   assert.equal(N.piuRecente('', '2026.09.18 · 15:50'), false);   // offline
 });
 
+prova('raggruppate per pagina: ordine delle tab, dentro dalla più recente, sconosciute in «Tutta l\'app»', () => {
+  const g = N.perPagina([
+    { quando: '2026.09.18 · 10:00', pagina: 'lista', titolo: 'L1' },
+    { quando: '2026.09.18 · 11:00', pagina: 'dashboard', titolo: 'D1' },
+    { quando: '2026.09.18 · 12:00', pagina: 'lista', titolo: 'L2' },
+    { quando: '2026.09.18 · 13:00', pagina: 'boh', titolo: 'X' },
+    { quando: '2026.09.18 · 14:00', titolo: 'Y' },
+  ]);
+  assert.deepEqual(g.map(x => x.pagina), ['dashboard', 'lista', 'app']);   // Agenda, Report, Mappa vuote: non compaiono
+  assert.deepEqual(g[1].novita.map(n => n.titolo), ['L2', 'L1']);
+  assert.deepEqual(g[2].novita.map(n => n.titolo), ['Y', 'X']);
+  assert.equal(g[0].titolo, '📊 Dashboard');
+});
+
 prova('ELENCO vero: ogni riga ha quando (formato giusto), titolo e testo', () => {
   for (const n of N.ELENCO) {
     assert.match(n.quando, /^\d{4}\.\d{2}\.\d{2} · \d{2}:\d{2}$/);
     assert.ok(n.titolo && n.testo);
+    assert.ok(N.PAGINE.some(p => p.chiave === n.pagina), 'pagina sconosciuta: ' + n.pagina + ' (' + n.titolo + ')');
   }
 });
 

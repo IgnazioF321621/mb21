@@ -33,7 +33,9 @@ function controllaNovita(ultimoUso) {
   } catch (e) {}
 }
 
-const righeNovita = elenco => elenco.map(n => `<div class="nv-riga"><small>${esc(MB21Novita.quandoLeggibile(n.quando))}</small><b>${esc(n.titolo)}</b>${esc(n.testo)}</div>`).join('');
+// Raggruppate per pagina, solo i titoli: toccando un titolo si apre la spiegazione (Ignazio 18/09). <details> si apre da solo, senza codice.
+const righeNovita = elenco => MB21Novita.perPagina(elenco).map(g => `<h4 class="nv-pagina">${esc(g.titolo)}</h4>` + g.novita.map(n =>
+  `<details class="nv-riga"><summary>${esc(n.titolo)}</summary><div>${esc(n.testo)}<small>${esc(MB21Novita.quandoLeggibile(n.quando))}</small></div></details>`).join('')).join('');
 
 // r = risultato di daMostrare → foglio all'apertura, con «Ho capito» · senza r → elenco completo (dal Profilo o da «vedi tutte»)
 function foglioNovita(r, ultimoUso) {
@@ -43,7 +45,7 @@ function foglioNovita(r, ultimoUso) {
   // «Ultimo ingresso» con l'ora (Ignazio 18/09): stesso formato della data di ogni novità, per confrontarle
   const eri = r && ultimoUso ? `<br><b style="color:var(--testo)">Ultimo ingresso: ${esc(MB21Novita.momentoLeggibile(ultimoUso))}</b>` : '';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>✨ ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
-    <p>${r ? `Ecco cosa è cambiato in MB21.${eri}` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, dalla novità più recente.`}</p>
+    <p>${r ? `Ecco cosa è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.${eri}` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
     ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button><p style="text-align:center;margin:10px 0 0;font-size:12px">Le ritrovi quando vuoi: tocca «✨ Novità» in fondo a ogni pagina.</p>' : ''}</div>`;

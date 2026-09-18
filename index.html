@@ -228,9 +228,11 @@
 
   .foglio.alto { max-height: 92vh; overflow-y: auto; }
   /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
-  .nv-riga { padding: 10px 0; border-bottom: 1px solid var(--linea); font-size: 14px; }
-  .nv-riga b { display: block; font-size: 15px; }
-  .nv-riga small { display: block; color: var(--grigio); font-size: 12px; margin-bottom: 2px; }
+  .nv-pagina { margin: 14px 0 2px; font-size: 13px; color: var(--grigio); text-transform: uppercase; letter-spacing: .04em; }
+  .nv-riga { border-bottom: 1px solid var(--linea); font-size: 14px; }
+  .nv-riga summary { padding: 9px 0; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .nv-riga div { padding: 0 0 10px 16px; color: var(--grigio); }
+  .nv-riga small { display: block; color: var(--grigio-chiaro); font-size: 11px; margin-top: 4px; }
   .foglio .testa-foglio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .foglio .testa-foglio button { border: 0; background: none; font-size: 24px; color: var(--grigio); padding: 0 4px; }
   .campo { margin-bottom: 4px; }
@@ -582,24 +584,24 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181851"></script>
-<script src="lista.js?v=202609181851"></script>
-<script src="dashboard.js?v=202609181851"></script>
-<script src="agenda.js?v=202609181851"></script>
-<script src="report.js?v=202609181851"></script>
-<script src="check.js?v=202609181851"></script>
-<script src="mappa.js?v=202609181851"></script>
-<script src="pagina-dashboard.js?v=202609181851"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181851"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181851"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181851"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181851"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181851"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181851"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181851"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609181851"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609181857"></script>
+<script src="lista.js?v=202609181857"></script>
+<script src="dashboard.js?v=202609181857"></script>
+<script src="agenda.js?v=202609181857"></script>
+<script src="report.js?v=202609181857"></script>
+<script src="check.js?v=202609181857"></script>
+<script src="mappa.js?v=202609181857"></script>
+<script src="pagina-dashboard.js?v=202609181857"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181857"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181857"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181857"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181857"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181857"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181857"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181857"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609181857"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 18:51';
+const APP_VERSION = '2026.09.18 · 18:57';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
