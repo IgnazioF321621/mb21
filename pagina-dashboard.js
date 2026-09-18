@@ -115,7 +115,6 @@ function cardContatto(r, dareSeguito) {
     return `<div class="card compatta" id="card-${esc(r.id)}"><div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>${testa}</div>`;
   }
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
-  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '';
   const bottoni = bottoniPer(r.categoria).map((b, i) =>
     `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline || guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
@@ -125,7 +124,6 @@ function cardContatto(r, dareSeguito) {
       <div class="corpo">
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
-        ${tel ? `<div class="riga">${tel}</div>` : ''}
         ${contattaHtml(r.telefono)}
         <div class="bottoni">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
@@ -163,7 +161,7 @@ function disegnaOggi() {
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   if (limitato()) {
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], button[data-riordino-nr], .riordino .ag-esiti button, #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
     return;
   }
   collegaConferme();
@@ -217,7 +215,6 @@ function cardCatalogo(r) {
   const strip = `<div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>`;
   if (!aperta) return `<div class="card compatta" id="card-${esc(r.id)}">${strip}${testa}</div>`;
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
-  const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono.replace(/[^0-9+]/g, ''))}">${esc(r.telefono)}</a>` : '<span class="sotto">Senza telefono</span>';
   const bottoni = r.categoria
     ? bottoniPer(r.categoria).map((b, i) =>   // come la coda, ma non conta nei contatti al giorno
       `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('')
@@ -228,7 +225,7 @@ function cardCatalogo(r) {
       ${strip}${testa}
       <div class="corpo">
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
-        <div class="riga">${tel}</div>
+        ${contattaHtml(r.telefono)}
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
         <div class="bottoni">${bottoni}</div>
@@ -470,7 +467,6 @@ function confermeHtml() {
         <div class="nome">${esc(c.contatti ? c.contatti.nome : '')}</div>
         <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
         ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
-        ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
         ${contattaHtml(tel)}
         <div class="bottoni conf-bottoni">
           <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
@@ -521,26 +517,34 @@ function riordiniHtml() {
   if (!RIO.righe.length) return '';
   const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
   return `<h2>🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
-    const tel = a.contatti && a.contatti.telefono;
+    const categoria = a.contatti ? a.contatti.categoria : a.categoria;
+    const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    const spento = ST.offline || soloGuardo() ? 'disabled' : '';
     return `<div class="card conferma riordino" data-riordino="${esc(a.id)}"><div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>
       <div class="corpo">
         <div class="nome">${esc(a.contatti ? a.contatti.nome : '')}</div>
-        <div class="conf-testo">${esc([a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
+        <div class="conf-testo">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
         ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
-        ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
-        ${contattaHtml(tel)}
-        ${ST.offline ? '' : bloccoEsiti(a, a.contatti ? a.contatti.categoria : null)}
-        <div class="bottoni conf-bottoni"><button data-riordino-nr="${esc(a.id)}">Non risponde</button></div>
+        ${contattaHtml(a.contatti && a.contatti.telefono)}
+        <div class="bottoni ${fasi.length === 2 ? 'conf-bottoni' : ''}">
+          ${fasi.map(f => `<button class="${f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
+          <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
+        </div>
+        <button class="link" data-scheda="${esc(a.contatto_id)}">👤 Apri contatto</button>
       </div></div>`;
   }).join('');
 }
 
+// Gli esiti passano da `chiudiAppuntamento`, come in Agenda (stessa strada di `collegaEsiti`, passo unico)
 function collegaRiordini() {
   const dopo = async () => { await caricaRiordini(ST.oggi); disegnaOggi(); };
   app.querySelectorAll('[data-riordino]').forEach(el => {
     const a = RIO.righe.find(x => x.id === el.dataset.riordino);
     if (!a) return;
-    collegaEsiti(el, a, { nome: a.contatti ? a.contatti.nome : '', categoria: a.contatti ? a.contatti.categoria : a.categoria }, dopo);
+    const categoria = a.contatti ? a.contatti.categoria : a.categoria;
+    el.querySelectorAll('[data-riordino-esito]').forEach(b => {
+      b.onclick = () => chiudiAppuntamento({ ...a, categoria: a.categoria || categoria }, b.dataset.riordinoEsito, { dopo });
+    });
     el.querySelector('[data-riordino-nr]').onclick = () => { RIO.nonRisponde.add(a.id); disegnaOggi(); };
   });
 }
