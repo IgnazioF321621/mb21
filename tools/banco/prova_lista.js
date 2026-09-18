@@ -254,4 +254,11 @@ prova('Vendite: la promo differita conta solo con «Ordine fatto»; prima è «d
   assert.equal(L.rigaVendita({ ...base, riordino: '2027-01-01' }).errore, 'Il riordino è prima della consegna');
 });
 
+prova('Vendite: targhette Brand della testata, accese quelle comprate (anche una promo da consegnare)', () => {
+  const t = L.brandComprati([{ brand: 'eSpring' }, { brand: 'eSpring' }, { brand: 'Home', consegna: '2027-03-01' }]);
+  assert.deepEqual(t.map(b => b.nome), ['Artistry', 'eSpring', 'Home', 'Nutrilite/XS', 'Persona']);
+  assert.deepEqual(t.filter(b => b.acceso).map(b => b.nome), ['eSpring', 'Home']);
+  assert.equal(L.brandComprati(null).some(b => b.acceso), false);
+});
+
 console.log(`\n${ok} prove superate`);

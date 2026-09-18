@@ -186,6 +186,10 @@
   .ck-vn .vn-aiuto { color: #1E40AF; margin-bottom: 4px; }
   .ck-vn-riga { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font-family: inherit; font-size: 15px; background: #fff; border: 0; border-radius: 10px; padding: 10px 12px; margin-top: 6px; color: var(--testo); }
   .ck-vn-riga b { flex: none; color: #1D4ED8; }
+  .vn-brand-testata { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .vn-brand-testata:empty { display: none; }
+  .vn-brand-testata button { font-family: inherit; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--linea); background: #F3F4F6; color: var(--grigio-chiaro); }
+  .vn-brand-testata button.acceso { background: var(--col); border-color: var(--col); color: #fff; }
   .vn-quando { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 8px; }
   .vn-quando button { font-size: 16px; font-weight: 600; padding: 12px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff; color: var(--testo); }
   .vn-quando button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
@@ -548,21 +552,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181130"></script>
-<script src="lista.js?v=202609181130"></script>
-<script src="dashboard.js?v=202609181130"></script>
-<script src="agenda.js?v=202609181130"></script>
-<script src="report.js?v=202609181130"></script>
-<script src="check.js?v=202609181130"></script>
-<script src="mappa.js?v=202609181130"></script>
-<script src="pagina-dashboard.js?v=202609181130"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181130"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609181130"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181130"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181130"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181130"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181138"></script>
+<script src="lista.js?v=202609181138"></script>
+<script src="dashboard.js?v=202609181138"></script>
+<script src="agenda.js?v=202609181138"></script>
+<script src="report.js?v=202609181138"></script>
+<script src="check.js?v=202609181138"></script>
+<script src="mappa.js?v=202609181138"></script>
+<script src="pagina-dashboard.js?v=202609181138"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181138"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609181138"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181138"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181138"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181138"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 11:30';
+const APP_VERSION = '2026.09.18 · 11:38';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.

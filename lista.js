@@ -246,6 +246,10 @@
   const BRAND = [['Artistry', '#BE185D'], ['eSpring', '#2563EB'], ['Home', '#EA580C'], ['Nutrilite/XS', '#16A34A'], ['Persona', '#7C3AED']];
   const coloreBrand = b => (BRAND.find(x => x[0] === b) || [null, '#6B7280'])[1];
 
+  // Targhette Brand nella testata della scheda (lavoro 6): i 5 brand, accesi quelli che il cliente ha comprato
+  // (contano anche le promo ancora da consegnare: le ha comprate).
+  const brandComprati = vendite => BRAND.map(([nome, colore]) => ({ nome, colore, acceso: (vendite || []).some(v => v.brand === nome) }));
+
   // Chi ha la sezione «Vendite» nella scheda (Ignazio 18/09): chi è Cliente; e chi ha già una vendita, anche se cambia categoria.
   const haVendite = (c, vendite) => c.categoria === 'Cliente' || !!(vendite && vendite.length);
 
@@ -292,7 +296,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, numero };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
