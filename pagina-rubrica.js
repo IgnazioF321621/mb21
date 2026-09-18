@@ -121,7 +121,7 @@ async function salvaRubrica(schede) {
   }
   for (const s of errore ? [] : RB.esito.numeri) {
     const { error } = await dbq('numero dalla rubrica', supa.from('contatti')
-      .update({ telefono: s.telefono, aggiornato_il: new Date().toISOString() }).eq('id', s.contattoId).is('telefono', null));
+      .update({ telefono: s.telefono, ...(s.compleanno ? { compleanno: MB21Rubrica.dataCompleanno(s.compleanno) } : {}), aggiornato_il: new Date().toISOString() }).eq('id', s.contattoId).is('telefono', null));
     if (error) { errore = true; break; }
     numeri++;
   }
