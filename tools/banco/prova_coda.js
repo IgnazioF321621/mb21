@@ -52,6 +52,11 @@ prova('fuori coda: rientro futuro o vuoto', () => {
   assert.deepEqual(r.coda.map(x => x.id), ['ok']);
 });
 
+prova('fuori coda: il Cliente con un riordino programmato (lo segue la telefonata di riordino)', () => {
+  const r = calcolaCoda([c('riordino', { categoria: 'Cliente', riordino_programmato: true }), c('libero', { categoria: 'Cliente', riordino_programmato: false })], OGGI);
+  assert.deepEqual(r.coda.map(x => x.id), ['libero']);
+});
+
 prova('Dare Seguito scaduto: sopra la capienza, con i giorni di ritardo', () => {
   const righe = Array.from({ length: 7 }, (_, i) => c('n' + i));
   righe.push(c('ds', { contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -3) }));
