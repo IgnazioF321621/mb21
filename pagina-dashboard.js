@@ -530,7 +530,7 @@ function riordiniHtml() {
     return `<div class="card conferma riordino" data-riordino="${esc(a.id)}"><div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>
       <div class="corpo">
         <div class="nome">${esc(a.contatti ? a.contatti.nome : '')}</div>
-        <div class="conf-testo">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
+        <div class="conf-testo">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : a.glide_id ? ` · era del ${esc(dataBreve(MB21Agenda.partiRoma(a.inizio).giorno))}` : ''}</div>
         ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(a.contatti && a.contatti.telefono)}
         <div class="bottoni">
