@@ -111,7 +111,7 @@ function disegnaLista() {
     <div id="fondo"></div>
     ${versione()}`;
   collegaPartnerSelect();
-  document.getElementById('nuovo').onclick = () => apriModulo(null);
+  document.getElementById('nuovo').onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });
   document.getElementById('altri').onclick = scegliAltri;
   const cerca = document.getElementById('cerca');
@@ -394,8 +394,19 @@ function sezioneDati() {
     ['Note', c.note], ['Contatto e/o Incaricato di', c.referral_di], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
     .filter(([, v]) => v);
   document.getElementById('sezione').innerHTML = `<div id="coppia"></div><div class="riquadro dati">
-    ${campi.map(([k, v]) => `<div><small>${k}</small>${esc(v)}</div>`).join('')}</div>`;
+    ${campi.map(([k, v]) => `<div><small>${k}</small>${esc(v)}</div>`).join('')}<div id="dati-compleanno" hidden></div></div>`;
   riquadroCoppia(c);
+  rigaCompleanno(c);
+}
+
+// Compleanno (cantiere 30, Ignazio 18/09: «domani potremmo mandare messaggi di auguri»): arriva dalla rubrica del telefono.
+// La vista della Lista non ce l'ha: si legge da `contatti` quando si apre «Dati», come la coppia. Senza rete la riga non compare.
+async function rigaCompleanno(c) {
+  const { data, error } = await dbq('compleanno', supa.from('contatti').select('compleanno').eq('id', c.id).maybeSingle());
+  const posto = document.getElementById('dati-compleanno');
+  if (error || !data || !data.compleanno || !posto || LS.contatto !== c || LS.sezione !== 'dati') return;
+  posto.innerHTML = `<small>Compleanno</small>🎂 ${esc(MB21Rubrica.compleannoScritto(data.compleanno))}`;
+  posto.hidden = false;
 }
 
 // Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
