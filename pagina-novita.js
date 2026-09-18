@@ -40,9 +40,10 @@ function foglioNovita(r, ultimoUso) {
   const tutte = MB21Novita.ordinate(MB21Novita.ELENCO);
   const velo = document.createElement('div');
   velo.className = 'velo';
-  const eri = r && ultimoUso ? ` (eri entrato il ${new Date(ultimoUso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' })})` : '';
+  // «Ultimo ingresso» con l'ora (Ignazio 18/09): stesso formato della data di ogni novità, per confrontarle
+  const eri = r && ultimoUso ? `<br><b style="color:var(--testo)">Ultimo ingresso: ${esc(MB21Novita.momentoLeggibile(ultimoUso))}</b>` : '';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>✨ ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
-    <p>${r ? `Ecco cosa è cambiato in MB21${eri}.` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, dalla novità più recente.`}</p>
+    <p>${r ? `Ecco cosa è cambiato in MB21.${eri}` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, dalla novità più recente.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
     ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button><p style="text-align:center;margin:10px 0 0;font-size:12px">Le ritrovi quando vuoi: tocca «✨ Novità» in fondo a ogni pagina.</p>' : ''}</div>`;

@@ -48,6 +48,8 @@ prova('più di 10: le 10 più recenti e il conto delle altre', () => {
 });
 
 prova('data leggibile', () => {
+  assert.equal(N.momentoLeggibile('2026-09-18T15:30:00+00:00'), '18/09/2026 · 17:30');   // ultimo ingresso, ora di Roma
+  assert.equal(N.momentoLeggibile(null), '');
   assert.equal(N.quandoLeggibile('2026.09.18 · 15:03'), '18/09/2026 · 15:03');
 });
 
