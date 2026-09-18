@@ -206,6 +206,10 @@
   .testo-nota { white-space: pre-wrap; font-size: 15px; line-height: 1.45; max-height: 60vh; overflow-y: auto; }
 
   .foglio.alto { max-height: 92vh; overflow-y: auto; }
+  /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
+  .nv-riga { padding: 10px 0; border-bottom: 1px solid var(--linea); font-size: 14px; }
+  .nv-riga b { display: block; font-size: 15px; }
+  .nv-riga small { display: block; color: var(--grigio); font-size: 12px; margin-bottom: 2px; }
   .foglio .testa-foglio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .foglio .testa-foglio button { border: 0; background: none; font-size: 24px; color: var(--grigio); padding: 0 4px; }
   .campo { margin-bottom: 4px; }
@@ -553,22 +557,23 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181503"></script>
-<script src="lista.js?v=202609181503"></script>
-<script src="dashboard.js?v=202609181503"></script>
-<script src="agenda.js?v=202609181503"></script>
-<script src="report.js?v=202609181503"></script>
-<script src="check.js?v=202609181503"></script>
-<script src="mappa.js?v=202609181503"></script>
-<script src="pagina-dashboard.js?v=202609181503"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181503"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181503"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181503"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181503"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181503"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181503"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181523"></script>
+<script src="lista.js?v=202609181523"></script>
+<script src="dashboard.js?v=202609181523"></script>
+<script src="agenda.js?v=202609181523"></script>
+<script src="report.js?v=202609181523"></script>
+<script src="check.js?v=202609181523"></script>
+<script src="mappa.js?v=202609181523"></script>
+<script src="pagina-dashboard.js?v=202609181523"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181523"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181523"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181523"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181523"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181523"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181523"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181523"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 15:03';
+const APP_VERSION = '2026.09.18 · 15:23';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -775,11 +780,48 @@ function foglioPassword(primaVolta) {
   };
 }
 
+// ── «✨ NOVITÀ» (cantiere 28, decisioni di Ignazio 18/09) ──
+// Elenco e logica in novita.js. Il foglio torna a ogni apertura finché non si tocca «Ho capito»: fino a quale novità
+// la persona l'ha toccato si ricorda su questo dispositivo (una chiave per utente). Primo ingresso: niente foglio.
+// Se la memoria del dispositivo non risponde non si apre niente: l'apertura dell'app non si blocca mai.
+const chiaveNovita = () => 'mb21_novita_' + ST.utente.id;
+
+function controllaNovita(ultimoUso) {
+  try {
+    const r = MB21Novita.daMostrare(MB21Novita.ELENCO, localStorage.getItem(chiaveNovita()) || '', ultimoUso);
+    if (r.segna) localStorage.setItem(chiaveNovita(), r.segna);
+    if (r.nuove.length) foglioNovita(r, ultimoUso);
+  } catch (e) {}
+}
+
+const righeNovita = elenco => elenco.map(n => `<div class="nv-riga"><small>${esc(MB21Novita.quandoLeggibile(n.quando))}</small><b>${esc(n.titolo)}</b>${esc(n.testo)}</div>`).join('');
+
+// r = risultato di daMostrare → foglio all'apertura, con «Ho capito» · senza r → elenco completo (dal Profilo o da «vedi tutte»)
+function foglioNovita(r, ultimoUso) {
+  const tutte = MB21Novita.ordinate(MB21Novita.ELENCO);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const eri = r && ultimoUso ? ` (eri entrato il ${new Date(ultimoUso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' })})` : '';
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>✨ ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
+    <p>${r ? `Ecco cosa è cambiato in MB21${eri}.` : 'Tutto quello che è cambiato in MB21, dalla novità più recente.'}</p>
+    ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
+    ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
+    ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button>' : ''}</div>`;
+  document.body.appendChild(velo);
+  const su = (id, fn) => { const el = velo.querySelector(id); if (el) el.onclick = fn; };
+  su('#nv-x', () => velo.remove());
+  su('#nv-tutte', () => foglioNovita());
+  su('#nv-ok', () => {
+    try { localStorage.setItem(chiaveNovita(), MB21Novita.ultima(MB21Novita.ELENCO)); } catch (e) {}
+    velo.remove();
+  });
+}
+
 async function dopoAccesso(sessione) {
   ST.emailAccount = sessione.user.email;   // per il foglio della password (i telefoni la salvano con l'email)
   await dbq('collega account', supa.rpc('collega_account'));   // primo accesso col link dell'email: collega l'account all'utente
   const { data, error } = await dbq('lettura utente',
-    supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, ruolo, abbonamento_scadenza, partner_id, accesso_attivo').eq('auth_id', sessione.user.id).maybeSingle());
+    supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, ruolo, abbonamento_scadenza, partner_id, accesso_attivo, ultimo_uso').eq('auth_id', sessione.user.id).maybeSingle());
   if (error && !navigator.onLine) { ST.utente = {}; return mostraTab(); }   // offline: si prova con la cache
   if (!data && !error) {   // entrato con la password del modulo: richiesta ancora da approvare
     const { data: stato } = await dbq('stato della richiesta', supa.rpc('mia_richiesta'));
@@ -790,6 +832,7 @@ async function dopoAccesso(sessione) {
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
   ST.utente = data;
+  const ultimoUso = data.ultimo_uso;   // letto PRIMA di segna_uso: è l'ingresso precedente (per «✨ Novità», cantiere 28)
   await controllaAbbonamento();
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   await caricaPersone();
@@ -802,6 +845,7 @@ async function dopoAccesso(sessione) {
   }
   mostraTab();
   if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true);
+  else controllaNovita(ultimoUso);   // un foglio alla volta: le novità aspettano la prossima apertura
 }
 
 // ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
