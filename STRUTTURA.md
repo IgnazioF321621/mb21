@@ -29,7 +29,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `vendite` | Vendite | Cantiere 26: una riga per vendita **e per brand**, legata al contatto: `user_id` · `contatto_id` · `data` · `brand` (Artistry · eSpring · Home · Nutrilite/XS · Persona) · `prodotto` (≤50) · `vp` · `sconto` (€) · `riordino` (data, vuota in parte dello storico) · `da_glide` | le proprie · Admin tutte |
 | `vendite_conti` (vista) | — | Cantiere 26: `vendite` + `fc` · `provvigione` · `guadagno_netto`, non arrotondati. **L'unico posto dove si calcola la provvigione**: l'app legge sempre da qui | come `vendite` |
 
-**Vendite** (cantiere 26, migrazione `20260918094500_vendite.sql`, **da applicare**; decisioni di Ignazio 18/09):
+**Vendite** (cantiere 26, migrazione `20260918094500_vendite.sql`, applicata il 18/09; decisioni di Ignazio 18/09):
 - **Provvigione = (VP × FC) × 0,20**, con l'FC valido **alla data della vendita** (la riga di `fattori_conversione` con il `dal` più alto non oltre quella data). Non si salva: la calcola la vista `vendite_conti`, così correggendo un FC in Admin i numeri si sistemano da soli. Senza un FC per quella data la vendita resta e la provvigione è vuota
 - **Guadagno netto = provvigione − sconto**. Provvigione bassa o nulla = promozioni o sconti voluti: è normale
 - I totali della scheda si sommano **non arrotondati** e si arrotondano solo a schermo (come Glide: 23,51 + 78,48 → 101,98, non 101,99)
