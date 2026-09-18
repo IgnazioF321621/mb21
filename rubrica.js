@@ -124,13 +124,16 @@
 
   // ── 5. Il riepilogo prima di salvare ──
   // righe: la Lista già letta dall'app; utenteId: il proprietario che riceve i nomi.
-  // → { presenti, nuovi, controllare, incompleti }: ogni scheda ha `spunta` (entra se accesa) e `motivi`
-  //   motivi: 'nome' (poco chiaro) · 'ditta' · 'omonimo' (stesso nome in Lista con un altro numero) · 'senza-telefono' · 'senza-nome'
+  // → { presenti, numeri, nuovi, controllare, incompleti }: ogni scheda ha `spunta` (entra se accesa) e `motivi`
+  //   motivi: 'nome' (poco chiaro) · 'ditta' · 'omonimo' (stesso nome in Lista con un altro numero: parte SENZA spunta) · 'senza-telefono' · 'senza-nome'
+  //   numeri: stesso nome di UNA scheda della Lista che non ha il numero → non si crea un doppione, si aggiunge il numero a `contattoId`
   function preparaImport(testo, righe, { utenteId } = {}) {
     const mie = (righe || []).filter(r => r.user_id === utenteId);
     const numeriLista = new Set(mie.map(r => soloCifre(r.telefono)).filter(c => c.length >= 6));
-    const nomiLista = new Set(mie.map(r => L.piega(r.nome)).filter(Boolean));
-    const esito = { letti: 0, presenti: [], nuovi: [], controllare: [], incompleti: [] };
+    const perNomeLista = new Map();
+    mie.forEach(r => { const k = L.piega(r.nome); if (k) perNomeLista.set(k, [...(perNomeLista.get(k) || []), r]); });
+    const nomiLista = perNomeLista;
+    const esito = { letti: 0, presenti: [], numeri: [], nuovi: [], controllare: [], incompleti: [] };
     const schede = unisciDoppioni(leggiVcard(testo));
     esito.letti = schede.length;
     for (const s of schede) {
@@ -141,13 +144,27 @@
       if (!s.nome.trim()) esito.incompleti.push({ ...s, motivi: ['senza-nome'], spunta: false });
       else if (!s.telefono) esito.incompleti.push({ ...s, motivi: ['senza-telefono', ...motivi], spunta: false });
       else {
-        if (nomiLista.has(L.piega(s.nome))) motivi.push('omonimo');
-        (motivi.length ? esito.controllare : esito.nuovi).push({ ...s, motivi, spunta: true });
+        const uguali = nomiLista.get(L.piega(s.nome)) || [];
+        if (uguali.length === 1 && !uguali[0].telefono) { esito.numeri.push({ ...s, motivi: [], spunta: true, contattoId: uguali[0].id }); continue; }
+        if (uguali.length) motivi.push('omonimo');
+        (motivi.length ? esito.controllare : esito.nuovi).push({ ...s, motivi, spunta: !motivi.includes('omonimo') });
       }
     }
     const perNome = (a, b) => L.piega(a.nome).localeCompare(L.piega(b.nome), 'it');
-    ['presenti', 'nuovi', 'controllare', 'incompleti'].forEach(k => esito[k].sort(perNome));
+    ['presenti', 'numeri', 'nuovi', 'controllare', 'incompleti'].forEach(k => esito[k].sort(perNome));
     return esito;
+  }
+
+  // Compleanno come lo tiene il database: una data; quando l'anno non si sa si scrive 1604 (la stessa convenzione dell'iPhone)
+  const ANNO_IGNOTO = 1604;
+  const due = n => String(n).padStart(2, '0');
+  const dataCompleanno = c => (c ? `${c.anno || ANNO_IGNOTO}-${due(c.mese)}-${due(c.giorno)}` : null);
+  // «2026-04-12» → «12 aprile 1985» · «1604-12-25» → «25 dicembre»
+  function compleannoScritto(data) {
+    const m = String(data || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return '';
+    const mesi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+    return `${Number(m[3])} ${mesi[Number(m[2]) - 1]}${Number(m[1]) === ANNO_IGNOTO ? '' : ' ' + m[1]}`;
   }
 
   // Riga pronta per la tabella `contatti`: senza categoria → «Da catalogare»; gli altri numeri nelle note
@@ -155,11 +172,11 @@
     return {
       user_id: utenteId, nome: s.nome.trim(), telefono: s.telefono || null,
       note: s.altriNumeri.length ? 'Altri numeri: ' + s.altriNumeri.join(' · ') : null,
-      compleanno: s.compleanno,
+      compleanno: dataCompleanno(s.compleanno),
     };
   }
 
-  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto };
+  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, dataCompleanno, compleannoScritto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Rubrica = api;
 })(this);
