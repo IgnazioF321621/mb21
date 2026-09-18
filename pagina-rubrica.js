@@ -63,7 +63,7 @@ function apriImportaRubrica() {
 const RB_MOTIVI = {
   nome: 'Nome poco chiaro: scrivi quello vero',
   ditta: 'Sembra una ditta o un nome di lavoro: togli la spunta se non è una persona',
-  omonimo: 'In Lista c\'è già un nome uguale con un altro numero: metti la spunta solo se è un\'altra persona',
+  omonimo: 'In Lista ci sono più schede con questo nome e un altro numero: metti la spunta solo se è un\'altra persona',
   'senza-telefono': 'Senza telefono',
   'senza-nome': 'Senza nome: scrivilo per farlo entrare',
 };
@@ -72,7 +72,14 @@ function disegnaRiepilogoRubrica() {
   const e = RB.esito;
   window.scrollTo(0, 0);
   const n = x => x.toLocaleString('it-IT');
-  const riga = (s, gruppo, i) => `<div class="rb-riga">
+  // stesso nome, altro numero: i due numeri e la scelta a tre voci (la prima, già scelta, non perde niente)
+  const rigaOmonimo = (s, i) => `<div class="rb-riga"><b>${esc(s.nome)}</b>
+      <small style="margin-left:0">In Lista: ${esc(s.inLista.telefono)} · In rubrica: ${esc(s.telefono)}</small>
+      <select class="rb-scelta" data-i="${i}">
+        <option value="note" ${s.scelta === 'note' ? 'selected' : ''}>Stessa persona: tieni il numero della Lista, l'altro nelle note</option>
+        <option value="rubrica" ${s.scelta === 'rubrica' ? 'selected' : ''}>Stessa persona: usa il numero della rubrica</option>
+        <option value="nuova" ${s.scelta === 'nuova' ? 'selected' : ''}>È un'altra persona: crea una scheda nuova</option></select></div>`;
+  const riga = (s, gruppo, i) => s.inLista ? rigaOmonimo(s, i) : `<div class="rb-riga">
       <label><input type="checkbox" data-g="${gruppo}" data-i="${i}" ${s.spunta ? 'checked' : ''}>
       <input type="text" class="rb-nome" data-g="${gruppo}" data-i="${i}" value="${esc(s.nome)}" maxlength="60" placeholder="Nome e cognome"></label>
       <small>${esc([s.telefono, ...s.motivi.map(m => RB_MOTIVI[m])].filter(Boolean).join(' · '))}</small></div>`;
@@ -91,29 +98,32 @@ function disegnaRiepilogoRubrica() {
     ${versione()}`;
   document.getElementById('rb-indietro').onclick = apriImportaRubrica;
   const bottone = document.getElementById('rb-salva');
-  const daSalvare = () => [...e.nuovi, ...e.controllare, ...e.incompleti].filter(s => s.spunta && s.nome.trim());
+  const daSalvare = () => [...e.nuovi, ...e.controllare, ...e.incompleti].filter(s => (s.inLista ? s.scelta === 'nuova' : s.spunta) && s.nome.trim());
+  const daCambiare = () => e.controllare.filter(s => s.inLista && s.scelta !== 'nuova');
   const aggiorna = () => {
     const quanti = daSalvare().length + e.numeri.length;
-    bottone.textContent = quanti ? `Salva ${n(quanti)} nomi` : 'Niente da salvare';
-    bottone.disabled = !quanti;
+    bottone.textContent = quanti ? `Salva ${n(quanti)} nomi` : daCambiare().length ? 'Salva le modifiche' : 'Niente da salvare';
+    bottone.disabled = !quanti && !daCambiare().length;
   };
+  app.querySelectorAll('.rb-scelta').forEach(sel => sel.onchange = () => { e.controllare[sel.dataset.i].scelta = sel.value; aggiorna(); });
   app.querySelectorAll('.rb-riga input[type=checkbox]').forEach(c => c.onchange = () => {
     const s = e[c.dataset.g][c.dataset.i];
     if (c.checked && !s.nome.trim()) { c.checked = false; return mostraToast('Prima scrivi il nome'); }
     s.spunta = c.checked; aggiorna();
   });
   app.querySelectorAll('.rb-nome').forEach(t => t.oninput = () => { e[t.dataset.g][t.dataset.i].nome = t.value; aggiorna(); });
-  bottone.onclick = () => salvaRubrica(daSalvare());
+  bottone.onclick = () => salvaRubrica(daSalvare(), daCambiare());
   aggiorna();
 }
 
 // A blocchi da 200: un file grosso non va in un colpo solo. Se un blocco non passa ci si ferma e si dice quanti sono entrati:
 // rifare l'importazione non crea doppioni, chi è già entrato viene riconosciuto dal numero.
-async function salvaRubrica(schede) {
+async function salvaRubrica(schede, omonimi) {
   const bottone = document.getElementById('rb-salva');
   bottone.disabled = true;
   const righe = schede.map(s => MB21Rubrica.rigaContatto(s, RB.proprietario));
   let salvati = 0, numeri = 0, errore = false;
+  const cambiati = { note: 0, rubrica: 0 };
   for (let i = 0; i < righe.length && !errore; i += 200) {
     bottone.textContent = `Salvo… ${salvati.toLocaleString('it-IT')} di ${righe.length.toLocaleString('it-IT')}`;
     const { error } = await dbq('importa rubrica', supa.from('contatti').insert(righe.slice(i, i + 200)));
@@ -125,11 +135,17 @@ async function salvaRubrica(schede) {
     if (error) { errore = true; break; }
     numeri++;
   }
+  for (const s of errore ? [] : omonimi) {
+    const c = MB21Rubrica.cambiaOmonimo(s);
+    const { error } = await dbq('numero in più dalla rubrica', supa.from('contatti').update({ ...c.campi, aggiornato_il: new Date().toISOString() }).eq('id', c.id));
+    if (error) { errore = true; break; }
+    cambiati[s.scelta]++;
+  }
   try { LS.righe = await leggiLista(); segnaApp(); } catch (err) {}
-  disegnaFattoRubrica({ salvati, numeri, errore, conAltri: schede.filter(s => s.altriNumeri.length).length });
+  disegnaFattoRubrica({ salvati, numeri, errore, cambiati, conAltri: schede.filter(s => s.altriNumeri.length).length });
 }
 
-function disegnaFattoRubrica({ salvati, numeri, errore, conAltri }) {
+function disegnaFattoRubrica({ salvati, numeri, errore, conAltri, cambiati = { note: 0, rubrica: 0 } }) {
   window.scrollTo(0, 0);
   const n = x => x.toLocaleString('it-IT');
   app.innerHTML = `
@@ -137,6 +153,8 @@ function disegnaFattoRubrica({ salvati, numeri, errore, conAltri }) {
     ${errore ? `<div class="riquadro">Si è interrotta la connessione: sono entrati <b>${n(salvati)}</b> nomi. Rifai l'importazione con lo stesso file: chi è già entrato viene saltato.</div>` : ''}
     ${salvati ? '<div class="riquadro">Sono in <b>«Da catalogare»</b>, senza categoria e con la targhetta <span class="badge new">nuovo</span>: li sistemi un po\' alla volta.</div>' : ''}
     ${numeri ? `<div class="riquadro">Ho aggiunto il numero a <b>${n(numeri)}</b> schede che erano già in Lista senza telefono.</div>` : ''}
+    ${cambiati.note ? `<div class="riquadro">Stesso nome con un altro numero: a <b>${n(cambiati.note)}</b> schede ho messo il numero della rubrica nelle note. Quando le chiami scopri qual è quello giusto.</div>` : ''}
+    ${cambiati.rubrica ? `<div class="riquadro">A <b>${n(cambiati.rubrica)}</b> schede ho messo il numero della rubrica; quello di prima è nelle note.</div>` : ''}
     ${conAltri ? '<div class="riquadro">Chi aveva più numeri: ho tenuto il cellulare, gli altri sono nelle note della scheda.</div>' : ''}
     <div class="riquadro">Puoi rifarlo quando vuoi: chi è già in Lista viene saltato.</div>
     <button class="primario" id="rb-catalogare">Vai a «Da catalogare»</button>
