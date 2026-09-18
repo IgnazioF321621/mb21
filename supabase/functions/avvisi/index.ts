@@ -3,7 +3,7 @@
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
-//    { tipo: 'mattino' } → alle 8 di Roma, «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
+//    { tipo: 'mattino' } → alle 9 di Roma (dal cantiere 29; prima alle 8), «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
 //    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
 //      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 
   // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
   if (tipo === 'mattino') {
-    if (oraRoma() !== 8 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 8` });
+    if (oraRoma() !== 9 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 9` });
     const oggi = oggiRoma(), g = giornoRoma(oggi), adesso = Date.now(), limiteConferme = new Date(adesso + 12 * 3600000).toISOString();
     // Riordini da sentire (cantiere 29): STESSA REGOLA di `MB21Agenda.riordiniDaSentire` in agenda.js (qui l'app non arriva, va tenuta uguale a mano):
     // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
