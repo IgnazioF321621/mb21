@@ -553,22 +553,22 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181433"></script>
-<script src="lista.js?v=202609181433"></script>
-<script src="dashboard.js?v=202609181433"></script>
-<script src="agenda.js?v=202609181433"></script>
-<script src="report.js?v=202609181433"></script>
-<script src="check.js?v=202609181433"></script>
-<script src="mappa.js?v=202609181433"></script>
-<script src="pagina-dashboard.js?v=202609181433"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181433"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181433"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181433"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181433"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181433"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181433"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181439"></script>
+<script src="lista.js?v=202609181439"></script>
+<script src="dashboard.js?v=202609181439"></script>
+<script src="agenda.js?v=202609181439"></script>
+<script src="report.js?v=202609181439"></script>
+<script src="check.js?v=202609181439"></script>
+<script src="mappa.js?v=202609181439"></script>
+<script src="pagina-dashboard.js?v=202609181439"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181439"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181439"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181439"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181439"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181439"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181439"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 14:33';
+const APP_VERSION = '2026.09.18 · 14:39';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1651,7 +1651,7 @@ function collegaCheck() {
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
 const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
-const CAMPI_REPORT = 'id, contatto_id, portato_da, tipo_azione, modalita, esito, inizio, ospite, contatti(nome)';
+const CAMPI_REPORT = 'id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, inizio, ospite, contatti(nome)';   // categoria e completata: servono a `contaAzione`
 
 async function leggiAzioniMie() {
   const righe = [];
@@ -1704,10 +1704,12 @@ function disegnaReport() {
       let h = riga(`tipo ${aperto ? 'aperto' : ''}`, `data-gruppo="${g.chiave}"`, esc(g.etichetta), g.totale, '', aperto ? '⌄' : '›');
       if (!aperto) return h;
       if (!g.esiti.length) return h + `<div class="rp-altre">Nessuna azione nel periodo</div>`;
+      let divisore = false;
       for (const e of g.esiti) {
         const scelto = RP.esito === e.esito;
-        h += riga(`esito ${e.verde ? 'verde' : ''} ${e.n ? '' : 'zero'}`, `data-esito="${esc(e.esito)}" ${e.n ? '' : 'disabled'}`,
-          esc(e.esito), e.n, `${e.percentuale}%`, e.n ? (scelto ? '⌄' : '›') : '');
+        if (!e.conta && !divisore) { divisore = true; h += `<div class="rp-altre">Non contano nel totale · ${g.nonContano}</div>`; }   // cantiere 27: tentativi a vuoto, senza esito, PM non avvenuti
+        h += riga(`esito ${e.verde ? 'verde' : ''} ${e.n && e.conta ? '' : 'zero'}`, `data-esito="${esc(e.esito)}" ${e.n ? '' : 'disabled'}`,
+          esc(e.esito), e.n, e.conta ? `${e.percentuale}%` : '', e.n ? (scelto ? '⌄' : '›') : '');
         if (!scelto) continue;
         h += e.persone.map(x => `<button class="rp-riga nome" data-azione="${esc(x.id)}">
           <span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}${x.portato ? ' · ' + rigaPortato(x.portato) : ''}</small></span><span></span><span class="f">›</span></button>`).join('');
