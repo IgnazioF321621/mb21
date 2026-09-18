@@ -10,7 +10,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 29. RIORDINI NELL'AVVISO DEL MATTINO E IN CIMA ALL'AGENDA (da aprire)
+## 29. RIORDINI NELL'AVVISO DEL MATTINO E IN CIMA ALL'AGENDA (aperto il 18/09)
 *Scelto da Ignazio il 18 settembre 2026, alla chiusura del cantiere 28, tra le voci del cantiere 21. Viene dal cantiere 27 (riquadro «🔁 Riordini da sentire»).*
 
 - **Perché**: dal 18/09 Contatti e VP Clienti nascono solo da ciò che si registra. Il riquadro «🔁 Riordini da sentire» c'è in Dashboard, ma chi la mattina guarda solo l'avviso o l'Agenda non sa di avere riordini da chiamare: riordino dimenticato = vendita persa e numero a zero
@@ -18,12 +18,12 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   - avviso delle 8 (`supabase/functions/avvisi/index.ts`, tipo `mattino`): «☀️ Buongiorno! Oggi N telefonate e N appuntamenti (N da confermare). Tocca per aprire l'Agenda.» → i riordini non ci sono
   - in cima all'Agenda (`index.html`, `AG.telefonate`): «📞 Telefonate del giorno · Fatte N di M» (porta in Dashboard) → i riordini non ci sono
   - l'elenco giusto esiste già: `MB21Agenda.riordiniDaSentire(vendite, oggi, glide)` (usato dal riquadro in Dashboard). Regola: **stessa funzione ovunque**, niente secondo conto (LEZIONI: un numero, una fonte sola)
-- **Lavoro 0 · decidere con Ignazio** (prima del codice, una domanda alla volta):
-  1. Nell'avviso del mattino: i riordini come voce a parte («… e 2 riordini da sentire») o sommati alle telefonate?
-  2. Se quel giorno ci sono **solo** riordini (niente telefonate né appuntamenti): l'avviso parte lo stesso?
-  3. In cima all'Agenda: una riga sua «🔁 N riordini da sentire ›» che porta al riquadro in Dashboard, o dentro la riga «📞 Telefonate del giorno»?
-  4. Quali riordini contano nell'avviso: tutti quelli del riquadro (anche arretrati, da oggi indietro) o solo quelli di oggi?
-  5. Con il Partner Select (Admin che guarda un partner): la riga in Agenda segue il partner guardato, come il riquadro?
+- ✅ **Lavoro 0 · decisioni prese con Ignazio** (18/09, una alla volta):
+  1. **Avviso del mattino: voce a parte.** «Oggi 5 telefonate, 2 appuntamenti (1 da confermare) e 2 riordini da sentire.» Senza riordini il pezzo non compare. Non si sommano alle telefonate: il numero resterebbe diverso da «Telefonate del giorno» in Agenda
+  2. **L'avviso parte sempre, come oggi**: nessuna regola nuova. Letto nel codice: parte per ogni partner attivo con un dispositivo, e le «telefonate» sono i contatti al giorno (da 1 a 10, lo zero non esiste né nel Profilo né nel database) meno quelli già fatti → il caso «solo riordini» non può capitare
+  3. **In cima all'Agenda: una riga sua** «🔁 N riordini da sentire ›» sotto «📞 Telefonate del giorno»; porta al riquadro in Dashboard; senza riordini non si vede
+  4. **Contano tutti quelli del riquadro**, arretrati compresi (da oggi indietro, ancora senza esito): stesso numero in avviso, Agenda e Dashboard
+  5. **La riga in Agenda segue il Partner Select come il riquadro**: il partner guardato, o il totale con «vedi tutti» (dove la riga delle telefonate invece non c'è). Si vede **solo con l'Agenda su oggi**. L'avviso dal server resta personale: a ognuno i suoi riordini
 - Lavoro 1 · riga in cima all'Agenda (solo app) · Lavoro 2 · avviso del mattino (funzione sul server) · Lavoro 3 · prova con Ignazio e un partner
 - ⚠️ Da verificare al lavoro 2: l'avviso del mattino gira **sul server** (Edge Function di Supabase), non nell'app: il conto va rifatto lì con la stessa regola di `riordiniDaSentire` (capire se la funzione si può condividere o va riscritta uguale) e **la funzione va ripubblicata su Supabase** (vedere nel cantiere 24 come è stata pubblicata e chi lo fa)
 - Ricordare la regola del cantiere 28: la modifica è visibile ai partner → riga in `novita.js` nello stesso commit
@@ -33,8 +33,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Benvenuto per chi entra la prima volta** (dal cantiere 28, Ignazio 18/09): oggi al primo ingresso il foglio «✨ Novità» non si apre. Da studiare in un documento apposito il percorso da seguire per un nuovo partner, «in maniera ancora più semplice»
 - ~~**Dire a Isabella, Carolina e agli altri partner**: dal 14/09/2026 **Contatti e PM** di Dashboard, Check, Report e Griglia contano **solo dalle azioni registrate** (esito dato in coda, Riordini, Agenda o scheda; «Non risponde», «No Show» e «Rimandato» non contano); nel Check del Giorno non si scrivono più (dal cantiere 27)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
 - ~~**Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
+- **Pausa: «0 contatti al giorno»** (Ignazio 18/09, dal cantiere 29): chi non vuole fare l'attività sceglie 0 e non riceve l'avviso del mattino, a meno che non abbia già qualcosa di programmato (appuntamenti, riordini, telefonate fissate); l'app lo invita a ripartire con una frase d'impatto («0 contatti al giorno. Vuoi cambiare questo valore?», testo da pensare con Ignazio). Oggi lo zero non esiste: scelta da 1 a 10 nel Profilo e vincolo nel database (`contatti_al_giorno between 1 and 10`) → servono una migrazione, il Profilo, l'avviso sul server e la coda
 - **Grafica dei bottoni** (Ignazio 18/09, dal cantiere 27): un aspetto migliore per i bottoni esito e di contatto, uguale ovunque (Riordini, coda, Conferme, Agenda, scheda): una sessione dedicata, con una classe condivisa
-- ~~**Riordini nell'avviso del mattino e in cima all'Agenda** (dal cantiere 27)~~ — diventato il [cantiere 29](#29-riordini-nellavviso-del-mattino-e-in-cima-allagenda-da-aprire) il 18/09
+- ~~**Riordini nell'avviso del mattino e in cima all'Agenda** (dal cantiere 27)~~ — diventato il [cantiere 29](#29-riordini-nellavviso-del-mattino-e-in-cima-allagenda-aperto-il-1809) il 18/09
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
 - **Isabella e Carolina**: entrano una volta con «Mandami il link» e scelgono la password; poi provare l'**app installata** sul telefono (dal cantiere 15)
 - **Isabella**: nella v4 non ha salvato nessun Check (ultimo 13/09 da Glide), da chiederle (dal cantiere 10)
