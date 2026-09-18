@@ -172,6 +172,14 @@
       })
       .sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
   }
+  // Riquadro «Riordini da sentire» della Dashboard (cantiere 27 lavoro 1): le telefonate di riordino nate dalle vendite,
+  // ancora senza esito, dal loro giorno in poi (restano finché non si dà l'esito). `vendite`: righe con la loro `azione` dentro.
+  function riordiniDaSentire(vendite, oggi) {
+    return vendite
+      .filter(v => v.azione && !v.azione.completata && !v.azione.esito && partiRoma(v.azione.inizio).giorno <= oggi)
+      .map(v => ({ ...v.azione, riordino: v.riordino, prodotto: v.prodotto }))
+      .sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
+  }
   // «Conferma appuntamento · PM 1a1 · oggi ore 18:30» (o «domani»)
   function testoConferma(a, adessoIso) {
     const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
@@ -275,7 +283,7 @@
 
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

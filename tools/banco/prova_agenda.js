@@ -204,4 +204,14 @@ prova('Esito «Vendita» di una Consulenza PRD: si propone di registrare la vend
   assert.equal(A.proponeVendita('Contatto', 'Vendita'), false);
 });
 
+prova('Riordini da sentire: telefonate di riordino senza esito, da oggi indietro, le più vecchie prima', () => {
+  const v = (id, inizio, piu) => ({ riordino: '2026-09-28', prodotto: 'Omega', azione: { id, inizio, completata: false, esito: null, ...piu } });
+  const lista = [v('oggi', '2026-09-18T08:00:00Z'), v('ieri', '2026-09-17T08:00:00Z'), v('domani', '2026-09-19T08:00:00Z'),
+    v('fatta', '2026-09-16T08:00:00Z', { completata: true, esito: 'Richiamare' }), { riordino: '2026-10-01', prodotto: 'X', azione: null }];
+  const r = A.riordiniDaSentire(lista, '2026-09-18');
+  assert.deepEqual(r.map(a => a.id), ['ieri', 'oggi']);
+  assert.equal(r[0].riordino, '2026-09-28');
+  assert.equal(r[0].prodotto, 'Omega');
+});
+
 console.log(`\n${ok} prove superate`);
