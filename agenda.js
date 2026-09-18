@@ -219,6 +219,9 @@
   const ESITI_CHIUSURA = ['No Interesse', 'No BuonFine'];
   const GIORNI_CHIUSURA = 365;
   const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
+  // Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita nella scheda del cliente (cantiere 26 lavoro 5 bis).
+  // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
+  const proponeVendita = (tipoAzione, esito) => tipoAzione === 'Consulenza PRD' && esito === 'Vendita';
 
   // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
   function controllaGiorno(giorno) {
@@ -273,7 +276,7 @@
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, controllaGiorno, linkGoogleCalendar, linkNotePlan };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

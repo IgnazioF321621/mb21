@@ -197,4 +197,11 @@ prova('linkNotePlan: nota del giorno di Roma, riga con ora, tipo, nome e dettagl
   assert.equal(decodeURIComponent(semplice.split('text=')[1]), '- 00:30 Appuntamento · X (MB21)');
 });
 
+prova('Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita; per gli altri esiti e tipi no', () => {
+  assert.equal(A.proponeVendita('Consulenza PRD', 'Vendita'), true);
+  assert.equal(A.proponeVendita('Consulenza PRD', 'No Vendita'), false);
+  assert.equal(A.proponeVendita('Piano Marketing', 'Prodotti'), false);
+  assert.equal(A.proponeVendita('Contatto', 'Vendita'), false);
+});
+
 console.log(`\n${ok} prove superate`);
