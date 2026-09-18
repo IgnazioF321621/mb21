@@ -139,6 +139,7 @@
   .rb-riga input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 0; }
   .rb-riga .rb-nome { margin: 0; padding: 8px 10px; font-size: 16px; }
   .rb-riga small { display: block; margin: 4px 0 0 32px; font-size: 12px; color: var(--grigio); line-height: 1.4; }
+  .rb-riga select { width: 100%; margin: 8px 0 0; font-size: 14px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; background: #fff; }
   .rb-fondo { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 70px); padding-top: 8px; }
   .ls-ordina span button { border: 1px solid var(--linea); background: #fff; color: var(--testo); border-radius: 999px; padding: 2px 9px; font-weight: 400; }
   .lettere-titolo { display: block; color: var(--grigio); font-size: 13px; margin: 14px 4px 8px; }
@@ -598,26 +599,26 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609182026"></script>
-<script src="lista.js?v=202609182026"></script>
-<script src="rubrica.js?v=202609182026"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609182026"></script>
-<script src="agenda.js?v=202609182026"></script>
-<script src="report.js?v=202609182026"></script>
-<script src="check.js?v=202609182026"></script>
-<script src="mappa.js?v=202609182026"></script>
-<script src="pagina-dashboard.js?v=202609182026"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609182026"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609182026"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609182026"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609182026"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609182026"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609182026"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609182026"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609182026"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609182026"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609182047"></script>
+<script src="lista.js?v=202609182047"></script>
+<script src="rubrica.js?v=202609182047"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609182047"></script>
+<script src="agenda.js?v=202609182047"></script>
+<script src="report.js?v=202609182047"></script>
+<script src="check.js?v=202609182047"></script>
+<script src="mappa.js?v=202609182047"></script>
+<script src="pagina-dashboard.js?v=202609182047"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609182047"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609182047"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609182047"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609182047"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609182047"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609182047"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609182047"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609182047"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609182047"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 20:26';
+const APP_VERSION = '2026.09.18 · 20:47';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.

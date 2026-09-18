@@ -87,6 +87,8 @@ prova('riepilogo: già in Lista (dal numero) saltati, nuovi con la spunta, da co
   assert.deepEqual(e.nuovi.map(s => s.nome), ['Anna Bianchi']);
   assert.ok(e.nuovi.every(s => s.spunta));
   assert.deepEqual(e.controllare.map(s => [s.nome, s.motivi, s.spunta]), [['Nicolò Savà', ['omonimo'], false], ['Pizzeria Da Finto', ['ditta'], true], ['Tipa palestra', ['ditta'], true]]);
+  assert.equal(e.controllare[0].scelta, 'note');
+  assert.deepEqual(e.controllare[0].inLista, { id: '3', telefono: '+393330000000', note: null });
   assert.deepEqual(e.numeri, []);
   assert.deepEqual(e.incompleti.map(s => [s.nome, s.motivi, s.spunta]), [['', ['senza-nome'], false], ['Assistenza', ['senza-telefono', 'ditta'], false], ['Luca Verdi', ['senza-telefono'], false]]);
 });
@@ -100,6 +102,20 @@ prova('stesso nome in Lista ma senza numero: non un doppione, si aggiunge il num
   const due = R.preparaImport(ANDROID, [...lista, { id: '8', user_id: 'u-io', nome: 'Anna Bianchi', telefono: null }], { utenteId: 'u-io' });
   assert.deepEqual(due.numeri, []);
   assert.deepEqual(due.controllare.map(s => [s.nome, s.spunta]), [['Anna Bianchi', false]]);
+});
+
+prova('stesso nome, altro numero: note (già scelta), numero della rubrica, oppure scheda nuova', () => {
+  const lista = [{ id: '3', user_id: 'u-io', nome: 'Anna Bianchi', telefono: '+393330000000', note: 'amica di Zeno' }];
+  const s = R.preparaImport(ANDROID, lista, { utenteId: 'u-io' }).controllare[0];
+  assert.deepEqual(R.cambiaOmonimo(s), { id: '3', campi: { note: 'amica di Zeno | Altro numero dalla rubrica: +393479876543 · +390951112233 · +390955556677' } });
+  assert.deepEqual(R.cambiaOmonimo({ ...s, scelta: 'rubrica' }), { id: '3', campi: { telefono: '+393479876543',
+    note: 'amica di Zeno | Numero di prima: +393330000000 | Altri numeri: +390951112233 · +390955556677' } });
+  assert.equal(R.cambiaOmonimo({ ...s, scelta: 'nuova' }), null);
+  // rifare l'importazione dopo: il numero è già nelle note → «già in Lista», non lo ripropone
+  const dopo = [{ ...lista[0], note: R.cambiaOmonimo(s).campi.note }];
+  const e2 = R.preparaImport(ANDROID, dopo, { utenteId: 'u-io' });
+  assert.deepEqual(e2.presenti.map(x => x.nome), ['Anna Bianchi']);
+  assert.deepEqual(e2.controllare, []);
 });
 
 prova('compleanno: data per il database (1604 = anno non scritto) e come si legge nella scheda', () => {

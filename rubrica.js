@@ -130,6 +130,8 @@
   function preparaImport(testo, righe, { utenteId } = {}) {
     const mie = (righe || []).filter(r => r.user_id === utenteId);
     const numeriLista = new Set(mie.map(r => soloCifre(r.telefono)).filter(c => c.length >= 6));
+    // anche i numeri già messi nelle note da un'importazione precedente: rifarla non ripropone gli stessi casi
+    mie.forEach(r => (String(r.note || '').match(/\+\d{8,}/g) || []).forEach(n => numeriLista.add(soloCifre(n))));
     const perNomeLista = new Map();
     mie.forEach(r => { const k = L.piega(r.nome); if (k) perNomeLista.set(k, [...(perNomeLista.get(k) || []), r]); });
     const nomiLista = perNomeLista;
@@ -146,6 +148,10 @@
       else {
         const uguali = nomiLista.get(L.piega(s.nome)) || [];
         if (uguali.length === 1 && !uguali[0].telefono) { esito.numeri.push({ ...s, motivi: [], spunta: true, contattoId: uguali[0].id }); continue; }
+        // stesso nome, altro numero (Ignazio 18/09: «non so quale dei due è quello corretto»): con UNA scheda uguale in Lista si sceglie
+        // tra 'note' (già scelta: non si perde niente), 'rubrica' e 'nuova'; con più schede uguali resta solo la spunta «è un'altra persona»
+        if (uguali.length === 1) { esito.controllare.push({ ...s, motivi: ['omonimo'], spunta: false, scelta: 'note',
+          inLista: { id: uguali[0].id, telefono: uguali[0].telefono, note: uguali[0].note || null } }); continue; }
         if (uguali.length) motivi.push('omonimo');
         (motivi.length ? esito.controllare : esito.nuovi).push({ ...s, motivi, spunta: !motivi.includes('omonimo') });
       }
@@ -167,6 +173,19 @@
     return `${Number(m[3])} ${mesi[Number(m[2]) - 1]}${Number(m[1]) === ANNO_IGNOTO ? '' : ' ' + m[1]}`;
   }
 
+  // Stesso nome, altro numero: cosa cambiare nella scheda che c'è già. → { id, campi } oppure null (scheda nuova o niente da fare)
+  //   'note'    → il numero della Lista resta, quelli della rubrica vanno in coda alle note
+  //   'rubrica' → il numero della rubrica diventa quello della scheda, quello di prima va nelle note (con gli altri della rubrica)
+  function cambiaOmonimo(s) {
+    if (!s.inLista || s.scelta === 'nuova') return null;
+    const inNote = s.scelta === 'rubrica'
+      ? ['Numero di prima: ' + s.inLista.telefono, ...(s.altriNumeri.length ? ['Altri numeri: ' + s.altriNumeri.join(' · ')] : [])]
+      : ['Altro numero dalla rubrica: ' + [s.telefono, ...s.altriNumeri].join(' · ')];
+    const note = [s.inLista.note, ...inNote].filter(Boolean).join(' | ');
+    return { id: s.inLista.id, campi: { ...(s.scelta === 'rubrica' ? { telefono: s.telefono } : {}), note,
+      ...(s.compleanno ? { compleanno: dataCompleanno(s.compleanno) } : {}) } };
+  }
+
   // Riga pronta per la tabella `contatti`: senza categoria → «Da catalogare»; gli altri numeri nelle note
   function rigaContatto(s, utenteId) {
     return {
@@ -176,7 +195,7 @@
     };
   }
 
-  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, dataCompleanno, compleannoScritto };
+  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleannoScritto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Rubrica = api;
 })(this);
