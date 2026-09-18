@@ -139,7 +139,7 @@
     const ultimo = Number(spostaGiorno(spostaMese(primo, 1), -1).slice(8, 10));
     const fine = spostaGiorno(primo.slice(0, 8) + String(Math.min(Number(inizio.slice(8, 10)), ultimo)).padStart(2, '0'), -1);
     const fatti = pm.map(a => ({ ...a, giorno: giornoAzione(a) }))
-      .filter(a => a.giorno && a.giorno >= inizio && a.giorno <= fine && a.giorno <= oggi)
+      .filter(a => a.giorno && a.giorno >= inizio && a.giorno <= fine && a.giorno <= oggi && PM_AVVENUTO.includes(a.esito))   // cantiere 27: solo i PM avvenuti
       .sort((x, y) => (x.inizio > y.inizio ? 1 : -1));
     const mancanti = Math.max(0, obiettivo - fatti.length);
     const iniziato = oggi >= inizio, finito = oggi > fine;
