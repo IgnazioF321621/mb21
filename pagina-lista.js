@@ -250,7 +250,7 @@ async function eliminaDefinitivamente(r) {
 function apriScheda(id) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
-  LS.sezione = 'dati';
+  LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null;
   window.scrollTo(0, 0);
   disegnaScheda();
