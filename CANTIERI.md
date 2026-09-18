@@ -15,7 +15,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 - ~~Lavoro 0 · rilievo su Glide~~ — fatto il 18/09: 5 schermate fotografate in Arc mentre Ignazio navigava; conti verificati su `Vendite.csv` (147 vendite, 55 clienti, 5 partner, tutte agganciate a un contatto). Guadagno Netto = Provvigione − Sconti; la «prossima azione di vendita» è una normale azione `Contatto • brand • Riordino`
 - **Risposte di Ignazio (18/09)**:
-  1. **Provvigione = (VP × Fattore di Conversione) × 0,20**, FC = **2,26194**. ⚠️ Glide oggi calcola con FC ≈ **2,2177** (53,00 → 23,51 invece di 23,98): da chiarire quale numero vale e se l'FC cambia nel tempo
+  1. **Provvigione = (VP × Fattore di Conversione) × 0,20**. L'FC lo cambia Amway: **2,21759 fino al 31/05/2026**, **2,26194 dal 01/06/2026** (Glide era rimasto al vecchio; con 2,21759 i numeri di Glide tornano al centesimo). Ogni vendita usa l'FC valido **alla data della vendita**; tutto lo storico prima di giugno va con 2,21759. **In Admin** si aggiunge, cambia o cancella l'FC quando Amway lo cambia
   2. **Chi vede**: ognuno le sue, l'Admin tutte (Partner Select)
   3. **Le 147 vendite vecchie si importano tutte**: sono lo storico, un giorno serviranno per fare proposte
   4. Provvigione bassa o quasi nulla = promozioni o sconti a clienti particolari, o per chiudere incentivi: è normale
