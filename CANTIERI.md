@@ -14,14 +14,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Aperto il 18 settembre 2026 (Ignazio: «deve essere legato alla persona»). Com'è in Glide: [rilievo](docs/MB21_v3_Vendite_come_e.md).*
 
 - ~~Lavoro 0 · rilievo su Glide~~ — fatto il 18/09: 5 schermate fotografate in Arc mentre Ignazio navigava; conti verificati su `Vendite.csv` (147 vendite, 55 clienti, 5 partner, tutte agganciate a un contatto). Guadagno Netto = Provvigione − Sconti; la «prossima azione di vendita» è una normale azione `Contatto • brand • Riordino`
-- **Domande aperte per Ignazio** (prima della struttura):
-  1. **Provvigione**: in Glide è sempre VP × 0,4435 circa. Da dove viene la percentuale? È fissa per tutti?
-  2. **Chi vede le vendite**: ogni partner le sue, l'Admin quelle di tutti con il Partner Select (come il resto)?
-  3. **Le 147 vendite vecchie** (dal 2019): si importano tutte?
-  4. **Azione di riordino**: nasce da sola in Agenda quando si salva la vendita?
-  5. **Targhette Brand** in testata: si accendono da sole dalle vendite?
-  6. **VP Clienti** del Check: resta scritto a mano o si calcola dalle vendite?
-  7. «Modifica» di una vendita = stesso modulo di «Vendita +»?
+- **Risposte di Ignazio (18/09)**:
+  1. **Provvigione = (VP × Fattore di Conversione) × 0,20**, FC = **2,26194**. ⚠️ Glide oggi calcola con FC ≈ **2,2177** (53,00 → 23,51 invece di 23,98): da chiarire quale numero vale e se l'FC cambia nel tempo
+  2. **Chi vede**: ognuno le sue, l'Admin tutte (Partner Select)
+  3. **Le 147 vendite vecchie si importano tutte**: sono lo storico, un giorno serviranno per fare proposte
+  4. Provvigione bassa o quasi nulla = promozioni o sconti a clienti particolari, o per chiudere incentivi: è normale
+  5. **Il riordino finisce in Agenda**
+  6. **Targhette Brand** accese in base alla tipologia del cliente (cioè a cosa compra)
+  7. **VP Clienti del Check e Vendite si incastrano**: scrivendo i VP Clienti nel Check l'app chiede «Hai già registrato la vendita?» nella scheda del cliente, e viceversa
+  8. **Modifica** apre il modulo di quella vendita; **Elimina** ci deve essere
 - Lavoro 1 · struttura (tabella `vendite`, regole di accesso, migrazione) — da proporre dopo le risposte
 - Lavoro 2 · import di `Vendite.csv`
 - Lavoro 3 · sezione «Vendite» nella scheda (totali, tabella, «Vendita +», Modifica/Elimina)
