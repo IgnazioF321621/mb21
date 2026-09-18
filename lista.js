@@ -72,12 +72,47 @@
   const diChi = (r, utenteId) => (Array.isArray(utenteId) ? utenteId.includes(r.user_id) : r.user_id === utenteId);
 
   // righe: tutte quelle visibili all'utente (per l'Admin: di tutti i partner)
-  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi } = {}) {
+  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az' } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     return righe
       .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo, oggi))
-      .sort(ordinaPerNome);
+      .sort(confrontoPer(ordine, oggi));
+  }
+
+  // ── Card che parla e «Ordina» (cantiere 30, lavoro 4) ──
+  // `ultima_il` è l'azione con la data più avanti (vista `contatti_lista`): può essere un appuntamento futuro.
+  const giornoRoma = iso => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date(iso));   // AAAA-MM-GG
+  // Giorni passati dall'ultima azione: null = nessuna azione, negativo = azione in programma
+  function giorniFermo(r, oggi) {
+    if (!r || !r.ultima_il) return null;
+    return Math.round((Date.parse(oggi + 'T12:00:00Z') - Date.parse(giornoRoma(r.ultima_il) + 'T12:00:00Z')) / 86400000);
+  }
+  // Frase della card al posto della riga blu: { testo, futuro }. Niente colori: il colore resta alla categoria (Ignazio 18/09).
+  function fraseCard(r, oggi) {
+    const g = giorniFermo(r, oggi);
+    if (g === null) return { testo: 'Mai contattato', futuro: false };
+    const cosa = String(r.ultima_modalita || r.ultimo_tipo || 'azione').toLowerCase();
+    if (g < 0) {
+      const quando = g === -1 ? 'domani' : 'il ' + new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short',
+        ...(g < -300 ? { year: 'numeric' } : {}) }).format(new Date(r.ultima_il));
+      return { testo: cosa.charAt(0).toUpperCase() + cosa.slice(1) + ' in programma ' + quando, futuro: true };
+    }
+    const quanto = g === 0 ? 'Sentito oggi' : g === 1 ? 'Sentito ieri' : g < 30 ? `Sentito ${g} giorni fa`
+      : g < 365 ? `Fermo da ${Math.floor(g / 30) === 1 ? '1 mese' : Math.floor(g / 30) + ' mesi'}`
+      : `Fermo da ${Math.floor(g / 365) === 1 ? '1 anno' : Math.floor(g / 365) + ' anni'}`;
+    return { testo: `${quanto} · ${cosa}`, futuro: false };
+  }
+  // Ordini della Lista: a parità si torna sempre all'ordine alfabetico
+  const ORDINI = { az: 'A-Z', fermi: 'fermi da più tempo', mai: 'mai contattati', nuovi: 'nuovi' };
+  function confrontoPer(ordine, oggi) {
+    const giorno = oggi || giornoRoma(new Date().toISOString());
+    // fermi: prima chi ha un'ultima azione passata (la più vecchia in cima), poi i mai contattati, in fondo chi ha già qualcosa in programma
+    const gruppo = r => { const g = giorniFermo(r, giorno); return g === null ? 1 : g < 0 ? 2 : 0; };
+    if (ordine === 'fermi') return (a, b) => (gruppo(a) - gruppo(b)) || (gruppo(a) === 0 && giorniFermo(b, giorno) - giorniFermo(a, giorno)) || ordinaPerNome(a, b);
+    if (ordine === 'mai') return (a, b) => ((a.ultima_il ? 1 : 0) - (b.ultima_il ? 1 : 0)) || ordinaPerNome(a, b);
+    if (ordine === 'nuovi') return (a, b) => String(b.creato_il || '').localeCompare(String(a.creato_il || '')) || ordinaPerNome(a, b);
+    return ordinaPerNome;
   }
 
   // Numeri dentro le pillole dei filtri (cantiere 30): quanti nomi ha ogni filtro, senza il testo di Cerca.
@@ -237,13 +272,6 @@
       year: breve ? '2-digit' : 'numeric' }).format(new Date(iso));
   }
 
-  // Etichetta blu della card, come Glide: «ATTIVITÀ • TELEFONATA 11/12/2024»
-  function etichettaCard(r) {
-    const parti = [r.area || r.ultima_area, [r.ultima_modalita || r.ultimo_tipo, data(r.ultima_il)].filter(Boolean).join(' ')]
-      .filter(Boolean);
-    return parti.join(' • ').toUpperCase();
-  }
-
   // Riquadro FASE: solo icona e titolo, es. «FASE CONTATTO: RICHIAMARE»
   function titoloFase(r) {
     if (!r || !r.ultima_fase) return '';
@@ -316,7 +344,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -93,10 +93,37 @@ prova('Onboarding: contatore calcolato sui 14 passi', () => {
   assert.deepEqual(L.contatoreOnboarding(tutti), { fatti: 14, totale: 14 });
 });
 
-prova('etichette: card con data lunga, fase con tipo e fase in maiuscolo', () => {
-  assert.equal(L.etichettaCard({ area: 'Attività', ultima_modalita: 'Telefonata', ultima_il: '2024-12-11T17:00:00Z' }), 'ATTIVITÀ • TELEFONATA 11/12/2024');
-  assert.equal(L.etichettaCard({ area: 'Attività' }), 'ATTIVITÀ');
-  assert.equal(L.etichettaCard({}), '');
+prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
+  const f = (r) => L.fraseCard(r, '2026-09-18');
+  assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-18T08:00:00Z' }).testo, 'Sentito oggi · telefonata');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-17T08:00:00Z' }).testo, 'Sentito ieri · telefonata');
+  assert.equal(f({ ultimo_tipo: 'Contatto', ultima_il: '2026-09-06T08:00:00Z' }).testo, 'Sentito 12 giorni fa · contatto');
+  assert.equal(f({ ultima_modalita: 'Contattare', ultima_il: '2025-11-18T10:00:00Z' }).testo, 'Fermo da 10 mesi · contattare');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-08-10T10:00:00Z' }).testo, 'Fermo da 1 mese · telefonata');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2023-01-04T10:00:00Z' }).testo, 'Fermo da 3 anni · telefonata');
+  assert.deepEqual(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-11-20T10:00:00Z' }), { testo: 'Telefonata in programma il 20 nov', futuro: true });
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-19T10:00:00Z' }).testo, 'Telefonata in programma domani');
+  assert.equal(L.giorniFermo({ ultima_il: '2026-09-17T22:30:00Z' }, '2026-09-18'), 0);   // le 00:30 del 18 a Roma
+});
+
+prova('Ordina: A-Z, fermi da più tempo, mai contattati, nuovi', () => {
+  const r = [
+    { id: 'a', user_id: IO, nome: 'Aldo', categoria: 'Prospect', ultima_il: '2026-09-01T10:00:00Z', creato_il: '2026-01-01T10:00:00Z' },
+    { id: 'b', user_id: IO, nome: 'Bea', categoria: 'Prospect', creato_il: '2026-09-10T10:00:00Z' },                                  // mai contattata, la più nuova
+    { id: 'c', user_id: IO, nome: 'Ciro', categoria: 'Prospect', ultima_il: '2023-01-04T10:00:00Z', creato_il: '2026-01-01T10:00:00Z' },
+    { id: 'd', user_id: IO, nome: 'Dina', categoria: 'Prospect', ultima_il: '2026-11-20T10:00:00Z', creato_il: '2026-01-01T10:00:00Z' }, // in programma
+  ];
+  const o = ordine => ids(L.filtraContatti(r, { utenteId: IO, oggi: '2026-09-18', ordine }));
+  assert.deepEqual(o('az'), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(o(undefined), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(o('fermi'), ['c', 'a', 'b', 'd']);   // il più fermo in cima, poi mai contattati, in fondo chi ha già un'azione in programma
+  assert.deepEqual(o('mai'), ['b', 'a', 'c', 'd']);
+  assert.deepEqual(o('nuovi'), ['b', 'a', 'c', 'd']);
+  assert.deepEqual(Object.keys(L.ORDINI), ['az', 'fermi', 'mai', 'nuovi']);
+});
+
+prova('etichette: data corta, fase con tipo e fase in maiuscolo', () => {
   assert.equal(L.data('2026-03-21T23:30:00Z', true), '22/03/26');                  // mezzanotte passata a Roma
   assert.equal(L.titoloFase({ ultimo_tipo: 'Contatto', ultima_fase: 'Richiamare' }), 'FASE CONTATTO: RICHIAMARE');
   assert.equal(L.titoloFase({ ultima_fase: null }), '');
