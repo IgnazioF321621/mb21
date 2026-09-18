@@ -73,6 +73,15 @@ function linkTelefono(tel, classe) {
   return `<a class="${classe || 'tel'}" href="tel:${esc(tel.replace(/[^0-9+]/g, ''))}">${esc(tel)}</a>`;
 }
 
+// I 4 bottoni per sentire il contatto senza spostarsi (Ignazio 18/09): gli stessi ovunque — scheda, coda, conferme, riordini, Agenda.
+// Partono solo con un numero che inizia per «+» (i numeri dubbi dell'import no). `sempre`: nella scheda si vedono anche spenti.
+function contattaHtml(telefono, sempre) {
+  const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
+  if (!tel && !sempre) return '';
+  const link = (href, testo) => `<a href="${esc(href)}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
+  return `<div class="contatta">${link('tel:' + (tel || ''), 'Call')}${link('sms:' + (tel || ''), 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}</div>`;
+}
+
 function disegnaLista() {
   if (LS.filtro === 'all') LS.filtro = 'lista';   // dal cantiere 15 «All» = Partner Select «Tutti»
   const f = MB21Lista.FILTRI[LS.filtro];
@@ -252,9 +261,6 @@ function sezioniPer(c) {
 
 function disegnaScheda() {
   const c = LS.contatto;
-  const tel = c.telefono && c.telefono.startsWith('+') ? c.telefono : null;   // i 7 numeri dubbi non partono
-  const cifre = tel ? tel.replace(/[^0-9]/g, '') : '';
-  const link = (href, testo) => `<a href="${href}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
   app.innerHTML = `
     <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata">
@@ -268,10 +274,7 @@ function disegnaScheda() {
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
         </div>
-        <div class="contatta">
-          ${link('tel:' + (tel || ''), 'Call')}${link('sms:' + (tel || ''), 'SMS')}
-          ${link('https://wa.me/' + cifre, 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}
-        </div>
+        ${contattaHtml(c.telefono, true)}
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
         <div class="vn-brand-testata" id="vn-brand-testata"></div>
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}

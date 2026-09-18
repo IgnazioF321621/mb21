@@ -525,3 +525,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.18 · 11:51 | Cantiere 26 lavoro 1 bis: Admin → Fattore di conversione (aggiungi, cambia, elimina) |
 | 2026.09.18 · 11:57 | Le Vendite della scheda contatto in un file proprio, `pagina-vendite.js` (spostate così com'erano da `pagina-lista.js`, nessun cambio di funzionamento) |
 | 2026.09.18 · 12:26 | Cantiere 27 lavoro 1: riquadro «🔁 Riordini da sentire» in Dashboard (telefonate di riordino senza esito, sopra la coda, con i bottoni esito dell'Agenda) |
+| 2026.09.18 · 12:34 | Bottoni **Call · SMS · WhatsApp · Telegram** ovunque con una funzione sola, `contattaHtml(telefono, sempre)` in `pagina-lista.js`: scheda contatto (anche spenti, `sempre`), card aperta della coda, Conferme, Riordini da sentire, evento aperto dell'Agenda. Partono solo con un numero che inizia per «+»; senza numero valido nelle card non si vedono |

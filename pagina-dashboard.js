@@ -126,6 +126,7 @@ function cardContatto(r, dareSeguito) {
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${tel ? `<div class="riga">${tel}</div>` : ''}
+        ${contattaHtml(r.telefono)}
         <div class="bottoni">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
       </div>
@@ -470,6 +471,7 @@ function confermeHtml() {
         <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
         ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
+        ${contattaHtml(tel)}
         <div class="bottoni conf-bottoni">
           <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
           <button data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
@@ -526,6 +528,7 @@ function riordiniHtml() {
         <div class="conf-testo">${esc([a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
         ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
+        ${contattaHtml(tel)}
         ${ST.offline ? '' : bloccoEsiti(a, a.contatti ? a.contatti.categoria : null)}
         <div class="bottoni conf-bottoni"><button data-riordino-nr="${esc(a.id)}">Non risponde</button></div>
       </div></div>`;
