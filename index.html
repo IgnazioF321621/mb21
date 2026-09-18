@@ -557,23 +557,23 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181523"></script>
-<script src="lista.js?v=202609181523"></script>
-<script src="dashboard.js?v=202609181523"></script>
-<script src="agenda.js?v=202609181523"></script>
-<script src="report.js?v=202609181523"></script>
-<script src="check.js?v=202609181523"></script>
-<script src="mappa.js?v=202609181523"></script>
-<script src="pagina-dashboard.js?v=202609181523"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181523"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181523"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181523"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181523"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181523"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181523"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181523"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="coda.js?v=202609181529"></script>
+<script src="lista.js?v=202609181529"></script>
+<script src="dashboard.js?v=202609181529"></script>
+<script src="agenda.js?v=202609181529"></script>
+<script src="report.js?v=202609181529"></script>
+<script src="check.js?v=202609181529"></script>
+<script src="mappa.js?v=202609181529"></script>
+<script src="pagina-dashboard.js?v=202609181529"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181529"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181529"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181529"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181529"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181529"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181529"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181529"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 15:23';
+const APP_VERSION = '2026.09.18 · 15:29';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -803,7 +803,7 @@ function foglioNovita(r, ultimoUso) {
   velo.className = 'velo';
   const eri = r && ultimoUso ? ` (eri entrato il ${new Date(ultimoUso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' })})` : '';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>✨ ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
-    <p>${r ? `Ecco cosa è cambiato in MB21${eri}.` : 'Tutto quello che è cambiato in MB21, dalla novità più recente.'}</p>
+    <p>${r ? `Ecco cosa è cambiato in MB21${eri}.` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b><br>Tutto quello che è cambiato in MB21, dalla novità più recente.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
     ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button>' : ''}</div>`;
