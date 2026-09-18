@@ -5,6 +5,7 @@
 // Regole (brief sez. 2 + decisioni di Ignazio del 14/09, STRUTTURA.md → Logiche):
 //   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato e i senza categoria
 //     (dal 15/09 hanno il loro riquadro «Da catalogare», cantiere 16)
+//   - fuori coda chi ha un riordino programmato (`riordino_programmato` della vista): lo segue la telefonata di riordino (18/09)
 //   - Dare Seguito scaduti (fase Dare Seguito / DS Fissato, rientro prima di oggi): sempre, sopra la capienza
 //   - capienza = contatti al giorno scelti dall'utente (1-10, predefinito 5) meno gli esiti già dati oggi
 //     dalla coda (i Dare Seguito non contano), tra chi ha rientro_il <= oggi:
@@ -45,6 +46,7 @@
     for (const r of righe) {
       if (!r.rientro_il || r.rientro_il > oggi) continue;
       if (!r.categoria || CATEGORIE_ESCLUSE.includes(r.categoria)) continue;
+      if (r.riordino_programmato) continue;   // cantiere 27: lo segue la telefonata di riordino (riquadro «Riordini da sentire»)
       if (FASI_DARE_SEGUITO.includes(r.ultima_fase) && r.rientro_il < oggi) {
         dareSeguito.push(Object.assign({}, r, { scadutoDa: giorniTra(r.rientro_il, oggi) }));
       } else {
