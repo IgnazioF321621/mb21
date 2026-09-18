@@ -111,6 +111,8 @@ prova('Griglia PM: fine del mese, non ancora iniziata, obiettivo superato, contr
   const tanti = Array.from({ length: 10 }, (_, i) => az(i, 'Piano Marketing', 'Iscrizione', `2026-09-0${i % 9 + 1}T10:00:00Z`));
   const sup = R.griglia(tanti, { obiettivo: 8, inizio: '2026-09-01', mesi: 1 }, oggi);
   assert.deepEqual([sup.celle.length, sup.mancanti, sup.percentuale, sup.alMese], [10, 0, 100, 0]);
+  const misti = ['Iscrizione', 'No Show', 'Rimandato', null, 'No BuonFine'].map((e, i) => az(i, 'Piano Marketing', e, `2026-09-0${i + 1}T10:00:00Z`));
+  assert.equal(R.griglia(misti, { obiettivo: 8, inizio: '2026-09-01', mesi: 1 }, oggi).fatti, 2);   // cantiere 27: solo i PM avvenuti
   assert.equal(R.abbrevia('Andrea'), 'Andrea');
   assert.equal(R.validaGriglia({ obiettivo: '101', inizio: '2026-07-01', mesi: 6 }), 'Obiettivo tra 1 e 100.');
   assert.equal(R.validaGriglia({ obiettivo: '30', inizio: '', mesi: 6 }), 'Scegli la data di inizio.');
