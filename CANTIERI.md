@@ -10,7 +10,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (aperto · lavori 0 e 1 fatti)
+## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (aperto · lavori 0, 1 e 2 fatti)
 *Idea di Ignazio del 18 settembre 2026, alla chiusura del cantiere 27: «evitare ogni volta un messaggio» ai partner quando l'app cambia. Semplice, «spiegabile anche ai bambini».*
 
 - **Cosa vuole Ignazio**: all'apertura dell'app (nel nuovo giorno, o alla prima apertura dopo un aggiornamento) un foglio «✨ Novità» con gli aggiornamenti fatti **dall'ultima volta che quella persona è entrata**, e la data del suo ultimo ingresso. L'elenco si aggiorna man mano che si lavora sull'app
@@ -29,13 +29,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Lavoro 1 · fatto il 18/09** ✅ (versione 2026.09.18 · 15:23): `novita.js` (elenco, per ora **vuoto**, e logica) + foglio all'apertura in `index.html` + voce «✨ Novità dell'app» nel Profilo + 8 prove in `tools/banco/prova_novita.js`. «Ho capito» si ricorda **sul telefono**, non nel database (scelta più semplice: niente migrazione, funziona anche offline; con un telefono nuovo si rivedono una volta le ultime 10). `ultimo_uso` letto prima di `segna_uso()` ✔ · offline non blocca ✔. Provato a secco con dati finti (primo ingresso, riapertura, «vedi tutte», «Ho capito»); **da vedere in foto al lavoro 2**, quando l'elenco avrà le prime righe (con l'elenco vuoto il foglio non si apre; dal Profilo si legge «Ancora nessuna novità»)
   - ✅ Visto in foto il 18/09: dal Profilo il foglio «✨ Novità dell'app» si apre («Ancora nessuna novità»). Richiesta di Ignazio nello stesso giro (versione 2026.09.18 · 15:29): sotto il titolo la riga **«La tua versione: …»**
 - **Lavoro 4 (nuovo, Ignazio 18/09) · «C'è una versione più recente»**: l'app confronta la versione che ha il telefono con l'ultima pubblicata e, se è indietro, consiglia di aggiornare con un bottone. È un lavoro a parte: oggi l'app conosce solo la propria versione, per sapere qual è l'ultima deve chiederlo a internet (un file piccolo con la versione, letto all'apertura e quando l'app torna in primo piano). Serve soprattutto a chi tiene l'app aperta per giorni senza richiuderla. Da fare dopo il lavoro 3
-- Lavoro 2 · la regola in CLAUDE.md e le prime novità scritte · Lavoro 3 · prova con Isabella o Carolina
+- **Lavoro 2 · fatto il 18/09** ✅ (versione 2026.09.18 · 15:33): le 5 novità del 18/09 in `novita.js` con i testi approvati da Ignazio («ok, i testi vanno bene») + la regola in `CLAUDE.md`. Da vedere in foto il foglio all'apertura. Il messaggio ai partner del cantiere 21 (VP Clienti, Contatti e PM) è sostituito da queste novità
+- Lavoro 3 · prova con Isabella o Carolina
 - ⚠️ Da verificare al lavoro 1: `ultimo_uso` va letto prima che `segna_uso()` lo aggiorni, e offline il foglio non deve bloccare l'apertura. Con la decisione 1 `ultimo_uso` da solo non basta (si aggiorna a ogni apertura): serve ricordare a parte fino a quale novità la persona ha toccato «Ho capito»; dove tenerlo (telefono o database) si decide al lavoro 1
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
-- **Dire a Isabella, Carolina e agli altri partner**: dal 14/09/2026 **Contatti e PM** di Dashboard, Check, Report e Griglia contano **solo dalle azioni registrate** (esito dato in coda, Riordini, Agenda o scheda; «Non risponde», «No Show» e «Rimandato» non contano); nel Check del Giorno non si scrivono più (dal cantiere 27)
-- **Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)
+- ~~**Dire a Isabella, Carolina e agli altri partner**: dal 14/09/2026 **Contatti e PM** di Dashboard, Check, Report e Griglia contano **solo dalle azioni registrate** (esito dato in coda, Riordini, Agenda o scheda; «Non risponde», «No Show» e «Rimandato» non contano); nel Check del Giorno non si scrivono più (dal cantiere 27)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
+- ~~**Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
 - **Grafica dei bottoni** (Ignazio 18/09, dal cantiere 27): un aspetto migliore per i bottoni esito e di contatto, uguale ovunque (Riordini, coda, Conferme, Agenda, scheda): una sessione dedicata, con una classe condivisa
 - **Riordini nell'avviso del mattino e in cima all'Agenda** (dal cantiere 27): oggi «Oggi N telefonate…» e il riepilogo dell'Agenda non contano i riordini da sentire
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
