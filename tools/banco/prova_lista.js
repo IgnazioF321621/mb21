@@ -50,9 +50,11 @@ prova('ricerca: nome, professione, telefono, in qualunque punto, mentre si scriv
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', testo: 'bianchi', utenteId: IO })), []);   // si combina col filtro
 });
 
-prova('totale del banner: i miei (archiviati compresi); con All, tutti', () => {
-  assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: IO, admin: true }), 7);
-  assert.equal(L.totaleContatti(righe, { filtro: 'all', utenteId: IO, admin: true }), 8);
+prova('numeri nelle pillole: come i filtri; «Lista» senza gli archiviati, che hanno il loro numero', () => {
+  const c = L.contaFiltri(righe, { utenteId: IO, admin: true });
+  assert.equal(c.lista, 6);
+  assert.deepEqual([c.prospect, c.partner, c.clienti, c.ex, c.unlinked, c.archiviati, c.senza], [1, 1, 1, 1, 1, 1, 1]);
+  assert.equal(c.lista, L.filtraContatti(righe, { filtro: 'lista', utenteId: IO }).length);   // stessa fonte dell'elenco
 });
 
 prova('doppioni: stesso nome (maiuscole/spazi) o stesso telefono, solo tra i miei, esclusa la scheda che modifico', () => {
@@ -95,8 +97,8 @@ prova('Partner Select: un partner scelto o «Tutti» (elenco di partner)', () =>
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: ALTRO, admin: true })), ['8']);
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: [IO, ALTRO], admin: true })), ['8', '1']);
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: [ALTRO], admin: true })), ['8']);
-  assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: [IO, ALTRO], admin: true }), 8);
-  assert.equal(L.totaleContatti(righe, { filtro: 'lista', utenteId: ALTRO, admin: true }), 1);
+  assert.equal(L.contaFiltri(righe, { utenteId: [IO, ALTRO], admin: true }).lista, 7);
+  assert.equal(L.contaFiltri(righe, { utenteId: ALTRO, admin: true }).prospect, 1);
 });
 
 prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca trova solo quelli', () => {
