@@ -191,4 +191,24 @@ prova('CEP: «Non ha rinnovato» chiude alla fine del mese prima', () => {
   assert.equal(L.dataUscitaCep('2026-10-01', '2026-10-05'), '2026-10-01');   // iniziato questo mese: si chiude il giorno di inizio
 });
 
+prova('Vendite: la sezione esiste per chi è Cliente e per chi ha già una vendita', () => {
+  assert.equal(L.haVendite({ categoria: 'Cliente' }, []), true);
+  assert.equal(L.haVendite({ categoria: 'Prospect' }, []), false);
+  assert.equal(L.haVendite({ categoria: 'Prospect' }, null), false);
+  assert.equal(L.haVendite({ categoria: 'Ex Partner/Cliente' }, [{ vp: 1 }]), true);
+});
+
+prova('Vendite: i totali si sommano interi e si arrotondano solo a schermo (come Glide: 101,98 e non 101,99)', () => {
+  const t = L.totaliVendite([
+    { vp: 53, provvigione: 53 * 2.21759 * 0.2, guadagno_netto: 53 * 2.21759 * 0.2 },
+    { vp: '176.94', provvigione: 176.94 * 2.21759 * 0.2, guadagno_netto: 176.94 * 2.21759 * 0.2 - 60 },
+  ]);
+  assert.equal(L.numero(t.vp), '229,94');
+  assert.equal(L.numero(t.provvigione, true), '101,98 €');
+  assert.equal(L.numero(t.netto, true), '41,98 €');
+  assert.deepEqual(L.totaliVendite([]), { vp: 0, provvigione: 0, netto: 0 });
+  assert.equal(L.coloreBrand('eSpring'), '#2563EB');
+  assert.equal(L.coloreBrand('Boh'), '#6B7280');
+});
+
 console.log(`\n${ok} prove superate`);
