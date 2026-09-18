@@ -249,11 +249,22 @@
   // Chi ha la sezione «Vendite» nella scheda (Ignazio 18/09): chi è Cliente; e chi ha già una vendita, anche se cambia categoria.
   const haVendite = (c, vendite) => c.categoria === 'Cliente' || !!(vendite && vendite.length);
 
+  // Promo con consegna differita (lavoro 4): la vendita CONTA il giorno dell'ordine (`conta_il` = consegna, o data se vuota).
+  // Finché quel giorno non arriva è «da consegnare»: sta nell'elenco con la targhetta 📦 ma non nei totali.
+  const daConsegnare = (v, oggi) => (v.conta_il || v.consegna || v.data) > oggi;
+
   // Totali della scheda dalle righe di `vendite_conti`: si sommano i numeri interi e si arrotonda solo a schermo (come Glide).
-  function totaliVendite(vendite) {
-    const somma = k => (vendite || []).reduce((t, v) => t + Number(v[k] || 0), 0);
-    return { vp: somma('vp'), provvigione: somma('provvigione'), netto: somma('guadagno_netto') };
+  // `attesaVp` = VP delle vendite ancora da consegnare (fuori dai tre totali).
+  function totaliVendite(vendite, oggi) {
+    const contate = (vendite || []).filter(v => !oggi || !daConsegnare(v, oggi));
+    const somma = (righe, k) => righe.reduce((t, v) => t + Number(v[k] || 0), 0);
+    return { vp: somma(contate, 'vp'), provvigione: somma(contate, 'provvigione'), netto: somma(contate, 'guadagno_netto'),
+      attesaVp: somma((vendite || []).filter(v => oggi && daConsegnare(v, oggi)), 'vp') };
   }
+
+  // Il prossimo riordino del cliente (da oggi in poi), per la riga «🔁 Prossimo riordino»
+  const prossimoRiordino = (vendite, oggi) => (vendite || []).filter(v => v.riordino && v.riordino >= oggi)
+    .sort((a, b) => a.riordino < b.riordino ? -1 : 1)[0] || null;
 
   // Modulo «Vendita» (lavoro 3b): dai campi scritti alla riga da salvare. `{ riga }` oppure `{ errore }` (cosa manca).
   // I numeri si scrivono all'italiana («88,47») o con il punto. Il riordino è obbligatorio (come in Glide),
@@ -266,17 +277,18 @@
     if (!prodotto) return { errore: 'Scrivi il prodotto' };
     if (vp === null || !isFinite(vp) || vp < 0) return { errore: 'Scrivi i VP della vendita' };
     if (sconto !== null && (!isFinite(sconto) || sconto < 0)) return { errore: 'Lo sconto non è un numero' };
+    if (v.consegna && v.consegna < v.data) return { errore: 'La consegna è prima della vendita' };
     if (!v.riordino && !senzaRiordino) return { errore: 'Manca la data di riordino' };
-    if (v.riordino && v.riordino < v.data) return { errore: 'Il riordino è prima della vendita' };
+    if (v.riordino && v.riordino < (v.consegna || v.data)) return { errore: v.consegna ? 'Il riordino è prima della consegna' : 'Il riordino è prima della vendita' };
     return { riga: { data: v.data, brand: v.brand, prodotto: prodotto.slice(0, 50), vp: Math.round(vp * 100) / 100,
-      sconto: Math.round((sconto || 0) * 100) / 100, riordino: v.riordino || null } };
+      sconto: Math.round((sconto || 0) * 100) / 100, consegna: v.consegna && v.consegna !== v.data ? v.consegna : null, riordino: v.riordino || null } };
   }
 
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, totaliVendite, rigaVendita, numero };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, daConsegnare, totaliVendite, prossimoRiordino, rigaVendita, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -304,7 +304,7 @@ function disegnaScheda() {
 async function venditeDellaScheda(c) {
   if (LS.vendite) return LS.vendite;
   const { data, error } = await dbq('lettura vendite', supa.from('vendite_conti')
-    .select('id, data, brand, prodotto, vp, sconto, riordino, provvigione, guadagno_netto')
+    .select('id, data, brand, prodotto, vp, sconto, consegna, riordino, conta_il, provvigione, guadagno_netto')
     .eq('contatto_id', c.id).order('data', { ascending: false }).order('creato_il', { ascending: false }));
   if (error) return null;
   if (LS.contatto === c) LS.vendite = data;
@@ -318,17 +318,20 @@ async function sezioneVendite() {
   const vendite = await venditeDellaScheda(c);
   if (LS.contatto !== c || LS.sezione !== 'vendite') return;
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
-  const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero;
+  const oggi = MB21Coda.oggiRoma();
+  const t = MB21Lista.totaliVendite(vendite, oggi), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
   box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="vendita-piu">Vendita +</button>') + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
       <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div>
-    </div>` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
+    </div>
+    ${t.attesaVp ? `<div class="vn-riga-info">📦 Da consegnare: ${n(t.attesaVp)} VP, contano il giorno dell'ordine</div>` : ''}
+    ${prossimo ? `<div class="vn-riga-info">🔁 Prossimo riordino · ${esc(prossimo.brand)} · ${esc(MB21Lista.data(prossimo.riordino))}</div>` : ''}` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
       <button class="vn-riga" data-vendita="${v.id}">
         <div>
           <div class="vn-prodotto">${esc(v.prodotto)}</div>
-          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}</div>
+          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${MB21Lista.daConsegnare(v, oggi) ? ` · <span class="vn-attesa">📦 consegna ${esc(MB21Lista.data(v.consegna))}</span>` : ''}</div>
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
       </button>`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
@@ -353,7 +356,8 @@ function moduloVendita(v) {
     <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
     <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
     <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
-    <div class="campo"><label>Data di riordino ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+    <div class="campo"><label>Ordine e consegna <small>Solo se più avanti</small></label><div class="vn-aiuto">Promo pagata oggi e consegnata fra mesi? Scrivi quando farai l'ordine: i VP contano da quel giorno e l'Agenda te lo ricorda. Se consegni subito, lascia vuoto.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}"></div>
+    <div class="campo"><label>Data di riordino ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">Quando al cliente finirà il prodotto. 10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
     <div class="due" style="margin-top:12px"><button class="primario" id="invia">Salva</button><button class="link" id="annulla">Annulla</button></div>
     ${v ? '<button class="link" id="elimina" style="color:var(--rosso);width:100%;margin-top:6px">Elimina questa vendita</button>' : ''}
   </div>`;
@@ -367,10 +371,10 @@ function moduloVendita(v) {
   segnaBrand();
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
-  const fatto = messaggio => { chiudi(); LS.vendite = null; mostraToast(messaggio); disegnaScheda(); };
+  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; mostraToast(messaggio); disegnaScheda(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
-      sconto: $('v-sconto').value, riordino: $('v-riordino').value }, !!(v && !v.riordino));
+      sconto: $('v-sconto').value, consegna: $('v-consegna').value, riordino: $('v-riordino').value }, !!(v && !v.riordino));
     if (esito.errore) return mostraToast(esito.errore);
     $('invia').disabled = true;
     const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)
