@@ -113,6 +113,30 @@ prova('avvio del Partner: prossimo passo (il primo non fatto, nell\'ordine dei 1
   assert.equal(e('2026-09-19'), '');   // data nel futuro: niente
 });
 
+prova('partner da avviare: avvio aperto, almeno un passo da fare, dal più recente, solo il ramo guardato', () => {
+  const tutti = Object.fromEntries(L.PASSI_ONBOARDING.map(([c]) => [c, true]));
+  const righe = [
+    { partner_id: 'V', nome: 'VECCHIO, VITO', data_ingresso: '2010-03-15', linea: ['I'] },
+    { partner_id: 'N', nome: 'NUOVA, NINA', data_ingresso: '2026-09-06', linea: ['S', 'I'], onb_sogno: true },
+    { partner_id: 'S', nome: 'SPONSOR, SARA', data_ingresso: '2025-01-24', linea: ['I'] },
+    { partner_id: 'F', nome: 'FINITO, FABIO', data_ingresso: '2026-08-01', linea: ['I'], ...tutti },                     // 14/14: niente da fare
+    { partner_id: 'C', nome: 'CONCLUSA, CARLA', data_ingresso: '2026-08-02', linea: ['I'], avvio_concluso_il: '2026-09-18' },
+    { partner_id: 'Z', nome: 'ZETA, ZOE', data_ingresso: null, linea: ['S', 'I'] },
+    { partner_id: 'A', nome: 'ALFA, ADA', data_ingresso: null, linea: ['S', 'I'] },
+  ];
+  assert.deepEqual(L.partnerDaAvviare(righe).map(r => r.partner_id), ['N', 'S', 'V', 'A', 'Z']);        // senza data in fondo, per nome
+  assert.deepEqual(L.partnerDaAvviare(righe, 'I').map(r => r.partner_id), ['N', 'S', 'V', 'A', 'Z']);
+  assert.deepEqual(L.partnerDaAvviare(righe, 'S').map(r => r.partner_id), ['N', 'A', 'Z']);              // Partner Select su Sara: solo chi sta sotto di lei
+  assert.deepEqual(L.partnerDaAvviare(righe, 'N'), []);
+  assert.deepEqual(L.partnerDaAvviare(null, 'I'), []);
+  // in pausa: fuori dall'elenco, elencati a parte (anche a 14/14); un avvio concluso non è in pausa
+  const conPausa = [...righe, { partner_id: 'P', nome: 'PAUSA, PINO', data_ingresso: '2026-09-10', linea: ['S', 'I'], avvio_in_pausa_dal: '2026-09-18' },
+    { partner_id: 'Q', nome: 'QUIETA, QUINZIA', data_ingresso: '2026-01-10', linea: ['I'], avvio_in_pausa_dal: '2026-09-01', avvio_concluso_il: '2026-09-02' }];
+  assert.deepEqual(L.partnerDaAvviare(conPausa, 'I').map(r => r.partner_id), ['N', 'S', 'V', 'A', 'Z']);
+  assert.deepEqual(L.partnerInPausa(conPausa, 'I').map(r => r.partner_id), ['P']);
+  assert.deepEqual(L.partnerInPausa(conPausa, 'V'), []);
+});
+
 prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
   const f = (r) => L.fraseCard(r, '2026-09-18');
   assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });
