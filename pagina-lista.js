@@ -270,6 +270,7 @@ function disegnaScheda() {
           ${link('https://wa.me/' + cifre, 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}
         </div>
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
+        <div class="vn-brand-testata" id="vn-brand-testata"></div>
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}
       </div>
     </div>
@@ -295,9 +296,24 @@ function disegnaScheda() {
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
-  // chi non è Cliente ma ha già delle vendite: la sezione «Vendite» compare appena lette
-  if (!MB21Lista.haVendite(c, LS.vendite)) venditeDellaScheda(c).then(v => { if (v && v.length && LS.contatto === c) disegnaScheda(); }).catch(() => {});
+  // Una lettura delle vendite per ogni scheda: accende le targhette Brand della testata; e per chi non è Cliente
+  // ma ha già delle vendite fa comparire la sezione «Vendite».
+  const senzaSezione = !MB21Lista.haVendite(c, LS.vendite);
+  venditeDellaScheda(c).then(v => {
+    if (!v || LS.contatto !== c) return;
+    if (senzaSezione && v.length) return disegnaScheda();
+    mostraBrand(c, v);
+  }).catch(() => {});
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite }[LS.sezione] || sezioneDati)();
+}
+
+// Targhette Brand nella testata: solo per chi ha la sezione Vendite; accese quelle comprate; un tocco porta alle Vendite.
+function mostraBrand(c, vendite) {
+  const posto = document.getElementById('vn-brand-testata');
+  if (!posto || !MB21Lista.haVendite(c, vendite)) return;
+  posto.innerHTML = MB21Lista.brandComprati(vendite).map(b =>
+    `<button type="button" class="${b.acceso ? 'acceso' : ''}" style="--col:${b.colore}">${esc(b.nome)}</button>`).join('');
+  posto.querySelectorAll('button').forEach(b => b.onclick = () => { LS.sezione = 'vendite'; disegnaScheda(); });
 }
 
 // ── Vendite (cantiere 26) ── una lettura sola per scheda, da `vendite_conti` (la provvigione si calcola solo lì)
