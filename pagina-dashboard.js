@@ -71,7 +71,7 @@ async function caricaOggi() {
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
     try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
   }
-  await Promise.all([caricaDashboard(oggi), caricaConferme()]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi)]);
   disegnaOggi();
 }
 
@@ -145,6 +145,7 @@ function disegnaOggi() {
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
   html += confermeHtml();
+  html += riordiniHtml();
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
@@ -161,10 +162,11 @@ function disegnaOggi() {
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   if (limitato()) {
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], button[data-riordino-nr], .riordino .ag-esiti button, #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
     return;
   }
   collegaConferme();
+  collegaRiordini();
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });
@@ -494,6 +496,49 @@ function collegaConferme() {
         disegnaOggi();
       });
     };
+  });
+}
+
+// ── RIORDINI DA SENTIRE (cantiere 27 lavoro 1, 18/09) ────
+// La telefonata «Riordino» che la vendita scrive in Agenda (10 giorni prima del riordino) si vedeva solo lì: qui ha il suo riquadro,
+// sopra la coda come le conferme, senza consumare i posti della coda. Resta finché non ha un esito. Bottoni esito: gli stessi dell'Agenda.
+const RIO = { righe: [], nonRisponde: new Set() };
+
+async function caricaRiordini(oggi) {
+  try {
+    const { data, error } = await dbq('riordini da sentire', supa.from('vendite')
+      .select(`riordino, prodotto, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null));
+    if (error) throw error;
+    RIO.righe = MB21Agenda.riordiniDaSentire(data, oggi);
+  } catch (e) {
+    RIO.righe = [];
+  }
+}
+
+function riordiniHtml() {
+  if (!RIO.righe.length) return '';
+  const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
+  return `<h2>🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
+    const tel = a.contatti && a.contatti.telefono;
+    return `<div class="card conferma riordino" data-riordino="${esc(a.id)}"><div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>
+      <div class="corpo">
+        <div class="nome">${esc(a.contatti ? a.contatti.nome : '')}</div>
+        <div class="conf-testo">${esc([a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
+        ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
+        ${tel ? `<div class="riga">${linkTelefono(tel)}</div>` : ''}
+        ${ST.offline ? '' : bloccoEsiti(a, a.contatti ? a.contatti.categoria : null)}
+        <div class="bottoni conf-bottoni"><button data-riordino-nr="${esc(a.id)}">Non risponde</button></div>
+      </div></div>`;
+  }).join('');
+}
+
+function collegaRiordini() {
+  const dopo = async () => { await caricaRiordini(ST.oggi); disegnaOggi(); };
+  app.querySelectorAll('[data-riordino]').forEach(el => {
+    const a = RIO.righe.find(x => x.id === el.dataset.riordino);
+    if (!a) return;
+    collegaEsiti(el, a, { nome: a.contatti ? a.contatti.nome : '', categoria: a.contatti ? a.contatti.categoria : a.categoria }, dopo);
+    el.querySelector('[data-riordino-nr]').onclick = () => { RIO.nonRisponde.add(a.id); disegnaOggi(); };
   });
 }
 
