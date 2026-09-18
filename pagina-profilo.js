@@ -1,7 +1,7 @@
 // MB21 · pagina personale «Profilo» (cantiere 25, decisioni di Ignazio 17/09): si apre dal cerchietto con le iniziali
 // in alto a destra in Dashboard, niente settima tab. È sempre la pagina di chi è entrato (il Partner Select non conta).
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
-// avvisi sul telefono (da qui, non più in Dashboard), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
+// avvisi sul telefono (da qui, non più in Dashboard), «✨ Novità dell'app» (cantiere 28), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
 // nel database»): rimpicciolita dall'app a 200×200 JPEG e salvata come testo in `utenti.foto` con `imposta_foto`.
 // Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword, versione…),
 // pagina-dashboard.js (scegliNumero) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
@@ -66,6 +66,7 @@ function disegnaProfilo() {
     <div class="pf-box"><h3>Avvisi sul telefono</h3>
       <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div></div>
+    <div class="pf-box">${b('pf-novita', '✨ Novità dell\'app')}</div>
     <div class="pf-box">${b('pf-password', '🔑 Cambia password')}</div>
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
@@ -75,6 +76,7 @@ function disegnaProfilo() {
   const foto = document.getElementById('pf-foto'); if (foto) foto.onchange = () => salvaFoto(foto.files[0]);
   su('pf-foto-via', () => salvaFoto(null));
   su('pf-numero', () => scegliNumero(disegnaProfilo));
+  su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
   collegaAvvisi();

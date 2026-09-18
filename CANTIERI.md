@@ -10,7 +10,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (aperto · lavoro 0 fatto)
+## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (aperto · lavori 0 e 1 fatti)
 *Idea di Ignazio del 18 settembre 2026, alla chiusura del cantiere 27: «evitare ogni volta un messaggio» ai partner quando l'app cambia. Semplice, «spiegabile anche ai bambini».*
 
 - **Cosa vuole Ignazio**: all'apertura dell'app (nel nuovo giorno, o alla prima apertura dopo un aggiornamento) un foglio «✨ Novità» con gli aggiornamenti fatti **dall'ultima volta che quella persona è entrata**, e la data del suo ultimo ingresso. L'elenco si aggiorna man mano che si lavora sull'app
@@ -26,7 +26,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   3. **Quante e dove**: nel foglio al massimo le 10 più recenti + riga «vedi tutte»; la voce fissa «✨ Novità dell'app» sta nel Profilo, con l'elenco completo
   4. **Partenza**: le 5 novità del 18/09 (VP Clienti dalle vendite · Contatti e PM dalle azioni · Riordini da sentire · Call/SMS/WhatsApp/Telegram ovunque · Clienti in coda), testi approvati da Ignazio prima di pubblicare; sostituiscono il messaggio ai partner rimasto in cantiere 21
   5. **Solo Admin**: le modifiche che riguardano solo l'Admin non si scrivono proprio → in `novita.js` non serve il campo «a chi interessa»
-- Lavoro 1 · `novita.js` + il foglio all'apertura + la voce per rileggerle · Lavoro 2 · la regola in CLAUDE.md e le prime novità scritte · Lavoro 3 · prova con Isabella o Carolina
+- **Lavoro 1 · fatto il 18/09** ✅ (versione 2026.09.18 · 15:23): `novita.js` (elenco, per ora **vuoto**, e logica) + foglio all'apertura in `index.html` + voce «✨ Novità dell'app» nel Profilo + 8 prove in `tools/banco/prova_novita.js`. «Ho capito» si ricorda **sul telefono**, non nel database (scelta più semplice: niente migrazione, funziona anche offline; con un telefono nuovo si rivedono una volta le ultime 10). `ultimo_uso` letto prima di `segna_uso()` ✔ · offline non blocca ✔. Provato a secco con dati finti (primo ingresso, riapertura, «vedi tutte», «Ho capito»); **da vedere in foto al lavoro 2**, quando l'elenco avrà le prime righe (con l'elenco vuoto il foglio non si apre; dal Profilo si legge «Ancora nessuna novità»)
+- Lavoro 2 · la regola in CLAUDE.md e le prime novità scritte · Lavoro 3 · prova con Isabella o Carolina
 - ⚠️ Da verificare al lavoro 1: `ultimo_uso` va letto prima che `segna_uso()` lo aggiorni, e offline il foglio non deve bloccare l'apertura. Con la decisione 1 `ultimo_uso` da solo non basta (si aggiorna a ogni apertura): serve ricordare a parte fino a quale novità la persona ha toccato «Ho capito»; dove tenerlo (telefono o database) si decide al lavoro 1
 
 ## 21. DA FARE PIÙ AVANTI
