@@ -33,6 +33,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - **Provvigione = (VP × FC) × 0,20**, con l'FC valido **alla data della vendita** (la riga di `fattori_conversione` con il `dal` più alto non oltre quella data). Non si salva: la calcola la vista `vendite_conti`, così correggendo un FC in Admin i numeri si sistemano da soli. Senza un FC per quella data la vendita resta e la provvigione è vuota
 - **Guadagno netto = provvigione − sconto**. Provvigione bassa o nulla = promozioni o sconti voluti: è normale
 - **Import da Glide** (18/09, `scripts/import_vendite.py`): 147 vendite da `Vendite.csv`, agganciate con `ClienteID` = `contatti.glide_id`; `user_id` = quello **del contatto** (non `UserEmail`); date in due formati; «Nutrilite» → «Nutrilite/XS»; `da_glide = true` (rilanciando si cancellano e ricaricano solo queste)
+- **Sezione «Vendite» della scheda** (lavoro 3a, 18/09; `sezioneVendite` in `pagina-lista.js`): c'è per chi è **Cliente** e per chi ha già una vendita anche se cambia categoria (`MB21Lista.haVendite`; Ignazio: «chi è Cliente ha le Vendite», niente spunte). Dopo Coach Yes. Tre riquadri **VP Totali** (blu) · **Provvigione** (viola) · **Guadagno netto** (verde) da `MB21Lista.totaliVendite`, poi l'elenco dalla più recente: prodotto, targhetta del brand (`MB21Lista.BRAND`, `coloreBrand`), data, sconto se c'è, VP e provvigione. Una lettura sola per scheda da `vendite_conti` (`venditeDellaScheda`, in `LS.vendite`). Numeri con `MB21Lista.numero`. Sparito il bottone spento «Vendite · in arrivo»
 - I totali della scheda si sommano **non arrotondati** e si arrotondano solo a schermo (come Glide: 23,51 + 78,48 → 101,98, non 101,99)
 
 **Prova gratuita** (migrazioni `20260916220000_prova_gratuita.sql` e `20260916223000_prova_da_abilitazione.sql`, applicate; richieste di Ignazio 16/09):
@@ -497,3 +498,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · `coda.js` (motore 
 | 2026.09.17 · 23:04 | Cantiere 25 passo 1: pagina «Profilo» dal cerchietto in Dashboard (dati, telefono, Contatti al giorno, avvisi, Cambia password, Esci) |
 | 2026.09.17 · 23:14 | Cantiere 25 passo 2: foto del profilo, piccola, nel database; si vede nel cerchietto |
 | 2026.09.17 · 23:21 | Admin → Utenti: la foto del profilo (o le iniziali) in ogni riga |
+| 2026.09.18 · 09:54 | Cantiere 26 lavoro 3a: sezione «Vendite» nella scheda dei Clienti (tre totali e elenco delle vendite, sola lettura) |

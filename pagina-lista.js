@@ -1,4 +1,4 @@
-// MB21 · pagina Lista Nomi: elenco e filtri, scheda contatto (Dati · Azioni · Coach Yes · Onboarding · Segni vitali),
+// MB21 · pagina Lista Nomi: elenco e filtri, scheda contatto (Dati · Azioni · Coach Yes · Vendite · Onboarding · Segni vitali),
 // Nuovo Contatto / Modifica. Spostata da index.html il 17/09 (pausa di sistemazione, richiesta di Ignazio), come admin.js
 // e pagina-dashboard.js. Nessun cambiamento di funzionamento. La logica da provare con node resta in lista.js.
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, esc, mostraToast, visto, vediTutti, idVisti, mostraTab…);
@@ -236,13 +236,14 @@ function apriScheda(id) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = 'dati';
-  LS.azioni = null; LS.note = null; LS.sv = null;
+  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null;
   window.scrollTo(0, 0);
   disegnaScheda();
 }
 
 function sezioniPer(c) {
-  const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'], ['segni', 'Segni vitali']];
+  const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'],
+    ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []), ['segni', 'Segni vitali']];
   return c.categoria === 'Partner' ? [['onboarding', 'Onboarding'], ...base] : base;
 }
 
@@ -272,8 +273,7 @@ function disegnaScheda() {
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}
       </div>
     </div>
-    <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}
-      <button disabled title="In arrivo">Vendite · in arrivo</button></div>
+    <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
     <div id="sezione"></div>
     ${versione()}`;
   document.getElementById('indietro').onclick = () => {
@@ -295,7 +295,43 @@ function disegnaScheda() {
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
-  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni }[LS.sezione] || sezioneDati)();
+  // chi non è Cliente ma ha già delle vendite: la sezione «Vendite» compare appena lette
+  if (!MB21Lista.haVendite(c, LS.vendite)) venditeDellaScheda(c).then(v => { if (v && v.length && LS.contatto === c) disegnaScheda(); }).catch(() => {});
+  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite }[LS.sezione] || sezioneDati)();
+}
+
+// ── Vendite (cantiere 26) ── una lettura sola per scheda, da `vendite_conti` (la provvigione si calcola solo lì)
+async function venditeDellaScheda(c) {
+  if (LS.vendite) return LS.vendite;
+  const { data, error } = await dbq('lettura vendite', supa.from('vendite_conti')
+    .select('id, data, brand, prodotto, vp, sconto, riordino, provvigione, guadagno_netto')
+    .eq('contatto_id', c.id).order('data', { ascending: false }).order('creato_il', { ascending: false }));
+  if (error) return null;
+  if (LS.contatto === c) LS.vendite = data;
+  return data;
+}
+
+async function sezioneVendite() {
+  const c = LS.contatto;
+  const box = document.getElementById('sezione');
+  box.innerHTML = '<div class="vuoto">Carico le vendite…</div>';
+  const vendite = await venditeDellaScheda(c);
+  if (LS.contatto !== c || LS.sezione !== 'vendite') return;
+  if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
+  const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero;
+  box.innerHTML = `
+    <div class="vn-totali">
+      <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
+      <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
+      <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div>
+    </div>` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
+      <div class="vn-riga">
+        <div>
+          <div class="vn-prodotto">${esc(v.prodotto)}</div>
+          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}</div>
+        </div>
+        <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
+      </div>`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
 }
 
 // Scheda di un Partner: riga «📱 Usa l'app · ultimo uso … · N nomi in lista» (e niente «Invita») se la persona è già utente
