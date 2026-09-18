@@ -804,7 +804,7 @@ function apriCheck() {
     <div id="ck-modifica" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px"></div>
     ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo" id="ck-campo-${k}">
       <label>${esc(etichetta)} <small>Obbligatorio</small></label>
-      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : ''}`).join('')}
+      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : k === 'pm' ? '<div id="ck-azioni" style="display:none"></div>' : ''}`).join('')}
     <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     <div class="errore" id="ck-errore"></div>
@@ -823,6 +823,7 @@ function apriCheck() {
     const mio = ++giro, data = campoData.value;
     const avviso = velo.querySelector('#ck-modifica');
     venditeDelGiorno(data, () => mio === giro);
+    azioniDelGiorno(data, () => mio === giro);
     const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
       .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
     if (mio !== giro) return;   // nel frattempo è cambiata la data
@@ -860,11 +861,32 @@ function apriCheck() {
       if (LS.contatto && LS.contatto.id === b.dataset.cliente) { LS.sezione = 'vendite'; disegnaScheda(); }
     });
   };
+  // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
+  // (vista `azioni_conti`); ogni azione porta alla scheda del contatto. Per i giorni prima restano i campi a mano.
+  const azioniDelGiorno = async (data, ancoraValido) => {
+    const box = velo.querySelector('#ck-azioni');
+    const dalle = MB21Dashboard.contattiDalleAzioni(data);
+    for (const k of ['contatti', 'pm']) velo.querySelector('#ck-campo-' + k).style.display = dalle ? 'none' : '';
+    box.style.display = dalle ? '' : 'none';
+    if (!dalle) return;
+    const titolo = (c, p) => `<b>📞 Contatti: ${c} · 🗓️ PM: ${p}</b>`;
+    box.innerHTML = `<div class="ck-vn">${titolo('…', '…')}<div class="vn-aiuto">Carico le azioni del giorno…</div></div>`;
+    const { data: righe, error } = await dbq('azioni del giorno', supa.from('azioni_conti')
+      .select('id, contatto_id, tipo_azione, modalita, esito, contatti, pm, contatto:contatti(nome)').eq('user_id', visto().id).eq('giorno', data).order('tipo_azione'));
+    if (!ancoraValido()) return;
+    if (error) { box.innerHTML = `<div class="ck-vn">${titolo('?', '?')}<div class="vn-aiuto">Non riesco a leggere le azioni: riprova.</div></div>`; return; }
+    const somma = k => righe.reduce((t, r) => t + (r[k] || 0), 0);
+    box.innerHTML = `<div class="ck-vn">${titolo(somma('contatti'), somma('pm'))}
+      <div class="vn-aiuto">${righe.length ? 'Dalle azioni registrate (coda, Agenda, scheda). Tocca un\'azione per aprire il contatto.' : 'Nessun contatto parlato e nessun PM avvenuto registrati in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli.'}</div>
+      ${righe.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')} · ${esc(r.pm ? (r.modalita || 'PM') : 'Contatto')}</span><b>${esc(r.esito || '')} ›</b></button>`).join('')}</div>`;
+    box.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });
+  };
   campoData.onchange = caricaGiorno;
   caricaGiorno();
   velo.querySelector('#ck-si').onclick = async () => {
     const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
+    if (MB21Dashboard.contattiDalleAzioni(v.data)) for (const k of ['contatti', 'pm']) if (String(v[k]).trim() === '') v[k] = '0';   // dal 14/09 li danno le azioni (un Check vecchio tiene i suoi numeri, che non contano)
     if (MB21Dashboard.vpDalleVendite(v.data)) v.vp_clienti = '0';   // dal 18/09 i VP Clienti li danno le vendite: nel Check resta 0
     const errore = MB21Dashboard.validaCheck(v);
     if (errore) { velo.querySelector('#ck-errore').textContent = errore; return; }

@@ -82,6 +82,10 @@
   // ⚠️ La stessa data è nelle viste `check_giorni_conti` e `check_mesi` (migrazione 20260918113000): si cambiano insieme.
   const INIZIO_VENDITE = '2026-09-18';
   const vpDalleVendite = giorno => !!giorno && giorno >= INIZIO_VENDITE;
+  // Contatti e PM dal 14/09/2026 (nascita della v4) nascono dalle azioni registrate (cantiere 27, vista `azioni_conti`).
+  // ⚠️ La stessa data è nella migrazione 20260918133500 (3 volte): si cambiano insieme.
+  const INIZIO_AZIONI = '2026-09-14';
+  const contattiDalleAzioni = giorno => !!giorno && giorno >= INIZIO_AZIONI;
 
   // Primo mese in cui BBS/WES/CEP vengono dalle persone invece che dai check (decisione di Ignazio 16/09)
   const INIZIO_PERSONE = '2026-09-01';
@@ -311,7 +315,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, vpDalleVendite, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
