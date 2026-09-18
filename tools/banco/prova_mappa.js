@@ -131,6 +131,19 @@ prova('scheda del partner: prima il codice Amway, poi il nome; vince la lista di
   assert.equal(M.schedaDelPartner({ id: '3', nome: 'Nessuno' }, contatti, 'ignazio'), null);
 });
 
+prova('partner della scheda: prima il codice Amway, poi lo stesso nome (data di ingresso nella scheda)', () => {
+  const squadra = [
+    { partner_id: '7027598793', nome: 'ABELA, ANTONINA', data_ingresso: '2026-09-06' },
+    { partner_id: '1', nome: 'ARCORACI,  FILIPPO', data_ingresso: '2010-03-15' },
+  ];
+  assert.equal(M.partnerDellaScheda({ nome: 'Tonya Abela', codice_amway: '7027598793' }, squadra).data_ingresso, '2026-09-06');
+  assert.equal(M.partnerDellaScheda({ nome: 'filippo  arcoraci' }, squadra).partner_id, '1');
+  assert.equal(M.partnerDellaScheda({ nome: 'Filippo Arcoraci', codice_amway: '999' }, squadra), null);   // ha un altro codice: il nome non vale
+  assert.equal(M.partnerDellaScheda({ nome: 'Nessuno' }, squadra), null);
+  assert.equal(M.partnerDellaScheda(null, squadra), null);
+  assert.equal(M.partnerDellaScheda({ nome: 'Tonya Abela' }, null), null);
+});
+
 prova('segni vitali a cascata: partner, compagno/a, clienti del partner, somma sull\'albero', () => {
   const squadra = [
     { partner_id: 'I', sponsor_id: null, nome: 'FIORITO, IGNAZIO' },

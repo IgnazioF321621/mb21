@@ -14,10 +14,11 @@
     ['+34', 'Spagna'], ['+43', 'Austria'], ['+31', 'Olanda'], ['+32', 'Belgio'], ['+40', 'Romania'],
     ['+1', 'USA / Canada'], ['+61', 'Australia'],
   ];
-  // 14 passi di Onboarding, ordine di Glide
+  // 14 passi di Onboarding (in Glide: Amway · Ordine · Network 21 · Sogno · …).
+  // Ordine deciso da Ignazio (18/09, cantiere 31): il Sogno per primo, davanti ad Amway (nel Manuale di Avvio le motivazioni vengono prima dei 4 passi)
   const PASSI_ONBOARDING = [
-    ['onb_amway', 'Amway', 'Registrazione'], ['onb_ordine', 'Ordine', 'Primo ordine'],
-    ['onb_n21', 'Network 21', 'Registrazione'], ['onb_sogno', 'Sogno', 'Motivo e/o incubo'],
+    ['onb_sogno', 'Sogno', 'Motivo e/o incubo'], ['onb_amway', 'Amway', 'Registrazione'],
+    ['onb_ordine', 'Ordine', 'Primo ordine'], ['onb_n21', 'Network 21', 'Registrazione'],
     ['onb_starter_pack', 'Starter Pack', 'Acquisto SPN21'], ['onb_lista_start', 'Lista Start', 'Nomi cerchia ristretta'],
     ['onb_role_play', 'Role Play', 'Esercitazione e prove'], ['onb_contatti', 'Contatti', 'Telefonate di contatto'],
     ['onb_pack_ds', 'Pack Dare Seguito', 'Acquisto DS 1 e 2'], ['onb_bbs', 'BBS', 'Partecipazione al BBS'],
@@ -169,6 +170,21 @@
   function contatoreOnboarding(c) {
     const fatti = PASSI_ONBOARDING.filter(([col]) => c && c[col] === true).length;
     return { fatti, totale: PASSI_ONBOARDING.length };
+  }
+  // Avvio del Partner (cantiere 31, Ignazio 18/09: l'app dice da sola il prossimo passo da fare con il nuovo).
+  // Prossimo passo = il primo dei 14 non fatto, nell'ordine di PASSI_ONBOARDING; tutti fatti → null. Una fonte sola, ovunque.
+  function prossimoPasso(c) {
+    const p = PASSI_ONBOARDING.find(([col]) => !(c && c[col] === true));
+    return p ? { col: p[0], nome: p[1], descr: p[2] } : null;
+  }
+  // Da quanto è entrato (data di ingresso del file Amway, «2026-09-06»): solo un'informazione, nessun allarme. Senza data → ''
+  function entratoDa(ingresso, oggi) {
+    if (!ingresso || !oggi) return '';
+    const g = Math.round((Date.parse(oggi + 'T12:00:00Z') - Date.parse(String(ingresso).slice(0, 10) + 'T12:00:00Z')) / 86400000);
+    if (!(g >= 0)) return '';
+    const quanti = (n, uno, tanti) => (n === 1 ? uno : n + ' ' + tanti);
+    return g === 0 ? 'entrato oggi' : g === 1 ? 'entrato ieri' : g < 60 ? `entrato da ${g} giorni`
+      : g < 365 ? `entrato da ${quanti(Math.floor(g / 30), '1 mese', 'mesi')}` : `entrato da ${quanti(Math.floor(g / 365), '1 anno', 'anni')}`;
   }
 
   // Segni vitali (cantiere 18): posti di un biglietto = contatto + compagno/a + ospiti senza nome
@@ -354,7 +370,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -277,7 +277,7 @@ function apriScheda(id) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
-  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null;
+  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null;
   window.scrollTo(0, 0);
   disegnaScheda();
 }
@@ -285,7 +285,34 @@ function apriScheda(id) {
 function sezioniPer(c) {
   const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'],
     ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []), ['segni', 'Segni vitali']];
-  return c.categoria === 'Partner' ? [['onboarding', 'Onboarding'], ...base] : base;
+  // La linguetta «Onboarding» dei Partner non c'è più (cantiere 31, Ignazio 18/09: «recuperiamo spazio»): i passi si aprono dalla riga «🚀 Avvio» in testata
+  return base;
+}
+
+// Avvio del Partner (cantiere 31). «Avvio concluso» e la data di ingresso (file Amway → `squadra`) non sono nella vista della Lista:
+// si leggono all'apertura della scheda di un Partner. LS.avvio = { id, concluso (giorno o null), ingresso (giorno o null) }
+// Riga dell'avvio nella testata, sotto «Usa l'app» (Ignazio 18/09: si deve capire senza entrare in una sezione, e al posto della
+// linguetta Onboarding): aperto → passi fatti e prossimo passo; concluso → «✅ Avvio concluso · fatti/14». Il tocco apre i 14 passi
+// (sezione `onboarding`, senza linguetta); un secondo tocco li richiude e torna alla sezione con cui si apre la scheda.
+function mostraAvvio(c) {
+  const posto = document.getElementById('avvio-posto');
+  if (!posto || !LS.avvio || LS.avvio.id !== c.id || c.categoria !== 'Partner') return;
+  const { fatti, totale } = MB21Lista.contatoreOnboarding(c), prossimo = MB21Lista.prossimoPasso(c);
+  posto.innerHTML = `<button class="app-riga" id="avvio-riga"><span class="ico">${LS.avvio.concluso ? '✅' : '🚀'}</span>
+    <div>${LS.avvio.concluso ? 'Avvio concluso' : 'Avvio'} · ${fatti}/${totale}${LS.avvio.concluso ? '' : `<small>${prossimo ? 'Prossimo passo: ' + esc(prossimo.nome) : 'Tutti i passi sono fatti'}</small>`}</div><span class="freccia">${LS.sezione === 'onboarding' ? '⌄' : '›'}</span></button>`;
+  document.getElementById('avvio-riga').onclick = () => {
+    LS.sezione = LS.sezione === 'onboarding' ? MB21Lista.sezioneIniziale(c) : 'onboarding';
+    disegnaScheda();
+  };
+}
+async function avvioDellaScheda(c) {
+  if (LS.avvio && LS.avvio.id === c.id) return null;   // già letto
+  const { data, error } = await dbq('avvio', supa.from('contatti').select('avvio_concluso_il, codice_amway').eq('id', c.id).maybeSingle());
+  if (error || !data) return null;
+  const sq = await dbq('squadra', supa.from('squadra').select('partner_id, nome, data_ingresso'));
+  const p = sq.error ? null : MB21Mappa.partnerDellaScheda({ nome: c.nome, codice_amway: data.codice_amway }, sq.data);
+  if (!LS.contatto || LS.contatto.id !== c.id) return null;
+  return (LS.avvio = { id: c.id, concluso: data.avvio_concluso_il || null, ingresso: (p && p.data_ingresso) || null });
 }
 
 function disegnaScheda() {
@@ -306,7 +333,7 @@ function disegnaScheda() {
         ${contattaHtml(c.telefono)}
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
         <div class="vn-brand-testata" id="vn-brand-testata"></div>
-        ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}
+        ${c.categoria === 'Partner' ? '<span id="invita-posto"></span><span id="avvio-posto"></span>' : ''}
       </div>
     </div>
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
@@ -328,6 +355,7 @@ function disegnaScheda() {
   const m = document.getElementById('modifica');
   if (m) m.onclick = () => apriModulo(c);
   mostraInvito(c);
+  mostraAvvio(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
@@ -338,6 +366,11 @@ function disegnaScheda() {
     if (!v || LS.contatto !== c) return;
     if (senzaSezione && v.length) return disegnaScheda();
     mostraBrand(c, v);
+  }).catch(() => {});
+  // Avvio del Partner: appena letto si disegna la riga in testata; con i passi aperti si ridisegna (giorni dall'ingresso e tasto)
+  if (c.categoria === 'Partner') avvioDellaScheda(c).then(a => {
+    if (a && LS.sezione === 'onboarding') disegnaScheda();
+    else mostraAvvio(c);
   }).catch(() => {});
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite }[LS.sezione] || sezioneDati)();
 }
@@ -583,16 +616,39 @@ async function notaCoach(n) {
 function sezioneOnboarding() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
+  const fermo = c.categoria === 'Archiviato';
   const disegna = () => {
     const { fatti, totale } = MB21Lista.contatoreOnboarding(c);
+    const prossimo = MB21Lista.prossimoPasso(c), a = LS.avvio && LS.avvio.id === c.id ? LS.avvio : null;
+    const entrato = a && a.ingresso ? `Ingresso in Amway: ${MB21Lista.data(a.ingresso)} · ${MB21Lista.entratoDa(a.ingresso, MB21Coda.oggiRoma())}` : '';
     box.innerHTML = `
       <div class="riquadro"><div style="display:flex;justify-content:space-between;font-weight:700">
         <span>Passi di base per il successo</span><span id="conta-onb">${fatti}/${totale}</span></div>
-        <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div></div>
+        <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
+        <div class="avvio-prossimo">${prossimo ? `👉 Prossimo passo: <b>${esc(prossimo.nome)}</b> <small>${esc(prossimo.descr)}</small>` : '🎉 Tutti i passi sono fatti'}</div>
+        ${entrato ? `<div class="sotto" style="margin:4px 0 0">${esc(entrato)}</div>` : ''}</div>
       <div class="riquadro">${MB21Lista.PASSI_ONBOARDING.map(([col, nome, descr]) => `
         <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small></span>
-          <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${c.categoria === 'Archiviato' ? 'disabled' : ''}></label>`).join('')}
-      </div>`;
+          <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${fermo ? 'disabled' : ''}></label>`).join('')}
+      </div>
+      ${fermo || !a ? '' : a.concluso
+        ? `<div class="riquadro"><b>✅ Avvio concluso il ${MB21Lista.data(a.concluso)}</b>
+            <div class="sotto" style="margin:4px 0 8px">Non è più tra i partner da avviare. I passi restano qui.</div>
+            <button class="link" id="avvio-riapri" style="padding:0">Riapri l'avvio</button></div>`
+        : `<div class="riquadro"><button class="primario" id="avvio-concludi">✅ Avvio concluso</button>
+            <div class="sotto" style="margin:8px 0 0">Quando il partner cammina da solo: la riga in alto diventa «✅ Avvio concluso». Si può sempre riaprire.</div></div>`}`;
+    const segna = async giorno => {
+      if (soloGuardo()) return;
+      const { error } = await dbq('avvio concluso', supa.from('contatti').update({ avvio_concluso_il: giorno }).eq('id', c.id));
+      if (error) return mostraToast('Non salvato: riprova.');
+      LS.avvio = { ...a, concluso: giorno };
+      if (giorno) LS.sezione = MB21Lista.sezioneIniziale(c);
+      disegnaScheda();
+      mostraToast(giorno ? `Avvio di ${c.nome} concluso` : `Avvio di ${c.nome} riaperto`, giorno ? () => segna(null) : null);
+    };
+    const concludi = document.getElementById('avvio-concludi'), riapri = document.getElementById('avvio-riapri');
+    if (concludi) concludi.onclick = () => segna(MB21Coda.oggiRoma());
+    if (riapri) riapri.onclick = () => segna(null);
     box.querySelectorAll('[data-passo]').forEach(i => i.onchange = async () => {
       if (soloGuardo()) { i.checked = !i.checked; return; }
       const col = i.dataset.passo;
@@ -602,6 +658,7 @@ function sezioneOnboarding() {
       const riga = LS.righe.find(x => x.id === c.id);
       if (riga) riga[col] = i.checked;
       disegna();
+      mostraAvvio(c);
     });
   };
   disegna();

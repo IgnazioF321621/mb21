@@ -114,11 +114,20 @@
 
   // Scheda contatto di un partner della Mappa: prima quella col suo codice Amway, poi per nome
   // (senza maiuscole e spazi doppi). A parità vince la lista di `preferito` (chi guarda la Mappa).
+  const piegaNome = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
   function schedaDelPartner(partner, contatti, preferito) {
-    const piega = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const piega = piegaNome;
     const scegli = trovati => (trovati.find(c => c.user_id === preferito) || trovati[0] || null);
     return scegli((contatti || []).filter(c => c.codice_amway && c.codice_amway === partner.id))
       || scegli((contatti || []).filter(c => !c.codice_amway && piega(c.nome) === piega(partner.nome)));
+  }
+
+  // Il contrario (cantiere 31): il partner della squadra (riga di `squadra`, nome come nel file Amway) a cui appartiene una scheda.
+  // Stessa regola: il codice Amway se la scheda ce l'ha, altrimenti lo stesso nome. Serve per la data di ingresso nella scheda.
+  function partnerDellaScheda(scheda, squadra) {
+    if (!scheda) return null;
+    if (scheda.codice_amway) return (squadra || []).find(p => p.partner_id === scheda.codice_amway) || null;
+    return (squadra || []).find(p => piegaNome(nomeLeggibile(p.nome)) === piegaNome(scheda.nome)) || null;
   }
 
   // Segni vitali a cascata (cantiere 18). Ogni biglietto e ogni periodo CEP va a un partner della squadra:
@@ -289,7 +298,7 @@
     return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} gg`;
   }
 
-  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner,
+  const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner, partnerDellaScheda,
     segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

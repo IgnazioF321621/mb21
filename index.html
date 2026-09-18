@@ -198,6 +198,11 @@
   .interruttore input:checked::after { left: 23px; }
   .barra { height: 8px; background: #E5E7EB; border-radius: 999px; overflow: hidden; margin-top: 8px; }
   .barra div { height: 100%; background: var(--coach); }
+  /* Avvio del Partner (cantiere 31): prossimo passo nella linguetta Onboarding, riga dell'avvio in testata sotto «Usa l'app» */
+  .avvio-prossimo { margin-top: 12px; font-size: 16px; }
+  .avvio-prossimo small { color: var(--grigio); font-size: 13px; margin-left: 4px; }
+  button.app-riga { width: 100%; border: 0; text-align: left; color: var(--testo); font-family: inherit; }
+  button.app-riga .freccia { margin-left: auto; color: var(--grigio); font-size: 18px; font-weight: 400; }
   /* Vendite nella scheda contatto (cantiere 26) */
   .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .vn-tot { border-radius: 14px; padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
@@ -601,26 +606,26 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609182130"></script>
-<script src="lista.js?v=202609182130"></script>
-<script src="rubrica.js?v=202609182130"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609182130"></script>
-<script src="agenda.js?v=202609182130"></script>
-<script src="report.js?v=202609182130"></script>
-<script src="check.js?v=202609182130"></script>
-<script src="mappa.js?v=202609182130"></script>
-<script src="pagina-dashboard.js?v=202609182130"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609182130"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609182130"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609182130"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609182130"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609182130"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609182130"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609182130"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609182130"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609182130"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609182303"></script>
+<script src="lista.js?v=202609182303"></script>
+<script src="rubrica.js?v=202609182303"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609182303"></script>
+<script src="agenda.js?v=202609182303"></script>
+<script src="report.js?v=202609182303"></script>
+<script src="check.js?v=202609182303"></script>
+<script src="mappa.js?v=202609182303"></script>
+<script src="pagina-dashboard.js?v=202609182303"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609182303"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609182303"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609182303"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609182303"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609182303"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609182303"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609182303"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609182303"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609182303"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 21:30';
+const APP_VERSION = '2026.09.18 · 23:03';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
