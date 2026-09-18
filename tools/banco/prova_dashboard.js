@@ -207,4 +207,10 @@ prova('VP Clienti dalle vendite dal 18/09/2026: prima si scrivono nel Check, da 
   assert.equal(D.vpDalleVendite(''), false);
 });
 
+prova('Contatti e PM dalle azioni: dal 14/09/2026 in poi', () => {
+  assert.equal(D.contattiDalleAzioni('2026-09-13'), false);
+  assert.equal(D.contattiDalleAzioni('2026-09-14'), true);
+  assert.equal(D.contattiDalleAzioni(''), false);
+});
+
 console.log(`\n${ok} prove superate`);
