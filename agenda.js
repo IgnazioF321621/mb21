@@ -36,7 +36,7 @@
       'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Consulenza PRD': FASI_PRD,
     },
     'Partner': { 'Contatto': FASI_CONTATTO_PC, 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
-    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC], 'Consulenza PRD': FASI_PRD },   // «Ordine» (Ignazio 18/09): il riordino è andato bene, si registra la vendita
+    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC, 'No Interesse'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
   };
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto

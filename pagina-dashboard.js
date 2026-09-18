@@ -527,8 +527,9 @@ function riordiniHtml() {
         ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(a.contatti && a.contatti.telefono)}
         <div class="bottoni">
-          ${fasi.map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
+          ${fasi.filter(f => f !== 'No Interesse').map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
+          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Non interessato</button>` : ''}
         </div>
         <button class="link" data-scheda="${esc(a.contatto_id)}">👤 Apri contatto</button>
       </div></div>`;
