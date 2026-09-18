@@ -10,24 +10,24 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (da aprire)
+## 28. «NOVITÀ»: COSA È CAMBIATO DALL'ULTIMA VOLTA CHE SEI ENTRATO (aperto · lavoro 0 fatto)
 *Idea di Ignazio del 18 settembre 2026, alla chiusura del cantiere 27: «evitare ogni volta un messaggio» ai partner quando l'app cambia. Semplice, «spiegabile anche ai bambini».*
 
 - **Cosa vuole Ignazio**: all'apertura dell'app (nel nuovo giorno, o alla prima apertura dopo un aggiornamento) un foglio «✨ Novità» con gli aggiornamenti fatti **dall'ultima volta che quella persona è entrata**, e la data del suo ultimo ingresso. L'elenco si aggiorna man mano che si lavora sull'app
 - **Si può fare, con poco**: l'app sa già quando ognuno è entrato l'ultima volta (`utenti.ultimo_uso`, scritto a ogni apertura da `segna_uso()`, cantiere 19). Basta leggerlo **prima** di aggiornarlo e confrontarlo con un elenco di novità datate
-- **Proposta di partenza (da confermare al lavoro 0)**:
+- **Proposta di partenza (confermata al lavoro 0, con le correzioni scritte sotto)**:
   - un file solo, `novita.js`: una riga per novità = data e ora (come `APP_VERSION`) · titolo corto · una o due frasi semplici, senza gergo · a chi interessa (tutti / solo Admin)
   - **regola di lavoro nuova in CLAUDE.md**: a ogni modifica che i partner vedono, Claude aggiunge la riga in `novita.js` nello stesso commit (come `APP_VERSION` e `STRUTTURA.md`); le modifiche invisibili (documenti, pulizie) no
   - all'apertura: se ci sono novità più recenti dell'ultimo ingresso → foglio «✨ Novità dall'ultima volta (eri entrato il …)» con l'elenco, dalla più recente; un bottone «Ho capito» lo chiude. Nessuna novità → non si apre niente
   - le novità restano sempre rileggibili da una voce fissa (per esempio nel Profilo: «✨ Novità dell'app»)
-- **Lavoro 0 · decidere con Ignazio** (prima del codice):
-  1. Quando si apre: a ogni apertura finché non si tocca «Ho capito», o una volta sola al giorno?
-  2. Chi entra per la prima volta: niente foglio, o le ultime 5 novità come benvenuto?
-  3. Quante novità al massimo nel foglio (per chi manca da un mese) e dove sta la voce per rileggerle
-  4. Da quale data partire: scrivere subito le novità del 18/09 (VP Clienti dalle vendite · Contatti e PM dalle azioni · Riordini da sentire · Call/SMS/WhatsApp/Telegram ovunque · Clienti in coda), così sostituiscono il messaggio ai partner rimasto in cantiere 21
-  5. Novità solo per l'Admin (pagina Admin, Partner Select): si mostrano solo a lui?
+- **Lavoro 0 · deciso con Ignazio il 18/09** ✅:
+  1. **Quando si apre**: a ogni apertura finché la persona non tocca «Ho capito»; poi non torna fino alla novità successiva
+  2. **Primo ingresso**: per ora niente foglio. Il percorso di benvenuto per i nuovi partner si studierà più avanti in un documento apposito (passaggio successivo, fuori da questo cantiere)
+  3. **Quante e dove**: nel foglio al massimo le 10 più recenti + riga «vedi tutte»; la voce fissa «✨ Novità dell'app» sta nel Profilo, con l'elenco completo
+  4. **Partenza**: le 5 novità del 18/09 (VP Clienti dalle vendite · Contatti e PM dalle azioni · Riordini da sentire · Call/SMS/WhatsApp/Telegram ovunque · Clienti in coda), testi approvati da Ignazio prima di pubblicare; sostituiscono il messaggio ai partner rimasto in cantiere 21
+  5. **Solo Admin**: le modifiche che riguardano solo l'Admin non si scrivono proprio → in `novita.js` non serve il campo «a chi interessa»
 - Lavoro 1 · `novita.js` + il foglio all'apertura + la voce per rileggerle · Lavoro 2 · la regola in CLAUDE.md e le prime novità scritte · Lavoro 3 · prova con Isabella o Carolina
-- ⚠️ Da verificare al lavoro 1: `ultimo_uso` va letto prima che `segna_uso()` lo aggiorni, e offline il foglio non deve bloccare l'apertura
+- ⚠️ Da verificare al lavoro 1: `ultimo_uso` va letto prima che `segna_uso()` lo aggiorni, e offline il foglio non deve bloccare l'apertura. Con la decisione 1 `ultimo_uso` da solo non basta (si aggiorna a ogni apertura): serve ricordare a parte fino a quale novità la persona ha toccato «Ho capito»; dove tenerlo (telefono o database) si decide al lavoro 1
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
