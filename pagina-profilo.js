@@ -3,7 +3,7 @@
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
 // avvisi sul telefono (da qui, non più in Dashboard), «✨ Novità dell'app» (cantiere 28), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
 // nel database»): rimpicciolita dall'app a 200×200 JPEG e salvata come testo in `utenti.foto` con `imposta_foto`.
-// Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword, versione…),
+// Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword…), pagina-novita.js (foglioNovita, versione),
 // pagina-dashboard.js (scegliNumero) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
 // Si carica prima dello script della pagina: solo definizioni.
 
