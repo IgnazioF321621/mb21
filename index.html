@@ -133,7 +133,10 @@
   .testata .alto { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   .modifica { border: 0; border-radius: 10px; background: #334155; color: #fff; font-size: 14px; font-weight: 600; padding: 8px 12px; flex: none; }
   .contatta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
-  .contatta a { text-align: center; text-decoration: none; background: #EEF2FF; color: #3730A3; font-size: 13px; font-weight: 600; padding: 10px 0; border-radius: 10px; }
+  .contatta a { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; background: #fff; color: var(--grigio);
+    border: 1px solid var(--linea); font-size: 11px; font-weight: 600; padding: 7px 0 6px; border-radius: 10px; }
+  .contatta svg { width: 22px; height: 22px; }
+  .contatta .ic-call { fill: #34C759; } .contatta .ic-sms { fill: #378ADD; } .contatta .ic-wa { fill: #25D366; } .contatta .ic-tg { fill: #26A5E4; }
   .contatta a.spento { opacity: .35; pointer-events: none; }
   .app-riga { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 12px; border-radius: 12px; background: #F3F4F6; font-size: 14px; font-weight: 600; }
   .app-riga small { display: block; font-weight: 400; color: var(--grigio); font-size: 12px; }
@@ -568,24 +571,24 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181754"></script>
-<script src="lista.js?v=202609181754"></script>
-<script src="dashboard.js?v=202609181754"></script>
-<script src="agenda.js?v=202609181754"></script>
-<script src="report.js?v=202609181754"></script>
-<script src="check.js?v=202609181754"></script>
-<script src="mappa.js?v=202609181754"></script>
-<script src="pagina-dashboard.js?v=202609181754"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181754"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181754"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181754"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181754"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181754"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181754"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181754"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609181754"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609181820"></script>
+<script src="lista.js?v=202609181820"></script>
+<script src="dashboard.js?v=202609181820"></script>
+<script src="agenda.js?v=202609181820"></script>
+<script src="report.js?v=202609181820"></script>
+<script src="check.js?v=202609181820"></script>
+<script src="mappa.js?v=202609181820"></script>
+<script src="pagina-dashboard.js?v=202609181820"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181820"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181820"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181820"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181820"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181820"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181820"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181820"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609181820"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 17:54';
+const APP_VERSION = '2026.09.18 · 18:20';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.

@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 18:20', titolo: 'Chiama, SMS, WhatsApp e Telegram con i loro simboli',
+      testo: 'I quattro bottoni per contattare una persona ora hanno il simbolo colorato e la scritta sotto: la cornetta per chiamare, il fumetto per l\'SMS, i loghi di WhatsApp e Telegram. Li trovi uguali dappertutto: scheda, coda, conferme, riordini e Agenda.' },
     { quando: '2026.09.18 · 17:54', titolo: 'La scheda si apre già su «Azioni»',
       testo: 'Quando apri un contatto che ha già telefono e categoria, la scheda si apre direttamente su «Azioni», pronta per chiamare o segnare com\'è andata: un tocco in meno. Se manca uno dei due si apre su «Dati», così vedi subito cosa completare.' },
     { quando: '2026.09.18 · 17:44', titolo: 'Lista Nomi: Cerca e filtri sempre a portata di mano',
