@@ -557,23 +557,23 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181533"></script>
-<script src="lista.js?v=202609181533"></script>
-<script src="dashboard.js?v=202609181533"></script>
-<script src="agenda.js?v=202609181533"></script>
-<script src="report.js?v=202609181533"></script>
-<script src="check.js?v=202609181533"></script>
-<script src="mappa.js?v=202609181533"></script>
-<script src="pagina-dashboard.js?v=202609181533"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181533"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181533"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181533"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181533"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181533"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181533"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181533"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="coda.js?v=202609181550"></script>
+<script src="lista.js?v=202609181550"></script>
+<script src="dashboard.js?v=202609181550"></script>
+<script src="agenda.js?v=202609181550"></script>
+<script src="report.js?v=202609181550"></script>
+<script src="check.js?v=202609181550"></script>
+<script src="mappa.js?v=202609181550"></script>
+<script src="pagina-dashboard.js?v=202609181550"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181550"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181550"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181550"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181550"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181550"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181550"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181550"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 15:33';
+const APP_VERSION = '2026.09.18 · 15:50';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -788,6 +788,8 @@ const chiaveNovita = () => 'mb21_novita_' + ST.utente.id;
 
 function controllaNovita(ultimoUso) {
   try {
+    // Per le prove: aprendo l'app con «?novita=rivedi» si dimentica «Ho capito» su questo dispositivo e il foglio torna
+    if (REGISTRAZIONE.get('novita') === 'rivedi') { localStorage.removeItem(chiaveNovita()); history.replaceState(null, '', location.pathname); }
     const r = MB21Novita.daMostrare(MB21Novita.ELENCO, localStorage.getItem(chiaveNovita()) || '', ultimoUso);
     if (r.segna) localStorage.setItem(chiaveNovita(), r.segna);
     if (r.nuove.length) foglioNovita(r, ultimoUso);
