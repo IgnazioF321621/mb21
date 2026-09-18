@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 17:44', titolo: 'Lista Nomi: Cerca e filtri sempre a portata di mano',
+      testo: 'In Lista Nomi la parte alta ora resta ferma mentre scorri i nomi: Cerca, i filtri e il «+» per un nuovo contatto (in alto a destra, come in Agenda) sono sempre lì. Dentro ogni filtro leggi quanti nomi contiene: «Lista» li conta tutti, senza gli archiviati.' },
     { quando: '2026.09.18 · 17:12', titolo: 'L\'avviso del mattino: alle 9, con il tuo nome e i riordini',
       testo: 'L\'avviso del buongiorno ora arriva alle 9 (prima alle 8), ti saluta per nome e ti dice anche quanti clienti hai da sentire per il riordino: «Oggi 5 telefonate, 2 appuntamenti e 2 riordini da sentire». Restano nel conto finché non segni com\'è andata.' },
     { quando: '2026.09.18 · 16:57', titolo: 'Riordini da sentire: righe più piccole',

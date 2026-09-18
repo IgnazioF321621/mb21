@@ -84,21 +84,24 @@ function contattaHtml(telefono) {
 function disegnaLista() {
   if (LS.filtro === 'all') LS.filtro = 'lista';   // dal cantiere 15 «All» = Partner Select «Tutti»
   const f = MB21Lista.FILTRI[LS.filtro];
-  const totale = MB21Lista.totaleContatti(LS.righe, { filtro: LS.filtro, utenteId: utentiLista(), admin: eAdmin() });
-  const chip = (k) => `<button data-filtro="${k}" class="${LS.filtro === k ? 'scelto' : ''}">${MB21Lista.FILTRI[k].etichetta}</button>`;
-  const altriScelto = f.altri ? `Altri: ${f.etichetta} ▾` : 'Altri ▾';
+  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
+  const quanti = (k) => `<span>${conti[k].toLocaleString('it-IT')}</span>`;
+  const chip = (k) => `<button data-filtro="${k}" class="${LS.filtro === k ? 'scelto' : ''}">${MB21Lista.FILTRI[k].etichetta} ${quanti(k)}</button>`;
+  const altriScelto = f.altri ? `Altri: ${f.etichetta} ${quanti(LS.filtro)} ▾` : 'Altri ▾';
+  // cantiere 30: parte alta compatta e ferma in alto (scorrono solo i nomi); «+» tondo come in Agenda
   app.innerHTML = `
-    <h1>Lista Nomi</h1>
-    ${partnerSelect()}
-    <div class="banner">${guardoAltri() ? `${esc(nomeVisto())}: ` : 'Hai '}un totale di <b>${totale.toLocaleString('it-IT')}</b> contatti registrati</div>
-    <button class="nuovo" id="nuovo">+ Nuovo Contatto</button>
-    <div class="chips">
-      ${chip('lista')}${chip('prospect')}${chip('partner')}${chip('clienti')}
-      <button id="altri" class="${f.altri ? 'scelto' : ''}">${altriScelto}</button>
-    </div>
-    <div class="cerca">
-      <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
-      <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">×</button>
+    <div class="ls-testa">
+      <div class="ag-testa"><h1>Lista Nomi</h1>
+        <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
+      ${partnerSelect()}
+      <div class="cerca">
+        <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
+        <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">×</button>
+      </div>
+      <div class="chips">
+        ${chip('lista')}${chip('prospect')}${chip('partner')}${chip('clienti')}
+        <button id="altri" class="${f.altri ? 'scelto' : ''}">${altriScelto}</button>
+      </div>
     </div>
     <div id="elenco"></div>
     <div id="fondo"></div>
@@ -192,7 +195,8 @@ function sceltaDa(titolo, voci) {
 }
 
 async function scegliAltri() {
-  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati', 'senza'].map(k => ({ etichetta: MB21Lista.FILTRI[k].etichetta, k })));
+  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
+  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati', 'senza'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k })));
   if (!v) return;
   LS.filtro = v.k; LS.mostrate = BLOCCO; disegnaLista();
 }
