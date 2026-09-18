@@ -350,7 +350,7 @@ async function ordineFatto(v) {
   if (valori.giorno < v.data) return mostraToast('L\'ordine è prima della vendita');
   const { error } = await dbq('ordine fatto', supa.from('vendite').update({ ordinata_il: valori.giorno }).eq('id', v.id));
   if (error) return mostraToast('Non salvato: riprova.');
-  LS.vendite = null; LS.azioni = null;
+  LS.vendite = null; LS.azioni = null; CK.giorni = null;   // i VP Clienti del Check vengono dalle vendite
   mostraToast('Ordine segnato: i VP ora contano');
   disegnaScheda();
 }
@@ -398,7 +398,7 @@ function moduloVendita(v) {
   segnaQuando();
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
-  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; mostraToast(messaggio); disegnaScheda(); };   // anche le azioni: la vendita scrive in Agenda
+  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
     if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
