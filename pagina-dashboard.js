@@ -592,7 +592,7 @@ async function caricaRichiamoGriglia(oggi) {
   try {
     const { data: imp, error } = await dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle());
     if (error || !imp) return;
-    const { data: pm, error: e2 } = await dbq('PM della griglia', supa.from('azioni').select('id, inizio')
+    const { data: pm, error: e2 } = await dbq('PM della griglia', supa.from('azioni').select('id, inizio, esito')   // esito: la Griglia conta solo i PM avvenuti
       .eq('user_id', visto().id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
     if (e2) return;
     DS.griglia = MB21Report.griglia(pm, imp, oggi);
