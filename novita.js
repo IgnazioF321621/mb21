@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 16:35', titolo: 'I riordini anche in Agenda',
+      testo: 'Quando hai clienti da sentire per il riordino, in Agenda (sul giorno di oggi) compare la riga «🔁 Riordini da sentire» con il numero. Toccala: ti porta dritto all\'elenco in Dashboard.' },
     { quando: '2026.09.18 · 16:07', titolo: 'Novità e versione in fondo a ogni pagina',
       testo: 'In fondo a ogni pagina la scritta «✨ Novità · Versione…» ora si tocca: apre l\'elenco delle novità. Se esce una versione più recente, la stessa scritta diventa blu e ti dice di toccarla per aggiornare.' },
     { quando: '2026.09.18 · 15:58', titolo: 'L\'app ti avvisa quando c\'è una versione più recente',
