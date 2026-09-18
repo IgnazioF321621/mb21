@@ -93,6 +93,26 @@ prova('Onboarding: contatore calcolato sui 14 passi', () => {
   assert.deepEqual(L.contatoreOnboarding(tutti), { fatti: 14, totale: 14 });
 });
 
+prova('avvio del Partner: prossimo passo (il primo non fatto, nell\'ordine dei 14) e da quanto è entrato', () => {
+  assert.deepEqual(L.prossimoPasso({}), { col: 'onb_sogno', nome: 'Sogno', descr: 'Motivo e/o incubo' });   // il Sogno è il primo passo (Ignazio 18/09)
+  assert.equal(L.prossimoPasso(null).col, 'onb_sogno');
+  assert.equal(L.prossimoPasso({ onb_sogno: true }).nome, 'Amway');
+  assert.equal(L.prossimoPasso({ onb_amway: true, onb_ordine: true, onb_n21: true, onb_sogno: true }).nome, 'Starter Pack');
+  assert.equal(L.prossimoPasso({ onb_sogno: true, onb_amway: true, onb_cep: true }).nome, 'Ordine');   // i passi fatti più avanti non contano: vale l'ordine
+  assert.equal(L.prossimoPasso(Object.fromEntries(L.PASSI_ONBOARDING.map(([c]) => [c, true]))), null);
+  const e = g => L.entratoDa(g, '2026-09-18');
+  assert.equal(e('2026-09-18'), 'entrato oggi');
+  assert.equal(e('2026-09-17'), 'entrato ieri');
+  assert.equal(e('2026-09-06'), 'entrato da 12 giorni');
+  assert.equal(e('2026-07-21'), 'entrato da 59 giorni');
+  assert.equal(e('2026-07-20'), 'entrato da 2 mesi');
+  assert.equal(e('2025-09-19'), 'entrato da 12 mesi');
+  assert.equal(e('2025-09-18'), 'entrato da 1 anno');
+  assert.equal(e('2010-03-15'), 'entrato da 16 anni');
+  assert.equal(e(null), '');
+  assert.equal(e('2026-09-19'), '');   // data nel futuro: niente
+});
+
 prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
   const f = (r) => L.fraseCard(r, '2026-09-18');
   assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });

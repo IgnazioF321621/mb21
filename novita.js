@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 23:03', pagina: 'lista', titolo: 'Partner: «Onboarding» diventa la riga «🚀 Avvio»',
+      testo: 'Nella scheda di un tuo Partner la linguetta «Onboarding» non c\'è più: sotto il nome trovi la riga «🚀 Avvio» con i passi fatti e il prossimo passo da fare con lui. Toccala per aprire i 14 passi (il Sogno ora è il primo) e vedere da quanto è entrato. Quando cammina da solo tocca «Avvio concluso»: la riga diventa «✅ Avvio concluso» e puoi sempre riaprirlo.' },
     { quando: '2026.09.18 · 21:30', pagina: 'lista', titolo: 'Il compleanno nella scheda del contatto',
       testo: 'In «Modifica contatto» (e in «Nuovo contatto») ora puoi scrivere il compleanno: giorno e mese, e l\'anno se lo sai. Lo ritrovi nella scheda, in «Dati», con la torta 🎂. Chi l\'aveva nella rubrica del telefono ce l\'ha già.' },
     { quando: '2026.09.18 · 20:47', pagina: 'lista', titolo: 'Rubrica: stesso nome con un altro numero',
