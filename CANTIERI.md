@@ -10,18 +10,22 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 27. CONTATTI E PM DEL CHECK DALLE AZIONI (da aprire)
+## 27. CONTATTI E PM DEL CHECK DALLE AZIONI (aperto il 18/09)
 *Idea di Ignazio del 18 settembre 2026, dopo i VP Clienti dalle vendite (cantiere 26 lavoro 5): «lo stesso ragionamento si può fare per Contatti e PM». Vedi [la lezione](LEZIONI.md#un-numero-una-fonte-sola).*
 
 - **Perché**: Contatti e PM si scrivono a mano nel Check del Giorno, ma gli stessi fatti sono già registrati come azioni (coda, Agenda, scheda). Primo confronto sui dati veri, 14-17/09/2026 (azioni nate nella v4): due partner hanno registrato 5 e 4 contatti (una anche 1 PM) **senza fare nessun Check** → in Dashboard vedono 0; un terzo ha 3 Check con 0 contatti scritti e 4 contatti registrati, e 1 PM scritto contro 0 registrati. Le due fonti non coincidono, in tutte e due le direzioni
-- **Lavoro 0 · decidere con Ignazio cosa conta** (prima di toccare il codice):
-  1. **Contatto**: conta ogni azione «Contatto» con un esito (anche «No Risposta» e «Telefono OFF»)? O solo quelle dove si è parlato?
-  2. **PM**: conta il Piano Marketing **avvenuto** (non «Rimandato» né «No Show»)? E il PM fatto come ospite/upline per un altro partner?
-  3. In che **giorno** conta: quello dell'azione o quello in cui si segna l'esito?
-  4. **Da quando** (come il 18/09 delle vendite) e cosa resta nel Check del Giorno: Sponsor, Tracce, Pagine, Libro (Sponsor forse un giorno dall'esito «Iscrizione» o dalla Mappa Amway)
-  5. Il Report conta già Contatti e PM dalle azioni: **stessa regola, stessa funzione** (LEZIONI: stessa schermata, stesso codice)
-- Lavoro 1 · confronto più lungo sui dati veri (qualche settimana di v4) per vedere di quanto si spostano i numeri di ognuno
-- Lavoro 2 · la regola nel database, come `check_giorni_conti` per le vendite; nel Check del Giorno i due campi diventano da leggere, con le azioni del giorno da toccare
+- **Lavoro 0 · cosa conta: deciso da Ignazio il 18/09**
+  1. **Contatto verso Prospect** (e Referral, e le categorie con gli stessi esiti): conta solo quando **si è parlato** → PM Fissato · No Interesse · Richiamare · Relazione · Consult Prodotti. **Non contano** «No Risposta», «Telefono OFF», «Mai contattato o 2+ anni» e le azioni senza esito (restano visibili nel Report, nella loro riga)
+  2. **Contatto verso Cliente**: conta, con la stessa regola (solo se si è parlato): è il contatto per una **nuova vendita** (la telefonata «Riordino») o per una **nuova consulenza**
+  3. **Contatto verso Partner**: **non conta** (è lavoro con il team, non un contatto nuovo)
+  4. **PM**: conta solo il Piano Marketing **avvenuto** (non «Rimandato» né «No Show»). ❓ Da chiarire al lavoro 2: il PM fatto come ospite/upline per un altro partner
+  5. **Giorno**: quello **dell'azione** (come il Report), non quello in cui si segna l'esito
+  6. **Da quando**: dal **14/09/2026**, nascita della v4 (si ricontano anche i giorni già passati; prima restano i numeri scritti a mano). Nessun confronto lungo sui dati: in 4 giorni di v4 «non è successo nulla» (il vecchio lavoro 1 cade)
+  7. Il **Report** prende la stessa regola con la stessa funzione: il totale «Contatti» conta solo i parlati, i tentativi a vuoto si vedono a parte (LEZIONI: stessa schermata, stesso codice)
+  8. Nel Check del Giorno restano da scrivere a mano: Sponsor, Tracce, Pagine, Libro
+- **Lavoro 1 · riquadro «🔁 Riordini da sentire» in Dashboard** (Ignazio 18/09): oggi la telefonata «Riordino» (10 giorni prima del riordino) si vede **solo in Agenda**: non è nelle conferme, non è in coda, non è nell'avviso del mattino → se quel giorno non si apre l'Agenda, passa. Riquadro **suo**, sopra la coda come le conferme, **senza consumare i posti della coda**; l'esito si segna da lì e il contatto si conta
+  - ❓ Da decidere con Ignazio: quando risentire il Cliente per una **nuova consulenza** (dopo quanti giorni, o solo con «Richiamare») e se entra nello stesso riquadro
+- **Lavoro 2 · la regola nel database**, come `check_giorni_conti` per le vendite; nel Check del Giorno i due campi diventano da leggere, con le azioni del giorno da toccare; Dashboard, Check e Report dalla stessa fonte
 - ⚠️ Stesso prezzo delle vendite: chi non registra le azioni nell'app vede 0
 
 ## 21. DA FARE PIÙ AVANTI
