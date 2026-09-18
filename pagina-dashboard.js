@@ -526,8 +526,8 @@ function riordiniHtml() {
         <div class="conf-testo">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : ''}</div>
         ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(a.contatti && a.contatti.telefono)}
-        <div class="bottoni ${fasi.length === 2 ? 'conf-bottoni' : ''}">
-          ${fasi.map(f => `<button class="${f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
+        <div class="bottoni">
+          ${fasi.map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
         </div>
         <button class="link" data-scheda="${esc(a.contatto_id)}">👤 Apri contatto</button>

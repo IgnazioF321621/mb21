@@ -36,7 +36,7 @@
       'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Consulenza PRD': FASI_PRD,
     },
     'Partner': { 'Contatto': FASI_CONTATTO_PC, 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
-    'Cliente': { 'Contatto': FASI_CONTATTO_PC, 'Consulenza PRD': FASI_PRD },
+    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC], 'Consulenza PRD': FASI_PRD },   // «Ordine» (Ignazio 18/09): il riordino è andato bene, si registra la vendita
   };
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
@@ -229,7 +229,7 @@
   const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
   // Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita nella scheda del cliente (cantiere 26 lavoro 5 bis).
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
-  const proponeVendita = (tipoAzione, esito) => tipoAzione === 'Consulenza PRD' && esito === 'Vendita';
+  const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
 
   // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
   function controllaGiorno(giorno) {

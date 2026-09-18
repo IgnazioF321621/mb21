@@ -18,7 +18,7 @@ prova('Tipi per categoria (Scelte.csv); Ex/Referral/Unlinked/Archiviato come Pro
 
 prova('Fasi: per tipo, per sottotipo dentro Appuntamento; PRD Vendita/No Vendita; Contatto di Partner/Cliente', () => {
   assert.deepEqual(A.fasiPer('Prospect', 'Consulenza PRD', 'Demo'), ['Vendita', 'No Vendita']);
-  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Appuntamento', 'Richiamare']);
+  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Appuntamento', 'Richiamare']);   // «Ordine» dal 18/09
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Counseling'), ['c/Downline', 'c/Upline', 'Motivazione']);
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Meeting/Evento'), ['Incontro N21']);
   assert.equal(A.fasiPer('Partner', 'Piano Marketing', 'PM 1a1')[0], 'Presentazione');
@@ -202,6 +202,9 @@ prova('Esito «Vendita» di una Consulenza PRD: si propone di registrare la vend
   assert.equal(A.proponeVendita('Consulenza PRD', 'No Vendita'), false);
   assert.equal(A.proponeVendita('Piano Marketing', 'Prodotti'), false);
   assert.equal(A.proponeVendita('Contatto', 'Vendita'), false);
+  assert.equal(A.proponeVendita('Contatto', 'Ordine'), true);   // telefonata al Cliente finita con un ordine (riordino)
+  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Appuntamento', 'Richiamare']);
+  assert.deepEqual(A.fasiPer('Partner', 'Contatto', 'Telefonata'), ['Appuntamento', 'Richiamare']);
 });
 
 prova('Riordini da sentire: telefonate di riordino senza esito, da oggi indietro, le più vecchie prima', () => {
