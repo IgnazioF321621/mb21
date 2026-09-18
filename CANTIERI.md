@@ -27,7 +27,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - Lavoro 1 bis · **Admin → Fattore di conversione**: aggiungere, cambiare, cancellare
 - ~~Lavoro 2 · import di `Vendite.csv`~~ — fatto il 18/09 con `scripts/import_vendite.py`: **147 vendite** di 55 clienti (Isabella 111 · Ignazio 17 · Ornella 10 · Carolina 5 · Andrea 4), 8.812,48 VP, 211,90 € di sconti, dal 2019. La vendita **segue il proprietario del contatto** (Ignazio: una vendita registrata da lui su una cliente di Isabella va a Isabella). «Nutrilite» → «Nutrilite/XS»; 66 vendite vecchie senza riordino. Riscontro con Glide sui due clienti fotografati: 229,94 · 101,98 · 41,98 e 88,47 · 39,24 · 0,24, identici. Le righe hanno `da_glide`: l'import si può rilanciare senza toccare le vendite scritte nell'app
 - **Regola di Ignazio (18/09)**: «chi è Cliente ha le Vendite», niente spunte; chi ha già una vendita la tiene anche se cambia categoria. Idea da tenere per l'incastro: all'esito «Vendita» di una Consulenza PRD chiedere «Registri la vendita?» e proporre il passaggio a Cliente
-- Lavoro 3a · sezione «Vendite» **in lettura** (tre totali ed elenco) — fatto il 18/09, provato da Ignazio («ok»)
+- Lavoro 3a · sezione «Vendite» **in lettura** (tre totali ed elenco) — fatto il 18/09, «ok» di Ignazio
 - Lavoro 3b · «Vendita +», Modifica, Elimina — fatto il 18/09, **da provare con Ignazio**: un modulo solo; la vendita si tocca nell'elenco per cambiarla o eliminarla (niente menu «…»: un tocco in meno)
 - Lavoro 4 · riordino in Agenda
 
