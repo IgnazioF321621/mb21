@@ -319,19 +319,72 @@ async function sezioneVendite() {
   if (LS.contatto !== c || LS.sezione !== 'vendite') return;
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero;
-  box.innerHTML = `
+  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="vendita-piu">Vendita +</button>') + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
       <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div>
     </div>` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
-      <div class="vn-riga">
+      <button class="vn-riga" data-vendita="${v.id}">
         <div>
           <div class="vn-prodotto">${esc(v.prodotto)}</div>
           <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}</div>
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
-      </div>`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
+      </button>`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
+  const p = document.getElementById('vendita-piu');
+  if (p) p.onclick = () => moduloVendita(null);
+  box.querySelectorAll('[data-vendita]').forEach(b => b.onclick = () => moduloVendita(vendite.find(v => v.id === b.dataset.vendita)));
+}
+
+// «Vendita +» e, toccando una riga, la stessa vendita da cambiare o eliminare: un modulo solo (campi di Glide).
+function moduloVendita(v) {
+  if (soloGuardo()) return;
+  const c = LS.contatto;
+  let brand = v ? v.brand : '';
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto">
+    <div class="testa-foglio"><h3>${v ? 'Modifica vendita' : 'Nuova vendita'}</h3><button id="chiudi">×</button></div>
+    ${v ? '' : '<div class="vn-avviso">Una vendita per ogni brand: Nutrilite + Artistry = 2 vendite separate</div>'}
+    <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : MB21Coda.oggiRoma())}"></div>
+    <div class="campo"><label>Brand <small>Obbligatorio</small></label>
+      <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div></div>
+    <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
+    <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
+    <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
+    <div class="campo"><label>Data di riordino ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+    <div class="due" style="margin-top:12px"><button class="primario" id="invia">Salva</button><button class="link" id="annulla">Annulla</button></div>
+    ${v ? '<button class="link" id="elimina" style="color:var(--rosso);width:100%;margin-top:6px">Elimina questa vendita</button>' : ''}
+  </div>`;
+  document.body.appendChild(velo);
+  const $ = id => velo.querySelector('#' + id);
+  const chiudi = () => velo.remove();
+  $('chiudi').onclick = chiudi;
+  $('annulla').onclick = chiudi;
+  const segnaBrand = () => velo.querySelectorAll('[data-brand]').forEach(b => b.classList.toggle('scelto', b.dataset.brand === brand));
+  velo.querySelectorAll('[data-brand]').forEach(b => b.onclick = () => { brand = b.dataset.brand; segnaBrand(); });
+  segnaBrand();
+  const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
+  $('v-prodotto').oninput = conta; conta();
+  const fatto = messaggio => { chiudi(); LS.vendite = null; mostraToast(messaggio); disegnaScheda(); };
+  $('invia').onclick = async () => {
+    const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
+      sconto: $('v-sconto').value, riordino: $('v-riordino').value }, !!(v && !v.riordino));
+    if (esito.errore) return mostraToast(esito.errore);
+    $('invia').disabled = true;
+    const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)
+      : supa.from('vendite').insert({ ...esito.riga, contatto_id: c.id, user_id: c.user_id });
+    const { error } = await dbq('vendita', q);
+    if (error) { $('invia').disabled = false; return mostraToast('Non salvata: riprova.'); }
+    fatto(v ? 'Vendita aggiornata' : 'Vendita registrata');
+  };
+  if (v) $('elimina').onclick = async () => {
+    if (!await chiediConferma('Eliminare questa vendita?', `${v.prodotto} · ${MB21Lista.data(v.data)} · ${MB21Lista.numero(v.vp)} VP. Non si può annullare.`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina vendita', supa.from('vendite').delete().eq('id', v.id));
+    if (error) return mostraToast('Non eliminata: riprova.');
+    fatto('Vendita eliminata');
+  };
 }
 
 // Scheda di un Partner: riga «📱 Usa l'app · ultimo uso … · N nomi in lista» (e niente «Invita») se la persona è già utente
