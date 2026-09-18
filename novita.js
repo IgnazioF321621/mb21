@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 15:58', titolo: 'L\'app ti avvisa quando c\'è una versione più recente',
+      testo: 'Se tieni MB21 aperta a lungo, quando ci torni l\'app controlla se è uscita una versione più recente e ti propone di aggiornare con un tocco. In Profilo → «✨ Novità dell\'app» vedi la tua versione e se è l\'ultima.' },
     { quando: '2026.09.18 · 14:56', titolo: 'Clienti di nuovo in coda',
       testo: 'Dopo un ordine o una consulenza, il Cliente torna in coda da solo dopo 90 giorni, così non lo perdi di vista. Chi ha già un riordino programmato non compare: lo senti alla data del riordino.' },
     { quando: '2026.09.18 · 14:33', titolo: 'Contatti e PM si contano da soli',
@@ -45,9 +47,14 @@
     return { nuove: nuove.slice(0, MASSIMO), altre: Math.max(0, nuove.length - MASSIMO), segna: '' };
   }
 
+  // Versione scritta dentro la pagina pubblicata (testo di index.html) → '2026.09.18 · 15:03', o '' se non si trova
+  const versioneDa = testo => (/const APP_VERSION = '(\d{4}\.\d{2}\.\d{2} · \d{2}:\d{2})'/.exec(String(testo || '')) || [])[1] || '';
+  // piuRecente(ultima, mia): vero se la versione pubblicata è più nuova di quella che ha il dispositivo
+  const piuRecente = (ultima, mia) => !!ultima && chiave(ultima) > chiave(mia);
+
   // '2026.09.18 · 15:03' → '18/09/2026 · 15:03'
   const quandoLeggibile = quando => String(quando || '').replace(/^(\d{4})\.(\d{2})\.(\d{2})/, '$3/$2/$1');
 
-  const api = { ELENCO, MASSIMO, chiave, chiaveDiMomento, ordinate, ultima, daMostrare, quandoLeggibile };
+  const api = { ELENCO, MASSIMO, chiave, chiaveDiMomento, ordinate, ultima, daMostrare, quandoLeggibile, versioneDa, piuRecente };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Novita = api;
 })(typeof self !== 'undefined' ? self : this);
