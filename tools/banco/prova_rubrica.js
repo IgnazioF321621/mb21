@@ -86,8 +86,29 @@ prova('riepilogo: già in Lista (dal numero) saltati, nuovi con la spunta, da co
   assert.deepEqual(e.presenti.map(s => s.nome), ['Zeno Rossi']);
   assert.deepEqual(e.nuovi.map(s => s.nome), ['Anna Bianchi']);
   assert.ok(e.nuovi.every(s => s.spunta));
-  assert.deepEqual(e.controllare.map(s => [s.nome, s.motivi]), [['Nicolò Savà', ['omonimo']], ['Pizzeria Da Finto', ['ditta']], ['Tipa palestra', ['ditta']]]);
+  assert.deepEqual(e.controllare.map(s => [s.nome, s.motivi, s.spunta]), [['Nicolò Savà', ['omonimo'], false], ['Pizzeria Da Finto', ['ditta'], true], ['Tipa palestra', ['ditta'], true]]);
+  assert.deepEqual(e.numeri, []);
   assert.deepEqual(e.incompleti.map(s => [s.nome, s.motivi, s.spunta]), [['', ['senza-nome'], false], ['Assistenza', ['senza-telefono', 'ditta'], false], ['Luca Verdi', ['senza-telefono'], false]]);
+});
+
+prova('stesso nome in Lista ma senza numero: non un doppione, si aggiunge il numero a quella scheda', () => {
+  const lista = [{ id: '7', user_id: 'u-io', nome: 'ANNA  bianchi', telefono: null }];
+  const e = R.preparaImport(ANDROID, lista, { utenteId: 'u-io' });
+  assert.deepEqual(e.numeri.map(s => [s.nome, s.telefono, s.contattoId, s.spunta]), [['Anna Bianchi', '+393479876543', '7', true]]);
+  assert.deepEqual(e.nuovi.map(s => s.nome), ['Nicolò Savà']);
+  // due schede con lo stesso nome in Lista: non si sa a quale dare il numero → da controllare, senza spunta
+  const due = R.preparaImport(ANDROID, [...lista, { id: '8', user_id: 'u-io', nome: 'Anna Bianchi', telefono: null }], { utenteId: 'u-io' });
+  assert.deepEqual(due.numeri, []);
+  assert.deepEqual(due.controllare.map(s => [s.nome, s.spunta]), [['Anna Bianchi', false]]);
+});
+
+prova('compleanno: data per il database (1604 = anno non scritto) e come si legge nella scheda', () => {
+  assert.equal(R.dataCompleanno({ giorno: 12, mese: 4, anno: 1985 }), '1985-04-12');
+  assert.equal(R.dataCompleanno({ giorno: 25, mese: 12, anno: null }), '1604-12-25');
+  assert.equal(R.dataCompleanno(null), null);
+  assert.equal(R.compleannoScritto('1985-04-12'), '12 aprile 1985');
+  assert.equal(R.compleannoScritto('1604-12-25'), '25 dicembre');
+  assert.equal(R.compleannoScritto(null), '');
 });
 
 prova('riga da salvare: senza categoria, altri numeri nelle note', () => {
