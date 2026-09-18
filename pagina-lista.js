@@ -74,10 +74,9 @@ function linkTelefono(tel, classe) {
 }
 
 // I 4 bottoni per sentire il contatto senza spostarsi (Ignazio 18/09): gli stessi ovunque — scheda, coda, conferme, riordini, Agenda.
-// Partono solo con un numero che inizia per «+» (i numeri dubbi dell'import no). `sempre`: nella scheda si vedono anche spenti.
-function contattaHtml(telefono, sempre) {
+// Accesi solo con un numero che inizia per «+» (i numeri dubbi dell'import no), altrimenti spenti: nelle card il numero non si scrive più.
+function contattaHtml(telefono) {
   const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
-  if (!tel && !sempre) return '';
   const link = (href, testo) => `<a href="${esc(href)}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${testo}</a>`;
   return `<div class="contatta">${link('tel:' + (tel || ''), 'Call')}${link('sms:' + (tel || ''), 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'Telegram')}</div>`;
 }
@@ -274,7 +273,7 @@ function disegnaScheda() {
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
         </div>
-        ${contattaHtml(c.telefono, true)}
+        ${contattaHtml(c.telefono)}
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
         <div class="vn-brand-testata" id="vn-brand-testata"></div>
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span>' : ''}
