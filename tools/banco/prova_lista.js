@@ -57,6 +57,15 @@ prova('numeri nelle pillole: come i filtri; «Lista» senza gli archiviati, che 
   assert.equal(c.lista, L.filtraContatti(righe, { filtro: 'lista', utenteId: IO }).length);   // stessa fonte dell'elenco
 });
 
+prova('la scheda si apre su Azioni con telefono e categoria, altrimenti su Dati (anche se archiviata)', () => {
+  const s = id => L.sezioneIniziale(righe.find(r => r.id === id));
+  assert.equal(s('1'), 'azioni');   // telefono e categoria
+  assert.equal(s('3'), 'dati');     // manca il telefono
+  assert.equal(s('4'), 'dati');     // manca la categoria
+  assert.equal(s('5'), 'dati');     // archiviata
+  assert.equal(L.sezioneIniziale(null), 'dati');
+});
+
 prova('doppioni: stesso nome (maiuscole/spazi) o stesso telefono, solo tra i miei, esclusa la scheda che modifico', () => {
   assert.deepEqual(ids(L.trovaDoppioni(righe, { nome: ' zeno  ROSSI ', telefono: '', utenteId: IO })), ['1']);
   assert.deepEqual(ids(L.trovaDoppioni(righe, { nome: 'Nuovo', telefono: '+39 347 9876543', utenteId: IO })), ['2']);
