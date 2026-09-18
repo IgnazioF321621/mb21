@@ -533,18 +533,27 @@ async function caricaRiordini(oggi) {
   }
 }
 
+// Righe chiuse come la coda (cantiere 29 lavoro 1 bis, Ignazio 18/09: «aperto si prende tre quarti di schermo»):
+// stessa `riga-coda` e stesso `ST.aperta` della coda, quindi il tocco che apre e chiude è quello di `disegnaOggi`.
 function riordiniHtml() {
   if (!RIO.righe.length) return '';
   const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
   return `<h2 id="rio-titolo">🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
     const categoria = a.contatti ? a.contatti.categoria : a.categoria;
+    const aperta = ST.aperta === a.id;
+    const strip = `<div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>`;
+    const testa = `
+      <button class="riga-coda" data-apri="${esc(a.id)}" aria-expanded="${aperta}">
+        <span class="rc-alto"><span class="nome">${esc(a.contatti ? a.contatti.nome : '')}</span></span>
+        <span class="rc-glide">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : a.glide_id ? ` · era del ${esc(dataBreve(MB21Agenda.partiRoma(a.inizio).giorno))}` : ''}</span>
+        ${RIO.nonRisponde.has(a.id) ? '<span class="conf-nr">📵 Non risponde · riprova più tardi</span>' : ''}
+        <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
+      </button>`;
+    if (!aperta) return `<div class="card compatta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}</div>`;
     const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     const spento = ST.offline || soloGuardo() ? 'disabled' : '';
-    return `<div class="card conferma riordino" data-riordino="${esc(a.id)}"><div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>
+    return `<div class="card compatta aperta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}
       <div class="corpo">
-        <div class="nome">${esc(a.contatti ? a.contatti.nome : '')}</div>
-        <div class="conf-testo">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : a.glide_id ? ` · era del ${esc(dataBreve(MB21Agenda.partiRoma(a.inizio).giorno))}` : ''}</div>
-        ${RIO.nonRisponde.has(a.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(a.contatti && a.contatti.telefono)}
         <div class="bottoni">
           ${fasi.filter(f => f !== 'No Interesse').map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
@@ -566,7 +575,8 @@ function collegaRiordini() {
     el.querySelectorAll('[data-riordino-esito]').forEach(b => {
       b.onclick = () => chiudiAppuntamento({ ...a, categoria: a.categoria || categoria }, b.dataset.riordinoEsito, { dopo });
     });
-    el.querySelector('[data-riordino-nr]').onclick = () => { RIO.nonRisponde.add(a.id); disegnaOggi(); };
+    const nr = el.querySelector('[data-riordino-nr]');   // c'è solo nella riga aperta
+    if (nr) nr.onclick = () => { RIO.nonRisponde.add(a.id); ST.aperta = null; disegnaOggi(); };
   });
 }
 
