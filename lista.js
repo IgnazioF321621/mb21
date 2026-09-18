@@ -255,11 +255,28 @@
     return { vp: somma('vp'), provvigione: somma('provvigione'), netto: somma('guadagno_netto') };
   }
 
+  // Modulo «Vendita» (lavoro 3b): dai campi scritti alla riga da salvare. `{ riga }` oppure `{ errore }` (cosa manca).
+  // I numeri si scrivono all'italiana («88,47») o con il punto. Il riordino è obbligatorio (come in Glide),
+  // tranne che modificando una vendita dello storico che non l'aveva (`senzaRiordino`).
+  function rigaVendita(v, senzaRiordino) {
+    const num = t => { const x = String(t == null ? '' : t).trim().replace(/\s/g, '').replace(',', '.'); return x === '' ? null : Number(x); };
+    const vp = num(v.vp), sconto = num(v.sconto), prodotto = String(v.prodotto || '').trim();
+    if (!v.data) return { errore: 'Manca la data di vendita' };
+    if (!BRAND.some(b => b[0] === v.brand)) return { errore: 'Scegli il brand' };
+    if (!prodotto) return { errore: 'Scrivi il prodotto' };
+    if (vp === null || !isFinite(vp) || vp < 0) return { errore: 'Scrivi i VP della vendita' };
+    if (sconto !== null && (!isFinite(sconto) || sconto < 0)) return { errore: 'Lo sconto non è un numero' };
+    if (!v.riordino && !senzaRiordino) return { errore: 'Manca la data di riordino' };
+    if (v.riordino && v.riordino < v.data) return { errore: 'Il riordino è prima della vendita' };
+    return { riga: { data: v.data, brand: v.brand, prodotto: prodotto.slice(0, 50), vp: Math.round(vp * 100) / 100,
+      sconto: Math.round((sconto || 0) * 100) / 100, riordino: v.riordino || null } };
+  }
+
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, totaliVendite, numero };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, haVendite, totaliVendite, rigaVendita, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -211,4 +211,20 @@ prova('Vendite: i totali si sommano interi e si arrotondano solo a schermo (come
   assert.equal(L.coloreBrand('Boh'), '#6B7280');
 });
 
+prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virgola', () => {
+  const base = { data: '2026-09-18', brand: 'eSpring', prodotto: ' Filtro ', vp: '176,94', sconto: '', riordino: '2027-09-18' };
+  assert.deepEqual(L.rigaVendita(base).riga, { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: 176.94, sconto: 0, riordino: '2027-09-18' });
+  assert.equal(L.rigaVendita({ ...base, vp: '53.5', sconto: '10,50' }).riga.sconto, 10.5);
+  assert.equal(L.rigaVendita({ ...base, brand: '' }).errore, 'Scegli il brand');
+  assert.equal(L.rigaVendita({ ...base, brand: 'Nutrilite' }).errore, 'Scegli il brand');
+  assert.equal(L.rigaVendita({ ...base, prodotto: '  ' }).errore, 'Scrivi il prodotto');
+  assert.equal(L.rigaVendita({ ...base, vp: '' }).errore, 'Scrivi i VP della vendita');
+  assert.equal(L.rigaVendita({ ...base, vp: 'abc' }).errore, 'Scrivi i VP della vendita');
+  assert.equal(L.rigaVendita({ ...base, sconto: '-1' }).errore, 'Lo sconto non è un numero');
+  assert.equal(L.rigaVendita({ ...base, riordino: '' }).errore, 'Manca la data di riordino');
+  assert.equal(L.rigaVendita({ ...base, riordino: '' }, true).riga.riordino, null);
+  assert.equal(L.rigaVendita({ ...base, riordino: '2026-09-01' }).errore, 'Il riordino è prima della vendita');
+  assert.equal(L.rigaVendita({ ...base, data: '' }).errore, 'Manca la data di vendita');
+});
+
 console.log(`\n${ok} prove superate`);
