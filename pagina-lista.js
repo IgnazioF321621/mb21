@@ -356,10 +356,11 @@ async function ordineFatto(v) {
 }
 
 // «Vendita +» e, toccando una riga, la stessa vendita da cambiare o eliminare: un modulo solo (campi di Glide).
-function moduloVendita(v) {
+// `proposta.brand`: brand già scelto quando la vendita nasce dall'esito «Vendita» di una Consulenza PRD.
+function moduloVendita(v, proposta) {
   if (soloGuardo()) return;
   const c = LS.contatto;
-  let brand = v ? v.brand : '';
+  let brand = v ? v.brand : (proposta && MB21Lista.BRAND.some(b => b[0] === proposta.brand) ? proposta.brand : '');
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
