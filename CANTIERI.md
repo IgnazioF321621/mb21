@@ -2,13 +2,30 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 17 settembre 2026.*
+*Aggiornato: 18 settembre 2026.*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 26. VENDITE NELLA SCHEDA CONTATTO
+*Aperto il 18 settembre 2026 (Ignazio: «deve essere legato alla persona»). Com'è in Glide: [rilievo](docs/MB21_v3_Vendite_come_e.md).*
+
+- ~~Lavoro 0 · rilievo su Glide~~ — fatto il 18/09: 5 schermate fotografate in Arc mentre Ignazio navigava; conti verificati su `Vendite.csv` (147 vendite, 55 clienti, 5 partner, tutte agganciate a un contatto). Guadagno Netto = Provvigione − Sconti; la «prossima azione di vendita» è una normale azione `Contatto • brand • Riordino`
+- **Domande aperte per Ignazio** (prima della struttura):
+  1. **Provvigione**: in Glide è sempre VP × 0,4435 circa. Da dove viene la percentuale? È fissa per tutti?
+  2. **Chi vede le vendite**: ogni partner le sue, l'Admin quelle di tutti con il Partner Select (come il resto)?
+  3. **Le 147 vendite vecchie** (dal 2019): si importano tutte?
+  4. **Azione di riordino**: nasce da sola in Agenda quando si salva la vendita?
+  5. **Targhette Brand** in testata: si accendono da sole dalle vendite?
+  6. **VP Clienti** del Check: resta scritto a mano o si calcola dalle vendite?
+  7. «Modifica» di una vendita = stesso modulo di «Vendita +»?
+- Lavoro 1 · struttura (tabella `vendite`, regole di accesso, migrazione) — da proporre dopo le risposte
+- Lavoro 2 · import di `Vendite.csv`
+- Lavoro 3 · sezione «Vendite» nella scheda (totali, tabella, «Vendita +», Modifica/Elimina)
+- Lavoro 4 · riordino in Agenda
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
@@ -22,7 +39,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Fasi di Appuntamento per sottotipo** da migliorare con Ignazio: nomi da tenere, togliere, aggiungere (dal cantiere 11)
 - **7 telefoni dubbi** lasciati com'erano dall'import (senza «+», bottoni di contatto spenti): da correggere a mano con Modifica (dal cantiere 9)
 - **Suggerimenti N21 sospesi** nel riquadro FASE; la decisione «Come fare ▸» a richiesta resta da riprendere quando Ignazio vorrà riattivarli (dal cantiere 9)
-- **Vendite** e **Sharing** della scheda contatto: «In arrivo» (dal cantiere 9)
+- **Sharing** della scheda contatto: «In arrivo» (dal cantiere 9) · le **Vendite** sono passate al [cantiere 26](#26-vendite-nella-scheda-contatto)
 - **Coach delle 4 righe Partner/Cliente** scritto da Claude: da rivedere · **Dare Seguito scaduti** (fase Piano Marketing) con i bottoni del Contatto: da rivedere quando ce ne saranno (dal cantiere 7)
 - **Codice a 6 cifre nell'email**: rimandato (serve un servizio email proprio, [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)); meno urgente da quando si entra con la password (dal cantiere 7)
 
