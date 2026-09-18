@@ -65,6 +65,9 @@
   // '2026.09.18 · 15:03' → '18/09/2026 · 15:03'
   const quandoLeggibile = quando => String(quando || '').replace(/^(\d{4})\.(\d{2})\.(\d{2})/, '$3/$2/$1');
 
-  const api = { ELENCO, MASSIMO, chiave, chiaveDiMomento, ordinate, ultima, daMostrare, quandoLeggibile, versioneDa, piuRecente };
+  // Momento del database (UTC) → '18/09/2026 · 15:03' a Roma: stesso formato delle novità, così le ore si confrontano a occhio
+  const momentoLeggibile = t => chiaveDiMomento(t).replace(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$3/$2/$1 · $4:$5');
+
+  const api = { ELENCO, MASSIMO, chiave, chiaveDiMomento, ordinate, ultima, daMostrare, quandoLeggibile, momentoLeggibile, versioneDa, piuRecente };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Novita = api;
 })(typeof self !== 'undefined' ? self : this);
