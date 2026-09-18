@@ -24,7 +24,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   3. **In cima all'Agenda: una riga sua** «🔁 N riordini da sentire ›» sotto «📞 Telefonate del giorno»; porta al riquadro in Dashboard; senza riordini non si vede
   4. **Contano tutti quelli del riquadro**, arretrati compresi (da oggi indietro, ancora senza esito): stesso numero in avviso, Agenda e Dashboard
   5. **La riga in Agenda segue il Partner Select come il riquadro**: il partner guardato, o il totale con «vedi tutti» (dove la riga delle telefonate invece non c'è). Si vede **solo con l'Agenda su oggi**. L'avviso dal server resta personale: a ognuno i suoi riordini
-- Lavoro 1 · riga in cima all'Agenda (solo app) · Lavoro 2 · avviso del mattino (funzione sul server) · Lavoro 3 · prova con Ignazio e un partner
+- **Lavoro 1 · riga in Agenda** — fatto il 18/09 (versione 2026.09.18 · 16:35), **da provare da Ignazio**: sul giorno di oggi «🔁 N riordini da sentire ›» (arancio, sotto «📞 Telefonate del giorno»; le righe di riepilogo stanno sotto l'elenco degli appuntamenti, non in cima). Stesso elenco del riquadro (`caricaRiordini` → `RIO.righe`), il tocco apre la Dashboard e scorre al riquadro. Corretto rispetto alla decisione 5: con «vedi tutti» la Dashboard **non** mostra il riquadro (chiede di scegliere il partner) → la riga mostra il totale e si comporta come «📅 conferme da fare»
+- Lavoro 2 · avviso del mattino (funzione sul server) · Lavoro 3 · prova con Ignazio e un partner
 - ⚠️ Da verificare al lavoro 2: l'avviso del mattino gira **sul server** (Edge Function di Supabase), non nell'app: il conto va rifatto lì con la stessa regola di `riordiniDaSentire` (capire se la funzione si può condividere o va riscritta uguale) e **la funzione va ripubblicata su Supabase** (vedere nel cantiere 24 come è stata pubblicata e chi lo fa)
 - Ricordare la regola del cantiere 28: la modifica è visibile ai partner → riga in `novita.js` nello stesso commit
 
