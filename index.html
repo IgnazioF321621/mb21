@@ -346,6 +346,7 @@
   .ag-comandi button.pericolo { color: var(--rosso); }
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: 14px; padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
   .ag-blocco.telefonate { background: #EEF2FF; color: #3730A3; }
+  .ag-blocco.riordini { background: #FFEDD5; color: #9A3412; }
   .ag-blocco.conferme { background: #DCFCE7; color: #166534; }
   .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: #166534; margin-top: 2px; }
   .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
@@ -558,24 +559,24 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181614"></script>
-<script src="lista.js?v=202609181614"></script>
-<script src="dashboard.js?v=202609181614"></script>
-<script src="agenda.js?v=202609181614"></script>
-<script src="report.js?v=202609181614"></script>
-<script src="check.js?v=202609181614"></script>
-<script src="mappa.js?v=202609181614"></script>
-<script src="pagina-dashboard.js?v=202609181614"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181614"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-vendite.js?v=202609181614"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609181614"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181614"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181614"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181614"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609181614"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609181614"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609181635"></script>
+<script src="lista.js?v=202609181635"></script>
+<script src="dashboard.js?v=202609181635"></script>
+<script src="agenda.js?v=202609181635"></script>
+<script src="report.js?v=202609181635"></script>
+<script src="check.js?v=202609181635"></script>
+<script src="mappa.js?v=202609181635"></script>
+<script src="pagina-dashboard.js?v=202609181635"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181635"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-vendite.js?v=202609181635"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609181635"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181635"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181635"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181635"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609181635"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609181635"></script>   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.18 · 16:14';
+const APP_VERSION = '2026.09.18 · 16:35';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -953,7 +954,7 @@ async function caricaAgenda() {
       .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
     dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
   ];
-  const conferme = AG.giorno === oggi ? caricaConferme() : null;
+  const conferme = AG.giorno === oggi ? Promise.all([caricaConferme(), caricaRiordini(oggi)]) : null;   // cantiere 29: stesso elenco del riquadro in Dashboard
   if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
   else if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('user_id', visto().id).eq('rientro_il', AG.giorno)));
@@ -990,6 +991,7 @@ function disegnaAgenda() {
   const t = AG.telefonate;
   if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 Telefonate del giorno · Fatte ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
   else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
+  if (AG.giorno === oggi && RIO.righe.length) html += `<button class="ag-blocco riordini" id="ag-riordini"><span>🔁 ${RIO.righe.length} ${RIO.righe.length === 1 ? 'riordino' : 'riordini'} da sentire</span><span>›</span></button>`;
   if (AG.giorno === oggi && CONF.righe.length) html += `<button class="ag-blocco conferme" id="ag-conferme"><span>📅 ${CONF.righe.length} ${CONF.righe.length === 1 ? 'conferma' : 'conferme'} da fare</span><span>›</span></button>`;
   if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>⚠️ ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
   app.innerHTML = html + versione();
@@ -1040,6 +1042,7 @@ function collegaAgenda(eventi) {
   collegaPartnerSelect();
   su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ag-riordini', () => { ST.tab = 'oggi'; ST.vaiA = 'riordini'; mostraTab(); });
   su('ag-passati', scegliPassato);
   su('ag-conferme', () => { ST.tab = 'oggi'; mostraTab(); });
   const scegli = document.getElementById('ag-scegli');

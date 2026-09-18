@@ -142,9 +142,10 @@ function cardContatto(r, dareSeguito) {
 
 function disegnaOggi() {
   const r = ST.risultato;
+  const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «🔁 N riordini da sentire» porta dritto al riquadro
   let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
   if (vediTutti()) {
-    html += `<div class="vuoto">La coda di OGGI e le conferme sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
+    html += `<div class="vuoto">La coda di OGGI, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
     app.innerHTML = html + dashboardBasso() + versione();
     return collegaDashboard();
   }
@@ -169,6 +170,8 @@ function disegnaOggi() {
   // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
+  const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
+  if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
   if (limitato()) {
     app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
     return;
@@ -533,7 +536,7 @@ async function caricaRiordini(oggi) {
 function riordiniHtml() {
   if (!RIO.righe.length) return '';
   const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
-  return `<h2>🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
+  return `<h2 id="rio-titolo">🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
     const categoria = a.contatti ? a.contatti.categoria : a.categoria;
     const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     const spento = ST.offline || soloGuardo() ? 'disabled' : '';
