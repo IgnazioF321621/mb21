@@ -10,6 +10,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 31. ONBOARDING DEL PARTNER: DA LISTA DI SPUNTE A STRUMENTO PER LO SPONSOR (aperto il 18/09)
+*Chiesto da Ignazio il 18 settembre 2026, alla chiusura del cantiere 30: «in questo momento è qualcosa messo là, ma non ha nessun valore. Come lo possiamo portare a beneficio… per sfruttare al meglio i passi che Network 21 ci mette a disposizione?»*
+
+- **Com'è oggi** (letto nel codice il 18/09: `PASSI_ONBOARDING` in `lista.js`, `sezioneOnboarding` in `pagina-lista.js`, colonne `onb_*` di `contatti`): 14 interruttori nella scheda dei Partner (Amway · Ordine · Network 21 · Sogno · Starter Pack · Lista Start · Role Play · Contatti · Pack Dare Seguito · BBS · WES · CEP · Primo PM · Primo ABO) con la barra «fatti/14». Solo a mano, **senza data**, e **non compaiono da nessun'altra parte** (card, Dashboard, Mappa). BBS · WES · CEP e il Primo PM l'app li sa già (Segni vitali, azioni) ma non li collega
+- **Lavoro 0 · raccolta con Ignazio** (una domanda alla volta):
+  1. ✅ **A chi serve**: a tutti e due, **ma soprattutto allo sponsor / upline** (per seguire i nuovi partner e non perderli nelle prime settimane); il nuovo partner che vede il suo avvio viene dopo
+  2. Come Network 21 organizza i passi (ordine, tempi consigliati, materiale): **Claude non lo sa, lo racconta Ignazio o dà un documento**
+- **Idee di Claude sul tavolo** (nessuna decisa): (1) passi che si accendono da soli quando l'app lo sa già (BBS · WES · CEP dai biglietti, Primo PM dalle azioni); (2) data su ogni passo e giorni dall'ingresso («entrato da 40 giorni, fermo a 3/14»); (3) «prossimo passo» in vista: card del Partner in Lista, riquadro «Partner da avviare» in Dashboard, Mappa; (4) «Come fare» su ogni passo con il materiale N21 (riprende i suggerimenti N21 sospesi); (5) il nuovo partner vede il suo avvio in Dashboard
+
 ## 29. RIORDINI NELL'AVVISO DEL MATTINO E IN CIMA ALL'AGENDA (aperto il 18/09)
 *Scelto da Ignazio il 18 settembre 2026, alla chiusura del cantiere 28, tra le voci del cantiere 21. Viene dal cantiere 27 (riquadro «🔁 Riordini da sentire»).*
 
