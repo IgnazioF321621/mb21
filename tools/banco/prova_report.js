@@ -40,13 +40,16 @@ prova('Aprile 2026 come in Glide: PM 15 · Iscrizione 4 (27%) · Dare Seguito 1 
   azioni.push(az(99, 'Piano Marketing', 'Iscrizione', '2026-03-31T22:30:00Z'));   // a Roma è 01/04 alle 00:30 → dentro
   azioni.push(az(98, 'Piano Marketing', 'Iscrizione', '2026-03-31T20:00:00Z'));   // a Roma è 31/03 alle 22:00 → fuori
   const pm = R.numeri(azioni, R.periodoMese('2026-04-01'), oggi).find(g => g.chiave === 'pm');
-  assert.equal(pm.totale, 16);
+  assert.equal(pm.totale, 15);   // cantiere 27: il No Show non è un PM avvenuto
+  assert.equal(pm.nonContano, 1);
   const isc = pm.esiti.find(e => e.esito === 'Iscrizione');
   assert.equal(isc.n, 5);
   assert.equal(isc.verde, true);
   assert.equal(pm.esiti[0].esito, 'Iscrizione');                       // i verdi in cima
   assert.equal(pm.esiti.find(e => e.esito === 'Prodotti').n, 0);         // risultato che conta anche a 0
-  assert.equal(pm.esiti.find(e => e.esito === 'No Show').percentuale, 6);
+  assert.equal(pm.esiti.find(e => e.esito === 'No Show').percentuale, null);   // non conta: niente percentuale
+  assert.equal(pm.esiti.find(e => e.esito === 'No Show').conta, false);
+  assert.equal(isc.percentuale, 33);   // 5 su 15 che contano
 });
 
 prova('Gruppi e verdi: Contatto PM Fissato · Consulenze = Consulenza PRD + Prodotti · Appuntamenti senza verdi · senza esito in fondo', () => {
@@ -58,7 +61,8 @@ prova('Gruppi e verdi: Contatto PM Fissato · Consulenze = Consulenza PRD + Prod
     az(8, 'Contatto', 'PM Fissato', '2026-09-20T10:00:00Z'),   // futuro: non è un'azione fatta
   ];
   const g = Object.fromEntries(R.numeri(azioni, R.periodoMese(oggi), oggi).map(x => [x.chiave, x]));
-  assert.equal(g.contatti.totale, 4);
+  assert.equal(g.contatti.totale, 1);   // cantiere 27: conta solo il contatto parlato
+  assert.equal(g.contatti.nonContano, 3);
   assert.deepEqual(g.contatti.esiti.map(e => [e.esito, e.n]), [['PM Fissato', 1], ['No Risposta', 2], ['Senza esito', 1]]);
   assert.equal(g.consulenze.totale, 2);
   assert.equal(g.consulenze.esiti.find(e => e.esito === 'Vendita').verde, true);
@@ -75,9 +79,9 @@ prova('Grafico: 12 mesi set → ago, azioni fatte e verdi, segue il gruppo apert
   const tutti = R.grafico(azioni, R.periodoAnno('2026-01-01'), oggi, null);
   assert.equal(tutti.length, 12);
   assert.equal(tutti[0].etichetta, 'Set');
-  assert.deepEqual([tutti[0].azioni, tutti[2].azioni, tutti[2].verdi, tutti[11].verdi], [1, 2, 1, 1]);
+  assert.deepEqual([tutti[0].azioni, tutti[2].azioni, tutti[2].verdi, tutti[11].verdi], [0, 1, 1, 1]);   // cantiere 27: No Risposta e No Show non contano
   const pm = R.grafico(azioni, R.periodoAnno('2026-01-01'), oggi, 'pm');
-  assert.deepEqual(pm.map(m => m.azioni).reduce((a, b) => a + b), 2);
+  assert.deepEqual(pm.map(m => m.azioni).reduce((a, b) => a + b), 1);
   assert.equal(R.grafico([], R.periodoAnno(oggi), oggi, null)[1].futuro, true);
 });
 
@@ -112,6 +116,22 @@ prova('Griglia PM: fine del mese, non ancora iniziata, obiettivo superato, contr
   assert.equal(R.validaGriglia({ obiettivo: '30', inizio: '', mesi: 6 }), 'Scegli la data di inizio.');
   assert.equal(R.validaGriglia({ obiettivo: '30', inizio: '2026-07-01', mesi: 13 }), 'Durata tra 1 e 12 mesi.');
   assert.equal(R.validaGriglia({ obiettivo: '30', inizio: '2026-07-01', mesi: '6' }), null);
+});
+
+prova('contaAzione: la stessa regola della vista azioni_conti (cantiere 27)', () => {
+  const c = (esito, piu) => R.contaAzione({ tipo_azione: 'Contatto', categoria: 'Prospect', esito, ...piu });
+  for (const e of ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consult Prodotti']) assert.equal(c(e), true, e);
+  for (const e of ['No Risposta', 'Telefono OFF', 'Mai contattato o 2+ anni', null]) assert.equal(c(e), false, String(e));
+  assert.equal(c('Richiamare', { categoria: 'Partner' }), false);          // verso un Partner non conta
+  assert.equal(c('Ordine', { categoria: 'Cliente' }), true);
+  assert.equal(c('Riordino', { completata: null }), false);                // etichetta di Glide: conta solo se fatta
+  assert.equal(c('Riordino', { completata: true }), true);
+  const p = esito => R.contaAzione({ tipo_azione: 'Piano Marketing', categoria: 'Partner', esito });
+  for (const e of ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti']) assert.equal(p(e), true, e);   // anche all'ospite di un partner
+  for (const e of ['Rimandato', 'No Show', null]) assert.equal(p(e), false, String(e));
+  assert.equal(R.contaAzione({ tipo_azione: 'Follow Up', esito: null }), true);   // gli altri gruppi come prima
+  const g = R.numeri([{ id: 1, tipo_azione: 'Contatto', categoria: 'Partner', esito: 'Richiamare', inizio: '2026-09-02T10:00:00Z' }], R.periodoMese(oggi), oggi)[0];
+  assert.deepEqual([g.totale, g.nonContano, g.esiti.find(e => e.n).esito], [0, 1, 'Verso un Partner']);
 });
 
 console.log(`\n${ok} prove superate`);

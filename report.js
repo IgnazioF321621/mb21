@@ -12,6 +12,16 @@
     { chiave: 'appuntamenti', etichetta: 'Appuntamenti', tipi: ['Appuntamento'], verdi: [] },
   ];
   const SENZA_ESITO = 'Senza esito';
+  // Cosa conta come Contatto e come PM (cantiere 27, decisioni di Ignazio del 18/09): la STESSA regola della vista `azioni_conti`
+  // del database (migrazione 20260918133500), che dà i numeri a Dashboard e Check. ⚠️ Si cambiano insieme.
+  const CONTATTO_PARLATO = ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consult Prodotti'];
+  const PM_AVVENUTO = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti'];
+  const VERSO_PARTNER = 'Verso un Partner';
+  function contaAzione(a) {
+    if (a.tipo_azione === 'Contatto') return a.categoria !== 'Partner' && (CONTATTO_PARLATO.includes(a.esito) || (a.esito === 'Riordino' && !!a.completata));
+    if (a.tipo_azione === 'Piano Marketing') return PM_AVVENUTO.includes(a.esito);
+    return true;   // gli altri gruppi del Report contano tutte le azioni fatte
+  }
   const MAX_NOMI = 50;
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
   const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
@@ -76,18 +86,22 @@
     return GRUPPI.map(g => {
       const sue = nel.filter(a => g.tipi.includes(a.tipo_azione));
       const perEsito = new Map(g.verdi.map(v => [v, []]));   // i risultati che contano si vedono anche a 0
+      const fuori = new Set();   // righe che non contano nel totale: tentativi a vuoto, senza esito, PM non avvenuti, contatti verso un Partner
       for (const a of sue) {
-        const e = a.esito || SENZA_ESITO;
+        const conta = contaAzione(a);
+        const e = !conta && a.tipo_azione === 'Contatto' && a.categoria === 'Partner' ? VERSO_PARTNER : a.esito || SENZA_ESITO;
+        if (!conta) fuori.add(e);
         if (!perEsito.has(e)) perEsito.set(e, []);
         perEsito.get(e).push(a);
       }
+      const totale = sue.filter(contaAzione).length;
       const esiti = [...perEsito].map(([esito, righe]) => ({
-        esito, n: righe.length, verde: g.verdi.includes(esito),
-        percentuale: sue.length ? Math.round(righe.length / sue.length * 100) : 0,
+        esito, n: righe.length, verde: g.verdi.includes(esito), conta: !fuori.has(esito),
+        percentuale: fuori.has(esito) ? null : totale ? Math.round(righe.length / totale * 100) : 0,   // sul totale che conta
         persone: righe.sort((x, y) => (y.inizio > x.inizio ? 1 : -1)).slice(0, MAX_NOMI).map(persona),
         altre: Math.max(0, righe.length - MAX_NOMI),
-      })).sort((x, y) => (y.verde - x.verde) || ((x.esito === SENZA_ESITO) - (y.esito === SENZA_ESITO)) || (y.n - x.n) || x.esito.localeCompare(y.esito));
-      return { ...g, totale: sue.length, esiti };
+      })).sort((x, y) => (y.verde - x.verde) || (y.conta - x.conta) || ((x.esito === SENZA_ESITO) - (y.esito === SENZA_ESITO)) || (y.n - x.n) || x.esito.localeCompare(y.esito));
+      return { ...g, totale, nonContano: sue.length - totale, esiti };
     });
   }
   const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', giorno: a.giorno, modalita: a.modalita || '', portato: a.portatoNome || '' });
@@ -103,7 +117,7 @@
       const giorno = giornoAzione(a);
       if (!giorno || giorno > oggi || !dentro(giorno, annoPeriodo)) continue;
       const g = gruppi.find(x => x.tipi.includes(a.tipo_azione));
-      if (!g) continue;
+      if (!g || !contaAzione(a)) continue;   // solo le azioni che contano (stessa regola dei numeri)
       const m = mesi[(Number(giorno.slice(0, 4)) * 12 + Number(giorno.slice(5, 7))) - (Number(annoPeriodo.da.slice(0, 4)) * 12 + 9)];
       m.azioni++;
       if (g.verdi.includes(a.esito)) m.verdi++;
@@ -155,7 +169,7 @@
     return null;
   }
 
-  const api = { GRUPPI, SENZA_ESITO, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
+  const api = { GRUPPI, SENZA_ESITO, CONTATTO_PARLATO, PM_AVVENUTO, VERSO_PARTNER, contaAzione, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
     spostaPeriodo, periodoIniziale, testoPeriodo, numeri, grafico, abbrevia, griglia, coloreCella, COLORI_GRIGLIA, validaGriglia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Report = api;
