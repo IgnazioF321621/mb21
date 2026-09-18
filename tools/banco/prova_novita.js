@@ -51,6 +51,15 @@ prova('data leggibile', () => {
   assert.equal(N.quandoLeggibile('2026.09.18 · 15:03'), '18/09/2026 · 15:03');
 });
 
+prova('versione più recente: letta dalla pagina pubblicata e confrontata', () => {
+  assert.equal(N.versioneDa("<script>\nconst APP_VERSION = '2026.09.18 · 15:50';\n"), '2026.09.18 · 15:50');
+  assert.equal(N.versioneDa('pagina senza versione'), '');
+  assert.equal(N.piuRecente('2026.09.19 · 08:00', '2026.09.18 · 15:50'), true);
+  assert.equal(N.piuRecente('2026.09.18 · 15:50', '2026.09.18 · 15:50'), false);
+  assert.equal(N.piuRecente('2026.09.17 · 10:00', '2026.09.18 · 15:50'), false);   // copia offline più vecchia: niente avviso
+  assert.equal(N.piuRecente('', '2026.09.18 · 15:50'), false);   // offline
+});
+
 prova('ELENCO vero: ogni riga ha quando (formato giusto), titolo e testo', () => {
   for (const n of N.ELENCO) {
     assert.match(n.quando, /^\d{4}\.\d{2}\.\d{2} · \d{2}:\d{2}$/);
