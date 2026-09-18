@@ -174,11 +174,16 @@
   }
   // Riquadro «Riordini da sentire» della Dashboard (cantiere 27 lavoro 1): le telefonate di riordino nate dalle vendite,
   // ancora senza esito, dal loro giorno in poi (restano finché non si dà l'esito). `vendite`: righe con la loro `azione` dentro.
-  function riordiniDaSentire(vendite, oggi) {
-    return vendite
-      .filter(v => v.azione && !v.azione.completata && !v.azione.esito && partiRoma(v.azione.inizio).giorno <= oggi)
-      .map(v => ({ ...v.azione, riordino: v.riordino, prodotto: v.prodotto }))
-      .sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
+  // Più quelle importate da Glide (`glide`): lì «Riordino» è l'etichetta scritta al posto dell'esito, non dice che è fatta;
+  // entrano le non completate dal 1° settembre 2026 (Ignazio 18/09: le 37 più vecchie restano solo in Agenda).
+  const INIZIO_RIORDINI_GLIDE = '2026-09-01';
+  function riordiniDaSentire(vendite, oggi, glide = []) {
+    const fin = a => partiRoma(a.inizio).giorno <= oggi;
+    return [
+      ...vendite.filter(v => v.azione && !v.azione.completata && !v.azione.esito && fin(v.azione))
+        .map(v => ({ ...v.azione, riordino: v.riordino, prodotto: v.prodotto })),
+      ...glide.filter(a => a.glide_id && a.esito === 'Riordino' && !a.completata && fin(a) && partiRoma(a.inizio).giorno >= INIZIO_RIORDINI_GLIDE),
+    ].sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
   }
   // «Conferma appuntamento · PM 1a1 · oggi ore 18:30» (o «domani»)
   function testoConferma(a, adessoIso) {
@@ -283,7 +288,7 @@
 
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
