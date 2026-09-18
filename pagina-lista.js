@@ -356,8 +356,10 @@ function moduloVendita(v) {
     <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
     <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
     <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
-    <div class="campo"><label>Ordine e consegna <small>Solo se più avanti</small></label><div class="vn-aiuto">Promo pagata oggi e consegnata fra mesi? Scrivi quando farai l'ordine: i VP contano da quel giorno e l'Agenda te lo ricorda. Se consegni subito, lascia vuoto.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}"></div>
-    <div class="campo"><label>Data di riordino ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">Quando al cliente finirà il prodotto. 10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+    <div class="campo"><label>Quando consegni?</label>
+      <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
+    <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP contano da quel giorno e l'Agenda ti ricorda la consegna.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}"></div>
+    <div class="campo"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
     <div class="due" style="margin-top:12px"><button class="primario" id="invia">Salva</button><button class="link" id="annulla">Annulla</button></div>
     ${v ? '<button class="link" id="elimina" style="color:var(--rosso);width:100%;margin-top:6px">Elimina questa vendita</button>' : ''}
   </div>`;
@@ -369,12 +371,22 @@ function moduloVendita(v) {
   const segnaBrand = () => velo.querySelectorAll('[data-brand]').forEach(b => b.classList.toggle('scelto', b.dataset.brand === brand));
   velo.querySelectorAll('[data-brand]').forEach(b => b.onclick = () => { brand = b.dataset.brand; segnaBrand(); });
   segnaBrand();
+  // «Quando consegni?»: Subito = il modulo di Glide; Più avanti = la promo con consegna differita (compare la data dell'ordine)
+  let dopo = !!(v && v.consegna);
+  const segnaQuando = () => {
+    velo.querySelectorAll('[data-quando]').forEach(b => b.classList.toggle('scelto', (b.dataset.quando === 'dopo') === dopo));
+    $('v-consegna-campo').style.display = dopo ? '' : 'none';
+    $('v-riordino-titolo').textContent = dopo ? 'Quando finirà il prodotto che consegni?' : 'Data di riordino: quando finirà il prodotto?';
+  };
+  velo.querySelectorAll('[data-quando]').forEach(b => b.onclick = () => { dopo = b.dataset.quando === 'dopo'; segnaQuando(); });
+  segnaQuando();
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
   const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; mostraToast(messaggio); disegnaScheda(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
+    if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
-      sconto: $('v-sconto').value, consegna: $('v-consegna').value, riordino: $('v-riordino').value }, !!(v && !v.riordino));
+      sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', riordino: $('v-riordino').value }, !!(v && !v.riordino));
     if (esito.errore) return mostraToast(esito.errore);
     $('invia').disabled = true;
     const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)

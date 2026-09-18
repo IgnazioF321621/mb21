@@ -179,6 +179,9 @@
   .vn-brand-scelta button { font-size: 15px; font-weight: 600; padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--col); background: #fff; color: var(--col); }
   .vn-brand-scelta button.scelto { background: var(--col); color: #fff; }
   .vn-riga-info { background: var(--card); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .vn-quando { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 8px; }
+  .vn-quando button { font-size: 16px; font-weight: 600; padding: 12px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff; color: var(--testo); }
+  .vn-quando button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
   .vn-attesa { color: #B45309; font-weight: 600; white-space: nowrap; }
   .vn-aiuto { font-size: 13px; color: var(--grigio); margin-top: 3px; line-height: 1.35; }
   .vn-numeri { text-align: right; flex: none; }
@@ -535,21 +538,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181024"></script>
-<script src="lista.js?v=202609181024"></script>
-<script src="dashboard.js?v=202609181024"></script>
-<script src="agenda.js?v=202609181024"></script>
-<script src="report.js?v=202609181024"></script>
-<script src="check.js?v=202609181024"></script>
-<script src="mappa.js?v=202609181024"></script>
-<script src="pagina-dashboard.js?v=202609181024"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181024"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609181024"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181024"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181024"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181024"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181041"></script>
+<script src="lista.js?v=202609181041"></script>
+<script src="dashboard.js?v=202609181041"></script>
+<script src="agenda.js?v=202609181041"></script>
+<script src="report.js?v=202609181041"></script>
+<script src="check.js?v=202609181041"></script>
+<script src="mappa.js?v=202609181041"></script>
+<script src="pagina-dashboard.js?v=202609181041"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181041"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609181041"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181041"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181041"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181041"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 10:24';
+const APP_VERSION = '2026.09.18 · 10:41';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
