@@ -3,7 +3,7 @@
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
-//    { tipo: 'mattino' } → alle 9 di Roma (dal cantiere 29; prima alle 8), «Buongiorno! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
+//    { tipo: 'mattino' } → alle 9 di Roma (dal cantiere 29; prima alle 8), «Buongiorno, Nome! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
 //    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
 //      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
     // (Contatto con glide_id ed esito «Riordino», non completate) dal 1° settembre 2026 (INIZIO_RIORDINI_GLIDE) a oggi.
     const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }, { data: vendite, error: e5 }, { data: glide, error: e6 }] = await Promise.all([
-      db.from('utenti').select('id, contatti_al_giorno').eq('accesso_attivo', true).is('eliminato_il', null),
+      db.from('utenti').select('id, nome, contatti_al_giorno').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('azioni').select('user_id').eq('da_coda', true).gte('inizio', g.inizio).lt('inizio', g.fine),   // esiti dalla coda già dati oggi
       db.from('azioni').select('user_id, contatto_id, inizio, confermato_il').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', g.inizio).lt('inizio', g.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, confermato_il').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', g.inizio).lt('data_scelta', g.fine),
@@ -128,10 +128,11 @@ Deno.serve(async (req) => {
       const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
       const pezzi = [plurale(telefonate, 'telefonata', 'telefonate')];
       if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
+      const nome = String(u.nome ?? '').trim();   // nome proprio nel titolo (Ignazio 18/09); senza nome resta «Buongiorno!»
       const riordini = riordiniDi.filter(id => id === u.id).length;
       if (riordini) pezzi.push(plurale(riordini, 'riordino', 'riordini') + ' da sentire');
       const testo = `Oggi ${pezzi.length > 1 ? pezzi.slice(0, -1).join(', ') + ' e ' + pezzi[pezzi.length - 1] : pezzi[0]}. Tocca per aprire l'Agenda.`;
-      esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
+      esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: nome ? `☀️ Buongiorno, ${nome}!` : '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
     }
     return risposta({ oggi, utenti: esiti.length, esiti: corpo.forza ? esiti : undefined });
   }
