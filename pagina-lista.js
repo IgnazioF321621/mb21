@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -68,11 +68,6 @@ function coloreCategoria(c) { return COLORI[c] || 'var(--unlinked)'; }
 // Targhetta NEW: contatto creato dentro l'app negli ultimi 30 giorni (richiesta di Ignazio 16/09)
 function nuovoBadge(r) { return MB21Lista.eNuovo(r, MB21Coda.oggiRoma()) ? ' <span class="badge new">nuovo</span>' : ''; }
 
-function linkTelefono(tel, classe) {
-  if (!tel) return `<span class="${classe || 'tel'}"></span>`;
-  return `<a class="${classe || 'tel'}" href="tel:${esc(tel.replace(/[^0-9+]/g, ''))}">${esc(tel)}</a>`;
-}
-
 // I 4 bottoni per sentire il contatto senza spostarsi (Ignazio 18/09): gli stessi ovunque — scheda, coda, conferme, riordini, Agenda.
 // Accesi solo con un numero che inizia per «+» (i numeri dubbi dell'import no), altrimenti spenti: nelle card il numero non si scrive più.
 // Disegni dei quattro bottoni (cantiere 30, proposta B scelta da Ignazio il 18/09): WhatsApp e Telegram sono i loghi ufficiali
@@ -130,16 +125,24 @@ function disegnaLista() {
 }
 
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma() });
+  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
+  const ordina = `<div class="ls-ordina"><span>${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
+    <button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></div>`;
   elenco.innerHTML = trovati.length
-    ? trovati.slice(0, LS.mostrate).map(cardNome).join('')
+    ? ordina + trovati.slice(0, LS.mostrate).map(cardNome).join('')
     : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}</div>`;
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => { if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id); };
   });
   elenco.querySelectorAll('.cn .menu').forEach(b => b.onclick = () => menuCard(b.dataset.id));
+  const ordinaB = document.getElementById('ordina');
+  if (ordinaB) ordinaB.onclick = async () => {
+    const v = await sceltaDa('Ordina i nomi', Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })));
+    if (!v) return;
+    LS.ordine = v.k; LS.mostrate = BLOCCO; window.scrollTo(0, 0); disegnaElenco();
+  };
   // caricamento a blocchi: quando il fondo entra nello schermo, altre card
   const fondo = document.getElementById('fondo');
   if (LS.osservatore) LS.osservatore.disconnect();
@@ -171,34 +174,40 @@ function coppiaCard(r) {
   return nome ? `<div class="prof">Coppia con ${esc(nome)}</div>` : '';
 }
 
+// Card che parla (cantiere 30, lavoro 4; disegno approvato da Ignazio il 18/09): nome · frase («Fermo da 10 mesi · telefonata»,
+// 📅 se è in programma) · area e professione · cornetta per chiamare. Gli altri bottoni stanno nei tre puntini (`menuCard`).
 function cardNome(r) {
-  const etichetta = MB21Lista.etichettaCard(r);
+  const frase = MB21Lista.fraseCard(r, MB21Coda.oggiRoma());
+  const sotto = [r.area || r.ultima_area, r.professione].filter(Boolean).join(' · ');
+  const tel = r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml
   return `
     <div class="cn" data-id="${esc(r.id)}">
       <div class="striscia" style="background:${coloreCategoria(r.categoria)}"></div>
       <div class="dentro">
-        <div class="etichetta">${esc(etichetta)}</div>
         <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
-        <div class="prof">${esc(r.professione || '')}</div>
+        <div class="frase">${frase.futuro ? '📅 ' : ''}${esc(frase.testo)}</div>
+        ${sotto ? `<div class="prof">${esc(sotto)}</div>` : ''}
         ${coppiaCard(r)}
-        <div>${linkTelefono(r.telefono)}</div>
       </div>
+      <a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ICONE_CONTATTA.call}</a>
       <button class="menu" data-id="${esc(r.id)}" aria-label="Menu">…</button>
     </div>`;
 }
 
 // Foglio con un elenco di voci; restituisce la voce scelta (o null)
-function sceltaDa(titolo, voci) {
+// `sopra`: un pezzo di pagina da mostrare sopra le voci (es. i bottoni per contattare); toccare un suo link chiude il foglio
+function sceltaDa(titolo, voci, sopra) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3><div class="altri-voci">
+    velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
       ${voci.map((v, i) => `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''}">${esc(v.etichetta)}</button>`).join('')}
       </div><button class="link" id="scelta-no">Annulla</button></div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
     velo.onclick = e => { if (e.target === velo) chiudi(null); };
     velo.querySelector('#scelta-no').onclick = () => chiudi(null);
+    velo.querySelectorAll('.foglio > .contatta a').forEach(a => a.addEventListener('click', () => chiudi(null)));
     velo.querySelectorAll('.altri-voci button').forEach(b => b.onclick = () => chiudi(voci[Number(b.dataset.i)]));
   });
 }
@@ -210,14 +219,14 @@ async function scegliAltri() {
   LS.filtro = v.k; LS.mostrate = BLOCCO; disegnaLista();
 }
 
+// Tre puntini della card: in alto i 4 bottoni per contattare (Ignazio 18/09: sulla card resta solo la cornetta), sotto le azioni
 async function menuCard(id) {
-  if (soloGuardo()) return;
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
-  const voci = r.categoria === 'Archiviato'
+  const voci = soloGuardo() ? [] : r.categoria === 'Archiviato'
     ? [{ etichetta: 'Ripristina', fai: () => ripristina(r) }, { etichetta: 'Elimina definitivamente', pericolo: true, fai: () => eliminaDefinitivamente(r) }]
     : [{ etichetta: 'Modifica', fai: () => apriModulo(r) }, { etichetta: 'Archivia', fai: () => archivia(r) }];
-  const v = await sceltaDa(r.nome, voci);
+  const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
   if (v) v.fai();
 }
 
