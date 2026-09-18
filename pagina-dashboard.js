@@ -504,10 +504,17 @@ const RIO = { righe: [], nonRisponde: new Set() };
 
 async function caricaRiordini(oggi) {
   try {
-    const { data, error } = await dbq('riordini da sentire', supa.from('vendite')
-      .select(`riordino, prodotto, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null));
-    if (error) throw error;
-    RIO.righe = MB21Agenda.riordiniDaSentire(data, oggi);
+    const A = MB21Agenda;
+    const [v, g] = await Promise.all([
+      dbq('riordini da sentire', supa.from('vendite')
+        .select(`riordino, prodotto, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null)),
+      // le telefonate di riordino importate da Glide, non ancora fatte, dal 1° settembre 2026 a oggi
+      dbq('riordini di Glide', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto').eq('esito', 'Riordino')
+        .not('glide_id', 'is', null).or('completata.is.null,completata.eq.false')
+        .gte('inizio', A.isoDaRoma(A.INIZIO_RIORDINI_GLIDE, '00:00')).lt('inizio', A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00'))),
+    ]);
+    if (v.error || g.error) throw v.error || g.error;
+    RIO.righe = A.riordiniDaSentire(v.data, oggi, g.data);
   } catch (e) {
     RIO.righe = [];
   }

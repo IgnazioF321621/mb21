@@ -215,6 +215,11 @@ prova('Riordini da sentire: telefonate di riordino senza esito, da oggi indietro
   assert.deepEqual(r.map(a => a.id), ['ieri', 'oggi']);
   assert.equal(r[0].riordino, '2026-09-28');
   assert.equal(r[0].prodotto, 'Omega');
+  // importate da Glide: «Riordino» è un'etichetta, contano le non completate dal 1° settembre 2026 fino a oggi
+  const g = (id, inizio, piu) => ({ id, inizio, glide_id: 'g' + id, esito: 'Riordino', completata: null, ...piu });
+  const glide = [g('set', '2026-09-13T08:00:00Z'), g('agosto', '2026-08-30T08:00:00Z'), g('ottobre', '2026-10-04T08:00:00Z'),
+    g('fatta', '2026-09-06T08:00:00Z', { completata: true }), g('chiusa', '2026-09-10T08:00:00Z', { esito: 'Ordine', completata: true })];
+  assert.deepEqual(A.riordiniDaSentire(lista, '2026-09-18', glide).map(a => a.id), ['set', 'ieri', 'oggi']);
 });
 
 console.log(`\n${ok} prove superate`);
