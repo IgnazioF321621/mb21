@@ -36,6 +36,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)
+- **Grafica dei bottoni** (Ignazio 18/09, dal cantiere 27): un aspetto migliore per i bottoni esito e di contatto, uguale ovunque (Riordini, coda, Conferme, Agenda, scheda): una sessione dedicata, con una classe condivisa
 - **Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata
 - **Isabella e Carolina**: entrano una volta con «Mandami il link» e scelgono la password; poi provare l'**app installata** sul telefono (dal cantiere 15)
 - **Isabella**: nella v4 non ha salvato nessun Check (ultimo 13/09 da Glide), da chiederle (dal cantiere 10)
