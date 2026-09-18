@@ -131,11 +131,14 @@ function disegnaElenco() {
   }
 }
 
-// Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa
+// BBS · WES · CEP accanto al nome, stessa regola sulla card e nella testata della scheda (Ignazio 18/09: al Cliente in alto
+// servono i Brand, non i segni vitali): per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa.
+const segniInAlto = (categoria, t) => categoria === 'Partner' || !!(t && (t.bbs || t.wes || t.cep));
+
+// Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP secondo `segniInAlto`
 function targheCard(r) {
   const t = LS.targhe && LS.targhe[r.id];
-  const accesa = t && (t.bbs || t.wes || t.cep);
-  const segni = r.categoria === 'Partner' || accesa ? targheHtml(t) : '';
+  const segni = segniInAlto(r.categoria, t) ? targheHtml(t) : '';
   return r.app || segni ? `<span class="sv-targhe">${targaAppHtml(r.app)}${segni}</span>` : '';
 }
 
@@ -260,7 +263,7 @@ function disegnaScheda() {
         <div class="alto">
           <div>
             <div class="cat" style="color:${coloreCategoria(c.categoria)}">${esc(c.categoria || 'Senza categoria')}</div>
-            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${targheHtml(null)}</span></h1>
+            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
           ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
@@ -336,7 +339,7 @@ async function sezioneVendite() {
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
   const oggi = MB21Coda.oggiRoma();
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
-  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="vendita-piu">Vendita +</button>') + `
+  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="primario vn-piu" id="vendita-piu">＋ Nuova vendita</button>') + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
@@ -747,7 +750,7 @@ function mostraTarghe(SV) {
   const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
   LS.targhe = LS.targhe || {};
   for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
-  if (el) el.innerHTML = targaAppHtml(LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id])) + targheHtml(t);
+  if (el) el.innerHTML = targaAppHtml(LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id])) + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);
