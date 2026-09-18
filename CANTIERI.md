@@ -10,8 +10,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 30. LISTA NOMI: PROFESSIONALE MA SEMPLICE (da aprire)
-*Scelto da Ignazio il 18 settembre 2026, in attesa delle prove del cantiere 29: «farla diventare qualcosa di top a livello professionale, ma anche semplice». Viene dal cantiere 21 («Lista Nomi: novità»). Da aprire in una sessione nuova.*
+## 30. LISTA NOMI: PROFESSIONALE MA SEMPLICE (aperto il 18/09)
+*Scelto da Ignazio il 18 settembre 2026, in attesa delle prove del cantiere 29: «farla diventare qualcosa di top a livello professionale, ma anche semplice». Viene dal cantiere 21 («Lista Nomi: novità»). Aperto il 18/09 in una sessione nuova.*
 
 - **Com'è oggi** (letto nel codice il 18/09, `pagina-lista.js` → `disegnaLista` · `cardNome`; regole in `lista.js`): titolo · Partner Select · banner «Hai un totale di N contatti registrati» · bottone largo «+ Nuovo Contatto» · chip dei filtri (Lista · Prospect · Partner · Clienti · Altri ▾) · Cerca · card tutte alte 112 px (riga blu tecnica «AREA • MODALITÀ gg/mm/aaaa», nome con targhette, professione, «Coppia con…», telefono cliccabile, menu «…»). È la copia fedele di Glide (`docs/MB21_v3_Lista_come_e.md`): quattro blocchi prima delle card, e sulla card una riga tecnica che a colpo d'occhio dice poco
 - **Lavoro 0 · raccolta con Ignazio** (prima del codice, una domanda alla volta):
@@ -55,7 +55,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Pausa: «0 contatti al giorno»** (Ignazio 18/09, dal cantiere 29): chi non vuole fare l'attività sceglie 0 e non riceve l'avviso del mattino, a meno che non abbia già qualcosa di programmato (appuntamenti, riordini, telefonate fissate); l'app lo invita a ripartire con una frase d'impatto («0 contatti al giorno. Vuoi cambiare questo valore?», testo da pensare con Ignazio). Oggi lo zero non esiste: scelta da 1 a 10 nel Profilo e vincolo nel database (`contatti_al_giorno between 1 and 10`) → servono una migrazione, il Profilo, l'avviso sul server e la coda
 - **Grafica dei bottoni** (Ignazio 18/09, dal cantiere 27): un aspetto migliore per i bottoni esito e di contatto, uguale ovunque (Riordini, coda, Conferme, Agenda, scheda): una sessione dedicata, con una classe condivisa
 - ~~**Riordini nell'avviso del mattino e in cima all'Agenda** (dal cantiere 27)~~ — diventato il [cantiere 29](#29-riordini-nellavviso-del-mattino-e-in-cima-allagenda-aperto-il-1809) il 18/09
-- ~~**Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata~~ — diventato il [cantiere 30](#30-lista-nomi-professionale-ma-semplice-da-aprire) il 18/09
+- ~~**Lista Nomi: novità** (Ignazio 17/09: «le implementazioni sono tante in ogni singola pagina»), da raccogliere con Ignazio in una sessione dedicata~~ — diventato il [cantiere 30](#30-lista-nomi-professionale-ma-semplice-aperto-il-1809) il 18/09
 - **Isabella e Carolina**: entrano una volta con «Mandami il link» e scelgono la password; poi provare l'**app installata** sul telefono (dal cantiere 15)
 - **Isabella**: nella v4 non ha salvato nessun Check (ultimo 13/09 da Glide), da chiederle (dal cantiere 10)
 - **Admin**: controlli di pulizia · frasi del coach · situazione del team (dal cantiere 19)
