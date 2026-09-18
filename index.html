@@ -171,6 +171,8 @@
   .vn-elenco { padding: 2px 16px; }
   .vn-riga { width: 100%; border: 0; background: transparent; text-align: left; font-family: inherit; color: var(--testo); display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); }
   .vn-riga:last-child { border-bottom: 0; }
+  .vn-riga:has(+ .vn-fatto) { border-bottom: 0; }
+  .vn-fatto + .vn-riga { border-top: 1px solid var(--linea); }
   .vn-prodotto { font-size: 16px; font-weight: 600; }
   .vn-sotto { font-size: 13px; color: var(--grigio); margin-top: 3px; }
   .vn-brand { display: inline-block; color: #fff; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 6px; margin-right: 6px; }
@@ -182,7 +184,10 @@
   .vn-quando { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 8px; }
   .vn-quando button { font-size: 16px; font-weight: 600; padding: 12px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff; color: var(--testo); }
   .vn-quando button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
-  .vn-attesa { color: #B45309; font-weight: 600; white-space: nowrap; }
+  .vn-attesa { color: var(--grigio); font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .vn-attesa.tardi { color: #B45309; }
+  .vn-fatto { display: block; width: 100%; margin: -2px 0 12px; border: 1.5px solid #F59E0B; background: #FFFBEB; color: #92400E; font-size: 15px; font-weight: 700; padding: 10px; border-radius: 12px; }
+
   .vn-aiuto { font-size: 13px; color: var(--grigio); margin-top: 3px; line-height: 1.35; }
   .vn-numeri { text-align: right; flex: none; }
   .vn-numeri b { display: block; font-size: 15px; }
@@ -538,21 +543,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609181041"></script>
-<script src="lista.js?v=202609181041"></script>
-<script src="dashboard.js?v=202609181041"></script>
-<script src="agenda.js?v=202609181041"></script>
-<script src="report.js?v=202609181041"></script>
-<script src="check.js?v=202609181041"></script>
-<script src="mappa.js?v=202609181041"></script>
-<script src="pagina-dashboard.js?v=202609181041"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609181041"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-mappa.js?v=202609181041"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609181041"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609181041"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609181041"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="coda.js?v=202609181102"></script>
+<script src="lista.js?v=202609181102"></script>
+<script src="dashboard.js?v=202609181102"></script>
+<script src="agenda.js?v=202609181102"></script>
+<script src="report.js?v=202609181102"></script>
+<script src="check.js?v=202609181102"></script>
+<script src="mappa.js?v=202609181102"></script>
+<script src="pagina-dashboard.js?v=202609181102"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609181102"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-mappa.js?v=202609181102"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609181102"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609181102"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609181102"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script>
-const APP_VERSION = '2026.09.18 · 10:41';
+const APP_VERSION = '2026.09.18 · 11:02';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
