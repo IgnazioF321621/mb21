@@ -32,6 +32,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 **Vendite** (cantiere 26, migrazione `20260918094500_vendite.sql`, applicata il 18/09; decisioni di Ignazio 18/09):
 - **Provvigione = (VP × FC) × 0,20**, con l'FC valido **alla data della vendita** (la riga di `fattori_conversione` con il `dal` più alto non oltre quella data). Non si salva: la calcola la vista `vendite_conti`, così correggendo un FC in Admin i numeri si sistemano da soli. Senza un FC per quella data la vendita resta e la provvigione è vuota
 - **Guadagno netto = provvigione − sconto**. Provvigione bassa o nulla = promozioni o sconti voluti: è normale
+- **Import da Glide** (18/09, `scripts/import_vendite.py`): 147 vendite da `Vendite.csv`, agganciate con `ClienteID` = `contatti.glide_id`; `user_id` = quello **del contatto** (non `UserEmail`); date in due formati; «Nutrilite» → «Nutrilite/XS»; `da_glide = true` (rilanciando si cancellano e ricaricano solo queste)
 - I totali della scheda si sommano **non arrotondati** e si arrotondano solo a schermo (come Glide: 23,51 + 78,48 → 101,98, non 101,99)
 
 **Prova gratuita** (migrazioni `20260916220000_prova_gratuita.sql` e `20260916223000_prova_da_abilitazione.sql`, applicate; richieste di Ignazio 16/09):
