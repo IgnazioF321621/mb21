@@ -18,13 +18,13 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   1. **Contatto verso Prospect** (e Referral, e le categorie con gli stessi esiti): conta solo quando **si è parlato** → PM Fissato · No Interesse · Richiamare · Relazione · Consult Prodotti. **Non contano** «No Risposta», «Telefono OFF», «Mai contattato o 2+ anni» e le azioni senza esito (restano visibili nel Report, nella loro riga)
   2. **Contatto verso Cliente**: conta, con la stessa regola (solo se si è parlato): è il contatto per una **nuova vendita** (la telefonata «Riordino») o per una **nuova consulenza**
   3. **Contatto verso Partner**: **non conta** (è lavoro con il team, non un contatto nuovo)
-  4. **PM**: conta solo il Piano Marketing **avvenuto** (non «Rimandato» né «No Show»). ❓ Da chiarire al lavoro 2: il PM fatto come ospite/upline per un altro partner
+  4. **PM**: conta solo il Piano Marketing **avvenuto** (non «Rimandato» né «No Show»). Il PM fatto a un **ospite di un nostro partner** è un Piano Marketing e **va conteggiato** (Ignazio 18/09); al lavoro 2 vedere come è scritto nei dati (`ospite`) e a chi va il numero
   5. **Giorno**: quello **dell'azione** (come il Report), non quello in cui si segna l'esito
   6. **Da quando**: dal **14/09/2026**, nascita della v4 (si ricontano anche i giorni già passati; prima restano i numeri scritti a mano). Nessun confronto lungo sui dati: in 4 giorni di v4 «non è successo nulla» (il vecchio lavoro 1 cade)
   7. Il **Report** prende la stessa regola con la stessa funzione: il totale «Contatti» conta solo i parlati, i tentativi a vuoto si vedono a parte (LEZIONI: stessa schermata, stesso codice)
   8. Nel Check del Giorno restano da scrivere a mano: Sponsor, Tracce, Pagine, Libro
 - **Lavoro 1 · riquadro «🔁 Riordini da sentire» in Dashboard** (Ignazio 18/09): oggi la telefonata «Riordino» (10 giorni prima del riordino) si vede **solo in Agenda**: non è nelle conferme, non è in coda, non è nell'avviso del mattino → se quel giorno non si apre l'Agenda, passa. Riquadro **suo**, sopra la coda come le conferme, **senza consumare i posti della coda**; l'esito si segna da lì e il contatto si conta
-  - ❓ Da decidere con Ignazio: quando risentire il Cliente per una **nuova consulenza** (dopo quanti giorni, o solo con «Richiamare») e se entra nello stesso riquadro
+  - Il Cliente da risentire per una **nuova consulenza** non va nel riquadro: va nei contatti, quindi **in Coda** (Ignazio 18/09). Da vedere nel database quali giorni di rientro hanno oggi le fasi del Cliente in `sequenze` (Vendita · No Vendita · Richiamare)
 - **Lavoro 2 · la regola nel database**, come `check_giorni_conti` per le vendite; nel Check del Giorno i due campi diventano da leggere, con le azioni del giorno da toccare; Dashboard, Check e Report dalla stessa fonte
 - ⚠️ Stesso prezzo delle vendite: chi non registra le azioni nell'app vede 0
 
