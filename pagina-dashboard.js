@@ -71,7 +71,7 @@ async function caricaOggi() {
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
     try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
   }
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi)]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio()]);
   disegnaOggi();
 }
 
@@ -155,6 +155,7 @@ function disegnaOggi() {
   }
   html += confermeHtml();
   html += riordiniHtml();
+  html += avvioHtml();
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
@@ -170,6 +171,9 @@ function disegnaOggi() {
   // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
+  collegaMioAvvio();
+  const rigaAvvio = document.getElementById('dash-avvio');
+  if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
   if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
   if (limitato()) {
@@ -513,6 +517,127 @@ function collegaConferme() {
 // ── RIORDINI DA SENTIRE (cantiere 27 lavoro 1, 18/09) ────
 // La telefonata «Riordino» che la vendita scrive in Agenda (10 giorni prima del riordino) si vedeva solo lì: qui ha il suo riquadro,
 // sopra la coda come le conferme, senza consumare i posti della coda. Resta finché non ha un esito. Bottoni esito: gli stessi dell'Agenda.
+// ── Partner da avviare e «Il mio avvio» (cantiere 31 lavori 2 e 3, decisioni di Ignazio 18/09) ──
+// Per sponsor e upline: i partner del proprio ramo con l'avvio aperto e almeno un passo da fare (`avvio_del_ramo()` nel database:
+// per ognuno vale la scheda dello sponsor, o del primo upline che ce l'ha, seguendo la mappa Amway; esce solo il percorso, mai
+// telefoni e note). In Dashboard una riga sola «🚀 N partner da avviare ›»; il tocco apre la pagina dei nomi, dal più recente.
+// Accanto al nome, tra [ ], lo sponsor Amway («così io come upline so a chi rivolgermi»). Chi è fermo per ora va «⏸ In pausa»:
+// esce dall'elenco e dal numero, resta in fondo alla pagina («⏸ In pausa · N ›») e si riprende con un tocco.
+// Segue il Partner Select (il ramo del partner guardato); con «Tutti» e offline non si mostra. Chi ha la scheda in lista (o l'Admin)
+// la apre dal nome; gli altri upline vedono soltanto. **Per ora solo l'Admin spunta i passi e chiude l'avvio da qui** (Ignazio:
+// «poi il leader»): scrive sulla scheda che vale, anche quando è nella lista di un altro.
+// Per il nuovo: «🚀 Il mio avvio» nella SUA Dashboard (`mio_avvio()`, `smarca_mio_passo()`): vede i suoi 14 passi e li smarca da solo;
+// la scheda resta nella lista dello sponsor e lui non la vede. Sparisce con l'avvio concluso, in pausa o a passi finiti.
+const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, mio: null, mioAperto: false };
+function ricalcolaAvvio() {
+  AVV.righe = MB21Lista.partnerDaAvviare(AVV.tutte, visto().partner_id);
+  AVV.pausa = MB21Lista.partnerInPausa(AVV.tutte, visto().partner_id);
+}
+async function caricaAvvio() {
+  AVV.tutte = []; AVV.mio = null;
+  if (!ST.offline && !vediTutti()) try {
+    const [ramo, mio] = await Promise.all([
+      dbq('avvio del ramo', supa.rpc('avvio_del_ramo')),
+      guardoAltri() ? { data: null } : dbq('il mio avvio', supa.rpc('mio_avvio')),
+    ]);
+    if (!ramo.error) AVV.tutte = ramo.data || [];
+    if (!mio.error) AVV.mio = mio.data || null;
+  } catch (e) {}
+  ricalcolaAvvio();
+}
+function avvioHtml() {
+  const n = AVV.righe.length;
+  return mioAvvioHtml() + (n ? `<button class="ag-blocco avvio" id="dash-avvio"><span>🚀 ${n} partner da avviare</span><span>›</span></button>` : '');
+}
+
+// «Il mio avvio»: riga chiusa con passi fatti e prossimo passo; aperta, i 14 passi da smarcare
+function mioAvvioHtml() {
+  const m = AVV.mio, L = MB21Lista;
+  if (!m || m.avvio_concluso_il || m.avvio_in_pausa_dal || !L.prossimoPasso(m)) return '';
+  const { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
+  return `<div class="riquadro avv-partner mio">
+    <button class="avv-testa" id="mio-avvio"><span><b>🚀 Il mio avvio</b><small>👉 Prossimo passo: ${esc(prossimo.nome)} · ${esc(prossimo.descr)}</small></span>
+      <span class="avv-conta">${fatti}/${totale}</span></button>
+    <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
+    ${AVV.mioAperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) =>
+        `<button class="${m[col] ? 'fatto' : ''}" data-mio-passo="${col}">${m[col] ? '✅' : '◻️'} ${esc(nome)}</button>`).join('')}</div>
+      <div class="sotto" style="margin:8px 0 0">Tocca un passo quando l'hai fatto${m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.</div>` : ''}
+  </div>`;
+}
+function collegaMioAvvio() {
+  const testa = document.getElementById('mio-avvio');
+  if (testa) testa.onclick = () => { AVV.mioAperto = !AVV.mioAperto; disegnaOggi(); };
+  app.querySelectorAll('[data-mio-passo]').forEach(b => b.onclick = async () => {
+    const col = b.dataset.mioPasso;
+    const { data, error } = await dbq('smarca il mio passo', supa.rpc('smarca_mio_passo', { p_passo: col, p_fatto: !AVV.mio[col] }));
+    if (error || !data) return mostraToast('Non salvato: riprova.');
+    AVV.mio = data;
+    disegnaOggi();
+  });
+}
+
+function disegnaAvvio() {
+  const L = MB21Lista, altro = guardoAltri(), admin = eAdmin();
+  const card = r => {
+    const { fatti, totale } = L.contatoreOnboarding(r), prossimo = L.prossimoPasso(r), aperto = AVV.aperto === r.partner_id;
+    const entrato = L.entratoDa(r.data_ingresso, ST.oggi);
+    const mia = r.user_id === ST.utente.id || admin;
+    return `<div class="riquadro avv-partner">
+      <button class="avv-testa" data-avvio="${esc(r.partner_id)}">
+        <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor">[${esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
+          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}</small></span>
+        <span class="avv-conta">${fatti}/${totale}</span></button>
+      <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
+      ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => admin
+          ? `<button class="${r[col] ? 'fatto' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</button>`
+          : `<span class="${r[col] ? 'fatto' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</span>`).join('')}</div>
+        <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${admin ? '. Da Admin: tocca un passo per segnarlo o toglierlo.' : ''}</div>
+        <div class="avv-azioni">
+          ${mia ? `<button class="link" data-apri-scheda="${esc(r.contatto_id)}">Apri la scheda ›</button>` : ''}
+          ${admin ? (r.avvio_in_pausa_dal
+            ? `<button class="link" data-chiudi="riprendi" data-di="${esc(r.partner_id)}">▶️ Riprendi</button>`
+            : `<button class="link" data-chiudi="pausa" data-di="${esc(r.partner_id)}">⏸ In pausa</button>
+               <button class="link" data-chiudi="concluso" data-di="${esc(r.partner_id)}">✅ Avvio concluso</button>`) : ''}
+        </div>` : ''}
+    </div>`;
+  };
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+    <h1>🚀 Partner da avviare</h1>
+    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor. Tocca un nome per vedere i suoi passi.</div>
+    ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
+    ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>⏸ In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
+      ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  const pausa = document.getElementById('avv-pausa');
+  if (pausa) pausa.onclick = () => { AVV.pausaAperta = !AVV.pausaAperta; disegnaAvvio(); };
+  app.querySelectorAll('[data-avvio]').forEach(b => b.onclick = () => { AVV.aperto = AVV.aperto === b.dataset.avvio ? null : b.dataset.avvio; disegnaAvvio(); });
+  // Solo Admin: scrive sulla scheda che vale (`contatto_id`), anche nella lista di un altro; la Lista già letta resta allineata
+  const scrivi = async (r, campi) => {
+    if (!r || !admin || soloGuardo()) return false;
+    const { error } = await dbq('avvio dalla pagina dei nomi', supa.from('contatti').update(campi).eq('id', r.contatto_id));
+    if (error) { mostraToast('Non salvato: riprova.'); return false; }
+    Object.assign(r, campi);
+    const inLista = LS.righe.find(x => x.id === r.contatto_id);
+    if (inLista) Object.assign(inLista, campi);
+    if (LS.avvio && LS.avvio.id === r.contatto_id) LS.avvio = null;   // la scheda rilegge concluso / pausa
+    ricalcolaAvvio();
+    disegnaAvvio();
+    return true;
+  };
+  const trova = id => AVV.tutte.find(x => x.partner_id === id);
+  app.querySelectorAll('[data-spunta]').forEach(b => b.onclick = () => { const r = trova(b.dataset.di); if (r) scrivi(r, { [b.dataset.spunta]: !r[b.dataset.spunta] }); });
+  app.querySelectorAll('[data-chiudi]').forEach(b => b.onclick = async () => {
+    const r = trova(b.dataset.di), cosa = b.dataset.chiudi;
+    const campi = cosa === 'pausa' ? { avvio_in_pausa_dal: ST.oggi } : cosa === 'riprendi' ? { avvio_in_pausa_dal: null } : { avvio_concluso_il: ST.oggi };
+    const prima = r && { avvio_in_pausa_dal: r.avvio_in_pausa_dal || null, avvio_concluso_il: r.avvio_concluso_il || null };
+    if (await scrivi(r, campi)) mostraToast(`${MB21Mappa.nomeLeggibile(r.nome)}: ${cosa === 'pausa' ? 'avvio in pausa' : cosa === 'riprendi' ? 'avvio ripreso' : 'avvio concluso'}`, () => scrivi(r, prima));
+  });
+  app.querySelectorAll('[data-apri-scheda]').forEach(b => b.onclick = async () => {
+    await apriContattoDa(b.dataset.apriScheda, 'oggi');
+    if (LS.contatto && LS.contatto.id === b.dataset.apriScheda) { LS.sezione = 'onboarding'; disegnaScheda(); }   // dritti sui 14 passi
+  });
+}
+
 const RIO = { righe: [], nonRisponde: new Set() };
 
 async function caricaRiordini(oggi) {

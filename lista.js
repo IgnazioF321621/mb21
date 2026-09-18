@@ -177,6 +177,18 @@
     const p = PASSI_ONBOARDING.find(([col]) => !(c && c[col] === true));
     return p ? { col: p[0], nome: p[1], descr: p[2] } : null;
   }
+  // Partner da avviare (cantiere 31 lavoro 2): dalle righe di `avvio_del_ramo()` restano quelli con l'avvio aperto e almeno un passo
+  // da fare, dal più recente per data di ingresso (senza data in fondo), poi per nome. `radice` = codice Amway di chi si guarda
+  // (Partner Select): restano solo i partner sotto di lui (`linea` = gli upline del partner, dallo sponsor in su). Senza radice: tutti.
+  // In pausa (`avvio_in_pausa_dal`, Ignazio 18/09: «molti sono fermi momentaneamente»): fuori dall'elenco e dal numero, elencati a parte.
+  const nelRamo = (r, radice) => !radice || (r.linea || []).includes(radice);
+  const recentiPrima = (a, b) => String(b.data_ingresso || '').localeCompare(String(a.data_ingresso || '')) || ordinaPerNome(a, b);
+  function partnerDaAvviare(righe, radice) {
+    return (righe || []).filter(r => !r.avvio_concluso_il && !r.avvio_in_pausa_dal && prossimoPasso(r) && nelRamo(r, radice)).sort(recentiPrima);
+  }
+  function partnerInPausa(righe, radice) {
+    return (righe || []).filter(r => !r.avvio_concluso_il && r.avvio_in_pausa_dal && nelRamo(r, radice)).sort(recentiPrima);
+  }
   // Da quanto è entrato (data di ingresso del file Amway, «2026-09-06»): solo un'informazione, nessun allarme. Senza data → ''
   function entratoDa(ingresso, oggi) {
     if (!ingresso || !oggi) return '';
@@ -370,7 +382,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -298,8 +298,9 @@ function mostraAvvio(c) {
   const posto = document.getElementById('avvio-posto');
   if (!posto || !LS.avvio || LS.avvio.id !== c.id || c.categoria !== 'Partner') return;
   const { fatti, totale } = MB21Lista.contatoreOnboarding(c), prossimo = MB21Lista.prossimoPasso(c);
-  posto.innerHTML = `<button class="app-riga" id="avvio-riga"><span class="ico">${LS.avvio.concluso ? '✅' : '🚀'}</span>
-    <div>${LS.avvio.concluso ? 'Avvio concluso' : 'Avvio'} · ${fatti}/${totale}${LS.avvio.concluso ? '' : `<small>${prossimo ? 'Prossimo passo: ' + esc(prossimo.nome) : 'Tutti i passi sono fatti'}</small>`}</div><span class="freccia">${LS.sezione === 'onboarding' ? '⌄' : '›'}</span></button>`;
+  const stato = LS.avvio.concluso ? ['✅', 'Avvio concluso'] : LS.avvio.pausa ? ['⏸', 'Avvio in pausa'] : ['🚀', 'Avvio'];
+  posto.innerHTML = `<button class="app-riga" id="avvio-riga"><span class="ico">${stato[0]}</span>
+    <div>${stato[1]} · ${fatti}/${totale}${LS.avvio.concluso || LS.avvio.pausa ? '' : `<small>${prossimo ? 'Prossimo passo: ' + esc(prossimo.nome) : 'Tutti i passi sono fatti'}</small>`}</div><span class="freccia">${LS.sezione === 'onboarding' ? '⌄' : '›'}</span></button>`;
   document.getElementById('avvio-riga').onclick = () => {
     LS.sezione = LS.sezione === 'onboarding' ? MB21Lista.sezioneIniziale(c) : 'onboarding';
     disegnaScheda();
@@ -307,12 +308,20 @@ function mostraAvvio(c) {
 }
 async function avvioDellaScheda(c) {
   if (LS.avvio && LS.avvio.id === c.id) return null;   // già letto
-  const { data, error } = await dbq('avvio', supa.from('contatti').select('avvio_concluso_il, codice_amway').eq('id', c.id).maybeSingle());
+  const { data, error } = await dbq('avvio', supa.from('contatti').select('avvio_concluso_il, avvio_in_pausa_dal, codice_amway').eq('id', c.id).maybeSingle());
   if (error || !data) return null;
   const sq = await dbq('squadra', supa.from('squadra').select('partner_id, nome, data_ingresso'));
   const p = sq.error ? null : MB21Mappa.partnerDellaScheda({ nome: c.nome, codice_amway: data.codice_amway }, sq.data);
+  // Quale scheda vale per «Partner da avviare» (lavoro 2): quella dello sponsor o del primo upline che ce l'ha (`avvio_del_ramo`).
+  // Se non è questa (il partner ha la scheda in due liste) la sezione lo dice: i passi segnati qui lì non si vedono.
+  let altra = null;
+  if (p) {
+    const ramo = await dbq('avvio del ramo', supa.rpc('avvio_del_ramo'));
+    const riga = ramo.error ? null : (ramo.data || []).find(r => r.partner_id === p.partner_id);
+    if (riga && riga.contatto_id !== c.id) altra = { id: riga.contatto_id, lista: riga.lista, mia: riga.user_id === ST.utente.id || eAdmin() };
+  }
   if (!LS.contatto || LS.contatto.id !== c.id) return null;
-  return (LS.avvio = { id: c.id, concluso: data.avvio_concluso_il || null, ingresso: (p && p.data_ingresso) || null });
+  return (LS.avvio = { id: c.id, concluso: data.avvio_concluso_il || null, pausa: data.avvio_in_pausa_dal || null, ingresso: (p && p.data_ingresso) || null, altra });
 }
 
 function disegnaScheda() {
@@ -627,6 +636,8 @@ function sezioneOnboarding() {
         <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
         <div class="avvio-prossimo">${prossimo ? `👉 Prossimo passo: <b>${esc(prossimo.nome)}</b> <small>${esc(prossimo.descr)}</small>` : '🎉 Tutti i passi sono fatti'}</div>
         ${entrato ? `<div class="sotto" style="margin:4px 0 0">${esc(entrato)}</div>` : ''}</div>
+      ${a && a.altra ? `<div class="avviso">Per «Partner da avviare» vale la scheda nella lista di <b>${esc(a.altra.lista || 'un upline')}</b> (lo sponsor, seguendo la mappa Amway): i passi segnati qui lì non si vedono.
+        ${a.altra.mia ? '<button class="link" id="avvio-altra" style="display:block;padding:6px 0 0">Apri quella scheda ›</button>' : ''}</div>` : ''}
       <div class="riquadro">${MB21Lista.PASSI_ONBOARDING.map(([col, nome, descr]) => `
         <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small></span>
           <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${fermo ? 'disabled' : ''}></label>`).join('')}
@@ -635,20 +646,37 @@ function sezioneOnboarding() {
         ? `<div class="riquadro"><b>✅ Avvio concluso il ${MB21Lista.data(a.concluso)}</b>
             <div class="sotto" style="margin:4px 0 8px">Non è più tra i partner da avviare. I passi restano qui.</div>
             <button class="link" id="avvio-riapri" style="padding:0">Riapri l'avvio</button></div>`
+        : a.pausa
+        ? `<div class="riquadro"><b>⏸ Avvio in pausa dal ${MB21Lista.data(a.pausa)}</b>
+            <div class="sotto" style="margin:4px 0 8px">Fermo per ora: non è tra i partner da avviare, lo ritrovi in fondo a quella pagina. I passi restano qui.</div>
+            <button class="link" id="avvio-riprendi" style="padding:0">▶️ Riprendi l'avvio</button></div>`
         : `<div class="riquadro"><button class="primario" id="avvio-concludi">✅ Avvio concluso</button>
-            <div class="sotto" style="margin:8px 0 0">Quando il partner cammina da solo: la riga in alto diventa «✅ Avvio concluso». Si può sempre riaprire.</div></div>`}`;
-    const segna = async giorno => {
+            <div class="sotto" style="margin:8px 0 12px">Quando il partner cammina da solo: la riga in alto diventa «✅ Avvio concluso». Si può sempre riaprire.</div>
+            <button class="link" id="avvio-pausa" style="padding:0">⏸ Metti in pausa</button>
+            <div class="sotto" style="margin:4px 0 0">Se per ora è fermo: esce dai partner da avviare finché non lo riprendi. Chi si è ritirato davvero cambia categoria con «Modifica».</div></div>`}`;
+    // campo: 'concluso' (avvio_concluso_il) o 'pausa' (avvio_in_pausa_dal); giorno vuoto = riaperto / ripreso
+    const segna = async (campo, giorno) => {
       if (soloGuardo()) return;
-      const { error } = await dbq('avvio concluso', supa.from('contatti').update({ avvio_concluso_il: giorno }).eq('id', c.id));
+      const colonna = campo === 'pausa' ? 'avvio_in_pausa_dal' : 'avvio_concluso_il';
+      const { error } = await dbq('avvio ' + campo, supa.from('contatti').update({ [colonna]: giorno }).eq('id', c.id));
       if (error) return mostraToast('Non salvato: riprova.');
-      LS.avvio = { ...a, concluso: giorno };
+      LS.avvio = { ...LS.avvio, [campo]: giorno };
       if (giorno) LS.sezione = MB21Lista.sezioneIniziale(c);
       disegnaScheda();
-      mostraToast(giorno ? `Avvio di ${c.nome} concluso` : `Avvio di ${c.nome} riaperto`, giorno ? () => segna(null) : null);
+      const cosa = campo === 'pausa' ? (giorno ? 'in pausa' : 'ripreso') : (giorno ? 'concluso' : 'riaperto');
+      mostraToast(`Avvio di ${c.nome} ${cosa}`, giorno ? () => segna(campo, null) : null);
+    };
+    const altraScheda = document.getElementById('avvio-altra');
+    if (altraScheda) altraScheda.onclick = async () => {
+      await apriContattoDa(a.altra.id, LS.ritorno);
+      if (LS.contatto && LS.contatto.id === a.altra.id) { LS.sezione = 'onboarding'; disegnaScheda(); }
     };
     const concludi = document.getElementById('avvio-concludi'), riapri = document.getElementById('avvio-riapri');
-    if (concludi) concludi.onclick = () => segna(MB21Coda.oggiRoma());
-    if (riapri) riapri.onclick = () => segna(null);
+    if (concludi) concludi.onclick = () => segna('concluso', MB21Coda.oggiRoma());
+    if (riapri) riapri.onclick = () => segna('concluso', null);
+    const pausa = document.getElementById('avvio-pausa'), riprendi = document.getElementById('avvio-riprendi');
+    if (pausa) pausa.onclick = () => segna('pausa', MB21Coda.oggiRoma());
+    if (riprendi) riprendi.onclick = () => segna('pausa', null);
     box.querySelectorAll('[data-passo]').forEach(i => i.onchange = async () => {
       if (soloGuardo()) { i.checked = !i.checked; return; }
       const col = i.dataset.passo;
