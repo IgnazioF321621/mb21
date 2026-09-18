@@ -272,6 +272,17 @@
   const prossimoRiordino = (vendite, oggi) => (vendite || []).filter(v => v.riordino && v.riordino >= oggi)
     .sort((a, b) => a.riordino < b.riordino ? -1 : 1)[0] || null;
 
+  // Admin → Fattore di conversione (lavoro 1 bis): dal giorno e dal numero scritti alla riga da salvare. `{ riga }` oppure `{ errore }`.
+  // L'FC di Amway è un numero piccolo con 5 decimali (2,21759 · 2,26194): fuori da 1–5 è quasi certamente un errore di battitura.
+  function rigaFattore(dal, valore) {
+    const x = Number(String(valore == null ? '' : valore).trim().replace(',', '.'));
+    if (!dal) return { errore: 'Scrivi da che giorno vale' };
+    if (!String(valore || '').trim() || !isFinite(x)) return { errore: 'Scrivi il fattore, es. 2,26194' };
+    if (x < 1 || x > 5) return { errore: 'Il fattore sembra sbagliato: di solito è tra 2 e 3' };
+    return { riga: { dal, valore: Math.round(x * 100000) / 100000 } };
+  }
+  const numeroFattore = v => Number(v).toLocaleString('it-IT', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+
   // Modulo «Vendita» (lavoro 3b): dai campi scritti alla riga da salvare. `{ riga }` oppure `{ errore }` (cosa manca).
   // I numeri si scrivono all'italiana («88,47») o con il punto. Il riordino è obbligatorio (come in Glide),
   // tranne che modificando una vendita dello storico che non l'aveva (`senzaRiordino`).
@@ -296,7 +307,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, numero };
+    totaleContatti, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, etichettaCard, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

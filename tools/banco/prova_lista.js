@@ -261,4 +261,15 @@ prova('Vendite: targhette Brand della testata, accese quelle comprate (anche una
   assert.equal(L.brandComprati(null).some(b => b.acceso), false);
 });
 
+prova('Admin, fattore di conversione: numero con la virgola, 5 decimali, errori di battitura fermati', () => {
+  assert.deepEqual(L.rigaFattore('2026-06-01', '2,26194').riga, { dal: '2026-06-01', valore: 2.26194 });
+  assert.equal(L.rigaFattore('2026-06-01', '2.2619449').riga.valore, 2.26194);
+  assert.equal(L.rigaFattore('', '2,26194').errore, 'Scrivi da che giorno vale');
+  assert.equal(L.rigaFattore('2026-06-01', '').errore, 'Scrivi il fattore, es. 2,26194');
+  assert.equal(L.rigaFattore('2026-06-01', 'abc').errore, 'Scrivi il fattore, es. 2,26194');
+  assert.equal(L.rigaFattore('2026-06-01', '226194').errore, 'Il fattore sembra sbagliato: di solito è tra 2 e 3');
+  assert.equal(L.rigaFattore('2026-06-01', '0,2').errore, 'Il fattore sembra sbagliato: di solito è tra 2 e 3');
+  assert.equal(L.numeroFattore(2.2), '2,20000');
+});
+
 console.log(`\n${ok} prove superate`);
