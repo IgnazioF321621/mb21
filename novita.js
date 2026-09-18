@@ -5,6 +5,16 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 14:56', titolo: 'Clienti di nuovo in coda',
+      testo: 'Dopo un ordine o una consulenza, il Cliente torna in coda da solo dopo 90 giorni, così non lo perdi di vista. Chi ha già un riordino programmato non compare: lo senti alla data del riordino.' },
+    { quando: '2026.09.18 · 14:33', titolo: 'Contatti e PM si contano da soli',
+      testo: 'Dal 14 settembre Contatti e PM non si scrivono più nel Check del Giorno: l\'app li conta dalle azioni che registri. Un contatto vale quando hai parlato con la persona, un PM quando è avvenuto. Se non registri l\'azione, il numero resta 0.' },
+    { quando: '2026.09.18 · 12:39', titolo: 'Riordini da sentire',
+      testo: 'In Dashboard c\'è il nuovo riquadro «🔁 Riordini da sentire»: i clienti da chiamare per il riordino, con i bottoni per segnare com\'è andata (Ordine, Appuntamento, Richiamare, Non interessato, Non risponde).' },
+    { quando: '2026.09.18 · 12:34', titolo: 'Chiama e scrivi senza spostarti',
+      testo: 'Call, SMS, WhatsApp e Telegram sono ora su ogni card: in coda, nelle Conferme, nei Riordini e in Agenda. Non serve più aprire la scheda del contatto.' },
+    { quando: '2026.09.18 · 11:15', titolo: 'VP Clienti dalle vendite',
+      testo: 'Dal 18 settembre i VP Clienti non si scrivono più nel Check del Giorno: sono la somma delle vendite che registri nella scheda del cliente. Se non registri la vendita, i VP restano 0.' },
   ];
 
   const MASSIMO = 10;   // nel foglio all'apertura: le più recenti, il resto con «vedi tutte»
