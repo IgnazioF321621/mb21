@@ -23,7 +23,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   6. **Targhette Brand** accese in base alla tipologia del cliente (cioè a cosa compra)
   7. **VP Clienti del Check e Vendite si incastrano**: scrivendo i VP Clienti nel Check l'app chiede «Hai già registrato la vendita?» nella scheda del cliente, e viceversa
   8. **Modifica** apre il modulo di quella vendita; **Elimina** ci deve essere
-- Lavoro 1 · struttura (tabella `vendite`, regole di accesso, migrazione) — da proporre dopo le risposte
+- Lavoro 1 · struttura — migrazione `20260918094500_vendite.sql` **scritta e provata, da applicare** (18/09): tabelle `fattori_conversione` e `vendite`, vista `vendite_conti` con la provvigione. Provata sul DB dentro una transazione annullata: i totali di Glide tornano (101,98 · 41,98), da giugno vale il nuovo FC (53 VP → 23,98), un brand fuori elenco è rifiutato; dopo la prova nel DB non è rimasto niente
+- Lavoro 1 bis · **Admin → Fattore di conversione**: aggiungere, cambiare, cancellare
 - Lavoro 2 · import di `Vendite.csv`
 - Lavoro 3 · sezione «Vendite» nella scheda (totali, tabella, «Vendita +», Modifica/Elimina)
 - Lavoro 4 · riordino in Agenda

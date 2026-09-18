@@ -25,6 +25,14 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `biglietti` | — | Cantiere 18: biglietti BBS e WES sulla persona (per il contatto, per il compagno/a, ospiti senza nome) | chi vede il contatto; scrive solo Admin |
 | `cep` | — | Cantiere 18: abbonamento CEP di un Partner, una riga per **periodo** (dal / uscito il; si può uscire e rientrare) | chi vede il contatto; scrive solo Admin |
 | `risposte_biglietto` | — | Cantiere 20: risposte del partner alla domanda «Hai il biglietto?» (anche «No»), una per utente · tipo · evento | nessuno direttamente: solo le funzioni |
+| `fattori_conversione` | — | Cantiere 26: l'FC (fattore di conversione) di Amway nel tempo, una riga per cambio: `dal` (primo giorno in cui vale, chiave) · `valore`. Partenza: 2,21759 da sempre · 2,26194 dal 01/06/2026 | tutti gli utenti loggati; scrive solo Admin |
+| `vendite` | Vendite | Cantiere 26: una riga per vendita **e per brand**, legata al contatto: `user_id` · `contatto_id` · `data` · `brand` (Artistry · eSpring · Home · Nutrilite/XS · Persona) · `prodotto` (≤50) · `vp` · `sconto` (€) · `riordino` (data, vuota in parte dello storico) · `da_glide` | le proprie · Admin tutte |
+| `vendite_conti` (vista) | — | Cantiere 26: `vendite` + `fc` · `provvigione` · `guadagno_netto`, non arrotondati. **L'unico posto dove si calcola la provvigione**: l'app legge sempre da qui | come `vendite` |
+
+**Vendite** (cantiere 26, migrazione `20260918094500_vendite.sql`, **da applicare**; decisioni di Ignazio 18/09):
+- **Provvigione = (VP × FC) × 0,20**, con l'FC valido **alla data della vendita** (la riga di `fattori_conversione` con il `dal` più alto non oltre quella data). Non si salva: la calcola la vista `vendite_conti`, così correggendo un FC in Admin i numeri si sistemano da soli. Senza un FC per quella data la vendita resta e la provvigione è vuota
+- **Guadagno netto = provvigione − sconto**. Provvigione bassa o nulla = promozioni o sconti voluti: è normale
+- I totali della scheda si sommano **non arrotondati** e si arrotondano solo a schermo (come Glide: 23,51 + 78,48 → 101,98, non 101,99)
 
 **Prova gratuita** (migrazioni `20260916220000_prova_gratuita.sql` e `20260916223000_prova_da_abilitazione.sql`, applicate; richieste di Ignazio 16/09):
 - trigger `mb21_prova_gratuita` prima di insert o update di `accesso_attivo` su `utenti`: quando «Può entrare» **si accende** (utente che nasce già abilitato, come in `approva_richiesta`, o da spento ad acceso) e l'utente **non ha mai avuto una scadenza** → **scadenza = oggi (Roma) + 15 giorni**. Conta dall'abilitazione, non dalla creazione («se io perdo tempo, loro perdono la possibilità di lavorarci»)
