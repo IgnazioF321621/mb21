@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', lettera: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -125,13 +125,13 @@ function disegnaLista() {
 }
 
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
+  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine, lettera: LS.lettera });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
-  const ordina = `<div class="ls-ordina"><span>${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
+  const ordina = `<div class="ls-ordina"><span>${LS.lettera ? `<button id="via-lettera" aria-label="Togli la lettera"><b>${esc(LS.lettera)}</b> ✕</button> · ` : ''}${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
     <button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></div>`;
-  elenco.innerHTML = trovati.length
-    ? ordina + trovati.slice(0, LS.mostrate).map(cardNome).join('')
+  elenco.innerHTML = trovati.length || LS.lettera
+    ? ordina + (trovati.length ? '' : '<div class="vuoto">Nessun nome con questa lettera.</div>') + trovati.slice(0, LS.mostrate).map(cardNome).join('')
     : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}</div>`;
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => { if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id); };
@@ -139,10 +139,17 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn .menu').forEach(b => b.onclick = () => menuCard(b.dataset.id));
   const ordinaB = document.getElementById('ordina');
   if (ordinaB) ordinaB.onclick = async () => {
-    const v = await sceltaDa('Ordina i nomi', Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })));
+    // sotto le scelte, le lettere: accese solo quelle che hanno nomi nel filtro scelto; toccarne una filtra (non salta: la lista si carica a blocchi)
+    const accese = MB21Lista.lettereConNomi(LS.righe, { filtro: LS.filtro, utenteId: utentiLista(), admin: eAdmin() });
+    const voci = [...Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })),
+      ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').map(l => ({ etichetta: l, lettera: l, scelta: LS.lettera === l, spenta: !accese.includes(l) }))];
+    const v = await sceltaDa('Ordina i nomi', voci);
     if (!v) return;
-    LS.ordine = v.k; LS.mostrate = BLOCCO; window.scrollTo(0, 0); disegnaElenco();
+    if (v.lettera) LS.lettera = LS.lettera === v.lettera ? null : v.lettera; else LS.ordine = v.k;
+    LS.mostrate = BLOCCO; window.scrollTo(0, 0); disegnaElenco();
   };
+  const viaLettera = document.getElementById('via-lettera');
+  if (viaLettera) viaLettera.onclick = () => { LS.lettera = null; LS.mostrate = BLOCCO; disegnaElenco(); };
   // caricamento a blocchi: quando il fondo entra nello schermo, altre card
   const fondo = document.getElementById('fondo');
   if (LS.osservatore) LS.osservatore.disconnect();
@@ -201,14 +208,15 @@ function sceltaDa(titolo, voci, sopra) {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
-      ${voci.map((v, i) => `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''}">${esc(v.etichetta)}</button>`).join('')}
-      </div><button class="link" id="scelta-no">Annulla</button></div>`;
+      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''}">${esc(v.etichetta)}</button>`).join('')}
+      </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">
+      ${voci.map((v, i) => v.lettera ? `<button data-i="${i}" class="${v.scelta ? 'scelto' : ''}" ${v.spenta ? 'disabled' : ''}>${esc(v.etichetta)}</button>` : '').join('')}</div>` : ''}<button class="link" id="scelta-no">Annulla</button></div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
     velo.onclick = e => { if (e.target === velo) chiudi(null); };
     velo.querySelector('#scelta-no').onclick = () => chiudi(null);
     velo.querySelectorAll('.foglio > .contatta a').forEach(a => a.addEventListener('click', () => chiudi(null)));
-    velo.querySelectorAll('.altri-voci button').forEach(b => b.onclick = () => chiudi(voci[Number(b.dataset.i)]));
+    velo.querySelectorAll('button[data-i]').forEach(b => b.onclick = () => chiudi(voci[Number(b.dataset.i)]));
   });
 }
 
