@@ -165,12 +165,27 @@
   const ANNO_IGNOTO = 1604;
   const due = n => String(n).padStart(2, '0');
   const dataCompleanno = c => (c ? `${c.anno || ANNO_IGNOTO}-${due(c.mese)}-${due(c.giorno)}` : null);
+  // Dal modulo «Modifica contatto» (giorno · mese · anno facoltativo) → { giorno, mese, anno } · null se vuoto · 'errore' se la data non esiste
+  function compleannoDalModulo(giorno, mese, anno) {
+    const g = Number(giorno) || 0, m = Number(mese) || 0, a = String(anno || '').trim();
+    if (!g && !m && !a) return null;
+    if (!g || !m || (a && !/^(19|20)\d{2}$/.test(a))) return 'errore';
+    const prova = new Date(Date.UTC(a ? Number(a) : ANNO_IGNOTO, m - 1, g));   // il 1604 è bisestile: il 29 febbraio senza anno va bene
+    if (prova.getUTCMonth() !== m - 1 || prova.getUTCDate() !== g) return 'errore';
+    return { giorno: g, mese: m, anno: a ? Number(a) : null };
+  }
+  // «1604-12-25» → { giorno: 25, mese: 12, anno: null } (per riempire il modulo)
+  function compleannoDaData(data) {
+    const m = String(data || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? { giorno: Number(m[3]), mese: Number(m[2]), anno: Number(m[1]) === ANNO_IGNOTO ? null : Number(m[1]) } : null;
+  }
+  const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+
   // «2026-04-12» → «12 aprile 1985» · «1604-12-25» → «25 dicembre»
   function compleannoScritto(data) {
     const m = String(data || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return '';
-    const mesi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-    return `${Number(m[3])} ${mesi[Number(m[2]) - 1]}${Number(m[1]) === ANNO_IGNOTO ? '' : ' ' + m[1]}`;
+    return `${Number(m[3])} ${MESI[Number(m[2]) - 1]}${Number(m[1]) === ANNO_IGNOTO ? '' : ' ' + m[1]}`;
   }
 
   // Stesso nome, altro numero: cosa cambiare nella scheda che c'è già. → { id, campi } oppure null (scheda nuova o niente da fare)
@@ -195,7 +210,7 @@
     };
   }
 
-  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleannoScritto };
+  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleannoScritto, compleannoDalModulo, compleannoDaData, MESI };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Rubrica = api;
 })(this);

@@ -33,7 +33,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
-- **Compleanno a mano** (dal cantiere 30, 18/09): oggi arriva solo dalla rubrica del telefono e si vede in «Dati»; aggiungere giorno · mese · anno (facoltativo) nel modulo «Modifica contatto». In prospettiva (Ignazio): messaggi di auguri
+- ~~**Compleanno a mano** (dal cantiere 30, 18/09)~~ — fatto il 18/09 (`2026.09.18 · 21:30`): Giorno · Mese · Anno facoltativo nel modulo Nuovo Contatto / Modifica; 11 prove rubrica. **Da provare da Ignazio**. Resta l'idea in prospettiva: **messaggi di auguri**
 - **Benvenuto per chi entra la prima volta** (dal cantiere 28, Ignazio 18/09): oggi al primo ingresso il foglio «✨ Novità» non si apre. Da studiare in un documento apposito il percorso da seguire per un nuovo partner, «in maniera ancora più semplice»
 - ~~**Dire a Isabella, Carolina e agli altri partner**: dal 14/09/2026 **Contatti e PM** di Dashboard, Check, Report e Griglia contano **solo dalle azioni registrate** (esito dato in coda, Riordini, Agenda o scheda; «Non risponde», «No Show» e «Rimandato» non contano); nel Check del Giorno non si scrivono più (dal cantiere 27)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
 - ~~**Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
