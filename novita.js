@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.18 · 21:30', pagina: 'lista', titolo: 'Il compleanno nella scheda del contatto',
+      testo: 'In «Modifica contatto» (e in «Nuovo contatto») ora puoi scrivere il compleanno: giorno e mese, e l\'anno se lo sai. Lo ritrovi nella scheda, in «Dati», con la torta 🎂. Chi l\'aveva nella rubrica del telefono ce l\'ha già.' },
     { quando: '2026.09.18 · 20:47', pagina: 'lista', titolo: 'Rubrica: stesso nome con un altro numero',
       testo: 'Quando importi la rubrica e una persona è già in Lista con un numero diverso, vedi tutti e due i numeri e scegli tu: tenere quello della Lista e mettere l\'altro nelle note (è la scelta già pronta, così non perdi niente), usare quello della rubrica, oppure creare una scheda nuova se è un\'altra persona.' },
     { quando: '2026.09.18 · 20:26', pagina: 'lista', titolo: 'Porta in MB21 la rubrica del telefono',

@@ -909,6 +909,10 @@ function apriModulo(c) {
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
     <div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>
+    <div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
+      <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
+      <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
+      <input id="f-ca" inputmode="numeric" maxlength="4" placeholder="Anno"></div></div>
     <div class="campo"><label>Professione</label><input id="f-prof" placeholder="Mansione (Settore)" maxlength="${max(40, c && c.professione)}" value="${esc(c ? c.professione || '' : '')}"><div class="conta" data-conta="f-prof"></div></div>
     <div class="campo"><label>Località</label><input id="f-citta" placeholder="Città (Prov)" maxlength="${max(40, c && c.citta)}" value="${esc(c ? c.citta || '' : '')}"><div class="conta" data-conta="f-citta"></div></div>
     <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat">${opz(conStorico(MB21Lista.CATEGORIE, c && c.categoria), c && c.categoria, 'Scegli qualcosa')}</select></div>
@@ -929,6 +933,15 @@ function apriModulo(c) {
   };
   velo.querySelectorAll('input, select').forEach(el => { el.oninput = controlla; el.onchange = controlla; });
   controlla();
+  // Compleanno (cantiere 30): la Lista non ce l'ha, si legge da `contatti` all'apertura del modulo. Finché non è stato letto
+  // (o se la lettura non riesce) il salvataggio NON lo tocca: meglio non poterlo cambiare che cancellarlo per sbaglio.
+  let compleannoLetto = nuovo;
+  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
+    if (error || !data || !velo.isConnected) return;
+    const k = MB21Rubrica.compleannoDaData(data.compleanno);
+    if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
+    compleannoLetto = true;
+  });
   $('invia').onclick = async () => {
     const telefono = MB21Lista.componiTelefono($('f-prefisso').value, $('f-tel').value);
     const riga = {
@@ -937,6 +950,9 @@ function apriModulo(c) {
       categoria: $('f-cat').value, referral_di: $('f-ref').value.trim() || null,
       area: $('f-area').value || null, note: $('f-note').value.trim() || null,
     };
+    const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
+    if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
+    if (compleannoLetto) riga.compleanno = MB21Rubrica.dataCompleanno(compleanno);
     const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
     if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva')) return;

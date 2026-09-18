@@ -127,6 +127,20 @@ prova('compleanno: data per il database (1604 = anno non scritto) e come si legg
   assert.equal(R.compleannoScritto(null), '');
 });
 
+prova('compleanno scritto a mano nel modulo: anno facoltativo, date che non esistono fermate', () => {
+  assert.equal(R.compleannoDalModulo('', '', ''), null);
+  assert.deepEqual(R.compleannoDalModulo('12', '4', ''), { giorno: 12, mese: 4, anno: null });
+  assert.deepEqual(R.compleannoDalModulo('12', '4', '1985'), { giorno: 12, mese: 4, anno: 1985 });
+  assert.deepEqual(R.compleannoDalModulo('29', '2', ''), { giorno: 29, mese: 2, anno: null });
+  assert.equal(R.compleannoDalModulo('29', '2', '1985'), 'errore');   // il 1985 non è bisestile
+  assert.equal(R.compleannoDalModulo('31', '4', ''), 'errore');
+  assert.equal(R.compleannoDalModulo('12', '', ''), 'errore');
+  assert.equal(R.compleannoDalModulo('12', '4', '85'), 'errore');
+  assert.deepEqual(R.compleannoDaData('1604-12-25'), { giorno: 25, mese: 12, anno: null });
+  assert.deepEqual(R.compleannoDaData('1985-04-12'), { giorno: 12, mese: 4, anno: 1985 });
+  assert.equal(R.compleannoDaData(null), null);
+});
+
 prova('riga da salvare: senza categoria, altri numeri nelle note', () => {
   const [anna] = R.unisciDoppioni(R.leggiVcard(ANDROID)).slice(1);
   assert.deepEqual(R.rigaContatto(anna, 'u-io'), { user_id: 'u-io', nome: 'Anna Bianchi', telefono: '+393479876543',
