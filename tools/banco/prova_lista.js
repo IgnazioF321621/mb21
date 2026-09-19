@@ -146,6 +146,16 @@ prova('proposte dell\'avvio: solo i passi spenti che l\'app sa già, nell\'ordin
   assert.deepEqual(L.proposteAvvio(null), []);
 });
 
+prova('pausa lunga: più di un anno in pausa → si propone di rifare l\'avvio da capo', () => {
+  assert.equal(L.pausaLunga({ avvio_in_pausa_dal: '2025-09-18' }, '2026-09-19'), true);
+  assert.equal(L.pausaLunga({ avvio_in_pausa_dal: '2025-09-19' }, '2026-09-19'), false);   // un anno giusto: non ancora
+  assert.equal(L.pausaLunga({ avvio_in_pausa_dal: '2026-09-01' }, '2026-09-19'), false);
+  assert.equal(L.pausaLunga({}, '2026-09-19'), false);
+  assert.equal(L.pausaLunga(null, '2026-09-19'), false);
+  assert.deepEqual(Object.keys(L.PASSI_SPENTI()).length, 14);
+  assert.ok(Object.values(L.PASSI_SPENTI()).every(v => v === false));
+});
+
 prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
   const f = (r) => L.fraseCard(r, '2026-09-18');
   assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });
