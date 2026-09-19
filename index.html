@@ -487,7 +487,9 @@
   .ag-evento { display: flex; background: var(--superficie); border-radius: var(--raggio-riga); margin-bottom: 8px; overflow: hidden; box-shadow: var(--ombra-card); }
   .ag-evento .ora { width: 64px; flex: none; padding: 12px 0 12px 12px; font-size: 13px; font-weight: 700; color: var(--testo); line-height: 1.3; }
   .ag-evento .ora small { display: block; font-weight: 500; color: var(--grigio); }
-  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 12px 0; border-radius: 4px; }
+  /* la barretta ha il colore della categoria della persona, come il tondo nella scheda (scelta «B» di Ignazio 19/09: viola, blu e arancio
+     vogliono dire Partner, Cliente e Prospect in tutta l'app; il tipo di appuntamento resta scritto nel titolo) */
+  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 12px 0; border-radius: 4px; background: var(--cat, var(--spento)); }
   .ag-evento .dentro { flex: 1; min-width: 0; }
   .ag-evento .apri { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; font-family: inherit; color: var(--testo); }
   .ag-evento .t { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -789,29 +791,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192311"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192311"></script>
-<script src="lista.js?v=202609192311"></script>
-<script src="rubrica.js?v=202609192311"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192311"></script>
-<script src="agenda.js?v=202609192311"></script>
-<script src="report.js?v=202609192311"></script>
-<script src="check.js?v=202609192311"></script>
-<script src="mappa.js?v=202609192311"></script>
-<script src="pagina-dashboard.js?v=202609192311"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192311"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192311"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192311"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192311"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192311"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192311"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192311"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192311"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192311"></script>
-<script src="benvenuto.js?v=202609192311"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192311"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192322"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192322"></script>
+<script src="lista.js?v=202609192322"></script>
+<script src="rubrica.js?v=202609192322"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192322"></script>
+<script src="agenda.js?v=202609192322"></script>
+<script src="report.js?v=202609192322"></script>
+<script src="check.js?v=202609192322"></script>
+<script src="mappa.js?v=202609192322"></script>
+<script src="pagina-dashboard.js?v=202609192322"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192322"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192322"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192322"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192322"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192322"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192322"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192322"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192322"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192322"></script>
+<script src="benvenuto.js?v=202609192322"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192322"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 23:11';
+const APP_VERSION = '2026.09.19 · 23:22';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1281,7 +1283,7 @@ function eventoAgenda(e, opz) {
   }
   return `<div class="ag-evento" data-evento="${esc(e.id)}">
     <div class="ora">${esc(inizio)}${fine ? `<small>${esc(fine)}</small>` : ''}</div>
-    <div class="barra-tipo" style="background:${r.colore}"></div>
+    <div class="barra-tipo ${classeCat(e.contatti && e.contatti.categoria)}"></div>
     <div class="dentro"><button class="apri"><div class="t">${esc(r.titolo)}</div><div class="s">${escIcone(r.sotto)}</div>${e.portatoNome ? `<div class="s">${rigaPortato(e.portatoNome)}</div>` : ''}</button>${extra}</div>
   </div>`;
 }
