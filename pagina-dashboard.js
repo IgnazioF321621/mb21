@@ -974,9 +974,12 @@ function apriObiettivi() {
   const prima = mesePrima ? D.nomeMese(mesePrima) : null;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${ic('obiettivi')} Obiettivi di ${esc(D.nomeMese(mese))}${esc(aNome())}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
-    ${prima ? `<p>Come vuoi partire?</p><div class="chips ob-modi">
+  // stessa forma degli altri moduli (cantiere 34)
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
+      <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">×</button></div>
+    <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
+    ${prima ? `<p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
       <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
       <button data-modo="vuoti">Scelgo io</button></div>
       <div class="ob-crescita">
@@ -984,12 +987,12 @@ function apriObiettivi() {
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
-      </div>` : `<p>Scrivi i tuoi obiettivi per questo mese.</p>`}
-    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<div class="ob-gruppo"><h4>${escIcone(pallino)}${esc(gruppo)}</h4><div class="ob-campi">
+      </div>` : `<p style="margin:0">Scrivi i tuoi obiettivi per questo mese.</p>`}</div>
+    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
       ${campi.map(([k, etichetta, decimale]) => `<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
     </div></div>`).join('')}
     <div class="errore" id="ob-errore"></div>
-    <div class="due"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
+    <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
   </div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
