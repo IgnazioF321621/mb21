@@ -1,10 +1,11 @@
 // MB21 · pagina personale «Profilo» (cantiere 25, decisioni di Ignazio 17/09): si apre dal cerchietto con le iniziali
 // in alto a destra in Dashboard, niente settima tab. È sempre la pagina di chi è entrato (il Partner Select non conta).
+// Dal cantiere 25 bis è «il mio quadro»: ogni voce è chiusa e si apre al tocco; la foto si cambia dal cerchio in alto a destra.
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
 // avvisi sul telefono (da qui, non più in Dashboard), «✨ Novità dell'app» (cantiere 28), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
 // nel database»): rimpicciolita dall'app a 200×200 JPEG e salvata come testo in `utenti.foto` con `imposta_foto`.
 // Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword…), pagina-novita.js (foglioNovita, versione),
-// pagina-dashboard.js (scegliNumero) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
+// pagina-dashboard.js (scegliNumero, domandaBigliettoHtml, collegaDomandaBiglietto) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
 // Si carica prima dello script della pagina: solo definizioni.
 
 // Iniziali per il cerchietto: «Ignazio Fiorito» → «IF»
@@ -32,29 +33,40 @@ async function apriProfilo() {
     dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', u.id).maybeSingle()),
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
     leggiPercorso(),   // cantiere 32: i propri «Perché iniziare» e i 14 passi (non letto = null: i due riquadri non si mostrano)
+    leggiMieiSegni(),  // cantiere 25 bis: le proprie targhette BBS · WES · CEP (non letti = la voce non si mostra)
   ]);
   AVV.mio = percorso;
   if (dati.data) { Object.assign(u, dati.data); ST.stato = { ...(ST.stato || { fatti_oggi: 0 }), contatti_al_giorno: dati.data.contatti_al_giorno }; }
   disegnaProfilo();
 }
 
-// «La mia scheda» (cantiere 32, Ignazio 19/09: la persona non ha una scheda contatto di sé stessa, e in Dashboard «Il mio avvio»
-// sparisce a 14/14 o ad avvio concluso): in cima al Profilo ci sono SEMPRE «🌟 Perché ho iniziato» (le voci scelte, con «Cambia» che
-// apre la schermata del benvenuto e torna qui) e «🚀 Il mio avvio · N/14» (il tocco apre i 14 passi: `mioPassiHtml`, gli stessi della Dashboard)
-const PF = { avvioAperto: false };
+// «Il mio quadro» (cantiere 25 bis, Ignazio 19/09: «per non essere ampio ogni voce deve essere collassata, che poi si apre»).
+// Tutte le voci nascono CHIUSE a ogni ingresso dalla Dashboard e l'app non ricorda quelle lasciate aperte (`PF.aperte` si svuota
+// al tocco del cerchietto). Una voce sola per tutte: `voceProfilo` (stessa schermata, stesso codice). Le righe che fanno una cosa
+// sola (Contatti al giorno → foglio dei numeri, Novità, Rivedi il benvenuto, Cambia password) hanno lo stesso aspetto ma agiscono al tocco (`rigaProfilo`).
+// In cima restano i due riquadri del cantiere 32: «🌟 Perché ho iniziato» («Cambia» apre la schermata del benvenuto e torna qui)
+// e «🚀 Il mio avvio · N/14» (i 14 passi: `mioPassiHtml`, gli stessi della Dashboard), ora collassabili come gli altri.
+const PF = { aperte: new Set(), segni: null };
+function voceProfilo(k, titolo, o) {   // o: { sotto, destra, sempre, corpo }
+  const aperta = PF.aperte.has(k);
+  return `<div class="pf-box pf-voce${o.classe ? ' ' + o.classe : ''}"><button class="avv-testa" data-voce="${k}"><span><b>${titolo}</b>${o.sotto ? `<small>${o.sotto}</small>` : ''}</span>
+      <span class="avv-conta">${o.destra ? o.destra + ' ' : ''}${aperta ? '⌄' : '›'}</span></button>
+      ${o.sempre || ''}${aperta ? `<div class="pf-corpo">${o.corpo}</div>` : ''}</div>`;
+}
+function rigaProfilo(id, titolo, destra) {
+  return `<div class="pf-box pf-voce"><button class="avv-testa" id="${id}"><span><b>${titolo}</b></span><span class="avv-conta">${destra ? destra + ' ' : ''}›</span></button></div>`;
+}
+
 function mioProfiloHtml() {
   const m = AVV.mio, L = MB21Lista;
   if (!m) return '';
   const righe = percheRigheHtml(m.perche), { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
   const stato = m.avvio_concluso_il ? `✅ concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(m.avvio_in_pausa_dal)}`
     : prossimo ? `👉 Prossimo passo: ${esc(prossimo.nome)}` : '🎉 Tutti i passi fatti';
-  return `<div class="pf-box"><h3>🌟 Perché ho iniziato</h3>
-      ${righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : '<small style="margin-top:0">Non l\'hai ancora scelto: bastano due tocchi.</small>'}
-      <button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button></div>
-    <div class="pf-box pf-avvio"><button class="avv-testa" id="pf-avvio"><span><b>🚀 Il mio avvio</b><small>${stato}</small></span>
-      <span class="avv-conta">${fatti}/${totale} ${PF.avvioAperto ? '⌄' : '›'}</span></button>
-      <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-      ${PF.avvioAperto ? mioPassiHtml(m) : ''}</div>`;
+  return voceProfilo('perche', '🌟 Perché ho iniziato', { sotto: righe.length ? '' : 'Non l\'hai ancora scelto: bastano due tocchi',
+      corpo: `${righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : ''}<button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button>` })
+    + voceProfilo('avvio', '🚀 Il mio avvio', { classe: 'pf-avvio', sotto: stato, destra: `${fatti}/${totale}`,
+      sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) });
 }
 
 function disegnaProfilo() {
@@ -68,45 +80,153 @@ function disegnaProfilo() {
     negato: `<div>🔔 Avvisi bloccati: riaccendili nelle Impostazioni del telefono (Notifiche → MB21).</div>`,
     no_supporto: `<div>🔔 Questo dispositivo non supporta gli avvisi.</div>`,
   };
+  const statoAvvisi = { acceso: 'accesi', spento: 'spenti', negato: 'bloccati', da_installare: 'da attivare', computer: 'dal telefono' }[s] || '';
+  const numero = (ST.stato || {}).contatti_al_giorno;
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
-    <div class="testa-pagina"><h1>Profilo</h1><span class="cerchio grande">${dentroCerchio(u)}</span></div>
-    <div class="sotto">La tua pagina personale</div>
+    <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>📷</i></button></div>
+    <div class="sotto">Il tuo quadro personale</div>
     ${mioProfiloHtml()}
-    <div class="pf-box"><h3>📷 Foto</h3>
-      <div class="pf-avvisi"><div class="riga"><label class="primario pf-foto">${u.foto ? 'Cambia foto' : 'Scegli la foto'}<input type="file" id="pf-foto" accept="image/*" hidden></label>${u.foto ? b('pf-foto-via', 'Togli') : ''}</div></div>
-      <small>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</small></div>
-    <div class="pf-box"><h3>👤 I tuoi dati</h3>
+    ${mieiSegniHtml()}
+    ${voceProfilo('dati', '👤 I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(u.partner_id || '—')}</b></div>
       <label>Telefono<input id="pf-tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" value="${esc(u.telefono || '')}" placeholder="+39 …"></label>
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
-      <small>Nome, email e codice Amway li cambia l'Admin.</small></div>
-    <div class="pf-box"><h3>📞 Contatti al giorno</h3>
-      <div class="pf-riga"><span>Quanti ne lavori ogni giorno</span><b>${esc(String((ST.stato || {}).contatti_al_giorno || '—'))}</b></div>
-      ${b('pf-numero', 'Cambia')}</div>
-    <div class="pf-box"><h3>Avvisi sul telefono</h3>
-      <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
-      <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div></div>
-    <div class="pf-box">${b('pf-novita', '✨ Novità dell\'app')}</div>
-    <div class="pf-box">${b('pf-benvenuto', '👋 Rivedi il benvenuto')}</div>
-    <div class="pf-box">${b('pf-password', '🔑 Cambia password')}</div>
+      <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
+    ${rigaProfilo('pf-numero', '📞 Contatti al giorno', esc(String(numero || '—')))}
+    ${voceProfilo('avvisi', '🔔 Avvisi sul telefono', { destra: statoAvvisi, corpo: `
+      <small style="margin-top:0">Alle <b>9</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
+      <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
+    ${rigaProfilo('pf-novita', '✨ Novità dell\'app')}
+    ${rigaProfilo('pf-benvenuto', '👋 Rivedi il benvenuto')}
+    ${rigaProfilo('pf-password', '🔑 Cambia password')}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  app.querySelectorAll('[data-voce]').forEach(t => { t.onclick = () => { const k = t.dataset.voce; PF.aperte.has(k) ? PF.aperte.delete(k) : PF.aperte.add(k); disegnaProfilo(); }; });
   su('pf-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('pf-foto-apri', foglioFoto);
+  collegaMieiSegni();
   su('pf-tel-salva', salvaTelefono);
-  const foto = document.getElementById('pf-foto'); if (foto) foto.onchange = () => salvaFoto(foto.files[0]);
-  su('pf-foto-via', () => salvaFoto(null));
   su('pf-numero', () => scegliNumero(disegnaProfilo));
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
-  su('pf-avvio', () => { PF.avvioAperto = !PF.avvioAperto; disegnaProfilo(); });
   collegaMioAvvio(disegnaProfilo, 'profilo');
   su('pf-benvenuto', () => apriBenvenuto());   // cantiere 32: le cinque schermate da capo, con quello che aveva già scelto
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
   collegaAvvisi();
+}
+
+// ── I MIEI SEGNI VITALI (cantiere 25 bis lavoro 2, Ignazio 19/09: «le tre targhette… da cliccare da parte dell'utente stesso») ──
+// `miei_segni()` dà i dati GREZZI della propria scheda (quella col proprio codice Amway, nella lista dell'Admin: il partner non la
+// legge direttamente); acceso/spento lo decide `MB21Lista.targheSegni`, la stessa funzione della scheda contatto e della Lista.
+// Le targhette sono sempre visibili, anche a voce chiusa. BBS e WES: tocco → da spenta la domanda «Hai il biglietto?» (la stessa
+// della Dashboard), da accesa il riepilogo con «Togli il biglietto» (`togli_mio_biglietto`), finché l'evento è in vendita.
+async function leggiMieiSegni() {
+  try {
+    const { data, error } = await dbq('i miei segni', supa.rpc('miei_segni'));
+    PF.segni = error ? null : (data || null);
+  } catch (e) { PF.segni = null; }
+}
+function mieTarghe() {
+  const g = PF.segni, L = MB21Lista;
+  return L.targheSegni(g.biglietti, g.cep, MB21Coda.oggiRoma(), { bbs: g.bbs && L.meseEvento(g.bbs), wes: g.wes && L.meseEvento(g.wes) });
+}
+function mieiSegniHtml() {
+  const g = PF.segni;
+  if (!g) return '';
+  const t = mieTarghe(), L = MB21Lista;
+  const targa = (k, scritta) => `<button class="sv-targa pf-targa ${k} ${t[k] ? 'on' : ''}" data-mia-targa="${k}">${scritta}</button>`;
+  return voceProfilo('segni', '📊 I miei Segni vitali', {
+    sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
+    corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
+      ${limitato() ? '' : '<button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>'}` });
+}
+function collegaMieiSegni() {
+  app.querySelectorAll('[data-mia-targa]').forEach(b => { b.onclick = () => (b.dataset.miaTarga === 'cep' ? toccaMioCep() : foglioMioBiglietto(b.dataset.miaTarga === 'bbs' ? 'BBS' : 'WES')); });
+  const mesi = document.getElementById('pf-12mesi');
+  if (mesi) mesi.onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };
+}
+// CEP (lavoro 3, Ignazio 19/09: «lo clicca l'utente se si abbona, e lo tolgo io se finisce l'abbonamento»): da spenta la conferma
+// «Ti sei abbonato al CEP?» → `segna_mio_cep` (periodo dal 1° del mese in corso); da accesa il riepilogo (`MB21Lista.descrizioneCep`,
+// lo stesso della scheda contatto). «Spegni» c'è solo nello stesso giorno dell'accensione (`oggi_mio`): dopo lo chiude l'Admin.
+async function toccaMioCep() {
+  const g = PF.segni, L = MB21Lista, oggi = MB21Coda.oggiRoma();
+  if (!g.scheda) return mostraToast('Non hai ancora una scheda collegata al tuo codice Amway: chiedi all\'Admin');
+  const dopo = async () => { await leggiMieiSegni(); disegnaProfilo(); };
+  const periodo = (g.cep || []).find(x => x.dal <= oggi && (!x.uscito_il || x.uscito_il >= oggi));
+  if (!periodo) {
+    const mese = new Date(oggi + 'T12:00:00Z').toLocaleDateString('it-IT', { month: 'long', timeZone: 'UTC' });
+    if (!await chiediConferma('Ti sei abbonato al CEP?', `La targhetta si accende dal 1° di ${mese} e la vede anche chi ti segue. Quando l'abbonamento finisce la spegne l'Admin.`, 'Sì, accendi il CEP')) return;
+    const { error } = await dbq('accendo il mio CEP', supa.rpc('segna_mio_cep'));
+    if (error) return mostraToast(error.message || 'Non salvato: riprova.');
+    mostraToast('CEP acceso ✅');
+    return dopo();
+  }
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>✅ CEP</h3>
+    <p>Abbonato ${esc(L.descrizioneCep(g.cep, oggi).replace(' · abbonato', ', per ora').replace(' · rinnovo del 1° da verificare', ''))}.${periodo.mio ? '' : ` È sulla scheda di ${esc(g.compagno || 'compagno/a')}.`}
+      ${periodo.oggi_mio ? ' L\'hai acceso oggi: se è stato un errore puoi spegnerlo, solo per oggi.' : ' Se non rinnovi lo spegne l\'Admin.'}</p>
+    <div class="due">${periodo.oggi_mio ? '<button class="link" id="pf-cep-via" style="color:var(--rosso)">Spegni il CEP</button>' : '<span></span>'}<button class="link" id="pf-cep-no">Chiudi</button></div></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) velo.remove(); };
+  velo.querySelector('#pf-cep-no').onclick = () => velo.remove();
+  const via = velo.querySelector('#pf-cep-via');
+  if (via) via.onclick = async () => {
+    via.disabled = true;
+    const { error } = await dbq('spengo il mio CEP', supa.rpc('togli_mio_cep'));
+    if (error) { via.disabled = false; return mostraToast(error.message || 'Non spento: riprova.'); }
+    velo.remove(); mostraToast('CEP spento'); dopo();
+  };
+}
+
+function foglioMioBiglietto(tipo) {
+  const g = PF.segni, L = MB21Lista, k = tipo.toLowerCase(), nome = tipo === 'BBS' ? 'BBS' : 'Wes', evento = g[k];
+  if (!g.scheda) return mostraToast('Non hai ancora una scheda collegata al tuo codice Amway: chiedi all\'Admin');
+  if (!evento) return mostraToast(`Nessun ${nome} in vendita adesso`);
+  const big = (g.biglietti || []).find(b => b.tipo === tipo && b.evento === evento);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const chiudi = () => velo.remove(), dopo = async () => { chiudi(); await leggiMieiSegni(); disegnaProfilo(); };
+  if (!big) {
+    velo.innerHTML = `<div class="foglio">${domandaBigliettoHtml({ tipo, evento, compagno: g.compagno }, 'pf-domanda')}
+      <button class="link" id="pf-big-no" style="display:block;margin:6px auto 0">Annulla</button></div>`;
+  } else {
+    const chi = [big.contatto ? 'tu' : '', big.compagno ? esc(g.compagno || 'compagno/a') : '', big.ospiti ? `${big.ospiti} ospit${big.ospiti === 1 ? 'e' : 'i'}` : ''].filter(Boolean).join(' · ');
+    velo.innerHTML = `<div class="foglio"><h3>🎟 ${nome} ${esc(L.etichettaEvento(evento))}</h3>
+      <p>Biglietto segnato: <b>${chi}</b>.${big.mio ? ' Per cambiarlo toglilo e segnalo di nuovo.' : ` È sulla scheda di ${esc(g.compagno || 'compagno/a')}: per cambiarlo chiedi all'Admin.`}</p>
+      <div class="due">${big.mio ? '<button class="link" id="pf-big-via" style="color:var(--rosso)">Togli il biglietto</button>' : '<span></span>'}<button class="link" id="pf-big-no">Chiudi</button></div></div>`;
+  }
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#pf-big-no').onclick = chiudi;
+  collegaDomandaBiglietto(velo, dopo);
+  const via = velo.querySelector('#pf-big-via');
+  if (via) via.onclick = async () => {
+    via.disabled = true;
+    const { error } = await dbq('togli il mio biglietto', supa.rpc('togli_mio_biglietto', { p_tipo: tipo, p_evento: evento }));
+    if (error) { via.disabled = false; return mostraToast(error.message || 'Non tolto: riprova.'); }
+    mostraToast('Biglietto tolto');
+    dopo();
+  };
+}
+
+// Foto (cantiere 25 bis, Ignazio 19/09: «la card foto la toglierei, il cambio solo dalla foto stessa in alto a destra»):
+// il tocco sul cerchio apre il foglietto «Scegli/Cambia foto · Togli foto · Annulla»
+function foglioFoto() {
+  const c = ST.utente.foto, velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>📷 La tua foto</h3><p>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</p>
+    <label class="primario pf-foto" style="display:block">${c ? 'Cambia foto' : 'Scegli la foto'}<input type="file" id="pf-foto" accept="image/*" hidden></label>
+    <div class="due" style="margin-top:8px">${c ? '<button class="link" id="pf-foto-via" style="color:var(--rosso)">Togli foto</button>' : '<span></span>'}<button class="link" id="pf-foto-no">Annulla</button></div></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) velo.remove(); };
+  velo.querySelector('#pf-foto-no').onclick = () => velo.remove();
+  const via = velo.querySelector('#pf-foto-via'); if (via) via.onclick = () => { velo.remove(); salvaFoto(null); };
+  const foto = velo.querySelector('#pf-foto'); foto.onchange = () => { const f = foto.files[0]; velo.remove(); salvaFoto(f); };
 }
 
 async function salvaTelefono() {

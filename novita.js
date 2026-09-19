@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.19 · 14:21', pagina: 'app', titolo: 'Profilo: il tuo quadro, con BBS · WES · CEP da toccare',
+      testo: 'Nel Profilo (il cerchietto in alto a destra in Dashboard) ogni voce ora è chiusa e si apre con un tocco. Ci sono le tue targhette BBS · WES · CEP: toccale per segnare il tuo biglietto, o il CEP quando ti abboni. La foto si cambia toccando il cerchio in alto a destra.' },
     { quando: '2026.09.19 · 11:54', pagina: 'app', titolo: 'Profilo: i tuoi «perché» e il tuo avvio, sempre',
       testo: 'In cima al Profilo (il cerchietto in alto a destra in Dashboard) trovi «🌟 Perché ho iniziato», con quello che hai scelto e «Cambia» per aggiornarlo, e «🚀 Il mio avvio» con i tuoi 14 passi. Ci sono sempre, anche quando l\'avvio è finito e in Dashboard il riquadro non c\'è più: i tuoi obiettivi restano a portata di mano.' },
     { quando: '2026.09.19 · 10:41', pagina: 'app', titolo: '👋 Il benvenuto di MB21',

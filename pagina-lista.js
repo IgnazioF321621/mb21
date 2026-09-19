@@ -864,7 +864,7 @@ async function sezioneSegni() {
       ${aperto ? (dis ? '' : '<button class="sv-piu" data-cep-esci>Non ha rinnovato</button>') : `<span class="sotto" style="margin:0">→</span>
       <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">`}
       ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
-    </div>`; };
+    </div>${p.segnato_da ? `<div class="sotto" style="margin:-2px 0 8px">📱 acceso dal partner, dal suo Profilo${p.aggiornato_il ? ' il ' + esc(MB21Lista.data(p.aggiornato_il)) : ''}</div>` : ''}`; };   // cantiere 25 bis
   const riquadroCep = () => {
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
         <small class="sotto" style="margin:0">${esc(MB21Lista.descrizioneCep(SV.cep, MB21Coda.oggiRoma()))}</small>

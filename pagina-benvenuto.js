@@ -229,5 +229,5 @@ async function mostraRigaTelefono() {
   const posto = document.getElementById('riga-telefono');
   if (!testo || !posto) return;
   posto.innerHTML = `<button class="ag-blocco bv-telefono" id="bv-telefono"><span>${esc(testo)}</span><span>›</span></button>`;
-  document.getElementById('bv-telefono').onclick = () => { ST.tab = 'profilo'; mostraTab(); };
+  document.getElementById('bv-telefono').onclick = () => { PF.aperte.clear(); PF.aperte.add('avvisi'); ST.tab = 'profilo'; mostraTab(); };   // 25 bis: nel Profilo la voce «Avvisi» già aperta
 }
