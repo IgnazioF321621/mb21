@@ -79,9 +79,11 @@ const ICONE_CONTATTA = {
   telegram: '<svg class="ic-tg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
 };
 
+// Dal cantiere 34 i bottoni per contattare usano le icone a tratto; Telegram non ce l'ha ancora (da chiedere a Design): resta il suo disegno, a un colore
+const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp' };
 function contattaHtml(telefono) {
   const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
-  const link = (href, icona, testo) => `<a href="${esc(href)}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
+  const link = (href, icona, testo) => `<a href="${esc(href)}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
   return `<div class="contatta">${link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
 }
 
@@ -188,16 +190,16 @@ function cardNome(r) {
   const sotto = [r.area || r.ultima_area, r.professione].filter(Boolean).join(' · ');
   const tel = r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml
   return `
-    <div class="cn" data-id="${esc(r.id)}">
-      <div class="striscia" style="background:${coloreCategoria(r.categoria)}"></div>
+    <div class="cn ${classeCat(r.categoria)}" data-id="${esc(r.id)}">
+      <span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>
       <div class="dentro">
         <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
-        <div class="frase">${frase.futuro ? '📅 ' : ''}${esc(frase.testo)}</div>
+        <div class="frase">${frase.futuro ? ic('agenda') + ' ' : ''}${esc(frase.testo)}</div>
         ${sotto ? `<div class="prof">${esc(sotto)}</div>` : ''}
         ${coppiaCard(r)}
       </div>
-      <a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ICONE_CONTATTA.call}</a>
-      <button class="menu" data-id="${esc(r.id)}" aria-label="Menu">…</button>
+      <a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ic('contatto')}</a>
+      <button class="menu" data-id="${esc(r.id)}" aria-label="Menu">${ic('puntini')}</button>
     </div>`;
 }
 
@@ -323,7 +325,7 @@ function mostraAvvio(c) {
   const posto = document.getElementById('avvio-posto');
   if (!posto || !LS.avvio || LS.avvio.id !== c.id || c.categoria !== 'Partner') return;
   const { fatti, totale } = MB21Lista.contatoreOnboarding(c), prossimo = MB21Lista.prossimoPasso(c);
-  const stato = LS.avvio.concluso ? ['✅', 'Avvio concluso'] : LS.avvio.pausa ? ['⏸', 'Avvio in pausa'] : ['🚀', 'Avvio'];
+  const stato = LS.avvio.concluso ? [ic('fatto'), 'Avvio concluso'] : LS.avvio.pausa ? [ic('pausa'), 'Avvio in pausa'] : [ic('avvio'), 'Avvio'];
   posto.innerHTML = `<button class="app-riga" id="avvio-riga"><span class="ico">${stato[0]}</span>
     <div>${stato[1]} · ${fatti}/${totale}${LS.avvio.concluso || LS.avvio.pausa ? '' : `<small>${prossimo ? 'Prossimo passo: ' + esc(prossimo.nome) : 'Tutti i passi sono fatti'}</small>`}</div><span class="freccia">${LS.sezione === 'onboarding' ? '⌄' : '›'}</span></button>`;
   document.getElementById('avvio-riga').onclick = () => {
@@ -356,12 +358,12 @@ function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
     <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
-    <div class="testata">
-      <div class="strip" style="background:${coloreCategoria(c.categoria)}"></div>
+    <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
-          <div>
-            <div class="cat" style="color:${coloreCategoria(c.categoria)}">${esc(c.categoria || 'Senza categoria')}</div>
+          <span class="ts-pastiglia">${esc(iniziali(c.nome))}</span>
+          <div class="ts-chi">
+            <div class="cat">${esc(c.categoria || 'Senza categoria')}</div>
             <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
@@ -429,12 +431,12 @@ async function mostraInvito(c) {
   }
   if (LS.contatto !== c || !posto.isConnected) return;
   const come = LS.utenteMb21[c.id];
-  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? '✕ Scollega dall\'utente' : '🔗 È già utente dell\'app: collega'}</button>` : '';
+  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? '✕ Scollega dall\'utente' : ic('collega') + ' È già utente dell\'app: collega'}</button>` : '';
   const uso = c.app || (LS.usoApp && LS.usoApp[c.id]);
   const dettaglio = uso ? `ultimo uso ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())} · ${uso.nomi} nomi in lista` : 'ultimo uso non disponibile';
   posto.innerHTML = come
-    ? `<div class="app-riga"><span class="ico">📱</span><div>Usa l'app<small>${esc(dettaglio)}</small></div></div>${come === 'collegato' ? collega : ''}`
-    : `<button class="link" id="invita-app">🔗 Invita nell'app</button>${collega}`;
+    ? `<div class="app-riga"><span class="ico">${ic('app')}</span><div>Usa l'app<small>${esc(dettaglio)}</small></div></div>${come === 'collegato' ? collega : ''}`
+    : `<button class="link" id="invita-app">${ic('collega')} Invita nell'app</button>${collega}`;
   const inv = document.getElementById('invita-app');
   if (inv) inv.onclick = () => foglioLinkInvito({ da: c.user_id, nome: c.nome, telefono: c.telefono });
   const col = document.getElementById('collega-mb21');
@@ -475,7 +477,7 @@ async function rigaCompleanno(c) {
   const { data, error } = await dbq('compleanno', supa.from('contatti').select('compleanno').eq('id', c.id).maybeSingle());
   const posto = document.getElementById('dati-compleanno');
   if (error || !data || !data.compleanno || !posto || LS.contatto !== c || LS.sezione !== 'dati') return;
-  posto.innerHTML = `<small>Compleanno</small>🎂 ${esc(MB21Rubrica.compleannoScritto(data.compleanno))}`;
+  posto.innerHTML = `<small>Compleanno</small>${ic('compleanno')} ${esc(MB21Rubrica.compleannoScritto(data.compleanno))}`;
   posto.hidden = false;
 }
 
@@ -555,7 +557,7 @@ async function sezioneAzioni() {
   if (LS.sezione !== 'azioni') return;
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
     <div class="azione">
-      <div class="t">🤝 Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
+      <div class="t">${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.esito].filter(Boolean).join(' • '))}</div>
       <div class="comandi"><button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
     </div>` : `
@@ -663,27 +665,27 @@ function sezioneOnboarding() {
       <div class="riquadro"><div style="display:flex;justify-content:space-between;font-weight:700">
         <span>Passi di base per il successo</span><span id="conta-onb">${fatti}/${totale}</span></div>
         <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-        <div class="avvio-prossimo">${prossimo ? `👉 Prossimo passo: <b>${esc(prossimo.nome)}</b> <small>${esc(prossimo.descr)}</small>` : '🎉 Tutti i passi sono fatti'}</div>
+        <div class="avvio-prossimo">${prossimo ? `${ic('prossimo')} Prossimo passo: <b>${esc(prossimo.nome)}</b> <small>${esc(prossimo.descr)}</small>` : ic('complimenti') + ' Tutti i passi sono fatti'}</div>
         ${entrato ? `<div class="sotto" style="margin:4px 0 0">${esc(entrato)}</div>` : ''}</div>
       ${a && a.altra ? `<div class="avviso">Per «Partner da avviare» vale la scheda nella lista di <b>${esc(a.altra.lista || 'un upline')}</b> (lo sponsor, seguendo la mappa Amway): i passi segnati qui lì non si vedono.
         ${a.altra.mia ? '<button class="link" id="avvio-altra" style="display:block;padding:6px 0 0">Apri quella scheda ›</button>' : ''}</div>` : ''}
       <div class="riquadro">${MB21Lista.PASSI_ONBOARDING.map(([col, nome, descr]) => `
-        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${col === 'onb_sogno' && a ? percheHtml(a.perche) : ''}${perche[col] ? `<small class="avvio-proposta">💡 L'app propone: ${esc(perche[col])}</small>` : ''}</span>
+        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${col === 'onb_sogno' && a ? percheHtml(a.perche) : ''}${perche[col] ? `<small class="avvio-proposta">${ic('propone')} L'app propone: ${esc(perche[col])}</small>` : ''}</span>
           <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${fermo ? 'disabled' : ''}></label>`).join('')}
       </div>
       ${fermo || !a ? '' : a.concluso
-        ? `<div class="riquadro"><b>✅ Avvio concluso il ${MB21Lista.data(a.concluso)}</b>
+        ? `<div class="riquadro"><b>${ic('fatto')} Avvio concluso il ${MB21Lista.data(a.concluso)}</b>
             <div class="sotto" style="margin:4px 0 8px">Non è più tra i partner da avviare. I passi restano qui.</div>
             <button class="link" id="avvio-riapri" style="padding:0">Riapri l'avvio</button></div>`
         : a.pausa
-        ? `<div class="riquadro"><b>⏸ Avvio in pausa dal ${MB21Lista.data(a.pausa)}</b>
+        ? `<div class="riquadro"><b>${ic('pausa')} Avvio in pausa dal ${MB21Lista.data(a.pausa)}</b>
             <div class="sotto" style="margin:4px 0 8px">Fermo per ora: non è tra i partner da avviare, lo ritrovi in fondo a quella pagina. I passi restano qui.</div>
-            <button class="link" id="avvio-riprendi" style="padding:0">▶️ Riprendi l'avvio</button>
+            <button class="link" id="avvio-riprendi" style="padding:0">${ic('riprendi')} Riprendi l'avvio</button>
             ${MB21Lista.pausaLunga({ avvio_in_pausa_dal: a.pausa }, MB21Coda.oggiRoma()) ? `<div class="sotto" style="margin:10px 0 4px">In pausa da più di un anno: alla ripresa l'avvio si rifà da capo.</div>
-              <button class="link" id="avvio-dacapo" style="padding:0">🔄 Riprendi da capo (i 14 passi tornano da fare)</button>` : ''}</div>`
-        : `<div class="riquadro"><button class="primario" id="avvio-concludi">✅ Avvio concluso</button>
-            <div class="sotto" style="margin:8px 0 12px">Quando il partner cammina da solo: la riga in alto diventa «✅ Avvio concluso». Si può sempre riaprire.</div>
-            <button class="link" id="avvio-pausa" style="padding:0">⏸ Metti in pausa</button>
+              <button class="link" id="avvio-dacapo" style="padding:0">${ic('aggiorna')} Riprendi da capo (i 14 passi tornano da fare)</button>` : ''}</div>`
+        : `<div class="riquadro"><button class="primario" id="avvio-concludi">${ic('fatto')} Avvio concluso</button>
+            <div class="sotto" style="margin:8px 0 12px">Quando il partner cammina da solo: la riga in alto diventa «${ic('fatto')} Avvio concluso». Si può sempre riaprire.</div>
+            <button class="link" id="avvio-pausa" style="padding:0">${ic('pausa')} Metti in pausa</button>
             <div class="sotto" style="margin:4px 0 0">Se per ora è fermo: esce dai partner da avviare finché non lo riprendi. Chi si è ritirato davvero cambia categoria con «Modifica».</div></div>`}`;
     // campo: 'concluso' (avvio_concluso_il) o 'pausa' (avvio_in_pausa_dal); giorno vuoto = riaperto / ripreso
     const segna = async (campo, giorno) => {
@@ -787,7 +789,7 @@ async function caricaSegni(c) {
 // Targhetta 📱 dell'app, bianca e senza colore (cantiere 20 lavoro 4): uso = { ultimo_uso } dell'utente, vuoto = non ha l'app.
 // Stessa targhetta in Mappa, card della Lista e scheda contatto.
 function targaAppHtml(uso) {
-  return uso ? `<span class="sv-targa app" title="Ultimo uso dell'app">📱 ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())}</span>` : '';
+  return uso ? `<span class="sv-targa app" title="Ultimo uso dell'app">${ic('app')} ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())}</span>` : '';
 }
 // t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
 function targheHtml(t, numeri) {
@@ -889,7 +891,7 @@ async function sezioneSegni() {
       ${aperto ? (dis ? '' : '<button class="sv-piu" data-cep-esci>Non ha rinnovato</button>') : `<span class="sotto" style="margin:0">→</span>
       <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">`}
       ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
-    </div>${p.segnato_da ? `<div class="sotto" style="margin:-2px 0 8px">📱 acceso dal partner, dal suo Profilo${p.aggiornato_il ? ' il ' + esc(MB21Lista.data(p.aggiornato_il)) : ''}</div>` : ''}`; };   // cantiere 25 bis
+    </div>${p.segnato_da ? `<div class="sotto" style="margin:-2px 0 8px">${ic('app')} acceso dal partner, dal suo Profilo${p.aggiornato_il ? ' il ' + esc(MB21Lista.data(p.aggiornato_il)) : ''}</div>` : ''}`; };   // cantiere 25 bis
   const riquadroCep = () => {
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
         <small class="sotto" style="margin:0">${esc(MB21Lista.descrizioneCep(SV.cep, MB21Coda.oggiRoma()))}</small>
@@ -1125,4 +1127,4 @@ async function aggiungiPortatoDa(azioni) {
   for (const a of azioni) a.portatoNome = nomi[a.portato_da] || null;
   return azioni;
 }
-const rigaPortato = nome => nome ? `🤝 Portato da ${esc(nome)}` : '';
+const rigaPortato = nome => nome ? `${ic('squadra')} Portato da ${esc(nome)}` : '';
