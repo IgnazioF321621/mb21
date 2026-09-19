@@ -651,7 +651,9 @@ function sezioneOnboarding() {
         : a.pausa
         ? `<div class="riquadro"><b>⏸ Avvio in pausa dal ${MB21Lista.data(a.pausa)}</b>
             <div class="sotto" style="margin:4px 0 8px">Fermo per ora: non è tra i partner da avviare, lo ritrovi in fondo a quella pagina. I passi restano qui.</div>
-            <button class="link" id="avvio-riprendi" style="padding:0">▶️ Riprendi l'avvio</button></div>`
+            <button class="link" id="avvio-riprendi" style="padding:0">▶️ Riprendi l'avvio</button>
+            ${MB21Lista.pausaLunga({ avvio_in_pausa_dal: a.pausa }, MB21Coda.oggiRoma()) ? `<div class="sotto" style="margin:10px 0 4px">In pausa da più di un anno: alla ripresa l'avvio si rifà da capo.</div>
+              <button class="link" id="avvio-dacapo" style="padding:0">🔄 Riprendi da capo (i 14 passi tornano da fare)</button>` : ''}</div>`
         : `<div class="riquadro"><button class="primario" id="avvio-concludi">✅ Avvio concluso</button>
             <div class="sotto" style="margin:8px 0 12px">Quando il partner cammina da solo: la riga in alto diventa «✅ Avvio concluso». Si può sempre riaprire.</div>
             <button class="link" id="avvio-pausa" style="padding:0">⏸ Metti in pausa</button>
@@ -679,6 +681,24 @@ function sezioneOnboarding() {
     const pausa = document.getElementById('avvio-pausa'), riprendi = document.getElementById('avvio-riprendi');
     if (pausa) pausa.onclick = () => segna('pausa', MB21Coda.oggiRoma());
     if (riprendi) riprendi.onclick = () => segna('pausa', null);
+    // Riprendi da capo (pausa di più di un anno): toglie la pausa e spegne i 14 passi; Annulla rimette tutto com'era
+    const dacapo = document.getElementById('avvio-dacapo');
+    if (dacapo) dacapo.onclick = async () => {
+      if (soloGuardo()) return;
+      const prima = { avvio_in_pausa_dal: a.pausa, ...Object.fromEntries(MB21Lista.PASSI_ONBOARDING.map(([col]) => [col, c[col] === true])) };
+      const metti = async (campi, annulla) => {
+        const { error } = await dbq('avvio da capo', supa.from('contatti').update(campi).eq('id', c.id));
+        if (error) return mostraToast('Non salvato: riprova.');
+        const { avvio_in_pausa_dal, ...passi } = campi;
+        Object.assign(c, passi);
+        const riga = LS.righe.find(x => x.id === c.id);
+        if (riga) Object.assign(riga, passi);
+        LS.avvio = { ...LS.avvio, pausa: avvio_in_pausa_dal };
+        disegnaScheda();
+        mostraToast(annulla ? `Avvio di ${c.nome} ripreso da capo: 14 passi da fare` : `Avvio di ${c.nome}: rimesso com'era`, annulla ? () => metti(prima, false) : null);
+      };
+      metti({ avvio_in_pausa_dal: null, ...MB21Lista.PASSI_SPENTI() }, true);
+    };
     box.querySelectorAll('[data-passo]').forEach(i => i.onchange = async () => {
       if (soloGuardo()) { i.checked = !i.checked; return; }
       const col = i.dataset.passo;

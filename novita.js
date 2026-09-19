@@ -5,10 +5,12 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.19 · 06:08', pagina: 'dashboard', titolo: 'Partner da avviare: «Come funziona», pausa e ripresa da capo',
+      testo: 'Nella pagina «🚀 Partner da avviare» in alto c\'è «ℹ️ Come funziona», con tutto spiegato in poche righe. Chi ha il partner nella sua lista ora può segnare i passi, metterlo «⏸ In pausa» o «✅ Avvio concluso» direttamente da lì, senza aprire la scheda. E se un partner è rimasto in pausa più di un anno, alla ripresa trovi «🔄 Riprendi da capo»: i 14 passi tornano tutti da fare.' },
     { quando: '2026.09.19 · 05:47', pagina: 'dashboard', titolo: '🚀 Il mio avvio: i tuoi primi passi',
       testo: 'Se sei entrato da poco, in Dashboard trovi «🚀 Il mio avvio»: i 14 passi di base per partire bene, con il prossimo in evidenza. Toccalo e segna da solo i passi man mano che li fai: li vede anche chi ti segue, così sa come aiutarti.' },
     { quando: '2026.09.19 · 05:47', pagina: 'dashboard', titolo: '🚀 Partner da avviare',
-      testo: 'Se nel tuo ramo ci sono partner con l\'avvio ancora aperto, in Dashboard trovi la riga «🚀 Partner da avviare»: toccala e vedi i nomi, dal più recente, con i passi fatti, il prossimo passo e tra [ ] lo sponsor a cui rivolgerti («Tuo/a» se l\'hai sponsorizzato tu). Tocca un nome per vedere tutti i suoi passi. Vale per chi hai sponsorizzato tu e per chi sta più sotto, così nessun nuovo resta solo.' },
+      testo: 'Se nel tuo Team ci sono partner con l\'avvio ancora aperto, in Dashboard trovi la riga «🚀 Partner da avviare»: toccala e vedi i nomi, dal più recente, con i passi fatti, il prossimo passo e tra [ ] lo sponsor a cui rivolgerti («Tuo/a» se l\'hai sponsorizzato tu). Tocca un nome per vedere tutti i suoi passi. Vale per chi hai sponsorizzato tu e per chi sta più sotto, così nessun nuovo resta solo.' },
     { quando: '2026.09.19 · 05:47', pagina: 'lista', titolo: 'Partner: «Onboarding» diventa la riga «🚀 Avvio»',
       testo: 'Nella scheda di un tuo Partner la linguetta «Onboarding» non c\'è più: sotto il nome trovi la riga «🚀 Avvio» con i passi fatti e il prossimo passo da fare con lui. Toccala per aprire i 14 passi (il Sogno ora è il primo) e vedere da quanto è entrato. Quando cammina da solo tocca «Avvio concluso»; se per ora è fermo, «Metti in pausa». Puoi sempre riaprire. Dove l\'app sa già qualcosa (è nel file Amway, ha un biglietto BBS…) te lo propone con la lampadina 💡: il passo lo segni sempre tu.' },
     { quando: '2026.09.18 · 21:30', pagina: 'lista', titolo: 'Il compleanno nella scheda del contatto',

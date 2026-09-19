@@ -199,6 +199,12 @@
     return PASSI_ONBOARDING.filter(([col]) => PERCHE_AVVIO[col] && sapute[col] === true && !(r && r[col] === true))
       .map(([col, nome]) => ({ col, nome, perche: PERCHE_AVVIO[col] }));
   }
+  // Pausa lunga (Ignazio 19/09): in pausa da più di un anno → alla ripresa l'app propone «Riprendi da capo» (i 14 passi tornano da fare)
+  function pausaLunga(r, oggi) {
+    if (!r || !r.avvio_in_pausa_dal || !oggi) return false;
+    return (Date.parse(oggi + 'T12:00:00Z') - Date.parse(String(r.avvio_in_pausa_dal).slice(0, 10) + 'T12:00:00Z')) / 86400000 > 365;
+  }
+  const PASSI_SPENTI = () => Object.fromEntries(PASSI_ONBOARDING.map(([col]) => [col, false]));
   // Da quanto è entrato (data di ingresso del file Amway, «2026-09-06»): solo un'informazione, nessun allarme. Senza data → ''
   function entratoDa(ingresso, oggi) {
     if (!ingresso || !oggi) return '';
@@ -392,7 +398,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

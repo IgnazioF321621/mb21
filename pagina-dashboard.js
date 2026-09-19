@@ -526,11 +526,15 @@ function collegaConferme() {
 // Segue il Partner Select (il ramo del partner guardato); con «Tutti» e offline non si mostra. Chi ha la scheda in lista (o l'Admin)
 // la apre dal nome; gli altri upline vedono soltanto. **Per ora solo l'Admin spunta i passi e chiude l'avvio da qui** (Ignazio:
 // «poi il leader»): scrive sulla scheda che vale, anche quando è nella lista di un altro.
+// Dal 19/09 (Ignazio: «anche lo sponsor lo può mettere in pausa»): chi ha la scheda nella SUA lista ha qui gli stessi comandi che ha
+// già nella scheda (passi, pausa, concluso, riprendi); gli altri upline vedono soltanto. In pausa da più di un anno
+// (`MB21Lista.pausaLunga`): accanto a «▶️ Riprendi» c'è «🔄 Riprendi da capo», che toglie la pausa e spegne i 14 passi (con Annulla).
+// In alto «ℹ️ Come funziona», chiusa, con il riassunto di tutto.
 // Lavoro 4 (Ignazio 19/09: «l'app propone ed io decido»): «💡 L'app propone» elenca i passi spenti che l'app sa già (`MB21Lista.proposteAvvio`
 // su `sa` di `avvio_del_ramo()`), con il perché; niente si accende da solo, «Segna» è lo stesso tocco del passo.
 // Per il nuovo: «🚀 Il mio avvio» nella SUA Dashboard (`mio_avvio()`, `smarca_mio_passo()`): vede i suoi 14 passi e li smarca da solo;
 // la scheda resta nella lista dello sponsor e lui non la vede. Sparisce con l'avvio concluso, in pausa o a passi finiti.
-const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, mio: null, mioAperto: false };
+const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, comeAperto: false, mio: null, mioAperto: false };
 function ricalcolaAvvio() {
   AVV.righe = MB21Lista.partnerDaAvviare(AVV.tutte, visto().partner_id);
   AVV.pausa = MB21Lista.partnerInPausa(AVV.tutte, visto().partner_id);
@@ -587,23 +591,24 @@ function disegnaAvvio() {
     const { fatti, totale } = L.contatoreOnboarding(r), prossimo = L.prossimoPasso(r), aperto = AVV.aperto === r.partner_id;
     const entrato = L.entratoDa(r.data_ingresso, ST.oggi);
     const proposte = L.proposteAvvio(r);   // lavoro 4: l'app propone, chi spunta decide
-    const mia = r.user_id === ST.utente.id || admin;
+    const mia = r.user_id === ST.utente.id || admin;   // ha la scheda in lista (o è l'Admin): apre la scheda e ha i comandi
     return `<div class="riquadro avv-partner">
       <button class="avv-testa" data-avvio="${esc(r.partner_id)}">
         <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${diretto(r) ? ' tuo' : ''}">[${diretto(r) ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
-          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
+          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}${L.pausaLunga(r, ST.oggi) ? ' · più di un anno' : ''}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-      ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => admin
+      ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => mia
           ? `<button class="${r[col] ? 'fatto' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</button>`
           : `<span class="${r[col] ? 'fatto' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</span>`).join('')}</div>
         ${proposte.length ? `<div class="avv-proposte"><b>💡 L'app propone</b>${proposte.map(p => `<div><span>${esc(p.nome)}: ${esc(p.perche)}</span>
-            ${admin ? `<button class="piccolo" data-spunta="${p.col}" data-di="${esc(r.partner_id)}">Segna</button>` : ''}</div>`).join('')}</div>` : ''}
-        <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${admin ? '. Da Admin: tocca un passo per segnarlo o toglierlo.' : ''}</div>
+            ${mia ? `<button class="piccolo" data-spunta="${p.col}" data-di="${esc(r.partner_id)}">Segna</button>` : ''}</div>`).join('')}</div>` : ''}
+        <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${mia ? '. Tocca un passo per segnarlo o toglierlo.' : ''}</div>
         <div class="avv-azioni">
           ${mia ? `<button class="link" data-apri-scheda="${esc(r.contatto_id)}">Apri la scheda ›</button>` : ''}
-          ${admin ? (r.avvio_in_pausa_dal
-            ? `<button class="link" data-chiudi="riprendi" data-di="${esc(r.partner_id)}">▶️ Riprendi</button>`
+          ${mia ? (r.avvio_in_pausa_dal
+            ? `<button class="link" data-chiudi="riprendi" data-di="${esc(r.partner_id)}">▶️ Riprendi</button>
+               ${L.pausaLunga(r, ST.oggi) ? `<button class="link" data-chiudi="dacapo" data-di="${esc(r.partner_id)}">🔄 Riprendi da capo</button>` : ''}`
             : `<button class="link" data-chiudi="pausa" data-di="${esc(r.partner_id)}">⏸ In pausa</button>
                <button class="link" data-chiudi="concluso" data-di="${esc(r.partner_id)}">✅ Avvio concluso</button>`) : ''}
         </div>` : ''}
@@ -611,17 +616,28 @@ function disegnaAvvio() {
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
     <h1>🚀 Partner da avviare</h1>
-    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor${altro ? '' : ', «Tuo/a» se è tuo'}. Tocca un nome per vedere i suoi passi.</div>
+    <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
+    <button class="ag-blocco avv-come" id="avv-come"><span>ℹ️ Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
+    ${AVV.comeAperto ? `<div class="riquadro avv-come-testo"><ul>
+      <li>Qui vedi i partner ${altro ? 'del Team' : 'del tuo Team'} con l'avvio aperto, dal più recente. Tra [ ] c'è lo sponsor: è a lui che ti rivolgi${altro ? '' : '; «Tuo/a» se è tuo'}.</li>
+      <li>👉 è il prossimo passo da fare insieme. 💡 sono i passi che l'app sa già: li segna chi ha il partner nella sua lista, se è d'accordo.</li>
+      <li><b>✅ Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
+      <li><b>⏸ In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>▶️ Riprendi</b> lo riporta qui.</li>
+      <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>🔄 Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>
+      <li>Passi, pausa e avvio concluso li tocca chi ha il partner nella sua lista (di solito lo sponsor); gli altri upline vedono soltanto.</li>
+    </ul></div>` : ''}
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
     ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>⏸ In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
   document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  const come = document.getElementById('avv-come');
+  if (come) come.onclick = () => { AVV.comeAperto = !AVV.comeAperto; disegnaAvvio(); };
   const pausa = document.getElementById('avv-pausa');
   if (pausa) pausa.onclick = () => { AVV.pausaAperta = !AVV.pausaAperta; disegnaAvvio(); };
   app.querySelectorAll('[data-avvio]').forEach(b => b.onclick = () => { AVV.aperto = AVV.aperto === b.dataset.avvio ? null : b.dataset.avvio; disegnaAvvio(); });
-  // Solo Admin: scrive sulla scheda che vale (`contatto_id`), anche nella lista di un altro; la Lista già letta resta allineata
+  // Chi ha la scheda in lista (e l'Admin, anche nella lista di un altro) scrive sulla scheda che vale (`contatto_id`); la Lista già letta resta allineata
   const scrivi = async (r, campi) => {
-    if (!r || !admin || soloGuardo()) return false;
+    if (!r || !(admin || r.user_id === ST.utente.id) || soloGuardo()) return false;
     const { error } = await dbq('avvio dalla pagina dei nomi', supa.from('contatti').update(campi).eq('id', r.contatto_id));
     if (error) { mostraToast('Non salvato: riprova.'); return false; }
     Object.assign(r, campi);
@@ -636,9 +652,12 @@ function disegnaAvvio() {
   app.querySelectorAll('[data-spunta]').forEach(b => b.onclick = () => { const r = trova(b.dataset.di); if (r) scrivi(r, { [b.dataset.spunta]: !r[b.dataset.spunta] }); });
   app.querySelectorAll('[data-chiudi]').forEach(b => b.onclick = async () => {
     const r = trova(b.dataset.di), cosa = b.dataset.chiudi;
-    const campi = cosa === 'pausa' ? { avvio_in_pausa_dal: ST.oggi } : cosa === 'riprendi' ? { avvio_in_pausa_dal: null } : { avvio_concluso_il: ST.oggi };
-    const prima = r && { avvio_in_pausa_dal: r.avvio_in_pausa_dal || null, avvio_concluso_il: r.avvio_concluso_il || null };
-    if (await scrivi(r, campi)) mostraToast(`${MB21Mappa.nomeLeggibile(r.nome)}: ${cosa === 'pausa' ? 'avvio in pausa' : cosa === 'riprendi' ? 'avvio ripreso' : 'avvio concluso'}`, () => scrivi(r, prima));
+    const campi = cosa === 'pausa' ? { avvio_in_pausa_dal: ST.oggi } : cosa === 'riprendi' ? { avvio_in_pausa_dal: null }
+      : cosa === 'dacapo' ? { avvio_in_pausa_dal: null, ...L.PASSI_SPENTI() } : { avvio_concluso_il: ST.oggi };
+    const prima = r && { avvio_in_pausa_dal: r.avvio_in_pausa_dal || null, avvio_concluso_il: r.avvio_concluso_il || null,
+      ...Object.fromEntries(L.PASSI_ONBOARDING.map(([col]) => [col, r[col] === true])) };   // per Annulla: anche i 14 passi com'erano
+    const detto = { pausa: 'avvio in pausa', riprendi: 'avvio ripreso', dacapo: 'avvio ripreso da capo, 14 passi da fare', concluso: 'avvio concluso' }[cosa];
+    if (await scrivi(r, campi)) mostraToast(`${MB21Mappa.nomeLeggibile(r.nome)}: ${detto}`, () => scrivi(r, prima));
   });
   app.querySelectorAll('[data-apri-scheda]').forEach(b => b.onclick = async () => {
     await apriContattoDa(b.dataset.apriScheda, 'oggi');
