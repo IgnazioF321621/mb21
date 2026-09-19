@@ -26,7 +26,9 @@ def lavora(testo, prima, ultima):
     # pila: 'T' dentro `…`, 'E' dentro ${…} di un template, "'" e '"' dentro un testo, 'C' commento di riga, 'B' commento a blocco
     while i < len(testo):
         c, stato = testo[i], (pila[-1] if pila else None)
-        if c == '\n': riga += 1
+        if c == '\n':
+            riga += 1
+            if stato in ("'", '"'): pila.pop(); stato = pila[-1] if pila else None   # un testo tra apici non va mai a capo: se sembra di sì, lo strumento si era confuso (es. un apice dentro una /espressione/) e qui si rimette in riga
         if stato == 'C':
             if c == '\n': pila.pop()
         elif stato == 'B':
