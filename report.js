@@ -104,7 +104,7 @@
       return { ...g, totale, nonContano: sue.length - totale, esiti };
     });
   }
-  const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', giorno: a.giorno, modalita: a.modalita || '', portato: a.portatoNome || '' });
+  const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', categoria: (a.contatti && a.contatti.categoria) || null, giorno: a.giorno, modalita: a.modalita || '', portato: a.portatoNome || '' });
 
   // ── Grafico dell'anno: 12 mesi (set → ago) del Performance Year, azioni fatte e risultati che contano ──
   function grafico(azioni, annoPeriodo, oggi, chiaveGruppo) {
