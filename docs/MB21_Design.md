@@ -74,5 +74,22 @@ Scala delle scritte: titolo di pagina 26/700 · sezione 16/700 · testo 15/400 �
 ## Le icone
 Una famiglia sola, a tratto: `viewBox 0 0 24 24`, `fill="none" stroke="currentColor"`, punte e giunzioni tonde, tratto **1,8** (Design ne usa 1,7 nel formato grande: nell'app si tiene 1,8 ovunque). Primo gruppo di Design: **29** (5 barra in basso · 7 categorie · 5 tipi di azione · 12 esiti più usati). Le 88 della versione 3 restano il vocabolario: le altre le disegna Design nello stesso tratto. Nell'app vivono in **un solo file** con un `<symbol id="ic-…">` per icona (nella tela sono disegni ripetuti, senza nome: i nomi li dà Code).
 
+### Nell'app (lavoro 2, 19/09/2026)
+File unico **`icone.js`**: l'elenco `DISEGNI` (nome → disegno), `MB21Icone.icona(nome, px)` per l'HTML scritto dal codice, e all'avvio mette nella pagina un `<symbol id="ic-nome">` per icona, così l'HTML scritto a mano usa `<svg class="ic"><use href="#ic-nome"/></svg>`. Lo stile `svg.ic` (tratto 1,8, un colore, grande quanto la scritta) è nel foglio di `index.html`. Prova: `tools/banco/prova_icone.js`. **Un'icona nuova si aggiunge solo lì.** `ic-admin` è provvisoria, disegnata da Code.
+
+### Richiesta a Design · secondo gruppo (le emoji che l'app usa oggi)
+Contate nel codice il 19/09: **68 emoji diverse, 295 usi**. Le 88 icone della versione 3 descrivono le *fasi* del lavoro; all'app di oggi servono soprattutto icone **di comando e di richiamo**. Testo da incollare in Design:
+
+> Le 29 icone vanno bene: sono già nell'app (barra in basso compresa). Adesso mi serve il secondo gruppo, nello stesso identico tratto (griglia 24×24, nessun riempimento, punte tonde, un colore solo, stroke currentColor). Non partire dalle 88 della versione 3: parti da questo elenco, che sono le emoji che oggi l'app usa davvero come icone e che vanno sostituite. Per ognuna il nome che userà Code.
+> 
+> Azioni e comandi: ic-modifica (matita) · ic-elimina (cestino) · ic-collega (catena) · ic-condividi (freccia che esce) · ic-aggiorna (due frecce in cerchio: «riprendi da capo») · ic-pausa · ic-riprendi (play) · ic-visione (occhio: «visione completa») · ic-info («come funziona») · ic-attenzione (triangolo) · ic-fatto (spunta in un cerchio) · ic-chiudi (X) · ic-piu (+) · ic-freccia (›) · ic-puntini (tre puntini) · ic-cerca (lente) · ic-foto (macchina fotografica)
+> Lavoro di ogni giorno: ic-lampo (Check del giorno) · ic-obiettivi (bersaglio) · ic-telefonate (cornetta con onde) · ic-riordini (freccia che torna, su una scatola) · ic-conferme (calendario con spunta) · ic-vendite (carrello) · ic-consegna (pacco) · ic-propone (lampadina: «l'app propone») · ic-prossimo (dito o freccia: «prossimo passo») · ic-orario (orologio) · ic-catalogare (schedario: «da catalogare»)
+> Persone e squadra: ic-persona (profilo) · ic-squadra (tre persone) · ic-avvio (razzo: l'avvio del partner) · ic-perche (stella: «perché ho iniziato») · ic-compleanno (torta) · ic-benvenuto (mano che saluta) · ic-complimenti (coriandoli o coppa)
+> Segni vitali e numeri: ic-segnivitali (battito) · ic-crescita (linea che sale) · ic-biglietto (biglietto BBS / WES) · ic-volume (pila o moneta: VP)
+> Telefono e app: ic-app (telefono: «usa l'app») · ic-installa (telefono con freccia in giù) · ic-avvisi (campana) · ic-avvisi-spenti (campana barrata) · ic-password (chiave) · ic-novita (scintille) · ic-invito (busta) · ic-file (foglio: file Amway) · ic-rubrica (rubrica del telefono) · ic-messaggio (fumetto) · ic-whatsapp (fumetto con cornetta, generico, senza marchio) · ic-email (busta aperta)
+> Materiali: ic-audio (cuffie) · ic-libro · ic-admin (cursori: pagina Admin; Code ne ha messa una provvisoria)
+> 
+> Mettile nella tavola «Icone» sotto le prime 29, con lo stesso formato (nome sotto ogni icona, prova a 24 e a 16 px). I pallini colorati (🟠 🟢 🔴 🔵 🟣) non servono come icone: li fa Code con un cerchietto.
+
 ## Come si porta nell'app (lo fa solo Code)
 Nella tela gli stili sono scritti dentro ogni elemento e le variabili sono solo un testo da copiare: nell'app diventano **variabili vere e classi**, in un posto solo. I pezzi propri dello strumento Design (`support.js`, `<x-dc>`, `{{accento}}`) non entrano nell'app. Nessun carattere da scaricare. Ordine dei lavori in `CANTIERI.md` → 34.

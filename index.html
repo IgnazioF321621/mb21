@@ -77,7 +77,10 @@
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--superficie); border-radius: 26px 26px 0 0;
     box-shadow: 0 -3px 16px rgba(16,21,31,.06); display: flex; justify-content: space-around;
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
-  nav button { background: none; border: 0; font-size: 12px; font-weight: 500; color: var(--testo-soft); padding: 6px 6px; min-height: var(--tocco); }
+  /* Le icone (icone.js): a tratto, un colore solo, grandi quanto la scritta se non si dice altro */
+  svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; flex: none; }
+  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 6px; min-height: var(--tocco); min-width: 56px; }
+  nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); }
@@ -700,37 +703,38 @@
 <body>
 <main id="app"></main>
 <nav id="tab" hidden>
-  <button data-tab="oggi" class="attiva">Dashboard</button>
-  <button data-tab="agenda">Agenda</button>
-  <button data-tab="lista">Lista Nomi</button>
-  <button data-tab="report">Report</button>
-  <button data-tab="mappa">Mappa</button>
-  <button data-tab="admin" hidden>Admin</button>
+  <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Dashboard</button>
+  <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Agenda</button>
+  <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
+  <button data-tab="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-report"/></svg>Report</button>
+  <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
+  <button data-tab="admin" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-admin"/></svg>Admin</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609191704"></script>
-<script src="lista.js?v=202609191704"></script>
-<script src="rubrica.js?v=202609191704"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191704"></script>
-<script src="agenda.js?v=202609191704"></script>
-<script src="report.js?v=202609191704"></script>
-<script src="check.js?v=202609191704"></script>
-<script src="mappa.js?v=202609191704"></script>
-<script src="pagina-dashboard.js?v=202609191704"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191704"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191704"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191704"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191704"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191704"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191704"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191704"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191704"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191704"></script>
-<script src="benvenuto.js?v=202609191704"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191704"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609191714"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609191714"></script>
+<script src="lista.js?v=202609191714"></script>
+<script src="rubrica.js?v=202609191714"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609191714"></script>
+<script src="agenda.js?v=202609191714"></script>
+<script src="report.js?v=202609191714"></script>
+<script src="check.js?v=202609191714"></script>
+<script src="mappa.js?v=202609191714"></script>
+<script src="pagina-dashboard.js?v=202609191714"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609191714"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609191714"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609191714"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609191714"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609191714"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609191714"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609191714"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609191714"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609191714"></script>
+<script src="benvenuto.js?v=202609191714"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609191714"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 17:04';
+const APP_VERSION = '2026.09.19 · 17:14';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
