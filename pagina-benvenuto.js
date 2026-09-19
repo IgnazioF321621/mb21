@@ -100,9 +100,9 @@ function disegnaBenvenuto() {
         <button class="primario" id="bv-aggiungi">Aggiungi</button>
       </div>
       <div class="bv-conto" id="bv-conto">${BV.conto == null ? 'Conto i tuoi nomi…' : esc(B.contoCerchia(BV.conto))}</div>
-      ${BV.nomi.length ? `<div class="riquadro bv-nomi">${BV.nomi.map(n => `<div><b>${esc(n.nome)}</b><small>${esc(n.telefono || 'senza numero')}</small></div>`).join('')}</div>` : ''}
       <div class="sotto bv-nota">Li ritrovi tutti nella Lista Nomi, e da subito in Dashboard: l'app ti dice già chi chiamare oggi.</div>
-      <button class="primario" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}`;
+      <button class="primario bv-finito" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}
+      ${BV.nomi.length ? `<div class="riquadro bv-nomi">${BV.nomi.map(n => `<div><b>${esc(n.nome)}</b><small>${esc(n.telefono || 'senza numero')}</small></div>`).join('')}</div>` : ''}`;   // il bottone sta SOPRA l'elenco: sempre a portata di dito (Ignazio 19/09, visto in foto)
     },
   }[quale]();
   app.innerHTML = `<div class="bv bv-s-${quale}">${testa}${corpo}</div>`;   // «bv-s-»: il nome della schermata non deve coincidere con un riquadro interno (.bv-pagine)
@@ -161,7 +161,8 @@ async function caricaCerchia() {
   ]);
   if (MB21Benvenuto.SCHERMATE[BV.i] !== 'cerchia') return;
   BV.conto = conto.error ? 0 : (conto.count || 0);
-  BV.nomi = ultimi.error ? [] : (ultimi.data || []);
+  // Chi ha già una lista lunga vede solo i nomi che aggiunge adesso: gli ultimi 30 di 1.800 non sono la sua cerchia ristretta (Ignazio 19/09)
+  BV.nomi = ultimi.error || BV.conto > MB21Benvenuto.LISTA_CORTA ? [] : (ultimi.data || []);
   const nome = document.getElementById('bv-nome'), numero = document.getElementById('bv-numero');
   const scritto = [nome && nome.value, numero && numero.value];
   disegnaBenvenuto();
