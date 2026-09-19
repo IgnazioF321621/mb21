@@ -31,8 +31,8 @@
       "y": 2000
     },
     "Icone.dc.html": {
-      "h": 1120,
-      "title": "Icone · primo gruppo",
+      "h": 4540,
+      "title": "Icone · 83",
       "w": 1240,
       "x": 0,
       "y": 6040
@@ -98,10 +98,10 @@
     },
     "nF": {
       "color": "gray",
-      "text": "Le 88 icone della versione 3 restano il vocabolario. Qui ci sono le prime 29, ridisegnate leggere: barra in basso, categorie, tipi di azione, esiti più usati.\n\nQuando dici che vanno bene, faccio le restanti nello stesso tratto.",
+      "text": "83 icone in tutto: le 29 già nell'app e le 54 che sostituiscono le emoji di oggi.\n\nNove tornano dal primo gruppo con il nome nuovo per Code (ic-lampo, ic-obiettivi, ic-orario, ic-conferme, ic-cerca, ic-piu, ic-freccia, ic-puntini, ic-messaggio): stesso disegno, un nome solo.\n\nic-whatsapp è un fumetto con cornetta generico, senza il marchio.",
       "w": 600,
       "x": 0,
-      "y": 7240
+      "y": 10660
     },
     "t2": {
       "kind": "title1",
@@ -114,7 +114,7 @@
     "t3": {
       "kind": "title1",
       "maxW": 1240,
-      "text": "Icone · il primo gruppo, una famiglia sola",
+      "text": "Icone · una famiglia sola, 83 disegni",
       "w": 240,
       "x": 0,
       "y": 5740
