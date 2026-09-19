@@ -209,6 +209,7 @@ const CATEGORIE_CATALOGO = [
   { etichetta: 'Cliente', categoria: 'Cliente' }, { etichetta: 'Ex Partner/Cliente', categoria: 'Ex Partner/Cliente' },
   { etichetta: 'Unlinked', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
 ];
+const ICONE_CAT = { 'Prospect': 'prospect', 'Partner': 'partner', 'Cliente': 'cliente', 'Ex Partner/Cliente': 'ex', 'Unlinked': 'unlinked', 'Archiviato': 'archiviato' };
 function catalogoHtml() {
   const cat = ST.catalogo;
   const fatti = ST.stato.catalogati_oggi || 0;
@@ -237,7 +238,10 @@ function cardCatalogo(r) {
     ? bottoniPer(r.categoria).map((b, i) =>   // come la coda, ma non conta nei contatti al giorno
       `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('')
     : CATEGORIE_CATALOGO.map((b, i) =>
-      `<button class="${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
+      // scelta «A» di Ignazio (19/09, tools/design/confronto_catalogare.html): le tre categorie con cui si lavora hanno il tondo pieno del loro colore
+      // con l'icona, come i tondi delle persone; Ex, Unlinked e Archivia stanno sotto, scritte piccole
+      i < 3 ? `<button class="grande ${classeCat(b.categoria)}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}><span>${ic(ICONE_CAT[b.categoria])}</span>${esc(b.etichetta)}</button>`
+        : `<button class="piccola ${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${ic(ICONE_CAT[b.categoria])} ${esc(b.etichetta)}</button>`).join('');
   return `
     <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
       ${testa}
@@ -246,7 +250,7 @@ function cardCatalogo(r) {
         ${contattaHtml(r.telefono)}
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
-        <div class="bottoni">${bottoni}</div>
+        <div class="bottoni ${r.categoria ? '' : 'scegli-cat'}">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
