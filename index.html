@@ -292,6 +292,18 @@
   label.pf-foto { display: inline-block; width: auto; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: #fff; background: var(--testo); border-radius: 12px; text-align: center; }
   .pf-box { background: #fff; border: 1.5px solid var(--linea); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .pf-box h3 { margin: 0 0 8px; font-size: 16px; }
+  /* cantiere 25 bis: voci del Profilo che si aprono al tocco, foto dal cerchio */
+  .pf-voce .pf-corpo { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--linea); }
+  .pf-voce .avv-conta { color: var(--grigio); font-weight: 600; font-size: 14px; }
+  .pf-voce .barra { margin-top: 8px; }
+  .pf-targhe { display: flex; gap: 8px; margin-top: 10px; }
+  .sv-targa.pf-targa { flex: 1; border: 0; font-size: 13px; padding: 11px 6px; border-radius: 10px; font-family: inherit; }
+  .pf-domanda .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .pf-domanda .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  .pf-domanda small { display: block; margin-top: 8px; color: var(--grigio); font-size: 12px; }
+  .pf-domanda > b { font-size: 17px; }
+  .pf-cerchio { position: relative; border: 0; background: none; padding: 0; flex: none; }
+  .pf-cerchio i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: 13px; background: #fff; border: 1px solid var(--linea); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
   .pf-box small { display: block; color: var(--grigio); font-size: 12px; margin-top: 6px; }
   .pf-box label { display: block; margin-top: 10px; color: var(--grigio); font-size: 13px; }
   .pf-box input { margin: 4px 0 8px; }
@@ -671,28 +683,28 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609191154"></script>
-<script src="lista.js?v=202609191154"></script>
-<script src="rubrica.js?v=202609191154"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191154"></script>
-<script src="agenda.js?v=202609191154"></script>
-<script src="report.js?v=202609191154"></script>
-<script src="check.js?v=202609191154"></script>
-<script src="mappa.js?v=202609191154"></script>
-<script src="pagina-dashboard.js?v=202609191154"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191154"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191154"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191154"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191154"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191154"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191154"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191154"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191154"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191154"></script>
-<script src="benvenuto.js?v=202609191154"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191154"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609191421"></script>
+<script src="lista.js?v=202609191421"></script>
+<script src="rubrica.js?v=202609191421"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609191421"></script>
+<script src="agenda.js?v=202609191421"></script>
+<script src="report.js?v=202609191421"></script>
+<script src="check.js?v=202609191421"></script>
+<script src="mappa.js?v=202609191421"></script>
+<script src="pagina-dashboard.js?v=202609191421"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609191421"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609191421"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609191421"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609191421"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609191421"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609191421"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609191421"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609191421"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609191421"></script>
+<script src="benvenuto.js?v=202609191421"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609191421"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 11:54';
+const APP_VERSION = '2026.09.19 · 14:21';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
