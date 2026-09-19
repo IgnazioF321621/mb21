@@ -91,12 +91,24 @@
   .bottoni .no { background: #FEF2F2; color: #991B1B; }
   .bottoni button:disabled { opacity: .45; }
   .bottoni button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* Il colore che parla (cantiere 34): card e righe delle persone prendono la tinta della categoria; il colore pieno va nella pastiglia */
+  .cat-prospect { --cat: var(--cat-prospect); --cat-tinta: var(--cat-prospect-tinta); } .cat-cliente { --cat: var(--cat-cliente); --cat-tinta: var(--cat-cliente-tinta); }
+  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); }
+  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); }
+  .cat-nessuna { --cat: var(--testo-tenue); --cat-tinta: var(--superficie); }
+  .card[class*="cat-"] { background: var(--cat-tinta); box-shadow: none; }
+  .card[class*="cat-"] .bottoni button:not(.appuntamento):not(.ordine):not(.no) { background: var(--superficie); }
+  .card[class*="cat-"].aperta .corpo { border-top: 1px solid rgba(16,21,31,.08); }
+  .rc-pastiglia { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff;
+    display: grid; place-items: center; font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  .pallino { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; flex: none; }
+  .ic-vuoto { display: inline-block; width: 1em; height: 1em; border: 1.8px solid var(--spento); border-radius: 50%; vertical-align: -0.14em; }
   .card.compatta { margin-bottom: 8px; border-radius: var(--raggio-riga); }
-  .riga-coda { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 36px 10px 14px; position: relative; font-family: inherit; color: var(--testo); }
+  .riga-coda { display: block; width: 100%; min-height: 64px; text-align: left; border: 0; background: none; padding: 11px 36px 11px 66px; position: relative; font-family: inherit; color: var(--testo); }
   .riga-coda .rc-alto { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .riga-coda .nome { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .badge { flex: none; }
-  .riga-coda .rc-glide { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; color: #1D4ED8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .rc-glide { display: block; margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--testo-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .rc-coach { display: block; margin-top: 3px; font-size: 13px; font-weight: 600; color: #6D28D9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .riga-coda .rc-freccia { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--grigio-chiaro); }
   .card.aperta .rc-coach { white-space: normal; }
@@ -305,9 +317,9 @@
   .partner-select.altro small, .partner-select.altro button span { color: #FFEDD5; }
   .partner-select.altro button { background: #9A3412; border-color: #FDBA74; }
   .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-  .banner-abb.attivo { background: rgba(5,150,105,.1); border: 1.5px solid #10B981; color: var(--verde); }
-  .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #B91C1C; padding: 12px 14px; }
-  .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: #EF4444; }
+  .banner-abb.attivo { background: var(--ok-tinta); color: var(--ok); }
+  .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: var(--pericolo-tinta); color: var(--pericolo); padding: 14px 16px; }
+  .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: inherit; opacity: .85; }
   .banner-big { border-radius: var(--raggio-card); background: #fff; border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .banner-big.bbs { border-color: #93C5FD; background: #EFF6FF; }
   .banner-big.wes { border-color: #FCA5A5; background: #FEF2F2; }
@@ -343,25 +355,27 @@
   .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
-  .banner-abb.in-scadenza { background: #FFF7ED; border-color: #FDBA74; color: #C2410C; }
-  .banner-abb.in-scadenza small { color: #EA580C; }
+  .banner-abb.in-scadenza { background: var(--proposta-tinta); color: var(--proposta); }
   .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: var(--raggio-bottone); background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
-  .banner-abb.in-scadenza button { background: #EA580C; }
+  .banner-abb.in-scadenza button { background: var(--proposta); }
   .banner-grande { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border-radius: var(--raggio-card); padding: 14px 16px; margin-bottom: 10px; font-family: inherit; }
   .banner-grande .ico { width: 46px; height: 46px; border-radius: var(--raggio-riga); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
   .banner-grande b { display: block; font-size: 16px; }
   .banner-grande small { font-size: 12px; }
   .banner-grande .freccia { margin-left: auto; font-size: 22px; }
-  .banner-grande.check { background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 2px solid #3B82F6; color: #1D4ED8; }
-  .banner-grande.check .ico { background: #3B82F6; }
-  .banner-grande.obiettivi { background: #FEF2F2; border: 1.5px solid #FCA5A5; border-left: 5px solid var(--rosso); color: #991B1B; }
-  .banner-grande.obiettivi .ico { background: #FEE2E2; }
-  .schede-dash { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
+  .banner-grande { border: 0; min-height: 72px; }
+  .banner-grande .ico svg.ic { width: 22px; height: 22px; }
+  .banner-grande.check { background: var(--accento); color: var(--accento-su); }
+  .banner-grande.check small { color: rgba(255,255,255,.8); }
+  .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
+  .banner-grande.obiettivi { background: var(--pericolo-tinta); color: var(--pericolo); }
+  .banner-grande.obiettivi .ico { background: var(--superficie); border-radius: 50%; }
+  .schede-dash { display: flex; gap: 2px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 4px; }
   .schede-dash::-webkit-scrollbar { display: none; }
-  .schede-dash button { flex: none; font-size: 13px; font-weight: 600; padding: 7px 8px; border-radius: 10px; border: 0; background: transparent; color: var(--grigio); }
-  .schede-dash button.scelto { background: var(--sfondo); color: var(--testo); }
+  .schede-dash button { flex: 1 0 auto; font-size: 13px; font-weight: 600; min-height: 36px; padding: 7px 11px; border-radius: var(--raggio-pill); border: 0; background: transparent; color: var(--testo-soft); white-space: nowrap; }
+  .schede-dash button.scelto { background: var(--accento); color: var(--accento-su); }
   .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
-  .kpi > div { min-width: 0; border: 1px solid var(--linea); border-radius: var(--raggio-riga); padding: 10px; background: #fff; }
+  .kpi > div { min-width: 0; border: 0; border-radius: var(--raggio-riga); padding: 12px; background: var(--superficie-2); }
   .kpi .t { font-size: 14px; font-weight: 600; }
   .kpi .v { font-size: clamp(19px, 5.6vw, 26px); white-space: nowrap; font-weight: 800; letter-spacing: -.5px; margin: 4px 0; }
   .kpi ul { margin: 6px 0 0; padding-left: 14px; font-size: 12px; line-height: 1.4; }
@@ -379,8 +393,8 @@
   .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
   .ob-campi input { margin: 4px 0 0; padding: 10px; font-size: 17px; }
-  .visione { display: block; margin: 14px auto; border: 0; background: none; font-size: 15px; font-weight: 600; color: #334155; }
-  .sv { background: #1F2937; color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
+  .visione { display: block; margin: 14px auto; min-height: var(--tocco); border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--testo-soft); }
+  .sv { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
   .sv h3 { margin: 0; font-size: 20px; }
   .sv .sotto-sv { font-size: 12px; color: var(--testo-tenue); margin: 2px 0 10px; }
   .sv .legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
@@ -389,9 +403,9 @@
   .sv th { font-size: 10px; font-weight: 700; color: var(--testo-tenue); }
   .sv th.mese { width: 34px; text-align: right; line-height: 1.1; }
   .sv td { height: 34px; color: #fff; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 800; }
-  .sv td.zero { background: #374151 !important; color: var(--testo-soft); font-weight: 600; }
+  .sv td.zero { background: rgba(255,255,255,.08) !important; color: var(--testo-soft); font-weight: 600; }
   .sv .totali { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
-  .sv .totali div { background: #374151; border-radius: 10px; padding: 8px 2px; text-align: center; }
+  .sv .totali div { background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 2px; text-align: center; }
   .sv .totali b { display: block; font-size: 17px; }
   .sv .totali div { min-width: 0; overflow: hidden; }
   .sv .totali span { display: block; font-size: 9px; font-weight: 700; color: var(--spento); }
@@ -432,10 +446,11 @@
   .ag-comandi button { border: 1px solid var(--linea); background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; padding: 8px 10px; color: var(--testo); }
   .ag-comandi button.pericolo { color: var(--rosso); }
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: var(--raggio-riga); padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
-  .ag-blocco.telefonate { background: #EEF2FF; color: #3730A3; }
-  .ag-blocco.riordini { background: #FFEDD5; color: #9A3412; }
-  .ag-blocco.conferme { background: #DCFCE7; color: #166534; }
-  .ag-blocco.avvio { background: #EDE9FE; color: #5B21B6; }
+  .ag-blocco { min-height: 52px; }
+  .ag-blocco.telefonate { background: var(--cat-cliente-tinta); color: #1E3A8A; }
+  .ag-blocco.riordini { background: var(--cat-prospect-tinta); color: #7C2D12; }
+  .ag-blocco.conferme { background: var(--ok-tinta); color: #14532D; }
+  .ag-blocco.avvio { background: var(--cat-partner-tinta); color: #4C1D95; }
   /* Pagina «Partner da avviare» (cantiere 31 lavoro 2) */
   .avv-partner { padding: 10px 14px 12px; }
   .avv-testa { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; background: none; padding: 2px 0; text-align: left; font-family: inherit; font-size: 16px; color: var(--testo); }
@@ -712,29 +727,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609191741"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609191741"></script>
-<script src="lista.js?v=202609191741"></script>
-<script src="rubrica.js?v=202609191741"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191741"></script>
-<script src="agenda.js?v=202609191741"></script>
-<script src="report.js?v=202609191741"></script>
-<script src="check.js?v=202609191741"></script>
-<script src="mappa.js?v=202609191741"></script>
-<script src="pagina-dashboard.js?v=202609191741"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191741"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191741"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191741"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191741"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191741"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191741"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191741"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191741"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191741"></script>
-<script src="benvenuto.js?v=202609191741"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191741"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609191746"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609191746"></script>
+<script src="lista.js?v=202609191746"></script>
+<script src="rubrica.js?v=202609191746"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609191746"></script>
+<script src="agenda.js?v=202609191746"></script>
+<script src="report.js?v=202609191746"></script>
+<script src="check.js?v=202609191746"></script>
+<script src="mappa.js?v=202609191746"></script>
+<script src="pagina-dashboard.js?v=202609191746"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609191746"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609191746"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609191746"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609191746"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609191746"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609191746"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609191746"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609191746"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609191746"></script>
+<script src="benvenuto.js?v=202609191746"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609191746"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 17:41';
+const APP_VERSION = '2026.09.19 · 17:46';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -742,6 +757,12 @@ const SUPABASE_KEY = 'sb_publishable_i9kxRdnrgk2fvk71P3VV9g_GJA1-r26';
 
 const COLORI = { 'Prospect': 'var(--prospect)', 'Cliente': 'var(--cliente)', 'Partner': 'var(--partner)',
   'Ex Partner/Cliente': 'var(--ex)', 'Archiviato': 'var(--ex)', 'Referral': 'var(--ex)', 'Unlinked': 'var(--unlinked)' };
+// Stile (cantiere 34, docs/MB21_Design.md): scorciatoie usate da tutte le pagine
+function ic(nome, px) { return MB21Icone.icona(nome, px); }                       // un'icona a tratto (icone.js)
+const CLASSI_CAT = { 'Prospect': 'cat-prospect', 'Cliente': 'cat-cliente', 'Partner': 'cat-partner', 'Ex Partner/Cliente': 'cat-ex',
+  'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato' };
+function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }   // la classe che tinge card e righe del colore della categoria
+function iniziali(nome) { const p = String(nome || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 const CHIAVE_CACHE = 'mb21_coda';
 
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
