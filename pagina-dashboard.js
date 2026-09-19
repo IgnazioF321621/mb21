@@ -1058,7 +1058,7 @@ function apriCheck() {
   </div>`;
   document.body.appendChild(velo);
   // Tracce e Pagine sono crescita, non attività: si spostano nel loro gruppo (i campi e gli id restano quelli di prima)
-  for (const k of ['tracce', 'pagine']) {
+  for (const k of ['pagine', 'tracce']) {   // all'indietro: ognuno va in cima al gruppo, così restano nell'ordine Tracce · Pagine
     const campo = velo.querySelector('#ck-campo-' + k), gruppo = velo.querySelector('#ck-crescita');
     if (campo && gruppo) gruppo.insertBefore(campo, gruppo.firstChild);
   }
