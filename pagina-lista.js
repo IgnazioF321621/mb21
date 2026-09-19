@@ -189,13 +189,18 @@ function cardNome(r) {
   const frase = MB21Lista.fraseCard(r, MB21Coda.oggiRoma());
   const sotto = [r.area || r.ultima_area, r.professione].filter(Boolean).join(' · ');
   const tel = r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml
+  // La prima riga è tutta del nome (Ignazio 19/09: con «nuovo» e le targhette accanto «si vede solo il nome e non si capisce»):
+  // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
+  // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
+  const segni = nuovoBadge(r) + targheCard(r);
   return `
     <div class="cn ${classeCat(r.categoria)}" data-id="${esc(r.id)}">
       <span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>
       <div class="dentro">
-        <div class="nome"><span class="nm">${esc(r.nome)}</span>${nuovoBadge(r)}${targheCard(r)}</div>
+        <div class="nome">${esc(r.nome)}</div>
         <div class="frase">${frase.futuro ? ic('agenda') + ' ' : ''}${esc(frase.testo)}</div>
         ${sotto ? `<div class="prof">${esc(sotto)}</div>` : ''}
+        ${segni ? `<div class="cn-segni">${segni}</div>` : ''}
         ${coppiaCard(r)}
       </div>
       <a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ic('contatto')}</a>
