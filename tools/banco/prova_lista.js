@@ -94,7 +94,7 @@ prova('Onboarding: contatore calcolato sui 14 passi', () => {
 });
 
 prova('avvio del Partner: prossimo passo (il primo non fatto, nell\'ordine dei 14) e da quanto è entrato', () => {
-  assert.deepEqual(L.prossimoPasso({}), { col: 'onb_sogno', nome: 'Sogno', descr: 'Motivo e/o incubo' });   // il Sogno è il primo passo (Ignazio 18/09)
+  assert.deepEqual(L.prossimoPasso({}), { col: 'onb_sogno', nome: 'Perché iniziare', descr: 'Motivo e/o incubo' });   // il Sogno è il primo passo (Ignazio 18/09); dal cantiere 32 a video si chiama «Perché iniziare»
   assert.equal(L.prossimoPasso(null).col, 'onb_sogno');
   assert.equal(L.prossimoPasso({ onb_sogno: true }).nome, 'Amway');
   assert.equal(L.prossimoPasso({ onb_amway: true, onb_ordine: true, onb_n21: true, onb_sogno: true }).nome, 'Starter Pack');
