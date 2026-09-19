@@ -65,16 +65,16 @@ function disegnaBenvenuto() {
         <button class="link" id="bv-esci">Lo faccio dopo</button></div>`;
   const indietro = !BV.solo && BV.i > 0 ? '<button class="link bv-indietro" id="bv-indietro">‹ Indietro</button>' : '';
   const corpo = {
-    benvenuto: () => `<div class="bv-grande">🎉</div>
+    benvenuto: () => `<div class="bv-grande">${ic('complimenti')}</div>
       <h1>Benvenuto in MB21${nome ? ', ' + esc(nome) : ''}!</h1>
       <p class="bv-lead">Complimenti per la scelta che hai fatto.</p>
       <button class="primario" id="bv-avanti">Cominciamo</button>`,
-    perche_mb21: () => `<div class="bv-grande">🚀</div>
+    perche_mb21: () => `<div class="bv-grande">${ic('avvio')}</div>
       <p class="bv-lead">MB21 ti aiuta a sviluppare la tua attività, per realizzare il tuo sogno… o scappare dal tuo incubo.</p>
       <div class="riquadro bv-punti">
-        <div><span>✨</span><p><b>È tutto semplice, come un flusso:</b> ogni passo ti porta al successivo.</p></div>
+        <div><span>${ic('novita')}</span><p><b>È tutto semplice, come un flusso:</b> ogni passo ti porta al successivo.</p></div>
         <div><span>🕊️</span><p><b>Niente è vincolante:</b> vai alla velocità che vuoi tu.</p></div>
-        <div><span>🤝</span><p><b>Il tuo sponsor e la tua squadra ti seguiranno da vicino,</b> e tu avrai sempre una linea guida sul percorso da fare.</p></div>
+        <div><span>${ic('squadra')}</span><p><b>Il tuo sponsor e la tua squadra ti seguiranno da vicino,</b> e tu avrai sempre una linea guida sul percorso da fare.</p></div>
       </div>
       <button class="primario" id="bv-avanti">Avanti</button>${indietro}`,
     perche: () => `<h1>Perché vuoi iniziare?</h1>
@@ -82,12 +82,12 @@ function disegnaBenvenuto() {
       <div class="bv-voci">${[...B.VOCI, B.ALTRO].map(v => {
         const scelta = Object.prototype.hasOwnProperty.call(BV.scelte, v), altro = v === B.ALTRO;
         return `<div class="bv-voce ${scelta ? 'scelta' : ''}">
-          <button data-bv-voce="${esc(v)}"><span>${scelta ? '✅' : '◻️'}</span> ${altro ? '✏️ Un altro: scrivilo tu' : esc(v)}</button>
+          <button data-bv-voce="${esc(v)}"><span>${scelta ? ic('fatto') : '<i class="ic-vuoto"></i>'}</span> ${altro ? ic('modifica') + ' Un altro: scrivilo tu' : esc(v)}</button>
           ${scelta ? `<input data-bv-testo="${esc(v)}" maxlength="${B.MAX_TESTO}" value="${esc(BV.scelte[v] || '')}" placeholder="${altro ? 'Scrivi il tuo perché' : 'Descrivilo in due parole, se vuoi'}">` : ''}</div>`; }).join('')}</div>
       <div class="sotto bv-nota">Lo vede anche chi ti segue, il tuo sponsor e la tua squadra: così sa per cosa stai lavorando.</div>
       <button class="primario" id="bv-avanti">${BV.solo ? 'Salva' : 'Avanti'}</button>${indietro}`,
     pagine: () => `<h1>Le pagine che trovi in basso</h1>
-      <div class="riquadro bv-pagine">${B.PAGINE.map(p => `<div><span>${p.icona}</span><p><b>${esc(p.nome)}</b> · ${esc(p.testo)}</p></div>`).join('')}</div>
+      <div class="riquadro bv-pagine">${B.PAGINE.map(p => `<div><span>${escIcone(p.icona)}</span><p><b>${esc(p.nome)}</b> · ${esc(p.testo)}</p></div>`).join('')}</div>
       <p class="bv-lead piccolo-lead">Non devi impararle adesso: si parte dalla Dashboard, il resto viene da sé.</p>
       <button class="primario" id="bv-avanti">Avanti</button>${indietro}`,
     cerchia: () => {
@@ -96,7 +96,7 @@ function disegnaBenvenuto() {
       return `<h1>La tua cerchia ristretta</h1>
       <p class="bv-lead piccolo-lead">Le persone più vicine a te. Scrivi i primi nomi che ti vengono in mente: bastano nome e cellulare.</p>
       <div class="bv-spunti">${B.SPUNTI.map(s => `<span>${esc(s)}</span>`).join('')}</div>
-      ${fatto ? '<div class="bv-fatto">✅ Già fatto: «Lista Start» è già spuntato nel tuo avvio. Se vuoi, aggiungi altri nomi.</div>' : ''}
+      ${fatto ? '<div class="bv-fatto">' + ic('fatto') + ' Già fatto: «Lista Start» è già spuntato nel tuo avvio. Se vuoi, aggiungi altri nomi.</div>' : ''}
       <div class="riquadro">
         <input id="bv-nome" autocomplete="off" autocapitalize="words" maxlength="60" placeholder="Nome e cognome">
         <input id="bv-numero" type="tel" inputmode="tel" autocomplete="off" maxlength="30" placeholder="Cellulare: scrivilo o incollalo">
@@ -212,7 +212,7 @@ async function finitaCerchia() {
     const { data, error } = await dbq('Lista Start', supa.rpc('segna_mio_passo', { p_passo: 'onb_lista_start', p_fatto: true }));
     if (error || !data) { btn.disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
     BV.percorso = data;
-    mostraToast('Lista Start fatto ✅ Ecco chi chiamare oggi');
+    mostraToast('Lista Start fatto. Ecco chi chiamare oggi');
   }
   chiudiBenvenuto();
 }
@@ -228,6 +228,6 @@ async function mostraRigaTelefono() {
   const testo = MB21Benvenuto.rigaTelefono(stato, appInstallata(), ST.primoIngresso === true);
   const posto = document.getElementById('riga-telefono');
   if (!testo || !posto) return;
-  posto.innerHTML = `<button class="ag-blocco bv-telefono" id="bv-telefono"><span>${esc(testo)}</span><span>›</span></button>`;
+  posto.innerHTML = `<button class="ag-blocco bv-telefono" id="bv-telefono"><span>${escIcone(testo)}</span><span>›</span></button>`;
   document.getElementById('bv-telefono').onclick = () => { PF.aperte.clear(); PF.aperte.add('avvisi'); ST.tab = 'profilo'; mostraTab(); };   // 25 bis: nel Profilo la voce «Avvisi» già aperta
 }

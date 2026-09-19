@@ -7,11 +7,11 @@ const RB = { esito: null, proprietario: null, telefono: null };   // telefono: '
 // Il «+» della Lista: nuovo contatto a mano oppure tutta la rubrica
 async function scegliAggiungi() {
   if (soloGuardo()) return;
-  const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: '👤 Nuovo contatto', k: 'uno' }, { etichetta: '📒 Importa dalla rubrica del telefono', k: 'rubrica' }]);
+  const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: ic('persona') + ' Nuovo contatto', k: 'uno' }, { etichetta: ic('rubrica') + ' Importa dalla rubrica del telefono', k: 'rubrica' }]);
   if (!v) return;
   if (v.k === 'uno') return apriModulo(null);
   // Ignazio 18/09: prima si chiede che telefono è, poi si danno solo le istruzioni di quello
-  const t = await sceltaDa('Che telefono hai?', [{ etichetta: '🍎 iPhone', k: 'iphone' }, { etichetta: '🤖 Android (Samsung, Huawei, Xiaomi…)', k: 'android' }]);
+  const t = await sceltaDa('Che telefono hai?', [{ etichetta: 'iPhone', k: 'iphone' }, { etichetta: 'Android (Samsung, Huawei, Xiaomi…)', k: 'android' }]);
   if (!t) return;
   RB.telefono = t.k;
   apriImportaRubrica();

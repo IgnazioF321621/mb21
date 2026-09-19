@@ -51,15 +51,15 @@ function rigaUtenteAdmin(u) {
   const pallino = { attivo: '🟢', in_scadenza: '🟠', scaduto: '🔴' }[stato];
   const data = d => (d ? d.split('-').reverse().join('/') : '—');
   // cantiere 25 (Ignazio 17/09): la foto del Profilo anche qui, letta da `utenti.foto` (stesso cerchietto della Dashboard)
-  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${pallino} ${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
-    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · 🔔' : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${escIcone(pallino)}${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
+    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · ' + ic('avvisi') : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
     <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
-    <small>${(AD.dispositivi[u.id] || []).length ? `🔔 Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : '🔕 Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
-    <button class="link" data-modifica-ut="${esc(u.id)}">✏️ Modifica</button>
-    <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">🗑 Elimina</button>
+    <small>${(AD.dispositivi[u.id] || []).length ? `${ic('avvisi')} Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : ic('avvisi-spenti') + ' Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
+    <button class="link" data-modifica-ut="${esc(u.id)}">${ic('modifica')} Modifica</button>
+    <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">${ic('elimina')} Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <div class="ad-abb"><b>Abbonamento</b>`;
@@ -85,28 +85,28 @@ function disegnaAdmin() {
   let html;
   if (AD.sezione === 'utenti') {
     html = `${indietro}<h1>Utenti dell'app</h1>
-      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟢 attivo · 🟠 scade entro ${D.GIORNI_PREAVVISO} giorni · 🔴 scaduto. Tocca un nome per aprirlo.</div>
-      ${AD.richieste.length ? `<div class="rp-wes ad-richieste"><h3>📨 Richieste da approvare (${AD.richieste.length})</h3>${AD.richieste.map(r => {
+      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto. Tocca un nome per aprirlo.</div>
+      ${AD.richieste.length ? `<div class="rp-wes ad-richieste"><h3>${ic('invito')} Richieste da approvare (${AD.richieste.length})</h3>${AD.richieste.map(r => {
         const da = AD.tutti.find(u => u.id === r.invitato_da), gia = AD.tutti.filter(u => u.partner_id === r.codice_amway);
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
           <small>${esc(r.email)}${r.telefono ? ' · ' + esc(r.telefono) : ''} · codice ${esc(r.codice_amway)}</small>
-          <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ⚠️ codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
-          ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>⚠️ codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
+          <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ${ic('attenzione')} codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
+          ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
-      ${AD.eliminati.length ? `<button class="rp-apri ad-voce" id="ad-vedi-eliminati" style="margin-top:10px"><span>🗂 Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
+      ${AD.eliminati.length ? `<button class="rp-apri ad-voce" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
         ${AD.vediEliminati ? `<div class="rp-wes">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
           <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
-          <button class="link" data-ripristina="${esc(u.id)}">↩︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
-      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>🔗 Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
+          <button class="link" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
+      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>${ic('collega')} Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
   } else if (AD.sezione === 'schede') {
     const p = AD.schede;
     html = `${indietro}<h1>Schede dei partner</h1>
       <div class="sotto" style="margin:0 0 8px">Regola di Ignazio (16/09): ogni partner della Mappa ha una scheda Partner, collegata al codice, nella lista di <b>ogni utente che gli sta sopra</b> (tutti i livelli), mai fuori dal ramo. Fuori coda. Non si cancella niente. Si fa da sola dopo «Carica file Amway».</div>`;
     if (!p) html += `<div class="vuoto">Controllo le liste…</div>`;
     else if (p.errore) html += `<div class="avviso">${esc(p.errore)}</div>`;
-    else if (!p.righe.length) html += `<div class="riquadro">✅ Tutto allineato: ogni partner è già nelle liste giuste.</div>`;
+    else if (!p.righe.length) html += `<div class="riquadro">${ic('fatto')} Tutto allineato: ogni partner è già nelle liste giuste.</div>`;
     else {
       const perUtente = {};
       for (const r of p.righe) (perUtente[r.utente] = perUtente[r.utente] || []).push(r);
@@ -141,12 +141,12 @@ function disegnaAdmin() {
     const voce = (id, titolo, sotto) => `<button class="rp-apri ad-voce" id="${id}"><span>${titolo}<small>${sotto}</small></span><span>›</span></button>`;
     html = `<h1>Admin</h1>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
-      ${voce('ad-scegli', '📄 Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
-      ${voce('ad-vai-utenti', "👥 Utenti dell'app", `${AD.richieste.length ? `📨 ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · 🟠 ${stati.filter(x => x === 'in_scadenza').length} · 🔴 ${stati.filter(x => x === 'scaduto').length}`)}
-      ${voce('ad-vai-schede', '🔗 Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
-      ${voce('ad-vai-wes', '🎟 Wes', `ultimo ${ultimo(AD.wes)}`)}
-      ${voce('ad-vai-bbs', '🎟 BBS', `ultimo ${ultimo(AD.bbs)}`)}
-      ${voce('ad-vai-fc', '🛒 Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
+      ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
+      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟠')}${stati.filter(x => x === 'in_scadenza').length} · ${escIcone('🔴')}${stati.filter(x => x === 'scaduto').length}`)}
+      ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
+      ${voce('ad-vai-wes', ic('biglietto') + ' Wes', `ultimo ${ultimo(AD.wes)}`)}
+      ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
+      ${voce('ad-vai-fc', ic('vendite') + ' Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
   }
   app.innerHTML = html + versione();
   collegaAdmin();
@@ -183,7 +183,7 @@ function foglioNuovoUtente(u) {
   const bloccaEmail = u && u.auth_id;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio nu"><h3>${u ? '✏️ Modifica utente' : '＋ Nuovo utente'}</h3>
+  velo.innerHTML = `<div class="foglio nu"><h3>${u ? ic('modifica') + ' Modifica utente' : '＋ Nuovo utente'}</h3>
     <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Filippo Arcoraci" autocomplete="off"></label>
     <div id="nu-trovati"></div>
     <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
@@ -272,7 +272,7 @@ function collegaAdmin() {
     // Avviso già pronto (Ignazio 17/09: dopo «Approva» il passaggio successivo non c'era): numero del modulo con +39 se scritto senza prefisso
     const app = `${location.origin}${location.pathname}`;
     foglioLinkInvito({ link: app, nome: r.nome_cognome, telefono: MB21Lista.componiTelefono('+39', r.telefono || ''),
-      titolo: `✅ Avvisa ${r.nome_cognome}`, spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): apre l\'app ed entra con la password scelta nel modulo.',
+      titolo: `${ic('fatto')} Avvisa ${r.nome_cognome}`, spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): apre l\'app ed entra con la password scelta nel modulo.',
       messaggio: `Ciao ${r.nome_cognome.split(' ')[0]}, la tua richiesta per MB21 è approvata. Apri ${app} : entri direttamente. Se ti chiede di entrare, usa email e password della registrazione.` });
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
@@ -447,7 +447,7 @@ async function foglioFileAmway(f) {
   const nomi = l => l.map(p => esc(MB21Mappa.nomeLeggibile(p.nome))).join(', ');
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>📄 File Amway · ${esc(meseTesto)}</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('file')} File Amway · ${esc(meseTesto)}</h3>
     <p>${f.squadra.length} partner nel file. VPP e VPG aggiornati anche in Dashboard e Check per ${perUtenti.length} utenti dell'app.</p>
     ${gia.count ? `<p>Questo mese è già caricato: i numeri di ${esc(meseTesto)} vengono <b>sostituiti</b> con quelli del file.</p>` : ''}
     ${c.nuovi.length ? `<p>Entrano nella Mappa (${c.nuovi.length}): ${nomi(c.nuovi)}</p>` : ''}

@@ -43,16 +43,16 @@ async function sezioneVendite() {
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
       <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div>
     </div>
-    ${t.attesaVp ? `<div class="vn-riga-info">📦 Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
-    ${prossimo ? `<div class="vn-riga-info">🔁 Prossimo riordino · ${esc(prossimo.brand)} · ${esc(MB21Lista.data(prossimo.riordino))}</div>` : ''}` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
+    ${t.attesaVp ? `<div class="vn-riga-info">${ic('consegna')} Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
+    ${prossimo ? `<div class="vn-riga-info">${ic('riordini')} Prossimo riordino · ${esc(prossimo.brand)} · ${esc(MB21Lista.data(prossimo.riordino))}</div>` : ''}` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
       <button class="vn-riga" data-vendita="${v.id}">
         <div>
           <div class="vn-prodotto">${esc(v.prodotto)}</div>
           <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${v.ordinata_il ? ' · ordine del ' + esc(MB21Lista.data(v.ordinata_il)) : ''}</div>
-          ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">📦 consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
+          ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
-      </button>${MB21Lista.daConsegnare(v) && c.categoria !== 'Archiviato' ? `<button class="vn-fatto" data-ordine="${v.id}">📦 Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
+      </button>${MB21Lista.daConsegnare(v) && c.categoria !== 'Archiviato' ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
   const p = document.getElementById('vendita-piu');
   if (p) p.onclick = () => moduloVendita(null);
   box.querySelectorAll('[data-vendita]').forEach(b => b.onclick = () => moduloVendita(vendite.find(v => v.id === b.dataset.vendita)));

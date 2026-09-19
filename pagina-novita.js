@@ -9,8 +9,8 @@ const VER = { controllata: 0, rimandata: '', ultima: '' };   // «C'è una versi
 // se l'app ha scoperto una versione più recente (VER.ultima) → «🔄 C'è una versione più recente» → foglio per aggiornare.
 function versione() {
   return MB21Novita.piuRecente(VER.ultima, APP_VERSION)
-    ? `<div class="versione nuova" role="button">🔄 C'è una versione più recente · tocca per aggiornare</div>`
-    : `<div class="versione" role="button">✨ Novità · Versione ${MB21Novita.quandoLeggibile(APP_VERSION)}</div>`;
+    ? `<div class="versione nuova" role="button">${ic('aggiorna')} C'è una versione più recente · tocca per aggiornare</div>`
+    : `<div class="versione" role="button">${ic('novita')} Novità · Versione ${MB21Novita.quandoLeggibile(APP_VERSION)}</div>`;
 }
 document.addEventListener('click', e => {
   if (!e.target.closest || !e.target.closest('.versione')) return;
@@ -44,19 +44,19 @@ function foglioNovita(r, ultimoUso) {
   velo.className = 'velo';
   // «Ultimo ingresso» con l'ora (Ignazio 18/09): stesso formato della data di ogni novità, per confrontarle
   const eri = r && ultimoUso ? `<br><b style="color:var(--testo)">Ultimo ingresso: ${esc(MB21Novita.momentoLeggibile(ultimoUso))}</b>` : '';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>✨ ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('novita')} ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
     <p>${r ? `Ecco cosa è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.${eri}` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}
-    ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button><p style="text-align:center;margin:10px 0 0;font-size:12px">Le ritrovi quando vuoi: tocca «✨ Novità» in fondo a ogni pagina.</p>' : ''}</div>`;
+    ${r ? '<button class="primario" id="nv-ok" style="margin-top:14px">Ho capito</button><p style="text-align:center;margin:10px 0 0;font-size:12px">Le ritrovi quando vuoi: tocca «' + ic('novita') + ' Novità» in fondo a ogni pagina.</p>' : ''}</div>`;
   document.body.appendChild(velo);
   const su = (id, fn) => { const el = velo.querySelector(id); if (el) el.onclick = fn; };
   su('#nv-x', () => velo.remove());
   if (!r) ultimaVersione().then(ultima => {   // dal Profilo: dice se è l'ultima versione, o propone di aggiornare
     const posto = velo.querySelector('#nv-ultima');
     if (!posto || !ultima) return;
-    if (!MB21Novita.piuRecente(ultima, APP_VERSION)) { posto.textContent = '· ✅ è l\'ultima'; return; }
-    posto.innerHTML = `<br>🔄 Ultima versione: ${esc(MB21Novita.quandoLeggibile(ultima))} · <button class="link" id="nv-aggiorna">Aggiorna ora</button>`;
+    if (!MB21Novita.piuRecente(ultima, APP_VERSION)) { posto.innerHTML = '· ' + ic('fatto') + ' è l\'ultima'; return; }
+    posto.innerHTML = `<br>${ic('aggiorna')} Ultima versione: ${esc(MB21Novita.quandoLeggibile(ultima))} · <button class="link" id="nv-aggiorna">Aggiorna ora</button>`;
     posto.querySelector('#nv-aggiorna').onclick = () => location.reload();
   });
   su('#nv-tutte', () => foglioNovita());
@@ -87,7 +87,7 @@ function foglioVersione(ultima) {
   if (document.getElementById('vr-si')) return;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>🔄 C'è una versione più recente</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('aggiorna')} C'è una versione più recente</h3>
     <p>La tua versione: <b>${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b><br>Ultima versione: <b>${esc(MB21Novita.quandoLeggibile(ultima))}</b><br>Ti consigliamo di aggiornare: basta un tocco. Se stavi scrivendo qualcosa, prima salvalo.</p>
     <div class="due"><button class="link" id="vr-no">Più tardi</button><button class="primario" id="vr-si">Aggiorna ora</button></div></div>`;
   document.body.appendChild(velo);

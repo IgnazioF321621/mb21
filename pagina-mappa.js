@@ -90,13 +90,13 @@ function disegnaMappa() {
   const conta = M.conta(cime);
   const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
   const num = (v, d = 2) => (v == null ? '—' : Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }));
-  const etichette = [['tutti', 'Tutti'], ['attivo', '🟢 Attivi'], ['warning', '🔴 Warning'], ['inattivo', '⚪ Inattivi']];
+  const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
-      `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${t} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
+      `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
     <input class="mp-cerca" id="mp-cerca" type="search" placeholder="Cerca un nome o un codice" value="${esc(MP.cerca)}">`;
 
@@ -114,7 +114,7 @@ function disegnaMappa() {
         ${apri}
         <div class="mp-corpo">
           <span class="mp-liv">${r.livello ?? ''}</span>
-          <span title="${esc(s.titolo)}">${s.pallino}</span>
+          <span title="${esc(s.titolo)}">${escIcone(s.pallino)}</span>
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
@@ -161,7 +161,7 @@ function disegnaCompleta() {
   const fatta = manca ? Math.max(0, Math.min(100, 100 * (Number(ultimo.vpg) || 0) / ((Number(ultimo.vpg) || 0) + manca))) : 100;
 
   let html = `<button class="indietro" id="mp-indietro">‹ Mappa</button>
-    <div class="mp-scheda-testa"><h1>${s.pallino} ${esc(nome)}</h1><span style="color:var(--grigio-chiaro);font-size:12px">#${esc(id)}</span></div>
+    <div class="mp-scheda-testa"><h1>${escIcone(s.pallino)}${esc(nome)}</h1><span style="color:var(--grigio-chiaro);font-size:12px">#${esc(id)}</span></div>
     <div class="mp-testa"><span>${chi.livello ? 'Livello ' + chi.livello : ''}${chi.data_ingresso ? ' · dal ' + esc(chi.data_ingresso.split('-').reverse().join('/')) : ''}</span>
       <span>mese ${esc(mesePulito(ultimo.mese))}</span></div>
     <div class="mp-riquadro">
@@ -186,7 +186,7 @@ function disegnaCompleta() {
     </div>
     <h3>Storico mensile</h3>
     <table class="mp-tabella"><tr><th>Mese</th><th>VPP</th><th>VPG</th><th>Bonus</th></tr>
-      ${[...st.righe].reverse().map(r => `<tr><td>${M.STATI[r.stato].pallino} ${esc(r.etichetta)}</td>
+      ${[...st.righe].reverse().map(r => `<tr><td>${escIcone(M.STATI[r.stato].pallino)}${esc(r.etichetta)}</td>
         <td>${num(r.vpp)}</td><td>${num(r.vpg)}</td><td>${num(r.bonus, 0)}%</td></tr>`).join('')}
     </table>`;
   }

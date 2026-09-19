@@ -44,7 +44,7 @@ async function attivaAvvisi() {
     { user_id: ST.utente.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, dispositivo: nomeDispositivo() }, { onConflict: 'endpoint' }));
   if (error) { await sub.unsubscribe(); return mostraToast(error.message || 'Non registrato: riprova.'); }
   AV.sub = sub; AV.stato = 'acceso';
-  mostraToast('Avvisi accesi su questo dispositivo ✅');
+  mostraToast('Avvisi accesi su questo dispositivo');
   await mandaAvvisoDiProva();
 }
 
