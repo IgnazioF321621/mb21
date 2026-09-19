@@ -5,6 +5,9 @@
 ## La direzione scelta (Ignazio, 19/09/2026)
 **C «Il colore che parla» con il respiro della A «Carta e inchiostro».** Fondo perla, card bianche molto tonde, carattere di sistema dell'iPhone, **un solo accento: l'inchiostro**. I colori che hanno un significato diventano la grafica: le righe e le card delle persone sono **tinte del colore della loro categoria**, così si capisce chi è chi prima di leggere. Dalla A viene il passo: **26 px fra le sezioni**, poche cose a schermo, più aria dentro le card. Scartate: A da sola e B «Blocchi» (resta nella tela come idea «da cantiere»).
 
+## La regola sulle voci (Ignazio, 19/09/2026)
+**Le voci dell'app non cambiano: cambia solo il vestito.** Nelle bozze (quelle di Code e quelle di Design) nomi, numeri e **scritte sono inventati**: «Buongiorno, Marco», le linguette «Attività · Prodotti · Team», «Da sentire oggi», «Vedi tutti», la riga unica «2 partner da avviare · 3 riordini», «128 contatti», «Registra esito». Nell'app restano **le voci, i contenuti e l'ordine di oggi**: per esempio le linguette della Dashboard sono **Volume · Azione · Segni Vitali · Crescita** (ognuna con il suo colore, che ha un significato: blu · arancio · verde · viola), la coda è «La tua coda», i richiami sono righe separate. Un'idea nuova vista nelle bozze (una voce, un bottone, un raggruppamento) **non entra da sola**: si propone a Ignazio e si decide a parte.
+
 ## Le variabili (da mettere in cima al foglio di stile, `:root`)
 ```css
 :root{
