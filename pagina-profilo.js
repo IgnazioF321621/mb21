@@ -45,11 +45,11 @@ const PF = { avvioAperto: false };
 function mioProfiloHtml() {
   const m = AVV.mio, L = MB21Lista;
   if (!m) return '';
-  const righe = MB21Benvenuto.percheRighe(m.perche), { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
+  const righe = percheRigheHtml(m.perche), { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
   const stato = m.avvio_concluso_il ? `✅ concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(m.avvio_in_pausa_dal)}`
     : prossimo ? `👉 Prossimo passo: ${esc(prossimo.nome)}` : '🎉 Tutti i passi fatti';
   return `<div class="pf-box"><h3>🌟 Perché ho iniziato</h3>
-      ${righe.length ? `<div class="pf-perche">${righe.map(esc).join('<br>')}</div>` : '<small style="margin-top:0">Non l\'hai ancora scelto: bastano due tocchi.</small>'}
+      ${righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : '<small style="margin-top:0">Non l\'hai ancora scelto: bastano due tocchi.</small>'}
       <button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button></div>
     <div class="pf-box pf-avvio"><button class="avv-testa" id="pf-avvio"><span><b>🚀 Il mio avvio</b><small>${stato}</small></span>
       <span class="avv-conta">${fatti}/${totale} ${PF.avvioAperto ? '⌄' : '›'}</span></button>

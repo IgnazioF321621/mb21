@@ -561,9 +561,13 @@ async function caricaAvvio() {
   ricalcolaAvvio();
 }
 // Le voci di «Perché iniziare» in piccolo sotto il passo: stesso disegno in «Il mio avvio», «Partner da avviare» e scheda del Partner
+// La VOCE in evidenza, la motivazione dopo, più leggera (Ignazio 19/09, visto in foto con 7 voci lunghe: altrimenti non si distinguono)
+function percheRigheHtml(perche) {
+  return MB21Benvenuto.pulisciPerche(perche).map(p => `<span><b>${esc(p.voce)}</b>${p.testo ? ': ' + esc(p.testo) : ''}</span>`);
+}
 function percheHtml(perche) {
-  const righe = MB21Benvenuto.percheRighe(perche);
-  return righe.length ? `<small class="avv-perche">${righe.map(esc).join('<br>')}</small>` : '';
+  const righe = percheRigheHtml(perche);
+  return righe.length ? `<small class="avv-perche">${righe.join('')}</small>` : '';
 }
 function avvioHtml() {
   const n = AVV.righe.length;
