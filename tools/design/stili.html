@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MB21 · tre stili a confronto</title>
+<!-- Cantiere 34 (Design), lavoro 0: la stessa Dashboard in tre stili, per scegliere guardando. Dati finti (LEZIONI L1). Non fa parte dell'app. -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; background: #E9EAEE; color: #111; padding: 24px 16px 60px; }
+  .intro { max-width: 1240px; margin: 0 auto 22px; }
+  .intro h1 { font-size: 22px; } .intro p { color: #555; margin-top: 6px; font-size: 15px; line-height: 1.45; }
+  .banco { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; max-width: 1240px; margin: 0 auto; }
+  .col { width: 375px; max-width: 100%; }
+  .col > h2 { font-size: 17px; margin: 0 4px 4px; } .col > p { font-size: 13.5px; color: #555; margin: 0 4px 12px; min-height: 56px; line-height: 1.4; }
+  .tel { border-radius: 38px; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.22); border: 9px solid #15161A; position: relative; height: 760px; display: flex; flex-direction: column; }
+  .scorri { flex: 1; overflow: hidden; padding: 18px 16px 0; }
+  svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; }
+
+  /* pezzi comuni (solo struttura) */
+  .testa { display: flex; align-items: center; justify-content: space-between; }
+  .io { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .linguette { display: flex; gap: 6px; } .linguette span { flex: 1; text-align: center; font-size: 12.5px; padding: 7px 0; border-radius: 999px; }
+  .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .barra { height: 6px; border-radius: 99px; margin: 8px 0 6px; overflow: hidden; } .barra i { display: block; height: 100%; border-radius: 99px; }
+  .persona { display: flex; align-items: center; gap: 12px; } .persona .chi { flex: 1; min-width: 0; } .persona b { display: block; font-size: 15.5px; } .persona small { font-size: 12.5px; }
+  .tab { display: flex; justify-content: space-around; padding: 9px 6px 20px; font-size: 10.5px; } .tab div { text-align: center; } .tab svg { font-size: 22px; display: block; margin: 0 auto 3px; }
+
+  /* ── 1 · CHIARO E ARIOSO ── */
+  .s1 { background: #FFFFFF; color: #0F172A; }
+  .s1 .saluto { font-size: 13px; color: #64748B; } .s1 h3 { font-size: 27px; letter-spacing: -.5px; font-weight: 700; }
+  .s1 .io { background: #EEF2FF; color: #3730A3; }
+  .s1 .check { margin-top: 18px; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #E2E8F0; border-radius: 14px; }
+  .s1 .check .ic { width: 38px; height: 38px; border-radius: 10px; background: #0F172A; color: #fff; display: grid; place-items: center; font-size: 18px; }
+  .s1 .check b { font-size: 15px; display: block; } .s1 .check small { color: #64748B; font-size: 12.5px; } .s1 .check .v { margin-left: auto; color: #94A3B8; font-size: 18px; }
+  .s1 .titolo { font-size: 11.5px; letter-spacing: 1.2px; text-transform: uppercase; color: #94A3B8; font-weight: 600; margin: 24px 0 10px; }
+  .s1 .linguette span { background: #F1F5F9; color: #475569; } .s1 .linguette .on { background: #0F172A; color: #fff; }
+  .s1 .kpi > div { padding: 0; } .s1 .kpi .n { font-size: 34px; font-weight: 700; letter-spacing: -1px; } .s1 .kpi .n em { font-style: normal; font-size: 15px; color: #94A3B8; font-weight: 500; }
+  .s1 .kpi .t { font-size: 12.5px; color: #64748B; } .s1 .barra { background: #F1F5F9; } .s1 .barra i { background: #2563EB; } .s1 .kpi small { color: #64748B; font-size: 12px; }
+  .s1 .persona { padding: 12px 0; border-bottom: 1px solid #F1F5F9; } .s1 .persona small { color: #64748B; }
+  .s1 .pall { width: 8px; height: 8px; border-radius: 50%; } .s1 .chiama { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #E2E8F0; display: grid; place-items: center; color: #2563EB; font-size: 17px; }
+  .s1 .tab { border-top: 1px solid #F1F5F9; color: #94A3B8; background: #fff; } .s1 .tab .on { color: #0F172A; font-weight: 600; }
+
+  /* ── 2 · SCURO ED ELEGANTE ── */
+  .s2 { background: #0B1220; color: #E8ECF4; }
+  .s2 .saluto { font-size: 13px; color: #8A94A8; } .s2 h3 { font-size: 26px; font-weight: 650; letter-spacing: -.3px; }
+  .s2 .io { background: linear-gradient(135deg, #D9B66A, #B8893A); color: #1A1305; }
+  .s2 .check { margin-top: 18px; display: flex; align-items: center; gap: 12px; padding: 15px; border-radius: 16px; background: linear-gradient(135deg, #1B2A4A, #14203A); border: 1px solid #263556; }
+  .s2 .check .ic { width: 38px; height: 38px; border-radius: 12px; background: rgba(217,182,106,.14); color: #D9B66A; display: grid; place-items: center; font-size: 18px; }
+  .s2 .check b { font-size: 15px; display: block; } .s2 .check small { color: #8A94A8; font-size: 12.5px; } .s2 .check .v { margin-left: auto; color: #D9B66A; font-size: 18px; }
+  .s2 .titolo { font-size: 13px; color: #8A94A8; font-weight: 600; margin: 22px 0 10px; }
+  .s2 .scatola { background: #121B2E; border: 1px solid #1E2A44; border-radius: 18px; padding: 14px; }
+  .s2 .linguette span { color: #8A94A8; background: #0B1220; } .s2 .linguette .on { background: #D9B66A; color: #1A1305; font-weight: 600; }
+  .s2 .kpi .n { font-size: 32px; font-weight: 650; } .s2 .kpi .n em { font-style: normal; font-size: 14px; color: #6B7690; font-weight: 500; }
+  .s2 .kpi .t { font-size: 12.5px; color: #8A94A8; } .s2 .barra { background: #1E2A44; } .s2 .barra i { background: linear-gradient(90deg, #B8893A, #E6CB8A); } .s2 .kpi small { color: #8A94A8; font-size: 12px; }
+  .s2 .persona { padding: 12px 14px; background: #121B2E; border: 1px solid #1E2A44; border-radius: 14px; margin-bottom: 8px; } .s2 .persona small { color: #8A94A8; }
+  .s2 .pall { width: 4px; height: 34px; border-radius: 4px; } .s2 .chiama { width: 36px; height: 36px; border-radius: 12px; background: rgba(217,182,106,.14); display: grid; place-items: center; color: #D9B66A; font-size: 17px; }
+  .s2 .tab { background: #0E1628; border-top: 1px solid #1E2A44; color: #6B7690; } .s2 .tab .on { color: #D9B66A; }
+
+  /* ── 3 · CALDO E MORBIDO ── */
+  .s3 { background: #F6F2EC; color: #2B2622; }
+  .s3 .saluto { font-size: 13px; color: #8C8278; } .s3 h3 { font-size: 27px; font-weight: 750; letter-spacing: -.5px; }
+  .s3 .io { background: #2F5D50; color: #fff; }
+  .s3 .check { margin-top: 18px; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 22px; background: #2F5D50; color: #fff; box-shadow: 0 10px 24px rgba(47,93,80,.28); }
+  .s3 .check .ic { width: 40px; height: 40px; border-radius: 14px; background: rgba(255,255,255,.16); display: grid; place-items: center; font-size: 19px; }
+  .s3 .check b { font-size: 15.5px; display: block; } .s3 .check small { color: rgba(255,255,255,.75); font-size: 12.5px; } .s3 .check .v { margin-left: auto; font-size: 18px; opacity: .8; }
+  .s3 .titolo { font-size: 17px; font-weight: 700; margin: 22px 0 10px; }
+  .s3 .scatola { background: #fff; border-radius: 24px; padding: 16px; box-shadow: 0 6px 20px rgba(60,40,20,.07); }
+  .s3 .linguette span { color: #8C8278; background: #F6F2EC; } .s3 .linguette .on { background: #E8704A; color: #fff; font-weight: 600; }
+  .s3 .kpi .n { font-size: 33px; font-weight: 750; letter-spacing: -1px; } .s3 .kpi .n em { font-style: normal; font-size: 14px; color: #A89E93; font-weight: 500; }
+  .s3 .kpi .t { font-size: 12.5px; color: #8C8278; } .s3 .barra { background: #F1EBE3; height: 8px; } .s3 .barra i { background: #E8704A; } .s3 .kpi small { color: #8C8278; font-size: 12px; }
+  .s3 .persona { padding: 12px 14px; background: #fff; border-radius: 20px; margin-bottom: 9px; box-shadow: 0 4px 14px rgba(60,40,20,.06); } .s3 .persona small { color: #8C8278; }
+  .s3 .pall { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; } .s3 .chiama { width: 40px; height: 40px; border-radius: 50%; background: #FCE9E2; display: grid; place-items: center; color: #E8704A; font-size: 18px; }
+  .s3 .tab { background: #fff; color: #A89E93; border-radius: 26px 26px 0 0; box-shadow: 0 -6px 20px rgba(60,40,20,.06); } .s3 .tab .on { color: #2F5D50; font-weight: 700; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="i-casa" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-agenda" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.700 6 6M16 5.500a3 3 0 0 1 0 5.500M18 14.500c1.800.800 3 2.700 3 5"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></symbol>
+  <symbol id="i-mappa" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 7v4M12 11l-6 5M12 11l6 5"/></symbol>
+  <symbol id="i-tel" viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.500 1.500a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-lampo" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></symbol>
+</defs></svg>
+
+<div class="intro">
+  <h1>MB21 · la stessa Dashboard in tre stili</h1>
+  <p>Stessi contenuti, stesso ordine: cambia solo il vestito. Nomi e numeri sono finti. In tutti e tre: un solo colore d'accento, meno cose sullo schermo, icone disegnate con lo stesso tratto al posto delle emoji. Guarda quale ti fa dire «ecco, così»: si possono anche mescolare (i colori di uno, le forme di un altro).</p>
+</div>
+
+<div class="banco">
+<!-- 1 -->
+<div class="col"><h2>1 · Chiaro e arioso</h2><p>Bianco, tanto respiro, un blu solo. Niente riquadri: le cose sono separate dallo spazio. Professionale, «da banca».</p>
+<div class="tel s1"><div class="scorri">
+  <div class="testa"><div><div class="saluto">Sabato 19 settembre</div><h3>Buongiorno, Marco</h3></div><div class="io">MR</div></div>
+  <div class="check"><div class="ic"><svg><use href="#i-lampo"/></svg></div><div><b>Check del giorno</b><small>Ultimo: ieri · tocca per compilare</small></div><div class="v">›</div></div>
+  <div class="titolo">Settembre</div>
+  <div class="linguette"><span class="on">Attività</span><span>Prodotti</span><span>Team</span></div>
+  <div class="kpi">
+    <div><div class="t">Contatti</div><div class="n">42 <em>/ 60</em></div><div class="barra"><i style="width:70%"></i></div><small>Ne mancano 18</small></div>
+    <div><div class="t">Piani Marketing</div><div class="n">5 <em>/ 8</em></div><div class="barra"><i style="width:62%"></i></div><small>Ne mancano 3</small></div>
+  </div>
+  <div class="titolo">Da sentire oggi · 5</div>
+  <div class="persona"><span class="pall" style="background:#F97316"></span><div class="chi"><b>Laura Bianchi</b><small>Prospect · sentita 12 giorni fa</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#3B82F6"></span><div class="chi"><b>Paolo Conti</b><small>Cliente · riordino tra 3 giorni</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#8B5CF6"></span><div class="chi"><b>Giulia Ferri</b><small>Partner · avvio 6/14</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+</div>
+<div class="tab"><div class="on"><svg><use href="#i-casa"/></svg>Dashboard</div><div><svg><use href="#i-agenda"/></svg>Agenda</div><div><svg><use href="#i-lista"/></svg>Lista</div><div><svg><use href="#i-report"/></svg>Report</div><div><svg><use href="#i-mappa"/></svg>Mappa</div></div>
+</div></div>
+
+<!-- 2 -->
+<div class="col"><h2>2 · Scuro ed elegante</h2><p>Blu notte con un tocco d'oro. Riquadri sottili, numeri in evidenza. Fa «premium», riposa gli occhi la sera.</p>
+<div class="tel s2"><div class="scorri">
+  <div class="testa"><div><div class="saluto">Sabato 19 settembre</div><h3>Buongiorno, Marco</h3></div><div class="io">MR</div></div>
+  <div class="check"><div class="ic"><svg><use href="#i-lampo"/></svg></div><div><b>Check del giorno</b><small>Ultimo: ieri · tocca per compilare</small></div><div class="v">›</div></div>
+  <div class="titolo">Settembre</div>
+  <div class="scatola">
+    <div class="linguette"><span class="on">Attività</span><span>Prodotti</span><span>Team</span></div>
+    <div class="kpi">
+      <div><div class="t">Contatti</div><div class="n">42 <em>/ 60</em></div><div class="barra"><i style="width:70%"></i></div><small>Ne mancano 18</small></div>
+      <div><div class="t">Piani Marketing</div><div class="n">5 <em>/ 8</em></div><div class="barra"><i style="width:62%"></i></div><small>Ne mancano 3</small></div>
+    </div>
+  </div>
+  <div class="titolo">Da sentire oggi · 5</div>
+  <div class="persona"><span class="pall" style="background:#F97316"></span><div class="chi"><b>Laura Bianchi</b><small>Prospect · sentita 12 giorni fa</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#3B82F6"></span><div class="chi"><b>Paolo Conti</b><small>Cliente · riordino tra 3 giorni</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#8B5CF6"></span><div class="chi"><b>Giulia Ferri</b><small>Partner · avvio 6/14</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+</div>
+<div class="tab"><div class="on"><svg><use href="#i-casa"/></svg>Dashboard</div><div><svg><use href="#i-agenda"/></svg>Agenda</div><div><svg><use href="#i-lista"/></svg>Lista</div><div><svg><use href="#i-report"/></svg>Report</div><div><svg><use href="#i-mappa"/></svg>Mappa</div></div>
+</div></div>
+
+<!-- 3 -->
+<div class="col"><h2>3 · Caldo e morbido</h2><p>Fondo color sabbia, forme molto tonde, verde bosco e corallo. Amichevole, mette a suo agio chi non ama la tecnologia.</p>
+<div class="tel s3"><div class="scorri">
+  <div class="testa"><div><div class="saluto">Sabato 19 settembre</div><h3>Buongiorno, Marco</h3></div><div class="io">MR</div></div>
+  <div class="check"><div class="ic"><svg><use href="#i-lampo"/></svg></div><div><b>Check del giorno</b><small>Ultimo: ieri · tocca per compilare</small></div><div class="v">›</div></div>
+  <div class="titolo">Settembre</div>
+  <div class="scatola">
+    <div class="linguette"><span class="on">Attività</span><span>Prodotti</span><span>Team</span></div>
+    <div class="kpi">
+      <div><div class="t">Contatti</div><div class="n">42 <em>/ 60</em></div><div class="barra"><i style="width:70%"></i></div><small>Ne mancano 18</small></div>
+      <div><div class="t">Piani Marketing</div><div class="n">5 <em>/ 8</em></div><div class="barra"><i style="width:62%"></i></div><small>Ne mancano 3</small></div>
+    </div>
+  </div>
+  <div class="titolo">Da sentire oggi · 5</div>
+  <div class="persona"><span class="pall" style="background:#F97316">LB</span><div class="chi"><b>Laura Bianchi</b><small>Prospect · sentita 12 giorni fa</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#3B82F6">PC</span><div class="chi"><b>Paolo Conti</b><small>Cliente · riordino tra 3 giorni</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+  <div class="persona"><span class="pall" style="background:#8B5CF6">GF</span><div class="chi"><b>Giulia Ferri</b><small>Partner · avvio 6/14</small></div><div class="chiama"><svg><use href="#i-tel"/></svg></div></div>
+</div>
+<div class="tab"><div class="on"><svg><use href="#i-casa"/></svg>Dashboard</div><div><svg><use href="#i-agenda"/></svg>Agenda</div><div><svg><use href="#i-lista"/></svg>Lista</div><div><svg><use href="#i-report"/></svg>Report</div><div><svg><use href="#i-mappa"/></svg>Mappa</div></div>
+</div></div>
+</div>
+</body>
+</html>
