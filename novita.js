@@ -5,13 +5,13 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
-    { quando: '2026.09.19 · 10:08', pagina: 'app', titolo: '👋 Il benvenuto di MB21',
+    { quando: '2026.09.19 · 10:41', pagina: 'app', titolo: '👋 Il benvenuto di MB21',
       testo: 'Cinque schermate corte che spiegano MB21 a chi entra la prima volta: perché usarla, «Perché vuoi iniziare?», le pagine in basso e i primi nomi della cerchia ristretta. La prima volta si apre da sola anche a te, così vedi cosa troverà un tuo nuovo partner; puoi sempre toccare «Lo faccio dopo». La ritrovi nel Profilo: «👋 Rivedi il benvenuto».' },
-    { quando: '2026.09.19 · 10:08', pagina: 'dashboard', titolo: '🚀 Il mio avvio: «Perché iniziare» e la cerchia ristretta',
+    { quando: '2026.09.19 · 10:41', pagina: 'dashboard', titolo: '🚀 Il mio avvio: «Perché iniziare» e la cerchia ristretta',
       testo: 'Il primo passo dell\'avvio ora si chiama «Perché iniziare», come nel Piano Marketing: toccalo, scegli quello che vuoi realizzare (anche più di una cosa) e scrivi due parole. Lo vede anche chi ti segue. Il passo «Lista Start» apre una pagina veloce dove scrivi nome e cellulare delle persone più vicine a te: entrano nella Lista Nomi e l\'app ti dice subito chi chiamare.' },
-    { quando: '2026.09.19 · 10:08', pagina: 'dashboard', titolo: 'Partner da avviare: leggi il «perché» dei tuoi partner',
+    { quando: '2026.09.19 · 10:41', pagina: 'dashboard', titolo: 'Partner da avviare: leggi il «perché» dei tuoi partner',
       testo: 'Nella pagina «🚀 Partner da avviare» e nella scheda del Partner, sotto il primo passo «Perché iniziare» leggi quello che il tuo partner ha scelto nel suo benvenuto: così sai per cosa sta lavorando.' },
-    { quando: '2026.09.19 · 10:08', pagina: 'dashboard', titolo: '📲 MB21 sul telefono e avvisi del mattino',
+    { quando: '2026.09.19 · 10:41', pagina: 'dashboard', titolo: '📲 MB21 sul telefono e avvisi del mattino',
       testo: 'Se sul telefono non hai ancora messo MB21 nella schermata Home o non hai acceso gli avvisi, in Dashboard trovi una riga azzurra che ti porta al Profilo, dove si fa in un attimo. Quando è tutto a posto la riga sparisce.' },
     { quando: '2026.09.19 · 06:08', pagina: 'dashboard', titolo: 'Partner da avviare: «Come funziona», pausa e ripresa da capo',
       testo: 'Nella pagina «🚀 Partner da avviare» in alto c\'è «ℹ️ Come funziona», con tutto spiegato in poche righe. Chi ha il partner nella sua lista ora può segnare i passi, metterlo «⏸ In pausa» o «✅ Avvio concluso» direttamente da lì, senza aprire la scheda. E se un partner è rimasto in pausa più di un anno, alla ripresa trovi «🔄 Riprendi da capo»: i 14 passi tornano tutti da fare.' },
