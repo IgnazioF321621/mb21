@@ -18,7 +18,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   1. ✅ Scheda contatto di un Partner · **Azioni** (19/09 22:3x): una card per azione, barretta viola per gli Appuntamenti e blu per i Piani Marketing, stato, «Cambia esito», «Modifica · Elimina»: si distinguono bene, niente da correggere
   2. ✅ Scheda contatto · **Dati** (19/09): riga «Coppia con — · Collega» e riquadro bianco con i campi a due colonne (etichetta piccola grigia, valore sotto), versione 22:17 letta in fondo: a posto, niente da correggere
   3. ✅ Scheda contatto · **Coach Yes** (19/09): «Coach+» a pastiglia, «Nessuna nota», e il **foglio «Nuova nota Coach»** aperto: angoli tondi in alto con la maniglia, campi alti e tondi, «Annulla» e «Salva» inchiostro affiancati: a posto. Nota: «Annulla» è ancora blu da link (come «Ordina: A-Z»): da decidere con Ignazio insieme agli altri blu
-  4. ☐ Scheda contatto · **Segni vitali**
+  4. ✅ Scheda contatto · **Segni vitali** (19/09): tre card bianche BBS · WES · CEP con «+ Biglietto» e «+ Periodo», periodo del CEP con la data, «Non ha rinnovato», spunta e ×: funziona e i colori sono quelli giusti. **Piccolo ritocco da fare** (non fatto: il modello grande era al limite): le tre etichette BBS · WES · CEP in testa alle card sono ancora **rettangolini** mentre in tutto il resto dell'app sono **pastiglie** → arrotondarle; «+ Biglietto», «+ Periodo», «Non ha rinnovato» sono blu da link (vedi la nota sui blu)
   5. ☐ Scheda di un Cliente · **Vendite**
   6. ☐ **Modifica** aperto, scorso fino in fondo
   7. ☐ **Agenda** di oggi
