@@ -145,9 +145,7 @@
   .ls-testa { position: sticky; top: 0; z-index: 5; background: var(--sfondo); margin: calc(-1 * (env(safe-area-inset-top) + 16px)) -16px 10px;
     padding: calc(env(safe-area-inset-top) + 12px) 16px 8px; border-bottom: 1px solid var(--linea); }
   .ls-testa .ag-testa { margin: 0 0 8px; }
-  .ls-testa .partner-select { display: flex; align-items: center; gap: 10px; border-radius: var(--raggio-bottone); padding: 5px 5px 5px 12px; margin: 0 0 8px; }
-  .ls-testa .partner-select small { margin: 0; flex: none; }
-  .ls-testa .partner-select button { flex: 1; min-width: 0; border-radius: 9px; padding: 6px 10px; font-size: 15px; }
+  .ls-testa .partner-select { margin: 0 0 8px; }
   .ls-testa .cerca { margin: 0 0 8px; }
   .chips button span { font-weight: 500; opacity: .6; margin-left: 2px; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
@@ -164,6 +162,10 @@
   .cn .striscia { width: 4px; flex: none; align-self: stretch; }
   .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
   .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* un nome lungo si accorcia con i puntini, ma targhette e «nuovo» restano sempre in vista (Ignazio 19/09: «se il nome è lungo si perdono i dati») */
+  .cn .nome { display: flex; align-items: center; min-width: 0; }
+  .cn .nome .nm { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .cn .nome > :not(.nm) { flex: none; }
   .cn .frase { font-size: 14px; color: var(--testo-soft); margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
   .cn .chiama { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--sfondo); color: var(--cat, var(--testo)); display: flex; align-items: center; justify-content: center; }
   .cn .chiama svg.ic { width: 19px; height: 19px; }
@@ -321,14 +323,17 @@
   .telefono-campo select { width: 118px; flex: none; }
 
   /* ── Dashboard (Fase 3) ── */
-  .partner-select { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 12px 14px; margin: 8px 0 12px; }
-  .partner-select small { display: block; font-size: 12px; font-weight: 700; color: var(--testo-tenue); margin-bottom: 6px; }
-  .partner-select button { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--accento); color: #fff;
-    border: 1px solid var(--testo-soft); border-radius: var(--raggio-bottone); padding: 10px 12px; font-size: 16px; font-weight: 600; }
-  .partner-select button span { font-size: 12px; color: var(--testo-tenue); font-weight: 600; }
-  .partner-select.altro { background: var(--cat-prospect); }   /* dati di un altro partner: si scrive a nome suo */
-  .partner-select.altro small, .partner-select.altro button span { color: var(--cat-prospect-tinta); }
-  .partner-select.altro button { background: var(--cat-prospect); border-color: var(--cat-prospect-tinta); }
+  /* Partner Select (solo Admin): una pastiglia bianca come la ricerca; diventa ARANCIO PIENO quando si guardano i dati di un altro partner
+     (si scrive a nome suo: il segnale deve restare forte) */
+  .partner-select { display: flex; align-items: center; gap: 10px; background: var(--superficie); color: var(--testo); border-radius: var(--raggio-pill); padding: 5px 5px 5px 16px; margin: 8px 0 12px; box-shadow: var(--ombra-card); }
+  .partner-select small { flex: none; font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--testo-tenue); }
+  .partner-select button { flex: 1; min-width: 0; min-height: 38px; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--sfondo); color: var(--testo);
+    border: 0; border-radius: var(--raggio-pill); padding: 6px 14px; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .partner-select button span { font-size: 12px; color: var(--testo-soft); font-weight: 600; flex: none; }
+  .partner-select.altro { background: var(--cat-prospect); color: #fff; }
+  .partner-select.altro small { color: rgba(255,255,255,.85); }
+  .partner-select.altro button { background: rgba(255,255,255,.2); color: #fff; }
+  .partner-select.altro button span { color: #fff; }
   .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
   .banner-abb.attivo { background: var(--ok-tinta); color: var(--ok); }
   .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: var(--pericolo-tinta); color: var(--pericolo); padding: 14px 16px; }
@@ -747,29 +752,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192046"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192046"></script>
-<script src="lista.js?v=202609192046"></script>
-<script src="rubrica.js?v=202609192046"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192046"></script>
-<script src="agenda.js?v=202609192046"></script>
-<script src="report.js?v=202609192046"></script>
-<script src="check.js?v=202609192046"></script>
-<script src="mappa.js?v=202609192046"></script>
-<script src="pagina-dashboard.js?v=202609192046"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192046"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192046"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192046"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192046"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192046"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192046"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192046"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192046"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192046"></script>
-<script src="benvenuto.js?v=202609192046"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192046"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192056"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192056"></script>
+<script src="lista.js?v=202609192056"></script>
+<script src="rubrica.js?v=202609192056"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192056"></script>
+<script src="agenda.js?v=202609192056"></script>
+<script src="report.js?v=202609192056"></script>
+<script src="check.js?v=202609192056"></script>
+<script src="mappa.js?v=202609192056"></script>
+<script src="pagina-dashboard.js?v=202609192056"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192056"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192056"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192056"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192056"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192056"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192056"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192056"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192056"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192056"></script>
+<script src="benvenuto.js?v=202609192056"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192056"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 20:46';
+const APP_VERSION = '2026.09.19 · 20:56';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.

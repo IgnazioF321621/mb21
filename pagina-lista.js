@@ -193,7 +193,7 @@ function cardNome(r) {
     <div class="cn ${classeCat(r.categoria)}" data-id="${esc(r.id)}">
       <span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>
       <div class="dentro">
-        <div class="nome">${esc(r.nome)}${nuovoBadge(r)}${targheCard(r)}</div>
+        <div class="nome"><span class="nm">${esc(r.nome)}</span>${nuovoBadge(r)}${targheCard(r)}</div>
         <div class="frase">${frase.futuro ? ic('agenda') + ' ' : ''}${esc(frase.testo)}</div>
         ${sotto ? `<div class="prof">${esc(sotto)}</div>` : ''}
         ${coppiaCard(r)}
