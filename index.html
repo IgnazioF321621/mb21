@@ -445,11 +445,15 @@
   .ag-comandi button { border: 1px solid var(--linea); background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; padding: 8px 10px; color: var(--testo); }
   .ag-comandi button.pericolo { color: var(--rosso); }
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: var(--raggio-riga); padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
-  .ag-blocco { min-height: 52px; }
-  .ag-blocco.telefonate { background: var(--cat-cliente-tinta); color: #1E3A8A; }
-  .ag-blocco.riordini { background: var(--cat-prospect-tinta); color: #7C2D12; }
-  .ag-blocco.conferme { background: var(--ok-tinta); color: #14532D; }
-  .ag-blocco.avvio { background: var(--cat-partner-tinta); color: #4C1D95; }
+  /* Righe di richiamo (partner da avviare, telefonate, riordini, conferme…): bianche come le righe delle persone (Ignazio 19/09: le tinte
+     sul fondo perla danno fastidio); il colore del richiamo resta solo nell'icona, --richiamo */
+  .ag-blocco { min-height: 52px; background: var(--superficie); color: var(--testo); box-shadow: var(--ombra-card); --richiamo: var(--testo-soft); }
+  .ag-blocco > span:first-child svg.ic { color: var(--richiamo); width: 20px; height: 20px; margin-right: 8px; vertical-align: -4px; }
+  .ag-blocco > span:last-child { color: var(--testo-tenue); }
+  .ag-blocco.telefonate { --richiamo: var(--cat-cliente); }
+  .ag-blocco.riordini { --richiamo: var(--cat-prospect); }
+  .ag-blocco.conferme { --richiamo: var(--ok); }
+  .ag-blocco.avvio { --richiamo: var(--cat-partner); }
   /* Pagina «Partner da avviare» (cantiere 31 lavoro 2) */
   .avv-partner { padding: 10px 14px 12px; }
   .avv-testa { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; background: none; padding: 2px 0; text-align: left; font-family: inherit; font-size: 16px; color: var(--testo); }
@@ -465,8 +469,8 @@
   .interruttore small.avvio-proposta { color: #92400E; }
   .avv-proposte .piccolo { margin: 0; background: #fff; flex: none; }
   .avv-azioni { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 4px; }
-  .ag-blocco.avv-pausa { background: var(--sfondo); color: var(--grigio); margin-top: 14px; }
-  .ag-blocco.avv-come { background: var(--sfondo); color: var(--testo); margin: 0 0 12px; padding: 10px 14px; font-size: 14px; }
+  .ag-blocco.avv-pausa { color: var(--testo-soft); margin-top: 14px; }
+  .ag-blocco.avv-come { margin: 0 0 12px; padding: 10px 14px; font-size: 14px; --richiamo: var(--cat-cliente); }
   .avv-come-testo ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.45; }
   .avv-come-testo li { margin: 5px 0; }
   .avv-partner.mio { border: 2px solid #C4B5FD; }
@@ -505,7 +509,7 @@
   .bv-nomi div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); font-size: 15px; }
   .bv-nomi div:first-child { border-top: 0; }
   .bv-nomi small { color: var(--grigio); flex: none; }
-  .ag-blocco.bv-telefono { background: #EFF6FF; color: #1D4ED8; }
+  .ag-blocco.bv-telefono { --richiamo: var(--cat-cliente); }
   .pf-perche { font-size: 15px; line-height: 1.45; color: #4B5563; }
   .pf-perche span, .avv-perche span { display: block; margin-top: 5px; color: inherit; }
   .pf-perche span:first-child, .avv-perche span:first-child { margin-top: 0; }
@@ -519,7 +523,7 @@
   .riga-coda .conf-nr { display: block; }
   .conf-bottoni { grid-template-columns: 1fr 1fr 1fr; }
   .conf-bottoni button:last-child:nth-child(odd) { grid-column: auto; }
-  .ag-blocco.passati { background: #FEF3C7; color: #92400E; }
+  .ag-blocco.passati { --richiamo: var(--proposta); }
   .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
   .ag-scelte button { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 14px; font-weight: 600; padding: 8px 12px; color: var(--testo); }
   .ag-scelte button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
@@ -726,29 +730,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609191752"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609191752"></script>
-<script src="lista.js?v=202609191752"></script>
-<script src="rubrica.js?v=202609191752"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191752"></script>
-<script src="agenda.js?v=202609191752"></script>
-<script src="report.js?v=202609191752"></script>
-<script src="check.js?v=202609191752"></script>
-<script src="mappa.js?v=202609191752"></script>
-<script src="pagina-dashboard.js?v=202609191752"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191752"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191752"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191752"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191752"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191752"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191752"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191752"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191752"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191752"></script>
-<script src="benvenuto.js?v=202609191752"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191752"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192004"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192004"></script>
+<script src="lista.js?v=202609192004"></script>
+<script src="rubrica.js?v=202609192004"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192004"></script>
+<script src="agenda.js?v=202609192004"></script>
+<script src="report.js?v=202609192004"></script>
+<script src="check.js?v=202609192004"></script>
+<script src="mappa.js?v=202609192004"></script>
+<script src="pagina-dashboard.js?v=202609192004"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192004"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192004"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192004"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192004"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192004"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192004"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192004"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192004"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192004"></script>
+<script src="benvenuto.js?v=202609192004"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192004"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 17:52';
+const APP_VERSION = '2026.09.19 · 20:04';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
