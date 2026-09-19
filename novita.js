@@ -5,7 +5,7 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
-    { quando: '2026.09.19 · 11:39', pagina: 'app', titolo: 'Profilo: i tuoi «perché» e il tuo avvio, sempre',
+    { quando: '2026.09.19 · 11:52', pagina: 'app', titolo: 'Profilo: i tuoi «perché» e il tuo avvio, sempre',
       testo: 'In cima al Profilo (il cerchietto in alto a destra in Dashboard) trovi «🌟 Perché ho iniziato», con quello che hai scelto e «Cambia» per aggiornarlo, e «🚀 Il mio avvio» con i tuoi 14 passi. Ci sono sempre, anche quando l\'avvio è finito e in Dashboard il riquadro non c\'è più: i tuoi obiettivi restano a portata di mano.' },
     { quando: '2026.09.19 · 10:41', pagina: 'app', titolo: '👋 Il benvenuto di MB21',
       testo: 'Cinque schermate corte che spiegano MB21 a chi entra la prima volta: perché usarla, «Perché vuoi iniziare?», le pagine in basso e i primi nomi della cerchia ristretta. La prima volta si apre da sola anche a te, così vedi cosa troverà un tuo nuovo partner; puoi sempre toccare «Lo faccio dopo». La ritrovi nel Profilo: «👋 Rivedi il benvenuto».' },
