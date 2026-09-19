@@ -17,7 +17,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - 📋 **Le foto che restano, UNA PER VOLTA** (Ignazio 19/09: «una per volta… sennò man mano si perde la lista»): a Ignazio si chiede **una sola schermata**, si aspetta «foto», si guarda, si corregge, si spunta qui sotto con ✅ e solo allora si dice la successiva. Mai l'elenco intero in chat.
   1. ✅ Scheda contatto di un Partner · **Azioni** (19/09 22:3x): una card per azione, barretta viola per gli Appuntamenti e blu per i Piani Marketing, stato, «Cambia esito», «Modifica · Elimina»: si distinguono bene, niente da correggere
   2. ✅ Scheda contatto · **Dati** (19/09): riga «Coppia con — · Collega» e riquadro bianco con i campi a due colonne (etichetta piccola grigia, valore sotto), versione 22:17 letta in fondo: a posto, niente da correggere
-  3. ☐ Scheda contatto · **Coach Yes**
+  3. ✅ Scheda contatto · **Coach Yes** (19/09): «Coach+» a pastiglia, «Nessuna nota», e il **foglio «Nuova nota Coach»** aperto: angoli tondi in alto con la maniglia, campi alti e tondi, «Annulla» e «Salva» inchiostro affiancati: a posto. Nota: «Annulla» è ancora blu da link (come «Ordina: A-Z»): da decidere con Ignazio insieme agli altri blu
   4. ☐ Scheda contatto · **Segni vitali**
   5. ☐ Scheda di un Cliente · **Vendite**
   6. ☐ **Modifica** aperto, scorso fino in fondo
