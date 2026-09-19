@@ -67,6 +67,7 @@ function disegnaProfilo() {
       <small>Alle <b>8</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div></div>
     <div class="pf-box">${b('pf-novita', '✨ Novità dell\'app')}</div>
+    <div class="pf-box">${b('pf-benvenuto', '👋 Rivedi il benvenuto')}</div>
     <div class="pf-box">${b('pf-password', '🔑 Cambia password')}</div>
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
@@ -77,6 +78,7 @@ function disegnaProfilo() {
   su('pf-foto-via', () => salvaFoto(null));
   su('pf-numero', () => scegliNumero(disegnaProfilo));
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
+  su('pf-benvenuto', () => apriBenvenuto());   // cantiere 32: le cinque schermate da capo, con quello che aveva già scelto
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
   collegaAvvisi();

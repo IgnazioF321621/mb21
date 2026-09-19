@@ -314,15 +314,17 @@ async function avvioDellaScheda(c) {
   const p = sq.error ? null : MB21Mappa.partnerDellaScheda({ nome: c.nome, codice_amway: data.codice_amway }, sq.data);
   // Quale scheda vale per «Partner da avviare» (lavoro 2): quella dello sponsor o del primo upline che ce l'ha (`avvio_del_ramo`).
   // Se non è questa (il partner ha la scheda in due liste) la sezione lo dice: i passi segnati qui lì non si vedono.
-  let altra = null, sa = null;
+  let altra = null, sa = null, perche = null;
   if (p) {
-    const ramo = await dbq('avvio del ramo', supa.rpc('avvio_del_ramo'));
-    const riga = ramo.error ? null : (ramo.data || []).find(r => r.partner_id === p.partner_id);
+    // cantiere 32: `avvio_del_team()` = { ramo: `avvio_del_ramo()` tale e quale, perche: le voci di «Perché iniziare» dei partner del ramo }
+    const team = await dbq('avvio del Team', supa.rpc('avvio_del_team'));
+    const riga = team.error || !team.data ? null : (team.data.ramo || []).find(r => r.partner_id === p.partner_id);
     if (riga && riga.contatto_id !== c.id) altra = { id: riga.contatto_id, lista: riga.lista, mia: riga.user_id === ST.utente.id || eAdmin() };
     sa = (riga && riga.sa) || null;   // lavoro 4: quello che l'app sa già di lui, per le proposte 💡
+    perche = (riga && team.data.perche && team.data.perche[p.partner_id]) || null;   // quello che ha scelto nel benvenuto, sotto il primo passo
   }
   if (!LS.contatto || LS.contatto.id !== c.id) return null;
-  return (LS.avvio = { id: c.id, concluso: data.avvio_concluso_il || null, pausa: data.avvio_in_pausa_dal || null, ingresso: (p && p.data_ingresso) || null, altra, sa });
+  return (LS.avvio = { id: c.id, concluso: data.avvio_concluso_il || null, pausa: data.avvio_in_pausa_dal || null, ingresso: (p && p.data_ingresso) || null, altra, sa, perche });
 }
 
 function disegnaScheda() {
@@ -641,7 +643,7 @@ function sezioneOnboarding() {
       ${a && a.altra ? `<div class="avviso">Per «Partner da avviare» vale la scheda nella lista di <b>${esc(a.altra.lista || 'un upline')}</b> (lo sponsor, seguendo la mappa Amway): i passi segnati qui lì non si vedono.
         ${a.altra.mia ? '<button class="link" id="avvio-altra" style="display:block;padding:6px 0 0">Apri quella scheda ›</button>' : ''}</div>` : ''}
       <div class="riquadro">${MB21Lista.PASSI_ONBOARDING.map(([col, nome, descr]) => `
-        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${perche[col] ? `<small class="avvio-proposta">💡 L'app propone: ${esc(perche[col])}</small>` : ''}</span>
+        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${col === 'onb_sogno' && a ? percheHtml(a.perche) : ''}${perche[col] ? `<small class="avvio-proposta">💡 L'app propone: ${esc(perche[col])}</small>` : ''}</span>
           <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${fermo ? 'disabled' : ''}></label>`).join('')}
       </div>
       ${fermo || !a ? '' : a.concluso

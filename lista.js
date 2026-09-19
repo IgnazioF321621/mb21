@@ -16,8 +16,10 @@
   ];
   // 14 passi di Onboarding (in Glide: Amway · Ordine · Network 21 · Sogno · …).
   // Ordine deciso da Ignazio (18/09, cantiere 31): il Sogno per primo, davanti ad Amway (nel Manuale di Avvio le motivazioni vengono prima dei 4 passi)
+  // Dal cantiere 32 (Ignazio 19/09) a video il primo passo si chiama «Perché iniziare», come l'ultima pagina del Piano Marketing e come
+  // la schermata del benvenuto; la colonna resta `onb_sogno`. Sotto il passo, in piccolo, le voci scelte (`MB21Benvenuto.percheRighe`)
   const PASSI_ONBOARDING = [
-    ['onb_sogno', 'Sogno', 'Motivo e/o incubo'], ['onb_amway', 'Amway', 'Registrazione'],
+    ['onb_sogno', 'Perché iniziare', 'Motivo e/o incubo'], ['onb_amway', 'Amway', 'Registrazione'],
     ['onb_ordine', 'Ordine', 'Primo ordine'], ['onb_n21', 'Network 21', 'Registrazione'],
     ['onb_starter_pack', 'Starter Pack', 'Acquisto SPN21'], ['onb_lista_start', 'Lista Start', 'Nomi cerchia ristretta'],
     ['onb_role_play', 'Role Play', 'Esercitazione e prove'], ['onb_contatti', 'Contatti', 'Telefonate di contatto'],

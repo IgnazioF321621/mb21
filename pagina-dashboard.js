@@ -153,6 +153,7 @@ function disegnaOggi() {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
+  html += rigaTelefonoHtml();   // cantiere 32: «📲 Metti MB21 sul telefono e accendi gli avvisi», dal secondo ingresso (pagina-benvenuto.js)
   html += confermeHtml();
   html += riordiniHtml();
   html += avvioHtml();
@@ -172,10 +173,13 @@ function disegnaOggi() {
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaMioAvvio();
+  mostraRigaTelefono();   // non fa aspettare la Dashboard
   const rigaAvvio = document.getElementById('dash-avvio');
   if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
   if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
+  const mioAvvio = vai === 'avvio' && document.getElementById('mio-avvio');   // cantiere 32: dal benvenuto si arriva su «Il mio avvio», con sotto i nomi da chiamare
+  if (mioAvvio) mioAvvio.scrollIntoView({ block: 'start' });
   if (limitato()) {
     app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
     return;
@@ -534,22 +538,32 @@ function collegaConferme() {
 // su `sa` di `avvio_del_ramo()`), con il perché; niente si accende da solo, «Segna» è lo stesso tocco del passo.
 // Per il nuovo: «🚀 Il mio avvio» nella SUA Dashboard (`mio_avvio()`, `smarca_mio_passo()`): vede i suoi 14 passi e li smarca da solo;
 // la scheda resta nella lista dello sponsor e lui non la vede. Sparisce con l'avvio concluso, in pausa o a passi finiti.
-const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, comeAperto: false, mio: null, mioAperto: false };
+// Cantiere 32 (Ignazio 19/09): «Il mio avvio» c'è dal primo giorno, anche senza la scheda nella lista dello sponsor (`mio_percorso()`:
+// con la scheda legge quella, senza legge i passi propri, che passano alla scheda da soli quando arriva); il primo passo si chiama
+// «Perché iniziare» e sotto, in piccolo, ha le voci scelte nel benvenuto (`perche`: le proprie da `mio_percorso()`, quelle dei partner
+// del Team da `avvio_del_team()`, che dentro ha `avvio_del_ramo()` tale e quale). I passi «Perché iniziare» e «Lista Start» del
+// proprio avvio non si spuntano a mano: aprono la loro schermata del benvenuto (pagina-benvenuto.js), che li spunta.
+const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, comeAperto: false, mio: null, mioAperto: false, perche: {} };
 function ricalcolaAvvio() {
   AVV.righe = MB21Lista.partnerDaAvviare(AVV.tutte, visto().partner_id);
   AVV.pausa = MB21Lista.partnerInPausa(AVV.tutte, visto().partner_id);
 }
 async function caricaAvvio() {
-  AVV.tutte = []; AVV.mio = null;
+  AVV.tutte = []; AVV.mio = null; AVV.perche = {};
   if (!ST.offline && !vediTutti()) try {
-    const [ramo, mio] = await Promise.all([
-      dbq('avvio del ramo', supa.rpc('avvio_del_ramo')),
-      guardoAltri() ? { data: null } : dbq('il mio avvio', supa.rpc('mio_avvio')),
+    const [team, mio] = await Promise.all([
+      dbq('avvio del Team', supa.rpc('avvio_del_team')),
+      guardoAltri() ? { data: null } : dbq('il mio percorso', supa.rpc('mio_percorso')),
     ]);
-    if (!ramo.error) AVV.tutte = ramo.data || [];
+    if (!team.error && team.data) { AVV.tutte = team.data.ramo || []; AVV.perche = team.data.perche || {}; }
     if (!mio.error) AVV.mio = mio.data || null;
   } catch (e) {}
   ricalcolaAvvio();
+}
+// Le voci di «Perché iniziare» in piccolo sotto il passo: stesso disegno in «Il mio avvio», «Partner da avviare» e scheda del Partner
+function percheHtml(perche) {
+  const righe = MB21Benvenuto.percheRighe(perche);
+  return righe.length ? `<small class="avv-perche">${righe.map(esc).join('<br>')}</small>` : '';
 }
 function avvioHtml() {
   const n = AVV.righe.length;
@@ -565,21 +579,37 @@ function mioAvvioHtml() {
     <button class="avv-testa" id="mio-avvio"><span><b>🚀 Il mio avvio</b><small>👉 Prossimo passo: ${esc(prossimo.nome)} · ${esc(prossimo.descr)}</small></span>
       <span class="avv-conta">${fatti}/${totale}</span></button>
     <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-    ${AVV.mioAperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) =>
-        `<button class="${m[col] ? 'fatto' : ''}" data-mio-passo="${col}">${m[col] ? '✅' : '◻️'} ${esc(nome)}</button>`).join('')}</div>
-      <div class="sotto" style="margin:8px 0 0">Tocca un passo quando l'hai fatto${m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.</div>` : ''}
+    ${AVV.mioAperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
+        const voci = col === 'onb_sogno' ? percheHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
+        return `<button class="${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-mio-passo="${col}">${m[col] ? '✅' : '◻️'} ${esc(nome)}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
+      <div class="sotto" style="margin:8px 0 0">Tocca un passo quando l'hai fatto${m.con_scheda === false ? '. Appena chi ti segue ti ha nella sua lista, li vede anche lui'
+        : m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.</div>
+      ${m.con_scheda === false ? '<div class="avv-azioni"><button class="link" id="mio-avvio-concluso">✅ Ho concluso il mio avvio</button></div>' : ''}` : ''}
   </div>`;
 }
+// I passi che hanno la loro schermata nel benvenuto (decisione 14 del cantiere 32): il tocco la apre, ed è lei a spuntare il passo
+const PASSI_CON_SCHERMATA = { onb_sogno: 'perche', onb_lista_start: 'cerchia' };
 function collegaMioAvvio() {
   const testa = document.getElementById('mio-avvio');
   if (testa) testa.onclick = () => { AVV.mioAperto = !AVV.mioAperto; disegnaOggi(); };
   app.querySelectorAll('[data-mio-passo]').forEach(b => b.onclick = async () => {
     const col = b.dataset.mioPasso;
-    const { data, error } = await dbq('smarca il mio passo', supa.rpc('smarca_mio_passo', { p_passo: col, p_fatto: !AVV.mio[col] }));
+    if (PASSI_CON_SCHERMATA[col]) return apriBenvenuto({ solo: PASSI_CON_SCHERMATA[col] });
+    const { data, error } = await dbq('segna il mio passo', supa.rpc('segna_mio_passo', { p_passo: col, p_fatto: !AVV.mio[col] }));
     if (error || !data) return mostraToast('Non salvato: riprova.');
     AVV.mio = data;
     disegnaOggi();
   });
+  // Senza la scheda nella lista di chi lo segue (in cima alla mappa, o non ancora nel file Amway) l'avvio lo conclude da sé
+  const concluso = document.getElementById('mio-avvio-concluso');
+  const concludi = async si => {
+    const { data, error } = await dbq('concludo il mio avvio', supa.rpc('concludi_mio_avvio', { p_concluso: si }));
+    if (error || !data) return mostraToast('Non salvato: riprova.');
+    AVV.mio = data;
+    disegnaOggi();
+    if (si) mostraToast('Il tuo avvio è concluso', () => concludi(false));
+  };
+  if (concluso) concluso.onclick = () => concludi(true);
 }
 
 function disegnaAvvio() {
@@ -598,9 +628,11 @@ function disegnaAvvio() {
           <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}${L.pausaLunga(r, ST.oggi) ? ' · più di un anno' : ''}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-      ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => mia
-          ? `<button class="${r[col] ? 'fatto' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</button>`
-          : `<span class="${r[col] ? 'fatto' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</span>`).join('')}</div>
+      ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
+          const voci = col === 'onb_sogno' ? percheHtml(AVV.perche[r.partner_id]) : '';   // cantiere 32: il perché lo vede anche chi lo segue
+          return mia
+          ? `<button class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}${voci}</button>`
+          : `<span class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}${voci}</span>`; }).join('')}</div>
         ${proposte.length ? `<div class="avv-proposte"><b>💡 L'app propone</b>${proposte.map(p => `<div><span>${esc(p.nome)}: ${esc(p.perche)}</span>
             ${mia ? `<button class="piccolo" data-spunta="${p.col}" data-di="${esc(r.partner_id)}">Segna</button>` : ''}</div>`).join('')}</div>` : ''}
         <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${mia ? '. Tocca un passo per segnarlo o toglierlo.' : ''}</div>
@@ -621,6 +653,7 @@ function disegnaAvvio() {
     ${AVV.comeAperto ? `<div class="riquadro avv-come-testo"><ul>
       <li>Qui vedi i partner ${altro ? 'del Team' : 'del tuo Team'} con l'avvio aperto, dal più recente. Tra [ ] c'è lo sponsor: è a lui che ti rivolgi${altro ? '' : '; «Tuo/a» se è tuo'}.</li>
       <li>👉 è il prossimo passo da fare insieme. 💡 sono i passi che l'app sa già: li segna chi ha il partner nella sua lista, se è d'accordo.</li>
+      <li><b>Perché iniziare</b> è il primo passo: il partner lo sceglie nel suo benvenuto («Perché vuoi iniziare?», come nel Piano Marketing) e qui, sotto il passo, leggi quello che ha scelto.</li>
       <li><b>✅ Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
       <li><b>⏸ In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>▶️ Riprendi</b> lo riporta qui.</li>
       <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>🔄 Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>
