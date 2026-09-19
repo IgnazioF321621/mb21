@@ -723,13 +723,14 @@
   .fa-ospite { margin: 6px 0 0; width: 100%; background: var(--proposta-tinta); color: var(--proposta); }
 
   /* Mappa (Fase 8) */
-  .mp-filtri { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0; }
+  .mp-filtri { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0; scrollbar-width: none; }
+  .mp-filtri::-webkit-scrollbar { display: none; }   /* la barra grigia di scorrimento sotto i filtri si vedeva (foto 12) */
   .mp-filtri button { flex: 0 0 auto; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 999px;
     padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--grigio); }
   .mp-filtri button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
-  .mp-cerca { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--bordo);
-    border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
-  .mp-riga { display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--bordo); }
+  .mp-cerca { width: 100%; box-sizing: border-box; min-height: 44px; padding: 9px 18px; border: 1px solid transparent; box-shadow: var(--ombra-card);
+    border-radius: var(--raggio-pill); font-size: 15px; margin-bottom: 12px; }
+  .mp-riga { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--superficie-2); background: var(--superficie); }
   .mp-riga.spento { opacity: .45; }
   .mp-apri { flex: 0 0 auto; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
     width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--bordo);
@@ -742,9 +743,10 @@
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
   .mp-numeri .mp-bonus, .mp-numeri b { color: var(--testo); font-weight: 700; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
-  .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: #fff; background: var(--spento);
-    border-radius: 4px; padding: 2px 4px; }
-  .mp-sv span.bbs.on { background: var(--cat-cliente); } .mp-sv span.wes.on { background: var(--pericolo); } .mp-sv span.cep.on { background: var(--ok); }
+  /* targhette BBS · WES · CEP della Mappa: le stesse pastiglie della Lista (accese piene, spente solo contorno) */
+  .mp-sv span { font-size: 9px; font-weight: 700; letter-spacing: .3px; color: var(--testo-tenue); background: none; border: 1px solid var(--spento);
+    border-radius: var(--raggio-pill); padding: 1px 5px; }
+  .mp-sv span.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .mp-sv span.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .mp-sv span.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
   .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
   .sv-pill { font-size: 11px; font-weight: 700; letter-spacing: .3px; color: #fff; border-radius: 5px; padding: 3px 7px; }
   .sv-pill.bbs { background: var(--cat-cliente); } .sv-pill.wes { background: var(--pericolo); } .sv-pill.cep { background: var(--ok); }
@@ -773,13 +775,13 @@
   .mp-completa { flex: 0 0 auto; align-self: center; background: none; border: 0; padding: 6px 4px 6px 10px;
     font-size: 20px; line-height: 1; color: var(--grigio-chiaro); }
   .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  .mp-riquadro { background: var(--testo); color: #fff; border-radius: var(--raggio-riga); padding: 14px; margin: 10px 0; }
+  .mp-riquadro { background: var(--accento); color: #fff; border-radius: var(--raggio-riga); padding: 14px; margin: 10px 0; }
   .mp-riquadro .tre { display: flex; gap: 10px; }
   .mp-riquadro .tre > div { flex: 1; background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 10px; }
   .mp-riquadro small { display: block; color: #C7CBD4; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
   .mp-riquadro b { font-size: 18px; font-weight: 700; }
   .mp-barra { height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); margin-top: 12px; overflow: hidden; }
-  .mp-barra i { display: block; height: 100%; background: #60A5FA; }
+  .mp-barra i { display: block; height: 100%; background: var(--cat-cliente-tinta); }
   .mp-tabella { width: 100%; border-collapse: collapse; font-size: 13px; }
   .mp-tabella th { text-align: right; color: var(--grigio-chiaro); font-size: 11px; text-transform: uppercase; padding: 4px 6px; }
   .mp-tabella th:first-child, .mp-tabella td:first-child { text-align: left; }
@@ -802,29 +804,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192347"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192347"></script>
-<script src="lista.js?v=202609192347"></script>
-<script src="rubrica.js?v=202609192347"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192347"></script>
-<script src="agenda.js?v=202609192347"></script>
-<script src="report.js?v=202609192347"></script>
-<script src="check.js?v=202609192347"></script>
-<script src="mappa.js?v=202609192347"></script>
-<script src="pagina-dashboard.js?v=202609192347"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192347"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192347"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192347"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192347"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192347"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192347"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192347"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192347"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192347"></script>
-<script src="benvenuto.js?v=202609192347"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192347"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192350"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192350"></script>
+<script src="lista.js?v=202609192350"></script>
+<script src="rubrica.js?v=202609192350"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192350"></script>
+<script src="agenda.js?v=202609192350"></script>
+<script src="report.js?v=202609192350"></script>
+<script src="check.js?v=202609192350"></script>
+<script src="mappa.js?v=202609192350"></script>
+<script src="pagina-dashboard.js?v=202609192350"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192350"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192350"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192350"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192350"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192350"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192350"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192350"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192350"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192350"></script>
+<script src="benvenuto.js?v=202609192350"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192350"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 23:47';
+const APP_VERSION = '2026.09.19 · 23:50';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
