@@ -16,9 +16,10 @@ ICONE = {
     u'📦': 'consegna', u'📞': 'telefonate', u'⭐': 'perche', u'🌟': 'perche', u'👥': 'squadra', u'🎧': 'audio', u'📖': 'libro',
     u'🔔': 'avvisi', u'🔕': 'avvisi-spenti', u'📱': 'app', u'🔗': 'collega', u'⚠': 'attenzione', u'🔑': 'password', u'🕑': 'orario',
     u'📷': 'foto', u'👋': 'benvenuto', u'📨': 'invito', u'📄': 'file', u'📤': 'condividi', u'🗑': 'elimina', u'✨': 'novita',
+    u'⏳': 'orario', u'👍': 'conferme', u'↩': 'aggiorna',
     u'🎂': 'compleanno', u'📒': 'rubrica', u'🤝': 'squadra', u'🏠': 'casa', u'📋': 'lista', u'🗺': 'mappa',
 }
-EMOJI = re.compile(u'([\U0001F300-\U0001FAFF☀-⛿✀-✒✔✖-➿⭐⏸▶ℹ])️?')
+EMOJI = re.compile(u'([\U0001F000-\U0001FAFF\u2300-\u23FF\u2600-\u26FF\u2700-\u2712\u2714\u2716-\u27BF\u2B00-\u2BFF\u25B6\u2139\u21A9])\uFE0F?')   # la clessidra (U+23F3) era rimasta fuori: vista da Ignazio il 19/09
 PERICOLO = re.compile(r'mostraToast|textContent|\besc\(|title=|placeholder=|aria-label=|chiediConferma|alert\(')
 
 def lavora(testo, prima, ultima):
