@@ -1,0 +1,142 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "B-Blocchi.dc.html": {
+      "h": 844,
+      "title": "Primo giro · B · Blocchi",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "C-Colore.dc.html": {
+      "h": 844,
+      "title": "Dashboard",
+      "w": 390,
+      "x": 1320,
+      "y": 2000
+    },
+    "Contatto-Lista.dc.html": {
+      "h": 844,
+      "title": "Lista Nomi · card del contatto",
+      "w": 390,
+      "x": 1790,
+      "y": 2000
+    },
+    "Contatto-Scheda.dc.html": {
+      "h": 1060,
+      "title": "Scheda contatto",
+      "w": 390,
+      "x": 2260,
+      "y": 2000
+    },
+    "Icone.dc.html": {
+      "h": 1120,
+      "title": "Icone · primo gruppo",
+      "w": 1240,
+      "x": 0,
+      "y": 6040
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "title": "Primo giro · A · Carta",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Stile.dc.html": {
+      "h": 3720,
+      "title": "Pagina di stile",
+      "w": 1240,
+      "x": 0,
+      "y": 2000
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-19T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "nA": {
+      "color": "teal",
+      "text": "A · CARTA E INCHIOSTRO\n\nAvorio, serif, filetti al posto dei riquadri. Da qui viene il respiro del sistema: spazi larghi fra le sezioni, poche cose a schermo.",
+      "w": 390,
+      "x": 0,
+      "y": 924
+    },
+    "nB": {
+      "color": "blue",
+      "text": "B · BLOCCHI\n\nContorni netti e numeri grandi. Scartata, ma se un giorno serve una versione «da cantiere» (sole forte, fretta) il sistema regge anche questa.",
+      "w": 390,
+      "x": 470,
+      "y": 924
+    },
+    "nC": {
+      "color": "purple",
+      "text": "DASHBOARD\n\nStessi contenuti e stesso ordine di prima, con il passo nuovo: 26 px fra le sezioni, più aria dentro le card, un solo accento (inchiostro).\n\nI colori delle categorie tingono le righe: si capisce chi è chi prima di leggere.",
+      "w": 390,
+      "x": 1320,
+      "y": 3140
+    },
+    "nD": {
+      "color": "orange",
+      "text": "LISTA NOMI\n\nLa card del contatto: tutte della stessa altezza (96 px), colore di categoria nella pastiglia e nel fondo, targhette BBS · WES · CEP sempre in quest'ordine, tre puntini a destra.",
+      "w": 390,
+      "x": 1790,
+      "y": 3140
+    },
+    "nE": {
+      "color": "green",
+      "text": "SCHEDA CONTATTO\n\nTestata del colore della categoria con i 4 modi di contattare, poi le linguette Dati · Azioni · Coach · Vendite · Segni vitali.\n\nIl riquadro giallo è «l'app propone». Il bottone principale resta sempre in fondo, a portata di pollice.",
+      "w": 390,
+      "x": 2260,
+      "y": 3140
+    },
+    "nF": {
+      "color": "gray",
+      "text": "Le 88 icone della versione 3 restano il vocabolario. Qui ci sono le prime 29, ridisegnate leggere: barra in basso, categorie, tipi di azione, esiti più usati.\n\nQuando dici che vanno bene, faccio le restanti nello stesso tratto.",
+      "w": 600,
+      "x": 0,
+      "y": 7240
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 2650,
+      "text": "Il sistema · direzione C con il respiro della A",
+      "w": 240,
+      "x": 0,
+      "y": 1700
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 1240,
+      "text": "Icone · il primo gruppo, una famiglia sola",
+      "w": 240,
+      "x": 0,
+      "y": 5740
+    },
+    "titolo": {
+      "kind": "title1",
+      "maxW": 860,
+      "text": "Primo giro · le direzioni scartate",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "B-Blocchi.dc.html",
+    "Stile.dc.html",
+    "C-Colore.dc.html",
+    "Contatto-Lista.dc.html",
+    "Contatto-Scheda.dc.html",
+    "Icone.dc.html"
+  ],
+  "pages": [],
+  "title": "MB21 · stile e schermate"
+}
