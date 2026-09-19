@@ -57,14 +57,14 @@
     'chiudi': '<path d="m6 6 12 12M18 6 6 18"/>',   // Chiudi
     'piu': '<path d="M12 5v14M5 12h14"/>',   // Aggiungi
     'freccia': '<path d="m9 5 7 7-7 7"/>',   // Vai avanti
-    'puntini': '<path d="M5.5 12h.01M12 12h.01M18.5 12h.01"/>',   // Altre azioni
+    'puntini': '<circle cx="5.6" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="18.4" cy="12" r="1.2" fill="currentColor" stroke="none"/>',   // Altre azioni
     'cerca': '<circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/>',   // Cerca
     'foto': '<rect x="2.8" y="6.6" width="18.4" height="13.2" rx="2.6"/><path d="m8.6 6.6 1.5-2.4h3.8l1.5 2.4"/><circle cx="12" cy="13.2" r="3.6"/>',   // Foto
     // Lavoro di ogni giorno
     'lampo': '<path d="M13.2 3 5 14.2h6.2l-1 6.8 8-11.2h-6.2z"/>',   // Check del giorno
     'obiettivi': '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.2"/><path d="M12 10.6h.01"/>',   // Obiettivi
     'telefonate': '<path d="M4.5 4.3h2.5l1.5 3.7-1.9 1.1a8.6 8.6 0 0 0 4.6 4.6l1.1-1.9 3.7 1.5v2.5a1.5 1.5 0 0 1-1.5 1.5A12.7 12.7 0 0 1 3 5.8a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M15.8 3.4a7 7 0 0 1 4.8 4.8M16.4 7.4a3.4 3.4 0 0 1 2.2 2.2"/>',   // Telefonate
-    'riordini': '<path d="M20.4 12.6a8.4 8.4 0 1 1-2.4-6.4"/><path d="M20.8 4.2v4.4h-4.4"/><path d="M9.2 12 12 9.6l2.8 2.4v3.8H9.2z"/>',   // Riordini
+    'riordini': '<path d="M6.5 10.7 12 8l5.5 2.7v5.2L12 18.6l-5.5-2.6z"/><path d="m6.5 10.7 5.5 2.7 5.5-2.7M12 13.4v5.2"/><path d="M3.6 9.9a9 9 0 0 1 16.8 0"/><path d="m17.8 8.1 2.6 1.8 1-3"/>',   // Riordini
     'conferme': '<rect x="3.6" y="5.2" width="16.8" height="15.2" rx="2.6"/><path d="M3.6 10.1h16.8M8.4 3.3v3.9M15.6 3.3v3.9"/><path d="m8.7 15.3 2.2 2.2 4.4-4.4"/>',   // Conferme
     'vendite': '<circle cx="9.6" cy="19.4" r="1.6"/><circle cx="17.4" cy="19.4" r="1.6"/><path d="M2.8 3.8h2.6l2.4 11.4h10.6l1.8-8.2H6.6"/>',   // Vendite
     'consegna': '<path d="M4.4 8.4 12 4.6l7.6 3.8v7.2L12 19.4l-7.6-3.8z"/><path d="m4.4 8.4 7.6 3.8 7.6-3.8M12 12.2v7.2"/><path d="m8.2 6.5 7.6 3.8"/>',   // Consegna

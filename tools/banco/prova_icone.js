@@ -20,8 +20,8 @@ prova('l\'elenco ha un disegno per ogni nome, senza doppioni', () => {
   const e = I.elenco();
   for (const n of I.nomi()) assert.equal(e.split(`id="ic-${n}"`).length, 2, n);
 });
-prova('i disegni sono a tratto e a un colore: niente colori, riempimenti o spessori scritti dentro', () => {
-  assert.doesNotMatch(I.elenco().replace(/^<svg[^>]*>/, ''), /#[0-9a-f]{3,6}|fill=|stroke=|stroke-width|style=/i);
+prova('i disegni sono a un colore solo: niente colori o spessori scritti dentro (un pieno può essere solo currentColor)', () => {
+  assert.doesNotMatch(I.elenco().replace(/^<svg[^>]*>/, ''), /#[0-9a-f]{3,6}|stroke-width|style=|(?:stroke|fill)="(?!currentColor"|none")/i);
 });
 prova('ogni icona usata nella pagina esiste', () => {
   const pagina = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
