@@ -13,7 +13,8 @@ righe, nomi, ultimo = [], [], None
 for m in re.finditer(r'<svg width="30"[^>]*>(.*?)</svg></div><div[^>]*>(.*?)</div><div[^>]*>ic-([a-z0-9-]+)</div>', tavola, re.S):
     gruppo = [t for p, t in gruppi if p < m.start()][-1]
     disegno, voce, nome = re.sub(r'\s+', ' ', m.group(1)).strip(), re.sub('<[^>]+>', '', m.group(2)).strip(), m.group(3)
-    if re.search(r"'|#[0-9a-fA-F]{3,6}|style=|stroke=|stroke-width|fill=|<text|<image|<script", disegno): sys.exit(u'Disegno non pulito: ic-' + nome)
+    # ammessi: «stroke-dasharray» (No show) e i pieni a un colore solo, fill="currentColor" stroke="none" (i tre puntini)
+    if re.search(r"""'|#[0-9a-fA-F]{3,6}|style=|stroke-width|(?:stroke|fill)="(?!currentColor"|none")|<text|<image|<script""", disegno): sys.exit(u'Disegno non pulito: ic-' + nome)
     if nome in nomi: sys.exit(u'Nome doppio: ic-' + nome)
     if gruppo != ultimo: righe.append(u'    // ' + gruppo); ultimo = gruppo
     righe.append(u"    '%s': '%s',   // %s" % (nome, disegno, voce)); nomi.append(nome)
