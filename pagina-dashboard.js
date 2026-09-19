@@ -969,7 +969,7 @@ function apriObiettivi() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>🎯 Obiettivi di ${esc(D.nomeMese(mese))}${esc(aNome())}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${ic('obiettivi')} Obiettivi di ${esc(D.nomeMese(mese))}${esc(aNome())}</h3><button id="ob-x" aria-label="Chiudi">×</button></div>
     ${prima ? `<p>Come vuoi partire?</p><div class="chips ob-modi">
       <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
       <button data-modo="vuoti">Scelgo io</button></div>
@@ -977,9 +977,9 @@ function apriObiettivi() {
         <div class="ob-crescita-testa">Crescita su ${esc(prima.toLowerCase())}: <b id="ob-perc">scegli</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
-        <div class="ob-ambizioso" id="ob-ambizioso" hidden>💪 Obiettivo ambizioso: parlane con il tuo upline</div>
+        <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div>` : `<p>Scrivi i tuoi obiettivi per questo mese.</p>`}
-    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<div class="ob-gruppo"><h4>${pallino} ${esc(gruppo)}</h4><div class="ob-campi">
+    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<div class="ob-gruppo"><h4>${escIcone(pallino)}${esc(gruppo)}</h4><div class="ob-campi">
       ${campi.map(([k, etichetta, decimale]) => `<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
     </div></div>`).join('')}
     <div class="errore" id="ob-errore"></div>
@@ -1034,10 +1034,10 @@ function apriCheck() {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
     <div class="testa-foglio"><h3>Check del Giorno${esc(aNome())}</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
-    <div class="campo"><label>📅 Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
+    <div class="campo"><label>${ic('conferme')} Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px"></div>
     ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo" id="ck-campo-${k}">
-      <label>${esc(etichetta)} <small>Obbligatorio</small></label>
+      <label>${escIcone(etichetta)} <small>Obbligatorio</small></label>
       <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : k === 'pm' ? '<div id="ck-azioni" style="display:none"></div>' : ''}`).join('')}
     <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
@@ -1069,8 +1069,8 @@ function apriCheck() {
     libro.value = esistente ? esistente.libro || '' : '';
     note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
     avviso.style.display = esistente ? 'block' : 'none';
-    avviso.textContent = !esistente ? '' : `✏️ Stai modificando il Check del ${dataBreve(data)}` +
-      (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : '');
+    avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
+      (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : ''));
   };
   // VP Clienti dal 18/09 (MB21Dashboard.INIZIO_VENDITE): non si scrivono, si leggono dalle vendite del giorno; ogni vendita
   // porta alla scheda del cliente. Per i giorni prima resta il campo a mano.
@@ -1080,13 +1080,13 @@ function apriCheck() {
     campo.style.display = dalle ? 'none' : '';
     box.style.display = dalle ? '' : 'none';
     if (!dalle) return;
-    box.innerHTML = '<div class="ck-vn"><b>🛒 VP Clienti</b><div class="vn-aiuto">Carico le vendite del giorno…</div></div>';
+    box.innerHTML = '<div class="ck-vn"><b>' + ic('vendite') + ' VP Clienti</b><div class="vn-aiuto">Carico le vendite del giorno…</div></div>';
     const { data: righe, error } = await dbq('vendite del giorno', supa.from('vendite_conti')
       .select('id, contatto_id, prodotto, vp, contatti(nome)').eq('user_id', visto().id).eq('conta_il', data).order('creato_il'));
     if (!ancoraValido()) return;
-    if (error) { box.innerHTML = '<div class="ck-vn"><b>🛒 VP Clienti</b><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div></div>'; return; }
+    if (error) { box.innerHTML = '<div class="ck-vn"><b>' + ic('vendite') + ' VP Clienti</b><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div></div>'; return; }
     const totale = MB21Lista.totaliVendite(righe).vp;
-    box.innerHTML = `<div class="ck-vn"><b>🛒 VP Clienti: ${MB21Lista.numero(totale)}</b>
+    box.innerHTML = `<div class="ck-vn"><b>${ic('vendite')} VP Clienti: ${MB21Lista.numero(totale)}</b>
       <div class="vn-aiuto">${righe.length ? 'Dalle vendite registrate. Tocca una vendita per aprire la scheda del cliente.' : 'Nessuna vendita registrata in questo giorno. Le vendite si scrivono nella scheda del cliente, sezione Vendite: qui arrivano da sole.'}</div>
       ${righe.map(r => `<button type="button" class="ck-vn-riga" data-cliente="${r.contatto_id}"><span>${esc(r.contatti ? r.contatti.nome : 'Cliente')} · ${esc(r.prodotto)}</span><b>${MB21Lista.numero(r.vp)} VP ›</b></button>`).join('')}</div>`;
     box.querySelectorAll('[data-cliente]').forEach(b => b.onclick = async () => {
@@ -1105,9 +1105,9 @@ function apriCheck() {
     if (!dalle) return;
     // due card azzurre, una per numero (Ignazio 18/09: «separiamole come erano prima»), ognuna con la sua spiegazione e le sue righe
     const CARD = [
-      { k: 'contatti', titolo: '📞 Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
+      { k: 'contatti', titolo: ic('telefonate') + ' Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «Non risponde» non conta.' },
-      { k: 'pm', titolo: '🗓️ PM', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
+      { k: 'pm', titolo: ic('agenda') + ' PM', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
     ];
     const card = (d, numero, aiuto, righe) => `<div class="ck-vn"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;

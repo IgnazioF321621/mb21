@@ -746,29 +746,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192031"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192031"></script>
-<script src="lista.js?v=202609192031"></script>
-<script src="rubrica.js?v=202609192031"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192031"></script>
-<script src="agenda.js?v=202609192031"></script>
-<script src="report.js?v=202609192031"></script>
-<script src="check.js?v=202609192031"></script>
-<script src="mappa.js?v=202609192031"></script>
-<script src="pagina-dashboard.js?v=202609192031"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192031"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192031"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192031"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192031"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192031"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192031"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192031"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192031"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192031"></script>
-<script src="benvenuto.js?v=202609192031"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192031"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192039"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192039"></script>
+<script src="lista.js?v=202609192039"></script>
+<script src="rubrica.js?v=202609192039"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192039"></script>
+<script src="agenda.js?v=202609192039"></script>
+<script src="report.js?v=202609192039"></script>
+<script src="check.js?v=202609192039"></script>
+<script src="mappa.js?v=202609192039"></script>
+<script src="pagina-dashboard.js?v=202609192039"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192039"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192039"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192039"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192039"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192039"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192039"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192039"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192039"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192039"></script>
+<script src="benvenuto.js?v=202609192039"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192039"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 20:31';
+const APP_VERSION = '2026.09.19 · 20:39';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -780,8 +780,7 @@ const COLORI = { 'Prospect': 'var(--prospect)', 'Cliente': 'var(--cliente)', 'Pa
 function ic(nome, px) { return MB21Icone.icona(nome, px); }                       // un'icona a tratto (icone.js)
 // Testi che arrivano già pronti dalle funzioni pure (agenda.js: «⏳ Da completare», «✅ Completato», «👍 confermato»): le funzioni e le loro
 // prove restano com'erano, qui il segno diventa l'icona. Si usa al posto di esc(): prima mette al sicuro il testo, poi cambia i segni.
-const SEGNI_ICONE = { '⏳': 'orario', '✅': 'fatto', '👍': 'conferme' };
-function escIcone(testo) { return esc(testo).replace(/[⏳✅👍]\uFE0F?/gu, s => ic(SEGNI_ICONE[s.replace('\uFE0F', '')])); }
+function escIcone(testo) { return MB21Icone.conIcone(esc(testo)); }
 const CLASSI_CAT = { 'Prospect': 'cat-prospect', 'Cliente': 'cat-cliente', 'Partner': 'cat-partner', 'Ex Partner/Cliente': 'cat-ex',
   'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato' };
 function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }   // la classe che tinge card e righe del colore della categoria
@@ -1836,7 +1835,7 @@ function disegnaCheck() {
       <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
       <div class="ck-confronto">${esc(r.confronto)}</div>`;
     html += r.gruppi.map(g => `<div class="ck-gruppo" style="border-left-color:${g.colore}">
-      <h3 style="color:${g.colore}">${g.pallino} ${esc(g.etichetta)}</h3>
+      <h3 style="color:${g.colore}">${escIcone(g.pallino)}${esc(g.etichetta)}</h3>
       <div class="ck-testa"><span></span><span>adesso</span><span>prima</span><span>▲▼</span></div>
       ${g.voci.map(v => {
         const aperta = CK.aperta === v.chiave;
