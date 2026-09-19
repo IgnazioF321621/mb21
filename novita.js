@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.20 · 00:04', pagina: 'app', titolo: 'MB21 cambia vestito',
+      testo: 'L\'app ha un aspetto nuovo, più pulito e uguale in tutte le pagine: colori più calmi, angoli morbidi, più spazio, disegni al posto delle faccine, bottoni più grandi da toccare. Ogni persona ha il suo cerchietto con le iniziali, del colore della sua categoria: arancio Prospect, blu Cliente, viola Partner. I moduli (nuovo contatto, appuntamento, Check del Giorno, obiettivi) sono divisi in gruppi e «Salva» resta sempre in fondo, a portata di pollice. Tutto è dove l\'hai lasciato: cambia solo l\'aspetto.' },
     { quando: '2026.09.19 · 14:56', pagina: 'lista', titolo: 'Lista Nomi: «Archivia» ed «Elimina» sempre a portata di mano',
       testo: 'Nei tre puntini di ogni nome trovi «Archivia» (lo metti da parte, domani lo puoi ripristinare) ed «Elimina» (il nome sparisce dalla lista, per esempio se era sbagliato); «Elimina» c\'è anche in fondo a «Modifica», dentro la scheda. Eliminando un nome il lavoro già fatto resta nei tuoi numeri; se hai sbagliato persona, tocca subito «Annulla» nell\'avviso in basso.' },
     { quando: '2026.09.19 · 14:21', pagina: 'app', titolo: 'Profilo: il tuo quadro, con BBS · WES · CEP da toccare',
