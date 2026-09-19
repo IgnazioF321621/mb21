@@ -240,17 +240,18 @@
   .dati div { font-size: 15px; overflow-wrap: anywhere; }
   .fase { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; color: var(--cat-cliente); }
   .fase img, .fase .senza-icona { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: var(--bordo); flex: none; }
-  .piccolo { border: 0; border-radius: 10px; background: var(--sfondo); font-size: 14px; font-weight: 600; padding: 9px 14px; color: var(--testo); margin-bottom: 12px; }
-  .azione { border-top: 1px solid var(--proposta-tinta); padding: 10px 0; }
+  .piccolo { border: 0; border-radius: var(--raggio-pill); min-height: 36px; background: var(--superficie); box-shadow: var(--ombra-card); font-size: 14px; font-weight: 600; padding: 9px 14px; color: var(--testo); margin-bottom: 12px; }
+  .azione { border-top: 1px solid var(--bordo); padding: 12px 0; }
   .azione:first-child { border-top: 0; }
   .azione .t { font-weight: 700; font-size: 15px; }
   .azione .s { font-size: 13px; color: var(--testo-soft); }
   .azione .comandi { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
   .stato-az { font-size: 13px; color: var(--grigio); }
-  .come-andata { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--proposta); font-size: 14px; font-weight: 700; color: var(--testo); }
+  .come-andata { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--bordo); font-size: 14px; font-weight: 700; color: var(--testo); }
   .come-andata small { font-weight: 400; color: var(--grigio); }
   .stato-az.fatto { color: var(--ok); }
-  .arancio { background: var(--proposta-tinta); border: 1px solid var(--proposta); border-radius: var(--raggio-riga); padding: 4px 14px; margin-bottom: 12px; }
+  /* l'elenco delle azioni nella scheda: era un grande riquadro giallo con il bordo (Glide); ora una card bianca, un'azione per riga separata da un filetto */
+  .arancio { background: var(--superficie); border-radius: var(--raggio-card); padding: 4px 16px; margin-bottom: 12px; box-shadow: var(--ombra-card); }
   .interruttore { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
   .interruttore:first-child { border-top: 0; }
   .interruttore small { display: block; color: var(--grigio); font-size: 12px; }
@@ -771,29 +772,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192204"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192204"></script>
-<script src="lista.js?v=202609192204"></script>
-<script src="rubrica.js?v=202609192204"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192204"></script>
-<script src="agenda.js?v=202609192204"></script>
-<script src="report.js?v=202609192204"></script>
-<script src="check.js?v=202609192204"></script>
-<script src="mappa.js?v=202609192204"></script>
-<script src="pagina-dashboard.js?v=202609192204"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192204"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192204"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192204"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192204"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192204"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192204"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192204"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192204"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192204"></script>
-<script src="benvenuto.js?v=202609192204"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192204"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192213"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192213"></script>
+<script src="lista.js?v=202609192213"></script>
+<script src="rubrica.js?v=202609192213"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192213"></script>
+<script src="agenda.js?v=202609192213"></script>
+<script src="report.js?v=202609192213"></script>
+<script src="check.js?v=202609192213"></script>
+<script src="mappa.js?v=202609192213"></script>
+<script src="pagina-dashboard.js?v=202609192213"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192213"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192213"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192213"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192213"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192213"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192213"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192213"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192213"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192213"></script>
+<script src="benvenuto.js?v=202609192213"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192213"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 22:04';
+const APP_VERSION = '2026.09.19 · 22:13';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
