@@ -96,7 +96,7 @@ function disegnaBenvenuto() {
       ${fatto ? '<div class="bv-fatto">✅ Già fatto: «Lista Start» è già spuntato nel tuo avvio. Se vuoi, aggiungi altri nomi.</div>' : ''}
       <div class="riquadro">
         <input id="bv-nome" autocomplete="off" autocapitalize="words" maxlength="60" placeholder="Nome e cognome">
-        <input id="bv-numero" type="tel" inputmode="tel" autocomplete="off" maxlength="30" placeholder="Cellulare (puoi incollarlo, anche con +39)">
+        <input id="bv-numero" type="tel" inputmode="tel" autocomplete="off" maxlength="30" placeholder="Cellulare: scrivilo o incollalo">
         <button class="primario" id="bv-aggiungi">Aggiungi</button>
       </div>
       <div class="bv-conto" id="bv-conto">${BV.conto == null ? 'Conto i tuoi nomi…' : esc(B.contoCerchia(BV.conto))}</div>
@@ -105,7 +105,7 @@ function disegnaBenvenuto() {
       <button class="primario" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}`;
     },
   }[quale]();
-  app.innerHTML = `<div class="bv bv-${quale}">${testa}${corpo}</div>`;
+  app.innerHTML = `<div class="bv bv-s-${quale}">${testa}${corpo}</div>`;   // «bv-s-»: il nome della schermata non deve coincidere con un riquadro interno (.bv-pagine)
 
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('bv-esci', chiudiBenvenuto);
