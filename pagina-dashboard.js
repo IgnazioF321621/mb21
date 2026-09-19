@@ -1038,19 +1038,30 @@ function apriCheck() {
   if (soloGuardo()) return;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>Check del Giorno${esc(aNome())}</h3><button id="ck-x" aria-label="Chiudi">×</button></div>
+  // stessa forma degli altri moduli (cantiere 34): in testa il giorno, gruppi «Attività» e «Crescita», «Annulla · Salva» fermi in fondo
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
+      <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">×</button></div>
+    <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>${ic('conferme')} Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
-    <div id="ck-modifica" style="display:none;background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px"></div>
+    <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
+    <h4 class="mc-t">Attività</h4><div class="riquadro mc-g">
     ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo" id="ck-campo-${k}">
       <label>${escIcone(etichetta)} <small>Obbligatorio</small></label>
       <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : k === 'pm' ? '<div id="ck-azioni" style="display:none"></div>' : ''}`).join('')}
+    </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
     <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
+    </div>
     <div class="errore" id="ck-errore"></div>
-    <div class="due"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
+    <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
+  // Tracce e Pagine sono crescita, non attività: si spostano nel loro gruppo (i campi e gli id restano quelli di prima)
+  for (const k of ['tracce', 'pagine']) {
+    const campo = velo.querySelector('#ck-campo-' + k), gruppo = velo.querySelector('#ck-crescita');
+    if (campo && gruppo) gruppo.insertBefore(campo, gruppo.firstChild);
+  }
   const chiudi = () => velo.remove();
   velo.querySelector('#ck-x').onclick = chiudi;
   velo.querySelector('#ck-no').onclick = chiudi;
