@@ -14,6 +14,27 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 *Scelto da Ignazio il 19 settembre 2026, alla chiusura dei cantieri 33, 31 e 29, tra sei idee (icone delle guide · Sharing · Materiale N21 · Libri e frasi dal Check · Design · Training a dialogo). «Non vorrei finire sia i token e sia il mese dell'app Max senza ancora aver fatto il design, che ha un costo importante e un valore importante» · «il tempo c'è, ma aprendo sempre cantieri il tempo passa».*
 
 - 📌 **A che punto siamo, per la prossima sessione** (aggiornato il 19/09 alle 22:20; il limite della settimana del modello grande è al 97%%: **si prosegue con un altro modello**, Ignazio: «continuiamo fino alla fine di Fable e poi passiamo a Opus, una verifica per volta, e cerchiamo di chiudere»). **Tutto è in locale**, versione di lavoro 2026.09.19 · 22:17, una trentina di commit sul computer **non pubblicati** (`git status`: «ahead» di `origin/main`; online c'è la 15:01): **non fare push finché Ignazio non dice «pubblica»**. Fatti i lavori 1-6 e cominciato il 7. **Metodo del giro finale**: Ignazio apre una schermata in Arc sulla scheda «MB21-Locale» (`127.0.0.1:8321`, attenzione a non guardare quella online) e scrive «foto»; Claude fotografa Arc in sola lettura (`request_access` ad Arc, poi `app_screenshot`), dice cosa vede, corregge **una cosa per volta**, aggiorna `APP_VERSION` e `?v=` con l'ora vera, fa commit locale. **Già viste e a posto**: Lista Nomi (card: prima riga solo il nome, «nuovo» e targhette in una riga loro), Partner Select a pastiglia, Dashboard intera (tasselli Obiettivi · Visione completa · Griglia PM · Mostra di più; coda aperta con gli esiti su tre righe: buono intero, neutri in fila, «no» intero; «Da catalogare» con i tre tondi grandi), testata della scheda contatto, elenco delle Azioni (una card per azione con la barretta del colore del tipo: **da rifotografare**). **Restano da fotografare**: scheda contatto (Dati, Coach Yes, Segni vitali, Vendite) · Agenda con un appuntamento aperto · Report e Griglia PM · Mappa · Profilo · Check del Giorno e Obiettivi · un modulo (Nuovo contatto) · volendo Admin, Benvenuto, Novità. **Da decidere con Ignazio**: righe di richiamo della Dashboard («non mi entusiasma») · «Ordina: A-Z» ancora blu · freccetta del Partner Select lontana dal nome · «Non risponde» su due righe negli schermi stretti. **Da chiedere a Design** (tela già nota, basta «Design ha aggiornato»): `ic-telegram` (ora provvisoria di Code) e un'icona per la colomba del Benvenuto. **Chiusura**: `STRUTTURA.md` e `docs/MB21_Design.md` con le ultime scelte · **una sola riga nelle Novità**, da far leggere a Ignazio una volta · push · prova dal telefono (in locale il telefono non si può usare: si prova dopo la pubblicazione e si corregge al volo) · cantiere tra i chiusi. Strumenti: `tools/design/emoji_in_icone.py`, `tools/design/importa_icone.py`, pagine di confronto in `tools/design/confronto_*.html`. Subito dopo il 34: la segnalazione in cima al cantiere 21 (il «Richiamare» che resta in Agenda). Scadenza del cantiere: **sabato 26/09**
+- 📋 **Le foto che restano, UNA PER VOLTA** (Ignazio 19/09: «una per volta… sennò man mano si perde la lista»): a Ignazio si chiede **una sola schermata**, si aspetta «foto», si guarda, si corregge, si spunta qui sotto con ✅ e solo allora si dice la successiva. Mai l'elenco intero in chat.
+  1. ☐ Scheda contatto di un Partner · **Azioni** (card nuove con la barretta colorata)
+  2. ☐ Scheda contatto · **Dati**
+  3. ☐ Scheda contatto · **Coach Yes**
+  4. ☐ Scheda contatto · **Segni vitali**
+  5. ☐ Scheda di un Cliente · **Vendite**
+  6. ☐ **Modifica** aperto, scorso fino in fondo
+  7. ☐ **Agenda** di oggi
+  8. ☐ Agenda · un **appuntamento aperto**
+  9. ☐ Agenda · il **«+»** (nuovo appuntamento)
+  10. ☐ **Report**
+  11. ☐ **Griglia PM**
+  12. ☐ **Mappa** con qualche ramo aperto
+  13. ☐ Mappa · **visione completa** di un partner
+  14. ☐ **Profilo** con una o due voci aperte
+  15. ☐ Modulo **Check del Giorno** aperto
+  16. ☐ Pagina **Check** (da «Visione completa»)
+  17. ☐ Foglio **Obiettivi**
+  18. ☐ (facoltativa) **Admin**
+  19. ☐ (facoltativa) **Benvenuto** e **Novità**
+  20. ☐ (facoltativa) **Partner da avviare** con un nome aperto
 - **Perché adesso**: è il lavoro più pesante e quello a cui Ignazio tiene di più; il piano Max scade tra circa 28 giorni (intorno al **17/10/2026**). Gli altri lavori sono più leggeri e si possono fare anche dopo
 - **L'idea** (proposta da Claude, da confermare nella raccolta): non ridisegnare le pagine una per una ma costruire **uno stile unico** (colori, scritte, bottoni, card, icone in un posto solo) che le pagine di oggi prendono e quelle future ereditano: così Materiale, Sharing e Training non obbligano a ridisegnare. Dentro finiscono due voci del cantiere 21: «Grafica dei bottoni» uguale ovunque e le **icone che Ignazio ha creato per le guide**
 - **Calendario di massima** (il limite della settimana si azzera la **domenica alle 8:00** di Roma): 19/09 raccolta (costa poco) · dal 20/09 lo stile e la prima pagina · una pagina alla volta, vista in locale prima di pubblicare · obiettivo: **Design chiuso entro una settimana, cioè entro sabato 26/09** (Ignazio 19/09: «design dobbiamo chiudere entro una settimana, no entro il quattro»; corregge il 4/10 proposto da Claude)
