@@ -1044,12 +1044,19 @@ function apriModulo(c) {
   const max = (base, v) => Math.max(base, (v || '').length);
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</h3><button id="chiudi">×</button></div>
+  // Il modulo (cantiere 34, prova approvata da Ignazio il 19/09: tools/design/confronto_modulo.html): in testa chi è, tre gruppi con un titoletto
+  // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
+  // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
+  const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria);
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
+      <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">×</button></div>
+    <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
     <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"></div>
     <div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
+    </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     <div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>
     <div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
       <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
@@ -1057,19 +1064,29 @@ function apriModulo(c) {
       <input id="f-ca" inputmode="numeric" maxlength="4" placeholder="Anno"></div></div>
     <div class="campo"><label>Professione</label><input id="f-prof" placeholder="Mansione (Settore)" maxlength="${max(40, c && c.professione)}" value="${esc(c ? c.professione || '' : '')}"><div class="conta" data-conta="f-prof"></div></div>
     <div class="campo"><label>Località</label><input id="f-citta" placeholder="Città (Prov)" maxlength="${max(40, c && c.citta)}" value="${esc(c ? c.citta || '' : '')}"><div class="conta" data-conta="f-citta"></div></div>
-    <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat">${opz(conStorico(MB21Lista.CATEGORIE, c && c.categoria), c && c.categoria, 'Scegli qualcosa')}</select></div>
+    </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
+    <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
+      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div></div>
     <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
     <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>
-    <div class="due" style="margin-top:12px"><button class="primario" id="invia" disabled>Salva</button><button class="link" id="annulla">Annulla</button></div>
-    ${c ? '<button class="link elimina-qui" id="elimina-qui">Elimina dalla lista</button>' : ''}
+    </div>
+    ${c ? `<button class="link elimina-qui" id="elimina-qui">${ic('elimina')} Elimina dalla lista</button>` : ''}
+    <div class="mc-fondo"><button class="link" id="annulla">Annulla</button><button class="primario" id="invia" disabled>Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
   const chiudi = () => velo.remove();
   $('chiudi').onclick = chiudi;
   $('annulla').onclick = chiudi;
+  // le pastiglie della categoria scrivono nel menu nascosto e avvisano il modulo, come se si fosse scelto dal menu
+  velo.querySelectorAll('.mc-cat').forEach(b => b.onclick = () => {
+    $('f-cat').value = b.dataset.cat;
+    velo.querySelectorAll('.mc-cat').forEach(x => x.classList.toggle('on', x === b));
+    $('mc-testa').className = 'mc-testa ' + classeCat(b.dataset.cat);
+    $('f-cat').dispatchEvent(new Event('change'));
+  });
   // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
