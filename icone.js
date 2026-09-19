@@ -121,7 +121,17 @@
     posto.innerHTML = elenco();
     documento.body.insertBefore(posto.firstChild, documento.body.firstChild);
   }
-  const api = { icona, ha, nomi: () => Object.keys(DISEGNI), elenco, monta };
+  // I testi che arrivano già scritti dalle funzioni pure (agenda.js, dashboard.js, check.js, mappa.js, benvenuto.js) portano ancora
+  // l'emoji: quelle funzioni e le loro prove non si toccano. Qui l'emoji diventa l'icona, o un cerchietto colorato se è un pallino.
+  // `conIcone` vuole un testo GIÀ messo al sicuro (passato da esc): nella pagina lo chiama escIcone().
+  const DA_EMOJI = { '⏳': 'orario', '✅': 'fatto', '👍': 'conferme', '📞': 'telefonate', '🗓': 'agenda', '📅': 'agenda', '⭐': 'perche', '👥': 'squadra',
+    '🛒': 'vendite', '🎧': 'audio', '📖': 'libro', '🏠': 'casa', '📋': 'lista', '📊': 'report', '🗺': 'mappa', '📲': 'installa', '🔔': 'avvisi' };
+  const PALLINI = { '🔵': '#2563EB', '🟠': '#EA580C', '🟢': '#16A34A', '🟣': '#7C3AED', '🔴': 'var(--pericolo)', '⚪': 'var(--spento)' };
+  function conIcone(htmlSicuro) {
+    return String(htmlSicuro).replace(/(\p{Extended_Pictographic})\uFE0F?/gu, (tutto, segno) =>
+      DA_EMOJI[segno] ? icona(DA_EMOJI[segno]) : PALLINI[segno] ? `<i class="pallino" style="background:${PALLINI[segno]}"></i>` : tutto);
+  }
+  const api = { icona, ha, nomi: () => Object.keys(DISEGNI), elenco, monta, conIcone };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {
     radice.MB21Icone = api;

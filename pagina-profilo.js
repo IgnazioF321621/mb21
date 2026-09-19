@@ -61,11 +61,11 @@ function mioProfiloHtml() {
   const m = AVV.mio, L = MB21Lista;
   if (!m) return '';
   const righe = percheRigheHtml(m.perche), { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
-  const stato = m.avvio_concluso_il ? `✅ concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(m.avvio_in_pausa_dal)}`
-    : prossimo ? `👉 Prossimo passo: ${esc(prossimo.nome)}` : '🎉 Tutti i passi fatti';
-  return voceProfilo('perche', '🌟 Perché ho iniziato', { sotto: righe.length ? '' : 'Non l\'hai ancora scelto: bastano due tocchi',
+  const stato = m.avvio_concluso_il ? `${ic('fatto')} concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `${ic('pausa')} in pausa dal ${L.data(m.avvio_in_pausa_dal)}`
+    : prossimo ? `${ic('prossimo')} Prossimo passo: ${esc(prossimo.nome)}` : ic('complimenti') + ' Tutti i passi fatti';
+  return voceProfilo('perche', ic('perche') + ' Perché ho iniziato', { sotto: righe.length ? '' : 'Non l\'hai ancora scelto: bastano due tocchi',
       corpo: `${righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : ''}<button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button>` })
-    + voceProfilo('avvio', '🚀 Il mio avvio', { classe: 'pf-avvio', sotto: stato, destra: `${fatti}/${totale}`,
+    + voceProfilo('avvio', ic('avvio') + ' Il mio avvio', { classe: 'pf-avvio', sotto: stato, destra: `${fatti}/${totale}`,
       sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) });
 }
 
@@ -73,34 +73,34 @@ function disegnaProfilo() {
   const u = ST.utente, s = AV.stato;
   const b = (id, t, classe = 'link') => `<button class="${classe}" id="${id}">${t}</button>`;
   const avvisi = {
-    acceso: `<div>🔔 Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')} · ${b('av-prova', 'Prova')}</div>`,
-    spento: `<div>🔔 Avvisi <b>spenti</b> su questo dispositivo</div><div class="riga">${b('av-attiva', 'Attiva gli avvisi', 'primario')}</div>`,
-    computer: `<div>🔔 Gli avvisi arrivano sul telefono o sul tablet: accendili da lì, in questa pagina.</div>`,
-    da_installare: `<div>🔔 Per ricevere gli avvisi aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home), poi torna qui.</div>`,
-    negato: `<div>🔔 Avvisi bloccati: riaccendili nelle Impostazioni del telefono (Notifiche → MB21).</div>`,
-    no_supporto: `<div>🔔 Questo dispositivo non supporta gli avvisi.</div>`,
+    acceso: `<div>${ic('avvisi')} Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')} · ${b('av-prova', 'Prova')}</div>`,
+    spento: `<div>${ic('avvisi')} Avvisi <b>spenti</b> su questo dispositivo</div><div class="riga">${b('av-attiva', 'Attiva gli avvisi', 'primario')}</div>`,
+    computer: `<div>${ic('avvisi')} Gli avvisi arrivano sul telefono o sul tablet: accendili da lì, in questa pagina.</div>`,
+    da_installare: `<div>${ic('avvisi')} Per ricevere gli avvisi aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home), poi torna qui.</div>`,
+    negato: `<div>${ic('avvisi')} Avvisi bloccati: riaccendili nelle Impostazioni del telefono (Notifiche → MB21).</div>`,
+    no_supporto: `<div>${ic('avvisi')} Questo dispositivo non supporta gli avvisi.</div>`,
   };
   const statoAvvisi = { acceso: 'accesi', spento: 'spenti', negato: 'bloccati', da_installare: 'da attivare', computer: 'dal telefono' }[s] || '';
   const numero = (ST.stato || {}).contatti_al_giorno;
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
-    <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>📷</i></button></div>
+    <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button></div>
     <div class="sotto">Il tuo quadro personale</div>
     ${mioProfiloHtml()}
     ${mieiSegniHtml()}
-    ${voceProfilo('dati', '👤 I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
+    ${voceProfilo('dati', ic('persona') + ' I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(u.partner_id || '—')}</b></div>
       <label>Telefono<input id="pf-tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" value="${esc(u.telefono || '')}" placeholder="+39 …"></label>
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
-    ${rigaProfilo('pf-numero', '📞 Contatti al giorno', esc(String(numero || '—')))}
-    ${voceProfilo('avvisi', '🔔 Avvisi sul telefono', { destra: statoAvvisi, corpo: `
+    ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', esc(String(numero || '—')))}
+    ${voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
       <small style="margin-top:0">Alle <b>9</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
-    ${rigaProfilo('pf-novita', '✨ Novità dell\'app')}
-    ${rigaProfilo('pf-benvenuto', '👋 Rivedi il benvenuto')}
-    ${rigaProfilo('pf-password', '🔑 Cambia password')}
+    ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
+    ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
+    ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
@@ -139,7 +139,7 @@ function mieiSegniHtml() {
   if (!g) return '';
   const t = mieTarghe(), L = MB21Lista;
   const targa = (k, scritta) => `<button class="sv-targa pf-targa ${k} ${t[k] ? 'on' : ''}" data-mia-targa="${k}">${scritta}</button>`;
-  return voceProfilo('segni', '📊 I miei Segni vitali', {
+  return voceProfilo('segni', ic('segnivitali') + ' I miei Segni vitali', {
     sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
     corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
       ${limitato() ? '' : '<button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>'}` });
@@ -162,12 +162,12 @@ async function toccaMioCep() {
     if (!await chiediConferma('Ti sei abbonato al CEP?', `La targhetta si accende dal 1° di ${mese} e la vede anche chi ti segue. Quando l'abbonamento finisce la spegne l'Admin.`, 'Sì, accendi il CEP')) return;
     const { error } = await dbq('accendo il mio CEP', supa.rpc('segna_mio_cep'));
     if (error) return mostraToast(error.message || 'Non salvato: riprova.');
-    mostraToast('CEP acceso ✅');
+    mostraToast('CEP acceso');
     return dopo();
   }
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>✅ CEP</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('fatto')} CEP</h3>
     <p>Abbonato ${esc(L.descrizioneCep(g.cep, oggi).replace(' · abbonato', ', per ora').replace(' · rinnovo del 1° da verificare', ''))}.${periodo.mio ? '' : ` È sulla scheda di ${esc(g.compagno || 'compagno/a')}.`}
       ${periodo.oggi_mio ? ' L\'hai acceso oggi: se è stato un errore puoi spegnerlo, solo per oggi.' : ' Se non rinnovi lo spegne l\'Admin.'}</p>
     <div class="due">${periodo.oggi_mio ? '<button class="link" id="pf-cep-via" style="color:var(--rosso)">Spegni il CEP</button>' : '<span></span>'}<button class="link" id="pf-cep-no">Chiudi</button></div></div>`;
@@ -196,7 +196,7 @@ function foglioMioBiglietto(tipo) {
       <button class="link" id="pf-big-no" style="display:block;margin:6px auto 0">Annulla</button></div>`;
   } else {
     const chi = [big.contatto ? 'tu' : '', big.compagno ? esc(g.compagno || 'compagno/a') : '', big.ospiti ? `${big.ospiti} ospit${big.ospiti === 1 ? 'e' : 'i'}` : ''].filter(Boolean).join(' · ');
-    velo.innerHTML = `<div class="foglio"><h3>🎟 ${nome} ${esc(L.etichettaEvento(evento))}</h3>
+    velo.innerHTML = `<div class="foglio"><h3>${ic('biglietto')} ${nome} ${esc(L.etichettaEvento(evento))}</h3>
       <p>Biglietto segnato: <b>${chi}</b>.${big.mio ? ' Per cambiarlo toglilo e segnalo di nuovo.' : ` È sulla scheda di ${esc(g.compagno || 'compagno/a')}: per cambiarlo chiedi all'Admin.`}</p>
       <div class="due">${big.mio ? '<button class="link" id="pf-big-via" style="color:var(--rosso)">Togli il biglietto</button>' : '<span></span>'}<button class="link" id="pf-big-no">Chiudi</button></div></div>`;
   }
@@ -219,7 +219,7 @@ function foglioMioBiglietto(tipo) {
 function foglioFoto() {
   const c = ST.utente.foto, velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>📷 La tua foto</h3><p>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</p>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('foto')} La tua foto</h3><p>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</p>
     <label class="primario pf-foto" style="display:block">${c ? 'Cambia foto' : 'Scegli la foto'}<input type="file" id="pf-foto" accept="image/*" hidden></label>
     <div class="due" style="margin-top:8px">${c ? '<button class="link" id="pf-foto-via" style="color:var(--rosso)">Togli foto</button>' : '<span></span>'}<button class="link" id="pf-foto-no">Annulla</button></div></div>`;
   document.body.appendChild(velo);
