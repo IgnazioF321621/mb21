@@ -10,6 +10,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 34. DESIGN DELL'APP: UNO STILE UNICO, CON LE ICONE (aperto il 19/09)
+*Scelto da Ignazio il 19 settembre 2026, alla chiusura dei cantieri 33, 31 e 29, tra sei idee (icone delle guide · Sharing · Materiale N21 · Libri e frasi dal Check · Design · Training a dialogo). «Non vorrei finire sia i token e sia il mese dell'app Max senza ancora aver fatto il design, che ha un costo importante e un valore importante» · «il tempo c'è, ma aprendo sempre cantieri il tempo passa».*
+
+- **Perché adesso**: è il lavoro più pesante e quello a cui Ignazio tiene di più; il piano Max scade tra circa 28 giorni (intorno al **17/10/2026**). Gli altri lavori sono più leggeri e si possono fare anche dopo
+- **L'idea** (proposta da Claude, da confermare nella raccolta): non ridisegnare le pagine una per una ma costruire **uno stile unico** (colori, scritte, bottoni, card, icone in un posto solo) che le pagine di oggi prendono e quelle future ereditano: così Materiale, Sharing e Training non obbligano a ridisegnare. Dentro finiscono due voci del cantiere 21: «Grafica dei bottoni» uguale ovunque e le **icone che Ignazio ha creato per le guide**
+- **Calendario di massima** (il limite della settimana si azzera la **domenica alle 8:00** di Roma): 19/09 raccolta (costa poco) · dal 20/09 lo stile e la prima pagina · una pagina alla volta, vista in locale prima di pubblicare · obiettivo: **Design chiuso entro il 4/10**, due settimane di margine prima della scadenza
+- **Dopo il Design, in quest'ordine** (consiglio di Claude 19/09, non si aprono finché il 34 non è chiuso): Materiale Network 21 (la base) → Sharing dalla scheda contatto → prova piccola di Training a dialogo (serve un'intelligenza artificiale sul server: costo a conversazione, da misurare) · Libri, lettura e frasi dal Check quando serve un lavoro leggero
+- **Lavoro 0 · raccolta con Ignazio** (una domanda alla volta): da cominciare
+
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Riordini: da guardare al primo caso vero** (dal cantiere 29, chiuso il 19/09): nell'avviso delle 9 il pezzo «… e N riordini da sentire» · in Dashboard il riquadro «🔁 Riordini da sentire» a righe sottili che si aprono al tocco. Con Isabella «compariva», ma non è certo quale dei pezzi. Se qualcosa non torna, si riapre
