@@ -526,6 +526,8 @@ function collegaConferme() {
 // Segue il Partner Select (il ramo del partner guardato); con «Tutti» e offline non si mostra. Chi ha la scheda in lista (o l'Admin)
 // la apre dal nome; gli altri upline vedono soltanto. **Per ora solo l'Admin spunta i passi e chiude l'avvio da qui** (Ignazio:
 // «poi il leader»): scrive sulla scheda che vale, anche quando è nella lista di un altro.
+// Lavoro 4 (Ignazio 19/09: «l'app propone ed io decido»): «💡 L'app propone» elenca i passi spenti che l'app sa già (`MB21Lista.proposteAvvio`
+// su `sa` di `avvio_del_ramo()`), con il perché; niente si accende da solo, «Segna» è lo stesso tocco del passo.
 // Per il nuovo: «🚀 Il mio avvio» nella SUA Dashboard (`mio_avvio()`, `smarca_mio_passo()`): vede i suoi 14 passi e li smarca da solo;
 // la scheda resta nella lista dello sponsor e lui non la vede. Sparisce con l'avvio concluso, in pausa o a passi finiti.
 const AVV = { tutte: [], righe: [], pausa: [], aperto: null, pausaAperta: false, mio: null, mioAperto: false };
@@ -581,16 +583,19 @@ function disegnaAvvio() {
   const card = r => {
     const { fatti, totale } = L.contatoreOnboarding(r), prossimo = L.prossimoPasso(r), aperto = AVV.aperto === r.partner_id;
     const entrato = L.entratoDa(r.data_ingresso, ST.oggi);
+    const proposte = L.proposteAvvio(r);   // lavoro 4: l'app propone, chi spunta decide
     const mia = r.user_id === ST.utente.id || admin;
     return `<div class="riquadro avv-partner">
       <button class="avv-testa" data-avvio="${esc(r.partner_id)}">
         <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor">[${esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
-          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}</small></span>
+          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
       ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => admin
           ? `<button class="${r[col] ? 'fatto' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</button>`
           : `<span class="${r[col] ? 'fatto' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}</span>`).join('')}</div>
+        ${proposte.length ? `<div class="avv-proposte"><b>💡 L'app propone</b>${proposte.map(p => `<div><span>${esc(p.nome)}: ${esc(p.perche)}</span>
+            ${admin ? `<button class="piccolo" data-spunta="${p.col}" data-di="${esc(r.partner_id)}">Segna</button>` : ''}</div>`).join('')}</div>` : ''}
         <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${admin ? '. Da Admin: tocca un passo per segnarlo o toglierlo.' : ''}</div>
         <div class="avv-azioni">
           ${mia ? `<button class="link" data-apri-scheda="${esc(r.contatto_id)}">Apri la scheda ›</button>` : ''}
