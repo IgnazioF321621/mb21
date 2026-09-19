@@ -197,6 +197,7 @@
   .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--testo-tenue); padding: 0 10px 0 6px; height: 44px; min-width: 40px; }
   .altri-voci button { display: block; width: 100%; text-align: left; font-size: 17px; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--linea); background: none; color: var(--testo); }
   .altri-voci button.pericolo { color: var(--rosso); }
+  .altri-voci button:not([class*="tono-"]) svg.ic { margin-right: 8px; }
   /* voci con un tono (i comandi dei tre puntini: Modifica · Archivia · Ripristina · Elimina): icona, grassetto e un colore per ognuna (Ignazio 19/09) */
   .altri-voci button[class*="tono-"] { font-weight: 700; display: flex; align-items: center; gap: 12px; min-height: 52px; }
   .altri-voci button[class*="tono-"] svg.ic { width: 22px; height: 22px; }
@@ -425,25 +426,25 @@
   /* ── Agenda (Fase 4) ── */
   .ag-testa { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
   .ag-testa h1 { margin: 0; flex: 1; }
-  .ag-mese { border: 0; background: none; font-size: 15px; font-weight: 700; color: var(--blu); padding: 6px 0; position: relative; }
+  .ag-mese { border: 0; background: none; font-size: 15px; font-weight: 700; color: var(--testo-soft); min-height: var(--tocco); padding: 6px 0; position: relative; }
   .ag-mese input { position: absolute; inset: 0; opacity: 0; width: 100%; }
-  .ag-oggi { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; padding: 6px 12px; color: var(--testo); }
-  .ag-piu { border: 0; background: var(--testo); color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; line-height: 1; }
-  .ag-settimana { display: flex; align-items: stretch; gap: 2px; background: #fff; border-radius: var(--raggio-card); padding: 8px 4px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 14px; }
+  .ag-oggi { border: 0; background: var(--superficie); box-shadow: var(--ombra-card); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 36px; padding: 6px 14px; color: var(--testo); }
+  .ag-piu { border: 0; background: var(--accento); color: var(--accento-su); width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1; }
+  .ag-settimana { display: flex; align-items: stretch; gap: 2px; background: var(--superficie); border-radius: var(--raggio-card); padding: 8px 4px; box-shadow: var(--ombra-card); margin-bottom: 16px; }
   .ag-settimana .freccia { border: 0; background: none; color: var(--grigio); font-size: 20px; padding: 0 4px; }
-  .ag-giorno { flex: 1; border: 0; background: none; border-radius: var(--raggio-bottone); padding: 6px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--testo); font-family: inherit; }
-  .ag-giorno small { font-size: 11px; font-weight: 700; color: var(--grigio); }
+  .ag-giorno { flex: 1; border: 0; background: none; border-radius: var(--raggio-riga); padding: 8px 0; min-height: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--testo); font-family: inherit; }
+  .ag-giorno small { font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .6px; }
   .ag-giorno b { font-size: 17px; }
   .ag-giorno i { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
-  .ag-giorno i.si { background: var(--blu); }
-  .ag-giorno.oggi b { color: var(--blu); }
-  .ag-giorno.scelto { background: var(--testo); }
+  .ag-giorno i.si { background: var(--cat-cliente); }
+  .ag-giorno.oggi b { color: var(--cat-cliente); }
+  .ag-giorno.scelto { background: var(--accento); }
   .ag-giorno.scelto small, .ag-giorno.scelto b { color: #fff; }
   .ag-giorno.scelto i.si { background: #fff; }
-  .ag-evento { display: flex; background: #fff; border-radius: var(--raggio-riga); margin-bottom: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .ag-evento { display: flex; background: var(--superficie); border-radius: var(--raggio-riga); margin-bottom: 8px; overflow: hidden; box-shadow: var(--ombra-card); }
   .ag-evento .ora { width: 64px; flex: none; padding: 12px 0 12px 12px; font-size: 13px; font-weight: 700; color: var(--testo); line-height: 1.3; }
   .ag-evento .ora small { display: block; font-weight: 500; color: var(--grigio); }
-  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 10px 0; border-radius: 4px; }
+  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 12px 0; border-radius: 4px; }
   .ag-evento .dentro { flex: 1; min-width: 0; }
   .ag-evento .apri { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; font-family: inherit; color: var(--testo); }
   .ag-evento .t { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -451,10 +452,11 @@
   .ag-evento .extra { padding: 0 12px 12px; }
   .ag-evento .extra .note-ev { font-size: 13px; color: var(--grigio); margin-bottom: 8px; }
   .ag-esiti { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-  .ag-esiti button { border: 0; border-radius: 10px; background: var(--sfondo); font-size: 14px; font-weight: 600; padding: 9px 11px; color: var(--testo); }
-  .ag-esiti button.attuale { background: #DBEAFE; color: #1D4ED8; }
+  /* gli esiti: pastiglie alte 40, bordo grigio su bianco; quello scelto pieno inchiostro (docs/MB21_Design.md) */
+  .ag-esiti button { border: 1px solid var(--bordo); border-radius: var(--raggio-pill); background: var(--superficie); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-esiti button.attuale { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
-  .ag-comandi button { border: 1px solid var(--linea); background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; padding: 8px 10px; color: var(--testo); }
+  .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
   .ag-comandi button.pericolo { color: var(--rosso); }
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: var(--raggio-riga); padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
   /* Righe di richiamo (partner da avviare, telefonate, riordini, conferme…): bianche come le righe delle persone (Ignazio 19/09: le tinte
@@ -539,8 +541,8 @@
   .conf-bottoni button:last-child:nth-child(odd) { grid-column: auto; }
   .ag-blocco.passati { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
   .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
-  .ag-scelte button { border: 1px solid var(--linea); background: #fff; border-radius: 999px; font-size: 14px; font-weight: 600; padding: 8px 12px; color: var(--testo); }
-  .ag-scelte button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .ag-scelte button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-scelte button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
 
   /* ── Report (Fase 5) ── */
@@ -744,29 +746,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192020"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192020"></script>
-<script src="lista.js?v=202609192020"></script>
-<script src="rubrica.js?v=202609192020"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192020"></script>
-<script src="agenda.js?v=202609192020"></script>
-<script src="report.js?v=202609192020"></script>
-<script src="check.js?v=202609192020"></script>
-<script src="mappa.js?v=202609192020"></script>
-<script src="pagina-dashboard.js?v=202609192020"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192020"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192020"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192020"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192020"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192020"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192020"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192020"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192020"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192020"></script>
-<script src="benvenuto.js?v=202609192020"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192020"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192025"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192025"></script>
+<script src="lista.js?v=202609192025"></script>
+<script src="rubrica.js?v=202609192025"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192025"></script>
+<script src="agenda.js?v=202609192025"></script>
+<script src="report.js?v=202609192025"></script>
+<script src="check.js?v=202609192025"></script>
+<script src="mappa.js?v=202609192025"></script>
+<script src="pagina-dashboard.js?v=202609192025"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192025"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192025"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192025"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192025"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192025"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192025"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192025"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192025"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192025"></script>
+<script src="benvenuto.js?v=202609192025"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192025"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 20:20';
+const APP_VERSION = '2026.09.19 · 20:25';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -834,7 +836,7 @@ async function entraConPassword() {
 // Entrato con la password dal modulo ma non ancora approvato: resta dentro e aspetta (si apre la Dashboard appena approvato)
 function mostraAttesa(sessione) {
   document.getElementById('tab').hidden = true;
-  app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ✅</h1>
+  app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ${ic('fatto')}</h1>
     <p>Appena viene approvata entri direttamente: riapri l'app oppure premi il bottone qui sotto.</p>
     <button class="primario" id="at-controlla">Controlla di nuovo</button>
     <button class="link" id="at-esci">Esci</button>${versione()}</div>`;
@@ -850,7 +852,7 @@ function mostraRegistrazione(esito) {
   const testi = { gia_utente: 'Questa email è già registrata: apri l\'app ed entra.', gia_richiesta: 'Hai già mandato la richiesta con questa email: aspetta l\'approvazione.',
     troppe: 'Troppe richieste in questo momento: riprova tra un\'ora.', password: 'La password deve avere almeno 8 caratteri.', dati: 'Controlla i dati: nome, email e codice Amway (solo numeri) sono obbligatori.' };
   if (esito === 'ok') {
-    app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ✅</h1>
+    app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ${ic('fatto')}</h1>
       <p>Quando viene approvata, apri <b>${esc(location.origin + location.pathname)}</b> e scrivi la stessa email: ti arriva il link per entrare.</p>${versione()}</div>`;
     return;
   }
@@ -928,13 +930,13 @@ function mostraPassword(dove) {
     campo.style.paddingRight = '48px';
     const occhio = document.createElement('button');
     occhio.type = 'button';
-    occhio.textContent = '👁️';
+    occhio.innerHTML = ic('visione'); occhio.style.opacity = '.45';   // chiaro = password nascosta, pieno = password in vista
     occhio.setAttribute('aria-label', 'Mostra la password');
     occhio.style.cssText = 'position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:20px;padding:8px;width:auto;margin:0;box-shadow:none';
     occhio.onclick = () => {
       const visibile = campo.type === 'password';
       campo.type = visibile ? 'text' : 'password';
-      occhio.textContent = visibile ? '🙈' : '👁️';
+      occhio.style.opacity = visibile ? '1' : '.45';
       occhio.setAttribute('aria-label', visibile ? 'Nascondi la password' : 'Mostra la password');
     };
     box.appendChild(occhio);
@@ -944,7 +946,7 @@ function mostraPassword(dove) {
 function foglioPassword(primaVolta) {
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>🔑 ${primaVolta ? 'Scegli la tua password' : 'Cambia password'}</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('password')} ${primaVolta ? 'Scegli la tua password' : 'Cambia password'}</h3>
     <p>${primaVolta ? 'Così la prossima volta entri con email e password, anche dall\'app installata sul telefono o sul tablet.' : 'Scrivi la nuova password due volte.'}</p>
     <input type="email" autocomplete="username" value="${esc(ST.emailAccount || ST.email || '')}" hidden>
     <label>Password (almeno 8 caratteri)<input id="pw-1" type="password" autocomplete="new-password"></label>
@@ -1049,7 +1051,7 @@ function soloGuardo() {
 }
 function partnerSelect() {
   if (!eAdmin() || !PS.persone.length) return '';
-  const nota = vediTutti() ? '👁️ solo lettura ' : guardoAltri() ? '✏️ modifiche a suo nome ' : '';
+  const nota = vediTutti() ? ic('visione') + ' solo lettura ' : guardoAltri() ? ic('modifica') + ' modifiche a suo nome ' : '';
   return `<div class="partner-select ${guardoAltri() && !vediTutti() ? 'altro' : ''}"><small>Partner Select</small>
     <button id="ps-scegli">${esc(nomeVisto())}<span>${nota}▾</span></button></div>`;
 }
@@ -1059,7 +1061,7 @@ function collegaPartnerSelect() {
 }
 async function scegliPartner() {
   const voci = [...PS.persone.map(p => ({ etichetta: nomeDi(p) + (p.id === ST.utente.id ? ' (tu)' : ''), id: p.id })),
-    { etichetta: '👥 Tutti', id: 'tutti' }];
+    { etichetta: 'Tutti', icona: 'squadra', id: 'tutti' }];
   const v = await sceltaDa('Partner Select', voci);
   if (!v) return;
   const nuovo = v.id === ST.utente.id ? null : v.id;
@@ -1194,11 +1196,11 @@ function disegnaAgenda() {
   html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
     : `<div class="vuoto">Nessun appuntamento. Tocca <b>+</b> per fissarne uno.</div>`;
   const t = AG.telefonate;
-  if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 Telefonate del giorno · Fatte ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
-  else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>📞 ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
-  if (AG.giorno === oggi && RIO.righe.length) html += `<button class="ag-blocco riordini" id="ag-riordini"><span>🔁 ${RIO.righe.length} ${RIO.righe.length === 1 ? 'riordino' : 'riordini'} da sentire</span><span>›</span></button>`;
-  if (AG.giorno === oggi && CONF.righe.length) html += `<button class="ag-blocco conferme" id="ag-conferme"><span>📅 ${CONF.righe.length} ${CONF.righe.length === 1 ? 'conferma' : 'conferme'} da fare</span><span>›</span></button>`;
-  if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>⚠️ ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
+  if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>${ic('telefonate')} Telefonate del giorno · Fatte ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
+  else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>${ic('telefonate')} ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
+  if (AG.giorno === oggi && RIO.righe.length) html += `<button class="ag-blocco riordini" id="ag-riordini"><span>${ic('riordini')} ${RIO.righe.length} ${RIO.righe.length === 1 ? 'riordino' : 'riordini'} da sentire</span><span>›</span></button>`;
+  if (AG.giorno === oggi && CONF.righe.length) html += `<button class="ag-blocco conferme" id="ag-conferme"><span>${ic('conferme')} ${CONF.righe.length} ${CONF.righe.length === 1 ? 'conferma' : 'conferme'} da fare</span><span>›</span></button>`;
+  if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>${ic('attenzione')} ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
 }
@@ -1224,8 +1226,8 @@ function eventoAgenda(e, opz) {
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
-        ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">🕑 Sposta</button><button data-cmd="modifica">✏️ Modifica</button>`}
-        <button data-cmd="contatto">👤 Apri contatto</button>
+        ${richiamo ? `<button data-cmd="fissa">＋ Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button><button data-cmd="modifica">${ic('modifica')} Modifica</button>`}
+        <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>
       ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button><button data-cmd="noteplan">${ICONA_NP} NotePlan</button></div>`}
@@ -1311,7 +1313,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
 // Stato scritto accanto all'azione
 function statoAzione(a) {
   if (!a.completata && !a.esito) return '<span class="stato-az">⏳ Da completare</span>';
-  return a.esito === MB21Agenda.fattoDi(a.tipo_azione) ? '<span class="stato-az fatto">✅ Fatto · risultato da dare</span>' : '<span class="stato-az fatto">✅ Completato</span>';
+  return a.esito === MB21Agenda.fattoDi(a.tipo_azione) ? '<span class="stato-az fatto">' + ic('fatto') + ' Fatto · risultato da dare</span>' : '<span class="stato-az fatto">' + ic('fatto') + ' Completato</span>';
 }
 // Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
 function collegaEsiti(el, a, contatto, dopo) {
@@ -1356,7 +1358,7 @@ async function cambiaEsito(a, esito, dopo, testo) {
 // «🛒 Vendita! La registri adesso?»: lo stesso passo per l'esito «Vendita» di una consulenza e per «Ordine» di una telefonata al Cliente
 // (Agenda, scheda, Riordini da sentire, coda). Se sì apre la scheda sulle Vendite con il modulo pronto e restituisce true.
 async function registraVenditaDa(contattoId, nome, categoria, brand) {
-  if (!await chiediConferma('🛒 Vendita! La registri adesso?',
+  if (!await chiediConferma('Vendita! La registri adesso?',
     'I VP Clienti contano solo dalle vendite registrate. Dalla vendita nasce anche la telefonata di riordino.', 'Registra la vendita')) return false;
   if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria || 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
     const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', contattoId));
@@ -1412,7 +1414,7 @@ function spostaAppuntamento(e, dopo) {
   dopo = dopo || (async g => { AG.aperta = e.id; await apriAgenda(g); });
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>🕑 Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('orario')} Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
     <div class="ag-due-campi"><input id="sp-giorno" type="date" value="${giorno}"><input id="sp-ora" type="time" value="${ora}"></div>
     <div class="due"><button class="link" id="sp-no">Annulla</button><button class="primario" id="sp-si">Sposta</button></div></div>`;
   document.body.appendChild(velo);
@@ -1458,7 +1460,7 @@ function scegliPassato() {
   const A = MB21Agenda, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>⚠️ Senza esito</h3><button id="ps-x">×</button></div>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('attenzione')} Senza esito</h3><button id="ps-x">×</button></div>
     <p>Tocca un appuntamento per dargli l'esito.</p>
     <div class="altri-voci">${AG.passati.map(e => { const r = A.riga(e, opz), p = A.partiRoma(e.inizio);
       return `<button data-id="${esc(e.id)}"><b>${esc(p.giorno.split('-').reverse().join('/'))} ${esc(p.ora)}</b> · ${esc(r.titolo)}</button>`; }).join('')}</div></div>`;
@@ -1651,7 +1653,7 @@ async function foglioAzione(id, opz = {}) {
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     <div class="errore" id="fa-errore"></div>
-    <div class="due">${opz.ritorno ? '<button class="link" id="fa-contatto">👤 Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
+    <div class="due">${opz.ritorno ? '<button class="link" id="fa-contatto">' + ic('persona') + ' Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
       <button class="primario" id="fa-si">Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
@@ -1945,14 +1947,14 @@ function disegnaReport() {
     }).join('')}</div>`;
     const anno = R.periodoAnno(p.da), aperto = gruppi.find(g => g.chiave === RP.aperto);
     const mesi = R.grafico(RP.azioni, anno, oggi, RP.aperto), max = Math.max(1, ...mesi.map(m => m.azioni));
-    html += `<div class="rp-grafico"><h3>📈 Anno ${esc(anno.etichetta)}${aperto ? ' · ' + esc(aperto.etichetta) : ''}</h3>
+    html += `<div class="rp-grafico"><h3>${ic('crescita')} Anno ${esc(anno.etichetta)}${aperto ? ' · ' + esc(aperto.etichetta) : ''}</h3>
       <div class="legenda"><i style="background:#93C5FD;margin-left:0"></i>azioni fatte<i style="background:var(--verde)"></i>risultati che contano</div>
       <div class="rp-barre">${mesi.map(m => `<div><small>${m.azioni || ''}</small><span style="height:${m.azioni / max * 100}%">
         <i style="height:${m.azioni ? m.verdi / m.azioni * 100 : 0}%"></i></span></div>`).join('')}</div>
       <div class="rp-mesi">${mesi.map(m => `<span class="${m.futuro ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div></div>`;
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
-  if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>🟪 Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
+  if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>${ic('pianomarketing')} Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -2034,13 +2036,13 @@ function foglioLinkInvito(opz = {}) {
   const tel = opz.telefono && opz.telefono.startsWith('+') ? opz.telefono : '';   // i numeri dubbi non partono
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>${opz.titolo ? esc(opz.titolo) : '🔗 ' + (opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione')}</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${opz.titolo ? esc(opz.titolo) : ic('collega') + ' ' + (opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione')}</h3>
     <p>${opz.spiega ? esc(opz.spiega) : opz.nome ? 'Mandagli il messaggio (puoi cambiarlo): si registra, e l\'Admin approva la richiesta.' : 'Manda il messaggio (puoi cambiarlo) a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
     <textarea id="li-testo" rows="4" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(messaggio)}</textarea>
     <div class="li-canali">
       <a href="#" data-canale="wa">WhatsApp</a><a href="#" data-canale="tg">Telegram</a><a href="#" data-canale="sms">SMS</a>
     </div>
-    ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">📤 Altre app</button>' : ''}
+    ${navigator.share ? '<button class="primario" id="li-condividi" style="margin-top:8px">' + ic('condividi') + ' Altre app</button>' : ''}
     <button class="primario" id="li-copia" style="margin-top:8px">⧉ Copia il messaggio</button>
     <button class="link" id="li-chiudi">Chiudi</button></div>`;
   document.body.appendChild(velo);
@@ -2075,7 +2077,7 @@ function foglioLinkInvito(opz = {}) {
 // Contatto appena diventato Partner (Ignazio 16/09): domanda «Vuoi invitarlo nell'app MB21?». Invitato da = proprietario della lista.
 async function domandaInvito(c) {
   if (!c || !c.nome) return;
-  const si = await chiediConferma(`${c.nome} è diventato Partner`, "Vuoi invitarlo nell'app MB21? Puoi farlo anche dopo, dalla sua scheda.", "🔗 Invita nell'app MB21");
+  const si = await chiediConferma(`${c.nome} è diventato Partner`, "Vuoi invitarlo nell'app MB21? Puoi farlo anche dopo, dalla sua scheda.", "Invita nell'app MB21");
   if (si) foglioLinkInvito({ da: c.user_id || visto().id, nome: c.nome, telefono: c.telefono });
 }
 
@@ -2103,12 +2105,12 @@ function disegnaGriglia() {
         <div><b>${g.alMese}</b><small>PM al mese</small></div></div>
       <div class="barra"><div style="width:${g.percentuale}%;background:${g.mancanti ? 'var(--blu)' : 'var(--verde)'}"></div></div>
       <div class="gp-sotto"><span>${g.percentuale}% completato</span><span>Ritmo: ${String(g.ritmo).replace('.', ',')} PM al mese</span></div>
-      ${g.mancanti ? '' : `<div class="gp-dettaglio" style="color:var(--verde);font-weight:700">🎉 Obiettivo raggiunto!</div>`}
+      ${g.mancanti ? '' : `<div class="gp-dettaglio" style="color:var(--verde);font-weight:700">${ic('complimenti')} Obiettivo raggiunto!</div>`}
     </div>
     <div class="riquadro">
       <div class="gp-celle">${g.celle.map((c, i) => c.id
         ? `<button class="fatta" data-cella="${c.numero}" style="border-color:${R.coloreCella(c.esito)}">
-            <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span>${c.portato ? `<span class="gp-portato">🤝 ${esc(c.portato)}</span>` : ''}</button>`
+            <b>${c.numero}</b><span>${esc(R.dataBreve(c.giorno))}</span><span>${esc(c.breve)}</span>${c.portato ? `<span class="gp-portato">${ic('squadra')} ${esc(c.portato)}</span>` : ''}</button>`
         : `<button class="${i === g.fatti ? 'prossima' : ''}" disabled>${c.numero}</button>`).join('')}</div>
       <div class="gp-legenda">${Object.entries(R.COLORI_GRIGLIA).map(([e, c]) => `<span><i style="background:${c}"></i>${esc(e)}</span>`).join('')}</div>
     </div>`;
@@ -2125,7 +2127,7 @@ function impostaGriglia() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>🟪 Griglia PM</h3><button id="gi-x" aria-label="Chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${ic('pianomarketing')} Griglia PM</h3><button id="gi-x" aria-label="Chiudi">×</button></div>
     <div class="campo"><label>Obiettivo PM</label>
       <div class="gp-obiettivi">${R.OBIETTIVI_PM.map(n => `<button data-ob="${n}">${n}</button>`).join('')}<button data-ob="altro">Altro</button></div>
       <div class="gp-altro" id="gi-altro" hidden><input type="range" id="gi-barra" min="1" max="100" step="1" value="${obiettivo}"><b id="gi-valore">${obiettivo}</b></div></div>
