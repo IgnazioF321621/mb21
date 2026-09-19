@@ -150,19 +150,21 @@
   .chips button span { font-weight: 500; opacity: .6; margin-left: 2px; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chips button { flex: none; font-size: 14px; font-weight: 600; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--linea); background: #fff; color: var(--testo); }
-  .chips button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .chips button { flex: none; font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; border-radius: var(--raggio-pill); border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); }
+  .chips button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .cerca { margin: 10px 0 12px; position: relative; }
-  .cerca input { margin: 0; padding-right: 40px; }
+  .cerca input { margin: 0; padding-right: 40px; border-radius: var(--raggio-pill); padding-left: 18px; border-color: transparent; box-shadow: var(--ombra-card); }
   .cerca button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; font-size: 20px; color: var(--grigio); padding: 6px 10px; }
-  .cn { display: flex; align-items: center; background: var(--card); border-radius: var(--raggio-riga); overflow: hidden; margin-bottom: 8px; min-height: 64px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .cn { display: flex; align-items: center; background: var(--card); border-radius: var(--raggio-riga); overflow: hidden; margin-bottom: 8px; min-height: 64px; padding-left: 12px;
+    box-shadow: var(--ombra-card); }
+  .cn-pastiglia { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff; display: grid; place-items: center; font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  .cn .frase svg.ic { color: var(--testo-soft); }
   .cn .striscia { width: 4px; flex: none; align-self: stretch; }
   .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
   .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cn .frase { font-size: 14px; color: #374151; margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
-  .cn .chiama { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--linea); display: flex; align-items: center; justify-content: center; }
-  .cn .chiama svg { width: 20px; height: 20px; fill: #34C759; }
+  .cn .frase { font-size: 14px; color: var(--testo-soft); margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
+  .cn .chiama { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--sfondo); color: var(--cat, var(--testo)); display: flex; align-items: center; justify-content: center; }
+  .cn .chiama svg.ic { width: 19px; height: 19px; }
   .cn .chiama.spento { opacity: .3; pointer-events: none; }
   .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; }
   .ls-ordina button { border: 0; background: none; color: var(--blu); font-size: 13px; font-weight: 600; padding: 4px 0; }
@@ -190,22 +192,26 @@
   .lettere button { border: 1px solid var(--linea); background: #fff; color: var(--testo); border-radius: 10px; font-size: 16px; font-weight: 600; padding: 9px 0; }
   .lettere button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
   .lettere button:disabled { opacity: .3; }
-  .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--grigio); padding: 0 12px 8px 8px; height: 44px; }
+  .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--testo-tenue); padding: 0 10px 0 6px; height: 44px; min-width: 40px; }
   .altri-voci button { display: block; width: 100%; text-align: left; font-size: 17px; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--linea); background: none; color: var(--testo); }
   .altri-voci button.pericolo { color: var(--rosso); }
 
-  .indietro { border: 0; background: none; color: var(--blu); font-size: 16px; padding: 6px 0; margin-top: 4px; }
-  .testata { background: var(--card); border-radius: var(--raggio-card); overflow: hidden; margin: 8px 0 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .testata .corpo { padding: 14px 16px 16px; }
-  .testata .cat { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .testata h1 { font-size: 26px; margin: 2px 0; }
-  .testata .alto { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .modifica { border: 0; border-radius: 10px; background: #334155; color: #fff; font-size: 14px; font-weight: 600; padding: 8px 12px; flex: none; }
+  .indietro { border: 0; background: none; color: var(--testo-soft); font-size: 16px; font-weight: 600; padding: 6px 0; margin-top: 4px; min-height: var(--tocco); }
+  /* Testata della scheda: qui la persona è una sola, quindi prende la tinta della sua categoria (docs/MB21_Design.md) */
+  .testata { background: var(--cat-tinta, var(--superficie)); border-radius: var(--raggio-card); overflow: hidden; margin: 8px 0 12px; }
+  .testata .corpo { padding: 16px; }
+  .testata .cat { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--cat, var(--testo-soft)); }
+  .testata h1 { font-size: 22px; margin: 2px 0; }
+  .testata .alto { display: flex; align-items: center; gap: 12px; }
+  .testata .ts-chi { flex: 1; min-width: 0; }
+  .ts-pastiglia { flex: none; width: 58px; height: 58px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff; display: grid; place-items: center; font-size: 19px; font-weight: 600; }
+  .modifica { align-self: flex-start; border: 0; border-radius: var(--raggio-pill); background: var(--superficie); color: var(--testo); font-size: 14px; font-weight: 600; min-height: 36px; padding: 8px 14px; flex: none; }
   .contatta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
-  .contatta a { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; background: #fff; color: var(--grigio);
-    border: 1px solid var(--linea); font-size: 11px; font-weight: 600; padding: 7px 0 6px; border-radius: 10px; }
-  .contatta svg { width: 22px; height: 22px; }
-  .contatta .ic-call { fill: #34C759; } .contatta .ic-sms { fill: #378ADD; } .contatta .ic-wa { fill: #25D366; } .contatta .ic-tg { fill: #26A5E4; }
+  .contatta a { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; background: var(--superficie); color: var(--testo-soft);
+    border: 0; font-size: 11px; font-weight: 600; padding: 9px 0 7px; border-radius: var(--raggio-riga); }
+  .foglio .contatta a { background: var(--sfondo); }
+  .contatta svg { width: 22px; height: 22px; color: var(--testo); }
+  .contatta .ic-tg { fill: currentColor; }
   .contatta a.spento { opacity: .35; pointer-events: none; }
   .app-riga { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 12px; border-radius: var(--raggio-bottone); background: var(--sfondo); font-size: 14px; font-weight: 600; }
   .app-riga small { display: block; font-weight: 400; color: var(--grigio); font-size: 12px; }
@@ -732,29 +738,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192005"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192005"></script>
-<script src="lista.js?v=202609192005"></script>
-<script src="rubrica.js?v=202609192005"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192005"></script>
-<script src="agenda.js?v=202609192005"></script>
-<script src="report.js?v=202609192005"></script>
-<script src="check.js?v=202609192005"></script>
-<script src="mappa.js?v=202609192005"></script>
-<script src="pagina-dashboard.js?v=202609192005"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192005"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192005"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192005"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192005"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192005"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192005"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192005"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192005"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192005"></script>
-<script src="benvenuto.js?v=202609192005"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192005"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192012"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192012"></script>
+<script src="lista.js?v=202609192012"></script>
+<script src="rubrica.js?v=202609192012"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192012"></script>
+<script src="agenda.js?v=202609192012"></script>
+<script src="report.js?v=202609192012"></script>
+<script src="check.js?v=202609192012"></script>
+<script src="mappa.js?v=202609192012"></script>
+<script src="pagina-dashboard.js?v=202609192012"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192012"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192012"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192012"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192012"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192012"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192012"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192012"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192012"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192012"></script>
+<script src="benvenuto.js?v=202609192012"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192012"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 20:05';
+const APP_VERSION = '2026.09.19 · 20:12';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
