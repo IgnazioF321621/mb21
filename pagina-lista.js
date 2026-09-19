@@ -83,7 +83,7 @@ const ICONE_CONTATTA = {
 const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp' };
 function contattaHtml(telefono) {
   const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
-  const link = (href, icona, testo) => `<a href="${esc(href)}" class="${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
+  const link = (href, icona, testo) => `<a href="${esc(href)}" class="ct-${icona} ${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
   return `<div class="contatta">${link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
 }
 
