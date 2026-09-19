@@ -28,12 +28,33 @@ async function apriProfilo() {
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button><h1>Profilo</h1><div class="vuoto">Carico…</div>`;
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
-  const [dati, stato] = await Promise.all([
+  const [dati, stato, percorso] = await Promise.all([
     dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', u.id).maybeSingle()),
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
+    leggiPercorso(),   // cantiere 32: i propri «Perché iniziare» e i 14 passi (non letto = null: i due riquadri non si mostrano)
   ]);
+  AVV.mio = percorso;
   if (dati.data) { Object.assign(u, dati.data); ST.stato = { ...(ST.stato || { fatti_oggi: 0 }), contatti_al_giorno: dati.data.contatti_al_giorno }; }
   disegnaProfilo();
+}
+
+// «La mia scheda» (cantiere 32, Ignazio 19/09: la persona non ha una scheda contatto di sé stessa, e in Dashboard «Il mio avvio»
+// sparisce a 14/14 o ad avvio concluso): in cima al Profilo ci sono SEMPRE «🌟 Perché ho iniziato» (le voci scelte, con «Cambia» che
+// apre la schermata del benvenuto e torna qui) e «🚀 Il mio avvio · N/14» (il tocco apre i 14 passi: `mioPassiHtml`, gli stessi della Dashboard)
+const PF = { avvioAperto: false };
+function mioProfiloHtml() {
+  const m = AVV.mio, L = MB21Lista;
+  if (!m) return '';
+  const righe = MB21Benvenuto.percheRighe(m.perche), { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
+  const stato = m.avvio_concluso_il ? `✅ concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(m.avvio_in_pausa_dal)}`
+    : prossimo ? `👉 Prossimo passo: ${esc(prossimo.nome)}` : '🎉 Tutti i passi fatti';
+  return `<div class="pf-box"><h3>🌟 Perché ho iniziato</h3>
+      ${righe.length ? `<div class="pf-perche">${righe.map(esc).join('<br>')}</div>` : '<small style="margin-top:0">Non l\'hai ancora scelto: bastano due tocchi.</small>'}
+      <button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button></div>
+    <div class="pf-box pf-avvio"><button class="avv-testa" id="pf-avvio"><span><b>🚀 Il mio avvio</b><small>${stato}</small></span>
+      <span class="avv-conta">${fatti}/${totale} ${PF.avvioAperto ? '⌄' : '›'}</span></button>
+      <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
+      ${PF.avvioAperto ? mioPassiHtml(m) : ''}</div>`;
 }
 
 function disegnaProfilo() {
@@ -50,6 +71,7 @@ function disegnaProfilo() {
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
     <div class="testa-pagina"><h1>Profilo</h1><span class="cerchio grande">${dentroCerchio(u)}</span></div>
     <div class="sotto">La tua pagina personale</div>
+    ${mioProfiloHtml()}
     <div class="pf-box"><h3>📷 Foto</h3>
       <div class="pf-avvisi"><div class="riga"><label class="primario pf-foto">${u.foto ? 'Cambia foto' : 'Scegli la foto'}<input type="file" id="pf-foto" accept="image/*" hidden></label>${u.foto ? b('pf-foto-via', 'Togli') : ''}</div></div>
       <small>Dal telefono o dal computer: viene rimpicciolita e salvata nel tuo profilo.</small></div>
@@ -78,6 +100,9 @@ function disegnaProfilo() {
   su('pf-foto-via', () => salvaFoto(null));
   su('pf-numero', () => scegliNumero(disegnaProfilo));
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
+  su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
+  su('pf-avvio', () => { PF.avvioAperto = !PF.avvioAperto; disegnaProfilo(); });
+  collegaMioAvvio(disegnaProfilo, 'profilo');
   su('pf-benvenuto', () => apriBenvenuto());   // cantiere 32: le cinque schermate da capo, con quello che aveva già scelto
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
