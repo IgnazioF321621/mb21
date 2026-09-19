@@ -900,8 +900,9 @@ function dashboardAlto() {
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
-    ${d.obiettiviMancanti || limitato() ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')} Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
-    ${limitato() ? '' : `<button class="visione" id="ds-visione">${ic('visione')} Clicca qui per una visione completa!</button>`}`;
+    ${limitato() ? '' : `<div class="ds-azioni">
+      ${d.obiettiviMancanti ? '' : `<button class="ds-azione obiettivi" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</b><small>Guarda o cambia i traguardi</small></span></button>`}
+      <button class="ds-azione visione-completa" id="ds-visione">${ic('visione')}<span><b>Visione completa</b><small>I tuoi numeri, mese per mese</small></span></button></div>`}`;
   return html;
 }
 
@@ -936,7 +937,7 @@ function dashboardBasso() {
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
     ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>${ic('pianomarketing')} Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    ${limitato() ? '' : `<button class="visione" id="ds-altro">${ic('visione')} Mostra di più!</button>`}`;
+    ${limitato() ? '' : `<div class="ds-azioni una"><button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Mostra di più</b><small>Il Report, giorno per giorno</small></span></button></div>`}`;
 }
 
 function collegaDashboard() {
