@@ -579,26 +579,40 @@ function mioAvvioHtml() {
     <button class="avv-testa" id="mio-avvio"><span><b>🚀 Il mio avvio</b><small>👉 Prossimo passo: ${esc(prossimo.nome)} · ${esc(prossimo.descr)}</small></span>
       <span class="avv-conta">${fatti}/${totale}</span></button>
     <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
-    ${AVV.mioAperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
-        const voci = col === 'onb_sogno' ? percheHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
-        return `<button class="${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-mio-passo="${col}">${m[col] ? '✅' : '◻️'} ${esc(nome)}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
-      <div class="sotto" style="margin:8px 0 0">Tocca un passo quando l'hai fatto${m.con_scheda === false ? '. Appena chi ti segue ti ha nella sua lista, li vede anche lui'
-        : m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.</div>
-      ${m.con_scheda === false ? '<div class="avv-azioni"><button class="link" id="mio-avvio-concluso">✅ Ho concluso il mio avvio</button></div>' : ''}` : ''}
+    ${AVV.mioAperto ? mioPassiHtml(m) : ''}
   </div>`;
+}
+// I 14 passi di chi è entrato: la stessa griglia in «🚀 Il mio avvio» (Dashboard) e nel Profilo. Ignazio 19/09, dopo la prova con un
+// partner vero: a 14/14 o ad avvio concluso il riquadro in Dashboard sparisce, ma la persona deve poter rivedere i suoi passi e
+// soprattutto i suoi «Perché iniziare» → li ritrova SEMPRE nel Profilo (`disegnaProfilo`), la Dashboard resta pulita.
+// Con l'avvio concluso o in pausa i passi si leggono soltanto; «Perché iniziare ›» si apre sempre (gli obiettivi si rivedono e si cambiano).
+function mioPassiHtml(m) {
+  const L = MB21Lista, chiuso = !!(m.avvio_concluso_il || m.avvio_in_pausa_dal);
+  return `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
+      const voci = col === 'onb_sogno' ? percheHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
+      const classe = `${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}`, dentro = `${m[col] ? '✅' : '◻️'} ${esc(nome)}`;
+      return chiuso && col !== 'onb_sogno' ? `<span class="${classe}">${dentro}</span>`
+        : `<button class="${classe}" data-mio-passo="${col}">${dentro}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
+    <div class="sotto" style="margin:8px 0 0">${m.avvio_concluso_il ? `✅ Avvio concluso il ${L.data(m.avvio_concluso_il)}: i passi restano qui.`
+      : m.avvio_in_pausa_dal ? `⏸ Avvio in pausa dal ${L.data(m.avvio_in_pausa_dal)}: i passi restano qui.`
+      : `Tocca un passo quando l'hai fatto${m.con_scheda === false ? '. Appena chi ti segue ti ha nella sua lista, li vede anche lui'
+        : m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.`}</div>
+    ${m.con_scheda === false ? `<div class="avv-azioni">${m.avvio_concluso_il ? '<button class="link" id="mio-avvio-riapri">Riapri il mio avvio</button>'
+      : '<button class="link" id="mio-avvio-concluso">✅ Ho concluso il mio avvio</button>'}</div>` : ''}`;
 }
 // I passi che hanno la loro schermata nel benvenuto (decisione 14 del cantiere 32): il tocco la apre, ed è lei a spuntare il passo
 const PASSI_CON_SCHERMATA = { onb_sogno: 'perche', onb_lista_start: 'cerchia' };
-function collegaMioAvvio() {
+// ridisegna / ritorno: in Dashboard `disegnaOggi`; dal Profilo `disegnaProfilo` e ritorno 'profilo' (le schermate dei passi tornano lì)
+function collegaMioAvvio(ridisegna = disegnaOggi, ritorno = null) {
   const testa = document.getElementById('mio-avvio');
   if (testa) testa.onclick = () => { AVV.mioAperto = !AVV.mioAperto; disegnaOggi(); };
   app.querySelectorAll('[data-mio-passo]').forEach(b => b.onclick = async () => {
     const col = b.dataset.mioPasso;
-    if (PASSI_CON_SCHERMATA[col]) return apriBenvenuto({ solo: PASSI_CON_SCHERMATA[col] });
+    if (PASSI_CON_SCHERMATA[col]) return apriBenvenuto({ solo: PASSI_CON_SCHERMATA[col], ritorno });
     const { data, error } = await dbq('segna il mio passo', supa.rpc('segna_mio_passo', { p_passo: col, p_fatto: !AVV.mio[col] }));
     if (error || !data) return mostraToast('Non salvato: riprova.');
     AVV.mio = data;
-    disegnaOggi();
+    ridisegna();
   });
   // Senza la scheda nella lista di chi lo segue (in cima alla mappa, o non ancora nel file Amway) l'avvio lo conclude da sé
   const concluso = document.getElementById('mio-avvio-concluso');
@@ -606,10 +620,12 @@ function collegaMioAvvio() {
     const { data, error } = await dbq('concludo il mio avvio', supa.rpc('concludi_mio_avvio', { p_concluso: si }));
     if (error || !data) return mostraToast('Non salvato: riprova.');
     AVV.mio = data;
-    disegnaOggi();
-    if (si) mostraToast('Il tuo avvio è concluso', () => concludi(false));
+    ridisegna();
+    if (si) mostraToast('Il tuo avvio è concluso: lo ritrovi nel Profilo', () => concludi(false));
   };
   if (concluso) concluso.onclick = () => concludi(true);
+  const riapri = document.getElementById('mio-avvio-riapri');
+  if (riapri) riapri.onclick = () => concludi(false);
 }
 
 function disegnaAvvio() {

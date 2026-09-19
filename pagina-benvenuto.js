@@ -10,7 +10,7 @@
 // toccando i passi «Perché iniziare» e «Lista Start» di «Il mio avvio» (`apriBenvenuto({ solo })`).
 // Usa ciò che definisce index.html (supa, dbq, ST, app, esc, mostraToast, mostraTab, chiediConferma, limitato), lista.js
 // (componiTelefono, trovaDoppioni) e avvisi.js (leggiStatoAvvisi, appInstallata). Si carica prima dello script della pagina: solo definizioni.
-const BV = { percorso: null, i: 0, solo: null, scelte: {}, nomi: [], conto: null, dopo: null };
+const BV = { percorso: null, i: 0, solo: null, scelte: {}, nomi: [], conto: null, dopo: null, ritorno: null };
 
 // Il percorso di chi è entrato (passi, «Perché iniziare», benvenuto già visto). Se non si legge (offline, errore) → null: l'app si apre come sempre
 async function leggiPercorso() {
@@ -20,9 +20,11 @@ async function leggiPercorso() {
   } catch (e) { return null; }
 }
 
-// opz.solo: 'perche' o 'cerchia' = una schermata sola (da «Il mio avvio»), poi si torna in Dashboard · opz.percorso: già letto · opz.dopo: cosa fare all'uscita
+// opz.solo: 'perche' o 'cerchia' = una schermata sola (da «Il mio avvio»), poi si torna in Dashboard, oppure al Profilo con
+// opz.ritorno: 'profilo' · opz.percorso: già letto · opz.dopo: cosa fare all'uscita
 async function apriBenvenuto(opz = {}) {
   BV.solo = opz.solo || null;
+  BV.ritorno = (BV.solo && opz.ritorno) || null;
   BV.dopo = opz.dopo || null;
   BV.i = BV.solo ? MB21Benvenuto.SCHERMATE.indexOf(BV.solo) : 0;
   BV.percorso = opz.percorso || await leggiPercorso();
@@ -38,7 +40,8 @@ async function chiudiBenvenuto() {
   if (!BV.solo) dbq('benvenuto visto', supa.rpc('segna_benvenuto_visto'));   // se non riesce non blocca: si riaprirà una volta in più
   const dopo = BV.dopo;
   BV.dopo = null;
-  ST.tab = 'oggi'; ST.vaiA = 'avvio';
+  if (BV.ritorno === 'profilo') ST.tab = 'profilo';
+  else { ST.tab = 'oggi'; ST.vaiA = 'avvio'; }
   if (typeof AVV !== 'undefined') AVV.mioAperto = false;
   window.scrollTo(0, 0);
   mostraTab();
@@ -57,7 +60,7 @@ function disegnaBenvenuto() {
   const nome = String((ST.utente && (ST.utente.nome || ST.utente.nome_cognome)) || '').trim().split(/\s+/)[0];
   // In alto: i pallini del percorso e «Lo faccio dopo» (niente è vincolante); in una schermata sola, il ritorno alla Dashboard
   const testa = BV.solo
-    ? `<div class="bv-testa"><button class="indietro" id="bv-esci">‹ Dashboard</button></div>`
+    ? `<div class="bv-testa"><button class="indietro" id="bv-esci">‹ ${BV.ritorno === 'profilo' ? 'Profilo' : 'Dashboard'}</button></div>`
     : `<div class="bv-testa"><span class="bv-pallini">${B.SCHERMATE.map((_, k) => `<i class="${k === BV.i ? 'qui' : k < BV.i ? 'fatto' : ''}"></i>`).join('')}</span>
         <button class="link" id="bv-esci">Lo faccio dopo</button></div>`;
   const indietro = !BV.solo && BV.i > 0 ? '<button class="link bv-indietro" id="bv-indietro">‹ Indietro</button>' : '';
@@ -101,7 +104,7 @@ function disegnaBenvenuto() {
       </div>
       <div class="bv-conto" id="bv-conto">${BV.conto == null ? 'Conto i tuoi nomi…' : esc(B.contoCerchia(BV.conto))}</div>
       <div class="sotto bv-nota">Li ritrovi tutti nella Lista Nomi, e da subito in Dashboard: l'app ti dice già chi chiamare oggi.</div>
-      <button class="primario bv-finito" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}
+      <button class="primario bv-finito" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.ritorno === 'profilo' ? 'Torna al Profilo' : BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}
       ${BV.nomi.length ? `<div class="riquadro bv-nomi">${BV.nomi.map(n => `<div><b>${esc(n.nome)}</b><small>${esc(n.telefono || 'senza numero')}</small></div>`).join('')}</div>` : ''}`;   // il bottone sta SOPRA l'elenco: sempre a portata di dito (Ignazio 19/09, visto in foto)
     },
   }[quale]();
