@@ -686,28 +686,28 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609191456"></script>
-<script src="lista.js?v=202609191456"></script>
-<script src="rubrica.js?v=202609191456"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191456"></script>
-<script src="agenda.js?v=202609191456"></script>
-<script src="report.js?v=202609191456"></script>
-<script src="check.js?v=202609191456"></script>
-<script src="mappa.js?v=202609191456"></script>
-<script src="pagina-dashboard.js?v=202609191456"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191456"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191456"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191456"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191456"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191456"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191456"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191456"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191456"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191456"></script>
-<script src="benvenuto.js?v=202609191456"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191456"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609191501"></script>
+<script src="lista.js?v=202609191501"></script>
+<script src="rubrica.js?v=202609191501"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609191501"></script>
+<script src="agenda.js?v=202609191501"></script>
+<script src="report.js?v=202609191501"></script>
+<script src="check.js?v=202609191501"></script>
+<script src="mappa.js?v=202609191501"></script>
+<script src="pagina-dashboard.js?v=202609191501"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609191501"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609191501"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609191501"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609191501"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609191501"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609191501"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609191501"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609191501"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609191501"></script>
+<script src="benvenuto.js?v=202609191501"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609191501"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 14:56';
+const APP_VERSION = '2026.09.19 · 15:01';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1208,15 +1208,19 @@ function collegaAgenda(eventi) {
   });
 }
 
+// Prima si cerca la persona, poi si cambia pagina (cantiere 33 lavoro 3, Ignazio 19/09: «A»): se non è più nella lista
+// (eliminata: lo storico di Report, Griglia PM e Agenda mostra ancora il suo nome) si resta dove si è, con un avviso.
+// Prima l'app passava alla Lista e restava ferma su «Carico il contatto…».
 async function apriContattoDa(id, ritorno) {
+  if (!LS.righe.find(x => x.id === id)) {   // lista mai letta o senza questo contatto
+    mostraToast('Apro la scheda…');
+    try { [LS.righe] = await Promise.all([leggiLista(), LS.usoApp ? null : leggiUsoApp()]); segnaApp(); }
+    catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
+    if (!LS.righe.find(x => x.id === id)) return mostraToast('Questa persona non è più nella lista: qui resta il lavoro fatto');
+  }
   LS.ritorno = ritorno || null;   // 'report' / 'griglia' / 'oggi': la freccia della scheda torna lì
   ST.tab = 'lista';
   document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'lista'));
-  if (!LS.righe.find(x => x.id === id)) {   // lista mai letta o senza questo contatto
-    app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico il contatto…</div>`;
-    try { [LS.righe] = await Promise.all([leggiLista(), LS.usoApp ? null : leggiUsoApp()]); segnaApp(); }
-    catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
-  }
   apriScheda(id);
 }
 
