@@ -580,7 +580,7 @@ function collegaMioAvvio() {
 
 function disegnaAvvio() {
   const L = MB21Lista, altro = guardoAltri(), admin = eAdmin();
-  // Sponsorizzato da chi guarda (Ignazio 19/09: «qualcosa di più semplice o diretto»): [Tuo diretto] al posto del proprio nome.
+  // Sponsorizzato da chi guarda (Ignazio 19/09: «qualcosa di più semplice o diretto»): [Tuo/a] al posto del proprio nome.
   // Lo sponsor è il primo di `linea`; guardando un altro col Partner Select resta il nome intero.
   const diretto = r => !altro && !!ST.utente.partner_id && (r.linea || [])[0] === ST.utente.partner_id;
   const card = r => {
@@ -590,7 +590,7 @@ function disegnaAvvio() {
     const mia = r.user_id === ST.utente.id || admin;
     return `<div class="riquadro avv-partner">
       <button class="avv-testa" data-avvio="${esc(r.partner_id)}">
-        <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${diretto(r) ? ' tuo' : ''}">[${diretto(r) ? 'Tuo diretto' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
+        <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${diretto(r) ? ' tuo' : ''}">[${diretto(r) ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
           <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
@@ -611,7 +611,7 @@ function disegnaAvvio() {
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
     <h1>🚀 Partner da avviare</h1>
-    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor, «Tuo diretto» se è tuo. Tocca un nome per vedere i suoi passi.</div>
+    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor, «Tuo/a» se è tuo. Tocca un nome per vedere i suoi passi.</div>
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
     ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>⏸ In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
