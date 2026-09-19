@@ -792,29 +792,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192335"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192335"></script>
-<script src="lista.js?v=202609192335"></script>
-<script src="rubrica.js?v=202609192335"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192335"></script>
-<script src="agenda.js?v=202609192335"></script>
-<script src="report.js?v=202609192335"></script>
-<script src="check.js?v=202609192335"></script>
-<script src="mappa.js?v=202609192335"></script>
-<script src="pagina-dashboard.js?v=202609192335"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192335"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192335"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192335"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192335"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192335"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192335"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192335"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192335"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192335"></script>
-<script src="benvenuto.js?v=202609192335"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192335"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192339"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192339"></script>
+<script src="lista.js?v=202609192339"></script>
+<script src="rubrica.js?v=202609192339"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192339"></script>
+<script src="agenda.js?v=202609192339"></script>
+<script src="report.js?v=202609192339"></script>
+<script src="check.js?v=202609192339"></script>
+<script src="mappa.js?v=202609192339"></script>
+<script src="pagina-dashboard.js?v=202609192339"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192339"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192339"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192339"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192339"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192339"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192339"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192339"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192339"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192339"></script>
+<script src="benvenuto.js?v=202609192339"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192339"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 23:35';
+const APP_VERSION = '2026.09.19 · 23:39';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1561,8 +1561,8 @@ async function nuovoAppuntamento(opz = {}) {
     velo.className = 'velo';
     // forma del modulo contatto (cantiere 34): in testa per chi è, gruppi con un titoletto, «Annulla · Salva» fermi in fondo
     velo.innerHTML = `<div class="foglio alto mc">
-      <div class="mc-testa ${classeCat(st.categoria)}"><span class="ts-pastiglia">${st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda')}</span>
-        <div><small>${esc(opz.titolo || 'Nuovo appuntamento')}</small><b>${st.contatto ? esc(st.contatto.nome) : 'Con chi?'}</b></div><button id="na-x" aria-label="Chiudi">×</button></div>
+      <div class="mc-testa" id="na-testa"><span class="ts-pastiglia"></span>
+        <div><small>${esc(opz.titolo || 'Nuovo appuntamento')}</small><b></b></div><button id="na-x" aria-label="Chiudi">×</button></div>
       ${opz.sottotitolo ? `<p style="margin:12px 4px 0">${esc(opz.sottotitolo)}</p>` : ''}
       <div id="na-corpo"></div>
       <div class="errore" id="na-errore"></div>
@@ -1606,6 +1606,11 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
       }
       velo.querySelector('#na-corpo').innerHTML = h + '</div>';
+      // la testa segue il contatto e la categoria scelti nel foglio (visto da Ignazio 19/09: restava «Con chi?» con il nome già scritto)
+      const testa = velo.querySelector('#na-testa');
+      testa.className = 'mc-testa ' + classeCat(st.categoria);
+      testa.querySelector('.ts-pastiglia').innerHTML = st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda');
+      testa.querySelector('b').textContent = st.contatto ? st.contatto.nome : 'Con chi?';
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
