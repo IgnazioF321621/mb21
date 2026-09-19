@@ -17,7 +17,7 @@
 2. Filtri: **All** (solo Admin: tutti i nomi di tutti i partner) · **Lista** (i nomi personali del partner loggato) · Prospect · Partner · Clienti · **Altri ▾** (Ex · Unlinked · Archiviati · Senza categoria).
 3. Scheda contatto in Fase 2: **Dati · Azioni · Coach Yes · Onboarding** (Onboarding solo per i Partner). Vendite e Sharing «In arrivo».
 4. Riquadro FASE nella sezione Azioni: **solo icona e titolo della fase** (es. «FASE CONTATTO: RICHIAMARE»). I 3 suggerimenti N21 e la pagina del Manuale sono **sospesi**: non mostrarli. Niente Indietro/Avanti. La riga di coach resta solo nella home.
-5. Elimina → **sposta in Archiviati** (categoria Archiviato). Da Archiviati, «Elimina definitivamente» con conferma.
+5. ~~Elimina → **sposta in Archiviati** (categoria Archiviato). Da Archiviati, «Elimina definitivamente» con conferma.~~ **Regola nuova dal 19/09/2026 (cantiere 33, decisioni 1-7 di Ignazio):** «Archivia» ed «Elimina» sono due cose diverse. **Archivia** = messo da parte, domani si ripristina. **Elimina** = il nome sparisce dalla lista (archivio, ricerca e coda compresi), ma **il lavoro già fatto resta nei numeri** e nello storico si legge ancora il nome: la scheda non si cancella dal database, prende il segno «eliminato il…». Conferma prima, «Annulla» subito dopo nell'avviso; poi dall'app non si recupera (nessun elenco «Eliminati»). Biglietti e CEP di chi è eliminato contano ancora, a meno che l'Admin non li tolga con la spunta nella conferma. Dove: tre puntini della card (Modifica · Archivia · Elimina; negli Archiviati Ripristina · Elimina) e «Elimina dalla lista», in rosso, in fondo a Modifica. Dettaglio tecnico in `STRUTTURA.md`.
 6. Partner Select (Admin) → Fase 3. In Fase 2 l'Admin vede tutti i nomi solo con il filtro All.
 7. La home si chiamerà **Dashboard** (come in Glide): rinomina tab e titolo, nient'altro.
 
@@ -54,7 +54,7 @@ Stessi campi del Nuovo Contatto, precompilati. Se «Modifica» di Glide risulta 
 
 ### 6. Archiviati
 - «Archivia» dalla card o dalla scheda → categoria Archiviato, sparisce da Lista e dalla coda della home.
-- In Altri ▾ → Archiviati: «Ripristina» (torna alla categoria precedente, da conservare in un campo) e «Elimina definitivamente» con conferma (cancella contatto e sue azioni).
+- In Altri ▾ → Archiviati: «Ripristina» (torna alla categoria precedente, da conservare in un campo) e ~~«Elimina definitivamente» con conferma (cancella contatto e sue azioni)~~ «Elimina» con la regola nuova del punto 5 (dal 19/09/2026: non cancella più niente del lavoro fatto).
 
 ### 7. I 32 telefoni
 - Riprendi l'elenco da `CANTIERI.md`; normalizza in `+39…` senza spazi dove non c'è ambiguità.
