@@ -29,6 +29,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
      - *Schermata 1*: «🎉 Benvenuto in MB21, [nome]! Complimenti per la scelta che hai fatto.»
      - *Schermata 2*: «MB21 ti aiuta a sviluppare la tua attività, per realizzare il tuo sogno… o scappare dal tuo incubo. · **È tutto semplice, come un flusso**: ogni passo ti porta al successivo. · **Niente è vincolante**: vai alla velocità che vuoi tu. · **Il tuo sponsor e la tua squadra ti seguiranno da vicino**, e tu avrai sempre una linea guida sul percorso da fare.»
      - Correzione di Ignazio (19/09): **niente nome dello sponsor** nella terza frase, ma «Il tuo sponsor e la tua squadra ti seguiranno da vicino» → nessun dato da cercare, vale per tutti uguale
+  5. ✅ **Quanti sogni** (Ignazio 19/09: «B e poi anche "un altro…"»): il nuovo può scegliere **più sogni insieme, ognuno con la sua piccola descrizione**; in fondo alla lista la voce **«✏️ Un altro: scrivilo tu»**. **La lista dei sogni viene dal Piano Marketing di Network 21, ultima pagina** (la carica Ignazio in chat; nel repo pubblico va solo l'elenco delle voci, non il documento). Il passo «Sogno» si spunta con almeno un sogno scelto (decisione 2)
 
 ## 31. ONBOARDING DEL PARTNER: DA LISTA DI SPUNTE A STRUMENTO PER LO SPONSOR (aperto il 18/09)
 *Chiesto da Ignazio il 18 settembre 2026, alla chiusura del cantiere 30: «in questo momento è qualcosa messo là, ma non ha nessun valore. Come lo possiamo portare a beneficio… per sfruttare al meglio i passi che Network 21 ci mette a disposizione?»*
