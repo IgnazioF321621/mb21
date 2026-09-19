@@ -66,7 +66,7 @@ Scala delle scritte: titolo di pagina 26/700 · sezione 16/700 · testo 15/400 �
 ## I pezzi
 - **Bottoni** (alti 50, raggio 14): principale pieno inchiostro · secondario bianco con bordo · pericolo pieno rosso `--pericolo` · a sola scritta · spento grigio `--bordo`.
 - **Esiti**: pastiglie alte 40 con icona e scritta, bordo grigio su bianco; quello scelto pieno inchiostro.
-- **Card del contatto**: tutte alte **96 px**, raggio 20, **fondo bianco** (non la tinta: vedi la correzione sopra), pastiglia tonda 46 con le iniziali nel colore pieno, nome e riga sotto, targhette BBS · WES · CEP, tre puntini a destra.
+- **Card del contatto** (com'è nell'app, decisa con Ignazio il 19/09 guardando la Lista vera): fondo bianco, tondo 42 con le iniziali nel colore della categoria, **prima riga solo il nome**, poi la frase, la professione e, **in una riga loro in fondo**, «nuovo» e le targhette (accanto al nome «ci si perde»); cornetta a tratto nel cerchio e tre puntini a destra. Compatta: più alta solo per chi ha le targhette. Nella tavola di Design era: tutte alte **96 px**, raggio 20, pastiglia tonda 46 con le iniziali nel colore pieno, nome e riga sotto, targhette BBS · WES · CEP, tre puntini a destra.
 - **Riquadro dei numeri**: superficie bianca raggio 22, numero grande con «/ obiettivo», barra alta 7.
 - **Riga che si apre al tocco**: sotto compaiono gli esiti, separati da un filetto.
 - **Linguette**: contenitore a pastiglia grigio chiaro, quella attiva piena inchiostro.
