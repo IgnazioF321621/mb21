@@ -115,27 +115,26 @@ function cardContatto(r, dareSeguito) {
   const aperta = ST.aperta === r.id;
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
-      <span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span>${dareSeguito ? badge : ''}</span>
+      <span class="rc-pastiglia">${esc(iniziali(r.nome))}</span><span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span>${dareSeguito ? badge : ''}</span>
       <span class="rc-glide">${esc(rigaGlide(r))}</span>
       ${r.coach ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
   if (!aperta) {
-    return `<div class="card compatta" id="card-${esc(r.id)}"><div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>${testa}</div>`;
+    return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
   }
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const bottoni = bottoniPer(r.categoria).map((b, i) =>
     `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline || guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
-    <div class="card compatta aperta" id="card-${esc(r.id)}">
-      <div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>
+    <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
       ${testa}
       <div class="corpo">
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
         <div class="bottoni">${bottoni}</div>
-        <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
+        <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
 }
@@ -165,9 +164,9 @@ function disegnaOggi() {
   const altro = guardoAltri();
   html += `<div class="testa-coda"><h2>${altro ? `La coda di ${esc(nomeDi(visto()))}` : 'La tua coda'}</h2>
     <span class="contatore">Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</span></div>`;
-  if (altro) html += `<div class="sotto">👁️ Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
+  if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
-    : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. 👏` : 'Nessuno da chiamare oggi.'}</div>`;
+    : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`;
   html += catalogoHtml();
   // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
   app.innerHTML = html + dashboardBasso() + versione();
@@ -216,24 +215,23 @@ function catalogoHtml() {
   if (!cat || (!cat.totale && !fatti)) return '';
   const altro = guardoAltri();
   const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
-  let h = `<div class="testa-coda"><h2>🗂️ Da catalogare</h2>
+  let h = `<div class="testa-coda"><h2>${ic('catalogare')} Da catalogare</h2>
     <span class="contatore">Fatti ${Math.min(fatti, quota)} di ${quota}</span></div>
     <div class="sotto">${cat.totale} ancora da catalogare</div>`;
-  if (altro) h += `<div class="sotto">👁️ Solo da guardare, per ora.</div>`;
+  if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
   if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
-  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${quota}. 👏` : 'Tutti catalogati. 👏'}</div>`
+  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${quota}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
     + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
 }
 function cardCatalogo(r) {
   const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
-      <span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span></span>
+      <span class="rc-pastiglia">${esc(iniziali(r.nome))}</span><span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span></span>
       <span class="rc-glide">${esc(r.categoria ? `✓ ${r.categoria} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
-  const strip = `<div class="strip" style="background:${COLORI[r.categoria] || 'var(--unlinked)'}"></div>`;
-  if (!aperta) return `<div class="card compatta" id="card-${esc(r.id)}">${strip}${testa}</div>`;
+  if (!aperta) return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const bottoni = r.categoria
     ? bottoniPer(r.categoria).map((b, i) =>   // come la coda, ma non conta nei contatti al giorno
@@ -241,15 +239,15 @@ function cardCatalogo(r) {
     : CATEGORIE_CATALOGO.map((b, i) =>
       `<button class="${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
   return `
-    <div class="card compatta aperta" id="card-${esc(r.id)}">
-      ${strip}${testa}
+    <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
+      ${testa}
       <div class="corpo">
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
         <div class="bottoni">${bottoni}</div>
-        <button class="link" data-scheda="${esc(r.id)}">👤 Apri contatto</button>
+        <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
 }
@@ -481,13 +479,13 @@ async function caricaConferme() {
 function confermeHtml() {
   if (!CONF.righe.length) return '';
   const ordinate = [...CONF.righe].sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
-  return `<h2>📅 Conferme · ${CONF.righe.length}</h2>` + ordinate.map(c => {
+  return `<h2>${ic('conferme')} Conferme · ${CONF.righe.length}</h2>` + ordinate.map(c => {
     const tel = c.contatti && c.contatti.telefono;
     return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || '#6B7280'}"></div>
       <div class="corpo">
         <div class="nome">${esc(c.contatti ? c.contatti.nome : '')}</div>
         <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
-        ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">📵 Non risponde · riprova più tardi</div>' : ''}
+        ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">' + ic('telefonooff') + ' Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(tel)}
         <div class="bottoni conf-bottoni">
           <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
@@ -571,7 +569,7 @@ function percheHtml(perche) {
 }
 function avvioHtml() {
   const n = AVV.righe.length;
-  return mioAvvioHtml() + (n ? `<button class="ag-blocco avvio" id="dash-avvio"><span>🚀 ${n} partner da avviare</span><span>›</span></button>` : '');
+  return mioAvvioHtml() + (n ? `<button class="ag-blocco avvio" id="dash-avvio"><span>${ic('avvio')} ${n} partner da avviare</span><span>›</span></button>` : '');
 }
 
 // «Il mio avvio»: riga chiusa con passi fatti e prossimo passo; aperta, i 14 passi da smarcare
@@ -580,7 +578,7 @@ function mioAvvioHtml() {
   if (!m || m.avvio_concluso_il || m.avvio_in_pausa_dal || !L.prossimoPasso(m)) return '';
   const { fatti, totale } = L.contatoreOnboarding(m), prossimo = L.prossimoPasso(m);
   return `<div class="riquadro avv-partner mio">
-    <button class="avv-testa" id="mio-avvio"><span><b>🚀 Il mio avvio</b><small>👉 Prossimo passo: ${esc(prossimo.nome)} · ${esc(prossimo.descr)}</small></span>
+    <button class="avv-testa" id="mio-avvio"><span><b>${ic('avvio')} Il mio avvio</b><small>${ic('prossimo')} Prossimo passo: ${esc(prossimo.nome)} · ${esc(prossimo.descr)}</small></span>
       <span class="avv-conta">${fatti}/${totale}</span></button>
     <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
     ${AVV.mioAperto ? mioPassiHtml(m) : ''}
@@ -594,15 +592,15 @@ function mioPassiHtml(m) {
   const L = MB21Lista, chiuso = !!(m.avvio_concluso_il || m.avvio_in_pausa_dal);
   return `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
       const voci = col === 'onb_sogno' ? percheHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
-      const classe = `${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}`, dentro = `${m[col] ? '✅' : '◻️'} ${esc(nome)}`;
+      const classe = `${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}`, dentro = `${m[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}`;
       return chiuso && col !== 'onb_sogno' ? `<span class="${classe}">${dentro}</span>`
         : `<button class="${classe}" data-mio-passo="${col}">${dentro}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
-    <div class="sotto" style="margin:8px 0 0">${m.avvio_concluso_il ? `✅ Avvio concluso il ${L.data(m.avvio_concluso_il)}: i passi restano qui.`
-      : m.avvio_in_pausa_dal ? `⏸ Avvio in pausa dal ${L.data(m.avvio_in_pausa_dal)}: i passi restano qui.`
+    <div class="sotto" style="margin:8px 0 0">${m.avvio_concluso_il ? `${ic('fatto')} Avvio concluso il ${L.data(m.avvio_concluso_il)}: i passi restano qui.`
+      : m.avvio_in_pausa_dal ? `${ic('pausa')} Avvio in pausa dal ${L.data(m.avvio_in_pausa_dal)}: i passi restano qui.`
       : `Tocca un passo quando l'hai fatto${m.con_scheda === false ? '. Appena chi ti segue ti ha nella sua lista, li vede anche lui'
         : m.sponsor_nome ? `: lo vede anche ${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, che ti segue` : ''}.`}</div>
     ${m.con_scheda === false ? `<div class="avv-azioni">${m.avvio_concluso_il ? '<button class="link" id="mio-avvio-riapri">Riapri il mio avvio</button>'
-      : '<button class="link" id="mio-avvio-concluso">✅ Ho concluso il mio avvio</button>'}</div>` : ''}`;
+      : '<button class="link" id="mio-avvio-concluso">' + ic('fatto') + ' Ho concluso il mio avvio</button>'}</div>` : ''}`;
 }
 // I passi che hanno la loro schermata nel benvenuto (decisione 14 del cantiere 32): il tocco la apre, ed è lei a spuntare il passo
 const PASSI_CON_SCHERMATA = { onb_sogno: 'perche', onb_lista_start: 'cerchia' };
@@ -645,43 +643,43 @@ function disegnaAvvio() {
     return `<div class="riquadro avv-partner">
       <button class="avv-testa" data-avvio="${esc(r.partner_id)}">
         <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${diretto(r) ? ' tuo' : ''}">[${diretto(r) ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
-          <small>${r.avvio_in_pausa_dal ? `⏸ in pausa dal ${L.data(r.avvio_in_pausa_dal)}${L.pausaLunga(r, ST.oggi) ? ' · più di un anno' : ''}` : prossimo ? '👉 ' + esc(prossimo.nome) : '🎉 Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · 💡 ${proposte.length}` : ''}</small></span>
+          <small>${r.avvio_in_pausa_dal ? `${ic('pausa')} in pausa dal ${L.data(r.avvio_in_pausa_dal)}${L.pausaLunga(r, ST.oggi) ? ' · più di un anno' : ''}` : prossimo ? ic('prossimo') + ' ' + esc(prossimo.nome) : ic('complimenti') + ' Tutti i passi fatti'}${entrato ? ' · ' + esc(entrato) : ''}${proposte.length ? ` · ${ic('propone')} ${proposte.length}` : ''}</small></span>
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
       ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
           const voci = col === 'onb_sogno' ? percheHtml(AVV.perche[r.partner_id]) : '';   // cantiere 32: il perché lo vede anche chi lo segue
           return mia
-          ? `<button class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? '✅' : '◻️'} ${esc(nome)}${voci}</button>`
-          : `<span class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}">${r[col] ? '✅' : '◻️'} ${esc(nome)}${voci}</span>`; }).join('')}</div>
-        ${proposte.length ? `<div class="avv-proposte"><b>💡 L'app propone</b>${proposte.map(p => `<div><span>${esc(p.nome)}: ${esc(p.perche)}</span>
+          ? `<button class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}${voci}</button>`
+          : `<span class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}">${r[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}${voci}</span>`; }).join('')}</div>
+        ${proposte.length ? `<div class="avv-proposte"><b>${ic('propone')} L'app propone</b>${proposte.map(p => `<div><span>${esc(p.nome)}: ${esc(p.perche)}</span>
             ${mia ? `<button class="piccolo" data-spunta="${p.col}" data-di="${esc(r.partner_id)}">Segna</button>` : ''}</div>`).join('')}</div>` : ''}
         <div class="sotto" style="margin:8px 0 0">Scheda nella lista di ${esc(r.lista || '—')}${r.data_ingresso ? ' · ingresso in Amway ' + L.data(r.data_ingresso) : ''}${mia ? '. Tocca un passo per segnarlo o toglierlo.' : ''}</div>
         <div class="avv-azioni">
           ${mia ? `<button class="link" data-apri-scheda="${esc(r.contatto_id)}">Apri la scheda ›</button>` : ''}
           ${mia ? (r.avvio_in_pausa_dal
-            ? `<button class="link" data-chiudi="riprendi" data-di="${esc(r.partner_id)}">▶️ Riprendi</button>
-               ${L.pausaLunga(r, ST.oggi) ? `<button class="link" data-chiudi="dacapo" data-di="${esc(r.partner_id)}">🔄 Riprendi da capo</button>` : ''}`
-            : `<button class="link" data-chiudi="pausa" data-di="${esc(r.partner_id)}">⏸ In pausa</button>
-               <button class="link" data-chiudi="concluso" data-di="${esc(r.partner_id)}">✅ Avvio concluso</button>`) : ''}
+            ? `<button class="link" data-chiudi="riprendi" data-di="${esc(r.partner_id)}">${ic('riprendi')} Riprendi</button>
+               ${L.pausaLunga(r, ST.oggi) ? `<button class="link" data-chiudi="dacapo" data-di="${esc(r.partner_id)}">${ic('aggiorna')} Riprendi da capo</button>` : ''}`
+            : `<button class="link" data-chiudi="pausa" data-di="${esc(r.partner_id)}">${ic('pausa')} In pausa</button>
+               <button class="link" data-chiudi="concluso" data-di="${esc(r.partner_id)}">${ic('fatto')} Avvio concluso</button>`) : ''}
         </div>` : ''}
     </div>`;
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
-    <h1>🚀 Partner da avviare</h1>
+    <h1>${ic('avvio')} Partner da avviare</h1>
     <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
-    <button class="ag-blocco avv-come" id="avv-come"><span>ℹ️ Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
+    <button class="ag-blocco avv-come" id="avv-come"><span>${ic('info')} Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
     ${AVV.comeAperto ? `<div class="riquadro avv-come-testo"><ul>
       <li>Qui vedi i partner ${altro ? 'del Team' : 'del tuo Team'} con l'avvio aperto, dal più recente. Tra [ ] c'è lo sponsor: è a lui che ti rivolgi${altro ? '' : '; «Tuo/a» se è tuo'}.</li>
-      <li>👉 è il prossimo passo da fare insieme. 💡 sono i passi che l'app sa già: li segna chi ha il partner nella sua lista, se è d'accordo.</li>
+      <li>${ic('prossimo')} è il prossimo passo da fare insieme. ${ic('propone')} sono i passi che l'app sa già: li segna chi ha il partner nella sua lista, se è d'accordo.</li>
       <li><b>Perché iniziare</b> è il primo passo: il partner lo sceglie nel suo benvenuto («Perché vuoi iniziare?», come nel Piano Marketing) e qui, sotto il passo, leggi quello che ha scelto.</li>
-      <li><b>✅ Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
-      <li><b>⏸ In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>▶️ Riprendi</b> lo riporta qui.</li>
-      <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>🔄 Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>
+      <li><b>${ic('fatto')} Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
+      <li><b>${ic('pausa')} In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>${ic('riprendi')} Riprendi</b> lo riporta qui.</li>
+      <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>${ic('aggiorna')} Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>
       <li><b>Comanda la mappa Amway</b>: chi non è più nell'ultimo file Amway caricato sparisce da solo dall'elenco, come chi non è più in categoria Partner.</li>
       <li>Passi, pausa e avvio concluso li tocca chi ha il partner nella sua lista (di solito lo sponsor); gli altri upline vedono soltanto.</li>
     </ul></div>` : ''}
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
-    ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>⏸ In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
+    ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>${ic('pausa')} In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
   document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
   const come = document.getElementById('avv-come');
@@ -744,7 +742,7 @@ async function caricaRiordini(oggi) {
 function riordiniHtml() {
   if (!RIO.righe.length) return '';
   const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
-  return `<h2 id="rio-titolo">🔁 Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
+  return `<h2 id="rio-titolo">${ic('riordini')} Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
     const categoria = a.contatti ? a.contatti.categoria : a.categoria;
     const aperta = ST.aperta === a.id;
     const strip = `<div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>`;
@@ -752,7 +750,7 @@ function riordiniHtml() {
       <button class="riga-coda" data-apri="${esc(a.id)}" aria-expanded="${aperta}">
         <span class="rc-alto"><span class="nome">${esc(a.contatti ? a.contatti.nome : '')}</span></span>
         <span class="rc-glide">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : a.glide_id ? ` · era del ${esc(dataBreve(MB21Agenda.partiRoma(a.inizio).giorno))}` : ''}</span>
-        ${RIO.nonRisponde.has(a.id) ? '<span class="conf-nr">📵 Non risponde · riprova più tardi</span>' : ''}
+        ${RIO.nonRisponde.has(a.id) ? '<span class="conf-nr">' + ic('telefonooff') + ' Non risponde · riprova più tardi</span>' : ''}
         <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
       </button>`;
     if (!aperta) return `<div class="card compatta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}</div>`;
@@ -766,7 +764,7 @@ function riordiniHtml() {
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
           ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Non interessato</button>` : ''}
         </div>
-        <button class="link" data-scheda="${esc(a.contatto_id)}">👤 Apri contatto</button>
+        <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
       </div></div>`;
   }).join('');
 }
@@ -838,7 +836,7 @@ const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
 function domandaBigliettoHtml(x, classe) {
   const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'Wes';
   return `<div class="${classe} ${k}" data-seg="${esc(x.tipo)}|${esc(x.evento)}">
-      <b>🎟 ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · Hai il biglietto?</b>
+      <b>${ic('biglietto')} ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · Hai il biglietto?</b>
       <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">Io</button>
         ${x.compagno ? `<button class="sv-chip ${k}" data-campo="compagno">${esc(x.compagno)}</button>` : ''}
         <label class="sv-osp">+<input type="number" min="0" max="50" value="0" data-campo="ospiti">ospiti</label></div>
@@ -868,7 +866,7 @@ async function rispondiBiglietto(box, si, dopo) {
     { p_tipo: tipo, p_evento: evento, p_contatto: contatto, p_compagno: compagno, p_ospiti: osp }));
   if (error) { box.querySelectorAll('button').forEach(b => { b.disabled = false; }); return mostraToast(error.message || 'Non salvato: riprova.'); }
   DS.daSegnare = (DS.daSegnare || []).filter(x => !(x.tipo === tipo && x.evento === evento));
-  mostraToast(si ? 'Biglietto segnato ✅' : 'Va bene, non te lo chiedo più');
+  mostraToast(si ? 'Biglietto segnato' : 'Va bene, non te lo chiedo più');
   dopo();
 }
 
@@ -881,29 +879,29 @@ function dashboardAlto() {
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
   if (!vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09)
     ? (d.abbonamento === 'in_scadenza'
-      ? `<div class="banner-abb scaduto in-scadenza">🟠 Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Rinnova entro la scadenza per continuare a usare tutta l'app</small>
+      ? `<div class="banner-abb scaduto in-scadenza"><i class="pallino" style="background:var(--proposta)"></i>Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Rinnova entro la scadenza per continuare a usare tutta l'app</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`
-      : `<div class="banner-abb attivo">✅ Abbonamento attivo · Buon lavoro!</div>`)
-    : `<div class="banner-abb scaduto">🔴 Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
+      : `<div class="banner-abb attivo">${ic('fatto')} Abbonamento attivo · Buon lavoro!</div>`)
+    : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   html += riquadriBiglietto();
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
-  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">🎯</span>
+  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
-  if (!limitato()) html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">⚡</span>
+  if (!limitato()) html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">${ic('lampo')}</span>
     <span><b>Compila il Check del Giorno!</b><small>Ultimo check: <u>${esc(dataBreve(d.ultimoCheck))}</u> · Tocca per aprire</small></span>
     <span class="freccia">›</span></button>`;
   const s = d.schede.find(x => x.chiave === DS.scheda);
   html += `<div class="riquadro"><div class="schede-dash">${d.schede.map(x =>
-    `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}">${x.pallino} ${esc(x.etichetta)}</button>`).join('')}</div>
+    `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</button>`).join('')}</div>
     <div class="kpi">${s.riquadri.map(r => `<div>
       <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
       <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
-    ${d.obiettiviMancanti || limitato() ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>🎯 Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
-    ${limitato() ? '' : `<button class="visione" id="ds-visione">👁️ Clicca qui per una visione completa!</button>`}`;
+    ${d.obiettiviMancanti || limitato() ? '' : `<button class="link obiettivi-mod" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')} Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</button>`}
+    ${limitato() ? '' : `<button class="visione" id="ds-visione">${ic('visione')} Clicca qui per una visione completa!</button>`}`;
   return html;
 }
 
@@ -918,8 +916,8 @@ function cellaSv(sv, k, v, tag) {
 }
 function tabellaSv(sv) {
   return `<div class="sv">
-      <h3>📊 Segni Vitali</h3>
-      <div class="sotto-sv">Ultimi 12 mesi · 👤 ${esc(nomeVisto())}</div>
+      <h3>${ic('segnivitali')} Segni Vitali</h3>
+      <div class="sotto-sv">Ultimi 12 mesi · ${ic('persona')} ${esc(nomeVisto())}</div>
       <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
       <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr>`).join('')}
@@ -932,13 +930,13 @@ function dashboardBasso() {
   if (!d) return '';
   const sv = d.segniVitali, r = sv.righe[sv.righe.length - 1];
   return `<div class="sv">
-      <h3>📊 Segni Vitali</h3>
-      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · 👤 ${esc(nomeVisto())}</div>
+      <h3>${ic('segnivitali')} Segni Vitali</h3>
+      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · ${ic('persona')} ${esc(nomeVisto())}</div>
       <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
-    ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>🟪 Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    ${limitato() ? '' : `<button class="visione" id="ds-altro">👁️ Mostra di più!</button>`}`;
+    ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>${ic('pianomarketing')} Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
+    ${limitato() ? '' : `<button class="visione" id="ds-altro">${ic('visione')} Mostra di più!</button>`}`;
 }
 
 function collegaDashboard() {
