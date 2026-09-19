@@ -21,6 +21,7 @@
   // Spunti per la memoria: «La tua cerchia ristretta», Manuale di Avvio N21 2026 pag. 6 (decisione 11)
   const SPUNTI = ['amici intimi', 'fratelli o sorelle', 'figli', 'genitori', 'cugini', 'zii', 'amici al lavoro', 'amici di scuola',
     'amici in palestra', 'amici in parrocchia', 'partner negli affari'];
+  const LISTA_CORTA = 30;   // fino a 30 nomi in lista la schermata li mostra tutti (per un nuovo sono la sua cerchia); oltre, solo quelli aggiunti adesso
   const CONSIGLIATI = '20-30';   // Manuale pag. 29: 20-30 persone tra le conoscenze più vicine
 
   // Le schermate del benvenuto, nell'ordine deciso da Ignazio (decisione 1)
@@ -82,7 +83,7 @@
     return null;
   }
 
-  const api = { VOCI, ALTRO, PAGINE, SPUNTI, CONSIGLIATI, SCHERMATE, MAX_VOCE, MAX_TESTO, pulisciPerche, percheDaScelte, scelteDaPerche,
+  const api = { VOCI, ALTRO, PAGINE, SPUNTI, CONSIGLIATI, LISTA_CORTA, SCHERMATE, MAX_VOCE, MAX_TESTO, pulisciPerche, percheDaScelte, scelteDaPerche,
     percheRighe, daAprire, contoCerchia, nomeVeloce, rigaTelefono };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Benvenuto = api;
 })(typeof self !== 'undefined' ? self : this);
