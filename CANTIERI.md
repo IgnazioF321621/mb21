@@ -2,13 +2,25 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 18 settembre 2026.*
+*Aggiornato: 19 settembre 2026.*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 32. BENVENUTO PER CHI ENTRA LA PRIMA VOLTA (aperto il 19/09)
+*Aperto da Ignazio il 19 settembre 2026. Viene dal cantiere 28 (decisione 2: «Primo ingresso: per ora niente foglio») e dalla voce in cantiere 21. Obiettivo (Ignazio 19/09): chi entra la prima volta deve capire **in pochi secondi cosa fare oggi**, «in maniera ancora più semplice», e **arrivare a «🚀 Il mio avvio»** (cantiere 31 lavoro 3).*
+
+- **Com'è oggi** (letto nel codice il 19/09: `mostraRegistrazione`, `mostraAttesa`, `dopoAccesso`, `foglioPassword` in `index.html` · `daMostrare` in `novita.js` · `disegnaOggi`, `dashboardAlto`, `mioAvvioHtml` in `pagina-dashboard.js` · `approva_richiesta` e `mb21_prova_gratuita` nel database):
+  1. **Registrazione** dal link «…/?registrati» (con «&da=» di chi invita): nome, email, telefono, codice Amway, password → «Richiesta inviata ✅», resta in attesa con «Controlla di nuovo»
+  2. **Approvazione** dell'Admin: nasce l'utente con 15 giorni di prova; l'Admin ha pronto il messaggio «la tua richiesta è approvata, apri …: entri direttamente»
+  3. **Primo ingresso**: si apre subito la **Dashboard**, senza nessuna parola di benvenuto. Il foglio «✨ Novità» non si apre (`ultimo_uso` vuoto → si segna tutto come già visto). Chi è entrato con «Mandami il link» (senza password) trova il foglio «🔑 Scegli la tua password»; chi si è registrato dal modulo non trova nessun foglio
+  4. **Cosa c'è nella Dashboard di un nuovo**, dall'alto: «✅ Abbonamento attivo · Buon lavoro!» · «🎯 Imposta gli obiettivi del mese!» · «⚡ Compila il Check del Giorno!» · i numeri del mese (tutti a zero) · «👁️ visione completa» · **«🚀 Il mio avvio»** (solo se c'è) · «La tua coda · Fatti 0 di N» con **«Nessuno da chiamare oggi.»** (la lista è vuota) · Segni Vitali a zero · «Mostra di più»
+  5. **«🚀 Il mio avvio» compare solo se** lo sponsor (o un upline utente dell'app) ha già la **scheda del nuovo in categoria Partner con il codice Amway** e il nuovo è **nell'ultimo file Amway caricato** (`scheda_avvio_di`, cantiere 31). Un appena iscritto di solito non è ancora nel file → il riquadro **non c'è** finché l'Admin non carica il file nuovo
+  6. **Nessuno gli dice** di: importare la rubrica (è dietro il «+» della Lista Nomi, cantiere 30) · installare l'app sul telefono · accendere gli avvisi (sono nel Profilo, «Attiva gli avvisi») · scegliere quanti contatti al giorno (parte da 5, si cambia solo dal Profilo)
+- **Lavoro 0 · raccolta con Ignazio** (una domanda alla volta): *in corso*
 
 ## 31. ONBOARDING DEL PARTNER: DA LISTA DI SPUNTE A STRUMENTO PER LO SPONSOR (aperto il 18/09)
 *Chiesto da Ignazio il 18 settembre 2026, alla chiusura del cantiere 30: «in questo momento è qualcosa messo là, ma non ha nessun valore. Come lo possiamo portare a beneficio… per sfruttare al meglio i passi che Network 21 ci mette a disposizione?»*
@@ -74,7 +86,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - ~~**Compleanno a mano** (dal cantiere 30, 18/09)~~ — fatto il 18/09 (`2026.09.18 · 21:30`): Giorno · Mese · Anno facoltativo nel modulo Nuovo Contatto / Modifica; 11 prove rubrica. **Provato da Ignazio il 18/09: «funziona»**. Resta l'idea in prospettiva: **messaggi di auguri**
-- **Benvenuto per chi entra la prima volta** (dal cantiere 28, Ignazio 18/09): oggi al primo ingresso il foglio «✨ Novità» non si apre. Da studiare in un documento apposito il percorso da seguire per un nuovo partner, «in maniera ancora più semplice»
+- ~~**Benvenuto per chi entra la prima volta** (dal cantiere 28, Ignazio 18/09): oggi al primo ingresso il foglio «✨ Novità» non si apre. Da studiare in un documento apposito il percorso da seguire per un nuovo partner, «in maniera ancora più semplice»~~ — diventato il [cantiere 32](#32-benvenuto-per-chi-entra-la-prima-volta-aperto-il-1909) il 19/09
 - ~~**Dire a Isabella, Carolina e agli altri partner**: dal 14/09/2026 **Contatti e PM** di Dashboard, Check, Report e Griglia contano **solo dalle azioni registrate** (esito dato in coda, Riordini, Agenda o scheda; «Non risponde», «No Show» e «Rimandato» non contano); nel Check del Giorno non si scrivono più (dal cantiere 27)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
 - ~~**Dire a Isabella e agli altri partner**: dal 18/09/2026 i VP Clienti di Dashboard e Check contano **solo dalle vendite registrate** nella scheda del cliente; nel Check del Giorno non si scrivono più (dal cantiere 26)~~ — sostituito il 18/09 dalle «✨ Novità» dell'app (cantiere 28 lavoro 2): i partner lo leggono all'apertura
 - **Pausa: «0 contatti al giorno»** (Ignazio 18/09, dal cantiere 29): chi non vuole fare l'attività sceglie 0 e non riceve l'avviso del mattino, a meno che non abbia già qualcosa di programmato (appuntamenti, riordini, telefonate fissate); l'app lo invita a ripartire con una frase d'impatto («0 contatti al giorno. Vuoi cambiare questo valore?», testo da pensare con Ignazio). Oggi lo zero non esiste: scelta da 1 a 10 nel Profilo e vincolo nel database (`contatti_al_giorno between 1 and 10`) → servono una migrazione, il Profilo, l'avviso sul server e la coda
