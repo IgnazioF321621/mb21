@@ -180,15 +180,15 @@ function disegnaCompleta() {
       <div class="legenda"><i style="background:#2563EB;margin-left:0"></i>VPG<i style="background:#93C5FD"></i>VPP</div>
       <div class="ck-barre">${st.righe.map(r => `<div>
         <span class="prima" style="height:${(r.vpg || 0) / st.max * 100}%;background:#2563EB"></span>
-        <span style="height:${(r.vpp || 0) / st.max * 100}%;background:#93C5FD"></span></div>`).join('')}</div>
+        <span style="height:${(r.vpp || 0) / st.max * 100}%;background:var(--cat-cliente-tinta)"></span></div>`).join('')}</div>
       <div class="rp-mesi">${st.righe.map(r => `<span>${esc(r.etichetta)}</span>`).join('')}</div>
       <div class="ck-valori">media VPP <b>${num(st.mediaVpp)}</b> · media VPG <b>${num(st.mediaVpg)}</b> su <b>${st.righe.length}</b> mesi</div>
     </div>
-    <h3>Storico mensile</h3>
-    <table class="mp-tabella"><tr><th>Mese</th><th>VPP</th><th>VPG</th><th>Bonus</th></tr>
+    <h4 class="mc-t">Storico mensile</h4>
+    <div class="riquadro" style="padding:6px 12px"><table class="mp-tabella"><tr><th>Mese</th><th>VPP</th><th>VPG</th><th>Bonus</th></tr>
       ${[...st.righe].reverse().map(r => `<tr><td>${escIcone(M.STATI[r.stato].pallino)}${esc(r.etichetta)}</td>
         <td>${num(r.vpp)}</td><td>${num(r.vpg)}</td><td>${num(r.bonus, 0)}%</td></tr>`).join('')}
-    </table>`;
+    </table></div>`;
   }
   app.innerHTML = html + versione();
   const su = document.getElementById('mp-indietro');
