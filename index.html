@@ -792,29 +792,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192329"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192329"></script>
-<script src="lista.js?v=202609192329"></script>
-<script src="rubrica.js?v=202609192329"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192329"></script>
-<script src="agenda.js?v=202609192329"></script>
-<script src="report.js?v=202609192329"></script>
-<script src="check.js?v=202609192329"></script>
-<script src="mappa.js?v=202609192329"></script>
-<script src="pagina-dashboard.js?v=202609192329"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192329"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192329"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192329"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192329"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192329"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192329"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192329"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192329"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192329"></script>
-<script src="benvenuto.js?v=202609192329"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192329"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192335"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192335"></script>
+<script src="lista.js?v=202609192335"></script>
+<script src="rubrica.js?v=202609192335"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192335"></script>
+<script src="agenda.js?v=202609192335"></script>
+<script src="report.js?v=202609192335"></script>
+<script src="check.js?v=202609192335"></script>
+<script src="mappa.js?v=202609192335"></script>
+<script src="pagina-dashboard.js?v=202609192335"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192335"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192335"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192335"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192335"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192335"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192335"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192335"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192335"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192335"></script>
+<script src="benvenuto.js?v=202609192335"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192335"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 23:29';
+const APP_VERSION = '2026.09.19 · 23:35';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1559,12 +1559,14 @@ async function nuovoAppuntamento(opz = {}) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>${esc(opz.titolo || 'Nuovo appuntamento')}</h3><button id="na-x" aria-label="Chiudi">×</button></div>
-      ${opz.sottotitolo ? `<p>${esc(opz.sottotitolo)}</p>` : ''}
+    // forma del modulo contatto (cantiere 34): in testa per chi è, gruppi con un titoletto, «Annulla · Salva» fermi in fondo
+    velo.innerHTML = `<div class="foglio alto mc">
+      <div class="mc-testa ${classeCat(st.categoria)}"><span class="ts-pastiglia">${st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda')}</span>
+        <div><small>${esc(opz.titolo || 'Nuovo appuntamento')}</small><b>${st.contatto ? esc(st.contatto.nome) : 'Con chi?'}</b></div><button id="na-x" aria-label="Chiudi">×</button></div>
+      ${opz.sottotitolo ? `<p style="margin:12px 4px 0">${esc(opz.sottotitolo)}</p>` : ''}
       <div id="na-corpo"></div>
       <div class="errore" id="na-errore"></div>
-      <div class="due"><button class="link" id="na-no">${opz.salta ? 'Salta' : 'Annulla'}</button><button class="primario" id="na-si">Salva</button></div></div>`;
+      <div class="mc-fondo"><button class="link" id="na-no">${opz.salta ? 'Salta' : 'Annulla'}</button><button class="primario" id="na-si">Salva</button></div></div>`;
     document.body.appendChild(velo);
     const chiudi = valore => { velo.remove(); risolvi(valore); };
     velo.querySelector('#na-x').onclick = () => chiudi(null);
@@ -1575,7 +1577,7 @@ async function nuovoAppuntamento(opz = {}) {
     const leggiCampi = () => { for (const k of ['giorno', 'ora', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     function disegna() {
       const tipi = A.tipiPer(st.categoria);
-      let h = '';
+      let h = '<div class="riquadro mc-g" style="margin-top:14px">';
       h += st.contatto && opz.contatto
         ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}</span>
             ${st.portato ? '' : '<button class="link" id="na-porta">⇄ Porta qualcuno</button>'}</div></div>`
@@ -1589,11 +1591,13 @@ async function nuovoAppuntamento(opz = {}) {
           ${!tipi.length ? '<div class="errore">Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.</div>' : ''}</div>`;
       }
       if (tipi.length) {
+        h += `</div><h4 class="mc-t">Area e tipo</h4><div class="riquadro mc-g">`;
         h += `<div class="campo"><label>Area</label>${scelte('area', ['Attività', 'Prodotti'], st.area)}</div>`;
         h += `<div class="campo"><label>Tipo di azione <small>Obbligatorio</small></label>${scelte('tipo', tipi, st.tipo)}</div>`;
       }
       if (st.tipo) {
         h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))} <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
@@ -1601,7 +1605,7 @@ async function nuovoAppuntamento(opz = {}) {
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">×</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
       }
-      velo.querySelector('#na-corpo').innerHTML = h;
+      velo.querySelector('#na-corpo').innerHTML = h + '</div>';
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
