@@ -186,8 +186,8 @@ async function aggiungiNomeVeloce() {
   const me = ST.utente.id;
   // Doppioni: stessa regola del modulo Nuovo Contatto (`trovaDoppioni`), sui soli candidati con lo stesso numero o lo stesso nome
   const cerche = [];
-  if (telefono) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).eq('telefono', telefono).limit(5));
-  if (!/[%_*\\,()]/.test(nome)) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).ilike('nome', nome).limit(5));
+  if (telefono) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).is('eliminato_il', null).eq('telefono', telefono).limit(5));
+  if (!/[%_*\\,()]/.test(nome)) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).is('eliminato_il', null).ilike('nome', nome).limit(5));
   const trovati = (await Promise.all(cerche.map(q => dbq('doppioni', q)))).flatMap(r => (r.error ? [] : r.data || []));
   const doppi = MB21Lista.trovaDoppioni(trovati, { nome, telefono, utenteId: me });
   if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: tra i tuoi nomi c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva lo stesso')) {

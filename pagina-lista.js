@@ -231,9 +231,7 @@ async function scegliAltri() {
 async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
-  const voci = soloGuardo() ? [] : r.categoria === 'Archiviato'
-    ? [{ etichetta: 'Ripristina', fai: () => ripristina(r) }, { etichetta: 'Elimina definitivamente', pericolo: true, fai: () => eliminaDefinitivamente(r) }]
-    : [{ etichetta: 'Modifica', fai: () => apriModulo(r) }, { etichetta: 'Archivia', fai: () => archivia(r) }];
+  const voci = soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', fai: () => apriModulo(r) }]), ...comandiContatto(r)];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
   if (v) v.fai();
 }
@@ -246,6 +244,14 @@ async function ricaricaERidisegna() {
     return LS.contatto ? disegnaScheda() : disegnaLista();
   }
   disegnaLista();
+}
+
+// «Archivia» ed «Elimina» sono due cose diverse e stanno tutte e due ovunque (cantiere 33, decisione 3): nei tre puntini
+// della card; dentro la scheda «Elimina» è in fondo a Modifica (e «Archivia» è la categoria Archiviato del modulo). Archivia = messo da parte, domani si ripristina;
+// Elimina = via dalla lista (archivio compreso), il lavoro fatto resta nei numeri.
+function comandiContatto(r) {
+  return [r.categoria === 'Archiviato' ? { etichetta: 'Ripristina', fai: () => ripristina(r) } : { etichetta: 'Archivia', fai: () => archivia(r) },
+    { etichetta: 'Elimina', pericolo: true, fai: () => elimina(r) }];
 }
 
 async function archivia(r) {
@@ -263,13 +269,32 @@ async function ripristina(r) {
   ricaricaERidisegna();
 }
 
-async function eliminaDefinitivamente(r) {
-  if (!await chiediConferma(`Eliminare definitivamente ${r.nome}?`, 'Si cancellano anche tutte le sue azioni e note. Non si può annullare.', 'Elimina', true)) return;
-  const { error } = await dbq('elimina', supa.from('contatti').delete().eq('id', r.id).eq('categoria', 'Archiviato'));
+// Elimina (cantiere 33): la scheda non si cancella, prende il segno `eliminato_il` (`elimina_contatto`): sparisce da lista,
+// archivio, ricerca e coda; se ne vanno solo appuntamenti e telefonate non ancora fatti; il lavoro fatto resta e conta.
+// Biglietti dal mese in corso e CEP attivo restano nei Segni vitali: li toglie solo l'Admin, con la spunta nella conferma.
+// «Annulla» nell'avviso rimette tutto com'era (`annulla_elimina_contatto`); dopo, dall'app non si recupera più.
+async function elimina(r) {
+  const mese = MB21Lista.meseEvento(MB21Coda.oggiRoma());
+  const [big, cep] = await Promise.all([
+    dbq('biglietti di chi si elimina', supa.from('biglietti').select('tipo, evento').eq('contatto_id', r.id).gte('evento', mese).order('evento')),
+    dbq('CEP di chi si elimina', supa.from('cep').select('id').eq('contatto_id', r.id).is('uscito_il', null)),
+  ]);
+  if (big.error || cep.error) return mostraToast('Non riesco a controllare biglietti e CEP: riprova.');
+  const segni = [...big.data.map(b => `biglietto ${b.tipo === 'WES' ? 'Wes' : b.tipo} ${MB21Lista.etichettaEvento(b.evento)}`), ...(cep.data.length ? ['CEP attivo'] : [])];
+  const testo = 'Sparisce dalla lista e dall\'archivio. Il lavoro già fatto resta nei tuoi numeri.'
+    + (segni.length ? ` Ha ${segni.join(' · ')}: ${segni.length > 1 ? 'restano' : 'resta'} nei Segni vitali${cep.data.length ? ' (il CEP non scade da solo)' : ''}.` : '');
+  const si = await chiediConferma(`Eliminare ${r.nome} dalla lista?`, testo, 'Elimina', true,
+    segni.length && eAdmin() ? `Togli anche ${segni.join(' e ')}` : '');
+  if (!si) return;
+  const { error } = await dbq('elimina', supa.rpc('elimina_contatto', { p_contatto: r.id, p_togli_segni: !!si.spunta }));
   if (error) return mostraToast('Non eliminato: riprova.');
-  mostraToast(`${r.nome} eliminato`);
   LS.contatto = null;
-  ricaricaERidisegna();
+  await ricaricaERidisegna();
+  mostraToast(`${r.nome} eliminato`, async () => {
+    const { error } = await dbq('annulla elimina', supa.rpc('annulla_elimina_contatto', { p_contatto: r.id }));
+    if (error) return mostraToast('Non annullato: riprova.');
+    ricaricaERidisegna();
+  });
 }
 
 // ── Scheda contatto ──
@@ -743,7 +768,7 @@ async function caricaSegni(c) {
   }
   let compagno = null;
   if (ana.compagno_id) {
-    const r = await dbq('scheda del compagno', supa.from('contatti').select('id, nome, categoria').eq('id', ana.compagno_id).maybeSingle());
+    const r = await dbq('scheda del compagno', supa.from('contatti').select('id, nome, categoria').eq('id', ana.compagno_id).is('eliminato_il', null).maybeSingle());
     compagno = r.data || null;
   }
   const ids = [c.id, compagno && compagno.id].filter(Boolean);
@@ -807,7 +832,7 @@ function scegliScheda(opz) {
     input.oninput = async () => {
       const testo = input.value.trim(), mio = ++giro;
       if (testo.length < 2) { elenco.innerHTML = ''; return; }
-      let q = supa.from('contatti').select('id, nome, categoria').eq('user_id', opz.userId);
+      let q = supa.from('contatti').select('id, nome, categoria').eq('user_id', opz.userId).is('eliminato_il', null);   // un eliminato non si sceglie (cantiere 33)
       if (opz.escludi) q = q.neq('id', opz.escludi);
       const { data, error } = await dbq('cerca scheda', q.ilike('nome', `%${testo.replace(/[%_,]/g, ' ')}%`).order('nome').limit(15));
       if (mio !== giro) return;
@@ -1030,12 +1055,15 @@ function apriModulo(c) {
     <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>
     <div class="due" style="margin-top:12px"><button class="primario" id="invia" disabled>Salva</button><button class="link" id="annulla">Annulla</button></div>
+    ${c ? '<button class="link elimina-qui" id="elimina-qui">Elimina dalla lista</button>' : ''}
   </div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
   const chiudi = () => velo.remove();
   $('chiudi').onclick = chiudi;
   $('annulla').onclick = chiudi;
+  // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
+  if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
     $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
     velo.querySelectorAll('[data-conta]').forEach(d => { const el = $(d.dataset.conta); d.textContent = `${el.value.length}/${el.maxLength}`; });
