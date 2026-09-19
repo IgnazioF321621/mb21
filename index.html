@@ -91,6 +91,9 @@
     padding: 20px 16px calc(env(safe-area-inset-bottom) + 20px); }
   .foglio h3 { margin: 0 0 4px; font-size: 20px; }
   .foglio p { margin: 0 0 12px; color: var(--grigio); font-size: 14px; }
+  .cf-spunta { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; font-size: 15px; }
+  .cf-spunta input { width: 22px; height: 22px; flex: none; margin: 0; }
+  button.link.elimina-qui { display: block; width: 100%; margin-top: 18px; color: var(--rosso); font-weight: 600; }   /* rosso: si deve sempre notare (Ignazio 19/09) */
   .foglio .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 78px); max-width: 488px; margin: 0 auto;
@@ -683,28 +686,28 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="coda.js?v=202609191421"></script>
-<script src="lista.js?v=202609191421"></script>
-<script src="rubrica.js?v=202609191421"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609191421"></script>
-<script src="agenda.js?v=202609191421"></script>
-<script src="report.js?v=202609191421"></script>
-<script src="check.js?v=202609191421"></script>
-<script src="mappa.js?v=202609191421"></script>
-<script src="pagina-dashboard.js?v=202609191421"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609191421"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609191421"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609191421"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609191421"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609191421"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609191421"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609191421"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609191421"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609191421"></script>
-<script src="benvenuto.js?v=202609191421"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609191421"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="coda.js?v=202609191456"></script>
+<script src="lista.js?v=202609191456"></script>
+<script src="rubrica.js?v=202609191456"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609191456"></script>
+<script src="agenda.js?v=202609191456"></script>
+<script src="report.js?v=202609191456"></script>
+<script src="check.js?v=202609191456"></script>
+<script src="mappa.js?v=202609191456"></script>
+<script src="pagina-dashboard.js?v=202609191456"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609191456"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609191456"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609191456"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609191456"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609191456"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609191456"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609191456"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609191456"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609191456"></script>
+<script src="benvenuto.js?v=202609191456"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609191456"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 14:21';
+const APP_VERSION = '2026.09.19 · 14:56';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1934,18 +1937,20 @@ function foglioRinnovo() {
 
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
 // e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
-function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false) {
+// Con `spunta` (testo) sotto il testo c'è una casella: la risposta «sì» diventa { spunta: true | false } (cantiere 33: «Togli anche biglietti e CEP»)
+function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta = '') {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${testo ? `<p>${esc(testo)}</p>` : ''}
+      ${spunta ? `<label class="cf-spunta"><input type="checkbox" id="cf-spunta"> <span>${esc(spunta)}</span></label>` : ''}
       <button class="primario" id="cf-si" ${pericolo ? 'style="background:var(--rosso)"' : ''}>${esc(si)}</button>
       <button class="link" id="cf-no">Annulla</button></div>`;
     document.body.appendChild(velo);
     const fine = v => { velo.remove(); risolvi(v); };
     velo.onclick = e => { if (e.target === velo) fine(false); };
     velo.querySelector('#cf-no').onclick = () => fine(false);
-    velo.querySelector('#cf-si').onclick = () => fine(true);
+    velo.querySelector('#cf-si').onclick = () => fine(spunta ? { spunta: velo.querySelector('#cf-spunta').checked } : true);
   });
 }
 

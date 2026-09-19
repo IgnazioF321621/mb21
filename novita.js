@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.19 · 14:56', pagina: 'lista', titolo: 'Lista Nomi: «Archivia» ed «Elimina» sempre a portata di mano',
+      testo: 'Nei tre puntini di ogni nome trovi «Archivia» (lo metti da parte, domani lo puoi ripristinare) ed «Elimina» (il nome sparisce dalla lista, per esempio se era sbagliato); «Elimina» c\'è anche in fondo a «Modifica», dentro la scheda. Eliminando un nome il lavoro già fatto resta nei tuoi numeri; se hai sbagliato persona, tocca subito «Annulla» nell\'avviso in basso.' },
     { quando: '2026.09.19 · 14:21', pagina: 'app', titolo: 'Profilo: il tuo quadro, con BBS · WES · CEP da toccare',
       testo: 'Nel Profilo (il cerchietto in alto a destra in Dashboard) ogni voce ora è chiusa e si apre con un tocco. Ci sono le tue targhette BBS · WES · CEP: toccale per segnare il tuo biglietto, o il CEP quando ti abboni. La foto si cambia toccando il cerchio in alto a destra.' },
     { quando: '2026.09.19 · 11:54', pagina: 'app', titolo: 'Profilo: i tuoi «perché» e il tuo avvio, sempre',
