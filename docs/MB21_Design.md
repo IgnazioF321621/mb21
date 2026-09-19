@@ -5,6 +5,9 @@
 ## La direzione scelta (Ignazio, 19/09/2026)
 **C «Il colore che parla» con il respiro della A «Carta e inchiostro».** Fondo perla, card bianche molto tonde, carattere di sistema dell'iPhone, **un solo accento: l'inchiostro**. I colori che hanno un significato diventano la grafica: le righe e le card delle persone sono **tinte del colore della loro categoria**, così si capisce chi è chi prima di leggere. Dalla A viene il passo: **26 px fra le sezioni**, poche cose a schermo, più aria dentro le card. Scartate: A da sola e B «Blocchi» (resta nella tela come idea «da cantiere»).
 
+## Correzione alla direzione, vista nell'app (Ignazio, 19/09/2026)
+**Negli elenchi la riga resta bianca; la categoria la dice il tondo con le iniziali.** La riga tutta tinta della categoria (proposta di Design) sul fondo perla «non si vede benissimo, il contrasto è un po' fastidioso» (il rosa-pesca del Prospect, caldo, sul grigio freddo). Scelta «B» tra tre prove affiancate (`tools/design/confronto_coda.html`): riga bianca con l'ombra leggera, **tondo pieno del colore della categoria con le iniziali bianche**, esiti grigio chiaro. Vale per la coda, «Da catalogare» e la Lista Nomi. **La tinta (`--cat-*-tinta`) resta per dove c'è una persona sola in primo piano**: la testata della scheda contatto.
+
 ## La regola sulle voci (Ignazio, 19/09/2026)
 **Le voci dell'app non cambiano: cambia solo il vestito.** Nelle bozze (quelle di Code e quelle di Design) nomi, numeri e **scritte sono inventati**: «Buongiorno, Marco», le linguette «Attività · Prodotti · Team», «Da sentire oggi», «Vedi tutti», la riga unica «2 partner da avviare · 3 riordini», «128 contatti», «Registra esito». Nell'app restano **le voci, i contenuti e l'ordine di oggi**: per esempio le linguette della Dashboard sono **Volume · Azione · Segni Vitali · Crescita** (ognuna con il suo colore, che ha un significato: blu · arancio · verde · viola), la coda è «La tua coda», i richiami sono righe separate. Un'idea nuova vista nelle bozze (una voce, un bottone, un raggruppamento) **non entra da sola**: si propone a Ignazio e si decide a parte.
 
@@ -61,7 +64,7 @@ Scala delle scritte: titolo di pagina 26/700 · sezione 16/700 · testo 15/400 �
 ## I pezzi
 - **Bottoni** (alti 50, raggio 14): principale pieno inchiostro · secondario bianco con bordo · pericolo pieno rosso `--pericolo` · a sola scritta · spento grigio `--bordo`.
 - **Esiti**: pastiglie alte 40 con icona e scritta, bordo grigio su bianco; quello scelto pieno inchiostro.
-- **Card del contatto**: tutte alte **96 px**, raggio 20, fondo = tinta della categoria, pastiglia tonda 46 con le iniziali nel colore pieno, nome e riga sotto, targhette BBS · WES · CEP, tre puntini a destra.
+- **Card del contatto**: tutte alte **96 px**, raggio 20, **fondo bianco** (non la tinta: vedi la correzione sopra), pastiglia tonda 46 con le iniziali nel colore pieno, nome e riga sotto, targhette BBS · WES · CEP, tre puntini a destra.
 - **Riquadro dei numeri**: superficie bianca raggio 22, numero grande con «/ obiettivo», barra alta 7.
 - **Riga che si apre al tocco**: sotto compaiono gli esiti, separati da un filetto.
 - **Linguette**: contenitore a pastiglia grigio chiaro, quella attiva piena inchiostro.
