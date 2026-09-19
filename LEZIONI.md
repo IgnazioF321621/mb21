@@ -70,3 +70,7 @@
 ## Le migrazioni prendono l'ora vera
 *19 settembre 2026.* Una migrazione chiamata con un orario «a occhio» più avanti del vero (09:00 alle 5 e mezza) ha fatto rifiutare quella dopo, nata con l'orario giusto ma più indietro: `supabase db push` non applica un file che viene prima dell'ultimo già applicato.
 **Regola:** il nome di una migrazione si fa con l'orologio (`TZ=Europe/Rome date +%Y%m%d%H%M%S`), come `APP_VERSION`. E una migrazione che cambia una funzione si prova prima tutta in una transazione annullata (`begin; … rollback;` con `supabase db query --linked -f`), contando i risultati sui dati veri.
+
+## ⭐ La stella cometa: da qualsiasi punto, un percorso semplice e tutto collegato
+*19 settembre 2026, cantiere 32.* Parlando del benvenuto per i nuovi partner, Ignazio ha dato la regola che vale per tutta l'app: «da qualsiasi punto mi trovo il flow deve essere veramente semplice, tutto collegato in conseguenza». Primo esempio, nello stesso giorno: il sogno scelto nel benvenuto **spunta da solo** il passo «Sogno» di «🚀 Il mio avvio» e lo vede chi segue il nuovo, invece di restare una cosa a parte da rifare con lo sponsor.
+**Regola:** ogni schermata porta da sola al passo dopo (un tocco, non una ricerca) e una cosa fatta in un punto compare già fatta in tutti gli altri che la riguardano. È la sorella di «Un numero, una fonte sola» e di «Stessa schermata in più posti»: quelle dicono dove vive il dato e il codice, questa dice che la persona non deve mai chiedersi «e adesso dove vado?». Sta in cima a `CLAUDE.md`.

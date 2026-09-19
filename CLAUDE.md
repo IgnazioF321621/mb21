@@ -2,6 +2,9 @@
 
 Contesto completo del progetto: `docs/MB21_v4_Brief_Sviluppo.md`.
 
+## ⭐ Stella cometa (Ignazio 19/09/2026)
+**Da qualsiasi punto dell'app mi trovo, il percorso deve essere veramente semplice, e tutto collegato di conseguenza.** Ogni schermata porta da sola al passo dopo; una cosa fatta in un punto si ritrova già fatta negli altri (niente da riscrivere, niente da andare a cercare). Prima di proporre o costruire qualcosa chiedersi: «da qui, il passo dopo è a un tocco? e quello che ho appena fatto, dove altro deve comparire?» (vedi LEZIONI.md).
+
 ## Come lavorare con Ignazio
 - **Un passo alla volta.** Finito un passo, fermarsi e attendere "ok" o "fatto" prima del successivo.
 - **Risposte concise, in italiano.**
