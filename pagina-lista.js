@@ -561,13 +561,13 @@ async function sezioneAzioni() {
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
-  box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio">${LS.azioni.map(a => a.contatto_id !== c.id ? `
-    <div class="azione" style="--tipo:${MB21Agenda.COLORI[a.tipo_azione] || 'var(--spento)'}">
+  box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => a.contatto_id !== c.id ? `
+    <div class="azione">
       <div class="t">${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.esito].filter(Boolean).join(' • '))}</div>
       <div class="comandi"><button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
     </div>` : `
-    <div class="azione" style="--tipo:${MB21Agenda.COLORI[a.tipo_azione] || 'var(--spento)'}">
+    <div class="azione">
       <div class="t">${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
       <div class="s">${esc([a.modalita, a.area].filter(Boolean).join(' • '))}</div>
       ${a.esito || a.note ? `<div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>` : ''}
