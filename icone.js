@@ -103,6 +103,8 @@
     'libro': '<path d="M4.2 4.6a1.8 1.8 0 0 1 1.8-1.8h12a1.8 1.8 0 0 1 1.8 1.8v14.8a1.8 1.8 0 0 0-1.8-1.8H6a1.8 1.8 0 0 0-1.8 1.8z"/><path d="M4.2 19.4a1.8 1.8 0 0 0 1.8 1.8h12"/><path d="M8.4 7.4h7.2M8.4 11h5"/>',   // Libro
     'admin': '<path d="M4.4 7.6h5.2M14.4 7.6h5.2M4.4 16.4h9.2M18.4 16.4h1.2"/><circle cx="12" cy="7.6" r="2.4"/><circle cx="16" cy="16.4" r="2.4"/>',   // Admin
     // ── DISEGNI: fine
+    // Provvisorie, disegnate da Code nello stesso tratto finché Design non le consegna (poi si tolgono da qui: le porta lo script)
+    'telegram': '<path d="M21 3 3 10.2l6.6 3.2L12.800 20z"/><path d="M21 3 9.600 13.400"/>',   // Telegram (aeroplanino di carta, generico)
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto

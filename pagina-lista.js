@@ -79,8 +79,8 @@ const ICONE_CONTATTA = {
   telegram: '<svg class="ic-tg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
 };
 
-// Dal cantiere 34 i bottoni per contattare usano le icone a tratto; Telegram non ce l'ha ancora (da chiedere a Design): resta il suo disegno, a un colore
-const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp' };
+// Dal cantiere 34 i bottoni per contattare usano le icone a tratto, ognuna con il suo colore (quella di Telegram è provvisoria, di Code: da chiedere a Design)
+const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp', telegram: 'telegram' };
 function contattaHtml(telefono) {
   const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
   const link = (href, icona, testo) => `<a href="${esc(href)}" class="ct-${icona} ${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
@@ -210,7 +210,7 @@ function sceltaDa(titolo, voci, sopra) {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
-      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''}">${esc(v.etichetta)}</button>`).join('')}
+      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''}">${v.icona ? ic(v.icona) : ''}${esc(v.etichetta)}</button>`).join('')}
       </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">
       ${voci.map((v, i) => v.lettera ? `<button data-i="${i}" class="${v.scelta ? 'scelto' : ''}" ${v.spenta ? 'disabled' : ''}>${esc(v.etichetta)}</button>` : '').join('')}</div>` : ''}<button class="link" id="scelta-no">Annulla</button></div>`;
     document.body.appendChild(velo);
@@ -233,7 +233,7 @@ async function scegliAltri() {
 async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
-  const voci = soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', fai: () => apriModulo(r) }]), ...comandiContatto(r)];
+  const voci = soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }]), ...comandiContatto(r)];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
   if (v) v.fai();
 }
@@ -252,8 +252,9 @@ async function ricaricaERidisegna() {
 // della card; dentro la scheda «Elimina» è in fondo a Modifica (e «Archivia» è la categoria Archiviato del modulo). Archivia = messo da parte, domani si ripristina;
 // Elimina = via dalla lista (archivio compreso), il lavoro fatto resta nei numeri.
 function comandiContatto(r) {
-  return [r.categoria === 'Archiviato' ? { etichetta: 'Ripristina', fai: () => ripristina(r) } : { etichetta: 'Archivia', fai: () => archivia(r) },
-    { etichetta: 'Elimina', pericolo: true, fai: () => elimina(r) }];
+  return [r.categoria === 'Archiviato' ? { etichetta: 'Ripristina', icona: 'aggiorna', tono: 'verde', fai: () => ripristina(r) }
+    : { etichetta: 'Archivia', icona: 'archiviato', tono: 'ambra', fai: () => archivia(r) },
+    { etichetta: 'Elimina', icona: 'elimina', tono: 'rosso', pericolo: true, fai: () => elimina(r) }];
 }
 
 async function archivia(r) {
