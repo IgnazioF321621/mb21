@@ -137,6 +137,15 @@ prova('partner da avviare: avvio aperto, almeno un passo da fare, dal più recen
   assert.deepEqual(L.partnerInPausa(conPausa, 'V'), []);
 });
 
+prova('proposte dell\'avvio: solo i passi spenti che l\'app sa già, nell\'ordine dei 14, con il perché', () => {
+  const r = { onb_amway: true, onb_bbs: false, sa: { onb_amway: true, onb_ordine: true, onb_bbs: true, onb_cep: false, onb_primo_abo: true, onb_sogno: true } };
+  assert.deepEqual(L.proposteAvvio(r).map(p => p.col), ['onb_ordine', 'onb_bbs', 'onb_primo_abo']);   // Amway già fatto; il Sogno l'app non lo sa
+  assert.equal(L.proposteAvvio(r)[0].perche, 'ha già fatto VP con Amway');
+  assert.deepEqual(L.proposteAvvio({ onb_ordine: true }, { onb_ordine: true, onb_wes: true }).map(p => p.nome), ['WES']);   // `sa` passato a parte (scheda)
+  assert.deepEqual(L.proposteAvvio({}), []);
+  assert.deepEqual(L.proposteAvvio(null), []);
+});
+
 prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
   const f = (r) => L.fraseCard(r, '2026-09-18');
   assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });

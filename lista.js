@@ -189,6 +189,16 @@
   function partnerInPausa(righe, radice) {
     return (righe || []).filter(r => !r.avvio_concluso_il && r.avvio_in_pausa_dal && nelRamo(r, radice)).sort(recentiPrima);
   }
+  // Proposte 💡 (cantiere 31 lavoro 4, Ignazio 19/09: «l'app propone ed io decido»): i passi ancora spenti che l'app sa già da altri
+  // dati (`sa` di `avvio_del_ramo()`), con il perché. Non accendono niente: decide chi spunta.
+  const PERCHE_AVVIO = { onb_amway: 'è nel file Amway', onb_ordine: 'ha già fatto VP con Amway', onb_bbs: 'ha un biglietto BBS',
+    onb_wes: 'ha un biglietto WES', onb_cep: 'ha un abbonamento CEP', onb_primo_pm: 'ha registrato un Piano Marketing nell\'app',
+    onb_primo_abo: 'ha una prima linea nella mappa' };
+  function proposteAvvio(r, sa) {
+    const sapute = sa || (r && r.sa) || {};
+    return PASSI_ONBOARDING.filter(([col]) => PERCHE_AVVIO[col] && sapute[col] === true && !(r && r[col] === true))
+      .map(([col, nome]) => ({ col, nome, perche: PERCHE_AVVIO[col] }));
+  }
   // Da quanto è entrato (data di ingresso del file Amway, «2026-09-06»): solo un'informazione, nessun allarme. Senza data → ''
   function entratoDa(ingresso, oggi) {
     if (!ingresso || !oggi) return '';
@@ -382,7 +392,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
