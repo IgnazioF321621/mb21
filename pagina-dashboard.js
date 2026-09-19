@@ -611,7 +611,7 @@ function disegnaAvvio() {
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
     <h1>🚀 Partner da avviare</h1>
-    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor, «Tuo/a» se è tuo. Tocca un nome per vedere i suoi passi.</div>
+    <div class="sotto">I partner ${altro ? `del ramo di ${esc(nomeDi(visto()))}` : 'del tuo ramo'} con l'avvio aperto, dal più recente; tra [ ] lo sponsor${altro ? '' : ', «Tuo/a» se è tuo'}. Tocca un nome per vedere i suoi passi.</div>
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
     ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>⏸ In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
