@@ -936,8 +936,9 @@ function dashboardBasso() {
       <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
-    ${DS.griglia && !limitato() ? `<button class="ds-griglia" id="ds-griglia"><span>${ic('pianomarketing')} Griglia PM · ${DS.griglia.fatti} di ${DS.griglia.obiettivo}</span><span>›</span></button>` : ''}
-    ${limitato() ? '' : `<div class="ds-azioni una"><button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Mostra di più</b><small>Il Report, giorno per giorno</small></span></button></div>`}`;
+    ${limitato() ? '' : `<div class="ds-azioni" style="margin-top:12px">
+      ${DS.griglia ? `<button class="ds-azione griglia" id="ds-griglia">${ic('pianomarketing')}<span><b>Griglia PM</b><small>${DS.griglia.fatti} di ${DS.griglia.obiettivo}</small></span></button>` : ''}
+      <button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Mostra di più</b><small>Il Report, giorno per giorno</small></span></button></div>`}`;
 }
 
 function collegaDashboard() {
