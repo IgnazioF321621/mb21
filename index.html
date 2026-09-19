@@ -93,8 +93,6 @@
   .bottoni button:active { transform: scale(.97); }
   .bottoni .appuntamento, .bottoni .ordine { flex: 1 1 100%; background: var(--ok-tinta); color: var(--ok); }
   .bottoni .ordine:has(+ .appuntamento), .bottoni .ordine + .appuntamento { flex: 1 1 40%; }   /* solo se gli esiti buoni sono due si dividono la riga */
-  /* scegliere la categoria («Da catalogare»): davanti a ogni nome il pallino del colore che quella categoria avrà in tutta l'app */
-  .bottoni button[class*="cat-"]:not(.no)::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--cat); vertical-align: 1px; }
   .bottoni .no { flex: 1 1 100%; background: var(--pericolo-tinta); color: var(--pericolo); }
   .bottoni button:disabled { opacity: .45; }
   /* Il colore che parla (cantiere 34). Scelta di Ignazio 19/09 («B»): negli elenchi la riga resta BIANCA e la categoria la dice il tondo con le
