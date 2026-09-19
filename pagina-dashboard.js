@@ -624,6 +624,7 @@ function disegnaAvvio() {
       <li><b>✅ Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
       <li><b>⏸ In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>▶️ Riprendi</b> lo riporta qui.</li>
       <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>🔄 Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>
+      <li><b>Comanda la mappa Amway</b>: chi non è più nell'ultimo file Amway caricato sparisce da solo dall'elenco, come chi non è più in categoria Partner.</li>
       <li>Passi, pausa e avvio concluso li tocca chi ha il partner nella sua lista (di solito lo sponsor); gli altri upline vedono soltanto.</li>
     </ul></div>` : ''}
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
