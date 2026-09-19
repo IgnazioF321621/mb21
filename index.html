@@ -249,7 +249,8 @@
   .azione .s { font-size: 13px; color: var(--testo-soft); }
   .azione .comandi { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
   .stato-az { font-size: 13px; color: var(--grigio); }
-  .come-andata { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--bordo); font-size: 14px; font-weight: 700; color: var(--testo); }
+  /* titoletto del blocco esiti (Ignazio 19/09): come i titoli dei gruppi dei moduli, niente più «· tocca per cambiare» */
+  .come-andata { margin: 12px 0 8px; padding-top: 10px; border-top: 1px solid var(--bordo); font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); }
   .come-andata small { font-weight: 400; color: var(--grigio); }
   .stato-az.fatto { color: var(--ok); }
   /* l'elenco delle azioni nella scheda: era un grande riquadro giallo con il bordo (Glide); ora una card bianca, un'azione per riga separata da un filetto */
@@ -791,29 +792,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609192323"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609192323"></script>
-<script src="lista.js?v=202609192323"></script>
-<script src="rubrica.js?v=202609192323"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609192323"></script>
-<script src="agenda.js?v=202609192323"></script>
-<script src="report.js?v=202609192323"></script>
-<script src="check.js?v=202609192323"></script>
-<script src="mappa.js?v=202609192323"></script>
-<script src="pagina-dashboard.js?v=202609192323"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609192323"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609192323"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609192323"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609192323"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609192323"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609192323"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609192323"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609192323"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609192323"></script>
-<script src="benvenuto.js?v=202609192323"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609192323"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609192329"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609192329"></script>
+<script src="lista.js?v=202609192329"></script>
+<script src="rubrica.js?v=202609192329"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609192329"></script>
+<script src="agenda.js?v=202609192329"></script>
+<script src="report.js?v=202609192329"></script>
+<script src="check.js?v=202609192329"></script>
+<script src="mappa.js?v=202609192329"></script>
+<script src="pagina-dashboard.js?v=202609192329"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609192329"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609192329"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609192329"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609192329"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609192329"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609192329"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609192329"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609192329"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609192329"></script>
+<script src="benvenuto.js?v=202609192329"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609192329"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.19 · 23:23';
+const APP_VERSION = '2026.09.19 · 23:29';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1354,7 +1355,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
   const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
   const dentro = chiusa && !aperto
     ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
-    : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}${p.passo.startsWith('cambia') ? ' <small>· tocca per cambiare</small>' : ''}</div>
+    : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
     <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${p.attuale === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`).join('');
   return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
@@ -1693,15 +1694,20 @@ async function foglioAzione(id, opz = {}) {
   const st = { contatto: { id: a.contatto_id, ...(a.contatti || { nome: '—' }) }, portato, ospite: a.ospite, sottotipo: a.modalita, esito: a.esito };
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${esc(a.tipo_azione || 'Azione')}</h3><button id="fa-x" aria-label="Chiudi">×</button></div>
-    <div id="fa-persone"></div>
+  // forma del modulo contatto (cantiere 34, Ignazio 19/09): in testa la persona, gruppi «Tipo ed esito» e «Data e note», Annulla · Salva fermi in fondo
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa ${classeCat(a.contatti && a.contatti.categoria)}"><span class="ts-pastiglia">${esc(iniziali(st.contatto.nome))}</span>
+      <div><small>${esc(a.tipo_azione || 'Azione')}</small><b>${esc(st.contatto.nome)}</b></div><button id="fa-x" aria-label="Chiudi">×</button></div>
+    <div class="riquadro mc-g" style="margin-top:14px"><div id="fa-persone"></div></div>
+    <h4 class="mc-t">Tipo ed esito</h4><div class="riquadro mc-g">
     ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
+    </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
+    </div>
     <div class="errore" id="fa-errore"></div>
-    <div class="due">${opz.ritorno ? '<button class="link" id="fa-contatto">' + ic('persona') + ' Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
+    <div class="mc-fondo">${opz.ritorno ? '<button class="link" id="fa-contatto">' + ic('persona') + ' Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
       <button class="primario" id="fa-si">Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
