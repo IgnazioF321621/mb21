@@ -628,11 +628,14 @@ async function sezioneCoach() {
 function leggiNota(n, quando) {
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${esc(quando(n.scritta_il))}</h3><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <p>${esc(n.tipo_azione || '')}</p>
-    <div class="testo-nota">${esc(n.testo)}</div>
-    <div class="due" style="margin-top:12px"><button class="link" id="chiudi2">Chiudi</button><button class="primario" id="modifica-nota">Modifica</button></div>
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa ${classeCat(LS.contatto && LS.contatto.categoria)}"><span class="ts-pastiglia">${ic('libro')}</span>
+      <div><small>Nota del Coach</small><b>${esc(quando(n.scritta_il))}</b></div>
+      <button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="riquadro mc-g" style="margin-top:14px">
+      ${n.tipo_azione ? `<p class="sotto" style="margin:0 0 8px">${esc(n.tipo_azione)}</p>` : ''}
+      <div class="testo-nota">${esc(n.testo)}</div></div>
+    <div class="mc-fondo"><button class="link" id="chiudi2">Chiudi</button><button class="primario" id="modifica-nota">Modifica</button></div>
   </div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -896,7 +899,7 @@ async function sezioneSegni() {
       <input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis} aria-label="Abbonato dal">
       ${aperto ? (dis ? '' : '<button class="sv-piu" data-cep-esci>Non ha rinnovato</button>') : `<span class="sotto" style="margin:0">→</span>
       <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">`}
-      ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">✓</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
+      ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">${ic('fatto')}</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
     </div>${p.segnato_da ? `<div class="sotto" style="margin:-2px 0 8px">${ic('app')} acceso dal partner, dal suo Profilo${p.aggiornato_il ? ' il ' + esc(MB21Lista.data(p.aggiornato_il)) : ''}</div>` : ''}`; };   // cantiere 25 bis
   const riquadroCep = () => {
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
@@ -1007,13 +1010,19 @@ function moduloSemplice(titolo, campi) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    // forma `mc` come gli altri moduli (cantiere 34): testa con la persona, campi in un riquadro, «Annulla · Salva» fermi in fondo
+    const p = LS.contatto;
+    velo.innerHTML = `<div class="foglio alto mc">
+      <div class="mc-testa ${classeCat(p && p.categoria)}"><span class="ts-pastiglia">${p ? esc(iniziali(p.nome)) : ic('modifica')}</span>
+        <div><small>${esc(titolo)}</small><b>${p ? esc(p.nome) : ''}</b></div>
+        <button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div class="riquadro mc-g" style="margin-top:14px">
       ${campi.map(f => `<div class="campo"><label>${esc(f.etichetta)}</label>${
         f.tipo === 'select' ? `<select data-k="${f.k}">${f.opzioni.map(o => `<option ${o === f.valore ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
         : f.tipo === 'textarea' ? `<textarea data-k="${f.k}" rows="${f.righe || 3}">${esc(f.valore)}</textarea>`
         : `<input data-k="${f.k}" type="${f.tipo}" value="${esc(f.valore)}">`}</div>`).join('')}
-      <div class="due" style="margin-top:12px"><button class="link" id="no">Annulla</button><button class="primario" id="si">Salva</button></div>
+      </div>
+      <div class="mc-fondo"><button class="link" id="no">Annulla</button><button class="primario" id="si">Salva</button></div>
     </div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
