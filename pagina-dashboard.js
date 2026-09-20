@@ -1132,7 +1132,7 @@ function apriCheck() {
       { k: 'pm', titolo: ic('agenda') + ' PM', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
     ];
-    const card = (d, numero, aiuto, righe) => `<div class="ck-vn"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;
+    const card = (d, numero, aiuto, righe) => `<div class="ck-vn azioni"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;
     box.innerHTML = CARD.map(d => card(d, '…', 'Carico le azioni del giorno…')).join('');
     const { data: righe, error } = await dbq('azioni del giorno', supa.from('azioni_conti')
       .select('id, contatto_id, tipo_azione, modalita, esito, contatti, pm, contatto:contatti(nome)').eq('user_id', visto().id).eq('giorno', data));
