@@ -112,10 +112,11 @@
   .bottoni button:disabled { opacity: .45; }
   /* Il colore che parla (cantiere 34). Scelta di Ignazio 19/09 («B»): negli elenchi la riga resta BIANCA e la categoria la dice il tondo con le
      iniziali (la riga tutta tinta, sul fondo perla, dava fastidio); la tinta --cat-tinta si usa dove c'è una persona sola: la testata della scheda. */
-  .cat-prospect { --cat: var(--cat-prospect); --cat-tinta: var(--cat-prospect-tinta); } .cat-cliente { --cat: var(--cat-cliente); --cat-tinta: var(--cat-cliente-tinta); }
-  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); }
-  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); }
-  .cat-nessuna { --cat: var(--testo-tenue); --cat-tinta: var(--superficie); }
+  /* --cat-scuro: la stessa tinta scritta scura, per il testo dentro i blocchi tinti dell'Agenda a orario (cantiere 37) */
+  .cat-prospect { --cat: var(--cat-prospect); --cat-tinta: var(--cat-prospect-tinta); --cat-scuro: #8E3B06; } .cat-cliente { --cat: var(--cat-cliente); --cat-tinta: var(--cat-cliente-tinta); --cat-scuro: #0A5468; }
+  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); --cat-scuro: #16379B; } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); --cat-scuro: #3A4150; }
+  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); --cat-scuro: #434C5C; } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); --cat-scuro: #26303F; }
+  .cat-nessuna { --cat: var(--testo-tenue); --cat-tinta: var(--superficie); --cat-scuro: #363E4C; }
   .card[class*="cat-"].aperta .corpo { border-top: 1px solid var(--bordo); }
   .rc-pastiglia { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff;
     display: grid; place-items: center; font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
@@ -537,6 +538,79 @@
   .ag-blocco.riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
   .ag-blocco.conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
   .ag-blocco.avvio { --richiamo: var(--cat-partner); --richiamo-tinta: var(--cat-partner-tinta); }
+  /* ── Agenda a orario (cantiere 37): griglia del giorno, settimana, interruttore delle viste ── */
+  /* i tre modi di guardare lo stesso giorno; la scelta si ricorda (MB21Viste) */
+  .ag-viste { display: flex; background: #E2E5EC; border-radius: var(--raggio-pill); padding: 3px; margin-bottom: 12px; }
+  .ag-viste button { flex: 1; border: 0; background: none; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--testo-soft); min-height: 34px; border-radius: var(--raggio-pill); display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+  .ag-viste button svg.ic { width: 16px; height: 16px; }
+  .ag-viste button.si { background: var(--superficie); color: var(--testo); box-shadow: 0 1px 4px rgba(16,21,31,.12); }
+  /* la striscia dei giorni: un pallino per impegno, col colore della persona (Ignazio 20/09) */
+  .ag-giorno .ag-punti { display: flex; gap: 3px; height: 6px; align-items: center; }
+  .ag-giorno .ag-punti i { width: 6px; height: 6px; border-radius: 50%; background: var(--cat, var(--spento)); }
+  .ag-giorno .ag-punti i.tanti { width: 10px; border-radius: 3px; }
+  .ag-giorno.scelto .ag-punti i { filter: brightness(1.75) saturate(.85); }   /* sul fondo scuro del giorno scelto i colori vanno schiariti */
+  /* la griglia: una card bianca con le ore a sinistra e i blocchi dentro */
+  .ag-griglia { position: relative; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 10px 12px 0; overflow: hidden; }
+  .ag-ore { position: relative; margin-left: 50px; }
+  .ag-lin { position: absolute; left: 0; right: 0; border-top: 1px solid var(--linea); pointer-events: none; }
+  .ag-lin b { position: absolute; left: -50px; top: -8px; width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
+  .ag-mezza { position: absolute; left: 0; right: 0; border-top: 1px solid var(--superficie-2); pointer-events: none; }
+  /* il tocco su un'ora libera fissa lì: l'ora è quella del punto toccato, al quarto d'ora */
+  .ag-libero { position: absolute; left: 0; right: 0; border: 0; background: none; padding: 0; margin: 0; font-family: inherit; }
+  .ag-invito { position: absolute; left: 2px; right: 4px; border: 1px dashed #E6E9EF; border-radius: 12px; color: var(--testo-tenue); font-size: 11.5px; font-weight: 600; display: flex; align-items: flex-start; justify-content: flex-end; gap: 3px; padding: 4px 8px 0 0; pointer-events: none; }
+  .ag-invito svg.ic { width: 13px; height: 13px; margin-top: 1px; }
+  /* un impegno: tinta della categoria della persona, barretta piena a sinistra (come nell'elenco) */
+  .ag-ev { position: absolute; border: 0; margin: 0; padding: 4px 7px 4px 11px; border-radius: 12px; overflow: hidden; text-align: left;
+    font-family: inherit; font-size: 13px; line-height: 1.25; background: var(--cat-tinta, var(--superficie-2)); color: var(--cat-scuro, var(--testo)); }
+  .ag-ev .bar { position: absolute; left: 4px; top: 4px; bottom: 4px; width: 3px; border-radius: 3px; background: var(--cat, var(--spento)); }
+  .ag-ev b { display: block; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-ev small { display: block; font-size: 11.5px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-ev.bassa { padding-top: 1px; padding-bottom: 1px; font-size: 12px; }
+  .ag-ev.bassa b { font-size: 12px; }
+  .ag-ev.fatta { opacity: .62; }
+  .ag-ev.fatta b { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .ag-ev.dacoda { background: var(--superficie-2); border: 1px dashed var(--cat, var(--spento)); padding-top: 3px; }   /* righine: viene dalla coda, non è un appuntamento fissato */
+  .ag-ev.scelta { outline: 2px solid var(--cat, var(--testo)); outline-offset: -2px; }
+  /* adesso: la linea rossa che attraversa la giornata, solo su oggi */
+  .ag-adesso { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--pericolo); z-index: 3; pointer-events: none; }
+  .ag-adesso i { position: absolute; left: -4px; top: -5px; width: 9px; height: 9px; border-radius: 50%; background: var(--pericolo); }
+  .ag-adesso b { position: absolute; left: -50px; top: -9px; width: 44px; text-align: right; font-size: 11px; font-weight: 700; color: var(--pericolo); background: var(--superficie); }
+  /* avviso in cima alla griglia quando due impegni si accavallano */
+  .ag-doppi { display: flex; align-items: center; gap: 8px; background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 9px 12px; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; }
+  .ag-doppi svg.ic { width: 18px; height: 18px; flex: none; }
+  /* bottone «Ora» che riporta la griglia su adesso */
+  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit; }
+  /* avviso «a quest'ora hai già…» nel modulo, con le prime ore libere da toccare (cantiere 37) */
+  .ag-scontro { background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 10px 12px; margin: 0 0 10px; font-size: 13.5px; font-weight: 700; }
+  .ag-scontro svg.ic { width: 17px; height: 17px; vertical-align: -4px; margin-right: 3px; }
+  .ag-scontro span { display: block; font-weight: 500; color: var(--testo); margin-top: 3px; }
+  .ag-scontro em { font-style: normal; color: var(--testo-soft); font-weight: 500; }
+  .ag-orelibere { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ag-orelibere button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); min-height: 36px; padding: 7px 13px; font-size: 13px; font-weight: 700; color: var(--testo); font-family: inherit; }
+  /* ── Settimana: sette colonne strette, si tocca un blocco per aprire quel giorno ── */
+  .ag-sett-testa { display: flex; margin: 0 0 2px 30px; }
+  .ag-sett-testa div { flex: 1; text-align: center; font-size: 11px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .4px; padding-bottom: 3px; }
+  .ag-sett-testa div b { display: block; font-size: 14px; color: var(--testo); letter-spacing: 0; }
+  .ag-sett-testa div.oggi b { color: var(--accento); }
+  .ag-sett-testa div.scelto b { background: var(--accento); color: #fff; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; margin: 0 auto; }
+  .ag-griglia.sett { padding: 8px 6px 10px 0; }
+  .ag-griglia.sett .ag-ore { margin-left: 30px; }
+  .ag-griglia.sett .ag-lin b { left: -30px; width: 26px; font-size: 10.5px; }
+  .ag-griglia.sett .ag-adesso b { display: none; }
+  .ag-colonna { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--bordo); background: none; padding: 0; }
+  .ag-colonna:first-of-type { border-left: 0; }
+  .ag-colonna.oggi { background: var(--superficie-2); }
+  .ag-colonna.scelto { background: rgba(16,21,31,.05); }
+  .ag-sev { position: absolute; border: 0; padding: 2px 3px; border-radius: 6px; overflow: hidden; font-family: inherit; font-size: 10px; line-height: 1.15;
+    text-align: left; background: var(--cat-tinta, var(--superficie-2)); color: var(--cat-scuro, var(--testo)); font-weight: 700; }
+  .ag-sev .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px; background: var(--cat, var(--spento)); border-radius: 3px; }
+  .ag-sev span { display: block; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-sev.fatta { opacity: .55; }
+  .ag-sett-vuoto { text-align: center; color: var(--testo-tenue); font-size: 13px; padding: 10px 0 2px; }
+  /* il riassunto della settimana: quanti PM, quanti Follow Up… (il colore è quello del tipo di lavoro, --az-*) */
+  .ag-conto { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 10px 4px 0; }
+  .ag-conto span { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--testo-soft); }
+  .ag-conto i { width: 8px; height: 8px; border-radius: 2px; background: var(--tinta, var(--spento)); }
   /* Pagina «Partner da avviare» (cantiere 31 lavoro 2) */
   .avv-partner { padding: 10px 14px 12px; }
   .avv-testa { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; background: none; padding: 2px 0; text-align: left; font-family: inherit; font-size: 16px; color: var(--testo); }
@@ -895,29 +969,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609202312"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609202312"></script>
-<script src="lista.js?v=202609202312"></script>
-<script src="rubrica.js?v=202609202312"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609202312"></script>
-<script src="agenda.js?v=202609202312"></script>
-<script src="report.js?v=202609202312"></script>
-<script src="check.js?v=202609202312"></script>
-<script src="mappa.js?v=202609202312"></script>
-<script src="pagina-dashboard.js?v=202609202312"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609202312"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609202312"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609202312"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609202312"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609202312"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609202312"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609202312"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609202312"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609202312"></script>
-<script src="benvenuto.js?v=202609202312"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609202312"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210033"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210033"></script>
+<script src="lista.js?v=202609210033"></script>
+<script src="rubrica.js?v=202609210033"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210033"></script>
+<script src="agenda.js?v=202609210033"></script>
+<script src="report.js?v=202609210033"></script>
+<script src="check.js?v=202609210033"></script>
+<script src="mappa.js?v=202609210033"></script>
+<script src="pagina-dashboard.js?v=202609210033"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210033"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210033"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210033"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210033"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210033"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210033"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210033"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210033"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210033"></script>
+<script src="benvenuto.js?v=202609210033"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210033"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 23:12';
+const APP_VERSION = '2026.09.21 · 00:33';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1286,11 +1360,12 @@ function mostraToast(testo, suAnnulla) {
 // Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
-const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null };
+const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null };
 
 
 async function apriAgenda(giorno) {
   AG.giorno = giorno || AG.giorno || MB21Coda.oggiRoma();
+  if (!AG.vista) AG.vista = vistaSalvata();   // cantiere 37: si riapre come l'hai lasciata
   if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>Agenda</h1><div class="vuoto">Carico l'agenda…</div>`;
   try { await caricaAgenda(); }
   catch (e) {
@@ -1326,11 +1401,29 @@ async function caricaAgenda() {
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
 }
 
+// ── Come si guarda l'Agenda (cantiere 37): «orario» (la griglia del giorno), «settimana», «elenco».
+// La scelta si ricorda sul telefono: chi lavora a orario riapre a orario.
+const VISTE = ['orario', 'settimana', 'elenco'];
+const CHIAVE_VISTA = 'mb21-agenda-vista';
+const NOMI_VISTA = { orario: ['orario', 'Giorno'], settimana: ['agenda', 'Settimana'], elenco: ['lista', 'Elenco'] };
+const ALT_ORA = 58;        // quanto è alta un'ora nella griglia del giorno (px)
+const ALT_ORA_SETT = 42;   // nella settimana: compressa, ma un impegno di mezz'ora resta leggibile
+function vistaSalvata() {
+  try { const v = localStorage.getItem(CHIAVE_VISTA); if (VISTE.includes(v)) return v; } catch (e) {}
+  return 'orario';
+}
+function cambiaVista(v) {
+  AG.vista = v;
+  try { localStorage.setItem(CHIAVE_VISTA, v); } catch (e) {}
+  AG.portato = null;   // la griglia si riposiziona su «adesso»
+  disegnaAgenda();
+}
+
 function disegnaAgenda() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const conEventi = A.giorniConEventi(AG.azioni);
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
+  const punti = A.puntiGiorni(AG.azioni, AG.settimana);
   const titoloGiorno = new Date(AG.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   let html = `
     <div class="ag-testa"><h1>Agenda</h1>
@@ -1340,12 +1433,22 @@ function disegnaAgenda() {
     <button class="ag-mese">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button>
     <div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
-      ${AG.settimana.map((g, i) => `<button class="ag-giorno ${g === AG.giorno ? 'scelto' : ''} ${g === oggi ? 'oggi' : ''}" data-giorno="${g}">
-        <small>${A.GIORNI[i]}</small><b>${Number(g.slice(8))}</b><i class="${conEventi.has(g) ? 'si' : ''}"></i></button>`).join('')}
+      ${AG.settimana.map((g, i) => {
+        const p = punti[g] || { punti: [], tanti: false, quanti: 0 };
+        const dice = p.quanti === 1 ? '1 impegno' : `${p.quanti} impegni`;
+        return `<button class="ag-giorno ${g === AG.giorno ? 'scelto' : ''} ${g === oggi ? 'oggi' : ''}" data-giorno="${g}" aria-label="${Number(g.slice(8))} · ${p.quanti ? dice : 'libero'}">
+          <small>${A.GIORNI[i]}</small><b>${Number(g.slice(8))}</b>
+          <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
+      }).join('')}
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
-    <div class="sotto">${esc(titoloGiorno)}</div>`;
-  html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
+    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
+      ${VISTE.map(v => `<button data-vista="${v}" class="${AG.vista === v ? 'si' : ''}">${ic(NOMI_VISTA[v][0])}${NOMI_VISTA[v][1]}</button>`).join('')}
+    </div>`;
+  if (AG.vista !== 'settimana') html += `<div class="sotto">${esc(titoloGiorno)} · ${eventi.length ? (eventi.length === 1 ? '1 impegno' : eventi.length + ' impegni') : 'giornata libera'}</div>`;
+  if (AG.vista === 'settimana') html += grigliaSettimana(opz);
+  else if (AG.vista === 'orario') html += grigliaGiorno(eventi, opz);
+  else html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
     : `<div class="vuoto">Nessun appuntamento. Tocca <b>+</b> per fissarne uno.</div>`;
   const t = AG.telefonate;
   if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>${ic('telefonate')} Contatti del giorno · Fatti ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
@@ -1355,23 +1458,139 @@ function disegnaAgenda() {
   if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>${ic('attenzione')} ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
+  portaInVista();
+}
+
+// ── La griglia del giorno, come il Calendario di iPhone ───────────────────────
+// Le ore a sinistra, ogni impegno alto quanto dura; chi si accavalla sta affiancato, così un doppio
+// appuntamento alla stessa ora si vede subito. Si tocca un'ora libera per fissare lì.
+function grigliaGiorno(eventi, opz) {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const d = A.disposizioneGiorno(eventi);
+  const y = m => Math.round((m - d.da) / 60 * ALT_ORA);
+  const altezza = y(d.a);
+  let h = '';
+  if (d.sovrapposti) h += `<div class="ag-doppi">${ic('attenzione')} ${d.sovrapposti} impegni si accavallano: controlla che sia voluto.</div>`;
+  h += `<div class="ag-griglia"><div class="ag-ore" data-da="${d.da}" data-alt="${ALT_ORA}" style="height:${altezza}px">`;
+  h += `<button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button>`;
+  for (let m = d.da; m <= d.a; m += 60) {
+    h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
+    if (m + 30 < d.a) h += `<div class="ag-mezza" style="top:${y(m + 30)}px"></div>`;
+  }
+  // l'invito «＋ libero» dentro i buchi da un'ora in su: fa capire che il vuoto si tocca.
+  // I buchi si contano sui blocchi come si vedono (mai più bassi di 20 minuti), se no l'invito finirebbe sotto una telefonata.
+  const buchi = [];
+  let punto = d.da;
+  for (const b of d.blocchi) {
+    if (b.cima - punto >= 60) buchi.push({ da: punto, a: b.cima });
+    punto = Math.max(punto, b.cima + b.alta);
+  }
+  if (d.a - punto >= 60) buchi.push({ da: punto, a: d.a });
+  for (const f of buchi) {
+    const alto = y(f.a) - y(f.da) - 6;
+    if (alto < 50) continue;
+    const dalle = A.daMinuti(Math.ceil(f.da / 15) * 15);
+    h += `<div class="ag-invito" style="top:${y(f.da) + 3}px;height:${alto}px">${ic('piu')} ${f.a >= 1440 ? `dalle ${dalle} libero` : `${dalle} – ${A.daMinuti(f.a)} libero`}</div>`;
+  }
+  for (const b of d.blocchi) {
+    const e = b.ev, larga = 100 / b.colonne, sin = b.col * larga;
+    const alto = Math.max(18, y(b.cima + b.alta) - y(b.cima) - 3);
+    const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
+    const r = A.riga(e, opz);
+    const cat = (e.contatti && e.contatti.categoria) || e.categoria;
+    h += `<button class="ag-ev ${classeCat(cat)}${alto < 26 ? ' bassa' : ''}${e.completata ? ' fatta' : ''}${dallaCoda ? ' dacoda' : ''}${AG.aperta === e.id ? ' scelta' : ''}" data-evento="${esc(e.id)}"
+      style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)">
+      <span class="bar"></span><b>${esc(r.titolo)}</b>${alto >= 32 ? `<small>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' · 👍' : ''}</small>` : ''}</button>`;
+  }
+  let adessoDentro = false;
+  if (AG.giorno === oggi) {
+    const ora = A.inMinuti(A.partiRoma(new Date().toISOString()).ora);
+    adessoDentro = ora >= d.da && ora <= d.a;
+    if (adessoDentro) h += `<div class="ag-adesso" style="top:${y(ora)}px"><i></i><b>${A.daMinuti(ora)}</b></div>`;
+  }
+  h += `</div></div>`;
+  if (adessoDentro) h += `<button class="ag-vai-ora" id="ag-vai-ora">${ic('orario')} Ora</button>`;
+  return h;
+}
+
+// ── La settimana intera: sette colonne, il colpo d'occhio su dove sei pieno e dove sei libero ──
+function grigliaSettimana(opz) {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const giorni = AG.settimana.map(g => ({ g, d: A.disposizioneGiorno(A.eventiDelGiorno(AG.azioni, g), { minimoMinuti: 30, oraDa: 8, oraA: 21 }) }));
+  const da = Math.min(...giorni.map(x => x.d.da)), a = Math.max(...giorni.map(x => x.d.a));
+  const y = m => Math.round((m - da) / 60 * ALT_ORA_SETT);
+  const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0);
+  let h = `<div class="ag-sett-testa">${giorni.map(({ g, d }, i) =>
+    `<div class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}">${A.GIORNI[i]}<b>${Number(g.slice(8))}</b></div>`).join('')}</div>`;
+  h += `<div class="ag-griglia sett"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" style="height:${y(a)}px">`;
+  for (let m = da; m <= a; m += 60) {
+    h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
+  }
+  giorni.forEach(({ g, d }, i) => {
+    const larga = 100 / 7, sinG = i * larga;
+    h += `<button class="ag-colonna ag-libero${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-vai="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}" style="left:${sinG}%;width:${larga}%"></button>`;
+    for (const b of d.blocchi) {
+      const e = b.ev, dentro = larga / b.colonne, sin = sinG + b.col * dentro;
+      const alto = Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2);
+      const cat = (e.contatti && e.contatti.categoria) || e.categoria;
+      const nome = (e.contatti && e.contatti.nome) || '—';
+      h += `<button class="ag-sev ${classeCat(cat)}${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}" data-giorno="${g}"
+        style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 1px);width:calc(${dentro}% - 2px)"
+        aria-label="${esc(A.orario(e))} ${esc(nome)}"><span class="bar"></span>${alto >= 18 ? `<span>${esc(nome.split(' ')[0])}</span>` : ''}</button>`;
+    }
+  });
+  if (AG.settimana.includes(oggi)) {
+    const ora = A.inMinuti(A.partiRoma(new Date().toISOString()).ora);
+    if (ora >= da && ora <= a) h += `<div class="ag-adesso" style="top:${y(ora)}px"><i></i></div>`;
+  }
+  h += `</div></div>`;
+  if (!quanti) h += `<div class="ag-sett-vuoto">Settimana libera. Tocca un giorno per fissare qualcosa.</div>`;
+  else {
+    // il riassunto della settimana: che lavoro c'è, non solo quando (qui il colore è quello del TIPO di lavoro)
+    const conto = A.contaPerTipo(AG.azioni, AG.settimana);
+    h += `<div class="ag-conto">${conto.map(c => `<span style="--tinta:${c.colore}"><i></i>${c.quanti} ${esc(c.nome)}</span>`).join('')}</div>`;
+  }
+  return h;
+}
+
+// La linea rossa di «adesso» scende da sola ogni minuto: si sposta e basta, senza rifare la pagina
+// (ridisegnare chiuderebbe quello che si sta facendo).
+setInterval(() => {
+  const linea = document.querySelector('.ag-adesso'), ore = document.querySelector('.ag-ore[data-da]');
+  if (!linea || !ore) return;
+  const A = MB21Agenda;
+  const adesso = A.inMinuti(A.partiRoma(new Date().toISOString()).ora);
+  const da = Number(ore.dataset.da);
+  linea.style.top = Math.round((adesso - da) / 60 * (Number(ore.dataset.alt) || ALT_ORA)) + 'px';
+  const eti = linea.querySelector('b');
+  if (eti) eti.textContent = A.daMinuti(adesso);
+}, 60000);
+
+// Porta la griglia sotto gli occhi: su oggi all'altezza di adesso, sugli altri giorni al primo impegno.
+// Si fa una volta sola per giorno e vista, se no la pagina saltellerebbe a ogni tocco.
+function portaInVista() {
+  if (AG.vista === 'elenco') return;
+  const segno = AG.vista + '|' + AG.giorno;
+  if (AG.portato === segno) return;
+  AG.portato = segno;
+  const rif = app.querySelector('.ag-adesso') || app.querySelector('.ag-ev') || app.querySelector('.ag-sev');
+  if (!rif) return;
+  const y = rif.getBoundingClientRect().top + window.scrollY - 150;
+  window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
 }
 
 // La «G» di Google (Ignazio 17/09: «invece dell'emoji usiamo la G di Google»), disegnata in linea: nessun file da scaricare
 const ICONA_G = `<svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:2px" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.1 38 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-8-6.2C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l8-6.2z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.2C6.5 42.6 14.6 48 24 48z"/></svg>`;
 // Icona di NotePlan: il logo vero (asterisco arancione, da noteplan.co, in icone/noteplan-32.png; Ignazio 17/09: «il logo vero, non solo la N»)
 const ICONA_NP = `<img src="icone/noteplan-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px">`;
-function eventoAgenda(e, opz) {
+
+// Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
+// si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
+function extraEvento(e) {
   const A = MB21Agenda;
-  const r = A.riga(e, opz);
-  const aperta = AG.aperta === e.id;
-  const [inizio, fine] = A.orario(e).split('–');
-  let extra = '';
-  if (aperta) {
-    const richiamo = e.tipo_azione === 'Contatto' && !!e.data_scelta;   // dato dalla coda: si guarda, non si chiude qui
-    const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
-    extra = `<div class="extra">
-      ${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
+  const richiamo = e.tipo_azione === 'Contatto' && !!e.data_scelta;   // dato dalla coda: si guarda, non si chiude qui
+  const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
+  return `${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
@@ -1382,14 +1601,70 @@ function eventoAgenda(e, opz) {
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>
-      ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button><button data-cmd="noteplan">${ICONA_NP} NotePlan</button></div>`}
-      </div>`;
-  }
+      ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button><button data-cmd="noteplan">${ICONA_NP} NotePlan</button></div>`}`;
+}
+
+function eventoAgenda(e, opz) {
+  const A = MB21Agenda;
+  const r = A.riga(e, opz);
+  const aperta = AG.aperta === e.id;
+  const [inizio, fine] = A.orario(e).split('–');
+  const extra = aperta ? `<div class="extra">${extraEvento(e)}</div>` : '';
   return `<div class="ag-evento" data-evento="${esc(e.id)}">
     <div class="ora">${esc(inizio)}${fine ? `<small>${esc(fine)}</small>` : ''}</div>
     <div class="barra-tipo ${classeCat(e.contatti && e.contatti.categoria)}"></div>
     <div class="dentro"><button class="apri"><div class="t">${esc(r.titolo)}</div><div class="s">${escIcone(r.sotto)}</div>${e.portatoNome ? `<div class="s">${rigaPortato(e.portatoNome)}</div>` : ''}</button>${extra}</div>
   </div>`;
+}
+
+// Il foglio che sale dal basso toccando un blocco nella griglia: dentro c'è esattamente quello che c'è
+// nell'elenco quando la riga si apre. Dando un esito il foglio si toglie di mezzo e, se il passo dopo
+// serve ancora (il PM «Fatto» che aspetta il risultato), si riapre da solo.
+function foglioEvento(e) {
+  const A = MB21Agenda;
+  const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const r = A.riga(e, opz);
+  const cat = (e.contatti && e.contatti.categoria) || e.categoria;
+  const giorno = A.partiRoma(e.quando || e.inizio).giorno;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto ${classeCat(cat)}">
+    <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="fe-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <p>${esc(dataLunga(giorno))} · ${esc(A.orario(e))} · ${escIcone(r.sotto)}</p>
+    ${extraEvento(e)}</div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#fe-x').onclick = chiudi;
+  // toccando un esito il foglio sparisce subito: il resto del flusso (prossimo appuntamento, vendita…) trova la scena libera
+  velo.addEventListener('click', ev => { if (ev.target.closest('[data-esito]')) velo.style.display = 'none'; }, true);
+  collegaComandiEvento(velo, e, async () => {
+    chiudi();
+    await apriAgenda(giorno);
+    const agg = AG.azioni.find(x => x.id === e.id);   // se manca un passo (PM «Fatto» → risultato) si riapre
+    if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando });
+  });
+}
+
+const dataLunga = g => new Date(g + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+
+// Esiti e comandi di un impegno: gli stessi nell'elenco e nel foglio della griglia. `dopo()` ridisegna chi l'ha aperto.
+function collegaComandiEvento(el, e, dopo) {
+  const A = MB21Agenda;
+  const giorno = A.partiRoma(e.quando || e.inizio).giorno;
+  collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
+  el.querySelectorAll('[data-cmd]').forEach(b => {
+    b.onclick = () => {
+      const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };
+      if (b.dataset.cmd === 'sposta') { chiudiFoglio(); return spostaAppuntamento(e, async g => { AG.aperta = e.id; await apriAgenda(g); }); }
+      if (b.dataset.cmd === 'modifica') { chiudiFoglio(); return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() }); }
+      if (b.dataset.cmd === 'elimina') { chiudiFoglio(); return eliminaAppuntamento(e); }
+      if (b.dataset.cmd === 'contatto') { chiudiFoglio(); return apriContattoDa(e.contatto_id); }
+      if (b.dataset.cmd === 'gcal') return window.open(A.linkGoogleCalendar(e), '_blank');   // cantiere 23: evento già compilato, si preme «Salva» lì
+      if (b.dataset.cmd === 'noteplan') { location.href = A.linkNotePlan(e); return; }       // cantiere 23: riga nella nota del giorno di NotePlan
+      if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } }); }
+    };
+  });
 }
 
 function collegaAgenda(eventi) {
@@ -1407,23 +1682,41 @@ function collegaAgenda(eventi) {
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
   app.querySelectorAll('.ag-giorno').forEach(b => {
-    b.onclick = () => { AG.aperta = null; apriAgenda(b.dataset.giorno); };
+    b.onclick = () => { AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); };
   });
+  app.querySelectorAll('.ag-viste button').forEach(b => { b.onclick = () => cambiaVista(b.dataset.vista); });
+  su('ag-vai-ora', () => { AG.portato = null; portaInVista(); });
+  // Vista a orario: il vuoto si tocca per fissare a quell'ora (al quarto d'ora), il blocco apre il foglio
+  const tocca = document.getElementById('ag-tocca');
+  if (tocca) tocca.onclick = ev => {
+    if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
+    const ore = tocca.parentElement, riquadro = ore.getBoundingClientRect();
+    const minuti = A.alQuarto(Number(ore.dataset.da) + (ev.clientY - riquadro.top) / ALT_ORA * 60);
+    nuovoAppuntamento({ giorno: AG.giorno, ora: A.daMinuti(minuti) });
+  };
+  app.querySelectorAll('.ag-ev').forEach(b => {
+    const e = eventi.find(x => x.id === b.dataset.evento);
+    if (e) b.onclick = () => { AG.aperta = e.id; foglioEvento(e); };
+  });
+  // Vista settimana: un blocco porta al suo giorno e lo apre, una colonna vuota porta a quel giorno
+  app.querySelectorAll('.ag-sev').forEach(b => {
+    b.onclick = async () => {
+      const g = b.dataset.giorno, id = b.dataset.evento;
+      AG.vista = 'orario'; AG.aperta = id; AG.portato = null;
+      await apriAgenda(g);
+      const e = AG.azioni.find(x => x.id === id);
+      if (e) foglioEvento(A.eventiDelGiorno([e], g)[0] || e);
+    };
+  });
+  app.querySelectorAll('[data-vai]').forEach(b => {
+    b.onclick = () => { AG.vista = 'orario'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.vai); };
+  });
+  // Vista elenco: la riga si apre sul posto, come prima
   app.querySelectorAll('.ag-evento').forEach(el => {
     const e = eventi.find(x => x.id === el.dataset.evento);
+    if (!e) return;
     el.querySelector('.apri').onclick = () => { AG.aperta = AG.aperta === e.id ? null : e.id; disegnaAgenda(); };
-    collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, () => apriAgenda());
-    el.querySelectorAll('[data-cmd]').forEach(b => {
-      b.onclick = () => {
-        if (b.dataset.cmd === 'sposta') return spostaAppuntamento(e);
-        if (b.dataset.cmd === 'modifica') return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() });
-        if (b.dataset.cmd === 'elimina') return eliminaAppuntamento(e);
-        if (b.dataset.cmd === 'contatto') return apriContattoDa(e.contatto_id);
-        if (b.dataset.cmd === 'gcal') return window.open(A.linkGoogleCalendar(e), '_blank');   // cantiere 23: evento già compilato, si preme «Salva» lì
-        if (b.dataset.cmd === 'noteplan') { location.href = A.linkNotePlan(e); return; }   // cantiere 23: riga nella nota del giorno di NotePlan
-        if (b.dataset.cmd === 'fissa') return nuovoAppuntamento({ giorno: A.partiRoma(e.quando).giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } });
-      };
-    });
+    collegaComandiEvento(el, e, () => apriAgenda());
   });
 }
 
@@ -1556,29 +1849,69 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
 }
 
 // Sposta un appuntamento (inizio/fine) o un esito dalla coda (data_scelta). `dopo(giorno)`: cosa ridisegnare
+// «A quest'ora hai già…» (cantiere 37): lo stesso avviso nel modulo Nuovo appuntamento e nel foglio Sposta,
+// con le prime ore libere da toccare. Si vede solo se l'Agenda ha in mano quel giorno (la settimana caricata):
+// se i dati non ci sono non si dice niente, invece di dire una cosa non vera. `salta`: l'impegno che si sta spostando.
+function avvisoSovrapposti(giorno, ora, durata, salta) {
+  const A = MB21Agenda;
+  if (!AG.settimana.includes(giorno) || !(durata > 0) || !/^\d\d:\d\d$/.test(ora || '')) return '';
+  const delGiorno = A.eventiDelGiorno(AG.azioni, giorno);
+  const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta);
+  if (!scontri.length) return '';
+  const oggi = MB21Coda.oggiRoma();
+  const vicino = { vicinoA: A.inMinuti(ora) };
+  const libere = A.oreProposte(delGiorno, durata, giorno === oggi ? { ...vicino, daMinuti: A.inMinuti(A.partiRoma(new Date().toISOString()).ora) } : vicino);
+  return `<div class="ag-scontro">${ic('attenzione')} A quest'ora hai già ${scontri.length === 1 ? 'un impegno' : scontri.length + ' impegni'}
+    ${scontri.map(e => `<span>${esc(A.riga(e, { mioId: null, admin: false }).titolo)} <em>${esc(A.orario(e))}</em></span>`).join('')}
+    ${libere.length ? `<div class="ag-orelibere">${libere.map(o => `<button data-ora="${o}">${o}</button>`).join('')}</div>` : ''}</div>`;
+}
+
 // (predefinito: l'Agenda su quel giorno). Spostando, la conferma torna da fare.
 function spostaAppuntamento(e, dopo) {
   const A = MB21Agenda;
   const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
   const quando = dallaCoda ? e.data_scelta : e.inizio;
   const { giorno, ora } = A.partiRoma(quando);
-  const durata = !dallaCoda && e.fine ? (Date.parse(e.fine) - Date.parse(e.inizio)) : 0;
+  const durata0 = !dallaCoda && e.fine && Date.parse(e.fine) > Date.parse(e.inizio) ? Math.round((Date.parse(e.fine) - Date.parse(e.inizio)) / 60000) : 0;
   dopo = dopo || (async g => { AG.aperta = e.id; await apriAgenda(g); });
   const velo = document.createElement('div');
   velo.className = 'velo';
+  // cantiere 37: si sposta l'inizio E si cambia quanto dura («Finisce alle»), e si vede subito se l'ora è già occupata
   velo.innerHTML = `<div class="foglio"><h3>${ic('orario')} Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
     <div class="ag-due-campi"><input id="sp-giorno" type="date" value="${giorno}"><input id="sp-ora" type="time" value="${ora}"></div>
+    ${durata0 ? `<div class="campo" style="margin-top:10px"><label>Finisce alle</label><input id="sp-fine" type="time" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + durata0))}"></div>` : ''}
+    <div id="sp-avviso" style="margin-top:10px"></div>
     <div class="due"><button class="link" id="sp-no">Annulla</button><button class="primario" id="sp-si">Sposta</button></div></div>`;
   document.body.appendChild(velo);
+  const campo = id => velo.querySelector('#sp-' + id);
+  const durataOra = () => {
+    if (!durata0) return 0;
+    const d = A.inMinuti(campo('fine').value) - A.inMinuti(campo('ora').value);
+    return d > 0 ? d : 0;
+  };
+  const avvisa = () => {
+    const html = avvisoSovrapposti(campo('giorno').value, campo('ora').value, durataOra() || A.durataPredefinita(e.tipo_azione), e.id);
+    campo('avviso').innerHTML = html;
+    campo('avviso').querySelectorAll('.ag-orelibere button').forEach(b => b.onclick = () => {
+      const quanto = durataOra();
+      campo('ora').value = b.dataset.ora;
+      if (durata0) campo('fine').value = A.daMinuti(Math.min(1440, A.inMinuti(b.dataset.ora) + (quanto || durata0)));
+      avvisa();
+    });
+  };
+  for (const k of ['giorno', 'ora', 'fine']) { const el = campo(k); if (el) el.onchange = avvisa; }
+  avvisa();
   velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
-  velo.querySelector('#sp-no').onclick = () => velo.remove();
-  velo.querySelector('#sp-si').onclick = async () => {
-    const g = velo.querySelector('#sp-giorno').value, o = velo.querySelector('#sp-ora').value;
+  campo('no').onclick = () => velo.remove();
+  campo('si').onclick = async () => {
+    const g = campo('giorno').value, o = campo('ora').value;
     if (!g || !o) return;
     if (A.controllaGiorno(g)) return mostraToast(A.controllaGiorno(g));
+    if (durata0 && !durataOra()) return mostraToast('L\'ora di fine deve venire dopo quella di inizio.');
     const nuovaData = A.isoDaRoma(g, o);
+    const durata = durataOra() || durata0;
     const nuovo = dallaCoda ? { data_scelta: nuovaData, confermato_il: null }
-      : { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata).toISOString() : null, confermato_il: null };
+      : { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata * 60000).toISOString() : null, confermato_il: null };
     const prima = dallaCoda ? { data_scelta: e.data_scelta, confermato_il: e.confermato_il || null }
       : { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
     velo.remove();
@@ -1654,7 +1987,7 @@ async function nuovoAppuntamento(opz = {}) {
   const st = {
     contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
-    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60, portato: null,
+    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60, durataToccata: false, altra: false, portato: null,
   };
   if (st.tipo && !A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
   const eventiGiorno = A.eventiDelGiorno(AG.azioni, opz.giorno || MB21Coda.oggiRoma());
@@ -1674,10 +2007,13 @@ async function nuovoAppuntamento(opz = {}) {
     const chiudi = valore => { velo.remove(); risolvi(valore); };
     velo.querySelector('#na-x').onclick = () => chiudi(null);
     velo.querySelector('#na-no').onclick = () => chiudi(null);
-    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, ospite: '', note: '' };
+    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '' };
     const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
       `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
-    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
+    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
+    // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
+    const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
+    const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId);
     function disegna() {
       const tipi = A.tipiPer(st.categoria);
       let h = '<div class="riquadro mc-g" style="margin-top:14px">';
@@ -1703,7 +2039,11 @@ async function nuovoAppuntamento(opz = {}) {
         h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
-        h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
+        // la durata la propone il tipo (Contatto 5 minuti, gli altri un'ora) finché non la si tocca; «Altra…» apre l'ora di fine
+        if (!st.durataToccata) st.durata = A.durataPredefinita(st.tipo);
+        h += `<div class="campo"><label>Durata</label>${scelte('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
+        if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
+        h += avvisoOre();
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
@@ -1734,12 +2074,23 @@ async function nuovoAppuntamento(opz = {}) {
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
         leggiCampi(); disegna();
       };
+      velo.querySelectorAll('.ag-orelibere button').forEach(b => {
+        b.onclick = () => { leggiCampi(); campi.ora = b.dataset.ora; if (st.altra) campi.fine = A.daMinuti(Math.min(1440, A.inMinuti(campi.ora) + (st.durata || 60))); disegna(); };
+      });
+      // cambiando giorno, ora o fine l'avviso si rifà subito
+      for (const k of ['giorno', 'ora', 'fine']) {
+        const el = velo.querySelector('#na-' + k);
+        if (el) el.onchange = () => { leggiCampi(); disegna(); };
+      }
       velo.querySelectorAll('[data-scelta]').forEach(g => g.querySelectorAll('button').forEach(b => {
         b.onclick = () => {
           leggiCampi();
           const nome = g.dataset.scelta, v = b.dataset.v;
-          if (nome === 'durata') st.durata = Number(v);
-          else st[nome] = v;
+          if (nome === 'durata') {
+            st.durataToccata = true;
+            if (v === 'altra') { st.altra = true; campi.fine = A.daMinuti(Math.min(1440, A.inMinuti(campi.ora) + (st.durata || 60))); }
+            else { st.altra = false; st.durata = Number(v); }
+          } else st[nome] = v;
           if (nome === 'categoria') st.categoriaToccata = true;
           if (nome === 'categoria' && !A.tipiPer(v).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
           if (nome === 'tipo') st.modalita = null;
@@ -1754,9 +2105,11 @@ async function nuovoAppuntamento(opz = {}) {
         giorno: campi.giorno, ora: campi.ora, ospite: A.conOspite(st.tipo) ? campi.ospite.trim() : '', note: campi.note.trim() };
       const errore = A.validaAppuntamento(v);
       if (errore) { velo.querySelector('#na-errore').textContent = errore; return; }
+      const durata = durataScelta();
+      if (!(durata > 0)) { velo.querySelector('#na-errore').textContent = 'L\'ora di fine deve venire dopo quella di inizio.'; return; }
       const inizio = A.isoDaRoma(v.giorno, v.ora);
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
-        modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + st.durata * 60000).toISOString(),
+        modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + durata * 60000).toISOString(),
         completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
@@ -1802,6 +2155,8 @@ async function foglioAzione(id, opz = {}) {
     portato = data || { id: a.portato_da, nome: '—' };
   }
   const A = MB21Agenda, s = A.sceltePerModifica(a);
+  // cantiere 37: qui si può cambiare anche quanto dura (prima si poteva solo quando si fissava)
+  const duraOra = a.inizio && a.fine && Date.parse(a.fine) > Date.parse(a.inizio) ? Math.round((Date.parse(a.fine) - Date.parse(a.inizio)) / 60000) : 0;
   const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
   const st = { contatto: { id: a.contatto_id, ...(a.contatti || { nome: '—' }) }, portato, ospite: a.ospite, sottotipo: a.modalita, esito: a.esito };
   const velo = document.createElement('div');
@@ -1816,6 +2171,8 @@ async function foglioAzione(id, opz = {}) {
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">
     <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
+    ${duraOra ? `<div class="campo"><label>Finisce alle</label><input type="time" id="fa-fine" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + duraOra))}"></div>` : ''}
+    <div id="fa-avviso"></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     </div>
     <div class="errore" id="fa-errore"></div>
@@ -1873,12 +2230,29 @@ async function foglioAzione(id, opz = {}) {
   velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { st.sottotipo = b.dataset.v; disegnaScelte(); });
   disegnaPersone();
   disegnaScelte();
+  const duraScelta = () => {
+    if (!duraOra || !$('fa-fine')) return duraOra;
+    const d = A.inMinuti($('fa-fine').value) - A.inMinuti($('fa-ora').value);
+    return d > 0 ? d : 0;
+  };
+  const avvisaFa = () => {
+    $('fa-avviso').innerHTML = avvisoSovrapposti($('fa-giorno').value, $('fa-ora').value, duraScelta() || A.durataPredefinita(a.tipo_azione), a.id);
+    $('fa-avviso').querySelectorAll('.ag-orelibere button').forEach(b => b.onclick = () => {
+      const quanto = duraScelta();
+      $('fa-ora').value = b.dataset.ora;
+      if ($('fa-fine')) $('fa-fine').value = A.daMinuti(Math.min(1440, A.inMinuti(b.dataset.ora) + (quanto || duraOra)));
+      avvisaFa();
+    });
+  };
+  for (const k of ['fa-giorno', 'fa-ora', 'fa-fine']) { const el = $(k); if (el) el.onchange = avvisaFa; }
+  avvisaFa();
   $('fa-si').onclick = async () => {
     if (!$('fa-giorno').value || !$('fa-ora').value) { $('fa-errore').textContent = 'Scegli giorno e ora.'; return; }
     if (A.controllaGiorno($('fa-giorno').value)) { $('fa-errore').textContent = A.controllaGiorno($('fa-giorno').value); return; }
     if (st.portato && st.portato.id === st.contatto.id) { $('fa-errore').textContent = 'Contatto e «Portato da» sono la stessa persona.'; return; }
     const inizio = A.isoDaRoma($('fa-giorno').value, $('fa-ora').value);
-    const fine = a.fine && a.inizio ? new Date(Date.parse(inizio) + Date.parse(a.fine) - Date.parse(a.inizio)).toISOString() : a.fine;   // stessa durata
+    if (duraOra && !duraScelta()) { $('fa-errore').textContent = 'L\'ora di fine deve venire dopo quella di inizio.'; return; }
+    const fine = duraOra ? new Date(Date.parse(inizio) + duraScelta() * 60000).toISOString() : a.fine;   // la durata scelta qui (prima: sempre la stessa)
     $('fa-si').disabled = true;
     const { data: prima, error: e2 } = await dbq('modifica azione', supa.rpc('modifica_azione', {
       p_azione: a.id, p_contatto: st.contatto.id, p_portato_da: st.portato ? st.portato.id : null,
