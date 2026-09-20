@@ -40,7 +40,7 @@
 
   /* i quattro gruppi dei numeri (Dashboard, Check, Obiettivi): colori loro, non delle categorie */
   --gr-volume:#1D4ED8;   --gr-volume-tinta:#E7EFFE;
-  --gr-azione:#C2410C;   --gr-azione-tinta:#FDEEE2;
+  --gr-azione:#DD5F0D;   --gr-azione-tinta:#FDEEE2;
   --gr-segni:#15803D;    --gr-segni-tinta:#E4F3E8;
   --gr-crescita:#6D28D9; --gr-crescita-tinta:#F0E9FD;
 
@@ -52,7 +52,7 @@
   --revolut:#185FA5;
 
   /* gli stessi colori in numeri, per le caselle della tabella dei Segni Vitali che si accendono piano piano */
-  --tenue-rgb:123,132,150; --gr-azione-rgb:194,65,12; --bbs-rgb:29,78,216; --wes-rgb:192,38,38; --cep-rgb:21,128,61;
+  --tenue-rgb:123,132,150; --gr-azione-rgb:221,95,13; --bbs-rgb:29,78,216; --wes-rgb:192,38,38; --cep-rgb:21,128,61;
 
   /* scritte */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
