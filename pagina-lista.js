@@ -130,7 +130,7 @@ function disegnaElenco() {
   const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine, lettera: LS.lettera });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
-  const ordina = `<div class="ls-ordina"><span>${LS.lettera ? `<button id="via-lettera" aria-label="Togli la lettera"><b>${esc(LS.lettera)}</b> ✕</button> · ` : ''}${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
+  const ordina = `<div class="ls-ordina"><span>${LS.lettera ? `<button id="via-lettera" aria-label="Togli la lettera"><b>${esc(LS.lettera)}</b>${ic('chiudi')}</button> · ` : ''}${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
     <button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></div>`;
   elenco.innerHTML = trovati.length || LS.lettera
     ? ordina + (trovati.length ? '' : '<div class="vuoto">Nessun nome con questa lettera.</div>') + trovati.slice(0, LS.mostrate).map(cardNome).join('')
@@ -437,7 +437,7 @@ async function mostraInvito(c) {
   }
   if (LS.contatto !== c || !posto.isConnected) return;
   const come = LS.utenteMb21[c.id];
-  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? '✕ Scollega dall\'utente' : ic('collega') + ' È già utente dell\'app: collega'}</button>` : '';
+  const collega = eAdmin() ? `<button class="link" id="collega-mb21" style="display:block">${come === 'collegato' ? ic('chiudi') + ' Scollega dall\'utente' : ic('collega') + ' È già utente dell\'app: collega'}</button>` : '';
   const uso = c.app || (LS.usoApp && LS.usoApp[c.id]);
   const dettaglio = uso ? `ultimo uso ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())} · ${uso.nomi} nomi in lista` : 'ultimo uso non disponibile';
   posto.innerHTML = come
@@ -899,7 +899,7 @@ async function sezioneSegni() {
       <input type="date" data-k="dal" value="${esc(p.dal || '')}" ${dis} aria-label="Abbonato dal">
       ${aperto ? (dis ? '' : '<button class="sv-piu" data-cep-esci>Non ha rinnovato</button>') : `<span class="sotto" style="margin:0">→</span>
       <input type="date" data-k="uscito_il" value="${esc(p.uscito_il || '')}" ${dis} aria-label="Uscito il">`}
-      ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">${ic('fatto')}</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">✕</button>`}
+      ${dis ? '' : `<button class="sv-ico" data-cep-salva aria-label="Salva">${ic('fatto')}</button><button class="sv-ico no" data-cep-togli aria-label="${p.id ? 'Elimina' : 'Annulla'}">${ic('chiudi')}</button>`}
     </div>${p.segnato_da ? `<div class="sotto" style="margin:-2px 0 8px">${ic('app')} acceso dal partner, dal suo Profilo${p.aggiornato_il ? ' il ' + esc(MB21Lista.data(p.aggiornato_il)) : ''}</div>` : ''}`; };   // cantiere 25 bis
   const riquadroCep = () => {
     return `<div class="riquadro"><div class="sv-testa"><span class="sv-pill cep">CEP</span>
