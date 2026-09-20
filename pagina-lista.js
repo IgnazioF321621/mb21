@@ -288,7 +288,7 @@ async function elimina(r) {
     dbq('CEP di chi si elimina', supa.from('cep').select('id').eq('contatto_id', r.id).is('uscito_il', null)),
   ]);
   if (big.error || cep.error) return mostraToast('Non riesco a controllare biglietti e CEP: riprova.');
-  const segni = [...big.data.map(b => `biglietto ${b.tipo === 'WES' ? 'Wes' : b.tipo} ${MB21Lista.etichettaEvento(b.evento)}`), ...(cep.data.length ? ['CEP attivo'] : [])];
+  const segni = [...big.data.map(b => `biglietto ${b.tipo} ${MB21Lista.etichettaEvento(b.evento)}`), ...(cep.data.length ? ['CEP attivo'] : [])];
   const testo = 'Sparisce dalla lista e dall\'archivio. Il lavoro già fatto resta nei tuoi numeri.'
     + (segni.length ? ` Ha ${segni.join(' · ')}: ${segni.length > 1 ? 'restano' : 'resta'} nei Segni vitali${cep.data.length ? ' (il CEP non scade da solo)' : ''}.` : '');
   const si = await chiediConferma(`Eliminare ${r.nome} dalla lista?`, testo, 'Elimina', true,
@@ -928,7 +928,7 @@ async function sezioneSegni() {
   const collega = () => {
     box.querySelectorAll('[data-piu]').forEach(b => b.onclick = async () => {
       if (soloGuardo()) return;
-      const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'Wes';
+      const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'WES';
       const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
       if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nella pagina Admin`);
       const etichette = liberi.map(d => MB21Lista.etichettaEvento(d));

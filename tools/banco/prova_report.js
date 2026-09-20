@@ -22,12 +22,12 @@ prova('Periodi: mese, Performance Year settembre → agosto, frecce', () => {
 prova('Wes: da una data alla successiva, l\'ultimo in corso, date future escluse', () => {
   const date = ['2026-02-14', '2025-10-13', '2026-06-05', '2026-10-20'];
   const w = R.periodiWes(date, oggi);
-  assert.deepEqual(w.map(x => x.etichetta), ['Wes Ott 2025', 'Wes Feb 2026', 'Wes Giu 2026']);
+  assert.deepEqual(w.map(x => x.etichetta), ['WES Ott 2025', 'WES Feb 2026', 'WES Giu 2026']);
   assert.equal(w[0].a, '2026-02-14');
   assert.equal(w[2].inCorso, true);
-  assert.equal(R.testoPeriodo(w[1]), 'Wes Feb 2026 · 14/02 → 04/06');
-  assert.equal(R.testoPeriodo(w[2]), 'Wes Giu 2026 · 05/06 → in corso');
-  assert.equal(R.periodoIniziale('wes', oggi, date).etichetta, 'Wes Giu 2026');
+  assert.equal(R.testoPeriodo(w[1]), 'WES Feb 2026 · 14/02 → 04/06');
+  assert.equal(R.testoPeriodo(w[2]), 'WES Giu 2026 · 05/06 → in corso');
+  assert.equal(R.periodoIniziale('wes', oggi, date).etichetta, 'WES Giu 2026');
   assert.equal(R.periodoIniziale('wes', oggi, []), null);
   assert.equal(R.spostaPeriodo(w[2], 1, oggi, date), null);
 });

@@ -12,7 +12,7 @@ async function apriAdmin() {
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
     const [wes, bbs, fc, ut, rich, sq, disp] = await Promise.all([
-      dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
+      dbq('date dei WES', supa.from('wes').select('id, data').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
       dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore').order('dal')),   // cantiere 26: l'FC di Amway nel tempo
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
@@ -43,6 +43,9 @@ async function apriAdmin() {
 const dataOra = t => new Date(MB21Lista.momento(t)).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(', ', ' · ');
 
 // Una riga per utente, chiusa: pallino dell'abbonamento, nome, scadenza. Tocco → si apre sul posto.
+const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+const meseLungo = d => { const [m, a] = MB21Lista.etichettaEvento(d).split('-'); return `${MESI_LUNGHI[Number(m) - 1]} ${a}`; };
+
 function rigaUtenteAdmin(u) {
   const D = MB21Dashboard, oggi = MB21Coda.oggiRoma(), io = u.id === ST.utente.id, aperto = AD.aperti.has(u.id);
   const chiPaga = u.abbonamento_con && AD.utenti.find(x => x.id === u.abbonamento_con);
@@ -116,25 +119,39 @@ function disegnaAdmin() {
         <button class="primario" id="ad-allinea">✓ Allinea adesso</button>`;
     }
   } else if (AD.sezione === 'wes') {
-    html = `${indietro}<h1>Wes</h1><div class="rp-wes">
-      ${[...AD.wes].reverse().map(w => `<div class="w"><span>WES ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}
-      <div class="nuovo-wes"><input type="month" id="rp-data-wes" aria-label="Mese del Wes"><button id="rp-piu-wes">+ Wes</button></div>
-      <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo Wes caricato.</div></div>`;
+    html = `${indietro}<h1>WES</h1>
+      <div class="ad-elenco wes">${[...AD.wes].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
+        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}</span>
+        <button class="via" data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un WES</h4>
+        <input type="month" id="rp-data-wes" aria-label="Mese del WES">
+        <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
+        <div class="sotto">Solo mese e anno: conta l'ultimo WES caricato.</div></div>`;
   } else if (AD.sezione === 'fc') {
     // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione = (VP × FC) × 0,20, con l'FC valido il giorno in cui la vendita conta.
     // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
     html = `${indietro}<h1>Fattore di conversione</h1>
       <div class="sotto">Provvigione = (VP × fattore) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
-      <div class="rp-wes">
-      ${[...AD.fc].reverse().map((f, i, tutti) => `<div class="w"><span><b>${esc(MB21Lista.numeroFattore(f.valore))}</b> · ${i === tutti.length - 1 ? 'dall\'inizio' : 'dal ' + esc(MB21Lista.data(f.dal))}</span>
-        <span><button data-fc-cambia="${esc(f.dal)}" style="color:var(--blu)">Cambia</button>${i === tutti.length - 1 ? '' : ` <button data-fc-togli="${esc(f.dal)}">Elimina</button>`}</span></div>`).join('')}
-      <div class="nuovo-wes"><input type="date" id="fc-dal" aria-label="Da che giorno vale"><input id="fc-valore" inputmode="decimal" placeholder="es. 2,26194" aria-label="Fattore"><button id="fc-piu">+ Fattore</button></div>
-      <div class="sotto" style="margin:6px 0 0">Da che giorno vale · il nuovo fattore.</div></div>`;
+      <div class="ad-elenco fc">${[...AD.fc].reverse().map((f, i, tutti) => `<div class="ad-el">${ic('vendite')}
+        <span class="q"><b>${esc(MB21Lista.numeroFattore(f.valore))}</b><small>${i === tutti.length - 1 ? 'vale dall\'inizio' : 'vale dal ' + esc(MB21Lista.data(f.dal))}</small></span>
+        <button class="cambia" data-fc-cambia="${esc(f.dal)}">Cambia</button>${i === tutti.length - 1 ? '' : `<button class="via" data-fc-togli="${esc(f.dal)}">Elimina</button>`}</div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un fattore</h4>
+        <label class="ad-lab" for="fc-dal">Da che giorno vale</label><input type="date" id="fc-dal">
+        <label class="ad-lab" for="fc-valore">Il nuovo fattore</label><input id="fc-valore" inputmode="decimal" placeholder="es. 2,26194">
+        <button class="primario" id="fc-piu">\uFF0B Aggiungi</button>
+        <div class="sotto">Le vendite di prima restano col fattore vecchio.</div></div>`;
   } else if (AD.sezione === 'bbs') {
-    html = `${indietro}<h1>BBS</h1><div class="rp-wes">
-      ${[...AD.bbs].reverse().map(w => `<div class="w"><span>BBS ${esc(MB21Lista.etichettaEvento(w.data))}</span><button data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}
-      <div class="nuovo-wes"><input type="month" id="rp-data-bbs" aria-label="Mese del BBS"><button id="rp-piu-bbs">+ BBS</button></div>
-      <div class="sotto" style="margin:6px 0 0">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
+    html = `${indietro}<h1>BBS</h1>
+      <div class="ad-elenco bbs">${[...AD.bbs].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
+        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}</span>
+        <button class="via" data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un BBS</h4>
+        <input type="month" id="rp-data-bbs" aria-label="Mese del BBS">
+        <button class="primario" id="rp-piu-bbs">\uFF0B Aggiungi</button>
+        <div class="sotto">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
   } else {
     const stati = AD.utenti.map(u => D.statoAbbonamento(D.scadenzaDi(u, AD.utenti), oggi));
     const ultimo = l => (l.length ? MB21Lista.etichettaEvento(l[l.length - 1].data) : 'nessuno');
@@ -144,7 +161,7 @@ function disegnaAdmin() {
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
-      ${voce('ad-vai-wes', ic('biglietto') + ' Wes', `ultimo ${ultimo(AD.wes)}`)}
+      ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
       ${voce('ad-vai-fc', ic('vendite') + ' Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
   }
@@ -363,9 +380,9 @@ function collegaAdmin() {
   };
   su('rp-piu-wes', async () => {
     const mese = document.getElementById('rp-data-wes').value;   // «2026-10»
-    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del Wes');
+    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del WES');
     const data = mese + '-01';
-    const { error } = await dbq('nuovo Wes', supa.from('wes').insert({ data }));
+    const { error } = await dbq('nuovo WES', supa.from('wes').insert({ data }));
     if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
     mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
@@ -419,12 +436,12 @@ function collegaAdmin() {
   });
   app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
     const w = AD.wes.find(x => x.id === b.dataset.togli);
-    const { count } = await dbq('biglietti del Wes', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
-    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo Wes`);
+    const { count } = await dbq('biglietti del WES', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
+    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo WES`);
     if (!await chiediConferma(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`, '', 'Elimina', true)) return;
-    const { error } = await dbq('elimina Wes', supa.from('wes').delete().eq('id', w.id));
+    const { error } = await dbq('elimina WES', supa.from('wes').delete().eq('id', w.id));
     if (error) return mostraToast('Non eliminato: riprova.');
-    mostraToast('Wes eliminato');
+    mostraToast('WES eliminato');
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
     apriAdmin();
   });

@@ -43,7 +43,7 @@ async function leggiSegniGrezzi() {
     MP.squadra ? { data: MP.squadra } : dbq('squadra per i segni', supa.from('squadra').select('partner_id, sponsor_id, nome')),
     dbq('segni del ramo', supa.rpc('segni_del_ramo')),
     dbq('BBS per i segni', supa.from('bbs').select('data, creato_il')),
-    dbq('Wes per i segni', supa.from('wes').select('data, creato_il')),
+    dbq('WES per i segni', supa.from('wes').select('data, creato_il')),
   ]);
   const errore = [sq, segni, bbs, wes].find(r => r.error);
   if (errore) throw errore.error;

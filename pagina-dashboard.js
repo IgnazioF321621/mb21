@@ -838,7 +838,7 @@ const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
 // La domanda è una sola (`domandaBigliettoHtml`), usata qui e nel foglio del Profilo (cantiere 25 bis: stessa schermata, stesso codice).
 // Dal 25 bis il biglietto si spegne e si rifà dal Profilo toccando la targhetta (prima: una risposta sola, correzioni dall'Admin).
 function domandaBigliettoHtml(x, classe) {
-  const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'Wes';
+  const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'WES';
   return `<div class="${classe} ${k}" data-seg="${esc(x.tipo)}|${esc(x.evento)}">
       <b>${ic('biglietto')} ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · Hai il biglietto?</b>
       <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">Io</button>
