@@ -24,7 +24,7 @@
   --accento:#10151F;      --accento-su:#FFFFFF;
 
   /* categorie dei contatti: colore pieno (pastiglia, targhetta) e tinta (fondo di card, riga, testata) */
-  --cat-prospect:#C2410C;    --cat-prospect-tinta:#FDEEE2;
+  --cat-prospect:#DD5F0D;    --cat-prospect-tinta:#FDEEE2;
   --cat-cliente:#0E7490;     --cat-cliente-tinta:#DFF1F6;
   --cat-partner:#1D4ED8;     --cat-partner-tinta:#E7EFFE;
   --cat-ex:#5A6475;          --cat-ex-tinta:#EAECF1;
