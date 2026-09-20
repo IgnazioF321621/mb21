@@ -102,7 +102,7 @@ function disegnaLista() {
       ${partnerSelect()}
       <div class="cerca">
         <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
-        <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">×</button>
+        <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">${ic('chiudi')}</button>
       </div>
       <div class="chips">
         ${chip('lista')}${chip('prospect')}${chip('partner')}${chip('clienti')}
@@ -629,7 +629,7 @@ function leggiNota(n, quando) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${esc(quando(n.scritta_il))}</h3><button id="chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${esc(quando(n.scritta_il))}</h3><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>${esc(n.tipo_azione || '')}</p>
     <div class="testo-nota">${esc(n.testo)}</div>
     <div class="due" style="margin-top:12px"><button class="link" id="chiudi2">Chiudi</button><button class="primario" id="modifica-nota">Modifica</button></div>
@@ -826,7 +826,7 @@ function scegliScheda(opz) {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>${esc(opz.titolo)}</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      <div class="testa-foglio"><h3>${esc(opz.titolo)}</h3><button id="sc-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${opz.sottotitolo ? `<p>${esc(opz.sottotitolo)}</p>` : ''}
       <div class="campo"><label>Cerca nella lista</label><input id="sc-cerca" type="search" placeholder="Nome o cognome" autocomplete="off"></div>
       <div id="sc-elenco" class="sc-elenco"></div>
@@ -1008,7 +1008,7 @@ function moduloSemplice(titolo, campi) {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="chiudi">×</button></div>
+      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${campi.map(f => `<div class="campo"><label>${esc(f.etichetta)}</label>${
         f.tipo === 'select' ? `<select data-k="${f.k}">${f.opzioni.map(o => `<option ${o === f.valore ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
         : f.tipo === 'textarea' ? `<textarea data-k="${f.k}" rows="${f.righe || 3}">${esc(f.valore)}</textarea>`
@@ -1050,7 +1050,7 @@ function apriModulo(c) {
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria);
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
-      <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">×</button></div>
+      <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
     <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"></div>
     <div class="campo"><label>Telefono</label><div class="telefono-campo">

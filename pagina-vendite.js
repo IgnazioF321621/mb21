@@ -81,7 +81,7 @@ function moduloVendita(v, proposta) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${v ? 'Modifica vendita' : 'Nuova vendita'}</h3><button id="chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${v ? 'Modifica vendita' : 'Nuova vendita'}</h3><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     ${v ? '' : '<div class="vn-avviso">Una vendita per ogni brand: Nutrilite + Artistry = 2 vendite separate</div>'}
     <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : MB21Coda.oggiRoma())}"></div>
     <div class="campo"><label>Brand <small>Obbligatorio</small></label>
