@@ -2,13 +2,23 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 19 settembre 2026.*
+*Aggiornato: 20 settembre 2026.*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 35. LO STORICO DEI BIGLIETTI BBS E WES (aperto il 20/09)
+*Nato da una domanda di Ignazio il 20/09 durante il cantiere 34, guardando la pagina Admin → BBS: «come mai tutti i BBS precedenti che esistevano anche su Glide non risultano?».*
+
+- **Cosa abbiamo scoperto** (letto sul database il 20/09, solo conteggi): nell'app ci sono **12 biglietti in tutto su 8 persone** — **5 BBS, tutti di settembre 2026** e **7 WES, tutti di ottobre 2026** (9 posti, contando compagni e ospiti). Eventi caricati: **1 BBS** e **4 WES**; 7 periodi CEP. I conteggi che si vedono in Mappa e Profilo («BBS 5 · WES 9 · CEP 7») **non sono scritti da nessuna parte**: l'app li conta al momento dalle righe di `biglietti` (`MB21Lista.targheSegni`, `leggiSegniGrezzi`)
+- **Perché mancano**: da Glide **non è mai stato importato niente** su questo. Gli unici eventi caricati sono i **3 WES** scritti dentro la migrazione `20260915150000_fase5_report.sql` (10-2025, 02-2026, 06-2026); il WES di ottobre 2026 e il BBS di settembre 2026 li ha aggiunti Ignazio a mano da Admin. I biglietti delle persone li sta segnando l'Admin nell'app da metà settembre
+- **Che cosa serve per avere lo storico** (due cose, non una): (1) le **date** dei BBS e dei WES passati, cioè l'elenco dei mesi; (2) per ogni evento, **chi aveva il biglietto**, persona per persona — questo è il pezzo grosso
+- **Da chiarire per primo** (Ignazio 20/09: «non ricordo ma dovrebbe essere segnato per ogni persona»): **in Glide i biglietti erano segnati evento per evento** (una riga per persona e per BBS) **o era un numero sulla scheda** («BBS: 7»)? Si guarda **nell'export di Glide**, non a memoria. Se c'è il dettaglio per evento si caricano tutti (come per contatti e Mappa); se c'è solo il totale, si può caricare quello e i conteggi tornano giusti anche senza sapere a quale evento appartiene ogni biglietto
+- **Attenzione**: `bbs.data` e `biglietti.evento` sono il **primo giorno del mese** (vincoli `bbs_primo_del_mese`, migrazione `20260916161747_eventi_al_mese.sql`); «evento in vendita» = l'ultimo caricato. Caricare eventi passati **cambia i conteggi dei segni vitali** di tutta la Mappa: prima si prova in una transazione annullata, come sempre
+- È **caricamento di dati, non stile**: non fa parte del cantiere 34
 
 ## 34. DESIGN DELL'APP: UNO STILE UNICO, CON LE ICONE (aperto il 19/09)
 *Scelto da Ignazio il 19 settembre 2026, alla chiusura dei cantieri 33, 31 e 29, tra sei idee (icone delle guide · Sharing · Materiale N21 · Libri e frasi dal Check · Design · Training a dialogo). «Non vorrei finire sia i token e sia il mese dell'app Max senza ancora aver fatto il design, che ha un costo importante e un valore importante» · «il tempo c'è, ma aprendo sempre cantieri il tempo passa».*
