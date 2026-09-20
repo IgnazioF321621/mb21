@@ -144,7 +144,7 @@ function disegnaOggi() {
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «🔁 N riordini da sentire» porta dritto al riquadro
   let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
   if (vediTutti()) {
-    html += `<div class="vuoto">La coda di OGGI, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
+    html += `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
     app.innerHTML = html + dashboardBasso() + versione();
     return collegaDashboard();
   }
@@ -162,7 +162,7 @@ function disegnaOggi() {
   const st = ST.stato;
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
   const altro = guardoAltri();
-  html += `<div class="testa-coda"><h2>${altro ? `La coda di ${esc(nomeDi(visto()))}` : 'La tua coda'}</h2>
+  html += `<div class="testa-coda"><h2>${altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno'}</h2>
     <span class="contatore">Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</span></div>`;
   if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
@@ -1129,7 +1129,7 @@ function apriCheck() {
     const CARD = [
       { k: 'contatti', titolo: ic('telefonate') + ' Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «Non risponde» non conta.' },
-      { k: 'pm', titolo: ic('agenda') + ' PM', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
+      { k: 'pm', titolo: ic('agenda') + ' Piani Marketing', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
     ];
     const card = (d, numero, aiuto, righe) => `<div class="ck-vn azioni"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;
