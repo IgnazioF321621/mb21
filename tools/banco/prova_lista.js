@@ -318,8 +318,8 @@ prova('Vendite: i totali si sommano interi e si arrotondano solo a schermo (come
   assert.equal(L.numero(t.provvigione, true), '101,98 €');
   assert.equal(L.numero(t.netto, true), '41,98 €');
   assert.deepEqual(L.totaliVendite([]), { vp: 0, provvigione: 0, netto: 0, attesaVp: 0 });
-  assert.equal(L.coloreBrand('eSpring'), '#2563EB');
-  assert.equal(L.coloreBrand('Boh'), '#6B7280');
+  assert.equal(L.coloreBrand('eSpring'), 'var(--brand-espring)');
+  assert.equal(L.coloreBrand('Boh'), 'var(--brand-altro)');
 });
 
 prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virgola', () => {

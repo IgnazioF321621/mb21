@@ -5,22 +5,22 @@
 (function (radice) {
   // Le 4 schede, ordine e testi di Glide. `da`: da dove viene il numero · `obiettivo`: colonna di obiettivi_mese
   const SCHEDE = [
-    { chiave: 'volume', etichetta: 'Volume', pallino: '🔵', colore: '#2563EB', riquadri: [
+    { chiave: 'volume', etichetta: 'Volume', pallino: '🔵', colore: 'var(--gr-volume)', riquadri: [
       { titolo: 'VPP', da: 'amway:vpp_amway', obiettivo: 'vpp', decimali: 2 },
       { titolo: 'VP Clienti', da: 'check:vp_clienti', obiettivo: 'vpv', decimali: 2 },
       { titolo: 'VPG', da: 'amway:vpg_amway', obiettivo: 'vpg', decimali: 2 },
     ] },
-    { chiave: 'azione', etichetta: 'Azione', pallino: '🟠', colore: '#EA580C', riquadri: [
+    { chiave: 'azione', etichetta: 'Azione', pallino: '🟠', colore: 'var(--gr-azione)', riquadri: [
       { titolo: 'Contatti', da: 'check:contatti', obiettivo: 'contatti' },
       { titolo: 'Piani Marketing', da: 'check:pm', obiettivo: 'pm' },
       { titolo: 'Nuovi Iscritti', da: 'check:sponsor_gruppo', obiettivo: 'sponsor_gruppo' },
     ] },
-    { chiave: 'segni', etichetta: 'Segni Vitali', pallino: '🟢', colore: '#16A34A', senzaGiorno: true, riquadri: [
+    { chiave: 'segni', etichetta: 'Segni Vitali', pallino: '🟢', colore: 'var(--gr-segni)', senzaGiorno: true, riquadri: [
       { titolo: 'BBS', da: 'tot:bbs', obiettivo: 'bbs' },
       { titolo: 'WES', da: 'tot:wes', obiettivo: 'wes' },
       { titolo: 'CEP', da: 'tot:cep', obiettivo: 'cep' },
     ] },
-    { chiave: 'crescita', etichetta: 'Crescita', pallino: '🟣', colore: '#7C3AED', riquadri: [
+    { chiave: 'crescita', etichetta: 'Crescita', pallino: '🟣', colore: 'var(--gr-crescita)', riquadri: [
       { titolo: 'Tracce audio', da: 'check:tracce', obiettivo: 'tracce' },
       { titolo: 'Pagine libro', da: 'check:pagine', obiettivo: 'pagine' },
     ] },

@@ -485,7 +485,7 @@ function confermeHtml() {
   const ordinate = [...CONF.righe].sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
   return `<h2>${ic('conferme')} Conferme · ${CONF.righe.length}</h2>` + ordinate.map(c => {
     const tel = c.contatti && c.contatti.telefono;
-    return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || '#6B7280'}"></div>
+    return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || 'var(--az-contatto)'}"></div>
       <div class="corpo">
         <div class="nome">${esc(c.contatti ? c.contatti.nome : '')}</div>
         <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
@@ -910,24 +910,26 @@ function dashboardAlto() {
   return html;
 }
 
-const COLORI_SV = { contatti: '#9CA3AF', pm: '#EA580C', bbs: '#3B82F6', wes: '#DC2626', cep: '#16A34A' };
+// i colori veri dell'app: BBS blu, WES rosso, CEP verde, come le targhette. `coloreSv(k)` il colore pieno, `tintaSv` la casella che si accende.
+const COLORI_SV = { contatti: 'tenue', pm: 'gr-azione', bbs: 'bbs', wes: 'wes', cep: 'cep' };
+const coloreSv = k => `var(--${COLORI_SV[k] === 'tenue' ? 'testo-tenue' : COLORI_SV[k]})`;
+const tintaSv = (k, forza) => `rgba(var(--${COLORI_SV[k]}-rgb), ${forza})`;
 // Tabella dei Segni Vitali a 12 mesi: dal 15/09 sta nel Check (decisione C); in Dashboard solo il mese in corso
 const COLONNE_SV = [['contatti', 'Contatti'], ['pm', 'PM'], ['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
 function cellaSv(sv, k, v, tag) {
   if (!v) return `<${tag} class="zero">0</${tag}>`;
   const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
-  const [rr, gg, bb] = [1, 3, 5].map(i => parseInt(COLORI_SV[k].slice(i, i + 2), 16));
-  return `<${tag} style="background:rgba(${rr},${gg},${bb},${forza.toFixed(2)})">${v}</${tag}>`;
+  return `<${tag} style="background:${tintaSv(k, forza.toFixed(2))}">${v}</${tag}>`;
 }
 function tabellaSv(sv) {
   return `<div class="sv">
       <h3>${ic('segnivitali')} Segni Vitali</h3>
       <div class="sotto-sv">Ultimi 12 mesi · ${ic('persona')} ${esc(nomeVisto())}</div>
-      <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${COLORI_SV[k]}"></i>${t}</span>`).join('')}</div>
-      <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
+      <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${coloreSv(k)}"></i>${t}</span>`).join('')}</div>
+      <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${coloreSv(k)}">${t.toUpperCase()}</th>`).join('')}</tr>
       ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr>`).join('')}
       </table>
-      <div class="totali">${COLONNE_SV.map(([k, t]) => `<div><b style="color:${COLORI_SV[k]}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
+      <div class="totali">${COLONNE_SV.map(([k, t]) => `<div><b style="color:${coloreSv(k)}">${sv.totali[k].valore}</b><span>${t.toUpperCase()}</span><small>${esc(sv.totali[k].sotto)}</small></div>`).join('')}</div>
     </div>`;
 }
 function dashboardBasso() {
@@ -937,7 +939,7 @@ function dashboardBasso() {
   return `<div class="sv">
       <h3>${ic('segnivitali')} Segni Vitali</h3>
       <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · ${ic('persona')} ${esc(nomeVisto())}</div>
-      <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${COLORI_SV[k]}">${t.toUpperCase()}</th>`).join('')}</tr>
+      <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${coloreSv(k)}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
     ${limitato() ? '' : `<div class="ds-azioni" style="margin-top:12px">

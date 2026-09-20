@@ -10,23 +10,23 @@
   // Le 12 voci, raggruppate come le schede. tipo: 'somma' (check giornalieri) · 'amway' (un numero al mese)
   // · 'stato' (fino ad agosto 2026 partenza + check; da settembre 2026 dalle persone, `segniAl`)
   const GRUPPI = [
-    { etichetta: 'Volume', pallino: '🔵', colore: '#2563EB', voci: [
+    { etichetta: 'Volume', pallino: '🔵', colore: 'var(--gr-volume)', voci: [
       { chiave: 'vpp', titolo: 'VPP', tipo: 'amway', campo: 'vpp_amway', decimali: 2 },
       { chiave: 'vp_clienti', titolo: 'VP Clienti', tipo: 'somma', decimali: 2 },
       { chiave: 'vpg', titolo: 'VPG', tipo: 'amway', campo: 'vpg_amway', decimali: 2 },
     ] },
-    { etichetta: 'Azione', pallino: '🟠', colore: '#EA580C', voci: [
+    { etichetta: 'Azione', pallino: '🟠', colore: 'var(--gr-azione)', voci: [
       { chiave: 'contatti', titolo: 'Contatti', tipo: 'somma' },
       { chiave: 'pm', titolo: 'PM', tipo: 'somma' },
       { chiave: 'sponsor_personali', titolo: 'Sponsor Personali', tipo: 'somma' },
       { chiave: 'sponsor_gruppo', titolo: 'Nuovi Iscritti', tipo: 'somma' },
     ] },
-    { etichetta: 'Segni Vitali N21', pallino: '🟢', colore: '#16A34A', voci: [
+    { etichetta: 'Segni Vitali N21', pallino: '🟢', colore: 'var(--gr-segni)', voci: [
       { chiave: 'bbs', titolo: 'BBS', tipo: 'stato' },
       { chiave: 'wes', titolo: 'WES', tipo: 'stato' },
       { chiave: 'cep', titolo: 'CEP', tipo: 'stato' },
     ] },
-    { etichetta: 'Crescita', pallino: '🟣', colore: '#7C3AED', voci: [
+    { etichetta: 'Crescita', pallino: '🟣', colore: 'var(--gr-crescita)', voci: [
       { chiave: 'tracce', titolo: 'Tracce audio', tipo: 'somma' },
       { chiave: 'pagine', titolo: 'Pagine libro', tipo: 'somma' },
     ] },

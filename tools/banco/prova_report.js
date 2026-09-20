@@ -100,7 +100,7 @@ prova('Griglia PM come in Glide il 15/09: 50 PM dal 01/07 per 6 mesi → fine 31
   assert.deepEqual([g.celle[0].breve, g.celle[0].ospite, g.celle[1].giorno], ['Filippo A.', 'Sonia', '2026-09-11']);
   assert.deepEqual([g.celle[0].portato, g.celle[1].portato], ['Marco N.', '']);
   assert.equal(g.celle[2].id, undefined);
-  assert.equal(R.coloreCella('Dare Seguito'), '#7B1FA2');
+  assert.equal(R.coloreCella('Dare Seguito'), 'var(--gr-crescita)');
 });
 
 prova('Griglia PM: fine del mese, non ancora iniziata, obiettivo superato, controlli', () => {
