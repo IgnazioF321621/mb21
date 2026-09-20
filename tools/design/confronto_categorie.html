@@ -1,0 +1,109 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MB21 · i colori delle categorie</title><style>
+  /* Cantiere 34 (Ignazio 20/09: «partner e clienti si somigliano»). Le stesse card in quattro combinazioni di colore.
+     Nomi finti. La scelta si porta poi nel :root di index.html cambiando due righe. */
+  :root {
+    --sfondo: #EFF1F5; --superficie: #FFFFFF; --bordo: #E3E7EE;
+    --testo: #10151F; --testo-soft: #5A6475; --testo-tenue: #7B8496;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --raggio-riga: 18px; --raggio-card: 22px; --raggio-pill: 999px;
+    --ombra-card: 0 2px 12px rgba(16,21,31,.05);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 16px 60px; background: var(--sfondo); color: var(--testo); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .intro { color: var(--testo-soft); font-size: 14px; margin: 0 0 22px; line-height: 1.4; }
+  .prova { max-width: 420px; margin: 0 auto 30px; }
+  .testa { display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px; }
+  .testa h2 { font-size: 17px; margin: 0; }
+  .testa small { color: var(--testo-soft); font-size: 12.5px; }
+  .nota { color: var(--testo-soft); font-size: 12.5px; margin: 0 0 12px; line-height: 1.35; }
+
+  /* le quattro combinazioni: cambia solo la terna di colori */
+  .oggi   { --pro: #C2410C; --pro-t: #FDEEE2; --cli: #1D4ED8; --cli-t: #E7EFFE; --par: #6D28D9; --par-t: #F0E9FD; }
+  .a      { --pro: #C2410C; --pro-t: #FDEEE2; --cli: #0E7490; --cli-t: #DFF1F6; --par: #6D28D9; --par-t: #F0E9FD; }
+  .b      { --pro: #C2410C; --pro-t: #FDEEE2; --cli: #1D4ED8; --cli-t: #E7EFFE; --par: #A21CAF; --par-t: #FAE8FD; }
+  .c      { --pro: #C2410C; --pro-t: #FDEEE2; --cli: #0E7490; --cli-t: #DFF1F6; --par: #A21CAF; --par-t: #FAE8FD; }
+
+  .cat-prospect { --cat: var(--pro); --cat-tinta: var(--pro-t); }
+  .cat-cliente  { --cat: var(--cli); --cat-tinta: var(--cli-t); }
+  .cat-partner  { --cat: var(--par); --cat-tinta: var(--par-t); }
+
+  /* card della Lista Nomi */
+  .card { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .pastiglia { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--cat); color: #fff; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+  .card .chi { min-width: 0; flex: 1; }
+  .card .nome { font-weight: 600; font-size: 15.5px; }
+  .card .mestiere { color: var(--testo-soft); font-size: 12.5px; margin-top: 2px; }
+  .card .segni { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: var(--raggio-pill); background: var(--cat-tinta); color: var(--cat); }
+  .tag.spento { background: #F2F4F7; color: #A7AEBB; }
+
+  /* riga della coda: riga bianca con il tondo del colore della categoria */
+  .riga { background: var(--superficie); border-radius: var(--raggio-riga); box-shadow: var(--ombra-card); padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; }
+  .riga .tondo { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--cat-tinta); color: var(--cat); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .riga .nome { font-weight: 600; font-size: 15px; }
+  .riga .sotto { color: var(--testo-soft); font-size: 12.5px; margin-top: 1px; }
+  .riga .f { margin-left: auto; color: var(--testo-tenue); }
+
+  /* testata della scheda contatto */
+  .testata { background: var(--cat-tinta); border-radius: var(--raggio-card); padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
+  .testata .pastiglia { width: 52px; height: 52px; font-size: 18px; }
+  .testata .nome { font-size: 18px; font-weight: 700; }
+  .testata .cat { font-size: 12.5px; font-weight: 700; color: var(--cat); margin-top: 2px; }
+
+  /* i tre colori uno accanto all'altro, grandi */
+  .terna { display: flex; gap: 10px; margin-bottom: 12px; }
+  .terna div { flex: 1; height: 54px; border-radius: 14px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; color: #fff; font-size: 11.5px; font-weight: 700; }
+  .t-pro { background: var(--pro); } .t-cli { background: var(--cli); } .t-par { background: var(--par); }
+</style>
+
+<h1>I colori delle categorie</h1>
+<p class="intro">Le stesse schermate in quattro combinazioni. Guarda soprattutto i <b>cerchietti piccoli</b>: è lì che oggi Cliente e Partner si confondono. Scegli con una lettera.</p>
+
+<div class="prova oggi">
+  <div class="testa"><h2>Com'è oggi</h2><small>arancio · blu · viola</small></div>
+  <p class="nota">Cliente e Partner sono due colori freddi e scuri: da lontano si somigliano.</p>
+  <div class="terna"><div class="t-pro">PROSPECT</div><div class="t-cli">CLIENTE</div><div class="t-par">PARTNER</div></div>
+  <div class="card cat-prospect"><span class="pastiglia">MR</span><span class="chi"><div class="nome">Marco Rossi</div><div class="mestiere">Idraulico · Catania</div><div class="segni"><span class="tag">BBS 2</span><span class="tag spento">WES</span></div></span></div>
+  <div class="card cat-cliente"><span class="pastiglia">GB</span><span class="chi"><div class="nome">Giulia Bianchi</div><div class="mestiere">Insegnante · Siracusa</div><div class="segni"><span class="tag">BBS 5</span><span class="tag">CEP</span></div></span></div>
+  <div class="card cat-partner"><span class="pastiglia">LV</span><span class="chi"><div class="nome">Luca Verdi</div><div class="mestiere">Geometra · Ragusa</div><div class="segni"><span class="tag">BBS 9</span><span class="tag">WES 3</span></div></span></div>
+  <div class="riga cat-cliente"><span class="tondo">GB</span><span><div class="nome">Giulia Bianchi</div><div class="sotto">rientra oggi · Cliente</div></span><span class="f">›</span></div>
+  <div class="riga cat-partner"><span class="tondo">LV</span><span><div class="nome">Luca Verdi</div><div class="sotto">rientra oggi · Partner</div></span><span class="f">›</span></div>
+  <div class="testata cat-partner"><span class="pastiglia">LV</span><span><div class="nome">Luca Verdi</div><div class="cat">Partner</div></span></div>
+</div>
+
+<div class="prova a">
+  <div class="testa"><h2>A · Cliente verde-acqua</h2><small>arancio · verde-acqua · viola</small></div>
+  <p class="nota">Cambia solo il Cliente. Il Partner resta viola come lo conosci.</p>
+  <div class="terna"><div class="t-pro">PROSPECT</div><div class="t-cli">CLIENTE</div><div class="t-par">PARTNER</div></div>
+  <div class="card cat-prospect"><span class="pastiglia">MR</span><span class="chi"><div class="nome">Marco Rossi</div><div class="mestiere">Idraulico · Catania</div><div class="segni"><span class="tag">BBS 2</span><span class="tag spento">WES</span></div></span></div>
+  <div class="card cat-cliente"><span class="pastiglia">GB</span><span class="chi"><div class="nome">Giulia Bianchi</div><div class="mestiere">Insegnante · Siracusa</div><div class="segni"><span class="tag">BBS 5</span><span class="tag">CEP</span></div></span></div>
+  <div class="card cat-partner"><span class="pastiglia">LV</span><span class="chi"><div class="nome">Luca Verdi</div><div class="mestiere">Geometra · Ragusa</div><div class="segni"><span class="tag">BBS 9</span><span class="tag">WES 3</span></div></span></div>
+  <div class="riga cat-cliente"><span class="tondo">GB</span><span><div class="nome">Giulia Bianchi</div><div class="sotto">rientra oggi · Cliente</div></span><span class="f">›</span></div>
+  <div class="riga cat-partner"><span class="tondo">LV</span><span><div class="nome">Luca Verdi</div><div class="sotto">rientra oggi · Partner</div></span><span class="f">›</span></div>
+  <div class="testata cat-partner"><span class="pastiglia">LV</span><span><div class="nome">Luca Verdi</div><div class="cat">Partner</div></span></div>
+</div>
+
+<div class="prova b">
+  <div class="testa"><h2>B · Partner fucsia</h2><small>arancio · blu · fucsia</small></div>
+  <p class="nota">Cambia solo il Partner. Il Cliente resta blu come lo conosci.</p>
+  <div class="terna"><div class="t-pro">PROSPECT</div><div class="t-cli">CLIENTE</div><div class="t-par">PARTNER</div></div>
+  <div class="card cat-prospect"><span class="pastiglia">MR</span><span class="chi"><div class="nome">Marco Rossi</div><div class="mestiere">Idraulico · Catania</div><div class="segni"><span class="tag">BBS 2</span><span class="tag spento">WES</span></div></span></div>
+  <div class="card cat-cliente"><span class="pastiglia">GB</span><span class="chi"><div class="nome">Giulia Bianchi</div><div class="mestiere">Insegnante · Siracusa</div><div class="segni"><span class="tag">BBS 5</span><span class="tag">CEP</span></div></span></div>
+  <div class="card cat-partner"><span class="pastiglia">LV</span><span class="chi"><div class="nome">Luca Verdi</div><div class="mestiere">Geometra · Ragusa</div><div class="segni"><span class="tag">BBS 9</span><span class="tag">WES 3</span></div></span></div>
+  <div class="riga cat-cliente"><span class="tondo">GB</span><span><div class="nome">Giulia Bianchi</div><div class="sotto">rientra oggi · Cliente</div></span><span class="f">›</span></div>
+  <div class="riga cat-partner"><span class="tondo">LV</span><span><div class="nome">Luca Verdi</div><div class="sotto">rientra oggi · Partner</div></span><span class="f">›</span></div>
+  <div class="testata cat-partner"><span class="pastiglia">LV</span><span><div class="nome">Luca Verdi</div><div class="cat">Partner</div></span></div>
+</div>
+
+<div class="prova c">
+  <div class="testa"><h2>C · tutti e due</h2><small>arancio · verde-acqua · fucsia</small></div>
+  <p class="nota">Il distacco più netto: i tre colori non si somigliano da nessuna distanza.</p>
+  <div class="terna"><div class="t-pro">PROSPECT</div><div class="t-cli">CLIENTE</div><div class="t-par">PARTNER</div></div>
+  <div class="card cat-prospect"><span class="pastiglia">MR</span><span class="chi"><div class="nome">Marco Rossi</div><div class="mestiere">Idraulico · Catania</div><div class="segni"><span class="tag">BBS 2</span><span class="tag spento">WES</span></div></span></div>
+  <div class="card cat-cliente"><span class="pastiglia">GB</span><span class="chi"><div class="nome">Giulia Bianchi</div><div class="mestiere">Insegnante · Siracusa</div><div class="segni"><span class="tag">BBS 5</span><span class="tag">CEP</span></div></span></div>
+  <div class="card cat-partner"><span class="pastiglia">LV</span><span class="chi"><div class="nome">Luca Verdi</div><div class="mestiere">Geometra · Ragusa</div><div class="segni"><span class="tag">BBS 9</span><span class="tag">WES 3</span></div></span></div>
+  <div class="riga cat-cliente"><span class="tondo">GB</span><span><div class="nome">Giulia Bianchi</div><div class="sotto">rientra oggi · Cliente</div></span><span class="f">›</span></div>
+  <div class="riga cat-partner"><span class="tondo">LV</span><span><div class="nome">Luca Verdi</div><div class="sotto">rientra oggi · Partner</div></span><span class="f">›</span></div>
+  <div class="testata cat-partner"><span class="pastiglia">LV</span><span><div class="nome">Luca Verdi</div><div class="cat">Partner</div></span></div>
+</div>
