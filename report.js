@@ -159,8 +159,8 @@
       celle,
     };
   }
-  const COLORI_GRIGLIA = { 'Iscrizione': '#2E7D32', 'No BuonFine': '#C62828', 'Presentazione': '#1565C0', 'Dare Seguito': '#7B1FA2' };
-  const coloreCella = esito => COLORI_GRIGLIA[esito] || '#6B7280';
+  const COLORI_GRIGLIA = { 'Iscrizione': 'var(--ok)', 'No BuonFine': 'var(--pericolo)', 'Presentazione': 'var(--gr-volume)', 'Dare Seguito': 'var(--gr-crescita)' };
+  const coloreCella = esito => COLORI_GRIGLIA[esito] || 'var(--az-contatto)';
   function validaGriglia(v) {
     const o = Number(v.obiettivo), m = Number(v.mesi);
     if (!Number.isInteger(o) || o < 1 || o > 100) return 'Obiettivo tra 1 e 100.';

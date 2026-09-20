@@ -38,6 +38,22 @@
   --pericolo:#C02626;  --pericolo-tinta:#FCEAEA;
   --proposta:#B45309;  --proposta-tinta:#FEF3C8;
 
+  /* i quattro gruppi dei numeri (Dashboard, Check, Obiettivi): colori loro, non delle categorie */
+  --gr-volume:#1D4ED8;   --gr-volume-tinta:#E7EFFE;
+  --gr-azione:#C2410C;   --gr-azione-tinta:#FDEEE2;
+  --gr-segni:#15803D;    --gr-segni-tinta:#E4F3E8;
+  --gr-crescita:#6D28D9; --gr-crescita-tinta:#F0E9FD;
+
+  /* i tipi di azione (strisciolina delle Conferme e dei Riordini, calendari) */
+  --az-pm:#1D4ED8; --az-followup:#15803D; --az-appuntamento:#6D28D9; --az-consulenza:#C2410C; --az-contatto:#5A6475;
+
+  /* i marchi: colori loro, decisi da altri */
+  --brand-artistry:#BE185D; --brand-espring:#1D4ED8; --brand-home:#C2410C; --brand-nutrilite:#15803D; --brand-persona:#6D28D9; --brand-altro:#5A6475;
+  --revolut:#185FA5;
+
+  /* gli stessi colori in numeri, per le caselle della tabella dei Segni Vitali che si accendono piano piano */
+  --tenue-rgb:123,132,150; --gr-azione-rgb:194,65,12; --bbs-rgb:29,78,216; --wes-rgb:192,38,38; --cep-rgb:21,128,61;
+
   /* scritte */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --dim-pagina:26px;   --dim-sezione:16px;

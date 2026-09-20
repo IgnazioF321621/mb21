@@ -42,7 +42,7 @@
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
   const CON_OSPITE = ['Piano Marketing', 'Follow Up'];                          // decisione 8
   const DURATE = [[5, '5 min'], [30, '30 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];
-  const COLORI = { 'Piano Marketing': '#2563EB', 'Follow Up': '#16A34A', 'Appuntamento': '#7C3AED', 'Consulenza PRD': '#EA580C', 'Contatto': '#6B7280' };
+  const COLORI = { 'Piano Marketing': 'var(--az-pm)', 'Follow Up': 'var(--az-followup)', 'Appuntamento': 'var(--az-appuntamento)', 'Consulenza PRD': 'var(--az-consulenza)', 'Contatto': 'var(--az-contatto)' };
   const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 

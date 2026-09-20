@@ -8,9 +8,9 @@
   // Stato dai VPP personali del mese, come in Glide (verificato sui dati il 16/09)
   const SOGLIA_ATTIVO = 50;
   const STATI = {
-    attivo:    { pallino: '🟢', titolo: 'Attivo',   colore: '#16A34A' },
-    warning:   { pallino: '🔴', titolo: 'Warning',  colore: '#DC2626' },
-    inattivo:  { pallino: '⚪', titolo: 'Inattivo', colore: '#9CA3AF' },
+    attivo:    { pallino: '🟢', titolo: 'Attivo',   colore: 'var(--ok)' },
+    warning:   { pallino: '🔴', titolo: 'Warning',  colore: 'var(--pericolo)' },
+    inattivo:  { pallino: '⚪', titolo: 'Inattivo', colore: 'var(--spento)' },
   };
 
   function stato(vpp) {
