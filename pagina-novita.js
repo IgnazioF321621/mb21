@@ -47,7 +47,7 @@ function foglioNovita(r, ultimoUso) {
   velo.className = 'velo';
   // «Ultimo ingresso» con l'ora (Ignazio 18/09): stesso formato della data di ogni novità, per confrontarle
   const eri = r && ultimoUso ? `<br><b style="color:var(--testo)">Ultimo ingresso: ${esc(MB21Novita.momentoLeggibile(ultimoUso))}</b>` : '';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('novita')} ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">×</button>'}</div>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('novita')} ${r ? 'Novità dall\'ultima volta' : 'Novità dell\'app'}</h3>${r ? '' : '<button id="nv-x" aria-label="Chiudi">' + ic('chiudi') + '</button>'}</div>
     <p>${r ? `Ecco cosa è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.${eri}` : `<b style="color:var(--testo)">La tua versione: ${esc(MB21Novita.quandoLeggibile(APP_VERSION))}</b> <span id="nv-ultima"></span><br>Tutto quello che è cambiato in MB21, pagina per pagina. Tocca un titolo per leggere.`}</p>
     ${righeNovita(r ? r.nuove : tutte) || '<div class="vuoto">Ancora nessuna novità.</div>'}
     ${r && r.altre ? `<button class="link" id="nv-tutte" style="display:block;margin:10px auto 0">vedi tutte (altre ${r.altre})</button>` : ''}

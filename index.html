@@ -349,6 +349,10 @@
   .nv-riga small { display: block; color: var(--grigio-chiaro); font-size: 11px; margin-top: 4px; }
   .foglio .testa-foglio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .foglio .testa-foglio button { border: 0; background: none; font-size: 24px; color: var(--grigio); padding: 0 4px; }
+  /* la «×» dei fogli è l'icona `chiudi`, non una lettera (cantiere 34, 20/09) */
+  .foglio .testa-foglio button > svg.ic, .mc-testa button > svg.ic { width: 22px; height: 22px; display: block; margin: auto; }
+  .cerca button > svg.ic { width: 18px; height: 18px; display: block; }
+  button.link > svg.ic { width: 18px; height: 18px; vertical-align: -4px; }
   .campo { margin-bottom: 4px; }
   .campo label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; margin-top: 10px; }
   .campo label small { font-weight: 400; color: var(--grigio); margin-left: auto; }   /* «Obbligatorio» resta a destra anche quando il titolo ha l'icona davanti */
@@ -885,29 +889,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609202234"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609202234"></script>
-<script src="lista.js?v=202609202234"></script>
-<script src="rubrica.js?v=202609202234"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609202234"></script>
-<script src="agenda.js?v=202609202234"></script>
-<script src="report.js?v=202609202234"></script>
-<script src="check.js?v=202609202234"></script>
-<script src="mappa.js?v=202609202234"></script>
-<script src="pagina-dashboard.js?v=202609202234"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609202234"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609202234"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609202234"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609202234"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609202234"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609202234"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609202234"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609202234"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609202234"></script>
-<script src="benvenuto.js?v=202609202234"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609202234"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609202237"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609202237"></script>
+<script src="lista.js?v=202609202237"></script>
+<script src="rubrica.js?v=202609202237"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609202237"></script>
+<script src="agenda.js?v=202609202237"></script>
+<script src="report.js?v=202609202237"></script>
+<script src="check.js?v=202609202237"></script>
+<script src="mappa.js?v=202609202237"></script>
+<script src="pagina-dashboard.js?v=202609202237"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609202237"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609202237"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609202237"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609202237"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609202237"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609202237"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609202237"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609202237"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609202237"></script>
+<script src="benvenuto.js?v=202609202237"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609202237"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 22:34';
+const APP_VERSION = '2026.09.20 · 22:37';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1602,7 +1606,7 @@ function scegliPassato() {
   const A = MB21Agenda, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('attenzione')} Senza esito</h3><button id="ps-x">×</button></div>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('attenzione')} Senza esito</h3><button id="ps-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>Tocca un appuntamento per dargli l'esito.</p>
     <div class="altri-voci">${AG.passati.map(e => { const r = A.riga(e, opz), p = A.partiRoma(e.inizio);
       return `<button data-id="${esc(e.id)}"><b>${esc(p.giorno.split('-').reverse().join('/'))} ${esc(p.ora)}</b> · ${esc(r.titolo)}</button>`; }).join('')}</div></div>`;
@@ -1655,7 +1659,7 @@ async function nuovoAppuntamento(opz = {}) {
     // forma del modulo contatto (cantiere 34): in testa per chi è, gruppi con un titoletto, «Annulla · Salva» fermi in fondo
     velo.innerHTML = `<div class="foglio alto mc">
       <div class="mc-testa" id="na-testa"><span class="ts-pastiglia"></span>
-        <div><small>${esc(opz.titolo || 'Nuovo appuntamento')}</small><b></b></div><button id="na-x" aria-label="Chiudi">×</button></div>
+        <div><small>${esc(opz.titolo || 'Nuovo appuntamento')}</small><b></b></div><button id="na-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${opz.sottotitolo ? `<p style="margin:12px 4px 0">${esc(opz.sottotitolo)}</p>` : ''}
       <div id="na-corpo"></div>
       <div class="errore" id="na-errore"></div>
@@ -1695,7 +1699,7 @@ async function nuovoAppuntamento(opz = {}) {
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         h += `<div class="campo"><label>Durata</label>${scelte('durata', A.DURATE.map(d => d[0]), st.durata, A.DURATE.map(d => d[1]))}</div>`;
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
-          ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">×</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
+          ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
       }
       velo.querySelector('#na-corpo').innerHTML = h + '</div>';
@@ -1799,7 +1803,7 @@ async function foglioAzione(id, opz = {}) {
   // forma del modulo contatto (cantiere 34, Ignazio 19/09): in testa la persona, gruppi «Tipo ed esito» e «Data e note», Annulla · Salva fermi in fondo
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(a.contatti && a.contatti.categoria)}"><span class="ts-pastiglia">${esc(iniziali(st.contatto.nome))}</span>
-      <div><small>${esc(a.tipo_azione || 'Azione')}</small><b>${esc(st.contatto.nome)}</b></div><button id="fa-x" aria-label="Chiudi">×</button></div>
+      <div><small>${esc(a.tipo_azione || 'Azione')}</small><b>${esc(st.contatto.nome)}</b></div><button id="fa-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px"><div id="fa-persone"></div></div>
     <h4 class="mc-t">Tipo ed esito</h4><div class="riquadro mc-g">
     ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
@@ -1828,7 +1832,7 @@ async function foglioAzione(id, opz = {}) {
       if (st.ospite && !st.portato) h += riga('Ospite <small>scritto a mano</small>', esc(st.ospite), '',
         `<button class="piccolo fa-ospite" data-cmd="ospite">⇄ L'esito è dell'ospite</button>`);
       else h += riga('Portato da', st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>',
-        st.portato ? '<button class="link" data-cmd="togli" aria-label="Togli">×</button>' : '<button class="link" data-cmd="portato">＋ Scegli</button>');
+        st.portato ? '<button class="link" data-cmd="togli" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" data-cmd="portato">＋ Scegli</button>');
     }
     $('fa-persone').innerHTML = h;
     $('fa-persone').querySelectorAll('[data-cmd]').forEach(b => b.onclick = async () => {
@@ -1897,7 +1901,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
     velo.className = 'velo';
     velo.style.zIndex = 25;   // sopra il foglio Modifica azione
     velo.innerHTML = `<div class="foglio alto">
-      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="sc-x" aria-label="Chiudi">×</button></div>
+      <div class="testa-foglio"><h3>${esc(titolo)}</h3><button id="sc-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <input id="sc-testo" placeholder="Scrivi il nome" value="${esc(testo)}" autocomplete="off">
       <div class="altri-voci" id="sc-elenco"></div></div>`;
     document.body.appendChild(velo);
@@ -2294,7 +2298,7 @@ function impostaGriglia() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto">
-    <div class="testa-foglio"><h3>${ic('pianomarketing')} Griglia PM</h3><button id="gi-x" aria-label="Chiudi">×</button></div>
+    <div class="testa-foglio"><h3>${ic('pianomarketing')} Griglia PM</h3><button id="gi-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="campo"><label>Obiettivo PM</label>
       <div class="gp-obiettivi">${R.OBIETTIVI_PM.map(n => `<button data-ob="${n}">${n}</button>`).join('')}<button data-ob="altro">Altro</button></div>
       <div class="gp-altro" id="gi-altro" hidden><input type="range" id="gi-barra" min="1" max="100" step="1" value="${obiettivo}"><b id="gi-valore">${obiettivo}</b></div></div>

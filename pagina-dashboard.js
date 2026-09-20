@@ -979,7 +979,7 @@ function apriObiettivi() {
   // stessa forma degli altri moduli (cantiere 34)
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
-      <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">×</button></div>
+      <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
     ${prima ? `<p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
       <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
@@ -1046,7 +1046,7 @@ function apriCheck() {
   // stessa forma degli altri moduli (cantiere 34): in testa il giorno, gruppi «Attività» e «Crescita», «Annulla · Salva» fermi in fondo
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
-      <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">×</button></div>
+      <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>${ic('conferme')} Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
