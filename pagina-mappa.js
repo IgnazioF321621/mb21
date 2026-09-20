@@ -105,24 +105,26 @@ function disegnaMappa() {
   } else if (!righe.length) {
     html += `<div class="vuoto">Nessuno con questo filtro.</div>`;
   } else {
-    html += righe.map(r => {
+    html += '<div class="mp-elenco">' + righe.map(r => {
       const s = M.STATI[r.stato];
       const apri = r.haFigli
         ? `<button class="mp-apri" data-mpapri="${esc(r.id)}" aria-label="${r.aperto ? 'Chiudi' : 'Apri'} il gruppo di ${esc(r.nome)}">${r.aperto ? '−' : '+'}</button>`
         : `<span class="mp-apri vuoto"></span>`;
-      return `<div class="mp-riga ${r.spento ? 'spento' : ''}" style="padding-left:${10 + r.profondita * 18}px">
+      // il rientro si ferma al quinto livello: più in basso lo dice la pastiglia, e restano leggibili nome e numeri
+      const rientro = 10 + Math.min(r.profondita, 5) * 22;
+      return `<div class="mp-riga ${r.spento ? 'spento' : ''} ${r.profondita ? 'figlio' : ''}" style="padding-left:${rientro}px; --filo:${rientro - 18}px">
         ${apri}
+        <span class="mp-tondo" style="background:${s.colore}" title="${esc(s.titolo)}">${esc(iniziali(r.nome))}</span>
         <div class="mp-corpo">
-          <span class="mp-liv">${r.livello ?? ''}</span>
-          <span title="${esc(s.titolo)}">${escIcone(s.pallino)}</span>
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
+          <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
           <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano <b>${num(r.alLivelloSuccessivo)}</b>` : ''}</div>
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
-    }).join('');
+    }).join('') + '</div>';
   }
   app.innerHTML = html + versione();
   collegaMappa();

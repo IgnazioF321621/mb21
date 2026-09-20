@@ -643,19 +643,27 @@
   .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
   .rp-mesi .futuro { color: var(--linea); }
   .ck-confronto { font-size: 13px; color: var(--grigio); text-align: center; margin: -4px 0 12px; }
-  .ck-gruppo { background: var(--superficie); border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra-card); margin-bottom: 12px; border-left: 5px solid; }
-  .ck-gruppo h3 { margin: 0; padding: 12px 14px 4px; font-size: 16px; }
+  /* Check (cantiere 34, 20/09): il tondo del gruppo al posto della striscia sul fianco, righe alternate invece delle lineette */
+  .ck-gruppo { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); margin-bottom: 12px; padding: 4px 6px 8px; }
+  .ck-testa-g { display: flex; align-items: center; gap: 10px; padding: 10px 8px 6px; }
+  .ck-testa-g .tondo { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--g-tinta); color: var(--g);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+  .ck-testa-g h3 { margin: 0; font-size: 16px; }
   .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px; align-items: center; gap: 4px; }
-  .ck-testa { padding: 0 12px 6px 14px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
-  .ck-riga { width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea); background: none; padding: 11px 12px 11px 14px;
+  .ck-testa { padding: 0 10px 6px 10px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
+  .ck-riga { width: 100%; text-align: left; border: 0; background: none; border-radius: var(--raggio-bottone); padding: 10px;
     font-family: inherit; color: var(--testo); font-size: 15px; }
-  .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; }
+  .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; color: var(--g); }
+  .ck-riga:nth-of-type(odd) { background: var(--superficie-2); }
+  .ck-riga .barra { grid-column: 1 / -1; height: 4px; border-radius: 999px; background: var(--superficie-2); margin-top: 7px; overflow: hidden; }
+  .ck-riga:nth-of-type(odd) .barra { background: var(--superficie); }
+  .ck-riga .barra i { display: block; height: 100%; background: var(--g); border-radius: 999px; }
   .ck-riga .pr { text-align: right; font-size: 14px; color: var(--grigio); white-space: nowrap; }
   .ck-riga .an { text-align: right; font-size: 13px; font-weight: 700; color: var(--grigio); white-space: nowrap; }
   .ck-riga .an.su { color: var(--verde); } .ck-riga .an.giu { color: var(--rosso); }
   .ck-riga small { grid-column: 1 / -1; font-size: 12px; color: var(--grigio-chiaro); margin-top: 1px; }
-  .ck-riga.aperta { background: var(--superficie-2); }
-  .ck-grafico { background: var(--superficie-2); padding: 4px 14px 12px; }
+  .ck-riga.aperta { background: var(--g-tinta); }
+  .ck-grafico { background: var(--g-tinta); border-radius: var(--raggio-bottone); padding: 8px 12px 12px; margin: 0 0 4px; }
   .ck-grafico .legenda { font-size: 12px; color: var(--grigio); margin: 0 0 8px; }
   .ck-grafico .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
   .ck-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 110px; }
@@ -778,16 +786,24 @@
   .mp-filtri button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .mp-cerca { width: 100%; box-sizing: border-box; min-height: 44px; padding: 9px 18px; border: 1px solid transparent; box-shadow: var(--ombra-card);
     border-radius: var(--raggio-pill); font-size: 15px; margin-bottom: 12px; }
-  .mp-riga { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--superficie-2); background: var(--superficie); }
-  .mp-riga.spento { opacity: .45; }
+  .mp-elenco { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 6px 4px; margin-bottom: 12px; }
+  /* Mappa (cantiere 34, 20/09): resta un albero, ma con i pezzi dell'app: tondo delle iniziali del colore dello stato, livello a pastiglia, filo che collega */
+  .mp-riga { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--raggio-bottone); background: var(--superficie); position: relative; }
+  .mp-riga + .mp-riga { margin-top: 2px; }
+  .mp-riga.figlio::before { content: ""; position: absolute; left: var(--filo); top: -2px; bottom: 50%; width: 1.5px; background: var(--bordo); }
+  .mp-riga.figlio::after { content: ""; position: absolute; left: var(--filo); top: 50%; width: 10px; height: 1.5px; background: var(--bordo); }
+  .mp-tondo { flex: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; }
+  .mp-riga.spento { opacity: .5; }
   .mp-apri { flex: 0 0 auto; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--bordo);
+    width: 22px; height: 22px; border-radius: 999px; border: 1px solid var(--bordo);
     background: var(--superficie); font-size: 15px; font-weight: 700; color: var(--grigio); line-height: 1; padding: 0; }
-  .mp-apri.vuoto { width: 12px; height: 12px; margin: 6px; border-color: var(--bordo); }
+  .mp-apri.vuoto { width: 22px; height: 22px; border: 0; }
   .mp-corpo { flex: 1; min-width: 0; }
   .mp-nome { background: none; border: 0; padding: 0; font-size: 15px; font-weight: 600; color: var(--testo); text-align: left; }
   .mp-nome.collegato { color: var(--cat-cliente); text-decoration: underline; }
-  .mp-liv { color: var(--grigio-chiaro); font-size: 12px; font-weight: 600; margin-right: 6px; }
+  .mp-liv { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--testo-tenue); background: var(--superficie-2);
+    border-radius: var(--raggio-pill); padding: 2px 7px; margin-left: 6px; vertical-align: 1px; }
   .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
   .mp-numeri .mp-bonus, .mp-numeri b { color: var(--testo); font-weight: 700; }
   .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
@@ -852,29 +868,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609200831"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609200831"></script>
-<script src="lista.js?v=202609200831"></script>
-<script src="rubrica.js?v=202609200831"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609200831"></script>
-<script src="agenda.js?v=202609200831"></script>
-<script src="report.js?v=202609200831"></script>
-<script src="check.js?v=202609200831"></script>
-<script src="mappa.js?v=202609200831"></script>
-<script src="pagina-dashboard.js?v=202609200831"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609200831"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609200831"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609200831"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609200831"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609200831"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609200831"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609200831"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609200831"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609200831"></script>
-<script src="benvenuto.js?v=202609200831"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609200831"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609200844"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609200844"></script>
+<script src="lista.js?v=202609200844"></script>
+<script src="rubrica.js?v=202609200844"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609200844"></script>
+<script src="agenda.js?v=202609200844"></script>
+<script src="report.js?v=202609200844"></script>
+<script src="check.js?v=202609200844"></script>
+<script src="mappa.js?v=202609200844"></script>
+<script src="pagina-dashboard.js?v=202609200844"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609200844"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609200844"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609200844"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609200844"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609200844"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609200844"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609200844"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609200844"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609200844"></script>
+<script src="benvenuto.js?v=202609200844"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609200844"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 08:31';
+const APP_VERSION = '2026.09.20 · 08:44';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1954,14 +1970,15 @@ function disegnaCheck() {
       <b>${esc(R.testoPeriodo(p))}</b>
       <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
       <div class="ck-confronto">${esc(r.confronto)}</div>`;
-    html += r.gruppi.map(g => `<div class="ck-gruppo" style="border-left-color:${g.colore}">
-      <h3 style="color:${g.colore}">${escIcone(g.pallino)}${esc(g.etichetta)}</h3>
+    html += r.gruppi.map(g => `<div class="ck-gruppo" style="--g:${g.colore}; --g-tinta:${g.colore.replace(')', '-tinta)')}">
+      <div class="ck-testa-g"><span class="tondo">${esc(g.etichetta[0])}</span><h3>${esc(g.etichetta)}</h3></div>
       <div class="ck-testa"><span></span><span>adesso</span><span>prima</span><span>▲▼</span></div>
       ${g.voci.map(v => {
         const aperta = CK.aperta === v.chiave;
         let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}"><span>${esc(v.titolo)}</span>
           <span class="n">${esc(v.adesso)}</span><span class="pr">${esc(v.prima)}</span><span class="an ${v.andamento.segno}">${esc(v.andamento.testo)}</span>
-          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}</button>`;
+          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}
+          ${v.quota == null ? '' : `<span class="barra" aria-hidden="true"><i style="width:${v.quota}%"></i></span>`}</button>`;
         if (!aperta) return h;
         const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
         const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });

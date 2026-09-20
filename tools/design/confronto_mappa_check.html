@@ -1,0 +1,168 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MB21 · Mappa e Check</title>
+<style>
+  /* Cantiere 34 · punto 2 del controllo (20/09). Nomi e numeri finti. A sinistra com'è oggi, a destra come diventerebbe. */
+  :root {
+    --sfondo:#EFF1F5; --superficie:#FFFFFF; --superficie-2:#F7F8FA; --bordo:#E3E7EE;
+    --testo:#10151F; --testo-soft:#5A6475; --testo-tenue:#7B8496; --accento:#10151F;
+    --bbs:#1D4ED8; --wes:#C02626; --cep:#15803D; --spento:#C3C8D1;
+    --ok:#15803D; --ok-tinta:#E4F3E8; --pericolo:#C02626; --pericolo-tinta:#FCEAEA;
+    --gr-volume:#1D4ED8; --gr-volume-tinta:#E7EFFE; --gr-azione:#DD5F0D; --gr-azione-tinta:#FDEEE2;
+    --gr-segni:#15803D; --gr-segni-tinta:#E4F3E8; --gr-crescita:#6D28D9; --gr-crescita-tinta:#F0E9FD;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    --raggio-bottone:14px; --raggio-riga:18px; --raggio-card:22px; --raggio-pill:999px;
+    --ombra-card:0 2px 12px rgba(16,21,31,.05);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:18px 16px 60px; background:var(--sfondo); color:var(--testo); font-family:var(--font); -webkit-font-smoothing:antialiased; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:30px 0 4px; }
+  p.i { color:var(--testo-soft); font-size:13.5px; margin:0 0 12px; line-height:1.45; max-width:760px; }
+  .coppia { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .col { flex:1 1 330px; min-width:300px; max-width:400px; }
+  .col > h3 { font-size:13px; text-transform:uppercase; letter-spacing:.8px; color:var(--testo-tenue); margin:0 0 8px 2px; }
+  .nota { color:var(--testo-soft); font-size:12.5px; margin:8px 2px 0; line-height:1.4; }
+
+  /* ───────── MAPPA · com'è oggi ───────── */
+  .mp-vecchia { background:var(--superficie); border-radius:var(--raggio-card); overflow:hidden; box-shadow:var(--ombra-card); }
+  .mp-riga { display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border-bottom:1px solid var(--superficie-2); background:var(--superficie); }
+  .mp-riga.spento { opacity:.45; }
+  .mp-apri { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:999px;
+    border:1px solid var(--bordo); background:var(--superficie); font-size:15px; font-weight:700; color:var(--testo-soft); line-height:1; }
+  .mp-apri.vuoto { width:12px; height:12px; margin:6px; }
+  .mp-corpo { flex:1; min-width:0; }
+  .mp-liv { color:var(--testo-tenue); font-size:12px; font-weight:600; margin-right:6px; }
+  .mp-nome { font-size:15px; font-weight:600; }
+  .mp-numeri { color:var(--testo-soft); font-size:12px; margin-top:2px; }
+  .mp-numeri b { color:var(--testo); font-weight:700; }
+  .pallino { display:inline-block; width:9px; height:9px; border-radius:50%; vertical-align:0; }
+  .mp-sv { display:inline-flex; gap:4px; margin-left:6px; vertical-align:middle; }
+  .mp-sv span { font-size:9px; font-weight:700; letter-spacing:.3px; color:var(--testo-tenue); background:none; border:1px solid var(--spento); border-radius:var(--raggio-pill); padding:1px 5px; }
+  .mp-sv span.bbs.on { background:var(--bbs); border-color:var(--bbs); color:#fff; }
+  .mp-sv span.wes.on { background:var(--wes); border-color:var(--wes); color:#fff; }
+  .mp-sv span.cep.on { background:var(--cep); border-color:var(--cep); color:#fff; }
+  .mp-completa { align-self:center; color:var(--testo-tenue); }
+
+  /* ───────── MAPPA · come diventerebbe ───────── */
+  .mp-nuova { background:var(--superficie); border-radius:var(--raggio-card); box-shadow:var(--ombra-card); padding:6px 4px; }
+  .nr { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--raggio-bottone); position:relative; }
+  .nr + .nr { margin-top:2px; }
+  .nr.figlio::before { content:""; position:absolute; left:var(--filo); top:-2px; bottom:50%; width:1.5px; background:var(--bordo); }
+  .nr.figlio::after { content:""; position:absolute; left:var(--filo); top:50%; width:10px; height:1.5px; background:var(--bordo); }
+  .nr.spento { opacity:.5; }
+  .nr .tondo { flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#fff; background:var(--stato); }
+  .nr .apri { flex:none; width:22px; height:22px; border-radius:50%; border:1px solid var(--bordo); background:var(--superficie);
+    font-size:13px; font-weight:700; color:var(--testo-soft); display:flex; align-items:center; justify-content:center; }
+  .nr .apri.vuoto { border:0; }
+  .nr .q { flex:1; min-width:0; }
+  .nr .q .riga1 { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .nr .q b { font-size:15px; font-weight:600; }
+  .nr .q .liv { font-size:10.5px; font-weight:700; color:var(--testo-tenue); background:var(--superficie-2); border-radius:var(--raggio-pill); padding:2px 7px; }
+  .nr .q .num { color:var(--testo-soft); font-size:12px; margin-top:3px; }
+  .nr .q .num b { color:var(--testo); font-weight:700; font-size:12px; }
+  .nr .f { flex:none; color:var(--testo-tenue); }
+
+  /* ───────── CHECK · com'è oggi ───────── */
+  .ck-gruppo { background:var(--superficie); border-radius:var(--raggio-card); overflow:hidden; box-shadow:var(--ombra-card); margin-bottom:12px; border-left:5px solid var(--g); }
+  .ck-gruppo h3 { margin:0; padding:12px 14px 4px; font-size:16px; }
+  .ck-testa, .ck-riga { display:grid; grid-template-columns:1fr 66px 66px 66px; align-items:center; gap:4px; }
+  .ck-testa { padding:0 12px 6px 14px; font-size:11px; font-weight:700; color:var(--testo-tenue); text-align:right; text-transform:uppercase; }
+  .ck-riga { width:100%; text-align:left; border-top:1px solid var(--bordo); padding:11px 12px 11px 14px; font-size:15px; }
+  .ck-riga .n { text-align:right; font-weight:800; font-size:15px; }
+  .ck-riga .pr { text-align:right; font-size:14px; color:var(--testo-soft); }
+  .ck-riga .an { text-align:right; font-size:13px; font-weight:700; color:var(--testo-soft); }
+  .ck-riga .an.su { color:var(--ok); } .ck-riga .an.giu { color:var(--pericolo); }
+
+  /* ───────── CHECK · come diventerebbe ───────── */
+  .cn-gruppo { background:var(--superficie); border-radius:var(--raggio-card); box-shadow:var(--ombra-card); margin-bottom:12px; padding:4px 6px 8px; }
+  .cn-testa { display:flex; align-items:center; gap:10px; padding:12px 10px 8px; }
+  .cn-testa .tondo { width:32px; height:32px; border-radius:50%; background:var(--g-tinta); color:var(--g); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; }
+  .cn-testa h3 { margin:0; font-size:16px; }
+  .cn-col { display:grid; grid-template-columns:1fr 72px 62px 52px; gap:4px; padding:0 10px 6px; font-size:10.5px; font-weight:700; color:var(--testo-tenue); text-align:right; text-transform:uppercase; letter-spacing:.5px; }
+  .cn-riga { display:grid; grid-template-columns:1fr 72px 62px 52px; gap:4px; align-items:center; padding:10px; border-radius:var(--raggio-bottone); font-size:15px; }
+  .cn-riga:nth-child(odd) { background:var(--superficie-2); }
+  .cn-riga .n { text-align:right; font-weight:800; color:var(--g); }
+  .cn-riga .pr { text-align:right; font-size:13.5px; color:var(--testo-soft); }
+  .cn-riga .an { text-align:right; font-size:13px; font-weight:700; }
+  .cn-riga .an.su { color:var(--ok); } .cn-riga .an.giu { color:var(--pericolo); }
+  .cn-riga .barra { grid-column:1 / -1; height:4px; border-radius:999px; background:var(--superficie-2); margin-top:7px; overflow:hidden; }
+  .cn-riga:nth-child(odd) .barra { background:#fff; }
+  .cn-riga .barra i { display:block; height:100%; background:var(--g); border-radius:999px; }
+</style>
+
+<h1>Mappa e Check: come diventerebbero</h1>
+<p class="i">Sono le due pagine rimaste nella forma vecchia. Ma non sono elenchi di persone da chiamare: la Mappa è un <b>albero</b> e il Check è una <b>tabella di numeri</b>. Per questo non le ho spezzate in tanti riquadri staccati, che avrebbero fatto perdere l'albero e disallineato le colonne. Ho fatto un'altra cosa: stesso respiro e stessi pezzi del resto dell'app, ma con la forma adatta a quello che devono far capire.</p>
+
+<h2>1 · La Mappa</h2>
+<p class="i">Oggi: righe attaccate con una lineetta, un pallino piccolo per lo stato, i numeri tutti della stessa grandezza, il rientro fatto solo con lo spazio bianco.<br>
+Come diventerebbe: <b>il tondo con le iniziali</b> come in tutta l'app, colorato secondo lo stato (verde attivo · rosso warning · grigio inattivo), <b>il livello in una pastiglia</b>, il <b>filo grigio</b> che collega chi sta sotto a chi sta sopra — così l'albero si legge meglio di adesso, non peggio — e il tocco della riga che resta tutto uguale.</p>
+<div class="coppia">
+  <div class="col">
+    <h3>com'è oggi</h3>
+    <div class="mp-vecchia">
+      <div class="mp-riga"><button class="mp-apri">−</button><div class="mp-corpo">
+        <span class="mp-liv">1</span><span class="pallino" style="background:var(--ok)"></span>
+        <span class="mp-nome"> Marco Rossi</span>
+        <span class="mp-sv"><span class="bbs on">BBS</span><span class="wes on">WES</span><span class="cep">CEP</span></span>
+        <div class="mp-numeri">VPP <b>312</b> · VPG <b>1.480</b> · <b>bonus 9%</b> · gruppo <b>7</b></div></div><span class="mp-completa">›</span></div>
+      <div class="mp-riga" style="padding-left:30px"><button class="mp-apri">+</button><div class="mp-corpo">
+        <span class="mp-liv">2</span><span class="pallino" style="background:var(--pericolo)"></span>
+        <span class="mp-nome"> Giulia Bianchi</span>
+        <span class="mp-sv"><span class="bbs on">BBS</span><span class="wes">WES</span><span class="cep on">CEP</span></span>
+        <div class="mp-numeri">VPP <b>38</b> · VPG <b>210</b> · <b>bonus 3%</b> · gruppo <b>2</b></div></div><span class="mp-completa">›</span></div>
+      <div class="mp-riga spento" style="padding-left:48px"><span class="mp-apri vuoto"></span><div class="mp-corpo">
+        <span class="mp-liv">3</span><span class="pallino" style="background:var(--spento)"></span>
+        <span class="mp-nome"> Luca Verdi</span>
+        <span class="mp-sv"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span>
+        <div class="mp-numeri">VPP <b>0</b> · VPG <b>0</b> · <b>bonus —</b></div></div><span class="mp-completa">›</span></div>
+    </div>
+  </div>
+  <div class="col">
+    <h3>come diventerebbe</h3>
+    <div class="mp-nuova">
+      <div class="nr" style="--stato:var(--ok)"><button class="apri">−</button><span class="tondo">MR</span>
+        <span class="q"><span class="riga1"><b>Marco Rossi</b><span class="liv">Liv. 1</span>
+          <span class="mp-sv"><span class="bbs on">BBS</span><span class="wes on">WES</span><span class="cep">CEP</span></span></span>
+          <span class="num">VPP <b>312</b> · VPG <b>1.480</b> · bonus <b>9%</b> · gruppo <b>7</b></span></span><span class="f">›</span></div>
+      <div class="nr figlio" style="--stato:var(--pericolo); --filo:26px; padding-left:44px"><button class="apri">+</button><span class="tondo">GB</span>
+        <span class="q"><span class="riga1"><b>Giulia Bianchi</b><span class="liv">Liv. 2</span>
+          <span class="mp-sv"><span class="bbs on">BBS</span><span class="wes">WES</span><span class="cep on">CEP</span></span></span>
+          <span class="num">VPP <b>38</b> · VPG <b>210</b> · bonus <b>3%</b> · gruppo <b>2</b></span></span><span class="f">›</span></div>
+      <div class="nr figlio spento" style="--stato:var(--spento); --filo:60px; padding-left:78px"><span class="apri vuoto"></span><span class="tondo">LV</span>
+        <span class="q"><span class="riga1"><b>Luca Verdi</b><span class="liv">Liv. 3</span>
+          <span class="mp-sv"><span class="bbs">BBS</span><span class="wes">WES</span><span class="cep">CEP</span></span></span>
+          <span class="num">VPP <b>0</b> · VPG <b>0</b> · bonus <b>—</b></span></span><span class="f">›</span></div>
+    </div>
+    <p class="nota">Il colore del tondo dice lo stato senza bisogno del pallino. Chi è inattivo resta più chiaro, come adesso.</p>
+  </div>
+</div>
+
+<h2>2 · Il Check</h2>
+<p class="i">Oggi: una striscia colorata sul fianco sinistro della card, righe divise da una lineetta, i numeri tutti neri.<br>
+Come diventerebbe: <b>il tondo del gruppo</b> con la sua iniziale (come i tondi di tutta l'app) al posto della striscia sul fianco, righe <b>a righe alternate</b> invece delle lineette (le colonne restano allineate), il <b>numero grande nel colore del gruppo</b> e sotto una <b>barretta</b> che fa vedere a colpo d'occhio quanto manca all'obiettivo.</p>
+<div class="coppia">
+  <div class="col">
+    <h3>com'è oggi</h3>
+    <div class="ck-gruppo" style="--g:var(--gr-azione)">
+      <h3>Azione</h3>
+      <div class="ck-testa"><span></span><span>Adesso</span><span>Previsto</span><span>Prima</span></div>
+      <div class="ck-riga"><span>Contatti</span><span class="n">148</span><span class="pr">200</span><span class="an su">+12%</span></div>
+      <div class="ck-riga"><span>PM</span><span class="n">9</span><span class="pr">14</span><span class="an giu">−8%</span></div>
+      <div class="ck-riga"><span>Nuovi Iscritti</span><span class="n">2</span><span class="pr">3</span><span class="an su">+50%</span></div>
+    </div>
+  </div>
+  <div class="col">
+    <h3>come diventerebbe</h3>
+    <div class="cn-gruppo" style="--g:var(--gr-azione); --g-tinta:var(--gr-azione-tinta)">
+      <div class="cn-testa"><span class="tondo">A</span><h3>Azione</h3></div>
+      <div class="cn-col"><span></span><span>Adesso</span><span>Previsto</span><span>Prima</span></div>
+      <div class="cn-riga"><span>Contatti</span><span class="n">148</span><span class="pr">200</span><span class="an su">+12%</span>
+        <span class="barra"><i style="width:74%"></i></span></div>
+      <div class="cn-riga"><span>PM</span><span class="n">9</span><span class="pr">14</span><span class="an giu">−8%</span>
+        <span class="barra"><i style="width:64%"></i></span></div>
+      <div class="cn-riga"><span>Nuovi Iscritti</span><span class="n">2</span><span class="pr">3</span><span class="an su">+50%</span>
+        <span class="barra"><i style="width:67%"></i></span></div>
+    </div>
+    <p class="nota">Stesse colonne, stessi numeri, stesso tocco per aprire il grafico dei 12 mesi.</p>
+  </div>
+</div>
