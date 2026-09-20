@@ -116,8 +116,9 @@
         const esito = !intero && !adesso ? '' : adesso >= intero ? ' · superato ✓' : ' · mancano ' + formato(tondo(intero - adesso), v.decimali);
         riga = `${etichetta}: ${formato(intero, v.decimali)}${esito}`;
       }
-      // `quota` (0-100): a che punto siamo rispetto al periodo prima. Serve alla barretta sotto la riga (cantiere 34, 20/09).
-      const quota = !prima || adesso == null ? null : Math.max(0, Math.min(100, Math.round(adesso / prima * 100)));
+      // `quota` (0-100): a che punto siamo rispetto al periodo prima. La barretta c'è SEMPRE (Ignazio 20/09), anche vuota:
+      // con un «prima» è quanto ci siamo arrivati vicino; senza «prima» è piena se abbiamo fatto qualcosa, vuota se siamo a zero.
+      const quota = !adesso ? 0 : !prima ? 100 : Math.max(0, Math.min(100, Math.round(adesso / prima * 100)));
       return { chiave: v.chiave, titolo: v.titolo, decimali: v.decimali || 0,
         adesso: formato(adesso, v.decimali), prima: prima == null ? '—' : formato(prima, v.decimali),
         andamento: andamento(adesso, prima), riga, quota };
