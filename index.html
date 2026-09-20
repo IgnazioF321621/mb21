@@ -642,7 +642,13 @@
   .rp-barre span i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--verde); }
   .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
   .rp-mesi .futuro { color: var(--linea); }
-  .ck-confronto { font-size: 13px; color: var(--grigio); text-align: center; margin: -4px 0 12px; }
+  .ck-confronto { font-size: 12.5px; color: var(--testo-tenue); text-align: center; margin: 0 0 12px; }
+  /* con quanti periodi fa si confronta (Ignazio 20/09) */
+  .ck-quando { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--testo-soft); margin: -2px 0 6px; }
+  .ck-quando button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill);
+    padding: 5px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo-soft); min-height: 32px; }
+  .ck-quando button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ck-testa small { display: block; font-size: 10px; font-weight: 600; color: var(--testo-tenue); text-transform: none; letter-spacing: 0; margin-top: 1px; }
   /* Check (cantiere 34, 20/09): il tondo del gruppo al posto della striscia sul fianco, righe alternate invece delle lineette */
   .ck-gruppo { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); margin-bottom: 12px; padding: 4px 6px 8px; }
   .ck-testa-g { display: flex; align-items: center; gap: 10px; padding: 10px 8px 6px; }
@@ -875,29 +881,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609202148"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609202148"></script>
-<script src="lista.js?v=202609202148"></script>
-<script src="rubrica.js?v=202609202148"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609202148"></script>
-<script src="agenda.js?v=202609202148"></script>
-<script src="report.js?v=202609202148"></script>
-<script src="check.js?v=202609202148"></script>
-<script src="mappa.js?v=202609202148"></script>
-<script src="pagina-dashboard.js?v=202609202148"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609202148"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609202148"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609202148"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609202148"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609202148"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609202148"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609202148"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609202148"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609202148"></script>
-<script src="benvenuto.js?v=202609202148"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609202148"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609202200"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609202200"></script>
+<script src="lista.js?v=202609202200"></script>
+<script src="rubrica.js?v=202609202200"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609202200"></script>
+<script src="agenda.js?v=202609202200"></script>
+<script src="report.js?v=202609202200"></script>
+<script src="check.js?v=202609202200"></script>
+<script src="mappa.js?v=202609202200"></script>
+<script src="pagina-dashboard.js?v=202609202200"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609202200"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609202200"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609202200"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609202200"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609202200"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609202200"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609202200"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609202200"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609202200"></script>
+<script src="benvenuto.js?v=202609202200"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609202200"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 21:48';
+const APP_VERSION = '2026.09.20 · 22:00';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1924,7 +1930,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // Brief docs/MB21_v4_Brief_F6_Check.md: si apre dal bottone «visione completa» della Dashboard (decisione A), periodi Mese · Wes · Anno,
 // adesso · prima (a pari giorni) · andamento, riga grigia col periodo prima intero (B), grafico dei 12 mesi, Segni Vitali a 12 mesi (C).
 // Numeri del partner loggato. Calcoli in check.js.
-const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], aperta: null };
+const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], aperta: null, indietro: 1 };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
 const CAMPI_CK = 'user_id, data, ' + MB21Check.CAMPI_GIORNO.join(', ');
 
 async function apriPaginaCheck() {
@@ -1971,16 +1977,23 @@ function disegnaCheck() {
   if (!p) {
     html += `<div class="vuoto">Nessun WES ancora: l'Admin aggiunge le date dei WES.</div>`;
   } else {
-    const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p });
+    const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p, indietro: CK.indietro });
     html += `<div class="rp-naviga">
       <button id="ck-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, CK.wes) ? '' : 'disabled'}>‹</button>
       <b>${esc(R.testoPeriodo(p))}</b>
       <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
+      <div class="ck-quando">Confronta con${[1, 2].map(n => {
+        const parole = { mese: ['il mese scorso', 'due mesi fa'], wes: ['il WES prima', 'due WES fa'], anno: ["l'anno prima", 'due anni fa'] }[CK.tipo];
+        return `<button data-ckindietro="${n}" class="${CK.indietro === n ? 'scelto' : ''}">${parole[n - 1]}</button>`;
+      }).join('')}</div>
       <div class="ck-confronto">${esc(r.confronto)}</div>`;
     html += r.gruppi.map(g => `<div class="ck-gruppo" style="--g:${g.colore}; --g-tinta:${g.colore.replace(')', '-tinta)')}">
       <div class="ck-testa-g"><span class="tondo">${esc(g.etichetta[0])}</span>
         <span><h3>${esc(g.etichetta)}</h3>${g.riassunto ? `<small>${esc(g.riassunto)}</small>` : ''}</span></div>
-      <div class="ck-testa"><span></span><span>adesso</span><span>prima</span><span>▲▼</span></div>
+      <div class="ck-testa"><span></span>
+        <span>${r.inCorso ? 'Oggi' : 'Totale'}<small>al ${esc(r.alGiorno)}</small></span>
+        <span>Prima${r.alGiornoPrima ? `<small>al ${esc(r.alGiornoPrima)}</small>` : ''}</span>
+        <span>▲▼</span></div>
       ${g.voci.map(v => {
         const aperta = CK.aperta === v.chiave;
         let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}"><span>${esc(v.titolo)}</span>
@@ -2010,6 +2023,9 @@ function collegaCheck() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
   collegaPartnerSelect();
+  app.querySelectorAll('[data-ckindietro]').forEach(b => b.onclick = () => {
+    CK.indietro = Number(b.dataset.ckindietro); disegnaCheck();
+  });
   app.querySelectorAll('[data-ckperiodo]').forEach(b => b.onclick = () => {
     CK.tipo = b.dataset.ckperiodo; CK.periodo = R.periodoIniziale(CK.tipo, oggi, CK.wes); disegnaCheck();
   });

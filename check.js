@@ -98,12 +98,14 @@
 
   // Tutte le voci del periodo p. Periodo in corso: confronto a pari giorni + riga col periodo prima intero (decisione B).
   // VPP e VPG hanno un numero al mese: nel periodo in corso niente pari giorni, solo il periodo prima intero.
-  function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi, segniAl }) {
+  // `indietro`: con quanti periodi fa confrontare (1 = quello appena prima, 2 = due fa). Ignazio 20/09.
+  function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi, segniAl, indietro }) {
+    const passi = Math.max(1, Math.min(2, Number(indietro) || 1));
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const fine = ultimoGiorno(p);
     const inCorso = !fine || fine >= oggi;
     const fino = inCorso ? oggi : fine;
-    let q = R.spostaPeriodo(p, -1, oggi, dateWes);
+    let q = R.spostaPeriodo(p, -passi, oggi, dateWes);
     const fineQ = q ? (ultimoGiorno(q) || R.spostaGiorno(p.da, -1)) : null;
     let finoQ = fineQ;
     if (q && inCorso) {
@@ -132,7 +134,8 @@
         adesso: formato(adesso, v.decimali), prima: prima == null ? '—' : formato(prima, v.decimali),
         andamento: andamento(adesso, prima), riga };
     }) })).map(g => ({ ...g, riassunto: riassunto(g.voci) }));
-    return { inCorso, confronto, gruppi };
+    return { inCorso, confronto, gruppi, passi,
+      alGiorno: R.dataBreve(fino), alGiornoPrima: finoQ ? R.dataBreve(finoQ) : null };
   }
 
   // Grafico di una voce: i 12 mesi dell'anno fiscale del periodo, con lo stesso mese dell'anno prima
