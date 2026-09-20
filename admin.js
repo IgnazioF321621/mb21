@@ -142,7 +142,7 @@ function disegnaAdmin() {
     html = `<h1>Admin</h1>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
-      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟠')}${stati.filter(x => x === 'in_scadenza').length} · ${escIcone('🔴')}${stati.filter(x => x === 'scaduto').length}`)}
+      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${stati.filter(x => x === 'in_scadenza').length} in scadenza · ${stati.filter(x => x === 'scaduto').length} scaduti`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-wes', ic('biglietto') + ' Wes', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
