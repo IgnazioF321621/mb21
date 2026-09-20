@@ -25,14 +25,15 @@
 
   /* categorie dei contatti: colore pieno (pastiglia, targhetta) e tinta (fondo di card, riga, testata) */
   --cat-prospect:#C2410C;    --cat-prospect-tinta:#FDEEE2;
-  --cat-cliente:#1D4ED8;     --cat-cliente-tinta:#E7EFFE;
-  --cat-partner:#6D28D9;     --cat-partner-tinta:#F0E9FD;
+  --cat-cliente:#0E7490;     --cat-cliente-tinta:#DFF1F6;
+  --cat-partner:#1D4ED8;     --cat-partner-tinta:#E7EFFE;
   --cat-ex:#5A6475;          --cat-ex-tinta:#EAECF1;
   --cat-unlinked:#7B8496;    --cat-unlinked-tinta:#F2F4F7;
   --cat-archiviato:#374151;  --cat-archiviato-tinta:#E4E7EC;
 
   /* segni vitali e stati */
-  --bbs:#1D4ED8; --wes:#C02626; --cep:#15803D; --spento:#C3C8D1;
+  --bbs:#1D4ED8; --bbs-tinta:#E7EFFE; --wes:#C02626; --cep:#15803D; --spento:#C3C8D1;
+  /* i segni vitali NON seguono le categorie: hanno i loro colori da sempre (BBS blu · WES rosso · CEP verde) */
   --ok:#15803D;        --ok-tinta:#E4F3E8;
   --pericolo:#C02626;  --pericolo-tinta:#FCEAEA;
   --proposta:#B45309;  --proposta-tinta:#FEF3C8;
