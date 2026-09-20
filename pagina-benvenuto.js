@@ -73,7 +73,7 @@ function disegnaBenvenuto() {
       <p class="bv-lead">MB21 ti aiuta a sviluppare la tua attività, per realizzare il tuo sogno… o scappare dal tuo incubo.</p>
       <div class="riquadro bv-punti">
         <div><span>${ic('novita')}</span><p><b>È tutto semplice, come un flusso:</b> ogni passo ti porta al successivo.</p></div>
-        <div><span>🕊️</span><p><b>Niente è vincolante:</b> vai alla velocità che vuoi tu.</p></div>
+        <div><span>${ic('liberta')}</span><p><b>Niente è vincolante:</b> vai alla velocità che vuoi tu.</p></div>
         <div><span>${ic('squadra')}</span><p><b>Il tuo sponsor e la tua squadra ti seguiranno da vicino,</b> e tu avrai sempre una linea guida sul percorso da fare.</p></div>
       </div>
       <button class="primario" id="bv-avanti">Avanti</button>${indietro}`,
