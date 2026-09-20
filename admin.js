@@ -70,7 +70,7 @@ function rigaUtenteAdmin(u) {
     h += `<div>In comune con <b>${esc(nomeDi(chiPaga))}</b>: vale la sua scadenza (${data(scad)}).</div>`;
   } else {
     h += `<div>Pagato fino al <b>${data(u.abbonamento_scadenza)}</b>${perChi.length ? ` · vale anche per ${perChi.map(x => esc(nomeDi(x))).join(', ')}` : ''}</div>
-      <button class="primario" data-paga="${esc(u.id)}">✓ Pagamento ricevuto → ${data(D.scadenzaDopoPagamento(u.abbonamento_scadenza, oggi))}</button>
+      <button class="primario" data-paga="${esc(u.id)}">${ic('fatto')} Pagamento ricevuto → ${data(D.scadenzaDopoPagamento(u.abbonamento_scadenza, oggi))}</button>
       <div class="nuovo-wes"><input type="date" data-scad-data="${esc(u.id)}" value="${esc(u.abbonamento_scadenza || '')}" aria-label="Scadenza"><button data-scad="${esc(u.id)}">Salva data</button></div>`;
   }
   if (!perChi.length) {
@@ -97,7 +97,7 @@ function disegnaAdmin() {
           ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
-      <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
+      <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
         ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
           <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
@@ -116,7 +116,7 @@ function disegnaAdmin() {
       html += `<div class="riquadro" style="margin-bottom:10px">Da fare: <b>${p.create} schede nuove</b> · <b>${p.collegate} schede già in lista da collegare al codice</b></div>
         ${Object.entries(perUtente).map(([ut, righe]) => `<div class="rp-wes"><h3>Lista di ${esc(ut)}</h3>${righe.map(r => `<div class="ad-richiesta">
           <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(r.categoria) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
-        <button class="primario" id="ad-allinea">✓ Allinea adesso</button>`;
+        <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
     }
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>WES</h1>
@@ -200,22 +200,27 @@ function foglioNuovoUtente(u) {
   const bloccaEmail = u && u.auth_id;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio nu"><h3>${u ? ic('modifica') + ' Modifica utente' : '＋ Nuovo utente'}</h3>
+  velo.innerHTML = `<div class="foglio alto mc nu">
+    <div class="mc-testa"><span class="ts-pastiglia">${u ? esc(iniziali(nomeDi(u))) : ic('squadra')}</span>
+      <div><small>${u ? 'Modifica utente' : 'Nuovo utente'}</small><b>${u ? esc(nomeDi(u)) : "Chi entra nell'app"}</b></div>
+      <button id="nu-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
     <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Filippo Arcoraci" autocomplete="off"></label>
     <div id="nu-trovati"></div>
     <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
     <label>Codice Amway <small style="color:var(--grigio)">(obbligatorio, solo numeri, anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off" value="${esc(u ? u.partner_id || '' : '')}"></label>
     <label>Email con cui entrerà${bloccaEmail ? ' <small style="color:var(--grigio)">(è già entrato: non si cambia)</small>' : ''}<input id="nu-email" type="email" autocomplete="off" autocapitalize="off" value="${esc(u ? u.email || '' : '')}" ${bloccaEmail ? 'disabled' : ''}></label>
-    ${u ? '' : `<label>Abbonamento in comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
-      .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label>`}
+    </div>${u ? '' : `<h4 class="mc-t">Abbonamento</h4><div class="riquadro mc-g">
+    <label>In comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
+      .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label></div>`}
     <div class="errore" id="nu-errore"></div>
-    <button class="primario" id="nu-crea">${u ? 'Salva' : 'Crea'}</button>
-    <button class="link" id="nu-annulla">Annulla</button></div>`;
+    <div class="mc-fondo"><button class="link" id="nu-annulla">Annulla</button><button class="primario" id="nu-crea">${u ? 'Salva' : 'Crea'}</button></div></div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
   const chiudi = () => velo.remove();
   velo.onclick = e => { if (e.target === velo) chiudi(); };
   $('nu-annulla').onclick = chiudi;
+  $('nu-x').onclick = chiudi;   // la × in testa chiude come Annulla
   let giro = 0;
   $('nu-cerca').oninput = async () => {
     const q = $('nu-cerca').value.trim(), mio = ++giro;
