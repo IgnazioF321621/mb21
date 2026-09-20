@@ -85,7 +85,7 @@ function disegnaAdmin() {
   let html;
   if (AD.sezione === 'utenti') {
     html = `${indietro}<h1>Utenti dell'app</h1>
-      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto. Tocca un nome per aprirlo.</div>
+      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
       ${AD.richieste.length ? `<div class="rp-wes ad-richieste"><h3>${ic('invito')} Richieste da approvare (${AD.richieste.length})</h3>${AD.richieste.map(r => {
         const da = AD.tutti.find(u => u.id === r.invitato_da), gia = AD.tutti.filter(u => u.partner_id === r.codice_amway);
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
@@ -95,10 +95,10 @@ function disegnaAdmin() {
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">＋ Nuovo utente</button>
-      ${AD.eliminati.length ? `<button class="rp-apri ad-voce" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
-        ${AD.vediEliminati ? `<div class="rp-wes">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
+      ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
+        ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
           <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
-          <button class="link" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
+          <button class="link ripristina" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
       <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>${ic('collega')} Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
   } else if (AD.sezione === 'schede') {
     const p = AD.schede;
