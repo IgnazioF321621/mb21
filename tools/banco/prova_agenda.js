@@ -58,14 +58,14 @@ prova('Eventi del giorno in ordine d\'ora; il Contatto conta alla data scelta; p
 prova('Riga con le parole di Glide; [Partner] all\'inizio solo per l\'Admin sugli appuntamenti degli altri', () => {
   const [carolina, samantha] = A.eventiDelGiorno(azioni, '2026-09-11');
   assert.deepEqual(A.riga(carolina, { mioId: 'io', admin: true }),
-    { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | c/Downline • ✅ Completato', colore: '#7C3AED' });
+    { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | c/Downline • ✅ Completato', colore: 'var(--az-appuntamento)' });
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).titolo, 'Counseling · Carolina C.');
   assert.equal(A.riga(carolina, { mioId: carolina.user_id, admin: true }).titolo, 'Counseling · Carolina C.');   // Partner Select su di lei
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).sotto, 'Attività | c/Downline • ✅ Completato');
   assert.equal(A.riga(samantha, { mioId: 'io', admin: true }).sotto, 'Attività • ⏳ Da completare');
   assert.equal(A.orario(carolina), '09:45–10:45');
   const [anna] = A.eventiDelGiorno(azioni, '2026-09-12');
-  assert.deepEqual(A.riga(anna, { mioId: 'io', admin: true }), { titolo: 'Telefonata · Anna B.', sotto: 'Richiamare • dalla coda', colore: '#6B7280' });
+  assert.deepEqual(A.riga(anna, { mioId: 'io', admin: true }), { titolo: 'Telefonata · Anna B.', sotto: 'Richiamare • dalla coda', colore: 'var(--az-contatto)' });
   assert.equal(A.orario(anna), '17:00');
 });
 

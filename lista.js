@@ -336,8 +336,8 @@
 
   // ── Vendite (cantiere 26) ──
   // I 5 brand del modulo «Vendita» di Glide, con il colore della targhetta.
-  const BRAND = [['Artistry', '#BE185D'], ['eSpring', '#2563EB'], ['Home', '#EA580C'], ['Nutrilite/XS', '#16A34A'], ['Persona', '#7C3AED']];
-  const coloreBrand = b => (BRAND.find(x => x[0] === b) || [null, '#6B7280'])[1];
+  const BRAND = [['Artistry', 'var(--brand-artistry)'], ['eSpring', 'var(--brand-espring)'], ['Home', 'var(--brand-home)'], ['Nutrilite/XS', 'var(--brand-nutrilite)'], ['Persona', 'var(--brand-persona)']];
+  const coloreBrand = b => (BRAND.find(x => x[0] === b) || [null, 'var(--brand-altro)'])[1];
 
   // Targhette Brand nella testata della scheda (lavoro 6): i 5 brand, accesi quelli che il cliente ha comprato
   // (contano anche le promo ancora da consegnare: le ha comprate).

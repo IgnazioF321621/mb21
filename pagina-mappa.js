@@ -168,7 +168,7 @@ function disegnaCompleta() {
       <div class="tre"><div><small>VPP</small><b>${num(ultimo.vpp)}</b></div>
         <div><small>VPG</small><b>${num(ultimo.vpg)}</b></div>
         <div><small>Bonus</small><b>${num(bonus, 0)}%</b></div></div>
-      ${manca ? `<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:#C7CBD4">
+      ${manca ? `<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--spento)">
         <span>${MB21Mappa.bonusSuccessivo(bonus) ? `Per il ${MB21Mappa.bonusSuccessivo(bonus)}% mancano` : 'Per il livello successivo mancano'}</span><b>${num(manca)}</b></div>
         <div class="mp-barra"><i style="width:${fatta.toFixed(1)}%"></i></div>` : ''}
     </div>`;
@@ -177,10 +177,10 @@ function disegnaCompleta() {
     html += `<div class="vuoto">Nessun mese caricato per questo partner.</div>`;
   } else {
     html += `<div class="ck-grafico">
-      <div class="legenda"><i style="background:#2563EB;margin-left:0"></i>VPG<i style="background:#93C5FD"></i>VPP</div>
+      <div class="legenda"><i style="background:var(--gr-volume);margin-left:0"></i>VPG<i style="background:var(--gr-volume-tinta)"></i>VPP</div>
       <div class="ck-barre">${st.righe.map(r => `<div>
-        <span class="prima" style="height:${(r.vpg || 0) / st.max * 100}%;background:#2563EB"></span>
-        <span style="height:${(r.vpp || 0) / st.max * 100}%;background:var(--cat-cliente-tinta)"></span></div>`).join('')}</div>
+        <span class="prima" style="height:${(r.vpg || 0) / st.max * 100}%;background:var(--gr-volume)"></span>
+        <span style="height:${(r.vpp || 0) / st.max * 100}%;background:var(--gr-volume-tinta)"></span></div>`).join('')}</div>
       <div class="rp-mesi">${st.righe.map(r => `<span>${esc(r.etichetta)}</span>`).join('')}</div>
       <div class="ck-valori">media VPP <b>${num(st.mediaVpp)}</b> · media VPG <b>${num(st.mediaVpg)}</b> su <b>${st.righe.length}</b> mesi</div>
     </div>

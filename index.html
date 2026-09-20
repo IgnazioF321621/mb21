@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="theme-color" content="#EFF1F5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MB21">
@@ -23,6 +23,16 @@
     /* segni vitali e stati */
     --bbs: #1D4ED8; --bbs-tinta: #E7EFFE; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
     --ok: #15803D; --ok-tinta: #E4F3E8; --pericolo: #C02626; --pericolo-tinta: #FCEAEA; --proposta: #B45309; --proposta-tinta: #FEF3C8;
+    /* i quattro gruppi dei numeri (Dashboard, Check, Obiettivi): colori loro, non delle categorie */
+    --gr-volume: #1D4ED8; --gr-volume-tinta: #E7EFFE; --gr-azione: #C2410C; --gr-azione-tinta: #FDEEE2;
+    --gr-segni: #15803D; --gr-segni-tinta: #E4F3E8; --gr-crescita: #6D28D9; --gr-crescita-tinta: #F0E9FD;
+    /* i tipi di azione: si vedono nella strisciolina delle Conferme e dei Riordini e nei calendari */
+    --az-pm: #1D4ED8; --az-followup: #15803D; --az-appuntamento: #6D28D9; --az-consulenza: #C2410C; --az-contatto: #5A6475;
+    /* i brand dei prodotti Amway: colori loro, decisi da Amway */
+    --revolut: #185FA5;   /* il blu del marchio Revolut, per il bottone del rinnovo */
+    --brand-artistry: #BE185D; --brand-espring: #1D4ED8; --brand-home: #C2410C; --brand-nutrilite: #15803D; --brand-persona: #6D28D9; --brand-altro: #5A6475;
+    /* gli stessi colori in numeri, per le caselle della tabella dei Segni Vitali che si accendono piano piano */
+    --tenue-rgb: 123, 132, 150; --gr-azione-rgb: 194, 65, 12; --bbs-rgb: 29, 78, 216; --wes-rgb: 192, 38, 38; --cep-rgb: 21, 128, 61;
     /* i 4 modi di contattare tengono il colore a cui la gente è abituata (Ignazio 19/09) */
     --ct-chiama: #1FA750; --ct-sms: #2F7FD6; --ct-whatsapp: #1FA855; --ct-telegram: #1F94D2;
     /* scritte */
@@ -628,7 +638,7 @@
   .rp-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 120px; }
   .rp-barre div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
   .rp-barre small { font-size: 10px; font-weight: 700; color: var(--grigio); margin-bottom: 2px; }
-  .rp-barre span { width: 100%; background: var(--cat-cliente-tinta); border-radius: 4px 4px 0 0; position: relative; overflow: hidden; }
+  .rp-barre span { width: 100%; background: var(--gr-volume-tinta); border-radius: 4px 4px 0 0; position: relative; overflow: hidden; }
   .rp-barre span i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--verde); }
   .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
   .rp-mesi .futuro { color: var(--linea); }
@@ -816,7 +826,7 @@
   .mp-riquadro { background: var(--accento); color: #fff; border-radius: var(--raggio-riga); padding: 14px; margin: 10px 0; }
   .mp-riquadro .tre { display: flex; gap: 10px; }
   .mp-riquadro .tre > div { flex: 1; background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 10px; }
-  .mp-riquadro small { display: block; color: #C7CBD4; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  .mp-riquadro small { display: block; color: var(--spento); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
   .mp-riquadro b { font-size: 18px; font-weight: 700; }
   .mp-barra { height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); margin-top: 12px; overflow: hidden; }
   .mp-barra i { display: block; height: 100%; background: var(--cat-cliente-tinta); }
@@ -842,29 +852,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609200806"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609200806"></script>
-<script src="lista.js?v=202609200806"></script>
-<script src="rubrica.js?v=202609200806"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609200806"></script>
-<script src="agenda.js?v=202609200806"></script>
-<script src="report.js?v=202609200806"></script>
-<script src="check.js?v=202609200806"></script>
-<script src="mappa.js?v=202609200806"></script>
-<script src="pagina-dashboard.js?v=202609200806"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609200806"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609200806"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609200806"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609200806"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609200806"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609200806"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609200806"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609200806"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609200806"></script>
-<script src="benvenuto.js?v=202609200806"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609200806"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609200814"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609200814"></script>
+<script src="lista.js?v=202609200814"></script>
+<script src="rubrica.js?v=202609200814"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609200814"></script>
+<script src="agenda.js?v=202609200814"></script>
+<script src="report.js?v=202609200814"></script>
+<script src="check.js?v=202609200814"></script>
+<script src="mappa.js?v=202609200814"></script>
+<script src="pagina-dashboard.js?v=202609200814"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609200814"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609200814"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609200814"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609200814"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609200814"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609200814"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609200814"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609200814"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609200814"></script>
+<script src="benvenuto.js?v=202609200814"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609200814"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 08:06';
+const APP_VERSION = '2026.09.20 · 08:14';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1956,7 +1966,7 @@ function disegnaCheck() {
         const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
         const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });
         h += `<div class="ck-grafico">
-          <div class="legenda"><i style="background:${g.colore};margin-left:0"></i>${esc(gr.anno)}<i style="background:#D1D5DB"></i>${esc(gr.annoPrima)}</div>
+          <div class="legenda"><i style="background:${g.colore};margin-left:0"></i>${esc(gr.anno)}<i style="background:var(--spento)"></i>${esc(gr.annoPrima)}</div>
           <div class="ck-barre">${gr.mesi.map(m => `<div>
             <span class="prima" style="height:${(m.prima || 0) / gr.max * 100}%"></span>
             <span style="height:${(m.valore || 0) / gr.max * 100}%;background:${g.colore}"></span></div>`).join('')}</div>
@@ -2061,7 +2071,7 @@ function disegnaReport() {
     const anno = R.periodoAnno(p.da), aperto = gruppi.find(g => g.chiave === RP.aperto);
     const mesi = R.grafico(RP.azioni, anno, oggi, RP.aperto), max = Math.max(1, ...mesi.map(m => m.azioni));
     html += `<div class="rp-grafico"><h3>${ic('crescita')} Anno ${esc(anno.etichetta)}${aperto ? ' · ' + esc(aperto.etichetta) : ''}</h3>
-      <div class="legenda"><i style="background:#93C5FD;margin-left:0"></i>azioni fatte<i style="background:var(--verde)"></i>risultati che contano</div>
+      <div class="legenda"><i style="background:var(--gr-volume-tinta);margin-left:0"></i>azioni fatte<i style="background:var(--verde)"></i>risultati che contano</div>
       <div class="rp-barre">${mesi.map(m => `<div><small>${m.azioni || ''}</small><span style="height:${m.azioni / max * 100}%">
         <i style="height:${m.azioni ? m.verdi / m.azioni * 100 : 0}%"></i></span></div>`).join('')}</div>
       <div class="rp-mesi">${mesi.map(m => `<span class="${m.futuro ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div></div>`;
@@ -2103,8 +2113,8 @@ function foglioRinnovo() {
     <p>Costo: <b>€ 5,00 al mese</b> · da pagare <b>entro il 5 di ogni mese</b>.</p>
     <p>Causale da scrivere su Revolut:</p>
     <textarea id="rn-causale" readonly rows="2" style="width:100%;font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(causale)}</textarea>
-    <button class="primario" id="rn-copia" style="margin-top:8px;background:#F3F4F6;color:var(--testo)">⧉ Copia la causale</button>
-    <a class="primario" href="${REVOLUT}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:8px;background:#185FA5;color:#fff;font-size:17px;font-weight:600;padding:14px;border-radius:12px">Paga su Revolut</a>
+    <button class="primario" id="rn-copia" style="margin-top:8px;background:var(--superficie-2);color:var(--testo)">⧉ Copia la causale</button>
+    <a class="primario" href="${REVOLUT}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:8px;background:var(--revolut);color:#fff;font-size:17px;font-weight:600;padding:14px;border-radius:12px">Paga su Revolut</a>
     <p style="margin-top:12px">Dopo il pagamento l'abbonamento viene rinnovato da Ignazio appena lo vede.</p>
     <button class="link" id="rn-chiudi">Chiudi</button></div>`;
   document.body.appendChild(velo);
