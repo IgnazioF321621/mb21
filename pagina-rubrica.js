@@ -7,7 +7,9 @@ const RB = { esito: null, proprietario: null, telefono: null };   // telefono: '
 // Il «+» della Lista: nuovo contatto a mano oppure tutta la rubrica
 async function scegliAggiungi() {
   if (soloGuardo()) return;
-  const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: ic('persona') + ' Nuovo contatto', k: 'uno' }, { etichetta: ic('rubrica') + ' Importa dalla rubrica del telefono', k: 'rubrica' }]);
+  // l'icona si passa nel campo `icona`: `etichetta` esce come testo, quindi un disegno messo lì si legge come codice (trovato il 20/09)
+  const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: 'Nuovo contatto', icona: 'persona', k: 'uno' },
+    { etichetta: 'Importa dalla rubrica del telefono', icona: 'rubrica', k: 'rubrica' }]);
   if (!v) return;
   if (v.k === 'uno') return apriModulo(null);
   // Ignazio 18/09: prima si chiede che telefono è, poi si danno solo le istruzioni di quello
