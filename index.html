@@ -842,29 +842,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609200747"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609200747"></script>
-<script src="lista.js?v=202609200747"></script>
-<script src="rubrica.js?v=202609200747"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609200747"></script>
-<script src="agenda.js?v=202609200747"></script>
-<script src="report.js?v=202609200747"></script>
-<script src="check.js?v=202609200747"></script>
-<script src="mappa.js?v=202609200747"></script>
-<script src="pagina-dashboard.js?v=202609200747"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609200747"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609200747"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609200747"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609200747"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609200747"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609200747"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609200747"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609200747"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609200747"></script>
-<script src="benvenuto.js?v=202609200747"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609200747"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609200803"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609200803"></script>
+<script src="lista.js?v=202609200803"></script>
+<script src="rubrica.js?v=202609200803"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609200803"></script>
+<script src="agenda.js?v=202609200803"></script>
+<script src="report.js?v=202609200803"></script>
+<script src="check.js?v=202609200803"></script>
+<script src="mappa.js?v=202609200803"></script>
+<script src="pagina-dashboard.js?v=202609200803"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609200803"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609200803"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609200803"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609200803"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609200803"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609200803"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609200803"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609200803"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609200803"></script>
+<script src="benvenuto.js?v=202609200803"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609200803"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 07:47';
+const APP_VERSION = '2026.09.20 · 08:03';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1909,7 +1909,7 @@ async function apriPaginaCheck() {
     }
     const [ob, wes, segniAl] = await Promise.all([
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
-      dbq('date dei Wes', supa.from('wes').select('data').order('data')),
+      dbq('date dei WES', supa.from('wes').select('data').order('data')),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
     ]);
     CK.segniAl = segniAl;
@@ -1933,10 +1933,10 @@ function disegnaCheck() {
   const R = MB21Report, C = MB21Check, oggi = MB21Coda.oggiRoma(), p = CK.periodo;
   const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi, segniAl: CK.segniAl };
   let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>${partnerSelect()}
-    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
+    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
-    html += `<div class="vuoto">Nessun Wes ancora: l'Admin aggiunge le date dei Wes.</div>`;
+    html += `<div class="vuoto">Nessun WES ancora: l'Admin aggiunge le date dei WES.</div>`;
   } else {
     const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p });
     html += `<div class="rp-naviga">
@@ -2011,7 +2011,7 @@ async function apriReport(vista) {
   try {
     const [azioni, wes, gr] = await Promise.all([
       leggiAzioniMie(),
-      dbq('date dei Wes', supa.from('wes').select('id, data').order('data')),
+      dbq('date dei WES', supa.from('wes').select('id, data').order('data')),
       vediTutti() ? { data: null } : dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle()),
     ]);
     if (wes.error || gr.error) throw wes.error || gr.error;
@@ -2030,10 +2030,10 @@ function disegnaReport() {
   const riga = (classe, attr, testo, n, perc, freccia) =>
     `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
   let html = `<h1>Report</h1>${partnerSelect()}
-    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'Wes'], ['anno', 'Anno']].map(([k, t]) =>
+    <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
-    html += `<div class="vuoto">Nessun Wes ancora. ${eAdmin() ? 'Aggiungi la data nella pagina Admin.' : "L'Admin aggiunge le date dei Wes."}</div>`;
+    html += `<div class="vuoto">Nessun WES ancora. ${eAdmin() ? 'Aggiungi la data nella pagina Admin.' : "L'Admin aggiunge le date dei WES."}</div>`;
   } else {
     html += `<div class="rp-naviga">
       <button id="rp-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, date) ? '' : 'disabled'}>‹</button>
