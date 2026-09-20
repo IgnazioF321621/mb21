@@ -41,7 +41,7 @@
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
   const CON_OSPITE = ['Piano Marketing', 'Follow Up'];                          // decisione 8
-  const DURATE = [[5, '5 min'], [30, '30 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];
+  const DURATE = [[5, '5 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];   // 45 aggiunto il 21/09 (Ignazio: «17:15–18:00»)
   const COLORI = { 'Piano Marketing': 'var(--az-pm)', 'Follow Up': 'var(--az-followup)', 'Appuntamento': 'var(--az-appuntamento)', 'Consulenza PRD': 'var(--az-consulenza)', 'Contatto': 'var(--az-contatto)' };
   const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -103,10 +103,6 @@
       .filter(a => a.quando && partiRoma(a.quando).giorno === giorno)
       .sort((x, y) => (x.quando < y.quando ? -1 : 1));
   }
-  const giorniConEventi = azioni => new Set(azioni.map(a => {
-    const q = a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio;
-    return q ? partiRoma(q).giorno : null;
-  }).filter(Boolean));
 
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
@@ -286,9 +282,179 @@
     return `noteplan://x-callback-url/addText?noteDate=${giorno.replace(/-/g, '')}&mode=append&openNote=yes&text=${encodeURIComponent(testo)}`;
   }
 
+  // Quanti impegni per tipo di lavoro in questi giorni (cantiere 37): il riassunto della settimana
+  // («4 Piano Marketing · 2 Follow Up»). Ordine degli elenchi dell'app, non del caso; i vuoti non compaiono.
+  const ORDINE_TIPI = ['Piano Marketing', 'Follow Up', 'Appuntamento', 'Consulenza PRD', 'Contatto'];
+  // come si dicono nel riassunto: uno e più d'uno (parole di tutti i giorni, «PM» come lo dice Ignazio)
+  const NOMI_CONTO = {
+    'Piano Marketing': ['PM', 'PM'], 'Follow Up': ['Follow Up', 'Follow Up'], 'Appuntamento': ['Appuntamento', 'Appuntamenti'],
+    'Consulenza PRD': ['Consulenza', 'Consulenze'], 'Contatto': ['Contatto', 'Contatti'],
+  };
+  function contaPerTipo(azioni, giorni) {
+    const dentro = new Set(giorni || []);
+    const conto = {};
+    for (const a of azioni || []) {
+      const q = quandoDi(a);
+      if (!q || !dentro.has(partiRoma(q).giorno)) continue;
+      const t = a.tipo_azione || 'Contatto';
+      conto[t] = (conto[t] || 0) + 1;
+    }
+    const tipi = [...ORDINE_TIPI, ...Object.keys(conto).filter(t => !ORDINE_TIPI.includes(t))];
+    return tipi.filter(t => conto[t]).map(t => ({
+      tipo: t, quanti: conto[t], colore: COLORI[t] || COLORI.Contatto,
+      nome: (NOMI_CONTO[t] || [t, t])[conto[t] === 1 ? 0 : 1],
+    }));
+  }
+
+  // Pallini della striscia dei giorni (cantiere 37): uno per impegno, col colore della categoria della persona
+  // (Ignazio 20/09). Oltre `max` l'ultimo diventa una barretta: «ce n'è ancora».
+  function puntiGiorni(azioni, giorni, max = 4) {
+    const fuori = {};
+    for (const g of giorni || []) fuori[g] = { punti: [], tanti: false };
+    for (const a of azioni || []) {
+      const q = quandoDi(a);
+      if (!q) continue;
+      const g = partiRoma(q).giorno;
+      if (!fuori[g]) continue;
+      fuori[g].punti.push({ categoria: (a.contatti && a.contatti.categoria) || a.categoria || null, quando: q });
+    }
+    for (const g of Object.keys(fuori)) {
+      const v = fuori[g];
+      v.punti.sort((x, y) => (x.quando < y.quando ? -1 : 1));
+      v.quanti = v.punti.length;
+      if (v.punti.length > max) { v.punti = v.punti.slice(0, max - 1); v.tanti = true; }
+      v.punti = v.punti.map(p => p.categoria);
+    }
+    return fuori;
+  }
+
+  // ── Vista a orario del giorno (cantiere 37) ────────────────────────────────
+  // Tutto in minuti dalla mezzanotte di Roma: le funzioni non toccano il DOM, così il banco le prova e
+  // la stessa disposizione serve alla vista Giorno e alla vista Settimana.
+  const ORA_DA = 8, ORA_A = 24;              // la griglia parte dalle 8 e arriva a mezzanotte (Ignazio 20/09)
+  const PASSO_MIN = 15;                      // il tocco sul vuoto arrotonda al quarto d'ora
+  const MINIMO_VISTA = 20;                   // un blocco non si disegna mai più basso di 20 minuti, o non si leggerebbe
+  const DURATA_CONTATTO = 5;                 // telefonata/messaggio/presenza (Ignazio 20/09)
+  const DURATA_NORMALE = 60;                 // tutto il resto, come il link a Google Calendar
+  const durataPredefinita = tipo => (tipo === 'Contatto' ? DURATA_CONTATTO : DURATA_NORMALE);
+
+  const inMinuti = hhmm => Number(String(hhmm).slice(0, 2)) * 60 + Number(String(hhmm).slice(3, 5));
+  // 0 → «00:00», 1425 → «23:45», 1440 → «24:00» (si vede solo come etichetta della griglia)
+  const daMinuti = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(Math.round(m) % 60).padStart(2, '0')}`;
+  const alQuarto = m => Math.max(0, Math.min(1440 - PASSO_MIN, Math.round(m / PASSO_MIN) * PASSO_MIN));
+  const quandoDi = a => (a.quando || (a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio));
+
+  // Inizio e fine di un impegno, in minuti dalla mezzanotte del suo giorno. Senza ora di fine vale la durata
+  // predefinita del tipo; una fine sbagliata (prima dell'inizio) si tratta come se non ci fosse.
+  function fascia(a) {
+    const q = quandoDi(a);
+    const da = inMinuti(partiRoma(q).ora);
+    let durata = a.fine ? Math.round((Date.parse(a.fine) - Date.parse(q)) / 60000) : 0;
+    if (!(durata > 0)) durata = durataPredefinita(a.tipo_azione);
+    return { da, a: Math.min(1440, da + durata), durata };
+  }
+
+  // Disposizione degli impegni di un giorno: per ognuno la sua fascia e la colonna in cui disegnarlo.
+  // Chi si sovrappone finisce in colonne affiancate (come il Calendario di iPhone), così un doppio
+  // appuntamento alla stessa ora si vede subito invece di nascondersi.
+  // Restituisce { da, a, blocchi: [{ ev, da, fine, cima, alta, col, colonne, sovrapposto }], sovrapposti }.
+  function disposizioneGiorno(eventi, opz = {}) {
+    const minimo = opz.minimoMinuti == null ? MINIMO_VISTA : opz.minimoMinuti;
+    const blocchi = (eventi || []).map(ev => {
+      const f = fascia(ev);
+      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false };
+    }).sort((x, y) => (x.da - y.da) || (x.fine - y.fine));
+    // gruppi di blocchi che si toccano (il gruppo si chiude quando nessuno arriva fin lì)
+    let gruppo = [], finePiuLontana = -1;
+    const chiudi = () => {
+      if (!gruppo.length) return;
+      const colonne = Math.max(...gruppo.map(b => b.col)) + 1;
+      for (const b of gruppo) { b.colonne = colonne; b.sovrapposto = colonne > 1; }
+      gruppo = [];
+    };
+    const codaColonne = [];   // per ogni colonna, la fine dell'ultimo blocco che ci sta dentro
+    for (const b of blocchi) {
+      if (b.cima >= finePiuLontana) { chiudi(); codaColonne.length = 0; }
+      let c = codaColonne.findIndex(fine => fine <= b.cima);
+      if (c === -1) { c = codaColonne.length; }
+      codaColonne[c] = b.cima + b.alta;
+      b.col = c;
+      gruppo.push(b);
+      finePiuLontana = Math.max(finePiuLontana, b.cima + b.alta);
+    }
+    chiudi();
+    const estremi = estremiGriglia(blocchi, opz);
+    return { ...estremi, blocchi, sovrapposti: blocchi.filter(b => b.sovrapposto).length };
+  }
+
+  // La griglia va dalle 8 a mezzanotte, ma si allarga se quel giorno c'è qualcosa prima o dopo:
+  // nessun impegno deve restare fuori dalla vista.
+  function estremiGriglia(blocchi, opz = {}) {
+    let da = (opz.oraDa == null ? ORA_DA : opz.oraDa) * 60;
+    let a = (opz.oraA == null ? ORA_A : opz.oraA) * 60;
+    for (const b of blocchi || []) {
+      da = Math.min(da, Math.floor(b.cima / 60) * 60);
+      a = Math.max(a, Math.ceil((b.cima + b.alta) / 60) * 60);
+    }
+    return { da: Math.max(0, da), a: Math.min(1440, Math.max(a, da + 60)) };
+  }
+
+  // Impegni che si accavallano con la fascia scelta (un minuto in comune basta). `salta`: l'id di quello
+  // che si sta spostando, che non fa conflitto con sé stesso. Serve all'avviso «a quest'ora hai già…».
+  function sovrapposti(eventi, inizioIso, durataMin, salta) {
+    const da = Date.parse(inizioIso), a = da + (durataMin || DURATA_NORMALE) * 60000;
+    return (eventi || []).filter(e => {
+      if (salta && e.id === salta) return false;
+      const q = quandoDi(e);
+      if (!q) return false;
+      const eDa = Date.parse(q);
+      const dur = e.fine && Date.parse(e.fine) > eDa ? Date.parse(e.fine) - eDa : durataPredefinita(e.tipo_azione) * 60000;
+      return eDa < a && (eDa + dur) > da;
+    }).sort((x, y) => Date.parse(quandoDi(x)) - Date.parse(quandoDi(y)));
+  }
+
+  // Le fasce libere di un giorno, lunghe almeno `durata`, dentro le ore in cui si lavora.
+  // Su oggi non propone ore già passate. Restituisce [{ da, a }] in minuti.
+  function fasceLibere(eventi, durata, opz = {}) {
+    const passo = opz.passo || PASSO_MIN;
+    let da = (opz.oraDa == null ? 8 : opz.oraDa) * 60, a = (opz.oraA == null ? 22 : opz.oraA) * 60;
+    if (opz.daMinuti != null) da = Math.max(da, Math.ceil(opz.daMinuti / passo) * passo);
+    const presi = (eventi || []).map(e => fascia(e)).sort((x, y) => x.da - y.da);
+    const libere = [];
+    let punto = da;
+    for (const p of presi) {
+      if (p.a <= punto) continue;
+      if (p.da - punto >= durata) libere.push({ da: punto, a: Math.min(p.da, a) });
+      punto = Math.max(punto, p.a);
+      if (punto >= a) break;
+    }
+    if (a - punto >= durata) libere.push({ da: punto, a });
+    return libere.filter(f => f.a - f.da >= durata && f.da < a).map(f => ({ da: f.da, a: Math.min(f.a, a) }));
+  }
+
+  // Le ore libere da proporre quando si fissa un appuntamento. Con `vicinoA` (minuti) si prendono quelle
+  // più vicine all'ora che si stava provando — chi cerca la sera non se le vede proporre la mattina.
+  function oreProposte(eventi, durata, opz = {}) {
+    const passo = opz.passo || 30;
+    const quante = opz.quante || 3;
+    const tutte = [];
+    for (const f of fasceLibere(eventi, durata, opz)) {
+      for (let m = Math.ceil(f.da / passo) * passo; m + durata <= f.a; m += passo) tutte.push(m);
+    }
+    if (opz.vicinoA == null) return tutte.slice(0, quante).map(daMinuti);
+    return tutte
+      .map(m => ({ m, via: Math.abs(m - opz.vicinoA) }))
+      .sort((x, y) => x.via - y.via || x.m - y.m)
+      .slice(0, quante)
+      .sort((x, y) => x.m - y.m)
+      .map(x => daMinuti(x.m));
+  }
+
   const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
-    partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, giorniConEventi, riga, orario,
+    partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
+    ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
+    fascia, disposizioneGiorno, puntiGiorni, contaPerTipo, ORDINE_TIPI, estremiGriglia, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
