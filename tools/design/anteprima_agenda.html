@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MB21 · Agenda, anteprima con dati finti</title>
+<style>
+
+  /* Lo stile dell'app (cantiere 34): la fonte unica è docs/MB21_Design.md. Qui i valori, nel resto del foglio solo var(--…). */
+  :root {
+    /* superfici e testo */
+    --sfondo: #EFF1F5; --superficie: #FFFFFF; --superficie-2: #F7F8FA; --bordo: #E3E7EE;
+    --testo: #10151F; --testo-soft: #5A6475; --testo-tenue: #7B8496; --accento: #10151F; --accento-su: #FFFFFF;
+    /* categorie dei contatti: colore pieno e tinta */
+    --cat-prospect: #DD5F0D; --cat-prospect-tinta: #FDEEE2; --cat-cliente: #0E7490; --cat-cliente-tinta: #DFF1F6;
+    --cat-partner: #1D4ED8; --cat-partner-tinta: #E7EFFE; --cat-ex: #5A6475; --cat-ex-tinta: #EAECF1;
+    --cat-unlinked: #7B8496; --cat-unlinked-tinta: #F2F4F7; --cat-archiviato: #374151; --cat-archiviato-tinta: #E4E7EC;
+    /* segni vitali e stati */
+    --bbs: #1D4ED8; --bbs-tinta: #E7EFFE; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
+    --ok: #15803D; --ok-tinta: #E4F3E8; --pericolo: #C02626; --pericolo-tinta: #FCEAEA; --proposta: #B45309; --proposta-tinta: #FEF3C8;
+    /* i quattro gruppi dei numeri (Dashboard, Check, Obiettivi): colori loro, non delle categorie */
+    --gr-volume: #1D4ED8; --gr-volume-tinta: #E7EFFE; --gr-azione: #DD5F0D; --gr-azione-tinta: #FDEEE2;
+    --gr-segni: #15803D; --gr-segni-tinta: #E4F3E8; --gr-crescita: #6D28D9; --gr-crescita-tinta: #F0E9FD;
+    /* i tipi di azione: si vedono nella strisciolina delle Conferme e dei Riordini e nei calendari */
+    --az-pm: #1D4ED8; --az-followup: #15803D; --az-appuntamento: #6D28D9; --az-consulenza: #C2410C; --az-contatto: #5A6475;
+    /* i brand dei prodotti Amway: colori loro, decisi da Amway */
+    --revolut: #185FA5;   /* il blu del marchio Revolut, per il bottone del rinnovo */
+    --brand-artistry: #BE185D; --brand-espring: #1D4ED8; --brand-home: #C2410C; --brand-nutrilite: #15803D; --brand-persona: #6D28D9; --brand-altro: #5A6475;
+    /* gli stessi colori in numeri, per le caselle della tabella dei Segni Vitali che si accendono piano piano */
+    --tenue-rgb: 123, 132, 150; --gr-azione-rgb: 221, 95, 13; --bbs-rgb: 29, 78, 216; --wes-rgb: 192, 38, 38; --cep-rgb: 21, 128, 61;
+    /* i 4 modi di contattare tengono il colore a cui la gente è abituata (Ignazio 19/09) */
+    --ct-chiama: #1FA750; --ct-sms: #2F7FD6; --ct-whatsapp: #1FA855; --ct-telegram: #1F94D2;
+    /* scritte */
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --dim-pagina: 26px; --dim-sezione: 16px; --dim-corpo: 15px; --dim-piccolo: 12.5px; --dim-etichetta: 11px; --dim-numero: 34px;
+    --peso-medio: 600; --peso-forte: 700; --interlinea: 1.35;
+    /* spazi, angoli, ombre, misure */
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+    --raggio-bottone: 14px; --raggio-riga: 18px; --raggio-card: 22px; --raggio-foglio: 28px; --raggio-pill: 999px;
+    --ombra-card: 0 2px 12px rgba(16,21,31,.05); --ombra-foglio: 0 -8px 30px rgba(16,21,31,.14);
+    --bottone-h: 50px; --pill-h: 40px; --tocco: 44px; --pagina-x: 16px;
+    /* nomi di prima: restano validi e puntano ai nuovi (si tolgono pagina per pagina) */
+    --card: var(--superficie); --grigio: var(--testo-soft); --grigio-chiaro: var(--testo-tenue); --linea: var(--bordo);
+    --blu: var(--gr-volume); --coach: var(--cat-partner); --verde: var(--ok); --rosso: var(--pericolo);
+    --prospect: var(--cat-prospect); --cliente: var(--cat-cliente); --partner: var(--cat-partner); --ex: var(--cat-ex); --unlinked: var(--spento);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--sfondo); color: var(--testo);
+    font-family: var(--font); font-size: var(--dim-corpo); line-height: var(--interlinea);
+    -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font-family: inherit; }
+  main { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 16px) 16px 110px; }
+  h1 { font-size: var(--dim-pagina); font-weight: var(--peso-forte); line-height: 1.15; margin: 8px 0 2px; letter-spacing: -0.5px; }
+  .sotto { color: var(--grigio); font-size: 14px; margin-bottom: 18px; }
+  h2 { font-size: var(--dim-sezione); font-weight: var(--peso-forte); line-height: 1.15; color: var(--testo); margin: 26px 4px 10px; }   /* 26 px fra le sezioni: il respiro */
+
+  .card { background: var(--card); border-radius: var(--raggio-card); overflow: hidden; margin-bottom: 12px;
+    box-shadow: var(--ombra-card); }
+  .strip { height: 3px; margin: 0 var(--raggio-riga); border-radius: 0 0 3px 3px; background: var(--unlinked); }
+  .corpo { padding: 14px 16px 16px; }
+  .nome { font-size: 17px; font-weight: 700; }
+  .prof { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .luogo { font-size: 12px; color: var(--grigio-chiaro); margin-top: 2px; }
+  .riga { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .tel { color: var(--blu); font-size: 16px; font-weight: 600; text-decoration: none; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--sfondo); color: var(--testo-soft); }
+  .badge.scaduto { background: var(--pericolo-tinta); color: var(--rosso); }
+  .badge.new { background: var(--ok-tinta); color: var(--ok); }
+  .coach { margin-top: 12px; padding: 10px 12px; border-radius: var(--raggio-bottone); background: var(--cat-partner-tinta); color: var(--cat-partner);
+    font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .coach small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--coach); margin-bottom: 2px; }
+
+  .vuoto, .avviso { text-align: center; color: var(--grigio); padding: 28px 16px; font-size: 15px; }
+  .avviso { background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 10px 12px; margin-bottom: 12px; font-size: 14px; }
+
+  .accesso { max-width: 360px; margin: 12vh auto 0; }
+  .accesso p { color: var(--grigio); font-size: 15px; }
+  input { width: 100%; font-size: 17px; padding: 14px; border-radius: var(--raggio-bottone); border: 1px solid var(--linea); background: var(--superficie); margin: 6px 0 12px; }
+  button.primario { width: 100%; min-height: var(--bottone-h); font-size: 16px; font-weight: var(--peso-medio); padding: 13px 14px; border: 0; border-radius: var(--raggio-bottone); background: var(--accento); color: var(--accento-su); }
+  button.primario:disabled { opacity: .5; }
+  button.link { background: none; border: 0; color: var(--blu); font-size: 15px; padding: 10px 0; min-height: var(--tocco); }
+  .errore { color: var(--rosso); font-size: 14px; min-height: 20px; }
+
+  nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--superficie); border-radius: 26px 26px 0 0;
+    box-shadow: 0 -3px 16px rgba(16,21,31,.06); display: flex; justify-content: space-around;
+    padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
+  /* Le icone (icone.js): a tratto, un colore solo, grandi quanto la scritta se non si dice altro */
+  svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; flex: none; }
+  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 6px; min-height: var(--tocco); min-width: 56px; }
+  nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
+  nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
+  nav button[hidden] { display: none; }
+  nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); }
+  /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «Non interessato» per intero in fondo.
+     Due esiti buoni (Cliente: Ordine · Appuntamento) si dividono la prima riga. */
+  .bottoni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .bottoni button { flex: 1 1 28%; min-width: 0; min-height: var(--tocco); font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: var(--raggio-bottone); border: 0; background: var(--sfondo); color: var(--testo); }
+  .bottoni button:active { transform: scale(.97); }
+  .bottoni .appuntamento, .bottoni .ordine { flex: 1 1 100%; background: var(--ok-tinta); color: var(--ok); }
+  .bottoni .ordine:has(+ .appuntamento), .bottoni .ordine + .appuntamento { flex: 1 1 40%; }   /* solo se gli esiti buoni sono due si dividono la riga */
+  /* scegliere la categoria in «Da catalogare» (scelta «A» di Ignazio): tre tasselli con il tondo colorato e l'icona, il resto sotto in piccolo */
+  .bottoni.scegli-cat button.grande { flex: 1 1 28%; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px 10px; border-radius: var(--raggio-riga); font-size: 14px; }
+  .bottoni.scegli-cat button.grande span { width: 44px; height: 44px; border-radius: 50%; background: var(--cat); color: #fff; display: grid; place-items: center; font-size: 21px; }
+  .bottoni.scegli-cat button.piccola { flex: 1 1 auto; background: none; color: var(--testo-soft); font-size: 13px; padding: 6px 2px; white-space: nowrap; }
+  .bottoni.scegli-cat button.piccola.no { flex: 1 1 auto; background: none; color: var(--pericolo); }
+  .bottoni .no { flex: 1 1 100%; background: var(--pericolo-tinta); color: var(--pericolo); }
+  .bottoni button:disabled { opacity: .45; }
+  /* Il colore che parla (cantiere 34). Scelta di Ignazio 19/09 («B»): negli elenchi la riga resta BIANCA e la categoria la dice il tondo con le
+     iniziali (la riga tutta tinta, sul fondo perla, dava fastidio); la tinta --cat-tinta si usa dove c'è una persona sola: la testata della scheda. */
+  /* --cat-scuro: la stessa tinta scritta scura, per il testo dentro i blocchi tinti dell'Agenda a orario (cantiere 37) */
+  .cat-prospect { --cat: var(--cat-prospect); --cat-tinta: var(--cat-prospect-tinta); --cat-scuro: #8E3B06; } .cat-cliente { --cat: var(--cat-cliente); --cat-tinta: var(--cat-cliente-tinta); --cat-scuro: #0A5468; }
+  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); --cat-scuro: #16379B; } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); --cat-scuro: #3A4150; }
+  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); --cat-scuro: #434C5C; } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); --cat-scuro: #26303F; }
+  .cat-nessuna { --cat: var(--testo-tenue); --cat-tinta: var(--superficie); --cat-scuro: #363E4C; }
+  .card[class*="cat-"].aperta .corpo { border-top: 1px solid var(--bordo); }
+  .rc-pastiglia { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff;
+    display: grid; place-items: center; font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  .pallino { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; flex: none; }
+  .ic-vuoto { display: inline-block; width: 1em; height: 1em; border: 1.8px solid var(--spento); border-radius: 50%; vertical-align: -0.14em; }
+  .card.compatta { margin-bottom: 8px; border-radius: var(--raggio-riga); }
+  .riga-coda { display: block; width: 100%; min-height: 64px; text-align: left; border: 0; background: none; padding: 11px 36px 11px 66px; position: relative; font-family: inherit; color: var(--testo); }
+  .riga-coda .rc-alto { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .riga-coda .nome { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .badge { flex: none; }
+  .riga-coda .rc-glide { display: block; margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--testo-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .rc-coach { display: block; margin-top: 3px; font-size: 13px; font-weight: 600; color: var(--cat-partner); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga-coda .rc-freccia { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--grigio-chiaro); }
+  .card.aperta .rc-coach { white-space: normal; }
+  .card.aperta .corpo { padding-top: 0; }
+  .card.via { opacity: 0; transform: translateX(40px); transition: all .25s ease; }
+
+  .testa-coda { display: flex; align-items: center; justify-content: space-between; margin: 22px 4px 8px; }
+  .testa-coda h2 { margin: 0; }
+  .contatore { background: var(--superficie); border: 1px solid var(--linea); border-radius: 999px; padding: 6px 12px;
+    font-size: 13px; font-weight: 700; color: var(--testo); }
+  .numeri { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 8px; }
+  .numeri button { font-size: 20px; font-weight: 700; padding: 14px 0; border-radius: var(--raggio-bottone); border: 0; background: var(--sfondo); color: var(--testo); }
+  .numeri button.scelto { background: var(--testo); color: #fff; }
+
+  .velo { position: fixed; inset: 0; background: rgba(16,21,31,.4); display: flex; align-items: flex-end; z-index: 20; }
+  .foglio { background: var(--superficie); width: 100%; max-width: 520px; margin: 0 auto; border-radius: var(--raggio-foglio) var(--raggio-foglio) 0 0;
+    padding: 26px 16px calc(env(safe-area-inset-bottom) + 20px); box-shadow: var(--ombra-foglio); position: relative; }
+  .foglio::before { content: ''; position: absolute; top: 9px; left: 50%; width: 44px; height: 5px; margin-left: -22px; border-radius: 99px; background: var(--spento); }   /* la maniglia */
+  .foglio h3 { margin: 0 0 4px; font-size: 20px; }
+  .foglio p { margin: 0 0 12px; color: var(--grigio); font-size: 14px; }
+  .cf-spunta { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; font-size: 15px; }
+  .cf-spunta input { width: 22px; height: 22px; flex: none; margin: 0; }
+  button.link.elimina-qui { display: block; width: 100%; margin-top: 18px; color: var(--rosso); font-weight: 600; }   /* rosso: si deve sempre notare (Ignazio 19/09) */
+  .foglio .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 78px); max-width: 488px; margin: 0 auto;
+    background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 8px 16px; min-height: 52px; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; font-size: 15px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .toast button { background: none; border: 0; color: var(--accento-su); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; font-weight: 700; padding: 4px 0; min-height: var(--tocco); }
+
+  /* ── Lista Nomi ── */
+  /* Lista Nomi, cantiere 30: parte alta ferma in alto, scorrono solo i nomi. Il «+» è quello dell'Agenda (.ag-testa · .ag-piu) */
+  .ls-testa { position: sticky; top: 0; z-index: 5; background: var(--sfondo); margin: calc(-1 * (env(safe-area-inset-top) + 16px)) -16px 10px;
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 8px; border-bottom: 1px solid var(--linea); }
+  .ls-testa .ag-testa { margin: 0 0 8px; }
+  .ls-testa .partner-select { margin: 0 0 8px; }
+  .ls-testa .cerca { margin: 0 0 8px; }
+  .chips button span { font-weight: 500; opacity: .6; margin-left: 2px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: none; font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; border-radius: var(--raggio-pill); border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); }
+  .chips button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .cerca { margin: 10px 0 12px; position: relative; }
+  .cerca input { margin: 0; padding-right: 40px; border-radius: var(--raggio-pill); padding-left: 18px; border-color: transparent; box-shadow: var(--ombra-card); }
+  .cerca button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; font-size: 20px; color: var(--grigio); padding: 6px 10px; }
+  .cn { display: flex; align-items: center; background: var(--card); border-radius: var(--raggio-riga); overflow: hidden; margin-bottom: 8px; min-height: 64px; padding-left: 12px;
+    box-shadow: var(--ombra-card); }
+  .cn-pastiglia { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff; display: grid; place-items: center; font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  .cn .frase svg.ic { color: var(--testo-soft); }
+  .cn .striscia { width: 4px; flex: none; align-self: stretch; }
+  .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
+  .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* la prima riga è solo del nome; «nuovo» e le targhette hanno una riga loro in fondo alla card (Ignazio 19/09: accanto al nome «ci si perde») */
+  .cn-segni { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .cn-segni .sv-targhe, .cn-segni .badge { margin-left: 0; }
+  .cn .frase { font-size: 14px; color: var(--testo-soft); margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
+  .cn .chiama { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--sfondo); color: var(--cat, var(--testo)); display: flex; align-items: center; justify-content: center; }
+  .cn .chiama svg.ic { width: 19px; height: 19px; }
+  .cn .chiama.spento { opacity: .3; pointer-events: none; }
+  .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; }
+  .ls-ordina button { border: 0; background: none; color: var(--blu); font-size: 13px; font-weight: 600; padding: 4px 0; }
+  .foglio > .contatta { margin: 4px 0 8px; }
+  .f-comp { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 6px; }
+  .f-comp select, .f-comp input { margin: 0; }
+  /* Importa dalla rubrica (cantiere 30) */
+  .rb-passi > b { font-size: 16px; }
+  .rb-passi button.link { padding: 8px 0 0; font-size: 14px; }
+  .rb-passi ol { margin: 8px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.5; color: var(--testo-soft); }
+  label.rb-file { display: block; text-align: center; font-size: 17px; font-weight: 600; padding: 14px; border-radius: var(--raggio-bottone); background: var(--testo); color: #fff; margin: 12px 0; }
+  .rb-conti div { font-size: 15px; padding: 3px 0; }
+  .rb-elenco { padding: 4px 14px; }
+  .rb-riga { padding: 10px 0; border-bottom: 1px solid var(--linea); }
+  .rb-riga:last-child { border-bottom: 0; }
+  .rb-riga label { display: flex; align-items: center; gap: 10px; }
+  .rb-riga input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 0; }
+  .rb-riga .rb-nome { margin: 0; padding: 8px 10px; font-size: 16px; }
+  .rb-riga small { display: block; margin: 4px 0 0 32px; font-size: 12px; color: var(--grigio); line-height: 1.4; }
+  .rb-riga select { width: 100%; margin: 8px 0 0; font-size: 14px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--superficie); }
+  .rb-fondo { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 70px); padding-top: 8px; }
+  .ls-ordina span button { border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); border-radius: 999px; padding: 2px 9px; font-weight: 400; }
+  .lettere-titolo { display: block; color: var(--grigio); font-size: 13px; margin: 14px 4px 8px; }
+  .lettere { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-bottom: 10px; }
+  .lettere button { border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); border-radius: 10px; font-size: 16px; font-weight: 600; padding: 9px 0; }
+  .lettere button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .lettere button:disabled { opacity: .3; }
+  .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--testo-tenue); padding: 0 10px 0 6px; height: 44px; min-width: 40px; }
+  .altri-voci button { display: block; width: 100%; text-align: left; font-size: 17px; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--linea); background: none; color: var(--testo); }
+  .altri-voci button.pericolo { color: var(--rosso); }
+  .altri-voci button:not([class*="tono-"]) svg.ic { margin-right: 8px; }
+  /* voci con un tono (i comandi dei tre puntini: Modifica · Archivia · Ripristina · Elimina): icona, grassetto e un colore per ognuna (Ignazio 19/09) */
+  .altri-voci button[class*="tono-"] { font-weight: 700; display: flex; align-items: center; gap: 12px; min-height: 52px; }
+  .altri-voci button[class*="tono-"] svg.ic { width: 22px; height: 22px; }
+  .altri-voci .tono-blu { color: var(--blu); } .altri-voci .tono-ambra { color: var(--proposta); } .altri-voci .tono-verde { color: var(--ok); } .altri-voci .tono-rosso { color: var(--pericolo); }
+
+  .indietro { border: 0; background: none; color: var(--testo-soft); font-size: 16px; font-weight: 600; padding: 6px 0; margin-top: 4px; min-height: var(--tocco); }
+  /* Testata della scheda: qui la persona è una sola, quindi prende la tinta della sua categoria (docs/MB21_Design.md) */
+  .testata { background: var(--cat-tinta, var(--superficie)); border-radius: var(--raggio-card); overflow: hidden; margin: 8px 0 12px; }
+  .testata .corpo { padding: 16px; }
+  .testata .cat { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--cat, var(--testo-soft)); }
+  .testata h1 { font-size: 22px; margin: 2px 0; }
+  .testata .alto { display: flex; align-items: center; gap: 12px; }
+  .testata .ts-chi { flex: 1; min-width: 0; }
+  .ts-pastiglia { flex: none; width: 58px; height: 58px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff; display: grid; place-items: center; font-size: 19px; font-weight: 600; }
+  .modifica { align-self: flex-start; border: 0; border-radius: var(--raggio-pill); background: var(--superficie); color: var(--testo); font-size: 14px; font-weight: 600; min-height: 36px; padding: 8px 14px; flex: none; }
+  .contatta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+  .contatta a { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; background: var(--superficie); color: var(--testo-soft);
+    border: 0; font-size: 11px; font-weight: 600; padding: 9px 0 7px; border-radius: var(--raggio-riga); }
+  .foglio .contatta a, .card .contatta a, .ag-evento .contatta a { background: var(--sfondo); }   /* su un fondo bianco i 4 bottoni hanno il loro tassello grigio chiaro; nella testata tinta della scheda restano bianchi */
+  .contatta svg { width: 22px; height: 22px; color: var(--testo); }
+  .contatta .ct-call svg { color: var(--ct-chiama); } .contatta .ct-sms svg { color: var(--ct-sms); } .contatta .ct-whatsapp svg { color: var(--ct-whatsapp); } .contatta .ct-telegram svg { color: var(--ct-telegram); }
+  .contatta a.spento { opacity: .35; pointer-events: none; }
+  .app-riga { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 12px; border-radius: var(--raggio-bottone); background: var(--sfondo); font-size: 14px; font-weight: 600; }
+  .app-riga small { display: block; font-weight: 400; color: var(--grigio); font-size: 12px; }
+  .app-riga .ico { font-size: 20px; }
+  .sezioni { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
+  .sezioni button { flex: none; font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; border-radius: var(--raggio-pill); border: 0; background: transparent; color: var(--testo-soft); }
+  .sezioni button.scelto { background: var(--accento); color: var(--accento-su); }
+  .riquadro { background: var(--superficie); border-radius: var(--raggio-card); padding: 16px; margin-bottom: 12px; box-shadow: var(--ombra-card); }
+  .dati { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .dati small { display: block; font-size: 12px; color: var(--grigio); }
+  .dati div { font-size: 15px; overflow-wrap: anywhere; }
+  .fase { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; color: var(--blu); }
+  .fase img, .fase .senza-icona { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: var(--bordo); flex: none; }
+  .piccolo { border: 0; border-radius: var(--raggio-pill); min-height: 36px; background: var(--superficie); box-shadow: var(--ombra-card); font-size: 14px; font-weight: 600; padding: 9px 14px; color: var(--testo); margin-bottom: 12px; }
+  /* ogni azione è una card sua, staccata dalle altre, con la barretta del colore della categoria della persona:
+     Ignazio 19/09, «non si distinguono una dall'altra» */
+  .azione { position: relative; background: var(--superficie); border-radius: var(--raggio-riga); box-shadow: var(--ombra-card); padding: 12px 14px 8px 22px; margin-bottom: 10px; }
+  .azione::before { content: ''; position: absolute; left: 10px; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: var(--cat, var(--spento)); }   /* il colore è quello della categoria della persona, lo stesso del tondo in testata (Ignazio 19/09: tondo e barretta devono essere coerenti, per tutte le categorie) */
+  .azione .t { font-weight: 700; font-size: 15px; }
+  .azione .s { font-size: 13px; color: var(--testo-soft); }
+  .azione .comandi { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .stato-az { font-size: 13px; color: var(--grigio); }
+  /* titoletto del blocco esiti (Ignazio 19/09): come i titoli dei gruppi dei moduli, niente più «· tocca per cambiare» */
+  .come-andata { margin: 12px 0 8px; padding-top: 10px; border-top: 1px solid var(--bordo); font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); }
+  .come-andata small { font-weight: 400; color: var(--grigio); }
+  .stato-az.fatto { color: var(--ok); }
+  /* l'elenco delle azioni nella scheda: era un grande riquadro giallo con il bordo (Glide); ora una card bianca, un'azione per riga separata da un filetto */
+  .arancio { margin-bottom: 12px; }
+  .interruttore { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
+  .interruttore:first-child { border-top: 0; }
+  .interruttore small { display: block; color: var(--grigio); font-size: 12px; }
+  .interruttore input { width: 50px; height: 30px; margin: 0; appearance: none; -webkit-appearance: none; background: var(--bordo); border-radius: 999px; position: relative; border: 0; padding: 0; flex: none; transition: background .2s; }
+  .interruttore input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; background: var(--superficie); border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left .2s; }
+  .interruttore input:checked { background: var(--verde); }
+  .interruttore input:checked::after { left: 23px; }
+  .barra { height: 8px; background: var(--bordo); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .barra div { height: 100%; background: var(--accento); }
+  /* Avvio del Partner (cantiere 31): prossimo passo nella linguetta Onboarding, riga dell'avvio in testata sotto «Usa l'app» */
+  .avvio-prossimo { margin-top: 12px; font-size: 16px; }
+  .avvio-prossimo small { color: var(--grigio); font-size: 13px; margin-left: 4px; }
+  button.app-riga { width: 100%; border: 0; text-align: left; color: var(--testo); font-family: inherit; }
+  button.app-riga .freccia { margin-left: auto; color: var(--grigio); font-size: 18px; font-weight: 400; }
+  /* Vendite nella scheda contatto (cantiere 26) */
+  .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .vn-tot { border-radius: var(--raggio-riga); padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
+  .vn-tot span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .vn-tot b { display: block; font-size: 17px; letter-spacing: -0.3px; white-space: nowrap; }
+  .vn-tot.blu { background: var(--gr-volume-tinta); border-color: var(--gr-volume-tinta); color: var(--gr-volume); }
+  .vn-tot.viola { background: var(--gr-crescita-tinta); border-color: var(--gr-crescita-tinta); color: var(--gr-crescita); }
+  .vn-tot.verde { background: var(--ok-tinta); border-color: var(--ok-tinta); color: var(--ok); }
+  .vn-elenco { padding: 2px 16px; }
+  .vn-riga { width: 100%; border: 0; background: transparent; text-align: left; font-family: inherit; color: var(--testo); display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); }
+  .vn-riga:last-child { border-bottom: 0; }
+  .vn-riga:has(+ .vn-fatto) { border-bottom: 0; }
+  .vn-fatto + .vn-riga { border-top: 1px solid var(--linea); }
+  .vn-prodotto { font-size: 16px; font-weight: 600; }
+  .vn-sotto { font-size: 13px; color: var(--grigio); margin-top: 3px; }
+  .vn-brand { display: inline-block; color: #fff; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 6px; margin-right: 6px; }
+  .vn-avviso { background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 10px 12px; font-size: 14px; margin-bottom: 10px; }
+  .vn-brand-scelta { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+  .vn-brand-scelta button { font-size: 15px; font-weight: 600; padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--col); background: var(--superficie); color: var(--col); }
+  .vn-brand-scelta button.scelto { background: var(--col); color: #fff; }
+  .vn-riga-info { background: var(--card); border-radius: var(--raggio-bottone); padding: 10px 14px; margin-bottom: 8px; font-size: 14px; font-weight: 600; box-shadow: var(--ombra-card); }
+  .ck-vn { --vn: var(--gr-volume); --vn-tinta: var(--gr-volume-tinta); background: var(--vn-tinta); border: 1px solid var(--vn-tinta); border-radius: var(--raggio-bottone); padding: 12px; margin: 4px 0 10px; color: var(--cat-cliente); }
+  .ck-vn > b { font-size: 16px; }
+  .ck-vn.azioni { --vn: var(--gr-azione); --vn-tinta: var(--gr-azione-tinta); }
+  .ck-vn .vn-aiuto { color: var(--vn); margin-bottom: 4px; }
+  .ck-vn-riga { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font-family: inherit; font-size: 15px; background: var(--superficie); border: 0; border-radius: 10px; padding: 10px 12px; margin-top: 6px; color: var(--testo); }
+  .ck-vn-riga b { flex: none; color: var(--vn); }
+  .vn-brand-testata { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .vn-brand-testata:empty { display: none; }
+  .vn-brand-testata button { font-family: inherit; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--linea); background: var(--sfondo); color: var(--grigio-chiaro); }
+  .vn-brand-testata button.acceso { background: var(--col); border-color: var(--col); color: #fff; }
+  button.vn-piu { margin-bottom: 12px; }
+  .vn-quando { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 8px; }
+  .vn-quando button { font-size: 16px; font-weight: 600; padding: 12px; border-radius: var(--raggio-bottone); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); }
+  .vn-quando button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .vn-attesa { color: var(--grigio); font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .vn-attesa.tardi { color: var(--proposta); }
+  .vn-fatto { display: block; width: 100%; margin: -2px 0 12px; border: 1.5px solid var(--proposta); background: var(--proposta-tinta); color: var(--proposta); font-size: 15px; font-weight: 700; padding: 10px; border-radius: var(--raggio-bottone); }
+
+  .vn-aiuto { font-size: 13px; color: var(--grigio); margin-top: 3px; line-height: 1.35; }
+  .vn-numeri { text-align: right; flex: none; }
+  .vn-numeri b { display: block; font-size: 15px; }
+  .vn-numeri span { font-size: 13px; color: var(--grigio); }
+  .nota { background: var(--proposta-tinta); border: 1px solid var(--proposta); border-radius: var(--raggio-bottone); padding: 12px 14px; margin-bottom: 8px; width: 100%; text-align: left; font-size: 15px; color: var(--testo); }
+  .testo-nota { white-space: pre-wrap; font-size: 15px; line-height: 1.45; max-height: 60vh; overflow-y: auto; }
+
+  .foglio.alto { max-height: 92vh; overflow-y: auto; }
+  /* Il modulo Nuovo contatto / Modifica (cantiere 34): fondo perla, gruppi in card bianche, categoria a pastiglie, «Annulla · Salva» fermi in fondo */
+  .foglio.mc { background: var(--sfondo); padding-bottom: 0; }
+  .mc-testa { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
+  .mc-testa .ts-pastiglia { width: 46px; height: 46px; font-size: 16px; }
+  .mc-testa > div { flex: 1; min-width: 0; } .mc-testa small { display: block; font-size: 12px; color: var(--testo-soft); }
+  .mc-testa b { display: block; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mc-testa button { flex: none; border: 0; background: var(--superficie); width: 38px; height: 38px; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--testo-soft); }
+  .mc-t { margin: 18px 6px 8px; font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); }
+  .mc-g { padding: 4px 14px 12px; margin-bottom: 0; }
+  .mc-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .mc-cat { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); min-height: 40px; padding: 6px 13px; font-size: 14px; font-weight: 600; color: var(--testo); }
+  .mc-cat.on { background: var(--cat); border-color: var(--cat); color: #fff; }
+  .foglio.mc .elimina-qui { margin: 14px 0; }
+  .mc-fondo { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; background: var(--superficie); margin: 0 -16px;
+    padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }
+  /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
+  /* Novità: righe bianche staccate come nel resto dell'app (cantiere 34, 20/09) */
+  .nv-pagina { margin: 16px 2px 6px; font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: 1.2px; }
+  .nv-riga { background: var(--superficie); border-radius: var(--raggio-riga); box-shadow: var(--ombra-card); margin-bottom: 8px; font-size: 14px; }
+  .nv-riga summary { padding: 12px 14px; font-weight: 600; font-size: 15px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .nv-riga summary::-webkit-details-marker { display: none; }
+  .nv-riga summary::after { content: "\203a"; color: var(--testo-tenue); font-size: 18px; flex: none; }
+  .nv-riga[open] summary::after { content: "\2304"; }
+  .nv-riga div { padding: 0 14px 12px; color: var(--testo-soft); line-height: 1.45; }
+  .nv-riga small { display: block; color: var(--grigio-chiaro); font-size: 11px; margin-top: 4px; }
+  .foglio .testa-foglio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .foglio .testa-foglio button { border: 0; background: none; font-size: 24px; color: var(--grigio); padding: 0 4px; }
+  /* la «×» dei fogli è l'icona `chiudi`, non una lettera (cantiere 34, 20/09) */
+  .foglio .testa-foglio button > svg.ic, .mc-testa button > svg.ic { width: 22px; height: 22px; display: block; margin: auto; }
+  .cerca button > svg.ic { width: 18px; height: 18px; display: block; }
+  button.link > svg.ic { width: 18px; height: 18px; vertical-align: -4px; }
+  .campo { margin-bottom: 4px; }
+  .campo label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; margin-top: 10px; }
+  .campo label small { font-weight: 400; color: var(--grigio); margin-left: auto; }   /* «Obbligatorio» resta a destra anche quando il titolo ha l'icona davanti */
+  .campo input, .campo select, .campo textarea { width: 100%; min-height: var(--bottone-h); font-size: 17px; padding: 12px 14px; border-radius: var(--raggio-bottone); border: 1px solid var(--bordo); background: var(--superficie-2); margin: 6px 0 2px; font-family: inherit; color: var(--testo); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accento); background: var(--superficie); }
+  .campo .conta { text-align: right; font-size: 11px; color: var(--grigio-chiaro); min-height: 14px; }
+  .telefono-campo { display: flex; gap: 6px; }
+  .telefono-campo select { width: 118px; flex: none; }
+
+  /* ── Dashboard (Fase 3) ── */
+  /* Partner Select (solo Admin): una pastiglia bianca come la ricerca; diventa ARANCIO PIENO quando si guardano i dati di un altro partner
+     (si scrive a nome suo: il segnale deve restare forte) */
+  .partner-select { display: flex; align-items: center; gap: 10px; background: var(--superficie); color: var(--testo); border-radius: var(--raggio-pill); padding: 5px 5px 5px 16px; margin: 8px 0 12px; box-shadow: var(--ombra-card); }
+  .partner-select small { flex: none; font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--testo-tenue); }
+  .partner-select button { flex: 1; min-width: 0; min-height: 38px; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--sfondo); color: var(--testo);
+    border: 0; border-radius: var(--raggio-pill); padding: 6px 14px; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .partner-select button span { font-size: 12px; color: var(--testo-soft); font-weight: 600; flex: none; }
+  /* stai guardando i dati di un altro: è un avvertimento (ambra), non una categoria (Ignazio 20/09) */
+  .partner-select.altro { background: var(--accento); color: var(--accento-su); }
+  .partner-select.altro small { color: rgba(255,255,255,.85); }
+  .partner-select.altro button { background: rgba(255,255,255,.2); color: #fff; }
+  .partner-select.altro button span { color: #fff; }
+  .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .banner-abb.attivo { background: var(--ok-tinta); color: var(--ok); }
+  .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: var(--pericolo-tinta); color: var(--pericolo); padding: 14px 16px; }
+  .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: inherit; opacity: .85; }
+  .banner-big { border-radius: var(--raggio-card); background: var(--superficie); border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+  .banner-big.bbs { border-color: var(--bbs-tinta); background: var(--bbs-tinta); }
+  .banner-big.wes { border-color: var(--pericolo-tinta); background: var(--pericolo-tinta); }
+  .banner-big .riga button.link { padding: 6px 0; font-size: 14px; }
+  /* Profilo (cantiere 25): cerchietto con le iniziali in Dashboard, riquadri della pagina */
+  .testa-pagina { display: flex; align-items: center; justify-content: space-between; }
+  .cerchio { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--blu); color: #fff; font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 8px; flex: none; }
+  .cerchio.grande { width: 56px; height: 56px; font-size: 20px; }
+  .cerchio { overflow: hidden; padding: 0; } .cerchio img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  label.pf-foto { display: inline-block; width: auto; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: #fff; background: var(--testo); border-radius: var(--raggio-bottone); text-align: center; }
+  .pf-box { background: var(--superficie); border: 1.5px solid var(--linea); border-radius: var(--raggio-card); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+  .pf-box h3 { margin: 0 0 8px; font-size: 16px; }
+  /* cantiere 25 bis: voci del Profilo che si aprono al tocco, foto dal cerchio */
+  .pf-voce .pf-corpo { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--linea); }
+  .pf-voce .avv-conta { color: var(--grigio); font-weight: 600; font-size: 14px; }
+  .pf-voce .barra { margin-top: 8px; }
+  .pf-targhe { display: flex; gap: 8px; margin-top: 10px; }
+  .sv-targa.pf-targa { flex: 1; border: 0; font-size: 13px; min-height: var(--tocco); padding: 11px 6px; border-radius: var(--raggio-pill); font-family: inherit; }
+  .pf-domanda .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .pf-domanda .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  .pf-domanda small { display: block; margin-top: 8px; color: var(--grigio); font-size: 12px; }
+  .pf-domanda > b { font-size: 17px; }
+  .pf-cerchio { position: relative; border: 0; background: none; padding: 0; flex: none; }
+  .pf-cerchio i { position: absolute; right: -4px; bottom: -4px; font-style: normal; font-size: 13px; background: var(--superficie); border: 1px solid var(--linea); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .pf-box small { display: block; color: var(--grigio); font-size: 12px; margin-top: 6px; }
+  .pf-box label { display: block; margin-top: 10px; color: var(--grigio); font-size: 13px; }
+  .pf-box input { margin: 4px 0 8px; }
+  .pf-riga { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--linea); }
+  .pf-riga span { color: var(--grigio); } .pf-riga b { text-align: right; word-break: break-all; }
+  .pf-avvisi { margin-top: 8px; } .pf-avvisi .riga { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .pf-avvisi .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
+  .banner-abb.in-scadenza { background: var(--proposta-tinta); color: var(--proposta); }
+  .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: var(--raggio-bottone); background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
+  .banner-abb.in-scadenza button { background: var(--proposta); }
+  .banner-grande { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border-radius: var(--raggio-card); padding: 14px 16px; margin-bottom: 10px; font-family: inherit; }
+  .banner-grande .ico { width: 46px; height: 46px; border-radius: var(--raggio-riga); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+  .banner-grande b { display: block; font-size: 16px; }
+  .banner-grande small { font-size: 12px; }
+  .banner-grande .freccia { margin-left: auto; font-size: 22px; }
+  .banner-grande { border: 0; min-height: 72px; }
+  .banner-grande .ico svg.ic { width: 22px; height: 22px; }
+  .banner-grande.check { background: var(--accento); color: var(--accento-su); }
+  .banner-grande.check small { color: rgba(255,255,255,.8); }
+  .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
+  .banner-grande.obiettivi { background: var(--pericolo-tinta); color: var(--pericolo); }
+  .banner-grande.obiettivi .ico { background: var(--superficie); border-radius: 50%; }
+  .schede-dash { display: flex; gap: 2px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 4px; }
+  .schede-dash::-webkit-scrollbar { display: none; }
+  .schede-dash button { flex: 1 0 auto; font-size: 13px; font-weight: 600; min-height: 36px; padding: 7px 11px; border-radius: var(--raggio-pill); border: 0; background: transparent; color: var(--testo-soft); white-space: nowrap; }
+  .schede-dash button.scelto { background: var(--accento); color: var(--accento-su); }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+  .kpi > div { min-width: 0; border: 0; border-radius: var(--raggio-riga); padding: 12px; background: var(--superficie-2); }
+  .kpi .t { font-size: 14px; font-weight: 600; }
+  .kpi .v { font-size: clamp(19px, 5.6vw, 26px); white-space: nowrap; font-weight: 800; letter-spacing: -.5px; margin: 4px 0; }
+  .kpi ul { margin: 6px 0 0; padding-left: 14px; font-size: 12px; line-height: 1.4; }
+  .kpi .barra div { transition: width .4s ease; }
+  .kpi .complimento { color: var(--verde); font-weight: 700; }
+  .obiettivi-mod { display: block; margin: 8px auto 0; font-weight: 600; }
+  /* Le azioni sotto i numeri (Obiettivi · Visione completa · Mostra di più): due tasselli affiancati, con l'icona nel tondo, un titolo e una riga che dice
+     cosa aprono (Ignazio 19/09: come due scritte al centro «non dicono niente e sono buttate a casaccio») */
+  .ds-azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 12px; }
+  .ds-azioni.una, .ds-azioni:has(> :only-child) { grid-template-columns: 1fr; }
+  .ds-azione { display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0; min-height: 64px; padding: 10px 12px; border: 0; border-radius: var(--raggio-riga);
+    background: var(--superficie); box-shadow: var(--ombra-card); color: var(--testo); font-family: inherit; --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
+  .ds-azione:disabled { opacity: .5; }
+  .ds-azione > svg.ic { flex: none; width: 40px; height: 40px; padding: 10px; border-radius: 50%; box-sizing: border-box; color: var(--richiamo); background: var(--richiamo-tinta); }
+  .ds-azione span { min-width: 0; } .ds-azione b { display: block; font-size: 14px; line-height: 1.2; } .ds-azione small { display: block; font-size: 12px; color: var(--testo-soft); margin-top: 2px; line-height: 1.25; }
+  .ds-azione.obiettivi { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
+  .ds-azione.visione-completa { --richiamo: var(--gr-volume); --richiamo-tinta: var(--gr-volume-tinta); }   /* i numeri, non i Clienti (Ignazio 20/09) */
+  .ds-azione.report { --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
+  .ds-azione.griglia { --richiamo: var(--gr-azione); --richiamo-tinta: var(--gr-azione-tinta); }   /* i Piani Marketing stanno nel gruppo Azione, non sono i Partner */
+  .ob-modi { margin-bottom: 10px; }
+  .ob-crescita { background: var(--gr-crescita-tinta); border-radius: var(--raggio-riga); padding: 12px 14px; margin-bottom: 6px; }
+  .ob-crescita-testa { font-size: 15px; font-weight: 600; color: var(--gr-crescita); }
+  .ob-crescita-testa b { font-size: 20px; }
+  .ob-crescita input[type=range] { width: 100%; margin: 10px 0 2px; padding: 0; border: 0; background: none; accent-color: var(--gr-crescita); height: 28px; }
+  .ob-tacche { display: flex; justify-content: space-between; font-size: 11px; color: var(--grigio); }
+  .ob-ambizioso { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--proposta); background: var(--proposta-tinta); border-radius: 10px; padding: 8px 10px; }
+  .ob-gruppo { padding: 12px 14px; }
+  .mc-t .pallino { vertical-align: 0; }
+  .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
+  .ob-campi input { margin: 4px 0 0; padding: 10px; font-size: 17px; }
+  .visione { display: block; margin: 14px auto; min-height: var(--tocco); border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--testo-soft); }
+  .sv { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
+  .sv h3 { margin: 0; font-size: 20px; }
+  .sv .sotto-sv { font-size: 12px; color: var(--testo-tenue); margin: 2px 0 10px; }
+  .sv .legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .sv .legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .sv table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+  .sv th { font-size: 10px; font-weight: 700; color: var(--testo-tenue); }
+  .sv th.mese { width: 34px; text-align: right; line-height: 1.1; }
+  .sv td { height: 34px; color: #fff; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 800; }
+  .sv td.zero { background: rgba(255,255,255,.08) !important; color: var(--testo-soft); font-weight: 600; }
+  .sv .totali { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+  .sv .totali div { background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 2px; text-align: center; }
+  .sv .totali b { display: block; font-size: 17px; }
+  .sv .totali div { min-width: 0; overflow: hidden; }
+  .sv .totali span { display: block; font-size: 9px; font-weight: 700; color: var(--spento); }
+  .sv .totali small { display: block; font-size: 9px; color: var(--testo-tenue); }
+
+  /* ── Agenda (Fase 4) ── */
+  .ag-testa { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+  .ag-testa h1 { margin: 0; flex: 1; }
+  .ag-mese { border: 0; background: none; font-size: 15px; font-weight: 700; color: var(--testo-soft); min-height: var(--tocco); padding: 6px 0; position: relative; }
+  .ag-mese input { position: absolute; inset: 0; opacity: 0; width: 100%; }
+  .ag-oggi { border: 0; background: var(--superficie); box-shadow: var(--ombra-card); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 36px; padding: 6px 14px; color: var(--testo); }
+  .ag-piu { border: 0; background: var(--accento); color: var(--accento-su); width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1; }
+  .ag-settimana { display: flex; align-items: stretch; gap: 2px; background: var(--superficie); border-radius: var(--raggio-card); padding: 8px 4px; box-shadow: var(--ombra-card); margin-bottom: 16px; }
+  .ag-settimana .freccia { border: 0; background: none; color: var(--grigio); font-size: 20px; padding: 0 4px; }
+  .ag-giorno { flex: 1; border: 0; background: none; border-radius: var(--raggio-riga); padding: 8px 0; min-height: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--testo); font-family: inherit; }
+  .ag-giorno small { font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .6px; }
+  .ag-giorno b { font-size: 17px; }
+  .ag-giorno i { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+  .ag-giorno i.si { background: var(--accento); }
+  .ag-giorno.oggi b { color: var(--accento); }
+  .ag-giorno.scelto { background: var(--accento); }
+  .ag-giorno.scelto small, .ag-giorno.scelto b { color: #fff; }
+  .ag-giorno.scelto i.si { background: var(--superficie); }
+  .ag-evento { display: flex; background: var(--superficie); border-radius: var(--raggio-riga); margin-bottom: 8px; overflow: hidden; box-shadow: var(--ombra-card); }
+  .ag-evento .ora { width: 64px; flex: none; padding: 12px 0 12px 12px; font-size: 13px; font-weight: 700; color: var(--testo); line-height: 1.3; }
+  .ag-evento .ora small { display: block; font-weight: 500; color: var(--grigio); }
+  /* la barretta ha il colore della categoria della persona, come il tondo nella scheda (scelta «B» di Ignazio 19/09: viola, blu e arancio
+     vogliono dire Partner, Cliente e Prospect in tutta l'app; il tipo di appuntamento resta scritto nel titolo) */
+  .ag-evento .barra-tipo { width: 4px; flex: none; margin: 12px 0; border-radius: 4px; background: var(--cat, var(--spento)); }
+  .ag-evento .dentro { flex: 1; min-width: 0; }
+  .ag-evento .apri { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; font-family: inherit; color: var(--testo); }
+  .ag-evento .t { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-evento .s { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .ag-evento .extra { padding: 0 12px 12px; }
+  .ag-evento .extra .note-ev { font-size: 13px; color: var(--grigio); margin-bottom: 8px; }
+  .ag-esiti { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  /* gli esiti: pastiglie alte 40, bordo grigio su bianco; quello scelto pieno inchiostro (docs/MB21_Design.md) */
+  .ag-esiti button { border: 1px solid var(--bordo); border-radius: var(--raggio-pill); background: var(--superficie); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-esiti button.attuale { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
+  .ag-comandi button.pericolo { color: var(--rosso); }
+  .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: var(--raggio-riga); padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
+  /* Righe di richiamo (partner da avviare, telefonate, riordini, conferme…): bianche come le righe delle persone (Ignazio 19/09: le tinte
+     sul fondo perla danno fastidio); il colore del richiamo resta solo nell'icona, --richiamo */
+  .ag-blocco { min-height: 60px; padding: 10px 14px 10px 12px; background: var(--superficie); color: var(--testo); box-shadow: var(--ombra-card); --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
+  /* l'icona sta in un tondo con la tinta del richiamo: dà colore alla riga senza tingerla tutta (tutta bianca era «troppo piatta», Ignazio 19/09) */
+  .ag-blocco > span:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ag-blocco > span:first-child svg.ic { color: var(--richiamo); background: var(--richiamo-tinta); width: 40px; height: 40px; padding: 10px; border-radius: 50%; box-sizing: border-box; }
+  .ag-blocco > span:last-child { color: var(--testo-tenue); }
+  .ag-blocco.telefonate { --richiamo: var(--az-contatto); --richiamo-tinta: var(--superficie-2); }
+  .ag-blocco.riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
+  .ag-blocco.conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
+  .ag-blocco.avvio { --richiamo: var(--cat-partner); --richiamo-tinta: var(--cat-partner-tinta); }
+  /* ── Agenda a orario (cantiere 37): griglia del giorno, settimana, interruttore delle viste ── */
+  /* i tre modi di guardare lo stesso giorno; la scelta si ricorda (MB21Viste) */
+  .ag-viste { display: flex; background: #E2E5EC; border-radius: var(--raggio-pill); padding: 3px; margin-bottom: 12px; }
+  .ag-viste button { flex: 1; border: 0; background: none; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--testo-soft); min-height: 34px; border-radius: var(--raggio-pill); display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+  .ag-viste button svg.ic { width: 16px; height: 16px; }
+  .ag-viste button.si { background: var(--superficie); color: var(--testo); box-shadow: 0 1px 4px rgba(16,21,31,.12); }
+  /* la striscia dei giorni: un pallino per impegno, col colore della persona (Ignazio 20/09) */
+  .ag-giorno .ag-punti { display: flex; gap: 3px; height: 6px; align-items: center; }
+  .ag-giorno .ag-punti i { width: 6px; height: 6px; border-radius: 50%; background: var(--cat, var(--spento)); }
+  .ag-giorno .ag-punti i.tanti { width: 10px; border-radius: 3px; }
+  .ag-giorno.scelto .ag-punti i { filter: brightness(1.75) saturate(.85); }   /* sul fondo scuro del giorno scelto i colori vanno schiariti */
+  /* la griglia: una card bianca con le ore a sinistra e i blocchi dentro */
+  .ag-griglia { position: relative; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 10px 12px 0; overflow: hidden; }
+  .ag-ore { position: relative; margin-left: 50px; }
+  .ag-lin { position: absolute; left: 0; right: 0; border-top: 1px solid var(--linea); pointer-events: none; }
+  .ag-lin b { position: absolute; left: -50px; top: -8px; width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
+  .ag-mezza { position: absolute; left: 0; right: 0; border-top: 1px solid var(--superficie-2); pointer-events: none; }
+  /* il tocco su un'ora libera fissa lì: l'ora è quella del punto toccato, al quarto d'ora */
+  .ag-libero { position: absolute; left: 0; right: 0; border: 0; background: none; padding: 0; margin: 0; font-family: inherit; }
+  .ag-invito { position: absolute; left: 2px; right: 4px; border: 1px dashed #E6E9EF; border-radius: 12px; color: var(--testo-tenue); font-size: 11.5px; font-weight: 600; display: flex; align-items: flex-start; justify-content: flex-end; gap: 3px; padding: 4px 8px 0 0; pointer-events: none; }
+  .ag-invito svg.ic { width: 13px; height: 13px; margin-top: 1px; }
+  /* un impegno: tinta della categoria della persona, barretta piena a sinistra (come nell'elenco) */
+  .ag-ev { position: absolute; border: 0; margin: 0; padding: 4px 7px 4px 11px; border-radius: 12px; overflow: hidden; text-align: left;
+    font-family: inherit; font-size: 13px; line-height: 1.25; background: var(--cat-tinta, var(--superficie-2)); color: var(--cat-scuro, var(--testo)); }
+  .ag-ev .bar { position: absolute; left: 4px; top: 4px; bottom: 4px; width: 3px; border-radius: 3px; background: var(--cat, var(--spento)); }
+  .ag-ev b { display: block; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-ev small { display: block; font-size: 11.5px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-ev.bassa { padding-top: 1px; padding-bottom: 1px; font-size: 12px; }
+  .ag-ev.bassa b { font-size: 12px; }
+  .ag-ev.fatta { opacity: .62; }
+  .ag-ev.fatta b { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .ag-ev.dacoda { background: var(--superficie-2); border: 1px dashed var(--cat, var(--spento)); padding-top: 3px; }   /* righine: viene dalla coda, non è un appuntamento fissato */
+  .ag-ev.scelta { outline: 2px solid var(--cat, var(--testo)); outline-offset: -2px; }
+  /* adesso: la linea rossa che attraversa la giornata, solo su oggi */
+  .ag-adesso { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--pericolo); z-index: 3; pointer-events: none; }
+  .ag-adesso i { position: absolute; left: -4px; top: -5px; width: 9px; height: 9px; border-radius: 50%; background: var(--pericolo); }
+  .ag-adesso b { position: absolute; left: -50px; top: -9px; width: 44px; text-align: right; font-size: 11px; font-weight: 700; color: var(--pericolo); background: var(--superficie); }
+  /* avviso in cima alla griglia quando due impegni si accavallano */
+  .ag-doppi { display: flex; align-items: center; gap: 8px; background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 9px 12px; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; }
+  .ag-doppi svg.ic { width: 18px; height: 18px; flex: none; }
+  /* bottone «Ora» che riporta la griglia su adesso */
+  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit; }
+  /* avviso «a quest'ora hai già…» nel modulo, con le prime ore libere da toccare (cantiere 37) */
+  .ag-scontro { background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 10px 12px; margin: 0 0 10px; font-size: 13.5px; font-weight: 700; }
+  .ag-scontro svg.ic { width: 17px; height: 17px; vertical-align: -4px; margin-right: 3px; }
+  .ag-scontro span { display: block; font-weight: 500; color: var(--testo); margin-top: 3px; }
+  .ag-scontro em { font-style: normal; color: var(--testo-soft); font-weight: 500; }
+  .ag-orelibere { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ag-orelibere button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); min-height: 36px; padding: 7px 13px; font-size: 13px; font-weight: 700; color: var(--testo); font-family: inherit; }
+  /* ── Settimana: sette colonne strette, si tocca un blocco per aprire quel giorno ── */
+  .ag-sett-testa { display: flex; margin: 0 0 2px 30px; }
+  .ag-sett-testa div { flex: 1; text-align: center; font-size: 11px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .4px; padding-bottom: 3px; }
+  .ag-sett-testa div b { display: block; font-size: 14px; color: var(--testo); letter-spacing: 0; }
+  .ag-sett-testa div.oggi b { color: var(--accento); }
+  .ag-sett-testa div.scelto b { background: var(--accento); color: #fff; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; margin: 0 auto; }
+  .ag-griglia.sett { padding: 8px 6px 10px 0; }
+  .ag-griglia.sett .ag-ore { margin-left: 30px; }
+  .ag-griglia.sett .ag-lin b { left: -30px; width: 26px; font-size: 10.5px; }
+  .ag-griglia.sett .ag-adesso b { display: none; }
+  .ag-colonna { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--bordo); background: none; padding: 0; }
+  .ag-colonna:first-of-type { border-left: 0; }
+  .ag-colonna.oggi { background: var(--superficie-2); }
+  .ag-colonna.scelto { background: rgba(16,21,31,.05); }
+  .ag-sev { position: absolute; border: 0; padding: 2px 3px; border-radius: 6px; overflow: hidden; font-family: inherit; font-size: 10px; line-height: 1.15;
+    text-align: left; background: var(--cat-tinta, var(--superficie-2)); color: var(--cat-scuro, var(--testo)); font-weight: 700; }
+  .ag-sev .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px; background: var(--cat, var(--spento)); border-radius: 3px; }
+  .ag-sev span { display: block; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-sev.fatta { opacity: .55; }
+  .ag-sett-vuoto { text-align: center; color: var(--testo-tenue); font-size: 13px; padding: 10px 0 2px; }
+  /* il riassunto della settimana: quanti PM, quanti Follow Up… (il colore è quello del tipo di lavoro, --az-*) */
+  .ag-conto { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 10px 4px 0; }
+  .ag-conto span { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--testo-soft); }
+  .ag-conto i { width: 8px; height: 8px; border-radius: 2px; background: var(--tinta, var(--spento)); }
+  /* Pagina «Partner da avviare» (cantiere 31 lavoro 2) */
+  .avv-partner { padding: 10px 14px 12px; }
+  .avv-testa { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; background: none; padding: 2px 0; text-align: left; font-family: inherit; font-size: 16px; color: var(--testo); }
+  .avv-testa small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
+  .avv-conta { font-weight: 700; flex: none; }
+  .avv-passi { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 12px; font-size: 14px; color: var(--grigio); }
+  .avv-passi .fatto { color: var(--testo); }
+  .avv-passi button { border: 0; background: var(--sfondo); border-radius: 10px; padding: 8px 10px; text-align: left; font-family: inherit; font-size: 14px; color: var(--grigio); }
+  .avv-sponsor { color: var(--grigio); font-weight: 400; font-size: 14px; }
+  .avv-sponsor.tuo { color: var(--cat-partner); font-weight: 600; }
+  .avv-proposte { margin-top: 12px; padding: 10px 12px; border-radius: var(--raggio-bottone); background: var(--proposta-tinta); color: var(--proposta); font-size: 14px; }
+  .avv-proposte div { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
+  .interruttore small.avvio-proposta { color: var(--proposta); }
+  .avv-proposte .piccolo { margin: 0; background: var(--superficie); flex: none; }
+  .avv-azioni { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 4px; }
+  .ag-blocco.avv-pausa { color: var(--testo-soft); margin-top: 14px; }
+  .ag-blocco.avv-come { margin: 0 0 12px; padding: 10px 14px; font-size: 14px; min-height: 52px; --richiamo: var(--az-contatto); --richiamo-tinta: var(--superficie-2); }
+  .avv-come-testo ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.45; }
+  .avv-come-testo li { margin: 5px 0; }
+  .avv-partner.mio { border: 2px solid var(--cat-partner-tinta); }
+  /* Cantiere 32: sotto il passo «Perché iniziare», in piccolo ma leggibile, le voci scelte nel benvenuto (percheHtml) */
+  .avv-passi .largo { grid-column: 1 / -1; }
+  /* Benvenuto per chi entra la prima volta (cantiere 32, pagina-benvenuto.js) */
+  .bv { max-width: 440px; margin: 0 auto; padding-bottom: 24px; }
+  .bv-testa { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-bottom: 8px; }
+  .bv-pallini { display: flex; gap: 6px; }
+  .bv-pallini i { width: 8px; height: 8px; border-radius: 50%; background: var(--spento); }
+  .bv-pallini i.fatto { background: var(--testo-tenue); }
+  .bv-pallini i.qui { background: var(--accento); width: 22px; border-radius: 999px; }
+  .bv-grande { font-size: 64px; text-align: center; margin: 7vh 0 8px; }
+  .bv-s-benvenuto h1, .bv-s-benvenuto .bv-lead { text-align: center; }
+  .bv h1 { font-size: 28px; line-height: 1.15; margin: 6px 0 12px; }
+  .bv-lead { font-size: 19px; line-height: 1.4; margin: 8px 0 18px; }
+  .bv-lead.piccolo-lead { font-size: 16px; color: var(--grigio); margin: 4px 0 14px; }
+  .bv button.primario { margin-top: 6px; }   /* prende l'inchiostro come tutti gli altri bottoni grandi */
+  .bv button.primario.bv-finito { background: var(--testo); }   /* diverso da «Aggiungi», che gli sta vicino */
+  .bv-indietro { display: block; margin: 4px auto 0; }
+  .bv-nomi { margin-top: 14px; }
+  .bv-punti div, .bv-pagine div { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-top: 1px solid var(--linea); }
+  .bv-punti div:first-child, .bv-pagine div:first-child { border-top: 0; }
+  .bv-punti span, .bv-pagine span { font-size: 24px; line-height: 1.2; flex: none; width: 30px; text-align: center; }
+  .bv-punti p, .bv-pagine p { margin: 0; font-size: 16px; line-height: 1.4; }
+  .bv-voce { background: var(--card); border-radius: var(--raggio-riga); margin-bottom: 8px; box-shadow: var(--ombra-card); border: 2px solid transparent; }
+  .bv-voce.scelta { border-color: var(--accento); }
+  .bv-voce button { width: 100%; border: 0; background: none; text-align: left; font-family: inherit; font-size: 17px; font-weight: 600; color: var(--testo); padding: 14px; }
+  .bv-voce button span { margin-right: 6px; }
+  .bv-voce input { width: calc(100% - 28px); margin: 0 14px 12px; font-size: 16px; padding: 11px 12px; }
+  .bv-nota { margin: 10px 2px 14px; }
+  .bv-spunti { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .bv-spunti span { background: var(--superficie-2); color: var(--testo-soft); border-radius: 999px; padding: 5px 11px; font-size: 13px; }
+  .bv-fatto { background: var(--ok-tinta); color: var(--ok); border-radius: var(--raggio-bottone); padding: 10px 12px; margin-bottom: 12px; font-size: 14px; }
+  .bv-conto { text-align: center; font-weight: 700; margin: 4px 0 12px; }
+  .bv-nomi div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); font-size: 15px; }
+  .bv-nomi div:first-child { border-top: 0; }
+  .bv-nomi small { color: var(--grigio); flex: none; }
+  .ag-blocco.bv-telefono { --richiamo: var(--az-contatto); --richiamo-tinta: var(--superficie-2); }
+  .pf-perche { font-size: 15px; line-height: 1.45; color: var(--testo-soft); }
+  .pf-perche span, .avv-perche span { display: block; margin-top: 5px; color: inherit; }
+  .pf-perche span:first-child, .avv-perche span:first-child { margin-top: 0; }
+  .pf-perche b, .avv-perche b { color: var(--testo); font-weight: 700; }
+  .pf-box .avv-perche { font-size: 13px; margin-top: 4px; color: var(--testo-soft); }
+  .pf-avvio .avv-testa small { font-size: 13px; margin-top: 2px; }
+  .avv-perche, .interruttore small.avv-perche { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--testo-soft); }
+  .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: var(--ok); margin-top: 2px; }
+  .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
+  .card.riordino .rc-glide { color: var(--proposta); }
+  .riga-coda .conf-nr { display: block; }
+  .conf-bottoni { grid-template-columns: 1fr 1fr 1fr; }
+  .conf-bottoni button:last-child:nth-child(odd) { grid-column: auto; }
+  .ag-blocco.passati { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
+  .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+  .ag-scelte button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-scelte button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
+
+  /* ── Report (Fase 5) ── */
+  .rp-periodi { display: flex; gap: 6px; margin: 8px 0 10px; }
+  .rp-periodi button { flex: 1; font-size: 15px; font-weight: 600; padding: 9px 0; border-radius: 999px; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); }
+  .rp-periodi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .rp-naviga { display: flex; align-items: center; justify-content: space-between; background: var(--superficie); border-radius: var(--raggio-riga); padding: 4px; margin-bottom: 12px; box-shadow: var(--ombra-card); }
+  .rp-naviga b { font-size: 16px; text-align: center; flex: 1; }
+  .rp-naviga button { border: 0; background: none; font-size: 24px; color: var(--blu); padding: 4px 16px; }
+  .rp-naviga button:disabled { color: var(--linea); }
+  .rp-lista { background: var(--superficie); border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra-card); margin-bottom: 12px; }
+  .rp-riga { display: grid; grid-template-columns: 1fr 52px 48px 18px; align-items: center; gap: 4px; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea);
+    background: none; padding: 13px 12px 13px 14px; font-family: inherit; color: var(--testo); font-size: 16px; }
+  .rp-riga:first-child { border-top: 0; }
+  .rp-riga .n { text-align: right; font-weight: 800; font-size: 18px; }
+  .rp-riga .p { text-align: right; font-size: 13px; color: var(--grigio); font-weight: 600; }
+  .rp-riga .f { text-align: right; color: var(--grigio-chiaro); font-size: 18px; }
+  /* Report aperto (cantiere 34, Ignazio 19/09: «adeguarli nello stile al resto dell'app»): il tipo aperto resta bianco e in grassetto; gli esiti hanno
+     il numero in una pastiglia grigia; le persone sono righe come nella coda, con il tondo delle iniziali nel colore della categoria */
+  .rp-riga { min-height: 52px; }
+  .rp-riga.tipo { font-weight: 700; }
+  .rp-riga.tipo.aperto { background: var(--superficie); border-bottom: 1px solid var(--bordo); }
+  .rp-riga.esito { background: var(--superficie); padding-left: 28px; font-size: 15px; font-weight: 600; border-top-color: var(--superficie-2); }
+  .rp-riga.esito .n { justify-self: end; min-width: 32px; padding: 3px 9px; border-radius: var(--raggio-pill); background: var(--sfondo); font-size: 14px; font-weight: 700; text-align: center; }
+  .rp-riga.esito.verde { color: var(--ok); } .rp-riga.esito.verde .n { color: var(--ok); background: var(--ok-tinta); }
+  .rp-riga.esito.zero, .rp-riga.esito.zero .n { color: var(--grigio-chiaro); }
+  .rp-riga.nome { background: var(--superficie-2); padding: 8px 14px 8px 28px; font-size: 15px; font-weight: 600; grid-template-columns: 1fr auto 18px; border-top-color: var(--superficie); }
+  .rp-riga.nome small { color: var(--testo-soft); font-size: 12px; font-weight: 400; }
+  .rp-chi { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .rp-tondo { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff; display: grid; place-items: center; font-style: normal; font-size: 12.5px; font-weight: 600; }
+  .rp-altre { background: var(--superficie); padding: 12px 14px 6px 28px; font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--testo-tenue); border-top: 1px solid var(--bordo); }
+  .rp-grafico { background: var(--superficie); border-radius: var(--raggio-card); padding: 14px; box-shadow: var(--ombra-card); margin-bottom: 12px; }
+  .rp-grafico h3 { margin: 0; font-size: 15px; }
+  .rp-grafico .legenda { font-size: 12px; color: var(--grigio); margin: 2px 0 10px; }
+  .rp-grafico .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+  .rp-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 120px; }
+  .rp-barre div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+  .rp-barre small { font-size: 10px; font-weight: 700; color: var(--grigio); margin-bottom: 2px; }
+  /* barre piene, non una tinta: su card bianca la tinta chiara spariva (cantiere 34, 20/09) */
+  .rp-barre span { width: 100%; background: var(--gr-volume); border-radius: 4px 4px 0 0; position: relative; overflow: hidden; }
+  .rp-barre span i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--verde); }
+  .rp-mesi { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: 10px; text-align: center; color: var(--grigio); margin-top: 4px; }
+  .rp-mesi .futuro { color: var(--linea); }
+  .ck-confronto { font-size: 12.5px; color: var(--testo-tenue); text-align: center; margin: 0 0 12px; }
+  /* con quanti periodi fa si confronta (Ignazio 20/09) */
+  .ck-quando { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--testo-soft); margin: -2px 0 6px; }
+  .ck-quando button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill);
+    padding: 5px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo-soft); min-height: 32px; }
+  .ck-quando button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ck-testa small { display: block; font-size: 10px; font-weight: 600; color: var(--testo-tenue); text-transform: none; letter-spacing: 0; margin-top: 1px; }
+  /* Check (cantiere 34, 20/09): il tondo del gruppo al posto della striscia sul fianco, righe alternate invece delle lineette */
+  .ck-gruppo { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); margin-bottom: 12px; padding: 4px 6px 8px; }
+  .ck-testa-g { display: flex; align-items: center; gap: 10px; padding: 10px 8px 6px; }
+  .ck-testa-g .tondo { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--g-tinta); color: var(--g);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+  .ck-testa-g h3 { margin: 0; font-size: 16px; }
+  .ck-testa-g small { display: block; font-size: 12.5px; color: var(--testo-soft); margin-top: 1px; }
+  .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px; align-items: center; gap: 4px; }
+  .ck-testa { padding: 0 10px 6px 10px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
+  .ck-riga { width: 100%; text-align: left; border: 0; background: none; border-radius: var(--raggio-bottone); padding: 10px;
+    font-family: inherit; color: var(--testo); font-size: 15px; }
+  .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; color: var(--g); }
+  .ck-riga:nth-of-type(odd) { background: var(--superficie-2); }
+  .ck-riga .pr { text-align: right; font-size: 14px; color: var(--grigio); white-space: nowrap; }
+  /* l'andamento a pastiglia: verde se va meglio del periodo prima, rosso se va peggio, grigia se è uguale (Ignazio 20/09: si deve capire a colpo d'occhio) */
+  .ck-riga .an { justify-self: end; font-size: 12.5px; font-weight: 700; white-space: nowrap; color: var(--testo-tenue);
+    background: var(--superficie-2); border-radius: var(--raggio-pill); padding: 3px 8px; }
+  .ck-riga .an:empty { background: none; padding: 0; }
+  .ck-riga .an.su { color: var(--ok); background: var(--ok-tinta); }
+  .ck-riga .an.giu { color: var(--pericolo); background: var(--pericolo-tinta); }
+  .ck-riga small { grid-column: 1 / -1; font-size: 12px; color: var(--grigio-chiaro); margin-top: 1px; }
+  .ck-riga.aperta { background: var(--g-tinta); }
+  .ck-grafico { background: var(--g-tinta); border-radius: var(--raggio-bottone); padding: 8px 12px 12px; margin: 0 0 4px; }
+  .ck-grafico .legenda { font-size: 12px; color: var(--grigio); margin: 0 0 8px; }
+  .ck-grafico .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+  .ck-barre { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 110px; }
+  .ck-barre div { display: flex; justify-content: center; align-items: flex-end; gap: 1px; height: 100%; min-width: 0; }
+  .ck-barre span { flex: 1; border-radius: 3px 3px 0 0; min-height: 1px; }
+  .ck-barre .prima { background: var(--spento); }
+  .ck-valori { font-size: 11px; color: var(--grigio); margin-top: 6px; }
+  .sv-oggi { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  /* righe da aprire (Griglia PM nel Report, voci di Admin): come le righe di richiamo della Dashboard, bianche con l'icona nel tondo tinto (cantiere 34) */
+  .rp-apri { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; border: 0; border-radius: var(--raggio-riga); min-height: 60px; padding: 10px 14px 10px 12px; margin-bottom: 12px;
+    background: var(--superficie); box-shadow: var(--ombra-card); color: var(--testo); font-size: 15px; font-weight: 600; font-family: inherit; --richiamo: var(--testo-soft); --richiamo-tinta: var(--superficie-2); }
+  .rp-apri > span:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; flex-wrap: wrap; }
+  .rp-apri > span:first-child > svg.ic { flex: none; color: var(--richiamo); background: var(--richiamo-tinta); width: 40px; height: 40px; padding: 10px; border-radius: 50%; box-sizing: border-box; }
+  .rp-apri > span:last-child { color: var(--testo-tenue); }
+  .rp-apri.ad-voce small { flex-basis: 100%; margin-left: 52px; }
+  .rp-wes { background: var(--superficie); border-radius: var(--raggio-card); padding: 12px 14px; box-shadow: var(--ombra-card); margin-bottom: 12px; }
+  .rp-wes h3 { margin: 0 0 6px; font-size: 15px; }
+  .rp-wes .w { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 15px; }
+  .ad-voce { margin-bottom: 10px; }
+  #rp-griglia { --richiamo: var(--gr-azione); --richiamo-tinta: var(--gr-azione-tinta); }   /* i Piani Marketing stanno nel gruppo Azione */
+  /* Admin · elenchi dei biglietti (WES, BBS) e dei fattori: righe come nel resto dell'app, con il tondo del colore del segno (cantiere 34, Ignazio 20/09) */
+  .ad-elenco { margin-bottom: 12px; }
+  .ad-elenco.wes { --richiamo: var(--wes); --richiamo-tinta: var(--pericolo-tinta); }
+  .ad-elenco.bbs { --richiamo: var(--bbs); --richiamo-tinta: var(--bbs-tinta); }
+  .ad-elenco.fc { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
+  .ad-el { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px 10px 12px; margin-bottom: 8px;
+    background: var(--superficie); border-radius: var(--raggio-riga); box-shadow: var(--ombra-card); }
+  .ad-el > svg.ic { flex: none; width: 40px; height: 40px; padding: 10px; border-radius: 50%; box-sizing: border-box; color: var(--richiamo); background: var(--richiamo-tinta); }
+  .ad-el .q { flex: 1; min-width: 0; }
+  .ad-el .q b { display: block; font-size: 15px; font-weight: 600; }
+  .ad-el .q small { display: block; color: var(--testo-soft); font-size: 12.5px; margin-top: 2px; }
+  .ad-el button { flex: none; border: 0; background: none; font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 4px; min-height: var(--tocco); }
+  .ad-el button.via { color: var(--pericolo); }
+  .ad-el button.cambia { color: var(--blu); }
+  /* riquadro per aggiungere: titoletto, campi alti e tondi, «Aggiungi» pieno in fondo (la forma dei moduli) */
+  .ad-aggiungi .mc-t { margin: 0 2px 6px; }
+  .ad-aggiungi input { margin: 0 0 12px; }
+  .ad-aggiungi .ad-lab { display: block; font-size: 12.5px; color: var(--testo-soft); margin: 0 2px 4px; }
+  .ad-aggiungi .sotto { margin: 10px 0 0; }
+  /* Admin: un colore per ogni voce (Ignazio 20/09). BBS blu e WES rosso sono i colori già stabiliti per i segni vitali. */
+  #ad-scegli { --richiamo: var(--cat-prospect); --richiamo-tinta: var(--cat-prospect-tinta); }
+  #ad-vai-utenti { --richiamo: var(--cat-partner); --richiamo-tinta: var(--cat-partner-tinta); }
+  #ad-vai-schede { --richiamo: var(--cat-archiviato); --richiamo-tinta: var(--cat-archiviato-tinta); }
+  #ad-vai-wes { --richiamo: var(--wes); --richiamo-tinta: var(--pericolo-tinta); }
+  #ad-vai-bbs { --richiamo: var(--bbs); --richiamo-tinta: var(--bbs-tinta); }
+  #ad-vai-fc { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
+  .ad-voce small .ad-scad { color: var(--proposta); font-weight: 700; }
+  .ad-voce small .ad-fuori { color: var(--pericolo); font-weight: 700; }
+  .li-canali { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .li-canali a { text-align: center; padding: 12px 4px; border-radius: var(--raggio-bottone); font-weight: 600; font-size: 15px; text-decoration: none; color: #fff; }
+  /* ogni canale con il colore a cui la gente è abituata (le stesse variabili dei 4 modi di contattare) */
+  .li-canali a:nth-child(1) { background: var(--ct-whatsapp); } .li-canali a:nth-child(2) { background: var(--ct-telegram); } .li-canali a:nth-child(3) { background: var(--ct-sms); }
+  /* elenchi di Admin (richieste, schede dei partner, utenti eliminati): righe bianche staccate */
+  .ad-richiesta { background: var(--superficie-2); border-radius: var(--raggio-bottone); padding: 10px 12px; margin-bottom: 8px; }
+  .ad-richiesta:last-child { margin-bottom: 0; }
+  .ad-richiesta small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
+  .ad-richiesta .bottoni .primario { font-size: 15px; padding: 10px; }
+  .accesso label { display: block; text-align: left; font-size: 14px; color: var(--grigio); }
+  .foglio.nu { max-height: 90vh; overflow-y: auto; font-size: 14px; }
+  .foglio.nu select { display: block; width: 100%; font-size: 16px; padding: 12px; border-radius: var(--raggio-bottone); border: 1px solid var(--linea); background: var(--superficie); margin: 6px 0 12px; }
+  .ad-voce small { display: block; color: var(--grigio); font-size: 12px; font-weight: 400; margin-top: 2px; }
+  .ad-utente { border-top: 1px solid var(--linea); }
+  .ad-utente:first-child { border-top: 0; }
+  .ad-riga { width: 100%; display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; align-items: center; background: none; border: 0; padding: 10px 0; text-align: left; color: var(--testo); font-size: 15px; }
+  .ad-riga small { grid-column: 2; color: var(--grigio); font-size: 12px; }
+  .ad-riga .f { grid-column: 3; grid-row: 1 / span 2; color: var(--grigio); font-size: 18px; }
+  /* le iniziali degli utenti sono viola: sono partner, e il viola vuol dire Partner in tutta l'app (cantiere 34) */
+  .ad-riga .cerchio.piccolo { grid-row: 1 / span 2; width: 36px; height: 36px; font-size: 13px; margin: 0; background: var(--cat-partner); }
+  .ad-riga b svg.ic, .ad-riga small svg.ic { width: 15px; height: 15px; vertical-align: -3px; color: var(--cat-partner); }
+  /* «Utenti eliminati» e le sue righe sono un pezzo solo: la voce sopra, l'apertura attaccata sotto */
+  .ad-voce.aperto { margin-bottom: 0; border-radius: var(--raggio-riga) var(--raggio-riga) 0 0; }
+  .rp-wes.ad-eliminati { margin-top: 0; border-radius: 0 0 var(--raggio-card) var(--raggio-card); padding-top: 2px; }
+
+  /* «Ripristina» verde: rimette le cose com'erano, come gli altri comandi che riportano indietro */
+  button.link.ripristina { color: var(--ok); font-weight: 600; }
+  button.link.ripristina svg.ic { color: var(--ok); }
+  .ad-dettaglio { padding: 0 0 10px 26px; }
+  .ad-dettaglio > small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
+  .ad-dettaglio .link { padding: 6px 0; font-size: 14px; }
+  .ad-dettaglio .interruttore { border-top: 0; padding: 6px 0; font-size: 15px; }
+  .ad-abb { margin-top: 6px; font-size: 14px; }
+  .ad-abb .primario { font-size: 15px; padding: 10px; margin-top: 8px; }
+  .ad-comune { display: block; margin-top: 8px; font-size: 14px; color: var(--grigio); }
+  .ad-comune select { display: block; width: 100%; margin-top: 4px; font-size: 16px; padding: 8px; }
+  .rp-wes .w button { border: 0; background: none; color: var(--rosso); font-size: 14px; font-weight: 600; }
+  .rp-wes .nuovo-wes { display: flex; gap: 8px; margin-top: 8px; }
+  .rp-wes .nuovo-wes input { margin: 0; padding: 10px; font-size: 16px; }
+  .rp-wes .nuovo-wes button { flex: none; border: 0; border-radius: var(--raggio-bottone); background: var(--testo); color: #fff; font-weight: 600; padding: 0 14px; }
+  .gp-obiettivi { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .gp-obiettivi button { font-size: 16px; font-weight: 700; min-width: 54px; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); }
+  .gp-obiettivi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .gp-numeri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .gp-numeri div { background: var(--sfondo); border-radius: var(--raggio-bottone); padding: 10px 4px; text-align: center; }
+  .gp-numeri b { display: block; font-size: 22px; }
+  .gp-numeri small { font-size: 11px; color: var(--grigio); font-weight: 600; }
+  .gp-sotto { display: flex; justify-content: space-between; font-size: 12px; color: var(--grigio); margin-top: 6px; }
+  .gp-celle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .gp-celle button { aspect-ratio: 1; min-width: 0; border-radius: 10px; border: 1px solid var(--linea); background: var(--superficie); color: var(--grigio-chiaro); font-size: 14px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; font-family: inherit; overflow: hidden; }
+  .gp-celle button.fatta { border-width: 2.5px; color: var(--testo); font-size: 10px; line-height: 1.15; }
+  .gp-celle button.fatta b { font-size: 15px; }
+  .gp-celle button.fatta span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gp-celle button.fatta .gp-portato { font-size: 9px; color: var(--grigio); }
+  .gp-celle button.prossima { border: 2px dashed var(--blu); color: var(--blu); }
+  .gp-dettaglio { background: var(--sfondo); border-radius: var(--raggio-bottone); padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+  .gp-legenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--grigio); margin-top: 10px; }
+  .gp-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .gp-altro { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .gp-altro input { margin: 0; padding: 0; border: 0; accent-color: var(--testo); }
+  .gp-altro b { min-width: 34px; text-align: right; font-size: 18px; }
+  .ds-griglia { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: var(--raggio-riga); padding: 12px 14px; margin: 10px 0 0;
+    background: var(--gr-azione-tinta); color: var(--gr-azione); font-size: 15px; font-weight: 700; font-family: inherit; }
+
+  .fa-persona { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--superficie-2); border: 1px solid var(--linea); border-radius: var(--raggio-bottone); padding: 4px 6px 4px 12px; margin-top: 6px; font-size: 16px; min-height: 46px; }
+  .fa-persona .link { padding: 6px 8px; flex: none; }
+  .fa-ospite { margin: 6px 0 0; width: 100%; background: var(--proposta-tinta); color: var(--proposta); }
+
+  /* Mappa (Fase 8) */
+  .mp-filtri { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0; scrollbar-width: none; }
+  .mp-filtri::-webkit-scrollbar { display: none; }   /* la barra grigia di scorrimento sotto i filtri si vedeva (foto 12) */
+  .mp-filtri button { flex: 0 0 auto; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 999px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--grigio); }
+  .mp-filtri button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .mp-cerca { width: 100%; box-sizing: border-box; min-height: 44px; padding: 9px 18px; border: 1px solid transparent; box-shadow: var(--ombra-card);
+    border-radius: var(--raggio-pill); font-size: 15px; margin-bottom: 12px; }
+  .mp-elenco { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 6px 4px; margin-bottom: 12px; }
+  /* Mappa (cantiere 34, 20/09): resta un albero, ma con i pezzi dell'app: tondo delle iniziali del colore dello stato, livello a pastiglia, filo che collega */
+  .mp-riga { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--raggio-bottone); background: var(--superficie); position: relative; }
+  .mp-riga + .mp-riga { margin-top: 2px; }
+  /* il filo dell'albero: scende per tutta la riga se il gruppo prosegue (│), si ferma a metà sull'ultimo figlio (└), con il trattino verso il nome */
+  .mp-riga.figlio::before { content: ""; position: absolute; left: var(--filo); top: -2px; bottom: -2px; width: 1.5px; background: var(--bordo); }
+  .mp-riga.figlio.ultimo::before { bottom: 50%; }
+  .mp-riga.figlio::after { content: ""; position: absolute; left: var(--filo); top: 50%; width: 11px; height: 1.5px; background: var(--bordo); }
+  .mp-tondo { flex: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; }
+  .mp-riga.spento { opacity: .5; }
+  .mp-apri { flex: 0 0 auto; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 999px; border: 1px solid var(--bordo);
+    background: var(--superficie); font-size: 15px; font-weight: 700; color: var(--grigio); line-height: 1; padding: 0; }
+  .mp-apri.vuoto { width: 22px; height: 22px; border: 0; }
+  .mp-corpo { flex: 1; min-width: 0; }
+  .mp-nome { background: none; border: 0; padding: 0; font-size: 15px; font-weight: 600; color: var(--testo); text-align: left; }
+  .mp-nome.collegato { color: var(--blu); text-decoration: underline; }
+  .mp-liv { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--testo-tenue); background: var(--superficie-2);
+    border-radius: var(--raggio-pill); padding: 2px 7px; margin-left: 6px; vertical-align: 1px; }
+  .mp-numeri { color: var(--grigio); font-size: 12px; margin-top: 2px; }
+  .mp-manca { color: var(--testo-tenue); font-size: 11.5px; margin-top: 1px; }
+  .mp-manca b { color: var(--testo-soft); font-weight: 700; }
+  .mp-numeri .mp-bonus, .mp-numeri b { color: var(--testo); font-weight: 700; }
+  .mp-sv { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+  /* targhette BBS · WES · CEP della Mappa: le stesse pastiglie della Lista (accese piene, spente solo contorno) */
+  .mp-sv span { font-size: 10px; font-weight: 700; letter-spacing: .3px; color: var(--testo-soft); background: var(--superficie-2); border: 1px solid var(--bordo);
+    border-radius: var(--raggio-pill); padding: 1px 6px; }
+  .mp-sv span.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .mp-sv span.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .mp-sv span.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
+  .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .sv-pill { font-size: 11px; font-weight: 700; letter-spacing: .3px; color: #fff; border-radius: 5px; padding: 3px 7px; }
+  .sv-pill.bbs { background: var(--bbs); } .sv-pill.wes { background: var(--pericolo); } .sv-pill.cep { background: var(--ok); }
+  .sv-targhe { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+  /* spente: scritta del colore del testo tenue su fondo grigio chiaro, contorno un po' più marcato — si leggono senza sembrare accese (Ignazio 20/09) */
+  .sv-targa { font-size: 10px; font-weight: 700; letter-spacing: .3px; color: var(--testo-soft); background: var(--superficie-2); border: 1px solid var(--bordo); border-radius: var(--raggio-pill); padding: 1px 6px; }
+  .sv-targa.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .sv-targa.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .sv-targa.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
+  .sv-targa.app { background: var(--sfondo); color: var(--testo-soft); border-color: transparent; font-weight: 600; letter-spacing: 0; }
+  .sv-ev { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 0; border-top: 1px solid var(--linea); }
+  .sv-testa + .sv-ev { border-top: 0; }
+  .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
+  .sv-ev input[type="date"] { width: auto; margin: 0; padding: 6px 8px; font-size: 15px; }
+  .sv-chip { border: 1px solid var(--linea); background: var(--superficie); color: var(--grigio); border-radius: 999px; padding: 5px 11px; font-size: 14px; font-weight: 600; }
+  .sv-chip.on.bbs { background: var(--bbs); border-color: var(--bbs); color: #fff; }
+  .sv-chip.on.wes { background: var(--pericolo); border-color: var(--pericolo); color: #fff; }
+  .sv-chip:disabled { opacity: 1; }
+  .sv-osp { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--grigio); margin-left: auto; }
+  .sv-osp input { width: 46px; margin: 0; padding: 5px; font-size: 15px; text-align: center; }
+  .sv-ico { border: 0; background: var(--testo); color: #fff; border-radius: 8px; width: 34px; height: 34px; font-size: 16px; }
+  .sv-ico.no { background: var(--sfondo); color: var(--grigio); }
+  .sv-piu { border: 0; background: none; color: var(--blu); font-size: 14px; font-weight: 600; padding: 4px 0; }
+  .sv-comp { display: flex; align-items: center; gap: 10px; }
+  .sv-comp .sv-piu { margin-left: auto; }
+  .sv-link { border: 0; background: none; padding: 0; color: var(--blu); font-size: 15px; font-weight: 600; text-align: left; }
+  .sc-elenco button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea); background: none; padding: 10px 2px; font-size: 15px; }
+  .sc-elenco button small { color: var(--grigio); }
+  .mp-completa { flex: 0 0 auto; align-self: center; background: none; border: 0; padding: 6px 4px 6px 10px;
+    font-size: 20px; line-height: 1; color: var(--grigio-chiaro); }
+  .mp-scheda-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .mp-riquadro { background: var(--accento); color: #fff; border-radius: var(--raggio-riga); padding: 14px; margin: 10px 0; }
+  .mp-riquadro .tre { display: flex; gap: 10px; }
+  .mp-riquadro .tre > div { flex: 1; background: rgba(255,255,255,.08); border-radius: 10px; padding: 8px 10px; }
+  .mp-riquadro small { display: block; color: var(--spento); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+  .mp-riquadro b { font-size: 18px; font-weight: 700; }
+  .mp-barra { height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); margin-top: 12px; overflow: hidden; }
+  .mp-barra i { display: block; height: 100%; background: var(--gr-volume-tinta); }
+  .mp-tabella { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mp-tabella th { text-align: right; color: var(--grigio-chiaro); font-size: 11px; text-transform: uppercase; padding: 4px 6px; }
+  .mp-tabella th:first-child, .mp-tabella td:first-child { text-align: left; }
+  .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); font-weight: 700; }
+  .mp-tabella td:first-child { font-weight: 400; }
+  .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
+  .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; padding: 8px 0; cursor: pointer; }
+  .versione.nuova { color: var(--blu); font-size: 14px; font-weight: 600; }
+
+  /* solo per l'anteprima, non fa parte dell'app */
+  body { background: #DDE1E8; padding: 18px 10px 40px;  }
+  .pv-fila { display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+  .pv-tel { width: 392px; background: var(--sfondo); border-radius: 34px; box-shadow: 0 10px 40px rgba(16,21,31,.18); padding: 8px 16px 22px; }
+  .pv-t { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--testo-tenue); font-weight: 700; margin: 4px 2px 2px; }
+</style>
+<div class="pv-fila"><div class="pv-tel"><div class="pv-t">Giorno · a orario</div>
+    <div class="ag-testa"><h1>Agenda</h1>
+      
+      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    
+    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
+    <div class="ag-settimana">
+      <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
+      <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
+          <small>L</small><b>21</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-prospect"></i><i class="cat-partner"></i><i class="tanti cat-nessuna"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-22" aria-label="22 · 2 impegni">
+          <small>M</small><b>22</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-partner"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-23" aria-label="23 · libero">
+          <small>M</small><b>23</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-24" aria-label="24 · 1 impegno">
+          <small>G</small><b>24</b>
+          <span class="ag-punti"><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-25" aria-label="25 · 3 impegni">
+          <small>V</small><b>25</b>
+          <span class="ag-punti"><i class="cat-cliente"></i><i class="cat-prospect"></i><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-26" aria-label="26 · libero">
+          <small>S</small><b>26</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-27" aria-label="27 · libero">
+          <small>D</small><b>27</b>
+          <span class="ag-punti"></span></button>
+      <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
+    </div>
+    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
+      <button data-vista="orario" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
+    </div><div class="sotto">lunedì 21 settembre · 6 impegni</div><div class="ag-doppi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 2 impegni si accavallano: controlla che sia voluto.</div><div class="ag-griglia"><div class="ag-ore" data-da="480" data-alt="58" style="height:928px"><button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-mezza" style="top:29px"></div><div class="ag-lin" style="top:58px"><b>9</b></div><div class="ag-mezza" style="top:87px"></div><div class="ag-lin" style="top:116px"><b>10</b></div><div class="ag-mezza" style="top:145px"></div><div class="ag-lin" style="top:174px"><b>11</b></div><div class="ag-mezza" style="top:203px"></div><div class="ag-lin" style="top:232px"><b>12</b></div><div class="ag-mezza" style="top:261px"></div><div class="ag-lin" style="top:290px"><b>13</b></div><div class="ag-mezza" style="top:319px"></div><div class="ag-lin" style="top:348px"><b>14</b></div><div class="ag-mezza" style="top:377px"></div><div class="ag-lin" style="top:406px"><b>15</b></div><div class="ag-mezza" style="top:435px"></div><div class="ag-lin" style="top:464px"><b>16</b></div><div class="ag-mezza" style="top:493px"></div><div class="ag-lin" style="top:522px"><b>17</b></div><div class="ag-mezza" style="top:551px"></div><div class="ag-lin" style="top:580px"><b>18</b></div><div class="ag-mezza" style="top:609px"></div><div class="ag-lin" style="top:638px"><b>19</b></div><div class="ag-mezza" style="top:667px"></div><div class="ag-lin" style="top:696px"><b>20</b></div><div class="ag-mezza" style="top:725px"></div><div class="ag-lin" style="top:754px"><b>21</b></div><div class="ag-mezza" style="top:783px"></div><div class="ag-lin" style="top:812px"><b>22</b></div><div class="ag-mezza" style="top:841px"></div><div class="ag-lin" style="top:870px"><b>23</b></div><div class="ag-mezza" style="top:899px"></div><div class="ag-lin" style="top:928px"><b>24</b></div><div class="ag-invito" style="top:3px;height:52px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 08:00 – 09:00 libero</div><div class="ag-invito" style="top:80px;height:91px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 09:30 – 11:00 libero</div><div class="ag-invito" style="top:235px;height:168px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 12:00 – 15:00 libero</div><div class="ag-invito" style="top:467px;height:139px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 16:00 – 18:30 libero</div><div class="ag-invito" style="top:743px;height:182px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> dalle 20:45 libero</div><button class="ag-ev cat-prospect bassa dacoda" data-evento="t1"
+      style="top:58px;height:18px;left:calc(0% + 2px);width:calc(100% - 6px)">
+      <span class="bar"></span><b>Telefonata · Marco Bini</b></button><button class="ag-ev cat-prospect" data-evento="p1"
+      style="top:174px;height:55px;left:calc(0% + 2px);width:calc(100% - 6px)">
+      <span class="bar"></span><b>PM 1a1 · Laura Ferri</b><small>11:00–12:00</small></button><button class="ag-ev cat-partner" data-evento="c1"
+      style="top:406px;height:55px;left:calc(0% + 2px);width:calc(100% - 6px)">
+      <span class="bar"></span><b>Counseling · Isabella Rossi</b><small>15:00–16:00 · 👍</small></button><button class="ag-ev cat-cliente" data-evento="v1"
+      style="top:609px;height:26px;left:calc(0% + 2px);width:calc(50% - 6px)">
+      <span class="bar"></span><b>Riordino · Anna Villa</b></button><button class="ag-ev cat-prospect" data-evento="p2"
+      style="top:609px;height:55px;left:calc(50% + 2px);width:calc(50% - 6px)">
+      <span class="bar"></span><b>PM 1a1 · Pino Manolo</b><small>18:30–19:30</small></button><button class="ag-ev cat-prospect" data-evento="f1"
+      style="top:696px;height:41px;left:calc(0% + 2px);width:calc(100% - 6px)">
+      <span class="bar"></span><b>Personale · Gino Pace</b><small>20:00–20:45</small></button></div></div><button class="ag-blocco telefonate" id="ag-telefonate"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg> Contatti del giorno · Fatti 4 di 10</span><span>›</span></button><button class="ag-blocco riordini" id="ag-riordini"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg> 1 riordino da sentire</span><span>›</span></button><button class="ag-blocco conferme" id="ag-conferme"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg> 2 conferme da fare</span><span>›</span></button><button class="ag-blocco passati" id="ag-passati"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 1 appuntamento passato senza esito</span><span>›</span></button></div><div class="pv-tel"><div class="pv-t">Settimana</div>
+    <div class="ag-testa"><h1>Agenda</h1>
+      
+      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    
+    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
+    <div class="ag-settimana">
+      <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
+      <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
+          <small>L</small><b>21</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-prospect"></i><i class="cat-partner"></i><i class="tanti cat-nessuna"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-22" aria-label="22 · 2 impegni">
+          <small>M</small><b>22</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-partner"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-23" aria-label="23 · libero">
+          <small>M</small><b>23</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-24" aria-label="24 · 1 impegno">
+          <small>G</small><b>24</b>
+          <span class="ag-punti"><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-25" aria-label="25 · 3 impegni">
+          <small>V</small><b>25</b>
+          <span class="ag-punti"><i class="cat-cliente"></i><i class="cat-prospect"></i><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-26" aria-label="26 · libero">
+          <small>S</small><b>26</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-27" aria-label="27 · libero">
+          <small>D</small><b>27</b>
+          <span class="ag-punti"></span></button>
+      <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
+    </div>
+    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
+      <button data-vista="orario" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
+    </div><div class="ag-sett-testa"><div class="oggi scelto">L<b>21</b></div><div class=" ">M<b>22</b></div><div class=" ">M<b>23</b></div><div class=" ">G<b>24</b></div><div class=" ">V<b>25</b></div><div class=" ">S<b>26</b></div><div class=" ">D<b>27</b></div></div><div class="ag-griglia sett"><div class="ag-ore" data-da="480" data-alt="42" style="height:546px"><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-lin" style="top:42px"><b>9</b></div><div class="ag-lin" style="top:84px"><b>10</b></div><div class="ag-lin" style="top:126px"><b>11</b></div><div class="ag-lin" style="top:168px"><b>12</b></div><div class="ag-lin" style="top:210px"><b>13</b></div><div class="ag-lin" style="top:252px"><b>14</b></div><div class="ag-lin" style="top:294px"><b>15</b></div><div class="ag-lin" style="top:336px"><b>16</b></div><div class="ag-lin" style="top:378px"><b>17</b></div><div class="ag-lin" style="top:420px"><b>18</b></div><div class="ag-lin" style="top:462px"><b>19</b></div><div class="ag-lin" style="top:504px"><b>20</b></div><div class="ag-lin" style="top:546px"><b>21</b></div><button class="ag-colonna ag-libero oggi scelto" data-vai="2026-09-21" aria-label="Apri il giorno 21" style="left:0%;width:14.285714285714286%"></button><button class="ag-sev cat-prospect" data-evento="t1" data-giorno="2026-09-21"
+        style="top:42px;height:19px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="09:00 Marco Bini"><span class="bar"></span><span>Marco</span></button><button class="ag-sev cat-prospect" data-evento="p1" data-giorno="2026-09-21"
+        style="top:126px;height:40px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="11:00–12:00 Laura Ferri"><span class="bar"></span><span>Laura</span></button><button class="ag-sev cat-partner" data-evento="c1" data-giorno="2026-09-21"
+        style="top:294px;height:40px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="15:00–16:00 Isabella Rossi"><span class="bar"></span><span>Isabella</span></button><button class="ag-sev cat-cliente" data-evento="v1" data-giorno="2026-09-21"
+        style="top:441px;height:19px;left:calc(0% + 1px);width:calc(7.142857142857143% - 2px)"
+        aria-label="18:30–19:00 Anna Villa"><span class="bar"></span><span>Anna</span></button><button class="ag-sev cat-prospect" data-evento="p2" data-giorno="2026-09-21"
+        style="top:441px;height:40px;left:calc(7.142857142857143% + 1px);width:calc(7.142857142857143% - 2px)"
+        aria-label="18:30–19:30 Pino Manolo"><span class="bar"></span><span>Pino</span></button><button class="ag-sev cat-prospect" data-evento="f1" data-giorno="2026-09-21"
+        style="top:504px;height:30px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="20:00–20:45 Gino Pace"><span class="bar"></span><span>Gino</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-22" aria-label="Apri il giorno 22" style="left:14.285714285714286%;width:14.285714285714286%"></button><button class="ag-sev cat-prospect" data-evento="x1" data-giorno="2026-09-22"
+        style="top:84px;height:40px;left:calc(14.285714285714286% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="10:00–11:00 Rita Neri"><span class="bar"></span><span>Rita</span></button><button class="ag-sev cat-partner" data-evento="x2" data-giorno="2026-09-22"
+        style="top:378px;height:61px;left:calc(14.285714285714286% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="17:00–18:30 Luca Dini"><span class="bar"></span><span>Luca</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-23" aria-label="Apri il giorno 23" style="left:28.571428571428573%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-24" aria-label="Apri il giorno 24" style="left:42.85714285714286%;width:14.285714285714286%"></button><button class="ag-sev cat-prospect fatta" data-evento="x3" data-giorno="2026-09-24"
+        style="top:462px;height:40px;left:calc(42.85714285714286% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="19:00–20:00 Sara Conti"><span class="bar"></span><span>Sara</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-25" aria-label="Apri il giorno 25" style="left:57.142857142857146%;width:14.285714285714286%"></button><button class="ag-sev cat-cliente" data-evento="x4" data-giorno="2026-09-25"
+        style="top:63px;height:19px;left:calc(57.142857142857146% + 1px);width:calc(14.285714285714286% - 2px)"
+        aria-label="09:30–10:00 Elio Massa"><span class="bar"></span><span>Elio</span></button><button class="ag-sev cat-prospect" data-evento="x5" data-giorno="2026-09-25"
+        style="top:420px;height:40px;left:calc(57.142857142857146% + 1px);width:calc(7.142857142857143% - 2px)"
+        aria-label="18:00–19:00 Gruppo"><span class="bar"></span><span>Gruppo</span></button><button class="ag-sev cat-prospect" data-evento="x6" data-giorno="2026-09-25"
+        style="top:441px;height:40px;left:calc(64.28571428571429% + 1px);width:calc(7.142857142857143% - 2px)"
+        aria-label="18:30–19:30 Nina Poli"><span class="bar"></span><span>Nina</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-26" aria-label="Apri il giorno 26" style="left:71.42857142857143%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-27" aria-label="Apri il giorno 27" style="left:85.71428571428572%;width:14.285714285714286%"></button></div></div><div class="ag-conto"><span style="--tinta:var(--az-pm)"><i></i>5 PM</span><span style="--tinta:var(--az-followup)"><i></i>2 Follow Up</span><span style="--tinta:var(--az-appuntamento)"><i></i>2 Appuntamenti</span><span style="--tinta:var(--az-consulenza)"><i></i>2 Consulenze</span><span style="--tinta:var(--az-contatto)"><i></i>1 Contatto</span></div><button class="ag-blocco telefonate" id="ag-telefonate"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg> Contatti del giorno · Fatti 4 di 10</span><span>›</span></button><button class="ag-blocco riordini" id="ag-riordini"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg> 1 riordino da sentire</span><span>›</span></button><button class="ag-blocco conferme" id="ag-conferme"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg> 2 conferme da fare</span><span>›</span></button><button class="ag-blocco passati" id="ag-passati"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 1 appuntamento passato senza esito</span><span>›</span></button></div><div class="pv-tel"><div class="pv-t">Elenco (una riga aperta)</div>
+    <div class="ag-testa"><h1>Agenda</h1>
+      
+      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    
+    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
+    <div class="ag-settimana">
+      <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
+      <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
+          <small>L</small><b>21</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-prospect"></i><i class="cat-partner"></i><i class="tanti cat-nessuna"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-22" aria-label="22 · 2 impegni">
+          <small>M</small><b>22</b>
+          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-partner"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-23" aria-label="23 · libero">
+          <small>M</small><b>23</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-24" aria-label="24 · 1 impegno">
+          <small>G</small><b>24</b>
+          <span class="ag-punti"><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-25" aria-label="25 · 3 impegni">
+          <small>V</small><b>25</b>
+          <span class="ag-punti"><i class="cat-cliente"></i><i class="cat-prospect"></i><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-26" aria-label="26 · libero">
+          <small>S</small><b>26</b>
+          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-27" aria-label="27 · libero">
+          <small>D</small><b>27</b>
+          <span class="ag-punti"></span></button>
+      <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
+    </div>
+    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
+      <button data-vista="orario" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
+    </div><div class="sotto">lunedì 21 settembre · 6 impegni</div><div class="ag-evento" data-evento="t1">
+    <div class="ora">09:00</div>
+    <div class="barra-tipo cat-prospect"></div>
+    <div class="dentro"><button class="apri"><div class="t">Telefonata · Marco Bini</div><div class="s">Richiamare • dalla coda</div></button></div>
+  </div><div class="ag-evento" data-evento="p1">
+    <div class="ora">11:00<small>12:00</small></div>
+    <div class="barra-tipo cat-prospect"></div>
+    <div class="dentro"><button class="apri"><div class="t">PM 1a1 · Laura Ferri</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button><div class="extra">
+      
+      <div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>
+      <div class="blocco-esiti" data-blocco="p1"><div class="come-andata">È avvenuto?</div>
+    <div class="ag-esiti" data-azione="p1" data-passo="avvenuto"><button data-esito="Fatto" class="">Fatto</button><button data-esito="Rimandato" class="">Rimandato</button><button data-esito="No Show" class="">No Show</button></div></div>
+      <div class="ag-comandi">
+        <button data-cmd="sposta"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Sposta</button><button data-cmd="modifica"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-modifica"/></svg> Modifica</button>
+        <button data-cmd="contatto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-persona"/></svg> Apri contatto</button>
+        <button data-cmd="elimina" class="pericolo">Elimina</button>
+      </div>
+      <div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal"><svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:2px" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.1 38 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-8-6.2C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l8-6.2z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.2C6.5 42.6 14.6 48 24 48z"/></svg> Google Calendar</button><button data-cmd="noteplan"><img src="icone/noteplan-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px"> NotePlan</button></div></div></div>
+  </div><div class="ag-evento" data-evento="c1">
+    <div class="ora">15:00<small>16:00</small></div>
+    <div class="barra-tipo cat-partner"></div>
+    <div class="dentro"><button class="apri"><div class="t">Counseling · Isabella Rossi</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare · <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg> confermato</div></button></div>
+  </div><div class="ag-evento" data-evento="p2">
+    <div class="ora">18:30<small>19:30</small></div>
+    <div class="barra-tipo cat-prospect"></div>
+    <div class="dentro"><button class="apri"><div class="t">PM 1a1 · Pino Manolo</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
+  </div><div class="ag-evento" data-evento="v1">
+    <div class="ora">18:30<small>19:00</small></div>
+    <div class="barra-tipo cat-cliente"></div>
+    <div class="dentro"><button class="apri"><div class="t">Riordino · Anna Villa</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
+  </div><div class="ag-evento" data-evento="f1">
+    <div class="ora">20:00<small>20:45</small></div>
+    <div class="barra-tipo cat-prospect"></div>
+    <div class="dentro"><button class="apri"><div class="t">Personale · Gino Pace</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
+  </div><button class="ag-blocco telefonate" id="ag-telefonate"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg> Contatti del giorno · Fatti 4 di 10</span><span>›</span></button><button class="ag-blocco riordini" id="ag-riordini"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg> 1 riordino da sentire</span><span>›</span></button><button class="ag-blocco conferme" id="ag-conferme"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg> 2 conferme da fare</span><span>›</span></button><button class="ag-blocco passati" id="ag-passati"><span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 1 appuntamento passato senza esito</span><span>›</span></button></div><div class="pv-tel"><div class="pv-t">Fissi a un'ora occupata</div><div class="foglio mc" style="border-radius:22px;box-shadow:var(--ombra-card)">
+  <div class="mc-testa cat-prospect"><span class="ts-pastiglia">PM</span><div><small>Nuovo appuntamento</small><b>Pino Manolo</b></div></div>
+  <div class="riquadro mc-g" style="margin-top:14px">
+    <div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
+      <input type="date" value="2026-09-21"><input type="time" value="18:30"></div></div>
+    <div class="campo"><label>Durata</label><div class="ag-scelte"><button class="">5 min</button><button class="">30 min</button><button class="">45 min</button><button class="">1 ora</button><button class="">1h 30</button><button class="">2 ore</button><button class="scelto">Altra…</button></div></div>
+    <div class="campo"><label>Finisce alle</label><input type="time" value="19:15"></div>
+    <div class="ag-scontro"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> A quest'ora hai già 2 impegni
+    <span>PM 1a1 · Pino Manolo <em>18:30–19:30</em></span><span>Riordino · Anna Villa <em>18:30–19:00</em></span>
+    <div class="ag-orelibere"><button data-ora="16:30">16:30</button><button data-ora="17:00">17:00</button><button data-ora="17:30">17:30</button></div></div>
+  </div></div></div></div>

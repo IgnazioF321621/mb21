@@ -52,7 +52,15 @@ const azioni = [
 prova('Eventi del giorno in ordine d\'ora; il Contatto conta alla data scelta; pallini della settimana', () => {
   assert.deepEqual(A.eventiDelGiorno(azioni, '2026-09-11').map(a => a.id), ['2', '1']);
   assert.deepEqual(A.eventiDelGiorno(azioni, '2026-09-12').map(a => a.id), ['3']);
-  assert.deepEqual([...A.giorniConEventi(azioni)].sort(), ['2026-09-11', '2026-09-12']);
+  // i pallini della striscia: uno per impegno, in ordine d'ora, col colore della categoria della persona
+  const punti = A.puntiGiorni(azioni, ['2026-09-10', '2026-09-11', '2026-09-12']);
+  assert.deepEqual(punti['2026-09-10'], { punti: [], tanti: false, quanti: 0 });
+  assert.equal(punti['2026-09-11'].quanti, 2);
+  assert.equal(punti['2026-09-12'].quanti, 1);
+  // oltre il massimo: gli ultimi diventano una barretta sola
+  const tanti = Array.from({ length: 6 }, (_, i) => ({ id: 'x' + i, tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-09-11', `0${i + 3}:00`), contatti: { categoria: 'Prospect' } }));
+  const p6 = A.puntiGiorni(tanti, ['2026-09-11'])['2026-09-11'];
+  assert.deepEqual([p6.quanti, p6.punti.length, p6.tanti], [6, 3, true]);
 });
 
 prova('Riga con le parole di Glide; [Partner] all\'inizio solo per l\'Admin sugli appuntamenti degli altri', () => {
@@ -220,6 +228,120 @@ prova('Riordini da sentire: telefonate di riordino senza esito, da oggi indietro
   const glide = [g('set', '2026-09-13T08:00:00Z'), g('agosto', '2026-08-30T08:00:00Z'), g('ottobre', '2026-10-04T08:00:00Z'),
     g('fatta', '2026-09-06T08:00:00Z', { completata: true }), g('chiusa', '2026-09-10T08:00:00Z', { esito: 'Ordine', completata: true })];
   assert.deepEqual(A.riordiniDaSentire(lista, '2026-09-18', glide).map(a => a.id), ['set', 'ieri', 'oggi']);
+});
+
+// ── Vista a orario (cantiere 37) ──
+const ev = (id, giorno, ora, minuti, tipo) => ({
+  id, tipo_azione: tipo || 'Piano Marketing', inizio: A.isoDaRoma(giorno, ora),
+  fine: minuti == null ? null : new Date(Date.parse(A.isoDaRoma(giorno, ora)) + minuti * 60000).toISOString(),
+});
+
+prova('Durate: c\'è anche 45 min; il Contatto dura 5 minuti, gli altri un\'ora', () => {
+  assert.deepEqual(A.DURATE.map(d => d[0]), [5, 30, 45, 60, 90, 120]);
+  assert.equal(A.durataPredefinita('Contatto'), 5);
+  assert.equal(A.durataPredefinita('Piano Marketing'), 60);
+  assert.equal(A.durataPredefinita('Appuntamento'), 60);
+});
+
+prova('Minuti e ore avanti e indietro; il tocco sul vuoto arrotonda al quarto d\'ora', () => {
+  assert.equal(A.inMinuti('08:00'), 480);
+  assert.equal(A.inMinuti('18:45'), 1125);
+  assert.equal(A.daMinuti(1125), '18:45');
+  assert.equal(A.daMinuti(0), '00:00');
+  assert.equal(A.daMinuti(1440), '24:00');
+  assert.equal(A.daMinuti(A.alQuarto(1030)), '17:15');   // 17:10 → il quarto più vicino
+  assert.equal(A.daMinuti(A.alQuarto(1022)), '17:00');   // 17:02 → l'ora piena
+  assert.equal(A.daMinuti(A.alQuarto(1028)), '17:15');
+  assert.equal(A.alQuarto(-30), 0);
+  assert.equal(A.alQuarto(99999), 1440 - 15);
+});
+
+prova('Fascia di un impegno: con la fine sua, senza fine la durata del tipo, fine sbagliata come se non ci fosse', () => {
+  assert.deepEqual(A.fascia(ev('a', '2026-09-21', '11:00', 60)), { da: 660, a: 720, durata: 60 });
+  assert.deepEqual(A.fascia(ev('b', '2026-09-21', '11:00', null)), { da: 660, a: 720, durata: 60 });
+  assert.deepEqual(A.fascia(ev('c', '2026-09-21', '09:00', null, 'Contatto')), { da: 540, a: 545, durata: 5 });
+  assert.deepEqual(A.fascia(ev('d', '2026-09-21', '11:00', -30)), { da: 660, a: 720, durata: 60 });   // fine prima dell'inizio
+  assert.deepEqual(A.fascia(ev('e', '2026-09-21', '23:30', 90)).a, 1440);                             // non si sfora la mezzanotte
+  // richiamo dalla coda: conta `data_scelta`, non `inizio`
+  assert.equal(A.fascia({ tipo_azione: 'Contatto', data_scelta: A.isoDaRoma('2026-09-21', '09:30'), inizio: A.isoDaRoma('2026-09-20', '18:00') }).da, 570);
+});
+
+prova('Disposizione del giorno: chi si accavalla va in colonne affiancate, gli altri larghi tutta la riga', () => {
+  const eventi = [ev('pm', '2026-09-21', '11:00', 60), ev('pino', '2026-09-21', '18:30', 60), ev('anna', '2026-09-21', '18:30', 30)];
+  const d = A.disposizioneGiorno(eventi);
+  const b = id => d.blocchi.find(x => x.ev.id === id);
+  assert.equal(b('pm').colonne, 1);
+  assert.equal(b('pm').sovrapposto, false);
+  assert.equal(b('pino').colonne, 2);
+  assert.equal(b('anna').colonne, 2);
+  assert.notEqual(b('pino').col, b('anna').col);
+  assert.equal(d.sovrapposti, 2);
+  // tre alla stessa ora: tre colonne
+  const tre = A.disposizioneGiorno([ev('x', '2026-09-21', '10:00', 60), ev('y', '2026-09-21', '10:15', 60), ev('z', '2026-09-21', '10:30', 60)]);
+  assert.deepEqual(tre.blocchi.map(x => x.colonne), [3, 3, 3]);
+  assert.deepEqual(tre.blocchi.map(x => x.col), [0, 1, 2]);
+  // uno dopo l'altro senza toccarsi: nessuna colonna in più
+  const fila = A.disposizioneGiorno([ev('m', '2026-09-21', '09:00', 60), ev('n', '2026-09-21', '10:00', 60)]);
+  assert.deepEqual(fila.blocchi.map(x => x.colonne), [1, 1]);
+  assert.equal(fila.sovrapposti, 0);
+});
+
+prova('Un blocco non è mai più basso di 20 minuti, ma la sua durata vera resta quella', () => {
+  const d = A.disposizioneGiorno([ev('tel', '2026-09-21', '09:00', null, 'Contatto')]);
+  assert.equal(d.blocchi[0].durata, 5);
+  assert.equal(d.blocchi[0].alta, 20);
+  assert.equal(d.blocchi[0].fine, 545);
+});
+
+prova('La griglia va dalle 8 a mezzanotte e si allarga se quel giorno c\'è qualcosa prima o dopo', () => {
+  assert.deepEqual([A.disposizioneGiorno([]).da, A.disposizioneGiorno([]).a], [480, 1440]);
+  const presto = A.disposizioneGiorno([ev('alba', '2026-09-21', '06:30', 60)]);
+  assert.equal(presto.da, 360);      // parte dalle 6
+  assert.equal(presto.a, 1440);
+  const sera = A.disposizioneGiorno([ev('tardi', '2026-09-21', '23:30', 30)]);
+  assert.deepEqual([sera.da, sera.a], [480, 1440]);
+});
+
+prova('Avviso doppioni: si accavalla anche per un minuto; chi si sposta non litiga con sé stesso; attaccati non è accavallato', () => {
+  const giornata = [{ ...ev('pino', '2026-09-21', '18:30', 60), id: 'pino' }, { ...ev('tel', '2026-09-21', '09:00', null, 'Contatto'), id: 'tel' }];
+  const alle18 = A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '18:30'), 30);
+  assert.deepEqual(alle18.map(e => e.id), ['pino']);
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '19:00'), 30).map(e => e.id), ['pino']);   // dentro: PM 1a1 finisce alle 19:30
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '19:30'), 30).map(e => e.id), []);   // attaccato dopo: libero
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '18:00'), 30).map(e => e.id), []);   // attaccato prima: libero
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '18:15'), 30).map(e => e.id), ['pino']);
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '18:30'), 60, 'pino').map(e => e.id), []);   // sto spostando proprio quello
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '09:02'), 5).map(e => e.id), ['tel']);       // la telefonata dura 5 minuti
+  assert.deepEqual(A.sovrapposti(giornata, A.isoDaRoma('2026-09-21', '09:06'), 5).map(e => e.id), []);
+});
+
+prova('Ore libere: le fasce del giorno e le tre proposte, senza le ore già passate', () => {
+  const giornata = [ev('pm', '2026-09-21', '11:00', 60), ev('cons', '2026-09-21', '15:00', 60)];
+  const libere = A.fasceLibere(giornata, 60);
+  assert.deepEqual(libere, [{ da: 480, a: 660 }, { da: 720, a: 900 }, { da: 960, a: 1320 }]);
+  assert.deepEqual(A.oreProposte(giornata, 60), ['08:00', '08:30', '09:00']);
+  assert.deepEqual(A.oreProposte(giornata, 60, { daMinuti: 16 * 60 + 10 }), ['16:30', '17:00', '17:30']);
+  // una fascia troppo corta non si propone
+  const pieno = [ev('a', '2026-09-21', '08:00', 60), ev('b', '2026-09-21', '09:30', 60)];
+  assert.deepEqual(A.oreProposte(pieno, 60, { quante: 1 }), ['10:30']);
+  // con «vicinoA» si propongono le ore vicine a quella che si stava provando, non quelle della mattina
+  assert.deepEqual(A.oreProposte(giornata, 60, { vicinoA: 18 * 60 + 30 }), ['18:00', '18:30', '19:00']);
+  assert.deepEqual(A.oreProposte(giornata, 60, { vicinoA: 9 * 60 }), ['08:30', '09:00', '09:30']);
+  assert.deepEqual(A.fasceLibere(pieno, 30)[0], { da: 540, a: 570 });   // il buco di mezz'ora fra i due c'è
+});
+
+prova('Riassunto della settimana: quanti impegni per tipo di lavoro, nell\'ordine dell\'app', () => {
+  const g = ['2026-09-21', '2026-09-22'];
+  const r = (id, giorno, ora, tipo) => ({ id, tipo_azione: tipo, inizio: A.isoDaRoma(giorno, ora) });
+  const righe = [r('1', '2026-09-21', '11:00', 'Follow Up'), r('2', '2026-09-21', '18:00', 'Piano Marketing'),
+    r('3', '2026-09-22', '09:00', 'Piano Marketing'), r('4', '2026-09-23', '09:00', 'Piano Marketing'),
+    { id: '5', tipo_azione: 'Contatto', data_scelta: A.isoDaRoma('2026-09-22', '10:00') }];
+  assert.deepEqual(A.contaPerTipo(righe, g).map(x => [x.tipo, x.quanti]),
+    [['Piano Marketing', 2], ['Follow Up', 1], ['Contatto', 1]]);   // il PM del 23 è fuori settimana
+  assert.equal(A.contaPerTipo(righe, g)[0].colore, 'var(--az-pm)');
+  assert.deepEqual(A.contaPerTipo(righe, g).map(x => `${x.quanti} ${x.nome}`), ['2 PM', '1 Follow Up', '1 Contatto']);
+  assert.equal(A.contaPerTipo([r('9', '2026-09-21', '09:00', 'Appuntamento')], g)[0].nome, 'Appuntamento');
+  assert.deepEqual(A.contaPerTipo([], g), []);
 });
 
 console.log(`\n${ok} prove superate`);
