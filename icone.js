@@ -126,7 +126,8 @@
   // `conIcone` vuole un testo GIÀ messo al sicuro (passato da esc): nella pagina lo chiama escIcone().
   const DA_EMOJI = { '⏳': 'orario', '✅': 'fatto', '👍': 'conferme', '📞': 'telefonate', '🗓': 'agenda', '📅': 'agenda', '⭐': 'perche', '👥': 'squadra',
     '🛒': 'vendite', '🎧': 'audio', '📖': 'libro', '🏠': 'casa', '📋': 'lista', '📊': 'report', '🗺': 'mappa', '📲': 'installa', '🔔': 'avvisi' };
-  const PALLINI = { '🔵': '#2563EB', '🟠': '#EA580C', '🟢': '#16A34A', '🟣': '#7C3AED', '🔴': 'var(--pericolo)', '⚪': 'var(--spento)' };
+  // i pallini prendono i colori veri dell'app: erano gli ultimi quattro scritti a mano, e di un tono diverso dai gruppi accanto a cui si vedono (cantiere 34, 20/09)
+  const PALLINI = { '🔵': 'var(--gr-volume)', '🟠': 'var(--gr-azione)', '🟢': 'var(--gr-segni)', '🟣': 'var(--gr-crescita)', '🔴': 'var(--pericolo)', '⚪': 'var(--spento)' };
   function conIcone(htmlSicuro) {
     return String(htmlSicuro).replace(/(\p{Extended_Pictographic})\uFE0F?/gu, (tutto, segno) =>
       DA_EMOJI[segno] ? icona(DA_EMOJI[segno]) : PALLINI[segno] ? `<i class="pallino" style="background:${PALLINI[segno]}"></i>` : tutto);

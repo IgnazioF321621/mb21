@@ -105,14 +105,22 @@ function disegnaMappa() {
   } else if (!righe.length) {
     html += `<div class="vuoto">Nessuno con questo filtro.</div>`;
   } else {
-    html += '<div class="mp-elenco">' + righe.map(r => {
+    // per ogni riga: è l'ultima del suo gruppo? (nessuna riga dopo, allo stesso livello, prima di risalire). Serve al filo dell'albero: │ se prosegue, └ se chiude
+    const ultimo = righe.map((r, i) => {
+      for (let j = i + 1; j < righe.length; j++) {
+        if (righe[j].profondita < r.profondita) return true;
+        if (righe[j].profondita === r.profondita) return false;
+      }
+      return true;
+    });
+    html += '<div class="mp-elenco">' + righe.map((r, i) => {
       const s = M.STATI[r.stato];
       const apri = r.haFigli
         ? `<button class="mp-apri" data-mpapri="${esc(r.id)}" aria-label="${r.aperto ? 'Chiudi' : 'Apri'} il gruppo di ${esc(r.nome)}">${r.aperto ? '−' : '+'}</button>`
         : `<span class="mp-apri vuoto"></span>`;
       // il rientro si ferma al quinto livello: più in basso lo dice la pastiglia, e restano leggibili nome e numeri
       const rientro = 10 + Math.min(r.profondita, 5) * 22;
-      return `<div class="mp-riga ${r.spento ? 'spento' : ''} ${r.profondita ? 'figlio' : ''}" style="padding-left:${rientro}px; --filo:${rientro - 18}px">
+      return `<div class="mp-riga ${r.spento ? 'spento' : ''} ${r.profondita ? 'figlio' : ''} ${ultimo[i] ? 'ultimo' : ''}" style="padding-left:${rientro}px; --filo:${rientro - 18}px">
         ${apri}
         <span class="mp-tondo" style="background:${s.colore}" title="${esc(s.titolo)}">${esc(iniziali(r.nome))}</span>
         <div class="mp-corpo">
@@ -121,7 +129,8 @@ function disegnaMappa() {
           <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
-            r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}${r.alLivelloSuccessivo ? ` · ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'} mancano <b>${num(r.alLivelloSuccessivo)}</b>` : ''}</div>
+            r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
+          ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
     }).join('') + '</div>';
