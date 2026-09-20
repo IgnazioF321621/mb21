@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.20 · 22:34', pagina: 'app', titolo: 'Il Check si legge a colpo d\'occhio',
+      testo: 'Aprendo «Visione completa» dalla Dashboard, ogni gruppo ti dice subito come stai andando a parole («2 in crescita · 2 ferme»), e accanto a ogni numero c\'è una pastiglia verde se stai facendo meglio del periodo prima, rossa se stai facendo meno. Le due colonne ora dicono anche a che giorno si fermano («Oggi al 20/09», «Prima al 20/08»), e puoi scegliere se confrontarti con il mese scorso o con due mesi fa (lo stesso per i WES e per gli anni). Nella Mappa ogni persona ha il suo cerchietto con le iniziali, verde se è attiva, e una linea che collega chi sta sotto a chi sta sopra.' },
     { quando: '2026.09.20 · 00:04', pagina: 'app', titolo: 'MB21 cambia vestito',
       testo: 'L\'app ha un aspetto nuovo, più pulito e uguale in tutte le pagine: colori più calmi, angoli morbidi, più spazio, disegni al posto delle faccine, bottoni più grandi da toccare. Ogni persona ha il suo cerchietto con le iniziali, del colore della sua categoria: arancio Prospect, verde Cliente, blu Partner. I moduli (nuovo contatto, appuntamento, Check del Giorno, obiettivi) sono divisi in gruppi e «Salva» resta sempre in fondo, a portata di pollice. Tutto è dove l\'hai lasciato: cambia solo l\'aspetto.' },
     { quando: '2026.09.19 · 14:56', pagina: 'lista', titolo: 'Lista Nomi: «Archivia» ed «Elimina» sempre a portata di mano',
