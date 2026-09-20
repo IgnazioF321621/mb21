@@ -133,7 +133,7 @@ function disegnaAdmin() {
     // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
     html = `${indietro}<h1>Fattore di conversione</h1>
       <div class="sotto">Provvigione = (VP × fattore) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
-      <div class="ad-elenco fc">${[...AD.fc].reverse().map((f, i, tutti) => `<div class="ad-el">${ic('vendite')}
+      <div class="ad-elenco fc">${[...AD.fc].reverse().map((f, i, tutti) => `<div class="ad-el">${ic('aggiorna')}
         <span class="q"><b>${esc(MB21Lista.numeroFattore(f.valore))}</b><small>${i === tutti.length - 1 ? 'vale dall\'inizio' : 'vale dal ' + esc(MB21Lista.data(f.dal))}</small></span>
         <button class="cambia" data-fc-cambia="${esc(f.dal)}">Cambia</button>${i === tutti.length - 1 ? '' : `<button class="via" data-fc-togli="${esc(f.dal)}">Elimina</button>`}</div>`).join('')}</div>
       <div class="riquadro ad-aggiungi">
