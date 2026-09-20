@@ -84,6 +84,18 @@
     return adesso > prima ? { segno: 'su', testo: `▲ ${perc}%` } : { segno: 'giu', testo: `▼ ${perc}%` };
   }
 
+  // Una riga a parole per ogni gruppo: quante voci vanno meglio, quante peggio, quante sono ferme (cantiere 34, Ignazio 20/09).
+  // Serve a capire come si sta andando **prima** di leggere i numeri. Vuota quando non c'è ancora niente da confrontare.
+  function riassunto(voci) {
+    const n = segno => voci.filter(v => v.andamento.segno === segno).length;
+    const su = n('su'), giu = n('giu'), pari = n('uguale');
+    const pezzi = [];
+    if (su) pezzi.push(`${su} in crescita`);
+    if (giu) pezzi.push(`${giu} in calo`);
+    if (pari) pezzi.push(pari === 1 ? '1 ferma' : `${pari} ferme`);
+    return pezzi.join(' · ');
+  }
+
   // Tutte le voci del periodo p. Periodo in corso: confronto a pari giorni + riga col periodo prima intero (decisione B).
   // VPP e VPG hanno un numero al mese: nel periodo in corso niente pari giorni, solo il periodo prima intero.
   function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi, segniAl }) {
@@ -116,13 +128,10 @@
         const esito = !intero && !adesso ? '' : adesso >= intero ? ' · superato ✓' : ' · mancano ' + formato(tondo(intero - adesso), v.decimali);
         riga = `${etichetta}: ${formato(intero, v.decimali)}${esito}`;
       }
-      // `quota` (0-100) per la barretta: **metà barra = come stavamo il periodo prima** (Ignazio 20/09: «la barra deve corrispondere al confronto»).
-      // Sotto la metà = stiamo peggio · sopra = meglio · piena = abbiamo raddoppiato. `null` quando non c'è proprio un confronto («—»): barra vuota con il solo segno.
-      const quota = prima == null ? null : !prima ? (adesso ? 100 : 0) : Math.max(0, Math.min(100, Math.round(adesso / prima * 50)));
       return { chiave: v.chiave, titolo: v.titolo, decimali: v.decimali || 0,
         adesso: formato(adesso, v.decimali), prima: prima == null ? '—' : formato(prima, v.decimali),
-        andamento: andamento(adesso, prima), riga, quota };
-    }) }));
+        andamento: andamento(adesso, prima), riga };
+    }) })).map(g => ({ ...g, riassunto: riassunto(g.voci) }));
     return { inCorso, confronto, gruppi };
   }
 

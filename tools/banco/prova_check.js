@@ -63,6 +63,23 @@ prova('Mese più lungo del precedente: il tratto di confronto non esce dal mese 
   assert.equal(r.confronto, 'fino al 31/03 · confronto con 01/02 → 28/02');
 });
 
+prova('riassunto del gruppo: quante voci vanno meglio, peggio o sono ferme (cantiere 34)', () => {
+  const giorni = [
+    { data: '2026-08-05', contatti: 10, pm: 2, tracce: 5, pagine: 20 },
+    { data: '2026-08-20', contatti: 8, pm: 1, tracce: 3, pagine: 10 },
+    { data: '2026-09-03', contatti: 14, pm: 1, tracce: 2, pagine: 40 },
+    { data: '2026-09-10', contatti: 9, pm: 2, tracce: 1, pagine: 5 },
+  ];
+  const r = C.calcola({ giorni, obiettivi: [], dateWes: [], periodo: R.periodoMese('2026-09-20'), oggi: '2026-09-20' });
+  const di = nome => r.gruppi.find(g => g.etichetta === nome).riassunto;
+  assert.equal(di('Azione'), '1 in crescita \u00b7 3 ferme');       // Contatti 23 contro 18; PM, Sponsor e Iscritti uguali
+  assert.equal(di('Crescita'), '1 in crescita \u00b7 1 in calo');    // Pagine 45 contro 30, Tracce 3 contro 8
+  assert.equal(di('Segni Vitali N21'), '3 ferme');
+  assert.equal(di('Volume'), '1 ferma');                         // VPP e VPG senza confronto non si contano
+  const vuoto = C.calcola({ giorni: [], obiettivi: [], dateWes: [], periodo: R.periodoMese('2026-09-20'), oggi: '2026-09-20' });
+  assert.equal(vuoto.gruppi.every(g => g.riassunto === ''), true);   // senza confronto la riga non si scrive
+});
+
 prova('WES in corso: stessi giorni del Wes prima; primo Wes senza confronto', () => {
   const date = ['2026-02-14', '2026-06-05'];
   const w = R.periodoIniziale('wes', oggi, date);
