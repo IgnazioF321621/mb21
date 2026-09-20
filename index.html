@@ -17,11 +17,11 @@
     --sfondo: #EFF1F5; --superficie: #FFFFFF; --superficie-2: #F7F8FA; --bordo: #E3E7EE;
     --testo: #10151F; --testo-soft: #5A6475; --testo-tenue: #7B8496; --accento: #10151F; --accento-su: #FFFFFF;
     /* categorie dei contatti: colore pieno e tinta */
-    --cat-prospect: #C2410C; --cat-prospect-tinta: #FDEEE2; --cat-cliente: #1D4ED8; --cat-cliente-tinta: #E7EFFE;
-    --cat-partner: #6D28D9; --cat-partner-tinta: #F0E9FD; --cat-ex: #5A6475; --cat-ex-tinta: #EAECF1;
+    --cat-prospect: #C2410C; --cat-prospect-tinta: #FDEEE2; --cat-cliente: #0E7490; --cat-cliente-tinta: #DFF1F6;
+    --cat-partner: #1D4ED8; --cat-partner-tinta: #E7EFFE; --cat-ex: #5A6475; --cat-ex-tinta: #EAECF1;
     --cat-unlinked: #7B8496; --cat-unlinked-tinta: #F2F4F7; --cat-archiviato: #374151; --cat-archiviato-tinta: #E4E7EC;
     /* segni vitali e stati */
-    --bbs: #1D4ED8; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
+    --bbs: #1D4ED8; --bbs-tinta: #E7EFFE; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
     --ok: #15803D; --ok-tinta: #E4F3E8; --pericolo: #C02626; --pericolo-tinta: #FCEAEA; --proposta: #B45309; --proposta-tinta: #FEF3C8;
     /* i 4 modi di contattare tengono il colore a cui la gente è abituata (Ignazio 19/09) */
     --ct-chiama: #1FA750; --ct-sms: #2F7FD6; --ct-whatsapp: #1FA855; --ct-telegram: #1F94D2;
@@ -36,7 +36,7 @@
     --bottone-h: 50px; --pill-h: 40px; --tocco: 44px; --pagina-x: 16px;
     /* nomi di prima: restano validi e puntano ai nuovi (si tolgono pagina per pagina) */
     --card: var(--superficie); --grigio: var(--testo-soft); --grigio-chiaro: var(--testo-tenue); --linea: var(--bordo);
-    --blu: #1D4ED8; --coach: #6D28D9; --verde: var(--ok); --rosso: var(--pericolo);
+    --blu: #1D4ED8; --coach: var(--cat-partner); --verde: var(--ok); --rosso: var(--pericolo);
     --prospect: var(--cat-prospect); --cliente: var(--cat-cliente); --partner: var(--cat-partner); --ex: var(--cat-ex); --unlinked: var(--spento);
   }
   * { box-sizing: border-box; }
@@ -364,7 +364,7 @@
   .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: var(--pericolo-tinta); color: var(--pericolo); padding: 14px 16px; }
   .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: inherit; opacity: .85; }
   .banner-big { border-radius: var(--raggio-card); background: var(--superficie); border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
-  .banner-big.bbs { border-color: var(--cat-cliente-tinta); background: var(--cat-cliente-tinta); }
+  .banner-big.bbs { border-color: var(--bbs-tinta); background: var(--bbs-tinta); }
   .banner-big.wes { border-color: var(--pericolo-tinta); background: var(--pericolo-tinta); }
   .banner-big .riga button.link { padding: 6px 0; font-size: 14px; }
   /* Profilo (cantiere 25): cerchietto con le iniziali in Dashboard, riquadri della pagina */
@@ -670,7 +670,7 @@
   #ad-vai-utenti { --richiamo: var(--cat-partner); --richiamo-tinta: var(--cat-partner-tinta); }
   #ad-vai-schede { --richiamo: var(--cat-archiviato); --richiamo-tinta: var(--cat-archiviato-tinta); }
   #ad-vai-wes { --richiamo: var(--wes); --richiamo-tinta: var(--pericolo-tinta); }
-  #ad-vai-bbs { --richiamo: var(--bbs); --richiamo-tinta: var(--cat-cliente-tinta); }
+  #ad-vai-bbs { --richiamo: var(--bbs); --richiamo-tinta: var(--bbs-tinta); }
   #ad-vai-fc { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
   .ad-voce small .ad-scad { color: var(--proposta); font-weight: 700; }
   .ad-voce small .ad-fuori { color: var(--pericolo); font-weight: 700; }
@@ -768,7 +768,7 @@
   .mp-sv span.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .mp-sv span.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .mp-sv span.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
   .sv-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
   .sv-pill { font-size: 11px; font-weight: 700; letter-spacing: .3px; color: #fff; border-radius: 5px; padding: 3px 7px; }
-  .sv-pill.bbs { background: var(--cat-cliente); } .sv-pill.wes { background: var(--pericolo); } .sv-pill.cep { background: var(--ok); }
+  .sv-pill.bbs { background: var(--bbs); } .sv-pill.wes { background: var(--pericolo); } .sv-pill.cep { background: var(--ok); }
   .sv-targhe { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
   .sv-targa { font-size: 10px; font-weight: 700; letter-spacing: .3px; color: var(--testo-tenue); background: none; border: 1px solid var(--spento); border-radius: var(--raggio-pill); padding: 1px 6px; }
   .sv-targa.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .sv-targa.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .sv-targa.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
@@ -778,7 +778,7 @@
   .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
   .sv-ev input[type="date"] { width: auto; margin: 0; padding: 6px 8px; font-size: 15px; }
   .sv-chip { border: 1px solid var(--linea); background: var(--superficie); color: var(--grigio); border-radius: 999px; padding: 5px 11px; font-size: 14px; font-weight: 600; }
-  .sv-chip.on.bbs { background: var(--cat-cliente); border-color: var(--cat-cliente); color: #fff; }
+  .sv-chip.on.bbs { background: var(--bbs); border-color: var(--bbs); color: #fff; }
   .sv-chip.on.wes { background: var(--pericolo); border-color: var(--pericolo); color: #fff; }
   .sv-chip:disabled { opacity: 1; }
   .sv-osp { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--grigio); margin-left: auto; }
@@ -823,29 +823,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609200714"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609200714"></script>
-<script src="lista.js?v=202609200714"></script>
-<script src="rubrica.js?v=202609200714"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609200714"></script>
-<script src="agenda.js?v=202609200714"></script>
-<script src="report.js?v=202609200714"></script>
-<script src="check.js?v=202609200714"></script>
-<script src="mappa.js?v=202609200714"></script>
-<script src="pagina-dashboard.js?v=202609200714"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609200714"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609200714"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609200714"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609200714"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609200714"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609200714"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609200714"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609200714"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609200714"></script>
-<script src="benvenuto.js?v=202609200714"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609200714"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609200730"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609200730"></script>
+<script src="lista.js?v=202609200730"></script>
+<script src="rubrica.js?v=202609200730"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609200730"></script>
+<script src="agenda.js?v=202609200730"></script>
+<script src="report.js?v=202609200730"></script>
+<script src="check.js?v=202609200730"></script>
+<script src="mappa.js?v=202609200730"></script>
+<script src="pagina-dashboard.js?v=202609200730"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609200730"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609200730"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609200730"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609200730"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609200730"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609200730"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609200730"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609200730"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609200730"></script>
+<script src="benvenuto.js?v=202609200730"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609200730"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 07:14';
+const APP_VERSION = '2026.09.20 · 07:30';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
