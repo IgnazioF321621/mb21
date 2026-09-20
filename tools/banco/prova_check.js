@@ -63,12 +63,12 @@ prova('Mese più lungo del precedente: il tratto di confronto non esce dal mese 
   assert.equal(r.confronto, 'fino al 31/03 · confronto con 01/02 → 28/02');
 });
 
-prova('Wes in corso: stessi giorni del Wes prima; primo Wes senza confronto', () => {
+prova('WES in corso: stessi giorni del Wes prima; primo Wes senza confronto', () => {
   const date = ['2026-02-14', '2026-06-05'];
   const w = R.periodoIniziale('wes', oggi, date);
   const r = C.calcola({ giorni, obiettivi, dateWes: date, periodo: w, oggi });
   assert.equal(r.confronto, 'fino al 15/09 · confronto con 14/02 → 27/05');   // 103 giorni dal 5 giugno = dal 14 febbraio al 27 maggio
-  assert.deepEqual([voce(r, 'Contatti').adesso, voce(r, 'Contatti').riga], ['11', 'Wes Feb 2026 intero: 0 · superato ✓']);
+  assert.deepEqual([voce(r, 'Contatti').adesso, voce(r, 'Contatti').riga], ['11', 'WES Feb 2026 intero: 0 · superato ✓']);
   const primo = R.spostaPeriodo(w, -1, oggi, date);
   const r2 = C.calcola({ giorni, obiettivi, dateWes: date, periodo: primo, oggi });
   assert.equal(r2.confronto, 'Nessun periodo prima da confrontare');
