@@ -17,7 +17,7 @@
     ] },
     { etichetta: 'Azione', pallino: '🟠', colore: 'var(--gr-azione)', voci: [
       { chiave: 'contatti', titolo: 'Contatti', tipo: 'somma' },
-      { chiave: 'pm', titolo: 'PM', tipo: 'somma' },
+      { chiave: 'pm', titolo: 'Piani Marketing', tipo: 'somma' },
       { chiave: 'sponsor_personali', titolo: 'Sponsor Personali', tipo: 'somma' },
       { chiave: 'sponsor_gruppo', titolo: 'Nuovi Iscritti', tipo: 'somma' },
     ] },

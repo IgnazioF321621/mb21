@@ -51,7 +51,7 @@ prova('Settembre 2026 in corso: a pari giorni (1-15 agosto) + agosto intero nell
   const pagine = voce(r, 'Pagine libro');
   assert.deepEqual([pagine.adesso, pagine.prima, pagine.andamento.testo, pagine.riga], ['102', '48', '▲ 113%', 'agosto intero: 272 · mancano 170']);
   assert.equal(voce(r, 'Contatti').riga, 'agosto intero: 0 · superato ✓');
-  assert.equal(voce(r, 'PM').riga, 'agosto intero: 0');   // 0 e 0: niente «superato»
+  assert.equal(voce(r, 'Piani Marketing').riga, 'agosto intero: 0');   // 0 e 0: niente «superato»
   // Segni Vitali: partenza + check; la riga grigia dice come si è chiuso agosto
   assert.deepEqual([voce(r, 'WES').adesso, voce(r, 'WES').prima, voce(r, 'WES').riga], ['10', '7', 'fine agosto: 9 · superato ✓']);
   // VPP/VPG: un numero al mese, niente pari giorni
