@@ -15,7 +15,7 @@
       { titolo: 'Piani Marketing', da: 'check:pm', obiettivo: 'pm' },
       { titolo: 'Nuovi Iscritti', da: 'check:sponsor_gruppo', obiettivo: 'sponsor_gruppo' },
     ] },
-    { chiave: 'segni', etichetta: 'Segni Vitali', pallino: '🟢', colore: 'var(--gr-segni)', senzaGiorno: true, riquadri: [
+    { chiave: 'segni', etichetta: 'Segni Vitali N21', pallino: '🟢', colore: 'var(--gr-segni)', senzaGiorno: true, riquadri: [
       { titolo: 'BBS', da: 'tot:bbs', obiettivo: 'bbs' },
       { titolo: 'WES', da: 'tot:wes', obiettivo: 'wes' },
       { titolo: 'CEP', da: 'tot:cep', obiettivo: 'cep' },
@@ -56,7 +56,7 @@
   const CAMPI_OBIETTIVI = [
     ['Volume', '🔵', [['vpp', 'VPP', true], ['vpv', 'VP Clienti', true], ['vpg', 'VPG', true]]],
     ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_personali', 'Sponsor Personali'], ['sponsor_gruppo', 'Nuovi Iscritti']]],
-    ['Segni Vitali', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
+    ['Segni Vitali N21', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
     ['Crescita', '🟣', [['tracce', 'Tracce audio'], ['pagine', 'Pagine libro']]],
   ];
   const CRESCITE = [5, 10, 20, 30, 40, 50];   // scelte della barra (decisione di Ignazio 14/09), si parte da 10
