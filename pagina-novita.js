@@ -29,7 +29,10 @@ function controllaNovita(ultimoUso) {
     if (REGISTRAZIONE.get('novita') === 'rivedi') { localStorage.removeItem(chiaveNovita()); history.replaceState(null, '', location.pathname); }
     const r = MB21Novita.daMostrare(MB21Novita.ELENCO, localStorage.getItem(chiaveNovita()) || '', ultimoUso);
     if (r.segna) localStorage.setItem(chiaveNovita(), r.segna);
-    if (r.nuove.length) foglioNovita(r, ultimoUso);
+    // Ignazio 20/09: il foglio NON si apre più da solo a ogni ingresso — «sono troppe e si annoiano se gliene compare sempre una».
+    // Le novità restano tutte nella lista del Profilo («Novità dell'app»), e più avanti si farà un riepilogo mirato da mostrare una volta sola.
+    // Per riaccenderlo basta togliere il «false &&» qui sotto.
+    if (false && r.nuove.length) foglioNovita(r, ultimoUso);
   } catch (e) {}
 }
 
