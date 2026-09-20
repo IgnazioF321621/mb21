@@ -649,19 +649,20 @@
   .ck-testa-g .tondo { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--g-tinta); color: var(--g);
     display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
   .ck-testa-g h3 { margin: 0; font-size: 16px; }
+  .ck-testa-g small { display: block; font-size: 12.5px; color: var(--testo-soft); margin-top: 1px; }
   .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px; align-items: center; gap: 4px; }
   .ck-testa { padding: 0 10px 6px 10px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
   .ck-riga { width: 100%; text-align: left; border: 0; background: none; border-radius: var(--raggio-bottone); padding: 10px;
     font-family: inherit; color: var(--testo); font-size: 15px; }
   .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; color: var(--g); }
   .ck-riga:nth-of-type(odd) { background: var(--superficie-2); }
-  /* la barretta del confronto: il segno a metà è «come stavi il periodo prima»; oltre il segno vuol dire che stai facendo meglio */
-  .ck-riga .barra { grid-column: 1 / -1; position: relative; height: 7px; border-radius: 999px; background: var(--bordo); margin-top: 8px; overflow: hidden; }
-  .ck-riga .barra::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: var(--superficie); }
-  .ck-riga .barra i { display: block; height: 100%; background: var(--g); border-radius: 999px; }
   .ck-riga .pr { text-align: right; font-size: 14px; color: var(--grigio); white-space: nowrap; }
-  .ck-riga .an { text-align: right; font-size: 13px; font-weight: 700; color: var(--grigio); white-space: nowrap; }
-  .ck-riga .an.su { color: var(--verde); } .ck-riga .an.giu { color: var(--rosso); }
+  /* l'andamento a pastiglia: verde se va meglio del periodo prima, rosso se va peggio, grigia se è uguale (Ignazio 20/09: si deve capire a colpo d'occhio) */
+  .ck-riga .an { justify-self: end; font-size: 12.5px; font-weight: 700; white-space: nowrap; color: var(--testo-tenue);
+    background: var(--superficie-2); border-radius: var(--raggio-pill); padding: 3px 8px; }
+  .ck-riga .an:empty { background: none; padding: 0; }
+  .ck-riga .an.su { color: var(--ok); background: var(--ok-tinta); }
+  .ck-riga .an.giu { color: var(--pericolo); background: var(--pericolo-tinta); }
   .ck-riga small { grid-column: 1 / -1; font-size: 12px; color: var(--grigio-chiaro); margin-top: 1px; }
   .ck-riga.aperta { background: var(--g-tinta); }
   .ck-grafico { background: var(--g-tinta); border-radius: var(--raggio-bottone); padding: 8px 12px 12px; margin: 0 0 4px; }
@@ -874,29 +875,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609200955"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609200955"></script>
-<script src="lista.js?v=202609200955"></script>
-<script src="rubrica.js?v=202609200955"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609200955"></script>
-<script src="agenda.js?v=202609200955"></script>
-<script src="report.js?v=202609200955"></script>
-<script src="check.js?v=202609200955"></script>
-<script src="mappa.js?v=202609200955"></script>
-<script src="pagina-dashboard.js?v=202609200955"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609200955"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609200955"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609200955"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609200955"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609200955"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609200955"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609200955"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609200955"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609200955"></script>
-<script src="benvenuto.js?v=202609200955"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609200955"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609202148"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609202148"></script>
+<script src="lista.js?v=202609202148"></script>
+<script src="rubrica.js?v=202609202148"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609202148"></script>
+<script src="agenda.js?v=202609202148"></script>
+<script src="report.js?v=202609202148"></script>
+<script src="check.js?v=202609202148"></script>
+<script src="mappa.js?v=202609202148"></script>
+<script src="pagina-dashboard.js?v=202609202148"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609202148"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609202148"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609202148"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609202148"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609202148"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609202148"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609202148"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609202148"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609202148"></script>
+<script src="benvenuto.js?v=202609202148"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609202148"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.20 · 09:55';
+const APP_VERSION = '2026.09.20 · 21:48';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1977,14 +1978,14 @@ function disegnaCheck() {
       <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
       <div class="ck-confronto">${esc(r.confronto)}</div>`;
     html += r.gruppi.map(g => `<div class="ck-gruppo" style="--g:${g.colore}; --g-tinta:${g.colore.replace(')', '-tinta)')}">
-      <div class="ck-testa-g"><span class="tondo">${esc(g.etichetta[0])}</span><h3>${esc(g.etichetta)}</h3></div>
+      <div class="ck-testa-g"><span class="tondo">${esc(g.etichetta[0])}</span>
+        <span><h3>${esc(g.etichetta)}</h3>${g.riassunto ? `<small>${esc(g.riassunto)}</small>` : ''}</span></div>
       <div class="ck-testa"><span></span><span>adesso</span><span>prima</span><span>▲▼</span></div>
       ${g.voci.map(v => {
         const aperta = CK.aperta === v.chiave;
         let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}"><span>${esc(v.titolo)}</span>
           <span class="n">${esc(v.adesso)}</span><span class="pr">${esc(v.prima)}</span><span class="an ${v.andamento.segno}">${esc(v.andamento.testo)}</span>
-          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}
-          <span class="barra" aria-hidden="true"><i style="width:${v.quota || 0}%"></i></span></button>`;
+          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}</button>`;
         if (!aperta) return h;
         const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
         const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });
