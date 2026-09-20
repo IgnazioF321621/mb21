@@ -342,10 +342,14 @@
   .mc-fondo { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; background: var(--superficie); margin: 0 -16px;
     padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }
   /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
-  .nv-pagina { margin: 14px 0 2px; font-size: 13px; color: var(--grigio); text-transform: uppercase; letter-spacing: .04em; }
-  .nv-riga { border-bottom: 1px solid var(--linea); font-size: 14px; }
-  .nv-riga summary { padding: 9px 0; font-weight: 600; font-size: 15px; cursor: pointer; }
-  .nv-riga div { padding: 0 0 10px 16px; color: var(--grigio); }
+  /* Novità: righe bianche staccate come nel resto dell'app (cantiere 34, 20/09) */
+  .nv-pagina { margin: 16px 2px 6px; font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: 1.2px; }
+  .nv-riga { background: var(--superficie); border-radius: var(--raggio-riga); box-shadow: var(--ombra-card); margin-bottom: 8px; font-size: 14px; }
+  .nv-riga summary { padding: 12px 14px; font-weight: 600; font-size: 15px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .nv-riga summary::-webkit-details-marker { display: none; }
+  .nv-riga summary::after { content: "\203a"; color: var(--testo-tenue); font-size: 18px; flex: none; }
+  .nv-riga[open] summary::after { content: "\2304"; }
+  .nv-riga div { padding: 0 14px 12px; color: var(--testo-soft); line-height: 1.45; }
   .nv-riga small { display: block; color: var(--grigio-chiaro); font-size: 11px; margin-top: 4px; }
   .foglio .testa-foglio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .foglio .testa-foglio button { border: 0; background: none; font-size: 24px; color: var(--grigio); padding: 0 4px; }
@@ -731,8 +735,9 @@
   .li-canali a { text-align: center; padding: 12px 4px; border-radius: var(--raggio-bottone); font-weight: 600; font-size: 15px; text-decoration: none; color: #fff; }
   /* ogni canale con il colore a cui la gente è abituata (le stesse variabili dei 4 modi di contattare) */
   .li-canali a:nth-child(1) { background: var(--ct-whatsapp); } .li-canali a:nth-child(2) { background: var(--ct-telegram); } .li-canali a:nth-child(3) { background: var(--ct-sms); }
-  .ad-richiesta { border-top: 1px solid var(--linea); padding: 10px 0; }
-  .ad-richieste h3 + .ad-richiesta { border-top: 0; }
+  /* elenchi di Admin (richieste, schede dei partner, utenti eliminati): righe bianche staccate */
+  .ad-richiesta { background: var(--superficie-2); border-radius: var(--raggio-bottone); padding: 10px 12px; margin-bottom: 8px; }
+  .ad-richiesta:last-child { margin-bottom: 0; }
   .ad-richiesta small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
   .ad-richiesta .bottoni .primario { font-size: 15px; padding: 10px; }
   .accesso label { display: block; text-align: left; font-size: 14px; color: var(--grigio); }
@@ -750,7 +755,7 @@
   /* «Utenti eliminati» e le sue righe sono un pezzo solo: la voce sopra, l'apertura attaccata sotto */
   .ad-voce.aperto { margin-bottom: 0; border-radius: var(--raggio-riga) var(--raggio-riga) 0 0; }
   .rp-wes.ad-eliminati { margin-top: 0; border-radius: 0 0 var(--raggio-card) var(--raggio-card); padding-top: 2px; }
-  .rp-wes.ad-eliminati .ad-richiesta:first-child { border-top: 0; }
+
   /* «Ripristina» verde: rimette le cose com'erano, come gli altri comandi che riportano indietro */
   button.link.ripristina { color: var(--ok); font-weight: 600; }
   button.link.ripristina svg.ic { color: var(--ok); }
