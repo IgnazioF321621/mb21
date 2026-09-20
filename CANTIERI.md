@@ -10,6 +10,15 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
+## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
+*Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
+
+- **Cosa c'è già** (letto sul database il 20/09, solo conteggi): **VPP e VPG mensili in `obiettivi_mese` da 2025-09 a 2026-09**, cioè tredici mesi, l'anno 2025-26 è completo · **`check_giorno`: 817 giorni dal 22/11/2024 al 20/09/2026**, di cui **795 prima di settembre 2026**. Quindi il grosso dello storico di Glide **è arrivato**
+- **Perché il grafico sembra vuoto sull'anno in corso**: l'anno fiscale **2026-27 è appena iniziato** (settembre), quindi ha una barra sola; le barre grigie dell'anno prima ci sono tutte. Questo non è un difetto
+- **Cosa resta da chiarire, con Ignazio davanti**: qual è **il buco preciso** che vede (un mese? una voce? VPP o VP Clienti?). Poi si confronta **voce per voce e mese per mese** con i **CSV esportati da Glide** a inizio progetto, per dire con certezza cosa manca e cosa no
+- **Da guardare anche**: nel Check le colonne «Prima» di **VPP e VPG** mostrano «—» quando il periodo è in corso, perché sono numeri **al mese** e non si possono tagliare a pari giorni (`tipo: 'amway'` in `check.js`). È voluto, ma a Ignazio può sembrare un dato mancante: **si decide se scrivere qualcosa di più chiaro al posto del trattino**
+- È **lavoro sui numeri, non sullo stile**: non fa parte del cantiere 34. Vicino al cantiere 35 (storico dei biglietti), stessa famiglia: «quello che c'era in Glide c'è anche qui?»
+
 ## 35. LO STORICO DEI BIGLIETTI BBS E WES (aperto il 20/09)
 *Nato da una domanda di Ignazio il 20/09 durante il cantiere 34, guardando la pagina Admin → BBS: «come mai tutti i BBS precedenti che esistevano anche su Glide non risultano?».*
 
