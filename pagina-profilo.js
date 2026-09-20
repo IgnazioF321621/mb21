@@ -184,7 +184,7 @@ async function toccaMioCep() {
 }
 
 function foglioMioBiglietto(tipo) {
-  const g = PF.segni, L = MB21Lista, k = tipo.toLowerCase(), nome = tipo === 'BBS' ? 'BBS' : 'Wes', evento = g[k];
+  const g = PF.segni, L = MB21Lista, k = tipo.toLowerCase(), nome = tipo === 'BBS' ? 'BBS' : 'WES', evento = g[k];
   if (!g.scheda) return mostraToast('Non hai ancora una scheda collegata al tuo codice Amway: chiedi all\'Admin');
   if (!evento) return mostraToast(`Nessun ${nome} in vendita adesso`);
   const big = (g.biglietti || []).find(b => b.tipo === tipo && b.evento === evento);

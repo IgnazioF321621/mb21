@@ -55,7 +55,7 @@
     const d = [...new Set(date)].filter(x => x <= oggi).sort();
     return d.map((da, i) => ({
       tipo: 'wes', da, a: d[i + 1] || null, inCorso: !d[i + 1],
-      etichetta: `Wes ${MESI_BREVI[Number(da.slice(5, 7)) - 1]} ${da.slice(0, 4)}`,
+      etichetta: `WES ${MESI_BREVI[Number(da.slice(5, 7)) - 1]} ${da.slice(0, 4)}`,
     }));
   }
   // Periodo spostato di n passi (‹ ›); null se si esce (futuro o Wes inesistente)
