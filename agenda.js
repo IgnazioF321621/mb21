@@ -17,7 +17,7 @@
   };
   const etichettaSottotipo = tipo => ETICHETTE_SOTTOTIPO[tipo] || (tipo ? `Tipo di ${tipo.toLowerCase()}` : 'Tipo');
   const FASI_PM = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
-  const FASI_FU = ['DS Fissato', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
+  const FASI_FU = ['Ulteriore Follow Up', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
   const FASI_PRD = ['Vendita', 'No Vendita'];                                   // decisione 1
   const FASI_CONTATTO_PC = ['Appuntamento', 'Richiamare'];                        // decisione 2
   // Appuntamento: fasi per sottotipo (decisione 3; tolti i nomi vecchi non in Sequenze)
@@ -210,7 +210,9 @@
   const RISULTATI = {
     // l'ordine è di Ignazio (21/09, cantiere 39): «prima vanno le cose buone e poi quelle meno», tutti in una riga
     'Piano Marketing': { fatto: 'Presentazione', esiti: ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine'] },
-    'Follow Up': { fatto: null, esiti: ['Iscrizione', 'DS Fissato', 'Prodotti', 'No BuonFine'] },
+    // «Ulteriore Follow Up» (Ignazio 21/09): era «DS Fissato» di Glide, che detto così sembrava il Follow Up stesso («come Presentazione nel PM»);
+    // è il «ci rivediamo», come «Richiamare» per le telefonate. Rinominato anche nel database (migrazione ulteriore_follow_up).
+    'Follow Up': { fatto: null, esiti: ['Iscrizione', 'Ulteriore Follow Up', 'Prodotti', 'No BuonFine'] },
   };
   const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
   // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.

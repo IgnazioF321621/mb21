@@ -6,7 +6,7 @@
 //   - fuori coda le categorie Unlinked, Ex Partner/Cliente, Archiviato e i senza categoria
 //     (dal 15/09 hanno il loro riquadro «Da catalogare», cantiere 16)
 //   - fuori coda chi ha un riordino programmato (`riordino_programmato` della vista): lo segue la telefonata di riordino (18/09)
-//   - Dare Seguito scaduti (fase Dare Seguito / DS Fissato, rientro prima di oggi): sempre, sopra la capienza
+//   - Dare Seguito scaduti (fase Dare Seguito / Ulteriore Follow Up, fino al 21/09 «DS Fissato»; rientro prima di oggi): sempre, sopra la capienza
 //   - capienza = contatti al giorno scelti dall'utente (1-10, predefinito 5) meno gli esiti già dati oggi
 //     dalla coda (i Dare Seguito non contano), tra chi ha rientro_il <= oggi:
 //       1. già in coda (in_coda_dal pieno), i più vecchi prima: chi non è stato chiamato slitta in cima
@@ -16,7 +16,7 @@
 (function (radice) {
   const CAPIENZA = 5;               // predefinita, se l'utente non ha scelto
   const QUOTA_RIENTRI = 3 / 5;      // il resto ai mai contattati
-  const FASI_DARE_SEGUITO = ['Dare Seguito', 'DS Fissato'];
+  const FASI_DARE_SEGUITO = ['Dare Seguito', 'Ulteriore Follow Up'];
   const CATEGORIE_ESCLUSE = ['Unlinked', 'Ex Partner/Cliente', 'Archiviato'];
 
   function giorniTra(da, a) {

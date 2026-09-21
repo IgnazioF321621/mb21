@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 17:53', pagina: 'agenda', titolo: 'Follow Up: c\'è «Ulteriore Follow Up»',
+      testo: 'Se dopo un Follow Up la persona non ha ancora deciso e vi rivedete, scegli «Ulteriore Follow Up» (prima si chiamava «DS Fissato»): l\'app ti fa fissare subito il prossimo incontro.' },
     { quando: '2026.09.21 · 17:07', pagina: 'agenda', titolo: 'Risultati del PM in ordine, dal migliore',
       testo: 'Dopo un Piano Marketing o un Follow Up, in «Com\'è andata?» i risultati sono in fila dal migliore: Iscrizione, Dare Seguito, Prodotti, No BuonFine.' },
     { quando: '2026.09.21 · 15:55', pagina: 'dashboard', titolo: 'Esiti delle telefonate: gli stessi ovunque',
