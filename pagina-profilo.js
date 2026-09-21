@@ -30,7 +30,7 @@ async function apriProfilo() {
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
   const [dati, stato, percorso] = await Promise.all([
-    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', u.id).maybeSingle()),
+    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno, calendario_token').eq('id', u.id).maybeSingle()),
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
     leggiPercorso(),   // cantiere 32: i propri «Perché iniziare» e i 14 passi (non letto = null: i due riquadri non si mostrano)
     leggiMieiSegni(),  // cantiere 25 bis: le proprie targhette BBS · WES · CEP (non letti = la voce non si mostra)
@@ -98,6 +98,7 @@ function disegnaProfilo() {
     ${voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
       <small style="margin-top:0">Alle <b>9</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
+    ${calendarioHtml()}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
     ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
@@ -117,6 +118,48 @@ function disegnaProfilo() {
   su('pf-password', () => foglioPassword(false));
   su('pf-esci', () => supa.auth.signOut());
   collegaAvvisi();
+  collegaCalendario();
+}
+
+// ── COLLEGA AL CALENDARIO APPLE (cantiere 38 lavoro 2, Ignazio 21/09: «MB21 è l'unica verità, fuori solo specchi, mai copie») ──
+// MB21 pubblica l'agenda dell'utente a un indirizzo segreto (`utenti.calendario_token`, funzione Edge `calendario`); il Calendario
+// ci si abbona una volta e poi la rilegge da solo (Apple: circa ogni ora). A senso unico: quello che si scrive là non torna qui.
+// Nell'app si dice «Collega», non «abbonamento» (Ignazio: «c'è da pagare?»). `webcal://` è l'indirizzo che iPhone, iPad e Mac
+// aprono direttamente con il Calendario; «Copia l'indirizzo» (https) è per gli altri calendari.
+const URL_CALENDARIO = token => `${SUPABASE_URL.replace(/^https:/, 'webcal:')}/functions/v1/calendario?t=${token}`;
+function calendarioHtml() {
+  const acceso = !!ST.utente.calendario_token;
+  return voceProfilo('calendario', ICONA_CAL + ' Calendario Apple', { destra: acceso ? 'collegato' : '', corpo: acceso
+    ? `<small style="margin-top:0">I tuoi appuntamenti e le telefonate con un orario compaiono da soli nel Calendario, in un calendario a parte che si chiama <b>MB21</b>. Il Calendario lo rilegge circa ogni ora. Quello che scrivi nel Calendario <b>non</b> torna in MB21.</small>
+      <div class="pf-avvisi"><div class="riga"><button class="primario" id="cal-apri">Apri nel Calendario</button></div>
+      <div class="riga"><button class="link" id="cal-copia">Copia l'indirizzo</button> · <button class="link" id="cal-cambia">Cambia indirizzo</button> · <button class="link" id="cal-scollega" style="color:var(--rosso)">Scollega</button></div></div>`
+    : `<small style="margin-top:0">Ritrovi i tuoi appuntamenti di MB21 nel Calendario di iPhone, iPad e Mac, <b>aggiornati da soli</b>: crei, sposti o elimini qui, e là cambia senza fare niente. Non costa niente; lo spegni quando vuoi.</small>
+      <div class="pf-avvisi"><div class="riga"><button class="primario" id="cal-collega">Collega al Calendario Apple</button></div></div>` });
+}
+function collegaCalendario() {
+  const u = ST.utente, su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  const chiedi = async (nuovo) => {
+    const { data, error } = await dbq('collega calendario', supa.rpc('calendario_collega', { p_nuovo: nuovo }));
+    if (error || !data) { mostraToast('Non riuscito: controlla la connessione e riprova.'); return false; }
+    u.calendario_token = data; return true;
+  };
+  su('cal-collega', async () => { if (await chiedi(false)) { disegnaProfilo(); location.href = URL_CALENDARIO(u.calendario_token); } });
+  su('cal-apri', () => { location.href = URL_CALENDARIO(u.calendario_token); });
+  su('cal-copia', async () => {
+    const indirizzo = URL_CALENDARIO(u.calendario_token).replace(/^webcal:/, 'https:');
+    try { await navigator.clipboard.writeText(indirizzo); mostraToast('Indirizzo copiato. Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.'); }
+    catch (e) { mostraToast('Copia non riuscita su questo dispositivo.'); }
+  });
+  su('cal-cambia', async () => {
+    if (!await chiediConferma('Cambiare indirizzo?', 'Serve se temi che l\'indirizzo sia finito in mano ad altri. Quello vecchio smette subito di funzionare: nel Calendario togli il calendario «MB21» di prima e collegalo di nuovo da qui.', 'Cambia indirizzo')) return;
+    if (await chiedi(true)) { mostraToast('Indirizzo cambiato: ora tocca «Apri nel Calendario».'); disegnaProfilo(); }
+  });
+  su('cal-scollega', async () => {
+    if (!await chiediConferma('Scollegare il Calendario?', 'MB21 smette di pubblicare i tuoi appuntamenti. Nel Calendario il calendario «MB21» resta fermo: toglilo da lì quando vuoi.', 'Scollega', true)) return;
+    const { error } = await dbq('scollega calendario', supa.rpc('calendario_scollega'));
+    if (error) return mostraToast('Non riuscito: controlla la connessione e riprova.');
+    u.calendario_token = null; disegnaProfilo();
+  });
 }
 
 // ── I MIEI SEGNI VITALI (cantiere 25 bis lavoro 2, Ignazio 19/09: «le tre targhette… da cliccare da parte dell'utente stesso») ──

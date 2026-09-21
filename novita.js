@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 11:14', pagina: 'app', titolo: 'MB21 dentro il Calendario del telefono, da solo',
+      testo: 'Nel Profilo c\'è la voce «Calendario Apple»: la colleghi una volta e da lì i tuoi appuntamenti di MB21 compaiono da soli nel Calendario di iPhone, iPad e Mac. Se sposti o elimini un appuntamento qui, là si aggiorna senza fare niente (di solito entro un\'ora).' },
     { quando: '2026.09.21 · 10:52', pagina: 'agenda', titolo: 'Il promemoria anche per le telefonate',
       testo: 'Se metti una telefonata in Agenda con un orario, mezz\'ora prima ti arriva l\'avviso, come per gli appuntamenti. Se ne hai più di una di fila arriva un avviso solo («Tra 30 minuti · 3 telefonate»), e un\'ora dopo, se manca l\'esito, l\'app ti chiede com\'è andata.' },
     { quando: '2026.09.21 · 09:00', pagina: 'agenda', titolo: 'L\'appuntamento nel Calendario di iPhone',
