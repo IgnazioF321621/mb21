@@ -36,6 +36,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Lavoro 2 · passi 2 e 3 fatti e pubblicati il 21/09** (`2026.09.21 · 11:14`): funzione Edge `calendario` + voce «Calendario Apple» nel Profilo per tutti. Il collegamento di Ignazio è stato acceso dal database per provare la funzione dal Mac. **Passo 4, da fare con Ignazio su iPhone**: collegare · creare, spostare, eliminare un appuntamento e vedere dopo quanto il Calendario se ne accorge · gli eliminati spariscono? · da dentro l'app sulla Home il `webcal://` si apre? · compare anche in NotePlan?
 
+**Passo 4, prova di Ignazio il 21/09**: collegato da iPhone; spostato un appuntamento in MB21 → sull'iPad orario giusto all'apertura del Calendario, sull'iPhone **si è aggiornato da solo** poco dopo («funziona meravigliosamente bene»). Per rileggere a mano su iPhone: Calendario → «Calendari» → tirare giù l'elenco (non la pagina principale). **Tolto il bottone NotePlan** da tutta l'app (`2026.09.21 · 11:29`). Resta da vedere: l'appuntamento **eliminato** sparisce dal Calendario?
+
 **Da decidere prima di partire** *(deciso il 21/09, vedi sopra)*
 - Si parte dal **lavoro 1** (piccolo, subito, per tutti) o dritti al **2** (l'abbonamento)?
 - Il lavoro 3 si fa o no (nodo privacy del calendario pubblico)?
