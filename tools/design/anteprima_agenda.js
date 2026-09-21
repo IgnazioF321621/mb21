@@ -54,6 +54,8 @@ const AZIONI = [
 ];
 
 // ── finte le cose che nell'app arrivano dal database o da altre pagine ──
+// `modo`: per provare anche l'Admin con il Partner Select su «Tutti» (più agende insieme)
+const modo = { admin: false, tutti: false };
 const app = { innerHTML: '', querySelectorAll: () => [], querySelector: () => null };
 const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati: [{}], aperta: null,
   telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'orario', portato: 'fatto' };
@@ -61,7 +63,7 @@ const stub = {
   MB21Agenda: A, MB21Icone, app, AG,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { oggiRoma: () => OGGI },
-  vediTutti: () => false, visto: () => ({ id: 'io' }), eAdmin: () => false, soloGuardo: () => false,
+  vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',
   rigaPortato: n => 'portato da ' + n,
@@ -81,7 +83,7 @@ function vista(v, aperta) {
   disegnaAgenda();
   return app.innerHTML;
 }
-module.exports = { A, AG, vista, disegnaAgenda, avvisoSovrapposti, az, OGGI };
+module.exports = { A, AG, modo, vista, disegnaAgenda, avvisoSovrapposti, az, OGGI };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
