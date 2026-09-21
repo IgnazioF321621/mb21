@@ -47,7 +47,7 @@ const AZIONI = [
   az('f1', OGGI, '20:00', 45, 'Follow Up', 'Personale', 'Gino Pace', 'Prospect', { ospite: 'la moglie' }),
   az('x1', '2026-09-22', '10:00', 60, 'Piano Marketing', 'PM 1a1', 'Rita Neri', 'Prospect'),
   az('x2', '2026-09-22', '17:00', 90, 'Appuntamento', 'Avvio', 'Luca Dini', 'Partner'),
-  az('x3', '2026-09-24', '19:00', 60, 'Follow Up', 'Upline', 'Sara Conti', 'Prospect', { completata: true, esito: 'DS Fissato' }),
+  az('x3', '2026-09-24', '19:00', 60, 'Follow Up', 'Upline', 'Sara Conti', 'Prospect', { completata: true, esito: 'Ulteriore Follow Up' }),
   az('x4', '2026-09-25', '09:30', 30, 'Consulenza PRD', 'Riordino', 'Elio Massa', 'Cliente'),
   az('x5', '2026-09-25', '18:00', 60, 'Piano Marketing', 'PM Open', 'Gruppo', 'Prospect'),
   az('x6', '2026-09-25', '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Nina Poli', 'Prospect'),

@@ -60,7 +60,7 @@ prova('fuori coda: il Cliente con un riordino programmato (lo segue la telefonat
 prova('Dare Seguito scaduto: sopra la capienza, con i giorni di ritardo', () => {
   const righe = Array.from({ length: 7 }, (_, i) => c('n' + i));
   righe.push(c('ds', { contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: piuGiorni(OGGI, -3) }));
-  righe.push(c('dsf', { contattato: true, ultima_fase: 'DS Fissato', ultimi_giorni: 2, rientro_il: IERI }));
+  righe.push(c('dsf', { contattato: true, ultima_fase: 'Ulteriore Follow Up', ultimi_giorni: 2, rientro_il: IERI }));
   const r = calcolaCoda(righe, OGGI);
   assert.equal(r.coda.length, 5);
   assert.deepEqual(r.dareSeguito.map(x => [x.id, x.scadutoDa]), [['ds', 3], ['dsf', 1]]);
