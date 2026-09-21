@@ -127,14 +127,17 @@ function disegnaProfilo() {
 // Nell'app si dice «Collega», non «abbonamento» (Ignazio: «c'è da pagare?»). `webcal://` è l'indirizzo che iPhone, iPad e Mac
 // aprono direttamente con il Calendario; «Copia l'indirizzo» (https) è per gli altri calendari.
 const URL_CALENDARIO = token => `${SUPABASE_URL.replace(/^https:/, 'webcal:')}/functions/v1/calendario?t=${token}`;
+// Google (21/09): lo stesso indirizzo segreto, aperto in Google Calendar già pronto da aggiungere («cid»). È lo specchio LENTO: Google
+// rilegge quando vuole (anche 12-24 ore) e si collega solo dal sito, non dall'app del telefono. Lo specchio vero per Google
+// (permesso dell'account, scrittura all'istante) è allo studio nel cantiere 38.
+const URL_GOOGLE = token => 'https://calendar.google.com/calendar/render?cid=' + encodeURIComponent(URL_CALENDARIO(token));
 function calendarioHtml() {
   const acceso = !!ST.utente.calendario_token;
-  return voceProfilo('calendario', ICONA_CAL + ' Calendario Apple', { destra: acceso ? 'collegato' : '', corpo: acceso
-    ? `<small style="margin-top:0">I tuoi appuntamenti e le telefonate con un orario compaiono da soli nel Calendario, in un calendario a parte che si chiama <b>MB21</b>. Il Calendario lo rilegge circa ogni ora. Quello che scrivi nel Calendario <b>non</b> torna in MB21.</small>
-      <div class="pf-avvisi"><div class="riga"><button class="primario" id="cal-apri">Apri nel Calendario</button></div>
-      <div class="riga"><button class="link" id="cal-copia">Copia l'indirizzo</button> · <button class="link" id="cal-cambia">Cambia indirizzo</button> · <button class="link" id="cal-scollega" style="color:var(--rosso)">Scollega</button></div></div>`
-    : `<small style="margin-top:0">Ritrovi i tuoi appuntamenti di MB21 nel Calendario di iPhone, iPad e Mac, <b>aggiornati da soli</b>: crei, sposti o elimini qui, e là cambia senza fare niente. Non costa niente; lo spegni quando vuoi.</small>
-      <div class="pf-avvisi"><div class="riga"><button class="primario" id="cal-collega">Collega al Calendario Apple</button></div></div>` });
+  const bottoni = `<div class="pf-avvisi"><div class="riga" style="flex-wrap:wrap"><button class="primario" id="cal-apple">${ICONA_CAL} Calendario Apple</button><button class="primario" id="cal-google" style="background:var(--sfondo);color:var(--testo)">${ICONA_G} Google Calendar</button></div>`;
+  return voceProfilo('calendario', ic('agenda') + ' MB21 nel tuo calendario', { destra: acceso ? 'collegato' : '', corpo: `
+      <small style="margin-top:0">I tuoi appuntamenti e le telefonate con un orario compaiono <b>da soli</b> nel tuo calendario, in un calendario a parte che si chiama <b>MB21</b>: crei, sposti o elimini qui, e là cambia senza fare niente. Quello che scrivi là <b>non</b> torna in MB21. Non costa niente; lo spegni quando vuoi.</small>
+      ${bottoni}${acceso ? `<div class="riga"><button class="link" id="cal-copia">Copia l'indirizzo</button> · <button class="link" id="cal-cambia">Cambia indirizzo</button> · <button class="link" id="cal-scollega" style="color:var(--rosso)">Scollega</button></div>` : ''}</div>
+      <small><b>Apple</b> (iPhone, iPad, Mac) si aggiorna di solito entro un'ora. <b>Google</b> è più lento, anche mezza giornata o più, e si collega dal computer: l'app di Google sul telefono non lo permette.</small>` });
 }
 function collegaCalendario() {
   const u = ST.utente, su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
@@ -143,8 +146,13 @@ function collegaCalendario() {
     if (error || !data) { mostraToast('Non riuscito: controlla la connessione e riprova.'); return false; }
     u.calendario_token = data; return true;
   };
-  su('cal-collega', async () => { if (await chiedi(false)) { disegnaProfilo(); location.href = URL_CALENDARIO(u.calendario_token); } });
-  su('cal-apri', () => { location.href = URL_CALENDARIO(u.calendario_token); });
+  // il collegamento si accende al primo tocco, qualunque calendario si scelga
+  su('cal-apple', async () => { if (u.calendario_token || await chiedi(false)) { disegnaProfilo(); location.href = URL_CALENDARIO(u.calendario_token); } });
+  su('cal-google', async () => {
+    const finestra = window.open('', '_blank');   // aperta subito, al tocco: dopo l'attesa il browser la bloccherebbe
+    if (u.calendario_token || await chiedi(false)) { disegnaProfilo(); if (finestra) finestra.location = URL_GOOGLE(u.calendario_token); else location.href = URL_GOOGLE(u.calendario_token); }
+    else if (finestra) finestra.close();
+  });
   su('cal-copia', async () => {
     const indirizzo = URL_CALENDARIO(u.calendario_token).replace(/^webcal:/, 'https:');
     try { await navigator.clipboard.writeText(indirizzo); mostraToast('Indirizzo copiato. Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.'); }
@@ -152,7 +160,7 @@ function collegaCalendario() {
   });
   su('cal-cambia', async () => {
     if (!await chiediConferma('Cambiare indirizzo?', 'Serve se temi che l\'indirizzo sia finito in mano ad altri. Quello vecchio smette subito di funzionare: nel Calendario togli il calendario «MB21» di prima e collegalo di nuovo da qui.', 'Cambia indirizzo')) return;
-    if (await chiedi(true)) { mostraToast('Indirizzo cambiato: ora tocca «Apri nel Calendario».'); disegnaProfilo(); }
+    if (await chiedi(true)) { mostraToast('Indirizzo cambiato: ora ricollega il tuo calendario da qui.'); disegnaProfilo(); }
   });
   su('cal-scollega', async () => {
     if (!await chiediConferma('Scollegare il Calendario?', 'MB21 smette di pubblicare i tuoi appuntamenti. Nel Calendario il calendario «MB21» resta fermo: toglilo da lì quando vuoi.', 'Scollega', true)) return;
