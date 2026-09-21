@@ -974,29 +974,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210643"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210643"></script>
-<script src="lista.js?v=202609210643"></script>
-<script src="rubrica.js?v=202609210643"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210643"></script>
-<script src="agenda.js?v=202609210643"></script>
-<script src="report.js?v=202609210643"></script>
-<script src="check.js?v=202609210643"></script>
-<script src="mappa.js?v=202609210643"></script>
-<script src="pagina-dashboard.js?v=202609210643"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210643"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210643"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210643"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210643"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210643"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210643"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210643"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210643"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210643"></script>
-<script src="benvenuto.js?v=202609210643"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210643"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210644"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210644"></script>
+<script src="lista.js?v=202609210644"></script>
+<script src="rubrica.js?v=202609210644"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210644"></script>
+<script src="agenda.js?v=202609210644"></script>
+<script src="report.js?v=202609210644"></script>
+<script src="check.js?v=202609210644"></script>
+<script src="mappa.js?v=202609210644"></script>
+<script src="pagina-dashboard.js?v=202609210644"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210644"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210644"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210644"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210644"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210644"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210644"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210644"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210644"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210644"></script>
+<script src="benvenuto.js?v=202609210644"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210644"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 06:43';
+const APP_VERSION = '2026.09.21 · 06:44';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1475,7 +1475,13 @@ function grigliaGiorno(eventi, opz) {
   const y = m => Math.round((m - d.da) / 60 * ALT_ORA);
   const altezza = y(d.a);
   let h = '';
-  if (d.sovrapposti) h += `<div class="ag-doppi">${ic('attenzione')} ${d.sovrapposti} impegni si accavallano: controlla che sia voluto.</div>`;
+  // L'avviso esce solo per un doppione VERO: due impegni della stessa persona. Con «Tutti» l'Admin guarda
+  // più agende insieme, e allora si dice anche di chi sono (Ignazio 21/09: «in Tutti non deve uscire»).
+  if (d.sovrapposti) {
+    const chi = [...new Set(d.blocchi.filter(b => b.doppio).map(b => b.ev.utenti && (b.ev.utenti.nome || b.ev.utenti.nome_cognome)).filter(Boolean))];
+    const diChi = vediTutti() && chi.length ? ` di ${chi.join(' e ')}` : '';
+    h += `<div class="ag-doppi">${ic('attenzione')} ${d.sovrapposti} impegni${esc(diChi)} si accavallano: controlla che sia voluto.</div>`;
+  }
   h += `<div class="ag-griglia"><div class="ag-ore" data-da="${d.da}" data-alt="${ALT_ORA}" style="height:${altezza}px">`;
   h += `<button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button>`;
   for (let m = d.da; m <= d.a; m += 60) {
