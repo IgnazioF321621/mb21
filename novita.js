@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 11:53', pagina: 'app', titolo: 'MB21 anche in Google Calendar',
+      testo: 'Nel Profilo la voce «MB21 nel tuo calendario» ora ha due bottoni: Calendario Apple e Google Calendar. Google si collega dal computer ed è più lento ad aggiornarsi (anche mezza giornata); Apple di solito entro un\'ora.' },
     { quando: '2026.09.21 · 11:40', pagina: 'agenda', titolo: 'Via i bottoni del calendario dall\'appuntamento',
       testo: 'Dentro l\'appuntamento non ci sono più i bottoni «Google Calendar» e «Calendario Apple»: facevano una copia che restava vecchia se poi spostavi l\'appuntamento. Al loro posto c\'è il collegamento dal Profilo, che si aggiorna da solo.' },
     { quando: '2026.09.21 · 11:14', pagina: 'app', titolo: 'MB21 dentro il Calendario del telefono, da solo',
