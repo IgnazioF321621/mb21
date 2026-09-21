@@ -78,28 +78,33 @@ async function caricaOggi() {
 // ── Bottoni esito (tabella confermata da Ignazio il 14/09, STRUTTURA.md → Bottoni esito) ──
 // Prospect e Referral (e senza categoria, se capitano): 5 bottoni sulle fasi Prospect · Contatto.
 // Partner e Cliente: in Sequenze non hanno fasi di telefonata → solo i due con data.
-const BOTTONI_PROSPECT = [
-  { etichetta: 'Appuntamento', chiave: 'Prospect-Contatto-PM Fissato', data: 'giorno-ora', classe: 'appuntamento' },
-  { etichetta: 'Richiamare', chiave: 'Prospect-Contatto-Richiamare', data: 'giorno' },
-  { etichetta: 'Non risponde', chiave: 'Prospect-Contatto-No Risposta' },
-  { etichetta: 'Non ora', chiave: 'Prospect-Contatto-Relazione' },
-  { etichetta: 'Non interessato', chiave: 'Prospect-Contatto-No Interesse', classe: 'no', rientro: true },   // poi «Quando risentirlo?» (17/09)
-];
-// Cliente (cantiere 27, 18/09): gli stessi esiti del riquadro «Riordini da sentire». «Ordine» propone di registrare la vendita.
-const BOTTONI_CLIENTE = [
-  { etichetta: 'Ordine', chiave: 'Cliente-Contatto-Ordine', classe: 'ordine', vendita: true },
-  { etichetta: 'Appuntamento', chiave: 'Cliente-Contatto-Appuntamento', data: 'giorno-ora', classe: 'appuntamento' },
-  { etichetta: 'Richiamare', chiave: 'Cliente-Contatto-Richiamare', data: 'giorno' },
-  { etichetta: 'Non risponde', chiave: 'Cliente-Contatto-No Risposta' },
-  { etichetta: 'Non interessato', chiave: 'Cliente-Contatto-No Interesse', classe: 'no', rientro: true },
-];
+// Cantiere 39 (Ignazio 21/09: «uniformiamo le parole della coda con quelle ufficiali», poi «così hanno tutti la stessa logica»):
+// i bottoni della coda sono gli STESSI esiti di «Com'è andata?», nello stesso ordine, presi dall'elenco unico di agenda.js
+// (MB21Agenda.fasiPer): sul bottone c'è scritto l'esito che si salva. Qui resta solo quello che un esito FA in coda.
+// Prima: 5 bottoni con parole loro (Appuntamento · Richiamare · Non risponde · Non ora · Non interessato), e in coda mancavano
+// «Consulenza Prodotti» e «Telefono spento». Partner: Appuntamento · Richiamare. Cliente: come in Agenda, più «No Risposta».
+const COSA_FA_ESITO = {
+  'PM Fissato': { data: 'giorno-ora', classe: 'appuntamento' },
+  'Appuntamento': { data: 'giorno-ora', classe: 'appuntamento' },
+  'Richiamare': { data: 'giorno' },
+  'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
+  'No Interesse': { classe: 'no', rientro: true },           // poi «Quando risentirlo?» (17/09)
+};
 function bottoniPer(categoria) {
-  if (categoria === 'Cliente') return BOTTONI_CLIENTE;
-  if (categoria === 'Partner') return [
-    { etichetta: 'Appuntamento', chiave: `${categoria}-Contatto-Appuntamento`, data: 'giorno-ora', classe: 'appuntamento' },
-    { etichetta: 'Richiamare', chiave: `${categoria}-Contatto-Richiamare`, data: 'giorno' },
-  ];
-  return BOTTONI_PROSPECT;
+  const cat = categoria === 'Partner' || categoria === 'Cliente' ? categoria : 'Prospect';   // Referral, Ex, senza categoria: fasi del Prospect
+  const esiti = [...MB21Agenda.fasiPer(cat, 'Contatto', 'Telefonata')];
+  if (cat === 'Cliente') esiti.push('No Risposta');   // in coda c'è dal 18/09; in Agenda no, perché lì il riquadro Riordini ha già il suo «Non risponde»
+  return esiti.map(f => ({ etichetta: f, chiave: `${cat}-Contatto-${f}`, ...(COSA_FA_ESITO[f] || {}) }));
+}
+// I bottoni di una riga della coda (e dei Dare Seguito scaduti): sopra gli esiti buoni, sotto quelli non andati, come in «Com'è andata?»
+// (MB21Agenda.esitiInDueRighe). `data-bottone` resta la posizione in bottoniPer: è quella che legge chi raccoglie il tocco.
+function bottoniCodaHtml(r, spento) {
+  const tutti = bottoniPer(r.categoria);
+  return MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).map((riga, n) =>
+    `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga.map(f => {
+      const i = tutti.findIndex(b => b.etichetta === f);
+      return `<button class="${tutti[i].classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${spento ? 'disabled' : ''}>${esc(f)}</button>`;
+    }).join('')}</div>`).join('');
 }
 
 // Riga compatta con le parole di Glide («Azioni da completare»): nome · «modalità • area | esito» dell'ultima azione · frase del coach. Il tocco la apre (una sola aperta): dati, telefono, coach intero, bottoni.
@@ -124,8 +129,7 @@ function cardContatto(r, dareSeguito) {
     return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
   }
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
-  const bottoni = bottoniPer(r.categoria).map((b, i) =>
-    `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${ST.offline || guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('');
+  const bottoni = bottoniCodaHtml(r, ST.offline || guardoAltri());
   return `
     <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
       ${testa}
@@ -133,7 +137,7 @@ function cardContatto(r, dareSeguito) {
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
-        <div class="bottoni">${bottoni}</div>
+        <div class="bottoni due-righe">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
@@ -235,8 +239,7 @@ function cardCatalogo(r) {
   if (!aperta) return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
   const bottoni = r.categoria
-    ? bottoniPer(r.categoria).map((b, i) =>   // come la coda, ma non conta nei contatti al giorno
-      `<button class="${b.classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${guardoAltri() ? 'disabled' : ''}>${esc(b.etichetta)}</button>`).join('')
+    ? bottoniCodaHtml(r, guardoAltri())   // come la coda, ma non conta nei contatti al giorno
     : CATEGORIE_CATALOGO.map((b, i) =>
       // scelta «A» di Ignazio (19/09, tools/design/confronto_catalogare.html): le tre categorie con cui si lavora hanno il tondo pieno del loro colore
       // con l'icona, come i tondi delle persone; Ex, Unlinked e Archivia stanno sotto, scritte piccole
@@ -250,7 +253,7 @@ function cardCatalogo(r) {
         ${contattaHtml(r.telefono)}
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
-        <div class="bottoni ${r.categoria ? '' : 'scegli-cat'}">${bottoni}</div>
+        <div class="bottoni ${r.categoria ? 'due-righe' : 'scegli-cat'}">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
@@ -333,7 +336,7 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
-  const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, 'Non interessato') : null;   // Annulla rimette il rientro di prima
+  const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, 'No Interesse') : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
   setTimeout(() => {
     listaDi(pos.lista).splice(pos.i, 1);
@@ -766,7 +769,7 @@ function riordiniHtml() {
         <div class="bottoni">
           ${fasi.filter(f => f !== 'No Interesse').map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
-          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Non interessato</button>` : ''}
+          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>No Interesse</button>` : ''}
         </div>
         <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
       </div></div>`;
@@ -1128,7 +1131,7 @@ function apriCheck() {
     // due card azzurre, una per numero (Ignazio 18/09: «separiamole come erano prima»), ognuna con la sua spiegazione e le sue righe
     const CARD = [
       { k: 'contatti', titolo: ic('telefonate') + ' Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
-        vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «Non risponde» non conta.' },
+        vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «No Risposta» non conta.' },
       { k: 'pm', titolo: ic('agenda') + ' Piani Marketing', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
     ];

@@ -122,8 +122,8 @@ prova('Griglia PM: fine del mese, non ancora iniziata, obiettivo superato, contr
 
 prova('contaAzione: la stessa regola della vista azioni_conti (cantiere 27)', () => {
   const c = (esito, piu) => R.contaAzione({ tipo_azione: 'Contatto', categoria: 'Prospect', esito, ...piu });
-  for (const e of ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consult Prodotti']) assert.equal(c(e), true, e);
-  for (const e of ['No Risposta', 'Telefono OFF', 'Mai contattato o 2+ anni', null]) assert.equal(c(e), false, String(e));
+  for (const e of ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consulenza Prodotti']) assert.equal(c(e), true, e);
+  for (const e of ['No Risposta', 'Telefono spento', 'Mai contattato o 2+ anni', null]) assert.equal(c(e), false, String(e));
   assert.equal(c('Richiamare', { categoria: 'Partner' }), false);          // verso un Partner non conta
   assert.equal(c('Ordine', { categoria: 'Cliente' }), true);
   assert.equal(c('Riordino', { completata: null }), false);                // etichetta di Glide: conta solo se fatta
