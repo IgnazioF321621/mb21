@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 10:52', pagina: 'agenda', titolo: 'Il promemoria anche per le telefonate',
+      testo: 'Se metti una telefonata in Agenda con un orario, mezz\'ora prima ti arriva l\'avviso, come per gli appuntamenti. Se ne hai più di una di fila arriva un avviso solo («Tra 30 minuti · 3 telefonate»), e un\'ora dopo, se manca l\'esito, l\'app ti chiede com\'è andata.' },
     { quando: '2026.09.21 · 09:00', pagina: 'agenda', titolo: 'L\'appuntamento nel Calendario di iPhone',
       testo: 'Dentro ogni appuntamento c\'è il bottone «Calendario Apple»: lo tocchi, poi «Aggiungi al calendario», e te lo ritrovi nel calendario del telefono.' },
     { quando: '2026.09.21 · 07:31', pagina: 'agenda', titolo: 'Agenda: la giornata a orario',
