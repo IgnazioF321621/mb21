@@ -2,46 +2,13 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 21 settembre 2026 (notte: aperto e lavorato il cantiere 37, l'Agenda come il Calendario di iPhone — **tutto in locale, non pubblicato**).*
+*Aggiornato: 21 settembre 2026 (mattina: **chiuso e pubblicato il cantiere 37**, l'Agenda come il Calendario di iPhone).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
-
-## 37. L'AGENDA COME IL CALENDARIO DI IPHONE (aperto il 20/09, lavorato il 21/09 — **in locale, da far vedere a Ignazio**)
-*Ignazio 20/09: «per come è strutturata non si capisce quando ci sono gli appuntamenti fissati e si può incappare nel creare appuntamenti alla stessa ora… o per giorno o per elenco o potendo scegliere varie opzioni, creare anche una visuale a orario». Poi: «i pallini colorati in base alla categoria», «si può fare veramente tanta implementazione», e infine «completa l'agenda in ogni sua parte, si lavora SOLO in locale e non si pubblica finché non l'ho vista io».*
-
-**Regola di questo cantiere: niente `git push`, niente riga in `novita.js`. Si pubblica solo dopo l'ok di Ignazio** (allora si aggiungono le novità per i partner e si spinge su `origin/main`).
-
-**Fatto (21/09, `2026.09.21 · 00:33`)**
-- **Tre modi di guardare**, con l'interruttore in alto e la scelta che si ricorda sul telefono: **Giorno** (a orario), **Settimana**, **Elenco** (quello di prima, intatto)
-- **Giorno a orario**: ore dalle 8 a mezzanotte (si allarga se c'è qualcosa prima o dopo), ogni impegno alto quanto dura, **chi si accavalla sta affiancato** (il doppio appuntamento si vede subito), avviso «N impegni si accavallano», **linea rossa di «adesso»** che scende da sola e bottone «Ora», **il vuoto si tocca** per fissare a quell'ora (al quarto d'ora: 17:15 si può), invito «＋ libero» nei buchi da un'ora in su
-- **Settimana**: sette colonne, il nome di battesimo dentro il blocco, oggi e il giorno scelto in evidenza; si tocca un impegno e si va a quel giorno già aperto. **Due o più alla stessa ora diventano un blocco solo con il numero** (Ignazio 21/09: «G. o N. è brutto»); sotto, il **riassunto della settimana**: «5 PM · 2 Follow Up · 2 Appuntamenti…»
-- **Pallini colorati** nella striscia dei giorni: uno per impegno, **col colore della persona** (arancio Prospect · ottanio Cliente · blu Partner), schiariti sul giorno scelto
-- **Durate**: aggiunta **45 min**; **5 min** proposti per i Contatti (telefonata, messaggio, presenza) e un'ora per il resto; pastiglia «**Altra…**» con «**Finisce alle**» per qualunque orario. **La durata si cambia anche dopo**: «Finisce alle» adesso c'è anche in **Sposta** e in **Modifica azione** (prima un appuntamento fissato non si poteva più allungare)
-- **Avviso «a quest'ora hai già…»** quando si fissa, si sposta o si modifica: dice chi c'è e propone le **ore libere più vicine** da toccare. Se l'Agenda non ha in mano quel giorno non dice niente (meglio tacere che dire una cosa non vera)
-- **Toccando un blocco** si apre il foglio con **esattamente** quello che l'elenco mostra quando la riga si apre (esiti, Sposta, Modifica, Apri contatto, Elimina, Google Calendar, NotePlan): un codice solo per tutti e due
-- **Prove**: 25 in `tools/banco/prova_agenda.js` (conti) e **8 nuove** in `tools/banco/prova_agenda_vista.js` (il disegno vero: niente fuori dalla griglia, le colonne degli accavallati, la giornata libera, l'avviso). Tutto il banco passa
-- **Anteprima con dati finti** per guardare senza database: `node tools/design/anteprima_agenda.js` → `tools/design/anteprima_agenda.html`
-
-**Trovato sui dati veri (21/09, foto dell'app di Ignazio con Partner Select «Tutti»)**
-- L'avviso diceva «**4 impegni si accavallano**» mettendo insieme le agende di **due partner** (Isabella e Ignazio alla stessa ora): non è un doppione. Corretto: i blocchi restano **affiancati** (se no si coprirebbero), ma «si accavallano», l'avviso dei moduli e le ore libere proposte guardano **solo il partner di cui è l'agenda**
-
-**Deciso da Ignazio il 21/09, provando l'app**
-- I richiami (contatti del giorno, conferme, riordini, senza esito) **non stanno più in fondo**: «va a finire che non si guardano perché troppo in basso». Scelta **A** fra due modi messi a confronto: **pastiglie corte sopra la giornata**, in tutte e tre le viste
-
-**Deciso da Ignazio il 21/09, guardando l'anteprima**
-- L'invito «＋ libero» nei buchi: **utile, resta**
-- La settimana: «G. o N. è brutto» → gli accavallati non si tagliano più, **diventano un blocco solo con il numero**
-- Le ore della griglia **8 → 24**: vanno bene
-
-**Idee messe da parte (non fatte, da valutare dopo)**
-- **Trascinare un impegno** nella griglia per spostarlo (tocco lungo e trascina): bello ma delicato sul telefono, meglio dopo aver provato il resto
-- **Vista Mese** con i pallini, per pianificare più in là
-- **Scorrere col dito** da un giorno all'altro
-- Un colore anche per il **tipo di lavoro** (PM, Follow Up, Appuntamento…) accanto a quello della persona, senza confonderli
 
 ## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
 *Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
@@ -92,6 +59,40 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 37. L'AGENDA COME IL CALENDARIO DI IPHONE (chiuso e pubblicato il 21/09)
+*Ignazio 20/09: «per come è strutturata non si capisce quando ci sono gli appuntamenti fissati e si può incappare nel creare appuntamenti alla stessa ora… o per giorno o per elenco o potendo scegliere varie opzioni, creare anche una visuale a orario». Poi: «i pallini colorati in base alla categoria», «si può fare veramente tanta implementazione», e infine «completa l'agenda in ogni sua parte, si lavora SOLO in locale e non si pubblica finché non l'ho vista io».*
+
+**Pubblicato il 21/09 alle 07:31 con l'ok di Ignazio**, dopo che l'ha provata in locale trovando quattro difetti (tutti corretti). Riga aggiunta in `novita.js` e migrazione `20260921073032_telefonate_cinque_minuti.sql`: le telefonate già salvate con l'ora del vecchio default passano a 5 minuti (505 righe, 6 partner; «Presenza» e durate scelte a mano non si toccano).
+
+**Fatto (21/09)**
+- **Tre modi di guardare**, con l'interruttore in alto e la scelta che si ricorda sul telefono: **Giorno** (a orario), **Settimana**, **Elenco** (quello di prima, intatto)
+- **Giorno a orario**: ore dalle 8 a mezzanotte (si allarga se c'è qualcosa prima o dopo), ogni impegno alto quanto dura, **chi si accavalla sta affiancato** (il doppio appuntamento si vede subito), avviso «N impegni si accavallano», **linea rossa di «adesso»** che scende da sola e bottone «Ora», **il vuoto si tocca** per fissare a quell'ora (al quarto d'ora: 17:15 si può), invito «＋ libero» nei buchi da un'ora in su
+- **Settimana**: sette colonne, il nome di battesimo dentro il blocco, oggi e il giorno scelto in evidenza; si tocca un impegno e si va a quel giorno già aperto. **Due o più alla stessa ora diventano un blocco solo con il numero** (Ignazio 21/09: «G. o N. è brutto»); sotto, il **riassunto della settimana**: «5 PM · 2 Follow Up · 2 Appuntamenti…»
+- **Pallini colorati** nella striscia dei giorni: uno per impegno, **col colore della persona** (arancio Prospect · ottanio Cliente · blu Partner), schiariti sul giorno scelto
+- **Durate**: aggiunta **45 min**; **5 min** proposti per i Contatti (telefonata, messaggio, presenza) e un'ora per il resto; pastiglia «**Altra…**» con «**Finisce alle**» per qualunque orario. **La durata si cambia anche dopo**: «Finisce alle» adesso c'è anche in **Sposta** e in **Modifica azione** (prima un appuntamento fissato non si poteva più allungare)
+- **Avviso «a quest'ora hai già…»** quando si fissa, si sposta o si modifica: dice chi c'è e propone le **ore libere più vicine** da toccare. Se l'Agenda non ha in mano quel giorno non dice niente (meglio tacere che dire una cosa non vera)
+- **Toccando un blocco** si apre il foglio con **esattamente** quello che l'elenco mostra quando la riga si apre (esiti, Sposta, Modifica, Apri contatto, Elimina, Google Calendar, NotePlan): un codice solo per tutti e due
+- **Prove**: 25 in `tools/banco/prova_agenda.js` (conti) e **8 nuove** in `tools/banco/prova_agenda_vista.js` (il disegno vero: niente fuori dalla griglia, le colonne degli accavallati, la giornata libera, l'avviso). Tutto il banco passa
+- **Anteprima con dati finti** per guardare senza database: `node tools/design/anteprima_agenda.js` → `tools/design/anteprima_agenda.html`
+
+**Trovato sui dati veri (21/09, foto dell'app di Ignazio con Partner Select «Tutti»)**
+- L'avviso diceva «**4 impegni si accavallano**» mettendo insieme le agende di **due partner** (Isabella e Ignazio alla stessa ora): non è un doppione. Corretto: i blocchi restano **affiancati** (se no si coprirebbero), ma «si accavallano», l'avviso dei moduli e le ore libere proposte guardano **solo il partner di cui è l'agenda**
+
+**Deciso da Ignazio il 21/09, provando l'app**
+- I richiami (contatti del giorno, conferme, riordini, senza esito) **non stanno più in fondo**: «va a finire che non si guardano perché troppo in basso». Scelta **A** fra due modi messi a confronto: **pastiglie corte sopra la giornata**, in tutte e tre le viste
+
+**Deciso da Ignazio il 21/09, guardando l'anteprima**
+- L'invito «＋ libero» nei buchi: **utile, resta**
+- La settimana: «G. o N. è brutto» → gli accavallati non si tagliano più, **diventano un blocco solo con il numero**
+- Le ore della griglia **8 → 24**: vanno bene
+
+**Idee messe da parte (non fatte, da valutare dopo)**
+- **Trascinare un impegno** nella griglia per spostarlo (tocco lungo e trascina): bello ma delicato sul telefono, meglio dopo aver provato il resto
+- **Vista Mese** con i pallini, per pianificare più in là
+- **Scorrere col dito** da un giorno all'altro
+- Un colore anche per il **tipo di lavoro** (PM, Follow Up, Appuntamento…) accanto a quello della persona, senza confonderli
+
 
 ## 34. DESIGN DELL'APP: UNO STILE UNICO, CON LE ICONE (chiuso il 20/09)
 *Scelto da Ignazio il 19 settembre 2026, alla chiusura dei cantieri 33, 31 e 29, tra sei idee (icone delle guide · Sharing · Materiale N21 · Libri e frasi dal Check · Design · Training a dialogo). «Non vorrei finire sia i token e sia il mese dell'app Max senza ancora aver fatto il design, che ha un costo importante e un valore importante» · «il tempo c'è, ma aprendo sempre cantieri il tempo passa».*

@@ -96,8 +96,8 @@ prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore li
 prova('Con «Tutti»: niente avviso per due partner diversi alla stessa ora, e se è la stessa persona si dice chi', () => {
   const con = (righe, vista) => { const tutte = AG.azioni; AG.azioni = righe; const h = V.vista(vista || 'orario'); AG.azioni = tutte; return h; };
   const mio = { ...V.az('mio', V.OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Pino M.', 'Prospect'), user_id: 'ignazio', utenti: { nome: 'Ignazio' } };
-  const suo = { ...V.az('suo', V.OGGI, '18:30', 30, 'Contatto', 'Telefonata', 'Chiara G.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
-  const suo2 = { ...V.az('suo2', V.OGGI, '18:40', 30, 'Contatto', 'Telefonata', 'Damiano F.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const suo = { ...V.az('suo', V.OGGI, '18:30', 30, 'Contatto', 'Telefonata', 'Elsa V.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const suo2 = { ...V.az('suo2', V.OGGI, '18:40', 30, 'Contatto', 'Telefonata', 'Bruno S.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
   const duePartner = con([mio, suo]);
   assert.doesNotMatch(duePartner, /si accavallano/);                  // due persone diverse: nessun doppione
   assert.match(duePartner, /width:calc\(50% - 6px\)/);                // ma restano affiancati, non si coprono
@@ -112,13 +112,13 @@ prova('Con «Tutti» il nome del partner sta sotto, non davanti: il nome della p
     AG.azioni = tutte; V.modo.admin = false; V.modo.tutti = false;
     return h;
   };
-  const suo = { ...V.az('suo', V.OGGI, '12:00', 60, 'Contatto', 'Telefonata', 'Damiano Fava', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const suo = { ...V.az('suo', V.OGGI, '12:00', 60, 'Contatto', 'Telefonata', 'Bruno Sala', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
   const h = con([suo]);
-  assert.match(h, /<b>Telefonata · Damiano Fava<\/b>/);       // il titolo non comincia più con [Isabella]
+  assert.match(h, /<b>Telefonata · Bruno Sala<\/b>/);       // il titolo non comincia più con [Isabella]
   assert.match(h, /<small>Isabella · 12:00–13:00<\/small>/);   // il partner sta nella riga piccola, con l'ora
   // in un blocco troppo basso per la riga piccola il partner torna davanti, per non perderlo
   const corto = { ...suo, id: 'corto', fine: null };   // senza ora di fine: 5 minuti, blocco basso
-  assert.match(con([corto]), /<b>\[Isabella\] Telefonata · Damiano Fava<\/b>/);
+  assert.match(con([corto]), /<b>\[Isabella\] Telefonata · Bruno Sala<\/b>/);
 });
 
 prova('Settimana: gli impegni ci sono tutti e il giorno scelto si riconosce', () => {
