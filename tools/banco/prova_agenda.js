@@ -221,16 +221,6 @@ prova('fileCalendario: ora di Roma, UID fisso, durata, note senza telefono, righ
   for (const r of lunga.split('\r\n')) assert.ok(Buffer.byteLength(r) <= 75, r);
   assert.ok(lunga.replace(/\r\n /g, '').includes('DESCRIPTION:Ospite: Anna\\n' + 'è così perché più giù c\'è già tutto · '.repeat(8).trim()));
 });
-prova('linkNotePlan: nota del giorno di Roma, riga con ora, tipo, nome e dettagli', () => {
-  const a = { modalita: 'PM 1a1', tipo_azione: 'Piano Marketing', inizio: '2026-09-18T16:30:00Z', fine: '2026-09-18T17:30:00Z',
-    ospite: 'Anna', note: 'portare il libro', contatti: { nome: 'Pino Manolo', telefono: '+39 333 1234567' } };
-  const u = A.linkNotePlan(a);
-  assert.ok(u.startsWith('noteplan://x-callback-url/addText?noteDate=20260918&mode=append&openNote=yes&text='));
-  assert.equal(decodeURIComponent(u.split('text=')[1]), '- 18:30-19:30 PM 1a1 · Pino Manolo (MB21) · ospite Anna · portare il libro');   // senza telefono
-  const semplice = A.linkNotePlan({ tipo_azione: 'Appuntamento', inizio: '2026-12-31T23:30:00Z', contatti: { nome: 'X' } });
-  assert.ok(semplice.includes('noteDate=20270101'));   // 00:30 di Roma del 1° gennaio
-  assert.equal(decodeURIComponent(semplice.split('text=')[1]), '- 00:30 Appuntamento · X (MB21)');
-});
 
 prova('Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita; per gli altri esiti e tipi no', () => {
   assert.equal(A.proponeVendita('Consulenza PRD', 'Vendita'), true);

@@ -271,22 +271,11 @@
     return 'https://calendar.google.com/calendar/render?' + q.toString();
   }
 
-  // Cantiere 23: collegamento noteplan:// che aggiunge una riga nella nota del giorno di NotePlan («- 16:30-17:30 PM 1a1 · Pino Manolo»,
-  // con ospite/note dopo un «·», senza telefono). encodeURIComponent, non URLSearchParams: NotePlan vuole gli spazi come %20, non «+».
-  function linkNotePlan(a) {
-    const { giorno, ora } = partiRoma(a.inizio);
-    const nome = (a.contatti && a.contatti.nome) || '—';
-    const quando = a.fine ? `${ora}-${partiRoma(a.fine).ora}` : ora;
-    const extra = [a.ospite ? `ospite ${a.ospite}` : '', a.note || ''].filter(Boolean);   // niente telefono (Ignazio 17/09: le note di NotePlan viaggiano su iCloud)
-    const testo = '- ' + [`${quando} ${a.modalita || a.tipo_azione || ''} · ${nome} (MB21)`, ...extra].join(' · ');   // «- » davanti: riga a elenco, come usa NotePlan (Ignazio 17/09)
-    return `noteplan://x-callback-url/addText?noteDate=${giorno.replace(/-/g, '')}&mode=append&openNote=yes&text=${encodeURIComponent(testo)}`;
-  }
-
   // Cantiere 38: il file .ics di un appuntamento, quello che iPhone apre con «Aggiungi al calendario» (provato da Ignazio il 21/09,
   // in Safari e dall'icona sulla Home: va il file creato al momento e scaricato). Stesso titolo e stessa durata di Google Calendar;
   // l'ora è scritta come ora di Roma (TZID + VTIMEZONE), se no sotto l'orario compare la riga grigia «(GMT)».
   // UID fisso per azione: riaggiungendo lo stesso appuntamento dopo uno «Sposta» il Calendario aggiorna quello che ha, non ne fa un altro;
-  // SEQUENCE cresce col tempo (minuti dal 2026) perché il Calendario prenda per buona la versione nuova. Niente telefono, come NotePlan:
+  // SEQUENCE cresce col tempo (minuti dal 2026) perché il Calendario prenda per buona la versione nuova. Niente telefono (Ignazio 17/09, regola nata per NotePlan):
   // il Calendario viaggia su iCloud. `adesso` si passa solo nelle prove.
   const FUSO_ROMA_ICS = ['BEGIN:VTIMEZONE', 'TZID:Europe/Rome',
     'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
@@ -522,7 +511,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan, fileCalendario };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, fileCalendario };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
