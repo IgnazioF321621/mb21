@@ -92,6 +92,17 @@ prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore li
   assert.equal(V.avvisoSovrapposti('2027-01-04', '18:30', 60, null), '');
 });
 
+prova('Con «Tutti»: niente avviso per due partner diversi alla stessa ora, e se è la stessa persona si dice chi', () => {
+  const con = (righe, vista) => { const tutte = AG.azioni; AG.azioni = righe; const h = V.vista(vista || 'orario'); AG.azioni = tutte; return h; };
+  const mio = { ...V.az('mio', V.OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Pino M.', 'Prospect'), user_id: 'ignazio', utenti: { nome: 'Ignazio' } };
+  const suo = { ...V.az('suo', V.OGGI, '18:30', 30, 'Contatto', 'Telefonata', 'Chiara G.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const suo2 = { ...V.az('suo2', V.OGGI, '18:40', 30, 'Contatto', 'Telefonata', 'Damiano F.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const duePartner = con([mio, suo]);
+  assert.doesNotMatch(duePartner, /si accavallano/);                  // due persone diverse: nessun doppione
+  assert.match(duePartner, /width:calc\(50% - 6px\)/);                // ma restano affiancati, non si coprono
+  assert.match(con([mio, suo, suo2]), /2 impegni si accavallano/);     // i due di Isabella sì (qui non si guarda «Tutti»)
+});
+
 prova('Settimana: gli impegni ci sono tutti e il giorno scelto si riconosce', () => {
   const s = V.vista('settimana');
   assert.match(s, /class="ag-colonna ag-libero oggi scelto"/);
