@@ -350,6 +350,15 @@ prova('Ore libere: le fasce del giorno e le tre proposte, senza le ore già pass
   assert.deepEqual(A.fasceLibere(pieno, 30)[0], { da: 540, a: 570 });   // il buco di mezz'ora fra i due c'è
 });
 
+prova('La settimana mostra solo le ore che servono, almeno otto, e se è vuota la giornata di lavoro', () => {
+  const b = (cima, alta) => ({ cima, alta });
+  assert.deepEqual(A.oreUtili([]), { da: 480, a: 1200 });                       // vuota: 8 → 20
+  assert.deepEqual(A.oreUtili([b(720, 60), b(1290, 60)]), { da: 660, a: 1380 }); // 12:00–22:30 → 11 → 23
+  assert.deepEqual(A.oreUtili([b(600, 60)]), { da: 540, a: 1020 });             // una sola cosa: si allarga a otto ore
+  const stretta = A.oreUtili([b(1380, 30)]);                                     // a tarda sera: non si sfora la mezzanotte
+  assert.deepEqual(stretta, { da: 960, a: 1440 });
+});
+
 prova('Riassunto della settimana: quanti impegni per tipo di lavoro, nell\'ordine dell\'app', () => {
   const g = ['2026-09-21', '2026-09-22'];
   const r = (id, giorno, ora, tipo) => ({ id, tipo_azione: tipo, inizio: A.isoDaRoma(giorno, ora) });
