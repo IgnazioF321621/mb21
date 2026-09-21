@@ -134,7 +134,7 @@ prova('Settimana: due accavallati diventano un blocco solo che dice quanti sono,
   const s = V.vista('settimana');
   // lunedì Pino e Anna alle 18:30, venerdì Gruppo e Nina alle 18:00/18:30 → due blocchi «2»
   assert.equal((s.match(/class="ag-sev molti"/g) || []).length, 2);
-  assert.equal((s.match(/<b>2<\/b>/g) || []).length, 2);
+  assert.equal((s.match(/<b>2<\/b><\/button>/g) || []).length, 2);   // il numero dentro il blocco unito (non le pastiglie dei richiami)
   assert.doesNotMatch(s, />(G|N|P|A)\.<\/span>/);                 // niente nomi ridotti a una lettera
   // i dieci che restano da soli tengono il loro nome
   assert.equal((s.match(/class="ag-sev cat-/g) || []).length, 8);
@@ -154,6 +154,23 @@ prova('Le parti invisibili che si toccano hanno una dimensione (se no non succed
   // nella settimana ogni colonna è toccabile per intero
   const sett = V.vista('settimana');
   assert.equal((sett.match(/class="ag-colonna ag-libero/g) || []).length, 7);
+});
+
+prova('I richiami stanno SOPRA la giornata, in pastiglie corte, e in fondo non resta niente', () => {
+  const g = V.vista('orario');
+  // sopra: prima della griglia, dopo l'interruttore delle viste
+  assert.ok(g.indexOf('class="ag-rich"') > g.indexOf('class="ag-viste"'), 'le pastiglie vengono dopo l\'interruttore');
+  assert.ok(g.indexOf('class="ag-rich"') < g.indexOf('class="ag-griglia"'), 'le pastiglie devono stare sopra la giornata');
+  assert.doesNotMatch(g, /ag-blocco/);                       // niente più righe grandi in fondo
+  // ci sono tutte e quattro, con gli id di prima (i tocchi portano dove portavano)
+  for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme', 'ag-passati']) assert.match(g, new RegExp(`id="${id}"`));
+  assert.match(g, /Contatti <b>4\/10<\/b>/);
+  assert.match(g, /<b>2<\/b> conferme/);
+  assert.match(g, /<b>1<\/b> riordino/);
+  assert.match(g, /<b>1<\/b> senza esito/);
+  // le stesse pastiglie in tutte e tre le viste
+  assert.match(V.vista('settimana'), /class="ag-rich"/);
+  assert.match(V.vista('elenco'), /class="ag-rich"/);
 });
 
 console.log(`\n${ok} prove superate`);

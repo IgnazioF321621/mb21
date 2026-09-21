@@ -549,6 +549,18 @@
   .ag-giorno .ag-punti i { width: 6px; height: 6px; border-radius: 50%; background: var(--cat, var(--spento)); }
   .ag-giorno .ag-punti i.tanti { width: 10px; border-radius: 3px; }
   .ag-giorno.scelto .ag-punti i { filter: brightness(1.75) saturate(.85); }   /* sul fondo scuro del giorno scelto i colori vanno schiariti */
+  /* i richiami del giorno, pastiglie corte sopra la giornata (cantiere 37): il tondo dell'icona tiene il
+     colore del richiamo, come le righe grandi della Dashboard */
+  .ag-rich { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .ag-rich button { flex: none; display: inline-flex; align-items: center; gap: 7px; border: 0; background: var(--superficie); box-shadow: var(--ombra-card);
+    border-radius: var(--raggio-pill); min-height: 38px; padding: 5px 13px 5px 5px; font-family: inherit; font-size: 13px; color: var(--testo);
+    --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
+  .ag-rich button svg.ic { width: 28px; height: 28px; padding: 6px; box-sizing: border-box; border-radius: 50%; color: var(--richiamo); background: var(--richiamo-tinta); }
+  .ag-rich button b { font-weight: 700; }
+  .ag-rich .telefonate { --richiamo: var(--az-contatto); --richiamo-tinta: var(--superficie-2); }
+  .ag-rich .riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
+  .ag-rich .conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
+  .ag-rich .passati { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
   /* la griglia: una card bianca con le ore a sinistra e i blocchi dentro */
   .ag-griglia { position: relative; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 10px 12px 0; overflow: hidden; }
   .ag-ore { position: relative; margin-left: 50px; }
@@ -976,29 +988,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210703"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210703"></script>
-<script src="lista.js?v=202609210703"></script>
-<script src="rubrica.js?v=202609210703"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210703"></script>
-<script src="agenda.js?v=202609210703"></script>
-<script src="report.js?v=202609210703"></script>
-<script src="check.js?v=202609210703"></script>
-<script src="mappa.js?v=202609210703"></script>
-<script src="pagina-dashboard.js?v=202609210703"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210703"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210703"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210703"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210703"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210703"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210703"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210703"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210703"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210703"></script>
-<script src="benvenuto.js?v=202609210703"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210703"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210716"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210716"></script>
+<script src="lista.js?v=202609210716"></script>
+<script src="rubrica.js?v=202609210716"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210716"></script>
+<script src="agenda.js?v=202609210716"></script>
+<script src="report.js?v=202609210716"></script>
+<script src="check.js?v=202609210716"></script>
+<script src="mappa.js?v=202609210716"></script>
+<script src="pagina-dashboard.js?v=202609210716"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210716"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210716"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210716"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210716"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210716"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210716"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210716"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210716"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210716"></script>
+<script src="benvenuto.js?v=202609210716"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210716"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 07:03';
+const APP_VERSION = '2026.09.21 · 07:16';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1426,6 +1438,22 @@ function cambiaVista(v) {
   disegnaAgenda();
 }
 
+// I richiami del giorno (contatti, conferme, riordini, appuntamenti senza esito) in una riga di pastiglie
+// corte **sopra** la giornata: in fondo alla griglia a orario finivano dopo mezzo metro di schermo e non
+// si guardavano più (Ignazio 21/09). Gli id sono gli stessi di prima, così i tocchi portano dove portavano.
+function richiamiAgenda(oggi) {
+  const voci = [];
+  const t = AG.telefonate;
+  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', `Contatti <b>${t.fatti_oggi}/${t.contatti_al_giorno}</b>`]);
+  else if (t && t.rientri) voci.push(['ag-telefonate', 'telefonate', 'telefonate', `<b>${t.rientri}</b> in coda`]);
+  if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
+  if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);
+  if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length}</b> senza esito`]);
+  if (!voci.length) return '';
+  return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
+    `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
+}
+
 function disegnaAgenda() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
@@ -1452,17 +1480,12 @@ function disegnaAgenda() {
     <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
       ${VISTE.map(v => `<button data-vista="${v}" class="${AG.vista === v ? 'si' : ''}">${ic(NOMI_VISTA[v][0])}${NOMI_VISTA[v][1]}</button>`).join('')}
     </div>`;
+  html += richiamiAgenda(oggi);
   if (AG.vista !== 'settimana') html += `<div class="sotto">${esc(titoloGiorno)} · ${eventi.length ? (eventi.length === 1 ? '1 impegno' : eventi.length + ' impegni') : 'giornata libera'}</div>`;
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else if (AG.vista === 'orario') html += grigliaGiorno(eventi, opz);
   else html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
     : `<div class="vuoto">Nessun appuntamento. Tocca <b>+</b> per fissarne uno.</div>`;
-  const t = AG.telefonate;
-  if (t && t.oggi) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>${ic('telefonate')} Contatti del giorno · Fatti ${t.fatti_oggi} di ${t.contatti_al_giorno}</span><span>›</span></button>`;
-  else if (t && t.rientri) html += `<button class="ag-blocco telefonate" id="ag-telefonate"><span>${ic('telefonate')} ${t.rientri} ${t.rientri === 1 ? 'contatto rientra' : 'contatti rientrano'} in coda</span><span>›</span></button>`;
-  if (AG.giorno === oggi && RIO.righe.length) html += `<button class="ag-blocco riordini" id="ag-riordini"><span>${ic('riordini')} ${RIO.righe.length} ${RIO.righe.length === 1 ? 'riordino' : 'riordini'} da sentire</span><span>›</span></button>`;
-  if (AG.giorno === oggi && CONF.righe.length) html += `<button class="ag-blocco conferme" id="ag-conferme"><span>${ic('conferme')} ${CONF.righe.length} ${CONF.righe.length === 1 ? 'conferma' : 'conferme'} da fare</span><span>›</span></button>`;
-  if (AG.passati.length) html += `<button class="ag-blocco passati" id="ag-passati"><span>${ic('attenzione')} ${AG.passati.length} ${AG.passati.length === 1 ? 'appuntamento passato' : 'appuntamenti passati'} senza esito</span><span>›</span></button>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   portaInVista();
