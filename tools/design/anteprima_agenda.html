@@ -549,7 +549,9 @@
   .ag-lin b { position: absolute; left: -50px; top: -8px; width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
   .ag-mezza { position: absolute; left: 0; right: 0; border-top: 1px solid var(--superficie-2); pointer-events: none; }
   /* il tocco su un'ora libera fissa lì: l'ora è quella del punto toccato, al quarto d'ora */
-  .ag-libero { position: absolute; left: 0; right: 0; border: 0; background: none; padding: 0; margin: 0; font-family: inherit; }
+  /* lo strato che prende il tocco sul vuoto: deve coprire TUTTA la griglia (senza inset è alto zero e non
+     succede niente — trovato da Ignazio il 21/09 provando l'app) */
+  .ag-libero { position: absolute; inset: 0; border: 0; background: none; padding: 0; margin: 0; font-family: inherit; }
   .ag-invito { position: absolute; left: 2px; right: 4px; border: 1px dashed #E6E9EF; border-radius: 12px; color: var(--testo-tenue); font-size: 11.5px; font-weight: 600; display: flex; align-items: flex-start; justify-content: flex-end; gap: 3px; padding: 4px 8px 0 0; pointer-events: none; }
   .ag-invito svg.ic { width: 13px; height: 13px; margin-top: 1px; }
   /* un impegno: tinta della categoria della persona, barretta piena a sinistra (come nell'elenco) */
@@ -590,7 +592,7 @@
   .ag-griglia.sett .ag-ore { margin-left: 30px; }
   .ag-griglia.sett .ag-lin b { left: -30px; width: 26px; font-size: 10.5px; }
   .ag-griglia.sett .ag-adesso b { display: none; }
-  .ag-colonna { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--bordo); background: none; padding: 0; }
+  .ag-colonna { position: absolute; top: 0; bottom: 0; right: auto; border-left: 1px solid var(--bordo); background: none; padding: 0; }   /* left e width arrivano dallo stile della colonna */
   .ag-colonna:first-of-type { border-left: 0; }
   .ag-colonna.oggi { background: var(--superficie-2); }
   .ag-colonna.scelto { background: rgba(16,21,31,.05); }

@@ -4,7 +4,9 @@
 // dall'anteprima (tools/design/anteprima_agenda.js).
 // Uso: node tools/banco/prova_agenda_vista.js
 const assert = require('node:assert/strict');
+const fs = require('node:fs'), path = require('node:path');
 const V = require('../design/anteprima_agenda.js');
+const SORGENTE = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf8');
 const A = V.A, AG = V.AG, OGGI = V.OGGI;
 
 let ok = 0;
@@ -138,6 +140,20 @@ prova('Settimana: due accavallati diventano un blocco solo che dice quanti sono,
   assert.equal((s.match(/class="ag-sev cat-/g) || []).length, 8);
   assert.match(s, /<span>Laura<\/span>/);
   assert.match(s, /<span>Rita<\/span>/);
+});
+
+prova('Le parti invisibili che si toccano hanno una dimensione (se no non succede niente)', () => {
+  // 21/09: lo strato del tocco sul vuoto era largo ma alto zero, e toccare la griglia non faceva niente.
+  // Il disegno da solo non lo mostra: si controlla la regola nello stile.
+  const regola = /\.ag-libero \{([^}]*)\}/.exec(SORGENTE);
+  assert.ok(regola, 'manca la regola .ag-libero');
+  assert.match(regola[1], /inset:\s*0/, '.ag-libero deve coprire tutta la griglia');
+  // e lo strato c'è davvero nella griglia del giorno, sotto i blocchi (viene prima nel disegno)
+  const g = V.vista('orario');
+  assert.ok(g.indexOf('id="ag-tocca"') < g.indexOf('class="ag-ev'), 'lo strato del tocco deve stare sotto i blocchi');
+  // nella settimana ogni colonna è toccabile per intero
+  const sett = V.vista('settimana');
+  assert.equal((sett.match(/class="ag-colonna ag-libero/g) || []).length, 7);
 });
 
 console.log(`\n${ok} prove superate`);
