@@ -22,10 +22,28 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - C'è anche una riga di Isabella **Contatto · Richiamare**, `completata` vera, con `data_scelta` al 21/09 alle 12:00 e **`inizio` al 21/09 alle 21:11 pur essendo stata creata il 18/09 alle 21:11**: un `inizio` tre giorni dopo la creazione per una telefonata data dalla coda non torna → da capire (potrebbe toccare i conti di Contatti/PM, che guardano il giorno dell'azione)
 - **Chi altro guarda questi dati**: gli avvisi del server (`avvisi`: il promemoria prende i Contatti dalla coda solo con esito «PM Fissato»/«Appuntamento», quindi un «No Interesse» con la data **non** fa partire un promemoria) e, dal 21/09, lo **specchio del calendario** (funzione Edge `calendario`: stessa regola, quindi il «No Interesse» non ci finisce; i «Richiamare» non ci sono per scelta). Se cambia la regola dell'Agenda, **si guardano anche questi due**, nello stesso commit
 
-**3. Da chiarire con Ignazio nella sessione nuova**
-- Quali sono le **altre cose sugli esiti** che ha in mente
-- Quando un esito viene **cambiato**, cosa deve succedere alla data scelta prima (si toglie? si chiede?) e al rientro del contatto in coda
-- «**Elimina**» dall'Agenda su una riga nata dalla coda: cosa deve cancellare davvero
+**3. Letto nel codice il 21/09 pomeriggio (sessione nuova, niente toccato)**
+- **Confermato**: `modifica_azione` (migrazione `20260915180000_portato_da.sql`) salva il nuovo esito ma **non tocca mai `data_scelta`**; l'Agenda prende qualunque Contatto con `data_scelta` nel giorno (`index.html`, lettura «agenda contatti») → la riga resta, con scritto «Dalla coda: No Interesse»
+- **Secondo difetto, stessa funzione**: nel ricalcolo del rientro, `when v_az.data_scelta is not null` viene **prima** dei giorni della sequenza → cambiando in «No Interesse» il contatto **rientra in coda nel vecchio giorno scelto** invece che dopo i giorni del nuovo esito
+- **«Elimina»**: in Agenda una riga nata dalla coda **non ha né «Elimina» né «Modifica»** (`extraEvento`: solo «Fissa appuntamento» e «Apri contatto»); l'«Elimina» c'è nella scheda contatto (`eliminaAppuntamento`, cancella tutta l'azione, con «Annulla»). Nei dati la telefonata c'è ancora: non è stata eliminata
+- **La riga di Isabella con `inizio` al 21/09** (ipotesi probabile, non certa): il foglio «Modifica» (`foglioAzione`) mostra come «Giorno e ora» **l'`inizio`** (quando la telefonata è stata fatta), non il giorno del richiamo; chi vuole spostare il richiamo e mette lì il 21 sposta la telefonata → il Contatto si conta il 21 invece del 18
+- Avvisi e specchio del calendario: **a posto** (prendono solo «PM Fissato» / «Appuntamento»)
+
+**4. Decisioni di Ignazio (21/09)**
+- Cambiando un esito che aveva un giorno scelto, **l'app chiede** se togliere il giorno (non lo toglie da sola)
+- **«Mai contattato o 2+ anni» non è un esito** («veniva da Glide: è prima della telefonata, non serve più») → via dai bottoni. Restano la scritta «Mai contattato» sotto i nomi (è lo stato della persona) e la riga di `sequenze` con quel nome, che serve al coach di chi non è mai stato sentito. Un'azione vecchia salvata con quell'esito resta com'è (`sceltePerModifica` tiene sempre sceglibile il valore già salvato)
+- **Ordine degli esiti di «Com'è andata?»** (Contatto del Prospect): sopra i buoni **PM Fissato · Relazione · Richiamare · Consulenza Prodotti**, sotto i non andati **Telefono spento · No Interesse · No Risposta**; due gruppi, ognuno sulla sua riga
+- **Due nomi nuovi, strada «B» (si rinomina davvero nel database)**: «Consult Prodotti» → **«Consulenza Prodotti»** (in Glide non ci stava la scritta intera) · «Telefono OFF» → **«Telefono spento»**. Una migrazione: `azioni.esito`, `sequenze` (chiave e fase), l'elenco del conto dei Contatti sul server (`20260918133500_contatti_pm_dalle_azioni.sql`) e `report.js` (`CONTATTO_PARLATO`), prove al banco comprese. **Prima in una transazione annullata**: i Contatti contati devono essere identici prima e dopo
+- **Le parole della coda si uniformano a quelle ufficiali**: oggi in Dashboard i bottoni dicono «Non risponde» · «Non ora» · «Non interessato» e salvano «No Risposta» · «Relazione» · «No Interesse» (tabella del 14/09, `BOTTONI_PROSPECT` / `bottoniPer`) → si scrive quello che si salva. ⚠️ Cambiano voci che i partner vedono: la disposizione dei bottoni della coda (buono intero in alto, neutri in fila, negativo in fondo; cantiere 34) si riguarda con Ignazio
+- **Spostando l'ora d'inizio, la fine slitta da sola** tenendo la durata (oggi in «Sposta» e in «Modifica» la fine resta ferma e, se finisce prima dell'inizio, l'app non salva e chiede di cambiarla a mano): una funzione sola per `spostaAppuntamento` e `foglioAzione`
+
+**5. Lavori, uno alla volta**
+1. ⬜ **Il giorno scelto quando cambia l'esito**: l'app chiede; se si toglie, la riga esce dall'Agenda e il rientro in coda segue il nuovo esito; «Annulla» rimette tutto (migrazione di `modifica_azione` / `annulla_modifica_azione`). Poi si sistema il caso vero di Ignazio nei dati
+2. ⬜ **Foglio «Modifica» di un richiamo**: distinguere «fatta il…» da «da richiamare il…»; guardare la riga di Isabella
+3. ⬜ **Esiti di «Com'è andata?»**: via «Mai contattato o 2+ anni», due gruppi con i buoni sopra
+4. ⬜ **I due nomi nuovi** nel database (strada B)
+5. ⬜ **Le parole della coda** uguali a quelle ufficiali
+6. ⬜ **La fine che slitta** spostando l'inizio («Sposta» e «Modifica»)
 
 ## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
 *Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
