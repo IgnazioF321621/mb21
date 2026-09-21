@@ -148,7 +148,7 @@ Legenda: (O) condivisibile con l'ospite · (U) condivisibile con l'utente · sen
 40. The E-myth — Michael Gerber
 41. Vivi una vita ispirata — Jim Rohn
 
-**Confronto con l'elenco del Check (`MB21Dashboard.LIBRI`, 44 voci)**: tutti i 41 del sito ci sono già (uno con il titolo lungo: «Come si diventa un venditore meraviglioso» = sul sito «Il venditore meraviglioso»). Nel Check ci sono in più: **La velocità della fiducia** · **Tutti comunicano, pochi si connettono** (non più tra i consigliati del sito) · **«Libro no N21»** (la voce jolly). Niente da caricare: l'elenco del Check è già la biblioteca dei libri; mancano solo gli autori.
+**Confronto con l'elenco del Check (`MB21Dashboard.LIBRI`, 44 voci)**: tutti i 41 del sito ci sono già (uno con il titolo lungo: «Come si diventa un venditore meraviglioso» = sul sito «Il venditore meraviglioso»). Nel Check ci sono in più: **La velocità della fiducia** · **Tutti comunicano, pochi si connettono** (non più tra i consigliati del sito) · **«Libro no N21»** (la voce jolly). Niente da caricare: l'elenco del Check è già la biblioteca dei libri; mancano solo gli autori. **Deciso da Ignazio il 21/09**: i due libri non più a catalogo **restano** nell'elenco; e «poi troviamo una soluzione per chi legge libri fuori catalogo o ulteriori a quelli consigliati» (oggi c'è solo la voce jolly «Libro no N21», che non dice quale libro è) → da studiare quando si costruisce la parte dei libri.
 
 ## Le decisioni di Ignazio (21/09)
 - **MB21 non manda le tracce**: per quello c'è l'app di Network 21. MB21 è **il registro di quello che si fa, ma che deve guidare in un percorso**: quale traccia è stata condivisa, se è stata ascoltata, e da lì il consiglio sul passo dopo
