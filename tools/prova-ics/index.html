@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prova ICS">
+<title>Prova Calendario Apple</title>
+<style>
+  body { font: 17px -apple-system, system-ui, sans-serif; margin: 0; padding: 20px 16px 40px; background: #F2F2F7; color: #1c1c1e; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: #555; line-height: 1.35; }
+  button, a.b { display: block; width: 100%; box-sizing: border-box; margin: 0 0 12px; padding: 16px; border: 0; border-radius: 14px;
+    background: #fff; color: #1c1c1e; font: inherit; font-weight: 600; text-align: left; text-decoration: none; }
+  button small, a.b small { display: block; font-weight: 400; color: #666; margin-top: 3px; }
+  #modo { font-weight: 600; color: #1c1c1e; }
+</style>
+</head>
+<body>
+<h1>Prova Calendario Apple</h1>
+<p>Sei in: <span id="modo"></span>.<br>Tocca un bottone alla volta. Quello giusto fa comparire il foglio «Aggiungi al calendario» con l'evento di domani alle 10. Non serve salvarlo.</p>
+
+<button id="a">A<small>indirizzo «data:»</small></button>
+<button id="b">B<small>file creato al momento e scaricato</small></button>
+<button id="c">C<small>foglio «Condividi» con il file</small></button>
+<a class="b" href="prova.ics">D<small>file vero del sito, link normale</small></a>
+<button id="e">E<small>file vero del sito, in una finestra nuova</small></button>
+
+<script>
+  const inApp = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  document.getElementById('modo').textContent = inApp ? 'app dalla schermata Home' : 'Safari (browser)';
+
+  function ics(lettera) {
+    const d = new Date(Date.now() + 86400000);
+    const giorno = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MB21//Prova//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'BEGIN:VEVENT', 'UID:prova-' + lettera + '-' + Date.now() + '@mb21', 'DTSTAMP:' + giorno + 'T060000Z',
+      'DTSTART:' + giorno + 'T080000Z', 'DTEND:' + giorno + 'T090000Z',
+      'SUMMARY:MB21 · PM 1a1 · Prova ' + lettera, 'DESCRIPTION:Prova del bottone Calendario Apple (si può eliminare)',
+      'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
+  }
+
+  document.getElementById('a').onclick = () => { location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics('A')); };
+
+  document.getElementById('b').onclick = () => {
+    const url = URL.createObjectURL(new Blob([ics('B')], { type: 'text/calendar;charset=utf-8' }));
+    const l = document.createElement('a'); l.href = url; l.download = 'mb21-prova.ics';
+    document.body.appendChild(l); l.click(); l.remove();
+  };
+
+  document.getElementById('c').onclick = async () => {
+    const file = new File([ics('C')], 'mb21-prova.ics', { type: 'text/calendar' });
+    if (!navigator.canShare || !navigator.canShare({ files: [file] })) return alert('C: questo telefono non lo permette');
+    try { await navigator.share({ files: [file] }); } catch (err) { if (err.name !== 'AbortError') alert('C: ' + err.message); }
+  };
+
+  document.getElementById('e').onclick = () => { window.open('prova.ics', '_blank'); };
+</script>
+</body>
+</html>
