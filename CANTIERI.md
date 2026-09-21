@@ -2,13 +2,36 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 21 settembre 2026 (pomeriggio: **chiuso il cantiere 38** — MB21 nel calendario del telefono, «solo specchi, mai copie»; **aperto il 39**, gli esiti: sette lavori scritti, visti con Ignazio in foto e **pubblicati alle 15:55**, tutto visto e pubblicato (ultima versione 17:53), si chiude dopo il controllo sui nomi vecchi; in mattinata chiuso e pubblicato il 37, Agenda a orario).*
+*Aggiornato: 21 settembre 2026 (sera: **aperto il cantiere 40 — BSM N21**, tracce N21 e Sharing, con l'ordine dei prossimi lavori deciso con Ignazio; pomeriggio: **chiuso il cantiere 38** — MB21 nel calendario del telefono, «solo specchi, mai copie»; **aperto il 39**, gli esiti: sette lavori scritti, visti con Ignazio in foto e **pubblicati alle 15:55**, tutto visto e pubblicato (ultima versione 17:53), si chiude dopo il controllo sui nomi vecchi; in mattinata chiuso e pubblicato il 37, Agenda a orario).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 40. BSM N21: LE TRACCE N21 E LO SHARING NELLA SCHEDA CONTATTO (aperto il 21/09)
+*Ignazio 21/09 sera: «dimmi quali cantieri risultano in prossima apertura e quali cose da Glide ancora dobbiamo fare, fra cui lo Sharing… fai un flusso di lavoro per importanza. Quello che decidiamo diventa il prossimo lavoro» → «sì, va bene questo ordine e questa sessione diventa cantiere 40 BSM N21».*
+
+**Perché per primo**: lo Sharing è l'unico pezzo della scheda contatto che si usa ogni giorno e che nella v4 non c'è: è quello che obbliga a tenere Glide acceso (30 $ al mese). Unisce due voci dell'elenco del 19/09: «Materiale Network 21» (la base) e «Sharing dalla scheda contatto».
+
+**Cosa c'è oggi** (letto il 21/09, solo titoli delle colonne e numero di righe dei CSV in `mb21-import/`, export del 13/09)
+- `BSM.csv`: **67 tracce** — Fase · Pack · Traccia · TracciaNr · Riassunto · Titolo-Autore · PerChi · FaseProspect · N21Link · foto. **Mai importato**
+- `Sharing.csv`: **166 condivisioni** — partner · contatto · DataCondivisione · FaseProspect · NrShare · TracciaShare · PackShare · Note · Ascoltata · la prossima traccia proposta (ProxTraccia, ProxNr, ProxPack). **Mai importato**
+- Nella v4: nessuna tabella, nessuna sezione nella scheda (nel codice la parola «Sharing» non c'è più). In Glide la sezione Sharing sta nella scheda di Prospect e Partner; nel rilievo della Lista (`docs/MB21_v3_Lista_come_e.md`) c'è scritto **«Sharing — non aperta»**: la schermata non è mai stata fotografata. Nel menu di Glide c'è anche la pagina **BSM**
+
+**I lavori, un passo alla volta**
+1. **Rilievo su Glide** — Ignazio naviga in Arc, Claude fotografa in sola lettura: sezione Sharing della scheda e pagina BSM → `docs/MB21_v3_Sharing_come_e.md`
+2. **Le 67 tracce** — tabella + import di `BSM.csv`, in transazione annullata prima
+3. **Le 166 condivisioni** — tabella + import di `Sharing.csv`, agganciate ai contatti come le Vendite
+4. **La sezione Sharing nella scheda**, nel suo file `pagina-sharing.js` (lezione del 18/09)
+5. **I collegamenti (stella cometa)**: da dove si arriva allo Sharing con un tocco (per esempio dopo un PM con «Dare Seguito» l'app propone la traccia da mandare) e dove altro deve comparire quello che si è condiviso
+
+**Da verificare, senza tirare a indovinare**
+- L'export è del **13/09**: se dopo quella data qualcuno ha fatto Sharing su Glide, serve un export nuovo del solo `Sharing.csv`
+- Le **«Tracce» del Check** sono quelle ascoltate dal partner o quelle condivise? Da questo dipende se lo Sharing deve contarle da solo (regola: un numero, una fonte sola)
+
+**L'ordine dei lavori dopo questo** (deciso con Ignazio il 21/09): chiudere il 39 con il controllo sui nomi vecchi (e i bottoni del Profilo alla prima modifica dell'app) → **40 BSM N21** → 35 storico dei biglietti → 36 numeri storici → Libri e frasi dal Check (lavoro leggero) → **spegnere Glide** (doppio uso, poi chiusura dell'abbonamento). Senza fretta, dopo: Training a dialogo · Google Calendar all'istante · le idee sugli avvisi · la pausa a «0 contatti»
 
 ## 39. GLI ESITI: IL «RICHIAMARE» CHE RESTA IN AGENDA, E LE ALTRE COSE SUGLI ESITI (aperto il 21/09)
 *Ignazio 21/09, chiusi i cantieri 38 e 34: «partiamo dall'esito richiamare che resta in agenda, ma anche da altre cose sugli esiti. Quindi apriamo cantiere, che però analizziamo già in un'altra sessione nuova». **Lavorare in una sessione nuova.***
@@ -103,7 +126,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Fasi di Appuntamento per sottotipo** da migliorare con Ignazio: nomi da tenere, togliere, aggiungere (dal cantiere 11)
 - **7 telefoni dubbi** lasciati com'erano dall'import (senza «+», bottoni di contatto spenti): da correggere a mano con Modifica (dal cantiere 9)
 - **Suggerimenti N21 sospesi** nel riquadro FASE; la decisione «Come fare ▸» a richiesta resta da riprendere quando Ignazio vorrà riattivarli (dal cantiere 9)
-- **Sharing** della scheda contatto: «In arrivo» (dal cantiere 9); nascerà nel suo file `pagina-sharing.js` (lezione del 18/09) · le **Vendite** sono passate al [cantiere 26](#26-vendite-nella-scheda-contatto)
+- ~~**Sharing** della scheda contatto: «In arrivo» (dal cantiere 9); nascerà nel suo file `pagina-sharing.js` (lezione del 18/09)~~ — diventato il [cantiere 40](#40-bsm-n21-le-tracce-n21-e-lo-sharing-nella-scheda-contatto-aperto-il-2109) il 21/09 · le **Vendite** sono passate al [cantiere 26](#26-vendite-nella-scheda-contatto)
 - **Coach delle 4 righe Partner/Cliente** scritto da Claude: da rivedere · **Dare Seguito scaduti** (fase Piano Marketing) con i bottoni del Contatto: da rivedere quando ce ne saranno (dal cantiere 7)
 - **Codice a 6 cifre nell'email**: rimandato (serve un servizio email proprio, [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)); meno urgente da quando si entra con la password (dal cantiere 7)
 
