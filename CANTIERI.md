@@ -30,6 +30,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Lavoro 1 fatto e pubblicato il 21/09** (`2026.09.21 · 09:00`): bottone «Calendario Apple» nell'impegno aperto. **Prima si è provato il metodo** con una paginetta a cinque bottoni (`tools/prova-ics/`, da cancellare a cantiere chiuso): su iPhone, **in Safari e dall'icona sulla Home**, vanno il **file creato al momento e scaricato** (scelto: niente server) e il file vero del sito; il foglio «Condividi» funziona ma è un passo in più. Su **Mac** il file si scarica e va cliccato (Ignazio: «non è automatica») → l'aggiunta da sola è il lavoro 2. **Da provare**: iPad (atteso uguale all'iPhone) · spostare un appuntamento già aggiunto e ritoccare il bottone: il Calendario aggiorna o ne fa un secondo? · **telefono nelle note**: per ora **no**, come NotePlan (viaggia su iCloud); Ignazio non ha ancora risposto
 
+**Lavoro 2 · passo 1 fatto il 21/09** (database): migrazione `20260921110143_calendario_token.sql` applicata. **Decisione di Ignazio**: nel Calendario vanno gli appuntamenti **e le telefonate con un orario**; i Riordini restano fuori (come per gli avvisi). Restano: passo 2 funzione Edge `calendario` · passo 3 riga nel Profilo (solo Admin, per ora) · passo 4 prova vera (crea, sposta, elimina: dopo quanto se ne accorge il Calendario? gli eliminati spariscono da soli?)
+
 **Da decidere prima di partire** *(deciso il 21/09, vedi sopra)*
 - Si parte dal **lavoro 1** (piccolo, subito, per tutti) o dritti al **2** (l'abbonamento)?
 - Il lavoro 3 si fa o no (nodo privacy del calendario pubblico)?
