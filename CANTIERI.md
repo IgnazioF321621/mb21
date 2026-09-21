@@ -29,6 +29,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 **Trovato sui dati veri (21/09, foto dell'app di Ignazio con Partner Select «Tutti»)**
 - L'avviso diceva «**4 impegni si accavallano**» mettendo insieme le agende di **due partner** (Isabella e Ignazio alla stessa ora): non è un doppione. Corretto: i blocchi restano **affiancati** (se no si coprirebbero), ma «si accavallano», l'avviso dei moduli e le ore libere proposte guardano **solo il partner di cui è l'agenda**
 
+**Deciso da Ignazio il 21/09, provando l'app**
+- I richiami (contatti del giorno, conferme, riordini, senza esito) **non stanno più in fondo**: «va a finire che non si guardano perché troppo in basso». Scelta **A** fra due modi messi a confronto: **pastiglie corte sopra la giornata**, in tutte e tre le viste
+
 **Deciso da Ignazio il 21/09, guardando l'anteprima**
 - L'invito «＋ libero» nei buchi: **utile, resta**
 - La settimana: «G. o N. è brutto» → gli accavallati non si tagliano più, **diventano un blocco solo con il numero**
