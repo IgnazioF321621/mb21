@@ -348,4 +348,23 @@ prova('Riassunto della settimana: quanti impegni per tipo di lavoro, nell\'ordin
   assert.deepEqual(A.contaPerTipo([], g), []);
 });
 
+prova('Cantiere 39 · esiti del Contatto: i buoni prima, quelli non andati su una riga loro; «Mai contattato» non è un esito', () => {
+  const f = A.fasiPer('Prospect', 'Contatto', 'Telefonata');
+  assert.deepEqual(f, ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti', 'Telefono spento', 'No Interesse', 'No Risposta']);
+  assert.deepEqual(A.esitiInDueRighe(f), [['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti'], ['Telefono spento', 'No Interesse', 'No Risposta']]);
+  assert.deepEqual(A.esitiInDueRighe(['Appuntamento', 'Richiamare']), [['Appuntamento', 'Richiamare']]);   // Partner: una riga sola
+  assert.deepEqual(A.esitiInDueRighe(A.fasiPer('Cliente', 'Contatto', 'Telefonata')), [['Ordine', 'Appuntamento', 'Richiamare'], ['No Interesse']]);
+  // un'azione vecchia con un esito tolto dall'elenco lo tiene sceglibile nel foglio «Modifica»
+  assert.ok(A.sceltePerModifica({ categoria: 'Prospect', tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Mai contattato o 2+ anni' }).esiti.includes('Mai contattato o 2+ anni'));
+  assert.deepEqual(A.ESITI_CON_GIORNO, ['Richiamare', 'PM Fissato', 'Appuntamento']);
+});
+
+prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quella', () => {
+  assert.equal(A.fineSlittata('18:30', '20:00', '19:30'), '21:00');
+  assert.equal(A.fineSlittata('18:30', '17:15', '19:15'), '18:00');
+  assert.equal(A.fineSlittata('18:30', '23:30', '20:00'), '24:00');     // non oltre la mezzanotte
+  assert.equal(A.fineSlittata('18:30', '20:00', '18:00'), null);        // fine già sbagliata: non si tocca
+  assert.equal(A.fineSlittata('18:30', '', '19:30'), null);
+});
+
 console.log(`\n${ok} prove superate`);
