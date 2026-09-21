@@ -974,29 +974,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210634"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210634"></script>
-<script src="lista.js?v=202609210634"></script>
-<script src="rubrica.js?v=202609210634"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210634"></script>
-<script src="agenda.js?v=202609210634"></script>
-<script src="report.js?v=202609210634"></script>
-<script src="check.js?v=202609210634"></script>
-<script src="mappa.js?v=202609210634"></script>
-<script src="pagina-dashboard.js?v=202609210634"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210634"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210634"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210634"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210634"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210634"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210634"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210634"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210634"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210634"></script>
-<script src="benvenuto.js?v=202609210634"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210634"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210643"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210643"></script>
+<script src="lista.js?v=202609210643"></script>
+<script src="rubrica.js?v=202609210643"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210643"></script>
+<script src="agenda.js?v=202609210643"></script>
+<script src="report.js?v=202609210643"></script>
+<script src="check.js?v=202609210643"></script>
+<script src="mappa.js?v=202609210643"></script>
+<script src="pagina-dashboard.js?v=202609210643"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210643"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210643"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210643"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210643"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210643"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210643"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210643"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210643"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210643"></script>
+<script src="benvenuto.js?v=202609210643"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210643"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 06:34';
+const APP_VERSION = '2026.09.21 · 06:43';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1873,14 +1873,15 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
 // «A quest'ora hai già…» (cantiere 37): lo stesso avviso nel modulo Nuovo appuntamento e nel foglio Sposta,
 // con le prime ore libere da toccare. Si vede solo se l'Agenda ha in mano quel giorno (la settimana caricata):
 // se i dati non ci sono non si dice niente, invece di dire una cosa non vera. `salta`: l'impegno che si sta spostando.
-function avvisoSovrapposti(giorno, ora, durata, salta) {
+function avvisoSovrapposti(giorno, ora, durata, salta, diChi) {
   const A = MB21Agenda;
   if (!AG.settimana.includes(giorno) || !(durata > 0) || !/^\d\d:\d\d$/.test(ora || '')) return '';
   const delGiorno = A.eventiDelGiorno(AG.azioni, giorno);
-  const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta);
+  const suo = diChi || (vediTutti() ? null : visto().id);   // con «Tutti» l'Admin ha in mano più agende: si guarda solo la sua
+  const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta, suo);
   if (!scontri.length) return '';
   const oggi = MB21Coda.oggiRoma();
-  const vicino = { vicinoA: A.inMinuti(ora) };
+  const vicino = { vicinoA: A.inMinuti(ora), soloDi: suo };
   const libere = A.oreProposte(delGiorno, durata, giorno === oggi ? { ...vicino, daMinuti: A.inMinuti(A.partiRoma(new Date().toISOString()).ora) } : vicino);
   return `<div class="ag-scontro">${ic('attenzione')} A quest'ora hai già ${scontri.length === 1 ? 'un impegno' : scontri.length + ' impegni'}
     ${scontri.map(e => `<span>${esc(A.riga(e, { mioId: null, admin: false }).titolo)} <em>${esc(A.orario(e))}</em></span>`).join('')}
@@ -1911,7 +1912,7 @@ function spostaAppuntamento(e, dopo) {
     return d > 0 ? d : 0;
   };
   const avvisa = () => {
-    const html = avvisoSovrapposti(campo('giorno').value, campo('ora').value, durataOra() || A.durataPredefinita(e.tipo_azione), e.id);
+    const html = avvisoSovrapposti(campo('giorno').value, campo('ora').value, durataOra() || A.durataPredefinita(e.tipo_azione), e.id, e.user_id);
     campo('avviso').innerHTML = html;
     campo('avviso').querySelectorAll('.ag-orelibere button').forEach(b => b.onclick = () => {
       const quanto = durataOra();
@@ -2034,7 +2035,7 @@ async function nuovoAppuntamento(opz = {}) {
     const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
-    const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId);
+    const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id));
     function disegna() {
       const tipi = A.tipiPer(st.categoria);
       let h = '<div class="riquadro mc-g" style="margin-top:14px">';
@@ -2257,7 +2258,7 @@ async function foglioAzione(id, opz = {}) {
     return d > 0 ? d : 0;
   };
   const avvisaFa = () => {
-    $('fa-avviso').innerHTML = avvisoSovrapposti($('fa-giorno').value, $('fa-ora').value, duraScelta() || A.durataPredefinita(a.tipo_azione), a.id);
+    $('fa-avviso').innerHTML = avvisoSovrapposti($('fa-giorno').value, $('fa-ora').value, duraScelta() || A.durataPredefinita(a.tipo_azione), a.id, a.user_id);
     $('fa-avviso').querySelectorAll('.ag-orelibere button').forEach(b => b.onclick = () => {
       const quanto = duraScelta();
       $('fa-ora').value = b.dataset.ora;

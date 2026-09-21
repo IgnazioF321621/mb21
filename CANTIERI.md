@@ -26,6 +26,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Prove**: 25 in `tools/banco/prova_agenda.js` (conti) e **8 nuove** in `tools/banco/prova_agenda_vista.js` (il disegno vero: niente fuori dalla griglia, le colonne degli accavallati, la giornata libera, l'avviso). Tutto il banco passa
 - **Anteprima con dati finti** per guardare senza database: `node tools/design/anteprima_agenda.js` → `tools/design/anteprima_agenda.html`
 
+**Trovato sui dati veri (21/09, foto dell'app di Ignazio con Partner Select «Tutti»)**
+- L'avviso diceva «**4 impegni si accavallano**» mettendo insieme le agende di **due partner** (Isabella e Ignazio alla stessa ora): non è un doppione. Corretto: i blocchi restano **affiancati** (se no si coprirebbero), ma «si accavallano», l'avviso dei moduli e le ore libere proposte guardano **solo il partner di cui è l'agenda**
+
 **Deciso da Ignazio il 21/09, guardando l'anteprima**
 - L'invito «＋ libero» nei buchi: **utile, resta**
 - La settimana: «G. o N. è brutto» → gli accavallati non si tagliano più, **diventano un blocco solo con il numero**

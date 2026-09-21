@@ -289,6 +289,23 @@ prova('Disposizione del giorno: chi si accavalla va in colonne affiancate, gli a
   assert.equal(fila.sovrapposti, 0);
 });
 
+prova('Con «Tutti» due partner alla stessa ora non sono un doppione: affiancati sì, avviso no', () => {
+  const mio = { ...ev('mio', '2026-09-21', '18:30', 60), user_id: 'ignazio' };
+  const suo = { ...ev('suo', '2026-09-21', '18:30', 30), user_id: 'isabella' };
+  const altro = { ...ev('altro', '2026-09-21', '18:45', 30), user_id: 'ignazio' };
+  const due = A.disposizioneGiorno([mio, suo]);
+  assert.equal(due.blocchi[0].colonne, 2);        // affiancati, se no si coprirebbero
+  assert.equal(due.sovrapposti, 0);               // ma non è un doppione: sono due persone
+  const stesso = A.disposizioneGiorno([mio, suo, altro]);
+  assert.equal(stesso.sovrapposti, 2);            // i due di Ignazio sì
+  // lo stesso vale per l'avviso quando si fissa
+  assert.deepEqual(A.sovrapposti([mio, suo], A.isoDaRoma('2026-09-21', '18:30'), 30, null, 'isabella').map(e => e.id), ['suo']);
+  assert.deepEqual(A.sovrapposti([mio, suo], A.isoDaRoma('2026-09-21', '18:30'), 30, null, 'ignazio').map(e => e.id), ['mio']);
+  assert.deepEqual(A.sovrapposti([mio, suo], A.isoDaRoma('2026-09-21', '18:30'), 30).map(e => e.id), ['mio', 'suo']);   // senza partner: tutti
+  // e per le ore libere proposte
+  assert.deepEqual(A.oreProposte([mio, suo], 60, { soloDi: 'isabella', vicinoA: 18 * 60 + 30 }), ['17:30', '19:00', '19:30']);
+});
+
 prova('Un blocco non è mai più basso di 20 minuti, ma la sua durata vera resta quella', () => {
   const d = A.disposizioneGiorno([ev('tel', '2026-09-21', '09:00', null, 'Contatto')]);
   assert.equal(d.blocchi[0].durata, 5);
