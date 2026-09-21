@@ -31,7 +31,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Da verificare, senza tirare a indovinare**
 - L'export è del **13/09**: se dopo quella data qualcuno ha fatto Sharing su Glide, serve un export nuovo del solo `Sharing.csv`
-- ~~Le **«Tracce» del Check** sono quelle ascoltate dal partner o quelle condivise?~~ — ✅ Ignazio 21/09: Tracce e Pagine sono «quelle che ascolto e leggo io, non quelle che condividiamo» → **le condivisioni non toccano il Check**. Resta da decidere se la traccia che un partner segna «ascoltata» nel suo percorso conta da sola nelle Tracce del Check (un numero, una fonte sola)
+- ~~Le **«Tracce» del Check** sono quelle ascoltate dal partner o quelle condivise?~~ — ✅ Ignazio 21/09: Tracce e Pagine sono «quelle che ascolto e leggo io, non quelle che condividiamo» → **le condivisioni non toccano il Check**. **Deciso il 21/09 («sì»)**: la traccia che un partner segna «ascoltata» nel suo percorso **conta da sola nelle Tracce del suo Check**; quando si costruisce va studiato come convive con il numero scritto a mano (il CEP resta a mano) senza contare due volte
 
 **L'ordine dei lavori dopo questo** (deciso con Ignazio il 21/09): chiudere il 39 con il controllo sui nomi vecchi (e i bottoni del Profilo alla prima modifica dell'app) → **40 BSM N21** → 35 storico dei biglietti → 36 numeri storici → Libri e frasi dal Check (lavoro leggero) → **spegnere Glide** (doppio uso, poi chiusura dell'abbonamento). Senza fretta, dopo: Training a dialogo · Google Calendar all'istante · le idee sugli avvisi · la pausa a «0 contatti»
 

@@ -86,7 +86,7 @@ Ogni traccia nel PDF ha: oratore · durata · breve riassunto · punti chiave ·
 4. **«Il mio percorso»** per il partner che ha MB21: le sue 4 fasi, quello che ha ascoltato e letto, il passo dopo. **Un registro solo**: la riga che lo sponsor segna «condivisa» è la stessa che il partner segna «ascoltata»; lo sponsor vede a che fase è ognuno
 
 ## Da chiarire
-- ~~**Tracce e Pagine del Check**~~ — ✅ confermato da Ignazio il 21/09: «sono quelle che ascolto e leggo io, non quelle che condividiamo». Quindi **le condivisioni non toccano il Check**. Da decidere più avanti: quando un partner segna «ascoltata» una traccia in «Il mio percorso», quella è una traccia ascoltata da lui → deve contare da sola nelle Tracce del Check? (regola: un numero, una fonte sola)
+- ~~**Tracce e Pagine del Check**~~ — ✅ confermato da Ignazio il 21/09: «sono quelle che ascolto e leggo io, non quelle che condividiamo». Quindi **le condivisioni non toccano il Check**. **Deciso da Ignazio il 21/09 («sì»)**: la traccia che un partner segna «ascoltata» in «Il mio percorso» **conta da sola nelle Tracce del suo Check**, senza riscriverla. Da studiare quando si costruisce: come convive con il numero scritto a mano nel Check del Giorno (le tracce del CEP restano a mano), senza contare due volte (un numero, una fonte sola; come già fatto per Contatti, PM e VP Clienti)
 - Il sito e l'app N21: come sono ordinati i pack, l'elenco ufficiale dei libri consigliati di oggi → foto in Arc
 - I 44 libri del Check rispetto ai libri consigliati ufficiali
 - L'export è del 13/09: serve un `Sharing.csv` nuovo se dopo si è segnato altro in Glide
