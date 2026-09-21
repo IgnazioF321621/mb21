@@ -253,63 +253,6 @@
     return null;
   }
 
-  // Cantiere 23: link che apre Google Calendar con l'evento già compilato (come Glide). Titolo «MB21 · PM 1a1 · Pino Manolo»,
-  // stessa durata di MB21 (senza fine: 1 ora), nelle note telefono, ospite e note dell'azione. Nessun account collegato:
-  // l'utente preme «Salva» in Google Calendar; se poi sposta in MB21, lo sposta a mano anche lì (decisione di Ignazio 17/09).
-  function linkGoogleCalendar(a) {
-    const compatto = iso => new Date(iso).toISOString().replace(/[-:]|\.\d{3}/g, '');
-    const inizio = a.inizio, fine = a.fine || new Date(Date.parse(a.inizio) + 3600000).toISOString();
-    const nome = (a.contatti && a.contatti.nome) || '—';
-    const dettagli = [
-      a.contatti && a.contatti.telefono ? `Telefono: ${a.contatti.telefono}` : '',
-      a.ospite ? `Ospite: ${a.ospite}` : '',
-      a.note || '',
-    ].filter(Boolean).join('\n');
-    const q = new URLSearchParams({ action: 'TEMPLATE', text: `MB21 · ${a.modalita || a.tipo_azione || ''} · ${nome}`,
-      dates: `${compatto(inizio)}/${compatto(fine)}`, ctz: 'Europe/Rome' });
-    if (dettagli) q.set('details', dettagli);
-    return 'https://calendar.google.com/calendar/render?' + q.toString();
-  }
-
-  // Cantiere 38: il file .ics di un appuntamento, quello che iPhone apre con «Aggiungi al calendario» (provato da Ignazio il 21/09,
-  // in Safari e dall'icona sulla Home: va il file creato al momento e scaricato). Stesso titolo e stessa durata di Google Calendar;
-  // l'ora è scritta come ora di Roma (TZID + VTIMEZONE), se no sotto l'orario compare la riga grigia «(GMT)».
-  // UID fisso per azione: riaggiungendo lo stesso appuntamento dopo uno «Sposta» il Calendario aggiorna quello che ha, non ne fa un altro;
-  // SEQUENCE cresce col tempo (minuti dal 2026) perché il Calendario prenda per buona la versione nuova. Niente telefono (Ignazio 17/09, regola nata per NotePlan):
-  // il Calendario viaggia su iCloud. `adesso` si passa solo nelle prove.
-  const FUSO_ROMA_ICS = ['BEGIN:VTIMEZONE', 'TZID:Europe/Rome',
-    'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
-    'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
-    'END:VTIMEZONE'];
-  const testoIcs = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-  // le righe di un .ics non passano i 75 byte: il resto va a capo con uno spazio davanti (le lettere accentate e il «·» pesano 2 byte)
-  function piegaIcs(riga) {
-    const pezzi = []; let corrente = '', peso = 0;
-    for (const ch of riga) {
-      const b = new TextEncoder().encode(ch).length;
-      if (peso + b > (pezzi.length ? 74 : 75)) { pezzi.push(corrente); corrente = ''; peso = 0; }
-      corrente += ch; peso += b;
-    }
-    pezzi.push(corrente);
-    return pezzi.join('\r\n ');
-  }
-  function fileCalendario(a, adesso) {
-    const ora = adesso ? new Date(adesso) : new Date();
-    const compatto = iso => new Date(iso).toISOString().replace(/[-:]|\.\d{3}/g, '');
-    const aRoma = iso => { const p = partiRoma(iso); return p.giorno.replace(/-/g, '') + 'T' + p.ora.replace(':', '') + '00'; };
-    const fine = a.fine || new Date(Date.parse(a.inizio) + 3600000).toISOString();
-    const nome = (a.contatti && a.contatti.nome) || '—';
-    const dettagli = [a.ospite ? `Ospite: ${a.ospite}` : '', a.note || ''].filter(Boolean).join('\n');
-    const righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MB21//Agenda//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', ...FUSO_ROMA_ICS,
-      'BEGIN:VEVENT', `UID:azione-${a.id}@mb21`, `DTSTAMP:${compatto(ora)}`,
-      `SEQUENCE:${Math.max(0, Math.floor((ora.getTime() - Date.UTC(2026, 0, 1)) / 60000))}`,
-      `DTSTART;TZID=Europe/Rome:${aRoma(a.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
-      `SUMMARY:${testoIcs(`MB21 · ${a.modalita || a.tipo_azione || ''} · ${nome}`)}`,
-      ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
-      'END:VEVENT', 'END:VCALENDAR', ''];
-    return righe.map(piegaIcs).join('\r\n');
-  }
-
   // Quanti impegni per tipo di lavoro in questi giorni (cantiere 37): il riassunto della settimana
   // («4 Piano Marketing · 2 Follow Up»). Ordine degli elenchi dell'app, non del caso; i vuoti non compaiono.
   const ORDINE_TIPI = ['Piano Marketing', 'Follow Up', 'Appuntamento', 'Consulenza PRD', 'Contatto'];
@@ -511,7 +454,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, fileCalendario };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
