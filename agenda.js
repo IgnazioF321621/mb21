@@ -409,6 +409,21 @@
     return { da: Math.max(0, da), a: Math.min(1440, Math.max(a, da + 60)) };
   }
 
+  // Le ore da mostrare nella vista Settimana: dalla prima all'ultima cosa, con mezz'ora di margine e
+  // almeno `minimo` ore; se non c'è niente, la giornata di lavoro (8 → 20). Serve a non disegnare
+  // un lenzuolo vuoto quando gli appuntamenti sono pochi (Ignazio 21/09).
+  function oreUtili(blocchi, minimo = 8) {
+    if (!blocchi || !blocchi.length) return { da: 8 * 60, a: 20 * 60 };
+    let da = Math.floor((Math.min(...blocchi.map(b => b.cima)) - 30) / 60) * 60;
+    let a = Math.ceil((Math.max(...blocchi.map(b => b.cima + b.alta)) + 30) / 60) * 60;
+    da = Math.max(0, da); a = Math.min(1440, a);
+    if (a - da < minimo * 60) {                      // troppo strette: si allargano, prima in giù poi in su
+      a = Math.min(1440, da + minimo * 60);
+      da = Math.max(0, a - minimo * 60);
+    }
+    return { da, a };
+  }
+
   // Impegni che si accavallano con la fascia scelta (un minuto in comune basta). `salta`: l'id di quello
   // che si sta spostando, che non fa conflitto con sé stesso. Serve all'avviso «a quest'ora hai già…».
   // `soloDi`: guarda solo gli impegni di quel partner (con «Tutti» l'Admin ha in mano più agende)
@@ -467,7 +482,7 @@
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
-    fascia, disposizioneGiorno, puntiGiorni, contaPerTipo, ORDINE_TIPI, estremiGriglia, sovrapposti, fasceLibere, oreProposte,
+    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno, linkGoogleCalendar, linkNotePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
