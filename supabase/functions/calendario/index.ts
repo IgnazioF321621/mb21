@@ -9,7 +9,7 @@
 //  - le telefonate messe in Agenda con un orario e non ancora fatte (come le mostra l'Agenda), MAI i Riordini (li crea l'app);
 //  - i «PM Fissato» / «Appuntamento» dati dalla coda con giorno e ora, finché non c'è l'appuntamento vero alla stessa ora
 //    (stessa regola del promemoria in `avvisi`).
-// STESSO FORMATO di `MB21Agenda.fileCalendario` in agenda.js (il bottone del lavoro 1): qui l'app non arriva, va tenuto uguale a mano —
+// IL FORMATO vive solo qui (il bottone del lavoro 1, `fileCalendario` in agenda.js, è stato tolto il 21/09: «solo specchi, mai copie»):
 // titolo «MB21 · PM 1a1 · Nome», senza fine 1 ora, ora di Roma con VTIMEZONE, UID fisso `azione-<id>@mb21`, niente telefono.
 // Gli appuntamenti eliminati spariscono e basta: il Calendario Apple a ogni rilettura prende l'elenco intero.
 import { createClient } from 'npm:@supabase/supabase-js@2';
