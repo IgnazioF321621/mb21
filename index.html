@@ -974,29 +974,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210644"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210644"></script>
-<script src="lista.js?v=202609210644"></script>
-<script src="rubrica.js?v=202609210644"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210644"></script>
-<script src="agenda.js?v=202609210644"></script>
-<script src="report.js?v=202609210644"></script>
-<script src="check.js?v=202609210644"></script>
-<script src="mappa.js?v=202609210644"></script>
-<script src="pagina-dashboard.js?v=202609210644"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210644"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210644"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210644"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210644"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210644"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210644"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210644"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210644"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210644"></script>
-<script src="benvenuto.js?v=202609210644"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210644"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210650"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210650"></script>
+<script src="lista.js?v=202609210650"></script>
+<script src="rubrica.js?v=202609210650"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210650"></script>
+<script src="agenda.js?v=202609210650"></script>
+<script src="report.js?v=202609210650"></script>
+<script src="check.js?v=202609210650"></script>
+<script src="mappa.js?v=202609210650"></script>
+<script src="pagina-dashboard.js?v=202609210650"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210650"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210650"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210650"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210650"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210650"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210650"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210650"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210650"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210650"></script>
+<script src="benvenuto.js?v=202609210650"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210650"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 06:44';
+const APP_VERSION = '2026.09.21 · 06:50';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1507,11 +1507,17 @@ function grigliaGiorno(eventi, opz) {
     const e = b.ev, larga = 100 / b.colonne, sin = b.col * larga;
     const alto = Math.max(18, y(b.cima + b.alta) - y(b.cima) - 3);
     const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
-    const r = A.riga(e, opz);
+    // Con «Tutti» il nome del partner non va davanti al titolo (nella colonna stretta mangerebbe il nome
+    // della persona: «[Isabella] Telefonata · Damia…», visto sui dati veri il 21/09): sta in piccolo sotto,
+    // insieme all'ora. Se il blocco è troppo basso per la riga piccola, allora resta davanti.
+    const suo = opz.admin && opz.mioId !== e.user_id && e.utenti ? (e.utenti.nome || e.utenti.nome_cognome) : '';
+    const bassoDavvero = alto < 32;
+    const r = A.riga(e, suo && !bassoDavvero ? { mioId: null, admin: false } : opz);
     const cat = (e.contatti && e.contatti.categoria) || e.categoria;
+    const sotto = [suo, A.orario(e)].filter(Boolean).join(' · ') + (e.confermato_il && !e.completata ? ' · 👍' : '');
     h += `<button class="ag-ev ${classeCat(cat)}${alto < 26 ? ' bassa' : ''}${e.completata ? ' fatta' : ''}${dallaCoda ? ' dacoda' : ''}${AG.aperta === e.id ? ' scelta' : ''}" data-evento="${esc(e.id)}"
       style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)">
-      <span class="bar"></span><b>${esc(r.titolo)}</b>${alto >= 32 ? `<small>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' · 👍' : ''}</small>` : ''}</button>`;
+      <span class="bar"></span><b>${esc(r.titolo)}</b>${bassoDavvero ? '' : `<small>${esc(sotto)}</small>`}</button>`;
   }
   let adessoDentro = false;
   if (AG.giorno === oggi) {

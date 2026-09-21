@@ -103,6 +103,23 @@ prova('Con «Tutti»: niente avviso per due partner diversi alla stessa ora, e s
   assert.match(con([mio, suo, suo2]), /2 impegni si accavallano/);     // i due di Isabella sì (qui non si guarda «Tutti»)
 });
 
+prova('Con «Tutti» il nome del partner sta sotto, non davanti: il nome della persona resta leggibile', () => {
+  const con = righe => {
+    const tutte = AG.azioni;
+    AG.azioni = righe; V.modo.admin = true; V.modo.tutti = true;
+    const h = V.vista('orario');
+    AG.azioni = tutte; V.modo.admin = false; V.modo.tutti = false;
+    return h;
+  };
+  const suo = { ...V.az('suo', V.OGGI, '12:00', 60, 'Contatto', 'Telefonata', 'Damiano Fava', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
+  const h = con([suo]);
+  assert.match(h, /<b>Telefonata · Damiano Fava<\/b>/);       // il titolo non comincia più con [Isabella]
+  assert.match(h, /<small>Isabella · 12:00–13:00<\/small>/);   // il partner sta nella riga piccola, con l'ora
+  // in un blocco troppo basso per la riga piccola il partner torna davanti, per non perderlo
+  const corto = { ...suo, id: 'corto', fine: null };   // senza ora di fine: 5 minuti, blocco basso
+  assert.match(con([corto]), /<b>\[Isabella\] Telefonata · Damiano Fava<\/b>/);
+});
+
 prova('Settimana: gli impegni ci sono tutti e il giorno scelto si riconosce', () => {
   const s = V.vista('settimana');
   assert.match(s, /class="ag-colonna ag-libero oggi scelto"/);
