@@ -72,7 +72,7 @@ const stub = {
   apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {},
   document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ style: {}, classList: { add() {} }, appendChild() {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }), body: { appendChild() {} } },
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
-  window: { scrollY: 0, scrollTo: () => {} },
+  window: { scrollY: 0, innerHeight: 800, scrollTo: () => {}, addEventListener: () => {} },
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);

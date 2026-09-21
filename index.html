@@ -601,7 +601,11 @@
   .ag-doppi { display: flex; align-items: center; gap: 8px; background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 9px 12px; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; }
   .ag-doppi svg.ic { width: 18px; height: 18px; flex: none; }
   /* bottone «Ora» che riporta la griglia su adesso */
-  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit; }
+  /* «Ora» si vede solo quando la linea di adesso è uscita dallo schermo: se sei già lì, un bottone che non
+     sposta niente sembra rotto (Ignazio 21/09) */
+  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit;
+    opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .18s ease, transform .18s ease; }
+  .ag-vai-ora.si { opacity: 1; pointer-events: auto; transform: none; }
   /* avviso «a quest'ora hai già…» nel modulo, con le prime ore libere da toccare (cantiere 37) */
   .ag-scontro { background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 10px 12px; margin: 0 0 10px; font-size: 13.5px; font-weight: 700; }
   .ag-scontro svg.ic { width: 17px; height: 17px; vertical-align: -4px; margin-right: 3px; }
@@ -996,29 +1000,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609211753"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609211753"></script>
-<script src="lista.js?v=202609211753"></script>
-<script src="rubrica.js?v=202609211753"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609211753"></script>
-<script src="agenda.js?v=202609211753"></script>
-<script src="report.js?v=202609211753"></script>
-<script src="check.js?v=202609211753"></script>
-<script src="mappa.js?v=202609211753"></script>
-<script src="pagina-dashboard.js?v=202609211753"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609211753"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609211753"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609211753"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609211753"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609211753"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609211753"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609211753"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609211753"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609211753"></script>
-<script src="benvenuto.js?v=202609211753"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609211753"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609211808"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609211808"></script>
+<script src="lista.js?v=202609211808"></script>
+<script src="rubrica.js?v=202609211808"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609211808"></script>
+<script src="agenda.js?v=202609211808"></script>
+<script src="report.js?v=202609211808"></script>
+<script src="check.js?v=202609211808"></script>
+<script src="mappa.js?v=202609211808"></script>
+<script src="pagina-dashboard.js?v=202609211808"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609211808"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609211808"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609211808"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609211808"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609211808"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609211808"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609211808"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609211808"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609211808"></script>
+<script src="benvenuto.js?v=202609211808"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609211808"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 17:53';
+const APP_VERSION = '2026.09.21 · 18:08';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1511,6 +1515,7 @@ function disegnaAgenda() {
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   portaInVista();
+  aggiornaVaiOra();
 }
 
 // ── La griglia del giorno, come il Calendario di iPhone ───────────────────────
@@ -1649,9 +1654,23 @@ setInterval(() => {
   if (eti) eti.textContent = A.daMinuti(adesso);
 }, 60000);
 
+// Il bottone «Ora» si mostra solo quando la linea rossa di adesso non è più sullo schermo, come nel
+// Calendario di iPhone. Gli ascolti si mettono una volta sola (disegnaAgenda passa di qui di continuo).
+function aggiornaVaiOra() {
+  const b = document.getElementById('ag-vai-ora');
+  if (!b) return;
+  const linea = document.querySelector('.ag-adesso');
+  if (!linea) { b.classList.remove('si'); return; }
+  const y = linea.getBoundingClientRect().top;
+  const inVista = y > 70 && y < window.innerHeight - 90;
+  b.classList.toggle('si', !inVista);
+}
+window.addEventListener('scroll', aggiornaVaiOra, { passive: true });
+window.addEventListener('resize', aggiornaVaiOra, { passive: true });
+
 // Porta la griglia sotto gli occhi: su oggi all'altezza di adesso, sugli altri giorni al primo impegno.
 // Si fa una volta sola per giorno e vista, se no la pagina saltellerebbe a ogni tocco.
-function portaInVista() {
+function portaInVista(morbido) {
   if (AG.vista === 'elenco') return;
   const segno = AG.vista + '|' + AG.giorno;
   if (AG.portato === segno) return;
@@ -1659,7 +1678,8 @@ function portaInVista() {
   const rif = app.querySelector('.ag-adesso') || app.querySelector('.ag-ev') || app.querySelector('.ag-sev');
   if (!rif) return;
   const y = rif.getBoundingClientRect().top + window.scrollY - 150;
-  window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
+  window.scrollTo({ top: Math.max(0, y), behavior: morbido ? 'smooth' : 'auto' });
+  setTimeout(aggiornaVaiOra, morbido ? 700 : 0);
 }
 
 // (dal 21/09 i bottoni dentro l'appuntamento non ci sono più: le due icone servono alle voci del Profilo)
@@ -1802,7 +1822,7 @@ function collegaAgenda(eventi) {
     }, { passive: false });
   }
   app.querySelectorAll('.ag-viste button').forEach(b => { b.onclick = () => cambiaVista(b.dataset.vista); });
-  su('ag-vai-ora', () => { AG.portato = null; portaInVista(); });
+  su('ag-vai-ora', () => { AG.portato = null; portaInVista(true); });
   // Vista a orario: il vuoto si tocca per fissare a quell'ora (al quarto d'ora), il blocco apre il foglio
   const tocca = document.getElementById('ag-tocca');
   if (tocca) tocca.onclick = ev => {
