@@ -32,7 +32,10 @@
   // Ex Partner/Cliente, Referral, Unlinked e Archiviato hanno gli stessi tipi ed esiti del Prospect (prima: nessun appuntamento, decisione 5).
   const TIPI = {
     'Prospect': {
-      'Contatto': ['Mai contattato o 2+ anni', 'PM Fissato', 'No Risposta', 'Telefono OFF', 'No Interesse', 'Richiamare', 'Relazione', 'Consult Prodotti'],
+      // cantiere 39 (Ignazio 21/09): prima gli esiti buoni, poi quelli non andati (ESITI_NON_ANDATI: vanno su una riga loro).
+      // «Mai contattato o 2+ anni» non è un esito (è prima della telefonata): tolto. «Consult Prodotti» → «Consulenza Prodotti»,
+      // «Telefono OFF» → «Telefono spento», rinominati anche nel database (migrazione esiti_nomi_nuovi).
+      'Contatto': ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti', 'Telefono spento', 'No Interesse', 'No Risposta'],
       'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Consulenza PRD': FASI_PRD,
     },
     'Partner': { 'Contatto': FASI_CONTATTO_PC, 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
@@ -46,6 +49,11 @@
   const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
+  // Esiti di una telefonata non andata: a video stanno sotto quelli buoni, su una riga loro (index.html → bottoniEsiti)
+  const ESITI_NON_ANDATI = ['Telefono spento', 'No Interesse', 'No Risposta'];
+  const esitiInDueRighe = bottoni => [bottoni.filter(x => !ESITI_NON_ANDATI.includes(x)), bottoni.filter(x => ESITI_NON_ANDATI.includes(x))].filter(g => g.length);
+  // Esiti dati dalla coda che portano con sé un giorno scelto (`data_scelta`): con gli altri il giorno non serve più
+  const ESITI_CON_GIORNO = ['Richiamare', 'PM Fissato', 'Appuntamento'];
   const tipiPer = categoria => Object.keys(TIPI[categoria] || {});
   const sottotipiPer = tipo => SOTTOTIPI[tipo] || [];
   function fasiPer(categoria, tipo, sottotipo) {
@@ -312,6 +320,13 @@
   const inMinuti = hhmm => Number(String(hhmm).slice(0, 2)) * 60 + Number(String(hhmm).slice(3, 5));
   // 0 → «00:00», 1425 → «23:45», 1440 → «24:00» (si vede solo come etichetta della griglia)
   const daMinuti = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(Math.round(m) % 60).padStart(2, '0')}`;
+  // Spostando l'ora d'inizio la fine slitta da sola e la durata resta quella (cantiere 39). null = niente da cambiare
+  function fineSlittata(oraPrima, oraDopo, fine) {
+    const ok = x => /^\d\d:\d\d$/.test(x || '');
+    if (!ok(oraPrima) || !ok(oraDopo) || !ok(fine)) return null;
+    const durata = inMinuti(fine) - inMinuti(oraPrima);
+    return durata > 0 ? daMinuti(Math.min(1440, inMinuti(oraDopo) + durata)) : null;
+  }
   const alQuarto = m => Math.max(0, Math.min(1440 - PASSO_MIN, Math.round(m / PASSO_MIN) * PASSO_MIN));
   const quandoDi = a => (a.quando || (a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio));
 
@@ -449,7 +464,7 @@
       .map(x => daMinuti(x.m));
   }
 
-  const api = { SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
+  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,

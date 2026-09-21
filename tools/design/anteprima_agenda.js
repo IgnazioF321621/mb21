@@ -25,7 +25,7 @@ const stile = fra('<style>', '</style>').replace('<style>', '');
 const codice = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'),
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
-  funzione('esc'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
+  funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
   'return { disegnaAgenda, avvisoSovrapposti };',
 ].join('\n');

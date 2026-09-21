@@ -14,7 +14,7 @@
   const SENZA_ESITO = 'Senza esito';
   // Cosa conta come Contatto e come PM (cantiere 27, decisioni di Ignazio del 18/09): la STESSA regola della vista `azioni_conti`
   // del database (migrazione 20260918133500), che dà i numeri a Dashboard e Check. ⚠️ Si cambiano insieme.
-  const CONTATTO_PARLATO = ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consult Prodotti'];
+  const CONTATTO_PARLATO = ['PM Fissato', 'Appuntamento', 'Ordine', 'Richiamare', 'Relazione', 'No Interesse', 'Consulenza Prodotti'];
   const PM_AVVENUTO = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti'];
   const VERSO_PARTNER = 'Verso un Partner';
   function contaAzione(a) {

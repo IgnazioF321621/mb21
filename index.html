@@ -96,7 +96,7 @@
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); }
-  /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «Non interessato» per intero in fondo.
+  /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «No Interesse» per intero in fondo (parole ufficiali dal cantiere 39).
      Due esiti buoni (Cliente: Ordine · Appuntamento) si dividono la prima riga. */
   .bottoni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .bottoni button { flex: 1 1 28%; min-width: 0; min-height: var(--tocco); font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: var(--raggio-bottone); border: 0; background: var(--sfondo); color: var(--testo); }
@@ -109,6 +109,13 @@
   .bottoni.scegli-cat button.piccola { flex: 1 1 auto; background: none; color: var(--testo-soft); font-size: 13px; padding: 6px 2px; white-space: nowrap; }
   .bottoni.scegli-cat button.piccola.no { flex: 1 1 auto; background: none; color: var(--pericolo); }
   .bottoni .no { flex: 1 1 100%; background: var(--pericolo-tinta); color: var(--pericolo); }
+  /* Cantiere 39 (Ignazio 21/09: «ci stiamo evolvendo»): in coda gli stessi esiti di «Com'è andata?», sopra i buoni a due a due,
+     sotto i non andati in fila. Supera la disposizione del 19/09 (buono intero in alto, negativo intero in fondo), che resta ai Riordini. */
+  .bottoni.due-righe { display: block; }
+  .bottoni.due-righe > div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bottoni.due-righe > div + div { margin-top: 14px; }
+  .bottoni.due-righe .buoni button { flex: 1 1 40%; }
+  .bottoni.due-righe .nonandati button { flex: 1 1 28%; font-size: 14px; }
   .bottoni button:disabled { opacity: .45; }
   /* Il colore che parla (cantiere 34). Scelta di Ignazio 19/09 («B»): negli elenchi la riga resta BIANCA e la categoria la dice il tondo con le
      iniziali (la riga tutta tinta, sul fondo perla, dava fastidio); la tinta --cat-tinta si usa dove c'è una persona sola: la testata della scheda. */
@@ -522,6 +529,7 @@
   .ag-esiti { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   /* gli esiti: pastiglie alte 40, bordo grigio su bianco; quello scelto pieno inchiostro (docs/MB21_Design.md) */
   .ag-esiti button { border: 1px solid var(--bordo); border-radius: var(--raggio-pill); background: var(--superficie); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-esiti .a-capo, .ag-scelte .a-capo { flex-basis: 100%; height: 0; }   /* cantiere 39: gli esiti non andati su una riga loro */
   .ag-esiti button.attuale { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
   .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
@@ -988,29 +996,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609211329"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609211329"></script>
-<script src="lista.js?v=202609211329"></script>
-<script src="rubrica.js?v=202609211329"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609211329"></script>
-<script src="agenda.js?v=202609211329"></script>
-<script src="report.js?v=202609211329"></script>
-<script src="check.js?v=202609211329"></script>
-<script src="mappa.js?v=202609211329"></script>
-<script src="pagina-dashboard.js?v=202609211329"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609211329"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609211329"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609211329"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609211329"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609211329"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609211329"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609211329"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609211329"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609211329"></script>
-<script src="benvenuto.js?v=202609211329"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609211329"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609211555"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609211555"></script>
+<script src="lista.js?v=202609211555"></script>
+<script src="rubrica.js?v=202609211555"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609211555"></script>
+<script src="agenda.js?v=202609211555"></script>
+<script src="report.js?v=202609211555"></script>
+<script src="check.js?v=202609211555"></script>
+<script src="mappa.js?v=202609211555"></script>
+<script src="pagina-dashboard.js?v=202609211555"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609211555"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609211555"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609211555"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609211555"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609211555"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609211555"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609211555"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609211555"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609211555"></script>
+<script src="benvenuto.js?v=202609211555"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609211555"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 13:29';
+const APP_VERSION = '2026.09.21 · 15:55';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1673,7 +1681,7 @@ function extraEvento(e) {
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
-        ${richiamo ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button><button data-cmd="modifica">${ic('modifica')} Modifica</button>`}
+        ${richiamo ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>`;
@@ -1854,6 +1862,12 @@ async function apriContattoDa(id, ritorno) {
 const daChiudere = MB21Agenda.daChiudere;
 const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa del risultato (solo a video)
 // Azione già chiusa: il blocco resta chiuso (si vede solo l'esito nella riga) e si apre con «Cambia esito ›» (Ignazio 17/09)
+// I bottoni di un gruppo di esiti, uguali in Agenda, scheda e foglio «Modifica» (cantiere 39): prima i buoni,
+// poi, su una riga loro, quelli non andati (MB21Agenda.esitiInDueRighe). `attr`: data-esito o data-v; `classe`: quella del bottone scelto.
+function bottoniEsiti(bottoni, attuale, attr, classe) {
+  return MB21Agenda.esitiInDueRighe(bottoni).map(riga => riga.map(f =>
+    `<button ${attr}="${esc(f)}" class="${attuale === f ? classe : ''}">${esc(f)}</button>`).join('')).join('<span class="a-capo"></span>');
+}
 function bloccoEsiti(a, categoria, aperto = false) {
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
@@ -1861,7 +1875,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
   const dentro = chiusa && !aperto
     ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
     : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
-    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${p.bottoni.map(f => `<button data-esito="${esc(f)}" class="${p.attuale === f ? 'attuale' : ''}">${esc(f)}</button>`).join('')}</div>`).join('');
+    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${bottoniEsiti(p.bottoni, p.attuale, 'data-esito', 'attuale')}</div>`).join('');
   return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
 // Stato scritto accanto all'azione
@@ -1976,6 +1990,20 @@ function avvisoSovrapposti(giorno, ora, durata, salta, diChi) {
     ${libere.length ? `<div class="ag-orelibere">${libere.map(o => `<button data-ora="${o}">${o}</button>`).join('')}</div>` : ''}</div>`;
 }
 
+// Spostando l'ora d'inizio, «Finisce alle» slitta da sola e la durata resta quella (cantiere 39, Ignazio 21/09: prima la fine
+// restava ferma e, se finiva prima dell'inizio, l'app non salvava). Stessa regola in «Sposta», «Modifica» e «Nuovo appuntamento»
+// (MB21Agenda.fineSlittata). Va chiamata PRIMA di dare `onchange` al campo, così l'avviso legge già la fine nuova.
+function legaInizioFine(campoOra, campoFine) {
+  if (!campoOra || !campoFine) return;
+  let prima = campoOra.value;
+  campoOra.addEventListener('focus', () => { prima = campoOra.value; });   // l'ora può essere cambiata anche dalle «ore libere»
+  campoOra.addEventListener('change', () => {
+    const nuova = MB21Agenda.fineSlittata(prima, campoOra.value, campoFine.value);
+    if (nuova) campoFine.value = nuova;
+    prima = campoOra.value;
+  });
+}
+
 // (predefinito: l'Agenda su quel giorno). Spostando, la conferma torna da fare.
 function spostaAppuntamento(e, dopo) {
   const A = MB21Agenda;
@@ -2009,6 +2037,7 @@ function spostaAppuntamento(e, dopo) {
       avvisa();
     });
   };
+  legaInizioFine(campo('ora'), campo('fine'));
   for (const k of ['giorno', 'ora', 'fine']) { const el = campo(k); if (el) el.onchange = avvisa; }
   avvisa();
   velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
@@ -2188,6 +2217,7 @@ async function nuovoAppuntamento(opz = {}) {
         b.onclick = () => { leggiCampi(); campi.ora = b.dataset.ora; if (st.altra) campi.fine = A.daMinuti(Math.min(1440, A.inMinuti(campi.ora) + (st.durata || 60))); disegna(); };
       });
       // cambiando giorno, ora o fine l'avviso si rifà subito
+      legaInizioFine(velo.querySelector('#na-ora'), velo.querySelector('#na-fine'));
       for (const k of ['giorno', 'ora', 'fine']) {
         const el = velo.querySelector('#na-' + k);
         if (el) el.onchange = () => { leggiCampi(); disegna(); };
@@ -2257,7 +2287,7 @@ async function nuovoAppuntamento(opz = {}) {
 async function foglioAzione(id, opz = {}) {
   if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
-    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, ospite, note, contatti(nome, categoria)').eq('id', id).maybeSingle());
+    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, data_scelta, ospite, note, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
   let portato = null;
   if (a.portato_da) {
@@ -2269,6 +2299,10 @@ async function foglioAzione(id, opz = {}) {
   const duraOra = a.inizio && a.fine && Date.parse(a.fine) > Date.parse(a.inizio) ? Math.round((Date.parse(a.fine) - Date.parse(a.inizio)) / 60000) : 0;
   const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
   const st = { contatto: { id: a.contatto_id, ...(a.contatti || { nome: '—' }) }, portato, ospite: a.ospite, sottotipo: a.modalita, esito: a.esito };
+  // Esito dato dalla coda con un giorno scelto (Richiamare, PM Fissato…; cantiere 39): «Giorno e ora» è quando la telefonata è stata
+  // FATTA, il giorno scelto sta in un campo suo. Prima c'era un campo solo e chi voleva spostare il richiamo spostava la telefonata.
+  const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;
+  const scelta = dallaCoda ? A.partiRoma(a.data_scelta) : null;
   const velo = document.createElement('div');
   velo.className = 'velo';
   // forma del modulo contatto (cantiere 34, Ignazio 19/09): in testa la persona, gruppi «Tipo ed esito» e «Data e note», Annulla · Salva fermi in fondo
@@ -2280,7 +2314,8 @@ async function foglioAzione(id, opz = {}) {
     ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
+    <div class="campo"><label>${dallaCoda ? 'Telefonata fatta il' : 'Giorno e ora'}</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"></div></div>
+    ${dallaCoda ? `<div class="campo"><label id="fa-scelta-titolo"></label><div class="ag-due-campi"><input type="date" id="fa-scelta-giorno" value="${scelta.giorno}"><input type="time" id="fa-scelta-ora" value="${scelta.ora}"></div><div class="sotto" style="margin:4px 0 0">È il giorno in cui lo vedi in Agenda.</div></div>` : ''}
     ${duraOra ? `<div class="campo"><label>Finisce alle</label><input type="time" id="fa-fine" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + duraOra))}"></div>` : ''}
     <div id="fa-avviso"></div>
     <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
@@ -2328,7 +2363,7 @@ async function foglioAzione(id, opz = {}) {
     $('fa-esito-titolo').textContent = gruppi.length === 1 ? gruppi[0].titolo : '';
     $('fa-esito-nota').textContent = gruppi.some(g => g.passo === 'risultato') ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
     $('fa-esiti').innerHTML = gruppi.map((g, i) => `${gruppi.length > 1 ? `<div class="come-andata" style="border:0;margin-top:${i ? 8 : 0}px;padding:0">${esc(g.titolo)}</div>` : ''}
-      <div class="ag-scelte" data-passo="${g.passo}">${g.bottoni.map(x => `<button data-v="${esc(x)}" class="${g.attuale === x ? 'scelto' : ''}">${esc(x)}</button>`).join('')}</div>`).join('');
+      <div class="ag-scelte" data-passo="${g.passo}">${bottoniEsiti(g.bottoni, g.attuale, 'data-v', 'scelto')}</div>`).join('');
     $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => {
       const x = b.dataset.v, fase = A.fattoDi(a.tipo_azione);
       if (x === 'Fatto') { st.esito = fase; st.fattoAperto = !fase; }
@@ -2336,6 +2371,7 @@ async function foglioAzione(id, opz = {}) {
       disegnaScelte();
     });
     velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === st.sottotipo));
+    if (dallaCoda) $('fa-scelta-titolo').textContent = st.esito === 'Richiamare' ? 'Da richiamare il' : A.ESITI_CON_GIORNO.includes(st.esito) ? 'Appuntamento il' : 'Giorno scelto';
   };
   velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.onclick = () => { st.sottotipo = b.dataset.v; disegnaScelte(); });
   disegnaPersone();
@@ -2354,6 +2390,7 @@ async function foglioAzione(id, opz = {}) {
       avvisaFa();
     });
   };
+  legaInizioFine($('fa-ora'), $('fa-fine'));
   for (const k of ['fa-giorno', 'fa-ora', 'fa-fine']) { const el = $(k); if (el) el.onchange = avvisaFa; }
   avvisaFa();
   $('fa-si').onclick = async () => {
@@ -2363,11 +2400,22 @@ async function foglioAzione(id, opz = {}) {
     const inizio = A.isoDaRoma($('fa-giorno').value, $('fa-ora').value);
     if (duraOra && !duraScelta()) { $('fa-errore').textContent = 'L\'ora di fine deve venire dopo quella di inizio.'; return; }
     const fine = duraOra ? new Date(Date.parse(inizio) + duraScelta() * 60000).toISOString() : a.fine;   // la durata scelta qui (prima: sempre la stessa)
+    // Il giorno scelto (cantiere 39, Ignazio 21/09: «l'app chiede»): con un esito che non lo porta più con sé (No Interesse…)
+    // si chiede se toglierlo dall'Agenda. Prima restava lì per sempre, e il contatto rientrava in coda nel giorno vecchio.
+    let dataScelta = null;
+    if (dallaCoda) {
+      if (!$('fa-scelta-giorno').value || !$('fa-scelta-ora').value) { $('fa-errore').textContent = 'Scegli il giorno e l\'ora.'; return; }
+      if (A.controllaGiorno($('fa-scelta-giorno').value)) { $('fa-errore').textContent = A.controllaGiorno($('fa-scelta-giorno').value); return; }
+      dataScelta = A.isoDaRoma($('fa-scelta-giorno').value, $('fa-scelta-ora').value);
+      if (st.esito && !A.ESITI_CON_GIORNO.includes(st.esito)
+        && await chiediConferma(`Tolgo dall'Agenda il giorno scelto?`, `${st.contatto.nome} è in Agenda ${dataLunga($('fa-scelta-giorno').value)}. Con «${st.esito}» di solito non serve più.`, 'Sì, togli', false, '', 'No, lascialo in Agenda')) dataScelta = null;
+    }
     $('fa-si').disabled = true;
     const { data: prima, error: e2 } = await dbq('modifica azione', supa.rpc('modifica_azione', {
       p_azione: a.id, p_contatto: st.contatto.id, p_portato_da: st.portato ? st.portato.id : null,
       p_modalita: st.sottotipo || null, p_esito: st.esito || null, p_inizio: inizio, p_fine: fine || null,
-      p_ospite: st.ospite || null, p_note: $('fa-note').value.trim() || null }));
+      p_ospite: st.ospite || null, p_note: $('fa-note').value.trim() || null,
+      ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     chiudi();
     LS.righe = [];   // la Lista si ricarica: fase e coda possono essere cambiate
@@ -2673,14 +2721,14 @@ function foglioRinnovo() {
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
 // e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
 // Con `spunta` (testo) sotto il testo c'è una casella: la risposta «sì» diventa { spunta: true | false } (cantiere 33: «Togli anche biglietti e CEP»)
-function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta = '') {
+function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta = '', no = 'Annulla') {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${testo ? `<p>${esc(testo)}</p>` : ''}
       ${spunta ? `<label class="cf-spunta"><input type="checkbox" id="cf-spunta"> <span>${esc(spunta)}</span></label>` : ''}
       <button class="primario" id="cf-si" ${pericolo ? 'style="background:var(--rosso)"' : ''}>${esc(si)}</button>
-      <button class="link" id="cf-no">Annulla</button></div>`;
+      <button class="link" id="cf-no">${esc(no)}</button></div>`;
     document.body.appendChild(velo);
     const fine = v => { velo.remove(); risolvi(v); };
     velo.onclick = e => { if (e.target === velo) fine(false); };
