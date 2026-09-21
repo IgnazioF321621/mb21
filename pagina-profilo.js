@@ -96,7 +96,7 @@ function disegnaProfilo() {
       <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
     ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', esc(String(numero || '—')))}
     ${voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
-      <small style="margin-top:0">Alle <b>9</b> il riepilogo della giornata, <b>30 minuti prima</b> di ogni appuntamento un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
+      <small style="margin-top:0">Alle <b>9</b> il programma di oggi, <b>30 minuti prima</b> di ogni appuntamento e di ogni telefonata con un orario un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
     ${calendarioHtml()}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
