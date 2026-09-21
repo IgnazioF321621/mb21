@@ -988,29 +988,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210716"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210716"></script>
-<script src="lista.js?v=202609210716"></script>
-<script src="rubrica.js?v=202609210716"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210716"></script>
-<script src="agenda.js?v=202609210716"></script>
-<script src="report.js?v=202609210716"></script>
-<script src="check.js?v=202609210716"></script>
-<script src="mappa.js?v=202609210716"></script>
-<script src="pagina-dashboard.js?v=202609210716"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210716"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210716"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210716"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210716"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210716"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210716"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210716"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210716"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210716"></script>
-<script src="benvenuto.js?v=202609210716"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210716"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210722"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210722"></script>
+<script src="lista.js?v=202609210722"></script>
+<script src="rubrica.js?v=202609210722"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210722"></script>
+<script src="agenda.js?v=202609210722"></script>
+<script src="report.js?v=202609210722"></script>
+<script src="check.js?v=202609210722"></script>
+<script src="mappa.js?v=202609210722"></script>
+<script src="pagina-dashboard.js?v=202609210722"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210722"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210722"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210722"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210722"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210722"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210722"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210722"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210722"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210722"></script>
+<script src="benvenuto.js?v=202609210722"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210722"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 07:16';
+const APP_VERSION = '2026.09.21 · 07:22';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1459,7 +1459,6 @@ function disegnaAgenda() {
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
   const punti = A.puntiGiorni(AG.azioni, AG.settimana);
-  const titoloGiorno = new Date(AG.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   let html = `
     <div class="ag-testa"><h1>Agenda</h1>
       ${AG.giorno !== oggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
@@ -1481,7 +1480,6 @@ function disegnaAgenda() {
       ${VISTE.map(v => `<button data-vista="${v}" class="${AG.vista === v ? 'si' : ''}">${ic(NOMI_VISTA[v][0])}${NOMI_VISTA[v][1]}</button>`).join('')}
     </div>`;
   html += richiamiAgenda(oggi);
-  if (AG.vista !== 'settimana') html += `<div class="sotto">${esc(titoloGiorno)} · ${eventi.length ? (eventi.length === 1 ? '1 impegno' : eventi.length + ' impegni') : 'giornata libera'}</div>`;
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else if (AG.vista === 'orario') html += grigliaGiorno(eventi, opz);
   else html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
@@ -1745,6 +1743,37 @@ function collegaAgenda(eventi) {
   app.querySelectorAll('.ag-giorno').forEach(b => {
     b.onclick = () => { AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); };
   });
+  // La striscia dei giorni si scorre col dito: a sinistra la settimana dopo, a destra quella prima
+  // (Ignazio 21/09: «non per forza cliccare solo le frecce»). Le frecce restano, per il computer.
+  const striscia = app.querySelector('.ag-settimana');
+  if (striscia) {
+    let x0 = null, y0 = null, scorso = 0;
+    striscia.addEventListener('touchstart', ev => { const t = ev.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+    striscia.addEventListener('touchend', ev => {
+      if (x0 == null) return;
+      const t = ev.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) < 45 || Math.abs(dy) > Math.abs(dx)) return;   // un tocco, o un dito che va su e giù: non è uno scorrimento
+      scorso = Date.now();
+      AG.aperta = null; AG.portato = null;
+      apriAgenda(A.spostaGiorno(AG.giorno, dx < 0 ? 7 : -7));
+    }, { passive: true });
+    // dopo uno scorrimento il dito è partito da un giorno: quel tocco non deve aprirlo
+    striscia.addEventListener('click', ev => { if (Date.now() - scorso < 400) { ev.preventDefault(); ev.stopPropagation(); } }, true);
+    // sul computer lo stesso gesto con due dita sul trackpad (si somma finché non basta, poi una settimana per volta)
+    let quanto = 0, ultimo = 0;
+    striscia.addEventListener('wheel', ev => {
+      if (Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;   // sta scorrendo la pagina su e giù
+      ev.preventDefault();
+      if (Date.now() - ultimo < 500) return;
+      quanto += ev.deltaX;
+      if (Math.abs(quanto) < 60) return;
+      const avanti = quanto > 0;
+      quanto = 0; ultimo = Date.now();
+      AG.aperta = null; AG.portato = null;
+      apriAgenda(A.spostaGiorno(AG.giorno, avanti ? 7 : -7));
+    }, { passive: false });
+  }
   app.querySelectorAll('.ag-viste button').forEach(b => { b.onclick = () => cambiaVista(b.dataset.vista); });
   su('ag-vai-ora', () => { AG.portato = null; portaInVista(); });
   // Vista a orario: il vuoto si tocca per fissare a quell'ora (al quarto d'ora), il blocco apre il foglio
