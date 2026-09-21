@@ -16,14 +16,16 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 **Perché per primo**: lo Sharing è l'unico pezzo della scheda contatto che si usa ogni giorno e che nella v4 non c'è: è quello che obbliga a tenere Glide acceso (30 $ al mese). Unisce due voci dell'elenco del 19/09: «Materiale Network 21» (la base) e «Sharing dalla scheda contatto».
 
 **Cosa c'è oggi** (letto il 21/09, solo titoli delle colonne e numero di righe dei CSV in `mb21-import/`, export del 13/09)
-- `BSM.csv`: **67 tracce** — Fase · Pack · Traccia · TracciaNr · Riassunto · Titolo-Autore · PerChi · FaseProspect · N21Link · foto. **Mai importato**
-- `Sharing.csv`: **166 condivisioni** — partner · contatto · DataCondivisione · FaseProspect · NrShare · TracciaShare · PackShare · Note · Ascoltata · la prossima traccia proposta (ProxTraccia, ProxNr, ProxPack). **Mai importato**
+- `BSM.csv`: **31 righe, 21 compilate** (corretto il 21/09 sera: il «67» era un conto delle righe di testo, non delle voci) — Fase · Pack · Traccia · TracciaNr · Riassunto · Titolo-Autore · PerChi · FaseProspect · N21Link · foto. **Mai importato**
+- `Sharing.csv`: **109 condivisioni su 42 persone**, tutte in fase «#1 Interesse» (corretto: non 166) — partner · contatto · DataCondivisione · FaseProspect · NrShare · TracciaShare · PackShare · Note · Ascoltata · la prossima traccia proposta (ProxTraccia, ProxNr, ProxPack). **Mai importato**
 - Nella v4: nessuna tabella, nessuna sezione nella scheda (nel codice la parola «Sharing» non c'è più). In Glide la sezione Sharing sta nella scheda di Prospect e Partner; nel rilievo della Lista (`docs/MB21_v3_Lista_come_e.md`) c'è scritto **«Sharing — non aperta»**: la schermata non è mai stata fotografata. Nel menu di Glide c'è anche la pagina **BSM**
 
+**Rilievo e struttura, 21/09 sera** → [`docs/MB21_N21_Materiali_come_e.md`](docs/MB21_N21_Materiali_come_e.md). Letti il PDF «Media Sharing V2» (40 tracce in 4 fasi: #1 Interesse per l'ospite, #2 Sopravvivenza · #3 Consapevolezza · #4 Convinzione per il nuovo incaricato, fino al primo WES) e il Manuale di Avvio 2026 (Starter Pack · Media Sharing · CEP · Libri consigliati). **Decisioni di Ignazio**: MB21 **non manda** le tracce (c'è l'app di Network 21): è **un registro che guida in un percorso** · non più chiuso nella singola scheda: prima condivide lo sponsor, poi la persona ascolta e studia in modo mirato, e chi ha MB21 segna il suo percorso e riceve il consiglio sui prossimi passi e pack · **la spina dorsale sono le 4 fasi del Media Sharing**, con libri e pack agganciati («poi aggiusteremo tutto»). Il sito network21.it chiede l'accesso: **niente password a Claude**, lo apre Ignazio in Arc e Claude fotografa
+
 **I lavori, un passo alla volta**
-1. **Rilievo su Glide** — Ignazio naviga in Arc, Claude fotografa in sola lettura: sezione Sharing della scheda e pagina BSM → `docs/MB21_v3_Sharing_come_e.md`
-2. **Le 67 tracce** — tabella + import di `BSM.csv`, in transazione annullata prima
-3. **Le 166 condivisioni** — tabella + import di `Sharing.csv`, agganciate ai contatti come le Vendite
+1. **Rilievo** — ✅ documenti letti il 21/09 (vedi sopra) · da fare con Ignazio in Arc, in sola lettura: sito network21.it (pack, libri consigliati) e, in Glide, sezione Sharing della scheda, pagina BSM e pagina Libri → si aggiungono allo stesso documento
+2. **La biblioteca** — le **40 tracce del Media Sharing** nelle 4 fasi (dal PDF, non solo le 21 di Glide), Starter Pack e libri consigliati; in transazione annullata prima. ⚠️ Repo pubblico: i testi di Network 21 stanno nel database, non nel repo
+3. **Le 109 condivisioni** — tabella + import di `Sharing.csv`, agganciate ai contatti come le Vendite
 4. **La sezione Sharing nella scheda**, nel suo file `pagina-sharing.js` (lezione del 18/09)
 5. **I collegamenti (stella cometa)**: da dove si arriva allo Sharing con un tocco (per esempio dopo un PM con «Dare Seguito» l'app propone la traccia da mandare) e dove altro deve comparire quello che si è condiviso
 
