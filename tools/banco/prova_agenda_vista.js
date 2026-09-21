@@ -20,7 +20,7 @@ const altezzaGriglia = html => Number(/class="ag-ore" data-da="\d+" data-alt="\d
 prova('Le tre viste si disegnano e ognuna dice quello che deve', () => {
   const g = V.vista('orario');
   assert.match(g, /class="ag-griglia"/);
-  assert.match(g, /lunedì 21 settembre · 6 impegni/);
+  assert.doesNotMatch(g, /lunedì 21 settembre/);   // il giorno si legge nella striscia: sotto non si ripete (Ignazio 21/09)
   assert.match(g, /2 impegni si accavallano/);          // Pino e Anna alle 18:30
   assert.match(g, /PM 1a1 · Pino Manolo/);
   const s = V.vista('settimana');
@@ -58,9 +58,8 @@ prova('Nessun impegno finisce fuori dalla griglia, nemmeno alle 6 del mattino o 
   for (const b of blocchi(estremi)) assert.ok(b.cima >= 0 && b.cima + b.alta <= altaE + 4);
 });
 
-prova('Giornata libera: lo dice e non inventa impegni', () => {
+prova('Giornata libera: nessun blocco e l\'invito a toccare il vuoto', () => {
   const vuoto = conAzioni([]);
-  assert.match(vuoto, /giornata libera/);
   assert.equal(blocchi(vuoto).length, 0);
   assert.doesNotMatch(vuoto, /si accavallano/);
   assert.match(vuoto, /libero<\/div>/);                   // l'invito a toccare il vuoto c'è
