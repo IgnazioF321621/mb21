@@ -362,7 +362,7 @@
     const minimo = opz.minimoMinuti == null ? MINIMO_VISTA : opz.minimoMinuti;
     const blocchi = (eventi || []).map(ev => {
       const f = fascia(ev);
-      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false, gruppo: 0 };
+      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false, doppio: false, gruppo: 0 };
     }).sort((x, y) => (x.da - y.da) || (x.fine - y.fine));
     // gruppi di blocchi che si toccano (il gruppo si chiude quando nessuno arriva fin lì).
     // `gruppo` serve anche alla settimana: lì, invece di tagliare i nomi in «G.» e «N.», un gruppo di
@@ -386,8 +386,15 @@
       finePiuLontana = Math.max(finePiuLontana, b.cima + b.alta);
     }
     chiudi();
+    // Due impegni alla stessa ora si disegnano sempre affiancati (se no si coprirebbero), ma «si accavallano»
+    // si dice solo quando sono **della stessa persona**: con «Tutti» l'Admin vede più agende insieme e
+    // Isabella alle 18:30 non è un doppione di Ignazio alle 18:30 (visto sui dati veri il 21/09).
+    for (const b of blocchi) {
+      b.doppio = blocchi.some(x => x !== b && (x.ev.user_id || null) === (b.ev.user_id || null)
+        && x.da < b.fine && x.fine > b.da);
+    }
     const estremi = estremiGriglia(blocchi, opz);
-    return { ...estremi, blocchi, sovrapposti: blocchi.filter(b => b.sovrapposto).length };
+    return { ...estremi, blocchi, sovrapposti: blocchi.filter(b => b.doppio).length };
   }
 
   // La griglia va dalle 8 a mezzanotte, ma si allarga se quel giorno c'è qualcosa prima o dopo:
@@ -404,10 +411,12 @@
 
   // Impegni che si accavallano con la fascia scelta (un minuto in comune basta). `salta`: l'id di quello
   // che si sta spostando, che non fa conflitto con sé stesso. Serve all'avviso «a quest'ora hai già…».
-  function sovrapposti(eventi, inizioIso, durataMin, salta) {
+  // `soloDi`: guarda solo gli impegni di quel partner (con «Tutti» l'Admin ha in mano più agende)
+  function sovrapposti(eventi, inizioIso, durataMin, salta, soloDi) {
     const da = Date.parse(inizioIso), a = da + (durataMin || DURATA_NORMALE) * 60000;
     return (eventi || []).filter(e => {
       if (salta && e.id === salta) return false;
+      if (soloDi && e.user_id && e.user_id !== soloDi) return false;
       const q = quandoDi(e);
       if (!q) return false;
       const eDa = Date.parse(q);
@@ -420,6 +429,7 @@
   // Su oggi non propone ore già passate. Restituisce [{ da, a }] in minuti.
   function fasceLibere(eventi, durata, opz = {}) {
     const passo = opz.passo || PASSO_MIN;
+    if (opz.soloDi) eventi = (eventi || []).filter(e => !e.user_id || e.user_id === opz.soloDi);
     let da = (opz.oraDa == null ? 8 : opz.oraDa) * 60, a = (opz.oraA == null ? 22 : opz.oraA) * 60;
     if (opz.daMinuti != null) da = Math.max(da, Math.ceil(opz.daMinuti / passo) * passo);
     const presi = (eventi || []).map(e => fascia(e)).sort((x, y) => x.da - y.da);
