@@ -52,6 +52,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Cosa c'è da costruire**: progetto su Google Cloud (lo crea Ignazio col suo account, guidato) · tabella dei permessi per utente, leggibile solo dal server · funzione Edge per il via libera (andata e ritorno da Google) · funzione Edge che scrive/sposta/elimina l'evento, chiamata **dal database** a ogni modifica di `azioni` (come le vendite che scrivono in Agenda: vale da qualunque punto dell'app) · colonna con l'id dell'evento di Google su ogni azione · voce nel Profilo «collegato / scollega» · il caso del permesso revocato. **Stima: due o tre sessioni come quella di oggi**
 - **Fonti**: [Google · permessi del Calendario](https://developers.google.com/workspace/calendar/api/auth) · [Google · verifica dei permessi sensibili](https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification) · [Google · quando la verifica non serve](https://support.google.com/cloud/answer/13464323?hl=en) · [Google · app non verificate](https://support.google.com/cloud/answer/7454865?hl=en) · [Unipile · il tetto dei 100 utenti](https://www.unipile.com/google-oauth-100-user-limit/)
 
+**Slide per i partner (21/09)**: brief pronto in `docs/MB21_v4_Brief_Slide_Avvisi_Calendario.md` (come accendere gli avvisi, come collegare Apple e Google, la regola «solo specchi», cosa provare e riferire a Ignazio). Da provare sui tre utenti attuali; le foto vere delle schermate le aggiunge Ignazio
+
 **Da decidere prima di partire** *(deciso il 21/09, vedi sopra)*
 - Si parte dal **lavoro 1** (piccolo, subito, per tutti) o dritti al **2** (l'abbonamento)?
 - Il lavoro 3 si fa o no (nodo privacy del calendario pubblico)?
