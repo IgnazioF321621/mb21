@@ -362,15 +362,18 @@
     const minimo = opz.minimoMinuti == null ? MINIMO_VISTA : opz.minimoMinuti;
     const blocchi = (eventi || []).map(ev => {
       const f = fascia(ev);
-      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false };
+      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false, gruppo: 0 };
     }).sort((x, y) => (x.da - y.da) || (x.fine - y.fine));
-    // gruppi di blocchi che si toccano (il gruppo si chiude quando nessuno arriva fin lì)
-    let gruppo = [], finePiuLontana = -1;
+    // gruppi di blocchi che si toccano (il gruppo si chiude quando nessuno arriva fin lì).
+    // `gruppo` serve anche alla settimana: lì, invece di tagliare i nomi in «G.» e «N.», un gruppo di
+    // accavallati si disegna come un blocco solo che dice quanti sono.
+    let gruppo = [], finePiuLontana = -1, nGruppo = 0;
     const chiudi = () => {
       if (!gruppo.length) return;
       const colonne = Math.max(...gruppo.map(b => b.col)) + 1;
-      for (const b of gruppo) { b.colonne = colonne; b.sovrapposto = colonne > 1; }
+      for (const b of gruppo) { b.colonne = colonne; b.sovrapposto = colonne > 1; b.gruppo = nGruppo; }
       gruppo = [];
+      nGruppo++;
     };
     const codaColonne = [];   // per ogni colonna, la fine dell'ultimo blocco che ci sta dentro
     for (const b of blocchi) {

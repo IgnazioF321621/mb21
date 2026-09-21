@@ -606,6 +606,11 @@
   .ag-sev .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px; background: var(--cat, var(--spento)); border-radius: 3px; }
   .ag-sev span { display: block; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-sev.fatta { opacity: .55; }
+  /* due o più accavallati nella settimana: un blocco solo con le barrette dei colori e quanti sono */
+  .ag-sev.molti { background: var(--superficie-2); border: 1px solid var(--bordo); color: var(--testo-soft); display: flex; align-items: center; gap: 3px; padding: 2px 3px; }
+  .ag-sev.molti .barre { display: flex; gap: 1px; align-self: stretch; padding: 1px 0; }
+  .ag-sev.molti .barre i { width: 3px; border-radius: 2px; background: var(--cat, var(--spento)); }
+  .ag-sev.molti b { font-size: 11px; }
   .ag-sett-vuoto { text-align: center; color: var(--testo-tenue); font-size: 13px; padding: 10px 0 2px; }
   /* il riassunto della settimana: quanti PM, quanti Follow Up… (il colore è quello del tipo di lavoro, --az-*) */
   .ag-conto { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 10px 4px 0; }
@@ -969,29 +974,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210033"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210033"></script>
-<script src="lista.js?v=202609210033"></script>
-<script src="rubrica.js?v=202609210033"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210033"></script>
-<script src="agenda.js?v=202609210033"></script>
-<script src="report.js?v=202609210033"></script>
-<script src="check.js?v=202609210033"></script>
-<script src="mappa.js?v=202609210033"></script>
-<script src="pagina-dashboard.js?v=202609210033"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210033"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210033"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210033"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210033"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210033"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210033"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210033"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210033"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210033"></script>
-<script src="benvenuto.js?v=202609210033"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210033"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210634"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210634"></script>
+<script src="lista.js?v=202609210634"></script>
+<script src="rubrica.js?v=202609210634"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210634"></script>
+<script src="agenda.js?v=202609210634"></script>
+<script src="report.js?v=202609210634"></script>
+<script src="check.js?v=202609210634"></script>
+<script src="mappa.js?v=202609210634"></script>
+<script src="pagina-dashboard.js?v=202609210634"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210634"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210634"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210634"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210634"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210634"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210634"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210634"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210634"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210634"></script>
+<script src="benvenuto.js?v=202609210634"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210634"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 00:33';
+const APP_VERSION = '2026.09.21 · 06:34';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1529,13 +1534,29 @@ function grigliaSettimana(opz) {
   giorni.forEach(({ g, d }, i) => {
     const larga = 100 / 7, sinG = i * larga;
     h += `<button class="ag-colonna ag-libero${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-vai="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}" style="left:${sinG}%;width:${larga}%"></button>`;
+    // i blocchi che si accavallano si uniscono in uno solo che dice quanti sono: nella colonna stretta
+    // della settimana due nomi diventerebbero «G.» e «N.», che non si leggono (Ignazio 21/09)
+    const gruppi = new Map();
     for (const b of d.blocchi) {
-      const e = b.ev, dentro = larga / b.colonne, sin = sinG + b.col * dentro;
-      const alto = Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2);
+      const chi = gruppi.get(b.gruppo) || [];
+      chi.push(b);
+      gruppi.set(b.gruppo, chi);
+    }
+    for (const chi of gruppi.values()) {
+      const cima = Math.min(...chi.map(b => b.cima)), giu = Math.max(...chi.map(b => b.cima + b.alta));
+      const alto = Math.max(11, y(giu) - y(cima) - 2);
+      if (chi.length > 1) {
+        const ore = A.daMinuti(cima);
+        h += `<button class="ag-sev molti" data-vai="${g}" style="top:${y(cima)}px;height:${alto}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
+          aria-label="${chi.length} impegni dalle ${ore}, apri il giorno"><span class="barre">${chi.slice(0, 3).map(b =>
+            `<i class="${classeCat((b.ev.contatti && b.ev.contatti.categoria) || b.ev.categoria)}"></i>`).join('')}</span><b>${chi.length}</b></button>`;
+        continue;
+      }
+      const b = chi[0], e = b.ev;
       const cat = (e.contatti && e.contatti.categoria) || e.categoria;
       const nome = (e.contatti && e.contatti.nome) || '—';
       h += `<button class="ag-sev ${classeCat(cat)}${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}" data-giorno="${g}"
-        style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 1px);width:calc(${dentro}% - 2px)"
+        style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
         aria-label="${esc(A.orario(e))} ${esc(nome)}"><span class="bar"></span>${alto >= 18 ? `<span>${esc(nome.split(' ')[0])}</span>` : ''}</button>`;
     }
   });

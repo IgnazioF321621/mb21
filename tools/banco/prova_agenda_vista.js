@@ -92,11 +92,24 @@ prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore li
   assert.equal(V.avvisoSovrapposti('2027-01-04', '18:30', 60, null), '');
 });
 
-prova('Settimana: ogni impegno della settimana c\'è, e il giorno scelto si riconosce', () => {
+prova('Settimana: gli impegni ci sono tutti e il giorno scelto si riconosce', () => {
   const s = V.vista('settimana');
-  assert.equal((s.match(/class="ag-sev /g) || []).length, 12);   // tutti i finti della settimana
   assert.match(s, /class="ag-colonna ag-libero oggi scelto"/);
   assert.match(s, /data-vai="2026-09-23"/);                      // anche i giorni vuoti si toccano
+  assert.match(s, /5 PM/);                                        // il riassunto della settimana
+  assert.match(s, /1 Contatto</);
+});
+
+prova('Settimana: due accavallati diventano un blocco solo che dice quanti sono, invece di nomi tagliati', () => {
+  const s = V.vista('settimana');
+  // lunedì Pino e Anna alle 18:30, venerdì Gruppo e Nina alle 18:00/18:30 → due blocchi «2»
+  assert.equal((s.match(/class="ag-sev molti"/g) || []).length, 2);
+  assert.equal((s.match(/<b>2<\/b>/g) || []).length, 2);
+  assert.doesNotMatch(s, />(G|N|P|A)\.<\/span>/);                 // niente nomi ridotti a una lettera
+  // i dieci che restano da soli tengono il loro nome
+  assert.equal((s.match(/class="ag-sev cat-/g) || []).length, 8);
+  assert.match(s, /<span>Laura<\/span>/);
+  assert.match(s, /<span>Rita<\/span>/);
 });
 
 console.log(`\n${ok} prove superate`);

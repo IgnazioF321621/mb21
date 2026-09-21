@@ -280,6 +280,9 @@ prova('Disposizione del giorno: chi si accavalla va in colonne affiancate, gli a
   const tre = A.disposizioneGiorno([ev('x', '2026-09-21', '10:00', 60), ev('y', '2026-09-21', '10:15', 60), ev('z', '2026-09-21', '10:30', 60)]);
   assert.deepEqual(tre.blocchi.map(x => x.colonne), [3, 3, 3]);
   assert.deepEqual(tre.blocchi.map(x => x.col), [0, 1, 2]);
+  // ogni blocco sa in che gruppo di accavallati sta (serve alla settimana)
+  assert.equal(b('pino').gruppo, b('anna').gruppo);
+  assert.notEqual(b('pm').gruppo, b('pino').gruppo);
   // uno dopo l'altro senza toccarsi: nessuna colonna in più
   const fila = A.disposizioneGiorno([ev('m', '2026-09-21', '09:00', 60), ev('n', '2026-09-21', '10:00', 60)]);
   assert.deepEqual(fila.blocchi.map(x => x.colonne), [1, 1]);
