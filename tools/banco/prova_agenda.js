@@ -163,14 +163,14 @@ prova('Passi dell\'esito: PM in due passi (Fatto = Presentazione, poi i risultat
   const pres = A.passiEsito({ ...pm, esito: 'Presentazione', completata: true }, 'Prospect');
   assert.deepEqual(pres.map(x => x.passo), ['cambia-avvenuto', 'risultato']);
   assert.equal(pres[0].attuale, 'Fatto');
-  assert.deepEqual(pres[1].bottoni, ['Dare Seguito', 'Iscrizione', 'Prodotti', 'No BuonFine']);
+  assert.deepEqual(pres[1].bottoni, ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine']);   // ordine di Ignazio 21/09: dal migliore al peggiore
   const ds = A.passiEsito({ ...pm, esito: 'Dare Seguito', completata: true }, 'Prospect');
   assert.deepEqual(ds.map(x => [x.passo, x.attuale]), [['cambia-avvenuto', 'Fatto'], ['cambia', 'Dare Seguito']]);
   const rim = A.passiEsito({ ...pm, esito: 'Rimandato', completata: true }, 'Prospect');
   assert.deepEqual(rim.map(x => [x.passo, x.attuale]), [['cambia-avvenuto', 'Rimandato']]);
   const fu = { tipo_azione: 'Follow Up', modalita: 'Personale', categoria: 'Prospect', completata: false, esito: null };
   assert.equal(A.passiEsito(fu, 'Prospect')[0].passo, 'avvenuto');
-  assert.deepEqual(A.passiEsito(fu, 'Prospect', true)[1].bottoni, ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine']);
+  assert.deepEqual(A.passiEsito(fu, 'Prospect', true)[1].bottoni, ['Iscrizione', 'DS Fissato', 'Prodotti', 'No BuonFine']);
   assert.equal(A.fattoDi('Piano Marketing'), 'Presentazione');
   assert.equal(A.fattoDi('Follow Up'), null);
   assert.equal(A.chiudeRelazione('No Interesse'), true); assert.equal(A.chiudeRelazione('No BuonFine'), true); assert.equal(A.chiudeRelazione('Dare Seguito'), false);
@@ -357,6 +357,10 @@ prova('Cantiere 39 · esiti del Contatto: i buoni prima, quelli non andati su un
   // un'azione vecchia con un esito tolto dall'elenco lo tiene sceglibile nel foglio «Modifica»
   assert.ok(A.sceltePerModifica({ categoria: 'Prospect', tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Mai contattato o 2+ anni' }).esiti.includes('Mai contattato o 2+ anni'));
   assert.deepEqual(A.ESITI_CON_GIORNO, ['Richiamare', 'PM Fissato', 'Appuntamento']);
+  // PM e Follow Up: una riga sola, dal migliore al peggiore (Ignazio 21/09)
+  assert.deepEqual(A.esitiInDueRighe(A.RISULTATI['Piano Marketing'].esiti), [['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine']]);
+  assert.deepEqual(A.esitiInDueRighe(A.RISULTATI['Follow Up'].esiti), [['Iscrizione', 'DS Fissato', 'Prodotti', 'No BuonFine']]);
+  assert.deepEqual(A.esitiInDueRighe(['Fatto', 'Rimandato', 'No Show']), [['Fatto', 'Rimandato', 'No Show']]);
 });
 
 prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quella', () => {
