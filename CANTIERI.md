@@ -18,7 +18,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 **Fatto (21/09, `2026.09.21 · 00:33`)**
 - **Tre modi di guardare**, con l'interruttore in alto e la scelta che si ricorda sul telefono: **Giorno** (a orario), **Settimana**, **Elenco** (quello di prima, intatto)
 - **Giorno a orario**: ore dalle 8 a mezzanotte (si allarga se c'è qualcosa prima o dopo), ogni impegno alto quanto dura, **chi si accavalla sta affiancato** (il doppio appuntamento si vede subito), avviso «N impegni si accavallano», **linea rossa di «adesso»** che scende da sola e bottone «Ora», **il vuoto si tocca** per fissare a quell'ora (al quarto d'ora: 17:15 si può), invito «＋ libero» nei buchi da un'ora in su
-- **Settimana**: sette colonne, il nome di battesimo dentro il blocco, oggi e il giorno scelto in evidenza; si tocca un impegno e si va a quel giorno già aperto
+- **Settimana**: sette colonne, il nome di battesimo dentro il blocco, oggi e il giorno scelto in evidenza; si tocca un impegno e si va a quel giorno già aperto. **Due o più alla stessa ora diventano un blocco solo con il numero** (Ignazio 21/09: «G. o N. è brutto»); sotto, il **riassunto della settimana**: «5 PM · 2 Follow Up · 2 Appuntamenti…»
 - **Pallini colorati** nella striscia dei giorni: uno per impegno, **col colore della persona** (arancio Prospect · ottanio Cliente · blu Partner), schiariti sul giorno scelto
 - **Durate**: aggiunta **45 min**; **5 min** proposti per i Contatti (telefonata, messaggio, presenza) e un'ora per il resto; pastiglia «**Altra…**» con «**Finisce alle**» per qualunque orario. **La durata si cambia anche dopo**: «Finisce alle» adesso c'è anche in **Sposta** e in **Modifica azione** (prima un appuntamento fissato non si poteva più allungare)
 - **Avviso «a quest'ora hai già…»** quando si fissa, si sposta o si modifica: dice chi c'è e propone le **ore libere più vicine** da toccare. Se l'Agenda non ha in mano quel giorno non dice niente (meglio tacere che dire una cosa non vera)
@@ -26,10 +26,10 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Prove**: 25 in `tools/banco/prova_agenda.js` (conti) e **8 nuove** in `tools/banco/prova_agenda_vista.js` (il disegno vero: niente fuori dalla griglia, le colonne degli accavallati, la giornata libera, l'avviso). Tutto il banco passa
 - **Anteprima con dati finti** per guardare senza database: `node tools/design/anteprima_agenda.js` → `tools/design/anteprima_agenda.html`
 
-**Da decidere con Ignazio quando la guarda**
-- L'invito «＋ libero» nei buchi: va bene così o dà fastidio?
-- La settimana: basta il nome di battesimo o serve anche l'ora dentro il blocco?
-- Le ore della griglia: 8 → 24 vanno bene tutti i giorni?
+**Deciso da Ignazio il 21/09, guardando l'anteprima**
+- L'invito «＋ libero» nei buchi: **utile, resta**
+- La settimana: «G. o N. è brutto» → gli accavallati non si tagliano più, **diventano un blocco solo con il numero**
+- Le ore della griglia **8 → 24**: vanno bene
 
 **Idee messe da parte (non fatte, da valutare dopo)**
 - **Trascinare un impegno** nella griglia per spostarlo (tocco lungo e trascina): bello ma delicato sul telefono, meglio dopo aver provato il resto
