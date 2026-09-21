@@ -2,13 +2,36 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 21 settembre 2026 (mattina: **chiuso e pubblicato il cantiere 37**, l'Agenda come il Calendario di iPhone).*
+*Aggiornato: 21 settembre 2026 (mattina: **chiuso e pubblicato il cantiere 37** (Agenda a orario); aperto il **38**, gli appuntamenti nel Calendario di iPhone — da fare in una sessione nuova).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 38. GLI APPUNTAMENTI NEL CALENDARIO DI IPHONE (aperto il 21/09)
+*Ignazio 21/09, chiuso il cantiere 37: «dobbiamo gestire meglio il poter sincronizzare o mandare gli appuntamenti nell'agenda personale di Google o di NotePlan… fai una ricerca approfondita su come portare gli appuntamenti su Calendario Apple, e anche l'anteprima, un po' quello che fa NotePlan come concetto di base, ma fatto di default da MB21». **Lavorare in una sessione nuova, non insieme al cantiere 37.**
+
+**Cosa si sa già (ricerca del 21/09, fonti in fondo)**
+- **Abbonarsi è diverso da mandare.** *Mandare* un appuntamento (quello che fanno oggi i bottoni Google e NotePlan) fa una **copia**: se poi in MB21 lo sposti, nel calendario resta dov'era. *Abbonarsi* è un **collegamento**: MB21 pubblica l'agenda a un indirizzo e il Calendario la rilegge da solo
+- **Il Calendario Apple rilegge un abbonamento circa una volta all'ora**, e l'utente può portarlo a **5 o 15 minuti** dalle impostazioni del telefono. È il più veloce dei calendari
+- **Google rilegge ogni 12-24 ore**: per Google l'abbonamento serve a poco, meglio tenere il bottone «aggiungi questo evento» di adesso
+- **Non possiamo decidere noi la frequenza**: nel file si può scrivere «ricontrollami ogni tot» (`X-PUBLISHED-TTL`, `REFRESH-INTERVAL`), ma Apple e Google lo ignorano
+- **Il contrario (leggere il calendario di iPhone da MB21) non ha una strada ufficiale**: nessuna app sul web può leggere iCloud. L'unica via è che l'utente renda **pubblico in sola lettura** un calendario iCloud e incolli il link in MB21. Attenzione: chi ha il link legge titoli e note, quindi va usato un calendario apposta
+- **Doppio senso vero (il calendario che riscrive in MB21): escluso.** Richiederebbe le credenziali dell'account Apple dentro MB21
+
+**I tre lavori proposti**
+1. **Bottone «Calendario Apple» sull'appuntamento**, accanto a Google e NotePlan: un file `.ics` che iPhone apre già pronto da aggiungere. Piccolo: niente database, niente server, vale subito per tutti. Attenzione: va servito come `text/calendar`, se no Safari non lo passa al Calendario
+2. **Abbonamento personale** (il pezzo vero): MB21 pubblica gli appuntamenti del partner a un **indirizzo segreto suo** (`utenti.calendario_token`), lui si abbona una volta dal Profilo e da lì in poi il Calendario Apple si aggiorna da solo. Serve una funzione Edge come `avvisi` (pubblicata con `--no-verify-jwt`), che restituisce il `.ics`. Regole da rispettare: **UID stabile** per ogni azione (se cambia, l'evento si sdoppia), `SEQUENCE` che cresce a ogni modifica, e gli appuntamenti eliminati restano nel file con `STATUS:CANCELLED` (se spariscono e basta, certi calendari li tengono per sempre). È **a senso unico**: quello che si scrive nel Calendario non torna in MB21
+3. **Gli impegni personali dentro MB21** (il concetto NotePlan): l'utente incolla in MB21 il link di un suo calendario iCloud pubblico, MB21 lo legge e disegna nella griglia le fasce **già occupate** in grigio, e ne tiene conto nell'avviso «a quest'ora hai già…». **Da decidere con Ignazio**: vuole tenere un calendario iCloud pubblico dedicato? Se no, questo lavoro non si fa
+
+**Da decidere prima di partire**
+- Si parte dal **lavoro 1** (piccolo, subito, per tutti) o dritti al **2** (l'abbonamento)?
+- Il lavoro 3 si fa o no (nodo privacy del calendario pubblico)?
+- L'abbonamento è **per tutti i partner** o solo per chi lo chiede? (chi ha il link legge i tuoi appuntamenti: serve poterlo **rigenerare**)
+
+**Fonti della ricerca**: [Calfeed](https://calfeed.ai/learn/ics-refresh-rate-apple-google) · [MoonCal](https://usemooncal.com/en/guides/google-calendar-ics-refresh) · [Apple Support](https://support.apple.com/guide/icloud/share-a-calendar-mm6b1a9479/icloud) · [nocal](https://nocal.app/help/apple-calendar/get-public-icloud-link) · [AddCal .ics](https://addcal.co/blog/how-to-add-an-ics-file-to-iphone-apple-calendar) · [AddCal webcal](https://addcal.co/blog/what-is-webcal-subscription-calendar-urls) · [Jane](https://jane.app/guide/deep-dive-into-calendar-subscription-issues-with-icalendar)
 
 ## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
 *Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
