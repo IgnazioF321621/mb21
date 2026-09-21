@@ -49,7 +49,8 @@
   const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
-  // Esiti di una telefonata non andata: a video stanno sotto quelli buoni, su una riga loro (index.html → bottoniEsiti)
+  // Esiti di una telefonata non andata: a video stanno sotto quelli buoni, su una riga loro (index.html → bottoniEsiti).
+  // PM e Follow Up no (Ignazio 21/09): lì i risultati sono quattro, in fila dal migliore al peggiore, vedi RISULTATI.
   const ESITI_NON_ANDATI = ['Telefono spento', 'No Interesse', 'No Risposta'];
   const esitiInDueRighe = bottoni => [bottoni.filter(x => !ESITI_NON_ANDATI.includes(x)), bottoni.filter(x => ESITI_NON_ANDATI.includes(x))].filter(g => g.length);
   // Esiti dati dalla coda che portano con sé un giorno scelto (`data_scelta`): con gli altri il giorno non serve più
@@ -207,8 +208,9 @@
   // quindi Fatto apre solo il secondo passo (fattoAperto). Gli altri tipi: un passo solo. Azione già chiusa: «cambia» tra tutte le fasi.
   const AVVENUTO = ['Fatto', 'Rimandato', 'No Show'];
   const RISULTATI = {
-    'Piano Marketing': { fatto: 'Presentazione', esiti: ['Dare Seguito', 'Iscrizione', 'Prodotti', 'No BuonFine'] },
-    'Follow Up': { fatto: null, esiti: ['DS Fissato', 'Iscrizione', 'Prodotti', 'No BuonFine'] },
+    // l'ordine è di Ignazio (21/09, cantiere 39): «prima vanno le cose buone e poi quelle meno», tutti in una riga
+    'Piano Marketing': { fatto: 'Presentazione', esiti: ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine'] },
+    'Follow Up': { fatto: null, esiti: ['Iscrizione', 'DS Fissato', 'Prodotti', 'No BuonFine'] },
   };
   const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
   // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.

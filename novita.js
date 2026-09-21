@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 17:07', pagina: 'agenda', titolo: 'Risultati del PM in ordine, dal migliore',
+      testo: 'Dopo un Piano Marketing o un Follow Up, in «Com\'è andata?» i risultati sono in fila dal migliore: Iscrizione, Dare Seguito, Prodotti, No BuonFine.' },
     { quando: '2026.09.21 · 15:55', pagina: 'dashboard', titolo: 'Esiti delle telefonate: gli stessi ovunque',
       testo: 'In coda e in Agenda trovi gli stessi esiti, nello stesso ordine: sopra quelli buoni (PM Fissato, Relazione, Richiamare, Consulenza Prodotti), sotto quelli non andati (Telefono spento, No Interesse, No Risposta). Se cambi l\'esito di un «Richiamare», l\'app ti chiede se togliere il giorno dall\'Agenda. E quando sposti l\'ora di un appuntamento, l\'ora di fine si sposta da sola.' },
     { quando: '2026.09.21 · 11:53', pagina: 'app', titolo: 'MB21 anche in Google Calendar',
