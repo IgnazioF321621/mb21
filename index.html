@@ -988,29 +988,29 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609210731"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609210731"></script>
-<script src="lista.js?v=202609210731"></script>
-<script src="rubrica.js?v=202609210731"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609210731"></script>
-<script src="agenda.js?v=202609210731"></script>
-<script src="report.js?v=202609210731"></script>
-<script src="check.js?v=202609210731"></script>
-<script src="mappa.js?v=202609210731"></script>
-<script src="pagina-dashboard.js?v=202609210731"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609210731"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609210731"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609210731"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609210731"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609210731"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609210731"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609210731"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609210731"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609210731"></script>
-<script src="benvenuto.js?v=202609210731"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609210731"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609210900"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609210900"></script>
+<script src="lista.js?v=202609210900"></script>
+<script src="rubrica.js?v=202609210900"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609210900"></script>
+<script src="agenda.js?v=202609210900"></script>
+<script src="report.js?v=202609210900"></script>
+<script src="check.js?v=202609210900"></script>
+<script src="mappa.js?v=202609210900"></script>
+<script src="pagina-dashboard.js?v=202609210900"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609210900"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609210900"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609210900"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="pagina-mappa.js?v=202609210900"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609210900"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609210900"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609210900"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609210900"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609210900"></script>
+<script src="benvenuto.js?v=202609210900"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609210900"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 07:31';
+const APP_VERSION = '2026.09.21 · 09:00';
 
 const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 // Chiave pubblica (anon/publishable): può stare nella pagina, i dati li proteggono le regole di accesso.
@@ -1642,6 +1642,8 @@ function portaInVista() {
 const ICONA_G = `<svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:2px" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.1 38 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-8-6.2C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l8-6.2z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.2C6.5 42.6 14.6 48 24 48z"/></svg>`;
 // Icona di NotePlan: il logo vero (asterisco arancione, da noteplan.co, in icone/noteplan-32.png; Ignazio 17/09: «il logo vero, non solo la N»)
 const ICONA_NP = `<img src="icone/noteplan-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px">`;
+// Icona del Calendario Apple: quella vera dell'app Calendario del Mac (icone/calendario-apple-32.png; Ignazio 21/09: «trova anche l'icona corretta»)
+const ICONA_CAL = `<img src="icone/calendario-apple-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px">`;
 
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
 // si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
@@ -1660,7 +1662,7 @@ function extraEvento(e) {
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>
-      ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button><button data-cmd="noteplan">${ICONA_NP} NotePlan</button></div>`}`;
+      ${richiamo ? '' : `<div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal">${ICONA_G} Google Calendar</button><button data-cmd="noteplan">${ICONA_NP} NotePlan</button><button data-cmd="ical">${ICONA_CAL} Calendario Apple</button></div>`}`;
 }
 
 function eventoAgenda(e, opz) {
@@ -1707,6 +1709,16 @@ function foglioEvento(e) {
 
 const dataLunga = g => new Date(g + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
+// Cantiere 38: l'appuntamento come file .ics creato al momento e scaricato. Su iPhone (Safari e app dalla Home, provato da Ignazio
+// il 21/09) compare il foglio «Aggiungi al calendario»; su Mac e Android il file si apre con il calendario del dispositivo.
+function scaricaCalendario(e) {
+  const url = URL.createObjectURL(new Blob([MB21Agenda.fileCalendario(e)], { type: 'text/calendar;charset=utf-8' }));
+  const l = document.createElement('a');
+  l.href = url; l.download = 'mb21-appuntamento.ics';
+  document.body.appendChild(l); l.click(); l.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 // Esiti e comandi di un impegno: gli stessi nell'elenco e nel foglio della griglia. `dopo()` ridisegna chi l'ha aperto.
 function collegaComandiEvento(el, e, dopo) {
   const A = MB21Agenda;
@@ -1721,6 +1733,7 @@ function collegaComandiEvento(el, e, dopo) {
       if (b.dataset.cmd === 'contatto') { chiudiFoglio(); return apriContattoDa(e.contatto_id); }
       if (b.dataset.cmd === 'gcal') return window.open(A.linkGoogleCalendar(e), '_blank');   // cantiere 23: evento già compilato, si preme «Salva» lì
       if (b.dataset.cmd === 'noteplan') { location.href = A.linkNotePlan(e); return; }       // cantiere 23: riga nella nota del giorno di NotePlan
+      if (b.dataset.cmd === 'ical') return scaricaCalendario(e);   // cantiere 38: iPhone apre «Aggiungi al calendario»
       if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } }); }
     };
   });

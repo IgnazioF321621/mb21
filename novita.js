@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.21 · 09:00', pagina: 'agenda', titolo: 'L\'appuntamento nel Calendario di iPhone',
+      testo: 'Dentro ogni appuntamento c\'è il bottone «Calendario Apple»: lo tocchi, poi «Aggiungi al calendario», e te lo ritrovi nel calendario del telefono.' },
     { quando: '2026.09.21 · 07:31', pagina: 'agenda', titolo: 'Agenda: la giornata a orario',
       testo: 'Adesso l\'Agenda si guarda in tre modi, con i bottoni Giorno · Settimana · Elenco: «Giorno» mette le ore una sotto l\'altra e ogni appuntamento al suo posto, alto quanto dura, così vedi a colpo d\'occhio quando sei pieno e quando sei libero; «Settimana» ti dà i sette giorni insieme; «Elenco» è come prima. Tocca un\'ora libera e fissi lì (anche 17:15). Se a quell\'ora hai già qualcosa l\'app te lo dice prima di salvare e ti propone le ore libere più vicine, così non ti ritrovi due appuntamenti insieme. I pallini sotto i giorni dicono quante persone vedi quel giorno, col colore della categoria. Le telefonate ora durano 5 minuti invece di un\'ora, e la durata di un appuntamento si può cambiare anche dopo, da «Sposta».' },
     { quando: '2026.09.20 · 22:34', pagina: 'app', titolo: 'Il Check si legge a colpo d\'occhio',

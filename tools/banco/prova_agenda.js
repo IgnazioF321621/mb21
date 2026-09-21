@@ -194,6 +194,33 @@ prova('linkGoogleCalendar: titolo, ora di Roma → UTC, durata, note', () => {
   assert.equal(senzaFine.searchParams.get('text'), 'MB21 · Appuntamento · X');
   assert.equal(senzaFine.searchParams.get('details'), null);
 });
+prova('fileCalendario: ora di Roma, UID fisso, durata, note senza telefono, righe entro 75 byte', () => {
+  const a = { id: 'abc-123', modalita: 'PM 1a1', tipo_azione: 'Piano Marketing', inizio: '2026-09-18T16:30:00Z', fine: '2026-09-18T17:30:00Z',
+    ospite: 'Anna', note: 'portare il libro; e la penna,\nriga due', contatti: { nome: 'Pino Manolo', telefono: '+39 333 1234567' } };
+  const f = A.fileCalendario(a, '2026-09-21T06:00:00Z');
+  const righe = f.split('\r\n');
+  assert.equal(righe[0], 'BEGIN:VCALENDAR');
+  assert.equal(righe[righe.length - 2], 'END:VCALENDAR');   // dopo c'è solo l'a capo finale
+  assert.ok(righe.includes('UID:azione-abc-123@mb21'));
+  assert.ok(righe.includes('DTSTAMP:20260921T060000Z'));
+  assert.ok(righe.includes('DTSTART;TZID=Europe/Rome:20260918T183000'));
+  assert.ok(righe.includes('DTEND;TZID=Europe/Rome:20260918T193000'));
+  assert.ok(righe.includes('SUMMARY:MB21 · PM 1a1 · Pino Manolo'));
+  assert.ok(righe.includes('DESCRIPTION:Ospite: Anna\\nportare il libro\\; e la penna\\,\\nriga due'));
+  assert.ok(!f.includes('333'));   // niente telefono: il Calendario viaggia su iCloud
+  assert.ok(righe.includes('TZID:Europe/Rome') && righe.includes('END:VTIMEZONE'));
+  // lo stesso appuntamento riaggiunto più tardi: stesso UID, SEQUENCE più alta
+  const seq = t => Number(t.match(/SEQUENCE:(\d+)/)[1]);
+  assert.ok(seq(A.fileCalendario(a, '2026-09-21T07:00:00Z')) > seq(f));
+  // senza fine: 1 ora; a cavallo dell'anno e dell'ora solare
+  const s = A.fileCalendario({ id: 'x', tipo_azione: 'Appuntamento', inizio: '2026-12-31T23:30:00Z', contatti: { nome: 'X' } }, '2026-09-21T06:00:00Z');
+  assert.ok(s.includes('DTSTART;TZID=Europe/Rome:20270101T003000\r\nDTEND;TZID=Europe/Rome:20270101T013000'));
+  assert.ok(s.includes('SUMMARY:MB21 · Appuntamento · X') && !s.includes('DESCRIPTION'));
+  // nota lunga con accenti: nessuna riga oltre 75 byte, e ricucita torna uguale
+  const lunga = A.fileCalendario({ ...a, note: 'è così perché più giù c\'è già tutto · '.repeat(8) }, '2026-09-21T06:00:00Z');
+  for (const r of lunga.split('\r\n')) assert.ok(Buffer.byteLength(r) <= 75, r);
+  assert.ok(lunga.replace(/\r\n /g, '').includes('DESCRIPTION:Ospite: Anna\\n' + 'è così perché più giù c\'è già tutto · '.repeat(8).trim()));
+});
 prova('linkNotePlan: nota del giorno di Roma, riga con ora, tipo, nome e dettagli', () => {
   const a = { modalita: 'PM 1a1', tipo_azione: 'Piano Marketing', inizio: '2026-09-18T16:30:00Z', fine: '2026-09-18T17:30:00Z',
     ospite: 'Anna', note: 'portare il libro', contatti: { nome: 'Pino Manolo', telefono: '+39 333 1234567' } };
