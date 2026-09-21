@@ -39,8 +39,8 @@ MB21 è l'unico posto dove scrivi i tuoi appuntamenti. Il telefono ti avvisa e i
 ── PARTE 1 · GLI AVVISI ──
 
 SLIDE 3 · Cosa ti arriva
-- Alle 9: il riepilogo della giornata
-- 30 minuti prima di ogni appuntamento e di ogni telefonata messa in Agenda con un orario (se hai più telefonate di fila arriva un avviso solo: «Tra 30 minuti · 3 telefonate»)
+- Alle 9: il programma di oggi, cosa ti aspetta (non «riepilogo»: fa pensare a una cosa già avvenuta — Ignazio 21/09)
+- 30 minuti prima: il promemoria di ogni appuntamento e di ogni telefonata messa in Agenda, con il suo orario (se hai più telefonate di fila arriva un avviso solo: «Tra 30 minuti · 3 telefonate»)
 - Un'ora dopo la fine, se non hai segnato l'esito: «Com'è andata?»
 - Alle 22: il promemoria del Check del Giorno
 Arrivano anche con l'app chiusa.
