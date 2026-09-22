@@ -1066,6 +1066,12 @@ function apriCheck() {
       <div class="vn-aiuto">Libri di crescita personale, vendita, network: niente romanzi. Con «Libro non da sistema…» scrivi titolo e autore una volta sola: se un giorno entra tra i consigliati N21, il diario lo riconosce da solo.</div></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     </div>
+    <h4 class="mc-t">Core N21</h4><div class="riquadro mc-g">
+    <div class="campo"><label>${ic('audio')} Traccia CEP ascoltata</label><input id="ck-titolo-traccia" maxlength="120" placeholder="Il titolo del CD di oggi">
+      <div class="vn-aiuto">Va nella sezione 4 del modulo Core («Ascoltare 1 CD al giorno»). Le tracce del percorso segnate «ascoltata» ci vanno da sole.</div></div>
+    <label class="cf-spunta"><input type="checkbox" id="ck-open"> <span>Oggi sono stato all'<b>OPEN</b> settimanale</span></label>
+    <label class="cf-spunta"><input type="checkbox" id="ck-counseling"> <span>Oggi ho fatto la sessione di <b>counseling</b> con lo sponsor</span></label>
+    </div>
     <div class="errore" id="ck-errore"></div>
     <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
   </div>`;
@@ -1120,6 +1126,9 @@ function apriCheck() {
     if (esistente && esistente.libro && !vecchio && ![...libro.options].some(o => o.value === esistente.libro)) libro.insertBefore(new Option(esistente.libro, esistente.libro), libro.querySelector('[value="__altro__"]'));
     libro.value = esistente && !vecchio ? esistente.libro || '' : '';
     note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
+    velo.querySelector('#ck-titolo-traccia').value = esistente ? esistente.titolo_traccia || '' : '';   // Core N21 (cantiere 41)
+    velo.querySelector('#ck-open').checked = !!(esistente && esistente.open);
+    velo.querySelector('#ck-counseling').checked = !!(esistente && esistente.counseling);
     avviso.style.display = esistente ? 'block' : 'none';
     avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
       (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : ''));
@@ -1190,7 +1199,10 @@ function apriCheck() {
   campoData.onchange = caricaGiorno;
   caricaGiorno();
   velo.querySelector('#ck-si').onclick = async () => {
-    const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null };
+    const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null,
+      // Core N21 (cantiere 41): la riga giornaliera del modulo
+      titolo_traccia: velo.querySelector('#ck-titolo-traccia').value.trim().slice(0, 120) || null,
+      open: velo.querySelector('#ck-open').checked, counseling: velo.querySelector('#ck-counseling').checked };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
     if (MB21Dashboard.contattiDalleAzioni(v.data)) for (const k of ['contatti', 'pm']) if (String(v[k]).trim() === '') v[k] = '0';   // dal 14/09 li danno le azioni (un Check vecchio tiene i suoi numeri, che non contano)
     if (MB21Dashboard.vpDalleVendite(v.data)) v.vp_clienti = '0';   // dal 18/09 i VP Clienti li danno le vendite: nel Check resta 0
@@ -1213,7 +1225,7 @@ function apriCheck() {
       await caricaDashboard(ST.oggi);
       disegnaOggi();
       return mostraToast('Check corretto', async () => {
-        const vecchi = { libro: prima.libro, note_libro: prima.note_libro };
+        const vecchi = { libro: prima.libro, note_libro: prima.note_libro, titolo_traccia: prima.titolo_traccia, open: prima.open, counseling: prima.counseling };
         for (const [k] of MB21Dashboard.CAMPI_CHECK) vecchi[k] = prima[k];
         const { error: e2 } = await dbq('annulla correzione check', supa.from('check_giorno').update(vecchi).eq('id', prima.id));
         if (e2) return mostraToast('Annullamento non riuscito: riprova.');
