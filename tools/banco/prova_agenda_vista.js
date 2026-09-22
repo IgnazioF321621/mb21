@@ -84,7 +84,13 @@ prova('Un richiamo dalla coda si vede diverso da un appuntamento fissato', () =>
 });
 
 prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore libere vicine', () => {
-  const a = V.avvisoSovrapposti(OGGI, '18:30', 60, null);
+  // l'avviso propone ore libere «da adesso in poi» se il giorno è oggi: la prova fissa «adesso» alle 10 del mattino,
+  // se no la sera non resta nessuna ora libera e la prova fallisce solo per l'orologio (visto il 22/09 alle 21)
+  const VeroDate = Date;
+  const FERMO = VeroDate.parse('2026-09-21T08:00:00Z');
+  global.Date = class extends VeroDate { constructor(...a) { super(...(a.length ? a : [FERMO])); } static now() { return FERMO; } };
+  let a;
+  try { a = V.avvisoSovrapposti(OGGI, '18:30', 60, null); } finally { global.Date = VeroDate; }
   assert.match(a, /A quest'ora hai già 2 impegni/);
   assert.match(a, /PM 1a1 · Pino Manolo/);
   assert.match(a, /Riordino · Anna Villa/);
