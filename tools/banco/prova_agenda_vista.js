@@ -17,7 +17,7 @@ const conAzioni = (righe, vista, aperta) => { AG.azioni = righe; const h = V.vis
 const blocchi = html => [...html.matchAll(/class="ag-ev[^"]*"[^>]*style="top:(-?\d+)px;height:(\d+)px/g)].map(m => ({ cima: +m[1], alta: +m[2] }));
 const altezzaGriglia = html => Number(/class="ag-ore" data-da="\d+" data-alt="\d+" style="height:(\d+)px/.exec(html)[1]);
 
-prova('Le tre viste si disegnano e ognuna dice quello che deve', () => {
+prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la griglia nel cassetto, il foglio del giorno con il Core)', () => {
   const g = V.vista('orario');
   assert.match(g, /class="ag-griglia"/);
   assert.doesNotMatch(g, /lunedì 21 settembre/);   // il giorno si legge nella striscia: sotto non si ripete (Ignazio 21/09)
@@ -26,13 +26,20 @@ prova('Le tre viste si disegnano e ognuna dice quello che deve', () => {
   const s = V.vista('settimana');
   assert.match(s, /class="ag-griglia sett"/);
   assert.equal((s.match(/class="ag-colonna/g) || []).length, 7);
-  const e = V.vista('elenco', 'p1');
-  assert.match(e, /class="ag-evento"/);
-  assert.match(e, /È AVVENUTO\?|Com'è andata\?|ag-esiti/);   // la riga aperta mostra gli esiti
-  // l'interruttore c'è in tutte e tre, e segna quella in cui sei
-  for (const [html, vista] of [[g, 'orario'], [s, 'settimana'], [e, 'elenco']]) {
-    assert.match(html, new RegExp(`data-vista="${vista}" class="si"`));
-  }
+  const f = V.vista('giorno');
+  assert.match(f, /class="ag-impegni"/);                 // la card degli impegni
+  assert.match(f, /class="ag-imp[^"]*" data-evento="p1"/);
+  assert.match(f, /Oggi, lun 21 set/);                   // il titolo del giorno
+  assert.match(f, /<h2 class="ag-sez">Core<\/h2>/);       // il foglio: Core in cima, poi Routine, poi Da fare
+  assert.ok(f.indexOf('ag-sez">Core') < f.indexOf('ag-sez">Routine') && f.indexOf('ag-sez">Routine') < f.indexOf('ag-sez">Da fare'));
+  assert.match(f, /cosa fatta auto[^"]*"[^>]*data-voce="mcd"/);     // 1 CD: spuntato da solo (tracce 1/1)
+  assert.match(f, /class="cosa auto" data-voce="mpagine"/);          // 6/10 pagine: non ancora
+  assert.match(f, /6\/10/);
+  assert.match(f, /3\/8 · questo mese/);                              // i PM del mese, con la scala accanto
+  assert.doesNotMatch(f, /Lavorare di squadra/);                     // voce spenta: non compare
+  assert.match(f, /da 19\/9/);                                       // la cosa non fatta di sabato si vede oggi
+  assert.match(f, /id="ag-cronologia"/);                             // il cassetto in fondo
+  assert.doesNotMatch(f, /class="ag-griglia"/);                      // la griglia non sta nella pagina
 });
 
 prova('Chi si accavalla sta affiancato: due colonne a metà larghezza', () => {
@@ -156,10 +163,10 @@ prova('Le parti invisibili che si toccano hanno una dimensione (se no non succed
 });
 
 prova('I richiami stanno SOPRA la giornata, in pastiglie corte, e in fondo non resta niente', () => {
-  const g = V.vista('orario');
-  // sopra: prima della griglia, dopo l'interruttore delle viste
-  assert.ok(g.indexOf('class="ag-rich"') > g.indexOf('class="ag-viste"'), 'le pastiglie vengono dopo l\'interruttore');
-  assert.ok(g.indexOf('class="ag-rich"') < g.indexOf('class="ag-griglia"'), 'le pastiglie devono stare sopra la giornata');
+  const g = V.vista('giorno');
+  // sopra: dopo il titolo del giorno, prima della card degli impegni (cantiere 41: la pagina formato NotePlan)
+  assert.ok(g.indexOf('class="ag-rich"') > g.indexOf('class="ag-titolo"'), 'le pastiglie vengono dopo il titolo');
+  assert.ok(g.indexOf('class="ag-rich"') < g.indexOf('class="ag-impegni"'), 'le pastiglie devono stare sopra la giornata');
   assert.doesNotMatch(g, /ag-blocco/);                       // niente più righe grandi in fondo
   // ci sono tutte e quattro, con gli id di prima (i tocchi portano dove portavano)
   for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme', 'ag-passati']) assert.match(g, new RegExp(`id="${id}"`));

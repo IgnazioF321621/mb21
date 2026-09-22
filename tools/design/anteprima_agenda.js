@@ -27,7 +27,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -58,7 +58,11 @@ const AZIONI = [
 const modo = { admin: false, tutti: false };
 const app = { innerHTML: '', querySelectorAll: () => [], querySelector: () => null };
 const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati: [{}], aperta: null,
-  telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'orario', portato: 'fatto' };
+  telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'giorno', portato: 'fatto',
+  // cantiere 41: il foglio del giorno con il Core N21 (pagine e CD dal Check, PM e clienti dal mese) e due cose a mano
+  cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null }, { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null }],
+  modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
+  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 } };
 const stub = {
   MB21Agenda: A, MB21Icone, app, AG,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
@@ -69,17 +73,21 @@ const stub = {
   rigaPortato: n => 'portato da ' + n,
   collegaEsiti: () => {}, mostraToast: () => {}, mostraTab: () => {},
   nuovoAppuntamento: () => {}, spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
-  apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {},
+  apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ style: {}, classList: { add() {} }, appendChild() {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }), body: { appendChild() {} } },
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
   window: { scrollY: 0, innerHeight: 800, scrollTo: () => {}, addEventListener: () => {} },
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
+// `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Cronologia»); `giorno` (o `elenco`) = la pagina
+// formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
 function vista(v, aperta) {
-  AG.vista = v; AG.aperta = aperta || null; AG.portato = 'fatto';
+  AG.aperta = aperta || null; AG.portato = 'fatto';
+  if (v === 'orario') return grigliaGiorno(A.eventiDelGiorno(AG.azioni, AG.giorno), { mioId: modo.tutti ? null : 'io', admin: modo.admin });
+  AG.vista = v === 'settimana' ? 'settimana' : 'giorno';
   disegnaAgenda();
   return app.innerHTML;
 }
@@ -100,12 +108,12 @@ const modulo = () => `<div class="foglio mc" style="border-radius:22px;box-shado
     <div class="campo"><label>Finisce alle</label><input type="time" value="19:15"></div>
     ${avvisoSovrapposti('2026-09-21', '18:30', 45, null)}
   </div></div>`;
-const tutti = sola === 'giorno' ? telefono('Giorno · a orario', vista('orario'))
+const tutti = sola === 'giorno' ? telefono('Cronologia (il cassetto)', vista('orario'))
   : sola === 'settimana' ? telefono('Settimana', vista('settimana'))
-  : sola === 'elenco' ? telefono('Elenco (una riga aperta)', vista('elenco', 'p1'))
+  : sola === 'elenco' ? telefono('Il foglio del giorno', vista('giorno'))
   : sola === 'modulo' ? telefono('Fissi a un\'ora occupata', modulo())
-  : telefono('Giorno · a orario', vista('orario')) + telefono('Settimana', vista('settimana'))
-    + telefono('Elenco (una riga aperta)', vista('elenco', 'p1')) + telefono('Fissi a un\'ora occupata', modulo());
+  : telefono('Cronologia (il cassetto)', vista('orario')) + telefono('Settimana', vista('settimana'))
+    + telefono('Il foglio del giorno', vista('giorno')) + telefono('Fissi a un\'ora occupata', modulo());
 const pagina = `<!doctype html>
 <html lang="it"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

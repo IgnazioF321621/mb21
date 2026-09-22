@@ -89,7 +89,7 @@
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); }
-  /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «Non interessato» per intero in fondo.
+  /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «No Interesse» per intero in fondo (parole ufficiali dal cantiere 39).
      Due esiti buoni (Cliente: Ordine · Appuntamento) si dividono la prima riga. */
   .bottoni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .bottoni button { flex: 1 1 28%; min-width: 0; min-height: var(--tocco); font-size: 15px; font-weight: 600; padding: 12px 6px; border-radius: var(--raggio-bottone); border: 0; background: var(--sfondo); color: var(--testo); }
@@ -102,6 +102,13 @@
   .bottoni.scegli-cat button.piccola { flex: 1 1 auto; background: none; color: var(--testo-soft); font-size: 13px; padding: 6px 2px; white-space: nowrap; }
   .bottoni.scegli-cat button.piccola.no { flex: 1 1 auto; background: none; color: var(--pericolo); }
   .bottoni .no { flex: 1 1 100%; background: var(--pericolo-tinta); color: var(--pericolo); }
+  /* Cantiere 39 (Ignazio 21/09: «ci stiamo evolvendo»): in coda gli stessi esiti di «Com'è andata?», sopra i buoni a due a due,
+     sotto i non andati in fila. Supera la disposizione del 19/09 (buono intero in alto, negativo intero in fondo), che resta ai Riordini. */
+  .bottoni.due-righe { display: block; }
+  .bottoni.due-righe > div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bottoni.due-righe > div + div { margin-top: 14px; }
+  .bottoni.due-righe .buoni button { flex: 1 1 40%; }
+  .bottoni.due-righe .nonandati button { flex: 1 1 28%; font-size: 14px; }
   .bottoni button:disabled { opacity: .45; }
   /* Il colore che parla (cantiere 34). Scelta di Ignazio 19/09 («B»): negli elenchi la riga resta BIANCA e la categoria la dice il tondo con le
      iniziali (la riga tutta tinta, sul fondo perla, dava fastidio); la tinta --cat-tinta si usa dove c'è una persona sola: la testata della scheda. */
@@ -274,6 +281,76 @@
   button.app-riga { width: 100%; border: 0; text-align: left; color: var(--testo); font-family: inherit; }
   button.app-riga .freccia { margin-left: auto; color: var(--grigio); font-size: 18px; font-weight: 400; }
   /* Vendite nella scheda contatto (cantiere 26) */
+  /* ── Sharing nella scheda (cantiere 40): il consiglio, il registro, «a mano» ── */
+  .sh-etichetta { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--gr-crescita); margin-bottom: 6px; }
+  .sh-titolo { font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .sh-oratore { font-size: 13px; color: var(--grigio); margin-top: 3px; }
+  .sh-testo { display: block; width: 100%; border: 0; background: none; padding: 0; text-align: left; font-family: inherit; color: var(--testo); }
+  .sh-riassunto { font-size: 14px; margin-top: 10px; line-height: 1.4; white-space: pre-line; }
+  .sh-punti { font-size: 14px; margin-top: 10px; line-height: 1.4; white-space: pre-line; }
+  .sh-punti b { display: block; margin-bottom: 2px; }
+  .sh-perchi { font-size: 13px; color: var(--grigio); margin-top: 8px; padding: 8px 10px; background: var(--superficie-2); border-radius: 10px; line-height: 1.35; white-space: pre-line; }
+  .sh-perchi b { color: var(--testo); }
+  .sh-apri-riga { font-size: 13px; font-weight: 600; color: var(--gr-crescita); margin-top: 6px; display: flex; align-items: center; gap: 2px; }
+  .sh-apri-riga svg { transform: rotate(90deg); } .sh-testo.aperto .sh-apri-riga svg { transform: rotate(-90deg); }
+  .sh-azioni { display: flex; gap: 8px; margin-top: 12px; }
+  .sh-azioni .primario { flex: 1; }
+  .sh-altra { flex: none; min-height: var(--bottone-h); padding: 0 16px; border-radius: var(--raggio-bottone); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); font-size: 15px; font-weight: 600; }
+  .sh-fase { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--grigio); }
+  .sh-fase .barra { flex: 1; height: 6px; border-radius: 3px; background: var(--sfondo); overflow: hidden; }
+  .sh-fase .barra i { display: block; height: 100%; background: var(--gr-crescita); border-radius: 3px; }
+  .sh-fine { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .sh-elenco { padding: 2px 16px; }
+  .sh-riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); }
+  .sh-riga:last-child { border-bottom: 0; }
+  .sh-riga-testo { min-width: 0; flex: 1; border: 0; background: none; padding: 0; text-align: left; font-family: inherit; color: var(--testo); }
+  .sh-riga-titolo { font-size: 15px; font-weight: 600; }
+  .sh-riga-sotto { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .sh-sw { flex: none; border: 0; background: none; padding: 0; font-family: inherit; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-height: var(--tocco); justify-content: center; }
+  .sh-sw i { display: block; width: 46px; height: 28px; border-radius: 14px; background: var(--spento); position: relative; transition: background .15s; }
+  .sh-sw i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .sh-sw.si i { background: var(--ok); } .sh-sw.si i::after { left: 21px; }
+  .sh-sw span { font-size: 11px; font-weight: 700; color: var(--testo-tenue); } .sh-sw.si span { color: var(--ok); }
+  .sh-mano { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: var(--tocco); border: 0; background: none; color: var(--testo-soft); font-size: 15px; font-weight: 600; font-family: inherit; }
+  .sh-sesso { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .sh-consiglio-foglio { background: var(--superficie-2); border-radius: var(--raggio-riga); padding: 12px 14px; margin-bottom: 12px; }
+  .sh-consiglio-foglio .sh-perchi { background: var(--superficie); }
+  .sh-foglio-fondo { display: flex; justify-content: space-between; }
+  .sh-nota { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; color: var(--grigio); line-height: 1.35; margin-bottom: 12px; } .sh-nota svg { flex: none; margin-top: 2px; }
+  .sh-nota.importante { font-size: 14px; color: var(--proposta); background: var(--proposta-tinta); border-radius: var(--raggio-bottone); padding: 10px 12px; } .sh-nota.importante b { color: var(--proposta); }
+  .sh-stato.ricordaglielo { color: var(--proposta); font-weight: 600; } .sh-stato.scaduta { color: var(--rosso); font-weight: 600; }
+  /* «Ascoltata» è spento (grigio) finché non lo tocchi: acceso verde solo dopo (Ignazio 22/09: «già verde è ingannevole») */
+  .sh-ok { flex: none; min-height: 36px; padding: 6px 12px; border-radius: var(--raggio-pill); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font-size: 13px; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
+  .sh-ok.si { border-color: var(--ok); background: var(--ok); color: #fff; }
+  .sh-ok:disabled:not(.si) { opacity: .5; }
+  .avv-partner.percorso .sh-fase { margin-top: 8px; }
+  /* acceso solo quando c'è qualcosa da ascoltare; altrimenti bianco e tranquillo (Ignazio 22/09: «la Dashboard sta diventando molto piena») */
+  .avv-partner.percorso.attivo { background: var(--gr-crescita-tinta); }
+  .avv-partner.percorso.attivo .sh-fase .barra { background: var(--superficie); }
+  .mio-elenco { margin-top: 6px; }
+  .ag-blocco.tracce small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
+  /* «I miei libri» (cantiere 40 lavoro 7) */
+  .lb-numeri { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .lb-numeri div { background: var(--gr-crescita-tinta); color: var(--gr-crescita); border-radius: var(--raggio-riga); padding: 10px 12px; }
+  .lb-numeri span { display: block; font-size: 12px; font-weight: 600; } .lb-numeri b { font-size: 20px; }
+  .lb-percorso { padding: 6px 16px; }
+  .lb-passo { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--linea); width: 100%; border-left: 0; border-right: 0; border-top: 0; background: none; text-align: left; font-family: inherit; color: var(--testo); font-size: 15px; } .lb-passo:last-child { border-bottom: 0; } .lb-passo:disabled { opacity: 1; }
+  .lb-tondo { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--sfondo); color: var(--testo-tenue); }
+  .lb-passo.letto .lb-tondo { background: var(--ok); color: #fff; } .lb-passo.ora .lb-tondo { background: var(--gr-crescita); color: #fff; }
+  .lb-passo b { display: block; font-size: 15px; } .lb-passo small { color: var(--grigio); font-size: 13px; } .lb-passo.ora b { color: var(--gr-crescita); }
+  .sh-chiede.n21 { vertical-align: middle; }
+  .lb-libro { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--linea); background: none; text-align: left; font-family: inherit; color: var(--testo); }
+  .lb-libro:last-child { border-bottom: 0; } .lb-libro b { display: block; font-size: 15px; } .lb-libro small { color: var(--grigio); font-size: 13px; }
+  .lb-note { background: var(--superficie-2); border-radius: var(--raggio-riga); padding: 4px 12px; margin: 0 0 8px; }
+  .lb-nota { padding: 10px 0; border-bottom: 1px solid var(--linea); } .lb-nota:last-child { border-bottom: 0; }
+  .lb-nota b { display: block; font-size: 14px; font-weight: 600; } .lb-nota small { color: var(--grigio); font-size: 13px; }
+  button.mio-libro { width: 100%; border: 0; text-align: left; font-family: inherit; justify-content: space-between; } button.mio-libro > span:first-of-type { flex: 1; }
+  .sh-gruppo { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); padding: 12px 0 2px; }
+  .sh-gruppo + .sh-riga { border-top: 0; }
+  .sh-chiede { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--proposta-tinta); color: var(--proposta); margin-left: 4px; vertical-align: middle; }
+  .sh-riga-freccia { color: var(--testo-tenue); font-size: 20px; padding: 0 4px; }
+  .mio-elenco .sh-riga { padding: 10px 0; }
+  .mio-libro { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: var(--raggio-bottone); background: var(--gr-crescita-tinta); color: var(--gr-crescita); font-size: 14px; line-height: 1.35; } .mio-libro svg { flex: none; margin-top: 2px; } .mio-libro small { color: var(--grigio); }
   .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .vn-tot { border-radius: var(--raggio-riga); padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
   .vn-tot span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -515,6 +592,7 @@
   .ag-esiti { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   /* gli esiti: pastiglie alte 40, bordo grigio su bianco; quello scelto pieno inchiostro (docs/MB21_Design.md) */
   .ag-esiti button { border: 1px solid var(--bordo); border-radius: var(--raggio-pill); background: var(--superficie); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .ag-esiti .a-capo, .ag-scelte .a-capo { flex-basis: 100%; height: 0; }   /* cantiere 39: gli esiti non andati su una riga loro */
   .ag-esiti button.attuale { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
   .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
@@ -554,6 +632,91 @@
   .ag-rich .riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
   .ag-rich .conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
   .ag-rich .passati { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
+  /* il foglio del giorno (cantiere 41): le cose da fare, con la spunta tonda e il campo per aggiungere */
+  .ag-cose { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px 8px; margin-bottom: 12px; }
+  .ag-cose-testa { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 4px; }
+  .ag-cose-testa svg.ic { width: 18px; height: 18px; color: var(--ok); }
+  .ag-cose-testa b { margin-left: auto; font-weight: 700; color: var(--testo-tenue); }
+  .ag-cose .cosa { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid var(--superficie-2); }
+  .ag-cose .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
+  .ag-cose .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid var(--testo-tenue); display: inline-flex; align-items: center; justify-content: center; }
+  .ag-cose .cosa .spunta svg.ic { width: 24px; height: 24px; }
+  .ag-cose .cosa.fatta .spunta { border-color: var(--ok); color: var(--ok); }
+  .ag-cose .cosa .testo { flex: 1; min-height: 42px; padding: 10px 0; font-size: 15px; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
+  .ag-cose .cosa .testo small { font-size: 11.5px; font-weight: 600; color: var(--proposta); }
+  .ag-cose .cosa.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); }
+  .ag-cosa-nuova { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--superficie-2); padding-top: 6px; }
+  .ag-cosa-nuova input { flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 15px; color: var(--testo); padding: 8px 0; outline: none; }
+  .ag-cosa-nuova input::placeholder { color: var(--testo-tenue); }
+  .ag-cosa-nuova button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--accento); color: var(--accento-su); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .ag-cosa-nuova button svg.ic { width: 18px; height: 18px; }
+  /* la pagina formato NotePlan (cantiere 41): testa con ☰, titolo del giorno, card degli impegni, foglio a sezioni, cassetto Cronologia */
+  .ag-testa.np { gap: 6px; }
+  .ag-testa.np .ag-mese { flex: 1; text-align: center; font-size: 17px; color: var(--testo); }
+  .ag-menu { border: 0; background: none; width: 44px; height: 44px; border-radius: 50%; color: var(--testo); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .ag-menu svg.ic { width: 24px; height: 24px; }
+  h1.ag-titolo { font-size: 22px; margin: 2px 0 8px; }
+  .ag-impegni { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 4px 12px; margin-bottom: 14px; }
+  .ag-impegni.vuota { color: var(--testo-tenue); font-size: 14px; padding: 14px 12px; }
+  .ag-imp { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; font-family: inherit; color: var(--testo); text-align: left; padding: 10px 0; border-top: 1px solid var(--superficie-2); }
+  .ag-imp:first-child { border-top: 0; }
+  .ag-imp i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--cat, var(--spento)); }
+  .ag-imp span { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-imp span small { display: block; font-size: 12px; color: var(--grigio); }
+  .ag-imp b { flex: none; font-size: 12.5px; font-weight: 600; background: var(--sfondo); border-radius: 8px; padding: 4px 8px; color: var(--testo-soft); }
+  .ag-imp.fatta span { color: var(--testo-tenue); }
+  .ag-foglio { padding: 0 4px 8px; }
+  .ag-foglio h2.ag-sez { font-size: 22px; font-weight: 800; color: var(--blu, #3a7bbf); margin: 18px 0 4px; letter-spacing: -0.3px; }
+  .ag-foglio h2.ag-sez:first-child { margin-top: 6px; }
+  .ag-foglio .cosa { display: flex; align-items: flex-start; gap: 12px; }
+  .ag-foglio .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
+  .ag-foglio .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #4fb3a9; }
+  .ag-foglio .cosa .spunta svg.ic { width: 24px; height: 24px; }
+  .ag-foglio .cosa.fatta .spunta { background: #4fb3a9; color: #fff; border-color: #4fb3a9; }
+  .ag-foglio .cosa.auto .spunta { border-style: dashed; }
+  .ag-foglio .cosa.auto.fatta .spunta { border-style: solid; }
+  .ag-foglio .cosa .testo { flex: 1; min-height: 42px; padding: 10px 0; font-size: 16px; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
+  .ag-foglio .cosa .testo small { font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
+  .ag-foglio .cosa.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); }
+  .ag-foglio .ag-cosa-nuova { border-top: 0; padding-top: 2px; }
+  .ag-cronologia { position: sticky; bottom: 92px; display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--superficie); box-shadow: 0 -2px 14px rgba(16,21,31,.12); border-radius: 18px 18px 0 0; padding: 12px 16px; margin-top: 12px; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--testo); }
+  .ag-cronologia span { flex: 1; text-align: left; font-size: 13px; font-weight: 500; color: var(--testo-soft); }
+  .ag-cronologia svg.ic { width: 20px; height: 20px; }
+  .ag-cronologia svg.ic:last-child { transform: rotate(-90deg); color: var(--testo-tenue); }
+  .foglio.crono { padding-bottom: 20px; }
+  .foglio.crono .ag-griglia { box-shadow: none; padding-left: 0; }
+  /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
+  .velo.lato { align-items: stretch; justify-content: flex-start; }
+  .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .ag-lato-titolo { font-size: 12px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .04em; padding: 14px 10px 6px; }
+  .ag-lato button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: none; font-family: inherit; font-size: 16px; font-weight: 600; color: var(--testo); padding: 11px 10px; border-radius: 12px; text-align: left; }
+  .ag-lato button.si { background: var(--sfondo); }
+  .ag-lato button.presto { color: var(--testo-tenue); }
+  .ag-lato button svg.ic { width: 22px; height: 22px; flex: none; color: var(--accento); }
+  .ag-lato button.presto svg.ic { color: var(--testo-tenue); }
+  .ag-lato button span { flex: 1; }
+  .ag-lato button small { font-size: 12px; font-weight: 500; color: var(--testo-tenue); }
+  /* i due gruppi del foglio del giorno (lavoro 2): «Ogni giorno» dal modello, «Oggi» a mano; la rotellina apre il modello */
+  .ag-cose-gruppo { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-tenue); padding: 8px 0 2px; }
+  .ag-cose-modello { border: 0; background: none; padding: 4px; margin-left: 4px; color: var(--testo-tenue); display: inline-flex; }
+  .ag-cose-testa .ag-cose-modello svg.ic { width: 20px; height: 20px; color: var(--testo-tenue); }
+  .ag-cose-invito { display: flex; align-items: center; gap: 8px; width: 100%; border: 1px dashed var(--bordo); background: var(--sfondo); border-radius: 12px; padding: 10px 12px; margin: 4px 0 6px; font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--testo-soft); text-align: left; }
+  .ag-cose-invito svg.ic { width: 20px; height: 20px; flex: none; color: var(--gr-crescita, var(--proposta)); }
+  /* il modello: una riga per voce con l'interruttore a sinistra */
+  .foglio.mod .mod-voce { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--superficie-2); }
+  .foglio.mod .mod-voce button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
+  .foglio.mod .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }
+  .foglio.mod .mod-int i { position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s; }
+  .foglio.mod .spenta .mod-int { background: var(--spento); }
+  .foglio.mod .spenta .mod-int i { left: 3px; }
+  .foglio.mod .mod-testo { flex: 1; min-height: 48px; padding: 8px 0; display: flex; flex-direction: column; gap: 1px; font-size: 15px; }
+  .foglio.mod .mod-testo small { font-size: 12px; color: var(--testo-tenue); }
+  .foglio.mod .spenta .mod-testo span { color: var(--testo-tenue); }
+  .foglio.mod .ag-cosa-nuova { border-top: 1px solid var(--superficie-2); margin-top: 4px; }
+  .fv-giorni button { flex: 1; padding: 8px 4px; }
+  .fc-quando { color: var(--testo-soft); font-size: 14px; }
+  .fc-comandi { display: flex; justify-content: space-between; gap: 10px; }
+  .fc-comandi button.link.elimina-qui { display: inline; width: auto; margin-top: 0; }
   /* la griglia: una card bianca con le ore a sinistra e i blocchi dentro */
   .ag-griglia { position: relative; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 10px 12px 0; overflow: hidden; }
   .ag-ore { position: relative; margin-left: 50px; }
@@ -586,7 +749,11 @@
   .ag-doppi { display: flex; align-items: center; gap: 8px; background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 9px 12px; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; }
   .ag-doppi svg.ic { width: 18px; height: 18px; flex: none; }
   /* bottone «Ora» che riporta la griglia su adesso */
-  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit; }
+  /* «Ora» si vede solo quando la linea di adesso è uscita dallo schermo: se sei già lì, un bottone che non
+     sposta niente sembra rotto (Ignazio 21/09) */
+  .ag-vai-ora { position: sticky; bottom: 12px; float: right; margin: -44px 6px 0 0; z-index: 4; border: 0; background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 700; min-height: 34px; padding: 6px 14px; box-shadow: 0 4px 14px rgba(16,21,31,.28); font-family: inherit;
+    opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .18s ease, transform .18s ease; }
+  .ag-vai-ora.si { opacity: 1; pointer-events: auto; transform: none; }
   /* avviso «a quest'ora hai già…» nel modulo, con le prime ore libere da toccare (cantiere 37) */
   .ag-scontro { background: var(--pericolo-tinta); color: var(--pericolo); border-radius: var(--raggio-bottone); padding: 10px 12px; margin: 0 0 10px; font-size: 13.5px; font-weight: 700; }
   .ag-scontro svg.ic { width: 17px; height: 17px; vertical-align: -4px; margin-right: 3px; }
@@ -974,34 +1141,7 @@
   .pv-tel { width: 392px; background: var(--sfondo); border-radius: 34px; box-shadow: 0 10px 40px rgba(16,21,31,.18); padding: 8px 16px 22px; }
   .pv-t { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--testo-tenue); font-weight: 700; margin: 4px 2px 2px; }
 </style>
-<div class="pv-fila"><div class="pv-tel"><div class="pv-t">Giorno · a orario</div>
-    <div class="ag-testa"><h1>Agenda</h1>
-      
-      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-    
-    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
-    <div class="ag-settimana">
-      <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
-      <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
-          <small>L</small><b>21</b>
-          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-prospect"></i><i class="cat-partner"></i><i class="tanti cat-nessuna"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-22" aria-label="22 · 2 impegni">
-          <small>M</small><b>22</b>
-          <span class="ag-punti"><i class="cat-prospect"></i><i class="cat-partner"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-23" aria-label="23 · libero">
-          <small>M</small><b>23</b>
-          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-24" aria-label="24 · 1 impegno">
-          <small>G</small><b>24</b>
-          <span class="ag-punti"><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-25" aria-label="25 · 3 impegni">
-          <small>V</small><b>25</b>
-          <span class="ag-punti"><i class="cat-cliente"></i><i class="cat-prospect"></i><i class="cat-prospect"></i></span></button><button class="ag-giorno  " data-giorno="2026-09-26" aria-label="26 · libero">
-          <small>S</small><b>26</b>
-          <span class="ag-punti"></span></button><button class="ag-giorno  " data-giorno="2026-09-27" aria-label="27 · libero">
-          <small>D</small><b>27</b>
-          <span class="ag-punti"></span></button>
-      <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
-    </div>
-    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
-      <button data-vista="orario" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
-    </div><div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-doppi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 2 impegni si accavallano: controlla che sia voluto.</div><div class="ag-griglia"><div class="ag-ore" data-da="480" data-alt="58" style="height:928px"><button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-mezza" style="top:29px"></div><div class="ag-lin" style="top:58px"><b>9</b></div><div class="ag-mezza" style="top:87px"></div><div class="ag-lin" style="top:116px"><b>10</b></div><div class="ag-mezza" style="top:145px"></div><div class="ag-lin" style="top:174px"><b>11</b></div><div class="ag-mezza" style="top:203px"></div><div class="ag-lin" style="top:232px"><b>12</b></div><div class="ag-mezza" style="top:261px"></div><div class="ag-lin" style="top:290px"><b>13</b></div><div class="ag-mezza" style="top:319px"></div><div class="ag-lin" style="top:348px"><b>14</b></div><div class="ag-mezza" style="top:377px"></div><div class="ag-lin" style="top:406px"><b>15</b></div><div class="ag-mezza" style="top:435px"></div><div class="ag-lin" style="top:464px"><b>16</b></div><div class="ag-mezza" style="top:493px"></div><div class="ag-lin" style="top:522px"><b>17</b></div><div class="ag-mezza" style="top:551px"></div><div class="ag-lin" style="top:580px"><b>18</b></div><div class="ag-mezza" style="top:609px"></div><div class="ag-lin" style="top:638px"><b>19</b></div><div class="ag-mezza" style="top:667px"></div><div class="ag-lin" style="top:696px"><b>20</b></div><div class="ag-mezza" style="top:725px"></div><div class="ag-lin" style="top:754px"><b>21</b></div><div class="ag-mezza" style="top:783px"></div><div class="ag-lin" style="top:812px"><b>22</b></div><div class="ag-mezza" style="top:841px"></div><div class="ag-lin" style="top:870px"><b>23</b></div><div class="ag-mezza" style="top:899px"></div><div class="ag-lin" style="top:928px"><b>24</b></div><div class="ag-invito" style="top:3px;height:52px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 08:00 – 09:00 libero</div><div class="ag-invito" style="top:80px;height:91px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 09:30 – 11:00 libero</div><div class="ag-invito" style="top:235px;height:168px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 12:00 – 15:00 libero</div><div class="ag-invito" style="top:467px;height:139px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 16:00 – 18:30 libero</div><div class="ag-invito" style="top:743px;height:182px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> dalle 20:45 libero</div><button class="ag-ev cat-prospect bassa dacoda" data-evento="t1"
+<div class="pv-fila"><div class="pv-tel"><div class="pv-t">Cronologia (il cassetto)</div><div class="ag-doppi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> 2 impegni si accavallano: controlla che sia voluto.</div><div class="ag-griglia"><div class="ag-ore" data-da="480" data-alt="58" style="height:928px"><button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-mezza" style="top:29px"></div><div class="ag-lin" style="top:58px"><b>9</b></div><div class="ag-mezza" style="top:87px"></div><div class="ag-lin" style="top:116px"><b>10</b></div><div class="ag-mezza" style="top:145px"></div><div class="ag-lin" style="top:174px"><b>11</b></div><div class="ag-mezza" style="top:203px"></div><div class="ag-lin" style="top:232px"><b>12</b></div><div class="ag-mezza" style="top:261px"></div><div class="ag-lin" style="top:290px"><b>13</b></div><div class="ag-mezza" style="top:319px"></div><div class="ag-lin" style="top:348px"><b>14</b></div><div class="ag-mezza" style="top:377px"></div><div class="ag-lin" style="top:406px"><b>15</b></div><div class="ag-mezza" style="top:435px"></div><div class="ag-lin" style="top:464px"><b>16</b></div><div class="ag-mezza" style="top:493px"></div><div class="ag-lin" style="top:522px"><b>17</b></div><div class="ag-mezza" style="top:551px"></div><div class="ag-lin" style="top:580px"><b>18</b></div><div class="ag-mezza" style="top:609px"></div><div class="ag-lin" style="top:638px"><b>19</b></div><div class="ag-mezza" style="top:667px"></div><div class="ag-lin" style="top:696px"><b>20</b></div><div class="ag-mezza" style="top:725px"></div><div class="ag-lin" style="top:754px"><b>21</b></div><div class="ag-mezza" style="top:783px"></div><div class="ag-lin" style="top:812px"><b>22</b></div><div class="ag-mezza" style="top:841px"></div><div class="ag-lin" style="top:870px"><b>23</b></div><div class="ag-mezza" style="top:899px"></div><div class="ag-lin" style="top:928px"><b>24</b></div><div class="ag-invito" style="top:3px;height:52px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 08:00 – 09:00 libero</div><div class="ag-invito" style="top:80px;height:91px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 09:30 – 11:00 libero</div><div class="ag-invito" style="top:235px;height:168px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 12:00 – 15:00 libero</div><div class="ag-invito" style="top:467px;height:139px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> 16:00 – 18:30 libero</div><div class="ag-invito" style="top:743px;height:182px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg> dalle 20:45 libero</div><button class="ag-ev cat-prospect bassa dacoda" data-evento="t1"
       style="top:58px;height:18px;left:calc(0% + 2px);width:calc(100% - 6px)">
       <span class="bar"></span><b>Telefonata · Marco Bini</b></button><button class="ag-ev cat-prospect" data-evento="p1"
       style="top:174px;height:55px;left:calc(0% + 2px);width:calc(100% - 6px)">
@@ -1013,12 +1153,12 @@
       style="top:609px;height:55px;left:calc(50% + 2px);width:calc(50% - 6px)">
       <span class="bar"></span><b>PM 1a1 · Pino Manolo</b><small>18:30–19:30</small></button><button class="ag-ev cat-prospect" data-evento="f1"
       style="top:696px;height:41px;left:calc(0% + 2px);width:calc(100% - 6px)">
-      <span class="bar"></span><b>Personale · Gino Pace</b><small>20:00–20:45</small></button></div></div></div><div class="pv-tel"><div class="pv-t">Settimana</div>
-    <div class="ag-testa"><h1>Agenda</h1>
+      <span class="bar"></span><b>Personale · Gino Pace</b><small>20:00–20:45</small></button><div class="ag-adesso" style="top:575px"><i></i><b>17:55</b></div></div></div><button class="ag-vai-ora" id="ag-vai-ora"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Ora</button></div><div class="pv-tel"><div class="pv-t">Settimana</div>
+    <div class="ag-testa np">
+      <button class="ag-menu" id="ag-menu" aria-label="Menu dell'agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg></button>
+      <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
       
       <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-    
-    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
     <div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
       <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
@@ -1038,9 +1178,8 @@
           <span class="ag-punti"></span></button>
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
-    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
-      <button data-vista="orario" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
-    </div><div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-sett-testa"><div class="oggi scelto">L<b>21</b></div><div class=" ">M<b>22</b></div><div class=" ">M<b>23</b></div><div class=" ">G<b>24</b></div><div class=" ">V<b>25</b></div><div class=" ">S<b>26</b></div><div class=" ">D<b>27</b></div></div><div class="ag-griglia sett"><div class="ag-ore" data-da="480" data-alt="42" style="height:588px"><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-lin" style="top:42px"><b>9</b></div><div class="ag-lin" style="top:84px"><b>10</b></div><div class="ag-lin" style="top:126px"><b>11</b></div><div class="ag-lin" style="top:168px"><b>12</b></div><div class="ag-lin" style="top:210px"><b>13</b></div><div class="ag-lin" style="top:252px"><b>14</b></div><div class="ag-lin" style="top:294px"><b>15</b></div><div class="ag-lin" style="top:336px"><b>16</b></div><div class="ag-lin" style="top:378px"><b>17</b></div><div class="ag-lin" style="top:420px"><b>18</b></div><div class="ag-lin" style="top:462px"><b>19</b></div><div class="ag-lin" style="top:504px"><b>20</b></div><div class="ag-lin" style="top:546px"><b>21</b></div><div class="ag-lin" style="top:588px"><b>22</b></div><button class="ag-colonna ag-libero oggi scelto" data-vai="2026-09-21" aria-label="Apri il giorno 21" style="left:0%;width:14.285714285714286%"></button><button class="ag-sev cat-prospect" data-evento="t1" data-giorno="2026-09-21"
+    <h1 class="ag-titolo">Settimana 21 – 27 set</h1>
+    <div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-sett-testa"><div class="oggi scelto">L<b>21</b></div><div class=" ">M<b>22</b></div><div class=" ">M<b>23</b></div><div class=" ">G<b>24</b></div><div class=" ">V<b>25</b></div><div class=" ">S<b>26</b></div><div class=" ">D<b>27</b></div></div><div class="ag-griglia sett"><div class="ag-ore" data-da="480" data-alt="42" style="height:588px"><div class="ag-lin" style="top:0px"><b>8</b></div><div class="ag-lin" style="top:42px"><b>9</b></div><div class="ag-lin" style="top:84px"><b>10</b></div><div class="ag-lin" style="top:126px"><b>11</b></div><div class="ag-lin" style="top:168px"><b>12</b></div><div class="ag-lin" style="top:210px"><b>13</b></div><div class="ag-lin" style="top:252px"><b>14</b></div><div class="ag-lin" style="top:294px"><b>15</b></div><div class="ag-lin" style="top:336px"><b>16</b></div><div class="ag-lin" style="top:378px"><b>17</b></div><div class="ag-lin" style="top:420px"><b>18</b></div><div class="ag-lin" style="top:462px"><b>19</b></div><div class="ag-lin" style="top:504px"><b>20</b></div><div class="ag-lin" style="top:546px"><b>21</b></div><div class="ag-lin" style="top:588px"><b>22</b></div><button class="ag-colonna ag-libero oggi scelto" data-vai="2026-09-21" aria-label="Apri il giorno 21" style="left:0%;width:14.285714285714286%"></button><button class="ag-sev cat-prospect" data-evento="t1" data-giorno="2026-09-21"
         style="top:42px;height:19px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
         aria-label="09:00 Marco Bini"><span class="bar"></span><span>Marco</span></button><button class="ag-sev cat-prospect" data-evento="p1" data-giorno="2026-09-21"
         style="top:126px;height:40px;left:calc(0% + 1px);width:calc(14.285714285714286% - 2px)"
@@ -1058,12 +1197,12 @@
         aria-label="19:00–20:00 Sara Conti"><span class="bar"></span><span>Sara</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-25" aria-label="Apri il giorno 25" style="left:57.142857142857146%;width:14.285714285714286%"></button><button class="ag-sev cat-cliente" data-evento="x4" data-giorno="2026-09-25"
         style="top:63px;height:19px;left:calc(57.142857142857146% + 1px);width:calc(14.285714285714286% - 2px)"
         aria-label="09:30–10:00 Elio Massa"><span class="bar"></span><span>Elio</span></button><button class="ag-sev molti" data-vai="2026-09-25" style="top:420px;height:61px;left:calc(57.142857142857146% + 1px);width:calc(14.285714285714286% - 2px)"
-          aria-label="2 impegni dalle 18:00, apri il giorno"><span class="barre"><i class="cat-prospect"></i><i class="cat-prospect"></i></span><b>2</b></button><button class="ag-colonna ag-libero" data-vai="2026-09-26" aria-label="Apri il giorno 26" style="left:71.42857142857143%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-27" aria-label="Apri il giorno 27" style="left:85.71428571428572%;width:14.285714285714286%"></button></div></div><div class="ag-conto"><span style="--tinta:var(--az-pm)"><i></i>5 PM</span><span style="--tinta:var(--az-followup)"><i></i>2 Follow Up</span><span style="--tinta:var(--az-appuntamento)"><i></i>2 Appuntamenti</span><span style="--tinta:var(--az-consulenza)"><i></i>2 Consulenze</span><span style="--tinta:var(--az-contatto)"><i></i>1 Contatto</span></div></div><div class="pv-tel"><div class="pv-t">Elenco (una riga aperta)</div>
-    <div class="ag-testa"><h1>Agenda</h1>
+          aria-label="2 impegni dalle 18:00, apri il giorno"><span class="barre"><i class="cat-prospect"></i><i class="cat-prospect"></i></span><b>2</b></button><button class="ag-colonna ag-libero" data-vai="2026-09-26" aria-label="Apri il giorno 26" style="left:71.42857142857143%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-27" aria-label="Apri il giorno 27" style="left:85.71428571428572%;width:14.285714285714286%"></button><div class="ag-adesso" style="top:417px"><i></i></div></div></div><div class="ag-conto"><span style="--tinta:var(--az-pm)"><i></i>5 PM</span><span style="--tinta:var(--az-followup)"><i></i>2 Follow Up</span><span style="--tinta:var(--az-appuntamento)"><i></i>2 Appuntamenti</span><span style="--tinta:var(--az-consulenza)"><i></i>2 Consulenze</span><span style="--tinta:var(--az-contatto)"><i></i>1 Contatto</span></div></div><div class="pv-tel"><div class="pv-t">Il foglio del giorno</div>
+    <div class="ag-testa np">
+      <button class="ag-menu" id="ag-menu" aria-label="Menu dell'agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg></button>
+      <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
       
       <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-    
-    <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
     <div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
       <button class="ag-giorno scelto oggi" data-giorno="2026-09-21" aria-label="21 · 6 impegni">
@@ -1083,43 +1222,37 @@
           <span class="ag-punti"></span></button>
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
-    <div class="ag-viste" role="group" aria-label="Come guardare l'agenda">
-      <button data-vista="orario" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg>Giorno</button><button data-vista="settimana" class=""><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Settimana</button><button data-vista="elenco" class="si"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Elenco</button>
-    </div><div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-evento" data-evento="t1">
-    <div class="ora">09:00</div>
-    <div class="barra-tipo cat-prospect"></div>
-    <div class="dentro"><button class="apri"><div class="t">Telefonata · Marco Bini</div><div class="s">Richiamare • dalla coda</div></button></div>
-  </div><div class="ag-evento" data-evento="p1">
-    <div class="ora">11:00<small>12:00</small></div>
-    <div class="barra-tipo cat-prospect"></div>
-    <div class="dentro"><button class="apri"><div class="t">PM 1a1 · Laura Ferri</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button><div class="extra">
-      
-      <div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>
-      <div class="blocco-esiti" data-blocco="p1"><div class="come-andata">È avvenuto?</div>
-    <div class="ag-esiti" data-azione="p1" data-passo="avvenuto"><button data-esito="Fatto" class="">Fatto</button><button data-esito="Rimandato" class="">Rimandato</button><button data-esito="No Show" class="">No Show</button></div></div>
-      <div class="ag-comandi">
-        <button data-cmd="sposta"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Sposta</button><button data-cmd="modifica"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-modifica"/></svg> Modifica</button>
-        <button data-cmd="contatto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-persona"/></svg> Apri contatto</button>
-        <button data-cmd="elimina" class="pericolo">Elimina</button>
-      </div>
-      <div class="ag-comandi" style="margin-top:8px"><button data-cmd="gcal"><svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:2px" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.1 38 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-8-6.2C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l8-6.2z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.2C6.5 42.6 14.6 48 24 48z"/></svg> Google Calendar</button><button data-cmd="noteplan"><img src="icone/noteplan-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px"> NotePlan</button></div></div></div>
-  </div><div class="ag-evento" data-evento="c1">
-    <div class="ora">15:00<small>16:00</small></div>
-    <div class="barra-tipo cat-partner"></div>
-    <div class="dentro"><button class="apri"><div class="t">Counseling · Isabella Rossi</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare · <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg> confermato</div></button></div>
-  </div><div class="ag-evento" data-evento="p2">
-    <div class="ora">18:30<small>19:30</small></div>
-    <div class="barra-tipo cat-prospect"></div>
-    <div class="dentro"><button class="apri"><div class="t">PM 1a1 · Pino Manolo</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
-  </div><div class="ag-evento" data-evento="v1">
-    <div class="ora">18:30<small>19:00</small></div>
-    <div class="barra-tipo cat-cliente"></div>
-    <div class="dentro"><button class="apri"><div class="t">Riordino · Anna Villa</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
-  </div><div class="ag-evento" data-evento="f1">
-    <div class="ora">20:00<small>20:45</small></div>
-    <div class="barra-tipo cat-prospect"></div>
-    <div class="dentro"><button class="apri"><div class="t">Personale · Gino Pace</div><div class="s">Costruzione • <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Da completare</div></button></div>
-  </div></div><div class="pv-tel"><div class="pv-t">Fissi a un'ora occupata</div><div class="foglio mc" style="border-radius:22px;box-shadow:var(--ombra-card)">
+    <h1 class="ag-titolo">Oggi, lun 21 set</h1>
+    <div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-impegni"><button class="ag-imp" data-evento="t1"><i class="cat-prospect"></i><span>Telefonata · Marco Bini</span><b>09:00</b></button><button class="ag-imp" data-evento="p1"><i class="cat-prospect"></i><span>PM 1a1 · Laura Ferri</span><b>11:00–12:00</b></button><button class="ag-imp" data-evento="c1"><i class="cat-partner"></i><span>Counseling · Isabella Rossi</span><b>15:00–16:00 👍</b></button><button class="ag-imp" data-evento="p2"><i class="cat-prospect"></i><span>PM 1a1 · Pino Manolo</span><b>18:30–19:30</b></button><button class="ag-imp" data-evento="v1"><i class="cat-cliente"></i><span>Riordino · Anna Villa</span><b>18:30–19:00</b></button><button class="ag-imp" data-evento="f1"><i class="cat-prospect"></i><span>Personale · Gino Pace</span><b>20:00–20:45</b></button></div><div class="ag-foglio"><h2 class="ag-sez">Core</h2><div class="cosa auto" data-voce="mpm">
+      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
+      <button class="testo"><span>Presentare almeno 8 Piani Marketing al mese</span><small>3/8 · questo mese</small></button>
+    </div><div class="cosa" data-voce="mprodotti">
+      <button class="spunta" aria-label="Fatta"></button>
+      <button class="testo"><span>Consumare i prodotti Amway</span><small>questo mese</small></button>
+    </div><div class="cosa auto" data-voce="mclienti">
+      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
+      <button class="testo"><span>Servire almeno 10 clienti al mese</span><small>4/10 · questo mese</small></button>
+    </div><div class="cosa fatta auto" data-voce="mcd">
+      <button class="spunta" aria-label="Si spunta da sola" disabled><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-fatto"/></svg></button>
+      <button class="testo"><span>Ascoltare 1 CD al giorno</span><small>1/1</small></button>
+    </div><div class="cosa auto" data-voce="mpagine">
+      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
+      <button class="testo"><span>Leggere 10 pagine al giorno</span><small>6/10</small></button>
+    </div><div class="cosa" data-voce="mopen">
+      <button class="spunta" aria-label="Fatta"></button>
+      <button class="testo"><span>Partecipare all&#39;OPEN settimanale</span><small>questa settimana</small></button>
+    </div><h2 class="ag-sez">Routine</h2><div class="cosa" data-voce="mr">
+      <button class="spunta" aria-label="Fatta"></button>
+      <button class="testo"><span>Meditazione</span></button>
+    </div><h2 class="ag-sez">Da fare</h2><div class="cosa" data-cosa="k1">
+      <button class="spunta" aria-label="Fatta"></button>
+      <button class="testo"><span>Comprare i biglietti BBS</span><small>da 19/9</small></button>
+    </div><div class="cosa" data-cosa="k2">
+      <button class="spunta" aria-label="Fatta"></button>
+      <button class="testo"><span>Preparare il PM di giovedì</span></button>
+    </div>
+    <form class="ag-cosa-nuova" id="ag-cosa-nuova"><input type="text" id="ag-cosa-testo" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-piu"/></svg></button></form>
+  </div><button class="ag-cronologia" id="ag-cronologia"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Cronologia <span>6 impegni</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-freccia"/></svg></button></div><div class="pv-tel"><div class="pv-t">Fissi a un'ora occupata</div><div class="foglio mc" style="border-radius:22px;box-shadow:var(--ombra-card)">
   <div class="mc-testa cat-prospect"><span class="ts-pastiglia">PM</span><div><small>Nuovo appuntamento</small><b>Pino Manolo</b></div></div>
   <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
@@ -1128,5 +1261,5 @@
     <div class="campo"><label>Finisce alle</label><input type="time" value="19:15"></div>
     <div class="ag-scontro"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> A quest'ora hai già 2 impegni
     <span>PM 1a1 · Pino Manolo <em>18:30–19:30</em></span><span>Riordino · Anna Villa <em>18:30–19:00</em></span>
-    <div class="ag-orelibere"><button data-ora="16:30">16:30</button><button data-ora="17:00">17:00</button><button data-ora="17:30">17:30</button></div></div>
+    <div class="ag-orelibere"><button data-ora="21:00">21:00</button></div></div>
   </div></div></div></div>
