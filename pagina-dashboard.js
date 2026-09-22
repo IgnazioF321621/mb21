@@ -1069,7 +1069,7 @@ function apriCheck() {
     ${riga(1, 'contatti', { spiega: 'Automatico dal 14/09: dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda).' })}
     ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.' })}
     ${riga(3, 'sponsor_personali', { spiega: 'A mano: gli iscritti che hai sponsorizzato tu oggi.' })}
-    ${riga(4, 'sponsor_gruppo', { spiega: 'Automatico dal file Amway (data di iscrizione, nella tua linea); a mano se il file non c\'è ancora.' })}
+    ${riga(4, 'sponsor_gruppo', { spiega: 'A mano finché il file ufficiale Amway non è caricato dal tuo Leader/Upline.' })}
     <div class="ckr core auto volume" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
       <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
     ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.' })}
@@ -1155,6 +1155,7 @@ function apriCheck() {
     const riga6 = velo.querySelector('#ck-campo-vp_clienti'), campo = velo.querySelector('#ck-vp_clienti'), box = velo.querySelector('#ck-auto-vp_clienti');
     const dalle = MB21Dashboard.vpDalleVendite(data);
     riga6.classList.toggle('auto', dalle); riga6.classList.add('volume');
+    riga6.querySelector(':scope > .ck-corpo > .vn-aiuto').style.display = dalle ? 'none' : '';   // una frase sola, in alto (Ignazio 22/09)
     campo.style.display = dalle ? 'none' : '';
     box.style.display = dalle ? '' : 'none';
     if (!dalle) return;
@@ -1165,7 +1166,7 @@ function apriCheck() {
     if (error) { box.innerHTML = '<div class="ck-valore">?</div><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div>'; return; }
     const totale = MB21Lista.totaliVendite(righe).vp;
     box.innerHTML = `<div class="ck-valore">${MB21Lista.numero(totale)} VP</div>
-      <div class="vn-aiuto">${righe.length ? 'Dalle vendite registrate. Tocca una vendita per aprire la scheda del cliente.' : 'Nessuna vendita registrata in questo giorno. Le vendite si scrivono nella scheda del cliente, sezione Vendite: qui arrivano da sole.'}</div>
+      <div class="vn-aiuto">${righe.length ? 'Dalle vendite registrate nella scheda del cliente: tocca una vendita per aprirla. Riempie la sezione 3 del foglio Core.' : 'Nessuna vendita registrata in questo giorno. Arrivano dalle vendite scritte nella scheda del cliente (sezione Vendite). Riempie la sezione 3 del foglio Core.'}</div>
       ${righe.map(r => `<button type="button" class="ck-vn-riga" data-cliente="${r.contatto_id}"><span>${esc(r.contatti ? r.contatti.nome : 'Cliente')} · ${esc(r.prodotto)}</span><b>${MB21Lista.numero(r.vp)} VP ›</b></button>`).join('')}`;
     riga6.classList.toggle('fatta', righe.length > 0);   // Core: verde con almeno una vendita oggi
     box.querySelectorAll('[data-cliente]').forEach(b => b.onclick = async () => {
@@ -1179,7 +1180,7 @@ function apriCheck() {
   const tracceDelGiorno = async (data, ancoraValido) => {
     // una frase sola (Ignazio 22/09), con il numero delle tracce del percorso già contate oggi
     const aiuto = velo.querySelector('#ck-campo-tracce .vn-aiuto');
-    const frase = n => `Scrivi quante tracce hai ascoltato oggi (CEP o BSM). Quelle del percorso che ti sono state condivise e segnate come “ascoltata” si aggiungono da sole${n == null ? '' : `: oggi ${n}`}. → sezione 4 del foglio Core.`;
+    const frase = n => `Scrivi quante tracce hai ascoltato oggi (CEP o BSM). Quelle del percorso che ti sono state condivise e segnate come “ascoltata” si aggiungono da sole${n == null ? '' : `: oggi ${n} ${n === 1 ? 'condivisa' : 'condivise'}`}. → sezione 4 del foglio Core.`;
     aiuto.textContent = frase(null);
     if (!data || data < MB21Dashboard.INIZIO_TRACCE_PERCORSO || visto().id !== ST.utente.id) return;
     const { data: righe, error } = await dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti'));
@@ -1204,7 +1205,7 @@ function apriCheck() {
     if (CK_CORE.gruppoOggi != null) {
       sg.value = String(CK_CORE.gruppoOggi); sg.readOnly = true; sg.style.display = 'none';
       autoSg.style.display = ''; autoSg.innerHTML = `<div class="ck-valore">${CK_CORE.gruppoOggi}</div>`;
-      aiutoSg.textContent = `Dal file Amway: ${CK_CORE.gruppoOggi} ${CK_CORE.gruppoOggi === 1 ? 'iscritto' : 'iscritti'} nella tua linea in questo giorno, ${CK_CORE.gruppoMese} nel mese.`;
+      aiutoSg.textContent = `Arrivano dal file ufficiale Amway caricato dal tuo Leader/Upline: ${CK_CORE.gruppoOggi} ${CK_CORE.gruppoOggi === 1 ? 'iscritto' : 'iscritti'} nella tua linea in questo giorno, ${CK_CORE.gruppoMese} nel mese.`;
     } else { sg.readOnly = false; sg.style.display = ''; autoSg.style.display = 'none'; }
   };
   for (const k of ['tracce', 'pagine']) velo.querySelector('#ck-' + k).addEventListener('input', aggiornaCore);
@@ -1249,13 +1250,15 @@ function apriCheck() {
   const azioniDelGiorno = async (data, ancoraValido) => {
     const dalle = MB21Dashboard.contattiDalleAzioni(data);
     // la riga resta con il suo numero: se i dati arrivano da soli, il campo si nasconde e la riga si colora con dentro il contenuto automatico
-    const auto = (k, dentro) => { const r = velo.querySelector('#ck-campo-' + k); r.classList.toggle('auto', dalle); velo.querySelector('#ck-' + k).style.display = dalle ? 'none' : ''; const box = velo.querySelector('#ck-auto-' + k); box.style.display = dalle ? '' : 'none'; if (dentro != null) box.innerHTML = dentro; };
+    // automatico: una frase sola, in alto dentro la riga (Ignazio 22/09): la spiegazione di sotto si nasconde
+    const auto = (k, dentro) => { const r = velo.querySelector('#ck-campo-' + k); r.classList.toggle('auto', dalle); velo.querySelector('#ck-' + k).style.display = dalle ? 'none' : ''; r.querySelector(':scope > .ck-corpo > .vn-aiuto').style.display = dalle ? 'none' : ''; const box = velo.querySelector('#ck-auto-' + k); box.style.display = dalle ? '' : 'none'; if (dentro != null) box.innerHTML = dentro; };
     if (!dalle) { auto('contatti', ''); auto('pm', ''); return; }
     const CARD = [
-      { k: 'contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
-        vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «No Risposta» non conta.' },
-      { k: 'pm', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
-        vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
+      // testi di Ignazio (22/09)
+      { k: 'contatti', pieno: 'Arrivano in automatico dall\'esito della coda in Dashboard, da MBplan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Tocca una riga per aprire il contatto.',
+        vuoto: 'Nessun contatto registrato in questo giorno. Arrivano in automatico dall\'esito della coda in Dashboard, da MBplan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Automatico dal 14/09.' },
+      { k: 'pm', pieno: 'Arrivano dall\'esito dei PM in MBplan (Agenda). «No Show» e «Rimandato» non contano. Tocca una riga per aprire il contatto. Riempie la sezione 1 del foglio Core.',
+        vuoto: 'Nessun Piano Marketing effettuato in questo giorno. Arrivano dall\'esito dei PM in MBplan (Agenda). «No Show» e «Rimandato» non contano. Riempie la sezione 1 del foglio Core.' },
     ];
     const dentro = (numero, aiuto, righe) => `<div class="ck-valore">${numero}</div><div class="vn-aiuto">${aiuto}</div>${righe || ''}`;
     for (const d of CARD) auto(d.k, dentro('…', 'Carico le azioni del giorno…'));
