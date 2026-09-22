@@ -198,7 +198,7 @@ Legenda: (O) condivisibile con l'ospite · (U) condivisibile con l'utente · sen
 ## Da chiarire
 - ~~**Tracce e Pagine del Check**~~ — ✅ confermato da Ignazio il 21/09: «sono quelle che ascolto e leggo io, non quelle che condividiamo». Quindi **le condivisioni non toccano il Check**. **Deciso da Ignazio il 21/09 («sì»)**: la traccia che un partner segna «ascoltata» in «Il mio percorso» **conta da sola nelle Tracce del suo Check**, senza riscriverla. Da studiare quando si costruisce: come convive con il numero scritto a mano nel Check del Giorno (le tracce del CEP restano a mano), senza contare due volte (un numero, una fonte sola; come già fatto per Contatti, PM e VP Clienti)
 - ~~Il sito: argomenti, libri consigliati e dentro i pack~~ — ✅ fatto il 21-22/09 (vedi sopra): 49 tracce, tutte con il pack
-- **La licenza di condivisione** («previo acquisto di licenza di condivisione», argomento «Licenze Media Sharing»): come funziona, serve per ogni traccia? → da chiedere a Ignazio
+- ~~**La licenza di condivisione**~~ — ✅ Ignazio 22/09: **una licenza per traccia** condivisa, si compra e si consuma nell'app N21. Deciso (consiglio di Claude, «senza complicarci la vita»): **MB21 non gestisce le licenze**, registra solo il fatto della condivisione; se un giorno servisse, un numero «licenze che ho» nel Profilo che scala a ogni condivisione
 - **La fase delle 9 tracce nuove** (non nel PDF) e **l'ordine di lettura dei libri**: li dà Ignazio
 - ~~I 44 libri del Check rispetto ai libri consigliati ufficiali~~ — ✅ confrontati: i 41 del sito ci sono tutti
 - L'export è del 13/09: serve un `Sharing.csv` nuovo se dopo si è segnato altro in Glide
