@@ -825,7 +825,22 @@
   .ag-lato button span { flex: 1; }
   .ag-lato button small { font-size: 12px; font-weight: 500; color: var(--testo-tenue); }
   /* il Modulo Core nel menu: un rettangolo suo, blu chiaro N21 (Ignazio 22/09) */
-  .ag-lato button.mb-core { margin-top: 14px; border: 1.5px solid #2c4a7c; background: #eef3fa; color: #2c4a7c; align-items: flex-start; }
+  .ag-lato button.mb-core { margin-top: 14px; border: 1.5px solid #2c4a7c; background: #d6e4f5; color: #2c4a7c; align-items: flex-start; }   /* fondo più deciso (Ignazio 22/09) */
+  .mb-titolo-piu { display: flex; align-items: center; justify-content: space-between; }
+  .ag-lato .mb-titolo-piu button { width: 28px; height: 28px; padding: 0; justify-content: center; border-radius: 50%; background: var(--accento); color: var(--accento-su); flex: none; }
+  .ag-lato .mb-titolo-piu button svg.ic { width: 16px; height: 16px; color: var(--accento-su); }
+  .mb-vuoto { font-size: 13px; color: var(--testo-tenue); padding: 4px 10px 8px; }
+  .nm-icone { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 8px; }
+  .nm-icone button { height: 44px; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--testo); font-size: 16px; }
+  .nm-icone button svg.ic { width: 22px; height: 22px; }
+  .nm-icone button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ag-foglio h2.ag-sez { display: flex; align-items: center; gap: 8px; }
+  .ag-foglio h2.ag-sez svg.ic { width: 22px; height: 22px; }
+  .mb-mese-griglia button { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 5px; gap: 2px; height: 38px; }
+  .mb-mese-griglia .ag-punti { display: flex; gap: 2px; height: 5px; }
+  .mb-mese-griglia .ag-punti i { width: 5px; height: 5px; border-radius: 50%; background: var(--cat, var(--spento)); }
+  .mb-mese-griglia .ag-punti i.tanti { width: 8px; border-radius: 3px; }
+  .mb-mese-griglia button.scelto .ag-punti i { filter: brightness(1.75) saturate(.85); }
   .ag-lato button.mb-core svg.ic { color: #2c4a7c; margin-top: 2px; }
   .ag-lato button.mb-core span { display: flex; flex-direction: column; gap: 2px; }
   .ag-lato button.mb-core b { font-weight: 800; }
@@ -1282,35 +1297,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609222123"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609222123"></script>
-<script src="lista.js?v=202609222123"></script>
-<script src="rubrica.js?v=202609222123"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609222123"></script>
-<script src="agenda.js?v=202609222123"></script>
-<script src="report.js?v=202609222123"></script>
-<script src="check.js?v=202609222123"></script>
-<script src="mappa.js?v=202609222123"></script>
-<script src="pagina-dashboard.js?v=202609222123"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609222123"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609222123"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609222123"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609222123"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609222123"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609222123"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609222123"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609222123"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609222123"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609222123"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609222123"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609222123"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609222123"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609222123"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609222123"></script>
-<script src="benvenuto.js?v=202609222123"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609222123"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609222144"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609222144"></script>
+<script src="lista.js?v=202609222144"></script>
+<script src="rubrica.js?v=202609222144"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609222144"></script>
+<script src="agenda.js?v=202609222144"></script>
+<script src="report.js?v=202609222144"></script>
+<script src="check.js?v=202609222144"></script>
+<script src="mappa.js?v=202609222144"></script>
+<script src="pagina-dashboard.js?v=202609222144"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609222144"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609222144"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609222144"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609222144"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609222144"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609222144"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609222144"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609222144"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609222144"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609222144"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609222144"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609222144"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609222144"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609222144"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609222144"></script>
+<script src="benvenuto.js?v=202609222144"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609222144"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 21:23';
+const APP_VERSION = '2026.09.22 · 21:44';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1701,7 +1716,7 @@ function mostraToast(testo, suAnnulla) {
 // Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
-const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null, cose: [], modello: [] };
+const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null, cose: [], modello: [], modelli: [] };
 
 
 async function apriAgenda(giorno) {
@@ -1725,7 +1740,10 @@ async function apriAgenda(giorno) {
 async function caricaAgenda() {
   const A = MB21Agenda;
   AG.settimana = A.settimana(AG.giorno);
-  const da = A.isoDaRoma(AG.settimana[0], '00:00'), a = A.isoDaRoma(A.spostaGiorno(AG.settimana[6], 1), '00:00');
+  // si legge la settimana E la griglia del mese (6 settimane): servono i pallini del mese nella colonna destra (22/09)
+  const griglia0 = A.settimana(AG.giorno.slice(0, 8) + '01')[0], griglia1 = A.spostaGiorno(griglia0, 42);
+  const da = A.isoDaRoma(griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0], '00:00');
+  const a = A.isoDaRoma(griglia1 > A.spostaGiorno(AG.settimana[6], 1) ? griglia1 : A.spostaGiorno(AG.settimana[6], 1), '00:00');
   const oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
   const ids = idVisti();   // Partner Select (lavoro 3): il partner scelto, o tutti
   const richieste = [
@@ -1744,15 +1762,17 @@ async function caricaAgenda() {
   const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*').eq('user_id', visto().id)
     .or(`and(giorno.gte.${AG.settimana[0]},giorno.lte.${AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01)`));   // le spunte Core del mese vivono sul primo del mese
   const modello = vediTutti() ? null : dbq('modello del giorno', supa.from('modello_giorno').select('*').eq('user_id', visto().id));
+  const modelli = vediTutti() ? null : dbq('modelli personali', supa.from('modelli').select('*').eq('user_id', visto().id).order('ordine'));
   // (le misure del Core non si leggono più qui: dal 22/09 il Core vive nel Check e nel Modulo Core del mese)
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   await conferme;
-  const [cd, md] = await Promise.all([cose, modello]);
-  for (const r of [app1, ric, pas, tel, cd, md]) if (r && r.error) throw r.error;
+  const [cd, md, mm] = await Promise.all([cose, modello, modelli]);
+  for (const r of [app1, ric, pas, tel, cd, md, mm]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
   AG.cose = cd ? cd.data : [];
   AG.modello = md ? md.data : [];
+  AG.modelli = mm ? mm.data : [];
   AG.misure = {};
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
@@ -1815,12 +1835,18 @@ function foglioHtml(oggi) {
       <button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button>
     </div>`;
   };
-  // Il Core non sta più nel foglio (Ignazio 22/09: vive nel Check e nel Modulo Core del mese); qui un bottone ben visibile che apre il modulo
-  let h = '<div class="ag-foglio">';   // il Modulo Core sta nel menu (22/09: nel giorno non ha senso)
-  for (const s of A.sezioniFoglio(voci.filter(v => !v.core))) h += `<h2 class="ag-sez">${esc(s.nome)}</h2>${s.voci.map(v => riga(v, 'data-voce')).join('')}`;
-  h += `<h2 class="ag-sez">Da fare</h2>${cose.map(c => riga(c, 'data-cosa')).join('')}
-    <form class="ag-cosa-nuova" id="ag-cosa-nuova"><input type="text" id="ag-cosa-testo" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-  </div>`;
+  // Una sezione per ogni modello personale acceso: il titolo del modello prende il posto di «Da fare» (Ignazio 22/09);
+  // dentro le voci del modello di quel giorno, le cose scritte a mano in quella sezione e il campo per aggiungerne.
+  const campo = gid => `<form class="ag-cosa-nuova" data-gruppo="${gid || ''}"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
+  const attivi = AG.modelli.filter(m => m.attivo !== false);
+  let h = '<div class="ag-foglio">';
+  for (const m of attivi) {
+    const sueVoci = voci.filter(v => !v.core && v.modello_id === m.id), sueCose = cose.filter(c => c.gruppo_id === m.id);
+    h += `<h2 class="ag-sez">${m.icona ? ic(m.icona) : ''}${esc(m.titolo)}</h2>${sueVoci.map(v => riga(v, 'data-voce')).join('')}${sueCose.map(c => riga(c, 'data-cosa')).join('')}${campo(m.id)}`;
+  }
+  const libere = cose.filter(c => !c.gruppo_id || !attivi.some(m => m.id === c.gruppo_id));
+  if (!attivi.length || libere.length) h += `<h2 class="ag-sez">Da fare</h2>${libere.map(c => riga(c, 'data-cosa')).join('')}${attivi.length ? '' : campo(null)}`;
+  h += '</div>';
   return h;
 }
 
@@ -1847,22 +1873,23 @@ function titoloGiorno(giorno, oggi) {
 
 function collegaCose(oggi) {
   const A = MB21Agenda;
-  const form = document.getElementById('ag-cosa-nuova');
-  if (!form) return;
-  const campo = document.getElementById('ag-cosa-testo');
-  form.onsubmit = async ev => {
-    ev.preventDefault();
-    const testo = A.testoCosa(campo.value);
-    if (!testo) return;
-    const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
-    const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: AG.giorno, ordine }).select().single());
-    if (error) return;
-    AG.cose.push(data);
-    disegnaAgenda();
-    const c2 = document.getElementById('ag-cosa-testo');
-    if (c2) c2.focus();   // si continua a scrivere la prossima, senza ritoccare il campo
-  };
-  app.querySelectorAll('.ag-cose .cosa[data-cosa]').forEach(riga => {
+  app.querySelectorAll('.ag-foglio .ag-cosa-nuova').forEach(form => {
+    const campo = form.querySelector('input');
+    form.onsubmit = async ev => {
+      ev.preventDefault();
+      const testo = A.testoCosa(campo.value);
+      if (!testo) return;
+      const gruppo = form.dataset.gruppo || null;
+      const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
+      const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: AG.giorno, ordine, gruppo_id: gruppo }).select().single());
+      if (error) return;
+      AG.cose.push(data);
+      disegnaAgenda();
+      const c2 = app.querySelector(`.ag-cosa-nuova[data-gruppo="${gruppo || ''}"] input`);
+      if (c2) c2.focus();   // si continua a scrivere la prossima, senza ritoccare il campo
+    };
+  });
+  app.querySelectorAll('.ag-foglio .cosa[data-cosa]').forEach(riga => {
     const c = AG.cose.find(x => x.id === riga.dataset.cosa);
     if (!c) return;
     riga.querySelector('.spunta').onclick = () => spuntaCosa(c);
@@ -1877,11 +1904,9 @@ function collegaCose(oggi) {
     riga.querySelector('.spunta').onclick = () => { if (!v.stato) spuntaVoce(v); };
     riga.querySelector('.testo').onclick = () => {
       if (v.stato && ['cd', 'pagine'].includes(v.core)) return AG.giorno === oggi ? apriCheck() : mostraToast('Il Check si compila per oggi');
-      foglioModello();
+      foglioModello(v.modello_id);
     };
   });
-  const core = document.getElementById('ag-core-mese');
-  if (core) core.onclick = () => apriCoreMese(AG.giorno.slice(0, 7));
 }
 
 // La spunta di una voce del modello: una riga di cose_da_fare con modello_id (voce personale, quel giorno) oppure
@@ -1902,10 +1927,52 @@ async function spuntaVoce(v) {
   disegnaAgenda();
 }
 
-// «Le mie cose di ogni giorno»: il modello. Ogni voce ha l'interruttore acceso/spento, il testo e i giorni in cui
-// compare; in fondo si aggiunge una voce. Con `proponiCore` (primo avvio) si mettono le cinque abitudini Core N21.
-function foglioModello(opz = {}) {
+// I Modelli personali (Ignazio 22/09): ognuno si crea le sue routine o cose da fare con il + — un titolo e, volendo,
+// un'icona. Il titolo diventa la sezione del foglio del giorno; le voci compaiono da sole nei giorni scelti.
+const ICONE_MODELLO = ['fatto', 'orario', 'lampo', 'libro', 'audio', 'crescita', 'obiettivi', 'squadra', 'telefonate', 'persona', 'casa', 'perche', 'vendite', 'prodotti', 'liberta', 'complimenti'];
+function foglioTitoloModello(m, dopo) {
+  let icona = (m && m.icona) || '';
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const disegna = () => {
+    const t = velo.querySelector('#nm-titolo') ? velo.querySelector('#nm-titolo').value : ((m && m.titolo) || '');
+    velo.innerHTML = `<div class="foglio"><h3>${m ? 'Titolo e icona' : 'Nuovo modello'}${esc(aNome())}</h3>
+      <p>Per esempio «Routine del mattino», «Giorno di OPEN», «Business». Il titolo è la sezione del tuo foglio del giorno.</p>
+      <div class="campo"><label>Titolo <small>Obbligatorio</small></label><input id="nm-titolo" maxlength="40" value="${esc(t)}"></div>
+      <div class="campo"><label>Icona <small>facoltativa</small></label>
+        <div class="nm-icone"><button data-icona="" class="${icona ? '' : 'scelto'}">—</button>${ICONE_MODELLO.map(n => `<button data-icona="${n}" class="${icona === n ? 'scelto' : ''}" aria-label="${n}">${ic(n)}</button>`).join('')}</div></div>
+      <button class="primario" id="nm-si">${m ? 'Salva' : 'Crea'}</button><button class="link" id="nm-no">Annulla</button></div>`;
+    velo.querySelector('#nm-no').onclick = () => velo.remove();
+    velo.querySelectorAll('[data-icona]').forEach(b => { b.onclick = () => { icona = b.dataset.icona; disegna(); }; });
+    velo.querySelector('#nm-si').onclick = async () => {
+      const titolo = String(velo.querySelector('#nm-titolo').value).replace(/\s+/g, ' ').trim().slice(0, 40);
+      if (!titolo) return mostraToast('Scrivi il titolo del modello');
+      velo.remove();
+      dopo({ titolo, icona: icona || null });
+    };
+  };
+  document.body.appendChild(velo);
+  disegna();
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  const campo = velo.querySelector('#nm-titolo'); if (campo) campo.focus();
+}
+function nuovoModello() {
+  foglioTitoloModello(null, async ({ titolo, icona }) => {
+    const ordine = AG.modelli.reduce((x, m) => Math.max(x, m.ordine || 0), 0) + 1;
+    const { data, error } = await dbq('nuovo modello', supa.from('modelli').insert({ user_id: visto().id, titolo, icona, ordine }).select().single());
+    if (error) return;
+    AG.modelli.push(data);
+    disegnaAgenda();
+    foglioModello(data.id);
+  });
+}
+
+// Un modello: titolo e icona, acceso/spento, le sue voci (ognuna con l'interruttore e i giorni), in fondo il campo per
+// aggiungerne; «Elimina il modello» in basso. Le cose scritte a mano nella sua sezione restano, sotto «Da fare».
+function foglioModello(id) {
   const A = MB21Agenda;
+  const m = AG.modelli.find(x => x.id === id) || AG.modelli[0];
+  if (!m) return nuovoModello();
   const velo = document.createElement('div');
   velo.className = 'velo';
   document.body.appendChild(velo);
@@ -1917,39 +1984,53 @@ function foglioModello(opz = {}) {
     Object.assign(v, dopo);
     disegna();
   };
-  const aggiungi = async righe => {
-    const ordine = AG.modello.reduce((m, v) => Math.max(m, v.ordine || 0), 0);
-    const { data, error } = await dbq('modello del giorno', supa.from('modello_giorno')
-      .insert(righe.map((r, i) => ({ user_id: visto().id, testo: r.testo, core: r.core || null, sezione: r.sezione || 'Routine', scala: r.scala || 'giorno', giorni: r.giorni || [], ordine: ordine + i + 1 }))).select());
+  const salvaModello = async dopo => {
+    const { error } = await dbq('modello', supa.from('modelli').update(dopo).eq('id', m.id));
     if (error) return;
-    AG.modello.push(...data);
+    Object.assign(m, dopo);
     disegna();
   };
+  const aggiungi = async testo => {
+    const ordine = AG.modello.reduce((x, v) => Math.max(x, v.ordine || 0), 0) + 1;
+    const { data, error } = await dbq('modello del giorno', supa.from('modello_giorno')
+      .insert({ user_id: visto().id, modello_id: m.id, testo, sezione: m.titolo.slice(0, 40), scala: 'giorno', giorni: [], ordine }).select().single());
+    if (error) return;
+    AG.modello.push(data);
+    disegna();
+    const c = velo.querySelector('#fm-testo'); if (c) c.focus();
+  };
   const disegna = () => {
-    // le voci Core non stanno più nel modello del giorno (22/09): il Core vive nel Check e nel Modulo Core del mese
-    const voci = AG.modello.filter(v => !v.core).sort((x, y) => (x.ordine || 0) - (y.ordine || 0));
-    const sezioni = A.sezioniFoglio(voci);
-    const mancanti = [];
+    const voci = AG.modello.filter(v => v.modello_id === m.id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0));
     velo.innerHTML = `<div class="foglio alto mod">
-      <div class="testa-foglio"><h3>Le mie cose di ogni giorno${esc(aNome())}</h3><button id="fm-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-      <p>Compaiono da sole nel foglio del giorno, sopra le cose scritte a mano. Tocca una voce per cambiarla; le abitudini Core misurabili si spuntano da sole dal Check, dai PM e dalle vendite.</p>
-      ${voci.length ? sezioni.map(s => `<div class="ag-cose-gruppo">${esc(s.nome)}</div>${s.voci.map(v => `<div class="mod-voce${v.attivo ? '' : ' spenta'}" data-voce="${esc(v.id)}">
+      <div class="testa-foglio"><h3>${m.icona ? ic(m.icona) + ' ' : ''}${esc(m.titolo)}${esc(aNome())}</h3><button id="fm-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div class="mod-voce${m.attivo === false ? ' spenta' : ''}"><button class="mod-int" id="fm-attivo" role="switch" aria-checked="${m.attivo !== false}"><i></i></button>
+        <button class="mod-testo" id="fm-titolo"><span>${m.attivo === false ? 'Spento: non compare nel foglio' : 'Acceso: compare nel foglio del giorno'}</span><small>Tocca qui per cambiare titolo e icona</small></button></div>
+      <div class="ag-cose-gruppo">Le voci</div>
+      ${voci.length ? voci.map(v => `<div class="mod-voce${v.attivo ? '' : ' spenta'}" data-voce="${esc(v.id)}">
         <button class="mod-int" role="switch" aria-checked="${v.attivo ? 'true' : 'false'}" aria-label="${v.attivo ? 'Accesa' : 'Spenta'}"><i></i></button>
-        <button class="mod-testo"><span>${esc(v.testo)}</span><small>${esc(v.core ? (A.DI_SCALA[v.scala] || 'ogni giorno') + (A.CORE_N21.find(c => c.core === v.core)?.misura ? ' · si spunta da sola' : '') : A.testoGiorni(v.giorni))}</small></button>
-      </div>`).join('')}`).join('') : `<div class="vuoto">Nessuna voce ancora.</div>`}
-      ${mancanti.length ? `<button class="link" id="fm-core">${ic('crescita')} ${mancanti.length === A.CORE_N21.length ? 'Abilita il modulo Core N21 (le 7 abitudini)' : `Aggiungi le abitudini Core che mancano (${mancanti.length})`}</button>` : ''}
-      <form class="ag-cosa-nuova" id="fm-nuova"><input type="text" id="fm-testo" maxlength="200" placeholder="Aggiungi una cosa di ogni giorno…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-      <button class="link" id="fm-chiudi">Chiudi</button></div>`;
+        <button class="mod-testo"><span>${esc(v.testo)}</span><small>${esc(A.testoGiorni(v.giorni))}</small></button>
+      </div>`).join('') : '<div class="vuoto">Nessuna voce: scrivi qui sotto la prima.</div>'}
+      <form class="ag-cosa-nuova" id="fm-nuova"><input type="text" id="fm-testo" maxlength="200" placeholder="Aggiungi una voce…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <div class="fc-comandi"><button class="link elimina-qui" id="fm-elimina">Elimina il modello</button><button class="link" id="fm-chiudi">Chiudi</button></div></div>`;
     velo.querySelector('#fm-x').onclick = chiudi;
     velo.querySelector('#fm-chiudi').onclick = chiudi;
-    const core = velo.querySelector('#fm-core');
-    if (core) core.onclick = () => aggiungi(mancanti);
+    velo.querySelector('#fm-attivo').onclick = () => salvaModello({ attivo: m.attivo === false });
+    velo.querySelector('#fm-titolo').onclick = () => foglioTitoloModello(m, salvaModello);
     velo.querySelector('#fm-nuova').onsubmit = ev => {
       ev.preventDefault();
       const testo = A.testoCosa(velo.querySelector('#fm-testo').value);
-      if (testo) aggiungi([{ testo }]);
+      if (testo) aggiungi(testo);
     };
-    velo.querySelectorAll('.mod-voce').forEach(riga => {
+    velo.querySelector('#fm-elimina').onclick = async () => {
+      if (!(await chiediConferma(`Eliminare il modello «${m.titolo}»?`, 'Le sue voci spariscono dal foglio; le cose scritte a mano restano, sotto «Da fare».', 'Elimina', true))) return;
+      const { error } = await dbq('elimina modello', supa.from('modelli').delete().eq('id', m.id));
+      if (error) return;
+      AG.modelli = AG.modelli.filter(x => x.id !== m.id);
+      AG.modello = AG.modello.filter(v => v.modello_id !== m.id);
+      for (const c of AG.cose) if (c.gruppo_id === m.id) c.gruppo_id = null;
+      chiudi();
+    };
+    velo.querySelectorAll('.mod-voce[data-voce]').forEach(riga => {
       const v = AG.modello.find(x => x.id === riga.dataset.voce);
       if (!v) return;
       riga.querySelector('.mod-int').onclick = () => salva(v, { attivo: !v.attivo });
@@ -1963,7 +2044,6 @@ function foglioModello(opz = {}) {
     });
   };
   disegna();
-  if (opz.proponiCore && !AG.modello.length) aggiungi(A.CORE_N21);
 }
 
 // Una voce del modello: il testo e i giorni in cui compare (Ogni giorno · Lun-Ven · Sab e Dom · a scelta).
@@ -1974,7 +2054,7 @@ function foglioVoceModello(v, salva, elimina) {
   velo.className = 'velo';
   const disegna = () => {
     const tutti = !giorni.length;
-    velo.innerHTML = `<div class="foglio"><h3>Cosa di ogni giorno</h3>
+    velo.innerHTML = `<div class="foglio"><h3>Voce del modello</h3>
       <div class="campo"><textarea id="fv-testo" rows="2" maxlength="200">${esc(v.testo)}</textarea></div>
       <div class="campo"><label>Quando compare</label>
         <div class="ag-scelte"><button data-preset="tutti" class="${tutti ? 'scelto' : ''}">Ogni giorno</button><button data-preset="lv" class="${giorni.join() === '1,2,3,4,5' ? 'scelto' : ''}">Lun-Ven</button><button data-preset="sd" class="${giorni.join() === '6,7' ? 'scelto' : ''}">Sab e Dom</button></div>
@@ -2120,8 +2200,9 @@ if (typeof window !== 'undefined' && window.matchMedia) {
 function menuAgendaHtml() {
   return `<div class="ag-lato-titolo">MBplan</div>
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k) || k === 'mese'; return `<button data-scala="${k}" class="${(AG.vista === 'settimana' ? 'settimana' : 'giorno') === k ? 'si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${k === 'mese' ? 'Modulo Core' : c ? '' : 'presto'}</small></button>`; }).join('')}
-    <div class="ag-lato-titolo">Modelli</div>
-    <button data-cmd="modello">${ic('aggiorna')}<span>Le mie cose di ogni giorno</span></button>
+    <div class="ag-lato-titolo mb-titolo-piu">Modelli personali<button data-cmd="nuovo-modello" aria-label="Nuovo modello">${ic('piu')}</button></div>
+    ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small>${m.attivo === false ? 'spento' : `${AG.modello.filter(v => v.modello_id === m.id).length} voci`}</small></button>`).join('')
+      : '<div class="mb-vuoto">Crea le tue routine o cose da fare con il +</div>'}
     <button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -2130,7 +2211,8 @@ function collegaMenuAgenda(radice, chiudi) {
     if (!VISTE.includes(b.dataset.scala)) return mostraToast('Il foglio di questa scala arriva presto');
     chiudi(); cambiaVista(b.dataset.scala);
   }; });
-  radice.querySelector('[data-cmd="modello"]').onclick = () => { chiudi(); foglioModello(); };
+  radice.querySelector('[data-cmd="nuovo-modello"]').onclick = () => { chiudi(); nuovoModello(); };
+  radice.querySelectorAll('[data-modello]').forEach(b => { b.onclick = () => { chiudi(); foglioModello(b.dataset.modello); }; });
   radice.querySelector('[data-cmd="core"]').onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7)); };
 }
 function menuAgenda() {
@@ -2151,12 +2233,14 @@ function meseHtml(giorno, oggi) {
   const A = MB21Agenda;
   const primo = giorno.slice(0, 8) + '01';
   const inizio = A.settimana(primo)[0];
+  const punti = A.puntiGiorni(AG.azioni, Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)), 3);   // i pallini come nella striscia (22/09)
   let h = `<div class="mb-mese"><div class="mb-mese-testa"><button class="freccia" data-mese="-1" aria-label="Mese prima">‹</button><b>${esc(A.titoloMese(giorno))}</b><button class="freccia" data-mese="1" aria-label="Mese dopo">›</button></div>
     <div class="mb-mese-griglia">${A.GIORNI_SETTIMANA.map(g => `<small>${g}</small>`).join('')}`;
   for (let i = 0; i < 42; i++) {
     const g = A.spostaGiorno(inizio, i);
     if (i >= 35 && g.slice(0, 7) !== giorno.slice(0, 7)) break;
-    h += `<button data-giorno="${g}" class="${g.slice(0, 7) !== giorno.slice(0, 7) ? 'altro' : ''}${g === giorno ? ' scelto' : ''}${g === oggi ? ' oggi' : ''}">${Number(g.slice(8))}</button>`;
+    const p = punti[g] || { punti: [], tanti: false };
+    h += `<button data-giorno="${g}" class="${g.slice(0, 7) !== giorno.slice(0, 7) ? 'altro' : ''}${g === giorno ? ' scelto' : ''}${g === oggi ? ' oggi' : ''}">${Number(g.slice(8))}<span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
   }
   return h + '</div></div>';
 }
