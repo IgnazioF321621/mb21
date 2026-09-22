@@ -282,7 +282,7 @@ async function caricaTracceDaControllare(oggi) {
     const da = MB21Agenda.spostaGiorno(oggi, -7);
     const { data, error } = await dbq('tracce', supa.from('condivisioni')
       .select('id, contatto_id, condivisa_il, ascoltata, ascoltata_il, segnata_dal_partner, chiede_prossima_il, contatti(nome), materiali(titolo)').in('user_id', idVisti())
-      .or(`and(ascoltata.eq.false,condivisa_il.gte.${da},condivisa_il.lt.${oggi}),and(ascoltata.eq.true,ascoltata_il.gte.${da})`));
+      .or(`and(ascoltata.eq.false,condivisa_il.gte.${da},condivisa_il.lte.${oggi}),and(ascoltata.eq.true,ascoltata_il.gte.${da})`));
     if (error) throw error;
     TRC.righe = MB21Sharing.daControllare((data || []).filter(k => !k.ascoltata), oggi);
     TRC.ascoltate = (data || []).filter(k => k.ascoltata).sort((a, b) => (b.chiede_prossima_il ? 1 : 0) - (a.chiede_prossima_il ? 1 : 0) || b.ascoltata_il.localeCompare(a.ascoltata_il));
@@ -293,7 +293,7 @@ async function caricaTracceDaControllare(oggi) {
 
 function tracceHtml() {
   if (!TRC.righe.length && !TRC.ascoltate.length) return '';
-  const testo = { chiedi: 'condivisa ieri · l\'ha ascoltata?', ricordaglielo: '2 giorni fa · ricordaglielo, scade domani', scaduta: 'scaduta: sono passati 3 giorni' };
+  const testo = { attesa: 'condivisa oggi · in attesa che la ascolti', chiedi: 'condivisa ieri · l\'ha ascoltata?', ricordaglielo: '2 giorni fa · ricordaglielo, scade domani', scaduta: 'scaduta: sono passati 3 giorni' };
   const spento = ST.offline || soloGuardo() ? 'disabled' : '';
   const oggi = ST.oggi || MB21Coda.oggiRoma();
   const quando = g => { const n = MB21Sharing.giorniDa(g, oggi); return n === 0 ? 'oggi' : n === 1 ? 'ieri' : `${n} giorni fa`; };
