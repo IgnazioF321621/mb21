@@ -58,6 +58,7 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.deepEqual(m.s3.righe.map(r => [r.nome, r.vp]), [['Gino Pace', 50], ['Anna Villa', 42.5], ['Consegna a settembre', 8]]);   // la promo che conta a marzo 2027 non c'è
   assert.equal(m.s3.quanti, 3); assert.equal(m.s3.vp, 100.5); assert.equal(m.s3.raggiunto, false);
   assert.deepEqual(C.modulo({ mese: '2027-03', vendite }).s3.righe.map(r => r.nome), ['Promo: conta a marzo']);
+  assert.equal(C.modulo({ mese, vendite: [{ contatto_id: 'x', data: '2026-09-01', vp: 0.1 }, { contatto_id: 'x', data: '2026-09-02', vp: 0.2 }] }).s3.vp, 0.3);   // niente 0,30000000000000004
   // 4 · CD: 30 giorni; le tracce del Check e quelle del percorso si sommano, i titoli del percorso si leggono
   assert.equal(m.s4.giorni.length, 30);
   assert.equal(m.s4.giorni[0].quante, 1); assert.equal(m.s4.giorni[0].titolo, '1 traccia'); assert.equal(m.s4.giorni[0].fatto, true);
