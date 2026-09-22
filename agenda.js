@@ -113,6 +113,25 @@
       .sort((x, y) => (x.quando < y.quando ? -1 : 1));
   }
 
+  // ── Cose da fare del giorno (cantiere 41, lavoro 1) ──────────────────────────
+  // Le cose non legate a una persona, nel foglio del giorno. Il riporto a domani è una regola di lettura:
+  // una cosa non fatta con giorno passato si vede OGGI (con «da <giorno>»), finché non la spunti; nel suo
+  // giorno di origine non si vede più. Le cose fatte stanno nel giorno in cui le hai spuntate (`giorno`).
+  // Ordine: prima le da fare (le riportate per prime, le più vecchie in cima), poi le fatte; a parità `ordine`, poi creazione.
+  function coseDelGiorno(cose, giorno, oggi) {
+    const mie = (cose || []).filter(c => {
+      if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
+      return c.giorno === giorno;
+    }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
+    const peso = c => (c.fatto_il ? 2 : c.riportata ? 0 : 1);
+    return mie.sort((x, y) => peso(x) - peso(y)
+      || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
+      || (x.ordine || 0) - (y.ordine || 0)
+      || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
+  }
+  // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
+  function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
+
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
     const nome = (a.contatti && a.contatti.nome) || '—';
@@ -473,7 +492,8 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno };
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
+    coseDelGiorno, testoCosa };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

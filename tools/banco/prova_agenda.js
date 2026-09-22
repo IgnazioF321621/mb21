@@ -371,4 +371,27 @@ prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quell
   assert.equal(A.fineSlittata('18:30', '', '19:30'), null);
 });
 
+prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte restano nel loro giorno', () => {
+  const cose = [
+    { id: 'a', testo: 'Biglietti BBS', giorno: '2026-09-20', ordine: 0, fatto_il: null, creato_il: '2026-09-20T10:00:00Z' },   // vecchia, non fatta → oggi
+    { id: 'b', testo: 'PM di giovedì', giorno: '2026-09-22', ordine: 1, fatto_il: null, creato_il: '2026-09-22T08:00:00Z' },
+    { id: 'c', testo: 'Chiamare Amway', giorno: '2026-09-22', ordine: 0, fatto_il: null, creato_il: '2026-09-22T09:00:00Z' },
+    { id: 'd', testo: 'Fatta ieri', giorno: '2026-09-21', ordine: 0, fatto_il: '2026-09-21T18:00:00Z', creato_il: '2026-09-21T08:00:00Z' },
+    { id: 'e', testo: 'Fatta oggi', giorno: '2026-09-22', ordine: 0, fatto_il: '2026-09-22T10:00:00Z', creato_il: '2026-09-22T07:00:00Z' },
+    { id: 'f', testo: 'Domani', giorno: '2026-09-23', ordine: 0, fatto_il: null, creato_il: '2026-09-22T07:00:00Z' },
+    { id: 'g', testo: 'Ancora più vecchia', giorno: '2026-09-18', ordine: 0, fatto_il: null, creato_il: '2026-09-18T07:00:00Z' },
+  ];
+  const oggi = A.coseDelGiorno(cose, '2026-09-22', '2026-09-22');
+  assert.deepEqual(oggi.map(c => c.id), ['g', 'a', 'c', 'b', 'e']);   // riportate (le più vecchie prima), poi da fare per ordine, poi fatte
+  assert.equal(oggi[0].riportata, '2026-09-18');
+  assert.equal(oggi[2].riportata, null);
+  assert.deepEqual(A.coseDelGiorno(cose, '2026-09-20', '2026-09-22').map(c => c.id), []);        // nel giorno vecchio la non fatta non c'è più
+  assert.deepEqual(A.coseDelGiorno(cose, '2026-09-21', '2026-09-22').map(c => c.id), ['d']);     // la fatta resta dov'è
+  assert.deepEqual(A.coseDelGiorno(cose, '2026-09-23', '2026-09-22').map(c => c.id), ['f']);     // domani: solo le sue
+  assert.deepEqual(A.coseDelGiorno([], '2026-09-22', '2026-09-22'), []);
+  assert.equal(A.testoCosa('  comprare   i biglietti  '), 'comprare i biglietti');
+  assert.equal(A.testoCosa('   '), null);
+  assert.equal(A.testoCosa('x'.repeat(300)).length, 200);
+});
+
 console.log(`\n${ok} prove superate`);
