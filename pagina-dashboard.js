@@ -1176,7 +1176,7 @@ function apriCheck() {
   const tracceDelGiorno = async (data, ancoraValido) => {
     const campo = velo.querySelector('#ck-campo-tracce');
     let spia = velo.querySelector('#ck-tracce-percorso');
-    if (!spia) { spia = document.createElement('div'); spia.id = 'ck-tracce-percorso'; spia.className = 'vn-aiuto'; campo.appendChild(spia); }
+    if (!spia) { spia = document.createElement('div'); spia.id = 'ck-tracce-percorso'; spia.className = 'vn-aiuto'; (campo.querySelector('.ck-corpo') || campo).appendChild(spia); }   // dentro il corpo della riga, non accanto (22/09: stringeva la riga)
     spia.textContent = '';
     if (!data || data < MB21Dashboard.INIZIO_TRACCE_PERCORSO || visto().id !== ST.utente.id) return;
     const { data: righe, error } = await dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti'));
