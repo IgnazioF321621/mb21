@@ -105,6 +105,31 @@ Legenda: (O) condivisibile con l'ospite · (U) condivisibile con l'utente · sen
 
 **Idee nate dal rilievo (da decidere quando si costruisce)**: una spunta **«ce l'ho»** sulle tracce della biblioteca, perché si condivide solo quello che si possiede · il registro distingue «me l'ha condivisa lo sponsor» da «l'ho presa e ascoltata io» · ogni materiale una volta sola, con più etichette di argomento · la biblioteca deve poter crescere a mano, da Admin (il sito ha più del PDF) · nel PDF alcune voci sono tracce singole, sul sito si comprano dentro un pack con lo stesso nome → **secondo giro**: aprire i pack con i filtri «Condivisibile ospiti / utenti» (Cmd + clic, scheda nuova) per sapere quali tracce stanno in quale pack
 
+### Secondo giro, dentro i pack (22/09 mattina): quale traccia sta in quale pack
+*Filtro «Condivisibile ospiti» poi «Condivisibile utenti»; ogni pack aperto da Ignazio in una scheda nuova. Regola emersa: **un pack può contenere tracce di fasi diverse** del PDF → l'unità del percorso è la traccia, il pack è solo «dove si compra».*
+
+**Per l'ospite (fase #1) — 7 materiali, 16 tracce, tutte le 16 del PDF**
+- **Dare Seguito 1** (pack 21 €): L'impresa ideale — M. Bini · Siamo nel mondo reale — E. Capecchi · Il principio del percorso — M. Bini
+- **Dare Seguito 2** (pack 21 €): Sviluppate una vostra solida opinione — A. Busato · L'attività si rivelerà a strati — L. Pellegrini · La rivoluzione dell'attività Amway — A. Mazzari
+- **Le storie dei Diamanti Italiani** (pack 35 €; il sito non elenca le tracce, Ignazio: «sono esattamente quelle che c'erano su Glide»): le 5 «La storia» — N. Gurini · A. e M.G. Nocentini · A. Castelli · F. Martelli · M. Bini
+- **Perché investire il tuo tempo in questa attività** (pack 14 €, A. Mazzari): Perché investire il tuo tempo in questa attività · Come avere successo in questa attività
+- **Risposte per prendere la migliore decisione** (7 €, P. Matz): una traccia sola, etichetta «Pack» perché contiene in omaggio la versione inglese
+- Tracce singole: **Tempo e denaro** — A. Nocentini · **Un equilibrio non comune** — F. Martelli
+- Nota della descrizione dei pack: ogni traccia è condivisibile «**previo acquisto di licenza di condivisione**» (l'argomento «Licenze Media Sharing», saltato) → **da chiarire con Ignazio** come funziona la licenza
+
+**Per l'utente (fasi #2-#4) — 16 materiali, 33 tracce: tutte le 24 del PDF più 9 nuove**
+- Tracce singole (7 € l'una): Come organizzare un Piano in casa — M. Bini *(nuova)* · Crescita personale — E. Capecchi (#2) · I primi passi per iniziare la vostra attività — A. Busato (#2) · Il potere del Sistema — M. Bini (#4) · Il ritmo del Sistema — E. Capecchi (#2) · L'opportunità sei tu — M. Bini (#3) · La risposta — M. Bini (#2) · Questa è la «tua» attività! — M. Bini (#4)
+- **Il potere dei numeri** (pack 21 €, E. Capecchi): Il potere dei numeri (#3) · Come superare i «no» *(nuova)* · Il gelato al mandarino (#4) · Non mollare mai *(bonus, nuova)*
+- **L'atteggiamento è tutto** (pack 21 €, B. Andrews): L'atteggiamento è tutto · La mente del diamante · L'ingrediente più importante del successo *(tutte e tre nuove)*
+- **La linea sottile** (pack 21 €, M. Bini): L'atteggiamento mentale della persona di successo (#4) · Atteggiamento II *(nuova)* · La linea sottile (#3)
+- **Massimo risultato con il minimo sforzo** (pack 21 €, E. Capecchi): Massimo risultato con il minimo sforzo (#3) · L'atteggiamento fa la differenza (#4) · Rimuovete la più grande zavorra *(nuova)*
+- **Pensare da vincente** (pack 21 €, M. Bini): Come sarà la vostra vita tra 10 anni? · Prendere il controllo assegnando le Priorità · Come superare le vostre paure · Pensare da vincente *(bonus)* — tutte #4
+- **Sviluppare una mentalità di successo** (pack 21 €, M. Bini): Sviluppare una mentalità imprenditoriale (#3) · Superare la paura del giudizio degli altri (#2) · I tre fondamentali per costruire l'attività (#4) · Stesse decisioni = Stessi risultati *(omaggio, #4)*
+- **Sviluppate l'abitudine di ascoltare i CD** (pack 14 €, M. Sala; il sito non elenca le tracce): Ignazio 22/09: «traccia unica divisa in 2 parti» → conta come **una** traccia *(nuova)*
+- **Valore e significatività** (pack 21 €, A. Mazzari): Valore e significatività (#3) · Il valore del CEP (#2) · La vostra attività inizia al Weekend Seminar (#2)
+
+**Totale biblioteca del Media Sharing: 49 tracce** (16 ospite + 33 utente), ognuna con il pack di appartenenza. Le **9 nuove** non hanno una fase nel PDF: la fase la dà Ignazio quando si ordina il percorso. ⚠️ In Glide (`BSM.csv`) la colonna «Pack» è sballata (es. «Il principio del percorso» segnato Diamanti): per l'import si usa questo rilievo, non quella colonna.
+
 ### Libri consigliati: 41 (rilievo del 21/09 a mezzanotte)
 1. Abitudini da un milione di dollari — Brian Tracy · *non disponibile il 21/09*
 2. Cambia paradigma cambia la tua vita — Bob Proctor
@@ -163,6 +188,8 @@ Legenda: (O) condivisibile con l'ospite · (U) condivisibile con l'utente · sen
 
 ## Da chiarire
 - ~~**Tracce e Pagine del Check**~~ — ✅ confermato da Ignazio il 21/09: «sono quelle che ascolto e leggo io, non quelle che condividiamo». Quindi **le condivisioni non toccano il Check**. **Deciso da Ignazio il 21/09 («sì»)**: la traccia che un partner segna «ascoltata» in «Il mio percorso» **conta da sola nelle Tracce del suo Check**, senza riscriverla. Da studiare quando si costruisce: come convive con il numero scritto a mano nel Check del Giorno (le tracce del CEP restano a mano), senza contare due volte (un numero, una fonte sola; come già fatto per Contatti, PM e VP Clienti)
-- ~~Il sito: argomenti ed elenco dei libri consigliati~~ — ✅ fatto il 21-22/09 (vedi sopra). Resta il **secondo giro dentro i pack**
+- ~~Il sito: argomenti, libri consigliati e dentro i pack~~ — ✅ fatto il 21-22/09 (vedi sopra): 49 tracce, tutte con il pack
+- **La licenza di condivisione** («previo acquisto di licenza di condivisione», argomento «Licenze Media Sharing»): come funziona, serve per ogni traccia? → da chiedere a Ignazio
+- **La fase delle 9 tracce nuove** (non nel PDF) e **l'ordine di lettura dei libri**: li dà Ignazio
 - ~~I 44 libri del Check rispetto ai libri consigliati ufficiali~~ — ✅ confrontati: i 41 del sito ci sono tutti
 - L'export è del 13/09: serve un `Sharing.csv` nuovo se dopo si è segnato altro in Glide
