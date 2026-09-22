@@ -30,7 +30,7 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   assert.match(f, /class="ag-impegni"/);                 // la card degli impegni
   assert.match(f, /class="ag-imp[^"]*" data-evento="p1"/);
   assert.match(f, /Oggi, lun 21 set/);                   // il titolo del giorno
-  assert.match(f, /id="ag-core-mese"/);                              // il bottone che apre il Modulo Core del mese (Ignazio 22/09: «più visibile»)
+  assert.doesNotMatch(f, /id="ag-core-mese"/);                       // il Modulo Core non sta nel foglio del giorno: è nel menu (22/09)
   assert.doesNotMatch(f, /ag-sez">Core/);                            // la sezione Core non sta più nel foglio: vive nel Check e nel modulo
   assert.doesNotMatch(f, /Presentare almeno 8 Piani Marketing/);
   assert.ok(f.indexOf('ag-sez">Routine') < f.indexOf('ag-sez">Da fare'));
