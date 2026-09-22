@@ -288,6 +288,38 @@
   button.app-riga { width: 100%; border: 0; text-align: left; color: var(--testo); font-family: inherit; }
   button.app-riga .freccia { margin-left: auto; color: var(--grigio); font-size: 18px; font-weight: 400; }
   /* Vendite nella scheda contatto (cantiere 26) */
+  /* ── Sharing nella scheda (cantiere 40): il consiglio, il registro, «a mano» ── */
+  .sh-etichetta { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--gr-crescita); margin-bottom: 6px; }
+  .sh-titolo { font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .sh-oratore { font-size: 13px; color: var(--grigio); margin-top: 3px; }
+  .sh-testo { display: block; width: 100%; border: 0; background: none; padding: 0; text-align: left; font-family: inherit; color: var(--testo); }
+  .sh-riassunto { font-size: 14px; margin-top: 10px; line-height: 1.4; white-space: pre-line; }
+  .sh-punti { font-size: 14px; margin-top: 10px; line-height: 1.4; white-space: pre-line; }
+  .sh-punti b { display: block; margin-bottom: 2px; }
+  .sh-perchi { font-size: 13px; color: var(--grigio); margin-top: 8px; padding: 8px 10px; background: var(--superficie-2); border-radius: 10px; line-height: 1.35; white-space: pre-line; }
+  .sh-perchi b { color: var(--testo); }
+  .sh-apri-riga { font-size: 13px; font-weight: 600; color: var(--gr-crescita); margin-top: 6px; display: flex; align-items: center; gap: 2px; }
+  .sh-apri-riga svg { transform: rotate(90deg); } .sh-testo.aperto .sh-apri-riga svg { transform: rotate(-90deg); }
+  .sh-azioni { display: flex; gap: 8px; margin-top: 12px; }
+  .sh-azioni .primario { flex: 1; }
+  .sh-altra { flex: none; min-height: var(--bottone-h); padding: 0 16px; border-radius: var(--raggio-bottone); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); font-size: 15px; font-weight: 600; }
+  .sh-fase { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--grigio); }
+  .sh-fase .barra { flex: 1; height: 6px; border-radius: 3px; background: var(--sfondo); overflow: hidden; }
+  .sh-fase .barra i { display: block; height: 100%; background: var(--gr-crescita); border-radius: 3px; }
+  .sh-fine { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .sh-elenco { padding: 2px 16px; }
+  .sh-riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); }
+  .sh-riga:last-child { border-bottom: 0; }
+  .sh-riga-testo { min-width: 0; flex: 1; border: 0; background: none; padding: 0; text-align: left; font-family: inherit; color: var(--testo); }
+  .sh-riga-titolo { font-size: 15px; font-weight: 600; }
+  .sh-riga-sotto { font-size: 13px; color: var(--grigio); margin-top: 2px; }
+  .sh-sw { flex: none; border: 0; background: none; padding: 0; font-family: inherit; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-height: var(--tocco); justify-content: center; }
+  .sh-sw i { display: block; width: 46px; height: 28px; border-radius: 14px; background: var(--spento); position: relative; transition: background .15s; }
+  .sh-sw i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .sh-sw.si i { background: var(--ok); } .sh-sw.si i::after { left: 21px; }
+  .sh-sw span { font-size: 11px; font-weight: 700; color: var(--testo-tenue); } .sh-sw.si span { color: var(--ok); }
+  .sh-mano { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: var(--tocco); border: 0; background: none; color: var(--testo-soft); font-size: 15px; font-weight: 600; font-family: inherit; }
+  .sh-sesso { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
   .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .vn-tot { border-radius: var(--raggio-riga); padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
   .vn-tot span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -1000,29 +1032,31 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609211808"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609211808"></script>
-<script src="lista.js?v=202609211808"></script>
-<script src="rubrica.js?v=202609211808"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609211808"></script>
-<script src="agenda.js?v=202609211808"></script>
-<script src="report.js?v=202609211808"></script>
-<script src="check.js?v=202609211808"></script>
-<script src="mappa.js?v=202609211808"></script>
-<script src="pagina-dashboard.js?v=202609211808"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609211808"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609211808"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609211808"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="pagina-mappa.js?v=202609211808"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609211808"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609211808"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609211808"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609211808"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609211808"></script>
-<script src="benvenuto.js?v=202609211808"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609211808"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221131"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221131"></script>
+<script src="lista.js?v=202609221131"></script>
+<script src="rubrica.js?v=202609221131"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221131"></script>
+<script src="agenda.js?v=202609221131"></script>
+<script src="report.js?v=202609221131"></script>
+<script src="check.js?v=202609221131"></script>
+<script src="mappa.js?v=202609221131"></script>
+<script src="pagina-dashboard.js?v=202609221131"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221131"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221131"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221131"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221131"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221131"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221131"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221131"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221131"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221131"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221131"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221131"></script>
+<script src="benvenuto.js?v=202609221131"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221131"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.21 · 18:08';
+const APP_VERSION = '2026.09.22 · 11:31';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).

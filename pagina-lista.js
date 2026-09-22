@@ -317,7 +317,9 @@ function apriScheda(id) {
 
 function sezioniPer(c) {
   const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'],
-    ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []), ['segni', 'Segni vitali']];
+    ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []),
+    // «Sharing» (cantiere 40): il percorso delle tracce è per candidati e partner (come in Glide), non per Ex e Archiviati
+    ...(MB21Sharing.perChiDi(c) && c.categoria !== 'Archiviato' ? [['sharing', 'Sharing']] : []), ['segni', 'Segni vitali']];
   // La linguetta «Onboarding» dei Partner non c'è più (cantiere 31, Ignazio 18/09: «recuperiamo spazio»): i passi si aprono dalla riga «🚀 Avvio» in testata
   return base;
 }
@@ -417,7 +419,7 @@ function disegnaScheda() {
     if (a && LS.sezione === 'onboarding') disegnaScheda();
     else mostraAvvio(c);
   }).catch(() => {});
-  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite }[LS.sezione] || sezioneDati)();
+  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite, sharing: sezioneSharing }[LS.sezione] || sezioneDati)();
 }
 
 // ── Vendite ── sezione «Vendite», modulo «Nuova vendita», «Ordine fatto» e targhette Brand sono in pagina-vendite.js
@@ -1006,7 +1008,7 @@ async function sezioneSegni() {
 }
 
 // Foglio con pochi campi (azione, nota). Restituisce {k: valore} o null.
-function moduloSemplice(titolo, campi) {
+function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del bottone «Elimina» in fondo (risolve con 'elimina')
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
@@ -1022,10 +1024,12 @@ function moduloSemplice(titolo, campi) {
         : f.tipo === 'textarea' ? `<textarea data-k="${f.k}" rows="${f.righe || 3}">${esc(f.valore)}</textarea>`
         : `<input data-k="${f.k}" type="${f.tipo}" value="${esc(f.valore)}">`}</div>`).join('')}
       </div>
+      ${opz.elimina ? `<button class="link elimina-qui" id="elimina">${ic('elimina')} ${esc(opz.elimina)}</button>` : ''}
       <div class="mc-fondo"><button class="link" id="no">Annulla</button><button class="primario" id="si">Salva</button></div>
     </div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
+    if (opz.elimina) velo.querySelector('#elimina').onclick = () => chiudi('elimina');
     velo.querySelector('#chiudi').onclick = () => chiudi(null);
     velo.querySelector('#no').onclick = () => chiudi(null);
     velo.querySelector('#si').onclick = () => {
@@ -1067,6 +1071,7 @@ function apriModulo(c) {
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
     </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     <div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>
+    <div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option><option value="M">Uomo</option><option value="F">Donna</option></select></div>
     <div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
       <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
       <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
@@ -1106,11 +1111,13 @@ function apriModulo(c) {
   controlla();
   // Compleanno (cantiere 30): la Lista non ce l'ha, si legge da `contatti` all'apertura del modulo. Finché non è stato letto
   // (o se la lettura non riesce) il salvataggio NON lo tocca: meglio non poterlo cambiare che cancellarlo per sbaglio.
+  // Il sesso (cantiere 40) segue la stessa regola: si legge da `contatti` e si salva solo se è stato letto
   let compleannoLetto = nuovo;
-  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
+  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno, sesso').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
     if (error || !data || !velo.isConnected) return;
     const k = MB21Rubrica.compleannoDaData(data.compleanno);
     if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
+    $('f-sesso').value = data.sesso || '';
     compleannoLetto = true;
   });
   $('invia').onclick = async () => {
@@ -1123,7 +1130,7 @@ function apriModulo(c) {
     };
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
     if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
-    if (compleannoLetto) riga.compleanno = MB21Rubrica.dataCompleanno(compleanno);
+    if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; }
     const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
     if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva')) return;
