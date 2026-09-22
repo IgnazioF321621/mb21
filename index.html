@@ -792,6 +792,27 @@
   .cm-cerchi i.pieno { background: var(--ok); border-color: var(--ok); color: #fff; }
   .cm-cerchi i.mezzo { background: linear-gradient(90deg, var(--ok-tinta) 50%, transparent 50%); }
   .cm-vuoto { font-size: 13px; color: var(--testo-tenue); padding: 6px 0; }
+  /* MBplan a tre colonne su schermo largo (cantiere 41, vista modulabile): menu · foglio del giorno · mese + Cronologia */
+  main:has(.mb-3col) { max-width: 1240px; }
+  .mb-3col { display: grid; grid-template-columns: 220px minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+  .mb-3col .mb-lato { position: sticky; top: 12px; width: auto; max-width: none; height: auto; max-height: calc(100vh - 140px); padding: 8px 4px; background: none; }
+  .mb-3col .mb-lato button.si { background: var(--superficie); box-shadow: var(--ombra-card); }
+  .mb-3col .mb-centro .ag-menu { display: none; }
+  .mb-3col .mb-destra { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 140px); }
+  .mb-mese { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px 12px; }
+  .mb-mese-testa { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .mb-mese-testa b { font-size: 15px; }
+  .mb-mese-testa .freccia { border: 0; background: none; font-size: 20px; color: var(--grigio); padding: 0 6px; }
+  .mb-mese-griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+  .mb-mese-griglia small { font-size: 10.5px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; padding: 2px 0 4px; }
+  .mb-mese-griglia button { border: 0; background: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo); height: 32px; border-radius: 8px; }
+  .mb-mese-griglia button.altro { color: var(--testo-tenue); font-weight: 400; }
+  .mb-mese-griglia button.oggi { color: var(--pericolo); }
+  .mb-mese-griglia button.scelto { background: var(--accento); color: var(--accento-su); }
+  .mb-crono { flex: 1; min-height: 0; overflow-y: auto; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px; }
+  .mb-crono-titolo { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 6px; }
+  .mb-crono-titolo svg.ic { width: 16px; height: 16px; }
+  .mb-crono .ag-griglia { box-shadow: none; padding-left: 0; }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
   .velo.lato { align-items: stretch; justify-content: flex-start; }
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -1247,7 +1268,7 @@
 <main id="app"></main>
 <nav id="tab" hidden>
   <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Dashboard</button>
-  <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Agenda</button>
+  <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>MBplan</button>
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
   <button data-tab="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-report"/></svg>Report</button>
   <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
@@ -1255,35 +1276,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609222100"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609222100"></script>
-<script src="lista.js?v=202609222100"></script>
-<script src="rubrica.js?v=202609222100"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609222100"></script>
-<script src="agenda.js?v=202609222100"></script>
-<script src="report.js?v=202609222100"></script>
-<script src="check.js?v=202609222100"></script>
-<script src="mappa.js?v=202609222100"></script>
-<script src="pagina-dashboard.js?v=202609222100"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609222100"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609222100"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609222100"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609222100"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609222100"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609222100"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609222100"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609222100"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609222100"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609222100"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609222100"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609222100"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609222100"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609222100"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609222100"></script>
-<script src="benvenuto.js?v=202609222100"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609222100"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609222108"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609222108"></script>
+<script src="lista.js?v=202609222108"></script>
+<script src="rubrica.js?v=202609222108"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609222108"></script>
+<script src="agenda.js?v=202609222108"></script>
+<script src="report.js?v=202609222108"></script>
+<script src="check.js?v=202609222108"></script>
+<script src="mappa.js?v=202609222108"></script>
+<script src="pagina-dashboard.js?v=202609222108"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609222108"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609222108"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609222108"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609222108"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609222108"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609222108"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609222108"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609222108"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609222108"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609222108"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609222108"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609222108"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609222108"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609222108"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609222108"></script>
+<script src="benvenuto.js?v=202609222108"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609222108"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 21:00';
+const APP_VERSION = '2026.09.22 · 21:08';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1675,10 +1696,10 @@ const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null,
 async function apriAgenda(giorno) {
   AG.giorno = giorno || AG.giorno || MB21Coda.oggiRoma();
   if (!AG.vista) AG.vista = vistaSalvata();   // cantiere 37: si riapre come l'hai lasciata
-  if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>Agenda</h1><div class="vuoto">Carico l'agenda…</div>`;
+  if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>MBplan</h1><div class="vuoto">Carico MBplan…</div>`;
   try { await caricaAgenda(); }
   catch (e) {
-    app.innerHTML = `<h1>Agenda</h1><div class="avviso">Non riesco a caricare l'agenda. Controlla la connessione e riprova.</div>${versione()}`;
+    app.innerHTML = `<h1>MBplan</h1><div class="avviso">Non riesco a caricare MBplan. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
   disegnaAgenda();
@@ -2048,41 +2069,79 @@ function disegnaAgenda() {
     <h1 class="ag-titolo">${esc(AG.vista === 'settimana' ? `Settimana ${Number(AG.settimana[0].slice(8))} – ${Number(AG.settimana[6].slice(8))} ${A.titoloMese(AG.settimana[6]).slice(0, 3).toLowerCase()}` : titoloGiorno(AG.giorno, oggi))}</h1>
     ${partnerSelect()}`;
   html += richiamiAgenda(oggi);
+  const tre = largo() && AG.vista !== 'settimana';   // MBplan a tre colonne (schermo largo)
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Cronologia»
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
-    html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Cronologia <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
+    if (!tre) html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Cronologia <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
   }
+  if (tre) html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section>
+    <aside class="mb-destra">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Cronologia</div>${grigliaGiorno(eventi, opz)}</div></aside></div>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   collegaCose(oggi);
+  if (tre) {
+    collegaMenuAgenda(app, () => {});
+    app.querySelectorAll('.mb-mese [data-giorno]').forEach(b => { b.onclick = () => { AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
+    app.querySelectorAll('.mb-mese [data-mese]').forEach(b => { b.onclick = () => { const m = A.spostaGiorno(AG.giorno.slice(0, 8) + '01', Number(b.dataset.mese) < 0 ? -1 : 32); apriAgenda(m.slice(0, 8) + '01'); }; });
+    const vai = app.querySelector('#ag-vai-ora'); if (vai) vai.remove();
+    const crono = app.querySelector('.mb-crono'), rif = crono && (crono.querySelector('.ag-adesso') || crono.querySelector('.ag-ev'));
+    if (rif) crono.scrollTop = Math.max(0, rif.offsetTop - 120);
+  }
+}
+// Cambiando la larghezza della finestra (Mac: finestra stretta ↔ larga) la pagina si ridisegna nel formato giusto
+if (typeof window !== 'undefined' && window.matchMedia) {
+  let eraLargo = largo();
+  window.addEventListener('resize', () => { const ora = largo(); if (ora !== eraLargo) { eraLargo = ora; if (ST.tab === 'agenda' && AG.giorno) disegnaAgenda(); } }, { passive: true });
 }
 
 // Il menu ☰ dell'Agenda, come la colonna sinistra di NotePlan: le scale del tempo (per ora funzionano Giorno e
 // Settimana; Mese, Periodo WES e Anno arrivano col lavoro 6) e i modelli.
-function menuAgenda() {
-  const velo = document.createElement('div');
-  velo.className = 'velo lato';
-  const core = AG.modello.some(v => v.core);
-  velo.innerHTML = `<div class="ag-lato">
-    <div class="ag-lato-titolo">Agenda</div>
+// Il menu è lo stesso nel cassetto ☰ (telefono) e nella colonna sinistra fissa (schermo largo, «MBplan» a tre colonne).
+function menuAgendaHtml() {
+  return `<div class="ag-lato-titolo">MBplan</div>
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k) || k === 'mese'; return `<button data-scala="${k}" class="${(AG.vista === 'settimana' ? 'settimana' : 'giorno') === k ? 'si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${k === 'mese' ? 'Modulo Core' : c ? '' : 'presto'}</small></button>`; }).join('')}
     <div class="ag-lato-titolo">Modelli</div>
     <button data-cmd="modello">${ic('aggiorna')}<span>Le mie cose di ogni giorno</span></button>
-    <button data-cmd="core">${ic('crescita')}<span>Modulo Core N21</span><small>il mese</small></button>
-  </div>`;
-  document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
-  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
-  velo.querySelectorAll('[data-scala]').forEach(b => { b.onclick = () => {
+    <button data-cmd="core">${ic('crescita')}<span>Modulo Core N21</span><small>il mese</small></button>`;
+}
+function collegaMenuAgenda(radice, chiudi) {
+  radice.querySelectorAll('[data-scala]').forEach(b => { b.onclick = () => {
     if (b.dataset.scala === 'mese') { chiudi(); return apriCoreMese(AG.giorno.slice(0, 7)); }   // il foglio del mese è il Modulo Core (cantiere 41)
     if (!VISTE.includes(b.dataset.scala)) return mostraToast('Il foglio di questa scala arriva presto');
     chiudi(); cambiaVista(b.dataset.scala);
   }; });
-  velo.querySelector('[data-cmd="modello"]').onclick = () => { chiudi(); foglioModello(); };
-  velo.querySelector('[data-cmd="core"]').onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7)); };
+  radice.querySelector('[data-cmd="modello"]').onclick = () => { chiudi(); foglioModello(); };
+  radice.querySelector('[data-cmd="core"]').onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7)); };
+}
+function menuAgenda() {
+  const velo = document.createElement('div');
+  velo.className = 'velo lato';
+  velo.innerHTML = `<div class="ag-lato">${menuAgendaHtml()}</div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  collegaMenuAgenda(velo, chiudi);
+}
+
+// Schermo largo (Mac, iPad orizzontale): MBplan a tre colonne come NotePlan — menu · foglio del giorno · mese e Cronologia
+// sempre aperta. Sul telefono resta una colonna (menu nel ☰, Cronologia nel cassetto).
+const largo = () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches;
+// Il mese a griglia per la colonna destra: si tocca un giorno per aprirlo (i pallini della settimana stanno nella striscia)
+function meseHtml(giorno, oggi) {
+  const A = MB21Agenda;
+  const primo = giorno.slice(0, 8) + '01';
+  const inizio = A.settimana(primo)[0];
+  let h = `<div class="mb-mese"><div class="mb-mese-testa"><button class="freccia" data-mese="-1" aria-label="Mese prima">‹</button><b>${esc(A.titoloMese(giorno))}</b><button class="freccia" data-mese="1" aria-label="Mese dopo">›</button></div>
+    <div class="mb-mese-griglia">${A.GIORNI_SETTIMANA.map(g => `<small>${g}</small>`).join('')}`;
+  for (let i = 0; i < 42; i++) {
+    const g = A.spostaGiorno(inizio, i);
+    if (i >= 35 && g.slice(0, 7) !== giorno.slice(0, 7)) break;
+    h += `<button data-giorno="${g}" class="${g.slice(0, 7) !== giorno.slice(0, 7) ? 'altro' : ''}${g === giorno ? ' scelto' : ''}${g === oggi ? ' oggi' : ''}">${Number(g.slice(8))}</button>`;
+  }
+  return h + '</div></div>';
 }
 
 // Il cassetto «Cronologia» che si tira su dal basso: la giornata a orario (la stessa griglia di prima), si tocca

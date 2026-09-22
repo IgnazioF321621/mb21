@@ -666,6 +666,13 @@
   .ag-imp b { flex: none; font-size: 12.5px; font-weight: 600; background: var(--sfondo); border-radius: 8px; padding: 4px 8px; color: var(--testo-soft); }
   .ag-imp.fatta span { color: var(--testo-tenue); }
   .ag-foglio { padding: 0 4px 8px; }
+  /* il bottone che apre il Modulo Core del mese (Ignazio 22/09: «rendiamo più visibile il click») */
+  .ag-core-mese { display: flex; align-items: center; gap: 12px; width: 100%; border: 1.5px solid #2c4a7c; background: #eef3fa; border-radius: 14px; padding: 12px 14px; margin: 4px 0 6px; font-family: inherit; color: #2c4a7c; text-align: left; }
+  .ag-core-mese > svg.ic { width: 26px; height: 26px; flex: none; }
+  .ag-core-mese > svg.ic:last-child { width: 18px; height: 18px; transform: rotate(-90deg); opacity: .7; }
+  .ag-core-mese span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ag-core-mese b { font-size: 16px; font-weight: 800; }
+  .ag-core-mese small { font-size: 12.5px; color: var(--testo-soft); }
   .ag-foglio h2.ag-sez { font-size: 22px; font-weight: 800; color: var(--blu, #3a7bbf); margin: 18px 0 4px; letter-spacing: -0.3px; }
   .ag-foglio h2.ag-sez:first-child { margin-top: 6px; }
   .ag-foglio .cosa { display: flex; align-items: flex-start; gap: 12px; }
@@ -685,6 +692,120 @@
   .ag-cronologia svg.ic:last-child { transform: rotate(-90deg); color: var(--testo-tenue); }
   .foglio.crono { padding-bottom: 20px; }
   .foglio.crono .ag-griglia { box-shadow: none; padding-left: 0; }
+  /* il Check a righe numerate come il modulo Core (cantiere 41, 22/09): numero blu N21, targhetta «Core», come si riempie */
+  .ckr { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid var(--superficie-2); }
+  .ckr:first-child { border-top: 0; }
+  .ckr .ck-n { flex: none; width: 28px; height: 28px; margin-top: 8px; border-radius: 50%; background: var(--sfondo); color: var(--testo-tenue); font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .ckr.core .ck-n { background: #eef3fa; color: #2c4a7c; }
+  .ckr.fatta .ck-n { background: var(--ok); color: #fff; }
+  .ckr .ck-corpo { flex: 1; min-width: 0; }
+  .ckr .ck-corpo > label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; margin: 8px 0 2px; }
+  .ckr .ck-corpo > input, .ckr .ck-corpo > select { width: 100%; min-height: var(--bottone-h); font-size: 17px; padding: 12px 14px; border-radius: var(--raggio-bottone); border: 1px solid var(--bordo); background: var(--superficie-2); margin: 6px 0 2px; font-family: inherit; color: var(--testo); }
+  .ckr .ck-corpo > input[readonly] { background: var(--sfondo); color: var(--testo-soft); }
+  .ckr .ck-corpo .vn-aiuto { margin-top: 4px; }
+  .ckr.core .ck-corpo .vn-aiuto { color: #2c4a7c; }
+  .ck-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: #2c4a7c; border-radius: 6px; padding: 2px 6px; }
+  .ck-valore { font-size: 17px; font-weight: 700; padding: 10px 0 2px; color: var(--testo); }
+  .ck-badge-riga { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--testo-soft); margin: 8px 0 2px; flex-wrap: wrap; }
+  .ck-badge { font-weight: 700; background: var(--sfondo); border-radius: 8px; padding: 4px 10px; color: var(--testo-tenue); }
+  .ck-badge.si { background: var(--ok-tinta); color: var(--ok); }
+  /* regola unica (Ignazio 22/09): automatico = riga colorata del suo gruppo (rosa Azione, lilla Volumi), con numero e targhetta; a mano = riga bianca con il campo */
+  .ckr.auto { background: var(--gr-azione-tinta); border-top: 0; border-radius: var(--raggio-bottone); padding: 10px 10px 12px; margin: 6px -4px; color: var(--gr-azione); }
+  .ckr.auto.volume { background: var(--gr-volume-tinta); color: var(--cat-cliente); }
+  .ckr.auto .ck-corpo > label, .ckr.auto .vn-aiuto { color: inherit; }
+  .ckr.auto .ck-valore { color: inherit; }
+  .ckr.auto .ck-n { background: var(--superficie); color: inherit; }
+  .ckr.auto.fatta .ck-n { background: var(--ok); color: #fff; }
+  .ckr.auto .ck-vn-riga { background: var(--superficie); color: var(--testo); }
+  .ckr.auto .ck-vn-riga b { color: inherit; }
+  .ckr .ck-sotto { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 400; color: var(--testo); margin-top: 8px; }
+  .ckr .ck-sotto span { flex: 1; line-height: 1.3; }
+  .ckr .ck-sotto input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: none; }
+  /* (le righe .ck-core di prima, tenute per il banco) */
+  .ck-core { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--superficie-2); font-size: 14px; }
+  .ck-core:first-child { border-top: 0; }
+  .ck-core > b { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #eef3fa; color: #2c4a7c; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .ck-core > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .ck-core > div span { font-weight: 600; }
+  .ck-core > div small { font-size: 12px; color: var(--testo-tenue); }
+  .ck-core input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: none; }
+  .ck-core .ck-sotto { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 400; color: var(--testo-soft); margin-top: 6px; }
+  .ck-core .ck-sotto input[type="checkbox"] { width: 20px; height: 20px; }
+  .ck-core .ck-core-spunta { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px dashed var(--testo-tenue); display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+  .ck-core.fatta > b { background: var(--ok); color: #fff; }
+  .ck-core.fatta .ck-core-spunta { border: 0; background: var(--ok); color: #fff; }
+  .ck-core.fatta > div small { color: var(--ok); font-weight: 600; }
+  /* il Modulo Core del mese (cantiere 41): sette riquadri numerati come il foglio N21, titolo blu, tabelle e caselle */
+  .cm-testa { display: flex; align-items: center; gap: 6px; }
+  .cm-testa h1 { flex: 1; text-align: center; margin: 4px 0; }
+  .cm-testa .freccia { border: 0; background: var(--superficie); box-shadow: var(--ombra-card); border-radius: 50%; width: 38px; height: 38px; font-size: 22px; color: var(--testo); }
+  .cm-mese { text-align: center; font-size: 15px; font-weight: 700; color: var(--testo-soft); margin: 0 0 10px; }
+  .cm-riass { text-align: center; font-size: 13px; font-weight: 700; color: var(--testo-tenue); margin-bottom: 12px; }
+  .cm-sez { background: var(--superficie); border: 1.5px solid #2c4a7c; border-radius: 14px; margin-bottom: 14px; padding: 0 12px 12px; overflow: hidden; }
+  .cm-sez.fatta { border-color: var(--ok); }
+  .cm-sez-testa { display: flex; align-items: center; gap: 10px; margin: 0 -12px 10px; padding: 8px 12px; background: #eef3fa; color: #2c4a7c; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: .02em; }
+  .cm-sez-testa b { font-size: 24px; font-weight: 900; line-height: 1; }
+  .cm-sez-testa span { flex: 1; }
+  .cm-sez-testa svg.ic { width: 22px; height: 22px; color: var(--ok); }
+  .cm-sez.fatta .cm-sez-testa { background: var(--ok-tinta); color: var(--ok); }
+  .cm-sez.ob .cm-sez-testa { background: var(--sfondo); color: var(--testo-soft); }
+  .cm-conto { font-size: 14px; color: var(--testo-soft); margin-bottom: 8px; }
+  .cm-conto b { color: var(--testo); font-size: 16px; }
+  .cm-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cm-tab th { font-weight: 600; color: var(--testo-tenue); font-size: 11px; text-align: left; padding: 4px 3px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+  .cm-tab td { padding: 6px 3px; border-bottom: 1px solid var(--superficie-2); vertical-align: middle; }
+  .cm-tab td.c, .cm-tab th.c { text-align: center; }
+  .cm-tab td.r, .cm-tab th.r { text-align: right; }
+  .cm-tab td.nome { font-weight: 600; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cm-tab .ris { background: #f2f4f8; }
+  .cm-tab tr.vuota td { color: var(--testo-tenue); height: 26px; }
+  .cm-tab tfoot td { font-weight: 600; border-bottom: 0; padding-top: 8px; }
+  .cm-tab svg.ic { color: var(--ok); vertical-align: middle; }
+  .cm-num { width: 44px; text-align: center; font-family: inherit; font-size: 14px; padding: 5px 4px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
+  .cm-num.larga { width: 110px; }
+  .cm-testo { flex: 1; min-width: 0; font-family: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
+  .cm-riga { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--superficie-2); font-size: 14px; }
+  .cm-riga > span:first-child { flex: 1; }
+  .cm-riga small { font-size: 11px; color: var(--testo-tenue); }
+  .cm-auto { font-weight: 700; background: var(--sfondo); border-radius: 8px; padding: 5px 10px; min-width: 44px; text-align: center; }
+  .cm-auto.si { background: var(--ok-tinta); color: var(--ok); }   /* SI acceso (Ignazio 22/09) */
+  .cm-sino { display: inline-flex; gap: 4px; }
+  .cm-sino button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 700; padding: 6px 10px; color: var(--testo-soft); }
+  .cm-sino button.si { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .cm-sett { display: inline-flex; gap: 6px; }
+  .cm-sett b { display: inline-flex; align-items: center; gap: 2px; background: #f2f4f8; border-radius: 8px; padding: 5px 8px; font-size: 12px; color: var(--testo-tenue); }
+  .cm-sett b.si { background: var(--ok-tinta); color: var(--ok); }
+  .cm-giorni { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 12px; }
+  .cm-g { display: flex; gap: 6px; align-items: baseline; border-bottom: 1px solid var(--superficie-2); padding: 3px 0; min-height: 22px; }
+  .cm-g b { width: 18px; text-align: right; color: var(--testo-tenue); font-weight: 600; flex: none; }
+  .cm-g span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--testo); }
+  .cm-g.fatto b { color: var(--ok); }
+  .cm-cerchi { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 4px; }
+  .cm-cerchi i { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #2c4a7c; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 600; color: #2c4a7c; }
+  .cm-cerchi i.pieno { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .cm-cerchi i.mezzo { background: linear-gradient(90deg, var(--ok-tinta) 50%, transparent 50%); }
+  .cm-vuoto { font-size: 13px; color: var(--testo-tenue); padding: 6px 0; }
+  /* MBplan a tre colonne su schermo largo (cantiere 41, vista modulabile): menu · foglio del giorno · mese + Cronologia */
+  main:has(.mb-3col) { max-width: 1240px; }
+  .mb-3col { display: grid; grid-template-columns: 220px minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+  .mb-3col .mb-lato { position: sticky; top: 12px; width: auto; max-width: none; height: auto; max-height: calc(100vh - 140px); padding: 8px 4px; background: none; }
+  .mb-3col .mb-lato button.si { background: var(--superficie); box-shadow: var(--ombra-card); }
+  .mb-3col .mb-centro .ag-menu { display: none; }
+  .mb-3col .mb-destra { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 140px); }
+  .mb-mese { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px 12px; }
+  .mb-mese-testa { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .mb-mese-testa b { font-size: 15px; }
+  .mb-mese-testa .freccia { border: 0; background: none; font-size: 20px; color: var(--grigio); padding: 0 6px; }
+  .mb-mese-griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+  .mb-mese-griglia small { font-size: 10.5px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; padding: 2px 0 4px; }
+  .mb-mese-griglia button { border: 0; background: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo); height: 32px; border-radius: 8px; }
+  .mb-mese-griglia button.altro { color: var(--testo-tenue); font-weight: 400; }
+  .mb-mese-griglia button.oggi { color: var(--pericolo); }
+  .mb-mese-griglia button.scelto { background: var(--accento); color: var(--accento-su); }
+  .mb-crono { flex: 1; min-height: 0; overflow-y: auto; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px; }
+  .mb-crono-titolo { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 6px; }
+  .mb-crono-titolo svg.ic { width: 16px; height: 16px; }
+  .mb-crono .ag-griglia { box-shadow: none; padding-left: 0; }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
   .velo.lato { align-items: stretch; justify-content: flex-start; }
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -705,9 +826,9 @@
   /* il modello: una riga per voce con l'interruttore a sinistra */
   .foglio.mod .mod-voce { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--superficie-2); }
   .foglio.mod .mod-voce button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
-  .foglio.mod .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }
+  .foglio.mod .mod-voce .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }   /* più specifico di «.mod-voce button», se no resta senza sfondo (visto da Ignazio 22/09) */
   .foglio.mod .mod-int i { position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s; }
-  .foglio.mod .spenta .mod-int { background: var(--spento); }
+  .foglio.mod .mod-voce.spenta .mod-int { background: var(--spento); }
   .foglio.mod .spenta .mod-int i { left: 3px; }
   .foglio.mod .mod-testo { flex: 1; min-height: 48px; padding: 8px 0; display: flex; flex-direction: column; gap: 1px; font-size: 15px; }
   .foglio.mod .mod-testo small { font-size: 12px; color: var(--testo-tenue); }
@@ -1153,7 +1274,7 @@
       style="top:609px;height:55px;left:calc(50% + 2px);width:calc(50% - 6px)">
       <span class="bar"></span><b>PM 1a1 · Pino Manolo</b><small>18:30–19:30</small></button><button class="ag-ev cat-prospect" data-evento="f1"
       style="top:696px;height:41px;left:calc(0% + 2px);width:calc(100% - 6px)">
-      <span class="bar"></span><b>Personale · Gino Pace</b><small>20:00–20:45</small></button><div class="ag-adesso" style="top:575px"><i></i><b>17:55</b></div></div></div><button class="ag-vai-ora" id="ag-vai-ora"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Ora</button></div><div class="pv-tel"><div class="pv-t">Settimana</div>
+      <span class="bar"></span><b>Personale · Gino Pace</b><small>20:00–20:45</small></button><div class="ag-adesso" style="top:762px"><i></i><b>21:08</b></div></div></div><button class="ag-vai-ora" id="ag-vai-ora"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-orario"/></svg> Ora</button></div><div class="pv-tel"><div class="pv-t">Settimana</div>
     <div class="ag-testa np">
       <button class="ag-menu" id="ag-menu" aria-label="Menu dell'agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg></button>
       <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
@@ -1197,7 +1318,7 @@
         aria-label="19:00–20:00 Sara Conti"><span class="bar"></span><span>Sara</span></button><button class="ag-colonna ag-libero" data-vai="2026-09-25" aria-label="Apri il giorno 25" style="left:57.142857142857146%;width:14.285714285714286%"></button><button class="ag-sev cat-cliente" data-evento="x4" data-giorno="2026-09-25"
         style="top:63px;height:19px;left:calc(57.142857142857146% + 1px);width:calc(14.285714285714286% - 2px)"
         aria-label="09:30–10:00 Elio Massa"><span class="bar"></span><span>Elio</span></button><button class="ag-sev molti" data-vai="2026-09-25" style="top:420px;height:61px;left:calc(57.142857142857146% + 1px);width:calc(14.285714285714286% - 2px)"
-          aria-label="2 impegni dalle 18:00, apri il giorno"><span class="barre"><i class="cat-prospect"></i><i class="cat-prospect"></i></span><b>2</b></button><button class="ag-colonna ag-libero" data-vai="2026-09-26" aria-label="Apri il giorno 26" style="left:71.42857142857143%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-27" aria-label="Apri il giorno 27" style="left:85.71428571428572%;width:14.285714285714286%"></button><div class="ag-adesso" style="top:417px"><i></i></div></div></div><div class="ag-conto"><span style="--tinta:var(--az-pm)"><i></i>5 PM</span><span style="--tinta:var(--az-followup)"><i></i>2 Follow Up</span><span style="--tinta:var(--az-appuntamento)"><i></i>2 Appuntamenti</span><span style="--tinta:var(--az-consulenza)"><i></i>2 Consulenze</span><span style="--tinta:var(--az-contatto)"><i></i>1 Contatto</span></div></div><div class="pv-tel"><div class="pv-t">Il foglio del giorno</div>
+          aria-label="2 impegni dalle 18:00, apri il giorno"><span class="barre"><i class="cat-prospect"></i><i class="cat-prospect"></i></span><b>2</b></button><button class="ag-colonna ag-libero" data-vai="2026-09-26" aria-label="Apri il giorno 26" style="left:71.42857142857143%;width:14.285714285714286%"></button><button class="ag-colonna ag-libero" data-vai="2026-09-27" aria-label="Apri il giorno 27" style="left:85.71428571428572%;width:14.285714285714286%"></button><div class="ag-adesso" style="top:552px"><i></i></div></div></div><div class="ag-conto"><span style="--tinta:var(--az-pm)"><i></i>5 PM</span><span style="--tinta:var(--az-followup)"><i></i>2 Follow Up</span><span style="--tinta:var(--az-appuntamento)"><i></i>2 Appuntamenti</span><span style="--tinta:var(--az-consulenza)"><i></i>2 Consulenze</span><span style="--tinta:var(--az-contatto)"><i></i>1 Contatto</span></div></div><div class="pv-tel"><div class="pv-t">Il foglio del giorno</div>
     <div class="ag-testa np">
       <button class="ag-menu" id="ag-menu" aria-label="Menu dell'agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg></button>
       <button class="ag-mese">Settembre 2026 ▾<input type="date" id="ag-scegli" value="2026-09-21"></button>
@@ -1223,25 +1344,7 @@
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
     <h1 class="ag-titolo">Oggi, lun 21 set</h1>
-    <div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-impegni"><button class="ag-imp" data-evento="t1"><i class="cat-prospect"></i><span>Telefonata · Marco Bini</span><b>09:00</b></button><button class="ag-imp" data-evento="p1"><i class="cat-prospect"></i><span>PM 1a1 · Laura Ferri</span><b>11:00–12:00</b></button><button class="ag-imp" data-evento="c1"><i class="cat-partner"></i><span>Counseling · Isabella Rossi</span><b>15:00–16:00 👍</b></button><button class="ag-imp" data-evento="p2"><i class="cat-prospect"></i><span>PM 1a1 · Pino Manolo</span><b>18:30–19:30</b></button><button class="ag-imp" data-evento="v1"><i class="cat-cliente"></i><span>Riordino · Anna Villa</span><b>18:30–19:00</b></button><button class="ag-imp" data-evento="f1"><i class="cat-prospect"></i><span>Personale · Gino Pace</span><b>20:00–20:45</b></button></div><div class="ag-foglio"><h2 class="ag-sez">Core</h2><div class="cosa auto" data-voce="mpm">
-      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
-      <button class="testo"><span>Presentare almeno 8 Piani Marketing al mese</span><small>3/8 · questo mese</small></button>
-    </div><div class="cosa" data-voce="mprodotti">
-      <button class="spunta" aria-label="Fatta"></button>
-      <button class="testo"><span>Consumare i prodotti Amway</span><small>questo mese</small></button>
-    </div><div class="cosa auto" data-voce="mclienti">
-      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
-      <button class="testo"><span>Servire almeno 10 clienti al mese</span><small>4/10 · questo mese</small></button>
-    </div><div class="cosa fatta auto" data-voce="mcd">
-      <button class="spunta" aria-label="Si spunta da sola" disabled><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-fatto"/></svg></button>
-      <button class="testo"><span>Ascoltare 1 CD al giorno</span><small>1/1</small></button>
-    </div><div class="cosa auto" data-voce="mpagine">
-      <button class="spunta" aria-label="Si spunta da sola" disabled></button>
-      <button class="testo"><span>Leggere 10 pagine al giorno</span><small>6/10</small></button>
-    </div><div class="cosa" data-voce="mopen">
-      <button class="spunta" aria-label="Fatta"></button>
-      <button class="testo"><span>Partecipare all&#39;OPEN settimanale</span><small>questa settimana</small></button>
-    </div><h2 class="ag-sez">Routine</h2><div class="cosa" data-voce="mr">
+    <div class="ag-rich"><button id="ag-telefonate" class="telefonate"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-telefonate"/></svg><span>Contatti <b>4/10</b></span></button><button id="ag-riordini" class="riordini"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-riordini"/></svg><span><b>1</b> riordino</span></button><button id="ag-conferme" class="conferme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-conferme"/></svg><span><b>2</b> conferme</span></button><button id="ag-passati" class="passati"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg><span><b>1</b> senza esito</span></button></div><div class="ag-impegni"><button class="ag-imp" data-evento="t1"><i class="cat-prospect"></i><span>Telefonata · Marco Bini</span><b>09:00</b></button><button class="ag-imp" data-evento="p1"><i class="cat-prospect"></i><span>PM 1a1 · Laura Ferri</span><b>11:00–12:00</b></button><button class="ag-imp" data-evento="c1"><i class="cat-partner"></i><span>Counseling · Isabella Rossi</span><b>15:00–16:00 👍</b></button><button class="ag-imp" data-evento="p2"><i class="cat-prospect"></i><span>PM 1a1 · Pino Manolo</span><b>18:30–19:30</b></button><button class="ag-imp" data-evento="v1"><i class="cat-cliente"></i><span>Riordino · Anna Villa</span><b>18:30–19:00</b></button><button class="ag-imp" data-evento="f1"><i class="cat-prospect"></i><span>Personale · Gino Pace</span><b>20:00–20:45</b></button></div><div class="ag-foglio"><button class="ag-core-mese" id="ag-core-mese"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg><span><b>Modulo Core N21</b><small>Le 7 abitudini di settembre 2026, già compilate dal Check</small></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-freccia"/></svg></button><h2 class="ag-sez">Routine</h2><div class="cosa" data-voce="mr">
       <button class="spunta" aria-label="Fatta"></button>
       <button class="testo"><span>Meditazione</span></button>
     </div><h2 class="ag-sez">Da fare</h2><div class="cosa" data-cosa="k1">
@@ -1261,5 +1364,5 @@
     <div class="campo"><label>Finisce alle</label><input type="time" value="19:15"></div>
     <div class="ag-scontro"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-attenzione"/></svg> A quest'ora hai già 2 impegni
     <span>PM 1a1 · Pino Manolo <em>18:30–19:30</em></span><span>Riordino · Anna Villa <em>18:30–19:00</em></span>
-    <div class="ag-orelibere"><button data-ora="21:00">21:00</button></div></div>
+    </div>
   </div></div></div></div>
