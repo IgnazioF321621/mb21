@@ -1115,8 +1115,10 @@ function apriCheck() {
     esistente = righe[0] || null;
     for (const [k] of MB21Dashboard.CAMPI_CHECK) velo.querySelector('#ck-' + k).value = esistente ? String(esistente[k] ?? '') : '';
     const libro = velo.querySelector('#ck-libro');
-    if (esistente && esistente.libro && ![...libro.options].some(o => o.value === esistente.libro)) libro.add(new Option(esistente.libro, esistente.libro));
-    libro.value = esistente ? esistente.libro || '' : '';
+    // il valore già salvato resta sceglibile, tranne il vecchio «Libro no N21» (dal 22/09 c'è «Libro non da sistema…», una voce sola)
+    const vecchio = esistente && esistente.libro === 'Libro no N21';
+    if (esistente && esistente.libro && !vecchio && ![...libro.options].some(o => o.value === esistente.libro)) libro.insertBefore(new Option(esistente.libro, esistente.libro), libro.querySelector('[value="__altro__"]'));
+    libro.value = esistente && !vecchio ? esistente.libro || '' : '';
     note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
     avviso.style.display = esistente ? 'block' : 'none';
     avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
