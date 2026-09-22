@@ -1067,8 +1067,9 @@ function apriCheck() {
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     </div>
     <h4 class="mc-t">Core N21</h4><div class="riquadro mc-g">
-    <label class="cf-spunta"><input type="checkbox" id="ck-open"> <span>Oggi sono stato all'<b>OPEN</b> settimanale</span></label>
-    <label class="cf-spunta"><input type="checkbox" id="ck-counseling"> <span>Oggi ho fatto la sessione di <b>counseling</b> con lo sponsor</span></label>
+    ${MB21Agenda.CORE_N21.map((c, i) => `<label class="ck-core" data-core="${c.core}"><b>${i + 1}</b><div><span>${esc(c.testo)}</span><small>${c.core === 'open' ? 'oggi sono stato all\'OPEN' : c.core === 'squadra' ? 'oggi counseling con lo sponsor' : '…'}</small></div>
+      ${c.core === 'open' ? '<input type="checkbox" id="ck-open">' : c.core === 'squadra' ? '<input type="checkbox" id="ck-counseling">' : `<i class="ck-core-spunta">${ic('fatto', 16)}</i>`}</label>`).join('')}
+    <div class="vn-aiuto">Le 7 abitudini della persona Core: 1-5 si riempiono da sole (PM dall'Agenda, VP dai dati Amway, clienti dalle vendite, tracce e pagine da questo Check), 6 e 7 le spunti tu.</div>
     </div>
     <div class="errore" id="ck-errore"></div>
     <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
@@ -1112,6 +1113,7 @@ function apriCheck() {
     venditeDelGiorno(data, () => mio === giro);
     azioniDelGiorno(data, () => mio === giro);
     tracceDelGiorno(data, () => mio === giro);
+    coreDelGiorno(data, () => mio === giro);
     const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
       .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
     if (mio !== giro) return;   // nel frattempo è cambiata la data
@@ -1127,6 +1129,7 @@ function apriCheck() {
     // Core N21 (cantiere 41): OPEN e counseling del giorno
     velo.querySelector('#ck-open').checked = !!(esistente && esistente.open);
     velo.querySelector('#ck-counseling').checked = !!(esistente && esistente.counseling);
+    aggiornaCore();
     avviso.style.display = esistente ? 'block' : 'none';
     avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
       (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : ''));
@@ -1166,6 +1169,42 @@ function apriCheck() {
     if (!ancoraValido() || error) return;
     const n = (righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
     spia.textContent = n ? `${ic('audio')} ${n === 1 ? '1 traccia' : n + ' tracce'} del tuo percorso già ${n === 1 ? 'contata' : 'contate'} in questo giorno: qui scrivi solo le altre (CEP).` : 'Le tracce del percorso segnate «ascoltata» contano da sole: qui scrivi solo le altre (CEP).';
+  };
+  // Le 7 abitudini Core con lo stato del giorno (cantiere 41, Ignazio 22/09: «tutte e sette nel Check»): 1-3 dal mese
+  // (PM dalle azioni, VP Amway, clienti dalle vendite), 4-5 da questo Check (tracce + percorso, pagine), 6-7 le spunte.
+  const CK_CORE = { pm: 0, clienti: 0, vp: null, percorso: 0 };
+  const aggiornaCore = () => {
+    const n = k => Number(String(velo.querySelector('#ck-' + k).value).trim().replace(',', '.')) || 0;
+    const stato = { pm: [CK_CORE.pm, 8, 'questo mese'], prodotti: [CK_CORE.vp, null, 'VP questo mese (dati Amway)'], clienti: [CK_CORE.clienti, 10, 'questo mese'],
+      cd: [n('tracce') + CK_CORE.percorso, 1, CK_CORE.percorso ? `oggi (${CK_CORE.percorso} dal percorso)` : 'oggi'], pagine: [n('pagine'), 10, 'pagine oggi'] };
+    for (const [k, [v, ob, testo]] of Object.entries(stato)) {
+      const riga = velo.querySelector(`.ck-core[data-core="${k}"]`);
+      if (!riga) continue;
+      riga.classList.toggle('fatta', ob ? v >= ob : v != null && v > 0);
+      riga.querySelector('small').textContent = v == null ? `— ${testo}` : `${ob ? `${v}/${ob}` : String(v).replace('.', ',')} ${testo}`;
+    }
+    for (const k of ['open', 'counseling']) {
+      const c = velo.querySelector('#ck-' + k);
+      c.closest('.ck-core').classList.toggle('fatta', c.checked);
+    }
+  };
+  for (const k of ['tracce', 'pagine']) velo.querySelector('#ck-' + k).addEventListener('input', aggiornaCore);
+  for (const k of ['open', 'counseling']) velo.querySelector('#ck-' + k).addEventListener('change', aggiornaCore);
+  const coreDelGiorno = async (data, ancoraValido) => {
+    if (!data) return;
+    const A = MB21Agenda, mese0 = data.slice(0, 8) + '01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
+    const [pm, ve, ob, tr] = await Promise.all([
+      dbq('pm del mese', supa.from('azioni_conti').select('pm').eq('user_id', visto().id).eq('pm', 1).gte('giorno', mese0).lt('giorno', mese1)),
+      dbq('clienti del mese', supa.from('vendite').select('contatto_id').eq('user_id', visto().id).gte('data', mese0).lt('data', mese1)),
+      dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', visto().id).eq('mese', mese0).maybeSingle()),
+      visto().id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
+    ]);
+    if (!ancoraValido()) return;
+    CK_CORE.pm = (pm.data || []).length;
+    CK_CORE.clienti = new Set((ve.data || []).map(r => r.contatto_id)).size;
+    CK_CORE.vp = ob.data && ob.data.vpp_amway != null ? Number(ob.data.vpp_amway) : null;
+    CK_CORE.percorso = (tr.data || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
+    aggiornaCore();
   };
   // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
   // (vista `azioni_conti`); ogni azione porta alla scheda del contatto. Per i giorni prima restano i campi a mano.
