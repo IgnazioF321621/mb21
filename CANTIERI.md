@@ -2,7 +2,7 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 22 settembre 2026 (sera: **chiusi i cantieri 40** — BSM N21, tutti e sette i lavori pubblicati — **e 39**; aperti restano 36, 35 e 21 «Da fare più avanti»).*
+*Aggiornato: 22 settembre 2026 (sera: **aperto il cantiere 41** con le decisioni di Ignazio e i lavori proposti; chiusi i cantieri 40 e 39; aperti restano 41, 36, 35 e 21 «Da fare più avanti»).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
@@ -31,6 +31,20 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - vanno dentro l'Agenda o è una pagina a parte?
 
 **Attenzione**: i Contatti del giorno (la coda) sono già una lista di cose da fare che si rigenera ogni giorno. Prima di inventare una lista nuova si guarda **se basta portare quella dentro la giornata**, se no MB21 finisce con due elenchi che dicono quasi la stessa cosa.
+
+**Decisioni di Ignazio (22/09, sessione dedicata):**
+- di NotePlan vuole **tutto**: scrivere sul giorno · cose da fare che si riportano avanti · dare un'ora a una cosa da fare (time blocking) · la **vista modulabile**
+- «vista modulabile» vuol dire: **mostrare o nascondere le parti** del giorno (orario, cose da fare, appunti) · **foglio e griglia affiancati** dove lo schermo è largo (iPad, Mac), uno sotto l'altro sul telefono · **scegliere le ore visibili** (dalle 8 alle 20 o tutto il giorno, più larga o più stretta) · **ordinare a piacere** le cose da fare
+- chi vede cose da fare e appunti: **la persona e l'Admin**; **più avanti il leader del gruppo** (da prevedere, non da fare ora)
+- vanno **dentro l'Agenda**, nel foglio del giorno
+- la coda dei Contatti del giorno **resta com'è**: è già nella giornata (pastiglia «Contatti 4/10»). La lista nuova è **solo per le cose non legate a una persona** («comprare i biglietti BBS», «preparare il PM di giovedì»)
+
+**Lavori proposti, dal più semplice** (ognuno pubblicabile da solo):
+1. **Cose da fare del giorno** — tabella `cose_da_fare` (mia, con giorno, testo, ordine, fatto il); in Agenda, sotto i richiami, l'elenco del giorno con la spunta e il «+». **Il riporto a domani è una regola di lettura, non uno spostamento**: quello che non è fatto e ha un giorno passato si vede oggi, finché non lo spunti (niente da riscrivere, niente lavoro notturno)
+2. **Appunti del giorno** — tabella `appunti_giorno` (mia, un testo per giorno): un riquadro dove si scrive liberamente, si salva da solo
+3. **Dare un'ora a una cosa da fare** — «Metti in agenda» sulla cosa da fare: scegli ora e durata, e il blocco compare nella griglia (colore suo, come un impegno; stessa `disposizioneGiorno`). Trascinarla con il dito viene dopo, se serve
+4. **Vista modulabile** — (a) mostra/nascondi orario · cose da fare · appunti, ricordato sul dispositivo come la vista; (b) affiancati su schermo largo; (c) ore visibili: «8-20» o «tutto il giorno», griglia stretta o larga; (d) ordinare le cose da fare trascinandole
+5. **Più avanti**: accesso del leader del gruppo (regole di lettura in Supabase)
 
 ## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
 *Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
