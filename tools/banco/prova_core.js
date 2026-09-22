@@ -55,11 +55,11 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   // 3 · clienti: uno per riga, VP sommati, i più alti prima
   assert.deepEqual(m.s3.righe.map(r => [r.nome, r.vp]), [['Gino Pace', 50], ['Anna Villa', 42.5]]);
   assert.equal(m.s3.quanti, 2); assert.equal(m.s3.vp, 92.5); assert.equal(m.s3.raggiunto, false);
-  // 4 · CD: 30 giorni, i titoli dal Check e dal percorso
+  // 4 · CD: 30 giorni; le tracce del Check e quelle del percorso si sommano, i titoli del percorso si leggono
   assert.equal(m.s4.giorni.length, 30);
-  assert.equal(m.s4.giorni[0].titolo, 'Tempo e denaro'); assert.equal(m.s4.giorni[0].fatto, true);
-  assert.equal(m.s4.giorni[1].titolo, 'La visione'); assert.equal(m.s4.giorni[1].fatto, true);   // dal percorso, anche se il Check dice 0
-  assert.equal(m.s4.giorni[14].titolo, 'Il sogno');
+  assert.equal(m.s4.giorni[0].quante, 1); assert.equal(m.s4.giorni[0].titolo, '1 traccia'); assert.equal(m.s4.giorni[0].fatto, true);
+  assert.equal(m.s4.giorni[1].quante, 1); assert.equal(m.s4.giorni[1].titolo, '1 traccia · La visione'); assert.equal(m.s4.giorni[1].fatto, true);   // dal percorso, anche se il Check dice 0
+  assert.equal(m.s4.giorni[14].quante, 3); assert.equal(m.s4.giorni[14].titolo, '3 tracce · Il sogno');   // 2 nel Check + 1 del percorso
   assert.equal(m.s4.giorni[2].titolo, ''); assert.equal(m.s4.giorni[2].fatto, false);
   assert.equal(m.s4.quanti, 3);
   // 5 · pagine: il libro più recente, un cerchietto pieno con 10 pagine, i punti a mano

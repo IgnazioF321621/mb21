@@ -25,7 +25,7 @@ async function apriCoreMese(mese) {
   const [az, ve, ck, ob, cm, scheda] = await Promise.all([
     dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
     dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, vp, contatti(nome)').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
-    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, titolo_traccia').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
+    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
@@ -86,7 +86,7 @@ function moduloCoreHtml(m) {
   const s4 = sez(4, 'Ascoltare 1 CD al giorno [CEP - catalogo BSM]', `
     <div class="cm-conto"><b>${m.s4.quanti}</b>/${m.giorni} giorni</div>
     <div class="cm-giorni">${m.s4.giorni.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>
-    <div class="vn-aiuto">Dalle tracce del percorso segnate «ascoltata» e dalla traccia CEP scritta nel Check del Giorno.</div>`, m.s4.quanti >= m.giorni);
+    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata» (con il titolo).</div>`, m.s4.quanti >= m.giorni);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>

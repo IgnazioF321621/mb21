@@ -71,13 +71,16 @@
     const s3 = { righe: clienti.slice(0, RIGHE.clienti), quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
       vp: clienti.reduce((t, r) => t + r.vp, 0) };
 
-    // 4 · Ascoltare 1 CD al giorno: 31 titoli, uno per giorno (le tracce del percorso ascoltate + la traccia CEP del Check)
+    // 4 · Ascoltare 1 CD al giorno: un rigo per giorno. Le tracce del percorso segnate «ascoltata» SI SOMMANO a quelle scritte
+    // nel Check (Ignazio 22/09: «due ascoltate e una condivisa diventano tre»); niente titoli a mano (ripetitivo): si scrive
+    // quante sono, e i titoli del percorso, che arrivano da soli.
     const s4 = { giorni: Array.from({ length: n }, (_, i) => {
       const giorno = `${mese}-${String(i + 1).padStart(2, '0')}`;
       const c = perGiorno.get(giorno);
-      const titoli = [...tracce.filter(t => t.giorno === giorno).map(t => t.titolo), c && c.titolo_traccia].filter(Boolean);
-      const quante = titoli.length || (c ? Number(c.tracce) || 0 : 0);
-      return { giorno: i + 1, titolo: titoli.join(' · ') || (quante ? `${quante} ${quante === 1 ? 'traccia' : 'tracce'} (senza titolo)` : ''), fatto: quante >= OBIETTIVI.cd };
+      const titoli = tracce.filter(t => t.giorno === giorno).map(t => t.titolo).filter(Boolean);
+      const quante = (c ? Number(c.tracce) || 0 : 0) + titoli.length;
+      const testo = quante ? `${quante} ${quante === 1 ? 'traccia' : 'tracce'}${titoli.length ? ' · ' + titoli.join(' · ') : ''}` : '';
+      return { giorno: i + 1, quante, titolo: testo, fatto: quante >= OBIETTIVI.cd };
     }) };
     s4.quanti = s4.giorni.filter(g => g.fatto).length;
 
