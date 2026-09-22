@@ -459,4 +459,21 @@ prova('Core N21 nel foglio: 7 abitudini, spunta dai numeri o a mano nel primo gi
   assert.equal(A.statoCore({ core: 'open' }, misure), null);
 });
 
+prova('Cose da fare del mese (vista Mese): riporto al mese di oggi, le fatte restano nel loro mese', () => {
+  const cose = [
+    { id: 'a', scala: 'mese', giorno: '2026-08-01', fatto_il: null, testo: 'Biglietti WES' },
+    { id: 'b', scala: 'mese', giorno: '2026-09-01', fatto_il: null, testo: 'Counseling' },
+    { id: 'c', scala: 'mese', giorno: '2026-08-01', fatto_il: '2026-08-20T10:00:00Z', testo: 'Fatta ad agosto' },
+    { id: 'd', scala: 'giorno', giorno: '2026-09-22', fatto_il: null, testo: 'Del giorno' },
+    { id: 'e', scala: 'mese', giorno: '2026-10-01', fatto_il: null, testo: 'Di ottobre' },
+  ];
+  const set = A.coseDelMese(cose, '2026-09-01', '2026-09-01');
+  assert.deepEqual(set.map(c => c.id), ['a', 'b']);
+  assert.equal(set[0].riportata, '2026-08-01');
+  assert.deepEqual(A.coseDelMese(cose, '2026-08-01', '2026-09-01').map(c => c.id), ['c']);
+  assert.deepEqual(A.coseDelMese(cose, '2026-10-01', '2026-09-01').map(c => c.id), ['e']);
+  assert.equal(A.meseAccanto('2026-12-01', 1), '2027-01-01');
+  assert.equal(A.meseAccanto('2026-01-01', -1), '2025-12-01');
+});
+
 console.log(`\n${ok} prove superate`);
