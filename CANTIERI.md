@@ -2,7 +2,7 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 22 settembre 2026 (sera: **cantiere 41 in locale** — pagina formato NotePlan, Modulo Core del mese, **Check del Giorno = modulo Core del giorno, chiuso da Ignazio** (versione 20:48); chiusi i cantieri 40 e 39; aperti restano 41, 36, 35 e 21 «Da fare più avanti»).*
+*Aggiornato: 22 settembre 2026 (sera: **cantiere 41 pubblicato alle 22 (versione 2026.09.22 · 21:50)** — pagina formato NotePlan, Modulo Core del mese, **Check del Giorno = modulo Core del giorno, chiuso da Ignazio** (versione 20:48); chiusi i cantieri 40 e 39; aperti restano 41, 36, 35 e 21 «Da fare più avanti»).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
