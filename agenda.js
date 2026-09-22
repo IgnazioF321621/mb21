@@ -118,8 +118,10 @@
   // una cosa non fatta con giorno passato si vede OGGI (con «da <giorno>»), finché non la spunti; nel suo
   // giorno di origine non si vede più. Le cose fatte stanno nel giorno in cui le hai spuntate (`giorno`).
   // Ordine: prima le da fare (le riportate per prime, le più vecchie in cima), poi le fatte; a parità `ordine`, poi creazione.
+  // Le righe con `modello_id` sono le spunte delle voci del modello (le legge `vociDelGiorno`), non cose scritte a mano;
+  // e qui contano solo le cose sulla scala del giorno (`scala` vuota = giorno).
   function coseDelGiorno(cose, giorno, oggi) {
-    const mie = (cose || []).filter(c => {
+    const mie = (cose || []).filter(c => !c.modello_id && (!c.scala || c.scala === 'giorno')).filter(c => {
       if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
       return c.giorno === giorno;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
@@ -131,6 +133,40 @@
   }
   // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
   function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
+
+  // ── Il modello del giorno (cantiere 41, lavoro 2) ────────────────────────────
+  // Le cose di ogni giorno, scritte una volta: compaiono da sole nel foglio del giorno. L'app le propone già
+  // pronte con le abitudini Core N21 (Ignazio 22/09: «un modello legato all'attività Amway o al sistema N21»);
+  // ognuna si accende o si spegne, e si aggiungono le proprie.
+  const CORE_N21 = [
+    { core: 'lettura', testo: 'Leggere 15 minuti' },
+    { core: 'traccia', testo: 'Ascoltare una traccia' },
+    { core: 'contatti', testo: 'I contatti del giorno' },
+    { core: 'check', testo: 'Il Check della sera' },
+    { core: 'prodotti', testo: 'Usare e mostrare i prodotti' },
+  ];
+  const GIORNI_SETTIMANA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];   // 1 = lunedì … 7 = domenica
+  // Il numero del giorno della settimana di una data (1 = lunedì … 7 = domenica)
+  function giornoSettimana(giorno) { return (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1; }
+  // Le voci del modello che compaiono in quel giorno, in ordine, con la spunta di quel giorno se c'è (`fatto_il`)
+  function vociDelGiorno(modello, cose, giorno) {
+    const dow = giornoSettimana(giorno);
+    return (modello || [])
+      .filter(v => v.attivo !== false && (!v.giorni || !v.giorni.length || v.giorni.includes(dow)))
+      .sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1))
+      .map(v => {
+        const spunta = (cose || []).find(c => c.modello_id === v.id && c.giorno === giorno && c.fatto_il);
+        return { ...v, fatto_il: spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null };
+      });
+  }
+  // «Ogni giorno» · «Lun-Ven» · «Sab e Dom» · «Lun, Mer, Ven»: come si dice quando compare una voce
+  function testoGiorni(giorni) {
+    const g = [...new Set((giorni || []).filter(n => n >= 1 && n <= 7))].sort((a, b) => a - b);
+    if (!g.length || g.length === 7) return 'Ogni giorno';
+    if (g.join() === '1,2,3,4,5') return 'Lun-Ven';
+    if (g.join() === '6,7') return 'Sab e Dom';
+    return g.map(n => GIORNI_SETTIMANA[n - 1]).join(', ');
+  }
 
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
@@ -493,7 +529,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
-    coseDelGiorno, testoCosa };
+    coseDelGiorno, testoCosa, CORE_N21, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
