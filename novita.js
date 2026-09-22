@@ -5,6 +5,8 @@
 // Funzioni pure, nessun accesso alla rete: le usano l'app (foglio all'apertura, voce nel Profilo) e tools/banco/prova_novita.js.
 (function (radice) {
   const ELENCO = [
+    { quando: '2026.09.22 · 12:38', pagina: 'agenda', titolo: 'La traccia giusta al momento giusto',
+      testo: 'Quando fissi un Piano Marketing, l\'app ti propone «Tempo e denaro» da condividere prima dell\'incontro: se la persona la ascolta, è interessata davvero. Dopo il PM, con Dare Seguito o Iscrizione, ti propone la traccia successiva (diversa se è dipendente o autonomo). Se dopo un giorno non hai segnato «ascoltata», un avviso te lo ricorda; dopo due, ti dice di ricordarlo alla persona perché la traccia scade. In Dashboard trovi «Tracce da controllare».' },
     { quando: '2026.09.22 · 11:34', pagina: 'lista', titolo: 'Sharing: le tracce da condividere, nella scheda',
       testo: 'Nella scheda di un candidato o di un partner c\'è la linguetta «Sharing»: l\'app ti propone la prossima traccia del Media Sharing da condividere, con riassunto e per chi è indicata; tocchi «Condivisa oggi» e resta segnata, poi segni quando l\'ha ascoltata. Le tracce si mandano dall\'app N21, come sempre: qui si tiene il percorso.' },
     { quando: '2026.09.21 · 17:53', pagina: 'agenda', titolo: 'Follow Up: c\'è «Ulteriore Follow Up»',
