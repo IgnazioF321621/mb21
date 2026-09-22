@@ -1198,7 +1198,9 @@ function apriCheck() {
     const A = MB21Agenda, mese0 = data.slice(0, 8) + '01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
     const [pm, ve, ob, tr] = await Promise.all([
       dbq('pm del mese', supa.from('azioni_conti').select('pm').eq('user_id', visto().id).eq('pm', 1).gte('giorno', mese0).lt('giorno', mese1)),
-      dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', visto().id).gte('data', mese0).lt('data', mese1)),
+      // le vendite che CONTANO nel mese (consegna nel mese, o senza consegna e pagate nel mese): la promo che conta nel 2027 non è qui
+      dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', visto().id)
+        .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
       dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', visto().id).eq('mese', mese0).maybeSingle()),
       visto().id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
     ]);
