@@ -291,13 +291,21 @@ async function caricaTracceDaControllare(oggi) {
   }
 }
 
+// In Dashboard una riga sola, «🎧 Tracce condivise · N» (Ignazio 22/09: «se ho 10 tracce a 10 persone la lista diventa lunga»);
+// il tocco apre la pagina «Tracce condivise» con i due gruppi. I testi delle righe sono gli stessi in tutti e due i posti.
 function tracceHtml() {
   if (!TRC.righe.length && !TRC.ascoltate.length) return '';
+  const chiede = TRC.ascoltate.filter(k => k.chiede_prossima_il).length;
+  const pezzi = [TRC.righe.length ? `${TRC.righe.length} da controllare` : '', TRC.ascoltate.length ? `${TRC.ascoltate.length} ascoltate` : '', chiede ? `${chiede} ${chiede === 1 ? 'chiede' : 'chiedono'} la prossima` : ''].filter(Boolean);
+  return `<button class="ag-blocco tracce" id="dash-tracce"><span><b>${ic('audio')} Tracce condivise</b><small>${esc(pezzi.join(' · '))}</small></span><span>›</span></button>`;
+}
+
+function righeTracceHtml() {
   const testo = { attesa: 'condivisa oggi · in attesa che la ascolti', chiedi: 'condivisa ieri · l\'ha ascoltata?', ricordaglielo: '2 giorni fa · ricordaglielo, scade domani', scaduta: 'scaduta: sono passati 3 giorni' };
   const spento = ST.offline || soloGuardo() ? 'disabled' : '';
   const oggi = ST.oggi || MB21Coda.oggiRoma();
   const quando = g => { const n = MB21Sharing.giorniDa(g, oggi); return n === 0 ? 'oggi' : n === 1 ? 'ieri' : `${n} giorni fa`; };
-  const daControllare = TRC.righe.length ? `<div class="sh-gruppo">Da controllare · ${TRC.righe.length}</div>` + TRC.righe.map(k => {
+  const daControllare = TRC.righe.length ? `<h2>Da controllare · ${TRC.righe.length}</h2><div class="riquadro sh-elenco">` + TRC.righe.map(k => {
     const stato = MB21Sharing.statoControllo(k.giorni);
     return `<div class="sh-riga">
       <button class="sh-riga-testo" data-traccia-scheda="${esc(k.contatto_id)}">
@@ -305,22 +313,33 @@ function tracceHtml() {
         <div class="sh-riga-sotto">${esc(k.materiali ? k.materiali.titolo : 'traccia')} · <span class="sh-stato ${stato}">${k.giorni >= 3 ? `scaduta: ${k.giorni} giorni` : testo[stato]}</span></div></button>
       <button class="sh-ok" data-traccia-ascoltata="${esc(k.id)}" ${spento}>${ic('fatto', 16)} Ascoltata</button>
     </div>`;
-  }).join('') : '';
-  const ascoltate = TRC.ascoltate.length ? `<div class="sh-gruppo">Ascoltate di recente · ${TRC.ascoltate.length}</div>` + TRC.ascoltate.map(k => `<div class="sh-riga">
+  }).join('') + '</div>' : '';
+  const ascoltate = TRC.ascoltate.length ? `<h2>Ascoltate di recente · ${TRC.ascoltate.length}</h2><div class="riquadro sh-elenco">` + TRC.ascoltate.map(k => `<div class="sh-riga">
       <button class="sh-riga-testo" data-traccia-scheda="${esc(k.contatto_id)}">
         <div class="sh-riga-titolo">${esc(k.contatti ? k.contatti.nome : '')}${k.chiede_prossima_il ? ' <span class="sh-chiede">chiede la prossima</span>' : ''}</div>
         <div class="sh-riga-sotto">${esc(k.materiali ? k.materiali.titolo : 'traccia')} · ascoltata ${quando(k.ascoltata_il)}${k.segnata_dal_partner ? ' · segnata da lui' : ''}</div></button>
       <span class="sh-riga-freccia">›</span>
-    </div>`).join('') : '';
-  return `<h2>${ic('audio')} Tracce</h2><div class="riquadro sh-elenco">${daControllare}${ascoltate}</div>`;
+    </div>`).join('') + '</div>' : '';
+  return daControllare + ascoltate || '<div class="vuoto">Nessuna traccia condivisa negli ultimi 7 giorni.</div>';
 }
 
-function collegaTracce() {
+// La pagina «Tracce condivise» (dalla Dashboard): stessa tab, «‹ Dashboard» per tornare
+async function apriPaginaTracce() {
+  app.innerHTML = `<button class="indietro" id="tr-indietro">‹ Dashboard</button><h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
+  window.scrollTo(0, 0);
+  document.getElementById('tr-indietro').onclick = () => caricaOggi();
+  collegaTracce(async () => { await caricaTracceDaControllare(ST.oggi); apriPaginaTracce(); });
+}
+
+function collegaTracce(ridisegna) {
+  const riga = document.getElementById('dash-tracce');
+  if (riga) riga.onclick = () => apriPaginaTracce();
   app.querySelectorAll('[data-traccia-ascoltata]').forEach(b => b.onclick = async () => {
     if (soloGuardo()) return;
     b.disabled = true; b.classList.add('si');
     const { error } = await dbq('ascoltata da dashboard', supa.from('condivisioni').update({ ascoltata: true, ascoltata_il: MB21Coda.oggiRoma() }).eq('id', b.dataset.tracciaAscoltata));
-    if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
+    if (error) { b.disabled = false; b.classList.remove('si'); return mostraToast('Non salvato: riprova.'); }
+    if (ridisegna) return ridisegna();
     await caricaTracceDaControllare(ST.oggi);
     disegnaOggi();
   });
