@@ -44,7 +44,7 @@ async function sezioneSharing() {
     } else {
       const t = proposta = r.traccia, av = MB21Sharing.avanzamento(MB21Sharing.percorsoDi(materiali, perChi), condivisioni, r.fase);
       consiglio = `<div class="riquadro sh-consiglio">
-        <div class="sh-etichetta">${r.extra ? `Fase ${r.fase} finita · una traccia in più` : `Prossima traccia per ${esc(nome)} · fase ${r.fase} · ${esc(r.nome)}`}</div>
+        <div class="sh-etichetta">${r.extra ? `Fase ${r.fase} finita · una traccia in più` : `Prossima traccia per ${esc(nome)} · fase ${r.fase}`}</div>
         <div class="sh-titolo">${esc(t.titolo)}</div>
         <div class="sh-oratore">${esc(t.autore || '')}${t.minuti ? ' · ' + t.minuti + ' min' : ''}${pack(t.pack_id)}</div>
         ${t.riassunto || t.per_chi_testo ? `<button class="sh-testo" id="sh-apri" aria-expanded="false">
@@ -132,7 +132,7 @@ async function condivisioneAMano(c, materiali) {
   // divise per fase (Ignazio 22/09: «capire esattamente dove ci troviamo, ma magari saltare una fase perché il candidato è pronto»)
   const gruppi = [];
   for (const m of tracce) {
-    const nome = m.fase ? `Fase ${m.fase} · ${MB21Sharing.FASI[m.fase]}${m.per_chi === 'ospite' ? ' (candidato)' : ' (partner)'}` : `In più, senza fase (${m.per_chi === 'ospite' ? 'candidato' : 'partner'})`;
+    const nome = m.fase ? `Fase ${m.fase}${m.per_chi === 'ospite' ? ' (candidato)' : ' (partner)'}` : `In più, senza fase (${m.per_chi === 'ospite' ? 'candidato' : 'partner'})`;
     let g = gruppi.find(x => x.gruppo === nome);
     if (!g) gruppi.push(g = { gruppo: nome, voci: [] });
     g.voci.push(voce(m));
@@ -243,7 +243,7 @@ async function proponiTracciaDopo(contatto, opz = {}) {
       if (r.fine) return fine(false);   // niente da proporre: si va avanti in silenzio
       const t = r.traccia, p = t.pack_id && materiali.find(m => m.id === t.pack_id);
       velo.innerHTML = `<div class="foglio"><h3>${ic('audio')} ${opz.primaDelPm ? `Prima del PM, manda a ${esc(nome)}:` : `Che traccia mandi a ${esc(nome)}?`}</h3>
-        <p>${opz.primaDelPm ? `Piano Marketing ${esc(dataBreve(opz.primaDelPm))}: condividila ora dall'app N21, così arriva preparato. Poi segnala qui.` : r.extra ? `Fase ${r.fase} finita: una traccia in più.` : `Fase ${r.fase} · ${esc(r.nome)}. Condividila dall'app N21 e segnala qui.`}</p>
+        <p>${opz.primaDelPm ? `Piano Marketing ${esc(dataBreve(opz.primaDelPm))}: condividila ora dall'app N21, così arriva preparato. Poi segnala qui.` : r.extra ? `Fase ${r.fase} finita: una traccia in più.` : `Fase ${r.fase}. Condividila dall'app N21 e segnala qui.`}</p>
         <div class="sh-consiglio-foglio">
           <div class="sh-titolo">${esc(t.titolo)}</div>
           <div class="sh-oratore">${esc(t.autore || '')}${t.minuti ? ' · ' + t.minuti + ' min' : ''}${p ? ' · pack ' + esc(p.titolo) : ''}</div>
@@ -318,7 +318,7 @@ function tracceHtml() {
 function collegaTracce() {
   app.querySelectorAll('[data-traccia-ascoltata]').forEach(b => b.onclick = async () => {
     if (soloGuardo()) return;
-    b.disabled = true;
+    b.disabled = true; b.classList.add('si');
     const { error } = await dbq('ascoltata da dashboard', supa.from('condivisioni').update({ ascoltata: true, ascoltata_il: MB21Coda.oggiRoma() }).eq('id', b.dataset.tracciaAscoltata));
     if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
     await caricaTracceDaControllare(ST.oggi);
@@ -373,10 +373,10 @@ function mioPercorsoHtml() {
   const sotto = daAscoltare.length
     ? `${esc(traccia(daAscoltare[0].materiale_id) ? traccia(daAscoltare[0].materiale_id).titolo : 'traccia')} · da ${esc(sponsor || 'il tuo sponsor')}${S.giorniDa(daAscoltare[0].condivisa_il, oggi) >= 2 ? ' · scade presto' : ''}`
     : `La prossima te la manda ${esc(sponsor || 'il tuo sponsor')}${prossimoLibro ? ` · intanto: ${esc(prossimoLibro.titolo)}` : ''}`;
-  return `<div class="riquadro avv-partner mio percorso">
+  return `<div class="riquadro avv-partner mio percorso ${daAscoltare.length ? 'attivo' : ''}">
     <button class="avv-testa" id="mio-percorso"><span><b>${ic('crescita')} Il mio percorso</b><small>${testa} · ${sotto}</small></span>
       <span class="avv-conta">${fase ? `Fase ${fase}` : ''}</span></button>
-    ${fase ? `<div class="sh-fase"><span>${esc(S.FASI[fase])}</span><div class="barra"><i style="width:${tot ? Math.round(100 * fatteFase / tot) : 0}%"></i></div><span>${fatteFase} di ${tot} ascoltate</span></div>` : ''}
+    ${fase ? `<div class="sh-fase"><div class="barra"><i style="width:${tot ? Math.round(100 * fatteFase / tot) : 0}%"></i></div><span>${fatteFase} di ${tot} ascoltate</span></div>` : ''}
     ${MIO.aperto ? `<div class="mio-elenco">
       ${daAscoltare.map(r => { const t = traccia(r.materiale_id); return `<div class="sh-riga">
         <div class="sh-riga-testo"><div class="sh-riga-titolo">${t ? esc(t.titolo) : 'traccia'}</div>
@@ -393,7 +393,7 @@ function collegaMioPercorso() {
   const testa = document.getElementById('mio-percorso');
   if (testa) testa.onclick = () => { MIO.aperto = !MIO.aperto; disegnaOggi(); };
   app.querySelectorAll('[data-mia-ascoltata]').forEach(b => b.onclick = async () => {
-    b.disabled = true;
+    b.disabled = true; b.classList.add('si');
     const r = MIO.righe.find(x => x.id === b.dataset.miaAscoltata);
     const { error } = await dbq('la mia traccia ascoltata', supa.from('condivisioni')
       .update({ ascoltata: true, ascoltata_il: MB21Coda.oggiRoma(), segnata_dal_partner: true }).eq('id', b.dataset.miaAscoltata));
