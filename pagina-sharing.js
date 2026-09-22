@@ -273,32 +273,46 @@ async function proponiTracciaDopo(contatto, opz = {}) {
 
 // ── In Dashboard: «🎧 Tracce da controllare» (lavoro 5): le condivisioni non ascoltate da 1 a 7 giorni, di chi è scelto nel Partner Select.
 // La traccia dura 72 ore: a 1 giorno «l'ha ascoltata?», a 2 «ricordaglielo», da 3 «scaduta». Un tocco «Ascoltata» o la scheda (Sharing).
-const TRC = { righe: [] };
+const TRC = { righe: [], ascoltate: [] };
 
+// Le condivisioni degli ultimi 7 giorni di chi è scelto nel Partner Select: non ascoltate (da controllare) e ascoltate di recente
+// (Ignazio 22/09: «lo sponsor dove vede che Isabella ha ascoltato? Mettiamo che ho 10 condivisioni, 10 persone diverse»)
 async function caricaTracceDaControllare(oggi) {
   try {
-    const { data, error } = await dbq('tracce da controllare', supa.from('condivisioni')
-      .select('id, contatto_id, condivisa_il, ascoltata, contatti(nome), materiali(titolo)').in('user_id', idVisti()).eq('ascoltata', false)
-      .gte('condivisa_il', MB21Agenda.spostaGiorno(oggi, -7)).lt('condivisa_il', oggi));
+    const da = MB21Agenda.spostaGiorno(oggi, -7);
+    const { data, error } = await dbq('tracce', supa.from('condivisioni')
+      .select('id, contatto_id, condivisa_il, ascoltata, ascoltata_il, segnata_dal_partner, chiede_prossima_il, contatti(nome), materiali(titolo)').in('user_id', idVisti())
+      .or(`and(ascoltata.eq.false,condivisa_il.gte.${da},condivisa_il.lt.${oggi}),and(ascoltata.eq.true,ascoltata_il.gte.${da})`));
     if (error) throw error;
-    TRC.righe = MB21Sharing.daControllare(data || [], oggi);
+    TRC.righe = MB21Sharing.daControllare((data || []).filter(k => !k.ascoltata), oggi);
+    TRC.ascoltate = (data || []).filter(k => k.ascoltata).sort((a, b) => (b.chiede_prossima_il ? 1 : 0) - (a.chiede_prossima_il ? 1 : 0) || b.ascoltata_il.localeCompare(a.ascoltata_il));
   } catch (e) {
-    TRC.righe = [];
+    TRC.righe = []; TRC.ascoltate = [];
   }
 }
 
 function tracceHtml() {
-  if (!TRC.righe.length) return '';
+  if (!TRC.righe.length && !TRC.ascoltate.length) return '';
   const testo = { chiedi: 'condivisa ieri · l\'ha ascoltata?', ricordaglielo: '2 giorni fa · ricordaglielo, scade domani', scaduta: 'scaduta: sono passati 3 giorni' };
-  return `<h2>${ic('audio')} Tracce da controllare · ${TRC.righe.length}</h2><div class="riquadro sh-elenco">${TRC.righe.map(k => {
+  const spento = ST.offline || soloGuardo() ? 'disabled' : '';
+  const oggi = ST.oggi || MB21Coda.oggiRoma();
+  const quando = g => { const n = MB21Sharing.giorniDa(g, oggi); return n === 0 ? 'oggi' : n === 1 ? 'ieri' : `${n} giorni fa`; };
+  const daControllare = TRC.righe.length ? `<div class="sh-gruppo">Da controllare · ${TRC.righe.length}</div>` + TRC.righe.map(k => {
     const stato = MB21Sharing.statoControllo(k.giorni);
     return `<div class="sh-riga">
       <button class="sh-riga-testo" data-traccia-scheda="${esc(k.contatto_id)}">
         <div class="sh-riga-titolo">${esc(k.contatti ? k.contatti.nome : '')}</div>
         <div class="sh-riga-sotto">${esc(k.materiali ? k.materiali.titolo : 'traccia')} · <span class="sh-stato ${stato}">${k.giorni >= 3 ? `scaduta: ${k.giorni} giorni` : testo[stato]}</span></div></button>
-      <button class="sh-ok" data-traccia-ascoltata="${esc(k.id)}" ${ST.offline || soloGuardo() ? 'disabled' : ''}>${ic('fatto', 16)} Ascoltata</button>
+      <button class="sh-ok" data-traccia-ascoltata="${esc(k.id)}" ${spento}>${ic('fatto', 16)} Ascoltata</button>
     </div>`;
-  }).join('')}</div>`;
+  }).join('') : '';
+  const ascoltate = TRC.ascoltate.length ? `<div class="sh-gruppo">Ascoltate di recente · ${TRC.ascoltate.length}</div>` + TRC.ascoltate.map(k => `<div class="sh-riga">
+      <button class="sh-riga-testo" data-traccia-scheda="${esc(k.contatto_id)}">
+        <div class="sh-riga-titolo">${esc(k.contatti ? k.contatti.nome : '')}${k.chiede_prossima_il ? ' <span class="sh-chiede">chiede la prossima</span>' : ''}</div>
+        <div class="sh-riga-sotto">${esc(k.materiali ? k.materiali.titolo : 'traccia')} · ascoltata ${quando(k.ascoltata_il)}${k.segnata_dal_partner ? ' · segnata da lui' : ''}</div></button>
+      <span class="sh-riga-freccia">›</span>
+    </div>`).join('') : '';
+  return `<h2>${ic('audio')} Tracce</h2><div class="riquadro sh-elenco">${daControllare}${ascoltate}</div>`;
 }
 
 function collegaTracce() {
@@ -311,4 +325,88 @@ function collegaTracce() {
     disegnaOggi();
   });
   app.querySelectorAll('[data-traccia-scheda]').forEach(b => b.onclick = () => { LS.apriSezione = 'sharing'; apriContattoDa(b.dataset.tracciaScheda, 'oggi'); });
+}
+
+// ── In Dashboard: «🎧 Il mio percorso» (lavoro 6, decisioni di Ignazio 21/09): il partner che usa MB21 vede le tracce che il suo
+// sponsor gli ha condiviso, le segna «ascoltata» con un tocco (stesso registro dello sponsor) e riceve il passo dopo: la fase in cui
+// si trova, la prossima traccia in arrivo, il prossimo libro. La traccia ascoltata conta da sola nelle Tracce del suo Check (dal 22/09).
+// Solo per sé stesso (non con il Partner Select su un altro), solo se ha una scheda collegata (codice Amway) con qualcosa dentro.
+const MIO = { righe: null, conScheda: false, libri: [], letti: [], aperto: false };
+
+async function caricaMioPercorso() {
+  MIO.righe = null;
+  if (vediTutti() || guardoAltri() || ST.offline) return;
+  try {
+    const [mio, materiali, libri, letti] = await Promise.all([
+      dbq('il mio percorso', supa.rpc('mio_sharing')),
+      leggiMateriali(),
+      dbq('libri del percorso', supa.from('materiali').select('id, tipo, titolo, autore, ordine_libro, solo_n21').not('ordine_libro', 'is', null).order('ordine_libro').order('titolo')),
+      dbq('libri letti', supa.from('check_giorno').select('libro').eq('user_id', ST.utente.id).not('libro', 'is', null)),
+    ]);
+    if (mio.error || !materiali) return;
+    const righe = (mio.data || []);
+    MIO.conScheda = righe.some(r => r.con_scheda);
+    MIO.righe = righe.filter(r => r.id);
+    MIO.libri = libri.data || [];
+    MIO.letti = [...new Set((letti.data || []).map(x => x.libro))];
+  } catch (e) {
+    MIO.righe = null;
+  }
+}
+
+function mioPercorsoHtml() {
+  if (!MIO.righe || !MIO.conScheda || !MIO.righe.length) return '';
+  const S = MB21Sharing, materiali = SH.materiali || [], oggi = ST.oggi || MB21Coda.oggiRoma();
+  const traccia = id => materiali.find(m => m.id === id);
+  const daAscoltare = [...MIO.righe].filter(r => !r.ascoltata).sort((a, b) => a.condivisa_il.localeCompare(b.condivisa_il));
+  const ascoltate = MIO.righe.filter(r => r.ascoltata).length;
+  // la fase in cui mi trovo: la fase (1-4) della traccia più recente che mi hanno mandato
+  const ultima = S.ultimaCondivisa(MIO.righe, materiali);
+  const fase = ultima && ultima.fase, tot = fase ? materiali.filter(m => m.tipo === 'traccia' && m.fase === fase && !m.fuori_catalogo).length : 0;
+  const mieFase = fase ? MIO.righe.filter(r => { const t = traccia(r.materiale_id); return t && t.fase === fase; }) : [];
+  const fatteFase = new Set(mieFase.filter(r => r.ascoltata).map(r => r.materiale_id)).size;
+  const prossimoLibro = MIO.libri.find(l => l.tipo === 'libro' && !MIO.letti.includes(l.titolo));
+  const sponsor = (daAscoltare[0] || MIO.righe[0]).sponsor;
+  const testa = daAscoltare.length
+    ? `${ic('audio')} ${daAscoltare.length === 1 ? 'Una traccia da ascoltare' : daAscoltare.length + ' tracce da ascoltare'}`
+    : `${ic('fatto')} Tutte le tracce ascoltate`;
+  const sotto = daAscoltare.length
+    ? `${esc(traccia(daAscoltare[0].materiale_id) ? traccia(daAscoltare[0].materiale_id).titolo : 'traccia')} · da ${esc(sponsor || 'il tuo sponsor')}${S.giorniDa(daAscoltare[0].condivisa_il, oggi) >= 2 ? ' · scade presto' : ''}`
+    : `La prossima te la manda ${esc(sponsor || 'il tuo sponsor')}${prossimoLibro ? ` · intanto: ${esc(prossimoLibro.titolo)}` : ''}`;
+  return `<div class="riquadro avv-partner mio percorso">
+    <button class="avv-testa" id="mio-percorso"><span><b>${ic('crescita')} Il mio percorso</b><small>${testa} · ${sotto}</small></span>
+      <span class="avv-conta">${fase ? `Fase ${fase}` : ''}</span></button>
+    ${fase ? `<div class="sh-fase"><span>${esc(S.FASI[fase])}</span><div class="barra"><i style="width:${tot ? Math.round(100 * fatteFase / tot) : 0}%"></i></div><span>${fatteFase} di ${tot} ascoltate</span></div>` : ''}
+    ${MIO.aperto ? `<div class="mio-elenco">
+      ${daAscoltare.map(r => { const t = traccia(r.materiale_id); return `<div class="sh-riga">
+        <div class="sh-riga-testo"><div class="sh-riga-titolo">${t ? esc(t.titolo) : 'traccia'}</div>
+          <div class="sh-riga-sotto">${t && t.autore ? esc(t.autore) + ' · ' : ''}${t && t.minuti ? t.minuti + ' min · ' : ''}da ${esc(r.sponsor || '')} il ${esc(MB21Lista.data(r.condivisa_il))}</div></div>
+        <button class="sh-ok" data-mia-ascoltata="${esc(r.id)}">${ic('fatto', 16)} Ascoltata</button></div>`; }).join('')}
+      ${daAscoltare.length ? '' : '<div class="sotto" style="margin:8px 0 4px">Niente da ascoltare: hai fatto tutto quello che ti è arrivato.</div>'}
+      ${ascoltate ? `<div class="sotto" style="margin:8px 0 0">${ic('fatto', 14)} ${ascoltate === 1 ? '1 traccia ascoltata' : ascoltate + ' tracce ascoltate'} in tutto · contano nelle Tracce del tuo Check</div>` : ''}
+      ${prossimoLibro ? `<div class="mio-libro">${ic('libro')} <span><b>Prossimo libro:</b> ${esc(prossimoLibro.titolo)}${prossimoLibro.autore ? ' — ' + esc(prossimoLibro.autore) : ''}${prossimoLibro.solo_n21 ? '<br><small>Lo trovi solo da Network 21 o al prossimo evento</small>' : ''}</span></div>` : ''}
+    </div>` : ''}
+  </div>`;
+}
+
+function collegaMioPercorso() {
+  const testa = document.getElementById('mio-percorso');
+  if (testa) testa.onclick = () => { MIO.aperto = !MIO.aperto; disegnaOggi(); };
+  app.querySelectorAll('[data-mia-ascoltata]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const r = MIO.righe.find(x => x.id === b.dataset.miaAscoltata);
+    const { error } = await dbq('la mia traccia ascoltata', supa.from('condivisioni')
+      .update({ ascoltata: true, ascoltata_il: MB21Coda.oggiRoma(), segnata_dal_partner: true }).eq('id', b.dataset.miaAscoltata));
+    if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
+    CK.giorni = null;   // le Tracce del Check cambiano
+    // Ignazio 22/09: «gli deve uscire un messaggio: vuoi che lo sponsor ti condivida un'altra traccia?». Con «Sì» lo sponsor riceve
+    // «… e chiede la prossima»; con «Non ora» riceve lo stesso «ha ascoltato»: «conviene sempre sentirsi»
+    const sponsor = MB21Sharing.nomeCorto(r && r.sponsor) || 'il tuo sponsor';
+    if (await chiediConferma(`Vuoi che ${sponsor} ti condivida la prossima traccia?`, `${sponsor} riceve un avviso e ti manda la prossima dall'app N21. Sentitevi: è il modo migliore per andare avanti.`, 'Sì, avvisalo', false, '', 'Non ora')) {
+      await dbq('chiede la prossima', supa.from('condivisioni').update({ chiede_prossima_il: new Date().toISOString() }).eq('id', b.dataset.miaAscoltata));
+      mostraToast(`${sponsor} riceve l'avviso · la traccia conta nelle Tracce di oggi`);
+    } else mostraToast('Ascoltata: conta nelle Tracce di oggi');
+    await caricaMioPercorso();
+    disegnaOggi();
+  });
 }
