@@ -1054,7 +1054,7 @@ function apriCheck() {
   // Ogni voce del Check è una riga numerata come nel modulo Core (Ignazio 22/09: «integrare sempre di più il Check nel Core»):
   // numero · titolo · targhetta «Core» se riempie il foglio Core del mese · come si riempie (automatico o a mano).
   const CK = Object.fromEntries(MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => [k, { etichetta, suggerimento, decimale }]));
-  const riga = (n, k, opz = {}) => `<div class="ck-riga${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
+  const riga = (n, k, opz = {}) => `<div class="ckr${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
       <label for="ck-${k}">${escIcone(CK[k].etichetta)}${opz.core ? '<span class="ck-tag">Core</span>' : ''}</label>
       <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="${esc(CK[k].suggerimento)}">
       <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>${opz.dopo || ''}`;
@@ -1069,22 +1069,22 @@ function apriCheck() {
     ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.', dopo: '<div id="ck-azioni" style="display:none"></div>' })}
     ${riga(3, 'sponsor_personali', { spiega: 'A mano: gli iscritti che hai sponsorizzato tu oggi.' })}
     ${riga(4, 'sponsor_gruppo', { spiega: 'Automatico dal file Amway (data di iscrizione, nella tua linea); a mano se il file non c\'è ancora.' })}
-    <div class="ck-riga core" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
+    <div class="ckr core" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
       <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
     ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.', dopo: '<div id="ck-vendite" style="display:none"></div>' })}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
     ${riga(7, 'tracce', { core: 4, spiega: 'A mano le tracce ascoltate oggi; quelle del percorso segnate «ascoltata» si sommano da sole → sezione 4 del foglio Core.' })}
-    <div class="ck-riga core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
+    <div class="ckr core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
       <select id="ck-libro"><option value="">— Libro —</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
       <input id="ck-pagine" inputmode="numeric" placeholder="${esc(CK.pagine.suggerimento)}">
       <input id="ck-note" maxlength="150" placeholder="Note del libro"><div class="conta" id="ck-conta">0/150</div>
       <div class="vn-aiuto">A mano: libro, pagine (10 al giorno) e note → sezione 5 del foglio Core e diario dei libri. Con «Libro non da sistema…» scrivi titolo e autore una volta sola.</div></div></div>
     </div><h4 class="mc-t">Squadra</h4><div class="riquadro mc-g">
-    <div class="ck-riga core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
+    <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-open"> oggi sono stato all'<b>OPEN</b></label>
       <div class="ck-badge-riga">Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b> Biglietto WES <b class="ck-badge" id="ck-wes">—</b></div>
       <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
-    <div class="ck-riga core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
+    <div class="ckr core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-counseling"> oggi sessione di <b>counseling</b> con lo sponsor/upline</label>
       <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"> oggi ho praticato l'<b>edificazione</b></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"> oggi ho praticato il <b>no-crossline</b></label>
