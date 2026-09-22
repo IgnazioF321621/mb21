@@ -71,7 +71,7 @@ async function caricaOggi() {
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
     try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
   }
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaTracceDaControllare(oggi)]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaTracceDaControllare(oggi), caricaMioPercorso()]);
   disegnaOggi();
 }
 
@@ -161,6 +161,7 @@ function disegnaOggi() {
   html += riordiniHtml();
   html += tracceHtml();   // cantiere 40: «Tracce da controllare» (pagina-sharing.js)
   html += avvioHtml();
+  html += mioPercorsoHtml();   // cantiere 40 lavoro 6: «Il mio percorso» (pagina-sharing.js)
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
   }
@@ -191,6 +192,7 @@ function disegnaOggi() {
   collegaConferme();
   collegaRiordini();
   collegaTracce();
+  collegaMioPercorso();
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });
@@ -1085,6 +1087,7 @@ function apriCheck() {
     const avviso = velo.querySelector('#ck-modifica');
     venditeDelGiorno(data, () => mio === giro);
     azioniDelGiorno(data, () => mio === giro);
+    tracceDelGiorno(data, () => mio === giro);
     const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
       .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
     if (mio !== giro) return;   // nel frattempo è cambiata la data
@@ -1121,6 +1124,19 @@ function apriCheck() {
       await apriContattoDa(b.dataset.cliente, 'oggi');
       if (LS.contatto && LS.contatto.id === b.dataset.cliente) { LS.sezione = 'vendite'; disegnaScheda(); }
     });
+  };
+  // Tracce dal percorso (cantiere 40 lavoro 6, dal 22/09): quelle segnate «ascoltata» in «Il mio percorso» contano da sole; il campo
+  // resta per le altre (il CEP). Una riga sotto il campo dice quante ne arrivano già dal percorso, così non si contano due volte.
+  const tracceDelGiorno = async (data, ancoraValido) => {
+    const campo = velo.querySelector('#ck-campo-tracce');
+    let spia = velo.querySelector('#ck-tracce-percorso');
+    if (!spia) { spia = document.createElement('div'); spia.id = 'ck-tracce-percorso'; spia.className = 'vn-aiuto'; campo.appendChild(spia); }
+    spia.textContent = '';
+    if (!data || data < MB21Dashboard.INIZIO_TRACCE_PERCORSO || visto().id !== ST.utente.id) return;
+    const { data: righe, error } = await dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti'));
+    if (!ancoraValido() || error) return;
+    const n = (righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
+    spia.textContent = n ? `${ic('audio')} ${n === 1 ? '1 traccia' : n + ' tracce'} del tuo percorso già ${n === 1 ? 'contata' : 'contate'} in questo giorno: qui scrivi solo le altre (CEP).` : 'Le tracce del percorso segnate «ascoltata» contano da sole: qui scrivi solo le altre (CEP).';
   };
   // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
   // (vista `azioni_conti`); ogni azione porta alla scheda del contatto. Per i giorni prima restano i campi a mano.

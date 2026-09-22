@@ -13,10 +13,13 @@
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
 //      ancora senza esito, una volta sola (azioni.senza_esito_avvisato_il); non più vecchi di un giorno
 //    { tipo: 'tracce' } → ogni 15 minuti, solo tra le 9 e le 21 di Roma (cantiere 40, 22/09): la traccia condivisa dura 72 ore.
-//      A 24 ore dalla condivisione non ancora «ascoltata»: «🎧 Mario ha ascoltato la traccia?»; a 48 ore, se ancora niente:
-//      «⏳ La traccia di Mario scade domani: ricordaglielo». Una volta sola ciascuno (condivisioni.avviso_24_il / avviso_48_il).
+//      A 48 ore dalla condivisione non ancora «ascoltata» (Ignazio: «48 ore sia per lo sponsor sia per chi deve ascoltare»):
+//      allo sponsor «⏳ La traccia di Mario scade domani: ricordaglielo» (condivisioni.avviso_48_il) e, se la persona usa MB21
+//      (utenti.partner_id = contatti.codice_amway), a lei «⏳ La traccia che ti ha mandato Ignazio scade domani: ascoltala»
+//      (avviso_ascolto_il). Quando è il partner a segnare «ascoltata» dalla sua Dashboard (segnata_dal_partner), allo sponsor
+//      «🎧 Isabella ha ascoltato "…" e chiede la prossima. Sentitevi!» (avviso_sponsor_il; «chiede la prossima» se chiede_prossima_il).
 //      Il momento della condivisione è `creato_il` se la riga è stata scritta il giorno stesso, altrimenti mezzogiorno di `condivisa_il`
-//      (le condivisioni scritte a mano per giorni passati). Con { prova: true } dice cosa manderebbe senza mandare.
+//      (le condivisioni scritte a mano per giorni passati). Mai per lo storico di Glide. Con { prova: true } dice cosa manderebbe senza mandare.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -257,38 +260,43 @@ Deno.serve(async (req) => {
     return risposta({ appuntamenti: esiti.length, esiti });
   }
 
-  // Le tracce condivise non ancora ascoltate (cantiere 40 lavoro 5): a 24 ore «l'ha ascoltata?», a 48 «ricordaglielo, scade domani»
+  // Le tracce condivise (cantiere 40 lavori 5 e 6): a 48 ore non ascoltata → sponsor e (se usa MB21) la persona; ascoltata dal partner → sponsor
   if (tipo === 'tracce') {
     const adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now(), ORA = 3600000;
     const oraAdesso = corpo.prova && corpo.adesso ? Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).format(new Date(adesso)).slice(0, 2)) : oraRoma();
     if (oraAdesso < 9 || oraAdesso >= 21) return risposta({ tracce: 0, nota: 'di notte si tace: gli avvisi partono dalle 9' });
-    const { data, error } = await db.from('condivisioni').select('id, user_id, contatto_id, condivisa_il, creato_il, avviso_24_il, avviso_48_il, contatti(nome), materiali(titolo)')
-      .eq('ascoltata', false).is('avviso_48_il', null).eq('da_glide', false)   // lo storico di Glide non fa partire avvisi
-      .gte('condivisa_il', giornoDi(new Date(adesso - 5 * 24 * ORA).toISOString())).gte('creato_il', new Date(adesso - 8 * 24 * ORA).toISOString());
+    type Riga = { id: string; user_id: string; contatto_id: string; condivisa_il: string; creato_il: string; ascoltata: boolean; ascoltata_il: string | null;
+      avviso_48_il: string | null; avviso_ascolto_il: string | null; avviso_sponsor_il: string | null; segnata_dal_partner: boolean; chiede_prossima_il: string | null;
+      contatti: { nome?: string; codice_amway?: string | null } | null; materiali: { titolo?: string } | null; utenti: { nome?: string } | null };
+    const { data, error } = await db.from('condivisioni')
+      .select('id, user_id, contatto_id, condivisa_il, creato_il, ascoltata, ascoltata_il, avviso_48_il, avviso_ascolto_il, avviso_sponsor_il, segnata_dal_partner, chiede_prossima_il, contatti(nome, codice_amway), materiali(titolo), utenti:user_id(nome)')
+      .eq('da_glide', false).gte('condivisa_il', giornoDi(new Date(adesso - 5 * 24 * ORA).toISOString())).gte('creato_il', new Date(adesso - 8 * 24 * ORA).toISOString());
     if (error) return risposta({ errore: error.message }, 500);
+    // chi usa MB21 tra le persone di queste condivisioni: il codice Amway della scheda = utenti.partner_id
+    const codici = [...new Set((data as unknown as Riga[] ?? []).map(k => k.contatti?.codice_amway).filter(Boolean))] as string[];
+    const { data: utenti } = codici.length ? await db.from('utenti').select('id, partner_id').in('partner_id', codici) : { data: [] };
+    const utenteDi = (codice: string | null | undefined) => (utenti ?? []).find(u => u.partner_id === codice)?.id ?? null;
     const esiti: Record<string, unknown>[] = [];
-    for (const k of data ?? []) {
-      // il momento della condivisione: la scrittura, se è dello stesso giorno; altrimenti mezzogiorno del giorno scelto (scritta a mano per un giorno passato)
+    const manda = async (k: Riga, a: string[], avviso: Avviso, campo: string) => {
+      if (corpo.prova) { esiti.push({ condivisione: k.id, campo, ...avviso }); return; }
+      const esito = await spedisciA(a, avviso);
+      await db.from('condivisioni').update({ [campo]: new Date().toISOString() }).eq('id', k.id);
+      esiti.push({ condivisione: k.id, campo, ...esito });
+    };
+    for (const k of (data as unknown as Riga[]) ?? []) {
       const momento = giornoDi(k.creato_il) === k.condivisa_il ? Date.parse(k.creato_il) : Date.parse(giornoRoma(k.condivisa_il).inizio) + 12 * ORA;
       const ore = (adesso - momento) / ORA;
-      const nome = ((k.contatti as unknown as { nome?: string } | null)?.nome || 'la persona').split(' ')[0];
-      const traccia = (k.materiali as unknown as { titolo?: string } | null)?.titolo || 'la traccia';
-      const url = `./?apri=lista&contatto=${k.contatto_id}&sezione=sharing`;
-      let avviso: Avviso | null = null, campo: 'avviso_24_il' | 'avviso_48_il' | null = null;
-      if (ore >= 48 && !k.avviso_48_il) {
-        avviso = { titolo: `⏳ La traccia di ${nome} scade domani`, testo: `${traccia} · condivisa 2 giorni fa e non ancora ascoltata: ricordaglielo, poi segna qui.`, url, tag: `traccia-48-${k.id}` };
-        campo = 'avviso_48_il';
-      } else if (ore >= 24 && ore < 48 && !k.avviso_24_il) {
-        avviso = { titolo: `🎧 ${nome} ha ascoltato la traccia?`, testo: `${traccia} · condivisa ieri. Se sì segnala, se no sentilo.`, url, tag: `traccia-24-${k.id}` };
-        campo = 'avviso_24_il';
+      const nome = (k.contatti?.nome || 'la persona').split(' ')[0], sponsor = (k.utenti?.nome || 'il tuo sponsor').split(' ')[0];
+      const traccia = k.materiali?.titolo || 'la traccia';
+      const urlScheda = `./?apri=lista&contatto=${k.contatto_id}&sezione=sharing`;
+      const partner = utenteDi(k.contatti?.codice_amway);
+      if (!k.ascoltata && ore >= 48) {
+        if (!k.avviso_48_il) await manda(k, [k.user_id], { titolo: `⏳ La traccia di ${nome} scade domani`, testo: `${traccia} · condivisa 2 giorni fa e non ancora ascoltata: ricordaglielo, poi segna qui.`, url: urlScheda, tag: `traccia-48-${k.id}` }, 'avviso_48_il');
+        if (partner && !k.avviso_ascolto_il) await manda(k, [partner], { titolo: `⏳ La traccia che ti ha mandato ${sponsor} scade domani`, testo: `${traccia} · ascoltala nell'app N21, poi tocca «Ascoltata» in MB21.`, url: './', tag: `traccia-ascolto-${k.id}` }, 'avviso_ascolto_il');
       }
-      if (!avviso || !campo) continue;
-      if (corpo.prova) { esiti.push({ condivisione: k.id, ore: Math.round(ore), ...avviso }); continue; }
-      const esito = await spedisciA([k.user_id], avviso);
-      const scritto: Record<string, string> = { [campo]: new Date().toISOString() };
-      if (campo === 'avviso_48_il' && !k.avviso_24_il) scritto.avviso_24_il = scritto.avviso_48_il;   // il 24 non mandato non si recupera più
-      await db.from('condivisioni').update(scritto).eq('id', k.id);
-      esiti.push({ condivisione: k.id, ore: Math.round(ore), campo, ...esito });
+      if (k.ascoltata && k.segnata_dal_partner && !k.avviso_sponsor_il) {
+        await manda(k, [k.user_id], { titolo: `🎧 ${nome} ha ascoltato la traccia`, testo: `${traccia}${k.chiede_prossima_il ? ' · e chiede la prossima' : ''}. Sentitevi!`, url: urlScheda, tag: `traccia-ascoltata-${k.id}` }, 'avviso_sponsor_il');
+      }
     }
     return risposta({ tracce: esiti.length, esiti });
   }

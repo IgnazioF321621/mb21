@@ -328,6 +328,14 @@
   .sh-stato.ricordaglielo { color: var(--proposta); font-weight: 600; } .sh-stato.scaduta { color: var(--rosso); font-weight: 600; }
   .sh-ok { flex: none; min-height: 36px; padding: 6px 12px; border-radius: var(--raggio-pill); border: 1.5px solid var(--ok); background: var(--ok-tinta); color: var(--ok); font-size: 13px; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
   .sh-ok:disabled { opacity: .5; }
+  .avv-partner.percorso .sh-fase { margin-top: 8px; }
+  .mio-elenco { margin-top: 6px; }
+  .sh-gruppo { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); padding: 12px 0 2px; }
+  .sh-gruppo + .sh-riga { border-top: 0; }
+  .sh-chiede { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--proposta-tinta); color: var(--proposta); margin-left: 4px; vertical-align: middle; }
+  .sh-riga-freccia { color: var(--testo-tenue); font-size: 20px; padding: 0 4px; }
+  .mio-elenco .sh-riga { padding: 10px 0; }
+  .mio-libro { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: var(--raggio-bottone); background: var(--gr-crescita-tinta); color: var(--gr-crescita); font-size: 14px; line-height: 1.35; } .mio-libro svg { flex: none; margin-top: 2px; } .mio-libro small { color: var(--grigio); }
   .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .vn-tot { border-radius: var(--raggio-riga); padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
   .vn-tot span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -1040,31 +1048,31 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609221238"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609221238"></script>
-<script src="lista.js?v=202609221238"></script>
-<script src="rubrica.js?v=202609221238"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609221238"></script>
-<script src="agenda.js?v=202609221238"></script>
-<script src="report.js?v=202609221238"></script>
-<script src="check.js?v=202609221238"></script>
-<script src="mappa.js?v=202609221238"></script>
-<script src="pagina-dashboard.js?v=202609221238"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609221238"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609221238"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609221238"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609221238"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609221238"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609221238"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609221238"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609221238"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609221238"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609221238"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609221238"></script>
-<script src="benvenuto.js?v=202609221238"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609221238"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221428"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221428"></script>
+<script src="lista.js?v=202609221428"></script>
+<script src="rubrica.js?v=202609221428"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221428"></script>
+<script src="agenda.js?v=202609221428"></script>
+<script src="report.js?v=202609221428"></script>
+<script src="check.js?v=202609221428"></script>
+<script src="mappa.js?v=202609221428"></script>
+<script src="pagina-dashboard.js?v=202609221428"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221428"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221428"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221428"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221428"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221428"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221428"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221428"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221428"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221428"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221428"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221428"></script>
+<script src="benvenuto.js?v=202609221428"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221428"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 12:38';
+const APP_VERSION = '2026.09.22 · 14:28';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).

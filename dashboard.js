@@ -81,6 +81,7 @@
   // Da questo giorno il Check del Giorno non li chiede: li mostra, con le vendite del giorno da toccare.
   // ⚠️ La stessa data è nelle viste `check_giorni_conti` e `check_mesi` (migrazione 20260918113000): si cambiano insieme.
   const INIZIO_VENDITE = '2026-09-18';
+  const INIZIO_TRACCE_PERCORSO = '2026-09-22';   // cantiere 40 lavoro 6: la traccia segnata «ascoltata» nel percorso conta nelle Tracce del Check (stessa data nella migrazione mio_percorso)
   const vpDalleVendite = giorno => !!giorno && giorno >= INIZIO_VENDITE;
   // Contatti e PM dal 14/09/2026 (nascita della v4) nascono dalle azioni registrate (cantiere 27, vista `azioni_conti`).
   // ⚠️ La stessa data è nella migrazione 20260918133500 (3 volte): si cambiano insieme.
@@ -315,7 +316,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
