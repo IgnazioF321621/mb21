@@ -117,7 +117,9 @@
     const o = obiettivi || {};
     const ob = { vpp: o.vpp, vpg: o.vpg, sponsor_personali: o.sponsor_personali, sponsor_gruppo: o.sponsor_gruppo, cep: o.cep, bbs: o.bbs, wes: o.wes };
 
-    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.quanti >= n, s5.quanti >= n, s6.open >= s6.settimane.length && s6.bbs && s6.wes, !!s7.counseling];
+    // 7 è fatta solo con tutte e tre (Ignazio 22/09): counseling, edificazione e no-crossline
+    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.quanti >= n, s5.quanti >= n, s6.open >= s6.settimane.length && s6.bbs && s6.wes,
+      !!s7.counseling && s7.edificazione === true && s7.no_crossline === true];
     return { mese, giorni: n, s1, s2, s3, s4, s5, s6, s7, obiettivi: ob, note: d.note || '', fatte: abitudini.filter(Boolean).length, abitudini };
   }
 
