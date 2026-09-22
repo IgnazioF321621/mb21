@@ -133,14 +133,14 @@ prova('dopo quale esito si propone la traccia', () => {
   assert.equal(S.proponeTraccia('Contatto', 'Dare Seguito'), false);
 });
 
-prova('tracce da controllare: non ascoltate, da 1 a 7 giorni, dalla più vecchia; lo stato a 1, 2, 3+ giorni', () => {
+prova('tracce da controllare: non ascoltate, da 0 a 7 giorni, dalla più vecchia; lo stato a 0, 1, 2, 3+ giorni', () => {
   const oggi = '2026-09-22';
   const k = (id, g, ascoltata = false) => ({ id, condivisa_il: g, ascoltata });
   const r = S.daControllare([k('a', '2026-09-22'), k('b', '2026-09-21'), k('c', '2026-09-20'), k('d', '2026-09-19', true), k('e', '2026-09-15'), k('f', '2026-09-10')], oggi);
-  assert.deepEqual(r.map(x => x.id), ['e', 'c', 'b']);   // oggi no (0 giorni), ascoltata no, 12 giorni no
-  assert.deepEqual(r.map(x => x.giorni), [7, 2, 1]);
+  assert.deepEqual(r.map(x => x.id), ['e', 'c', 'b', 'a']);   // oggi sì (in attesa), ascoltata no, 12 giorni no
+  assert.deepEqual(r.map(x => x.giorni), [7, 2, 1, 0]);
   assert.equal(S.giorniDa('2026-09-14', oggi), 8);
-  assert.equal(S.statoControllo(1), 'chiedi'); assert.equal(S.statoControllo(2), 'ricordaglielo'); assert.equal(S.statoControllo(5), 'scaduta');
+  assert.equal(S.statoControllo(0), 'attesa'); assert.equal(S.statoControllo(1), 'chiedi'); assert.equal(S.statoControllo(2), 'ricordaglielo'); assert.equal(S.statoControllo(5), 'scaduta');
 });
 
 console.log(`\n${ok} prove superate`);
