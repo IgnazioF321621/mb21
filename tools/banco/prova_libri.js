@@ -58,4 +58,15 @@ prova('il riepilogo mette insieme tutto', () => {
   assert.equal(r.inCorso.titolo, 'Hai diritto di essere ricco'); assert.equal(r.percorso.length, 5); assert.equal(r.diario.length, 3);
 });
 
+prova('«L\'ho già letto»: vale come letto nel percorso e compare in fondo al diario senza note', () => {
+  const gia = [{ titolo: 'È semplice, non ovvia', quando: '2019' }, { titolo: 'Goals', quando: null }];
+  const p = L.percorso(CHECK, LIBRI, gia);
+  assert.equal(p.find(x => x.titolo === 'È semplice, non ovvia').letto, true);
+  assert.equal(p.find(x => x.titolo === 'È semplice, non ovvia').gia.quando, '2019');
+  assert.equal(p.find(x => x.prossimo).titolo, 'Il pianoforte sulla spiaggia');
+  const d = L.diario(CHECK, LIBRI, gia);
+  assert.equal(d.length, 4); assert.equal(d[3].titolo, 'È semplice, non ovvia'); assert.equal(d[3].gia.quando, '2019');
+  assert.equal(d.filter(x => x.titolo === 'Goals').length, 1);   // Goals ha i Check: non si raddoppia
+});
+
 console.log(`\n${ok} prove superate`);

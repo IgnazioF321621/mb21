@@ -224,6 +224,10 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **condivisioni** (migrazione `20260922094905_condivisioni.sql`, cantiere 40; import `scripts/import_condivisioni.py`, righe `da_glide`) — `user_id` (**chi ha condiviso**: in 5 righe di Glide non è il proprietario del contatto) · `contatto_id` · `materiale_id` (la traccia; `on delete restrict`) · `condivisa_il` (data) · `ascoltata` · `ascoltata_il` (vuoto per lo storico di Glide) · `note` (≤300) · `da_glide` · `creato_il`. Un registro solo: la riga che lo sponsor segna «condivisa» è quella che il partner con MB21 segna «ascoltata». Le due tracce della vecchia versione del Media Sharing condivise in Glide stanno in `materiali` come `fuori_catalogo`
 
+**libri_letti** (migrazione `20260922154805`, cantiere 40 lavoro 7) — `user_id` · `titolo` · `quando` (a parole, ≤40, facoltativo) · `creato_il`; unico per utente e titolo. «L'ho già letto»: vale come letto nel percorso, blocco senza note nel diario
+
+**libri_personali** (stessa migrazione) — `user_id` · `titolo` · `autore` · `creato_il`; unico per utente e titolo. «Libro non da sistema…» del Check: entra nell'elenco del Check di chi l'ha scritto; i Check lo salvano per titolo come gli altri, quindi se un giorno entra in `materiali` il diario lo riconosce da solo
+
 **obiettivi_mese** — `user_id` · `mese` (primo giorno del mese, unico per partner) · obiettivi `vpp` · `vpv` (VP Clienti) · `vpg` · `contatti` · `pm` · `sponsor_personali` · `sponsor_gruppo` · `bbs` · `wes` · `cep` · `tracce` · `pagine` (vuoti o 0 = non impostati) · `bbs_partenza` · `wes_partenza` · `cep_partenza` (vuoti = automatici) · `vpp_amway` · `vpg_amway` (dati Amway del mese, fermi all'export)
 
 **Dati importati da Glide** (13/09/2026, `scripts/import_glide.py`): 11 utenti · 49 sequenze (+4 aggiunte in Fase 1, vedi Bottoni esito) · 2.920 contatti · 1.647 azioni · 60 coach note.
@@ -666,3 +670,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`libri.js`** (ca
 | 2026.09.22 · 15:04 | Cantiere 40: «Ascoltata» spento finché non si tocca; «Il mio percorso» acceso solo con tracce da ascoltare; via i nomi delle fasi (resta «Fase N») |
 | 2026.09.22 · 15:08 | Cantiere 40: in Dashboard la riga «Tracce condivise · …» apre la pagina «Tracce condivise» (Da controllare · Ascoltate di recente) |
 | 2026.09.22 · 15:46 | **Cantiere 40 pubblicato, lavoro 7 (prima parte)**: dal Profilo «📖 I miei libri» — Stai leggendo (pagine del mese e del mese prima), Il percorso dei libri (✓ dai Check, il prossimo, «solo da N21»), Il mio diario (note dei Check per libro, uno aperto alla volta); con il Partner Select «I libri di Isabella»; da «Il mio percorso» il tocco su «Prossimo libro» apre la pagina |
+| 2026.09.22 · 16:00 | **Cantiere 40 pubblicato, lavoro 7 (seconda parte)**: «L'ho già letto» con il periodo (percorso e diario), «Libro non da sistema…» nel Check e in «Un libro già letto» (tabelle `libri_letti`, `libri_personali`); «Libro no N21» via dall'elenco per i Check nuovi |
