@@ -129,8 +129,16 @@ async function condivisioneAMano(c, materiali) {
   const tracce = materiali.filter(m => m.tipo === 'traccia' && (m.per_chi === 'ospite' || m.per_chi === 'utente') && !m.fuori_catalogo)
     .sort((a, b) => (a.per_chi === perChi ? 0 : 1) - (b.per_chi === perChi ? 0 : 1) || (a.fase || 9) - (b.fase || 9) || (a.ordine ?? 999) - (b.ordine ?? 999) || a.titolo.localeCompare(b.titolo, 'it'));
   const voce = m => `${m.titolo}${m.autore ? ' — ' + m.autore : ''}`;
+  // divise per fase (Ignazio 22/09: «capire esattamente dove ci troviamo, ma magari saltare una fase perché il candidato è pronto»)
+  const gruppi = [];
+  for (const m of tracce) {
+    const nome = m.fase ? `Fase ${m.fase} · ${MB21Sharing.FASI[m.fase]}${m.per_chi === 'ospite' ? ' (candidato)' : ' (partner)'}` : `In più, senza fase (${m.per_chi === 'ospite' ? 'candidato' : 'partner'})`;
+    let g = gruppi.find(x => x.gruppo === nome);
+    if (!g) gruppi.push(g = { gruppo: nome, voci: [] });
+    g.voci.push(voce(m));
+  }
   const valori = await moduloSemplice('Condivisione a mano', [
-    { k: 'traccia', etichetta: 'Traccia', tipo: 'select', opzioni: ['Scegli la traccia', ...tracce.map(voce)], valore: 'Scegli la traccia', obbligatorio: true },
+    { k: 'traccia', etichetta: 'Traccia', tipo: 'select', opzioni: ['Scegli la traccia', ...gruppi], valore: 'Scegli la traccia', obbligatorio: true },
     { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true },
     { k: 'ascoltata', etichetta: 'L\'ha già ascoltata?', tipo: 'select', opzioni: ['No', 'Sì'], valore: 'No' },
     { k: 'note', etichetta: 'Note', tipo: 'textarea', valore: '', righe: 2 },
