@@ -29,6 +29,8 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
     { contatto_id: 'c1', data: '2026-09-18', vp: 12.5, contatti: { nome: 'Anna Villa' } },
     { contatto_id: 'c2', data: '2026-09-09', vp: 50, contatti: { nome: 'Gino Pace' } },
     { contatto_id: 'c3', data: '2026-08-09', vp: 50, contatti: { nome: 'Mese scorso' } },
+    { contatto_id: 'c4', data: '2026-09-20', consegna: '2027-03-01', vp: 200, contatti: { nome: 'Promo: conta a marzo' } },   // pagata oggi, i VP contano nel 2027
+    { contatto_id: 'c5', data: '2026-08-20', consegna: '2026-09-05', vp: 8, contatti: { nome: 'Consegna a settembre' } },
   ];
   const check = [
     { data: '2026-09-01', tracce: 1, pagine: 12, libro: 'Goals', open: false, counseling: false, titolo_traccia: 'Tempo e denaro' },
@@ -49,12 +51,13 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.equal(m.s1.righe[1].casa, true); assert.equal(m.s1.righe[1].candidati, 3); assert.equal(m.s1.righe[0].candidati, 1);
   assert.equal(m.s1.iscritti, 1); assert.equal(m.s1.no, 0);
   // 2 · VP consumo: i VP personali Amway meno i VP venduti ai clienti (187,5 − 92,5)
-  assert.equal(m.s2.vp, 95); assert.equal(m.s2.auto, true); assert.equal(m.s2.vpAmway, 187.5); assert.equal(m.s2.vpClienti, 92.5);
+  assert.equal(m.s2.vp, 87); assert.equal(m.s2.auto, true); assert.equal(m.s2.vpAmway, 187.5); assert.equal(m.s2.vpClienti, 100.5);   // 187,5 − 100,5
   assert.equal(C.modulo({ mese, obiettivi: { vpp: 1 }, dati: { vp_consumo: 40 } }).s2.vp, 40);
   assert.equal(C.modulo({ mese }).s2.vp, null);
   // 3 · clienti: uno per riga, VP sommati, i più alti prima
-  assert.deepEqual(m.s3.righe.map(r => [r.nome, r.vp]), [['Gino Pace', 50], ['Anna Villa', 42.5]]);
-  assert.equal(m.s3.quanti, 2); assert.equal(m.s3.vp, 92.5); assert.equal(m.s3.raggiunto, false);
+  assert.deepEqual(m.s3.righe.map(r => [r.nome, r.vp]), [['Gino Pace', 50], ['Anna Villa', 42.5], ['Consegna a settembre', 8]]);   // la promo che conta a marzo 2027 non c'è
+  assert.equal(m.s3.quanti, 3); assert.equal(m.s3.vp, 100.5); assert.equal(m.s3.raggiunto, false);
+  assert.deepEqual(C.modulo({ mese: '2027-03', vendite }).s3.righe.map(r => r.nome), ['Promo: conta a marzo']);
   // 4 · CD: 30 giorni; le tracce del Check e quelle del percorso si sommano, i titoli del percorso si leggono
   assert.equal(m.s4.giorni.length, 30);
   assert.equal(m.s4.giorni[0].quante, 1); assert.equal(m.s4.giorni[0].titolo, '1 traccia'); assert.equal(m.s4.giorni[0].fatto, true);

@@ -24,7 +24,9 @@ async function apriCoreMese(mese) {
   const io = visto();
   const [az, ve, ck, ob, cm, scheda] = await Promise.all([
     dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
-    dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, vp, contatti(nome)').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
+    // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
+    dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
+      .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
     dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
@@ -97,9 +99,9 @@ function moduloCoreHtml(m) {
 
   const s6 = sez(6, 'Frequentare tutti gli incontri di Network 21', `
     <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => `<b class="${w.open ? 'si' : ''}" title="${w.da} – ${w.a}">${i + 1}${w.open ? ' ' + ic('fatto', 12) : ''}</b>`).join('')}</span></div>
-    <div class="cm-riga"><span>Acquisto biglietto BBS</span><b class="cm-auto">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
-    <div class="cm-riga"><span>Acquisto biglietto WES</span><b class="cm-auto">${m.s6.wes ? 'SI' : 'NO'}</b></div>
-    <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»), i biglietti dalla tua scheda.</div>`, m.s6.open >= m.s6.settimane.length && m.s6.bbs && m.s6.wes);
+    <div class="cm-riga"><span>Acquisto biglietto BBS</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
+    <div class="cm-riga"><span>Acquisto biglietto WES</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
+    <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»); i biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.s6.open >= m.s6.settimane.length && m.s6.bbs && m.s6.wes);
 
   const s7 = sez(7, 'Lavorare di squadra', `
     <div class="cm-riga"><span>Sessione di COUNSELING in data</span>${m.s7.auto ? `<b class="cm-auto">${esc(m.s7.counseling)}</b>` : `<input class="cm-num larga" id="cm-counseling" value="${esc(m.s7.counseling)}" placeholder="gg/mm" maxlength="10">`}</div>
