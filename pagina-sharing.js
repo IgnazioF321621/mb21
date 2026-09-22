@@ -403,7 +403,7 @@ function mioPercorsoHtml() {
         <button class="sh-ok" data-mia-ascoltata="${esc(r.id)}">${ic('fatto', 16)} Ascoltata</button></div>`; }).join('')}
       ${daAscoltare.length ? '' : '<div class="sotto" style="margin:8px 0 4px">Niente da ascoltare: hai fatto tutto quello che ti è arrivato.</div>'}
       ${ascoltate ? `<div class="sotto" style="margin:8px 0 0">${ic('fatto', 14)} ${ascoltate === 1 ? '1 traccia ascoltata' : ascoltate + ' tracce ascoltate'} in tutto · contano nelle Tracce del tuo Check</div>` : ''}
-      ${prossimoLibro ? `<div class="mio-libro">${ic('libro')} <span><b>Prossimo libro:</b> ${esc(prossimoLibro.titolo)}${prossimoLibro.autore ? ' — ' + esc(prossimoLibro.autore) : ''}${prossimoLibro.solo_n21 ? '<br><small>Lo trovi solo da Network 21 o al prossimo evento</small>' : ''}</span></div>` : ''}
+      ${prossimoLibro ? `<button class="mio-libro" id="mio-libri">${ic('libro')} <span><b>Prossimo libro:</b> ${esc(prossimoLibro.titolo)}${prossimoLibro.autore ? ' — ' + esc(prossimoLibro.autore) : ''}${prossimoLibro.solo_n21 ? '<br><small>Lo trovi solo da Network 21 o al prossimo evento</small>' : ''}</span><span class="sh-riga-freccia">›</span></button>` : ''}
     </div>` : ''}
   </div>`;
 }
@@ -411,6 +411,8 @@ function mioPercorsoHtml() {
 function collegaMioPercorso() {
   const testa = document.getElementById('mio-percorso');
   if (testa) testa.onclick = () => { MIO.aperto = !MIO.aperto; disegnaOggi(); };
+  const libri = document.getElementById('mio-libri');
+  if (libri) libri.onclick = () => apriLibri('oggi');
   app.querySelectorAll('[data-mia-ascoltata]').forEach(b => b.onclick = async () => {
     b.disabled = true; b.classList.add('si');
     const r = MIO.righe.find(x => x.id === b.dataset.miaAscoltata);
