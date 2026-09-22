@@ -128,7 +128,7 @@ Legenda: (O) condivisibile con l'ospite · (U) condivisibile con l'utente · sen
 - **Sviluppate l'abitudine di ascoltare i CD** (pack 14 €, M. Sala; il sito non elenca le tracce): Ignazio 22/09: «traccia unica divisa in 2 parti» → conta come **una** traccia *(nuova)*
 - **Valore e significatività** (pack 21 €, A. Mazzari): Valore e significatività (#3) · Il valore del CEP (#2) · La vostra attività inizia al Weekend Seminar (#2)
 
-**Deciso da Ignazio il 22/09**: i pack **non condivisibili** (studio personale e avanzato) **non si aprono**: in biblioteca entrano come materiale intero, con titolo, autore e argomento (senza le singole tracce dentro).
+**Deciso da Ignazio il 22/09 («al momento ok»)**: i pack **non condivisibili** (studio personale e avanzato) **per ora non si aprono**: in biblioteca entrano come materiale intero, con titolo, autore e argomento. **Più avanti vanno aperti anche loro** (Ignazio: «possiamo prendere spunto per un'esigenza di una traccia specifica che però è dentro un pack, che poi consiglieremo»): la biblioteca deve quindi prevedere fin dall'inizio che un materiale intero possa ricevere dopo le sue tracce, da Admin, senza rifare niente.
 
 **Totale biblioteca del Media Sharing: 49 tracce** (16 ospite + 33 utente), ognuna con il pack di appartenenza. Le **9 nuove** non hanno una fase nel PDF: la fase la dà Ignazio quando si ordina il percorso. ⚠️ In Glide (`BSM.csv`) la colonna «Pack» è sballata (es. «Il principio del percorso» segnato Diamanti): per l'import si usa questo rilievo, non quella colonna.
 
