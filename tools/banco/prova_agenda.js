@@ -392,6 +392,41 @@ prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte
   assert.equal(A.testoCosa('  comprare   i biglietti  '), 'comprare i biglietti');
   assert.equal(A.testoCosa('   '), null);
   assert.equal(A.testoCosa('x'.repeat(300)).length, 200);
+  // le spunte del modello e le cose su altre scale non sono cose del giorno
+  const altre = [
+    { id: 'm', testo: 'Leggere', giorno: '2026-09-22', modello_id: 'v1', fatto_il: '2026-09-22T10:00:00Z' },
+    { id: 's', testo: 'Settimana', giorno: '2026-09-21', scala: 'settimana', fatto_il: null },
+    { id: 'z', testo: 'A mano', giorno: '2026-09-22', scala: 'giorno', fatto_il: null },
+  ];
+  assert.deepEqual(A.coseDelGiorno(altre, '2026-09-22', '2026-09-22').map(c => c.id), ['z']);
+});
+
+prova('Modello del giorno (cantiere 41 lavoro 2): voci per giorno della settimana, spunta del giorno, testo dei giorni', () => {
+  assert.equal(A.giornoSettimana('2026-09-21'), 1);   // lunedì
+  assert.equal(A.giornoSettimana('2026-09-27'), 7);   // domenica
+  const modello = [
+    { id: 'v1', testo: 'Leggere 15 minuti', giorni: [], ordine: 1, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
+    { id: 'v2', testo: 'Meditazione', giorni: [1, 2, 3, 4, 5], ordine: 0, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
+    { id: 'v3', testo: 'Spenta', giorni: [], ordine: 0, attivo: false, creato_il: '2026-09-22T08:00:00Z' },
+    { id: 'v4', testo: 'Solo domenica', giorni: [7], ordine: 2, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
+  ];
+  const cose = [
+    { id: 'c1', modello_id: 'v1', giorno: '2026-09-22', fatto_il: '2026-09-22T21:00:00Z' },
+    { id: 'c2', modello_id: 'v1', giorno: '2026-09-21', fatto_il: '2026-09-21T21:00:00Z' },   // ieri: non conta oggi
+  ];
+  const mar = A.vociDelGiorno(modello, cose, '2026-09-22');
+  assert.deepEqual(mar.map(v => v.id), ['v2', 'v1']);            // per ordine; la spenta e la domenicale non ci sono
+  assert.equal(mar[1].fatto_il, '2026-09-22T21:00:00Z');
+  assert.equal(mar[1].spunta_id, 'c1');
+  assert.equal(mar[0].fatto_il, null);
+  assert.deepEqual(A.vociDelGiorno(modello, cose, '2026-09-27').map(v => v.id), ['v1', 'v4']);   // domenica: niente Lun-Ven
+  assert.deepEqual(A.vociDelGiorno([], cose, '2026-09-22'), []);
+  assert.equal(A.testoGiorni([]), 'Ogni giorno');
+  assert.equal(A.testoGiorni([1, 2, 3, 4, 5, 6, 7]), 'Ogni giorno');
+  assert.equal(A.testoGiorni([5, 1, 2, 3, 4]), 'Lun-Ven');
+  assert.equal(A.testoGiorni([6, 7]), 'Sab e Dom');
+  assert.equal(A.testoGiorni([1, 3, 5]), 'Lun, Mer, Ven');
+  assert.equal(A.CORE_N21.length, 5);
 });
 
 console.log(`\n${ok} prove superate`);

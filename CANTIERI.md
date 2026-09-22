@@ -2,7 +2,7 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 22 settembre 2026 (sera: **cantiere 41 lavoro 1 in locale** — cose da fare del giorno, tabella applicata; chiusi i cantieri 40 e 39; aperti restano 41, 36, 35 e 21 «Da fare più avanti»).*
+*Aggiornato: 22 settembre 2026 (sera: **cantiere 41, lavori 1 e 2 in locale** — cose da fare e modello del giorno, rilievo di NotePlan fatto; chiusi i cantieri 40 e 39; aperti restano 41, 36, 35 e 21 «Da fare più avanti»).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
@@ -58,12 +58,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Cosa ne segue per MB21** (da decidere con Ignazio): il suo foglio non è una lista piatta ma **sezioni** (Routine · Time Blocking · Tasks · Business), e le prime due si ripetono **tutti i giorni** → serve un **modello del giorno** (cose che compaiono da sole ogni giorno; «Daily Business Check» è già il Check di MB21). La Cronologia è la nostra griglia a orario; «7 giorni» somiglia all'Elenco esteso alla settimana. La colonna destra che si chiude = mostra/nascondi.
 
-**Lavori proposti, dal più semplice** (ognuno pubblicabile da solo):
-1. **Cose da fare del giorno** — tabella `cose_da_fare` (mia, con giorno, testo, ordine, fatto il); in Agenda, sotto i richiami, l'elenco del giorno con la spunta e il «+». **Il riporto a domani è una regola di lettura, non uno spostamento**: quello che non è fatto e ha un giorno passato si vede oggi, finché non lo spunti (niente da riscrivere, niente lavoro notturno)
-2. **Appunti del giorno** — tabella `appunti_giorno` (mia, un testo per giorno): un riquadro dove si scrive liberamente, si salva da solo
-3. **Dare un'ora a una cosa da fare** — «Metti in agenda» sulla cosa da fare: scegli ora e durata, e il blocco compare nella griglia (colore suo, come un impegno; stessa `disposizioneGiorno`). Trascinarla con il dito viene dopo, se serve
-4. **Vista modulabile** — (a) mostra/nascondi orario · cose da fare · appunti, ricordato sul dispositivo come la vista; (b) affiancati su schermo largo; (c) ore visibili: «8-20» o «tutto il giorno», griglia stretta o larga; (d) ordinare le cose da fare trascinandole
-5. **Più avanti**: accesso del leader del gruppo (regole di lettura in Supabase)
+**Lavori, dal più semplice** (ognuno pubblicabile da solo; ordine deciso il 22/09 dopo il rilievo):
+1. **Cose da fare del giorno** — ✅ fatto in locale (versione 16:32, tabella applicata): card «Da fare» sopra la giornata, spunta, «+», foglio con Sposta a domani ed Elimina. Il riporto a domani è una regola di lettura: il non fatto si vede oggi con «da GG/MM»
+2. **Il modello del giorno** — ✅ fatto in locale (versione 17:00, tabella da applicare): «Le mie cose di ogni giorno», con le abitudini **Core N21** proposte (Leggere 15 minuti · Ascoltare una traccia · I contatti del giorno · Il Check della sera · Usare e mostrare i prodotti), interruttore per ognuna, giorni della settimana, voci proprie; nella card i gruppi **«Ogni giorno»** e **«Oggi»**. Una voce non spuntata non si riporta: domani ha la sua. La tabella `cose_da_fare` ha già `scala` (giorno · settimana · mese · periodo · anno) per la struttura di riferimento
+3. **Dare un'ora a una cosa da fare** — «Metti in agenda» sulla cosa (e sulla voce del modello: es. Lettura 21:30 per 15 min, tutti i giorni): il blocco compare nella griglia (colore suo, stessa `disposizioneGiorno`). Trascinarla con il dito viene dopo, se serve
+4. **Appunti del giorno** — tabella `appunti_giorno` (mia, un testo per giorno): un riquadro dove si scrive liberamente, si salva da solo
+5. **Vista modulabile** — (a) mostra/nascondi orario · cose da fare · appunti, ricordato sul dispositivo come la vista; (b) affiancati su schermo largo; (c) ore visibili: «8-20» o «tutto il giorno», griglia stretta o larga; (d) ordinare le cose da fare trascinandole
+6. **Le altre scale** — il foglio della settimana, del mese, del periodo WES e dell'anno (cose da fare e appunti su quella scala), e dal giorno la settimana ripiegata in cima, come NotePlan
+7. **Più avanti**: accesso del leader del gruppo (regole di lettura in Supabase)
 
 ## 36. I NUMERI STORICI: QUELLO CHE C'ERA IN GLIDE C'È ANCHE QUI? (aperto il 20/09)
 *Domanda di Ignazio il 20/09, guardando il grafico del Check: «come mai i confronti con l'anno 2025-26… su Glide c'erano anche questi dati; prova a guardare nei CSV esportati da Glide a inizio progetto». Lui stesso: «oppure lo facciamo in un cantiere successivo, da non dimenticare».*
