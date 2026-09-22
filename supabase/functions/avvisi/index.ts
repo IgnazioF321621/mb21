@@ -12,6 +12,11 @@
 //      di Riordino (le crea l'app: ci pensa l'avviso del mattino) né per la coda, che non ha orario.
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
 //      ancora senza esito, una volta sola (azioni.senza_esito_avvisato_il); non più vecchi di un giorno
+//    { tipo: 'tracce' } → ogni 15 minuti, solo tra le 9 e le 21 di Roma (cantiere 40, 22/09): la traccia condivisa dura 72 ore.
+//      A 24 ore dalla condivisione non ancora «ascoltata»: «🎧 Mario ha ascoltato la traccia?»; a 48 ore, se ancora niente:
+//      «⏳ La traccia di Mario scade domani: ricordaglielo». Una volta sola ciascuno (condivisioni.avviso_24_il / avviso_48_il).
+//      Il momento della condivisione è `creato_il` se la riga è stata scritta il giorno stesso, altrimenti mezzogiorno di `condivisa_il`
+//      (le condivisioni scritte a mano per giorni passati). Con { prova: true } dice cosa manderebbe senza mandare.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -250,6 +255,42 @@ Deno.serve(async (req) => {
       esiti.push({ telefonate: giro.length, ...esito });
     }
     return risposta({ appuntamenti: esiti.length, esiti });
+  }
+
+  // Le tracce condivise non ancora ascoltate (cantiere 40 lavoro 5): a 24 ore «l'ha ascoltata?», a 48 «ricordaglielo, scade domani»
+  if (tipo === 'tracce') {
+    const adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now(), ORA = 3600000;
+    const oraAdesso = corpo.prova && corpo.adesso ? Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).format(new Date(adesso)).slice(0, 2)) : oraRoma();
+    if (oraAdesso < 9 || oraAdesso >= 21) return risposta({ tracce: 0, nota: 'di notte si tace: gli avvisi partono dalle 9' });
+    const { data, error } = await db.from('condivisioni').select('id, user_id, contatto_id, condivisa_il, creato_il, avviso_24_il, avviso_48_il, contatti(nome), materiali(titolo)')
+      .eq('ascoltata', false).is('avviso_48_il', null).eq('da_glide', false)   // lo storico di Glide non fa partire avvisi
+      .gte('condivisa_il', giornoDi(new Date(adesso - 5 * 24 * ORA).toISOString())).gte('creato_il', new Date(adesso - 8 * 24 * ORA).toISOString());
+    if (error) return risposta({ errore: error.message }, 500);
+    const esiti: Record<string, unknown>[] = [];
+    for (const k of data ?? []) {
+      // il momento della condivisione: la scrittura, se è dello stesso giorno; altrimenti mezzogiorno del giorno scelto (scritta a mano per un giorno passato)
+      const momento = giornoDi(k.creato_il) === k.condivisa_il ? Date.parse(k.creato_il) : Date.parse(giornoRoma(k.condivisa_il).inizio) + 12 * ORA;
+      const ore = (adesso - momento) / ORA;
+      const nome = ((k.contatti as unknown as { nome?: string } | null)?.nome || 'la persona').split(' ')[0];
+      const traccia = (k.materiali as unknown as { titolo?: string } | null)?.titolo || 'la traccia';
+      const url = `./?apri=lista&contatto=${k.contatto_id}&sezione=sharing`;
+      let avviso: Avviso | null = null, campo: 'avviso_24_il' | 'avviso_48_il' | null = null;
+      if (ore >= 48 && !k.avviso_48_il) {
+        avviso = { titolo: `⏳ La traccia di ${nome} scade domani`, testo: `${traccia} · condivisa 2 giorni fa e non ancora ascoltata: ricordaglielo, poi segna qui.`, url, tag: `traccia-48-${k.id}` };
+        campo = 'avviso_48_il';
+      } else if (ore >= 24 && ore < 48 && !k.avviso_24_il) {
+        avviso = { titolo: `🎧 ${nome} ha ascoltato la traccia?`, testo: `${traccia} · condivisa ieri. Se sì segnala, se no sentilo.`, url, tag: `traccia-24-${k.id}` };
+        campo = 'avviso_24_il';
+      }
+      if (!avviso || !campo) continue;
+      if (corpo.prova) { esiti.push({ condivisione: k.id, ore: Math.round(ore), ...avviso }); continue; }
+      const esito = await spedisciA([k.user_id], avviso);
+      const scritto: Record<string, string> = { [campo]: new Date().toISOString() };
+      if (campo === 'avviso_48_il' && !k.avviso_24_il) scritto.avviso_24_il = scritto.avviso_48_il;   // il 24 non mandato non si recupera più
+      await db.from('condivisioni').update(scritto).eq('id', k.id);
+      esiti.push({ condivisione: k.id, ore: Math.round(ore), campo, ...esito });
+    }
+    return risposta({ tracce: esiti.length, esiti });
   }
 
   return risposta({ errore: `tipo sconosciuto: ${tipo}` }, 400);

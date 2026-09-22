@@ -10,7 +10,7 @@ function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
 // fasi 2-4 per l'utente, due «in più» senza fase, una fuori catalogo, un pack (non è una traccia: non entra nel percorso)
 const t = (id, titolo, per_chi, fase, ordine, extra = {}) => ({ id, tipo: 'traccia', titolo, per_chi, fase, ordine, straniero: false, solo_donne: false, fuori_catalogo: false, ...extra });
 const M = [
-  t('td', 'Tempo e denaro', 'ospite', 1, 0), t('ii', "L'impresa ideale", 'ospite', 1, 1), t('mr', 'Siamo nel mondo reale', 'ospite', 1, 2),
+  t('td', 'Tempo e denaro', 'ospite', 1, 0), t('ii', "L'impresa ideale", 'ospite', 1, 1, { per_lavoro: 'autonomo' }), t('mr', 'Siamo nel mondo reale', 'ospite', 1, 2, { per_lavoro: 'dipendente' }),
   t('ri', 'Risposte', 'ospite', 1, 7, { straniero: true }), t('pi', 'Perché investire', 'ospite', 1, 8), t('eq', 'Un equilibrio non comune', 'ospite', 1, 10, { solo_donne: true }),
   t('ve', 'Vecchia', 'ospite', null, null, { fuori_catalogo: true }),
   t('lr', 'La risposta', 'utente', 2, 1), t('rs', 'Il ritmo del Sistema', 'utente', 2, 3),
@@ -108,6 +108,39 @@ prova('nome corto e riassunto accorciato', () => {
   const lungo = 'parola '.repeat(50).trim();
   const a = S.accorcia(lungo, 40);
   assert.ok(a.endsWith('…') && a.length <= 41 && !a.includes('  '));
+});
+
+prova('dipendente o autonomo: la traccia per il suo lavoro passa per prima; senza lavoro si chiede', () => {
+  const dopoTd = [k('td', '2026-09-20')];
+  assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'dipendente' }).traccia.id, 'mr');   // Siamo nel mondo reale prima dell'Impresa ideale
+  assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'autonomo' }).traccia.id, 'ii');
+  const r = S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: null });
+  assert.equal(r.traccia.id, 'ii'); assert.equal(r.serveLavoro, true);
+  // «Tempo e denaro» (ordine 0) resta prima di tutto se non è stata condivisa, anche con il lavoro noto
+  assert.equal(S.prossima(M, [], { categoria: 'Prospect', sesso: 'M', lavoro: 'dipendente' }).traccia.id, 'td');
+  // ma se è messa tra le saltate (dopo il PM), viene la traccia del lavoro
+  assert.equal(S.prossima(M, [], { categoria: 'Prospect', sesso: 'M', lavoro: 'dipendente' }, ['td']).traccia.id, 'mr');
+  assert.equal(S.prossima(M, [], { categoria: 'Partner', sesso: 'M', lavoro: null }).serveLavoro, false);
+});
+
+prova('dopo quale esito si propone la traccia', () => {
+  assert.equal(S.proponeTraccia('Piano Marketing', 'Dare Seguito'), true);
+  assert.equal(S.proponeTraccia('Follow Up', 'Ulteriore Follow Up'), true);
+  assert.equal(S.proponeTraccia('Piano Marketing', 'Iscrizione'), true);
+  assert.equal(S.proponeTraccia('Follow Up', 'Iscrizione'), true);
+  assert.equal(S.proponeTraccia('Piano Marketing', 'No BuonFine'), false);
+  assert.equal(S.proponeTraccia('Piano Marketing', 'Prodotti'), false);
+  assert.equal(S.proponeTraccia('Contatto', 'Dare Seguito'), false);
+});
+
+prova('tracce da controllare: non ascoltate, da 1 a 7 giorni, dalla più vecchia; lo stato a 1, 2, 3+ giorni', () => {
+  const oggi = '2026-09-22';
+  const k = (id, g, ascoltata = false) => ({ id, condivisa_il: g, ascoltata });
+  const r = S.daControllare([k('a', '2026-09-22'), k('b', '2026-09-21'), k('c', '2026-09-20'), k('d', '2026-09-19', true), k('e', '2026-09-15'), k('f', '2026-09-10')], oggi);
+  assert.deepEqual(r.map(x => x.id), ['e', 'c', 'b']);   // oggi no (0 giorni), ascoltata no, 12 giorni no
+  assert.deepEqual(r.map(x => x.giorni), [7, 2, 1]);
+  assert.equal(S.giorniDa('2026-09-14', oggi), 8);
+  assert.equal(S.statoControllo(1), 'chiedi'); assert.equal(S.statoControllo(2), 'ricordaglielo'); assert.equal(S.statoControllo(5), 'scaduta');
 });
 
 console.log(`\n${ok} prove superate`);
