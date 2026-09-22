@@ -1255,10 +1255,10 @@ function apriCheck() {
     if (!dalle) { auto('contatti', ''); auto('pm', ''); return; }
     const CARD = [
       // testi di Ignazio (22/09)
-      { k: 'contatti', pieno: 'Arrivano in automatico dall\'esito della coda in Dashboard, da MBplan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Tocca una riga per aprire il contatto.',
-        vuoto: 'Nessun contatto registrato in questo giorno. Arrivano in automatico dall\'esito della coda in Dashboard, da MBplan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Automatico dal 14/09.' },
-      { k: 'pm', pieno: 'Arrivano dall\'esito dei PM in MBplan (Agenda). «No Show» e «Rimandato» non contano. Tocca una riga per aprire il contatto. Riempie la sezione 1 del foglio Core.',
-        vuoto: 'Nessun Piano Marketing effettuato in questo giorno. Arrivano dall\'esito dei PM in MBplan (Agenda). «No Show» e «Rimandato» non contano. Riempie la sezione 1 del foglio Core.' },
+      { k: 'contatti', pieno: 'Arrivano in automatico dall\'esito della coda in Dashboard, da MB Plan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Tocca una riga per aprire il contatto.',
+        vuoto: 'Nessun contatto registrato in questo giorno. Arrivano in automatico dall\'esito della coda in Dashboard, da MB Plan (Agenda), dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Automatico dal 14/09.' },
+      { k: 'pm', pieno: 'Arrivano dall\'esito dei PM in MB Plan (Agenda). «No Show» e «Rimandato» non contano. Tocca una riga per aprire il contatto. Riempie la sezione 1 del foglio Core.',
+        vuoto: 'Nessun Piano Marketing effettuato in questo giorno. Arrivano dall\'esito dei PM in MB Plan (Agenda). «No Show» e «Rimandato» non contano. Riempie la sezione 1 del foglio Core.' },
     ];
     const dentro = (numero, aiuto, righe) => `<div class="ck-valore">${numero}</div><div class="vn-aiuto">${aiuto}</div>${righe || ''}`;
     for (const d of CARD) auto(d.k, dentro('…', 'Carico le azioni del giorno…'));

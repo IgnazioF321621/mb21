@@ -8,7 +8,7 @@ const CM = { mese: null, dati: {}, riga: null, salvo: null };
 async function apriCoreMese(mese) {
   CM.mese = mese || CM.mese || MB21Coda.oggiRoma().slice(0, 7);
   const titolo = () => `${MB21Rubrica.MESI[Number(CM.mese.slice(5, 7)) - 1]} ${CM.mese.slice(0, 4)}`;
-  const testa = () => `<button class="indietro" id="cm-indietro">‹ MBplan</button>
+  const testa = () => `<button class="indietro" id="cm-indietro">‹ MB Plan</button>
     <div class="cm-testa"><button class="freccia" id="cm-prima" aria-label="Mese prima">‹</button><h1>${ic('crescita')} Modulo Core</h1><button class="freccia" id="cm-dopo" aria-label="Mese dopo">›</button></div>
     <div class="cm-mese">${esc(titolo())}${aNome() ? esc(aNome()) : ''}</div>`;
   app.innerHTML = `${testa()}<div class="vuoto">Compilo il modulo…</div>`;
