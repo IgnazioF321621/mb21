@@ -12,7 +12,7 @@ async function apriAdmin() {
   app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
   try {
     const [wes, bbs, fc, ut, rich, sq, disp] = await Promise.all([
-      dbq('date dei WES', supa.from('wes').select('id, data').order('data')),
+      dbq('date dei WES', supa.from('wes').select('id, data, giorno').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
       dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore').order('dal')),   // cantiere 26: l'FC di Amway nel tempo
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
@@ -121,13 +121,15 @@ function disegnaAdmin() {
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>WES</h1>
       <div class="ad-elenco wes">${[...AD.wes].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
-        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}</span>
+        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}
+          <label class="ad-wes-giorno">Primo giorno <input type="date" data-wes-giorno="${esc(w.id)}" value="${esc(w.giorno || '')}" min="${esc(w.data)}" max="${esc(MB21Agenda.spostaGiorno(MB21Agenda.meseAccanto(w.data, 1), -1))}"></label></span>
         <button class="via" data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}</div>
       <div class="riquadro ad-aggiungi">
         <h4 class="mc-t">Aggiungi un WES</h4>
         <input type="month" id="rp-data-wes" aria-label="Mese del WES">
+        <label class="ad-wes-giorno">Primo giorno del WES (facoltativo) <input type="date" id="rp-giorno-wes"></label>
         <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
-        <div class="sotto">Solo mese e anno: conta l'ultimo WES caricato.</div></div>`;
+        <div class="sotto">Mese e anno contano per segni vitali, biglietti e Report. Il primo giorno serve solo a MB Plan per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
   } else if (AD.sezione === 'fc') {
     // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione = (VP × FC) × 0,20, con l'FC valido il giorno in cui la vendita conta.
     // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
@@ -387,7 +389,9 @@ function collegaAdmin() {
     const mese = document.getElementById('rp-data-wes').value;   // «2026-10»
     if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del WES');
     const data = mese + '-01';
-    const { error } = await dbq('nuovo WES', supa.from('wes').insert({ data }));
+    const giorno = document.getElementById('rp-giorno-wes').value || null;
+    if (giorno && giorno.slice(0, 7) !== mese) return mostraToast('Il primo giorno deve stare nel mese del WES');
+    const { error } = await dbq('nuovo WES', supa.from('wes').insert({ data, giorno }));
     if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
     mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
     RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
@@ -438,6 +442,16 @@ function collegaAdmin() {
     if (error) return mostraToast('Non eliminato: riprova.');
     mostraToast('BBS eliminato');
     apriAdmin();
+  });
+  // il primo giorno del WES (cantiere 41): si scrive o si cambia sul posto, si salva da solo
+  app.querySelectorAll('[data-wes-giorno]').forEach(i => i.onchange = async () => {
+    const w = AD.wes.find(x => x.id === i.dataset.wesGiorno);
+    const giorno = i.value || null;
+    if (giorno && giorno.slice(0, 7) !== w.data.slice(0, 7)) { i.value = w.giorno || ''; return mostraToast('Il primo giorno deve stare nel mese del WES'); }
+    const { error } = await dbq('giorno del WES', supa.from('wes').update({ giorno }).eq('id', w.id));
+    if (error) { i.value = w.giorno || ''; return mostraToast('Non salvato: riprova.'); }
+    w.giorno = giorno;
+    mostraToast(giorno ? 'Primo giorno del WES salvato' : 'Primo giorno tolto');
   });
   app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
     const w = AD.wes.find(x => x.id === b.dataset.togli);

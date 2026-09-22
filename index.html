@@ -871,6 +871,27 @@
   .ag-lato button.mb-ris span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .ag-lato button.mb-ris b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-lato button.mb-ris small { font-size: 12px; color: var(--testo-tenue); }
+  /* il foglio del PERIODO WES */
+  .pw-barra { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 14px; margin: 10px 0 12px; }
+  .pw-barra-testa { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; margin-bottom: 8px; }
+  .pw-barra-testa b { color: #2c4a7c; }
+  .pw-traccia { height: 8px; border-radius: 4px; background: var(--superficie-2); overflow: hidden; }
+  .pw-traccia i { display: block; height: 100%; background: #2c4a7c; border-radius: 4px; }
+  .pw-barra small { display: block; margin-top: 6px; font-size: 12px; color: var(--testo-tenue); }
+  .pw-numeri { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .pw-num { background: var(--superficie); border: 0; border-radius: 12px; box-shadow: var(--ombra-card); padding: 9px 12px; display: flex; flex-direction: column; gap: 2px; text-align: left; font-family: inherit; color: var(--testo); }
+  .pw-num small { font-size: 12px; color: var(--testo-soft); }
+  .pw-num b { font-size: 21px; font-weight: 800; }
+  .pw-voci { align-items: center; justify-content: center; color: var(--testo-soft); border: 1.5px dashed var(--bordo); box-shadow: none; background: none; }
+  .pw-voci svg.ic { width: 20px; height: 20px; }
+  .pw-nota { font-size: 12px; color: var(--testo-tenue); margin: 6px 2px 14px; }
+  .pw-mesi { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .pw-mese { border: 0; background: var(--superficie); border-radius: 12px; box-shadow: var(--ombra-card); padding: 9px 12px; display: flex; flex-direction: column; gap: 1px; text-align: left; font-family: inherit; font-size: 12.5px; color: var(--testo-soft); }
+  .pw-mese b { font-size: 15px; color: var(--testo); }
+  .pw-mese.oggi { box-shadow: inset 0 0 0 2px var(--accento); }
+  .mm-testa .freccia:disabled { opacity: .35; }
+  .ad-wes-giorno { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--testo-soft); margin-top: 6px; }
+  .ad-wes-giorno input { font-family: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
   .velo.lato { align-items: stretch; justify-content: flex-start; }
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -1355,35 +1376,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609222320"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609222320"></script>
-<script src="lista.js?v=202609222320"></script>
-<script src="rubrica.js?v=202609222320"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609222320"></script>
-<script src="agenda.js?v=202609222320"></script>
-<script src="report.js?v=202609222320"></script>
-<script src="check.js?v=202609222320"></script>
-<script src="mappa.js?v=202609222320"></script>
-<script src="pagina-dashboard.js?v=202609222320"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609222320"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609222320"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609222320"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609222320"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609222320"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609222320"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609222320"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609222320"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609222320"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609222320"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609222320"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609222320"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609222320"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609222320"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609222320"></script>
-<script src="benvenuto.js?v=202609222320"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609222320"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609222341"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609222341"></script>
+<script src="lista.js?v=202609222341"></script>
+<script src="rubrica.js?v=202609222341"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609222341"></script>
+<script src="agenda.js?v=202609222341"></script>
+<script src="report.js?v=202609222341"></script>
+<script src="check.js?v=202609222341"></script>
+<script src="mappa.js?v=202609222341"></script>
+<script src="pagina-dashboard.js?v=202609222341"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609222341"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609222341"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609222341"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609222341"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609222341"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609222341"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609222341"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609222341"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609222341"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609222341"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609222341"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609222341"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609222341"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609222341"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609222341"></script>
+<script src="benvenuto.js?v=202609222341"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609222341"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 23:20';
+const APP_VERSION = '2026.09.22 · 23:41';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1818,7 +1839,7 @@ async function caricaAgenda() {
   // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
   // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
   const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*').eq('user_id', visto().id)
-    .or(`and(giorno.gte.${AG.settimana[0]},giorno.lte.${AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01),scala.eq.mese,scala.eq.settimana`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
+    .or(`and(giorno.gte.${AG.settimana[0]},giorno.lte.${AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01),scala.eq.mese,scala.eq.settimana,scala.eq.periodo`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
   const modello = vediTutti() ? null : dbq('modello del giorno', supa.from('modello_giorno').select('*').eq('user_id', visto().id));
   const modelli = vediTutti() ? null : dbq('modelli personali', supa.from('modelli').select('*').eq('user_id', visto().id).order('ordine'));
   // (le misure del Core non si leggono più qui: dal 22/09 il Core vive nel Check e nel Modulo Core del mese)
@@ -1830,6 +1851,9 @@ async function caricaAgenda() {
   AG.passati = pas.data;
   AG.cose = cd ? cd.data : [];
   AG.modello = md ? md.data : [];
+  const w = await dbq('WES', supa.from('wes').select('data, giorno').order('data'));
+  AG.wes = w.error ? [] : w.data;
+  if (AG.vista === 'periodo') await caricaPeriodo();
   AG.modelli = mm ? mm.data : [];
   AG.misure = {};
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
@@ -1840,7 +1864,7 @@ async function caricaAgenda() {
 // La scelta si ricorda sul telefono: chi lavora a orario riapre a orario.
 // Dal cantiere 41 (pagina formato NotePlan) le viste sono due: «giorno» (il foglio del giorno, con la griglia a orario
 // nel cassetto «Cronologia») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
-const VISTE = ['giorno', 'settimana', 'mese'];
+const VISTE = ['giorno', 'settimana', 'mese', 'periodo'];
 const CHIAVE_VISTA = 'mb21-agenda-vista';
 const SCALE_MENU = [['giorno', 'Giorno', 'orario'], ['settimana', 'Settimana', 'agenda'], ['mese', 'Mese', 'agenda'], ['periodo', 'Periodo WES', 'biglietto'], ['anno', 'Anno', 'agenda']];
 const ALT_ORA = 58;        // quanto è alta un'ora nella griglia del giorno (px)
@@ -1939,7 +1963,7 @@ function collegaCose(oggi) {
       if (!testo) return;
       const gruppo = form.dataset.gruppo || null, scala = form.dataset.scala || 'giorno';
       const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
-      const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: scala === 'giorno' ? AG.giorno : A.inizioScala(scala, AG.giorno), scala, ordine, gruppo_id: gruppo }).select().single());
+      const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: inizioScalaMB(scala, AG.giorno), scala, ordine, gruppo_id: gruppo }).select().single());
       if (error) return;
       AG.cose.push(data);
       disegnaAgenda();
@@ -2147,7 +2171,7 @@ function foglioVoceModello(v, salva, elimina) {
 // Spuntare = fatta oggi (o nel giorno che stai guardando): una cosa riportata da ieri, spuntata, resta nel giorno in cui l'hai fatta.
 async function spuntaCosa(c) {
   const prima = { fatto_il: c.fatto_il, giorno: c.giorno };
-  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: c.scala === 'mese' || c.scala === 'settimana' ? MB21Agenda.inizioScala(c.scala, AG.giorno) : AG.giorno };
+  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: inizioScalaMB(c.scala || 'giorno', AG.giorno) };
   const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
   if (error) return;
   Object.assign(c, dopo);
@@ -2169,7 +2193,7 @@ function foglioCosa(c, oggi) {
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
     <p class="fc-quando">${c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     <button class="primario" id="fc-salva">Salva</button>
-    <div class="fc-comandi">${c.fatto_il ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : 'Sposta a domani'}</button>`}
+    <div class="fc-comandi">${c.fatto_il ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
     <button class="link" id="fc-no">Annulla</button></div>`;
   document.body.appendChild(velo);
@@ -2189,7 +2213,10 @@ function foglioCosa(c, oggi) {
     cambia({ testo });
   };
   const domani = velo.querySelector('#fc-domani');
-  if (domani) domani.onclick = () => cambia({ giorno: c.scala === 'mese' ? A.meseAccanto(c.riportata ? oggi.slice(0, 8) + '01' : c.giorno, 1)
+  const pw = c.scala === 'periodo' ? A.periodoWesDi(c.riportata ? oggi : c.giorno, AG.wes) : null;
+  if (domani && c.scala === 'periodo' && !(pw && pw.poi)) domani.remove();   // non c'è ancora il WES dopo: niente «periodo dopo»
+  else if (domani && c.scala === 'periodo') domani.onclick = () => cambia({ giorno: pw.poi });
+  else if (domani) domani.onclick = () => cambia({ giorno: c.scala === 'mese' ? A.meseAccanto(c.riportata ? oggi.slice(0, 8) + '01' : c.giorno, 1)
     : c.scala === 'settimana' ? A.spostaGiorno(c.riportata ? A.inizioScala('settimana', oggi) : c.giorno, 7) : A.spostaGiorno(c.riportata ? oggi : c.giorno, 1) });
   velo.querySelector('#fc-elimina').onclick = async () => {
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').delete().eq('id', c.id));
@@ -2207,6 +2234,7 @@ function disegnaAgenda() {
   const punti = A.puntiGiorni(AG.azioni, AG.settimana);
   if (AG.vista === 'mese') return disegnaMese();
   if (AG.vista === 'settimana') return disegnaSettimana();
+  if (AG.vista === 'periodo') return disegnaPeriodo();
   let html = `
     <div class="ag-testa np">
       <span class="ag-menu-posto"></span>
@@ -2303,6 +2331,131 @@ function disegnaMese() {
   if (mp) mp.onclick = () => vaiMese(-1);
   if (md) md.onclick = () => vaiMese(1);
   app.querySelectorAll('.mm-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
+}
+
+// Il primo giorno della scala: giorno, lunedì, primo del mese, o il mese del WES che apre il periodo
+function inizioScalaMB(scala, giorno) {
+  if (scala === 'giorno') return giorno;
+  if (scala === 'periodo') { const p = MB21Agenda.periodoWesDi(giorno, AG.wes); return p ? p.da : MB21Agenda.inizioScala('mese', giorno); }
+  return MB21Agenda.inizioScala(scala, giorno);
+}
+
+// ── Il foglio del PERIODO WES (cantiere 41; Ignazio 22/09): dal WES al WES successivo — la barra del tempo con i giorni
+// che mancano al WES, i numeri del periodo (voci a scelta, ricordate sul dispositivo), i mesi del periodo, le cose da fare.
+const VOCI_PERIODO = [
+  ['contatti', 'Contatti'], ['pm', 'Piani Marketing'], ['followup', 'Follow Up'], ['sponsor_personali', 'Sponsor personali'],
+  ['sponsor_gruppo', 'Nuovi iscritti'], ['biglietti_wes', 'Biglietti WES'], ['biglietti_bbs', 'Biglietti BBS'],
+  ['clienti', 'Clienti serviti'], ['vp_clienti', 'VP Clienti'], ['tracce', 'Tracce'], ['pagine', 'Pagine'],
+];
+const CHIAVE_VOCI_PERIODO = 'mb21-periodo-voci';
+function vociPeriodo() {
+  try { const v = JSON.parse(localStorage.getItem(CHIAVE_VOCI_PERIODO) || 'null'); if (Array.isArray(v) && v.length) return v.filter(k => VOCI_PERIODO.some(x => x[0] === k)); } catch (e) {}
+  return ['contatti', 'pm', 'sponsor_gruppo', 'biglietti_wes'];
+}
+async function caricaPeriodo() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const p = A.periodoWesDi(AG.giorno, AG.wes);
+  AG.pd = { p, numeri: {}, mesi: {} };
+  if (!p) return;
+  const fine = p.a && p.a <= oggi ? p.a : A.spostaGiorno(oggi, 1);   // si conta fino a oggi compreso
+  const ids = idVisti();
+  const [ck, ve, fu, bi] = await Promise.all([
+    dbq('periodo: check', supa.from('check_giorni_conti').select('data, contatti, pm, sponsor_personali, sponsor_gruppo, vp_clienti, tracce, pagine').in('user_id', ids).gte('data', p.da).lt('data', fine)),
+    dbq('periodo: clienti', supa.from('vendite_conti').select('contatto_id, conta_il').in('user_id', ids).gte('conta_il', p.da).lt('conta_il', fine)),
+    dbq('periodo: follow up', supa.from('azioni').select('id', { count: 'exact', head: true }).in('user_id', ids).eq('tipo_azione', 'Follow Up').eq('completata', true).gte('inizio', A.isoDaRoma(p.da, '00:00')).lt('inizio', A.isoDaRoma(fine, '00:00'))),
+    dbq('periodo: biglietti', supa.from('biglietti').select('tipo, evento, contatto, compagno, ospiti, contatti!inner(user_id)').in('contatti.user_id', ids).gte('evento', p.da).lte('evento', p.a || A.meseAccanto(p.da, 24))),
+  ]);
+  const n = AG.pd.numeri, somma = (k, righe) => (righe || []).reduce((t, r) => t + (Number(r[k]) || 0), 0);
+  for (const k of ['contatti', 'pm', 'sponsor_personali', 'sponsor_gruppo', 'tracce', 'pagine']) n[k] = somma(k, ck.data);
+  n.vp_clienti = Math.round(somma('vp_clienti', ck.data) * 100) / 100;
+  n.clienti = new Set((ve.data || []).map(r => r.contatto_id)).size;
+  n.followup = fu.count || 0;
+  const persone = b => (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + (Number(b.ospiti) || 0);
+  n.biglietti_wes = (bi.data || []).filter(b => b.tipo === 'WES' && p.a && b.evento === p.a).reduce((t, b) => t + persone(b), 0);
+  n.biglietti_bbs = (bi.data || []).filter(b => b.tipo === 'BBS' && b.evento < (p.a || '9999')).reduce((t, b) => t + persone(b), 0);
+  // i mesi del periodo: PM, contatti e clienti di ogni mese
+  for (const m of A.mesiTra(p.da, p.a || A.meseAccanto(oggi.slice(0, 8) + '01', 1))) {
+    const dentro = r => r >= m && r < A.meseAccanto(m, 1);
+    const righe = (ck.data || []).filter(r => dentro(r.data));
+    AG.pd.mesi[m] = { pm: somma('pm', righe), contatti: somma('contatti', righe), clienti: new Set((ve.data || []).filter(r => dentro(r.conta_il)).map(r => r.contatto_id)).size };
+  }
+}
+function disegnaPeriodo() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const pd = AG.pd || { p: null, numeri: {}, mesi: {} }, p = pd.p;
+  const mese = g => A.titoloMese(g).split(' ')[0].toLowerCase();
+  const tre = largo();
+  const testa = `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
+      ${p && !(oggi >= p.da && (!p.a || oggi < p.a)) ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
+      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>`;
+  let html;
+  if (!p) html = testa + `<h1 class="ag-titolo">Periodo WES</h1><div class="vuoto">Nessun WES prima di questa data. L'Admin inserisce i WES in Admin → WES.</div>`;
+  else {
+    const titolo = `Periodo WES · ${mese(p.da)} → ${p.a ? `${mese(p.a)} ${p.a.slice(0, 4)}` : 'in corso'}`;
+    // la barra del tempo: quanto del periodo è passato e quanti giorni mancano al WES
+    let barra = '';
+    if (p.a) {
+      const tot = Math.max(1, A.giorniTra(p.da, p.fino)), fatti = Math.min(tot, Math.max(0, A.giorniTra(p.da, oggi)));
+      const mancano = A.giorniTra(oggi, p.fino);
+      const dice = oggi < p.da ? `inizia tra ${A.giorniTra(oggi, p.da)} giorni` : mancano > 1 ? `mancano ${mancano} giorni al WES` : mancano === 1 ? 'domani c\'è il WES' : mancano === 0 ? 'oggi c\'è il WES' : 'periodo concluso';
+      barra = `<div class="pw-barra"><div class="pw-barra-testa"><span>Settimana ${Math.min(Math.ceil(tot / 7), Math.max(1, Math.ceil((fatti + 1) / 7)))} di ${Math.ceil(tot / 7)}</span><b>${dice}</b></div>
+        <div class="pw-traccia"><i style="width:${Math.round(fatti / tot * 100)}%"></i></div>
+        ${p.senzaGiorno ? '<small>Si conta fino al primo del mese del WES: il giorno esatto si scrive in Admin → WES.</small>' : `<small>WES dal ${esc(dataLunga(p.fino))}</small>`}</div>`;
+    }
+    const voci = vociPeriodo();
+    const numeri = `<div class="pw-numeri">${voci.map(k => { const [, nome] = VOCI_PERIODO.find(x => x[0] === k);
+        const v = pd.numeri[k] == null ? '—' : String(pd.numeri[k]).replace('.', ',');
+        return `<div class="pw-num"><small>${esc(nome)}</small><b>${v}</b></div>`; }).join('')}
+      <button class="pw-num pw-voci" id="pw-voci" aria-label="Scegli le voci">${ic('piu')}<small>Voci</small></button></div>
+      <div class="pw-nota">Contati come in Dashboard e Report${!p.a || p.a > oggi ? ', fino a oggi' : ''}.</div>`;
+    const mesi = `<div class="pw-mesi">${Object.entries(pd.mesi).map(([m, x]) => `<button class="pw-mese${oggi.slice(0, 8) + '01' === m ? ' oggi' : ''}" data-mese="${m}"><b>${esc(A.titoloMese(m).split(' ')[0])}</b><span>PM ${x.pm} · contatti ${x.contatti}</span><span>clienti ${x.clienti}</span></button>`).join('')}</div>`;
+    const cose = A.coseDellaScala(AG.cose, 'periodo', p.da, inizioScalaMB('periodo', oggi));
+    html = testa + `<div class="mm-testa"><button class="freccia" id="pw-prima" aria-label="Periodo prima"${p.prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo"><button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="pw-dopo" aria-label="Periodo dopo"${p.poi ? '' : ' disabled'}>›</button></div>
+      ${partnerSelect()}${barra}${numeri}${mesi}
+      <div class="ag-foglio"><h2 class="ag-sez">Da fare in questo periodo</h2>
+        ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
+          <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
+          <button class="testo"><span>${esc(c.testo)}</span>${c.riportata ? `<small>dal periodo di ${esc(mese(c.riportata))}</small>` : ''}</button></div>`).join('')}
+        <form class="ag-cosa-nuova" data-gruppo="" data-scala="periodo"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      </div>`;
+  }
+  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`;
+  else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
+  app.innerHTML = html + versione();
+  collegaAgenda([]);
+  collegaCose(oggi);
+  if (tre) collegaMenuAgenda(app, () => {});
+  const sx = document.getElementById('mb-ling-sx'); if (sx) sx.onclick = menuAgenda;
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  if (p) {
+    su('pw-prima', () => { if (p.prima) apriAgenda(p.prima); });
+    su('pw-dopo', () => { if (p.poi) apriAgenda(p.poi); });
+    su('pw-voci', sceltaVociPeriodo);
+    app.querySelectorAll('.pw-mese').forEach(b => { b.onclick = () => { AG.vista = 'mese'; apriAgenda(b.dataset.mese); }; });
+  }
+}
+// Le voci del periodo: si accendono e si spengono, la scelta si ricorda sul dispositivo
+function sceltaVociPeriodo() {
+  let scelte = vociPeriodo();
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const disegna = () => {
+    velo.innerHTML = `<div class="foglio"><h3>Le voci del periodo</h3><p>Scegli quali numeri vedere nel Periodo WES.</p>
+      <div class="ag-scelte">${VOCI_PERIODO.map(([k, nome]) => `<button data-voce="${k}" class="${scelte.includes(k) ? 'scelto' : ''}">${esc(nome)}</button>`).join('')}</div>
+      <button class="primario" id="pv-ok" style="margin-top:14px">Fatto</button></div>`;
+    velo.querySelectorAll('[data-voce]').forEach(b => { b.onclick = () => {
+      const k = b.dataset.voce;
+      scelte = scelte.includes(k) ? scelte.filter(x => x !== k) : VOCI_PERIODO.map(x => x[0]).filter(x => x === k || scelte.includes(x));
+      disegna();
+    }; });
+    velo.querySelector('#pv-ok').onclick = () => {
+      try { localStorage.setItem(CHIAVE_VOCI_PERIODO, JSON.stringify(scelte.length ? scelte : vociPeriodo())); } catch (e) {}
+      velo.remove(); disegnaAgenda();
+    };
+  };
+  document.body.appendChild(velo);
+  disegna();
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
 }
 
 // ── Il foglio della SETTIMANA (cantiere 41, vista D; Ignazio 22/09): sette righe, una per giorno, con gli impegni

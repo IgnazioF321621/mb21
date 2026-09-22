@@ -482,4 +482,17 @@ prova('Cose da fare del mese (vista Mese): riporto al mese di oggi, le fatte res
   assert.equal(A.meseAccanto('2026-01-01', -1), '2025-12-01');
 });
 
+prova('Periodo WES: da un WES al successivo, il giorno del WES per il conto alla rovescia', () => {
+  const wes = [{ data: '2026-02-01', giorno: '2026-02-14' }, { data: '2026-06-01', giorno: null }, { data: '2026-10-01', giorno: '2026-10-03' }];
+  const p = A.periodoWesDi('2026-09-22', wes);
+  assert.equal(p.da, '2026-06-01'); assert.equal(p.a, '2026-10-01'); assert.equal(p.fino, '2026-10-03');
+  assert.equal(p.prima, '2026-02-01'); assert.equal(p.poi, '2026-10-01'); assert.equal(p.senzaGiorno, false);
+  assert.equal(A.periodoWesDi('2026-03-10', wes).fino, '2026-06-01');                 // il WES di giugno senza giorno: si conta dal 1°
+  assert.equal(A.periodoWesDi('2026-03-10', wes).senzaGiorno, true);
+  assert.equal(A.periodoWesDi('2026-11-01', wes).a, null);                            // l'ultimo: in corso, senza fine
+  assert.equal(A.periodoWesDi('2026-01-10', wes), null);                              // prima del primo WES
+  assert.deepEqual(A.mesiTra('2026-06-01', '2026-10-01'), ['2026-06-01', '2026-07-01', '2026-08-01', '2026-09-01']);
+  assert.equal(A.giorniTra('2026-09-22', '2026-10-03'), 11);
+});
+
 console.log(`\n${ok} prove superate`);
