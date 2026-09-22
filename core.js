@@ -62,12 +62,12 @@
     const perCliente = new Map();
     for (const v of vendite.filter(v => nelMese(v.consegna || v.data, mese))) {
       const k = v.contatto_id, r = perCliente.get(k) || { id: k, nome: (v.contatti && v.contatti.nome) || '—', vp: 0 };
-      r.vp += Number(v.vp) || 0;
+      r.vp = Math.round((r.vp + (Number(v.vp) || 0)) * 100) / 100;
       perCliente.set(k, r);
     }
     const clienti = [...perCliente.values()].sort((x, y) => y.vp - x.vp);
     const s3 = { righe: clienti.slice(0, RIGHE.clienti), quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
-      vp: clienti.reduce((t, r) => t + r.vp, 0) };
+      vp: Math.round(clienti.reduce((t, r) => t + r.vp, 0) * 100) / 100 };   // arrotondato: la somma dei decimali dava «29,560000000000002» (Isabella, 22/09)
 
     // 2 · Consumare i prodotti Amway (Ignazio 22/09): il consumo personale = i VP personali Amway del mese MENO i VP venduti
     // ai clienti (chi compra solo per vendere non consuma). Senza dati Amway vale quello scritto a mano.
