@@ -336,6 +336,22 @@
   .avv-partner.percorso.attivo .sh-fase .barra { background: var(--superficie); }
   .mio-elenco { margin-top: 6px; }
   .ag-blocco.tracce small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
+  /* «I miei libri» (cantiere 40 lavoro 7) */
+  .lb-numeri { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .lb-numeri div { background: var(--gr-crescita-tinta); color: var(--gr-crescita); border-radius: var(--raggio-riga); padding: 10px 12px; }
+  .lb-numeri span { display: block; font-size: 12px; font-weight: 600; } .lb-numeri b { font-size: 20px; }
+  .lb-percorso { padding: 6px 16px; }
+  .lb-passo { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--linea); } .lb-passo:last-child { border-bottom: 0; }
+  .lb-tondo { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--sfondo); color: var(--testo-tenue); }
+  .lb-passo.letto .lb-tondo { background: var(--ok); color: #fff; } .lb-passo.ora .lb-tondo { background: var(--gr-crescita); color: #fff; }
+  .lb-passo b { display: block; font-size: 15px; } .lb-passo small { color: var(--grigio); font-size: 13px; } .lb-passo.ora b { color: var(--gr-crescita); }
+  .sh-chiede.n21 { vertical-align: middle; }
+  .lb-libro { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--linea); background: none; text-align: left; font-family: inherit; color: var(--testo); }
+  .lb-libro:last-child { border-bottom: 0; } .lb-libro b { display: block; font-size: 15px; } .lb-libro small { color: var(--grigio); font-size: 13px; }
+  .lb-note { background: var(--superficie-2); border-radius: var(--raggio-riga); padding: 4px 12px; margin: 0 0 8px; }
+  .lb-nota { padding: 10px 0; border-bottom: 1px solid var(--linea); } .lb-nota:last-child { border-bottom: 0; }
+  .lb-nota b { display: block; font-size: 14px; font-weight: 600; } .lb-nota small { color: var(--grigio); font-size: 13px; }
+  button.mio-libro { width: 100%; border: 0; text-align: left; font-family: inherit; justify-content: space-between; } button.mio-libro > span:first-of-type { flex: 1; }
   .sh-gruppo { font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); padding: 12px 0 2px; }
   .sh-gruppo + .sh-riga { border-top: 0; }
   .sh-chiede { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--proposta-tinta); color: var(--proposta); margin-left: 4px; vertical-align: middle; }
@@ -1054,31 +1070,33 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609221508"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609221508"></script>
-<script src="lista.js?v=202609221508"></script>
-<script src="rubrica.js?v=202609221508"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609221508"></script>
-<script src="agenda.js?v=202609221508"></script>
-<script src="report.js?v=202609221508"></script>
-<script src="check.js?v=202609221508"></script>
-<script src="mappa.js?v=202609221508"></script>
-<script src="pagina-dashboard.js?v=202609221508"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609221508"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609221508"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609221508"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609221508"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609221508"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609221508"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609221508"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609221508"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609221508"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609221508"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609221508"></script>
-<script src="benvenuto.js?v=202609221508"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609221508"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221535"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221535"></script>
+<script src="lista.js?v=202609221535"></script>
+<script src="rubrica.js?v=202609221535"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221535"></script>
+<script src="agenda.js?v=202609221535"></script>
+<script src="report.js?v=202609221535"></script>
+<script src="check.js?v=202609221535"></script>
+<script src="mappa.js?v=202609221535"></script>
+<script src="pagina-dashboard.js?v=202609221535"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221535"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221535"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221535"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221535"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221535"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609221535"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="pagina-libri.js?v=202609221535"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221535"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221535"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221535"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221535"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221535"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221535"></script>
+<script src="benvenuto.js?v=202609221535"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221535"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 15:08';
+const APP_VERSION = '2026.09.22 · 15:35';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
