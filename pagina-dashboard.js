@@ -1067,8 +1067,13 @@ function apriCheck() {
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     </div>
     <h4 class="mc-t">Core N21</h4><div class="riquadro mc-g">
-    ${MB21Agenda.CORE_N21.map((c, i) => `<label class="ck-core" data-core="${c.core}"><b>${i + 1}</b><div><span>${esc(c.testo)}</span><small>${c.core === 'open' ? 'oggi sono stato all\'OPEN' : c.core === 'squadra' ? 'oggi counseling con lo sponsor' : '…'}</small></div>
-      ${c.core === 'open' ? '<input type="checkbox" id="ck-open">' : c.core === 'squadra' ? '<input type="checkbox" id="ck-counseling">' : `<i class="ck-core-spunta">${ic('fatto', 16)}</i>`}</label>`).join('')}
+    ${MB21Agenda.CORE_N21.map((c, i) => c.core === 'squadra'
+      ? `<div class="ck-core" data-core="squadra"><b>${i + 1}</b><div><span>${esc(c.testo)}</span>
+          <label class="ck-sotto"><input type="checkbox" id="ck-counseling"> oggi sessione di <b>counseling</b> con lo sponsor</label>
+          <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"> oggi ho praticato l'<b>edificazione</b></label>
+          <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"> oggi ho praticato il <b>no-crossline</b></label></div></div>`
+      : `<label class="ck-core" data-core="${c.core}"><b>${i + 1}</b><div><span>${esc(c.testo)}</span><small>${c.core === 'open' ? 'oggi sono stato all\'OPEN' : '…'}</small></div>
+      ${c.core === 'open' ? '<input type="checkbox" id="ck-open">' : `<i class="ck-core-spunta">${ic('fatto', 16)}</i>`}</label>`).join('')}
     <div class="vn-aiuto">Le 7 abitudini della persona Core: 1-5 si riempiono da sole (PM dall'Agenda, VP dai dati Amway, clienti dalle vendite, tracce e pagine da questo Check), 6 e 7 le spunti tu.</div>
     </div>
     <div class="errore" id="ck-errore"></div>
@@ -1128,7 +1133,7 @@ function apriCheck() {
     note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
     // Core N21 (cantiere 41): OPEN e counseling del giorno
     velo.querySelector('#ck-open').checked = !!(esistente && esistente.open);
-    velo.querySelector('#ck-counseling').checked = !!(esistente && esistente.counseling);
+    for (const k of ['counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).checked = !!(esistente && esistente[k]);
     aggiornaCore();
     avviso.style.display = esistente ? 'block' : 'none';
     avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
@@ -1183,26 +1188,26 @@ function apriCheck() {
       riga.classList.toggle('fatta', ob ? v >= ob : v != null && v > 0);
       riga.querySelector('small').textContent = v == null ? `— ${testo}` : `${ob ? `${v}/${ob}` : String(v).replace('.', ',')} ${testo}`;
     }
-    for (const k of ['open', 'counseling']) {
-      const c = velo.querySelector('#ck-' + k);
-      c.closest('.ck-core').classList.toggle('fatta', c.checked);
-    }
+    velo.querySelector('.ck-core[data-core="open"]').classList.toggle('fatta', velo.querySelector('#ck-open').checked);
+    velo.querySelector('.ck-core[data-core="squadra"]').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].some(k => velo.querySelector('#ck-' + k).checked));
   };
   for (const k of ['tracce', 'pagine']) velo.querySelector('#ck-' + k).addEventListener('input', aggiornaCore);
-  for (const k of ['open', 'counseling']) velo.querySelector('#ck-' + k).addEventListener('change', aggiornaCore);
+  for (const k of ['open', 'counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).addEventListener('change', aggiornaCore);
   const coreDelGiorno = async (data, ancoraValido) => {
     if (!data) return;
     const A = MB21Agenda, mese0 = data.slice(0, 8) + '01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
     const [pm, ve, ob, tr] = await Promise.all([
       dbq('pm del mese', supa.from('azioni_conti').select('pm').eq('user_id', visto().id).eq('pm', 1).gte('giorno', mese0).lt('giorno', mese1)),
-      dbq('clienti del mese', supa.from('vendite').select('contatto_id').eq('user_id', visto().id).gte('data', mese0).lt('data', mese1)),
+      dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', visto().id).gte('data', mese0).lt('data', mese1)),
       dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', visto().id).eq('mese', mese0).maybeSingle()),
       visto().id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
     ]);
     if (!ancoraValido()) return;
     CK_CORE.pm = (pm.data || []).length;
     CK_CORE.clienti = new Set((ve.data || []).map(r => r.contatto_id)).size;
-    CK_CORE.vp = ob.data && ob.data.vpp_amway != null ? Number(ob.data.vpp_amway) : null;
+    // consumo personale = VP personali Amway − VP venduti ai clienti (Ignazio 22/09)
+    const vpClienti = (ve.data || []).reduce((t, r) => t + (Number(r.vp) || 0), 0);
+    CK_CORE.vp = ob.data && ob.data.vpp_amway != null ? Math.max(0, Math.round((Number(ob.data.vpp_amway) - vpClienti) * 100) / 100) : null;
     CK_CORE.percorso = (tr.data || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
     aggiornaCore();
   };
@@ -1238,7 +1243,8 @@ function apriCheck() {
   velo.querySelector('#ck-si').onclick = async () => {
     const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null,
       // Core N21 (cantiere 41): la riga giornaliera del modulo
-      open: velo.querySelector('#ck-open').checked, counseling: velo.querySelector('#ck-counseling').checked };
+      open: velo.querySelector('#ck-open').checked, counseling: velo.querySelector('#ck-counseling').checked,
+      edificazione: velo.querySelector('#ck-edificazione').checked, no_crossline: velo.querySelector('#ck-no_crossline').checked };
     for (const [k] of MB21Dashboard.CAMPI_CHECK) v[k] = velo.querySelector('#ck-' + k).value;
     if (MB21Dashboard.contattiDalleAzioni(v.data)) for (const k of ['contatti', 'pm']) if (String(v[k]).trim() === '') v[k] = '0';   // dal 14/09 li danno le azioni (un Check vecchio tiene i suoi numeri, che non contano)
     if (MB21Dashboard.vpDalleVendite(v.data)) v.vp_clienti = '0';   // dal 18/09 i VP Clienti li danno le vendite: nel Check resta 0
@@ -1261,7 +1267,7 @@ function apriCheck() {
       await caricaDashboard(ST.oggi);
       disegnaOggi();
       return mostraToast('Check corretto', async () => {
-        const vecchi = { libro: prima.libro, note_libro: prima.note_libro, open: prima.open, counseling: prima.counseling };
+        const vecchi = { libro: prima.libro, note_libro: prima.note_libro, open: prima.open, counseling: prima.counseling, edificazione: prima.edificazione, no_crossline: prima.no_crossline };
         for (const [k] of MB21Dashboard.CAMPI_CHECK) vecchi[k] = prima[k];
         const { error: e2 } = await dbq('annulla correzione check', supa.from('check_giorno').update(vecchi).eq('id', prima.id));
         if (e2) return mostraToast('Annullamento non riuscito: riprova.');

@@ -48,8 +48,8 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.equal(m.s1.righe[0].data, '3/9'); assert.equal(m.s1.righe[0].uno_a_uno, true); assert.equal(m.s1.righe[0].iscritti, true);
   assert.equal(m.s1.righe[1].casa, true); assert.equal(m.s1.righe[1].candidati, 3); assert.equal(m.s1.righe[0].candidati, 1);
   assert.equal(m.s1.iscritti, 1); assert.equal(m.s1.no, 0);
-  // 2 · VP consumo: dai dati Amway
-  assert.equal(m.s2.vp, 187.5); assert.equal(m.s2.auto, true);
+  // 2 · VP consumo: i VP personali Amway meno i VP venduti ai clienti (187,5 − 92,5)
+  assert.equal(m.s2.vp, 95); assert.equal(m.s2.auto, true); assert.equal(m.s2.vpAmway, 187.5); assert.equal(m.s2.vpClienti, 92.5);
   assert.equal(C.modulo({ mese, obiettivi: { vpp: 1 }, dati: { vp_consumo: 40 } }).s2.vp, 40);
   assert.equal(C.modulo({ mese }).s2.vp, null);
   // 3 · clienti: uno per riga, VP sommati, i più alti prima
@@ -58,8 +58,8 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   // 4 · CD: 30 giorni; le tracce del Check e quelle del percorso si sommano, i titoli del percorso si leggono
   assert.equal(m.s4.giorni.length, 30);
   assert.equal(m.s4.giorni[0].quante, 1); assert.equal(m.s4.giorni[0].titolo, '1 traccia'); assert.equal(m.s4.giorni[0].fatto, true);
-  assert.equal(m.s4.giorni[1].quante, 1); assert.equal(m.s4.giorni[1].titolo, '1 traccia · La visione'); assert.equal(m.s4.giorni[1].fatto, true);   // dal percorso, anche se il Check dice 0
-  assert.equal(m.s4.giorni[14].quante, 3); assert.equal(m.s4.giorni[14].titolo, '3 tracce · Il sogno');   // 2 nel Check + 1 del percorso
+  assert.equal(m.s4.giorni[1].quante, 1); assert.equal(m.s4.giorni[1].titolo, '1 traccia (1 dal percorso)'); assert.equal(m.s4.giorni[1].fatto, true);   // dal percorso, anche se il Check dice 0
+  assert.equal(m.s4.giorni[14].quante, 3); assert.equal(m.s4.giorni[14].titolo, '3 tracce (1 dal percorso)');   // 2 nel Check + 1 del percorso, senza titoli
   assert.equal(m.s4.giorni[2].titolo, ''); assert.equal(m.s4.giorni[2].fatto, false);
   assert.equal(m.s4.quanti, 3);
   // 5 · pagine: il libro più recente, un cerchietto pieno con 10 pagine, i punti a mano
@@ -73,7 +73,9 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.equal(m.s6.open, 2); assert.equal(m.s6.bbs, true); assert.equal(m.s6.wes, false);   // il WES è solo per il compagno
   // 7 · counseling dal Check (il primo), edificazione a mano, no-crossline non risposto
   assert.equal(m.s7.counseling, '15/9'); assert.equal(m.s7.auto, true);
-  assert.equal(m.s7.edificazione, true); assert.equal(m.s7.no_crossline, null);
+  assert.equal(m.s7.edificazione, true); assert.equal(m.s7.no_crossline, null); assert.equal(m.s7.autoEdificazione, false);
+  const m2 = C.modulo({ mese, check: [{ data: '2026-09-03', no_crossline: true, edificazione: false }] });
+  assert.equal(m2.s7.no_crossline, true); assert.equal(m2.s7.autoNoCrossline, true); assert.equal(m2.s7.edificazione, null);   // dal Check del giorno
   // obiettivi del mese
   assert.equal(m.obiettivi.vpp, 300); assert.equal(m.obiettivi.wes, 3);
   assert.equal(m.note, 'ok');
