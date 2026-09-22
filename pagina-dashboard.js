@@ -1057,7 +1057,8 @@ function apriCheck() {
   const riga = (n, k, opz = {}) => `<div class="ckr${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
       <label for="ck-${k}">${escIcone(CK[k].etichetta)}${opz.core ? '<span class="ck-tag">Core</span>' : ''}</label>
       <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="${esc(CK[k].suggerimento)}">
-      <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>${opz.dopo || ''}`;
+      <div class="ck-auto" id="ck-auto-${k}" style="display:none"></div>
+      <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
       <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
@@ -1066,12 +1067,12 @@ function apriCheck() {
     <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
     <h4 class="mc-t">Azione</h4><div class="riquadro mc-g">
     ${riga(1, 'contatti', { spiega: 'Automatico dal 14/09: dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda).' })}
-    ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.', dopo: '<div id="ck-azioni" style="display:none"></div>' })}
+    ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.' })}
     ${riga(3, 'sponsor_personali', { spiega: 'A mano: gli iscritti che hai sponsorizzato tu oggi.' })}
     ${riga(4, 'sponsor_gruppo', { spiega: 'Automatico dal file Amway (data di iscrizione, nella tua linea); a mano se il file non c\'è ancora.' })}
-    <div class="ckr core" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
+    <div class="ckr core auto volume" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
       <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
-    ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.', dopo: '<div id="ck-vendite" style="display:none"></div>' })}
+    ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.' })}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
     ${riga(7, 'tracce', { core: 4, spiega: 'A mano le tracce ascoltate oggi; quelle del percorso segnate «ascoltata» si sommano da sole → sezione 4 del foglio Core.' })}
     <div class="ckr core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
@@ -1081,14 +1082,14 @@ function apriCheck() {
       <div class="vn-aiuto">A mano: libro, pagine (10 al giorno) e note → sezione 5 del foglio Core e diario dei libri. Con «Libro non da sistema…» scrivi titolo e autore una volta sola.</div></div></div>
     </div><h4 class="mc-t">Squadra</h4><div class="riquadro mc-g">
     <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
-      <label class="ck-sotto"><input type="checkbox" id="ck-open"> oggi sono stato all'<b>OPEN</b></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-open"><span>oggi sono stato all'<b>OPEN</b></span></label>
       <div class="ck-badge-riga">Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b> Biglietto WES <b class="ck-badge" id="ck-wes">—</b></div>
       <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
     <div class="ckr core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
-      <label class="ck-sotto"><input type="checkbox" id="ck-counseling"> oggi sessione di <b>counseling</b> con lo sponsor/upline</label>
-      <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"> oggi ho praticato l'<b>edificazione</b></label>
-      <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"> oggi ho praticato il <b>no-crossline</b></label>
-      <div class="vn-aiuto">A mano → sezione 7 del foglio Core.</div></div></div>
+      <label class="ck-sotto"><input type="checkbox" id="ck-counseling"><span>oggi sessione di <b>counseling</b> con lo sponsor/upline</span></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"><span>oggi ho praticato l'<b>edificazione</b> (ho parlato bene degli altri, non solo nell'attività)</span></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"><span>oggi ho praticato il <b>no-crossline</b></span></label>
+      <div class="vn-aiuto">A mano, tutte e tre → sezione 7 del foglio Core.</div></div></div>
     </div>
     <div class="errore" id="ck-errore"></div>
     <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
@@ -1151,20 +1152,22 @@ function apriCheck() {
   // VP Clienti dal 18/09 (MB21Dashboard.INIZIO_VENDITE): non si scrivono, si leggono dalle vendite del giorno; ogni vendita
   // porta alla scheda del cliente. Per i giorni prima resta il campo a mano.
   const venditeDelGiorno = async (data, ancoraValido) => {
-    const campo = velo.querySelector('#ck-campo-vp_clienti'), box = velo.querySelector('#ck-vendite');
+    const riga6 = velo.querySelector('#ck-campo-vp_clienti'), campo = velo.querySelector('#ck-vp_clienti'), box = velo.querySelector('#ck-auto-vp_clienti');
     const dalle = MB21Dashboard.vpDalleVendite(data);
+    riga6.classList.toggle('auto', dalle); riga6.classList.add('volume');
     campo.style.display = dalle ? 'none' : '';
     box.style.display = dalle ? '' : 'none';
     if (!dalle) return;
-    box.innerHTML = '<div class="ck-vn"><b>' + ic('vendite') + ' VP Clienti</b><div class="vn-aiuto">Carico le vendite del giorno…</div></div>';
+    box.innerHTML = '<div class="ck-valore">…</div><div class="vn-aiuto">Carico le vendite del giorno…</div>';
     const { data: righe, error } = await dbq('vendite del giorno', supa.from('vendite_conti')
       .select('id, contatto_id, prodotto, vp, contatti(nome)').eq('user_id', visto().id).eq('conta_il', data).order('creato_il'));
     if (!ancoraValido()) return;
-    if (error) { box.innerHTML = '<div class="ck-vn"><b>' + ic('vendite') + ' VP Clienti</b><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div></div>'; return; }
+    if (error) { box.innerHTML = '<div class="ck-valore">?</div><div class="vn-aiuto">Non riesco a leggere le vendite: riprova.</div>'; return; }
     const totale = MB21Lista.totaliVendite(righe).vp;
-    box.innerHTML = `<div class="ck-vn"><b>${ic('vendite')} VP Clienti: ${MB21Lista.numero(totale)}</b>
+    box.innerHTML = `<div class="ck-valore">${MB21Lista.numero(totale)} VP</div>
       <div class="vn-aiuto">${righe.length ? 'Dalle vendite registrate. Tocca una vendita per aprire la scheda del cliente.' : 'Nessuna vendita registrata in questo giorno. Le vendite si scrivono nella scheda del cliente, sezione Vendite: qui arrivano da sole.'}</div>
-      ${righe.map(r => `<button type="button" class="ck-vn-riga" data-cliente="${r.contatto_id}"><span>${esc(r.contatti ? r.contatti.nome : 'Cliente')} · ${esc(r.prodotto)}</span><b>${MB21Lista.numero(r.vp)} VP ›</b></button>`).join('')}</div>`;
+      ${righe.map(r => `<button type="button" class="ck-vn-riga" data-cliente="${r.contatto_id}"><span>${esc(r.contatti ? r.contatti.nome : 'Cliente')} · ${esc(r.prodotto)}</span><b>${MB21Lista.numero(r.vp)} VP ›</b></button>`).join('')}`;
+    riga6.classList.toggle('fatta', righe.length > 0);   // Core: verde con almeno una vendita oggi
     box.querySelectorAll('[data-cliente]').forEach(b => b.onclick = async () => {
       chiudi();
       await apriContattoDa(b.dataset.cliente, 'oggi');
@@ -1195,8 +1198,9 @@ function apriCheck() {
     velo.querySelector('#ck-campo-tracce').classList.toggle('fatta', num('tracce') + CK_CORE.percorso >= 1);
     velo.querySelector('#ck-campo-pagine').classList.toggle('fatta', num('pagine') >= 10);
     velo.querySelector('#ck-campo-open').classList.toggle('fatta', velo.querySelector('#ck-open').checked);
-    velo.querySelector('#ck-campo-squadra').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].some(k => velo.querySelector('#ck-' + k).checked));
+    velo.querySelector('#ck-campo-squadra').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].every(k => velo.querySelector('#ck-' + k).checked));   // tutte e tre (Ignazio 22/09)
     const sg = velo.querySelector('#ck-sponsor_gruppo'), aiutoSg = velo.querySelector('#ck-campo-sponsor_gruppo .vn-aiuto');
+    velo.querySelector('#ck-campo-sponsor_gruppo').classList.toggle('auto', CK_CORE.gruppoOggi != null);   // automatico dal file Amway: riga colorata come Contatti e PM
     if (CK_CORE.gruppoOggi != null) {
       sg.value = String(CK_CORE.gruppoOggi); sg.readOnly = true;
       aiutoSg.textContent = `Dal file Amway: ${CK_CORE.gruppoOggi} ${CK_CORE.gruppoOggi === 1 ? 'iscritto' : 'iscritti'} nella tua linea in questo giorno, ${CK_CORE.gruppoMese} nel mese.`;
@@ -1242,29 +1246,28 @@ function apriCheck() {
   // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
   // (vista `azioni_conti`); ogni azione porta alla scheda del contatto. Per i giorni prima restano i campi a mano.
   const azioniDelGiorno = async (data, ancoraValido) => {
-    const box = velo.querySelector('#ck-azioni');
     const dalle = MB21Dashboard.contattiDalleAzioni(data);
-    for (const k of ['contatti', 'pm']) velo.querySelector('#ck-campo-' + k).style.display = dalle ? 'none' : '';
-    box.style.display = dalle ? '' : 'none';
-    if (!dalle) return;
-    // due card azzurre, una per numero (Ignazio 18/09: «separiamole come erano prima»), ognuna con la sua spiegazione e le sue righe
+    // la riga resta con il suo numero: se i dati arrivano da soli, il campo si nasconde e la riga si colora con dentro il contenuto automatico
+    const auto = (k, dentro) => { const r = velo.querySelector('#ck-campo-' + k); r.classList.toggle('auto', dalle); velo.querySelector('#ck-' + k).style.display = dalle ? 'none' : ''; const box = velo.querySelector('#ck-auto-' + k); box.style.display = dalle ? '' : 'none'; if (dentro != null) box.innerHTML = dentro; };
+    if (!dalle) { auto('contatti', ''); auto('pm', ''); return; }
     const CARD = [
-      { k: 'contatti', titolo: ic('telefonate') + ' Contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
+      { k: 'contatti', pieno: 'Dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda). Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun contatto parlato registrato in questo giorno. Dai l\'esito dalla coda o in Agenda: qui arrivano da soli. «No Risposta» non conta.' },
-      { k: 'pm', titolo: ic('agenda') + ' Piani Marketing', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
+      { k: 'pm', pieno: 'Dai Piani Marketing avvenuti in Agenda. Tocca una riga per aprire il contatto.',
         vuoto: 'Nessun Piano Marketing avvenuto in questo giorno. Dai l\'esito al PM in Agenda: qui arriva da solo. «No Show» e «Rimandato» non contano.' },
     ];
-    const card = (d, numero, aiuto, righe) => `<div class="ck-vn azioni"><b>${d.titolo}: ${numero}</b><div class="vn-aiuto">${aiuto}</div>${righe || ''}</div>`;
-    box.innerHTML = CARD.map(d => card(d, '…', 'Carico le azioni del giorno…')).join('');
+    const dentro = (numero, aiuto, righe) => `<div class="ck-valore">${numero}</div><div class="vn-aiuto">${aiuto}</div>${righe || ''}`;
+    for (const d of CARD) auto(d.k, dentro('…', 'Carico le azioni del giorno…'));
     const { data: righe, error } = await dbq('azioni del giorno', supa.from('azioni_conti')
       .select('id, contatto_id, tipo_azione, modalita, esito, contatti, pm, contatto:contatti(nome)').eq('user_id', visto().id).eq('giorno', data));
     if (!ancoraValido()) return;
-    if (error) { box.innerHTML = CARD.map(d => card(d, '?', 'Non riesco a leggere le azioni: riprova.')).join(''); return; }
-    box.innerHTML = CARD.map(d => {
+    if (error) { for (const d of CARD) auto(d.k, dentro('?', 'Non riesco a leggere le azioni: riprova.')); return; }
+    for (const d of CARD) {
       const sue = righe.filter(r => r[d.k]);
-      return card(d, sue.length, sue.length ? d.pieno : d.vuoto, sue.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')}${r.modalita ? ' · ' + esc(r.modalita) : ''}</span><b>${esc(r.esito || '')} ›</b></button>`).join(''));
-    }).join('');
-    box.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });
+      auto(d.k, dentro(sue.length, sue.length ? d.pieno : d.vuoto, sue.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')}${r.modalita ? ' · ' + esc(r.modalita) : ''}</span><b>${esc(r.esito || '')} ›</b></button>`).join('')));
+      if (d.k === 'pm') velo.querySelector('#ck-campo-pm').classList.toggle('fatta', sue.length > 0);   // Core: verde con almeno un PM fatto oggi
+    }
+    velo.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });
   };
   campoData.onchange = caricaGiorno;
   caricaGiorno();

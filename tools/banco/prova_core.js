@@ -82,7 +82,8 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   // obiettivi del mese
   assert.equal(m.obiettivi.vpp, 300); assert.equal(m.obiettivi.wes, 3);
   assert.equal(m.note, 'ok');
-  assert.equal(m.fatte, 2);   // «consumare i prodotti» (VP > 0) e «lavorare di squadra» (counseling fatto)
+  assert.equal(m.fatte, 1);   // solo «consumare i prodotti» (VP > 0): la squadra vuole tutte e tre (no-crossline non risposto)
+  assert.equal(C.modulo({ mese, check: [{ data: '2026-09-03', counseling: true, edificazione: true, no_crossline: true }] }).abitudini[6], true);
 });
 
 console.log(`\n${ok} prove superate`);
