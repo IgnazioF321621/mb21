@@ -57,8 +57,10 @@
       iscritti: pm.filter(r => r.iscritti).length, clienti: pm.filter(r => r.clienti).length, no: pm.filter(r => r.no).length };
 
     // 3 · Servire almeno 10 clienti al mese: un cliente per riga, con i VP del mese
+    // una vendita conta nel mese in cui CONTANO i suoi VP (`consegna` se c'è, se no `data`: la promo pagata oggi con l'ordine
+    // Amway a marzo 2027 sta nel modulo di marzo 2027; Ignazio 22/09: «Elisa non entra nei clienti di settembre»)
     const perCliente = new Map();
-    for (const v of vendite.filter(v => nelMese(v.data, mese))) {
+    for (const v of vendite.filter(v => nelMese(v.consegna || v.data, mese))) {
       const k = v.contatto_id, r = perCliente.get(k) || { id: k, nome: (v.contatti && v.contatti.nome) || '—', vp: 0 };
       r.vp += Number(v.vp) || 0;
       perCliente.set(k, r);
