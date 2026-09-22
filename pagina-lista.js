@@ -1020,7 +1020,8 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
         <button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <div class="riquadro mc-g" style="margin-top:14px">
       ${campi.map(f => `<div class="campo"><label>${esc(f.etichetta)}</label>${
-        f.tipo === 'select' ? `<select data-k="${f.k}">${f.opzioni.map(o => `<option ${o === f.valore ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+        f.tipo === 'select' ? `<select data-k="${f.k}">${f.opzioni.map(o => typeof o === 'string' ? `<option ${o === f.valore ? 'selected' : ''}>${esc(o)}</option>`
+          : `<optgroup label="${esc(o.gruppo)}">${o.voci.map(v => `<option ${v === f.valore ? 'selected' : ''}>${esc(v)}</option>`).join('')}</optgroup>`).join('')}</select>`
         : f.tipo === 'textarea' ? `<textarea data-k="${f.k}" rows="${f.righe || 3}">${esc(f.valore)}</textarea>`
         : `<input data-k="${f.k}" type="${f.tipo}" value="${esc(f.valore)}">`}</div>`).join('')}
       </div>
