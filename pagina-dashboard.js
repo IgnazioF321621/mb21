@@ -71,7 +71,7 @@ async function caricaOggi() {
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
     try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
   }
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio()]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaTracceDaControllare(oggi)]);
   disegnaOggi();
 }
 
@@ -159,6 +159,7 @@ function disegnaOggi() {
   html += rigaTelefonoHtml();   // cantiere 32: «📲 Metti MB21 sul telefono e accendi gli avvisi», dal secondo ingresso (pagina-benvenuto.js)
   html += confermeHtml();
   html += riordiniHtml();
+  html += tracceHtml();   // cantiere 40: «Tracce da controllare» (pagina-sharing.js)
   html += avvioHtml();
   if (r.dareSeguito.length) {
     html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
@@ -189,6 +190,7 @@ function disegnaOggi() {
   }
   collegaConferme();
   collegaRiordini();
+  collegaTracce();
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });

@@ -25,6 +25,7 @@ import unicodedata
 
 PDF = '/Users/ignaziofiorito/Downloads/Amway & Network Marketing/Formazione/Media Sharing V2.pdf'
 STRANIERI = {'Peter Matz', 'Bob Andrews', 'Mitch Sala', 'Jim Dornan', 'Skip Ross', 'Sean Henderson'}
+PER_LAVORO = {'Siamo nel mondo reale': 'dipendente', "L'impresa ideale": 'autonomo'}   # la prima traccia dopo il PM (Ignazio 22/09)
 
 # ── Media Sharing: i pack condivisibili e le tracce che contengono (rilievo del 22/09, dentro i pack) ──
 # (titolo del pack, autore del pack, per chi, [tracce])  — le tracce senza autore lo prendono dal PDF
@@ -218,7 +219,7 @@ def q(v):
 def riga(tipo, titolo, autore=None, **c):
     campi = dict(tipo=tipo, titolo=titolo, autore=autore, per_chi=None, fase=None, ordine=None, straniero=autore in STRANIERI,
                  solo_donne=False, solo_n21=False, fuori_catalogo=False, ordine_libro=None, minuti=None, riassunto=None,
-                 punti_chiave=None, per_chi_testo=None, argomenti=[], link=None, glide_indice=None, note=None)
+                 punti_chiave=None, per_chi_testo=None, argomenti=[], link=None, glide_indice=None, note=None, per_lavoro=None)
     campi.update(c)
     return campi
 
@@ -235,7 +236,7 @@ def costruisci():
             trovate.add(id(t))
             autore = autore or t['oratore']
         g = GLIDE.get(titolo + '|' + autore) or GLIDE.get(titolo)
-        r = riga('traccia', titolo, autore, per_chi=per_chi, argomenti=ARGOMENTI.get(pack or titolo, []),
+        r = riga('traccia', titolo, autore, per_chi=per_chi, argomenti=ARGOMENTI.get(pack or titolo, []), per_lavoro=PER_LAVORO.get(titolo),
                  glide_indice=g[0] if g else None, link=f'https://network21.it/bsm/product/{g[1]}' if g and g[1] else None,
                  note=None if t else 'Sul sito ma non nel PDF «Media Sharing V2»: senza fase (Ignazio 22/09)')
         if t:
@@ -270,7 +271,7 @@ def costruisci():
 
 
 COLONNE = ['tipo', 'titolo', 'autore', 'per_chi', 'fase', 'ordine', 'straniero', 'solo_donne', 'solo_n21', 'fuori_catalogo',
-           'ordine_libro', 'minuti', 'riassunto', 'punti_chiave', 'per_chi_testo', 'argomenti', 'link', 'glide_indice', 'note']
+           'ordine_libro', 'minuti', 'riassunto', 'punti_chiave', 'per_chi_testo', 'argomenti', 'link', 'glide_indice', 'note', 'per_lavoro']
 
 
 def valori(r):

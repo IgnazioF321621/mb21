@@ -320,6 +320,14 @@
   .sh-sw span { font-size: 11px; font-weight: 700; color: var(--testo-tenue); } .sh-sw.si span { color: var(--ok); }
   .sh-mano { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: var(--tocco); border: 0; background: none; color: var(--testo-soft); font-size: 15px; font-weight: 600; font-family: inherit; }
   .sh-sesso { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .sh-consiglio-foglio { background: var(--superficie-2); border-radius: var(--raggio-riga); padding: 12px 14px; margin-bottom: 12px; }
+  .sh-consiglio-foglio .sh-perchi { background: var(--superficie); }
+  .sh-foglio-fondo { display: flex; justify-content: space-between; }
+  .sh-nota { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; color: var(--grigio); line-height: 1.35; margin-bottom: 12px; } .sh-nota svg { flex: none; margin-top: 2px; }
+  .sh-nota.importante { font-size: 14px; color: var(--proposta); background: var(--proposta-tinta); border-radius: var(--raggio-bottone); padding: 10px 12px; } .sh-nota.importante b { color: var(--proposta); }
+  .sh-stato.ricordaglielo { color: var(--proposta); font-weight: 600; } .sh-stato.scaduta { color: var(--rosso); font-weight: 600; }
+  .sh-ok { flex: none; min-height: 36px; padding: 6px 12px; border-radius: var(--raggio-pill); border: 1.5px solid var(--ok); background: var(--ok-tinta); color: var(--ok); font-size: 13px; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
+  .sh-ok:disabled { opacity: .5; }
   .vn-totali { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .vn-tot { border-radius: var(--raggio-riga); padding: 10px 10px 12px; border: 1px solid; min-width: 0; }
   .vn-tot span { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -1032,31 +1040,31 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609221145"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609221145"></script>
-<script src="lista.js?v=202609221145"></script>
-<script src="rubrica.js?v=202609221145"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609221145"></script>
-<script src="agenda.js?v=202609221145"></script>
-<script src="report.js?v=202609221145"></script>
-<script src="check.js?v=202609221145"></script>
-<script src="mappa.js?v=202609221145"></script>
-<script src="pagina-dashboard.js?v=202609221145"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609221145"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609221145"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609221145"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609221145"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609221145"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609221145"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609221145"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609221145"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609221145"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609221145"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609221145"></script>
-<script src="benvenuto.js?v=202609221145"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609221145"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221228"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221228"></script>
+<script src="lista.js?v=202609221228"></script>
+<script src="rubrica.js?v=202609221228"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221228"></script>
+<script src="agenda.js?v=202609221228"></script>
+<script src="report.js?v=202609221228"></script>
+<script src="check.js?v=202609221228"></script>
+<script src="mappa.js?v=202609221228"></script>
+<script src="pagina-dashboard.js?v=202609221228"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221228"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221228"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221228"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221228"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221228"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221228"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221228"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221228"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221228"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221228"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221228"></script>
+<script src="benvenuto.js?v=202609221228"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221228"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 11:45';
+const APP_VERSION = '2026.09.22 · 12:28';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1310,9 +1318,10 @@ async function dopoAccesso(sessione) {
   const [, percorso] = await Promise.all([caricaPersone(), leggiPercorso()]);   // il percorso serve al benvenuto (cantiere 32); non letto = null, si apre come sempre
   // Toccando un avviso push «…/?apri=check» (o «agenda») si apre direttamente quella pagina (cantiere 24)
   const apri = REGISTRAZIONE.get('apri');
-  if (['check', 'agenda'].includes(apri) && !limitato()) {
+  if (['check', 'agenda', 'lista'].includes(apri) && !limitato()) {
     ST.tab = apri;
     if (apri === 'agenda') { AG.giorno = REGISTRAZIONE.get('giorno') || null; AG.aperta = REGISTRAZIONE.get('azione') || null; }   // «&azione=<id>»: l'appuntamento dell'avviso si apre già aperto (con «&giorno=AAAA-MM-GG» se non è di oggi)
+    if (apri === 'lista') { LS.apriContatto = REGISTRAZIONE.get('contatto') || null; LS.apriSezione = REGISTRAZIONE.get('sezione') || null; }   // «&contatto=<id>&sezione=sharing»: la scheda già aperta su quella sezione (cantiere 40)
     history.replaceState(null, '', location.pathname);
   }
   // Un foglio alla volta: la password per chi è entrato col link, altrimenti le novità (che aspettano la prossima apertura)
@@ -2023,6 +2032,9 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   });
   await ridisegna();
   mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`, () => annulla(creato));
+  // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
+  if (MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
+      && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
 }
 
 // Sposta un appuntamento (inizio/fine) o un esito dalla coda (data_scelta). `dopo(giorno)`: cosa ridisegnare
@@ -2316,6 +2328,10 @@ async function nuovoAppuntamento(opz = {}) {
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
       chiudi({ id: data.id, inizio });
+      // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
+      // piano marketing»): subito il foglio «Prima del PM, manda a Mario…». Dopo che chi ha chiamato ha finito (coda, Agenda, scheda).
+      if (v.tipo_azione === 'Piano Marketing' && st.contatto && MB21Sharing.perChiDi({ categoria: v.categoria }) === 'ospite')
+        setTimeout(() => proponiTracciaDopo({ id: v.contatto_id, nome: st.contatto.nome, categoria: v.categoria }, { primaDelPm: v.giorno }), 400);
       if (!opz.salta && !opz.resta) {
         AG.aperta = data.id;
         await apriAgenda(v.giorno);
