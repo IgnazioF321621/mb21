@@ -27,7 +27,7 @@ async function apriCoreMese(mese) {
     // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
     dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
       .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
-    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
+    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
