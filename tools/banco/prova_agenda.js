@@ -426,7 +426,37 @@ prova('Modello del giorno (cantiere 41 lavoro 2): voci per giorno della settiman
   assert.equal(A.testoGiorni([5, 1, 2, 3, 4]), 'Lun-Ven');
   assert.equal(A.testoGiorni([6, 7]), 'Sab e Dom');
   assert.equal(A.testoGiorni([1, 3, 5]), 'Lun, Mer, Ven');
-  assert.equal(A.CORE_N21.length, 5);
+});
+
+prova('Core N21 nel foglio: 7 abitudini, spunta dai numeri o a mano nel primo giorno della scala, sezioni con Core in cima', () => {
+  assert.equal(A.CORE_N21.length, 7);
+  assert.equal(A.inizioScala('settimana', '2026-09-24'), '2026-09-21');
+  assert.equal(A.inizioScala('mese', '2026-09-24'), '2026-09-01');
+  assert.equal(A.inizioScala('anno', '2026-09-24'), '2026-01-01');
+  assert.equal(A.inizioScala('giorno', '2026-09-24'), '2026-09-24');
+  const modello = [
+    ...A.CORE_N21.map((c, i) => ({ id: 'c' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })),
+    { id: 'p1', testo: 'Meditazione', sezione: 'Routine', giorni: [], ordine: 10, attivo: true },
+  ];
+  const cose = [
+    { id: 's1', core: 'open', giorno: '2026-09-21', fatto_il: '2026-09-23T20:00:00Z' },   // OPEN spuntato a mano, vale tutta la settimana
+    { id: 's2', core: 'prodotti', giorno: '2026-08-01', fatto_il: '2026-08-05T20:00:00Z' },   // mese scorso: non conta
+  ];
+  const misure = { tracce: 1, pagine: 6, pm_mese: 9, clienti_mese: 3 };
+  const voci = A.vociDelGiorno(modello, cose, '2026-09-24', misure);
+  const per = Object.fromEntries(voci.map(v => [v.core || v.id, v]));
+  assert.equal(voci.length, 7);                                  // 6 Core accese + Meditazione; «squadra» è spenta
+  assert.equal(per.cd.fatto_il, 'misura'); assert.equal(per.cd.stato.testo, '1/1');
+  assert.equal(per.pagine.fatto_il, null); assert.equal(per.pagine.stato.testo, '6/10');
+  assert.equal(per.pm.fatto_il, 'misura'); assert.equal(per.pm.diScala, 'questo mese');
+  assert.equal(per.clienti.fatto_il, null);
+  assert.equal(per.open.fatto_il, '2026-09-23T20:00:00Z'); assert.equal(per.open.spunta_id, 's1'); assert.equal(per.open.giornoSpunta, '2026-09-21');
+  assert.equal(per.prodotti.fatto_il, null); assert.equal(per.prodotti.giornoSpunta, '2026-09-01');
+  assert.equal(per.p1.stato, null); assert.equal(per.p1.giornoSpunta, '2026-09-24');
+  const sez = A.sezioniFoglio(voci);
+  assert.deepEqual(sez.map(s => s.nome), ['Core', 'Routine']);
+  assert.equal(sez[0].voci.length, 6);
+  assert.equal(A.statoCore({ core: 'open' }, misure), null);
 });
 
 console.log(`\n${ok} prove superate`);
