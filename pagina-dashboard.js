@@ -1074,7 +1074,7 @@ function apriCheck() {
       <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
     ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.' })}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
-    ${riga(7, 'tracce', { core: 4, spiega: 'A mano le tracce ascoltate oggi; quelle del percorso segnate «ascoltata» si sommano da sole → sezione 4 del foglio Core.' })}
+    ${riga(7, 'tracce', { core: 4, spiega: 'Scrivi quante tracce hai ascoltato oggi (CEP o BSM). Quelle del percorso che ti sono state condivise e segnate come “ascoltata” si aggiungono da sole. → sezione 4 del foglio Core.' })}
     <div class="ckr core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
       <select id="ck-libro"><option value="">— Libro —</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
       <input id="ck-pagine" inputmode="numeric" placeholder="${esc(CK.pagine.suggerimento)}">
@@ -1177,15 +1177,14 @@ function apriCheck() {
   // Tracce dal percorso (cantiere 40 lavoro 6, dal 22/09): quelle segnate «ascoltata» in «Il mio percorso» contano da sole; il campo
   // resta per le altre (il CEP). Una riga sotto il campo dice quante ne arrivano già dal percorso, così non si contano due volte.
   const tracceDelGiorno = async (data, ancoraValido) => {
-    const campo = velo.querySelector('#ck-campo-tracce');
-    let spia = velo.querySelector('#ck-tracce-percorso');
-    if (!spia) { spia = document.createElement('div'); spia.id = 'ck-tracce-percorso'; spia.className = 'vn-aiuto'; (campo.querySelector('.ck-corpo') || campo).appendChild(spia); }   // dentro il corpo della riga, non accanto (22/09: stringeva la riga)
-    spia.textContent = '';
+    // una frase sola (Ignazio 22/09), con il numero delle tracce del percorso già contate oggi
+    const aiuto = velo.querySelector('#ck-campo-tracce .vn-aiuto');
+    const frase = n => `Scrivi quante tracce hai ascoltato oggi (CEP o BSM). Quelle del percorso che ti sono state condivise e segnate come “ascoltata” si aggiungono da sole${n == null ? '' : `: oggi ${n}`}. → sezione 4 del foglio Core.`;
+    aiuto.textContent = frase(null);
     if (!data || data < MB21Dashboard.INIZIO_TRACCE_PERCORSO || visto().id !== ST.utente.id) return;
     const { data: righe, error } = await dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti'));
     if (!ancoraValido() || error) return;
-    const n = (righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
-    spia.textContent = n ? `${ic('audio')} ${n === 1 ? '1 traccia' : n + ' tracce'} del tuo percorso già ${n === 1 ? 'contata' : 'contate'} in questo giorno: qui scrivi solo le altre (CEP).` : 'Le tracce del percorso segnate «ascoltata» contano da sole: qui scrivi solo le altre (CEP).';
+    aiuto.textContent = frase((righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length);
   };
   // Lo stato del giorno sulle righe Core (Ignazio 22/09): consumo = VP Amway del mese − VP clienti; BBS/WES dai Segni vitali
   // della propria scheda; sponsor gruppo dal file Amway (data di ingresso nella propria linea); le righe si segnano «fatte».
@@ -1201,10 +1200,12 @@ function apriCheck() {
     velo.querySelector('#ck-campo-squadra').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].every(k => velo.querySelector('#ck-' + k).checked));   // tutte e tre (Ignazio 22/09)
     const sg = velo.querySelector('#ck-sponsor_gruppo'), aiutoSg = velo.querySelector('#ck-campo-sponsor_gruppo .vn-aiuto');
     velo.querySelector('#ck-campo-sponsor_gruppo').classList.toggle('auto', CK_CORE.gruppoOggi != null);   // automatico dal file Amway: riga colorata come Contatti e PM
+    const autoSg = velo.querySelector('#ck-auto-sponsor_gruppo');
     if (CK_CORE.gruppoOggi != null) {
-      sg.value = String(CK_CORE.gruppoOggi); sg.readOnly = true;
+      sg.value = String(CK_CORE.gruppoOggi); sg.readOnly = true; sg.style.display = 'none';
+      autoSg.style.display = ''; autoSg.innerHTML = `<div class="ck-valore">${CK_CORE.gruppoOggi}</div>`;
       aiutoSg.textContent = `Dal file Amway: ${CK_CORE.gruppoOggi} ${CK_CORE.gruppoOggi === 1 ? 'iscritto' : 'iscritti'} nella tua linea in questo giorno, ${CK_CORE.gruppoMese} nel mese.`;
-    }
+    } else { sg.readOnly = false; sg.style.display = ''; autoSg.style.display = 'none'; }
   };
   for (const k of ['tracce', 'pagine']) velo.querySelector('#ck-' + k).addEventListener('input', aggiornaCore);
   for (const k of ['open', 'counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).addEventListener('change', aggiornaCore);
