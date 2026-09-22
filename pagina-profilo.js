@@ -99,6 +99,7 @@ function disegnaProfilo() {
       <small style="margin-top:0">Alle <b>9</b> il programma di oggi, <b>30 minuti prima</b> di ogni appuntamento e di ogni telefonata con un orario un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
     ${calendarioHtml()}
+    ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
     ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
@@ -111,6 +112,7 @@ function disegnaProfilo() {
   collegaMieiSegni();
   su('pf-tel-salva', salvaTelefono);
   su('pf-numero', () => scegliNumero(disegnaProfilo));
+  su('pf-libri', () => apriLibri('profilo'));   // cantiere 40 lavoro 7: il diario di lettura (pagina-libri.js)
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
   collegaMioAvvio(disegnaProfilo, 'profilo');
