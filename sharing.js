@@ -49,8 +49,10 @@
     return k ? (materiali || []).find(m => m.id === k.materiale_id) || null : null;
   }
 
-  // Il consiglio: { traccia, fase, extra, fineFase, serveSesso } oppure { fine: true } quando non c'è più niente da proporre.
+  // Il consiglio: { traccia, fase, extra, fineFase, serveSesso, serveLavoro } oppure { fine: true } quando non c'è più niente da proporre.
   //   contatto.sesso: 'M' salta le «solo donne»; vuoto → se una candidata è «solo donne» si segnala serveSesso (l'app lo chiede)
+  //   contatto.lavoro: 'dipendente' / 'autonomo' → la traccia con lo stesso per_lavoro passa per prima nella fase (Ignazio 22/09:
+  //     dipendenti «Siamo nel mondo reale», autonomi «L'impresa ideale»); vuoto → se una candidata ha per_lavoro si segnala serveLavoro
   //   saltate: id scartati con «Un'altra» in questa sessione (si propongono per ultimi, non spariscono)
   function prossima(materiali, condivisioni, contatto, saltate = []) {
     const perChi = perChiDi(contatto);
@@ -62,16 +64,19 @@
     const scegli = lista => {
       const c = lista.filter(daFare);
       if (!c.length) return null;
-      // dopo uno straniero viene un italiano, se ce n'è; le saltate vanno in fondo
-      const peso = m => (saltate.includes(m.id) ? 2 : 0) + (ultima && ultima.straniero && m.straniero ? 1 : 0);
+      // la traccia per il suo lavoro passa avanti; dopo uno straniero viene un italiano, se ce n'è; le saltate vanno in fondo
+      // «Tempo e denaro» (ordine 0, prima del PM) e la traccia del lavoro pesano uguale: a parità decide l'ordine del PDF
+      const peso = m => (saltate.includes(m.id) ? 4 : 0) + (ultima && ultima.straniero && m.straniero ? 2 : 0) - (m.ordine === 0 || (contatto.lavoro && m.per_lavoro === contatto.lavoro) ? 1 : 0);
       return [...c].sort((a, b) => peso(a) - peso(b) || ordina(a, b))[0];
     };
     for (const f of percorso.fasi) {
       const t = scegli(f.tracce);
-      if (t) return { traccia: t, fase: f.fase, nome: f.nome, extra: false, serveSesso: !contatto.sesso && f.tracce.some(m => !condivisa(condivisioni, m.id) && m.solo_donne) };
+      if (t) return { traccia: t, fase: f.fase, nome: f.nome, extra: false,
+        serveSesso: !contatto.sesso && f.tracce.some(m => !condivisa(condivisioni, m.id) && m.solo_donne),
+        serveLavoro: !contatto.lavoro && f.tracce.some(m => !condivisa(condivisioni, m.id) && m.per_lavoro) };
       // la fase è finita (tutto condiviso, o restano solo «solo donne» per un uomo): prima le tracce in più del sito, poi la fase dopo
       const e = scegli(percorso.extra);
-      if (e) return { traccia: e, fase: f.fase, nome: f.nome, extra: true, fineFase: true, serveSesso: false };
+      if (e) return { traccia: e, fase: f.fase, nome: f.nome, extra: true, fineFase: true, serveSesso: false, serveLavoro: false };
     }
     return { fine: true, motivo: 'percorso' };
   }
@@ -87,6 +92,23 @@
     return taglio + '…';
   }
 
-  const api = { FASI, perChiDi, fasiPer, percorsoDi, faseCorrente, avanzamento, ultimaCondivisa, prossima, nomeCorto, accorcia };
+  // Dopo quale esito l'app propone la traccia (Ignazio 22/09: «la traccia si manda subito dopo, con il candidato davanti, al Piano
+  // Marketing: si fissa il successivo appuntamento e si condivide una traccia audio» · «deve comparire se la persona, dopo il piano,
+  // ha avuto un riscontro positivo (iscrizione o follow-up); se dice di no non condividiamo tracce»): i risultati buoni di PM e Follow Up
+  const proponeTraccia = (tipoAzione, esito) => ['Piano Marketing', 'Follow Up'].includes(tipoAzione) && ['Dare Seguito', 'Ulteriore Follow Up', 'Iscrizione'].includes(esito);
+
+  // Giorni interi da una data (AAAA-MM-GG) a oggi
+  const giorniDa = (giorno, oggi) => Math.round((Date.parse(oggi + 'T00:00:00Z') - Date.parse(giorno + 'T00:00:00Z')) / 86400000);
+
+  // Le condivisioni da controllare (riga in Dashboard): non ascoltate, condivise da 1 a 7 giorni. La traccia dura 72 ore:
+  // a 1 giorno «l'ha ascoltata?», a 2 «ricordaglielo», da 3 in poi «scaduta». Ordinate dalla più urgente (più vecchia).
+  function daControllare(condivisioni, oggi) {
+    return (condivisioni || []).filter(k => !k.ascoltata && giorniDa(k.condivisa_il, oggi) >= 1 && giorniDa(k.condivisa_il, oggi) <= 7)
+      .map(k => ({ ...k, giorni: giorniDa(k.condivisa_il, oggi) }))
+      .sort((a, b) => b.giorni - a.giorni);
+  }
+  const statoControllo = giorni => giorni >= 3 ? 'scaduta' : giorni === 2 ? 'ricordaglielo' : 'chiedi';
+
+  const api = { FASI, perChiDi, fasiPer, percorsoDi, faseCorrente, avanzamento, ultimaCondivisa, prossima, nomeCorto, accorcia, proponeTraccia, giorniDa, daControllare, statoControllo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Sharing = api;
 })(typeof self !== 'undefined' ? self : this);

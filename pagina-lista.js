@@ -58,6 +58,10 @@ async function apriLista() {
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
+  if (LS.apriContatto) {   // da un avviso «…?apri=lista&contatto=<id>&sezione=sharing» (cantiere 40): la scheda già aperta
+    const id = LS.apriContatto; LS.apriContatto = null;
+    if (LS.righe.find(x => x.id === id)) return apriScheda(id);
+  }
   disegnaLista();
 }
 
@@ -310,6 +314,7 @@ function apriScheda(id) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
+  if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
   LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null;
   window.scrollTo(0, 0);
   disegnaScheda();
@@ -1073,6 +1078,7 @@ function apriModulo(c) {
     </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     <div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>
     <div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option><option value="M">Uomo</option><option value="F">Donna</option></select></div>
+    <div class="campo"><label>Lavoro <small class="sotto" style="margin:0">(per la prima traccia dopo il PM)</small></label><select id="f-lavoro"><option value="">—</option><option value="dipendente">Dipendente</option><option value="autonomo">Autonomo</option></select></div>
     <div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
       <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
       <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
@@ -1114,11 +1120,11 @@ function apriModulo(c) {
   // (o se la lettura non riesce) il salvataggio NON lo tocca: meglio non poterlo cambiare che cancellarlo per sbaglio.
   // Il sesso (cantiere 40) segue la stessa regola: si legge da `contatti` e si salva solo se è stato letto
   let compleannoLetto = nuovo;
-  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno, sesso').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
+  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
     if (error || !data || !velo.isConnected) return;
     const k = MB21Rubrica.compleannoDaData(data.compleanno);
     if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
-    $('f-sesso').value = data.sesso || '';
+    $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
     compleannoLetto = true;
   });
   $('invia').onclick = async () => {
@@ -1131,7 +1137,7 @@ function apriModulo(c) {
     };
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
     if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
-    if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; }
+    if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; riga.lavoro = $('f-lavoro').value || null; }
     const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
     if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva')) return;
