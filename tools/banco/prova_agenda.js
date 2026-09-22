@@ -473,6 +473,12 @@ prova('Cose da fare del mese (vista Mese): riporto al mese di oggi, le fatte res
   assert.deepEqual(A.coseDelMese(cose, '2026-08-01', '2026-09-01').map(c => c.id), ['c']);
   assert.deepEqual(A.coseDelMese(cose, '2026-10-01', '2026-09-01').map(c => c.id), ['e']);
   assert.equal(A.meseAccanto('2026-12-01', 1), '2027-01-01');
+  // la settimana: stessa regola, giorno = il lunedì
+  const sett = [{ id: 's1', scala: 'settimana', giorno: '2026-09-14', fatto_il: null }, { id: 's2', scala: 'settimana', giorno: '2026-09-21', fatto_il: null }];
+  assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => [c.id, c.riportata]), [['s1', '2026-09-14'], ['s2', null]]);
+  assert.equal(A.numeroSettimana('2026-09-22'), 39);
+  assert.equal(A.numeroSettimana('2026-01-01'), 1);
+  assert.equal(A.numeroSettimana('2027-01-01'), 53);
   assert.equal(A.meseAccanto('2026-01-01', -1), '2025-12-01');
 });
 
