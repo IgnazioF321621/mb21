@@ -30,13 +30,10 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   assert.match(f, /class="ag-impegni"/);                 // la card degli impegni
   assert.match(f, /class="ag-imp[^"]*" data-evento="p1"/);
   assert.match(f, /Oggi, lun 21 set/);                   // il titolo del giorno
-  assert.match(f, /<h2 class="ag-sez">Core<\/h2>/);       // il foglio: Core in cima, poi Routine, poi Da fare
-  assert.ok(f.indexOf('ag-sez">Core') < f.indexOf('ag-sez">Routine') && f.indexOf('ag-sez">Routine') < f.indexOf('ag-sez">Da fare'));
-  assert.match(f, /cosa fatta auto[^"]*"[^>]*data-voce="mcd"/);     // 1 CD: spuntato da solo (tracce 1/1)
-  assert.match(f, /class="cosa auto" data-voce="mpagine"/);          // 6/10 pagine: non ancora
-  assert.match(f, /6\/10/);
-  assert.match(f, /3\/8 · questo mese/);                              // i PM del mese, con la scala accanto
-  assert.doesNotMatch(f, /Lavorare di squadra/);                     // voce spenta: non compare
+  assert.match(f, /id="ag-core-mese"/);                              // il bottone che apre il Modulo Core del mese (Ignazio 22/09: «più visibile»)
+  assert.doesNotMatch(f, /ag-sez">Core/);                            // la sezione Core non sta più nel foglio: vive nel Check e nel modulo
+  assert.doesNotMatch(f, /Presentare almeno 8 Piani Marketing/);
+  assert.ok(f.indexOf('ag-sez">Routine') < f.indexOf('ag-sez">Da fare'));
   assert.match(f, /da 19\/9/);                                       // la cosa non fatta di sabato si vede oggi
   assert.match(f, /id="ag-cronologia"/);                             // il cassetto in fondo
   assert.doesNotMatch(f, /class="ag-griglia"/);                      // la griglia non sta nella pagina
