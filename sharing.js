@@ -100,14 +100,15 @@
   // Giorni interi da una data (AAAA-MM-GG) a oggi
   const giorniDa = (giorno, oggi) => Math.round((Date.parse(oggi + 'T00:00:00Z') - Date.parse(giorno + 'T00:00:00Z')) / 86400000);
 
-  // Le condivisioni da controllare (riga in Dashboard): non ascoltate, condivise da 1 a 7 giorni. La traccia dura 72 ore:
-  // a 1 giorno «l'ha ascoltata?», a 2 «ricordaglielo», da 3 in poi «scaduta». Ordinate dalla più urgente (più vecchia).
+  // Le condivisioni da controllare (riga in Dashboard): non ascoltate, condivise da 0 a 7 giorni (Ignazio 22/09: quella appena
+  // condivisa si vede subito, «in attesa»). La traccia dura 72 ore: a 0 giorni «in attesa», a 1 «l'ha ascoltata?», a 2 «ricordaglielo»,
+  // da 3 in poi «scaduta». Ordinate dalla più urgente (più vecchia).
   function daControllare(condivisioni, oggi) {
-    return (condivisioni || []).filter(k => !k.ascoltata && giorniDa(k.condivisa_il, oggi) >= 1 && giorniDa(k.condivisa_il, oggi) <= 7)
+    return (condivisioni || []).filter(k => !k.ascoltata && giorniDa(k.condivisa_il, oggi) >= 0 && giorniDa(k.condivisa_il, oggi) <= 7)
       .map(k => ({ ...k, giorni: giorniDa(k.condivisa_il, oggi) }))
       .sort((a, b) => b.giorni - a.giorni);
   }
-  const statoControllo = giorni => giorni >= 3 ? 'scaduta' : giorni === 2 ? 'ricordaglielo' : 'chiedi';
+  const statoControllo = giorni => giorni >= 3 ? 'scaduta' : giorni === 2 ? 'ricordaglielo' : giorni === 1 ? 'chiedi' : 'attesa';
 
   const api = { FASI, perChiDi, fasiPer, percorsoDi, faseCorrente, avanzamento, ultimaCondivisa, prossima, nomeCorto, accorcia, proponeTraccia, giorniDa, daControllare, statoControllo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Sharing = api;
