@@ -1062,7 +1062,8 @@ function apriCheck() {
       <label>${escIcone(etichetta)} <small>Obbligatorio</small></label>
       <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : k === 'pm' ? '<div id="ck-azioni" style="display:none"></div>' : ''}`).join('')}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
-    <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.map(l => `<option>${esc(l)}</option>`).join('')}</select></div>
+    <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
+      <div class="vn-aiuto">Libri di crescita personale, vendita, network: niente romanzi. Con «Libro non da sistema…» scrivi titolo e autore una volta sola: se un giorno entra tra i consigliati N21, il diario lo riconosce da solo.</div></div>
     <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
     </div>
     <div class="errore" id="ck-errore"></div>
@@ -1078,6 +1079,25 @@ function apriCheck() {
   velo.querySelector('#ck-x').onclick = chiudi;
   velo.querySelector('#ck-no').onclick = chiudi;
   const note = velo.querySelector('#ck-note');
+  // I libri personali di chi è scelto («Altro libro…», cantiere 40 lavoro 7): si aggiungono all'elenco prima di «Altro libro…»
+  const libroSel = velo.querySelector('#ck-libro'), vocealtro = libroSel.querySelector('[value="__altro__"]');
+  dbq('libri personali', supa.from('libri_personali').select('titolo').eq('user_id', visto().id).order('titolo')).then(({ data }) => {
+    for (const x of data || []) if (![...libroSel.options].some(o => o.value === x.titolo)) libroSel.insertBefore(new Option(x.titolo, x.titolo), vocealtro);
+  });
+  let libroPrima = '';
+  libroSel.addEventListener('focus', () => { libroPrima = libroSel.value; });
+  libroSel.addEventListener('change', async () => {
+    if (libroSel.value !== '__altro__') return;
+    const v = await moduloSemplice('Libro non da sistema', [
+      { k: 'titolo', etichetta: 'Titolo', tipo: 'text', valore: '', obbligatorio: true },
+      { k: 'autore', etichetta: 'Autore', tipo: 'text', valore: '' }]);
+    const titolo = v && String(v.titolo || '').trim().slice(0, 120);
+    if (!titolo) { libroSel.value = libroPrima; return; }
+    const { error } = await dbq('altro libro', supa.from('libri_personali').upsert({ user_id: visto().id, titolo, autore: String(v.autore || '').trim().slice(0, 80) || null }, { onConflict: 'user_id,titolo' }));
+    if (error) { libroSel.value = libroPrima; return mostraToast('Libro non salvato: riprova.'); }
+    if (![...libroSel.options].some(o => o.value === titolo)) libroSel.insertBefore(new Option(titolo, titolo), vocealtro);
+    libroSel.value = titolo;
+  });
   note.oninput = () => { velo.querySelector('#ck-conta').textContent = `${note.value.length}/150`; };
   // Check già salvato nel giorno scelto: si carica nei campi (esistente = riga più recente, null = Check nuovo)
   let esistente = null, giro = 0;

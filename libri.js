@@ -24,12 +24,13 @@
   // Il percorso dei libri: i materiali con `ordine_libro`, in ordine; ✓ se il titolo compare in un Check.
   // Passo 0 (Manuale): non passa dai Check → si dà per fatto quando è stato letto almeno un altro libro del percorso.
   // Passo 1: due libri «a scelta» → basta uno dei due. Il «prossimo» è il primo passo non fatto.
-  function percorso(check, libri) {
-    const letti = new Set(conLibro(check).map(c => c.libro));
+  // `giaLetti`: i libri segnati «L'ho già letto» [{ titolo, quando }] (prima di MB21): valgono come letti, senza data
+  function percorso(check, libri, giaLetti = []) {
+    const letti = new Set([...conLibro(check).map(c => c.libro), ...giaLetti.map(g => g.titolo)]);
     const primoLetto = t => { const c = conLibro(check).filter(x => x.libro === t); return c.length ? c[c.length - 1].data : null; };
     const passi = (libri || []).filter(l => l.ordine_libro !== null && l.ordine_libro !== undefined).sort((a, b) => a.ordine_libro - b.ordine_libro || a.titolo.localeCompare(b.titolo, 'it'));
     const altroLetto = passi.some(l => l.ordine_libro > 0 && letti.has(l.titolo));
-    const righe = passi.map(l => ({ ...l, letto: l.tipo === 'manuale' ? altroLetto : letti.has(l.titolo), letto_il: primoLetto(l.titolo) }));
+    const righe = passi.map(l => ({ ...l, letto: l.tipo === 'manuale' ? altroLetto : letti.has(l.titolo), letto_il: primoLetto(l.titolo), gia: giaLetti.find(g => g.titolo === l.titolo) || null }));
     // il passo 1 è «uno dei due»: se uno è letto, l'altro non è più «prossimo»
     const passo1Fatto = righe.some(r => r.ordine_libro === 1 && r.letto);
     let prossimoDato = false;
@@ -42,7 +43,7 @@
   }
 
   // Il diario: un blocco per libro, dal più recente; dentro le note giorno per giorno (dal più recente)
-  function diario(check, libri) {
+  function diario(check, libri, giaLetti = []) {
     const perLibro = new Map();
     for (const c of conLibro(check)) {
       if (!perLibro.has(c.libro)) perLibro.set(c.libro, { titolo: c.libro, autore: ((libri || []).find(x => x.titolo === c.libro) || {}).autore || null, giorni: 0, pagine: 0, dal: c.data, al: c.data, note: [] });
@@ -50,13 +51,16 @@
       b.giorni++; b.pagine += n(c.pagine); b.dal = c.data < b.dal ? c.data : b.dal; b.al = c.data > b.al ? c.data : b.al;
       if (c.note_libro) b.note.push({ data: c.data, testo: c.note_libro, pagine: n(c.pagine) });
     }
-    return [...perLibro.values()].sort((a, b) => b.al.localeCompare(a.al));
+    const dai = [...perLibro.values()].sort((a, b) => b.al.localeCompare(a.al));
+    // i «già letti» senza Check vanno in fondo, come blocchi senza note
+    const gia = giaLetti.filter(g => !perLibro.has(g.titolo)).map(g => ({ titolo: g.titolo, autore: ((libri || []).find(x => x.titolo === g.titolo) || {}).autore || null, giorni: 0, pagine: 0, dal: null, al: null, note: [], gia: g }));
+    return [...dai, ...gia];
   }
 
-  function riepilogo(check, libri, oggi) {
+  function riepilogo(check, libri, oggi, giaLetti = []) {
     const m = mese(oggi);
     return { inCorso: inCorso(check, libri), pagineMese: pagineDelMese(check, m), pagineMesePrima: pagineDelMese(check, mesePrima(oggi)),
-      mese: m, mesePrima: mesePrima(oggi), percorso: percorso(check, libri), diario: diario(check, libri) };
+      mese: m, mesePrima: mesePrima(oggi), percorso: percorso(check, libri, giaLetti), diario: diario(check, libri, giaLetti) };
   }
 
   const api = { mese, mesePrima, conLibro, inCorso, pagineDelMese, percorso, diario, riepilogo };
