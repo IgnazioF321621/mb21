@@ -1051,40 +1051,49 @@ function apriCheck() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34): in testa il giorno, gruppi «Attività» e «Crescita», «Annulla · Salva» fermi in fondo
+  // Ogni voce del Check è una riga numerata come nel modulo Core (Ignazio 22/09: «integrare sempre di più il Check nel Core»):
+  // numero · titolo · targhetta «Core» se riempie il foglio Core del mese · come si riempie (automatico o a mano).
+  const CK = Object.fromEntries(MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => [k, { etichetta, suggerimento, decimale }]));
+  const riga = (n, k, opz = {}) => `<div class="ck-riga${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
+      <label for="ck-${k}">${escIcone(CK[k].etichetta)}${opz.core ? '<span class="ck-tag">Core</span>' : ''}</label>
+      <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="${esc(CK[k].suggerimento)}">
+      <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>${opz.dopo || ''}`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
       <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>${ic('conferme')} Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
-    <h4 class="mc-t">Attività</h4><div class="riquadro mc-g">
-    ${MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => `<div class="campo" id="ck-campo-${k}">
-      <label>${escIcone(etichetta)} <small>Obbligatorio</small></label>
-      <input id="ck-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" placeholder="${esc(suggerimento)}"></div>${k === 'vp_clienti' ? '<div id="ck-vendite" style="display:none"></div>' : k === 'pm' ? '<div id="ck-azioni" style="display:none"></div>' : ''}`).join('')}
+    <h4 class="mc-t">Azione</h4><div class="riquadro mc-g">
+    ${riga(1, 'contatti', { spiega: 'Automatico dal 14/09: dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda).' })}
+    ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.', dopo: '<div id="ck-azioni" style="display:none"></div>' })}
+    ${riga(3, 'sponsor_personali', { spiega: 'A mano: gli iscritti che hai sponsorizzato tu oggi.' })}
+    ${riga(4, 'sponsor_gruppo', { spiega: 'Automatico dal file Amway (data di iscrizione, nella tua linea); a mano se il file non c\'è ancora.' })}
+    <div class="ck-riga core" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
+      <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
+    ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.', dopo: '<div id="ck-vendite" style="display:none"></div>' })}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">
-    <div class="campo"><label>Libro</label><select id="ck-libro"><option value="">—</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
-      <div class="vn-aiuto">Libri di crescita personale, vendita, network: niente romanzi. Con «Libro non da sistema…» scrivi titolo e autore una volta sola: se un giorno entra tra i consigliati N21, il diario lo riconosce da solo.</div></div>
-    <div class="campo"><label>Note del libro</label><input id="ck-note" maxlength="150"><div class="conta" id="ck-conta">0/150</div></div>
-    </div>
-    <h4 class="mc-t">Core N21</h4><div class="riquadro mc-g">
-    ${MB21Agenda.CORE_N21.map((c, i) => c.core === 'squadra'
-      ? `<div class="ck-core" data-core="squadra"><b>${i + 1}</b><div><span>${esc(c.testo)}</span>
-          <label class="ck-sotto"><input type="checkbox" id="ck-counseling"> oggi sessione di <b>counseling</b> con lo sponsor</label>
-          <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"> oggi ho praticato l'<b>edificazione</b></label>
-          <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"> oggi ho praticato il <b>no-crossline</b></label></div></div>`
-      : `<label class="ck-core" data-core="${c.core}"><b>${i + 1}</b><div><span>${esc(c.testo)}</span><small>${c.core === 'open' ? 'oggi sono stato all\'OPEN' : '…'}</small></div>
-      ${c.core === 'open' ? '<input type="checkbox" id="ck-open">' : `<i class="ck-core-spunta">${ic('fatto', 16)}</i>`}</label>`).join('')}
-    <div class="vn-aiuto">Le 7 abitudini della persona Core: 1-5 si riempiono da sole (PM dall'Agenda, VP dai dati Amway, clienti dalle vendite, tracce e pagine da questo Check), 6 e 7 le spunti tu.</div>
+    ${riga(7, 'tracce', { core: 4, spiega: 'A mano le tracce ascoltate oggi; quelle del percorso segnate «ascoltata» si sommano da sole → sezione 4 del foglio Core.' })}
+    <div class="ck-riga core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
+      <select id="ck-libro"><option value="">— Libro —</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
+      <input id="ck-pagine" inputmode="numeric" placeholder="${esc(CK.pagine.suggerimento)}">
+      <input id="ck-note" maxlength="150" placeholder="Note del libro"><div class="conta" id="ck-conta">0/150</div>
+      <div class="vn-aiuto">A mano: libro, pagine (10 al giorno) e note → sezione 5 del foglio Core e diario dei libri. Con «Libro non da sistema…» scrivi titolo e autore una volta sola.</div></div></div>
+    </div><h4 class="mc-t">Squadra</h4><div class="riquadro mc-g">
+    <div class="ck-riga core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-open"> oggi sono stato all'<b>OPEN</b></label>
+      <div class="ck-badge-riga">Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b> Biglietto WES <b class="ck-badge" id="ck-wes">—</b></div>
+      <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
+    <div class="ck-riga core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-counseling"> oggi sessione di <b>counseling</b> con lo sponsor/upline</label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"> oggi ho praticato l'<b>edificazione</b></label>
+      <label class="ck-sotto"><input type="checkbox" id="ck-no_crossline"> oggi ho praticato il <b>no-crossline</b></label>
+      <div class="vn-aiuto">A mano → sezione 7 del foglio Core.</div></div></div>
     </div>
     <div class="errore" id="ck-errore"></div>
     <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
-  // Tracce e Pagine sono crescita, non attività: si spostano nel loro gruppo (i campi e gli id restano quelli di prima)
-  for (const k of ['pagine', 'tracce']) {   // all'indietro: ognuno va in cima al gruppo, così restano nell'ordine Tracce · Pagine
-    const campo = velo.querySelector('#ck-campo-' + k), gruppo = velo.querySelector('#ck-crescita');
-    if (campo && gruppo) gruppo.insertBefore(campo, gruppo.firstChild);
-  }
   const chiudi = () => velo.remove();
   velo.querySelector('#ck-x').onclick = chiudi;
   velo.querySelector('#ck-no').onclick = chiudi;
@@ -1175,42 +1184,59 @@ function apriCheck() {
     const n = (righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
     spia.textContent = n ? `${ic('audio')} ${n === 1 ? '1 traccia' : n + ' tracce'} del tuo percorso già ${n === 1 ? 'contata' : 'contate'} in questo giorno: qui scrivi solo le altre (CEP).` : 'Le tracce del percorso segnate «ascoltata» contano da sole: qui scrivi solo le altre (CEP).';
   };
-  // Le 7 abitudini Core con lo stato del giorno (cantiere 41, Ignazio 22/09: «tutte e sette nel Check»): 1-3 dal mese
-  // (PM dalle azioni, VP Amway, clienti dalle vendite), 4-5 da questo Check (tracce + percorso, pagine), 6-7 le spunte.
-  const CK_CORE = { pm: 0, clienti: 0, vp: null, percorso: 0 };
+  // Lo stato del giorno sulle righe Core (Ignazio 22/09): consumo = VP Amway del mese − VP clienti; BBS/WES dai Segni vitali
+  // della propria scheda; sponsor gruppo dal file Amway (data di ingresso nella propria linea); le righe si segnano «fatte».
+  const CK_CORE = { vp: null, percorso: 0, bbs: null, wes: null, gruppoOggi: null, gruppoMese: 0 };
+  const num = k => Number(String(velo.querySelector('#ck-' + k).value).trim().replace(',', '.')) || 0;
   const aggiornaCore = () => {
-    const n = k => Number(String(velo.querySelector('#ck-' + k).value).trim().replace(',', '.')) || 0;
-    const stato = { pm: [CK_CORE.pm, 8, 'questo mese'], prodotti: [CK_CORE.vp, null, 'VP questo mese (dati Amway)'], clienti: [CK_CORE.clienti, 10, 'questo mese'],
-      cd: [n('tracce') + CK_CORE.percorso, 1, CK_CORE.percorso ? `oggi (${CK_CORE.percorso} dal percorso)` : 'oggi'], pagine: [n('pagine'), 10, 'pagine oggi'] };
-    for (const [k, [v, ob, testo]] of Object.entries(stato)) {
-      const riga = velo.querySelector(`.ck-core[data-core="${k}"]`);
-      if (!riga) continue;
-      riga.classList.toggle('fatta', ob ? v >= ob : v != null && v > 0);
-      riga.querySelector('small').textContent = v == null ? `— ${testo}` : `${ob ? `${v}/${ob}` : String(v).replace('.', ',')} ${testo}`;
+    velo.querySelector('#ck-consumo').textContent = CK_CORE.vp == null ? '— (dati Amway del mese non ancora importati)' : `${String(CK_CORE.vp).replace('.', ',')} VP`;
+    velo.querySelector('#ck-campo-consumo').classList.toggle('fatta', CK_CORE.vp != null && CK_CORE.vp > 0);
+    for (const k of ['bbs', 'wes']) { const b = velo.querySelector('#ck-' + k); b.textContent = CK_CORE[k] == null ? '—' : CK_CORE[k] ? 'SI' : 'NO'; b.classList.toggle('si', !!CK_CORE[k]); }
+    velo.querySelector('#ck-campo-tracce').classList.toggle('fatta', num('tracce') + CK_CORE.percorso >= 1);
+    velo.querySelector('#ck-campo-pagine').classList.toggle('fatta', num('pagine') >= 10);
+    velo.querySelector('#ck-campo-open').classList.toggle('fatta', velo.querySelector('#ck-open').checked);
+    velo.querySelector('#ck-campo-squadra').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].some(k => velo.querySelector('#ck-' + k).checked));
+    const sg = velo.querySelector('#ck-sponsor_gruppo'), aiutoSg = velo.querySelector('#ck-campo-sponsor_gruppo .vn-aiuto');
+    if (CK_CORE.gruppoOggi != null) {
+      sg.value = String(CK_CORE.gruppoOggi); sg.readOnly = true;
+      aiutoSg.textContent = `Dal file Amway: ${CK_CORE.gruppoOggi} ${CK_CORE.gruppoOggi === 1 ? 'iscritto' : 'iscritti'} nella tua linea in questo giorno, ${CK_CORE.gruppoMese} nel mese.`;
     }
-    velo.querySelector('.ck-core[data-core="open"]').classList.toggle('fatta', velo.querySelector('#ck-open').checked);
-    velo.querySelector('.ck-core[data-core="squadra"]').classList.toggle('fatta', ['counseling', 'edificazione', 'no_crossline'].some(k => velo.querySelector('#ck-' + k).checked));
   };
   for (const k of ['tracce', 'pagine']) velo.querySelector('#ck-' + k).addEventListener('input', aggiornaCore);
   for (const k of ['open', 'counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).addEventListener('change', aggiornaCore);
   const coreDelGiorno = async (data, ancoraValido) => {
     if (!data) return;
     const A = MB21Agenda, mese0 = data.slice(0, 8) + '01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
-    const [pm, ve, ob, tr] = await Promise.all([
-      dbq('pm del mese', supa.from('azioni_conti').select('pm').eq('user_id', visto().id).eq('pm', 1).gte('giorno', mese0).lt('giorno', mese1)),
+    const io = visto();
+    const [ve, ob, tr, sq, scheda] = await Promise.all([
       // le vendite che CONTANO nel mese (consegna nel mese, o senza consegna e pagate nel mese): la promo che conta nel 2027 non è qui
-      dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', visto().id)
+      dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', io.id)
         .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
-      dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', visto().id).eq('mese', mese0).maybeSingle()),
-      visto().id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
+      dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
+      io.id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
+      io.partner_id ? dbq('squadra', supa.from('squadra').select('partner_id, sponsor_id, data_ingresso')) : Promise.resolve({ data: null }),
+      io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : Promise.resolve({ data: [] }),
     ]);
     if (!ancoraValido()) return;
-    CK_CORE.pm = (pm.data || []).length;
-    CK_CORE.clienti = new Set((ve.data || []).map(r => r.contatto_id)).size;
-    // consumo personale = VP personali Amway − VP venduti ai clienti (Ignazio 22/09)
     const vpClienti = (ve.data || []).reduce((t, r) => t + (Number(r.vp) || 0), 0);
     CK_CORE.vp = ob.data && ob.data.vpp_amway != null ? Math.max(0, Math.round((Number(ob.data.vpp_amway) - vpClienti) * 100) / 100) : null;
     CK_CORE.percorso = (tr.data || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length;
+    // la propria linea: chi ha come sponsor me, o chi ha come sponsor uno della mia linea (albero Amway `squadra`)
+    if (sq.data && sq.data.length) {
+      const figli = new Map();
+      for (const r of sq.data) { if (!figli.has(r.sponsor_id)) figli.set(r.sponsor_id, []); figli.get(r.sponsor_id).push(r); }
+      const linea = [], coda = [...(figli.get(io.partner_id) || [])];
+      while (coda.length) { const r = coda.shift(); linea.push(r); coda.push(...(figli.get(r.partner_id) || [])); }
+      CK_CORE.gruppoOggi = linea.filter(r => r.data_ingresso === data).length;
+      CK_CORE.gruppoMese = linea.filter(r => r.data_ingresso && r.data_ingresso >= mese0 && r.data_ingresso < mese1).length;
+    } else CK_CORE.gruppoOggi = null;
+    const miaScheda = scheda.data && scheda.data[0] ? scheda.data[0].id : null;
+    if (miaScheda) {
+      const bi = await dbq('biglietti', supa.from('biglietti').select('tipo, contatto').eq('contatto_id', miaScheda).gte('evento', mese0));
+      if (!ancoraValido()) return;
+      CK_CORE.bbs = (bi.data || []).some(b => b.tipo === 'BBS' && b.contatto);
+      CK_CORE.wes = (bi.data || []).some(b => b.tipo === 'WES' && b.contatto);
+    } else { CK_CORE.bbs = null; CK_CORE.wes = null; }
     aggiornaCore();
   };
   // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
