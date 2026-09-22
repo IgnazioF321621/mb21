@@ -761,9 +761,9 @@
   /* il modello: una riga per voce con l'interruttore a sinistra */
   .foglio.mod .mod-voce { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--superficie-2); }
   .foglio.mod .mod-voce button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
-  .foglio.mod .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }
+  .foglio.mod .mod-voce .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }   /* più specifico di «.mod-voce button», se no resta senza sfondo (visto da Ignazio 22/09) */
   .foglio.mod .mod-int i { position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s; }
-  .foglio.mod .spenta .mod-int { background: var(--spento); }
+  .foglio.mod .mod-voce.spenta .mod-int { background: var(--spento); }
   .foglio.mod .spenta .mod-int i { left: 3px; }
   .foglio.mod .mod-testo { flex: 1; min-height: 48px; padding: 8px 0; display: flex; flex-direction: column; gap: 1px; font-size: 15px; }
   .foglio.mod .mod-testo small { font-size: 12px; color: var(--testo-tenue); }
@@ -1204,35 +1204,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609221826"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609221826"></script>
-<script src="lista.js?v=202609221826"></script>
-<script src="rubrica.js?v=202609221826"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609221826"></script>
-<script src="agenda.js?v=202609221826"></script>
-<script src="report.js?v=202609221826"></script>
-<script src="check.js?v=202609221826"></script>
-<script src="mappa.js?v=202609221826"></script>
-<script src="pagina-dashboard.js?v=202609221826"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609221826"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609221826"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609221826"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609221826"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609221826"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609221826"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609221826"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609221826"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609221826"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609221826"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609221826"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609221826"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609221826"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609221826"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609221826"></script>
-<script src="benvenuto.js?v=202609221826"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609221826"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221841"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221841"></script>
+<script src="lista.js?v=202609221841"></script>
+<script src="rubrica.js?v=202609221841"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221841"></script>
+<script src="agenda.js?v=202609221841"></script>
+<script src="report.js?v=202609221841"></script>
+<script src="check.js?v=202609221841"></script>
+<script src="mappa.js?v=202609221841"></script>
+<script src="pagina-dashboard.js?v=202609221841"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221841"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221841"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221841"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221841"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221841"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609221841"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609221841"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609221841"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609221841"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221841"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221841"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221841"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221841"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221841"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221841"></script>
+<script src="benvenuto.js?v=202609221841"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221841"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 18:26';
+const APP_VERSION = '2026.09.22 · 18:41';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1662,6 +1662,7 @@ async function caricaAgenda() {
     dbq('check del giorno', supa.from('check_giorno').select('tracce, pagine').eq('user_id', visto().id).eq('data', AG.giorno)),
     dbq('pm del mese', supa.from('azioni_conti').select('pm').eq('user_id', visto().id).eq('pm', 1).gte('giorno', mese0).lt('giorno', mese1)),
     dbq('clienti del mese', supa.from('vendite').select('contatto_id').eq('user_id', visto().id).gte('data', mese0).lt('data', mese1)),
+    dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')),   // le tracce del percorso segnate «ascoltata»: si sommano a quelle del Check
   ]);
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   await conferme;
@@ -1672,7 +1673,7 @@ async function caricaAgenda() {
   AG.cose = cd ? cd.data : [];
   AG.modello = md ? md.data : [];
   AG.misure = !ms ? {} : {
-    tracce: ms[0].data.reduce((n, r) => n + (Number(r.tracce) || 0), 0),
+    tracce: ms[0].data.reduce((n, r) => n + (Number(r.tracce) || 0), 0) + (ms[3].data || []).filter(r => r.giorno === AG.giorno && r.user_id === visto().id).length,
     pagine: ms[0].data.reduce((n, r) => n + (Number(r.pagine) || 0), 0),
     pm_mese: ms[1].data.length,
     clienti_mese: new Set(ms[2].data.map(r => r.contatto_id)).size,
