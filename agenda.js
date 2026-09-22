@@ -145,7 +145,7 @@
     { core: 'pm', testo: 'Presentare almeno 8 Piani Marketing al mese', scala: 'mese', misura: 'pm_mese', obiettivo: 8 },
     { core: 'prodotti', testo: 'Consumare i prodotti Amway', scala: 'mese' },
     { core: 'clienti', testo: 'Servire almeno 10 clienti al mese', scala: 'mese', misura: 'clienti_mese', obiettivo: 10 },
-    { core: 'cd', testo: 'Ascoltare 1 CD al giorno', scala: 'giorno', misura: 'tracce', obiettivo: 1 },
+    { core: 'cd', testo: 'Ascoltare 1 traccia al giorno', scala: 'giorno', misura: 'tracce', obiettivo: 1 },   // Ignazio 22/09: «traccia, non CD»
     { core: 'pagine', testo: 'Leggere 10 pagine al giorno', scala: 'giorno', misura: 'pagine', obiettivo: 10 },
     { core: 'open', testo: 'Partecipare all\'OPEN settimanale', scala: 'settimana' },
     { core: 'squadra', testo: 'Lavorare di squadra', scala: 'mese' },

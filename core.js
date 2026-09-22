@@ -56,10 +56,6 @@
     const s1 = { righe: pm.slice(0, RIGHE.pm), quanti: pm.length, obiettivo: OBIETTIVI.pm, raggiunto: pm.length >= OBIETTIVI.pm,
       iscritti: pm.filter(r => r.iscritti).length, clienti: pm.filter(r => r.clienti).length, no: pm.filter(r => r.no).length };
 
-    // 2 · Consumare i prodotti Amway: i VP personali Amway del mese; se non ci sono, quello scritto a mano
-    const vpAmway = obiettivi && obiettivi.vpp_amway != null ? Number(obiettivi.vpp_amway) : null;
-    const s2 = { vp: vpAmway != null ? vpAmway : d.vp_consumo != null ? Number(d.vp_consumo) : null, auto: vpAmway != null };
-
     // 3 · Servire almeno 10 clienti al mese: un cliente per riga, con i VP del mese
     const perCliente = new Map();
     for (const v of vendite.filter(v => nelMese(v.data, mese))) {
@@ -71,15 +67,21 @@
     const s3 = { righe: clienti.slice(0, RIGHE.clienti), quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
       vp: clienti.reduce((t, r) => t + r.vp, 0) };
 
+    // 2 · Consumare i prodotti Amway (Ignazio 22/09): il consumo personale = i VP personali Amway del mese MENO i VP venduti
+    // ai clienti (chi compra solo per vendere non consuma). Senza dati Amway vale quello scritto a mano.
+    const vpAmway = obiettivi && obiettivi.vpp_amway != null ? Number(obiettivi.vpp_amway) : null;
+    const s2 = { vp: vpAmway != null ? Math.max(0, Math.round((vpAmway - s3.vp) * 100) / 100) : d.vp_consumo != null ? Number(d.vp_consumo) : null,
+      auto: vpAmway != null, vpAmway, vpClienti: s3.vp };
+
     // 4 · Ascoltare 1 CD al giorno: un rigo per giorno. Le tracce del percorso segnate «ascoltata» SI SOMMANO a quelle scritte
     // nel Check (Ignazio 22/09: «due ascoltate e una condivisa diventano tre»); niente titoli a mano (ripetitivo): si scrive
     // quante sono, e i titoli del percorso, che arrivano da soli.
     const s4 = { giorni: Array.from({ length: n }, (_, i) => {
       const giorno = `${mese}-${String(i + 1).padStart(2, '0')}`;
       const c = perGiorno.get(giorno);
-      const titoli = tracce.filter(t => t.giorno === giorno).map(t => t.titolo).filter(Boolean);
-      const quante = (c ? Number(c.tracce) || 0 : 0) + titoli.length;
-      const testo = quante ? `${quante} ${quante === 1 ? 'traccia' : 'tracce'}${titoli.length ? ' · ' + titoli.join(' · ') : ''}` : '';
+      const percorso = tracce.filter(t => t.giorno === giorno).length;
+      const quante = (c ? Number(c.tracce) || 0 : 0) + percorso;
+      const testo = quante ? `${quante} ${quante === 1 ? 'traccia' : 'tracce'}${percorso ? ` (${percorso} dal percorso)` : ''}` : '';   // senza titoli (Ignazio 22/09)
       return { giorno: i + 1, quante, titolo: testo, fatto: quante >= OBIETTIVI.cd };
     }) };
     s4.quanti = s4.giorni.filter(g => g.fatto).length;
@@ -102,9 +104,12 @@
 
     // 7 · Lavorare di squadra: counseling (dal Check), edificazione e no-crossline (a mano)
     const cons = check.filter(c => c.counseling && nelMese(c.data, mese)).map(c => c.data).sort();
+    // edificazione e no-crossline: SI se almeno un Check del mese li ha spuntati (Ignazio 22/09: «gli altri punti li dobbiamo mettere»); se no, la risposta data a mano nel modulo
+    const daCheck = k => check.some(c => c[k] && nelMese(c.data, mese));
     const s7 = { counseling: cons.length ? gg(cons[0]) : (d.counseling || ''), auto: cons.length > 0,
-      edificazione: d.edificazione === true ? true : d.edificazione === false ? false : null,
-      no_crossline: d.no_crossline === true ? true : d.no_crossline === false ? false : null };
+      edificazione: daCheck('edificazione') ? true : d.edificazione === true ? true : d.edificazione === false ? false : null,
+      no_crossline: daCheck('no_crossline') ? true : d.no_crossline === true ? true : d.no_crossline === false ? false : null,
+      autoEdificazione: daCheck('edificazione'), autoNoCrossline: daCheck('no_crossline') };
 
     // Obiettivi del mese (dal Check: obiettivi_mese)
     const o = obiettivi || {};

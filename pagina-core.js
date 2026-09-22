@@ -74,7 +74,8 @@ function moduloCoreHtml(m) {
     </tbody></table>` : vuotoPer('dai Piani Marketing avvenuti in Agenda', 'Piano Marketing')}`, m.s1.raggiunto);
 
   const s2 = sez(2, 'Consumare i prodotti Amway', `
-    <div class="cm-riga"><span>Totale VP prodotti dal consumo personale</span>${m.s2.auto ? `<b class="cm-auto">${num(m.s2.vp)}</b><small>dai dati Amway</small>` : `<input class="cm-num larga" id="cm-vp-consumo" inputmode="decimal" value="${num(m.s2.vp)}" placeholder="VP">`}</div>`, m.s2.vp != null && m.s2.vp > 0);
+    <div class="cm-riga"><span>Totale VP prodotti dal consumo personale</span>${m.s2.auto ? `<b class="cm-auto">${num(m.s2.vp)}</b>` : `<input class="cm-num larga" id="cm-vp-consumo" inputmode="decimal" value="${num(m.s2.vp)}" placeholder="VP">`}</div>
+    <div class="vn-aiuto">${m.s2.auto ? `VP personali Amway ${num(m.s2.vpAmway)} − VP venduti ai clienti ${num(m.s2.vpClienti)}: quello che resta è consumo.` : 'Senza dati Amway del mese si scrive a mano: VP personali meno VP venduti ai clienti.'}</div>`, m.s2.vp != null && m.s2.vp > 0);
 
   const s3 = sez(3, 'Servire almeno 10 clienti al mese [100-300 VP]', `
     <div class="cm-conto"><b>${m.s3.quanti}</b>/${m.s3.obiettivo} clienti · <b>${num(m.s3.vp)}</b> VP</div>
@@ -86,7 +87,7 @@ function moduloCoreHtml(m) {
   const s4 = sez(4, 'Ascoltare 1 CD al giorno [CEP - catalogo BSM]', `
     <div class="cm-conto"><b>${m.s4.quanti}</b>/${m.giorni} giorni</div>
     <div class="cm-giorni">${m.s4.giorni.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>
-    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata» (con il titolo).</div>`, m.s4.quanti >= m.giorni);
+    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.</div>`, m.s4.quanti >= m.giorni);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>
@@ -102,8 +103,8 @@ function moduloCoreHtml(m) {
 
   const s7 = sez(7, 'Lavorare di squadra', `
     <div class="cm-riga"><span>Sessione di COUNSELING in data</span>${m.s7.auto ? `<b class="cm-auto">${esc(m.s7.counseling)}</b>` : `<input class="cm-num larga" id="cm-counseling" value="${esc(m.s7.counseling)}" placeholder="gg/mm" maxlength="10">`}</div>
-    <div class="cm-riga"><span>Pratico il principio dell'EDIFICAZIONE</span>${sn('edificazione', m.s7.edificazione)}</div>
-    <div class="cm-riga"><span>Pratico il principio del NO-CROSSLINE</span>${sn('no_crossline', m.s7.no_crossline)}</div>`, !!m.s7.counseling);
+    <div class="cm-riga"><span>Pratico il principio dell'EDIFICAZIONE</span>${m.s7.autoEdificazione ? '<b class="cm-auto">SI</b><small>dal Check</small>' : sn('edificazione', m.s7.edificazione)}</div>
+    <div class="cm-riga"><span>Pratico il principio del NO-CROSSLINE</span>${m.s7.autoNoCrossline ? '<b class="cm-auto">SI</b><small>dal Check</small>' : sn('no_crossline', m.s7.no_crossline)}</div>`, !!m.s7.counseling);
 
   const o = m.obiettivi;
   const ob = `<section class="cm-sez ob"><div class="cm-sez-testa"><span>Obiettivi del mese</span></div>
