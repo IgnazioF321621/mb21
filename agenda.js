@@ -150,6 +150,23 @@
     const primo = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
     return 1 + Math.round(((d - primo) / 86400000 - 3 + ((primo.getUTCDay() + 6) % 7)) / 7);
   }
+  // ── Il Periodo WES (cantiere 41): da un WES al successivo. `wes` = righe { data (primo del mese), giorno (primo giorno
+  // del WES, facoltativo) }. Il periodo che contiene `giorno` va dal mese di un WES (compreso) al mese del successivo (escluso);
+  // null prima del primo WES. `fino` = il giorno del WES che chiude il periodo (o il primo del suo mese se manca il giorno).
+  function periodoWesDi(giorno, wes) {
+    const d = [...(wes || [])].filter(w => w && w.data).sort((x, y) => (x.data < y.data ? -1 : 1));
+    let i = -1;
+    for (let k = 0; k < d.length; k++) if (d[k].data <= giorno) i = k;
+    if (i < 0) return null;
+    const dopo = d[i + 1] || null;
+    return { da: d[i].data, a: dopo ? dopo.data : null, apre: d[i], chiude: dopo, fino: dopo ? (dopo.giorno || dopo.data) : null,
+      prima: i > 0 ? d[i - 1].data : null, poi: dopo ? dopo.data : null, senzaGiorno: !!dopo && !dopo.giorno };
+  }
+  // I mesi (primo giorno) da `da` compreso ad `a` escluso
+  function mesiTra(da, a) { const out = []; for (let m = da; a && m < a && out.length < 24; m = meseAccanto(m, 1)) out.push(m); return out; }
+  // Giorni interi tra due date (b − a)
+  const giorniTra = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000);
+
   // Il primo giorno del mese dopo (o prima, con n = -1)
   function meseAccanto(mese0, n) { const d = new Date(mese0 + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n, 1); return d.toISOString().slice(0, 10); }
   // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
@@ -589,7 +606,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
