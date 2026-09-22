@@ -61,7 +61,8 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
   telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'giorno', portato: 'fatto',
   // cantiere 41: il foglio del giorno con il Core N21 (pagine e CD dal Check, PM e clienti dal mese) e due cose a mano
   cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null }, { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null }],
-  modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
+  modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', modello_id: 'g1', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
+  modelli: [{ id: 'g1', titolo: 'Routine', icona: 'orario', attivo: true, ordine: 1 }],
   misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 } };
 const stub = {
   MB21Agenda: A, MB21Icone, app, AG,
