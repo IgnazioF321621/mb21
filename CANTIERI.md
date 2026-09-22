@@ -2,13 +2,35 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 21 settembre 2026 (sera: **aperto il cantiere 40 — BSM N21**, tracce N21 e Sharing, con l'ordine dei prossimi lavori deciso con Ignazio; pomeriggio: **chiuso il cantiere 38** — MB21 nel calendario del telefono, «solo specchi, mai copie»; **aperto il 39**, gli esiti: sette lavori scritti, visti con Ignazio in foto e **pubblicati alle 15:55**, tutto visto e pubblicato (ultima versione 17:53), si chiude dopo il controllo sui nomi vecchi; in mattinata chiuso e pubblicato il 37, Agenda a orario).*
+*Aggiornato: 22 settembre 2026 (mattina: segnato il **cantiere 41** — l'Agenda come NotePlan, da fare in una sessione dedicata).* *Prima: 21 settembre 2026 (sera: **aperto il cantiere 40 — BSM N21**, tracce N21 e Sharing, con l'ordine dei prossimi lavori deciso con Ignazio; pomeriggio: **chiuso il cantiere 38** — MB21 nel calendario del telefono, «solo specchi, mai copie»; **aperto il 39**, gli esiti: sette lavori scritti, visti con Ignazio in foto e **pubblicati alle 15:55**, tutto visto e pubblicato (ultima versione 17:53), si chiude dopo il controllo sui nomi vecchi; in mattinata chiuso e pubblicato il 37, Agenda a orario).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 41. L'AGENDA COME NOTEPLAN: LA GIORNATA IN UN FOGLIO SOLO (aperto il 22/09)
+*Ignazio 22/09: «segna come prossimo cantiere di modificare l'agenda e renderla simile a NotePlan».* Da fare **in una sessione dedicata**, come il 38 e il 39.
+
+**Da cosa nasce.** Con il cantiere 37 l'Agenda è diventata un calendario (Giorno a orario · Settimana · Elenco) e con il 38 si specchia nel calendario del telefono. NotePlan però non è un calendario: è un modo di lavorare. La differenza, in una frase: **un calendario ti dice quando; NotePlan ti dice cosa fai oggi**, mettendo nello stesso foglio gli appuntamenti, le cose da fare e gli appunti del giorno.
+
+**Come lavora NotePlan** (base per la discussione, non ancora decisioni):
+- **la giornata è un foglio unico**: appuntamenti, cose da fare e appunti scritti a mano stanno insieme, nello stesso posto, giorno per giorno
+- **le cose da fare non finite si spostano da sole a domani**: non si perde niente e non si riscrive niente
+- **si può dare un'ora a una cosa da fare** (trascinandola sulla giornata), così il tempo per farla si vede occupato come un appuntamento
+- **si scrive liberamente**: due righe di appunti sul giorno, che restano lì e si ritrovano
+
+**Cosa MB21 ha già, e cosa le manca** (da guardare prima di decidere):
+- ha già: la giornata a orario, i richiami in alto (contatti del giorno, conferme, riordini, senza esito), gli esiti su ogni impegno
+- le manca: **un posto dove scrivere** sul giorno · **cose da fare non legate a una persona** («comprare i biglietti BBS», «preparare il PM di giovedì») · il **riporto automatico a domani** di quello che non hai fatto · l'ora data a una cosa da fare
+
+**Da chiedere a Ignazio prima di partire** (perché «simile a NotePlan» può voler dire cose molto diverse):
+- cosa gli piace davvero di NotePlan: **scrivere sul giorno**, la **lista di cose da fare che si riporta avanti**, o il **dare un'ora alle cose da fare**?
+- le cose da fare sono **sue e basta** o le vede anche chi lo segue (come i passi dell'avvio)?
+- vanno dentro l'Agenda o è una pagina a parte?
+
+**Attenzione**: i Contatti del giorno (la coda) sono già una lista di cose da fare che si rigenera ogni giorno. Prima di inventare una lista nuova si guarda **se basta portare quella dentro la giornata**, se no MB21 finisce con due elenchi che dicono quasi la stessa cosa.
 
 ## 40. BSM N21: LE TRACCE N21 E LO SHARING NELLA SCHEDA CONTATTO (aperto il 21/09)
 *Ignazio 21/09 sera: «dimmi quali cantieri risultano in prossima apertura e quali cose da Glide ancora dobbiamo fare, fra cui lo Sharing… fai un flusso di lavoro per importanza. Quello che decidiamo diventa il prossimo lavoro» → «sì, va bene questo ordine e questa sessione diventa cantiere 40 BSM N21».*
