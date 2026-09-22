@@ -859,6 +859,18 @@
   .ss-riga.fatta { color: var(--testo-tenue); }
   .ss-libera { font-size: 13px; color: var(--testo-tenue); padding-top: 4px; }
   .ss-destra .ag-griglia.sett { box-shadow: none; }
+  /* Cerca in MB Plan */
+  .mb-cerca { padding: 2px 4px 6px; }
+  .mb-cerca input { width: 100%; box-sizing: border-box; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 10px; padding: 9px 12px; font-family: inherit; font-size: 15px; color: var(--testo); }
+  .mb-risultati { display: flex; flex-direction: column; gap: 2px; max-height: 45vh; overflow-y: auto; }
+  .mb-ris-conto { font-size: 12px; color: var(--testo-tenue); padding: 2px 10px 4px; }
+  .ag-lato button.mb-ris { align-items: flex-start; gap: 9px; padding: 8px 10px; font-size: 14px; font-weight: 500; background: var(--superficie); }
+  .ag-lato button.mb-ris i { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--cat, var(--spento)); }
+  .ag-lato button.mb-ris.cosa-r i { border-radius: 50%; background: none; border: 1.5px solid #4fb3a9; }
+  .ag-lato button.mb-ris.cosa-r i.fatta { background: #4fb3a9; }
+  .ag-lato button.mb-ris span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .ag-lato button.mb-ris b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-lato button.mb-ris small { font-size: 12px; color: var(--testo-tenue); }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
   .velo.lato { align-items: stretch; justify-content: flex-start; }
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -1343,35 +1355,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609222306"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609222306"></script>
-<script src="lista.js?v=202609222306"></script>
-<script src="rubrica.js?v=202609222306"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609222306"></script>
-<script src="agenda.js?v=202609222306"></script>
-<script src="report.js?v=202609222306"></script>
-<script src="check.js?v=202609222306"></script>
-<script src="mappa.js?v=202609222306"></script>
-<script src="pagina-dashboard.js?v=202609222306"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609222306"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609222306"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609222306"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609222306"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609222306"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609222306"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609222306"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609222306"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609222306"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609222306"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609222306"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609222306"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609222306"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609222306"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609222306"></script>
-<script src="benvenuto.js?v=202609222306"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609222306"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609222320"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609222320"></script>
+<script src="lista.js?v=202609222320"></script>
+<script src="rubrica.js?v=202609222320"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609222320"></script>
+<script src="agenda.js?v=202609222320"></script>
+<script src="report.js?v=202609222320"></script>
+<script src="check.js?v=202609222320"></script>
+<script src="mappa.js?v=202609222320"></script>
+<script src="pagina-dashboard.js?v=202609222320"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609222320"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609222320"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609222320"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609222320"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609222320"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609222320"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609222320"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609222320"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609222320"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609222320"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609222320"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609222320"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609222320"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609222320"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609222320"></script>
+<script src="benvenuto.js?v=202609222320"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609222320"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 23:06';
+const APP_VERSION = '2026.09.22 · 23:20';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2402,9 +2414,62 @@ if (typeof window !== 'undefined' && window.matchMedia) {
 
 // Il menu ☰ dell'Agenda, come la colonna sinistra di NotePlan: le scale del tempo (per ora funzionano Giorno e
 // Settimana; Mese, Periodo WES e Anno arrivano col lavoro 6) e i modelli.
+// ── Cerca in MB Plan: impegni per nome della persona o per tipo (PM, Follow Up, Counseling, telefonata, esito),
+// e le cose da fare scritte a mano. Di chi è scelto nel Partner Select (l'Admin con «Tutti» vede tutto).
+// Prima i prossimi (da adesso in avanti), poi i passati dal più recente; al massimo 50.
+let CERCA_GIRO = 0;
+async function cercaMB(testo, box, chiudi) {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
+  const t = String(testo || '').replace(/[,()*%\\]/g, ' ').replace(/\s+/g, ' ').trim().replace(/^piani\b/i, 'piano');
+  const giro = ++CERCA_GIRO;
+  if (t.length < 2) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="mb-vuoto">Cerco…</div>';
+  const ids = idVisti();
+  const [perNome, perTipo, cose] = await Promise.all([
+    dbq('cerca per nome', supa.from('azioni').select('*, contatti!inner(nome, categoria, telefono), utenti(nome, nome_cognome)').in('user_id', ids).ilike('contatti.nome', `%${t}%`).order('inizio', { ascending: false }).limit(60)),
+    dbq('cerca per tipo', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).or(`tipo_azione.ilike.*${t}*,modalita.ilike.*${t}*,esito.ilike.*${t}*`).order('inizio', { ascending: false }).limit(60)),
+    dbq('cerca nelle cose da fare', supa.from('cose_da_fare').select('*').in('user_id', ids).is('core', null).ilike('testo', `%${t}%`).order('giorno', { ascending: false }).limit(20)),
+  ]);
+  if (giro !== CERCA_GIRO) return;
+  if (perNome.error && perTipo.error) { box.innerHTML = '<div class="mb-vuoto">Non riesco a cercare: riprova.</div>'; return; }
+  const visti = new Map();
+  for (const a of [...(perNome.data || []), ...(perTipo.data || [])]) {
+    const quando = a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio;
+    if (quando && !visti.has(a.id)) visti.set(a.id, { ...a, quando });
+  }
+  const tutti = [...visti.values()];
+  const prossimi = tutti.filter(a => a.quando >= adesso).sort((x, y) => (x.quando < y.quando ? -1 : 1));
+  const passati = tutti.filter(a => a.quando < adesso).sort((x, y) => (x.quando < y.quando ? 1 : -1));
+  const elenco = [...prossimi, ...passati].slice(0, 50);
+  const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const quandoCosa = c => c.scala === 'mese' ? A.titoloMese(c.giorno) : c.scala === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : titoloGiorno(c.giorno, oggi);
+  const righe = elenco.map(a => {
+    const p = A.partiRoma(a.quando), cat = (a.contatti && a.contatti.categoria) || a.categoria;
+    return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
+  }).join('') + (cose.data || []).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
+  const quanti = elenco.length + (cose.data || []).length;
+  box.innerHTML = quanti ? `<div class="mb-ris-conto">${tutti.length > 50 ? 'Primi 50 risultati: scrivi qualcosa di più preciso' : `${quanti} ${quanti === 1 ? 'risultato' : 'risultati'}`}</div>${righe}` : '<div class="mb-vuoto">Nessun risultato.</div>';
+  box.querySelectorAll('.mb-ris[data-evento]').forEach(b => { b.onclick = async () => {
+    chiudi();
+    const g = b.dataset.giorno, id = b.dataset.evento;
+    AG.vista = 'giorno'; AG.aperta = id; AG.portato = null;
+    await apriAgenda(g);
+    const e = AG.azioni.find(x => x.id === id);
+    if (e) foglioEvento(A.eventiDelGiorno([e], g)[0] || e);
+  }; });
+  box.querySelectorAll('.mb-ris[data-cosa-giorno]').forEach(b => { b.onclick = () => {
+    chiudi();
+    const sc = b.dataset.cosaScala;
+    AG.vista = sc === 'mese' || sc === 'settimana' ? sc : 'giorno'; AG.aperta = null; AG.portato = null;
+    apriAgenda(b.dataset.cosaGiorno);
+  }; });
+}
+
 // Il menu è lo stesso nel cassetto ☰ (telefono) e nella colonna sinistra fissa (schermo largo, «MB Plan» a tre colonne).
 function menuAgendaHtml() {
   return `<div class="ag-lato-titolo">MB Plan</div>
+    <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca in MB Plan"></form>
+    <div class="mb-risultati"></div>
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="${(AG.vista || 'giorno') === k ? 'si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
     <div class="ag-lato-titolo mb-titolo-piu">Modelli personali<button data-cmd="nuovo-modello" aria-label="Nuovo modello">${ic('piu')}</button></div>
     ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small>${m.attivo === false ? 'spento' : `${AG.modello.filter(v => v.modello_id === m.id).length} voci`}</small></button>`).join('')
@@ -2412,6 +2477,16 @@ function menuAgendaHtml() {
     <button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
+  // la ricerca (Ignazio 22/09): un nome, un tipo («piano marketing», «PM», «counseling»), le cose da fare
+  const form = radice.querySelector('.mb-cerca'), box = radice.querySelector('.mb-risultati');
+  if (form && box) {
+    const campo = form.querySelector('input');
+    let attesa = null;
+    const via = () => { AG.cerca = campo.value; clearTimeout(attesa); attesa = setTimeout(() => cercaMB(campo.value, box, chiudi), 300); };
+    campo.oninput = via;
+    form.onsubmit = ev => { ev.preventDefault(); clearTimeout(attesa); cercaMB(campo.value, box, chiudi); };
+    if (AG.cerca) cercaMB(AG.cerca, box, chiudi);
+  }
   radice.querySelectorAll('[data-scala]').forEach(b => { b.onclick = () => {
     if (!VISTE.includes(b.dataset.scala)) return mostraToast('Il foglio di questa scala arriva presto');
     chiudi(); cambiaVista(b.dataset.scala);
