@@ -639,6 +639,27 @@
   .ag-rich .riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
   .ag-rich .conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
   .ag-rich .passati { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
+  /* il foglio del giorno (cantiere 41): le cose da fare, con la spunta tonda e il campo per aggiungere */
+  .ag-cose { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px 8px; margin-bottom: 12px; }
+  .ag-cose-testa { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 4px; }
+  .ag-cose-testa svg.ic { width: 18px; height: 18px; color: var(--ok); }
+  .ag-cose-testa b { margin-left: auto; font-weight: 700; color: var(--testo-tenue); }
+  .ag-cose .cosa { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid var(--superficie-2); }
+  .ag-cose .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
+  .ag-cose .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid var(--testo-tenue); display: inline-flex; align-items: center; justify-content: center; }
+  .ag-cose .cosa .spunta svg.ic { width: 24px; height: 24px; }
+  .ag-cose .cosa.fatta .spunta { border-color: var(--ok); color: var(--ok); }
+  .ag-cose .cosa .testo { flex: 1; min-height: 42px; padding: 10px 0; font-size: 15px; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
+  .ag-cose .cosa .testo small { font-size: 11.5px; font-weight: 600; color: var(--proposta); }
+  .ag-cose .cosa.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); }
+  .ag-cosa-nuova { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--superficie-2); padding-top: 6px; }
+  .ag-cosa-nuova input { flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 15px; color: var(--testo); padding: 8px 0; outline: none; }
+  .ag-cosa-nuova input::placeholder { color: var(--testo-tenue); }
+  .ag-cosa-nuova button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--accento); color: var(--accento-su); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .ag-cosa-nuova button svg.ic { width: 18px; height: 18px; }
+  .fc-quando { color: var(--testo-soft); font-size: 14px; }
+  .fc-comandi { display: flex; justify-content: space-between; gap: 10px; }
+  .fc-comandi button.link.elimina-qui { display: inline; width: auto; margin-top: 0; }
   /* la griglia: una card bianca con le ore a sinistra e i blocchi dentro */
   .ag-griglia { position: relative; background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 10px 12px 0; overflow: hidden; }
   .ag-ore { position: relative; margin-left: 50px; }
@@ -1070,33 +1091,33 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609221614"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609221614"></script>
-<script src="lista.js?v=202609221614"></script>
-<script src="rubrica.js?v=202609221614"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609221614"></script>
-<script src="agenda.js?v=202609221614"></script>
-<script src="report.js?v=202609221614"></script>
-<script src="check.js?v=202609221614"></script>
-<script src="mappa.js?v=202609221614"></script>
-<script src="pagina-dashboard.js?v=202609221614"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609221614"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609221614"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609221614"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609221614"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609221614"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609221614"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="pagina-libri.js?v=202609221614"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609221614"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609221614"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609221614"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609221614"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609221614"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609221614"></script>
-<script src="benvenuto.js?v=202609221614"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609221614"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609221632"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609221632"></script>
+<script src="lista.js?v=202609221632"></script>
+<script src="rubrica.js?v=202609221632"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609221632"></script>
+<script src="agenda.js?v=202609221632"></script>
+<script src="report.js?v=202609221632"></script>
+<script src="check.js?v=202609221632"></script>
+<script src="mappa.js?v=202609221632"></script>
+<script src="pagina-dashboard.js?v=202609221632"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609221632"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609221632"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609221632"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609221632"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609221632"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609221632"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="pagina-libri.js?v=202609221632"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609221632"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609221632"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609221632"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609221632"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609221632"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609221632"></script>
+<script src="benvenuto.js?v=202609221632"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609221632"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 16:14';
+const APP_VERSION = '2026.09.22 · 16:32';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1482,7 +1503,7 @@ function mostraToast(testo, suAnnulla) {
 // Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
-const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null };
+const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null, cose: [] };
 
 
 async function apriAgenda(giorno) {
@@ -1514,11 +1535,17 @@ async function caricaAgenda() {
   if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
   else if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('user_id', visto().id).eq('rientro_il', AG.giorno)));
+  // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
+  // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
+  const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*').eq('user_id', visto().id)
+    .or(`and(giorno.gte.${AG.settimana[0]},giorno.lte.${AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null)`));
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   await conferme;
-  for (const r of [app1, ric, pas, tel]) if (r && r.error) throw r.error;
+  const cd = await cose;
+  for (const r of [app1, ric, pas, tel, cd]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
+  AG.cose = cd ? cd.data : [];
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
 }
@@ -1557,6 +1584,104 @@ function richiamiAgenda(oggi) {
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
 }
 
+// ── Le cose da fare del giorno (cantiere 41, lavoro 1): il foglio del giorno, come in NotePlan ──
+// Cose non legate a una persona («comprare i biglietti BBS»), con la spunta e il «+». Chi decide cosa si
+// vede in che giorno è MB21Agenda.coseDelGiorno: una cosa non fatta ieri si vede oggi con «da <giorno>».
+function coseHtml(oggi) {
+  const A = MB21Agenda;
+  const cose = A.coseDelGiorno(AG.cose, AG.giorno, oggi);
+  const daFare = cose.filter(c => !c.fatto_il).length;
+  const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
+  return `<div class="ag-cose">
+    <div class="ag-cose-testa">${ic('fatto')}<span>Da fare</span>${cose.length ? `<b>${cose.length - daFare}/${cose.length}</b>` : ''}</div>
+    ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
+      <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
+      <button class="testo"><span>${esc(c.testo)}</span>${c.riportata ? `<small>da ${gg(c.riportata)}</small>` : ''}</button>
+    </div>`).join('')}
+    <form class="ag-cosa-nuova" id="ag-cosa-nuova"><input type="text" id="ag-cosa-testo" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+  </div>`;
+}
+
+function collegaCose(oggi) {
+  const A = MB21Agenda;
+  const form = document.getElementById('ag-cosa-nuova');
+  if (!form) return;
+  const campo = document.getElementById('ag-cosa-testo');
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const testo = A.testoCosa(campo.value);
+    if (!testo) return;
+    const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
+    const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: AG.giorno, ordine }).select().single());
+    if (error) return;
+    AG.cose.push(data);
+    disegnaAgenda();
+    const c2 = document.getElementById('ag-cosa-testo');
+    if (c2) c2.focus();   // si continua a scrivere la prossima, senza ritoccare il campo
+  };
+  app.querySelectorAll('.ag-cose .cosa').forEach(riga => {
+    const c = AG.cose.find(x => x.id === riga.dataset.cosa);
+    if (!c) return;
+    riga.querySelector('.spunta').onclick = () => spuntaCosa(c);
+    riga.querySelector('.testo').onclick = () => foglioCosa(c, oggi);
+  });
+}
+
+// Spuntare = fatta oggi (o nel giorno che stai guardando): una cosa riportata da ieri, spuntata, resta nel giorno in cui l'hai fatta.
+async function spuntaCosa(c) {
+  const prima = { fatto_il: c.fatto_il, giorno: c.giorno };
+  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: AG.giorno };
+  const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
+  if (error) return;
+  Object.assign(c, dopo);
+  disegnaAgenda();
+  if (dopo.fatto_il) mostraToast('Fatta ✓', async () => {
+    const r = await dbq('cosa da fare', supa.from('cose_da_fare').update(prima).eq('id', c.id));
+    if (r.error) return;
+    Object.assign(c, prima);
+    disegnaAgenda();
+  });
+}
+
+// Il foglio di una cosa da fare: si corregge il testo, si manda a domani, si elimina.
+function foglioCosa(c, oggi) {
+  const A = MB21Agenda;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>Cosa da fare${esc(aNome())}</h3>
+    <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
+    <p class="fc-quando">${c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
+    <button class="primario" id="fc-salva">Salva</button>
+    <div class="fc-comandi">${c.fatto_il ? '' : `<button class="link" id="fc-domani">${ic('agenda')} Sposta a domani</button>`}
+    <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
+    <button class="link" id="fc-no">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#fc-no').onclick = chiudi;
+  const cambia = async dopo => {
+    const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
+    if (error) return;
+    Object.assign(c, dopo);
+    chiudi();
+    disegnaAgenda();
+  };
+  velo.querySelector('#fc-salva').onclick = () => {
+    const testo = A.testoCosa(velo.querySelector('#fc-testo').value);
+    if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
+    cambia({ testo });
+  };
+  const domani = velo.querySelector('#fc-domani');
+  if (domani) domani.onclick = () => cambia({ giorno: A.spostaGiorno(c.riportata ? oggi : c.giorno, 1) });
+  velo.querySelector('#fc-elimina').onclick = async () => {
+    const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').delete().eq('id', c.id));
+    if (error) return;
+    AG.cose = AG.cose.filter(x => x.id !== c.id);
+    chiudi();
+    disegnaAgenda();
+  };
+}
+
 function disegnaAgenda() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
@@ -1583,12 +1708,14 @@ function disegnaAgenda() {
       ${VISTE.map(v => `<button data-vista="${v}" class="${AG.vista === v ? 'si' : ''}">${ic(NOMI_VISTA[v][0])}${NOMI_VISTA[v][1]}</button>`).join('')}
     </div>`;
   html += richiamiAgenda(oggi);
+  if (AG.vista !== 'settimana') html += coseHtml(oggi);   // il foglio del giorno (cantiere 41): le cose da fare sopra la giornata
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else if (AG.vista === 'orario') html += grigliaGiorno(eventi, opz);
   else html += eventi.length ? eventi.map(e => eventoAgenda(e, opz)).join('')
     : `<div class="vuoto">Nessun appuntamento. Tocca <b>+</b> per fissarne uno.</div>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
+  collegaCose(oggi);
   portaInVista();
   aggiornaVaiOra();
 }
