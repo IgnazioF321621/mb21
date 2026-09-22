@@ -46,6 +46,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **«7 giorni»**: la settimana come elenco di giornate una sotto l'altra, ognuna con le sue sezioni e le sue cose da fare; niente griglia a orario
 - Nella Cronologia di oggi non c'era nessun blocco: il time blocking, da lui, è la **sezione «Time Blocking» del foglio** (i grandi blocchi della giornata scritti come cose da fare con il tag), più che i blocchi trascinati sull'orario
 
+**Seconda fotografia (22/09, su richiesta di Ignazio: «l'impostazione, non solo le voci»)** — le scale del tempo di lato:
+- **Settimanale** («Settimana 40 · 28 set –»): un foglio della settimana, vuoto da lui, con in cima ripiegato il **mese** («settembre»); a destra il mese e la Cronologia del giorno scelto (28/09: blocchi «Studio N21 14:15-15:30» e «Contatti 18:30» **disegnati dalle cose da fare con l'ora**: il time blocking c'è, e si vede nella griglia)
+- **Mensile** («settembre»): foglio del mese, in cima ripiegato il **trimestre** («Q3»); a destra l'anno a griglia (T1-T4 × mesi) e sotto l'**Elenco Eventi** del mese, giorno per giorno: compleanni e blocchi con ✓ quando fatti («✓ #Book 05:00-06:00», «✓ #Workout 07:00-08:15»…)
+- **Trimestrale** («T3 · lug-ago-set»): in cima l'**anno** («2026»); a destra l'elenco dei giorni del trimestre per settimana
+- **Annuale** («2026»): a destra la griglia degli anni (2016-2027) e l'elenco dei giorni dell'anno
+- **Regola che tiene tutto insieme**: ogni foglio ha in cima, ripiegato, **il foglio della scala sopra** (giorno → settimana → mese → trimestre → anno), e ogni foglio nuovo propone «Inserisci modello». Le tre colonne, come le descrive Ignazio: a sinistra **organizzazione, tempo e modelli**; al centro **la routine e il time blocking**, che si riproduce da solo a destra; a destra **il mese** (tocchi un giorno e la Cronologia è di quel giorno).
+- Ignazio: da noi le scale sono **giorno · settimana · mese · trimestre · anno**; sul nome del trimestre («WES»?) ci si torna.
+
 **Cosa ne segue per MB21** (da decidere con Ignazio): il suo foglio non è una lista piatta ma **sezioni** (Routine · Time Blocking · Tasks · Business), e le prime due si ripetono **tutti i giorni** → serve un **modello del giorno** (cose che compaiono da sole ogni giorno; «Daily Business Check» è già il Check di MB21). La Cronologia è la nostra griglia a orario; «7 giorni» somiglia all'Elenco esteso alla settimana. La colonna destra che si chiude = mostra/nascondi.
 
 **Lavori proposti, dal più semplice** (ognuno pubblicabile da solo):
