@@ -106,7 +106,7 @@
 **Regola:** un avviso nuovo si chiama la prima volta **sempre** con `prova: true` e si legge l'elenco; e ogni avviso che nasce da una tabella con righe importate (`da_glide`, `da_import`) le esclude per nome, oltre a guardare la data del fatto, non quella della riga.
 
 ## La pagina bianca che il controllo di sintassi non vede
-*22 settembre 2026, cantiere 41 (MBplan a tre colonne).* Un pezzo di codice che parte **al caricamento** (l'ascolto del cambio di larghezza della finestra) usava una funzione scritta come `const largo = () => …` **definita più sotto**: sintassi perfetta, ma all'avvio la funzione non esiste ancora e lo script muore. Risultato per Ignazio: pagina tutta bianca. `node --check` non lo può vedere: è un errore che succede solo eseguendo.
+*22 settembre 2026, cantiere 41 (MB Plan a tre colonne).* Un pezzo di codice che parte **al caricamento** (l'ascolto del cambio di larghezza della finestra) usava una funzione scritta come `const largo = () => …` **definita più sotto**: sintassi perfetta, ma all'avvio la funzione non esiste ancora e lo script muore. Risultato per Ignazio: pagina tutta bianca. `node --check` non lo può vedere: è un errore che succede solo eseguendo.
 
 **Regola:** le funzioni usate da codice che parte al caricamento si scrivono come `function nome() {}` (esistono da subito), mai come `const nome = () => …`. E prima di ogni commit che tocca `index.html` si fa girare anche la **prova di caricamento** (eseguire tutto il codice in un finto browser e vedere se arriva in fondo), non solo il controllo di sintassi.
 

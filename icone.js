@@ -56,7 +56,7 @@
     'fatto': '<circle cx="12" cy="12" r="8.6"/><path d="m8.2 12.2 2.6 2.6 5-5.4"/>',   // Fatto
     'chiudi': '<path d="m6 6 12 12M18 6 6 18"/>',   // Chiudi
     'piu': '<path d="M12 5v14M5 12h14"/>',   // Aggiungi
-    'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',   // Menu (le tre linee del ☰ di MBplan, 22/09)
+    'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',   // Menu (le tre linee del ☰ di MB Plan, 22/09)
     'freccia': '<path d="m9 5 7 7-7 7"/>',   // Vai avanti
     'puntini': '<circle cx="5.6" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="18.4" cy="12" r="1.2" fill="currentColor" stroke="none"/>',   // Altre azioni
     'cerca': '<circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/>',   // Cerca
