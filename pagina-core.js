@@ -84,7 +84,7 @@ function moduloCoreHtml(m) {
       ${vuote(Math.max(m.s3.obiettivo, m.s3.righe.length), m.s3.righe.length).map((_, i) => `<tr class="vuota"><td>${m.s3.righe.length + i + 1}</td><td></td><td></td></tr>`).join('')}
     </tbody><tfoot><tr><td></td><td>Totale VP prodotti dalla vendita</td><td class="r"><b>${num(m.s3.vp)}</b></td></tr></tfoot></table>` : vuotoPer('dalle vendite registrate nella scheda del cliente', 'cliente')}`, m.s3.raggiunto);
 
-  const s4 = sez(4, 'Ascoltare 1 CD al giorno [CEP - catalogo BSM]', `
+  const s4 = sez(4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', `
     <div class="cm-conto"><b>${m.s4.quanti}</b>/${m.giorni} giorni</div>
     <div class="cm-giorni">${m.s4.giorni.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>
     <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.</div>`, m.s4.quanti >= m.giorni);
