@@ -138,26 +138,65 @@
   // Le cose di ogni giorno, scritte una volta: compaiono da sole nel foglio del giorno. L'app le propone già
   // pronte con le abitudini Core N21 (Ignazio 22/09: «un modello legato all'attività Amway o al sistema N21»);
   // ognuna si accende o si spegne, e si aggiungono le proprie.
+  // Le 7 abitudini della persona Core (modulo di auto-valutazione N21, R10), come voci del modello: `scala` dice
+  // dove vivono (giorno · settimana · mese · periodo); `misura` dice cosa l'app sa contare da sola (da Check, azioni,
+  // vendite) e `obiettivo` quanto serve per la spunta. Senza `misura` la spunta è a mano.
   const CORE_N21 = [
-    { core: 'lettura', testo: 'Leggere 15 minuti' },
-    { core: 'traccia', testo: 'Ascoltare una traccia' },
-    { core: 'contatti', testo: 'I contatti del giorno' },
-    { core: 'check', testo: 'Il Check della sera' },
-    { core: 'prodotti', testo: 'Usare e mostrare i prodotti' },
-  ];
+    { core: 'pm', testo: 'Presentare almeno 8 Piani Marketing al mese', scala: 'mese', misura: 'pm_mese', obiettivo: 8 },
+    { core: 'prodotti', testo: 'Consumare i prodotti Amway', scala: 'mese' },
+    { core: 'clienti', testo: 'Servire almeno 10 clienti al mese', scala: 'mese', misura: 'clienti_mese', obiettivo: 10 },
+    { core: 'cd', testo: 'Ascoltare 1 CD al giorno', scala: 'giorno', misura: 'tracce', obiettivo: 1 },
+    { core: 'pagine', testo: 'Leggere 10 pagine al giorno', scala: 'giorno', misura: 'pagine', obiettivo: 10 },
+    { core: 'open', testo: 'Partecipare all\'OPEN settimanale', scala: 'settimana' },
+    { core: 'squadra', testo: 'Lavorare di squadra', scala: 'mese' },
+  ].map(v => ({ sezione: 'Core', ...v }));
+  const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
+  const DI_SCALA = { giorno: '', settimana: 'questa settimana', mese: 'questo mese', periodo: 'questo periodo', anno: 'quest\'anno' };
+  // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
+  function inizioScala(scala, giorno) {
+    if (scala === 'settimana') return settimana(giorno)[0];
+    if (scala === 'mese') return giorno.slice(0, 8) + '01';
+    if (scala === 'anno') return giorno.slice(0, 4) + '-01-01';
+    return giorno;   // giorno (e, finché non c'è la tabella dei periodi, anche periodo)
+  }
+  // Lo stato di un'abitudine Core con misura, dai numeri del giorno/mese (`misure`: { tracce, pagine, pm_mese, clienti_mese })
+  function statoCore(voce, misure) {
+    const def = CORE_N21.find(c => c.core === voce.core);
+    if (!def || !def.misura) return null;
+    const n = Number((misure || {})[def.misura]) || 0;
+    return { quanto: n, obiettivo: def.obiettivo, fatta: n >= def.obiettivo, testo: `${n}/${def.obiettivo}` };
+  }
   const GIORNI_SETTIMANA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];   // 1 = lunedì … 7 = domenica
   // Il numero del giorno della settimana di una data (1 = lunedì … 7 = domenica)
   function giornoSettimana(giorno) { return (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1; }
-  // Le voci del modello che compaiono in quel giorno, in ordine, con la spunta di quel giorno se c'è (`fatto_il`)
-  function vociDelGiorno(modello, cose, giorno) {
+  // Le voci del modello che compaiono in quel giorno, in ordine, con la spunta di quel giorno se c'è (`fatto_il`).
+  // Le voci Core compaiono sempre (anche quelle del mese o della settimana, con «questo mese» accanto, finché non
+  // c'è il foglio della loro scala): se hanno una misura la spunta viene dai numeri (`misure`), se no dalla riga
+  // a mano con `core` nel primo giorno della scala. Le voci personali: dalla riga con `modello_id` di quel giorno.
+  function vociDelGiorno(modello, cose, giorno, misure) {
     const dow = giornoSettimana(giorno);
     return (modello || [])
-      .filter(v => v.attivo !== false && (!v.giorni || !v.giorni.length || v.giorni.includes(dow)))
+      .filter(v => v.attivo !== false && (v.core || !v.giorni || !v.giorni.length || v.giorni.includes(dow)))
       .sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1))
       .map(v => {
-        const spunta = (cose || []).find(c => c.modello_id === v.id && c.giorno === giorno && c.fatto_il);
-        return { ...v, fatto_il: spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null };
+        const scala = v.scala || 'giorno';
+        const stato = v.core ? statoCore(v, misure) : null;
+        const inizio = inizioScala(scala, giorno);
+        const spunta = (cose || []).find(c => c.fatto_il && (v.core ? c.core === v.core && c.giorno === inizio : c.modello_id === v.id && c.giorno === giorno));
+        return { ...v, scala, stato, diScala: DI_SCALA[scala] || '', giornoSpunta: v.core ? inizio : giorno,
+          fatto_il: stato ? (stato.fatta ? 'misura' : null) : spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null };
       });
+  }
+  // Le sezioni del foglio, in ordine: «Core» per prima, poi le altre come compaiono nel modello; ogni sezione con le sue voci
+  function sezioniFoglio(voci) {
+    const ordine = [], per = new Map();
+    for (const v of voci) {
+      const s = v.sezione || 'Routine';
+      if (!per.has(s)) { per.set(s, []); ordine.push(s); }
+      per.get(s).push(v);
+    }
+    ordine.sort((a, b) => (a === 'Core' ? -1 : b === 'Core' ? 1 : 0));
+    return ordine.map(nome => ({ nome, voci: per.get(nome) }));
   }
   // «Ogni giorno» · «Lun-Ven» · «Sab e Dom» · «Lun, Mer, Ven»: come si dice quando compare una voce
   function testoGiorni(giorni) {
@@ -529,7 +568,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
-    coseDelGiorno, testoCosa, CORE_N21, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, testoGiorni };
+    coseDelGiorno, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
