@@ -133,13 +133,22 @@
   }
   // Le cose da fare del MESE (cantiere 41, vista Mese): `scala = 'mese'`, `giorno` = primo del mese. Come per i giorni,
   // una non fatta di un mese passato si vede nel mese di oggi con «riportata» = il suo mese; le fatte restano nel loro.
-  function coseDelMese(cose, mese0, meseOggi0) {
-    const mie = (cose || []).filter(c => c.scala === 'mese' && !c.modello_id && !c.core).filter(c => {
-      if (!c.fatto_il && c.giorno < meseOggi0) return mese0 === meseOggi0;
-      return c.giorno === mese0;
-    }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < mese0 ? c.giorno : null }));
+  // La stessa regola vale per la SETTIMANA (`scala = 'settimana'`, `giorno` = il lunedì): coseDellaScala.
+  function coseDellaScala(cose, scala, inizio, inizioOggi) {
+    const mie = (cose || []).filter(c => c.scala === scala && !c.modello_id && !c.core).filter(c => {
+      if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
+      return c.giorno === inizio;
+    }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
     const peso = c => (c.fatto_il ? 2 : c.riportata ? 0 : 1);
     return mie.sort((x, y) => peso(x) - peso(y) || (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  }
+  const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
+  // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
+  function numeroSettimana(giorno) {
+    const d = new Date(giorno + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7));
+    const primo = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+    return 1 + Math.round(((d - primo) / 86400000 - 3 + ((primo.getUTCDay() + 6) % 7)) / 7);
   }
   // Il primo giorno del mese dopo (o prima, con n = -1)
   function meseAccanto(mese0, n) { const d = new Date(mese0 + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n, 1); return d.toISOString().slice(0, 10); }
@@ -580,7 +589,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
-    coseDelGiorno, coseDelMese, meseAccanto, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

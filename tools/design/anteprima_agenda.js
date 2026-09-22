@@ -27,7 +27,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -81,7 +81,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Cronologia»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -90,6 +90,8 @@ function vista(v, aperta) {
   if (v === 'orario') return grigliaGiorno(A.eventiDelGiorno(AG.azioni, AG.giorno), { mioId: modo.tutti ? null : 'io', admin: modo.admin });
   AG.vista = v === 'settimana' ? 'settimana' : 'giorno';
   disegnaAgenda();
+  // la griglia a sette colonne sta nella colonna destra (o nella linguetta): nell'anteprima si mette sotto il foglio
+  if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
 module.exports = { A, AG, modo, vista, disegnaAgenda, avvisoSovrapposti, az, OGGI };
