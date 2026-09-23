@@ -114,11 +114,19 @@
     s5.quanti = s5.giorni.filter(g => g.fatto).length;
     s5.pagine = s5.giorni.reduce((t, g) => t + g.pagine, 0);
 
-    // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda)
-    const s6 = { settimane: settimaneDelMese(mese).map(w => ({ ...w, open: check.some(c => c.open && c.data >= w.da && c.data <= w.a) })),
+    // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda).
+    // Gli OPEN cambiano da città a città (Ignazio 23/09): niente calendario; una settimana in cui nella propria città l'OPEN
+    // non c'era si segna «non c'era» nel modulo (`dati.senza_open`: i lunedì di quelle settimane) e non conta. Se il Check
+    // dice che all'OPEN ci sei stato, vale quello.
+    const senzaOpen = new Set(d.senza_open || []);
+    const s6 = { settimane: settimaneDelMese(mese).map(w => {
+        const open = check.some(c => c.open && c.data >= w.da && c.data <= w.a);
+        return { ...w, open, senza: !open && senzaOpen.has(w.da) };
+      }),
       bbs: biglietti.some(b => b.tipo === 'BBS' && b.contatto), wes: biglietti.some(b => b.tipo === 'WES' && b.contatto),
       prossimoBbs: oggi ? prossimoEvento(date.bbs, oggi) : null, prossimoWes: oggi ? prossimoEvento(date.wes, oggi) : null };
     s6.open = s6.settimane.filter(w => w.open).length;
+    s6.valide = s6.settimane.filter(w => !w.senza).length;   // le settimane in cui l'OPEN c'era (o non si sa ancora)
 
     // 7 · Lavorare di squadra: counseling (dal Check), edificazione e no-crossline (a mano)
     const cons = check.filter(c => c.counseling && nelMese(c.data, mese)).map(c => c.data).sort();
@@ -134,7 +142,7 @@
     const ob = { vpp: o.vpp, vpg: o.vpg, sponsor_personali: o.sponsor_personali, sponsor_gruppo: o.sponsor_gruppo, cep: o.cep, bbs: o.bbs, wes: o.wes };
 
     // 7 è fatta solo con tutte e tre (Ignazio 22/09): counseling, edificazione e no-crossline
-    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.quanti >= n, s5.quanti >= n, s6.open >= s6.settimane.length && s6.bbs && s6.wes,
+    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.quanti >= n, s5.quanti >= n, s6.open >= s6.valide && s6.bbs && s6.wes,
       !!s7.counseling && s7.edificazione === true && s7.no_crossline === true];
     return { mese, giorni: n, s1, s2, s3, s4, s5, s6, s7, obiettivi: ob, note: d.note || '', fatte: abitudini.filter(Boolean).length, abitudini };
   }

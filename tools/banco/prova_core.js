@@ -112,4 +112,17 @@ prova('Il prossimo BBS e WES dopo oggi', () => {
   assert.equal(C.modulo({ mese: '2026-09' }).s6.prossimoBbs, null);
 });
 
+prova('OPEN: la settimana in cui nella tua città non c\'era si segna «non c\'era» e non conta (23/09)', () => {
+  const mese = '2026-09';   // 5 settimane: 31/8, 7/9, 14/9, 21/9, 28/9
+  const check = [{ data: '2026-09-02', open: true }, { data: '2026-09-09', open: true }, { data: '2026-09-23', open: true }];
+  const biglietti = [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-10-01', contatto: true }];
+  let m = C.modulo({ mese, check, biglietti });
+  assert.equal(m.s6.open, 3); assert.equal(m.s6.valide, 5); assert.equal(m.abitudini[5], false);   // mancano 14/9 e 28/9
+  m = C.modulo({ mese, check, biglietti, dati: { senza_open: ['2026-09-14', '2026-09-28'] } });
+  assert.deepEqual(m.s6.settimane.map(w => w.senza), [false, false, true, false, true]);
+  assert.equal(m.s6.valide, 3); assert.equal(m.abitudini[5], true);   // 3 OPEN su 3 che c'erano, più BBS e WES
+  m = C.modulo({ mese, check, biglietti, dati: { senza_open: ['2026-08-31'] } });   // segnata «non c'era» ma il Check dice che ci sei stato: vale il Check
+  assert.equal(m.s6.settimane[0].senza, false); assert.equal(m.s6.valide, 5);
+});
+
 console.log(`\n${ok} prove superate`);
