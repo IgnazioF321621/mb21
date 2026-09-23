@@ -469,7 +469,7 @@ function disegnaProgetto() {
     return '📅 ' + g + (c.ora ? ' · ' + String(c.ora).slice(0, 5) : '');
   };
   const righeHtml = righe.map((c, i) => {
-    const tipo = c.tipo || 'cosa', rientro = `style="padding-left:${(c.livello || 0) * 24}px"`;
+    const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
     if (tipo === 'titolo') return `<div class="cosa pj-titolo" data-cosa="${esc(c.id)}"><button class="spunta segno" disabled aria-hidden="true"></button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
     if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" disabled aria-hidden="true">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
     const sotto = [quando(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : ''].filter(Boolean).join(' · ');
@@ -1256,10 +1256,25 @@ function ridisegnaDopoBlocco(velo) {
 }
 function righeTrascinabili(riga, attr) {
   const progetto = riga.parentElement.classList.contains('pj-foglio');   // nei progetti anche le fatte: restano al loro posto
-  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto'));
+  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto') && !x.classList.contains('al-seguito'));
+}
+// Nei progetti una riga si porta dietro quello che le sta dentro (Ignazio 23/09: «se trascino un titolo, i punti che sono
+// all'interno devono seguire il titolo»): un titolo tutte le righe fino al titolo dopo; una riga le righe più rientrate
+// che la seguono. Mentre si trascina restano nascoste (la riga dice «+N»), al rilascio si rimettono subito sotto.
+function figliDi(riga) {
+  if (!riga.parentElement.classList.contains('pj-foglio')) return [];
+  const titolo = riga.classList.contains('pj-titolo'), liv = Number(riga.dataset.livello || 0), figli = [];
+  for (let x = riga.nextElementSibling; x && x.classList.contains('cosa'); x = x.nextElementSibling) {
+    if (titolo ? x.classList.contains('pj-titolo') : Number(x.dataset.livello || 0) <= liv || x.classList.contains('pj-titolo')) break;
+    figli.push(x);
+  }
+  return figli;
 }
 function iniziaTrascina() {
   TR.avviato = true;
+  TR.figli = figliDi(TR.riga);
+  TR.figli.forEach(x => x.classList.add('al-seguito'));
+  if (TR.figli.length) TR.riga.setAttribute('data-seguito', '+' + TR.figli.length);
   TR.riga.classList.add('trascina');
   document.body.classList.add('sto-trascinando');
   try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
@@ -1277,6 +1292,10 @@ async function fineTrascina() {
   document.body.classList.remove('sto-trascinando');
   if (!riga || !avviato) return;
   riga.classList.remove('trascina');
+  // le righe al seguito tornano subito sotto la riga, nello stesso ordine
+  let dopo = riga;
+  for (const x of TR.figli || []) { dopo.after(x); x.classList.remove('al-seguito'); dopo = x; }
+  riga.removeAttribute('data-seguito'); TR.figli = [];
   TR.dopoClic = Date.now();   // il clic che segue il rilascio non deve aprire il foglio
   const voce = attr === 'data-voce';
   const ids = righeTrascinabili(riga, attr).map(x => x.getAttribute(attr));
