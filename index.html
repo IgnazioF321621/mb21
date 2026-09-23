@@ -871,6 +871,20 @@
   .ag-lato button.mb-ris span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .ag-lato button.mb-ris b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-lato button.mb-ris small { font-size: 12px; color: var(--testo-tenue); }
+  /* il colore di ogni scala (Ignazio 23/09): tondo pieno con l'icona bianca, velo sulla voce scelta, barra accanto al titolo */
+  .sc-giorno { --sc: #1D9E75; --sc-tinta: #E1F5EE; --sc-scuro: #085041; }
+  .sc-settimana { --sc: #2F6FE0; --sc-tinta: #E6F1FB; --sc-scuro: #0C447C; }
+  .sc-mese { --sc: #8E44D8; --sc-tinta: #F1E8FC; --sc-scuro: #4B1F7A; }
+  .sc-periodo { --sc: #D83A5A; --sc-tinta: #FCE8EC; --sc-scuro: #7A1A2E; }
+  .sc-anno { --sc: #E8890C; --sc-tinta: #FDF0DC; --sc-scuro: #7A4504; }
+  .ag-lato button[data-scala] > svg.ic { width: 30px; height: 30px; padding: 6px; box-sizing: border-box; border-radius: 50%; background: var(--sc); color: #fff; }
+  .ag-lato button[data-scala].si { background: var(--sc-tinta); color: var(--sc-scuro); box-shadow: inset 3px 0 0 var(--sc); }
+  .ag-lato button[data-scala].presto > svg.ic { background: var(--spento); }
+  h1.sc-titolo { display: flex; align-items: center; gap: 10px; }
+  h1.sc-titolo > svg.ic { flex: none; width: 32px; height: 32px; padding: 7px; box-sizing: border-box; border-radius: 50%; background: var(--sc); color: #fff; }
+  .mm-testa h1.sc-titolo { justify-content: center; }
+  .mm-testa[class*="sc-"] { border-left: 4px solid var(--sc); padding-left: 6px; border-radius: 4px; }
+  h1.ag-titolo.sc-giorno { border-left: 4px solid var(--sc); padding-left: 10px; border-radius: 4px; }
   /* i mesi piccoli di Periodo WES e Anno (agende, non numeri: Ignazio 22/09) */
   .mn-mesi { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 10px 0 14px; }
   .mn { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 8px 10px 10px; }
@@ -1378,35 +1392,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609222354"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609222354"></script>
-<script src="lista.js?v=202609222354"></script>
-<script src="rubrica.js?v=202609222354"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609222354"></script>
-<script src="agenda.js?v=202609222354"></script>
-<script src="report.js?v=202609222354"></script>
-<script src="check.js?v=202609222354"></script>
-<script src="mappa.js?v=202609222354"></script>
-<script src="pagina-dashboard.js?v=202609222354"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609222354"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609222354"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609222354"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609222354"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609222354"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609222354"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609222354"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609222354"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609222354"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609222354"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609222354"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609222354"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609222354"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609222354"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609222354"></script>
-<script src="benvenuto.js?v=202609222354"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609222354"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230556"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230556"></script>
+<script src="lista.js?v=202609230556"></script>
+<script src="rubrica.js?v=202609230556"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230556"></script>
+<script src="agenda.js?v=202609230556"></script>
+<script src="report.js?v=202609230556"></script>
+<script src="check.js?v=202609230556"></script>
+<script src="mappa.js?v=202609230556"></script>
+<script src="pagina-dashboard.js?v=202609230556"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230556"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230556"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230556"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230556"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230556"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230556"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230556"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230556"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230556"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230556"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230556"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230556"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230556"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230556"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230556"></script>
+<script src="benvenuto.js?v=202609230556"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230556"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.22 · 23:54';
+const APP_VERSION = '2026.09.23 · 05:56';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1869,7 +1883,8 @@ async function caricaAgenda() {
 // nel cassetto «Cronologia») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
 const VISTE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
 const CHIAVE_VISTA = 'mb21-agenda-vista';
-const SCALE_MENU = [['giorno', 'Giorno', 'orario'], ['settimana', 'Settimana', 'agenda'], ['mese', 'Mese', 'agenda'], ['periodo', 'Periodo WES', 'biglietto'], ['anno', 'Anno', 'agenda']];
+// Ogni scala ha la sua icona e il suo colore (Ignazio 23/09): Giorno verde · Settimana blu · Mese viola · Periodo WES lampone · Anno arancio
+const SCALE_MENU = [['giorno', 'Giorno', 'scala-giorno'], ['settimana', 'Settimana', 'scala-settimana'], ['mese', 'Mese', 'scala-mese'], ['periodo', 'Periodo WES', 'biglietto'], ['anno', 'Anno', 'scala-anno']];
 const ALT_ORA = 58;        // quanto è alta un'ora nella griglia del giorno (px)
 const ALT_ORA_SETT = 42;   // nella settimana: compressa, ma un impegno di mezz'ora resta leggibile
 function vistaSalvata() {
@@ -2257,7 +2272,7 @@ function disegnaAgenda() {
       }).join('')}
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
-    <h1 class="ag-titolo">${esc(AG.vista === 'settimana' ? `Settimana ${Number(AG.settimana[0].slice(8))} – ${Number(AG.settimana[6].slice(8))} ${A.titoloMese(AG.settimana[6]).slice(0, 3).toLowerCase()}` : titoloGiorno(AG.giorno, oggi))}</h1>
+    <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}${esc(AG.vista === 'settimana' ? `Settimana ${Number(AG.settimana[0].slice(8))} – ${Number(AG.settimana[6].slice(8))} ${A.titoloMese(AG.settimana[6]).slice(0, 3).toLowerCase()}` : titoloGiorno(AG.giorno, oggi))}</h1>
     ${partnerSelect()}`;
   html += richiamiAgenda(oggi);
   const tre = largo() && AG.vista !== 'settimana';   // MB Plan a tre colonne (schermo largo)
@@ -2306,7 +2321,7 @@ function disegnaMese() {
   let html = `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
       ${mese0 !== oggi.slice(0, 8) + '01' ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
       <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-    <div class="mm-testa"><button class="freccia" id="mm-prima" aria-label="Mese prima">‹</button><h1 class="ag-titolo"><button class="ag-mese mm-titolo">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="mm-dopo" aria-label="Mese dopo">›</button></div>
+    <div class="mm-testa sc-mese"><button class="freccia" id="mm-prima" aria-label="Mese prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-mese')}<button class="ag-mese mm-titolo">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="mm-dopo" aria-label="Mese dopo">›</button></div>
     ${partnerSelect()}
     <div class="mm-griglia">${A.GIORNI_SETTIMANA.map(g => `<b>${g}</b>`).join('')}
       ${giorni.map(g => {
@@ -2398,7 +2413,7 @@ function collegaMesiMini() {
 }
 // Il foglio con titolo e frecce, mesi piccoli e le cose da fare della scala: lo stesso per Periodo WES e Anno
 function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, titoloCose, cose, riportataDi, oggi }) {
-  return `${testaHtml}<div class="mm-testa"><button class="freccia" id="sc-prima" aria-label="Prima"${prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo"><button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="Dopo"${dopo ? '' : ' disabled'}>›</button></div>
+  return `${testaHtml}<div class="mm-testa sc-${scala}"><button class="freccia" id="sc-prima" aria-label="Prima"${prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo sc-titolo">${ic(scala === 'periodo' ? 'biglietto' : 'scala-anno')}<button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="Dopo"${dopo ? '' : ' disabled'}>›</button></div>
     ${partnerSelect()}${sopra || ''}${mesiMiniHtml(mesi, oggi)}
     <div class="ag-foglio"><h2 class="ag-sez">${esc(titoloCose)}</h2>
       ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
@@ -2488,7 +2503,7 @@ function disegnaSettimana() {
   let html = `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
       ${!AG.settimana.includes(oggi) ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
       <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-    <div class="mm-testa"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo"><button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
+    <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelect()}
     ${richiamiAgenda(oggi)}
     ${giorniSettimanaHtml(opz, oggi)}
@@ -2631,7 +2646,7 @@ function menuAgendaHtml() {
   return `<div class="ag-lato-titolo">MB Plan</div>
     <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca in MB Plan"></form>
     <div class="mb-risultati"></div>
-    ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="${(AG.vista || 'giorno') === k ? 'si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
+    ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="sc-${k}${(AG.vista || 'giorno') === k ? ' si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
     <div class="ag-lato-titolo mb-titolo-piu">Modelli personali<button data-cmd="nuovo-modello" aria-label="Nuovo modello">${ic('piu')}</button></div>
     ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small>${m.attivo === false ? 'spento' : `${AG.modello.filter(v => v.modello_id === m.id).length} voci`}</small></button>`).join('')
       : '<div class="mb-vuoto">Crea le tue routine o cose da fare con il +</div>'}

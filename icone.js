@@ -56,7 +56,6 @@
     'fatto': '<circle cx="12" cy="12" r="8.6"/><path d="m8.2 12.2 2.6 2.6 5-5.4"/>',   // Fatto
     'chiudi': '<path d="m6 6 12 12M18 6 6 18"/>',   // Chiudi
     'piu': '<path d="M12 5v14M5 12h14"/>',   // Aggiungi
-    'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',   // Menu (le tre linee del ☰ di MB Plan, 22/09)
     'freccia': '<path d="m9 5 7 7-7 7"/>',   // Vai avanti
     'puntini': '<circle cx="5.6" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="18.4" cy="12" r="1.2" fill="currentColor" stroke="none"/>',   // Altre azioni
     'cerca': '<circle cx="11" cy="11" r="6.6"/><path d="m16 16 4.4 4.4"/>',   // Cerca
@@ -106,6 +105,13 @@
     'libro': '<path d="M4.2 4.6a1.8 1.8 0 0 1 1.8-1.8h12a1.8 1.8 0 0 1 1.8 1.8v14.8a1.8 1.8 0 0 0-1.8-1.8H6a1.8 1.8 0 0 0-1.8 1.8z"/><path d="M4.2 19.4a1.8 1.8 0 0 0 1.8 1.8h12"/><path d="M8.4 7.4h7.2M8.4 11h5"/>',   // Libro
     'admin': '<path d="M4.4 7.6h5.2M14.4 7.6h5.2M4.4 16.4h9.2M18.4 16.4h1.2"/><circle cx="12" cy="7.6" r="2.4"/><circle cx="16" cy="16.4" r="2.4"/>',   // Admin
     // ── DISEGNI: fine
+    // ── Aggiunte a mano per MB Plan (cantiere 41, 22-23/09), fuori dal blocco importato da Claude Design (l'import non le cancella):
+    // stesso tratto e stessa griglia delle altre. Se un giorno arrivano da Design, si tolgono da qui.
+    'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',   // le tre linee del menu
+    'scala-giorno': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16"/><rect x="8" y="12.5" width="4" height="4" rx=".8"/>',   // Giorno: il foglio con il giorno segnato
+    'scala-settimana': '<rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><path d="M9.2 4.5v15M14.8 4.5v15"/>',   // Settimana: le colonnine
+    'scala-mese': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/>',   // Mese: la griglia dei giorni
+    'scala-anno': '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',   // Anno: i quadratini
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto
