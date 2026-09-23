@@ -403,9 +403,9 @@
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
   const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
 
-  // Il momento di riflessione dopo un appuntamento (cantiere 42, Ignazio 23/09): tre domande per tutti, due per tipo.
-  // Le telefonate no (sono tante al giorno: l'esito diventerebbe pesante). Ignazio: «partiamo da queste e poi, man mano,
-  // le rendiamo più efficaci» → si cambiano solo qui. Ogni risposta si salva con la sua domanda (azioni.riflessione).
+  // Il momento di riflessione dopo un appuntamento o una telefonata (cantiere 42, Ignazio 23/09): tre domande per tutti, due per tipo.
+  // Le telefonate solo se ci hai parlato (Ignazio, provando dalla coda: non dopo No Risposta e Telefono spento).
+  // Ignazio: «partiamo da queste e poi, man mano, le rendiamo più efficaci» → si cambiano solo qui. Ogni risposta si salva con la sua domanda (azioni.riflessione).
   const DOMANDE_PER_TUTTI = [
     { chiave: 'andata', domanda: 'Com\'è andata?' },
     { chiave: 'diversamente', domanda: 'Cosa, secondo te, si poteva fare diversamente?' },
@@ -416,7 +416,9 @@
     'Follow Up': ['Cosa l\'ha fatto avvicinare o allontanare dall\'ultima volta?', 'Qual è il suo «perché», se è emerso?'],
     'Consulenza PRD': ['Quale prodotto l\'ha interessato, e perché?', 'Cosa l\'ha frenato dal provarlo?'],
     'Appuntamento': ['Su cosa l\'hai aiutato oggi?', 'Qual è il suo prossimo passo concreto?'],
+    'Contatto': ['Come ha reagito quando gli hai proposto di vedervi?', 'Che obiezione o domanda è venuta fuori?'],
   };
+  const ESITI_SENZA_PAROLE = ['No Risposta', 'Telefono spento'];   // nessuno dall'altra parte: niente su cui riflettere
   // Rimandato e No Show (Ignazio 23/09: «magari dietro c'è una motivazione o c'è da dare un input per ricontattare»):
   // in alto il suo consiglio su cosa fare, sotto una domanda sola. «Standby» è un modo di dire: Richiamare o si lascia rientrare in coda.
   const CONSIGLI_NON_AVVENUTO = {
@@ -425,10 +427,11 @@
   };
   const DOMANDA_NON_AVVENUTO = { chiave: 'successo', domanda: 'Cosa è successo?' };
   const consiglioRiflessione = esito => CONSIGLI_NON_AVVENUTO[esito] || null;
-  // Le domande dopo l'esito di un'azione, nell'ordine in cui si fanno ([] = niente foglietto): niente per le telefonate
+  // Le domande dopo l'esito di un'azione, nell'ordine in cui si fanno ([] = niente foglietto): niente per le telefonate senza risposta
   // e per il «Fatto» del PM (è il primo passo: il foglietto arriva con il risultato). Un tipo fuori elenco (vecchi di Glide): le tre per tutti.
   function domandeRiflessione(tipo, esito) {
-    if (!tipo || tipo === 'Contatto' || (esito && esito === fattoDi(tipo))) return [];
+    if (!tipo || (esito && esito === fattoDi(tipo))) return [];
+    if (tipo === 'Contatto' && (!esito || ESITI_SENZA_PAROLE.includes(esito))) return [];
     if (consiglioRiflessione(esito)) return [DOMANDA_NON_AVVENUTO];
     return [...DOMANDE_PER_TUTTI, ...(DOMANDE_PER_TIPO[tipo] || []).map((domanda, i) => ({ chiave: `${tipo}-${i + 1}`, domanda }))];
   }
