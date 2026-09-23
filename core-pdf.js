@@ -6,6 +6,7 @@
 (function (radice) {
   const BLU = [44, 74, 124], BLU_TINTA = [238, 243, 250], VERDE = [21, 128, 61], GRIGIO = [123, 132, 150], LINEA = [205, 211, 222], RIS = [236, 238, 242], NERO = [16, 21, 31];
   const A4 = { w: 210, h: 297 }, M = 10, GAP = 6, COL = (A4.w - 2 * M - GAP) / 2;
+  const MASSIMO = { pm: 25, clienti: 40 };   // oltre, l'ultima riga dice «… e altri N»
   const num = v => v == null || v === '' ? '' : String(Math.round(Number(v) * 100) / 100).replace('.', ',');
 
   function crea(jsPDF, m, { mese, nome, oggi }) {
@@ -70,34 +71,45 @@
     doc.text(`${m.fatte}/7 abitudini nel mese${m.fatte === 7 ? ' · persona Core' : ''}`, A4.w - M, 25.5, { align: 'right' });
     colore(BLU, 'd'); doc.setLineWidth(0.5); doc.line(M, 28, A4.w - M, 28); doc.setLineWidth(0.2);
 
-    const RH = 4.9;   // altezza di una riga di tabella
     // ══ Colonna di sinistra = pagina 1 del modulo ══
     let xs = M, y = 32, y0;
+    // Righe: almeno quelle del modulo di carta (15 PM, 20 clienti su due colonne da 10, come l'originale); se ce ne sono di più
+    // (Ignazio 23/09) le righe crescono e si stringono per stare nella pagina, fino a 25 PM e 40 clienti; oltre, l'ultima
+    // riga dice «… e altri N» (i conti in cima restano completi).
+    const pmTutti = m.s1.righe, cliTutti = m.s3.righe;
+    const nP = Math.min(MASSIMO.pm, Math.max(15, pmTutti.length));
+    const nC = Math.min(MASSIMO.clienti / 2, Math.max(10, Math.ceil(cliTutti.length / 2)));   // righe per colonna
+    const RH = Math.min(4.9, 180 / (nP + nC));   // altezza di una riga: 4,9 mm di solito, fino a 4 con le tabelle piene
+    const sb = Math.min(3, RH - 1.1), base = RH * 0.68;   // lato delle caselle e riga di scrittura dentro la riga
+    const altri = (tutti, posti) => tutti.length > posti ? tutti.length - (posti - 1) : 0;   // quante non ci stanno (l'ultima riga le dice)
 
-    // 1 · Piani Marketing: 15 righe come nel modulo, le caselle vuote si possono completare a penna
+    // 1 · Piani Marketing
     y0 = y; y = testa(xs, y, 1, 'Presentare almeno 8 Piani Marketing al mese', m.s1.raggiunto) + 4.2;
     conto(xs, y, `${m.s1.quanti}/${m.s1.obiettivo} PM presentati · iscritti ${m.s1.iscritti} · clienti ${m.s1.clienti} · no ${m.s1.no}`);
     y += 2.5;
     // colonne: n. · data · 1a1 · nome · casa · n. cand. | risultati: iscritti · clienti · no
     const c1 = { n: xs + 2, data: xs + 7, uno: xs + 19, nome: xs + 26, casa: xs + 55, cand: xs + 62, isc: xs + 70.5, cli: xs + 78, no: xs + 85.5 };
-    colore(RIS, 'f'); doc.rect(c1.isc - 1.5, y, COL - (c1.isc - 1.5 - xs) - 1.5, 4.5 + 15 * RH + 1, 'F');
+    colore(RIS, 'f'); doc.rect(c1.isc - 1.5, y, COL - (c1.isc - 1.5 - xs) - 1.5, 4.5 + nP * RH + 1, 'F');
     font(6.3, 'bold', GRIGIO);
     [['Data', c1.data], ['1a1', c1.uno], ['Nome candidato', c1.nome], ['Casa', c1.casa], ['N.', c1.cand + 1.2], ['Iscr.', c1.isc - 0.8], ['Cli.', c1.cli - 0.3], ['NO', c1.no]]
       .forEach(([t, cx]) => doc.text(t, cx, y + 3.2));
     y += 4.5;
-    for (let i = 0; i < 15; i++) {
-      const r = m.s1.righe[i], yb = y + i * RH, s = 3;
-      font(7, 'normal', GRIGIO); doc.text(String(i + 1), c1.n + 3, yb + 3.3, { align: 'right' });
-      font(7.3, r ? 'normal' : 'normal', r ? NERO : LINEA); doc.text(r ? r.data : '__/__', c1.data, yb + 3.3);
-      casella(c1.uno, yb + 0.6, s, r && r.uno_a_uno);
-      if (r) { font(7.3, 'bold'); scrivi(r.nome, c1.nome, yb + 3.3, 27.5); }
-      riga(c1.nome, c1.nome + 27.5, yb + 4);
-      casella(c1.casa + 0.5, yb + 0.6, s, r && r.casa);
-      colore(LINEA, 'd'); doc.rect(c1.cand, yb + 0.6, 5, s);
-      if (r) { font(7, 'bold'); doc.text(String(r.candidati), c1.cand + 2.5, yb + 3.1, { align: 'center' }); }
-      casella(c1.isc, yb + 0.6, s, r && r.iscritti); casella(c1.cli, yb + 0.6, s, r && r.clienti); casella(c1.no, yb + 0.6, s, r && r.no);
+    const altriPm = altri(pmTutti, nP);
+    for (let i = 0; i < nP; i++) {
+      const yb = y + i * RH, yc = yb + (RH - sb) / 2;
+      font(7, 'normal', GRIGIO); doc.text(String(i + 1), c1.n + 3, yb + base, { align: 'right' });
+      if (altriPm && i === nP - 1) { font(7, 'italic', GRIGIO); doc.text(`... e altri ${altriPm} Piani Marketing (in tutto ${pmTutti.length})`, c1.data, yb + base); continue; }
+      const r = pmTutti[i];
+      font(7.3, 'normal', r ? NERO : LINEA); doc.text(r ? r.data : '__/__', c1.data, yb + base);
+      casella(c1.uno, yc, sb, r && r.uno_a_uno);
+      if (r) { font(7.3, 'bold'); scrivi(r.nome, c1.nome, yb + base, 27.5); }
+      riga(c1.nome, c1.nome + 27.5, yb + base + 0.7);
+      casella(c1.casa + 0.5, yc, sb, r && r.casa);
+      colore(LINEA, 'd'); doc.rect(c1.cand, yc, 5, sb);
+      if (r) { font(7, 'bold'); doc.text(String(r.candidati), c1.cand + 2.5, yc + sb - 0.5, { align: 'center' }); }
+      casella(c1.isc, yc, sb, r && r.iscritti); casella(c1.cli, yc, sb, r && r.clienti); casella(c1.no, yc, sb, r && r.no);
     }
-    y += 15 * RH + 2.5;
+    y += nP * RH + 2.5;
     cornice(xs, y0, y, m.s1.raggiunto); y += 3.5;
 
     // 2 · Consumo personale
@@ -107,20 +119,25 @@
     valore(num(m.s2.vp), xs + COL - 3, y, 20);
     y += 4.5; cornice(xs, y0, y, f2); y += 3.5;
 
-    // 3 · Clienti: 20 righe come nel modulo, in fondo il totale VP
+    // 3 · Clienti: due colonne affiancate come nel modulo (1-10 · 11-20, o di più), in fondo il totale VP
     y0 = y; y = testa(xs, y, 3, 'Servire almeno 10 clienti al mese [100-300 VP]', m.s3.raggiunto) + 4.2;
     conto(xs, y, `${m.s3.quanti}/${m.s3.obiettivo} clienti · ${num(m.s3.vp) || 0} VP`);
     y += 2.5;
-    font(6.3, 'bold', GRIGIO); doc.text('Nome cliente', xs + 8, y + 3.2); doc.text('Valore Punti', xs + COL - 3, y + 3.2, { align: 'right' });
-    y += 4.5;
-    for (let i = 0; i < 20; i++) {
-      const r = m.s3.righe[i], yb = y + i * RH;
-      font(7, 'normal', GRIGIO); doc.text(String(i + 1), xs + 6, yb + 3.3, { align: 'right' });
-      if (r) { font(7.3, 'bold'); scrivi(r.nome, xs + 8, yb + 3.3, 58); font(7.3); doc.text(num(r.vp), xs + COL - 4, yb + 3.3, { align: 'right' }); }
-      riga(xs + 8, xs + 68, yb + 4);
-      colore(LINEA, 'd'); doc.rect(xs + COL - 20, yb + 0.5, 17, 3.6);
+    const MEZZA = (COL - 2) / 2, altriCli = altri(cliTutti, 2 * nC);
+    for (let k = 0; k < 2; k++) {
+      const x0 = xs + 1 + k * MEZZA;
+      font(6.3, 'bold', GRIGIO); doc.text('Nome cliente', x0 + 6.5, y + 3.2); doc.text('Valore Punti', x0 + MEZZA - 2, y + 3.2, { align: 'right' });
+      for (let i = 0; i < nC; i++) {
+        const j = k * nC + i, yb = y + 4.5 + i * RH;
+        font(7, 'normal', GRIGIO); doc.text(String(j + 1), x0 + 5, yb + base, { align: 'right' });
+        if (altriCli && j === 2 * nC - 1) { font(7, 'italic', GRIGIO); doc.text(`... e altri ${altriCli}`, x0 + 6.5, yb + base); continue; }
+        const r = cliTutti[j];
+        if (r) { font(7.3, 'bold'); scrivi(r.nome, x0 + 6.5, yb + base, MEZZA - 21); font(7.3); doc.text(num(r.vp), x0 + MEZZA - 3, yb + base, { align: 'right' }); }
+        riga(x0 + 6.5, x0 + MEZZA - 14, yb + base + 0.7);
+        colore(LINEA, 'd'); doc.rect(x0 + MEZZA - 13, yb + (RH - (RH - 1.1)) / 2, 11.5, RH - 1.1);
+      }
     }
-    y += 20 * RH + 5;
+    y += 4.5 + nC * RH + 5;
     font(8.5); doc.text('Totale VP prodotti dalla vendita', xs + 3, y);
     valore(num(m.s3.vp), xs + COL - 3, y, 20);
     y += 3.5; cornice(xs, y0, y, m.s3.raggiunto);
@@ -180,7 +197,11 @@
     y += 10;
     font(8); doc.text('Acquisto biglietto BBS', xs + 3, y); siNo(xs + 34, y, m.s6.bbs);
     font(8); doc.text('WES', xs + 56, y); siNo(xs + 64, y, m.s6.wes);
-    y += 3.5; cornice(xs, y0, y, f6); y += 3.5;
+    // sotto, in piccolo, il prossimo BBS e il prossimo WES dopo oggi (Ignazio 23/09)
+    font(6.5, 'normal', GRIGIO);
+    if (m.s6.prossimoBbs) doc.text(`prossimo: ${m.s6.prossimoBbs.testo}`, xs + 3, y + 3.6);
+    if (m.s6.prossimoWes) doc.text(`prossimo: ${m.s6.prossimoWes.testo}`, xs + 56, y + 3.6);
+    y += m.s6.prossimoBbs || m.s6.prossimoWes ? 6 : 3.5; cornice(xs, y0, y, f6); y += 3.5;
 
     // 7 · Lavorare di squadra
     const f7 = !!m.s7.counseling && m.s7.edificazione === true && m.s7.no_crossline === true;
