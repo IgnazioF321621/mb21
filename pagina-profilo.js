@@ -30,7 +30,7 @@ async function apriProfilo() {
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
   const [dati, stato, percorso] = await Promise.all([
-    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno, calendario_token').eq('id', u.id).maybeSingle()),
+    dbq('profilo', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno, calendario_token, avvisi_quando').eq('id', u.id).maybeSingle()),
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
     leggiPercorso(),   // cantiere 32: i propri «Perché iniziare» e i 14 passi (non letto = null: i due riquadri non si mostrano)
     leggiMieiSegni(),  // cantiere 25 bis: le proprie targhette BBS · WES · CEP (non letti = la voce non si mostra)
@@ -69,11 +69,23 @@ function mioProfiloHtml() {
       sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) });
 }
 
+// «Avvisi» con lo schema del QUANDO (cantiere 43 lavoro 2, schizzo approvato da Ignazio il 23/09): per ora SOLO ADMIN,
+// perché la funzione `avvisi` legge le scelte solo dal lavoro 3; alla pubblicazione del lavoro 3 diventa di tutti e la voce
+// vecchia qui sotto (in disegnaProfilo) si toglie. «Spegni» vale per il dispositivo; «Prova un avviso» va in fondo, sotto le scelte.
+function avvisiNuoviHtml(statoDispositivo, destra) {
+  return voceProfilo('avvisi', ic('avvisi') + ' Avvisi', { destra, corpo: `
+      <small style="margin-top:0">Tutto quello che in MB Plan ha un'ora ti avvisa, anche con l'app chiusa. Scegli tu <b>quando</b>: vale su telefono e iPad insieme.</small>
+      <div class="pf-avvisi">${statoDispositivo}</div>
+      ${avvisiQuandoHtml(ST.utente)}
+      <small>Le tracce condivise da controllare ti avvisano sempre, appena arrivano.</small>
+      <button class="primario pf-prova" id="av-prova">${ic('avvisi')} Prova un avviso</button>` });
+}
+
 function disegnaProfilo() {
   const u = ST.utente, s = AV.stato;
   const b = (id, t, classe = 'link') => `<button class="${classe}" id="${id}">${t}</button>`;
   const avvisi = {
-    acceso: `<div>${ic('avvisi')} Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')} · ${b('av-prova', 'Prova')}</div>`,
+    acceso: `<div>${ic('avvisi')} Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')}${eAdmin() ? '' : ' · ' + b('av-prova', 'Prova')}</div>`,   // Admin: «Prova» in fondo (avvisiNuoviHtml)
     spento: `<div>${ic('avvisi')} Avvisi <b>spenti</b> su questo dispositivo</div><div class="riga">${b('av-attiva', 'Attiva gli avvisi', 'primario')}</div>`,
     computer: `<div>${ic('avvisi')} Gli avvisi arrivano sul telefono o sul tablet: accendili da lì, in questa pagina.</div>`,
     da_installare: `<div>${ic('avvisi')} Per ricevere gli avvisi aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home), poi torna qui.</div>`,
@@ -95,7 +107,7 @@ function disegnaProfilo() {
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
     ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', esc(String(numero || '—')))}
-    ${voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
+    ${eAdmin() ? avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi) : voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
       <small style="margin-top:0">Alle <b>9</b> il programma di oggi, <b>30 minuti prima</b> di ogni appuntamento e di ogni telefonata con un orario un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
       <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
     ${calendarioHtml()}
