@@ -74,6 +74,8 @@ Decisioni del 22/09 sera sui numeri: **VPP (valore punti personali) non è autoc
 
 **✅ Fatto il 23/09 (versione 2026.09.23 · 08:45):** nella **scheda del contatto** le cose da fare collegate a quella persona (`cose_da_fare.contatto_id`, dal 23/09): «Da fare: messaggio per eSpring», con la spunta e il tocco che apre il foglio della cosa; e da lì «Aggiungi una cosa da fare» già collegata. Regola della stella cometa: quello che fai in MB Plan si ritrova nella scheda. Riquadro «Da fare» sotto la testata (Prospect, Partner, Cliente), prima delle linguette.
 
+**MB Plan nel suo file (23/09, Ignazio «ok procedi»):** `pagina-agenda.js`, codice identico, come Lista, Core, Sharing e Dashboard.
+
 **Ancora da fare in MB Plan (lista del 23/09, ordine consigliato):** la settimana in cima al giorno ✅ 23/09: prima riga leggera, poi (studio di NotePlan, versione 11:05) **sempre presente e ripiegata**, si apre sul posto; il mese in cima alla settimana · ~~mostra/nascondi le parti del giorno~~ (tolto: le sezioni si chiudono già) · scorciatoie Oggi · Domani · Settimana prossima nel foglio della cosa ✅ 23/09 · ordinare le cose trascinandole ✅ 23/09 (dentro la stessa sezione; nella scheda del contatto no: lì l'ordine è per giorno) · (dopo, se serve) trascinare una cosa sulla Timeline · PDF del Modulo Core · calendario degli OPEN · accesso del leader · avvisi delle telefonate vecchie a 15 minuti · giro di controllo sull'iPhone.
 
 **Lavori, dal più semplice** (ognuno pubblicabile da solo; ordine deciso il 22/09 dopo il rilievo):
