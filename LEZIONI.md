@@ -110,3 +110,8 @@
 
 **Regola:** le funzioni usate da codice che parte al caricamento si scrivono come `function nome() {}` (esistono da subito), mai come `const nome = () => …`. E prima di ogni commit che tocca `index.html` si fa girare anche la **prova di caricamento** (eseguire tutto il codice in un finto browser e vedere se arriva in fondo), non solo il controllo di sintassi.
 
+
+## La spunta che il database rifiutava in silenzio
+*23 settembre 2026, cantiere 41 (MB Plan, voci dei modelli).* La spunta delle voci si salvava con «inserisci o aggiorna se c'è già» (upsert) appoggiandosi a un indice unico **parziale** (valido solo per le righe con `modello_id` pieno). Il database, con un indice parziale, non sa riconoscere il doppione e rifiuta tutto: Ignazio toccava il cerchio e non succedeva niente, mentre le cose da fare (salvate con un inserimento semplice) funzionavano.
+
+**Regola:** con un indice unico che ha un `where`, niente upsert: si controlla prima nell'app se la riga c'è già (qui `spunta_id`) e poi si inserisce o si cancella. E ogni nuovo salvataggio si prova almeno una volta davvero, non solo nel finto browser.
