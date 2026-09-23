@@ -1878,6 +1878,8 @@ const ICONA_CAL = `<img src="icone/calendario-apple-32.png" width="16" height="1
 function extraEvento(e) {
   const A = MB21Agenda;
   const richiamo = e.tipo_azione === 'Contatto' && !!e.data_scelta;   // dato dalla coda: si guarda, non si chiude qui
+  // «Fissa appuntamento» solo dopo PM Fissato / Appuntamento; un «Richiamare» si sposta (Ignazio 23/09: con «Fissa» nasceva
+  // una seconda telefonata alla stessa persona lo stesso giorno). Sposta porta con sé anche il giorno in cui torna in coda.
   const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
   return `${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
@@ -1886,7 +1888,7 @@ function extraEvento(e) {
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria || 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
-        ${richiamo ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>
+        ${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>`;
@@ -1948,7 +1950,7 @@ function collegaComandiEvento(el, e, dopo) {
       if (b.dataset.cmd === 'modifica') { chiudiFoglio(); return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() }); }
       if (b.dataset.cmd === 'elimina') { chiudiFoglio(); return eliminaAppuntamento(e); }
       if (b.dataset.cmd === 'contatto') { chiudiFoglio(); return apriContattoDa(e.contatto_id); }
-      if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti } }); }
+      if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti }, saltaId: e.id }); }   // l'avviso «a quest'ora hai già» non conta il richiamo stesso
     };
   });
 }
