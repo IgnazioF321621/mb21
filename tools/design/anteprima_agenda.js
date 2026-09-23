@@ -5,7 +5,10 @@
 // Uso:  node tools/design/anteprima_agenda.js   →  tools/design/anteprima_agenda.html
 const fs = require('node:fs'), path = require('node:path');
 const BASE = path.join(__dirname, '..', '..');
-const sorgente = fs.readFileSync(path.join(BASE, 'index.html'), 'utf8');
+// dal 23/09 MB Plan vive in pagina-agenda.js: lo si rimette al suo posto in index.html (dove c'è il segnaposto),
+// così i pezzi si prendono come prima, dai file veri
+const sorgente = fs.readFileSync(path.join(BASE, 'index.html'), 'utf8')
+  .replace(/^\/\/ ── MB PLAN \(l'Agenda\) ── la pagina è in pagina-agenda\.js.*$/m, () => fs.readFileSync(path.join(BASE, 'pagina-agenda.js'), 'utf8'));
 const A = require(path.join(BASE, 'agenda.js'));
 const MB21Icone = require(path.join(BASE, 'icone.js'));
 
