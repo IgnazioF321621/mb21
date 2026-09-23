@@ -126,10 +126,11 @@
       if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
       return c.giorno === giorno;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
-    const peso = c => (c.fatto_il ? 2 : c.riportata ? 0 : 1);
-    return mie.sort((x, y) => peso(x) - peso(y)
-      || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
+    // fatte in fondo; poi l'ordine scelto trascinando (Ignazio 23/09: vince lui); a parità le riportate prima (le più vecchie per prime)
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
       || (x.ordine || 0) - (y.ordine || 0)
+      || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1)
+      || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
       || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
   }
   // Le cose da fare del MESE (cantiere 41, vista Mese): `scala = 'mese'`, `giorno` = primo del mese. Come per i giorni,
@@ -140,8 +141,8 @@
       if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
       return c.giorno === inizio;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
-    const peso = c => (c.fatto_il ? 2 : c.riportata ? 0 : 1);
-    return mie.sort((x, y) => peso(x) - peso(y) || (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.ordine || 0) - (y.ordine || 0)
+      || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
   // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
