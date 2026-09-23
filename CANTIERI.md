@@ -106,6 +106,36 @@ Decisioni del 22/09 sera sui numeri: **VPP (valore punti personali) non è autoc
 - **Attenzione**: `bbs.data` e `biglietti.evento` sono il **primo giorno del mese** (vincoli `bbs_primo_del_mese`, migrazione `20260916161747_eventi_al_mese.sql`); «evento in vendita» = l'ultimo caricato. Caricare eventi passati **cambia i conteggi dei segni vitali** di tutta la Mappa: prima si prova in una transazione annullata, come sempre
 - È **caricamento di dati, non stile**: non fa parte del cantiere 34
 
+## 43. GLI AVVISI TUTTI DA MB21, E OGNUNO SCEGLIE QUANDO (aperto il 23/09, da fare in una sessione nuova)
+*Ignazio 23/09: «l'idea di sganciarci completamente da Google e Apple: qualsiasi cosa caricata su MB Plan avvisi, come gli altri appuntamenti, sul cellulare o sull'iPad». E: «uno schema in Profilo dove c'è la cosa degli avvisi e ognuno sceglie che tipologia di avvisi vuole (come tempo di avviso)».*
+
+**Oggi** gli avvisi arrivano da due strade: **MB21** (funzione `avvisi`: buongiorno delle 9, «Tra 30 minuti» per appuntamenti e telefonate, «Com'è andata?» un'ora dopo, Check della sera alle 22, tracce) e il **calendario di Google/Apple** che copia MB Plan (cantiere 38, funzione `calendario`). Le **cose da fare con l'ora** e le **voci dei modelli** (Lettura 06:00…) non avvisano da nessuna parte.
+
+**Decisioni di Ignazio (23/09):**
+- **Tutto quello che in MB Plan ha un'ora avvisa da MB21**, su telefono e iPad: appuntamenti, telefonate, cose da fare con l'ora, voci dei modelli (anche con l'ora «solo oggi»)
+- **Il collegamento a Google/Apple resta facoltativo** (chi vuole vedere MB Plan nel calendario del telefono lo tiene; gli avvisi arrivano da MB21)
+- **Uno schema nel Profilo**, sezione «Avvisi»: ognuno sceglie **quando** riceverli, per tipo. **Niente «spento»** (Ignazio: «niente lo toglierei»): gli avvisi restano sempre accesi, si sceglie solo il tempo. Chi non tocca niente ha i valori **«già impostato»**:
+
+| Avviso | Si sceglie | Già impostato |
+|---|---|---|
+| Appuntamenti (PM, Follow Up, Counseling…) | all'ora · 5 · 10 · 15 · 30 min · 1 ora prima | 30 min prima |
+| Telefonate in agenda | uguale | 10 min prima |
+| Cose da fare con l'ora | uguale | 10 min prima |
+| Modelli personali (Lettura, Workout…) | uguale | all'ora |
+| «Com'è andata?» dopo un appuntamento | 30 min · 1 ora · 2 ore dopo | 1 ora dopo |
+| Buongiorno con il riepilogo del giorno | 7 · 8 · 9 · 10 | 9:00 |
+| Check della sera | 20 · 21 · 22 | 22:00 (come oggi) |
+
+- «Tracce da controllare» **non entra nello schema**: resta sempre accesa, come oggi. In fondo alla sezione resta «Prova un avviso».
+
+**Lavori, in ordine:**
+1. **Schizzo della sezione «Avvisi» del Profilo** da far vedere a Ignazio prima di costruire
+2. **Le scelte nel database** (una colonna nella tabella `utenti`, ognuno legge e scrive le sue; vuota = valori «già impostato») e lo schema nel Profilo (`pagina-profilo.js`)
+3. **La funzione `avvisi`** legge le scelte di ognuno; avvisa anche per **cose da fare con l'ora** e **voci dei modelli** (stessa regola di `vociDelGiorno` in `agenda.js`, riscritta uguale nella funzione, compresa la riga del giorno con l'ora «solo oggi»; mai per le fatte); un avviso solo per cosa (colonna «avvisato» come `azioni.promemoria_il`); il controllo passa **da ogni 5 minuti a ogni minuto** (cron) per rispettare «5 · 10 min prima»; buongiorno e Check della sera all'ora scelta da ognuno (il cron gira ogni ora e la funzione guarda la scelta)
+4. Prova senza spedire (`{ prova: true, adesso }`) sui dati veri, poi pubblicazione; **attenzione alla lezione L14** (prima chiamata vera = avvisi veri a tutti)
+
+**Da sapere** (detto a Ignazio): su iPhone/iPad gli avvisi arrivano solo con MB21 **installata sulla schermata Home**; è un avviso come un messaggio, non una sveglia.
+
 ## 42. IL MOMENTO DI RIFLESSIONE DOPO OGNI ATTIVITÀ (idea di Ignazio 23/09, da fare in una prossima sessione)
 *Ignazio 23/09: «dopo ogni appuntamento, telefonata, demo prodotti o qualsiasi cosa che riguardi l'attività ci può essere un momento di riflessione, con alcune domande già automatiche che ci portano a riflettere per cercare di migliorarci».*
 
