@@ -6,7 +6,6 @@
   const OBIETTIVI = { pm: 8, clienti: 10, pagine: 10, cd: 1 };
   const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-  const GIORNI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
   const NON_AVVENUTI = ['No Show', 'Rimandato'];   // un PM con questo esito non è stato presentato (stessa regola di azioni_conti)
 
   const giorniDelMese = mese => new Date(Date.UTC(Number(mese.slice(0, 4)), Number(mese.slice(5, 7)), 0)).getUTCDate();
@@ -39,15 +38,14 @@
   // Il prossimo BBS o WES dopo oggi (Ignazio 23/09: «sotto BBS la data del prossimo, sempre quella successiva al giorno
   // di oggi»). eventi: righe di `bbs` o `wes` ({ data: primo del mese, giorno?: primo giorno del WES }). Con il giorno
   // conta il giorno (passato = si salta); senza giorno (il BBS, che cade in giorni diversi nelle città) vale il mese
-  // intero: il BBS di settembre è «il prossimo» fino al 30 settembre. Torna { mese, giorno, testo } o null.
+  // intero: il BBS di settembre è «il prossimo» fino al 30 settembre. Torna { mese, giorno, testo: «ottobre 2026» } o null.
   function prossimoEvento(eventi, oggi) {
     const dopo = (eventi || []).filter(e => e && e.data && (e.giorno ? e.giorno >= oggi : e.data.slice(0, 7) >= oggi.slice(0, 7)))
       .sort((x, y) => ((x.giorno || x.data) < (y.giorno || y.data) ? -1 : 1));
     if (!dopo.length) return null;
-    const e = dopo[0], nomeMese = `${MESI[Number(e.data.slice(5, 7)) - 1]} ${e.data.slice(0, 4)}`;
-    if (!e.giorno) return { mese: e.data.slice(0, 7), giorno: null, testo: nomeMese };
-    const g = e.giorno, dow = new Date(g + 'T12:00:00Z').getUTCDay();
-    return { mese: e.data.slice(0, 7), giorno: g, testo: `${GIORNI[dow]} ${g.slice(8)}/${g.slice(5, 7)}/${g.slice(0, 4)}` };
+    // si scrive solo mese e anno, anche per il WES che ha il giorno (Ignazio 23/09: «anche il WES facciamo mese/anno»)
+    const e = dopo[0];
+    return { mese: e.data.slice(0, 7), giorno: e.giorno || null, testo: `${MESI[Number(e.data.slice(5, 7)) - 1]} ${e.data.slice(0, 4)}` };
   }
 
   // Il modulo del mese. `mese` = 'AAAA-MM'.

@@ -33,7 +33,7 @@ prova('Il foglio è una pagina A4 verticale, con il modulo dentro', () => {
   const w = doc.internal.pageSize.getWidth(), h = doc.internal.pageSize.getHeight();
   assert.ok(Math.abs(w - 210) < 0.5 && Math.abs(h - 297) < 0.5);
   const testo = doc.output();
-  for (const t of ['PRESENTARE ALMENO 8', 'CONSUMARE I PRODOTTI', 'SERVIRE ALMENO 10', 'LAVORARE DI SQUADRA', 'Ignazio Fiorito', 'settembre 2026', 'Laura Ferri', 'prossimo: settembre 2026', 'prossimo: sab 10/10/2026']) assert.ok(testo.includes(t), t);
+  for (const t of ['PRESENTARE ALMENO 8', 'CONSUMARE I PRODOTTI', 'SERVIRE ALMENO 10', 'LAVORARE DI SQUADRA', 'Ignazio Fiorito', 'settembre 2026', 'Laura Ferri', 'prossimo: settembre 2026', 'prossimo: ottobre 2026']) assert.ok(testo.includes(t), t);
   if (process.env.PDF_OUT) require('node:fs').writeFileSync(process.env.PDF_OUT, Buffer.from(doc.output('arraybuffer')));
 });
 
