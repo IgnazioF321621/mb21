@@ -67,6 +67,19 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - Da decidere con Ignazio prima di costruire: domande fisse o diverse per tipo di attività · sempre o solo quando si vuole (per non appesantire l'esito) · dove si rilegge (scheda, prossimo appuntamento, Coach Yes) · chi la vede (la persona, l'Admin, il leader/sponsor per il counseling?) · legame con «Com'è andata?» degli avvisi senza esito, che esiste già
 - Regola: niente quarto posto dove scrivere (vedi appunti tolti dal 41): la riflessione vive **sull'attività**, accanto all'esito
 
+**Decisioni di Ignazio (23/09 sera)**
+- **Quando**: dopo gli **appuntamenti** (PM, Follow Up, Consulenza PRD/demo, Appuntamento con un Partner); **non dopo le telefonate** (troppe al giorno)
+- **Domande**: **tre per tutti** («Com'è andata?» · «Cosa, secondo te, si poteva fare diversamente?» · «Cosa farai la prossima volta?») **+ due per tipo** (PM: «Quale parte del piano l'ha colpito di più?» · «Che dubbio o obiezione è venuto fuori?»; Follow Up: «Cosa l'ha fatto avvicinare o allontanare dall'ultima volta?» · «Qual è il suo «perché», se è emerso?»; Consulenza PRD: «Quale prodotto l'ha interessato, e perché?» · «Cosa l'ha frenato dal provarlo?»; Appuntamento: «Su cosa l'hai aiutato oggi?» · «Qual è il suo prossimo passo concreto?»). Ignazio: «partiamo da queste e poi, man mano, le rendiamo più efficaci»
+- **Proposta, si salta**: il foglietto compare, «Salta» a un tocco; si risponde solo a quello che si vuole
+- **Chi la legge**: chi l'ha scritta e l'Admin (come le azioni); leader/sponsor più avanti, con il loro accesso a MB Plan
+- **Passo 2, note di Ignazio**: (a) il foglietto anche con **Rimandato e No Show** («magari dietro c'è una motivazione o c'è da dare un input per ricontattare») — domande da decidere; (b) **non prima di «Fissa il prossimo appuntamento»**: quello si fa spesso con la persona davanti, la riflessione no; (c) il foglietto **diverso e colorato diversamente per ogni situazione** (colore del tipo di appuntamento)
+- **Passo 3, note di Ignazio**: «L'ultima volta ti eri detto» con la stessa persona **e anche le risposte generiche della stessa situazione** (stesso tipo di appuntamento, con altre persone) «perché mi permetterebbero di essere pronto»; storico della scheda con la riflessione correggibile: ok
+
+**Passi**
+1. ✅ 23/09 **scritto, migrazione non ancora applicata** (versione 2026.09.23 · 22:14): colonna `azioni.riflessione` (migrazione `20260923221246_riflessione.sql`, provata in transazione annullata: 1.695 azioni, nessuna toccata) + domande e `riflessioneDa` in `agenda.js` (1 prova nuova in `prova_agenda.js`). Da applicare con l'«ok, applica» di Ignazio
+2. Il foglietto dopo l'esito (vedi note sopra)
+3. Ritrovarla: prossimo appuntamento con la stessa persona + stessa situazione; storico della scheda
+
 ## 21. DA FARE PIÙ AVANTI
 *Raccolta del 17 settembre 2026 (pausa di sistemazione): voci rimaste nei cantieri chiusi, da riprendere una alla volta quando servono.*
 - **Accesso del leader del gruppo a MB Plan** (dal cantiere 41, chiuso il 23/09; Ignazio: «leader è successivo»): regole di lettura in Supabase perché il leader veda MB Plan del suo gruppo
