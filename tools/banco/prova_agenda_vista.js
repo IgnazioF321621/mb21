@@ -34,7 +34,9 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   assert.doesNotMatch(f, /ag-sez">Core/);                            // la sezione Core non sta più nel foglio: vive nel Check e nel modulo
   assert.doesNotMatch(f, /Presentare almeno 8 Piani Marketing/);
   assert.ok(f.indexOf('data-apri-modello="g1"') > 0 && f.indexOf('data-apri-modello="g1"') < f.indexOf('Da fare oggi'));   // il modello, poi «Da fare oggi»
-  assert.equal((f.match(/data-chiudi-sez=/g) || []).length, 2);                      // tutte e due le sezioni si chiudono
+  assert.equal((f.match(/data-chiudi-sez=/g) || []).length, 3);                      // le due sezioni si chiudono, e la settimana ripiegata in cima si apre
+  assert.match(f, /class="ag-sopra sc-settimana/);                   // la settimana sempre in cima al Giorno, come NotePlan (23/09)
+  assert.ok(f.indexOf('ag-sopra') < f.indexOf('data-apri-modello="g1"'));
   assert.match(f, /da 19\/9/);                                       // la cosa non fatta di sabato si vede oggi
   assert.match(f, /id="ag-cronologia"/);                             // il cassetto in fondo
   assert.doesNotMatch(f, /class="ag-griglia"/);                      // la griglia non sta nella pagina
