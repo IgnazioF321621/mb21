@@ -521,4 +521,22 @@ prova('Periodo WES: da un WES al successivo, il giorno del WES per il conto alla
   assert.equal(A.giorniTra('2026-09-22', '2026-10-03'), 11);
 });
 
+prova('Riflessione (cantiere 42): tre domande per tutti + due per tipo, niente per le telefonate; si salvano solo le risposte date', () => {
+  const pm = A.domandeRiflessione('Piano Marketing');
+  assert.equal(pm.length, 5);
+  assert.deepEqual(pm.slice(0, 3).map(d => d.chiave), ['andata', 'diversamente', 'prossima']);
+  assert.equal(pm[3].domanda, 'Quale parte del piano l\'ha colpito di più?');
+  for (const t of ['Follow Up', 'Consulenza PRD', 'Appuntamento']) assert.equal(A.domandeRiflessione(t).length, 5);
+  assert.equal(new Set(['Piano Marketing', 'Follow Up', 'Consulenza PRD', 'Appuntamento'].flatMap(t => A.domandeRiflessione(t).map(d => d.chiave))).size, 3 + 8);
+  assert.deepEqual(A.domandeRiflessione('Contatto'), []);
+  assert.deepEqual(A.domandeRiflessione(null), []);
+  assert.equal(A.domandeRiflessione('Vecchio di Glide').length, 3);
+  assert.equal(A.riflessioneDa(pm, {}), null);
+  assert.equal(A.riflessioneDa(pm, { andata: '   ' }), null);
+  assert.deepEqual(A.riflessioneDa(pm, { andata: ' Bene ', [pm[4].chiave]: 'Il tempo' }), [
+    { chiave: 'andata', domanda: 'Com\'è andata?', risposta: 'Bene' },
+    { chiave: pm[4].chiave, domanda: pm[4].domanda, risposta: 'Il tempo' },
+  ]);
+});
+
 console.log(`\n${ok} prove superate`);

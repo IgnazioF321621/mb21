@@ -403,6 +403,29 @@
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
   const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
 
+  // Il momento di riflessione dopo un appuntamento (cantiere 42, Ignazio 23/09): tre domande per tutti, due per tipo.
+  // Le telefonate no (sono tante al giorno: l'esito diventerebbe pesante). Ignazio: «partiamo da queste e poi, man mano,
+  // le rendiamo più efficaci» → si cambiano solo qui. Ogni risposta si salva con la sua domanda (azioni.riflessione).
+  const DOMANDE_PER_TUTTI = [
+    { chiave: 'andata', domanda: 'Com\'è andata?' },
+    { chiave: 'diversamente', domanda: 'Cosa, secondo te, si poteva fare diversamente?' },
+    { chiave: 'prossima', domanda: 'Cosa farai la prossima volta?' },
+  ];
+  const DOMANDE_PER_TIPO = {
+    'Piano Marketing': ['Quale parte del piano l\'ha colpito di più?', 'Che dubbio o obiezione è venuto fuori?'],
+    'Follow Up': ['Cosa l\'ha fatto avvicinare o allontanare dall\'ultima volta?', 'Qual è il suo «perché», se è emerso?'],
+    'Consulenza PRD': ['Quale prodotto l\'ha interessato, e perché?', 'Cosa l\'ha frenato dal provarlo?'],
+    'Appuntamento': ['Su cosa l\'hai aiutato oggi?', 'Qual è il suo prossimo passo concreto?'],
+  };
+  // Le domande di un tipo di azione, nell'ordine in cui si fanno ([] = niente riflessione). Un tipo fuori elenco (vecchi di Glide): le tre per tutti.
+  const domandeRiflessione = tipo => !tipo || tipo === 'Contatto' ? [] : [...DOMANDE_PER_TUTTI,
+    ...(DOMANDE_PER_TIPO[tipo] || []).map((domanda, i) => ({ chiave: `${tipo}-${i + 1}`, domanda }))];
+  // Da quanto scritto nel foglietto ({ chiave: testo }) a quanto si salva: solo le risposte date, ognuna con la sua domanda; null = nessuna
+  function riflessioneDa(domande, testi) {
+    const risposte = domande.map(d => ({ ...d, risposta: String((testi || {})[d.chiave] || '').trim() })).filter(d => d.risposta);
+    return risposte.length ? risposte : null;
+  }
+
   // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
   function controllaGiorno(giorno) {
     if (!giorno) return 'Scegli il giorno.';
@@ -632,7 +655,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, DOMANDE_PER_TUTTI, DOMANDE_PER_TIPO, domandeRiflessione, riflessioneDa, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
