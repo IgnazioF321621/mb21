@@ -511,6 +511,9 @@ function disegnaProgetto() {
   // un titolo è completato quando tutti i passi sotto di lui (fino al titolo dopo) sono fatti; un passo nuovo lo riapre
   const sottoTitolo = i => { const out = []; for (let k = i + 1; k < righe.length && righe[k].tipo !== 'titolo'; k++) out.push(righe[k]); return out; };
   const titoloFatto = i => { const r = sottoTitolo(i); return r.length > 0 && r.every(x => x.fatto_il); };
+  // un titolo si chiude e si apre con la freccetta, come le sezioni del giorno (Ignazio 23/09); si ricorda sul dispositivo
+  const chiuse = sezioniChiuse(), nascoste = new Set();
+  righe.forEach((c, i) => { if (c.tipo === 'titolo' && chiuse.includes('pt-' + c.id)) sottoTitolo(i).forEach(x => nascoste.add(x.id)); });
   const n = contaProgetto(p.id);
   const quando = c => {
     if (!c.giorno) return '';
@@ -520,14 +523,18 @@ function disegnaProgetto() {
   };
   const inline = id => `<form class="ag-cosa-nuova pj-inline" data-dopo="${esc(id)}"><input type="text" maxlength="200" placeholder="Scrivi e premi Invio · Tab per il rientro · Esc per chiudere" autocomplete="off" style="padding-left:${(AG.livelloInline || 0) * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
   const dopoRiga = (c, i) => AG.inserisciDopo === c.id ? inline(c.id)
-    : righe[i + 1] && righe[i + 1].tipo === 'titolo' ? `<button type="button" class="pj-aggiungi" data-dopo="${esc(c.id)}">${ic('piu')} Aggiungi qui</button>` : '';
+    : righe[i + 1] && righe[i + 1].tipo === 'titolo' && !nascoste.has(c.id) && !(c.tipo === 'titolo' && chiuse.includes('pt-' + c.id)) ? `<button type="button" class="pj-aggiungi" data-dopo="${esc(c.id)}">${ic('piu')} Aggiungi qui</button>` : '';
   const righeHtml = righe.map((c, i) => rigaHtml(c, i) + dopoRiga(c, i)).join('');
   function rigaHtml(c, i) {
     const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
-    if (tipo === 'titolo') { const f = titoloFatto(i); return `<div class="cosa pj-titolo${f ? ' fatta' : ''}" data-cosa="${esc(c.id)}"><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`; }
-    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
+    if (tipo === 'titolo') {
+      const f = titoloFatto(i), chiuso = chiuse.includes('pt-' + c.id), passi = sottoTitolo(i), restano = passi.filter(x => !x.fatto_il).length;
+      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${chiuso && passi.length ? `<small>${restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`}</small>` : ''}</button></div>`;
+    }
+    const nascosta = nascoste.has(c.id) ? ' pj-nascosta' : '';
+    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}${nascosta}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
     const sotto = [quando(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : ''].filter(Boolean).join(' · ');
-    return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
+    return `<div class="cosa${c.fatto_il ? ' fatta' : ''}${nascosta}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
   }
   const tipoOra = AG.tipoRiga || 'cosa', livOra = AG.livelloRiga || 0;
   const html = testaScala(false) + `<div class="mm-testa pj-testa"><h1 class="ag-titolo sc-titolo">${ic(p.icona || 'obiettivi')}<button class="ag-mese mm-titolo" id="pj-titolo" aria-label="Titolo, icona, elimina">${esc(p.titolo)} ${ic('modifica')}</button></h1></div>
@@ -1341,9 +1348,10 @@ function ridisegnaDopoBlocco(velo) {
   disegnaAgenda();
   if (velo) lato ? pannelloDestro(eventi, opz) : foglioCronologia(eventi, opz);
 }
-function righeTrascinabili(riga, attr) {
+function righeTrascinabili(riga, attr, tutte) {
   const progetto = riga.parentElement.classList.contains('pj-foglio');   // nei progetti anche le fatte: restano al loro posto
-  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto') && !x.classList.contains('al-seguito'));
+  // `tutte`: per salvare l'ordine contano anche le righe nascoste dentro un titolo chiuso; mentre si trascina no
+  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto') && !x.classList.contains('al-seguito') && (tutte || !x.classList.contains('pj-nascosta')));
 }
 // Nei progetti una riga si porta dietro quello che le sta dentro (Ignazio 23/09: «se trascino un titolo, i punti che sono
 // all'interno devono seguire il titolo»): un titolo tutte le righe fino al titolo dopo; una riga le righe più rientrate
@@ -1385,7 +1393,7 @@ async function fineTrascina() {
   riga.removeAttribute('data-seguito'); TR.figli = [];
   TR.dopoClic = Date.now();   // il clic che segue il rilascio non deve aprire il foglio
   const voce = attr === 'data-voce';
-  const ids = righeTrascinabili(riga, attr).map(x => x.getAttribute(attr));
+  const ids = righeTrascinabili(riga, attr, true).map(x => x.getAttribute(attr));
   const lista = voce ? AG.modello : AG.cose;
   const cambiate = [];
   ids.forEach((id, i) => { const x = lista.find(y => y.id === id); if (x && x.ordine !== i + 1) { x.ordine = i + 1; cambiate.push(x); } });
