@@ -878,6 +878,11 @@
   .ag-ev.ag-cosa.fatta b { text-decoration: line-through; }
   .ag-ev.ag-cosa.fatta i { background: #1D9E75; }
   .fc-persona { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  /* le sezioni del foglio del giorno si chiudono (Ignazio 23/09) */
+  .ag-sez-chiudi { border: 0; background: none; padding: 0; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: var(--testo-tenue); flex: none; }
+  .ag-sez-chiudi svg.ic { width: 18px; height: 18px; transform: rotate(90deg); transition: transform .15s; }
+  .ag-sezione.chiusa .ag-sez-chiudi svg.ic { transform: rotate(0deg); }
+  .ag-sez-conto { font-size: 12px; font-weight: 600; color: var(--testo-tenue); margin-left: 6px; letter-spacing: 0; }
   .fc-fine { margin-top: 8px; font-size: 14px; color: var(--testo-soft); }
   .fc-fine input { font-family: inherit; font-size: 15px; margin-left: 8px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   .fm-matita { border: 0; background: var(--sfondo); border-radius: 50%; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-left: 6px; color: var(--testo-soft); }
@@ -1408,35 +1413,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230646"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230646"></script>
-<script src="lista.js?v=202609230646"></script>
-<script src="rubrica.js?v=202609230646"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230646"></script>
-<script src="agenda.js?v=202609230646"></script>
-<script src="report.js?v=202609230646"></script>
-<script src="check.js?v=202609230646"></script>
-<script src="mappa.js?v=202609230646"></script>
-<script src="pagina-dashboard.js?v=202609230646"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230646"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230646"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230646"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230646"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230646"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230646"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230646"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230646"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230646"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230646"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230646"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230646"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230646"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230646"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230646"></script>
-<script src="benvenuto.js?v=202609230646"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230646"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230654"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230654"></script>
+<script src="lista.js?v=202609230654"></script>
+<script src="rubrica.js?v=202609230654"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230654"></script>
+<script src="agenda.js?v=202609230654"></script>
+<script src="report.js?v=202609230654"></script>
+<script src="check.js?v=202609230654"></script>
+<script src="mappa.js?v=202609230654"></script>
+<script src="pagina-dashboard.js?v=202609230654"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230654"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230654"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230654"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230654"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230654"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230654"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230654"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230654"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230654"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230654"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230654"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230654"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230654"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230654"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230654"></script>
+<script src="benvenuto.js?v=202609230654"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230654"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 06:46';
+const APP_VERSION = '2026.09.23 · 06:54';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1955,15 +1960,33 @@ function foglioHtml(oggi) {
   // dentro le voci del modello di quel giorno, le cose scritte a mano in quella sezione e il campo per aggiungerne.
   const campo = gid => `<form class="ag-cosa-nuova" data-gruppo="${gid || ''}"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
   const attivi = AG.modelli.filter(m => m.attivo !== false);
+  // Ogni sezione si chiude e si apre con la freccetta (Ignazio 23/09); da chiusa dice quante cose restano. La scelta si ricorda sul dispositivo.
+  const chiuse = sezioniChiuse();
+  const blocco = (chiave, titoloHtml, righe, restano, fondo) => {
+    const chiusa = chiuse.includes(chiave);
+    return `<section class="ag-sezione${chiusa ? ' chiusa' : ''}" data-sez="${esc(chiave)}"><h2 class="ag-sez"><button class="ag-sez-chiudi" data-chiudi-sez="${esc(chiave)}" aria-expanded="${!chiusa}" aria-label="${chiusa ? 'Apri' : 'Chiudi'} la sezione">${ic('freccia')}</button>${titoloHtml}${chiusa && restano ? `<small class="ag-sez-conto">${restano} da fare</small>` : ''}</h2>
+      <div class="ag-sezione-dentro"${chiusa ? ' hidden' : ''}>${righe}${fondo}</div></section>`;
+  };
   let h = '<div class="ag-foglio">';
   for (const m of attivi) {
     const sueVoci = voci.filter(v => !v.core && v.modello_id === m.id), sueCose = cose.filter(c => c.gruppo_id === m.id);
-    h += `<h2 class="ag-sez"><button class="ag-sez-modello" data-apri-modello="${esc(m.id)}" aria-label="Apri il modello ${esc(m.titolo)}">${m.icona ? ic(m.icona) : ''}${esc(m.titolo)}${ic('modifica')}</button></h2>${sueVoci.map(v => riga(v, 'data-voce')).join('')}${sueCose.map(c => riga(c, 'data-cosa')).join('')}${campo(m.id)}`;
+    h += blocco('m-' + m.id, `<button class="ag-sez-modello" data-apri-modello="${esc(m.id)}" aria-label="Apri il modello ${esc(m.titolo)}">${m.icona ? ic(m.icona) : ''}${esc(m.titolo)}${ic('modifica')}</button>`,
+      sueVoci.map(v => riga(v, 'data-voce')).join('') + sueCose.map(c => riga(c, 'data-cosa')).join(''), [...sueVoci, ...sueCose].filter(x => !x.fatto_il).length, campo(m.id));
   }
+  // «Da fare oggi» (Ignazio 23/09): c'è sempre, con il suo campo, anche quando ci sono i modelli
   const libere = cose.filter(c => !c.gruppo_id || !attivi.some(m => m.id === c.gruppo_id));
-  if (!attivi.length || libere.length) h += `<h2 class="ag-sez">Da fare</h2>${libere.map(c => riga(c, 'data-cosa')).join('')}${attivi.length ? '' : campo(null)}`;
+  const nomeGiorno = AG.giorno === oggi ? 'oggi' : AG.giorno === MB21Agenda.spostaGiorno(oggi, 1) ? 'domani' : titoloGiorno(AG.giorno, oggi).toLowerCase();
+  h += blocco('da-fare', `<span>Da fare ${esc(nomeGiorno)}</span>`, libere.map(c => riga(c, 'data-cosa')).join(''), libere.filter(c => !c.fatto_il).length, campo(null));
   h += '</div>';
   return h;
+}
+
+const CHIAVE_SEZIONI_CHIUSE = 'mb21-sezioni-chiuse';
+function sezioniChiuse() { try { const v = JSON.parse(localStorage.getItem(CHIAVE_SEZIONI_CHIUSE) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function cambiaSezione(chiave) {
+  const ora = sezioniChiuse(), dopo = ora.includes(chiave) ? ora.filter(x => x !== chiave) : [...ora, chiave];
+  try { localStorage.setItem(CHIAVE_SEZIONI_CHIUSE, JSON.stringify(dopo)); } catch (e) {}
+  disegnaAgenda();
 }
 
 // La card degli impegni del giorno, come NotePlan: una riga per impegno, pallino della categoria · titolo · orario a pastiglia.
@@ -2014,6 +2037,7 @@ function collegaCose(oggi) {
   // le voci del modello: la spunta vale per quel giorno (o per la settimana/il mese, se la voce è di quella scala);
   // il testo di una voce misurata dal Check apre il Check di oggi, le altre aprono il modello
   const voci = A.vociDelGiorno(AG.modello, AG.cose, AG.giorno, AG.misure);
+  app.querySelectorAll('[data-chiudi-sez]').forEach(b => { b.onclick = () => cambiaSezione(b.dataset.chiudiSez); });
   // il titolo della sezione apre il suo modello (lì si cambiano titolo, icona e voci: Ignazio 23/09)
   app.querySelectorAll('[data-apri-modello]').forEach(b => { b.onclick = () => foglioModello(b.dataset.apriModello); });
   app.querySelectorAll('.ag-foglio .cosa[data-voce]').forEach(riga => {
