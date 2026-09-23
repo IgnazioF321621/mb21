@@ -388,6 +388,9 @@ prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte
   assert.deepEqual(A.coseDelGiorno(cose, '2026-09-20', '2026-09-22').map(c => c.id), []);        // nel giorno vecchio la non fatta non c'è più
   assert.deepEqual(A.coseDelGiorno(cose, '2026-09-21', '2026-09-22').map(c => c.id), ['d']);     // la fatta resta dov'è
   assert.deepEqual(A.coseDelGiorno(cose, '2026-09-23', '2026-09-22').map(c => c.id), ['f']);     // domani: solo le sue
+  // l'ordine scelto trascinando vince sulle riportate (23/09): «b» portata in cima
+  const riordinate = cose.map(c => ({ ...c, ordine: { b: 1, g: 2, a: 3, c: 4 }[c.id] || 9 }));
+  assert.deepEqual(A.coseDelGiorno(riordinate, '2026-09-22', '2026-09-22').map(c => c.id), ['b', 'g', 'a', 'c', 'e']);
   assert.deepEqual(A.coseDelGiorno([], '2026-09-22', '2026-09-22'), []);
   assert.equal(A.testoCosa('  comprare   i biglietti  '), 'comprare i biglietti');
   assert.equal(A.testoCosa('   '), null);
