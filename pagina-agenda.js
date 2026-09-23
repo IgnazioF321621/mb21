@@ -1378,7 +1378,12 @@ function muoviTrascina(y) {
   const altre = righeTrascinabili(TR.riga, TR.attr).filter(x => x !== TR.riga);
   const prima = altre.find(x => { const r = x.getBoundingClientRect(); return y < r.top + r.height / 2; });
   if (prima) { if (TR.riga.nextElementSibling !== prima) prima.before(TR.riga); }
-  else if (altre.length) { const ultima = altre[altre.length - 1]; if (ultima.nextElementSibling !== TR.riga) ultima.after(TR.riga); }
+  else if (altre.length) {
+    // in fondo: dopo l'ultima riga di tutte, anche nascosta. Se l'ultima visibile è un titolo chiuso, i suoi passi nascosti
+    // stanno sotto: lasciando subito dopo il titolo, la riga gli rubava i passi (Ignazio 23/09, Cantiere 41 sotto «Cantieri Vari»)
+    const tutte = righeTrascinabili(TR.riga, TR.attr, true).filter(x => x !== TR.riga), ultima = tutte[tutte.length - 1];
+    if (ultima.nextElementSibling !== TR.riga) ultima.after(TR.riga);
+  }
 }
 async function fineTrascina() {
   clearTimeout(TR.timer);
