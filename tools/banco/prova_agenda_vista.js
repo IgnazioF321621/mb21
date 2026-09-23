@@ -193,4 +193,10 @@ prova('Le cose da fare con l\'ora stanno nella Timeline, tratteggiate, e non fan
   assert.match(g, /2 impegni si accavallano/);   // conta solo Pino e Anna, non la cosa da fare
 });
 
+prova('La Settimana mostra sotto ogni giorno anche le sue cose da fare (Ignazio 23/09)', () => {
+  const s = V.vista('settimana');
+  assert.match(s, /class="ss-riga ss-cosa[^"]*"><i><\/i>Preparare il PM di giovedì/);
+  assert.match(s, /Comprare i biglietti BBS/);   // riportata da sabato: si vede oggi
+});
+
 console.log(`\n${ok} prove superate`);
