@@ -726,5 +726,5 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`core.js`** + **
 | 2026.09.22 · 23:54 | MB Plan: **Periodo WES e Anno come agende** — mesi piccoli con i puntini dei giorni di lavoro e i WES segnati, cose da fare della scala; via i numeri dal Periodo WES (sono nel Report); l'Anno va da gennaio a dicembre |
 | 2026.09.23 · 05:56 | MB Plan: ogni scala con la sua icona e il suo colore (Giorno verde · Settimana blu · Mese viola · Periodo WES lampone · Anno arancio), nel menu e nel titolo del foglio |
 | 2026.09.23 · 06:02 | Admin → WES: il primo giorno non si cancella più mentre si scrive; Periodo WES contato dal giorno del WES che apre, «circa» se manca il giorno di chiusura |
-| 2026.09.23 · 06:15 | MB Plan: **dare un'ora alle cose da fare** e alle voci dei Modelli personali — blocchi tratteggiati nella Cronologia, si spuntano da lì; gli appuntamenti restano com'erano (migrazione da applicare) |
+| 2026.09.23 · 06:15 | MB Plan: **dare un'ora alle cose da fare** e alle voci dei Modelli personali — blocchi tratteggiati nella Cronologia, si spuntano da lì; gli appuntamenti restano com'erano (migrazione applicata il 23/09) |
 | 2026.09.22 · 20:48 | Cantiere 41: riga 4 col numero grande; riga 7 con una frase sola sulle tracce |
