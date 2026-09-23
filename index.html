@@ -493,6 +493,15 @@
   .pf-riga span { color: var(--grigio); } .pf-riga b { text-align: right; word-break: break-all; }
   .pf-avvisi { margin-top: 8px; } .pf-avvisi .riga { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
   .pf-avvisi .primario { width: auto; padding: 8px 14px; font-size: 14px; }
+  /* «Avvisi» nel Profilo, lo schema del QUANDO (cantiere 43): un gruppo = titoletto, un tipo = nome + una fila di pillole, quella scelta scura */
+  .pf-quando-titolo { margin: 16px 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-tenue); }
+  .pf-tipo { padding: 10px 0; border-bottom: 1px solid var(--linea); } .pf-tipo:last-of-type { border-bottom: 0; }
+  .pf-tipo > b { font-size: 15px; } .pf-tipo > span { color: var(--grigio); font-size: 12.5px; margin-left: 4px; }
+  .pf-scelte { display: flex; gap: 6px; margin-top: 8px; }
+  .pf-scelte button { flex: 1; min-width: 0; min-height: 38px; padding: 6px 0; border-radius: var(--raggio-pill); border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); font-size: 14px; font-weight: 600; font-family: inherit; white-space: nowrap; }
+  .pf-scelte button.scelto { background: var(--testo); border-color: var(--testo); color: #fff; }
+  .pf-avvisi + .pf-quando-titolo { margin-top: 12px; }
+  button.primario.pf-prova { display: block; width: 100%; margin-top: 12px; }
   .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
@@ -1445,36 +1454,36 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609231230"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609231230"></script>
-<script src="lista.js?v=202609231230"></script>
-<script src="rubrica.js?v=202609231230"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609231230"></script>
-<script src="agenda.js?v=202609231230"></script>
-<script src="report.js?v=202609231230"></script>
-<script src="check.js?v=202609231230"></script>
-<script src="mappa.js?v=202609231230"></script>
-<script src="pagina-dashboard.js?v=202609231230"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609231230"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609231230"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609231230"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609231230"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609231230"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609231230"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609231230"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609231230"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609231230"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609231230"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609231230"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609231230"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609231230"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609231230"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609231230"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609231230"></script>
-<script src="benvenuto.js?v=202609231230"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609231230"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609231434"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609231434"></script>
+<script src="lista.js?v=202609231434"></script>
+<script src="rubrica.js?v=202609231434"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609231434"></script>
+<script src="agenda.js?v=202609231434"></script>
+<script src="report.js?v=202609231434"></script>
+<script src="check.js?v=202609231434"></script>
+<script src="mappa.js?v=202609231434"></script>
+<script src="pagina-dashboard.js?v=202609231434"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609231434"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609231434"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609231434"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609231434"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609231434"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609231434"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609231434"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609231434"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609231434"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609231434"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609231434"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609231434"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609231434"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609231434"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609231434"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609231434"></script>
+<script src="benvenuto.js?v=202609231434"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609231434"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 12:30';
+const APP_VERSION = '2026.09.23 · 14:34';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
