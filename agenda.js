@@ -417,9 +417,22 @@
     'Consulenza PRD': ['Quale prodotto l\'ha interessato, e perché?', 'Cosa l\'ha frenato dal provarlo?'],
     'Appuntamento': ['Su cosa l\'hai aiutato oggi?', 'Qual è il suo prossimo passo concreto?'],
   };
-  // Le domande di un tipo di azione, nell'ordine in cui si fanno ([] = niente riflessione). Un tipo fuori elenco (vecchi di Glide): le tre per tutti.
-  const domandeRiflessione = tipo => !tipo || tipo === 'Contatto' ? [] : [...DOMANDE_PER_TUTTI,
-    ...(DOMANDE_PER_TIPO[tipo] || []).map((domanda, i) => ({ chiave: `${tipo}-${i + 1}`, domanda }))];
+  // Rimandato e No Show (Ignazio 23/09: «magari dietro c'è una motivazione o c'è da dare un input per ricontattare»):
+  // in alto il suo consiglio su cosa fare, sotto una domanda sola. «Standby» è un modo di dire: Richiamare o si lascia rientrare in coda.
+  const CONSIGLI_NON_AVVENUTO = {
+    'Rimandato': 'Chiedi se è successo qualcosa di importante e fissa già l\'incontro successivo.',
+    'No Show': 'Chiamalo il giorno dopo e chiedi se è tutto a posto o se è successo qualcosa. Se ti chiede lui/lei di rifissare, bene; altrimenti mettilo in standby.',
+  };
+  const DOMANDA_NON_AVVENUTO = { chiave: 'successo', domanda: 'Cosa è successo?' };
+  const consiglioRiflessione = esito => CONSIGLI_NON_AVVENUTO[esito] || null;
+  // Le domande dopo l'esito di un'azione, nell'ordine in cui si fanno ([] = niente foglietto): niente per le telefonate
+  // e per il «Fatto» del PM (è il primo passo: il foglietto arriva con il risultato). Un tipo fuori elenco (vecchi di Glide): le tre per tutti.
+  function domandeRiflessione(tipo, esito) {
+    if (!tipo || tipo === 'Contatto' || (esito && esito === fattoDi(tipo))) return [];
+    if (consiglioRiflessione(esito)) return [DOMANDA_NON_AVVENUTO];
+    return [...DOMANDE_PER_TUTTI, ...(DOMANDE_PER_TIPO[tipo] || []).map((domanda, i) => ({ chiave: `${tipo}-${i + 1}`, domanda }))];
+  }
+  const ICONE_TIPO = { 'Piano Marketing': 'pianomarketing', 'Follow Up': 'followup', 'Appuntamento': 'appuntamento', 'Consulenza PRD': 'consulenza', 'Contatto': 'contatto' };
   // Da quanto scritto nel foglietto ({ chiave: testo }) a quanto si salva: solo le risposte date, ognuna con la sua domanda; null = nessuna
   function riflessioneDa(domande, testi) {
     const risposte = domande.map(d => ({ ...d, risposta: String((testi || {})[d.chiave] || '').trim() })).filter(d => d.risposta);
@@ -655,7 +668,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, DOMANDE_PER_TUTTI, DOMANDE_PER_TIPO, domandeRiflessione, riflessioneDa, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, DOMANDE_PER_TUTTI, DOMANDE_PER_TIPO, CONSIGLI_NON_AVVENUTO, consiglioRiflessione, domandeRiflessione, riflessioneDa, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

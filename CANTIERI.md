@@ -77,7 +77,9 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 **Passi**
 1. ✅ 23/09 **fatto e applicato** (versione 2026.09.23 · 22:14; migrazione applicata con l’«ok, applica» di Ignazio, riletta sul database: colonna jsonb, 1.695 azioni, nessuna con riflessione): colonna `azioni.riflessione` (migrazione `20260923221246_riflessione.sql`, provata in transazione annullata: 1.695 azioni, nessuna toccata) + domande e `riflessioneDa` in `agenda.js` (1 prova nuova in `prova_agenda.js`).
-2. Il foglietto dopo l'esito (vedi note sopra)
+2. Il foglietto dopo l'esito, in tre pezzi (risposte di Ignazio 23/09 sera: domande per Rimandato/No Show → **consiglio + «Cosa è successo?»**, testi suoi; **riflessione per ultima**; **colore del tipo**; «standby» è solo un modo di dire: Richiamare o si lascia rientrare in coda, niente da costruire)
+   - 2a. ⏳ **scritto in locale, da provare con Ignazio** (versione 2026.09.23 · 22:30): `chiediRiflessione` alla fine di `chiudiAppuntamento` (e alla chiusura del modulo Vendita), vedi STRUTTURA; 1 prova allargata in `prova_agenda.js`; foto con dati finti di PM · Dare Seguito, Follow Up · No Show, Consulenza PRD · Vendita. **Non pubblicato** finché Ignazio non l'ha provato
+   - 2b. No Show → al posto di «Fissa il prossimo appuntamento» il modulo già pronto «Telefonata domani» (Contatto · Telefonata · domani · stessa persona), un tocco su Salva
 3. Ritrovarla: prossimo appuntamento con la stessa persona + stessa situazione; storico della scheda
 
 ## 21. DA FARE PIÙ AVANTI
