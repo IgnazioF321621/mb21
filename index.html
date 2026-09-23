@@ -905,6 +905,7 @@
   .pw-traccia { height: 8px; border-radius: 4px; background: var(--superficie-2); overflow: hidden; }
   .pw-traccia i { display: block; height: 100%; background: #2c4a7c; border-radius: 4px; }
   .pw-barra small { display: block; margin-top: 6px; font-size: 12px; color: var(--testo-tenue); }
+  .pw-barra small.pw-manca { color: var(--proposta); font-weight: 600; }
   .mm-testa .freccia:disabled { opacity: .35; }
   .ad-wes-giorno { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--testo-soft); margin-top: 6px; }
   .ad-wes-giorno input { font-family: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
@@ -1392,35 +1393,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230556"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230556"></script>
-<script src="lista.js?v=202609230556"></script>
-<script src="rubrica.js?v=202609230556"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230556"></script>
-<script src="agenda.js?v=202609230556"></script>
-<script src="report.js?v=202609230556"></script>
-<script src="check.js?v=202609230556"></script>
-<script src="mappa.js?v=202609230556"></script>
-<script src="pagina-dashboard.js?v=202609230556"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230556"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230556"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230556"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230556"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230556"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230556"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230556"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230556"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230556"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230556"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230556"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230556"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230556"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230556"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230556"></script>
-<script src="benvenuto.js?v=202609230556"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230556"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230602"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230602"></script>
+<script src="lista.js?v=202609230602"></script>
+<script src="rubrica.js?v=202609230602"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230602"></script>
+<script src="agenda.js?v=202609230602"></script>
+<script src="report.js?v=202609230602"></script>
+<script src="check.js?v=202609230602"></script>
+<script src="mappa.js?v=202609230602"></script>
+<script src="pagina-dashboard.js?v=202609230602"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230602"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230602"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230602"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230602"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230602"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230602"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230602"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230602"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230602"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230602"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230602"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230602"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230602"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230602"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230602"></script>
+<script src="benvenuto.js?v=202609230602"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230602"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 05:56';
+const APP_VERSION = '2026.09.23 · 06:02';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2454,12 +2455,13 @@ function disegnaPeriodo() {
   if (!p) return montaScala(testaScala(false) + `<h1 class="ag-titolo">Periodo WES</h1><div class="vuoto">Nessun WES prima di questa data. L'Admin inserisce i WES in Admin → WES.</div>`);
   let barra = '';
   if (p.a) {
-    const tot = Math.max(1, A.giorniTra(p.da, p.fino)), fatti = Math.min(tot, Math.max(0, A.giorniTra(p.da, oggi)));
-    const mancano = A.giorniTra(oggi, p.fino);
-    const dice = oggi < p.da ? `inizia tra ${A.giorniTra(oggi, p.da)} giorni` : mancano > 1 ? `mancano ${mancano} giorni al WES` : mancano === 1 ? 'domani c\'è il WES' : mancano === 0 ? 'oggi c\'è il WES' : 'periodo concluso';
+    // da WES a WES (Ignazio 23/09): si conta dal giorno del WES che apre al giorno del WES che chiude
+    const tot = Math.max(1, A.giorniTra(p.inizio, p.fino)), fatti = Math.min(tot, Math.max(0, A.giorniTra(p.inizio, oggi)));
+    const mancano = A.giorniTra(oggi, p.fino), circa = p.senzaGiorno ? 'circa ' : '';
+    const dice = oggi < p.inizio ? `inizia tra ${A.giorniTra(oggi, p.inizio)} giorni` : mancano > 1 ? `mancano ${circa}${mancano} giorni al WES` : mancano === 1 ? 'domani c\'è il WES' : mancano === 0 ? 'oggi c\'è il WES' : 'periodo concluso';
     barra = `<div class="pw-barra"><div class="pw-barra-testa"><span>Settimana ${Math.min(Math.ceil(tot / 7), Math.max(1, Math.ceil((fatti + 1) / 7)))} di ${Math.ceil(tot / 7)}</span><b>${dice}</b></div>
       <div class="pw-traccia"><i style="width:${Math.round(fatti / tot * 100)}%"></i></div>
-      ${p.senzaGiorno ? '<small>Si conta fino al primo del mese del WES: il giorno esatto si scrive in Admin → WES.</small>' : `<small>WES dal ${esc(dataLunga(p.fino))}</small>`}</div>`;
+      ${p.senzaGiorno ? '<small class="pw-manca">Manca il giorno del WES: si conta fino al 1° del mese. Il giorno si scrive in Admin → WES.</small>' : `<small>WES dal ${esc(dataLunga(p.fino))}</small>`}</div>`;
   }
   const inCorso = oggi >= p.da && (!p.a || oggi < p.a);
   const html = foglioScalaHtml({ testaHtml: testaScala(!inCorso), oggi,

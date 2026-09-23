@@ -159,7 +159,8 @@
     for (let k = 0; k < d.length; k++) if (d[k].data <= giorno) i = k;
     if (i < 0) return null;
     const dopo = d[i + 1] || null;
-    return { da: d[i].data, a: dopo ? dopo.data : null, apre: d[i], chiude: dopo, fino: dopo ? (dopo.giorno || dopo.data) : null,
+    // `inizio` = il giorno del WES che apre (o il primo del suo mese): da lì si contano settimane e giorni (Ignazio 23/09)
+    return { da: d[i].data, a: dopo ? dopo.data : null, apre: d[i], chiude: dopo, inizio: d[i].giorno || d[i].data, fino: dopo ? (dopo.giorno || dopo.data) : null,
       prima: i > 0 ? d[i - 1].data : null, poi: dopo ? dopo.data : null, senzaGiorno: !!dopo && !dopo.giorno };
   }
   // I mesi (primo giorno) da `da` compreso ad `a` escluso

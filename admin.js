@@ -447,7 +447,10 @@ function collegaAdmin() {
   app.querySelectorAll('[data-wes-giorno]').forEach(i => i.onchange = async () => {
     const w = AD.wes.find(x => x.id === i.dataset.wesGiorno);
     const giorno = i.value || null;
-    if (giorno && giorno.slice(0, 7) !== w.data.slice(0, 7)) { i.value = w.giorno || ''; return mostraToast('Il primo giorno deve stare nel mese del WES'); }
+    // scrivendo l'anno a mano il campo passa da date come «0002-10-…» finché l'anno non è intero: si aspetta, senza cancellare
+    // (Ignazio 23/09: «l'ho scritta diverse volte ma poi si cancella»)
+    if (giorno && !/^(19|20)\d\d-/.test(giorno)) return;
+    if (giorno && giorno.slice(0, 7) !== w.data.slice(0, 7)) return mostraToast(`Il primo giorno deve stare in ${meseLungo(w.data)}`);
     const { error } = await dbq('giorno del WES', supa.from('wes').update({ giorno }).eq('id', w.id));
     if (error) { i.value = w.giorno || ''; return mostraToast('Non salvato: riprova.'); }
     w.giorno = giorno;
