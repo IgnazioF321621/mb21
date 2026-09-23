@@ -103,10 +103,12 @@ function moduloCoreHtml(m) {
     <div class="campo"><label>Punti sui quali mi concentrerò</label><textarea id="cm-punti" rows="2" maxlength="300">${esc(m.s5.punti)}</textarea></div>`, m.s5.quanti >= m.giorni);
 
   const s6 = sez(6, 'Frequentare tutti gli incontri di Network 21', `
-    <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => `<b class="${w.open ? 'si' : ''}" title="${w.da} – ${w.a}">${i + 1}${w.open ? ' ' + ic('fatto', 12) : ''}</b>`).join('')}</span></div>
+    <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => w.open
+      ? `<b class="si" title="${w.da} – ${w.a}">${i + 1} ${ic('fatto', 12)}</b>`
+      : `<button class="${w.senza ? 'senza' : ''}" data-senza-open="${w.da}" title="${w.da} – ${w.a}" aria-label="Settimana ${i + 1}: ${w.senza ? 'l\'OPEN non c\'era, tocca per annullare' : 'tocca se l\'OPEN non c\'era'}">${i + 1}${w.senza ? ' —' : ''}</button>`).join('')}</span></div>
     <div class="cm-riga"><span>Acquisto biglietto BBS${prossimo(m.s6.prossimoBbs)}</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
     <div class="cm-riga"><span>Acquisto biglietto WES${prossimo(m.s6.prossimoWes)}</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
-    <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»); i biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.s6.open >= m.s6.settimane.length && m.s6.bbs && m.s6.wes);
+    <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»). Se in una settimana l'OPEN nella tua città non c'era, tocca il suo numero: diventa «—» e non conta. I biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.abitudini[5]);
 
   const s7 = sez(7, 'Lavorare di squadra', `
     <div class="cm-riga"><span>Sessione di COUNSELING in data</span>${m.s7.auto ? `<b class="cm-auto">${esc(m.s7.counseling)}</b>` : `<input class="cm-num larga" id="cm-counseling" value="${esc(m.s7.counseling)}" placeholder="gg/mm" maxlength="10">`}</div>
@@ -144,6 +146,12 @@ function collegaModuloCore(m, disegna) {
   su('cm-counseling', (d, v) => { d.counseling = v.trim().slice(0, 10); });
   su('cm-note', (d, v) => { d.note = v.trim().slice(0, 300); });
   document.getElementById('cm-pdf').onclick = () => condividiCorePdf(m);
+  // una settimana senza OPEN nella propria città: un tocco la segna «non c'era», un altro la rimette (23/09)
+  app.querySelectorAll('[data-senza-open]').forEach(b => { b.onclick = () => salva(d => {
+    const k = b.dataset.senzaOpen, prima = new Set(d.senza_open || []);
+    if (prima.has(k)) prima.delete(k); else prima.add(k);
+    d.senza_open = [...prima].sort();
+  }); });
   app.querySelectorAll('[data-sino]').forEach(s => {
     const [bSi, bNo] = s.querySelectorAll('button');
     bSi.onclick = () => salva(d => { d[s.dataset.sino] = CM.dati[s.dataset.sino] === true ? null : true; });

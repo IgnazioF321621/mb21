@@ -184,7 +184,7 @@
     y += 11; cornice(xs, y0, y, f5); y += 3.5;
 
     // 6 · Incontri: una casella per settimana del mese (SI/NO), biglietti BBS e WES
-    const f6 = m.s6.open >= m.s6.settimane.length && m.s6.bbs && m.s6.wes;
+    const f6 = m.abitudini[5];
     y0 = y; y = testa(xs, y, 6, 'Frequentare tutti gli incontri di Network 21', f6) + 5;
     font(8); doc.text('Partecipazione OPEN settimanale', xs + 3, y + 2.2);
     const ns = m.s6.settimane.length, largS = Math.min(9, (COL - 52) / ns);
@@ -192,7 +192,9 @@
       const bx = xs + 50 + i * largS;
       colore(RIS, 'f'); doc.rect(bx, y - 2.6, largS - 1, 7.4, 'F');
       font(6.5, 'bold', GRIGIO); doc.text(String(i + 1), bx + (largS - 1) / 2, y, { align: 'center' });
-      if (w.open) { font(6.3, 'bold', VERDE); doc.text('SI', bx + (largS - 1) / 2, y + 3.6, { align: 'center' }); }   // senza OPEN resta vuota: la settimana può essere ancora da venire
+      // SI = c'era e ci sei stato · «—» = nella tua città l'OPEN non c'era (non conta) · vuota = non ancora, o da scrivere a penna
+      if (w.open) { font(6.3, 'bold', VERDE); doc.text('SI', bx + (largS - 1) / 2, y + 3.6, { align: 'center' }); }
+      else if (w.senza) { font(7, 'bold', GRIGIO); doc.text('—', bx + (largS - 1) / 2, y + 3.8, { align: 'center' }); }
     });
     y += 10;
     font(8); doc.text('Acquisto biglietto BBS', xs + 3, y); siNo(xs + 34, y, m.s6.bbs);
