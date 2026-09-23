@@ -120,3 +120,8 @@
 *23 settembre 2026, cantiere 41 (MB Plan, Settimana sul Mac).* Il menu a tre colonne collegava i suoi bottoni cercando «tutto quello che ha `data-scala`» in tutta la pagina; ma anche i campi «Aggiungi…» dei fogli di Settimana, Mese, Periodo WES e Anno hanno `data-scala`. Il clic sul campo diventava «apri la Settimana»: la pagina si ridisegnava e il cursore spariva. Sul telefono non succedeva (lì il menu vive in un pannello a parte).
 
 **Regola:** quando si collegano i tocchi, cercare **l'elemento preciso** (`button[data-scala]`, o dentro il contenitore del menu), mai un'etichetta generica in tutta la pagina: la stessa etichetta può servire ad altro.
+
+## La vista che si apriva vuota
+*23 settembre 2026, cantiere 41 (MB Plan, Periodo WES).* Dal menu, il cambio di vista ridisegnava la pagina **senza ricaricare**: ma il Periodo WES e l'Anno leggono i loro dati (il periodo, i puntini dei mesi) solo durante il caricamento. Risultato: «Nessun WES registrato» con le date WES tutte al loro posto nel database, e Ignazio pronto a togliere la vista.
+
+**Regola:** una vista che ha dati suoi si apre sempre passando dal caricamento (`apriAgenda`), mai con il solo ridisegno. E prima di dare la colpa ai dati, guardarli: qui bastava leggere la tabella `wes`.
