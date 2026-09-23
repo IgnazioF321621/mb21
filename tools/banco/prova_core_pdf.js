@@ -23,7 +23,7 @@ const check = Array.from({ length: 23 }, (_, i) => ({ data: `2026-09-${String(i 
 const tracce = [{ giorno: '2026-09-02', titolo: 'La visione' }, { giorno: '2026-09-15', titolo: 'Il sogno' }];
 const biglietti = [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }];
 const obiettivi = { vpp: 300, vpg: 1200, sponsor_personali: 2, sponsor_gruppo: 4, cep: 30, bbs: 5, wes: 3, vpp_amway: 412.75 };
-const dati = { pm: { a2: { candidati: 2 } }, punti: 'Fare le domande giuste e ascoltare di più; scrivere ogni sera tre cose fatte bene.', note: 'Mese buono: da rinforzare la lettura nel fine settimana.' };
+const dati = { senza_open: ['2026-09-28'], pm: { a2: { candidati: 2 } }, punti: 'Fare le domande giuste e ascoltare di più; scrivere ogni sera tre cose fatte bene.', note: 'Mese buono: da rinforzare la lettura nel fine settimana.' };
 const date = { bbs: [{ data: '2026-09-01' }, { data: '2026-10-01' }], wes: [{ data: '2026-10-01', giorno: '2026-10-10' }] };
 const m = C.modulo({ mese, azioni, vendite, check, tracce, biglietti, obiettivi, dati, date, oggi: '2026-09-23' });
 
