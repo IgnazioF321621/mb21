@@ -651,7 +651,7 @@
   .ag-cose .cosa.fatta .spunta { border-color: var(--ok); color: var(--ok); }
   .ag-cose .cosa .testo { flex: 1; min-height: 42px; padding: 10px 0; font-size: 15px; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
   .ag-cose .cosa .testo small { font-size: 11.5px; font-weight: 600; color: var(--proposta); }
-  .ag-cose .cosa.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); }
+  .ag-cose .cosa.fatta .testo span { color: var(--testo-tenue); }
   .ag-cosa-nuova { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--superficie-2); padding-top: 6px; }
   .ag-cosa-nuova input { flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 15px; color: var(--testo); padding: 8px 0; outline: none; }
   .ag-cosa-nuova input::placeholder { color: var(--testo-tenue); }
@@ -691,7 +691,8 @@
   .ag-foglio .cosa.auto.fatta .spunta { border-style: solid; }
   .ag-foglio .cosa .testo { flex: 1; min-height: 42px; padding: 10px 0; font-size: 16px; line-height: 1.3; display: flex; flex-direction: column; gap: 2px; }
   .ag-foglio .cosa .testo small { font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
-  .ag-foglio .cosa.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); }
+  /* fatta: grigia e spenta, senza riga sopra, come NotePlan (Ignazio 23/09) */
+  .ag-foglio .cosa.fatta .testo span, .ag-foglio .cosa.fatta .testo small { color: var(--testo-tenue); opacity: .75; }
   .ag-foglio .ag-cosa-nuova { border-top: 0; padding-top: 2px; }
   .ag-cronologia { position: sticky; bottom: 92px; display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--superficie); box-shadow: 0 -2px 14px rgba(16,21,31,.12); border-radius: 18px 18px 0 0; padding: 12px 16px; margin-top: 12px; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--testo); }
   .ag-cronologia span { flex: 1; text-align: left; font-size: 13px; font-weight: 500; color: var(--testo-soft); }
@@ -874,9 +875,9 @@
   /* le cose da fare con l'ora nella Timeline: tratteggiate, col cerchietto (non sono appuntamenti) */
   .ag-ev.ag-cosa { background: var(--superficie); border: 1.5px dashed #1D9E75; color: #085041; padding-left: 24px; }
   .ag-ev.ag-cosa i { position: absolute; left: 7px; top: 6px; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #1D9E75; box-sizing: border-box; }
-  .ag-ev.ag-cosa.fatta { opacity: .6; }
-  .ag-ev.ag-cosa.fatta b { text-decoration: line-through; }
-  .ag-ev.ag-cosa.fatta i { background: #1D9E75; }
+  .ag-ev.ag-cosa.fatta { opacity: 1; border-color: var(--testo-tenue); color: var(--testo-tenue); background: var(--superficie-2); }
+  .ag-ev.ag-cosa.fatta b { text-decoration: none; }
+  .ag-ev.ag-cosa.fatta i { border-color: var(--testo-tenue); background: var(--testo-tenue); }
   .fc-persona { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
   /* le sezioni del foglio del giorno si chiudono (Ignazio 23/09) */
   .ag-sez-chiudi { border: 0; background: none; padding: 0; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: var(--testo-tenue); flex: none; }
@@ -885,7 +886,7 @@
   .ag-sez-conto { font-size: 12px; font-weight: 600; color: var(--testo-tenue); margin-left: 6px; letter-spacing: 0; }
   .ss-riga.ss-cosa { color: var(--testo-soft); font-size: 13px; }
   .ss-riga.ss-cosa i { background: none; border: 1.5px solid #1D9E75; box-sizing: border-box; }
-  .ss-riga.ss-cosa.fatta { text-decoration: line-through; color: var(--testo-tenue); }
+  .ss-riga.ss-cosa.fatta { color: var(--testo-tenue); opacity: .75; }
   .ss-riga.ss-cosa.fatta i { background: #1D9E75; }
   .mm-n { position: relative; }
   .mm-cose { position: absolute; top: 1px; right: -9px; width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid #1D9E75; box-sizing: border-box; }
@@ -1424,35 +1425,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230705"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230705"></script>
-<script src="lista.js?v=202609230705"></script>
-<script src="rubrica.js?v=202609230705"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230705"></script>
-<script src="agenda.js?v=202609230705"></script>
-<script src="report.js?v=202609230705"></script>
-<script src="check.js?v=202609230705"></script>
-<script src="mappa.js?v=202609230705"></script>
-<script src="pagina-dashboard.js?v=202609230705"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230705"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230705"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230705"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230705"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230705"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230705"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230705"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230705"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230705"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230705"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230705"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230705"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230705"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230705"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230705"></script>
-<script src="benvenuto.js?v=202609230705"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230705"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230718"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230718"></script>
+<script src="lista.js?v=202609230718"></script>
+<script src="rubrica.js?v=202609230718"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230718"></script>
+<script src="agenda.js?v=202609230718"></script>
+<script src="report.js?v=202609230718"></script>
+<script src="check.js?v=202609230718"></script>
+<script src="mappa.js?v=202609230718"></script>
+<script src="pagina-dashboard.js?v=202609230718"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230718"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230718"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230718"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230718"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230718"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230718"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230718"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230718"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230718"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230718"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230718"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230718"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230718"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230718"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230718"></script>
+<script src="benvenuto.js?v=202609230718"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230718"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 07:05';
+const APP_VERSION = '2026.09.23 · 07:18';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2074,7 +2075,8 @@ async function spuntaVoce(v) {
   }
   const riga = { user_id: visto().id, testo: v.testo, giorno: v.giornoSpunta, scala: v.scala || 'giorno', fatto_il: new Date().toISOString(),
     ...(v.core ? { core: v.core } : { modello_id: v.id }) };
-  const { data, error } = await dbq('voce del giorno', supa.from('cose_da_fare').upsert(riga, { onConflict: v.core ? 'user_id,core,giorno' : 'modello_id,giorno' }).select().single());
+  // un semplice insert: l'upsert non funziona con gli indici unici «parziali» (con where) e il database rifiutava la spunta
+  const { data, error } = await dbq('voce del giorno', supa.from('cose_da_fare').insert(riga).select().single());
   if (error) return;
   AG.cose = [...AG.cose.filter(c => c.id !== data.id), data];
   disegnaAgenda();
