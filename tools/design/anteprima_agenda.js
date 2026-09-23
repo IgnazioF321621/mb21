@@ -83,7 +83,7 @@ const stub = {
 const nomi = Object.keys(stub);
 const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
-// `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Cronologia»); `giorno` (o `elenco`) = la pagina
+// `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
 function vista(v, aperta) {
   AG.aperta = aperta || null; AG.portato = 'fatto';
@@ -111,11 +111,11 @@ const modulo = () => `<div class="foglio mc" style="border-radius:22px;box-shado
     <div class="campo"><label>Finisce alle</label><input type="time" value="19:15"></div>
     ${avvisoSovrapposti('2026-09-21', '18:30', 45, null)}
   </div></div>`;
-const tutti = sola === 'giorno' ? telefono('Cronologia (il cassetto)', vista('orario'))
+const tutti = sola === 'giorno' ? telefono('Timeline (il cassetto)', vista('orario'))
   : sola === 'settimana' ? telefono('Settimana', vista('settimana'))
   : sola === 'elenco' ? telefono('Il foglio del giorno', vista('giorno'))
   : sola === 'modulo' ? telefono('Fissi a un\'ora occupata', modulo())
-  : telefono('Cronologia (il cassetto)', vista('orario')) + telefono('Settimana', vista('settimana'))
+  : telefono('Timeline (il cassetto)', vista('orario')) + telefono('Settimana', vista('settimana'))
     + telefono('Il foglio del giorno', vista('giorno')) + telefono('Fissi a un\'ora occupata', modulo());
 const pagina = `<!doctype html>
 <html lang="it"><meta charset="utf-8">

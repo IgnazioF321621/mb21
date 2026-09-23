@@ -657,7 +657,7 @@
   .ag-cosa-nuova input::placeholder { color: var(--testo-tenue); }
   .ag-cosa-nuova button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--accento); color: var(--accento-su); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
   .ag-cosa-nuova button svg.ic { width: 18px; height: 18px; }
-  /* la pagina formato NotePlan (cantiere 41): testa con ☰, titolo del giorno, card degli impegni, foglio a sezioni, cassetto Cronologia */
+  /* la pagina formato NotePlan (cantiere 41): testa con ☰, titolo del giorno, card degli impegni, foglio a sezioni, cassetto Timeline */
   .ag-testa.np { gap: 6px; }
   .ag-testa.np .ag-mese { flex: 1; text-align: center; font-size: 17px; color: var(--testo); }
   .ag-menu { border: 0; background: none; width: 44px; height: 44px; border-radius: 50%; color: var(--testo); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
@@ -792,7 +792,7 @@
   .cm-cerchi i.pieno { background: var(--ok); border-color: var(--ok); color: #fff; }
   .cm-cerchi i.mezzo { background: linear-gradient(90deg, var(--ok-tinta) 50%, transparent 50%); }
   .cm-vuoto { font-size: 13px; color: var(--testo-tenue); padding: 6px 0; }
-  /* MB Plan a tre colonne su schermo largo (cantiere 41, vista modulabile): menu · foglio del giorno · mese + Cronologia */
+  /* MB Plan a tre colonne su schermo largo (cantiere 41, vista modulabile): menu · foglio del giorno · mese + Timeline */
   main:has(.mb-3col) { max-width: 1240px; }
   .mb-3col { display: grid; grid-template-columns: 220px minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
   .mb-3col .mb-lato { position: sticky; top: 12px; width: auto; max-width: none; height: auto; max-height: calc(100vh - 140px); padding: 8px 4px; background: none; }
@@ -813,7 +813,7 @@
   .mb-crono-titolo { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 6px; }
   .mb-crono-titolo svg.ic { width: 16px; height: 16px; }
   .mb-crono .ag-griglia { box-shadow: none; padding-left: 0; }
-  /* le linguette ai bordi (telefono, iPad in verticale): menu a sinistra, mese e Cronologia a destra (Ignazio 22/09) */
+  /* le linguette ai bordi (telefono, iPad in verticale): menu a sinistra, mese e Timeline a destra (Ignazio 22/09) */
   .ag-menu-posto { width: 44px; flex: none; }
   .mb-linguetta { position: fixed; top: 50%; z-index: 15; width: 26px; height: 64px; margin-top: -32px; border: 0; padding: 0; background: var(--superficie); box-shadow: var(--ombra-card); color: var(--testo-soft); display: inline-flex; align-items: center; justify-content: center; }
   .mb-linguetta.sx { left: 0; border-radius: 0 14px 14px 0; }
@@ -871,12 +871,15 @@
   .ag-lato button.mb-ris span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .ag-lato button.mb-ris b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-lato button.mb-ris small { font-size: 12px; color: var(--testo-tenue); }
-  /* le cose da fare con l'ora nella Cronologia: tratteggiate, col cerchietto (non sono appuntamenti) */
+  /* le cose da fare con l'ora nella Timeline: tratteggiate, col cerchietto (non sono appuntamenti) */
   .ag-ev.ag-cosa { background: var(--superficie); border: 1.5px dashed #1D9E75; color: #085041; padding-left: 24px; }
   .ag-ev.ag-cosa i { position: absolute; left: 7px; top: 6px; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #1D9E75; box-sizing: border-box; }
   .ag-ev.ag-cosa.fatta { opacity: .6; }
   .ag-ev.ag-cosa.fatta b { text-decoration: line-through; }
   .ag-ev.ag-cosa.fatta i { background: #1D9E75; }
+  .fc-persona { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .fc-chi { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 8px 14px; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--testo); }
+  .fc-chi svg.ic { width: 18px; height: 18px; }
   /* il colore di ogni scala (Ignazio 23/09): tondo pieno con l'icona bianca, velo sulla voce scelta, barra accanto al titolo */
   .sc-giorno { --sc: #1D9E75; --sc-tinta: #E1F5EE; --sc-scuro: #085041; }
   .sc-settimana { --sc: #2F6FE0; --sc-tinta: #E6F1FB; --sc-scuro: #0C447C; }
@@ -1399,35 +1402,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230621"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230621"></script>
-<script src="lista.js?v=202609230621"></script>
-<script src="rubrica.js?v=202609230621"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230621"></script>
-<script src="agenda.js?v=202609230621"></script>
-<script src="report.js?v=202609230621"></script>
-<script src="check.js?v=202609230621"></script>
-<script src="mappa.js?v=202609230621"></script>
-<script src="pagina-dashboard.js?v=202609230621"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230621"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230621"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230621"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230621"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230621"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230621"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230621"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230621"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230621"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230621"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230621"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230621"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230621"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230621"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230621"></script>
-<script src="benvenuto.js?v=202609230621"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230621"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230634"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230634"></script>
+<script src="lista.js?v=202609230634"></script>
+<script src="rubrica.js?v=202609230634"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230634"></script>
+<script src="agenda.js?v=202609230634"></script>
+<script src="report.js?v=202609230634"></script>
+<script src="check.js?v=202609230634"></script>
+<script src="mappa.js?v=202609230634"></script>
+<script src="pagina-dashboard.js?v=202609230634"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230634"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230634"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230634"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230634"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230634"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230634"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230634"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230634"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230634"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230634"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230634"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230634"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230634"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230634"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230634"></script>
+<script src="benvenuto.js?v=202609230634"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230634"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 06:21';
+const APP_VERSION = '2026.09.23 · 06:34';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1861,7 +1864,7 @@ async function caricaAgenda() {
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('user_id', visto().id).eq('rientro_il', AG.giorno)));
   // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
   // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
-  const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*').eq('user_id', visto().id)
+  const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id)
     .or(`and(giorno.gte.${AG.settimana[0]},giorno.lte.${AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01),scala.eq.mese,scala.eq.settimana,scala.eq.periodo,scala.eq.anno`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
   const modello = vediTutti() ? null : dbq('modello del giorno', supa.from('modello_giorno').select('*').eq('user_id', visto().id));
   const modelli = vediTutti() ? null : dbq('modelli personali', supa.from('modelli').select('*').eq('user_id', visto().id).order('ordine'));
@@ -1887,7 +1890,7 @@ async function caricaAgenda() {
 // ── Come si guarda l'Agenda (cantiere 37): «orario» (la griglia del giorno), «settimana», «elenco».
 // La scelta si ricorda sul telefono: chi lavora a orario riapre a orario.
 // Dal cantiere 41 (pagina formato NotePlan) le viste sono due: «giorno» (il foglio del giorno, con la griglia a orario
-// nel cassetto «Cronologia») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
+// nel cassetto «Timeline») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
 const VISTE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
 const CHIAVE_VISTA = 'mb21-agenda-vista';
 // Ogni scala ha la sua icona e il suo colore (Ignazio 23/09): Giorno verde · Settimana blu · Mese viola · Periodo WES lampone · Anno arancio
@@ -1936,7 +1939,7 @@ function foglioHtml(oggi) {
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
   const riga = (c, attr) => {
     const auto = !!c.stato;   // spunta dai numeri: non si tocca, dice quanto manca
-    const sotto = [c.stato ? c.stato.testo : '', oraDurata(c), c.diScala, c.riportata ? `da ${gg(c.riportata)}` : ''].filter(Boolean).join(' · ');
+    const sotto = [c.stato ? c.stato.testo : '', oraDurata(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : '', c.diScala, c.riportata ? `da ${gg(c.riportata)}` : ''].filter(Boolean).join(' · ');
     return `<div class="cosa${c.fatto_il ? ' fatta' : ''}${auto ? ' auto' : ''}" ${attr}="${esc(c.id)}">
       <button class="spunta" aria-label="${auto ? 'Si spunta da sola' : c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}"${auto ? ' disabled' : ''}>${c.fatto_il ? ic('fatto') : ''}</button>
       <button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button>
@@ -1960,7 +1963,7 @@ function foglioHtml(oggi) {
 // La card degli impegni del giorno, come NotePlan: una riga per impegno, pallino della categoria · titolo · orario a pastiglia.
 function impegniHtml(eventi, opz) {
   const A = MB21Agenda;
-  if (!eventi.length) return `<div class="ag-impegni vuota">Nessun impegno. Tocca <b>+</b> o apri la Cronologia.</div>`;
+  if (!eventi.length) return `<div class="ag-impegni vuota">Nessun impegno. Tocca <b>+</b> o apri la Timeline.</div>`;
   return `<div class="ag-impegni">${eventi.map(e => {
     const r = A.riga(e, opz), cat = (e.contatti && e.contatti.categoria) || e.categoria;
     return `<button class="ag-imp${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}"><i class="${classeCat(cat)}"></i><span>${esc(r.titolo)}${e.portatoNome ? `<small>${rigaPortato(e.portatoNome)}</small>` : ''}</span><b>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' 👍' : ''}</b></button>`;
@@ -2168,7 +2171,7 @@ function foglioVoceModello(v, salva, elimina) {
         <div class="ag-scelte fv-giorni">${A.GIORNI_SETTIMANA.map((g, i) => `<button data-giorno="${i + 1}" class="${!tutti && giorni.includes(i + 1) ? 'scelto' : ''}">${g}</button>`).join('')}</div></div>
       <div class="campo"><label>${ic('orario')} A che ora <small>facoltativo</small></label><input type="time" id="fv-ora" value="${esc(ora)}">
         <div class="ag-scelte" id="fv-durate">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${durata === m ? 'scelto' : ''}">${t}</button>`).join('')}</div>
-        <div class="vn-aiuto">Con l'ora compare ogni giorno nella Cronologia, tratteggiata. Senza ora resta solo nel foglio del giorno.</div></div>
+        <div class="vn-aiuto">Con l'ora compare ogni giorno nella Timeline, tratteggiata. Senza ora resta solo nel foglio del giorno.</div></div>
       <button class="primario" id="fv-salva">Salva</button>
       <div class="fc-comandi"><button class="link elimina-qui" id="fv-elimina">Elimina dal modello</button><button class="link" id="fv-no">Annulla</button></div></div>`;
     velo.querySelector('#fv-no').onclick = () => velo.remove();
@@ -2226,7 +2229,10 @@ function foglioCosa(c, oggi) {
     ${(c.scala || 'giorno') === 'giorno' ? `<div class="campo"><label>${ic('orario')} Metti in agenda <small>facoltativo</small></label>
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : c.giorno)}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       <div class="ag-scelte" id="fc-durate">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${(c.durata || 30) === m ? 'scelto' : ''}">${t}</button>`).join('')}</div>
-      <div class="vn-aiuto">Occupa quell'ora nella Cronologia, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
+      <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
+    <div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
+      ${c.contatto_id ? `<div class="fc-persona"><button type="button" class="fc-chi" id="fc-apri-contatto">${ic('persona')} ${esc((c.contatti && c.contatti.nome) || 'Contatto')}</button><button type="button" class="link" id="fc-scollega">Togli</button></div>`
+        : `<button type="button" class="link" id="fc-collega">${ic('piu')} Collega a un Prospect, Partner o Cliente</button>`}</div>
     <button class="primario" id="fc-salva">Salva</button>
     <div class="fc-comandi">${c.fatto_il ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
@@ -2244,6 +2250,26 @@ function foglioCosa(c, oggi) {
   };
   let durata = c.durata || 30;
   velo.querySelectorAll('#fc-durate [data-durata]').forEach(b => { b.onclick = () => { durata = Number(b.dataset.durata); velo.querySelectorAll('#fc-durate [data-durata]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
+  // la persona (Ignazio 23/09): solo Prospect, Partner o Cliente; il nome apre la sua scheda
+  const collega = velo.querySelector('#fc-collega');
+  if (collega) collega.onclick = async () => {
+    const x = await sceltaContatto('A chi si riferisce', '');
+    if (!x) return;
+    if (!['Prospect', 'Partner', 'Cliente'].includes(x.categoria)) return mostraToast('Si collega solo a un Prospect, Partner o Cliente');
+    const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update({ contatto_id: x.id }).eq('id', c.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    c.contatto_id = x.id; c.contatti = { nome: x.nome, categoria: x.categoria };
+    chiudi(); disegnaAgenda(); foglioCosa(c, oggi);
+  };
+  const scollega = velo.querySelector('#fc-scollega');
+  if (scollega) scollega.onclick = async () => {
+    const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update({ contatto_id: null }).eq('id', c.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    c.contatto_id = null; c.contatti = null;
+    chiudi(); disegnaAgenda(); foglioCosa(c, oggi);
+  };
+  const apriC = velo.querySelector('#fc-apri-contatto');
+  if (apriC) apriC.onclick = () => { chiudi(); apriContattoDa(c.contatto_id); };
   const togli = velo.querySelector('#fc-togli-ora');
   if (togli) togli.onclick = () => cambia({ ora: null, durata: null });
   velo.querySelector('#fc-salva').onclick = () => {
@@ -2305,17 +2331,17 @@ function disegnaAgenda() {
   const tre = largo() && AG.vista !== 'settimana';   // MB Plan a tre colonne (schermo largo)
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else {
-    // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Cronologia»
+    // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
-    if (!tre) html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Cronologia <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
+    if (!tre) html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Timeline <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
   }
   // Telefono e iPad in verticale (Ignazio 22/09): due linguette a metà dei bordi, come la freccetta di NotePlan —
-  // a sinistra il menu, a destra il mese e la Cronologia; si aprono anche trascinando il dito dal bordo.
+  // a sinistra il menu, a destra il mese e la Timeline; si aprono anche trascinando il dito dal bordo.
   if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`
-    + (AG.vista === 'giorno' ? `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri il mese e la Cronologia">${ic('freccia')}</button>` : '');
+    + (AG.vista === 'giorno' ? `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri il mese e la Timeline">${ic('freccia')}</button>` : '');
   if (tre) html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section>
-    <aside class="mb-destra">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Cronologia</div>${grigliaGiorno(eventi, opz)}</div></aside></div>`;
+    <aside class="mb-destra">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Timeline</div>${grigliaGiorno(eventi, opz)}</div></aside></div>`;
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   collegaCose(oggi);
@@ -2577,12 +2603,12 @@ function collegaGrigliaSettimana(radice, prima) {
   radice.querySelectorAll('.ag-colonna[data-vai]').forEach(b => { b.onclick = () => { prima(); AG.vista = 'giorno'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.vai); }; });
 }
 
-// Il pannello di destra sul telefono / iPad in verticale: il mese con i pallini e sotto la Cronologia, come la terza colonna del Mac
+// Il pannello di destra sul telefono / iPad in verticale: il mese con i pallini e sotto la Timeline, come la terza colonna del Mac
 function pannelloDestro(eventi, opz) {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const velo = document.createElement('div');
   velo.className = 'velo lato destra';
-  velo.innerHTML = `<div class="mb-pannello">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Cronologia</div>${grigliaGiorno(eventi, opz)}</div></div>`;
+  velo.innerHTML = `<div class="mb-pannello">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Timeline</div>${grigliaGiorno(eventi, opz)}</div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
@@ -2709,8 +2735,8 @@ function menuAgenda() {
   collegaMenuAgenda(velo, chiudi);
 }
 
-// Schermo largo (Mac, iPad orizzontale): MB Plan a tre colonne come NotePlan — menu · foglio del giorno · mese e Cronologia
-// sempre aperta. Sul telefono resta una colonna (menu nel ☰, Cronologia nel cassetto).
+// Schermo largo (Mac, iPad orizzontale): MB Plan a tre colonne come NotePlan — menu · foglio del giorno · mese e Timeline
+// sempre aperta. Sul telefono resta una colonna (menu nel ☰, Timeline nel cassetto).
 function largo() { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches; }   // function, non const: la usa anche il codice che parte al caricamento (pagina bianca del 22/09)
 // Il mese a griglia per la colonna destra: si tocca un giorno per aprirlo (i pallini della settimana stanno nella striscia)
 function meseHtml(giorno, oggi) {
@@ -2729,13 +2755,13 @@ function meseHtml(giorno, oggi) {
   return h + '</div></div>';
 }
 
-// Il cassetto «Cronologia» che si tira su dal basso: la giornata a orario (la stessa griglia di prima), si tocca
+// Il cassetto «Timeline» che si tira su dal basso: la giornata a orario (la stessa griglia di prima), si tocca
 // un'ora libera per fissare, un blocco per aprirlo.
 function foglioCronologia(eventi, opz) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto crono">
-    <div class="testa-foglio"><h3>Cronologia</h3><button id="cr-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="testa-foglio"><h3>Timeline</h3><button id="cr-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     ${grigliaGiorno(eventi, opz)}</div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -2777,7 +2803,7 @@ function collegaGriglia(radice, eventi, prima) {
 // Le ore a sinistra, ogni impegno alto quanto dura; chi si accavalla sta affiancato, così un doppio
 // appuntamento alla stessa ora si vede subito. Si tocca un'ora libera per fissare lì.
 // Dare un'ora alle cose da fare (time blocking, Ignazio 23/09): le cose da fare e le voci dei Modelli personali con l'ora
-// diventano blocchi nella Cronologia, tratteggiati col cerchietto (non sono appuntamenti: niente persona, esito o conti).
+// diventano blocchi nella Timeline, tratteggiati col cerchietto (non sono appuntamenti: niente persona, esito o conti).
 const DURATE_COSA = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora'], [120, '2 ore']];
 function coseConOra(giorno) {
   const A = MB21Agenda;
