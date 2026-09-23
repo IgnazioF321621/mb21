@@ -371,6 +371,14 @@ prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quell
   assert.equal(A.fineSlittata('18:30', '', '19:30'), null);
 });
 
+prova('Progetti come Word (23/09): numeri 1. → 1.1 → 1.1.1, i titoli fanno ripartire, i puntini cambiano col rientro', () => {
+  const r = (tipo, livello) => ({ tipo, livello });
+  assert.deepEqual(A.numeraRighe([
+    r('titolo', 0), r('numero', 0), r('numero', 1), r('numero', 1), r('numero', 2), r('numero', 0), r('punto', 1), r('numero', 1),
+    r('titolo', 0), r('numero', 0), r('cosa', 0), r('numero', 0), r('punto', 0), r('punto', 2),
+  ]), ['', '1.', '1.1', '1.2', '1.2.1', '2.', '◦', '2.1', '', '1.', '', '2.', '•', '▪']);
+});
+
 prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
   const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
   const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];

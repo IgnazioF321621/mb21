@@ -334,7 +334,8 @@ function nuovoModello() {
 // Nel menu, sotto «Modelli personali», la sezione «Progetti» con il +. Un progetto = titolo e icona; dentro le righe:
 // ☐ cose da fare (si spuntano; con un giorno compaiono anche in quel giorno di MB Plan e restano nel progetto),
 // 1. elenco numerato, • elenco a puntini. Le righe sono `cose_da_fare` con `progetto_id` e `tipo`; senza giorno stanno solo qui.
-const TIPI_RIGA = [['cosa', '☐ Da fare'], ['numero', '1. Numerato'], ['punto', '• Puntini']];
+const TIPI_RIGA = [['titolo', 'T Titolo'], ['cosa', '☐ Da fare'], ['numero', '1. Numerato'], ['punto', '• Puntini']];
+const LIVELLO_MAX = 4;   // i rientri, come in Word: con Tab avanti, con Maiusc+Tab indietro (Ignazio 23/09)
 const vediProgetti = () => typeof eAdmin === 'function' && eAdmin() && !vediTutti();
 async function caricaProgetti() {
   if (!vediProgetti()) { AG.progetti = []; if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }
@@ -415,13 +416,20 @@ function nuovoProgetto() {
 }
 // Il tipo di una riga: scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » o «• »
 // puntini, «[] » o «☐ » da fare). Toglie anche i segni di un testo copiato da altrove («## titolo», «**grassetto**»).
-function rigaDaTesto(riga) {
-  let testo = String(riga || '').replace(/^\s*#{1,6}\s+/, ''), tipo = AG.tipoRiga || 'cosa';
-  if (/^\s*\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\s*\d+[.)]\s+/, ''); }
-  else if (/^\s*[-•*–]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^\s*[-•*–]\s+/, ''); }
-  else if (/^\s*(\[\s?\]|☐)\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^\s*(\[\s?\]|☐)\s*/, ''); }
+function rigaDaTesto(riga, livelloScelto) {
+  const grezza = String(riga || '').replace(/ /g, ' ');
+  // il rientro scritto all'inizio (testi incollati): un Tab o due spazi = un livello
+  const inizio = (grezza.match(/^[\t ]*/) || [''])[0];
+  let livello = (inizio.match(/\t/g) || []).length + Math.floor(inizio.replace(/\t/g, '').length / 2);
+  let testo = grezza.trim(), tipo = AG.tipoRiga || 'cosa';
+  if (/^#{1,6}\s+/.test(testo)) { tipo = 'titolo'; testo = testo.replace(/^#{1,6}\s+/, ''); livello = 0; }
+  else if (/^\d+(\.\d+)+\.?\s+/.test(testo)) { tipo = 'numero'; livello = Math.max(livello, testo.match(/^[\d.]+/)[0].replace(/\.$/, '').split('.').length - 1); testo = testo.replace(/^\d+(\.\d+)+\.?\s+/, ''); }   // «1.2 » → secondo livello
+  else if (/^\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\d+[.)]\s+/, ''); }
+  else if (/^[-•*–◦▪]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^[-•*–◦▪]\s+/, ''); }
+  else if (/^(\[\s?\]|☐)\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^(\[\s?\]|☐)\s*/, ''); }
+  else if (!inizio && livelloScelto != null) livello = livelloScelto;
   testo = MB21Agenda.testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
-  return testo ? { tipo, testo } : null;
+  return testo ? { tipo, testo, livello: tipo === 'titolo' ? 0 : Math.min(LIVELLO_MAX, livello) } : null;
 }
 // Incollare più righe insieme (Ignazio 23/09: «incollare l'elenco dei cantieri aperti»): ogni riga non vuota diventa una
 // riga del progetto, nello stesso ordine, ognuna con il suo tipo (1. / - / [] all'inizio, se no il tipo scelto).
@@ -429,7 +437,7 @@ async function incollaRigheProgetto(progettoId, testo) {
   const righe = String(testo || '').split(/\r?\n/).map(rigaDaTesto).filter(Boolean).slice(0, 200);
   if (!righe.length) return;
   let ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0);
-  const nuove = righe.map(r => ({ user_id: visto().id, testo: r.testo, tipo: r.tipo, giorno: null, scala: 'giorno', ordine: ++ordine, progetto_id: progettoId }));
+  const nuove = righe.map(r => ({ user_id: visto().id, testo: r.testo, tipo: r.tipo, livello: r.livello, giorno: null, scala: 'giorno', ordine: ++ordine, progetto_id: progettoId }));
   const { data, error } = await dbq('righe incollate', supa.from('cose_da_fare').insert(nuove).select());
   if (error) return mostraToast('Non salvate: riprova.');
   AG.cose.push(...data);
@@ -437,10 +445,10 @@ async function incollaRigheProgetto(progettoId, testo) {
   mostraToast(`${data.length} ${data.length === 1 ? 'riga aggiunta' : 'righe aggiunte'} al progetto`);
 }
 async function nuovaRigaProgetto(form, valore, ordine) {
-  const r = rigaDaTesto(valore);
+  const r = rigaDaTesto(valore, AG.livelloRiga || 0);
   if (!r) return;
-  const { tipo, testo } = r;
-  const { data, error } = await dbq('riga del progetto', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: null, scala: 'giorno', ordine, progetto_id: form.dataset.progetto, tipo }).select().single());
+  const { tipo, testo, livello } = r;
+  const { data, error } = await dbq('riga del progetto', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: null, scala: 'giorno', ordine, progetto_id: form.dataset.progetto, tipo, livello }).select().single());
   if (error) return mostraToast('Non salvato: riprova.');
   AG.cose.push(data);
   disegnaAgenda();
@@ -450,30 +458,32 @@ function disegnaProgetto() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const p = AG.progetti.find(x => x.id === AG.progettoAperto);
   if (!p) { AG.vista = 'giorno'; return disegnaAgenda(); }
-  const righe = righeProgetto(p.id).sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  // come un foglio Word (Ignazio 23/09): l'ordine è quello scelto, le fatte restano al loro posto (grigie), rientri e titoli
+  const righe = righeProgetto(p.id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  const segni = A.numeraRighe(righe);
   const n = contaProgetto(p.id);
-  let num = 0;
   const quando = c => {
     if (!c.giorno) return '';
     const sc = c.scala || 'giorno';
     const g = sc === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : sc === 'mese' ? A.titoloMese(c.giorno) : titoloGiorno(c.giorno, oggi);
     return '📅 ' + g + (c.ora ? ' · ' + String(c.ora).slice(0, 5) : '');
   };
-  const righeHtml = righe.map(c => {
-    const tipo = c.tipo || 'cosa';
-    num = tipo === 'numero' ? num + 1 : 0;
-    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}" data-cosa="${esc(c.id)}"><button class="spunta segno" disabled aria-hidden="true">${tipo === 'numero' ? num + '.' : '•'}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
+  const righeHtml = righe.map((c, i) => {
+    const tipo = c.tipo || 'cosa', rientro = `style="padding-left:${(c.livello || 0) * 24}px"`;
+    if (tipo === 'titolo') return `<div class="cosa pj-titolo" data-cosa="${esc(c.id)}"><button class="spunta segno" disabled aria-hidden="true"></button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
+    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" disabled aria-hidden="true">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
     const sotto = [quando(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : ''].filter(Boolean).join(' · ');
-    return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}"><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
+    return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
   }).join('');
-  const tipoOra = AG.tipoRiga || 'cosa';
+  const tipoOra = AG.tipoRiga || 'cosa', livOra = AG.livelloRiga || 0;
   const html = testaScala(false) + `<div class="mm-testa pj-testa"><h1 class="ag-titolo sc-titolo">${ic(p.icona || 'obiettivi')}<button class="ag-mese mm-titolo" id="pj-titolo" aria-label="Titolo, icona, elimina">${esc(p.titolo)} ${ic('modifica')}</button></h1></div>
     ${n.tot ? `<div class="pj-conto"><span><b>${n.fatte} di ${n.tot}</b> cose fatte</span><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
     <div class="ag-foglio pj-foglio">${righeHtml || '<div class="mb-vuoto">Scrivi qui sotto la prima riga del progetto.</div>'}
       <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
-        <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-      <div class="vn-aiuto">Scegli il tipo con ☐ 1. • (oppure scrivi «1. » o «- » all'inizio). Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto. Una cosa da fare si mette in un giorno toccandola.</div>
+        <span class="pj-tipi pj-rientri"><button type="button" data-rientro="-1" aria-label="Rientro indietro (Maiusc+Tab)">⇤</button><button type="button" data-rientro="1" aria-label="Rientro avanti (Tab)">⇥</button></span>
+        <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off" style="padding-left:${livOra * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. Una cosa da fare si mette in un giorno toccandola.</div>
     </div>`;
   montaScala(html);
   const t = document.getElementById('pj-titolo');
@@ -483,18 +493,28 @@ function disegnaProgetto() {
     Object.assign(p, { titolo, icona });
     disegnaAgenda();
   });
-  // più righe incollate insieme: ognuna la sua riga (il campo da solo le metterebbe tutte su una riga)
   const campoNuova = app.querySelector('.pj-nuova input');
-  if (campoNuova) campoNuova.addEventListener('paste', ev => {
-    const testo = ev.clipboardData && ev.clipboardData.getData('text');
-    if (!testo || !/\n/.test(testo.trim())) return;   // una riga sola: incolla normale
-    ev.preventDefault();
-    incollaRigheProgetto(p.id, testo);
-  });
+  const rientra = passo => {
+    AG.livelloRiga = Math.max(0, Math.min(LIVELLO_MAX, (AG.livelloRiga || 0) + passo));
+    if (campoNuova) { campoNuova.style.paddingLeft = AG.livelloRiga * 24 + 'px'; campoNuova.focus(); }
+  };
+  if (campoNuova) {
+    // più righe incollate insieme: ognuna la sua riga (il campo da solo le metterebbe tutte su una riga)
+    campoNuova.addEventListener('paste', ev => {
+      const testo = ev.clipboardData && ev.clipboardData.getData('text');
+      if (!testo || !/\n/.test(testo.trim())) return;   // una riga sola: incolla normale
+      ev.preventDefault();
+      incollaRigheProgetto(p.id, testo);
+    });
+    // Tab / Maiusc+Tab come in Word: il rientro della riga che si sta scrivendo
+    campoNuova.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); rientra(ev.shiftKey ? -1 : 1); } });
+  }
+  app.querySelectorAll('[data-rientro]').forEach(b => { b.onclick = () => rientra(Number(b.dataset.rientro)); });
   app.querySelectorAll('[data-tipo-riga]').forEach(b => { b.onclick = () => {
     AG.tipoRiga = b.dataset.tipoRiga;
+    if (AG.tipoRiga === 'titolo') rientra(-LIVELLO_MAX);
     app.querySelectorAll('[data-tipo-riga]').forEach(x => x.classList.toggle('scelto', x === b));
-    const campo = app.querySelector('.pj-nuova input'); if (campo) campo.focus();
+    if (campoNuova) campoNuova.focus();
   }; });
 }
 
@@ -666,7 +686,7 @@ function foglioCosa(c, oggi, opz = {}) {
   // un tocco sposta e chiude. «Settimana prossima» / «Mese prossimo» la fanno diventare una cosa di quella scala (senza ora).
   // Progetti (Ignazio 23/09): una riga di progetto può essere una cosa da fare (con o senza giorno), un punto numerato o a puntini
   const eCosa = (c.tipo || 'cosa') === 'cosa', pj = c.progetto_id ? (AG.progetti || []).find(x => x.id === c.progetto_id) : null;
-  let tipoScelto = c.tipo || 'cosa';
+  let tipoScelto = c.tipo || 'cosa', livelloScelto = c.livello || 0;
   const scalaC = c.scala || 'giorno', domaniG = A.spostaGiorno(oggi, 1);
   const settProssima = A.spostaGiorno(A.inizioScala('settimana', oggi), 7), meseProssimo = A.meseAccanto(oggi.slice(0, 8) + '01', 1);
   const rapide = c.fatto_il || !eCosa || !['giorno', 'settimana', 'mese'].includes(scalaC) ? [] : [
@@ -679,7 +699,8 @@ function foglioCosa(c, oggi, opz = {}) {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
-    ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div></div>` : ''}
+    ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
+      <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
     <p class="fc-quando">${!c.giorno ? (eCosa ? 'Senza giorno: sta solo nel progetto. Dagli un giorno qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
@@ -757,7 +778,8 @@ function foglioCosa(c, oggi, opz = {}) {
     if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
     const campoOra = velo.querySelector('#fc-ora'), campoGiorno = velo.querySelector('#fc-giorno');
     const dopo = { testo };
-    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'cosa' ? {} : { fatto_il: null, giorno: null, ora: null, durata: null });
+    if (pj && livelloScelto !== (c.livello || 0)) dopo.livello = tipoScelto === 'titolo' ? 0 : livelloScelto;
+    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'cosa' ? {} : { fatto_il: null, giorno: null, ora: null, durata: null }, tipoScelto === 'titolo' ? { livello: 0 } : {});
     if (dopo.tipo && dopo.tipo !== 'cosa') return cambia(dopo);   // un punto dell'elenco non ha giorno né ora
     if (sposta) Object.assign(dopo, sposta.giorno ? { scala: 'giorno', giorno: sposta.giorno } : { giorno: sposta.inizio });
     if (campoOra && campoOra.value) {
@@ -770,6 +792,11 @@ function foglioCosa(c, oggi, opz = {}) {
     }
     cambia(dopo);
   };
+  const livTesto = () => { const el = velo.querySelector('#fc-liv'); if (el) el.textContent = livelloScelto ? `Rientro ${livelloScelto}` : 'Senza rientro'; };
+  livTesto();
+  const livM = velo.querySelector('#fc-liv-meno'), livP = velo.querySelector('#fc-liv-piu');
+  if (livM) livM.onclick = () => { livelloScelto = Math.max(0, livelloScelto - 1); livTesto(); };
+  if (livP) livP.onclick = () => { livelloScelto = Math.min(LIVELLO_MAX, livelloScelto + 1); livTesto(); };
   velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(b => { b.onclick = () => { tipoScelto = b.dataset.tipo; velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
   const togliG = velo.querySelector('#fc-togli-giorno'); if (togliG) togliG.onclick = () => cambia({ giorno: null, ora: null, durata: null, scala: 'giorno' });
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });
@@ -1228,7 +1255,8 @@ function ridisegnaDopoBlocco(velo) {
   if (velo) lato ? pannelloDestro(eventi, opz) : foglioCronologia(eventi, opz);
 }
 function righeTrascinabili(riga, attr) {
-  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && !x.classList.contains('fatta') && !x.classList.contains('auto'));
+  const progetto = riga.parentElement.classList.contains('pj-foglio');   // nei progetti anche le fatte: restano al loro posto
+  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto'));
 }
 function iniziaTrascina() {
   TR.avviato = true;
@@ -1265,7 +1293,7 @@ function rigaDa(ev) {
   const riga = ev.target.closest && ev.target.closest('.ag-foglio .cosa');
   if (!riga || ev.target.closest('.spunta')) return null;
   const attr = riga.hasAttribute('data-cosa') ? 'data-cosa' : riga.hasAttribute('data-voce') ? 'data-voce' : null;
-  if (!attr || riga.classList.contains('fatta') || riga.classList.contains('auto') || righeTrascinabili(riga, attr).length < 2) return null;
+  if (!attr || (riga.classList.contains('fatta') && !riga.parentElement.classList.contains('pj-foglio')) || riga.classList.contains('auto') || righeTrascinabili(riga, attr).length < 2) return null;
   return { riga, attr };
 }
 if (typeof document !== 'undefined' && document.addEventListener) {
