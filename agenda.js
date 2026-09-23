@@ -223,9 +223,14 @@
         const scala = v.scala || 'giorno';
         const stato = v.core ? statoCore(v, misure) : null;
         const inizio = inizioScala(scala, giorno);
-        const spunta = (cose || []).find(c => c.fatto_il && (v.core ? c.core === v.core && c.giorno === inizio : c.modello_id === v.id && c.giorno === giorno));
-        return { ...v, scala, stato, diScala: DI_SCALA[scala] || '', giornoSpunta: v.core ? inizio : giorno,
-          fatto_il: stato ? (stato.fatta ? 'misura' : null) : spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null };
+        // la riga del giorno (cose_da_fare con modello_id): c'è quando la voce è spuntata OPPURE quando quel giorno ha un'ora
+        // sua (spostata nella Timeline solo per quella volta, Ignazio 23/09: il modello resta com'è nei giorni dopo)
+        const delGiorno = v.core ? null : (cose || []).find(c => c.modello_id === v.id && c.giorno === giorno) || null;
+        const spunta = v.core ? (cose || []).find(c => c.fatto_il && c.core === v.core && c.giorno === inizio) : delGiorno && delGiorno.fatto_il ? delGiorno : null;
+        const suaOra = delGiorno && delGiorno.ora ? { ora: delGiorno.ora, durata: delGiorno.durata || v.durata, oraDelModello: v.ora || null } : {};
+        return { ...v, ...suaOra, scala, stato, diScala: DI_SCALA[scala] || '', giornoSpunta: v.core ? inizio : giorno,
+          fatto_il: stato ? (stato.fatta ? 'misura' : null) : spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null,
+          riga_id: delGiorno ? delGiorno.id : null };
       });
   }
   // Le sezioni del foglio, in ordine: «Core» per prima, poi le altre come compaiono nel modello; ogni sezione con le sue voci
