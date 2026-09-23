@@ -70,6 +70,7 @@ async function caricaAgenda() {
   if (AG.vista === 'anno') { const y = AG.giorno.slice(0, 4); await caricaIntervallo(`${y}-01-01`, `${Number(y) + 1}-01-01`); }
   AG.modelli = mm ? mm.data : [];
   AG.misure = {};
+  await caricaProgetti();
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
 }
@@ -128,7 +129,7 @@ function foglioHtml(oggi) {
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
   const riga = (c, attr) => {
     const auto = !!c.stato;   // spunta dai numeri: non si tocca, dice quanto manca
-    const sotto = [c.stato ? c.stato.testo : '', oraDurata(c) + (c.oraDelModello !== undefined ? ` (solo ${AG.giorno === oggi ? 'oggi' : 'questo giorno'}${c.oraDelModello ? `, di solito ${String(c.oraDelModello).slice(0, 5)}` : ''})` : ''), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : '', c.diScala, c.riportata ? `da ${gg(c.riportata)}` : ''].filter(Boolean).join(' · ');
+    const sotto = [c.stato ? c.stato.testo : '', oraDurata(c) + (c.oraDelModello !== undefined ? ` (solo ${AG.giorno === oggi ? 'oggi' : 'questo giorno'}${c.oraDelModello ? `, di solito ${String(c.oraDelModello).slice(0, 5)}` : ''})` : ''), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : '', nomeProgetto(c), c.diScala, c.riportata ? `da ${gg(c.riportata)}` : ''].filter(Boolean).join(' · ');
     return `<div class="cosa${c.fatto_il ? ' fatta' : ''}${auto ? ' auto' : ''}" ${attr}="${esc(c.id)}">
       <button class="spunta" aria-label="${auto ? 'Si spunta da sola' : c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}"${auto ? ' disabled' : ''}>${c.fatto_il ? ic('fatto') : ''}</button>
       <button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button>
@@ -225,6 +226,7 @@ function collegaCose(oggi) {
       if (!testo) return;
       const gruppo = form.dataset.gruppo || null, scala = form.dataset.scala || 'giorno';
       const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
+      if (form.dataset.progetto) return nuovaRigaProgetto(form, campo.value, ordine);
       const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: inizioScalaMB(scala, AG.giorno), scala, ordine, gruppo_id: gruppo }).select().single());
       if (error) return;
       AG.cose.push(data);
@@ -326,6 +328,147 @@ function nuovoModello() {
     disegnaAgenda();
     foglioModello(data.id);
   });
+}
+
+// ── PROGETTI, come le note di progetto di NotePlan (Ignazio 23/09; per ora solo l'Admin) ──
+// Nel menu, sotto «Modelli personali», la sezione «Progetti» con il +. Un progetto = titolo e icona; dentro le righe:
+// ☐ cose da fare (si spuntano; con un giorno compaiono anche in quel giorno di MB Plan e restano nel progetto),
+// 1. elenco numerato, • elenco a puntini. Le righe sono `cose_da_fare` con `progetto_id` e `tipo`; senza giorno stanno solo qui.
+const TIPI_RIGA = [['cosa', '☐ Da fare'], ['numero', '1. Numerato'], ['punto', '• Puntini']];
+const vediProgetti = () => typeof eAdmin === 'function' && eAdmin() && !vediTutti();
+async function caricaProgetti() {
+  if (!vediProgetti()) { AG.progetti = []; if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }
+  const [pr, rg] = await Promise.all([
+    dbq('progetti', supa.from('progetti').select('*').eq('user_id', visto().id).order('ordine')),
+    dbq('righe dei progetti', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id).not('progetto_id', 'is', null)),
+  ]);
+  AG.progetti = pr.error ? [] : pr.data;
+  if (!rg.error) { const per = new Map(AG.cose.map(c => [c.id, c])); for (const r of rg.data) per.set(r.id, r); AG.cose = [...per.values()]; }
+  if (AG.vista === 'progetto' && !AG.progetti.some(x => x.id === AG.progettoAperto)) AG.vista = 'giorno';
+}
+const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
+function contaProgetto(id) {
+  const cose = righeProgetto(id).filter(c => (c.tipo || 'cosa') === 'cosa');
+  return { tot: cose.length, fatte: cose.filter(c => c.fatto_il).length, righe: righeProgetto(id).length };
+}
+function nomeProgetto(c) {
+  const pj = c.progetto_id && (AG.progetti || []).find(x => x.id === c.progetto_id);
+  return pj ? '📁 ' + pj.titolo : '';
+}
+function progettiMenuHtml() {
+  if (!vediProgetti()) return '';
+  return `<div class="ag-lato-titolo mb-titolo-piu">Progetti<button data-cmd="nuovo-progetto" aria-label="Nuovo progetto">${ic('piu')}</button></div>
+    ${AG.progetti.length ? AG.progetti.map(p => { const n = contaProgetto(p.id);
+      return `<button data-progetto="${esc(p.id)}" class="${AG.vista === 'progetto' && AG.progettoAperto === p.id ? 'si' : ''}">${ic(p.icona || 'obiettivi')}<span>${esc(p.titolo)}</span><small>${n.tot ? `${n.fatte} di ${n.tot} fatte` : n.righe ? `${n.righe} righe` : 'vuoto'}</small></button>`; }).join('')
+      : '<div class="mb-vuoto">Crea un progetto con il + e mettici le cose da fare</div>'}`;
+}
+function apriProgetto(id) { AG.vista = 'progetto'; AG.progettoAperto = id; AG.aperta = null; AG.portato = null; apriAgenda(AG.giorno); }
+function foglioProgetto(p, dopo) {
+  let icona = (p && p.icona) || '';
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const disegna = () => {
+    const t = velo.querySelector('#np-titolo') ? velo.querySelector('#np-titolo').value : ((p && p.titolo) || '');
+    velo.innerHTML = `<div class="foglio"><h3>${p ? 'Il progetto' : 'Nuovo progetto'}${esc(aNome())}</h3>
+      <p>Per esempio «Evento BBS di novembre», «Serata prodotti», «Squadra di Isabella». Dentro scrivi le cose da fare e gli elenchi.</p>
+      <div class="campo"><label>Titolo <small>Obbligatorio</small></label><input id="np-titolo" maxlength="60" value="${esc(t)}"></div>
+      <div class="campo"><label>Icona <small>facoltativa</small></label>
+        <div class="nm-icone"><button data-icona="" class="${icona ? '' : 'scelto'}">—</button>${ICONE_MODELLO.map(n => `<button data-icona="${n}" class="${icona === n ? 'scelto' : ''}" aria-label="${n}">${ic(n)}</button>`).join('')}</div></div>
+      <button class="primario" id="np-si">${p ? 'Salva' : 'Crea'}</button>
+      ${p ? '<button class="link elimina-qui" id="np-elimina">Elimina il progetto</button>' : ''}
+      <button class="link" id="np-no">Annulla</button></div>`;
+    velo.querySelector('#np-no').onclick = () => velo.remove();
+    velo.querySelectorAll('[data-icona]').forEach(b => { b.onclick = () => { icona = b.dataset.icona; disegna(); }; });
+    velo.querySelector('#np-si').onclick = () => {
+      const titolo = String(velo.querySelector('#np-titolo').value).replace(/\s+/g, ' ').trim().slice(0, 60);
+      if (!titolo) return mostraToast('Scrivi il titolo del progetto');
+      velo.remove();
+      dopo({ titolo, icona: icona || null });
+    };
+    const el = velo.querySelector('#np-elimina');
+    if (el) el.onclick = async () => {
+      const si = await chiediConferma(`Eliminare «${p.titolo}»?`, 'Si cancellano anche tutte le sue righe, comprese quelle messe in un giorno di MB Plan.', 'Elimina', true);
+      if (!si) return;
+      const { error } = await dbq('elimina progetto', supa.from('progetti').delete().eq('id', p.id));
+      if (error) return mostraToast('Non eliminato: riprova.');
+      velo.remove();
+      AG.progetti = AG.progetti.filter(x => x.id !== p.id);
+      AG.cose = AG.cose.filter(c => c.progetto_id !== p.id);
+      AG.vista = 'giorno';
+      disegnaAgenda();
+      mostraToast(`«${p.titolo}» eliminato`);
+    };
+  };
+  document.body.appendChild(velo);
+  disegna();
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  const campo = velo.querySelector('#np-titolo'); if (campo && !p) campo.focus();
+}
+function nuovoProgetto() {
+  foglioProgetto(null, async ({ titolo, icona }) => {
+    const ordine = AG.progetti.reduce((x, p) => Math.max(x, p.ordine || 0), 0) + 1;
+    const { data, error } = await dbq('nuovo progetto', supa.from('progetti').insert({ user_id: visto().id, titolo, icona, ordine }).select().single());
+    if (error) return mostraToast('Non salvato: riprova.');
+    AG.progetti.push(data);
+    apriProgetto(data.id);
+  });
+}
+// Una riga nuova: il tipo scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » puntini, «[] » da fare)
+async function nuovaRigaProgetto(form, valore, ordine) {
+  let testo = String(valore || ''), tipo = AG.tipoRiga || 'cosa';
+  if (/^\s*\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\s*\d+[.)]\s+/, ''); }
+  else if (/^\s*[-•*]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^\s*[-•*]\s+/, ''); }
+  else if (/^\s*\[\s?\]\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^\s*\[\s?\]\s*/, ''); }
+  testo = MB21Agenda.testoCosa(testo);
+  if (!testo) return;
+  const { data, error } = await dbq('riga del progetto', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: null, scala: 'giorno', ordine, progetto_id: form.dataset.progetto, tipo }).select().single());
+  if (error) return mostraToast('Non salvato: riprova.');
+  AG.cose.push(data);
+  disegnaAgenda();
+  const c2 = app.querySelector('.pj-nuova input'); if (c2) c2.focus();
+}
+function disegnaProgetto() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
+  const p = AG.progetti.find(x => x.id === AG.progettoAperto);
+  if (!p) { AG.vista = 'giorno'; return disegnaAgenda(); }
+  const righe = righeProgetto(p.id).sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  const n = contaProgetto(p.id);
+  let num = 0;
+  const quando = c => {
+    if (!c.giorno) return '';
+    const sc = c.scala || 'giorno';
+    const g = sc === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : sc === 'mese' ? A.titoloMese(c.giorno) : titoloGiorno(c.giorno, oggi);
+    return '📅 ' + g + (c.ora ? ' · ' + String(c.ora).slice(0, 5) : '');
+  };
+  const righeHtml = righe.map(c => {
+    const tipo = c.tipo || 'cosa';
+    num = tipo === 'numero' ? num + 1 : 0;
+    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}" data-cosa="${esc(c.id)}"><button class="spunta segno" disabled aria-hidden="true">${tipo === 'numero' ? num + '.' : '•'}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
+    const sotto = [quando(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : ''].filter(Boolean).join(' · ');
+    return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}"><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
+  }).join('');
+  const tipoOra = AG.tipoRiga || 'cosa';
+  const html = testaScala(false) + `<div class="mm-testa pj-testa"><h1 class="ag-titolo sc-titolo">${ic(p.icona || 'obiettivi')}<button class="ag-mese mm-titolo" id="pj-titolo" aria-label="Titolo, icona, elimina">${esc(p.titolo)} ${ic('modifica')}</button></h1></div>
+    ${n.tot ? `<div class="pj-conto"><span><b>${n.fatte} di ${n.tot}</b> cose fatte</span><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
+    <div class="ag-foglio pj-foglio">${righeHtml || '<div class="mb-vuoto">Scrivi qui sotto la prima riga del progetto.</div>'}
+      <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
+        <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
+        <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <div class="vn-aiuto">Scegli il tipo con ☐ 1. • (oppure scrivi «1. » o «- » all'inizio). Una cosa da fare si mette in un giorno toccandola.</div>
+    </div>`;
+  montaScala(html);
+  const t = document.getElementById('pj-titolo');
+  if (t) t.onclick = () => foglioProgetto(p, async ({ titolo, icona }) => {
+    const { error } = await dbq('progetto', supa.from('progetti').update({ titolo, icona }).eq('id', p.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    Object.assign(p, { titolo, icona });
+    disegnaAgenda();
+  });
+  app.querySelectorAll('[data-tipo-riga]').forEach(b => { b.onclick = () => {
+    AG.tipoRiga = b.dataset.tipoRiga;
+    app.querySelectorAll('[data-tipo-riga]').forEach(x => x.classList.toggle('scelto', x === b));
+    const campo = app.querySelector('.pj-nuova input'); if (campo) campo.focus();
+  }; });
 }
 
 // Un modello: titolo e icona, acceso/spento, le sue voci (ognuna con l'interruttore e i giorni), in fondo il campo per
@@ -463,7 +606,7 @@ function foglioVoceModello(v, salva, elimina) {
 async function spuntaCosa(c, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const prima = { fatto_il: c.fatto_il, giorno: c.giorno };
-  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: inizioScalaMB(c.scala || 'giorno', opz.giorno || AG.giorno) };
+  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), ...(c.progetto_id && !c.giorno ? {} : { giorno: inizioScalaMB(c.scala || 'giorno', opz.giorno || AG.giorno) }) };
   const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
   if (error) return;
   Object.assign(c, dopo);
@@ -494,9 +637,12 @@ function foglioCosa(c, oggi, opz = {}) {
   } : null;
   // Le scorciatoie per spostare, come NotePlan (Ignazio 23/09): Oggi · Domani · Settimana prossima (· Mese prossimo);
   // un tocco sposta e chiude. «Settimana prossima» / «Mese prossimo» la fanno diventare una cosa di quella scala (senza ora).
+  // Progetti (Ignazio 23/09): una riga di progetto può essere una cosa da fare (con o senza giorno), un punto numerato o a puntini
+  const eCosa = (c.tipo || 'cosa') === 'cosa', pj = c.progetto_id ? (AG.progetti || []).find(x => x.id === c.progetto_id) : null;
+  let tipoScelto = c.tipo || 'cosa';
   const scalaC = c.scala || 'giorno', domaniG = A.spostaGiorno(oggi, 1);
   const settProssima = A.spostaGiorno(A.inizioScala('settimana', oggi), 7), meseProssimo = A.meseAccanto(oggi.slice(0, 8) + '01', 1);
-  const rapide = c.fatto_il || !['giorno', 'settimana', 'mese'].includes(scalaC) ? [] : [
+  const rapide = c.fatto_il || !eCosa || !['giorno', 'settimana', 'mese'].includes(scalaC) ? [] : [
     ['oggi', 'Oggi', { scala: 'giorno', giorno: oggi }], ['domani', 'Domani', { scala: 'giorno', giorno: domaniG }],
     ['settimana', 'Settimana prossima', { scala: 'settimana', giorno: settProssima, ora: null, durata: null }],
     ['mese', 'Mese prossimo', { scala: 'mese', giorno: meseProssimo, ora: null, durata: null }],
@@ -504,19 +650,20 @@ function foglioCosa(c, oggi, opz = {}) {
     .filter(([k]) => k !== 'mese' || scalaC === 'mese' || scalaC === 'settimana');
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>Cosa da fare${esc(aNome())}</h3>
+  velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
-    <p class="fc-quando">${sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
+    ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div></div>` : ''}
+    <p class="fc-quando">${!c.giorno ? (eCosa ? 'Senza giorno: sta solo nel progetto. Dagli un giorno qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
       <label style="margin-top:10px">${ic('scala-giorno')} Giorno <small>facoltativo</small></label>
       ${c.scala === 'mese' ? '<input type="date" id="fc-sc-giorno">' : '<div class="ag-scelte" id="fc-sc-giorni"></div>'}
       <div class="vn-aiuto" id="fc-sc-aiuto"></div></div>` : ''}
-    ${(c.scala || 'giorno') === 'giorno' ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
-      <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : c.giorno)}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
+    ${eCosa && (c.scala || 'giorno') === 'giorno' ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
+      <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
-      <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
-    ${opz.dallaScheda ? '' : `<div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
+      <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}${pj && c.giorno ? ' <button type="button" class="link" id="fc-togli-giorno">Togli dal giorno (resta nel progetto)</button>' : ''}</div></div>` : ''}
+    ${opz.dallaScheda || !eCosa ? '' : `<div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
       ${c.contatto_id ? `<div class="fc-persona"><button type="button" class="fc-chi" id="fc-apri-contatto">${ic('persona')} ${esc((c.contatti && c.contatti.nome) || 'Contatto')}</button><button type="button" class="link" id="fc-scollega">Togli</button></div>`
         : `<button type="button" class="link" id="fc-collega">${ic('piu')} Collega a un Prospect, Partner o Cliente</button>`}</div>`}
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} Sposta a <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
@@ -583,6 +730,8 @@ function foglioCosa(c, oggi, opz = {}) {
     if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
     const campoOra = velo.querySelector('#fc-ora'), campoGiorno = velo.querySelector('#fc-giorno');
     const dopo = { testo };
+    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'cosa' ? {} : { fatto_il: null, giorno: null, ora: null, durata: null });
+    if (dopo.tipo && dopo.tipo !== 'cosa') return cambia(dopo);   // un punto dell'elenco non ha giorno né ora
     if (sposta) Object.assign(dopo, sposta.giorno ? { scala: 'giorno', giorno: sposta.giorno } : { giorno: sposta.inizio });
     if (campoOra && campoOra.value) {
       if (!campoGiorno.value || A.controllaGiorno(campoGiorno.value)) return mostraToast('Scegli il giorno');
@@ -594,6 +743,8 @@ function foglioCosa(c, oggi, opz = {}) {
     }
     cambia(dopo);
   };
+  velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(b => { b.onclick = () => { tipoScelto = b.dataset.tipo; velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
+  const togliG = velo.querySelector('#fc-togli-giorno'); if (togliG) togliG.onclick = () => cambia({ giorno: null, ora: null, durata: null, scala: 'giorno' });
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });
   const domani = velo.querySelector('#fc-domani');
   const pw = c.scala === 'periodo' ? A.periodoWesDi(c.riportata ? oggi : c.giorno, AG.wes) : null;
@@ -621,6 +772,7 @@ function disegnaAgenda() {
   if (AG.vista === 'settimana') return disegnaSettimana();
   if (AG.vista === 'periodo') return disegnaPeriodo();
   if (AG.vista === 'anno') return disegnaAnno();
+  if (AG.vista === 'progetto') return disegnaProgetto();
   let html = `
     <div class="ag-testa np">
       <span class="ag-menu-posto"></span>
@@ -1181,11 +1333,11 @@ async function cercaMB(testo, box, chiudi) {
   const passati = tutti.filter(a => a.quando < adesso).sort((x, y) => (x.quando < y.quando ? 1 : -1));
   const elenco = [...prossimi, ...passati].slice(0, 50);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
-  const quandoCosa = c => c.scala === 'mese' ? A.titoloMese(c.giorno) : c.scala === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : titoloGiorno(c.giorno, oggi);
+  const quandoCosa = c => !c.giorno ? `progetto «${(AG.progetti || []).find(x => x.id === c.progetto_id) ? AG.progetti.find(x => x.id === c.progetto_id).titolo : ''}»` : c.scala === 'mese' ? A.titoloMese(c.giorno) : c.scala === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : titoloGiorno(c.giorno, oggi);
   const righe = elenco.map(a => {
     const p = A.partiRoma(a.quando), cat = (a.contatti && a.contatti.categoria) || a.categoria;
     return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
-  }).join('') + (cose.data || []).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
+  }).join('') + (cose.data || []).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-progetto="${esc(c.progetto_id || '')}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
   const quanti = elenco.length + (cose.data || []).length;
   box.innerHTML = quanti ? `<div class="mb-ris-conto">${tutti.length > 50 ? 'Primi 50 risultati: scrivi qualcosa di più preciso' : `${quanti} ${quanti === 1 ? 'risultato' : 'risultati'}`}</div>${righe}` : '<div class="mb-vuoto">Nessun risultato.</div>';
   box.querySelectorAll('.mb-ris[data-evento]').forEach(b => { b.onclick = async () => {
@@ -1198,6 +1350,7 @@ async function cercaMB(testo, box, chiudi) {
   }; });
   box.querySelectorAll('.mb-ris[data-cosa-giorno]').forEach(b => { b.onclick = () => {
     chiudi();
+    if (!b.dataset.cosaGiorno && b.dataset.cosaProgetto) return apriProgetto(b.dataset.cosaProgetto);
     const sc = b.dataset.cosaScala;
     AG.vista = sc === 'mese' || sc === 'settimana' ? sc : 'giorno'; AG.aperta = null; AG.portato = null;
     apriAgenda(b.dataset.cosaGiorno);
@@ -1213,6 +1366,7 @@ function menuAgendaHtml() {
     <div class="ag-lato-titolo mb-titolo-piu">Modelli personali<button data-cmd="nuovo-modello" aria-label="Nuovo modello">${ic('piu')}</button></div>
     ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small><i class="mb-scala-punto sc-${m.scala || 'giorno'}"></i>${esc(NOMI_SCALA[m.scala || 'giorno'])}${m.attivo === false ? ' · spento' : ` · ${AG.modello.filter(v => v.modello_id === m.id).length}`}</small></button>`).join('')
       : '<div class="mb-vuoto">Crea le tue routine o cose da fare con il +</div>'}
+    ${progettiMenuHtml()}
     <button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -1235,6 +1389,8 @@ function collegaMenuAgenda(radice, chiudi) {
   const nuovo = radice.querySelector('[data-cmd="nuovo-modello"]'); if (nuovo) nuovo.onclick = () => { chiudi(); nuovoModello(); };
   radice.querySelectorAll('[data-modello]').forEach(b => { b.onclick = () => { chiudi(); foglioModello(b.dataset.modello); }; });
   const core = radice.querySelector('[data-cmd="core"]'); if (core) core.onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7)); };
+  const nuovoP = radice.querySelector('[data-cmd="nuovo-progetto"]'); if (nuovoP) nuovoP.onclick = () => { chiudi(); nuovoProgetto(); };
+  radice.querySelectorAll('button[data-progetto]').forEach(b => { b.onclick = () => { chiudi(); apriProgetto(b.dataset.progetto); }; });
 }
 function menuAgenda() {
   const velo = document.createElement('div');
