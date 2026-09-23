@@ -371,6 +371,19 @@ prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quell
   assert.equal(A.fineSlittata('18:30', '', '19:30'), null);
 });
 
+prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
+  const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
+  const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];
+  const oggi = A.vociDelGiorno(modello, cose, '2026-09-23', {})[0];
+  assert.equal(oggi.ora, '11:30:00'); assert.equal(oggi.oraDelModello, '06:00:00'); assert.equal(oggi.fatto_il, null); assert.equal(oggi.riga_id, 'r1');
+  const domani = A.vociDelGiorno(modello, cose, '2026-09-24', {})[0];
+  assert.equal(domani.ora, '06:00:00'); assert.equal(domani.oraDelModello, undefined); assert.equal(domani.riga_id, null);
+  const fatta = A.vociDelGiorno(modello, [{ ...cose[0], fatto_il: '2026-09-23T10:00:00Z' }], '2026-09-23', {})[0];
+  assert.ok(fatta.fatto_il); assert.equal(fatta.ora, '11:30:00');
+  const soloSpunta = A.vociDelGiorno(modello, [{ id: 's1', modello_id: 'v1', giorno: '2026-09-23', fatto_il: '2026-09-23T07:00:00Z' }], '2026-09-23', {})[0];
+  assert.equal(soloSpunta.ora, '06:00:00'); assert.equal(soloSpunta.spunta_id, 's1'); assert.equal(soloSpunta.oraDelModello, undefined);
+});
+
 prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte restano nel loro giorno', () => {
   const cose = [
     { id: 'a', testo: 'Biglietti BBS', giorno: '2026-09-20', ordine: 0, fatto_il: null, creato_il: '2026-09-20T10:00:00Z' },   // vecchia, non fatta → oggi
