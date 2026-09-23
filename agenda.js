@@ -44,7 +44,8 @@
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
   const CON_OSPITE = ['Piano Marketing', 'Follow Up'];                          // decisione 8
-  const DURATE = [[5, '5 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];   // 45 aggiunto il 21/09 (Ignazio: «17:15–18:00»)
+  // Ignazio 23/09: le stesse pillole ovunque (appuntamenti e cose da fare), oppure inizio e fine scritti a mano («Altra…»)
+  const DURATE = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora']];   // 45 aggiunto il 21/09 (Ignazio: «17:15–18:00»)
   const COLORI = { 'Piano Marketing': 'var(--az-pm)', 'Follow Up': 'var(--az-followup)', 'Appuntamento': 'var(--az-appuntamento)', 'Consulenza PRD': 'var(--az-consulenza)', 'Contatto': 'var(--az-contatto)' };
   const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
   const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -447,10 +448,10 @@
   // ── Vista a orario del giorno (cantiere 37) ────────────────────────────────
   // Tutto in minuti dalla mezzanotte di Roma: le funzioni non toccano il DOM, così il banco le prova e
   // la stessa disposizione serve alla vista Giorno e alla vista Settimana.
-  const ORA_DA = 8, ORA_A = 24;              // la griglia parte dalle 8 e arriva a mezzanotte (Ignazio 20/09)
+  const ORA_DA = 8, ORA_A = 22;              // la Timeline va dalle 8 alle 22 e si allarga se serve (Ignazio 23/09; prima fino a mezzanotte)
   const PASSO_MIN = 15;                      // il tocco sul vuoto arrotonda al quarto d'ora
   const MINIMO_VISTA = 20;                   // un blocco non si disegna mai più basso di 20 minuti, o non si leggerebbe
-  const DURATA_CONTATTO = 5;                 // telefonata/messaggio/presenza (Ignazio 20/09)
+  const DURATA_CONTATTO = 15;                // telefonata/messaggio/presenza: 15 minuti (Ignazio 23/09; prima 5)
   const DURATA_NORMALE = 60;                 // tutto il resto, come il link a Google Calendar
   const durataPredefinita = tipo => (tipo === 'Contatto' ? DURATA_CONTATTO : DURATA_NORMALE);
 

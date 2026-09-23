@@ -878,6 +878,12 @@
   .ag-ev.ag-cosa.fatta b { text-decoration: line-through; }
   .ag-ev.ag-cosa.fatta i { background: #1D9E75; }
   .fc-persona { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .fc-fine { margin-top: 8px; font-size: 14px; color: var(--testo-soft); }
+  .fc-fine input { font-family: inherit; font-size: 15px; margin-left: 8px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
+  .fm-matita { border: 0; background: var(--sfondo); border-radius: 50%; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-left: 6px; color: var(--testo-soft); }
+  .fm-matita svg.ic { width: 16px; height: 16px; }
+  .ag-sez-modello { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; }
+  .ag-sez-modello svg.ic:last-child { width: 16px; height: 16px; opacity: .45; }
   .fc-chi { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 8px 14px; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--testo); }
   .fc-chi svg.ic { width: 18px; height: 18px; }
   /* il colore di ogni scala (Ignazio 23/09): tondo pieno con l'icona bianca, velo sulla voce scelta, barra accanto al titolo */
@@ -1402,35 +1408,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230634"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230634"></script>
-<script src="lista.js?v=202609230634"></script>
-<script src="rubrica.js?v=202609230634"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230634"></script>
-<script src="agenda.js?v=202609230634"></script>
-<script src="report.js?v=202609230634"></script>
-<script src="check.js?v=202609230634"></script>
-<script src="mappa.js?v=202609230634"></script>
-<script src="pagina-dashboard.js?v=202609230634"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230634"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230634"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230634"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230634"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230634"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230634"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230634"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230634"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230634"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230634"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230634"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230634"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230634"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230634"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230634"></script>
-<script src="benvenuto.js?v=202609230634"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230634"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230646"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230646"></script>
+<script src="lista.js?v=202609230646"></script>
+<script src="rubrica.js?v=202609230646"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230646"></script>
+<script src="agenda.js?v=202609230646"></script>
+<script src="report.js?v=202609230646"></script>
+<script src="check.js?v=202609230646"></script>
+<script src="mappa.js?v=202609230646"></script>
+<script src="pagina-dashboard.js?v=202609230646"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230646"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230646"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230646"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230646"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230646"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230646"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230646"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230646"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230646"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230646"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230646"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230646"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230646"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230646"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230646"></script>
+<script src="benvenuto.js?v=202609230646"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230646"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 06:34';
+const APP_VERSION = '2026.09.23 · 06:46';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1952,7 +1958,7 @@ function foglioHtml(oggi) {
   let h = '<div class="ag-foglio">';
   for (const m of attivi) {
     const sueVoci = voci.filter(v => !v.core && v.modello_id === m.id), sueCose = cose.filter(c => c.gruppo_id === m.id);
-    h += `<h2 class="ag-sez">${m.icona ? ic(m.icona) : ''}${esc(m.titolo)}</h2>${sueVoci.map(v => riga(v, 'data-voce')).join('')}${sueCose.map(c => riga(c, 'data-cosa')).join('')}${campo(m.id)}`;
+    h += `<h2 class="ag-sez"><button class="ag-sez-modello" data-apri-modello="${esc(m.id)}" aria-label="Apri il modello ${esc(m.titolo)}">${m.icona ? ic(m.icona) : ''}${esc(m.titolo)}${ic('modifica')}</button></h2>${sueVoci.map(v => riga(v, 'data-voce')).join('')}${sueCose.map(c => riga(c, 'data-cosa')).join('')}${campo(m.id)}`;
   }
   const libere = cose.filter(c => !c.gruppo_id || !attivi.some(m => m.id === c.gruppo_id));
   if (!attivi.length || libere.length) h += `<h2 class="ag-sez">Da fare</h2>${libere.map(c => riga(c, 'data-cosa')).join('')}${attivi.length ? '' : campo(null)}`;
@@ -2008,6 +2014,8 @@ function collegaCose(oggi) {
   // le voci del modello: la spunta vale per quel giorno (o per la settimana/il mese, se la voce è di quella scala);
   // il testo di una voce misurata dal Check apre il Check di oggi, le altre aprono il modello
   const voci = A.vociDelGiorno(AG.modello, AG.cose, AG.giorno, AG.misure);
+  // il titolo della sezione apre il suo modello (lì si cambiano titolo, icona e voci: Ignazio 23/09)
+  app.querySelectorAll('[data-apri-modello]').forEach(b => { b.onclick = () => foglioModello(b.dataset.apriModello); });
   app.querySelectorAll('.ag-foglio .cosa[data-voce]').forEach(riga => {
     const v = voci.find(x => x.id === riga.dataset.voce);
     if (!v) return;
@@ -2112,7 +2120,7 @@ function foglioModello(id) {
   const disegna = () => {
     const voci = AG.modello.filter(v => v.modello_id === m.id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0));
     velo.innerHTML = `<div class="foglio alto mod">
-      <div class="testa-foglio"><h3>${m.icona ? ic(m.icona) + ' ' : ''}${esc(m.titolo)}${esc(aNome())}</h3><button id="fm-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div class="testa-foglio"><h3>${m.icona ? ic(m.icona) + ' ' : ''}${esc(m.titolo)}${esc(aNome())} <button class="fm-matita" id="fm-matita" aria-label="Cambia titolo e icona">${ic('modifica')}</button></h3><button id="fm-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <div class="mod-voce${m.attivo === false ? ' spenta' : ''}"><button class="mod-int" id="fm-attivo" role="switch" aria-checked="${m.attivo !== false}"><i></i></button>
         <button class="mod-testo" id="fm-titolo"><span>${m.attivo === false ? 'Spento: non compare nel foglio' : 'Acceso: compare nel foglio del giorno'}</span><small>Tocca qui per cambiare titolo e icona</small></button></div>
       <div class="ag-cose-gruppo">Le voci</div>
@@ -2126,6 +2134,7 @@ function foglioModello(id) {
     velo.querySelector('#fm-chiudi').onclick = chiudi;
     velo.querySelector('#fm-attivo').onclick = () => salvaModello({ attivo: m.attivo === false });
     velo.querySelector('#fm-titolo').onclick = () => foglioTitoloModello(m, salvaModello);
+    velo.querySelector('#fm-matita').onclick = () => foglioTitoloModello(m, salvaModello);   // Ignazio 23/09: il titolo si cambia dalla matita
     velo.querySelector('#fm-nuova').onsubmit = ev => {
       ev.preventDefault();
       const testo = A.testoCosa(velo.querySelector('#fm-testo').value);
@@ -2170,13 +2179,13 @@ function foglioVoceModello(v, salva, elimina) {
         <div class="ag-scelte"><button data-preset="tutti" class="${tutti ? 'scelto' : ''}">Ogni giorno</button><button data-preset="lv" class="${giorni.join() === '1,2,3,4,5' ? 'scelto' : ''}">Lun-Ven</button><button data-preset="sd" class="${giorni.join() === '6,7' ? 'scelto' : ''}">Sab e Dom</button></div>
         <div class="ag-scelte fv-giorni">${A.GIORNI_SETTIMANA.map((g, i) => `<button data-giorno="${i + 1}" class="${!tutti && giorni.includes(i + 1) ? 'scelto' : ''}">${g}</button>`).join('')}</div></div>
       <div class="campo"><label>${ic('orario')} A che ora <small>facoltativo</small></label><input type="time" id="fv-ora" value="${esc(ora)}">
-        <div class="ag-scelte" id="fv-durate">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${durata === m ? 'scelto' : ''}">${t}</button>`).join('')}</div>
+        ${pilloleDurata('fv-durate', durata, ora)}
         <div class="vn-aiuto">Con l'ora compare ogni giorno nella Timeline, tratteggiata. Senza ora resta solo nel foglio del giorno.</div></div>
       <button class="primario" id="fv-salva">Salva</button>
       <div class="fc-comandi"><button class="link elimina-qui" id="fv-elimina">Elimina dal modello</button><button class="link" id="fv-no">Annulla</button></div></div>`;
     velo.querySelector('#fv-no').onclick = () => velo.remove();
     velo.querySelector('#fv-ora').onchange = ev => { ora = ev.target.value; };
-    velo.querySelectorAll('#fv-durate [data-durata]').forEach(b => { b.onclick = () => { durata = Number(b.dataset.durata); const t = velo.querySelector('#fv-testo').value; disegna(); velo.querySelector('#fv-testo').value = t; }; });
+    collegaPilloleDurata(velo, 'fv-durate', () => velo.querySelector('#fv-ora').value, d => { durata = d; });
     velo.querySelectorAll('[data-preset]').forEach(b => { b.onclick = () => { giorni = b.dataset.preset === 'lv' ? [1, 2, 3, 4, 5] : b.dataset.preset === 'sd' ? [6, 7] : []; const t = velo.querySelector('#fv-testo').value; disegna(); velo.querySelector('#fv-testo').value = t; }; });
     velo.querySelectorAll('[data-giorno]').forEach(b => { b.onclick = () => {
       const n = Number(b.dataset.giorno);
@@ -2228,7 +2237,7 @@ function foglioCosa(c, oggi) {
     <p class="fc-quando">${c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${(c.scala || 'giorno') === 'giorno' ? `<div class="campo"><label>${ic('orario')} Metti in agenda <small>facoltativo</small></label>
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : c.giorno)}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
-      <div class="ag-scelte" id="fc-durate">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${(c.durata || 30) === m ? 'scelto' : ''}">${t}</button>`).join('')}</div>
+      ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
     <div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
       ${c.contatto_id ? `<div class="fc-persona"><button type="button" class="fc-chi" id="fc-apri-contatto">${ic('persona')} ${esc((c.contatti && c.contatti.nome) || 'Contatto')}</button><button type="button" class="link" id="fc-scollega">Togli</button></div>`
@@ -2249,7 +2258,7 @@ function foglioCosa(c, oggi) {
     disegnaAgenda();
   };
   let durata = c.durata || 30;
-  velo.querySelectorAll('#fc-durate [data-durata]').forEach(b => { b.onclick = () => { durata = Number(b.dataset.durata); velo.querySelectorAll('#fc-durate [data-durata]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
+  collegaPilloleDurata(velo, 'fc-durate', () => { const o = velo.querySelector('#fc-ora'); return o && o.value; }, d => { durata = d; });
   // la persona (Ignazio 23/09): solo Prospect, Partner o Cliente; il nome apre la sua scheda
   const collega = velo.querySelector('#fc-collega');
   if (collega) collega.onclick = async () => {
@@ -2804,7 +2813,31 @@ function collegaGriglia(radice, eventi, prima) {
 // appuntamento alla stessa ora si vede subito. Si tocca un'ora libera per fissare lì.
 // Dare un'ora alle cose da fare (time blocking, Ignazio 23/09): le cose da fare e le voci dei Modelli personali con l'ora
 // diventano blocchi nella Timeline, tratteggiati col cerchietto (non sono appuntamenti: niente persona, esito o conti).
-const DURATE_COSA = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora'], [120, '2 ore']];
+// le stesse pillole degli appuntamenti (MB21Agenda.DURATE: 15 · 30 · 45 min · 1 ora), più «Altra…» con l'ora di fine a mano
+const DURATE_COSA = MB21Agenda.DURATE;
+function pilloleDurata(id, durata, oraInizio) {
+  const altra = !DURATE_COSA.some(([m]) => m === durata);
+  const fine = oraInizio && durata ? MB21Agenda.daMinuti(Math.min(1439, MB21Agenda.inMinuti(oraInizio) + durata)) : '';
+  return `<div class="ag-scelte" id="${id}">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${!altra && durata === m ? 'scelto' : ''}">${t}</button>`).join('')}<button type="button" data-durata="altra" class="${altra ? 'scelto' : ''}">Altra…</button></div>
+    <div class="fc-fine"${altra ? '' : ' hidden'}><label>Finisce alle <input type="time" data-fine="${id}" value="${esc(fine)}"></label></div>`;
+}
+// la durata scelta: una pillola, oppure «Altra…» con l'ora di fine (differenza dall'ora d'inizio, almeno 5 minuti)
+function collegaPilloleDurata(radice, id, campoOra, cambia) {
+  const box = radice.querySelector('#' + id), fine = radice.querySelector(`[data-fine="${id}"]`);
+  if (!box) return;
+  box.querySelectorAll('[data-durata]').forEach(b => { b.onclick = () => {
+    box.querySelectorAll('[data-durata]').forEach(x => x.classList.toggle('scelto', x === b));
+    fine.parentElement.parentElement.hidden = b.dataset.durata !== 'altra';
+    if (b.dataset.durata !== 'altra') cambia(Number(b.dataset.durata));
+  }; });
+  fine.onchange = () => {
+    const ora = campoOra() || '';
+    if (!ora || !fine.value) return;
+    const d = MB21Agenda.inMinuti(fine.value) - MB21Agenda.inMinuti(ora);
+    if (d < 5) return mostraToast('L\'ora di fine deve venire dopo l\'inizio');
+    cambia(d);
+  };
+}
 function coseConOra(giorno) {
   const A = MB21Agenda;
   const blocco = (id, testo, ora, durata, fatto, ref) => {
@@ -3502,7 +3535,7 @@ async function nuovoAppuntamento(opz = {}) {
         h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
-        // la durata la propone il tipo (Contatto 5 minuti, gli altri un'ora) finché non la si tocca; «Altra…» apre l'ora di fine
+        // la durata la propone il tipo (Contatto 15 minuti, gli altri un'ora) finché non la si tocca; «Altra…» apre l'ora di fine
         if (!st.durataToccata) st.durata = A.durataPredefinita(st.tipo);
         h += `<div class="campo"><label>Durata</label>${scelte('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
         if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
