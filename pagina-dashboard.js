@@ -348,7 +348,11 @@ async function toccaBottone(id, indice) {
     salvaCache();
     disegnaOggi();
     mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
-    if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria);   // «Ordine»: «La registri adesso?»
+    // per ultimo il momento di riflessione (cantiere 42), sulla telefonata appena registrata; con «Ordine» alla chiusura del modulo Vendita
+    const riflessione = () => chiediRiflessione({ id: esito.azione_id, tipo_azione: 'Contatto', modalita: 'Telefonata', contatti: { nome: pos.contatto.nome } }, bottone.etichetta);
+    if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria, undefined, riflessione)   // «Ordine»: «La registri adesso?»
+      .then(registrata => { if (!registrata) riflessione(); });
+    else riflessione();
   }, 250);
 }
 
