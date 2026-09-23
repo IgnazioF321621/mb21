@@ -521,13 +521,19 @@ prova('Periodo WES: da un WES al successivo, il giorno del WES per il conto alla
   assert.equal(A.giorniTra('2026-09-22', '2026-10-03'), 11);
 });
 
-prova('Riflessione (cantiere 42): tre domande per tutti + due per tipo, niente per le telefonate; si salvano solo le risposte date', () => {
+prova('Riflessione (cantiere 42): tre domande per tutti + due per tipo, telefonate solo se ci hai parlato; si salvano solo le risposte date', () => {
   const pm = A.domandeRiflessione('Piano Marketing');
   assert.equal(pm.length, 5);
   assert.deepEqual(pm.slice(0, 3).map(d => d.chiave), ['andata', 'diversamente', 'prossima']);
   assert.equal(pm[3].domanda, 'Quale parte del piano l\'ha colpito di più?');
   for (const t of ['Follow Up', 'Consulenza PRD', 'Appuntamento']) assert.equal(A.domandeRiflessione(t).length, 5);
   assert.equal(new Set(['Piano Marketing', 'Follow Up', 'Consulenza PRD', 'Appuntamento'].flatMap(t => A.domandeRiflessione(t).map(d => d.chiave))).size, 3 + 8);
+  // telefonate (Ignazio 23/09 sera): solo se ci hai parlato, con le due domande della telefonata
+  for (const e of ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti', 'No Interesse', 'Appuntamento', 'Ordine']) {
+    assert.equal(A.domandeRiflessione('Contatto', e).length, 5, e);
+  }
+  assert.equal(A.domandeRiflessione('Contatto', 'Richiamare')[3].domanda, 'Come ha reagito quando gli hai proposto di vedervi?');
+  for (const e of ['No Risposta', 'Telefono spento']) assert.deepEqual(A.domandeRiflessione('Contatto', e), []);
   assert.deepEqual(A.domandeRiflessione('Contatto'), []);
   assert.deepEqual(A.domandeRiflessione(null), []);
   assert.equal(A.domandeRiflessione('Vecchio di Glide').length, 3);
@@ -540,7 +546,6 @@ prova('Riflessione (cantiere 42): tre domande per tutti + due per tipo, niente p
     assert.ok(A.consiglioRiflessione(e));
   }
   assert.equal(A.consiglioRiflessione('Iscrizione'), null);
-  assert.deepEqual(A.domandeRiflessione('Contatto', 'Richiamare'), []);
   assert.equal(A.riflessioneDa(pm, {}), null);
   assert.equal(A.riflessioneDa(pm, { andata: '   ' }), null);
   assert.deepEqual(A.riflessioneDa(pm, { andata: ' Bene ', [pm[4].chiave]: 'Il tempo' }), [
