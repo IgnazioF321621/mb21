@@ -349,7 +349,8 @@ async function caricaProgetti() {
 }
 const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
 function contaProgetto(id) {
-  const cose = righeProgetto(id).filter(c => (c.tipo || 'cosa') === 'cosa');
+  // dal 23/09 sera si spuntano anche i numeri e i puntini: contano tutti i passi, non i titoli
+  const cose = righeProgetto(id).filter(c => (c.tipo || 'cosa') !== 'titolo');
   return { tot: cose.length, fatte: cose.filter(c => c.fatto_il).length, righe: righeProgetto(id).length };
 }
 function nomeProgetto(c) {
@@ -464,6 +465,22 @@ async function inserisciRighe(progettoId, dopoId, righe) {
   const campo = app.querySelector(dopoId ? '.pj-inline input' : '.pj-nuova input'); if (campo) campo.focus();
   return data.length;
 }
+async function spuntaTitolo(passi, fatto) {
+  if (!passi.length) return mostraToast('Il titolo non ha ancora passi sotto');
+  const fatto_il = fatto ? null : new Date().toISOString();
+  const cambiano = passi.filter(x => !!x.fatto_il !== !!fatto_il);
+  const prima = cambiano.map(x => [x, x.fatto_il]);
+  const { error } = await dbq('titolo', supa.from('cose_da_fare').update({ fatto_il }).in('id', cambiano.map(x => x.id)));
+  if (error) return mostraToast('Non salvato: riprova.');
+  cambiano.forEach(x => { x.fatto_il = fatto_il; });
+  disegnaAgenda();
+  if (fatto_il) mostraToast(`Titolo completato: ${cambiano.length} ${cambiano.length === 1 ? 'passo' : 'passi'} fatti`, async () => {
+    const r = await Promise.all(prima.map(([x, v]) => dbq('titolo', supa.from('cose_da_fare').update({ fatto_il: v }).eq('id', x.id))));
+    if (r.some(e => e.error)) return;
+    prima.forEach(([x, v]) => { x.fatto_il = v; });
+    disegnaAgenda();
+  });
+}
 // Il campo in mezzo al progetto: si apre con «+ Aggiungi qui» in fondo a un titolo, o con «Aggiungi una riga sotto»
 // nel foglio di una riga. Tipo e rientro partono da quelli della riga sopra (il titolo: dal tipo scelto, senza rientro).
 function apriInserisci(dopoId) {
@@ -491,6 +508,9 @@ function disegnaProgetto() {
   // come un foglio Word (Ignazio 23/09): l'ordine è quello scelto, le fatte restano al loro posto (grigie), rientri e titoli
   const righe = righeProgetto(p.id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   const segni = A.numeraRighe(righe);
+  // un titolo è completato quando tutti i passi sotto di lui (fino al titolo dopo) sono fatti; un passo nuovo lo riapre
+  const sottoTitolo = i => { const out = []; for (let k = i + 1; k < righe.length && righe[k].tipo !== 'titolo'; k++) out.push(righe[k]); return out; };
+  const titoloFatto = i => { const r = sottoTitolo(i); return r.length > 0 && r.every(x => x.fatto_il); };
   const n = contaProgetto(p.id);
   const quando = c => {
     if (!c.giorno) return '';
@@ -504,14 +524,14 @@ function disegnaProgetto() {
   const righeHtml = righe.map((c, i) => rigaHtml(c, i) + dopoRiga(c, i)).join('');
   function rigaHtml(c, i) {
     const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
-    if (tipo === 'titolo') return `<div class="cosa pj-titolo" data-cosa="${esc(c.id)}"><button class="spunta segno" disabled aria-hidden="true"></button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
-    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" disabled aria-hidden="true">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
+    if (tipo === 'titolo') { const f = titoloFatto(i); return `<div class="cosa pj-titolo${f ? ' fatta' : ''}" data-cosa="${esc(c.id)}"><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`; }
+    if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
     const sotto = [quando(c), c.contatti && c.contatti.nome ? '👤 ' + c.contatti.nome : ''].filter(Boolean).join(' · ');
     return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${sotto ? `<small>${esc(sotto)}</small>` : ''}</button></div>`;
   }
   const tipoOra = AG.tipoRiga || 'cosa', livOra = AG.livelloRiga || 0;
   const html = testaScala(false) + `<div class="mm-testa pj-testa"><h1 class="ag-titolo sc-titolo">${ic(p.icona || 'obiettivi')}<button class="ag-mese mm-titolo" id="pj-titolo" aria-label="Titolo, icona, elimina">${esc(p.titolo)} ${ic('modifica')}</button></h1></div>
-    ${n.tot ? `<div class="pj-conto"><span><b>${n.fatte} di ${n.tot}</b> cose fatte</span><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
+    ${n.tot ? `<div class="pj-conto"><span><b>${n.fatte} di ${n.tot}</b> passi fatti</span><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
     <div class="ag-foglio pj-foglio">${righeHtml || '<div class="mb-vuoto">Scrivi qui sotto la prima riga del progetto.</div>'}
       <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
@@ -544,6 +564,12 @@ function disegnaProgetto() {
     campoNuova.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); rientra(ev.shiftKey ? -1 : 1); } });
   }
   app.querySelectorAll('[data-rientro]').forEach(b => { b.onclick = () => rientra(Number(b.dataset.rientro)); });
+  // la spunta del titolo: completa (o riapre) tutti i passi del titolo in un colpo
+  righe.forEach((c, i) => {
+    if (c.tipo !== 'titolo') return;
+    const b = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .spunta`);
+    if (b) b.onclick = () => spuntaTitolo(sottoTitolo(i), titoloFatto(i));
+  });
   app.querySelectorAll('.pj-aggiungi[data-dopo]').forEach(b => { b.onclick = () => apriInserisci(b.dataset.dopo); });
   const fi = app.querySelector('.pj-inline');
   if (fi) {
@@ -839,7 +865,7 @@ function foglioCosa(c, oggi, opz = {}) {
     const campoOra = velo.querySelector('#fc-ora'), campoGiorno = velo.querySelector('#fc-giorno');
     const dopo = { testo };
     if (pj && livelloScelto !== (c.livello || 0)) dopo.livello = tipoScelto === 'titolo' ? 0 : livelloScelto;
-    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'cosa' ? {} : { fatto_il: null, giorno: null, ora: null, durata: null }, tipoScelto === 'titolo' ? { livello: 0 } : {});
+    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'cosa' ? {} : { giorno: null, ora: null, durata: null }, tipoScelto === 'titolo' ? { livello: 0, fatto_il: null } : {});
     if (dopo.tipo && dopo.tipo !== 'cosa') return cambia(dopo);   // un punto dell'elenco non ha giorno né ora
     if (sposta) Object.assign(dopo, sposta.giorno ? { scala: 'giorno', giorno: sposta.giorno } : { giorno: sposta.inizio });
     if (campoOra && campoOra.value) {
