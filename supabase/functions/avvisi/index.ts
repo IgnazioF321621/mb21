@@ -48,7 +48,9 @@ const oraDi = (iso: string) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Eur
 type Telefonata = { id: string; user_id: string; inizio: string; fine: string | null; contatti: unknown };
 const GIRO = 30 * 60000;   // due telefonate sono «una dietro l'altra» se la seconda comincia entro 30 minuti dalla prima
 const nomeDi = (az: { contatti: unknown }) => (az.contatti as { nome?: string } | null)?.nome || '—';
-const fineTelefonata = (az: Telefonata) => (az.fine ? Date.parse(az.fine) : Date.parse(az.inizio) + 5 * 60000);
+// senza «fine» una telefonata dura 15 minuti, come in MB Plan (MB21Agenda.DURATA_CONTATTO, Ignazio 23/09; prima 5)
+const DURATA_TELEFONATA = 15 * 60000;
+const fineTelefonata = (az: Telefonata) => (az.fine ? Date.parse(az.fine) : Date.parse(az.inizio) + DURATA_TELEFONATA);
 // Via le telefonate di Riordino, quelle che l'app crea da sola da una vendita (vendite.azione_riordino_id)
 async function senzaRiordini(telefonate: Telefonata[]) {
   if (!telefonate.length) return telefonate;
