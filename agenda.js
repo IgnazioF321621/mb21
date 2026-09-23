@@ -172,6 +172,25 @@
 
   // Il primo giorno del mese dopo (o prima, con n = -1)
   function meseAccanto(mese0, n) { const d = new Date(mese0 + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n, 1); return d.toISOString().slice(0, 10); }
+  // Il segno davanti a ogni riga di un progetto, come in Word (Ignazio 23/09): numerate 1. 2. → con un rientro 1.1 1.2 →
+  // 1.1.1; sotto una riga non numerata si riparte da «1.»; un titolo fa ripartire tutto; i puntini cambiano con il rientro
+  // (• ◦ ▪). Una riga meno rientrata chiude le parti più rientrate. Le cose da fare e i titoli non hanno segno ('').
+  function numeraRighe(righe) {
+    const cont = [], etich = [], PUNTI = ['•', '◦', '▪'];
+    return (righe || []).map(r => {
+      const L = Math.max(0, Math.min(4, r.livello || 0)), t = r.tipo || 'cosa';
+      if (t === 'titolo') { cont.length = 0; etich.length = 0; return ''; }
+      cont.length = Math.min(cont.length, L + 1); etich.length = Math.min(etich.length, L + 1);
+      if (t === 'numero') {
+        cont[L] = (cont[L] || 0) + 1;
+        const pre = L > 0 && etich[L - 1] ? etich[L - 1] : '';
+        etich[L] = pre ? `${pre}.${cont[L]}` : String(cont[L]);
+        return pre ? etich[L] : etich[L] + '.';
+      }
+      etich[L] = '';
+      return t === 'punto' ? PUNTI[L % PUNTI.length] : '';
+    });
+  }
   // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
   function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
 
@@ -614,7 +633,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
