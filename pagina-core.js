@@ -7,6 +7,7 @@ const CM = { mese: null, dati: {}, riga: null, salvo: null };
 
 async function apriCoreMese(mese) {
   CM.mese = mese || CM.mese || MB21Coda.oggiRoma().slice(0, 7);
+  caricaJsPdf().catch(() => {});   // pronta prima del tocco su «Condividi PDF» (il menu di condivisione vuole il tocco «fresco»)
   const titolo = () => `${MB21Rubrica.MESI[Number(CM.mese.slice(5, 7)) - 1]} ${CM.mese.slice(0, 4)}`;
   const testa = () => `<button class="indietro" id="cm-indietro">‹ MB Plan</button>
     <div class="cm-testa"><button class="freccia" id="cm-prima" aria-label="Mese prima">‹</button><h1>${ic('crescita')} Modulo Core</h1><button class="freccia" id="cm-dopo" aria-label="Mese dopo">›</button></div>
@@ -48,7 +49,7 @@ async function apriCoreMese(mese) {
   CM.dati = (cm.data && cm.data.dati) || {};
   const disegna = () => {
     const m = C.modulo({ mese: CM.mese, azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti, obiettivi: ob.data || null, dati: CM.dati });
-    app.innerHTML = testa() + moduloCoreHtml(m) + versione();
+    app.innerHTML = testa() + `<button class="primario cm-pdf" id="cm-pdf">${ic('condividi')} Condividi PDF</button>` + moduloCoreHtml(m) + versione();
     collegaTesta();
     collegaModuloCore(m, disegna);
   };
@@ -117,7 +118,7 @@ function moduloCoreHtml(m) {
   return `<div class="cm-riass">${m.fatte}/7 abitudini nel mese${m.fatte === 7 ? ' · persona Core ✓' : ''}</div>
     ${s1}${s2}${s3}${s4}${s5}${s6}${s7}${ob}
     <div class="campo"><label>Note</label><textarea id="cm-note" rows="2" maxlength="300">${esc(m.note)}</textarea></div>
-    <div class="vn-aiuto">Le caselle con il bordo si compilano a mano e si salvano da sole. Scarica e stampa (PDF): presto.</div>`;
+    <div class="vn-aiuto">Le caselle con il bordo si compilano a mano e si salvano da sole.</div>`;
 }
 
 // I campi a mano si salvano da soli in core_mese.dati (una riga per mese); dopo ogni salvataggio il modulo si ricalcola.
@@ -138,9 +139,47 @@ function collegaModuloCore(m, disegna) {
   su('cm-punti', (d, v) => { d.punti = v.trim().slice(0, 300); });
   su('cm-counseling', (d, v) => { d.counseling = v.trim().slice(0, 10); });
   su('cm-note', (d, v) => { d.note = v.trim().slice(0, 300); });
+  document.getElementById('cm-pdf').onclick = () => condividiCorePdf(m);
   app.querySelectorAll('[data-sino]').forEach(s => {
     const [bSi, bNo] = s.querySelectorAll('button');
     bSi.onclick = () => salva(d => { d[s.dataset.sino] = CM.dati[s.dataset.sino] === true ? null : true; });
     bNo.onclick = () => salva(d => { d[s.dataset.sino] = CM.dati[s.dataset.sino] === false ? null : false; });
   });
+}
+
+// ── Il modulo in PDF (23/09): un foglio A4 verticale su due colonne (core-pdf.js), da stampare o da mandare.
+// Dove il telefono o il computer sanno condividere un file (iPhone, iPad, Android, Windows, Mac) si apre il loro menu:
+// WhatsApp, Telegram, Mail, Salva, Stampa. Dove non sanno, il PDF si scarica e si allega a mano.
+// La libreria jsPDF arriva da jsdelivr solo qui, la prima volta (poi resta salvata dal service worker, come supabase-js).
+const JSPDF_URL = 'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js';
+let jsPdfInArrivo = null;
+function caricaJsPdf() {
+  if (window.jspdf) return Promise.resolve(window.jspdf);
+  if (!jsPdfInArrivo) jsPdfInArrivo = new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = JSPDF_URL;
+    s.onload = () => (window.jspdf ? ok(window.jspdf) : no(new Error('jspdf')));
+    s.onerror = () => { jsPdfInArrivo = null; s.remove(); no(new Error('jspdf')); };
+    document.head.appendChild(s);
+  });
+  return jsPdfInArrivo;
+}
+
+async function condividiCorePdf(m) {
+  let lib;
+  try { lib = window.jspdf || await caricaJsPdf(); } catch (e) { return mostraToast('Per preparare il PDF serve la connessione: riprova.'); }
+  const mese = `${MB21Rubrica.MESI[Number(m.mese.slice(5, 7)) - 1]} ${m.mese.slice(0, 4)}`.toLowerCase();
+  const nome = nomeDi(visto()), o = MB21Coda.oggiRoma();
+  const doc = MB21CorePdf.crea(lib.jsPDF, m, { mese, nome, oggi: `${Number(o.slice(8))}/${Number(o.slice(5, 7))}/${o.slice(0, 4)}` });
+  const nomeFile = MB21CorePdf.nomeFile(mese, nome), blob = doc.output('blob');
+  const file = new File([blob], nomeFile, { type: 'application/pdf' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: nomeFile.replace(/\.pdf$/, '') }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }   // menu chiuso senza scegliere: niente; altri errori → si scarica
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = nomeFile;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  mostraToast('PDF scaricato: lo trovi nei Download, pronto da allegare.');
 }
