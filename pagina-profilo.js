@@ -69,9 +69,8 @@ function mioProfiloHtml() {
       sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) });
 }
 
-// «Avvisi» con lo schema del QUANDO (cantiere 43 lavoro 2, schizzo approvato da Ignazio il 23/09): per ora SOLO ADMIN,
-// perché la funzione `avvisi` legge le scelte solo dal lavoro 3; alla pubblicazione del lavoro 3 diventa di tutti e la voce
-// vecchia qui sotto (in disegnaProfilo) si toglie. «Spegni» vale per il dispositivo; «Prova un avviso» va in fondo, sotto le scelte.
+// «Avvisi» con lo schema del QUANDO (cantiere 43, schizzo approvato da Ignazio il 23/09; per tutti dal lavoro 4, stesso giorno):
+// ognuno sceglie quando, per tipo (avvisiQuandoHtml in avvisi.js). «Spegni» vale per il dispositivo; «Prova un avviso» in fondo.
 function avvisiNuoviHtml(statoDispositivo, destra) {
   return voceProfilo('avvisi', ic('avvisi') + ' Avvisi', { destra, corpo: `
       <small style="margin-top:0">Tutto quello che in MB Plan ha un'ora ti avvisa, anche con l'app chiusa. Scegli tu <b>quando</b>: vale su telefono e iPad insieme.</small>
@@ -85,7 +84,7 @@ function disegnaProfilo() {
   const u = ST.utente, s = AV.stato;
   const b = (id, t, classe = 'link') => `<button class="${classe}" id="${id}">${t}</button>`;
   const avvisi = {
-    acceso: `<div>${ic('avvisi')} Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')}${eAdmin() ? '' : ' · ' + b('av-prova', 'Prova')}</div>`,   // Admin: «Prova» in fondo (avvisiNuoviHtml)
+    acceso: `<div>${ic('avvisi')} Avvisi <b>accesi</b> su questo dispositivo</div><div class="riga">${b('av-spegni', 'Spegni')}</div>`,   // «Prova un avviso» sta in fondo alla voce (avvisiNuoviHtml)
     spento: `<div>${ic('avvisi')} Avvisi <b>spenti</b> su questo dispositivo</div><div class="riga">${b('av-attiva', 'Attiva gli avvisi', 'primario')}</div>`,
     computer: `<div>${ic('avvisi')} Gli avvisi arrivano sul telefono o sul tablet: accendili da lì, in questa pagina.</div>`,
     da_installare: `<div>${ic('avvisi')} Per ricevere gli avvisi aggiungi MB21 alla schermata Home (Condividi → Aggiungi alla schermata Home), poi torna qui.</div>`,
@@ -107,9 +106,7 @@ function disegnaProfilo() {
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
     ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', esc(String(numero || '—')))}
-    ${eAdmin() ? avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi) : voceProfilo('avvisi', ic('avvisi') + ' Avvisi sul telefono', { destra: statoAvvisi, corpo: `
-      <small style="margin-top:0">Alle <b>9</b> il programma di oggi, <b>30 minuti prima</b> di ogni appuntamento e di ogni telefonata con un orario un promemoria, <b>un'ora dopo</b> «Com'è andata?» se manca l'esito, alle <b>22</b> il promemoria per il Check del Giorno, anche con l'app chiusa. Ogni dispositivo si accende da solo.</small>
-      <div class="pf-avvisi">${avvisi[s] || avvisi.no_supporto}</div>` })}
+    ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
