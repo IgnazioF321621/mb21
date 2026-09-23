@@ -4,7 +4,9 @@
 // Prove in tools/banco/prova_core.js. Il disegno è in pagina-core.js.
 (function (radice) {
   const OBIETTIVI = { pm: 8, clienti: 10, pagine: 10, cd: 1 };
-  const RIGHE = { pm: 15, clienti: 20 };
+  const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
+  const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+  const GIORNI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
   const NON_AVVENUTI = ['No Show', 'Rimandato'];   // un PM con questo esito non è stato presentato (stessa regola di azioni_conti)
 
   const giorniDelMese = mese => new Date(Date.UTC(Number(mese.slice(0, 4)), Number(mese.slice(5, 7)), 0)).getUTCDate();
@@ -34,11 +36,26 @@
     return out;
   }
 
+  // Il prossimo BBS o WES dopo oggi (Ignazio 23/09: «sotto BBS la data del prossimo, sempre quella successiva al giorno
+  // di oggi»). eventi: righe di `bbs` o `wes` ({ data: primo del mese, giorno?: primo giorno del WES }). Con il giorno
+  // conta il giorno (passato = si salta); senza giorno (il BBS, che cade in giorni diversi nelle città) vale il mese
+  // intero: il BBS di settembre è «il prossimo» fino al 30 settembre. Torna { mese, giorno, testo } o null.
+  function prossimoEvento(eventi, oggi) {
+    const dopo = (eventi || []).filter(e => e && e.data && (e.giorno ? e.giorno >= oggi : e.data.slice(0, 7) >= oggi.slice(0, 7)))
+      .sort((x, y) => ((x.giorno || x.data) < (y.giorno || y.data) ? -1 : 1));
+    if (!dopo.length) return null;
+    const e = dopo[0], nomeMese = `${MESI[Number(e.data.slice(5, 7)) - 1]} ${e.data.slice(0, 4)}`;
+    if (!e.giorno) return { mese: e.data.slice(0, 7), giorno: null, testo: nomeMese };
+    const g = e.giorno, dow = new Date(g + 'T12:00:00Z').getUTCDay();
+    return { mese: e.data.slice(0, 7), giorno: g, testo: `${GIORNI[dow]} ${g.slice(8)}/${g.slice(5, 7)}/${g.slice(0, 4)}` };
+  }
+
   // Il modulo del mese. `mese` = 'AAAA-MM'.
   // azioni: righe di azioni del mese (tipo, modalita, esito, completata, inizio, contatti{nome}) · vendite: (contatto_id, data, vp, contatti{nome})
   // check: righe di check_giorno del mese · tracce: [{ giorno, titolo }] del percorso ascoltate · biglietti: [{ tipo, evento, contatto }] della propria scheda
   // obiettivi: la riga di obiettivi_mese (o null) · dati: i campi a mano (core_mese.dati)
-  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {} }) {
+  // date: { bbs, wes } le righe delle tabelle bbs e wes, oggi: 'AAAA-MM-GG' (per il prossimo BBS e WES)
+  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {}, date = {}, oggi = null }) {
     const d = dati || {};
     const n = giorniDelMese(mese);
     const perGiorno = new Map(check.map(c => [c.data, c]));
@@ -53,7 +70,7 @@
           nome: (a.contatti && a.contatti.nome) || '—', candidati: mano.candidati != null ? Number(mano.candidati) : 1,
           iscritti: a.esito === 'Iscrizione', clienti: a.esito === 'Prodotti', no: a.esito === 'No BuonFine' };
       });
-    const s1 = { righe: pm.slice(0, RIGHE.pm), quanti: pm.length, obiettivo: OBIETTIVI.pm, raggiunto: pm.length >= OBIETTIVI.pm,
+    const s1 = { righe: pm, quanti: pm.length, obiettivo: OBIETTIVI.pm, raggiunto: pm.length >= OBIETTIVI.pm,
       iscritti: pm.filter(r => r.iscritti).length, clienti: pm.filter(r => r.clienti).length, no: pm.filter(r => r.no).length };
 
     // 3 · Servire almeno 10 clienti al mese: un cliente per riga, con i VP del mese
@@ -66,7 +83,7 @@
       perCliente.set(k, r);
     }
     const clienti = [...perCliente.values()].sort((x, y) => y.vp - x.vp);
-    const s3 = { righe: clienti.slice(0, RIGHE.clienti), quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
+    const s3 = { righe: clienti, quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
       vp: Math.round(clienti.reduce((t, r) => t + r.vp, 0) * 100) / 100 };   // arrotondato: la somma dei decimali dava «29,560000000000002» (Isabella, 22/09)
 
     // 2 · Consumare i prodotti Amway (Ignazio 22/09): il consumo personale = i VP personali Amway del mese MENO i VP venduti
@@ -101,7 +118,8 @@
 
     // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda)
     const s6 = { settimane: settimaneDelMese(mese).map(w => ({ ...w, open: check.some(c => c.open && c.data >= w.da && c.data <= w.a) })),
-      bbs: biglietti.some(b => b.tipo === 'BBS' && b.contatto), wes: biglietti.some(b => b.tipo === 'WES' && b.contatto) };
+      bbs: biglietti.some(b => b.tipo === 'BBS' && b.contatto), wes: biglietti.some(b => b.tipo === 'WES' && b.contatto),
+      prossimoBbs: oggi ? prossimoEvento(date.bbs, oggi) : null, prossimoWes: oggi ? prossimoEvento(date.wes, oggi) : null };
     s6.open = s6.settimane.filter(w => w.open).length;
 
     // 7 · Lavorare di squadra: counseling (dal Check), edificazione e no-crossline (a mano)
@@ -123,7 +141,7 @@
     return { mese, giorni: n, s1, s2, s3, s4, s5, s6, s7, obiettivi: ob, note: d.note || '', fatte: abitudini.filter(Boolean).length, abitudini };
   }
 
-  const api = { OBIETTIVI, RIGHE, NON_AVVENUTI, giorniDelMese, giornoRoma, settimaneDelMese, modulo };
+  const api = { OBIETTIVI, RIGHE, NON_AVVENUTI, giorniDelMese, giornoRoma, settimaneDelMese, prossimoEvento, modulo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Core = api;
 })(this);
