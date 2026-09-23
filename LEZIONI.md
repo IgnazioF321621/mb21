@@ -115,3 +115,8 @@
 *23 settembre 2026, cantiere 41 (MB Plan, voci dei modelli).* La spunta delle voci si salvava con «inserisci o aggiorna se c'è già» (upsert) appoggiandosi a un indice unico **parziale** (valido solo per le righe con `modello_id` pieno). Il database, con un indice parziale, non sa riconoscere il doppione e rifiuta tutto: Ignazio toccava il cerchio e non succedeva niente, mentre le cose da fare (salvate con un inserimento semplice) funzionavano.
 
 **Regola:** con un indice unico che ha un `where`, niente upsert: si controlla prima nell'app se la riga c'è già (qui `spunta_id`) e poi si inserisce o si cancella. E ogni nuovo salvataggio si prova almeno una volta davvero, non solo nel finto browser.
+
+## Il campo dove non si riusciva a scrivere
+*23 settembre 2026, cantiere 41 (MB Plan, Settimana sul Mac).* Il menu a tre colonne collegava i suoi bottoni cercando «tutto quello che ha `data-scala`» in tutta la pagina; ma anche i campi «Aggiungi…» dei fogli di Settimana, Mese, Periodo WES e Anno hanno `data-scala`. Il clic sul campo diventava «apri la Settimana»: la pagina si ridisegnava e il cursore spariva. Sul telefono non succedeva (lì il menu vive in un pannello a parte).
+
+**Regola:** quando si collegano i tocchi, cercare **l'elemento preciso** (`button[data-scala]`, o dentro il contenitore del menu), mai un'etichetta generica in tutta la pagina: la stessa etichetta può servire ad altro.
