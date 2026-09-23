@@ -76,7 +76,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Passo 3, note di Ignazio**: «L'ultima volta ti eri detto» con la stessa persona **e anche le risposte generiche della stessa situazione** (stesso tipo di appuntamento, con altre persone) «perché mi permetterebbero di essere pronto»; storico della scheda con la riflessione correggibile: ok
 
 **Passi**
-1. ✅ 23/09 **scritto, migrazione non ancora applicata** (versione 2026.09.23 · 22:14): colonna `azioni.riflessione` (migrazione `20260923221246_riflessione.sql`, provata in transazione annullata: 1.695 azioni, nessuna toccata) + domande e `riflessioneDa` in `agenda.js` (1 prova nuova in `prova_agenda.js`). Da applicare con l'«ok, applica» di Ignazio
+1. ✅ 23/09 **fatto e applicato** (versione 2026.09.23 · 22:14; migrazione applicata con l’«ok, applica» di Ignazio, riletta sul database: colonna jsonb, 1.695 azioni, nessuna con riflessione): colonna `azioni.riflessione` (migrazione `20260923221246_riflessione.sql`, provata in transazione annullata: 1.695 azioni, nessuna toccata) + domande e `riflessioneDa` in `agenda.js` (1 prova nuova in `prova_agenda.js`).
 2. Il foglietto dopo l'esito (vedi note sopra)
 3. Ritrovarla: prossimo appuntamento con la stessa persona + stessa situazione; storico della scheda
 
