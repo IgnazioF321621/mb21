@@ -20,8 +20,17 @@
 //      «🎧 Isabella ha ascoltato "…" e chiede la prossima. Sentitevi!» (avviso_sponsor_il; «chiede la prossima» se chiede_prossima_il).
 //      Il momento della condivisione è `creato_il` se la riga è stata scritta il giorno stesso, altrimenti mezzogiorno di `condivisa_il`
 //      (le condivisioni scritte a mano per giorni passati). Mai per lo storico di Glide. Con { prova: true } dice cosa manderebbe senza mandare.
+//
+//  CANTIERE 43 (23/09): ognuno sceglie QUANDO (utenti.avvisi_quando, schema nel Profilo; regole pure in ./regole.ts, provate con
+//  node tools/banco/prova_avvisi.js). Le ore e i minuti scritti qui sopra sono ora i valori «già impostato»:
+//   - check_sera e mattino: l'orologio chiama ogni ora nella fascia possibile, la funzione avvisa chi ha scelto quell'ora
+//   - promemoria (ogni minuto): appuntamenti, telefonate, e ANCHE cose da fare con l'ora e voci dei modelli (tabella avvisi_mandati:
+//     un avviso solo per cosa, giorno e ora), ognuno con i suoi minuti prima; parte da «N minuti prima» fino all'inizio
+//   - senza_esito: «Com'è andata?» N minuti dopo la fine (30 · 60 · 120, scelta di ognuno)
+//   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -30,9 +39,6 @@ webpush.setVapidDetails('mailto:ignazio.f@me.com', Deno.env.get('VAPID_PUBLIC')!
 
 const db = createClient(URL_SUPABASE, CHIAVE_SERVIZIO, { auth: { persistSession: false } });
 
-const aRoma = (opzioni: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', ...opzioni }).format(new Date());
-const oggiRoma = () => aRoma({ year: 'numeric', month: '2-digit', day: '2-digit' });             // «2026-09-17»
-const oraRoma = () => Number(aRoma({ hour: '2-digit', hour12: false }).slice(0, 2));             // 0..23
 // Inizio e fine del giorno di Roma (ISO): Roma è UTC+2 con l'ora legale, UTC+1 con quella solare
 function giornoRoma(giorno: string) {
   const scarto = (new Date(giorno + 'T12:00:00Z').getTime() - new Date(new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(giorno + 'T12:00:00Z')).replace(' ', 'T') + 'Z').getTime()) / 3600000;
@@ -102,6 +108,15 @@ async function spedisciA(utenti: string[], avviso: Avviso) {
   return { dispositivi: esiti.length, ok: esiti.filter(x => x === 'ok').length, tolti: esiti.filter(x => x === 'tolto').length, errori: esiti.filter(x => x === 'errore').length };
 }
 
+// Le scelte del QUANDO di tutti gli utenti (cantiere 43): (utente, chiave) → la sua scelta o il «già impostato»
+async function scelteDiTutti() {
+  const { data, error } = await db.from('utenti').select('id, avvisi_quando');
+  if (error) throw error;
+  const per = new Map<string, Record<string, number>>();
+  for (const u of data ?? []) per.set(u.id, u.avvisi_quando ?? {});
+  return (id: string, k: string) => scelta(per.get(id), k);
+}
+
 const risposta = (corpo: unknown, stato = 200) => new Response(JSON.stringify(corpo), { status: stato, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
 
 Deno.serve(async (req) => {
@@ -114,33 +129,40 @@ Deno.serve(async (req) => {
     const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
     const { data: { user } } = await db.auth.getUser(token);
     if (!user) return risposta({ errore: 'non autorizzato' }, 401);
-    const { data: u } = await db.from('utenti').select('id').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
+    const { data: u } = await db.from('utenti').select('id, avvisi_quando').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
     if (!u) return risposta({ errore: 'utente non trovato' }, 403);
-    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: 'Da stasera alle 22 ti ricordo il Check del Giorno.', url: './', tag: 'prova' });
+    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: `Da stasera alle ${scelta(u.avvisi_quando, 'check')} ti ricordo il Check del Giorno.`, url: './', tag: 'prova' });
     return risposta(esito);
   }
 
   // Avvisi dell'orologio: solo con il segreto condiviso
   if (!SEGRETO || req.headers.get('x-avvisi-segreto') !== SEGRETO) return risposta({ errore: 'non autorizzato' }, 401);
+  // «Adesso»: quello vero, oppure con { prova: true, adesso } quello finto (solo in prova: niente parte, niente si segna)
+  const adessoVero = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now();
+  const oraAdesso = oraRomaDi(adessoVero), oggiAdesso = giornoRomaDi(adessoVero);
+  const quando = await scelteDiTutti();
 
   if (tipo === 'check_sera') {
-    if (oraRoma() !== 22 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 22` });
-    const oggi = oggiRoma();
+    // cantiere 43: l'orologio chiama ogni ora dalle 20 alle 22 di Roma; avvisa chi ha scelto quest'ora (già impostato: 22)
+    if (![20, 21, 22].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il Check della sera si sceglie tra le 20 e le 22` });
+    const oggi = oggiAdesso;
     const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }] = await Promise.all([
       db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
     ]);
     if (e1 || e2) return risposta({ errore: (e1 || e2)!.message }, 500);
     const giaFatto = new Set((fatti ?? []).map(x => x.user_id));
-    const daAvvisare = (attivi ?? []).map(x => x.id).filter(id => !giaFatto.has(id));
+    const daAvvisare = (attivi ?? []).map(x => x.id).filter(id => !giaFatto.has(id) && (corpo.forza || quando(id, 'check') === oraAdesso));
+    if (corpo.prova) return risposta({ oggi, ora: oraAdesso, utenti: daAvvisare });
     const esito = await spedisciA(daAvvisare, { titolo: '⚡ Hai fatto il Check di oggi?', testo: 'Due minuti per chiudere la giornata: tocca per aprire il Check del Giorno.', url: './?apri=check', tag: 'check_sera' });
     return risposta({ oggi, utenti: daAvvisare.length, ...esito });
   }
 
   // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
   if (tipo === 'mattino') {
-    if (oraRoma() !== 9 && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraRoma()}, non le 9` });
-    const oggi = oggiRoma(), g = giornoRoma(oggi), adesso = Date.now(), limiteConferme = new Date(adesso + 12 * 3600000).toISOString();
+    // cantiere 43: l'orologio chiama ogni ora dalle 7 alle 10 di Roma; avvisa chi ha scelto quest'ora (già impostato: 9)
+    if (![7, 8, 9, 10].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il buongiorno si sceglie tra le 7 e le 10` });
+    const oggi = oggiAdesso, g = giornoRoma(oggi), adesso = adessoVero, limiteConferme = new Date(adesso + 12 * 3600000).toISOString();
     // Riordini da sentire (cantiere 29): STESSA REGOLA di `MB21Agenda.riordiniDaSentire` in agenda.js (qui l'app non arriva, va tenuta uguale a mano):
     // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
     // (Contatto con glide_id ed esito «Riordino», non completate) dal 1° settembre 2026 (INIZIO_RIORDINI_GLIDE) a oggi.
@@ -170,6 +192,7 @@ Deno.serve(async (req) => {
     const esiti: Record<string, unknown>[] = [];
     for (const u of attivi ?? []) {
       if (!conDispositivo.has(u.id)) continue;
+      if (!corpo.forza && quando(u.id, 'buongiorno') !== oraAdesso) continue;
       const telefonate = Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length);
       const miei = tutti.filter(a => a.user_id === u.id);
       const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
@@ -179,15 +202,18 @@ Deno.serve(async (req) => {
       const riordini = riordiniDi.filter(id => id === u.id).length;
       if (riordini) pezzi.push(plurale(riordini, 'riordino', 'riordini') + ' da sentire');
       const testo = `Oggi ${pezzi.length > 1 ? pezzi.slice(0, -1).join(', ') + ' e ' + pezzi[pezzi.length - 1] : pezzi[0]}. Tocca per aprire l'Agenda.`;
+      if (corpo.prova) { esiti.push({ utente: u.id, testo }); continue; }
       esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: nome ? `☀️ Buongiorno, ${nome}!` : '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
     }
-    return risposta({ oggi, utenti: esiti.length, esiti: corpo.forza ? esiti : undefined });
+    return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.forza || corpo.prova ? esiti : undefined });
   }
 
-  // Promemoria prima dell'appuntamento (cantiere 24 passo 3): stesso titolo dell'Agenda («PM 1a1 · Pino Manolo»)
+  // Promemoria prima dell'appuntamento (cantiere 24 passo 3): stesso titolo dell'Agenda («PM 1a1 · Pino Manolo»).
+  // Cantiere 43: i minuti prima sono la scelta di ognuno («appuntamenti», «telefonate», «cose», «modelli»); si guarda da 5 minuti fa
+  // (per «all'ora») fino a un'ora avanti (la scelta più lunga) e decide `eMomentoPrima`.
   if (tipo === 'promemoria') {
-    const ANTICIPO = 30, adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now();
-    const da = new Date(adesso + (ANTICIPO - 5) * 60000).toISOString(), a = new Date(adesso + (ANTICIPO + 5) * 60000).toISOString();
+    const adesso = adessoVero, MASSIMO = 60;
+    const da = new Date(adesso - 5 * 60000).toISOString(), a = new Date(adesso + (MASSIMO + 1) * 60000).toISOString();
     const [{ data: appuntamenti, error: e1 }, { data: daCoda, error: e2 }] = await Promise.all([
       db.from('azioni').select('id, user_id, contatto_id, inizio, tipo_azione, modalita, esito, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).is('promemoria_il', null).gte('inizio', da).lt('inizio', a),
       db.from('azioni').select('id, user_id, contatto_id, data_scelta, tipo_azione, modalita, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).is('promemoria_il', null).gte('data_scelta', da).lt('data_scelta', a),
@@ -199,45 +225,82 @@ Deno.serve(async (req) => {
     for (const az of tutti) {
       const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
       const cosa = az.tipo_azione === 'Contatto' ? (az.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (az.modalita || az.tipo_azione);
-      const quando = az.tipo_azione === 'Contatto' ? az.data_scelta : az.inizio;
-      const minuti = Math.round((Date.parse(quando) - adesso) / 60000);
-      const testo = `${cosa} · ${nome}`;
-      if (corpo.prova) { esiti.push({ azione: az.id, minuti, testo }); continue; }
-      const esito = await spedisciA([az.user_id], { titolo: `⏰ Tra ${minuti} minuti`, testo, url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}` });
+      const ore = az as unknown as { inizio?: string; data_scelta?: string };   // appuntamento vero (inizio) o dalla coda (data_scelta)
+      const inizio = Date.parse((az.tipo_azione === 'Contatto' ? ore.data_scelta : ore.inizio) ?? '');
+      if (!eMomentoPrima(inizio, quando(az.user_id, 'appuntamenti'), adesso)) continue;   // non è ancora il momento
+      const avviso = { titolo: titoloPrima(inizio, adesso), testo: `${cosa} · ${nome}`, url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}` };
+      if (corpo.prova) { esiti.push({ azione: az.id, utente: az.user_id, ...avviso }); continue; }
+      const esito = await spedisciA([az.user_id], avviso);
       await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).eq('id', az.id);
-      esiti.push({ azione: az.id, minuti, ...esito });
+      esiti.push({ azione: az.id, ...esito });
     }
-    // Le telefonate in Agenda: si guarda fino a 3 ore avanti per prendere tutto il giro, ma l'avviso parte solo
-    // quando la PRIMA ancora senza promemoria entra nei 25-35 minuti; con lei si segnano tutte quelle del giro.
+    // Le telefonate in Agenda: si guarda fino a 3 ore oltre per prendere tutto il giro, ma l'avviso parte solo quando è il momento
+    // della PRIMA ancora senza promemoria; con lei si segnano tutte quelle del giro.
     const { data: tel, error: e3 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false)
-      .is('esito', null).is('promemoria_il', null).gte('inizio', da).lt('inizio', new Date(adesso + (ANTICIPO + 180) * 60000).toISOString());
+      .is('esito', null).is('promemoria_il', null).gte('inizio', da).lt('inizio', new Date(adesso + (MASSIMO + 180) * 60000).toISOString());
     if (e3) return risposta({ errore: e3.message }, 500);
     for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
-      if (giro[0].inizio >= a) continue;   // il giro comincia più avanti: se ne riparla al suo turno
-      const minuti = Math.round((Date.parse(giro[0].inizio) - adesso) / 60000);
+      const inizio = Date.parse(giro[0].inizio);
+      if (!eMomentoPrima(inizio, quando(giro[0].user_id, 'telefonate'), adesso)) continue;   // non è ancora il momento: se ne riparla al suo turno
+      const titolo = titoloPrima(inizio, adesso);
       const avviso = giro.length === 1
-        ? { titolo: `⏰ Tra ${minuti} minuti`, testo: `Telefonata · ${nomeDi(giro[0])}`, url: `./?apri=agenda&azione=${giro[0].id}`, tag: `promemoria-${giro[0].id}` }
-        : { titolo: `⏰ Tra ${minuti} minuti · ${giro.length} telefonate`, testo: `dalle ${oraDi(giro[0].inizio)}: ${elencoNomi(giro)}`, url: `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`, tag: `promemoria-${giro[0].id}` };
-      if (corpo.prova) { esiti.push({ telefonate: giro.length, minuti, ...avviso }); continue; }
+        ? { titolo, testo: `Telefonata · ${nomeDi(giro[0])}`, url: `./?apri=agenda&azione=${giro[0].id}`, tag: `promemoria-${giro[0].id}` }
+        : { titolo: `${titolo} · ${giro.length} telefonate`, testo: `dalle ${oraDi(giro[0].inizio)}: ${elencoNomi(giro)}`, url: `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`, tag: `promemoria-${giro[0].id}` };
+      if (corpo.prova) { esiti.push({ telefonate: giro.length, utente: giro[0].user_id, ...avviso }); continue; }
       const esito = await spedisciA([giro[0].user_id], avviso);
       await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).in('id', giro.map(x => x.id));
-      esiti.push({ telefonate: giro.length, minuti, ...esito });
+      esiti.push({ telefonate: giro.length, ...esito });
     }
-    return risposta({ appuntamenti: esiti.length, esiti });
+    // Cantiere 43: le cose da fare con l'ora e le voci dei modelli (stessa regola della Timeline di MB Plan: `coseConOra` in regole.ts).
+    // Oggi, e domani se tra un'ora è già domani. Quelle della stessa persona alla stessa ora fanno un avviso solo.
+    const giorni = [...new Set([oggiAdesso, giornoRomaDi(adesso + (MASSIMO + 1) * 60000)])];
+    const [{ data: cose, error: e4 }, { data: voci, error: e5 }, { data: modelli, error: e6 }] = await Promise.all([
+      db.from('cose_da_fare').select('id, user_id, testo, giorno, ora, fatto_il, modello_id, core, scala').in('giorno', giorni),
+      db.from('modello_giorno').select('id, user_id, testo, giorni, attivo, core, modello_id, ora').not('modello_id', 'is', null).is('core', null),
+      db.from('modelli').select('id, attivo, scala'),
+    ]);
+    if (e4 || e5 || e6) return risposta({ errore: (e4 || e5 || e6)!.message }, 500);
+    const pronte = giorni.flatMap(g => coseConOra((cose ?? []) as Cosa[], (voci ?? []) as Voce[], (modelli ?? []) as Modello[], g))
+      .filter(x => eMomentoPrima(x.inizio, quando(x.user_id, x.tipo), adesso));
+    const { data: mandati, error: e7 } = pronte.length ? await db.from('avvisi_mandati').select('chiave').in('chiave', pronte.map(chiaveAvviso)) : { data: [], error: null };
+    if (e7) return risposta({ errore: e7.message }, 500);
+    const gia = new Set((mandati ?? []).map(m => m.chiave));
+    const gruppi = new Map<string, ConOra[]>();
+    for (const x of pronte) {
+      if (gia.has(chiaveAvviso(x))) continue;   // già avvisata
+      const k = `${x.user_id}|${x.inizio}`;
+      gruppi.set(k, [...(gruppi.get(k) ?? []), x]);
+    }
+    for (const gruppo of gruppi.values()) {
+      const primo = gruppo[0], titolo = titoloPrima(primo.inizio, adesso);
+      const nomi = gruppo.slice(0, 3).map(x => x.testo).join(', ') + (gruppo.length > 3 ? ` e altre ${gruppo.length - 3}` : '');
+      const avviso = gruppo.length === 1
+        ? { titolo, testo: `${primo.ora} · ${primo.testo}`, url: `./?apri=agenda&giorno=${primo.giorno}`, tag: `cosa-${chiaveAvviso(primo)}` }
+        : { titolo: `${titolo} · ${gruppo.length} cose`, testo: `alle ${primo.ora}: ${nomi}`, url: `./?apri=agenda&giorno=${primo.giorno}`, tag: `cosa-${chiaveAvviso(primo)}` };
+      if (corpo.prova) { esiti.push({ cose: gruppo.map(x => `${x.tipo} ${x.id}`), utente: primo.user_id, ...avviso }); continue; }
+      const esito = await spedisciA([primo.user_id], avviso);
+      await db.from('avvisi_mandati').upsert(gruppo.map(x => ({ chiave: chiaveAvviso(x), user_id: x.user_id })), { onConflict: 'chiave', ignoreDuplicates: true });
+      esiti.push({ cose: gruppo.length, ...esito });
+    }
+    // i segni più vecchi di 3 giorni non servono più (la chiave ha dentro il giorno): si puliscono una volta al giorno, alle 3 di notte
+    if (!corpo.prova && oraAdesso === 3) await db.from('avvisi_mandati').delete().lt('mandato_il', new Date(adesso - 3 * 86400000).toISOString());
+    return risposta({ avvisi: esiti.length, esiti });
   }
 
   // Appuntamento passato senza esito (cantiere 24 passo 4): un'ora dopo la fine, «Com'è andata?»
   if (tipo === 'senza_esito') {
-    const adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now(), ORA = 3600000;
-    // Candidati: iniziati tra 1 giorno e 1 ora fa (la fine, o l'inizio + 1 ora, deve essere passata da almeno un'ora)
+    const adesso = adessoVero, ORA = 3600000, MINUTO = 60000;
+    // cantiere 43: «dopo» = la scelta di ognuno (30 · 60 · 120 minuti dopo la fine; già impostato 60)
+    const dopo = (utente: string) => quando(utente, 'com_e_andata') * MINUTO;
+    // Candidati: iniziati tra 1 giorno e 30 minuti fa (la scelta più corta); decide la fine + la scelta
     const { data, error } = await db.from('azioni').select('id, user_id, inizio, fine, tipo_azione, modalita, contatti(nome)')
       .neq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).is('senza_esito_avvisato_il', null)
-      .gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso - ORA).toISOString());
+      .gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso - 30 * MINUTO).toISOString());
     if (error) return risposta({ errore: error.message }, 500);
     const esiti: Record<string, unknown>[] = [];
     for (const az of data ?? []) {
       const fine = az.fine ? Date.parse(az.fine) : Date.parse(az.inizio) + ORA;
-      if (fine + ORA > adesso) continue;   // è finito da meno di un'ora: si aspetta
+      if (fine + dopo(az.user_id) > adesso) continue;   // dalla fine non è ancora passato il tempo scelto: si aspetta
       const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
       const testo = `${az.modalita || az.tipo_azione} · ${nome}`;
       if (corpo.prova) { esiti.push({ azione: az.id, testo }); continue; }
@@ -250,7 +313,7 @@ Deno.serve(async (req) => {
       .is('esito', null).is('senza_esito_avvisato_il', null).gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso).toISOString());
     if (e2) return risposta({ errore: e2.message }, 500);
     for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
-      if (fineTelefonata(giro[giro.length - 1]) + ORA > adesso) continue;   // l'ultima è finita da meno di un'ora: si aspetta
+      if (fineTelefonata(giro[giro.length - 1]) + dopo(giro[0].user_id) > adesso) continue;   // l'ultima non è finita da abbastanza: si aspetta
       const avviso = giro.length === 1
         ? { titolo: '❓ Com\'è andata?', testo: `Telefonata · ${nomeDi(giro[0])}`, url: `./?apri=agenda&azione=${giro[0].id}&giorno=${giornoDi(giro[0].inizio)}`, tag: `senza-esito-${giro[0].id}` }
         : { titolo: `❓ Com'è andata? · ${giro.length} telefonate senza esito`, testo: elencoNomi(giro), url: `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`, tag: `senza-esito-${giro[0].id}` };
@@ -264,8 +327,7 @@ Deno.serve(async (req) => {
 
   // Le tracce condivise (cantiere 40 lavori 5 e 6): a 48 ore non ascoltata → sponsor e (se usa MB21) la persona; ascoltata dal partner → sponsor
   if (tipo === 'tracce') {
-    const adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now(), ORA = 3600000;
-    const oraAdesso = corpo.prova && corpo.adesso ? Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).format(new Date(adesso)).slice(0, 2)) : oraRoma();
+    const adesso = adessoVero, ORA = 3600000;
     if (oraAdesso < 9 || oraAdesso >= 21) return risposta({ tracce: 0, nota: 'di notte si tace: gli avvisi partono dalle 9' });
     type Riga = { id: string; user_id: string; contatto_id: string; condivisa_il: string; creato_il: string; ascoltata: boolean; ascoltata_il: string | null;
       avviso_48_il: string | null; avviso_ascolto_il: string | null; avviso_sponsor_il: string | null; segnata_dal_partner: boolean; chiede_prossima_il: string | null;
