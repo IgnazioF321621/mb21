@@ -884,6 +884,9 @@
   .ag-sez-chiudi svg.ic { width: 18px; height: 18px; transform: rotate(90deg); transition: transform .15s; }
   .ag-sezione.chiusa .ag-sez-chiudi svg.ic { transform: rotate(0deg); }
   .ag-sez-conto { font-size: 12px; font-weight: 600; color: var(--testo-tenue); margin-left: 6px; letter-spacing: 0; }
+  /* le cose da fare della persona, nella sua scheda (23/09) */
+  .riquadro.scheda-cose { padding: 10px 16px 6px; margin-top: 12px; }
+  .riquadro.scheda-cose h2.ag-sez { font-size: 18px; margin: 2px 0 2px; }
   .ss-riga.ss-cosa { color: var(--testo-soft); font-size: 13px; }
   .ss-riga.ss-cosa i { background: none; border: 1.5px solid #1D9E75; box-sizing: border-box; }
   .ss-riga.ss-cosa.fatta { color: var(--testo-tenue); opacity: .75; }
@@ -1425,35 +1428,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230718"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230718"></script>
-<script src="lista.js?v=202609230718"></script>
-<script src="rubrica.js?v=202609230718"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230718"></script>
-<script src="agenda.js?v=202609230718"></script>
-<script src="report.js?v=202609230718"></script>
-<script src="check.js?v=202609230718"></script>
-<script src="mappa.js?v=202609230718"></script>
-<script src="pagina-dashboard.js?v=202609230718"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230718"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230718"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230718"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230718"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230718"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230718"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230718"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230718"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230718"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230718"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230718"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230718"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230718"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230718"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230718"></script>
-<script src="benvenuto.js?v=202609230718"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230718"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230845"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230845"></script>
+<script src="lista.js?v=202609230845"></script>
+<script src="rubrica.js?v=202609230845"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230845"></script>
+<script src="agenda.js?v=202609230845"></script>
+<script src="report.js?v=202609230845"></script>
+<script src="check.js?v=202609230845"></script>
+<script src="mappa.js?v=202609230845"></script>
+<script src="pagina-dashboard.js?v=202609230845"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230845"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230845"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230845"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230845"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230845"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230845"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230845"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230845"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230845"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230845"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230845"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230845"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230845"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230845"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230845"></script>
+<script src="benvenuto.js?v=202609230845"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230845"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 07:18';
+const APP_VERSION = '2026.09.23 · 08:45';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2258,23 +2261,26 @@ function foglioVoceModello(v, salva, elimina) {
 }
 
 // Spuntare = fatta oggi (o nel giorno che stai guardando): una cosa riportata da ieri, spuntata, resta nel giorno in cui l'hai fatta.
-async function spuntaCosa(c) {
+// `opz.ridisegna` e `opz.giorno`: dalla scheda del contatto (23/09) si ridisegna la scheda, non MB Plan, e la fatta va su oggi
+async function spuntaCosa(c, opz = {}) {
+  const ridisegna = opz.ridisegna || disegnaAgenda;
   const prima = { fatto_il: c.fatto_il, giorno: c.giorno };
-  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: inizioScalaMB(c.scala || 'giorno', AG.giorno) };
+  const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: inizioScalaMB(c.scala || 'giorno', opz.giorno || AG.giorno) };
   const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
   if (error) return;
   Object.assign(c, dopo);
-  disegnaAgenda();
+  ridisegna();
   if (dopo.fatto_il) mostraToast('Fatta ✓', async () => {
     const r = await dbq('cosa da fare', supa.from('cose_da_fare').update(prima).eq('id', c.id));
     if (r.error) return;
     Object.assign(c, prima);
-    disegnaAgenda();
+    ridisegna();
   });
 }
 
 // Il foglio di una cosa da fare: si corregge il testo, si manda a domani, si elimina.
-function foglioCosa(c, oggi) {
+function foglioCosa(c, oggi, opz = {}) {
+  const ridisegna = opz.ridisegna || disegnaAgenda;
   const A = MB21Agenda;
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -2285,9 +2291,9 @@ function foglioCosa(c, oggi) {
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : c.giorno)}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
-    <div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
+    ${opz.dallaScheda ? '' : `<div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
       ${c.contatto_id ? `<div class="fc-persona"><button type="button" class="fc-chi" id="fc-apri-contatto">${ic('persona')} ${esc((c.contatti && c.contatti.nome) || 'Contatto')}</button><button type="button" class="link" id="fc-scollega">Togli</button></div>`
-        : `<button type="button" class="link" id="fc-collega">${ic('piu')} Collega a un Prospect, Partner o Cliente</button>`}</div>
+        : `<button type="button" class="link" id="fc-collega">${ic('piu')} Collega a un Prospect, Partner o Cliente</button>`}</div>`}
     <button class="primario" id="fc-salva">Salva</button>
     <div class="fc-comandi">${c.fatto_il ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
@@ -2301,7 +2307,7 @@ function foglioCosa(c, oggi) {
     if (error) return mostraToast('Non salvato: riprova.');   // prima il foglio restava fermo senza dire niente (23/09)
     Object.assign(c, dopo);
     chiudi();
-    disegnaAgenda();
+    ridisegna();
   };
   let durata = c.durata || 30;
   collegaPilloleDurata(velo, 'fc-durate', () => { const o = velo.querySelector('#fc-ora'); return o && o.value; }, d => { durata = d; });
@@ -2314,14 +2320,14 @@ function foglioCosa(c, oggi) {
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update({ contatto_id: x.id }).eq('id', c.id));
     if (error) return mostraToast('Non salvato: riprova.');
     c.contatto_id = x.id; c.contatti = { nome: x.nome, categoria: x.categoria };
-    chiudi(); disegnaAgenda(); foglioCosa(c, oggi);
+    chiudi(); ridisegna(); foglioCosa(c, oggi, opz);
   };
   const scollega = velo.querySelector('#fc-scollega');
   if (scollega) scollega.onclick = async () => {
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update({ contatto_id: null }).eq('id', c.id));
     if (error) return mostraToast('Non salvato: riprova.');
     c.contatto_id = null; c.contatti = null;
-    chiudi(); disegnaAgenda(); foglioCosa(c, oggi);
+    chiudi(); ridisegna(); foglioCosa(c, oggi, opz);
   };
   const apriC = velo.querySelector('#fc-apri-contatto');
   if (apriC) apriC.onclick = () => { chiudi(); apriContattoDa(c.contatto_id); };
@@ -2350,7 +2356,7 @@ function foglioCosa(c, oggi) {
     if (error) return;
     AG.cose = AG.cose.filter(x => x.id !== c.id);
     chiudi();
-    disegnaAgenda();
+    ridisegna();
   };
 }
 

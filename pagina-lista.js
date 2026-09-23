@@ -388,6 +388,7 @@ function disegnaScheda() {
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span><span id="avvio-posto"></span>' : ''}
       </div>
     </div>
+    ${['Prospect', 'Partner', 'Cliente'].includes(c.categoria) ? '<div id="scheda-cose"></div>' : ''}
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
     <div id="sezione"></div>
     ${versione()}`;
@@ -424,7 +425,54 @@ function disegnaScheda() {
     if (a && LS.sezione === 'onboarding') disegnaScheda();
     else mostraAvvio(c);
   }).catch(() => {});
+  coseDellaScheda(c);
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite, sharing: sezioneSharing }[LS.sezione] || sezioneDati)();
+}
+
+// Le cose da fare collegate a questa persona (cantiere 41, Ignazio 23/09: quello che fai in MB Plan si ritrova nella scheda).
+// Sotto la testata, prima delle linguette: le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
+// (lo stesso di MB Plan), e il campo per aggiungerne una già collegata, da fare oggi.
+async function coseDellaScheda(c) {
+  const posto = document.getElementById('scheda-cose');
+  if (!posto) return;
+  const oggi = MB21Coda.oggiRoma();
+  const { data, error } = await dbq('cose da fare della scheda', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('contatto_id', c.id)
+    .or(`fatto_il.is.null,giorno.gte.${oggi}`).order('giorno').order('ordine'));
+  if (error || LS.contatto !== c || !posto.isConnected) return;
+  const cose = (data || []).filter(x => !x.fatto_il || x.giorno === oggi)
+    .sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.giorno < y.giorno ? -1 : x.giorno > y.giorno ? 1 : 0));
+  const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
+  const quando = x => {
+    const scala = x.scala || 'giorno';
+    if (scala !== 'giorno') return { settimana: 'questa settimana', mese: 'questo mese', periodo: 'questo periodo WES', anno: "quest'anno" }[scala] || '';
+    if (x.giorno < oggi) return `da ${gg(x.giorno)}`;
+    if (x.giorno === oggi) return 'oggi' + (x.ora ? ' · ' + String(x.ora).slice(0, 5) : '');
+    return (x.giorno === MB21Agenda.spostaGiorno(oggi, 1) ? 'domani' : gg(x.giorno)) + (x.ora ? ' · ' + String(x.ora).slice(0, 5) : '');
+  };
+  posto.innerHTML = `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>
+    ${cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
+      <button class="spunta" aria-label="${x.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${x.fatto_il ? ic('fatto') : ''}</button>
+      <button class="testo"><span>${esc(x.testo)}</span><small>${esc(quando(x))}</small></button></div>`).join('')}
+    <form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form></div>`;
+  const ridisegna = () => coseDellaScheda(c);
+  posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
+    const x = cose.find(y => y.id === r.dataset.cosa);
+    r.querySelector('.spunta').onclick = () => { if (!soloGuardo()) spuntaCosa(x, { ridisegna, giorno: oggi }); };
+    r.querySelector('.testo').onclick = () => foglioCosa(x, oggi, { ridisegna, dallaScheda: true });
+  });
+  const form = document.getElementById('sc-cosa-nuova');
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    if (soloGuardo()) return;
+    const testo = MB21Agenda.testoCosa(form.querySelector('input').value);
+    if (!testo) return;
+    // la cosa è del proprietario della scheda (l'Admin su una scheda di un partner la mette nel suo MB Plan)
+    const { error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: c.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c.id }));
+    if (error) return mostraToast('Non salvato: riprova.');
+    await coseDellaScheda(c);
+    const campo = document.querySelector('#sc-cosa-nuova input');
+    if (campo) campo.focus();   // si continua a scrivere la prossima
+  };
 }
 
 // ── Vendite ── sezione «Vendite», modulo «Nuova vendita», «Ordine fatto» e targhette Brand sono in pagina-vendite.js
