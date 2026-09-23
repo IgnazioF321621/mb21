@@ -125,3 +125,7 @@
 *23 settembre 2026, cantiere 41 (MB Plan, Periodo WES).* Dal menu, il cambio di vista ridisegnava la pagina **senza ricaricare**: ma il Periodo WES e l'Anno leggono i loro dati (il periodo, i puntini dei mesi) solo durante il caricamento. Risultato: «Nessun WES registrato» con le date WES tutte al loro posto nel database, e Ignazio pronto a togliere la vista.
 
 **Regola:** una vista che ha dati suoi si apre sempre passando dal caricamento (`apriAgenda`), mai con il solo ridisegno. E prima di dare la colpa ai dati, guardarli: qui bastava leggere la tabella `wes`.
+
+## La funzione del server si controlla anche senza Deno installato
+*23 settembre 2026, cantiere 43.* Le funzioni Edge (`supabase/functions/…`) sono scritte in TypeScript per Deno, che sul Mac non c'è: finora si pubblicavano senza un controllo vero. `npx -y deno check index.ts` (dentro la cartella della funzione) scarica Deno solo per quel momento e controlla tutto: ha trovato subito un errore di tipo nella funzione `avvisi` che `node --check` non vede.
+**Regola:** prima di pubblicare una funzione Edge, `npx -y deno check index.ts`. Le regole che si possono separare dal database vanno in un file a parte (come `avvisi/regole.ts`) e si provano con node (`tools/banco/`), che legge il TypeScript da solo.
