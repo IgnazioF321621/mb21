@@ -413,14 +413,33 @@ function nuovoProgetto() {
     apriProgetto(data.id);
   });
 }
-// Una riga nuova: il tipo scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » puntini, «[] » da fare)
-async function nuovaRigaProgetto(form, valore, ordine) {
-  let testo = String(valore || ''), tipo = AG.tipoRiga || 'cosa';
+// Il tipo di una riga: scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » o «• »
+// puntini, «[] » o «☐ » da fare). Toglie anche i segni di un testo copiato da altrove («## titolo», «**grassetto**»).
+function rigaDaTesto(riga) {
+  let testo = String(riga || '').replace(/^\s*#{1,6}\s+/, ''), tipo = AG.tipoRiga || 'cosa';
   if (/^\s*\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\s*\d+[.)]\s+/, ''); }
-  else if (/^\s*[-•*]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^\s*[-•*]\s+/, ''); }
-  else if (/^\s*\[\s?\]\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^\s*\[\s?\]\s*/, ''); }
-  testo = MB21Agenda.testoCosa(testo);
-  if (!testo) return;
+  else if (/^\s*[-•*–]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^\s*[-•*–]\s+/, ''); }
+  else if (/^\s*(\[\s?\]|☐)\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^\s*(\[\s?\]|☐)\s*/, ''); }
+  testo = MB21Agenda.testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
+  return testo ? { tipo, testo } : null;
+}
+// Incollare più righe insieme (Ignazio 23/09: «incollare l'elenco dei cantieri aperti»): ogni riga non vuota diventa una
+// riga del progetto, nello stesso ordine, ognuna con il suo tipo (1. / - / [] all'inizio, se no il tipo scelto).
+async function incollaRigheProgetto(progettoId, testo) {
+  const righe = String(testo || '').split(/\r?\n/).map(rigaDaTesto).filter(Boolean).slice(0, 200);
+  if (!righe.length) return;
+  let ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0);
+  const nuove = righe.map(r => ({ user_id: visto().id, testo: r.testo, tipo: r.tipo, giorno: null, scala: 'giorno', ordine: ++ordine, progetto_id: progettoId }));
+  const { data, error } = await dbq('righe incollate', supa.from('cose_da_fare').insert(nuove).select());
+  if (error) return mostraToast('Non salvate: riprova.');
+  AG.cose.push(...data);
+  disegnaAgenda();
+  mostraToast(`${data.length} ${data.length === 1 ? 'riga aggiunta' : 'righe aggiunte'} al progetto`);
+}
+async function nuovaRigaProgetto(form, valore, ordine) {
+  const r = rigaDaTesto(valore);
+  if (!r) return;
+  const { tipo, testo } = r;
   const { data, error } = await dbq('riga del progetto', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: null, scala: 'giorno', ordine, progetto_id: form.dataset.progetto, tipo }).select().single());
   if (error) return mostraToast('Non salvato: riprova.');
   AG.cose.push(data);
@@ -454,7 +473,7 @@ function disegnaProgetto() {
       <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
         <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-      <div class="vn-aiuto">Scegli il tipo con ☐ 1. • (oppure scrivi «1. » o «- » all'inizio). Una cosa da fare si mette in un giorno toccandola.</div>
+      <div class="vn-aiuto">Scegli il tipo con ☐ 1. • (oppure scrivi «1. » o «- » all'inizio). Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto. Una cosa da fare si mette in un giorno toccandola.</div>
     </div>`;
   montaScala(html);
   const t = document.getElementById('pj-titolo');
@@ -463,6 +482,14 @@ function disegnaProgetto() {
     if (error) return mostraToast('Non salvato: riprova.');
     Object.assign(p, { titolo, icona });
     disegnaAgenda();
+  });
+  // più righe incollate insieme: ognuna la sua riga (il campo da solo le metterebbe tutte su una riga)
+  const campoNuova = app.querySelector('.pj-nuova input');
+  if (campoNuova) campoNuova.addEventListener('paste', ev => {
+    const testo = ev.clipboardData && ev.clipboardData.getData('text');
+    if (!testo || !/\n/.test(testo.trim())) return;   // una riga sola: incolla normale
+    ev.preventDefault();
+    incollaRigheProgetto(p.id, testo);
   });
   app.querySelectorAll('[data-tipo-riga]').forEach(b => { b.onclick = () => {
     AG.tipoRiga = b.dataset.tipoRiga;
