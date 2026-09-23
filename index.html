@@ -682,7 +682,9 @@
   .ag-core-mese small { font-size: 12.5px; color: var(--testo-soft); }
   .ag-foglio h2.ag-sez { font-size: 22px; font-weight: 800; color: var(--blu, #3a7bbf); margin: 18px 0 4px; letter-spacing: -0.3px; }
   .ag-foglio h2.ag-sez:first-child { margin-top: 6px; }
-  .ag-foglio .cosa { display: flex; align-items: flex-start; gap: 12px; }
+  .ag-foglio .cosa { display: flex; align-items: flex-start; gap: 12px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .ag-foglio .cosa.trascina { background: var(--superficie); box-shadow: 0 6px 18px rgba(16,21,31,.18); border-radius: 10px; transform: scale(1.02); position: relative; z-index: 5; }
+  body.sto-trascinando, body.sto-trascinando * { cursor: grabbing !important; user-select: none; }
   .ag-foglio .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
   .ag-foglio .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #4fb3a9; }
   .ag-foglio .cosa .spunta svg.ic { width: 24px; height: 24px; }
@@ -1441,35 +1443,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609231111"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609231111"></script>
-<script src="lista.js?v=202609231111"></script>
-<script src="rubrica.js?v=202609231111"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609231111"></script>
-<script src="agenda.js?v=202609231111"></script>
-<script src="report.js?v=202609231111"></script>
-<script src="check.js?v=202609231111"></script>
-<script src="mappa.js?v=202609231111"></script>
-<script src="pagina-dashboard.js?v=202609231111"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609231111"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609231111"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609231111"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609231111"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609231111"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609231111"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609231111"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609231111"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609231111"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609231111"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609231111"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609231111"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609231111"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609231111"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609231111"></script>
-<script src="benvenuto.js?v=202609231111"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609231111"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609231149"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609231149"></script>
+<script src="lista.js?v=202609231149"></script>
+<script src="rubrica.js?v=202609231149"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609231149"></script>
+<script src="agenda.js?v=202609231149"></script>
+<script src="report.js?v=202609231149"></script>
+<script src="check.js?v=202609231149"></script>
+<script src="mappa.js?v=202609231149"></script>
+<script src="pagina-dashboard.js?v=202609231149"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609231149"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609231149"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609231149"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609231149"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609231149"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609231149"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609231149"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609231149"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609231149"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609231149"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609231149"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609231149"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609231149"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609231149"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609231149"></script>
+<script src="benvenuto.js?v=202609231149"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609231149"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 11:11';
+const APP_VERSION = '2026.09.23 · 11:49';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2825,6 +2827,87 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     if (da < 24 && dx > 0) { const b = document.getElementById('mb-ling-sx'); if (b) b.click(); }
     else if (da > window.innerWidth - 24 && dx < 0) { const b = document.getElementById('mb-ling-dx'); if (b) b.click(); }
   }, { passive: true });
+}
+// ── Riordinare le cose da fare trascinandole, come NotePlan (Ignazio 23/09) ──
+// Telefono e iPad: dito fermo mezzo secondo sulla riga, poi su e giù. Mac: si preme e si trascina (dopo pochi pixel).
+// Si sposta solo dentro la stessa sezione e tra righe dello stesso tipo (cose con cose, voci del modello con voci);
+// le fatte e quelle che si spuntano da sole non si spostano. Lasciando, il nuovo ordine si salva (`ordine`).
+// Il tocco breve resta com'era: il cerchio spunta, il testo apre il foglio.
+const TR = { riga: null, attr: null, avviato: false, timer: null, x0: 0, y0: 0, dopoClic: 0 };
+function righeTrascinabili(riga, attr) {
+  return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && !x.classList.contains('fatta') && !x.classList.contains('auto'));
+}
+function iniziaTrascina() {
+  TR.avviato = true;
+  TR.riga.classList.add('trascina');
+  document.body.classList.add('sto-trascinando');
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+}
+function muoviTrascina(y) {
+  const altre = righeTrascinabili(TR.riga, TR.attr).filter(x => x !== TR.riga);
+  const prima = altre.find(x => { const r = x.getBoundingClientRect(); return y < r.top + r.height / 2; });
+  if (prima) { if (TR.riga.nextElementSibling !== prima) prima.before(TR.riga); }
+  else if (altre.length) { const ultima = altre[altre.length - 1]; if (ultima.nextElementSibling !== TR.riga) ultima.after(TR.riga); }
+}
+async function fineTrascina() {
+  clearTimeout(TR.timer);
+  const { riga, attr, avviato } = TR;
+  TR.riga = null; TR.avviato = false;
+  document.body.classList.remove('sto-trascinando');
+  if (!riga || !avviato) return;
+  riga.classList.remove('trascina');
+  TR.dopoClic = Date.now();   // il clic che segue il rilascio non deve aprire il foglio
+  const voce = attr === 'data-voce';
+  const ids = righeTrascinabili(riga, attr).map(x => x.getAttribute(attr));
+  const lista = voce ? AG.modello : AG.cose;
+  const cambiate = [];
+  ids.forEach((id, i) => { const x = lista.find(y => y.id === id); if (x && x.ordine !== i + 1) { x.ordine = i + 1; cambiate.push(x); } });
+  if (!cambiate.length) return;
+  const esiti = await Promise.all(cambiate.map(x => dbq('ordine', supa.from(voce ? 'modello_giorno' : 'cose_da_fare').update({ ordine: x.ordine }).eq('id', x.id))));
+  if (esiti.some(r => r.error)) { mostraToast('Ordine non salvato: riprova.'); return apriAgenda(AG.giorno); }
+  disegnaAgenda();
+}
+function rigaDa(ev) {
+  if (typeof ST === 'undefined' || ST.tab !== 'agenda' || document.querySelector('.velo')) return null;
+  const riga = ev.target.closest && ev.target.closest('.ag-foglio .cosa');
+  if (!riga || ev.target.closest('.spunta')) return null;
+  const attr = riga.hasAttribute('data-cosa') ? 'data-cosa' : riga.hasAttribute('data-voce') ? 'data-voce' : null;
+  if (!attr || riga.classList.contains('fatta') || riga.classList.contains('auto') || righeTrascinabili(riga, attr).length < 2) return null;
+  return { riga, attr };
+}
+if (typeof document !== 'undefined' && document.addEventListener) {
+  // dito: pressione lunga
+  document.addEventListener('touchstart', ev => {
+    const r = rigaDa(ev); if (!r) return;
+    const t = ev.touches[0];
+    Object.assign(TR, r, { avviato: false, x0: t.clientX, y0: t.clientY });
+    clearTimeout(TR.timer);
+    TR.timer = setTimeout(() => { if (TR.riga) iniziaTrascina(); }, 450);
+  }, { passive: true });
+  document.addEventListener('touchmove', ev => {
+    if (!TR.riga) return;
+    const t = ev.touches[0];
+    if (!TR.avviato) { if (Math.abs(t.clientX - TR.x0) > 8 || Math.abs(t.clientY - TR.y0) > 8) { clearTimeout(TR.timer); TR.riga = null; } return; }   // scorre la pagina
+    ev.preventDefault();   // mentre si trascina la pagina sta ferma
+    muoviTrascina(t.clientY);
+  }, { passive: false });
+  document.addEventListener('touchend', () => { if (TR.riga) fineTrascina(); });
+  document.addEventListener('touchcancel', () => { if (TR.riga) fineTrascina(); });
+  // mouse e trackpad: si preme e si trascina
+  document.addEventListener('mousedown', ev => {
+    if (ev.button !== 0 || ev.sourceCapabilities && ev.sourceCapabilities.firesTouchEvents) return;
+    const r = rigaDa(ev); if (!r) return;
+    Object.assign(TR, r, { avviato: false, x0: ev.clientX, y0: ev.clientY });
+  });
+  document.addEventListener('mousemove', ev => {
+    if (!TR.riga) return;
+    if (ev.buttons === 0) { if (TR.avviato) fineTrascina(); else TR.riga = null; return; }   // il tasto è già stato lasciato
+    if (!TR.avviato) { if (Math.abs(ev.clientY - TR.y0) < 6) return; iniziaTrascina(); }
+    ev.preventDefault();
+    muoviTrascina(ev.clientY);
+  });
+  document.addEventListener('mouseup', () => { if (TR.riga) fineTrascina(); });
+  document.addEventListener('click', ev => { if (Date.now() - TR.dopoClic < 400) { ev.preventDefault(); ev.stopPropagation(); } }, true);
 }
 // Cambiando la larghezza della finestra (Mac: finestra stretta ↔ larga) la pagina si ridisegna nel formato giusto
 if (typeof window !== 'undefined' && window.matchMedia) {
