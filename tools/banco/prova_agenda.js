@@ -531,6 +531,16 @@ prova('Riflessione (cantiere 42): tre domande per tutti + due per tipo, niente p
   assert.deepEqual(A.domandeRiflessione('Contatto'), []);
   assert.deepEqual(A.domandeRiflessione(null), []);
   assert.equal(A.domandeRiflessione('Vecchio di Glide').length, 3);
+  // passo 2: il «Fatto» del PM non apre il foglietto (arriva con il risultato); Rimandato e No Show: consiglio + «Cosa è successo?»
+  assert.deepEqual(A.domandeRiflessione('Piano Marketing', 'Presentazione'), []);
+  assert.equal(A.domandeRiflessione('Piano Marketing', 'Dare Seguito').length, 5);
+  assert.equal(A.domandeRiflessione('Consulenza PRD', 'Vendita').length, 5);
+  for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Rimandato', 'No Show']) {
+    assert.deepEqual(A.domandeRiflessione(t, e).map(d => d.chiave), ['successo']);
+    assert.ok(A.consiglioRiflessione(e));
+  }
+  assert.equal(A.consiglioRiflessione('Iscrizione'), null);
+  assert.deepEqual(A.domandeRiflessione('Contatto', 'Richiamare'), []);
   assert.equal(A.riflessioneDa(pm, {}), null);
   assert.equal(A.riflessioneDa(pm, { andata: '   ' }), null);
   assert.deepEqual(A.riflessioneDa(pm, { andata: ' Bene ', [pm[4].chiave]: 'Il tempo' }), [

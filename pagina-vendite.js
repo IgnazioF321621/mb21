@@ -113,7 +113,7 @@ function moduloVendita(v, proposta) {
   </div>`;
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
-  const chiudi = () => velo.remove();
+  const chiudi = () => { velo.remove(); if (proposta && proposta.poi) proposta.poi(); };   // poi: la riflessione dopo la Consulenza PRD (cantiere 42)
   $('chiudi').onclick = chiudi;
   $('annulla').onclick = chiudi;
   const segnaBrand = () => velo.querySelectorAll('[data-brand]').forEach(b => b.classList.toggle('scelto', b.dataset.brand === brand));
