@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- Cantiere 43, lavoro 3 · gli avvisi all'ora scelta da ognuno, anche per cose da fare e modelli
+-- Cantiere 43, lavoro 3 · il segno «già avvisato» delle cose da fare e delle voci dei modelli
 -- 23 settembre 2026
 -- ═══════════════════════════════════════════════════════════
 -- Va insieme alla funzione Edge `avvisi` nuova (regole in supabase/functions/avvisi/regole.ts).
@@ -9,12 +9,7 @@
 --    per ogni giorno, per questo il segno sta qui: chiave «cosa:<id>:<giorno>:<ora>» o «voce:<id>:<giorno>:<ora>»,
 --    così una cosa spostata a un'altra ora avvisa di nuovo. La scrive e la legge solo la funzione (chiave di servizio):
 --    regole di accesso accese e nessun permesso per gli utenti. Le righe di più di 3 giorni le toglie la funzione.
--- 2. Gli orologi (pg_cron), ora che ognuno sceglie:
---    - promemoria da ogni 5 minuti a OGNI MINUTO (per rispettare «5 · 10 minuti prima»)
---    - mattino ogni ora dalle 5 alle 9 UTC = dalle 7 alle 10 di Roma sia con l'ora legale sia con la solare
---      (la funzione avvisa chi ha scelto l'ora di Roma di quel momento: ognuno una volta sola)
---    - check della sera ogni ora dalle 18 alle 21 UTC = dalle 20 alle 22 di Roma, legale e solare
---    «Com'è andata?» (ogni 5 minuti) e tracce (ogni 15) non cambiano.
+-- Gli orologi nuovi stanno nella migrazione dopo (20260923144747_avvisi_orologi.sql).
 --
 -- Progetto: exwgjlhbhlgebkgxtanq (mb21). Si applica con `supabase db push`.
 -- ═══════════════════════════════════════════════════════════
@@ -26,7 +21,3 @@ create table public.avvisi_mandati (
 );
 alter table public.avvisi_mandati enable row level security;
 revoke all on public.avvisi_mandati from anon, authenticated;
-
-select cron.schedule('avviso-promemoria', '* * * * *', $$select chiama_avvisi('promemoria')$$);
-select cron.schedule('avviso-mattino', '0 5-9 * * *', $$select chiama_avvisi('mattino')$$);
-select cron.schedule('avviso-check-sera', '0 18-21 * * *', $$select chiama_avvisi('check_sera')$$);
