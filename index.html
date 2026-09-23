@@ -685,6 +685,8 @@
   .ag-foglio .cosa { display: flex; align-items: flex-start; gap: 12px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   .ag-foglio .cosa.trascina { background: var(--superficie); box-shadow: 0 6px 18px rgba(16,21,31,.18); border-radius: 10px; transform: scale(1.02); position: relative; z-index: 5; }
   body.sto-trascinando, body.sto-trascinando * { cursor: grabbing !important; user-select: none; }
+  .ag-ev.ag-cosa { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .ag-ev.ag-cosa.trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); border-style: solid; }
   .ag-foglio .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
   .ag-foglio .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #4fb3a9; }
   .ag-foglio .cosa .spunta svg.ic { width: 24px; height: 24px; }
@@ -1443,35 +1445,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609231149"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609231149"></script>
-<script src="lista.js?v=202609231149"></script>
-<script src="rubrica.js?v=202609231149"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609231149"></script>
-<script src="agenda.js?v=202609231149"></script>
-<script src="report.js?v=202609231149"></script>
-<script src="check.js?v=202609231149"></script>
-<script src="mappa.js?v=202609231149"></script>
-<script src="pagina-dashboard.js?v=202609231149"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609231149"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609231149"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609231149"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609231149"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609231149"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609231149"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609231149"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609231149"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609231149"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609231149"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609231149"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609231149"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609231149"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609231149"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609231149"></script>
-<script src="benvenuto.js?v=202609231149"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609231149"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609231205"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609231205"></script>
+<script src="lista.js?v=202609231205"></script>
+<script src="rubrica.js?v=202609231205"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609231205"></script>
+<script src="agenda.js?v=202609231205"></script>
+<script src="report.js?v=202609231205"></script>
+<script src="check.js?v=202609231205"></script>
+<script src="mappa.js?v=202609231205"></script>
+<script src="pagina-dashboard.js?v=202609231205"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609231205"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609231205"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609231205"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609231205"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609231205"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609231205"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609231205"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609231205"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609231205"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609231205"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609231205"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609231205"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609231205"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609231205"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609231205"></script>
+<script src="benvenuto.js?v=202609231205"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609231205"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 11:49';
+const APP_VERSION = '2026.09.23 · 12:05';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2833,7 +2835,55 @@ if (typeof document !== 'undefined' && document.addEventListener) {
 // Si sposta solo dentro la stessa sezione e tra righe dello stesso tipo (cose con cose, voci del modello con voci);
 // le fatte e quelle che si spuntano da sole non si spostano. Lasciando, il nuovo ordine si salva (`ordine`).
 // Il tocco breve resta com'era: il cerchio spunta, il testo apre il foglio.
-const TR = { riga: null, attr: null, avviato: false, timer: null, x0: 0, y0: 0, dopoClic: 0 };
+const TR = { riga: null, attr: null, avviato: false, timer: null, x0: 0, y0: 0, dopoClic: 0, blocco: null };
+// Nella Timeline (Ignazio 23/09: «la cosa più importante»): i blocchi tratteggiati (cose da fare e voci dei modelli con l'ora)
+// si trascinano su e giù a scatti di 15 minuti; lasciando si salva la nuova ora nella cosa (quel giorno) o nella voce del
+// modello (tutti i giorni). Gli appuntamenti veri non si trascinano.
+function bloccoDa(ev) {
+  if (typeof ST === 'undefined' || ST.tab !== 'agenda') return null;
+  const el = ev.target.closest && ev.target.closest('.ag-ore .ag-ev.ag-cosa[data-cosa-blocco]');
+  if (!el) return null;
+  const ore = el.closest('.ag-ore');
+  return { el, ore, top0: parseFloat(el.style.top) || 0, alt: Number(ore.dataset.alt) || ALT_ORA, da: Number(ore.dataset.da) || 0 };
+}
+function minutiBlocco(b, top) { return b.da + Math.round(top / b.alt * 60 / 15) * 15; }
+function muoviBlocco(y) {
+  const b = TR.blocco, A = MB21Agenda;
+  const alto = parseFloat(b.el.style.height) || 20, max = (parseFloat(b.ore.style.height) || 0) - alto;
+  const m = Math.max(b.da, minutiBlocco(b, Math.min(Math.max(0, b.top0 + (y - TR.y0)), Math.max(0, max))));
+  b.min = m;
+  b.el.style.top = Math.round((m - b.da) / 60 * b.alt) + 'px';
+  const eti = b.el.querySelector('small') || b.el.querySelector('b');
+  if (!b.testo0) b.testo0 = eti.textContent;
+  eti.textContent = A.daMinuti(m) + (eti.tagName === 'B' ? ' · ' + b.testo0 : '');
+}
+async function fineBlocco() {
+  const b = TR.blocco; TR.blocco = null;
+  clearTimeout(TR.timer);
+  document.body.classList.remove('sto-trascinando');
+  if (!b || !TR.avviato) { TR.avviato = false; return; }
+  TR.avviato = false; TR.dopoClic = Date.now();
+  b.el.classList.remove('trascina');
+  const A = MB21Agenda, id = b.el.dataset.cosaBlocco, velo = b.el.closest('.velo');
+  if (b.min == null) return;
+  const ora = A.daMinuti(b.min);
+  const voce = id.startsWith('voce-'), vero = id.replace(/^(cosa|voce)-/, '');
+  const x = voce ? AG.modello.find(v => v.id === vero) : AG.cose.find(c => c.id === vero);
+  if (!x || String(x.ora || '').slice(0, 5) === ora) return ridisegnaDopoBlocco(velo);
+  const { error } = await dbq('ora', supa.from(voce ? 'modello_giorno' : 'cose_da_fare').update({ ora }).eq('id', vero));
+  if (error) { mostraToast('Ora non salvata: riprova.'); return ridisegnaDopoBlocco(velo); }
+  x.ora = ora;
+  mostraToast(voce ? `${x.testo}: alle ${ora} ogni giorno del modello` : `${x.testo}: alle ${ora}`);
+  ridisegnaDopoBlocco(velo);
+}
+// dopo lo spostamento si ridisegna la pagina; se la Timeline era nel pannello (telefono/iPad) si riapre com'era
+function ridisegnaDopoBlocco(velo) {
+  const eventi = MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno), opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const lato = velo && velo.classList.contains('lato');
+  if (velo) velo.remove();
+  disegnaAgenda();
+  if (velo) lato ? pannelloDestro(eventi, opz) : foglioCronologia(eventi, opz);
+}
 function righeTrascinabili(riga, attr) {
   return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && !x.classList.contains('fatta') && !x.classList.contains('auto'));
 }
@@ -2878,6 +2928,14 @@ function rigaDa(ev) {
 if (typeof document !== 'undefined' && document.addEventListener) {
   // dito: pressione lunga
   document.addEventListener('touchstart', ev => {
+    const bl = bloccoDa(ev);
+    if (bl) {
+      const t = ev.touches[0];
+      Object.assign(TR, { riga: null, blocco: bl, avviato: false, x0: t.clientX, y0: t.clientY });
+      clearTimeout(TR.timer);
+      TR.timer = setTimeout(() => { if (TR.blocco) { TR.avviato = true; bl.el.classList.add('trascina'); document.body.classList.add('sto-trascinando'); try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {} } }, 450);
+      return;
+    }
     const r = rigaDa(ev); if (!r) return;
     const t = ev.touches[0];
     Object.assign(TR, r, { avviato: false, x0: t.clientX, y0: t.clientY });
@@ -2885,28 +2943,42 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     TR.timer = setTimeout(() => { if (TR.riga) iniziaTrascina(); }, 450);
   }, { passive: true });
   document.addEventListener('touchmove', ev => {
+    if (TR.blocco) {
+      const t = ev.touches[0];
+      if (!TR.avviato) { if (Math.abs(t.clientX - TR.x0) > 8 || Math.abs(t.clientY - TR.y0) > 8) { clearTimeout(TR.timer); TR.blocco = null; } return; }
+      ev.preventDefault();
+      return muoviBlocco(t.clientY);
+    }
     if (!TR.riga) return;
     const t = ev.touches[0];
     if (!TR.avviato) { if (Math.abs(t.clientX - TR.x0) > 8 || Math.abs(t.clientY - TR.y0) > 8) { clearTimeout(TR.timer); TR.riga = null; } return; }   // scorre la pagina
     ev.preventDefault();   // mentre si trascina la pagina sta ferma
     muoviTrascina(t.clientY);
   }, { passive: false });
-  document.addEventListener('touchend', () => { if (TR.riga) fineTrascina(); });
-  document.addEventListener('touchcancel', () => { if (TR.riga) fineTrascina(); });
+  document.addEventListener('touchend', () => { if (TR.blocco) fineBlocco(); else if (TR.riga) fineTrascina(); });
+  document.addEventListener('touchcancel', () => { if (TR.blocco) fineBlocco(); else if (TR.riga) fineTrascina(); });
   // mouse e trackpad: si preme e si trascina
   document.addEventListener('mousedown', ev => {
     if (ev.button !== 0 || ev.sourceCapabilities && ev.sourceCapabilities.firesTouchEvents) return;
+    const bl = bloccoDa(ev);
+    if (bl) { Object.assign(TR, { riga: null, blocco: bl, avviato: false, x0: ev.clientX, y0: ev.clientY }); return; }
     const r = rigaDa(ev); if (!r) return;
     Object.assign(TR, r, { avviato: false, x0: ev.clientX, y0: ev.clientY });
   });
   document.addEventListener('mousemove', ev => {
+    if (TR.blocco) {
+      if (ev.buttons === 0) return fineBlocco();
+      if (!TR.avviato) { if (Math.abs(ev.clientY - TR.y0) < 6) return; TR.avviato = true; TR.blocco.el.classList.add('trascina'); document.body.classList.add('sto-trascinando'); }
+      ev.preventDefault();
+      return muoviBlocco(ev.clientY);
+    }
     if (!TR.riga) return;
     if (ev.buttons === 0) { if (TR.avviato) fineTrascina(); else TR.riga = null; return; }   // il tasto è già stato lasciato
     if (!TR.avviato) { if (Math.abs(ev.clientY - TR.y0) < 6) return; iniziaTrascina(); }
     ev.preventDefault();
     muoviTrascina(ev.clientY);
   });
-  document.addEventListener('mouseup', () => { if (TR.riga) fineTrascina(); });
+  document.addEventListener('mouseup', () => { if (TR.blocco) fineBlocco(); else if (TR.riga) fineTrascina(); });
   document.addEventListener('click', ev => { if (Date.now() - TR.dopoClic < 400) { ev.preventDefault(); ev.stopPropagation(); } }, true);
 }
 // Cambiando la larghezza della finestra (Mac: finestra stretta ↔ larga) la pagina si ridisegna nel formato giusto
