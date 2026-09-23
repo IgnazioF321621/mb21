@@ -895,7 +895,8 @@
   .ss-riga.ss-cosa i { background: none; border: 1.5px solid #1D9E75; box-sizing: border-box; }
   .ss-riga.ss-cosa.fatta { color: var(--testo-tenue); opacity: .75; }
   .ss-riga.ss-cosa.fatta i { background: #1D9E75; }
-  .mm-n { position: relative; }
+  .mm-n, .cc-n { position: relative; }
+  .cc-n .mm-cose { top: 0; right: -8px; width: 5px; height: 5px; }
   .mm-cose { position: absolute; top: 1px; right: -9px; width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid #1D9E75; box-sizing: border-box; }
   .mb-scala-punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--sc); margin-right: 5px; vertical-align: 0; }
   .nm-scale button { display: inline-flex; align-items: center; gap: 5px; }
@@ -1434,35 +1435,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609231023"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609231023"></script>
-<script src="lista.js?v=202609231023"></script>
-<script src="rubrica.js?v=202609231023"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609231023"></script>
-<script src="agenda.js?v=202609231023"></script>
-<script src="report.js?v=202609231023"></script>
-<script src="check.js?v=202609231023"></script>
-<script src="mappa.js?v=202609231023"></script>
-<script src="pagina-dashboard.js?v=202609231023"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609231023"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609231023"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609231023"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609231023"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609231023"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609231023"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609231023"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609231023"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609231023"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609231023"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609231023"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609231023"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609231023"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609231023"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609231023"></script>
-<script src="benvenuto.js?v=202609231023"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609231023"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609231046"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609231046"></script>
+<script src="lista.js?v=202609231046"></script>
+<script src="rubrica.js?v=202609231046"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609231046"></script>
+<script src="agenda.js?v=202609231046"></script>
+<script src="report.js?v=202609231046"></script>
+<script src="check.js?v=202609231046"></script>
+<script src="mappa.js?v=202609231046"></script>
+<script src="pagina-dashboard.js?v=202609231046"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609231046"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609231046"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609231046"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609231046"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609231046"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609231046"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609231046"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609231046"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609231046"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609231046"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609231046"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609231046"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609231046"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609231046"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609231046"></script>
+<script src="benvenuto.js?v=202609231046"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609231046"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 10:23';
+const APP_VERSION = '2026.09.23 · 10:46';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2422,6 +2423,7 @@ function disegnaAgenda() {
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
   const punti = A.puntiGiorni(AG.azioni, AG.settimana);
+  const conCose = giorniConCose(AG.cose, oggi);
   if (AG.vista === 'mese') return disegnaMese();
   if (AG.vista === 'settimana') return disegnaSettimana();
   if (AG.vista === 'periodo') return disegnaPeriodo();
@@ -2438,7 +2440,7 @@ function disegnaAgenda() {
         const p = punti[g] || { punti: [], tanti: false, quanti: 0 };
         const dice = p.quanti === 1 ? '1 impegno' : `${p.quanti} impegni`;
         return `<button class="ag-giorno ${g === AG.giorno ? 'scelto' : ''} ${g === oggi ? 'oggi' : ''}" data-giorno="${g}" aria-label="${Number(g.slice(8))} · ${p.quanti ? dice : 'libero'}">
-          <small>${A.GIORNI[i]}</small><b>${Number(g.slice(8))}</b>
+          <small>${A.GIORNI[i]}</small><b class="cc-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</b>
           <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
       }).join('')}
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
@@ -2489,6 +2491,7 @@ function disegnaMese() {
   const giorni = Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)).filter((g, i) => i < 35 || g.slice(0, 7) === mese0.slice(0, 7));
   const punti = A.puntiGiorni(AG.azioni, giorni, 4);
   const cose = A.coseDelMese(AG.cose, mese0, oggi.slice(0, 8) + '01');
+  const conCose = giorniConCose(AG.cose, oggi);
   const nomeMese = g => A.titoloMese(g).split(' ')[0].toLowerCase();
   const tre = largo();
   // il mese si scrive una volta sola (Ignazio 22/09): il titolo grande con ‹ › e, toccandolo, la scelta della data
@@ -2502,7 +2505,7 @@ function disegnaMese() {
         const p = punti[g] || { punti: [], tanti: false };
         const ev = A.eventiDelGiorno(AG.azioni, g);
         return `<button class="mm-g${g.slice(0, 7) !== mese0.slice(0, 7) ? ' altro' : ''}${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-giorno="${g}">
-          <span class="mm-n">${Number(g.slice(8))}${A.coseDelGiorno(AG.cose, g, oggi).some(c => !c.fatto_il) ? '<i class="mm-cose" title="Cose da fare aperte"></i>' : ''}</span>
+          <span class="mm-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</span>
           <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span>
           ${ev.slice(0, 2).map(e => `<span class="mm-e">${esc(A.orario(e).split('–')[0])} ${esc(A.riga(e, opz).titolo.split(' · ').pop())}</span>`).join('')}${ev.length > 2 ? `<span class="mm-e">+${ev.length - 2}</span>` : ''}
         </button>`;
@@ -2558,9 +2561,15 @@ async function caricaIntervallo(da, a) {
   const visti = new Map();
   for (const x of [...perInizio, ...perScelta]) visti.set(x.id, x);
   AG.lunghe = [...visti.values()];
+  // le cose da fare aperte dell'intervallo, per il cerchietto verde dei mesi piccoli (23/09)
+  AG.coseLunghe = [];
+  if (!vediTutti()) {
+    const { data, error } = await dbq('cose da fare del periodo', supa.from('cose_da_fare').select('id, giorno, scala, fatto_il, modello_id').eq('user_id', visto().id).is('fatto_il', null).is('modello_id', null).gte('giorno', da).lt('giorno', a));
+    if (!error && data) AG.coseLunghe = data;
+  }
 }
 // Un mese piccolo: il nome (apre il Mese), i giorni (aprono il Giorno) con i puntini, oggi e i WES evidenziati
-function meseMiniHtml(mese0, oggi, punti) {
+function meseMiniHtml(mese0, oggi, punti, conCose) {
   const A = MB21Agenda;
   const inizio = A.settimana(mese0)[0];
   const wes = (AG.wes || []).find(w => w.data === mese0);
@@ -2571,7 +2580,7 @@ function meseMiniHtml(mese0, oggi, punti) {
     if (g.slice(0, 7) !== mese0.slice(0, 7)) { h += '<span></span>'; continue; }
     const p = punti[g] || { punti: [] };
     const eWes = wes && wes.giorno === g;
-    h += `<button data-giorno="${g}" class="${g === oggi ? 'oggi' : ''}${eWes ? ' wes' : ''}" aria-label="${Number(g.slice(8))}${p.quanti ? ` · ${p.quanti} impegni` : ''}${eWes ? ' · WES' : ''}">${Number(g.slice(8))}<span class="ag-punti">${p.punti.slice(0, 3).map(c => `<i class="${classeCat(c)}"></i>`).join('')}</span></button>`;
+    h += `<button data-giorno="${g}" class="${g === oggi ? 'oggi' : ''}${eWes ? ' wes' : ''}" aria-label="${Number(g.slice(8))}${p.quanti ? ` · ${p.quanti} impegni` : ''}${eWes ? ' · WES' : ''}"><span class="cc-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</span><span class="ag-punti">${p.punti.slice(0, 3).map(c => `<i class="${classeCat(c)}"></i>`).join('')}</span></button>`;
   }
   return h + '</div></div>';
 }
@@ -2579,7 +2588,8 @@ function mesiMiniHtml(mesi, oggi) {
   const A = MB21Agenda;
   const giorni = mesi.flatMap(m => Array.from({ length: 31 }, (_, i) => A.spostaGiorno(m, i)).filter(g => g.slice(0, 7) === m.slice(0, 7)));
   const punti = A.puntiGiorni(AG.lunghe || [], giorni, 3);
-  return `<div class="mn-mesi">${mesi.map(m => meseMiniHtml(m, oggi, punti)).join('')}</div>`;
+  const conCose = giorniConCose([...(AG.cose || []), ...(AG.coseLunghe || [])], oggi);
+  return `<div class="mn-mesi">${mesi.map(m => meseMiniHtml(m, oggi, punti, conCose)).join('')}</div>`;
 }
 function collegaMesiMini() {
   app.querySelectorAll('.mn [data-giorno]').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
@@ -2886,18 +2896,32 @@ function menuAgenda() {
 // sempre aperta. Sul telefono resta una colonna (menu nel ☰, Timeline nel cassetto).
 function largo() { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches; }   // function, non const: la usa anche il codice che parte al caricamento (pagina bianca del 22/09)
 // Il mese a griglia per la colonna destra: si tocca un giorno per aprirlo (i pallini della settimana stanno nella striscia)
+// I giorni con cose da fare ancora aperte (Ignazio 23/09: «sul giorno non vedo nessun riferimento»): un cerchietto verde
+// vuoto accanto al numero, uguale ovunque — striscia della settimana, mese grande, mese piccolo, mesi di Periodo WES e Anno.
+// Come nel foglio: una cosa non fatta di un giorno passato sta su oggi. `lista` = AG.cose (+ AG.coseLunghe per Periodo/Anno).
+function giorniConCose(lista, oggi) {
+  const si = new Set();
+  for (const c of lista || []) {
+    if (c.fatto_il || c.modello_id || (c.scala && c.scala !== 'giorno')) continue;
+    si.add(c.giorno < oggi ? oggi : c.giorno);
+  }
+  return si;
+}
+const anelloCose = (si, g) => (si.has(g) ? '<i class="mm-cose" title="Cose da fare aperte"></i>' : '');
+
 function meseHtml(giorno, oggi) {
   const A = MB21Agenda;
   const primo = giorno.slice(0, 8) + '01';
   const inizio = A.settimana(primo)[0];
   const punti = A.puntiGiorni(AG.azioni, Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)), 3);   // i pallini come nella striscia (22/09)
+  const conCose = giorniConCose(AG.cose, oggi);
   let h = `<div class="mb-mese"><div class="mb-mese-testa"><button class="freccia" data-mese="-1" aria-label="Mese prima">‹</button><b>${esc(A.titoloMese(giorno))}</b><button class="freccia" data-mese="1" aria-label="Mese dopo">›</button></div>
     <div class="mb-mese-griglia">${A.GIORNI_SETTIMANA.map(g => `<small>${g}</small>`).join('')}`;
   for (let i = 0; i < 42; i++) {
     const g = A.spostaGiorno(inizio, i);
     if (i >= 35 && g.slice(0, 7) !== giorno.slice(0, 7)) break;
     const p = punti[g] || { punti: [], tanti: false };
-    h += `<button data-giorno="${g}" class="${g.slice(0, 7) !== giorno.slice(0, 7) ? 'altro' : ''}${g === giorno ? ' scelto' : ''}${g === oggi ? ' oggi' : ''}">${Number(g.slice(8))}<span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
+    h += `<button data-giorno="${g}" class="${g.slice(0, 7) !== giorno.slice(0, 7) ? 'altro' : ''}${g === giorno ? ' scelto' : ''}${g === oggi ? ' oggi' : ''}"><span class="cc-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</span><span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
   }
   return h + '</div></div>';
 }
