@@ -884,6 +884,10 @@
   .ag-sez-chiudi svg.ic { width: 18px; height: 18px; transform: rotate(90deg); transition: transform .15s; }
   .ag-sezione.chiusa .ag-sez-chiudi svg.ic { transform: rotate(0deg); }
   .ag-sez-conto { font-size: 12px; font-weight: 600; color: var(--testo-tenue); margin-left: 6px; letter-spacing: 0; }
+  .ag-riga-sett { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--sc-tinta); color: var(--sc-scuro); border-radius: 12px; padding: 9px 12px; margin: 0 0 10px; font-family: inherit; font-size: 14px; text-align: left; }
+  .ag-riga-sett span { flex: 1; } .ag-riga-sett b { font-weight: 700; }
+  .ag-riga-sett svg.ic { width: 18px; height: 18px; color: var(--sc); flex: none; }
+  .ag-riga-sett svg.ic:last-child { width: 16px; height: 16px; opacity: .7; }
   /* le cose da fare della persona, nella sua scheda (23/09) */
   .riquadro.scheda-cose { padding: 10px 16px 6px; margin-top: 12px; }
   .riquadro.scheda-cose h2.ag-sez { font-size: 18px; margin: 2px 0 2px; }
@@ -1428,35 +1432,35 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609230845"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609230845"></script>
-<script src="lista.js?v=202609230845"></script>
-<script src="rubrica.js?v=202609230845"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609230845"></script>
-<script src="agenda.js?v=202609230845"></script>
-<script src="report.js?v=202609230845"></script>
-<script src="check.js?v=202609230845"></script>
-<script src="mappa.js?v=202609230845"></script>
-<script src="pagina-dashboard.js?v=202609230845"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609230845"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609230845"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609230845"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609230845"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609230845"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609230845"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609230845"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="pagina-core.js?v=202609230845"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-libri.js?v=202609230845"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609230845"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609230845"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609230845"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609230845"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609230845"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609230845"></script>
-<script src="benvenuto.js?v=202609230845"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609230845"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609230927"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609230927"></script>
+<script src="lista.js?v=202609230927"></script>
+<script src="rubrica.js?v=202609230927"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609230927"></script>
+<script src="agenda.js?v=202609230927"></script>
+<script src="report.js?v=202609230927"></script>
+<script src="check.js?v=202609230927"></script>
+<script src="mappa.js?v=202609230927"></script>
+<script src="pagina-dashboard.js?v=202609230927"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609230927"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609230927"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609230927"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609230927"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609230927"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609230927"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609230927"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="pagina-core.js?v=202609230927"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-libri.js?v=202609230927"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609230927"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609230927"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609230927"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609230927"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609230927"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609230927"></script>
+<script src="benvenuto.js?v=202609230927"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609230927"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.23 · 08:45';
+const APP_VERSION = '2026.09.23 · 09:27';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2004,6 +2008,18 @@ function cambiaSezione(chiave) {
   disegnaAgenda();
 }
 
+// La settimana in cima al Giorno, versione leggera (Ignazio 23/09): una riga sola, e solo quando nella settimana c'è
+// qualcosa ancora da fare (cose della settimana + voci dei modelli di settimana); il tocco apre la Settimana. Niente doppioni.
+function rigaSettimanaHtml(oggi) {
+  const A = MB21Agenda, inizio = A.inizioScala('settimana', AG.giorno);
+  const cose = A.coseDellaScala(AG.cose, 'settimana', inizio, inizioScalaMB('settimana', oggi)).filter(c => !c.fatto_il).length;
+  const voci = (AG.modelli || []).filter(m => m.attivo !== false && m.scala === 'settimana')
+    .reduce((n, m) => n + A.vociDelGiorno(AG.modello.filter(v => v.modello_id === m.id), AG.cose, inizio, {}).filter(v => !v.fatto_il).length, 0);
+  const n = cose + voci;
+  if (!n) return '';
+  return `<button class="ag-riga-sett sc-settimana" id="ag-riga-sett">${ic('scala-settimana')}<span>Settimana ${A.numeroSettimana(inizio)}: <b>${n} da fare</b></span>${ic('freccia')}</button>`;
+}
+
 // La card degli impegni del giorno, come NotePlan: una riga per impegno, pallino della categoria · titolo · orario a pastiglia.
 function impegniHtml(eventi, opz) {
   const A = MB21Agenda;
@@ -2393,6 +2409,7 @@ function disegnaAgenda() {
   if (AG.vista === 'settimana') html += grigliaSettimana(opz);
   else {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
+    html += rigaSettimanaHtml(oggi);
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
     if (!tre) html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Timeline <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
@@ -2406,6 +2423,8 @@ function disegnaAgenda() {
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   collegaCose(oggi);
+  const rs = document.getElementById('ag-riga-sett');
+  if (rs) rs.onclick = () => { AG.vista = 'settimana'; apriAgenda(AG.giorno); };
   if (!tre) {
     const sx = document.getElementById('mb-ling-sx'), dx = document.getElementById('mb-ling-dx');
     if (sx) sx.onclick = menuAgenda;
