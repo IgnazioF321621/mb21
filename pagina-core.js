@@ -23,7 +23,7 @@ async function apriCoreMese(mese) {
   const mese0 = CM.mese + '-01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
   const da = A.isoDaRoma(mese0, '00:00'), a = A.isoDaRoma(mese1, '00:00');
   const io = visto();
-  const [az, ve, ck, ob, cm, scheda] = await Promise.all([
+  const [az, ve, ck, ob, cm, scheda, dBbs, dWes] = await Promise.all([
     dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
     // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
     dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
@@ -32,6 +32,8 @@ async function apriCoreMese(mese) {
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
+    dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
+    dbq('date dei WES', supa.from('wes').select('data, giorno')),
   ]);
   if (az.error || ve.error || ck.error) { app.innerHTML = `${testa()}<div class="avviso">Non riesco a compilare il modulo: riprova.</div>${versione()}`; collegaTesta(); return; }
   // le tracce del percorso ascoltate nel mese e i biglietti: sulla propria scheda (il contatto con il proprio codice Amway)
@@ -48,7 +50,8 @@ async function apriCoreMese(mese) {
   CM.riga = cm.data || null;
   CM.dati = (cm.data && cm.data.dati) || {};
   const disegna = () => {
-    const m = C.modulo({ mese: CM.mese, azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti, obiettivi: ob.data || null, dati: CM.dati });
+    const m = C.modulo({ mese: CM.mese, azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti, obiettivi: ob.data || null, dati: CM.dati,
+      date: { bbs: dBbs.data || [], wes: dWes.data || [] }, oggi: MB21Coda.oggiRoma() });
     app.innerHTML = testa() + `<button class="primario cm-pdf" id="cm-pdf">${ic('condividi')} Condividi PDF</button>` + moduloCoreHtml(m) + versione();
     collegaTesta();
     collegaModuloCore(m, disegna);
@@ -65,6 +68,7 @@ function moduloCoreHtml(m) {
   const vuote = (n, righe) => Array.from({ length: Math.max(0, n - righe) }, () => '');
   const num = v => v == null || v === '' ? '' : String(Number(v)).replace('.', ',');
   const vuotoPer = (n, k) => `<div class="cm-vuoto">Nessun ${k} in questo mese: qui arrivano da soli ${n}.</div>`;
+  const prossimo = p => p ? `<small class="cm-prossimo">prossimo: ${esc(p.testo)}</small>` : '';   // il prossimo BBS/WES dopo oggi (23/09)
   const sez = (n, titolo, dentro, stato) => `<section class="cm-sez${stato ? ' fatta' : ''}"><div class="cm-sez-testa"><b>${n}</b><span>${esc(titolo)}</span>${stato ? ic('fatto') : ''}</div>${dentro}</section>`;
 
   const s1 = sez(1, 'Presentare almeno 8 Piani Marketing al mese', `
@@ -100,8 +104,8 @@ function moduloCoreHtml(m) {
 
   const s6 = sez(6, 'Frequentare tutti gli incontri di Network 21', `
     <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => `<b class="${w.open ? 'si' : ''}" title="${w.da} – ${w.a}">${i + 1}${w.open ? ' ' + ic('fatto', 12) : ''}</b>`).join('')}</span></div>
-    <div class="cm-riga"><span>Acquisto biglietto BBS</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
-    <div class="cm-riga"><span>Acquisto biglietto WES</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
+    <div class="cm-riga"><span>Acquisto biglietto BBS${prossimo(m.s6.prossimoBbs)}</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
+    <div class="cm-riga"><span>Acquisto biglietto WES${prossimo(m.s6.prossimoWes)}</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
     <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»); i biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.s6.open >= m.s6.settimane.length && m.s6.bbs && m.s6.wes);
 
   const s7 = sez(7, 'Lavorare di squadra', `

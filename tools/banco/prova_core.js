@@ -87,4 +87,29 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.equal(C.modulo({ mese, check: [{ data: '2026-09-03', counseling: true, edificazione: true, no_crossline: true }] }).abitudini[6], true);
 });
 
+prova('Più di 15 PM e più di 20 clienti: nel modulo ci sono tutti (Ignazio 23/09)', () => {
+  const azioni = Array.from({ length: 18 }, (_, i) => ({ id: 'p' + i, tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Dare Seguito', completata: true,
+    inizio: `2026-09-${String(i + 1).padStart(2, '0')}T17:00:00Z`, contatti: { nome: 'PM ' + i } }));
+  const vendite = Array.from({ length: 23 }, (_, i) => ({ contatto_id: 'c' + i, data: '2026-09-10', vp: 10 + i, contatti: { nome: 'Cliente ' + i } }));
+  const m = C.modulo({ mese: '2026-09', azioni, vendite });
+  assert.equal(m.s1.righe.length, 18); assert.equal(m.s1.righe[17].nome, 'PM 17');   // anche quelli di fine mese
+  assert.equal(m.s3.righe.length, 23); assert.equal(m.s3.vp, m.s3.righe.reduce((t, r) => t + r.vp, 0));   // la somma delle righe torna con il totale
+});
+
+prova('Il prossimo BBS e WES dopo oggi', () => {
+  const bbs = [{ data: '2026-09-01' }, { data: '2026-10-01' }, { data: '2026-06-01' }];
+  const wes = [{ data: '2026-06-01', giorno: '2026-06-13' }, { data: '2026-10-01', giorno: '2026-10-10' }, { data: '2027-02-01', giorno: null }];
+  // il BBS ha solo il mese: quello di settembre vale fino al 30 settembre
+  assert.deepEqual(C.prossimoEvento(bbs, '2026-09-23'), { mese: '2026-09', giorno: null, testo: 'settembre 2026' });
+  assert.equal(C.prossimoEvento(bbs, '2026-10-01').testo, 'ottobre 2026');
+  assert.equal(C.prossimoEvento(bbs, '2026-11-01'), null);   // nessuno caricato dopo
+  // il WES con il giorno: sabato 10 ottobre, poi (passato) quello di febbraio che ha solo il mese
+  assert.deepEqual(C.prossimoEvento(wes, '2026-09-23'), { mese: '2026-10', giorno: '2026-10-10', testo: 'sab 10/10/2026' });
+  assert.equal(C.prossimoEvento(wes, '2026-10-10').testo, 'sab 10/10/2026');   // il giorno stesso è ancora «il prossimo»
+  assert.equal(C.prossimoEvento(wes, '2026-10-11').testo, 'febbraio 2027');
+  const m = C.modulo({ mese: '2026-08', date: { bbs, wes }, oggi: '2026-09-23' });   // anche il modulo di un mese passato guarda a oggi
+  assert.equal(m.s6.prossimoBbs.testo, 'settembre 2026'); assert.equal(m.s6.prossimoWes.testo, 'sab 10/10/2026');
+  assert.equal(C.modulo({ mese: '2026-09' }).s6.prossimoBbs, null);
+});
+
 console.log(`\n${ok} prove superate`);

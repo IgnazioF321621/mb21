@@ -24,7 +24,8 @@ const tracce = [{ giorno: '2026-09-02', titolo: 'La visione' }, { giorno: '2026-
 const biglietti = [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }];
 const obiettivi = { vpp: 300, vpg: 1200, sponsor_personali: 2, sponsor_gruppo: 4, cep: 30, bbs: 5, wes: 3, vpp_amway: 412.75 };
 const dati = { pm: { a2: { candidati: 2 } }, punti: 'Fare le domande giuste e ascoltare di più; scrivere ogni sera tre cose fatte bene.', note: 'Mese buono: da rinforzare la lettura nel fine settimana.' };
-const m = C.modulo({ mese, azioni, vendite, check, tracce, biglietti, obiettivi, dati });
+const date = { bbs: [{ data: '2026-09-01' }, { data: '2026-10-01' }], wes: [{ data: '2026-10-01', giorno: '2026-10-10' }] };
+const m = C.modulo({ mese, azioni, vendite, check, tracce, biglietti, obiettivi, dati, date, oggi: '2026-09-23' });
 
 prova('Il foglio è una pagina A4 verticale, con il modulo dentro', () => {
   const doc = P.crea(jspdf.jsPDF, m, { mese: 'settembre 2026', nome: 'Ignazio Fiorito', oggi: '23/09/2026' });
@@ -32,7 +33,7 @@ prova('Il foglio è una pagina A4 verticale, con il modulo dentro', () => {
   const w = doc.internal.pageSize.getWidth(), h = doc.internal.pageSize.getHeight();
   assert.ok(Math.abs(w - 210) < 0.5 && Math.abs(h - 297) < 0.5);
   const testo = doc.output();
-  for (const t of ['PRESENTARE ALMENO 8', 'CONSUMARE I PRODOTTI', 'SERVIRE ALMENO 10', 'LAVORARE DI SQUADRA', 'Ignazio Fiorito', 'settembre 2026', 'Laura Ferri']) assert.ok(testo.includes(t), t);
+  for (const t of ['PRESENTARE ALMENO 8', 'CONSUMARE I PRODOTTI', 'SERVIRE ALMENO 10', 'LAVORARE DI SQUADRA', 'Ignazio Fiorito', 'settembre 2026', 'Laura Ferri', 'prossimo: settembre 2026', 'prossimo: sab 10/10/2026']) assert.ok(testo.includes(t), t);
   if (process.env.PDF_OUT) require('node:fs').writeFileSync(process.env.PDF_OUT, Buffer.from(doc.output('arraybuffer')));
 });
 
@@ -40,6 +41,22 @@ prova('Anche un mese vuoto sta in una pagina (caselle da compilare a penna)', ()
   const doc = P.crea(jspdf.jsPDF, C.modulo({ mese: '2026-10' }), { mese: 'ottobre 2026', nome: '', oggi: '1/10/2026' });
   assert.equal(doc.getNumberOfPages(), 1);
   if (process.env.PDF_OUT) require('node:fs').writeFileSync(process.env.PDF_OUT.replace('.pdf', '-vuoto.pdf'), Buffer.from(doc.output('arraybuffer')));
+});
+
+prova('Tanti PM e tanti clienti: sempre una pagina, con «… e altri N» oltre 25 e 40', () => {
+  const tanti = (n, fn) => Array.from({ length: n }, (_, i) => fn(i));
+  const pieno = (nPm, nCli) => C.modulo({ mese,
+    azioni: tanti(nPm, i => ({ id: 'x' + i, tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Iscrizione', completata: true, inizio: `2026-09-${String(1 + (i % 28)).padStart(2, '0')}T17:00:00Z`, contatti: { nome: 'Candidato ' + (i + 1) } })),
+    vendite: tanti(nCli, i => ({ contatto_id: 'k' + i, data: '2026-09-10', vp: 100 - i, contatti: { nome: 'Cliente numero ' + (i + 1) } })) });
+  for (const [nPm, nCli] of [[18, 26], [25, 40], [31, 47]]) {
+    const doc = P.crea(jspdf.jsPDF, pieno(nPm, nCli), { mese: 'settembre 2026', nome: 'Prova', oggi: '23/09/2026' });
+    assert.equal(doc.getNumberOfPages(), 1);
+    const t = doc.output();
+    assert.equal(t.includes('e altri'), nPm > 25 || nCli > 40, `${nPm}/${nCli}`);
+    if (nPm === 25) assert.ok(t.includes('Candidato 25') && t.includes('Cliente numero 40'));   // al limite ci stanno tutti
+    if (nPm === 31) assert.ok(t.includes('e altri 7 Piani Marketing') && t.includes('in tutto 31') && t.includes('e altri 8'));   // 24 + 7 · 39 + 8
+    if (process.env.PDF_OUT && nPm === 31) require('node:fs').writeFileSync(process.env.PDF_OUT.replace('.pdf', '-pieno.pdf'), Buffer.from(doc.output('arraybuffer')));
+  }
 });
 
 prova('Il nome del file va bene su iPhone, Android e Windows', () => {
