@@ -734,4 +734,5 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`core.js`** + **
 | 2026.09.23 · 06:34 | MB Plan: «Cronologia» diventa **Timeline**; una cosa da fare si può **collegare a un Prospect, Partner o Cliente** (il nome apre la scheda) |
 | 2026.09.23 · 06:46 | MB Plan: durate uguali ovunque (15 · 30 · 45 min · 1 ora o «Altra…» con la fine a mano; telefonate da 15 minuti), Timeline dalle 8 alle 22, titoli dei modelli con la matita |
 | 2026.09.23 · 06:54 | MB Plan: nel Giorno **«Da fare oggi»** sempre presente con il suo campo; modelli e Da fare **si chiudono e si aprono** con la freccetta |
+| 2026.09.23 · 06:58 | MB Plan, Periodo WES: una data prima del primo WES apre il primo periodo invece della pagina vuota; nella pagina vuota c'è «Oggi» |
 | 2026.09.22 · 20:48 | Cantiere 41: riga 4 col numero grande; riga 7 con una frase sola sulle tracce |
