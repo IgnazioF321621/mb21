@@ -444,6 +444,7 @@ async function coseDellaScheda(c) {
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
   const quando = x => {
     const scala = x.scala || 'giorno';
+    if (!x.giorno) return 'nel progetto';   // una riga di progetto senza giorno (24/09: prima gg(null) rompeva il riquadro)
     if (scala !== 'giorno') return { settimana: 'questa settimana', mese: 'questo mese', periodo: 'questo periodo WES', anno: "quest'anno" }[scala] || '';
     if (x.giorno < oggi) return `da ${gg(x.giorno)}`;
     if (x.giorno === oggi) return 'oggi' + (x.ora ? ' · ' + String(x.ora).slice(0, 5) : '');
@@ -452,7 +453,7 @@ async function coseDellaScheda(c) {
   posto.innerHTML = `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>
     ${cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
       <button class="spunta" aria-label="${x.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${x.fatto_il ? ic('fatto') : ''}</button>
-      <button class="testo"><span>${esc(x.testo)}</span><small>${esc(quando(x))}</small></button></div>`).join('')}
+      <button class="testo"><span>${esc(x.testo)}</span><small>${esc([quando(x), typeof nomeProgetto === 'function' ? nomeProgetto(x) : ''].filter(Boolean).join(' · '))}</small></button></div>`).join('')}
     <form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form></div>`;
   const ridisegna = () => coseDellaScheda(c);
   posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
