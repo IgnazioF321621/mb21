@@ -201,8 +201,12 @@ prova('da catalogare: solo senza categoria, alfabetico, 5 meno i catalogati di o
   assert.deepEqual(daCatalogare(righe, 3).righe.map(x => x.id), [2, 4]);
   assert.equal(daCatalogare(righe, 5).righe.length, 0);
   assert.equal(daCatalogare(righe, 8).righe.length, 0);
-  assert.deepEqual(daCatalogare(righe, 5, 5).righe.map(x => x.id), [2, 4, 5, 6, 7]);   // «Altri 5»
-  assert.deepEqual(daCatalogare(righe, 7, 5).righe.map(x => x.id), [2, 4, 5]);
+  // «Altri 5»: dal 24/09 sono cinque nomi IN PIÙ, anche a chi oggi ha già catalogato tutto e oltre
+  assert.deepEqual(daCatalogare(righe, 5, 5).righe.map(x => x.id), [2, 4, 5, 6, 7]);
+  assert.deepEqual(daCatalogare(righe, 7, 5).righe.map(x => x.id), [2, 4, 5, 6, 7]);
+  assert.deepEqual(daCatalogare(righe, 20, 5).righe.map(x => x.id), [2, 4, 5, 6, 7]);
+  assert.deepEqual(daCatalogare(righe, 20, 10).righe.length, 7);   // più dei nomi che ci sono: si fermano ai 7
+  assert.deepEqual(daCatalogare(righe, 3, 5).righe.length, 7);     // i 2 rimasti dei 5 + altri 5
 });
 
 console.log(`\n${ok} prove superate`);
