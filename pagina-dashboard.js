@@ -77,6 +77,33 @@ async function caricaOggi() {
   disegnaOggi();
 }
 
+// ── Righe che si aprono e si chiudono (Ignazio 24/09: la Dashboard sul telefono era lunghissima) ──
+// «Contatti del giorno» e «Da catalogare» sono due righe come «Partner da avviare»: il tocco le apre sul posto.
+// Da sole: la coda è aperta se c'è qualcuno da chiamare, «Da catalogare» è sempre chiusa.
+// La scelta di Ignazio (aperta/chiusa) resta su questo telefono fino al giorno dopo.
+const CHIAVE_APERTE = 'mb21_dash_aperte';
+function aperteDash() {
+  if (ST.aperteDash && ST.aperteDash.giorno === ST.oggi) return ST.aperteDash;
+  let salvate = null;
+  try { salvate = JSON.parse(localStorage.getItem(CHIAVE_APERTE)); } catch (e) {}
+  ST.aperteDash = salvate && salvate.giorno === ST.oggi ? salvate : { giorno: ST.oggi };
+  return ST.aperteDash;
+}
+function apertaSezione(nome, daSola) {
+  const scelta = aperteDash()[nome];
+  return scelta === undefined ? daSola : scelta;
+}
+function cambiaSezione(nome, daSola) {
+  const a = aperteDash();
+  a[nome] = !apertaSezione(nome, daSola);
+  try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {}
+  disegnaOggi();
+}
+function rigaSezione(id, classe, icona, titolo, sotto, aperta) {
+  return `<button class="ag-blocco sezione ${classe}" id="${id}" aria-expanded="${aperta}">
+    <span>${ic(icona)}<span class="sez-testo"><b>${titolo}</b>${sotto ? `<small>${sotto}</small>` : ''}</span></span><span>${aperta ? '⌄' : '›'}</span></button>`;
+}
+
 // ── Bottoni esito (tabella confermata da Ignazio il 14/09, STRUTTURA.md → Bottoni esito) ──
 // Prospect e Referral (e senza categoria, se capitano): 5 bottoni sulle fasi Prospect · Contatto.
 // Partner e Cliente: in Sequenze non hanno fasi di telefonata → solo i due con data.
@@ -171,17 +198,25 @@ function disegnaOggi() {
   const st = ST.stato;
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
   const altro = guardoAltri();
-  html += `<div class="testa-coda"><h2>${altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno'}</h2>
-    <span class="contatore">Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}</span></div>`;
-  if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
-  html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
-    : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`;
+  const apertaCoda = apertaSezione('coda', !!r.coda.length);   // da sola si apre solo se c'è qualcuno da chiamare
+  html += rigaSezione('sez-coda', r.coda.length ? 'telefonate' : 'telefonate fatta', r.coda.length ? 'telefonate' : 'fatto',
+    altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
+    `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, apertaCoda);
+  if (apertaCoda) {
+    if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
+    html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
+      : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`;
+  }
   html += catalogoHtml();
   // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaMioAvvio();
   mostraRigaTelefono();   // non fa aspettare la Dashboard
+  const sezCoda = document.getElementById('sez-coda');   // le righe si aprono e si chiudono anche con l'abbonamento scaduto
+  if (sezCoda) sezCoda.onclick = () => cambiaSezione('coda', !!r.coda.length);
+  const sezCat = document.getElementById('sez-catalogo');
+  if (sezCat) sezCat.onclick = () => cambiaSezione('catalogo', false);
   const rigaAvvio = document.getElementById('dash-avvio');
   if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
@@ -210,6 +245,12 @@ function disegnaOggi() {
   app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
     btn.onclick = () => apriContattoDa(btn.dataset.scheda, 'oggi');
   });
+  app.querySelectorAll('button[data-elimina-cat]').forEach(btn => {   // Elimina dentro «Da catalogare» (Ignazio 24/09): stessa funzione della Lista Nomi
+    btn.onclick = () => {
+      const c = (ST.catalogo && ST.catalogo.righe.find(x => x.id === btn.dataset.eliminaCat));
+      if (c) elimina(c, caricaOggi);
+    };
+  });
 }
 
 // ── DA CATALOGARE (cantiere 16, decisioni di Ignazio 15/09 · brief F7 §4c) ──
@@ -227,9 +268,10 @@ function catalogoHtml() {
   if (!cat || (!cat.totale && !fatti)) return '';
   const altro = guardoAltri();
   const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
-  let h = `<div class="testa-coda"><h2>${ic('catalogare')} Da catalogare</h2>
-    <span class="contatore">Fatti ${Math.min(fatti, quota)} di ${quota}</span></div>
-    <div class="sotto">${cat.totale} ancora da catalogare</div>`;
+  const aperta = apertaSezione('catalogo', false);   // da sola è sempre chiusa
+  let h = rigaSezione('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
+    `${cat.totale} ancora da catalogare · fatti ${Math.min(fatti, quota)} di ${quota}`, aperta);
+  if (!aperta) return h;
   if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
   if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
   return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${quota}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
@@ -261,7 +303,10 @@ function cardCatalogo(r) {
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
         <div class="bottoni ${r.categoria ? 'due-righe' : 'scegli-cat'}">${bottoni}</div>
-        <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
+        <div class="cat-comandi">
+          <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
+          ${guardoAltri() ? '' : `<button class="link elimina-qui" data-elimina-cat="${esc(r.id)}">${ic('elimina')} Elimina</button>`}
+        </div>
       </div>
     </div>`;
 }

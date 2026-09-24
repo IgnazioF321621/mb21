@@ -285,7 +285,7 @@ async function ripristina(r) {
 // archivio, ricerca e coda; se ne vanno solo appuntamenti e telefonate non ancora fatti; il lavoro fatto resta e conta.
 // Biglietti dal mese in corso e CEP attivo restano nei Segni vitali: li toglie solo l'Admin, con la spunta nella conferma.
 // «Annulla» nell'avviso rimette tutto com'era (`annulla_elimina_contatto`); dopo, dall'app non si recupera più.
-async function elimina(r) {
+async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla Dashboard: «Da catalogare», 24/09)
   const mese = MB21Lista.meseEvento(MB21Coda.oggiRoma());
   const [big, cep] = await Promise.all([
     dbq('biglietti di chi si elimina', supa.from('biglietti').select('tipo, evento').eq('contatto_id', r.id).gte('evento', mese).order('evento')),
@@ -301,11 +301,11 @@ async function elimina(r) {
   const { error } = await dbq('elimina', supa.rpc('elimina_contatto', { p_contatto: r.id, p_togli_segni: !!si.spunta }));
   if (error) return mostraToast('Non eliminato: riprova.');
   LS.contatto = null;
-  await ricaricaERidisegna();
+  await (dopo || ricaricaERidisegna)();
   mostraToast(`${r.nome} eliminato`, async () => {
     const { error } = await dbq('annulla elimina', supa.rpc('annulla_elimina_contatto', { p_contatto: r.id }));
     if (error) return mostraToast('Non annullato: riprova.');
-    ricaricaERidisegna();
+    (dopo || ricaricaERidisegna)();
   });
 }
 
