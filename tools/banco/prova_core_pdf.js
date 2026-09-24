@@ -59,6 +59,14 @@ prova('Tanti PM e tanti clienti: sempre una pagina, con «… e altri N» oltre 
   }
 });
 
+prova('Tracce in verticale come il modulo N21: 1-15 a sinistra, 16-31 a destra, anche nei mesi di 31 giorni', () => {
+  const m31 = C.modulo({ mese: '2026-10', check: [{ data: '2026-10-16', tracce: 2 }], dati: { note: 'Una nota lunga '.repeat(10), punti: 'Punti '.repeat(20) },
+    date, oggi: '2026-09-24', biglietti });
+  const doc = P.crea(jspdf.jsPDF, m31, { mese: 'ottobre 2026', nome: 'Prova', oggi: '24/9/2026' });
+  assert.equal(doc.getNumberOfPages(), 1);
+  assert.ok(doc.output().includes('2 tracce'));
+});
+
 prova('Il nome del file va bene su iPhone, Android e Windows', () => {
   assert.equal(P.nomeFile('settembre 2026', 'Ignazio Fiorito'), 'Modulo Core - settembre 2026 - Ignazio Fiorito.pdf');
   assert.equal(P.nomeFile('settembre 2026', 'A/B: "C"'), 'Modulo Core - settembre 2026 - AB C.pdf');
