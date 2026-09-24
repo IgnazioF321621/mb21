@@ -1,5 +1,5 @@
-// MB21 · la pagina Training: solo definizioni. Una voce della barra in basso, «Training», che per ora compare solo nell'anteprima sul Mac
-// (127.0.0.1 / localhost: TRAINING_VISIBILE in index.html; online resta nascosta anche se il codice va online).
+// MB21 · la pagina Training: solo definizioni. Una voce della barra in basso, «Training», accesa per tutti dal 24/09
+// sera (l'interruttore TRAINING_VISIBILE è in index.html).
 // Tre parti (cantiere 45, Ignazio 24/09: le flashcard «come si studia all'università» più Duolingo, «un percorso di crescita che va verso
 // l'alto: man mano si apre e questo permette anche visivamente di capire che si sta salendo»):
 //   Impara  — la scala dei sette livelli, dal Nuovo in basso al Platino in cima; dentro il livello aperto i percorsi (Contattare…),
