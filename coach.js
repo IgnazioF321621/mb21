@@ -3,7 +3,7 @@
 // coach_batterie, una «batteria» per situazione (oggi le telefonate: «telefonata», «telefonata_partner», «telefonata_cliente»; si scrivono e si caricano dalla cartella privata
 // ~/mb21-import/training). Qui c'è solo la logica: quale batteria vale per un esito, come si monta la chat da una batteria
 // (l'imbuto), cosa si salva, e il motore che la recita (puntini, fumetti, risposte da toccare).
-// Lo usano l'app (index.html → chiediCoach) e la pagina privata di prova, così la chat è la stessa.
+// Lo usano l'app (pagina-coach.js → chiediCoach) e la pagina privata di prova, così la chat è la stessa.
 //
 // Un copione è una lista di passi:
 //   { c: 'fumetto', fonte?: [testo, consigliabile], rif?: [tipo, testo] }   un fumetto del coach; rif = va tra gli approfondimenti
