@@ -1,6 +1,6 @@
 // MB21 · il coach che parla (cantiere 42): la chat che si apre dopo un esito, al posto del foglietto della riflessione.
 // I messaggi NON stanno in questo file, perché il progetto su GitHub è pubblico: stanno nell'archivio privato, la tabella
-// coach_batterie, una «batteria» per situazione (oggi «telefonata»; si scrivono e si caricano dalla cartella privata
+// coach_batterie, una «batteria» per situazione (oggi le telefonate: «telefonata», «telefonata_partner», «telefonata_cliente»; si scrivono e si caricano dalla cartella privata
 // ~/mb21-import/training). Qui c'è solo la logica: quale batteria vale per un esito, come si monta la chat da una batteria
 // (l'imbuto), cosa si salva, e il motore che la recita (puntini, fumetti, risposte da toccare).
 // Lo usano l'app (index.html → chiediCoach) e la pagina privata di prova, così la chat è la stessa.
@@ -20,12 +20,13 @@
   const nodo = typeof module !== 'undefined' && module.exports;
 
   // ── quale batteria vale per un esito (null = nessuna chat) ──
-  // Telefonata: un Contatto al telefono (dalla coda o dall'Agenda) in cui ci hai parlato, con un contatto che non è
-  // Partner né Cliente (loro hanno esiti diversi: avranno i loro messaggi).
+  // Telefonata: un Contatto al telefono (dalla coda, dai Riordini o dall'Agenda) in cui ci hai parlato. Partner e Clienti
+  // hanno esiti diversi e i loro messaggi (24/09): telefonata_partner, telefonata_cliente; tutti gli altri come i Prospect.
   const SENZA_PAROLE = ['No Risposta', 'Telefono spento'];
+  const TELEFONATA_DI = { Partner: 'telefonata_partner', Cliente: 'telefonata_cliente' };
   function situazione(tipo, modalita, categoria, esito) {
-    if (tipo === 'Contatto' && (!modalita || modalita === 'Telefonata') && !['Partner', 'Cliente'].includes(categoria)
-        && esito && !SENZA_PAROLE.includes(esito)) return 'telefonata';
+    if (tipo === 'Contatto' && (!modalita || modalita === 'Telefonata') && esito && !SENZA_PAROLE.includes(esito))
+      return TELEFONATA_DI[categoria] || 'telefonata';
     return null;
   }
 
@@ -55,7 +56,7 @@
     const domande = (B.senza_obiezione || []).includes(esito) ? [] : [
       { c: D.c },
       { piu: [...Object.entries(B.obiezioni).map(([ob, o]) => [ob, blocco(ob, o)]), ...(B.altro ? [[D.altro, blocco(D.altro, B.altro)]] : [])],
-        nessuna: [D.nessuna, B.nessuna[esito] || []], avanti: D.avanti, salva: 'obiezioni' },
+        nessuna: [D.nessuna, B.nessuna[esito] || []], avanti: D.avanti, salva: D.salva || 'obiezioni' },   // i partner: «freni»
     ];
     return riempi([
       ...(B.manuale && B.manuale[esito] ? [{ rif: ['manuale', B.manuale[esito]] }] : []),
@@ -67,8 +68,13 @@
     ], nomi);
   }
 
+  // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma: lo stesso montatore, ognuna con la sua batteria.
+  const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata };
+  const monta = (sit, B, esito, nomi, n) => (MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
+
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
-  // { chiave: 'obiezioni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima', domanda, risposta, obiezione? }.
+  // { chiave: 'obiezioni' o 'freni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima' · le domande dell'esito ('lavoro', 'motivo'),
+  //   domanda, risposta, obiezione? }.
   // null se non c'è nessuna risposta (chat chiusa subito).
   function riflessioneDa(risposte) {
     const date = (risposte || []).filter(x => x && x.chiave && (Array.isArray(x.risposta) ? x.risposta.length : String(x.risposta || '').trim()));
@@ -78,7 +84,7 @@
   // Il promemoria «Ti eri detto…» (cantiere 42, 24/09): la risposta si ritrova al prossimo appuntamento con la stessa persona.
   // Da righe di azioni { id, contatto_id, inizio, creato_il, riflessione }: per ogni contatto l'ultima riflessione che ha la frase
   // per la prossima volta → { frase, obiezioni, azione, quando }. Le obiezioni sono quelle di quella volta, senza «Nessuna»;
-  // «Altro» diventa la riga scritta (se c'è). Vale anche per le riflessioni del foglietto (stessa chiave «prossima»).
+  // «Altro» diventa la riga scritta (se c'è); per i partner valgono i freni. Vale anche per le riflessioni del foglietto (stessa chiave «prossima»).
   function ricordi(azioni) {
     const quando = a => a.inizio || a.creato_il || '';
     const ordinate = [...(azioni || [])].sort((a, b) => (quando(a) < quando(b) ? 1 : quando(a) > quando(b) ? -1 : 0));
@@ -88,9 +94,9 @@
       const r = chiave => a.riflessione.find(x => x && x.chiave === chiave);
       const frase = r('prossima');
       if (!frase || typeof frase.risposta !== 'string' || !frase.risposta.trim()) continue;
-      const ob = r('obiezioni'), altro = r('altro');
+      const ob = r('obiezioni') || r('freni'), altro = r('altro');   // i partner: «freni»
       const obiezioni = (ob && Array.isArray(ob.risposta) ? ob.risposta : [])
-        .filter(x => x !== 'Nessuna').map(x => (x === 'Altro' ? (altro && altro.risposta ? `«${altro.risposta}»` : null) : x)).filter(Boolean);
+        .filter(x => x !== 'Nessuna' && x !== 'Niente').map(x => (x === 'Altro' ? (altro && altro.risposta ? `«${altro.risposta}»` : null) : x)).filter(Boolean);
       out[a.contatto_id] = { frase: frase.risposta.trim(), obiezioni, azione: a.id, quando: quando(a) };
     }
     return out;
@@ -208,7 +214,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, situazione, riempi, telefonata, riflessioneDa, ricordi, chat };
+  const api = { SENZA_PAROLE, situazione, riempi, telefonata, monta, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);
