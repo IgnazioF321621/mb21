@@ -7,7 +7,8 @@
 // Il momento dopo l'esito (cantiere 42): l'ultimo passo dopo l'esito di un appuntamento o di una telefonata, da qualunque
 // pagina (Agenda, scheda, Griglia PM, Report e Riordini passano da chiudiAppuntamento; la coda da toccaBottone). Per ultimo,
 // perché il prossimo appuntamento si fissa spesso con la persona davanti. Si apre la chat del coach solo dove ci sono i suoi
-// messaggi approvati (oggi le telefonate: Prospect, Partner, Clienti, quando ci hai parlato); altrove niente. Il foglietto a
+// messaggi approvati (le telefonate: Prospect, Partner, Clienti, quando ci hai parlato; dal 24/09 anche Piano Marketing e Follow Up,
+// dopo il risultato del «Com'è andata?»); altrove niente. Il foglietto a
 // bottoni del 23/09 è stato tolto il 24/09, in locale e online (Ignazio: «si toglie il foglietto vecchio e vediamo man mano
 // solo le cose nuove, sia in locale sia online, solo le cose approvate»).
 // `e`: l'azione con almeno id, tipo_azione, contatti.nome (modalita, categoria, contatto_id facoltativi).
@@ -24,7 +25,7 @@ async function chiediRiflessione(e, esito) {
 // dall'archivio privato (tabella coach_batterie, letta una volta per sessione); coach.js (MB21Coach) monta la chat e la
 // recita. Si chiude quando vuoi (✕): le risposte date si salvano da sole in azioni.riflessione, a fine chat o alla chiusura.
 // Restituisce la riflessione salvata, null se non c'è niente da salvare, undefined se la chat non si apre (niente rete,
-// niente messaggi per quell'esito): allora chiediRiflessione passa al foglietto.
+// niente messaggi per quell'esito): allora dopo l'esito non si apre niente.
 const COACH = { batterie: {} };
 async function batteriaCoach(situazione) {
   if (COACH.batterie[situazione]) return COACH.batterie[situazione];

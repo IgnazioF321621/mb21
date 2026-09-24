@@ -32,7 +32,7 @@ const B = {
 };
 const nomi = { io: 'Isabella', chi: 'Anna' };
 
-prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi', () => {
+prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi; PM e Follow Up dopo il risultato', () => {
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Prospect', 'PM Fissato'), 'telefonata');
   assert.equal(C.situazione('Contatto', undefined, undefined, 'Richiamare'), 'telefonata');          // dalla coda, Referral o senza categoria
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Ex Partner/Cliente', 'No Interesse'), 'telefonata');
@@ -40,9 +40,15 @@ prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con 
   assert.equal(C.situazione('Contatto', undefined, 'Cliente', 'Ordine'), 'telefonata_cliente');
   for (const e of ['No Risposta', 'Telefono spento', null]) for (const cat of ['Prospect', 'Partner', 'Cliente']) assert.equal(C.situazione('Contatto', 'Telefonata', cat, e), null);
   for (const m of ['Messaggio', 'Presenza']) assert.equal(C.situazione('Contatto', m, 'Prospect', 'PM Fissato'), null);
-  assert.equal(C.situazione('Piano Marketing', null, 'Prospect', 'Dare Seguito'), null);
-  // stesso montatore per le tre telefonate; una situazione senza montatore: niente chat
-  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
+  // Piano Marketing e Follow Up: dopo il risultato del «Com'è andata?», per ogni categoria; non dopo «Fatto» (Presentazione), Rimandato, No Show
+  for (const e of ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine']) assert.equal(C.situazione('Piano Marketing', 'PM 1a1', 'Prospect', e), 'piano_marketing');
+  for (const e of ['Iscrizione', 'Ulteriore Follow Up', 'Prodotti', 'No BuonFine']) assert.equal(C.situazione('Follow Up', null, 'Partner', e), 'follow_up');
+  for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Presentazione', 'Fatto', 'Rimandato', 'No Show', null]) assert.equal(C.situazione(t, null, 'Prospect', e), null);
+  assert.equal(C.situazione('Follow Up', null, 'Prospect', 'Dare Seguito'), null);   // «Dare Seguito» è un risultato del PM
+  assert.equal(C.situazione('Appuntamento', 'Avvio', 'Partner', 'Lista nomi'), null);
+  assert.equal(C.situazione('Consulenza PRD', 'Demo', 'Prospect', 'Vendita'), null);
+  // stesso montatore per tutte; una situazione senza montatore: niente chat
+  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
   assert.equal(C.monta('piano', B, 'PM Fissato', nomi, 0), null);
   // i partner salvano «freni» invece di «obiezioni»
   const Bp = { ...B, domanda_obiezione: { ...B.domanda_obiezione, salva: 'freni', nessuna: 'Niente' } };
@@ -60,6 +66,11 @@ prova('L\'imbuto: si parte dall\'esito (niente «com\'è andata?»), i nomi al l
   assert.equal(C.telefonata(B, 'Richiamare', nomi, 0), null);               // esito senza messaggi: nessuna chat
   assert.equal(C.telefonata(null, 'PM Fissato', nomi, 0), null);
   assert.equal(JSON.stringify(C.telefonata(B, 'PM Fissato', { io: '$&', chi: '$1' }, 0)).includes('Ottimo, $&! Piano con $1.'), true);   // nomi strani restano com'erano
+  // le domande di prima (dopo un piano «cosa ha colpito di più»): dopo la reazione e prima delle obiezioni, uguali per ogni esito
+  const Bprima = { ...B, prima: [{ c: 'Cosa ha colpito {chi}?' }, { salva: 'colpito', chiedi: [['Il reddito', []]] }] };
+  assert.deepEqual(C.telefonata(Bprima, 'PM Fissato', nomi, 0).slice(1, 5).map(p => p.c || p.salva),
+    ['Ottimo, Isabella! Piano con Anna.', 'Cosa ha colpito Anna?', 'colpito', 'Anna ti ha fatto domande?']);
+  assert.equal(C.telefonata(Bprima, 'Relazione', nomi, 0)[1].c, 'Cosa ha colpito Anna?');
 });
 
 prova('Domande, dubbi, obiezioni: più scelte + «Altro» + «Nessuna»; ogni blocco porta la sua frase e il suo manuale', () => {
