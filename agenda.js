@@ -151,7 +151,8 @@
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
   // Un cantiere in programma (Ignazio 24/09, passo 3): il titolo di un progetto con un giorno è UNA riga del giorno, della
   // settimana o del mese («una riga sola»). È fatto quando sono fatti tutti i suoi passi — non si salva, si calcola, come nel
-  // progetto: allora sta tra le fatte nel giorno (o nella settimana, nel mese) dell'ultima spunta; un passo nuovo lo riapre e,
+  // progetto: allora sta tra le fatte nel giorno (o nella settimana, nel mese) dell'ultima spunta — ma non prima del giorno in
+  // cui era in programma (revisione 24/09: finito in anticipo resta dove l'avevi messo, come le altre cose); un passo nuovo lo riapre e,
   // se il suo giorno è passato, si riporta come le altre cose. Rende la lista con, al posto di ogni titolo in programma, una
   // copia con `fatto_il` e `giorno` calcolati e `passi` / `fatti` (per «1 di 4 fatte»); le altre righe restano le stesse.
   function conTitoliFatti(cose) {
@@ -168,7 +169,8 @@
       if (c.tipo !== 'titolo' || !c.progetto_id || !c.giorno) return c;
       const suoi = passi.get(c.id) || [], fatti = suoi.filter(x => x.fatto_il);
       const ultima = suoi.length && fatti.length === suoi.length ? fatti.map(x => x.fatto_il).sort().pop() : null;
-      return { ...c, passi: suoi.length, fatti: fatti.length, fatto_il: ultima, giorno: ultima ? inizioScala(c.scala || 'giorno', partiRoma(ultima).giorno) : c.giorno };
+      const finito = ultima ? inizioScala(c.scala || 'giorno', partiRoma(ultima).giorno) : null;
+      return { ...c, passi: suoi.length, fatti: fatti.length, fatto_il: ultima, giorno: finito && finito > c.giorno ? finito : c.giorno };
     });
   }
   // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)

@@ -491,6 +491,10 @@ prova('Cantiere in programma (24/09, passo 3): una riga sola, fatto quando sono 
   const sett = finito.map(c => c.id === 'T' ? { ...c, scala: 'settimana', giorno: '2026-09-14' } : c);
   assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => [c.id, !!c.fatto_il]), [['T', true]]);
   assert.equal(A.coseDellaScala(sett, 'settimana', '2026-09-14', '2026-09-21').length, 0);
+  // finito in anticipo (era in programma per la settimana dopo): resta dove l'avevi messo, come le altre cose (revisione 24/09)
+  const avanti = finito.map(c => c.id === 'T' ? { ...c, scala: 'settimana', giorno: '2026-09-28' } : c);
+  assert.equal(A.conTitoliFatti(avanti).find(c => c.id === 'T').giorno, '2026-09-28');
+  assert.deepEqual(A.coseDellaScala(avanti, 'settimana', '2026-09-28', '2026-09-21').map(c => [c.id, !!c.fatto_il]), [['T', true]]);
   // senza titoli in programma la lista resta la stessa (niente copie)
   const senza = lista.filter(c => c.id !== 'T' && c.id !== 'V');
   assert.equal(A.conTitoliFatti(senza), senza);

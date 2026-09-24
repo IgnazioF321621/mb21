@@ -345,7 +345,7 @@ const TIPI_RIGA = [['titolo', 'T Titolo'], ['cosa', '☐ Da fare'], ['numero', '
 const LIVELLO_MAX = 4;   // i rientri, come in Word: con Tab avanti, con Maiusc+Tab indietro (Ignazio 23/09)
 const vediProgetti = () => typeof eAdmin === 'function' && eAdmin() && !vediTutti();
 async function caricaProgetti() {
-  if (!vediProgetti()) { AG.progetti = []; if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }
+  if (!vediProgetti()) { AG.progetti = []; AG.cose = AG.cose.filter(c => !c.progetto_id); if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }   // senza progetti niente righe di progetto (revisione 24/09)
   const [pr, rg] = await Promise.all([
     dbq('progetti', supa.from('progetti').select('*').eq('user_id', visto().id).order('ordine')),
     dbq('righe dei progetti', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id).not('progetto_id', 'is', null)),
@@ -532,7 +532,8 @@ async function spuntaTitolo(passi, fatto) {
   if (esiti.some(r => r && r.error)) { mostraToast('Non salvato: riprova.'); return apriAgenda(AG.giorno); }
   cambiano.forEach(x => Object.assign(x, dopo(x)));
   disegnaAgenda();
-  if (fatto_il) mostraToast(`Titolo completato: ${cambiano.length} ${cambiano.length === 1 ? 'passo' : 'passi'} fatti`, async () => {
+  // completato o riaperto, sempre con «Annulla» (revisione 24/09: riaprire rimetteva da fare tutte le voci senza dire niente)
+  if (cambiano.length) mostraToast(fatto_il ? `Titolo completato: ${cambiano.length} ${cambiano.length === 1 ? 'passo fatto' : 'passi fatti'}` : `${cambiano.length === 1 ? 'Riaperta 1 voce' : `Riaperte ${cambiano.length} voci`}`, async () => {
     const r = await Promise.all(prima.map(([x, v]) => dbq('titolo', supa.from('cose_da_fare').update(v).eq('id', x.id))));
     if (r.some(e => e.error)) return;
     prima.forEach(([x, v]) => { Object.assign(x, v); });
@@ -570,6 +571,7 @@ function disegnaProgetto() {
   const chiuse = sezioniChiuse(), nascoste = new Set();
   righe.forEach((c, i) => { if (c.tipo === 'titolo' && chiuse.includes('pt-' + c.id)) sottoTitolo(i).forEach(x => nascoste.add(x.id)); });
   const n = contaProgetto(p.id);
+  const calcolati = new Map(A.conTitoliFatti(AG.cose).filter(x => x.tipo === 'titolo' && x.giorno).map(x => [x.id, x]));   // i cantieri in programma
   const quando = c => {
     if (!c.giorno) return '';
     const sc = c.scala || 'giorno';
@@ -584,7 +586,7 @@ function disegnaProgetto() {
     const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
     if (tipo === 'titolo') {
       const f = titoloFatto(i), chiuso = chiuse.includes('pt-' + c.id), passi = sottoTitolo(i), restano = passi.filter(x => !x.fatto_il).length;
-      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${(x => x ? `<small>${esc(x)}</small>` : '')([chiuso && passi.length ? (restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`) : '', quando(c)].filter(Boolean).join(' · '))}</button><button class="pj-copia" aria-label="Copia il titolo con le sue righe">${ic('copia')}</button></div>`;
+      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${(x => x ? `<small>${esc(x)}</small>` : '')([chiuso && passi.length ? (restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`) : '', quando(calcolati.get(c.id) || c)].filter(Boolean).join(' · '))}</button><button class="pj-copia" aria-label="Copia il titolo con le sue righe">${ic('copia')}</button></div>`;
     }
     const nascosta = nascoste.has(c.id) ? ' pj-nascosta' : '';
     if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}${nascosta}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span>${quando(c) ? `<small>${esc(quando(c))}</small>` : ''}</button></div>`;
@@ -817,10 +819,12 @@ async function spuntaCosa(c, opz = {}) {
 function foglioCosa(c, oggi, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const A = MB21Agenda;
+  // un cantiere in programma è fatto quando lo sono tutte le sue voci: si calcola (conTitoliFatti), nel database non c'è
+  const calcolato = c.tipo === 'titolo' && c.giorno ? A.conTitoliFatti(AG.cose).find(x => x.id === c.id) : null, cantiereFatto = !!(calcolato && calcolato.fatto_il);
   // Settimana e Mese (Ignazio 23/09): si sceglie la settimana (o il mese) e, volendo, un giorno preciso dentro;
   // con il giorno la cosa diventa del Giorno (scala giorno), senza resta della settimana/del mese.
   // solo con il giorno (24/09): una riga senza giorno ma con la scala «settimana» faceva fallire il foglio (spostaGiorno(null))
-  const sposta = c.giorno && ['settimana', 'mese'].includes(c.scala) ? {
+  const sposta = c.giorno && ['settimana', 'mese'].includes(c.scala) && !cantiereFatto ? {
     inizio: c.riportata ? inizioScalaMB(c.scala, oggi) : c.giorno, giorno: null,
     giorni() { return c.scala === 'mese' ? Array.from({ length: 31 }, (_, i) => A.spostaGiorno(this.inizio, i)).filter(g => g.slice(0, 7) === this.inizio.slice(0, 7)) : Array.from({ length: 7 }, (_, i) => A.spostaGiorno(this.inizio, i)); },
     nome() {
@@ -857,7 +861,7 @@ function foglioCosa(c, oggi, opz = {}) {
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
     ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
       <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
-    <p class="fc-quando">${!c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
+    <p class="fc-quando">${cantiereFatto ? `Fatto: tutte le sue ${calcolato.passi} voci sono fatte, l'ultima ${esc(dataLunga(MB21Agenda.partiRoma(calcolato.fatto_il).giorno))}.` : !c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
       <label style="margin-top:10px">${ic('scala-giorno')} Giorno <small>facoltativo</small></label>
@@ -906,6 +910,7 @@ function foglioCosa(c, oggi, opz = {}) {
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
     if (error) return mostraToast('Non salvato: riprova.');   // prima il foglio restava fermo senza dire niente (23/09)
     Object.assign(c, dopo);
+    if ('contatto_id' in dopo && !dopo.contatto_id) c.contatti = null;   // diventata titolo: niente più persona, anche sullo schermo
     chiudi();
     ridisegna();
   };
@@ -976,7 +981,7 @@ function foglioCosa(c, oggi, opz = {}) {
     : c.scala === 'settimana' ? A.spostaGiorno(c.riportata ? A.inizioScala('settimana', oggi) : c.giorno, 7) : A.spostaGiorno(c.riportata ? oggi : c.giorno, 1) });
   velo.querySelector('#fc-elimina').onclick = async () => {
     // un titolo con voci si elimina solo dopo la conferma (passo 3: ora si apre anche dal giorno, dove è facile sbagliare)
-    if (eTitolo && passiT.length && !await chiediConferma(`Eliminare il titolo «${c.testo}»?`, `Le sue ${passiT.length} ${passiT.length === 1 ? 'voce non si cancella' : 'voci non si cancellano'}: ${passiT.length === 1 ? 'resta' : 'restano'} nel progetto.`, 'Elimina il titolo', true)) return;
+    if (eTitolo && passiT.length && !await chiediConferma(`Eliminare il titolo «${c.testo}»?`, passiT.length === 1 ? 'La sua voce non si cancella: resta nel progetto.' : `Le sue ${passiT.length} voci non si cancellano: restano nel progetto.`, 'Elimina il titolo', true)) return;
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').delete().eq('id', c.id));
     if (error) return;
     AG.cose = AG.cose.filter(x => x.id !== c.id);
@@ -1586,11 +1591,13 @@ async function cercaMB(testo, box, chiudi) {
   const passati = tutti.filter(a => a.quando < adesso).sort((x, y) => (x.quando < y.quando ? 1 : -1));
   const elenco = [...prossimi, ...passati].slice(0, 50);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  // i cantieri in programma: fatto e giorno si calcolano (conTitoliFatti), nel database il titolo non li ha (revisione 24/09)
+  const calcolati = new Map(A.conTitoliFatti(AG.cose || []).filter(x => x.tipo === 'titolo' && x.giorno).map(x => [x.id, x]));
   const quandoCosa = c => !c.giorno ? `progetto «${(AG.progetti || []).find(x => x.id === c.progetto_id) ? AG.progetti.find(x => x.id === c.progetto_id).titolo : ''}»` : c.scala === 'mese' ? A.titoloMese(c.giorno) : c.scala === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : titoloGiorno(c.giorno, oggi);
   const righe = elenco.map(a => {
     const p = A.partiRoma(a.quando), cat = (a.contatti && a.contatti.categoria) || a.categoria;
     return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
-  }).join('') + (cose.data || []).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-progetto="${esc(c.progetto_id || '')}" data-cosa-id="${esc(c.id)}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
+  }).join('') + (cose.data || []).map(c => calcolati.get(c.id) ? { ...c, fatto_il: calcolati.get(c.id).fatto_il, giorno: calcolati.get(c.id).giorno } : c).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-progetto="${esc(c.progetto_id || '')}" data-cosa-id="${esc(c.id)}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
   const quanti = elenco.length + (cose.data || []).length;
   box.innerHTML = quanti ? `<div class="mb-ris-conto">${tutti.length > 50 ? 'Primi 50 risultati: scrivi qualcosa di più preciso' : `${quanti} ${quanti === 1 ? 'risultato' : 'risultati'}`}</div>${righe}` : '<div class="mb-vuoto">Nessun risultato.</div>';
   box.querySelectorAll('.mb-ris[data-evento]').forEach(b => { b.onclick = async () => {
