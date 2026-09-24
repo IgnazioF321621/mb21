@@ -1,7 +1,7 @@
 // MB21 · il coach che parla (cantiere 42): la chat che si apre dopo un esito, al posto del foglietto della riflessione.
 // I messaggi NON stanno in questo file, perché il progetto su GitHub è pubblico: stanno nell'archivio privato, la tabella
 // coach_batterie, una «batteria» per situazione (le telefonate: «telefonata», «telefonata_partner», «telefonata_cliente»; dopo il risultato di un
-// Piano Marketing o di un Follow Up: «piano_marketing», «follow_up»; si scrivono e si caricano dalla cartella privata
+// Piano Marketing o di un Follow Up: «piano_marketing», «follow_up»; dopo una Consulenza prodotti: «consulenza»; si scrivono e si caricano dalla cartella privata
 // ~/mb21-import/training). Qui c'è solo la logica: quale batteria vale per un esito, come si monta la chat da una batteria
 // (l'imbuto), cosa si salva, e il motore che la recita (puntini, fumetti, risposte da toccare).
 // Lo usano l'app (pagina-coach.js → chiediCoach) e la pagina privata di prova, così la chat è la stessa.
@@ -33,6 +33,8 @@
     if (tipo === 'Contatto' && (!modalita || modalita === 'Telefonata') && esito && !SENZA_PAROLE.includes(esito))
       return TELEFONATA_DI[categoria] || 'telefonata';
     if (DOPO_IL_RISULTATO[tipo] && A.RISULTATI[tipo].esiti.includes(esito)) return DOPO_IL_RISULTATO[tipo];
+    // Consulenza prodotti (24/09): dopo Vendita o No Vendita (le fasi della Consulenza PRD, le stesse per ogni categoria)
+    if (tipo === 'Consulenza PRD' && A.fasiPer('Prospect', tipo).includes(esito)) return 'consulenza';
     return null;
   }
 
@@ -76,14 +78,15 @@
     ], nomi);
   }
 
-  // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing e Follow Up:
+  // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up e Consulenza:
   // lo stesso montatore, ognuna con la sua batteria.
-  const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata };
+  const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata,
+    consulenza: telefonata };
   const monta = (sit, B, esito, nomi, n) => (MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
 
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
   // { chiave: 'obiezioni' o 'freni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima' · le domande di prima ('colpito', 'perche')
-  //   · le domande dell'esito ('lavoro', 'motivo', 'inaugurazione', 'quando', 'decisione'),
+  //   · le domande dell'esito ('lavoro', 'motivo', 'inaugurazione', 'quando', 'decisione', 'interesse'),
   //   domanda, risposta, obiezione? }.
   // null se non c'è nessuna risposta (chat chiusa subito).
   function riflessioneDa(risposte) {
