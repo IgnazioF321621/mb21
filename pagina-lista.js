@@ -454,7 +454,7 @@ async function coseDellaScheda(c) {
     ${cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
       <button class="spunta" aria-label="${x.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${x.fatto_il ? ic('fatto') : ''}</button>
       <button class="testo"><span>${esc(x.testo)}</span><small>${esc([quando(x), typeof nomeProgetto === 'function' ? nomeProgetto(x) : ''].filter(Boolean).join(' · '))}</small></button></div>`).join('')}
-    <form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" maxlength="200" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form></div>`;
+    <form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form></div>`;
   const ridisegna = () => coseDellaScheda(c);
   posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
     const x = cose.find(y => y.id === r.dataset.cosa);
@@ -465,7 +465,7 @@ async function coseDellaScheda(c) {
   form.onsubmit = async ev => {
     ev.preventDefault();
     if (soloGuardo()) return;
-    const testo = MB21Agenda.testoCosa(form.querySelector('input').value);
+    const testo = MB21Agenda.testoCosa(form.querySelector('input').value); if (typeof avvisaSeLungo === 'function') avvisaSeLungo(form.querySelector('input').value);
     if (!testo) return;
     // la cosa è del proprietario della scheda (l'Admin su una scheda di un partner la mette nel suo MB Plan)
     const { error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: c.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c.id }));

@@ -536,7 +536,11 @@ prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte
   assert.deepEqual(A.coseDelGiorno([], '2026-09-22', '2026-09-22'), []);
   assert.equal(A.testoCosa('  comprare   i biglietti  '), 'comprare i biglietti');
   assert.equal(A.testoCosa('   '), null);
-  assert.equal(A.testoCosa('x'.repeat(300)).length, 200);
+  assert.equal(A.testoCosa('x'.repeat(300)).length, 300);   // dal 24/09 le cose da fare arrivano a 1000 lettere
+  assert.equal(A.testoCosa('x'.repeat(1300)).length, 1000);
+  assert.equal(A.testoCosa('x'.repeat(300), A.MAX_VOCE).length, 200);   // le voci dei modelli restano a 200
+  assert.equal(A.testoTroppoLungo('x'.repeat(1000)), false); assert.equal(A.testoTroppoLungo('x'.repeat(1001)), true);
+  assert.equal(A.testoTroppoLungo('  ' + 'x'.repeat(200) + '  ', A.MAX_VOCE), false);   // gli spazi ai bordi non contano
   // le spunte del modello e le cose su altre scale non sono cose del giorno
   const altre = [
     { id: 'm', testo: 'Leggere', giorno: '2026-09-22', modello_id: 'v1', fatto_il: '2026-09-22T10:00:00Z' },

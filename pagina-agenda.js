@@ -140,7 +140,7 @@ function foglioHtml(oggi) {
   };
   // Una sezione per ogni modello personale acceso: il titolo del modello prende il posto di «Da fare» (Ignazio 22/09);
   // dentro le voci del modello di quel giorno, le cose scritte a mano in quella sezione e il campo per aggiungerne.
-  const campo = gid => `<form class="ag-cosa-nuova" data-gruppo="${gid || ''}"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
+  const campo = gid => `<form class="ag-cosa-nuova" data-gruppo="${gid || ''}"><input type="text" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
   const attivi = AG.modelli.filter(m => m.attivo !== false && (m.scala || 'giorno') === 'giorno');   // gli altri stanno nel foglio della loro scala
   // Ogni sezione si chiude e si apre con la freccetta (Ignazio 23/09); da chiusa dice quante cose restano. La scelta si ricorda sul dispositivo.
   const chiuse = sezioniChiuse();
@@ -193,7 +193,7 @@ function scalaSopraHtml(scala, oggi) {
     <button class="ag-sopra-testa" data-chiudi-sez="${chiave}" aria-expanded="${aperta}">${ic('freccia')}${ic(scala === 'mese' ? 'scala-mese' : 'scala-settimana')}<b>${esc(nome)}</b><small>${restano ? `${restano} da fare` : 'niente da fare'}</small></button>
     ${aperta ? `<div class="ag-sopra-dentro">
       ${voci.map(v => riga(v, 'data-voce', ` data-voce-giorno="${inizio}"`)).join('')}${cose.map(c => riga(c, 'data-cosa')).join('')}
-      <form class="ag-cosa-nuova" data-gruppo="" data-scala="${scala}"><input type="text" maxlength="200" placeholder="Aggiungi ${scala === 'mese' ? 'al mese' : 'alla settimana'}…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <form class="ag-cosa-nuova" data-gruppo="" data-scala="${scala}"><input type="text" placeholder="Aggiungi ${scala === 'mese' ? 'al mese' : 'alla settimana'}…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
       <button class="link ag-sopra-apri" data-apri-scala="${scala}">Apri ${scala === 'mese' ? 'il Mese' : 'la Settimana'} ›</button></div>` : ''}
   </section>`;
 }
@@ -227,6 +227,7 @@ function collegaCose(oggi) {
       ev.preventDefault();
       const testo = A.testoCosa(campo.value);
       if (!testo) return;
+      avvisaSeLungo(campo.value);
       const gruppo = form.dataset.gruppo || null, scala = form.dataset.scala || 'giorno';
       const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
       if (form.dataset.progetto) return nuovaRigaProgetto(form, campo.value);
@@ -477,7 +478,12 @@ function nuovoProgetto() {
 }
 // Il tipo di una riga: scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » o «• »
 // puntini, «[] » «☐ » «- [ ] » da fare, «- [x] » e «✓ » fatte). La lettura è MB21Agenda.leggiRiga (con le prove, 24/09).
+// Una riga più lunga del massimo si accorcia, ma lo si dice (Ignazio 24/09: col dettato la fine si perdeva in silenzio)
+function avvisaSeLungo(testo, max = MB21Agenda.MAX_COSA) {
+  if (MB21Agenda.testoTroppoLungo(testo, max)) mostraToast(`Testo lungo: tenute le prime ${max} lettere`);
+}
 function rigaDaTesto(riga, livelloScelto) {
+  avvisaSeLungo(riga);   // vale anche per le righe incollate e per quelle dei progetti
   const r = MB21Agenda.leggiRiga(riga, livelloScelto, AG.tipoRiga || 'cosa');
   return r ? { ...r, livello: r.tipo === 'titolo' ? 0 : Math.min(LIVELLO_MAX, r.livello) } : null;
 }
@@ -578,7 +584,7 @@ function disegnaProgetto() {
     const g = sc === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : sc === 'mese' ? A.titoloMese(c.giorno) : titoloGiorno(c.giorno, oggi);
     return '📅 ' + g + (c.ora ? ' · ' + String(c.ora).slice(0, 5) : '');
   };
-  const inline = id => `<form class="ag-cosa-nuova pj-inline" data-dopo="${esc(id)}"><input type="text" maxlength="200" placeholder="Scrivi e premi Invio · Tab per il rientro · Esc per chiudere" autocomplete="off" style="padding-left:${(AG.livelloInline || 0) * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
+  const inline = id => `<form class="ag-cosa-nuova pj-inline" data-dopo="${esc(id)}"><input type="text" placeholder="Scrivi e premi Invio · Tab per il rientro · Esc per chiudere" autocomplete="off" style="padding-left:${(AG.livelloInline || 0) * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`;
   const dopoRiga = (c, i) => AG.inserisciDopo === c.id ? inline(c.id)
     : righe[i + 1] && righe[i + 1].tipo === 'titolo' && !nascoste.has(c.id) && !(c.tipo === 'titolo' && chiuse.includes('pt-' + c.id)) ? `<button type="button" class="pj-aggiungi" data-dopo="${esc(c.id)}">${ic('piu')} Aggiungi qui</button>` : '';
   const righeHtml = righe.map((c, i) => rigaHtml(c, i) + dopoRiga(c, i)).join('');
@@ -600,7 +606,7 @@ function disegnaProgetto() {
       <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
         <span class="pj-tipi pj-rientri"><button type="button" data-rientro="-1" aria-label="Rientro indietro (Maiusc+Tab)">⇤</button><button type="button" data-rientro="1" aria-label="Rientro avanti (Tab)">⇥</button></span>
-        <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off" style="padding-left:${livOra * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+        <input type="text" placeholder="Aggiungi una riga…" autocomplete="off" style="padding-left:${livOra * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
       <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. <b>Tocca una riga</b> per metterla in programma: in un giorno, in una settimana o in un mese. <b>Tocca un titolo</b> per mettere in programma tutto il cantiere: sarà una riga sola, che si completa quando fai le sue voci.</div>
     </div>`;
   montaScala(html);
@@ -710,7 +716,7 @@ function foglioModello(id) {
         <button class="mod-int" role="switch" aria-checked="${v.attivo ? 'true' : 'false'}" aria-label="${v.attivo ? 'Accesa' : 'Spenta'}"><i></i></button>
         <button class="mod-testo"><span>${esc(v.testo)}</span><small>${esc((m.scala || 'giorno') === 'giorno' ? [A.testoGiorni(v.giorni), oraDurata(v)].filter(Boolean).join(' · ') : 'ogni ' + NOMI_SCALA[m.scala].toLowerCase())}</small></button>
       </div>`).join('') : '<div class="vuoto">Nessuna voce: scrivi qui sotto la prima.</div>'}
-      <form class="ag-cosa-nuova" id="fm-nuova"><input type="text" id="fm-testo" maxlength="200" placeholder="Aggiungi una voce…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <form class="ag-cosa-nuova" id="fm-nuova"><input type="text" id="fm-testo" placeholder="Aggiungi una voce…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
       <div class="fc-comandi"><button class="link elimina-qui" id="fm-elimina">Elimina il modello</button><button class="link" id="fm-chiudi">Chiudi</button></div></div>`;
     velo.querySelector('#fm-x').onclick = chiudi;
     velo.querySelector('#fm-chiudi').onclick = chiudi;
@@ -719,7 +725,7 @@ function foglioModello(id) {
     velo.querySelector('#fm-matita').onclick = () => foglioTitoloModello(m, salvaModello);   // Ignazio 23/09: il titolo si cambia dalla matita
     velo.querySelector('#fm-nuova').onsubmit = ev => {
       ev.preventDefault();
-      const testo = A.testoCosa(velo.querySelector('#fm-testo').value);
+      const testo = A.testoCosa(velo.querySelector('#fm-testo').value, A.MAX_VOCE); avvisaSeLungo(velo.querySelector('#fm-testo').value, A.MAX_VOCE);
       if (testo) aggiungi(testo);
     };
     velo.querySelector('#fm-elimina').onclick = async () => {
@@ -757,7 +763,7 @@ function foglioVoceModello(v, salva, elimina) {
   const disegna = () => {
     const tutti = !giorni.length;
     velo.innerHTML = `<div class="foglio"><h3>Voce del modello</h3>
-      <div class="campo"><textarea id="fv-testo" rows="2" maxlength="200">${esc(v.testo)}</textarea></div>
+      <div class="campo"><textarea id="fv-testo" rows="2">${esc(v.testo)}</textarea></div>
       ${delGiorno ? `<div class="campo"><label>Quando compare</label>
         <div class="ag-scelte"><button data-preset="tutti" class="${tutti ? 'scelto' : ''}">Ogni giorno</button><button data-preset="lv" class="${giorni.join() === '1,2,3,4,5' ? 'scelto' : ''}">Lun-Ven</button><button data-preset="sd" class="${giorni.join() === '6,7' ? 'scelto' : ''}">Sab e Dom</button></div>
         <div class="ag-scelte fv-giorni">${A.GIORNI_SETTIMANA.map((g, i) => `<button data-giorno="${i + 1}" class="${!tutti && giorni.includes(i + 1) ? 'scelto' : ''}">${g}</button>`).join('')}</div></div>
@@ -778,7 +784,7 @@ function foglioVoceModello(v, salva, elimina) {
       const t = velo.querySelector('#fv-testo').value; disegna(); velo.querySelector('#fv-testo').value = t;
     }; });
     velo.querySelector('#fv-salva').onclick = async () => {
-      const testo = A.testoCosa(velo.querySelector('#fv-testo').value);
+      const testo = A.testoCosa(velo.querySelector('#fv-testo').value, A.MAX_VOCE); avvisaSeLungo(velo.querySelector('#fv-testo').value, A.MAX_VOCE);
       if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
       const co = velo.querySelector('#fv-ora');
       if (!co) { await salva(v, { testo }); velo.remove(); return; }   // voce di un modello di settimana, mese, periodo o anno
@@ -867,7 +873,7 @@ function foglioCosa(c, oggi, opz = {}) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
-    <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
+    <div class="campo"><textarea id="fc-testo" rows="3">${esc(c.testo)}</textarea></div>
     ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
       <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
     <p class="fc-quando">${cantiereFatto ? `Fatto: tutte le sue ${calcolato.passi} voci sono fatte, l'ultima ${esc(dataLunga(MB21Agenda.partiRoma(calcolato.fatto_il).giorno))}.` : !c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : rip ? `Da fare dal ${esc(dataLunga(rip))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
@@ -948,7 +954,7 @@ function foglioCosa(c, oggi, opz = {}) {
   const togli = velo.querySelector('#fc-togli-ora');
   if (togli) togli.onclick = () => cambia({ ora: null, durata: null });
   velo.querySelector('#fc-salva').onclick = () => {
-    const testo = A.testoCosa(velo.querySelector('#fc-testo').value);
+    const testo = A.testoCosa(velo.querySelector('#fc-testo').value); avvisaSeLungo(velo.querySelector('#fc-testo').value);
     if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
     const campoOra = velo.querySelector('#fc-ora'), campoGiorno = velo.querySelector('#fc-giorno');
     const dopo = { testo };
@@ -1093,7 +1099,7 @@ function disegnaMese() {
       ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
         <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
         <button class="testo"><span>${esc(c.testo)}</span>${sottoCosa([c.riportata ? `da ${nomeMese(c.riportata)}` : '', nomeProgetto(c)])}</button></div>`).join('')}
-      <form class="ag-cosa-nuova" data-gruppo="" data-scala="mese"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <form class="ag-cosa-nuova" data-gruppo="" data-scala="mese"><input type="text" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
     </div>`;
   if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
@@ -1199,7 +1205,7 @@ function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, t
       ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
         <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
         <button class="testo"><span>${esc(c.testo)}</span>${sottoCosa([c.riportata ? riportataDi(c.riportata) : '', nomeProgetto(c)])}</button></div>`).join('')}
-      <form class="ag-cosa-nuova" data-gruppo="" data-scala="${scala}"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <form class="ag-cosa-nuova" data-gruppo="" data-scala="${scala}"><input type="text" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
     </div>`;
 }
 function montaScala(html, prima, dopo) {
@@ -1299,7 +1305,7 @@ function disegnaSettimana() {
       ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
         <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
         <button class="testo"><span>${esc(c.testo)}</span>${sottoCosa([c.riportata ? `da sett. ${A.numeroSettimana(c.riportata)}` : '', nomeProgetto(c)])}</button></div>`).join('')}
-      <form class="ag-cosa-nuova" data-gruppo="" data-scala="settimana"><input type="text" maxlength="200" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
+      <form class="ag-cosa-nuova" data-gruppo="" data-scala="settimana"><input type="text" placeholder="Aggiungi…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
   if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button><button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
