@@ -91,7 +91,7 @@
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
   /* Le icone (icone.js): a tratto, un colore solo, grandi quanto la scritta se non si dice altro */
   svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; flex: none; }
-  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 6px; min-height: var(--tocco); min-width: 56px; }
+  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 2px; min-height: var(--tocco); min-width: 50px; }   /* 24/09: con «Training» le voci arrivano a 7 */
   nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
@@ -444,6 +444,7 @@
   .foglio.mc .elimina-qui { margin: 14px 0; }
   .mc-fondo { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; background: var(--superficie); margin: 0 -16px;
     padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }
+  .trn-allenamento .mc-fondo[hidden] { display: none; }   /* 24/09: «display: grid» vince su hidden (come per la barra in basso): «Un'altra · Chiudi» solo a fine allenamento. Nella chat del coach il «Chiudi» si vede da subito: da decidere con Ignazio */
   /* Dopo l'esito (cantiere 42): il foglio della chat prende il colore del tipo di appuntamento (--tipo, come in Agenda) */
   .foglio.mc.rifl { border-top: 6px solid var(--tipo); background: var(--sfondo); background: color-mix(in srgb, var(--tipo) 7%, var(--sfondo)); }
   .rifl .mc-testa .ts-pastiglia { background: var(--tipo); }
@@ -475,6 +476,64 @@
   .ricordo small { display: block; font-size: 12.5px; color: var(--cat-partner); font-weight: 600; margin-bottom: 2px; }
   @keyframes cch-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes cch-salta { 0%, 60%, 100% { transform: none; opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+  /* ── Training (cantiere 42, 24/09): la pagina per allenarsi (pagina-training.js); ogni settore ha il suo colore (--col) ── */
+  .trn-perte { padding: 14px 16px 6px; }
+  .trn-perte .sh-etichetta { display: flex; align-items: center; gap: 6px; color: var(--proposta); }
+  .trn-perte-sotto { font-size: 14px; color: var(--testo-soft); margin: 0 0 8px; }
+  .trn-perte-riga { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; border: 0; border-top: 1px solid var(--bordo); background: none;
+    padding: 11px 0; font-family: inherit; color: var(--testo); }
+  .trn-perte-riga > div { flex: 1; min-width: 0; } .trn-perte-riga b { display: block; font-size: 15.5px; }
+  .trn-perte-riga small { display: block; font-size: 12.5px; color: var(--testo-soft); margin-top: 1px; }
+  .trn-perte-riga > span { flex: none; font-size: 14px; font-weight: 700; color: var(--proposta); }
+  .trn-chips { margin: 0 0 4px; }
+  .trn-settore { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin: 12px 0 2px; border-radius: var(--raggio-card);
+    background: color-mix(in srgb, var(--col) 12%, var(--superficie)); }
+  .trn-settore > div { flex: 1; min-width: 0; } .trn-settore b { display: block; font-size: 19px; line-height: 1.2; }
+  .trn-settore small { display: block; color: var(--testo-soft); font-size: 13.5px; margin-top: 2px; }
+  .trn-icona, .trn-tondo { flex: none; display: grid; place-items: center; border-radius: 50%; }
+  .trn-icona { width: 46px; height: 46px; background: var(--col); color: #fff; }
+  .trn-icona > svg.ic { width: 26px; height: 26px; } .trn-tondo > svg.ic { width: 20px; height: 20px; }   /* la misura va nello stile: svg.ic vince sugli attributi */
+  .trn-foglio .trn-pastiglia > svg.ic { width: 24px; height: 24px; } .trn-dove > svg.ic { width: 19px; height: 19px; }
+  button.trn-tutte { display: block; width: 100%; background: none; border: 0; color: var(--col); font-size: 15px; font-weight: 700; padding: 10px 0 4px; font-family: inherit; }
+  .trn-conti { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .trn-conti span { font-size: 12.5px; color: var(--testo-soft); background: var(--superficie); border-radius: var(--raggio-pill); padding: 3px 10px; }
+  .trn-conti b { display: inline; font-size: 12.5px; color: var(--col); }
+  .trn-allena, .trn-riga { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 0; background: var(--superficie); color: var(--testo);
+    border-radius: var(--raggio-riga); padding: 12px 14px; margin: 7px 0; box-shadow: var(--ombra-card); font-family: inherit; }
+  .trn-allena > svg.ic { width: 26px; height: 26px; color: var(--col); }
+  .trn-allena > div, .trn-riga > div { flex: 1; min-width: 0; }
+  .trn-allena b, .trn-riga b { display: block; font-size: 15.5px; line-height: 1.25; }
+  .trn-allena small, .trn-riga small { display: block; font-size: 13px; color: var(--testo-soft); margin-top: 2px; }
+  .trn-riga small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .trn-barra { display: block; height: 6px; border-radius: 99px; background: var(--sfondo); margin-top: 8px; overflow: hidden; }
+  .trn-barra i { display: block; height: 100%; background: var(--col); border-radius: 99px; }
+  .trn-freccia { flex: none; font-size: 22px; color: var(--testo-tenue); }
+  .trn-tondo { width: 38px; height: 38px; background: color-mix(in srgb, var(--col) 13%, var(--superficie)); color: var(--col); }
+  .trn-pag { flex: none; min-width: 48px; text-align: center; font-size: 13px; font-weight: 800; color: var(--col); border-radius: 12px; padding: 8px 6px;
+    background: color-mix(in srgb, var(--col) 13%, var(--superficie)); }
+  .trn-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gr-crescita-tinta); color: var(--gr-crescita); margin: 5px 4px 0 0; }
+  .trn-sotto { margin: 0 4px 6px; }
+  .foglio.trn-foglio { border-top: 6px solid var(--col); }
+  .trn-foglio .trn-pastiglia { background: var(--col); color: #fff; }
+  .trn-foglio-corpo { padding-top: 12px; }
+  .trn-foglio h4 { margin: 18px 0 6px; font-size: 15px; }
+  .trn-foglio h5 { margin: 12px 0 4px; font-size: 12px; color: var(--testo-soft); text-transform: uppercase; letter-spacing: .8px; }
+  .trn-foglio ul { margin: 0; padding-left: 20px; } .trn-foglio li { margin: 5px 0; font-size: 15px; line-height: 1.4; }
+  .foglio.trn-foglio p.trn-testo { white-space: pre-wrap; color: var(--testo); font-size: 15px; line-height: 1.45; }
+  .trn-meta { font-size: 14px; color: var(--testo-soft); margin: 2px 0 10px; }
+  .trn-dove { display: flex; align-items: center; gap: 8px; border-radius: var(--raggio-bottone); padding: 12px 14px; font-size: 15px; font-weight: 600;
+    background: color-mix(in srgb, var(--col) 11%, var(--superficie)); color: var(--col); text-decoration: none; margin: 8px 0; }
+  .trn-appunti { background: var(--sfondo); border-radius: var(--raggio-riga); padding: 12px 14px; margin-top: 16px; }
+  .trn-cap { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--bordo); }
+  .trn-cap b { display: block; font-size: 15px; } .trn-cap small { display: block; font-size: 13.5px; color: var(--testo-soft); line-height: 1.35; margin-top: 2px; }
+  .trn-capitolo { border-top: 1px solid var(--bordo); padding: 11px 0; } .trn-capitolo summary { font-weight: 600; font-size: 15px; cursor: pointer; }
+  .trn-dafare { margin-top: 8px; } .trn-dafare b { font-size: 13px; color: var(--col); }
+  .foglio.cch p.trn-al-intro { font-size: 15px; color: var(--testo-soft); margin: 4px 0 12px; }
+  .trn-ob { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .trn-ob button { border: 1.5px solid var(--tipo); color: var(--tipo); background: var(--superficie); border-radius: var(--raggio-pill); min-height: 42px; padding: 8px 14px;
+    font-size: 15px; font-weight: 600; font-family: inherit; }
+  .trn-ob button.fatta { background: color-mix(in srgb, var(--tipo) 12%, var(--superficie)); }
+  .trn-allenamento .mc-fondo { grid-template-columns: 1fr 2fr; }
   /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
   /* Novità: righe bianche staccate come nel resto dell'app (cantiere 34, 20/09) */
   .nv-pagina { margin: 16px 2px 6px; font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: 1.2px; }
@@ -1542,43 +1601,46 @@
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
   <button data-tab="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-report"/></svg>Report</button>
   <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
+  <button data-tab="training" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg>Training</button>   <!-- cantiere 42: per ora solo nell'anteprima (TRAINING_VISIBILE) -->
   <button data-tab="admin" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-admin"/></svg>Admin</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609241617"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609241617"></script>
-<script src="lista.js?v=202609241617"></script>
-<script src="rubrica.js?v=202609241617"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609241617"></script>
-<script src="agenda.js?v=202609241617"></script>
-<script src="coach.js?v=202609241617"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="report.js?v=202609241617"></script>
-<script src="check.js?v=202609241617"></script>
-<script src="mappa.js?v=202609241617"></script>
-<script src="pagina-coach.js?v=202609241617"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-dashboard.js?v=202609241617"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609241617"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609241617"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609241617"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609241617"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609241617"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609241617"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609241617"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609241617"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609241617"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609241617"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609241617"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609241617"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609241617"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609241617"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609241617"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609241617"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609241617"></script>
-<script src="benvenuto.js?v=202609241617"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609241617"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609241620"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609241620"></script>
+<script src="lista.js?v=202609241620"></script>
+<script src="rubrica.js?v=202609241620"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609241620"></script>
+<script src="agenda.js?v=202609241620"></script>
+<script src="coach.js?v=202609241620"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609241620"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609241620"></script>
+<script src="check.js?v=202609241620"></script>
+<script src="mappa.js?v=202609241620"></script>
+<script src="pagina-coach.js?v=202609241620"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609241620"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609241620"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609241620"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609241620"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609241620"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609241620"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609241620"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609241620"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609241620"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609241620"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609241620"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609241620"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609241620"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609241620"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609241620"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609241620"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609241620"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609241620"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609241620"></script>
+<script src="benvenuto.js?v=202609241620"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609241620"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.24 · 16:17';
+const APP_VERSION = '2026.09.24 · 16:20';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1923,9 +1985,13 @@ async function controllaAbbonamento() {
   ST.scaduto = MB21Dashboard.statoAbbonamento(scadenza, MB21Coda.oggiRoma()) === 'scaduto';
 }
 
+// La pagina Training (cantiere 42, 24/09; pagina-training.js): per ora solo nell'anteprima sul Mac (Ignazio: «al momento in locale»).
+// Sta qui e non nella pagina: se pagina-training.js mancasse, la barra funziona lo stesso.
+const TRAINING_VISIBILE = ['127.0.0.1', 'localhost'].includes(location.hostname);
 function aggiornaTab() {
   document.querySelectorAll('#tab button').forEach(b => {
-    b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
+    b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE)
+      || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
   });
 }
 
@@ -1933,6 +1999,7 @@ function mostraTab() {
   const nav = document.getElementById('tab');
   nav.hidden = false;
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
+  if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
   if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
     ST.tab = 'oggi'; LS.ritorno = null;
     mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
@@ -1950,6 +2017,7 @@ function mostraTab() {
   if (ST.tab === 'check') return apriPaginaCheck();
   if (ST.tab === 'admin') return apriAdmin();
   if (ST.tab === 'profilo') return apriProfilo();   // cantiere 25: dal cerchietto in Dashboard
+  if (ST.tab === 'training') return apriTraining();   // cantiere 42: pagina-training.js
 }
 
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine
