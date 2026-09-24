@@ -230,8 +230,9 @@ function trnSessione(carte, modo, titolo) {
       corpo.querySelector('#trn-gira').onclick = () => {
         corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti piccola">${esc(d.davanti)}</div>
           <div class="trn-frase-dietro">${esc(d.dietro)}</div>${trnFonte(c)}
-          <div class="trn-sapevo"><button class="no" data-s="0">Non la sapevo</button><button class="si" data-s="1">La sapevo</button></div></div>`;
+          <div class="trn-sapevo"><button class="no" data-s="0">Non la sapevo</button><button class="si" data-s="1">La sapevo</button></div>${trnCorreggi()}</div>`;
         trnCollegaFonte(corpo);
+        trnCollegaCorreggi(corpo, c, { dove: modo, domanda: d.davanti });
         corpo.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { risposto(b.dataset.s === '1', { scelta: b.textContent }); i++; mostra(); });
       };
       return;
@@ -251,8 +252,9 @@ function trnSessione(carte, modo, titolo) {
       b.classList.add(r.giusta ? 'giusta' : 'sbagliata');
       if (!r.giusta) corpo.querySelectorAll('[data-r]').forEach(x => { if (d.risposte[Number(x.dataset.r)].giusta) x.classList.add('giusta'); });
       corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : c.trabocchetto ? 'Era un trabocchetto!' : 'Non proprio'}</b>
-        ${esc(c.perche || '')}${trnFonte(c)}</div>`;
+        ${esc(c.perche || '')}${trnFonte(c)}</div>${trnCorreggi()}`;
       trnCollegaFonte(corpo);
+      trnCollegaCorreggi(corpo, c, { dove: modo, domanda: d.testo, scelta: r.testo, giusta: r.giusta });
       risposto(r.giusta, { scelta: r.testo });
       fondo.hidden = false;
       avanti.focus({ preventScroll: true });
@@ -282,9 +284,13 @@ function trnSessione(carte, modo, titolo) {
           ${prima ? `<br>La volta scorsa ${prima.giuste}: ${trnDiff(giuste - prima.giuste)}.` : ''}
           ${st < 3 ? '<br>Le sbagliate tornano nel ripasso di domani.' : ''}</p>${filaHtml}</div>
         <h4 class="trn-rif-t">Le tue risposte</h4>
-        ${fatte.map(f => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div>${!f.giusta && f.carta.trabocchetto ? '<span class="trn-trab">Era un trabocchetto</span>' : ''}<b>${esc(f.domanda ? f.domanda.testo : '')}</b>
+        ${fatte.map((f, k) => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div>${!f.giusta && f.carta.trabocchetto ? '<span class="trn-trab">Era un trabocchetto</span>' : ''}<b>${esc(f.domanda ? f.domanda.testo : '')}</b>
           ${f.giusta ? `<small>${esc(f.scelta)}</small>` : `<small class="tua">La tua: ${esc(f.scelta)}</small><small>Giusta: ${esc(f.domanda.risposte.find(r => r.giusta).testo)}</small>`}
-          <small class="perche">${esc(f.carta.perche || '')}</small></div></div>`).join('')}`;
+          <small class="perche">${esc(f.carta.perche || '')}</small>${trnCorreggi(k)}</div></div>`).join('')}`;
+      corpo.querySelectorAll('[data-correggi]').forEach(b => {
+        const f = fatte[Number(b.dataset.correggi)];
+        b.onclick = () => trnFoglioCorreggi(f.carta, { dove: 'test', domanda: f.domanda ? f.domanda.testo : '', scelta: f.scelta, giusta: f.giusta }, b);
+      });
       return;
     }
     const tornano = {};
@@ -296,6 +302,50 @@ function trnSessione(carte, modo, titolo) {
       ${filaHtml}</div>`;
   };
   mostra();
+}
+
+// Solo per l'Admin (Ignazio 24/09 sera: «se io vedo le risposte, non mi posso allenare… nella mia ci deve essere anche la cosa di poter
+// fare gli aggiustamenti, mentre gli utenti normali non vedono questo passaggio»): sotto la risposta «Correggi questa carta», un foglio
+// con il motivo a un tocco e cosa cambiare. La carta esatta, con quello che c'era sullo schermo, va in training_correzioni (solo l'Admin
+// la legge e la scrive); Claude corregge il mazzo nell'archivio e la segna risolta. Ai partner non compare niente.
+const TRN_MOTIVI = [['risposta', 'La risposta non è giusta'], ['non_chiara', 'Non si capisce'], ['altro', 'Altro']];
+function trnCorreggi(k = '') {
+  return eAdmin() ? `<button class="trn-correggi" data-correggi="${k}">${ic('modifica', 16)} Correggi questa carta</button>` : '';
+}
+function trnCollegaCorreggi(el, carta, visto) {
+  el.querySelectorAll('[data-correggi]').forEach(b => b.onclick = () => trnFoglioCorreggi(carta, visto, b));
+}
+function trnFoglioCorreggi(carta, visto, bottone) {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Correggi questa carta</h3>
+    <p>${esc(visto.domanda || '')} <small>${esc(carta.id)}</small></p>
+    <div class="trn-corr-motivi">${TRN_MOTIVI.map(([k, t]) => `<button data-m="${k}">${esc(t)}</button>`).join('')}</div>
+    <div class="campo"><textarea rows="3" maxlength="1000" placeholder="Cosa cambiare (se vuoi)"></textarea></div>
+    <button class="primario" id="trn-corr-invia" disabled>Invia</button>
+    <button class="link" id="trn-corr-no">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  let motivo = null;
+  const invia = velo.querySelector('#trn-corr-invia'), testo = velo.querySelector('textarea');
+  const pronto = () => { invia.disabled = !motivo && !testo.value.trim(); };
+  velo.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    motivo = motivo === b.dataset.m ? null : b.dataset.m;
+    velo.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('scelto', x.dataset.m === motivo));
+    pronto();
+  });
+  testo.oninput = pronto;
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#trn-corr-no').onclick = chiudi;
+  invia.onclick = async () => {
+    invia.disabled = true;
+    const r = await dbq('training: correzione', supa.from('training_correzioni').insert({ user_id: ST.utente.id, carta: carta.id, motivo,
+      testo: testo.value.trim() || null, visto }));
+    if (r.error) { pronto(); return mostraToast('Correzione non salvata: riprova.'); }
+    chiudi();
+    if (bottone) { bottone.disabled = true; bottone.innerHTML = `${ic('fatto', 16)} Segnata`; }
+    mostraToast('Carta segnata per la correzione.');
+  };
 }
 
 // da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro)
