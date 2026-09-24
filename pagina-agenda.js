@@ -62,6 +62,8 @@ async function caricaAgenda() {
   for (const r of [app1, ric, pas, tel, cd, md, mm]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
   AG.passati = pas.data;
+  // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
+  const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
   AG.cose = cd ? cd.data : [];
   AG.modello = md ? md.data : [];
   const w = await dbq('WES', supa.from('wes').select('data, giorno').order('data'));
@@ -73,6 +75,7 @@ async function caricaAgenda() {
   await caricaProgetti();
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
+  await ricordi;
 }
 
 // ── Come si guarda l'Agenda (cantiere 37): «orario» (la griglia del giorno), «settimana», «elenco».
@@ -1881,7 +1884,9 @@ function extraEvento(e) {
   // «Fissa appuntamento» solo dopo PM Fissato / Appuntamento; un «Richiamare» si sposta (Ignazio 23/09: con «Fissa» nasceva
   // una seconda telefonata alla stessa persona lo stesso giorno). Sposta porta con sé anche il giorno in cui torna in coda.
   const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
-  return `${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
+  // prima dell'appuntamento (ancora da fare, o un richiamo dalla coda): il promemoria del coach, «Ti eri detto…» (cantiere 42)
+  const ricordo = richiamo || !e.esito ? ricordoHtml(e.contatto_id, e.contatti && e.contatti.nome) : '';
+  return `${ricordo}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`

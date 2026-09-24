@@ -75,6 +75,27 @@
     return date.length ? date.map(x => ({ ...x })) : null;
   }
 
+  // Il promemoria «Ti eri detto…» (cantiere 42, 24/09): la risposta si ritrova al prossimo appuntamento con la stessa persona.
+  // Da righe di azioni { id, contatto_id, inizio, creato_il, riflessione }: per ogni contatto l'ultima riflessione che ha la frase
+  // per la prossima volta → { frase, obiezioni, azione, quando }. Le obiezioni sono quelle di quella volta, senza «Nessuna»;
+  // «Altro» diventa la riga scritta (se c'è). Vale anche per le riflessioni del foglietto (stessa chiave «prossima»).
+  function ricordi(azioni) {
+    const quando = a => a.inizio || a.creato_il || '';
+    const ordinate = [...(azioni || [])].sort((a, b) => (quando(a) < quando(b) ? 1 : quando(a) > quando(b) ? -1 : 0));
+    const out = {};
+    for (const a of ordinate) {
+      if (!a || !a.contatto_id || out[a.contatto_id] || !Array.isArray(a.riflessione)) continue;
+      const r = chiave => a.riflessione.find(x => x && x.chiave === chiave);
+      const frase = r('prossima');
+      if (!frase || typeof frase.risposta !== 'string' || !frase.risposta.trim()) continue;
+      const ob = r('obiezioni'), altro = r('altro');
+      const obiezioni = (ob && Array.isArray(ob.risposta) ? ob.risposta : [])
+        .filter(x => x !== 'Nessuna').map(x => (x === 'Altro' ? (altro && altro.risposta ? `«${altro.risposta}»` : null) : x)).filter(Boolean);
+      out[a.contatto_id] = { frase: frase.risposta.trim(), obiezioni, azione: a.id, quando: quando(a) };
+    }
+    return out;
+  }
+
   // ── il motore: recita un copione dentro `corpo` (un elemento della pagina) ──
   // opz: icona(nome) → svg · fonti: 'tutte' (pagina di prova) o 'consigliabili' (app) · scorri(el): dopo ogni fumetto o bottone
   //      · rif: approfondimenti già in lista · veloce: senza attese (prove).
@@ -187,7 +208,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, situazione, riempi, telefonata, riflessioneDa, chat };
+  const api = { SENZA_PAROLE, situazione, riempi, telefonata, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);
