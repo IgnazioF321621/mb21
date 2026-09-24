@@ -99,9 +99,12 @@ function cambiaRigaDash(nome, daSola) {
   try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {}
   disegnaOggi();
 }
-function rigaApribile(id, classe, icona, titolo, sotto, aperta) {
+// `restano` = quanti ne restano da fare: chiusa, il numero si vede in una pastiglia prima della freccia
+// (Ignazio 24/09: «non si capisce che ci sono 4 persone da chiamare»)
+function rigaApribile(id, classe, icona, titolo, sotto, aperta, restano) {
+  const pastiglia = !aperta && restano ? `<span class="sez-quanti">${restano}</span>` : '';
   return `<button class="ag-blocco sezione ${classe}" id="${id}" aria-expanded="${aperta}">
-    <span>${ic(icona)}<span class="sez-testo"><b>${titolo}</b>${sotto ? `<small>${sotto}</small>` : ''}</span></span><span>${aperta ? '⌄' : '›'}</span></button>`;
+    <span>${ic(icona)}<span class="sez-testo"><b>${titolo}</b>${sotto ? `<small>${sotto}</small>` : ''}</span></span><span>${pastiglia}${aperta ? '⌄' : '›'}</span></button>`;
 }
 
 // ── Bottoni esito (tabella confermata da Ignazio il 14/09, STRUTTURA.md → Bottoni esito) ──
@@ -201,7 +204,8 @@ function disegnaOggi() {
   const apertaCoda = apertaRigaDash('coda', !!r.coda.length);   // da sola si apre solo se c'è qualcuno da chiamare
   html += rigaApribile('sez-coda', r.coda.length ? 'telefonate' : 'telefonate fatta', r.coda.length ? 'telefonate' : 'fatto',
     altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
-    `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, apertaCoda);
+    r.coda.length ? `${r.coda.length} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`
+      : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, apertaCoda, r.coda.length);
   if (apertaCoda) {
     if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
     html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
@@ -270,7 +274,7 @@ function catalogoHtml() {
   const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
   const aperta = apertaRigaDash('catalogo', false);   // da sola è sempre chiusa
   let h = rigaApribile('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
-    `${cat.totale} ancora da catalogare · fatti ${Math.min(fatti, quota)} di ${quota}`, aperta);
+    `${cat.totale} ancora da catalogare · fatti ${Math.min(fatti, quota)} di ${quota}`, aperta, cat.righe.length);
   if (!aperta) return h;
   if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
   if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
