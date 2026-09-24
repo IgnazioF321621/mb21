@@ -53,9 +53,12 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const url = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
+  // App già aperta: la si porta davanti e le si dice dove andare (index.html, «apri-avviso»); cambiare il suo indirizzo con navigate()
+  // sull'iPhone non funzionava e restava sulla Dashboard (24/09). App chiusa: si apre sull'indirizzo dell'avviso.
   event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(finestre => {
     const aperta = finestre.find(f => f.url.startsWith(self.registration.scope));
-    if (aperta) return aperta.navigate(url).then(f => f && f.focus());
-    return clients.openWindow(url);
+    if (!aperta) return clients.openWindow(url);
+    aperta.postMessage({ tipo: 'apri-avviso', url });
+    return aperta.focus().catch(() => {});
   }));
 });
