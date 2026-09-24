@@ -220,7 +220,7 @@ function trnSessione(carte, modo, titolo) {
     const testa = `<div class="trn-tema">${esc(c.tema)}${x.ancora ? ' · riprova' : ''}</div>`;
     if (d.tipo === 'frase') {
       corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti">${esc(d.davanti)}</div>
-        <button class="trn-secondo" id="trn-gira">Gira la carta</button></div>`;
+        <p class="trn-frase-aiuto">${esc(d.aiuto)}</p><button class="trn-secondo" id="trn-gira">Gira la carta</button></div>`;
       corpo.querySelector('#trn-gira').onclick = () => {
         corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti piccola">${esc(d.davanti)}</div>
           <div class="trn-frase-dietro">${esc(d.dietro)}</div>${trnFonte(c)}
