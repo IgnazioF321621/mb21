@@ -783,7 +783,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`pagina-agenda.j
 | 2026.09.24 · 15:37 | Cantiere 42, **solo nell'anteprima** (`COACH_SOLO_ANTEPRIMA`): la chat del coach dopo l'**Appuntamento con un Partner** (`appuntamento_partner`, 11 esiti) |
 | 2026.09.24 · 15:39 | Cantiere 42, **online dalle 15:44** (Ignazio: «pubblica»): la chat dopo l'**Appuntamento con un Partner** accesa per tutti (`COACH_SOLO_ANTEPRIMA` vuota) |
 | 2026.09.24 · 15:49 | Cantiere 42, **solo nell'anteprima** (`COACH_SOLO_ANTEPRIMA`): la chat del coach per **Rimandato e No Show** di PM e Follow Up (`non_avvenuto`) |
-| 2026.09.24 · 15:55 | Cantiere 42 (Ignazio: «pubblica»): la chat per **Rimandato e No Show** accesa anche online (`COACH_SOLO_ANTEPRIMA` vuota) |
+| 2026.09.24 · 15:55 | Cantiere 42, **online dalle 15:57** (Ignazio: «pubblica»; sul sito con la versione 15:56 dell'altra sessione, inviata subito dopo): la chat per **Rimandato e No Show** accesa anche online (`COACH_SOLO_ANTEPRIMA` vuota) |
 | 2026.09.24 · 12:25 | MB Plan, Progetti: le fatte in fondo al loro titolo e i titoli tutti fatti in fondo al progetto; le cose da fare numerate da 1 (Ignazio) |
 | 2026.09.24 · 15:11 | MB Plan, Progetti: copiare un cantiere (iconcina accanto al titolo), una voce o tutto il progetto, per incollarlo in Claude o altrove; copiaTesto unica anche per Rinnovo, Invito e Calendario (Ignazio) |
 | 2026.09.24 · 15:23 | Progetti, copiare: correzioni della revisione (voce rientrata reincollata con i suoi sottopunti, campo in mezzo dopo righe fatte, parole «il titolo e la sua voce», foglio di riserva in sola lettura con l'avviso del Calendario, titoli con parole lunghissime) |
