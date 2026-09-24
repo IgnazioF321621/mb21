@@ -610,12 +610,15 @@ async function sezioneAzioni() {
   if (!LS.azioni) {
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
     const { data, error } = await dbq('lettura azioni', supa.from('azioni')
-      .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, area, ospite, note, inizio, fine, completata, data_scelta, contatti(nome)')
+      .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, area, ospite, note, inizio, fine, completata, data_scelta, riflessione, creato_il, contatti(nome)')
       .or(`contatto_id.eq.${c.id},portato_da.eq.${c.id}`).order('inizio', { ascending: false, nullsFirst: false }));
     if (error) { box.innerHTML = faseHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
+  // il promemoria «Ti eri detto…» (cantiere 42): dalle azioni appena lette, lo stesso riquadro di MB Plan e della coda,
+  // dentro l'azione ancora da completare (Ignazio 24/09: «aggiungilo anche nella scheda»)
+  RICORDI[c.id] = MB21Coach.ricordi(LS.azioni.filter(a => a.contatto_id === c.id))[c.id] || null;
   box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => a.contatto_id !== c.id ? `
     <div class="azione">
       <div class="t">${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
@@ -628,6 +631,7 @@ async function sezioneAzioni() {
       ${a.esito || a.note ? `<div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>` : ''}
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
+      ${a.esito ? '' : ricordoHtml(c.id, c.nome)}
       ${bloccoEsiti(a, c.categoria)}
       <div class="comandi">${statoAzione(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button><button class="link" data-elimina-azione="${a.id}" style="color:var(--rosso)">Elimina</button></div>
     </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
