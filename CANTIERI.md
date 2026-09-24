@@ -29,36 +29,6 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - **Attenzione**: `bbs.data` e `biglietti.evento` sono il **primo giorno del mese** (vincoli `bbs_primo_del_mese`, migrazione `20260916161747_eventi_al_mese.sql`); «evento in vendita» = l'ultimo caricato. Caricare eventi passati **cambia i conteggi dei segni vitali** di tutta la Mappa: prima si prova in una transazione annullata, come sempre
 - È **caricamento di dati, non stile**: non fa parte del cantiere 34
 
-## 43. GLI AVVISI TUTTI DA MB21, E OGNUNO SCEGLIE QUANDO (aperto il 23/09, da fare in una sessione nuova)
-*Ignazio 23/09: «l'idea di sganciarci completamente da Google e Apple: qualsiasi cosa caricata su MB Plan avvisi, come gli altri appuntamenti, sul cellulare o sull'iPad». E: «uno schema in Profilo dove c'è la cosa degli avvisi e ognuno sceglie che tipologia di avvisi vuole (come tempo di avviso)».*
-
-**Oggi** gli avvisi arrivano da due strade: **MB21** (funzione `avvisi`: buongiorno delle 9, «Tra 30 minuti» per appuntamenti e telefonate, «Com'è andata?» un'ora dopo, Check della sera alle 22, tracce) e il **calendario di Google/Apple** che copia MB Plan (cantiere 38, funzione `calendario`). Le **cose da fare con l'ora** e le **voci dei modelli** (Lettura 06:00…) non avvisano da nessuna parte.
-
-**Decisioni di Ignazio (23/09):**
-- **Tutto quello che in MB Plan ha un'ora avvisa da MB21**, su telefono e iPad: appuntamenti, telefonate, cose da fare con l'ora, voci dei modelli (anche con l'ora «solo oggi»)
-- **Il collegamento a Google/Apple resta facoltativo** (chi vuole vedere MB Plan nel calendario del telefono lo tiene; gli avvisi arrivano da MB21)
-- **Uno schema nel Profilo**, sezione «Avvisi»: ognuno sceglie **quando** riceverli, per tipo. **Niente «spento»** (Ignazio: «niente lo toglierei»): gli avvisi restano sempre accesi, si sceglie solo il tempo. Chi non tocca niente ha i valori **«già impostato»**:
-
-| Avviso | Si sceglie | Già impostato |
-|---|---|---|
-| Appuntamenti (PM, Follow Up, Counseling…) | all'ora · 5 · 10 · 15 · 30 min · 1 ora prima | 30 min prima |
-| Telefonate in agenda | uguale | 10 min prima |
-| Cose da fare con l'ora | uguale | 10 min prima |
-| Modelli personali (Lettura, Workout…) | uguale | all'ora |
-| «Com'è andata?» dopo un appuntamento | 30 min · 1 ora · 2 ore dopo | 1 ora dopo |
-| Buongiorno con il riepilogo del giorno | 7 · 8 · 9 · 10 | 9:00 |
-| Check della sera | 20 · 21 · 22 | 22:00 (come oggi) |
-
-- «Tracce da controllare» **non entra nello schema**: resta sempre accesa, come oggi. In fondo alla sezione resta «Prova un avviso».
-
-**Lavori, in ordine:**
-1. ✅ 23/09 **Schizzo della sezione «Avvisi» del Profilo** — approvato da Ignazio così com'era: voce «Avvisi» (non più «Avvisi sul telefono»), tre gruppi (Prima di · Dopo un appuntamento · Ogni giorno) con una fila di pillole per tipo, **un tocco = salvato** (niente «Salva»), «5′» = 5 minuti, «Spegni» resta ma vale solo per quel dispositivo, «Prova un avviso» in fondo (risolve anche i bottoni troppo distanti del 21/09)
-2. ✅ 23/09 (versione 14:34) **Le scelte nel database** (`utenti.avvisi_quando`, `{}` = valori «già impostato»; `imposta_avviso`; migrazione `20260923143237_avvisi_quando.sql` provata in transazione annullata e **applicata**) e lo schema nel Profilo (`avvisiNuoviHtml` in `pagina-profilo.js`, `AVVISI_QUANDO` / `avvisiQuandoHtml` in `avvisi.js`). **Per ora solo Admin**: la funzione `avvisi` non legge ancora le scelte, i partner vedono la voce di prima. Con la pubblicazione del lavoro 3 si toglie la voce vecchia e lo schema diventa di tutti
-3. ✅ 23/09 **scritto, non ancora pubblicato** (regole in `supabase/functions/avvisi/regole.ts`, 9 prove in `tools/banco/prova_avvisi.js`; `npx -y deno check` pulito; migrazioni `20260923144425_avvisi_mandati.sql` (**applicata il 23/09** per la prova, non cambia niente da sola) e `20260923144747_avvisi_orologi.sql` (**applicata**: risulta sul database, controllato il 23/09 sera con `supabase migration list`): tabella `avvisi_mandati` al posto della colonna «avvisato», perché una voce del modello non ha una riga per ogni giorno; orologi mattino `0 5-9`, Check `0 18-21` UTC, promemoria ogni minuto). Un avviso «prima» parte **da N minuti prima fino all'inizio** (non più una finestra stretta di 10 minuti): una cosa messa in agenda tardi avvisa lo stesso. Cose e voci della stessa persona alla stessa ora = un avviso solo («⏰ Adesso · 3 cose»). **La funzione `avvisi`** legge le scelte di ognuno; avvisa anche per **cose da fare con l'ora** e **voci dei modelli** (stessa regola di `vociDelGiorno` in `agenda.js`, riscritta uguale nella funzione, compresa la riga del giorno con l'ora «solo oggi»; mai per le fatte); un avviso solo per cosa (colonna «avvisato» come `azioni.promemoria_il`); il controllo passa **da ogni 5 minuti a ogni minuto** (cron) per rispettare «5 · 10 min prima»; buongiorno e Check della sera all'ora scelta da ognuno (il cron gira ogni ora e la funzione guarda la scelta)
-4. ✅ 23/09 **prova a vuoto fatta** su una copia della funzione (`avvisi-prova`, poi cancellata; nessun orologio la chiamava, sempre `prova: true`), orari finti sui dati veri: Check della sera alle 22 = gli stessi 4 di oggi, alle 21 nessuno · buongiorno alle 9 = i soliti 3, alle 8 nessuno, alle 11 «saltato» · «Biglietto CT-AO» 15:30 → avviso alle 15:20 · telefonate di Ignazio 16:30, Carolina 18:04, Isabella 18:30 → 10 minuti prima · Lettura 06:00 e Workout 07:15 (giovedì) → «Adesso» · «Personale» 24/09 ore 9 → alle 8:50 · «Com'è andata?» della telefonata 16:30-16:35 → alle 17:35, non prima · tracce invariate. ✅ **Pubblicato il 23/09 su «ok accendi tutto» di Ignazio** (versione 2026.09.23 · 14:51): funzione `avvisi` ripubblicata (`deno check` pulito), orologi applicati e verificati in `cron.job`, schema «Avvisi» nel Profilo per tutti (tolta la voce vecchia e il limite «solo Admin»). **Provato dal vivo il 23/09** (Ignazio: «gli avvisi sono arrivati come programmati»): Ignazio ha scelto «all'ora» per appuntamenti, telefonate e cose → «Biglietto CT-AO» partito alle 15:30:01 (un segno solo in `avvisi_mandati`) e la telefonata delle 16:30 alle 16:30 (`promemoria_il`), un avviso solo ciascuno. **Resta da vedere**: le voci dei modelli (Lettura 06:00 e Workout 07:15 del 24/09), poi il cantiere si chiude (in quest'ordine: migrazione degli orologi, `supabase functions deploy avvisi --no-verify-jwt`, schema del Profilo per tutti togliendo la voce vecchia e il limite «solo Admin» in `pagina-profilo.js` e `avvisi.js`); **attenzione alla lezione L14** (prima chiamata vera = avvisi veri a tutti)
-
-**Da sapere** (detto a Ignazio): su iPhone/iPad gli avvisi arrivano solo con MB21 **installata sulla schermata Home**; è un avviso come un messaggio, non una sveglia.
-
 ## 42. IL MOMENTO DI RIFLESSIONE DOPO OGNI ATTIVITÀ, IL TRAINING E IL COACH (idea di Ignazio 23/09; il Training si è aggiunto la sera stessa)
 *Ignazio 23/09: «dopo ogni appuntamento, telefonata, demo prodotti o qualsiasi cosa che riguardi l'attività ci può essere un momento di riflessione, con alcune domande già automatiche che ci portano a riflettere per cercare di migliorarci».*
 
@@ -168,6 +138,36 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 43. GLI AVVISI TUTTI DA MB21, E OGNUNO SCEGLIE QUANDO (aperto il 23/09, chiuso il 24/09)
+*Ignazio 23/09: «l'idea di sganciarci completamente da Google e Apple: qualsiasi cosa caricata su MB Plan avvisi, come gli altri appuntamenti, sul cellulare o sull'iPad». E: «uno schema in Profilo dove c'è la cosa degli avvisi e ognuno sceglie che tipologia di avvisi vuole (come tempo di avviso)».*
+
+**Oggi** gli avvisi arrivano da due strade: **MB21** (funzione `avvisi`: buongiorno delle 9, «Tra 30 minuti» per appuntamenti e telefonate, «Com'è andata?» un'ora dopo, Check della sera alle 22, tracce) e il **calendario di Google/Apple** che copia MB Plan (cantiere 38, funzione `calendario`). Le **cose da fare con l'ora** e le **voci dei modelli** (Lettura 06:00…) non avvisano da nessuna parte.
+
+**Decisioni di Ignazio (23/09):**
+- **Tutto quello che in MB Plan ha un'ora avvisa da MB21**, su telefono e iPad: appuntamenti, telefonate, cose da fare con l'ora, voci dei modelli (anche con l'ora «solo oggi»)
+- **Il collegamento a Google/Apple resta facoltativo** (chi vuole vedere MB Plan nel calendario del telefono lo tiene; gli avvisi arrivano da MB21)
+- **Uno schema nel Profilo**, sezione «Avvisi»: ognuno sceglie **quando** riceverli, per tipo. **Niente «spento»** (Ignazio: «niente lo toglierei»): gli avvisi restano sempre accesi, si sceglie solo il tempo. Chi non tocca niente ha i valori **«già impostato»**:
+
+| Avviso | Si sceglie | Già impostato |
+|---|---|---|
+| Appuntamenti (PM, Follow Up, Counseling…) | all'ora · 5 · 10 · 15 · 30 min · 1 ora prima | 30 min prima |
+| Telefonate in agenda | uguale | 10 min prima |
+| Cose da fare con l'ora | uguale | 10 min prima |
+| Modelli personali (Lettura, Workout…) | uguale | all'ora |
+| «Com'è andata?» dopo un appuntamento | 30 min · 1 ora · 2 ore dopo | 1 ora dopo |
+| Buongiorno con il riepilogo del giorno | 7 · 8 · 9 · 10 | 9:00 |
+| Check della sera | 20 · 21 · 22 | 22:00 (come oggi) |
+
+- «Tracce da controllare» **non entra nello schema**: resta sempre accesa, come oggi. In fondo alla sezione resta «Prova un avviso».
+
+**Lavori, in ordine:**
+1. ✅ 23/09 **Schizzo della sezione «Avvisi» del Profilo** — approvato da Ignazio così com'era: voce «Avvisi» (non più «Avvisi sul telefono»), tre gruppi (Prima di · Dopo un appuntamento · Ogni giorno) con una fila di pillole per tipo, **un tocco = salvato** (niente «Salva»), «5′» = 5 minuti, «Spegni» resta ma vale solo per quel dispositivo, «Prova un avviso» in fondo (risolve anche i bottoni troppo distanti del 21/09)
+2. ✅ 23/09 (versione 14:34) **Le scelte nel database** (`utenti.avvisi_quando`, `{}` = valori «già impostato»; `imposta_avviso`; migrazione `20260923143237_avvisi_quando.sql` provata in transazione annullata e **applicata**) e lo schema nel Profilo (`avvisiNuoviHtml` in `pagina-profilo.js`, `AVVISI_QUANDO` / `avvisiQuandoHtml` in `avvisi.js`). **Per ora solo Admin**: la funzione `avvisi` non legge ancora le scelte, i partner vedono la voce di prima. Con la pubblicazione del lavoro 3 si toglie la voce vecchia e lo schema diventa di tutti
+3. ✅ 23/09 **scritto, non ancora pubblicato** (regole in `supabase/functions/avvisi/regole.ts`, 9 prove in `tools/banco/prova_avvisi.js`; `npx -y deno check` pulito; migrazioni `20260923144425_avvisi_mandati.sql` (**applicata il 23/09** per la prova, non cambia niente da sola) e `20260923144747_avvisi_orologi.sql` (**applicata**: risulta sul database, controllato il 23/09 sera con `supabase migration list`): tabella `avvisi_mandati` al posto della colonna «avvisato», perché una voce del modello non ha una riga per ogni giorno; orologi mattino `0 5-9`, Check `0 18-21` UTC, promemoria ogni minuto). Un avviso «prima» parte **da N minuti prima fino all'inizio** (non più una finestra stretta di 10 minuti): una cosa messa in agenda tardi avvisa lo stesso. Cose e voci della stessa persona alla stessa ora = un avviso solo («⏰ Adesso · 3 cose»). **La funzione `avvisi`** legge le scelte di ognuno; avvisa anche per **cose da fare con l'ora** e **voci dei modelli** (stessa regola di `vociDelGiorno` in `agenda.js`, riscritta uguale nella funzione, compresa la riga del giorno con l'ora «solo oggi»; mai per le fatte); un avviso solo per cosa (colonna «avvisato» come `azioni.promemoria_il`); il controllo passa **da ogni 5 minuti a ogni minuto** (cron) per rispettare «5 · 10 min prima»; buongiorno e Check della sera all'ora scelta da ognuno (il cron gira ogni ora e la funzione guarda la scelta)
+4. ✅ 23/09 **prova a vuoto fatta** su una copia della funzione (`avvisi-prova`, poi cancellata; nessun orologio la chiamava, sempre `prova: true`), orari finti sui dati veri: Check della sera alle 22 = gli stessi 4 di oggi, alle 21 nessuno · buongiorno alle 9 = i soliti 3, alle 8 nessuno, alle 11 «saltato» · «Biglietto CT-AO» 15:30 → avviso alle 15:20 · telefonate di Ignazio 16:30, Carolina 18:04, Isabella 18:30 → 10 minuti prima · Lettura 06:00 e Workout 07:15 (giovedì) → «Adesso» · «Personale» 24/09 ore 9 → alle 8:50 · «Com'è andata?» della telefonata 16:30-16:35 → alle 17:35, non prima · tracce invariate. ✅ **Pubblicato il 23/09 su «ok accendi tutto» di Ignazio** (versione 2026.09.23 · 14:51): funzione `avvisi` ripubblicata (`deno check` pulito), orologi applicati e verificati in `cron.job`, schema «Avvisi» nel Profilo per tutti (tolta la voce vecchia e il limite «solo Admin»). **Provato dal vivo il 23/09** (Ignazio: «gli avvisi sono arrivati come programmati»): Ignazio ha scelto «all'ora» per appuntamenti, telefonate e cose → «Biglietto CT-AO» partito alle 15:30:01 (un segno solo in `avvisi_mandati`) e la telefonata delle 16:30 alle 16:30 (`promemoria_il`), un avviso solo ciascuno. il 24/09 arrivate anche le voci dei modelli (Lettura 06:00, Workout 07:15). **Chiuso da Ignazio il 24/09**: «gli avvisi arrivano in maniera perfetta e come da programma» (in quest'ordine: migrazione degli orologi, `supabase functions deploy avvisi --no-verify-jwt`, schema del Profilo per tutti togliendo la voce vecchia e il limite «solo Admin» in `pagina-profilo.js` e `avvisi.js`); **attenzione alla lezione L14** (prima chiamata vera = avvisi veri a tutti)
+
+**Da sapere** (detto a Ignazio): su iPhone/iPad gli avvisi arrivano solo con MB21 **installata sulla schermata Home**; è un avviso come un messaggio, non una sveglia.
 
 ## 41. L'AGENDA COME NOTEPLAN: LA GIORNATA IN UN FOGLIO SOLO → MB PLAN (aperto il 22/09, chiuso il 23/09)
 **✅ Chiuso da Ignazio il 23/09 sera («chiudi il cantiere 41»).** MB Plan con le scale Giorno · Settimana · Mese · Periodo WES · Anno, modelli personali, cose da fare (anche collegate a una persona), Timeline, Progetti; il Check = modulo Core del giorno; il **Modulo Core** del mese già compilato, con **PDF** A4 su due colonne da condividere (pubblicato 19:38, poi tutte le righe e «prossimo» BBS/WES 20:34, OPEN «non c'era» 21:02); giro sull'iPhone fatto. **Fuori dal cantiere:** l'accesso del leader del gruppo, rimandato (in «21. Da fare più avanti»).
