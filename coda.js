@@ -83,12 +83,14 @@
 
   // Da catalogare (cantiere 16): i senza categoria del partner in ordine alfabetico,
   // tanti quanti ne restano dei 5 al giorno (QUOTA_CATALOGO meno quelli già catalogati oggi);
-  // `altri`: posti in più chiesti con «Altri 5» (lavoro 4)
+  // `altri`: posti in più chiesti con «Altri 5» (lavoro 4). Dal 24/09 (Ignazio: «clicco su Altri 5 e non
+  // mi spuntano i nomi») gli «altri» si SOMMANO ai posti rimasti, non alla quota: chi ha già catalogato
+  // 20 nomi oggi, con un tocco ne vede 5 nuovi lo stesso. Prima, sotto i fatti di oggi, il bottone non faceva niente.
   const QUOTA_CATALOGO = 5;
   function daCatalogare(righe, catalogatiOggi, altri) {
     const senza = righe.filter(r => !r.categoria)
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }));
-    const posti = Math.max(0, QUOTA_CATALOGO + (altri || 0) - (catalogatiOggi || 0));
+    const posti = Math.max(0, QUOTA_CATALOGO - (catalogatiOggi || 0)) + Math.max(0, altri || 0);
     return { righe: senza.slice(0, posti), totale: senza.length };
   }
 
