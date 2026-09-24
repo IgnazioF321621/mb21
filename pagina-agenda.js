@@ -229,7 +229,7 @@ function collegaCose(oggi) {
       if (!testo) return;
       const gruppo = form.dataset.gruppo || null, scala = form.dataset.scala || 'giorno';
       const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
-      if (form.dataset.progetto) return nuovaRigaProgetto(form, campo.value, ordine);
+      if (form.dataset.progetto) return nuovaRigaProgetto(form, campo.value);
       const { data, error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: inizioScalaMB(scala, AG.giorno), scala, ordine, gruppo_id: gruppo }).select().single());
       if (error) return;
       AG.cose.push(data);
@@ -351,6 +351,10 @@ async function caricaProgetti() {
   if (AG.vista === 'progetto' && !AG.progetti.some(x => x.id === AG.progettoAperto)) AG.vista = 'giorno';
 }
 const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
+// Le righe di un progetto come si vedono (Ignazio 24/09): nell'ordine salvato, poi le fatte in fondo al loro titolo e i titoli
+// tutti fatti in fondo al progetto (MB21Agenda.fatteInFondo). Anche chi aggiunge righe parte da qui: la riga nuova va dove
+// l'hai vista, e l'ordine salvato diventa quello che si vede.
+const righeInVista = id => MB21Agenda.fatteInFondo(righeProgetto(id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1)));
 function contaProgetto(id) {
   // dal 23/09 sera si spuntano anche i numeri e i puntini: contano tutti i passi, non i titoli
   const cose = righeProgetto(id).filter(c => (c.tipo || 'cosa') !== 'titolo');
@@ -448,7 +452,7 @@ async function incollaRigheProgetto(progettoId, testo, dopoId, livelloBase) {
 // altri passi»): dopo la riga `dopoId` (vuoto = in fondo). Le righe del progetto si rinumerano 1…N nel nuovo ordine
 // (si salvano solo quelle che cambiano), poi si inseriscono le nuove. Il campo resta aperto sotto l'ultima nuova.
 async function inserisciRighe(progettoId, dopoId, righe) {
-  const tutte = righeProgetto(progettoId).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  const tutte = righeInVista(progettoId);   // l'ordine che si vede (24/09): con le fatte in fondo, la riga nuova va dove l'hai vista
   const k = dopoId ? tutte.findIndex(c => c.id === dopoId) + 1 : tutte.length;
   const prima = tutte.slice(0, k), dopo = tutte.slice(k);
   const cambiate = [];
@@ -494,22 +498,19 @@ function apriInserisci(dopoId) {
   disegnaAgenda();
   const campo = app.querySelector('.pj-inline input'); if (campo) campo.focus();
 }
-async function nuovaRigaProgetto(form, valore, ordine) {
+// Il campo in fondo al progetto: la riga va in fondo a quello che si vede (24/09: prima andava in fondo all'ordine salvato e,
+// con i titoli tutti fatti in fondo, poteva finire sotto un altro titolo)
+async function nuovaRigaProgetto(form, valore) {
   const r = rigaDaTesto(valore, AG.livelloRiga || 0);
-  if (!r) return;
-  const { tipo, testo, livello } = r;
-  const { data, error } = await dbq('riga del progetto', supa.from('cose_da_fare').insert({ user_id: visto().id, testo, giorno: null, scala: 'giorno', ordine, progetto_id: form.dataset.progetto, tipo, livello }).select().single());
-  if (error) return mostraToast('Non salvato: riprova.');
-  AG.cose.push(data);
-  disegnaAgenda();
-  const c2 = app.querySelector('.pj-nuova input'); if (c2) c2.focus();
+  if (r) await inserisciRighe(form.dataset.progetto, null, [r]);
 }
 function disegnaProgetto() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const p = AG.progetti.find(x => x.id === AG.progettoAperto);
   if (!p) { AG.vista = 'giorno'; return disegnaAgenda(); }
-  // come un foglio Word (Ignazio 23/09): l'ordine è quello scelto, le fatte restano al loro posto (grigie), rientri e titoli
-  const righe = righeProgetto(p.id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  // come un foglio Word (Ignazio 23/09): l'ordine è quello scelto, rientri e titoli; dal 24/09 le fatte in fondo al loro titolo
+  // (grigie) e i titoli tutti fatti in fondo al progetto, così le cose da fare sono numerate da 1
+  const righe = righeInVista(p.id);
   const segni = A.numeraRighe(righe);
   // un titolo è completato quando tutti i passi sotto di lui (fino al titolo dopo) sono fatti; un passo nuovo lo riapre
   const sottoTitolo = i => { const out = []; for (let k = i + 1; k < righe.length && righe[k].tipo !== 'titolo'; k++) out.push(righe[k]); return out; };
@@ -1352,7 +1353,7 @@ function ridisegnaDopoBlocco(velo) {
   if (velo) lato ? pannelloDestro(eventi, opz) : foglioCronologia(eventi, opz);
 }
 function righeTrascinabili(riga, attr, tutte) {
-  const progetto = riga.parentElement.classList.contains('pj-foglio');   // nei progetti anche le fatte: restano al loro posto
+  const progetto = riga.parentElement.classList.contains('pj-foglio');   // nei progetti anche le fatte (portate in un altro titolo, lì tornano in fondo)
   // `tutte`: per salvare l'ordine contano anche le righe nascoste dentro un titolo chiuso; mentre si trascina no
   return [...riga.parentElement.children].filter(x => x.classList.contains('cosa') && x.hasAttribute(attr) && (progetto || !x.classList.contains('fatta')) && !x.classList.contains('auto') && !x.classList.contains('al-seguito') && (tutte || !x.classList.contains('pj-nascosta')));
 }
