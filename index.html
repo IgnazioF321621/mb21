@@ -970,6 +970,10 @@
   .ag-foglio .cosa.pj-titolo .ag-sez-chiudi { margin: 14px -6px 0 -4px; }
   .ag-foglio .cosa.pj-titolo.chiusa .ag-sez-chiudi svg.ic { transform: rotate(0deg); }
   .ag-foglio .cosa.pj-titolo .testo small { font-size: 12px; font-weight: 600; text-decoration: none; }
+  /* l'iconcina accanto al titolo che lo copia con le sue righe (24/09): come la freccetta, a destra */
+  .ag-foglio .cosa.pj-titolo .pj-copia { border: 0; background: none; padding: 0; width: 34px; height: 34px; margin: 10px -6px 0 0; display: inline-flex; align-items: center; justify-content: center; color: var(--testo-tenue); flex: none; cursor: pointer; }
+  .ag-foglio .cosa.pj-titolo .pj-copia svg.ic { width: 18px; height: 18px; }
+  .ag-foglio .cosa.pj-titolo .pj-copia:active { color: var(--accento); }
   .pj-aggiungi { display: flex; align-items: center; gap: 6px; border: 0; background: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo-tenue); padding: 2px 0 8px 36px; }
   .pj-aggiungi svg.ic { width: 14px; height: 14px; }
   .pj-aggiungi:hover { color: var(--accento); }
@@ -1528,39 +1532,39 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609241507"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609241507"></script>
-<script src="lista.js?v=202609241507"></script>
-<script src="rubrica.js?v=202609241507"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609241507"></script>
-<script src="agenda.js?v=202609241507"></script>
-<script src="coach.js?v=202609241507"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="report.js?v=202609241507"></script>
-<script src="check.js?v=202609241507"></script>
-<script src="mappa.js?v=202609241507"></script>
-<script src="pagina-coach.js?v=202609241507"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-dashboard.js?v=202609241507"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609241507"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609241507"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609241507"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609241507"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609241507"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609241507"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609241507"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609241507"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609241507"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609241507"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609241507"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609241507"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609241507"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609241507"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609241507"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609241507"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609241507"></script>
-<script src="benvenuto.js?v=202609241507"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609241507"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609241511"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609241511"></script>
+<script src="lista.js?v=202609241511"></script>
+<script src="rubrica.js?v=202609241511"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609241511"></script>
+<script src="agenda.js?v=202609241511"></script>
+<script src="coach.js?v=202609241511"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="report.js?v=202609241511"></script>
+<script src="check.js?v=202609241511"></script>
+<script src="mappa.js?v=202609241511"></script>
+<script src="pagina-coach.js?v=202609241511"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-dashboard.js?v=202609241511"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609241511"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609241511"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609241511"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609241511"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609241511"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609241511"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609241511"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609241511"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609241511"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609241511"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609241511"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609241511"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609241511"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609241511"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609241511"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609241511"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609241511"></script>
+<script src="benvenuto.js?v=202609241511"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609241511"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.24 · 15:07';
+const APP_VERSION = '2026.09.24 · 15:11';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -1945,6 +1949,38 @@ function mostraToast(testo, suAnnulla) {
   if (suAnnulla) t.querySelector('button').onclick = () => { t.remove(); clearTimeout(timerToast); suAnnulla(); };
   document.body.appendChild(t);
   timerToast = setTimeout(() => t.remove(), suAnnulla ? 6000 : 3500);
+}
+
+// Copiare negli appunti, uguale ovunque (Progetti di MB Plan, Rinnovo, Invito, Calendario: 24/09). Va chiamata SUBITO nel tocco,
+// senza attese prima: su iPhone, dopo un'attesa, il permesso di copiare si perde. Se il telefono non lascia copiare: con `campo`
+// (il riquadro di testo del foglio) lo seleziona e dice `aiuto`; senza, apre un foglio con il testo già selezionato.
+async function copiaTesto(testo, detto, campo, aiuto) {
+  try {
+    if (!navigator.clipboard) throw new Error('appunti non disponibili');
+    await navigator.clipboard.writeText(testo);
+    mostraToast(detto);
+    return true;
+  } catch (e) {
+    let velo = null, t = campo;
+    if (!t) {
+      velo = document.createElement('div');
+      velo.className = 'velo';
+      velo.innerHTML = `<div class="foglio"><h3>Copia il testo</h3><p>Il telefono non ha lasciato copiare da solo: tieni premuto sul testo e scegli «Copia».</p>
+        <textarea rows="8" style="width:100%;font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(testo)}</textarea>
+        <button class="link" id="ct-chiudi">Chiudi</button></div>`;
+      document.body.appendChild(velo);
+      velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+      velo.querySelector('#ct-chiudi').onclick = () => velo.remove();
+      t = velo.querySelector('textarea');
+    }
+    let ok = false;
+    t.focus(); t.select(); t.setSelectionRange(0, t.value.length);
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    if (ok && velo) velo.remove();
+    if (ok || campo) mostraToast(ok ? detto : aiuto || 'Tieni premuto sul testo e scegli Copia');
+    if (!ok) { t.focus(); t.select(); }
+    return ok;
+  }
 }
 
 // ── MB PLAN (l'Agenda) ── la pagina è in pagina-agenda.js (spostata il 23/09, codice identico)
@@ -2830,12 +2866,7 @@ function foglioRinnovo() {
   const chiudi = () => velo.remove();
   velo.onclick = e => { if (e.target === velo) chiudi(); };
   velo.querySelector('#rn-chiudi').onclick = chiudi;
-  velo.querySelector('#rn-copia').onclick = async () => {
-    const t = velo.querySelector('#rn-causale');
-    let ok = false;
-    try { await navigator.clipboard.writeText(causale); ok = true; } catch (e) { t.focus(); t.select(); try { ok = document.execCommand('copy'); } catch (e2) {} }
-    mostraToast(ok ? 'Causale copiata' : 'Tieni premuto sulla causale e scegli Copia');
-  };
+  velo.querySelector('#rn-copia').onclick = () => copiaTesto(causale, 'Causale copiata', velo.querySelector('#rn-causale'), 'Tieni premuto sulla causale e scegli Copia');
 }
 
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
@@ -2892,16 +2923,7 @@ function foglioLinkInvito(opz = {}) {
       : a.dataset.canale === 'tg' ? `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(attuale().replace(link, '').trim())}`
       : `sms:${tel}?&body=${t}`;
   });
-  velo.querySelector('#li-copia').onclick = async () => {
-    const m = attuale();
-    let ok = false;
-    try { await navigator.clipboard.writeText(m); ok = true; } catch (e) {
-      testo.focus(); testo.select(); testo.setSelectionRange(0, testo.value.length);
-      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
-    }
-    mostraToast(ok ? 'Messaggio copiato: incollalo dove vuoi' : 'Tieni premuto sul messaggio e scegli Copia');
-    if (!ok) { testo.focus(); testo.select(); }
-  };
+  velo.querySelector('#li-copia').onclick = () => copiaTesto(attuale(), 'Messaggio copiato: incollalo dove vuoi', testo, 'Tieni premuto sul messaggio e scegli Copia');
   const cond = velo.querySelector('#li-condividi');
   if (cond) cond.onclick = () => navigator.share({ title: 'Registrati a MB21', text: attuale() }).catch(() => {});
 }

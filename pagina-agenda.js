@@ -355,6 +355,17 @@ const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
 // tutti fatti in fondo al progetto (MB21Agenda.fatteInFondo). Anche chi aggiunge righe parte da qui: la riga nuova va dove
 // l'hai vista, e l'ordine salvato diventa quello che si vede.
 const righeInVista = id => MB21Agenda.fatteInFondo(righeProgetto(id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1)));
+// Copiare (Ignazio 24/09): un titolo con le sue righe dall'iconcina accanto al titolo, una riga (con i suoi sottopunti) dal suo
+// foglio, tutto il progetto dal foglio del progetto (`c` vuoto). Il testo lo fa MB21Agenda.testoDaCopiare da quello che si
+// vede, con gli stessi numeri; copiaTesto (index.html) parte subito, nel tocco.
+function copiaRighe(progettoId, c) {
+  const { testo, voci } = MB21Agenda.testoDaCopiare(righeInVista(progettoId), c ? c.id : null);
+  if (!testo) return mostraToast('Niente da copiare');
+  const n = `${voci} ${voci === 1 ? 'voce' : 'voci'}`, corto = s => s.length > 28 ? s.slice(0, 27) + '…' : s;
+  const detto = !c ? `Progetto copiato · ${n}` : c.tipo === 'titolo' ? `«${corto(c.testo)}» copiato · ${n}`
+    : voci > 1 ? `Voce copiata con ${voci - 1} ${voci === 2 ? 'sottopunto' : 'sottopunti'}` : 'Voce copiata';
+  copiaTesto(testo, `${detto}. Incolla dove vuoi`);
+}
 function contaProgetto(id) {
   // dal 23/09 sera si spuntano anche i numeri e i puntini: contano tutti i passi, non i titoli
   const cose = righeProgetto(id).filter(c => (c.tipo || 'cosa') !== 'titolo');
@@ -384,6 +395,7 @@ function foglioProgetto(p, dopo) {
       <div class="campo"><label>Icona <small>facoltativa</small></label>
         <div class="nm-icone"><button data-icona="" class="${icona ? '' : 'scelto'}">—</button>${ICONE_MODELLO.map(n => `<button data-icona="${n}" class="${icona === n ? 'scelto' : ''}" aria-label="${n}">${ic(n)}</button>`).join('')}</div></div>
       <button class="primario" id="np-si">${p ? 'Salva' : 'Crea'}</button>
+      ${p ? `<button class="link" id="np-copia">${ic('copia')} Copia tutto il progetto</button>` : ''}
       ${p ? '<button class="link elimina-qui" id="np-elimina">Elimina il progetto</button>' : ''}
       <button class="link" id="np-no">Annulla</button></div>`;
     velo.querySelector('#np-no').onclick = () => velo.remove();
@@ -394,6 +406,8 @@ function foglioProgetto(p, dopo) {
       velo.remove();
       dopo({ titolo, icona: icona || null });
     };
+    const cp = velo.querySelector('#np-copia');
+    if (cp) cp.onclick = () => { copiaRighe(p.id, null); velo.remove(); };
     const el = velo.querySelector('#np-elimina');
     if (el) el.onclick = async () => {
       const si = await chiediConferma(`Eliminare «${p.titolo}»?`, 'Si cancellano anche tutte le sue righe, comprese quelle messe in un giorno di MB Plan.', 'Elimina', true);
@@ -423,21 +437,10 @@ function nuovoProgetto() {
   });
 }
 // Il tipo di una riga: scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » o «• »
-// puntini, «[] » o «☐ » da fare). Toglie anche i segni di un testo copiato da altrove («## titolo», «**grassetto**»).
+// puntini, «[] » «☐ » «- [ ] » da fare, «- [x] » e «✓ » fatte). La lettura è MB21Agenda.leggiRiga (con le prove, 24/09).
 function rigaDaTesto(riga, livelloScelto) {
-  const grezza = String(riga || '').replace(/ /g, ' ');
-  // il rientro scritto all'inizio (testi incollati): un Tab o due spazi = un livello
-  const inizio = (grezza.match(/^[\t ]*/) || [''])[0];
-  let livello = (inizio.match(/\t/g) || []).length + Math.floor(inizio.replace(/\t/g, '').length / 2);
-  let testo = grezza.trim(), tipo = AG.tipoRiga || 'cosa';
-  if (/^#{1,6}\s+/.test(testo)) { tipo = 'titolo'; testo = testo.replace(/^#{1,6}\s+/, ''); livello = 0; }
-  else if (/^\d+(\.\d+)+\.?\s+/.test(testo)) { tipo = 'numero'; livello = Math.max(livello, testo.match(/^[\d.]+/)[0].replace(/\.$/, '').split('.').length - 1); testo = testo.replace(/^\d+(\.\d+)+\.?\s+/, ''); }   // «1.2 » → secondo livello
-  else if (/^\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\d+[.)]\s+/, ''); }
-  else if (/^[-•*–◦▪]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^[-•*–◦▪]\s+/, ''); }
-  else if (/^(\[\s?\]|☐)\s*/.test(testo)) { tipo = 'cosa'; testo = testo.replace(/^(\[\s?\]|☐)\s*/, ''); }
-  else if (!inizio && livelloScelto != null) livello = livelloScelto;
-  testo = MB21Agenda.testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
-  return testo ? { tipo, testo, livello: tipo === 'titolo' ? 0 : Math.min(LIVELLO_MAX, livello) } : null;
+  const r = MB21Agenda.leggiRiga(riga, livelloScelto, AG.tipoRiga || 'cosa');
+  return r ? { ...r, livello: r.tipo === 'titolo' ? 0 : Math.min(LIVELLO_MAX, r.livello) } : null;
 }
 // Incollare più righe insieme (Ignazio 23/09: «incollare l'elenco dei cantieri aperti»): ogni riga non vuota diventa una
 // riga del progetto, nello stesso ordine, ognuna con il suo tipo (1. / - / [] all'inizio, se no il tipo scelto).
@@ -458,7 +461,8 @@ async function inserisciRighe(progettoId, dopoId, righe) {
   const cambiate = [];
   dopo.forEach((c, i) => { const o = prima.length + righe.length + i + 1; if (c.ordine !== o) { c.ordine = o; cambiate.push(c); } });
   prima.forEach((c, i) => { if (c.ordine !== i + 1) { c.ordine = i + 1; cambiate.push(c); } });
-  const nuove = righe.map((r, i) => ({ user_id: visto().id, testo: r.testo, tipo: r.tipo, livello: r.livello, giorno: null, scala: 'giorno', ordine: prima.length + i + 1, progetto_id: progettoId }));
+  const adesso = new Date().toISOString();   // le righe incollate già fatte («- [x] », «✓ ») restano fatte (24/09)
+  const nuove = righe.map((r, i) => ({ user_id: visto().id, testo: r.testo, tipo: r.tipo, livello: r.livello, giorno: null, scala: 'giorno', ordine: prima.length + i + 1, progetto_id: progettoId, fatto_il: r.fatta ? adesso : null }));
   const esiti = await Promise.all(cambiate.map(c => dbq('ordine', supa.from('cose_da_fare').update({ ordine: c.ordine }).eq('id', c.id))));
   if (esiti.some(r => r.error)) { mostraToast('Non salvato: riprova.'); apriAgenda(AG.giorno); return 0; }
   const { data, error } = await dbq('righe del progetto', supa.from('cose_da_fare').insert(nuove).select());
@@ -533,7 +537,7 @@ function disegnaProgetto() {
     const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
     if (tipo === 'titolo') {
       const f = titoloFatto(i), chiuso = chiuse.includes('pt-' + c.id), passi = sottoTitolo(i), restano = passi.filter(x => !x.fatto_il).length;
-      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${chiuso && passi.length ? `<small>${restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`}</small>` : ''}</button></div>`;
+      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${chiuso && passi.length ? `<small>${restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`}</small>` : ''}</button><button class="pj-copia" aria-label="Copia il titolo con le sue righe">${ic('copia')}</button></div>`;
     }
     const nascosta = nascoste.has(c.id) ? ' pj-nascosta' : '';
     if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}${nascosta}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span></button></div>`;
@@ -580,6 +584,8 @@ function disegnaProgetto() {
     if (c.tipo !== 'titolo') return;
     const b = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .spunta`);
     if (b) b.onclick = () => spuntaTitolo(sottoTitolo(i), titoloFatto(i));
+    const cp = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .pj-copia`);   // l'iconcina: copia il titolo con le sue righe (24/09)
+    if (cp) cp.onclick = () => copiaRighe(p.id, c);
   });
   app.querySelectorAll('.pj-aggiungi[data-dopo]').forEach(b => { b.onclick = () => apriInserisci(b.dataset.dopo); });
   const fi = app.querySelector('.pj-inline');
@@ -791,6 +797,7 @@ function foglioCosa(c, oggi, opz = {}) {
     ['mese', 'Mese prossimo', { scala: 'mese', giorno: meseProssimo, ora: null, durata: null }],
   ].filter(([, , d]) => !(d.scala === scalaC && d.giorno === (c.riportata ? (scalaC === 'giorno' ? oggi : inizioScalaMB(scalaC, oggi)) : c.giorno)))
     .filter(([k]) => k !== 'mese' || scalaC === 'mese' || scalaC === 'settimana');
+  const pezzo = pj ? MB21Agenda.testoDaCopiare(righeInVista(pj.id), c.id) : null;   // «Copia la voce» (24/09)
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
@@ -813,6 +820,7 @@ function foglioCosa(c, oggi, opz = {}) {
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} Sposta a <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
     ${pj && !opz.dallaScheda && AG.vista === 'progetto' ? `<button class="link" id="fc-sotto">${ic('piu')} Aggiungi una riga sotto</button>` : ''}
+    ${pezzo ? `<button class="link" id="fc-copia">${ic('copia')} ${c.tipo === 'titolo' ? `Copia il titolo e le sue ${pezzo.voci} ${pezzo.voci === 1 ? 'voce' : 'voci'}` : pezzo.voci > 1 ? `Copia la voce e i suoi ${pezzo.voci - 1} ${pezzo.voci === 2 ? 'sottopunto' : 'sottopunti'}` : 'Copia la voce'}</button>` : ''}
     <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
     <button class="link" id="fc-no">Annulla</button></div>`;
@@ -895,6 +903,7 @@ function foglioCosa(c, oggi, opz = {}) {
   if (livM) livM.onclick = () => { livelloScelto = Math.max(0, livelloScelto - 1); livTesto(); };
   if (livP) livP.onclick = () => { livelloScelto = Math.min(LIVELLO_MAX, livelloScelto + 1); livTesto(); };
   velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(b => { b.onclick = () => { tipoScelto = b.dataset.tipo; velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
+  const copia = velo.querySelector('#fc-copia'); if (copia) copia.onclick = () => { copiaRighe(pj.id, c); chiudi(); };
   const sotto = velo.querySelector('#fc-sotto'); if (sotto) sotto.onclick = () => { chiudi(); apriInserisci(c.id); };
   const togliG = velo.querySelector('#fc-togli-giorno'); if (togliG) togliG.onclick = () => cambia({ giorno: null, ora: null, durata: null, scala: 'giorno' });
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });
@@ -1414,7 +1423,7 @@ async function fineTrascina() {
 function rigaDa(ev) {
   if (typeof ST === 'undefined' || ST.tab !== 'agenda' || document.querySelector('.velo')) return null;
   const riga = ev.target.closest && ev.target.closest('.ag-foglio .cosa');
-  if (!riga || ev.target.closest('.spunta')) return null;
+  if (!riga || ev.target.closest('.spunta, .pj-copia')) return null;   // la spunta e l'iconcina «copia» non trascinano
   const attr = riga.hasAttribute('data-cosa') ? 'data-cosa' : riga.hasAttribute('data-voce') ? 'data-voce' : null;
   if (!attr || (riga.classList.contains('fatta') && !riga.parentElement.classList.contains('pj-foglio')) || riga.classList.contains('auto') || righeTrascinabili(riga, attr).length < 2) return null;
   return { riga, attr };

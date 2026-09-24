@@ -111,6 +111,7 @@
     'scala-giorno': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16"/><rect x="8" y="12.5" width="4" height="4" rx=".8"/>',   // Giorno: il foglio con il giorno segnato
     'scala-settimana': '<rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><path d="M9.2 4.5v15M14.8 4.5v15"/>',   // Settimana: le colonnine
     'scala-mese': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/>',   // Mese: la griglia dei giorni
+    'copia': '<rect x="8.6" y="8.6" width="11.8" height="11.8" rx="2.2"/><path d="M15.4 8.6V5.8a2.2 2.2 0 0 0-2.2-2.2H5.8a2.2 2.2 0 0 0-2.2 2.2v7.4a2.2 2.2 0 0 0 2.2 2.2h2.8"/>',   // Copia: due fogli (Progetti, 24/09)
     'scala-anno': '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',   // Anno: i quadratini
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
