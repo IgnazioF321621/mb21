@@ -142,6 +142,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ## 44. SCHEDA CONTATTO: VIA LE FASI, CARD DELL'AZIONE PIÙ STRETTA (aperto e chiuso il 24/09)
 *Le due righe «Scheda Contatto» di MB App (Ignazio 24/09).*
 
+- **Provato da Ignazio il 24/09 («perfetto, è ok»)**: via le fasi, card stretta e pillole a due a due. Le due righe di MB App spuntate
+
 - ~~Togliere le fasi dalla scheda~~ — fatto il 24/09: via il riquadro FASE («residuo di Glide»); dove si è con la persona lo dice la prima card. Al suo posto «＋ Nuova azione», bottone principale come «＋ Nuova vendita». `titoloFase` tolta da `lista.js`; `contatti.fase_icona` resta nel database
 - ~~Stringere la card dell'azione~~ — fatto il 24/09 («nel telefono è tutto molto lungo»): proposta con due foto a larghezza telefono (oggi / dopo, dati finti, stili veri), «ok» di Ignazio. Titolo `tipo · modalità` con la data a destra, `area · esito · nota` su una riga, «Cambia esito» nella riga dei comandi: una card chiusa passa da 5 righe a 3 (circa la metà). I bottoni degli esiti delle azioni da completare restano visibili (stella cometa: a un tocco); l'Agenda non si tocca
 - ~~Pillole degli esiti senza righe mezze vuote~~ — fatto il 24/09 (Ignazio, subito dopo: «la seconda e la quarta riga hanno molto spazio»): tre foto a larghezza telefono (oggi, A «a due a due come la coda», B «riempi la riga»), scelta **A**: buoni a due a due larghi uguali, non andati in una riga più piccoli e grigi; da 4 righe a 3 nel Contatto. Un blocco solo, quindi uguale in scheda, Agenda e foglio Modifica; la coda resta com'è
