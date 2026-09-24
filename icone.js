@@ -113,6 +113,10 @@
     'scala-mese': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/>',   // Mese: la griglia dei giorni
     'copia': '<rect x="8.6" y="8.6" width="11.8" height="11.8" rx="2.2"/><path d="M15.4 8.6V5.8a2.2 2.2 0 0 0-2.2-2.2H5.8a2.2 2.2 0 0 0-2.2 2.2v7.4a2.2 2.2 0 0 0 2.2 2.2h2.8"/>',   // Copia: due fogli (Progetti, 24/09)
     'scala-anno': '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',   // Anno: i quadratini
+    // Aggiunte a mano per il Training (cantiere 45, 24/09): stesso tratto e stessa griglia; il pieno delle stelle prese lo dà lo stile (fill: currentColor)
+    'lucchetto': '<rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.4a4 4 0 0 1 8 0V11M12 15.2v2"/>',   // un livello ancora chiuso
+    'stella': '<path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',   // le stelle dei test
+    'fiamma': '<path d="M12 21a6 6 0 0 0 6-6c0-2.3-1.1-4.2-2.2-5.4-.6 1.9-1.7 2.9-2.8 3.2.5-3.2-.7-6.4-3.6-8.8.2 3.2-1.6 5.3-2.9 6.9A7 7 0 0 0 6 15a6 6 0 0 0 6 6z"/>',   // i giorni di fila
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto

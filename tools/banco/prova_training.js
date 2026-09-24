@@ -1,4 +1,5 @@
-// Prova della pagina Training (training.js, cantiere 42): le carte, la ricerca, «Per te, adesso», l'allenamento.
+// Prova della pagina Training (training.js, cantieri 42 e 45): il catalogo e la ricerca (Studia), le carte a scatole, il ripasso,
+// il test, i giorni di fila, la scala dei livelli (Impara e Ripassa).
 // I testi veri sono privati: qui un catalogo e una biblioteca finti, con la stessa forma.
 // Uso: node tools/banco/prova_training.js
 const assert = require('node:assert/strict');
@@ -29,7 +30,7 @@ const materiali = [
   { id: 'l2', tipo: 'libro', titolo: 'Come trattare gli altri', autore: 'Dale Carnegie', solo_n21: true },
 ];
 
-prova('Le carte: manuale, tracce con il loro settore dal BSM, appunti fuori biblioteca, libri; niente fuori catalogo', () => {
+prova('Il catalogo: manuale, tracce con il loro settore dal BSM, appunti fuori biblioteca, libri; niente fuori catalogo', () => {
   const c = T.carte(materiali, cat);
   assert.deepEqual(c.map(x => x.tipo + ':' + x.titolo), ['manuale:Scrivere la lista', 'traccia:La risposta', 'traccia:Come superare le vostre paure',
     'libro:Pensa e arricchisci te stesso', 'libro:Come trattare gli altri', 'traccia:La più grande opportunità']);
@@ -55,34 +56,163 @@ prova('Cerca: tutte le parole, senza accenti né maiuscole, anche dentro appunti
   assert.deepEqual(T.cerca(c, 'paure inesistente'), []);
 });
 
-prova('Per te, adesso: domande e freni più frequenti, con la chat da cui vengono; niente Nessuna, Niente, Altro', () => {
-  const azioni = [
-    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'PM Fissato', contatti: { categoria: 'Prospect' }, riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo', 'È Amway?'] }] },
-    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Richiamare', contatti: { categoria: 'Prospect' }, riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo', 'Altro'] }, { chiave: 'altro', risposta: 'Quanto costa?' }] },
-    { tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Dare Seguito', contatti: { categoria: 'Prospect' }, riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }] },
-    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Richiamare', contatti: { categoria: 'Partner' }, riflessione: [{ chiave: 'freni', risposta: ['Poco tempo'] }] },
-    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'No Interesse', contatti: { categoria: 'Prospect' }, riflessione: [{ chiave: 'obiezioni', risposta: ['Nessuna'] }] },
-    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'No Risposta', riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }] },   // senza chat: non conta
-  ];
-  assert.deepEqual(T.perTe(azioni), [
-    { situazione: 'telefonata', nome: 'Non ho tempo', volte: 2 },
-    { situazione: 'telefonata', nome: 'È Amway?', volte: 1 },
-    { situazione: 'piano_marketing', nome: 'Non ho tempo', volte: 1 },
-    { situazione: 'telefonata_partner', nome: 'Poco tempo', volte: 1 },
-  ]);
-  assert.deepEqual(T.perTe(null), []);
+// ── Allenarsi: le carte a scatole, il ripasso, il test, la scala dei livelli ──
+const scena = (id, piu = {}) => ({ id, tipo: 'scena', tema: 'Telefonata', versioni: [{ scena: 'Scena ' + id, risposte: ['giusta', 'sbagliata 1', 'sbagliata 2'] }], perche: 'Perché sì.', ...piu });
+const vf = (id, piu = {}) => ({ id, tipo: 'vf', tema: 'Obiezioni', frase: 'Frase ' + id, vero: false, perche: 'Perché no.', ...piu });
+const mazzo = { situazione: 'carte_contattare', percorso: { id: 'contattare' }, carte: [
+  scena('a'), scena('b', { obiezione: 'Non ho tempo' }), vf('c', { trabocchetto: true }), { id: 'd', tipo: 'frase', tema: 'Lista', davanti: 'Quanti nomi?', dietro: '200' },
+  scena('e'), scena('f'), vf('g', { trabocchetto: true }), scena('h'), scena('i'), scena('l'), scena('m', { obiezione: 'È vendita?', situazioni: ['telefonata', 'piano_marketing'] }), vf('n'),
+] };
+const OGGI = '2026-09-24';
+
+prova('Scatole: giusta avanza di una (domani, 3, 7, 14, 30 giorni), sbagliata torna alla prima; nel test una giusta non sposta', () => {
+  let s = T.dopoRisposta(null, true, OGGI);
+  assert.deepEqual(s, { scatola: 1, prossima: '2026-09-25', giuste: 1, sbagliate: 0 });
+  s = T.dopoRisposta(s, true, OGGI); assert.equal(s.scatola, 2); assert.equal(s.prossima, '2026-09-27');
+  s = T.dopoRisposta(s, true, OGGI); assert.equal(s.prossima, '2026-10-01');
+  s = T.dopoRisposta(s, true, OGGI); assert.equal(s.prossima, '2026-10-08');
+  s = T.dopoRisposta(s, true, OGGI); assert.deepEqual([s.scatola, s.prossima], [5, '2026-10-24']);
+  s = T.dopoRisposta(s, true, OGGI); assert.equal(s.scatola, 5);                      // oltre la quinta non si va
+  s = T.dopoRisposta(s, false, OGGI); assert.deepEqual(s, { scatola: 1, prossima: '2026-09-25', giuste: 6, sbagliate: 1 });
+  assert.deepEqual(T.dopoRisposta(null, false, OGGI), { scatola: 1, prossima: '2026-09-25', giuste: 0, sbagliate: 1 });
+  const in3 = { scatola: 3, prossima: '2026-09-30', giuste: 3, sbagliate: 0 };
+  assert.deepEqual(T.dopoRisposta(in3, true, OGGI, { test: true }), { scatola: 3, prossima: '2026-09-30', giuste: 4, sbagliate: 0 });
+  assert.deepEqual(T.dopoRisposta(in3, false, OGGI, { test: true }), { scatola: 1, prossima: '2026-09-25', giuste: 3, sbagliate: 1 });
+  assert.equal(T.piuGiorni('2026-12-31', 1), '2027-01-01');
+  assert.equal(T.piuGiorni('2026-03-01', -1), '2026-02-28');
 });
 
-prova('Allenamento: il blocco della chat su quella domanda, i nomi al loro posto, in fondo la frase da ricordare', () => {
-  const B = { obiezioni: { 'Non ho tempo': { passi: [{ c: 'Tu cosa hai risposto a {chi}, {io}?' }, { salva: 'risposta', chiedi: [['Un caffè', []]] }],
-    frase: 'Proporre un caffè', manuale: 'pagina 13' } } };
-  const p = T.allenamento(B, 'Non ho tempo', { io: 'Ignazio', chi: 'questa persona' });
-  assert.equal(p[0].c, 'Allenamento su «Non ho tempo». Pensa all’ultima volta che ti è capitato.'.replace('’', "'"));
-  assert.deepEqual(p[1], { rif: ['manuale', 'pagina 13'] });
-  assert.equal(p[2].c, 'Tu cosa hai risposto a questa persona, Ignazio?');
-  assert.equal(p[p.length - 1].c, 'Da ricordare: «Proporre un caffè».');
-  assert.equal(T.allenamento(B, 'Non esiste', {}), null);
-  assert.equal(T.allenamento(null, 'Non ho tempo', {}), null);
+prova('Impara: le carte nuove nell\'ordine del mazzo, 6 per lezione', () => {
+  assert.deepEqual(T.nuove(mazzo, {}).map(c => c.id), ['a', 'b', 'c', 'd', 'e', 'f']);
+  assert.deepEqual(T.nuove(mazzo, { a: {}, c: {} }, 3).map(c => c.id), ['b', 'd', 'e']);
+  assert.deepEqual(T.nuove(null, {}), []);
+});
+
+prova('Segnali: l\'ultima volta che un\'obiezione è capitata in una chat del coach, per le carte che ce l\'hanno', () => {
+  const azioni = [
+    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'PM Fissato', contatti: { categoria: 'Prospect' }, inizio: '2026-09-20T10:00:00Z', riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }] },
+    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Richiamare', contatti: { categoria: 'Prospect' }, creato_il: '2026-09-23T09:00:00Z', riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo', 'Altro'] }] },
+    { tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Dare Seguito', contatti: { categoria: 'Prospect' }, inizio: '2026-09-22T18:00:00Z', riflessione: [{ chiave: 'obiezioni', risposta: ['È vendita?'] }] },
+    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'No Risposta', inizio: '2026-09-24T08:00:00Z', riflessione: [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }] },   // senza chat: non conta
+  ];
+  assert.deepEqual(T.segnali(azioni, [mazzo]), { b: '2026-09-23T09:00:00Z', m: '2026-09-22T18:00:00Z' });
+  assert.deepEqual(T.segnali(azioni.slice(2), [{ ...mazzo, carte: [{ ...mazzo.carte[10], situazioni: undefined }] }]), {});   // «È vendita?» dopo il piano non è del telefono
+  assert.deepEqual(T.segnali(null, [mazzo]), {});
+});
+
+prova('Ripassa: le scadute e le obiezioni capitate dopo l\'ultima risposta (anche mai viste), prima le capitate e le più deboli', () => {
+  const stati = {
+    a: { scatola: 3, prossima: '2026-09-24', risposta_il: '2026-09-17T10:00:00Z' },
+    c: { scatola: 1, prossima: '2026-09-22', risposta_il: '2026-09-21T10:00:00Z' },
+    e: { scatola: 2, prossima: '2026-09-26', risposta_il: '2026-09-23T10:00:00Z' },   // non ancora
+    b: { scatola: 4, prossima: '2026-10-10', risposta_il: '2026-09-20T09:00:00Z' },   // capitata il 23, dopo l'ultima risposta
+    m: { scatola: 2, prossima: '2026-10-01', risposta_il: '2026-09-23T10:00:00Z' },   // capitata il 22, prima dell'ultima risposta: no
+  };
+  const segn = { b: '2026-09-23T09:00:00Z', m: '2026-09-22T18:00:00Z', f: '2026-09-23T12:00:00Z' };
+  const r = T.daRipassare([{ ...mazzo, percorso: { id: 'contattare' } }], stati, OGGI, segn);
+  assert.deepEqual(r.map(x => [x.carta.id, x.capitata]), [['f', true], ['b', true], ['c', false], ['a', false]]);
+  assert.equal(r[0].percorso, 'contattare');
+  assert.equal(T.daRipassare([mazzo], stati, OGGI, segn, 2).length, 2);
+  assert.deepEqual(T.daRipassare([mazzo], {}, OGGI, {}), []);
+  assert.deepEqual(T.prossimiRipassi(stati, OGGI), { '2026-09-26': 1, '2026-10-10': 1, '2026-10-01': 1 });
+});
+
+prova('Stelle: 10 su 10 tre, dall\'80% due, dal 70% una; sotto, nessuna', () => {
+  assert.deepEqual([10, 9, 8, 7, 6, 0].map(g => T.stelle(g, 10)), [3, 2, 2, 1, 0, 0]);
+  assert.equal(T.stelle(0, 0), 0);
+});
+
+prova('Stato di un percorso: viste, sapute (dalla terza scatola), da ripassare, test aperto a carte tutte viste, stelle migliori e ultimi due test', () => {
+  const stati = { a: { scatola: 3, prossima: '2026-09-30' }, b: { scatola: 1, prossima: '2026-09-24' } };
+  const test = [{ percorso: 'contattare', giuste: 6, totale: 10, fatto_il: '2026-09-20T10:00:00Z' }, { percorso: 'contattare', giuste: 9, totale: 10, fatto_il: '2026-09-21T10:00:00Z' },
+    { percorso: 'contattare', giuste: 7, totale: 10, fatto_il: '2026-09-23T10:00:00Z' }, { percorso: 'altro', giuste: 10, totale: 10, fatto_il: '2026-09-23T11:00:00Z' }];
+  const s = T.statoPercorso(mazzo, stati, test, OGGI);
+  assert.deepEqual([s.totale, s.viste, s.nuove, s.sapute, s.daRipassare, s.testAperto, s.stelle, s.superato], [12, 2, 10, 1, 1, false, 2, true]);
+  assert.equal(s.ultimo.giuste, 7); assert.equal(s.penultimo.giuste, 9);
+  const tutte = Object.fromEntries(mazzo.carte.map(c => [c.id, { scatola: 1, prossima: '2026-09-25' }]));
+  assert.equal(T.statoPercorso(mazzo, tutte, [], OGGI).testAperto, true);
+  assert.equal(T.statoPercorso(mazzo, tutte, [], OGGI).superato, false);
+});
+
+prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i percorsi del livello sotto non sono superati', () => {
+  const s = T.scala([mazzo], {}, [], OGGI);
+  assert.deepEqual(s.livelli.map(l => l.nome), ['Nuovo', 'Sponsor', 'Leaders Club', 'Leader Executive', 'Leader Bronzo', 'Leader Argento', 'Platino']);
+  assert.deepEqual(s.livelli.map(l => l.aperto), [true, false, false, false, false, false, false]);
+  assert.equal(s.qui.nome, 'Nuovo');
+  assert.deepEqual(s.livelli[0].percorsi.map(p => [p.id, p.pronto]), [['contattare', true], ['primi_passi', false], ['sistema', false], ['principi', false]]);
+  // Contattare superato: Sponsor resta chiuso, gli altri percorsi del Nuovo non ci sono ancora
+  const s2 = T.scala([mazzo], {}, [{ percorso: 'contattare', giuste: 8, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }], OGGI);
+  assert.equal(s2.livelli[0].percorsi[0].stato.superato, true);
+  assert.equal(s2.livelli[1].aperto, false);
+  // con tutti e quattro i percorsi superati si apre Sponsor
+  const mazzi = ['contattare', 'primi_passi', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  const test = mazzi.map(m => ({ percorso: m.percorso.id, giuste: 10, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }));
+  const s3 = T.scala(mazzi, {}, test, OGGI);
+  assert.deepEqual(s3.livelli.map(l => l.aperto), [true, true, false, false, false, false, false]);
+  assert.equal(s3.qui.nome, 'Sponsor');
+  assert.equal(s3.livelli[0].superato, true);
+});
+
+prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno due trabocchetti, ogni volta in ordine diverso', () => {
+  let n = 0; const rnd = () => ((n = (n * 9301 + 49297) % 233280) / 233280);
+  const stati = Object.fromEntries(mazzo.carte.map(c => [c.id, { scatola: 5, sbagliate: 0 }]));
+  stati.h = { scatola: 1, sbagliate: 3 }; stati.i = { scatola: 1, sbagliate: 2 };
+  const t = T.pescaTest(mazzo, stati, 10, rnd);
+  assert.equal(t.length, 10);
+  assert.ok(t.every(c => c.tipo !== 'frase'));
+  assert.equal(new Set(t.map(c => c.id)).size, 10);
+  assert.ok(t.some(c => c.id === 'h') && t.some(c => c.id === 'i'));
+  assert.ok(t.filter(c => c.trabocchetto).length >= 2);
+  // con poche carte deboli e i trabocchetti in fondo, i trabocchetti entrano lo stesso
+  const pochi = T.pescaTest(mazzo, { ...stati, c: { scatola: 5 }, g: { scatola: 5 } }, 4, rnd);
+  assert.equal(pochi.filter(c => c.trabocchetto).length, 2);
+});
+
+prova('Una domanda: scena con le risposte in ordine sparso (la prima del mazzo è la giusta), vero o falso, frase', () => {
+  const d = T.domanda({ ...scena('x'), versioni: [{ scena: 'Uno', risposte: ['G', 'S1', 'S2'] }, { scena: 'Due', risposte: ['G2', 'T1', 'T2'] }] }, () => 0.99);
+  assert.equal(d.testo, 'Due');
+  assert.deepEqual(d.risposte.filter(r => r.giusta).map(r => r.testo), ['G2']);
+  assert.equal(d.risposte.length, 3);
+  assert.deepEqual(T.domanda(vf('y')).risposte, [{ testo: 'Vero', giusta: false }, { testo: 'Falso', giusta: true }]);
+  assert.deepEqual(T.domanda(mazzo.carte[3]), { tipo: 'frase', davanti: 'Quanti nomi?', dietro: '200' });
+});
+
+prova('Giorni di fila: fino a oggi o, se oggi non ancora, fino a ieri; un buco li azzera', () => {
+  assert.deepEqual(T.giorniDiFila(['2026-09-22', '2026-09-23', '2026-09-24'], OGGI), { n: 3, oggi: true });
+  assert.deepEqual(T.giorniDiFila(['2026-09-22', '2026-09-23'], OGGI), { n: 2, oggi: false });
+  assert.deepEqual(T.giorniDiFila(['2026-09-20', '2026-09-24'], OGGI), { n: 1, oggi: true });
+  assert.deepEqual(T.giorniDiFila(['2026-09-21'], OGGI), { n: 0, oggi: false });
+  assert.deepEqual(T.giorniDiFila([], OGGI), { n: 0, oggi: false });
+});
+
+prova('La fonte, detta come la cercano le persone; la voce di chi l\'ha detto non ha riga', () => {
+  assert.equal(T.fonte({ tipo: 'manuale', pag: '13' }), 'Manuale di Avvio, pagina 13');
+  assert.equal(T.fonte({ tipo: 'manuale', pag: '6-7' }), 'Manuale di Avvio, pagine 6-7');
+  assert.equal(T.fonte({ tipo: 'traccia', id: 't', titolo: 'La risposta', oratore: 'Massimo Bini' }), 'Da ascoltare nel BSM: Massimo Bini – «La risposta»');
+  assert.equal(T.fonte({ tipo: 'libro', id: 'l', titolo: 'Pensa e arricchisci te stesso', autore: 'Napoleon Hill', capitolo: 'La decisione' }),
+    'Dal libro di Napoleon Hill «Pensa e arricchisci te stesso», capitolo «La decisione»');
+  assert.equal(T.fonte(null), null);
+});
+
+prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte che non sono 3, fonti a metà, tipi sconosciuti', () => {
+  assert.deepEqual(T.controllaMazzo(mazzo), []);
+  const rotto = { ...mazzo, carte: [...mazzo.carte, scena('a'), { ...scena('z'), versioni: [{ scena: 'x', risposte: ['uno', 'due'] }] },
+    { ...vf('w'), fonte: { tipo: 'traccia', titolo: 'Senza id' } }, { id: 'q', tipo: 'boh', tema: 'x' }] };
+  const p = T.controllaMazzo(rotto);
+  assert.ok(p.includes('id doppio: a'));
+  assert.ok(p.some(x => x.startsWith('z: servono 3 risposte')));
+  assert.ok(p.includes('w: fonte incompleta'));
+  assert.ok(p.includes('q: tipo sconosciuto «boh»'));
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, percorso: { id: 'boh' } }), ['percorso sconosciuto: boh']);
+  assert.ok(T.controllaMazzo({ ...mazzo, situazione: 'carte_x' })[0].startsWith('situazione'));
+});
+
+prova('Il capitolo del manuale che contiene una pagina', () => {
+  const voci = T.carte([], { manuale: [{ pagine: '8-12', titolo: 'Tracce' }, { pagine: '13-14', titolo: 'Obiezioni' }, { pagine: '15', titolo: 'PM in casa' }] });
+  assert.equal(T.capitoloDi(voci, '13').titolo, 'Obiezioni');
+  assert.equal(T.capitoloDi(voci, 15).titolo, 'PM in casa');
+  assert.equal(T.capitoloDi(voci, '9').id, 'manuale-8-12');
+  assert.equal(T.capitoloDi(voci, '99'), null);
 });
 
 console.log(`\n${ok} prove superate`);

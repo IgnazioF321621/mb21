@@ -444,7 +444,6 @@
   .foglio.mc .elimina-qui { margin: 14px 0; }
   .mc-fondo { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; background: var(--superficie); margin: 0 -16px;
     padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }
-  .trn-allenamento .mc-fondo[hidden] { display: none; }   /* 24/09: «display: grid» vince su hidden (come per la barra in basso): «Un'altra · Chiudi» solo a fine allenamento. Nella chat del coach il «Chiudi» si vede da subito: da decidere con Ignazio */
   /* Dopo l'esito (cantiere 42): il foglio della chat prende il colore del tipo di appuntamento (--tipo, come in Agenda) */
   .foglio.mc.rifl { border-top: 6px solid var(--tipo); background: var(--sfondo); background: color-mix(in srgb, var(--tipo) 7%, var(--sfondo)); }
   .rifl .mc-testa .ts-pastiglia { background: var(--tipo); }
@@ -476,15 +475,115 @@
   .ricordo small { display: block; font-size: 12.5px; color: var(--cat-partner); font-weight: 600; margin-bottom: 2px; }
   @keyframes cch-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes cch-salta { 0%, 60%, 100% { transform: none; opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
-  /* ── Training (cantiere 42, 24/09): la pagina per allenarsi (pagina-training.js); ogni settore ha il suo colore (--col) ── */
-  .trn-perte { padding: 14px 16px 6px; }
-  .trn-perte .sh-etichetta { display: flex; align-items: center; gap: 6px; color: var(--proposta); }
-  .trn-perte-sotto { font-size: 14px; color: var(--testo-soft); margin: 0 0 8px; }
-  .trn-perte-riga { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; border: 0; border-top: 1px solid var(--bordo); background: none;
-    padding: 11px 0; font-family: inherit; color: var(--testo); }
-  .trn-perte-riga > div { flex: 1; min-width: 0; } .trn-perte-riga b { display: block; font-size: 15.5px; }
-  .trn-perte-riga small { display: block; font-size: 12.5px; color: var(--testo-soft); margin-top: 1px; }
-  .trn-perte-riga > span { flex: none; font-size: 14px; font-weight: 700; color: var(--proposta); }
+  /* ── Training (cantieri 42 e 45): pagina-training.js. Impara (la scala che sale), Ripassa, Studia (il catalogo: ogni settore ha il suo
+     colore, --col). Il colore del Training è il viola della crescita, come la sua icona ── */
+  .trn-ciao { display: flex; align-items: center; gap: 8px; margin: -6px 2px 12px; }
+  .trn-ciao b { flex: 1; font-size: 18px; }
+  .trn-conto { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 700; color: var(--testo-soft); background: var(--superficie);
+    border-radius: var(--raggio-pill); padding: 6px 12px; box-shadow: var(--ombra-card); }
+  .trn-conto > svg.ic { width: 18px; height: 18px; }
+  .trn-conto.fila.acceso { color: var(--cat-prospect); } .trn-conto.stelle > svg.ic { color: var(--proposta); fill: currentColor; }
+  .trn-fila-oggi { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--cat-prospect); background: var(--cat-prospect-tinta);
+    border-radius: var(--raggio-riga); padding: 9px 12px; margin: 0 0 12px; }
+  .trn-schede { display: flex; gap: 4px; background: var(--superficie); border-radius: var(--raggio-pill); padding: 4px; margin: 0 0 16px; box-shadow: var(--ombra-card); }
+  .trn-schede button { flex: 1; border: 0; background: none; border-radius: var(--raggio-pill); min-height: 40px; font-size: 15px; font-weight: 600; color: var(--testo-soft); font-family: inherit; }
+  .trn-schede button.scelta { background: var(--gr-crescita); color: #fff; }
+  .trn-num { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 99px; background: var(--cat-prospect); color: #fff; font-size: 12px; line-height: 20px; }
+  /* la scala: dall'alto i livelli chiusi, poi i percorsi del livello aperto a zig-zag (come Duolingo), e in basso la sua base */
+  .trn-scala { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 8px; }
+  .trn-gradino { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--raggio-riga); }
+  .trn-gradino > div { flex: 1; min-width: 0; } .trn-gradino b { display: block; font-size: 16px; }
+  .trn-gradino small { display: block; font-size: 13px; margin-top: 1px; color: var(--testo-soft); }
+  .trn-gradino.chiuso { border: 1.5px dashed var(--spento); color: var(--testo-tenue); } .trn-gradino.chiuso b { color: var(--testo-soft); }
+  .trn-lucchetto { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--superficie-2); }
+  .trn-lucchetto > svg.ic { width: 19px; height: 19px; }
+  .trn-gradino.qui { background: var(--gr-crescita); color: #fff; margin-top: 4px; } .trn-gradino.qui small { color: rgba(255,255,255,.85); }
+  .trn-gradino.fatto { background: var(--ok-tinta); color: var(--ok); } .trn-gradino > svg.ic { width: 24px; height: 24px; }
+  .trn-nodo { display: flex; align-items: center; gap: 12px; margin-left: var(--x); border: 0; background: none; padding: 6px 0; text-align: left; font-family: inherit; color: var(--testo); }
+  .trn-nodo > div { min-width: 0; } .trn-nodo b { display: block; font-size: 16px; }
+  .trn-nodo small { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--testo-soft); margin-top: 1px; }
+  .trn-tondo-n { width: 64px; height: 64px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--superficie); color: var(--gr-crescita);
+    border: 2px solid var(--gr-crescita); box-shadow: 0 5px 0 var(--gr-crescita-tinta); }
+  .trn-tondo-n > svg.ic { width: 28px; height: 28px; }
+  .trn-nodo.qui .trn-tondo-n { background: var(--gr-crescita); color: #fff; box-shadow: 0 5px 0 color-mix(in srgb, var(--gr-crescita) 55%, #000); }
+  .trn-nodo.fatto .trn-tondo-n { background: var(--ok); border-color: var(--ok); color: #fff; box-shadow: 0 5px 0 color-mix(in srgb, var(--ok) 55%, #000); }
+  .trn-nodo.presto .trn-tondo-n { border: 2px dashed var(--spento); color: var(--testo-tenue); box-shadow: none; } .trn-nodo.presto b { color: var(--testo-soft); }
+  .trn-qui { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--gr-crescita-tinta); color: var(--gr-crescita); margin-left: 8px; vertical-align: 2px; }
+  .trn-stelle { display: inline-flex; gap: 1px; } .trn-stelle i { display: inline-flex; color: var(--spento); }
+  .trn-stelle i.presa { color: var(--proposta); } .trn-stelle i.presa svg.ic { fill: currentColor; }
+  /* il foglio di un percorso */
+  .trn-avanzamento { position: relative; height: 12px; border-radius: 99px; background: var(--sfondo); overflow: hidden; margin: 14px 0 4px; }
+  .trn-avanzamento i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: color-mix(in srgb, var(--gr-crescita) 35%, var(--superficie)); }
+  .trn-avanzamento i.sapute { background: var(--gr-crescita); }
+  .trn-percorso .trn-conti { margin: 8px 0 16px; } .trn-percorso .trn-conti span { background: var(--sfondo); }
+  button.trn-via { margin: 4px 0 8px; background: var(--gr-crescita); }
+  button.trn-secondo { width: 100%; min-height: var(--bottone-h); font-size: 16px; font-weight: 600; border: 1.5px solid var(--gr-crescita); color: var(--gr-crescita);
+    background: var(--superficie); border-radius: var(--raggio-bottone); margin: 4px 0 8px; font-family: inherit; }
+  .trn-test { border-radius: var(--raggio-riga); background: var(--sfondo); padding: 12px 14px; margin: 10px 0; }
+  .trn-test-riga { display: flex; gap: 10px; align-items: flex-start; color: var(--gr-crescita); } .trn-test-riga > div { flex: 1; color: var(--testo); }
+  .trn-test-riga b { display: block; font-size: 15.5px; } .trn-test-riga small { display: block; font-size: 13.5px; color: var(--testo-soft); margin-top: 2px; }
+  .trn-test.chiuso .trn-test-riga { color: var(--testo-tenue); }
+  .trn-test button { margin: 10px 0 0; }
+  .trn-ultimo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; margin-top: 10px; } .trn-ultimo > span:not(.trn-stelle) { color: var(--testo-soft); }
+  /* Ripassa */
+  .trn-ripassa { text-align: center; padding: 24px 18px; } .trn-ripassa > svg.ic { width: 30px; height: 30px; color: var(--gr-crescita); }
+  .trn-ripassa.fatto > svg.ic { color: var(--ok); }
+  .trn-ripassa b { display: block; font-size: 18px; margin: 6px 0; } .trn-ripassa p { color: var(--testo-soft); font-size: 15px; line-height: 1.45; margin: 0 0 16px; }
+  .trn-rip-n { font-size: 52px; font-weight: 800; color: var(--gr-crescita); line-height: 1; }
+  .trn-ripassa button.primario { background: var(--gr-crescita); }
+  /* la sessione: una carta alla volta */
+  .foglio.trn-sessione { min-height: 70vh; display: flex; flex-direction: column; }
+  .trn-ses-testa { display: flex; align-items: center; gap: 12px; }
+  .trn-ses-testa .trn-x { flex: none; border: 0; background: var(--sfondo); width: 38px; height: 38px; border-radius: 50%; color: var(--testo-soft); }
+  .trn-ses-testa .trn-x > svg.ic { width: 20px; height: 20px; display: block; margin: auto; }
+  .trn-ses-barra { flex: 1; height: 12px; border-radius: 99px; background: var(--sfondo); overflow: hidden; }
+  .trn-ses-barra i { display: block; height: 100%; width: 0; background: var(--gr-crescita); border-radius: 99px; transition: width .3s; }
+  .trn-ses-n { flex: none; font-size: 13px; font-weight: 700; color: var(--testo-soft); min-width: 34px; text-align: right; }
+  .trn-ses-titolo { font-size: 13px; color: var(--testo-soft); margin: 10px 2px 0; }
+  .trn-ses-corpo { flex: 1; }
+  .trn-carta { padding: 14px 2px 8px; }
+  .trn-tema { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gr-crescita); }
+  .trn-domanda { font-size: 19px; line-height: 1.4; font-weight: 600; margin: 8px 0 16px; }
+  .trn-chiede { font-size: 14px; color: var(--testo-soft); margin: -8px 0 12px; }
+  .trn-risposte { display: grid; gap: 10px; } .trn-risposte.trn-vf { grid-template-columns: 1fr 1fr; }
+  .trn-risposte button { text-align: left; border: 2px solid var(--bordo); border-bottom-width: 4px; background: var(--superficie); border-radius: var(--raggio-bottone);
+    padding: 13px 14px; font-size: 16px; line-height: 1.35; font-family: inherit; color: var(--testo); }
+  .trn-vf button { text-align: center; font-weight: 700; }
+  .trn-risposte button:disabled { opacity: 1; color: var(--testo); }
+  .trn-risposte button.giusta { border-color: var(--ok); background: var(--ok-tinta); }
+  .trn-risposte button.sbagliata { border-color: var(--pericolo); background: var(--pericolo-tinta); }
+  .trn-risposte button.scelta-test { border-color: var(--gr-crescita); background: var(--gr-crescita-tinta); }
+  .trn-esito { margin-top: 14px; border-radius: var(--raggio-riga); padding: 12px 14px; font-size: 15px; line-height: 1.45; }
+  .trn-esito.si { background: var(--ok-tinta); } .trn-esito.no { background: var(--pericolo-tinta); }
+  .trn-esito > b { display: block; font-size: 17px; margin-bottom: 4px; } .trn-esito.si > b { color: var(--ok); } .trn-esito.no > b { color: var(--pericolo); }
+  button.trn-fonte { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 0; border: 0; background: none; color: var(--gr-crescita); font-size: 14px;
+    font-weight: 600; text-align: left; font-family: inherit; }
+  button.trn-fonte:disabled { color: var(--testo-soft); opacity: 1; } button.trn-fonte > svg.ic { width: 16px; height: 16px; }
+  .trn-frase-davanti { font-size: 21px; font-weight: 700; line-height: 1.35; text-align: center; padding: 30px 16px; margin: 12px 0 16px; border: 2px solid var(--bordo);
+    border-bottom-width: 4px; border-radius: var(--raggio-card); background: var(--superficie); }
+  .trn-frase-davanti.piccola { font-size: 16px; padding: 14px; margin-bottom: 10px; color: var(--testo-soft); }
+  .trn-frase-dietro { font-size: 18px; line-height: 1.45; font-weight: 600; padding: 16px; border-radius: var(--raggio-card); background: var(--gr-crescita-tinta); }
+  .trn-sapevo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .trn-sapevo button { min-height: var(--bottone-h); border-radius: var(--raggio-bottone); font-size: 16px; font-weight: 700; font-family: inherit; border: 2px solid; border-bottom-width: 4px; }
+  .trn-sapevo .no { border-color: var(--pericolo); color: var(--pericolo); background: var(--pericolo-tinta); }
+  .trn-sapevo .si { border-color: var(--ok); color: var(--ok); background: var(--ok-tinta); }
+  .trn-ses-fondo { position: sticky; bottom: 0; background: var(--superficie); padding: 12px 0 calc(env(safe-area-inset-bottom) + 4px); }
+  .trn-ses-fondo[hidden] { display: none; }
+  .trn-ses-fondo button.primario { background: var(--gr-crescita); }
+  .trn-fine { text-align: center; padding: 20px 0 8px; }
+  .trn-grande { font-size: 56px; font-weight: 800; color: var(--gr-crescita); line-height: 1; }
+  .trn-grande small { font-size: 18px; font-weight: 600; color: var(--testo-soft); margin-left: 6px; }
+  .trn-fine .trn-stelle { margin: 10px 0 4px; } .trn-fine .trn-stelle svg.ic { width: 34px; height: 34px; }
+  .trn-fine p { font-size: 15px; line-height: 1.5; color: var(--testo-soft); margin: 10px 0; } .trn-fine p b { color: var(--testo); font-size: 17px; }
+  .trn-tornano { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 8px 0; }
+  .trn-tornano span { font-size: 13px; color: var(--testo-soft); background: var(--sfondo); border-radius: var(--raggio-pill); padding: 4px 11px; } .trn-tornano b { color: var(--gr-crescita); }
+  .trn-fila { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--cat-prospect); font-size: 15px; }
+  .trn-rif-t { margin: 18px 2px 6px; font-size: 15px; }
+  .trn-rif { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--bordo); text-align: left; }
+  .trn-rif > svg.ic { flex: none; margin-top: 2px; } .trn-rif.si > svg.ic { color: var(--ok); } .trn-rif.no > svg.ic { color: var(--pericolo); }
+  .trn-rif b { display: block; font-size: 14.5px; line-height: 1.35; } .trn-rif small { display: block; font-size: 13.5px; margin-top: 3px; color: var(--testo-soft); line-height: 1.35; }
+  .trn-rif small.tua { color: var(--pericolo); } .trn-rif small.perche { font-style: italic; }
+  /* Studia: il catalogo del cantiere 42 */
   .trn-chips { margin: 0 0 4px; }
   .trn-settore { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin: 12px 0 2px; border-radius: var(--raggio-card);
     background: color-mix(in srgb, var(--col) 12%, var(--superficie)); }
@@ -498,15 +597,11 @@
   .trn-conti { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
   .trn-conti span { font-size: 12.5px; color: var(--testo-soft); background: var(--superficie); border-radius: var(--raggio-pill); padding: 3px 10px; }
   .trn-conti b { display: inline; font-size: 12.5px; color: var(--col); }
-  .trn-allena, .trn-riga { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 0; background: var(--superficie); color: var(--testo);
+  .trn-riga { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 0; background: var(--superficie); color: var(--testo);
     border-radius: var(--raggio-riga); padding: 12px 14px; margin: 7px 0; box-shadow: var(--ombra-card); font-family: inherit; }
-  .trn-allena > svg.ic { width: 26px; height: 26px; color: var(--col); }
-  .trn-allena > div, .trn-riga > div { flex: 1; min-width: 0; }
-  .trn-allena b, .trn-riga b { display: block; font-size: 15.5px; line-height: 1.25; }
-  .trn-allena small, .trn-riga small { display: block; font-size: 13px; color: var(--testo-soft); margin-top: 2px; }
-  .trn-riga small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .trn-barra { display: block; height: 6px; border-radius: 99px; background: var(--sfondo); margin-top: 8px; overflow: hidden; }
-  .trn-barra i { display: block; height: 100%; background: var(--col); border-radius: 99px; }
+  .trn-riga > div { flex: 1; min-width: 0; }
+  .trn-riga b { display: block; font-size: 15.5px; line-height: 1.25; }
+  .trn-riga small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; color: var(--testo-soft); margin-top: 2px; }
   .trn-freccia { flex: none; font-size: 22px; color: var(--testo-tenue); }
   .trn-tondo { width: 38px; height: 38px; background: color-mix(in srgb, var(--col) 13%, var(--superficie)); color: var(--col); }
   .trn-pag { flex: none; min-width: 48px; text-align: center; font-size: 13px; font-weight: 800; color: var(--col); border-radius: 12px; padding: 8px 6px;
@@ -528,12 +623,6 @@
   .trn-cap b { display: block; font-size: 15px; } .trn-cap small { display: block; font-size: 13.5px; color: var(--testo-soft); line-height: 1.35; margin-top: 2px; }
   .trn-capitolo { border-top: 1px solid var(--bordo); padding: 11px 0; } .trn-capitolo summary { font-weight: 600; font-size: 15px; cursor: pointer; }
   .trn-dafare { margin-top: 8px; } .trn-dafare b { font-size: 13px; color: var(--col); }
-  .foglio.cch p.trn-al-intro { font-size: 15px; color: var(--testo-soft); margin: 4px 0 12px; }
-  .trn-ob { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
-  .trn-ob button { border: 1.5px solid var(--tipo); color: var(--tipo); background: var(--superficie); border-radius: var(--raggio-pill); min-height: 42px; padding: 8px 14px;
-    font-size: 15px; font-weight: 600; font-family: inherit; }
-  .trn-ob button.fatta { background: color-mix(in srgb, var(--tipo) 12%, var(--superficie)); }
-  .trn-allenamento .mc-fondo { grid-template-columns: 1fr 2fr; }
   /* «✨ Novità» (cantiere 28): una riga per novità, nel foglio all'apertura e dal Profilo */
   /* Novità: righe bianche staccate come nel resto dell'app (cantiere 34, 20/09) */
   .nv-pagina { margin: 16px 2px 6px; font-size: var(--dim-etichetta); font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: 1.2px; }
@@ -1609,41 +1698,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609241729"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609241729"></script>
-<script src="lista.js?v=202609241729"></script>
-<script src="rubrica.js?v=202609241729"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609241729"></script>
-<script src="agenda.js?v=202609241729"></script>
-<script src="coach.js?v=202609241729"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609241729"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609241729"></script>
-<script src="check.js?v=202609241729"></script>
-<script src="mappa.js?v=202609241729"></script>
-<script src="pagina-coach.js?v=202609241729"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609241729"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609241729"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609241729"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609241729"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609241729"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609241729"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609241729"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609241729"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609241729"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609241729"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609241729"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609241729"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609241729"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609241729"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609241729"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609241729"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609241729"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609241729"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609241729"></script>
-<script src="benvenuto.js?v=202609241729"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609241729"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609241855"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609241855"></script>
+<script src="lista.js?v=202609241855"></script>
+<script src="rubrica.js?v=202609241855"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609241855"></script>
+<script src="agenda.js?v=202609241855"></script>
+<script src="coach.js?v=202609241855"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609241855"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609241855"></script>
+<script src="check.js?v=202609241855"></script>
+<script src="mappa.js?v=202609241855"></script>
+<script src="pagina-coach.js?v=202609241855"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609241855"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609241855"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609241855"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609241855"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609241855"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609241855"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609241855"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609241855"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609241855"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609241855"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609241855"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609241855"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609241855"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609241855"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609241855"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609241855"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609241855"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609241855"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609241855"></script>
+<script src="benvenuto.js?v=202609241855"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609241855"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.24 · 17:29';
+const APP_VERSION = '2026.09.24 · 18:55';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).

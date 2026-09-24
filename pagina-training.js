@@ -1,136 +1,383 @@
-// MB21 · la pagina Training (cantiere 42, 24/09/2026): solo definizioni. Ignazio: «facciamolo visivamente intuibile, intelligente, bella
-// da vedere e, soprattutto, al momento in locale; puoi capire dove inserirla»: una voce della barra in basso, «Training», che per ora
-// compare solo nell'anteprima sul Mac (127.0.0.1 / localhost: TRAINING_VISIBILE; online resta nascosta anche se il codice va online).
-// Nella pagina: «Per te, adesso» (dalle risposte date al coach: su cosa allenarsi), la ricerca, i settori di Ignazio del 23/09 (ognuno
-// col suo colore) e, dentro ogni settore, «Allenati» (la chat del coach su una domanda o un'obiezione, senza salvare niente), i capitoli
-// del Manuale di Avvio, le tracce della biblioteca N21 con gli appunti PAL di Ignazio e quelle fuori dal BSM (CEP, eventi); «Libri» a
-// parte. I testi arrivano dall'archivio privato (coach_batterie: «training» e le chat) e dalla biblioteca (materiali); la logica è in
-// training.js (MB21Training), la chat è quella del coach (MB21Coach.chat); lo stile .trn-* e TRAINING_VISIBILE sono in index.html.
-const TRN = { settore: null, cerca: '', carte: null, cat: null, batterie: {}, perTe: [], chi: null, tutte: {} };
-const TRN_PRIME = 6;   // in un elenco lungo si vedono le prime 6, poi «Mostra tutte»
-const TRN_SITUAZIONI = { telefonata: 'al telefono', telefonata_partner: 'con i partner, al telefono', telefonata_cliente: 'con i clienti, al telefono',
-  piano_marketing: 'dopo il piano', follow_up: 'nel Follow Up', consulenza: 'nella consulenza', appuntamento_partner: 'agli appuntamenti con i partner' };
+// MB21 · la pagina Training: solo definizioni. Una voce della barra in basso, «Training», che per ora compare solo nell'anteprima sul Mac
+// (127.0.0.1 / localhost: TRAINING_VISIBILE in index.html; online resta nascosta anche se il codice va online).
+// Tre parti (cantiere 45, Ignazio 24/09: le flashcard «come si studia all'università» più Duolingo, «un percorso di crescita che va verso
+// l'alto: man mano si apre e questo permette anche visivamente di capire che si sta salendo»):
+//   Impara  — la scala dei sette livelli, dal Nuovo in basso al Platino in cima; dentro il livello aperto i percorsi (Contattare…),
+//             ognuno con le sue carte nuove e il test finale con le stelle.
+//   Ripassa — le carte che tornano oggi (cinque scatole: domani, 3 giorni… 1 mese) e quelle delle obiezioni capitate davvero nelle chat
+//             del coach; tutti i temi insieme, 5 minuti.
+//   Studia  — il catalogo del cantiere 42: i capitoli del Manuale di Avvio, le tracce del BSM con gli appunti PAL, i libri.
+// I progressi sono nel database, ognuno i suoi (training_carte, training_giorni, training_test); le carte e il catalogo nell'archivio
+// privato (coach_batterie: «carte_<percorso>» e «training»), la biblioteca in materiali. La logica è in training.js (MB21Training);
+// lo stile .trn-* e TRAINING_VISIBILE sono in index.html.
+const TRN = {
+  vista: 'impara',
+  mazzi: null, stati: {}, giorni: [], test: [], segnali: {}, nonSalvato: false,          // allenarsi
+  voci: null, cat: null, settore: null, cerca: '', tutte: {},                            // studiare
+};
+const TRN_PRIME = 6;   // in un elenco lungo del catalogo si vedono le prime 6, poi «Mostra tutte»
 const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro' };
 const TRN_LIBRI = 'var(--cat-ex)';   // il colore di «Libri»
-
-// le domande già allenate, sul dispositivo: una comodità (se si perde, si ricomincia da zero)
-function trnAllenate() {
-  try { return JSON.parse(localStorage.getItem('mb21-training-allenate') || '{}') || {}; } catch (_) { return {}; }
-}
-function trnSegnaAllenata(situazione, nome) {
-  try {
-    const a = trnAllenate(), k = situazione + '|' + nome;
-    a[k] = (a[k] || 0) + 1;
-    localStorage.setItem('mb21-training-allenate', JSON.stringify(a));
-  } catch (_) { /* senza memoria del dispositivo: niente spunte, il resto va */ }
-}
+const trnOggi = () => MB21Coda.oggiRoma();
 
 async function apriTraining() {
   app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="vuoto">Carico…</div>`;
-  if (!TRN.carte) {
-    const [mat, cat] = await Promise.all([
-      dbq('biblioteca', supa.from('materiali').select('id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave, link, pack_id, solo_n21, fuori_catalogo')),
-      batteriaCoach('training'),
-    ]);
-    if (mat.error || !cat) {
-      app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="avviso">Non riesco a caricare il Training: controlla la connessione e riprova.</div>${versione()}`;
-      return;
-    }
-    TRN.cat = cat;
-    TRN.carte = MB21Training.carte(mat.data || [], cat);
+  const io = ST.utente && ST.utente.id, oggi = trnOggi();
+  const [mat, cat, mazzi, carte, giorni, test, azioni] = await Promise.all([
+    TRN.voci ? null : dbq('biblioteca', supa.from('materiali').select('id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave, link, pack_id, solo_n21, fuori_catalogo')),
+    TRN.cat || batteriaCoach('training'),
+    TRN.mazzi ? null : dbq('carte del training', supa.from('coach_batterie').select('situazione, batteria').like('situazione', 'carte_%')),
+    dbq('training: carte', supa.from('training_carte').select('carta, scatola, prossima, giuste, sbagliate, risposta_il').eq('user_id', io)),
+    dbq('training: giorni', supa.from('training_giorni').select('giorno, carte').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
+    dbq('training: test', supa.from('training_test').select('percorso, giuste, totale, fatto_il').eq('user_id', io).order('fatto_il')),
+    // le obiezioni capitate davvero: dalle chat del coach di chi si allena (l'Admin legge le azioni di tutti: qui solo le sue)
+    dbq('training: obiezioni', supa.from('azioni').select('tipo_azione, modalita, esito, riflessione, inizio, creato_il, contatti(categoria)')
+      .eq('user_id', io).not('riflessione', 'is', null).order('creato_il', { ascending: false }).limit(300)),
+  ]);
+  if ((mat && mat.error) || !cat || (mazzi && mazzi.error) || carte.error || giorni.error || test.error) {
+    app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="avviso">Non riesco a caricare il Training: controlla la connessione e riprova.</div>${versione()}`;
+    return;
   }
-  // «Per te, adesso» di chi è scelto (Partner Select compreso): le ultime chat del coach
-  TRN.chi = visto();
-  const rif = await dbq('per te', supa.from('azioni').select('tipo_azione, modalita, esito, riflessione, contatti(categoria)').eq('user_id', TRN.chi.id)
-    .not('riflessione', 'is', null).order('creato_il', { ascending: false }).limit(200));
-  TRN.perTe = rif.error ? [] : MB21Training.perTe(rif.data || []);
-  // le chat per allenarsi: quelle dei settori e quelle di «Per te» (lette una volta per sessione)
-  const servono = new Set([...TRN.cat.settori.flatMap(s => (s.allenamenti || []).map(a => a.situazione)), ...TRN.perTe.slice(0, 6).map(p => p.situazione)]);
-  await Promise.all([...servono].filter(s => !TRN.batterie[s]).map(async s => { TRN.batterie[s] = await batteriaCoach(s); }));
+  if (mat) TRN.voci = MB21Training.carte(mat.data || [], cat);
+  TRN.cat = cat;
+  if (mazzi) TRN.mazzi = (mazzi.data || []).map(r => r.batteria).filter(m => m && m.percorso && Array.isArray(m.carte));
+  TRN.stati = Object.fromEntries((carte.data || []).map(r => [r.carta, r]));
+  TRN.giorni = giorni.data || [];
+  TRN.test = test.data || [];
+  TRN.segnali = azioni.error ? {} : MB21Training.segnali(azioni.data || [], TRN.mazzi);
   if (!TRN.settore) TRN.settore = TRN.cat.settori[0].nome;
   disegnaTraining();
 }
 
 function disegnaTraining() {
-  const chips = [...TRN.cat.settori.map(s => s.nome), 'Libri'];
-  const cerco = !!TRN.cerca.trim();
+  const oggi = trnOggi();
+  const fila = MB21Training.giorniDiFila(TRN.giorni.map(g => g.giorno), oggi);
+  const sc = MB21Training.scala(TRN.mazzi, TRN.stati, TRN.test, oggi);
+  const stelle = sc.livelli.flatMap(l => l.percorsi).reduce((n, p) => n + (p.stato ? p.stato.stelle : 0), 0);
+  const rip = MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali);
+  const nome = primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome));
+  const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${rip.length}</span>` : '')], ['studia', 'Studia']];
+  const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
   app.innerHTML = `<h1>${ic('crescita')} Training</h1>
-    <div class="sotto">Allenati sulle risposte, ritrova il manuale, scegli cosa ascoltare e leggere: tutto dal Sistema di Network 21.</div>
-    ${trnPerTe()}
+    <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
+      <span class="trn-conto fila${fila.oggi ? ' acceso' : ''}" title="Giorni di allenamento di fila">${ic('fiamma')} ${fila.n}</span>
+      <span class="trn-conto stelle" title="Stelle dei test">${ic('stella')} ${stelle}</span></div>
+    ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
+    <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
+    <div id="trn-corpo">${corpo}</div>${versione()}`;
+  app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
+  if (TRN.vista === 'impara') {
+    app.querySelectorAll('[data-percorso]').forEach(b => b.onclick = () => trnApriPercorso(b.dataset.percorso));
+    // si parte da dove sei: la scala si apre in basso, sul percorso di adesso, e sopra si vede fin dove si può salire
+    const qui = app.querySelector('.trn-nodo.qui') || app.querySelector('.trn-gradino.qui');
+    if (qui) qui.scrollIntoView({ block: 'center' });
+  } else if (TRN.vista === 'ripassa') {
+    const via = document.getElementById('trn-via-ripasso');
+    if (via) via.onclick = () => trnSessione(MB21Training.daRipassare(TRN.mazzi, TRN.stati, trnOggi(), TRN.segnali, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', 'Ripasso di oggi');
+  } else trnCollegaStudia();
+}
+
+// ── Impara: la scala che sale ────────────────────────────────
+
+// Dall'alto in basso: i livelli chiusi (col lucchetto e i loro temi), poi i livelli aperti con i loro percorsi, il primo in basso
+// accanto alla base del livello. Quello da fare adesso ha «Sei qui».
+function trnScala(sc) {
+  const livelli = [...sc.livelli].reverse();
+  const prossimo = sc.qui && sc.qui.percorsi.find(p => p.pronto && !p.stato.superato);
+  return `<div class="trn-scala">${livelli.map(l => {
+    if (!l.aperto) {
+      const sopraQui = sc.qui && l.numero === sc.qui.numero + 1;
+      return `<div class="trn-gradino chiuso"><span class="trn-lucchetto">${ic('lucchetto')}</span><div><b>${esc(l.nome)}</b>
+        <small>${sopraQui ? `Si apre quando superi i test di ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
+    }
+    const nodi = [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), p === prossimo)).join('');
+    return `${nodi}<div class="trn-gradino ${l.superato ? 'fatto' : 'qui'}">${l.superato ? ic('fatto') : ''}<div><b>${esc(l.nome)}</b>
+      <small>${l.superato ? 'Livello superato' : `Livello ${l.numero} di ${sc.livelli.length} · ${esc(l.sotto)}`}</small></div></div>`;
+  }).join('')}</div>`;
+}
+// un percorso: il tondo (a zig-zag, come Duolingo) e accanto il titolo con i progressi
+function trnNodo(p, i, qui) {
+  const x = [0, 56, 112, 56][i % 4];
+  if (!p.pronto) return `<div class="trn-nodo presto" style="--x:${x}px"><span class="trn-tondo-n">${ic(p.icona, 26)}</span>
+    <div><b>${esc(p.titolo)}</b><small>In arrivo</small></div></div>`;
+  const s = p.stato, stato = s.superato ? 'fatto' : qui ? 'qui' : 'aperto';
+  const sotto = s.superato ? `${trnStelle(s.stelle)} test superato`
+    : s.testAperto ? 'Hai visto tutte le carte: il test è aperto'
+    : s.viste ? `${s.viste} di ${s.totale} carte` : `${s.totale} carte, poi il test`;
+  return `<button class="trn-nodo ${stato}" data-percorso="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic(s.superato ? 'fatto' : p.icona, 26)}</span>
+    <div><b>${esc(p.titolo)}${qui ? '<span class="trn-qui">Sei qui</span>' : ''}</b><small>${sotto}</small></div></button>`;
+}
+const trnStelle = n => `<span class="trn-stelle">${[0, 1, 2].map(i => `<i class="${i < n ? 'presa' : ''}">${ic('stella', 14)}</i>`).join('')}</span>`;
+
+// Il foglio di un percorso: a che punto sei, le carte nuove, il ripasso delle sue carte, il test, e cosa ascoltare e leggere
+function trnApriPercorso(id) {
+  const oggi = trnOggi(), m = (TRN.mazzi || []).find(x => x.percorso.id === id);
+  if (!m) return;
+  const liv = MB21Training.LIVELLI.find(l => l.percorsi.some(p => p.id === id)), p = liv.percorsi.find(x => x.id === id);
+  const s = MB21Training.statoPercorso(m, TRN.stati, TRN.test, oggi);
+  const daFare = Math.min(MB21Training.LEZIONE, s.nuove);
+  const suo = MB21Training.daRipassare([m], TRN.stati, oggi, TRN.segnali);
+  const pct = n => Math.round(n / (s.totale || 1) * 100);
+  const ultimo = s.ultimo ? `<div class="trn-ultimo">Ultimo test: <b>${s.ultimo.giuste} su ${s.ultimo.totale}</b> ${trnStelle(MB21Training.stelle(s.ultimo.giuste, s.ultimo.totale))}
+    ${s.penultimo ? `<span>· la volta prima ${s.penultimo.giuste} (${trnDiff(s.ultimo.giuste - s.penultimo.giuste)})</span>` : ''}</div>` : '';
+  // per approfondire: dal catalogo di Studia, il manuale e le tracce del BSM del settore con lo stesso nome
+  const studio = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
+  const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-foglio trn-percorso" style="--col:var(--gr-crescita)">
+    ${trnTesta(p.icona, `${liv.nome} · percorso ${liv.percorsi.indexOf(p) + 1} di ${liv.percorsi.length}`, p.titolo)}
+    <div class="trn-foglio-corpo">
+      <p class="trn-testo">${esc(p.sotto)}</p>
+      <div class="trn-avanzamento"><i style="width:${pct(s.viste)}%"></i><i class="sapute" style="width:${pct(s.sapute)}%"></i></div>
+      <div class="trn-conti"><span><b>${s.sapute}</b> le sai</span><span><b>${s.viste - s.sapute}</b> in ripasso</span><span><b>${s.nuove}</b> nuove</span></div>
+      ${daFare ? `<button class="primario trn-via" id="trn-impara">Impara ${daFare} ${daFare === 1 ? 'carta nuova' : 'carte nuove'}</button>` : ''}
+      ${suo.length ? `<button class="trn-secondo" id="trn-ripassa-qui">Ripassa ${suo.length} ${suo.length === 1 ? 'carta' : 'carte'} di oggi</button>` : ''}
+      <div class="trn-test ${s.testAperto ? '' : 'chiuso'}">
+        <div class="trn-test-riga">${ic(s.testAperto ? 'obiettivi' : 'lucchetto', 22)}<div><b>Test finale · ${MB21Training.TEST} domande</b>
+          <small>${s.testAperto ? 'Senza aiuti, anche a trabocchetto: dal 70% il percorso è superato.' : `Si apre quando avrai visto tutte le ${s.totale} carte: ne mancano ${s.nuove}.`}</small></div></div>
+        ${ultimo}
+        ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
+      </div>
+      ${studio.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, settore ? settore.colore : 'var(--gr-crescita)')).join('')}` : ''}
+    </div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('.trn-x').onclick = chiudi;
+  const via = (carte, modo, titolo) => { chiudi(); trnSessione(carte, modo, titolo); };
+  const b1 = velo.querySelector('#trn-impara'), b2 = velo.querySelector('#trn-ripassa-qui'), b3 = velo.querySelector('#trn-test');
+  if (b1) b1.onclick = () => via(MB21Training.nuove(m, TRN.stati), 'impara', `${p.titolo} · Impara`);
+  if (b2) b2.onclick = () => via(suo.slice(0, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', `${p.titolo} · Ripassa`);
+  if (b3) b3.onclick = () => via(MB21Training.pescaTest(m, TRN.stati), 'test', `${p.titolo} · Test finale`);
+  velo.querySelectorAll('[data-carta]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.carta));
+}
+const trnDiff = n => (n > 0 ? `+${n}` : n < 0 ? String(n) : 'uguale');
+
+// ── Ripassa ─────────────────────────────────────────────────
+
+function trnRipassa(rip, oggi) {
+  if (!Object.keys(TRN.stati).length && !rip.length) return `<div class="riquadro trn-ripassa">${ic('orario', 30)}<b>Qui torna quello che impari</b>
+    <p>Le carte che vedi in Impara tornano qui al momento giusto per non dimenticarle: domani, fra 3 giorni, fra una settimana… Cinque minuti al giorno bastano.</p>
+    <button class="primario" data-vista="impara">Inizia da Impara</button></div>`;
+  if (!rip.length) {
+    const dopo = Object.entries(MB21Training.prossimiRipassi(TRN.stati, oggi)).sort(([a], [b]) => a.localeCompare(b))[0];
+    const quando = dopo && (dopo[0] === MB21Training.piuGiorni(oggi, 1) ? 'domani' : 'il ' + new Date(dopo[0] + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }));
+    return `<div class="riquadro trn-ripassa fatto">${ic('fatto', 30)}<b>Per oggi il ripasso è fatto</b>
+      <p>${dopo ? `Le prossime carte tornano ${quando}: ${dopo[1]} ${dopo[1] === 1 ? 'carta' : 'carte'}.` : 'Le carte torneranno quando sarà il momento.'} Intanto, in Impara ci sono carte nuove.</p>
+      <button class="trn-secondo" data-vista="impara">Vai a Impara</button></div>`;
+  }
+  const n = Math.min(rip.length, MB21Training.RIPASSO), capitate = rip.filter(x => x.capitata).length;
+  const minuti = Math.max(1, Math.round(n * 20 / 60));
+  return `<div class="riquadro trn-ripassa"><div class="trn-rip-n">${rip.length}</div>
+    <b>${rip.length === 1 ? 'carta da ripassare oggi' : 'carte da ripassare oggi'}</b>
+    <p>${rip.length > n ? `Si parte dalle prime ${n}: circa` : 'Circa'} ${minuti} ${minuti === 1 ? 'minuto' : 'minuti'}, tutti i temi insieme.${capitate
+      ? ` ${capitate === 1 ? 'Una viene' : capitate + ' vengono'} dalle obiezioni che ti sono capitate davvero nelle telefonate.` : ''}</p>
+    <button class="primario" id="trn-via-ripasso">Inizia il ripasso</button></div>`;
+}
+
+// ── La sessione: una carta alla volta ───────────────────────
+
+// Impara e Ripassa: dopo ogni risposta si vede subito se è giusta, il perché e da dove viene (un tocco porta alla fonte in Studia);
+// le sbagliate si ripropongono una volta in fondo, senza contare. Test: nessun aiuto finché non è finito, poi il punteggio, le stelle,
+// «la volta scorsa» e tutte le risposte con quella giusta. Ogni risposta si salva subito (anche se si chiude a metà resta quello fatto).
+function trnSessione(carte, modo, titolo) {
+  if (!carte || !carte.length) return mostraToast('Nessuna carta da fare adesso.');
+  const coda = carte.map(c => ({ carta: c, ancora: false })), fatte = [];
+  const test = modo === 'test', percorso = test ? (TRN.mazzi.find(m => m.carte.includes(carte[0])) || {}).percorso : null;
+  let i = 0;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-sessione">
+    <div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-barra"><i></i></div><span class="trn-ses-n"></span></div>
+    <div class="trn-ses-titolo"></div><div class="trn-ses-corpo"></div>
+    <div class="trn-ses-fondo" hidden><button class="primario" id="trn-avanti">Avanti</button></div></div>`;
+  document.body.appendChild(velo);
+  const foglio = velo.querySelector('.foglio'), corpo = velo.querySelector('.trn-ses-corpo'), fondo = velo.querySelector('.trn-ses-fondo');
+  const avanti = velo.querySelector('#trn-avanti');
+  velo.querySelector('.trn-ses-titolo').textContent = titolo;
+  const chiudi = () => { velo.remove(); if (ST.tab === 'training') disegnaTraining(); };
+  velo.querySelector('.trn-x').onclick = async () => {
+    if (test && fatte.length && fatte.length < coda.length
+      && !(await chiediConferma('Uscire dal test?', 'Le risposte date finora non fanno punteggio: il test si rifà quando vuoi.', 'Esci', false, '', 'Continua il test'))) return;
+    chiudi();
+  };
+  const barra = () => {
+    const tot = coda.length;
+    velo.querySelector('.trn-ses-barra i').style.width = Math.round(Math.min(i, tot) / tot * 100) + '%';
+    velo.querySelector('.trn-ses-n').textContent = `${Math.min(i + 1, tot)}/${tot}`;
+  };
+  const risposto = (giusta, extra) => {
+    const x = coda[i];
+    if (!x.ancora) { fatte.push({ carta: x.carta, giusta, ...extra }); trnSalva(x.carta, giusta, modo); }
+    if (!giusta && !test && !x.ancora) coda.push({ carta: x.carta, ancora: true });
+  };
+  const mostra = () => {
+    if (i >= coda.length) return fine();
+    barra();
+    fondo.hidden = true;
+    const x = coda[i], c = x.carta, d = MB21Training.domanda(c);
+    const testa = `<div class="trn-tema">${esc(c.tema)}${x.ancora ? ' · riprova' : ''}</div>`;
+    if (d.tipo === 'frase') {
+      corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti">${esc(d.davanti)}</div>
+        <button class="trn-secondo" id="trn-gira">Gira la carta</button></div>`;
+      corpo.querySelector('#trn-gira').onclick = () => {
+        corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti piccola">${esc(d.davanti)}</div>
+          <div class="trn-frase-dietro">${esc(d.dietro)}</div>${trnFonte(c)}
+          <div class="trn-sapevo"><button class="no" data-s="0">Non la sapevo</button><button class="si" data-s="1">La sapevo</button></div></div>`;
+        trnCollegaFonte(corpo);
+        corpo.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { risposto(b.dataset.s === '1', { scelta: b.textContent }); i++; mostra(); });
+      };
+      return;
+    }
+    corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-domanda">${esc(d.testo)}</div>
+      ${d.tipo === 'vf' ? '<div class="trn-chiede">Vero o falso?</div>' : ''}
+      <div class="trn-risposte${d.tipo === 'vf' ? ' trn-vf' : ''}">${d.risposte.map((r, k) => `<button data-r="${k}">${esc(r.testo)}</button>`).join('')}</div>
+      <div class="trn-esito-posto"></div></div>`;
+    corpo.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
+      const r = d.risposte[Number(b.dataset.r)];
+      corpo.querySelectorAll('[data-r]').forEach(x => { x.disabled = true; });
+      if (test) {
+        b.classList.add('scelta-test');
+        risposto(r.giusta, { scelta: r.testo, domanda: d });
+        return setTimeout(() => { i++; mostra(); }, 350);
+      }
+      b.classList.add(r.giusta ? 'giusta' : 'sbagliata');
+      if (!r.giusta) corpo.querySelectorAll('[data-r]').forEach(x => { if (d.risposte[Number(x.dataset.r)].giusta) x.classList.add('giusta'); });
+      corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : 'Non proprio'}</b>
+        ${esc(c.perche || '')}${trnFonte(c)}</div>`;
+      trnCollegaFonte(corpo);
+      risposto(r.giusta, { scelta: r.testo });
+      fondo.hidden = false;
+      avanti.focus({ preventScroll: true });
+      foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
+    });
+  };
+  avanti.onclick = () => { i++; mostra(); foglio.scrollTo({ top: 0 }); };
+  const fine = () => {
+    velo.querySelector('.trn-ses-barra i').style.width = '100%';
+    velo.querySelector('.trn-ses-n').textContent = '';
+    fondo.hidden = false;
+    avanti.textContent = 'Chiudi';
+    avanti.onclick = chiudi;
+    const giuste = fatte.filter(f => f.giusta).length, oggi = trnOggi();
+    const fila = MB21Training.giorniDiFila(TRN.giorni.map(g => g.giorno), oggi);
+    const filaHtml = `<div class="trn-fila">${ic('fiamma', 22)} <b>${fila.n} ${fila.n === 1 ? 'giorno' : 'giorni'} di fila</b>${[7, 30, 100].includes(fila.n) ? ' · traguardo!' : ''}</div>`;
+    if (test) {
+      const prima = TRN.test.filter(t => percorso && t.percorso === percorso.id).slice(-1)[0];
+      const riga = { percorso: percorso && percorso.id, giuste, totale: fatte.length, fatto_il: new Date().toISOString() };
+      TRN.test.push(riga);
+      dbq('training: test', supa.from('training_test').insert({ user_id: ST.utente.id, percorso: riga.percorso, giuste, totale: fatte.length,
+        risposte: fatte.map(f => ({ carta: f.carta.id, giusta: f.giusta })) })).then(r => { if (r.error) trnAvvisaNonSalvato(); });
+      const st = MB21Training.stelle(giuste, fatte.length);
+      corpo.innerHTML = `<div class="trn-fine">
+        <div class="trn-grande">${giuste}<small>su ${fatte.length}</small></div>${trnStelle(st)}
+        <p><b>${st ? (st === 3 ? 'Tutte giuste: percorso superato!' : 'Percorso superato!') : 'Non ancora: dal 70% il percorso è superato.'}</b>
+          ${prima ? `<br>La volta scorsa ${prima.giuste}: ${trnDiff(giuste - prima.giuste)}.` : ''}
+          ${st < 3 ? '<br>Le sbagliate tornano nel ripasso di domani.' : ''}</p>${filaHtml}</div>
+        <h4 class="trn-rif-t">Le tue risposte</h4>
+        ${fatte.map(f => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div><b>${esc(f.domanda ? f.domanda.testo : '')}</b>
+          ${f.giusta ? `<small>${esc(f.scelta)}</small>` : `<small class="tua">La tua: ${esc(f.scelta)}</small><small>Giusta: ${esc(f.domanda.risposte.find(r => r.giusta).testo)}</small>`}
+          <small class="perche">${esc(f.carta.perche || '')}</small></div></div>`).join('')}`;
+      return;
+    }
+    const tornano = {};
+    for (const f of fatte) { const s = TRN.stati[f.carta.id]; if (s) tornano[s.prossima] = (tornano[s.prossima] || 0) + 1; }
+    const quando = g => { const n = Math.round((Date.parse(g + 'T12:00:00Z') - Date.parse(oggi + 'T12:00:00Z')) / 864e5); return n === 1 ? 'domani' : n < 7 ? `fra ${n} giorni` : n < 14 ? 'fra una settimana' : n < 30 ? 'fra due settimane' : 'fra un mese'; };
+    corpo.innerHTML = `<div class="trn-fine"><div class="trn-grande">${giuste}<small>su ${fatte.length}</small></div>
+      <p><b>${giuste === fatte.length ? 'Tutte giuste!' : 'Fatto!'}</b> ${modo === 'impara' ? 'Queste carte ora sono tue: tornano nel ripasso al momento giusto.' : 'Il ripasso di queste carte è fatto.'}</p>
+      <div class="trn-tornano">${Object.entries(tornano).sort(([a], [b]) => a.localeCompare(b)).map(([g, n]) => `<span><b>${n}</b> ${quando(g)}</span>`).join('')}</div>
+      ${filaHtml}</div>`;
+  };
+  mostra();
+}
+
+// da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro)
+function trnFonte(c) {
+  const t = MB21Training.fonte(c.fonte);
+  if (!t) return '';
+  const f = c.fonte, voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+}
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte)); }
+
+// Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
+async function trnSalva(carta, giusta, modo) {
+  const oggi = trnOggi(), ora = new Date().toISOString(), io = ST.utente.id;
+  const nuovo = MB21Training.dopoRisposta(TRN.stati[carta.id], giusta, oggi, { test: modo === 'test' });
+  TRN.stati[carta.id] = { carta: carta.id, ...nuovo, risposta_il: ora };
+  let g = TRN.giorni.find(x => x.giorno === oggi);
+  if (!g) TRN.giorni.push(g = { giorno: oggi, carte: 0 });
+  g.carte++;
+  const [a, b] = await Promise.all([
+    dbq('training: carta', supa.from('training_carte').upsert({ user_id: io, carta: carta.id, ...nuovo, risposta_il: ora })),
+    dbq('training: giorno', supa.from('training_giorni').upsert({ user_id: io, giorno: oggi, carte: g.carte })),
+  ]);
+  if (a.error || b.error) trnAvvisaNonSalvato();
+}
+function trnAvvisaNonSalvato() {
+  if (TRN.nonSalvato) return;
+  TRN.nonSalvato = true;
+  mostraToast('Non riesco a salvare le risposte: controlla la connessione.');
+  setTimeout(() => { TRN.nonSalvato = false; }, 60000);
+}
+
+// ── Studia: il catalogo (cantiere 42) ───────────────────────
+
+function trnStudia() {
+  const chips = [...TRN.cat.settori.map(s => s.nome), 'Libri'], cerco = !!TRN.cerca.trim();
+  return `<div class="sotto trn-sotto">Il manuale, le tracce da ascoltare e i libri: tutto dal Sistema di Network 21.</div>
     <div class="cerca"><input id="trn-cerca" type="text" enterkeyhint="search" autocomplete="off" placeholder="Cerca un tema: tempo, paura, lista…" value="${esc(TRN.cerca)}">
       <button id="trn-via" aria-label="Cancella" ${cerco ? '' : 'hidden'}>${ic('chiudi')}</button></div>
     <div class="chips trn-chips">${chips.map(n => `<button data-settore="${esc(n)}" class="${!cerco && n === TRN.settore ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>
-    <div id="trn-corpo">${cerco ? trnRisultati() : trnSettore()}</div>${versione()}`;
+    <div id="trn-studia">${cerco ? trnRisultati() : trnSettore()}</div>`;
+}
+function trnCollegaStudia() {
   const inp = document.getElementById('trn-cerca'), via = document.getElementById('trn-via');
   inp.oninput = () => {
     TRN.cerca = inp.value;
     via.hidden = !TRN.cerca.trim();
     app.querySelectorAll('[data-settore]').forEach(b => b.classList.toggle('scelto', !TRN.cerca.trim() && b.dataset.settore === TRN.settore));
-    trnCorpo();
+    trnCorpoStudia();
   };
   via.onclick = () => { TRN.cerca = ''; disegnaTraining(); };
   app.querySelectorAll('[data-settore]').forEach(b => b.onclick = () => { TRN.settore = b.dataset.settore; TRN.cerca = ''; disegnaTraining(); });
-  app.querySelectorAll('[data-perte]').forEach(b => b.onclick = () => { const p = TRN.perTe[Number(b.dataset.perte)]; trnApriAllenamento(p.situazione, p.nome); });
-  trnCollega(document.getElementById('trn-corpo'));
+  trnCollegaElenco(document.getElementById('trn-studia'));
 }
 // ridisegna solo la parte sotto i settori (mentre si scrive nella ricerca il campo resta dov'è)
-function trnCorpo() {
-  const corpo = document.getElementById('trn-corpo');
+function trnCorpoStudia() {
+  const corpo = document.getElementById('trn-studia');
   if (!corpo) return;
   corpo.innerHTML = TRN.cerca.trim() ? trnRisultati() : trnSettore();
-  trnCollega(corpo);
+  trnCollegaElenco(corpo);
 }
-function trnCollega(el) {
+function trnCollegaElenco(el) {
   if (!el) return;
   el.querySelectorAll('[data-carta]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.carta));
-  el.querySelectorAll('[data-allena]').forEach(b => b.onclick = () => trnApriAllenamento(b.dataset.allena));
-  el.querySelectorAll('[data-tutte]').forEach(b => b.onclick = () => { TRN.tutte[b.dataset.tutte] = true; trnCorpo(); });
+  el.querySelectorAll('[data-tutte]').forEach(b => b.onclick = () => { TRN.tutte[b.dataset.tutte] = true; trnCorpoStudia(); });
 }
 
-// «Per te, adesso»: le domande e le obiezioni toccate più spesso nelle chat del coach, pronte da allenare
-function trnPerTe() {
-  const altri = guardoAltri() ? ` di ${esc(MB21Sharing.nomeCorto(nomeDi(TRN.chi)))}` : '';
-  const lista = TRN.perTe.filter(p => { const B = TRN.batterie[p.situazione]; return B && B.obiezioni && B.obiezioni[p.nome]; }).slice(0, 3);
-  if (!lista.length) return `<div class="riquadro trn-perte"><div class="sh-etichetta">${ic('lampo')} Per te, adesso</div>
-    <div class="trn-perte-sotto">Quando nelle chat del coach tocchi domande e obiezioni, qui trovi le più frequenti${altri}, pronte da allenare.</div></div>`;
-  return `<div class="riquadro trn-perte"><div class="sh-etichetta">${ic('lampo')} Per te, adesso</div>
-    <div class="trn-perte-sotto">Dalle ultime chat del coach${altri}, le più frequenti:</div>
-    ${lista.map(p => `<button class="trn-perte-riga" data-perte="${TRN.perTe.indexOf(p)}"><div><b>«${esc(p.nome)}»</b>
-      <small>${p.volte} ${p.volte === 1 ? 'volta' : 'volte'} · ${esc(TRN_SITUAZIONI[p.situazione] || '')}</small></div><span>Allenati ›</span></button>`).join('')}</div>`;
-}
-
-// un settore: la testata colorata con i conti, poi Allenati, il manuale, le tracce del BSM, gli appunti fuori dal BSM
+// un settore: la testata colorata con i conti, poi il manuale, le tracce del BSM, gli appunti fuori dal BSM
 function trnSettore() {
   if (TRN.settore === 'Libri') return trnLibri();
   const s = TRN.cat.settori.find(x => x.nome === TRN.settore) || TRN.cat.settori[0];
-  const qui = TRN.carte.filter(c => c.settori.includes(s.nome));
+  const qui = TRN.voci.filter(c => c.settori.includes(s.nome));
   const pagine = qui.filter(c => c.tipo === 'manuale');
   const bsm = qui.filter(c => c.tipo === 'traccia' && c.sezione).sort((a, b) => (b.appunti ? 1 : 0) - (a.appunti ? 1 : 0) || a.titolo.localeCompare(b.titolo, 'it'));
   const fuori = qui.filter(c => c.tipo === 'traccia' && !c.sezione).sort((a, b) => a.titolo.localeCompare(b.titolo, 'it'));
-  const allena = (s.allenamenti || []).map(a => ({ ...a, B: TRN.batterie[a.situazione] })).filter(a => a.B && a.B.obiezioni);
-  const nAllena = allena.reduce((n, a) => n + Object.keys(a.B.obiezioni).length, 0), nTracce = bsm.length + fuori.length;
-  const conti = [[nAllena, 'da allenare'], [pagine.length, pagine.length === 1 ? 'capitolo del manuale' : 'capitoli del manuale'],
-    [nTracce, nTracce === 1 ? 'traccia' : 'tracce']].filter(([n]) => n);
+  const nTracce = bsm.length + fuori.length;
+  const conti = [[pagine.length, pagine.length === 1 ? 'capitolo del manuale' : 'capitoli del manuale'], [nTracce, nTracce === 1 ? 'traccia' : 'tracce']].filter(([n]) => n);
   return `<div class="trn-settore" style="--col:${s.colore}"><span class="trn-icona">${ic(s.icona, 26)}</span>
       <div><b>${esc(s.nome)}</b><small>${esc(s.sotto || '')}</small><div class="trn-conti">${conti.map(([n, t]) => `<span><b>${n}</b> ${t}</span>`).join('')}</div></div></div>
-    ${allena.length ? `<h2>Allenati</h2>${allena.map(a => trnAllena(a, s)).join('')}` : ''}
     ${pagine.length ? `<h2>Nel Manuale di Avvio</h2>${pagine.map(c => trnRiga(c, s.colore)).join('')}` : ''}
     ${bsm.length ? `<h2>Da ascoltare nel BSM</h2>${trnElenco(bsm, s, 'bsm')}` : ''}
     ${fuori.length ? `<h2>Dagli eventi e dal CEP</h2><div class="sotto trn-sotto">Gli appunti PAL di tracce che non sono nel BSM.</div>${trnElenco(fuori, s, 'fuori')}` : ''}`;
 }
 // un elenco di tracce: se è lungo, le prime e «Mostra tutte le N» (si ricorda finché la pagina è aperta)
-function trnElenco(carte, s, chiave) {
-  const k = s.nome + '|' + chiave, tutte = TRN.tutte[k] || carte.length <= TRN_PRIME + 2;
-  return (tutte ? carte : carte.slice(0, TRN_PRIME)).map(c => trnRiga(c, s.colore)).join('')
-    + (tutte ? '' : `<button class="trn-tutte" data-tutte="${esc(k)}" style="--col:${s.colore}">Mostra tutte le ${carte.length} ›</button>`);
-}
-function trnAllena(a, s) {
-  const nomi = Object.keys(a.B.obiezioni), fatte = trnAllenate();
-  const n = nomi.filter(x => fatte[a.situazione + '|' + x]).length;
-  const cosa = a.situazione === 'telefonata_partner' ? 'freni' : 'domande e obiezioni';
-  return `<button class="trn-allena" data-allena="${esc(a.situazione)}" style="--col:${s.colore}">${ic('lampo', 26)}
-    <div><b>${esc(a.titolo)}</b><small>${nomi.length} ${cosa} · ${n ? `✓ ${n} di ${nomi.length}` : 'tocca per iniziare'}</small>
-      <span class="trn-barra"><i style="width:${Math.round(n / nomi.length * 100)}%"></i></span></div><span class="trn-freccia">›</span></button>`;
+function trnElenco(voci, s, chiave) {
+  const k = s.nome + '|' + chiave, tutte = TRN.tutte[k] || voci.length <= TRN_PRIME + 2;
+  return (tutte ? voci : voci.slice(0, TRN_PRIME)).map(c => trnRiga(c, s.colore)).join('')
+    + (tutte ? '' : `<button class="trn-tutte" data-tutte="${esc(k)}" style="--col:${s.colore}">Mostra tutte le ${voci.length} ›</button>`);
 }
 // una riga del catalogo: un capitolo del manuale (con le pagine), una traccia, un libro
 function trnRiga(c, colore) {
@@ -145,8 +392,8 @@ function trnRiga(c, colore) {
     <div><b>${esc(c.titolo)}</b><small>${sotto}</small>${badge ? `<div>${badge}</div>` : ''}</div><span class="trn-freccia">›</span></button>`;
 }
 function trnLibri() {
-  const libri = TRN.carte.filter(c => c.tipo === 'libro').sort((a, b) => (b.capitoli ? 1 : 0) - (a.capitoli ? 1 : 0) || a.titolo.localeCompare(b.titolo, 'it'));
-  const capitoli = TRN.carte.filter(c => c.tipo === 'manuale').length;
+  const libri = TRN.voci.filter(c => c.tipo === 'libro').sort((a, b) => (b.capitoli ? 1 : 0) - (a.capitoli ? 1 : 0) || a.titolo.localeCompare(b.titolo, 'it'));
+  const capitoli = TRN.voci.filter(c => c.tipo === 'manuale').length;
   return `<div class="trn-settore" style="--col:${TRN_LIBRI}"><span class="trn-icona">${ic('libro', 26)}</span>
       <div><b>Libri</b><small>Il Manuale di Avvio e i libri consigliati da Network 21</small>
       <div class="trn-conti"><span><b>${libri.length}</b> libri</span></div></div></div>
@@ -157,7 +404,7 @@ function trnLibri() {
 }
 // la ricerca: tutto il catalogo, diviso per tipo
 function trnRisultati() {
-  const q = TRN.cerca.trim(), r = MB21Training.cerca(TRN.carte, q);
+  const q = TRN.cerca.trim(), r = MB21Training.cerca(TRN.voci, q);
   if (!r.length) return `<div class="vuoto">Niente con «${esc(q)}». Prova con un'altra parola.</div>`;
   const colore = c => { if (c.tipo === 'libro') return TRN_LIBRI; const s = TRN.cat.settori.find(x => c.settori.includes(x.nome)); return s ? s.colore : 'var(--testo-soft)'; };
   return `<div class="sotto trn-sotto">${r.length} ${r.length === 1 ? 'risultato' : 'risultati'} per «${esc(q)}»</div>`
@@ -167,16 +414,16 @@ function trnRisultati() {
     }).join('');
 }
 
-// Il foglio di una carta: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, gli appunti PAL), il libro (gli appunti per capitolo)
+// Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, gli appunti PAL), il libro
 function trnApriCarta(id) {
   let testa, corpo, colore;
   if (id === 'manuale') {
     colore = TRN_LIBRI;
     testa = trnTesta('file', 'Network 21 · arriva con lo Starter Pack', 'Il Manuale di Avvio');
-    corpo = `<p>Capitolo per capitolo: le pagine e di cosa parlano.</p>${TRN.carte.filter(c => c.tipo === 'manuale').map(c =>
+    corpo = `<p>Capitolo per capitolo: le pagine e di cosa parlano.</p>${TRN.voci.filter(c => c.tipo === 'manuale').map(c =>
       `<div class="trn-cap"><span class="trn-pag">${esc(c.pagine)}</span><div><b>${esc(c.titolo)}</b><small>${esc(c.sintesi)}</small></div></div>`).join('')}`;
   } else {
-    const c = TRN.carte.find(x => x.id === id);
+    const c = TRN.voci.find(x => x.id === id);
     if (!c) return;
     const s = TRN.cat.settori.find(x => c.settori.includes(x.nome));
     colore = c.tipo === 'libro' ? TRN_LIBRI : s ? s.colore : 'var(--testo-soft)';
@@ -220,53 +467,4 @@ function trnAppunti(a) {
   const lista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
   return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti PAL di Ignazio</div>
     ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Da fare', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
-}
-
-// Allenati: si sceglie una domanda (o la si passa già, da «Per te, adesso») e il coach la ripropone con la sua chat; niente si salva,
-// solo la spunta sul dispositivo. Il foglio prende il colore del settore, come la chat dopo l'esito prende quello del tipo.
-function trnApriAllenamento(situazione, nome) {
-  const B = TRN.batterie[situazione];
-  if (!B || !B.obiezioni) return mostraToast('Allenamento non disponibile: controlla la connessione e riprova.');
-  const s = TRN.cat.settori.find(x => (x.allenamenti || []).some(a => a.situazione === situazione));
-  const titolo = s ? s.allenamenti.find(x => x.situazione === situazione).titolo : (TRN_SITUAZIONI[situazione] || '');
-  const velo = document.createElement('div');
-  velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto mc rifl cch trn-allenamento" style="--tipo:${s ? s.colore : 'var(--cat-partner)'}">
-    <div class="mc-testa"><span class="ts-pastiglia">${ic('lampo')}</span><div><small>Allenati · ${esc(titolo.charAt(0).toUpperCase() + titolo.slice(1))}</small><b id="trn-al-titolo">Scegli su cosa</b></div>
-      <button id="trn-al-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <div class="cch-corpo" id="trn-al-corpo"></div>
-    <div class="mc-fondo" id="trn-al-fondo" hidden><button class="link" id="trn-al-altra">Un'altra</button><button class="primario" id="trn-al-chiudi">Chiudi</button></div></div>`;
-  document.body.appendChild(velo);
-  const foglio = velo.querySelector('.foglio'), corpo = velo.querySelector('#trn-al-corpo'), fondo = velo.querySelector('#trn-al-fondo');
-  const chiudi = () => { velo.remove(); if (ST.tab === 'training') trnCorpo(); };   // la barra «✓ n di N» si aggiorna
-  velo.querySelector('#trn-al-x').onclick = chiudi;
-  velo.querySelector('#trn-al-chiudi').onclick = chiudi;
-  const scegli = () => {
-    fondo.hidden = true;
-    velo.querySelector('#trn-al-titolo').textContent = 'Scegli su cosa';
-    const fatte = trnAllenate();
-    corpo.innerHTML = `<p class="trn-al-intro">Tocca una domanda o un'obiezione: il coach te la ripropone come nelle chat dopo l'esito, e ti allena sulla risposta. Qui non si salva niente.</p>
-      <div class="trn-ob">${Object.keys(B.obiezioni).map(n => {
-        const f = fatte[situazione + '|' + n];
-        return `<button data-ob="${esc(n)}" class="${f ? 'fatta' : ''}">${f ? ic('fatto', 14) + ' ' : ''}${esc(n)}</button>`;
-      }).join('')}</div>`;
-    corpo.querySelectorAll('[data-ob]').forEach(b => b.onclick = () => allena(b.dataset.ob));
-    foglio.scrollTo({ top: 0 });
-  };
-  const allena = n => {
-    velo.querySelector('#trn-al-titolo').textContent = n;
-    fondo.hidden = true;
-    corpo.innerHTML = '';
-    const passi = MB21Training.allenamento(B, n, { io: primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome)), chi: 'questa persona' });
-    const { fine } = MB21Coach.chat(corpo, passi, { icona: ic, fonti: 'consigliabili', scorri: () => foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' }) });
-    fine.then(() => {
-      if (!corpo.isConnected || velo.querySelector('#trn-al-titolo').textContent !== n) return;
-      trnSegnaAllenata(situazione, n);
-      fondo.hidden = false;
-      foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
-    });
-  };
-  velo.querySelector('#trn-al-altra').onclick = scegli;
-  if (nome && B.obiezioni[nome]) allena(nome);
-  else scegli();
 }
