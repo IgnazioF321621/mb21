@@ -129,7 +129,7 @@
     // fatte in fondo; poi le righe dei progetti dopo le altre, nell'ordine del progetto (24/09: nel giorno non si trascinano);
     // poi l'ordine scelto trascinando (Ignazio 23/09: vince lui); a parità le riportate prima (le più vecchie per prime)
     return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
-      || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)
+      || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0) || String(x.progetto_id || '').localeCompare(String(y.progetto_id || ''))
       || (x.ordine || 0) - (y.ordine || 0)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1)
       || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
@@ -143,7 +143,8 @@
       if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
       return c.giorno === inizio;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
-    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)   // i progetti dopo (24/09)
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)   // i progetti dopo (24/09), ognuno insieme
+      || String(x.progetto_id || '').localeCompare(String(y.progetto_id || ''))
       || (x.ordine || 0) - (y.ordine || 0)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }

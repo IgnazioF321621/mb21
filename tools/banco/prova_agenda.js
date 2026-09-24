@@ -453,6 +453,9 @@ prova('Progetti in programma (24/09): nel giorno le righe dei progetti dopo le a
   assert.deepEqual(A.coseDelGiorno(cose, g, g).map(c => c.id), ['m1', 'p1', 'p2', 'f1']);   // la riga senza giorno non c'è
   const sett = cose.map(c => ({ ...c, scala: 'settimana', giorno: c.giorno ? '2026-09-21' : null }));
   assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => c.id), ['m1', 'p1', 'p2', 'f1']);
+  // due progetti nello stesso giorno: ognuno insieme, nel suo ordine (revisione 24/09)
+  const due = [{ id: 'a2', giorno: g, ordine: 2, progetto_id: 'pa' }, { id: 'b3', giorno: g, ordine: 3, progetto_id: 'pb' }, { id: 'a25', giorno: g, ordine: 25, progetto_id: 'pa' }, { id: 'b1', giorno: g, ordine: 1, progetto_id: 'pb' }];
+  assert.deepEqual(A.coseDelGiorno(due, g, g).map(c => c.id), ['a2', 'a25', 'b1', 'b3']);
   const vista = A.fatteInFondo([
     { id: 'x', tipo: 'numero', livello: 0, fatto_il: null }, { id: 'T', tipo: 'titolo', testo: 'Cantiere 41 – MB Plan' },
     { id: 'a', tipo: 'numero', livello: 0, fatto_il: '2026-09-24T08:00:00Z' }, { id: 'b', tipo: 'numero', livello: 0, fatto_il: null },

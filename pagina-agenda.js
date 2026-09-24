@@ -399,7 +399,7 @@ async function apriProgetto(id, rigaId) {
   AG.vista = 'progetto'; AG.progettoAperto = id; AG.inserisciDopo = null; AG.aperta = null; AG.portato = null;
   if (rigaId) {   // il titolo sopra la riga, se è chiuso, si apre
     const righe = righeInVista(id), i = righe.findIndex(r => r.id === rigaId);
-    let k = i - 1;
+    let k = i;   // un titolo apre sé stesso, una riga il titolo sopra di lei
     while (k >= 0 && righe[k].tipo !== 'titolo') k--;
     const chiave = i >= 0 && k >= 0 ? 'pt-' + righe[k].id : null;
     if (chiave && sezioniChiuse().includes(chiave)) try { localStorage.setItem(CHIAVE_SEZIONI_CHIUSE, JSON.stringify(sezioniChiuse().filter(x => x !== chiave))); } catch (e) {}
@@ -505,17 +505,23 @@ async function inserisciRighe(progettoId, dopoId, righe) {
 }
 async function spuntaTitolo(passi, fatto) {
   if (!passi.length) return mostraToast('Il titolo non ha ancora passi sotto');
-  const fatto_il = fatto ? null : new Date().toISOString();
+  const fatto_il = fatto ? null : new Date().toISOString(), oggi = MB21Coda.oggiRoma();
   const cambiano = passi.filter(x => !!x.fatto_il !== !!fatto_il);
-  const prima = cambiano.map(x => [x, x.fatto_il]);
-  const { error } = await dbq('titolo', supa.from('cose_da_fare').update({ fatto_il }).in('id', cambiano.map(x => x.id)));
-  if (error) return mostraToast('Non salvato: riprova.');
-  cambiano.forEach(x => { x.fatto_il = fatto_il; });
+  const prima = cambiano.map(x => [x, { fatto_il: x.fatto_il, giorno: x.giorno }]);
+  // come la spunta di una riga dal progetto (24/09): un passo in programma, fatto, va su oggi (o sulla settimana, sul mese di oggi)
+  const dopo = x => (fatto_il && x.giorno ? { fatto_il, giorno: inizioScalaMB(x.scala || 'giorno', oggi) } : { fatto_il });
+  const senza = cambiano.filter(x => !(fatto_il && x.giorno)), con = cambiano.filter(x => fatto_il && x.giorno);
+  const esiti = await Promise.all([
+    senza.length ? dbq('titolo', supa.from('cose_da_fare').update({ fatto_il }).in('id', senza.map(x => x.id))) : { error: null },
+    ...con.map(x => dbq('titolo', supa.from('cose_da_fare').update(dopo(x)).eq('id', x.id))),
+  ]);
+  if (esiti.some(r => r && r.error)) { mostraToast('Non salvato: riprova.'); return apriAgenda(AG.giorno); }
+  cambiano.forEach(x => Object.assign(x, dopo(x)));
   disegnaAgenda();
   if (fatto_il) mostraToast(`Titolo completato: ${cambiano.length} ${cambiano.length === 1 ? 'passo' : 'passi'} fatti`, async () => {
-    const r = await Promise.all(prima.map(([x, v]) => dbq('titolo', supa.from('cose_da_fare').update({ fatto_il: v }).eq('id', x.id))));
+    const r = await Promise.all(prima.map(([x, v]) => dbq('titolo', supa.from('cose_da_fare').update(v).eq('id', x.id))));
     if (r.some(e => e.error)) return;
-    prima.forEach(([x, v]) => { x.fatto_il = v; });
+    prima.forEach(([x, v]) => { Object.assign(x, v); });
     disegnaAgenda();
   });
 }
