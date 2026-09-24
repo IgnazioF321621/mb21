@@ -156,14 +156,17 @@
   }
 
   // Una carta pronta da mostrare. Scena: una delle sue versioni, le tre risposte in ordine sparso (nel mazzo la prima è quella giusta).
-  // Vero o falso: i due bottoni, sempre in quest'ordine. Frase: davanti e dietro, e si risponde «la sapevo / non la sapevo».
+  // Vero o falso: i due bottoni, sempre in quest'ordine. Frase: davanti e dietro, e si risponde «la sapevo / non la sapevo»; prima di
+  // girarla la carta dice di rispondere a voce (Ignazio 24/09: la carta si girava subito, senza provare a ricordare), con le parole
+  // della carta se ne ha (`aiuto`, es. «come al telefono»).
+  const AIUTO_FRASE = 'Prima rispondi a voce. Poi gira la carta.';
   function domanda(carta, rnd = Math.random) {
     if (carta.tipo === 'scena') {
       const v = carta.versioni[Math.floor(rnd() * carta.versioni.length)];
       return { tipo: 'scena', testo: v.scena, risposte: mescola(v.risposte.map((t, i) => ({ testo: t, giusta: i === 0 })), rnd) };
     }
     if (carta.tipo === 'vf') return { tipo: 'vf', testo: carta.frase, risposte: [{ testo: 'Vero', giusta: carta.vero === true }, { testo: 'Falso', giusta: carta.vero === false }] };
-    return { tipo: 'frase', davanti: carta.davanti, dietro: carta.dietro };
+    return { tipo: 'frase', davanti: carta.davanti, dietro: carta.dietro, aiuto: carta.aiuto || AIUTO_FRASE };
   }
 
   // I giorni di allenamento di fila (a Roma), come Duolingo: contano fino a oggi o, se oggi non ti sei ancora allenato, fino a ieri.
@@ -210,6 +213,7 @@
         if (!testo(c.frase, 300) || typeof c.vero !== 'boolean' || !testo(c.perche, 500)) p.push(`${chi}: vero o falso incompleto`);
       } else if (c.tipo === 'frase') {
         if (!testo(c.davanti, 200) || !testo(c.dietro, 400)) p.push(`${chi}: frase senza davanti o dietro`);
+        if (c.aiuto !== undefined && !testo(c.aiuto, 120)) p.push(`${chi}: aiuto vuoto o lungo`);
       } else p.push(`${chi}: tipo sconosciuto «${c.tipo}»`);
       const f = c.fonte;
       if (f && !((f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)))
