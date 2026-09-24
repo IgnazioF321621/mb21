@@ -305,8 +305,13 @@
     testo = testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
     return testo ? { tipo, testo, livello: tipo === 'titolo' ? 0 : Math.min(4, livello), fatta: tipo === 'titolo' ? false : fatta } : null;
   }
-  // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
-  function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
+  // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai vuoto (→ null), al massimo `max` lettere: 1000 per le
+  // cose da fare e le righe dei progetti (Ignazio 24/09: col dettato le 200 di prima tagliavano la fine senza dirlo),
+  // 200 per le voci dei modelli (MAX_VOCE, etichette corte). Chi scrive avvisa con `testoTroppoLungo`.
+  const MAX_COSA = 1000, MAX_VOCE = 200;
+  const pulisciTesto = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  function testoCosa(s, max = MAX_COSA) { const t = pulisciTesto(s).slice(0, max); return t || null; }
+  function testoTroppoLungo(s, max = MAX_COSA) { return pulisciTesto(s).length > max; }
 
   // ── Il modello del giorno (cantiere 41, lavoro 2) ────────────────────────────
   // Le cose di ogni giorno, scritte una volta: compaiono da sole nel foglio del giorno. L'app le propone già
@@ -750,7 +755,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
