@@ -126,8 +126,10 @@
       if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
       return c.giorno === giorno;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
-    // fatte in fondo; poi l'ordine scelto trascinando (Ignazio 23/09: vince lui); a parità le riportate prima (le più vecchie per prime)
+    // fatte in fondo; poi le righe dei progetti dopo le altre, nell'ordine del progetto (24/09: nel giorno non si trascinano);
+    // poi l'ordine scelto trascinando (Ignazio 23/09: vince lui); a parità le riportate prima (le più vecchie per prime)
     return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
+      || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)
       || (x.ordine || 0) - (y.ordine || 0)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1)
       || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
@@ -141,7 +143,8 @@
       if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
       return c.giorno === inizio;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
-    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.ordine || 0) - (y.ordine || 0)
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)   // i progetti dopo (24/09)
+      || (x.ordine || 0) - (y.ordine || 0)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
@@ -219,6 +222,15 @@
     const inFila = p => [...(p.titolo ? [p.titolo] : []), ...inFondo(p.passi)];
     const [cima, ...titoli] = pezzi;
     return [...inFila(cima), ...titoli.filter(p => !finito(p)).flatMap(inFila), ...titoli.filter(finito).flatMap(inFila)];
+  }
+  // Dove sta una riga nel suo progetto (24/09): il titolo sopra di lei e il suo segno come sullo schermo («3.», «2.1», «•»).
+  // `righe` = il progetto come si vede (fatteInFondo). Serve alla riga «📁 MB App › Cantiere 41 · 3.» nel giorno e nella settimana.
+  function postoNelProgetto(righe, id) {
+    const tutte = righe || [], i = tutte.findIndex(r => r.id === id);
+    if (i < 0) return null;
+    let t = i - 1;
+    while (t >= 0 && tutte[t].tipo !== 'titolo') t--;
+    return { titolo: t >= 0 ? tutte[t].testo : '', segno: numeraRighe(tutte)[i] || '' };
   }
   // Copiare un pezzo di progetto (Ignazio 24/09): per incollarlo in una chat di Claude o altrove, e di nuovo in un progetto.
   // `righe` = tutte le righe del progetto come si vedono (fatteInFondo), così i numeri sono quelli dello schermo.
@@ -713,7 +725,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
