@@ -130,7 +130,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 - ⏸ **Grafica accattivante con lo strumento Design**: quando ci saranno token a disposizione (dal cantiere 13)
 - **Fasi di Appuntamento per sottotipo** da migliorare con Ignazio: nomi da tenere, togliere, aggiungere (dal cantiere 11)
 - **7 telefoni dubbi** lasciati com'erano dall'import (senza «+», bottoni di contatto spenti): da correggere a mano con Modifica (dal cantiere 9)
-- **Suggerimenti N21 sospesi** nel riquadro FASE; la decisione «Come fare ▸» a richiesta resta da riprendere quando Ignazio vorrà riattivarli (dal cantiere 9)
+- **Suggerimenti N21 sospesi** (il riquadro FASE non c'è più dal 24/09, cantiere 44: se torneranno, nel coach); la decisione «Come fare ▸» a richiesta resta da riprendere quando Ignazio vorrà riattivarli (dal cantiere 9)
 - ~~**Sharing** della scheda contatto: «In arrivo» (dal cantiere 9); nascerà nel suo file `pagina-sharing.js` (lezione del 18/09)~~ — diventato il [cantiere 40](#40-bsm-n21-le-tracce-n21-e-lo-sharing-nella-scheda-contatto-aperto-il-2109) il 21/09 · le **Vendite** sono passate al [cantiere 26](#26-vendite-nella-scheda-contatto)
 - **Coach delle 4 righe Partner/Cliente** scritto da Claude: da rivedere · **Dare Seguito scaduti** (fase Piano Marketing) con i bottoni del Contatto: da rivedere quando ce ne saranno (dal cantiere 7)
 - **Codice a 6 cifre nell'email**: rimandato (serve un servizio email proprio, [L4](LEZIONI.md#l4--sul-piano-gratuito-lemail-di-accesso-contiene-solo-il-link)); meno urgente da quando si entra con la password (dal cantiere 7)
@@ -138,6 +138,13 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 ---
 
 # Cantieri chiusi
+
+## 44. SCHEDA CONTATTO: VIA LE FASI, CARD DELL'AZIONE PIÙ STRETTA (aperto e chiuso il 24/09)
+*Le due righe «Scheda Contatto» di MB App (Ignazio 24/09).*
+
+- ~~Togliere le fasi dalla scheda~~ — fatto il 24/09: via il riquadro FASE («residuo di Glide»); dove si è con la persona lo dice la prima card. Al suo posto «＋ Nuova azione», bottone principale come «＋ Nuova vendita». `titoloFase` tolta da `lista.js`; `contatti.fase_icona` resta nel database
+- ~~Stringere la card dell'azione~~ — fatto il 24/09 («nel telefono è tutto molto lungo»): proposta con due foto a larghezza telefono (oggi / dopo, dati finti, stili veri), «ok» di Ignazio. Titolo `tipo · modalità` con la data a destra, `area · esito · nota` su una riga, «Cambia esito» nella riga dei comandi: una card chiusa passa da 5 righe a 3 (circa la metà). I bottoni degli esiti delle azioni da completare restano visibili (stella cometa: a un tocco); l'Agenda non si tocca
+- Fatto mentre l'altra sessione lavorava al Training (cantiere 42): nel commit `index.html` è entrato solo con queste righe, le sue no
 
 ## 43. GLI AVVISI TUTTI DA MB21, E OGNUNO SCEGLIE QUANDO (aperto il 23/09, chiuso il 24/09)
 *Ignazio 23/09: «l'idea di sganciarci completamente da Google e Apple: qualsiasi cosa caricata su MB Plan avvisi, come gli altri appuntamenti, sul cellulare o sull'iPad». E: «uno schema in Profilo dove c'è la cosa degli avvisi e ognuno sceglie che tipologia di avvisi vuole (come tempo di avviso)».*

@@ -37,7 +37,7 @@ async function sezioneVendite() {
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
   const oggi = MB21Coda.oggiRoma();
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
-  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="primario vn-piu" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>') + `
+  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="primario piu-sezione" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>') + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>

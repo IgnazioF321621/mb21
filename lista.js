@@ -328,12 +328,6 @@
       year: breve ? '2-digit' : 'numeric' }).format(new Date(iso));
   }
 
-  // Riquadro FASE: solo icona e titolo, es. «FASE CONTATTO: RICHIAMARE»
-  function titoloFase(r) {
-    if (!r || !r.ultima_fase) return '';
-    return ('Fase ' + (r.ultimo_tipo ? r.ultimo_tipo + ': ' : ': ') + r.ultima_fase).toUpperCase();
-  }
-
   // ── Vendite (cantiere 26) ──
   // I 5 brand del modulo «Vendita» di Glide, con il colore della targhetta.
   const BRAND = [['Artistry', 'var(--brand-artistry)'], ['eSpring', 'var(--brand-espring)'], ['Home', 'var(--brand-home)'], ['Nutrilite/XS', 'var(--brand-nutrilite)'], ['Persona', 'var(--brand-persona)']];
@@ -400,7 +394,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, titoloFase, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

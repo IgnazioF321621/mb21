@@ -196,10 +196,8 @@ prova('lettera iniziale: nome così com\'è scritto, senza accenti; si combina c
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', utenteId: IO, lettera: 'N' })), []);
 });
 
-prova('etichette: data corta, fase con tipo e fase in maiuscolo', () => {
+prova('etichette: data corta', () => {
   assert.equal(L.data('2026-03-21T23:30:00Z', true), '22/03/26');                  // mezzanotte passata a Roma
-  assert.equal(L.titoloFase({ ultimo_tipo: 'Contatto', ultima_fase: 'Richiamare' }), 'FASE CONTATTO: RICHIAMARE');
-  assert.equal(L.titoloFase({ ultima_fase: null }), '');
 });
 
 prova('Partner Select: un partner scelto o «Tutti» (elenco di partner)', () => {
