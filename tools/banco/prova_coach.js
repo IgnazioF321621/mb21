@@ -95,4 +95,26 @@ prova('Cosa si salva: solo le risposte date, nell\'ordine; niente risposte = nie
   assert.notEqual(C.riflessioneDa(r)[0], r[0]);                              // copie, non gli stessi oggetti
 });
 
+prova('Il promemoria «Ti eri detto…»: per ogni contatto l\'ultima frase per la prossima volta, con le domande di quella volta', () => {
+  const az = [
+    { id: 'a1', contatto_id: 'anna', inizio: '2026-09-20T09:00:00+00:00', riflessione: [{ chiave: 'prossima', risposta: 'Frase vecchia' }] },
+    { id: 'a2', contatto_id: 'anna', inizio: '2026-09-24T08:30:00+00:00', riflessione: [
+      { chiave: 'obiezioni', risposta: ['Non ho tempo', 'Altro'] }, { chiave: 'risposta', obiezione: 'Non ho tempo', risposta: 'Ho insistito' },
+      { chiave: 'altro', risposta: 'Quanto si guadagna?' }, { chiave: 'prossima', risposta: ' Proporre un caffè ' }] },
+    { id: 'a3', contatto_id: 'anna', inizio: '2026-09-25T10:00:00+00:00', riflessione: [{ chiave: 'obiezioni', risposta: ['È Amway?'] }] },   // chiusa prima della frase: non conta
+    { id: 'b1', contatto_id: 'luca', inizio: null, creato_il: '2026-09-23T20:00:00+00:00', riflessione: [{ chiave: 'obiezioni', risposta: ['Nessuna'] }, { chiave: 'prossima', risposta: 'Confermare il giorno prima' }] },
+    { id: 'c1', contatto_id: 'bea', inizio: '2026-09-22T10:00:00+00:00', riflessione: [{ chiave: 'andata', risposta: 'Bene' }, { chiave: 'prossima', risposta: 'Dal foglietto' }] },
+    { id: 'd1', contatto_id: 'dino', inizio: '2026-09-22T10:00:00+00:00', riflessione: [{ chiave: 'Tipo-1', risposta: 'chiavi vecchie del 23/09' }] },
+  ];
+  const r = C.ricordi(az);
+  assert.deepEqual(r.anna, { frase: 'Proporre un caffè', obiezioni: ['Non ho tempo', '«Quanto si guadagna?»'], azione: 'a2', quando: '2026-09-24T08:30:00+00:00' });
+  assert.deepEqual(r.luca.obiezioni, []);                                    // «Nessuna» non si ripete
+  assert.equal(r.luca.frase, 'Confermare il giorno prima');                  // senza inizio vale la data di creazione
+  assert.equal(r.bea.frase, 'Dal foglietto');                                 // anche le riflessioni del foglietto
+  assert.equal(r.dino, undefined);
+  assert.deepEqual(C.ricordi([]), {});
+  assert.deepEqual(C.ricordi(null), {});
+  assert.deepEqual(C.ricordi([{ id: 'x', contatto_id: 'y', riflessione: [{ chiave: 'obiezioni', risposta: ['Altro'] }, { chiave: 'prossima', risposta: 'Ok' }] }]).y.obiezioni, []);   // «Altro» senza riga: niente
+});
+
 console.log(`\n${ok} prove superate`);
