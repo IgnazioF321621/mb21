@@ -220,6 +220,54 @@
     const [cima, ...titoli] = pezzi;
     return [...inFila(cima), ...titoli.filter(p => !finito(p)).flatMap(inFila), ...titoli.filter(finito).flatMap(inFila)];
   }
+  // Copiare un pezzo di progetto (Ignazio 24/09): per incollarlo in una chat di Claude o altrove, e di nuovo in un progetto.
+  // `righe` = tutte le righe del progetto come si vedono (fatteInFondo), così i numeri sono quelli dello schermo.
+  // `id`: un titolo → il titolo e le sue righe fino al titolo dopo; una riga → lei e le più rientrate che la seguono;
+  // vuoto → tutto il progetto (una riga vuota prima di ogni titolo). Il formato è quello che leggiRiga rilegge:
+  // «## titolo» · «1. » «2.1 » numerate · «- » puntini · «- [ ] » da fare, «- [x] » fatta · «✓ » dopo il numero o il
+  // puntino = fatta · due spazi per ogni rientro, contati dalla riga copiata. Rende { testo, voci } (voci = righe non titolo).
+  function testoDaCopiare(righe, id) {
+    const tutte = righe || [], segni = numeraRighe(tutte);
+    let da = 0, a = tutte.length;
+    if (id) {
+      da = tutte.findIndex(r => r.id === id);
+      if (da < 0) return { testo: '', voci: 0 };
+      const capo = tutte[da];
+      a = da + 1;
+      while (a < tutte.length && tutte[a].tipo !== 'titolo' && (capo.tipo === 'titolo' || (tutte[a].livello || 0) > (capo.livello || 0))) a++;
+    }
+    const base = id && tutte[da].tipo !== 'titolo' ? tutte[da].livello || 0 : 0;
+    const out = [];
+    for (let i = da; i < a; i++) {
+      const r = tutte[i], t = r.tipo || 'cosa', testo = String(r.testo || '').replace(/\s+/g, ' ').trim();
+      if (t === 'titolo') { if (out.length) out.push(''); out.push('## ' + testo); continue; }
+      const rientro = '  '.repeat(Math.max(0, (r.livello || 0) - base)), fatta = r.fatto_il ? '✓ ' : '';
+      if (t === 'numero') out.push(`${rientro}${segni[i]} ${fatta}${testo}`);
+      else if (t === 'punto') out.push(`${rientro}- ${fatta}${testo}`);
+      else out.push(`${rientro}- [${r.fatto_il ? 'x' : ' '}] ${testo}`);
+    }
+    return { testo: out.join('\n'), voci: tutte.slice(da, a).filter(r => r.tipo !== 'titolo').length };
+  }
+  // Una riga scritta o incollata in un progetto → { tipo, testo, livello, fatta } (null se vuota). Il tipo si scrive all'inizio
+  // come in NotePlan: «## » titolo, «1. » o «1.2 » numerata, «- » «• » puntini, «[] » «☐ » «- [ ] » da fare, «- [x] » fatta;
+  // «✓ » dopo il numero o il puntino = fatta (è il testo che fa testoDaCopiare, 24/09). Se no vale `tipoScelto` (i bottoni).
+  // Il rientro si legge dall'inizio (un Tab o due spazi = un livello), al massimo 4 come nel database. Toglie «**» e «__».
+  function leggiRiga(riga, livelloScelto, tipoScelto) {
+    const grezza = String(riga || '').replace(/\u00a0/g, ' ');   // lo spazio che non va a capo (testi copiati) → spazio
+    const inizio = (grezza.match(/^[\t ]*/) || [''])[0];
+    let livello = (inizio.match(/\t/g) || []).length + Math.floor(inizio.replace(/\t/g, '').length / 2);
+    let testo = grezza.trim(), tipo = tipoScelto || 'cosa', fatta = false;
+    const spuntata = () => { if (/^✓\s*/.test(testo)) { fatta = true; testo = testo.replace(/^✓\s*/, ''); } };
+    const casella = /^(?:[-*•]\s+)?(\[\s?\]|\[[xX]\]|☐)\s*/;
+    if (/^#{1,6}\s+/.test(testo)) { tipo = 'titolo'; testo = testo.replace(/^#{1,6}\s+/, ''); livello = 0; }
+    else if (/^\d+(\.\d+)+\.?\s+/.test(testo)) { tipo = 'numero'; livello = Math.max(livello, testo.match(/^[\d.]+/)[0].replace(/\.$/, '').split('.').length - 1); testo = testo.replace(/^\d+(\.\d+)+\.?\s+/, ''); spuntata(); }   // «1.2 » → secondo livello
+    else if (/^\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\d+[.)]\s+/, ''); spuntata(); }
+    else if (casella.test(testo)) { tipo = 'cosa'; fatta = /x/i.test(testo.match(casella)[1]); testo = testo.replace(casella, ''); }
+    else if (/^[-•*–◦▪]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^[-•*–◦▪]\s+/, ''); spuntata(); }
+    else if (!inizio && livelloScelto != null) livello = livelloScelto;
+    testo = testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
+    return testo ? { tipo, testo, livello: tipo === 'titolo' ? 0 : Math.min(4, livello), fatta: tipo === 'titolo' ? false : fatta } : null;
+  }
   // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
   function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
 
@@ -665,7 +713,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
