@@ -6,7 +6,8 @@
 //             ognuno con le sue carte nuove e il test finale con le stelle.
 //   Ripassa — le carte che tornano oggi (cinque scatole: domani, 3 giorni… 1 mese) e quelle delle obiezioni capitate davvero nelle chat
 //             del coach; tutti i temi insieme, 5 minuti.
-//   Studia  — il catalogo del cantiere 42: i capitoli del Manuale di Avvio, le tracce del BSM con gli appunti PAL, i libri.
+//   Studia  — il catalogo del cantiere 42: i capitoli del Manuale di Avvio, le tracce del BSM con i loro appunti, i libri (per ora
+//             niente fuori dal BSM: Ignazio 24/09 sera).
 // I progressi sono nel database, ognuno i suoi (training_carte, training_giorni, training_test); le carte e il catalogo nell'archivio
 // privato (coach_batterie: «carte_<percorso>» e «training»), la biblioteca in materiali. La logica è in training.js (MB21Training);
 // lo stile .trn-* e TRAINING_VISIBILE sono in index.html.
@@ -17,6 +18,7 @@ const TRN = {
 };
 const TRN_PRIME = 6;   // in un elenco lungo del catalogo si vedono le prime 6, poi «Mostra tutte»
 const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro' };
+const TRN_ORDINE = ['manuale', 'traccia', 'libro'];   // in «Per approfondire»: prima il manuale, poi le tracce, poi i libri
 const TRN_LIBRI = 'var(--cat-ex)';   // il colore di «Libri»
 const trnOggi = () => MB21Coda.oggiRoma();
 
@@ -125,8 +127,13 @@ function trnApriPercorso(id) {
   const pct = n => Math.round(n / (s.totale || 1) * 100);
   const ultimo = s.ultimo ? `<div class="trn-ultimo">Ultimo test: <b>${s.ultimo.giuste} su ${s.ultimo.totale}</b> ${trnStelle(MB21Training.stelle(s.ultimo.giuste, s.ultimo.totale))}
     ${s.penultimo ? `<span>· la volta prima ${s.penultimo.giuste} (${trnDiff(s.ultimo.giuste - s.penultimo.giuste)})</span>` : ''}</div>` : '';
-  // per approfondire: dal catalogo di Studia, il manuale e le tracce del BSM del settore con lo stesso nome
-  const studio = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
+  // per approfondire: da dove vengono le sue carte (i capitoli del manuale, le tracce del BSM, i libri), poi il manuale e le tracce
+  // del settore di Studia con lo stesso nome; senza doppioni, prima il manuale
+  const fonti = m.carte.map(c => c.fonte).filter(Boolean)
+    .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id)));
+  const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
+  const studio = [...new Set([...fonti, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
+    || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -145,7 +152,7 @@ function trnApriPercorso(id) {
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
-      ${studio.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, settore ? settore.colore : 'var(--gr-crescita)')).join('')}` : ''}
+      ${studio.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}` : ''}
     </div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -413,21 +420,19 @@ function trnCollegaElenco(el) {
   el.querySelectorAll('[data-tutte]').forEach(b => b.onclick = () => { TRN.tutte[b.dataset.tutte] = true; trnCorpoStudia(); });
 }
 
-// un settore: la testata colorata con i conti, poi il manuale, le tracce del BSM, gli appunti fuori dal BSM
+// un settore: la testata colorata con i conti, poi il manuale e le tracce del BSM
 function trnSettore() {
   if (TRN.settore === 'Libri') return trnLibri();
   const s = TRN.cat.settori.find(x => x.nome === TRN.settore) || TRN.cat.settori[0];
   const qui = TRN.voci.filter(c => c.settori.includes(s.nome));
   const pagine = qui.filter(c => c.tipo === 'manuale');
   const bsm = qui.filter(c => c.tipo === 'traccia' && c.sezione).sort((a, b) => (b.appunti ? 1 : 0) - (a.appunti ? 1 : 0) || a.titolo.localeCompare(b.titolo, 'it'));
-  const fuori = qui.filter(c => c.tipo === 'traccia' && !c.sezione).sort((a, b) => a.titolo.localeCompare(b.titolo, 'it'));
-  const nTracce = bsm.length + fuori.length;
+  const nTracce = bsm.length;
   const conti = [[pagine.length, pagine.length === 1 ? 'capitolo del manuale' : 'capitoli del manuale'], [nTracce, nTracce === 1 ? 'traccia' : 'tracce']].filter(([n]) => n);
   return `<div class="trn-settore" style="--col:${s.colore}"><span class="trn-icona">${ic(s.icona, 26)}</span>
       <div><b>${esc(s.nome)}</b><small>${esc(s.sotto || '')}</small><div class="trn-conti">${conti.map(([n, t]) => `<span><b>${n}</b> ${t}</span>`).join('')}</div></div></div>
     ${pagine.length ? `<h2>Nel Manuale di Avvio</h2>${pagine.map(c => trnRiga(c, s.colore)).join('')}` : ''}
-    ${bsm.length ? `<h2>Da ascoltare nel BSM</h2>${trnElenco(bsm, s, 'bsm')}` : ''}
-    ${fuori.length ? `<h2>Dagli eventi e dal CEP</h2><div class="sotto trn-sotto">Gli appunti PAL di tracce che non sono nel BSM.</div>${trnElenco(fuori, s, 'fuori')}` : ''}`;
+    ${bsm.length ? `<h2>Da ascoltare nel BSM</h2>${trnElenco(bsm, s, 'bsm')}` : ''}`;
 }
 // un elenco di tracce: se è lungo, le prime e «Mostra tutte le N» (si ricorda finché la pagina è aperta)
 function trnElenco(voci, s, chiave) {
@@ -441,7 +446,7 @@ function trnRiga(c, colore) {
   if (c.tipo === 'manuale') sotto = esc(c.sintesi);
   if (c.tipo === 'traccia') sotto = [c.autore, c.minuti ? c.minuti + ' min' : null, MB21Training.dove(c)].filter(Boolean).map(esc).join(' · ');
   if (c.tipo === 'libro') sotto = esc(c.autore || '');
-  const badge = (c.appunti ? '<span class="trn-badge">Appunti PAL</span>' : '') + (c.capitoli ? '<span class="trn-badge">Appunti per capitolo</span>' : '')
+  const badge = (c.appunti ? '<span class="trn-badge">Appunti</span>' : '') + (c.capitoli ? '<span class="trn-badge">Appunti per capitolo</span>' : '')
     + (c.solo_n21 ? '<span class="sh-chiede n21">solo da N21</span>' : '');
   return `<button class="trn-riga" data-carta="${esc(c.id)}" style="--col:${colore}">
     ${c.tipo === 'manuale' ? `<span class="trn-pag">${esc(c.pagine)}</span>` : `<span class="trn-tondo">${ic(TRN_ICONA[c.tipo] || 'info', 20)}</span>`}
@@ -470,7 +475,7 @@ function trnRisultati() {
     }).join('');
 }
 
-// Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, gli appunti PAL), il libro
+// Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, i suoi appunti), il libro
 function trnApriCarta(id) {
   let testa, corpo, colore;
   if (id === 'manuale') {
@@ -492,8 +497,7 @@ function trnApriCarta(id) {
       const meta = [c.autore, c.minuti ? c.minuti + ' minuti' : null].filter(Boolean).map(esc).join(' · ');
       corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}
         ${c.link ? `<a class="trn-dove" href="${esc(c.link)}" target="_blank" rel="noopener">${ic('audio')} Apri nel BSM ›</a>`
-          : c.sezione ? `<div class="trn-dove">${ic('audio')} Nel BSM, sezione «${esc(c.sezione)}»${c.pack ? `, pack «${esc(c.pack)}»` : ''}</div>`
-          : c.fonte ? `<div class="trn-dove">${ic('audio')} Non è nel BSM: viene da ${esc(c.fonte)}</div>` : ''}
+          : c.sezione ? `<div class="trn-dove">${ic('audio')} Nel BSM, sezione «${esc(c.sezione)}»${c.pack ? `, pack «${esc(c.pack)}»` : ''}</div>` : ''}
         ${c.riassunto ? `<h4>Di cosa parla</h4><p class="trn-testo">${esc(c.riassunto)}</p>` : ''}
         ${c.punti ? `<h4>Punti chiave</h4><p class="trn-testo">${esc(c.punti)}</p>` : ''}
         ${c.appunti ? trnAppunti(c.appunti) : ''}
@@ -521,6 +525,6 @@ function trnTesta(icona, sopra, titolo) {
 }
 function trnAppunti(a) {
   const lista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
-  return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti PAL di Ignazio</div>
+  return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
     ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Da fare', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
 }

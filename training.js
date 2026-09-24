@@ -2,8 +2,8 @@
 // 1. Allenarsi (Ignazio 24/09: le flashcard «come si studia all'università» più Duolingo, «un percorso di crescita che va verso l'alto»):
 //    i sette livelli con i loro percorsi, le carte a cinque scatole (Leitner), le carte nuove di Impara, il ripasso del giorno
 //    (anche le obiezioni capitate davvero nelle chat del coach), il test finale con le stelle, i giorni di fila.
-// 2. Studiare (cantiere 42): il catalogo (i capitoli del Manuale di Avvio, le tracce della biblioteca N21 con gli appunti PAL di Ignazio,
-//    i libri a catalogo) e la ricerca.
+// 2. Studiare (cantiere 42): il catalogo (i capitoli del Manuale di Avvio, le tracce del BSM con i loro appunti, i libri a catalogo)
+//    e la ricerca.
 // I testi non stanno qui (il progetto è pubblico): le carte e il catalogo sono nell'archivio privato (coach_batterie, righe «carte_…» e
 // «training»), la biblioteca nella tabella materiali. Lo usano pagina-training.js e tools/banco/prova_training.js.
 (function (radice) {
@@ -13,6 +13,7 @@
   // ── 1. Allenarsi ───────────────────────────────────────────
 
   // I livelli coi nomi dell'attività (Ignazio 24/09), dal basso verso l'alto; i temi sono quelli divisi con lui lo stesso giorno.
+  // Ogni livello: le persone, l'attività dall'interno e, dallo Sponsor in su, un percorso di mentalità (dal credere in te alla visione).
   // Un percorso è pronto quando nell'archivio c'è la riga «carte_<id>»; gli altri si vedono «in arrivo».
   const LIVELLI = [
     { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, il Sistema', percorsi: [
@@ -21,12 +22,43 @@
       { id: 'sistema', titolo: 'Il Sistema', sotto: 'Open, BBS, WES, CEP e libri', icona: 'agenda' },
       { id: 'principi', titolo: 'Principi e parole', sotto: "I 9 principi guida e le parole dell'attività", icona: 'libro' },
     ] },
-    { nome: 'Sponsor', sotto: 'Presentare il piano, il Dare Seguito, i clienti, avviare un nuovo', percorsi: [] },
-    { nome: 'Leaders Club', sotto: 'Aiutare i tuoi partner, i Segni Vitali, il counseling', percorsi: [] },
-    { nome: 'Leader Executive', sotto: 'Far crescere i leader, la duplicazione', percorsi: [] },
-    { nome: 'Leader Bronzo', sotto: 'Allargare e approfondire le linee', percorsi: [] },
-    { nome: 'Leader Argento', sotto: "Tenere il 21%, l'attività internazionale", percorsi: [] },
-    { nome: 'Platino', sotto: 'Portare i tuoi leader al 21%', percorsi: [] },
+    { nome: 'Sponsor', sotto: 'Presentare il piano, il Dare Seguito, i clienti, avviare un nuovo', percorsi: [
+      { id: 'piano', titolo: 'Il Piano Marketing', sotto: 'Presentarlo, anche in casa: prima, durante e dopo', icona: 'pianomarketing' },
+      { id: 'dare_seguito', titolo: 'Dare Seguito', sotto: 'Entro 24-72 ore: le paure, le domande, le obiezioni dopo il piano', icona: 'followup' },
+      { id: 'clienti', titolo: 'I clienti', sotto: 'I prodotti, i clienti e il volume di ogni mese', icona: 'cliente' },
+      { id: 'avviare', titolo: 'Avviare un nuovo', sotto: 'I quattro passi e i primi 30 giorni, dalla parte dello sponsor', icona: 'avvio' },
+      { id: 'core', titolo: 'Core e Pacesetter', sotto: 'Le sette caratteristiche, il Pacesetter, il counseling con la tua upline', icona: 'obiettivi' },
+      { id: 'credere', titolo: 'Credere in te', sotto: 'La tua opinione, i «no», la persona che diventi', icona: 'crescita' },
+    ] },
+    { nome: 'Leaders Club', sotto: 'Aiutare i tuoi partner, i Segni Vitali, il counseling', percorsi: [
+      { id: 'aiutare_partner', titolo: 'Aiutare i tuoi partner', sotto: 'Le telefonate e i piani insieme, i loro freni', icona: 'partner' },
+      { id: 'segni_vitali', titolo: 'Segni Vitali', sotto: 'I numeri che dicono se il gruppo è solido, e i riconoscimenti', icona: 'segnivitali' },
+      { id: 'dare_counseling', titolo: 'Dare counseling', sotto: "Il counseling ai tuoi, l'edificazione, il no crossline", icona: 'squadra' },
+      { id: 'sistema_gruppo', titolo: 'Il Sistema nel gruppo', sotto: 'Biglietti, CEP, Media Sharing e il ciclo di 4 mesi', icona: 'biglietto' },
+      { id: 'paure', titolo: 'Vincere le paure', sotto: 'Il giudizio degli altri, i fallimenti, la zona di comfort', icona: 'lampo' },
+    ] },
+    { nome: 'Leader Executive', sotto: 'Far crescere i leader, la duplicazione', percorsi: [
+      { id: 'profondita', titolo: 'Costruire in profondità', sotto: 'Cercare il leader, di livello in livello', icona: 'mappa' },
+      { id: 'leader', titolo: 'Far crescere i leader', sotto: 'Riconoscerli, rafforzarli, lasciarli guidare', icona: 'stella' },
+      { id: 'obiettivi_mese', titolo: 'Gli obiettivi del mese', sotto: "Dal sogno al piano d'azione, con i Segni Vitali", icona: 'agenda' },
+      { id: 'duplicazione', titolo: 'La duplicazione', sotto: 'Fare solo quello che altri possono rifare', icona: 'copia' },
+      { id: 'abitudini', titolo: 'Le abitudini', sotto: 'Le piccole decisioni di ogni giorno', icona: 'orario' },
+    ] },
+    { nome: 'Leader Bronzo', sotto: 'Allargare e approfondire le linee', percorsi: [
+      { id: 'verso_21', titolo: 'Verso il 21%', sotto: 'Il Bonus Attività, i punti e il principio della leva', icona: 'volume' },
+      { id: 'linee', titolo: 'Larghezza e profondità', sotto: 'Più linee, e ognuna solida', icona: 'report' },
+      { id: 'persistere', titolo: 'Persistere', sotto: 'Desiderio, impegno, abilità, persistenza', icona: 'fiamma' },
+    ] },
+    { nome: 'Leader Argento', sotto: "Tenere il 21%, l'attività internazionale", percorsi: [
+      { id: 'argento', titolo: 'Il Produttore Argento', sotto: 'Il 21% con linee solide, mese dopo mese', icona: 'complimenti' },
+      { id: 'internazionale', titolo: "L'attività internazionale", sotto: 'Lo sponsor internazionale e lo sponsor adottivo', icona: 'liberta' },
+      { id: 'guidare', titolo: 'Guidare le persone', sotto: 'Connettersi, ascoltare, mettere le persone al primo posto', icona: 'persona' },
+    ] },
+    { nome: 'Platino', sotto: 'Portare i tuoi leader al 21%', percorsi: [
+      { id: 'bonus_leader', titolo: 'Il Bonus Leader', sotto: 'I tuoi leader al 21%, verso Smeraldo e Diamante', icona: 'stella' },
+      { id: 'esempio', titolo: "Guidare con l'esempio", sotto: 'Il ritmo, i valori e le abitudini che si duplicano', icona: 'squadra' },
+      { id: 'visione', titolo: 'La visione', sotto: 'Vedere lontano: dieci anni, il Diamante, il Weekend Seminar', icona: 'visione' },
+    ] },
   ];
 
   // Le cinque scatole: dopo quanti giorni torna una carta (Ignazio 24/09: domani, 3 giorni… 1 mese). Giusta avanza di una, sbagliata
@@ -241,8 +273,8 @@
 
   // Tutte le voci del catalogo. `materiali`: righe della biblioteca { id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave,
   // link, pack_id, solo_n21, fuori_catalogo }; `cat`: il catalogo privato { settori, manuale, appunti, libri }.
-  // Il settore di una traccia della biblioteca viene dalla sua sezione del BSM (argomenti); gli appunti delle tracce che non sono nella
-  // biblioteca (CEP, eventi) hanno il settore scritto nel catalogo e dicono da dove vengono.
+  // Il settore di una traccia viene dalla sua sezione del BSM (argomenti). Solo il BSM (Ignazio 24/09 sera: «dove ci sono riferimenti
+  // fuori da BSM, non li mettiamo, al momento»): gli appunti delle tracce che non sono nella biblioteca (CEP, eventi) restano fuori.
   function carte(materiali, cat) {
     const m = materiali || [], k = cat || {}, settori = k.settori || [];
     const settoriDi = argomenti => settori.filter(s => (argomenti || []).some(a => (s.bsm || []).includes(a))).map(s => s.nome);
@@ -259,9 +291,7 @@
       else if (x.tipo === 'libro') out.push({ tipo: 'libro', id: x.id, titolo: x.titolo, autore: x.autore || null, settori: ['Libri'],
         solo_n21: !!x.solo_n21, capitoli: libri[x.id] ? libri[x.id].capitoli : null });
     }
-    (k.appunti || []).filter(a => !a.materiale_id).forEach((a, i) => out.push({ tipo: 'traccia', id: 'pal-' + i, titolo: a.titolo, autore: a.oratore || null,
-      minuti: a.minuti || null, settori: a.settori || [], sezione: null, pack: null, fonte: a.fonte || null, appunti: a }));
-    for (const c of out) c.testo = piega([c.titolo, c.autore, c.sintesi, c.riassunto, c.punti, c.pack, c.sezione, c.fonte,
+    for (const c of out) c.testo = piega([c.titolo, c.autore, c.sintesi, c.riassunto, c.punti, c.pack, c.sezione,
       ...(c.appunti ? [...(c.appunti.capitoli || []), ...(c.appunti.principi || []), ...(c.appunti.azioni || []), ...(c.appunti.frasi || [])] : []),
       ...(c.capitoli || []).flatMap(x => [x.titolo, ...(x.principi || []), ...(x.da_fare || [])])].filter(Boolean).join(' '));
     return out;
@@ -273,8 +303,8 @@
     return (voci || []).find(c => c.tipo === 'manuale' && (() => { const [a, b] = String(c.pagine).split('-').map(Number); return n >= a && n <= (b || a); })()) || null;
   }
 
-  // dove si trova una traccia: nel BSM (sezione › pack) o, per gli appunti fuori dalla biblioteca, l'evento o il CEP da cui vengono
-  const dove = c => (c.sezione ? ['BSM', c.sezione, c.pack].filter(Boolean).join(' › ') : c.fonte || '');
+  // dove si trova una traccia nel BSM: sezione › pack
+  const dove = c => (c.sezione ? ['BSM', c.sezione, c.pack].filter(Boolean).join(' › ') : '');
 
   // Ricerca: ogni parola (di almeno due lettere) deve esserci, nel titolo, nel riassunto, negli appunti o nei capitoli
   function cerca(tutte, testo) {
