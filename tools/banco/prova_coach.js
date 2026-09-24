@@ -32,14 +32,21 @@ const B = {
 };
 const nomi = { io: 'Isabella', chi: 'Anna' };
 
-prova('Quale chat: la telefonata a chi non è Partner né Cliente, solo se ci hai parlato', () => {
+prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi', () => {
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Prospect', 'PM Fissato'), 'telefonata');
   assert.equal(C.situazione('Contatto', undefined, undefined, 'Richiamare'), 'telefonata');          // dalla coda, Referral o senza categoria
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Ex Partner/Cliente', 'No Interesse'), 'telefonata');
-  for (const e of ['No Risposta', 'Telefono spento', null]) assert.equal(C.situazione('Contatto', 'Telefonata', 'Prospect', e), null);
-  for (const cat of ['Partner', 'Cliente']) assert.equal(C.situazione('Contatto', 'Telefonata', cat, 'Richiamare'), null);
+  assert.equal(C.situazione('Contatto', 'Telefonata', 'Partner', 'Richiamare'), 'telefonata_partner');
+  assert.equal(C.situazione('Contatto', undefined, 'Cliente', 'Ordine'), 'telefonata_cliente');
+  for (const e of ['No Risposta', 'Telefono spento', null]) for (const cat of ['Prospect', 'Partner', 'Cliente']) assert.equal(C.situazione('Contatto', 'Telefonata', cat, e), null);
   for (const m of ['Messaggio', 'Presenza']) assert.equal(C.situazione('Contatto', m, 'Prospect', 'PM Fissato'), null);
   assert.equal(C.situazione('Piano Marketing', null, 'Prospect', 'Dare Seguito'), null);
+  // stesso montatore per le tre telefonate; una situazione senza montatore: niente chat
+  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
+  assert.equal(C.monta('piano', B, 'PM Fissato', nomi, 0), null);
+  // i partner salvano «freni» invece di «obiezioni»
+  const Bp = { ...B, domanda_obiezione: { ...B.domanda_obiezione, salva: 'freni', nessuna: 'Niente' } };
+  assert.equal(C.telefonata(Bp, 'PM Fissato', nomi, 0).find(p => p.piu).salva, 'freni');
 });
 
 prova('L\'imbuto: si parte dall\'esito (niente «com\'è andata?»), i nomi al loro posto, la variante cambia a ogni chat', () => {
@@ -115,6 +122,7 @@ prova('Il promemoria «Ti eri detto…»: per ogni contatto l\'ultima frase per 
   assert.deepEqual(C.ricordi([]), {});
   assert.deepEqual(C.ricordi(null), {});
   assert.deepEqual(C.ricordi([{ id: 'x', contatto_id: 'y', riflessione: [{ chiave: 'obiezioni', risposta: ['Altro'] }, { chiave: 'prossima', risposta: 'Ok' }] }]).y.obiezioni, []);   // «Altro» senza riga: niente
+  assert.deepEqual(C.ricordi([{ id: 'p', contatto_id: 'isa', riflessione: [{ chiave: 'freni', risposta: ['Poco tempo', 'Niente'] }, { chiave: 'prossima', risposta: 'Fare il punto sul Core' }] }]).isa.obiezioni, ['Poco tempo']);   // i freni dei partner
 });
 
 console.log(`\n${ok} prove superate`);
