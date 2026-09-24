@@ -30,17 +30,15 @@ const materiali = [
   { id: 'l2', tipo: 'libro', titolo: 'Come trattare gli altri', autore: 'Dale Carnegie', solo_n21: true },
 ];
 
-prova('Il catalogo: manuale, tracce con il loro settore dal BSM, appunti fuori biblioteca, libri; niente fuori catalogo', () => {
+prova('Il catalogo: manuale, tracce con il loro settore dal BSM, libri; niente fuori catalogo né appunti fuori dal BSM', () => {
   const c = T.carte(materiali, cat);
   assert.deepEqual(c.map(x => x.tipo + ':' + x.titolo), ['manuale:Scrivere la lista', 'traccia:La risposta', 'traccia:Come superare le vostre paure',
-    'libro:Pensa e arricchisci te stesso', 'libro:Come trattare gli altri', 'traccia:La più grande opportunità']);
+    'libro:Pensa e arricchisci te stesso', 'libro:Come trattare gli altri']);   // «La più grande opportunità» (CEP) resta fuori: Ignazio 24/09
   const risposta = c.find(x => x.titolo === 'La risposta');
   assert.deepEqual(risposta.settori, ['Follow Up']);
-  assert.equal(risposta.appunti.principi[0], 'Uscire dalla zona di comfort');   // gli appunti PAL agganciati alla traccia della biblioteca
+  assert.equal(risposta.appunti.principi[0], 'Uscire dalla zona di comfort');   // gli appunti agganciati alla traccia del BSM
   assert.equal(T.dove(c.find(x => x.titolo === 'Come superare le vostre paure')), 'BSM › Crescita personale › Pensare da vincente');
-  const cep = c.find(x => x.titolo === 'La più grande opportunità');
-  assert.equal(T.dove(cep), 'CEP 03/2020');
-  assert.deepEqual(cep.settori, ['Leadership e mentalità']);
+  assert.equal(T.cerca(c, 'costanza invincibili').length, 0);   // nemmeno la ricerca trova gli appunti fuori dal BSM
   assert.equal(c.find(x => x.titolo === 'Pensa e arricchisci te stesso').capitoli[0].titolo, 'La decisione');
   assert.equal(c.find(x => x.titolo === 'Come trattare gli altri').capitoli, null);
   assert.deepEqual(T.carte(null, null), []);
@@ -158,6 +156,26 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
   assert.deepEqual(s3.livelli.map(l => l.aperto), [true, true, false, false, false, false, false]);
   assert.equal(s3.qui.nome, 'Sponsor');
   assert.equal(s3.livelli[0].superato, true);
+});
+
+prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
+  const I = require('../../icone.js');
+  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [4, 6, 5, 5, 3, 3, 3]);
+  const tutti = T.LIVELLI.flatMap(l => l.percorsi);
+  assert.equal(new Set(tutti.map(p => p.id)).size, tutti.length);
+  for (const p of tutti) {
+    assert.match(p.id, /^[a-z0-9_]+$/, p.id);                  // la riga dell'archivio è «carte_<id>»
+    assert.ok(I.ha(p.icona), `${p.id}: icona «${p.icona}» che non esiste`);
+    assert.ok(p.titolo && p.sotto, p.id);
+  }
+  // superati i quattro test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
+  const mazzi = ['contattare', 'primi_passi', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  const s = T.scala(mazzi, {}, mazzi.map(m => ({ percorso: m.percorso.id, giuste: 9, totale: 10, fatto_il: '2026-09-24T10:00:00Z' })), OGGI);
+  assert.equal(s.qui.nome, 'Sponsor');
+  assert.deepEqual(s.qui.percorsi.map(p => [p.id, p.pronto, p.aperto]).slice(0, 2), [['piano', false, true], ['dare_seguito', false, false]]);
+  // con le carte del Piano nell'archivio, «Sei qui» è il Piano
+  const piano = { ...mazzo, percorso: { id: 'piano' }, carte: mazzo.carte.map(c => ({ ...c, id: 'pm-' + c.id })) };
+  assert.equal(T.scala([...mazzi, piano], {}, mazzi.map(m => ({ percorso: m.percorso.id, giuste: 9, totale: 10, fatto_il: '2026-09-24T10:00:00Z' })), OGGI).percorso, 'piano');
 });
 
 prova('Dentro un livello i percorsi si aprono uno dopo l\'altro: il successivo quando hai visto tutte le carte di quello prima', () => {
