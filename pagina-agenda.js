@@ -361,10 +361,13 @@ const righeInVista = id => MB21Agenda.fatteInFondo(righeProgetto(id).sort((x, y)
 function copiaRighe(progettoId, c) {
   const { testo, voci } = MB21Agenda.testoDaCopiare(righeInVista(progettoId), c ? c.id : null);
   if (!testo) return mostraToast('Niente da copiare');
-  const n = `${voci} ${voci === 1 ? 'voce' : 'voci'}`, corto = s => s.length > 28 ? s.slice(0, 27) + '…' : s;
-  const detto = !c ? `Progetto copiato · ${n}` : c.tipo === 'titolo' ? `«${corto(c.testo)}» copiato · ${n}`
-    : voci > 1 ? `Voce copiata con ${voci - 1} ${voci === 2 ? 'sottopunto' : 'sottopunti'}` : 'Voce copiata';
-  copiaTesto(testo, `${detto}. Incolla dove vuoi`);
+  copiaTesto(testo, `Copiato ${cosaSiCopia(c, voci)}. Incolla dove vuoi`);
+}
+// Cosa si copia, in parole: le stesse nel foglio della riga («Copia …») e nel messaggio («Copiato …»)
+function cosaSiCopia(c, voci) {
+  if (!c) return 'tutto il progetto';
+  if (c.tipo === 'titolo') return voci === 0 ? 'il titolo' : voci === 1 ? 'il titolo e la sua voce' : `il titolo e le sue ${voci} voci`;
+  return voci === 2 ? 'la voce e il suo sottopunto' : voci > 2 ? `la voce e i suoi ${voci - 1} sottopunti` : 'la voce';
 }
 function contaProgetto(id) {
   // dal 23/09 sera si spuntano anche i numeri e i puntini: contano tutti i passi, non i titoli
@@ -469,8 +472,10 @@ async function inserisciRighe(progettoId, dopoId, righe) {
   if (error) { mostraToast('Non salvato: riprova.'); return 0; }
   AG.cose.push(...data);
   if (dopoId) {   // si continua a scrivere sotto l'ultima riga nuova, con il suo rientro
-    const ultima = data.sort((x, y) => x.ordine - y.ordine)[data.length - 1];
-    AG.inserisciDopo = ultima.id; AG.livelloInline = ultima.tipo === 'titolo' ? 0 : ultima.livello || 0;
+    // …l'ultima NON fatta: le fatte incollate («✓», «- [x]») vanno in fondo al titolo, e il campo andrebbe con loro (revisione 24/09)
+    const ancora = data.filter(x => !x.fatto_il).sort((x, y) => x.ordine - y.ordine);
+    const ultima = ancora[ancora.length - 1] || AG.cose.find(x => x.id === dopoId);
+    if (ultima) { AG.inserisciDopo = ultima.id; AG.livelloInline = ultima.tipo === 'titolo' ? 0 : ultima.livello || 0; }
   }
   disegnaAgenda();
   const campo = app.querySelector(dopoId ? '.pj-inline input' : '.pj-nuova input'); if (campo) campo.focus();
@@ -820,7 +825,7 @@ function foglioCosa(c, oggi, opz = {}) {
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} Sposta a <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
     ${pj && !opz.dallaScheda && AG.vista === 'progetto' ? `<button class="link" id="fc-sotto">${ic('piu')} Aggiungi una riga sotto</button>` : ''}
-    ${pezzo ? `<button class="link" id="fc-copia">${ic('copia')} ${c.tipo === 'titolo' ? `Copia il titolo e le sue ${pezzo.voci} ${pezzo.voci === 1 ? 'voce' : 'voci'}` : pezzo.voci > 1 ? `Copia la voce e i suoi ${pezzo.voci - 1} ${pezzo.voci === 2 ? 'sottopunto' : 'sottopunti'}` : 'Copia la voce'}</button>` : ''}
+    ${pezzo ? `<button class="link" id="fc-copia">${ic('copia')} Copia ${cosaSiCopia(c, pezzo.voci)}</button>` : ''}
     <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
     <button class="link" id="fc-no">Annulla</button></div>`;

@@ -225,7 +225,8 @@
   // `id`: un titolo → il titolo e le sue righe fino al titolo dopo; una riga → lei e le più rientrate che la seguono;
   // vuoto → tutto il progetto (una riga vuota prima di ogni titolo). Il formato è quello che leggiRiga rilegge:
   // «## titolo» · «1. » «2.1 » numerate · «- » puntini · «- [ ] » da fare, «- [x] » fatta · «✓ » dopo il numero o il
-  // puntino = fatta · due spazi per ogni rientro, contati dalla riga copiata. Rende { testo, voci } (voci = righe non titolo).
+  // puntino = fatta · due spazi per ogni rientro, quello vero anche copiando una voce rientrata (una «2.1 » con due spazi
+  // davanti e i suoi sottopunti con quattro: reincollati restano figli suoi, revisione 24/09). Rende { testo, voci }.
   function testoDaCopiare(righe, id) {
     const tutte = righe || [], segni = numeraRighe(tutte);
     let da = 0, a = tutte.length;
@@ -236,12 +237,11 @@
       a = da + 1;
       while (a < tutte.length && tutte[a].tipo !== 'titolo' && (capo.tipo === 'titolo' || (tutte[a].livello || 0) > (capo.livello || 0))) a++;
     }
-    const base = id && tutte[da].tipo !== 'titolo' ? tutte[da].livello || 0 : 0;
     const out = [];
     for (let i = da; i < a; i++) {
       const r = tutte[i], t = r.tipo || 'cosa', testo = String(r.testo || '').replace(/\s+/g, ' ').trim();
       if (t === 'titolo') { if (out.length) out.push(''); out.push('## ' + testo); continue; }
-      const rientro = '  '.repeat(Math.max(0, (r.livello || 0) - base)), fatta = r.fatto_il ? '✓ ' : '';
+      const rientro = '  '.repeat(r.livello || 0), fatta = r.fatto_il ? '✓ ' : '';
       if (t === 'numero') out.push(`${rientro}${segni[i]} ${fatta}${testo}`);
       else if (t === 'punto') out.push(`${rientro}- ${fatta}${testo}`);
       else out.push(`${rientro}- [${r.fatto_il ? 'x' : ' '}] ${testo}`);
