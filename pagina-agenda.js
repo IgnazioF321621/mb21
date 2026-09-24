@@ -819,20 +819,29 @@ async function spuntaCosa(c, opz = {}) {
 function foglioCosa(c, oggi, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const A = MB21Agenda;
+  // Rimasta indietro (Ignazio 24/09): non fatta e con il giorno prima dell'inizio della sua scala di oggi. Si calcola qui,
+  // perché il foglio si apre anche dalla riga salvata (giorno, scheda del contatto, progetto, Cerca), che «riportata» non ce l'ha:
+  // prima diceva la data vecchia e le frecce di Settimana/Mese partivano da lì.
+  const scalaR = c.scala || 'giorno';
+  const rip = !c.fatto_il && c.giorno && c.giorno < inizioScalaMB(scalaR, oggi) ? c.giorno : null;
   // un cantiere in programma è fatto quando lo sono tutte le sue voci: si calcola (conTitoliFatti), nel database non c'è
   const calcolato = c.tipo === 'titolo' && c.giorno ? A.conTitoliFatti(AG.cose).find(x => x.id === c.id) : null, cantiereFatto = !!(calcolato && calcolato.fatto_il);
   // Settimana e Mese (Ignazio 23/09): si sceglie la settimana (o il mese) e, volendo, un giorno preciso dentro;
   // con il giorno la cosa diventa del Giorno (scala giorno), senza resta della settimana/del mese.
   // solo con il giorno (24/09): una riga senza giorno ma con la scala «settimana» faceva fallire il foglio (spostaGiorno(null))
   const sposta = c.giorno && ['settimana', 'mese'].includes(c.scala) && !cantiereFatto ? {
-    inizio: c.riportata ? inizioScalaMB(c.scala, oggi) : c.giorno, giorno: null,
+    inizio: rip ? inizioScalaMB(c.scala, oggi) : c.giorno, giorno: null,
     giorni() { return c.scala === 'mese' ? Array.from({ length: 31 }, (_, i) => A.spostaGiorno(this.inizio, i)).filter(g => g.slice(0, 7) === this.inizio.slice(0, 7)) : Array.from({ length: 7 }, (_, i) => A.spostaGiorno(this.inizio, i)); },
     nome() {
       if (c.scala === 'mese') return A.titoloMese(this.inizio);
       const g = this.giorni(), m = x => A.titoloMese(x).split(' ')[0].toLowerCase();
       return `Settimana ${A.numeroSettimana(this.inizio)} · ${Number(g[0].slice(8))}${g[0].slice(5, 7) === g[6].slice(5, 7) ? '' : ' ' + m(g[0])}–${Number(g[6].slice(8))} ${m(g[6])}`;
     },
-    quando() { return c.fatto_il ? `Fatta · ${this.nome()}` : c.scala === 'mese' ? `Da fare nel mese di ${A.titoloMese(this.inizio).toLowerCase()}` : `Da fare nella ${this.nome().replace('Settimana', 'settimana')}`; },
+    quando() {
+      if (c.fatto_il) return `Fatta · ${this.nome()}`;
+      if (rip) return c.scala === 'mese' ? `Da fare dal mese di ${A.titoloMese(rip).toLowerCase()}, ancora aperta` : `Da fare dalla settimana ${A.numeroSettimana(rip)}, ancora aperta`;
+      return c.scala === 'mese' ? `Da fare nel mese di ${A.titoloMese(this.inizio).toLowerCase()}` : `Da fare nella ${this.nome().replace('Settimana', 'settimana')}`;
+    },
   } : null;
   // Le scorciatoie per spostare, come NotePlan (Ignazio 23/09): Oggi · Domani · Settimana prossima (· Mese prossimo);
   // un tocco sposta e chiude. «Settimana prossima» / «Mese prossimo» la fanno diventare una cosa di quella scala (senza ora).
@@ -852,7 +861,7 @@ function foglioCosa(c, oggi, opz = {}) {
     ['settimana', 'Settimana prossima', { scala: 'settimana', giorno: settProssima, ora: null, durata: null }],
     ...(inProgramma ? [] : [['questo-mese', 'Questo mese', { scala: 'mese', giorno: oggi.slice(0, 8) + '01', ora: null, durata: null }]]),
     ['mese', 'Mese prossimo', { scala: 'mese', giorno: meseProssimo, ora: null, durata: null }],
-  ].filter(([, , d]) => !(d.scala === scalaC && d.giorno === (c.riportata ? (scalaC === 'giorno' ? oggi : inizioScalaMB(scalaC, oggi)) : c.giorno)))
+  ].filter(([, , d]) => !(d.scala === scalaC && d.giorno === (rip ? (scalaC === 'giorno' ? oggi : inizioScalaMB(scalaC, oggi)) : c.giorno)))
     .filter(([k]) => !inProgramma || k !== 'mese' || scalaC === 'mese' || scalaC === 'settimana');
   const pezzo = pj ? MB21Agenda.testoDaCopiare(righeInVista(pj.id), c.id) : null;   // «Copia la voce» (24/09)
   const velo = document.createElement('div');
@@ -861,7 +870,7 @@ function foglioCosa(c, oggi, opz = {}) {
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
     ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
       <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
-    <p class="fc-quando">${cantiereFatto ? `Fatto: tutte le sue ${calcolato.passi} voci sono fatte, l'ultima ${esc(dataLunga(MB21Agenda.partiRoma(calcolato.fatto_il).giorno))}.` : !c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
+    <p class="fc-quando">${cantiereFatto ? `Fatto: tutte le sue ${calcolato.passi} voci sono fatte, l'ultima ${esc(dataLunga(MB21Agenda.partiRoma(calcolato.fatto_il).giorno))}.` : !c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : rip ? `Da fare dal ${esc(dataLunga(rip))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
       <label style="margin-top:10px">${ic('scala-giorno')} Giorno <small>facoltativo</small></label>
@@ -869,7 +878,7 @@ function foglioCosa(c, oggi, opz = {}) {
       <div class="vn-aiuto" id="fc-sc-aiuto"></div></div>` : ''}
     ${pj && !opz.dallaScheda && AG.vista !== 'progetto' ? `<button class="link" id="fc-apri-progetto">${ic(pj.icona || 'obiettivi')} Apri nel progetto «${esc(pj.titolo)}» ›</button>` : ''}
     ${programmabile && !eTitolo && (!c.giorno || (c.scala || 'giorno') === 'giorno') ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
-      <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
+      <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(rip ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
     ${opz.dallaScheda || !eCosa ? '' : `<div class="campo"><label>${ic('persona')} Persona <small>facoltativo</small></label>
@@ -951,7 +960,7 @@ function foglioCosa(c, oggi, opz = {}) {
     if (campoOra && campoOra.value) {
       if (!campoGiorno.value || A.controllaGiorno(campoGiorno.value)) return mostraToast('Scegli il giorno');
       Object.assign(dopo, { ora: campoOra.value, durata, giorno: campoGiorno.value }, scalaC === 'giorno' ? {} : { scala: 'giorno' });
-    } else if (campoGiorno && campoGiorno.value && campoGiorno.value !== (c.riportata ? oggi : c.giorno)) {
+    } else if (campoGiorno && campoGiorno.value && campoGiorno.value !== (rip ? oggi : c.giorno)) {
       // solo il giorno, senza ora (Ignazio 23/09: dal 29 al 24 e restava sul 29)
       if (A.controllaGiorno(campoGiorno.value)) return mostraToast('Scegli il giorno');
       dopo.giorno = campoGiorno.value;
@@ -973,12 +982,12 @@ function foglioCosa(c, oggi, opz = {}) {
   const apriPj = velo.querySelector('#fc-apri-progetto'); if (apriPj) apriPj.onclick = () => { chiudi(); apriProgetto(pj.id, c.id); };
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });
   const domani = velo.querySelector('#fc-domani');
-  const pw = c.scala === 'periodo' ? A.periodoWesDi(c.riportata ? oggi : c.giorno, AG.wes) : null;
+  const pw = c.scala === 'periodo' ? A.periodoWesDi(rip ? oggi : c.giorno, AG.wes) : null;
   if (domani && c.scala === 'periodo' && !(pw && pw.poi)) domani.remove();   // non c'è ancora il WES dopo: niente «periodo dopo»
   else if (domani && c.scala === 'periodo') domani.onclick = () => cambia({ giorno: pw.poi });
-  else if (domani && c.scala === 'anno') domani.onclick = () => cambia({ giorno: `${Number((c.riportata ? oggi : c.giorno).slice(0, 4)) + 1}-01-01` });
-  else if (domani) domani.onclick = () => cambia({ giorno: c.scala === 'mese' ? A.meseAccanto(c.riportata ? oggi.slice(0, 8) + '01' : c.giorno, 1)
-    : c.scala === 'settimana' ? A.spostaGiorno(c.riportata ? A.inizioScala('settimana', oggi) : c.giorno, 7) : A.spostaGiorno(c.riportata ? oggi : c.giorno, 1) });
+  else if (domani && c.scala === 'anno') domani.onclick = () => cambia({ giorno: `${Number((rip ? oggi : c.giorno).slice(0, 4)) + 1}-01-01` });
+  else if (domani) domani.onclick = () => cambia({ giorno: c.scala === 'mese' ? A.meseAccanto(rip ? oggi.slice(0, 8) + '01' : c.giorno, 1)
+    : c.scala === 'settimana' ? A.spostaGiorno(rip ? A.inizioScala('settimana', oggi) : c.giorno, 7) : A.spostaGiorno(rip ? oggi : c.giorno, 1) });
   velo.querySelector('#fc-elimina').onclick = async () => {
     // un titolo con voci si elimina solo dopo la conferma (passo 3: ora si apre anche dal giorno, dove è facile sbagliare)
     if (eTitolo && passiT.length && !await chiediConferma(`Eliminare il titolo «${c.testo}»?`, passiT.length === 1 ? 'La sua voce non si cancella: resta nel progetto.' : `Le sue ${passiT.length} voci non si cancellano: restano nel progetto.`, 'Elimina il titolo', true)) return;
