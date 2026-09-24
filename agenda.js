@@ -122,7 +122,7 @@
   // Le righe con `modello_id` sono le spunte delle voci del modello (le legge `vociDelGiorno`), non cose scritte a mano;
   // e qui contano solo le cose sulla scala del giorno (`scala` vuota = giorno).
   function coseDelGiorno(cose, giorno, oggi) {
-    const mie = (cose || []).filter(c => !c.modello_id && (!c.scala || c.scala === 'giorno')).filter(c => {
+    const mie = conTitoliFatti(cose).filter(c => !c.modello_id && (!c.scala || c.scala === 'giorno')).filter(c => {
       if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
       return c.giorno === giorno;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
@@ -139,7 +139,7 @@
   // una non fatta di un mese passato si vede nel mese di oggi con «riportata» = il suo mese; le fatte restano nel loro.
   // La stessa regola vale per la SETTIMANA (`scala = 'settimana'`, `giorno` = il lunedì): coseDellaScala.
   function coseDellaScala(cose, scala, inizio, inizioOggi) {
-    const mie = (cose || []).filter(c => c.scala === scala && !c.modello_id && !c.core).filter(c => {
+    const mie = conTitoliFatti(cose).filter(c => c.scala === scala && !c.modello_id && !c.core).filter(c => {
       if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
       return c.giorno === inizio;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
@@ -149,6 +149,28 @@
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
+  // Un cantiere in programma (Ignazio 24/09, passo 3): il titolo di un progetto con un giorno è UNA riga del giorno, della
+  // settimana o del mese («una riga sola»). È fatto quando sono fatti tutti i suoi passi — non si salva, si calcola, come nel
+  // progetto: allora sta tra le fatte nel giorno (o nella settimana, nel mese) dell'ultima spunta; un passo nuovo lo riapre e,
+  // se il suo giorno è passato, si riporta come le altre cose. Rende la lista con, al posto di ogni titolo in programma, una
+  // copia con `fatto_il` e `giorno` calcolati e `passi` / `fatti` (per «1 di 4 fatte»); le altre righe restano le stesse.
+  function conTitoliFatti(cose) {
+    const lista = cose || [];
+    if (!lista.some(c => c.tipo === 'titolo' && c.progetto_id && c.giorno)) return lista;
+    const perProgetto = new Map(), passi = new Map();
+    for (const c of lista) if (c.progetto_id) { if (!perProgetto.has(c.progetto_id)) perProgetto.set(c.progetto_id, []); perProgetto.get(c.progetto_id).push(c); }
+    for (const righe of perProgetto.values()) {
+      righe.sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
+      let titolo = null;
+      for (const r of righe) { if (r.tipo === 'titolo') { titolo = r; passi.set(r.id, []); } else if (titolo) passi.get(titolo.id).push(r); }
+    }
+    return lista.map(c => {
+      if (c.tipo !== 'titolo' || !c.progetto_id || !c.giorno) return c;
+      const suoi = passi.get(c.id) || [], fatti = suoi.filter(x => x.fatto_il);
+      const ultima = suoi.length && fatti.length === suoi.length ? fatti.map(x => x.fatto_il).sort().pop() : null;
+      return { ...c, passi: suoi.length, fatti: fatti.length, fatto_il: ultima, giorno: ultima ? inizioScala(c.scala || 'giorno', partiRoma(ultima).giorno) : c.giorno };
+    });
+  }
   // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
   function numeroSettimana(giorno) {
     const d = new Date(giorno + 'T12:00:00Z');
@@ -726,7 +748,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
