@@ -32,7 +32,7 @@ const B = {
 };
 const nomi = { io: 'Isabella', chi: 'Anna' };
 
-prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi; PM e Follow Up dopo il risultato', () => {
+prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi; PM e Follow Up dopo il risultato; la Consulenza', () => {
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Prospect', 'PM Fissato'), 'telefonata');
   assert.equal(C.situazione('Contatto', undefined, undefined, 'Richiamare'), 'telefonata');          // dalla coda, Referral o senza categoria
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Ex Partner/Cliente', 'No Interesse'), 'telefonata');
@@ -46,9 +46,12 @@ prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con 
   for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Presentazione', 'Fatto', 'Rimandato', 'No Show', null]) assert.equal(C.situazione(t, null, 'Prospect', e), null);
   assert.equal(C.situazione('Follow Up', null, 'Prospect', 'Dare Seguito'), null);   // «Dare Seguito» è un risultato del PM
   assert.equal(C.situazione('Appuntamento', 'Avvio', 'Partner', 'Lista nomi'), null);
-  assert.equal(C.situazione('Consulenza PRD', 'Demo', 'Prospect', 'Vendita'), null);
+  // Consulenza prodotti: dopo Vendita o No Vendita, per ogni categoria e ogni tipo di consulenza
+  for (const [m, cat, e] of [['Demo', 'Prospect', 'Vendita'], ['Riordino', 'Cliente', 'No Vendita'], [null, undefined, 'Vendita'], ['Assistenza', 'Ex Partner/Cliente', 'No Vendita']])
+    assert.equal(C.situazione('Consulenza PRD', m, cat, e), 'consulenza');
+  for (const e of ['Demo', 'Promo/Sconto', null]) assert.equal(C.situazione('Consulenza PRD', null, 'Cliente', e), null);   // gli esiti vecchi di Glide
   // stesso montatore per tutte; una situazione senza montatore: niente chat
-  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
+  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
   assert.equal(C.monta('piano', B, 'PM Fissato', nomi, 0), null);
   // i partner salvano «freni» invece di «obiezioni»
   const Bp = { ...B, domanda_obiezione: { ...B.domanda_obiezione, salva: 'freni', nessuna: 'Niente' } };
