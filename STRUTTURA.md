@@ -2,7 +2,7 @@
 
 Mappa viva di tabelle, campi e logiche. Si aggiorna nello stesso commit di ogni modifica di schema o logica.
 
-*Aggiornato: 22 settembre 2026 (tabelle `materiali` e `condivisioni`, cantiere 40).*
+*Aggiornato: 24 settembre 2026 (tabella `coach_batterie`, cantiere 42).*
 
 ## Tabelle
 Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Schema in `supabase/migrations/20260913193000_schema_minimo.sql`.
@@ -29,6 +29,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 | `check_giorni_conti` (vista) | — | Cantiere 26 lavoro 5: i Check giorno per giorno con i VP Clienti **azzerati dal 18/09/2026** + una riga per ogni vendita che conta da quel giorno (`e_check` = false, `data` = `conta_il`, `vp_clienti` = VP). La legge la pagina Check; `check_mesi` (Dashboard) è costruita su questa | come `check_giorno` e `vendite` |
 | `materiali` | BSM + N21 (parziale) | Cantiere 40 lavoro 2: **la biblioteca N21** — tracce audio, pack, libri, Manuale (144 righe dallo script: 49 tracce del Media Sharing con il loro pack, 30 pack, 21 materiali di studio interi, 44 libri). Non è una pagina: è il motore del consiglio e la base del registro delle condivisioni | tutti gli utenti loggati; scrive solo Admin |
 | `condivisioni` | Sharing | Cantiere 40 lavoro 3: **il registro delle tracce condivise**, una riga per persona e traccia: chi ha condiviso, a chi, quando, ascoltata sì/no; 109 righe da Glide | le proprie (fatte da sé) · Admin tutte |
+| `coach_batterie` | — | Cantiere 42: **l'archivio privato del coach** — i messaggi della chat che si apre dopo un esito, una riga per situazione (per ora «telefonata»). I testi stanno solo qui e non nel codice, perché il repo è pubblico | tutti gli utenti loggati; scrive solo Admin |
 | `fattori_conversione` | — | Cantiere 26: l'FC (fattore di conversione) di Amway nel tempo, una riga per cambio: `dal` (primo giorno in cui vale, chiave) · `valore`. Partenza: 2,21759 da sempre · 2,26194 dal 01/06/2026 | tutti gli utenti loggati; scrive solo Admin |
 | `vendite` | Vendite | Cantiere 26: una riga per vendita **e per brand**, legata al contatto: `user_id` · `contatto_id` · `data` · `brand` (Artistry · eSpring · Home · Nutrilite/XS · Persona) · `prodotto` (≤50) · `vp` · `sconto` (€) · `consegna` (data **prevista** dell'ordine Amway e della consegna; vuota = subito) · `ordinata_il` (il giorno vero dell'ordine, da «📦 Ordine fatto»; solo con `consegna`) · `riordino` (data, vuota in parte dello storico) · `da_glide` · `azione_riordino_id` · `azione_consegna_id` (le due azioni scritte in Agenda) | le proprie · Admin tutte |
 | `vendite_conti` (vista) | — | Cantiere 26: `vendite` + `conta_il` · `fc` · `provvigione` · `guadagno_netto`, non arrotondati. **L'unico posto dove si calcola la provvigione**: l'app legge sempre da qui | come `vendite` |
@@ -227,6 +228,8 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **condivisioni** (migrazione `20260922094905_condivisioni.sql`, cantiere 40; import `scripts/import_condivisioni.py`, righe `da_glide`) — `user_id` (**chi ha condiviso**: in 5 righe di Glide non è il proprietario del contatto) · `contatto_id` · `materiale_id` (la traccia; `on delete restrict`) · `condivisa_il` (data) · `ascoltata` · `ascoltata_il` (vuoto per lo storico di Glide) · `note` (≤300) · `da_glide` · `creato_il`. Un registro solo: la riga che lo sponsor segna «condivisa» è quella che il partner con MB21 segna «ascoltata». Le due tracce della vecchia versione del Media Sharing condivise in Glide stanno in `materiali` come `fuori_catalogo`
 
 **libri_letti** (migrazione `20260922154805`, cantiere 40 lavoro 7) — `user_id` · `titolo` · `quando` (a parole, ≤40, facoltativo) · `creato_il`; unico per utente e titolo. «L'ho già letto»: vale come letto nel percorso, blocco senza note nel diario
+
+**coach_batterie** (migrazione `20260924082926_coach_batterie.sql`, cantiere 42, applicata il 24/09) — `situazione` (chiave: `telefonata`, poi le altre) · `batteria` (jsonb: i messaggi della situazione; il formato lo legge `coach.js`) · `aggiornata_il`. **Si riempie dalla cartella privata** `~/mb21-import/training` (fuori dal repo): `python3 carica_coach.py` lancia prima la prova di tutte le strade della chat (`prova_coach.js`) e, solo se passa, sostituisce la riga di ogni situazione. Senza essere entrati nell'app non si legge (provato il 24/09 con la chiave pubblica: risposta vuota, come `materiali`)
 
 **libri_personali** (stessa migrazione) — `user_id` · `titolo` · `autore` · `creato_il`; unico per utente e titolo. «Libro non da sistema…» del Check: entra nell'elenco del Check di chi l'ha scritto; i Check lo salvano per titolo come gli altri, quindi se un giorno entra in `materiali` il diario lo riconosce da solo
 
