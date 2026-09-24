@@ -271,14 +271,17 @@ function catalogoHtml() {
   const fatti = ST.stato.catalogati_oggi || 0;
   if (!cat || (!cat.totale && !fatti)) return '';
   const altro = guardoAltri();
-  const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
   const aperta = apertaRigaDash('catalogo', false);   // da sola è sempre chiusa
+  // Ignazio 24/09: «fatti 20 di 20» sembrava un traguardo raggiunto (e con la quota piena il bottone non dava nomi).
+  // Adesso si dice quanti ne restano e quanti ne ha già fatti oggi: i 5 al giorno sono il ritmo, non un tetto.
+  const ne = altro ? 'ne ha catalogati' : 'ne hai catalogati';
+  const sotto = cat.totale ? `${cat.totale} ancora da catalogare · oggi ${ne} ${fatti}` : `Tutti catalogati · oggi ${ne} ${fatti}`;
   let h = rigaApribile('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
-    `${cat.totale} ancora da catalogare · fatti ${Math.min(fatti, quota)} di ${quota}`, aperta, cat.righe.length);
+    sotto, aperta, cat.righe.length);
   if (!aperta) return h;
   if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
   if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
-  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} di ${quota}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
+  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
     + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
 }
 function cardCatalogo(r) {
