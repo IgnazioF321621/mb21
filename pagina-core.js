@@ -23,7 +23,7 @@ async function apriCoreMese(mese) {
   const mese0 = CM.mese + '-01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
   const da = A.isoDaRoma(mese0, '00:00'), a = A.isoDaRoma(mese1, '00:00');
   const io = visto();
-  const [az, ve, ck, ob, cm, scheda, dBbs, dWes] = await Promise.all([
+  const [az, ve, ck, ob, cm, dBbs, dWes] = await Promise.all([
     dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
     // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
     dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
@@ -31,22 +31,15 @@ async function apriCoreMese(mese) {
     dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
-    io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
     dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
     dbq('date dei WES', supa.from('wes').select('data, giorno')),
   ]);
   if (az.error || ve.error || ck.error) { app.innerHTML = `${testa()}<div class="avviso">Non riesco a compilare il modulo: riprova.</div>${versione()}`; collegaTesta(); return; }
-  // le tracce del percorso ascoltate nel mese e i biglietti: sulla propria scheda (il contatto con il proprio codice Amway)
-  const miaScheda = scheda.data && scheda.data[0] ? scheda.data[0].id : null;
-  let tracce = [], biglietti = [];
-  if (miaScheda) {
-    const [tr, bi] = await Promise.all([
-      dbq('tracce ascoltate', supa.from('condivisioni').select('ascoltata_il, materiali(titolo)').eq('contatto_id', miaScheda).eq('ascoltata', true).gte('ascoltata_il', mese0).lt('ascoltata_il', mese1)),
-      dbq('biglietti', supa.from('biglietti').select('tipo, evento, contatto').eq('contatto_id', miaScheda).gte('evento', mese0)),
-    ]);
-    tracce = (tr.data || []).map(r => ({ giorno: r.ascoltata_il, titolo: r.materiali && r.materiali.titolo })).filter(t => t.titolo);
-    biglietti = bi.data || [];
-  }
+  // Le tracce del percorso ascoltate nel mese e i biglietti stanno sulla propria scheda (il contatto con il proprio codice
+  // Amway), che per un partner sta nella lista dell'upline: le regole di sicurezza non gliela fanno leggere e il modulo
+  // scriveva «NO» anche a chi il biglietto ce l'aveva (Ignazio 24/09). Si passa dalle funzioni `miei_biglietti` e `mie_tracce`.
+  const [tracce, big] = await Promise.all([traccePercorso(io, mese0, mese1), bigliettiDiChiGuardo(io, mese0)]);
+  const biglietti = big || [];
   CM.riga = cm.data || null;
   CM.dati = (cm.data && cm.data.dati) || {};
   const disegna = () => {
@@ -194,4 +187,20 @@ async function condividiCorePdf(m) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   mostraToast('PDF scaricato: lo trovi nei Download, pronto da allegare.');
+}
+
+// Le tracce del percorso segnate «ascoltata» sulla propria scheda nel mese. Come per i biglietti, la scheda di un partner
+// sta nella lista dell'upline: per sé si passa da `mie_tracce`; l'Admin che guarda un altro partner legge come prima.
+async function traccePercorso(io, mese0, mese1) {
+  if (io.id === ST.utente.id) {
+    const { data, error } = await dbq('le mie tracce', supa.rpc('mie_tracce', { p_dal: mese0, p_a: mese1 }));
+    return error ? [] : (data || []).filter(r => r.titolo);
+  }
+  if (!io.partner_id) return [];
+  const sc = await dbq('la sua scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1));
+  const scheda = !sc.error && sc.data && sc.data[0] ? sc.data[0].id : null;
+  if (!scheda) return [];
+  const tr = await dbq('le sue tracce', supa.from('condivisioni').select('ascoltata_il, materiali(titolo)')
+    .eq('contatto_id', scheda).eq('ascoltata', true).gte('ascoltata_il', mese0).lt('ascoltata_il', mese1));
+  return tr.error ? [] : (tr.data || []).map(r => ({ giorno: r.ascoltata_il, titolo: r.materiali && r.materiali.titolo })).filter(x => x.titolo);
 }

@@ -895,6 +895,25 @@ async function caricaRichiamoGriglia(oggi) {
   } catch (e) { /* il richiamo manca, la Dashboard resta */ }
 }
 
+// I biglietti BBS/WES della propria scheda (Ignazio 24/09, biglietti di Isabella): la scheda con il proprio codice Amway
+// sta quasi sempre nella lista dell'upline e le regole di sicurezza non la fanno leggere al partner, così il biglietto
+// c'era ma il Check e il Modulo Core lo davano per non comprato. Si passa da `miei_biglietti`, che sa dov'è la scheda.
+// null = non lo so (nessuna scheda col mio codice) · [] = scheda sì, biglietti no. `contatto` = il biglietto è per me.
+// Guardando un altro partner (Partner Select), l'Admin legge la sua scheda come prima: lui le vede tutte.
+async function bigliettiDiChiGuardo(io, dal) {
+  if (io.id === ST.utente.id) {
+    const { data, error } = await dbq('i miei biglietti', supa.rpc('miei_biglietti', { p_dal: dal }));
+    if (error || data == null) return null;
+    return data.map(b => ({ tipo: b.tipo, evento: b.evento, ospiti: b.ospiti, contatto: !!b.io }));
+  }
+  if (!io.partner_id) return null;
+  const sc = await dbq('la sua scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1));
+  const scheda = !sc.error && sc.data && sc.data[0] ? sc.data[0].id : null;
+  if (!scheda) return null;
+  const bi = await dbq('i suoi biglietti', supa.from('biglietti').select('tipo, evento, contatto, ospiti').eq('contatto_id', scheda).gte('evento', dal));
+  return bi.error ? null : (bi.data || []);
+}
+
 const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);
 const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
 
@@ -1272,14 +1291,13 @@ function apriCheck() {
     if (!data) return;
     const A = MB21Agenda, mese0 = data.slice(0, 8) + '01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
     const io = visto();
-    const [ve, ob, tr, sq, scheda] = await Promise.all([
+    const [ve, ob, tr, sq] = await Promise.all([
       // le vendite che CONTANO nel mese (consegna nel mese, o senza consegna e pagate nel mese): la promo che conta nel 2027 non è qui
       dbq('clienti del mese', supa.from('vendite').select('contatto_id, vp').eq('user_id', io.id)
         .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
       dbq('vp amway', supa.from('obiettivi_mese').select('vpp_amway').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
       io.id === ST.utente.id && data >= MB21Dashboard.INIZIO_TRACCE_PERCORSO ? dbq('tracce del percorso', supa.rpc('tracce_ascoltate_conti')) : Promise.resolve({ data: [] }),
       io.partner_id ? dbq('squadra', supa.from('squadra').select('partner_id, sponsor_id, data_ingresso')) : Promise.resolve({ data: null }),
-      io.partner_id ? dbq('la mia scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1)) : Promise.resolve({ data: [] }),
     ]);
     if (!ancoraValido()) return;
     const vpClienti = (ve.data || []).reduce((t, r) => t + (Number(r.vp) || 0), 0);
@@ -1294,13 +1312,11 @@ function apriCheck() {
       CK_CORE.gruppoOggi = linea.filter(r => r.data_ingresso === data).length;
       CK_CORE.gruppoMese = linea.filter(r => r.data_ingresso && r.data_ingresso >= mese0 && r.data_ingresso < mese1).length;
     } else CK_CORE.gruppoOggi = null;
-    const miaScheda = scheda.data && scheda.data[0] ? scheda.data[0].id : null;
-    if (miaScheda) {
-      const bi = await dbq('biglietti', supa.from('biglietti').select('tipo, contatto').eq('contatto_id', miaScheda).gte('evento', mese0));
-      if (!ancoraValido()) return;
-      CK_CORE.bbs = (bi.data || []).some(b => b.tipo === 'BBS' && b.contatto);
-      CK_CORE.wes = (bi.data || []).some(b => b.tipo === 'WES' && b.contatto);
-    } else { CK_CORE.bbs = null; CK_CORE.wes = null; }
+    const big = await bigliettiDiChiGuardo(io, mese0);   // 24/09: dalla propria scheda, ovunque sia
+    if (!ancoraValido()) return;
+    CK_CORE.bbs = big && big.some(b => b.tipo === 'BBS' && b.contatto);
+    CK_CORE.wes = big && big.some(b => b.tipo === 'WES' && b.contatto);
+    if (!big) { CK_CORE.bbs = null; CK_CORE.wes = null; }
     aggiornaCore();
   };
   // Contatti e PM dal 14/09 (MB21Dashboard.INIZIO_AZIONI): non si scrivono, si leggono dalle azioni del giorno che contano
