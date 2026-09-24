@@ -379,6 +379,24 @@ prova('Progetti come Word (23/09): numeri 1. → 1.1 → 1.1.1, i titoli fanno r
   ]), ['', '1.', '1.1', '1.2', '1.2.1', '2.', '◦', '2.1', '', '1.', '', '2.', '•', '▪']);
 });
 
+prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; i titoli tutti fatti in fondo al progetto', () => {
+  const r = (id, tipo, livello, fatto) => ({ id, tipo, livello, fatto_il: fatto ? '2026-09-24T10:00:00Z' : null });
+  const vista = righe => A.fatteInFondo(righe).map(x => x.id);
+  // dentro un titolo: prima le da fare nel loro ordine, poi le fatte nel loro ordine
+  assert.deepEqual(vista([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('b', 'numero', 0), r('c', 'numero', 0, true), r('d', 'numero', 0)]), ['T1', 'b', 'd', 'a', 'c']);
+  // i numeri seguono quello che si vede: le da fare partono da 1.
+  assert.deepEqual(A.numeraRighe(A.fatteInFondo([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('b', 'numero', 0), r('d', 'numero', 0)])), ['', '1.', '2.', '3.']);
+  // una riga si porta dietro i sottopunti e va in fondo solo se sono fatti tutti; dentro, la stessa regola
+  assert.deepEqual(vista([r('T1', 'titolo', 0), r('p', 'numero', 0), r('p1', 'numero', 1, true), r('p2', 'numero', 1), r('q', 'numero', 0, true), r('q1', 'numero', 1, true), r('s', 'numero', 0, true), r('s1', 'numero', 1), r('u', 'numero', 0)]),
+    ['T1', 'p', 'p2', 'p1', 's', 's1', 'u', 'q', 'q1']);
+  // titolo tutto fatto in fondo con i suoi passi; titolo senza passi al suo posto; le righe prima del primo titolo in cima
+  assert.deepEqual(vista([r('x', 'cosa', 0, true), r('y', 'cosa', 0), r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('T2', 'titolo', 0), r('b', 'numero', 0), r('T3', 'titolo', 0), r('T4', 'titolo', 0), r('c', 'numero', 0, true), r('d', 'numero', 0, true)]),
+    ['y', 'x', 'T2', 'b', 'T3', 'T1', 'a', 'T4', 'c', 'd']);
+  // un passo da fare riapre il titolo: torna al suo posto
+  assert.deepEqual(vista([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('n', 'numero', 0), r('T2', 'titolo', 0), r('b', 'numero', 0)]), ['T1', 'n', 'a', 'T2', 'b']);
+  assert.deepEqual(A.fatteInFondo([]), []);
+});
+
 prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
   const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
   const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];
