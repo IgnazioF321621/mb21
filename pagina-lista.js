@@ -602,49 +602,64 @@ async function riquadroCoppia(c) {
 async function sezioneAzioni() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
-  const titolo = MB21Lista.titoloFase(c);
-  const faseHtml = `<div class="riquadro fase">
-      ${c.fase_icona ? `<img src="${esc(c.fase_icona)}" alt="">` : '<div class="senza-icona"></div>'}
-      <div>${titolo ? esc(titolo) : 'NESSUNA FASE'}</div></div>
-    ${c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="azione-piu">Azione +</button>'}`;
-  box.innerHTML = faseHtml + '<div class="vuoto">Carico le azioni…</div>';
+  // Niente riquadro FASE (Ignazio 24/09: «residuo di Glide»): dove si è con la persona lo dice la prima card, l'ultima azione con il suo esito.
+  const piuHtml = c.categoria === 'Archiviato' ? '' : '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
+  box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';
   if (!LS.azioni) {
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
     const { data, error } = await dbq('lettura azioni', supa.from('azioni')
       .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, area, ospite, note, inizio, fine, completata, data_scelta, riflessione, creato_il, contatti(nome)')
       .or(`contatto_id.eq.${c.id},portato_da.eq.${c.id}`).order('inizio', { ascending: false, nullsFirst: false }));
-    if (error) { box.innerHTML = faseHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
+    if (error) { box.innerHTML = piuHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
   if (LS.sezione !== 'azioni') return;
   // il promemoria «Ti eri detto…» (cantiere 42): dalle azioni appena lette, lo stesso riquadro di MB Plan e della coda,
   // dentro l'azione ancora da completare (Ignazio 24/09: «aggiungilo anche nella scheda»)
   RICORDI[c.id] = MB21Coach.ricordi(LS.azioni.filter(a => a.contatto_id === c.id))[c.id] || null;
-  box.innerHTML = faseHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => a.contatto_id !== c.id ? `
+  // Card stretta (Ignazio 24/09, «nel telefono è tutto molto lungo»): riga 1 tipo · modalità con la data a destra, riga 2 area · esito · nota.
+  // Azione già chiusa: il blocco degli esiti resta vuoto e «Cambia esito» sta nella riga dei comandi; al tocco il blocco si apre lì sopra.
+  const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}</div></div>`;
+  const dettagli = parti => { const p = parti.filter(Boolean); return p.length ? `<div class="s">${p.join(' · ')}</div>` : ''; };
+  const link = (attr, id, testo, rosso) => `<button class="link" ${attr}="${esc(id)}"${rosso ? ' style="color:var(--rosso)"' : ''}>${testo}</button>`;
+  box.innerHTML = piuHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => {
+    if (a.contatto_id !== c.id) return `
     <div class="azione">
-      <div class="t">${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')} · ${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
-      <div class="s">${esc([a.modalita, a.esito].filter(Boolean).join(' • '))}</div>
-      <div class="comandi"><button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button></div>
-    </div>` : `
+      ${testa(`${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')}`, a)}
+      ${dettagli([esc(a.tipo_azione || ''), esc(a.modalita || ''), a.esito ? `<b>${esc(a.esito)}</b>` : ''])}
+      <div class="comandi"><span class="stato-az"></span>${link('data-modifica-azione', a.id, 'Modifica')}</div>
+    </div>`;
+    const blocco = bloccoEsiti(a, c.categoria);
+    const chiusa = blocco.includes('data-apri-esiti');
+    return `
     <div class="azione">
-      <div class="t">${esc([a.tipo_azione, MB21Lista.data(a.inizio, true)].filter(Boolean).join(' • '))}</div>
-      <div class="s">${esc([a.modalita, a.area].filter(Boolean).join(' • '))}</div>
-      ${a.esito || a.note ? `<div class="s">${esc([a.esito, a.note].filter(Boolean).join(' • '))}</div>` : ''}
+      ${testa(esc([a.tipo_azione, a.modalita].filter(Boolean).join(' · ')), a)}
+      ${dettagli([esc(a.area || ''), a.esito ? `<b>${esc(a.esito)}</b>` : '', esc(a.note || '')])}
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${a.esito ? '' : ricordoHtml(c.id, c.nome)}
-      ${bloccoEsiti(a, c.categoria)}
-      <div class="comandi">${statoAzione(a)}<button class="link" data-modifica-azione="${a.id}" style="margin-left:auto">Modifica</button><button class="link" data-elimina-azione="${a.id}" style="color:var(--rosso)">Elimina</button></div>
-    </div>`).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
+      ${chiusa ? `<div class="blocco-esiti" data-blocco="${esc(a.id)}"></div>` : blocco}
+      <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
+    </div>`;
+  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
-  box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo));
+  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo);
+  box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(collega);
+  box.querySelectorAll('[data-cambia-esito]').forEach(b => b.onclick = () => {   // stesso blocco dell'Agenda, aperto sul posto
+    const a = LS.azioni.find(x => x.id === b.dataset.cambiaEsito);
+    const vuoto = box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`);
+    if (!vuoto) return;
+    vuoto.outerHTML = bloccoEsiti(a, c.categoria, true);
+    b.remove();
+    collega(box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`));
+  });
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
   box.querySelectorAll('[data-elimina-azione]').forEach(b => b.onclick = () => { if (!soloGuardo()) eliminaAppuntamento(LS.azioni.find(x => x.id === b.dataset.eliminaAzione), dopo); });
 }
 
-// «Azione +» (Ignazio 17/09): apre subito «Nuovo appuntamento» con la persona già scelta e tutti i tipi della sua categoria.
+// «＋ Nuova azione» (Ignazio 17/09, allora «Azione +»): apre subito «Nuovo appuntamento» con la persona già scelta e tutti i tipi della sua categoria.
 // Gli esiti rapidi della coda restano in Dashboard.
 async function azionePiu() {
   if (soloGuardo()) return;
