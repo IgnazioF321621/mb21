@@ -241,7 +241,11 @@ function collegaCose(oggi) {
   app.querySelectorAll('.ag-foglio .cosa[data-cosa]').forEach(riga => {
     const c = AG.cose.find(x => x.id === riga.dataset.cosa);
     if (!c) return;
-    riga.querySelector('.spunta').onclick = () => spuntaCosa(c, AG.vista === 'progetto' ? { giorno: oggi } : {});   // dal progetto: fatta oggi (24/09)
+    riga.querySelector('.spunta').onclick = () => {
+      // un titolo (nel progetto e, dal passo 3, nel giorno, nella settimana, nel mese): completa o riapre tutti i suoi passi
+      if (c.tipo === 'titolo') { const passi = passiDelTitolo(c); return spuntaTitolo(passi, passi.length > 0 && passi.every(x => x.fatto_il)); }
+      spuntaCosa(c, AG.vista === 'progetto' ? { giorno: oggi } : {});   // dal progetto: fatta oggi (24/09)
+    };
     riga.querySelector('.testo').onclick = () => foglioCosa(c, oggi);
   });
   // le voci del modello: la spunta vale per quel giorno (o per la settimana/il mese, se la voce è di quella scala);
@@ -355,6 +359,12 @@ const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
 // tutti fatti in fondo al progetto (MB21Agenda.fatteInFondo). Anche chi aggiunge righe parte da qui: la riga nuova va dove
 // l'hai vista, e l'ordine salvato diventa quello che si vede.
 const righeInVista = id => MB21Agenda.fatteInFondo(righeProgetto(id).sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1)));
+// I passi di un titolo (fino al titolo dopo), come si vedono nel progetto: per la spunta del cantiere dal giorno (passo 3)
+function passiDelTitolo(t) {
+  const righe = righeInVista(t.progetto_id), i = righe.findIndex(r => r.id === t.id), out = [];
+  for (let k = i + 1; i >= 0 && k < righe.length && righe[k].tipo !== 'titolo'; k++) out.push(righe[k]);
+  return out;
+}
 // Copiare (Ignazio 24/09): un titolo con le sue righe dall'iconcina accanto al titolo, una riga (con i suoi sottopunti) dal suo
 // foglio, tutto il progetto dal foglio del progetto (`c` vuoto). Il testo lo fa MB21Agenda.testoDaCopiare da quello che si
 // vede, con gli stessi numeri; copiaTesto (index.html) parte subito, nel tocco.
@@ -379,6 +389,10 @@ function contaProgetto(id) {
 function nomeProgetto(c) {
   const pj = c.progetto_id && (AG.progetti || []).find(x => x.id === c.progetto_id);
   if (!pj) return '';
+  if (c.tipo === 'titolo') {   // un cantiere in programma (passo 3): «📁 MB App · 1 di 4 fatte»
+    const n = c.passi != null ? { tot: c.passi, fatte: c.fatti } : (x => ({ tot: x.length, fatte: x.filter(y => y.fatto_il).length }))(passiDelTitolo(c));
+    return '📁 ' + pj.titolo + (n.tot ? ` · ${n.fatte} di ${n.tot} fatte` : ' · ancora senza voci');
+  }
   const posto = MB21Agenda.postoNelProgetto(righeInVista(pj.id), c.id) || { titolo: '', segno: '' };
   const corto = String(posto.titolo || '').split(/\s+[–-]\s+/)[0], numero = /^\d/.test(posto.segno) ? posto.segno : '';
   return '📁 ' + pj.titolo + (corto ? ' › ' + (corto.length > 28 ? corto.slice(0, 27) + '…' : corto) + (numero ? ' · ' + numero : '') : '');
@@ -570,7 +584,7 @@ function disegnaProgetto() {
     const tipo = c.tipo || 'cosa', rientro = `data-livello="${c.livello || 0}" style="padding-left:${(c.livello || 0) * 24}px"`;
     if (tipo === 'titolo') {
       const f = titoloFatto(i), chiuso = chiuse.includes('pt-' + c.id), passi = sottoTitolo(i), restano = passi.filter(x => !x.fatto_il).length;
-      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${chiuso && passi.length ? `<small>${restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`}</small>` : ''}</button><button class="pj-copia" aria-label="Copia il titolo con le sue righe">${ic('copia')}</button></div>`;
+      return `<div class="cosa pj-titolo${f ? ' fatta' : ''}${chiuso ? ' chiusa' : ''}" data-cosa="${esc(c.id)}"><button class="ag-sez-chiudi" data-chiudi-sez="pt-${esc(c.id)}" aria-expanded="${!chiuso}" aria-label="${chiuso ? 'Apri' : 'Chiudi'} il titolo">${ic('freccia')}</button><button class="spunta" aria-label="${f ? 'Titolo completato: riapri tutti i suoi passi' : 'Completa tutti i passi del titolo'}">${f ? ic('fatto') : ''}</button><button class="testo"><span>${esc(c.testo)}</span>${(x => x ? `<small>${esc(x)}</small>` : '')([chiuso && passi.length ? (restano ? `${restano} da fare · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}` : `tutti fatti · ${passi.length} ${passi.length === 1 ? 'passo' : 'passi'}`) : '', quando(c)].filter(Boolean).join(' · '))}</button><button class="pj-copia" aria-label="Copia il titolo con le sue righe">${ic('copia')}</button></div>`;
     }
     const nascosta = nascoste.has(c.id) ? ' pj-nascosta' : '';
     if (tipo !== 'cosa') return `<div class="cosa pj-${tipo}${c.fatto_il ? ' fatta' : ''}${nascosta}" data-cosa="${esc(c.id)}" ${rientro}><button class="spunta segno" aria-label="${c.fatto_il ? 'Fatto: rimetti da fare' : 'Fatto'}">${esc(segni[i])}</button><button class="testo"><span>${esc(c.testo)}</span>${quando(c) ? `<small>${esc(quando(c))}</small>` : ''}</button></div>`;
@@ -585,7 +599,7 @@ function disegnaProgetto() {
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
         <span class="pj-tipi pj-rientri"><button type="button" data-rientro="-1" aria-label="Rientro indietro (Maiusc+Tab)">⇤</button><button type="button" data-rientro="1" aria-label="Rientro avanti (Tab)">⇥</button></span>
         <input type="text" maxlength="200" placeholder="Aggiungi una riga…" autocomplete="off" style="padding-left:${livOra * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-      <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. <b>Tocca una riga</b> per metterla in programma: in un giorno, in una settimana o in un mese.</div>
+      <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. <b>Tocca una riga</b> per metterla in programma: in un giorno, in una settimana o in un mese. <b>Tocca un titolo</b> per mettere in programma tutto il cantiere: sarà una riga sola, che si completa quando fai le sue voci.</div>
     </div>`;
   montaScala(html);
   const t = document.getElementById('pj-titolo');
@@ -612,12 +626,10 @@ function disegnaProgetto() {
     campoNuova.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); rientra(ev.shiftKey ? -1 : 1); } });
   }
   app.querySelectorAll('[data-rientro]').forEach(b => { b.onclick = () => rientra(Number(b.dataset.rientro)); });
-  // la spunta del titolo: completa (o riapre) tutti i passi del titolo in un colpo
-  righe.forEach((c, i) => {
+  // la spunta del titolo (completa o riapre tutti i suoi passi) la collega collegaCose, come nel giorno; qui l'iconcina «copia»
+  righe.forEach(c => {
     if (c.tipo !== 'titolo') return;
-    const b = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .spunta`);
-    if (b) b.onclick = () => spuntaTitolo(sottoTitolo(i), titoloFatto(i));
-    const cp = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .pj-copia`);   // l'iconcina: copia il titolo con le sue righe (24/09)
+    const cp = app.querySelector(`.pj-titolo[data-cosa="${c.id}"] .pj-copia`);   // copia il titolo con le sue righe (24/09)
     if (cp) cp.onclick = () => copiaRighe(p.id, c);
   });
   app.querySelectorAll('.pj-aggiungi[data-dopo]').forEach(b => { b.onclick = () => apriInserisci(b.dataset.dopo); });
@@ -824,7 +836,9 @@ function foglioCosa(c, oggi, opz = {}) {
   const eCosa = (c.tipo || 'cosa') === 'cosa', pj = c.progetto_id ? (AG.progetti || []).find(x => x.id === c.progetto_id) : null;
   // In programma (Ignazio 24/09): qualsiasi riga, anche numerata o a puntini, va in un giorno, una settimana o un mese; i titoli no
   // (il cantiere intero è il passo 3). Senza giorno le scelte sono «Metti in programma», con il giorno restano «Sposta a».
-  const programmabile = (c.tipo || 'cosa') !== 'titolo', inProgramma = !!c.giorno;
+  // Un titolo (passo 3) va in programma tutto intero con le stesse pillole, senza ora, solo se ha ancora voci da fare.
+  const eTitolo = (c.tipo || 'cosa') === 'titolo', passiT = eTitolo && pj ? passiDelTitolo(c) : [], restanoT = passiT.filter(x => !x.fatto_il).length;
+  const programmabile = !eTitolo || restanoT > 0, inProgramma = !!c.giorno;
   let tipoScelto = c.tipo || 'cosa', livelloScelto = c.livello || 0;
   const scalaC = c.scala || 'giorno', domaniG = A.spostaGiorno(oggi, 1);
   const settProssima = A.spostaGiorno(A.inizioScala('settimana', oggi), 7), meseProssimo = A.meseAccanto(oggi.slice(0, 8) + '01', 1);
@@ -843,14 +857,14 @@ function foglioCosa(c, oggi, opz = {}) {
     <div class="campo"><textarea id="fc-testo" rows="3" maxlength="200">${esc(c.testo)}</textarea></div>
     ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
       <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
-    <p class="fc-quando">${!c.giorno ? (pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
+    <p class="fc-quando">${!c.giorno ? (eTitolo ? (!pj ? '' : !passiT.length ? 'Il titolo non ha ancora voci: aggiungine sotto e potrai metterlo in programma.' : !restanoT ? 'Tutte le sue voci sono fatte.' : `Il cantiere sta solo nel progetto: ${restanoT} ${restanoT === 1 ? 'voce' : 'voci'} da fare. Mettilo in programma qui sotto: nel giorno, nella settimana o nel mese sarà una riga sola, che si completa quando fai le sue voci (meglio nella Settimana o nel Mese).`) : pj && programmabile ? 'Senza giorno: sta solo nel progetto. Mettila in programma qui sotto e la trovi anche in MB Plan.' : '') : sposta ? esc(sposta.quando()) : c.riportata ? `Da fare dal ${esc(dataLunga(c.riportata))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
       <label style="margin-top:10px">${ic('scala-giorno')} Giorno <small>facoltativo</small></label>
       ${c.scala === 'mese' ? '<input type="date" id="fc-sc-giorno">' : '<div class="ag-scelte" id="fc-sc-giorni"></div>'}
       <div class="vn-aiuto" id="fc-sc-aiuto"></div></div>` : ''}
     ${pj && !opz.dallaScheda && AG.vista !== 'progetto' ? `<button class="link" id="fc-apri-progetto">${ic(pj.icona || 'obiettivi')} Apri nel progetto «${esc(pj.titolo)}» ›</button>` : ''}
-    ${programmabile && (!c.giorno || (c.scala || 'giorno') === 'giorno') ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
+    ${programmabile && !eTitolo && (!c.giorno || (c.scala || 'giorno') === 'giorno') ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(c.riportata ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
@@ -926,7 +940,7 @@ function foglioCosa(c, oggi, opz = {}) {
     const dopo = { testo };
     if (pj && livelloScelto !== (c.livello || 0)) dopo.livello = tipoScelto === 'titolo' ? 0 : livelloScelto;
     // tra ☐, numerata e puntini il programma resta (24/09); un titolo non va in programma (il cantiere intero è il passo 3)
-    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'titolo' ? { livello: 0, fatto_il: null, giorno: null, ora: null, durata: null, scala: 'giorno' } : {});
+    if (pj && tipoScelto !== (c.tipo || 'cosa')) Object.assign(dopo, { tipo: tipoScelto }, tipoScelto === 'titolo' ? { livello: 0, fatto_il: null, giorno: null, ora: null, durata: null, scala: 'giorno', contatto_id: null } : {});
     if (dopo.tipo === 'titolo') return cambia(dopo);
     if (sposta) Object.assign(dopo, sposta.giorno ? { scala: 'giorno', giorno: sposta.giorno } : { giorno: sposta.inizio });
     if (campoOra && campoOra.value) {
@@ -961,6 +975,8 @@ function foglioCosa(c, oggi, opz = {}) {
   else if (domani) domani.onclick = () => cambia({ giorno: c.scala === 'mese' ? A.meseAccanto(c.riportata ? oggi.slice(0, 8) + '01' : c.giorno, 1)
     : c.scala === 'settimana' ? A.spostaGiorno(c.riportata ? A.inizioScala('settimana', oggi) : c.giorno, 7) : A.spostaGiorno(c.riportata ? oggi : c.giorno, 1) });
   velo.querySelector('#fc-elimina').onclick = async () => {
+    // un titolo con voci si elimina solo dopo la conferma (passo 3: ora si apre anche dal giorno, dove è facile sbagliare)
+    if (eTitolo && passiT.length && !await chiediConferma(`Eliminare il titolo «${c.testo}»?`, `Le sue ${passiT.length} ${passiT.length === 1 ? 'voce non si cancella' : 'voci non si cancellano'}: ${passiT.length === 1 ? 'resta' : 'restano'} nel progetto.`, 'Elimina il titolo', true)) return;
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').delete().eq('id', c.id));
     if (error) return;
     AG.cose = AG.cose.filter(x => x.id !== c.id);
@@ -1113,7 +1129,7 @@ async function caricaIntervallo(da, a) {
   // le cose da fare aperte dell'intervallo, per il cerchietto verde dei mesi piccoli (23/09)
   AG.coseLunghe = [];
   if (!vediTutti()) {
-    const { data, error } = await dbq('cose da fare del periodo', supa.from('cose_da_fare').select('id, giorno, scala, fatto_il, modello_id').eq('user_id', visto().id).is('fatto_il', null).is('modello_id', null).gte('giorno', da).lt('giorno', a));
+    const { data, error } = await dbq('cose da fare del periodo', supa.from('cose_da_fare').select('id, giorno, scala, fatto_il, modello_id').eq('user_id', visto().id).is('fatto_il', null).is('modello_id', null).is('progetto_id', null).gte('giorno', da).lt('giorno', a));   // le righe dei progetti sono già tutte in AG.cose (passo 3: un cantiere finito ha fatto_il vuoto)
     if (!error && data) AG.coseLunghe = data;
   }
 }
@@ -1648,8 +1664,8 @@ function largo() { return typeof window !== 'undefined' && !!window.matchMedia &
 // Come nel foglio: una cosa non fatta di un giorno passato sta su oggi. `lista` = AG.cose (+ AG.coseLunghe per Periodo/Anno).
 function giorniConCose(lista, oggi) {
   const si = new Set();
-  for (const c of lista || []) {
-    if (c.fatto_il || c.modello_id || (c.scala && c.scala !== 'giorno')) continue;
+  for (const c of MB21Agenda.conTitoliFatti(lista || [])) {   // un cantiere finito conta come fatto (passo 3)
+    if (c.fatto_il || c.modello_id || (c.scala && c.scala !== 'giorno') || !c.giorno) continue;
     si.add(c.giorno < oggi ? oggi : c.giorno);
   }
   return si;

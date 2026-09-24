@@ -468,6 +468,34 @@ prova('Progetti in programma (24/09): nel giorno le righe dei progetti dopo le a
   assert.equal(A.postoNelProgetto(vista, 'nessuna'), null);
 });
 
+prova('Cantiere in programma (24/09, passo 3): una riga sola, fatto quando sono fatti tutti i passi, nel giorno dell\'ultima spunta', () => {
+  const r = (id, tipo, ordine, extra) => ({ id, tipo, ordine, progetto_id: 'pj', testo: id, fatto_il: null, giorno: null, scala: 'giorno', ...extra });
+  const lista = [
+    r('T', 'titolo', 1, { giorno: '2026-09-21' }), r('a', 'numero', 2, { fatto_il: '2026-09-23T10:00:00Z' }), r('b', 'numero', 3),
+    r('U', 'titolo', 4), r('c', 'numero', 5),                                  // titolo non in programma: non compare mai
+    r('V', 'titolo', 6, { giorno: '2026-09-22' }),                             // in programma ma senza passi: resta aperto
+    { id: 'm', testo: 'a mano', giorno: '2026-09-24', ordine: 9, fatto_il: null },
+  ];
+  // aperto (1 di 2): riportato a oggi come le altre cose
+  const oggi = A.coseDelGiorno(lista, '2026-09-24', '2026-09-24');
+  assert.deepEqual(oggi.map(c => c.id), ['m', 'T', 'V']);
+  const t = oggi.find(c => c.id === 'T');
+  assert.deepEqual([t.passi, t.fatti, t.fatto_il, t.riportata], [2, 1, null, '2026-09-21']);
+  assert.equal(A.coseDelGiorno(lista, '2026-09-21', '2026-09-24').length, 0);   // nel giorno vecchio non c'è più
+  // tutti i passi fatti: fatto, nel giorno (di Roma) dell'ultima spunta, anche se era in programma per un altro giorno
+  const finito = lista.map(c => c.id === 'b' ? { ...c, fatto_il: '2026-09-23T22:30:00Z' } : c);   // 00:30 del 24 a Roma
+  const f = A.conTitoliFatti(finito).find(c => c.id === 'T');
+  assert.deepEqual([f.fatto_il, f.giorno, f.passi, f.fatti], ['2026-09-23T22:30:00Z', '2026-09-24', 2, 2]);
+  assert.deepEqual(A.coseDelGiorno(finito, '2026-09-24', '2026-09-24').map(c => [c.id, !!c.fatto_il]), [['m', false], ['V', false], ['T', true]]);
+  // nella settimana: finito, va nella settimana dell'ultima spunta (il lunedì)
+  const sett = finito.map(c => c.id === 'T' ? { ...c, scala: 'settimana', giorno: '2026-09-14' } : c);
+  assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => [c.id, !!c.fatto_il]), [['T', true]]);
+  assert.equal(A.coseDellaScala(sett, 'settimana', '2026-09-14', '2026-09-21').length, 0);
+  // senza titoli in programma la lista resta la stessa (niente copie)
+  const senza = lista.filter(c => c.id !== 'T' && c.id !== 'V');
+  assert.equal(A.conTitoliFatti(senza), senza);
+});
+
 prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
   const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
   const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];
