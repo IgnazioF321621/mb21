@@ -171,6 +171,8 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 ## 41. L'AGENDA COME NOTEPLAN: LA GIORNATA IN UN FOGLIO SOLO → MB PLAN (aperto il 22/09, chiuso il 23/09)
 **✅ Chiuso da Ignazio il 23/09 sera («chiudi il cantiere 41»).** MB Plan con le scale Giorno · Settimana · Mese · Periodo WES · Anno, modelli personali, cose da fare (anche collegate a una persona), Timeline, Progetti; il Check = modulo Core del giorno; il **Modulo Core** del mese già compilato, con **PDF** A4 su due colonne da condividere (pubblicato 19:38, poi tutte le righe e «prossimo» BBS/WES 20:34, OPEN «non c'era» 21:02); giro sull'iPhone fatto. **Fuori dal cantiere:** l'accesso del leader del gruppo, rimandato (in «21. Da fare più avanti»).
+
+**Dopo la chiusura (24/09, Ignazio: «le cose già smarcate vadano in fondo, all'interno del proprio titolo, e quelle da fare vengano rinumerate»; «cantiere in fondo»):** nei Progetti le fatte vanno in fondo al loro titolo e i titoli con tutti i passi fatti in fondo al progetto; le cose da fare sono numerate da 1. Cambia la scelta del 23/09 («le fatte restano al loro posto»). Versione 2026.09.24 · 12:25.
 *Ignazio 22/09: «segna come prossimo cantiere di modificare l'agenda e renderla simile a NotePlan».* Da fare **in una sessione dedicata**, come il 38 e il 39.
 
 **Da cosa nasce.** Con il cantiere 37 l'Agenda è diventata un calendario (Giorno a orario · Settimana · Elenco) e con il 38 si specchia nel calendario del telefono. NotePlan però non è un calendario: è un modo di lavorare. La differenza, in una frase: **un calendario ti dice quando; NotePlan ti dice cosa fai oggi**, mettendo nello stesso foglio gli appuntamenti, le cose da fare e gli appunti del giorno.

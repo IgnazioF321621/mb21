@@ -191,6 +191,35 @@
       return t === 'punto' ? PUNTI[L % PUNTI.length] : '';
     });
   }
+  // Nei progetti le fatte vanno in fondo (Ignazio 24/09, al posto del «restano al loro posto» del 23/09): dentro ogni titolo
+  // prima le righe da fare, nel loro ordine, poi le fatte; una riga si porta dietro le più rientrate che la seguono e va in
+  // fondo solo se sono fatte tutte (dentro, la stessa regola). Un titolo con tutti i passi fatti va in fondo al progetto con
+  // i suoi passi; un titolo senza passi resta dov'è; le righe prima del primo titolo restano in cima.
+  // Riceve le righe nell'ordine salvato, le rende nell'ordine in cui si vedono (i numeri 1. 2. 3. li fa poi numeraRighe).
+  function fatteInFondo(righe) {
+    const fatta = r => !!r.fatto_il;
+    const inFondo = lista => {
+      const gruppi = [];
+      for (let k = 0; k < lista.length;) {
+        const liv = lista[k].livello || 0;
+        let m = k + 1;
+        while (m < lista.length && (lista[m].livello || 0) > liv) m++;
+        const dentro = inFondo(lista.slice(k + 1, m));
+        gruppi.push({ righe: [lista[k], ...dentro], fatto: fatta(lista[k]) && dentro.every(fatta) });
+        k = m;
+      }
+      return [...gruppi.filter(g => !g.fatto), ...gruppi.filter(g => g.fatto)].flatMap(g => g.righe);
+    };
+    const pezzi = [{ titolo: null, passi: [] }];
+    for (const r of righe || []) {
+      if (r.tipo === 'titolo') pezzi.push({ titolo: r, passi: [] });
+      else pezzi[pezzi.length - 1].passi.push(r);
+    }
+    const finito = p => p.passi.length > 0 && p.passi.every(fatta);
+    const inFila = p => [...(p.titolo ? [p.titolo] : []), ...inFondo(p.passi)];
+    const [cima, ...titoli] = pezzi;
+    return [...inFila(cima), ...titoli.filter(p => !finito(p)).flatMap(inFila), ...titoli.filter(finito).flatMap(inFila)];
+  }
   // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai più di 200 lettere, mai vuoto (→ null)
   function testoCosa(s) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, 200); return t || null; }
 
@@ -636,7 +665,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, numeraRighe, fatteInFondo, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
