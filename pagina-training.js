@@ -88,7 +88,7 @@ function trnScala(sc) {
     if (!l.aperto) {
       const sopraQui = sc.qui && l.numero === sc.qui.numero + 1;
       return `<div class="trn-gradino chiuso"><span class="trn-lucchetto">${ic('lucchetto')}</span><div><b>${esc(l.nome)}</b>
-        <small>${sopraQui ? `Si apre quando superi i test di ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
+        <small>${sopraQui ? `Si apre quando superi i test del livello ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
     }
     const nodi = [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), l === sc.qui && p.id === sc.percorso)).join('');
     return `${nodi}<div class="trn-gradino ${l.superato ? 'fatto' : 'qui'}">${l.superato ? ic('fatto') : ''}<div><b>${esc(l.nome)}</b>
@@ -101,7 +101,7 @@ function trnNodo(p, i, qui) {
   if (!p.pronto) return `<div class="trn-nodo presto" style="--x:${x}px"><span class="trn-tondo-n">${ic(p.icona, 26)}</span>
     <div><b>${esc(p.titolo)}</b><small>In arrivo</small></div></div>`;
   if (!p.aperto) return `<div class="trn-nodo chiuso" style="--x:${x}px"><span class="trn-tondo-n">${ic('lucchetto', 26)}</span>
-    <div><b>${esc(p.titolo)}</b><small>Si apre quando hai visto tutte le carte di ${esc(p.prima)}</small></div></div>`;
+    <div><b>${esc(p.titolo)}</b><small>Si apre quando hai visto tutte le carte di «${esc(p.prima)}»</small></div></div>`;
   const s = p.stato, stato = s.superato ? 'fatto' : qui ? 'qui' : 'aperto';
   const sotto = s.superato ? `${trnStelle(s.stelle)} test superato`
     : s.testAperto ? 'Le sai: il test è aperto'
