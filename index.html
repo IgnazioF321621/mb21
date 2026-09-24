@@ -337,8 +337,10 @@
   .mio-elenco { margin-top: 6px; }
   .ag-blocco.tracce small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
   /* Righe «Contatti del giorno» e «Da catalogare» che si aprono e si chiudono (Ignazio 24/09) */
-  .ag-blocco.sezione { margin: 22px 0 8px; background: var(--sfondo); box-shadow: none; border: 1px solid var(--bordo); font-size: 16px; }
-  .ag-blocco.sezione > span:first-child svg.ic { width: 26px; height: 26px; padding: 0; background: none; }   /* icona piccola, non il tondo pieno: il tondo grande è dei nomi (Ignazio 24/09) */
+  .ag-blocco.sezione { margin: 22px 0 8px; background: var(--az-contatto); color: var(--accento-su); box-shadow: none; border: 0; font-size: 16px; }
+  .ag-blocco.sezione > span:first-child svg.ic { width: 26px; height: 26px; padding: 0; background: none; color: var(--accento-su); }
+  .ag-blocco.sezione .sez-testo small, .ag-blocco.sezione > span:last-child { color: var(--accento-su); opacity: .85; }
+  .ag-blocco.sezione.fatta { background: var(--ok); }
   .ag-blocco.sezione small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
   .ag-blocco.sezione .sez-testo { min-width: 0; }
   .ag-blocco.sezione .sez-testo b { display: block; font-weight: 600; }
