@@ -32,7 +32,7 @@ const B = {
 };
 const nomi = { io: 'Isabella', chi: 'Anna' };
 
-prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi; PM e Follow Up dopo il risultato; Consulenza e Appuntamento', () => {
+prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con i loro messaggi; PM e Follow Up dopo il risultato (e Rimandato, No Show); Consulenza e Appuntamento', () => {
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Prospect', 'PM Fissato'), 'telefonata');
   assert.equal(C.situazione('Contatto', undefined, undefined, 'Richiamare'), 'telefonata');          // dalla coda, Referral o senza categoria
   assert.equal(C.situazione('Contatto', 'Telefonata', 'Ex Partner/Cliente', 'No Interesse'), 'telefonata');
@@ -43,7 +43,10 @@ prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con 
   // Piano Marketing e Follow Up: dopo il risultato del «Com'è andata?», per ogni categoria; non dopo «Fatto» (Presentazione), Rimandato, No Show
   for (const e of ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine']) assert.equal(C.situazione('Piano Marketing', 'PM 1a1', 'Prospect', e), 'piano_marketing');
   for (const e of ['Iscrizione', 'Ulteriore Follow Up', 'Prodotti', 'No BuonFine']) assert.equal(C.situazione('Follow Up', null, 'Partner', e), 'follow_up');
-  for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Presentazione', 'Fatto', 'Rimandato', 'No Show', null]) assert.equal(C.situazione(t, null, 'Prospect', e), null);
+  for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Presentazione', 'Fatto', null]) assert.equal(C.situazione(t, null, 'Prospect', e), null);
+  // Rimandato e No Show di PM e Follow Up: una chat sola, per ogni categoria; negli altri tipi non esistono
+  for (const t of ['Piano Marketing', 'Follow Up']) for (const e of ['Rimandato', 'No Show']) assert.equal(C.situazione(t, 'PM 1a1', 'Partner', e), 'non_avvenuto');
+  for (const t of ['Appuntamento', 'Consulenza PRD']) assert.equal(C.situazione(t, null, 'Partner', 'No Show'), null);
   assert.equal(C.situazione('Follow Up', null, 'Prospect', 'Dare Seguito'), null);   // «Dare Seguito» è un risultato del PM
   // Appuntamento con un Partner: dopo un esito del suo tipo; gli esiti vecchi di Glide niente
   for (const [m, e] of [['Avvio', 'Lista nomi'], ['Avvio', 'OrdineStart'], ['Counseling', 'c/Upline'], ['Lista/Contatti', 'Telefonate'], ['Meeting/Evento', 'Incontro N21'], ['Ordine', 'VP Personali']])
@@ -56,7 +59,7 @@ prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con 
     assert.equal(C.situazione('Consulenza PRD', m, cat, e), 'consulenza');
   for (const e of ['Demo', 'Promo/Sconto', null]) assert.equal(C.situazione('Consulenza PRD', null, 'Cliente', e), null);   // gli esiti vecchi di Glide
   // stesso montatore per tutte; una situazione senza montatore: niente chat
-  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza', 'appuntamento_partner']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
+  for (const sit of ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza', 'appuntamento_partner', 'non_avvenuto']) assert.deepEqual(C.monta(sit, B, 'PM Fissato', nomi, 0), C.telefonata(B, 'PM Fissato', nomi, 0));
   assert.equal(C.monta('piano', B, 'PM Fissato', nomi, 0), null);
   // i partner salvano «freni» invece di «obiezioni»
   const Bp = { ...B, domanda_obiezione: { ...B.domanda_obiezione, salva: 'freni', nessuna: 'Niente' } };

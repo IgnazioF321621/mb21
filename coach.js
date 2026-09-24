@@ -2,7 +2,7 @@
 // I messaggi NON stanno in questo file, perché il progetto su GitHub è pubblico: stanno nell'archivio privato, la tabella
 // coach_batterie, una «batteria» per situazione (le telefonate: «telefonata», «telefonata_partner», «telefonata_cliente»; dopo il risultato di un
 // Piano Marketing o di un Follow Up: «piano_marketing», «follow_up»; dopo una Consulenza prodotti: «consulenza»; dopo un Appuntamento con un
-// Partner: «appuntamento_partner»; si scrivono e si caricano dalla cartella privata
+// Partner: «appuntamento_partner»; dopo un PM o un Follow Up Rimandato o No Show: «non_avvenuto»; si scrivono e si caricano dalla cartella privata
 // ~/mb21-import/training). Qui c'è solo la logica: quale batteria vale per un esito, come si monta la chat da una batteria
 // (l'imbuto), cosa si salva, e il motore che la recita (puntini, fumetti, risposte da toccare).
 // Lo usano l'app (pagina-coach.js → chiediCoach) e la pagina privata di prova, così la chat è la stessa.
@@ -34,6 +34,8 @@
     if (tipo === 'Contatto' && (!modalita || modalita === 'Telefonata') && esito && !SENZA_PAROLE.includes(esito))
       return TELEFONATA_DI[categoria] || 'telefonata';
     if (DOPO_IL_RISULTATO[tipo] && A.RISULTATI[tipo].esiti.includes(esito)) return DOPO_IL_RISULTATO[tipo];
+    // Rimandato e No Show (24/09): il «È avvenuto?» di PM e Follow Up quando la risposta non è «Fatto»; una chat sola per tutti e due
+    if (DOPO_IL_RISULTATO[tipo] && esito !== 'Fatto' && A.AVVENUTO.includes(esito)) return 'non_avvenuto';
     // Consulenza prodotti (24/09): dopo Vendita o No Vendita (le fasi della Consulenza PRD, le stesse per ogni categoria)
     if (tipo === 'Consulenza PRD' && A.fasiPer('Prospect', tipo).includes(esito)) return 'consulenza';
     // Appuntamento con un Partner (24/09): dopo un esito del suo tipo (Avvio, Counseling, Lista/Contatti, Meeting/Evento, Ordine);
@@ -82,16 +84,18 @@
     ], nomi);
   }
 
-  // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up, Consulenza e Appuntamento:
+  // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up, Consulenza, Appuntamento,
+  // Rimandato e No Show:
   // lo stesso montatore, ognuna con la sua batteria.
   const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata,
-    consulenza: telefonata, appuntamento_partner: telefonata };
+    consulenza: telefonata, appuntamento_partner: telefonata, non_avvenuto: telefonata };
   const monta = (sit, B, esito, nomi, n) => (MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
 
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
   // { chiave: 'obiezioni' o 'freni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima' · le domande di prima ('colpito', 'perche')
   //   · le domande dell'esito ('lavoro', 'motivo', 'inaugurazione', 'quando', 'decisione', 'interesse'; dopo un Appuntamento con un Partner
-  //   'lista', 'obiettivo', 'ricorrente', 'prove', 'appuntamenti', 'presenza', 'obiettivi', 'counseling', 'biglietto', 'vp'),
+  //   'lista', 'obiettivo', 'ricorrente', 'prove', 'appuntamenti', 'presenza', 'obiettivi', 'counseling', 'biglietto', 'vp'; dopo Rimandato e
+  //   No Show 'motivo'),
   //   domanda, risposta, obiezione? }.
   // null se non c'è nessuna risposta (chat chiusa subito).
   function riflessioneDa(risposte) {
