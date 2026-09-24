@@ -80,17 +80,17 @@ function disegnaTraining() {
 // ── Impara: la scala che sale ────────────────────────────────
 
 // Dall'alto in basso: i livelli chiusi (col lucchetto e i loro temi), poi i livelli aperti con i loro percorsi, il primo in basso
-// accanto alla base del livello. Quello da fare adesso ha «Sei qui».
+// accanto alla base del livello. Dentro un livello i percorsi si aprono uno dopo l'altro (MB21Training.scala); quello da fare adesso
+// ha «Sei qui».
 function trnScala(sc) {
   const livelli = [...sc.livelli].reverse();
-  const prossimo = sc.qui && sc.qui.percorsi.find(p => p.pronto && !p.stato.superato);
   return `<div class="trn-scala">${livelli.map(l => {
     if (!l.aperto) {
       const sopraQui = sc.qui && l.numero === sc.qui.numero + 1;
       return `<div class="trn-gradino chiuso"><span class="trn-lucchetto">${ic('lucchetto')}</span><div><b>${esc(l.nome)}</b>
         <small>${sopraQui ? `Si apre quando superi i test di ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
     }
-    const nodi = [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), p === prossimo)).join('');
+    const nodi = [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), l === sc.qui && p.id === sc.percorso)).join('');
     return `${nodi}<div class="trn-gradino ${l.superato ? 'fatto' : 'qui'}">${l.superato ? ic('fatto') : ''}<div><b>${esc(l.nome)}</b>
       <small>${l.superato ? 'Livello superato' : `Livello ${l.numero} di ${sc.livelli.length} · ${esc(l.sotto)}`}</small></div></div>`;
   }).join('')}</div>`;
@@ -100,9 +100,12 @@ function trnNodo(p, i, qui) {
   const x = [0, 56, 112, 56][i % 4];
   if (!p.pronto) return `<div class="trn-nodo presto" style="--x:${x}px"><span class="trn-tondo-n">${ic(p.icona, 26)}</span>
     <div><b>${esc(p.titolo)}</b><small>In arrivo</small></div></div>`;
+  if (!p.aperto) return `<div class="trn-nodo chiuso" style="--x:${x}px"><span class="trn-tondo-n">${ic('lucchetto', 26)}</span>
+    <div><b>${esc(p.titolo)}</b><small>Si apre quando hai visto tutte le carte di ${esc(p.prima)}</small></div></div>`;
   const s = p.stato, stato = s.superato ? 'fatto' : qui ? 'qui' : 'aperto';
   const sotto = s.superato ? `${trnStelle(s.stelle)} test superato`
-    : s.testAperto ? 'Hai visto tutte le carte: il test è aperto'
+    : s.testAperto ? 'Le sai: il test è aperto'
+    : s.tutteViste ? `Le hai viste tutte: ne sai ${s.sapute} di ${s.totale}`
     : s.viste ? `${s.viste} di ${s.totale} carte` : `${s.totale} carte, poi il test`;
   return `<button class="trn-nodo ${stato}" data-percorso="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic(s.superato ? 'fatto' : p.icona, 26)}</span>
     <div><b>${esc(p.titolo)}${qui ? '<span class="trn-qui">Sei qui</span>' : ''}</b><small>${sotto}</small></div></button>`;
@@ -135,7 +138,8 @@ function trnApriPercorso(id) {
       ${suo.length ? `<button class="trn-secondo" id="trn-ripassa-qui">Ripassa ${suo.length} ${suo.length === 1 ? 'carta' : 'carte'} di oggi</button>` : ''}
       <div class="trn-test ${s.testAperto ? '' : 'chiuso'}">
         <div class="trn-test-riga">${ic(s.testAperto ? 'obiettivi' : 'lucchetto', 22)}<div><b>Test finale · ${MB21Training.TEST} domande</b>
-          <small>${s.testAperto ? 'Senza aiuti, anche a trabocchetto: dal 70% il percorso è superato.' : `Si apre quando avrai visto tutte le ${s.totale} carte: ne mancano ${s.nuove}.`}</small></div></div>
+          <small>${s.testAperto ? 'Senza aiuti, anche a trabocchetto: dal 70% il percorso è superato.'
+            : `Si apre quando ne sai almeno ${s.servono} su ${s.totale}: ora ne sai ${s.sapute}. Una carta la sai quando la azzecchi tre volte di fila, in giorni diversi: oggi, nel ripasso di domani e in quello di 3 giorni dopo.`}</small></div></div>
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
@@ -244,7 +248,7 @@ function trnSessione(carte, modo, titolo) {
       }
       b.classList.add(r.giusta ? 'giusta' : 'sbagliata');
       if (!r.giusta) corpo.querySelectorAll('[data-r]').forEach(x => { if (d.risposte[Number(x.dataset.r)].giusta) x.classList.add('giusta'); });
-      corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : 'Non proprio'}</b>
+      corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : c.trabocchetto ? 'Era un trabocchetto!' : 'Non proprio'}</b>
         ${esc(c.perche || '')}${trnFonte(c)}</div>`;
       trnCollegaFonte(corpo);
       risposto(r.giusta, { scelta: r.testo });
@@ -276,7 +280,7 @@ function trnSessione(carte, modo, titolo) {
           ${prima ? `<br>La volta scorsa ${prima.giuste}: ${trnDiff(giuste - prima.giuste)}.` : ''}
           ${st < 3 ? '<br>Le sbagliate tornano nel ripasso di domani.' : ''}</p>${filaHtml}</div>
         <h4 class="trn-rif-t">Le tue risposte</h4>
-        ${fatte.map(f => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div><b>${esc(f.domanda ? f.domanda.testo : '')}</b>
+        ${fatte.map(f => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div>${!f.giusta && f.carta.trabocchetto ? '<span class="trn-trab">Era un trabocchetto</span>' : ''}<b>${esc(f.domanda ? f.domanda.testo : '')}</b>
           ${f.giusta ? `<small>${esc(f.scelta)}</small>` : `<small class="tua">La tua: ${esc(f.scelta)}</small><small>Giusta: ${esc(f.domanda.risposte.find(r => r.giusta).testo)}</small>`}
           <small class="perche">${esc(f.carta.perche || '')}</small></div></div>`).join('')}`;
       return;

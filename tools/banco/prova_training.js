@@ -61,7 +61,7 @@ const scena = (id, piu = {}) => ({ id, tipo: 'scena', tema: 'Telefonata', versio
 const vf = (id, piu = {}) => ({ id, tipo: 'vf', tema: 'Obiezioni', frase: 'Frase ' + id, vero: false, perche: 'Perché no.', ...piu });
 const mazzo = { situazione: 'carte_contattare', percorso: { id: 'contattare' }, carte: [
   scena('a'), scena('b', { obiezione: 'Non ho tempo' }), vf('c', { trabocchetto: true }), { id: 'd', tipo: 'frase', tema: 'Lista', davanti: 'Quanti nomi?', dietro: '200' },
-  scena('e'), scena('f'), vf('g', { trabocchetto: true }), scena('h'), scena('i'), scena('l'), scena('m', { obiezione: 'È vendita?', situazioni: ['telefonata', 'piano_marketing'] }), vf('n'),
+  scena('e'), scena('f'), vf('g', { trabocchetto: true }), scena('h'), scena('i'), scena('l'), scena('m', { obiezione: 'È vendita?', situazioni: ['telefonata', 'piano_marketing'] }), vf('n', { trabocchetto: true }),
 ] };
 const OGGI = '2026-09-24';
 
@@ -122,16 +122,23 @@ prova('Stelle: 10 su 10 tre, dall\'80% due, dal 70% una; sotto, nessuna', () => 
   assert.equal(T.stelle(0, 0), 0);
 });
 
-prova('Stato di un percorso: viste, sapute (dalla terza scatola), da ripassare, test aperto a carte tutte viste, stelle migliori e ultimi due test', () => {
+prova('Stato di un percorso: viste, sapute (dalla terza scatola), da ripassare, test aperto quando le sai 8 su 10, stelle migliori e ultimi due test', () => {
   const stati = { a: { scatola: 3, prossima: '2026-09-30' }, b: { scatola: 1, prossima: '2026-09-24' } };
   const test = [{ percorso: 'contattare', giuste: 6, totale: 10, fatto_il: '2026-09-20T10:00:00Z' }, { percorso: 'contattare', giuste: 9, totale: 10, fatto_il: '2026-09-21T10:00:00Z' },
     { percorso: 'contattare', giuste: 7, totale: 10, fatto_il: '2026-09-23T10:00:00Z' }, { percorso: 'altro', giuste: 10, totale: 10, fatto_il: '2026-09-23T11:00:00Z' }];
   const s = T.statoPercorso(mazzo, stati, test, OGGI);
   assert.deepEqual([s.totale, s.viste, s.nuove, s.sapute, s.daRipassare, s.testAperto, s.stelle, s.superato], [12, 2, 10, 1, 1, false, 2, true]);
   assert.equal(s.ultimo.giuste, 7); assert.equal(s.penultimo.giuste, 9);
+  assert.deepEqual([s.tutteViste, s.servono, s.perIlTest], [false, 10, 9]);   // 12 carte: il test vuole che ne sai 10
+  // viste tutte ma appena imparate (prima scatola): il test non si apre ancora
   const tutte = Object.fromEntries(mazzo.carte.map(c => [c.id, { scatola: 1, prossima: '2026-09-25' }]));
-  assert.equal(T.statoPercorso(mazzo, tutte, [], OGGI).testAperto, true);
-  assert.equal(T.statoPercorso(mazzo, tutte, [], OGGI).superato, false);
+  const t1 = T.statoPercorso(mazzo, tutte, [], OGGI);
+  assert.deepEqual([t1.tutteViste, t1.testAperto, t1.perIlTest, t1.superato], [true, false, 10, false]);
+  // 9 sapute su 12 non bastano, 10 sì
+  const nove = { ...tutte }; mazzo.carte.slice(0, 9).forEach(c => { nove[c.id] = { scatola: 3, prossima: '2026-10-01' }; });
+  assert.deepEqual([T.statoPercorso(mazzo, nove, [], OGGI).testAperto, T.statoPercorso(mazzo, nove, [], OGGI).perIlTest], [false, 1]);
+  const dieci = { ...nove, [mazzo.carte[9].id]: { scatola: 4, prossima: '2026-10-08' } };
+  assert.equal(T.statoPercorso(mazzo, dieci, [], OGGI).testAperto, true);
 });
 
 prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i percorsi del livello sotto non sono superati', () => {
@@ -153,7 +160,32 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
   assert.equal(s3.livelli[0].superato, true);
 });
 
-prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno due trabocchetti, ogni volta in ordine diverso', () => {
+prova('Dentro un livello i percorsi si aprono uno dopo l\'altro: il successivo quando hai visto tutte le carte di quello prima', () => {
+  const primi = { ...mazzo, percorso: { id: 'primi_passi' }, carte: mazzo.carte.map(c => ({ ...c, id: 'p-' + c.id })) };
+  const p = s => s.livelli[0].percorsi.map(x => [x.id, x.pronto, x.aperto]);
+  let s = T.scala([mazzo, primi], {}, [], OGGI);
+  assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['sistema', false, false], ['principi', false, false]]);
+  assert.equal(s.livelli[0].percorsi[1].prima, 'Contattare');
+  assert.equal(s.percorso, 'contattare');
+  // 11 carte di Contattare viste su 12: ancora chiuso
+  const quasi = Object.fromEntries(mazzo.carte.slice(0, 11).map(c => [c.id, { scatola: 1, prossima: '2026-09-25' }]));
+  assert.equal(T.scala([mazzo, primi], quasi, [], OGGI).livelli[0].percorsi[1].aperto, false);
+  // tutte viste: si apre «I primi passi» e «Sei qui» passa lì (ha le carte nuove)
+  const viste = { ...quasi, [mazzo.carte[11].id]: { scatola: 1, prossima: '2026-09-25' } };
+  s = T.scala([mazzo, primi], viste, [], OGGI);
+  assert.deepEqual(p(s).slice(0, 2), [['contattare', true, true], ['primi_passi', true, true]]);
+  assert.equal(s.percorso, 'primi_passi');
+  // già cominciato: una carta aggiunta dopo a Contattare non lo richiude
+  const conNuova = { ...mazzo, carte: [...mazzo.carte, scena('z')] };
+  const cominciato = { ...viste, 'p-a': { scatola: 1, prossima: '2026-09-25' } };
+  assert.equal(T.scala([conNuova, primi], cominciato, [], OGGI).livelli[0].percorsi[1].aperto, true);
+  // tutto visto nei percorsi aperti: «Sei qui» torna sul primo col test da fare
+  const tutto = { ...viste, ...Object.fromEntries(primi.carte.map(c => [c.id, { scatola: 1, prossima: '2026-09-25' }])) };
+  assert.equal(T.scala([mazzo, primi], tutto, [], OGGI).percorso, 'contattare');
+  assert.equal(T.scala([mazzo, primi], tutto, [{ percorso: 'contattare', giuste: 9, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }], OGGI).percorso, 'primi_passi');
+});
+
+prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno tre trabocchetti, ogni volta in ordine diverso', () => {
   let n = 0; const rnd = () => ((n = (n * 9301 + 49297) % 233280) / 233280);
   const stati = Object.fromEntries(mazzo.carte.map(c => [c.id, { scatola: 5, sbagliate: 0 }]));
   stati.h = { scatola: 1, sbagliate: 3 }; stati.i = { scatola: 1, sbagliate: 2 };
@@ -162,10 +194,10 @@ prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno due tra
   assert.ok(t.every(c => c.tipo !== 'frase'));
   assert.equal(new Set(t.map(c => c.id)).size, 10);
   assert.ok(t.some(c => c.id === 'h') && t.some(c => c.id === 'i'));
-  assert.ok(t.filter(c => c.trabocchetto).length >= 2);
+  assert.ok(t.filter(c => c.trabocchetto).length >= 3);
   // con poche carte deboli e i trabocchetti in fondo, i trabocchetti entrano lo stesso
-  const pochi = T.pescaTest(mazzo, { ...stati, c: { scatola: 5 }, g: { scatola: 5 } }, 4, rnd);
-  assert.equal(pochi.filter(c => c.trabocchetto).length, 2);
+  const pochi = T.pescaTest(mazzo, { ...stati, c: { scatola: 5 }, g: { scatola: 5 }, n: { scatola: 5 } }, 4, rnd);
+  assert.equal(pochi.filter(c => c.trabocchetto).length, 3);
 });
 
 prova('Una domanda: scena con le risposte in ordine sparso (la prima del mazzo è la giusta), vero o falso, frase con l\'invito a rispondere prima di girarla', () => {

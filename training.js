@@ -35,6 +35,8 @@
   const LEZIONE = 6;          // carte nuove in una lezione di Impara
   const RIPASSO = 15;         // carte in un ripasso: circa 5 minuti
   const TEST = 10;            // domande del test finale
+  const TRABOCCHETTI = 3;     // nel test almeno 3 trabocchetti, se ci sono (Ignazio 24/09: «la voglia di imparare e la rabbia se ancora non so le cose»)
+  const PER_IL_TEST = 0.8;    // il test si apre quando le sai almeno 8 su 10 (Ignazio 24/09)
   const piuGiorni = (giorno, n) => { const d = new Date(giorno + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   const quando = t => (t ? Date.parse(t) || 0 : 0);
 
@@ -100,43 +102,51 @@
     return r >= 1 ? 3 : r >= 0.8 ? 2 : r >= 0.7 ? 1 : 0;
   }
 
-  // Un percorso a colpo d'occhio: carte viste, sapute (dalla terza scatola), da ripassare, il test (aperto quando le hai viste tutte),
-  // le stelle migliori, l'ultimo e il penultimo test (per «la volta scorsa 6: +2»). `test`: [{ percorso, giuste, totale, fatto_il }].
+  // Un percorso a colpo d'occhio: carte viste, sapute (dalla terza scatola: giuste tre volte di fila, in giorni diversi), da ripassare,
+  // il test (Ignazio 24/09: si apre quando le sai, almeno 8 su 10, non appena viste; `perIlTest` = quante ne mancano), le stelle migliori,
+  // l'ultimo e il penultimo test (per «la volta scorsa 6: +2»). `test`: [{ percorso, giuste, totale, fatto_il }].
   function statoPercorso(mazzo, stati, test, oggi) {
     const st = stati || {}, carte = mazzo ? mazzo.carte : [], viste = carte.filter(c => st[c.id]);
     const miei = (test || []).filter(t => mazzo && t.percorso === mazzo.percorso.id).sort((a, b) => quando(a.fatto_il) - quando(b.fatto_il));
     const migliori = miei.reduce((n, t) => Math.max(n, stelle(t.giuste, t.totale)), 0);
+    const sapute = viste.filter(c => st[c.id].scatola >= 3).length, servono = Math.ceil(carte.length * PER_IL_TEST);
     return {
-      totale: carte.length, viste: viste.length, nuove: carte.length - viste.length,
-      sapute: viste.filter(c => st[c.id].scatola >= 3).length,
+      totale: carte.length, viste: viste.length, nuove: carte.length - viste.length, sapute,
       daRipassare: viste.filter(c => st[c.id].prossima <= oggi).length,
-      testAperto: carte.length > 0 && viste.length === carte.length,
+      tutteViste: carte.length > 0 && viste.length === carte.length,
+      testAperto: carte.length > 0 && sapute >= servono, perIlTest: Math.max(0, servono - sapute), servono,
       stelle: migliori, superato: migliori >= 1,
       ultimo: miei[miei.length - 1] || null, penultimo: miei[miei.length - 2] || null,
     };
   }
 
-  // La scala dei livelli: ogni percorso con il suo mazzo (se c'è) e il suo stato; un livello si apre quando tutti i percorsi del livello
-  // sotto sono superati. Dà { livelli: [{ nome, sotto, numero, aperto, superato, percorsi }], qui } (qui = il livello più alto aperto).
+  // La scala dei livelli (Ignazio 24/09): dentro un livello i percorsi si aprono uno dopo l'altro, il successivo quando hai visto tutte le
+  // carte di quello prima (o se l'hai già cominciato: una carta aggiunta dopo non lo richiude); un livello si apre quando tutti i percorsi
+  // del livello sotto hanno il test superato. Dà { livelli: [{ nome, sotto, numero, aperto, superato, percorsi: [{ …, pronto, aperto, prima }] }],
+  // qui, percorso } (qui = il livello più alto aperto; percorso = dove sei: il primo aperto con carte nuove, se no il primo col test da fare).
   function scala(mazzi, stati, test, oggi) {
     const perId = Object.fromEntries((mazzi || []).map(m => [m.percorso.id, m]));
     const livelli = [];
     let aperto = true;
     LIVELLI.forEach((l, i) => {
-      const percorsi = l.percorsi.map(p => {
-        const mazzo = perId[p.id] || null;
-        return { ...p, pronto: !!mazzo, mazzo, stato: mazzo ? statoPercorso(mazzo, stati, test, oggi) : null };
-      });
+      const percorsi = [];
+      for (const p of l.percorsi) {
+        const mazzo = perId[p.id] || null, stato = mazzo ? statoPercorso(mazzo, stati, test, oggi) : null, prima = percorsi[percorsi.length - 1];
+        const suo = !prima || !!(prima.stato && prima.stato.tutteViste) || !!(stato && stato.viste);
+        percorsi.push({ ...p, pronto: !!mazzo, mazzo, stato, aperto: aperto && suo, prima: prima ? prima.titolo : null });
+      }
       const superato = percorsi.length > 0 && percorsi.every(p => p.stato && p.stato.superato);
       livelli.push({ nome: l.nome, sotto: l.sotto, numero: i + 1, aperto, superato, percorsi });
       aperto = aperto && superato;
     });
     const qui = livelli.filter(l => l.aperto).pop();
-    return { livelli, qui };
+    const aperti = qui.percorsi.filter(p => p.pronto && p.aperto);
+    const dove = aperti.find(p => p.stato.nuove > 0) || aperti.find(p => !p.stato.superato) || null;
+    return { livelli, qui, percorso: dove ? dove.id : null };
   }
 
   // Le domande del test finale: dalle carte a risposta (scene e vero o falso) del percorso, prima le più deboli (scatola bassa, più
-  // sbagliate) con un po' di caso, e almeno due trabocchetti se ci sono; poi in ordine sparso. `rnd` = Math.random (nelle prove, fisso).
+  // sbagliate) con un po' di caso, e almeno tre trabocchetti se ci sono; poi in ordine sparso. `rnd` = Math.random (nelle prove, fisso).
   function pescaTest(mazzo, stati, quante = TEST, rnd = Math.random) {
     const st = stati || {};
     const adatte = (mazzo ? mazzo.carte : []).filter(c => c.tipo === 'scena' || c.tipo === 'vf');
@@ -144,7 +154,7 @@
     const ordinate = adatte.map(c => ({ c, p: peso(c) })).sort((a, b) => a.p - b.p).map(x => x.c);
     const scelte = ordinate.slice(0, quante);
     const trabocchetti = ordinate.filter(c => c.trabocchetto && !scelte.includes(c));
-    for (let i = scelte.length - 1; i >= 0 && scelte.filter(c => c.trabocchetto).length < 2 && trabocchetti.length; i--)
+    for (let i = scelte.length - 1; i >= 0 && scelte.filter(c => c.trabocchetto).length < TRABOCCHETTI && trabocchetti.length; i--)
       if (!scelte[i].trabocchetto) scelte[i] = trabocchetti.shift();
     return mescola(scelte, rnd);
   }
@@ -273,7 +283,7 @@
     return (tutte || []).filter(c => parole.every(p => c.testo.includes(p)));
   }
 
-  const api = { LIVELLI, SCATOLE, LEZIONE, RIPASSO, TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { LIVELLI, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;
