@@ -166,7 +166,7 @@ function collegaCalendario() {
   });
   su('cal-copia', async () => {
     const indirizzo = URL_CALENDARIO(u.calendario_token).replace(/^webcal:/, 'https:');
-    copiaTesto(indirizzo, 'Indirizzo copiato. Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.');
+    copiaTesto(indirizzo, 'Indirizzo copiato. Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.', null, null, 'Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.');
   });
   su('cal-cambia', async () => {
     if (!await chiediConferma('Cambiare indirizzo?', 'Serve se temi che l\'indirizzo sia finito in mano ad altri. Quello vecchio smette subito di funzionare: nel Calendario togli il calendario «MB21» di prima e collegalo di nuovo da qui.', 'Cambia indirizzo')) return;

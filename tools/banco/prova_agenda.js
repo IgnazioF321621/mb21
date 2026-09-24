@@ -410,9 +410,15 @@ prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello
     '## Cantiere 41 – MB Plan', '1. Copiare negli appunti', '2. Mettere un punto in un giorno', '  2.1 anche nella settimana',
     '- Foto dal telefono', '- [ ] Provare su iPhone', '3. ✓ Le fatte in fondo', '- [x] Scrivere a Isabella'].join('\n'));   // «3.»: la numerazione continua dopo puntini e ☐, come sullo schermo
   assert.equal(titolo.voci, 7);
-  // una voce: lei e i suoi sottopunti, il rientro contato da lei
+  // una voce: lei e i suoi sottopunti, con il rientro vero
   assert.deepEqual(A.testoDaCopiare(vista, 'c'), { testo: '2. Mettere un punto in un giorno\n  2.1 anche nella settimana', voci: 2 });
-  assert.deepEqual(A.testoDaCopiare(vista, 'c1'), { testo: '2.1 anche nella settimana', voci: 1 });
+  assert.deepEqual(A.testoDaCopiare(vista, 'c1'), { testo: '  2.1 anche nella settimana', voci: 1 });
+  // una voce rientrata con sottopunti (revisione 24/09): reincollata, i sottopunti restano figli suoi
+  const rientrata = A.fatteInFondo([r('P', 'numero', 0, 'Padre'), r('F', 'numero', 1, 'Figlio'), r('N', 'punto', 2, 'Nipote'), r('D', 'cosa', 2, 'Da fare'), r('M', 'numero', 2, 'Numerata'), r('Q', 'punto', 3, 'Pronipote')]);
+  const copiaF = A.testoDaCopiare(rientrata, 'F');
+  assert.equal(copiaF.testo, '  1.1 Figlio\n    - Nipote\n    - [ ] Da fare\n    1.1.1 Numerata\n      - Pronipote');
+  assert.deepEqual(copiaF.testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [1, 2, 2, 2, 3]);
+  assert.deepEqual(A.testoDaCopiare(rientrata, 'M').testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [2, 3]);
   assert.deepEqual(A.testoDaCopiare(vista, 'g'), { testo: '1. Parole chiave', voci: 1 });
   // tutto il progetto: una riga vuota prima di ogni titolo (non prima del primo)
   const tutto = A.testoDaCopiare(vista, null).testo.split('\n');
