@@ -145,14 +145,14 @@
     // ══ Colonna di destra = pagina 2 del modulo ══
     xs = M + COL + GAP; y = 32;
 
-    // 4 · Tracce: un rigo per giorno, su due colonne (1-16 · 17-31)
+    // 4 · Tracce: un rigo per giorno, in verticale su due colonne come il modulo N21: 1-15 a sinistra, 16-31 a destra (Ignazio 24/09)
     const f4 = m.s4.quanti >= m.giorni;
     y0 = y; y = testa(xs, y, 4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', f4) + 4.2;
     conto(xs, y, `${m.s4.quanti}/${m.giorni} giorni`);
     y += 1;
-    const meta = Math.ceil(m.s4.giorni.length / 2), RT = 4.4;
+    const PRIMA = 15, meta = Math.max(PRIMA, m.s4.giorni.length - PRIMA), RT = 4.4;   // righe: 15, o 16 nei mesi di 31 giorni
     m.s4.giorni.forEach((g, i) => {
-      const cx = xs + (i < meta ? 0 : COL / 2), yb = y + (i % meta) * RT;
+      const cx = xs + (i < PRIMA ? 0 : COL / 2), yb = y + (i < PRIMA ? i : i - PRIMA) * RT;
       font(7, g.fatto ? 'bold' : 'normal', g.fatto ? VERDE : GRIGIO); doc.text(String(g.giorno), cx + 7, yb + 3.3, { align: 'right' });
       if (g.titolo) { font(7); scrivi(g.titolo, cx + 9, yb + 3.2, COL / 2 - 11); }
       riga(cx + 9, cx + COL / 2 - 2, yb + 3.9);

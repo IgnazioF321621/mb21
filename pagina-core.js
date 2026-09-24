@@ -84,9 +84,10 @@ function moduloCoreHtml(m) {
       ${vuote(Math.max(m.s3.obiettivo, m.s3.righe.length), m.s3.righe.length).map((_, i) => `<tr class="vuota"><td>${m.s3.righe.length + i + 1}</td><td></td><td></td></tr>`).join('')}
     </tbody><tfoot><tr><td></td><td>Totale VP prodotti dalla vendita</td><td class="r"><b>${num(m.s3.vp)}</b></td></tr></tfoot></table>` : vuotoPer('dalle vendite registrate nella scheda del cliente', 'cliente')}`, m.s3.raggiunto);
 
+  // 4 · i giorni in verticale come il modulo N21 e il PDF: 1-15 a sinistra, 16-31 a destra (Ignazio 24/09)
   const s4 = sez(4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', `
     <div class="cm-conto"><b>${m.s4.quanti}</b>/${m.giorni} giorni</div>
-    <div class="cm-giorni">${m.s4.giorni.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>
+    <div class="cm-giorni">${[m.s4.giorni.slice(0, 15), m.s4.giorni.slice(15)].map(col => `<div>${col.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>`).join('')}</div>
     <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.</div>`, m.s4.quanti >= m.giorni);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
