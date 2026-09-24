@@ -168,13 +168,14 @@ prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno due tra
   assert.equal(pochi.filter(c => c.trabocchetto).length, 2);
 });
 
-prova('Una domanda: scena con le risposte in ordine sparso (la prima del mazzo è la giusta), vero o falso, frase', () => {
+prova('Una domanda: scena con le risposte in ordine sparso (la prima del mazzo è la giusta), vero o falso, frase con l\'invito a rispondere prima di girarla', () => {
   const d = T.domanda({ ...scena('x'), versioni: [{ scena: 'Uno', risposte: ['G', 'S1', 'S2'] }, { scena: 'Due', risposte: ['G2', 'T1', 'T2'] }] }, () => 0.99);
   assert.equal(d.testo, 'Due');
   assert.deepEqual(d.risposte.filter(r => r.giusta).map(r => r.testo), ['G2']);
   assert.equal(d.risposte.length, 3);
   assert.deepEqual(T.domanda(vf('y')).risposte, [{ testo: 'Vero', giusta: false }, { testo: 'Falso', giusta: true }]);
-  assert.deepEqual(T.domanda(mazzo.carte[3]), { tipo: 'frase', davanti: 'Quanti nomi?', dietro: '200' });
+  assert.deepEqual(T.domanda(mazzo.carte[3]), { tipo: 'frase', davanti: 'Quanti nomi?', dietro: '200', aiuto: 'Prima rispondi a voce. Poi gira la carta.' });
+  assert.equal(T.domanda({ ...mazzo.carte[3], aiuto: 'Prima rispondi a voce, come al telefono. Poi gira la carta.' }).aiuto, 'Prima rispondi a voce, come al telefono. Poi gira la carta.');
 });
 
 prova('Giorni di fila: fino a oggi o, se oggi non ancora, fino a ieri; un buco li azzera', () => {
@@ -203,6 +204,7 @@ prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte
   assert.ok(p.some(x => x.startsWith('z: servono 3 risposte')));
   assert.ok(p.includes('w: fonte incompleta'));
   assert.ok(p.includes('q: tipo sconosciuto «boh»'));
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { id: 'k', tipo: 'frase', tema: 'x', davanti: 'a', dietro: 'b', aiuto: '' }] }), ['k: aiuto vuoto o lungo']);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, percorso: { id: 'boh' } }), ['percorso sconosciuto: boh']);
   assert.ok(T.controllaMazzo({ ...mazzo, situazione: 'carte_x' })[0].startsWith('situazione'));
 });
