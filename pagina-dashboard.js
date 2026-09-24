@@ -89,17 +89,17 @@ function aperteDash() {
   ST.aperteDash = salvate && salvate.giorno === ST.oggi ? salvate : { giorno: ST.oggi };
   return ST.aperteDash;
 }
-function apertaSezione(nome, daSola) {
+function apertaRigaDash(nome, daSola) {
   const scelta = aperteDash()[nome];
   return scelta === undefined ? daSola : scelta;
 }
-function cambiaSezione(nome, daSola) {
+function cambiaRigaDash(nome, daSola) {
   const a = aperteDash();
-  a[nome] = !apertaSezione(nome, daSola);
+  a[nome] = !apertaRigaDash(nome, daSola);
   try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {}
   disegnaOggi();
 }
-function rigaSezione(id, classe, icona, titolo, sotto, aperta) {
+function rigaApribile(id, classe, icona, titolo, sotto, aperta) {
   return `<button class="ag-blocco sezione ${classe}" id="${id}" aria-expanded="${aperta}">
     <span>${ic(icona)}<span class="sez-testo"><b>${titolo}</b>${sotto ? `<small>${sotto}</small>` : ''}</span></span><span>${aperta ? '⌄' : '›'}</span></button>`;
 }
@@ -198,8 +198,8 @@ function disegnaOggi() {
   const st = ST.stato;
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
   const altro = guardoAltri();
-  const apertaCoda = apertaSezione('coda', !!r.coda.length);   // da sola si apre solo se c'è qualcuno da chiamare
-  html += rigaSezione('sez-coda', r.coda.length ? 'telefonate' : 'telefonate fatta', r.coda.length ? 'telefonate' : 'fatto',
+  const apertaCoda = apertaRigaDash('coda', !!r.coda.length);   // da sola si apre solo se c'è qualcuno da chiamare
+  html += rigaApribile('sez-coda', r.coda.length ? 'telefonate' : 'telefonate fatta', r.coda.length ? 'telefonate' : 'fatto',
     altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
     `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, apertaCoda);
   if (apertaCoda) {
@@ -214,9 +214,9 @@ function disegnaOggi() {
   collegaMioAvvio();
   mostraRigaTelefono();   // non fa aspettare la Dashboard
   const sezCoda = document.getElementById('sez-coda');   // le righe si aprono e si chiudono anche con l'abbonamento scaduto
-  if (sezCoda) sezCoda.onclick = () => cambiaSezione('coda', !!r.coda.length);
+  if (sezCoda) sezCoda.onclick = () => cambiaRigaDash('coda', !!r.coda.length);
   const sezCat = document.getElementById('sez-catalogo');
-  if (sezCat) sezCat.onclick = () => cambiaSezione('catalogo', false);
+  if (sezCat) sezCat.onclick = () => cambiaRigaDash('catalogo', false);
   const rigaAvvio = document.getElementById('dash-avvio');
   if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
@@ -268,8 +268,8 @@ function catalogoHtml() {
   if (!cat || (!cat.totale && !fatti)) return '';
   const altro = guardoAltri();
   const quota = MB21Coda.QUOTA_CATALOGO + (ST.catalogoAltri || 0);
-  const aperta = apertaSezione('catalogo', false);   // da sola è sempre chiusa
-  let h = rigaSezione('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
+  const aperta = apertaRigaDash('catalogo', false);   // da sola è sempre chiusa
+  let h = rigaApribile('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
     `${cat.totale} ancora da catalogare · fatti ${Math.min(fatti, quota)} di ${quota}`, aperta);
   if (!aperta) return h;
   if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
