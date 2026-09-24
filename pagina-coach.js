@@ -8,16 +8,16 @@
 // pagina (Agenda, scheda, Griglia PM, Report e Riordini passano da chiudiAppuntamento; la coda da toccaBottone). Per ultimo,
 // perché il prossimo appuntamento si fissa spesso con la persona davanti. Si apre la chat del coach solo dove ci sono i suoi
 // messaggi approvati (le telefonate: Prospect, Partner, Clienti, quando ci hai parlato; dal 24/09 anche Piano Marketing e Follow Up,
-// dopo il risultato del «Com'è andata?»; la Consulenza prodotti, dopo Vendita o No Vendita; l'Appuntamento con un Partner, per ora solo
-// nell'anteprima); altrove niente. Il foglietto a
+// dopo il risultato del «Com'è andata?»; la Consulenza prodotti, dopo Vendita o No Vendita; l'Appuntamento con un Partner, dopo ogni
+// suo esito); altrove niente. Il foglietto a
 // bottoni del 23/09 è stato tolto il 24/09, in locale e online (Ignazio: «si toglie il foglietto vecchio e vediamo man mano
 // solo le cose nuove, sia in locale sia online, solo le cose approvate»).
 // `e`: l'azione con almeno id, tipo_azione, contatti.nome (modalita, categoria, contatto_id facoltativi).
 // Una chat nuova si prova prima sul Mac: finché Ignazio non dice «pubblica», la sua situazione sta in COACH_SOLO_ANTEPRIMA e si apre
 // solo nell'anteprima (127.0.0.1), anche se il codice va online prima (in questa cartella lavora anche un'altra sessione, che
 // pubblica il suo lavoro: il 24/09 ha pubblicato anche la chat di PM e Follow Up, prima della prova). Dopo l'ok si toglie dalla lista.
-// La Consulenza prodotti è online dal 24/09 (Ignazio: «pubblica»); l'Appuntamento con un Partner per ora solo sul Mac.
-const COACH_SOLO_ANTEPRIMA = ['appuntamento_partner'];
+// Oggi vuota: Consulenza prodotti e Appuntamento con un Partner sono online dal 24/09 (Ignazio: «pubblica»).
+const COACH_SOLO_ANTEPRIMA = [];
 async function chiediRiflessione(e, esito) {
   const categoria = (e.contatti && e.contatti.categoria) || e.categoria;
   const situazione = MB21Coach.situazione(e.tipo_azione, e.modalita, categoria, esito);
