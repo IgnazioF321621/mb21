@@ -441,6 +441,30 @@ prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello
   assert.equal(A.leggiRiga('Spazio speciale', 0, 'cosa').testo, 'Spazio speciale');
 });
 
+prova('Progetti in programma (24/09): nel giorno le righe dei progetti dopo le altre; dove sta una riga nel progetto', () => {
+  const g = '2026-09-24';
+  const cose = [
+    { id: 'p2', testo: 'Seconda del progetto', giorno: g, ordine: 2, progetto_id: 'pj', tipo: 'numero', fatto_il: null },
+    { id: 'm1', testo: 'Scritta a mano', giorno: g, ordine: 90, fatto_il: null },
+    { id: 'p1', testo: 'Prima del progetto', giorno: g, ordine: 1, progetto_id: 'pj', tipo: 'punto', fatto_il: null },
+    { id: 'f1', testo: 'Fatta', giorno: g, ordine: 0, fatto_il: '2026-09-24T08:00:00Z' },
+    { id: 'n0', testo: 'Senza giorno, solo nel progetto', giorno: null, ordine: 3, progetto_id: 'pj', tipo: 'numero', fatto_il: null },
+  ];
+  assert.deepEqual(A.coseDelGiorno(cose, g, g).map(c => c.id), ['m1', 'p1', 'p2', 'f1']);   // la riga senza giorno non c'è
+  const sett = cose.map(c => ({ ...c, scala: 'settimana', giorno: c.giorno ? '2026-09-21' : null }));
+  assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => c.id), ['m1', 'p1', 'p2', 'f1']);
+  const vista = A.fatteInFondo([
+    { id: 'x', tipo: 'numero', livello: 0, fatto_il: null }, { id: 'T', tipo: 'titolo', testo: 'Cantiere 41 – MB Plan' },
+    { id: 'a', tipo: 'numero', livello: 0, fatto_il: '2026-09-24T08:00:00Z' }, { id: 'b', tipo: 'numero', livello: 0, fatto_il: null },
+    { id: 'b1', tipo: 'numero', livello: 1, fatto_il: null }, { id: 'c', tipo: 'punto', livello: 0, fatto_il: null },
+  ]);
+  assert.deepEqual(A.postoNelProgetto(vista, 'b'), { titolo: 'Cantiere 41 – MB Plan', segno: '1.' });   // la fatta è in fondo: «b» è la prima
+  assert.deepEqual(A.postoNelProgetto(vista, 'b1'), { titolo: 'Cantiere 41 – MB Plan', segno: '1.1' });
+  assert.deepEqual(A.postoNelProgetto(vista, 'c'), { titolo: 'Cantiere 41 – MB Plan', segno: '•' });
+  assert.deepEqual(A.postoNelProgetto(vista, 'x'), { titolo: '', segno: '1.' });   // prima del primo titolo
+  assert.equal(A.postoNelProgetto(vista, 'nessuna'), null);
+});
+
 prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
   const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
   const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];
