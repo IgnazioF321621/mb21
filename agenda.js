@@ -432,7 +432,7 @@
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
   const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
 
-  // Icona di ogni tipo di azione (il foglietto della riflessione, cantiere 42: le domande stanno in riflessione.js)
+  // Icona di ogni tipo di azione (la testata della chat del coach dopo l'esito, cantiere 42)
   const ICONE_TIPO = { 'Piano Marketing': 'pianomarketing', 'Follow Up': 'followup', 'Appuntamento': 'appuntamento', 'Consulenza PRD': 'consulenza', 'Contatto': 'contatto' };
 
   // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
