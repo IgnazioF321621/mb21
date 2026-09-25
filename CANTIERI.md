@@ -73,6 +73,13 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   - una funzione sola per l'ordine (`MB21Mappa.ordinePerMappa`) e una sola lettura dell'albero (`caricaAlberoMappa`, la stessa della Mappa)
   - **foto con Chrome senza finestra** (stile vero, dati veri) prima di pubblicare: ha trovato un difetto vero — la riga «sotto Simone Giavatto» usciva come una pastiglia gialla, perché `.nota` è già una classe dell'app; rinominata `nota-ramo`
   - prove: 4 nel banco nuovo `prova_check_vista.js`, 10 in `prova_storico_vista.js`, 23 in `prova_mappa.js`, 18 in `prova_check.js`
+  - ✅ **provato da Ignazio**: «molto, molto bene»
+- ✅ **25/09, versione 2026.09.25 · 14:08 — le coppie contano per codice.** Ignazio: «dove ci sono i doppi nomi, Luca Caccamo e Michaela Di Martino, e Antonina Abela e Filippo Arcoraci, non sono quattro persone. Bisogna contare i codici: sono due… Quelli sono i partner, cioè i compagni, mariti, mogli».
+  - `MB21Mappa.lineePerCodice`: una linea per codice Amway, col nome di Amway; gli account della coppia in `utenti`, i compagni in `compagni` (dal cognome: Tonya Abela è Antonina, non una compagna)
+  - nel foglio: le linee, «Chi guardi» e la griglia in cima lavorano per codice; i numeri **sommano i due** con la regola di «Tutti» (ognuno la sua partenza, poi la somma). Sotto il nome la riga piccola «con Michaela Di Martino» / «con Filippo Arcoraci». Sui dati veri le linee sotto Ignazio passano da 10 a **8**
+  - nei dati veri solo Luca aveva scritto qualcosa (2 BBS a marzo): sommare non conta niente due volte
+  - il **Partner Select resta per account**: serve a scrivere a nome di una persona precisa. Oggi nessuna coppia è nel Partner Select; se ci entrassero tutti e due, «Tutti» sommerebbe due volte VPP e VPG di Amway (ognuno ne ha una copia): messo in MB App
+  - prove: 19 in `prova_check.js`, 11 in `prova_storico_vista.js`, 24 in `prova_mappa.js`; foto rifatte con Chrome senza finestra
   - **da provare con Ignazio**
 - È **lavoro sui numeri, non sullo stile**: non fa parte del cantiere 34. Vicino al cantiere 35 (storico dei biglietti), stessa famiglia: «quello che c'era in Glide c'è anche qui?»
 

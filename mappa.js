@@ -344,7 +344,32 @@
     }).sort((x, y) => x.pos - y.pos || String(x.p.nome || '').localeCompare(String(y.p.nome || ''), 'it')).map(x => x.p);
   }
 
+  // Una linea per codice Amway (Ignazio 25/09: «dove ci sono i doppi nomi… non sono quattro persone. Bisogna contare
+  // i codici»). La coppia — marito e moglie, compagni: stesso codice — è un partner solo, col nome che ha in Amway
+  // (`squadra`: Luca Caccamo, Antonina Abela). `utenti` = gli utenti dell'app di quel codice (i loro numeri si sommano),
+  // `compagni` = i nomi degli altri della coppia, riconosciuti dal cognome diverso da quello del titolare (Tonya Abela
+  // è Antonina: stesso cognome, non è un compagno). Chi non ha codice resta da solo. `id` = il primo utente; ordine = `persone`.
+  function lineePerCodice(persone, squadra) {
+    const nomi = {};
+    for (const q of squadra || []) if (q.nome) nomi[q.partner_id] = nomeLeggibile(q.nome);
+    const cognome = t => piegaNome(t).split(' ').pop();
+    const perCodice = new Map(), linee = [];
+    for (const p of persone || []) {
+      const chiave = p.partner_id || 'utente:' + p.id;
+      let l = perCodice.get(chiave);
+      if (!l) {
+        l = { ...p, nome: (p.partner_id && nomi[p.partner_id]) || p.nome, utenti: [], nomiApp: [] };
+        perCodice.set(chiave, l);
+        linee.push(l);
+      }
+      l.utenti.push(p.id);
+      l.nomiApp.push(p.nome);
+    }
+    return linee.map(({ nomiApp, ...l }) => ({ ...l,
+      compagni: l.utenti.length > 1 ? nomiApp.filter(n => cognome(n) !== cognome(l.nome)) : [] }));
+  }
+
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner, partnerDellaScheda,
-    segniGruppo, segniAl, ramoDi, ordinePerMappa, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
+    segniGruppo, segniAl, ramoDi, ordinePerMappa, lineePerCodice, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

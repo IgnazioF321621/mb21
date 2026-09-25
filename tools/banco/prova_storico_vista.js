@@ -175,6 +175,33 @@ prova('Le linee nell\'ordine della Mappa, a partire da chi guardi, con il rientr
   assert.match(righe[1], /<i class="ramo"[^>]*>↳<\/i>Isabella/);        // un livello sotto
 });
 
+prova('La coppia (stesso codice) è una linea sola, col nome di Amway, e somma i due (Ignazio 25/09)', () => {
+  const dc = {
+    persone: [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }, { id: 'E1', nome: 'Luca Caccamo', partner_id: 'LU' },
+      { id: 'E2', nome: 'Michaela Di Martino', partner_id: 'LU' }],
+    squadra: [{ partner_id: 'IG', sponsor_id: 'X', nome: 'FIORITO, IGNAZIO' }, { partner_id: 'LU', sponsor_id: 'IG', nome: 'CACCAMO, LUCA' }],
+    giorni: [{ user_id: 'E2', data: '2026-09-10', contatti: 0, pm: 0, bbs: 1, wes: 0, cep: 0 }],
+    obiettivi: [{ user_id: 'A', mese: '2026-09-01', bbs_partenza: 5, wes_partenza: 0, cep_partenza: 0 },
+      { user_id: 'E1', mese: '2026-09-01', bbs_partenza: 2, wes_partenza: 0, cep_partenza: 0 },
+      { user_id: 'E2', mese: '2026-09-01', bbs_partenza: 0, wes_partenza: 0, cep_partenza: 0 }],
+  };
+  imposta('tipo', 'bbs');
+  imposta('chi', 'A');
+  ctx.disegnaStorico(velo, dc);
+  let h = velo.corpo.innerHTML;
+  assert.deepEqual([...h.matchAll(/data-slchi="([^"]+)"/g)].map(m => m[1]), ['A', 'E1']);   // due linee, non tre
+  assert.match(h, /↳<\/i>Luca Caccamo<\/b>/);
+  assert.doesNotMatch(h, /Michaela/);                   // la compagna non è una linea a parte
+  const luca = h.split('data-slchi="E1"')[1];
+  assert.match(luca, /class="sl-n ">3</);              // 2 di Luca + 1 di Michaela
+  imposta('chi', 'E2');                                  // guardando Michaela si guarda la linea di Luca
+  ctx.disegnaStorico(velo, dc);
+  h = velo.corpo.innerHTML;
+  assert.match(h, /id="sl-chi">.*Luca Caccamo<small>con Michaela Di Martino<\/small>/);
+  assert.match(h, /GRIGLIA di Luca Caccamo:.*SET 3\//);  // anche la griglia in cima somma i due
+  imposta('chi', 'A');
+});
+
 prova('Con una persona sola: nessun selettore, nessuna tabella delle linee', () => {
   ctx.disegnaStorico(velo, { giorni, obiettivi, squadra, persone: [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }] });
   const h = velo.corpo.innerHTML;

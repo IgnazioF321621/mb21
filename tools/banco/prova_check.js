@@ -191,6 +191,23 @@ prova('Storico linee: totali del gruppo e massimi per la barretta', () => {
   assert.equal(sl.totali.bbs[col('2026-05-01')], 0);         // nessuno ha dati: totale 0
 });
 
+prova('Storico linee: la coppia (stesso codice) è una linea sola e somma i due (Ignazio 25/09)', () => {
+  // Luca ha scritto 2 BBS di partenza a marzo; Michaela ne segna 1 nel Check di aprile. Ognuno la sua catena, poi la somma
+  const g2 = [{ user_id: 'L2', data: '2026-04-10', bbs: 1, wes: 0, cep: 0 }];
+  const o2 = [{ user_id: 'L1', mese: '2026-03-01', bbs_partenza: 2, wes_partenza: 0, cep_partenza: 0 },
+    { user_id: 'L2', mese: '2026-04-01', bbs_partenza: 0, wes_partenza: 0, cep_partenza: 0 }];
+  const r = C.storicoLinee({ giorni: g2, obiettivi: o2, persone: [{ id: 'L1', nome: 'Luca Caccamo', utenti: ['L1', 'L2'] }], oggi: '2026-09-15' });
+  assert.equal(r.righe.length, 1);
+  const bbs = r.righe[0].celle.bbs, m = x => r.mesi.findIndex(y => y.mese === x);
+  assert.equal(bbs[m('2026-03-01')].valore, 2);          // solo Luca
+  assert.equal(bbs[m('2026-04-01')].valore, 3);          // Luca resta 2 (mese prima) + Michaela 1
+  assert.equal(bbs[m('2026-04-01')].cambio, 'su');
+  assert.equal(bbs[m('2026-05-01')].valore, 3);          // nessuno scrive niente: restano i due totali di aprile
+  // senza `utenti` una persona conta solo sé stessa, come prima
+  const solo = C.storicoLinee({ giorni: g2, obiettivi: o2, persone: [{ id: 'L1', nome: 'Luca' }], oggi: '2026-09-15' });
+  assert.equal(solo.righe[0].celle.bbs[m('2026-04-01')].valore, 2);
+});
+
 prova('Storico linee: un partner senza niente resta in elenco, tutto vuoto', () => {
   const r = C.storicoLinee({ giorni: [], obiettivi: [], persone: [{ id: 'C', nome: 'Nuovo' }], oggi: '2026-09-15' });
   assert.equal(r.righe[0].vuota, true);
