@@ -180,6 +180,35 @@ Deno.serve(async (req) => {
     return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
   }
 
+  // L'avviso del Training (lista «Avvisi» di MB App, Ignazio 25/09): tutti i giorni all'ora scelta (8 · 13 · 18 · 21, già impostato 13),
+  // solo a chi oggi non si è ancora allenato (nessuna riga in training_giorni per oggi). Tre testi: mai usato → «Prova il Training»;
+  // carte da ripassare oggi (training_carte.prossima ≤ oggi) → «Oggi hai N carte da ripassare», tocco su Ripassa; se no → «Continua il tuo percorso».
+  if (tipo === 'training') {
+    if (![8, 13, 18, 21].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il Training si sceglie alle 8, 13, 18 o 21` });
+    const oggi = oggiAdesso;
+    const [{ data: attivi, error: e1 }, { data: allenati, error: e2 }, { data: carte, error: e3 }] = await Promise.all([
+      db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
+      db.from('training_giorni').select('user_id').eq('giorno', oggi),
+      db.from('training_carte').select('user_id, prossima'),
+    ]);
+    const err = e1 || e2 || e3;
+    if (err) return risposta({ errore: err.message }, 500);
+    const giaAllenati = new Set((allenati ?? []).map(x => x.user_id));
+    const esiti: Record<string, unknown>[] = [];
+    for (const { id } of attivi ?? []) {
+      if (giaAllenati.has(id) || (!corpo.forza && quando(id, 'training') !== oraAdesso)) continue;
+      const mie = (carte ?? []).filter(c => c.user_id === id), daRipassare = mie.filter(c => c.prossima && c.prossima <= oggi).length;
+      const avviso: Avviso = !mie.length
+        ? { titolo: '🏋️ Prova il Training', testo: '5 minuti per il primo percorso del livello Nuovo: Contattare. Tocca per iniziare.', url: './?apri=training', tag: 'training' }
+        : daRipassare
+          ? { titolo: '🏋️ 5 minuti di Training?', testo: `Oggi hai ${daRipassare} ${daRipassare === 1 ? 'carta' : 'carte'} da ripassare. Tocca per iniziare.`, url: './?apri=training&vista=ripassa', tag: 'training' }
+          : { titolo: '🏋️ 5 minuti di Training?', testo: 'Continua il tuo percorso, una carta alla volta. Tocca per riprendere.', url: './?apri=training', tag: 'training' };
+      if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
+      esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
+    }
+    return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
+  }
+
   // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
   if (tipo === 'mattino') {
     // cantiere 43: l'orologio chiama ogni ora dalle 7 alle 10 di Roma; avvisa chi ha scelto quest'ora (già impostato: 9)

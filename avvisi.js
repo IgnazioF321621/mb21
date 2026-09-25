@@ -90,7 +90,8 @@ const AVVISI_QUANDO = [
     { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: 'se manca l\'esito', scelte: [[30, '30′ dopo'], [60, '1 ora dopo'], [120, '2 ore dopo']], gia: 60 } ] },
   { gruppo: 'Ogni giorno', tipi: [
     { k: 'buongiorno', titolo: 'Buongiorno', sotto: 'il programma di oggi', scelte: [7, 8, 9, 10].map(h => [h, h + ':00']), gia: 9 },
-    { k: 'check', titolo: 'Check della sera', sotto: '', scelte: [20, 21, 22].map(h => [h, h + ':00']), gia: 22 } ] },
+    { k: 'check', titolo: 'Check della sera', sotto: '', scelte: [20, 21, 22].map(h => [h, h + ':00']), gia: 22 },
+    { k: 'training', titolo: 'Training', sotto: '5 minuti, se oggi non ti sei allenato', scelte: [8, 13, 18, 21].map(h => [h, h + ':00']), gia: 13 } ] },   // 25/09
 ];
 const sceltaAvviso = (u, k) => { const t = AVVISI_QUANDO.flatMap(g => g.tipi).find(t => t.k === k); const v = (u.avvisi_quando || {})[k]; return v == null ? t.gia : v; };
 
@@ -109,4 +110,42 @@ async function impostaAvviso(k, v) {
   if (error) return mostraToast('Non salvato: riprova.');
   u.avvisi_quando = { ...(u.avvisi_quando || {}), [k]: v };
   mostraToast('Salvato');
+}
+
+// ── L'ANNUNCIO DEL TRAINING (lista «Avvisi» di MB App, schizzo approvato da Ignazio il 25/09) ──
+// Un foglio che si apre da solo all'apertura dell'app a chi non ha MAI usato il Training (nessuna risposta in training_carte):
+// appena risponde alla prima carta non lo vede più, su nessun dispositivo. «Più tardi» (o il tocco fuori) lo rimanda di 3 giorni
+// su quel dispositivo (localStorage). Mai se l'app si apre da un avviso, mai sopra un altro foglio, mai a chi ha l'abbonamento scaduto.
+// `forza` (indirizzo «?annuncio=training») lo mostra comunque: per vederlo anche da chi il Training l'ha già usato.
+const RIMANDO_ANNUNCIO = 3 * 86400000;
+const chiaveAnnuncio = () => 'mb21_annuncio_training_' + ST.utente.id;
+async function annuncioTraining(forza) {
+  if (typeof TRAINING_VISIBILE === 'undefined' || !TRAINING_VISIBILE || limitato() || !ST.utente || !ST.utente.id) return;
+  if (!forza) {
+    try { if (Date.now() - Number(localStorage.getItem(chiaveAnnuncio()) || 0) < RIMANDO_ANNUNCIO) return; } catch (e) { return; }
+    const { count, error } = await supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', ST.utente.id);
+    if (error || count) return;
+  }
+  if (document.querySelector('.velo')) return;   // un foglio alla volta
+  const livelli = MB21Training.LIVELLI.map(l => l.nome);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio an-trn">
+    <div class="an-testa"><span class="an-tondo">${ic('crescita')}</span><small>Novità in MB21</small><h3>Il Training</h3>
+      <p>Allenati a fare l'attività, un passo alla volta: poche carte al giorno, e il percorso sale con te.</p></div>
+    <div class="an-scala">${livelli.map((l, i) => `<i class="${i === 0 ? 'acceso' : ''}"></i>`).join('')}<span>dal <b>${esc(livelli[0])}</b> al <b>${esc(livelli[livelli.length - 1])}</b></span></div>
+    <div class="an-punti">
+      <div>${ic('crescita')}<p><b>Impara</b> · ${livelli.length} livelli che si aprono man mano che sali, con il test finale e le stelle</p></div>
+      <div>${ic('fiamma')}<p><b>Ripassa</b> · 5 minuti al giorno: tornano le carte da ripassare, anche le obiezioni capitate davvero</p></div>
+      <div>${ic('libro')}<p><b>Studia</b> · il Manuale di Avvio e le tracce del BSM, a portata di mano</p></div>
+    </div>
+    <button class="primario" id="an-inizia">Inizia dal livello ${esc(livelli[0])}</button>
+    <button class="link an-dopo" id="an-dopo">Più tardi</button>
+    <small class="an-nota">Lo ritrovi sempre nella barra in basso: ${ic('crescita')} Training</small>
+  </div>`;
+  document.body.appendChild(velo);
+  const piuTardi = () => { try { localStorage.setItem(chiaveAnnuncio(), String(Date.now())); } catch (e) {} velo.remove(); };
+  velo.onclick = e => { if (e.target === velo) piuTardi(); };
+  velo.querySelector('#an-dopo').onclick = piuTardi;
+  velo.querySelector('#an-inizia').onclick = () => { velo.remove(); ST.tab = 'training'; mostraTab(); };
 }

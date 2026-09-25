@@ -7,7 +7,7 @@
 export const GIA_IMPOSTATO: Record<string, number> = {
   appuntamenti: 30, telefonate: 10, cose: 10, modelli: 0,   // minuti prima (0 = all'ora)
   com_e_andata: 60,                                          // minuti dopo la fine
-  buongiorno: 9, check: 22,                                  // ora di Roma
+  buongiorno: 9, check: 22, training: 13,                    // ora di Roma
 };
 export function scelta(quando: Record<string, number> | null | undefined, k: string): number {
   const v = (quando ?? {})[k];
