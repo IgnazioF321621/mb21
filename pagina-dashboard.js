@@ -114,7 +114,7 @@ function rigaApribile(id, classe, icona, titolo, sotto, aperta, restano) {
 // i bottoni della coda sono gli STESSI esiti di «Com'è andata?», nello stesso ordine, presi dall'elenco unico di agenda.js
 // (MB21Agenda.fasiPer): sul bottone c'è scritto l'esito che si salva. Qui resta solo quello che un esito FA in coda.
 // Prima: 5 bottoni con parole loro (Appuntamento · Richiamare · Non risponde · Non ora · Non interessato), e in coda mancavano
-// «Consulenza Prodotti» e «Telefono spento». Partner: Appuntamento · Richiamare. Cliente: come in Agenda, più «No Risposta».
+// «Consulenza Prodotti» e «Telefono spento». Partner e Cliente: come in Agenda (dal 25/09 anche lì «Telefono spento» e «No Risposta»).
 const COSA_FA_ESITO = {
   'PM Fissato': { data: 'giorno-ora', classe: 'appuntamento' },
   'Appuntamento': { data: 'giorno-ora', classe: 'appuntamento' },
@@ -125,8 +125,7 @@ const COSA_FA_ESITO = {
 };
 function bottoniPer(categoria) {
   const cat = categoria === 'Partner' || categoria === 'Cliente' ? categoria : 'Prospect';   // Referral, Ex, senza categoria: fasi del Prospect
-  const esiti = [...MB21Agenda.fasiPer(cat, 'Contatto', 'Telefonata')];
-  if (cat === 'Cliente') esiti.push('No Risposta');   // in coda c'è dal 18/09; in Agenda no, perché lì il riquadro Riordini ha già il suo «Non risponde»
+  const esiti = MB21Agenda.fasiPer(cat, 'Contatto', 'Telefonata');
   return esiti.map(f => ({ etichetta: f, chiave: `${cat}-Contatto-${f}`, ...(COSA_FA_ESITO[f] || {}) }));
 }
 // I bottoni di una riga della coda (e dei Dare Seguito scaduti): sopra gli esiti buoni, sotto quelli non andati, come in «Com'è andata?»
@@ -830,11 +829,12 @@ function riordiniHtml() {
     if (!aperta) return `<div class="card compatta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}</div>`;
     const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     const spento = ST.offline || soloGuardo() ? 'disabled' : '';
+    // gli esiti non andati del Cliente qui no: c'è «Non risponde», che lascia il riordino aperto («riprova più tardi»)
     return `<div class="card compatta aperta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}
       <div class="corpo">
         ${contattaHtml(a.contatti && a.contatti.telefono)}
         <div class="bottoni">
-          ${fasi.filter(f => f !== 'No Interesse').map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
+          ${fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f)).map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
           ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>No Interesse</button>` : ''}
         </div>
