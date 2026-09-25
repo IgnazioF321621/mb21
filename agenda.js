@@ -221,8 +221,9 @@
   }
   // Nei progetti le fatte vanno in fondo (Ignazio 24/09, al posto del «restano al loro posto» del 23/09): dentro ogni titolo
   // prima le righe da fare, nel loro ordine, poi le fatte; una riga si porta dietro le più rientrate che la seguono e va in
-  // fondo solo se sono fatte tutte (dentro, la stessa regola). Un titolo con tutti i passi fatti va in fondo al progetto con
-  // i suoi passi; un titolo senza passi resta dov'è; le righe prima del primo titolo restano in cima.
+  // fondo solo se sono fatte tutte (dentro, la stessa regola). I titoli restano al loro posto, anche con tutti i passi fatti
+  // (Ignazio 25/09: con i titoli in ordine alfabetico «rimane in ordine alfabetico, come sono gli altri»; dal 24/09 un titolo
+  // finito andava in fondo al progetto); le righe prima del primo titolo restano in cima.
   // Riceve le righe nell'ordine salvato, le rende nell'ordine in cui si vedono (i numeri 1. 2. 3. li fa poi numeraRighe).
   function fatteInFondo(righe) {
     const fatta = r => !!r.fatto_il;
@@ -243,10 +244,7 @@
       if (r.tipo === 'titolo') pezzi.push({ titolo: r, passi: [] });
       else pezzi[pezzi.length - 1].passi.push(r);
     }
-    const finito = p => p.passi.length > 0 && p.passi.every(fatta);
-    const inFila = p => [...(p.titolo ? [p.titolo] : []), ...inFondo(p.passi)];
-    const [cima, ...titoli] = pezzi;
-    return [...inFila(cima), ...titoli.filter(p => !finito(p)).flatMap(inFila), ...titoli.filter(finito).flatMap(inFila)];
+    return pezzi.flatMap(p => [...(p.titolo ? [p.titolo] : []), ...inFondo(p.passi)]);
   }
   // Dove sta una riga nel suo progetto (24/09): il titolo sopra di lei e il suo segno come sullo schermo («3.», «2.1», «•»).
   // `righe` = il progetto come si vede (fatteInFondo). Serve alla riga «📁 MB App › Cantiere 41 · 3.» nel giorno e nella settimana.

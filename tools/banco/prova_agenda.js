@@ -379,7 +379,7 @@ prova('Progetti come Word (23/09): numeri 1. → 1.1 → 1.1.1, i titoli fanno r
   ]), ['', '1.', '1.1', '1.2', '1.2.1', '2.', '◦', '2.1', '', '1.', '', '2.', '•', '▪']);
 });
 
-prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; i titoli tutti fatti in fondo al progetto', () => {
+prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; dal 25/09 i titoli tutti fatti restano al loro posto', () => {
   const r = (id, tipo, livello, fatto) => ({ id, tipo, livello, fatto_il: fatto ? '2026-09-24T10:00:00Z' : null });
   const vista = righe => A.fatteInFondo(righe).map(x => x.id);
   // dentro un titolo: prima le da fare nel loro ordine, poi le fatte nel loro ordine
@@ -389,9 +389,10 @@ prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; i t
   // una riga si porta dietro i sottopunti e va in fondo solo se sono fatti tutti; dentro, la stessa regola
   assert.deepEqual(vista([r('T1', 'titolo', 0), r('p', 'numero', 0), r('p1', 'numero', 1, true), r('p2', 'numero', 1), r('q', 'numero', 0, true), r('q1', 'numero', 1, true), r('s', 'numero', 0, true), r('s1', 'numero', 1), r('u', 'numero', 0)]),
     ['T1', 'p', 'p2', 'p1', 's', 's1', 'u', 'q', 'q1']);
-  // titolo tutto fatto in fondo con i suoi passi; titolo senza passi al suo posto; le righe prima del primo titolo in cima
+  // titolo tutto fatto al suo posto, con i suoi passi (25/09: l'ordine alfabetico dei titoli non si rompe); titolo senza passi al
+  // suo posto; le righe prima del primo titolo in cima
   assert.deepEqual(vista([r('x', 'cosa', 0, true), r('y', 'cosa', 0), r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('T2', 'titolo', 0), r('b', 'numero', 0), r('T3', 'titolo', 0), r('T4', 'titolo', 0), r('c', 'numero', 0, true), r('d', 'numero', 0, true)]),
-    ['y', 'x', 'T2', 'b', 'T3', 'T1', 'a', 'T4', 'c', 'd']);
+    ['y', 'x', 'T1', 'a', 'T2', 'b', 'T3', 'T4', 'c', 'd']);
   // un passo da fare riapre il titolo: torna al suo posto
   assert.deepEqual(vista([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('n', 'numero', 0), r('T2', 'titolo', 0), r('b', 'numero', 0)]), ['T1', 'n', 'a', 'T2', 'b']);
   assert.deepEqual(A.fatteInFondo([]), []);
@@ -475,16 +476,16 @@ prova('Progetti (25/09): spostare una riga sotto un altro titolo o in un altro p
   assert.equal(pr[5].livello, 1);   // le righe di prima non si toccano: i cambi li salva la pagina
   // una fatta va in fondo al titolo, dopo le da fare
   assert.deepEqual(A.spostaRighe(vista, 'b', 'T2').map(x => [x.id, x.ordine]), [['T2', 3], ['c', 4], ['c1', 5], ['c2', 6], ['e', 7], ['b', 8]]);
-  // un titolo in un altro progetto: con tutte le sue righe, dopo i titoli ancora aperti (quello tutto fatto resta in fondo)
+  // un titolo in un altro progetto: con tutte le sue righe, in fondo (dal 25/09 anche dopo un titolo tutto fatto, che resta al suo posto)
   const altro = A.fatteInFondo([r('X1', 'titolo', 1, 0, false, 'Q'), r('x', 'numero', 2, 0, false, 'Q'), r('X2', 'titolo', 3, 0, false, 'Q'), r('y', 'numero', 4, 0, true, 'Q')]);
   assert.deepEqual(A.spostaRighe(vista, 'T2', null, altro, 'Q').map(x => [x.id, x.ordine, x.livello, x.progetto_id]), [
-    ['T2', 3, 0, 'Q'], ['c', 4, 0, 'Q'], ['c1', 5, 1, 'Q'], ['c2', 6, 2, 'Q'], ['e', 7, 0, 'Q'], ['X2', 8, 0, 'Q'], ['y', 9, 0, 'Q']]);
+    ['T2', 5, 0, 'Q'], ['c', 6, 0, 'Q'], ['c1', 7, 1, 'Q'], ['c2', 8, 2, 'Q'], ['e', 9, 0, 'Q']]);
   // una riga sotto un titolo di un altro progetto; quello di partenza si rinumera (qui non cambia niente: era l'ultima)
   assert.deepEqual(A.spostaRighe(vista, 'e', 'X1', altro, 'Q').map(x => [x.id, x.ordine, x.progetto_id]), [['e', 3, 'Q'], ['X2', 4, 'Q'], ['y', 5, 'Q']]);
-  // in un progetto senza titoli va in fondo; nel progetto di partenza T1, rimasto con la sola fatta, va in fondo come si vede
+  // in un progetto senza titoli va in fondo; nel progetto di partenza T1, rimasto con la sola fatta, resta al suo posto (25/09)
   const cambi = A.spostaRighe(vista, 'a', null, [r('z', 'cosa', 1, 0, false, 'R')], 'R');
   assert.deepEqual(cambi[0], { id: 'a', ordine: 2, livello: 0, progetto_id: 'R' });
-  assert.deepEqual(cambi.slice(1).map(x => [x.id, x.ordine]), [['T2', 1], ['c', 2], ['c1', 3], ['c2', 4], ['e', 5], ['T1', 6], ['b', 7]]);
+  assert.deepEqual(cambi.slice(1).map(x => [x.id, x.ordine]), [['b', 2], ['T2', 3], ['c', 4], ['c1', 5], ['c2', 6], ['e', 7]]);
   assert.deepEqual(A.spostaRighe(vista, 'a', null, [], 'R'), [{ id: 'a', ordine: 1, livello: 0, progetto_id: 'R' }, ...cambi.slice(1)]);
   // senza titolo nello stesso progetto: tra le righe in cima, prima del primo titolo
   assert.deepEqual(A.spostaRighe(vista, 'e', null).map(x => [x.id, x.ordine]), [['e', 1], ['T1', 2], ['a', 3], ['b', 4], ['T2', 5], ['c', 6], ['c1', 7], ['c2', 8]]);
