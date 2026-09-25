@@ -41,6 +41,7 @@ Serve a Ignazio per avere **un flusso di lavoro solo**, senza perdersi saltando 
 - Lavori aperti/chiusi in `CANTIERI.md`; lezioni apprese in `LEZIONI.md`.
 - Migrazioni del database in `supabase/migrations/`.
 - Branch unico: `main`. Pubblicazione con GitHub Pages da `main` / root.
+- **Più sessioni sulla stessa cartella: ognuna pubblica solo il suo** (Ignazio 25/09). Prima di ogni commit `git status` e `git diff`: si aggiungono **per nome** solo i propri file (mai `git add -A` né `git add .`); in un file toccato anche da un'altra sessione (`index.html`, `STRUTTURA.md`, `CANTIERI.md`…) si salvano **solo i propri pezzi** (`git diff <file>` in una patch, si tolgono i pezzi degli altri, `git apply --cached`) e si ricontrolla con `git diff --cached` che dentro ci sia solo il proprio lavoro. Il lavoro non salvato delle altre sessioni resta nella cartella e non va online. `APP_VERSION` e `?v=` li mette chi pubblica, con l'ora di adesso. Se il proprio lavoro ha bisogno di un pezzo non salvato di un'altra sessione, non si pubblica: lo si dice a Ignazio. Vedi `LEZIONI.md` L13.
 
 ## Repo di riferimento
 - `benessere-forma` (Zona Tracker): pattern collaudati da riusare. **Sola lettura, non si modifica.**
