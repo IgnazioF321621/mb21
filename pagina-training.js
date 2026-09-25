@@ -233,7 +233,7 @@ function trnApriPercorso(id) {
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
-      ${studio.length || siti.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
+      ${studio.length || siti.length ? `<h4>Per approfondire e imparare</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
         siti.length ? `<a class="trn-riga" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
           <div><b>Le Risorse del sito Amway</b><small>${esc(siti.join(' · '))}</small></div><span class="trn-freccia">›</span></a>` : ''}` : ''}
     </div></div>`;
@@ -536,13 +536,14 @@ function trnElenco(voci, s, chiave) {
 // una riga del catalogo: un capitolo del manuale (con le pagine), una traccia, un libro
 function trnRiga(c, colore) {
   let sotto = '';
-  if (c.tipo === 'manuale') sotto = esc(c.sintesi);
+  // il manuale con la sua icona e «Manuale di Avvio · pagine …», come le tracce con le cuffie (Ignazio 24/09, fatto il 25/09)
+  if (c.tipo === 'manuale') sotto = [`Manuale di Avvio · ${String(c.pagine).includes('-') ? 'pagine' : 'pagina'} ${c.pagine}`, c.sintesi].filter(Boolean).map(esc).join(' · ');
   if (c.tipo === 'traccia') sotto = [c.autore, c.minuti ? c.minuti + ' min' : null, MB21Training.dove(c)].filter(Boolean).map(esc).join(' · ');
   if (c.tipo === 'libro') sotto = esc(c.autore || '');
   const badge = (c.appunti ? '<span class="trn-badge">Appunti</span>' : '') + (c.capitoli ? '<span class="trn-badge">Appunti per capitolo</span>' : '')
     + (c.solo_n21 ? '<span class="sh-chiede n21">solo da N21</span>' : '');
   return `<button class="trn-riga" data-carta="${esc(c.id)}" style="--col:${colore}">
-    ${c.tipo === 'manuale' ? `<span class="trn-pag">${esc(c.pagine)}</span>` : `<span class="trn-tondo">${ic(TRN_ICONA[c.tipo] || 'info', 20)}</span>`}
+    <span class="trn-tondo">${ic(TRN_ICONA[c.tipo] || 'info', 20)}</span>
     <div><b>${esc(c.titolo)}</b><small>${sotto}</small>${badge ? `<div>${badge}</div>` : ''}</div><span class="trn-freccia">›</span></button>`;
 }
 function trnLibri() {
