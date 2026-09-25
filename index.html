@@ -824,6 +824,30 @@
   .sv .totali div { min-width: 0; overflow: hidden; }
   .sv .totali span { display: block; font-size: 9px; font-weight: 700; color: var(--spento); }
   .sv .totali small { display: block; font-size: 9px; color: var(--testo-tenue); }
+  /* ── Gli ultimi 12 mesi: il foglio dello storico dei Segni Vitali (Ignazio 25/09: la griglia non deve stare
+     in fondo a una pagina lunga, e si devono poter scegliere gli utenti). Una riga per linea, il flusso a
+     barrette, il numero di adesso e il cambiamento; il tocco porta la griglia in cima su quella linea. ── */
+  .sl-chi { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--tocco); margin-bottom: 4px;
+    border: 1px solid var(--linea); border-radius: var(--raggio-bottone); background: var(--superficie);
+    font-family: inherit; font-size: 16px; font-weight: 600; color: var(--testo); padding: 10px 12px; text-align: left; }
+  .sl-chi svg.ic { flex: none; width: 20px; height: 20px; color: var(--gr-segni); }
+  .sl-chi span { margin-left: auto; color: var(--testo-tenue); font-weight: 400; }
+  .sl { display: grid; gap: 6px; }
+  .sl-riga { display: grid; grid-template-columns: 1fr auto 42px 22px; align-items: center; gap: 8px; width: 100%;
+    border: 1px solid transparent; border-radius: var(--raggio-riga); background: var(--superficie-2); padding: 8px 10px;
+    font-family: inherit; font-size: 15px; color: var(--testo); text-align: left; min-height: var(--tocco); }
+  .sl-riga.scelta { border-color: var(--sl-c); background: var(--superficie); }
+  .sl-riga > b { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sl-barre { display: flex; align-items: flex-end; gap: 2px; height: 26px; }
+  .sl-barre i { display: block; width: 7px; min-height: 2px; border-radius: 2px 2px 0 0; background: var(--spento); }
+  .sl-barre i.pieno { background: var(--sl-c); }
+  .sl-n { text-align: right; font-weight: 800; font-size: 16px; color: var(--sl-c); }
+  .sl-n.zero { color: var(--grigio-chiaro); font-weight: 600; }
+  .sl-f { font-size: 13px; font-weight: 700; color: var(--testo-tenue); text-align: center; }
+  .sl-f.su { color: var(--ok); } .sl-f.giu { color: var(--pericolo); }
+  .sl-riga.gruppo { background: var(--accento); color: #fff; border-color: var(--accento); }
+  .sl-riga.gruppo .sl-n { color: #fff; }
+  .sl-nota { font-size: 12.5px; color: var(--grigio); margin: 8px 0 0; }
 
   /* ── Agenda (Fase 4) ── */
   .ag-testa { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
@@ -1772,41 +1796,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609251048"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609251048"></script>
-<script src="lista.js?v=202609251048"></script>
-<script src="rubrica.js?v=202609251048"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609251048"></script>
-<script src="agenda.js?v=202609251048"></script>
-<script src="coach.js?v=202609251048"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609251048"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609251048"></script>
-<script src="check.js?v=202609251048"></script>
-<script src="mappa.js?v=202609251048"></script>
-<script src="pagina-coach.js?v=202609251048"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609251048"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609251048"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609251048"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609251048"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609251048"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609251048"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609251048"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609251048"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609251048"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609251048"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609251048"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609251048"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609251048"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609251048"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609251048"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609251048"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609251048"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609251048"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609251048"></script>
-<script src="benvenuto.js?v=202609251048"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609251048"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609251224"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609251224"></script>
+<script src="lista.js?v=202609251224"></script>
+<script src="rubrica.js?v=202609251224"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609251224"></script>
+<script src="agenda.js?v=202609251224"></script>
+<script src="coach.js?v=202609251224"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609251224"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609251224"></script>
+<script src="check.js?v=202609251224"></script>
+<script src="mappa.js?v=202609251224"></script>
+<script src="pagina-coach.js?v=202609251224"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609251224"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609251224"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609251224"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609251224"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609251224"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609251224"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609251224"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609251224"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609251224"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609251224"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609251224"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609251224"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609251224"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609251224"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609251224"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609251224"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609251224"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609251224"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609251224"></script>
+<script src="benvenuto.js?v=202609251224"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609251224"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.25 · 10:48';
+const APP_VERSION = '2026.09.25 · 12:24';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2132,7 +2156,7 @@ async function scegliPartner() {
   const nuovo = v.id === ST.utente.id ? null : v.id;
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
-  CK.giorni = null; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
   MP.schede = null; MP.targhe = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
   mostraTab();
@@ -2950,6 +2974,92 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // Brief docs/MB21_v4_Brief_F6_Check.md: si apre dal bottone «visione completa» della Dashboard (decisione A), periodi Mese · Wes · Anno,
 // adesso · prima (a pari giorni) · andamento, riga grigia col periodo prima intero (B), grafico dei 12 mesi, Segni Vitali a 12 mesi (C).
 // Numeri del partner loggato. Calcoli in check.js.
+// ── Gli ultimi 12 mesi (Ignazio 25/09: «alla fine di una lunga lista… la griglia nera è dispersa in fondo»,
+// «sempre la possibilità di selezionare gli utenti»): un posto solo per lo storico dei Segni Vitali, con due
+// porte — la striscia in Dashboard e la riga in cima al Check. Dentro: chi guardi, la griglia dei 12 mesi e,
+// per l'Admin, tutte le linee con il flusso a barrette e il cambiamento sul mese prima.
+const SL = { dati: null, tipo: 'bbs', chi: null, segniAl: undefined };
+const TIPI_SL = [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
+
+async function caricaStorico() {
+  if (SL.dati) return SL.dati;
+  const persone = eAdmin() && PS.persone.length ? PS.persone : [ST.utente];
+  const ids = persone.map(p => p.id), giorni = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq('storico dei check', supa.from('check_giorni_conti').select(CAMPI_CK)
+      .in('user_id', ids).order('id').range(da, da + 999));
+    if (error) throw error;
+    giorni.push(...data);
+    if (data.length < 1000) break;
+  }
+  const { data: ob, error } = await dbq('storico degli obiettivi', supa.from('obiettivi_mese').select('*').in('user_id', ids));
+  if (error) throw error;
+  if (SL.segniAl === undefined) SL.segniAl = CK.segniAl !== undefined ? CK.segniAl : await calcolatoreSegni();
+  SL.dati = { giorni, obiettivi: ob, persone: persone.map(p => ({ id: p.id, nome: nomeDi(p) })) };
+  return SL.dati;
+}
+
+async function foglioStorico() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--gr-segni)">${ic('segnivitali')}</span>
+      <div><small>Il flusso e i cambiamenti</small><b>Gli ultimi 12 mesi</b></div>
+      <button id="sl-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div id="sl-corpo"><div class="vuoto">Carico i numeri…</div></div></div>`;
+  document.body.appendChild(velo);
+  velo.querySelector('#sl-x').onclick = () => velo.remove();
+  let dati;
+  try { dati = await caricaStorico(); } catch (e) {
+    velo.querySelector('#sl-corpo').innerHTML = `<div class="avviso">Non riesco a caricare lo storico. Controlla la connessione e riprova.</div>`;
+    return;
+  }
+  if (!SL.chi || !dati.persone.some(p => p.id === SL.chi)) SL.chi = (visto() || ST.utente).id;
+  disegnaStorico(velo, dati);
+}
+
+function disegnaStorico(velo, dati) {
+  const C = MB21Check, oggi = MB21Coda.oggiRoma();
+  const chi = dati.persone.find(p => p.id === SL.chi) || dati.persone[0];
+  const io = (visto() || ST.utente).id;
+  const sv = C.segniVitali({ giorni: dati.giorni.filter(g => g.user_id === chi.id),
+    obiettivi: dati.obiettivi.filter(o => o.user_id === chi.id), oggi,
+    segniAl: chi.id === io ? SL.segniAl : null });
+  let html = '';
+  if (dati.persone.length > 1) html += `<button class="sl-chi" id="sl-chi">${ic('persona')} ${esc(chi.nome)}<span>cambia ▾</span></button>`;
+  html += tabellaSv(sv, chi.nome);
+  if (dati.persone.length > 1) {
+    const st = C.storicoLinee({ ...dati, oggi });
+    const colore = `var(--${SL.tipo})`;
+    const riga = (nome, celle, tot, classe, id) => {
+      const max = tot ? Math.max(1, ...celle.map(c => c.valore || 0)) : st.massimi[SL.tipo];
+      const ultima = celle[celle.length - 1], v = ultima.valore;
+      const frecce = { su: '▲', giu: '▼' };
+      return `<${id ? 'button' : 'div'} class="sl-riga ${classe}" ${id ? `data-slchi="${id}"` : ''} style="--sl-c:${colore}">
+        <b>${esc(nome)}</b>
+        <span class="sl-barre">${celle.map(c => `<i class="${c.valore ? 'pieno' : ''}" style="height:${Math.round((c.valore || 0) / max * 24) + 2}px"></i>`).join('')}</span>
+        <span class="sl-n ${v ? '' : 'zero'}">${v == null ? '·' : v}</span>
+        <span class="sl-f ${ultima.cambio}">${frecce[ultima.cambio] || ''}</span></${id ? 'button' : 'div'}>`;
+    };
+    html += `<h4 class="mc-t">Tutte le linee</h4>
+      <div class="rp-periodi">${TIPI_SL.map(([k, t]) => `<button data-sltipo="${k}" class="${SL.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
+      <div class="sl">
+        ${st.righe.filter(r => !r.vuota).map(r => riga(r.nome, r.celle[SL.tipo], false, r.id === chi.id ? 'scelta' : '', r.id)).join('')}
+        ${riga('Tutto il gruppo', st.totali[SL.tipo].map((v, i) => ({ valore: v, cambio: i && v > st.totali[SL.tipo][i - 1] ? 'su' : i && v < st.totali[SL.tipo][i - 1] ? 'giu' : '' })), true, 'gruppo')}
+      </div>
+      <p class="sl-nota">Da ${esc(st.mesi[0].etichetta.toLowerCase())} ${st.mesi[0].anno} a ${esc(st.mesi[11].etichetta.toLowerCase())} ${st.mesi[11].anno} · il numero è quello dell'ultimo mese, la freccia dice come è cambiato rispetto al mese prima. Tocca una linea per vederne i 12 mesi qui sopra.</p>
+      ${st.righe.some(r => r.vuota) ? `<p class="sl-nota">Senza biglietti in questi 12 mesi: ${st.righe.filter(r => r.vuota).map(r => esc(r.nome)).join(' · ')}.</p>` : ''}`;
+  }
+  velo.querySelector('#sl-corpo').innerHTML = html;
+  const b = velo.querySelector('#sl-chi');
+  if (b) b.onclick = async () => {
+    const v = await sceltaDa('Chi guardi', dati.persone.map(p => ({ etichetta: p.nome, id: p.id })));
+    if (v) { SL.chi = v.id; disegnaStorico(velo, dati); }
+  };
+  velo.querySelectorAll('[data-sltipo]').forEach(x => x.onclick = () => { SL.tipo = x.dataset.sltipo; disegnaStorico(velo, dati); });
+  velo.querySelectorAll('[data-slchi]').forEach(x => x.onclick = () => { SL.chi = x.dataset.slchi; disegnaStorico(velo, dati); velo.querySelector('.foglio').scrollTop = 0; });
+}
+
 const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], aperta: null, indietro: 1 };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
 const CAMPI_CK = 'user_id, data, ' + MB21Check.CAMPI_GIORNO.join(', ');
 
@@ -3006,7 +3116,8 @@ function disegnaCheck() {
         const parole = { mese: ['il mese scorso', 'due mesi fa'], wes: ['il WES prima', 'due WES fa'], anno: ["l'anno prima", 'due anni fa'] }[CK.tipo];
         return `<button data-ckindietro="${n}" class="${CK.indietro === n ? 'scelto' : ''}">${parole[n - 1]}</button>`;
       }).join('')}</div>
-      <div class="ck-confronto">${esc(r.confronto)}</div>`;
+      <div class="ck-confronto">${esc(r.confronto)}</div>
+      <button class="rp-apri" id="ck-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
     html += r.gruppi.map(g => `<div class="ck-gruppo" style="--g:${g.colore}; --g-tinta:${g.colore.replace(')', '-tinta)')}">
       <div class="ck-testa-g"><span class="tondo">${esc(g.etichetta[0])}</span>
         <span><h3>${esc(g.etichetta)}</h3>${g.riassunto ? `<small>${esc(g.riassunto)}</small>` : ''}</span></div>
@@ -3033,7 +3144,6 @@ function disegnaCheck() {
         return h;
       }).join('')}</div>`).join('');
   }
-  html += tabellaSv(C.segniVitali(dati));
   app.innerHTML = html + versione();
   collegaCheck();
 }
@@ -3042,6 +3152,7 @@ function collegaCheck() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ck-storico', foglioStorico);
   collegaPartnerSelect();
   app.querySelectorAll('[data-ckindietro]').forEach(b => b.onclick = () => {
     CK.indietro = Number(b.dataset.ckindietro); disegnaCheck();
