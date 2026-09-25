@@ -32,11 +32,50 @@ async function apriAdmin() {
     // l'Admin non è nell'elenco e non ha scadenza (Ignazio 16/09)
     AD.eliminati = ut.data.filter(u => u.eliminato_il).sort((a, b) => nomeDi(a).localeCompare(nomeDi(b), 'it'));
     AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin' && !u.eliminato_il).sort((a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    // «Senza avvisi» (25/09): il telefono per l'invito si prende dalla scheda della persona in Lista Nomi (codice Amway = partner_id), che ha il +39
+    const codiciSenza = senzaAvvisi().map(u => u.partner_id).filter(Boolean);
+    AD.telSchede = {};
+    if (codiciSenza.length) {
+      const { data: tel } = await dbq('telefoni delle schede', supa.from('contatti').select('codice_amway, telefono').in('codice_amway', codiciSenza).is('eliminato_il', null).like('telefono', '+%'));
+      (tel || []).forEach(c => { AD.telSchede[c.codice_amway] = c.telefono; });
+    }
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
   disegnaAdmin();
+}
+
+// ── SENZA AVVISI (lista «Avvisi» di MB App, Ignazio 25/09) ── chi entra nell'app ma non ha gli avvisi accesi su nessun dispositivo:
+// in cima a «Utenti dell'app», con l'invito già scritto da mandare con un tocco su WhatsApp o Telegram. Se sono tutti accesi, niente.
+// Telegram non accetta un testo già scritto verso una persona: il messaggio si copia e si incolla nella chat che si apre.
+const senzaAvvisi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.dispositivi[u.id] || []).length);
+// Il numero: prima quello della sua scheda (ha il +39), se no quello del Profilo (a volte scritto senza +39: «338…» → «+39338…»)
+function telefonoInvito(u) {
+  const n = ((AD.telSchede || {})[u.partner_id] || u.telefono || '').replace(/[^0-9+]/g, '');
+  return n.startsWith('+') ? n : /^3\d{8,9}$/.test(n) ? '+39' + n : null;
+}
+const invitoAvvisi = u => `Ciao ${(u.nome || nomeDi(u)).split(' ')[0]}! Per ricevere gli avvisi di MB21 (appuntamenti, telefonate, il Check della sera): apri MB21 dall'icona sulla schermata Home del telefono, tocca il cerchietto in alto a destra (il tuo Profilo), poi «Avvisi» → «Attiva gli avvisi». Se MB21 non è ancora sulla schermata Home: su iPhone aprila in Safari → Condividi → «Aggiungi alla schermata Home»; su Android in Chrome → menu ⋮ → «Aggiungi a schermata Home». Poi fai come sopra.`;
+function senzaAvvisiHtml() {
+  const senza = senzaAvvisi();
+  if (!senza.length) return '';
+  return `<div class="rp-wes ad-senza-avvisi"><h3>${ic('avvisi-spenti')} Senza avvisi (${senza.length})</h3>${senza.map(u => {
+    const tel = telefonoInvito(u);
+    return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(usoBreve(u))}</small>
+      ${tel ? `<div class="ad-invita"><a class="ct-whatsapp" href="${esc('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(invitoAvvisi(u)))}" target="_blank" rel="noopener">${ic('whatsapp')} WhatsApp</a>
+        <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button></div>`
+        : '<small>Manca il telefono: senza, l\'invito non parte</small>'}</div>`;
+  }).join('')}<small>L'invito è già scritto: tocca WhatsApp o Telegram e mandalo.</small></div>`;
+}
+function collegaSenzaAvvisi() {
+  app.querySelectorAll('[data-invito-tg]').forEach(b => b.onclick = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.invitoTg);
+    if (!u) return;
+    let copiato = false;
+    try { await navigator.clipboard.writeText(invitoAvvisi(u)); copiato = true; } catch (e) {}
+    window.open('https://t.me/' + telefonoInvito(u), '_blank', 'noopener');
+    mostraToast(copiato ? 'Messaggio copiato: nella chat di Telegram tieni premuto e scegli «Incolla»' : 'Telegram aperto: scrivi tu il messaggio');
+  });
 }
 
 // «16/09/2026 · 20:51» nell'ora di Roma
@@ -110,6 +149,7 @@ function disegnaAdmin() {
           <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ${ic('attenzione')} codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
           ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
+      ${senzaAvvisiHtml()}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
@@ -295,6 +335,7 @@ function collegaAdmin() {
     anteprimaSchede();
   });
   su('ad-nuovo-utente', () => foglioNuovoUtente());
+  collegaSenzaAvvisi();
   su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
