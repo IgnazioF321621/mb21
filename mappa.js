@@ -298,7 +298,23 @@
     return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} gg`;
   }
 
+  // Il ramo di un partner: il suo codice Amway e tutti quelli sotto di lui, a qualsiasi profondità.
+  // Serve alla regola del **niente crossline** (Ignazio 25/09: «le altre squadre non devono vedere i dati di
+  // Isabella, compresi i miei»): guardando una linea si vedono lei e la sua discendenza, mai le linee parallele.
+  function ramoDi(squadra, radice) {
+    const dentro = new Set();
+    if (!radice) return dentro;
+    dentro.add(radice);
+    const figli = {};
+    for (const p of squadra || []) if (p.sponsor_id) (figli[p.sponsor_id] = figli[p.sponsor_id] || []).push(p.partner_id);
+    const daFare = [radice];
+    while (daFare.length) {
+      for (const f of figli[daFare.pop()] || []) if (!dentro.has(f)) { dentro.add(f); daFare.push(f); }
+    }
+    return dentro;
+  }
+
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner, partnerDellaScheda,
-    segniGruppo, segniAl, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
+    segniGruppo, segniAl, ramoDi, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

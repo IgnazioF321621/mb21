@@ -43,8 +43,12 @@ const velo = {
   },
 };
 
-// ── i dati finti: tre linee, gli stessi numeri della prova dei conti
-const persone = [{ id: 'A', nome: 'Ignazio' }, { id: 'B', nome: 'Ornella' }, { id: 'C', nome: 'Nuovo' }];
+// ── i dati finti: l'albero vero in piccolo. Ignazio in cima, Isabella sotto di lui, Nuovo sotto Isabella;
+// Ornella è una squadra PARALLELA (sponsor fuori dall'app): guardando Ignazio non deve comparire (crossline).
+const persone = [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }, { id: 'B', nome: 'Isabella', partner_id: 'IS' },
+  { id: 'C', nome: 'Nuovo', partner_id: 'SA' }, { id: 'D', nome: 'Ornella', partner_id: 'OR' }];
+const squadra = [{ partner_id: 'IG', sponsor_id: 'X' }, { partner_id: 'IS', sponsor_id: 'IG' },
+  { partner_id: 'SA', sponsor_id: 'IS' }, { partner_id: 'OR', sponsor_id: 'Y' }];
 const giorni = [
   { user_id: 'A', data: '2026-07-05', contatti: 6, pm: 1, bbs: 0, wes: 1, cep: 0 },
   { user_id: 'A', data: '2026-08-20', contatti: 0, pm: 0, bbs: 0, wes: 2, cep: 0 },
@@ -55,12 +59,13 @@ const obiettivi = [
   { user_id: 'A', mese: '2026-09-01', bbs_partenza: 5, wes_partenza: 10, cep_partenza: 6 },
   { user_id: 'B', mese: '2026-07-01', bbs_partenza: 2, wes_partenza: 2, cep_partenza: 2 },
   { user_id: 'B', mese: '2026-09-01', bbs_partenza: 0, wes_partenza: 0, cep_partenza: 0 },
+  { user_id: 'D', mese: '2026-07-01', bbs_partenza: 9, wes_partenza: 9, cep_partenza: 9 },
 ];
-const dati = { giorni, obiettivi, persone };
+const dati = { giorni, obiettivi, persone, squadra };
 
 // ── il contesto: gli stub di quello che sta altrove nell'app
 const ctx = {
-  MB21Check: C, MB21Dashboard: D,
+  MB21Check: C, MB21Dashboard: D, MB21Mappa: require('../../mappa.js'),
   MB21Coda: { oggiRoma: () => '2026-09-25' },
   ST: { utente: { id: 'A' } },
   visto: () => ({ id: 'A' }),
@@ -82,13 +87,13 @@ prova('Il foglio disegna chi guardi, la griglia dei 12 mesi e tutte le linee', (
   const h = disegna();
   assert.match(h, /id="sl-chi"/);                      // il selettore c'è: più di una persona
   assert.match(h, /GRIGLIA di Ignazio/);               // la griglia nera è del partner scelto
-  assert.match(h, /Tutte le linee/);
+  assert.match(h, /Ignazio e le sue linee/);
   assert.match(h, /data-slchi="A"/);
   assert.match(h, /data-slchi="B"/);
   assert.doesNotMatch(h, /data-slchi="C"/);            // chi non ha biglietti non fa una riga…
   assert.match(h, /Senza biglietti in questi 12 mesi: Nuovo/);   // …ma è detto in fondo
   assert.match(h, /Tutto il gruppo/);
-  assert.ok(h.indexOf('GRIGLIA di Ignazio') < h.indexOf('Tutte le linee'));   // prima il singolo, poi le linee
+  assert.ok(h.indexOf('GRIGLIA di Ignazio') < h.indexOf('e le sue linee'));   // prima il singolo, poi le linee
 });
 
 prova('Ogni linea ha 12 barrette, il numero dell\'ultimo mese e la sua freccia', () => {
@@ -97,7 +102,7 @@ prova('Ogni linea ha 12 barrette, il numero dell\'ultimo mese e la sua freccia',
   const barre = righe[0].match(/<i class="[^"]*" style="height:\d+px"><\/i>/g) || [];
   assert.equal(barre.length, 12);
   assert.match(righe[0], /class="sl-n ">5</);          // Ignazio: BBS 5 a settembre
-  assert.match(righe[1], /class="sl-n zero">0</);      // Ornella: 0 a settembre, scritto spento
+  assert.match(righe[1], /class="sl-n zero">0</);      // Isabella: 0 a settembre, scritto spento
   assert.match(righe[1], /class="sl-f giu">▼</);       // 0 dopo 2: freccia giù
   assert.match(righe[0], /class="sl-f ">/);            // Ignazio fermo a 5: nessuna freccia
 });
@@ -107,9 +112,9 @@ prova('La linea scelta è segnata, e il tocco su un\'altra la cambia', () => {
   assert.match(h, /class="sl-riga scelta" data-slchi="A"/);
   imposta('chi', 'B');
   h = disegna();
-  assert.match(h, /GRIGLIA di Ornella/);
+  assert.match(h, /GRIGLIA di Isabella/);
   assert.match(h, /class="sl-riga scelta" data-slchi="B"/);
-  assert.match(h, /id="sl-chi">.*Ornella/);
+  assert.match(h, /id="sl-chi">.*Isabella/);
   imposta('chi', 'A');
 });
 
@@ -140,12 +145,33 @@ prova('Il periodo è scritto sotto la tabella, e dice come si legge', () => {
   assert.match(h, /Tocca una linea per vederne i 12 mesi qui sopra/);
 });
 
+prova('Niente crossline: la squadra parallela non si vede, nemmeno tra i nomi in fondo', () => {
+  const h = disegna();
+  assert.doesNotMatch(h, /data-slchi="D"/);
+  assert.doesNotMatch(h, /Ornella/);                   // non è sotto Ignazio: non esiste per questa tabella
+  assert.match(h, /Solo la linea di Ignazio/);
+});
+
+prova('Cambiando persona cambiano anche le linee sotto', () => {
+  imposta('chi', 'B');
+  const h = disegna();
+  assert.match(h, /Isabella e le sue linee/);
+  assert.doesNotMatch(h, /data-slchi="A"/);            // il suo upline non si vede da sotto
+  assert.match(h, /Senza biglietti in questi 12 mesi: Nuovo/);   // Nuovo è sotto Isabella
+  imposta('chi', 'D');
+  const o = disegna();
+  assert.match(o, /GRIGLIA di Ornella/);
+  assert.doesNotMatch(o, /e le sue linee/);            // sotto di lei non c'è nessuno: niente tabella…
+  assert.match(o, /Sotto Ornella non c'è ancora nessuno che usa l'app/);   // …ma è scritto, non sparisce
+  imposta('chi', 'A');
+});
+
 prova('Con una persona sola: nessun selettore, nessuna tabella delle linee', () => {
-  ctx.disegnaStorico(velo, { giorni, obiettivi, persone: [{ id: 'A', nome: 'Ignazio' }] });
+  ctx.disegnaStorico(velo, { giorni, obiettivi, squadra, persone: [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }] });
   const h = velo.corpo.innerHTML;
   assert.match(h, /GRIGLIA di Ignazio/);
   assert.doesNotMatch(h, /id="sl-chi"/);
-  assert.doesNotMatch(h, /Tutte le linee/);
+  assert.doesNotMatch(h, /e le sue linee/);
 });
 
 console.log(`\n${ok} prove superate`);

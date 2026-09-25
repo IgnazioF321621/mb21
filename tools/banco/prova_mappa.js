@@ -244,6 +244,26 @@ prova('file Amway: VPP e VPG vanno agli utenti dell\'app col loro codice', () =>
   assert.deepEqual(r, [{ user_id: 'u1', mese: '2026-09-01', vpp_amway: 1221.5, vpg_amway: 539.93 }]);
 });
 
+prova('ramoDi: la linea di un partner, niente squadre parallele (Ignazio 25/09, no crossline)', () => {
+  // l'albero vero in piccolo: Ignazio in cima con Isabella (e Sandra sotto) e Luca (con Filippo e Valentina);
+  // Ornella è un'altra squadra, il suo sponsor non è nell'app
+  const sq = [{ partner_id: 'IG', sponsor_id: 'X' }, { partner_id: 'IS', sponsor_id: 'IG' }, { partner_id: 'SA', sponsor_id: 'IS' },
+    { partner_id: 'LU', sponsor_id: 'IG' }, { partner_id: 'FI', sponsor_id: 'LU' }, { partner_id: 'VA', sponsor_id: 'FI' },
+    { partner_id: 'OR', sponsor_id: 'Y' }, { partner_id: 'CA', sponsor_id: 'OR' }];
+  const r = x => [...M.ramoDi(sq, x)].sort().join(' ');
+  assert.equal(r('IG'), 'FI IG IS LU SA VA');   // tutta la sua discendenza, a qualsiasi profondità
+  assert.equal(r('IS'), 'IS SA');               // da sotto non si vede l'upline
+  assert.equal(r('OR'), 'CA OR');               // l'altra squadra ha il suo ramo, separato
+  assert.equal(r('SA'), 'SA');                  // chi non ha nessuno sotto: solo sé
+  assert.equal(r(null), '');
+  assert.equal([...M.ramoDi(null, 'IG')].join(' '), 'IG');   // senza albero resta sé stesso
+});
+
+prova('ramoDi: un albero con un anello non gira a vuoto', () => {
+  const sq = [{ partner_id: 'A', sponsor_id: 'B' }, { partner_id: 'B', sponsor_id: 'A' }];
+  assert.deepEqual([...M.ramoDi(sq, 'A')].sort(), ['A', 'B']);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
 
 prova('targhetta 📱 dell\'app: uso per partner (coppia: uso più recente, nomi sommati; eliminati fuori) ed etichetta dei giorni', () => {
