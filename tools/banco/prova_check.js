@@ -54,8 +54,10 @@ prova('Settembre 2026 in corso: a pari giorni (1-15 agosto) + agosto intero nell
   assert.equal(voce(r, 'Piani Marketing').riga, 'agosto intero: 0');   // 0 e 0: niente «superato»
   // Segni Vitali: partenza + check; la riga grigia dice come si è chiuso agosto
   assert.deepEqual([voce(r, 'WES').adesso, voce(r, 'WES').prima, voce(r, 'WES').riga], ['10', '7', 'fine agosto: 9 · superato ✓']);
-  // VPP/VPG: un numero al mese, niente pari giorni
-  assert.deepEqual([voce(r, 'VPG').adesso, voce(r, 'VPG').prima, voce(r, 'VPG').riga], ['325,83', '—', 'agosto intero: 2106,78 · mancano 1780,95']);
+  // VPP/VPG: un numero al mese, niente pari giorni → nella colonna «Prima» si dice quando arriva il confronto (Ignazio 25/09)
+  assert.deepEqual([voce(r, 'VPG').adesso, voce(r, 'VPG').prima, voce(r, 'VPG').riga], ['325,83', 'a fine mese', 'agosto intero: 2106,78 · mancano 1780,95']);
+  assert.equal(voce(r, 'VPG').primaNota, true);
+  assert.equal(voce(r, 'Pagine libro').primaNota, false);   // le voci con i pari giorni restano un numero
 });
 
 prova('Mese più lungo del precedente: il tratto di confronto non esce dal mese prima', () => {

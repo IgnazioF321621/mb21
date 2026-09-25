@@ -33,6 +33,8 @@
   ];
   const VOCI = GRUPPI.flatMap(g => g.voci);
   const CAMPI_GIORNO = VOCI.filter(v => v.tipo !== 'amway').map(v => v.chiave);
+  // come si chiama la fine del periodo nella colonna «Prima» (VPP e VPG, un numero al mese)
+  const A_FINE = { mese: 'mese', wes: 'WES', anno: 'anno' };
   const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
   const n = v => (v == null || v === '' ? 0 : Number(v));
@@ -124,6 +126,9 @@
       const intero = q ? valore(dati, v, q.da, fineQ) : null;
       const pariGiorni = !senzaTratto && (v.tipo !== 'amway' || !inCorso);
       const prima = !q ? null : pariGiorni ? valore(dati, v, q.da, finoQ) : null;
+      // VPP e VPG nel periodo in corso: un numero solo al mese, il confronto arriva quando il periodo è finito.
+      // Al posto del «—», che sembrava un dato mancante, si scrive quando arriva (Ignazio 25/09).
+      const aFine = !!q && inCorso && v.tipo === 'amway' && !senzaTratto;
       let riga = null;
       if (q && inCorso) {
         const etichetta = v.tipo === 'stato' ? `fine ${nomeIntero(q)}` : `${nomeIntero(q)} intero`;
@@ -131,7 +136,9 @@
         riga = `${etichetta}: ${formato(intero, v.decimali)}${esito}`;
       }
       return { chiave: v.chiave, titolo: v.titolo, decimali: v.decimali || 0,
-        adesso: formato(adesso, v.decimali), prima: prima == null ? '—' : formato(prima, v.decimali),
+        adesso: formato(adesso, v.decimali),
+        prima: prima != null ? formato(prima, v.decimali) : aFine ? `a fine ${A_FINE[p.tipo] || 'periodo'}` : '—',
+        primaNota: prima == null && aFine,
         andamento: andamento(adesso, prima), riga };
     }) })).map(g => ({ ...g, riassunto: riassunto(g.voci) }));
     return { inCorso, confronto, gruppi, passi,
