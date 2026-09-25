@@ -562,6 +562,28 @@ async function inserisciRighe(progettoId, dopoId, righe) {
   const campo = app.querySelector(dopoId ? '.pj-inline input' : '.pj-nuova input'); if (campo) campo.focus();
   return data.length;
 }
+// Eliminare le voci fatte (Ignazio 25/09: «creano confusione inutile»): dal conto in cima al progetto «Elimina le N fatte», con
+// conferma. Quali lo decide MB21Agenda.fatteDaEliminare (una fatta con sotto punti da fare resta; i titoli restano, anche vuoti).
+// «Annulla» nel messaggio le rimette com'erano: stesso id, stesso posto (l'ordine delle altre non si tocca, i buchi non contano).
+const COLONNE_COSA = ['id', 'user_id', 'testo', 'giorno', 'ordine', 'fatto_il', 'creato_il', 'modello_id', 'scala', 'core', 'gruppo_id', 'ora', 'durata', 'contatto_id', 'progetto_id', 'tipo', 'livello'];
+async function eliminaFatte(p) {
+  const via = new Set(MB21Agenda.fatteDaEliminare(righeInVista(p.id)));
+  const righe = AG.cose.filter(c => via.has(c.id)), n = righe.length;
+  if (!n) return;
+  const neiGiorni = righe.some(c => c.giorno) ? ' Spariscono anche dai giorni in cui erano in programma.' : '';
+  if (!await chiediConferma(n === 1 ? 'Eliminare la voce fatta?' : `Eliminare le ${n} voci fatte?`, `Restano le cose da fare di «${p.titolo}» e i titoli. Una voce fatta con sotto punti ancora da fare resta.${neiGiorni}`, 'Elimina', true)) return;
+  const { error } = await dbq('elimina le fatte', supa.from('cose_da_fare').delete().in('id', [...via]));
+  if (error) return mostraToast('Non eliminate: riprova.');
+  AG.cose = AG.cose.filter(c => !via.has(c.id));
+  disegnaAgenda();
+  mostraToast(n === 1 ? 'Eliminata 1 voce fatta' : `Eliminate ${n} voci fatte`, async () => {
+    const copie = righe.map(c => Object.fromEntries(COLONNE_COSA.filter(k => k in c).map(k => [k, c[k]])));
+    const r = await dbq('rimetti le fatte', supa.from('cose_da_fare').insert(copie));
+    if (r.error) return mostraToast('Non rimesse: riprova.');
+    AG.cose.push(...righe);
+    disegnaAgenda();
+  });
+}
 async function spuntaTitolo(passi, fatto) {
   if (!passi.length) return mostraToast('Il titolo non ha ancora passi sotto');
   const fatto_il = fatto ? null : new Date().toISOString(), oggi = MB21Coda.oggiRoma();
@@ -615,7 +637,7 @@ function disegnaProgetto() {
   // un titolo si chiude e si apre con la freccetta, come le sezioni del giorno (Ignazio 23/09); si ricorda sul dispositivo
   const chiuse = sezioniChiuse(), nascoste = new Set();
   righe.forEach((c, i) => { if (c.tipo === 'titolo' && chiuse.includes('pt-' + c.id)) sottoTitolo(i).forEach(x => nascoste.add(x.id)); });
-  const n = contaProgetto(p.id);
+  const n = contaProgetto(p.id), daEliminare = A.fatteDaEliminare(righe).length;   // «Elimina le N fatte» (25/09)
   const calcolati = new Map(A.conTitoliFatti(AG.cose).filter(x => x.tipo === 'titolo' && x.giorno).map(x => [x.id, x]));   // i cantieri in programma
   const quando = c => {
     if (!c.giorno) return '';
@@ -640,7 +662,7 @@ function disegnaProgetto() {
   }
   const tipoOra = AG.tipoRiga || 'cosa', livOra = AG.livelloRiga || 0;
   const html = testaScala(false) + `<div class="mm-testa pj-testa"><h1 class="ag-titolo sc-titolo">${ic(p.icona || 'obiettivi')}<button class="ag-mese mm-titolo" id="pj-titolo" aria-label="Titolo, icona, elimina">${esc(p.titolo)} ${ic('modifica')}</button></h1></div>
-    ${n.tot ? `<div class="pj-conto"><span><b>${n.fatte} di ${n.tot}</b> passi fatti</span><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
+    ${n.tot ? `<div class="pj-conto"><div class="pj-conto-riga"><span><b>${n.fatte} di ${n.tot}</b> passi fatti</span>${daEliminare ? `<button class="link" id="pj-via-fatte">${ic('elimina')} Elimina ${daEliminare === 1 ? 'la fatta' : `le ${daEliminare} fatte`}</button>` : ''}</div><div class="pw-traccia"><i style="width:${Math.round(n.fatte / n.tot * 100)}%"></i></div></div>` : ''}
     <div class="ag-foglio pj-foglio">${righeHtml || '<div class="mb-vuoto">Scrivi qui sotto la prima riga del progetto.</div>'}
       <form class="ag-cosa-nuova pj-nuova" data-gruppo="" data-progetto="${esc(p.id)}">
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
@@ -650,6 +672,7 @@ function disegnaProgetto() {
     </div>`;
   montaScala(html);
   const t = document.getElementById('pj-titolo');
+  const vf = document.getElementById('pj-via-fatte'); if (vf) vf.onclick = () => eliminaFatte(p);
   if (t) t.onclick = () => foglioProgetto(p, async ({ titolo, icona }) => {
     const { error } = await dbq('progetto', supa.from('progetti').update({ titolo, icona }).eq('id', p.id));
     if (error) return mostraToast('Non salvato: riprova.');
