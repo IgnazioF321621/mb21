@@ -46,6 +46,20 @@ const dataOra = t => new Date(MB21Lista.momento(t)).toLocaleString('it-IT', { ti
 const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 const meseLungo = d => { const [m, a] = MB21Lista.etichettaEvento(d).split('-'); return `${MESI_LUNGHI[Number(m) - 1]} ${a}`; };
 
+// Ultimo utilizzo in breve, per la riga chiusa (Ignazio 25/09): «usata oggi 14:03» · «ieri 09:20» · «3 giorni fa» · «il 12/09/2026»
+function usoBreve(u) {
+  if (!u.ultimo_uso) return u.auth_id ? 'utilizzo non registrato' : 'mai entrato';
+  const t = MB21Lista.momento(u.ultimo_uso);
+  const giorno = new Date(t).toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });   // AAAA-MM-GG
+  const ora = new Date(t).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  const oggi = MB21Coda.oggiRoma();
+  const giorni = Math.round((Date.parse(oggi + 'T00:00:00Z') - Date.parse(giorno + 'T00:00:00Z')) / 86400000);
+  if (giorni <= 0) return `usata oggi ${ora}`;
+  if (giorni === 1) return `usata ieri ${ora}`;
+  if (giorni < 7) return `usata ${giorni} giorni fa`;
+  return `usata il ${giorno.split('-').reverse().join('/')}`;
+}
+
 function rigaUtenteAdmin(u) {
   const D = MB21Dashboard, oggi = MB21Coda.oggiRoma(), io = u.id === ST.utente.id, aperto = AD.aperti.has(u.id);
   const chiPaga = u.abbonamento_con && AD.utenti.find(x => x.id === u.abbonamento_con);
@@ -55,7 +69,7 @@ function rigaUtenteAdmin(u) {
   const data = d => (d ? d.split('-').reverse().join('/') : '—');
   // cantiere 25 (Ignazio 17/09): la foto del Profilo anche qui, letta da `utenti.foto` (stesso cerchietto della Dashboard)
   let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${escIcone(pallino)}${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
-    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · ' + ic('avvisi') : ''}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · ' + ic('avvisi') : ''} · ${esc(usoBreve(u))}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
