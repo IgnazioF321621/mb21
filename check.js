@@ -180,9 +180,18 @@
       mesi.push({ mese: m, etichetta: MESI_BREVI[Number(mm) - 1], anno: a.slice(2) });
     }
     const perMese = D.mesiDaGiorni(giorni, CAMPI_STATO);
+    // una linea può avere più utenti: la coppia con lo stesso codice (`utenti`, da MB21Mappa.lineePerCodice).
+    // Il totale di ognuno si calcola da sé (la sua partenza, o il suo mese prima) e poi si somma, come fa «Tutti»
+    // (MB21Dashboard.unisciPartner): la catena di chi non ha scritto la partenza non si mescola con quella dell'altro
+    const totaleDi = u => D.totaliMesi(perMese.filter(x => x.user_id === u), (obiettivi || []).filter(o => o.user_id === u), finoA);
     const righe = (persone || []).map(p => {
-      const tot = D.totaliMesi(perMese.filter(x => x.user_id === p.id),
-        (obiettivi || []).filter(o => o.user_id === p.id), finoA);
+      const tot = {};
+      for (const t of (p.utenti || [p.id]).map(totaleDi)) {
+        for (const [mese, v] of Object.entries(t)) {
+          const r = tot[mese] || (tot[mese] = { bbs: 0, wes: 0, cep: 0 });
+          for (const k of CAMPI_STATO) r[k] += v[k];
+        }
+      }
       const celle = {};
       for (const k of CAMPI_STATO) {
         celle[k] = mesi.map(({ mese }) => {

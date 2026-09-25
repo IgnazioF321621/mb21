@@ -288,6 +288,21 @@ prova('ordinePerMappa: i nomi come in Mappa, prima la propria squadra, con livel
   assert.equal(di.find(p => p.nome === 'Ignazio').livello, null);
 });
 
+prova('lineePerCodice: una linea per codice Amway, la coppia è un partner solo (Ignazio 25/09)', () => {
+  const sq = [{ partner_id: 'LU', nome: 'GALLI, LUCA' }, { partner_id: 'TO', nome: 'RUSSO, ANTONINA' }, { partner_id: 'IS', nome: 'MORETTI, FIAMMETTA' }];
+  const persone = [{ id: 1, nome: 'Fiammetta Moretti', partner_id: 'IS' }, { id: 2, nome: 'Luca Galli', partner_id: 'LU' },
+    { id: 3, nome: 'Persona H', partner_id: 'LU' }, { id: 4, nome: 'Persona G', partner_id: 'TO' },
+    { id: 5, nome: 'Tonya Russo', partner_id: 'TO' }, { id: 6, nome: 'Senza Codice', partner_id: null }];
+  const l = M.lineePerCodice(persone, sq);
+  assert.deepEqual(l.map(x => x.nome), ['Fiammetta Moretti', 'Luca Galli', 'Antonina Russo', 'Senza Codice']);
+  assert.deepEqual(l.map(x => x.utenti), [[1], [2, 3], [4, 5], [6]]);
+  assert.deepEqual(l[1].compagni, ['Persona H']);
+  assert.deepEqual(l[2].compagni, ['Persona G']);   // Tonya Russo è Antonina (stesso cognome): non è una compagna
+  assert.deepEqual(l[0].compagni, []);
+  assert.equal(l[2].id, 4);                                  // l'id della linea è il primo utente
+  assert.equal(M.lineePerCodice([{ id: 7, nome: 'Anna', partner_id: 'ZZ' }], []).at(0).nome, 'Anna');   // senza nome Amway resta il suo
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
 
 prova('targhetta 📱 dell\'app: uso per partner (coppia: uso più recente, nomi sommati; eliminati fuori) ed etichetta dei giorni', () => {
