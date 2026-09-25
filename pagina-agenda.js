@@ -395,8 +395,47 @@ function nomeProgetto(c) {
     return '📁 ' + pj.titolo + (n.tot ? ` · ${n.fatte} di ${n.tot} fatte` : ' · ancora senza voci');
   }
   const posto = MB21Agenda.postoNelProgetto(righeInVista(pj.id), c.id) || { titolo: '', segno: '' };
-  const corto = String(posto.titolo || '').split(/\s+[–-]\s+/)[0], numero = /^\d/.test(posto.segno) ? posto.segno : '';
-  return '📁 ' + pj.titolo + (corto ? ' › ' + (corto.length > 28 ? corto.slice(0, 27) + '…' : corto) + (numero ? ' · ' + numero : '') : '');
+  const corto = titoloCorto(posto.titolo), numero = /^\d/.test(posto.segno) ? posto.segno : '';
+  return '📁 ' + pj.titolo + (corto ? ' › ' + corto + (numero ? ' · ' + numero : '') : '');
+}
+// Il titolo corto, fino al « – » e al massimo 28 lettere: nella riga piccola delle liste e nel messaggio dello spostamento
+function titoloCorto(t) { const x = String(t || '').split(/\s+[–-]\s+/)[0]; return x.length > 28 ? x.slice(0, 27) + '…' : x; }
+// Spostare una riga sotto un altro titolo, anche di un altro progetto (Ignazio 25/09: con la lista lunga, trascinando non sempre
+// si arriva al titolo giusto). Dal foglio della riga: «Sposta sotto un altro titolo» apre la lista delle mete (sceltaDa): i titoli
+// del suo progetto tranne quello dove sta, poi quelli degli altri progetti (un progetto senza titoli è una meta sola, in fondo).
+// Un titolo va solo in un altro progetto, in fondo, con tutte le sue righe. Rende { testo del bottone, mete, sopra = il titolo di adesso }.
+function doveSpostare(c) {
+  const righe = righeInVista(c.progetto_id);
+  let t = righe.findIndex(r => r.id === c.id) - 1;
+  while (t >= 0 && righe[t].tipo !== 'titolo') t--;
+  const sopra = c.tipo !== 'titolo' && t >= 0 ? righe[t] : null, mete = [];
+  const progetti = [...(AG.progetti || [])].sort((x, y) => (x.id === c.progetto_id ? 0 : 1) - (y.id === c.progetto_id ? 0 : 1));   // prima il suo
+  for (const p of progetti) {
+    const altro = p.id !== c.progetto_id, titoli = righeInVista(p.id).filter(r => r.tipo === 'titolo'), icona = altro ? p.icona || 'obiettivi' : null;
+    if (c.tipo === 'titolo' || !titoli.length) { if (altro) mete.push({ etichetta: p.titolo, icona, progetto: p, titolo: null }); continue; }
+    for (const x of titoli) if (!sopra || x.id !== sopra.id) mete.push({ etichetta: altro ? `${p.titolo} › ${x.testo}` : x.testo, icona, progetto: p, titolo: x });
+  }
+  const qui = mete.some(m => m.progetto.id === c.progetto_id), fuori = mete.some(m => m.progetto.id !== c.progetto_id);
+  return { testo: 'Sposta ' + [qui ? 'sotto un altro titolo' : '', fuori ? 'in un altro progetto' : ''].filter(Boolean).join(' o '), mete, sopra };
+}
+// Lo spostamento (MB21Agenda.spostaRighe, con le prove): si salvano solo le righe che cambiano posto, rientro o progetto.
+// Si resta dove si è; il messaggio dice dove è andata, con «Annulla» che rimette tutto com'era.
+async function spostaSotto(c, meta, ridisegna = disegnaAgenda) {
+  const altro = meta.progetto.id !== c.progetto_id;
+  const cambi = MB21Agenda.spostaRighe(righeInVista(c.progetto_id), c.id, meta.titolo ? meta.titolo.id : null, altro ? righeInVista(meta.progetto.id) : null, altro ? meta.progetto.id : null);
+  if (!cambi) return mostraToast('Non spostata: riprova.');
+  const per = new Map(AG.cose.map(x => [x.id, x]));
+  const prima = cambi.map(({ id }) => { const x = per.get(id); return { id, ordine: x.ordine, livello: x.livello || 0, progetto_id: x.progetto_id }; });
+  const salva = async lista => {
+    const esiti = await Promise.all(lista.map(({ id, ...v }) => dbq('sposta', supa.from('cose_da_fare').update(v).eq('id', id))));
+    if (esiti.some(r => r.error)) { mostraToast('Non salvato: riprova.'); apriAgenda(AG.giorno); return false; }
+    lista.forEach(({ id, ...v }) => Object.assign(per.get(id), v));
+    ridisegna();
+    return true;
+  };
+  if (!await salva(cambi)) return;
+  const dove = [altro ? `in «${meta.progetto.titolo}»` : '', meta.titolo ? `sotto «${titoloCorto(meta.titolo.testo)}»` : ''].filter(Boolean).join(' ');
+  mostraToast(`${c.tipo === 'titolo' ? 'Titolo spostato' : 'Spostata'} ${dove}`, () => salva(prima));
 }
 // La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Periodo, Anno e della scala sopra: le parti non
 // vuote separate da « · » (la riportata, e per le righe di un progetto nomeProgetto)
@@ -607,7 +646,7 @@ function disegnaProgetto() {
         <span class="pj-tipi">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo-riga="${k}" class="${tipoOra === k ? 'scelto' : ''}" aria-label="${t}">${t.split(' ')[0]}</button>`).join('')}</span>
         <span class="pj-tipi pj-rientri"><button type="button" data-rientro="-1" aria-label="Rientro indietro (Maiusc+Tab)">⇤</button><button type="button" data-rientro="1" aria-label="Rientro avanti (Tab)">⇥</button></span>
         <input type="text" placeholder="Aggiungi una riga…" autocomplete="off" style="padding-left:${livOra * 24}px"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>
-      <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. <b>Tocca una riga</b> per metterla in programma: in un giorno, in una settimana o in un mese. <b>Tocca un titolo</b> per mettere in programma tutto il cantiere: sarà una riga sola, che si completa quando fai le sue voci.</div>
+      <div class="vn-aiuto">T titolo · ☐ da fare · 1. numerato · • puntini. <b>Tab</b> (o ⇥) porta la riga avanti e la numera 1.1, <b>Maiusc+Tab</b> (o ⇤) la riporta indietro. Puoi anche <b>incollare un elenco</b>: ogni riga va al suo posto, con i suoi rientri. <b>Tocca una riga</b> per metterla in programma (in un giorno, in una settimana o in un mese) o per spostarla sotto un altro titolo. <b>Tocca un titolo</b> per mettere in programma tutto il cantiere: sarà una riga sola, che si completa quando fai le sue voci.</div>
     </div>`;
   montaScala(html);
   const t = document.getElementById('pj-titolo');
@@ -870,6 +909,7 @@ function foglioCosa(c, oggi, opz = {}) {
   ].filter(([, , d]) => !(d.scala === scalaC && d.giorno === (rip ? (scalaC === 'giorno' ? oggi : inizioScalaMB(scalaC, oggi)) : c.giorno)))
     .filter(([k]) => !inProgramma || k !== 'mese' || scalaC === 'mese' || scalaC === 'settimana');
   const pezzo = pj ? MB21Agenda.testoDaCopiare(righeInVista(pj.id), c.id) : null;   // «Copia la voce» (24/09)
+  const spostaIn = pj && !opz.dallaScheda ? doveSpostare(c) : null;   // «Sposta sotto un altro titolo» (25/09)
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
@@ -894,7 +934,8 @@ function foglioCosa(c, oggi, opz = {}) {
     ${pj && c.giorno ? `<button type="button" class="link" id="fc-togli-giorno">${ic('agenda')} Togli dal programma (resta nel progetto)</button>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
     ${pj && !opz.dallaScheda && AG.vista === 'progetto' ? `<button class="link" id="fc-sotto">${ic('piu')} Aggiungi una riga sotto</button>` : ''}
-    ${pezzo ? `<button class="link" id="fc-copia">${ic('copia')} Copia ${cosaSiCopia(c, pezzo.voci)}</button>` : ''}
+    ${spostaIn && spostaIn.mete.length ? `<button class="link" id="fc-sposta-in">${ic('sposta')} ${spostaIn.testo}</button>` : ''}
+    ${pezzo ?`<button class="link" id="fc-copia">${ic('copia')} Copia ${cosaSiCopia(c, pezzo.voci)}</button>` : ''}
     <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'mese' ? 'Sposta al mese dopo' : c.scala === 'settimana' ? 'Sposta alla settimana dopo' : c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
     <button class="link" id="fc-no">Annulla</button></div>`;
@@ -984,6 +1025,17 @@ function foglioCosa(c, oggi, opz = {}) {
   velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(b => { b.onclick = () => { tipoScelto = b.dataset.tipo; velo.querySelectorAll('#fc-tipo [data-tipo]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
   const copia = velo.querySelector('#fc-copia'); if (copia) copia.onclick = () => { copiaRighe(pj.id, c); chiudi(); };
   const sotto = velo.querySelector('#fc-sotto'); if (sotto) sotto.onclick = () => { chiudi(); apriInserisci(c.id); };
+  const spIn = velo.querySelector('#fc-sposta-in');
+  if (spIn) spIn.onclick = async () => {
+    // la lista delle mete sopra il foglio: con «Annulla» si torna al foglio della riga
+    const n = pezzo ? pezzo.voci - (eTitolo ? 0 : 1) : 0, s = spostaIn.sopra;
+    const sopra = eTitolo ? `<p>Va in fondo al progetto che scegli${n ? `, con ${n === 1 ? 'la sua voce' : `le sue ${n} voci`}` : ''}.</p>`
+      : `<p>${s ? `Adesso è sotto «${esc(s.testo)}». ` : ''}Va in fondo alle cose da fare del titolo che scegli${n ? `, con ${n === 1 ? 'il suo sottopunto' : `i suoi ${n} sottopunti`}` : ''}.</p>`;
+    const meta = await sceltaDa(spostaIn.testo, spostaIn.mete, sopra);
+    if (!meta) return;
+    chiudi();
+    spostaSotto(c, meta, ridisegna);
+  };
   const togliG = velo.querySelector('#fc-togli-giorno'); if (togliG) togliG.onclick = () => cambia({ giorno: null, ora: null, durata: null, scala: 'giorno' });
   const apriPj = velo.querySelector('#fc-apri-progetto'); if (apriPj) apriPj.onclick = () => { chiudi(); apriProgetto(pj.id, c.id); };
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });

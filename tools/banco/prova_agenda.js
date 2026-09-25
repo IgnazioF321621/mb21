@@ -441,6 +441,36 @@ prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello
   assert.equal(A.leggiRiga('Spazio speciale', 0, 'cosa').testo, 'Spazio speciale');
 });
 
+prova('Progetti (25/09): spostare una riga sotto un altro titolo o in un altro progetto, con i suoi sottopunti', () => {
+  const r = (id, tipo, ordine, livello, fatto, pj = 'P') => ({ id, tipo, ordine, livello, progetto_id: pj, testo: id, fatto_il: fatto ? '2026-09-25T08:00:00Z' : null });
+  const pr = [r('T1', 'titolo', 1, 0), r('a', 'numero', 2, 0), r('b', 'numero', 3, 0, true), r('T2', 'titolo', 4, 0), r('c', 'numero', 5, 0), r('c1', 'numero', 6, 1), r('c2', 'punto', 7, 2), r('e', 'numero', 8, 0)];
+  const vista = A.fatteInFondo(pr);
+  // «c1» (rientrata, con il suo sottopunto) sotto T1: in fondo alle cose da fare (prima della fatta «b»), senza rientro; il resto si rinumera
+  assert.deepEqual(A.spostaRighe(vista, 'c1', 'T1'), [
+    { id: 'c1', ordine: 3, livello: 0, progetto_id: 'P' }, { id: 'c2', ordine: 4, livello: 1, progetto_id: 'P' },
+    { id: 'b', ordine: 5, livello: 0, progetto_id: 'P' }, { id: 'T2', ordine: 6, livello: 0, progetto_id: 'P' }, { id: 'c', ordine: 7, livello: 0, progetto_id: 'P' }]);
+  assert.equal(pr[5].livello, 1);   // le righe di prima non si toccano: i cambi li salva la pagina
+  // una fatta va in fondo al titolo, dopo le da fare
+  assert.deepEqual(A.spostaRighe(vista, 'b', 'T2').map(x => [x.id, x.ordine]), [['T2', 3], ['c', 4], ['c1', 5], ['c2', 6], ['e', 7], ['b', 8]]);
+  // un titolo in un altro progetto: con tutte le sue righe, dopo i titoli ancora aperti (quello tutto fatto resta in fondo)
+  const altro = A.fatteInFondo([r('X1', 'titolo', 1, 0, false, 'Q'), r('x', 'numero', 2, 0, false, 'Q'), r('X2', 'titolo', 3, 0, false, 'Q'), r('y', 'numero', 4, 0, true, 'Q')]);
+  assert.deepEqual(A.spostaRighe(vista, 'T2', null, altro, 'Q').map(x => [x.id, x.ordine, x.livello, x.progetto_id]), [
+    ['T2', 3, 0, 'Q'], ['c', 4, 0, 'Q'], ['c1', 5, 1, 'Q'], ['c2', 6, 2, 'Q'], ['e', 7, 0, 'Q'], ['X2', 8, 0, 'Q'], ['y', 9, 0, 'Q']]);
+  // una riga sotto un titolo di un altro progetto; quello di partenza si rinumera (qui non cambia niente: era l'ultima)
+  assert.deepEqual(A.spostaRighe(vista, 'e', 'X1', altro, 'Q').map(x => [x.id, x.ordine, x.progetto_id]), [['e', 3, 'Q'], ['X2', 4, 'Q'], ['y', 5, 'Q']]);
+  // in un progetto senza titoli va in fondo; nel progetto di partenza T1, rimasto con la sola fatta, va in fondo come si vede
+  const cambi = A.spostaRighe(vista, 'a', null, [r('z', 'cosa', 1, 0, false, 'R')], 'R');
+  assert.deepEqual(cambi[0], { id: 'a', ordine: 2, livello: 0, progetto_id: 'R' });
+  assert.deepEqual(cambi.slice(1).map(x => [x.id, x.ordine]), [['T2', 1], ['c', 2], ['c1', 3], ['c2', 4], ['e', 5], ['T1', 6], ['b', 7]]);
+  assert.deepEqual(A.spostaRighe(vista, 'a', null, [], 'R'), [{ id: 'a', ordine: 1, livello: 0, progetto_id: 'R' }, ...cambi.slice(1)]);
+  // senza titolo nello stesso progetto: tra le righe in cima, prima del primo titolo
+  assert.deepEqual(A.spostaRighe(vista, 'e', null).map(x => [x.id, x.ordine]), [['e', 1], ['T1', 2], ['a', 3], ['b', 4], ['T2', 5], ['c', 6], ['c1', 7], ['c2', 8]]);
+  // la riga o il titolo che non ci sono: niente
+  assert.equal(A.spostaRighe(vista, 'nessuna', 'T1'), null);
+  assert.equal(A.spostaRighe(vista, 'a', 'nessuno'), null);
+  assert.equal(A.spostaRighe(vista, 'a', 'c'), null);   // «c» non è un titolo
+});
+
 prova('Progetti in programma (24/09): nel giorno le righe dei progetti dopo le altre; dove sta una riga nel progetto', () => {
   const g = '2026-09-24';
   const cose = [

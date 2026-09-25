@@ -285,6 +285,38 @@
     }
     return { testo: out.join('\n'), voci: tutte.slice(da, a).filter(r => r.tipo !== 'titolo').length };
   }
+  // Spostare una riga sotto un altro titolo, anche di un altro progetto (Ignazio 25/09: con la lista lunga, trascinando non
+  // sempre si arriva al titolo giusto). `righe` = il progetto della riga come si vede (fatteInFondo); `id` = la riga, che si
+  // porta dietro i suoi sottopunti (un titolo tutte le sue righe, come trascinando); `titoloId` = il titolo d'arrivo (vuoto =
+  // tra le righe senza titolo, in cima; un titolo va sempre in fondo al progetto). Per un altro progetto `altre` = le sue righe
+  // come si vedono e `progettoId` il suo id. La riga va in fondo alle cose da fare del titolo, senza rientro (i sottopunti
+  // scalano con lei); poi tutto torna nell'ordine che si vede (fatteInFondo) e si numera 1…N, come quando si aggiungono righe.
+  // Rende le righe che cambiano, con i valori nuovi: [{ id, ordine, livello, progetto_id }]; null se la riga o il titolo non ci sono.
+  function spostaRighe(righe, id, titoloId, altre, progettoId) {
+    const da = righe || [], i = da.findIndex(r => r.id === id);
+    if (i < 0) return null;
+    const capo = da[i], eTitolo = capo.tipo === 'titolo';
+    let j = i + 1;
+    while (j < da.length && da[j].tipo !== 'titolo' && (eTitolo || (da[j].livello || 0) > (capo.livello || 0))) j++;
+    const giu = eTitolo ? 0 : capo.livello || 0;
+    const blocco = da.slice(i, j).map(r => ({ ...r, livello: Math.max(0, (r.livello || 0) - giu), progetto_id: progettoId || r.progetto_id }));
+    const resto = [...da.slice(0, i), ...da.slice(j)], arrivo = altre ? [...altre] : resto;
+    let k;
+    if (eTitolo) k = arrivo.length;
+    else if (titoloId) {
+      k = arrivo.findIndex(r => r.id === titoloId && r.tipo === 'titolo');
+      if (k < 0) return null;
+      for (k++; k < arrivo.length && arrivo[k].tipo !== 'titolo'; k++);
+    } else { k = arrivo.findIndex(r => r.tipo === 'titolo'); if (k < 0) k = arrivo.length; }
+    const prima = new Map([...da, ...(altre || [])].map(r => [r.id, r])), cambi = [];
+    const numera = lista => fatteInFondo(lista).forEach((r, n) => {
+      const x = prima.get(r.id), nuova = { id: r.id, ordine: n + 1, livello: r.livello || 0, progetto_id: r.progetto_id };
+      if (x.ordine !== nuova.ordine || (x.livello || 0) !== nuova.livello || x.progetto_id !== nuova.progetto_id) cambi.push(nuova);
+    });
+    numera([...arrivo.slice(0, k), ...blocco, ...arrivo.slice(k)]);
+    if (altre) numera(resto);   // il progetto di partenza, senza le righe spostate
+    return cambi;
+  }
   // Una riga scritta o incollata in un progetto → { tipo, testo, livello, fatta } (null se vuota). Il tipo si scrive all'inizio
   // come in NotePlan: «## » titolo, «1. » o «1.2 » numerata, «- » «• » puntini, «[] » «☐ » «- [ ] » da fare, «- [x] » fatta;
   // «✓ » dopo il numero o il puntino = fatta (è il testo che fa testoDaCopiare, 24/09). Se no vale `tipoScelto` (i bottoni).
@@ -755,7 +787,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, testoDaCopiare, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
