@@ -57,6 +57,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   - le linee **sempre a zero** non fanno riga (si leggono in fondo): con i dati veri restano 7 righe su 13, il resto era rumore
   - lo schizzo mostrato a Ignazio aveva qualche zero di troppo (era fatto con una query, non con la regola dell'app): nell'app vale **partenza mancante = totale del mese prima**, quindi Ornella resta 2 a giugno e Andrea 1 da aprile. `storicoLinee` usa `MB21Dashboard.totaliMesi` proprio per questo: i numeri non possono divergere da quelli della griglia del singolo
   - prove: **8 in `prova_check.js`** (18 in tutto) e **7 in `tools/banco/prova_storico_vista.js`**, un banco nuovo che disegna il foglio davvero con un finto DOM, prendendo il codice vero da `index.html`. Controllata anche la tabella sui **dati veri di tutti e 13 i partner**
+  - ✅ **provato da Ignazio**: «funziona meraviglioso»
+- ✅ **25/09, versione 2026.09.25 · 13:18 — niente crossline: le linee sono quelle sotto chi guardi.** Ignazio: «nel momento in cui io clicco Isabella Sammito, anche le linee sotto devono cambiare… Le altre squadre non devono vedere i dati di Isabella, compresi i miei, perché è cross-line».
+  - `MB21Mappa.ramoDi(squadra, radice)` (funzione pura, 2 prove in `prova_mappa.js`): il codice Amway di un partner più tutta la sua discendenza, risalendo gli `sponsor_id` di `squadra`; protetta dagli anelli. Il foglio filtra le linee con questa
+  - cambiando persona in cima **cambiano anche le linee sotto**; il titolo diventa «<nome> e le sue linee» e una nota lo dice: «Solo la linea di …: le squadre che non stanno sotto di … non si vedono»
+  - toccando una linea si **scende** in quella linea (la griglia sopra e la tabella sotto passano a lei)
+  - se sotto una persona non c'è nessuno con l'app, la tabella non sparisce muta: lo scrive
+  - **sui dati veri**: guardando Ignazio 10 linee — Ornella e Carolina comprese, perché la catena di `squadra` le mette **nella sua downline** (Ignazio → Simone Giavatto, che non usa l'app → Ornella → Carolina): non è crossline. Guardando Isabella nessuna linea, perché Sandra è stata eliminata dall'app. Guardando Ornella lei e Carolina
+  - prove: 9 in `prova_storico_vista.js` (due nuove sul crossline, con una squadra parallela nei dati finti) e 22 in `prova_mappa.js`
   - **da provare con Ignazio**
 - È **lavoro sui numeri, non sullo stile**: non fa parte del cantiere 34. Vicino al cantiere 35 (storico dei biglietti), stessa famiglia: «quello che c'era in Glide c'è anche qui?»
 
