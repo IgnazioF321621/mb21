@@ -109,15 +109,19 @@ const meseLungo = d => { const [m, a] = MB21Lista.etichettaEvento(d).split('-');
 // Ultimo utilizzo in breve, per la riga chiusa (Ignazio 25/09): «usata oggi 14:03» · «ieri 09:20» · «3 giorni fa» · «il 12/09/2026»
 function usoBreve(u) {
   if (!u.ultimo_uso) return u.auth_id ? 'utilizzo non registrato' : 'mai entrato';
-  const t = MB21Lista.momento(u.ultimo_uso);
+  return 'usata ' + quandoBreve(u.ultimo_uso);
+}
+// «oggi 14:03» · «ieri 09:20» · «3 giorni fa» · «il 12/09/2026»
+function quandoBreve(quando) {
+  const t = MB21Lista.momento(quando);
   const giorno = new Date(t).toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });   // AAAA-MM-GG
   const ora = new Date(t).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
   const oggi = MB21Coda.oggiRoma();
   const giorni = Math.round((Date.parse(oggi + 'T00:00:00Z') - Date.parse(giorno + 'T00:00:00Z')) / 86400000);
-  if (giorni <= 0) return `usata oggi ${ora}`;
-  if (giorni === 1) return `usata ieri ${ora}`;
-  if (giorni < 7) return `usata ${giorni} giorni fa`;
-  return `usata il ${giorno.split('-').reverse().join('/')}`;
+  if (giorni <= 0) return `oggi ${ora}`;
+  if (giorni === 1) return `ieri ${ora}`;
+  if (giorni < 7) return `${giorni} giorni fa`;
+  return `il ${giorno.split('-').reverse().join('/')}`;
 }
 
 function rigaUtenteAdmin(u) {
@@ -193,6 +197,21 @@ function disegnaAdmin() {
           <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(r.categoria) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
         <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
     }
+  } else if (AD.sezione === 'training') {
+    const t = AD.training;
+    html = `${indietro}<h1>${ic('medaglia')} Training</h1>
+      <div class="sotto" style="margin:0 0 8px">Chi si allena e dove è arrivato. Solo il riassunto: le risposte date restano private (Ignazio 25/09).</div>`;
+    if (!t) html += `<div class="vuoto">Carico…</div>`;
+    else if (t.errore) html += `<div class="avviso">${esc(t.errore)}</div>`;
+    else {
+      html += t.persone.length ? `<div class="rp-wes">${t.persone.map(x => `<div class="ad-richiesta">
+          <b>${esc(x.nome)}</b>
+          <small>Livello ${x.numero} di ${MB21Training.LIVELLI.length} · <b>${esc(x.livello)}</b>${x.percorso ? ` · percorso <b>${esc(x.percorso)}</b>` : ''}</small>
+          <small>${x.viste} carte viste · ${x.sapute} sapute · ${x.superati ? `${x.superati} ${x.superati === 1 ? 'test superato' : 'test superati'} · ${ic('stella')} ${x.stelle}` : 'nessun test superato'}</small>
+          <small>ultimo allenamento ${esc(x.ultima)}${x.fila ? ` · ${ic('fiamma')} ${x.fila} ${x.fila === 1 ? 'giorno' : 'giorni'} di fila` : ''}</small></div>`).join('')}</div>`
+        : `<div class="vuoto">Nessuno si è ancora allenato.</div>`;
+      if (t.mai.length) html += `<div class="rp-wes"><h3>Non hanno ancora aperto il Training (${t.mai.length})</h3><div class="sotto" style="margin:0">${t.mai.map(esc).join(' · ')}</div></div>`;
+    }
   } else if (AD.sezione === 'wes') {
     html = `${indietro}<h1>WES</h1>
       <div class="ad-elenco wes">${[...AD.wes].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
@@ -238,12 +257,41 @@ function disegnaAdmin() {
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
+      ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
       ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
       ${voce('ad-vai-fc', ic('vendite') + ' Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
   }
   app.innerHTML = html + versione();
   collegaAdmin();
+}
+
+// Admin → Training (Ignazio 25/09): per ognuno che si è allenato livello, percorso, carte, test, ultimo allenamento e giorni di fila.
+// I progressi arrivano da `training_admin()` (solo Admin, solo il riassunto: niente risposte); livello e percorso li calcola
+// MB21Training.scala come nella pagina Training di ognuno, con le carte dell'archivio privato.
+async function caricaTrainingAdmin() {
+  const [r, m] = await Promise.all([
+    dbq('training di tutti', supa.rpc('training_admin')),
+    typeof TRN !== 'undefined' && TRN.mazzi ? { data: null } : dbq('carte del training', supa.from('coach_batterie').select('situazione, batteria').like('situazione', 'carte_%')),
+  ]);
+  if (r.error || m.error) { AD.training = { errore: 'Non riesco a leggere il Training: riprova.' }; return AD.sezione === 'training' && disegnaAdmin(); }
+  const mazzi = m.data ? m.data.map(x => x.batteria).filter(z => z && z.percorso && Array.isArray(z.carte)) : TRN.mazzi;
+  const T = MB21Training, oggi = MB21Coda.oggiRoma();
+  const persone = (r.data || []).map(p => {
+    const stati = Object.fromEntries((p.carte || []).map(c => [c.carta, c]));
+    const sc = T.scala(mazzi, stati, p.test || [], oggi), med = T.medaglie(p.test || [], p.giorni || []);
+    const perc = sc.percorso ? sc.qui.percorsi.find(x => x.id === sc.percorso) : null;
+    const u = AD.tutti.find(x => x.id === p.user_id);
+    return { nome: u ? nomeDi(u) : '?', livello: sc.qui.nome, numero: sc.qui.numero, percorso: perc ? perc.titolo : null,
+      viste: (p.carte || []).length, sapute: (p.carte || []).filter(c => c.scatola >= 3).length,
+      superati: med.percorsi.length, stelle: med.stelle, fila: T.giorniDiFila(p.giorni || [], oggi).n,
+      ultima: p.ultima ? quandoBreve(p.ultima) : (p.giorni && p.giorni.length ? 'il ' + p.giorni[p.giorni.length - 1].split('-').reverse().join('/') : '—'),
+      quando: p.ultima ? MB21Lista.momento(p.ultima) : 0 };
+  }).sort((a, b) => b.quando - a.quando);
+  const dentro = new Set((r.data || []).map(p => p.user_id));
+  const mai = AD.tutti.filter(u => !u.eliminato_il && u.accesso_attivo && !dentro.has(u.id)).map(nomeDi).sort((a, b) => a.localeCompare(b, 'it'));
+  AD.training = { persone, mai };
+  if (AD.sezione === 'training') disegnaAdmin();
 }
 
 // Schede dei partner a cascata (cantiere 19, Ignazio 16/09): anteprima (senza scrivere) e allineamento, nel database.
@@ -348,6 +396,7 @@ function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  su('ad-vai-training', () => { AD.sezione = 'training'; AD.training = null; disegnaAdmin(); window.scrollTo(0, 0); caricaTrainingAdmin(); });
   su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
   su('ad-allinea', async () => {
     if (!await chiediConferma('Allineo le liste?', `Crea ${AD.schede.create} schede Partner (fuori coda) e collega ${AD.schede.collegate} schede al codice. Non cancella niente.`, 'Allinea')) return;
