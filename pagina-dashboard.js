@@ -1010,10 +1010,10 @@ function cellaSv(sv, k, v, tag) {
   const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
   return `<${tag} style="background:${tintaSv(k, forza.toFixed(2))}">${v}</${tag}>`;
 }
-function tabellaSv(sv) {
+function tabellaSv(sv, nome) {
   return `<div class="sv">
       <h3>${ic('segnivitali')} Segni Vitali</h3>
-      <div class="sotto-sv">Ultimi 12 mesi · ${ic('persona')} ${esc(nomeVisto())}</div>
+      <div class="sotto-sv">Ultimi 12 mesi · ${ic('persona')} ${esc(nome || nomeVisto())}</div>
       <div class="legenda">${COLONNE_SV.map(([k, t]) => `<span><i style="background:${coloreSv(k)}"></i>${t}</span>`).join('')}</div>
       <table><tr><th class="mese"></th>${COLONNE_SV.map(([k, t]) => `<th style="color:${coloreSv(k)}">${t.toUpperCase()}</th>`).join('')}</tr>
       ${sv.righe.map(r => `<tr><th class="mese">${r.etichetta}<br>${r.anno}</th>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr>`).join('')}
@@ -1025,9 +1025,9 @@ function dashboardBasso() {
   const d = DS.dati;
   if (!d) return '';
   const sv = d.segniVitali, r = sv.righe[sv.righe.length - 1];
-  return `<div class="sv">
-      <h3>${ic('segnivitali')} Segni Vitali</h3>
-      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · ${ic('persona')} ${esc(nomeVisto())}</div>
+  return `<div class="sv" id="ds-sv" role="button" tabindex="0">
+      <h3>${ic('segnivitali')} Segni Vitali <span style="float:right;font-weight:400;color:var(--testo-tenue)">›</span></h3>
+      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · ${ic('persona')} ${esc(nomeVisto())} · tocca per i 12 mesi</div>
       <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${coloreSv(k)}">${t.toUpperCase()}</th>`).join('')}</tr>
       <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
     </div>
@@ -1038,6 +1038,7 @@ function dashboardBasso() {
 
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ds-sv', foglioStorico);   // la striscia dei Segni Vitali apre lo storico: stessa schermata del Check (Ignazio 25/09)
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
