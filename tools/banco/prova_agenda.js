@@ -477,6 +477,12 @@ prova('Progetti (25/09): spostare una riga sotto un altro titolo o in un altro p
   assert.deepEqual(A.spostaRighe(vista, 'a', null, [], 'R'), [{ id: 'a', ordine: 1, livello: 0, progetto_id: 'R' }, ...cambi.slice(1)]);
   // senza titolo nello stesso progetto: tra le righe in cima, prima del primo titolo
   assert.deepEqual(A.spostaRighe(vista, 'e', null).map(x => [x.id, x.ordine]), [['e', 1], ['T1', 2], ['a', 3], ['b', 4], ['T2', 5], ['c', 6], ['c1', 7], ['c2', 8]]);
+  // un titolo con le voci rientrate subito sotto (incollate): la riga prende il loro rientro e non «adotta» la fatta (revisione 25/09)
+  const ev = A.fatteInFondo([r('E', 'titolo', 1, 0), r('sala', 'numero', 2, 1), r('inv', 'numero', 3, 1, true), r('A', 'titolo', 4, 0), r('buf', 'numero', 5, 0), r('buf1', 'punto', 6, 1)]);
+  const dopo = A.spostaRighe(ev, 'buf', 'E');
+  assert.deepEqual(dopo.map(x => [x.id, x.ordine, x.livello]), [['buf', 3, 1], ['buf1', 4, 2], ['inv', 5, 1], ['A', 6, 0]]);
+  const nuova = A.fatteInFondo(ev.map(x => ({ ...x, ...(dopo.find(y => y.id === x.id) || {}) })).sort((x, y) => x.ordine - y.ordine));
+  assert.deepEqual(A.numeraRighe(nuova), ['', '1.', '2.', '▪', '3.', '']);   // «inv» resta sorella di «sala» (3.), non figlia di «buf»
   // la riga o il titolo che non ci sono: niente
   assert.equal(A.spostaRighe(vista, 'nessuna', 'T1'), null);
   assert.equal(A.spostaRighe(vista, 'a', 'nessuno'), null);
