@@ -17,7 +17,7 @@ const TRN = {
   voci: null, cat: null, settore: null, cerca: '', tutte: {},                            // studiare
 };
 const TRN_PRIME = 6;   // in un elenco lungo del catalogo si vedono le prime 6, poi «Mostra tutte»
-const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro' };
+const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro', sito: 'collega' };
 const TRN_ORDINE = ['manuale', 'traccia', 'libro'];   // in «Per approfondire»: prima il manuale, poi le tracce, poi i libri
 const TRN_LIBRI = 'var(--cat-ex)';   // il colore di «Libri»
 const trnOggi = () => MB21Coda.oggiRoma();
@@ -134,6 +134,7 @@ function trnApriPercorso(id) {
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   const studio = [...new Set([...fonti, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
+  const siti = [...new Map(m.carte.map(c => c.fonte).filter(f => f && f.tipo === 'sito').map(f => [f.url, f])).values()];   // in fondo, le pagine del sito Amway
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -152,7 +153,9 @@ function trnApriPercorso(id) {
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
-      ${studio.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}` : ''}
+      ${studio.length || siti.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
+        siti.map(f => `<a class="trn-riga" href="${esc(f.url)}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
+          <div><b>${esc(f.titolo)}</b><small>Sul sito Amway Italia</small></div><span class="trn-freccia">›</span></a>`).join('')}` : ''}
     </div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -355,10 +358,11 @@ function trnFoglioCorreggi(carta, visto, bottone) {
   };
 }
 
-// da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro)
+// da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro) o, per il sito Amway, la sua pagina
 function trnFonte(c) {
   const t = MB21Training.fonte(c.fonte);
   if (!t) return '';
+  if (c.fonte.tipo === 'sito') return `<a class="trn-fonte" href="${esc(c.fonte.url)}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const f = c.fonte, voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
   return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }

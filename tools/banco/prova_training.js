@@ -243,6 +243,12 @@ prova('La fonte, detta come la cercano le persone; la voce di chi l\'ha detto no
   assert.equal(T.fonte({ tipo: 'libro', id: 'l', titolo: 'Pensa e arricchisci te stesso', autore: 'Napoleon Hill', capitolo: 'La decisione' }),
     'Dal libro di Napoleon Hill «Pensa e arricchisci te stesso», capitolo «La decisione»');
   assert.equal(T.fonte(null), null);
+  // dal 25/09 anche le pagine del sito Amway Italia (Ignazio: «possiamo rimandare al sito Amway»; le fonti straniere no)
+  assert.equal(T.fonte({ tipo: 'sito', titolo: 'Programma START', url: 'https://www.amway.it/about-amway/new-abo-start' }), 'Sul sito Amway: «Programma START»');
+  const conSito = url => T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...scena('sito'), fonte: { tipo: 'sito', titolo: 'Programma START', url } }] });
+  assert.deepEqual(conSito('https://www.amway.it/about-amway/new-abo-start'), []);
+  assert.deepEqual(conSito('https://www.amway.pt/en/bronze-incentives'), ['sito: fonte incompleta']);
+  assert.deepEqual(conSito(undefined), ['sito: fonte incompleta']);
 });
 
 prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte che non sono 3, fonti a metà, tipi sconosciuti', () => {
