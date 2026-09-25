@@ -346,6 +346,7 @@ const TIPI_RIGA = [['titolo', 'T Titolo'], ['cosa', '☐ Da fare'], ['numero', '
 const LIVELLO_MAX = 4;   // i rientri, come in Word: con Tab avanti, con Maiusc+Tab indietro (Ignazio 23/09)
 const vediProgetti = () => typeof eAdmin === 'function' && eAdmin() && !vediTutti();
 async function caricaProgetti() {
+  const primo = AG.primoProgetto; AG.primoProgetto = false;   // dall'icona «Progetti»: se quello salvato non c'è più, il primo del menu
   if (!vediProgetti()) { AG.progetti = []; AG.cose = AG.cose.filter(c => !c.progetto_id); if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }   // senza progetti niente righe di progetto (revisione 24/09)
   const [pr, rg] = await Promise.all([
     dbq('progetti', supa.from('progetti').select('*').eq('user_id', visto().id).order('ordine')),
@@ -353,7 +354,9 @@ async function caricaProgetti() {
   ]);
   AG.progetti = pr.error ? [] : pr.data;
   if (!rg.error) { const per = new Map(AG.cose.map(c => [c.id, c])); for (const r of rg.data) per.set(r.id, r); AG.cose = [...per.values()]; }
-  if (AG.vista === 'progetto' && !AG.progetti.some(x => x.id === AG.progettoAperto)) AG.vista = 'giorno';
+  if (AG.vista === 'progetto' && !AG.progetti.some(x => x.id === AG.progettoAperto)) {
+    if (primo && AG.progetti.length) AG.progettoAperto = AG.progetti[0].id; else AG.vista = 'giorno';
+  }
 }
 const righeProgetto = id => AG.cose.filter(c => c.progetto_id === id);
 // Le righe di un progetto come si vedono (Ignazio 24/09): nell'ordine salvato, poi le fatte in fondo al loro titolo e i titoli
@@ -457,6 +460,7 @@ function progettiMenuHtml() {
 // chiuso il titolo si apre, e la pagina scorre fino a lei.
 async function apriProgetto(id, rigaId) {
   AG.vista = 'progetto'; AG.progettoAperto = id; AG.inserisciDopo = null; AG.aperta = null; AG.portato = null;
+  if (id) try { localStorage.setItem(CHIAVE_ULTIMO_PROGETTO, id); } catch (e) {}   // per l'icona «Progetti» (25/09)
   if (rigaId) {   // il titolo sopra la riga, se è chiuso, si apre
     const righe = righeInVista(id), i = righe.findIndex(r => r.id === rigaId);
     let k = i;   // un titolo apre sé stesso, una riga il titolo sopra di lei
@@ -467,6 +471,16 @@ async function apriProgetto(id, rigaId) {
   await apriAgenda(AG.giorno);
   const el = rigaId && app.querySelector(`.pj-foglio .cosa[data-cosa="${rigaId}"]`);
   if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' });
+}
+// L'icona «Progetti» nella barra in basso (Ignazio 25/09: «per non fare il passaggio ogni volta che c'è un aggiornamento, da
+// Plan a Progetti, e cercare quello giusto»), solo per chi vede i progetti (l'Admin): un tocco apre l'ultimo progetto usato, che il
+// telefono si ricorda (apriProgetto lo salva, resta anche dopo un aggiornamento); la prima volta il primo del menu (caricaProgetti).
+const CHIAVE_ULTIMO_PROGETTO = 'mb21-ultimo-progetto';
+function apriProgetti() {
+  let id = null;
+  try { id = localStorage.getItem(CHIAVE_ULTIMO_PROGETTO); } catch (e) {}
+  AG.primoProgetto = true;
+  return apriProgetto(id);
 }
 function foglioProgetto(p, dopo) {
   let icona = (p && p.icona) || '';
@@ -1088,6 +1102,7 @@ function foglioCosa(c, oggi, opz = {}) {
 }
 
 function disegnaAgenda() {
+  if (typeof accendiTab === 'function') accendiTab();   // nella barra «Progetti» o «MB Plan» (25/09)
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
