@@ -112,6 +112,7 @@
     'scala-settimana': '<rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><path d="M9.2 4.5v15M14.8 4.5v15"/>',   // Settimana: le colonnine
     'scala-mese': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/>',   // Mese: la griglia dei giorni
     'copia': '<rect x="8.6" y="8.6" width="11.8" height="11.8" rx="2.2"/><path d="M15.4 8.6V5.8a2.2 2.2 0 0 0-2.2-2.2H5.8a2.2 2.2 0 0 0-2.2 2.2v7.4a2.2 2.2 0 0 0 2.2 2.2h2.8"/>',   // Copia: due fogli (Progetti, 24/09)
+    'sposta': '<path d="M6 4v7.5a3.5 3.5 0 0 0 3.5 3.5H19"/><path d="m15 11 4 4-4 4"/>',   // Sposta sotto un altro titolo: la freccia che scende e va a destra (Progetti, 25/09)
     'scala-anno': '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',   // Anno: i quadratini
     // Aggiunte a mano per il Training (cantiere 45, 24/09): stesso tratto e stessa griglia; il pieno delle stelle prese lo dà lo stile (fill: currentColor)
     'lucchetto': '<rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.4a4 4 0 0 1 8 0V11M12 15.2v2"/>',   // un livello ancora chiuso

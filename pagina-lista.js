@@ -214,11 +214,12 @@ function cardNome(r) {
 
 // Foglio con un elenco di voci; restituisce la voce scelta (o null)
 // `sopra`: un pezzo di pagina da mostrare sopra le voci (es. i bottoni per contattare); toccare un suo link chiude il foglio
+// Con tante voci il foglio scorre (`alto`, 25/09: i titoli di un progetto in «Sposta sotto un altro titolo» di MB Plan)
 function sceltaDa(titolo, voci, sopra) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
+    velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
       ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''}">${v.icona ? ic(v.icona) : ''}${esc(v.etichetta)}</button>`).join('')}
       </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">
       ${voci.map((v, i) => v.lettera ? `<button data-i="${i}" class="${v.scelta ? 'scelto' : ''}" ${v.spenta ? 'disabled' : ''}>${esc(v.etichetta)}</button>` : '').join('')}</div>` : ''}<button class="link" id="scelta-no">Annulla</button></div>`;
