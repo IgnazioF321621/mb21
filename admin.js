@@ -55,24 +55,45 @@ function telefonoInvito(u) {
   const n = ((AD.telSchede || {})[u.partner_id] || u.telefono || '').replace(/[^0-9+]/g, '');
   return n.startsWith('+') ? n : /^3\d{8,9}$/.test(n) ? '+39' + n : null;
 }
-const invitoAvvisi = u => `Ciao ${(u.nome || nomeDi(u)).split(' ')[0]}! Per ricevere gli avvisi di MB21 (appuntamenti, telefonate, il Check della sera): apri MB21 dall'icona sulla schermata Home del telefono, tocca il cerchietto in alto a destra (il tuo Profilo), poi «Avvisi» → «Attiva gli avvisi». Se MB21 non è ancora sulla schermata Home: su iPhone aprila in Safari → Condividi → «Aggiungi alla schermata Home»; su Android in Chrome → menu ⋮ → «Aggiungi a schermata Home». Poi fai come sopra.`;
+// Il messaggio dipende dal telefono (Ignazio 25/09: «per Android il messaggio parla di Safari, non è consono»): l'Admin sceglie
+// iPhone o Android sulla riga (`AD.telefonoDi`, già scelto iPhone). Su Android gli avvisi si accendono anche da Chrome, senza installare.
+const INDIRIZZO_APP = () => location.origin + location.pathname;
+function invitoAvvisi(u) {
+  const nome = (u.nome || nomeDi(u)).split(' ')[0], android = (AD.telefonoDi || {})[u.id] === 'android';
+  const passo1 = android
+    ? `1. Apri MB21 con Chrome: ${INDIRIZZO_APP()} (meglio ancora dall'icona sulla schermata Home: in Chrome tocca il menu ⋮ → «Aggiungi a schermata Home» o «Installa app»).`
+    : `1. Apri MB21 dall'icona sulla schermata Home. Se non c'è ancora: apri ${INDIRIZZO_APP()} con Safari, tocca Condividi (il quadrato con la freccia) → «Aggiungi alla schermata Home», poi aprila da lì.`;
+  return `Ciao ${nome}! Per ricevere gli avvisi di MB21 (appuntamenti, telefonate, il Check della sera):\n${passo1}\n2. Tocca il cerchietto in alto a destra (il tuo Profilo) → «Avvisi» → «Attiva gli avvisi».\n3. Quando il telefono chiede il permesso, tocca «Consenti».`;
+}
 function senzaAvvisiHtml() {
   const senza = senzaAvvisi();
   if (!senza.length) return '';
   return `<div class="rp-wes ad-senza-avvisi"><h3>${ic('avvisi-spenti')} Senza avvisi (${senza.length})</h3>${senza.map(u => {
-    const tel = telefonoInvito(u);
+    const tel = telefonoInvito(u), android = (AD.telefonoDi || {})[u.id] === 'android';
     return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(usoBreve(u))}</small>
-      ${tel ? `<div class="ad-invita"><a class="ct-whatsapp" href="${esc('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(invitoAvvisi(u)))}" target="_blank" rel="noopener">${ic('whatsapp')} WhatsApp</a>
-        <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button></div>`
-        : '<small>Manca il telefono: senza, l\'invito non parte</small>'}</div>`;
-  }).join('')}<small>L'invito è già scritto: tocca WhatsApp o Telegram e mandalo.</small></div>`;
+      <div class="pf-scelte"><button class="${android ? '' : 'scelto'}" data-invito-tel="${esc(u.id)}:iphone">iPhone</button><button class="${android ? 'scelto' : ''}" data-invito-tel="${esc(u.id)}:android">Android</button></div>
+      <div class="ad-invita">${tel ? `<a class="ct-whatsapp" href="${esc('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(invitoAvvisi(u)))}" target="_blank" rel="noopener">${ic('whatsapp')} WhatsApp</a>
+        <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button>` : ''}
+        <button data-invito-copia="${esc(u.id)}">${ic('copia')} Copia</button></div>
+      ${tel ? '' : '<small>Manca il telefono: copia il messaggio e mandalo come vuoi</small>'}</div>`;
+  }).join('')}<small>Scegli il suo telefono, poi mandale l'invito già scritto: WhatsApp, Telegram, o Copia e incollalo dove vuoi.</small></div>`;
 }
 function collegaSenzaAvvisi() {
+  const di = id => AD.utenti.find(x => x.id === id);
+  const copia = async u => { try { await navigator.clipboard.writeText(invitoAvvisi(u)); return true; } catch (e) { return false; } };
+  app.querySelectorAll('[data-invito-tel]').forEach(b => b.onclick = () => {
+    const [id, tipo] = b.dataset.invitoTel.split(':');
+    AD.telefonoDi = { ...(AD.telefonoDi || {}), [id]: tipo };
+    disegnaAdmin();
+  });
+  app.querySelectorAll('[data-invito-copia]').forEach(b => b.onclick = async () => {
+    const u = di(b.dataset.invitoCopia);
+    if (u) mostraToast(await copia(u) ? 'Messaggio copiato: incollalo dove vuoi' : 'Non riesco a copiare: riprova');
+  });
   app.querySelectorAll('[data-invito-tg]').forEach(b => b.onclick = async () => {
-    const u = AD.utenti.find(x => x.id === b.dataset.invitoTg);
+    const u = di(b.dataset.invitoTg);
     if (!u) return;
-    let copiato = false;
-    try { await navigator.clipboard.writeText(invitoAvvisi(u)); copiato = true; } catch (e) {}
+    const copiato = await copia(u);
     window.open('https://t.me/' + telefonoInvito(u), '_blank', 'noopener');
     mostraToast(copiato ? 'Messaggio copiato: nella chat di Telegram tieni premuto e scegli «Incolla»' : 'Telegram aperto: scrivi tu il messaggio');
   });
