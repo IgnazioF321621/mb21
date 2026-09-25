@@ -676,4 +676,10 @@ prova('Periodo WES: da un WES al successivo, il giorno del WES per il conto alla
   assert.equal(A.giorniTra('2026-09-22', '2026-10-03'), 11);
 });
 
+prova('Dopo l\'esito si chiede solo quando risentire: un anno per No Interesse / No BuonFine, 20 giorni per Relazione, altrimenti niente', () => {
+  assert.equal(A.giorniRisentire('No Interesse'), 365); assert.equal(A.giorniRisentire('No BuonFine'), 365);
+  assert.equal(A.giorniRisentire('Relazione'), 20); assert.equal(A.GIORNI_RELAZIONE, 20);
+  assert.equal(A.giorniRisentire('Richiamare'), null); assert.equal(A.giorniRisentire('PM Fissato'), null); assert.equal(A.giorniRisentire('Consulenza Prodotti'), null);
+});
+
 console.log(`\n${ok} prove superate`);
