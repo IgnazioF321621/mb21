@@ -143,11 +143,14 @@ const obL = [
 const sl = C.storicoLinee({ giorni: giorniL, obiettivi: obL, persone, oggi: '2026-09-15' });
 const col = m => sl.mesi.findIndex(x => x.mese === m);
 
-prova('Storico linee: 12 mesi da ottobre, chi ha più biglietti in alto', () => {
+prova('Storico linee: 12 mesi da ottobre, righe nell\'ordine ricevuto (la Mappa lo decide)', () => {
   assert.equal(sl.mesi.length, 12);
   assert.deepEqual([sl.mesi[0].etichetta, sl.mesi[0].anno], ['Ott', '25']);
   assert.deepEqual([sl.mesi[11].etichetta, sl.mesi[11].anno], ['Set', '26']);
-  assert.deepEqual(sl.righe.map(r => r.nome), ['Ignazio', 'Ornella']);   // peso 61 contro 12
+  assert.deepEqual(sl.righe.map(r => r.nome), ['Ignazio', 'Ornella']);
+  assert.deepEqual([sl.righe[0].peso, sl.righe[1].peso], [61, 12]);
+  const girate = C.storicoLinee({ giorni: giorniL, obiettivi: obL, persone: [...persone].reverse(), oggi: '2026-09-15' });
+  assert.deepEqual(girate.righe.map(r => r.nome), ['Ornella', 'Ignazio']);   // non riordina per numero di biglietti
 });
 
 prova('Storico linee: i numeri sono quelli del Check (partenza + giorni)', () => {
