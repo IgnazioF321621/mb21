@@ -119,6 +119,7 @@ const COSA_FA_ESITO = {
   'PM Fissato': { data: 'giorno-ora', classe: 'appuntamento' },
   'Appuntamento': { data: 'giorno-ora', classe: 'appuntamento' },
   'Richiamare': { data: 'giorno' },
+  'Relazione': { rientro: true },                            // «Quando risentirlo?» con 20 giorni proposti (Ignazio 25/09)
   'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
   'No Interesse': { classe: 'no', rientro: true },           // poi «Quando risentirlo?» (17/09)
 };
@@ -395,7 +396,7 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
-  const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, 'No Interesse') : null;   // Annulla rimette il rientro di prima
+  const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
   setTimeout(() => {
     listaDi(pos.lista).splice(pos.i, 1);
@@ -451,11 +452,12 @@ function salvaCache() {
   try { localStorage.setItem(CHIAVE_CACHE, JSON.stringify({ oggi: ST.oggi, risultato: ST.risultato, stato: ST.stato, salvata: new Date().toISOString() })); } catch (e) {}
 }
 
-// «Quando risentirlo?» dopo un esito che chiude la relazione (No Interesse, No BuonFine): data già a un anno, cambiabile.
+// «Quando risentirlo?» dopo un esito che chiude la relazione (No Interesse, No BuonFine: data già a un anno) e dopo «Relazione»
+// (20 giorni, Ignazio 25/09), cambiabile. `giorni` da MB21Agenda.giorniRisentire.
 // Scrive `rientro_il` del contatto (il giorno in cui rientra in coda). Stesso foglio da coda, Agenda e scheda. Restituisce il giorno o null.
-async function chiediRientro(contattoId, nome, esito) {
-  const A = MB21Agenda;
-  const iso = await chiediData({ etichetta: 'Quando risentirlo?', data: 'giorno', giorni: A.GIORNI_CHIUSURA, testo: `${esito}: rientra in coda tra un anno, o quando vuoi tu` }, nome);
+async function chiediRientro(contattoId, nome, esito, giorni = MB21Agenda.GIORNI_CHIUSURA) {
+  const tra = giorni === MB21Agenda.GIORNI_CHIUSURA ? 'un anno' : `${giorni} giorni`;
+  const iso = await chiediData({ etichetta: 'Quando risentirlo?', data: 'giorno', giorni, testo: `${esito}: rientra in coda tra ${tra}, o quando vuoi tu` }, nome);
   if (!iso) return null;
   const giorno = MB21Coda.oggiRoma(new Date(iso));
   const { error } = await dbq('giorno di rientro', supa.from('contatti').update({ rientro_il: giorno, in_coda_dal: null }).eq('id', contattoId));
