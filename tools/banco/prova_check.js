@@ -127,4 +127,72 @@ prova('Segni Vitali a 12 mesi: settembre come in Glide (BBS 5 · WES 10 · CEP 6
   assert.deepEqual([set.etichetta, set.contatti, set.bbs, set.wes, set.cep], ['SET', 5, 5, 10, 6]);
 });
 
+// ── Lo storico linea per linea (Ignazio 25/09): una riga per partner, 12 mesi, i cambiamenti
+const persone = [{ id: 'A', nome: 'Ignazio' }, { id: 'B', nome: 'Ornella' }];
+const giorniL = [
+  { user_id: 'A', data: '2026-07-05', bbs: 0, wes: 1, cep: 0 },
+  { user_id: 'A', data: '2026-08-20', bbs: 0, wes: 2, cep: 0 },
+];
+const obL = [
+  { user_id: 'A', mese: '2026-07-01', bbs_partenza: 5, wes_partenza: 7, cep_partenza: 7 },
+  { user_id: 'A', mese: '2026-08-01', bbs_partenza: 5, wes_partenza: 7, cep_partenza: 6 },
+  { user_id: 'A', mese: '2026-09-01', bbs_partenza: 5, wes_partenza: 10, cep_partenza: 6 },
+  { user_id: 'B', mese: '2026-07-01', bbs_partenza: 2, wes_partenza: 2, cep_partenza: 2 },
+  { user_id: 'B', mese: '2026-09-01', bbs_partenza: 0, wes_partenza: 0, cep_partenza: 0 },
+];
+const sl = C.storicoLinee({ giorni: giorniL, obiettivi: obL, persone, oggi: '2026-09-15' });
+const col = m => sl.mesi.findIndex(x => x.mese === m);
+
+prova('Storico linee: 12 mesi da ottobre, chi ha più biglietti in alto', () => {
+  assert.equal(sl.mesi.length, 12);
+  assert.deepEqual([sl.mesi[0].etichetta, sl.mesi[0].anno], ['Ott', '25']);
+  assert.deepEqual([sl.mesi[11].etichetta, sl.mesi[11].anno], ['Set', '26']);
+  assert.deepEqual(sl.righe.map(r => r.nome), ['Ignazio', 'Ornella']);   // peso 61 contro 12
+});
+
+prova('Storico linee: i numeri sono quelli del Check (partenza + giorni)', () => {
+  const a = sl.righe[0].celle;
+  assert.deepEqual([a.bbs[col('2026-07-01')].valore, a.wes[col('2026-07-01')].valore, a.cep[col('2026-07-01')].valore], [5, 8, 7]);
+  assert.deepEqual([a.bbs[col('2026-08-01')].valore, a.wes[col('2026-08-01')].valore, a.cep[col('2026-08-01')].valore], [5, 9, 6]);
+  assert.deepEqual([a.bbs[col('2026-09-01')].valore, a.wes[col('2026-09-01')].valore, a.cep[col('2026-09-01')].valore], [5, 10, 6]);
+});
+
+prova('Storico linee: prima del primo dato la cella è vuota, non zero', () => {
+  const a = sl.righe[0].celle;
+  assert.equal(a.bbs[col('2026-06-01')].valore, null);
+  assert.equal(a.bbs[col('2025-10-01')].valore, null);
+  assert.equal(sl.righe[0].vuota, false);
+});
+
+prova('Storico linee: i cambiamenti rispetto al mese prima', () => {
+  const a = sl.righe[0].celle, b = sl.righe[1].celle;
+  assert.equal(a.wes[col('2026-08-01')].cambio, 'su');       // 9 dopo 8
+  assert.equal(a.cep[col('2026-08-01')].cambio, 'giu');      // 6 dopo 7
+  assert.equal(a.bbs[col('2026-08-01')].cambio, '');         // fermo a 5
+  assert.equal(a.wes[col('2026-07-01')].cambio, '');         // primo mese: niente freccia
+  assert.equal(b.bbs[col('2026-09-01')].cambio, 'giu');      // 0 dopo 2
+});
+
+prova('Storico linee: mese senza partenza = totale del mese prima (come nel Check)', () => {
+  const b = sl.righe[1].celle;
+  assert.equal(b.bbs[col('2026-07-01')].valore, 2);
+  assert.equal(b.bbs[col('2026-08-01')].valore, 2);          // agosto senza obiettivo: resta 2
+  assert.equal(b.bbs[col('2026-08-01')].cambio, '');
+  assert.equal(b.bbs[col('2026-09-01')].valore, 0);          // partenza scritta a 0
+});
+
+prova('Storico linee: totali del gruppo e massimi per la barretta', () => {
+  assert.deepEqual([sl.totali.bbs[col('2026-07-01')], sl.totali.bbs[col('2026-08-01')], sl.totali.bbs[col('2026-09-01')]], [7, 7, 5]);
+  assert.equal(sl.totali.wes[col('2026-09-01')], 10);
+  assert.deepEqual([sl.massimi.bbs, sl.massimi.wes, sl.massimi.cep], [5, 10, 7]);
+  assert.equal(sl.totali.bbs[col('2026-05-01')], 0);         // nessuno ha dati: totale 0
+});
+
+prova('Storico linee: un partner senza niente resta in elenco, tutto vuoto', () => {
+  const r = C.storicoLinee({ giorni: [], obiettivi: [], persone: [{ id: 'C', nome: 'Nuovo' }], oggi: '2026-09-15' });
+  assert.equal(r.righe[0].vuota, true);
+  assert.equal(r.righe[0].celle.bbs.every(c => c.valore === null), true);
+  assert.deepEqual([r.massimi.bbs, r.totali.bbs[11]], [1, 0]);   // massimo 1 per non dividere per zero
+});
+
 console.log(`\n${ok} prove superate`);

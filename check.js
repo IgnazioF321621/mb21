@@ -165,6 +165,45 @@
   }
 
   // Segni Vitali a 12 mesi (tabella della Dashboard, spostata qui: decisione C)
+  // ── Lo storico linea per linea (Ignazio 25/09: «lo storico dove lo vedo con tutto il flusso e i cambiamenti
+  // e per ogni partner»). Una riga per partner, i 12 mesi in fila, la freccia dove cambia rispetto al mese prima.
+  // Usa `D.totaliMesi` come tutto il resto (partenza del mese, e se manca il totale del mese prima): i numeri
+  // sono per forza gli stessi della tabella del singolo partner.
+  const CAMPI_STATO = ['bbs', 'wes', 'cep'];
+
+  function storicoLinee({ giorni, obiettivi, persone, oggi, fino }) {
+    const finoA = (fino || oggi).slice(0, 8) + '01';
+    const mesi = [];
+    for (let k = 11; k >= 0; k--) {
+      const m = R.spostaMese(finoA, -k), [a, mm] = m.split('-');
+      mesi.push({ mese: m, etichetta: MESI_BREVI[Number(mm) - 1], anno: a.slice(2) });
+    }
+    const perMese = D.mesiDaGiorni(giorni, CAMPI_STATO);
+    const righe = (persone || []).map(p => {
+      const tot = D.totaliMesi(perMese.filter(x => x.user_id === p.id),
+        (obiettivi || []).filter(o => o.user_id === p.id), finoA);
+      const celle = {};
+      for (const k of CAMPI_STATO) {
+        celle[k] = mesi.map(({ mese }) => {
+          const t = tot[mese];
+          if (!t) return { valore: null };
+          const prima = tot[R.spostaMese(mese, -1)];
+          const cambio = !prima ? '' : t[k] > prima[k] ? 'su' : t[k] < prima[k] ? 'giu' : '';
+          return { valore: t[k], cambio };
+        });
+      }
+      const peso = CAMPI_STATO.reduce((s, k) => s + celle[k].reduce((q, c) => q + n(c.valore), 0), 0);
+      // «vuota» anche chi è sempre a zero: non fa una riga nella tabella, si legge in fondo (niente rumore)
+      return { id: p.id, nome: p.nome, celle, peso, vuota: !Object.keys(tot).length || !peso };
+    }).sort((x, y) => y.peso - x.peso || String(x.nome).localeCompare(String(y.nome), 'it'));
+    const massimi = {}, totali = {};
+    for (const k of CAMPI_STATO) {
+      massimi[k] = Math.max(1, ...righe.map(r => Math.max(0, ...r.celle[k].map(c => n(c.valore)))));
+      totali[k] = mesi.map((_, i) => righe.reduce((s, r) => s + n(r.celle[k][i].valore), 0));
+    }
+    return { mesi, righe, massimi, totali };
+  }
+
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
@@ -176,7 +215,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, andamento, valore, prepara, calcola, grafico, segniVitali };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
