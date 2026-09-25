@@ -397,19 +397,24 @@ prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; i t
   assert.deepEqual(A.fatteInFondo([]), []);
 });
 
-prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello schermo; il testo si reincolla uguale', () => {
+prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello schermo; dal 25/09 solo le voci da fare', () => {
   const r = (id, tipo, livello, testo, fatto) => ({ id, tipo, livello, testo, fatto_il: fatto ? '2026-09-24T10:00:00Z' : null });
   const vista = A.fatteInFondo([
     r('T1', 'titolo', 0, 'Cantiere 41 – MB Plan'), r('a', 'numero', 0, 'Le fatte in fondo', true), r('b', 'numero', 0, 'Copiare negli appunti'),
     r('c', 'numero', 0, 'Mettere un punto in un giorno'), r('c1', 'numero', 1, 'anche nella settimana'), r('d', 'punto', 0, 'Foto dal telefono'),
     r('e', 'cosa', 0, 'Provare su iPhone'), r('f', 'cosa', 0, 'Scrivere a Isabella', true),
+    r('h', 'numero', 0, 'Fatta con sotto', true), r('h1', 'punto', 1, 'ancora da fare'), r('h2', 'punto', 1, 'fatto anche lui', true),
     r('T2', 'titolo', 0, 'Evernote'), r('g', 'numero', 0, 'Parole chiave'),
+    r('T3', 'titolo', 0, 'Finito'), r('z', 'numero', 0, 'Tutto fatto', true),
   ]);
   const titolo = A.testoDaCopiare(vista, 'T1');
+  // solo le da fare (25/09): via «Le fatte in fondo», «Scrivere a Isabella» e «fatto anche lui»; «Fatta con sotto» resta, con ✓,
+  // perché sotto ha un punto da fare; i numeri sono quelli dello schermo («3.» continua dopo puntini e ☐)
   assert.equal(titolo.testo, [
     '## Cantiere 41 – MB Plan', '1. Copiare negli appunti', '2. Mettere un punto in un giorno', '  2.1 anche nella settimana',
-    '- Foto dal telefono', '- [ ] Provare su iPhone', '3. ✓ Le fatte in fondo', '- [x] Scrivere a Isabella'].join('\n'));   // «3.»: la numerazione continua dopo puntini e ☐, come sullo schermo
+    '- Foto dal telefono', '- [ ] Provare su iPhone', '3. ✓ Fatta con sotto', '  - ancora da fare'].join('\n'));
   assert.equal(titolo.voci, 7);
+  assert.deepEqual(A.numeraRighe(vista).slice(1, 11), ['1.', '2.', '2.1', '•', '', '3.', '◦', '◦', '4.', '']);   // sullo schermo (h, h1, h2, poi le fatte a, f): il «3.» è lo stesso
   // una voce: lei e i suoi sottopunti, con il rientro vero
   assert.deepEqual(A.testoDaCopiare(vista, 'c'), { testo: '2. Mettere un punto in un giorno\n  2.1 anche nella settimana', voci: 2 });
   assert.deepEqual(A.testoDaCopiare(vista, 'c1'), { testo: '  2.1 anche nella settimana', voci: 1 });
@@ -420,16 +425,22 @@ prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello
   assert.deepEqual(copiaF.testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [1, 2, 2, 2, 3]);
   assert.deepEqual(A.testoDaCopiare(rientrata, 'M').testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [2, 3]);
   assert.deepEqual(A.testoDaCopiare(vista, 'g'), { testo: '1. Parole chiave', voci: 1 });
-  // tutto il progetto: una riga vuota prima di ogni titolo (non prima del primo)
+  // tutto il progetto: una riga vuota prima di ogni titolo (non prima del primo); il titolo tutto fatto non c'è
   const tutto = A.testoDaCopiare(vista, null).testo.split('\n');
   assert.equal(tutto[0], '## Cantiere 41 – MB Plan'); assert.equal(tutto[8], ''); assert.equal(tutto[9], '## Evernote');
+  assert.equal(tutto.length, 11); assert.ok(!tutto.some(x => /Finito|Tutto fatto|Isabella|Le fatte in fondo/.test(x)));
+  // copiato da solo (l'iconcina), il titolo finito dà il titolo; una voce fatta scelta dal suo foglio si copia (con ✓), senza i sottopunti fatti
+  assert.deepEqual(A.testoDaCopiare(vista, 'T3'), { testo: '## Finito', voci: 0 });
+  assert.deepEqual(A.testoDaCopiare(vista, 'h'), { testo: '3. ✓ Fatta con sotto\n  - ancora da fare', voci: 2 });
+  assert.deepEqual(A.testoDaCopiare(vista, 'f'), { testo: '- [x] Scrivere a Isabella', voci: 1 });
   assert.deepEqual(A.testoDaCopiare(vista, 'nessuno'), { testo: '', voci: 0 });
   // reincollato: stessi tipi, rientri e fatte
   const letto = titolo.testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa'));
   assert.deepEqual(letto.map(x => [x.tipo, x.livello, x.fatta, x.testo]), [
     ['titolo', 0, false, 'Cantiere 41 – MB Plan'], ['numero', 0, false, 'Copiare negli appunti'], ['numero', 0, false, 'Mettere un punto in un giorno'],
     ['numero', 1, false, 'anche nella settimana'], ['punto', 0, false, 'Foto dal telefono'], ['cosa', 0, false, 'Provare su iPhone'],
-    ['numero', 0, true, 'Le fatte in fondo'], ['cosa', 0, true, 'Scrivere a Isabella']]);
+    ['numero', 0, true, 'Fatta con sotto'], ['punto', 1, false, 'ancora da fare']]);
+  assert.equal(A.leggiRiga('- [x] Scrivere a Isabella', 0, 'cosa').fatta, true);   // «- [x] » si rilegge ancora (testi copiati prima del 25/09)
   // come prima: tipo scelto con i bottoni, rientro scritto, «[] », «☐ », puntini e **grassetto**; vuota → null
   assert.deepEqual(A.leggiRiga('Solo testo', 2, 'numero'), { tipo: 'numero', testo: 'Solo testo', livello: 2, fatta: false });
   assert.deepEqual(A.leggiRiga('\t\t• **Punto** rientrato', 0, 'cosa'), { tipo: 'punto', testo: 'Punto rientrato', livello: 2, fatta: false });
