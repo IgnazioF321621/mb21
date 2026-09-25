@@ -285,6 +285,21 @@
     }
     return { testo: out.join('\n'), voci: tutte.slice(da, a).filter(r => r.tipo !== 'titolo').length };
   }
+  // Le voci fatte che si possono eliminare (Ignazio 25/09: «le voci smarcate in quanto fatte le eliminiamo, perché creano
+  // confusione inutile»): fatte e con tutto quello che hanno dentro fatto. Una fatta con sotto punti ancora da fare resta,
+  // se no i suoi punti finirebbero sotto la voce sopra. I titoli non ci sono mai. `righe` = il progetto (o un suo pezzo)
+  // come si vede (fatteInFondo); rende gli id, nell'ordine dello schermo.
+  function fatteDaEliminare(righe) {
+    const tutte = righe || [], out = [];
+    for (let i = 0; i < tutte.length; i++) {
+      const r = tutte[i];
+      if (r.tipo === 'titolo' || !r.fatto_il) continue;
+      let tutteFatte = true;
+      for (let j = i + 1; j < tutte.length && tutte[j].tipo !== 'titolo' && (tutte[j].livello || 0) > (r.livello || 0); j++) if (!tutte[j].fatto_il) tutteFatte = false;
+      if (tutteFatte) out.push(r.id);
+    }
+    return out;
+  }
   // Spostare una riga sotto un altro titolo, anche di un altro progetto (Ignazio 25/09: con la lista lunga, trascinando non
   // sempre si arriva al titolo giusto). `righe` = il progetto della riga come si vede (fatteInFondo); `id` = la riga, che si
   // porta dietro i suoi sottopunti (un titolo tutte le sue righe, come trascinando); `titoloId` = il titolo d'arrivo (vuoto =
@@ -793,7 +808,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, fatteDaEliminare, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
