@@ -38,8 +38,9 @@
       'Contatto': ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti', 'Telefono spento', 'No Interesse', 'No Risposta'],
       'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Consulenza PRD': FASI_PRD,
     },
-    'Partner': { 'Contatto': FASI_CONTATTO_PC, 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
-    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC, 'No Interesse'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
+    // Ignazio 25/09: «No Risposta» e «Telefono spento» anche per Partner e Clienti (in Glide c'erano; prima il Cliente li aveva solo in coda)
+    'Partner': { 'Contatto': [...FASI_CONTATTO_PC, 'Telefono spento', 'No Risposta'], 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
+    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC, 'Telefono spento', 'No Interesse', 'No Risposta'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
   };
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
