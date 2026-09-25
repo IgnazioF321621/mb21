@@ -550,6 +550,12 @@
   const ESITI_CHIUSURA = ['No Interesse', 'No BuonFine'];
   const GIORNI_CHIUSURA = 365;
   const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
+  // Esito «Relazione» (Ignazio 25/09: «non presuppone altri esiti a parte richiamare più in là»): niente «prossimo appuntamento»
+  // (proponeva un altro messaggio per domani: due azioni in un giorno), si chiede «Quando risentirlo?» con la data già a 20 giorni,
+  // gli stessi del rientro in coda (sequenze `Prospect-Contatto-Relazione`: se cambia uno, cambia l'altro)
+  const GIORNI_RELAZIONE = 20;
+  // Esiti dopo i quali si chiede solo quando risentire la persona: i giorni proposti, altrimenti null
+  const giorniRisentire = esito => chiudeRelazione(esito) ? GIORNI_CHIUSURA : esito === 'Relazione' ? GIORNI_RELAZIONE : null;
   // Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita nella scheda del cliente (cantiere 26 lavoro 5 bis).
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
   const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
@@ -786,7 +792,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, chiudeRelazione, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
