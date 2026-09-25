@@ -78,3 +78,17 @@ export function coseConOra(cose: Cosa[], voci: Voce[], modelli: Modello[], giorn
 }
 // Il segno «già avvisato» di una cosa o voce (tabella avvisi_mandati): con il giorno e l'ora, così una cosa spostata a un'altra ora avvisa di nuovo
 export const chiaveAvviso = (x: ConOra) => `${x.tipo === 'cose' ? 'cosa' : 'voce'}:${x.id}:${x.giorno}:${x.ora}`;
+
+// ── «Domani hai…» nel Check della sera (24/09, Ignazio: dalla lista «Avvisi» di MB App) ──
+// Gli impegni di domani di una persona: appuntamenti (anche PM/Appuntamento dalla coda) e telefonate in agenda, mai Riordini.
+// → { titolo: «2 appuntamenti e 1 telefonata», ora: «09:30», primo: «PM · Pino Manolo» }; niente = null.
+export type Impegno = { inizio: number; testo: string; telefonata: boolean };
+const quanti = (n: number, uno: string, tanti: string) => `${n} ${n === 1 ? uno : tanti}`;
+export const oraMinuti = (t: number) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date(t));
+export function riepilogoDomani(impegni: Impegno[]): { titolo: string; ora: string; primo: string } | null {
+  if (!impegni.length) return null;
+  const app = impegni.filter(x => !x.telefonata).length, tel = impegni.length - app;
+  const pezzi = [app ? quanti(app, 'appuntamento', 'appuntamenti') : '', tel ? quanti(tel, 'telefonata', 'telefonate') : ''].filter(Boolean);
+  const primo = [...impegni].sort((x, y) => x.inizio - y.inizio)[0];
+  return { titolo: pezzi.join(' e '), ora: oraMinuti(primo.inizio), primo: primo.testo };
+}
