@@ -264,6 +264,10 @@
   // «## titolo» · «1. » «2.1 » numerate · «- » puntini · «- [ ] » da fare, «- [x] » fatta · «✓ » dopo il numero o il
   // puntino = fatta · due spazi per ogni rientro, quello vero anche copiando una voce rientrata (una «2.1 » con due spazi
   // davanti e i suoi sottopunti con quattro: reincollati restano figli suoi, revisione 24/09). Rende { testo, voci }.
+  // Dal 25/09 (Ignazio: «devono essere copiate solo quelle che non sono state eseguite… quelle fatte non ci servono») si copiano
+  // solo le voci da fare: le fatte le toglie fatteDaEliminare (una fatta con sotto punti da fare resta, con «✓»); la riga scelta
+  // c'è sempre; copiando tutto il progetto un titolo con tutte le voci fatte non c'è. I numeri restano quelli dello schermo
+  // (le fatte stanno in fondo, dopo le da fare). `voci` = le righe copiate, titoli esclusi.
   function testoDaCopiare(righe, id) {
     const tutte = righe || [], segni = numeraRighe(tutte);
     let da = 0, a = tutte.length;
@@ -274,16 +278,25 @@
       a = da + 1;
       while (a < tutte.length && tutte[a].tipo !== 'titolo' && (capo.tipo === 'titolo' || (tutte[a].livello || 0) > (capo.livello || 0))) a++;
     }
+    const via = new Set(fatteDaEliminare(tutte.slice(da, a)));
+    if (id) via.delete(id);
+    const finito = i => { let k = i + 1; for (; k < a && tutte[k].tipo !== 'titolo'; k++) if (!via.has(tutte[k].id)) return false; return k > i + 1; };
     const out = [];
+    let voci = 0;
     for (let i = da; i < a; i++) {
       const r = tutte[i], t = r.tipo || 'cosa', testo = String(r.testo || '').replace(/\s+/g, ' ').trim();
-      if (t === 'titolo') { if (out.length) out.push(''); out.push('## ' + testo); continue; }
+      if (via.has(r.id)) continue;
+      if (t === 'titolo') {
+        if (!id && finito(i)) continue;   // tutto il progetto: un titolo finito non serve
+        if (out.length) out.push(''); out.push('## ' + testo); continue;
+      }
+      voci++;
       const rientro = '  '.repeat(r.livello || 0), fatta = r.fatto_il ? '✓ ' : '';
       if (t === 'numero') out.push(`${rientro}${segni[i]} ${fatta}${testo}`);
       else if (t === 'punto') out.push(`${rientro}- ${fatta}${testo}`);
       else out.push(`${rientro}- [${r.fatto_il ? 'x' : ' '}] ${testo}`);
     }
-    return { testo: out.join('\n'), voci: tutte.slice(da, a).filter(r => r.tipo !== 'titolo').length };
+    return { testo: out.join('\n'), voci };
   }
   // Le voci fatte che si possono eliminare (Ignazio 25/09: «le voci smarcate in quanto fatte le eliminiamo, perché creano
   // confusione inutile»): fatte e con tutto quello che hanno dentro fatto. Una fatta con sotto punti ancora da fare resta,

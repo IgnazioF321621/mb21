@@ -380,8 +380,9 @@ function copiaRighe(progettoId, c) {
 // Cosa si copia, in parole: le stesse nel foglio della riga («Copia …») e nel messaggio («Copiato …»)
 function cosaSiCopia(c, voci) {
   if (!c) return 'tutto il progetto';
-  if (c.tipo === 'titolo') return voci === 0 ? 'il titolo' : voci === 1 ? 'il titolo e la sua voce' : `il titolo e le sue ${voci} voci`;
-  return voci === 2 ? 'la voce e il suo sottopunto' : voci > 2 ? `la voce e i suoi ${voci - 1} sottopunti` : 'la voce';
+  // dal 25/09 si copiano solo le voci da fare: lo dicono le parole
+  if (c.tipo === 'titolo') return voci === 0 ? 'il titolo' : voci === 1 ? 'il titolo e la sua voce da fare' : `il titolo e le sue ${voci} voci da fare`;
+  return voci === 2 ? 'la voce e il suo sottopunto da fare' : voci > 2 ? `la voce e i suoi ${voci - 1} sottopunti da fare` : 'la voce';
 }
 function contaProgetto(id) {
   // dal 23/09 sera si spuntano anche i numeri e i puntini: contano tutti i passi, non i titoli
@@ -427,13 +428,16 @@ function doveSpostare(c) {
 // poi si ricarica; «Annulla» solo se nei due progetti non è cambiato niente nel frattempo (se no «Non si può più annullare»).
 async function spostaSotto(c, meta, ridisegna = disegnaAgenda) {
   const altro = meta.progetto.id !== c.progetto_id, progetti = [c.progetto_id, meta.progetto.id];
-  const cambi = MB21Agenda.spostaRighe(righeInVista(c.progetto_id), c.id, meta.titolo ? meta.titolo.id : null, altro ? righeInVista(meta.progetto.id) : null, altro ? meta.progetto.id : null);
+  // un titolo si sposta senza le sue voci fatte (25/09): si calcola senza di loro, poi si cancellano
+  const via = c.tipo === 'titolo' ? fatteDelTitolo(c) : [], tolte = new Set(via.map(x => x.id));
+  const senza = id => righeInVista(id).filter(x => !tolte.has(x.id));
+  const cambi = MB21Agenda.spostaRighe(senza(c.progetto_id), c.id, meta.titolo ? meta.titolo.id : null, altro ? senza(meta.progetto.id) : null, altro ? meta.progetto.id : null);
   if (!cambi) return mostraToast('Non spostata: riprova.');
   const valori = x => ({ ordine: x.ordine, livello: x.livello || 0, progetto_id: x.progetto_id });
   const per = new Map(AG.cose.map(x => [x.id, x]));
   const prima = cambi.map(({ id }) => ({ id, ...valori(per.get(id)) }));
   const scrivi = lista => Promise.all(lista.map(({ id, ...v }) => dbq('sposta', supa.from('cose_da_fare').update(v).eq('id', id))));
-  const firma = () => AG.cose.filter(x => progetti.includes(x.progetto_id)).map(x => [x.id, ...Object.values(valori(x))].join(':')).sort().join('|');
+  const firma = () => firmaProgetti(progetti);
   const salva = async (lista, indietro) => {
     if ((await scrivi(lista)).some(r => r.error)) { await scrivi(indietro); mostraToast('Non salvato: riprova.'); apriAgenda(AG.giorno); return false; }
     const ora = new Map(AG.cose.map(x => [x.id, x]));   // le righe di adesso (la pagina può essersi ricaricata)
@@ -442,9 +446,19 @@ async function spostaSotto(c, meta, ridisegna = disegnaAgenda) {
     return true;
   };
   if (!await salva(cambi, prima)) return;
+  if (via.length) {   // se la cancellazione non riesce si torna com'era (le fatte resterebbero sotto il titolo sbagliato)
+    const { error } = await dbq('elimina le fatte', supa.from('cose_da_fare').delete().in('id', [...tolte]));
+    if (error) { await salva(prima, cambi); return mostraToast('Non salvato: riprova.'); }
+    AG.cose = AG.cose.filter(x => !tolte.has(x.id));
+    ridisegna();
+  }
   const dopo = firma();
   const dove = [altro ? `in «${meta.progetto.titolo}»` : '', meta.titolo ? `sotto «${titoloCorto(meta.titolo.testo)}»` : ''].filter(Boolean).join(' ');
-  mostraToast(`${c.tipo === 'titolo' ? 'Titolo spostato' : 'Spostata'} ${dove}`, () => (firma() === dopo ? salva(prima, cambi) : mostraToast('Non si può più annullare: nel frattempo il progetto è cambiato')));
+  mostraToast(`${c.tipo === 'titolo' ? 'Titolo spostato' : 'Spostata'} ${dove}${via.length ? ': ' + eliminateFatte(via.length) : ''}`, async () => {
+    if (firma() !== dopo) return mostraToast('Non si può più annullare: nel frattempo il progetto è cambiato');
+    if (via.length && !await rimettiRighe(via)) return;
+    await salva(prima, cambi);
+  });
 }
 // La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Periodo, Anno e della scala sopra: le parti non
 // vuote separate da « · » (la riportata, e per le righe di un progetto nomeProgetto)
@@ -494,7 +508,7 @@ function foglioProgetto(p, dopo) {
       <div class="campo"><label>Icona <small>facoltativa</small></label>
         <div class="nm-icone"><button data-icona="" class="${icona ? '' : 'scelto'}">—</button>${ICONE_MODELLO.map(n => `<button data-icona="${n}" class="${icona === n ? 'scelto' : ''}" aria-label="${n}">${ic(n)}</button>`).join('')}</div></div>
       <button class="primario" id="np-si">${p ? 'Salva' : 'Crea'}</button>
-      ${p ? `<button class="link" id="np-copia">${ic('copia')} Copia tutto il progetto</button>` : ''}
+      ${p ? `<button class="link" id="np-copia">${ic('copia')} Copia tutto il progetto (le voci da fare)</button>` : ''}
       ${p ? '<button class="link elimina-qui" id="np-elimina">Elimina il progetto</button>' : ''}
       <button class="link" id="np-no">Annulla</button></div>`;
     velo.querySelector('#np-no').onclick = () => velo.remove();
@@ -596,14 +610,26 @@ async function eliminaFatte(p) {
   if (error) return mostraToast('Non eliminate: riprova.');
   AG.cose = AG.cose.filter(c => !via.has(c.id));
   disegnaAgenda();
-  mostraToast(n === 1 ? 'Eliminata 1 voce fatta' : `Eliminate ${n} voci fatte`, async () => {
-    const copie = righe.map(c => Object.fromEntries(COLONNE_COSA.filter(k => k in c).map(k => [k, c[k]])));
-    const r = await dbq('rimetti le fatte', supa.from('cose_da_fare').insert(copie));
-    if (r.error) return mostraToast('Non rimesse: riprova.');
-    AG.cose.push(...righe);
-    disegnaAgenda();
-  });
+  mostraToast(n === 1 ? 'Eliminata 1 voce fatta' : `Eliminate ${n} voci fatte`, async () => { if (await rimettiRighe(righe)) disegnaAgenda(); });
 }
+// Rimettere righe cancellate (l'«Annulla» di «Elimina le fatte» e dei titoli spostati o trascinati): com'erano, stesso id,
+// solo le colonne del database. Rende false (e lo dice) se non riesce.
+async function rimettiRighe(righe) {
+  const copie = righe.map(c => Object.fromEntries(COLONNE_COSA.filter(k => k in c).map(k => [k, c[k]])));
+  const r = await dbq('rimetti le righe', supa.from('cose_da_fare').insert(copie));
+  if (r.error) { mostraToast('Non rimesse: riprova.'); return false; }
+  AG.cose.push(...righe);
+  return true;
+}
+// Le voci fatte di un titolo, come le sceglie «Elimina le fatte» (Ignazio 25/09: spostando o trascinando un titolo si cancellano,
+// «quelle fatte non ci servono»; una fatta con sotto punti da fare resta)
+function fatteDelTitolo(t) {
+  const ids = new Set(MB21Agenda.fatteDaEliminare(passiDelTitolo(t)));
+  return AG.cose.filter(c => ids.has(c.id));
+}
+const eliminateFatte = n => (n === 1 ? 'eliminata 1 voce fatta' : `eliminate ${n} voci fatte`);
+// Come stanno adesso le righe di questi progetti: se cambia, un «Annulla» vecchio non si fa più (revisione 25/09)
+const firmaProgetti = progetti => AG.cose.filter(x => progetti.includes(x.progetto_id)).map(x => [x.id, x.ordine, x.livello || 0, x.progetto_id].join(':')).sort().join('|');
 async function spuntaTitolo(passi, fatto) {
   if (!passi.length) return mostraToast('Il titolo non ha ancora passi sotto');
   const fatto_il = fatto ? null : new Date().toISOString(), oggi = MB21Coda.oggiRoma();
@@ -1595,12 +1621,32 @@ async function fineTrascina() {
   const voce = attr === 'data-voce';
   const ids = righeTrascinabili(riga, attr, true).map(x => x.getAttribute(attr));
   const lista = voce ? AG.modello : AG.cose;
+  // un titolo trascinato in un altro posto perde le sue voci fatte (Ignazio 25/09), con «Annulla»; lasciato dov'era, niente
+  const titolo = !voce && riga.classList.contains('pj-titolo') ? AG.cose.find(c => c.id === riga.getAttribute(attr)) : null;
+  if (titolo && ids.join() === righeInVista(titolo.progetto_id).map(x => x.id).join()) return;
+  const via = titolo ? fatteDelTitolo(titolo) : [], tolte = new Set(via.map(x => x.id)), primaDi = new Map();
   const cambiate = [];
-  ids.forEach((id, i) => { const x = lista.find(y => y.id === id); if (x && x.ordine !== i + 1) { x.ordine = i + 1; cambiate.push(x); } });
-  if (!cambiate.length) return;
-  const esiti = await Promise.all(cambiate.map(x => dbq('ordine', supa.from(voce ? 'modello_giorno' : 'cose_da_fare').update({ ordine: x.ordine }).eq('id', x.id))));
+  ids.filter(id => !tolte.has(id)).forEach((id, i) => { const x = lista.find(y => y.id === id); if (x && x.ordine !== i + 1) { primaDi.set(x.id, x.ordine); x.ordine = i + 1; cambiate.push(x); } });
+  if (!cambiate.length && !via.length) return;
+  const ordina = quale => Promise.all(cambiate.map(x => dbq('ordine', supa.from(voce ? 'modello_giorno' : 'cose_da_fare').update({ ordine: quale(x) }).eq('id', x.id))));
+  const esiti = await ordina(x => x.ordine);
   if (esiti.some(r => r.error)) { mostraToast('Ordine non salvato: riprova.'); return apriAgenda(AG.giorno); }
+  if (via.length) {
+    const { error } = await dbq('elimina le fatte', supa.from('cose_da_fare').delete().in('id', [...tolte]));
+    if (error) { await ordina(x => primaDi.get(x.id)); mostraToast('Non salvato: riprova.'); return apriAgenda(AG.giorno); }
+    AG.cose = AG.cose.filter(x => !tolte.has(x.id));
+  }
   disegnaAgenda();
+  if (!via.length) return;
+  const progetti = [titolo.progetto_id], firmaDopo = firmaProgetti(progetti);
+  mostraToast(`Titolo spostato: ${eliminateFatte(via.length)}`, async () => {
+    if (firmaProgetti(progetti) !== firmaDopo) return mostraToast('Non si può più annullare: nel frattempo il progetto è cambiato');
+    if (!await rimettiRighe(via)) return;
+    if ((await ordina(x => primaDi.get(x.id))).some(r => r.error)) { mostraToast('Non salvato: riprova.'); return apriAgenda(AG.giorno); }
+    const ora = new Map(AG.cose.map(x => [x.id, x]));   // le righe di adesso (la pagina può essersi ricaricata)
+    cambiate.forEach(x => { if (ora.has(x.id)) ora.get(x.id).ordine = primaDi.get(x.id); });
+    disegnaAgenda();
+  });
 }
 function rigaDa(ev) {
   if (typeof ST === 'undefined' || ST.tab !== 'agenda' || document.querySelector('.velo')) return null;
