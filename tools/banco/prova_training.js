@@ -144,13 +144,13 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
   assert.deepEqual(s.livelli.map(l => l.nome), ['Nuovo', 'Sponsor', 'Leaders Club', 'Leader Executive', 'Leader Bronzo', 'Leader Argento', 'Platino']);
   assert.deepEqual(s.livelli.map(l => l.aperto), [true, false, false, false, false, false, false]);
   assert.equal(s.qui.nome, 'Nuovo');
-  assert.deepEqual(s.livelli[0].percorsi.map(p => [p.id, p.pronto]), [['contattare', true], ['primi_passi', false], ['sistema', false], ['principi', false]]);
+  assert.deepEqual(s.livelli[0].percorsi.map(p => [p.id, p.pronto]), [['contattare', true], ['primi_passi', false], ['dire_il_vero', false], ['sistema', false], ['principi', false]]);
   // Contattare superato: Sponsor resta chiuso, gli altri percorsi del Nuovo non ci sono ancora
   const s2 = T.scala([mazzo], {}, [{ percorso: 'contattare', giuste: 8, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }], OGGI);
   assert.equal(s2.livelli[0].percorsi[0].stato.superato, true);
   assert.equal(s2.livelli[1].aperto, false);
-  // con tutti e quattro i percorsi superati si apre Sponsor
-  const mazzi = ['contattare', 'primi_passi', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  // con tutti e cinque i percorsi superati si apre Sponsor
+  const mazzi = ['contattare', 'primi_passi', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
   const test = mazzi.map(m => ({ percorso: m.percorso.id, giuste: 10, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }));
   const s3 = T.scala(mazzi, {}, test, OGGI);
   assert.deepEqual(s3.livelli.map(l => l.aperto), [true, true, false, false, false, false, false]);
@@ -160,7 +160,7 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
 
 prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
   const I = require('../../icone.js');
-  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [4, 6, 5, 5, 3, 3, 3]);
+  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [5, 6, 5, 5, 3, 3, 3]);
   const tutti = T.LIVELLI.flatMap(l => l.percorsi);
   assert.equal(new Set(tutti.map(p => p.id)).size, tutti.length);
   for (const p of tutti) {
@@ -168,8 +168,8 @@ prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mental
     assert.ok(I.ha(p.icona), `${p.id}: icona «${p.icona}» che non esiste`);
     assert.ok(p.titolo && p.sotto, p.id);
   }
-  // superati i quattro test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
-  const mazzi = ['contattare', 'primi_passi', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  // superati i cinque test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
+  const mazzi = ['contattare', 'primi_passi', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
   const s = T.scala(mazzi, {}, mazzi.map(m => ({ percorso: m.percorso.id, giuste: 9, totale: 10, fatto_il: '2026-09-24T10:00:00Z' })), OGGI);
   assert.equal(s.qui.nome, 'Sponsor');
   assert.deepEqual(s.qui.percorsi.map(p => [p.id, p.pronto, p.aperto]).slice(0, 2), [['piano', false, true], ['dare_seguito', false, false]]);
@@ -182,7 +182,7 @@ prova('Dentro un livello i percorsi si aprono uno dopo l\'altro: il successivo q
   const primi = { ...mazzo, percorso: { id: 'primi_passi' }, carte: mazzo.carte.map(c => ({ ...c, id: 'p-' + c.id })) };
   const p = s => s.livelli[0].percorsi.map(x => [x.id, x.pronto, x.aperto]);
   let s = T.scala([mazzo, primi], {}, [], OGGI);
-  assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['sistema', false, false], ['principi', false, false]]);
+  assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['dire_il_vero', false, false], ['sistema', false, false], ['principi', false, false]]);
   assert.equal(s.livelli[0].percorsi[1].prima, 'Contattare');
   assert.equal(s.percorso, 'contattare');
   // 11 carte di Contattare viste su 12: ancora chiuso
