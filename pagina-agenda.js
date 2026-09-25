@@ -416,26 +416,32 @@ function doveSpostare(c) {
     for (const x of titoli) if (!sopra || x.id !== sopra.id) mete.push({ etichetta: altro ? `${p.titolo} › ${x.testo}` : x.testo, icona, progetto: p, titolo: x });
   }
   const qui = mete.some(m => m.progetto.id === c.progetto_id), fuori = mete.some(m => m.progetto.id !== c.progetto_id);
-  return { testo: 'Sposta ' + [qui ? 'sotto un altro titolo' : '', fuori ? 'in un altro progetto' : ''].filter(Boolean).join(' o '), mete, sopra };
+  return { testo: 'Sposta ' + [qui ? (sopra ? 'sotto un altro titolo' : 'sotto un titolo') : '', fuori ? 'in un altro progetto' : ''].filter(Boolean).join(' o '), mete, sopra };
 }
 // Lo spostamento (MB21Agenda.spostaRighe, con le prove): si salvano solo le righe che cambiano posto, rientro o progetto.
 // Si resta dove si è; il messaggio dice dove è andata, con «Annulla» che rimette tutto com'era.
+// Revisione 25/09: tutto o niente — se una scrittura non riesce (rete caduta a metà) si rimettono com'erano anche le altre,
+// poi si ricarica; «Annulla» solo se nei due progetti non è cambiato niente nel frattempo (se no «Non si può più annullare»).
 async function spostaSotto(c, meta, ridisegna = disegnaAgenda) {
-  const altro = meta.progetto.id !== c.progetto_id;
+  const altro = meta.progetto.id !== c.progetto_id, progetti = [c.progetto_id, meta.progetto.id];
   const cambi = MB21Agenda.spostaRighe(righeInVista(c.progetto_id), c.id, meta.titolo ? meta.titolo.id : null, altro ? righeInVista(meta.progetto.id) : null, altro ? meta.progetto.id : null);
   if (!cambi) return mostraToast('Non spostata: riprova.');
+  const valori = x => ({ ordine: x.ordine, livello: x.livello || 0, progetto_id: x.progetto_id });
   const per = new Map(AG.cose.map(x => [x.id, x]));
-  const prima = cambi.map(({ id }) => { const x = per.get(id); return { id, ordine: x.ordine, livello: x.livello || 0, progetto_id: x.progetto_id }; });
-  const salva = async lista => {
-    const esiti = await Promise.all(lista.map(({ id, ...v }) => dbq('sposta', supa.from('cose_da_fare').update(v).eq('id', id))));
-    if (esiti.some(r => r.error)) { mostraToast('Non salvato: riprova.'); apriAgenda(AG.giorno); return false; }
-    lista.forEach(({ id, ...v }) => Object.assign(per.get(id), v));
+  const prima = cambi.map(({ id }) => ({ id, ...valori(per.get(id)) }));
+  const scrivi = lista => Promise.all(lista.map(({ id, ...v }) => dbq('sposta', supa.from('cose_da_fare').update(v).eq('id', id))));
+  const firma = () => AG.cose.filter(x => progetti.includes(x.progetto_id)).map(x => [x.id, ...Object.values(valori(x))].join(':')).sort().join('|');
+  const salva = async (lista, indietro) => {
+    if ((await scrivi(lista)).some(r => r.error)) { await scrivi(indietro); mostraToast('Non salvato: riprova.'); apriAgenda(AG.giorno); return false; }
+    const ora = new Map(AG.cose.map(x => [x.id, x]));   // le righe di adesso (la pagina può essersi ricaricata)
+    lista.forEach(({ id, ...v }) => { if (ora.has(id)) Object.assign(ora.get(id), v); });
     ridisegna();
     return true;
   };
-  if (!await salva(cambi)) return;
+  if (!await salva(cambi, prima)) return;
+  const dopo = firma();
   const dove = [altro ? `in «${meta.progetto.titolo}»` : '', meta.titolo ? `sotto «${titoloCorto(meta.titolo.testo)}»` : ''].filter(Boolean).join(' ');
-  mostraToast(`${c.tipo === 'titolo' ? 'Titolo spostato' : 'Spostata'} ${dove}`, () => salva(prima));
+  mostraToast(`${c.tipo === 'titolo' ? 'Titolo spostato' : 'Spostata'} ${dove}`, () => (firma() === dopo ? salva(prima, cambi) : mostraToast('Non si può più annullare: nel frattempo il progetto è cambiato')));
 }
 // La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Periodo, Anno e della scala sopra: le parti non
 // vuote separate da « · » (la riportata, e per le righe di un progetto nomeProgetto)
@@ -883,7 +889,8 @@ async function spuntaCosa(c, opz = {}) {
   });
 }
 
-// Il foglio di una cosa da fare: si corregge il testo, si manda a domani, si elimina.
+// Il foglio di una cosa da fare: si corregge il testo, si manda a domani, si elimina. È un `foglio alto` (revisione 25/09): più alto
+// dello schermo scorre; prima sull'iPhone la parte alta (titolo e testo) restava tagliata fuori.
 function foglioCosa(c, oggi, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const A = MB21Agenda;
@@ -935,7 +942,7 @@ function foglioCosa(c, oggi, opz = {}) {
   const spostaIn = pj && !opz.dallaScheda ? doveSpostare(c) : null;   // «Sposta sotto un altro titolo» (25/09)
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
+  velo.innerHTML = `<div class="foglio alto"><h3>${eCosa ? 'Cosa da fare' : 'Riga del progetto'}${esc(aNome())}</h3>
     <div class="campo"><textarea id="fc-testo" rows="3">${esc(c.testo)}</textarea></div>
     ${pj ? `<div class="campo"><label>${ic(pj.icona || 'obiettivi')} Progetto «${esc(pj.titolo)}» · tipo di riga</label><div class="ag-scelte" id="fc-tipo">${TIPI_RIGA.map(([k, t]) => `<button type="button" data-tipo="${k}" class="${tipoScelto === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
       <div class="fc-scala" style="margin-top:8px"><button type="button" class="freccia" id="fc-liv-meno" aria-label="Rientro indietro">⇤</button><b id="fc-liv"></b><button type="button" class="freccia" id="fc-liv-piu" aria-label="Rientro avanti">⇥</button></div></div>` : ''}
@@ -1053,7 +1060,7 @@ function foglioCosa(c, oggi, opz = {}) {
     // la lista delle mete sopra il foglio: con «Annulla» si torna al foglio della riga
     const n = pezzo ? pezzo.voci - (eTitolo ? 0 : 1) : 0, s = spostaIn.sopra;
     const sopra = eTitolo ? `<p>Va in fondo al progetto che scegli${n ? `, con ${n === 1 ? 'la sua voce' : `le sue ${n} voci`}` : ''}.</p>`
-      : `<p>${s ? `Adesso è sotto «${esc(s.testo)}». ` : ''}Va in fondo alle cose da fare del titolo che scegli${n ? `, con ${n === 1 ? 'il suo sottopunto' : `i suoi ${n} sottopunti`}` : ''}.</p>`;
+      : `<p>${s ? `Adesso è sotto «${esc(s.testo)}». ` : ''}Va in fondo alle cose da fare del ${spostaIn.mete.every(m => m.titolo) ? 'titolo' : spostaIn.mete.some(m => m.titolo) ? 'titolo o del progetto' : 'progetto'} che scegli${n ? `, con ${n === 1 ? 'il suo sottopunto' : `i suoi ${n} sottopunti`}` : ''}.</p>`;
     const meta = await sceltaDa(spostaIn.testo, spostaIn.mete, sopra);
     if (!meta) return;
     chiudi();

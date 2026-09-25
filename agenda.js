@@ -304,8 +304,10 @@
   // sempre si arriva al titolo giusto). `righe` = il progetto della riga come si vede (fatteInFondo); `id` = la riga, che si
   // porta dietro i suoi sottopunti (un titolo tutte le sue righe, come trascinando); `titoloId` = il titolo d'arrivo (vuoto =
   // tra le righe senza titolo, in cima; un titolo va sempre in fondo al progetto). Per un altro progetto `altre` = le sue righe
-  // come si vedono e `progettoId` il suo id. La riga va in fondo alle cose da fare del titolo, senza rientro (i sottopunti
-  // scalano con lei); poi tutto torna nell'ordine che si vede (fatteInFondo) e si numera 1…N, come quando si aggiungono righe.
+  // come si vedono e `progettoId` il suo id. La riga va in fondo alle cose da fare del titolo, con il rientro più piccolo delle
+  // sue voci (di solito nessuno; revisione 25/09: con voci rientrate subito sotto il titolo, senza rientro «adottava» una fatta
+  // rientrata come suo sottopunto), e i sottopunti scalano con lei; poi tutto torna nell'ordine che si vede (fatteInFondo) e si
+  // numera 1…N, come quando si aggiungono righe.
   // Rende le righe che cambiano, con i valori nuovi: [{ id, ordine, livello, progetto_id }]; null se la riga o il titolo non ci sono.
   function spostaRighe(righe, id, titoloId, altre, progettoId) {
     const da = righe || [], i = da.findIndex(r => r.id === id);
@@ -313,16 +315,17 @@
     const capo = da[i], eTitolo = capo.tipo === 'titolo';
     let j = i + 1;
     while (j < da.length && da[j].tipo !== 'titolo' && (eTitolo || (da[j].livello || 0) > (capo.livello || 0))) j++;
-    const giu = eTitolo ? 0 : capo.livello || 0;
-    const blocco = da.slice(i, j).map(r => ({ ...r, livello: Math.max(0, (r.livello || 0) - giu), progetto_id: progettoId || r.progetto_id }));
     const resto = [...da.slice(0, i), ...da.slice(j)], arrivo = altre ? [...altre] : resto;
-    let k;
-    if (eTitolo) k = arrivo.length;
+    let k, inizio;   // le voci del titolo d'arrivo: da `inizio` a `k` (escluso); la riga va in `k`
+    if (eTitolo) k = inizio = arrivo.length;
     else if (titoloId) {
       k = arrivo.findIndex(r => r.id === titoloId && r.tipo === 'titolo');
       if (k < 0) return null;
-      for (k++; k < arrivo.length && arrivo[k].tipo !== 'titolo'; k++);
-    } else { k = arrivo.findIndex(r => r.tipo === 'titolo'); if (k < 0) k = arrivo.length; }
+      for (inizio = ++k; k < arrivo.length && arrivo[k].tipo !== 'titolo'; k++);
+    } else { inizio = 0; k = arrivo.findIndex(r => r.tipo === 'titolo'); if (k < 0) k = arrivo.length; }
+    const livelli = arrivo.slice(inizio, k).map(r => r.livello || 0), base = livelli.length ? Math.min(...livelli) : 0;
+    const giu = eTitolo ? 0 : capo.livello || 0, su = eTitolo ? 0 : base;
+    const blocco = da.slice(i, j).map(r => ({ ...r, livello: Math.min(4, su + Math.max(0, (r.livello || 0) - giu)), progetto_id: progettoId || r.progetto_id }));
     const prima = new Map([...da, ...(altre || [])].map(r => [r.id, r])), cambi = [];
     const numera = lista => fatteInFondo(lista).forEach((r, n) => {
       const x = prima.get(r.id), nuova = { id: r.id, ordine: n + 1, livello: r.livello || 0, progetto_id: r.progetto_id };
