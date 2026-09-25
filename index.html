@@ -91,8 +91,9 @@
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); }
   /* Le icone (icone.js): a tratto, un colore solo, grandi quanto la scritta se non si dice altro */
   svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; flex: none; }
-  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 2px; min-height: var(--tocco); min-width: 50px; }   /* 24/09: con «Training» le voci arrivano a 7 */
+  nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 2px; min-height: var(--tocco); min-width: 44px; white-space: nowrap; }   /* 24/09: con «Training» le voci arrivano a 7; 25/09: per l'Admin 8 con «Progetti» (44 px, su una riga) */
   nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
+  nav:has(button[data-tab="progetti"]:not([hidden])) button { font-size: 9.5px; padding: 4px 0; min-width: 40px; }   /* l'Admin con 8 voci (25/09): su un iPhone da 375 punti le scritte si toccavano */
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); }
@@ -1708,6 +1709,7 @@
 <nav id="tab" hidden>
   <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Dashboard</button>
   <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>MB Plan</button>
+  <button data-tab="progetti" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-obiettivi"/></svg>Progetti</button>   <!-- 25/09: solo l'Admin (vediProgetti), apre l'ultimo progetto -->
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
   <button data-tab="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-report"/></svg>Report</button>
   <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
@@ -1716,41 +1718,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609250705"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609250705"></script>
-<script src="lista.js?v=202609250705"></script>
-<script src="rubrica.js?v=202609250705"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609250705"></script>
-<script src="agenda.js?v=202609250705"></script>
-<script src="coach.js?v=202609250705"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609250705"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609250705"></script>
-<script src="check.js?v=202609250705"></script>
-<script src="mappa.js?v=202609250705"></script>
-<script src="pagina-coach.js?v=202609250705"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609250705"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609250705"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609250705"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609250705"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609250705"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609250705"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609250705"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609250705"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609250705"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609250705"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609250705"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609250705"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609250705"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609250705"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609250705"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609250705"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609250705"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609250705"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609250705"></script>
-<script src="benvenuto.js?v=202609250705"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609250705"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609250905"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609250905"></script>
+<script src="lista.js?v=202609250905"></script>
+<script src="rubrica.js?v=202609250905"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609250905"></script>
+<script src="agenda.js?v=202609250905"></script>
+<script src="coach.js?v=202609250905"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609250905"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609250905"></script>
+<script src="check.js?v=202609250905"></script>
+<script src="mappa.js?v=202609250905"></script>
+<script src="pagina-coach.js?v=202609250905"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609250905"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609250905"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609250905"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609250905"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609250905"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609250905"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609250905"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609250905"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609250905"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609250905"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609250905"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609250905"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609250905"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609250905"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609250905"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609250905"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609250905"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609250905"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609250905"></script>
+<script src="benvenuto.js?v=202609250905"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609250905"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.25 · 07:05';
+const APP_VERSION = '2026.09.25 · 09:05';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2096,8 +2098,16 @@ const TRAINING_VISIBILE = true;
 function aggiornaTab() {
   document.querySelectorAll('#tab button').forEach(b => {
     b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE)
+      || (b.dataset.tab === 'progetti' && !(typeof vediProgetti === 'function' && vediProgetti()))
       || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
   });
+}
+// Il bottone acceso nella barra: «Progetti» (Ignazio 25/09, solo l'Admin) quando MB Plan è su un progetto, se no quello della
+// pagina. La chiama anche disegnaAgenda: dentro MB Plan si passa da un progetto al giorno senza passare dalla barra.
+function accendiTab() {
+  aggiornaTab();
+  const suProgetto = ST.tab === 'agenda' && typeof AG !== 'undefined' && AG.vista === 'progetto';
+  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', suProgetto ? b.dataset.tab === 'progetti' : b.dataset.tab === ST.tab));
 }
 
 // ── IL TOCCO SU UN AVVISO (Ignazio 22/09: «quando clicco, la pagina si deve aprire dove mi ha detto l'avviso, altrimenti perdo il flow») ──
@@ -2136,10 +2146,14 @@ function mostraTab() {
     ST.tab = 'oggi'; LS.ritorno = null;
     mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
   }
-  aggiornaTab();
+  accendiTab();
   nav.querySelectorAll('button').forEach(b => {
-    b.classList.toggle('attiva', b.dataset.tab === ST.tab);
-    b.onclick = () => { ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab(); };
+    // «Progetti» è MB Plan aperto sull'ultimo progetto; «MB Plan» da un progetto torna al giorno (o alla vista di partenza)
+    b.onclick = () => {
+      if (b.dataset.tab === 'progetti') { ST.tab = 'agenda'; LS.ritorno = null; const apre = apriProgetti(); accendiTab(); return apre; }   // acceso subito, non a caricamento finito
+      if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined' && AG.vista === 'progetto') AG.vista = null;
+      ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab();
+    };
   });
   if (ST.tab === 'oggi') return caricaOggi();
   if (ST.tab === 'lista') return apriLista();
