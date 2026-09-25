@@ -381,4 +381,10 @@ prova('Admin, fattore di conversione: numero con la virgola, 5 decimali, errori 
   assert.equal(L.numeroFattore(2.2), '2,20000');
 });
 
+prova('Dati personali: un elenco solo per modulo e sezione Dati, nell\'ordine di Ignazio (25/09); i valori salvati diventano parole', () => {
+  assert.deepEqual(L.DATI_PERSONA.map(x => x[1]), ['Età', 'Compleanno', 'Sesso', 'Professione', 'Lavoro', 'Località']);
+  assert.deepEqual(L.DATI_PERSONA.map(x => x[0]), ['fascia_eta', 'compleanno', 'sesso', 'professione', 'lavoro', 'citta']);
+  assert.equal(L.nomeScelta(L.SESSI, 'F'), 'Donna'); assert.equal(L.nomeScelta(L.LAVORI, 'autonomo'), 'Autonomo'); assert.equal(L.nomeScelta(L.SESSI, 'X'), 'X');
+});
+
 console.log(`\n${ok} prove superate`);
