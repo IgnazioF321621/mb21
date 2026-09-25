@@ -167,6 +167,7 @@
   // Segni Vitali a 12 mesi (tabella della Dashboard, spostata qui: decisione C)
   // ── Lo storico linea per linea (Ignazio 25/09: «lo storico dove lo vedo con tutto il flusso e i cambiamenti
   // e per ogni partner»). Una riga per partner, i 12 mesi in fila, la freccia dove cambia rispetto al mese prima.
+  // Le righe restano nell'ordine di `persone` (l'app le passa nell'ordine della Mappa, `MB21Mappa.ordinePerMappa`).
   // Usa `D.totaliMesi` come tutto il resto (partenza del mese, e se manca il totale del mese prima): i numeri
   // sono per forza gli stessi della tabella del singolo partner.
   const CAMPI_STATO = ['bbs', 'wes', 'cep'];
@@ -195,7 +196,7 @@
       const peso = CAMPI_STATO.reduce((s, k) => s + celle[k].reduce((q, c) => q + n(c.valore), 0), 0);
       // «vuota» anche chi è sempre a zero: non fa una riga nella tabella, si legge in fondo (niente rumore)
       return { id: p.id, nome: p.nome, celle, peso, vuota: !Object.keys(tot).length || !peso };
-    }).sort((x, y) => y.peso - x.peso || String(x.nome).localeCompare(String(y.nome), 'it'));
+    });   // l'ordine è quello di `persone`: chi chiama lo mette come la Mappa (Ignazio 25/09)
     const massimi = {}, totali = {};
     for (const k of CAMPI_STATO) {
       massimi[k] = Math.max(1, ...righe.map(r => Math.max(0, ...r.celle[k].map(c => n(c.valore)))));
