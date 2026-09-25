@@ -15,6 +15,7 @@ const TRN = {
   vista: 'impara',
   mazzi: null, stati: {}, giorni: [], test: [], segnali: {}, nonSalvato: false,          // allenarsi
   voci: null, cat: null, settore: null, cerca: '', tutte: {},                            // studiare
+  dopo: null,   // 'medaglie': appena aperto, «Le tue medaglie» (dalla riga «Il mio Training» del Profilo)
 };
 const TRN_PRIME = 6;   // in un elenco lungo del catalogo si vedono le prime 6, poi «Mostra tutte»
 const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro', sito: 'collega' };
@@ -49,6 +50,7 @@ async function apriTraining() {
   TRN.segnali = azioni.error ? {} : MB21Training.segnali(azioni.data || [], TRN.mazzi);
   if (!TRN.settore) TRN.settore = TRN.cat.settori[0].nome;
   disegnaTraining();
+  if (TRN.dopo === 'medaglie') { TRN.dopo = null; trnMedaglie(); }
 }
 
 function disegnaTraining() {
@@ -57,22 +59,26 @@ function disegnaTraining() {
   const sc = MB21Training.scala(TRN.mazzi, TRN.stati, TRN.test, oggi);
   const stelle = sc.livelli.flatMap(l => l.percorsi).reduce((n, p) => n + (p.stato ? p.stato.stelle : 0), 0);
   const rip = MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali);
+  const med = MB21Training.medaglie(TRN.test, TRN.giorni.map(g => g.giorno));
   const nome = primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome));
   const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${rip.length}</span>` : '')], ['studia', 'Studia']];
   const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
   app.innerHTML = `<h1>${ic('crescita')} Training</h1>
     <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
       <button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-come title="Giorni di allenamento di fila">${ic('fiamma')} ${fila.n}</button>
-      <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button></div>
+      <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button>
+      <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
   app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
-  // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta
+  app.querySelectorAll('[data-medaglie]').forEach(b => b.onclick = trnMedaglie);
+  // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
+  // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
-  try { spiegato = !!localStorage.getItem(TRN_SPIEGATO); if (!spiegato) localStorage.setItem(TRN_SPIEGATO, '1'); } catch (e) {}
+  if (!TRN.dopo) try { spiegato = !!localStorage.getItem(TRN_SPIEGATO); if (!spiegato) localStorage.setItem(TRN_SPIEGATO, '1'); } catch (e) {}
   if (!spiegato) trnComeFunziona();
   if (TRN.vista === 'impara') {
     app.querySelectorAll('[data-percorso]').forEach(b => b.onclick = () => trnApriPercorso(b.dataset.percorso));
@@ -99,7 +105,8 @@ function trnComeFunziona() {
       + 'la relativa carta torna il giorno dopo. Bastano 5 minuti al giorno.'],
     ['obiettivi', 'Il test', `Si apre quando sai ${Math.round(T.PER_IL_TEST * 10)} carte su 10 del percorso. Sono ${T.TEST} domande, almeno ${T.TRABOCCHETTI} a trabocchetto, senza aiuti. `
       + 'Dal 70% il percorso è superato. Le stelle: una dal 70%, due dall\'80%, tre con 10 su 10. Puoi rifarlo per migliorare.'],
-    ['stella', 'I premi', 'Le stelle dei test e la fiammella dei giorni di fila sono in alto, accanto al tuo nome. Un percorso diventa verde quando superi il test, un livello quando superi tutti i suoi percorsi.'],
+    ['stella', 'I premi', 'Le stelle dei test e la fiammella dei giorni di fila sono in alto, accanto al tuo nome. Un percorso diventa verde quando superi il test, un livello quando superi tutti i suoi percorsi. '
+      + `Ogni percorso superato ti dà la sua medaglia, e così ogni livello e i giorni di fila (${T.TRAGUARDI.slice(0, -1).join(', ')} e ${T.TRAGUARDI[T.TRAGUARDI.length - 1]}): le trovi toccando la medaglia in alto, e nel Profilo.`],
     ['libro', 'Studia', 'Il Manuale di Avvio, le tracce del BSM e i libri. Ogni carta dice da dove viene: tocca la fonte e la ritrovi.'],
   ];
   document.querySelectorAll('.trn-come-foglio').forEach(f => f.parentNode.remove());
@@ -113,6 +120,43 @@ function trnComeFunziona() {
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   velo.querySelector('.trn-x').onclick = chiudi;
   velo.querySelector('#trn-capito').onclick = chiudi;
+}
+
+// «Le tue medaglie» (Ignazio 25/09): livello per livello, quelle prese a colori con le stelle e la data, quelle da prendere in grigio; in
+// fondo i traguardi dei giorni di fila. Si apre dalla medaglia in alto e dalla riga «Il mio Training» del Profilo.
+const trnData = x => new Date(/^\d{4}-\d\d-\d\d$/.test(x) ? x + 'T12:00:00Z' : x).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' });
+function trnMedaglie() {
+  const T = MB21Training, m = T.medaglie(TRN.test, TRN.giorni.map(g => g.giorno));
+  const riga = (presa, titolo, sotto, stelle = '') => `<div class="trn-med${presa ? ' presa' : ''}"><span class="trn-med-tondo">${ic('medaglia', 22)}</span>
+    <div><b>${esc(titolo)}</b><small>${stelle}${esc(sotto)}</small></div></div>`;
+  const livelli = T.LIVELLI.map(l => {
+    const lv = m.livelli.find(x => x.nome === l.nome);
+    return `<h4>${esc(l.nome)}${lv ? ` <span class="trn-badge">superato il ${trnData(lv.quando)}</span>` : ''}</h4>` + l.percorsi.map(p => {
+      const x = m.percorsi.find(y => y.id === p.id);
+      return riga(!!x, T.titoloMedaglia(p), x ? `il ${trnData(x.quando)}` : `Da prendere: il test di «${p.titolo}»`, x ? trnStelle(x.stelle) + ' ' : '');
+    }).join('');
+  }).join('');
+  const fila = T.TRAGUARDI.map(g => { const x = m.traguardi.find(t => t.giorni === g); return riga(!!x, `${g} giorni di fila`, x ? `il ${trnData(x.quando)}` : 'Da prendere'); }).join('');
+  document.querySelectorAll('.trn-med-foglio').forEach(f => f.parentNode.remove());
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-foglio trn-med-foglio" style="--col:var(--gr-crescita)">${trnTesta('medaglia', 'Training', 'Le tue medaglie')}
+    <div class="trn-foglio-corpo"><p class="trn-meta">${m.totale} ${m.totale === 1 ? 'medaglia' : 'medaglie'} · ${m.stelle} ${m.stelle === 1 ? 'stella' : 'stelle'} · record ${m.record} ${m.record === 1 ? 'giorno' : 'giorni'} di fila</p>
+      ${livelli}<h4>Giorni di fila</h4>${fila}</div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('.trn-x').onclick = chiudi;
+}
+// Per la riga «Il mio Training» del Profilo: livello, medaglie, stelle e giorni di fila (null se non si riesce a leggere)
+async function trnMioRiepilogo() {
+  const io = ST.utente && ST.utente.id, oggi = trnOggi();
+  const [test, giorni] = await Promise.all([
+    dbq('training: test', supa.from('training_test').select('percorso, giuste, totale, fatto_il').eq('user_id', io)),
+    dbq('training: giorni', supa.from('training_giorni').select('giorno').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
+  ]);
+  if (test.error || giorni.error) return null;
+  return MB21Training.riepilogo(test.data || [], (giorni.data || []).map(g => g.giorno), oggi);
 }
 
 // ── Impara: la scala che sale ────────────────────────────────
@@ -143,11 +187,11 @@ function trnNodo(p, i, qui) {
   if (!p.aperto) return `<div class="trn-nodo chiuso" style="--x:${x}px"><span class="trn-tondo-n">${ic('lucchetto', 26)}</span>
     <div><b>${esc(p.titolo)}</b><small>Si apre quando hai visto tutte le carte di «${esc(p.prima)}»</small></div></div>`;
   const s = p.stato, stato = s.superato ? 'fatto' : qui ? 'qui' : 'aperto';
-  const sotto = s.superato ? `${trnStelle(s.stelle)} test superato`
+  const sotto = s.superato ? `${trnStelle(s.stelle)} ${esc(MB21Training.titoloMedaglia(p))}`
     : s.testAperto ? 'Le sai: il test è aperto'
     : s.tutteViste ? `Le hai viste tutte: ne sai ${s.sapute} di ${s.totale}`
     : s.viste ? `${s.viste} di ${s.totale} carte` : `${s.totale} carte, poi il test`;
-  return `<button class="trn-nodo ${stato}" data-percorso="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic(s.superato ? 'fatto' : p.icona, 26)}</span>
+  return `<button class="trn-nodo ${stato}" data-percorso="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic(s.superato ? 'medaglia' : p.icona, 26)}</span>
     <div><b>${esc(p.titolo)}${qui ? '<span class="trn-qui">Sei qui</span>' : ''}</b><small>${sotto}</small></div></button>`;
 }
 const trnStelle = n => `<span class="trn-stelle">${[0, 1, 2].map(i => `<i class="${i < n ? 'presa' : ''}">${ic('stella', 14)}</i>`).join('')}</span>`;
@@ -320,19 +364,28 @@ function trnSessione(carte, modo, titolo) {
     if (test) {
       const prima = TRN.test.filter(t => percorso && t.percorso === percorso.id).slice(-1)[0];
       const riga = { percorso: percorso && percorso.id, giuste, totale: fatte.length, fatto_il: new Date().toISOString() };
+      const L = MB21Training.LIVELLI, gg = TRN.giorni.map(g => g.giorno), medPrima = MB21Training.medaglie(TRN.test, gg);
       TRN.test.push(riga);
+      const medDopo = MB21Training.medaglie(TRN.test, gg), pDef = L.flatMap(l => l.percorsi).find(x => percorso && x.id === percorso.id);
+      const nuova = medDopo.percorsi.some(x => x.id === riga.percorso) && !medPrima.percorsi.some(x => x.id === riga.percorso);
+      const livello = medDopo.livelli.find(l => !medPrima.livelli.some(x => x.nome === l.nome));
+      const dopoLiv = livello ? L[L.findIndex(l => l.nome === livello.nome) + 1] : null;
       dbq('training: test', supa.from('training_test').insert({ user_id: ST.utente.id, percorso: riga.percorso, giuste, totale: fatte.length,
         risposte: fatte.map(f => ({ carta: f.carta.id, giusta: f.giusta })) })).then(r => { if (r.error) trnAvvisaNonSalvato(); });
       const st = MB21Training.stelle(giuste, fatte.length);
+      const righe = [st ? '' : '<b>Non ancora: dal 70% il percorso è superato.</b>', prima ? `La volta scorsa ${prima.giuste}: ${trnDiff(giuste - prima.giuste)}.` : '',
+        st < 3 ? 'Le sbagliate tornano nel ripasso di domani.' : ''].filter(Boolean);
       corpo.innerHTML = `<div class="trn-fine">
         <div class="trn-grande">${giuste}<small>su ${fatte.length}</small></div>${trnStelle(st)}
-        <p><b>${st ? (st === 3 ? 'Tutte giuste: percorso superato!' : 'Percorso superato!') : 'Non ancora: dal 70% il percorso è superato.'}</b>
-          ${prima ? `<br>La volta scorsa ${prima.giuste}: ${trnDiff(giuste - prima.giuste)}.` : ''}
-          ${st < 3 ? '<br>Le sbagliate tornano nel ripasso di domani.' : ''}</p>${filaHtml}</div>
+        ${st && pDef ? `<div class="trn-medaglia-nuova">${ic('medaglia', 30)}<div><small>${nuova ? 'Nuova medaglia' : 'La tua medaglia'}${st === 3 ? ' · tutte giuste' : ''}</small>
+          <b>${esc(MB21Training.complimenti(pDef))}</b></div></div>` : ''}
+        ${livello ? `<div class="trn-livello-nuovo">${ic('crescita', 22)}<b>Complimenti! Livello ${esc(livello.nome)} superato${dopoLiv ? `: si apre ${esc(dopoLiv.nome)}` : ': hai completato tutto il Training'}.</b></div>` : ''}
+        ${righe.length ? `<p>${righe.join('<br>')}</p>` : ''}${filaHtml}</div>
         <h4 class="trn-rif-t">Le tue risposte</h4>
         ${fatte.map((f, k) => `<div class="trn-rif ${f.giusta ? 'si' : 'no'}">${ic(f.giusta ? 'fatto' : 'chiudi', 18)}<div>${!f.giusta && f.carta.trabocchetto ? '<span class="trn-trab">Era un trabocchetto</span>' : ''}<b>${esc(f.domanda ? f.domanda.testo : '')}</b>
           ${f.giusta ? `<small>${esc(f.scelta)}</small>` : `<small class="tua">La tua: ${esc(f.scelta)}</small><small>Giusta: ${esc(f.domanda.risposte.find(r => r.giusta).testo)}</small>`}
           <small class="perche">${esc(f.carta.perche || '')}</small>${trnCorreggi(k)}</div></div>`).join('')}`;
+      if (dopoLiv) avanti.textContent = `Vai a ${dopoLiv.nome}`;   // chiudendo, la scala si apre sul primo percorso del livello nuovo
       corpo.querySelectorAll('[data-correggi]').forEach(b => {
         const f = fatte[Number(b.dataset.correggi)];
         b.onclick = () => trnFoglioCorreggi(f.carta, { dove: 'test', domanda: f.domanda ? f.domanda.testo : '', scelta: f.scelta, giusta: f.giusta }, b);
