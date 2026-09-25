@@ -441,6 +441,18 @@ prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello
   assert.equal(A.leggiRiga('Spazio speciale', 0, 'cosa').testo, 'Spazio speciale');
 });
 
+prova('Progetti (25/09): le voci fatte da eliminare; una fatta con sotto punti da fare resta, i titoli restano', () => {
+  const r = (id, tipo, livello, fatto) => ({ id, tipo, livello, fatto_il: fatto ? '2026-09-25T08:00:00Z' : null });
+  const vista = A.fatteInFondo([
+    r('x', 'cosa', 0, true),                                                           // prima del primo titolo
+    r('T1', 'titolo', 0), r('a', 'numero', 0), r('a1', 'numero', 1, true), r('b', 'numero', 0, true), r('b1', 'numero', 1), r('b2', 'punto', 1, true),
+    r('c', 'numero', 0, true), r('c1', 'numero', 1, true), r('c2', 'numero', 2, true),
+    r('T2', 'titolo', 0), r('d', 'numero', 0, true), r('T3', 'titolo', 0)]);          // T2 tutto fatto: resta, vuoto; T3 senza voci
+  assert.deepEqual(A.fatteDaEliminare(vista), ['x', 'a1', 'b2', 'c', 'c1', 'c2', 'd']);   // «b» resta: sotto ha «b1» da fare
+  assert.deepEqual(A.fatteDaEliminare([]), []);
+  assert.deepEqual(A.fatteDaEliminare(A.fatteInFondo([r('T', 'titolo', 0), r('e', 'numero', 0)])), []);
+});
+
 prova('Progetti (25/09): spostare una riga sotto un altro titolo o in un altro progetto, con i suoi sottopunti', () => {
   const r = (id, tipo, ordine, livello, fatto, pj = 'P') => ({ id, tipo, ordine, livello, progetto_id: pj, testo: id, fatto_il: fatto ? '2026-09-25T08:00:00Z' : null });
   const pr = [r('T1', 'titolo', 1, 0), r('a', 'numero', 2, 0), r('b', 'numero', 3, 0, true), r('T2', 'titolo', 4, 0), r('c', 'numero', 5, 0), r('c1', 'numero', 6, 1), r('c2', 'punto', 7, 2), r('e', 'numero', 8, 0)];
