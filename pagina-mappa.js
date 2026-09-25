@@ -9,19 +9,27 @@
 // pillole BBS/WES/CEP (grigie finché i segni vitali non stanno sulle persone). Calcoli in mappa.js.
 const MP = { squadra: null, volumi: null, mese: null, schede: null, targhe: null, aperti: new Set(), filtro: 'tutti', cerca: '', completa: null, storico: {} };
 
+// L'albero Amway e i volumi dell'ultimo mese, letti una volta sola: servono alla Mappa e all'ordine dei nomi nel
+// Partner Select e in «Gli ultimi 12 mesi» (Ignazio 25/09: «in ordine di mappa»). Stessa lettura, stesso ordine ovunque.
+async function caricaAlberoMappa() {
+  if (MP.squadra) return { squadra: MP.squadra, volumi: MP.volumi || [] };
+  const ultimo = await dbq('ultimo mese dei volumi', supa.from('volumi_mese').select('mese').order('mese', { ascending: false }).limit(1));
+  if (ultimo.error) throw ultimo.error;
+  MP.mese = ultimo.data.length ? ultimo.data[0].mese : null;
+  const [sq, vol] = await Promise.all([
+    dbq('squadra', supa.from('squadra').select('partner_id, sponsor_id, nome, livello, data_ingresso, telefono, email')),
+    MP.mese ? dbq('volumi del mese', supa.from('volumi_mese').select('*').eq('mese', MP.mese)) : { data: [] },
+  ]);
+  if (sq.error || vol.error) throw sq.error || vol.error;
+  MP.squadra = sq.data; MP.volumi = vol.data || [];
+  return { squadra: MP.squadra, volumi: MP.volumi };
+}
+
 async function apriMappa() {
   if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
   if (!MP.squadra) {
     try {
-      const ultimo = await dbq('ultimo mese dei volumi', supa.from('volumi_mese').select('mese').order('mese', { ascending: false }).limit(1));
-      if (ultimo.error) throw ultimo.error;
-      MP.mese = ultimo.data.length ? ultimo.data[0].mese : null;
-      const [sq, vol] = await Promise.all([
-        dbq('squadra', supa.from('squadra').select('partner_id, sponsor_id, nome, livello, data_ingresso, telefono, email')),
-        MP.mese ? dbq('volumi del mese', supa.from('volumi_mese').select('*').eq('mese', MP.mese)) : { data: [] },
-      ]);
-      if (sq.error || vol.error) throw sq.error || vol.error;
-      MP.squadra = sq.data; MP.volumi = vol.data || [];
+      await caricaAlberoMappa();
     } catch (e) {
       app.innerHTML = `<h1>Mappa</h1><div class="avviso">Non riesco a caricare il gruppo. Controlla la connessione e riprova.</div>${versione()}`;
       return;

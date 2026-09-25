@@ -65,6 +65,14 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
   - se sotto una persona non c'è nessuno con l'app, la tabella non sparisce muta: lo scrive
   - **sui dati veri**: guardando Ignazio 10 linee — Ornella e Carolina comprese, perché la catena di `squadra` le mette **nella sua downline** (Ignazio → Simone Giavatto, che non usa l'app → Ornella → Carolina): non è crossline. Guardando Isabella nessuna linea, perché Sandra è stata eliminata dall'app. Guardando Ornella lei e Carolina
   - prove: 9 in `prova_storico_vista.js` (due nuove sul crossline, con una squadra parallela nei dati finti) e 22 in `prova_mappa.js`
+  - ✅ **provato da Ignazio**: «funziona»
+- ✅ **25/09, versione 2026.09.25 · 13:58 — gruppi apribili, riga scura, nomi in ordine di mappa.** Ignazio: «facciamo in modo che sia volume, sia azione, sia segni vitali siano collassabili ed espandibili. Gli ultimi 12 mesi lo facciamo di un colore, così si distingue. Se possibile, mettiamo i nominativi nel partner select o nella scelta dei 12 mesi in ordine di mappa ed in base alla propria squadra».
+  - **i quattro gruppi del Check** (anche Crescita, per avere una regola sola) si aprono e si chiudono toccando la testata; da chiusi resta il riassunto («1 in calo»); **il telefono si ricorda** quali hai chiuso; all'inizio tutti aperti
+  - **«Gli ultimi 12 mesi» scura**, come la griglia nera che apre e come la striscia in Dashboard: le due porte dello stesso posto hanno lo stesso colore
+  - **i nomi nell'ordine della Mappa**, prima la propria squadra, ogni livello più a destra con `↳`: nel **Partner Select**, in **«Chi guardi»** dello storico e anche **nelle linee** del foglio (prima erano per numero di biglietti: un ordine solo ovunque). Chi ha lo sponsor fuori dall'app ha sotto il nome «sotto …»: sui dati veri «Ornella Miceli · sotto Simone Giavatto». Ordine vero di oggi: Ignazio → Ornella (sotto Simone, gruppo 10) → Carolina → Isabella (gruppo 7) → Luca e Michaela (3) → Filippo e Tonya → Valentina → Andrea
+  - una funzione sola per l'ordine (`MB21Mappa.ordinePerMappa`) e una sola lettura dell'albero (`caricaAlberoMappa`, la stessa della Mappa)
+  - **foto con Chrome senza finestra** (stile vero, dati veri) prima di pubblicare: ha trovato un difetto vero — la riga «sotto Simone Giavatto» usciva come una pastiglia gialla, perché `.nota` è già una classe dell'app; rinominata `nota-ramo`
+  - prove: 4 nel banco nuovo `prova_check_vista.js`, 10 in `prova_storico_vista.js`, 23 in `prova_mappa.js`, 18 in `prova_check.js`
   - **da provare con Ignazio**
 - È **lavoro sui numeri, non sullo stile**: non fa parte del cantiere 34. Vicino al cantiere 35 (storico dei biglietti), stessa famiglia: «quello che c'era in Glide c'è anche qui?»
 

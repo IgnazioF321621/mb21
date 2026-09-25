@@ -166,6 +166,15 @@ prova('Cambiando persona cambiano anche le linee sotto', () => {
   imposta('chi', 'A');
 });
 
+prova('Le linee nell\'ordine della Mappa, a partire da chi guardi, con il rientro ↳', () => {
+  const h = disegna();
+  const ordine = [...h.matchAll(/data-slchi="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(ordine, ['A', 'B']);                                 // Ignazio, poi Isabella sotto di lui
+  const righe = h.split('data-slchi=').slice(1);
+  assert.doesNotMatch(righe[0], /class="ramo"/);                       // chi guardi: nessun rientro
+  assert.match(righe[1], /<i class="ramo"[^>]*>↳<\/i>Isabella/);        // un livello sotto
+});
+
 prova('Con una persona sola: nessun selettore, nessuna tabella delle linee', () => {
   ctx.disegnaStorico(velo, { giorni, obiettivi, squadra, persone: [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }] });
   const h = velo.corpo.innerHTML;

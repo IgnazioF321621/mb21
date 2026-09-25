@@ -264,6 +264,30 @@ prova('ramoDi: un albero con un anello non gira a vuoto', () => {
   assert.deepEqual([...M.ramoDi(sq, 'A')].sort(), ['A', 'B']);
 });
 
+prova('ordinePerMappa: i nomi come in Mappa, prima la propria squadra, con livello e «sotto» (Ignazio 25/09)', () => {
+  // il caso vero in piccolo: sotto Ignazio il ramo di Simone (che non usa l'app) è il più grande, poi Isabella, poi Luca
+  const sq = [{ partner_id: 'IG', sponsor_id: 'X', nome: 'FIORITO, IGNAZIO' }, { partner_id: 'SI', sponsor_id: 'IG', nome: 'GIAVATTO, SIMONE' },
+    { partner_id: 'OR', sponsor_id: 'SI', nome: 'MICELI, ORNELLA' }, { partner_id: 'CA', sponsor_id: 'OR', nome: 'CARNEMOLLA, CAROLINA' },
+    { partner_id: 'IS', sponsor_id: 'IG', nome: 'SAMMITO, ISABELLA' }, { partner_id: 'LU', sponsor_id: 'IG', nome: 'CACCAMO, LUCA' },
+    { partner_id: 'ZZ', sponsor_id: 'Y', nome: 'ALTRA, SQUADRA' }];
+  const vol = [{ partner_id: 'SI', dimensioni_gruppo: 10 }, { partner_id: 'IS', dimensioni_gruppo: 7 }, { partner_id: 'LU', dimensioni_gruppo: 3 }];
+  const persone = [{ id: 1, nome: 'Andrea', partner_id: null }, { id: 2, nome: 'Isabella', partner_id: 'IS' }, { id: 3, nome: 'Carolina', partner_id: 'CA' },
+    { id: 4, nome: 'Michaela', partner_id: 'LU' }, { id: 5, nome: 'Luca', partner_id: 'LU' }, { id: 6, nome: 'Ornella', partner_id: 'OR' },
+    { id: 7, nome: 'Ignazio', partner_id: 'IG' }, { id: 8, nome: 'Zeta', partner_id: 'ZZ' }];
+  const o = M.ordinePerMappa(persone, sq, vol, 'IG');
+  assert.deepEqual(o.map(p => p.nome), ['Ignazio', 'Ornella', 'Carolina', 'Isabella', 'Luca', 'Michaela', 'Zeta', 'Andrea']);
+  assert.deepEqual(o.map(p => p.livello), [0, 2, 3, 1, 1, 1, null, null]);   // Zeta è un'altra squadra, Andrea senza codice
+  assert.equal(o[1].sotto, 'Simone Giavatto');   // lo sponsor non usa l'app: si dice sotto chi sta
+  assert.equal(o[2].sotto, null);                // Ornella c'è già nell'elenco: basta il rientro
+  assert.equal(o[3].sotto, null);                // sotto Ignazio, che c'è
+  assert.equal(persone[0].livello, undefined);   // non tocca le persone che riceve
+  // da un'altra radice: prima la squadra di Isabella (solo lei), poi il resto dell'albero dall'alto
+  const di = M.ordinePerMappa(persone, sq, vol, 'IS');
+  assert.equal(di[0].nome, 'Isabella');
+  assert.equal(di[0].livello, 0);
+  assert.equal(di.find(p => p.nome === 'Ignazio').livello, null);
+});
+
 console.log(`\n${ok} prove passate in tutto.`);
 
 prova('targhetta 📱 dell\'app: uso per partner (coppia: uso più recente, nomi sommati; eliminati fuori) ed etichetta dei giorni', () => {
