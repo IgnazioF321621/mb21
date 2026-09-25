@@ -15,52 +15,53 @@
   // I livelli coi nomi dell'attività (Ignazio 24/09), dal basso verso l'alto; i temi sono quelli divisi con lui lo stesso giorno.
   // Ogni livello: le persone, l'attività dall'interno e, dallo Sponsor in su, un percorso di mentalità (dal credere in te alla visione).
   // Un percorso è pronto quando nell'archivio c'è la riga «carte_<id>»; gli altri si vedono «in arrivo».
+  // `leader` (Ignazio 25/09): il titolo della medaglia del percorso, «Complimenti, sei leader nel contattare!» (senza «un»: va bene per tutti)
   const LIVELLI = [
     { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, dire il vero, il Sistema', percorsi: [
-      { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate' },
-      { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio' },
+      { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate', leader: 'nel contattare' },
+      { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio', leader: 'nei primi passi' },
       // 25/09: dalle Regole di Condotta Amway solo le regole su cose false dette o fatte (Ignazio: «vai a prendere le regole solo per
       // quanto riguarda fare cose false e dire cose false in generale»; per i contatti restano le idee del manuale)
-      { id: 'dire_il_vero', titolo: 'Dire sempre il vero', sotto: "Le Regole di Condotta Amway: i prodotti, i social, l'attività, i guadagni", icona: 'fatto' },
-      { id: 'sistema', titolo: 'Il Sistema', sotto: 'Open, BBS, WES, CEP e libri', icona: 'agenda' },
-      { id: 'principi', titolo: 'Principi e parole', sotto: "I 9 principi guida e le parole dell'attività", icona: 'libro' },
+      { id: 'dire_il_vero', titolo: 'Dire sempre il vero', sotto: "Le Regole di Condotta Amway: i prodotti, i social, l'attività, i guadagni", icona: 'fatto', leader: 'nel dire sempre il vero' },
+      { id: 'sistema', titolo: 'Il Sistema', sotto: 'Open, BBS, WES, CEP e libri', icona: 'agenda', leader: 'nel Sistema' },
+      { id: 'principi', titolo: 'Principi e parole', sotto: "I 9 principi guida e le parole dell'attività", icona: 'libro', leader: 'nei principi e nelle parole' },
     ] },
     { nome: 'Sponsor', sotto: 'Presentare il piano, il Dare Seguito, i clienti, avviare un nuovo', percorsi: [
-      { id: 'piano', titolo: 'Il Piano Marketing', sotto: 'Presentarlo, anche in casa: prima, durante e dopo', icona: 'pianomarketing' },
-      { id: 'dare_seguito', titolo: 'Dare Seguito', sotto: 'Entro 24-72 ore: le paure, le domande, le obiezioni dopo il piano', icona: 'followup' },
-      { id: 'clienti', titolo: 'I clienti', sotto: 'I prodotti, i clienti e il volume di ogni mese', icona: 'cliente' },
-      { id: 'avviare', titolo: 'Avviare un nuovo', sotto: 'I quattro passi e i primi 30 giorni, dalla parte dello sponsor', icona: 'avvio' },
-      { id: 'core', titolo: 'Core e Pacesetter', sotto: 'Le sette caratteristiche, il Pacesetter, il counseling con la tua upline', icona: 'obiettivi' },
-      { id: 'credere', titolo: 'Credere in te', sotto: 'La tua opinione, i «no», la persona che diventi', icona: 'crescita' },
+      { id: 'piano', titolo: 'Il Piano Marketing', sotto: 'Presentarlo, anche in casa: prima, durante e dopo', icona: 'pianomarketing', leader: 'nel Piano Marketing' },
+      { id: 'dare_seguito', titolo: 'Dare Seguito', sotto: 'Entro 24-72 ore: le paure, le domande, le obiezioni dopo il piano', icona: 'followup', leader: 'nel Dare Seguito' },
+      { id: 'clienti', titolo: 'I clienti', sotto: 'I prodotti, i clienti e il volume di ogni mese', icona: 'cliente', leader: 'con i clienti' },
+      { id: 'avviare', titolo: 'Avviare un nuovo', sotto: 'I quattro passi e i primi 30 giorni, dalla parte dello sponsor', icona: 'avvio', leader: 'nell\'avviare un nuovo' },
+      { id: 'core', titolo: 'Core e Pacesetter', sotto: 'Le sette caratteristiche, il Pacesetter, il counseling con la tua upline', icona: 'obiettivi', leader: 'nel Core e nel Pacesetter' },
+      { id: 'credere', titolo: 'Credere in te', sotto: 'La tua opinione, i «no», la persona che diventi', icona: 'crescita', leader: 'nel credere in te' },
     ] },
     { nome: 'Leaders Club', sotto: 'Aiutare i tuoi partner, i Segni Vitali, il counseling', percorsi: [
-      { id: 'aiutare_partner', titolo: 'Aiutare i tuoi partner', sotto: 'Le telefonate e i piani insieme, i loro freni', icona: 'partner' },
-      { id: 'segni_vitali', titolo: 'Segni Vitali', sotto: 'I numeri che dicono se il gruppo è solido, e i riconoscimenti', icona: 'segnivitali' },
-      { id: 'dare_counseling', titolo: 'Dare counseling', sotto: "Il counseling ai tuoi, l'edificazione, il no crossline", icona: 'squadra' },
-      { id: 'sistema_gruppo', titolo: 'Il Sistema nel gruppo', sotto: 'Biglietti, CEP, Media Sharing e il ciclo di 4 mesi', icona: 'biglietto' },
-      { id: 'paure', titolo: 'Vincere le paure', sotto: 'Il giudizio degli altri, i fallimenti, la zona di comfort', icona: 'lampo' },
+      { id: 'aiutare_partner', titolo: 'Aiutare i tuoi partner', sotto: 'Le telefonate e i piani insieme, i loro freni', icona: 'partner', leader: 'nell\'aiutare i tuoi partner' },
+      { id: 'segni_vitali', titolo: 'Segni Vitali', sotto: 'I numeri che dicono se il gruppo è solido, e i riconoscimenti', icona: 'segnivitali', leader: 'nei Segni Vitali' },
+      { id: 'dare_counseling', titolo: 'Dare counseling', sotto: "Il counseling ai tuoi, l'edificazione, il no crossline", icona: 'squadra', leader: 'nel dare counseling' },
+      { id: 'sistema_gruppo', titolo: 'Il Sistema nel gruppo', sotto: 'Biglietti, CEP, Media Sharing e il ciclo di 4 mesi', icona: 'biglietto', leader: 'nel Sistema del gruppo' },
+      { id: 'paure', titolo: 'Vincere le paure', sotto: 'Il giudizio degli altri, i fallimenti, la zona di comfort', icona: 'lampo', leader: 'nel vincere le paure' },
     ] },
     { nome: 'Leader Executive', sotto: 'Far crescere i leader, la duplicazione', percorsi: [
-      { id: 'profondita', titolo: 'Costruire in profondità', sotto: 'Cercare il leader, di livello in livello', icona: 'mappa' },
-      { id: 'leader', titolo: 'Far crescere i leader', sotto: 'Riconoscerli, rafforzarli, lasciarli guidare', icona: 'stella' },
-      { id: 'obiettivi_mese', titolo: 'Gli obiettivi del mese', sotto: "Dal sogno al piano d'azione, con i Segni Vitali", icona: 'agenda' },
-      { id: 'duplicazione', titolo: 'La duplicazione', sotto: 'Fare solo quello che altri possono rifare', icona: 'copia' },
-      { id: 'abitudini', titolo: 'Le abitudini', sotto: 'Le piccole decisioni di ogni giorno', icona: 'orario' },
+      { id: 'profondita', titolo: 'Costruire in profondità', sotto: 'Cercare il leader, di livello in livello', icona: 'mappa', leader: 'nel costruire in profondità' },
+      { id: 'leader', titolo: 'Far crescere i leader', sotto: 'Riconoscerli, rafforzarli, lasciarli guidare', icona: 'stella', leader: 'nel far crescere i leader' },
+      { id: 'obiettivi_mese', titolo: 'Gli obiettivi del mese', sotto: "Dal sogno al piano d'azione, con i Segni Vitali", icona: 'agenda', leader: 'negli obiettivi del mese' },
+      { id: 'duplicazione', titolo: 'La duplicazione', sotto: 'Fare solo quello che altri possono rifare', icona: 'copia', leader: 'nella duplicazione' },
+      { id: 'abitudini', titolo: 'Le abitudini', sotto: 'Le piccole decisioni di ogni giorno', icona: 'orario', leader: 'nelle abitudini' },
     ] },
     { nome: 'Leader Bronzo', sotto: 'Allargare e approfondire le linee', percorsi: [
-      { id: 'verso_21', titolo: 'Verso il 21%', sotto: 'Il Bonus Attività, i punti e il principio della leva', icona: 'volume' },
-      { id: 'linee', titolo: 'Larghezza e profondità', sotto: 'Più linee, e ognuna solida', icona: 'report' },
-      { id: 'persistere', titolo: 'Persistere', sotto: 'Desiderio, impegno, abilità, persistenza', icona: 'fiamma' },
+      { id: 'verso_21', titolo: 'Verso il 21%', sotto: 'Il Bonus Attività, i punti e il principio della leva', icona: 'volume', leader: 'nella strada verso il 21%' },
+      { id: 'linee', titolo: 'Larghezza e profondità', sotto: 'Più linee, e ognuna solida', icona: 'report', leader: 'nel costruire larghezza e profondità' },
+      { id: 'persistere', titolo: 'Persistere', sotto: 'Desiderio, impegno, abilità, persistenza', icona: 'fiamma', leader: 'nel persistere' },
     ] },
     { nome: 'Leader Argento', sotto: "Tenere il 21%, l'attività internazionale", percorsi: [
-      { id: 'argento', titolo: 'Il Produttore Argento', sotto: 'Il 21% con linee solide, mese dopo mese', icona: 'complimenti' },
-      { id: 'internazionale', titolo: "L'attività internazionale", sotto: 'Lo sponsor internazionale e lo sponsor adottivo', icona: 'liberta' },
-      { id: 'guidare', titolo: 'Guidare le persone', sotto: 'Connettersi, ascoltare, mettere le persone al primo posto', icona: 'persona' },
+      { id: 'argento', titolo: 'Il Produttore Argento', sotto: 'Il 21% con linee solide, mese dopo mese', icona: 'complimenti', leader: 'nel tenere il 21%' },
+      { id: 'internazionale', titolo: "L'attività internazionale", sotto: 'Lo sponsor internazionale e lo sponsor adottivo', icona: 'liberta', leader: 'nell\'attività internazionale' },
+      { id: 'guidare', titolo: 'Guidare le persone', sotto: 'Connettersi, ascoltare, mettere le persone al primo posto', icona: 'persona', leader: 'nel guidare le persone' },
     ] },
     { nome: 'Platino', sotto: 'Portare i tuoi leader al 21%', percorsi: [
-      { id: 'bonus_leader', titolo: 'Il Bonus Leader', sotto: 'I tuoi leader al 21%, verso Smeraldo e Diamante', icona: 'stella' },
-      { id: 'esempio', titolo: "Guidare con l'esempio", sotto: 'Il ritmo, i valori e le abitudini che si duplicano', icona: 'squadra' },
-      { id: 'visione', titolo: 'La visione', sotto: 'Vedere lontano: dieci anni, il Diamante, il Weekend Seminar', icona: 'visione' },
+      { id: 'bonus_leader', titolo: 'Il Bonus Leader', sotto: 'I tuoi leader al 21%, verso Smeraldo e Diamante', icona: 'stella', leader: 'nel portare i tuoi leader al 21%' },
+      { id: 'esempio', titolo: "Guidare con l'esempio", sotto: 'Il ritmo, i valori e le abitudini che si duplicano', icona: 'squadra', leader: 'nel guidare con l\'esempio' },
+      { id: 'visione', titolo: 'La visione', sotto: 'Vedere lontano: dieci anni, il Diamante, il Weekend Seminar', icona: 'visione', leader: 'nella visione' },
     ] },
   ];
 
@@ -222,6 +223,42 @@
     return { n, oggi: g.has(oggi) };
   }
 
+  // I premi (Ignazio 25/09): una medaglia per ogni percorso superato, con il suo titolo («Complimenti, sei leader nel contattare!»), una per
+  // ogni livello superato e i traguardi dei giorni di fila (7, 30 e 100: conta la serie più lunga, così una medaglia presa resta). Tutto
+  // dai test e dai giorni già salvati, senza tabelle nuove: la data è quella del primo test superato (del livello: del percorso che mancava).
+  // `test`: [{ percorso, giuste, totale, fatto_il }] · `giorni`: ['AAAA-MM-GG', …] (i giorni di allenamento).
+  const TRAGUARDI = [7, 30, 100];
+  const complimenti = p => `Complimenti, sei leader ${p.leader}!`;
+  const titoloMedaglia = p => `Leader ${p.leader}`;
+  function medaglie(test, giorni) {
+    const primo = {}, migliori = {};
+    for (const t of [...(test || [])].sort((a, b) => quando(a.fatto_il) - quando(b.fatto_il))) {
+      const s = stelle(t.giuste, t.totale);
+      migliori[t.percorso] = Math.max(migliori[t.percorso] || 0, s);
+      if (s >= 1 && !primo[t.percorso]) primo[t.percorso] = t.fatto_il;
+    }
+    const percorsi = [], livelli = [];
+    for (const l of LIVELLI) {
+      for (const p of l.percorsi) if (primo[p.id]) percorsi.push({ id: p.id, titolo: p.titolo, leader: p.leader, icona: p.icona, livello: l.nome, quando: primo[p.id], stelle: migliori[p.id] });
+      if (l.percorsi.every(p => primo[p.id])) livelli.push({ nome: l.nome, quando: l.percorsi.map(p => primo[p.id]).sort((a, b) => quando(a) - quando(b)).pop() });
+    }
+    const traguardi = [];
+    let n = 0, prima = null, record = 0;
+    for (const d of [...new Set(giorni || [])].sort()) {
+      n = prima && piuGiorni(prima, 1) === d ? n + 1 : 1;
+      prima = d; record = Math.max(record, n);
+      for (const x of TRAGUARDI) if (n === x && !traguardi.some(t => t.giorni === x)) traguardi.push({ giorni: x, quando: d });
+    }
+    const stelleTutte = LIVELLI.flatMap(l => l.percorsi).reduce((k, p) => k + (migliori[p.id] || 0), 0);
+    return { percorsi, livelli, traguardi, record, stelle: stelleTutte, totale: percorsi.length + livelli.length + traguardi.length };
+  }
+  // Per il Profilo: il livello di adesso (il primo non ancora superato), le medaglie, le stelle e i giorni di fila di oggi
+  function riepilogo(test, giorni, oggi) {
+    const m = medaglie(test, giorni);
+    const qui = LIVELLI.find(l => !m.livelli.some(x => x.nome === l.nome)) || LIVELLI[LIVELLI.length - 1];
+    return { ...m, livello: qui.nome, fila: giorniDiFila(giorni, oggi).n };
+  }
+
   // Da dove viene una carta, detto come lo cercano le persone. Si consigliano solo il Manuale di Avvio, le tracce nel BSM, i libri a
   // catalogo e, dal 25/09, il sito Amway Italia: sempre e solo la pagina Risorse (Ignazio: «per quanto riguarda le cose di Amway rimanda
   // alla pagina Risorse del sito Amway e basta»), e la carta dice il titolo del documento da cercare lì; per il resto l'attribuzione sta
@@ -322,7 +359,7 @@
   }
 
   const api = { LIVELLI, RISORSE_AMWAY, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
-    statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
+    statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;
 })(this);

@@ -118,6 +118,7 @@
     'lucchetto': '<rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.4a4 4 0 0 1 8 0V11M12 15.2v2"/>',   // un livello ancora chiuso
     'stella': '<path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',   // le stelle dei test
     'fiamma': '<path d="M12 21a6 6 0 0 0 6-6c0-2.3-1.1-4.2-2.2-5.4-.6 1.9-1.7 2.9-2.8 3.2.5-3.2-.7-6.4-3.6-8.8.2 3.2-1.6 5.3-2.9 6.9A7 7 0 0 0 6 15a6 6 0 0 0 6 6z"/>',   // i giorni di fila
+    'medaglia': '<circle cx="12" cy="9" r="5.6"/><path d="M8.5 13.4 7 21l5-2.7 5 2.7-1.5-7.6"/>',   // le medaglie dei percorsi, dei livelli e dei giorni di fila (25/09)
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto

@@ -34,6 +34,7 @@ async function apriProfilo() {
     leggiStatoAvvisi().catch(() => (AV.stato = null)),
     leggiPercorso(),   // cantiere 32: i propri «Perché iniziare» e i 14 passi (non letto = null: i due riquadri non si mostrano)
     leggiMieiSegni(),  // cantiere 25 bis: le proprie targhette BBS · WES · CEP (non letti = la voce non si mostra)
+    TRAINING_VISIBILE ? trnMioRiepilogo().then(r => { PF.training = r; }).catch(() => { PF.training = null; }) : null,   // «Il mio Training» (25/09)
   ]);
   AVV.mio = percorso;
   if (dati.data) { Object.assign(u, dati.data); ST.stato = { ...(ST.stato || { fatti_oggi: 0 }), contatti_al_giorno: dati.data.contatti_al_giorno }; }
@@ -46,15 +47,23 @@ async function apriProfilo() {
 // sola (Contatti al giorno → foglio dei numeri, Novità, Rivedi il benvenuto, Cambia password) hanno lo stesso aspetto ma agiscono al tocco (`rigaProfilo`).
 // In cima restano i due riquadri del cantiere 32: «🌟 Perché ho iniziato» («Cambia» apre la schermata del benvenuto e torna qui)
 // e «🚀 Il mio avvio · N/14» (i 14 passi: `mioPassiHtml`, gli stessi della Dashboard), ora collassabili come gli altri.
-const PF = { aperte: new Set(), segni: null };
+const PF = { aperte: new Set(), segni: null, training: null };
 function voceProfilo(k, titolo, o) {   // o: { sotto, destra, sempre, corpo }
   const aperta = PF.aperte.has(k);
   return `<div class="pf-box pf-voce${o.classe ? ' ' + o.classe : ''}"><button class="avv-testa" data-voce="${k}"><span><b>${titolo}</b>${o.sotto ? `<small>${o.sotto}</small>` : ''}</span>
       <span class="avv-conta">${o.destra ? o.destra + ' ' : ''}${aperta ? '⌄' : '›'}</span></button>
       ${o.sempre || ''}${aperta ? `<div class="pf-corpo">${o.corpo}</div>` : ''}</div>`;
 }
-function rigaProfilo(id, titolo, destra) {
-  return `<div class="pf-box pf-voce"><button class="avv-testa" id="${id}"><span><b>${titolo}</b></span><span class="avv-conta">${destra ? destra + ' ' : ''}›</span></button></div>`;
+function rigaProfilo(id, titolo, destra, sotto) {
+  return `<div class="pf-box pf-voce"><button class="avv-testa" id="${id}"><span><b>${titolo}</b>${sotto ? `<small>${sotto}</small>` : ''}</span><span class="avv-conta">${destra ? destra + ' ' : ''}›</span></button></div>`;
+}
+// «Il mio Training» (Ignazio 25/09: le medaglie «da vedere anche nel Profilo»): il livello e i conti; al tocco il Training con «Le tue medaglie»
+function mioTrainingHtml() {
+  const t = PF.training;
+  if (!t) return '';
+  const n = (k, uno, tanti) => `${k} ${k === 1 ? uno : tanti}`;
+  return rigaProfilo('pf-training', ic('medaglia') + ' Il mio Training', '',
+    `${esc(t.livello)} · ${n(t.totale, 'medaglia', 'medaglie')} · ${n(t.stelle, 'stella', 'stelle')} · ${n(t.fila, 'giorno', 'giorni')} di fila`);
 }
 
 function mioProfiloHtml() {
@@ -98,6 +107,7 @@ function disegnaProfilo() {
     <div class="sotto">Il tuo quadro personale</div>
     ${mioProfiloHtml()}
     ${mieiSegniHtml()}
+    ${mioTrainingHtml()}
     ${voceProfilo('dati', ic('persona') + ' I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
@@ -121,6 +131,7 @@ function disegnaProfilo() {
   collegaMieiSegni();
   su('pf-tel-salva', salvaTelefono);
   su('pf-numero', () => scegliNumero(disegnaProfilo));
+  su('pf-training', () => { TRN.vista = 'impara'; TRN.dopo = 'medaglie'; ST.tab = 'training'; mostraTab(); });
   su('pf-libri', () => apriLibri('profilo'));   // cantiere 40 lavoro 7: il diario di lettura (pagina-libri.js)
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
