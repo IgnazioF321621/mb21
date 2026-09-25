@@ -328,6 +328,13 @@
       year: breve ? '2-digit' : 'numeric' }).format(new Date(iso));
   }
 
+  // «Chi è»: i dati personali nell'ordine deciso da Ignazio (25/09, MB Project → Scheda Contatto: «per avere una sequenza o un flow»),
+  // lo stesso nel modulo Nuovo/Modifica e nella sezione Dati della scheda. [colonna di `contatti`, etichetta]
+  const DATI_PERSONA = [['fascia_eta', 'Età'], ['compleanno', 'Compleanno'], ['sesso', 'Sesso'], ['professione', 'Professione'], ['lavoro', 'Lavoro'], ['citta', 'Località']];
+  const SESSI = [['M', 'Uomo'], ['F', 'Donna']];
+  const LAVORI = [['dipendente', 'Dipendente'], ['autonomo', 'Autonomo']];
+  const nomeScelta = (elenco, v) => (elenco.find(x => x[0] === v) || [v, v])[1];   // il valore salvato → la parola che si legge
+
   // ── Vendite (cantiere 26) ──
   // I 5 brand del modulo «Vendita» di Glide, con il colore della targhetta.
   const BRAND = [['Artistry', 'var(--brand-artistry)'], ['eSpring', 'var(--brand-espring)'], ['Home', 'var(--brand-home)'], ['Nutrilite/XS', 'var(--brand-nutrilite)'], ['Persona', 'var(--brand-persona)']];
@@ -394,7 +401,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -527,23 +527,36 @@ async function collegaUtenteMb21(c, scollega) {
 
 function sezioneDati() {
   const c = LS.contatto;
-  const campi = [['Professione', c.professione], ['Età', c.fascia_eta], ['Località', c.citta], ['Area', c.area],
-    ['Note', c.note], ['Contatto e/o Incaricato di', c.referral_di], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
-    .filter(([, v]) => v);
-  document.getElementById('sezione').innerHTML = `<div id="coppia"></div><div class="riquadro dati">
-    ${campi.map(([k, v]) => `<div><small>${k}</small>${esc(v)}</div>`).join('')}<div id="dati-compleanno" hidden></div></div>`;
+  disegnaDati(c, null);
   riquadroCoppia(c);
-  rigaCompleanno(c);
+  datiPersonaExtra(c);
 }
 
-// Compleanno (cantiere 30, Ignazio 18/09: «domani potremmo mandare messaggi di auguri»): arriva dalla rubrica del telefono.
-// La vista della Lista non ce l'ha: si legge da `contatti` quando si apre «Dati», come la coppia. Senza rete la riga non compare.
-async function rigaCompleanno(c) {
-  const { data, error } = await dbq('compleanno', supa.from('contatti').select('compleanno').eq('id', c.id).maybeSingle());
-  const posto = document.getElementById('dati-compleanno');
-  if (error || !data || !data.compleanno || !posto || LS.contatto !== c || LS.sezione !== 'dati') return;
-  posto.innerHTML = `<small>Compleanno</small>${ic('compleanno')} ${esc(MB21Rubrica.compleannoScritto(data.compleanno))}`;
-  posto.hidden = false;
+// La sezione Dati: prima i dati personali nell'ordine di MB21Lista.DATI_PERSONA (lo stesso del modulo, Ignazio 25/09), poi il resto.
+// Solo i campi pieni. Compleanno, sesso e lavoro non stanno nella vista della Lista: arrivano con `datiPersonaExtra` (seconda passata).
+function disegnaDati(c, extra) {
+  const box = document.getElementById('sezione');
+  if (!box) return;
+  const L = MB21Lista, valore = k => (extra && k in extra ? extra[k] : c[k]);
+  const persona = L.DATI_PERSONA.map(([k, etichetta]) => {
+    const v = valore(k);
+    if (!v) return null;
+    if (k === 'compleanno') return [etichetta, ic('compleanno') + ' ' + esc(MB21Rubrica.compleannoScritto(v))];
+    return [etichetta, esc(k === 'sesso' ? L.nomeScelta(L.SESSI, v) : k === 'lavoro' ? L.nomeScelta(L.LAVORI, v) : v)];
+  }).filter(Boolean);
+  const resto = [['Area', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
+    .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
+  const riquadro = `<div class="riquadro dati" id="dati-riquadro">${[...persona, ...resto].map(([k, v]) => `<div><small>${k}</small>${v}</div>`).join('')}</div>`;
+  const vecchio = document.getElementById('dati-riquadro');
+  if (vecchio) vecchio.outerHTML = riquadro; else box.innerHTML = `<div id="coppia"></div>${riquadro}`;
+}
+
+// Compleanno (cantiere 30, Ignazio 18/09: «domani potremmo mandare messaggi di auguri»), sesso e lavoro (cantiere 40): la vista della Lista
+// non li ha, si leggono da `contatti` quando si apre «Dati», come la coppia. Senza rete restano fuori.
+async function datiPersonaExtra(c) {
+  const { data, error } = await dbq('dati personali', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle());
+  if (error || !data || LS.contatto !== c || LS.sezione !== 'dati') return;
+  disegnaDati(c, data);
 }
 
 // Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
@@ -1132,6 +1145,18 @@ function apriModulo(c) {
   const conStorico = (lista, v) => v && !lista.includes(v) ? [...lista, v] : lista;
   const prefissi = conStorico(MB21Lista.PREFISSI.map(p => p[0]), tel.prefisso);
   const max = (base, v) => Math.max(base, (v || '').length);
+  // i dati personali, uno per chiave: l'ORDINE lo dà MB21Lista.DATI_PERSONA (lo stesso della sezione Dati)
+  const campiPersona = {
+    fascia_eta: `<div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>`,
+    sesso: `<div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option>${MB21Lista.SESSI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
+    lavoro: `<div class="campo"><label>Lavoro <small class="sotto" style="margin:0">(per la prima traccia dopo il PM)</small></label><select id="f-lavoro"><option value="">—</option>${MB21Lista.LAVORI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
+    compleanno: `<div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
+      <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
+      <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
+      <input id="f-ca" inputmode="numeric" maxlength="4" placeholder="Anno"></div></div>`,
+    professione: `<div class="campo"><label>Professione</label><input id="f-prof" placeholder="Mansione (Settore)" maxlength="${max(40, c && c.professione)}" value="${esc(c ? c.professione || '' : '')}"><div class="conta" data-conta="f-prof"></div></div>`,
+    citta: `<div class="campo"><label>Località</label><input id="f-citta" placeholder="Città (Prov)" maxlength="${max(40, c && c.citta)}" value="${esc(c ? c.citta || '' : '')}"><div class="conta" data-conta="f-citta"></div></div>`
+  };
   const velo = document.createElement('div');
   velo.className = 'velo';
   // Il modulo (cantiere 34, prova approvata da Ignazio il 19/09: tools/design/confronto_modulo.html): in testa chi è, tre gruppi con un titoletto
@@ -1147,15 +1172,7 @@ function apriModulo(c) {
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
     </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>
-    <div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option><option value="M">Uomo</option><option value="F">Donna</option></select></div>
-    <div class="campo"><label>Lavoro <small class="sotto" style="margin:0">(per la prima traccia dopo il PM)</small></label><select id="f-lavoro"><option value="">—</option><option value="dipendente">Dipendente</option><option value="autonomo">Autonomo</option></select></div>
-    <div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
-      <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
-      <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
-      <input id="f-ca" inputmode="numeric" maxlength="4" placeholder="Anno"></div></div>
-    <div class="campo"><label>Professione</label><input id="f-prof" placeholder="Mansione (Settore)" maxlength="${max(40, c && c.professione)}" value="${esc(c ? c.professione || '' : '')}"><div class="conta" data-conta="f-prof"></div></div>
-    <div class="campo"><label>Località</label><input id="f-citta" placeholder="Città (Prov)" maxlength="${max(40, c && c.citta)}" value="${esc(c ? c.citta || '' : '')}"><div class="conta" data-conta="f-citta"></div></div>
+    ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
     <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div></div>
