@@ -16,9 +16,12 @@
   // Ogni livello: le persone, l'attività dall'interno e, dallo Sponsor in su, un percorso di mentalità (dal credere in te alla visione).
   // Un percorso è pronto quando nell'archivio c'è la riga «carte_<id>»; gli altri si vedono «in arrivo».
   const LIVELLI = [
-    { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, il Sistema', percorsi: [
+    { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, dire il vero, il Sistema', percorsi: [
       { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate' },
       { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio' },
+      // 25/09: dalle Regole di Condotta Amway solo le regole su cose false dette o fatte (Ignazio: «vai a prendere le regole solo per
+      // quanto riguarda fare cose false e dire cose false in generale»; per i contatti restano le idee del manuale)
+      { id: 'dire_il_vero', titolo: 'Dire sempre il vero', sotto: "Le Regole di Condotta Amway: i prodotti, i social, l'attività, i guadagni", icona: 'fatto' },
       { id: 'sistema', titolo: 'Il Sistema', sotto: 'Open, BBS, WES, CEP e libri', icona: 'agenda' },
       { id: 'principi', titolo: 'Principi e parole', sotto: "I 9 principi guida e le parole dell'attività", icona: 'libro' },
     ] },
