@@ -220,12 +220,13 @@
   }
 
   // Da dove viene una carta, detto come lo cercano le persone. Si consigliano solo il Manuale di Avvio, le tracce nel BSM, i libri a
-  // catalogo e, dal 25/09, le pagine del sito Amway Italia (Ignazio: «possiamo rimandare al sito Amway»; le fonti straniere no: solo
-  // amway.it, SITO_AMWAY); per il resto l'attribuzione sta già nel «perché» («Massimo Bini dice spesso…») e qui non si scrive niente.
-  const SITO_AMWAY = /^https:\/\/www\.amway\.it\//;
+  // catalogo e, dal 25/09, il sito Amway Italia: sempre e solo la pagina Risorse (Ignazio: «per quanto riguarda le cose di Amway rimanda
+  // alla pagina Risorse del sito Amway e basta»), e la carta dice il titolo del documento da cercare lì; per il resto l'attribuzione sta
+  // già nel «perché» («Massimo Bini dice spesso…») e qui non si scrive niente.
+  const RISORSE_AMWAY = 'https://www.amway.it/amway-resources';
   function fonte(f) {
     if (!f) return null;
-    if (f.tipo === 'sito') return `Sul sito Amway: «${f.titolo}»`;
+    if (f.tipo === 'sito') return `Sul sito Amway, in Risorse: «${f.titolo}»`;
     if (f.tipo === 'manuale') return `Manuale di Avvio, ${String(f.pag).includes('-') ? 'pagine' : 'pagina'} ${f.pag}`;
     if (f.tipo === 'traccia') return `Da ascoltare nel BSM: ${f.oratore} – «${f.titolo}»`;
     if (f.tipo === 'libro') return `Dal libro di ${f.autore} «${f.titolo}»${f.capitolo ? `, capitolo «${f.capitolo}»` : ''}`;
@@ -262,7 +263,7 @@
       } else p.push(`${chi}: tipo sconosciuto «${c.tipo}»`);
       const f = c.fonte;
       if (f && !((f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)
-        || (f.tipo === 'sito' && f.titolo && SITO_AMWAY.test(f.url || ''))))
+        || (f.tipo === 'sito' && f.titolo && !f.url)))
         p.push(`${chi}: fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
     }
@@ -317,7 +318,7 @@
     return (tutte || []).filter(c => parole.every(p => c.testo.includes(p)));
   }
 
-  const api = { LIVELLI, SITO_AMWAY, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { LIVELLI, RISORSE_AMWAY, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;

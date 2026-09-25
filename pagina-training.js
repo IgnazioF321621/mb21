@@ -134,7 +134,7 @@ function trnApriPercorso(id) {
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   const studio = [...new Set([...fonti, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
-  const siti = [...new Map(m.carte.map(c => c.fonte).filter(f => f && f.tipo === 'sito').map(f => [f.url, f])).values()];   // in fondo, le pagine del sito Amway
+  const siti = [...new Set(m.carte.map(c => c.fonte).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -154,8 +154,8 @@ function trnApriPercorso(id) {
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
       ${studio.length || siti.length ? `<h4>Per approfondire</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
-        siti.map(f => `<a class="trn-riga" href="${esc(f.url)}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
-          <div><b>${esc(f.titolo)}</b><small>Sul sito Amway Italia</small></div><span class="trn-freccia">›</span></a>`).join('')}` : ''}
+        siti.length ? `<a class="trn-riga" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
+          <div><b>Le Risorse del sito Amway</b><small>${esc(siti.join(' · '))}</small></div><span class="trn-freccia">›</span></a>` : ''}` : ''}
     </div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
@@ -358,11 +358,11 @@ function trnFoglioCorreggi(carta, visto, bottone) {
   };
 }
 
-// da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro) o, per il sito Amway, la sua pagina
+// da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro) o, per Amway, la pagina Risorse del sito
 function trnFonte(c) {
   const t = MB21Training.fonte(c.fonte);
   if (!t) return '';
-  if (c.fonte.tipo === 'sito') return `<a class="trn-fonte" href="${esc(c.fonte.url)}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
+  if (c.fonte.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const f = c.fonte, voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
   return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
