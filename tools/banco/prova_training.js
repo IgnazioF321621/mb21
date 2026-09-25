@@ -167,6 +167,7 @@ prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mental
     assert.match(p.id, /^[a-z0-9_]+$/, p.id);                  // la riga dell'archivio è «carte_<id>»
     assert.ok(I.ha(p.icona), `${p.id}: icona «${p.icona}» che non esiste`);
     assert.ok(p.titolo && p.sotto, p.id);
+    assert.match(p.leader, /^(nel |nei |nella |nelle |negli |nell'|con )/, `${p.id}: il titolo della medaglia «leader ${p.leader}»`);
   }
   // superati i cinque test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
   const mazzi = ['contattare', 'primi_passi', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
@@ -273,6 +274,39 @@ prova('Il capitolo del manuale che contiene una pagina', () => {
   assert.equal(T.capitoloDi(voci, 15).titolo, 'PM in casa');
   assert.equal(T.capitoloDi(voci, '9').id, 'manuale-8-12');
   assert.equal(T.capitoloDi(voci, '99'), null);
+});
+
+prova('Le medaglie: una per percorso superato (con il suo titolo), una per livello superato, i traguardi dei giorni di fila', () => {
+  assert.equal(T.complimenti(T.LIVELLI[0].percorsi[0]), 'Complimenti, sei leader nel contattare!');
+  assert.equal(T.titoloMedaglia(T.LIVELLI[1].percorsi[2]), 'Leader con i clienti');
+  // un test sotto il 70% non dà medaglia; il primo superato dà la data, le stelle sono le migliori
+  const test = [
+    { percorso: 'contattare', giuste: 6, totale: 10, fatto_il: '2026-09-20T10:00:00Z' },
+    { percorso: 'contattare', giuste: 8, totale: 10, fatto_il: '2026-09-21T10:00:00Z' },
+    { percorso: 'contattare', giuste: 10, totale: 10, fatto_il: '2026-09-23T10:00:00Z' },
+    { percorso: 'primi_passi', giuste: 7, totale: 10, fatto_il: '2026-09-22T10:00:00Z' },
+  ];
+  let m = T.medaglie(test, []);
+  assert.deepEqual(m.percorsi.map(x => [x.id, x.quando.slice(0, 10), x.stelle, x.livello]), [['contattare', '2026-09-21', 3, 'Nuovo'], ['primi_passi', '2026-09-22', 1, 'Nuovo']]);
+  assert.deepEqual(m.livelli, []);
+  assert.equal(m.stelle, 4);
+  assert.equal(m.totale, 2);
+  // tutti e cinque i percorsi del Nuovo: la medaglia del livello, con la data dell'ultimo che mancava
+  const nuovo = T.LIVELLI[0].percorsi.slice(2).map((p, i) => ({ percorso: p.id, giuste: 9, totale: 10, fatto_il: `2026-09-2${4 + i}T10:00:00Z` }));
+  m = T.medaglie([...test, ...nuovo], []);
+  assert.deepEqual(m.livelli.map(l => [l.nome, l.quando.slice(0, 10)]), [['Nuovo', '2026-09-26']]);
+  assert.equal(m.totale, 6);
+  // i giorni di fila: conta la serie più lunga, la medaglia resta anche dopo una pausa; la data è il giorno del traguardo
+  const serie = (da, n) => Array.from({ length: n }, (_, i) => T.piuGiorni(da, i));
+  m = T.medaglie([], [...serie('2026-08-01', 8), ...serie('2026-08-20', 3)]);
+  assert.deepEqual(m.traguardi, [{ giorni: 7, quando: '2026-08-07' }]);
+  assert.equal(m.record, 8);
+  assert.equal(T.medaglie([], serie('2026-06-01', 31)).traguardi.map(t => t.giorni).join(), '7,30');
+  // il riepilogo del Profilo: il livello di adesso è il primo non superato
+  const r = T.riepilogo([...test, ...nuovo], serie('2026-09-22', 3), '2026-09-24');
+  assert.equal(r.livello, 'Sponsor');
+  assert.equal(r.fila, 3);
+  assert.equal(T.riepilogo([], [], OGGI).livello, 'Nuovo');
 });
 
 console.log(`\n${ok} prove superate`);
