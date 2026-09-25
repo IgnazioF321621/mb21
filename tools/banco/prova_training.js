@@ -243,12 +243,14 @@ prova('La fonte, detta come la cercano le persone; la voce di chi l\'ha detto no
   assert.equal(T.fonte({ tipo: 'libro', id: 'l', titolo: 'Pensa e arricchisci te stesso', autore: 'Napoleon Hill', capitolo: 'La decisione' }),
     'Dal libro di Napoleon Hill «Pensa e arricchisci te stesso», capitolo «La decisione»');
   assert.equal(T.fonte(null), null);
-  // dal 25/09 anche le pagine del sito Amway Italia (Ignazio: «possiamo rimandare al sito Amway»; le fonti straniere no)
-  assert.equal(T.fonte({ tipo: 'sito', titolo: 'Programma START', url: 'https://www.amway.it/about-amway/new-abo-start' }), 'Sul sito Amway: «Programma START»');
-  const conSito = url => T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...scena('sito'), fonte: { tipo: 'sito', titolo: 'Programma START', url } }] });
-  assert.deepEqual(conSito('https://www.amway.it/about-amway/new-abo-start'), []);
-  assert.deepEqual(conSito('https://www.amway.pt/en/bronze-incentives'), ['sito: fonte incompleta']);
-  assert.deepEqual(conSito(undefined), ['sito: fonte incompleta']);
+  // dal 25/09 anche il sito Amway Italia, ma solo la pagina Risorse (Ignazio: «rimanda alla pagina Risorse del sito Amway e basta»):
+  // la carta dice solo il titolo del documento, il link è sempre quello di Risorse
+  assert.equal(T.fonte({ tipo: 'sito', titolo: 'Programma START' }), 'Sul sito Amway, in Risorse: «Programma START»');
+  assert.equal(T.RISORSE_AMWAY, 'https://www.amway.it/amway-resources');
+  const conSito = f => T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...scena('sito'), fonte: { tipo: 'sito', ...f } }] });
+  assert.deepEqual(conSito({ titolo: 'Programma START' }), []);
+  assert.deepEqual(conSito({ titolo: 'Programma START', url: 'https://www.amway.it/about-amway/new-abo-start' }), ['sito: fonte incompleta']);
+  assert.deepEqual(conSito({}), ['sito: fonte incompleta']);
 });
 
 prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte che non sono 3, fonti a metà, tipi sconosciuti', () => {
