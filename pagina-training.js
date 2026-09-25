@@ -62,12 +62,18 @@ function disegnaTraining() {
   const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
   app.innerHTML = `<h1>${ic('crescita')} Training</h1>
     <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
-      <span class="trn-conto fila${fila.oggi ? ' acceso' : ''}" title="Giorni di allenamento di fila">${ic('fiamma')} ${fila.n}</span>
-      <span class="trn-conto stelle" title="Stelle dei test">${ic('stella')} ${stelle}</span></div>
+      <button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-come title="Giorni di allenamento di fila">${ic('fiamma')} ${fila.n}</button>
+      <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button></div>
+    <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
+  app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
+  // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta
+  let spiegato = true;
+  try { spiegato = !!localStorage.getItem(TRN_SPIEGATO); if (!spiegato) localStorage.setItem(TRN_SPIEGATO, '1'); } catch (e) {}
+  if (!spiegato) trnComeFunziona();
   if (TRN.vista === 'impara') {
     app.querySelectorAll('[data-percorso]').forEach(b => b.onclick = () => trnApriPercorso(b.dataset.percorso));
     // si parte da dove sei: la scala si apre in basso, sul percorso di adesso, e sopra si vede fin dove si può salire
@@ -77,6 +83,36 @@ function disegnaTraining() {
     const via = document.getElementById('trn-via-ripasso');
     if (via) via.onclick = () => trnSessione(MB21Training.daRipassare(TRN.mazzi, TRN.stati, trnOggi(), TRN.segnali, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', 'Ripasso di oggi');
   } else trnCollegaStudia();
+}
+
+// «Come funziona» (Ignazio 25/09, il testo è suo): le regole del Training in poche righe. Si apre dal bottone in alto, dalla fiammella e
+// dalle stelle, e da sola la prima volta. I numeri vengono da MB21Training, così la spiegazione resta uguale alle regole vere.
+const TRN_SPIEGATO = 'mb21-training-spiegato';
+function trnComeFunziona() {
+  const T = MB21Training, sc = T.SCATOLE;
+  const parti = [
+    ['crescita', 'Sali di livello', 'Sette livelli, da Nuovo a Platino: si parte dal basso. Il livello sopra si apre quando superi i test di tutti i percorsi del livello attuale.'],
+    ['mappa', 'I percorsi', 'Dentro un livello si aprono uno dopo l\'altro: il successivo quando hai visto tutte le carte di quello prima. «Sei qui» ti dice da dove continuare.'],
+    ['lampo', 'Impara', `${T.LEZIONE} carte nuove alla volta, di tre tipi: una scena con 3 risposte, una frase da ricordare (rispondi a voce, poi gira la carta), un vero o falso. Occhio ai trabocchetti.`],
+    ['aggiorna', 'Ripassa', `Ogni carta torna quando serve: se la sai torna dopo ${sc.slice(0, -1).join(', ')} e ${sc[sc.length - 1]} giorni, se sbagli torna domani. `
+      + 'Una carta la sai quando la indovini tre volte di fila, in giorni diversi. Se, in una chat con il coach dopo un\'azione o un appuntamento, segni un\'obiezione, '
+      + 'la relativa carta torna il giorno dopo. Bastano 5 minuti al giorno.'],
+    ['obiettivi', 'Il test', `Si apre quando sai ${Math.round(T.PER_IL_TEST * 10)} carte su 10 del percorso. Sono ${T.TEST} domande, almeno ${T.TRABOCCHETTI} a trabocchetto, senza aiuti. `
+      + 'Dal 70% il percorso è superato. Le stelle: una dal 70%, due dall\'80%, tre con 10 su 10. Puoi rifarlo per migliorare.'],
+    ['stella', 'I premi', 'Le stelle dei test e la fiammella dei giorni di fila sono in alto, accanto al tuo nome. Un percorso diventa verde quando superi il test, un livello quando superi tutti i suoi percorsi.'],
+    ['libro', 'Studia', 'Il Manuale di Avvio, le tracce del BSM e i libri. Ogni carta dice da dove viene: tocca la fonte e la ritrovi.'],
+  ];
+  document.querySelectorAll('.trn-come-foglio').forEach(f => f.parentNode.remove());
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-foglio trn-come-foglio" style="--col:var(--gr-crescita)">${trnTesta('info', 'Training', 'Come funziona')}
+    <div class="trn-foglio-corpo">${parti.map(([i, t, x]) => `<div class="trn-come-parte"><span class="trn-tondo">${ic(i, 20)}</span><div><b>${esc(t)}</b><p>${esc(x)}</p></div></div>`).join('')}
+      <button class="primario trn-via" id="trn-capito">Ho capito</button></div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('.trn-x').onclick = chiudi;
+  velo.querySelector('#trn-capito').onclick = chiudi;
 }
 
 // ── Impara: la scala che sale ────────────────────────────────
