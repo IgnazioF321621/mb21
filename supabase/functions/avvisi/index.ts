@@ -30,7 +30,7 @@
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -145,17 +145,39 @@ Deno.serve(async (req) => {
   if (tipo === 'check_sera') {
     // cantiere 43: l'orologio chiama ogni ora dalle 20 alle 22 di Roma; avvisa chi ha scelto quest'ora (già impostato: 22)
     if (![20, 21, 22].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il Check della sera si sceglie tra le 20 e le 22` });
-    const oggi = oggiAdesso;
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }] = await Promise.all([
+    // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Hai fatto il Check?» con in fondo
+    // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
+    const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }] = await Promise.all([
       db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
+      db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
+      db.from('azioni').select('user_id, contatto_id, data_scelta, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani.inizio).lt('data_scelta', domani.fine),
+      db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).gte('inizio', domani.inizio).lt('inizio', domani.fine),
     ]);
-    if (e1 || e2) return risposta({ errore: (e1 || e2)!.message }, 500);
+    const err = e1 || e2 || e3 || e4 || e5;
+    if (err) return risposta({ errore: err.message }, 500);
+    const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
+    const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda, come il promemoria
+    const impegni: (Impegno & { user_id: string })[] = [
+      ...(app ?? []).map(x => ({ user_id: x.user_id, inizio: Date.parse(x.inizio), testo: `${x.modalita || x.tipo_azione} · ${nome(x)}`, telefonata: false })),
+      ...(daCoda ?? []).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta)}`))
+        .map(x => ({ user_id: x.user_id, inizio: Date.parse(x.data_scelta), testo: `${x.esito === 'PM Fissato' ? 'PM' : 'Appuntamento'} · ${nome(x)}`, telefonata: false })),
+      ...(await senzaRiordini((tel ?? []) as Telefonata[])).map(x => ({ user_id: x.user_id, inizio: Date.parse(x.inizio), testo: `Telefonata · ${nomeDi(x)}`, telefonata: true })),
+    ];
     const giaFatto = new Set((fatti ?? []).map(x => x.user_id));
-    const daAvvisare = (attivi ?? []).map(x => x.id).filter(id => !giaFatto.has(id) && (corpo.forza || quando(id, 'check') === oraAdesso));
-    if (corpo.prova) return risposta({ oggi, ora: oraAdesso, utenti: daAvvisare });
-    const esito = await spedisciA(daAvvisare, { titolo: '⚡ Hai fatto il Check di oggi?', testo: 'Due minuti per chiudere la giornata: tocca per aprire il Check del Giorno.', url: './?apri=check', tag: 'check_sera' });
-    return risposta({ oggi, utenti: daAvvisare.length, ...esito });
+    const esiti: Record<string, unknown>[] = [];
+    for (const { id } of attivi ?? []) {
+      if (!corpo.forza && quando(id, 'check') !== oraAdesso) continue;
+      const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
+      let avviso: Avviso;
+      if (!giaFatto.has(id)) avviso = { titolo: '⚡ Hai fatto il Check di oggi?', testo: 'Due minuti per chiudere la giornata: tocca per aprire il Check del Giorno.' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
+      else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
+      else continue;   // Check fatto e domani niente: si tace
+      if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
+      esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
+    }
+    return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
   }
 
   // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
