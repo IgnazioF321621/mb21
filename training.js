@@ -337,7 +337,8 @@
         solo_n21: !!x.solo_n21, capitoli: libri[x.id] ? libri[x.id].capitoli : null });
     }
     for (const c of out) c.testo = piega([c.titolo, c.autore, c.sintesi, c.riassunto, c.punti, c.pack, c.sezione,
-      ...(c.appunti ? [...(c.appunti.capitoli || []), ...(c.appunti.principi || []), ...(c.appunti.azioni || []), ...(c.appunti.frasi || [])] : []),
+      ...(c.appunti ? [...(c.appunti.capitoli || []), ...(c.appunti.principi || []), ...(c.appunti.azioni || []), ...(c.appunti.frasi || []),
+        ...(c.appunti.sezioni || []).flatMap(z => z.voci.flatMap(v => [v.titolo, ...v.punti])), ...(c.appunti.termini || []).flat()] : []),
       ...(c.capitoli || []).flatMap(x => [x.titolo, ...(x.principi || []), ...(x.da_fare || [])])].filter(Boolean).join(' '));
     return out;
   }
