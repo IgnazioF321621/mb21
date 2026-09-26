@@ -617,8 +617,18 @@ function trnTesta(icona, sopra, titolo) {
   return `<div class="mc-testa trn-testa"><span class="ts-pastiglia trn-pastiglia">${ic(icona)}</span><div><small>${esc(sopra)}</small><b>${esc(titolo)}</b></div>
     <button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>`;
 }
+// gli appunti di una traccia: dal 26/09 i PAL nuovi delle note [BSM] (a.sezioni: i punti sezione per sezione, ognuna che si apre; le lezioni
+// e le citazioni evidenziate; poi le azioni da fare e i termini); per i PAL vecchi restano capitoli, principi, azioni e frasi
 function trnAppunti(a) {
   const lista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+  if (a.sezioni && a.sezioni.length) {
+    const voce = v => `${v.titolo ? `<b class="trn-pal-voce">${esc(v.titolo)}</b>` : ''}<ul>${v.punti.map((x, i) =>
+      `<li class="${(v.lezioni || []).includes(i) ? 'lezione' : (v.citazioni || []).includes(i) ? 'citazione' : ''}">${esc(x)}</li>`).join('')}</ul>`;
+    return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
+      ${a.sezioni.map((z, i) => `<details class="trn-capitolo trn-pal"${i === 0 ? ' open' : ''}><summary>${esc(z.titolo)}</summary>${z.voci.map(voce).join('')}</details>`).join('')}
+      ${lista('Da fare', a.azioni)}
+      ${a.termini && a.termini.length ? `<h5>Termini e definizioni</h5><ul class="trn-termini">${a.termini.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : ''}</div>`;
+  }
   return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
     ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Da fare', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
 }
