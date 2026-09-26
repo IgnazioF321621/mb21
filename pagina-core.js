@@ -19,32 +19,14 @@ async function apriCoreMese(mese) {
     document.getElementById('cm-dopo').onclick = () => apriCoreMese(MB21Agenda.spostaGiorno(CM.mese + '-01', 32).slice(0, 7));
   };
   collegaTesta();
-  const A = MB21Agenda, C = MB21Core;
-  const mese0 = CM.mese + '-01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
-  const da = A.isoDaRoma(mese0, '00:00'), a = A.isoDaRoma(mese1, '00:00');
-  const io = visto();
-  const [az, ve, ck, ob, cm, dBbs, dWes] = await Promise.all([
-    dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
-    // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
-    dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
-      .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
-    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
-    dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
-    dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
-    dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
-    dbq('date dei WES', supa.from('wes').select('data, giorno')),
-  ]);
-  if (az.error || ve.error || ck.error) { app.innerHTML = `${testa()}<div class="avviso">Non riesco a compilare il modulo: riprova.</div>${versione()}`; collegaTesta(); return; }
-  // Le tracce del percorso ascoltate nel mese e i biglietti stanno sulla propria scheda (il contatto con il proprio codice
-  // Amway), che per un partner sta nella lista dell'upline: le regole di sicurezza non gliela fanno leggere e il modulo
-  // scriveva «NO» anche a chi il biglietto ce l'aveva (Ignazio 24/09). Si passa dalle funzioni `miei_biglietti` e `mie_tracce`.
-  const [tracce, big] = await Promise.all([traccePercorso(io, mese0, mese1), bigliettiDiChiGuardo(io, mese0)]);
-  const biglietti = big || [];
-  CM.riga = cm.data || null;
-  CM.dati = (cm.data && cm.data.dati) || {};
+  const C = MB21Core;
+  let d;
+  try { d = await datiCoreDelMese(visto(), CM.mese); }
+  catch (e) { app.innerHTML = `${testa()}<div class="avviso">Non riesco a compilare il modulo: riprova.</div>${versione()}`; collegaTesta(); return; }
+  CM.riga = d.riga;
+  CM.dati = d.dati;
   const disegna = () => {
-    const m = C.modulo({ mese: CM.mese, azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti, obiettivi: ob.data || null, dati: CM.dati,
-      date: { bbs: dBbs.data || [], wes: dWes.data || [] }, oggi: MB21Coda.oggiRoma() });
+    const m = C.modulo({ ...d, mese: CM.mese, dati: CM.dati, oggi: MB21Coda.oggiRoma() });
     app.innerHTML = testa() + `<button class="primario cm-pdf" id="cm-pdf">${ic('condividi')} Condividi PDF</button>` + moduloCoreHtml(m) + versione();
     collegaTesta();
     collegaModuloCore(m, disegna);
@@ -188,6 +170,34 @@ async function condividiCorePdf(m) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   mostraToast('PDF scaricato: lo trovi nei Download, pronto da allegare.');
+}
+
+// Tutto quello che serve a `MB21Core.modulo` per un mese («AAAA-MM») di `io`: una lettura sola, usata dal Modulo Core
+// e dal Check (la riga «Leader Core» del percorso, cantiere 46). Torna { azioni, vendite, check, tracce, biglietti, obiettivi,
+// date, riga (core_mese), dati (i campi a mano) }; se una lettura fallisce lancia l'errore.
+async function datiCoreDelMese(io, mese) {
+  const A = MB21Agenda;
+  const mese0 = mese + '-01', mese1 = A.spostaGiorno(mese0, 32).slice(0, 8) + '01';
+  const da = A.isoDaRoma(mese0, '00:00'), a = A.isoDaRoma(mese1, '00:00');
+  const [az, ve, ck, ob, cm, dBbs, dWes] = await Promise.all([
+    dbq('PM del mese', supa.from('azioni').select('id, tipo_azione, modalita, esito, completata, inizio, contatti(nome)').eq('user_id', io.id).eq('tipo_azione', 'Piano Marketing').gte('inizio', da).lt('inizio', a)),
+    // le vendite che CONTANO nel mese: consegna nel mese, oppure senza consegna e pagate nel mese (regola `conta_il` delle vendite)
+    dbq('vendite del mese', supa.from('vendite').select('contatto_id, data, consegna, vp, contatti(nome)').eq('user_id', io.id)
+      .or(`and(consegna.is.null,data.gte.${mese0},data.lt.${mese1}),and(consegna.gte.${mese0},consegna.lt.${mese1})`)),
+    dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
+    dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
+    dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
+    dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
+    dbq('date dei WES', supa.from('wes').select('data, giorno')),
+  ]);
+  const errore = [az, ve, ck].find(r => r.error);
+  if (errore) throw errore.error;
+  // Le tracce del percorso ascoltate nel mese e i biglietti stanno sulla propria scheda (il contatto con il proprio codice
+  // Amway), che per un partner sta nella lista dell'upline: le regole di sicurezza non gliela fanno leggere e il modulo
+  // scriveva «NO» anche a chi il biglietto ce l'aveva (Ignazio 24/09). Si passa dalle funzioni `miei_biglietti` e `mie_tracce`.
+  const [tracce, big] = await Promise.all([traccePercorso(io, mese0, mese1), bigliettiDiChiGuardo(io, mese0)]);
+  return { azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti: big || [], obiettivi: ob.data || null,
+    date: { bbs: dBbs.data || [], wes: dWes.data || [] }, riga: cm.data || null, dati: (cm.data && cm.data.dati) || {} };
 }
 
 // Le tracce del percorso segnate «ascoltata» sulla propria scheda nel mese. Come per i biglietti, la scheda di un partner
