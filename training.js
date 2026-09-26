@@ -259,6 +259,29 @@
     return { ...m, livello: qui.nome, fila: giorniDiFila(giorni, oggi).n };
   }
 
+  // La riga «MB21:» delle note Evernote [BSM] (dal 26/09, Ignazio: «ok, mi piace»): ogni parola aggiunge la traccia a uno o più percorsi
+  // di «Per approfondire e imparare» (mai toglie). «Mentalità» manda al percorso di mentalità del livello dato dalla fase del Media Sharing
+  // della nota; con la fase 1 «Interesse» anche a «I primi passi» (Ignazio: «il nuovo è quello che rischia di più… i commenti negativi»).
+  const MB21_PERCORSI = {
+    'Contatti': ['contattare'], 'Invito': ['contattare'], 'Amici': ['contattare'], 'PM': ['piano'],
+    'Dare Seguito': ['dare_seguito'], 'Piramide': ['dare_seguito'], 'Mercato': ['dare_seguito'],
+    'Prodotti': ['clienti', 'primi_passi'], 'Avvio': ['primi_passi', 'avviare'], 'Sponsorizzare': ['avviare', 'linee'],
+    'Sistema': ['sistema', 'sistema_gruppo'], 'Duplicazione': ['duplicazione'], 'Obiettivi': ['obiettivi_mese', 'core'],
+    'Decisione': ['persistere', 'abitudini'], 'Costanza': ['persistere', 'abitudini'], 'Tempo': ['abitudini', 'obiettivi_mese'],
+    'Soldi': ['verso_21'], 'Paure': ['paure'], 'Critiche': ['paure'], 'Credere': ['credere'], 'Entusiasmo': ['credere'],
+    'Famiglia': ['dare_seguito', 'credere'], 'Leadership': ['leader', 'guidare'], 'Relazioni': ['guidare', 'aiutare_partner'],
+  };
+  const MENTALITA_PER_FASE = { 1: ['credere', 'primi_passi'], 2: ['credere'], 3: ['paure'], 4: ['abitudini'], studio: ['persistere', 'guidare'], avanzato: ['visione'] };
+  function percorsiDaMb21(appunto) {
+    if (!appunto || !Array.isArray(appunto.mb21)) return [];
+    const out = new Set();
+    for (const w of appunto.mb21) {
+      for (const id of MB21_PERCORSI[w] || []) out.add(id);
+      if (w === 'Mentalità') for (const id of MENTALITA_PER_FASE[appunto.fase] || []) out.add(id);
+    }
+    return [...out];
+  }
+
   // Da dove viene una carta, detto come lo cercano le persone. Si consigliano solo il Manuale di Avvio, le tracce nel BSM, i libri a
   // catalogo e, dal 25/09, il sito Amway Italia: sempre e solo la pagina Risorse (Ignazio: «per quanto riguarda le cose di Amway rimanda
   // alla pagina Risorse del sito Amway e basta»), e la carta dice il titolo del documento da cercare lì; per il resto l'attribuzione sta
@@ -359,7 +382,7 @@
     return (tutte || []).filter(c => parole.every(p => c.testo.includes(p)));
   }
 
-  const api = { LIVELLI, RISORSE_AMWAY, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { LIVELLI, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;

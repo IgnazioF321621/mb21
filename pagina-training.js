@@ -212,8 +212,13 @@ function trnApriPercorso(id) {
   const fonti = m.carte.map(c => c.fonte).filter(Boolean)
     .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id)));
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
-  const studio = [...new Set([...fonti, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
+  // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
+  const daMb21 = (TRN.voci || []).filter(c => c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id));
+  const tutteStudio = [...new Set([...fonti, ...delSettore, ...daMb21].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
+  // liste corte (Ignazio 26/09: «tutto veloce e impattante»): le prime 6, poi «Mostra tutte»
+  const kTutte = 'percorso|' + p.id, mostraTutte = TRN.tutte[kTutte] || tutteStudio.length <= TRN_PRIME + 2;
+  const studio = mostraTutte ? tutteStudio : tutteStudio.slice(0, TRN_PRIME);
   const siti = [...new Set(m.carte.map(c => c.fonte).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
   const velo = document.createElement('div');
@@ -234,6 +239,7 @@ function trnApriPercorso(id) {
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
       ${studio.length || siti.length ? `<h4>Per approfondire e imparare</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
+        mostraTutte ? '' : `<button class="trn-tutte" id="trn-tutte-percorso" style="--col:var(--gr-crescita)">Mostra tutte le ${tutteStudio.length} ›</button>`}${
         siti.length ? `<a class="trn-riga" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
           <div><b>Le Risorse del sito Amway</b><small>${esc(siti.join(' · '))}</small></div><span class="trn-freccia">›</span></a>` : ''}` : ''}
     </div></div>`;
@@ -247,6 +253,8 @@ function trnApriPercorso(id) {
   if (b2) b2.onclick = () => via(suo.slice(0, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', `${p.titolo} · Ripassa`);
   if (b3) b3.onclick = () => via(MB21Training.pescaTest(m, TRN.stati), 'test', `${p.titolo} · Test finale`);
   velo.querySelectorAll('[data-carta]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.carta));
+  const bt = velo.querySelector('#trn-tutte-percorso');
+  if (bt) bt.onclick = () => { TRN.tutte[kTutte] = true; chiudi(); trnApriPercorso(id); };
 }
 const trnDiff = n => (n > 0 ? `+${n}` : n < 0 ? String(n) : 'uguale');
 
