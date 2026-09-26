@@ -99,11 +99,11 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   assert.doesNotMatch(h, /class="sv"/);
 });
 
-prova('LC1 in cima al Check: le quattro luci, «2 su 4» e cosa manca; con tutte accese «LC1 ✓»; con «Tutti» la card non c\'è', () => {
+prova('Leader 1° livello (lc1) in cima al Check: le quattro luci, «2 su 4» e cosa manca; con tutte accese «LC1 ✓»; con «Tutti» la card non c\'è', () => {
   let h = disegna();
   const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('id="ck-storico"'));
   assert.ok(card.length > 0 && h.indexOf('class="ck-lc1') < h.indexOf('id="ck-storico"'));   // sopra «Gli ultimi 12 mesi»
-  assert.match(card, /<b>LC1 · settembre 2026<\/b>/);
+  assert.match(card, /<b>Leader 1° livello · settembre 2026<\/b>/);
   assert.match(card, /<span class="stato">2 su 4<\/span>/);                  // BBS e CEP sì; VP 0 e WES no
   assert.match(card, /class="luce bbs on /);
   assert.match(card, /class="luce cep on /);
@@ -112,12 +112,12 @@ prova('LC1 in cima al Check: le quattro luci, «2 su 4» e cosa manca; con tutte
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
   h = disegna();
   assert.match(h, /class="ck-lc1 fatto"/);
-  assert.match(h, /<span class="stato">LC1 ✓<\/span>/);
-  assert.match(h, /LC1 di settembre 2026 è tuo/);
+  assert.match(h, /<span class="stato">✓ Leader<\/span>/);
+  assert.match(h, /a settembre 2026 sei Leader 1° livello/);
   esegui(`CK.lc1 = null`);
   assert.doesNotMatch(disegna(), /ck-lc1/);
   esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
-  assert.match(disegna(), /LC1 si conta da settembre 2026/);
+  assert.match(disegna(), /Leader 1° livello si conta da settembre 2026/);
   esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15');`);
   assert.match(disegna(), /non trovo la scheda col tuo codice Amway/);
 });
