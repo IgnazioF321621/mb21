@@ -258,6 +258,56 @@
       mancano: luci.filter(l => !l.ok).map(l => l.titolo) };
   }
 
+  // ── Il percorso Core (Ignazio 26/09): i gradini si leggono insieme ma ognuno si accende da solo, senza ordine obbligato
+  // («può succedere che un passo sia fatto prima di un altro»). «Ogni mese»: Leader 1° livello (lc1), Leader Core (le 7
+  // abitudini del Modulo Core, `MB21Core.modulo`), Pacesetter (dopo). «Livelli» (dopo): Leaders Club, Executive, Argento, Platino.
+  // Torna { gradini: [{ chiave, titolo, sotto, fatto, stato, mancano: [{ testo, peso }], pronto }], doveSei, prossimo }.
+  // `modulo` null = non ancora letto (la riga dice «…»); `peso` = quanto manca (0-1), per scegliere il prossimo passo.
+  function mancanzeCore(m) {
+    const out = [];
+    const n = m.giorni;
+    if (!m.abitudini[0]) out.push({ testo: `${m.s1.obiettivo - m.s1.quanti} PM`, peso: (m.s1.obiettivo - m.s1.quanti) / m.s1.obiettivo });
+    if (!m.abitudini[1]) out.push({ testo: 'il consumo personale', peso: 0.5 });
+    if (!m.abitudini[2]) out.push({ testo: `${m.s3.obiettivo - m.s3.quanti} clienti`, peso: (m.s3.obiettivo - m.s3.quanti) / m.s3.obiettivo });
+    if (!m.abitudini[3]) out.push({ testo: `una traccia ogni giorno (${m.s4.quanti} su ${n})`, peso: (n - m.s4.quanti) / n });
+    if (!m.abitudini[4]) out.push({ testo: `10 pagine ogni giorno (${m.s5.quanti} su ${n})`, peso: (n - m.s5.quanti) / n });
+    if (!m.abitudini[5]) {
+      const pezzi = [];
+      if (m.s6.open < m.s6.valide) pezzi.push(`OPEN (${m.s6.open} su ${m.s6.valide})`);
+      if (!m.s6.bbs) pezzi.push('biglietto BBS');
+      if (!m.s6.wes) pezzi.push('biglietto WES');
+      out.push({ testo: pezzi.join(' · ') || 'gli incontri', peso: 0.4 });
+    }
+    if (!m.abitudini[6]) {
+      const pezzi = [];
+      if (!m.s7.counseling) pezzi.push('counseling');
+      if (m.s7.edificazione !== true) pezzi.push('edificazione');
+      if (m.s7.no_crossline !== true) pezzi.push('no-crossline');
+      out.push({ testo: `squadra: ${pezzi.join(' · ')}`, peso: 0.3 });
+    }
+    return out;
+  }
+  const VERBI_LC1 = { vp: 'arriva a 100 VP', bbs: 'compra il biglietto BBS', wes: 'compra il biglietto WES', cep: 'abbonati al CEP' };
+  function percorso({ lc1: l, modulo: m }) {
+    const gradini = [];
+    gradini.push({ chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
+      stato: l.fatto ? 'fatto' : `${l.accese} su 4`,
+      mancano: (l.luci || []).filter(x => !x.ok).map(x => ({ testo: VERBI_LC1[x.chiave], peso: x.chiave === 'vp' ? 0.6 : 0.2 })) });
+    const fatte = m ? m.fatte : null;
+    gradini.push({ chiave: 'core', titolo: 'Leader Core', sotto: 'le 7 abitudini del mese', fatto: !!m && m.fatte === 7, pronto: !!m,
+      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${fatte} su 7`, mancano: m ? mancanzeCore(m) : [] });
+    const fatti = gradini.filter(g => g.fatto);
+    const doveSei = fatti.length ? fatti[fatti.length - 1].titolo : null;
+    // il prossimo passo: la cosa più vicina che manca, non il gradino dopo nell'ordine (Ignazio 26/09)
+    let prossimo = null;
+    for (const g of gradini) {
+      if (g.fatto || !g.pronto || !g.mancano.length) continue;
+      const min = g.mancano.reduce((a, b) => (b.peso < a.peso ? b : a));
+      if (!prossimo || min.peso < prossimo.peso) prossimo = { peso: min.peso, testo: `${min.testo} → ${g.titolo}` };
+    }
+    return { gradini, doveSei, prossimo: prossimo ? prossimo.testo : null, tuttiFatti: gradini.every(g => g.fatto) };
+  }
+
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
@@ -269,7 +319,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, lc1 };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, lc1, percorso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
