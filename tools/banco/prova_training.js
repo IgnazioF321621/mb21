@@ -309,4 +309,17 @@ prova('Le medaglie: una per percorso superato (con il suo titolo), una per livel
   assert.equal(T.riepilogo([], [], OGGI).livello, 'Nuovo');
 });
 
+prova('La riga MB21 di un PAL manda la traccia ai percorsi giusti; «Mentalità» al percorso di mentalità del livello della fase, con la fase 1 anche a I primi passi', () => {
+  const ids = new Set(T.LIVELLI.flatMap(l => l.percorsi.map(p => p.id)));
+  for (const v of [...Object.values(T.MB21_PERCORSI), ...Object.values(T.MENTALITA_PER_FASE)].flat()) assert.ok(ids.has(v), v);
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Credere', 'Sistema', 'Decisione', 'Costanza', 'Mentalità'], fase: 1 }).sort(),
+    ['abitudini', 'credere', 'persistere', 'primi_passi', 'sistema', 'sistema_gruppo']);
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Paure', 'Mentalità'], fase: 4 }).sort(), ['abitudini', 'paure']);
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'], fase: 'studio' }).sort(), ['guidare', 'persistere']);
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'], fase: 'avanzato' }), ['visione']);
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'] }), []);           // senza fase: da nessuna parte
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['PM', 'Invito', 'Avvio', 'Dare Seguito'] }).sort(), ['avviare', 'contattare', 'dare_seguito', 'piano', 'primi_passi']);
+  assert.deepEqual(T.percorsiDaMb21(null), []);
+});
+
 console.log(`\n${ok} prove superate`);
