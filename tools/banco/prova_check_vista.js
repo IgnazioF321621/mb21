@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const C = require('../../check.js');
 const R = require('../../report.js');
+const L = require('../../lista.js');
 
 let ok = 0;
 function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
@@ -26,7 +27,8 @@ const memoria = { dati: {}, rotta: false,
 
 const app = { innerHTML: '' };
 const ctx = {
-  MB21Check: C, MB21Report: R,
+  MB21Check: C, MB21Report: R, MB21Lista: L,
+  visto: () => ({ id: 'io' }), ST: { utente: { id: 'io' } },
   MB21Coda: { oggiRoma: () => '2026-09-15' },
   localStorage: memoria, app,
   esc: t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])),
@@ -36,13 +38,15 @@ const ctx = {
 };
 vm.createContext(ctx);
 vm.runInContext(pezzo('const CK = {', 'const CAMPI_CK'), ctx);
-vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);
+vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);   // porta con sé lc1Html
 const esegui = codice => vm.runInContext(codice, ctx);
 
 const g = (data, v = {}) => ({ data, contatti: 0, pm: 0, sponsor_personali: 0, sponsor_gruppo: 0, vp_clienti: 0, cep: 0, bbs: 0, wes: 0, tracce: 0, pagine: 0, ...v });
 esegui(`CK.giorni = ${JSON.stringify([g('2025-09-03'), g('2026-08-03', { contatti: 3, tracce: 10 }), g('2026-09-02', { contatti: 5, tracce: 18 })])};
   CK.obiettivi = ${JSON.stringify([{ mese: '2026-08-01', vpp_amway: 343.12, vpg_amway: 2106.78 }, { mese: '2026-09-01', vpp_amway: 0, vpg_amway: 325.83 }])};
-  CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+  CK.periodo = MB21Report.periodoMese('2026-09-15');
+  CK.eventi = { bbs: [{ data: '2026-10-01', creato_il: '2026-09-01T10:00:00+00:00' }], wes: [{ data: '2026-10-01', creato_il: '2026-09-01T10:00:00+00:00' }] };
+  CK.lc1 = { biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }], cep: [{ dal: '2026-01-01', uscito_il: null }] };`);
 const disegna = () => { esegui('disegnaCheck()'); return app.innerHTML; };
 const gruppo = (h, nome) => {   // il pezzo di pagina di un gruppo, dalla sua testata alla testata dopo
   const i = h.indexOf(`data-ckgruppo="${nome}"`);
@@ -93,6 +97,29 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
   assert.ok(h.indexOf('id="ck-storico"') < h.indexOf('data-ckgruppo="Volume"'));
   assert.doesNotMatch(h, /class="sv"/);
+});
+
+prova('LC1 in cima al Check: le quattro luci, «2 su 4» e cosa manca; con tutte accese «LC1 ✓»; con «Tutti» la card non c\'è', () => {
+  let h = disegna();
+  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('id="ck-storico"'));
+  assert.ok(card.length > 0 && h.indexOf('class="ck-lc1') < h.indexOf('id="ck-storico"'));   // sopra «Gli ultimi 12 mesi»
+  assert.match(card, /<b>LC1 · settembre 2026<\/b>/);
+  assert.match(card, /<span class="stato">2 su 4<\/span>/);                  // BBS e CEP sì; VP 0 e WES no
+  assert.match(card, /class="luce bbs on /);
+  assert.match(card, /class="luce cep on /);
+  assert.match(card, /class="luce vp {2}"/);
+  assert.match(card, /<small class="nota-lc1">Ti manca: 100 VP · WES<\/small>/);   // non «.nota», che è la pastiglia gialla
+  esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
+  h = disegna();
+  assert.match(h, /class="ck-lc1 fatto"/);
+  assert.match(h, /<span class="stato">LC1 ✓<\/span>/);
+  assert.match(h, /LC1 di settembre 2026 è tuo/);
+  esegui(`CK.lc1 = null`);
+  assert.doesNotMatch(disegna(), /ck-lc1/);
+  esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
+  assert.match(disegna(), /LC1 si conta da settembre 2026/);
+  esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+  assert.match(disegna(), /non trovo la scheda col tuo codice Amway/);
 });
 
 console.log(`\n${ok} prove superate`);

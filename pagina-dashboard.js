@@ -915,8 +915,26 @@ async function bigliettiDiChiGuardo(io, dal) {
   const sc = await dbq('la sua scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1));
   const scheda = !sc.error && sc.data && sc.data[0] ? sc.data[0].id : null;
   if (!scheda) return null;
-  const bi = await dbq('i suoi biglietti', supa.from('biglietti').select('tipo, evento, contatto, ospiti').eq('contatto_id', scheda).gte('evento', dal));
+  let q = supa.from('biglietti').select('tipo, evento, contatto, ospiti').eq('contatto_id', scheda);
+  if (dal) q = q.gte('evento', dal);   // senza `dal` tutti i biglietti (LC1 guarda anche i mesi passati)
+  const bi = await dbq('i suoi biglietti', q);
   return bi.error ? null : (bi.data || []);
+}
+
+// I periodi CEP della propria scheda (LC1, 26/09): la stessa strada dei biglietti. Per sé `miei_segni` (la scheda sta
+// nella lista dell'upline), per un altro partner l'Admin legge la sua scheda. null = non lo so · [] = scheda sì, CEP mai
+async function cepDiChiGuardo(io) {
+  if (io.id === ST.utente.id) {
+    const { data, error } = await dbq('il mio CEP', supa.rpc('miei_segni'));
+    if (error || !data || !data.scheda) return null;
+    return (data.cep || []).map(p => ({ dal: p.dal, uscito_il: p.uscito_il }));
+  }
+  if (!io.partner_id) return null;
+  const sc = await dbq('la sua scheda', supa.from('contatti').select('id').eq('codice_amway', io.partner_id).is('eliminato_il', null).limit(1));
+  const scheda = !sc.error && sc.data && sc.data[0] ? sc.data[0].id : null;
+  if (!scheda) return null;
+  const c = await dbq('il suo CEP', supa.from('cep').select('dal, uscito_il').eq('contatto_id', scheda));
+  return c.error ? null : (c.data || []);
 }
 
 const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);

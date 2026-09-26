@@ -6,6 +6,7 @@
 (function (radice) {
   const R = typeof module !== 'undefined' && module.exports ? require('./report.js') : radice.MB21Report;
   const D = typeof module !== 'undefined' && module.exports ? require('./dashboard.js') : radice.MB21Dashboard;
+  const L = typeof module !== 'undefined' && module.exports ? require('./lista.js') : radice.MB21Lista;
 
   // Le 12 voci, raggruppate come le schede. tipo: 'somma' (check giornalieri) · 'amway' (un numero al mese)
   // · 'stato' (fino ad agosto 2026 partenza + check; da settembre 2026 dalle persone, `segniAl`)
@@ -36,6 +37,7 @@
   // come si chiama la fine del periodo nella colonna «Prima» (VPP e VPG, un numero al mese)
   const A_FINE = { mese: 'mese', wes: 'WES', anno: 'anno' };
   const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 
   const n = v => (v == null || v === '' ? 0 : Number(v));
   const tondo = x => Math.round(x * 100) / 100;
@@ -214,6 +216,48 @@
     return { mesi, righe, massimi, totali };
   }
 
+  // ── LC1 (Ignazio 26/09): il traguardo di squadra del mese, «i primi 4 punti Core»: almeno 100 VP personali, il biglietto
+  // del BBS, il biglietto del WES, l'abbonamento CEP. Non è un livello Amway o N21: è la direzione verso il Leaders Club.
+  // In Glide era una spunta a mano (e per questo è morta); qui si calcola da quello che l'app sa già: `obiettivi_mese.vpp_amway`,
+  // i biglietti della propria scheda (`miei_biglietti`), i periodi CEP. Si conta da settembre 2026, nuovo anno di performance.
+  // Fotografia a fine mese (o a oggi se il mese è in corso): il biglietto vale per l'evento in vendita in quel mese
+  // (`MB21Lista.eventoAttivo`, la stessa regola delle targhette), il CEP se quel giorno si è dentro un periodo.
+  // biglietti: [{ tipo, evento, contatto }] · null = non lo so (nessuna scheda col codice) · cep: [{ dal, uscito_il }] · null = non lo so
+  // eventi: { bbs, wes } le righe delle tabelle (data, creato_il) · obiettivi: le righe di obiettivi_mese di questa persona
+  const LC1_VP = 100;
+  const LC1_INIZIO = '2026-09-01';
+  function lc1({ mese, obiettivi, biglietti, cep, eventi, oggi }) {
+    const m = mese.slice(0, 8) + '01';
+    const [a, mm] = m.split('-');
+    const nome = `${MESI_LUNGHI[Number(mm) - 1]} ${a}`;
+    if (m < LC1_INIZIO) return { mese: m, nome, prima: true, luci: [], accese: 0, fatto: false, mancano: [] };
+    const fine = R.spostaGiorno(R.spostaMese(m, 1), -1);
+    const al = fine < oggi ? fine : oggi;
+    const quando = Date.parse(al + 'T23:59:59+01:00');
+    const ev = eventi || {};
+    const o = (obiettivi || []).find(x => x.mese === m) || null;
+    const vp = o && o.vpp_amway != null && o.vpp_amway !== '' ? Number(o.vpp_amway) : null;
+    const biglietto = tipo => {
+      const attivo = L.eventoAttivo(ev[tipo.toLowerCase()], quando, m);
+      // testi corti: sul telefono la casella è larga 80 px
+      if (biglietti == null) return { ok: false, ignoto: true, testo: 'non lo so' };
+      if (!attivo) return { ok: false, testo: 'nessuno in vendita' };
+      const ok = biglietti.some(b => b.tipo === tipo && b.contatto && b.evento === attivo);
+      return { ok, evento: attivo, testo: ok ? L.etichettaEvento(attivo) : `manca ${L.etichettaEvento(attivo)}` };
+    };
+    const cepOk = cep == null ? null : (cep || []).some(p => p.dal <= al && (!p.uscito_il || p.uscito_il >= al));
+    const luci = [
+      { chiave: 'vp', titolo: `${LC1_VP} VP`, ok: vp != null && vp >= LC1_VP, ignoto: vp == null,
+        testo: vp == null ? 'dati Amway non arrivati' : formato(vp, 2) },
+      { chiave: 'bbs', titolo: 'BBS', ...biglietto('BBS') },
+      { chiave: 'wes', titolo: 'WES', ...biglietto('WES') },
+      { chiave: 'cep', titolo: 'CEP', ok: !!cepOk, ignoto: cepOk == null, testo: cepOk == null ? 'non lo so' : cepOk ? 'abbonato' : 'manca' },
+    ];
+    const accese = luci.filter(l => l.ok).length;
+    return { mese: m, nome, al, prima: false, luci, accese, fatto: accese === luci.length, inCorso: fine >= oggi,
+      mancano: luci.filter(l => !l.ok).map(l => l.titolo) };
+  }
+
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
@@ -225,7 +269,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, lc1 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
