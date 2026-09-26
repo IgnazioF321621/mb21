@@ -214,7 +214,8 @@ function trnApriPercorso(id) {
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
   const daMb21 = (TRN.voci || []).filter(c => c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id));
-  const tutteStudio = [...new Set([...fonti, ...delSettore, ...daMb21].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
+  // prima le fonti delle carte, poi le tracce mandate dalla riga MB21, poi il resto del settore
+  const tutteStudio = [...new Set([...fonti, ...daMb21, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
   // liste corte (Ignazio 26/09: «tutto veloce e impattante»): le prime 6, poi «Mostra tutte»
   const kTutte = 'percorso|' + p.id, mostraTutte = TRN.tutte[kTutte] || tutteStudio.length <= TRN_PRIME + 2;
