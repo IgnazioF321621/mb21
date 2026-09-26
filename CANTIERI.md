@@ -2,13 +2,21 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 24 settembre 2026 (sera: **aperto il cantiere 45, il Training a carte e livelli**, che nasce dal 42: le basi e il percorso Contattare, per ora solo nell'anteprima; aperti restano 45, 36, 35, 43, 42 e 21).*
+*Aggiornato: 26 settembre 2026 (mattina: **aperto il cantiere 46, LC1 — i primi 4 punti Core del mese**, calcolati da soli nel Check; da fare Dashboard, avvisi, mesi di fila, lista del leader; aperti restano 46, 45, 36 e gli altri di prima).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 
 ---
 
 # Cantieri aperti
+
+## 46. LC1: I PRIMI 4 PUNTI CORE DEL MESE (aperto il 26/09; MB App → Report)
+*Nato dal cantiere 36: l'unico segno di Glide non portato in v4 era «LC1», sempre «sì» in una tabella abbandonata. Ignazio 26/09: «non è un termine o risultato ufficiale né di Network 21 né di Amway, ma era un nostro raggiungimento, chiamiamolo di squadra: i primi 4 punti di Core, almeno 100 punti, il ticket del BBS, il ticket del WES, l'abbonamento CEP. Dava una direzione alle persone; l'idea si è un po' abbandonata. Deve essere propedeutica a diventare Leaders Club: i punti Core vanno molto attenzionati in tutto il percorso e, di conseguenza, nell'app».*
+
+- **Perché in Glide è morta e qui no**: era una spunta a mano, ogni mese, in una tabella a parte (8 righe, settembre-novembre 2025). In MB21 i quattro dati ci sono già (VP del mese, biglietti e CEP della propria scheda): l'app lo calcola da sola, nessuno deve ricordarsi di segnarlo
+- **Si conta da settembre 2026** (Ignazio: «è nuovo anno di performance, va benissimo»): prima i biglietti personali mese per mese non c'erano (in Glide erano numeri di gruppo); i VP ci sono da settembre 2025 ma non bastano da soli
+- ✅ **26/09, versione 2026.09.26 · 10:17 — passo 1, il Check**: `MB21Check.lc1` (funzione pura, 4 prove in `prova_check.js`) e la card `.ck-lc1` in cima al Check, sotto il confronto e sopra «Gli ultimi 12 mesi»: le quattro luci con il valore sotto, «3 su 4» o «LC1 ✓», «Ti manca: WES». Fotografia a fine mese (o a oggi): biglietto per l'evento in vendita in quel mese (`eventoAttivo`, come le targhette), CEP che copre l'ultimo giorno. Senza scheda col codice le luci dicono «?» e la riga manda dall'Admin. Con «Tutti» la card non c'è. Nuova `cepDiChiGuardo` accanto a `bigliettiDiChiGuardo` (che ora senza `dal` prende tutti i biglietti). Prova del disegno in `prova_check_vista.js` (5), foto con Chrome senza finestra (390 px): le luci stanno in una riga. Lezione ripetuta: `.nota` è la pastiglia gialla, la riga sotto le luci si chiama `.nota-lc1`. **Da provare da Ignazio**
+- **Da fare, nell'ordine di MB App → Report** (Ignazio 26/09: «come lo rendiamo utile per un utente che neanche apre ogni tanto l'app? … vanno guidati»): **Dashboard** (le 4 luci in cima, con scritto cosa manca: chi apre l'app lo vede per forza) → **avvisi sul telefono** (a metà mese se manca una luce, e quando LC1 è fatto; stesso meccanismo dell'avviso della sera, che diventerà «il coach della sera», MB App → Avvisi) → **«Gli ultimi 12 mesi»** con il mese segnato e «N mesi di fila» → **al leader** la lista di chi non ha LC1 e cosa gli manca, per chiamarlo (la strada del «leader che vede le cose dei suoi»)
 
 ## 45. IL TRAINING: LE CARTE A SCATOLE E LA SCALA CHE SALE (aperto il 24/09)
 
