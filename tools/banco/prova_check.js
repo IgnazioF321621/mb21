@@ -215,4 +215,50 @@ prova('Storico linee: un partner senza niente resta in elenco, tutto vuoto', () 
   assert.deepEqual([r.massimi.bbs, r.totali.bbs[11]], [1, 0]);   // massimo 1 per non dividere per zero
 });
 
+// ── LC1 (Ignazio 26/09): i primi 4 punti Core del mese
+const ev = { bbs: [{ data: '2026-10-01', creato_il: '2026-09-01T10:00:00+00:00' }],
+  wes: [{ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' }, { data: '2027-01-01', creato_il: '2026-11-20T10:00:00+00:00' }] };
+const cepSempre = [{ dal: '2026-01-01', uscito_il: null }];
+
+prova('LC1: tutte e quattro le luci accese = fatto', () => {
+  const l = C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }],
+    biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-11-01', contatto: true }], cep: cepSempre, eventi: ev });
+  assert.equal(l.nome, 'ottobre 2026');
+  assert.deepEqual(l.luci.map(x => [x.chiave, x.ok]), [['vp', true], ['bbs', true], ['wes', true], ['cep', true]]);
+  assert.equal(l.luci[0].testo, '187,50');
+  assert.equal(l.luci[1].testo, '10-2026');
+  assert.ok(l.fatto && l.accese === 4 && l.inCorso);
+  assert.deepEqual(l.mancano, []);
+});
+
+prova('LC1: sotto i 100 VP e senza biglietto WES (o solo per il compagno) = 2 su 4, con cosa manca', () => {
+  const l = C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiettivi: [{ mese: '2026-10-01', vpp_amway: 99.99 }],
+    biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-11-01', contatto: false }], cep: cepSempre, eventi: ev });
+  assert.equal(l.accese, 2);
+  assert.equal(l.fatto, false);
+  assert.deepEqual(l.mancano, ['100 VP', 'WES']);
+  assert.equal(l.luci[2].testo, 'manca 11-2026');
+});
+
+prova('LC1: fotografia a fine mese — il CEP uscito il 15 non vale a ottobre, il WES di gennaio caricato a novembre non conta a ottobre', () => {
+  const l = C.lc1({ mese: '2026-10-01', oggi: '2026-12-05', obiettivi: [{ mese: '2026-10-01', vpp_amway: 150 }],
+    biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2027-01-01', contatto: true }],
+    cep: [{ dal: '2026-01-01', uscito_il: '2026-10-15' }], eventi: ev });
+  assert.equal(l.al, '2026-10-31');
+  assert.equal(l.inCorso, false);
+  assert.equal(l.luci[2].ok, false);          // a ottobre in vendita c'era il WES di novembre
+  assert.equal(l.luci[3].ok, false);          // a fine ottobre non era più abbonato
+  assert.deepEqual(l.mancano, ['WES', 'CEP']);
+});
+
+prova('LC1: senza dati Amway o senza scheda col codice le luci dicono «non lo so», e prima di settembre 2026 non si conta', () => {
+  const l = C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiettivi: [], biglietti: null, cep: null, eventi: ev });
+  assert.deepEqual(l.luci.map(x => !!x.ignoto), [true, true, true, true]);
+  assert.equal(l.luci[0].testo, 'dati Amway non arrivati');
+  assert.equal(l.accese, 0);
+  const prima = C.lc1({ mese: '2026-08-01', oggi: '2026-10-20' });
+  assert.ok(prima.prima && !prima.fatto && prima.luci.length === 0 && prima.nome === 'agosto 2026');
+  assert.equal(C.LC1_INIZIO, '2026-09-01');
+});
+
 console.log(`\n${ok} prove superate`);
