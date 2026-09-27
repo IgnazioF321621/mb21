@@ -97,7 +97,7 @@ prova('La scelta si ricorda sul telefono, e se la memoria non risponde la pagina
 prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la griglia in fondo non c\'è più', () => {
   const h = disegna();
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
-  assert.ok(h.indexOf('id="ck-storico"') < h.indexOf('data-ckgruppo="Volume"'));
+  assert.ok(h.indexOf('id="ck-storico"') < h.indexOf('class="ck-quando"') && h.indexOf('class="ck-quando"') < h.indexOf('data-ckgruppo="Volume"'));   // «Confronta con» attaccato ai gruppi (Ignazio 26/09)
   assert.doesNotMatch(h, /class="sv"/);
 });
 
