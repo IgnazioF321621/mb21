@@ -254,4 +254,22 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   ctx.visto = () => ({ id: 'io' });
 });
 
+prova('La card «Il tuo Check» della Dashboard (Ignazio 27/09): le stesse luci del Check, una riga su dove sei, l\'invito ad aprire', () => {
+  Object.assign(ctx, { vediTutti: () => false, nomeDi: p => String(p.nome_cognome || p.nome || ''), limitato: () => false });
+  esegui(`CK.di = 'io'; CK.meseCard = null; CK.obiettivi[1].vpp_amway = 120;`);
+  let h = esegui('cardCheckHtml()');
+  assert.match(h, /<b>Il tuo Check<\/b><small>il tuo percorso · settembre<\/small>/);
+  assert.match(h, /<span class="luce vp on "><i>✓<\/i>100 VP<small>120,00<\/small><\/span>/);   // la luce del Check, uguale
+  assert.match(h, /<span class="pc-apri">Apri il Check: CORE, Pacesetter e i livelli<em>›<\/em><\/span>/);
+  assert.match(h, /<span class="pc-riga ok">✓ Leader 1° livello · CORE /);
+  esegui(`CK.obiettivi[1].vpp_amway = 40;`);
+  assert.match(esegui('cardCheckHtml()'), /<span class="pc-riga ">Leader 1° livello 3 su 4 · manca 100 VP<\/span>/);
+  esegui(`CK.obiettivi[1].vpp_amway = 120; CK.di = 'altro';`);
+  assert.match(esegui('cardCheckHtml()'), /<span class="pc-riga attesa">Leggo il percorso…<\/span>/);   // i dati di un'altra persona: si aspetta
+  ctx.visto = () => ({ id: 'isa', nome: 'Isabella Sammito' });
+  assert.match(esegui('cardCheckHtml()'), /<b>Il Check di Isabella<\/b><small>il suo percorso · settembre<\/small>/);
+  ctx.visto = () => ({ id: 'io' });
+  esegui(`CK.di = 'io';`);
+});
+
 console.log(`\n${ok} prove superate`);
