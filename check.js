@@ -275,7 +275,9 @@
     if (!m.abitudini[0]) out.push({ cosa: pm === 1 ? 'un Piano Marketing in più' : `${pm} Piani Marketing in più`, peso: pm / m.s1.obiettivo });
     if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5 });
     if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo });
-    if (!m.abitudini[3]) out.push({ cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n });
+    if (!m.abitudini[3]) out.push(m.s4.aTotale   // settembre 2026: conta il totale delle tracce (core.js)
+      ? { cosa: `una traccia ogni giorno (${m.s4.totale} tracce su ${n})`, peso: (n - m.s4.totale) / n }
+      : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n });
     if (!m.abitudini[4]) out.push({ cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n });
     if (!m.abitudini[5]) {
       const pezzi = [];
@@ -302,7 +304,7 @@
       { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? FATTO : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
       { testo: 'Consumo personale', fatto: f[1], stato: f[1] ? FATTO : vp },
       { testo: '10 clienti', fatto: f[2], stato: f[2] ? FATTO : `mancano ${m.s3.obiettivo - m.s3.quanti}` },
-      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
+      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : m.s4.aTotale ? `${m.s4.totale} tracce su ${n}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },
       { testo: 'Squadra', fatto: f[6], stato: f[6] ? FATTO : [!m.s7.counseling ? 'counseling' : '', m.s7.edificazione !== true ? 'edificazione' : '', m.s7.no_crossline !== true ? 'no-crossline' : ''].filter(Boolean).join(' · ') },

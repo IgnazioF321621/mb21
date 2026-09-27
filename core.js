@@ -4,6 +4,7 @@
 // Prove in tools/banco/prova_core.js. Il disegno è in pagina-core.js.
 (function (radice) {
   const OBIETTIVI = { pm: 8, clienti: 10, pagine: 10, cd: 1 };
+  const MESE_A_TOTALE = '2026-09';   // tracce: il mese del passaggio all'app nuova, contato sul totale (vedi s4)
   const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
   const NON_AVVENUTI = ['No Show', 'Rimandato'];   // un PM con questo esito non è stato presentato (stessa regola di azioni_conti)
@@ -102,6 +103,11 @@
       return { giorno: i + 1, quante, titolo: testo, fatto: quante >= OBIETTIVI.cd };
     }) };
     s4.quanti = s4.giorni.filter(g => g.fatto).length;
+    // Solo settembre 2026 (Ignazio 27/09: «solo ed esclusivamente per questo mese»): col passaggio all'app nuova alcuni giorni
+    // sono cumulativi e altri vuoti, quindi vale il totale delle tracce: se è almeno uguale ai giorni del mese, è fatta. Per tutti.
+    s4.totale = s4.giorni.reduce((t, g) => t + g.quante, 0);
+    s4.aTotale = mese === MESE_A_TOTALE;
+    s4.fatta = s4.aTotale ? s4.totale >= n : s4.quanti >= n;
 
     // 5 · Leggere 10 pagine al giorno: libro in corso, un cerchietto per giorno, punti su cui concentrarsi (a mano)
     const conLibro = check.filter(c => c.libro && nelMese(c.data, mese)).sort((x, y) => (x.data < y.data ? 1 : -1));
@@ -142,12 +148,12 @@
     const ob = { vpp: o.vpp, vpg: o.vpg, sponsor_personali: o.sponsor_personali, sponsor_gruppo: o.sponsor_gruppo, cep: o.cep, bbs: o.bbs, wes: o.wes };
 
     // 7 è fatta solo con tutte e tre (Ignazio 22/09): counseling, edificazione e no-crossline
-    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.quanti >= n, s5.quanti >= n, s6.open >= s6.valide && s6.bbs && s6.wes,
+    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.fatta, s5.quanti >= n, s6.open >= s6.valide && s6.bbs && s6.wes,
       !!s7.counseling && s7.edificazione === true && s7.no_crossline === true];
     return { mese, giorni: n, s1, s2, s3, s4, s5, s6, s7, obiettivi: ob, note: d.note || '', fatte: abitudini.filter(Boolean).length, abitudini };
   }
 
-  const api = { OBIETTIVI, RIGHE, NON_AVVENUTI, giorniDelMese, giornoRoma, settimaneDelMese, prossimoEvento, modulo };
+  const api = { OBIETTIVI, MESE_A_TOTALE, RIGHE, NON_AVVENUTI, giorniDelMese, giornoRoma, settimaneDelMese, prossimoEvento, modulo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Core = api;
 })(this);
