@@ -68,15 +68,15 @@ function moduloCoreHtml(m) {
 
   // 4 · i giorni in verticale come il modulo N21 e il PDF: 1-15 a sinistra, 16-31 a destra (Ignazio 24/09)
   const s4 = sez(4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', `
-    <div class="cm-conto">${m.s4.aTotale ? `<b>${m.s4.totale}</b>/${m.giorni} tracce in tutto` : `<b>${m.s4.quanti}</b>/${m.giorni} giorni`}</div>
+    <div class="cm-conto">${m.s4.aTotale ? `<b>${m.s4.totale}</b>/${m.s4.obiettivo} tracce${m.s4.finora ? ' finora' : ' in tutto'}` : `<b>${m.s4.quanti}</b>/${m.giorni} giorni`}</div>
     <div class="cm-giorni">${[m.s4.giorni.slice(0, 15), m.s4.giorni.slice(15)].map(col => `<div>${col.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>`).join('')}</div>
-    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.${m.s4.aTotale ? ' Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno una traccia per giorno del mese.' : ''}</div>`, m.s4.fatta);
+    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.${m.s4.aTotale ? ' Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno una traccia per ogni giorno passato del mese.' : ''}</div>`, m.s4.fatta);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>
-    <div class="cm-conto">${m.s5.aTotale ? `<b>${m.s5.pagine}</b>/${m.s5.obiettivo} pagine in tutto` : `<b>${m.s5.quanti}</b>/${m.giorni} giorni · <b>${m.s5.pagine}</b> pagine`}</div>
+    <div class="cm-conto">${m.s5.aTotale ? `<b>${m.s5.pagine}</b>/${m.s5.obiettivo} pagine${m.s5.finora ? ' finora' : ' in tutto'}` : `<b>${m.s5.quanti}</b>/${m.giorni} giorni · <b>${m.s5.pagine}</b> pagine`}</div>
     <div class="cm-cerchi">${m.s5.giorni.map(g => `<i class="${g.fatto ? 'pieno' : g.qualcosa ? 'mezzo' : ''}" title="${g.pagine} pagine">${g.giorno}</i>`).join('')}</div>
-    <div class="campo"><label>Punti sui quali mi concentrerò</label><textarea id="cm-punti" rows="2" maxlength="300">${esc(m.s5.punti)}</textarea></div>${m.s5.aTotale ? '<div class="vn-aiuto">Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno 10 pagine per giorno del mese.</div>' : ''}`, m.s5.fatta);
+    <div class="campo"><label>Punti sui quali mi concentrerò</label><textarea id="cm-punti" rows="2" maxlength="300">${esc(m.s5.punti)}</textarea></div>${m.s5.aTotale ? '<div class="vn-aiuto">Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno 10 pagine per ogni giorno passato del mese.</div>' : ''}`, m.s5.fatta);
 
   const s6 = sez(6, 'Frequentare tutti gli incontri di Network 21', `
     <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => w.open
