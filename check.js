@@ -102,9 +102,9 @@
 
   // Tutte le voci del periodo p. Periodo in corso: confronto a pari giorni + riga col periodo prima intero (decisione B).
   // VPP e VPG hanno un numero al mese: nel periodo in corso niente pari giorni, solo il periodo prima intero.
-  // `indietro`: con quanti periodi fa confrontare (1 = quello appena prima, 2 = due fa). Ignazio 20/09.
+  // `indietro`: con quanti periodi fa confrontare (1 = quello appena prima, 2 = due fa, 3 = tre fa: col Mese copre il quadrimestre da WES a WES, Ignazio 27/09). Ignazio 20/09.
   function calcola({ giorni, obiettivi, dateWes, periodo: p, oggi, segniAl, indietro }) {
-    const passi = Math.max(1, Math.min(2, Number(indietro) || 1));
+    const passi = Math.max(1, Math.min(3, Number(indietro) || 1));
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const fine = ultimoGiorno(p);
     const inCorso = !fine || fine >= oggi;
@@ -303,7 +303,8 @@
     ];
   }
   const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09)
-  const VERBI_LC1 = { vp: 'arriva a 100 VP', bbs: 'compra il biglietto BBS', wes: 'compra il biglietto WES', cep: 'abbonati al CEP' };
+  // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
+  const VERBI_LC1 = { vp: 'ti consiglio di arrivare a 100 VP', bbs: 'ti consiglio il biglietto BBS', wes: 'ti consiglio il biglietto WES', cep: "ti consiglio l'abbonamento CEP" };
   function percorso({ lc1: l, modulo: m }) {
     const gradini = [];
     gradini.push({ chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
