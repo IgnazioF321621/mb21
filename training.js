@@ -269,7 +269,7 @@
     'Sistema': ['sistema', 'sistema_gruppo'], 'Duplicazione': ['duplicazione'], 'Obiettivi': ['obiettivi_mese', 'core'],
     'Decisione': ['persistere', 'abitudini'], 'Costanza': ['persistere', 'abitudini'], 'Tempo': ['abitudini', 'obiettivi_mese'],
     'Soldi': ['verso_21'], 'Paure': ['paure'], 'Critiche': ['paure'], 'Credere': ['credere'], 'Entusiasmo': ['credere'],
-    'Famiglia': ['dare_seguito', 'credere'], 'Leadership': ['leader', 'guidare'], 'Relazioni': ['guidare', 'aiutare_partner'], 'Libertà': ['credere', 'visione'],
+    'Famiglia': ['dare_seguito', 'credere'], 'Leadership': ['leader', 'guidare'], 'Relazioni': ['guidare', 'aiutare_partner'], 'Libertà': ['credere', 'visione'], 'Volume affari': ['clienti', 'segni_vitali'],
   };
   const MENTALITA_PER_FASE = { 1: ['credere', 'primi_passi'], 2: ['credere'], 3: ['paure'], 4: ['abitudini'], studio: ['persistere', 'guidare'], avanzato: ['visione'] };
   function percorsiDaMb21(appunto) {
