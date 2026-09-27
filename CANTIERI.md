@@ -10,7 +10,7 @@ Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chius
 
 # Cantieri aperti
 
-## 46. LEADER 1° LIVELLO (LC1): I PRIMI 4 PUNTI CORE DEL MESE (aperto il 26/09; MB App → Report)
+## 46. LEADER 1° LIVELLO (LC1) E IL PERCORSO CORE NEL CHECK (aperto il 26/09; dal 27/09 MB App → **Check**, prima Report)
 *Nato dal cantiere 36: l'unico segno di Glide non portato in v4 era «LC1», sempre «sì» in una tabella abbandonata. Ignazio 26/09: «non è un termine o risultato ufficiale né di Network 21 né di Amway, ma era un nostro raggiungimento, chiamiamolo di squadra: i primi 4 punti di Core, almeno 100 punti, il ticket del BBS, il ticket del WES, l'abbonamento CEP. Dava una direzione alle persone; l'idea si è un po' abbandonata. Deve essere propedeutica a diventare Leaders Club: i punti Core vanno molto attenzionati in tutto il percorso e, di conseguenza, nell'app».*
 
 - **Perché in Glide è morta e qui no**: era una spunta a mano, ogni mese, in una tabella a parte (8 righe, settembre-novembre 2025). In MB21 i quattro dati ci sono già (VP del mese, biglietti e CEP della propria scheda): l'app lo calcola da sola, nessuno deve ricordarsi di segnarlo
