@@ -356,19 +356,36 @@ prova('I livelli (Ignazio 27/09, Manuale pag. 31): Leaders Club, Executive, Arge
   assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '0 su 5', false], ['Executive Leader Club', '0 su 6', false], ['Produttore Argento', '0 su 1', false]]);
   assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Leader Core', 'nel percorso sopra'], ['9% di bonus', '6%'], ['5 prime linee attive', '4 su 5'],
     ['5 iscritti al CEP nel gruppo', '3 su 5'], ['3 linee al 3%', '1 su 3']]);
-  assert.deepEqual(v.righe[0].consiglio, { cosa: 'una prima linea attiva in più', peso: 0.2 });   // la più vicina
-  assert.equal(v.righe[1].consiglio, null);   // un consiglio solo: il prossimo livello
-  assert.equal(v.righe[2].consiglio, null);
+  assert.equal(v.righe[0].passi[0].testo, 'Una prima linea attiva in più (4 su 5)');   // i nomi e i VP: nella prova dopo
+  assert.deepEqual([v.righe[1].passi, v.righe[2].passi], [[], []]);   // i passi solo per il prossimo livello
   assert.equal(v.righe[1].voci[5].testo, 'di cui 2 a Leaders Club');   // Executive: non si sa ancora, resta da segnare
   assert.equal(v.righe[1].voci[5].stato, 'da segnare');
   assert.equal(v.doveSei, null);
   // Leaders Club fatto → il consiglio passa all'Executive; l'Argento conta solo il 21%
   const lc = C.livelli({ core: true, bonus: 12, linee: [...Array(5).fill({ vpp: 50, bonus: 3 })], cep: 6 });
-  assert.deepEqual([lc.righe[0].fatto, lc.doveSei, lc.righe[0].consiglio, !!lc.righe[1].consiglio], [true, 'Leaders Club', null, true]);
+  assert.deepEqual([lc.righe[0].fatto, lc.doveSei, lc.righe[0].passi.length, lc.righe[1].passi.length > 0], [true, 'Leaders Club', 0, true]);
   assert.equal(C.livelli({ core: false, bonus: 21, linee: [], cep: 0 }).righe[2].fatto, true);
   // senza il file Amway del mese: niente numeri inventati
   const nulla = C.livelli({ core: false, bonus: null, linee: [], cep: null });
-  assert.deepEqual([nulla.noto, nulla.righe[0].voci[1].stato, nulla.righe[0].voci[3].stato, nulla.righe[0].consiglio], [false, 'dati Amway non arrivati', 'non lo so', null]);
+  assert.deepEqual([nulla.noto, nulla.righe[0].voci[1].stato, nulla.righe[0].voci[3].stato, nulla.righe[0].passi, nulla.righe[0].info], [false, 'dati Amway non arrivati', 'non lo so', [], null]);
+});
+
+prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi nomi; «Non ora» passa alla linea dopo; il 9% è una riga', () => {
+  const linee = [{ partner_id: 'G', nome: 'Simone Giavatto', vpp: 107.38, bonus: 3, manca: 89.06 }, { partner_id: 'S', nome: 'Isabella Sammito', vpp: 47.46, bonus: 0, manca: 152.54 },
+    { partner_id: 'K', nome: 'Luca Caccamo', vpp: 78.27, bonus: 0, manca: 121.73 }, { partner_id: 'A', nome: 'Alberto Cilia', vpp: 116.36, bonus: 0, manca: 83.64 },
+    { partner_id: 'V', nome: 'Vanessa Migliore', vpp: 0, bonus: 0, manca: 200 }];
+  const r = C.livelli({ core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: [] }).righe[0];
+  assert.deepEqual(r.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', 'Aiutare Alberto Cilia: mancano 84 VP al 3%']);
+  assert.equal(r.passi[1].partner_id, 'A');
+  assert.equal(r.info, 'Al 9% mancano 194 VP: arrivano con i passi sopra');
+  const r2 = C.livelli({ core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: ['A'] }).righe[0];
+  assert.equal(r2.passi[1].testo, 'Aiutare Luca Caccamo: mancano 122 VP al 3%');
+  assert.deepEqual(r2.nonOra, [{ partner_id: 'A', nome: 'Alberto Cilia' }]);
+  // tutti «Non ora»: resta il passo che c'è (il CEP, se manca), niente nomi
+  const r3 = C.livelli({ core: false, bonus: 6, linee, cep: 3, mancaMio: 193.86, nonOra: ['A', 'K', 'S'] }).righe[0];
+  assert.deepEqual(r3.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', '2 iscritti al CEP in più nel gruppo (3 su 5)']);
+  // il 9% non è il prossimo scalino (3% → 9%): niente VP inventati
+  assert.equal(C.livelli({ core: false, bonus: 3, linee, cep: 7, mancaMio: 50 }).righe[0].info, 'Bonus al 3%: il 9% arriva con la crescita delle linee');
 });
 
 console.log(`\n${ok} prove superate`);

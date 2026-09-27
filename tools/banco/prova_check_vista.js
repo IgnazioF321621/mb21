@@ -8,6 +8,7 @@ const C = require('../../check.js');
 const R = require('../../report.js');
 const L = require('../../lista.js');
 const K = require('../../core.js');
+const M = require('../../mappa.js');
 
 let ok = 0;
 function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
@@ -28,7 +29,7 @@ const memoria = { dati: {}, rotta: false,
 
 const app = { innerHTML: '' };
 const ctx = {
-  MB21Check: C, MB21Report: R, MB21Lista: L, MB21Core: K,
+  MB21Check: C, MB21Report: R, MB21Lista: L, MB21Core: K, MB21Mappa: M,
   visto: () => ({ id: 'io' }), ST: { utente: { id: 'io' } },
   MB21Coda: { oggiRoma: () => '2026-09-15' },
   localStorage: memoria, app,
@@ -218,17 +219,31 @@ prova('Pacesetter, terza riga (Ignazio 26/09): 2 sponsor personali scritti nel C
 prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Amway del mese della card; senza codice Amway non ci sono', () => {
   assert.doesNotMatch(disegna(), /livelli-t/);   // nessun codice Amway (visto senza partner_id)
   ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
-  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1' }, { partner_id: 'B', sponsor_id: 'P1' }, { partner_id: 'C', sponsor_id: 'X' }],
-    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 }, { partner_id: 'P1', mese: 202608, vpp: 1, bonus: 21 }] };
+  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'GIAVATTO, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'CILIA, ALBERTO' }, { partner_id: 'D', sponsor_id: 'P1', nome: 'Caccamo, Luca' }, { partner_id: 'C', sponsor_id: 'X', nome: 'ALTRO, UNO' }],
+    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6, al_livello_successivo: 193.86 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 },
+      { partner_id: 'B', mese: 202609, vpp: 116.36, bonus: 0, al_livello_successivo: 83.64 }, { partner_id: 'D', mese: 202609, vpp: 78.27, bonus: 0, al_livello_successivo: 121.73 },
+      { partner_id: 'P1', mese: 202608, vpp: 1, bonus: 21 }] };
+    CK.nonOra = [];
     CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('lc');`);
   const h = disegna();
   const card = h.slice(h.indexOf('class="livelli-t"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
   assert.match(card, /^class="livelli-t">I livelli<\/div>/);
   assert.match(card, /data-gradino="lc" aria-expanded="true"><b>Leaders Club<\/b>/);
   assert.match(card, /<span>9% di bonus<\/span><span>6%<\/span>/);
-  assert.match(card, /<span>5 prime linee attive<\/span><span>1 su 5<\/span>/);   // B senza volumi = ferma; C è di un altro
+  assert.match(card, /<span>5 prime linee attive<\/span><span>3 su 5<\/span>/);   // C è di un altro
   assert.match(card, /<span>5 iscritti al CEP nel gruppo<\/span><span>3 su 5<\/span>/);
-  assert.match(card, /<div class="prossimo">Ti consiglio di arrivare al 9%<\/div>/);   // 6 su 9 è più vicino di 3 CEP su 5
+  // «I prossimi passi» (27/09): 2, coi nomi, prima le cause; il 9% è una riga sotto
+  assert.match(card, /<b>I prossimi passi verso Leaders Club<\/b>/);
+  assert.match(card, /<div class="passo"><span>1\. 2 prime linee attive in più \(3 su 5\)<\/span><\/div>/);
+  assert.match(card, /<div class="passo"><span>2\. Aiutare Alberto Cilia: mancano 84 VP al 3%<\/span><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);
+  assert.doesNotMatch(card, /iscritti al CEP in più/);   // al massimo 2 passi
+  assert.match(card, /<small>Al 9% mancano 194 VP: arrivano con i passi sopra<\/small>/);
+  // «Non ora» su Cilia: il passo passa a Caccamo, e Cilia si può riprendere
+  esegui(`CK.nonOra = [{ partner_id: 'B', mese: 202609 }, { partner_id: 'D', mese: 202608 }]`);   // quello di agosto non conta
+  const h2 = disegna();
+  assert.match(h2, /2\. Aiutare Luca Caccamo: mancano 122 VP al 3%/);
+  assert.match(h2, /<small class="nonora">Non ora, questo mese: <button data-riprendi="B" data-mese="202609">Alberto Cilia ↺<\/button><\/small>/);
+  esegui(`CK.nonOra = []`);
   assert.match(card, /data-gradino="elc" aria-expanded="false"><b>Executive Leader Club<small>Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%<\/small>/);
   assert.match(card, /data-gradino="arg" aria-expanded="false"><b>Produttore Argento<small>21% di bonus nel mese<\/small><\/b><span><span class="st">0 su 1/);   // il 21% di agosto non conta
   esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear();`);
