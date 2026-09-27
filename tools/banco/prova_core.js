@@ -125,4 +125,16 @@ prova('OPEN: la settimana in cui nella tua città non c\'era si segna «non c\'e
   assert.equal(m.s6.settimane[0].senza, false); assert.equal(m.s6.valide, 5);
 });
 
+prova('Tracce, solo settembre 2026 (Ignazio 27/09): conta il totale, giorni cumulativi e giorni vuoti; da ottobre di nuovo giorno per giorno', () => {
+  const check = [{ data: '2026-09-03', tracce: 12 }, { data: '2026-09-10', tracce: 10 }, { data: '2026-09-20', tracce: 7 }];
+  const tracce = [{ giorno: '2026-09-21', titolo: 'una' }];
+  const sett = C.modulo({ mese: '2026-09', check, tracce });
+  assert.deepEqual([sett.s4.totale, sett.s4.quanti, sett.s4.aTotale, sett.s4.fatta, sett.abitudini[3]], [30, 4, true, true, true]);
+  const poche = C.modulo({ mese: '2026-09', check: check.slice(0, 2) });
+  assert.deepEqual([poche.s4.totale, poche.s4.fatta], [22, false]);
+  const ott = C.modulo({ mese: '2026-10', check: check.map(c => ({ ...c, data: c.data.replace('-09-', '-10-') })), tracce: [] });
+  assert.deepEqual([ott.s4.totale, ott.s4.aTotale, ott.s4.fatta], [29, false, false]);
+  assert.equal(C.MESE_A_TOTALE, '2026-09');
+});
+
 console.log(`\n${ok} prove superate`);

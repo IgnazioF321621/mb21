@@ -68,9 +68,9 @@ function moduloCoreHtml(m) {
 
   // 4 · i giorni in verticale come il modulo N21 e il PDF: 1-15 a sinistra, 16-31 a destra (Ignazio 24/09)
   const s4 = sez(4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', `
-    <div class="cm-conto"><b>${m.s4.quanti}</b>/${m.giorni} giorni</div>
+    <div class="cm-conto">${m.s4.aTotale ? `<b>${m.s4.totale}</b>/${m.giorni} tracce in tutto` : `<b>${m.s4.quanti}</b>/${m.giorni} giorni`}</div>
     <div class="cm-giorni">${[m.s4.giorni.slice(0, 15), m.s4.giorni.slice(15)].map(col => `<div>${col.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>`).join('')}</div>
-    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.</div>`, m.s4.quanti >= m.giorni);
+    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.${m.s4.aTotale ? ' Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno una traccia per giorno del mese.' : ''}</div>`, m.s4.fatta);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>
