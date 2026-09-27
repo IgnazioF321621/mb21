@@ -54,7 +54,7 @@
   // check: righe di check_giorno del mese · tracce: [{ giorno, titolo }] del percorso ascoltate · biglietti: [{ tipo, evento, contatto }] della propria scheda
   // obiettivi: la riga di obiettivi_mese (o null) · dati: i campi a mano (core_mese.dati)
   // date: { bbs, wes } le righe delle tabelle bbs e wes, oggi: 'AAAA-MM-GG' (per il prossimo BBS e WES)
-  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {}, date = {}, oggi = null }) {
+  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {}, date = {}, oggi = null, spazi = [] }) {
     const d = dati || {};
     const n = giorniDelMese(mese);
     const perGiorno = new Map(check.map(c => [c.data, c]));
@@ -130,10 +130,12 @@
     // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda).
     // Gli OPEN cambiano da città a città (Ignazio 23/09): niente calendario; una settimana in cui nella propria città l'OPEN
     // non c'era si segna «non c'era» nel modulo (`dati.senza_open`: i lunedì di quelle settimane) e non conta. Se il Check
-    // dice che all'OPEN ci sei stato, vale quello.
+    // dice che all'OPEN ci sei stato, vale quello. Dal 27/09 anche MB Plan: una SdS/OPEN («Prepara la settimana», tabella
+    // `spazi`) già passata in quella settimana vuol dire che l'OPEN c'era (Ignazio: «sappiamo se l'OPEN si fa oppure no»).
     const senzaOpen = new Set(d.senza_open || []);
+    const sdsPassata = w => spazi.some(s => s.tipo === 'SdS/OPEN' && giornoRoma(s.inizio) >= w.da && giornoRoma(s.inizio) <= w.a && (!oggi || giornoRoma(s.inizio) <= oggi));
     const s6 = { settimane: settimaneDelMese(mese).map(w => {
-        const open = check.some(c => c.open && c.data >= w.da && c.data <= w.a);
+        const open = check.some(c => c.open && c.data >= w.da && c.data <= w.a) || sdsPassata(w);
         return { ...w, open, senza: !open && senzaOpen.has(w.da) };
       }),
       bbs: biglietti.some(b => b.tipo === 'BBS' && b.contatto), wes: biglietti.some(b => b.tipo === 'WES' && b.contatto),
