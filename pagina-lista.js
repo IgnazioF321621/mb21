@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', lettera: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', lettera: null, esporta: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 async function leggiLista() {
@@ -135,13 +135,19 @@ function disegnaElenco() {
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
   const ordina = `<div class="ls-ordina"><span>${LS.lettera ? `<button id="via-lettera" aria-label="Togli la lettera"><b>${esc(LS.lettera)}</b>${ic('chiudi')}</button> · ` : ''}${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
-    <button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></div>`;
+    <span>${LS.esporta ? '' : `<button id="esporta">${ic('file')} Esporta</button> · `}<button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></span></div>`;
   elenco.innerHTML = trovati.length || LS.lettera
     ? ordina + (trovati.length ? '' : '<div class="vuoto">Nessun nome con questa lettera.</div>') + trovati.slice(0, LS.mostrate).map(cardNome).join('')
     : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}</div>`;
   elenco.querySelectorAll('.cn').forEach(c => {
-    c.onclick = e => { if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id); };
+    c.onclick = e => {
+      if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
+      if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id);
+    };
   });
+  const esportaB = document.getElementById('esporta');
+  if (esportaB) esportaB.onclick = () => { LS.esporta = { modo: 'tutti', eccezioni: new Set() }; disegnaElenco(); };
+  barraEsporta(trovati);
   elenco.querySelectorAll('.cn .menu').forEach(b => b.onclick = () => menuCard(b.dataset.id));
   const ordinaB = document.getElementById('ordina');
   if (ordinaB) ordinaB.onclick = async () => {
@@ -165,6 +171,38 @@ function disegnaElenco() {
     }, { rootMargin: '400px' });
     LS.osservatore.observe(fondo);
   }
+}
+
+// ── Esporta (MB Project → Lista Nomi, Ignazio 25/09): un file Excel nel modello dell'altro programma con i nomi che si vedono
+// (pillola, Cerca, lettera, ordine) MA scelti uno a uno: partono tutti spuntati, si toglie chi non serve; «Nessuno» per partire da zero.
+// LS.esporta = { modo: 'tutti' | 'nessuno', eccezioni: Set di id } → scelto = (modo tutti) diverso da (è un'eccezione)
+const sceltoEsporta = id => !!LS.esporta && ((LS.esporta.modo === 'tutti') !== LS.esporta.eccezioni.has(id));
+function spuntaEsporta(id) { const e = LS.esporta.eccezioni; if (e.has(id)) e.delete(id); else e.add(id); }
+
+function barraEsporta(trovati) {
+  let barra = document.getElementById('ls-esporta');
+  if (!LS.esporta) { if (barra) barra.remove(); return; }
+  const scelti = trovati.filter(r => sceltoEsporta(r.id));
+  if (!barra) { barra = document.createElement('div'); barra.id = 'ls-esporta'; barra.className = 'ls-esporta'; document.getElementById('elenco').after(barra); }
+  const n = scelti.length.toLocaleString('it-IT');
+  barra.innerHTML = `<div class="ls-esporta-riga"><button class="link" id="esp-tutti">Tutti</button><button class="link" id="esp-nessuno">Nessuno</button><button class="link" id="esp-annulla">Annulla</button></div>
+    <button class="primario" id="esp-scarica" ${scelti.length ? '' : 'disabled'}>${scelti.length ? `Scarica ${n} ${scelti.length === 1 ? 'nome' : 'nomi'}` : 'Scegli almeno un nome'}</button>`;
+  barra.querySelector('#esp-tutti').onclick = () => { LS.esporta = { modo: 'tutti', eccezioni: new Set() }; disegnaElenco(); };
+  barra.querySelector('#esp-nessuno').onclick = () => { LS.esporta = { modo: 'nessuno', eccezioni: new Set() }; disegnaElenco(); };
+  barra.querySelector('#esp-annulla').onclick = () => { LS.esporta = null; disegnaElenco(); };
+  barra.querySelector('#esp-scarica').onclick = () => scaricaEsporta(scelti);
+}
+
+// Il file si prepara sul telefono e si «scarica»: su iPhone si apre il foglio per salvarlo in File o passarlo a un'altra app
+function scaricaEsporta(scelti) {
+  const etichetta = [MB21Lista.FILTRI[LS.filtro].etichetta, LS.lettera, LS.testo.trim()].filter(Boolean).join(' ');
+  const bytes = MB21Esporta.xlsxBytes(MB21Esporta.righeEsporta(scelti));
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: MB21Esporta.nomeFile(etichetta, MB21Coda.oggiRoma()) });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  mostraToast(`File pronto con ${scelti.length.toLocaleString('it-IT')} nomi`);
+  LS.esporta = null; disegnaElenco();
 }
 
 // BBS · WES · CEP accanto al nome, stessa regola sulla card e nella testata della scheda (Ignazio 18/09: al Cliente in alto
@@ -198,8 +236,8 @@ function cardNome(r) {
   // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
   const segni = nuovoBadge(r) + targheCard(r);
   return `
-    <div class="cn ${classeCat(r.categoria)}" data-id="${esc(r.id)}">
-      <span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>
+    <div class="cn ${classeCat(r.categoria)} ${LS.esporta && sceltoEsporta(r.id) ? 'spuntata' : ''}" data-id="${esc(r.id)}">
+      ${LS.esporta ? `<span class="cn-spunta" aria-hidden="true">${ic('fatto')}</span>` : `<span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>`}
       <div class="dentro">
         <div class="nome">${esc(r.nome)}</div>
         <div class="frase">${frase.futuro ? ic('agenda') + ' ' : ''}${esc(frase.testo)}</div>
