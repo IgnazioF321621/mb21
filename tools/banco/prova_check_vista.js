@@ -118,7 +118,8 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
   assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
-  assert.match(card, /<div class="prossimo ">Prossimo passo: ti consiglio il biglietto WES → Leader 1° livello<\/div>/);
+  assert.match(card, /<\/div>\s*<div class="prossimo">Ti consiglio il biglietto WES<\/div>\s*<button class="sez core/);   // il consiglio del 1° livello, sotto le luci (Ignazio 27/09)
+  assert.equal((card.match(/class="prossimo"/g) || []).length, 1);   // Core chiuso: il suo consiglio non si vede
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
   h = disegna();
   assert.match(h, /class="ck-lc1 fatto"/);
@@ -137,7 +138,9 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.match(h, /data-gradino="core" aria-expanded="true"/);
   assert.match(h, /<span class="apri">⌄<\/span>/);
   assert.doesNotMatch(h, /tocca per vedere/);   // da aperta la scritta sparisce
-  const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo'));
+  const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo', h.indexOf('class="voci"')));
+  // da aperto, sotto le 7 abitudini, il consiglio del Core (senza il WES, che consiglia già il 1° livello)
+  assert.match(h, /<\/div><\/div><div class="prossimo">Ti consiglio il counseling, l'edificazione e il no-crossline<\/div>/);
   assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 su 15 giorni finora<\/span><\/div>/);   // i giorni passati, non tutto il mese (Ignazio 27/09)
@@ -167,6 +170,19 @@ prova('Confronta con: col Mese tre bottoni (fino a «tre mesi fa»), con WES e A
   esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
   assert.equal((quando(disegna()).match(/data-ckindietro/g) || []).length, 2);
   esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+});
+
+prova('Guardando un altro partner (Ignazio 27/09): «Il percorso di Isabella» e «Da consigliare a Isabella: …», testo neutro', () => {
+  ctx.visto = () => ({ id: 'isa', nome: 'Isabella Sammito' });
+  assert.match(disegna(), /<div class="prossimo fatto">Tutti i gradini di questo mese sono fatti<\/div>/);   // non «tuoi»
+  esegui(`CK.obiettivi[1].vpp_amway = 47.46`);   // come Isabella il 27/09: manca solo 100 VP
+  const h = disegna();
+  esegui(`CK.obiettivi[1].vpp_amway = 120`);
+  assert.match(h, /<h2 class="ck-sezione">Il percorso di Isabella<\/h2>/);
+  assert.match(h, /<div class="prossimo">Da consigliare a Isabella: arrivare a 100 VP<\/div>/);
+  assert.doesNotMatch(h, /Il tuo percorso|Ti consiglio/);
+  ctx.visto = () => ({ id: 'io' });
+  assert.match(disegna(), /<h2 class="ck-sezione">Il tuo percorso<\/h2>/);
 });
 
 prova('La card ha il suo mese con ‹ ›; Mese · WES · Anno e le frecce del periodo non la cambiano (Ignazio 27/09)', () => {
