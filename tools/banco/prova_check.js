@@ -407,7 +407,12 @@ prova('I passi (Ignazio 27/09): nell\'ordine di Ignazio — prime linee, iscritt
     { partner_id: 'S', nome: 'Isabella Sammito', vpp: 47, bonus: 0, manca: 152.54 }, { partner_id: 'K', nome: 'Luca Caccamo', vpp: 78, bonus: 0, manca: 121.73 }];
   const dati = { core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: [], planner: 0, iscritti: 2, totale: 32, bbs: 3, wes: 12, mesi21: 0 };
   const lc = C.livelli(dati).righe[0];
-  assert.deepEqual(lc.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', '3 iscritti in più nel gruppo questo mese (2 su 5)']);
+  // un posto fisso ciascuno (27/09): le persone nuove, poi una persona da aiutare col nome
+  assert.deepEqual(lc.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', 'Aiutare Alberto Cilia: mancano 84 VP al 3%']);
+  // Cilia e Caccamo «Non ora»: il secondo posto passa a Isabella, non sparisce
+  assert.equal(C.livelli({ ...dati, nonOra: ['A', 'K'] }).righe[0].passi[1].testo, 'Aiutare Isabella Sammito: mancano 153 VP al 3%');
+  // prime linee a posto: il primo posto va agli iscritti del mese
+  assert.equal(C.livelli({ ...dati, linee: [...linee, { partner_id: 'Z', nome: 'Z', vpp: 10, bonus: 0 }] }).righe[0].passi[0].testo, '3 iscritti in più nel gruppo questo mese (2 su 5)');
   const tutti = C.livelli({ ...dati, linee: [...linee, { partner_id: 'Z', nome: 'Z', vpp: 10, bonus: 0 }], iscritti: 5 }).righe[0];
   assert.deepEqual(tutti.passi.map(p => p.vai), ['scheda', 'agenda']);   // Cilia (linee riceventi bonus), poi «Un 15 Planner in più»
   assert.match(tutti.passi[1].testo, /^Un 15 Planner in più nel gruppo: 15 Piani Marketing nel mese \(0 su 1\)$/);

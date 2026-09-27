@@ -453,7 +453,13 @@
         const m = manca('cep');
         passi.push({ testo: `${m === 1 ? 'Un iscritto al CEP in più' : `${m} iscritti al CEP in più`} nel gruppo (${quanti.cep} su ${serve('cep')})`, vai: 'mappa' });
       }
-      r.passi = passi.slice(0, PASSI);
+      // un posto fisso ciascuno (Ignazio 27/09: con Cilia e Caccamo «Non ora», Isabella spariva dietro prime linee e iscritti):
+      // 1° le persone nuove (la prima tra prime linee e iscritti), 2° una persona da aiutare col nome; se una delle due non c'è,
+      // il posto va alla cosa dopo nell'ordine
+      const nuove = passi.find(x => x.vai === 'lista'), aiuto = passi.find(x => x.vai === 'scheda');
+      const scelti = [nuove, aiuto].filter(Boolean);
+      for (const x of passi) if (scelti.length < PASSI && !scelti.includes(x)) scelti.push(x);
+      r.passi = passi.filter(x => scelti.includes(x)).slice(0, PASSI);
       const obiettivo = L.sv.bonus;
       if (P.mesi21 && mesi21 != null && (!noto || Number(bonus) >= obiettivo)) r.info = `Mesi di fila al 21% da settembre: ${mesi21} su ${P.mesi21}`;
       else if (noto && obiettivo && Number(bonus) < obiettivo) r.info = scalino(bonus) === obiettivo && mancaMio != null

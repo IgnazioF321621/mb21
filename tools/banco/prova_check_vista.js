@@ -237,8 +237,8 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   assert.doesNotMatch(card, /Per essere|I Segni Vitali ·/);
   // «I prossimi passi» (27/09): 2, coi nomi, prima le cause; il 9% è una riga sotto
   assert.match(card, /<b>I prossimi passi verso Leaders Club<\/b>/);
-  assert.match(card, /<div class="passo"><button class="vai" data-vai="lista">1\. 2 prime linee attive in più \(3 su 5\) ›<\/button><\/div>/);
-  assert.match(card, /<div class="passo"><button class="vai" data-vai="scheda" data-pid="B">2\. Aiutare Alberto Cilia: mancano 84 VP al 3% ›<\/button><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);   // il nome apre la sua scheda
+  assert.match(card, /<div class="passo"><button class="vai" data-vai="lista">1\. 2 prime linee attive in più \(3 su 5\)&nbsp;›<\/button><\/div>/);
+  assert.match(card, /<div class="passo"><button class="vai" data-vai="scheda" data-pid="B">2\. Aiutare Alberto Cilia: mancano 84 VP al 3%&nbsp;›<\/button><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);   // il nome apre la sua scheda
   assert.doesNotMatch(card, /iscritti al CEP in più/);   // al massimo 2 passi
   assert.match(card, /<small>Al 9% mancano 194 VP: arrivano con i passi sopra<\/small>/);
   // «Non ora» su Cilia: il passo passa a Caccamo, e Cilia si può riprendere

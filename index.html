@@ -1570,7 +1570,13 @@
   .ck-lc1 .prossimo { margin-top: 8px; background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 8px 10px; font-size: 13px; font-weight: 600; }
   .ck-lc1 .prossimo.fatto { background: var(--ok-tinta); color: var(--ok); }
   .ck-lc1 .livelli-t { margin: 14px 0 0; padding-top: 10px; border-top: 2px solid var(--linea); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-soft); }
-  .ck-lc1 .livelli-t + .sez.core { border-top: 0; margin-top: 0; }
+  .ck-lc1 .livelli-t + .livello > .sez.core { border-top: 0; margin-top: 0; }
+  /* il livello aperto in un riquadro grigio chiaro (Ignazio 27/09: «tutto questo bianco… staccare un livello da un altro») */
+  .ck-lc1 .livello.aperto { background: var(--superficie-2); border: 1px solid var(--bordo); border-left: 3px solid var(--bordo); border-radius: var(--raggio-riga); padding: 2px 10px 10px; margin: 8px -4px 0; }
+  .ck-lc1 .livello.aperto.ok { border-left-color: var(--ok); }
+  .ck-lc1 .livello.aperto > .sez.core { border-top: 0; margin-top: 0; }
+  .ck-lc1 .livello.aperto + .livello > .sez.core { border-top: 0; }
+  .ck-lc1 .livello.aperto .voci div { border-top-color: var(--bordo); }
   .ck-lc1 .sv-t { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--testo-soft); margin: 8px 0 0; }
   .ck-lc1 .passi { margin-top: 8px; background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 8px 10px; font-size: 13px; }
   .ck-lc1 .passi > b { display: block; font-size: 12px; margin-bottom: 2px; }
@@ -1860,41 +1866,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609271601"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609271601"></script>
-<script src="lista.js?v=202609271601"></script>
-<script src="rubrica.js?v=202609271601"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609271601"></script>
-<script src="agenda.js?v=202609271601"></script>
-<script src="coach.js?v=202609271601"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609271601"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609271601"></script>
-<script src="check.js?v=202609271601"></script>
-<script src="mappa.js?v=202609271601"></script>
-<script src="pagina-coach.js?v=202609271601"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609271601"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609271601"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609271601"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609271601"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609271601"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609271601"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609271601"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609271601"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609271601"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609271601"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609271601"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609271601"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609271601"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609271601"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609271601"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609271601"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609271601"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609271601"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609271601"></script>
-<script src="benvenuto.js?v=202609271601"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609271601"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609271617"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609271617"></script>
+<script src="lista.js?v=202609271617"></script>
+<script src="rubrica.js?v=202609271617"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609271617"></script>
+<script src="agenda.js?v=202609271617"></script>
+<script src="coach.js?v=202609271617"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609271617"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609271617"></script>
+<script src="check.js?v=202609271617"></script>
+<script src="mappa.js?v=202609271617"></script>
+<script src="pagina-coach.js?v=202609271617"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609271617"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609271617"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609271617"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609271617"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609271617"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609271617"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609271617"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609271617"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609271617"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609271617"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609271617"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609271617"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609271617"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609271617"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609271617"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609271617"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609271617"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609271617"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609271617"></script>
+<script src="benvenuto.js?v=202609271617"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609271617"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.27 · 16:01';
+const APP_VERSION = '2026.09.27 · 16:17';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -3333,8 +3339,8 @@ function lc1Html(oggi) {
     ${apertoPace ? `<div class="voci">${g3.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>${consiglio(g3.consiglio)}` : ''}
     ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}
     ${lv ? `<div class="livelli-t">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ''}</div>${lv.righe.map(r => { const ap = CK.aperti.has(r.chiave); return `
-    <button class="sez core ${r.fatto ? 'ok' : ''}" data-gradino="${r.chiave}" aria-expanded="${ap ? 'true' : 'false'}"><b>${r.fatto ? '✓ ' : ''}${esc(r.titolo)}${ap ? '' : `<small>${esc(r.sotto)}</small>`}</b><span><span class="st">${esc(r.stato)}</span><span class="apri">${ap ? '⌄' : '›'}</span></span></button>
-    ${ap ? `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci)}${passiHtml(r, lv.mese)}` : ''}`; }).join('')}` : ''}</div>`;
+    <div class="livello ${ap ? 'aperto' : ''} ${r.fatto ? 'ok' : ''}"><button class="sez core ${r.fatto ? 'ok' : ''}" data-gradino="${r.chiave}" aria-expanded="${ap ? 'true' : 'false'}"><b>${r.fatto ? '✓ ' : ''}${esc(r.titolo)}${ap ? '' : `<small>${esc(r.sotto)}</small>`}</b><span><span class="st">${esc(r.stato)}</span><span class="apri">${ap ? '⌄' : '›'}</span></span></button>
+    ${ap ? `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci)}${passiHtml(r, lv.mese)}` : ''}</div>`; }).join('')}` : ''}</div>`;
 }
 const vociHtml = voci => `<div class="voci">${voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>`;
 
@@ -3342,7 +3348,7 @@ const vociHtml = voci => `<div class="voci">${voci.map(v => `<div class="${v.fat
 function passiHtml(r, mese) {
   if (!r.passi.length && !r.info && !r.nonOra.length) return '';
   return `<div class="passi">${r.passi.length ? `<b>I prossimi passi verso ${esc(r.titolo)}</b>` : ''}
-    ${r.passi.map((p, i) => `<div class="passo">${p.vai ? `<button class="vai" data-vai="${p.vai}"${p.partner_id ? ` data-pid="${esc(p.partner_id)}"` : ''}>${i + 1}. ${esc(p.testo)} ›</button>` : `<span>${i + 1}. ${esc(p.testo)}</span>`}${p.partner_id ? `<button data-nonora="${esc(p.partner_id)}" data-mese="${mese}">Non ora</button>` : ''}</div>`).join('')}
+    ${r.passi.map((p, i) => `<div class="passo">${p.vai ? `<button class="vai" data-vai="${p.vai}"${p.partner_id ? ` data-pid="${esc(p.partner_id)}"` : ''}>${i + 1}. ${esc(p.testo)}&nbsp;›</button>` : `<span>${i + 1}. ${esc(p.testo)}</span>`}${p.partner_id ? `<button data-nonora="${esc(p.partner_id)}" data-mese="${mese}">Non ora</button>` : ''}</div>`).join('')}
     ${r.info ? `<small>${esc(r.info)}</small>` : ''}
     ${r.nonOra.length ? `<small class="nonora">Non ora, questo mese: ${r.nonOra.map(x => `<button data-riprendi="${esc(x.partner_id)}" data-mese="${mese}">${esc(x.nome)} ↺</button>`).join(' ')}</small>` : ''}</div>`;
 }
