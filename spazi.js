@@ -74,12 +74,24 @@
   const sdsDaMettere = (settimana, esistenti, oggi) => settimana[SDS.giorno] >= oggi
     && !(esistenti || []).some(s => s.tipo === 'SdS/OPEN' && settimana.includes(giornoDi(s.inizio)));
 
-  // Modulo Core: in quella settimana (da, a: lunedì e domenica) c'è stata una SdS/OPEN, cioè una già passata (giorno ≤ oggi)?
-  const openDellaSettimana = (spazi, da, a, oggi) => (spazi || []).some(s => {
-    if (s.tipo !== 'SdS/OPEN') return false;
-    const g = giornoDi(s.inizio);
-    return g >= da && g <= a && (!oggi || g <= oggi);
-  });
+  // La card «Programma della settimana» nel menu di MB Plan (Ignazio 27/09, al posto del Modulo Core): per Piani Marketing e
+  // Consulenze quanti sono già fissati (appuntamenti veri) e quanti spazi restano da riempire, poi la SdS/OPEN.
+  // azioni: righe di `azioni` (si contano quelle della settimana); spazi: righe di `spazi`.
+  function programma(settimana, azioni, spazi) {
+    const dentro = iso => !!iso && settimana.includes(giornoDi(iso));
+    const suoi = (spazi || []).filter(s => dentro(s.inizio));
+    const righe = [];
+    for (const t of DA_PREPARARE) {
+      const fissati = (azioni || []).filter(a => a.tipo_azione === t && dentro(a.inizio)).length;
+      const vuoti = suoi.filter(s => s.tipo === t).length;
+      if (!fissati && !vuoti) continue;
+      const f = t === 'Piano Marketing' ? (fissati === 1 ? 'fissato' : 'fissati') : (fissati === 1 ? 'fissata' : 'fissate');
+      righe.push({ tipo: t, testo: `${TIPI[t].plurale}: ${[fissati ? `${fissati} ${f}` : '', vuoti ? `${vuoti} da riempire` : ''].filter(Boolean).join(' · ')}` });
+    }
+    const sds = suoi.filter(s => s.tipo === 'SdS/OPEN').sort((x, y) => x.inizio.localeCompare(y.inizio))[0];
+    if (sds) { const g = giornoDi(sds.inizio); righe.push({ tipo: 'SdS/OPEN', testo: `SdS/OPEN: ${A.GIORNI_SETTIMANA[A.giornoSettimana(g) - 1].toLowerCase()} ${Number(g.slice(8))} alle ${oraDi(sds.inizio).slice(0, 5)}` }); }
+    return { righe, preparata: suoi.length > 0 };
+  }
 
   // Le parole dei passi, pensate per chi è appena arrivato (Ignazio 27/09: «nei panni di un nuovo»): una domanda chiara,
   // il conto scritto a parole
@@ -96,7 +108,7 @@
     return parti.length > 1 ? parti.slice(0, -1).join(', ') + ' e ' + parti[parti.length - 1] : (parti[0] || '');
   }
 
-  const api = { TIPI, DA_PREPARARE, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, openDellaSettimana, domandaGiorni, conto, manca, riassunto };
+  const api = { TIPI, DA_PREPARARE, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, domandaGiorni, conto, manca, riassunto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Spazi = api;
 })(this);

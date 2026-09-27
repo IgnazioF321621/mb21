@@ -51,15 +51,24 @@ prova('Gli spazi del giorno in ordine, e il loro orario', () => {
   assert.deepEqual(S.orario(l[1]), { giorno: '2026-09-30', ora: '10:00', fine: '11:30', durata: 90 });
 });
 
-prova('Modulo Core: una SdS/OPEN passata dice che l\'OPEN di quella settimana c\'era', () => {
-  const spazi = [sp('SdS/OPEN', '2026-09-07', '21:30'), sp('SdS/OPEN', '2026-09-28', '21:30'), sp('Piano Marketing', '2026-09-14', '19:00')];
-  const m = C.modulo({ mese: '2026-09', spazi, oggi: '2026-09-27' });
-  const w = m.s6.settimane;
-  assert.equal(w.find(x => x.da === '2026-09-07').open, true);
-  assert.equal(w.find(x => x.da === '2026-09-14').open, false);   // un Piano Marketing non è un OPEN
-  assert.equal(w.find(x => x.da === '2026-09-28').open, false);   // non ancora passata
-  assert.equal(S.openDellaSettimana(spazi, '2026-09-28', '2026-10-04', '2026-09-28'), true);
-  assert.equal(C.modulo({ mese: '2026-09', oggi: '2026-09-27' }).s6.open, 0);   // senza spazi come prima
+prova('Modulo Core: la SdS/OPEN dice che l\'OPEN c\'è, la presenza viene solo dal Check (Ignazio 27/09)', () => {
+  const spazi = [sp('SdS/OPEN', '2026-09-07', '21:30')];
+  const w = C.modulo({ mese: '2026-09', spazi, oggi: '2026-09-27' }).s6.settimane;
+  assert.equal(w.find(x => x.da === '2026-09-07').open, false);
+  const c = C.modulo({ mese: '2026-09', check: [{ data: '2026-09-07', open: true }], oggi: '2026-09-27' }).s6.settimane;
+  assert.equal(c.find(x => x.da === '2026-09-07').open, true);
+});
+
+prova('Il programma della settimana: fissati e da riempire per tipo, poi la SdS/OPEN', () => {
+  const az = [{ tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-09-29', '19:00') }, { tipo_azione: 'Follow Up', inizio: A.isoDaRoma('2026-09-29', '20:00') },
+    { tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-10-06', '19:00') }];   // quello della settimana dopo non conta
+  const spazi = [sp('Piano Marketing', '2026-09-30', '19:00'), sp('Piano Marketing', '2026-10-01', '19:00'), sp('SdS/OPEN', '2026-09-28', '21:30')];
+  const p = S.programma(SETT, az, spazi);
+  assert.deepEqual(p.righe.map(r => r.testo), ['Piani Marketing: 1 fissato · 2 da riempire', 'SdS/OPEN: lun 28 alle 21:30']);
+  assert.equal(p.preparata, true);
+  const v = S.programma(SETT, [], []);
+  assert.deepEqual(v, { righe: [], preparata: false });
+  assert.equal(S.programma(SETT, [], [sp('Consulenza PRD', '2026-10-02', '10:00')]).righe[0].testo, 'Consulenze prodotti: 1 da riempire');
 });
 
 console.log(`\n${ok} prove superate`);
