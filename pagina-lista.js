@@ -283,7 +283,9 @@ async function scegliAltri() {
 async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
-  const voci = soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }]), ...comandiContatto(r)];
+  // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
+  const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
+  const voci = [...apri, ...(soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }]), ...comandiContatto(r)])];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
   if (v) v.fai();
 }
@@ -357,6 +359,7 @@ function apriScheda(id) {
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
   LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null;
+  LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
 }
@@ -435,7 +438,7 @@ function disegnaScheda() {
     ${versione()}`;
   document.getElementById('indietro').onclick = () => {
     LS.contatto = null;
-    if (!LS.ritorno) return disegnaLista();
+    if (!LS.ritorno) { disegnaLista(); return window.scrollTo(0, LS.scrollLista || 0); }
     if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
     if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
