@@ -357,73 +357,120 @@
     return { gradini, doveSei, tuttiFatti: gradini.every(g => g.fatto) };
   }
 
-  // ── I livelli (Ignazio 27/09; Manuale di Avvio 2026 pag. 31), separati dalle cose del mese: Leaders Club → Executive
-  // Leader Club → Produttore Argento (il Platino no, per ora: «troppa roba per tutti»). Tutto dal mese della card:
-  // `core` = Leader Core fatto · `bonus` = % del file Amway (null = non arrivato) · `linee` = le prime linee [{ vpp, bonus }]
-  // · `cep` = iscritti al CEP nel gruppo (null = non lo so). Prime linee «attive» = con VP nel mese (Ignazio: solo le attive).
-  // Executive: delle 3 linee al 6%, 2 devono essere a Leaders Club: l'app ancora non lo sa (serve il Leaders Club completo
-  // di quella persona, o la spunta dell'Admin: dopo), quindi quella voce resta «da segnare» e l'Executive non si accende.
-  // Argento, prima fase: solo il 21% (Ignazio 27/09; i Segni Vitali della tabella per ogni livello vengono dopo).
+  // ── I livelli (Ignazio 27/09; Manuale di Avvio 2026 pag. 31), separati dalle cose del mese: Leaders Club → Executive Leader Club
+  // → Produttore Argento → Platino. Ogni livello ha due parti (Ignazio 27/09: «il riquadro sono le cose da avere per essere
+  // Executive, la tabella dei Segni Vitali è quella che ci porta ad avere quei risultati»):
+  //   `req`  = «Per essere …»: i requisiti del riquadro (decidono se il livello è fatto). Argento: il 21% (prima fase);
+  //            Platino: l'Argento tenuto 12 mesi di fila nell'anno di performance settembre-agosto (Ignazio 27/09).
+  //   `sv`   = la riga della Tabella dei Segni Vitali; le voci già nei requisiti con lo stesso numero non si ripetono.
+  // Dati, tutti del mese della card (null = non lo so): `bonus` · `linee` = prime linee [{ partner_id, nome, vpp, bonus, manca }]
+  // (attive = con VP: Ignazio) · `cep`, `bbs`, `wes` del gruppo (conto della Mappa) · `planner` = persone del gruppo con almeno 15
+  // Piani Marketing nel mese («15 Planner», Ignazio 27/09; solo chi li scrive nel Check) · `iscritti` = entrati nel gruppo nel mese
+  // (data d'ingresso del file Amway, Ignazio 27/09) · `totale` = dimensione del gruppo (file Amway) · `mesi21` = mesi di fila al 21%
+  // da settembre. Executive: «di cui 2 a Leaders Club» resta «da segnare» (dopo: il Leaders Club di quella persona o la spunta dell'Admin).
   const LIVELLI = [
-    { chiave: 'lc', titolo: 'Leaders Club', bonus: 9, primeLinee: 5, cep: 5, linee: { quante: 3, al: 3 }, sotto: 'Core · 9% · 5 prime linee · 5 CEP · 3 linee al 3%' },
-    { chiave: 'elc', titolo: 'Executive Leader Club', bonus: 15, primeLinee: 10, cep: 15, linee: { quante: 3, al: 6, lc: 2 }, sotto: 'Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%' },
-    { chiave: 'arg', titolo: 'Produttore Argento', bonus: 21, sotto: '21% di bonus nel mese' },
+    { chiave: 'lc', titolo: 'Leaders Club', sotto: 'Core · 9% · 5 prime linee · 5 CEP · 3 linee al 3%',
+      req: { core: true, bonus: 9, primeLinee: 5, cep: 5, linee: { quante: 3, al: 3 } },
+      sv: { bonus: 9, lineeBonus: 3, planner: 1, primeLinee: 5, iscritti: 5, totale: 15, cep: 5, bbs: 10, wes: 10 } },
+    { chiave: 'elc', titolo: 'Executive Leader Club', sotto: 'Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%',
+      req: { core: true, bonus: 15, primeLinee: 10, cep: 15, linee: { quante: 3, al: 6, lc: 2 } },
+      sv: { bonus: 15, lineeBonus: 4, planner: 3, primeLinee: 10, iscritti: 10, totale: 50, cep: 15, bbs: 20, wes: 20 } },
+    { chiave: 'arg', titolo: 'Produttore Argento', sotto: '21% di bonus nel mese',
+      req: { bonus: 21 },
+      sv: { bonus: 21, lineeBonus: 6, planner: 5, primeLinee: 20, iscritti: 16, totale: 150, cep: 30, bbs: 50, wes: 50 } },
+    { chiave: 'plat', titolo: 'Platino', sotto: 'Argento 12 mesi di fila, da settembre ad agosto',
+      req: { mesi21: 12 },
+      sv: { bonus: 21, lineeBonus: 9, planner: 10, primeLinee: 20, iscritti: 20, totale: 200, cep: 50, bbs: 80, wes: 80 } },
   ];
-  // «I prossimi passi» (Ignazio 27/09): per il primo livello non fatto, al massimo 2 passi concreti, solo quelli che mancano, prima
-  // le cause poi i risultati — una prima linea attiva in più · la linea più vicina al traguardo, col nome e i VP che le mancano
-  // (`linee[].manca` = «Punti al livello successivo» del file Amway) · i CEP del gruppo. Il bonus % non è un passo: è la riga
-  // `info` («Al 9% mancano 194 VP»). `nonOra` = i codici delle linee da non proporre questo mese (tabella passi_non_ora):
-  // il passo passa alla linea dopo; `r.nonOra` le elenca per riprenderle.
+  const SV_TESTI = { bonus: t => `${t}% di bonus`, lineeBonus: t => `${t} linee che ricevono bonus`, planner: () => '15 Planner nel gruppo',   // «1 15 Planner» si legge male: il numero sta nello stato
+    primeLinee: t => `${t} prime linee attive`, iscritti: t => `${t} iscritti del mese nel gruppo`, totale: t => `${t} persone nel gruppo`,
+    cep: t => `${t} iscritti al CEP nel gruppo`, bbs: t => `${t} biglietti BBS nel gruppo`, wes: t => `${t} biglietti WES nel gruppo` };
+  // «I prossimi passi» (Ignazio 27/09): per il primo livello non fatto, al massimo 2 passi concreti, solo quelli che mancano, da
+  // requisiti e Segni Vitali insieme, nell'ordine scelto da Ignazio: prima le persone nuove (prime linee, iscritti del mese), poi la
+  // linea da aiutare (col nome e i VP che le mancano: `linee[].manca` = «Punti al livello successivo»), poi i 15 Planner, poi
+  // biglietti e CEP. Bonus, totale del gruppo e mesi al 21% non sono passi: sono risultati (la riga `info`). `nonOra` = le linee da
+  // non proporre questo mese (tabella passi_non_ora): il passo passa alla linea dopo; `r.nonOra` le elenca per riprenderle.
   const SCALA = [3, 6, 9, 12, 15, 18, 21];
   const scalino = b => SCALA.find(x => x > (Number(b) || 0)) || null;
   const PASSI = 2;
-  function livelli({ core, bonus, linee, cep, mancaMio, nonOra }) {
+  function livelli({ core, bonus, linee, cep, mancaMio, nonOra, planner = null, iscritti = null, totale = null, bbs = null, wes = null, mesi21 = null }) {
     const salta = new Set(nonOra || []);
     const noto = bonus != null;
     const attive = (linee || []).filter(x => Number(x.vpp) > 0);
+    const conBonus = al => attive.filter(x => Number(x.bonus) >= al).length;
+    const quanti = { bonus: noto ? Number(bonus) : null, lineeBonus: noto ? conBonus(3) : null, planner, primeLinee: noto ? attive.length : null,
+      iscritti, totale, cep: cep == null ? null : Number(cep), bbs, wes };
     const righe = LIVELLI.map(L => {
-      const voci = [];
+      const voci = [], R = L.req;
       const voce = (testo, ok, stato) => voci.push({ testo, fatto: !!ok, stato: ok ? FATTO : stato });
-      if (L.primeLinee) voce('Leader Core', core, 'nel percorso sopra');   // i suoi passi sono in Leader Core
-      voce(`${L.bonus}% di bonus`, noto && Number(bonus) >= L.bonus, noto ? `${formato(bonus, 0)}%` : 'dati Amway non arrivati');
-      if (L.primeLinee) {
-        const q = attive.length;
-        voce(`${L.primeLinee} prime linee attive`, noto && q >= L.primeLinee, noto ? `${q} su ${L.primeLinee}` : '—');
-        const c = cep == null ? null : Number(cep);
-        voce(`${L.cep} iscritti al CEP nel gruppo`, c != null && c >= L.cep, c == null ? 'non lo so' : `${c} su ${L.cep}`);
-        const al = attive.filter(x => Number(x.bonus) >= L.linee.al).length;
-        voce(`${L.linee.quante} linee al ${L.linee.al}%`, noto && al >= L.linee.quante, noto ? `${al} su ${L.linee.quante}` : '—');
-        if (L.linee.lc) voce(`di cui ${L.linee.lc} a Leaders Club`, false, 'da segnare');
+      const conto = (k, t) => (quanti[k] == null ? (k === 'bonus' ? 'dati Amway non arrivati' : 'non lo so') : k === 'bonus' ? `${formato(quanti[k], 0)}%` : `${quanti[k]} su ${t}`);
+      if (R.core) voce('Leader Core', core, 'nel percorso sopra');   // i suoi passi sono in Leader Core
+      if (R.bonus) voce(SV_TESTI.bonus(R.bonus), noto && quanti.bonus >= R.bonus, conto('bonus', R.bonus));
+      if (R.mesi21) voce(`${R.mesi21} mesi di fila al 21%`, mesi21 != null && mesi21 >= R.mesi21, mesi21 == null ? 'non lo so' : `${mesi21} su ${R.mesi21}`);
+      if (R.primeLinee) voce(SV_TESTI.primeLinee(R.primeLinee), noto && quanti.primeLinee >= R.primeLinee, conto('primeLinee', R.primeLinee));
+      if (R.cep) voce(SV_TESTI.cep(R.cep), quanti.cep != null && quanti.cep >= R.cep, conto('cep', R.cep));
+      if (R.linee) {
+        const al = noto ? conBonus(R.linee.al) : null;
+        voce(`${R.linee.quante} linee al ${R.linee.al}%`, noto && al >= R.linee.quante, noto ? `${al} su ${R.linee.quante}` : '—');
+        if (R.linee.lc) voce(`di cui ${R.linee.lc} a Leaders Club`, false, 'da segnare');
       }
+      // la riga dei Segni Vitali, senza ripetere quello che i requisiti dicono già con lo stesso numero
+      // («linee che ricevono bonus» = linee al 3%: col Leaders Club è la stessa voce dei requisiti)
+      const doppia = (k, t) => R[k] === t || (k === 'lineeBonus' && R.linee && R.linee.al === 3 && R.linee.quante === t);
+      const segni = Object.entries(L.sv).filter(([k, t]) => !doppia(k, t)).map(([k, t]) => {
+        const ok = quanti[k] != null && quanti[k] >= t;
+        return { chiave: k, testo: SV_TESTI[k](t), fatto: ok, stato: ok ? FATTO : conto(k, t) };
+      });
       const fatto = voci.every(v => v.fatto);
-      return { chiave: L.chiave, titolo: L.titolo, sotto: L.sotto, fatto, voci,
-        stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto).length} su ${voci.length}` };
+      return { chiave: L.chiave, titolo: L.titolo, sotto: L.sotto, fatto, voci, segni,
+        stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto).length} su ${voci.length}`,
+        statoSegni: `${segni.filter(v => v.fatto).length} su ${segni.length}` };
     });
-    // i passi solo per il primo livello non ancora fatto: il prossimo traguardo
-    const prossimo = righe.find(r => !r.fatto);
+    // i passi solo per il prossimo traguardo: il primo livello non fatto SOPRA il più alto raggiunto (chi è Argento guarda
+    // al Platino anche se l'Executive, con «da segnare», non si accende)
+    const ultimo = righe.reduce((u, r, i) => (r.fatto ? i : u), -1);
+    const prossimo = righe.slice(ultimo + 1).find(r => !r.fatto);
     for (const r of righe) { r.passi = []; r.info = null; r.nonOra = []; }
-    if (prossimo && noto) {
-      const L = LIVELLI.find(x => x.chiave === prossimo.chiave), r = prossimo, passi = [];
-      if (L.primeLinee && attive.length < L.primeLinee) {
-        const m = L.primeLinee - attive.length;
-        passi.push({ testo: `${m === 1 ? 'Una prima linea attiva in più' : `${m} prime linee attive in più`} (${attive.length} su ${L.primeLinee})`, vai: 'lista' });
+    if (prossimo) {
+      const L = LIVELLI.find(x => x.chiave === prossimo.chiave), r = prossimo, R = L.req, passi = [];
+      const serve = k => Math.max(R[k] || 0, L.sv[k] || 0);
+      const manca = k => (quanti[k] == null ? 0 : serve(k) - quanti[k]);
+      if (noto && manca('primeLinee') > 0) {
+        const m = manca('primeLinee');
+        passi.push({ testo: `${m === 1 ? 'Una prima linea attiva in più' : `${m} prime linee attive in più`} (${quanti.primeLinee} su ${serve('primeLinee')})`, vai: 'lista' });
       }
-      if (L.primeLinee && attive.filter(x => Number(x.bonus) >= L.linee.al).length < L.linee.quante) {
-        const sotto = attive.filter(x => Number(x.bonus) < L.linee.al);
+      if (manca('iscritti') > 0) {
+        const m = manca('iscritti');
+        passi.push({ testo: `${m === 1 ? 'Un iscritto in più' : `${m} iscritti in più`} nel gruppo questo mese (${iscritti} su ${L.sv.iscritti})`, vai: 'lista' });
+      }
+      // la linea da aiutare: verso la soglia dei requisiti se mancano le linee al 3%/6%, se no verso il 3% delle linee che ricevono bonus
+      const soglia = noto && R.linee && conBonus(R.linee.al) < R.linee.quante ? R.linee.al : noto && manca('lineeBonus') > 0 ? 3 : null;
+      if (soglia) {
+        const sotto = attive.filter(x => Number(x.bonus) < soglia);
         r.nonOra = sotto.filter(x => salta.has(x.partner_id)).map(x => ({ partner_id: x.partner_id, nome: x.nome }));
-        const dist = x => (scalino(x.bonus) === L.linee.al && x.manca != null ? Number(x.manca) : Infinity);
+        const dist = x => (scalino(x.bonus) === soglia && x.manca != null ? Number(x.manca) : Infinity);
         const chi = sotto.filter(x => !salta.has(x.partner_id)).sort((a, b) => dist(a) - dist(b))[0];
         if (chi) passi.push({ partner_id: chi.partner_id, nome: chi.nome, vai: 'scheda',
-          testo: dist(chi) < Infinity ? `Aiutare ${chi.nome}: mancano ${formato(dist(chi), 0)} VP al ${L.linee.al}%` : `Aiutare ${chi.nome} verso il ${L.linee.al}%` });
+          testo: dist(chi) < Infinity ? `Aiutare ${chi.nome}: mancano ${formato(dist(chi), 0)} VP al ${soglia}%` : `Aiutare ${chi.nome} verso il ${soglia}%` });
       }
-      if (L.cep && cep != null && Number(cep) < L.cep) {
-        const mc = L.cep - Number(cep);
-        passi.push({ testo: `${mc === 1 ? 'Un iscritto al CEP in più' : `${mc} iscritti al CEP in più`} nel gruppo (${cep} su ${L.cep})`, vai: 'mappa' });
+      if (manca('planner') > 0) {
+        const m = manca('planner');
+        passi.push({ testo: `${m === 1 ? 'Un 15 Planner in più' : `${m} 15 Planner in più`} nel gruppo: 15 Piani Marketing nel mese (${planner} su ${L.sv.planner})`, vai: 'agenda' });
+      }
+      for (const k of ['bbs', 'wes']) if (manca(k) > 0) {
+        const m = manca(k);
+        passi.push({ testo: `${m === 1 ? 'Un biglietto' : `${m} biglietti`} ${k.toUpperCase()} in più nel gruppo (${quanti[k]} su ${L.sv[k]})`, vai: 'mappa' });
+      }
+      if (manca('cep') > 0) {
+        const m = manca('cep');
+        passi.push({ testo: `${m === 1 ? 'Un iscritto al CEP in più' : `${m} iscritti al CEP in più`} nel gruppo (${quanti.cep} su ${serve('cep')})`, vai: 'mappa' });
       }
       r.passi = passi.slice(0, PASSI);
-      if (Number(bonus) < L.bonus) r.info = scalino(bonus) === L.bonus && mancaMio != null
-        ? `Al ${L.bonus}% mancano ${formato(mancaMio, 0)} VP${r.passi.length ? ': arrivano con i passi sopra' : ''}`
-        : `Bonus al ${formato(bonus, 0)}%: il ${L.bonus}% arriva con la crescita delle linee`;
+      const obiettivo = R.bonus || (R.mesi21 ? 21 : null);
+      if (R.mesi21 && mesi21 != null) r.info = `Mesi di fila al 21% da settembre: ${mesi21} su ${R.mesi21}`;
+      else if (noto && obiettivo && Number(bonus) < obiettivo) r.info = scalino(bonus) === obiettivo && mancaMio != null
+        ? `Al ${obiettivo}% mancano ${formato(mancaMio, 0)} VP${r.passi.length ? ': arrivano con i passi sopra' : ''}`
+        : `Bonus al ${formato(bonus, 0)}%: il ${obiettivo}% arriva con la crescita delle linee`;
     }
     const fatti = righe.filter(r => r.fatto);
     return { righe, doveSei: fatti.length ? fatti[fatti.length - 1].titolo : null, noto };

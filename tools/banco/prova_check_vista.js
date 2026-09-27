@@ -219,7 +219,8 @@ prova('Pacesetter, terza riga (Ignazio 26/09): 2 sponsor personali scritti nel C
 prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Amway del mese della card; senza codice Amway non ci sono', () => {
   assert.doesNotMatch(disegna(), /livelli-t/);   // nessun codice Amway (visto senza partner_id)
   ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
-  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'GIAVATTO, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'CILIA, ALBERTO' }, { partner_id: 'D', sponsor_id: 'P1', nome: 'Caccamo, Luca' }, { partner_id: 'C', sponsor_id: 'X', nome: 'ALTRO, UNO' }],
+  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'GIAVATTO, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'CILIA, ALBERTO' }, { partner_id: 'D', sponsor_id: 'P1', nome: 'Caccamo, Luca' }, { partner_id: 'C', sponsor_id: 'X', nome: 'ALTRO, UNO' },
+      ...['N1', 'N2', 'N3', 'N4', 'N5'].map(x => ({ partner_id: x, sponsor_id: 'B', nome: x, data_ingresso: '2026-09-10' }))],   // 5 iscritti del mese sotto Cilia
     volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6, al_livello_successivo: 193.86 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 },
       { partner_id: 'B', mese: 202609, vpp: 116.36, bonus: 0, al_livello_successivo: 83.64 }, { partner_id: 'D', mese: 202609, vpp: 78.27, bonus: 0, al_livello_successivo: 121.73 },
       { partner_id: 'P1', mese: 202608, vpp: 1, bonus: 21 }] };
