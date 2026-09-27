@@ -349,4 +349,26 @@ prova('Pacesetter (Ignazio 26/09): 2 sponsor personali del Check · 100 VP · CE
   assert.equal(C.PACE_SPONSOR, 2);
 });
 
+prova('I livelli (Ignazio 27/09, Manuale pag. 31): Leaders Club, Executive, Argento; prime linee solo attive; un consiglio solo, per il prossimo', () => {
+  // come Ignazio a settembre 2026: 6%, 4 prime linee con VP (una al 3%), 9 ferme
+  const linee = [{ vpp: 107.38, bonus: 3 }, { vpp: 47.46, bonus: 0 }, { vpp: 78.27, bonus: 0 }, { vpp: 116.36, bonus: 0 }, ...Array(9).fill({ vpp: 0, bonus: 0 })];
+  const v = C.livelli({ core: false, bonus: 6, linee, cep: 3 });
+  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '0 su 5', false], ['Executive Leader Club', '0 su 6', false], ['Produttore Argento', '0 su 1', false]]);
+  assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Leader Core', 'nel percorso sopra'], ['9% di bonus', '6%'], ['5 prime linee attive', '4 su 5'],
+    ['5 iscritti al CEP nel gruppo', '3 su 5'], ['3 linee al 3%', '1 su 3']]);
+  assert.deepEqual(v.righe[0].consiglio, { cosa: 'una prima linea attiva in più', peso: 0.2 });   // la più vicina
+  assert.equal(v.righe[1].consiglio, null);   // un consiglio solo: il prossimo livello
+  assert.equal(v.righe[2].consiglio, null);
+  assert.equal(v.righe[1].voci[5].testo, 'di cui 2 a Leaders Club');   // Executive: non si sa ancora, resta da segnare
+  assert.equal(v.righe[1].voci[5].stato, 'da segnare');
+  assert.equal(v.doveSei, null);
+  // Leaders Club fatto → il consiglio passa all'Executive; l'Argento conta solo il 21%
+  const lc = C.livelli({ core: true, bonus: 12, linee: [...Array(5).fill({ vpp: 50, bonus: 3 })], cep: 6 });
+  assert.deepEqual([lc.righe[0].fatto, lc.doveSei, lc.righe[0].consiglio, !!lc.righe[1].consiglio], [true, 'Leaders Club', null, true]);
+  assert.equal(C.livelli({ core: false, bonus: 21, linee: [], cep: 0 }).righe[2].fatto, true);
+  // senza il file Amway del mese: niente numeri inventati
+  const nulla = C.livelli({ core: false, bonus: null, linee: [], cep: null });
+  assert.deepEqual([nulla.noto, nulla.righe[0].voci[1].stato, nulla.righe[0].voci[3].stato, nulla.righe[0].consiglio], [false, 'dati Amway non arrivati', 'non lo so', null]);
+});
+
 console.log(`\n${ok} prove superate`);

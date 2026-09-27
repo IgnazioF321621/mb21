@@ -355,6 +355,51 @@
     return { gradini, doveSei, tuttiFatti: gradini.every(g => g.fatto) };
   }
 
+  // ── I livelli (Ignazio 27/09; Manuale di Avvio 2026 pag. 31), separati dalle cose del mese: Leaders Club → Executive
+  // Leader Club → Produttore Argento (il Platino no, per ora: «troppa roba per tutti»). Tutto dal mese della card:
+  // `core` = Leader Core fatto · `bonus` = % del file Amway (null = non arrivato) · `linee` = le prime linee [{ vpp, bonus }]
+  // · `cep` = iscritti al CEP nel gruppo (null = non lo so). Prime linee «attive» = con VP nel mese (Ignazio: solo le attive).
+  // Executive: delle 3 linee al 6%, 2 devono essere a Leaders Club: l'app ancora non lo sa (serve il Leaders Club completo
+  // di quella persona, o la spunta dell'Admin: dopo), quindi quella voce resta «da segnare» e l'Executive non si accende.
+  // Argento, prima fase: solo il 21% (Ignazio 27/09; i Segni Vitali della tabella per ogni livello vengono dopo).
+  const LIVELLI = [
+    { chiave: 'lc', titolo: 'Leaders Club', bonus: 9, primeLinee: 5, cep: 5, linee: { quante: 3, al: 3 }, sotto: 'Core · 9% · 5 prime linee · 5 CEP · 3 linee al 3%' },
+    { chiave: 'elc', titolo: 'Executive Leader Club', bonus: 15, primeLinee: 10, cep: 15, linee: { quante: 3, al: 6, lc: 2 }, sotto: 'Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%' },
+    { chiave: 'arg', titolo: 'Produttore Argento', bonus: 21, sotto: '21% di bonus nel mese' },
+  ];
+  function livelli({ core, bonus, linee, cep }) {
+    const noto = bonus != null;
+    const attive = (linee || []).filter(x => Number(x.vpp) > 0);
+    const conto = (n, di) => ({ n, di });
+    const righe = LIVELLI.map(L => {
+      const voci = [];
+      const voce = (testo, ok, stato, manca) => voci.push({ testo, fatto: !!ok, stato: ok ? FATTO : stato, manca: ok ? null : manca });
+      if (L.primeLinee) voce('Leader Core', core, 'nel percorso sopra', null);   // lo consiglia già Leader Core
+      voce(`${L.bonus}% di bonus`, noto && Number(bonus) >= L.bonus, noto ? `${formato(bonus, 0)}%` : 'dati Amway non arrivati',
+        noto ? { cosa: `arrivare al ${L.bonus}%`, di: true, peso: 1 - Number(bonus) / L.bonus } : null);
+      if (L.primeLinee) {
+        const q = attive.length, m = L.primeLinee - q;
+        voce(`${L.primeLinee} prime linee attive`, noto && q >= L.primeLinee, noto ? `${q} su ${L.primeLinee}` : '—',
+          noto ? { cosa: m === 1 ? 'una prima linea attiva in più' : `${m} prime linee attive in più`, peso: m / L.primeLinee } : null);
+        const c = cep == null ? null : Number(cep), mc = c == null ? 0 : L.cep - c;
+        voce(`${L.cep} iscritti al CEP nel gruppo`, c != null && c >= L.cep, c == null ? 'non lo so' : `${c} su ${L.cep}`,
+          c == null ? null : { cosa: mc === 1 ? 'un iscritto al CEP in più nel gruppo' : `${mc} iscritti al CEP in più nel gruppo`, peso: mc / L.cep });
+        const al = attive.filter(x => Number(x.bonus) >= L.linee.al).length, ml = L.linee.quante - al;
+        voce(`${L.linee.quante} linee al ${L.linee.al}%`, noto && al >= L.linee.quante, noto ? `${al} su ${L.linee.quante}` : '—',
+          noto ? { cosa: ml === 1 ? `una linea al ${L.linee.al}% in più` : `${ml} linee al ${L.linee.al}% in più`, peso: ml / L.linee.quante } : null);
+        if (L.linee.lc) voce(`di cui ${L.linee.lc} a Leaders Club`, false, 'da segnare', null);
+      }
+      const fatto = voci.every(v => v.fatto);
+      return { chiave: L.chiave, titolo: L.titolo, sotto: L.sotto, fatto, voci,
+        stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto).length} su ${voci.length}`, mancano: voci.map(v => v.manca).filter(Boolean) };
+    });
+    // un consiglio solo, per il primo livello non ancora fatto: il prossimo traguardo
+    const prossimo = righe.find(r => !r.fatto);
+    for (const r of righe) r.consiglio = r === prossimo ? piuVicina(r.mancano) : null;
+    const fatti = righe.filter(r => r.fatto);
+    return { righe, doveSei: fatti.length ? fatti[fatti.length - 1].titolo : null, noto };
+  }
+
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
@@ -366,7 +411,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, lc1, percorso };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, lc1, percorso, livelli };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);

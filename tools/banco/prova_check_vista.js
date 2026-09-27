@@ -215,4 +215,24 @@ prova('Pacesetter, terza riga (Ignazio 26/09): 2 sponsor personali scritti nel C
   esegui(`CK.aperti.clear()`);
 });
 
+prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Amway del mese della card; senza codice Amway non ci sono', () => {
+  assert.doesNotMatch(disegna(), /livelli-t/);   // nessun codice Amway (visto senza partner_id)
+  ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
+  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1' }, { partner_id: 'B', sponsor_id: 'P1' }, { partner_id: 'C', sponsor_id: 'X' }],
+    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 }, { partner_id: 'P1', mese: 202608, vpp: 1, bonus: 21 }] };
+    CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('lc');`);
+  const h = disegna();
+  const card = h.slice(h.indexOf('class="livelli-t"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
+  assert.match(card, /^class="livelli-t">I livelli<\/div>/);
+  assert.match(card, /data-gradino="lc" aria-expanded="true"><b>Leaders Club<\/b>/);
+  assert.match(card, /<span>9% di bonus<\/span><span>6%<\/span>/);
+  assert.match(card, /<span>5 prime linee attive<\/span><span>1 su 5<\/span>/);   // B senza volumi = ferma; C è di un altro
+  assert.match(card, /<span>5 iscritti al CEP nel gruppo<\/span><span>3 su 5<\/span>/);
+  assert.match(card, /<div class="prossimo">Ti consiglio di arrivare al 9%<\/div>/);   // 6 su 9 è più vicino di 3 CEP su 5
+  assert.match(card, /data-gradino="elc" aria-expanded="false"><b>Executive Leader Club<small>Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%<\/small>/);
+  assert.match(card, /data-gradino="arg" aria-expanded="false"><b>Produttore Argento<small>21% di bonus nel mese<\/small><\/b><span><span class="st">0 su 1/);   // il 21% di agosto non conta
+  esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear();`);
+  ctx.visto = () => ({ id: 'io' });
+});
+
 console.log(`\n${ok} prove superate`);
