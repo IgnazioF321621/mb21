@@ -97,21 +97,24 @@ prova('La scelta si ricorda sul telefono, e se la memoria non risponde la pagina
 prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la griglia in fondo non c\'è più', () => {
   const h = disegna();
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
-  assert.ok(h.indexOf('id="ck-storico"') < h.indexOf('class="ck-quando"') && h.indexOf('class="ck-quando"') < h.indexOf('data-ckgruppo="Volume"'));   // «Confronta con» attaccato ai gruppi (Ignazio 26/09)
+  // due domande (Ignazio 27/09): sopra la card, sotto «I numeri del periodo» con Confronta con → Gli ultimi 12 mesi → i gruppi
+  const posti = ['class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
+  assert.ok(posti.every((x, i) => x > 0 && (i === 0 || x > posti[i - 1])), posti.join(' '));
   assert.doesNotMatch(h, /class="sv"/);
 });
 
 prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con le quattro luci sotto, senza il mese; con «Tutti» non c\'è', () => {
   let h = disegna();
-  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('id="ck-storico"'));
-  assert.ok(card.length > 0 && h.indexOf('class="ck-lc1') < h.indexOf('id="ck-storico"'));   // sopra «Gli ultimi 12 mesi»
+  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('class="ck-sezione"'));
+  assert.ok(card.length > 0);
   assert.match(card, /<div class="sez "><b>Leader 1° livello<\/b><span class="st">2 su 4<\/span><\/div>/);
   assert.doesNotMatch(card, /settembre/);                                    // il mese lo dice il periodo sopra
   assert.match(card, /class="luce bbs on /);
   assert.match(card, /class="luce cep on /);
   assert.match(card, /class="luce vp {2}"/);
   assert.doesNotMatch(card, /Ti manca/);
-  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
+  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
+  assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
   assert.match(card, /<div class="prossimo ">Prossimo passo: compra il biglietto WES → Leader 1° livello<\/div>/);
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
@@ -131,6 +134,7 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   const h = disegna();
   assert.match(h, /data-gradino="core" aria-expanded="true"/);
   assert.match(h, /<span class="apri">⌄<\/span>/);
+  assert.doesNotMatch(h, /tocca per vedere/);   // da aperta la scritta sparisce
   const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo'));
   assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
@@ -153,6 +157,10 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
   assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
   esegui(`CK.aperti.clear()`);
+  // con WES o Anno la card dice di che mese è
+  esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
+  assert.match(disegna(), /<small class="mese-card">settembre 2026, l'ultimo mese del periodo<\/small>/);
+  esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-09-15');`);
 });
 
 console.log(`\n${ok} prove superate`);
