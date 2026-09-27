@@ -197,11 +197,8 @@ async function datiCoreDelMese(io, mese) {
   // Amway), che per un partner sta nella lista dell'upline: le regole di sicurezza non gliela fanno leggere e il modulo
   // scriveva «NO» anche a chi il biglietto ce l'aveva (Ignazio 24/09). Si passa dalle funzioni `miei_biglietti` e `mie_tracce`.
   const [tracce, big] = await Promise.all([traccePercorso(io, mese0, mese1), bigliettiDiChiGuardo(io, mese0)]);
-  // le SdS/OPEN di MB Plan (27/09) nelle settimane che toccano il mese: una già passata dice che l'OPEN c'era
-  const w = MB21Core.settimaneDelMese(mese), sp = await dbq('SdS/OPEN del mese', supa.from('spazi').select('tipo, inizio').eq('user_id', io.id).eq('tipo', 'SdS/OPEN')
-    .gte('inizio', A.isoDaRoma(w[0].da, '00:00')).lt('inizio', A.isoDaRoma(A.spostaGiorno(w[w.length - 1].a, 1), '00:00')));
   return { azioni: az.data || [], vendite: ve.data || [], check: ck.data || [], tracce, biglietti: big || [], obiettivi: ob.data || null,
-    date: { bbs: dBbs.data || [], wes: dWes.data || [] }, riga: cm.data || null, dati: (cm.data && cm.data.dati) || {}, spazi: sp.error ? [] : sp.data || [] };
+    date: { bbs: dBbs.data || [], wes: dWes.data || [] }, riga: cm.data || null, dati: (cm.data && cm.data.dati) || {} };
 }
 
 // Le tracce del percorso segnate «ascoltata» sulla propria scheda nel mese. Come per i biglietti, la scheda di un partner

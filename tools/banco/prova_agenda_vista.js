@@ -201,11 +201,12 @@ prova('La Settimana mostra sotto ogni giorno anche le sue cose da fare (Ignazio 
   assert.match(s, /Comprare i biglietti BBS/);   // riportata da sabato: si vede oggi
 });
 
-prova('Gli spazi da riempire (27/09): solo l\'Admin; nella card, nella Timeline, nella Settimana e il bottone «Prepara la settimana»', () => {
+prova('Gli spazi da riempire (27/09): solo l\'Admin; nella card, nella Timeline, nella Settimana, e nel menu «Programma della settimana» al posto del Modulo Core', () => {
   const modo = V.modo, prima = modo.admin;
   modo.admin = false;
   assert.doesNotMatch(V.vista('giorno'), /data-spazio=/);                 // un partner per ora non li vede
-  assert.doesNotMatch(V.vista('settimana'), /id="sp-prepara"/);
+  assert.match(V.menuAgendaHtml(), /data-cmd="core" class="mb-core"/);   // al partner resta il Modulo Core nel menu
+  assert.doesNotMatch(V.menuAgendaHtml(), /Programma della settimana/);
   modo.admin = true;
   const f = V.vista('giorno');
   assert.match(f, /class="ag-imp sp-imp" data-spazio="s2"/);
@@ -217,8 +218,13 @@ prova('Gli spazi da riempire (27/09): solo l\'Admin; nella card, nella Timeline,
   assert.match(g, /13:00–14:00 · da riempire/);
   assert.doesNotMatch(g, /3 impegni si accavallano/);                   // uno spazio non fa scattare l'avviso
   const s = V.vista('settimana');
-  assert.match(s, /id="sp-prepara"/);
-  assert.match(s, /Prepara la settimana<small>Piani Marketing, Consulenze prodotti e SdS\/OPEN/);
+  const m = V.menuAgendaHtml();
+  assert.doesNotMatch(m, /data-cmd="core"/);                                  // il Modulo Core resta dal Check
+  assert.match(m, /<b>Programma della settimana<\/b><small>Settimana 39 · 21 set – 27 set/);
+  assert.match(m, /Piani Marketing: 5 fissati · 1 da riempire/);            // i 5 PM veri della settimana, più lo spazio di lunedì
+  assert.match(m, /Consulenze prodotti: 2 fissate · 1 da riempire/);
+  assert.match(m, /SdS\/OPEN: lun 21 alle 21:30/);
+  assert.match(m, /data-cmd="prepara" class="mb-prog-bottone">.*Aggiungi appuntamenti/);
   assert.match(s, /ss-spazio[^>]*><i><\/i><em>10:00<\/em>Consulenza prodotti · da riempire/);
   assert.equal((s.match(/class="ag-sev ag-spazio"/g) || []).length, 3);
   modo.admin = prima;

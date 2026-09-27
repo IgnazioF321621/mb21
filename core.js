@@ -54,7 +54,7 @@
   // check: righe di check_giorno del mese · tracce: [{ giorno, titolo }] del percorso ascoltate · biglietti: [{ tipo, evento, contatto }] della propria scheda
   // obiettivi: la riga di obiettivi_mese (o null) · dati: i campi a mano (core_mese.dati)
   // date: { bbs, wes } le righe delle tabelle bbs e wes, oggi: 'AAAA-MM-GG' (per il prossimo BBS e WES)
-  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {}, date = {}, oggi = null, spazi = [] }) {
+  function modulo({ mese, azioni = [], vendite = [], check = [], tracce = [], biglietti = [], obiettivi = null, dati = {}, date = {}, oggi = null }) {
     const d = dati || {};
     const n = giorniDelMese(mese);
     const perGiorno = new Map(check.map(c => [c.data, c]));
@@ -130,12 +130,12 @@
     // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda).
     // Gli OPEN cambiano da città a città (Ignazio 23/09): niente calendario; una settimana in cui nella propria città l'OPEN
     // non c'era si segna «non c'era» nel modulo (`dati.senza_open`: i lunedì di quelle settimane) e non conta. Se il Check
-    // dice che all'OPEN ci sei stato, vale quello. Dal 27/09 anche MB Plan: una SdS/OPEN («Prepara la settimana», tabella
-    // `spazi`) già passata in quella settimana vuol dire che l'OPEN c'era (Ignazio: «sappiamo se l'OPEN si fa oppure no»).
+    // dice che all'OPEN ci sei stato, vale quello. La SdS/OPEN di MB Plan (27/09) dice solo che l'OPEN c'è, non che ci sei
+    // stato (Ignazio: «la devo comunque smarcare all'interno del Check del giorno»): la presenza viene solo dal Check; togliendo
+    // la SdS con «Questa settimana non c'è» la settimana si segna in `senza_open`.
     const senzaOpen = new Set(d.senza_open || []);
-    const sdsPassata = w => spazi.some(s => s.tipo === 'SdS/OPEN' && giornoRoma(s.inizio) >= w.da && giornoRoma(s.inizio) <= w.a && (!oggi || giornoRoma(s.inizio) <= oggi));
     const s6 = { settimane: settimaneDelMese(mese).map(w => {
-        const open = check.some(c => c.open && c.data >= w.da && c.data <= w.a) || sdsPassata(w);
+        const open = check.some(c => c.open && c.data >= w.da && c.data <= w.a);
         return { ...w, open, senza: !open && senzaOpen.has(w.da) };
       }),
       bbs: biglietti.some(b => b.tipo === 'BBS' && b.contatto), wes: biglietti.some(b => b.tipo === 'WES' && b.contatto),

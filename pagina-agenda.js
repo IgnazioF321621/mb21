@@ -1429,7 +1429,6 @@ function disegnaSettimana() {
     <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelect()}
     ${richiamiAgenda(oggi)}
-    ${vediSpazi() && AG.settimana[6] >= oggi ? `<button class="sp-prepara" id="sp-prepara">${ic('scala-settimana')}<span>Prepara la settimana<small>Piani Marketing, Consulenze prodotti e SdS/OPEN</small></span>${ic('freccia')}</button>` : ''}
     ${giorniSettimanaHtml(opz, oggi)}
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${modelliScalaHtml('settimana', lun)}<h2 class="ag-sez">Da fare questa settimana</h2>
       ${cose.map(c => `<div class="cosa${c.fatto_il ? ' fatta' : ''}" data-cosa="${esc(c.id)}">
@@ -1802,7 +1801,18 @@ function menuAgendaHtml() {
     ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small><i class="mb-scala-punto sc-${m.scala || 'giorno'}"></i>${esc(NOMI_SCALA[m.scala || 'giorno'])}${m.attivo === false ? ' · spento' : ` · ${AG.modello.filter(v => v.modello_id === m.id).length}`}</small></button>`).join('')
       : '<div class="mb-vuoto">Crea le tue routine o cose da fare con il +</div>'}
     ${progettiMenuHtml()}
-    <button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`;
+    ${vediSpazi() ? programmaSettimanaHtml() : `<button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`}`;
+}
+// La card «Programma della settimana» (Ignazio 27/09: «la settimana messa là la devo andare a cercare»): in fondo al menu, al
+// posto del Modulo Core (che resta dal Check), sempre a portata da ogni vista. La settimana è quella che si sta guardando.
+function programmaSettimanaHtml() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), lun = AG.settimana[0], dom = AG.settimana[6];
+  const p = MB21Spazi.programma(AG.settimana, AG.azioni, AG.spazi);
+  const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
+  return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
+    ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>`
+      : `<p>${dom < oggi ? 'Nessun Piano Marketing o Consulenza in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e Consulenze prodotti vuoi fare, e quando.'}</p>`}
+    ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
   // la ricerca (Ignazio 22/09): un nome, un tipo («piano marketing», «PM», «counseling»), le cose da fare
@@ -1824,6 +1834,7 @@ function collegaMenuAgenda(radice, chiudi) {
   const nuovo = radice.querySelector('[data-cmd="nuovo-modello"]'); if (nuovo) nuovo.onclick = () => { chiudi(); nuovoModello(); };
   radice.querySelectorAll('[data-modello]').forEach(b => { b.onclick = () => { chiudi(); foglioModello(b.dataset.modello); }; });
   const core = radice.querySelector('[data-cmd="core"]'); if (core) core.onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7), 'agenda'); };
+  const prepara = radice.querySelector('[data-cmd="prepara"]'); if (prepara) prepara.onclick = () => { chiudi(); preparaSettimana(); };
   const nuovoP = radice.querySelector('[data-cmd="nuovo-progetto"]'); if (nuovoP) nuovoP.onclick = () => { chiudi(); nuovoProgetto(); };
   radice.querySelectorAll('button[data-progetto]').forEach(b => { b.onclick = () => { chiudi(); apriProgetto(b.dataset.progetto); }; });
 }
@@ -2236,7 +2247,6 @@ function collegaAgenda(eventi) {
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
   collegaPartnerSelect();
   su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
-  su('sp-prepara', preparaSettimana);
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
   su('ag-riordini', () => { ST.tab = 'oggi'; ST.vaiA = 'riordini'; mostraTab(); });
@@ -2429,7 +2439,7 @@ function foglioSpazio(id) {
   velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
     <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}${sds ? '' : ' · da riempire'}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
-    <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN. Quando è passata, nel Modulo Core conta come l\'OPEN di quella settimana.'
+    <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni nel Check del giorno.'
       : 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'}</div>
     <div class="sp-comandi">${sds ? '' : `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>`}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>

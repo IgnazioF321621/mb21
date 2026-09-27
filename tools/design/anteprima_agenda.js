@@ -31,7 +31,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -67,7 +67,7 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
   cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null }, { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null }],
   modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', modello_id: 'g1', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
   modelli: [{ id: 'g1', titolo: 'Routine', icona: 'orario', attivo: true, ordine: 1 }],
-  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 },
+  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 }, progetti: [],
   // gli spazi da riempire (27/09): si vedono solo all'Admin (modo.admin)
   spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
     { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
@@ -88,7 +88,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -101,7 +101,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { A, AG, modo, vista, disegnaAgenda, avvisoSovrapposti, az, OGGI };
+module.exports = { A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
