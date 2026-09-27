@@ -1505,6 +1505,33 @@
   .ag-scelte { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
   .ag-scelte button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
   .ag-scelte button.scelto { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  /* MB Plan, «Modello appuntamenti settimanale» (27/09): gli spazi da riempire, tratteggiati col colore del tipo */
+  .ag-ev.ag-cosa.ag-spazio { border: 1.5px dashed var(--tinta); background: color-mix(in srgb, var(--tinta) 7%, var(--superficie)); color: var(--testo); padding-left: 9px; }
+  .ag-ev.ag-cosa.ag-spazio b { color: var(--tinta); }
+  .ag-ev.ag-cosa.ag-spazio small { color: var(--testo-soft); }
+  .ag-sev.ag-spazio { border: 1.5px dashed var(--tinta); background: color-mix(in srgb, var(--tinta) 10%, var(--superficie)); }
+  .ss-riga.ss-spazio i, .ag-imp.sp-imp i { background: none; border: 1.5px dashed var(--tinta); box-sizing: border-box; }
+  .ag-imp.sp-imp span { color: var(--tinta); }
+  .sp-prepara { display: flex; align-items: center; gap: 12px; width: 100%; margin: 10px 0 4px; padding: 12px 14px; border: 1.5px dashed var(--az-pm); border-radius: 14px;
+    background: color-mix(in srgb, var(--az-pm) 6%, var(--superficie)); color: var(--testo); font-family: inherit; font-size: 16px; font-weight: 700; text-align: left; }
+  .sp-prepara > svg.ic { width: 22px; height: 22px; color: var(--az-pm); flex: none; }
+  .sp-prepara span { flex: 1; }
+  .sp-prepara small { display: block; font-size: 13px; font-weight: 400; color: var(--testo-soft); margin-top: 2px; }
+  .sp-domanda { font-size: 17px; font-weight: 700; margin: 4px 0 6px; }
+  .sp-giorno { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--superficie-2); }
+  .sp-g { flex: 1 1 140px; display: flex; align-items: baseline; gap: 10px; min-height: 40px; border: 1px solid var(--bordo); border-radius: 12px; background: var(--superficie);
+    padding: 8px 12px; font-family: inherit; font-size: 15px; color: var(--testo); text-align: left; }
+  .sp-giorno.aperto .sp-g { border-color: var(--accento); }
+  .sp-g small { color: var(--testo-tenue); font-size: 13px; }
+  .sp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    background: color-mix(in srgb, var(--tinta) 12%, var(--superficie)); color: var(--tinta); }
+  .sp-chip button { border: 0; background: none; color: inherit; padding: 4px; display: inline-flex; }
+  .sp-ore { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 10px; }
+  .sp-ore button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
+  .sp-conto { margin: 12px 0 0; font-size: 15px; font-weight: 700; color: var(--testo-soft); }
+  .sp-conto.pieno { color: var(--verde, #15803D); }
+  .sp-comandi { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .sp-comandi[hidden], #sp-campi[hidden] { display: none; }
   .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
 
   /* ── Report (Fase 5) ── */
@@ -1887,42 +1914,43 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609271710"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609271710"></script>
-<script src="lista.js?v=202609271710"></script>
-<script src="esporta.js?v=202609271710"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
-<script src="rubrica.js?v=202609271710"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609271710"></script>
-<script src="agenda.js?v=202609271710"></script>
-<script src="coach.js?v=202609271710"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609271710"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609271710"></script>
-<script src="check.js?v=202609271710"></script>
-<script src="mappa.js?v=202609271710"></script>
-<script src="pagina-coach.js?v=202609271710"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609271710"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609271710"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609271710"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609271710"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609271710"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609271710"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609271710"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609271710"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609271710"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609271710"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609271710"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609271710"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609271710"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609271710"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609271710"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609271710"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609271710"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609271710"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609271710"></script>
-<script src="benvenuto.js?v=202609271710"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609271710"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609272046"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609272046"></script>
+<script src="lista.js?v=202609272046"></script>
+<script src="esporta.js?v=202609272046"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
+<script src="rubrica.js?v=202609272046"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609272046"></script>
+<script src="agenda.js?v=202609272046"></script>
+<script src="spazi.js?v=202609272046"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
+<script src="coach.js?v=202609272046"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609272046"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609272046"></script>
+<script src="check.js?v=202609272046"></script>
+<script src="mappa.js?v=202609272046"></script>
+<script src="pagina-coach.js?v=202609272046"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609272046"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609272046"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609272046"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609272046"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609272046"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609272046"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609272046"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609272046"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609272046"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609272046"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609272046"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609272046"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609272046"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609272046"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609272046"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609272046"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609272046"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609272046"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609272046"></script>
+<script src="benvenuto.js?v=202609272046"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609272046"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.27 · 17:10';
+const APP_VERSION = '2026.09.27 · 20:46';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2711,19 +2739,26 @@ async function leggiContattiMiei() {
 }
 
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
-// opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId }
+// opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
+// `spazio`: la riga di `spazi` che si sta riempiendo (MB Plan, 27/09): salvando, lo spazio diventa questo appuntamento e si toglie.
+// Senza `spazio`, per Piano Marketing e Consulenza PRD il foglio propone gli spazi liberi dello stesso tipo (anche dalla scheda).
 // Restituisce { id, inizio } o null. `salta`: il bottone in basso dice «Salta»; `salta`/`resta`: non si va in Agenda dopo il salvataggio.
 async function nuovoAppuntamento(opz = {}) {
   const A = MB21Agenda;
   let elenco = [];
+  const liberi = !opz.spazio && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
   if (!opz.contatto) {
     try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   }
   const st = {
     contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
-    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: 60, durataToccata: false, altra: false, portato: null,
+    tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: opz.durata || 60, durataToccata: !!opz.durata, altra: false, portato: null,
+    spazio: opz.spazio || null,
   };
+  // il tipo chiesto (lo spazio da riempire: «Piano Marketing») torna appena si sceglie una persona che lo può avere
+  const tipoVoluto = st.tipo;
+  const tipoPer = categoria => (A.tipiPer(categoria).includes(tipoVoluto) ? tipoVoluto : null);
   if (st.tipo && !A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
   const eventiGiorno = A.eventiDelGiorno(AG.azioni, opz.giorno || MB21Coda.oggiRoma());
   const oraIniziale = opz.ora || A.oraProposta(eventiGiorno, opz.giorno || MB21Coda.oggiRoma(), new Date().toISOString());
@@ -2772,6 +2807,10 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.tipo) {
         h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))} <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
         h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
+        const suoi = liberi.filter(x => x.tipo === st.tipo);   // i tuoi spazi liberi di questo tipo (MB Plan, 27/09)
+        if (suoi.length) h += `<div class="campo"><label>I tuoi spazi liberi <small>tocca per usarne uno</small></label><div class="ag-scelte" id="na-liberi">${suoi.map(x => {
+          const o = MB21Spazi.orario(x);
+          return `<button type="button" data-libero="${esc(x.id)}" class="${st.spazio && st.spazio.id === x.id ? 'scelto' : ''}">${esc(giornoBreve(o.giorno))} · ${o.ora}</button>`; }).join('')}</div></div>`;
         h += `<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}"><input id="na-ora" type="time" value="${esc(campi.ora)}"></div></div>`;
         // la durata la propone il tipo (Contatto 15 minuti, gli altri un'ora) finché non la si tocca; «Altra…» apre l'ora di fine
@@ -2806,9 +2845,16 @@ async function nuovoAppuntamento(opz = {}) {
       if (inp) inp.onchange = () => {
         const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
         st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
-        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); disegna();
       };
+      velo.querySelectorAll('[data-libero]').forEach(b => { b.onclick = () => {
+        leggiCampi();
+        const x = liberi.find(y => y.id === b.dataset.libero), o = MB21Spazi.orario(x);
+        if (st.spazio && st.spazio.id === x.id) st.spazio = null;
+        else { st.spazio = x; campi.giorno = o.giorno; campi.ora = o.ora; st.durata = o.durata; st.durataToccata = true; st.altra = false; }
+        disegna();
+      }; });
       velo.querySelectorAll('.ag-orelibere button').forEach(b => {
         b.onclick = () => { leggiCampi(); campi.ora = b.dataset.ora; if (st.altra) campi.fine = A.daMinuti(Math.min(1440, A.inMinuti(campi.ora) + (st.durata || 60))); disegna(); };
       });
@@ -2857,6 +2903,12 @@ async function nuovoAppuntamento(opz = {}) {
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+      // lo spazio riempito è diventato questo appuntamento: si toglie (con «Annulla» torna com'era)
+      const usato = st.spazio;
+      if (usato) {
+        await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
+        if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
+      }
       chiudi({ id: data.id, inizio });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
       // piano marketing»): subito il foglio «Prima del PM, manda a Mario…». Dopo che chi ha chiamato ha finito (coda, Agenda, scheda).
@@ -2867,6 +2919,7 @@ async function nuovoAppuntamento(opz = {}) {
         await apriAgenda(v.giorno);
         mostraToast('Appuntamento fissato', async () => {
           await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', data.id));
+          if (usato) await dbq('rimetti spazio', supa.from('spazi').insert({ id: usato.id, user_id: usato.user_id, tipo: usato.tipo, inizio: usato.inizio, durata: usato.durata }));
           await apriAgenda();
         });
       }
