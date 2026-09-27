@@ -261,29 +261,35 @@
   // ── Il percorso Core (Ignazio 26/09): i gradini si leggono insieme ma ognuno si accende da solo, senza ordine obbligato
   // («può succedere che un passo sia fatto prima di un altro»). «Ogni mese»: Leader 1° livello (lc1), Leader Core (le 7
   // abitudini del Modulo Core, `MB21Core.modulo`), Pacesetter (dopo). «Livelli» (dopo): Leaders Club, Executive, Argento, Platino.
-  // Torna { gradini: [{ chiave, titolo, sotto, fatto, stato, mancano: [{ testo, peso }], pronto }], doveSei, prossimo }.
-  // `modulo` null = non ancora letto (la riga dice «…»); `peso` = quanto manca (0-1), per scegliere il prossimo passo.
-  function mancanzeCore(m) {
+  // Torna { gradini: [{ chiave, titolo, sotto, fatto, stato, mancano: [{ cosa, di, peso }], consiglio, pronto }], doveSei, tuttiFatti }.
+  // `modulo` null = non ancora letto (la riga dice «…»); `peso` = quanto manca (0-1), per scegliere il consiglio.
+  // Un consiglio per ogni gradino, che camminano in parallelo (Ignazio 27/09): `consiglio` = la cosa più vicina che manca a
+  // quel gradino, { cosa, di } («ti consiglio [di] …»); consigli, mai ordini.
+  const elenco = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`;
+  // `giaDetti`: i biglietti che il consiglio del 1° livello dice già (BBS, WES): il Core non li ripete
+  function mancanzeCore(m, finora, giaDetti) {
     const out = [];
-    const n = m.giorni;
-    if (!m.abitudini[0]) out.push({ testo: `${m.s1.obiettivo - m.s1.quanti} PM`, peso: (m.s1.obiettivo - m.s1.quanti) / m.s1.obiettivo });
-    if (!m.abitudini[1]) out.push({ testo: 'il consumo personale', peso: 0.5 });
-    if (!m.abitudini[2]) out.push({ testo: `${m.s3.obiettivo - m.s3.quanti} clienti`, peso: (m.s3.obiettivo - m.s3.quanti) / m.s3.obiettivo });
-    if (!m.abitudini[3]) out.push({ testo: `una traccia ogni giorno (${m.s4.quanti} su ${n})`, peso: (n - m.s4.quanti) / n });
-    if (!m.abitudini[4]) out.push({ testo: `10 pagine ogni giorno (${m.s5.quanti} su ${n})`, peso: (n - m.s5.quanti) / n });
+    const n = m.giorni, g = finora || n, su = q => `${q} su ${g}${g < n ? ' giorni finora' : ''}`;
+    const gia = new Set(giaDetti || []);
+    const pm = m.s1.obiettivo - m.s1.quanti, cl = m.s3.obiettivo - m.s3.quanti;
+    if (!m.abitudini[0]) out.push({ cosa: pm === 1 ? 'un Piano Marketing in più' : `${pm} Piani Marketing in più`, peso: pm / m.s1.obiettivo });
+    if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5 });
+    if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo });
+    if (!m.abitudini[3]) out.push({ cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n });
+    if (!m.abitudini[4]) out.push({ cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n });
     if (!m.abitudini[5]) {
       const pezzi = [];
-      if (m.s6.open < m.s6.valide) pezzi.push(`OPEN (${m.s6.open} su ${m.s6.valide})`);
-      if (!m.s6.bbs) pezzi.push('biglietto BBS');
-      if (!m.s6.wes) pezzi.push('biglietto WES');
-      out.push({ testo: pezzi.join(' · ') || 'gli incontri', peso: 0.4 });
+      if (m.s6.open < m.s6.valide) pezzi.push(`gli OPEN (${m.s6.open} su ${m.s6.valide})`);
+      if (!m.s6.bbs && !gia.has('BBS')) pezzi.push('il biglietto BBS');
+      if (!m.s6.wes && !gia.has('WES')) pezzi.push('il biglietto WES');
+      if (pezzi.length) out.push({ cosa: elenco(pezzi), peso: 0.4 });
     }
     if (!m.abitudini[6]) {
       const pezzi = [];
-      if (!m.s7.counseling) pezzi.push('counseling');
-      if (m.s7.edificazione !== true) pezzi.push('edificazione');
-      if (m.s7.no_crossline !== true) pezzi.push('no-crossline');
-      out.push({ testo: `squadra: ${pezzi.join(' · ')}`, peso: 0.3 });
+      if (!m.s7.counseling) pezzi.push('il counseling');
+      if (m.s7.edificazione !== true) pezzi.push("l'edificazione");
+      if (m.s7.no_crossline !== true) pezzi.push('il no-crossline');
+      out.push({ cosa: elenco(pezzi), peso: 0.3 });
     }
     return out;
   }
@@ -304,26 +310,27 @@
   }
   const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09)
   // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
-  const VERBI_LC1 = { vp: 'ti consiglio di arrivare a 100 VP', bbs: 'ti consiglio il biglietto BBS', wes: 'ti consiglio il biglietto WES', cep: "ti consiglio l'abbonamento CEP" };
+  const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP', di: true }, bbs: { cosa: 'il biglietto BBS' }, wes: { cosa: 'il biglietto WES' }, cep: { cosa: "l'abbonamento CEP" } };
+  const piuVicina = xs => xs.length ? xs.reduce((a, b) => (b.peso < a.peso ? b : a)) : null;
   function percorso({ lc1: l, modulo: m }) {
     const gradini = [];
-    gradini.push({ chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
+    const mancaLc1 = (l.luci || []).filter(x => !x.ok);
+    const g1 = { chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
       stato: l.fatto ? 'fatto' : `${l.accese} su 4`,
-      mancano: (l.luci || []).filter(x => !x.ok).map(x => ({ testo: VERBI_LC1[x.chiave], peso: x.chiave === 'vp' ? 0.6 : 0.2 })) });
-    const fatte = m ? m.fatte : null;
-    gradini.push({ chiave: 'core', titolo: 'Leader Core', sotto: 'le 7 abitudini del mese', fatto: !!m && m.fatte === 7, pronto: !!m,
-      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${fatte} su 7`, mancano: m ? mancanzeCore(m) : [],
-      voci: m ? vociCore(m, l.inCorso && l.al ? Number(l.al.slice(8, 10)) : null) : [] });
+      mancano: mancaLc1.map(x => ({ ...COSE_LC1[x.chiave], peso: x.chiave === 'vp' ? 0.6 : 0.2 })) };
+    g1.consiglio = g1.fatto ? null : piuVicina(g1.mancano);
+    gradini.push(g1);
+    const finora = l.inCorso && l.al ? Number(l.al.slice(8, 10)) : null;
+    // il Core non ripete i biglietti che mancano già nelle luci del 1° livello: li consiglia lì
+    const giaDetti = mancaLc1.filter(x => x.chiave === 'bbs' || x.chiave === 'wes').map(x => x.titolo);
+    const g2 = { chiave: 'core', titolo: 'Leader Core', sotto: 'le 7 abitudini del mese', fatto: !!m && m.fatte === 7, pronto: !!m,
+      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${m.fatte} su 7`, mancano: m ? mancanzeCore(m, finora, giaDetti) : [],
+      voci: m ? vociCore(m, finora) : [] };
+    g2.consiglio = g2.fatto || !g2.pronto ? null : piuVicina(g2.mancano);
+    gradini.push(g2);
     const fatti = gradini.filter(g => g.fatto);
     const doveSei = fatti.length ? fatti[fatti.length - 1].titolo : null;
-    // il prossimo passo: la cosa più vicina che manca, non il gradino dopo nell'ordine (Ignazio 26/09)
-    let prossimo = null;
-    for (const g of gradini) {
-      if (g.fatto || !g.pronto || !g.mancano.length) continue;
-      const min = g.mancano.reduce((a, b) => (b.peso < a.peso ? b : a));
-      if (!prossimo || min.peso < prossimo.peso) prossimo = { peso: min.peso, testo: `${min.testo} → ${g.titolo}` };
-    }
-    return { gradini, doveSei, prossimo: prossimo ? prossimo.testo : null, tuttiFatti: gradini.every(g => g.fatto) };
+    return { gradini, doveSei, tuttiFatti: gradini.every(g => g.fatto) };
   }
 
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {

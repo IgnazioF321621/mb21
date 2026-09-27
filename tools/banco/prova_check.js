@@ -274,26 +274,38 @@ const lc1Di = (vp, wes) => C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiet
   biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-11-01', contatto: wes }], cep: cepSempre, eventi: ev });
 const moduloVuoto = K.modulo({ mese: '2026-10', obiettivi: { vpp_amway: 187.5 }, oggi: '2026-10-20' });
 
-prova('Percorso: Leader 1° livello a 3 su 4 e Leader Core a 1 su 7; il prossimo passo è il biglietto WES (la cosa più vicina)', () => {
+prova('Percorso: un consiglio per ogni gradino, in parallelo (Ignazio 27/09); il Core non ripete il biglietto che manca nelle luci', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: moduloVuoto });
   assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false]]);
   assert.equal(p.doveSei, null);
-  assert.equal(p.prossimo, 'ti consiglio il biglietto WES → Leader 1° livello');
-  assert.deepEqual(p.gradini[1].mancano.map(x => x.testo).slice(0, 2), ['8 PM', '10 clienti']);
-  assert.match(p.gradini[1].mancano.map(x => x.testo).join(' | '), /OPEN \(0 su 5\) · biglietto BBS · biglietto WES/);
+  assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2 });
+  assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3 });
+  assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', '10 clienti in più']);
+  const incontri = p.gradini[1].mancano.map(x => x.cosa).join(' | ');
+  assert.match(incontri, /gli OPEN \(0 su 5\) e il biglietto BBS/);   // il BBS è acceso nelle luci: il Core lo dice ancora (qui il modulo finto è senza biglietti)
+  assert.doesNotMatch(incontri, /biglietto WES/);                         // il WES manca nelle luci: lo consiglia il 1° livello
+  assert.match(incontri, /una traccia ogni giorno \(0 su 20 giorni finora\)/);
+});
+
+prova('Percorso: il caso di Isabella (27/09) — manca solo 100 VP: il 1° livello consiglia i VP, il Core la sua cosa più vicina', () => {
+  const p = C.percorso({ lc1: C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiettivi: [{ mese: '2026-10-01', vpp_amway: 47.46 }],
+    biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-11-01', contatto: true }], cep: cepSempre, eventi: ev }), modulo: moduloVuoto });
+  assert.deepEqual(p.gradini[0].consiglio, { cosa: 'arrivare a 100 VP', di: true, peso: 0.6 });
+  assert.ok(p.gradini[1].consiglio && p.gradini[1].consiglio.cosa !== 'arrivare a 100 VP');
 });
 
 prova('Percorso: senza ancora il Modulo Core la riga dice «…» e il prossimo passo viene solo dal primo gradino', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: null });
-  assert.deepEqual([p.gradini[1].stato, p.gradini[1].pronto, p.gradini[1].mancano], ['…', false, []]);
-  assert.equal(p.prossimo, 'ti consiglio il biglietto WES → Leader 1° livello');
+  assert.deepEqual([p.gradini[1].stato, p.gradini[1].pronto, p.gradini[1].mancano, p.gradini[1].consiglio], ['…', false, [], null]);
+  assert.equal(p.gradini[0].consiglio.cosa, 'il biglietto WES');
 });
 
 prova('Percorso: Leader 1° livello fatto → «dove sei» lo dice, e il prossimo passo passa a Leader Core (la mancanza più piccola)', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto });
   assert.equal(p.gradini[0].stato, 'fatto');
   assert.equal(p.doveSei, 'Leader 1° livello');
-  assert.equal(p.prossimo, 'squadra: counseling · edificazione · no-crossline → Leader Core');   // peso 0.3, la più vicina
+  assert.equal(p.gradini[0].consiglio, null);   // fatto: niente consiglio
+  assert.equal(p.gradini[1].consiglio.cosa, "il counseling, l'edificazione e il no-crossline");   // peso 0.3, la più vicina
   assert.equal(p.tuttiFatti, false);
 });
 
@@ -302,9 +314,10 @@ prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se 
   const p = C.percorso({ lc1: lc1Di(99, true), modulo: fintoCore });
   assert.deepEqual(p.gradini.map(g => g.fatto), [false, true]);
   assert.equal(p.doveSei, 'Leader Core');
-  assert.equal(p.prossimo, 'ti consiglio di arrivare a 100 VP → Leader 1° livello');
+  assert.equal(p.gradini[0].consiglio.cosa, 'arrivare a 100 VP');
+  assert.equal(p.gradini[1].consiglio, null);
   const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore });
-  assert.ok(tutto.tuttiFatti && tutto.prossimo === null);
+  assert.ok(tutto.tuttiFatti && tutto.gradini.every(g => g.consiglio === null));
 });
 
 prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mese in corso, «fatto» uguale su tutte le righe fatte', () => {
