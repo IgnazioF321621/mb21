@@ -135,6 +135,11 @@ prova('Tracce, solo settembre 2026 (Ignazio 27/09): conta il totale, giorni cumu
   const ott = C.modulo({ mese: '2026-10', check: check.map(c => ({ ...c, data: c.data.replace('-09-', '-10-') })), tracce: [] });
   assert.deepEqual([ott.s4.totale, ott.s4.aTotale, ott.s4.fatta], [29, false, false]);
   assert.equal(C.MESE_A_TOTALE, '2026-09');
+  // mese in corso: il totale si confronta con i giorni passati (Ignazio 27/09: «siamo al giorno 27»)
+  const al27 = C.modulo({ mese: '2026-09', check: [{ data: '2026-09-05', pagine: 188 }, { data: '2026-09-06', pagine: 90 }, { data: '2026-09-07', tracce: 27 }], oggi: '2026-09-27' });
+  assert.deepEqual([al27.s5.obiettivo, al27.s5.finora, al27.s5.fatta, al27.s4.obiettivo, al27.s4.fatta], [270, true, true, 27, true]);
+  const al27poche = C.modulo({ mese: '2026-09', check: [{ data: '2026-09-05', pagine: 188, tracce: 26 }], oggi: '2026-09-27' });
+  assert.deepEqual([al27poche.s5.fatta, al27poche.s4.fatta], [false, false]);
   // pagine, stesso ragionamento: almeno 10 × i giorni del mese in tutto
   const pag = C.modulo({ mese: '2026-09', check: [{ data: '2026-09-05', pagine: 200 }, { data: '2026-09-20', pagine: 100 }] });
   assert.deepEqual([pag.s5.pagine, pag.s5.obiettivo, pag.s5.quanti, pag.s5.fatta, pag.abitudini[4]], [300, 300, 2, true, true]);

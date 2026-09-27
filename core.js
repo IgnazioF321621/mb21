@@ -105,9 +105,12 @@
     s4.quanti = s4.giorni.filter(g => g.fatto).length;
     // Solo settembre 2026 (Ignazio 27/09: «solo ed esclusivamente per questo mese»): col passaggio all'app nuova alcuni giorni
     // sono cumulativi e altri vuoti, quindi vale il totale delle tracce: se è almeno uguale ai giorni del mese, è fatta. Per tutti.
+    // col mese in corso il totale si confronta con i giorni già passati, non con tutto il mese (Ignazio 27/09: «siamo al giorno 27»)
+    const finora = oggi && oggi.slice(0, 7) === mese ? Number(oggi.slice(8, 10)) : n;
     s4.totale = s4.giorni.reduce((t, g) => t + g.quante, 0);
     s4.aTotale = mese === MESE_A_TOTALE;
-    s4.fatta = s4.aTotale ? s4.totale >= n : s4.quanti >= n;
+    s4.obiettivo = finora; s4.finora = finora < n;
+    s4.fatta = s4.aTotale ? s4.totale >= s4.obiettivo : s4.quanti >= n;
 
     // 5 · Leggere 10 pagine al giorno: libro in corso, un cerchietto per giorno, punti su cui concentrarsi (a mano)
     const conLibro = check.filter(c => c.libro && nelMese(c.data, mese)).sort((x, y) => (x.data < y.data ? 1 : -1));
@@ -121,7 +124,7 @@
     s5.pagine = s5.giorni.reduce((t, g) => t + g.pagine, 0);
     // settembre 2026, stesso ragionamento delle tracce (Ignazio 27/09): fatta con almeno 10 pagine per giorno del mese in tutto
     s5.aTotale = mese === MESE_A_TOTALE;
-    s5.obiettivo = OBIETTIVI.pagine * n;
+    s5.obiettivo = OBIETTIVI.pagine * finora; s5.finora = finora < n;
     s5.fatta = s5.aTotale ? s5.pagine >= s5.obiettivo : s5.quanti >= n;
 
     // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda).
