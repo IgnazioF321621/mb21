@@ -157,8 +157,10 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   esegui(`CK.meseCard = null;`);
   // tutto fatto: titoli verdi, riga verde
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-11-01', contatto: true });   // a settembre in vendita c'è il WES di novembre
-    CK.core['2026-09-01'].modulo.fatte = 7; CK.core['2026-09-01'].modulo.abitudini = [true, true, true, true, true, true, true];`);
+    CK.core['2026-09-01'].modulo.fatte = 7; CK.core['2026-09-01'].modulo.abitudini = [true, true, true, true, true, true, true];
+    CK.giorni.push({ data: '2026-09-10', sponsor_personali: 2 });   // Pacesetter: 2 sponsor personali scritti nel Check`);
   const h3 = disegna();
+  assert.match(h3, /<button class="sez core ok" data-gradino="pace" aria-expanded="false"><b>✓ Pacesetter<small>2 sponsor personali, 100 VP e CEP<\/small><\/b><span><span class="st">fatto<\/span>/);
   assert.match(h3, /<button class="sez core ok" data-gradino="core"[^>]*><b>✓ Leader Core<\/b><span><span class="st">7 su 7<\/span>/);
   assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
   assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
@@ -197,6 +199,20 @@ prova('La card ha il suo mese con ‹ ›; Mese · WES · Anno e le frecce del p
   esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15'); CK.meseCard = '2026-08-01';`);
   assert.match(card(disegna()), /aria-label="Mese dopo" >›/);
   esegui(`CK.meseCard = null;`);
+});
+
+prova('Pacesetter, terza riga (Ignazio 26/09): 2 sponsor personali scritti nel Check · 100 VP · CEP, si apre come Leader Core', () => {
+  const sp = esegui(`CK.giorni.findIndex(g => g.sponsor_personali === 2 && g.data === '2026-09-10')`);
+  esegui(`CK.giorni.splice(${sp}, 1); CK.giorni.push({ data: '2026-09-04', sponsor_personali: 1 }, { data: '2026-08-20', sponsor_personali: 5 }); CK.aperti.add('pace');`);   // agosto non conta
+  const h = disegna();
+  assert.match(h, /data-gradino="pace" aria-expanded="true"><b>Pacesetter<\/b><span><span class="st">2 su 3<\/span><span class="apri">⌄<\/span>/);
+  const voci = h.slice(h.indexOf('data-gradino="pace"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
+  assert.match(voci, /<div class=""><span>2 sponsor personali<\/span><span>1 su 2<\/span><\/div>/);
+  assert.match(voci, /<div class="ok"><span>✓ 100 VP<\/span><span>fatto<\/span><\/div>/);
+  assert.match(voci, /<div class="ok"><span>✓ CEP<\/span><span>fatto<\/span><\/div>/);
+  assert.match(voci, /<div class="prossimo">Ti consiglio di sponsorizzare ancora una persona<\/div>/);
+  assert.doesNotMatch(h, /Tutti i gradini/);
+  esegui(`CK.aperti.clear()`);
 });
 
 console.log(`\n${ok} prove superate`);
