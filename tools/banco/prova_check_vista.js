@@ -98,14 +98,14 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   const h = disegna();
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
   // due domande (Ignazio 27/09): sopra la card, sotto «I numeri del periodo» con Confronta con → Gli ultimi 12 mesi → i gruppi
-  const posti = ['class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
+  const posti = ['<h2 class="ck-sezione">Il tuo percorso</h2>', 'class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
   assert.ok(posti.every((x, i) => x > 0 && (i === 0 || x > posti[i - 1])), posti.join(' '));
   assert.doesNotMatch(h, /class="sv"/);
 });
 
 prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con le quattro luci sotto, senza il mese; con «Tutti» non c\'è', () => {
   let h = disegna();
-  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('class="ck-sezione"'));
+  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('<h2 class="ck-sezione">I numeri'));
   assert.ok(card.length > 0);
   assert.match(card, /<div class="sez "><b>Leader 1° livello<\/b><span class="st">2 su 4<\/span><\/div>/);
   assert.doesNotMatch(card, /settembre/);                                    // il mese lo dice il periodo sopra
@@ -113,6 +113,7 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   assert.match(card, /class="luce cep on /);
   assert.match(card, /class="luce vp {2}"/);
   assert.doesNotMatch(card, /Ti manca/);
+  assert.match(card, /class="luce wes  "><i><\/i>WES<small>manca<\/small>/);   // solo «manca», niente mese tagliato (Ignazio 27/09)
   assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
   assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
@@ -138,7 +139,7 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo'));
   assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
-  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 su 30<\/span><\/div>/);
+  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 su 15 giorni finora<\/span><\/div>/);   // i giorni passati, non tutto il mese (Ignazio 27/09)
   assert.match(voci, /<span>OPEN · BBS · WES<\/span><span>OPEN 0 su 5 · BBS · WES<\/span>/);
   assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
   assert.equal((voci.match(/<div class="/g) || []).length, 7);

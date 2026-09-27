@@ -243,7 +243,7 @@
       if (biglietti == null) return { ok: false, ignoto: true, testo: 'non lo so' };
       if (!attivo) return { ok: false, testo: 'nessuno in vendita' };
       const ok = biglietti.some(b => b.tipo === tipo && b.contatto && b.evento === attivo);
-      return { ok, evento: attivo, testo: ok ? L.etichettaEvento(attivo) : `manca ${L.etichettaEvento(attivo)}` };
+      return { ok, evento: attivo, testo: ok ? L.etichettaEvento(attivo) : 'manca' };   // solo «manca»: il mese usciva tagliato (Ignazio 27/09)
     };
     const cepOk = cep == null ? null : (cep || []).some(p => p.dal <= al && (!p.uscito_il || p.uscito_il >= al));
     const luci = [
@@ -288,19 +288,21 @@
     return out;
   }
   // Le 7 abitudini, una riga ciascuna, per quando «Leader Core» si apre: titolo, fatta, e a destra lo stato in due parole
-  function vociCore(m) {
-    const n = m.giorni, f = m.abitudini;
+  // `finora` = i giorni già passati del mese (mese in corso) oppure tutti (mese chiuso): «12 su 15 giorni finora» (Ignazio 27/09)
+  function vociCore(m, finora) {
+    const n = m.giorni, f = m.abitudini, g = finora || n;
     const vp = m.s2.vp == null ? '—' : `${formato(m.s2.vp, 0)} VP`;
     return [
-      { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? String(m.s1.quanti) : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
-      { testo: 'Consumo personale', fatto: f[1], stato: vp },
-      { testo: '10 clienti', fatto: f[2], stato: f[2] ? String(m.s3.quanti) : `mancano ${m.s3.obiettivo - m.s3.quanti}` },
-      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: `${m.s4.quanti} su ${n}` },
-      { testo: '10 pagine ogni giorno', fatto: f[4], stato: `${m.s5.quanti} su ${n}` },
-      { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? '' : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },
-      { testo: 'Squadra', fatto: f[6], stato: f[6] ? '' : [!m.s7.counseling ? 'counseling' : '', m.s7.edificazione !== true ? 'edificazione' : '', m.s7.no_crossline !== true ? 'no-crossline' : ''].filter(Boolean).join(' · ') },
+      { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? FATTO : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
+      { testo: 'Consumo personale', fatto: f[1], stato: f[1] ? FATTO : vp },
+      { testo: '10 clienti', fatto: f[2], stato: f[2] ? FATTO : `mancano ${m.s3.obiettivo - m.s3.quanti}` },
+      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
+      { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
+      { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },
+      { testo: 'Squadra', fatto: f[6], stato: f[6] ? FATTO : [!m.s7.counseling ? 'counseling' : '', m.s7.edificazione !== true ? 'edificazione' : '', m.s7.no_crossline !== true ? 'no-crossline' : ''].filter(Boolean).join(' · ') },
     ];
   }
+  const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09)
   const VERBI_LC1 = { vp: 'arriva a 100 VP', bbs: 'compra il biglietto BBS', wes: 'compra il biglietto WES', cep: 'abbonati al CEP' };
   function percorso({ lc1: l, modulo: m }) {
     const gradini = [];
@@ -309,7 +311,8 @@
       mancano: (l.luci || []).filter(x => !x.ok).map(x => ({ testo: VERBI_LC1[x.chiave], peso: x.chiave === 'vp' ? 0.6 : 0.2 })) });
     const fatte = m ? m.fatte : null;
     gradini.push({ chiave: 'core', titolo: 'Leader Core', sotto: 'le 7 abitudini del mese', fatto: !!m && m.fatte === 7, pronto: !!m,
-      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${fatte} su 7`, mancano: m ? mancanzeCore(m) : [], voci: m ? vociCore(m) : [] });
+      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${fatte} su 7`, mancano: m ? mancanzeCore(m) : [],
+      voci: m ? vociCore(m, l.inCorso && l.al ? Number(l.al.slice(8, 10)) : null) : [] });
     const fatti = gradini.filter(g => g.fatto);
     const doveSei = fatti.length ? fatti[fatti.length - 1].titolo : null;
     // il prossimo passo: la cosa più vicina che manca, non il gradino dopo nell'ordine (Ignazio 26/09)

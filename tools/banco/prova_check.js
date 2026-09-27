@@ -238,7 +238,7 @@ prova('LC1: sotto i 100 VP e senza biglietto WES (o solo per il compagno) = 2 su
   assert.equal(l.accese, 2);
   assert.equal(l.fatto, false);
   assert.deepEqual(l.mancano, ['100 VP', 'WES']);
-  assert.equal(l.luci[2].testo, 'manca 11-2026');
+  assert.equal(l.luci[2].testo, 'manca');   // solo «manca»: il mese usciva tagliato (Ignazio 27/09)
 });
 
 prova('LC1: fotografia a fine mese — il CEP uscito il 15 non vale a ottobre, il WES di gennaio caricato a novembre non conta a ottobre', () => {
@@ -298,6 +298,20 @@ prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se 
   assert.equal(p.prossimo, 'arriva a 100 VP → Leader 1° livello');
   const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore });
   assert.ok(tutto.tuttiFatti && tutto.prossimo === null);
+});
+
+prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mese in corso, «fatto» uguale su tutte le righe fatte', () => {
+  const p = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto });   // oggi 20/10, mese in corso
+  const voci = p.gradini[1].voci;
+  assert.equal(voci[3].stato, '0 su 20 giorni finora');
+  assert.equal(voci[4].stato, '0 su 20 giorni finora');
+  assert.equal(voci[1].stato, 'fatto');   // consumo personale fatto: «fatto», non i VP
+  const fintoCore = { ...moduloVuoto, fatte: 7, abitudini: [true, true, true, true, true, true, true] };
+  const tutte = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore }).gradini[1].voci;
+  assert.deepEqual([...new Set(tutte.map(v => v.stato))], ['fatto']);
+  // mese chiuso: i giorni sono quelli del mese, senza «finora»
+  const chiuso = C.percorso({ lc1: C.lc1({ mese: '2026-10-01', oggi: '2026-12-05', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }], biglietti: [], cep: cepSempre, eventi: ev }), modulo: moduloVuoto });
+  assert.equal(chiuso.gradini[1].voci[3].stato, '0 su 31');
 });
 
 console.log(`\n${ok} prove superate`);
