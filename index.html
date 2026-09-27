@@ -1544,12 +1544,18 @@
   /* LC1 (26/09): il traguardo del mese, quattro luci (100 VP · BBS · WES · CEP) e cosa manca */
   .ck-lc1 { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 12px 10px; margin: 0 0 12px; border-left: 4px solid var(--grigio-chiaro); }
   .ck-lc1.fatto { border-left-color: var(--ok); }
-  .ck-lc1 .testa { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .ck-lc1 .testa b { font-size: 16px; }
-  .ck-lc1 .testa small { display: block; font-size: 12.5px; color: var(--testo-soft); }
-  .ck-lc1 .stato { font-weight: 800; font-size: 15px; color: var(--grigio); white-space: nowrap; }
-  .ck-lc1.fatto .stato { color: var(--ok); }
-  .ck-lc1 .luci { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 8px; }
+  .ck-lc1 .sez { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0 2px; width: 100%; border: 0; background: none; text-align: left; font: inherit; color: var(--testo); }
+  .ck-lc1 .sez b { font-size: 16px; color: var(--gr-volume); }
+  .ck-lc1 .sez.ok b { color: var(--ok); }
+  .ck-lc1 .sez .st { font-weight: 800; font-size: 15px; color: var(--grigio); white-space: nowrap; }
+  .ck-lc1 .sez.ok .st { color: var(--ok); }
+  .ck-lc1 .sez .apri { font-size: 20px; line-height: 1; color: var(--testo-tenue); margin-left: 8px; }
+  .ck-lc1 .sez.core { border-top: 1px solid var(--linea); margin-top: 10px; padding-top: 10px; }
+  .ck-lc1 .voci { padding: 0 0 4px; }
+  .ck-lc1 .voci div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px dashed var(--linea); color: var(--testo); }
+  .ck-lc1 .voci div.ok { color: var(--ok); }
+  .ck-lc1 .voci div span:last-child { color: var(--testo-soft); white-space: nowrap; }
+  .ck-lc1 .luci { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0 4px; }
   .ck-lc1 .luce { --luce: var(--grigio); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 8px 4px 6px; min-width: 0;
     border-radius: var(--raggio-bottone); background: var(--superficie-2); color: var(--grigio); font-size: 13px; font-weight: 700; }
   .ck-lc1 .luce i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--luce); font-style: normal; font-size: 13px; line-height: 18px; color: #fff; }
@@ -1559,19 +1565,6 @@
   .ck-lc1 .luce.vp { --luce: var(--proposta); }   /* ambra: il blu era uguale al BBS (Ignazio 26/09) */ .ck-lc1 .luce.bbs { --luce: var(--bbs); } .ck-lc1 .luce.wes { --luce: var(--pericolo); } .ck-lc1 .luce.cep { --luce: var(--gr-segni); }
   .ck-lc1 .luce small { font-weight: 500; font-size: 11px; color: var(--testo-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .ck-lc1 .nota-lc1 { display: block; font-size: 13px; color: var(--testo-soft); }
-  .ck-lc1 .scala { margin: 8px 0 2px; border-top: 1px solid var(--linea); padding-top: 4px; }
-  .ck-lc1 .grad { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; padding: 7px 2px; color: var(--testo-tenue); }
-  .ck-lc1 .grad + .grad { border-top: 1px dashed var(--linea); }
-  .ck-lc1 .grad i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--spento); font-style: normal; font-size: 12px; line-height: 18px; text-align: center; color: var(--testo-tenue); font-weight: 800; }
-  .ck-lc1 .grad.qui { color: var(--testo); }
-  .ck-lc1 .grad.qui i { border-color: var(--accento); color: var(--accento); }
-  .ck-lc1 .grad.ok { color: var(--testo); }
-  .ck-lc1 .grad.ok i { background: var(--ok); border-color: var(--ok); color: #fff; }
-  .ck-lc1 .grad b { font-size: 14px; }
-  .ck-lc1 .grad small { display: block; font-size: 12px; color: var(--testo-soft); }
-  .ck-lc1 .grad .st { font-size: 13px; font-weight: 800; white-space: nowrap; color: var(--spento); }
-  .ck-lc1 .grad.qui .st { color: var(--accento); }
-  .ck-lc1 .grad.ok .st { color: var(--ok); }
   .ck-lc1 .prossimo { margin-top: 8px; background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 8px 10px; font-size: 13px; font-weight: 600; }
   .ck-lc1 .prossimo.fatto { background: var(--ok-tinta); color: var(--ok); }
   /* con quanti periodi fa si confronta (Ignazio 20/09) */
@@ -1853,41 +1846,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609270831"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609270831"></script>
-<script src="lista.js?v=202609270831"></script>
-<script src="rubrica.js?v=202609270831"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609270831"></script>
-<script src="agenda.js?v=202609270831"></script>
-<script src="coach.js?v=202609270831"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609270831"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609270831"></script>
-<script src="check.js?v=202609270831"></script>
-<script src="mappa.js?v=202609270831"></script>
-<script src="pagina-coach.js?v=202609270831"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609270831"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609270831"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609270831"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609270831"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609270831"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609270831"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609270831"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609270831"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609270831"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609270831"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609270831"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609270831"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609270831"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609270831"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609270831"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609270831"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609270831"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609270831"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609270831"></script>
-<script src="benvenuto.js?v=202609270831"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609270831"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609270845"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609270845"></script>
+<script src="lista.js?v=202609270845"></script>
+<script src="rubrica.js?v=202609270845"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609270845"></script>
+<script src="agenda.js?v=202609270845"></script>
+<script src="coach.js?v=202609270845"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609270845"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609270845"></script>
+<script src="check.js?v=202609270845"></script>
+<script src="mappa.js?v=202609270845"></script>
+<script src="pagina-coach.js?v=202609270845"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609270845"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609270845"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609270845"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609270845"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609270845"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609270845"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609270845"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609270845"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609270845"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609270845"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609270845"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609270845"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609270845"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609270845"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609270845"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609270845"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609270845"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609270845"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609270845"></script>
+<script src="benvenuto.js?v=202609270845"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609270845"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.27 · 08:31';
+const APP_VERSION = '2026.09.27 · 08:45';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -3159,7 +3152,7 @@ function disegnaStorico(velo, dati) {
   velo.querySelectorAll('[data-slchi]').forEach(x => x.onclick = () => { SL.chi = x.dataset.slchi; disegnaStorico(velo, dati); velo.querySelector('.foglio').scrollTop = 0; });
 }
 
-const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperta: null, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
+const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperti: new Set(), aperta: null, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
 // I gruppi del Check chiusi (Volume, Azione, Segni Vitali N21, Crescita) si ricordano sul telefono: è una comodità
 // di chi guarda, quindi solo qui; se la memoria del telefono non risponde, si parte tutti aperti
 function leggiGruppiChiusi() {
@@ -3275,28 +3268,26 @@ function lc1Html(p, oggi) {
   const fine = p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi;
   const l = C.lc1({ mese: p.tipo === 'mese' ? p.da : fine, oggi, obiettivi: CK.obiettivi, biglietti: CK.lc1.biglietti, cep: CK.lc1.cep, eventi: CK.eventi });
   const io = visto().id === ST.utente.id;
-  if (l.prima) return `<div class="ck-lc1"><div class="testa"><span><b>Dove sei · ${esc(l.nome)}</b><small>il percorso Core, un gradino alla volta</small></span></div>
+  // niente mese nel titolo: lo dice già il periodo sopra (Ignazio 26/09: «settembre è scritto da tutte le parti»)
+  if (l.prima) return `<div class="ck-lc1"><div class="sez"><b>Leader 1° livello</b></div>
     <small class="nota-lc1">Il percorso si conta da settembre 2026, il nuovo anno di performance</small></div>`;
-  // Leader Core: il Modulo Core del mese si legge al bisogno (una volta per mese guardato); intanto la riga dice «…»
   const core = CK.core[l.mese];
   if (!core) caricaCoreCheck(l.mese);
   const pc = C.percorso({ lc1: l, modulo: core && core.modulo ? core.modulo : null });
-  // sotto le luci solo quello che i gradini non dicono già: il mese chiuso, la scheda che manca
+  const [g1, g2] = pc.gradini;
   const avvisi = [];
   if (!l.fatto && !l.inCorso) avvisi.push('mese chiuso');
   if (l.luci.some(x => x.ignoto && x.chiave !== 'vp')) avvisi.push(io ? 'non trovo la scheda col tuo codice Amway: chiedi all\'Admin' : 'nessuna scheda col suo codice Amway');
-  const nota = avvisi.join(' · ');
-  // le mancanze di un gradino: le prime tre, poi «e altre N»
-  const mancanze = g => g.mancano.slice(0, 3).map(x => x.testo).join(' · ') + (g.mancano.length > 3 ? ` · e altre ${g.mancano.length - 3}` : '');
-  const stato = pc.doveSei || `${l.accese} su 4`;
   const prossimo = pc.tuttiFatti ? (io ? 'Tutti i gradini di questo mese sono tuoi' : 'Tutti i gradini di questo mese sono fatti')
     : pc.prossimo ? `Prossimo passo: ${pc.prossimo}` : core && core.errore ? 'Non riesco a leggere il Modulo Core: riprova' : '';
+  const aperto = CK.aperti.has('core');
   return `<div class="ck-lc1 ${l.fatto ? 'fatto' : ''}">
-    <div class="testa"><span><b>Dove sei · ${esc(l.nome)}</b><small>il percorso Core, un gradino alla volta</small></span><span class="stato">${esc(stato)}</span></div>
+    <div class="sez ${g1.fatto ? 'ok' : ''}"><b>${g1.fatto ? '✓ ' : ''}Leader 1° livello</b><span class="st">${esc(g1.stato)}</span></div>
     <div class="luci">${l.luci.map(x => `<span class="luce ${x.chiave} ${x.ok ? 'on' : ''} ${x.ignoto ? 'ignoto' : ''}"><i>${x.ok ? '✓' : x.ignoto ? '?' : ''}</i>${esc(x.titolo)}<small>${esc(x.testo)}</small></span>`).join('')}</div>
-    ${nota ? `<small class="nota-lc1">${esc(nota)}</small>` : ''}
-    <div class="scala">${pc.gradini.map((g, i) => `<div class="grad ${g.fatto ? 'ok' : g.pronto ? 'qui' : ''}" data-grad="${g.chiave}"><i>${g.fatto ? '✓' : i + 1}</i>
-      <span><b>${esc(g.titolo)}</b><small>${esc(g.fatto || !g.mancano.length ? g.sotto : mancanze(g))}</small></span><span class="st">${esc(g.stato)}</span></div>`).join('')}</div>
+    ${avvisi.length ? `<small class="nota-lc1">${esc(avvisi.join(' · '))}</small>` : ''}
+    <button class="sez core ${g2.fatto ? 'ok' : ''}" data-gradino="core" aria-expanded="${aperto ? 'true' : 'false'}"><b>${g2.fatto ? '✓ ' : ''}Leader Core</b><span><span class="st">${esc(g2.stato)}</span><span class="apri">${aperto ? '⌄' : '›'}</span></span></button>
+    ${aperto ? `<div class="voci">${g2.voci.length ? g2.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')
+      : `<div><span>${core && core.errore ? 'Non riesco a leggere il Modulo Core' : 'Leggo il Modulo Core…'}</span><span></span></div>`}</div>` : ''}
     ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}</div>`;
 }
 
@@ -3320,6 +3311,11 @@ function collegaCheck() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
   su('ck-storico', foglioStorico);
+  app.querySelectorAll('[data-gradino]').forEach(b => b.onclick = () => {   // un gradino del percorso si apre e si chiude (Ignazio 26/09)
+    const k = b.dataset.gradino;
+    if (CK.aperti.has(k)) CK.aperti.delete(k); else CK.aperti.add(k);
+    disegnaCheck();
+  });
   app.querySelectorAll('[data-ckgruppo]').forEach(b => b.onclick = () => {
     const k = b.dataset.ckgruppo;
     if (CK.chiusi.has(k)) CK.chiusi.delete(k); else CK.chiusi.add(k);

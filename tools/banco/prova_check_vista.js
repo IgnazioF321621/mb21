@@ -101,21 +101,23 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   assert.doesNotMatch(h, /class="sv"/);
 });
 
-prova('«Dove sei» in cima al Check: le quattro luci, «2 su 4» e cosa manca; con tutte accese «Leader 1° livello»; con «Tutti» la card non c\'è', () => {
+prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con le quattro luci sotto, senza il mese; con «Tutti» non c\'è', () => {
   let h = disegna();
   const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('id="ck-storico"'));
   assert.ok(card.length > 0 && h.indexOf('class="ck-lc1') < h.indexOf('id="ck-storico"'));   // sopra «Gli ultimi 12 mesi»
-  assert.match(card, /<b>Dove sei · settembre 2026<\/b>/);
-  assert.match(card, /<span class="stato">2 su 4<\/span>/);                  // BBS e CEP sì; VP 0 e WES no
+  assert.match(card, /<div class="sez "><b>Leader 1° livello<\/b><span class="st">2 su 4<\/span><\/div>/);
+  assert.doesNotMatch(card, /settembre/);                                    // il mese lo dice il periodo sopra
   assert.match(card, /class="luce bbs on /);
   assert.match(card, /class="luce cep on /);
   assert.match(card, /class="luce vp {2}"/);
-  assert.doesNotMatch(card, /Ti manca/);   // lo dice già il gradino (e non si usa «.nota», che è la pastiglia gialla)
+  assert.doesNotMatch(card, /Ti manca/);
+  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
+  assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
+  assert.match(card, /<div class="prossimo ">Prossimo passo: compra il biglietto WES → Leader 1° livello<\/div>/);
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
   h = disegna();
   assert.match(h, /class="ck-lc1 fatto"/);
-  assert.match(h, /<span class="stato">Leader 1° livello<\/span>/);
-  assert.doesNotMatch(h, /nota-lc1/);   // niente più «ti manca» quando le luci sono tutte accese
+  assert.match(h, /<div class="sez ok"><b>✓ Leader 1° livello<\/b><span class="st">fatto<\/span><\/div>/);
   esegui(`CK.lc1 = null`);
   assert.doesNotMatch(disegna(), /ck-lc1/);
   esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
@@ -124,28 +126,33 @@ prova('«Dove sei» in cima al Check: le quattro luci, «2 su 4» e cosa manca; 
   assert.match(disegna(), /<small class="nota-lc1">non trovo la scheda col tuo codice Amway: chiedi all'Admin<\/small>/);
 });
 
-prova('La scala sotto le luci: Leader 1° livello «qui», Leader Core con le mancanze, la riga gialla del prossimo passo; il mese non letto si chiede una volta', () => {
-  esegui(`CK.lc1 = { biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }], cep: [{ dal: '2026-01-01', uscito_il: null }] }; CK.obiettivi[1].vpp_amway = 0;`);
+prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stato; il mese non letto dice «…»; tutto fatto = verde', () => {
+  esegui(`CK.lc1 = { biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }], cep: [{ dal: '2026-01-01', uscito_il: null }] }; CK.obiettivi[1].vpp_amway = 0; CK.aperti.add('core');`);
   const h = disegna();
-  assert.match(h, /<div class="grad qui" data-grad="leader1"><i>1<\/i>/);
-  assert.match(h, /<b>Leader 1° livello<\/b><small>arriva a 100 VP · compra il biglietto WES<\/small><\/span><span class="st">2 su 4<\/span>/);
-  assert.match(h, /<div class="grad qui" data-grad="core"><i>2<\/i>/);
-  assert.match(h, /<b>Leader Core<\/b><small>8 PM · il consumo personale · 10 clienti · e altre 4<\/small>/);   // le prime tre, poi «e altre N»
-  assert.match(h, /<span class="st">0 su 7<\/span>/);
-  assert.match(h, /<div class="prossimo ">Prossimo passo: compra il biglietto WES → Leader 1° livello<\/div>/);
-  // un mese di cui il Modulo Core non è ancora letto: la riga dice «…» e la lettura parte (qui, senza database, si ferma da sola)
+  assert.match(h, /data-gradino="core" aria-expanded="true"/);
+  assert.match(h, /<span class="apri">⌄<\/span>/);
+  const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo'));
+  assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
+  assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
+  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 su 30<\/span><\/div>/);
+  assert.match(voci, /<span>OPEN · BBS · WES<\/span><span>OPEN 0 su 5 · BBS · WES<\/span>/);
+  assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
+  assert.equal((voci.match(/<div class="/g) || []).length, 7);
+  // un mese di cui il Modulo Core non è ancora letto: «…» e «Leggo il Modulo Core…»; la lettura parte (qui, senza database, si ferma da sola)
   esegui(`CK.periodo = MB21Report.periodoMese('2026-10-15'); CK.eventi.wes.push({ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' });`);
   const h2 = disegna();
-  assert.ok(esegui(`!!CK.core['2026-10-01']`));   // segnata come «in lettura»: non si chiede due volte
-  assert.match(h2, /<div class="grad " data-grad="core"><i>2<\/i>[\s\S]*?<span class="st">…<\/span>/);
+  assert.ok(esegui(`!!CK.core['2026-10-01']`));
+  assert.match(h2, /<span class="st">…<\/span>/);
+  assert.match(h2, /Leggo il Modulo Core…/);
   esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15');`);
-  // tutto fatto: gradini verdi, «dove sei» = Leader Core, riga verde
+  // tutto fatto: titoli verdi, riga verde
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-11-01', contatto: true });   // a settembre in vendita c'è il WES di novembre
     CK.core['2026-09-01'].modulo.fatte = 7; CK.core['2026-09-01'].modulo.abitudini = [true, true, true, true, true, true, true];`);
   const h3 = disegna();
-  assert.match(h3, /<span class="stato">Leader Core<\/span>/);
-  assert.equal((h3.match(/class="grad ok"/g) || []).length, 2);
+  assert.match(h3, /<button class="sez core ok" data-gradino="core"[^>]*><b>✓ Leader Core<\/b><span><span class="st">7 su 7<\/span>/);
+  assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
   assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
+  esegui(`CK.aperti.clear()`);
 });
 
 console.log(`\n${ok} prove superate`);
