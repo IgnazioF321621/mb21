@@ -48,7 +48,7 @@ async function caricaAgenda() {
   const conferme = AG.giorno === oggi ? Promise.all([caricaConferme(), caricaRiordini(oggi)]) : null;   // cantiere 29: stesso elenco del riquadro in Dashboard
   if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
   else if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
-  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id', { count: 'exact', head: true }).eq('user_id', visto().id).eq('rientro_il', AG.giorno)));
+  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id, nome, categoria').eq('user_id', visto().id).eq('rientro_il', AG.giorno).order('nome').limit(300)));
   // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
   // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
   const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id)
@@ -77,7 +77,10 @@ async function caricaAgenda() {
   AG.misure = {};
   await caricaProgetti();
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
-  AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, rientri: tel.count || 0 };
+  // Un giorno che deve venire (Ignazio 27/09): in coda contano solo le persone che quel giorno non hanno già un orario
+  // fissato (un messaggio alle 10:30 si vede già tra gli impegni); toccando la pillola si vedono i nomi, non la Dashboard di oggi.
+  const conOrario = new Set(MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno).map(e => e.contatto_id));
+  AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, inCoda: (tel.data || []).filter(c => !conOrario.has(c.id)) };
   await ricordi;
 }
 
@@ -111,13 +114,29 @@ function richiamiAgenda(oggi) {
   const voci = [];
   const t = AG.telefonate;
   if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', `Contatti <b>${t.fatti_oggi}/${t.contatti_al_giorno}</b>`]);
-  else if (t && t.rientri) voci.push(['ag-telefonate', 'telefonate', 'telefonate', `<b>${t.rientri}</b> in coda`]);
+  else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
   if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
   if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);
   if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length}</b> senza esito`]);
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
+}
+
+// Chi torna in coda in un giorno che deve venire, senza un orario fissato (27/09): i nomi, e la scheda a un tocco.
+// Quel giorno le stesse persone saranno nella Dashboard, tra quelle da contattare.
+function codaDelGiorno() {
+  const lista = (AG.telefonate && AG.telefonate.inCoda) || [];
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>In coda ${esc(titoloGiorno(AG.giorno, MB21Coda.oggiRoma()).toLowerCase())}</h3><button id="cg-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="vn-aiuto">${lista.length === 1 ? 'Questa persona torna' : 'Queste persone tornano'} da contattare quel giorno, senza un orario fissato. Quel giorno ${lista.length === 1 ? 'la trovi' : 'le trovi'} nella Dashboard, tra le persone da contattare.</div>
+    <div class="cg-lista">${lista.map(c => `<button data-contatto="${esc(c.id)}"><span class="ts-pastiglia ${classeCat(c.categoria)}">${esc(iniziali(c.nome))}</span><span>${esc(c.nome)}<small>${esc(c.categoria || '')}</small></span>${ic('freccia')}</button>`).join('')}</div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#cg-x').onclick = chiudi;
+  velo.querySelectorAll('[data-contatto]').forEach(b => { b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contatto); }; });
 }
 
 // ── Le cose da fare del giorno (cantiere 41, lavoro 1): il foglio del giorno, come in NotePlan ──
@@ -2249,6 +2268,7 @@ function collegaAgenda(eventi) {
   su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ag-in-coda', codaDelGiorno);
   su('ag-riordini', () => { ST.tab = 'oggi'; ST.vaiA = 'riordini'; mostraTab(); });
   su('ag-passati', scegliPassato);
   su('ag-conferme', () => { ST.tab = 'oggi'; mostraTab(); });
