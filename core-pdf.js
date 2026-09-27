@@ -160,12 +160,12 @@
     y += meta * RT + 2.5; cornice(xs, y0, y, f4); y += 3.5;
 
     // 5 · Lettura: libro, un cerchietto per giorno (pieno = 10 pagine o più, a metà = meno), punti su cui concentrarsi
-    const f5 = m.s5.quanti >= m.giorni;
+    const f5 = m.s5.fatta;
     y0 = y; y = testa(xs, y, 5, 'Leggere 10 pagine al giorno [RB]', f5) + 5;
     font(8); doc.text('Libro in corso di lettura', xs + 3, y);
     let lx = xs + 3 + doc.getTextWidth('Libro in corso di lettura ') + 1;
     font(8, 'bold'); scrivi(m.s5.libro, lx, y - 0.3, xs + COL - 3 - lx); riga(lx, xs + COL - 3, y + 0.8);
-    y += 4.5; conto(xs, y, `${m.s5.quanti}/${m.giorni} giorni · ${m.s5.pagine} pagine`);
+    y += 4.5; conto(xs, y, m.s5.aTotale ? `${m.s5.pagine}/${m.s5.obiettivo} pagine` : `${m.s5.quanti}/${m.giorni} giorni · ${m.s5.pagine} pagine`);
     y += 2;
     const perRiga = 16, passo = (COL - 6) / perRiga, rc = 2.25;
     m.s5.giorni.forEach((g, i) => {
