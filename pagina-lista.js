@@ -373,7 +373,7 @@ async function avvioDellaScheda(c) {
 function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'check' ? 'Check' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
@@ -399,6 +399,7 @@ function disegnaScheda() {
     LS.contatto = null;
     if (!LS.ritorno) return disegnaLista();
     if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
+    if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
       LS.ritorno = null; ST.tab = 'oggi'; ST.aperta = null;
       document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'oggi'));

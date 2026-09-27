@@ -119,8 +119,8 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
   assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
-  assert.match(card, /<\/div>\s*<div class="prossimo">Ti consiglio il biglietto WES<\/div>\s*<button class="sez core/);   // il consiglio del 1° livello, sotto le luci (Ignazio 27/09)
-  assert.equal((card.match(/class="prossimo"/g) || []).length, 1);   // Core chiuso: il suo consiglio non si vede
+  assert.match(card, /<\/div>\s*<button class="prossimo vai" data-vai="segni"><span>Ti consiglio il biglietto WES<\/span><span>›<\/span><\/button>\s*<button class="sez core/);   // un tocco porta ai biglietti (27/09)   // il consiglio del 1° livello, sotto le luci (Ignazio 27/09)
+  assert.equal((card.match(/class="prossimo[ "]/g) || []).length, 1);   // Core chiuso: il suo consiglio non si vede
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
   h = disegna();
   assert.match(h, /class="ck-lc1 fatto"/);
@@ -141,7 +141,7 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.doesNotMatch(h, /tocca per vedere/);   // da aperta la scritta sparisce
   const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo', h.indexOf('class="voci"')));
   // da aperto, sotto le 7 abitudini, il consiglio del Core (senza il WES, che consiglia già il 1° livello)
-  assert.match(h, /<\/div><\/div><div class="prossimo">Ti consiglio il counseling, l'edificazione e il no-crossline<\/div>/);
+  assert.match(h, /<\/div><\/div><button class="prossimo vai" data-vai="core"><span>Ti consiglio il counseling, l'edificazione e il no-crossline<\/span>/);
   assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 tracce su 15 finora<\/span><\/div>/);   // settembre 2026: il totale delle tracce (Ignazio 27/09)
@@ -211,7 +211,7 @@ prova('Pacesetter, terza riga (Ignazio 26/09): 2 sponsor personali scritti nel C
   assert.match(voci, /<div class=""><span>2 sponsor personali<\/span><span>1 su 2<\/span><\/div>/);
   assert.match(voci, /<div class="ok"><span>✓ 100 VP<\/span><span>fatto<\/span><\/div>/);
   assert.match(voci, /<div class="ok"><span>✓ CEP<\/span><span>fatto<\/span><\/div>/);
-  assert.match(voci, /<div class="prossimo">Ti consiglio di sponsorizzare ancora una persona<\/div>/);
+  assert.match(voci, /<button class="prossimo vai" data-vai="lista"><span>Ti consiglio di sponsorizzare ancora una persona<\/span>/);
   assert.doesNotMatch(h, /Tutti i gradini/);
   esegui(`CK.aperti.clear()`);
 });
@@ -234,8 +234,8 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   assert.match(card, /<span>5 iscritti al CEP nel gruppo<\/span><span>3 su 5<\/span>/);
   // «I prossimi passi» (27/09): 2, coi nomi, prima le cause; il 9% è una riga sotto
   assert.match(card, /<b>I prossimi passi verso Leaders Club<\/b>/);
-  assert.match(card, /<div class="passo"><span>1\. 2 prime linee attive in più \(3 su 5\)<\/span><\/div>/);
-  assert.match(card, /<div class="passo"><span>2\. Aiutare Alberto Cilia: mancano 84 VP al 3%<\/span><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);
+  assert.match(card, /<div class="passo"><button class="vai" data-vai="lista">1\. 2 prime linee attive in più \(3 su 5\) ›<\/button><\/div>/);
+  assert.match(card, /<div class="passo"><button class="vai" data-vai="scheda" data-pid="B">2\. Aiutare Alberto Cilia: mancano 84 VP al 3% ›<\/button><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);   // il nome apre la sua scheda
   assert.doesNotMatch(card, /iscritti al CEP in più/);   // al massimo 2 passi
   assert.match(card, /<small>Al 9% mancano 194 VP: arrivano con i passi sopra<\/small>/);
   // «Non ora» su Cilia: il passo passa a Caccamo, e Cilia si può riprendere

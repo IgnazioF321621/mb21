@@ -278,8 +278,8 @@ prova('Percorso: un consiglio per ogni gradino, in parallelo (Ignazio 27/09); il
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: moduloVuoto });
   assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false], ['pace', '2 su 3', false]]);
   assert.equal(p.doveSei, null);
-  assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2 });
-  assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3 });
+  assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2, vai: 'segni' });   // il tocco porta ai biglietti
+  assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3, vai: 'core' });
   assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', '10 clienti in più']);
   const incontri = p.gradini[1].mancano.map(x => x.cosa).join(' | ');
   assert.match(incontri, /gli OPEN \(0 su 5\) e il biglietto BBS/);   // il BBS è acceso nelle luci: il Core lo dice ancora (qui il modulo finto è senza biglietti)
@@ -339,7 +339,7 @@ prova('Pacesetter (Ignazio 26/09): 2 sponsor personali del Check · 100 VP · CE
   const g = p0.gradini[2];
   assert.deepEqual([g.chiave, g.titolo, g.stato, g.fatto], ['pace', 'Pacesetter', '2 su 3', false]);
   assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 sponsor personali', '0 su 2'], ['100 VP', 'fatto'], ['CEP', 'fatto']]);
-  assert.deepEqual(g.consiglio, { cosa: 'sponsorizzare ancora 2 persone', di: true, peso: 1 });
+  assert.deepEqual(g.consiglio, { cosa: 'sponsorizzare ancora 2 persone', di: true, peso: 1, vai: 'lista' });
   assert.equal(C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 1 }).gradini[2].consiglio.cosa, 'sponsorizzare ancora una persona');
   const p2 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 3 });
   assert.deepEqual([p2.gradini[2].stato, p2.gradini[2].fatto, p2.gradini[2].consiglio, p2.doveSei], ['fatto', true, null, 'Pacesetter']);
@@ -386,6 +386,18 @@ prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi
   assert.deepEqual(r3.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', '2 iscritti al CEP in più nel gruppo (3 su 5)']);
   // il 9% non è il prossimo scalino (3% → 9%): niente VP inventati
   assert.equal(C.livelli({ core: false, bonus: 3, linee, cep: 7, mancaMio: 50 }).righe[0].info, 'Bonus al 3%: il 9% arriva con la crescita delle linee');
+});
+
+prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce e pagine → Training, squadra → Modulo Core', () => {
+  const p = C.percorso({ lc1: lc1Di(40, false), modulo: moduloVuoto, sponsor: 0 });
+  const dove = Object.fromEntries(p.gradini[1].mancano.map(x => [x.cosa.split(' (')[0], x.vai]));
+  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '10 clienti in più': 'agenda', 'una traccia ogni giorno': 'training', '10 pagine ogni giorno': 'training',
+    'gli OPEN': 'segni', "il counseling, l'edificazione e il no-crossline": 'core' });
+  assert.equal(p.gradini[0].consiglio.vai, 'segni');   // il biglietto WES
+  assert.equal(C.percorso({ lc1: lc1Di(40, true), modulo: moduloVuoto }).gradini[0].consiglio.vai, undefined);   // 100 VP: nessun posto nell'app dove si fa
+  assert.equal(p.gradini[2].consiglio.vai, 'lista');
+  const r = C.livelli({ core: false, bonus: 6, linee: [{ partner_id: 'A', nome: 'Alberto Cilia', vpp: 116, bonus: 0, manca: 84 }], cep: 1, mancaMio: 194 }).righe[0];
+  assert.deepEqual(r.passi.map(x => [x.vai, x.partner_id]), [['lista', undefined], ['scheda', 'A']]);
 });
 
 console.log(`\n${ok} prove superate`);

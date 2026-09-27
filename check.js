@@ -272,28 +272,28 @@
     const n = m.giorni, g = finora || n, su = q => `${q} su ${g}${g < n ? ' giorni finora' : ''}`;
     const gia = new Set(giaDetti || []);
     const pm = m.s1.obiettivo - m.s1.quanti, cl = m.s3.obiettivo - m.s3.quanti;
-    if (!m.abitudini[0]) out.push({ cosa: pm === 1 ? 'un Piano Marketing in più' : `${pm} Piani Marketing in più`, peso: pm / m.s1.obiettivo });
-    if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5 });
-    if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo });
+    if (!m.abitudini[0]) out.push({ cosa: pm === 1 ? 'un Piano Marketing in più' : `${pm} Piani Marketing in più`, peso: pm / m.s1.obiettivo, vai: 'agenda' });
+    if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5, vai: 'core' });
+    if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo, vai: 'agenda' });
     if (!m.abitudini[3]) out.push(m.s4.aTotale   // settembre 2026: conta il totale delle tracce (core.js)
-      ? { cosa: `una traccia ogni giorno (${m.s4.totale} tracce su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''})`, peso: (m.s4.obiettivo - m.s4.totale) / m.s4.obiettivo }
-      : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n });
+      ? { cosa: `una traccia ogni giorno (${m.s4.totale} tracce su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''})`, peso: (m.s4.obiettivo - m.s4.totale) / m.s4.obiettivo, vai: 'training' }
+      : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n, vai: 'training' });
     if (!m.abitudini[4]) out.push(m.s5.aTotale   // settembre 2026: conta il totale delle pagine (core.js)
-      ? { cosa: `10 pagine ogni giorno (${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''})`, peso: (m.s5.obiettivo - m.s5.pagine) / m.s5.obiettivo }
-      : { cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n });
+      ? { cosa: `10 pagine ogni giorno (${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''})`, peso: (m.s5.obiettivo - m.s5.pagine) / m.s5.obiettivo, vai: 'training' }
+      : { cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n, vai: 'training' });
     if (!m.abitudini[5]) {
       const pezzi = [];
       if (m.s6.open < m.s6.valide) pezzi.push(`gli OPEN (${m.s6.open} su ${m.s6.valide})`);
       if (!m.s6.bbs && !gia.has('BBS')) pezzi.push('il biglietto BBS');
       if (!m.s6.wes && !gia.has('WES')) pezzi.push('il biglietto WES');
-      if (pezzi.length) out.push({ cosa: elenco(pezzi), peso: 0.4 });
+      if (pezzi.length) out.push({ cosa: elenco(pezzi), peso: 0.4, vai: 'segni' });
     }
     if (!m.abitudini[6]) {
       const pezzi = [];
       if (!m.s7.counseling) pezzi.push('il counseling');
       if (m.s7.edificazione !== true) pezzi.push("l'edificazione");
       if (m.s7.no_crossline !== true) pezzi.push('il no-crossline');
-      out.push({ cosa: elenco(pezzi), peso: 0.3 });
+      out.push({ cosa: elenco(pezzi), peso: 0.3, vai: 'core' });
     }
     return out;
   }
@@ -314,7 +314,9 @@
   }
   const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09)
   // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
-  const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP', di: true }, bbs: { cosa: 'il biglietto BBS' }, wes: { cosa: 'il biglietto WES' }, cep: { cosa: "l'abbonamento CEP" } };
+  // `vai` = dove porta il tocco sul consiglio (Ignazio, stella cometa: «da qui, il passo dopo è a un tocco»): segni = i biglietti e il CEP
+  // (Profilo, o la scheda di chi guardi) · agenda = MB Plan · training · core = Modulo Core · lista = Lista Nomi · mappa · scheda = quella linea
+  const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP', di: true }, bbs: { cosa: 'il biglietto BBS', vai: 'segni' }, wes: { cosa: 'il biglietto WES', vai: 'segni' }, cep: { cosa: "l'abbonamento CEP", vai: 'segni' } };
   const piuVicina = xs => xs.length ? xs.reduce((a, b) => (b.peso < a.peso ? b : a)) : null;
   // Pacesetter (Ignazio 26/09): nello stesso mese 2 sponsor personali · 100 VP · CEP. Gli sponsor sono solo quelli scritti nel
   // Check (`sponsor`: la somma di sponsor_personali del mese), mai le prime linee del file Amway (chi mette il nuovo in
@@ -347,7 +349,7 @@
     // il consiglio: gli sponsor; 100 VP e CEP li consiglia già il 1° livello, qui non si ripetono
     const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 sponsor personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
       stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, voci: voci3,
-      mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, di: true, peso: manca / PACE_SPONSOR }] : [] };
+      mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, di: true, peso: manca / PACE_SPONSOR, vai: 'lista' }] : [] };
     g3.consiglio = g3.fatto ? null : piuVicina(g3.mancano);
     gradini.push(g3);
     const fatti = gradini.filter(g => g.fatto);
@@ -404,19 +406,19 @@
       const L = LIVELLI.find(x => x.chiave === prossimo.chiave), r = prossimo, passi = [];
       if (L.primeLinee && attive.length < L.primeLinee) {
         const m = L.primeLinee - attive.length;
-        passi.push({ testo: `${m === 1 ? 'Una prima linea attiva in più' : `${m} prime linee attive in più`} (${attive.length} su ${L.primeLinee})` });
+        passi.push({ testo: `${m === 1 ? 'Una prima linea attiva in più' : `${m} prime linee attive in più`} (${attive.length} su ${L.primeLinee})`, vai: 'lista' });
       }
       if (L.primeLinee && attive.filter(x => Number(x.bonus) >= L.linee.al).length < L.linee.quante) {
         const sotto = attive.filter(x => Number(x.bonus) < L.linee.al);
         r.nonOra = sotto.filter(x => salta.has(x.partner_id)).map(x => ({ partner_id: x.partner_id, nome: x.nome }));
         const dist = x => (scalino(x.bonus) === L.linee.al && x.manca != null ? Number(x.manca) : Infinity);
         const chi = sotto.filter(x => !salta.has(x.partner_id)).sort((a, b) => dist(a) - dist(b))[0];
-        if (chi) passi.push({ partner_id: chi.partner_id, nome: chi.nome,
+        if (chi) passi.push({ partner_id: chi.partner_id, nome: chi.nome, vai: 'scheda',
           testo: dist(chi) < Infinity ? `Aiutare ${chi.nome}: mancano ${formato(dist(chi), 0)} VP al ${L.linee.al}%` : `Aiutare ${chi.nome} verso il ${L.linee.al}%` });
       }
       if (L.cep && cep != null && Number(cep) < L.cep) {
         const mc = L.cep - Number(cep);
-        passi.push({ testo: `${mc === 1 ? 'Un iscritto al CEP in più' : `${mc} iscritti al CEP in più`} nel gruppo (${cep} su ${L.cep})` });
+        passi.push({ testo: `${mc === 1 ? 'Un iscritto al CEP in più' : `${mc} iscritti al CEP in più`} nel gruppo (${cep} su ${L.cep})`, vai: 'mappa' });
       }
       r.passi = passi.slice(0, PASSI);
       if (Number(bonus) < L.bonus) r.info = scalino(bonus) === L.bonus && mancaMio != null
