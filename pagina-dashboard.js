@@ -864,6 +864,7 @@ function collegaRiordini() {
 const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 
 async function caricaDashboard(oggi) {
+  CK.di = null;   // la card «Il tuo Check» rilegge i dati a ogni caricamento: dopo il Check del Giorno i numeri sono nuovi (27/09)
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
     const [cm, ob, segniAl, scad, seg] = await Promise.all([
@@ -1011,9 +1012,9 @@ function dashboardAlto() {
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
     </div>`).join('')}</div></div>
-    ${limitato() ? '' : `<div class="ds-azioni">
-      ${d.obiettiviMancanti ? '' : `<button class="ds-azione obiettivi" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</b><small>Guarda o cambia i traguardi</small></span></button>`}
-      <button class="ds-azione visione-completa" id="ds-visione">${ic('visione')}<span><b>Check</b><small>Il tuo percorso, i numeri e il Modulo Core</small></span></button></div>`}`;   // era «Visione completa» (Ignazio 27/09: stesso nome della pagina)
+    ${limitato() ? '' : `<div id="ds-card-check">${cardCheckHtml()}</div>
+      ${d.obiettiviMancanti ? '' : `<div class="ds-azioni"><button class="ds-azione obiettivi" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</b><small>Guarda o cambia i traguardi</small></span></button></div>`}`}`;
+  // la card «Il tuo Check» (Ignazio 27/09) prende il posto del tassello «Visione completa»/«Check»: una porta sola per il Check
   return html;
 }
 
@@ -1064,6 +1065,7 @@ function collegaDashboard() {
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
   su('ds-visione', () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); });
+  caricaCardCheck();   // i dati del percorso dopo la Dashboard, che non aspetta (27/09)
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
