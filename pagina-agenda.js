@@ -1806,7 +1806,7 @@ function collegaMenuAgenda(radice, chiudi) {
   }; });
   const nuovo = radice.querySelector('[data-cmd="nuovo-modello"]'); if (nuovo) nuovo.onclick = () => { chiudi(); nuovoModello(); };
   radice.querySelectorAll('[data-modello]').forEach(b => { b.onclick = () => { chiudi(); foglioModello(b.dataset.modello); }; });
-  const core = radice.querySelector('[data-cmd="core"]'); if (core) core.onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7)); };
+  const core = radice.querySelector('[data-cmd="core"]'); if (core) core.onclick = () => { chiudi(); apriCoreMese(AG.giorno.slice(0, 7), 'agenda'); };
   const nuovoP = radice.querySelector('[data-cmd="nuovo-progetto"]'); if (nuovoP) nuovoP.onclick = () => { chiudi(); nuovoProgetto(); };
   radice.querySelectorAll('button[data-progetto]').forEach(b => { b.onclick = () => { chiudi(); apriProgetto(b.dataset.progetto); }; });
 }

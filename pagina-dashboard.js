@@ -1013,7 +1013,7 @@ function dashboardAlto() {
     </div>`).join('')}</div></div>
     ${limitato() ? '' : `<div class="ds-azioni">
       ${d.obiettiviMancanti ? '' : `<button class="ds-azione obiettivi" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</b><small>Guarda o cambia i traguardi</small></span></button>`}
-      <button class="ds-azione visione-completa" id="ds-visione">${ic('visione')}<span><b>Visione completa</b><small>I tuoi numeri, mese per mese</small></span></button></div>`}`;
+      <button class="ds-azione visione-completa" id="ds-visione">${ic('visione')}<span><b>Check</b><small>Il tuo percorso, i numeri e il Modulo Core</small></span></button></div>`}`;   // era «Visione completa» (Ignazio 27/09: stesso nome della pagina)
   return html;
 }
 
