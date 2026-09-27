@@ -1811,7 +1811,7 @@ function programmaSettimanaHtml() {
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>`
-      : `<p>${dom < oggi ? 'Nessun Piano Marketing o Consulenza in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e Consulenze prodotti vuoi fare, e quando.'}</p>`}
+      : `<p>${dom < oggi ? 'Nessun Piano Marketing o Consulenza in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando.'}</p>`}
     ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
