@@ -316,6 +316,8 @@ prova('La riga MB21 di un PAL manda la traccia ai percorsi giusti; «Mentalità�
     ['abitudini', 'credere', 'persistere', 'primi_passi', 'sistema', 'sistema_gruppo']);
   assert.deepEqual(T.percorsiDaMb21({ mb21: ['Paure', 'Mentalità'], fase: 4 }).sort(), ['abitudini', 'paure']);
   assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'], fase: 'studio' }).sort(), ['guidare', 'persistere']);
+  // un libro con il PAL nuovo: solo le parole della riga MB21, niente fase (27/09)
+  assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità', 'Libertà', 'Relazioni'] }).sort(), ['aiutare_partner', 'credere', 'guidare', 'visione']);
   assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'], fase: 'avanzato' }), ['visione']);
   assert.deepEqual(T.percorsiDaMb21({ mb21: ['Mentalità'] }), []);           // senza fase: da nessuna parte
   assert.deepEqual(T.percorsiDaMb21({ mb21: ['PM', 'Invito', 'Avvio', 'Dare Seguito'] }).sort(), ['avviare', 'contattare', 'dare_seguito', 'piano', 'primi_passi']);

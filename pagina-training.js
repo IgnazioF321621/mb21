@@ -213,7 +213,9 @@ function trnApriPercorso(id) {
     .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id)));
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
-  const daMb21 = (TRN.voci || []).filter(c => c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id));
+  // le tracce del BSM con il PAL nuovo e, dal 27/09, i libri con il PAL nuovo (la riga MB21 del libro; per i libri niente fase, quindi «Mentalità» non porta da sola)
+  const daMb21 = (TRN.voci || []).filter(c => (c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id))
+    || (c.tipo === 'libro' && c.mb21 && MB21Training.percorsiDaMb21({ mb21: c.mb21 }).includes(p.id)));
   // prima le fonti delle carte, poi le tracce mandate dalla riga MB21, poi il resto del settore
   const tutteStudio = [...new Set([...fonti, ...daMb21, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
@@ -608,7 +610,8 @@ function trnApriCarta(id) {
     } else {
       testa = trnTesta('libro', 'Libro consigliato da Network 21', c.titolo);
       corpo = `<div class="trn-meta">${esc(c.autore || '')}${c.solo_n21 ? ' <span class="sh-chiede n21">solo da N21</span>' : ''}</div>
-        ${c.capitoli ? `<h4>Gli appunti, capitolo per capitolo</h4>${c.capitoli.map(x => `<details class="trn-capitolo"><summary>${esc(x.titolo)}</summary>
+        ${c.capitoli ? `<h4>Gli appunti, capitolo per capitolo</h4>${c.capitoli.map(x => x.sezioni && x.sezioni.length ? trnCapitoloPal(x)
+          : `<details class="trn-capitolo"><summary>${esc(x.titolo)}</summary>
           ${(x.principi || []).length ? `<ul>${x.principi.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
           ${(x.da_fare || []).length ? `<div class="trn-dafare"><b>Da fare</b><ul>${x.da_fare.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}</details>`).join('')}`
           : '<p>Per questo libro non ci sono ancora gli appunti.</p>'}`;
@@ -628,15 +631,21 @@ function trnTesta(icona, sopra, titolo) {
 }
 // gli appunti di una traccia: dal 26/09 i PAL nuovi delle note [BSM] (a.sezioni: i punti sezione per sezione, ognuna che si apre; le lezioni
 // e le citazioni evidenziate; poi le azioni da fare e i termini); per i PAL vecchi restano capitoli, principi, azioni e frasi
+const trnLista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+const trnVocePal = v => `${v.titolo ? `<b class="trn-pal-voce">${esc(v.titolo)}</b>` : ''}<ul>${v.punti.map((x, i) =>
+  `<li class="${(v.lezioni || []).includes(i) ? 'lezione' : (v.citazioni || []).includes(i) ? 'citazione' : ''}">${esc(x)}</li>`).join('')}</ul>`;
+const trnTermini = v => (v && v.length ? `<h5>Termini e definizioni</h5><ul class="trn-termini">${v.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : '');
+// un capitolo di un libro con il PAL nuovo (note [PAT], 27/09): le voci con lezioni e citazioni evidenziate, poi «Da fare» e i termini del capitolo
+function trnCapitoloPal(x) {
+  return `<details class="trn-capitolo trn-pal"><summary>${esc(x.titolo)}</summary>${x.sezioni.map(trnVocePal).join('')}
+    ${trnLista('Da fare', x.da_fare)}${trnTermini(x.termini)}</details>`;
+}
 function trnAppunti(a) {
-  const lista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
+  const lista = trnLista;
   if (a.sezioni && a.sezioni.length) {
-    const voce = v => `${v.titolo ? `<b class="trn-pal-voce">${esc(v.titolo)}</b>` : ''}<ul>${v.punti.map((x, i) =>
-      `<li class="${(v.lezioni || []).includes(i) ? 'lezione' : (v.citazioni || []).includes(i) ? 'citazione' : ''}">${esc(x)}</li>`).join('')}</ul>`;
     return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
-      ${a.sezioni.map((z, i) => `<details class="trn-capitolo trn-pal"${i === 0 ? ' open' : ''}><summary>${esc(z.titolo)}</summary>${z.voci.map(voce).join('')}</details>`).join('')}
-      ${lista('Da fare', a.azioni)}
-      ${a.termini && a.termini.length ? `<h5>Termini e definizioni</h5><ul class="trn-termini">${a.termini.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : ''}</div>`;
+      ${a.sezioni.map((z, i) => `<details class="trn-capitolo trn-pal"${i === 0 ? ' open' : ''}><summary>${esc(z.titolo)}</summary>${z.voci.map(trnVocePal).join('')}</details>`).join('')}
+      ${lista('Da fare', a.azioni)}${trnTermini(a.termini)}</div>`;
   }
   return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
     ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Da fare', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
