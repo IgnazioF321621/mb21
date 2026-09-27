@@ -1576,6 +1576,9 @@
   .ck-lc1 .passi .passo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; font-weight: 600; }
   .ck-lc1 .passi button { border: 1px solid currentColor; background: none; color: inherit; border-radius: var(--raggio-pill); padding: 2px 10px; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .ck-lc1 .passi small { display: block; margin-top: 4px; color: var(--testo-soft); font-size: 12px; }
+  .ck-lc1 button.prossimo.vai { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; text-align: left; font: inherit; font-size: 13px; font-weight: 600; }
+  .ck-lc1 button.prossimo.vai > span:last-child { font-size: 18px; line-height: 1; }
+  .ck-lc1 .passi .passo button.vai { border: 0; padding: 0; border-radius: 0; text-align: left; font-size: 13px; white-space: normal; flex: 1; }
   .ck-lc1 .passi small.nonora button { border: 0; padding: 0 4px; text-decoration: underline; color: var(--testo-soft); }
   /* con quanti periodi fa si confronta (Ignazio 20/09) */
   .ck-quando { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--testo-soft); margin: -2px 0 6px; }
@@ -1856,41 +1859,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609271514"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609271514"></script>
-<script src="lista.js?v=202609271514"></script>
-<script src="rubrica.js?v=202609271514"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609271514"></script>
-<script src="agenda.js?v=202609271514"></script>
-<script src="coach.js?v=202609271514"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609271514"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609271514"></script>
-<script src="check.js?v=202609271514"></script>
-<script src="mappa.js?v=202609271514"></script>
-<script src="pagina-coach.js?v=202609271514"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609271514"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609271514"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609271514"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609271514"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609271514"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609271514"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609271514"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609271514"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609271514"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609271514"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609271514"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609271514"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609271514"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609271514"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609271514"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609271514"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609271514"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609271514"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609271514"></script>
-<script src="benvenuto.js?v=202609271514"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609271514"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609271524"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609271524"></script>
+<script src="lista.js?v=202609271524"></script>
+<script src="rubrica.js?v=202609271524"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609271524"></script>
+<script src="agenda.js?v=202609271524"></script>
+<script src="coach.js?v=202609271524"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609271524"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609271524"></script>
+<script src="check.js?v=202609271524"></script>
+<script src="mappa.js?v=202609271524"></script>
+<script src="pagina-coach.js?v=202609271524"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609271524"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609271524"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609271524"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609271524"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609271524"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609271524"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609271524"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609271524"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609271524"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609271524"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609271524"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609271524"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609271524"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609271524"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609271524"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609271524"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609271524"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609271524"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609271524"></script>
+<script src="benvenuto.js?v=202609271524"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609271524"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.27 · 15:14';
+const APP_VERSION = '2026.09.27 · 15:24';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -3306,7 +3309,12 @@ function lc1Html(oggi) {
   if (!l.fatto && !l.inCorso) avvisi.push('mese chiuso');
   if (l.luci.some(x => x.ignoto && x.chiave !== 'vp')) avvisi.push(io ? 'non trovo la scheda col tuo codice Amway: chiedi all\'Admin' : 'nessuna scheda col suo codice Amway');
   // un consiglio sotto ogni gradino, in parallelo (Ignazio 27/09); per un altro partner la direzione da dargli, con testo neutro
-  const consiglio = c => !c ? '' : `<div class="prossimo">${esc(io || !nome ? `Ti consiglio ${c.di ? 'di ' : ''}${c.cosa}` : `Da consigliare a ${nome}: ${c.cosa}`)}</div>`;
+  const consiglio = c => {
+    if (!c) return '';
+    const t = esc(io || !nome ? `Ti consiglio ${c.di ? 'di ' : ''}${c.cosa}` : `Da consigliare a ${nome}: ${c.cosa}`);
+    // con un posto dove andare il consiglio è un bottone: un tocco e si è lì (stella cometa, 27/09)
+    return c.vai ? `<button class="prossimo vai" data-vai="${c.vai}"><span>${t}</span><span>›</span></button>` : `<div class="prossimo">${t}</div>`;
+  };
   const prossimo = pc.tuttiFatti ? (io ? 'Tutti i gradini di questo mese sono tuoi' : 'Tutti i gradini di questo mese sono fatti') : '';
   const aperto = CK.aperti.has('core'), apertoPace = CK.aperti.has('pace');
   const lv = livelliCheck(l, g2.fatto);
@@ -3330,7 +3338,7 @@ function lc1Html(oggi) {
 function passiHtml(r, mese) {
   if (!r.passi.length && !r.info && !r.nonOra.length) return '';
   return `<div class="passi">${r.passi.length ? `<b>I prossimi passi verso ${esc(r.titolo)}</b>` : ''}
-    ${r.passi.map((p, i) => `<div class="passo"><span>${i + 1}. ${esc(p.testo)}</span>${p.partner_id ? `<button data-nonora="${esc(p.partner_id)}" data-mese="${mese}">Non ora</button>` : ''}</div>`).join('')}
+    ${r.passi.map((p, i) => `<div class="passo">${p.vai ? `<button class="vai" data-vai="${p.vai}"${p.partner_id ? ` data-pid="${esc(p.partner_id)}"` : ''}>${i + 1}. ${esc(p.testo)} ›</button>` : `<span>${i + 1}. ${esc(p.testo)}</span>`}${p.partner_id ? `<button data-nonora="${esc(p.partner_id)}" data-mese="${mese}">Non ora</button>` : ''}</div>`).join('')}
     ${r.info ? `<small>${esc(r.info)}</small>` : ''}
     ${r.nonOra.length ? `<small class="nonora">Non ora, questo mese: ${r.nonOra.map(x => `<button data-riprendi="${esc(x.partner_id)}" data-mese="${mese}">${esc(x.nome)} ↺</button>`).join(' ')}</small>` : ''}</div>`;
 }
@@ -3401,6 +3409,7 @@ function collegaCheck() {
   su('ck-dopo', () => sposta(1));
   const meseCard = n => { CK.meseCard = R.spostaMese(CK.meseCard || oggi.slice(0, 8) + '01', n); disegnaCheck(); };   // il mese della card, da solo (Ignazio 27/09)
   su('ck-mese-prima', () => meseCard(-1));
+  app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
   // «Non ora» su un passo e ↺ per riprenderlo (Ignazio 27/09): una riga in passi_non_ora per il mese della card, a nome di chi si guarda
   app.querySelectorAll('[data-nonora], [data-riprendi]').forEach(b => b.onclick = async () => {
     const pid = b.dataset.nonora || b.dataset.riprendi, mese = Number(b.dataset.mese), uid = visto().id;
@@ -3414,6 +3423,28 @@ function collegaCheck() {
   });
   su('ck-mese-dopo', () => meseCard(1));
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
+}
+
+// Il tocco su un consiglio o su un passo del percorso porta dove si fa (Ignazio, stella cometa; MB21Check: `vai`).
+// segni: per sé il Profilo con «I miei Segni vitali» aperto; guardando un altro partner la sua scheda (le targhette sono lì)
+async function vaiDalCheck(vai, pid) {
+  const io = visto().id === ST.utente.id;
+  if (vai === 'scheda') return schedaDalCheck(pid);
+  if (vai === 'segni' && !io) return schedaDalCheck(visto().partner_id);
+  if (vai === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); vai = 'profilo'; }
+  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7));
+  ST.tab = vai; mostraTab(); window.scrollTo(0, 0);
+}
+// la scheda contatto di una linea (codice Amway), con lo stesso aggancio della Mappa; la freccia della scheda torna al Check
+async function schedaDalCheck(pid) {
+  const p = ((CK.amway && CK.amway.squadra) || []).find(x => x.partner_id === pid);
+  const r = { id: pid, nome: p ? MB21Mappa.nomeLeggibile(p.nome) : '' };
+  if (!MP.schede) {
+    try { await caricaSchedeMappa(); } catch (e) { return mostraToast('Schede non caricate: riprova.'); }
+  }
+  const sc = MB21Mappa.schedaDelPartner(r, MP.schede, visto().id);
+  if (!sc) return mostraToast(`${r.nome || 'Questa persona'} non ha una scheda collegata nella lista: collegala dalla Mappa`);
+  apriContattoDa(sc.id, 'check');
 }
 
 // ── MAPPA (Fase 8) ── la pagina è in pagina-mappa.js (albero, targhette, visione completa, lettura dei segni vitali)
