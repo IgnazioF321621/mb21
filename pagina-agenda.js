@@ -1428,7 +1428,7 @@ function giorniSettimanaHtml(opz, oggi) {
     const ev = A.eventiDelGiorno(AG.azioni, g);
     const cose = A.coseDelGiorno(AG.cose, g, oggi);   // le cose da fare di quel giorno, sotto gli impegni (come i riferimenti di NotePlan)
     const coseHtml = cose.map(c => `<span class="ss-riga ss-cosa${c.fatto_il ? ' fatta' : ''}"><i></i>${c.ora ? `<em>${esc(String(c.ora).slice(0, 5))}</em>` : ''}${c.progetto_id ? '📁 ' : ''}${esc(c.testo)}</span>`).join('')
-      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.nome(x.tipo))}${x.tipo === 'SdS/OPEN' ? '' : ' · da riempire'}</span>`).join('');
+      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.nome(x.tipo))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('');
     return `<button class="ss-g${g === oggi ? ' oggi' : ''}" data-apri="${g}"><span class="ss-data"><small>${A.GIORNI_SETTIMANA[i]}</small><b>${Number(g.slice(8))}</b></span>
       <span class="ss-ev">${ev.length ? ev.map(e => { const cat = (e.contatti && e.contatti.categoria) || e.categoria;
         return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`; }).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
@@ -1830,7 +1830,7 @@ function programmaSettimanaHtml() {
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>`
-      : `<p>${dom < oggi ? 'Nessun Piano Marketing o Consulenza in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando.'}</p>`}
+      : `<p>${dom < oggi ? 'Niente in programma in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LOS.'}</p>`}
     ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -2032,7 +2032,7 @@ function grigliaGiorno(eventi, opz) {
     const alto = Math.max(18, y(b.cima + b.alta) - y(b.cima) - 3);
     if (e._spazio) {   // uno spazio da riempire (27/09): tratteggiato col colore del tipo, si trascina; il tocco apre il suo foglio
       h += `<button class="ag-ev ag-cosa ag-spazio${alto < 26 ? ' bassa' : ''}" data-cosa-blocco="${esc(e.id)}" data-spazio="${esc(e._spazio.id)}" aria-label="${esc(e.testo)}, ${esc(sottoSpazio(e._spazio))}"
-        style="--tinta:${coloreSpazio(e._spazio.tipo)};top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)"><b>${esc(e.testo)}</b>${alto < 32 ? '' : `<small>${esc(A.orario(e))}${e._spazio.tipo === 'SdS/OPEN' ? '' : ' · da riempire'}</small>`}</button>`;
+        style="--tinta:${coloreSpazio(e._spazio.tipo)};top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)"><b>${esc(e.testo)}</b>${alto < 32 ? '' : `<small>${esc(A.orario(e))}${MB21Spazi.daRiempire(e._spazio.tipo) ? ' · da riempire' : ''}</small>`}</button>`;
       continue;
     }
     if (e._cosa) {   // una cosa da fare con l'ora: tratteggiata, col cerchietto; il tocco la spunta
@@ -2094,7 +2094,7 @@ function grigliaSettimana(opz) {
       gruppi.set(b.gruppo, chi);
     }
     for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
-      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.nome(b.x.tipo))}${b.x.tipo === 'SdS/OPEN' ? '' : ' da riempire'}"></button>`;
+      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.nome(b.x.tipo))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}"></button>`;
     for (const chi of gruppi.values()) {
       const cima = Math.min(...chi.map(b => b.cima)), giu = Math.max(...chi.map(b => b.cima + b.alta));
       const alto = Math.max(11, y(giu) - y(cima) - 2);
@@ -2352,8 +2352,9 @@ function collegaAgenda(eventi) {
 // il foglio «Nuovo appuntamento» propone gli spazi liberi dello stesso tipo. Per ora solo l'Admin, come i Progetti.
 const vediSpazi = () => typeof MB21Spazi !== 'undefined' && typeof eAdmin === 'function' && eAdmin() && !vediTutti();
 const spaziDelGiorno = g => (vediSpazi() ? MB21Spazi.delGiorno(AG.spazi, g) : []);
-const coloreSpazio = tipo => (tipo === 'SdS/OPEN' ? 'var(--az-appuntamento)' : MB21Agenda.COLORI[tipo]);
-const sottoSpazio = s => (s.tipo === 'SdS/OPEN' ? 'Serata di sponsorizzazione / OPEN' : 'da riempire · tocca per mettere un nome');
+// Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LOS) col colore degli Appuntamenti
+const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : 'var(--az-appuntamento)');
+const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.TIPI[s.tipo].sotto);
 const giornoBreve = g => `${MB21Agenda.GIORNI_SETTIMANA[MB21Agenda.giornoSettimana(g) - 1]} ${Number(g.slice(8))}`;
 // la riga nella card degli impegni e nell'elenco della settimana
 function rigaSpazioHtml(s) {
@@ -2372,8 +2373,9 @@ async function preparaSettimana() {
   if (!giorni.length) return mostraToast('Questa settimana è già passata: vai alla prossima con ›');
   const esistenti = (AG.spazi || []).filter(s => settimana.includes(S.orario(s).giorno));
   const sds = S.sdsDaMettere(settimana, esistenti, oggi) ? [{ giorno: settimana[S.SDS.giorno], ora: S.SDS.ora, durata: S.SDS.durata }] : [];
-  const st = { passo: 0, quanti: { 'Piano Marketing': 0, 'Consulenza PRD': 0 }, scelti: [], aperto: null };
-  const passi = () => ['quanti', ...S.DA_PREPARARE.filter(t => st.quanti[t] > 0)];
+  // tipi: quelli aggiunti dal selettore «Aggiungi ▾» (Ignazio 27/09: «se no le scritte diventano tante»), nell'ordine scelto
+  const st = { passo: 0, tipi: [], quanti: {}, scelti: [], aperto: null, menu: false };
+  const passi = () => ['quanti', ...st.tipi];
   const velo = document.createElement('div');
   velo.className = 'velo';
   document.body.appendChild(velo);
@@ -2387,8 +2389,14 @@ async function preparaSettimana() {
     const lista = passi(), p = lista[st.passo], ultimo = p !== 'quanti' && st.passo === lista.length - 1;
     let corpo;
     if (p === 'quanti') {
-      corpo = S.DA_PREPARARE.map(t => `<div class="campo"><label>${esc(S.TIPI[t].domanda)}</label><div class="ag-scelte" data-quanti="${esc(t)}">${
-        Array.from({ length: S.TIPI[t].max + 1 }, (_, n) => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
+      const restano = S.DA_PREPARARE.filter(t => !st.tipi.includes(t));
+      const gruppo = (titolo, tipi) => { const qui = tipi.filter(t => restano.includes(t)); return qui.length ? `<small>${titolo}</small>${qui.map(t => `<button type="button" data-tipo="${esc(t)}"><i style="--tinta:${coloreSpazio(t)}"></i>${esc(S.TIPI[t].plurale)}</button>`).join('')}` : ''; };
+      corpo = `<p class="sp-domanda">Cosa vuoi fare questa settimana?</p>`
+        + st.tipi.map(t => `<div class="campo sp-tipo"><label>${esc(S.TIPI[t].domanda)}<button type="button" class="sp-via" data-via="${esc(t)}" aria-label="Togli: ${esc(S.TIPI[t].plurale)}">${ic('chiudi')}</button></label><div class="ag-scelte" data-quanti="${esc(t)}">${
+          Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
+        + (restano.length ? `<button type="button" class="sp-aggiungi${st.menu ? ' aperto' : ''}" id="sp-aggiungi" aria-expanded="${st.menu}">${ic('piu')}<span>${st.tipi.length ? 'Aggiungi altro' : 'Aggiungi'}</span>${ic('freccia')}</button>
+            ${st.menu ? `<div class="sp-menu">${gruppo('Con una persona', S.CON_PERSONA)}${gruppo('Di gruppo, senza nome', S.DI_GRUPPO)}</div>` : ''}` : '')
+        + (st.tipi.length ? '' : `<div class="vn-aiuto">Tocca «Aggiungi» e scegli: Piani Marketing, Consulenze prodotti, incontri di Team o LOS.</div>`)
         + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge da sola. Se cambia giorno o ora, la sposti poi nella Timeline.</div>` : '');
     } else {
       const n = st.quanti[p], messi = st.scelti.filter(s => s.tipo === p).length;
@@ -2411,6 +2419,14 @@ async function preparaSettimana() {
       <div class="mc-fondo"><button class="link" id="sp-no">${st.passo ? 'Indietro' : 'Annulla'}</button><button class="primario" id="sp-si">${ultimo ? 'Crea gli spazi' : 'Avanti'}</button></div></div>`;
     velo.querySelector('#sp-x').onclick = chiudi;
     velo.querySelector('#sp-no').onclick = () => { if (!st.passo) return chiudi(); st.passo--; st.aperto = null; disegna(); };
+    const agg = velo.querySelector('#sp-aggiungi');
+    if (agg) agg.onclick = () => { st.menu = !st.menu; disegna(); };
+    velo.querySelectorAll('[data-tipo]').forEach(b => { b.onclick = () => { st.tipi.push(b.dataset.tipo); st.quanti[b.dataset.tipo] = 1; st.menu = false; disegna(); }; });
+    velo.querySelectorAll('[data-via]').forEach(b => { b.onclick = () => {
+      const t = b.dataset.via;
+      st.tipi = st.tipi.filter(x => x !== t); delete st.quanti[t]; st.scelti = st.scelti.filter(x => x.tipo !== t);
+      disegna();
+    }; });
     velo.querySelectorAll('[data-quanti] button').forEach(b => { b.onclick = () => {
       const t = b.parentElement.dataset.quanti;
       st.quanti[t] = Number(b.dataset.n);
@@ -2425,14 +2441,14 @@ async function preparaSettimana() {
     velo.querySelectorAll('[data-ora]').forEach(b => { b.onclick = () => { st.scelti.push({ tipo: p, giorno: st.aperto, ora: b.dataset.ora, durata: S.DURATA }); st.aperto = null; disegna(); }; });
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {
-      if (p === 'quanti' && lista.length === 1) return disegna('Scegli almeno un Piano Marketing o una Consulenza prodotti.');
+      if (p === 'quanti' && lista.length === 1) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
       if (p !== 'quanti') {
         const mancano = st.quanti[p] - st.scelti.filter(s => s.tipo === p).length;
         if (mancano > 0) return disegna(S.manca(p, mancano));
       }
       if (!ultimo) { st.passo++; st.aperto = null; return disegna(); }
       const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi);
-      if (!righe.length) return disegna('Scegli almeno un Piano Marketing o una Consulenza prodotti.');
+      if (!righe.length) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
       const btn = velo.querySelector('#sp-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       const { data, error } = await dbq('prepara la settimana', supa.from('spazi').insert(righe).select('id'));
@@ -2450,20 +2466,22 @@ async function preparaSettimana() {
 
 // Il foglio di uno spazio: mettere un nome (diventa l'appuntamento), cambiare giorno e ora, toglierlo.
 // La SdS/OPEN non ha nome: «Questa settimana non c'è» la toglie e nel Modulo Core la settimana diventa «l'OPEN non c'era».
+// Team e LOS (27/09): incontri di gruppo, senza nome: si spostano, si allungano, si tolgono.
 function foglioSpazio(id) {
   const S = MB21Spazi, A = MB21Agenda, s = (AG.spazi || []).find(x => x.id === id);
   if (!s) return;
-  const o = S.orario(s), sds = s.tipo === 'SdS/OPEN';
+  const o = S.orario(s), sds = s.tipo === 'SdS/OPEN', persona = S.daRiempire(s.tipo);
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
-    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}${sds ? '' : ' · da riempire'}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}${persona ? ' · da riempire' : ''}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni nel Check del giorno.'
-      : 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'}</div>
-    <div class="sp-comandi">${sds ? '' : `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>`}
+      : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
+      : `${esc(S.TIPI[s.tipo].sotto)}: un incontro senza nome. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
+    <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
-      <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : 'Togli lo spazio'}</button></div>
+      <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : 'Togli l\'incontro'}</button></div>
     <div id="sp-campi" hidden><div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
       <div class="campo"><label>Durata</label>${pilloleDurata('sp-durata', o.durata, o.ora)}</div>
       <div class="mc-fondo"><button class="link" id="sp-annulla">Annulla</button><button class="primario" id="sp-salva">Salva</button></div></div></div>`;
@@ -2499,7 +2517,7 @@ function foglioSpazio(id) {
       if (segnato) await segnaSenzaOpen(lun, false);
       await apriAgenda(AG.giorno);
     };
-    mostraToast(sds ? (segnato ? 'Tolta: nel Modulo Core questa settimana «l\'OPEN non c\'era»' : 'Tolta. Nel Modulo Core non sono riuscito a segnarla: toccala lì.') : 'Spazio tolto', rimetti);
+    mostraToast(sds ? (segnato ? 'Tolta: nel Modulo Core questa settimana «l\'OPEN non c\'era»' : 'Tolta. Nel Modulo Core non sono riuscito a segnarla: toccala lì.') : persona ? 'Spazio tolto' : 'Incontro tolto', rimetti);
   };
 }
 
@@ -2523,7 +2541,7 @@ async function segnaSenzaOpen(lun, senza) {
 async function spaziLiberi() {
   if (!vediSpazi()) return [];
   const A = MB21Agenda, da = new Date().toISOString(), a = A.isoDaRoma(A.spostaGiorno(MB21Coda.oggiRoma(), 22), '00:00');
-  const { data, error } = await dbq('spazi liberi', supa.from('spazi').select('*').eq('user_id', visto().id).neq('tipo', 'SdS/OPEN').gte('inizio', da).lt('inizio', a).order('inizio'));
+  const { data, error } = await dbq('spazi liberi', supa.from('spazi').select('*').eq('user_id', visto().id).in('tipo', MB21Spazi.CON_PERSONA).gte('inizio', da).lt('inizio', a).order('inizio'));
   return error ? [] : data || [];
 }
 

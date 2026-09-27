@@ -71,4 +71,19 @@ prova('Il programma della settimana: fissati e da riempire per tipo, poi la SdS/
   assert.equal(S.programma(SETT, [], [sp('Consulenza PRD', '2026-10-02', '10:00')]).righe[0].testo, 'Consulenze prodotti: 1 da riempire');
 });
 
+prova('Team e LOS (27/09): incontri di gruppo, senza nome, nel selettore dopo Piani e Consulenze', () => {
+  assert.deepEqual(S.DA_PREPARARE, ['Piano Marketing', 'Consulenza PRD', 'Team', 'LOS']);
+  assert.equal(S.daRiempire('Piano Marketing'), true);
+  assert.equal(S.daRiempire('Team'), false);
+  assert.equal(S.daRiempire('SdS/OPEN'), false);
+  assert.equal(S.TIPI.Team.max, 3);
+  assert.equal(S.domandaGiorni('Team', 1), 'In che giorno fai l\'incontro di Team?');
+  assert.equal(S.domandaGiorni('LOS', 2), 'In che giorni fai i 2 incontri LOS?');
+  assert.equal(S.conto('LOS', 1, 1), 'Messi 1 su 1 ✓');
+  const r = S.righeNuove('io', SETT, [{ tipo: 'Team', giorno: '2026-09-30', ora: '21:00' }, { tipo: 'Team', giorno: '2026-10-02', ora: '21:00' }, { tipo: 'LOS', giorno: '2026-10-01', ora: '20:00' }], [], '2026-09-27');
+  assert.equal(S.riassunto(r), '2 incontri di Team, 1 incontro LOS e la SdS/OPEN');
+  const p = S.programma(SETT, [], r.map((x, k) => ({ ...x, id: 'r' + k })));
+  assert.deepEqual(p.righe.map(x => x.testo), ['Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00', 'Incontro LOS: gio 1 alle 20:00', 'SdS/OPEN: lun 28 alle 21:30']);
+});
+
 console.log(`\n${ok} prove superate`);

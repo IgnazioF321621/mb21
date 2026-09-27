@@ -1,18 +1,26 @@
 // MB21 · «Modello appuntamenti settimanale» (Ignazio 27/09/2026): gli spazi della settimana preparati prima, senza persona.
-// «Prepara la settimana» chiede quanti Piani Marketing e quante Consulenze prodotti, poi per ognuno il giorno e l'ora tra
-// quelle libere (1 ora ciascuno: se serve di più si allunga nella Timeline); la SdS/OPEN (Serata di sponsorizzazione / OPEN,
-// una voce sola) si mette da sola il lunedì alle 21:30. Mettendo un nome, lo spazio diventa un appuntamento vero.
+// «Prepara la settimana» chiede cosa vuoi fare (un selettore: Piani Marketing, Consulenze prodotti, incontri di Team e LOS) e
+// quanti, poi per ognuno il giorno e l'ora tra quelle libere (1 ora ciascuno: se serve di più si allunga nella Timeline); la
+// SdS/OPEN (Serata di sponsorizzazione / OPEN, una voce sola) si mette da sola il lunedì alle 21:30. Piani e Consulenze sono
+// spazi «da riempire»: mettendo un nome diventano un appuntamento vero. Team, LOS e SdS/OPEN sono incontri di gruppo, senza nome.
 // Funzioni pure. Tabella `spazi`; il disegno è in pagina-agenda.js; prove in tools/banco/prova_spazi.js.
 (function (radice) {
   const A = typeof module !== 'undefined' && module.exports ? require('./agenda.js') : radice.MB21Agenda;
 
   // i tipi: la chiave è quella di `azioni.tipo_azione` (così lo spazio diventa l'appuntamento senza tradurre niente)
+  // Team e LOS (linea di sponsorizzazione): incontri di gruppo, senza nome e senza giorno fisso (Ignazio 27/09).
+  // uno / tanti / piccolo: le parole dentro le frasi («In che giorno fai l'incontro di Team?», «1 incontro di Team»); f = femminile
   const TIPI = {
-    'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing vuoi fare questa settimana?', max: 6 },
-    'Consulenza PRD': { nome: 'Consulenza prodotti', plurale: 'Consulenze prodotti', domanda: 'Quante Consulenze prodotti vuoi fare questa settimana?', max: 4 },
-    'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN' },
+    'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing?', max: 6, persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
+    'Consulenza PRD': { nome: 'Consulenza prodotti', plurale: 'Consulenze prodotti', domanda: 'Quante Consulenze prodotti?', max: 4, persona: true, f: true, uno: 'la Consulenza prodotti', tanti: 'Consulenze prodotti', piccolo: 'Consulenza prodotti' },
+    'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', domanda: 'Quanti incontri di Team?', max: 3, uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
+    'LOS': { nome: 'Incontro LOS', plurale: 'Incontri LOS', domanda: 'Quanti incontri LOS?', max: 3, uno: 'l\'incontro LOS', tanti: 'incontri LOS', piccolo: 'incontro LOS', sotto: 'Linea di sponsorizzazione' },
+    'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
   };
-  const DA_PREPARARE = ['Piano Marketing', 'Consulenza PRD'];
+  const CON_PERSONA = ['Piano Marketing', 'Consulenza PRD'];   // spazi da riempire con un nome
+  const DI_GRUPPO = ['Team', 'LOS'];
+  const DA_PREPARARE = [...CON_PERSONA, ...DI_GRUPPO];         // le scelte del selettore «Aggiungi», in quest'ordine
+  const daRiempire = tipo => CON_PERSONA.includes(tipo);
   const DURATA = 60;
   const SDS = { giorno: 0, ora: '21:30', durata: 60 };   // lunedì (il primo giorno della settimana) alle 21:30
   const DALLE = 9 * 60, ALLE = 22 * 60;                    // le ore proposte: dalle 9 (ultimo inizio alle 21)
@@ -77,38 +85,40 @@
   // La card «Programma della settimana» nel menu di MB Plan (Ignazio 27/09, al posto del Modulo Core): per Piani Marketing e
   // Consulenze quanti sono già fissati (appuntamenti veri) e quanti spazi restano da riempire, poi la SdS/OPEN.
   // azioni: righe di `azioni` (si contano quelle della settimana); spazi: righe di `spazi`.
+  // Team, LOS e SdS/OPEN: quando sono («Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00»).
+  const quando = s => { const g = giornoDi(s.inizio); return `${A.GIORNI_SETTIMANA[A.giornoSettimana(g) - 1].toLowerCase()} ${Number(g.slice(8))} alle ${oraDi(s.inizio).slice(0, 5)}`; };
   function programma(settimana, azioni, spazi) {
     const dentro = iso => !!iso && settimana.includes(giornoDi(iso));
-    const suoi = (spazi || []).filter(s => dentro(s.inizio));
+    const suoi = (spazi || []).filter(s => dentro(s.inizio)).sort((x, y) => x.inizio.localeCompare(y.inizio));
     const righe = [];
-    for (const t of DA_PREPARARE) {
+    for (const t of CON_PERSONA) {
       const fissati = (azioni || []).filter(a => a.tipo_azione === t && dentro(a.inizio)).length;
       const vuoti = suoi.filter(s => s.tipo === t).length;
       if (!fissati && !vuoti) continue;
       const f = t === 'Piano Marketing' ? (fissati === 1 ? 'fissato' : 'fissati') : (fissati === 1 ? 'fissata' : 'fissate');
       righe.push({ tipo: t, testo: `${TIPI[t].plurale}: ${[fissati ? `${fissati} ${f}` : '', vuoti ? `${vuoti} da riempire` : ''].filter(Boolean).join(' · ')}` });
     }
-    const sds = suoi.filter(s => s.tipo === 'SdS/OPEN').sort((x, y) => x.inizio.localeCompare(y.inizio))[0];
-    if (sds) { const g = giornoDi(sds.inizio); righe.push({ tipo: 'SdS/OPEN', testo: `SdS/OPEN: ${A.GIORNI_SETTIMANA[A.giornoSettimana(g) - 1].toLowerCase()} ${Number(g.slice(8))} alle ${oraDi(sds.inizio).slice(0, 5)}` }); }
+    for (const t of [...DI_GRUPPO, 'SdS/OPEN']) {
+      const questi = suoi.filter(s => s.tipo === t);
+      if (questi.length) righe.push({ tipo: t, testo: `${questi.length === 1 ? TIPI[t].nome : TIPI[t].plurale}: ${questi.map(quando).join(' · ')}` });
+    }
     return { righe, preparata: suoi.length > 0 };
   }
 
   // Le parole dei passi, pensate per chi è appena arrivato (Ignazio 27/09: «nei panni di un nuovo»): una domanda chiara,
   // il conto scritto a parole
-  const domandaGiorni = (tipo, n) => tipo === 'Piano Marketing'
-    ? (n === 1 ? 'In che giorno fai il Piano Marketing?' : `In che giorni fai i ${n} Piani Marketing?`)
-    : (n === 1 ? 'In che giorno fai la Consulenza prodotti?' : `In che giorni fai le ${n} Consulenze prodotti?`);
-  const conto = (tipo, messi, n) => `${tipo === 'Piano Marketing' ? 'Messi' : 'Messe'} ${messi} su ${n}${messi === n ? ' ✓' : ''}`;
-  const manca = (tipo, n) => n === 1 ? `Ne manca ${tipo === 'Piano Marketing' ? 'uno' : 'una'}: tocca un giorno e scegli l'ora.` : `Ne mancano ${n}: tocca un giorno e scegli l'ora.`;
+  const domandaGiorni = (tipo, n) => (n === 1 ? `In che giorno fai ${TIPI[tipo].uno}?` : `In che giorni fai ${TIPI[tipo].f ? 'le' : 'i'} ${n} ${TIPI[tipo].tanti}?`);
+  const conto = (tipo, messi, n) => `${TIPI[tipo].f ? 'Messe' : 'Messi'} ${messi} su ${n}${messi === n ? ' ✓' : ''}`;
+  const manca = (tipo, n) => n === 1 ? `Ne manca ${TIPI[tipo].f ? 'una' : 'uno'}: tocca un giorno e scegli l'ora.` : `Ne mancano ${n}: tocca un giorno e scegli l'ora.`;
 
-  // «3 Piani Marketing, 1 Consulenza prodotti e la SdS/OPEN»: il riassunto dopo averli creati
+  // «3 Piani Marketing, 1 incontro di Team e la SdS/OPEN»: il riassunto dopo averli creati
   function riassunto(righe) {
-    const parti = DA_PREPARARE.map(t => { const n = righe.filter(r => r.tipo === t).length; return n ? `${n} ${n === 1 ? TIPI[t].nome : TIPI[t].plurale}` : ''; }).filter(Boolean);
+    const parti = DA_PREPARARE.map(t => { const n = righe.filter(r => r.tipo === t).length; return n ? `${n} ${n === 1 ? TIPI[t].piccolo : TIPI[t].tanti}` : ''; }).filter(Boolean);
     if (righe.some(r => r.tipo === 'SdS/OPEN')) parti.push('la SdS/OPEN');
     return parti.length > 1 ? parti.slice(0, -1).join(', ') + ' e ' + parti[parti.length - 1] : (parti[0] || '');
   }
 
-  const api = { TIPI, DA_PREPARARE, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, domandaGiorni, conto, manca, riassunto };
+  const api = { TIPI, CON_PERSONA, DI_GRUPPO, DA_PREPARARE, daRiempire, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, domandaGiorni, conto, manca, riassunto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Spazi = api;
 })(this);
