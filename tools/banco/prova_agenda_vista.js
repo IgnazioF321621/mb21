@@ -230,4 +230,15 @@ prova('Gli spazi da riempire (27/09): solo l\'Admin; nella card, nella Timeline,
   modo.admin = prima;
 });
 
+prova('Un giorno che deve venire: «N in coda» conta chi non ha già un orario e apre i nomi, non la Dashboard (27/09)', () => {
+  const prima = AG.telefonate;
+  AG.telefonate = { oggi: false, inCoda: [{ id: 'm1', nome: 'Mario Rossi', categoria: 'Prospect' }] };
+  const f = V.vista('giorno');
+  assert.match(f, /<button id="ag-in-coda" class="telefonate">.*<b>1<\/b> in coda/);
+  assert.doesNotMatch(f, /id="ag-telefonate"/);
+  AG.telefonate = { oggi: false, inCoda: [] };                     // tutti con un orario: la pillola non c'è
+  assert.doesNotMatch(V.vista('giorno'), /in coda/);
+  AG.telefonate = prima;
+});
+
 console.log(`\n${ok} prove superate`);
