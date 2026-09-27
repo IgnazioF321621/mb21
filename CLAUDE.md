@@ -11,6 +11,7 @@ Contesto completo del progetto: `docs/MB21_v4_Brief_Sviluppo.md`.
 - **Ignazio non è programmatore:** spiegare in modo semplice, zero gergo in chat. Se serve un termine tecnico, dire in una frase cosa significa.
 - **Onestà sulla confidenza:** se non sei certo di qualcosa, fermati e proponi come verificarlo. Mai tirare a indovinare.
 - **Niente over-engineering:** una soluzione sola, la più semplice che funziona.
+- **Nei panni di un nuovo** (Ignazio 27/09: «io sono nuovo, appena iscritto, apro l'app, devo avere tutto chiaro»): ogni schermata, schizzo o testo si pensa per chi apre l'app per la prima volta. Si capisce al primo sguardo cosa toccare: una domanda chiara in cima, un gesto solo per volta, il conto scritto a parole («Messi 3 su 3»), niente sigle (PM, C) né segni da interpretare (− 0 +). Prima di mostrare qualcosa chiedersi: «un nuovo capisce subito?» (vedi LEZIONI.md).
 - **Nell'app consigli, mai ordini** (Ignazio 27/09: «noi non comandiamo, compri, ordina: diamo consigli, diamo direzione, diamo visione — stella cometa»): nei testi che i partner leggono niente imperativi come «compra», «fai», «abbonati»; si scrive «ti consiglio il biglietto WES», o si indica la direzione.
 - **Stessa schermata, stesso codice ovunque:** prima di cambiare un modulo, un formato o un flusso, cercare con grep tutti i posti che lo mostrano (Agenda, scheda, Report/Griglia, Dashboard…) e cambiarli tutti nello stesso commit con una funzione condivisa (vedi LEZIONI.md).
 
