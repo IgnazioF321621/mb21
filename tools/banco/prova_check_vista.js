@@ -230,9 +230,11 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   const card = h.slice(h.indexOf('class="livelli-t"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
   assert.match(card, /^class="livelli-t">I livelli<\/div>/);
   assert.match(card, /data-gradino="lc" aria-expanded="true"><b>Leaders Club<\/b>/);
-  assert.match(card, /<span>9% di bonus<\/span><span>6%<\/span>/);
-  assert.match(card, /<span>5 prime linee attive<\/span><span>3 su 5<\/span>/);   // C è di un altro
-  assert.match(card, /<span>5 iscritti al CEP nel gruppo<\/span><span>3 su 5<\/span>/);
+  assert.match(card, /<div class="sv-t">Segni Vitali<\/div><div class="voci"><div class=""><span>Bonus attività<\/span><span>6% su 9%<\/span>/);   // una lista sola, come il Manuale
+  assert.match(card, /<span>Prime linee<\/span><span>3 su 5<\/span>/);   // C è di un altro
+  assert.match(card, /<div class="ok"><span>✓ Iscritti al mese gruppo<\/span><span>fatto<\/span>/);
+  assert.match(card, /<span>Iscritti CEP<\/span><span>3 su 5<\/span>/);
+  assert.doesNotMatch(card, /Per essere|I Segni Vitali ·/);
   // «I prossimi passi» (27/09): 2, coi nomi, prima le cause; il 9% è una riga sotto
   assert.match(card, /<b>I prossimi passi verso Leaders Club<\/b>/);
   assert.match(card, /<div class="passo"><button class="vai" data-vai="lista">1\. 2 prime linee attive in più \(3 su 5\) ›<\/button><\/div>/);
@@ -245,8 +247,8 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   assert.match(h2, /2\. Aiutare Luca Caccamo: mancano 122 VP al 3%/);
   assert.match(h2, /<small class="nonora">Non ora, questo mese: <button data-riprendi="B" data-mese="202609">Alberto Cilia ↺<\/button><\/small>/);
   esegui(`CK.nonOra = []`);
-  assert.match(card, /data-gradino="elc" aria-expanded="false"><b>Executive Leader Club<small>Core · 15% · 10 prime linee · 15 CEP · 3 linee al 6%<\/small>/);
-  assert.match(card, /data-gradino="arg" aria-expanded="false"><b>Produttore Argento<small>21% di bonus nel mese<\/small><\/b><span><span class="st">0 su 1/);   // il 21% di agosto non conta
+  assert.match(card, /data-gradino="elc" aria-expanded="false"><b>Executive Leader Club<small>Segni Vitali: 15% · 10 prime linee · 15 CEP · 50 nel gruppo<\/small>/);
+  assert.match(card, /data-gradino="arg" aria-expanded="false"><b>Produttore Argento<small>Segni Vitali: 21% · 20 prime linee · 30 CEP · 150 nel gruppo<\/small><\/b><span><span class="st">0 su 9/);   // il 21% di agosto non conta
   esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear();`);
   ctx.visto = () => ({ id: 'io' });
 });

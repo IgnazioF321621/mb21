@@ -349,25 +349,27 @@ prova('Pacesetter (Ignazio 26/09): 2 sponsor personali del Check · 100 VP · CE
   assert.equal(C.PACE_SPONSOR, 2);
 });
 
-prova('I livelli (Ignazio 27/09, Manuale pag. 31): Leaders Club, Executive, Argento; prime linee solo attive; un consiglio solo, per il prossimo', () => {
+prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali», ordine e nomi del Manuale, poi il riquadro; si accende con tutta la lista', () => {
   // come Ignazio a settembre 2026: 6%, 4 prime linee con VP (una al 3%), 9 ferme
   const linee = [{ vpp: 107.38, bonus: 3 }, { vpp: 47.46, bonus: 0 }, { vpp: 78.27, bonus: 0 }, { vpp: 116.36, bonus: 0 }, ...Array(9).fill({ vpp: 0, bonus: 0 })];
-  const v = C.livelli({ core: false, bonus: 6, linee, cep: 3 });
-  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '0 su 5', false], ['Executive Leader Club', '0 su 6', false], ['Produttore Argento', '0 su 1', false], ['Platino', '0 su 1', false]]);
-  assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Leader Core', 'nel percorso sopra'], ['9% di bonus', '6%'], ['5 prime linee attive', '4 su 5'],
-    ['5 iscritti al CEP nel gruppo', '3 su 5'], ['3 linee al 3%', '1 su 3']]);
-  assert.equal(v.righe[0].passi[0].testo, 'Una prima linea attiva in più (4 su 5)');   // i nomi e i VP: nella prova dopo
+  const v = C.livelli({ core: false, bonus: 6, linee, cep: 3, planner: 0, iscritti: 0, totale: 32, bbs: 3, wes: 4, mesi21: 0 });
+  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '1 su 10', false], ['Executive Leader Club', '0 su 12', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
+  assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Bonus attività', '6% su 9%'], ['Linee riceventi Bonus', '1 su 3'], ['15 Planner', '0 su 1'],
+    ['Prime linee', '4 su 5'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
+    ['Biglietti WES', '4 su 10'], ['Core', 'nel percorso sopra']]);
+  assert.deepEqual(v.righe[1].voci.slice(9).map(x => [x.testo, x.stato]), [['Core', 'nel percorso sopra'], ['3 linee al 6%', '0 su 3'], ['di cui 2 a Leaders Club', 'da segnare']]);
+  assert.equal(v.righe[2].voci.length, 9);   // Argento: solo la riga della tabella
+  assert.deepEqual(v.righe[3].voci[9], { chiave: 'mesi21', testo: '12 mesi di fila al 21%', fatto: false, stato: '0 su 12' });
   assert.deepEqual([v.righe[1].passi, v.righe[2].passi], [[], []]);   // i passi solo per il prossimo livello
-  assert.equal(v.righe[1].voci[5].testo, 'di cui 2 a Leaders Club');   // Executive: non si sa ancora, resta da segnare
-  assert.equal(v.righe[1].voci[5].stato, 'da segnare');
   assert.equal(v.doveSei, null);
-  // Leaders Club fatto → il consiglio passa all'Executive; l'Argento conta solo il 21%
-  const lc = C.livelli({ core: true, bonus: 12, linee: [...Array(5).fill({ vpp: 50, bonus: 3 })], cep: 6 });
+  // tutta la lista fatta → Leaders Club acceso, i passi passano all'Executive; senza un solo segno (qui i biglietti WES) resta spento
+  const pieno = { core: true, bonus: 12, linee: Array(5).fill({ vpp: 50, bonus: 3 }), cep: 6, planner: 1, iscritti: 5, totale: 20, bbs: 10, wes: 10 };
+  const lc = C.livelli(pieno);
   assert.deepEqual([lc.righe[0].fatto, lc.doveSei, lc.righe[0].passi.length, lc.righe[1].passi.length > 0], [true, 'Leaders Club', 0, true]);
-  assert.equal(C.livelli({ core: false, bonus: 21, linee: [], cep: 0 }).righe[2].fatto, true);
+  assert.equal(C.livelli({ ...pieno, wes: 9 }).righe[0].fatto, false);
   // senza il file Amway del mese: niente numeri inventati
   const nulla = C.livelli({ core: false, bonus: null, linee: [], cep: null });
-  assert.deepEqual([nulla.noto, nulla.righe[0].voci[1].stato, nulla.righe[0].voci[3].stato, nulla.righe[0].passi, nulla.righe[0].info], [false, 'dati Amway non arrivati', 'non lo so', [], null]);
+  assert.deepEqual([nulla.noto, nulla.righe[0].voci[0].stato, nulla.righe[0].voci[6].stato, nulla.righe[0].info], [false, 'dati Amway non arrivati', 'non lo so', null]);
 });
 
 prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi nomi; «Non ora» passa alla linea dopo; il 9% è una riga', () => {
@@ -400,34 +402,23 @@ prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM
   assert.deepEqual(r.passi.map(x => [x.vai, x.partner_id]), [['lista', undefined], ['scheda', 'A']]);
 });
 
-prova('I Segni Vitali dei livelli (Ignazio 27/09, tabella pag. 31) e il Platino: due parti, niente doppioni, passi nell\'ordine di Ignazio', () => {
+prova('I passi (Ignazio 27/09): nell\'ordine di Ignazio — prime linee, iscritti del mese, la linea da aiutare, 15 Planner, biglietti, CEP; il Platino conta i mesi', () => {
   const linee = [{ partner_id: 'G', nome: 'Simone Giavatto', vpp: 107, bonus: 3, manca: 89 }, { partner_id: 'A', nome: 'Alberto Cilia', vpp: 116, bonus: 0, manca: 83.64 },
     { partner_id: 'S', nome: 'Isabella Sammito', vpp: 47, bonus: 0, manca: 152.54 }, { partner_id: 'K', nome: 'Luca Caccamo', vpp: 78, bonus: 0, manca: 121.73 }];
   const dati = { core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: [], planner: 0, iscritti: 2, totale: 32, bbs: 3, wes: 12, mesi21: 0 };
-  const v = C.livelli(dati);
-  const [lc, elc, arg, plat] = v.righe;
-  // Leaders Club: bonus, prime linee e CEP sono già nei requisiti con lo stesso numero → nei Segni Vitali le altre sei colonne
-  assert.deepEqual(lc.segni.map(x => [x.testo, x.stato]), [['15 Planner nel gruppo', '0 su 1'],   // «3 linee che ricevono bonus» = «3 linee al 3%», già sopra
-    ['5 iscritti del mese nel gruppo', '2 su 5'], ['15 persone nel gruppo', 'fatto'], ['10 biglietti BBS nel gruppo', '3 su 10'], ['10 biglietti WES nel gruppo', 'fatto']]);
-  assert.equal(lc.statoSegni, '2 su 5');
-  // Argento: requisito il 21%; nei Segni Vitali tutta la riga tranne il bonus. Platino: 12 mesi di fila al 21%, e la riga intera
-  assert.deepEqual(arg.voci.map(x => x.testo), ['21% di bonus']);
-  assert.equal(arg.segni.length, 8);
-  assert.deepEqual(plat.voci.map(x => [x.testo, x.stato]), [['12 mesi di fila al 21%', '0 su 12']]);
-  assert.deepEqual(plat.segni.map(x => x.testo).slice(0, 3), ['21% di bonus', '9 linee che ricevono bonus', '15 Planner nel gruppo']);
-  // i passi: prima le persone nuove (prime linee, iscritti del mese), poi la linea da aiutare, poi 15 Planner, biglietti e CEP
+  const lc = C.livelli(dati).righe[0];
   assert.deepEqual(lc.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', '3 iscritti in più nel gruppo questo mese (2 su 5)']);
   const tutti = C.livelli({ ...dati, linee: [...linee, { partner_id: 'Z', nome: 'Z', vpp: 10, bonus: 0 }], iscritti: 5 }).righe[0];
-  assert.deepEqual(tutti.passi.map(p => p.vai), ['scheda', 'agenda']);   // Cilia (linee al 3% dei requisiti)   // Cilia, poi «Un 15 Planner in più»
+  assert.deepEqual(tutti.passi.map(p => p.vai), ['scheda', 'agenda']);   // Cilia (linee riceventi bonus), poi «Un 15 Planner in più»
   assert.match(tutti.passi[1].testo, /^Un 15 Planner in più nel gruppo: 15 Piani Marketing nel mese \(0 su 1\)$/);
-  // non lo so = niente numeri inventati e niente passi su quella voce
+  // non lo so = niente passi su quella voce
   const ignoto = C.livelli({ ...dati, planner: null, iscritti: null }).righe[0];
-  assert.deepEqual(ignoto.segni.filter(x => x.stato === 'non lo so').map(x => x.chiave), ['planner', 'iscritti']);
+  assert.deepEqual(ignoto.voci.filter(x => x.stato === 'non lo so').map(x => x.chiave), ['planner', 'iscritti']);
   assert.ok(!ignoto.passi.some(p => /iscritti|Planner/.test(p.testo)));
-  // Platino: i mesi al 21% sono un risultato, la riga sotto li conta
-  const quasi = C.livelli({ ...dati, core: true, bonus: 21, linee: Array(20).fill({ vpp: 100, bonus: 9 }), cep: 50, iscritti: 20, planner: 10, bbs: 80, wes: 80, totale: 200, mesi21: 4 });
-  assert.equal(quasi.righe[3].info, 'Mesi di fila al 21% da settembre: 4 su 12');
-  assert.equal(quasi.doveSei, 'Produttore Argento');   // Executive resta «da segnare»: l'Argento si accende lo stesso
+  // Argento fatto (tutta la sua riga) → il prossimo è il Platino anche se l'Executive resta «da segnare»; la riga sotto conta i mesi
+  const arg = C.livelli({ ...dati, core: true, bonus: 21, linee: Array(20).fill({ vpp: 100, bonus: 9 }), cep: 50, iscritti: 20, planner: 10, bbs: 80, wes: 80, totale: 200, mesi21: 4 });
+  assert.equal(arg.doveSei, 'Produttore Argento');
+  assert.equal(arg.righe[3].info, 'Mesi di fila al 21% da settembre: 4 su 12');
 });
 
 console.log(`\n${ok} prove superate`);
