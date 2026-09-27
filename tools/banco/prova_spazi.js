@@ -1,0 +1,65 @@
+// Prova di spazi.js: «Modello appuntamenti settimanale» di MB Plan (Ignazio 27/09/2026).
+// Uso: node tools/banco/prova_spazi.js
+const assert = require('node:assert/strict');
+const S = require('../../spazi.js'), A = require('../../agenda.js'), C = require('../../core.js');
+let ok = 0;
+function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
+const SETT = A.settimana('2026-09-30');   // lun 28/9 … dom 4/10
+const sp = (tipo, g, o, durata) => ({ id: tipo + g + o, tipo, inizio: A.isoDaRoma(g, o), durata: durata || 60 });
+
+prova('Le ore libere: a ore piene dalle 9 alle 21, senza toccare impegni, spazi e scelti', () => {
+  const imp = [{ inizio: A.isoDaRoma('2026-09-29', '18:30'), fine: A.isoDaRoma('2026-09-29', '19:30') }];
+  const occ = S.occupati('2026-09-29', imp, [sp('SdS/OPEN', '2026-09-29', '21:30')], [{ giorno: '2026-09-29', ora: '10:00' }, { giorno: '2026-09-30', ora: '11:00' }]);
+  const ore = S.oreLibere(occ);
+  assert.equal(ore[0], '09:00');
+  assert.ok(!ore.includes('10:00'));                       // scelto adesso
+  assert.ok(ore.includes('11:00'));                        // quello dell'altro giorno non conta
+  assert.ok(!ore.includes('18:00') && !ore.includes('19:00'));   // 18:30–19:30 tocca tutte e due
+  assert.ok(ore.includes('20:00') && !ore.includes('21:00')); // 21:00–22:00 tocca la SdS delle 21:30
+  assert.equal(ore[ore.length - 1], '20:00');
+  assert.deepEqual(S.oreLibere([], { adesso: 15 * 60 }).slice(0, 2), ['16:00', '17:00']);   // oggi: niente ore passate
+});
+
+prova('Le righe da creare: gli scelti e la SdS/OPEN del lunedì alle 21:30, una volta sola', () => {
+  const scelti = [{ tipo: 'Piano Marketing', giorno: '2026-09-30', ora: '19:00' }, { tipo: 'Consulenza PRD', giorno: '2026-10-01', ora: '10:00' }];
+  const r = S.righeNuove('io', SETT, scelti, [], '2026-09-27');
+  assert.equal(r.length, 3);
+  assert.equal(r[0].tipo, 'SdS/OPEN');
+  assert.equal(A.partiRoma(r[0].inizio).giorno, '2026-09-28');
+  assert.equal(A.partiRoma(r[0].inizio).ora, '21:30');
+  assert.ok(r.every(x => x.user_id === 'io' && x.durata === 60));
+  assert.equal(S.righeNuove('io', SETT, scelti, [sp('SdS/OPEN', '2026-09-28', '20:30')], '2026-09-27').length, 2);   // c'è già (anche spostata)
+  assert.equal(S.righeNuove('io', SETT, scelti, [], '2026-09-29').length, 2);   // il lunedì è passato
+  assert.equal(S.sdsDaMettere(SETT, [], '2026-09-28'), true);
+  assert.equal(S.riassunto(r), '1 Piano Marketing, 1 Consulenza prodotti e la SdS/OPEN');
+  assert.equal(S.riassunto(S.righeNuove('io', SETT, [scelti[0], scelti[0]], [], '2026-09-29')), '2 Piani Marketing');
+});
+
+prova('Le parole dei passi (nei panni di un nuovo): domanda, conto, cosa manca', () => {
+  assert.equal(S.domandaGiorni('Piano Marketing', 3), 'In che giorni fai i 3 Piani Marketing?');
+  assert.equal(S.domandaGiorni('Piano Marketing', 1), 'In che giorno fai il Piano Marketing?');
+  assert.equal(S.domandaGiorni('Consulenza PRD', 2), 'In che giorni fai le 2 Consulenze prodotti?');
+  assert.equal(S.conto('Piano Marketing', 2, 3), 'Messi 2 su 3');
+  assert.equal(S.conto('Consulenza PRD', 1, 1), 'Messe 1 su 1 ✓');
+  assert.match(S.manca('Piano Marketing', 1), /^Ne manca uno/);
+  assert.match(S.manca('Consulenza PRD', 2), /^Ne mancano 2/);
+});
+
+prova('Gli spazi del giorno in ordine, e il loro orario', () => {
+  const l = [sp('Piano Marketing', '2026-09-30', '20:00'), sp('Consulenza PRD', '2026-09-30', '10:00', 90), sp('Piano Marketing', '2026-10-01', '19:00')];
+  assert.deepEqual(S.delGiorno(l, '2026-09-30').map(x => S.orario(x).ora), ['10:00', '20:00']);
+  assert.deepEqual(S.orario(l[1]), { giorno: '2026-09-30', ora: '10:00', fine: '11:30', durata: 90 });
+});
+
+prova('Modulo Core: una SdS/OPEN passata dice che l\'OPEN di quella settimana c\'era', () => {
+  const spazi = [sp('SdS/OPEN', '2026-09-07', '21:30'), sp('SdS/OPEN', '2026-09-28', '21:30'), sp('Piano Marketing', '2026-09-14', '19:00')];
+  const m = C.modulo({ mese: '2026-09', spazi, oggi: '2026-09-27' });
+  const w = m.s6.settimane;
+  assert.equal(w.find(x => x.da === '2026-09-07').open, true);
+  assert.equal(w.find(x => x.da === '2026-09-14').open, false);   // un Piano Marketing non è un OPEN
+  assert.equal(w.find(x => x.da === '2026-09-28').open, false);   // non ancora passata
+  assert.equal(S.openDellaSettimana(spazi, '2026-09-28', '2026-10-04', '2026-09-28'), true);
+  assert.equal(C.modulo({ mese: '2026-09', oggi: '2026-09-27' }).s6.open, 0);   // senza spazi come prima
+});
+
+console.log(`\n${ok} prove superate`);

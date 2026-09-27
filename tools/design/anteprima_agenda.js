@@ -11,6 +11,7 @@ const sorgente = fs.readFileSync(path.join(BASE, 'index.html'), 'utf8')
   .replace(/^\/\/ ── MB PLAN \(l'Agenda\) ── la pagina è in pagina-agenda\.js.*$/m, () => fs.readFileSync(path.join(BASE, 'pagina-agenda.js'), 'utf8'));
 const A = require(path.join(BASE, 'agenda.js'));
 const MB21Icone = require(path.join(BASE, 'icone.js'));
+const MB21Spazi = require(path.join(BASE, 'spazi.js'));   // «Modello appuntamenti settimanale» (27/09)
 
 const fra = (da, a) => sorgente.slice(sorgente.indexOf(da), sorgente.indexOf(a, sorgente.indexOf(da)));
 const funzione = nome => {
@@ -66,9 +67,12 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
   cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null }, { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null }],
   modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', modello_id: 'g1', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
   modelli: [{ id: 'g1', titolo: 'Routine', icona: 'orario', attivo: true, ordine: 1 }],
-  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 } };
+  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 },
+  // gli spazi da riempire (27/09): si vedono solo all'Admin (modo.admin)
+  spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
+    { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
 const stub = {
-  MB21Agenda: A, MB21Icone, app, AG,
+  MB21Agenda: A, MB21Icone, MB21Spazi, app, AG,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { oggiRoma: () => OGGI },
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
