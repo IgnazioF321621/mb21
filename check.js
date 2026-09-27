@@ -316,7 +316,11 @@
   // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
   const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP', di: true }, bbs: { cosa: 'il biglietto BBS' }, wes: { cosa: 'il biglietto WES' }, cep: { cosa: "l'abbonamento CEP" } };
   const piuVicina = xs => xs.length ? xs.reduce((a, b) => (b.peso < a.peso ? b : a)) : null;
-  function percorso({ lc1: l, modulo: m }) {
+  // Pacesetter (Ignazio 26/09): nello stesso mese 2 sponsor personali · 100 VP · CEP. Gli sponsor sono solo quelli scritti nel
+  // Check (`sponsor`: la somma di sponsor_personali del mese), mai le prime linee del file Amway (chi mette il nuovo in
+  // profondità l'ha sponsorizzato lui). 100 VP e CEP sono le stesse luci del 1° livello.
+  const PACE_SPONSOR = 2;
+  function percorso({ lc1: l, modulo: m, sponsor }) {
     const gradini = [];
     const mancaLc1 = (l.luci || []).filter(x => !x.ok);
     const g1 = { chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
@@ -332,6 +336,20 @@
       voci: m ? vociCore(m, finora) : [] };
     g2.consiglio = g2.fatto || !g2.pronto ? null : piuVicina(g2.mancano);
     gradini.push(g2);
+    const sp = Number(sponsor) || 0, luce = k => (l.luci || []).find(x => x.chiave === k) || {};
+    const voci3 = [
+      { testo: `${PACE_SPONSOR} sponsor personali`, fatto: sp >= PACE_SPONSOR, stato: sp >= PACE_SPONSOR ? FATTO : `${sp} su ${PACE_SPONSOR}` },
+      { testo: '100 VP', fatto: !!luce('vp').ok, stato: luce('vp').ok ? FATTO : luce('vp').testo || '—' },
+      { testo: 'CEP', fatto: !!luce('cep').ok, stato: luce('cep').ok ? FATTO : luce('cep').testo || '—' },
+    ];
+    const accese3 = voci3.filter(v => v.fatto).length;
+    const manca = PACE_SPONSOR - sp;
+    // il consiglio: gli sponsor; 100 VP e CEP li consiglia già il 1° livello, qui non si ripetono
+    const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 sponsor personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
+      stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, voci: voci3,
+      mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, di: true, peso: manca / PACE_SPONSOR }] : [] };
+    g3.consiglio = g3.fatto ? null : piuVicina(g3.mancano);
+    gradini.push(g3);
     const fatti = gradini.filter(g => g.fatto);
     const doveSei = fatti.length ? fatti[fatti.length - 1].titolo : null;
     return { gradini, doveSei, tuttiFatti: gradini.every(g => g.fatto) };
@@ -348,7 +366,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, lc1, percorso };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, lc1, percorso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
