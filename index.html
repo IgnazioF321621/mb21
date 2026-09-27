@@ -1572,6 +1572,10 @@
   .ck-lc1 .livelli-t { margin: 14px 0 0; padding-top: 10px; border-top: 2px solid var(--linea); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-soft); }
   .ck-lc1 .livelli-t + .livello > .sez.core { border-top: 0; margin-top: 0; }
   /* il livello aperto in un riquadro grigio chiaro (Ignazio 27/09: «tutto questo bianco… staccare un livello da un altro») */
+  /* la porta del Modulo Core dalla riga CORE (Ignazio 27/09): la stessa pagina che si apre da MB Plan */
+  .ck-lc1 .ck-modulo { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 9px 12px; border: 1px solid var(--bordo); border-radius: var(--raggio-bottone);
+    background: var(--superficie-2); color: var(--blu); font: inherit; font-size: 14px; font-weight: 700; text-align: left; }
+  .ck-lc1 .ck-modulo > span { margin-left: auto; font-size: 18px; line-height: 1; }
   .ck-lc1 .livello.aperto { background: var(--superficie-2); border: 1px solid var(--bordo); border-left: 3px solid var(--bordo); border-radius: var(--raggio-riga); padding: 2px 10px 10px; margin: 8px -4px 0; }
   .ck-lc1 .livello.aperto.ok { border-left-color: var(--ok); }
   .ck-lc1 .livello.aperto > .sez.core { border-top: 0; margin-top: 0; }
@@ -1866,41 +1870,41 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609271617"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609271617"></script>
-<script src="lista.js?v=202609271617"></script>
-<script src="rubrica.js?v=202609271617"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609271617"></script>
-<script src="agenda.js?v=202609271617"></script>
-<script src="coach.js?v=202609271617"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609271617"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609271617"></script>
-<script src="check.js?v=202609271617"></script>
-<script src="mappa.js?v=202609271617"></script>
-<script src="pagina-coach.js?v=202609271617"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609271617"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609271617"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609271617"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609271617"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609271617"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609271617"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609271617"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609271617"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609271617"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609271617"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609271617"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609271617"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609271617"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609271617"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609271617"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609271617"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609271617"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609271617"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609271617"></script>
-<script src="benvenuto.js?v=202609271617"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609271617"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609271635"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609271635"></script>
+<script src="lista.js?v=202609271635"></script>
+<script src="rubrica.js?v=202609271635"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609271635"></script>
+<script src="agenda.js?v=202609271635"></script>
+<script src="coach.js?v=202609271635"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609271635"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609271635"></script>
+<script src="check.js?v=202609271635"></script>
+<script src="mappa.js?v=202609271635"></script>
+<script src="pagina-coach.js?v=202609271635"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609271635"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609271635"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609271635"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609271635"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609271635"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609271635"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609271635"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609271635"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609271635"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609271635"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609271635"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609271635"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609271635"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609271635"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609271635"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609271635"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609271635"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609271635"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609271635"></script>
+<script src="benvenuto.js?v=202609271635"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609271635"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.27 · 16:17';
+const APP_VERSION = '2026.09.27 · 16:35';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -3332,9 +3336,10 @@ function lc1Html(oggi) {
     <div class="luci">${l.luci.map(x => `<span class="luce ${x.chiave} ${x.ok ? 'on' : ''} ${x.ignoto ? 'ignoto' : ''}"><i>${x.ok ? '✓' : x.ignoto ? '?' : ''}</i>${esc(x.titolo)}<small>${esc(x.testo)}</small></span>`).join('')}</div>
     ${avvisi.length ? `<small class="nota-lc1">${esc(avvisi.join(' · '))}</small>` : ''}
     ${consiglio(g1.consiglio)}
-    <button class="sez core ${g2.fatto ? 'ok' : ''}" data-gradino="core" aria-expanded="${aperto ? 'true' : 'false'}"><b>${g2.fatto ? '✓ ' : ''}Leader Core${aperto ? '' : '<small>tocca per vedere le 7 abitudini</small>'}</b><span><span class="st">${esc(g2.stato)}</span><span class="apri">${aperto ? '⌄' : '›'}</span></span></button>
+    <button class="sez core ${g2.fatto ? 'ok' : ''}" data-gradino="core" aria-expanded="${aperto ? 'true' : 'false'}"><b>${g2.fatto ? '✓ ' : ''}CORE${aperto ? '' : '<small>tocca per vedere le 7 abitudini</small>'}</b><span><span class="st">${esc(g2.stato)}</span><span class="apri">${aperto ? '⌄' : '›'}</span></span></button>
     ${aperto ? `<div class="voci">${g2.voci.length ? g2.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')
-      : `<div><span>${core && core.errore ? 'Non riesco a leggere il Modulo Core: riprova' : 'Leggo il Modulo Core…'}</span><span></span></div>`}</div>${consiglio(g2.consiglio)}` : ''}
+      : `<div><span>${core && core.errore ? 'Non riesco a leggere il Modulo Core: riprova' : 'Leggo il Modulo Core…'}</span><span></span></div>`}</div>${consiglio(g2.consiglio)}
+    <button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : ''}
     <button class="sez core ${g3.fatto ? 'ok' : ''}" data-gradino="pace" aria-expanded="${apertoPace ? 'true' : 'false'}"><b>${g3.fatto ? '✓ ' : ''}Pacesetter${apertoPace ? '' : '<small>2 sponsor personali, 100 VP e CEP</small>'}</b><span><span class="st">${esc(g3.stato)}</span><span class="apri">${apertoPace ? '⌄' : '›'}</span></span></button>
     ${apertoPace ? `<div class="voci">${g3.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>${consiglio(g3.consiglio)}` : ''}
     ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}
@@ -3454,7 +3459,7 @@ async function vaiDalCheck(vai, pid) {
   if (vai === 'scheda') return schedaDalCheck(pid);
   if (vai === 'segni' && !io) return schedaDalCheck(visto().partner_id);
   if (vai === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); vai = 'profilo'; }
-  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7));
+  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7), 'check');   // «‹ Check» per tornare
   ST.tab = vai; mostraTab(); window.scrollTo(0, 0);
 }
 // la scheda contatto di una linea (codice Amway), con lo stesso aggancio della Mappa; la freccia della scheda torna al Check

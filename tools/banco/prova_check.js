@@ -313,7 +313,7 @@ prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se 
   const fintoCore = { ...moduloVuoto, fatte: 7, abitudini: [true, true, true, true, true, true, true] };
   const p = C.percorso({ lc1: lc1Di(99, true), modulo: fintoCore });
   assert.deepEqual(p.gradini.map(g => g.fatto), [false, true, false]);
-  assert.equal(p.doveSei, 'Leader Core');
+  assert.equal(p.doveSei, 'CORE');   // «Leader Core» → «CORE» (Ignazio 27/09)
   assert.equal(p.gradini[0].consiglio.cosa, 'arrivare a 100 VP');
   assert.equal(p.gradini[1].consiglio, null);
   const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore, sponsor: 2 });

@@ -116,7 +116,7 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   assert.match(card, /class="luce vp {2}"/);
   assert.doesNotMatch(card, /Ti manca/);
   assert.match(card, /class="luce wes  "><i><\/i>WES<small>manca<\/small>/);   // solo «manca», niente mese tagliato (Ignazio 27/09)
-  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
+  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>CORE<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
   assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
   assert.match(card, /<\/div>\s*<button class="prossimo vai" data-vai="segni"><span>Ti consiglio il biglietto WES<\/span><span>›<\/span><\/button>\s*<button class="sez core/);   // un tocco porta ai biglietti (27/09)   // il consiglio del 1° livello, sotto le luci (Ignazio 27/09)
@@ -148,6 +148,7 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.match(voci, /<span>10 pagine ogni giorno<\/span><span>0 pagine su 150 finora<\/span>/);   // anche le pagine sul totale, a settembre
   assert.match(voci, /<span>OPEN · BBS · WES<\/span><span>OPEN 0 su 5 · BBS · WES<\/span>/);
   assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
+  assert.match(h, /<button class="ck-modulo" data-vai="core"><svg class="ic crescita"><\/svg> Modulo del mese<span>›<\/span><\/button>/);   // la porta del Modulo Core (27/09)
   assert.equal((voci.match(/<div class="/g) || []).length, 7);
   // un mese di cui il Modulo Core non è ancora letto: «…» e «Leggo il Modulo Core…»; la lettura parte (qui, senza database, si ferma da sola)
   esegui(`CK.meseCard = '2026-10-01'; CK.eventi.wes.push({ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' });`);
@@ -162,7 +163,7 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
     CK.giorni.push({ data: '2026-09-10', sponsor_personali: 2 });   // Pacesetter: 2 sponsor personali scritti nel Check`);
   const h3 = disegna();
   assert.match(h3, /<button class="sez core ok" data-gradino="pace" aria-expanded="false"><b>✓ Pacesetter<small>2 sponsor personali, 100 VP e CEP<\/small><\/b><span><span class="st">fatto<\/span>/);
-  assert.match(h3, /<button class="sez core ok" data-gradino="core"[^>]*><b>✓ Leader Core<\/b><span><span class="st">7 su 7<\/span>/);
+  assert.match(h3, /<button class="sez core ok" data-gradino="core"[^>]*><b>✓ CORE<\/b><span><span class="st">7 su 7<\/span>/);
   assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
   assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
   esegui(`CK.aperti.clear()`);

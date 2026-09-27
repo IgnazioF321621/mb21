@@ -3,18 +3,19 @@
 // l'app non sa lo compila l'incaricato qui dentro (core_mese.dati) e si salva da solo. Si apre dal ☰ dell'Agenda → «Mese».
 // La regola è in core.js (MB21Core.modulo). Solo definizioni.
 
-const CM = { mese: null, dati: {}, riga: null, salvo: null };
+const CM = { mese: null, dati: {}, riga: null, salvo: null, da: 'agenda' };   // da: dove torna la freccia (agenda = MB Plan · check)
 
-async function apriCoreMese(mese) {
+async function apriCoreMese(mese, da) {
+  if (da) CM.da = da;   // aperto dal Check (27/09): la freccia torna al Check; le frecce dei mesi lo lasciano com'è
   CM.mese = mese || CM.mese || MB21Coda.oggiRoma().slice(0, 7);
   caricaJsPdf().catch(() => {});   // pronta prima del tocco su «Condividi PDF» (il menu di condivisione vuole il tocco «fresco»)
   const titolo = () => `${MB21Rubrica.MESI[Number(CM.mese.slice(5, 7)) - 1]} ${CM.mese.slice(0, 4)}`;
-  const testa = () => `<button class="indietro" id="cm-indietro">‹ MB Plan</button>
+  const testa = () => `<button class="indietro" id="cm-indietro">‹ ${CM.da === 'check' ? 'Check' : 'MB Plan'}</button>
     <div class="cm-testa"><button class="freccia" id="cm-prima" aria-label="Mese prima">‹</button><h1>${ic('crescita')} Modulo Core</h1><button class="freccia" id="cm-dopo" aria-label="Mese dopo">›</button></div>
     <div class="cm-mese">${esc(titolo())}${aNome() ? esc(aNome()) : ''}</div>`;
   app.innerHTML = `${testa()}<div class="vuoto">Compilo il modulo…</div>`;
   const collegaTesta = () => {
-    document.getElementById('cm-indietro').onclick = () => { ST.tab = 'agenda'; mostraTab(); };
+    document.getElementById('cm-indietro').onclick = () => { ST.tab = CM.da === 'check' ? 'check' : 'agenda'; CM.da = 'agenda'; mostraTab(); };
     document.getElementById('cm-prima').onclick = () => apriCoreMese(MB21Agenda.spostaGiorno(CM.mese + '-01', -1).slice(0, 7));
     document.getElementById('cm-dopo').onclick = () => apriCoreMese(MB21Agenda.spostaGiorno(CM.mese + '-01', 32).slice(0, 7));
   };
