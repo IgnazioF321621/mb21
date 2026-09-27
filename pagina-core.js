@@ -74,9 +74,9 @@ function moduloCoreHtml(m) {
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>
-    <div class="cm-conto"><b>${m.s5.quanti}</b>/${m.giorni} giorni · <b>${m.s5.pagine}</b> pagine</div>
+    <div class="cm-conto">${m.s5.aTotale ? `<b>${m.s5.pagine}</b>/${m.s5.obiettivo} pagine in tutto` : `<b>${m.s5.quanti}</b>/${m.giorni} giorni · <b>${m.s5.pagine}</b> pagine`}</div>
     <div class="cm-cerchi">${m.s5.giorni.map(g => `<i class="${g.fatto ? 'pieno' : g.qualcosa ? 'mezzo' : ''}" title="${g.pagine} pagine">${g.giorno}</i>`).join('')}</div>
-    <div class="campo"><label>Punti sui quali mi concentrerò</label><textarea id="cm-punti" rows="2" maxlength="300">${esc(m.s5.punti)}</textarea></div>`, m.s5.quanti >= m.giorni);
+    <div class="campo"><label>Punti sui quali mi concentrerò</label><textarea id="cm-punti" rows="2" maxlength="300">${esc(m.s5.punti)}</textarea></div>${m.s5.aTotale ? '<div class="vn-aiuto">Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno 10 pagine per giorno del mese.</div>' : ''}`, m.s5.fatta);
 
   const s6 = sez(6, 'Frequentare tutti gli incontri di Network 21', `
     <div class="cm-riga"><span>Partecipazione OPEN settimanale</span><span class="cm-sett">${m.s6.settimane.map((w, i) => w.open

@@ -4,7 +4,7 @@
 // Prove in tools/banco/prova_core.js. Il disegno è in pagina-core.js.
 (function (radice) {
   const OBIETTIVI = { pm: 8, clienti: 10, pagine: 10, cd: 1 };
-  const MESE_A_TOTALE = '2026-09';   // tracce: il mese del passaggio all'app nuova, contato sul totale (vedi s4)
+  const MESE_A_TOTALE = '2026-09';   // tracce e pagine: il mese del passaggio all'app nuova, contato sul totale (vedi s4, s5)
   const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
   const NON_AVVENUTI = ['No Show', 'Rimandato'];   // un PM con questo esito non è stato presentato (stessa regola di azioni_conti)
@@ -119,6 +119,10 @@
       }), punti: d.punti || '' };
     s5.quanti = s5.giorni.filter(g => g.fatto).length;
     s5.pagine = s5.giorni.reduce((t, g) => t + g.pagine, 0);
+    // settembre 2026, stesso ragionamento delle tracce (Ignazio 27/09): fatta con almeno 10 pagine per giorno del mese in tutto
+    s5.aTotale = mese === MESE_A_TOTALE;
+    s5.obiettivo = OBIETTIVI.pagine * n;
+    s5.fatta = s5.aTotale ? s5.pagine >= s5.obiettivo : s5.quanti >= n;
 
     // 6 · Frequentare tutti gli incontri N21: OPEN per settimana (dal Check), biglietti BBS e WES (dalla propria scheda).
     // Gli OPEN cambiano da città a città (Ignazio 23/09): niente calendario; una settimana in cui nella propria città l'OPEN
@@ -148,7 +152,7 @@
     const ob = { vpp: o.vpp, vpg: o.vpg, sponsor_personali: o.sponsor_personali, sponsor_gruppo: o.sponsor_gruppo, cep: o.cep, bbs: o.bbs, wes: o.wes };
 
     // 7 è fatta solo con tutte e tre (Ignazio 22/09): counseling, edificazione e no-crossline
-    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.fatta, s5.quanti >= n, s6.open >= s6.valide && s6.bbs && s6.wes,
+    const abitudini = [s1.raggiunto, s2.vp != null && s2.vp > 0, s3.raggiunto, s4.fatta, s5.fatta, s6.open >= s6.valide && s6.bbs && s6.wes,
       !!s7.counseling && s7.edificazione === true && s7.no_crossline === true];
     return { mese, giorni: n, s1, s2, s3, s4, s5, s6, s7, obiettivi: ob, note: d.note || '', fatte: abitudini.filter(Boolean).length, abitudini };
   }
