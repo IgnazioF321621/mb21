@@ -61,6 +61,13 @@ prova('Settembre 2026 in corso: a pari giorni (1-15 agosto) + agosto intero nell
   assert.equal(voce(r, 'Pagine libro').primaNota, false);   // le voci con i pari giorni restano un numero
 });
 
+prova('Tre mesi fa (Ignazio 27/09): col Mese si arriva al quadrimestre da WES a WES; oltre tre non si va', () => {
+  const r3 = C.calcola({ giorni, obiettivi, dateWes: [], periodo: R.periodoMese(oggi), oggi, indietro: 3 });
+  assert.equal(r3.confronto, 'fino al 15/09 · confronto con 01/06 → 15/06');
+  const r9 = C.calcola({ giorni, obiettivi, dateWes: [], periodo: R.periodoMese(oggi), oggi, indietro: 9 });
+  assert.equal(r9.confronto, r3.confronto);
+});
+
 prova('Mese più lungo del precedente: il tratto di confronto non esce dal mese prima', () => {
   const r = C.calcola({ giorni, obiettivi, dateWes: [], periodo: R.periodoMese('2026-03-31'), oggi: '2026-03-31' });
   assert.equal(r.confronto, 'fino al 31/03 · confronto con 01/02 → 28/02');
@@ -271,7 +278,7 @@ prova('Percorso: Leader 1° livello a 3 su 4 e Leader Core a 1 su 7; il prossimo
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: moduloVuoto });
   assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false]]);
   assert.equal(p.doveSei, null);
-  assert.equal(p.prossimo, 'compra il biglietto WES → Leader 1° livello');
+  assert.equal(p.prossimo, 'ti consiglio il biglietto WES → Leader 1° livello');
   assert.deepEqual(p.gradini[1].mancano.map(x => x.testo).slice(0, 2), ['8 PM', '10 clienti']);
   assert.match(p.gradini[1].mancano.map(x => x.testo).join(' | '), /OPEN \(0 su 5\) · biglietto BBS · biglietto WES/);
 });
@@ -279,7 +286,7 @@ prova('Percorso: Leader 1° livello a 3 su 4 e Leader Core a 1 su 7; il prossimo
 prova('Percorso: senza ancora il Modulo Core la riga dice «…» e il prossimo passo viene solo dal primo gradino', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: null });
   assert.deepEqual([p.gradini[1].stato, p.gradini[1].pronto, p.gradini[1].mancano], ['…', false, []]);
-  assert.equal(p.prossimo, 'compra il biglietto WES → Leader 1° livello');
+  assert.equal(p.prossimo, 'ti consiglio il biglietto WES → Leader 1° livello');
 });
 
 prova('Percorso: Leader 1° livello fatto → «dove sei» lo dice, e il prossimo passo passa a Leader Core (la mancanza più piccola)', () => {
@@ -295,7 +302,7 @@ prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se 
   const p = C.percorso({ lc1: lc1Di(99, true), modulo: fintoCore });
   assert.deepEqual(p.gradini.map(g => g.fatto), [false, true]);
   assert.equal(p.doveSei, 'Leader Core');
-  assert.equal(p.prossimo, 'arriva a 100 VP → Leader 1° livello');
+  assert.equal(p.prossimo, 'ti consiglio di arrivare a 100 VP → Leader 1° livello');
   const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore });
   assert.ok(tutto.tuttiFatti && tutto.prossimo === null);
 });
