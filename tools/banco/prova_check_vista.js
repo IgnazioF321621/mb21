@@ -98,7 +98,8 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   const h = disegna();
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
   // due domande (Ignazio 27/09): sopra la card, sotto «I numeri del periodo» con Confronta con → Gli ultimi 12 mesi → i gruppi
-  const posti = ['<h2 class="ck-sezione">Il tuo percorso</h2>', 'class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
+  // Mese · WES · Anno sotto «I numeri del periodo»: cambiano solo i numeri (Ignazio 27/09)
+  const posti = ['<h2 class="ck-sezione">Il tuo percorso</h2>', 'id="ck-mese-prima"', 'class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="rp-periodi"', 'id="ck-prima"', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
   assert.ok(posti.every((x, i) => x > 0 && (i === 0 || x > posti[i - 1])), posti.join(' '));
   assert.doesNotMatch(h, /class="sv"/);
 });
@@ -108,7 +109,7 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('<h2 class="ck-sezione">I numeri'));
   assert.ok(card.length > 0);
   assert.match(card, /<div class="sez "><b>Leader 1° livello<\/b><span class="st">2 su 4<\/span><\/div>/);
-  assert.doesNotMatch(card, /settembre/);                                    // il mese lo dice il periodo sopra
+  assert.doesNotMatch(card, /settembre/);                                    // il mese lo dicono le frecce sopra la card
   assert.match(card, /class="luce bbs on /);
   assert.match(card, /class="luce cep on /);
   assert.match(card, /class="luce vp {2}"/);
@@ -117,16 +118,16 @@ prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con 
   assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>Leader Core<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
   assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
   assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
-  assert.match(card, /<div class="prossimo ">Prossimo passo: compra il biglietto WES → Leader 1° livello<\/div>/);
+  assert.match(card, /<div class="prossimo ">Prossimo passo: ti consiglio il biglietto WES → Leader 1° livello<\/div>/);
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
   h = disegna();
   assert.match(h, /class="ck-lc1 fatto"/);
   assert.match(h, /<div class="sez ok"><b>✓ Leader 1° livello<\/b><span class="st">fatto<\/span><\/div>/);
   esegui(`CK.lc1 = null`);
   assert.doesNotMatch(disegna(), /ck-lc1/);
-  esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
+  esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.meseCard = '2026-08-01';`);
   assert.match(disegna(), /Il percorso si conta da settembre 2026/);
-  esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+  esegui(`CK.meseCard = null;`);
   assert.match(disegna(), /<small class="nota-lc1">non trovo la scheda col tuo codice Amway: chiedi all'Admin<\/small>/);
 });
 
@@ -144,12 +145,12 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
   assert.equal((voci.match(/<div class="/g) || []).length, 7);
   // un mese di cui il Modulo Core non è ancora letto: «…» e «Leggo il Modulo Core…»; la lettura parte (qui, senza database, si ferma da sola)
-  esegui(`CK.periodo = MB21Report.periodoMese('2026-10-15'); CK.eventi.wes.push({ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' });`);
+  esegui(`CK.meseCard = '2026-10-01'; CK.eventi.wes.push({ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' });`);
   const h2 = disegna();
   assert.ok(esegui(`!!CK.core['2026-10-01']`));
   assert.match(h2, /<span class="st">…<\/span>/);
   assert.match(h2, /Leggo il Modulo Core…/);
-  esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+  esegui(`CK.meseCard = null;`);
   // tutto fatto: titoli verdi, riga verde
   esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-11-01', contatto: true });   // a settembre in vendita c'è il WES di novembre
     CK.core['2026-09-01'].modulo.fatte = 7; CK.core['2026-09-01'].modulo.abitudini = [true, true, true, true, true, true, true];`);
@@ -158,10 +159,27 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
   assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
   esegui(`CK.aperti.clear()`);
-  // con WES o Anno la card dice di che mese è
+});
+
+prova('Confronta con: col Mese tre bottoni (fino a «tre mesi fa»), con WES e Anno due (qui Anno; Ignazio 27/09)', () => {
+  const quando = h => h.slice(h.indexOf('class="ck-quando"'), h.indexOf('class="ck-confronto"'));
+  assert.deepEqual([...quando(disegna()).matchAll(/data-ckindietro="\d"[^>]*>([^<]+)</g)].map(m => m[1]), ['il mese scorso', 'due mesi fa', 'tre mesi fa']);
   esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
-  assert.match(disegna(), /<small class="mese-card">settembre 2026, l'ultimo mese del periodo<\/small>/);
+  assert.equal((quando(disegna()).match(/data-ckindietro/g) || []).length, 2);
   esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-09-15');`);
+});
+
+prova('La card ha il suo mese con ‹ ›; Mese · WES · Anno e le frecce del periodo non la cambiano (Ignazio 27/09)', () => {
+  const card = h => h.slice(h.indexOf('<h2 class="ck-sezione">Il tuo percorso'), h.indexOf('<h2 class="ck-sezione">I numeri'));
+  const settembre = card(disegna());
+  assert.match(settembre, /<button id="ck-mese-prima" aria-label="Mese prima" disabled>‹<\/button>\s*<b>Settembre 2026<\/b>\s*<button id="ck-mese-dopo" aria-label="Mese dopo" disabled>›<\/button>/);   // prima di settembre non si conta, dopo è futuro
+  esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
+  assert.equal(card(disegna()), settembre);
+  esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
+  assert.equal(card(disegna()), settembre);
+  esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15'); CK.meseCard = '2026-08-01';`);
+  assert.match(card(disegna()), /aria-label="Mese dopo" >›/);
+  esegui(`CK.meseCard = null;`);
 });
 
 console.log(`\n${ok} prove superate`);
