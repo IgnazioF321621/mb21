@@ -276,7 +276,7 @@ const moduloVuoto = K.modulo({ mese: '2026-10', obiettivi: { vpp_amway: 187.5 },
 
 prova('Percorso: un consiglio per ogni gradino, in parallelo (Ignazio 27/09); il Core non ripete il biglietto che manca nelle luci', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: moduloVuoto });
-  assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false]]);
+  assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false], ['pace', '2 su 3', false]]);
   assert.equal(p.doveSei, null);
   assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2 });
   assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3 });
@@ -312,11 +312,11 @@ prova('Percorso: Leader 1° livello fatto → «dove sei» lo dice, e il prossim
 prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se Leader 1° livello no (Ignazio: nessun ordine obbligato)', () => {
   const fintoCore = { ...moduloVuoto, fatte: 7, abitudini: [true, true, true, true, true, true, true] };
   const p = C.percorso({ lc1: lc1Di(99, true), modulo: fintoCore });
-  assert.deepEqual(p.gradini.map(g => g.fatto), [false, true]);
+  assert.deepEqual(p.gradini.map(g => g.fatto), [false, true, false]);
   assert.equal(p.doveSei, 'Leader Core');
   assert.equal(p.gradini[0].consiglio.cosa, 'arrivare a 100 VP');
   assert.equal(p.gradini[1].consiglio, null);
-  const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore });
+  const tutto = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore, sponsor: 2 });
   assert.ok(tutto.tuttiFatti && tutto.gradini.every(g => g.consiglio === null));
 });
 
@@ -332,6 +332,21 @@ prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mes
   // mese chiuso: i giorni sono quelli del mese, senza «finora»
   const chiuso = C.percorso({ lc1: C.lc1({ mese: '2026-10-01', oggi: '2026-12-05', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }], biglietti: [], cep: cepSempre, eventi: ev }), modulo: moduloVuoto });
   assert.equal(chiuso.gradini[1].voci[3].stato, '0 su 31');
+});
+
+prova('Pacesetter (Ignazio 26/09): 2 sponsor personali del Check · 100 VP · CEP nello stesso mese; consiglia solo gli sponsor', () => {
+  const p0 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 0 });
+  const g = p0.gradini[2];
+  assert.deepEqual([g.chiave, g.titolo, g.stato, g.fatto], ['pace', 'Pacesetter', '2 su 3', false]);
+  assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 sponsor personali', '0 su 2'], ['100 VP', 'fatto'], ['CEP', 'fatto']]);
+  assert.deepEqual(g.consiglio, { cosa: 'sponsorizzare ancora 2 persone', di: true, peso: 1 });
+  assert.equal(C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 1 }).gradini[2].consiglio.cosa, 'sponsorizzare ancora una persona');
+  const p2 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 3 });
+  assert.deepEqual([p2.gradini[2].stato, p2.gradini[2].fatto, p2.gradini[2].consiglio, p2.doveSei], ['fatto', true, null, 'Pacesetter']);
+  // sponsor sì ma 100 VP no: niente consiglio qui, i VP li consiglia il 1° livello
+  const p3 = C.percorso({ lc1: lc1Di(40, true), modulo: moduloVuoto, sponsor: 2 });
+  assert.deepEqual([p3.gradini[2].stato, p3.gradini[2].consiglio, p3.gradini[0].consiglio.cosa], ['2 su 3', null, 'arrivare a 100 VP']);
+  assert.equal(C.PACE_SPONSOR, 2);
 });
 
 console.log(`\n${ok} prove superate`);
