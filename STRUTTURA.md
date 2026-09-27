@@ -897,3 +897,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`pagina-agenda.j
 | 2026.09.27 · 21:07 | MB Plan: nel menu la card **«Programma della settimana»** al posto del Modulo Core (fissati e da riempire, SdS/OPEN, «Prepara la settimana»); la SdS/OPEN dice solo che l’OPEN c’è, la presenza si segna nel Check (solo Admin) |
 | 2026.09.27 · 21:12 | MB Plan, card «Programma della settimana»: «scegli quanti Piani Marketing e/o Consulenze prodotti…» (solo Admin) |
 | 2026.09.27 · 21:35 | MB Plan, giorni che devono venire: «N in coda» conta solo chi non ha già un orario quel giorno e apre i nomi (foglio «In coda domani»), non più la Dashboard di oggi |
+| 2026.09.27 · 22:18 | MB Plan, Prepara la settimana: anche gli **incontri di Team e LOS** (senza nome, un’ora, giorno scelto ogni settimana) e un solo selettore «Aggiungi ▾» per tutti i tipi (solo Admin) |
