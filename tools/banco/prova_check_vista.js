@@ -143,7 +143,8 @@ prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stat
   assert.match(h, /<\/div><\/div><div class="prossimo">Ti consiglio il counseling, l'edificazione e il no-crossline<\/div>/);
   assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
   assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
-  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 su 15 giorni finora<\/span><\/div>/);   // i giorni passati, non tutto il mese (Ignazio 27/09)
+  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 tracce su 30<\/span><\/div>/);   // settembre 2026: il totale delle tracce (Ignazio 27/09)
+  assert.match(voci, /<span>10 pagine ogni giorno<\/span><span>0 su 15 giorni finora<\/span>/);   // gli altri: i giorni passati, non tutto il mese
   assert.match(voci, /<span>OPEN · BBS · WES<\/span><span>OPEN 0 su 5 · BBS · WES<\/span>/);
   assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
   assert.equal((voci.match(/<div class="/g) || []).length, 7);

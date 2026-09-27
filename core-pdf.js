@@ -146,9 +146,9 @@
     xs = M + COL + GAP; y = 32;
 
     // 4 · Tracce: un rigo per giorno, in verticale su due colonne come il modulo N21: 1-15 a sinistra, 16-31 a destra (Ignazio 24/09)
-    const f4 = m.s4.quanti >= m.giorni;
+    const f4 = m.s4.fatta;
     y0 = y; y = testa(xs, y, 4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', f4) + 4.2;
-    conto(xs, y, `${m.s4.quanti}/${m.giorni} giorni`);
+    conto(xs, y, m.s4.aTotale ? `${m.s4.totale}/${m.giorni} tracce` : `${m.s4.quanti}/${m.giorni} giorni`);
     y += 1;
     const PRIMA = 15, meta = Math.max(PRIMA, m.s4.giorni.length - PRIMA), RT = 4.4;   // righe: 15, o 16 nei mesi di 31 giorni
     m.s4.giorni.forEach((g, i) => {
