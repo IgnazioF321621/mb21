@@ -893,3 +893,4 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`pagina-agenda.j
 | 2026.09.27 · 17:04 | Esporta: «Apri la scheda» nei tre puntini; al ritorno spunte e punto della Lista come prima (`LS.scrollLista`) |
 | 2026.09.27 · 20:46 | MB Plan, **Modello appuntamenti settimanale** (solo Admin): «Prepara la settimana» con Piani Marketing, Consulenze prodotti e SdS/OPEN; spazi da riempire nel giorno, nella Timeline e nella Settimana; «I tuoi spazi liberi» nel Nuovo appuntamento; la SdS/OPEN passata vale come OPEN nel Modulo Core (tabella `spazi`, `spazi.js`) |
 | 2026.09.27 · 21:07 | MB Plan: nel menu la card **«Programma della settimana»** al posto del Modulo Core (fissati e da riempire, SdS/OPEN, «Prepara la settimana»); la SdS/OPEN dice solo che l’OPEN c’è, la presenza si segna nel Check (solo Admin) |
+| 2026.09.27 · 21:12 | MB Plan, card «Programma della settimana»: «scegli quanti Piani Marketing e/o Consulenze prodotti…» (solo Admin) |
