@@ -269,7 +269,7 @@
     'Sistema': ['sistema', 'sistema_gruppo'], 'Duplicazione': ['duplicazione'], 'Obiettivi': ['obiettivi_mese', 'core'],
     'Decisione': ['persistere', 'abitudini'], 'Costanza': ['persistere', 'abitudini'], 'Tempo': ['abitudini', 'obiettivi_mese'],
     'Soldi': ['verso_21'], 'Paure': ['paure'], 'Critiche': ['paure'], 'Credere': ['credere'], 'Entusiasmo': ['credere'],
-    'Famiglia': ['dare_seguito', 'credere'], 'Leadership': ['leader', 'guidare'], 'Relazioni': ['guidare', 'aiutare_partner'],
+    'Famiglia': ['dare_seguito', 'credere'], 'Leadership': ['leader', 'guidare'], 'Relazioni': ['guidare', 'aiutare_partner'], 'Libertà': ['credere', 'visione'],
   };
   const MENTALITA_PER_FASE = { 1: ['credere', 'primi_passi'], 2: ['credere'], 3: ['paure'], 4: ['abitudini'], studio: ['persistere', 'guidare'], avanzato: ['visione'] };
   function percorsiDaMb21(appunto) {
@@ -357,12 +357,15 @@
         settori: settoriDi(x.argomenti), sezione: (x.argomenti || [])[0] || null, pack: pack[x.pack_id] || null,
         riassunto: x.riassunto || null, punti: x.punti_chiave || null, link: x.link || null, appunti: appunti[x.id] || null });
       else if (x.tipo === 'libro') out.push({ tipo: 'libro', id: x.id, titolo: x.titolo, autore: x.autore || null, settori: ['Libri'],
-        solo_n21: !!x.solo_n21, capitoli: libri[x.id] ? libri[x.id].capitoli : null });
+        solo_n21: !!x.solo_n21, capitoli: libri[x.id] ? libri[x.id].capitoli : null,
+        // dal 27/09 i libri con il PAL nuovo (note [PAT]) portano la riga MB21 del libro: entrano in «Per approfondire e imparare» come le tracce
+        mb21: libri[x.id] && libri[x.id].mb21 ? libri[x.id].mb21 : null, nuovo: !!(libri[x.id] && libri[x.id].nuovo) });
     }
     for (const c of out) c.testo = piega([c.titolo, c.autore, c.sintesi, c.riassunto, c.punti, c.pack, c.sezione,
       ...(c.appunti ? [...(c.appunti.capitoli || []), ...(c.appunti.principi || []), ...(c.appunti.azioni || []), ...(c.appunti.frasi || []),
         ...(c.appunti.sezioni || []).flatMap(z => z.voci.flatMap(v => [v.titolo, ...v.punti])), ...(c.appunti.termini || []).flat()] : []),
-      ...(c.capitoli || []).flatMap(x => [x.titolo, ...(x.principi || []), ...(x.da_fare || [])])].filter(Boolean).join(' '));
+      ...(c.capitoli || []).flatMap(x => [x.titolo, ...(x.principi || []), ...(x.da_fare || []), ...(x.frasi || []),
+        ...(x.sezioni || []).flatMap(z => [z.titolo, ...z.punti]), ...(x.termini || []).flat()])].filter(Boolean).join(' '));
     return out;
   }
 
