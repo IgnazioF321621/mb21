@@ -368,7 +368,8 @@ function nuovoModello() {
 // 1. elenco numerato, • elenco a puntini. Le righe sono `cose_da_fare` con `progetto_id` e `tipo`; senza giorno stanno solo qui.
 const TIPI_RIGA = [['titolo', 'T Titolo'], ['cosa', '☐ Da fare'], ['numero', '1. Numerato'], ['punto', '• Puntini']];
 const LIVELLO_MAX = 4;   // i rientri, come in Word: con Tab avanti, con Maiusc+Tab indietro (Ignazio 23/09)
-const vediProgetti = () => typeof eAdmin === 'function' && eAdmin() && !vediTutti();
+// dal 28/09 per tutti (Ignazio: «rendi disponibili anche i progetti per tutti»); prima solo l'Admin. Con «Tutti» no: sono personali
+const vediProgetti = () => !vediTutti();
 async function caricaProgetti() {
   const primo = AG.primoProgetto; AG.primoProgetto = false;   // dall'icona «Progetti»: se quello salvato non c'è più, il primo del menu
   if (!vediProgetti()) { AG.progetti = []; AG.cose = AG.cose.filter(c => !c.progetto_id); if (AG.vista === 'progetto') AG.vista = 'giorno'; return; }   // senza progetti niente righe di progetto (revisione 24/09)
@@ -2350,7 +2351,8 @@ function collegaAgenda(eventi) {
 // la SdS/OPEN si mette da sola il lunedì alle 21:30. Nella Timeline sono blocchi tratteggiati «da riempire» che si trascinano;
 // toccandoli: «Metti un nome» (diventa l'appuntamento), «Cambia giorno e ora», «Togli». Il nome si mette anche dalla scheda:
 // il foglio «Nuovo appuntamento» propone gli spazi liberi dello stesso tipo. Per ora solo l'Admin, come i Progetti.
-const vediSpazi = () => typeof MB21Spazi !== 'undefined' && typeof eAdmin === 'function' && eAdmin() && !vediTutti();
+// dal 28/09 per tutti (Ignazio: «dobbiamo pubblicare a tutti»); prima solo l'Admin. Con «Tutti» no: sono personali
+const vediSpazi = () => typeof MB21Spazi !== 'undefined' && !vediTutti();
 const spaziDelGiorno = g => (vediSpazi() ? MB21Spazi.delGiorno(AG.spazi, g) : []);
 // Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LOS) col colore degli Appuntamenti
 const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : 'var(--az-appuntamento)');
