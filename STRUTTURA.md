@@ -298,6 +298,12 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **Da catalogare** (`coda.js → daCatalogare(righe, catalogatiOggi)`, cantiere 16, decisioni di Ignazio 15/09): i senza categoria del partner visto (`contatti` con categoria vuota, tutti, a pagine da 1000) in **ordine alfabetico** (`localeCompare` it, senza distinguere maiuscole e accenti); se ne mostrano **quel che resta dei `QUOTA_CATALOGO` (5) di oggi, più gli `altri` chiesti** (`max(0, 5 − catalogati_oggi) + altri`; **cambiato il 24/09**: prima era `5 + altri − catalogati_oggi`, così chi oggi aveva già catalogato più di 5 nomi toccava «Altri 5» e non compariva niente — Ignazio: «non mi spuntano i nomi, però mi calcola come se le avessi fatte: 20 di 20». Adesso un tocco dà sempre 5 nomi in più). Nella riga della sezione non si scrive più «fatti X di Y» (sembrava un tetto raggiunto) ma **«N ancora da catalogare · oggi ne hai catalogati M»**; `altri` = 5 per ogni tocco su **«Altri 5»** (`ST.catalogoAltri`, solo nell'app e solo per oggi: riaprendo l'app si riparte da 5, e se i catalogati sono già 5 o più ricompare «Altri 5»). Non contano nei contatti al giorno. I 5 restano gli stessi riaprendo l'app perché l'ordine è fisso e i catalogati escono
 
+**La barra in basso** (Ignazio 28/09, passo 4): **il Report non c'è più nella barra** — si apre dalla Dashboard, zona «Approfondisci»
+(e dalla Griglia PM) e ha in cima **«‹ Dashboard»** (`tornaInDashboard` / `collegaTornaInDashboard` in `index.html`, come il Check).
+Restano Dashboard · MB Plan · Lista Nomi · Mappa · Training (e, solo per l'Admin, Progetti e Admin). **La voce della pagina in cui si è
+ha la pastiglia grigia** (`nav button.attiva`: fondo `--superficie-2`, angoli tondi), oltre al testo scuro: «così so dove sono».
+Sulla pagina Report nessuna voce è accesa: ci si torna con «‹ Dashboard».
+
 **«Il mio giorno» (prima «Check del Giorno»)** (Ignazio 28/09, passo 3; nome scelto da lui: «Check» resta **solo** la pagina dei numeri):
 il modulo della sera si chiama **«Il mio giorno»** in tutti i posti dove lo legge un partner — la fascia della zona OGGI («cosa hai fatto
 oggi in attività · da scrivere stasera», la sera «è ora: scrivi cosa hai fatto oggi in attività», fatto «fatto oggi · tocca per rivederlo»),
