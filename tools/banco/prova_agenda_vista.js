@@ -224,6 +224,7 @@ prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Tim
   assert.match(m, /Consulenze prodotti: 2 fissate · 1 da riempire/);
   assert.match(m, /SdS\/OPEN: lun 21 alle 21:30/);
   assert.match(m, /data-cmd="prepara" class="mb-prog-bottone">.*Aggiungi appuntamenti/);
+  assert.ok(m.indexOf('data-scala="anno"') < m.indexOf('Programma della settimana') && m.indexOf('Programma della settimana') < m.indexOf('Modelli personali'));   // subito sotto le scale (28/09: in fondo restava tagliata)
   assert.match(s, /ss-spazio[^>]*><i><\/i><em>10:00<\/em>Consulenza prodotti · da riempire/);
   assert.equal((s.match(/class="ag-sev ag-spazio"/g) || []).length, 3);
   modo.admin = prima;
