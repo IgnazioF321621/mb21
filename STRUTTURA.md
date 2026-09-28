@@ -298,6 +298,15 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **Da catalogare** (`coda.js → daCatalogare(righe, catalogatiOggi)`, cantiere 16, decisioni di Ignazio 15/09): i senza categoria del partner visto (`contatti` con categoria vuota, tutti, a pagine da 1000) in **ordine alfabetico** (`localeCompare` it, senza distinguere maiuscole e accenti); se ne mostrano **quel che resta dei `QUOTA_CATALOGO` (5) di oggi, più gli `altri` chiesti** (`max(0, 5 − catalogati_oggi) + altri`; **cambiato il 24/09**: prima era `5 + altri − catalogati_oggi`, così chi oggi aveva già catalogato più di 5 nomi toccava «Altri 5» e non compariva niente — Ignazio: «non mi spuntano i nomi, però mi calcola come se le avessi fatte: 20 di 20». Adesso un tocco dà sempre 5 nomi in più). Nella riga della sezione non si scrive più «fatti X di Y» (sembrava un tetto raggiunto) ma **«N ancora da catalogare · oggi ne hai catalogati M»**; `altri` = 5 per ogni tocco su **«Altri 5»** (`ST.catalogoAltri`, solo nell'app e solo per oggi: riaprendo l'app si riparte da 5, e se i catalogati sono già 5 o più ricompare «Altri 5»). Non contano nei contatti al giorno. I 5 restano gli stessi riaprendo l'app perché l'ordine è fisso e i catalogati escono
 
+**«IL MIO MESE», un riquadro solo** (Ignazio 28/09, passo 2 dello schizzo; `pagina-dashboard.js` → `dashboardNumeri`, `dashboardBasso`):
+sotto la zona OGGI c'è **un riquadro unico** (`.mese-card`) diviso in due metà etichettate: **«Dove sono»** (le quattro linguette e i numeri
+del mese) e **«Dove vado»** (le luci del 1° livello, la riga dei livelli e la porta scura «Apri il Check»), con in mezzo la riga
+**«Obiettivi di <mese>»** (`.mese-riga`). La card del percorso è **la stessa di prima** (`cardCheckHtml` in `index.html`) con il nuovo
+argomento **`dentro`**: dentro il riquadro non ha la sua testata (il titolo è l'etichetta «Dove vado», «Dove va <nome>» guardando un
+partner, «Dove vanno» con Tutti) e il suo «Apri il Check» diventa la **porta scura** in fondo; senza argomento resta com'era (le prove
+`prova_check_vista.js` non cambiano). **Il riquadro nero dei Segni Vitali in fondo non c'è più**: erano gli stessi numeri della linguetta
+«Segni Vitali N21» e i 12 mesi si aprono dal Check. In fondo resta la zona **«Approfondisci»** con Griglia PM e **Report** (prima «Mostra di più»).
+
 **La zona «OGGI»** (Ignazio 28/09, schizzo approvato in sessione; `pagina-dashboard.js` → `zonaOggiHtml`, `ORA_CHECK`, `oraRoma`):
 la Dashboard si legge dall'alto come una giornata. Ordine: testata + Partner Select + avvisi (abbonamento, biglietti da segnare) →
 **titolo «OGGI · ti restano N cose»** → le fasce del giorno → «Il mio avvio» e «Il mio percorso» → **«IL MIO MESE»** (i numeri, `dashboardNumeri`) →
