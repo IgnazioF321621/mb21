@@ -26,6 +26,7 @@ const trnOggi = () => MB21Coda.oggiRoma();
 async function apriTraining() {
   app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="vuoto">Carico…</div>`;
   const io = ST.utente && ST.utente.id, oggi = trnOggi();
+  MB21Training.inProva(eAdmin());   // 28/09: i percorsi in prova (solo_admin) li vede solo Ignazio, anche nei conti dei livelli
   const [mat, cat, mazzi, carte, giorni, test, azioni] = await Promise.all([
     TRN.voci ? null : dbq('biblioteca', supa.from('materiali').select('id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave, link, pack_id, solo_n21, fuori_catalogo')),
     TRN.cat || batteriaCoach('training'),
@@ -129,7 +130,7 @@ function trnMedaglie() {
   const T = MB21Training, m = T.medaglie(TRN.test, TRN.giorni.map(g => g.giorno));
   const riga = (presa, titolo, sotto, stelle = '') => `<div class="trn-med${presa ? ' presa' : ''}"><span class="trn-med-tondo">${ic('medaglia', 22)}</span>
     <div><b>${esc(titolo)}</b><small>${stelle}${esc(sotto)}</small></div></div>`;
-  const livelli = T.LIVELLI.map(l => {
+  const livelli = T.livelliVisibili().map(l => {
     const lv = m.livelli.find(x => x.nome === l.nome);
     return `<h4>${esc(l.nome)}${lv ? ` <span class="trn-badge">superato il ${trnData(lv.quando)}</span>` : ''}</h4>` + l.percorsi.map(p => {
       const x = m.percorsi.find(y => y.id === p.id);
@@ -200,7 +201,7 @@ const trnStelle = n => `<span class="trn-stelle">${[0, 1, 2].map(i => `<i class=
 function trnApriPercorso(id) {
   const oggi = trnOggi(), m = (TRN.mazzi || []).find(x => x.percorso.id === id);
   if (!m) return;
-  const liv = MB21Training.LIVELLI.find(l => l.percorsi.some(p => p.id === id)), p = liv.percorsi.find(x => x.id === id);
+  const liv = MB21Training.livelliVisibili().find(l => l.percorsi.some(p => p.id === id)), p = liv.percorsi.find(x => x.id === id);
   const s = MB21Training.statoPercorso(m, TRN.stati, TRN.test, oggi);
   const daFare = Math.min(MB21Training.LEZIONE, s.nuove);
   const suo = MB21Training.daRipassare([m], TRN.stati, oggi, TRN.segnali);
@@ -229,6 +230,7 @@ function trnApriPercorso(id) {
   velo.innerHTML = `<div class="foglio alto trn-foglio trn-percorso" style="--col:var(--gr-crescita)">
     ${trnTesta(p.icona, `${liv.nome} · percorso ${liv.percorsi.indexOf(p) + 1} di ${liv.percorsi.length}`, p.titolo)}
     <div class="trn-foglio-corpo">
+      ${p.solo_admin ? '<p class="trn-prova">⚠️ Per ora lo vedi solo tu: percorso in prova.</p>' : ''}
       <p class="trn-testo">${esc(p.sotto)}</p>
       <div class="trn-avanzamento"><i style="width:${pct(s.viste)}%"></i><i class="sapute" style="width:${pct(s.sapute)}%"></i></div>
       <div class="trn-conti"><span><b>${s.sapute}</b> le sai</span><span><b>${s.viste - s.sapute}</b> in ripasso</span><span><b>${s.nuove}</b> nuove</span></div>
@@ -375,7 +377,7 @@ function trnSessione(carte, modo, titolo) {
     if (test) {
       const prima = TRN.test.filter(t => percorso && t.percorso === percorso.id).slice(-1)[0];
       const riga = { percorso: percorso && percorso.id, giuste, totale: fatte.length, fatto_il: new Date().toISOString() };
-      const L = MB21Training.LIVELLI, gg = TRN.giorni.map(g => g.giorno), medPrima = MB21Training.medaglie(TRN.test, gg);
+      const L = MB21Training.livelliVisibili(), gg = TRN.giorni.map(g => g.giorno), medPrima = MB21Training.medaglie(TRN.test, gg);
       TRN.test.push(riga);
       const medDopo = MB21Training.medaglie(TRN.test, gg), pDef = L.flatMap(l => l.percorsi).find(x => percorso && x.id === percorso.id);
       const nuova = medDopo.percorsi.some(x => x.id === riga.percorso) && !medPrima.percorsi.some(x => x.id === riga.percorso);

@@ -20,6 +20,9 @@
     { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, dire il vero, il Sistema', percorsi: [
       { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate', leader: 'nel contattare' },
       { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio', leader: 'nei primi passi' },
+      // 28/09 (Ignazio: «le aree di mercato le farei partire già dal nuovo, e il nuovo deve conoscere l'Energy Program»): le quattro
+      // aree in generale; il dettaglio per area sta nel livello Sponsor. `solo_admin` = in prova, lo vede solo Ignazio (vedi livelli())
+      { id: 'aree', titolo: 'Le aree di mercato', sotto: 'Nutrizione, bellezza, casa e persona: da dove parte il volume', icona: 'prodotti', leader: 'nelle aree di mercato', solo_admin: true },
       // 25/09: dalle Regole di Condotta Amway solo le regole su cose false dette o fatte (Ignazio: «vai a prendere le regole solo per
       // quanto riguarda fare cose false e dire cose false in generale»; per i contatti restano le idee del manuale)
       { id: 'dire_il_vero', titolo: 'Dire sempre il vero', sotto: "Le Regole di Condotta Amway: i prodotti, i social, l'attività, i guadagni", icona: 'fatto', leader: 'nel dire sempre il vero' },
@@ -164,7 +167,7 @@
     const perId = Object.fromEntries((mazzi || []).map(m => [m.percorso.id, m]));
     const livelli = [];
     let aperto = true;
-    LIVELLI.forEach((l, i) => {
+    livelliVisibili().forEach((l, i) => {
       const percorsi = [];
       for (const p of l.percorsi) {
         const mazzo = perId[p.id] || null, stato = mazzo ? statoPercorso(mazzo, stati, test, oggi) : null, prima = percorsi[percorsi.length - 1];
@@ -238,7 +241,7 @@
       if (s >= 1 && !primo[t.percorso]) primo[t.percorso] = t.fatto_il;
     }
     const percorsi = [], livelli = [];
-    for (const l of LIVELLI) {
+    for (const l of livelliVisibili()) {
       for (const p of l.percorsi) if (primo[p.id]) percorsi.push({ id: p.id, titolo: p.titolo, leader: p.leader, icona: p.icona, livello: l.nome, quando: primo[p.id], stelle: migliori[p.id] });
       if (l.percorsi.every(p => primo[p.id])) livelli.push({ nome: l.nome, quando: l.percorsi.map(p => primo[p.id]).sort((a, b) => quando(a) - quando(b)).pop() });
     }
@@ -249,13 +252,14 @@
       prima = d; record = Math.max(record, n);
       for (const x of TRAGUARDI) if (n === x && !traguardi.some(t => t.giorni === x)) traguardi.push({ giorni: x, quando: d });
     }
-    const stelleTutte = LIVELLI.flatMap(l => l.percorsi).reduce((k, p) => k + (migliori[p.id] || 0), 0);
+    const stelleTutte = livelliVisibili().flatMap(l => l.percorsi).reduce((k, p) => k + (migliori[p.id] || 0), 0);
     return { percorsi, livelli, traguardi, record, stelle: stelleTutte, totale: percorsi.length + livelli.length + traguardi.length };
   }
   // Per il Profilo: il livello di adesso (il primo non ancora superato), le medaglie, le stelle e i giorni di fila di oggi
   function riepilogo(test, giorni, oggi) {
     const m = medaglie(test, giorni);
-    const qui = LIVELLI.find(l => !m.livelli.some(x => x.nome === l.nome)) || LIVELLI[LIVELLI.length - 1];
+    const tuttiLiv = livelliVisibili();
+    const qui = tuttiLiv.find(l => !m.livelli.some(x => x.nome === l.nome)) || tuttiLiv[tuttiLiv.length - 1];
     return { ...m, livello: qui.nome, fila: giorniDiFila(giorni, oggi).n };
   }
 
@@ -297,6 +301,12 @@
   }
 
   // Il controllo di un mazzo, prima di caricarlo nell'archivio (lo usa la prova della cartella privata): la lista dei problemi, vuota se va.
+  // I percorsi in prova (`solo_admin`) li vede solo Ignazio: la pagina chiama inProva(eAdmin()) all'apertura, e da lì in poi
+  // scala, riepilogo e medaglie usano livelliVisibili() invece di LIVELLI, così per gli altri il percorso non esiste (né nei conti).
+  let IN_PROVA = false;
+  function inProva(v) { IN_PROVA = !!v; }
+  function livelliVisibili() { return IN_PROVA ? LIVELLI : LIVELLI.map(l => ({ ...l, percorsi: l.percorsi.filter(p => !p.solo_admin) })); }
+
   function controllaMazzo(m) {
     const p = [], ids = new Set();
     const testo = (v, max) => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
@@ -385,7 +395,7 @@
     return (tutte || []).filter(c => parole.every(p => c.testo.includes(p)));
   }
 
-  const api = { LIVELLI, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;

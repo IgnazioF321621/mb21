@@ -160,7 +160,14 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
 
 prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
   const I = require('../../icone.js');
-  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [5, 6, 5, 5, 3, 3, 3]);
+  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [6, 6, 5, 5, 3, 3, 3]);
+  // 28/09: «Le aree di mercato» è in prova: lo vede solo l'Admin (inProva), per gli altri non c'è nemmeno nei conti
+  T.inProva(false);
+  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), [5, 6, 5, 5, 3, 3, 3]);
+  assert.ok(!T.livelliVisibili().flatMap(l => l.percorsi).some(p => p.id === 'aree'));
+  T.inProva(true);
+  assert.ok(T.livelliVisibili().flatMap(l => l.percorsi).some(p => p.id === 'aree'));
+  T.inProva(false);
   const tutti = T.LIVELLI.flatMap(l => l.percorsi);
   assert.equal(new Set(tutti.map(p => p.id)).size, tutti.length);
   for (const p of tutti) {
@@ -291,8 +298,8 @@ prova('Le medaglie: una per percorso superato (con il suo titolo), una per livel
   assert.deepEqual(m.livelli, []);
   assert.equal(m.stelle, 4);
   assert.equal(m.totale, 2);
-  // tutti e cinque i percorsi del Nuovo: la medaglia del livello, con la data dell'ultimo che mancava
-  const nuovo = T.LIVELLI[0].percorsi.slice(2).map((p, i) => ({ percorso: p.id, giuste: 9, totale: 10, fatto_il: `2026-09-2${4 + i}T10:00:00Z` }));
+  // tutti i percorsi del Nuovo che si vedono (senza quelli in prova): la medaglia del livello, con la data dell'ultimo che mancava
+  const nuovo = T.livelliVisibili()[0].percorsi.slice(2).map((p, i) => ({ percorso: p.id, giuste: 9, totale: 10, fatto_il: `2026-09-2${4 + i}T10:00:00Z` }));
   m = T.medaglie([...test, ...nuovo], []);
   assert.deepEqual(m.livelli.map(l => [l.nome, l.quando.slice(0, 10)]), [['Nuovo', '2026-09-26']]);
   assert.equal(m.totale, 6);
