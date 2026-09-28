@@ -2480,7 +2480,7 @@ function foglioSpazio(id) {
   velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
     <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}${persona ? ' · da riempire' : ''}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
-    <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni nel Check del giorno.'
+    <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
       : `${esc(S.TIPI[s.tipo].sotto)}: un incontro senza nome. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}

@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     if (!user) return risposta({ errore: 'non autorizzato' }, 401);
     const { data: u } = await db.from('utenti').select('id, avvisi_quando').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
     if (!u) return risposta({ errore: 'utente non trovato' }, 403);
-    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: `Da stasera alle ${scelta(u.avvisi_quando, 'check')} ti ricordo il Check del Giorno.`, url: './', tag: 'prova' });
+    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: `Da stasera alle ${scelta(u.avvisi_quando, 'check')} ti ricordo «Il mio giorno».`, url: './', tag: 'prova' });
     return risposta(esito);
   }
 
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
       if (!corpo.forza && quando(id, 'check') !== oraAdesso) continue;
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
       let avviso: Avviso;
-      if (!giaFatto.has(id)) avviso = { titolo: '⚡ Hai fatto il Check di oggi?', testo: 'Due minuti per chiudere la giornata: tocca per aprire il Check del Giorno.' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
+      if (!giaFatto.has(id)) avviso = { titolo: '⚡ Hai scritto il tuo giorno?', testo: 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
       else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
       else continue;   // Check fatto e domani niente: si tace
       if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }

@@ -1,4 +1,4 @@
-// MB21 · pagina Dashboard (OGGI): coda delle telefonate, «Da catalogare», conferme, numeri del mese, Obiettivi e Check del Giorno.
+// MB21 · pagina Dashboard (OGGI): coda delle telefonate, «Da catalogare», conferme, numeri del mese, Obiettivi e «Il mio giorno» (il modulo della sera, fino al 28/09 «Check del Giorno»).
 // Spostata da index.html il 17/09 (pausa di sistemazione, richiesta di Ignazio). Nessun cambiamento di funzionamento.
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, LS, esc, mostraToast, visto, guardoAltri, limitato, mostraTab…);
 // alcune sue funzioni servono anche alle altre pagine (caricaOggi, registraEsito, annullaEsito, chiediData, bottoniPer,
@@ -233,10 +233,10 @@ function zonaOggiHtml() {
     const fatto = d.ultimoCheck === ST.oggi;
     const sera = oraRoma() >= ORA_CHECK;
     check = rigaApribile('sez-giorno', fatto ? 'fatta' : (sera ? '' : 'catalogare'), fatto ? 'fatto' : 'lampo',
-      'Check del Giorno',
+      'Il mio giorno',
       fatto ? 'fatto oggi · tocca per rivederlo'
-        : sera ? 'è ora: scrivi come è andata oggi'
-        : `si compila stasera · dalle ${ORA_CHECK} te lo ricordo in cima`,
+        : sera ? 'è ora: scrivi cosa hai fatto oggi in attività'
+        : `cosa hai fatto oggi in attività · da scrivere stasera`,
       false, 0);
     if (!fatto && sera) pezzi.unshift({ blu: true, html: check }), check = '';
   }
@@ -1207,7 +1207,7 @@ function apriObiettivi() {
   };
 }
 
-// Check del Giorno: 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
+// «Il mio giorno» (fino al 28/09 «Check del Giorno»): 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
 // e «Salva» lo corregge invece di aggiungerne un altro (prima si sommavano, decisione 9). I giorni di Glide con
 // più Check restano come sono: si modifica il più recente, con l'avviso.
 function apriCheck() {
@@ -1225,9 +1225,9 @@ function apriCheck() {
       <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
-      <div><small>Oggi${esc(aNome())}</small><b>Check del Giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div><small>Oggi${esc(aNome())}</small><b>Il mio giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px">
-    <div class="campo"><label>${ic('conferme')} Data Check <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
+    <div class="campo"><label>${ic('conferme')} Giorno <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
     <h4 class="mc-t">Azione</h4><div class="riquadro mc-g">
     ${riga(1, 'contatti', { spiega: 'Automatico dal 14/09: dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda).' })}
@@ -1296,7 +1296,7 @@ function apriCheck() {
     const { data: righe, error } = data ? await dbq('check del giorno', supa.from('check_giorno').select('*')
       .eq('user_id', visto().id).eq('data', data).order('creato_il', { ascending: false })) : { data: [] };
     if (mio !== giro) return;   // nel frattempo è cambiata la data
-    if (error) { avviso.style.display = 'block'; avviso.textContent = 'Non riesco a controllare se questo giorno ha già un Check: riprova.'; return; }
+    if (error) { avviso.style.display = 'block'; avviso.textContent = 'Non riesco a controllare se questo giorno è già scritto: riprova.'; return; }
     esistente = righe[0] || null;
     for (const [k] of MB21Dashboard.CAMPI_CHECK) velo.querySelector('#ck-' + k).value = esistente ? String(esistente[k] ?? '') : '';
     const libro = velo.querySelector('#ck-libro');
@@ -1310,8 +1310,8 @@ function apriCheck() {
     for (const k of ['counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).checked = !!(esistente && esistente[k]);
     aggiornaCore();
     avviso.style.display = esistente ? 'block' : 'none';
-    avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il Check del ${dataBreve(data)}` +
-      (righe.length > 1 ? ` · questo giorno ha ${righe.length} Check da Glide: si modifica il più recente` : ''));
+    avviso.innerHTML = !esistente ? '' : ic('modifica') + esc(` Stai modificando il ${dataBreve(data)}` +
+      (righe.length > 1 ? ` · questo giorno ha ${righe.length} schede da Glide: si modifica la più recente` : ''));
   };
   // VP Clienti dal 18/09 (MB21Dashboard.INIZIO_VENDITE): non si scrivono, si leggono dalle vendite del giorno; ogni vendita
   // porta alla scheda del cliente. Per i giorni prima resta il campo a mano.
@@ -1462,7 +1462,7 @@ function apriCheck() {
     if (prima) {   // Annulla rimette i numeri di prima
       await caricaDashboard(ST.oggi);
       disegnaOggi();
-      return mostraToast('Check corretto', async () => {
+      return mostraToast('Giorno corretto', async () => {
         const vecchi = { libro: prima.libro, note_libro: prima.note_libro, open: prima.open, counseling: prima.counseling, edificazione: prima.edificazione, no_crossline: prima.no_crossline };
         for (const [k] of MB21Dashboard.CAMPI_CHECK) vecchi[k] = prima[k];
         const { error: e2 } = await dbq('annulla correzione check', supa.from('check_giorno').update(vecchi).eq('id', prima.id));
@@ -1474,12 +1474,12 @@ function apriCheck() {
     }
     await caricaDashboard(ST.oggi);
     disegnaOggi();
-    mostraToast('Check salvato', async () => {
+    mostraToast('Giorno salvato', async () => {
       const { error: e2 } = await dbq('annulla check', supa.from('check_giorno').delete().eq('id', data.id));
       if (e2) return mostraToast('Annullamento non riuscito: riprova.');
       await caricaDashboard(ST.oggi);
       disegnaOggi();
-      mostraToast('Check annullato');
+      mostraToast('Annullato');
     });
   };
 }
