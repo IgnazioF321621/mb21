@@ -308,7 +308,7 @@ Sulla pagina Report nessuna voce è accesa: ci si torna con «‹ Dashboard».
 il modulo della sera si chiama **«Il mio giorno»** in tutti i posti dove lo legge un partner — la fascia della zona OGGI («cosa hai fatto
 oggi in attività · da scrivere stasera», la sera «è ora: scrivi cosa hai fatto oggi in attività», fatto «fatto oggi · tocca per rivederlo»),
 la testata del foglio, gli avvisi del Profilo (««Il mio giorno», la sera»), «I miei libri», il Modulo Core, MB Plan e gli avvisi push
-(`supabase/functions/avvisi/index.ts`: **il testo è cambiato nel codice, la funzione va ripubblicata perché arrivi davvero**).
+(`supabase/functions/avvisi/index.ts`: «⚡ Hai scritto il tuo giorno?»; **funzione ripubblicata il 28/09 su «ok» di Ignazio** con `supabase functions deploy avvisi --no-verify-jwt`, controllata subito dopo: senza segreto rifiuta, come deve).
 Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, `ST.tab = 'check'`, `?apri=check`, `validaCheck`,
 `d.ultimoCheck` — cambiano solo le parole che si leggono. I testi vecchi in `novita.js` non si toccano: raccontano cosa è successo allora.
 
