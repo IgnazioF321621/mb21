@@ -301,7 +301,7 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 **La barra in basso** (Ignazio 28/09, passo 4): **il Report non c'è più nella barra** — si apre dalla Dashboard, zona «Approfondisci»
 (e dalla Griglia PM) e ha in cima **«‹ Dashboard»** (`tornaInDashboard` / `collegaTornaInDashboard` in `index.html`, come il Check).
 Restano Dashboard · MB Plan · Lista Nomi · Mappa · Training (e, solo per l'Admin, Progetti e Admin). **La voce della pagina in cui si è
-ha la pastiglia grigia** (`nav button.attiva`: fondo `--superficie-2`, angoli tondi), oltre al testo scuro: «così so dove sono».
+ha la pastiglia grigia** (`nav button.attiva`: fondo `--tab-attiva` = #D3DAE6, scelto dopo tre prove affiancate perché col grigio chiaro «si notava a malapena», angoli tondi), oltre al testo scuro: «così so dove sono».
 Sulla pagina Report nessuna voce è accesa: ci si torna con «‹ Dashboard».
 
 **«Il mio giorno» (prima «Check del Giorno»)** (Ignazio 28/09, passo 3; nome scelto da lui: «Check» resta **solo** la pagina dei numeri):
