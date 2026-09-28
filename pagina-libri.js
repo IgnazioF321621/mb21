@@ -34,7 +34,7 @@ async function apriLibri(ritorno) {
       <div class="sh-titolo">${esc(r.inCorso.titolo)}</div>
       <div class="sh-oratore">${r.inCorso.autore ? esc(r.inCorso.autore) + ' · ' : ''}ultimo Check ${esc(data(r.inCorso.ultimo, true))}</div>
       <div class="lb-numeri"><div><span>Pagine a ${esc(nomeMese(r.mese))}</span><b>${r.pagineMese}</b></div><div><span>A ${esc(nomeMese(r.mesePrima))}</span><b>${r.pagineMesePrima}</b></div></div>
-    </div>` : `<div class="riquadro"><div class="sh-etichetta">Stai leggendo</div><div class="sotto" style="margin:0">Nessun libro nei Check finora. Nel Check del Giorno scegli il libro e scrivi le pagine: qui nasce il diario.</div>
+    </div>` : `<div class="riquadro"><div class="sh-etichetta">Stai leggendo</div><div class="sotto" style="margin:0">Nessun libro finora. In «Il mio giorno» scegli il libro e scrivi le pagine: qui nasce il diario.</div>
       <div class="lb-numeri"><div><span>Pagine a ${esc(nomeMese(r.mese))}</span><b>${r.pagineMese}</b></div><div><span>A ${esc(nomeMese(r.mesePrima))}</span><b>${r.pagineMesePrima}</b></div></div></div>`;
 
   const percorso = r.percorso.length ? `<h2>Il percorso dei libri</h2><div class="riquadro lb-percorso">${r.percorso.map(p => `
@@ -55,7 +55,7 @@ async function apriLibri(ritorno) {
   }).join('')}</div>` : '<div class="vuoto">Nessun libro nel diario finora.</div>'}${mio ? `<button class="sh-mano" id="lb-gia-altro">${ic('piu')} Un libro già letto</button>` : ''}`;
 
   app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} ${guardoAltri() ? 'I libri di ' + esc(MB21Sharing.nomeCorto(nomeDi(visto()))) : 'I miei libri'}</h1>
-    <div class="sotto">Dai Check del Giorno${chi}: il libro, le pagine, le note.</div>${inCorso}${percorso}${diario}${versione()}`;
+    <div class="sotto">Da «Il mio giorno»${chi}: il libro, le pagine, le note.</div>${inCorso}${percorso}${diario}${versione()}`;
   window.scrollTo(0, 0);
   document.getElementById('lb-indietro').onclick = torna;
   app.querySelectorAll('[data-libro]').forEach(b => b.onclick = () => { LB.aperto = LB.aperto === b.dataset.libro ? null : b.dataset.libro; apriLibri(); });

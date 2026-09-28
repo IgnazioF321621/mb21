@@ -99,7 +99,7 @@ prova('Modulo Check: 11 numeri obbligatori, VP con decimali, note max 150', () =
   assert.equal(D.validaCheck({ ...pieno, pm: '' }), 'Manca: PM.');
   assert.equal(D.validaCheck({ ...pieno, contatti: '1,5' }), 'Numero non valido: Contatti.');
   assert.equal(D.validaCheck({ ...pieno, tracce: '-1' }), 'Numero non valido: Tracce.');
-  assert.equal(D.validaCheck({ ...pieno, data: '' }), 'Manca la data del check.');
+  assert.equal(D.validaCheck({ ...pieno, data: '' }), 'Manca il giorno.');
   assert.equal(D.validaCheck({ ...pieno, note_libro: 'x'.repeat(151) }), 'Note del libro: massimo 150 caratteri.');
   assert.equal(D.LIBRI.length, 44);
   assert.equal(D.CAMPI_CHECK.length, 7);    // + Data, Libro, Note; BBS/WES/CEP tolti (cantiere 18)

@@ -298,6 +298,14 @@ Funzioni: `utente_corrente()` (id in `utenti` di chi è loggato) · `is_admin()`
 
 **Da catalogare** (`coda.js → daCatalogare(righe, catalogatiOggi)`, cantiere 16, decisioni di Ignazio 15/09): i senza categoria del partner visto (`contatti` con categoria vuota, tutti, a pagine da 1000) in **ordine alfabetico** (`localeCompare` it, senza distinguere maiuscole e accenti); se ne mostrano **quel che resta dei `QUOTA_CATALOGO` (5) di oggi, più gli `altri` chiesti** (`max(0, 5 − catalogati_oggi) + altri`; **cambiato il 24/09**: prima era `5 + altri − catalogati_oggi`, così chi oggi aveva già catalogato più di 5 nomi toccava «Altri 5» e non compariva niente — Ignazio: «non mi spuntano i nomi, però mi calcola come se le avessi fatte: 20 di 20». Adesso un tocco dà sempre 5 nomi in più). Nella riga della sezione non si scrive più «fatti X di Y» (sembrava un tetto raggiunto) ma **«N ancora da catalogare · oggi ne hai catalogati M»**; `altri` = 5 per ogni tocco su **«Altri 5»** (`ST.catalogoAltri`, solo nell'app e solo per oggi: riaprendo l'app si riparte da 5, e se i catalogati sono già 5 o più ricompare «Altri 5»). Non contano nei contatti al giorno. I 5 restano gli stessi riaprendo l'app perché l'ordine è fisso e i catalogati escono
 
+**«Il mio giorno» (prima «Check del Giorno»)** (Ignazio 28/09, passo 3; nome scelto da lui: «Check» resta **solo** la pagina dei numeri):
+il modulo della sera si chiama **«Il mio giorno»** in tutti i posti dove lo legge un partner — la fascia della zona OGGI («cosa hai fatto
+oggi in attività · da scrivere stasera», la sera «è ora: scrivi cosa hai fatto oggi in attività», fatto «fatto oggi · tocca per rivederlo»),
+la testata del foglio, gli avvisi del Profilo (««Il mio giorno», la sera»), «I miei libri», il Modulo Core, MB Plan e gli avvisi push
+(`supabase/functions/avvisi/index.ts`: **il testo è cambiato nel codice, la funzione va ripubblicata perché arrivi davvero**).
+Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, `ST.tab = 'check'`, `?apri=check`, `validaCheck`,
+`d.ultimoCheck` — cambiano solo le parole che si leggono. I testi vecchi in `novita.js` non si toccano: raccontano cosa è successo allora.
+
 **«IL MIO MESE», un riquadro solo** (Ignazio 28/09, passo 2 dello schizzo; `pagina-dashboard.js` → `dashboardNumeri`, `dashboardBasso`):
 sotto la zona OGGI c'è **un riquadro unico** (`.mese-card`) diviso in due metà etichettate: **«Dove sono»** (le quattro linguette e i numeri
 del mese) e **«Dove vado»** (le luci del 1° livello, la riga dei livelli e la porta scura «Apri il Check»), con in mezzo la riga
