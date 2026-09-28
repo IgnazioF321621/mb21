@@ -71,7 +71,7 @@ function moduloCoreHtml(m) {
   const s4 = sez(4, 'Ascoltare 1 traccia al giorno [CEP - catalogo BSM]', `
     <div class="cm-conto">${m.s4.aTotale ? `<b>${m.s4.totale}</b>/${m.s4.obiettivo} tracce${m.s4.finora ? ' finora' : ' in tutto'}` : `<b>${m.s4.quanti}</b>/${m.giorni} giorni`}</div>
     <div class="cm-giorni">${[m.s4.giorni.slice(0, 15), m.s4.giorni.slice(15)].map(col => `<div>${col.map(g => `<div class="cm-g${g.fatto ? ' fatto' : ''}"><b>${g.giorno}</b><span>${esc(g.titolo)}</span></div>`).join('')}</div>`).join('')}</div>
-    <div class="vn-aiuto">Le tracce scritte nel Check del Giorno più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.${m.s4.aTotale ? ' Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno una traccia per ogni giorno passato del mese.' : ''}</div>`, m.s4.fatta);
+    <div class="vn-aiuto">Le tracce scritte in «Il mio giorno» più quelle del percorso segnate «ascoltata»: con almeno una, il giorno è fatto.${m.s4.aTotale ? ' Solo a settembre 2026, mese del passaggio all\'app nuova, conta il totale: almeno una traccia per ogni giorno passato del mese.' : ''}</div>`, m.s4.fatta);
 
   const s5 = sez(5, 'Leggere 10 pagine al giorno [RB]', `
     <div class="cm-riga"><span>Libro in corso di lettura</span>${m.s5.auto ? `<b class="cm-auto">${esc(m.s5.libro)}</b>` : `<input class="cm-testo" id="cm-libro" value="${esc(m.s5.libro)}" placeholder="Titolo" maxlength="120">`}</div>
@@ -85,7 +85,7 @@ function moduloCoreHtml(m) {
       : `<button class="${w.senza ? 'senza' : ''}" data-senza-open="${w.da}" title="${w.da} – ${w.a}" aria-label="Settimana ${i + 1}: ${w.senza ? 'l\'OPEN non c\'era, tocca per annullare' : 'tocca se l\'OPEN non c\'era'}">${i + 1}${w.senza ? ' —' : ''}</button>`).join('')}</span></div>
     <div class="cm-riga"><span>Acquisto biglietto BBS${prossimo(m.s6.prossimoBbs)}</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
     <div class="cm-riga"><span>Acquisto biglietto WES${prossimo(m.s6.prossimoWes)}</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
-    <div class="vn-aiuto">L'OPEN dal Check del Giorno («oggi sono stato all'OPEN»). Se in una settimana l'OPEN nella tua città non c'era, tocca il suo numero: diventa «—» e non conta. I biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.abitudini[5]);
+    <div class="vn-aiuto">L'OPEN da «Il mio giorno» («oggi sono stato all'OPEN»). Se in una settimana l'OPEN nella tua città non c'era, tocca il suo numero: diventa «—» e non conta. I biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.abitudini[5]);
 
   const s7 = sez(7, 'Lavorare di squadra', `
     <div class="cm-riga"><span>Sessione di COUNSELING in data</span>${m.s7.auto ? `<b class="cm-auto">${esc(m.s7.counseling)}</b>` : `<input class="cm-num larga" id="cm-counseling" value="${esc(m.s7.counseling)}" placeholder="gg/mm" maxlength="10">`}</div>

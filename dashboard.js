@@ -280,7 +280,7 @@
 
   // Controllo del modulo Check: numeri obbligatori (CAMPI_CHECK), niente negativi, note al massimo 150
   function validaCheck(v) {
-    if (!v.data) return 'Manca la data del check.';
+    if (!v.data) return 'Manca il giorno.';
     for (const [k, etichetta, , decimale] of CAMPI_CHECK) {
       const s = String(v[k] ?? '').trim().replace(',', '.');
       if (s === '') return `Manca: ${etichetta.replace(/^\S+\s/, '')}.`;
