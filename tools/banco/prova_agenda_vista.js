@@ -201,13 +201,12 @@ prova('La Settimana mostra sotto ogni giorno anche le sue cose da fare (Ignazio 
   assert.match(s, /Comprare i biglietti BBS/);   // riportata da sabato: si vede oggi
 });
 
-prova('Gli spazi da riempire (27/09): solo l\'Admin; nella card, nella Timeline, nella Settimana, e nel menu «Programma della settimana» al posto del Modulo Core', () => {
+prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Timeline, nella Settimana, e nel menu «Programma della settimana» al posto del Modulo Core', () => {
   const modo = V.modo, prima = modo.admin;
-  modo.admin = false;
-  assert.doesNotMatch(V.vista('giorno'), /data-spazio=/);                 // un partner per ora non li vede
-  assert.match(V.menuAgendaHtml(), /data-cmd="core" class="mb-core"/);   // al partner resta il Modulo Core nel menu
-  assert.doesNotMatch(V.menuAgendaHtml(), /Programma della settimana/);
-  modo.admin = true;
+  modo.admin = true; modo.tutti = true;
+  assert.doesNotMatch(V.vista('giorno'), /data-spazio=/);                 // con «Tutti» no: sono personali
+  assert.match(V.menuAgendaHtml(), /data-cmd="core" class="mb-core"/);
+  modo.tutti = false; modo.admin = false;                                  // un partner li vede (dal 28/09)
   const f = V.vista('giorno');
   assert.match(f, /class="ag-imp sp-imp" data-spazio="s2"/);
   assert.match(f, /Piano Marketing<small>da riempire · tocca per mettere un nome/);
