@@ -144,13 +144,13 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
   assert.deepEqual(s.livelli.map(l => l.nome), ['Nuovo', 'Sponsor', 'Leaders Club', 'Leader Executive', 'Leader Bronzo', 'Leader Argento', 'Platino']);
   assert.deepEqual(s.livelli.map(l => l.aperto), [true, false, false, false, false, false, false]);
   assert.equal(s.qui.nome, 'Nuovo');
-  assert.deepEqual(s.livelli[0].percorsi.map(p => [p.id, p.pronto]), [['contattare', true], ['primi_passi', false], ['dire_il_vero', false], ['sistema', false], ['principi', false]]);
+  assert.deepEqual(s.livelli[0].percorsi.map(p => [p.id, p.pronto]), [['contattare', true], ['primi_passi', false], ['aree', false], ['dire_il_vero', false], ['sistema', false], ['principi', false]]);
   // Contattare superato: Sponsor resta chiuso, gli altri percorsi del Nuovo non ci sono ancora
   const s2 = T.scala([mazzo], {}, [{ percorso: 'contattare', giuste: 8, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }], OGGI);
   assert.equal(s2.livelli[0].percorsi[0].stato.superato, true);
   assert.equal(s2.livelli[1].aperto, false);
-  // con tutti e cinque i percorsi superati si apre Sponsor
-  const mazzi = ['contattare', 'primi_passi', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  // con tutti i percorsi del Nuovo superati si apre Sponsor (dal 28/09 sono sei, con «Le aree di mercato»)
+  const mazzi = ['contattare', 'primi_passi', 'aree', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
   const test = mazzi.map(m => ({ percorso: m.percorso.id, giuste: 10, totale: 10, fatto_il: '2026-09-24T10:00:00Z' }));
   const s3 = T.scala(mazzi, {}, test, OGGI);
   assert.deepEqual(s3.livelli.map(l => l.aperto), [true, true, false, false, false, false, false]);
@@ -161,13 +161,12 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
 prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
   const I = require('../../icone.js');
   assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [6, 6, 5, 5, 3, 3, 3]);
-  // 28/09: «Le aree di mercato» è in prova: lo vede solo l'Admin (inProva), per gli altri non c'è nemmeno nei conti
+  // 28/09: un percorso in prova (`solo_admin`) lo vede solo l'Admin, e per gli altri non c'è nemmeno nei conti.
+  // Oggi non ce n'è nessuno in prova («Le aree di mercato» è aperto a tutti), quindi le due liste sono uguali.
   T.inProva(false);
-  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), [5, 6, 5, 5, 3, 3, 3]);
-  assert.ok(!T.livelliVisibili().flatMap(l => l.percorsi).some(p => p.id === 'aree'));
-  T.inProva(true);
+  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), T.LIVELLI.map(l => l.percorsi.length));
+  assert.ok(!T.LIVELLI.flatMap(l => l.percorsi).some(p => p.solo_admin), 'percorsi in prova rimasti accesi');
   assert.ok(T.livelliVisibili().flatMap(l => l.percorsi).some(p => p.id === 'aree'));
-  T.inProva(false);
   const tutti = T.LIVELLI.flatMap(l => l.percorsi);
   assert.equal(new Set(tutti.map(p => p.id)).size, tutti.length);
   for (const p of tutti) {
@@ -176,8 +175,8 @@ prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mental
     assert.ok(p.titolo && p.sotto, p.id);
     assert.match(p.leader, /^(nel |nei |nella |nelle |negli |nell'|con )/, `${p.id}: il titolo della medaglia «leader ${p.leader}»`);
   }
-  // superati i cinque test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
-  const mazzi = ['contattare', 'primi_passi', 'dire_il_vero', 'sistema', 'principi'].map(id => ({ ...mazzo, percorso: { id } }));
+  // superati i test del Nuovo, lo Sponsor si apre con i suoi sei percorsi «in arrivo» finché le carte non sono nell'archivio
+  const mazzi = T.LIVELLI[0].percorsi.map(p => ({ ...mazzo, percorso: { id: p.id } }));
   const s = T.scala(mazzi, {}, mazzi.map(m => ({ percorso: m.percorso.id, giuste: 9, totale: 10, fatto_il: '2026-09-24T10:00:00Z' })), OGGI);
   assert.equal(s.qui.nome, 'Sponsor');
   assert.deepEqual(s.qui.percorsi.map(p => [p.id, p.pronto, p.aperto]).slice(0, 2), [['piano', false, true], ['dare_seguito', false, false]]);
@@ -190,7 +189,7 @@ prova('Dentro un livello i percorsi si aprono uno dopo l\'altro: il successivo q
   const primi = { ...mazzo, percorso: { id: 'primi_passi' }, carte: mazzo.carte.map(c => ({ ...c, id: 'p-' + c.id })) };
   const p = s => s.livelli[0].percorsi.map(x => [x.id, x.pronto, x.aperto]);
   let s = T.scala([mazzo, primi], {}, [], OGGI);
-  assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['dire_il_vero', false, false], ['sistema', false, false], ['principi', false, false]]);
+  assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['aree', false, false], ['dire_il_vero', false, false], ['sistema', false, false], ['principi', false, false]]);
   assert.equal(s.livelli[0].percorsi[1].prima, 'Contattare');
   assert.equal(s.percorso, 'contattare');
   // 11 carte di Contattare viste su 12: ancora chiuso
@@ -298,11 +297,11 @@ prova('Le medaglie: una per percorso superato (con il suo titolo), una per livel
   assert.deepEqual(m.livelli, []);
   assert.equal(m.stelle, 4);
   assert.equal(m.totale, 2);
-  // tutti i percorsi del Nuovo che si vedono (senza quelli in prova): la medaglia del livello, con la data dell'ultimo che mancava
+  // tutti i percorsi del Nuovo che si vedono: la medaglia del livello, con la data dell'ultimo che mancava
   const nuovo = T.livelliVisibili()[0].percorsi.slice(2).map((p, i) => ({ percorso: p.id, giuste: 9, totale: 10, fatto_il: `2026-09-2${4 + i}T10:00:00Z` }));
   m = T.medaglie([...test, ...nuovo], []);
-  assert.deepEqual(m.livelli.map(l => [l.nome, l.quando.slice(0, 10)]), [['Nuovo', '2026-09-26']]);
-  assert.equal(m.totale, 6);
+  assert.deepEqual(m.livelli.map(l => [l.nome, l.quando.slice(0, 10)]), [['Nuovo', '2026-09-27']]);   // 28/09: il Nuovo ha sei percorsi
+  assert.equal(m.totale, 7);
   // i giorni di fila: conta la serie più lunga, la medaglia resta anche dopo una pausa; la data è il giorno del traguardo
   const serie = (da, n) => Array.from({ length: n }, (_, i) => T.piuGiorni(da, i));
   m = T.medaglie([], [...serie('2026-08-01', 8), ...serie('2026-08-20', 3)]);
