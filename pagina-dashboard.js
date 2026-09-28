@@ -176,10 +176,80 @@ function cardContatto(r, dareSeguito) {
     </div>`;
 }
 
+// ── ZONA «OGGI» (Ignazio 28/09, schizzo approvato) ───────────────────────────────
+// Tutte le cose del giorno hanno lo stesso aspetto: fascia con icona, titolo, una riga che dice
+// quante ne restano e la pastiglia col numero. **Blu = persone che ti aspettano oggi** (conferme,
+// Dare Seguito scaduti, contatti del giorno, riordini) · **grigio = lavoro senza fretta** (tracce,
+// da catalogare, partner da avviare, il Check della sera) · **verde = fatto**.
+// In cima il conto a parole: «ti restano N cose» (solo le blu non finite).
+// Il Check della sera sta in fondo e dalle 20 diventa blu e sale primo (Ignazio: «dalle 20:00»).
+const ORA_CHECK = 20;
+function oraRoma() {
+  return Number(new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).format(new Date()));
+}
+function zonaOggiHtml() {
+  const r = ST.risultato, st = ST.stato, altro = guardoAltri();
+  const d = DS.dati;
+  const pezzi = [];   // { html, blu }
+  const metti = (id, icona, titolo, sotto, quanti, blu, contenuto, apertaDaSola) => {
+    const aperta = contenuto != null && apertaRigaDash(id, !!apertaDaSola);
+    const classe = quanti ? (blu ? '' : 'catalogare') : 'fatta';
+    pezzi.push({ blu: blu && !!quanti,
+      html: rigaApribile('sez-' + id, classe, quanti ? icona : 'fatto', titolo, sotto, aperta, quanti)
+        + (aperta ? contenuto() : '') });
+  };
+
+  // 1. Conferme: gli appuntamenti di oggi da confermare
+  if (CONF.righe.length) metti('conferme', 'conferme', 'Conferme',
+    `${CONF.righe.length} ${CONF.righe.length === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}`,
+    CONF.righe.length, true, confermeHtml, true);
+
+  // 2. Dare Seguito scaduti
+  if (r.dareSeguito.length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti',
+    `${r.dareSeguito.length} da richiamare`, r.dareSeguito.length, true,
+    () => r.dareSeguito.map(x => cardContatto(x, true)).join(''), true);
+
+  // 3. Contatti del giorno
+  const finito = st.fatti_oggi >= st.contatti_al_giorno;
+  metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
+    r.coda.length ? `${r.coda.length} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`
+      : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`,
+    r.coda.length, true, () => (altro ? `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>` : '')
+      + (r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
+        : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`),
+    !!r.coda.length);
+
+  // 4. Riordini da sentire
+  if (RIO.righe.length) metti('riordini', 'riordini', 'Riordini da sentire',
+    `${RIO.righe.length} ${RIO.righe.length === 1 ? 'cliente da sentire' : 'clienti da sentire'}`,
+    RIO.righe.length, true, riordiniHtml, true);
+
+  // 5-7. Le grigie: tracce, da catalogare, partner da avviare (l'HTML ce l'hanno già loro)
+  const grigie = [tracceHtml(), catalogoHtml(), avvioHtml()].filter(Boolean);
+
+  // 8. Il Check della sera: grigio di giorno, blu (e primo) dalle 20 se non è ancora fatto
+  let check = '';
+  if (!limitato() && d) {
+    const fatto = d.ultimoCheck === ST.oggi;
+    const sera = oraRoma() >= ORA_CHECK;
+    check = rigaApribile('sez-giorno', fatto ? 'fatta' : (sera ? '' : 'catalogare'), fatto ? 'fatto' : 'lampo',
+      'Check del Giorno',
+      fatto ? 'fatto oggi · tocca per rivederlo'
+        : sera ? 'è ora: scrivi come è andata oggi'
+        : `si compila stasera · dalle ${ORA_CHECK} te lo ricordo in cima`,
+      false, 0);
+    if (!fatto && sera) pezzi.unshift({ blu: true, html: check }), check = '';
+  }
+  const restano = pezzi.filter(x => x.blu).length;
+  const titolo = `<div class="zona-oggi">Oggi ${restano ? `<span>· ti ${restano === 1 ? 'resta 1 cosa' : `restano ${restano} cose`}</span>`
+    : `<span>· hai finito ${ic('complimenti')}</span>`}</div>`;
+  return titolo + pezzi.map(x => x.html).join('') + grigie.join('') + check;
+}
+
 function disegnaOggi() {
   const r = ST.risultato;
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «🔁 N riordini da sentire» porta dritto al riquadro
-  let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardAlto();
+  let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta();
   if (vediTutti()) {
     html += `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
     app.innerHTML = html + dashboardBasso() + versione();
@@ -190,40 +260,26 @@ function disegnaOggi() {
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
   html += rigaTelefonoHtml();   // cantiere 32: «📲 Metti MB21 sul telefono e accendi gli avvisi», dal secondo ingresso (pagina-benvenuto.js)
-  html += confermeHtml();
-  html += riordiniHtml();
-  html += tracceHtml();   // cantiere 40: «Tracce da controllare» (pagina-sharing.js)
-  html += avvioHtml();
-  html += mioPercorsoHtml();   // cantiere 40 lavoro 6: «Il mio percorso» (pagina-sharing.js)
-  if (r.dareSeguito.length) {
-    html += `<h2>Dare Seguito scaduti</h2>` + r.dareSeguito.map(x => cardContatto(x, true)).join('');
-  }
-  const st = ST.stato;
-  const finito = st.fatti_oggi >= st.contatti_al_giorno;
-  const altro = guardoAltri();
-  const apertaCoda = apertaRigaDash('coda', !!r.coda.length);   // da sola si apre solo se c'è qualcuno da chiamare
-  html += rigaApribile('sez-coda', r.coda.length ? 'telefonate' : 'telefonate fatta', r.coda.length ? 'telefonate' : 'fatto',
-    altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
-    r.coda.length ? `${r.coda.length} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`
-      : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, apertaCoda, r.coda.length);
-  if (apertaCoda) {
-    if (altro) html += `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
-    html += r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
-      : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`;
-  }
-  html += catalogoHtml();
+  html += zonaOggiHtml();       // 28/09: prima cosa che si vede, tutte le cose del giorno con lo stesso aspetto
+  html += mioAvvioHtml();       // il proprio avvio (14 passi), subito sotto le cose di oggi
+  html += mioPercorsoHtml();    // cantiere 40 lavoro 6: «Il mio percorso» (pagina-sharing.js)
+  html += dashboardNumeri();    // i numeri del mese vengono dopo: sono il risultato, non un compito
   // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaMioAvvio();
   mostraRigaTelefono();   // non fa aspettare la Dashboard
-  const sezCoda = document.getElementById('sez-coda');   // le righe si aprono e si chiudono anche con l'abbonamento scaduto
-  if (sezCoda) sezCoda.onclick = () => cambiaRigaDash('coda', !!r.coda.length);
-  const sezCat = document.getElementById('sez-catalogo');
-  if (sezCat) sezCat.onclick = () => cambiaRigaDash('catalogo', false);
+  // Le fasce della zona OGGI si aprono e si chiudono anche con l'abbonamento scaduto (dentro non si tocca niente)
+  const daSole = { conferme: true, dareseguito: true, coda: !!r.coda.length, riordini: true, catalogo: false };
+  for (const k of Object.keys(daSole)) {
+    const b = document.getElementById('sez-' + k);
+    if (b) b.onclick = () => cambiaRigaDash(k, daSole[k]);
+  }
+  const sezGiorno = document.getElementById('sez-giorno');
+  if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
   const rigaAvvio = document.getElementById('dash-avvio');
   if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
-  const titoloRio = vai === 'riordini' && document.getElementById('rio-titolo');
+  const titoloRio = vai === 'riordini' && document.getElementById('sez-riordini');
   if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
   const mioAvvio = vai === 'avvio' && document.getElementById('mio-avvio');   // cantiere 32: dal benvenuto si arriva su «Il mio avvio», con sotto i nomi da chiamare
   if (mioAvvio) mioAvvio.scrollIntoView({ block: 'start' });
@@ -552,7 +608,7 @@ async function caricaConferme() {
 function confermeHtml() {
   if (!CONF.righe.length) return '';
   const ordinate = [...CONF.righe].sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
-  return `<h2>${ic('conferme')} Conferme · ${CONF.righe.length}</h2>` + ordinate.map(c => {
+  return ordinate.map(c => {
     const tel = c.contatti && c.contatti.telefono;
     return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || 'var(--az-contatto)'}"></div>
       <div class="corpo">
@@ -642,7 +698,8 @@ function percheHtml(perche) {
 }
 function avvioHtml() {
   const n = AVV.righe.length;
-  return mioAvvioHtml() + (n ? `<button class="ag-blocco avvio" id="dash-avvio"><span>${ic('avvio')} ${n} partner da avviare</span><span>›</span></button>` : '');
+  return n ? rigaApribile('dash-avvio', 'catalogare', 'avvio', 'Partner da avviare',
+    `${n} ${n === 1 ? 'avvio aperto' : 'avvii aperti'} · quando hai tempo`, false, n) : '';
 }
 
 // «Il mio avvio»: riga chiusa con passi fatti e prossimo passo; aperta, i 14 passi da smarcare
@@ -815,7 +872,7 @@ async function caricaRiordini(oggi) {
 function riordiniHtml() {
   if (!RIO.righe.length) return '';
   const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
-  return `<h2 id="rio-titolo">${ic('riordini')} Riordini da sentire · ${RIO.righe.length}</h2>` + ordinate.map(a => {
+  return ordinate.map(a => {
     const categoria = a.contatti ? a.contatti.categoria : a.categoria;
     const aperta = ST.aperta === a.id;
     const strip = `<div class="strip" style="background:${MB21Agenda.COLORI['Consulenza PRD']}"></div>`;
@@ -985,7 +1042,9 @@ async function rispondiBiglietto(box, si, dopo) {
 // Testata con il cerchietto del Profilo (cantiere 25): sempre di chi è entrato, anche col Partner Select
 function testataDashboard() { return `<div class="testa-pagina"><h1>Dashboard</h1>${cerchiettoProfilo()}</div>`; }
 
-function dashboardAlto() {
+// Dal 28/09 la testata (Partner Select, abbonamento, biglietti da segnare) resta in cima, mentre i numeri
+// del mese scendono sotto la zona OGGI: `dashboardNumeri()`. Il banner nero del Check è diventato una fascia della zona OGGI.
+function dashboardTesta() {
   const d = DS.dati;
   let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
@@ -1000,9 +1059,13 @@ function dashboardAlto() {
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
-  if (!limitato()) html += `<button class="banner-grande check" id="ds-check" ${ST.offline ? 'disabled' : ''}><span class="ico">${ic('lampo')}</span>
-    <span><b>Compila il Check del Giorno!</b><small>Ultimo check: <u>${esc(dataBreve(d.ultimoCheck))}</u> · Tocca per aprire</small></span>
-    <span class="freccia">›</span></button>`;
+  return html;
+}
+
+function dashboardNumeri() {
+  const d = DS.dati;
+  if (!d) return '';
+  let html = '<div class="zona-oggi numeri">Il mio mese</div>';
   const s = d.schede.find(x => x.chiave === DS.scheda);
   html += `<div class="riquadro"><div class="schede-dash">${d.schede.map(x =>
     `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</button>`).join('')}</div>
