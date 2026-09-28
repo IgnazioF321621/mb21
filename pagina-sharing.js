@@ -297,7 +297,8 @@ function tracceHtml() {
   if (!TRC.righe.length && !TRC.ascoltate.length) return '';
   const chiede = TRC.ascoltate.filter(k => k.chiede_prossima_il).length;
   const pezzi = [TRC.righe.length ? `${TRC.righe.length} da controllare` : '', TRC.ascoltate.length ? `${TRC.ascoltate.length} ascoltate` : '', chiede ? `${chiede} ${chiede === 1 ? 'chiede' : 'chiedono'} la prossima` : ''].filter(Boolean);
-  return `<button class="ag-blocco tracce" id="dash-tracce"><span><b>${ic('audio')} Tracce condivise</b><small>${esc(pezzi.join(' · '))}</small></span><span>›</span></button>`;
+  // dal 28/09 ha lo stesso aspetto delle altre cose del giorno (zona OGGI della Dashboard)
+  return rigaApribile('dash-tracce', 'catalogare', 'audio', 'Tracce condivise', esc(pezzi.join(' · ')), false, TRC.righe.length);
 }
 
 function righeTracceHtml() {
