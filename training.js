@@ -21,8 +21,8 @@
       { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate', leader: 'nel contattare' },
       { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio', leader: 'nei primi passi' },
       // 28/09 (Ignazio: «le aree di mercato le farei partire già dal nuovo, e il nuovo deve conoscere l'Energy Program»): le quattro
-      // aree in generale; il dettaglio per area sta nel livello Sponsor. `solo_admin` = in prova, lo vede solo Ignazio (vedi livelli())
-      { id: 'aree', titolo: 'Le aree di mercato', sotto: 'Nutrizione, bellezza, casa e persona: da dove parte il volume', icona: 'prodotti', leader: 'nelle aree di mercato', solo_admin: true },
+      // aree in generale; il dettaglio per area sta nel livello Sponsor. Provato da Ignazio e aperto a tutti lo stesso giorno
+      { id: 'aree', titolo: 'Le aree di mercato', sotto: 'Nutrizione, bellezza, casa e persona: da dove parte il volume', icona: 'prodotti', leader: 'nelle aree di mercato' },
       // 25/09: dalle Regole di Condotta Amway solo le regole su cose false dette o fatte (Ignazio: «vai a prendere le regole solo per
       // quanto riguarda fare cose false e dire cose false in generale»; per i contatti restano le idee del manuale)
       { id: 'dire_il_vero', titolo: 'Dire sempre il vero', sotto: "Le Regole di Condotta Amway: i prodotti, i social, l'attività, i guadagni", icona: 'fatto', leader: 'nel dire sempre il vero' },
