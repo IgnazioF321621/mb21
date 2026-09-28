@@ -1817,14 +1817,16 @@ function menuAgendaHtml() {
     <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca in MB Plan"></form>
     <div class="mb-risultati"></div>
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="sc-${k}${(AG.vista || 'giorno') === k ? ' si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
+    ${vediSpazi() ? programmaSettimanaHtml() : ''}
     <div class="ag-lato-titolo mb-titolo-piu">Modelli personali<button data-cmd="nuovo-modello" aria-label="Nuovo modello">${ic('piu')}</button></div>
     ${AG.modelli.length ? AG.modelli.map(m => `<button data-modello="${esc(m.id)}" class="${m.attivo === false ? 'presto' : ''}">${ic(m.icona || 'fatto')}<span>${esc(m.titolo)}</span><small><i class="mb-scala-punto sc-${m.scala || 'giorno'}"></i>${esc(NOMI_SCALA[m.scala || 'giorno'])}${m.attivo === false ? ' · spento' : ` · ${AG.modello.filter(v => v.modello_id === m.id).length}`}</small></button>`).join('')
       : '<div class="mb-vuoto">Crea le tue routine o cose da fare con il +</div>'}
     ${progettiMenuHtml()}
-    ${vediSpazi() ? programmaSettimanaHtml() : `<button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`}`;
+    ${vediSpazi() ? '' : `<button data-cmd="core" class="mb-core">${ic('crescita')}<span><b>Modulo Core N21</b><small>Le 7 abitudini di ${esc(MB21Agenda.titoloMese(AG.giorno).toLowerCase())}, già compilate dal Check</small></span></button>`}`;
 }
-// La card «Programma della settimana» (Ignazio 27/09: «la settimana messa là la devo andare a cercare»): in fondo al menu, al
-// posto del Modulo Core (che resta dal Check), sempre a portata da ogni vista. La settimana è quella che si sta guardando.
+// La card «Programma della settimana» (Ignazio 27/09: «la settimana messa là la devo andare a cercare»): al posto del Modulo Core
+// (che resta dal Check), sempre a portata da ogni vista. La settimana è quella che si sta guardando. Dal 28/09 subito sotto
+// Giorno…Anno: in fondo alla colonna di sinistra (ferma, con un'altezza massima) sull'iPad di Isabella restava tagliata.
 function programmaSettimanaHtml() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), lun = AG.settimana[0], dom = AG.settimana[6];
   const p = MB21Spazi.programma(AG.settimana, AG.azioni, AG.spazi);
