@@ -1065,18 +1065,20 @@ function dashboardTesta() {
 function dashboardNumeri() {
   const d = DS.dati;
   if (!d) return '';
-  let html = '<div class="zona-oggi numeri">Il mio mese</div>';
+  const mese = MB21Dashboard.nomeMese(d.mese);
+  let html = `<div class="zona-oggi">Il mio mese <span>· ${esc(mese.toLowerCase())}</span></div>`;
   const s = d.schede.find(x => x.chiave === DS.scheda);
-  html += `<div class="riquadro"><div class="schede-dash">${d.schede.map(x =>
+  html += `<div class="riquadro mese-card"><div class="mese-t">Dove sono</div><div class="schede-dash">${d.schede.map(x =>
     `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</button>`).join('')}</div>
     <div class="kpi">${s.riquadri.map(r => `<div>
       <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
       <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
-    </div>`).join('')}</div></div>
-    ${limitato() ? '' : `<div id="ds-card-check">${cardCheckHtml()}</div>
-      ${d.obiettiviMancanti ? '' : `<div class="ds-azioni"><button class="ds-azione obiettivi" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(MB21Dashboard.nomeMese(d.mese))}</b><small>Guarda o cambia i traguardi</small></span></button></div>`}`}`;
+    </div>`).join('')}</div>
+    ${limitato() ? '' : `${d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`}
+      <div id="ds-card-check">${cardCheckHtml(true)}</div>`}
+    </div>`;
   // la card «Il tuo Check» (Ignazio 27/09) prende il posto del tassello «Visione completa»/«Check»: una porta sola per il Check
   return html;
 }
@@ -1105,17 +1107,13 @@ function tabellaSv(sv, nome) {
 }
 function dashboardBasso() {
   const d = DS.dati;
-  if (!d) return '';
-  const sv = d.segniVitali, r = sv.righe[sv.righe.length - 1];
-  return `<div class="sv" id="ds-sv" role="button" tabindex="0">
-      <h3>${ic('segnivitali')} Segni Vitali <span style="float:right;font-weight:400;color:var(--testo-tenue)">›</span></h3>
-      <div class="sotto-sv">${esc(MB21Dashboard.nomeMese(r.mese))} ${r.mese.slice(0, 4)} · ${ic('persona')} ${esc(nomeVisto())} · tocca per i 12 mesi</div>
-      <table><tr>${COLONNE_SV.map(([k, t]) => `<th style="color:${coloreSv(k)}">${t.toUpperCase()}</th>`).join('')}</tr>
-      <tr>${COLONNE_SV.map(([k]) => cellaSv(sv, k, r[k], 'td')).join('')}</tr></table>
-    </div>
-    ${limitato() ? '' : `<div class="ds-azioni" style="margin-top:12px">
+  if (!d || limitato()) return '';
+  // Dal 28/09 il riquadro nero dei Segni Vitali non c'è più: erano gli stessi numeri della linguetta
+  // «Segni Vitali N21» qui sopra, e i 12 mesi si aprono dal Check. In fondo resta solo la consultazione.
+  return `<div class="zona-oggi">Approfondisci</div>
+    <div class="ds-azioni">
       ${DS.griglia ? `<button class="ds-azione griglia" id="ds-griglia">${ic('pianomarketing')}<span><b>Griglia PM</b><small>${DS.griglia.fatti} di ${DS.griglia.obiettivo}</small></span></button>` : ''}
-      <button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Mostra di più</b><small>Il Report, giorno per giorno</small></span></button></div>`}`;
+      <button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Report</b><small>I tuoi numeri, giorno per giorno</small></span></button></div>`;
 }
 
 function collegaDashboard() {
