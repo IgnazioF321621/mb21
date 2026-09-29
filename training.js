@@ -334,10 +334,11 @@
         if (!testo(c.davanti, 200) || !testo(c.dietro, 400)) p.push(`${chi}: frase senza davanti o dietro`);
         if (c.aiuto !== undefined && !testo(c.aiuto, 120)) p.push(`${chi}: aiuto vuoto o lungo`);
       } else p.push(`${chi}: tipo sconosciuto «${c.tipo}»`);
-      const f = c.fonte;
-      if (f && !((f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)
-        || (f.tipo === 'sito' && f.titolo && !f.url)))
-        p.push(`${chi}: fonte incompleta`);
+      // fonte: il collegamento della carta; fonte2 (dal 29/09, Ignazio) un secondo collegamento, solo dove servono due fonti
+      const fonteOk = f => (f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)
+        || (f.tipo === 'sito' && f.titolo && !f.url);
+      if (c.fonte && !fonteOk(c.fonte)) p.push(`${chi}: fonte incompleta`);
+      if (c.fonte2 && (!c.fonte || !fonteOk(c.fonte2) || c.fonte2.tipo === 'sito')) p.push(`${chi}: seconda fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
     }
     if ((m.carte || []).filter(c => c.tipo === 'scena' || c.tipo === 'vf').length < TEST) p.push(`servono almeno ${TEST} carte a risposta per il test`);
