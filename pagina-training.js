@@ -467,9 +467,9 @@ function trnFonteUna(f) {
   if (!t) return '';
   if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
-  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez !== undefined ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null, az: b.dataset.az ? b.dataset.az.split(',').map(Number) : [], tr: b.dataset.tr ? b.dataset.tr.split(',').map(Number) : [] } : null)); }
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, (b.dataset.sez !== undefined || b.dataset.cap) ? { sezione: b.dataset.sez || '', voce: b.dataset.voce || '', vi: Number(b.dataset.vi || 0), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null, az: b.dataset.az ? b.dataset.az.split(',').map(Number) : [], tr: b.dataset.tr ? b.dataset.tr.split(',').map(Number) : [] } : null)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -630,6 +630,13 @@ function trnApriCarta(id, cap, punto) {
       const chiave = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
       const solo = cap && c.capitoli ? c.capitoli.filter(x => chiave(x.titolo).includes(chiave(cap)) || chiave(cap).includes(chiave(x.titolo))) : [];
       const capitoli = solo.length ? solo : c.capitoli;
+      if (punto && solo.length) {
+        // dalla carta: del capitolo solo i punti, le azioni e i termini che rispondono alla domanda (`fonte.pt`, `az`, `tr`), niente altro
+        const x = solo[0], da = (v, ii) => (ii || []).map(i => v && v[i]).filter(Boolean);
+        corpo = `<div class="trn-meta">${esc(c.autore || '')}${c.solo_n21 ? ' <span class="sh-chiede n21">solo da N21</span>' : ''}</div>
+          <div class="trn-appunti"><div class="sh-etichetta">${esc(x.titolo)}</div>
+          ${trnLista('Punti', da(x.principi, punto.pt))}${trnLista('Azioni', da(x.da_fare, punto.az))}${trnTermini(da(x.termini, punto.tr))}</div>`;
+      } else
       corpo = `<div class="trn-meta">${esc(c.autore || '')}${c.solo_n21 ? ' <span class="sh-chiede n21">solo da N21</span>' : ''}</div>
         ${c.capitoli ? `<h4>${solo.length ? 'Il capitolo, con i suoi appunti' : 'Gli appunti, capitolo per capitolo'}</h4>${capitoli.map(x => x.sezioni && x.sezioni.length ? trnCapitoloPal(x, !!solo.length)
           : `<details class="trn-capitolo"${solo.length ? ' open' : ''}><summary>${esc(x.titolo)}</summary>
