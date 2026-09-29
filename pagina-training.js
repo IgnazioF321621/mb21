@@ -210,7 +210,7 @@ function trnApriPercorso(id) {
     ${s.penultimo ? `<span>· la volta prima ${s.penultimo.giuste} (${trnDiff(s.ultimo.giuste - s.penultimo.giuste)})</span>` : ''}</div>` : '';
   // per approfondire: da dove vengono le sue carte (i capitoli del manuale, le tracce del BSM, i libri), poi il manuale e le tracce
   // del settore di Studia con lo stesso nome; senza doppioni, prima il manuale
-  const fonti = m.carte.map(c => c.fonte).filter(Boolean)
+  const fonti = m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(Boolean)
     .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id)));
   const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
@@ -223,7 +223,7 @@ function trnApriPercorso(id) {
   // liste corte (Ignazio 26/09: «tutto veloce e impattante»): le prime 6, poi «Mostra tutte»
   const kTutte = 'percorso|' + p.id, mostraTutte = TRN.tutte[kTutte] || tutteStudio.length <= TRN_PRIME + 2;
   const studio = mostraTutte ? tutteStudio : tutteStudio.slice(0, TRN_PRIME);
-  const siti = [...new Set(m.carte.map(c => c.fonte).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
+  const siti = [...new Set(m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -461,11 +461,12 @@ function trnFoglioCorreggi(carta, visto, bottone) {
 }
 
 // da dove viene una carta; il tocco apre la fonte in Studia (il capitolo del manuale, la traccia, il libro) o, per Amway, la pagina Risorse del sito
-function trnFonte(c) {
-  const t = MB21Training.fonte(c.fonte);
+function trnFonte(c) { return [c.fonte, c.fonte2].filter(Boolean).map(trnFonteUna).join(''); }   // fonte2: il secondo collegamento (29/09)
+function trnFonteUna(f) {
+  const t = MB21Training.fonte(f);
   if (!t) return '';
-  if (c.fonte.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
-  const f = c.fonte, voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
+  if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
+  const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
   return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
 function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte)); }
