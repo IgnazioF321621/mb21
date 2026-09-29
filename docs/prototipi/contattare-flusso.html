@@ -1,0 +1,689 @@
+<title>Contattare, il flusso</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap">
+<style>
+/* Layout: a phone in the middle (the flow, one screen at a time) and beside it the notes: the road taken, what changes vs today. Warm paper ground, orange = Contatto, teal = the coach. */
+:root{
+  --bg:#f6f2ec; --carta:#ffffff; --fg:#241f1a; --fg2:#6b6259; --linea:#e3dcd2;
+  --arancio:#d9581c; --arancio-chiaro:#fbe9de; --arancio-scuro:#8f3610;
+  --coach:#1f7a74; --coach-chiaro:#ddf0ee; --coach-scuro:#0f4a46;
+  --verde:#2f7d4a; --verde-chiaro:#e1f1e6; --rosso:#b83a2c; --rosso-chiaro:#f8e3df;
+  --ombra:0 10px 30px rgba(60,40,20,.12);
+  --ui:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --voce:"Source Serif 4",Georgia,serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#1b1815; --carta:#26221e; --fg:#f1ebe3; --fg2:#a89e93; --linea:#3a342d;
+  --arancio:#f0763a; --arancio-chiaro:#3d2417; --arancio-scuro:#ffd2bb;
+  --coach:#4cb3ab; --coach-chiaro:#163634; --coach-scuro:#c8ecea;
+  --verde:#63b57e; --verde-chiaro:#1c3324; --rosso:#e0705f; --rosso-chiaro:#3d211c;
+  --ombra:0 10px 30px rgba(0,0,0,.4); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#1b1815; --carta:#26221e; --fg:#f1ebe3; --fg2:#a89e93; --linea:#3a342d;
+  --arancio:#f0763a; --arancio-chiaro:#3d2417; --arancio-scuro:#ffd2bb;
+  --coach:#4cb3ab; --coach-chiaro:#163634; --coach-scuro:#c8ecea;
+  --verde:#63b57e; --verde-chiaro:#1c3324; --rosso:#e0705f; --rosso-chiaro:#3d211c;
+  --ombra:0 10px 30px rgba(0,0,0,.4); color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:16px;line-height:1.5}
+.pagina{max-width:1080px;margin:0 auto;padding-block:20px 48px;padding-inline:16px}
+h1{font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.sotto{color:var(--fg2);margin:0 0 18px;max-width:62ch}
+.impostazioni{display:flex;flex-wrap:wrap;gap:14px 26px;margin-bottom:22px}
+.imp{display:flex;flex-direction:column;gap:6px}
+.imp small{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--linea);background:var(--carta);color:var(--fg);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip:focus-visible,button:focus-visible{outline:2px solid var(--arancio);outline-offset:2px}
+.corpo{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:760px){.corpo{grid-template-columns:1fr}}
+/* il telefono */
+.tel{background:var(--carta);border:1px solid var(--linea);border-radius:28px;box-shadow:var(--ombra);overflow:hidden;min-height:560px;display:flex;flex-direction:column}
+.tel-testa{padding:14px 18px 10px;border-bottom:1px solid var(--linea);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.provato{display:inline-block;color:var(--verde);font-size:12px;margin-left:6px}
+.conto{font-size:13px;color:var(--fg2)}
+.tel-testa b{font-size:15px}
+.tel-testa small{color:var(--fg2);font-size:12px}
+.passo-n{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--arancio);font-weight:700;text-align:right}
+.schermo{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1}
+.card{border:1px solid var(--linea);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.card .nome{font-weight:700;font-size:17px}
+.card .riga{color:var(--fg2);font-size:14px}
+.card.contatto{border-left:4px solid var(--arancio)}
+.esito-badge{display:inline-block;background:var(--arancio-chiaro);color:var(--arancio-scuro);border-radius:8px;padding:2px 8px;font-size:13px;font-weight:700}
+.ricordo{background:var(--coach-chiaro);color:var(--coach-scuro);border-radius:12px;padding:10px 12px;font-size:14px}
+.ricordo small{display:block;font-size:13px;opacity:.85}
+.ricordo b{font-weight:700}
+.domanda{font-size:19px;font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:4px 0 0}
+.bott{display:flex;flex-wrap:wrap;gap:8px}
+.bott.riga2{padding-top:8px;border-top:1px dashed var(--linea)}
+.b{font:inherit;font-size:15px;border:1px solid var(--linea);background:var(--carta);color:var(--fg);border-radius:12px;padding:10px 14px;cursor:pointer;text-align:left}
+.b:hover{border-color:var(--fg2)}
+.b.primario{background:var(--arancio);border-color:var(--arancio);color:#fff;font-weight:700}
+.b.no{color:var(--rosso)}
+.b.link{border:0;background:none;color:var(--fg2);padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+.foglio{border:1px solid var(--linea);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.foglio h3{margin:0;font-size:16px}
+.foglio p{margin:0;font-size:14px;color:var(--fg2)}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+input[type=date],input[type=time],input[type=text]{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--linea);border-radius:10px;background:var(--carta);color:var(--fg);max-width:100%}
+.due{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.toast{background:var(--fg);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px}
+/* la chat del coach */
+.chat{display:flex;flex-direction:column;gap:10px}
+.fum{display:flex;gap:8px;align-items:flex-end}
+.fum .av{flex:none;width:28px;height:28px;border-radius:50%;background:var(--coach);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+.fum .bolla{background:var(--coach-chiaro);color:var(--coach-scuro);border-radius:14px 14px 14px 4px;padding:9px 12px;font-size:15px;max-width:88%}
+.fum.mio{justify-content:flex-end}
+.fum.mio .bolla{background:var(--arancio-chiaro);color:var(--arancio-scuro);border-radius:14px 14px 4px 14px}
+.fum .fonte{display:block;font-size:12px;opacity:.8;margin-top:3px}
+.carta-tr{border:1px solid var(--coach);border-radius:14px;padding:12px 14px;background:var(--carta);display:flex;flex-direction:column;gap:6px}
+.carta-tr small{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--coach)}
+.carta-tr .scena{font-family:var(--voce);font-size:16px}
+.carta-tr .giusta{font-size:14px}
+.carta-tr .giusta b{color:var(--verde)}
+.fine{display:flex;flex-direction:column;gap:12px}
+.scaletta{border:1px solid var(--linea);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.scaletta small{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.scaletta .p{display:flex;gap:10px;align-items:center;font-size:15px}
+.scaletta .p i{font-style:normal;width:22px;text-align:center;flex:none}
+.scaletta .p.fatto{color:var(--verde)}
+.scaletta .p.prog{color:var(--arancio);font-weight:700}
+.scaletta .p.dafare{color:var(--fg2)}
+.errore{color:var(--rosso);font-size:13px}
+.chip.fatto{border-color:var(--verde);color:var(--verde);opacity:.8;cursor:default}
+.sv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sv div{border:1px solid var(--linea);border-radius:10px;padding:8px;text-align:center}
+.sv b{display:block;font-size:20px}
+.sv span{font-size:12px;color:var(--fg2)}
+.dove{border:1px solid var(--linea);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.dove small{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.dove.verde{border-left:4px solid var(--verde)}
+.tel-fondo{padding:10px 18px 14px;border-top:1px solid var(--linea);display:flex;justify-content:space-between;gap:8px}
+/* le note a fianco */
+.note{display:flex;flex-direction:column;gap:18px}
+.mappa{display:flex;flex-wrap:wrap;gap:6px}
+.mappa span{border-radius:999px;padding:5px 11px;font-size:13px;border:1px solid var(--linea);color:var(--fg2)}
+.mappa span.qui{background:var(--arancio);border-color:var(--arancio);color:#fff;font-weight:700}
+.mappa span.fatto{border-color:var(--verde);color:var(--verde)}
+.blocco h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);margin:0 0 8px;font-weight:700}
+.strada{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.strada li{display:flex;gap:10px;font-size:15px}
+.strada li em{font-style:normal;color:var(--fg2);min-width:112px;flex:none}
+.strada li.vuota{color:var(--fg2);font-style:italic}
+.oggi{border-left:3px solid var(--arancio);padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.oggi p{margin:0;font-size:15px}
+.oggi p b{font-weight:700}
+.oggi .prop{font-family:var(--voce);font-size:17px}
+.legenda{font-size:13px;color:var(--fg2)}
+.mappa-tab{overflow-x:auto;border:1px solid var(--linea);border-radius:12px}
+.mappa-tab table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+.mappa-tab th{text-align:left;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);padding:8px 10px;border-bottom:1px solid var(--linea);background:var(--bg)}
+.mappa-tab td{padding:7px 10px;border-bottom:1px solid var(--linea);vertical-align:top;line-height:1.35}
+.mappa-tab tr:last-child td{border-bottom:0}
+.mappa-tab td:first-child{font-weight:700;white-space:nowrap}
+.mappa-tab tr.qui td{background:var(--arancio-chiaro);color:var(--arancio-scuro)}
+.mappa-tab tr.incontro td{background:var(--verde-chiaro)}
+.mappa-tab tr.incontro td:first-child{color:var(--verde)}
+.mappa-titolo{font-size:13px;color:var(--fg2);margin:0 0 6px}
+.b.blocco{border-color:var(--rosso);color:var(--rosso);font-weight:700}
+.blocco-box{margin:0 18px 14px;border:1px solid var(--rosso);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--rosso-chiaro)}
+.blocco-box p{margin:0;font-size:14px}
+.registro-stato{font-size:12px;color:var(--fg2);padding:0 18px 10px}
+@media (prefers-reduced-motion:no-preference){.schermo>*{animation:su .18s ease-out}@keyframes su{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
+</style>
+
+<div class="pagina">
+  <h1>Contattare, il flusso</h1>
+  <p class="sotto">Prototipo della linea proposta, solo per la telefonata. Le voci (esiti, tipi, obiezioni, frasi) sono esattamente quelle dell'app oggi: non cambiano, perché danno le statistiche del Report. Tocca come faresti nell'app; a fianco vedi la strada fatta e cosa cambia rispetto a oggi.</p>
+
+  <div class="impostazioni">
+    <div class="imp"><small>Mario è</small><div class="chips" id="imp-cat"></div></div>
+    <div class="imp"><small>Con Mario</small><div class="chips" id="imp-volta"></div></div>
+    <div class="imp"><small>Chiamo da</small><div class="chips" id="imp-da"></div></div>
+  </div>
+
+  <div class="corpo">
+    <div class="tel">
+      <div class="tel-testa"><div><b id="tel-titolo">Coda di oggi</b><br><small id="tel-sotto">Dashboard</small></div><span class="passo-n" id="tel-passo">Passo 1 di 4</span><button class="b" id="ricomincia-su" style="padding:6px 10px;font-size:13px">Ricomincia</button></div>
+      <div class="schermo" id="schermo"></div>
+      <div class="blocco-box" id="blocco-box" hidden><p><b>Mi blocco qui.</b> Claude legge questa schermata e i tocchi fatti prima. Se vuoi, due parole:</p><input type="text" id="blocco-nota" maxlength="300" placeholder="Cosa non torna? (facoltativo)"><div class="due"><button class="b link" id="blocco-no">Annulla</button><button class="b primario" id="blocco-si">Segna</button></div></div>
+      <div class="tel-fondo"><button class="b link" id="indietro">‹ Indietro</button><button class="b blocco" id="blocco" hidden>Mi blocco qui</button><button class="b link" id="ricomincia">Ricomincia</button></div>
+      <div class="registro-stato" id="registro-stato"></div>
+    </div>
+
+    <div class="note">
+      <div class="blocco"><h2>I passi</h2><div class="mappa" id="mappa"></div></div>
+      <div class="blocco"><h2>La mappa</h2><p class="mappa-titolo" id="mappa-titolo"></p><div class="mappa-tab"><table><thead><tr><th>Esito</th><th>Il passo dopo</th><th>Il coach</th><th>Obiezioni?</th><th>Dove ricompare Mario</th></tr></thead><tbody id="mappa-righe"></tbody></table></div></div>
+      <div class="blocco"><h2>La strada fatta</h2><ul class="strada" id="strada"></ul></div>
+      <div class="blocco"><h2>Cosa cambia rispetto a oggi</h2><div class="oggi" id="oggi"></div></div>
+      <p class="legenda">Dall'app di oggi: gli esiti del Contatto per categoria (agenda.js), i tipi di piano, appuntamento e consulenza, le obiezioni e i freni delle batterie del coach, le frasi per la prossima volta, le carte del Training. Rientri in coda: No Risposta 2 giorni · Telefono spento 7 · Relazione 20 · Ordine 90 · No Interesse un anno. Tipi di consulenza con «Presentazione» al posto di «Assistenza» (Ignazio 29/09).</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── le voci dell'app, esatte (agenda.js → TIPI e SOTTOTIPI; esiti buoni sopra, non andati sotto: ESITI_NON_ANDATI) ──
+const ESITI = {
+  Prospect: { buoni: ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti'], no: ['Telefono spento', 'No Interesse', 'No Risposta'] },
+  Partner:  { buoni: ['Appuntamento', 'Richiamare'], no: ['Telefono spento', 'No Risposta'] },
+  Cliente:  { buoni: ['Ordine', 'Appuntamento', 'Richiamare'], no: ['Telefono spento', 'No Interesse', 'No Risposta'] },
+};
+ESITI.Nuovo = ESITI.Partner;   // un partner appena iscritto: stessi esiti del Partner
+// i passi dell'Avvio (le fasi di «Appuntamento · Avvio» nell'app, messe nell'ordine del Manuale di Avvio: da confermare con Ignazio)
+const AVVIO = ['Motivazione', 'Lista nomi', 'ListaStart', 'OrdineStart', 'RolePlay', 'Telefonate', 'Inaugurazione'];
+const AVVIO_DETTO = { 'Motivazione': 'il suo perché e un obiettivo con una data', 'Lista nomi': 'la lista, almeno 200 nomi', 'ListaStart': 'la cerchia ristretta, 20-30 persone', 'OrdineStart': 'il primo ordine e l\'ordine ricorrente', 'RolePlay': 'la traccia della telefonata, provata insieme', 'Telefonate': 'le prime telefonate, insieme', 'Inaugurazione': 'il piano in casa' };
+// come si prepara ogni passo, dal Manuale di Avvio (le pagine sono quelle delle batterie del coach e delle carte del Training)
+const AVVIO_PREP = {
+  'Motivazione': ['Le tre domande del manuale: perché hai iniziato, quali obiettivi a un anno, a che velocità vuoi andare.', 'Manuale di Avvio, pagina 28'],
+  'Lista nomi': ['Con il manuale aperto: le categorie per ricordare, almeno 200 nomi con professione, età e cellulare.', 'Manuale di Avvio, pagine 6-7'],
+  'ListaStart': ['Le 20-30 persone della cerchia più vicina: da lì partono le prime telefonate.', 'Manuale di Avvio, pagina 29'],
+  'OrdineStart': ['Energy Program e ordine ricorrente: si parte usando i prodotti in casa.', 'Manuale di Avvio, pagina 28'],
+  'RolePlay': ['La traccia della telefonata: breve, entusiasta, due date pronte, niente informazioni al telefono.', 'Manuale di Avvio, pagina 8'],
+  'Telefonate': ['Le prime telefonate si fanno insieme, con la traccia scritta davanti.', 'Manuale di Avvio, pagina 29'],
+  'Inaugurazione': ['Il piano in casa: si conferma il doppio delle persone, l\'80% è preparazione.', 'Manuale di Avvio, pagine 15 e 29'],
+};
+const NON_PARLATO = ['No Risposta', 'Telefono spento'];   // MB21Coach.SENZA_PAROLE: niente chat
+// «Consulenza Prodotti» al telefono = consulenza fissata (Ignazio 29/09): si apre «Nuovo appuntamento» come per «PM Fissato»;
+// il coach dice come prepararsi, per tipo di consulenza (le obiezioni sui prodotti arrivano dopo la consulenza, non al telefono)
+const CONSULENZA = { tipo: 'Consulenza PRD', etichetta: 'Tipo di consulenza', sottotipi: ['Presentazione', 'Demo', 'Promo/Sconto', 'Riordino'] };
+const CONS_PREP = {
+  'Presentazione': ['Ripassa il prodotto e il marchio che vuoi presentare. Studia la garanzia di soddisfazione e come si diventa cliente registrato.', 'Manuale di Avvio, pagine 18-20 e 24'],   // parole di Ignazio (29/09)
+  'Demo': ['Ripassa il prodotto che farai vedere o provare e il confronto con un competitor, se possibile.', 'Manuale di Avvio, pagina 15 e pagine 25-27'],   // parole di Ignazio (29/09)
+  'Promo/Sconto': ['Guarda la promo del mese e cosa comprende, prima di proporla.', 'Sito Amway, Risorse'],
+  'Riordino': ['Rivedi cosa ha preso l\'ultima volta e prepara un prodotto nuovo da fargli provare.', 'Manuale di Avvio, pagina 5 (creare volume)'],
+};
+// il bottone «PM Fissato» / «Appuntamento» apre «Nuovo appuntamento» già compilato (MB21Agenda.tipoDaCoda)
+const APP_DA_CODA = { Prospect: { tipo: 'Piano Marketing', etichetta: 'Tipo di piano', sottotipi: ['PM 1a1', 'PM Upline', 'PM Casa/Pull', 'PM Open'] },
+  Partner: { tipo: 'Appuntamento', etichetta: 'Tipo di appuntamento', sottotipi: ['Avvio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'] },
+  Cliente: { tipo: 'Consulenza PRD', etichetta: 'Tipo di consulenza', sottotipi: ['Presentazione', 'Demo', 'Promo/Sconto', 'Riordino'] },   // Ignazio 29/09: «Presentazione» al posto di «Assistenza»
+  Nuovo: { tipo: 'Appuntamento', etichetta: 'Tipo di appuntamento', sottotipi: ['Avvio'] } };
+// batterie del coach: la domanda sulle obiezioni e le voci, per categoria (telefonata, telefonata_partner, telefonata_cliente)
+const OB = {
+  Prospect: { domanda: 'Mario ti ha fatto domande, dubbi o obiezioni?', nessuna: 'Nessuna', voci: ['Di cosa si tratta?', 'Non ho tempo', 'È vendita?', 'È network marketing?', 'È Amway?', 'Perché anche il partner?'] },
+  Partner:  { domanda: 'In questo momento c\'è qualcosa che frena Mario?', nessuna: 'Niente', voci: ['Poco tempo', 'Paura di contattare', 'Lista finita', 'Poco entusiasmo', 'Pressioni in famiglia', 'Non ascolta le tracce'] },
+  Cliente:  { domanda: 'Mario ti ha fatto domande, dubbi o obiezioni?', nessuna: 'Nessuna', voci: ['Costa troppo', 'Non ne ho bisogno', 'Compro già altro', 'Voglio provarlo prima', 'Ci devo pensare'] },
+};
+// le carte del Training (percorsi Contattare, I clienti, Aiutare i partner): scena e risposta giusta
+const CARTE = {
+  'Di cosa si tratta?': ['Al telefono un amico ti chiede: «Dimmi almeno due parole: di cosa si tratta?». Cosa fai?', 'Gli dico che voglio spiegarglielo di persona, e propongo due date'],
+  'Non ho tempo': ['«Guarda, non ho tempo.» Cosa rispondi?', '«Ti capisco, siamo tutti molto impegnati: è proprio per questo che ti ho chiamato.» E propongo un caffè'],
+  'È vendita?': ['«Ma si tratta di vendita?»', '«Perché me lo chiedi? Ti interessa un\'attività di vendita?» E ascolto'],
+  'È network marketing?': ['«È network marketing?»', '«Perché me lo chiedi? E che esperienza hai avuto?» E ascolto'],
+  'È Amway?': ['«È Amway? Un mio amico ci ha provato e si è trovato male.»', '«Da quello che mi dici, la penserei come te.» Poi racconto la mia esperienza'],
+  'Perché anche il partner?': ['«Perché dobbiamo venire in due?»', '«Perché tocca la vita della famiglia: è meglio valutarla in due»'],
+  'Poco tempo': ['Una tua prima linea ti dice: «In questo periodo ho poco tempo per l\'attività». Cosa proponi?', 'Di organizzare insieme la sua agenda, con tempi fissi per l\'attività'],
+  'Paura di contattare': ['Ha la lista scritta, ma non telefona: «Ho paura di cosa penseranno». Cosa proponi?', 'Di fare le prime telefonate insieme, con la traccia scritta'],
+  'Lista finita': ['«Ho chiamato tutti, la mia lista è finita». Cosa fate?', 'Ci sediamo e la riscriviamo insieme, con le categorie del manuale'],
+  'Poco entusiasmo': ['È giù di morale: «Non ci credo più come all\'inizio». Cosa proponi?', 'Di venire con me al prossimo incontro di Network 21'],
+  'Pressioni in famiglia': ['«A casa dicono che è una perdita di tempo». Cosa fai?', 'Ne parliamo con il mio upline, e rimettiamo a fuoco il suo perché'],
+  'Non ascolta le tracce': ['Non ascolta le tracce: «Non trovo mai il momento». Cosa proponi?', 'Le condivido una traccia precisa, e ci sentiamo dopo per parlarne'],
+  'Costa troppo': ['Una cliente guarda il listino e dice: «Costa troppo.» Cosa fai?', 'Le mostro un confronto a parità di concentrazione, con un esempio concreto'],
+  'Non ne ho bisogno': ['«Non ne ho bisogno.» Cosa fai?', 'Gli chiedo cosa usa adesso e come si trova, poi ascolto la risposta'],
+  'Compro già altro': ['«Grazie, ma compro già altro, e mi trovo bene.» Cosa fai?', 'Le propongo un confronto con il prodotto che usa, a parità di qualità'],
+  'Voglio provarlo prima': ['«Voglio provarlo prima.»', 'Bene: il manuale consiglia di far provare il prodotto, con la garanzia di soddisfazione'],
+  'Ci devo pensare': ['«Ci devo pensare.» Cosa fai prima di salutare?', 'Fisso subito quando risentirci'],
+};
+const PERCORSO = { Prospect: 'Contattare', Partner: 'Aiutare i partner', Cliente: 'I clienti', Nuovo: 'Avviare un nuovo' };
+OB.Nuovo = OB.Partner;
+// Prospect chiamato per una consulenza prodotti (Ignazio 29/09): le obiezioni sono quelle dei prodotti, non dell'attività
+const incontroFissato = () => ['PM Fissato', 'Appuntamento', 'Consulenza Prodotti'].includes(S.scelte.esito) && !!S.scelte.app;
+const consulenzaFissata = () => S.scelte.esito === 'Consulenza Prodotti' || (S.scelte.esito === 'Appuntamento' && S.cat === 'Cliente');
+// al telefono per i prodotti (Ignazio 29/09: le obiezioni ci sono sia a fissare la consulenza sia dopo): quelle a vedersi, non «costa troppo» che arriva quando li vede
+const OB_TEL_PRODOTTI = { domanda: 'Mario ti ha fatto domande, dubbi o obiezioni?', nessuna: 'Nessuna', voci: ['Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro'] };   // «Ci devo pensare» viene dopo la presentazione (Ignazio 29/09)
+const obDi = () => consulenzaFissata() ? OB_TEL_PRODOTTI : OB[S.cat];
+const percorsoDi = () => { const o = S.scelte.obiezione; return OB.Prospect.voci.includes(o) ? 'Contattare' : OB.Cliente.voci.includes(o) ? 'I clienti' : PERCORSO[S.cat]; };
+// «Cosa farai la prossima volta?»: le frasi delle batterie, per esito (la prima della lista)
+const FRASE = {
+  Prospect: { 'PM Fissato': 'Confermare il piano il giorno prima', 'Richiamare': 'Richiamare Mario nel giorno fissato', 'Consulenza Prodotti': 'Confermare la consulenza il giorno prima' },   // FRASE['Consulenza Prodotti'] anche per il Cliente sotto
+  Partner:  { 'Appuntamento': 'Preparare l\'incontro con i Segni Vitali', 'Richiamare': 'Richiamare Mario nel giorno fissato' },
+  Cliente:  { 'Ordine': 'Chiedere come si trova con i prodotti', 'Appuntamento': 'Confermare la consulenza il giorno prima', 'Richiamare': 'Richiamare Mario nel giorno fissato' },
+};
+// la reazione del coach all'esito (una frase)
+const REAZIONE = {
+  'PM Fissato': 'Bene: Mario viene a vedere il piano. È il passo che conta.',
+  'Richiamare': 'Va bene così: un richiamo fissato è una porta lasciata aperta.',
+  'Appuntamento': 'Bene: vi vedete. Con Mario l\'incontro vale più di dieci telefonate.',
+  'Ordine': 'Un ordine: Mario si fida dei prodotti. I VP Clienti partono da qui.',
+  'Consulenza Prodotti': 'Bene: la consulenza è la porta dei prodotti.',
+};
+// dopo questi esiti niente chat: una riga sola del coach
+const RIGA_SOLA = {
+  'Relazione': 'Segnato: Mario rientra in coda fra 20 giorni. Coltiva il rapporto, senza forzare.',
+  'No Interesse': 'Capita. Il manuale dice: chiama subito il nome dopo.',
+};
+// tentativi a vuoto di fila (proposta, Ignazio 29/09: «risulta spento per due volte di fila»): al 2° Telefono spento o al 3° No Risposta il coach propone un altro canale
+const SOGLIA_VUOTI = { 'Telefono spento': 2, 'No Risposta': 3 };
+const VUOTO_TESTO = { 'Telefono spento': n => `Il telefono di Mario risulta spento per ${n === 2 ? 'due' : n} volte di fila: cerca un altro canale.`, 'No Risposta': n => `Mario non risponde per ${n === 3 ? 'tre' : n} volte di fila: cerca un altro canale.` };
+const CANALI = [['Messaggio', 'Messaggio'], ['Presenza', 'Di persona'], ['chiedo', 'Chiedo a chi me l\'ha dato'], ['parte', 'Lo metto da parte']];
+const RIENTRO = { 'Relazione': 20, 'No Interesse': 365, 'Consulenza Prodotti': 3, 'Ordine': 90, 'No Risposta': 2, 'Telefono spento': 7 };
+const ULTIMA = { Prospect: 'Non ho tempo', Partner: 'Poco tempo', Cliente: 'Ci devo pensare', Nuovo: 'Poco tempo' };
+FRASE.Nuovo = FRASE.Partner;   // «già sentito»: cosa diceva l'altra volta
+const DA = { coda: ['Coda di oggi', 'Dashboard'], scheda: ['Scheda di Mario', 'Lista Nomi → Azioni'], plan: ['MB Plan', 'Il giorno · Telefonata'] };
+
+const OGGI = {
+  1: ['Oggi la domanda è «Com\'è andata?» dappertutto, anche quando l\'incontro è ancora da fissare (Ignazio 29/09: «non ha senso»). Gli stessi bottoni in coda, scheda e MB Plan, i buoni sopra e i non andati sotto.', 'La domanda dice di cosa parla: «Com\'è andata la telefonata?» qui, «Com\'è andato l\'incontro?» dopo l\'appuntamento. Gli esiti restano questi: danno le statistiche del Report.'],
+  2: ['Oggi dalla coda va così; dalla scheda e da MB Plan invece si apre «Fissa il prossimo appuntamento», che propone un\'altra telefonata.', 'Lo stesso foglio da qualunque punto: «Nuovo appuntamento» già compilato, «Richiamare» col giorno, «Quando risentirlo?». E «Consulenza Prodotti» fissa la consulenza come «PM Fissato» fissa il piano (oggi non crea niente: Mario torna in coda fra 3 giorni).'],
+  3: ['Oggi la chat fa sempre 5 domande uguali: reazione, obiezioni, «tu cosa hai risposto?» con la risposta spiegata, «Cosa farai la prossima volta?», la chiusura. E non ricorda le volte prima.', 'Il coach registra e indirizza, non insegna: un tocco sull\'obiezione; se l\'incontro è fissato l\'hai superata (e ti ricorda la risposta del manuale per quando vi vedete), se invece devi richiamare «L\'hai gestita?» e se serve la carta del Training. La volta dopo parte da quello che sa. Dopo Relazione e No Interesse una riga sola, niente chat. Al 2° Telefono spento (o 3° No Risposta) di fila propone un altro canale, a un tocco.'],
+  4: ['Oggi il promemoria «Ti eri detto…» c\'è già in coda, MB Plan e scheda, con le obiezioni di quella volta.', 'Il coach della volta dopo parte da qui: per questo non si ripete.'],
+};
+
+const OGGI_NUOVO = {
+  1: OGGI[1],
+  2: ['Oggi «Nuovo appuntamento» chiede solo il tipo (Avvio); su cosa si lavora lo scegli alla chiusura, e una cosa sola.', 'Si sceglie prima, e più d\'una: in un incontro si lavora su più fronti (Ignazio 29/09). I passi sono le fasi dell\'Avvio che l\'app ha già.'],
+  3: ['Oggi dopo la telefonata a un partner si apre la chat dei freni, con la stessa forma del Prospect.', 'Una riga sola: cosa farete, e come si prepara dal Manuale di Avvio. Niente Segni Vitali: un nuovo non li ha ancora (Ignazio 29/09). I freni, semmai, dopo l\'incontro.'],
+  4: ['Oggi l\'appuntamento sta in MB Plan e basta.', 'In più la scaletta dell\'Avvio di Mario: fatto · in programma · da fare. Un nuovo sponsor vede da solo che con un partner si lavora a tappe.'],
+  5: ['Oggi l\'incontro si chiude con un esito solo, una fase.', 'Si spuntano tutti i passi fatti (più d\'uno). Nell\'app vuol dire salvare una riga per passo, così il Report li conta tutti.'],
+  6: ['Oggi il coach chiede i freni.', 'Il coach conta i passi («Fatti 2 su 7») e propone il passo dopo, già pronto nel prossimo appuntamento.'],
+};
+// ── il registro dei tocchi (capacità db dell'artefatto): Claude lo legge da Code per vedere i passi fatti e dove ci si blocca ──
+const REG = { db: null, giro: null, coda: Promise.resolve(), pronto: false };
+const adesso = () => new Date().toISOString();
+function nuovoGiro() {
+  REG.giro = { id: 'g' + Date.now().toString(36), inizio: adesso(), cat: S.cat, volta: S.volta, da: S.da, tocchi: [], blocchi: [], ultimo: adesso() };
+}
+function scriviGiro() {
+  if (!REG.db || !REG.giro) return;
+  const g = REG.giro, corpo = { ...g, tocchi: g.tocchi.slice(-150), ultimo: adesso() };
+  REG.coda = REG.coda.then(() => REG.db.collection('registro').doc(g.id).set(corpo)).catch(e => { stato(`Registro: non riesco a scrivere (${e && e.code || 'errore'})`); });
+}
+function registra(tocco, testo) {
+  if (!REG.giro) nuovoGiro();
+  REG.giro.tocchi.push({ t: adesso(), passo: S.passo, sotto: S.sotto || null, tocco, testo: String(testo || '').replace(/\s+/g, ' ').trim().slice(0, 80) });
+  if (REG.giro.tocchi.length > 150) { scriviGiro(); nuovoGiro(); }
+  scriviGiro();
+}
+function schermoTesto() {
+  const s = $('schermo');
+  return [...s.querySelectorAll('.domanda, .bolla, .card, .foglio h3, .foglio p, .conto, .dove')].map(x => x.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 12).join(' | ')
+    + ' || bottoni: ' + [...s.querySelectorAll('[data-v], .chip')].map(b => b.textContent.replace(/\s+/g, ' ').trim()).join(' · ');
+}
+function stato(t) { $('registro-stato').textContent = t; }
+async function avviaRegistro() {
+  try { REG.db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { REG.db = null; }
+  if (!REG.db) { stato('I tocchi non si registrano qui (apri la pagina da claude.ai).'); return; }
+  REG.pronto = true; $('blocco').hidden = false;
+  stato('I tocchi si registrano: Claude li può leggere. Se ti blocchi, tocca «Mi blocco qui».');
+  if (!REG.giro) nuovoGiro();
+  scriviGiro();
+}
+// ── la mappa: per ogni categoria, ogni esito sui 4 passi (stessa cosa del telefono, tutta in una pagina) ──
+const MAPPA = {
+  Prospect: [
+    ['PM Fissato', 'Nuovo appuntamento · piano, giorno e ora', 'una riga', 'sì, dell\'attività · fissato = superata', 'il piano in MB Plan'],
+    ['Consulenza Prodotti', 'Nuovo appuntamento · consulenza, tipo, giorno e ora', 'una riga: come prepararti, per tipo', 'sì, «a vedersi» sui prodotti · fissata = superata', 'la consulenza in MB Plan'],
+    ['Richiamare', 'il giorno', 'una riga', 'sì, dell\'attività · «l\'hai gestita?» → carta', 'in coda quel giorno'],
+    ['Relazione', 'quando risentirlo (20 giorni)', 'una riga', 'no', 'in coda fra 20 giorni'],
+    ['No Interesse', 'quando risentirlo (un anno)', 'una riga', 'no', 'in coda fra un anno'],
+    ['No Risposta', 'niente', 'niente', 'no', 'in coda fra 2 giorni'],
+    ['Telefono spento', 'niente', 'niente', 'no', 'in coda fra 7 giorni'],
+  ],
+  Nuovo: [
+    ['Appuntamento', 'Nuovo appuntamento · Avvio, su cosa lavorate (anche più passi), giorno e ora', 'una riga: come preparare ogni passo, dal Manuale', 'no', 'l\'incontro in MB Plan + la scaletta dell\'Avvio'],
+    ['↳ L\'incontro', '«Com\'è andato l\'incontro?»: spunti i passi fatti (anche più d\'uno) · Fatto / Rimandato / No Show', 'conta i passi («Fatti 3 su 7») e propone il passo dopo', 'no', 'il prossimo appuntamento col passo dopo già scelto'],
+    ['Richiamare', 'il giorno', 'una riga', 'no', 'in coda quel giorno'],
+    ['No Risposta', 'niente', 'niente', 'no', 'in coda fra 2 giorni'],
+    ['Telefono spento', 'niente', 'niente', 'no', 'in coda fra 7 giorni'],
+  ],
+  Partner: [
+    ['Appuntamento', 'Nuovo appuntamento · tipo (Avvio, Counseling, Lista/Contatti, Meeting/Evento, Ordine), giorno e ora', 'una riga', 'i freni · fissato = superato', 'l\'appuntamento in MB Plan'],
+    ['Richiamare', 'il giorno', 'una riga', 'i freni · «l\'hai gestito?» → carta', 'in coda quel giorno'],
+    ['No Risposta', 'niente', 'niente', 'no', 'in coda fra 2 giorni'],
+    ['Telefono spento', 'niente', 'niente', 'no', 'in coda fra 7 giorni'],
+  ],
+  Cliente: [
+    ['Ordine', '«Vendita! La registri adesso?»', 'una riga', 'no', 'il riordino fra 90 giorni in MB Plan (o in coda fra 90 giorni)'],
+    ['Appuntamento', 'Nuovo appuntamento · consulenza, tipo, giorno e ora', 'una riga: come prepararti, per tipo', 'sì, «a vedersi» sui prodotti · fissata = superata', 'la consulenza in MB Plan'],
+    ['Richiamare', 'il giorno', 'una riga', 'sì, «a vedersi» sui prodotti · «l\'hai gestita?» → carta', 'in coda quel giorno'],
+    ['No Interesse', 'quando risentirlo (un anno)', 'una riga', 'no', 'in coda fra un anno'],
+    ['No Risposta', 'niente', 'niente', 'no', 'in coda fra 2 giorni'],
+    ['Telefono spento', 'niente', 'niente', 'no', 'in coda fra 7 giorni'],
+  ],
+};
+const NOME_CAT = { Prospect: 'Prospect', Nuovo: 'Partner nuovo (Avvio)', Partner: 'Partner', Cliente: 'Cliente' };
+function disegnaMappa() {
+  const righe = MAPPA[S.cat] || [];
+  $('mappa-titolo').textContent = `${NOME_CAT[S.cat]}: ${righe.length} righe, sempre gli stessi 4 passi. La riga accesa è quella che stai provando.`;
+  $('mappa-righe').innerHTML = righe.map(r => {
+    const incontro = r[0].startsWith('↳');
+    const qui = incontro ? S.passo >= 5 : (S.scelte.esito === r[0] && S.passo < 5);
+    return `<tr class="${qui ? 'qui' : incontro ? 'incontro' : ''}">${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`;
+  }).join('');
+}
+// ── stato ──
+const S = { cat: 'Prospect', volta: 'prima', da: 'coda', passo: 1, storia: [], scelte: {}, sotto: null, provati: {}, fatti: [] };
+const nuovo = () => S.cat === 'Nuovo';
+try { S.provati = JSON.parse(localStorage.getItem('mb21-flusso-provati') || '{}') || {}; } catch (e) { S.provati = {}; }
+const chiaveProva = () => `${S.cat}-${S.volta}`;
+const provatiQui = () => S.provati[chiaveProva()] || [];
+function segnaProvato(es) { const k = chiaveProva(), l = S.provati[k] || []; if (!l.includes(es)) { l.push(es); S.provati[k] = l; } try { localStorage.setItem('mb21-flusso-provati', JSON.stringify(S.provati)); } catch (e) {} }
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const tra = n => n === 365 ? 'un anno' : `${n} giorni`;
+function dataBreve(iso) { return new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }); }
+function isoFra(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function chips(id, voci, attuale, su) {
+  $(id).innerHTML = voci.map(([k, t]) => `<button class="chip${k === attuale ? ' on' : ''}" data-k="${esc(k)}">${esc(t)}</button>`).join('');
+  $(id).querySelectorAll('.chip').forEach(b => b.onclick = () => su(b.dataset.k));
+}
+function impostazioni() {
+  chips('imp-cat', [['Prospect', 'Prospect'], ['Nuovo', 'Partner nuovo (Avvio)'], ['Partner', 'Partner'], ['Cliente', 'Cliente']], S.cat, k => { S.cat = k; S.fatti = []; ricomincia(); });
+  chips('imp-volta', [['prima', 'Mai contattato'], ['dopo', 'Già sentito']], S.volta, k => { S.volta = k; ricomincia(); });
+  $('imp-volta').parentElement.hidden = nuovo();
+  chips('imp-da', [['coda', 'Coda'], ['scheda', 'Scheda'], ['plan', 'MB Plan']], S.da, k => { S.da = k; ricomincia(); });
+}
+function ricomincia() { S.passo = 1; S.storia = []; S.scelte = {}; S.sotto = null; impostazioni(); nuovoGiro(); scriviGiro(); disegna(); }
+function vai(passo, scelta) { if (scelta) S.storia.push(scelta); S.passo = passo; S.sotto = null; disegna(); }
+const ultima = () => S.scelte.obiezionePrec || (consulenzaFissata() ? 'Non ne ho bisogno' : ULTIMA[S.cat]);
+const fraseDi = es => (FRASE[S.cat] || {})[es] || null;
+
+// ── i quattro passi ──
+function cardMario(esito) {
+  // la riga della coda, come in Dashboard: «Telefonata • Attività | ultimo esito» (o «Mai contattato o 2+ anni»)
+  const stato = esito ? `<span class="esito-badge">${esc(esito)}</span>` : (S.scelte.vuotoPrec ? `${esc(S.scelte.vuotoPrec)} (${S.scelte.vuoti} ${S.scelte.vuoti === 1 ? 'volta' : 'volte'})` : S.volta === 'dopo' ? 'Richiamare' : 'Mai contattato o 2+ anni');
+  // un partner appena iscritto: l'ultima azione è il piano con «Iscrizione» (poi l'Avvio con l'ultimo passo fatto)
+  const rigaNuovo = esito || S.scelte.vuotoPrec ? `Telefonata • Attività | ${stato}` : S.fatti.length ? `Avvio • Attività | ${esc(S.fatti[S.fatti.length - 1])}` : 'PM 1a1 • Attività | Iscrizione';
+  return `<div class="card contatto"><div class="nome">Mario Rossi</div><div class="riga">${nuovo() ? 'Partner · iscritto da 10 giorni' : S.cat}</div><div class="riga">${nuovo() ? rigaNuovo : `Telefonata • Attività | ${stato}`}</div></div>`;
+}
+function passo1() {
+  const e = ESITI[S.cat];
+  const ricordo = S.volta === 'dopo' && !S.scelte.vuotoPrec && !nuovo() ? `<div class="ricordo"><small>L'ultima volta con Mario: ${esc(ultima())}</small>Ti eri detto: <b>«${esc(S.scelte.frasePrec || fraseDi('Richiamare'))}»</b></div>` : '';
+  const pr = provatiQui(), tutti = [...e.buoni, ...e.no];
+  const spunta = x => pr.includes(x) ? '<span class="provato">✓ provato</span>' : '';
+  return `${cardMario()}${ricordo}
+    <p class="domanda">Com'è andata la telefonata?</p>
+    <div class="bott">${e.buoni.map(x => `<button class="b" data-v="${esc(x)}">${esc(x)}${spunta(x)}</button>`).join('')}</div>
+    <div class="bott riga2">${e.no.map(x => `<button class="b no" data-v="${esc(x)}">${esc(x)}${spunta(x)}</button>`).join('')}</div>
+    <p class="conto">${nuovo() ? 'Partner nuovo · appena iscritto' : `${S.cat} · ${S.volta === 'dopo' ? 'già sentito' : 'mai contattato'}`}: provati ${pr.filter(x => tutti.includes(x)).length} esiti su ${tutti.length}${pr.length ? ' · <button class="b link" data-v="azzera" style="padding:0;font-size:13px">azzera le spunte</button>' : ''}</p>`;
+}
+function passo2() {
+  const es = S.scelte.esito, testa = cardMario(es);
+  if (es === 'Appuntamento' && nuovo()) {
+    const pre = S.scelte.preset || [];
+    return `${testa}<div class="foglio"><h3>Nuovo appuntamento</h3><p>Mario Rossi · Appuntamento</p>
+      <div class="campo"><label>Tipo di appuntamento</label><div class="chips" id="f-tipo"><button class="chip on" data-k="Avvio">Avvio</button></div></div>
+      <div class="campo"><label>Su cosa lavorate? (anche più d'uno)</label><div class="chips" id="f-passi">${AVVIO.map(p => S.fatti.includes(p) ? `<button class="chip fatto" disabled>✓ ${esc(p)}</button>` : `<button class="chip${pre.includes(p) ? ' on' : ''}" data-k="${esc(p)}">${esc(p)}</button>`).join('')}</div><div class="errore" id="f-errore"></div></div>
+      <div class="campo"><label>Giorno e ora</label><div class="chips" style="gap:8px"><input type="date" id="f-data" value="${isoFra(1)}"><input type="time" id="f-ora" value="18:30"></div></div>
+      <div class="due"><button class="b link" data-v="annulla">Annulla</button><button class="b primario" data-v="salva">Salva</button></div></div>`;
+  }
+  if (es === 'PM Fissato' || es === 'Appuntamento' || es === 'Consulenza Prodotti') {
+    const a = consulenzaFissata() ? CONSULENZA : APP_DA_CODA[S.cat];
+    return `${testa}<div class="foglio"><h3>Nuovo appuntamento</h3><p>Mario Rossi · ${esc(a.tipo)}</p>
+      <div class="campo"><label>${esc(a.etichetta)}</label><div class="chips" id="f-tipo">${a.sottotipi.map((t, i) => `<button class="chip${i === 0 ? ' on' : ''}" data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+      <div class="campo"><label>Giorno e ora</label><div class="chips" style="gap:8px"><input type="date" id="f-data" value="${isoFra(1)}"><input type="time" id="f-ora" value="18:30"></div></div>
+      <div class="due"><button class="b link" data-v="annulla">Annulla</button><button class="b primario" data-v="salva">Salva</button></div></div>`;
+  }
+  if (es === 'Richiamare') return `${testa}<div class="foglio"><h3>Richiamare</h3><p>Mario Rossi</p>
+      <input type="date" id="f-data" value="${isoFra(1)}">
+      <div class="due"><button class="b link" data-v="annulla">Annulla</button><button class="b primario" data-v="conferma">Conferma</button></div></div>`;
+  if (es === 'Relazione' || es === 'No Interesse') return `${testa}<div class="foglio"><h3>Quando risentirlo?</h3><p>Mario Rossi<br>${esc(es)}: rientra in coda tra ${tra(RIENTRO[es])}, o quando vuoi tu</p>
+      <input type="date" id="f-data" value="${isoFra(RIENTRO[es])}">
+      <div class="due"><button class="b link" data-v="annulla">Annulla</button><button class="b primario" data-v="conferma">Conferma</button></div></div>`;
+  if (es === 'Ordine') return `${testa}<div class="foglio"><h3>Vendita! La registri adesso?</h3><p>I VP Clienti contano solo dalle vendite registrate. Dalla vendita nasce anche la telefonata di riordino.</p>
+      <div class="due"><button class="b link" data-v="no-vendita">Annulla</button><button class="b primario" data-v="vendita">Registra la vendita</button></div></div>`;
+  return `${testa}<div class="bott"><button class="b primario" data-v="avanti">Avanti</button></div>`;
+}
+function passo3() {
+  const es = S.scelte.esito, O = obDi();
+  let sotto = S.sotto || 'inizio';
+  const chat = [];
+  let bottoni = '';
+  const fum = (t, mio, fonte) => chat.push(`<div class="fum${mio ? ' mio' : ''}">${mio ? '' : '<span class="av">MB</span>'}<div class="bolla">${esc(t)}${fonte ? `<span class="fonte">✓ ${esc(fonte)}</span>` : ''}</div></div>`);
+  const testa = `<div class="card contatto"><div class="riga">Coach · Telefonata · ${esc(es)}</div><div class="nome">Mario Rossi</div></div>`;
+  if (sotto === 'canale' || sotto === 'parte') {
+    fum(VUOTO_TESTO[es](S.scelte.vuotiOra));
+    if (sotto === 'parte') {
+      fum('Lo metto da parte', true);
+      bottoni = `<div class="foglio"><h3>Quando risentirlo?</h3><p>Mario Rossi<br>rientra in coda tra 20 giorni, o quando vuoi tu</p><input type="date" id="f-data" value="${isoFra(20)}"><div class="due"><button class="b link" data-v="c:annulla">Annulla</button><button class="b primario" data-v="c:conferma">Conferma</button></div></div>`;
+    } else bottoni = `<div class="bott">${CANALI.map(([k, t]) => `<button class="b${k === 'Messaggio' ? ' primario' : ''}" data-v="c:${k}">${esc(t)}</button>`).join('')}</div>`;
+    return `${testa}<div class="chat">${chat.join('')}</div>${bottoni}`;
+  }
+  if (nuovo()) {
+    if (es === 'Appuntamento' && S.scelte.app) {
+      const passi = S.scelte.app.passi;
+      fum(`${S.scelte.app.quando} con Mario: ${passi.join(', ')}.${passi.length === 1 ? ' Se poi fate anche altro, lo spunti all\'incontro.' : ''}`);
+      for (const p of passi) fum(`${p}: ${AVVIO_PREP[p][0]}`, false, AVVIO_PREP[p][1]);
+      if (sotto === 'training') bottoni = `<div class="carta-tr"><small>Training · Avviare un nuovo</small><div class="scena">Le carte su ${esc(passi.join(' e '))}: le ripassi prima dell'incontro.</div></div><div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`;
+      else bottoni = `<div class="bott"><button class="b" data-v="training">Ripassa nel Training</button><button class="b primario" data-v="chiudi">Chiudi</button></div>`;
+    } else if (es === 'Appuntamento') { fum('Va bene: quando fissate l\'incontro, Mario resta in coda.'); bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`; }
+    else { fum(`Segnato: lo richiami ${S.scelte.quando || 'domani'}.`); bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`; }
+    return `${testa}<div class="chat">${chat.join('')}</div>${bottoni}`;
+  }
+  if (RIGA_SOLA[es]) {
+    fum(RIGA_SOLA[es]);
+    return `${testa}<div class="chat">${chat.join('')}</div><div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`;
+  }
+  if (consulenzaFissata() && S.scelte.app) {   // consulenza fissata: prima come prepararla, poi le obiezioni a vedersi (come per il piano)
+    const t = S.scelte.app.tipo;
+    fum(`${S.scelte.app.quando}: consulenza con Mario, ${t}.`);
+    fum(CONS_PREP[t][0], false, CONS_PREP[t][1]);
+  } else fum(REAZIONE[es]);
+  const ob = S.scelte.obiezione;
+  const senzaOb = es === 'Ordine';   // l'ordine è preso: nessuna obiezione da chiedere
+  const fissato = incontroFissato();   // Ignazio 29/09: se l'incontro è fissato l'obiezione l'hai superata; la carta serve solo quando non l'hai fissato (Richiamare)
+  if (senzaOb && sotto === 'inizio') sotto = 'frase';
+  const domandaPrec = () => fum(`L'altra volta Mario diceva «${ultima()}»: è tornato fuori?`);
+  if (sotto === 'inizio') {
+    if (S.volta === 'dopo') {
+      domandaPrec();
+      bottoni = `<div class="bott"><button class="b" data-v="ob:${esc(ultima())}">Sì</button><button class="b" data-v="ob:no">No</button><button class="b" data-v="ob:altra">Un'altra</button></div>`;
+    } else {
+      fum(O.domanda);
+      bottoni = `<div class="bott"><button class="b" data-v="ob:no">${esc(O.nessuna)}</button>${O.voci.map(o => `<button class="b" data-v="ob:${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+    }
+  } else if (sotto === 'altra') {
+    domandaPrec(); fum('Un\'altra', true); fum('Quale?');
+    bottoni = `<div class="bott">${O.voci.filter(o => o !== ultima()).map(o => `<button class="b" data-v="ob:${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+  } else if (sotto === 'superata') {
+    if (S.volta === 'dopo') { domandaPrec(); fum(ob === ultima() ? 'Sì' : ob, true); } else { fum(O.domanda); fum(ob, true); }
+    fum(`Bene: l'hai superata, ${es === 'PM Fissato' ? 'il piano' : es === 'Appuntamento' && S.cat !== 'Cliente' ? 'l\'incontro' : 'la consulenza'} è ${es === 'PM Fissato' ? 'fissato' : es === 'Appuntamento' && S.cat !== 'Cliente' ? 'fissato' : 'fissata'}.`);
+    if (CARTE[ob]) fum(`Se torna fuori quando vi vedete, la risposta del manuale è: ${CARTE[ob][1]}.`, false, `Training · ${percorsoDi()}`);
+    bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`;
+  } else if (sotto === 'gestita?') {
+    if (S.volta === 'dopo') { domandaPrec(); fum(ob === ultima() ? 'Sì' : ob, true); } else { fum(O.domanda); fum(ob, true); }
+    fum('L\'hai gestita?');
+    bottoni = `<div class="bott"><button class="b" data-v="g:si">Sì</button><button class="b" data-v="g:no">No</button></div>`;
+  } else if (sotto === 'carta') {
+    fum('L\'hai gestita?'); fum('No', true);
+    fum(`Succede. Nel Training c'è la carta «${ob}», nel percorso «${percorsoDi()}»: ripassala prima di richiamarlo.`, false, 'Carte del Training, dal Manuale di Avvio');
+    const c = CARTE[ob] || ['', ''];
+    bottoni = `<div class="carta-tr"><small>Carta · ${esc(ob)}</small><div class="scena">${esc(c[0])}</div><div class="giusta"><b>Risposta del manuale:</b> ${esc(c[1])}</div></div>
+      <div class="bott"><button class="b primario" data-v="avanti">Ho capito, avanti</button></div>`;
+  } else if (sotto === 'frase') {
+    if (senzaOb) {}
+    else if (ob && ob !== 'no') { fum('L\'hai gestita?'); fum(S.scelte.gestita ? 'Sì' : 'No', true); fum(S.scelte.gestita ? 'Bene.' : 'La ripassi prima di richiamarlo.'); }
+    else if (S.volta === 'dopo') { domandaPrec(); fum('No', true); fum('Bene: superata.'); }
+    else { fum(O.domanda); fum(O.nessuna, true); fum('Bene, avanti.'); }
+    const f = fissato ? null : fraseDi(es);   // con l'incontro fissato la prossima volta è l'incontro: niente frase da chiedere
+    if (fissato) { fum(`Bene: ci vediamo ${S.scelte.app.quando}.`); bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`; }
+    else if (!f) { fum('Segnato.'); bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`; }
+    else {
+      fum('Cosa farai la prossima volta?');
+      bottoni = `<div class="bott"><button class="b primario" data-v="f:${esc(f)}">${esc(f)}</button><button class="b" data-v="scrivo">Scrivo io…</button></div>`;
+    }
+  } else if (sotto === 'scrivo') {
+    fum('Cosa farai la prossima volta?');
+    bottoni = `<div class="foglio"><input type="text" id="f-frase" maxlength="300" placeholder="Scrivi o detta la tua frase"><div class="due"><span></span><button class="b primario" data-v="invia">Invia</button></div></div>`;
+  } else if (sotto === 'fine') {
+    fum('Cosa farai la prossima volta?'); fum(S.scelte.frase, true);
+    fum('Ottima scelta. Te lo ricordo la prossima volta che vedi Mario.');
+    bottoni = `<div class="bott"><button class="b primario" data-v="chiudi">Chiudi</button></div>`;
+  }
+  return `${testa}<div class="chat">${chat.join('')}</div>${bottoni}`;
+}
+function passo4() {
+  const es = S.scelte.esito, r = S.scelte;
+  let dove = '';
+  if (es === 'PM Fissato' || es === 'Appuntamento' || es === 'Consulenza Prodotti') dove = r.app ? `<div class="dove verde"><small>In MB Plan</small><b>${esc(consulenzaFissata() ? 'Consulenza PRD' : APP_DA_CODA[S.cat].tipo)} · ${esc(r.app.tipo)} · ${esc(r.app.quando)}</b><span>${consulenzaFissata() ? 'Alla consulenza: «Vendita / No Vendita», e lì le obiezioni sui prodotti visti' : 'Quel giorno: «È avvenuto?» e poi «Com\'è andata?»'}</span></div>` : `<div class="dove"><small>In coda</small><b>Domani</b><span>Hai annullato il foglio: Mario resta in coda</span></div>`;
+  else if (es === 'Richiamare') dove = r.quando ? `<div class="dove verde"><small>In coda</small><b>${esc(r.quando)}</b><span>Il giorno scelto Mario torna in cima alla coda</span></div>` : `<div class="dove"><small>In coda</small><b>Domani</b><span>Hai annullato il foglio: Mario resta in coda</span></div>`;
+  else if (es === 'Ordine') dove = r.vendita ? `<div class="dove verde"><small>Vendita registrata</small><b>Riordino fra 90 giorni, in MB Plan</b><span>I VP Clienti contano da qui</span></div>` : `<div class="dove"><small>In coda</small><b>Fra 90 giorni</b><span>La vendita puoi registrarla dalla scheda, sezione Vendite</span></div>`;
+  else if (NON_PARLATO.includes(es) && r.canale) {
+    if (r.canale === 'parte') dove = `<div class="dove"><small>In coda</small><b>${esc(r.quando)}</b><span>Messo da parte: fino ad allora non lo richiami</span></div>`;
+    else if (r.canale === 'chiedo') dove = `<div class="dove verde"><small>Cosa da fare, in MB Plan</small><b>Chiedere di Mario a chi ti ha dato il nome</b><span>Domani, nel foglio del giorno</span></div>`;
+    else dove = `<div class="dove verde"><small>In MB Plan</small><b>Contatto · ${esc(r.canale)} · domani</b><span>Come «Nuovo appuntamento», con Mario e il canale già scelti</span></div>`;
+  }
+  else if (NON_PARLATO.includes(es)) dove = `<div class="dove"><small>In coda</small><b>Fra ${RIENTRO[es]} giorni</b><span>${esc(es)}: nessun foglio, nessuna chat${S.scelte.vuotiOra > 1 ? ` · ${S.scelte.vuotiOra}ª volta di fila` : ''}${S.scelte.vuotiOra === SOGLIA_VUOTI[es] - 1 ? ' · alla prossima il coach propone un altro canale' : ''}</span></div>`;
+  else dove = `<div class="dove"><small>In coda</small><b>${esc(r.quando || 'Fra ' + tra(RIENTRO[es]))}</b><span>${esc(es)}</span></div>`;
+  if (nuovo()) {
+    const prog = r.app ? r.app.passi : [];
+    const scaletta = `<div class="scaletta"><small>L'Avvio di Mario · fatti ${S.fatti.length} su ${AVVIO.length}</small>${AVVIO.map(p => S.fatti.includes(p) ? `<div class="p fatto"><i>✓</i>${esc(p)}</div>` : prog.includes(p) ? `<div class="p prog"><i>●</i>${esc(p)} · in programma</div>` : `<div class="p dafare"><i>○</i>${esc(p)}</div>`).join('')}</div>`;
+    if (r.app) dove = `<div class="dove verde"><small>In MB Plan</small><b>Appuntamento · Avvio · ${esc(r.app.quando)}</b><span>${esc(r.app.passi.join(', '))}</span></div>`;
+    return `<p class="domanda">Dove ritrovi Mario</p><div class="fine">${dove}${scaletta}</div>
+      <div class="bott">${r.app ? '<button class="b primario" data-v="incontro">Vai all\'incontro</button>' : ''}<button class="b${r.app ? '' : ' primario'}" data-v="ricomincia">Prova un altro esito</button><button class="b" data-v="rifai">Richiamalo la volta dopo</button></div>`;
+  }
+  const ob = r.obiezione && r.obiezione !== 'no' ? r.obiezione : null;
+  const ricordo = (ob || r.frase) ? `<div class="ricordo">${ob ? `<small>L'ultima volta con Mario: ${esc(ob)}${r.gestita === false ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}<small style="margin-top:4px">Il coach della volta dopo parte da qui.</small></div>` : `<div class="ricordo" style="opacity:.8">Niente da ricordare: la volta dopo il coach parte da zero.</div>`;
+  segnaProvato(es);
+  return `<p class="domanda">Dove ritrovi Mario</p><div class="fine">${dove}${ricordo}</div>
+    <div class="bott"><button class="b primario" data-v="ricomincia">Prova un altro esito</button><button class="b" data-v="rifai">Richiamalo la volta dopo</button></div>`;
+}
+
+function passo5() {
+  const a = S.scelte.app, sel = S.scelte.selIncontro || a.passi;
+  return `<div class="card contatto"><div class="nome">Mario Rossi</div><div class="riga">Appuntamento · Avvio · ${esc(a.quando)}</div></div>
+    <p class="domanda">Com'è andato l'incontro?</p><p class="conto">Spunta tutto quello che avete fatto (anche più d'uno)</p>
+    <div class="chips" id="f-passi">${AVVIO.map(p => S.fatti.includes(p) ? `<button class="chip fatto" disabled>✓ ${esc(p)}</button>` : `<button class="chip${sel.includes(p) ? ' on' : ''}" data-k="${esc(p)}">${esc(p)}</button>`).join('')}</div><div class="errore" id="f-errore"></div>
+    <div class="bott riga2"><button class="b no" data-v="noshow">No Show</button><button class="b" data-v="rimandato">Rimandato</button><button class="b primario" data-v="fatto">Fatto</button></div>`;
+}
+function passo6() {
+  const fatti = S.scelte.fattiOra || [], n = S.fatti.length, dopo = AVVIO.find(p => !S.fatti.includes(p));
+  const chat = [];
+  const fum = t => chat.push(`<div class="fum"><span class="av">MB</span><div class="bolla">${esc(t)}</div></div>`);
+  if (S.scelte.esitoIncontro === 'Fatto') {
+    fum(`Fatti ${n} su ${AVVIO.length} passi dell'Avvio con Mario${fatti.length ? `: oggi ${fatti.join(', ')}` : ''}.`);
+    if (dopo) fum(`Il passo dopo è ${dopo}: ${AVVIO_DETTO[dopo]}.`); else fum('Avvio completo: Mario è partito. Da qui, il counseling ogni mese.');
+  } else fum(`${S.scelte.esitoIncontro}: capita. L'importante è rifissare subito.`);
+  return `<div class="card contatto"><div class="riga">Coach · Appuntamento · Avvio</div><div class="nome">Mario Rossi</div></div><div class="chat">${chat.join('')}</div>
+    <div class="bott"><button class="b primario" data-v="prossimo">Fissa il prossimo appuntamento</button><button class="b" data-v="chiudi">Chiudi</button></div>`;
+}
+// ── i tocchi ──
+function tocco(v) {
+  const p = S.passo;
+  if (p === 1) {
+    if (v === 'azzera') { delete S.provati[chiaveProva()]; try { localStorage.setItem('mb21-flusso-provati', JSON.stringify(S.provati)); } catch (e) {} return disegna(); }
+    S.scelte.esito = v;
+    if (NON_PARLATO.includes(v)) {
+      const n = (S.scelte.vuotoPrec === v ? S.scelte.vuoti : 0) + 1;
+      S.scelte.vuotiOra = n;
+      if (n >= SOGLIA_VUOTI[v]) { S.storia.push(['La telefonata', `${v} (${n}ª volta di fila)`]); S.passo = 3; S.sotto = 'canale'; return disegna(); }
+      return vai(4, ['La telefonata', v]);
+    }
+    return vai(2, ['La telefonata', v]);
+  }
+  if (p === 2) {
+    const es = S.scelte.esito;
+    if (v === 'salva') {
+      const tipo = document.querySelector('#f-tipo .chip.on').dataset.k, quando = `${dataBreve($('f-data').value)} ore ${$('f-ora').value}`;
+      if (nuovo()) {
+        const passi = [...document.querySelectorAll('#f-passi .chip.on')].map(b => b.dataset.k);
+        if (!passi.length) { $('f-errore').textContent = 'Scegli almeno un passo su cui lavorare.'; return; }
+        S.scelte.app = { tipo, quando, passi }; S.scelte.preset = null; return vai(3, ['Nuovo appuntamento', `Avvio · ${quando} · ${passi.join(', ')}`]);
+      }
+      S.scelte.app = { tipo, quando }; return vai(3, ['Nuovo appuntamento', `${tipo} · ${quando}`]);
+    }
+    if (v === 'annulla') { S.scelte.app = null; S.scelte.quando = null; return vai(3, ['Il passo dopo', 'annullato']); }
+    if (v === 'conferma') { S.scelte.quando = dataBreve($('f-data').value); return vai(3, [es === 'Richiamare' ? 'Richiamare' : 'Quando risentirlo?', S.scelte.quando]); }
+    if (v === 'vendita') { S.scelte.vendita = true; return vai(3, ['Vendita', 'registrata']); }
+    if (v === 'no-vendita') { S.scelte.vendita = false; return vai(3, ['Vendita', 'più tardi']); }
+    return vai(3, ['Il passo dopo', 'niente da chiedere']);
+  }
+  if (p === 3) {
+    if (v === 'training') { S.sotto = 'training'; S.storia.push(['Coach', 'Ripassa nel Training']); return disegna(); }
+    if (v.startsWith('c:')) {
+      const c = v.slice(2);
+      if (c === 'parte') { S.sotto = 'parte'; return disegna(); }
+      if (c === 'annulla') { S.sotto = 'canale'; return disegna(); }
+      if (c === 'conferma') { S.scelte.canale = 'parte'; S.scelte.quando = dataBreve($('f-data').value); return vai(4, ['Altro canale', `Lo metto da parte · ${S.scelte.quando}`]); }
+      S.scelte.canale = c; return vai(4, ['Altro canale', CANALI.find(x => x[0] === c)[1]]);
+    }
+    if (v === 'chiudi') return vai(4, S.scelte.esito in RIGA_SOLA ? ['Coach', 'una riga, niente chat'] : null);
+    if (v.startsWith('ob:')) {
+      const o = v.slice(3);
+      if (o === 'no') { S.scelte.obiezione = 'no'; S.storia.push(['Coach', S.volta === 'dopo' ? 'obiezione superata' : obDi().nessuna.toLowerCase()]); S.sotto = 'frase'; return disegna(); }
+      if (o === 'altra') { S.sotto = 'altra'; return disegna(); }
+      S.scelte.obiezione = o; S.storia.push(['Coach', o]); S.sotto = incontroFissato() ? 'superata' : 'gestita?'; return disegna();
+    }
+    if (v === 'g:si') { S.scelte.gestita = true; S.storia.push(['L\'hai gestita?', 'Sì']); S.sotto = 'frase'; return disegna(); }
+    if (v === 'g:no') { S.scelte.gestita = false; S.storia.push(['L\'hai gestita?', 'No → carta del Training']); S.sotto = 'carta'; return disegna(); }
+    if (v === 'avanti') { S.sotto = 'frase'; return disegna(); }
+    if (v.startsWith('f:')) { S.scelte.frase = v.slice(2); S.storia.push(['Prossima volta', S.scelte.frase]); S.sotto = 'fine'; return disegna(); }
+    if (v === 'scrivo') { S.sotto = 'scrivo'; return disegna(); }
+    if (v === 'invia') { const t = $('f-frase').value.trim(); if (!t) { $('f-frase').focus(); return; } S.scelte.frase = t; S.storia.push(['Prossima volta', t]); S.sotto = 'fine'; return disegna(); }
+  }
+  if (p === 4) {
+    if (v === 'incontro') { S.scelte.selIncontro = null; return vai(5, ['MB Plan', `l'incontro · ${S.scelte.app.quando}`]); }
+    if (v === 'ricomincia') return ricomincia();
+  }
+  if (p === 5) {
+    if (v === 'fatto') {
+      const sel = [...document.querySelectorAll('#f-passi .chip.on')].map(b => b.dataset.k);
+      if (!sel.length) { $('f-errore').textContent = 'Spunta almeno un passo, oppure tocca Rimandato o No Show.'; return; }
+      S.scelte.fattiOra = sel; S.fatti = [...S.fatti, ...sel.filter(x => !S.fatti.includes(x))]; S.scelte.esitoIncontro = 'Fatto';
+      return vai(6, ['L\'incontro', `Fatto · ${sel.join(', ')}`]);
+    }
+    S.scelte.fattiOra = []; S.scelte.esitoIncontro = v === 'noshow' ? 'No Show' : 'Rimandato';
+    return vai(6, ['L\'incontro', S.scelte.esitoIncontro]);
+  }
+  if (p === 6) {
+    if (v === 'prossimo') {
+      const dopo = AVVIO.find(x => !S.fatti.includes(x));
+      S.scelte = { esito: 'Appuntamento', preset: S.scelte.esitoIncontro === 'Fatto' ? (dopo ? [dopo] : []) : S.scelte.app.passi };
+      return vai(2, ['Coach', 'Fissa il prossimo appuntamento']);
+    }
+    S.scelte.app = null; return vai(4, ['Coach', 'chiuso senza fissare']);
+  }
+  if (p === 4) {
+    if (v === 'rifai') {   // la volta dopo con lo stesso Mario: il coach sa cosa diceva e cosa ti eri detto
+      const ob = S.scelte.obiezione && S.scelte.obiezione !== 'no' ? S.scelte.obiezione : null, fr = S.scelte.frase;
+      S.volta = 'dopo'; S.passo = 1; S.storia = []; S.sotto = null;
+      const vuoto = NON_PARLATO.includes(S.scelte.esito) && !S.scelte.canale ? S.scelte.esito : null;
+      S.scelte = { obiezionePrec: ob || ULTIMA[S.cat], frasePrec: fr || fraseDi('Richiamare'), vuotoPrec: vuoto, vuoti: vuoto ? S.scelte.vuotiOra : 0 };
+      impostazioni(); return disegna();
+    }
+  }
+}
+
+// ── disegno ──
+const PASSI = ['La telefonata', 'Il passo dopo', 'Coach', 'Dove ritrovi Mario'];
+const PASSI_NUOVO = ['La telefonata', 'Nuovo appuntamento', 'Coach', 'Dove ritrovi Mario', 'L\'incontro', 'Coach dopo l\'incontro'];
+function disegna() {
+  const p = S.passo;
+  $('tel-titolo').textContent = DA[S.da][0]; $('tel-sotto').textContent = DA[S.da][1];
+  const passi = nuovo() ? PASSI_NUOVO : PASSI, note = nuovo() ? OGGI_NUOVO : OGGI;
+  $('tel-passo').textContent = `Passo ${p} di ${passi.length} · ${passi[p - 1]}`;
+  $('schermo').innerHTML = [passo1, passo2, passo3, passo4, passo5, passo6][p - 1]();
+  $('schermo').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { registra(b.dataset.v, b.textContent); tocco(b.dataset.v); });
+  $('schermo').querySelectorAll('#f-tipo').forEach(g => g.querySelectorAll('.chip').forEach(b => b.onclick = () => { g.querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); }));
+  $('schermo').querySelectorAll('#f-passi .chip:not(.fatto)').forEach(b => b.onclick = () => { b.classList.toggle('on'); $('f-errore').textContent = ''; registra('pillola', (b.classList.contains('on') ? '+ ' : '− ') + b.textContent); });
+  $('schermo').querySelectorAll('#f-tipo .chip').forEach(b => b.addEventListener('click', () => registra('pillola', b.textContent)));
+  const inp = $('f-frase'); if (inp) { inp.focus(); inp.onkeydown = e => { if (e.key === 'Enter') tocco('invia'); }; }
+  $('indietro').hidden = p === 1;
+  disegnaMappa();
+  $('mappa').innerHTML = passi.map((t, i) => `<span class="${i + 1 === p ? 'qui' : i + 1 < p ? 'fatto' : ''}">${i + 1} · ${t}</span>`).join('');
+  $('strada').innerHTML = S.storia.length ? S.storia.map(([a, b]) => `<li><em>${esc(a)}</em><span>${esc(b)}</span></li>`).join('') : '<li class="vuota">Ancora niente: tocca nel telefono.</li>';
+  $('oggi').innerHTML = `<p><b>Oggi.</b> ${esc(note[p][0])}</p><p class="prop">${esc(note[p][1])}</p>`;
+}
+$('indietro').addEventListener('click', () => registra('indietro', 'Indietro'));
+$('indietro').onclick = () => {
+  if (S.passo === 3 && S.sotto === 'training') { S.sotto = null; S.storia.pop(); return disegna(); }
+  if (S.passo === 6) { S.fatti = S.fatti.filter(x => !(S.scelte.fattiOra || []).includes(x)); S.passo = 5; S.storia.pop(); return disegna(); }
+  if (S.passo === 5) { S.passo = 4; S.storia.pop(); return disegna(); }
+  if (S.passo === 3 && (S.sotto === 'canale' || S.sotto === 'parte')) { S.passo = 1; S.sotto = null; S.storia.pop(); return disegna(); }
+  if (S.passo === 3 && S.sotto) { S.sotto = null; S.scelte.obiezione = null; S.scelte.gestita = undefined; S.scelte.frase = null; S.storia = S.storia.filter(x => !['Coach', 'L\'hai gestita?', 'Prossima volta'].includes(x[0])); return disegna(); }
+  if (S.passo === 4 && NON_PARLATO.includes(S.scelte.esito)) { S.passo = 1; S.storia.pop(); return disegna(); }
+  if (S.passo > 1) { S.passo -= 1; S.storia.pop(); if (S.passo === 3) { S.sotto = null; S.scelte.obiezione = null; S.scelte.gestita = undefined; S.scelte.frase = null; S.storia = S.storia.filter(x => !['Coach', 'L\'hai gestita?', 'Prossima volta'].includes(x[0])); } disegna(); }
+};
+$('ricomincia').onclick = ricomincia; $('ricomincia-su').onclick = ricomincia;
+$('blocco').onclick = () => { $('blocco-box').hidden = false; $('blocco-nota').value = ''; $('blocco-nota').focus(); };
+$('blocco-no').onclick = () => { $('blocco-box').hidden = true; };
+$('blocco-si').onclick = () => {
+  if (!REG.giro) nuovoGiro();
+  REG.giro.blocchi.push({ t: adesso(), passo: S.passo, sotto: S.sotto || null, nota: $('blocco-nota').value.trim().slice(0, 300), schermo: schermoTesto().slice(0, 1500), strada: S.storia.map(x => x.join(': ')).join(' → ').slice(0, 600) });
+  scriviGiro();
+  $('blocco-box').hidden = true;
+  stato('Segnato. Di\' a Claude «guarda» e lui legge questo punto.');
+};
+avviaRegistro();
+impostazioni(); disegna();
+</script>
