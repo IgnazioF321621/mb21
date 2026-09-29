@@ -100,7 +100,7 @@ function trnComeFunziona() {
   const parti = [
     ['crescita', 'Sali di livello', 'Sette livelli, da Nuovo a Platino: si parte dal basso. Il livello sopra si apre quando superi i test di tutti i percorsi del livello attuale.'],
     ['mappa', 'I percorsi', 'Dentro un livello si aprono uno dopo l\'altro: il successivo quando hai visto tutte le carte di quello prima. «Sei qui» ti dice da dove continuare.'],
-    ['lampo', 'Impara', `${T.LEZIONE} carte nuove alla volta, di tre tipi: una scena con 3 risposte, una frase da ricordare (rispondi a voce, poi gira la carta), un vero o falso. Occhio ai trabocchetti.`],
+    ['lampo', 'Impara', `${T.LEZIONE} carte nuove alla volta, di tre tipi: una scena con 3 risposte, una frase da completare (scegli quella giusta tra 4), un vero o falso. Occhio ai trabocchetti.`],
     ['aggiorna', 'Ripassa', `Ogni carta torna quando serve: se la sai torna dopo ${sc.slice(0, -1).join(', ')} e ${sc[sc.length - 1]} giorni, se sbagli torna domani. `
       + 'Una carta la sai quando la indovini tre volte di fila, in giorni diversi. Se, in una chat con il coach dopo un\'azione o un appuntamento, segni un\'obiezione, '
       + 'la relativa carta torna il giorno dopo. Bastano 5 minuti al giorno.'],
@@ -467,9 +467,9 @@ function trnFonteUna(f) {
   if (!t) return '';
   if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
-  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte)); }
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -584,7 +584,7 @@ function trnRisultati() {
 }
 
 // Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, i suoi appunti), il libro
-function trnApriCarta(id) {
+function trnApriCarta(id, cap) {
   let testa, corpo, colore;
   if (id === 'manuale') {
     colore = TRN_LIBRI;
@@ -612,11 +612,15 @@ function trnApriCarta(id) {
         ${!c.riassunto && !c.punti && !c.appunti ? '<p>Per questa traccia non ci sono ancora il riassunto né gli appunti.</p>' : ''}`;
     } else {
       testa = trnTesta('libro', 'Libro consigliato da Network 21', c.titolo);
+      // dal 29/09 (Ignazio): se la carta indica un capitolo («L'immaginazione»), si apre solo quello, con gli appunti; «Tutto il libro» li mostra tutti
+      const chiave = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+      const solo = cap && c.capitoli ? c.capitoli.filter(x => chiave(x.titolo).includes(chiave(cap)) || chiave(cap).includes(chiave(x.titolo))) : [];
+      const capitoli = solo.length ? solo : c.capitoli;
       corpo = `<div class="trn-meta">${esc(c.autore || '')}${c.solo_n21 ? ' <span class="sh-chiede n21">solo da N21</span>' : ''}</div>
-        ${c.capitoli ? `<h4>Gli appunti, capitolo per capitolo</h4>${c.capitoli.map(x => x.sezioni && x.sezioni.length ? trnCapitoloPal(x)
-          : `<details class="trn-capitolo"><summary>${esc(x.titolo)}</summary>
+        ${c.capitoli ? `<h4>${solo.length ? 'Il capitolo, con i suoi appunti' : 'Gli appunti, capitolo per capitolo'}</h4>${capitoli.map(x => x.sezioni && x.sezioni.length ? trnCapitoloPal(x, !!solo.length)
+          : `<details class="trn-capitolo"${solo.length ? ' open' : ''}><summary>${esc(x.titolo)}</summary>
           ${(x.principi || []).length ? `<ul>${x.principi.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
-          ${(x.da_fare || []).length ? `<div class="trn-dafare"><b>Da fare</b><ul>${x.da_fare.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}</details>`).join('')}`
+          ${(x.da_fare || []).length ? `<div class="trn-dafare"><b>Azioni</b><ul>${x.da_fare.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}</details>`).join('')}${solo.length && c.capitoli.length > 1 ? '<button class="trn-secondo" data-tutto>Tutto il libro</button>' : ''}`
           : '<p>Per questo libro non ci sono ancora gli appunti.</p>'}`;
     }
   }
@@ -627,6 +631,8 @@ function trnApriCarta(id) {
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   velo.querySelector('.trn-x').onclick = chiudi;
+  const tutto = velo.querySelector('[data-tutto]');
+  if (tutto) tutto.onclick = () => { velo.remove(); trnApriCarta(id); };
 }
 function trnTesta(icona, sopra, titolo) {
   return `<div class="mc-testa trn-testa"><span class="ts-pastiglia trn-pastiglia">${ic(icona)}</span><div><small>${esc(sopra)}</small><b>${esc(titolo)}</b></div>
@@ -638,18 +644,18 @@ const trnLista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>
 const trnVocePal = v => `${v.titolo ? `<b class="trn-pal-voce">${esc(v.titolo)}</b>` : ''}<ul>${v.punti.map((x, i) =>
   `<li class="${(v.lezioni || []).includes(i) ? 'lezione' : (v.citazioni || []).includes(i) ? 'citazione' : ''}">${esc(x)}</li>`).join('')}</ul>`;
 const trnTermini = v => (v && v.length ? `<h5>Termini e definizioni</h5><ul class="trn-termini">${v.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : '');
-// un capitolo di un libro con il PAL nuovo (note [PAT], 27/09): le voci con lezioni e citazioni evidenziate, poi «Da fare» e i termini del capitolo
-function trnCapitoloPal(x) {
-  return `<details class="trn-capitolo trn-pal"><summary>${esc(x.titolo)}</summary>${x.sezioni.map(trnVocePal).join('')}
-    ${trnLista('Da fare', x.da_fare)}${trnTermini(x.termini)}</details>`;
+// un capitolo di un libro con il PAL nuovo (note [PAT], 27/09): le voci con lezioni e citazioni evidenziate, poi le azioni e i termini del capitolo
+function trnCapitoloPal(x, aperto) {
+  return `<details class="trn-capitolo trn-pal"${aperto ? ' open' : ''}><summary>${esc(x.titolo)}</summary>${x.sezioni.map(trnVocePal).join('')}
+    ${trnLista('Azioni', x.da_fare)}${trnTermini(x.termini)}</details>`;
 }
 function trnAppunti(a) {
   const lista = trnLista;
   if (a.sezioni && a.sezioni.length) {
     return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
       ${a.sezioni.map((z, i) => `<details class="trn-capitolo trn-pal"${i === 0 ? ' open' : ''}><summary>${esc(z.titolo)}</summary>${z.voci.map(trnVocePal).join('')}</details>`).join('')}
-      ${lista('Da fare', a.azioni)}${trnTermini(a.termini)}</div>`;
+      ${lista('Azioni', a.azioni)}${trnTermini(a.termini)}</div>`;
   }
   return `<div class="trn-appunti"><div class="sh-etichetta">Gli appunti</div>
-    ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Da fare', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
+    ${lista('Capitoli', a.capitoli)}${lista('Principi e tecniche', a.principi)}${lista('Azioni', a.azioni)}${lista('Frasi da ricordare', a.frasi)}</div>`;
 }
