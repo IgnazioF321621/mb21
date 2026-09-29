@@ -75,6 +75,7 @@
   const RIPASSO = 15;         // carte in un ripasso: circa 5 minuti
   const TEST = 10;            // domande del test finale
   const TRABOCCHETTI = 3;     // nel test almeno 3 trabocchetti, se ci sono (Ignazio 24/09: «la voglia di imparare e la rabbia se ancora non so le cose»)
+  const MINIMO_MAZZO = 5;     // un mazzo si carica anche con poche carte, purché tutte certificate: cresce con le note nuove (Ignazio 29/09)
   const PER_IL_TEST = 0.8;    // il test si apre quando le sai almeno 8 su 10 (Ignazio 24/09)
   const piuGiorni = (giorno, n) => { const d = new Date(giorno + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   const quando = t => (t ? Date.parse(t) || 0 : 0);
@@ -313,7 +314,7 @@
     const percorsi = LIVELLI.flatMap(l => l.percorsi.map(x => x.id));
     if (!m || !m.percorso || !percorsi.includes(m.percorso.id)) return ['percorso sconosciuto: ' + (m && m.percorso && m.percorso.id)];
     if (m.situazione !== 'carte_' + m.percorso.id) p.push(`situazione «${m.situazione}» invece di «carte_${m.percorso.id}»`);
-    if (!Array.isArray(m.carte) || m.carte.length < TEST) p.push(`servono almeno ${TEST} carte`);
+    if (!Array.isArray(m.carte) || m.carte.length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte`);
     for (const c of m.carte || []) {
       const chi = c && c.id ? c.id : '(senza id)';
       if (!c || !/^[a-z0-9-]{1,40}$/.test(c.id || "")) p.push(`id non valido: ${chi}`);
@@ -341,7 +342,7 @@
       if (c.fonte2 && (!c.fonte || !fonteOk(c.fonte2) || c.fonte2.tipo === 'sito')) p.push(`${chi}: seconda fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
     }
-    if ((m.carte || []).filter(c => c.tipo === 'scena' || c.tipo === 'vf').length < TEST) p.push(`servono almeno ${TEST} carte a risposta per il test`);
+    if ((m.carte || []).filter(c => c.tipo === 'scena' || c.tipo === 'vf').length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte a risposta per il test`);
     return p;
   }
 
@@ -350,6 +351,8 @@
   // minuscole, senza accenti né punteggiatura: per cercare e per confrontare i titoli
   const piega = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
+  // Certificato (Ignazio 29/09): un materiale, traccia o libro, è certificato solo se è BSM (materiale di Network 21 da studiare), ha la nota rivista da lui (IF) e gli
+  // appunti PLAT (Punti importanti con le Lezioni nei riquadri · Lezioni · Azioni · Termini). Solo il certificato entra nei percorsi: nelle carte, nelle fonti e nel materiale suggerito. `cert` sulle voci.
   // Tutte le voci del catalogo. `materiali`: righe della biblioteca { id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave,
   // link, pack_id, solo_n21, fuori_catalogo }; `cat`: il catalogo privato { settori, manuale, appunti, libri }.
   // Il settore di una traccia viene dalla sua sezione del BSM (argomenti). Solo il BSM (Ignazio 24/09 sera: «dove ci sono riferimenti
@@ -361,16 +364,17 @@
     const appunti = {}; for (const a of k.appunti || []) if (a.materiale_id) appunti[a.materiale_id] = a;
     const libri = {}; for (const l of k.libri || []) if (l.materiale_id) libri[l.materiale_id] = l;
     const out = [];
-    for (const p of k.manuale || []) out.push({ tipo: 'manuale', id: 'manuale-' + p.pagine, titolo: p.titolo, pagine: p.pagine, sintesi: p.sintesi, settori: p.settori || [] });
+    for (const p of k.manuale || []) out.push({ tipo: 'manuale', id: 'manuale-' + p.pagine, titolo: p.titolo, pagine: p.pagine, sintesi: p.sintesi, settori: p.settori || [], cert: true });
     for (const x of m) {
       if (x.fuori_catalogo) continue;
       if (x.tipo === 'traccia') out.push({ tipo: 'traccia', id: x.id, titolo: x.titolo, autore: x.autore || null, minuti: x.minuti || null,
         settori: settoriDi(x.argomenti), sezione: (x.argomenti || [])[0] || null, pack: pack[x.pack_id] || null,
-        riassunto: x.riassunto || null, punti: x.punti_chiave || null, link: x.link || null, appunti: appunti[x.id] || null });
+        riassunto: x.riassunto || null, punti: x.punti_chiave || null, link: x.link || null, appunti: appunti[x.id] || null,
+        cert: !!(appunti[x.id] && appunti[x.id].certificato) });
       else if (x.tipo === 'libro') out.push({ tipo: 'libro', id: x.id, titolo: x.titolo, autore: x.autore || null, settori: ['Libri'],
         solo_n21: !!x.solo_n21, capitoli: libri[x.id] ? libri[x.id].capitoli : null,
         // dal 27/09 i libri con il PAL nuovo (note [PAT]) portano la riga MB21 del libro: entrano in «Per approfondire e imparare» come le tracce
-        mb21: libri[x.id] && libri[x.id].mb21 ? libri[x.id].mb21 : null, nuovo: !!(libri[x.id] && libri[x.id].nuovo) });
+        mb21: libri[x.id] && libri[x.id].mb21 ? libri[x.id].mb21 : null, nuovo: !!(libri[x.id] && libri[x.id].nuovo), cert: !!(libri[x.id] && libri[x.id].certificato) });
     }
     for (const c of out) c.testo = piega([c.titolo, c.autore, c.sintesi, c.riassunto, c.punti, c.pack, c.sezione,
       ...(c.appunti ? [...(c.appunti.capitoli || []), ...(c.appunti.principi || []), ...(c.appunti.azioni || []), ...(c.appunti.frasi || []),
