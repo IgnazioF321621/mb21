@@ -467,9 +467,9 @@ function trnFonteUna(f) {
   if (!t) return '';
   if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
-  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' && f.sezione ? ` data-sez="${esc(f.sezione)}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi) } : null)); }
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez !== undefined ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null } : null)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -603,20 +603,18 @@ function trnApriCarta(id, cap, punto) {
     } else if (c.tipo === 'traccia') {
       testa = trnTesta('audio', MB21Training.dove(c) || 'Traccia', c.titolo);
       const meta = [c.autore, c.minuti ? c.minuti + ' minuti' : null].filter(Boolean).map(esc).join(' · ');
-      // dal 29/09 (Ignazio: «una palpardella che le persone non leggeranno mai»): dalla carta si apre solo la voce degli appunti che la riguarda;
-      // le altre parti, le azioni e i termini restano chiusi, e «Tutta la traccia» mostra tutto
+      // dal 29/09 (Ignazio: «una palpardella che le persone non leggeranno mai»; «le altre parti invogliano a non ascoltare la traccia»): dalla
+      // carta si vedono solo i punti che rispondono alla sua domanda (`fonte.pt`, o la voce), niente altro; l'insieme degli appunti resta in Studia
       const az = c.appunti, zs = (az && az.sezioni) || [], zc = punto && zs.find(z => z.titolo === punto.sezione);
       const vc = zc && ((punto.voce && zc.voci.find(v => v.titolo === punto.voce)) || zc.voci[punto.vi]);
       const dove = c.link ? `<a class="trn-dove" href="${esc(c.link)}" target="_blank" rel="noopener">${ic('audio')} Apri nel BSM ›</a>`
         : c.sezione ? `<div class="trn-dove">${ic('audio')} Nel BSM, sezione «${esc(c.sezione)}»${c.pack ? `, pack «${esc(c.pack)}»` : ''}</div>` : '';
-      if (vc) {
-        const altre = zs.map(z => ({ ...z, voci: z.voci.filter(v => v !== vc) })).filter(z => z.voci.length);
+      if (punto) {
+        const sel = vc && punto.pt && punto.pt.length ? punto.pt.filter(i => vc.punti[i] !== undefined) : null;
+        const ridotta = vc && sel && sel.length ? { punti: sel.map(i => vc.punti[i]), lezioni: (vc.lezioni || []).filter(i => sel.includes(i)).map(i => sel.indexOf(i)),
+          citazioni: (vc.citazioni || []).filter(i => sel.includes(i)).map(i => sel.indexOf(i)) } : vc;
         corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}${dove}
-          <div class="trn-appunti"><div class="sh-etichetta">Per questa carta</div>
-          <details class="trn-capitolo trn-pal" open><summary>${esc(vc.titolo || zc.titolo)}</summary>${trnVocePal({ ...vc, titolo: '' })}</details>
-          ${altre.length ? `<details class="trn-capitolo trn-pal"><summary>Le altre parti della traccia</summary>${altre.map(z => `<b class="trn-pal-voce">${esc(z.titolo)}</b>${z.voci.map(trnVocePal).join('')}`).join('')}</details>` : ''}
-          ${(az.azioni || []).length || (az.termini || []).length ? `<details class="trn-capitolo trn-pal"><summary>Azioni · Termini</summary>${trnLista('Azioni', az.azioni)}${trnTermini(az.termini)}</details>` : ''}</div>
-          <button class="trn-secondo" data-tutto>Tutta la traccia</button>`;
+          ${vc ? `<div class="trn-appunti"><div class="sh-etichetta">Per questa carta</div>${trnVocePal({ ...ridotta, titolo: vc.titolo || zc.titolo })}</div>` : '<p class="trn-testo">Il resto è da ascoltare nella traccia.</p>'}`;
       } else
       corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}
         ${dove}
