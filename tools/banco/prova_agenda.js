@@ -713,4 +713,20 @@ prova('Dopo l\'esito si chiede solo quando risentire: un anno per No Interesse /
   assert.equal(A.giorniRisentire('Richiamare'), null); assert.equal(A.giorniRisentire('PM Fissato'), null); assert.equal(A.giorniRisentire('Consulenza Prodotti'), null);
 });
 
+prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata si apre lo stesso foglio della coda', () => {
+  assert.equal(A.domandaEsito('Contatto'), 'Com\'è andata la telefonata?'); assert.equal(A.domandaEsito('Appuntamento'), 'Com\'è andato l\'incontro?');
+  assert.equal(A.domandaEsito('Piano Marketing'), 'Com\'è andato il piano?'); assert.equal(A.domandaEsito('Consulenza PRD'), 'Com\'è andata la consulenza?');
+  assert.equal(A.domandaEsito('Boh'), 'Com\'è andata?');
+  assert.equal(A.passiEsito({ tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect' }, 'Prospect')[0].titolo, 'Com\'è andata la telefonata?');
+  assert.equal(A.passiEsito({ tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', categoria: 'Prospect' }, 'Prospect', true)[1].titolo, 'Com\'è andato il piano?');
+  assert.deepEqual(A.dopoTelefonata('Prospect', 'PM Fissato'), { cosa: 'appuntamento', proposta: { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' } });
+  assert.deepEqual(A.dopoTelefonata('Partner', 'Appuntamento'), { cosa: 'appuntamento', proposta: { categoria: 'Partner', tipo: 'Appuntamento', modalita: null } });
+  assert.deepEqual(A.dopoTelefonata('Cliente', 'Appuntamento'), { cosa: 'appuntamento', proposta: { categoria: 'Cliente', tipo: 'Consulenza PRD', modalita: null } });
+  assert.deepEqual(A.dopoTelefonata('Prospect', 'Consulenza Prodotti'), { cosa: 'appuntamento', proposta: { categoria: 'Prospect', tipo: 'Consulenza PRD', modalita: null } });
+  assert.deepEqual(A.dopoTelefonata('Cliente', 'Richiamare'), { cosa: 'giorno' });
+  assert.deepEqual(A.dopoTelefonata('Prospect', 'Relazione'), { cosa: 'risentire', giorni: 20 });
+  assert.deepEqual(A.dopoTelefonata('Cliente', 'No Interesse'), { cosa: 'risentire', giorni: 365 });
+  for (const es of ['No Risposta', 'Telefono spento', 'Ordine']) assert.deepEqual(A.dopoTelefonata('Cliente', es), { cosa: 'niente' });
+});
+
 console.log(`\n${ok} prove superate`);

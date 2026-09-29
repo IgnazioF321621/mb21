@@ -555,6 +555,10 @@
     'Follow Up': { fatto: null, esiti: ['Iscrizione', 'Ulteriore Follow Up', 'Prodotti', 'No BuonFine'] },
   };
   const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+  // La domanda sopra i bottoni dice di cosa parla (Ignazio 29/09, cantiere 48: con l'incontro ancora da fissare «Com'è andata?» non ha senso)
+  const DOMANDA_ESITO = { 'Contatto': 'Com\'è andata la telefonata?', 'Piano Marketing': 'Com\'è andato il piano?', 'Follow Up': 'Com\'è andato il follow up?',
+    'Appuntamento': 'Com\'è andato l\'incontro?', 'Consulenza PRD': 'Com\'è andata la consulenza?' };
+  const domandaEsito = tipo => DOMANDA_ESITO[tipo] || 'Com\'è andata?';
   // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.
   // passo: avvenuto (azione aperta) · risultato (dopo Fatto) · unico (un passo solo) · cambia (chiusa: cambia il risultato) · cambia-avvenuto (chiusa: cambia se è avvenuto)
   function passiEsito(a, categoria, fattoAperto) {
@@ -564,14 +568,14 @@
     const due = RISULTATI[a.tipo_azione];
     const g = (passo, titolo, bottoni, attuale) => ({ passo, titolo, bottoni, attuale: attuale || null });
     if (daChiudere(a)) {
-      if (!due) return [g('unico', 'Com\'è andata?', fasi)];
-      if (fattoAperto) return [g('avvenuto', 'È avvenuto?', AVVENUTO, 'Fatto'), g('risultato', 'Com\'è andata?', due.esiti)];
+      if (!due) return [g('unico', domandaEsito(a.tipo_azione), fasi)];
+      if (fattoAperto) return [g('avvenuto', 'È avvenuto?', AVVENUTO, 'Fatto'), g('risultato', domandaEsito(a.tipo_azione), due.esiti)];
       return [g('avvenuto', 'È avvenuto?', AVVENUTO)];
     }
     if (!due) return [g('cambia', 'Esito', fasi, a.esito)];
     const nonAvvenuto = AVVENUTO.includes(a.esito) ? a.esito : null;   // Rimandato / No Show
     const gruppi = [g('cambia-avvenuto', 'È avvenuto?', AVVENUTO, nonAvvenuto || 'Fatto')];
-    if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', 'Com\'è andata?', due.esiti) : g('cambia', 'Com\'è andata?', due.esiti, a.esito));
+    if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', domandaEsito(a.tipo_azione), due.esiti) : g('cambia', domandaEsito(a.tipo_azione), due.esiti, a.esito));
     return gruppi;
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
@@ -586,6 +590,22 @@
   const GIORNI_RELAZIONE = 20;
   // Esiti dopo i quali si chiede solo quando risentire la persona: i giorni proposti, altrimenti null
   const giorniRisentire = esito => chiudeRelazione(esito) ? GIORNI_CHIUSURA : esito === 'Relazione' ? GIORNI_RELAZIONE : null;
+  // Cosa si apre dopo l'esito di una TELEFONATA, uguale da coda, scheda e MB Plan (Ignazio 29/09, cantiere 48; prima dalla scheda si apriva
+  // «Fissa il prossimo appuntamento» che proponeva un'altra telefonata): si fissa quello che l'esito dice.
+  //   { cosa: 'appuntamento', proposta } → «Nuovo appuntamento» già compilato: PM Fissato → il piano; Appuntamento → Partner: Appuntamento, Cliente: Consulenza PRD;
+  //                                        Consulenza Prodotti → la consulenza (e il contatto esce dalla coda: lo segue l'appuntamento)
+  //   { cosa: 'giorno' }                 → «Richiamare»: il giorno del richiamo
+  //   { cosa: 'risentire', giorni }      → «Quando risentirlo?» (Relazione, No Interesse)
+  //   { cosa: 'niente' }                 → No Risposta, Telefono spento, Ordine (la vendita la chiede proponeVendita) e tutto il resto
+  function dopoTelefonata(categoria, esito) {
+    if (esito === 'PM Fissato') return { cosa: 'appuntamento', proposta: { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' } };
+    if (esito === 'Appuntamento') return { cosa: 'appuntamento', proposta: tipoDaCoda(categoria) };
+    if (esito === 'Consulenza Prodotti') return { cosa: 'appuntamento', proposta: { categoria: categoria === 'Cliente' ? 'Cliente' : 'Prospect', tipo: 'Consulenza PRD', modalita: null } };
+    if (esito === 'Richiamare') return { cosa: 'giorno' };
+    const giorni = giorniRisentire(esito);
+    if (giorni) return { cosa: 'risentire', giorni };
+    return { cosa: 'niente' };
+  }
   // Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita nella scheda del cliente (cantiere 26 lavoro 5 bis).
   // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
   const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
@@ -822,7 +842,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, fatteDaEliminare, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
