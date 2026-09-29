@@ -467,9 +467,9 @@ function trnFonteUna(f) {
   if (!t) return '';
   if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
-  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' && f.sezione ? ` data-sez="${esc(f.sezione)}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap)); }
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi) } : null)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -584,7 +584,7 @@ function trnRisultati() {
 }
 
 // Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, i suoi appunti), il libro
-function trnApriCarta(id, cap) {
+function trnApriCarta(id, cap, punto) {
   let testa, corpo, colore;
   if (id === 'manuale') {
     colore = TRN_LIBRI;
@@ -603,9 +603,23 @@ function trnApriCarta(id, cap) {
     } else if (c.tipo === 'traccia') {
       testa = trnTesta('audio', MB21Training.dove(c) || 'Traccia', c.titolo);
       const meta = [c.autore, c.minuti ? c.minuti + ' minuti' : null].filter(Boolean).map(esc).join(' · ');
+      // dal 29/09 (Ignazio: «una palpardella che le persone non leggeranno mai»): dalla carta si apre solo la voce degli appunti che la riguarda;
+      // le altre parti, le azioni e i termini restano chiusi, e «Tutta la traccia» mostra tutto
+      const az = c.appunti, zs = (az && az.sezioni) || [], zc = punto && zs.find(z => z.titolo === punto.sezione);
+      const vc = zc && ((punto.voce && zc.voci.find(v => v.titolo === punto.voce)) || zc.voci[punto.vi]);
+      const dove = c.link ? `<a class="trn-dove" href="${esc(c.link)}" target="_blank" rel="noopener">${ic('audio')} Apri nel BSM ›</a>`
+        : c.sezione ? `<div class="trn-dove">${ic('audio')} Nel BSM, sezione «${esc(c.sezione)}»${c.pack ? `, pack «${esc(c.pack)}»` : ''}</div>` : '';
+      if (vc) {
+        const altre = zs.map(z => ({ ...z, voci: z.voci.filter(v => v !== vc) })).filter(z => z.voci.length);
+        corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}${dove}
+          <div class="trn-appunti"><div class="sh-etichetta">Per questa carta</div>
+          <details class="trn-capitolo trn-pal" open><summary>${esc(vc.titolo || zc.titolo)}</summary>${trnVocePal({ ...vc, titolo: '' })}</details>
+          ${altre.length ? `<details class="trn-capitolo trn-pal"><summary>Le altre parti della traccia</summary>${altre.map(z => `<b class="trn-pal-voce">${esc(z.titolo)}</b>${z.voci.map(trnVocePal).join('')}`).join('')}</details>` : ''}
+          ${(az.azioni || []).length || (az.termini || []).length ? `<details class="trn-capitolo trn-pal"><summary>Azioni · Termini</summary>${trnLista('Azioni', az.azioni)}${trnTermini(az.termini)}</details>` : ''}</div>
+          <button class="trn-secondo" data-tutto>Tutta la traccia</button>`;
+      } else
       corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}
-        ${c.link ? `<a class="trn-dove" href="${esc(c.link)}" target="_blank" rel="noopener">${ic('audio')} Apri nel BSM ›</a>`
-          : c.sezione ? `<div class="trn-dove">${ic('audio')} Nel BSM, sezione «${esc(c.sezione)}»${c.pack ? `, pack «${esc(c.pack)}»` : ''}</div>` : ''}
+        ${dove}
         ${c.riassunto ? `<h4>Di cosa parla</h4><p class="trn-testo">${esc(c.riassunto)}</p>` : ''}
         ${c.punti ? `<h4>Punti chiave</h4><p class="trn-testo">${esc(c.punti)}</p>` : ''}
         ${c.appunti ? trnAppunti(c.appunti) : ''}
@@ -643,7 +657,7 @@ function trnTesta(icona, sopra, titolo) {
 const trnLista = (t, v) => (v && v.length ? `<h5>${t}</h5><ul>${v.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '');
 const trnVocePal = v => `${v.titolo ? `<b class="trn-pal-voce">${esc(v.titolo)}</b>` : ''}<ul>${v.punti.map((x, i) =>
   `<li class="${(v.lezioni || []).includes(i) ? 'lezione' : (v.citazioni || []).includes(i) ? 'citazione' : ''}">${esc(x)}</li>`).join('')}</ul>`;
-const trnTermini = v => (v && v.length ? `<h5>Termini e definizioni</h5><ul class="trn-termini">${v.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : '');
+const trnTermini = v => (v && v.length ? `<h5>Termini</h5><ul class="trn-termini">${v.map(([t, d]) => `<li><b>${esc(t)}</b>${d ? ' — ' + esc(d) : ''}</li>`).join('')}</ul>` : '');
 // un capitolo di un libro con il PAL nuovo (note [PAT], 27/09): le voci con lezioni e citazioni evidenziate, poi le azioni e i termini del capitolo
 function trnCapitoloPal(x, aperto) {
   return `<details class="trn-capitolo trn-pal"${aperto ? ' open' : ''}><summary>${esc(x.titolo)}</summary>${x.sezioni.map(trnVocePal).join('')}
