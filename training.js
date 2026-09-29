@@ -185,11 +185,14 @@
     return { livelli, qui, percorso: dove ? dove.id : null };
   }
 
-  // Le domande del test finale: dalle carte a risposta (scene e vero o falso) del percorso, prima le più deboli (scatola bassa, più
+  // Una carta a risposta: scena, vero o falso, o una frase con le sue tre alternative sbagliate (Ignazio 29/09: «scegli quella completa»)
+  const aRisposta = c => c.tipo === 'scena' || c.tipo === 'vf' || (c.tipo === 'frase' && Array.isArray(c.sbagliate) && c.sbagliate.length === 3);
+
+  // Le domande del test finale: dalle carte a risposta (scene, vero o falso, frasi da scegliere) del percorso, prima le più deboli (scatola bassa, più
   // sbagliate) con un po' di caso, e almeno tre trabocchetti se ci sono; poi in ordine sparso. `rnd` = Math.random (nelle prove, fisso).
   function pescaTest(mazzo, stati, quante = TEST, rnd = Math.random) {
     const st = stati || {};
-    const adatte = (mazzo ? mazzo.carte : []).filter(c => c.tipo === 'scena' || c.tipo === 'vf');
+    const adatte = (mazzo ? mazzo.carte : []).filter(aRisposta);
     const peso = c => { const s = st[c.id] || {}; return (s.scatola || 0) * 10 - (s.sbagliate || 0) * 3 + rnd() * 12; };
     const ordinate = adatte.map(c => ({ c, p: peso(c) })).sort((a, b) => a.p - b.p).map(x => x.c);
     const scelte = ordinate.slice(0, quante);
@@ -216,6 +219,7 @@
       return { tipo: 'scena', testo: v.scena, risposte: mescola(v.risposte.map((t, i) => ({ testo: t, giusta: i === 0 })), rnd) };
     }
     if (carta.tipo === 'vf') return { tipo: 'vf', testo: carta.frase, risposte: [{ testo: 'Vero', giusta: carta.vero === true }, { testo: 'Falso', giusta: carta.vero === false }] };
+    if (aRisposta(carta)) return { tipo: 'scelta', testo: carta.davanti, risposte: mescola([{ testo: carta.dietro, giusta: true }, ...carta.sbagliate.map(t => ({ testo: t, giusta: false }))], rnd) };
     return { tipo: 'frase', davanti: carta.davanti, dietro: carta.dietro, aiuto: carta.aiuto || AIUTO_FRASE };
   }
 
@@ -334,6 +338,10 @@
       } else if (c.tipo === 'frase') {
         if (!testo(c.davanti, 200) || !testo(c.dietro, 400)) p.push(`${chi}: frase senza davanti o dietro`);
         if (c.aiuto !== undefined && !testo(c.aiuto, 120)) p.push(`${chi}: aiuto vuoto o lungo`);
+        if (c.sbagliate !== undefined) {   // «scegli quella completa»: la giusta è `dietro`, più tre alternative sbagliate tutte diverse
+          if (!Array.isArray(c.sbagliate) || c.sbagliate.length !== 3 || !c.sbagliate.every(r => testo(r, 400))) p.push(`${chi}: servono 3 alternative sbagliate (max 400 caratteri)`);
+          else if (new Set([...c.sbagliate, c.dietro]).size !== 4) p.push(`${chi}: alternative uguali fra loro o alla giusta`);
+        }
       } else p.push(`${chi}: tipo sconosciuto «${c.tipo}»`);
       // fonte: il collegamento della carta; fonte2 (dal 29/09, Ignazio) un secondo collegamento, solo dove servono due fonti
       const fonteOk = f => (f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)
@@ -342,7 +350,7 @@
       if (c.fonte2 && (!c.fonte || !fonteOk(c.fonte2) || c.fonte2.tipo === 'sito')) p.push(`${chi}: seconda fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
     }
-    if ((m.carte || []).filter(c => c.tipo === 'scena' || c.tipo === 'vf').length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte a risposta per il test`);
+    if ((m.carte || []).filter(aRisposta).length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte a risposta per il test`);
     return p;
   }
 

@@ -341,8 +341,8 @@ function trnSessione(carte, modo, titolo) {
       return;
     }
     corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-domanda">${esc(d.testo)}</div>
-      ${d.tipo === 'vf' ? '<div class="trn-chiede">Vero o falso?</div>' : ''}
-      <div class="trn-risposte${d.tipo === 'vf' ? ' trn-vf' : ''}">${d.risposte.map((r, k) => `<button data-r="${k}">${esc(r.testo)}</button>`).join('')}</div>
+      ${d.tipo === 'vf' ? '<div class="trn-chiede">Vero o falso?</div>' : d.tipo === 'scelta' ? '<div class="trn-chiede">Scegli quella completa</div>' : ''}
+      <div class="trn-risposte${d.tipo === 'vf' ? ' trn-vf' : d.tipo === 'scelta' ? ' trn-scelta' : ''}">${d.risposte.map((r, k) => `<button data-r="${k}">${esc(r.testo)}</button>`).join('')}</div>
       <div class="trn-esito-posto"></div></div>`;
     corpo.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
       const r = d.risposte[Number(b.dataset.r)];
@@ -355,7 +355,7 @@ function trnSessione(carte, modo, titolo) {
       b.classList.add(r.giusta ? 'giusta' : 'sbagliata');
       if (!r.giusta) corpo.querySelectorAll('[data-r]').forEach(x => { if (d.risposte[Number(x.dataset.r)].giusta) x.classList.add('giusta'); });
       corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : c.trabocchetto ? 'Era un trabocchetto!' : 'Non proprio'}</b>
-        ${esc(c.perche || '')}${trnFonte(c)}</div>${trnCorreggi()}`;
+        ${esc(c.perche || '')}${d.tipo === 'scelta' ? '<p class="trn-a-voce">Ora dilla a voce, con le tue parole.</p>' : ''}${trnFonte(c)}</div>${trnCorreggi()}`;
       trnCollegaFonte(corpo);
       trnCollegaCorreggi(corpo, c, { dove: modo, domanda: d.testo, scelta: r.testo, giusta: r.giusta });
       risposto(r.giusta, { scelta: r.testo });
