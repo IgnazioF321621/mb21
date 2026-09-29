@@ -467,9 +467,9 @@ function trnFonteUna(f) {
   if (!t) return '';
   if (f.tipo === 'sito') return `<a class="trn-fonte" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener">${ic(TRN_ICONA.sito, 16)} ${esc(t)} ›</a>`;
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
-  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
+  return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez !== undefined ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null } : null)); }
+function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, b.dataset.sez !== undefined ? { sezione: b.dataset.sez, voce: b.dataset.voce, vi: Number(b.dataset.vi), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null, az: b.dataset.az ? b.dataset.az.split(',').map(Number) : [], tr: b.dataset.tr ? b.dataset.tr.split(',').map(Number) : [] } : null)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -614,7 +614,9 @@ function trnApriCarta(id, cap, punto) {
         const ridotta = vc && sel && sel.length ? { punti: sel.map(i => vc.punti[i]), lezioni: (vc.lezioni || []).filter(i => sel.includes(i)).map(i => sel.indexOf(i)),
           citazioni: (vc.citazioni || []).filter(i => sel.includes(i)).map(i => sel.indexOf(i)) } : vc;
         corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}${dove}
-          ${vc ? `<div class="trn-appunti"><div class="sh-etichetta">Per questa carta</div>${trnVocePal({ ...ridotta, titolo: vc.titolo || zc.titolo })}</div>` : '<p class="trn-testo">Il resto è da ascoltare nella traccia.</p>'}`;
+          ${vc ? `<div class="trn-appunti"><div class="sh-etichetta">Per questa carta</div>${trnVocePal({ ...ridotta, titolo: vc.titolo || zc.titolo })}</div>` : ''}
+          ${trnLista('Azioni', (punto.az || []).map(i => az && az.azioni && az.azioni[i]).filter(Boolean))}${trnTermini((punto.tr || []).map(i => az && az.termini && az.termini[i]).filter(Boolean))}
+          ${!vc && !(punto.az || []).length && !(punto.tr || []).length ? '<p class="trn-testo">Il resto è da ascoltare nella traccia.</p>' : ''}`;
       } else
       corpo = `${meta ? `<div class="trn-meta">${meta}</div>` : ''}
         ${dove}
