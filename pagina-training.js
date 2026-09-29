@@ -211,12 +211,12 @@ function trnApriPercorso(id) {
   // per approfondire: da dove vengono le sue carte (i capitoli del manuale, le tracce del BSM, i libri), poi il manuale e le tracce
   // del settore di Studia con lo stesso nome; senza doppioni, prima il manuale
   const fonti = m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(Boolean)
-    .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id)));
-  const delSettore = (TRN.voci || []).filter(c => c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
+    .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id))).filter(v => !v || v.cert);   // solo il certificato (29/09)
+  const delSettore = (TRN.voci || []).filter(c => c.cert && c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
   // le tracce del BSM con il PAL nuovo e, dal 27/09, i libri con il PAL nuovo (la riga MB21 del libro; per i libri niente fase, quindi «Mentalità» non porta da sola)
-  const daMb21 = (TRN.voci || []).filter(c => (c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id))
-    || (c.tipo === 'libro' && c.mb21 && MB21Training.percorsiDaMb21({ mb21: c.mb21 }).includes(p.id)));
+  const daMb21 = (TRN.voci || []).filter(c => c.cert && ((c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id))
+    || (c.tipo === 'libro' && c.mb21 && MB21Training.percorsiDaMb21({ mb21: c.mb21 }).includes(p.id))));
   // prima le fonti delle carte, poi le tracce mandate dalla riga MB21, poi il resto del settore
   const tutteStudio = [...new Set([...fonti, ...daMb21, ...delSettore].filter(Boolean))].sort((a, b) => TRN_ORDINE.indexOf(a.tipo) - TRN_ORDINE.indexOf(b.tipo)
     || (a.tipo === 'manuale' ? parseInt(a.pagine, 10) - parseInt(b.pagine, 10) : 0));
