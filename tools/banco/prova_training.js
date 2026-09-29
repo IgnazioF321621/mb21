@@ -225,6 +225,20 @@ prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno tre tra
   assert.equal(pochi.filter(c => c.trabocchetto).length, 3);
 });
 
+prova('Frase «scegli quella completa»: con 3 sbagliate diventa una domanda a 4 risposte (una giusta), entra nel test; senza resta a voce; controllo delle alternative', () => {
+  const f = { id: 'q', tipo: 'frase', tema: 'x', davanti: 'Quanti nomi?', dietro: '200', sbagliate: ['100', '20', '2000'] };
+  const d = T.domanda(f, () => 0.5);
+  assert.equal(d.tipo, 'scelta'); assert.equal(d.testo, 'Quanti nomi?'); assert.equal(d.risposte.length, 4);
+  assert.equal(d.risposte.filter(r => r.giusta).length, 1); assert.equal(d.risposte.find(r => r.giusta).testo, '200');
+  const m = { ...mazzo, carte: [...mazzo.carte, f] };
+  assert.ok(T.pescaTest(m, {}, 100, () => 0.5).some(c => c.id === 'q'));
+  assert.deepEqual(T.controllaMazzo(m), []);
+  const male = (sb) => T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...f, sbagliate: sb }] });
+  assert.deepEqual(male(['100', '20']), ['q: servono 3 alternative sbagliate (max 400 caratteri)']);
+  assert.deepEqual(male(['100', '100', '20']), ['q: alternative uguali fra loro o alla giusta']);
+  assert.deepEqual(male(['200', '20', '30']), ['q: alternative uguali fra loro o alla giusta']);
+});
+
 prova('Una domanda: scena con le risposte in ordine sparso (la prima del mazzo è la giusta), vero o falso, frase con l\'invito a rispondere prima di girarla', () => {
   const d = T.domanda({ ...scena('x'), versioni: [{ scena: 'Uno', risposte: ['G', 'S1', 'S2'] }, { scena: 'Due', risposte: ['G2', 'T1', 'T2'] }] }, () => 0.99);
   assert.equal(d.testo, 'Due');
