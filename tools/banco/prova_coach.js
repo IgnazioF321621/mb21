@@ -56,7 +56,7 @@ prova('Quale chat: la telefonata, solo se ci hai parlato; Partner e Clienti con 
   for (const [m, e] of [['Avvio', 'Prodotti'], ['Ordine', 'Iscr+Ordine'], ['Counseling', 'Telefonate'], ['Team Meeting', null], [null, 'Lista nomi']])
     assert.equal(C.situazione('Appuntamento', m, 'Partner', e), null);
   // Consulenza prodotti: dopo Vendita o No Vendita, per ogni categoria e ogni tipo di consulenza
-  for (const [m, cat, e] of [['Demo', 'Prospect', 'Vendita'], ['Riordino', 'Cliente', 'No Vendita'], [null, undefined, 'Vendita'], ['Assistenza', 'Ex Partner/Cliente', 'No Vendita']])
+  for (const [m, cat, e] of [['Demo', 'Prospect', 'Vendita'], ['Riordino', 'Cliente', 'No Vendita'], [null, undefined, 'Vendita'], ['Presentazione', 'Ex Partner/Cliente', 'No Vendita']])
     assert.equal(C.situazione('Consulenza PRD', m, cat, e), 'consulenza');
   for (const e of ['Demo', 'Promo/Sconto', null]) assert.equal(C.situazione('Consulenza PRD', null, 'Cliente', e), null);   // gli esiti vecchi di Glide
   // stesso montatore per tutte; una situazione senza montatore: niente chat
