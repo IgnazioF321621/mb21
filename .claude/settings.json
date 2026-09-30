@@ -7,6 +7,7 @@
       "Bash(git commit:*)",
       "Bash(git diff:*)",
       "Bash(git status:*)",
+      "Bash(git apply --cached:*)",
       "Bash(supabase db query:*)",
       "Bash(python3:*)",
       "Bash(node:*)",
