@@ -479,6 +479,7 @@ prova('la persona vera: il nome dalla lista, le parole al femminile per una donn
   assert.equal(T.rpAlFemminile('È un imprenditore o un libero professionista'), "È un'imprenditrice o una libera professionista");
   assert.equal(T.rpAlFemminile('Un amico che lavora come dipendente; È un lavoratore dipendente'), "Un'amica che lavora come dipendente; Una lavoratrice dipendente".replace('Una lavoratrice', 'È una lavoratrice'));
   assert.equal(T.rpAlFemminile('Richiami un dipendente già sentito in passato; ci devo pensare da solo; tempo libero'), 'Richiami una dipendente già sentita in passato; ci devo pensare da sola; tempo libero');
+  assert.equal(T.rpAlFemminile("Maria è partito; si è scoraggiato; mi sento un po' perso; ne ho parlato con un amico; mi fermo qui; Un amico che lavora come dipendente"), "Maria è partita; si è scoraggiata; mi sento un po' persa; ne ho parlato con un amico; mi fermo qui; Un'amica che lavora come dipendente");
   const sc = (c, varianti) => ({ candidato: c, perche: 'p', varianti, risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }] });
   const conv = { colpi: 3, candidato: '{nome}', testa: [sc('Pronto?')], obiezioni: [sc('non ho tempo', [{}, { candidato: 'ho i bambini', mamma: true }]), sc('costa troppo'), sc('è piramidale')],
     coda: [sc('quando?')], uscite: [{ candidato: 'devo andare', ok: 'dimmi', perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'r' }, { testo: 'b', reazione: 'r' }] },
