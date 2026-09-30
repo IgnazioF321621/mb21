@@ -2568,7 +2568,7 @@ const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa 
 // poi, su una riga loro, quelli non andati (MB21Agenda.esitiInDueRighe). `attr`: data-esito o data-v; `classe`: quella del bottone scelto.
 function bottoniEsiti(bottoni, attuale, attr, classe) {
   return MB21Agenda.esitiInDueRighe(bottoni).map(riga => riga.map(f =>
-    `<button ${attr}="${esc(f)}" class="${attuale === f ? classe : ''}">${esc(f)}</button>`).join('')).map((riga, n) =>
+    `<button ${attr}="${esc(f)}" class="${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
 function bloccoEsiti(a, categoria, aperto = false) {
@@ -2898,7 +2898,7 @@ async function nuovoAppuntamento(opz = {}) {
     contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
     tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: opz.durata || 60, durataToccata: !!opz.durata, altra: false, portato: null,
-    spazio: opz.spazio || null,
+    spazio: opz.spazio || null, suCosa: [],   // «Su cosa lavorate?» (cantiere 48): i passi dell'incontro con un Partner, anche più d'uno
   };
   // il tipo chiesto (lo spazio da riempire: «Piano Marketing») torna appena si sceglie una persona che lo può avere
   const tipoVoluto = st.tipo;
@@ -2950,6 +2950,11 @@ async function nuovoAppuntamento(opz = {}) {
       }
       if (st.tipo) {
         h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))} <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        // Un incontro con un Partner: su cosa si lavora, anche più d'uno (le fasi del tipo; si ritrovano nell'appuntamento). Facoltativo.
+        const passi = A.suCosaPer(st.categoria, st.tipo, st.modalita);
+        st.suCosa = st.suCosa.filter(x => passi.includes(x));
+        if (passi.length) h += `<div class="campo"><label>Su cosa lavorate? <small>anche più d'uno</small></label><div class="ag-scelte" id="na-su-cosa">${passi.map(x =>
+          `<button type="button" data-passo="${esc(x)}" class="${st.suCosa.includes(x) ? 'scelto' : ''}">${esc(A.nomePasso(x))}</button>`).join('')}</div></div>`;
         h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
         const suoi = liberi.filter(x => x.tipo === st.tipo);   // i tuoi spazi liberi di questo tipo (MB Plan, 27/09)
         if (suoi.length) h += `<div class="campo"><label>I tuoi spazi liberi <small>tocca per usarne uno</small></label><div class="ag-scelte" id="na-liberi">${suoi.map(x => {
@@ -2992,6 +2997,12 @@ async function nuovoAppuntamento(opz = {}) {
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); disegna();
       };
+      velo.querySelectorAll('#na-su-cosa [data-passo]').forEach(b => { b.onclick = () => {
+        leggiCampi();
+        const x = b.dataset.passo;
+        st.suCosa = st.suCosa.includes(x) ? st.suCosa.filter(y => y !== x) : [...st.suCosa, x];
+        disegna();
+      }; });
       velo.querySelectorAll('[data-libero]').forEach(b => { b.onclick = () => {
         leggiCampi();
         const x = liberi.find(y => y.id === b.dataset.libero), o = MB21Spazi.orario(x);
@@ -3036,7 +3047,8 @@ async function nuovoAppuntamento(opz = {}) {
       const inizio = A.isoDaRoma(v.giorno, v.ora);
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + durata * 60000).toISOString(),
-        completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null };
+        completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null,
+        su_cosa: st.suCosa.length && A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).length ? A.fasiPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) : null };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
