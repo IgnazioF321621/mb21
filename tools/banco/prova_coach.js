@@ -343,4 +343,65 @@ prova('Il motore: il tocco sull\'obiezione si salva come elenco, «Sì» dell\'a
   assert.ok(f2.fumetti.includes('Succede. Ripassa la risposta del manuale prima di richiamare Anna.'));   // per «È Amway?» qui non c'è la carta
 });
 
+prova('Tentativi a vuoto di fila: al 2° «Telefono spento» o al 3° «No Risposta» il coach propone un altro canale, con le parole di Ignazio', () => {
+  assert.deepEqual(C.SOGLIA_VUOTI, { 'Telefono spento': 2, 'No Risposta': 3 });
+  assert.equal(C.vuotiDiFila(['Telefono spento', 'Telefono spento', 'Relazione', 'Telefono spento'], 'Telefono spento'), 2);   // di fila: si ferma al primo diverso
+  assert.equal(C.vuotiDiFila(['No Risposta', 'Telefono spento'], 'No Risposta'), 1);
+  assert.equal(C.vuotiDiFila([], 'No Risposta'), 0);
+  assert.equal(C.altroCanale('Telefono spento', 1, 'Mario'), null);
+  assert.equal(C.altroCanale('Telefono spento', 2, 'Mario'), 'Il telefono di Mario risulta spento per due volte di fila: cerca un altro canale.');
+  assert.equal(C.altroCanale('No Risposta', 2, 'Mario'), null);
+  assert.equal(C.altroCanale('No Risposta', 3, 'Mario'), 'Mario non risponde per tre volte di fila: cerca un altro canale.');
+  assert.equal(C.altroCanale('Telefono spento', 9, 'Mario'), 'Il telefono di Mario risulta spento per 9 volte di fila: cerca un altro canale.');
+  assert.equal(C.altroCanale('Richiamare', 5, 'Mario'), null);
+  assert.deepEqual(C.CANALI, ['Messaggio', 'Di persona', 'Chiedo a chi me’ha dato'.replace('me’ha', 'me l’ha'), 'Lo metto da parte']);
+});
+
+prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (Messaggio e Di persona → Nuovo appuntamento, «Chiedo…» → cosa da fare, «Lo metto da parte» → Quando risentirlo?)', async () => {
+  const vm = require('node:vm'), fs = require('node:fs');
+  const chiamate = [];
+  const ctx = { MB21Coach: C, MB21Agenda: { spostaGiorno: (g, n) => `${g}+${n}` }, MB21Coda: { oggiRoma: () => '2026-09-30' }, ST: { utente: { id: 'io' } },
+    esc: x => x, ic: () => '', console,
+    mostraToast: t => chiamate.push(['toast', t]),
+    nuovoAppuntamento: async o => { chiamate.push(['appuntamento', o.titolo, o.modalita, o.tipo, o.giorno, o.contatto.id, o.userId]); return { id: 'n' }; },
+    chiediRientro: async (...a) => { chiamate.push(['rientro', ...a]); return '2026-10-20'; } };
+  let esiti = [];
+  ctx.supa = { from: t => { const q = { t, _ins: null,
+    select() { return q; }, eq() { return q; }, not() { return q; }, limit() { return q; },
+    order() { return q; }, insert(r) { chiamate.push(['insert', t, r]); q._ins = true; return q; },
+    then(res) { res(t === 'azioni' ? { data: esiti.map(esito => ({ esito })), error: null } : q._ins ? { data: null, error: null } : { data: [{ ordine: 7 }], error: null }); } }; return q; } };
+  ctx.dbq = (_, p) => Promise.resolve(p);
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(require('node:path').join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  const e = { id: 'az1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', contatti: { nome: 'Mario Rossi', categoria: 'Prospect' } };
+  let scelta, testo;
+  ctx.recitaCoach = async (_e, _es, passi) => { testo = passi[0].c; return [{ chiave: 'canale', risposta: scelta }]; };
+  // un solo «Telefono spento»: niente
+  esiti = ['Telefono spento', 'Relazione'];
+  assert.equal(await ctx.chiediRiflessione(e, 'Telefono spento'), null);
+  assert.equal(testo, undefined);
+  // due di fila: il coach parla
+  esiti = ['Telefono spento', 'Telefono spento'];
+  scelta = 'Messaggio'; await ctx.chiediRiflessione(e, 'Telefono spento');
+  assert.equal(testo, 'Il telefono di Mario risulta spento per due volte di fila: cerca un altro canale.');
+  assert.deepEqual(chiamate.pop(), ['appuntamento', 'Messaggio · Mario Rossi', 'Messaggio', 'Contatto', '2026-09-30+1', 'c1', 'u1']);
+  scelta = 'Di persona'; await ctx.chiediRiflessione(e, 'Telefono spento');
+  assert.deepEqual(chiamate.pop().slice(0, 4), ['appuntamento', 'Di persona · Mario Rossi', 'Presenza', 'Contatto']);
+  scelta = 'Chiedo a chi me l’ha dato'; await ctx.chiediRiflessione(e, 'Telefono spento');
+  assert.deepEqual(JSON.parse(JSON.stringify(chiamate.splice(0))), [['insert', 'cose_da_fare', { user_id: 'u1', contatto_id: 'c1', testo: 'Chiedere di Mario a chi ti ha dato il nome', giorno: '2026-09-30+1', scala: 'giorno', ordine: 8 }], ['toast', 'Te la trovi in MB Plan, domani']]);
+  scelta = 'Lo metto da parte'; await ctx.chiediRiflessione(e, 'Telefono spento');
+  assert.deepEqual(chiamate.pop(), ['rientro', 'c1', 'Mario Rossi', 'Messo da parte', 20]);
+  // chiusa senza scegliere: non succede altro
+  scelta = undefined; ctx.recitaCoach = async () => null; chiamate.length = 0;
+  assert.equal(await ctx.chiediRiflessione(e, 'Telefono spento'), null);
+  assert.deepEqual(chiamate, []);
+  // No Risposta: servono tre
+  scelta = 'Messaggio'; ctx.recitaCoach = async (_e, _es, passi) => { testo = passi[0].c; return [{ chiave: 'canale', risposta: scelta }]; };
+  testo = undefined; esiti = ['No Risposta', 'No Risposta']; await ctx.chiediRiflessione(e, 'No Risposta'); assert.equal(testo, undefined);
+  esiti = ['No Risposta', 'No Risposta', 'No Risposta']; await ctx.chiediRiflessione(e, 'No Risposta'); assert.equal(testo, 'Mario non risponde per tre volte di fila: cerca un altro canale.');
+  // senza rete (errore nella lettura) o per un Messaggio/Presenza: niente
+  testo = undefined; await ctx.chiediRiflessione({ ...e, modalita: 'Messaggio' }, 'Telefono spento'); assert.equal(testo, undefined);
+  await ctx.chiediRiflessione({ ...e, contatto_id: null }, 'Telefono spento'); assert.equal(testo, undefined);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
