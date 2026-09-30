@@ -124,6 +124,24 @@ function quandoBreve(quando) {
   return `il ${giorno.split('-').reverse().join('/')}`;
 }
 
+// Messaggio per entrare, uno solo per tutti i casi (Ignazio 30/09: «qualcosa di omnicomprensivo»): chi entra la prima volta (link
+// all'email, poi sceglie la sua password) e chi la password ce l'ha già; dice anche che la password è personale, coppie comprese.
+// Usato dopo «Approva» e dal tasto «Manda il messaggio per entrare» di ogni utente che può entrare.
+function messaggioPerEntrare(nomeCognome, email) {
+  const nome = String(nomeCognome || '').trim().split(/\s+/)[0];
+  const indirizzo = `${location.origin}${location.pathname}`;
+  return `${nome ? 'Ciao ' + nome + ', ' : ''}MB21 è pronta per te. Apri dal telefono ${indirizzo} e scrivi la tua email${email ? ' (' + email + ')' : ''}.
+• Se è la prima volta che entri: tocca «Mandami il link», apri l'email su questo telefono e scegli la tua password.
+• Se la password ce l'hai già: scrivila e tocca «Entra».
+La password è personale: ognuno ha la sua, anche in coppia con lo stesso codice Amway.`;
+}
+function foglioPerEntrare(nomeCognome, email, telefono, titolo) {
+  foglioLinkInvito({ link: `${location.origin}${location.pathname}`, nome: nomeCognome, telefono: MB21Lista.componiTelefono('+39', telefono || ''),
+    titolo: titolo || `${ic('collega')} Messaggio per entrare · ${nomeCognome}`,
+    spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): vale sia se entra per la prima volta sia se ha già la sua password.',
+    messaggio: messaggioPerEntrare(nomeCognome, email) });
+}
+
 function rigaUtenteAdmin(u) {
   const D = MB21Dashboard, oggi = MB21Coda.oggiRoma(), io = u.id === ST.utente.id, aperto = AD.aperti.has(u.id);
   const chiPaga = u.abbonamento_con && AD.utenti.find(x => x.id === u.abbonamento_con);
@@ -139,6 +157,7 @@ function rigaUtenteAdmin(u) {
     <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
     <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
     <small>${(AD.dispositivi[u.id] || []).length ? `${ic('avvisi')} Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : ic('avvisi-spenti') + ' Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
+    ${u.accesso_attivo && !io ? `<button class="primario" data-entra-ut="${esc(u.id)}" style="margin:8px 0">${ic('collega')} Manda il messaggio per entrare</button>` : ''}
     <button class="link" data-modifica-ut="${esc(u.id)}">${ic('modifica')} Modifica</button>
     <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">${ic('elimina')} Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
@@ -419,10 +438,7 @@ function collegaAdmin() {
     AD.aperti.add(data);
     await apriAdmin();
     // Avviso già pronto (Ignazio 17/09: dopo «Approva» il passaggio successivo non c'era): numero del modulo con +39 se scritto senza prefisso
-    const app = `${location.origin}${location.pathname}`;
-    foglioLinkInvito({ link: app, nome: r.nome_cognome, telefono: MB21Lista.componiTelefono('+39', r.telefono || ''),
-      titolo: `${ic('fatto')} Avvisa ${r.nome_cognome}`, spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): apre l\'app ed entra con la password scelta nel modulo.',
-      messaggio: `Ciao ${r.nome_cognome.split(' ')[0]}, la tua richiesta per MB21 è approvata. Apri ${app} : entri direttamente. Se ti chiede di entrare, usa email e password della registrazione.` });
+    foglioPerEntrare(r.nome_cognome, r.email, r.telefono, `${ic('fatto')} Avvisa ${r.nome_cognome}`);
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
   app.querySelectorAll('[data-rifiuta]').forEach(b => b.onclick = async () => {
@@ -456,6 +472,10 @@ function collegaAdmin() {
     AD.aperti.add(u.id);
     await apriAdmin();
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
+  });
+  app.querySelectorAll('[data-entra-ut]').forEach(b => b.onclick = () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.entraUt);
+    if (u) foglioPerEntrare(nomeDi(u), u.email, u.telefono);
   });
   app.querySelectorAll('[data-modifica-ut]').forEach(b => b.onclick = () => foglioNuovoUtente(AD.utenti.find(x => x.id === b.dataset.modificaUt)));
   su('ad-scegli', () => document.getElementById('ad-file').click());
