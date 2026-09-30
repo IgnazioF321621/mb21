@@ -174,7 +174,7 @@
       const percorsi = [];
       for (const p of l.percorsi) {
         const mazzo = perId[p.id] || null, stato = mazzo ? statoPercorso(mazzo, stati, test, oggi) : null, prima = percorsi[percorsi.length - 1];
-        const suo = !prima || !!(prima.stato && prima.stato.tutteViste) || !!(stato && stato.viste);
+        const suo = !prima || !!(prima.stato && (prima.stato.tutteViste || prima.stato.superato)) || !!(stato && stato.viste);   // superato = anche col test d'ingresso, senza aver visto le carte
         percorsi.push({ ...p, pronto: !!mazzo, mazzo, stato, aperto: aperto && suo, prima: prima ? prima.titolo : null });
       }
       const superato = percorsi.length > 0 && percorsi.every(p => p.stato && p.stato.superato);
