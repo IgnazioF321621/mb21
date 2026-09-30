@@ -400,4 +400,21 @@ prova('la conversazione: ogni errore ha il suo rimedio e lo scambio può avere p
   assert.equal(conv.scambi[0].candidato, undefined);                 // l'originale non si tocca
 });
 
+prova('la conversazione: il carattere cambia le frasi, i passi falsi che regge e l\'umore di partenza', () => {
+  const sc = { candidato: 'base', perche: 'p', risposte: [{ testo: 'g', giusta: true }],
+    varianti: [{}, { candidato: 'per tutti' }, { candidato: 'di fretta', carattere: ['fretta'] }, { candidato: 'dritto', carattere: ['schietto', 'diffidente'] }] };
+  const conv = { colpi: 3, scambi: [sc] };
+  const c = (car, r) => T.rpNuova(conv, () => r, car).conv.scambi[0].candidato;
+  assert.equal(c('fretta', 0.99), 'di fretta');                        // se ci sono frasi per il carattere, si pesca fra quelle
+  assert.equal(c('diffidente', 0), 'dritto');
+  assert.ok(['base', 'per tutti'].includes(c('cordiale', 0.6)));       // senza frasi sue: fra quelle per tutti
+  assert.ok(['base', 'per tutti'].includes(c(undefined, 0.99)));
+  assert.equal(T.rpNuova(conv, null, 'schietto').conv.colpi, 2);
+  assert.equal(T.rpNuova(conv, null, 'cordiale').conv.colpi, 4);
+  assert.equal(T.rpUmore(T.rpNuova(conv, null, 'cordiale')), 'cordiale');
+  assert.equal(T.rpUmore(T.rpNuova(conv, null, 'schietto')), 'un po\' freddo');
+  assert.equal(T.rpUmoreN({ colpi: 2, base: 1 }), 2);                  // mai oltre l'ultimo umore
+  assert.deepEqual(T.CARATTERI.map(x => x.livello), ['Facile', 'Media', 'Media', 'Difficile']);
+});
+
 console.log(`\n${ok} prove superate`);
