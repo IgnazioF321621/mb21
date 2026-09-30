@@ -76,6 +76,8 @@ function disegnaTraining() {
       <div><b>Allenamento a coppia</b><small>⚠️ Per ora lo vedi solo tu · Con il tuo sponsor o il tuo upline, di persona o al telefono: uno ascolta, l'altro risponde, poi vi scambiate.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-voce style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('audio', 20)}</span>
       <div><b>Allenati a voce</b><small>⚠️ Per ora lo vedi solo tu · Col cronometro: uno spunto da dire con parole tue e un'obiezione a sorpresa, in 3, 5 o 10 minuti.</small></div><span class="trn-freccia">›</span></button>` : ''}
+    ${eAdmin() && trnTutteLeConversazioni().length ? `<button class="trn-riga" data-proverp style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('report', 20)}</span>
+      <div><b>Le prove del role play</b><small>⚠️ Per ora lo vedi solo tu · Quante telefonate, quante arrivano in fondo, dove si sbaglia di più.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
@@ -85,6 +87,7 @@ function disegnaTraining() {
   app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = trnScegliConversazione);
   app.querySelectorAll('[data-coppia]').forEach(b => b.onclick = trnCoppia);
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = trnAllenatiAVoce);
+  app.querySelectorAll('[data-proverp]').forEach(b => b.onclick = trnProveRp);
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -296,6 +299,33 @@ function trnSeduta(modo) {
   scegli();
 }
 const trnCoppia = () => trnSeduta('coppia'), trnAllenatiAVoce = () => trnSeduta('voce');
+// Le prove del role play (solo Admin): cosa c'è in `training_prove_rp` (una riga per telefonata finita, dell'Admin; quando i partner veri proveranno, anche le loro):
+// per conversazione e per carattere quante prove, quante arrivano in fondo, quante volte si aggancia chi esce, e dove si sbaglia di più (il nome dello scambio)
+async function trnProveRp() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Le prove del role play</h3><p class="trn-prova">⚠️ Per ora lo vedi solo tu.</p><div id="trn-pr-corpo"><p class="sotto">Un momento…</p></div><button class="link" id="trn-pr-no">Chiudi</button></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  velo.querySelector('#trn-pr-no').onclick = () => velo.remove();
+  const { data, error } = await dbq('prove del role play', supa.from('training_prove_rp').select('conversazione, carattere, esito, agganciato, scambi, passi_falsi, sbagliati').order('creata_il', { ascending: false }).limit(2000));
+  const corpo = velo.querySelector('#trn-pr-corpo');
+  if (error) { corpo.innerHTML = '<p class="sotto">Non riesco a leggerle adesso: riprova.</p>'; return; }
+  const righe = data || [];
+  if (!righe.length) { corpo.innerHTML = '<p class="sotto">Ancora nessuna prova: appena finisci una telefonata compare qui.</p>'; return; }
+  const somma = (chiave, etichetta) => {
+    const g = {};
+    righe.forEach(r => { const k = etichetta(r[chiave]); const x = g[k] || (g[k] = { n: 0, ok: 0, agg: 0, falsi: 0 }); x.n++; if (r.esito === 'ok') x.ok++; if (r.agganciato) x.agg++; x.falsi += r.passi_falsi; });
+    return Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, x]) => `<div class="trn-esito ${x.ok === x.n ? 'si' : 'no'}"><b>${esc(k)}</b>${x.n} ${x.n === 1 ? 'prova' : 'prove'} · ${x.ok} ${x.ok === 1 ? 'arrivata' : 'arrivate'} in fondo · ${x.agg} ${x.agg === 1 ? 'agganciata' : 'agganciate'} · ${(x.falsi / x.n).toFixed(1).replace('.', ',')} passi falsi in media</div>`).join('');
+  };
+  const sbagli = {};
+  righe.forEach(r => (r.sbagliati || []).forEach(id => { const k = typeof id === 'number' ? `scambio ${id} (prove vecchie)` : String(id); sbagli[k] = (sbagli[k] || 0) + 1; }));
+  const top = Object.entries(sbagli).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const car = k => (MB21Training.rpCarattere(k) || {}).nome || 'senza carattere';
+  corpo.innerHTML = `<h4 class="trn-rp-manuale">Per conversazione</h4>${somma('conversazione', k => k)}
+    <h4 class="trn-rp-manuale">Per carattere</h4>${somma('carattere', car)}
+    <h4 class="trn-rp-manuale">Dove si sbaglia di più</h4>${top.length ? top.map(([k, n]) => `<div class="trn-esito no"><b>${esc(k)}</b>${n} ${n === 1 ? 'volta' : 'volte'}</div>`).join('') : '<p class="sotto">Nessun passo falso registrato.</p>'}`;
+}
 // La prima telefonata del partner nuovo (solo Admin, dal passo «Role Play» di «Il mio avvio»): il mazzo «I primi passi» porta una conversazione semplice, con uno della sua lista
 async function trnProvaTelefonata() {
   const { data, error } = await dbq('la prima telefonata', supa.from('coach_batterie').select('batteria').eq('situazione', 'carte_primi_passi').maybeSingle());
@@ -892,7 +922,7 @@ function trnConversazione(convs) {
   // solo per l'Admin: com'è andata ogni prova (tabella training_prove_rp), per vedere dove si sbaglia di più quando arriveranno i partner
   const registra = () => {
     if (!eAdmin() || !ST.utente) return;
-    const sbagliati = [...new Set(st.giro.filter(g => !g.giusta).map(g => g.scambio + 1))];
+    const sbagliati = [...new Set(st.giro.filter(g => !g.giusta).map(g => (cv.scambi[g.scambio] && cv.scambi[g.scambio].id) || g.scambio + 1))];   // il nome dello scambio («tempo»), perché a ogni telefonata l'ordine cambia
     dbq('training: prova conversazione', supa.from('training_prove_rp').insert({ user_id: ST.utente.id, conversazione: cv.id, carattere: st.car,
       esito: st.fine === 'ok' ? 'ok' : 'chiusa', agganciato: !!st.agganciato, scambi: st.i, passi_falsi: st.giro.filter(g => !g.giusta).length, sbagliati }));
   };
