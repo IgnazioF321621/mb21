@@ -2334,6 +2334,8 @@ const vediTutti = () => PS.scelto === 'tutti';
 const guardoAltri = () => !!PS.scelto;
 const visto = () => (PS.scelto && !vediTutti() && PS.persone.find(p => p.id === PS.scelto)) || ST.utente;   // con «Tutti»: sé stesso, non usarlo
 const idVisti = () => (vediTutti() ? PS.persone.map(p => p.id) : [visto().id]);
+// { id utente: codice Amway }: chi ha lo stesso codice (la coppia) conta VPP e VPG di Amway una volta sola in «Tutti»
+const codiciDi = persone => Object.fromEntries((persone || PS.persone).filter(p => p.partner_id).map(p => [p.id, p.partner_id]));
 const nomeVisto = () => (vediTutti() ? 'Tutti' : nomeDi(visto()));
 const aNome = () => (guardoAltri() && !vediTutti() ? ` · ${nomeDi(visto())}` : '');   // nei titoli dei fogli: a nome di chi si scrive
 
@@ -3322,7 +3324,7 @@ function disegnaStorico(velo, dati) {
   const suoiOb = dati.obiettivi.filter(o => chi.utenti.includes(o.user_id));
   const sv = C.segniVitali({ giorni: suoiGiorni, oggi, segniAl: chi.utenti.includes(io) ? SL.segniAl : null,
     // più utenti (la coppia): gli obiettivi si uniscono come fa «Tutti», ognuno con le sue partenze
-    obiettivi: chi.utenti.length > 1 ? D.unisciPartner(D.mesiDaGiorni(suoiGiorni, C.CAMPI_STATO), suoiOb, oggi.slice(0, 8) + '01').obiettivi : suoiOb });
+    obiettivi: chi.utenti.length > 1 ? D.unisciPartner(D.mesiDaGiorni(suoiGiorni, C.CAMPI_STATO), suoiOb, oggi.slice(0, 8) + '01', codiciDi(dati.persone)).obiettivi : suoiOb });
   // Niente crossline (Ignazio 25/09): le linee sono quelle **sotto la persona scelta**, mai le squadre parallele.
   // Cambiando persona in cima cambiano anche le linee sotto.
   const ramo = MB21Mappa.ramoDi(dati.squadra, chi.partner_id);
@@ -3421,7 +3423,7 @@ async function caricaDatiCheck() {
     CK.core = {};   // il Modulo Core di ogni mese guardato (Leader Core), letto al bisogno
     // «Tutti»: check di tutti insieme, obiettivi sommati con le partenze calcolate per ognuno (dashboard.js → unisciPartner)
     CK.obiettivi = vediTutti()
-      ? MB21Dashboard.unisciPartner(MB21Dashboard.mesiDaGiorni(giorni, ['bbs', 'wes', 'cep']), ob.data, MB21Coda.oggiRoma().slice(0, 8) + '01').obiettivi
+      ? MB21Dashboard.unisciPartner(MB21Dashboard.mesiDaGiorni(giorni, ['bbs', 'wes', 'cep']), ob.data, MB21Coda.oggiRoma().slice(0, 8) + '01', codiciDi()).obiettivi
       : ob.data;
     CK.giorni = giorni; CK.wes = wes.data.map(w => w.data); CK.di = di;
   }

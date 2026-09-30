@@ -130,9 +130,12 @@
   // Partner Select «Tutti» (cantiere 15): somma dei mesi di più partner. checkMesi e obiettivi hanno `user_id`.
   // Le partenze di BBS/WES/CEP si calcolano per ogni partner e si sommano già scritte: la catena di chi non ha
   // la partenza salvata non si mescola con quella di chi ce l'ha. Restituisce { checkMesi, obiettivi } come per un partner.
-  const CAMPI_SOMMA_OB = [...OBIETTIVI, 'vpp_amway', 'vpg_amway'];
-  function unisciPartner(checkMesi, obiettivi, finoA) {
-    const cm = {}, ob = {};
+  // VPP e VPG del file Amway sono del CODICE, non della persona: marito e moglie (stesso `partner_id`) hanno lo stesso numero
+  // su tutti e due gli account e si contano una volta sola. `partnerDi` = { user_id: partner_id } (facoltativo).
+  const CAMPI_AMWAY = ['vpp_amway', 'vpg_amway'];
+  const CAMPI_SOMMA_OB = [...OBIETTIVI];
+  function unisciPartner(checkMesi, obiettivi, finoA, partnerDi) {
+    const cm = {}, ob = {}, amway = {};
     const riga = (dove, mese) => dove[mese] || (dove[mese] = { mese });
     for (const c of checkMesi) {
       const r = riga(cm, c.mese);
@@ -145,6 +148,12 @@
     for (const o of obiettivi) {
       const r = riga(ob, o.mese);
       for (const k of CAMPI_SOMMA_OB) if (o[k] != null && o[k] !== '') r[k] = n(r[k]) + n(o[k]);
+      const codice = (partnerDi && partnerDi[o.user_id]) || o.user_id;
+      for (const k of CAMPI_AMWAY) {
+        if (o[k] == null || o[k] === '') continue;
+        const chiave = o.mese + '|' + k + '|' + codice;
+        if (!(chiave in amway)) { amway[chiave] = n(o[k]); r[k] = n(r[k]) + n(o[k]); }
+      }
     }
     const utenti = new Set([...checkMesi, ...obiettivi].map(x => x.user_id));
     for (const u of utenti) {
