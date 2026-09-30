@@ -1647,6 +1647,11 @@
   .ck-lc1 .voci div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px dashed var(--linea); color: var(--testo); }
   .ck-lc1 .voci div.ok { color: var(--ok); }
   .ck-lc1 .voci div span:last-child { color: var(--testo-soft); white-space: nowrap; }
+  .ck-lc1 .voci .lc-apri { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; text-decoration: underline dotted; }
+  .ck-lc1 .voci .lc-scelta { display: block; padding: 6px 0 8px; }
+  .ck-lc1 .voci .lc-scelta small { display: block; color: var(--testo-soft); font-size: 12px; margin-bottom: 4px; }
+  .ck-lc1 .voci .lc-scelta button { border: 1px solid var(--bordo); background: none; color: var(--testo); border-radius: var(--raggio-pill); padding: 4px 12px; margin: 0 6px 6px 0; font: inherit; font-size: 13px; }
+  .ck-lc1 .voci .lc-scelta button.su { border-color: var(--ok); color: var(--ok); font-weight: 600; }
   .ck-lc1 .luci { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0 4px; }
   .ck-lc1 .luce { --luce: var(--grigio); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 8px 4px 6px; min-width: 0;
     border-radius: var(--raggio-bottone); background: var(--superficie-2); color: var(--grigio); font-size: 13px; font-weight: 700; }
@@ -3366,7 +3371,7 @@ function disegnaStorico(velo, dati) {
   velo.querySelectorAll('[data-slchi]').forEach(x => x.onclick = () => { SL.chi = x.dataset.slchi; disegnaStorico(velo, dati); velo.querySelector('.foglio').scrollTop = 0; });
 }
 
-const CK = { tipo: 'mese', periodo: null, meseCard: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperti: new Set(), aperta: null, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
+const CK = { tipo: 'mese', periodo: null, meseCard: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperti: new Set(), aperta: null, lcLinee: [], lcAperto: false, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
 // I gruppi del Check chiusi (Volume, Azione, Segni Vitali N21, Crescita) si ricordano sul telefono: è una comodità
 // di chi guarda, quindi solo qui; se la memoria del telefono non risponde, si parte tutti aperti
 function leggiGruppiChiusi() {
@@ -3390,7 +3395,7 @@ async function caricaDatiCheck() {
       giorni.push(...data);
       if (data.length < 1000) break;
     }
-    const [ob, wes, bbs, segniAl, biglietti, cep, sq, vol, nonOra, pm] = await Promise.all([
+    const [ob, wes, bbs, segniAl, biglietti, cep, sq, vol, nonOra, pm, lcl] = await Promise.all([
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
       dbq('date dei WES', supa.from('wes').select('data, creato_il').order('data')),
       dbq('date dei BBS', supa.from('bbs').select('data, creato_il').order('data')),
@@ -3403,6 +3408,7 @@ async function caricaDatiCheck() {
       vediTutti() ? null : dbq('volumi per i livelli', supa.from('volumi_mese').select('partner_id, mese, vpp, bonus, al_livello_successivo, dimensioni_gruppo').gte('mese', 202609)),
       vediTutti() ? null : dbq('«Non ora» dei passi', supa.from('passi_non_ora').select('partner_id, mese').eq('user_id', visto().id)),
       vediTutti() ? null : dbq('Piani Marketing del ramo', supa.rpc('pm_del_ramo', { da: 202609 })),   // «15 Planner» (27/09)
+      vediTutti() ? null : dbq('linee a Leaders Club', supa.from('linee_leaders_club').select('partner_id, mese').eq('user_id', visto().id)),   // segnate dall'Admin (30/09)
     ]);
     CK.segniAl = segniAl;
     if (ob.error || wes.error || bbs.error) throw ob.error || wes.error || bbs.error;
@@ -3410,6 +3416,7 @@ async function caricaDatiCheck() {
     CK.lc1 = vediTutti() ? null : { biglietti, cep };
     CK.amway = sq && vol && !sq.error && !vol.error ? { squadra: sq.data, volumi: vol.data } : null;   // senza: i livelli non si vedono
     CK.nonOra = nonOra && !nonOra.error ? nonOra.data : [];   // «Non ora» dei prossimi passi (27/09): senza, i passi ci sono lo stesso
+    CK.lcLinee = lcl && !lcl.error ? lcl.data : [];   // «di cui 2 a Leaders Club» (30/09): senza, la voce resta «da segnare»
     CK.pm = pm && !pm.error ? pm.data || [] : null;   // senza: «15 Planner» dice «non lo so»
     CK.core = {};   // il Modulo Core di ogni mese guardato (Leader Core), letto al bisogno
     // «Tutti»: check di tutti insieme, obiettivi sommati con le partenze calcolate per ognuno (dashboard.js → unisciPartner)
@@ -3540,9 +3547,14 @@ function lc1Html(oggi) {
     ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}
     ${lv ? `<div class="livelli-t">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ''}</div>${lv.righe.map(r => { const ap = CK.aperti.has(r.chiave); return `
     <div class="livello ${ap ? 'aperto' : ''} ${r.fatto ? 'ok' : ''}"><button class="sez core ${r.fatto ? 'ok' : ''}" data-gradino="${r.chiave}" aria-expanded="${ap ? 'true' : 'false'}"><b>${r.fatto ? '✓ ' : ''}${esc(r.titolo)}${ap ? '' : `<small>${esc(r.sotto)}</small>`}</b><span><span class="st">${esc(r.stato)}</span><span class="apri">${ap ? '⌄' : '›'}</span></span></button>
-    ${ap ? `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci)}${passiHtml(r, lv.mese)}` : ''}</div>`; }).join('')}` : ''}</div>`;
+    ${ap ? `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci, lv)}${passiHtml(r, lv.mese)}` : ''}</div>`; }).join('')}` : ''}</div>`;
 }
-const vociHtml = voci => `<div class="voci">${voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>`;
+const vociHtml = (voci, lv) => `<div class="voci">${voci.map(v => {
+  const t = `${v.fatto ? '✓ ' : ''}${esc(v.testo)}`;
+  // «di cui 2 a Leaders Club»: l'Admin apre l'elenco delle linee e spunta chi lo è (30/09); gli altri leggono solo il conto
+  if (v.chiave === 'lineeLc' && lv && lv.segnaLc) return `<div class="${v.fatto ? 'ok' : ''}"><button class="lc-apri" data-lcapri aria-expanded="${CK.lcAperto}">${t} ${CK.lcAperto ? '⌄' : '›'}</button><span>${esc(v.stato)}</span></div>${CK.lcAperto ? `<div class="lc-scelta"><small>Chi è già Leaders Club, in questo mese</small>${lv.linee.map(x => { const su = CK.lcLinee.some(y => y.partner_id === x.partner_id && y.mese === lv.mese); return `<button class="${su ? 'su' : ''}" data-lc="${esc(x.partner_id)}" data-mese="${lv.mese}" aria-pressed="${su}">${su ? '✓ ' : ''}${esc(x.nome)}</button>`; }).join('') || '<small>Nessuna linea attiva</small>'}</div>` : ''}`;
+  return `<div class="${v.fatto ? 'ok' : ''}"><span>${t}</span><span>${esc(v.stato)}</span></div>`;
+}).join('')}</div>`;
 
 // «I prossimi passi» del livello (Ignazio 27/09): al massimo 2, coi nomi; «Non ora» su una linea la toglie per questo mese
 function passiHtml(r, mese) {
@@ -3591,9 +3603,10 @@ function livelliCheck(l, coreFatto) {
     mesi21++;
   }
   const lv = MB21Check.livelli({ core: coreFatto, bonus: mio && mio.bonus != null ? Number(mio.bonus) : null, linee, cep: segni ? segni.cep : null,
-    mancaMio: mio ? mio.al_livello_successivo : null, nonOra, planner, iscritti: mio ? iscritti : null,
+    mancaMio: mio ? mio.al_livello_successivo : null, nonOra, lcLinee: (CK.lcLinee || []).filter(x => x.mese === mese).map(x => x.partner_id), planner, iscritti: mio ? iscritti : null,
     totale: mio && mio.dimensioni_gruppo != null ? Number(mio.dimensioni_gruppo) : null, bbs: segni ? segni.bbs : null, wes: segni ? segni.wes : null, mesi21 });
   lv.mese = mese;
+  lv.segnaLc = ST.utente.ruolo === 'Admin';   // le linee a Leaders Club le segna solo l'Admin (30/09)
   return lv;
 }
 
@@ -3714,6 +3727,18 @@ function collegaCheck() {
     disegnaCheck();
   });
   su('ck-mese-dopo', () => meseCard(1));
+  // le linee a Leaders Club, a mano dell'Admin (30/09): il tocco apre l'elenco, ogni nome si spunta e si toglie
+  app.querySelectorAll('[data-lcapri]').forEach(b => b.onclick = () => { CK.lcAperto = !CK.lcAperto; disegnaCheck(); });
+  app.querySelectorAll('[data-lc]').forEach(b => b.onclick = async () => {
+    const pid = b.dataset.lc, mese = Number(b.dataset.mese), uid = visto().id, c = CK.lcLinee.some(x => x.partner_id === pid && x.mese === mese);
+    b.disabled = true;
+    const { error } = c
+      ? await dbq('togli Leaders Club', supa.from('linee_leaders_club').delete().eq('user_id', uid).eq('partner_id', pid).eq('mese', mese))
+      : await dbq('segna Leaders Club', supa.from('linee_leaders_club').insert({ user_id: uid, partner_id: pid, mese }));
+    if (error) { b.disabled = false; mostraToast('Non riesco a salvare: riprova'); return; }
+    CK.lcLinee = c ? CK.lcLinee.filter(x => !(x.partner_id === pid && x.mese === mese)) : [...CK.lcLinee, { partner_id: pid, mese }];
+    disegnaCheck();
+  });
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
 }
 

@@ -390,7 +390,7 @@
   const SCALA = [3, 6, 9, 12, 15, 18, 21];
   const scalino = b => SCALA.find(x => x > (Number(b) || 0)) || null;
   const PASSI = 2;
-  function livelli({ core, bonus, linee, cep, mancaMio, nonOra, planner = null, iscritti = null, totale = null, bbs = null, wes = null, mesi21 = null }) {
+  function livelli({ core, bonus, linee, cep, mancaMio, nonOra, planner = null, iscritti = null, totale = null, bbs = null, wes = null, mesi21 = null, lcLinee = null }) {
     const salta = new Set(nonOra || []);
     const noto = bonus != null;
     const attive = (linee || []).filter(x => Number(x.vpp) > 0);
@@ -408,7 +408,9 @@
       if (P.linee) {
         const al = noto ? conBonus(P.linee.al) : null;
         voce('linee', `${P.linee.quante} linee al ${P.linee.al}%`, noto && al >= P.linee.quante, noto ? `${al} su ${P.linee.quante}` : '—');
-        voce('lineeLc', `di cui ${P.linee.lc} a Leaders Club`, false, 'da segnare');
+        // a Leaders Club: le segna a mano l'Admin (tabella linee_leaders_club, 30/09); `lcLinee` = i codici già segnati
+        const lc = (lcLinee || []).filter(id => (linee || []).some(x => x.partner_id === id)).length;
+        voce('lineeLc', `di cui ${P.linee.lc} a Leaders Club`, lc >= P.linee.lc, lc ? `${lc} su ${P.linee.lc}` : 'da segnare');
       }
       if (P.mesi21) voce('mesi21', `${P.mesi21} mesi di fila al 21%`, mesi21 != null && mesi21 >= P.mesi21, mesi21 == null ? 'non lo so' : `${mesi21} su ${P.mesi21}`);
       const fatto = voci.every(v => v.fatto);
@@ -468,7 +470,7 @@
         : `Bonus al ${formato(bonus, 0)}%: il ${obiettivo}% arriva con la crescita delle linee`;
     }
     const fatti = righe.filter(r => r.fatto);
-    return { righe, doveSei: fatti.length ? fatti[fatti.length - 1].titolo : null, noto };
+    return { righe, doveSei: fatti.length ? fatti[fatti.length - 1].titolo : null, noto, linee: attive.map(x => ({ partner_id: x.partner_id, nome: x.nome })) };
   }
 
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
