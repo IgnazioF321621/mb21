@@ -73,6 +73,7 @@
     'orario': '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.2V12l3.2 2"/>',   // Orario
     'catalogare': '<rect x="3.4" y="4.6" width="17.2" height="6.4" rx="1.8"/><rect x="3.4" y="13" width="17.2" height="6.4" rx="1.8"/><path d="M9.6 7.8h4.8M9.6 16.2h4.8"/>',   // Da catalogare
     // Persone e squadra
+    'chiamata': '<circle cx="9.2" cy="7.6" r="3.3"/><path d="M2.8 19.6c0-3.2 2.5-5.8 5.7-5.8 1 0 1.9.2 2.7.7"/><path d="M14.6 12.4h2l1.1 2.5-1.4.9a6.2 6.2 0 0 0 2.9 2.9l.9-1.4 2.5 1.1v2a1.3 1.3 0 0 1-1.3 1.3A9 9 0 0 1 13.4 13.6a1.3 1.3 0 0 1 1.2-1.2z"/>',   // Faccia con il telefono (role play: la chiacchierata)
     'persona': '<circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20.2c0-3.9 3.2-7 7.2-7s7.2 3.1 7.2 7"/>',   // Persona
     'squadra': '<circle cx="12" cy="8.6" r="2.8"/><path d="M7.4 16.6c0-2.6 2.1-4.6 4.6-4.6s4.6 2 4.6 4.6"/><circle cx="4.8" cy="10.8" r="2.2"/><path d="M1.5 17.8c0-2.1 1.5-3.8 3.3-3.8"/><circle cx="19.2" cy="10.8" r="2.2"/><path d="M22.5 17.8c0-2.1-1.5-3.8-3.3-3.8"/>',   // Squadra
     'avvio': '<path d="M12 2.6c2.8 2.2 4.4 5.4 4.4 9l-1.8 3.6H9.4L7.6 11.6c0-3.6 1.6-6.8 4.4-9z"/><circle cx="12" cy="9.8" r="1.8"/><path d="m9.4 15.2-2.4 2c-.4 1.4-.3 2.8.2 4.2 1.4-.4 2.6-1.2 3.4-2.4M14.6 15.2l2.4 2c.4 1.4.3 2.8-.2 4.2-1.4-.4-2.6-1.2-3.4-2.4"/>',   // Avvio del partner
