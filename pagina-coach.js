@@ -47,9 +47,9 @@ function voltaCoach() {
   catch (_) { return Math.floor(Math.random() * 1000); }
 }
 const primoNome = s => String(s || '').trim().split(/\s+/)[0];
-// Le carte del Training che rispondono alle obiezioni del telefono (Prospect, Clienti, Partner): si leggono una volta, in
+// Le carte del Training che rispondono alle obiezioni (il telefono con Prospect, Clienti, Partner; dopo il piano e il Follow Up): si leggono una volta, in
 // background appena la chat si apre, e servono solo se si arriva alla risposta del manuale (MB21Coach.cartaDi).
-const MAZZI_COACH = ['carte_contattare', 'carte_clienti', 'carte_aiutare_partner'];
+const MAZZI_COACH = ['carte_contattare', 'carte_clienti', 'carte_aiutare_partner', 'carte_dare_seguito'];
 function carteCoach() {
   if (!COACH.carte) COACH.carte = dbq('carte del coach', supa.from('coach_batterie').select('situazione, batteria').in('situazione', MAZZI_COACH))
     .then(({ data, error }) => {

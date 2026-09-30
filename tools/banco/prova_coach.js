@@ -287,7 +287,16 @@ prova('Coach corto: Ordine senza obiezioni; per i partner la domanda dei freni (
 
 prova('Quale montatore: con `ctx` le telefonate hanno la forma corta, senza (pagina di prova privata) quella lunga; gli altri come prima', () => {
   assert.ok(C.monta('telefonata', B, 'PM Fissato', nomi, 0, {}).length < C.monta('telefonata', B, 'PM Fissato', nomi, 0).length);
-  assert.equal(C.monta('piano_marketing', B, 'PM Fissato', nomi, 0, {}).length, C.monta('piano_marketing', B, 'PM Fissato', nomi, 0).length);
+  // dopo il piano, il follow up e la consulenza la forma corta c'è, ma l'obiezione non è mai «superata»: sempre «L'hai gestita?»; le «domande di prima» restano
+  const BP = { ...B, prima: [{ c: 'Cosa ha colpito di più {chi}?' }, { salva: 'colpito', chiedi: [['Il reddito', [{ c: 'Il reddito colpisce quasi tutti.' }]]] }] };
+  for (const sit of ['piano_marketing', 'follow_up', 'consulenza']) {
+    const passi = C.monta(sit, BP, 'PM Fissato', nomi, 0, {});
+    assert.ok(passi.length < C.monta(sit, BP, 'PM Fissato', nomi, 0).length);
+    assert.equal(passi[1].c, 'Cosa ha colpito di più Anna?');
+  }
+  // gli altri (Appuntamento con un Partner, Rimandato e No Show) restano come prima, anche con `ctx`
+  for (const sit of ['appuntamento_partner', 'non_avvenuto'])
+    assert.equal(C.monta(sit, B, 'PM Fissato', nomi, 0, {}).length, C.monta(sit, B, 'PM Fissato', nomi, 0).length);
 });
 
 // Il motore vero (C.chat) con un finto foglio: i fumetti si leggono, i bottoni si toccano
