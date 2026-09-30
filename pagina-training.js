@@ -78,6 +78,8 @@ function disegnaTraining() {
       <div><b>Allenati a voce</b><small>⚠️ Per ora lo vedi solo tu · Col cronometro: uno spunto da dire con parole tue e un'obiezione a sorpresa, in 3, 5 o 10 minuti.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${eAdmin() && trnTutteLeConversazioni().length ? `<button class="trn-riga" data-proverp style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('report', 20)}</span>
       <div><b>Le prove del role play</b><small>⚠️ Per ora lo vedi solo tu · Quante telefonate, quante arrivano in fondo, dove si sbaglia di più.</small></div><span class="trn-freccia">›</span></button>` : ''}
+    ${eAdmin() ? `<button class="trn-riga" data-ingresso style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
+      <div><b>Test d'ingresso</b><small>⚠️ Per ora lo vedi solo tu · Sei già avanti? Supera i test dei livelli che conosci e parti dal tuo, senza rifare tutte le carte.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${eAdmin() ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
       <div><b>Dove sei, dove vuoi andare</b><small>⚠️ Per ora lo vedi solo tu · Scegli quanto vuoi guadagnare: vedi i tuoi numeri, cosa manca e cosa studiare.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
@@ -91,6 +93,7 @@ function disegnaTraining() {
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = trnAllenatiAVoce);
   app.querySelectorAll('[data-proverp]').forEach(b => b.onclick = trnProveRp);
   app.querySelectorAll('[data-dovesei]').forEach(b => b.onclick = trnDoveSei);
+  app.querySelectorAll('[data-ingresso]').forEach(b => b.onclick = trnTestIngresso);
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -329,6 +332,50 @@ async function trnProveRp() {
     <h4 class="trn-rp-manuale">Per carattere</h4>${somma('carattere', car)}
     <h4 class="trn-rp-manuale">Dove si sbaglia di più</h4>${top.length ? top.map(([k, n]) => `<div class="trn-esito no"><b>${esc(k)}</b>${n} ${n === 1 ? 'volta' : 'volte'}</div>`).join('') : '<p class="sotto">Nessun passo falso registrato.</p>'}`;
 }
+// ── Test d'ingresso (Ignazio 25/09, costruito il 30/09, solo Admin): «per chi è già avanti: supera i test dei livelli che conosce e parte dal suo, senza rifare tutte le carte» ──
+// Per ogni percorso, dal Nuovo in su, il test di sempre (10 carte, dal 70% il percorso è superato) senza dover prima studiare le carte; se lo superi passa al percorso dopo,
+// se no ti fermi lì e parti da quel percorso. Le stelle e le medaglie sono quelle vere, guadagnate con il test.
+function trnTestIngresso() {
+  const prossimo = () => {
+    const sc = MB21Training.scala(TRN.mazzi, TRN.stati, TRN.test, trnOggi());
+    for (const l of sc.livelli) { if (!l.aperto) break; const p = l.percorsi.find(x => x.pronto && !(x.stato && x.stato.superato)); if (p) return { l, p }; }
+    return null;
+  };
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Test d'ingresso</h3><p class="trn-prova">⚠️ Per ora lo vedi solo tu.</p><div id="trn-ti-corpo"></div></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  const corpo = velo.querySelector('#trn-ti-corpo');
+  const fine = () => {
+    const x = prossimo();
+    corpo.innerHTML = x ? `<div class="trn-esito si"><b>Parti da qui</b>Livello ${esc(x.l.nome)}, «${esc(x.p.titolo)}». I percorsi prima li hai superati con il test.</div>
+        <button class="primario" id="trn-ti-vai">Vai al Training</button>`
+      : `<div class="trn-esito si"><b>Hai superato tutto quello che c'è</b>Non ci sono altri percorsi da fare adesso.</div><button class="primario" id="trn-ti-vai">Vai al Training</button>`;
+    corpo.querySelector('#trn-ti-vai').onclick = () => { velo.remove(); TRN.vista = 'impara'; disegnaTraining(); window.scrollTo({ top: 0 }); };
+  };
+  const avanti = () => {
+    const x = prossimo();
+    if (!x) return fine();
+    const carte = MB21Training.pescaTest(x.p.mazzo, TRN.stati);
+    const prima = TRN.test.length;
+    velo.style.display = 'none';
+    trnSessione(carte, 'test', `Test d'ingresso · ${x.p.titolo}`, () => {
+      velo.style.display = '';
+      const ultimo = TRN.test.length > prima ? TRN.test[TRN.test.length - 1] : null;
+      if (ultimo && MB21Training.stelle(ultimo.giuste, ultimo.totale) >= 1) return avanti();   // superato: il percorso dopo
+      fine();   // non superato, oppure uscito dal test: si parte da qui
+    });
+  };
+  const x = prossimo();
+  corpo.innerHTML = x ? `<div class="trn-chiede">Sei già avanti? Fai i test dei livelli che conosci, senza rifare tutte le carte.</div>
+      <div class="trn-esito si"><b>Come funziona</b>Per ogni percorso, dal Nuovo in su, 10 domande: dal 70% il percorso è superato e passi al successivo. Dove non superi, parti da lì.</div>
+      <button class="primario" id="trn-ti-via">Comincia da ${esc(x.p.titolo)}</button><button class="link" id="trn-ti-no">Chiudi</button>`
+    : `<div class="trn-esito si"><b>Hai superato tutto quello che c'è</b></div><button class="link" id="trn-ti-no">Chiudi</button>`;
+  const via = corpo.querySelector('#trn-ti-via');
+  if (via) via.onclick = avanti;
+  corpo.querySelector('#trn-ti-no').onclick = () => velo.remove();
+}
 // ── «Dove sei, dove vuoi andare» (voluta da Ignazio il 24/09, solo Admin per ora) ──
 // Un tocco su una delle tre fasce di guadagno del Manuale di Avvio (pag. 17), i tuoi numeri dell'ultimo mese (`volumi_mese`, gli stessi della Mappa), quanto manca,
 // la strada che mostra il manuale (esempi pag. 20-22) e il livello del Training da studiare. La scelta si salva in `training_obiettivo`.
@@ -496,7 +543,7 @@ function trnRipassa(rip, oggi) {
 // Impara e Ripassa: dopo ogni risposta si vede subito se è giusta, il perché e da dove viene (un tocco porta alla fonte in Studia);
 // le sbagliate si ripropongono una volta in fondo, senza contare. Test: nessun aiuto finché non è finito, poi il punteggio, le stelle,
 // «la volta scorsa» e tutte le risposte con quella giusta. Ogni risposta si salva subito (anche se si chiude a metà resta quello fatto).
-function trnSessione(carte, modo, titolo) {
+function trnSessione(carte, modo, titolo, dopo) {
   if (!carte || !carte.length) return mostraToast('Nessuna carta da fare adesso.');
   const coda = carte.map(c => ({ carta: c, ancora: false })), fatte = [];
   const test = modo === 'test', percorso = test ? (TRN.mazzi.find(m => m.carte.includes(carte[0])) || {}).percorso : null;
@@ -511,7 +558,7 @@ function trnSessione(carte, modo, titolo) {
   const foglio = velo.querySelector('.foglio'), corpo = velo.querySelector('.trn-ses-corpo'), fondo = velo.querySelector('.trn-ses-fondo');
   const avanti = velo.querySelector('#trn-avanti');
   velo.querySelector('.trn-ses-titolo').textContent = titolo;
-  const chiudi = () => { velo.remove(); if (ST.tab === 'training') disegnaTraining(); };
+  const chiudi = () => { velo.remove(); if (dopo) return dopo(); if (ST.tab === 'training') disegnaTraining(); };   // `dopo`: il test d'ingresso riparte dal percorso dopo
   velo.querySelector('.trn-x').onclick = async () => {
     if (test && fatte.length && fatte.length < coda.length
       && !(await chiediConferma('Uscire dal test?', 'Le risposte date finora non fanno punteggio: il test si rifà quando vuoi.', 'Esci', false, '', 'Continua il test'))) return;
