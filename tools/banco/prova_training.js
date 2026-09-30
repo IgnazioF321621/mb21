@@ -160,12 +160,15 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
 
 prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
   const I = require('../../icone.js');
-  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [6, 6, 5, 5, 3, 3, 3]);
+  assert.deepEqual(T.LIVELLI.map(l => l.percorsi.length), [6, 8, 5, 5, 3, 3, 3]);
   // 28/09: un percorso in prova (`solo_admin`) lo vede solo l'Admin, e per gli altri non c'è nemmeno nei conti.
-  // Oggi non ce n'è nessuno in prova («Le aree di mercato» è aperto a tutti), quindi le due liste sono uguali.
+  // 30/09: «L'area nutrizione» e «L'area casa: eSpring» (livello Sponsor) sono in prova: per gli altri lo Sponsor ha ancora 6 percorsi.
   T.inProva(false);
-  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), T.LIVELLI.map(l => l.percorsi.length));
-  assert.ok(!T.LIVELLI.flatMap(l => l.percorsi).some(p => p.solo_admin), 'percorsi in prova rimasti accesi');
+  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), [6, 6, 5, 5, 3, 3, 3]);
+  assert.deepEqual(T.LIVELLI.flatMap(l => l.percorsi).filter(p => p.solo_admin).map(p => p.id), ['area_nutrizione', 'area_casa']);
+  T.inProva(true);
+  assert.deepEqual(T.livelliVisibili().map(l => l.percorsi.length), [6, 8, 5, 5, 3, 3, 3]);
+  T.inProva(false);
   assert.ok(T.livelliVisibili().flatMap(l => l.percorsi).some(p => p.id === 'aree'));
   const tutti = T.LIVELLI.flatMap(l => l.percorsi);
   assert.equal(new Set(tutti.map(p => p.id)).size, tutti.length);
