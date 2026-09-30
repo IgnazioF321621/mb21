@@ -665,9 +665,9 @@ function trnConversazione(convs, livello) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto trn-sessione trn-rp"><div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-titolo">${esc(convs[0].foglio || 'Telefonata di prova')}</div></div>
-    <div class="trn-rp-umore"></div><div class="trn-rp-chat"></div><div class="trn-rp-fondo"></div></div>`;
+    <div class="trn-rp-chat"></div><div class="trn-rp-fondo"></div></div>`;
   document.body.appendChild(velo);
-  const foglio = velo.querySelector('.foglio'), chat = velo.querySelector('.trn-rp-chat'), fondo = velo.querySelector('.trn-rp-fondo'), umore = velo.querySelector('.trn-rp-umore');
+  const foglio = velo.querySelector('.foglio'), chat = velo.querySelector('.trn-rp-chat'), fondo = velo.querySelector('.trn-rp-fondo');
   const chiudi = () => { velo.remove(); if (ST.tab === 'training') disegnaTraining(); };
   velo.querySelector('.trn-x').onclick = chiudi;
   let cv = conv;
@@ -677,7 +677,7 @@ function trnConversazione(convs, livello) {
   const prossimamente = t => `<button disabled class="trn-rp-presto">${esc(t)}<small>in arrivo</small></button>`;
   const scegliNome = () => {
     st = null;
-    umore.hidden = true; umore.className = 'trn-rp-umore'; chat.innerHTML = '';
+    chat.innerHTML = '';
     fondo.innerHTML = `<div class="trn-chiede">${esc(convs[0].domanda_nome || 'Come si chiama la persona che chiami?')}</div>
       <div class="campo"><input id="trn-rp-nome" maxlength="20" placeholder="Il nome, per esempio Mario" autocomplete="off" value="${esc(nome)}"></div>
       <button class="primario" id="trn-rp-avanti">Avanti</button>`;
@@ -720,7 +720,7 @@ function trnConversazione(convs, livello) {
   };
   const parti = () => {
     cv = JSON.parse(JSON.stringify(conv).split('{nome}').join(JSON.stringify(nome).slice(1, -1)));
-    st = MB21Training.rpNuova(cv, null, carattere); cv = st.conv; umore.hidden = false; disegna();   // cv = quello con le frasi pescate (varianti)
+    st = MB21Training.rpNuova(cv, null, carattere); cv = st.conv; disegna();   // cv = quello con le frasi pescate (varianti)
   };
   // solo per l'Admin: com'è andata ogni prova (tabella training_prove_rp), per vedere dove si sbaglia di più quando arriveranno i partner
   const registra = () => {
@@ -737,26 +737,28 @@ function trnConversazione(convs, livello) {
       righe.push({ carta: `${cv.id}#${j + 1}`, visto: { dove: 'conversazione', titolo: 'Correggi la spiegazione', domanda: arr(cv.scambi[j].candidato).join(' '), scelta: cv.scambi[j].perche, quale: 'spiegazione' } });
       return `<div class="trn-esito no"><b>${esc(arr(cv.scambi[j].candidato).join(' '))}</b>${esc(cv.scambi[j].perche)}${trnFonte(cv.scambi[j])}${btn(righe.length - 1)}</div>`; };
     // i fumetti: se il candidato dice più frasi di fila (la reazione e la frase dopo) sono un fumetto solo, con le frasi staccate (Ignazio 30/09)
-    const eventi = [];
+    // ogni fumetto del candidato dice come si sente in quel momento (Ignazio 30/09: «l'impatto di quello che sta passando Mario»): dipende dai passi falsi fatti fin lì
+    const eventi = [], umoreDopo = n => Math.min(n + (st.base || 0), MB21Training.UMORI.length - 1);
+    let errori = 0;
     for (let j = 0; j <= Math.min(st.i, cv.scambi.length - 1); j++) {
-      eventi.push({ chi: 'lui', j, frasi: arr(cv.scambi[j].candidato), principale: true });
+      eventi.push({ chi: 'lui', j, frasi: arr(cv.scambi[j].candidato), principale: true, um: umoreDopo(errori) });
       st.giro.filter(g => g.scambio === j).forEach(g => {
         eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero });
-        if (!g.giusta) eventi.push({ chi: 'lui', j, frasi: arr(g.reazione) });
+        if (!g.giusta) { errori++; eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) }); }
       });
     }
     const ult = cv.scambi.length - 1;
-    if (st.fine === 'ok') eventi.push({ chi: 'lui', j: ult, frasi: arr(cv.chiusura) });
-    if (st.fine === 'chiusa') eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto) });
+    if (st.fine === 'ok') eventi.push({ chi: 'lui', j: ult, frasi: arr(cv.chiusura), um: umoreDopo(errori) });
+    if (st.fine === 'chiusa') eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto), um: MB21Training.UMORI.length - 1 });
     const gruppi = [];
-    eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
+    eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; u.um = e.um; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
     let h = '';
     gruppi.forEach(g => {
       const pezzi = g.frasi.map(t => `<p>${esc(t)}</p>`).join('');
       if (g.chi === 'lui') {
         righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: 'lui' } });
         const v = g.principale ? (righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
-        h += `<div class="trn-rp-b lui"><small>${esc(nome)}</small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
+        h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente u${g.um}">${esc(MB21Training.UMORI[g.um])}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
       } else {
         const q = (g.rec ? 'recupero, ' : '') + (g.giusta ? 'risposta giusta' : 'risposta sbagliata');
         righe.push({ carta: `${cv.id}#${g.j + 1}${g.rec ? 'r' : ''}`, visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
@@ -771,8 +773,6 @@ function trnConversazione(convs, livello) {
     chat.querySelectorAll('[data-variante]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.variante)]; trnNuovaVariante({ id: r.carta }, r.visto, nome); });
     trnCollegaFonte(chat);
     chat.querySelectorAll('[data-correggi]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.correggi)]; trnFoglioCorreggi({ id: r.carta }, r.visto, b); });
-    umore.innerHTML = st.fine === 'chiusa' ? esc(cv.esito_no || `${nome} ha chiuso la telefonata`) : st.fine === 'ok' ? esc(cv.esito_ok ? cv.esito_ok : `${nome} ha accettato`) : `${esc(nome)} è <b>${esc(MB21Training.rpUmore(st))}</b>${st.car ? ` · ${esc(MB21Training.rpCarattere(st.car).nome)}` : ''}`;
-    umore.className = 'trn-rp-umore u' + (st.fine === 'chiusa' ? 3 : st.fine === 'ok' ? 0 : MB21Training.rpUmoreN(st));
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
@@ -784,7 +784,7 @@ function trnConversazione(convs, livello) {
       fondo.querySelector('#trn-rp-altro').onclick = () => { scegliNome(); foglio.scrollTo({ top: 0 }); };
       fondo.querySelector('#trn-rp-esci').onclick = chiudi;
     } else {
-      fondo.innerHTML = `<div class="trn-chiede">${st.fase === 'recupero' ? `Ora tocca a te rimediare: cosa dici a ${esc(nome)}?` : st.fuori.length ? `Riprova: cosa rispondi a ${esc(nome)}?` : `Cosa rispondi a ${esc(nome)}?`}</div><div class="trn-risposte">${MB21Training.rpRisposte(st).map(r => `<button data-r="${r.k}">${esc(r.testo)}</button>`).join('')}</div>`;
+      fondo.innerHTML = `<div class="trn-chiede">${st.fuori.length ? `Riprova: cosa rispondi a ${esc(nome)}?` : `Cosa rispondi a ${esc(nome)}?`}</div><div class="trn-risposte">${MB21Training.rpRisposte(st).map(r => `<button data-r="${r.k}">${esc(r.testo)}</button>`).join('')}</div>`;
       fondo.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { st = MB21Training.rpScegli(st, Number(b.dataset.r)); disegna(); });
     }
     foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
