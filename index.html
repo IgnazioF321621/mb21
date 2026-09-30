@@ -2678,6 +2678,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
         titolo: `Appuntamento · ${nome}`, resta: true, giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1), ora: '18:30',
         contatto: { id: e.contatto_id, nome, categoria }, categoria: dopo.proposta.categoria, tipo: dopo.proposta.tipo, modalita: dopo.proposta.modalita, userId: e.user_id,
       });
+      e.fissato = !!creato;   // il coach corto: foglio annullato = come un richiamo
       // fissato: il contatto esce dalla coda, lo segue l'appuntamento (come in coda, `registra_esito`)
       if (creato) await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', e.contatto_id));
       await ridisegna();

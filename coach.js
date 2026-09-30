@@ -11,7 +11,9 @@
 //   { c: 'fumetto', fonte?: [testo, consigliabile], rif?: [tipo, testo] }   un fumetto del coach; rif = va tra gli approfondimenti
 //   { rif: [tipo, testo] }                                                   solo un approfondimento, senza fumetto
 //   { proponi: 'frase' }                                                     una frase in più tra quelle per la prossima volta
-//   { chiedi: [[risposta, [passi]], …], salva?, obiezione? }                 un tocco; ogni risposta continua a modo suo
+//   { chiedi: [[risposta, [passi], valore?], …], salva?, obiezione?, elenco? } un tocco; ogni risposta continua a modo suo; `valore` = cosa si salva
+//                                                                            al posto della scritta (null: niente); `elenco`: si salva come elenco
+//   { dopo: async () => [passi] }                                            passi decisi al momento (la carta del Training, dal coach corto)
 //   { piu: [[scelta, [passi]], …], nessuna: [etichetta, [passi]], avanti, salva }
 //                                                                            più tocchi, poi «Avanti»: i passi di ogni scelta, uno dopo l'altro
 //   { scrivi: 'esempio', salta: 'etichetta', poi?: 'risposta', salva }       una riga da scrivere, facoltativa
@@ -84,12 +86,86 @@
     ], nomi);
   }
 
+  // Il coach corto dopo la telefonata (cantiere 48, Ignazio 29-30/09: «il coach registra e indirizza, non insegna»): una reazione, un solo tocco
+  // sull'obiezione (o «Nessuna»), e poi dipende dall'esito. Se l'incontro è fissato (PM Fissato, Appuntamento, Consulenza Prodotti) l'hai superata
+  // e il coach ti ricorda la risposta del manuale per quando vi vedete, senza altre domande; se no (Richiamare…) «L'hai gestita?»: «No» porta alla
+  // carta del Training, e chiude la frase per la prossima volta. Se l'altra volta con la stessa persona è uscita un'obiezione, parte da lì
+  // («L'altra volta Mario diceva «Non ho tempo»: è tornato fuori?»). Dopo Relazione e No Interesse una riga sola, niente chat.
+  // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null }
+  const RIGA_SOLA = ['Relazione', 'No Interesse'];
+  const FISSATI = ['PM Fissato', 'Appuntamento', 'Consulenza Prodotti'];
+  // Un Prospect chiamato per una consulenza prodotti: le obiezioni sono quelle «a vedersi» sui prodotti, non quelle dell'attività (Ignazio 29/09)
+  const OBIEZIONI_PRODOTTI = ['Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro'];
+  const finePunto = t => (/[.!?»]$/.test(t) ? t : t + '.');
+  function corta(B, esito, nomi, n, ctx = {}) {
+    if (!B || !B.reazione || !B.reazione[esito]) return null;
+    const varianti = B.reazione[esito];
+    const reazione = varianti[Math.abs(n || 0) % varianti.length];
+    if (RIGA_SOLA.includes(esito)) return riempi(reazione, nomi);
+    const D = B.domanda_obiezione || {}, O = B.obiezioni || {};
+    const fissato = ctx.fissato === undefined ? FISSATI.includes(esito) : !!ctx.fissato;
+    const nomiOb = esito === 'Consulenza Prodotti' ? OBIEZIONI_PRODOTTI : Object.keys(O);
+    const chiave = D.salva || 'obiezioni';   // i partner: «freni»
+    const cartaDi_ = async ob => (ctx.carta ? await ctx.carta(ob, esito) : null);
+    const fonte = c => [`Training · ${c.percorso}`, true];
+    // dopo l'obiezione toccata
+    const dopoOb = ob => {
+      const o = O[ob] || {};
+      const aiuti = [...(o.frase ? [{ proponi: o.frase }] : []), ...(o.manuale ? [{ rif: ['manuale', o.manuale] }] : [])];
+      if (fissato) return [...aiuti, { c: 'Bene: l’hai superata.' }, { dopo: async () => {
+        const c = await cartaDi_(ob);
+        return c ? [{ c: `Se torna fuori quando vi vedete, la risposta del manuale è: ${finePunto(c.giusta)}`, fonte: fonte(c) }] : [];
+      } }];
+      return [...aiuti, { c: 'L’hai gestita?' }, { salva: 'gestita', chiedi: [
+        ['Sì', [{ c: 'Bene.' }]],
+        ['No', [{ dopo: async () => {
+          const c = await cartaDi_(ob);
+          return c ? [{ c: `Succede. Nel Training c’è la carta «${ob}»: ripassala prima di richiamare ${nomi.chi}.` },
+            { c: `La risposta del manuale: ${finePunto(c.giusta)}`, fonte: fonte(c) }]
+            : [{ c: `Succede. Ripassa la risposta del manuale prima di richiamare ${nomi.chi}.` }];
+        } }]],
+      ] }];
+    };
+    const altro = B.altro ? [[D.altro || 'Altro', [...(B.altro.frase ? [{ proponi: B.altro.frase }] : []), ...(B.altro.passi || []).slice(0, 2)]]] : [];
+    const tutte = (escluse = []) => [...nomiOb.filter(ob => !escluse.includes(ob)).map(ob => [ob, dopoOb(ob)]), ...altro];
+    const niente = [(B.nessuna && B.nessuna[esito] || [])[0]].filter(Boolean);
+    const prima = (ctx.ricordo && ctx.ricordo.obiezioni || []).find(ob => nomiOb.includes(ob));
+    const domanda = (B.senza_obiezione || []).includes(esito) ? [] : prima ? [
+      { c: `L’altra volta {chi} diceva «${prima}»: è tornato fuori?` },
+      { salva: chiave, elenco: true, chiedi: [
+        ['Sì', dopoOb(prima), prima],
+        ['No', [{ c: 'Bene: superata.' }], D.nessuna || 'Nessuna'],
+        ['Un’altra', [{ c: 'Quale?' }, { salva: chiave, elenco: true, chiedi: [[D.nessuna || 'Nessuna', niente], ...tutte([prima])] }], null],
+      ] },
+    ] : [
+      { c: String(D.c || '{chi} ti ha fatto domande, dubbi o obiezioni?').replace(/\s*Tocca tutt[^.]*\./, '') },
+      { salva: chiave, elenco: true, chiedi: [[D.nessuna || 'Nessuna', niente], ...tutte()] },
+    ];
+    const f = B.prossima && B.prossima.frasi && B.prossima.frasi[esito];
+    const frase = fissato || !f || !f.length ? [] : [{ c: B.prossima.c }, { frase: f, poi: B.prossima.poi && B.prossima.poi[esito], salva: 'prossima' }];
+    return riempi([...reazione.slice(0, 1), ...domanda, ...frase], nomi);
+  }
+
+  // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per
+  // quelle chat (`situazioni`; senza, è quella del telefono con un Prospect). → { id, scena, giusta (la prima risposta del mazzo), percorso } o null
+  function cartaDi(mazzi, obiezione, situazioni) {
+    for (const m of mazzi || []) for (const c of (m && m.carte) || []) {
+      if (c.tipo !== 'scena' || c.obiezione !== obiezione) continue;
+      if (!(c.situazioni ? c.situazioni.some(s => situazioni.includes(s)) : situazioni.includes('telefonata'))) continue;
+      const v = c.versioni && c.versioni[0];
+      if (v && v.scena && v.risposte && v.risposte[0]) return { id: c.id, scena: v.scena, giusta: v.risposte[0], percorso: m.percorso && m.percorso.titolo || '' };
+    }
+    return null;
+  }
+
   // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up, Consulenza, Appuntamento,
   // Rimandato e No Show:
   // lo stesso montatore, ognuna con la sua batteria.
   const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata,
     consulenza: telefonata, appuntamento_partner: telefonata, non_avvenuto: telefonata };
-  const monta = (sit, B, esito, nomi, n) => (MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
+  // Nell'app (con `ctx`) le telefonate hanno la forma corta; senza `ctx` (la pagina privata di prova) la forma lunga di prima.
+  const CORTE = ['telefonata', 'telefonata_partner', 'telefonata_cliente'];
+  const monta = (sit, B, esito, nomi, n, ctx) => (ctx && CORTE.includes(sit) ? corta(B, esito, nomi, n, ctx) : MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
 
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
   // { chiave: 'obiezioni' o 'freni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima' · le domande di prima ('colpito', 'perche')
@@ -112,14 +188,16 @@
     const ordinate = [...(azioni || [])].sort((a, b) => (quando(a) < quando(b) ? 1 : quando(a) > quando(b) ? -1 : 0));
     const out = {};
     for (const a of ordinate) {
-      if (!a || !a.contatto_id || out[a.contatto_id] || !Array.isArray(a.riflessione)) continue;
+      if (!a || !a.contatto_id || a.contatto_id in out || !Array.isArray(a.riflessione)) continue;
       const r = chiave => a.riflessione.find(x => x && x.chiave === chiave);
-      const frase = r('prossima');
-      if (!frase || typeof frase.risposta !== 'string' || !frase.risposta.trim()) continue;
-      const ob = r('obiezioni') || r('freni'), altro = r('altro');   // i partner: «freni»
+      const fr = r('prossima'), ob = r('obiezioni') || r('freni'), altro = r('altro'), gestita = r('gestita');   // i partner: «freni»
+      const frase = fr && typeof fr.risposta === 'string' && fr.risposta.trim() ? fr.risposta.trim() : null;
+      if (!frase && !(ob && Array.isArray(ob.risposta))) continue;   // una chat senza frase né obiezioni (altre domande): non conta
       const obiezioni = (ob && Array.isArray(ob.risposta) ? ob.risposta : [])
         .filter(x => x !== 'Nessuna' && x !== 'Niente').map(x => (x === 'Altro' ? (altro && altro.risposta ? `«${altro.risposta}»` : null) : x)).filter(Boolean);
-      out[a.contatto_id] = { frase: frase.risposta.trim(), obiezioni, azione: a.id, quando: quando(a) };
+      // l'ultima chat di quella persona decide: se non ha lasciato niente da ricordare, le volte prima non tornano
+      out[a.contatto_id] = frase || obiezioni.length
+        ? { frase, obiezioni, daRipassare: !!(gestita && gestita.risposta === 'No'), azione: a.id, quando: quando(a) } : null;
     }
     return out;
   }
@@ -193,8 +271,8 @@
       riga(box, esempio, risolvi);
       box.querySelector('[data-salta]').onclick = () => { box.remove(); risolvi(''); };
     });
-    const salva = (p, risposta) => {
-      if (p.salva) stato.risposte.push({ chiave: p.salva, domanda: stato.domanda, risposta, ...(p.obiezione ? { obiezione: p.obiezione } : {}) });
+    const salva = (p, risposta) => {   // `elenco`: la risposta toccata si salva come elenco di una voce (le obiezioni)
+      if (p.salva) stato.risposte.push({ chiave: p.salva, domanda: stato.domanda, risposta: p.elenco && !Array.isArray(risposta) ? [risposta] : risposta, ...(p.obiezione ? { obiezione: p.obiezione } : {}) });
     };
     async function recita(lista) {
       for (const p of lista) {
@@ -202,10 +280,13 @@
         if (p.rif && !stato.rif.some(r => r[1] === p.rif[1])) stato.rif.push(p.rif);
         if (p.proponi && !stato.proposte.includes(p.proponi)) stato.proposte.push(p.proponi);
         if (p.c) await scrive(p.c, p.fonte);
+        else if (p.dopo) await recita(await p.dopo());   // passi decisi al momento (la carta del Training)
         else if (p.chiedi) {
           const x = await tocca(p.chiedi.map(y => y[0]));
-          fumetto(x, true); salva(p, x);
-          await recita(p.chiedi.find(y => y[0] === x)[1]);
+          const y = p.chiedi.find(z => z[0] === x);
+          fumetto(x, true);
+          if (y[2] !== null) salva(p, y[2] !== undefined ? y[2] : x);   // terzo valore: cosa si salva se non è la scritta del bottone (null: niente)
+          await recita(y[1]);
         } else if (p.piu) {
           const scelte = await toccaPiu(p.piu.map(y => y[0]), p.nessuna && p.nessuna[0], p.avanti);
           fumetto(scelte.join(' · '), true); salva(p, scelte);
@@ -236,7 +317,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, situazione, riempi, telefonata, monta, riflessioneDa, ricordi, chat };
+  const api = { SENZA_PAROLE, situazione, riempi, telefonata, corta, cartaDi, monta, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);
