@@ -2187,7 +2187,8 @@ function extraEvento(e) {
   const fasi = richiamo ? [] : A.fasiPer(e.categoria, e.tipo_azione, e.modalita);
   // prima dell'appuntamento (ancora da fare, o un richiamo dalla coda): il promemoria del coach, «Ti eri detto…» (cantiere 42)
   const ricordo = richiamo || !e.esito ? ricordoHtml(e.contatto_id, e.contatti && e.contatti.nome) : '';
-  return `${ricordo}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
+  const suCosa = !richiamo && Array.isArray(e.su_cosa) && e.su_cosa.length ? `<div class="note-ev">Su cosa lavorate: ${esc(e.su_cosa.map(A.nomePasso).join(' · '))}</div>` : '';
+  return `${ricordo}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`

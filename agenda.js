@@ -59,6 +59,12 @@
   const ESITI_CON_GIORNO = ['Richiamare', 'PM Fissato', 'Appuntamento'];
   const tipiPer = categoria => Object.keys(TIPI[categoria] || {});
   const sottotipiPer = tipo => SOTTOTIPI[tipo] || [];
+  // «Su cosa lavorate?» (cantiere 48): gli incontri con un Partner si fissano con i passi su cui si lavora, anche più d'uno: le fasi di quel tipo
+  // di appuntamento (Avvio: Motivazione · ListaStart · OrdineStart · Lista nomi · RolePlay · Telefonate · Inaugurazione). Per gli altri, niente.
+  const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
+  // Il nome che si legge: il perché è lo stesso passo di «Il perché» in «Il mio avvio» (Ignazio 30/09); il nome salvato resta Motivazione (il Report)
+  const NOMI_PASSO = { Motivazione: 'Il perché' };
+  const nomePasso = f => NOMI_PASSO[f] || f;
   function fasiPer(categoria, tipo, sottotipo) {
     const f = (TIPI[categoria] || {})[tipo];
     if (!f) return [];
@@ -837,7 +843,7 @@
       .map(x => daMinuti(x.m));
   }
 
-  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
+  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,

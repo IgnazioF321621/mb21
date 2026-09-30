@@ -729,4 +729,14 @@ prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata s
   for (const es of ['No Risposta', 'Telefono spento', 'Ordine']) assert.deepEqual(A.dopoTelefonata('Cliente', es), { cosa: 'niente' });
 });
 
+prova('«Su cosa lavorate?»: le fasi del tipo di appuntamento, solo per un Partner; l\'Avvio nell\'ordine di Ignazio; «Motivazione» si legge «Il perché»', () => {
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Avvio'), ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione']);
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Ordine'), ['OrdineStart', 'VP Personali']);
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Meeting/Evento'), ['Incontro N21']);
+  for (const [c, t, m] of [['Prospect', 'Appuntamento', 'Avvio'], ['Cliente', 'Appuntamento', 'Avvio'], ['Partner', 'Piano Marketing', 'PM 1a1'], ['Partner', 'Appuntamento', null], ['Partner', 'Contatto', 'Telefonata']])
+    assert.deepEqual(A.suCosaPer(c, t, m), [], `${c} ${t} ${m}`);
+  assert.equal(A.nomePasso('Motivazione'), 'Il perché');
+  assert.equal(A.nomePasso('ListaStart'), 'ListaStart');   // gli altri come sono: i nomi salvati non cambiano
+});
+
 console.log(`\n${ok} prove superate`);
