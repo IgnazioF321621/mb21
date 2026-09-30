@@ -447,9 +447,9 @@
   // Il testo nei mazzi è scritto al maschile; qui si cambia solo quello che serve.
   const PAROLE_F = ['perplesso', 'confuso', 'convinto', 'incasinato', 'incuriosito', 'curioso', 'impegnato', 'giudicato', 'interessato', 'soddisfatto', 'ritirato', 'tranquillo', 'infastidito', 'stanco', 'sicuro', 'occupato', 'contento'];
   const FRASI_F = [[/\bun lavoratore dipendente/g, 'una lavoratrice dipendente'], [/\bUn lavoratore dipendente/g, 'Una lavoratrice dipendente'], [/\bun imprenditore o un libero professionista/g, "un'imprenditrice o una libera professionista"],
-    [/\bUn imprenditore o un libero professionista/g, "Un'imprenditrice o una libera professionista"], [/\bun imprenditore/g, "un'imprenditrice"], [/\bUn amico\b/g, "Un'amica"], [/\bun amico\b/g, "un'amica"],
+    [/\bUn imprenditore o un libero professionista/g, "Un'imprenditrice o una libera professionista"], [/\bun imprenditore/g, "un'imprenditrice"], [/\bUn amico (?=che lavora|con una sua)/g, "Un'amica "],
     [/\bchiami un dipendente/g, 'chiami una dipendente'], [/\bChiami un dipendente/g, 'Chiami una dipendente'], [/\bRichiami un dipendente/g, 'Richiami una dipendente'], [/\bun dipendente/g, 'una dipendente'],
-    [/\bgià stato contattato/g, 'già stata contattata'], [/\bquando sei pronto/g, 'quando sei pronta'], [/\bgià sentito\b/g, 'già sentita'], [/\bda solo\b/g, 'da sola'], [/\b(che (?:ti )?(?:richiami|chiami)) lui\b/g, '$1 lei'], [/\bsei libero\b(?! professionista)/g, 'sei libera']];
+    [/\bgià stato contattato/g, 'già stata contattata'], [/\bquando sei pronto/g, 'quando sei pronta'], [/è partito\b/g, 'è partita'], [/si è (raffreddato|scoraggiato)\b/g, m => m.slice(0, -1) + 'a'], [/un po' perso\b/g, "un po' persa"], [/mi sono iscritto\b/g, 'mi sono iscritta'], [/sono carico\b/g, 'sono carica'], [/resto fermo\b/g, 'resto ferma'], [/\bgià sentito\b/g, 'già sentita'], [/\bda solo\b/g, 'da sola'], [/\b(che (?:ti )?(?:richiami|chiami)) lui\b/g, '$1 lei'], [/\bsei libero\b(?! professionista)/g, 'sei libera']];
   const rpAlFemminile = t => { let x = t; FRASI_F.forEach(([a, b]) => { x = x.replace(a, b); });
     return x.replace(new RegExp(`\\b(${PAROLE_F.join('|')})\\b`, 'gi'), w => { const f = w.slice(0, -1) + 'a'; return w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f; }); };
   function rpPersona(conv, nome, donna) {

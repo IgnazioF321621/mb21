@@ -727,6 +727,7 @@ function mioPassiHtml(m) {
       const classe = `${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}`, dentro = `${m[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}`;
       return chiuso && col !== 'onb_sogno' ? `<span class="${classe}">${dentro}</span>`
         : `<button class="${classe}" data-mio-passo="${col}">${dentro}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
+    ${eAdmin() && !chiuso ? `<button class="link" id="mio-prova-tel">${ic('chiamata')} Prova la telefonata prima di farla ›</button><div class="sotto" style="margin:0">⚠️ Per ora lo vedi solo tu</div>` : ''}
     <div class="sotto" style="margin:8px 0 0">${m.avvio_concluso_il ? `${ic('fatto')} Avvio concluso il ${L.data(m.avvio_concluso_il)}: i passi restano qui.`
       : m.avvio_in_pausa_dal ? `${ic('pausa')} Avvio in pausa dal ${L.data(m.avvio_in_pausa_dal)}: i passi restano qui.`
       : `Tocca un passo quando l'hai fatto${m.con_scheda === false ? '. Appena chi ti segue ti ha nella sua lista, li vede anche lui'
@@ -749,6 +750,8 @@ function collegaMioAvvio(ridisegna = disegnaOggi, ritorno = null) {
     ridisegna();
   });
   // Senza la scheda nella lista di chi lo segue (in cima alla mappa, o non ancora nel file Amway) l'avvio lo conclude da sé
+  const provaTel = document.getElementById('mio-prova-tel');
+  if (provaTel) provaTel.onclick = () => trnProvaTelefonata();
   const concluso = document.getElementById('mio-avvio-concluso');
   const concludi = async si => {
     const { data, error } = await dbq('concludo il mio avvio', supa.rpc('concludi_mio_avvio', { p_concluso: si }));
