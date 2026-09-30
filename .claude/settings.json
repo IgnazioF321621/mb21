@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(supabase db query:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "Bash(curl http://127.0.0.1:*)",
+      "Bash(curl http://localhost:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh release:*)",
+      "Bash(gh api:*)",
+      "Bash(gh workflow:*)",
+      "Bash(gh pages:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(wrangler:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(supabase db push:*)",
+      "Bash(supabase deploy:*)"
+    ]
+  }
+}
