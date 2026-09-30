@@ -1810,6 +1810,13 @@
   .ad-richiesta small { display: block; color: var(--grigio); font-size: 12px; overflow-wrap: anywhere; }
   .ad-richiesta .bottoni .primario { font-size: 15px; padding: 10px; }
   .accesso label { display: block; text-align: left; font-size: 14px; color: var(--grigio); }
+  /* Pagina di accesso a due riquadri (Ignazio 30/09: chi entra la prima volta non capiva che la password la sceglie lui; in coppia si provava quella del compagno) */
+  .acc-box { background: var(--card); border-radius: 14px; padding: 14px; margin-top: 12px; text-align: left; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .acc-box b { display: block; font-size: 16px; margin-bottom: 6px; }
+  .acc-box p { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+  .acc-box.prima { border: 2px solid #C4B5FD; }
+  .acc-box.prima button.primario { background: var(--coach); }
+  .accesso .acc-nota { font-size: 13px; margin-top: 14px; text-align: center; }
   .foglio.nu { max-height: 90vh; overflow-y: auto; font-size: 14px; }
   .foglio.nu select { display: block; width: 100%; font-size: 16px; padding: 12px; border-radius: var(--raggio-bottone); border: 1px solid var(--linea); background: var(--superficie); margin: 6px 0 12px; }
   .ad-voce small { display: block; color: var(--grigio); font-size: 12px; font-weight: 400; margin-top: 2px; }
@@ -1965,43 +1972,43 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609292237"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609292237"></script>
-<script src="lista.js?v=202609292237"></script>
-<script src="esporta.js?v=202609292237"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
-<script src="rubrica.js?v=202609292237"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609292237"></script>
-<script src="agenda.js?v=202609292237"></script>
-<script src="spazi.js?v=202609292237"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
-<script src="coach.js?v=202609292237"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609292237"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609292237"></script>
-<script src="check.js?v=202609292237"></script>
-<script src="mappa.js?v=202609292237"></script>
-<script src="pagina-coach.js?v=202609292237"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609292237"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609292237"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609292237"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609292237"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609292237"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609292237"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609292237"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609292237"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609292237"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609292237"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609292237"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609292237"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609292237"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609292237"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609292237"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609292237"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609292237"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609292237"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609292237"></script>
-<script src="benvenuto.js?v=202609292237"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609292237"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609300846"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609300846"></script>
+<script src="lista.js?v=202609300846"></script>
+<script src="esporta.js?v=202609300846"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
+<script src="rubrica.js?v=202609300846"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609300846"></script>
+<script src="agenda.js?v=202609300846"></script>
+<script src="spazi.js?v=202609300846"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
+<script src="coach.js?v=202609300846"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609300846"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609300846"></script>
+<script src="check.js?v=202609300846"></script>
+<script src="mappa.js?v=202609300846"></script>
+<script src="pagina-coach.js?v=202609300846"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609300846"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609300846"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609300846"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609300846"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609300846"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609300846"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609300846"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609300846"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609300846"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609300846"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609300846"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609300846"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609300846"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609300846"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609300846"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609300846"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609300846"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609300846"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609300846"></script>
+<script src="benvenuto.js?v=202609300846"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609300846"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.29 · 22:37';
+const APP_VERSION = '2026.09.30 · 08:46';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -2065,13 +2072,19 @@ function mostraEmail(errore) {
   app.innerHTML = `
     <div class="accesso">
       <h1>MB21</h1>
-      <p>Entra con email e password.</p>
-      <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.it" value="${esc(ST.email)}">
-      <input id="password" type="password" autocomplete="current-password" placeholder="password" style="margin-top:8px">
+      <label>La tua email<input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.it" value="${esc(ST.email)}"></label>
       <div class="errore">${esc(errore || '')}</div>
-      <button class="primario" id="entra">Entra</button>
-      <p style="margin-top:18px">Non hai la password? Scrivi solo l'email:</p>
-      <button class="link" id="invia">Mandami il link</button>
+      <div class="acc-box">
+        <b>Hai già la tua password?</b>
+        <input id="password" type="password" autocomplete="current-password" placeholder="La tua password">
+        <button class="primario" id="entra">Entra</button>
+      </div>
+      <div class="acc-box prima">
+        <b>È la prima volta che entri?</b>
+        <p>La password non ce l'hai ancora: la scegli tu. Scrivi qui sopra la tua email e ti mando un link. Lo apri da questo telefono, entri e scegli la tua password.</p>
+        <button class="primario" id="invia">Mandami il link</button>
+      </div>
+      <p class="acc-nota">Ognuno entra con la sua email e la sua password, anche chi è in coppia con lo stesso codice Amway.</p>
       ${versione()}
     </div>`;
   document.getElementById('invia').onclick = inviaLink;
@@ -2087,7 +2100,7 @@ async function entraConPassword() {
   if (!ST.email.includes('@') || !password) return mostraEmail('Scrivi email e password.');
   btn.disabled = true; btn.textContent = 'Entro…';
   const { error } = await dbq('accesso con password', supa.auth.signInWithPassword({ email: ST.email, password }));
-  if (error) return mostraEmail(/invalid login/i.test(error.message || '') ? 'Email o password sbagliate. Se non hai la password usa «Mandami il link».' : messaggioAccesso(error));
+  if (error) return mostraEmail(/invalid login/i.test(error.message || '') ? 'Email o password non corrispondono. La password è personale: quella di un\'altra persona non vale. Se è la prima volta che entri, tocca «Mandami il link» qui sotto.' : messaggioAccesso(error));
 }
 
 // Entrato con la password dal modulo ma non ancora approvato: resta dentro e aspetta (si apre la Dashboard appena approvato)
@@ -2160,7 +2173,7 @@ async function inviaLink() {
   app.innerHTML = `
     <div class="accesso">
       <h1>Controlla l'email</h1>
-      <p>Abbiamo mandato un link a <b>${esc(ST.email)}</b>. Aprilo <b>su questo telefono</b>: ti riporta qui già dentro.</p>
+      <p>Abbiamo mandato un link a <b>${esc(ST.email)}</b>. Aprilo <b>su questo telefono</b>: ti riporta qui già dentro, e lì scegli la tua password.</p>
       <button class="link" id="indietro">Cambia email</button>
     </div>`;
   document.getElementById('indietro').onclick = () => mostraEmail();
