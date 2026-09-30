@@ -57,7 +57,7 @@ function telefonoInvito(u) {
 }
 // Il messaggio dipende dal telefono (Ignazio 25/09: «per Android il messaggio parla di Safari, non è consono»): l'Admin sceglie
 // iPhone o Android sulla riga (`AD.telefonoDi`, già scelto iPhone). Su Android gli avvisi si accendono anche da Chrome, senza installare.
-const INDIRIZZO_APP = () => location.origin + location.pathname;
+const INDIRIZZO_APP = () => indirizzoApp();   // in index.html: dall'anteprima dà l'indirizzo vero
 function invitoAvvisi(u) {
   const nome = (u.nome || nomeDi(u)).split(' ')[0], android = (AD.telefonoDi || {})[u.id] === 'android';
   const passo1 = android
@@ -129,14 +129,14 @@ function quandoBreve(quando) {
 // Usato dopo «Approva» e dal tasto «Manda il messaggio per entrare» di ogni utente che può entrare.
 function messaggioPerEntrare(nomeCognome, email) {
   const nome = String(nomeCognome || '').trim().split(/\s+/)[0];
-  const indirizzo = `${location.origin}${location.pathname}`;
+  const indirizzo = INDIRIZZO_APP();
   return `${nome ? 'Ciao ' + nome + ', ' : ''}MB21 è pronta per te. Apri dal telefono ${indirizzo} e scrivi la tua email${email ? ' (' + email + ')' : ''}.
 • Se è la prima volta che entri: tocca «Mandami il link», apri l'email su questo telefono e scegli la tua password.
 • Se la password ce l'hai già: scrivila e tocca «Entra».
 La password è personale: ognuno ha la sua, anche in coppia con lo stesso codice Amway.`;
 }
 function foglioPerEntrare(nomeCognome, email, telefono, titolo) {
-  foglioLinkInvito({ link: `${location.origin}${location.pathname}`, nome: nomeCognome, telefono: MB21Lista.componiTelefono('+39', telefono || ''),
+  foglioLinkInvito({ link: INDIRIZZO_APP(), nome: nomeCognome, telefono: MB21Lista.componiTelefono('+39', telefono || ''),
     titolo: titolo || `${ic('collega')} Messaggio per entrare · ${nomeCognome}`,
     spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): vale sia se entra per la prima volta sia se ha già la sua password.',
     messaggio: messaggioPerEntrare(nomeCognome, email) });
