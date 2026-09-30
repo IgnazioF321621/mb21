@@ -70,12 +70,15 @@ function disegnaTraining() {
       <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button>
       <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
+    ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
+      <div><b>Telefonata di prova</b><small>⚠️ Per ora la vedi solo tu · Scegli chi chiami e rispondi: se sbagli troppo, ti saluta e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
   app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
   app.querySelectorAll('[data-medaglie]').forEach(b => b.onclick = trnMedaglie);
+  app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = () => trnConversazione(trnTutteLeConversazioni()));
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -225,6 +228,7 @@ function trnApriPercorso(id) {
   const studio = mostraTutte ? tutteStudio : tutteStudio.slice(0, TRN_PRIME);
   const siti = [...new Set(m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
   const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
+  const conversazioni = trnConversazioniQui(m);
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto trn-foglio trn-percorso" style="--col:var(--gr-crescita)">
@@ -243,6 +247,8 @@ function trnApriPercorso(id) {
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
+      ${conversazioni.length ? `<h4>Prova una conversazione</h4><button class="trn-riga" data-conv="0" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
+        <div><b>Telefona a una persona per fissare un caffè</b><small>⚠️ Per ora lo vedi solo tu · Scegli chi chiami: se sbagli troppo, ti saluta e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
       ${studio.length || siti.length ? `<h4>Per approfondire e imparare</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
         mostraTutte ? '' : `<button class="trn-tutte" id="trn-tutte-percorso" style="--col:var(--gr-crescita)">Mostra tutte le ${tutteStudio.length} ›</button>`}${
         siti.length ? `<a class="trn-riga" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
@@ -257,6 +263,7 @@ function trnApriPercorso(id) {
   if (b1) b1.onclick = () => via(MB21Training.nuove(m, TRN.stati), 'impara', `${p.titolo} · Impara`);
   if (b2) b2.onclick = () => via(suo.slice(0, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', `${p.titolo} · Ripassa`);
   if (b3) b3.onclick = () => via(MB21Training.pescaTest(m, TRN.stati), 'test', `${p.titolo} · Test finale`);
+  velo.querySelectorAll('[data-conv]').forEach(b => b.onclick = () => { chiudi(); trnConversazione(conversazioni); });
   velo.querySelectorAll('[data-carta]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.carta));
   const bt = velo.querySelector('#trn-tutte-percorso');
   if (bt) bt.onclick = () => { TRN.tutte[kTutte] = true; chiudi(); trnApriPercorso(id); };
@@ -421,8 +428,8 @@ function trnSessione(carte, modo, titolo) {
 // con il motivo a un tocco e cosa cambiare. La carta esatta, con quello che c'era sullo schermo, va in training_correzioni (solo l'Admin
 // la legge e la scrive); Claude corregge il mazzo nell'archivio e la segna risolta. Ai partner non compare niente.
 const TRN_MOTIVI = [['risposta', 'La risposta non è giusta'], ['non_chiara', 'Non si capisce'], ['altro', 'Altro']];
-function trnCorreggi(k = '') {
-  return eAdmin() ? `<button class="trn-correggi" data-correggi="${k}">${ic('modifica', 16)} Correggi questa carta</button>` : '';
+function trnCorreggi(k = '', t = 'Correggi questa carta') {
+  return eAdmin() ? `<button class="trn-correggi" data-correggi="${k}">${ic('modifica', 16)} ${t}</button>` : '';
 }
 function trnCollegaCorreggi(el, carta, visto) {
   el.querySelectorAll('[data-correggi]').forEach(b => b.onclick = () => trnFoglioCorreggi(carta, visto, b));
@@ -430,7 +437,7 @@ function trnCollegaCorreggi(el, carta, visto) {
 function trnFoglioCorreggi(carta, visto, bottone) {
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio trn-corr"><h3>Correggi questa carta</h3>
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>${esc(visto.titolo || 'Correggi questa carta')}</h3>
     <p>${esc(visto.domanda || '')} <small>${esc(carta.id)}</small></p>
     <div class="trn-corr-motivi">${TRN_MOTIVI.map(([k, t]) => `<button data-m="${k}">${esc(t)}</button>`).join('')}</div>
     <div class="campo"><textarea rows="3" maxlength="1000" placeholder="Cosa cambiare (se vuoi)"></textarea></div>
@@ -584,6 +591,160 @@ function trnRisultati() {
 }
 
 // Il foglio di una voce del catalogo: il capitolo del manuale, la traccia (dove trovarla, di cosa parla, i suoi appunti), il libro
+// ── Conversazione a scelte (29/09, Ignazio: «Marco ti dice l'obiezione, sotto scegli una risposta e la conversazione continua; se sbagli il candidato
+// si irrigidisce e, alla fine, saluta e chiude»). Per ora solo in locale: la mostra soltanto chi apre l'app dal proprio computer.
+// dal 30/09 anche online, ma solo per l'Admin (Ignazio: «voglio testare anche fuori dalla mia rete Wi-Fi»): i partner non la vedono
+const trnInLocale = () => ['localhost', '127.0.0.1'].includes(location.hostname);
+const trnConversazioniQui = m => ((trnInLocale() || eAdmin()) && Array.isArray(m.conversazioni)) ? m.conversazioni : [];
+const trnTutteLeConversazioni = () => (TRN.mazzi || []).flatMap(m => trnConversazioniQui(m));
+// Per provare (Ignazio 30/09: «quando ricarico la pagina mi parta direttamente dalla chiacchierata»): aprendo l'app con #chiacchierata in fondo
+// all'indirizzo, dopo l'accesso, se sei Admin (o in locale), si va da soli a Training → Contattare → la telefonata. Per gli altri non fa niente.
+async function trnProvaDiretta() {
+  if (location.hash !== '#chiacchierata' || !ST.utente || !(trnInLocale() || eAdmin())) return;
+  ST.tab = 'training';
+  await mostraTab();
+  trnApriPercorso('contattare');
+  const b = document.querySelector('[data-conv]');
+  if (b) b.click();
+}
+// Solo Admin: una frase in più che il candidato potrebbe dire in quel punto (Ignazio 30/09: «le obiezioni, io ne so a centinaia»). Arriva nello stesso posto delle
+// correzioni (`training_correzioni`, `visto.quale` = «nuova frase del candidato»); le risposte e i rimedi per quella frase li scrive poi Claude dal manuale.
+function trnNuovaVariante(carta, visto, nome) {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Un'altra frase di ${esc(nome)}</h3>
+    <p>Al posto di: «${esc(visto.domanda || '')}»</p>
+    <div class="campo"><textarea id="trn-nv-frase" rows="3" maxlength="500" placeholder="Cosa può dire ${esc(nome)} qui?"></textarea></div>
+    <div class="trn-corr-motivi">${['Gentile', 'Media', 'Dura'].map(l => `<button data-l="${l}">${l}</button>`).join('')}</div>
+    <div class="campo"><textarea id="trn-nv-note" rows="2" maxlength="500" placeholder="Come reagisce, cosa lo preoccupa (se vuoi)"></textarea></div>
+    <button class="primario" id="trn-nv-invia" disabled>Salva la frase</button><button class="link" id="trn-nv-no">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  let livello = null;
+  const frase = velo.querySelector('#trn-nv-frase'), note = velo.querySelector('#trn-nv-note'), invia = velo.querySelector('#trn-nv-invia');
+  const pronto = () => { invia.disabled = !frase.value.trim(); };
+  frase.oninput = pronto;
+  velo.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { livello = livello === b.dataset.l ? null : b.dataset.l; velo.querySelectorAll('[data-l]').forEach(x => x.classList.toggle('scelto', x.dataset.l === livello)); });
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#trn-nv-no').onclick = chiudi;
+  invia.onclick = async () => {
+    invia.disabled = true;
+    const r = await dbq('training: nuova frase', supa.from('training_correzioni').insert({ user_id: ST.utente.id, carta: carta.id, motivo: null,
+      testo: frase.value.trim(), visto: { ...visto, livello, note: note.value.trim() || null } }));
+    if (r.error) { pronto(); return mostraToast('Frase non salvata: riprova.'); }
+    chiudi(); mostraToast('Frase salvata: la scrivo con le sue risposte.');
+  };
+}
+function trnConversazione(convs) {
+  let conv = convs[0], st = null, nome = '';
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-sessione trn-rp"><div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-titolo">Telefonata di prova</div></div>
+    <div class="trn-rp-umore"></div><div class="trn-rp-chat"></div><div class="trn-rp-fondo"></div></div>`;
+  document.body.appendChild(velo);
+  const foglio = velo.querySelector('.foglio'), chat = velo.querySelector('.trn-rp-chat'), fondo = velo.querySelector('.trn-rp-fondo'), umore = velo.querySelector('.trn-rp-umore');
+  const chiudi = () => { velo.remove(); if (ST.tab === 'training') disegnaTraining(); };
+  velo.querySelector('.trn-x').onclick = chiudi;
+  let cv = conv;
+   // la conversazione col nome scelto al posto di {nome}
+  // prima tre domande, una alla volta (più vero: hai un nome, un lavoro, una storia): come si chiama, che lavoro fa, se l'hai già contattato.
+  // Per ora c'è solo il dipendente, che non è mai stato contattato: gli altri si aggiungono un po' alla volta (Ignazio 29/09: «parti in progressione»).
+  const prossimamente = t => `<button disabled class="trn-rp-presto">${esc(t)}<small>in arrivo</small></button>`;
+  const scegliNome = () => {
+    st = null;
+    umore.hidden = true; umore.className = 'trn-rp-umore'; chat.innerHTML = '';
+    fondo.innerHTML = `<div class="trn-chiede">Come si chiama la persona che chiami?</div>
+      <div class="campo"><input id="trn-rp-nome" maxlength="20" placeholder="Il nome, per esempio Mario" autocomplete="off" value="${esc(nome)}"></div>
+      <button class="primario" id="trn-rp-avanti">Avanti</button>`;
+    const campo = fondo.querySelector('#trn-rp-nome'), av = fondo.querySelector('#trn-rp-avanti');
+    const pronto = () => { nome = campo.value.trim(); av.disabled = !nome; };
+    campo.oninput = pronto; pronto();
+    av.onclick = scegliLavoro;
+  };
+  let profilo = null;
+  const scegliLavoro = () => {
+    const previsti = [['imprenditore', 'È un imprenditore o un libero professionista'], ['dipendente', 'È un lavoratore dipendente'], ['presentato', "Me l'ha presentato qualcuno"]];
+    fondo.innerHTML = `<div class="trn-chiede">Che lavoro fa ${esc(nome)}?</div><div class="trn-risposte">
+      ${previsti.map(([k, t]) => { const c = convs.find(x => x.profilo === k); return c ? `<button data-p="${k}">${esc(c.profilo_testo || t)}</button>` : prossimamente(t); }).join('')}</div>
+      <button class="link" id="trn-rp-indietro">‹ Cambia il nome</button>`;
+    fondo.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { profilo = b.dataset.p; scegliPassato(); });
+    fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
+  };
+  // «già contattato in passato?»: ogni risposta porta alla sua conversazione (manuale pag. 12 per chi era già stato sentito)
+  const scegliPassato = () => {
+    const con = flag => convs.find(x => x.profilo === profilo && !!x.contattato === flag);
+    fondo.innerHTML = `<div class="trn-chiede">L'hai già contattato in passato?</div><div class="trn-risposte">
+      ${con(false) ? '<button id="trn-rp-no">No, è la prima volta</button>' : prossimamente('No, è la prima volta')}
+      ${con(true) ? '<button id="trn-rp-si">Sì, ci eravamo già sentiti</button>' : prossimamente('Sì, ci eravamo già sentiti')}</div>
+      <button class="link" id="trn-rp-indietro">‹ Indietro</button>`;
+    const via = flag => { conv = con(flag); cv = JSON.parse(JSON.stringify(conv).split('{nome}').join(JSON.stringify(nome).slice(1, -1)));
+      st = MB21Training.rpNuova(cv); umore.hidden = false; disegna(); };
+    const no = fondo.querySelector('#trn-rp-no'), si = fondo.querySelector('#trn-rp-si');
+    if (no) no.onclick = () => via(false);
+    if (si) si.onclick = () => via(true);
+    fondo.querySelector('#trn-rp-indietro').onclick = scegliLavoro;
+  };
+  const btn = (n) => trnCorreggi(n, 'Correggi');
+  const disegna = () => {
+    const righe = [];   // ogni frase che si può correggere: quella del candidato e la risposta giusta (Ignazio 29/09)
+    const arr = x => (Array.isArray(x) ? x : [x]);
+    const nota = j => {
+      righe.push({ carta: `${cv.id}#${j + 1}`, visto: { dove: 'conversazione', titolo: 'Correggi la spiegazione', domanda: arr(cv.scambi[j].candidato).join(' '), scelta: cv.scambi[j].perche, quale: 'spiegazione' } });
+      return `<div class="trn-esito no"><b>${esc(arr(cv.scambi[j].candidato).join(' '))}</b>${esc(cv.scambi[j].perche)}${trnFonte(cv.scambi[j])}${btn(righe.length - 1)}</div>`; };
+    // i fumetti: se il candidato dice più frasi di fila (la reazione e la frase dopo) sono un fumetto solo, con le frasi staccate (Ignazio 30/09)
+    const eventi = [];
+    for (let j = 0; j <= Math.min(st.i, cv.scambi.length - 1); j++) {
+      eventi.push({ chi: 'lui', j, frasi: arr(cv.scambi[j].candidato), principale: true });
+      st.giro.filter(g => g.scambio === j).forEach(g => {
+        eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero });
+        if (!g.giusta) eventi.push({ chi: 'lui', j, frasi: arr(g.reazione) });
+      });
+    }
+    const ult = cv.scambi.length - 1;
+    if (st.fine === 'ok') eventi.push({ chi: 'lui', j: ult, frasi: arr(cv.chiusura) });
+    if (st.fine === 'chiusa') eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto) });
+    const gruppi = [];
+    eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
+    let h = '';
+    gruppi.forEach(g => {
+      const pezzi = g.frasi.map(t => `<p>${esc(t)}</p>`).join('');
+      if (g.chi === 'lui') {
+        righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: 'lui' } });
+        const v = g.principale ? (righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
+        h += `<div class="trn-rp-b lui"><small>${esc(nome)}</small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
+      } else {
+        const q = (g.rec ? 'recupero, ' : '') + (g.giusta ? 'risposta giusta' : 'risposta sbagliata');
+        righe.push({ carta: `${cv.id}#${g.j + 1}${g.rec ? 'r' : ''}`, visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
+        h += `<div class="trn-rp-b io"><small>Tu</small>${pezzi}${btn(righe.length - 1)}</div>`;
+      }
+    });
+    // le spiegazioni del manuale non si vedono durante la chiacchierata (Ignazio 30/09: leggerle a metà toglie il gusto): solo alla fine,
+    // per i passi in cui hai sbagliato
+    const rivedi = [...new Set(st.giro.filter(g => !g.giusta).map(g => g.scambio))].sort((x, y) => x - y);
+    if (st.fine && rivedi.length) h += `<h4 class="trn-rp-manuale">Cosa suggerisce il manuale, dove hai sbagliato</h4>${rivedi.map(nota).join('')}`;
+    chat.innerHTML = h;
+    chat.querySelectorAll('[data-variante]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.variante)]; trnNuovaVariante({ id: r.carta }, r.visto, nome); });
+    trnCollegaFonte(chat);
+    chat.querySelectorAll('[data-correggi]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.correggi)]; trnFoglioCorreggi({ id: r.carta }, r.visto, b); });
+    umore.innerHTML = st.fine === 'chiusa' ? `${esc(nome)} ha chiuso la telefonata` : st.fine === 'ok' ? `${esc(nome)} ha accettato` : `${esc(nome)} è <b>${esc(MB21Training.rpUmore(st))}</b>`;
+    umore.className = 'trn-rp-umore u' + (st.fine === 'chiusa' ? 3 : st.fine === 'ok' ? 0 : Math.min(st.colpi, 2));
+    if (st.fine) {
+      const sbagli = st.giro.filter(g => !g.giusta).length;
+      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? `Appuntamento fissato con ${esc(nome)}` : 'Contatto perso'}</b>
+        ${st.fine === 'ok' ? `${st.i} scambi su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
+          : `Hai fatto ${st.i} scambi su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
+        <button class="primario" id="trn-rp-ancora">Riprova la conversazione</button><button class="trn-secondo" id="trn-rp-esci">Chiudi</button>`;
+      fondo.querySelector('#trn-rp-ancora').onclick = () => { scegliNome(); foglio.scrollTo({ top: 0 }); };
+      fondo.querySelector('#trn-rp-esci').onclick = chiudi;
+    } else {
+      fondo.innerHTML = `<div class="trn-chiede">${st.fase === 'recupero' ? `Ora tocca a te rimediare: cosa dici a ${esc(nome)}?` : st.fuori.length ? `Riprova: cosa rispondi a ${esc(nome)}?` : `Cosa rispondi a ${esc(nome)}?`}</div><div class="trn-risposte">${MB21Training.rpRisposte(st).map(r => `<button data-r="${r.k}">${esc(r.testo)}</button>`).join('')}</div>`;
+      fondo.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { st = MB21Training.rpScegli(st, Number(b.dataset.r)); disegna(); });
+    }
+    foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
+  };
+  scegliNome();
+}
+
 function trnApriCarta(id, cap, punto) {
   let testa, corpo, colore;
   if (id === 'manuale') {
