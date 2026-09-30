@@ -92,5 +92,13 @@ const assert = require('node:assert/strict');
     assert.equal(R.riepilogoDomani([{ inizio: t('2026-09-25T07:30:00Z'), testo: 'Telefonata · Anna', telefonata: true }]).titolo, '1 telefonata');
   });
 
+  prova('complimenti della sera: la giornata a parole, niente di fatto = niente complimenti', () => {
+    assert.equal(R.complimentiDelGiorno({ contatti: 0, fissati: 0, pm: 0, vendite: 0 }), null);
+    assert.equal(R.complimentiDelGiorno({ contatti: 1, fissati: 0, pm: 0, vendite: 0 }), '1 contatto');
+    assert.equal(R.complimentiDelGiorno({ contatti: 3, fissati: 0, pm: 0, vendite: 1 }), '3 contatti e 1 vendita');
+    assert.equal(R.complimentiDelGiorno({ contatti: 5, fissati: 2, pm: 1, vendite: 2 }), '5 contatti, 2 appuntamenti fissati, 1 PM e 2 vendite');
+    assert.equal(R.complimentiDelGiorno({ contatti: 0, fissati: 1, pm: 2, vendite: 0 }), '1 appuntamento fissato e 2 PM');
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -30,7 +30,7 @@
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -148,14 +148,17 @@ Deno.serve(async (req) => {
     // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Hai fatto il Check?» con in fondo
     // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
     const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }] = await Promise.all([
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }] = await Promise.all([
       db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani.inizio).lt('data_scelta', domani.fine),
       db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).gte('inizio', domani.inizio).lt('inizio', domani.fine),
+      // 30/09 i complimenti: la giornata già scritta, contata come la Dashboard (viste azioni_conti e vendite_conti, giorno di Roma)
+      db.from('azioni_conti').select('user_id, esito, contatti, pm').eq('giorno', oggi),
+      db.from('vendite_conti').select('user_id, contatto_id').eq('conta_il', oggi),
     ]);
-    const err = e1 || e2 || e3 || e4 || e5;
+    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7;
     if (err) return risposta({ errore: err.message }, 500);
     const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
     const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda, come il promemoria
@@ -170,9 +173,19 @@ Deno.serve(async (req) => {
     for (const { id } of attivi ?? []) {
       if (!corpo.forza && quando(id, 'check') !== oraAdesso) continue;
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
+      // il coach guarda la giornata scritta nell'app: se c'è qualcosa la prima riga sono i complimenti, se no niente di inventato
+      const mieiConti = (conti ?? []).filter(x => x.user_id === id);
+      const bravo = complimentiDelGiorno({
+        contatti: mieiConti.reduce((n, x) => n + (x.contatti || 0), 0),
+        fissati: mieiConti.filter(x => x.esito === 'PM Fissato' || x.esito === 'Appuntamento').length,
+        pm: mieiConti.reduce((n, x) => n + (x.pm || 0), 0),
+        vendite: new Set((vend ?? []).filter(x => x.user_id === id).map(x => x.contatto_id)).size,
+      });
       let avviso: Avviso;
-      if (!giaFatto.has(id)) avviso = { titolo: '⚡ Hai scritto il tuo giorno?', testo: 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
-      else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
+      if (!giaFatto.has(id)) avviso = bravo
+        ? { titolo: '👏 Bel lavoro oggi!', testo: `${bravo[0].toUpperCase()}${bravo.slice(1)}. Hai scritto il tuo giorno? Bastano due minuti: tocca per aprire «Il mio giorno».` + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' }
+        : { titolo: '⚡ Hai scritto il tuo giorno?', testo: 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
+      else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `${bravo ? `Oggi ${bravo}, bel lavoro. ` : ''}Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
       else continue;   // Check fatto e domani niente: si tace
       if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
       esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
