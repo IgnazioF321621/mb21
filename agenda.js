@@ -8,7 +8,7 @@
     'Piano Marketing': ['PM 1a1', 'PM Upline', 'PM Casa/Pull', 'PM Open'],
     'Follow Up': ['Personale', 'Upline', 'Meeting/Evento'],
     'Appuntamento': ['Avvio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'],
-    'Consulenza PRD': ['Assistenza', 'Demo', 'Promo/Sconto', 'Riordino'],
+    'Consulenza PRD': ['Presentazione', 'Demo', 'Promo/Sconto', 'Riordino'],   // «Presentazione» al posto di «Assistenza» (Ignazio 29/09; cantiere 48)
   };
   // Nome del campo sottotipo per ogni tipo, stile Glide «Tipo di contatto» (decisione di Ignazio 15/09)
   const ETICHETTE_SOTTOTIPO = {
