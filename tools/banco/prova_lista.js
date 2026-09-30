@@ -4,7 +4,8 @@ const assert = require('node:assert/strict');
 const L = require('../../lista.js');
 
 let ok = 0;
-function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
+let coda = Promise.resolve();   // una dopo l'altra, anche quelle che aspettano
+function prova(nome, fn) { coda = coda.then(async () => { await fn(); ok++; console.log('OK  ' + nome); }); }
 
 const IO = 'u-io', ALTRO = 'u-altro';
 const righe = [
@@ -387,4 +388,40 @@ prova('Dati personali: un elenco solo per modulo e sezione Dati, nell\'ordine di
   assert.equal(L.nomeScelta(L.SESSI, 'F'), 'Donna'); assert.equal(L.nomeScelta(L.LAVORI, 'autonomo'), 'Autonomo'); assert.equal(L.nomeScelta(L.SESSI, 'X'), 'X');
 });
 
-console.log(`\n${ok} prove superate`);
+prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il mio avvio»; solo per l\'incontro di Avvio e per i passi che hanno una riga', () => {
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Motivazione'), 'onb_sogno');
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'ListaStart'), 'onb_lista_start');
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'OrdineStart'), 'onb_ordine');
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'RolePlay'), 'onb_role_play');
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Telefonate'), 'onb_contatti');
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Lista nomi'), null);          // non ha una riga in «Il mio avvio»
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Inaugurazione'), null);
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Counseling', 'Motivazione'), null);    // solo l'Avvio
+  assert.equal(L.passoAvvioDa('Piano Marketing', 'Avvio', 'Motivazione'), null);
+  for (const col of Object.values(L.AVVIO_DA_INCONTRO)) assert.ok(L.PASSI_ONBOARDING.some(p => p[0] === col), col);   // la colonna esiste davvero
+});
+
+prova('spuntaAvvio nell\'app: segna il passo una volta, non tocca quello già fatto, niente rete = niente', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function spuntaAvvio'), codice = src.slice(da);
+  const chiamate = []; let riga = { onb_lista_start: false }, errore = null;
+  const ctx = { MB21Lista: L, LS: { contatto: { id: 'c1', onb_lista_start: false }, righe: [{ id: 'c1', onb_lista_start: false }, { id: 'c2' }] },
+    dbq: (_, p) => p, supa: { from: () => { const q = { select() { return q; }, eq() { return q; }, maybeSingle() { return q; },
+      update(v) { chiamate.push(['update', v]); q._u = true; return q; }, then(r) { r(q._u ? { error: errore } : { data: riga, error: errore }); } }; return q; } } };
+  vm.createContext(ctx); vm.runInContext(codice, ctx);
+  const e = { tipo_azione: 'Appuntamento', modalita: 'Avvio', contatto_id: 'c1' };
+  const r = await ctx.spuntaAvvio(e, 'ListaStart');
+  assert.deepEqual(JSON.parse(JSON.stringify(r)), { col: 'onb_lista_start', nome: 'Lista Start' });
+  assert.deepEqual(JSON.parse(JSON.stringify(chiamate)), [['update', { onb_lista_start: true }]]);
+  assert.equal(ctx.LS.contatto.onb_lista_start, true); assert.equal(ctx.LS.righe[0].onb_lista_start, true);   // la scheda già letta resta allineata
+  ctx.passoInCache('c1', 'onb_lista_start', false); assert.equal(ctx.LS.contatto.onb_lista_start, false);        // e Annulla la rimette
+  chiamate.length = 0; riga = { onb_lista_start: true };
+  assert.equal(await ctx.spuntaAvvio(e, 'ListaStart'), null); assert.deepEqual(chiamate, []);                     // già segnato: niente, e Annulla non lo toglie
+  assert.equal(await ctx.spuntaAvvio(e, 'Lista nomi'), null);                                                      // senza riga
+  assert.equal(await ctx.spuntaAvvio({ ...e, modalita: 'Counseling' }, 'Motivazione'), null);
+  riga = { onb_lista_start: false }; errore = { message: 'rete' };
+  assert.equal(await ctx.spuntaAvvio(e, 'ListaStart'), null);
+});
+
+coda.then(() => console.log(`\n${ok} prove superate`));

@@ -206,6 +206,10 @@
     if (!r || !r.avvio_in_pausa_dal || !oggi) return false;
     return (Date.parse(oggi + 'T12:00:00Z') - Date.parse(String(r.avvio_in_pausa_dal).slice(0, 10) + 'T12:00:00Z')) / 86400000 > 365;
   }
+  // Il passo dell'Avvio fatto in un incontro → la sua riga in «Il mio avvio» (cantiere 48, Ignazio 30/09: «si spunta lì da soli»). Solo per gli
+  // incontri di Avvio e solo per i passi che esistono in tutti e due gli elenchi: Lista nomi e Inaugurazione non hanno una riga in «Il mio avvio».
+  const AVVIO_DA_INCONTRO = { Motivazione: 'onb_sogno', ListaStart: 'onb_lista_start', OrdineStart: 'onb_ordine', RolePlay: 'onb_role_play', Telefonate: 'onb_contatti' };
+  const passoAvvioDa = (tipo, modalita, esito) => (tipo === 'Appuntamento' && modalita === 'Avvio' ? AVVIO_DA_INCONTRO[esito] || null : null);
   const PASSI_SPENTI = () => Object.fromEntries(PASSI_ONBOARDING.map(([col]) => [col, false]));
   // Da quanto è entrato (data di ingresso del file Amway, «2026-09-06»): solo un'informazione, nessun allarme. Senza data → ''
   function entratoDa(ingresso, oggi) {
@@ -400,7 +404,7 @@
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
-  const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
