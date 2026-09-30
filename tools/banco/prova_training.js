@@ -344,4 +344,60 @@ prova('La riga MB21 di un PAL manda la traccia ai percorsi giusti; «Mentalità�
   assert.deepEqual(T.percorsiDaMb21(null), []);
 });
 
+prova('la conversazione: il candidato si irrigidisce e, al terzo passo falso, saluta', () => {
+  const sc = n => ({ candidato: 'c' + n, perche: 'p' + n, risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }] });
+  const conv = { colpi: 3, scambi: [sc(1), sc(2)] };
+  let st = T.rpNuova(conv);
+  assert.equal(T.rpUmore(st), 'cordiale');
+  assert.equal(T.rpRisposte(st).length, 3);
+  const k = (st, t) => st.conv.scambi[st.i].risposte.findIndex(r => r.testo === t);
+  st = T.rpScegli(st, k(st, 'a'));                       // un passo falso: più freddo, stessa domanda, una risposta in meno
+  assert.equal(T.rpUmore(st), 'un po\' freddo'); assert.equal(st.i, 0); assert.equal(T.rpRisposte(st).length, 2); assert.equal(st.fine, null);
+  st = T.rpScegli(st, k(st, 'g'));                       // la giusta porta allo scambio dopo, con tutte e tre le risposte
+  assert.equal(st.i, 1); assert.equal(T.rpRisposte(st).length, 3);
+  st = T.rpScegli(st, k(st, 'a'));
+  assert.equal(T.rpUmore(st), 'infastidito');
+  st = T.rpScegli(st, k(st, 'b'));                       // il terzo colpo: chiude
+  assert.equal(st.fine, 'chiusa'); assert.equal(T.rpRisposte(st).length, 0);
+  assert.equal(T.rpScegli(st, 0), st);                   // a telefonata chiusa non cambia più niente
+  // andare fino in fondo senza troppi colpi
+  let ok2 = T.rpNuova(conv);
+  for (let n = 0; n < 2; n++) ok2 = T.rpScegli(ok2, ok2.conv.scambi[ok2.i].risposte.findIndex(r => r.giusta));
+  assert.equal(ok2.fine, 'ok'); assert.equal(ok2.colpi, 0);
+});
+
+prova('la conversazione: dopo un errore tocca rimediare, non tornano le stesse risposte', () => {
+  const sc = n => ({ candidato: 'c' + n, perche: 'p' + n, risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }],
+    recupero: { risposte: [{ testo: 'rg', giusta: true }, { testo: 'ra', reazione: 'x' }, { testo: 'rb', reazione: 'y' }] } });
+  const conv = { colpi: 3, scambi: [sc(1), sc(2), sc(3)] };
+  const k = (st, t) => T.rpRisposte(st).find(r => r.testo === t).k;
+  let st = T.rpNuova(conv);
+  st = T.rpScegli(st, k(st, 'a'));                                   // errore: si resta sullo scambio, ma le risposte sono quelle per rimediare
+  assert.equal(st.i, 0); assert.equal(st.fase, 'recupero'); assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['ra', 'rb', 'rg']);
+  st = T.rpScegli(st, k(st, 'rg'));                                  // rimediato: avanti, di nuovo le risposte dello scambio
+  assert.equal(st.i, 1); assert.equal(st.fase, 'principale'); assert.equal(st.colpi, 1); assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['a', 'b', 'g']);
+  st = T.rpScegli(st, k(st, 'b'));                                   // secondo errore
+  st = T.rpScegli(st, k(st, 'rb'));                                  // rimediare male: un altro colpo, ma si va avanti (più freddi)
+  assert.equal(st.colpi, 3); assert.equal(st.fine, 'chiusa');        // 3 colpi: il candidato chiude, anche a metà del recupero
+  let b = T.rpNuova(conv);
+  b = T.rpScegli(b, k(b, 'a')); b = T.rpScegli(b, k(b, 'ra'));       // errore + recupero sbagliato = 2 colpi, avanti
+  assert.equal(b.colpi, 2); assert.equal(b.i, 1); assert.equal(b.fine, null); assert.equal(T.rpUmore(b), 'infastidito');
+  assert.equal(b.giro.filter(g => g.recupero).length, 1);
+});
+
+prova('la conversazione: ogni errore ha il suo rimedio e lo scambio può avere più frasi del candidato', () => {
+  const rec = t => ({ risposte: [{ testo: t + '-g', giusta: true }, { testo: t + '-x', reazione: 'r' }, { testo: t + '-y', reazione: 'r' }] });
+  const sc = { candidato: 'c', perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra', recupero: rec('A') }, { testo: 'b', reazione: 'rb', recupero: rec('B') }] };
+  let st = T.rpNuova({ colpi: 3, scambi: [sc, sc] });
+  const k = (st, t) => T.rpRisposte(st).find(r => r.testo === t).k;
+  st = T.rpScegli(st, k(st, 'b'));                                   // il rimedio è quello dell'errore fatto (B), non quello dell'altro
+  assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['B-g', 'B-x', 'B-y']);
+  // più frasi del candidato: se ne pesca una, e con lei cambiano risposte e spiegazione
+  const conv = { scambi: [{ varianti: [{ candidato: 'uno', perche: 'p1', risposte: [{ testo: 'g1', giusta: true }] }, { candidato: 'due', perche: 'p2', risposte: [{ testo: 'g2', giusta: true }] }] }] };
+  assert.equal(T.rpNuova(conv, () => 0).conv.scambi[0].candidato, 'uno');
+  assert.equal(T.rpNuova(conv, () => 0.99).conv.scambi[0].candidato, 'due');
+  assert.equal(T.rpRisposte(T.rpNuova(conv, () => 0.99))[0].testo, 'g2');
+  assert.equal(conv.scambi[0].candidato, undefined);                 // l'originale non si tocca
+});
+
 console.log(`\n${ok} prove superate`);
