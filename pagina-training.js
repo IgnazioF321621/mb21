@@ -201,6 +201,13 @@ function trnNodo(p, i, qui) {
 }
 // il role play accanto al suo percorso (solo Admin, Ignazio 29/09: «percorso parallelo e visibile, con icona propria, adeguato al livello»): un tondo piccolo
 // sotto il percorso
+// La prima telefonata del partner nuovo (solo Admin, dal passo «Role Play» di «Il mio avvio»): il mazzo «I primi passi» porta una conversazione semplice, con uno della sua lista
+async function trnProvaTelefonata() {
+  const { data, error } = await dbq('la prima telefonata', supa.from('coach_batterie').select('batteria').eq('situazione', 'carte_primi_passi').maybeSingle());
+  const convs = !error && data && data.batteria && data.batteria.conversazioni;
+  if (!convs || !convs.length) return mostraToast('La prova non è pronta: riprova fra poco.');
+  trnConversazione(convs);
+}
 function trnNodoConversazione(p, i) {
   const m = p.pronto && p.aperto && (TRN.mazzi || []).find(x => x.percorso.id === p.id), convs = m ? trnConversazioniQui(m) : [];
   if (!convs.length) return '';
@@ -776,6 +783,7 @@ function trnConversazione(convs) {
   // com'è la persona: cambia le frasi, quanti errori regge, da che umore parte (Ignazio 30/09); ogni voce dice la sua difficoltà
   let carattere = null;
   const scegliCarattere = () => {
+    if (conv.carattere_fisso) { carattere = conv.carattere_fisso; return parti(); }   // la telefonata del partner nuovo: una sola storia semplice, con uno cordiale
     fondo.innerHTML = `<div class="trn-chiede">Com'è ${esc(nome)} di carattere?</div><div class="trn-risposte">
       ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(donna && c.k === 'schietto' ? 'Schietta' : c.nome)} · ${esc(c.livello)}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
       <button class="link" id="trn-rp-indietro">‹ Indietro</button>`;
@@ -850,7 +858,7 @@ function trnConversazione(convs) {
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
-      const posto = MB21Training.CARATTERI.findIndex(c => c.k === carattere), su = st.fine === 'ok' && sbagli <= 1 ? MB21Training.CARATTERI[posto + 1] : null, giu = st.fine === 'chiusa' && posto > 0 ? MB21Training.CARATTERI[posto - 1] : null;
+      const posto = MB21Training.CARATTERI.findIndex(c => c.k === carattere), su = !conv.carattere_fisso && st.fine === 'ok' && sbagli <= 1 ? MB21Training.CARATTERI[posto + 1] : null, giu = !conv.carattere_fisso && st.fine === 'chiusa' && posto > 0 ? MB21Training.CARATTERI[posto - 1] : null;
       fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
         ${st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}${st.agganciato ? ', e lo hai agganciato mentre stava uscendo' : ''}.`
           : `Hai fatto ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
