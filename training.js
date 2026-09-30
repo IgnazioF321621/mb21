@@ -33,6 +33,8 @@
       { id: 'piano', titolo: 'Il Piano Marketing', sotto: 'Presentarlo, anche in casa: prima, durante e dopo', icona: 'pianomarketing', leader: 'nel Piano Marketing' },
       { id: 'dare_seguito', titolo: 'Dare Seguito', sotto: 'Entro 24-72 ore: le paure, le domande, le obiezioni dopo il piano', icona: 'followup', leader: 'nel Dare Seguito' },
       { id: 'clienti', titolo: 'I clienti', sotto: 'I prodotti, i clienti e il volume di ogni mese', icona: 'cliente', leader: 'con i clienti' },
+      { id: 'area_nutrizione', titolo: "L'area nutrizione", sotto: "L'Energy Program: il primo ordine e il riordino", icona: 'prodotti', leader: "nell'area nutrizione", solo_admin: true },
+      { id: 'area_casa', titolo: "L'area casa: eSpring", sotto: 'Da dove si parte, cosa si dice, il filtro, il riordino', icona: 'casa', leader: "nell'area casa", solo_admin: true },
       { id: 'avviare', titolo: 'Avviare un nuovo', sotto: 'I quattro passi e i primi 30 giorni, dalla parte dello sponsor', icona: 'avvio', leader: 'nell\'avviare un nuovo' },
       { id: 'core', titolo: 'Core e Pacesetter', sotto: 'Le sette caratteristiche, il Pacesetter, il counseling con la tua upline', icona: 'obiettivi', leader: 'nel Core e nel Pacesetter' },
       { id: 'credere', titolo: 'Credere in te', sotto: 'La tua opinione, i «no», la persona che diventi', icona: 'crescita', leader: 'nel credere in te' },
