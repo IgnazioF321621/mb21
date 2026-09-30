@@ -261,10 +261,10 @@
   // ── Il percorso Core (Ignazio 26/09): i gradini si leggono insieme ma ognuno si accende da solo, senza ordine obbligato
   // («può succedere che un passo sia fatto prima di un altro»). «Ogni mese»: Leader 1° livello (lc1), Leader Core (le 7
   // abitudini del Modulo Core, `MB21Core.modulo`), Pacesetter (dopo). «Livelli» (dopo): Leaders Club, Executive, Argento, Platino.
-  // Torna { gradini: [{ chiave, titolo, sotto, fatto, stato, mancano: [{ cosa, di, peso }], consiglio, pronto }], doveSei, tuttiFatti }.
+  // Torna { gradini: [{ chiave, titolo, sotto, fatto, stato, mancano: [{ cosa, peso }], consiglio, pronto }], doveSei, tuttiFatti }.
   // `modulo` null = non ancora letto (la riga dice «…»); `peso` = quanto manca (0-1), per scegliere il consiglio.
   // Un consiglio per ogni gradino, che camminano in parallelo (Ignazio 27/09): `consiglio` = la cosa più vicina che manca a
-  // quel gradino, { cosa, di } («ti consiglio [di] …»); consigli, mai ordini.
+  // quel gradino, { cosa } («Per te: …» / «Per Isabella: …»); consigli, mai ordini.
   const elenco = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`;
   // `giaDetti`: i biglietti che il consiglio del 1° livello dice già (BBS, WES): il Core non li ripete
   function mancanzeCore(m, finora, giaDetti) {
@@ -316,7 +316,7 @@
   // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
   // `vai` = dove porta il tocco sul consiglio (Ignazio, stella cometa: «da qui, il passo dopo è a un tocco»): segni = i biglietti e il CEP
   // (Profilo, o la scheda di chi guardi) · agenda = MB Plan · training · core = Modulo Core · lista = Lista Nomi · mappa · scheda = quella linea
-  const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP', di: true }, bbs: { cosa: 'il biglietto BBS', vai: 'segni' }, wes: { cosa: 'il biglietto WES', vai: 'segni' }, cep: { cosa: "l'abbonamento CEP", vai: 'segni' } };
+  const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP' }, bbs: { cosa: 'il biglietto BBS', vai: 'segni' }, wes: { cosa: 'il biglietto WES', vai: 'segni' }, cep: { cosa: "l'abbonamento CEP", vai: 'segni' } };
   const piuVicina = xs => xs.length ? xs.reduce((a, b) => (b.peso < a.peso ? b : a)) : null;
   // Pacesetter (Ignazio 26/09): nello stesso mese 2 sponsor personali · 100 VP · CEP. Gli sponsor sono solo quelli scritti nel
   // Check (`sponsor`: la somma di sponsor_personali del mese), mai le prime linee del file Amway (chi mette il nuovo in
@@ -350,7 +350,7 @@
     // il consiglio: gli sponsor; 100 VP e CEP li consiglia già il 1° livello, qui non si ripetono
     const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 sponsor personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
       stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, voci: voci3,
-      mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, di: true, peso: manca / PACE_SPONSOR, vai: 'lista' }] : [] };
+      mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, peso: manca / PACE_SPONSOR, vai: 'lista' }] : [] };
     g3.consiglio = g3.fatto ? null : piuVicina(g3.mancano);
     gradini.push(g3);
     const fatti = gradini.filter(g => g.fatto);
@@ -440,7 +440,7 @@
         const dist = x => (scalino(x.bonus) === soglia && x.manca != null ? Number(x.manca) : Infinity);
         const chi = sotto.filter(x => !salta.has(x.partner_id)).sort((a, b) => dist(a) - dist(b))[0];
         if (chi) passi.push({ partner_id: chi.partner_id, nome: chi.nome, vai: 'scheda',
-          testo: dist(chi) < Infinity ? `Aiutare ${chi.nome}: mancano ${formato(dist(chi), 0)} VP al ${soglia}%` : `Aiutare ${chi.nome} verso il ${soglia}%` });
+          testo: dist(chi) < Infinity ? `${chi.nome}: ${formato(dist(chi), 0)} VP e arriva al ${soglia}%` : `${chi.nome}: verso il ${soglia}%` });
       }
       if (manca('planner') > 0) {
         const m = manca('planner');
