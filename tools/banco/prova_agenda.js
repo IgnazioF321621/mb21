@@ -736,7 +736,7 @@ prova('«Su cosa lavorate?»: le fasi del tipo di appuntamento, solo per un Part
   for (const [c, t, m] of [['Prospect', 'Appuntamento', 'Avvio'], ['Cliente', 'Appuntamento', 'Avvio'], ['Partner', 'Piano Marketing', 'PM 1a1'], ['Partner', 'Appuntamento', null], ['Partner', 'Contatto', 'Telefonata']])
     assert.deepEqual(A.suCosaPer(c, t, m), [], `${c} ${t} ${m}`);
   assert.equal(A.nomePasso('Motivazione'), 'Il perché');
-  assert.equal(A.nomePasso('ListaStart'), 'ListaStart');   // gli altri come sono: i nomi salvati non cambiano
+  assert.deepEqual(['ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'].map(A.nomePasso), ['Lista Start', 'Ordine Start', 'Lista Nomi', 'Role Play', 'Telefonate', 'Inaugurazione']);   // come li scrive Ignazio; i nomi salvati non cambiano
 });
 
 prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anche altro» con gli altri, tutti in ordine delle fasi; chiuso o senza scelta → il blocco di sempre', () => {

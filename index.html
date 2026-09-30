@@ -2733,6 +2733,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
         contatto: { id: e.contatto_id, nome, categoria }, categoria: dopo.proposta.categoria, tipo: dopo.proposta.tipo, modalita: dopo.proposta.modalita, userId: e.user_id,
       });
       e.fissato = !!creato;   // il coach corto: foglio annullato = come un richiamo
+      e.incontro = creato || undefined;   // il giorno e i passi scelti: «Giovedì con Mario lavorate su…»
       // fissato: il contatto esce dalla coda, lo segue l'appuntamento (come in coda, `registra_esito`)
       if (creato) await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', e.contatto_id));
       await ridisegna();
@@ -3105,7 +3106,7 @@ async function nuovoAppuntamento(opz = {}) {
         await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
         if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
       }
-      chiudi({ id: data.id, inizio });
+      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
       // piano marketing»): subito il foglio «Prima del PM, manda a Mario…». Dopo che chi ha chiamato ha finito (coda, Agenda, scheda).
       if (v.tipo_azione === 'Piano Marketing' && st.contatto && MB21Sharing.perChiDi({ categoria: v.categoria }) === 'ospite')
