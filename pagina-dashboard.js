@@ -463,7 +463,7 @@ async function toccaBottone(id, indice) {
     mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
     // per ultimo il momento di riflessione (cantiere 42), sulla telefonata appena registrata; con «Ordine» alla chiusura del modulo Vendita
     // (la categoria serve al coach: la chat delle telefonate è per chi non è Partner né Cliente)
-    const riflessione = () => chiediRiflessione({ id: esito.azione_id, contatto_id: id, user_id: pos.contatto.user_id, tipo_azione: 'Contatto', modalita: 'Telefonata',
+    const riflessione = () => chiediRiflessione({ id: esito.azione_id, contatto_id: id, user_id: pos.contatto.user_id, incontro: appuntamento || undefined, tipo_azione: 'Contatto', modalita: 'Telefonata',
       contatti: { nome: pos.contatto.nome, categoria: pos.contatto.categoria } }, bottone.etichetta);
     if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria, undefined, riflessione)   // «Ordine»: «La registri adesso?»
       .then(registrata => { if (!registrata) riflessione(); });
@@ -806,7 +806,7 @@ function disegnaAvvio() {
     ${AVV.comeAperto ? `<div class="riquadro avv-come-testo"><ul>
       <li>Qui vedi i partner ${altro ? 'del Team' : 'del tuo Team'} con l'avvio aperto, dal più recente. Tra [ ] c'è lo sponsor: è a lui che ti rivolgi${altro ? '' : '; «Tuo/a» se è tuo'}.</li>
       <li>${ic('prossimo')} è il prossimo passo da fare insieme. ${ic('propone')} sono i passi che l'app sa già: li segna chi ha il partner nella sua lista, se è d'accordo.</li>
-      <li><b>Perché iniziare</b> è il primo passo: il partner lo sceglie nel suo benvenuto («Perché vuoi iniziare?», come nel Piano Marketing) e qui, sotto il passo, leggi quello che ha scelto.</li>
+      <li><b>Il perché</b> è il primo passo: il partner lo sceglie nel suo benvenuto («Perché vuoi iniziare?», come nel Piano Marketing) e qui, sotto il passo, leggi quello che ha scelto.</li>
       <li><b>${ic('fatto')} Avvio concluso</b>: cammina da solo, esce dall'elenco.</li>
       <li><b>${ic('pausa')} In pausa</b>: fermo per ora. Lo ritrovi in fondo alla pagina; <b>${ic('riprendi')} Riprendi</b> lo riporta qui.</li>
       <li><b>Fermo da più di un anno?</b> Alla ripresa l'avvio si rifà da capo: con <b>${ic('aggiorna')} Riprendi da capo</b> i 14 passi tornano tutti da fare.</li>

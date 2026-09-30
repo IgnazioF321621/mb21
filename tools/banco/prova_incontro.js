@@ -23,7 +23,7 @@ prova('Il blocco: i passi scelti da toccare, «anche altro» con gli altri, «Fa
   const h = ctx.bloccoEsiti(incontro, 'Partner');
   assert.match(h, /Com'è andato l'incontro\?/);
   assert.match(h, /data-passo-fatto="Motivazione">Il perché</);
-  assert.match(h, /data-passo-fatto="ListaStart">ListaStart</);
+  assert.match(h, /data-passo-fatto="ListaStart">Lista Start</);
   const scelti = h.split('Tocca i passi')[1].split('data-anche-altro')[0], altri = h.split('data-altri')[1];
   assert.ok(!scelti.includes('RolePlay') && altri.includes('data-passo-fatto="RolePlay"') && altri.includes('Inaugurazione'));   // gli altri stanno dietro «anche altro»
   assert.match(h, /data-incontro-fatto disabled/);
@@ -50,12 +50,12 @@ prova('Chiudere con più passi: il primo è l\'esito, gli altri una riga di azio
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const e = { ...incontro, contatti: { nome: 'Mario', categoria: 'Partner' } };
-  await ctx.chiudiAppuntamento(e, 'Motivazione', { dopo: async () => {}, extra: ['ListaStart', 'Telefonate'], testo: 'Il perché · ListaStart · Telefonate' });
+  await ctx.chiudiAppuntamento(e, 'Motivazione', { dopo: async () => {}, extra: ['ListaStart', 'Telefonate'], testo: 'Il perché · Lista Start · Telefonate' });
   assert.deepEqual(chiamate.filter(c => c[0] === 'rpc'), [['rpc', 'chiudi_appuntamento', 'Motivazione']]);
   assert.deepEqual(righe.map(r => r.esito), ['ListaStart', 'Telefonate']);
   for (const r of righe) assert.deepEqual([r.contatto_id, r.user_id, r.tipo_azione, r.modalita, r.categoria, r.inizio, r.fine, r.completata], ['c1', 'u1', 'Appuntamento', 'Avvio', 'Partner', incontro.inizio, incontro.fine, true]);
   assert.deepEqual(segnati, ['onb_sogno', 'onb_lista_start', 'onb_contatti']);
-  assert.match(toastTesto, /^Il perché · ListaStart · Telefonate salvato · segnato in «Il mio avvio»: Il perché, Lista Start, Contatti$/);
+  assert.match(toastTesto, /^Il perché · Lista Start · Telefonate salvato · segnato in «Il mio avvio»: Il perché, Lista Start, Contatti$/);
   chiamate.length = 0;
   await toastAnnulla();
   assert.ok(chiamate.some(c => c[0] === 'delete' && c[1] === 'azioni' && c[2].join() === 'nuova1,nuova2'));                       // le righe in più tolte
