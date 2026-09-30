@@ -2,7 +2,7 @@
 
 Lista dei lavori aperti e archivio di quelli chiusi. **Le regole tecniche vivono in `CLAUDE.md`; le lezioni apprese in `LEZIONI.md`; la mappa di tabelle e logiche in `STRUTTURA.md`.** Qui c'è cosa resta da fare e cosa è già stato fatto.
 
-*Aggiornato: 29 settembre 2026 (sera: **aperto il cantiere 48, Azioni — il flusso dopo la telefonata**; fatto il lavoro 1, il foglio unico dopo l'esito; aperti restano 47, 46, 45, 36 e gli altri di prima).*
+*Aggiornato: 30 settembre 2026 (Report: «Tutti» conta VPP e VPG di Amway una volta per codice, la coppia non si somma più due volte — in locale); 29 settembre 2026 (sera: **aperto il cantiere 48, Azioni — il flusso dopo la telefonata**; fatto il lavoro 1, il foglio unico dopo l'esito; aperti restano 47, 46, 45, 36 e gli altri di prima).*
 
 Indice: [Cantieri aperti](#cantieri-aperti) · [Cantieri chiusi](#cantieri-chiusi)
 

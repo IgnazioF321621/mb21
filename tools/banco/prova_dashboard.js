@@ -169,6 +169,23 @@ prova('Partner Select «Tutti»: somma dei partner, partenze calcolate per ognun
   assert.deepEqual(mesi, [{ user_id: 'A', mese: '2026-09-01', bbs: 3 }, { user_id: 'B', mese: '2026-09-01', bbs: 4 }]);
 });
 
+prova('«Tutti»: la coppia con lo stesso codice conta VPP e VPG di Amway una volta sola', () => {
+  const ob = [
+    { user_id: 'A', mese: '2026-09-01', contatti: 30, vpp_amway: 100, vpg_amway: 500 },
+    { user_id: 'B', mese: '2026-09-01', contatti: 10, vpp_amway: 100, vpg_amway: 500 },   // moglie di A: stesso codice, stesso numero
+    { user_id: 'C', mese: '2026-09-01', contatti: 5, vpp_amway: 40, vpg_amway: 60 },
+  ];
+  const u = D.unisciPartner([], ob, '2026-09-01', { A: '111', B: '111', C: '222' }).obiettivi[0];
+  assert.equal(u.vpp_amway, 140);   // 100 (coppia, una volta) + 40
+  assert.equal(u.vpg_amway, 560);
+  assert.equal(u.contatti, 45);     // gli obiettivi scritti dalle persone restano sommati
+  // senza codici noti ogni utente è un partner a sé (come prima)
+  assert.equal(D.unisciPartner([], ob, '2026-09-01').obiettivi[0].vpp_amway, 240);
+  // due mesi diversi non si confondono
+  const due = D.unisciPartner([], [...ob, { user_id: 'A', mese: '2026-10-01', vpp_amway: 7 }, { user_id: 'B', mese: '2026-10-01', vpp_amway: 7 }], '2026-10-01', { A: '111', B: '111' }).obiettivi;
+  assert.equal(due.find(x => x.mese === '2026-10-01').vpp_amway, 7);
+});
+
 prova('BBS/WES/CEP dalle persone da settembre 2026: fotografia a fine mese, prima i check', () => {
   const chiesti = [];
   const segniAl = giorno => { chiesti.push(giorno); return giorno === '2026-09-30' ? { bbs: 4, wes: 8, cep: 6 } : { bbs: 2, wes: 7, cep: 5 }; };
