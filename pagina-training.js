@@ -78,6 +78,8 @@ function disegnaTraining() {
       <div><b>Allenati a voce</b><small>⚠️ Per ora lo vedi solo tu · Col cronometro: uno spunto da dire con parole tue e un'obiezione a sorpresa, in 3, 5 o 10 minuti.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${eAdmin() && trnTutteLeConversazioni().length ? `<button class="trn-riga" data-proverp style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('report', 20)}</span>
       <div><b>Le prove del role play</b><small>⚠️ Per ora lo vedi solo tu · Quante telefonate, quante arrivano in fondo, dove si sbaglia di più.</small></div><span class="trn-freccia">›</span></button>` : ''}
+    ${eAdmin() ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
+      <div><b>Dove sei, dove vuoi andare</b><small>⚠️ Per ora lo vedi solo tu · Scegli quanto vuoi guadagnare: vedi i tuoi numeri, cosa manca e cosa studiare.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
@@ -88,6 +90,7 @@ function disegnaTraining() {
   app.querySelectorAll('[data-coppia]').forEach(b => b.onclick = trnCoppia);
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = trnAllenatiAVoce);
   app.querySelectorAll('[data-proverp]').forEach(b => b.onclick = trnProveRp);
+  app.querySelectorAll('[data-dovesei]').forEach(b => b.onclick = trnDoveSei);
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -325,6 +328,60 @@ async function trnProveRp() {
   corpo.innerHTML = `<h4 class="trn-rp-manuale">Per conversazione</h4>${somma('conversazione', k => k)}
     <h4 class="trn-rp-manuale">Per carattere</h4>${somma('carattere', car)}
     <h4 class="trn-rp-manuale">Dove si sbaglia di più</h4>${top.length ? top.map(([k, n]) => `<div class="trn-esito no"><b>${esc(k)}</b>${n} ${n === 1 ? 'volta' : 'volte'}</div>`).join('') : '<p class="sotto">Nessun passo falso registrato.</p>'}`;
+}
+// ── «Dove sei, dove vuoi andare» (voluta da Ignazio il 24/09, solo Admin per ora) ──
+// Un tocco su una delle tre fasce di guadagno del Manuale di Avvio (pag. 17), i tuoi numeri dell'ultimo mese (`volumi_mese`, gli stessi della Mappa), quanto manca,
+// la strada che mostra il manuale (esempi pag. 20-22) e il livello del Training da studiare. La scelta si salva in `training_obiettivo`.
+const TRN_FASCE = [
+  { k: 'arrotondamento', nome: 'Un arrotondamento', euro: '200-500 € al mese', sotto: 'Per arrivare meglio alla fine del mese', rif: 200, livello: 'Sponsor',
+    strada: 'Il manuale parte da 200 punti al mese, sviluppati con i tuoi ordini e con quelli di alcuni clienti: è il primo livello del Bonus Attività, il 3%. Nell\'esempio sono 90,48 € di provvigione e 13,57 € di bonus.' },
+  { k: 'piano_b', nome: 'Un piano B', euro: '2.000-3.000 € al mese', sotto: 'Una grande sicurezza per la famiglia', rif: 4200, livello: 'Leader Executive',
+    strada: 'Il manuale mostra cosa succede costruendo una squadra: con 5 persone che sviluppano 200 punti a testa sei a 1.200 punti (il 9%, 229 € di bonus); con 21 persone sei a 4.200 punti (il 15%, 1.500 € di bonus).' },
+  { k: 'indipendenza', nome: 'L\'indipendenza economica', euro: '8.000-10.000 € al mese', sotto: 'Cambia la vita, non solo per l\'importo ma per la libertà', rif: 10200, livello: 'Leader Argento',
+    strada: 'Con 51 persone a 200 punti sei a 10.200 punti, il 21%: 5.057 € di bonus al mese. In più il Bonus Leader (il 6% sul volume dei gruppi che arrivano al 21%) e le qualifiche: lo Smeraldo Fondatori ha un reddito medio in Europa di 8.230 € al mese.' }];
+async function trnDoveSei() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Dove sei, dove vuoi andare</h3><p class="trn-prova">⚠️ Per ora lo vedi solo tu.</p><div id="trn-ds-corpo"><p class="sotto">Un momento…</p></div></div>`;
+  document.body.appendChild(velo);
+  const corpo = velo.querySelector('#trn-ds-corpo'), foglio = velo.querySelector('.foglio');
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  const io = ST.utente && ST.utente.id, partner = ST.utente && ST.utente.partner_id;
+  const [ob, vol] = await Promise.all([
+    dbq('la mia fascia', supa.from('training_obiettivo').select('fascia').eq('user_id', io).maybeSingle()),
+    partner ? dbq('i miei numeri', supa.from('volumi_mese').select('mese, vpp, vpg, bonus, al_livello_successivo').eq('partner_id', partner).order('mese', { ascending: false }).limit(1)) : { data: [] }]);
+  let fascia = !ob.error && ob.data ? ob.data.fascia : null;
+  const ultimo = !vol.error && vol.data && vol.data[0] ? vol.data[0] : null;
+  const num = n => Number(n || 0).toLocaleString('it-IT', { maximumFractionDigits: 0 });
+  const scegli = () => {
+    corpo.innerHTML = `<div class="trn-chiede">Dove vuoi andare? Sempre in aggiunta al tuo reddito di adesso.</div><div class="trn-risposte">${TRN_FASCE.map(f => `<button data-f="${f.k}">${esc(f.nome)} · ${esc(f.euro)}<small>${esc(f.sotto)}</small></button>`).join('')}</div>
+      <button class="link" id="trn-ds-no">Chiudi</button>`;
+    corpo.querySelectorAll('[data-f]').forEach(b => b.onclick = async () => {
+      const k = b.dataset.f;
+      const { error } = await dbq('salvo la fascia', supa.from('training_obiettivo').upsert({ user_id: io, fascia: k, aggiornata_il: new Date().toISOString() }));
+      if (error) mostraToast('Non salvato: riprova.'); else fascia = k;
+      risultato();
+    });
+    corpo.querySelector('#trn-ds-no').onclick = () => velo.remove();
+  };
+  const risultato = () => {
+    const f = TRN_FASCE.find(x => x.k === fascia);
+    if (!f) return scegli();
+    const sc = MB21Training.scala(TRN.mazzi, TRN.stati, TRN.test, trnOggi()), qui = sc.qui, livello = sc.livelli.find(l => l.nome === f.livello);
+    const mese = ultimo ? new Date(ultimo.mese + 'T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) : '';
+    const vpg = ultimo ? Number(ultimo.vpg) || 0 : 0, manca = Math.max(0, f.rif - vpg);
+    corpo.innerHTML = `<div class="trn-esito si"><b>Dove vuoi andare</b>${esc(f.nome)} · ${esc(f.euro)}</div>
+      <div class="trn-esito ${ultimo ? 'si' : 'no'}"><b>Dove sei</b>${ultimo ? `A ${esc(mese)}: ${num(ultimo.vpp)} punti personali e ${num(ultimo.vpg)} di gruppo${Number(ultimo.bonus) ? `, bonus ${num(ultimo.bonus)} €` : ''}.` : 'Non ho ancora i tuoi numeri: compaiono quando il file Amway del mese è stato caricato.'}</div>
+      <div class="trn-esito no"><b>Cosa manca</b>${ultimo ? (manca ? `Il riferimento del manuale per questa fascia è ${num(f.rif)} punti di gruppo al mese: ti mancano circa ${num(manca)} punti.${Number(ultimo.al_livello_successivo) ? ` Al prossimo livello del Bonus Attività ti mancano ${num(ultimo.al_livello_successivo)} punti.` : ''}` : `Hai già superato il riferimento del manuale per questa fascia (${num(f.rif)} punti di gruppo).`) : 'Appena ho i tuoi numeri te lo dico.'}</div>
+      <div class="trn-esito si"><b>La strada, nel manuale</b>${esc(f.strada)}</div>
+      <div class="trn-esito si"><b>Cosa studiare</b>${qui ? `Sei al livello ${esc(qui.nome)}. ` : ''}Per questa fascia ti consiglio il livello ${esc(f.livello)}${livello && !livello.percorsi.length ? ' (i suoi percorsi sono in preparazione)' : ''}.</div>
+      <button class="primario" id="trn-ds-training">Vai al Training</button><button class="trn-secondo" id="trn-ds-cambia">Cambia fascia</button><button class="link" id="trn-ds-no">Chiudi</button>`;
+    corpo.querySelector('#trn-ds-training').onclick = () => { velo.remove(); TRN.vista = 'impara'; disegnaTraining(); window.scrollTo({ top: 0 }); };
+    corpo.querySelector('#trn-ds-cambia').onclick = scegli;
+    corpo.querySelector('#trn-ds-no').onclick = () => velo.remove();
+    foglio.scrollTo({ top: 0 });
+  };
+  risultato();
 }
 // La prima telefonata del partner nuovo (solo Admin, dal passo «Role Play» di «Il mio avvio»): il mazzo «I primi passi» porta una conversazione semplice, con uno della sua lista
 async function trnProvaTelefonata() {
