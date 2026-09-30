@@ -680,6 +680,7 @@ function trnConversazione(convs) {
   // La persona che chiami (Ignazio 30/09): non un nome inventato ma uno della tua lista, come un'esercitazione con uno che poi chiamerai davvero.
   // Si sceglie dalla lista (o si cerca scrivendo); se nella scheda manca il sesso si chiede lì e si salva; se è una donna, si chiede se è mamma (gli impegni in più cambiano).
   let donna = false, mamma = false, contatto = null;
+  const nomeCar = c => (donna && c.k === 'schietto' ? 'schietta' : c.nome.toLowerCase());   // «è schietta»
   const fem = t => (donna ? MB21Training.rpAlFemminile(t) : t);   // le parole dell'umore («infastidito») al femminile
   const scegliNome = () => {
     st = null; contatto = null; donna = false; mamma = false;
@@ -849,11 +850,18 @@ function trnConversazione(convs) {
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
+      const posto = MB21Training.CARATTERI.findIndex(c => c.k === carattere), su = st.fine === 'ok' && sbagli <= 1 ? MB21Training.CARATTERI[posto + 1] : null, giu = st.fine === 'chiusa' && posto > 0 ? MB21Training.CARATTERI[posto - 1] : null;
       fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
         ${st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}${st.agganciato ? ', e lo hai agganciato mentre stava uscendo' : ''}.`
           : `Hai fatto ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
-        <button class="primario" id="trn-rp-ancora">Riprova con ${esc(nome)}</button><button class="trn-secondo" id="trn-rp-altro">Cambia persona o carattere</button><button class="link" id="trn-rp-esci">Chiudi</button>`;
+        ${su ? `<button class="primario" id="trn-rp-su">Più difficile: ${esc(nome)} è ${esc(nomeCar(su))}</button><button class="trn-secondo" id="trn-rp-ancora">Riprova con ${esc(nome)} com'è</button>`
+          : `<button class="primario" id="trn-rp-ancora">Riprova con ${esc(nome)}</button>${giu ? `<button class="trn-secondo" id="trn-rp-giu">Più facile: ${esc(nome)} è ${esc(nomeCar(giu))}</button>` : ''}`}
+        <button class="trn-secondo" id="trn-rp-altro">Cambia persona o carattere</button><button class="link" id="trn-rp-esci">Chiudi</button>`;
       fondo.querySelector('#trn-rp-ancora').onclick = () => { parti(); foglio.scrollTo({ top: 0 }); };
+      // il livello sale da solo: se è andata bene (al massimo un passo falso) si propone il carattere dopo; se il candidato ha chiuso, si può scendere (Ignazio 30/09)
+      const passa = c => { carattere = c.k; parti(); foglio.scrollTo({ top: 0 }); };
+      if (su) fondo.querySelector('#trn-rp-su').onclick = () => passa(su);
+      if (giu) fondo.querySelector('#trn-rp-giu').onclick = () => passa(giu);
       fondo.querySelector('#trn-rp-altro').onclick = () => { scegliNome(); foglio.scrollTo({ top: 0 }); };
       fondo.querySelector('#trn-rp-esci').onclick = chiudi;
     } else {
