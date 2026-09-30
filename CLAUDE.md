@@ -28,7 +28,7 @@ Tre domande prima di ogni scelta:
    - la riga non è chiara, o ci sono due modi diversi di farla che cambiano ciò che vede il partner;
    - c'è un blocco (errore che non si risolve, prova che fallisce, pezzo mancante di un'altra sessione).
    Quando ci si ferma: **una domanda sola**, breve, con cosa è fatto e cosa aspetta. Avuta la risposta si riparte da soli.
-4. Lavori nuovi o difetti visti strada facendo: vanno in MB Project al loro posto (§ 7), non si fanno fuori dal titolo.
+4. Lavori nuovi o difetti visti strada facendo, **anche se sono di un altro titolo** (es. la sessione Evernote nota un difetto in Azioni): non si fanno e non si dimenticano. Si scrivono subito in MB Project sotto il titolo giusto e al loro posto (§ 7), e si avvisa Ignazio con la riga di spiegazione del § 7 (dove l'hai messo, al quale posto, perché).
 5. A fine titolo (o quando Ignazio dice «basta»): **un solo resoconto a 6 punti** (§ 10).
 
 ## 4. 🔒 Regola fondamentale: il database
@@ -82,7 +82,7 @@ Serve a Ignazio per avere **un flusso di lavoro solo**, senza saltare da un cant
   select user_id, id, $t$Testo corto e chiaro$t$, 'numero', 0, P
   from progetti where id = '56a23b23-daff-4ae4-9066-dba97d55b099';
   ```
-  `tipo` come le righe vicine (di solito `numero`); `livello` 1 solo se è un dettaglio del lavoro sopra. Dopo, una riga sola a Ignazio: «📌 In MB Project → Training, al 2° posto su 4: perché…». Niente commit: sono dati dell'app.
+  `tipo` come le righe vicine (di solito `numero`); `livello` 1 solo se è un dettaglio del lavoro sopra. Dopo, una riga sola a Ignazio, sempre, anche in modalità autonoma: «📌 In MB Project → Training, al 2° posto su 4: perché…». Se il lavoro è stato visto da una sessione di un altro titolo, la riga dice anche da dove: «Visto lavorando su Evernote: 📌 In MB Project → Azioni, al 3° posto su 7: perché…». Niente commit: sono dati dell'app.
 - **Spuntare:** `update cose_da_fare set fatto_il = now() where id = '…'` — in modalità B appena il lavoro è finito e provato; in modalità A quando Ignazio dà «ok» o «fatto». Il titolo si completa da solo.
 - **Spostare un titolo:** sempre con tutte le sue righe (fino al titolo dopo), in un comando solo (`update … set ordine = case … end`), poi controllo che non ci siano numeri doppi (i buchi vanno bene).
 - Funziona solo da Claude Code su questa cartella: dalla chat di Claude non si arriva all'app.
