@@ -784,7 +784,8 @@ function trnConversazione(convs, livello) {
       fondo.querySelector('#trn-rp-altro').onclick = () => { scegliNome(); foglio.scrollTo({ top: 0 }); };
       fondo.querySelector('#trn-rp-esci').onclick = chiudi;
     } else {
-      fondo.innerHTML = `<div class="trn-chiede">${st.fuori.length ? `Riprova: cosa rispondi a ${esc(nome)}?` : `Cosa rispondi a ${esc(nome)}?`}</div><div class="trn-risposte">${MB21Training.rpRisposte(st).map(r => `<button data-r="${r.k}">${esc(r.testo)}</button>`).join('')}</div>`;
+      // dopo un errore nessuna frase sopra le risposte: tocca a te rimettere la discussione sulla strada giusta (Ignazio 30/09)
+      fondo.innerHTML = `${st.fase === 'recupero' || st.fuori.length ? '' : `<div class="trn-chiede">Cosa rispondi a ${esc(nome)}?</div>`}<div class="trn-risposte">${MB21Training.rpRisposte(st).map(r => `<button data-r="${r.k}">${esc(r.testo)}</button>`).join('')}</div>`;
       fondo.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { st = MB21Training.rpScegli(st, Number(b.dataset.r)); disegna(); });
     }
     foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
