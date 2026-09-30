@@ -71,14 +71,14 @@ function disegnaTraining() {
       <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
-      <div><b>Telefonata di prova</b><small>⚠️ Per ora la vedi solo tu · Scegli chi chiami e rispondi: se sbagli troppo, ti saluta e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
+      <div><b>Conversazione di prova</b><small>⚠️ Per ora la vedi solo tu · Telefonata o incontro: scegli chi hai davanti e rispondi; se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
   app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
   app.querySelectorAll('[data-medaglie]').forEach(b => b.onclick = trnMedaglie);
-  app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = () => trnConversazione(trnTutteLeConversazioni()));
+  app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = trnScegliConversazione);
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -248,7 +248,7 @@ function trnApriPercorso(id) {
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
       ${conversazioni.length ? `<h4>Prova una conversazione</h4><button class="trn-riga" data-conv="0" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
-        <div><b>Telefona a una persona per fissare un caffè</b><small>⚠️ Per ora lo vedi solo tu · Scegli chi chiami: se sbagli troppo, ti saluta e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
+        <div><b>${esc(conversazioni[0].ingresso || 'Prova una conversazione')}</b><small>⚠️ Per ora lo vedi solo tu · Scegli chi hai davanti: se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
       ${studio.length || siti.length ? `<h4>Per approfondire e imparare</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
         mostraTutte ? '' : `<button class="trn-tutte" id="trn-tutte-percorso" style="--col:var(--gr-crescita)">Mostra tutte le ${tutteStudio.length} ›</button>`}${
         siti.length ? `<a class="trn-riga" href="${MB21Training.RISORSE_AMWAY}" target="_blank" rel="noopener" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic(TRN_ICONA.sito, 20)}</span>
@@ -597,6 +597,21 @@ function trnRisultati() {
 const trnInLocale = () => ['localhost', '127.0.0.1'].includes(location.hostname);
 const trnConversazioniQui = m => ((trnInLocale() || eAdmin()) && Array.isArray(m.conversazioni)) ? m.conversazioni : [];
 const trnTutteLeConversazioni = () => (TRN.mazzi || []).flatMap(m => trnConversazioniQui(m));
+// le conversazioni raggruppate per percorso (Contattare, Dare Seguito…): [{nome, convs}]
+const trnConversazioniPerPercorso = () => (TRN.mazzi || []).map(m => ({ nome: m.conversazioni_nome || (m.percorso && m.percorso.titolo) || 'Conversazione', convs: trnConversazioniQui(m) })).filter(g => g.convs.length);
+// dalla scorciatoia in cima al Training: con una sola situazione si parte dritti, con più si sceglie cosa allenare
+function trnScegliConversazione() {
+  const g = trnConversazioniPerPercorso();
+  if (g.length === 1) return trnConversazione(g[0].convs);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Cosa vuoi allenare?</h3><p class="trn-prova">⚠️ Per ora lo vedi solo tu.</p>
+    <div class="trn-risposte">${g.map((x, i) => `<button data-g="${i}">${esc(x.nome)}</button>`).join('')}</div><button class="link" id="trn-sc-no">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = ev => { if (ev.target === velo) velo.remove(); };
+  velo.querySelector('#trn-sc-no').onclick = () => velo.remove();
+  velo.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { velo.remove(); trnConversazione(g[Number(b.dataset.g)].convs); });
+}
 // Per provare (Ignazio 30/09: «quando ricarico la pagina mi parta direttamente dalla chiacchierata»): aprendo l'app con #chiacchierata in fondo
 // all'indirizzo, dopo l'accesso, se sei Admin (o in locale), si va da soli a Training → Contattare → la telefonata. Per gli altri non fa niente.
 async function trnProvaDiretta() {
@@ -639,7 +654,7 @@ function trnConversazione(convs) {
   let conv = convs[0], st = null, nome = '';
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto trn-sessione trn-rp"><div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-titolo">Telefonata di prova</div></div>
+  velo.innerHTML = `<div class="foglio alto trn-sessione trn-rp"><div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-titolo">${esc(convs[0].foglio || 'Telefonata di prova')}</div></div>
     <div class="trn-rp-umore"></div><div class="trn-rp-chat"></div><div class="trn-rp-fondo"></div></div>`;
   document.body.appendChild(velo);
   const foglio = velo.querySelector('.foglio'), chat = velo.querySelector('.trn-rp-chat'), fondo = velo.querySelector('.trn-rp-fondo'), umore = velo.querySelector('.trn-rp-umore');
@@ -653,13 +668,13 @@ function trnConversazione(convs) {
   const scegliNome = () => {
     st = null;
     umore.hidden = true; umore.className = 'trn-rp-umore'; chat.innerHTML = '';
-    fondo.innerHTML = `<div class="trn-chiede">Come si chiama la persona che chiami?</div>
+    fondo.innerHTML = `<div class="trn-chiede">${esc(convs[0].domanda_nome || 'Come si chiama la persona che chiami?')}</div>
       <div class="campo"><input id="trn-rp-nome" maxlength="20" placeholder="Il nome, per esempio Mario" autocomplete="off" value="${esc(nome)}"></div>
       <button class="primario" id="trn-rp-avanti">Avanti</button>`;
     const campo = fondo.querySelector('#trn-rp-nome'), av = fondo.querySelector('#trn-rp-avanti');
     const pronto = () => { nome = campo.value.trim(); av.disabled = !nome; };
     campo.oninput = pronto; pronto();
-    av.onclick = scegliLavoro;
+    av.onclick = convs.some(x => x.profilo) ? scegliLavoro : () => { conv = convs[0]; scegliCarattere(); };   // Contattare: lavoro e passato; le altre conversazioni vanno dritte al carattere
   };
   let profilo = null;
   const scegliLavoro = () => {
@@ -686,11 +701,11 @@ function trnConversazione(convs) {
   // com'è la persona: cambia le frasi, quanti errori regge, da che umore parte (Ignazio 30/09); ogni voce dice la sua difficoltà
   let carattere = null;
   const scegliCarattere = () => {
-    fondo.innerHTML = `<div class="trn-chiede">Com'è ${esc(nome)} al telefono?</div><div class="trn-risposte">
+    fondo.innerHTML = `<div class="trn-chiede">Com'è ${esc(nome)} di carattere?</div><div class="trn-risposte">
       ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(c.nome)} · ${esc(c.livello)}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
       <button class="link" id="trn-rp-indietro">‹ Indietro</button>`;
     fondo.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { carattere = b.dataset.c; parti(); });
-    fondo.querySelector('#trn-rp-indietro').onclick = scegliPassato;
+    fondo.querySelector('#trn-rp-indietro').onclick = convs.some(x => x.profilo) ? scegliPassato : scegliNome;
   };
   const parti = () => {
     cv = JSON.parse(JSON.stringify(conv).split('{nome}').join(JSON.stringify(nome).slice(1, -1)));
@@ -745,14 +760,14 @@ function trnConversazione(convs) {
     chat.querySelectorAll('[data-variante]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.variante)]; trnNuovaVariante({ id: r.carta }, r.visto, nome); });
     trnCollegaFonte(chat);
     chat.querySelectorAll('[data-correggi]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.correggi)]; trnFoglioCorreggi({ id: r.carta }, r.visto, b); });
-    umore.innerHTML = st.fine === 'chiusa' ? `${esc(nome)} ha chiuso la telefonata` : st.fine === 'ok' ? `${esc(nome)} ha accettato` : `${esc(nome)} è <b>${esc(MB21Training.rpUmore(st))}</b>${st.car ? ` · ${esc(MB21Training.rpCarattere(st.car).nome)}` : ''}`;
+    umore.innerHTML = st.fine === 'chiusa' ? esc(cv.esito_no || `${nome} ha chiuso la telefonata`) : st.fine === 'ok' ? esc(cv.esito_ok ? cv.esito_ok : `${nome} ha accettato`) : `${esc(nome)} è <b>${esc(MB21Training.rpUmore(st))}</b>${st.car ? ` · ${esc(MB21Training.rpCarattere(st.car).nome)}` : ''}`;
     umore.className = 'trn-rp-umore u' + (st.fine === 'chiusa' ? 3 : st.fine === 'ok' ? 0 : MB21Training.rpUmoreN(st));
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
-      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? `Appuntamento fissato con ${esc(nome)}` : 'Contatto perso'}</b>
-        ${st.fine === 'ok' ? `${st.i} scambi su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
-          : `Hai fatto ${st.i} scambi su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
+      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
+        ${st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
+          : `Hai fatto ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
         <button class="primario" id="trn-rp-ancora">Riprova con ${esc(nome)}</button><button class="trn-secondo" id="trn-rp-altro">Cambia persona o carattere</button><button class="link" id="trn-rp-esci">Chiudi</button>`;
       fondo.querySelector('#trn-rp-ancora').onclick = () => { parti(); foglio.scrollTo({ top: 0 }); };
       fondo.querySelector('#trn-rp-altro').onclick = () => { scegliNome(); foglio.scrollTo({ top: 0 }); };
