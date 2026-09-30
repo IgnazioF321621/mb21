@@ -77,6 +77,7 @@ const ctx = {
 };
 ctx.window = ctx;
 vm.createContext(ctx);
+vm.runInContext(pezzo('const codiciDi = ', 'const nomeVisto'), ctx);
 vm.runInContext(pezzo("const SL = { dati: null", 'async function caricaStorico'), ctx);
 vm.runInContext(pezzo('function disegnaStorico(velo, dati) {', '\nconst CK = {'), ctx);
 const disegna = () => { ctx.disegnaStorico(velo, dati); return velo.corpo.innerHTML; };
