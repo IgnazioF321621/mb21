@@ -22,7 +22,7 @@ const COACH_SOLO_ANTEPRIMA = [];
 async function chiediRiflessione(e, esito) {
   const categoria = (e.contatti && e.contatti.categoria) || e.categoria;
   const situazione = MB21Coach.situazione(e.tipo_azione, e.modalita, categoria, esito);
-  if (!situazione) return null;
+  if (!situazione) return e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? tentativiAVuoto(e, esito) : null;
   if (COACH_SOLO_ANTEPRIMA.includes(situazione) && !['127.0.0.1', 'localhost'].includes(location.hostname)) return null;
   const r = await chiediCoach(e, esito, situazione);
   return r === undefined ? null : r;
@@ -68,6 +68,10 @@ async function chiediCoach(e, esito, situazione) {
   const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
   if (passi && !COACH.carte) carteCoach();
   if (!passi) return undefined;
+  return recitaCoach(e, esito, passi);
+}
+// Il foglio della chat: recita `passi` e salva le risposte. `opz.daSola`: a chat finita si chiude da sé (il passo dopo si apre subito).
+function recitaCoach(e, esito, passi, opz = {}) {
   const A = MB21Agenda;
   return new Promise(risolvi => {
     const velo = document.createElement('div');
@@ -94,6 +98,7 @@ async function chiediCoach(e, esito, situazione) {
       if (chiusa) return;
       salvata = await salva();
       if (chiusa) return;
+      if (opz.daSola) return setTimeout(chiudi, 700);
       velo.querySelector('#cch-fondo').hidden = false;
       foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
     });
@@ -109,6 +114,39 @@ async function chiediCoach(e, esito, situazione) {
     velo.querySelector('#cch-x').onclick = chiudi;
     velo.querySelector('#cch-chiudi').onclick = chiudi;
   });
+}
+
+// I tentativi a vuoto di fila (cantiere 48, Ignazio 29/09): dopo «Telefono spento» (2ª volta di fila) o «No Risposta» (3ª) il coach propone un altro
+// canale, a un tocco: Messaggio e Di persona aprono «Nuovo appuntamento» (Contatto, domani) col canale già scelto; «Chiedo a chi me l'ha dato» scrive
+// una cosa da fare per domani in MB Plan; «Lo metto da parte» chiede «Quando risentirlo?» (20 giorni). Gli esiti restano quelli (il Report li conta).
+// Si apre da chiediRiflessione, cioè da dove si dà l'esito (coda e Agenda). Senza rete o con meno tentativi non succede niente.
+async function tentativiAVuoto(e, esito) {
+  if (!MB21Coach.SOGLIA_VUOTI[esito] || !e.contatto_id) return null;
+  const { data, error } = await dbq('tentativi di fila', supa.from('azioni').select('esito')
+    .eq('contatto_id', e.contatto_id).eq('tipo_azione', 'Contatto').not('esito', 'is', null).order('inizio', { ascending: false }).limit(8));
+  if (error || !data) return null;
+  const nome = e.contatti ? e.contatti.nome : '', categoria = e.contatti && e.contatti.categoria;
+  const testo = MB21Coach.altroCanale(esito, MB21Coach.vuotiDiFila(data.map(x => x.esito), esito), primoNome(nome));
+  if (!testo) return null;
+  const C = MB21Coach.CANALI;
+  const r = await recitaCoach(e, esito, [{ c: testo }, { salva: 'canale', chiedi: [
+    [C[0], [{ c: 'Bene: un messaggio, scegli il giorno.' }]], [C[1], [{ c: 'Bene: di persona, scegli il giorno.' }]],
+    [C[2], [{ c: 'Bene: ti lascio una cosa da fare per domani.' }]], [C[3], [{ c: 'Bene: lo risenti più avanti.' }]]] }], { daSola: true });
+  const canale = r && r.find(x => x.chiave === 'canale');
+  if (!canale) return r || null;
+  const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
+  if (canale.risposta === C[0] || canale.risposta === C[1]) {
+    await nuovoAppuntamento({ titolo: `${canale.risposta === C[0] ? 'Messaggio' : 'Di persona'} · ${nome}`, resta: true, giorno: domani, ora: '18:30',
+      contatto: { id: e.contatto_id, nome, categoria }, categoria, tipo: 'Contatto', modalita: canale.risposta === C[0] ? 'Messaggio' : 'Presenza', userId: e.user_id });
+  } else if (canale.risposta === C[2]) {
+    const { data: ultimo } = await dbq('ordine', supa.from('cose_da_fare').select('ordine').eq('user_id', e.user_id || ST.utente.id).order('ordine', { ascending: false }).limit(1));
+    const { error: e2 } = await dbq('cosa da fare', supa.from('cose_da_fare').insert({ user_id: e.user_id || ST.utente.id, contatto_id: e.contatto_id,
+      testo: `Chiedere di ${primoNome(nome)} a chi ti ha dato il nome`, giorno: domani, scala: 'giorno', ordine: ((ultimo && ultimo[0] && ultimo[0].ordine) || 0) + 1 }));
+    mostraToast(e2 ? 'Cosa da fare non salvata: riprova da MB Plan.' : 'Te la trovi in MB Plan, domani');
+  } else {
+    await chiediRientro(e.contatto_id, nome, 'Messo da parte', 20);
+  }
+  return r;
 }
 
 // Il promemoria «Ti eri detto…» (cantiere 42, 24/09; MB App: «la risposta si ritrova al prossimo appuntamento con la stessa

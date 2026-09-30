@@ -168,6 +168,18 @@
     return nomi.map(nome => ({ nome, carta: cartaDi(mazzi, nome, [situazione]) })).filter(x => x.carta);
   }
 
+  // I tentativi a vuoto di fila (cantiere 48, Ignazio 29/09: «risulta spento per due volte di fila»): al 2° «Telefono spento» o al 3° «No Risposta» di fila
+  // il coach propone un altro canale. `esiti`: gli esiti delle telefonate di quel contatto, dal più recente (il tocco appena dato è il primo).
+  const SOGLIA_VUOTI = { 'Telefono spento': 2, 'No Risposta': 3 };
+  const VOLTE = { 2: 'due', 3: 'tre', 4: 'quattro', 5: 'cinque', 6: 'sei' };
+  const CANALI = ['Messaggio', 'Di persona', 'Chiedo a chi me l’ha dato', 'Lo metto da parte'];
+  const vuotiDiFila = (esiti, esito) => { let n = 0; for (const e of esiti || []) { if (e !== esito) break; n++; } return n; };
+  function altroCanale(esito, n, chi) {   // il testo del coach, o null se non ancora
+    if (!SOGLIA_VUOTI[esito] || n < SOGLIA_VUOTI[esito]) return null;
+    const volte = `${VOLTE[n] || n} volte di fila`;
+    return esito === 'Telefono spento' ? `Il telefono di ${chi} risulta spento per ${volte}: cerca un altro canale.` : `${chi} non risponde per ${volte}: cerca un altro canale.`;
+  }
+
   // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up, Consulenza, Appuntamento,
   // Rimandato e No Show:
   // lo stesso montatore, ognuna con la sua batteria.
@@ -327,7 +339,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, situazione, riempi, telefonata, corta, cartaDi, obiezioniDelTelefono, monta, riflessioneDa, ricordi, chat };
+  const api = { SENZA_PAROLE, SOGLIA_VUOTI, CANALI, vuotiDiFila, altroCanale, situazione, riempi, telefonata, corta, cartaDi, obiezioniDelTelefono, monta, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);
