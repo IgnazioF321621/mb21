@@ -424,28 +424,48 @@
   // uno scambio può avere `varianti`: più frasi possibili del candidato (Ignazio 30/09: «le obiezioni ne so a centinaia»), ognuna con le sue risposte;
   // a ogni telefonata se ne pesca una, e con lei cambia tutto il resto dello scambio. Se ce ne sono per il carattere scelto si pesca fra quelle,
   // altrimenti fra quelle valide per tutti (senza `carattere`)
-  const rpPool = (sc, car) => { const v = sc.varianti, per = v.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)); return per.length ? per : v.filter(x => !x.carattere); };
-  const rpScegliVarianti = (conv, rnd, car) => ({ ...conv, scambi: conv.scambi.map(sc => { const pool = Array.isArray(sc.varianti) && sc.varianti.length ? rpPool(sc, car) : [];
+  // `mamma`: le frasi con `mamma: true` (gli impegni in più: bambini, scuola, chi li tiene) si sentono solo se la candidata è mamma, e allora prendono il posto delle altre
+  const rpPool = (sc, car, mamma) => { const tutte = sc.varianti, m = tutte.filter(x => x.mamma);
+    if (mamma && m.length) return m;
+    const v = tutte.filter(x => !x.mamma), per = v.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)); return per.length ? per : v.filter(x => !x.carattere); };
+  const rpScegliVarianti = (conv, rnd, car, mamma) => ({ ...conv, scambi: conv.scambi.map(sc => { const pool = Array.isArray(sc.varianti) && sc.varianti.length ? rpPool(sc, car, mamma) : [];
     if (!pool.length) return sc; const { carattere, livello, ...v } = pool[Math.floor((rnd || Math.random)() * pool.length)]; return { ...sc, ...v }; }) });
   // La chiamata dura finché il candidato non chiude (è rosso da due passaggi) o il partner non fissa l'appuntamento (Ignazio 30/09). Se la conversazione ha
   // `testa` (i saluti e la presentazione), `obiezioni` (un gruppo) e `coda` (l'appuntamento e la conferma), a ogni telefonata si pescano da 1 a 3 obiezioni
   // (quante dipende dal carattere, `ob`; a caso, dando la precedenza a quelle del carattere): l'appuntamento arriva sempre dopo almeno un'obiezione.
   const rpMescolaCon = (a, rnd) => { const v = [...a]; for (let i = v.length - 1; i > 0; i--) { const j = Math.floor((rnd || Math.random)() * (i + 1)); [v[i], v[j]] = [v[j], v[i]]; } return v; };
-  function rpPercorso(conv, rnd, c, car) {
+  function rpPercorso(conv, rnd, c, car, mamma) {
     if (!Array.isArray(conv.obiezioni)) return conv;
     const buone = conv.obiezioni.filter(o => !o.carattere || o.carattere.includes(car)), [min, max] = c ? c.ob : [1, 2];
     const n = Math.min(buone.length, min + Math.floor((rnd || Math.random)() * (max - min + 1)));
-    return { ...conv, scambi: [...(conv.testa || []), ...rpMescolaCon(buone, rnd).slice(0, n), ...(conv.coda || [])] };
+    // con la mamma, fra le obiezioni pescate si dà la precedenza a quelle che hanno una frase da mamma (così gli impegni in più si sentono davvero)
+    const conMamma = o => Array.isArray(o.varianti) && o.varianti.some(x => x.mamma), mesc = rpMescolaCon(buone, rnd);
+    const pescate = (mamma ? [...mesc.filter(conMamma), ...mesc.filter(o => !conMamma(o))] : mesc).slice(0, n);
+    return { ...conv, scambi: [...(conv.testa || []), ...pescate, ...(conv.coda || [])] };
   }
-  function rpNuova(conv, rnd, car) {
-    const c = rpCarattere(car), cv = rpScegliVarianti(rpPercorso(conv, rnd, c, car), rnd, car);
+  // La persona che si chiama (Ignazio 30/09): il nome vero, scelto dalla lista dei contatti; se è una donna le parole al femminile («perplessa», «incasinata»…).
+  // Il testo nei mazzi è scritto al maschile; qui si cambia solo quello che serve.
+  const PAROLE_F = ['perplesso', 'confuso', 'convinto', 'incasinato', 'incuriosito', 'curioso', 'impegnato', 'giudicato', 'interessato', 'soddisfatto', 'ritirato', 'tranquillo', 'infastidito', 'stanco', 'sicuro', 'occupato', 'contento'];
+  const FRASI_F = [[/\bun lavoratore dipendente/g, 'una lavoratrice dipendente'], [/\bUn lavoratore dipendente/g, 'Una lavoratrice dipendente'], [/\bun imprenditore o un libero professionista/g, "un'imprenditrice o una libera professionista"],
+    [/\bUn imprenditore o un libero professionista/g, "Un'imprenditrice o una libera professionista"], [/\bun imprenditore/g, "un'imprenditrice"], [/\bUn amico\b/g, "Un'amica"], [/\bun amico\b/g, "un'amica"],
+    [/\bchiami un dipendente/g, 'chiami una dipendente'], [/\bChiami un dipendente/g, 'Chiami una dipendente'], [/\bRichiami un dipendente/g, 'Richiami una dipendente'], [/\bun dipendente/g, 'una dipendente'],
+    [/\bgià stato contattato/g, 'già stata contattata'], [/\bquando sei pronto/g, 'quando sei pronta'], [/\bgià sentito\b/g, 'già sentita'], [/\bda solo\b/g, 'da sola'], [/\b(che (?:ti )?(?:richiami|chiami)) lui\b/g, '$1 lei'], [/\bsei libero\b(?! professionista)/g, 'sei libera']];
+  const rpAlFemminile = t => { let x = t; FRASI_F.forEach(([a, b]) => { x = x.replace(a, b); });
+    return x.replace(new RegExp(`\\b(${PAROLE_F.join('|')})\\b`, 'gi'), w => { const f = w.slice(0, -1) + 'a'; return w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f; }); };
+  function rpPersona(conv, nome, donna) {
+    const js = JSON.stringify(conv).split('{nome}').join(JSON.stringify(nome).slice(1, -1));
+    return JSON.parse(donna ? rpAlFemminile(js) : js);
+  }
+  function rpNuova(conv, rnd, car, mamma) {
+    const c = rpCarattere(car), cv = rpScegliVarianti(rpPercorso(conv, rnd, c, car, mamma), rnd, car, mamma);
     if (c) cv.colpi = c.colpi;
     // un'obiezione può avere un `seguito`: quello che il candidato dice subito dopo la risposta (per esempio «No, vendere non fa per me»), in testa alla frase dello scambio dopo
     const lista = x => (Array.isArray(x) ? x : [x]);
     cv.scambi = cv.scambi.map((sc, i) => (i > 0 && cv.scambi[i - 1].seguito ? { ...sc, candidato: [...lista(cv.scambi[i - 1].seguito), ...lista(sc.candidato)] } : sc));
     // la frase con cui il candidato avvisa che sta per uscire, quando diventa rosso (`uscite` della conversazione, una per telefonata)
-    const us = Array.isArray(cv.uscite) && cv.uscite.length ? cv.uscite.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)) : [];
-    const pool = us.length ? us : (cv.uscite || []).filter(x => !x.carattere), uscita = pool.length ? pool[Math.floor((rnd || Math.random)() * pool.length)] : null;
+    const usM = (cv.uscite || []).filter(x => x.mamma), usN = (cv.uscite || []).filter(x => !x.mamma);
+    const us = usN.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car));
+    const pool = mamma && usM.length ? usM : us.length ? us : usN.filter(x => !x.carattere), uscita = pool.length ? pool[Math.floor((rnd || Math.random)() * pool.length)] : null;
     return { conv: cv, i: 0, colpi: c ? c.base * RP_CALMA : 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0,
       uscita, uscitaDopo: null, uscitaUsata: false, dopo: null, agganciato: false };
     // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero' | 'uscita'
@@ -500,7 +520,7 @@
     return nuovo;
   }
 
-  const api = { UMORI, CARATTERI, RP_CALMA, rpColpiDopo, rpCarattere, rpTensione, rpUmoreDa, rpUmoreN, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { UMORI, CARATTERI, RP_CALMA, rpColpiDopo, rpCarattere, rpTensione, rpUmoreDa, rpUmoreN, rpNuova, rpPersona, rpAlFemminile, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;

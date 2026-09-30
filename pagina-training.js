@@ -677,23 +677,76 @@ function trnConversazione(convs) {
   // prima tre domande, una alla volta (più vero: hai un nome, un lavoro, una storia): come si chiama, che lavoro fa, se l'hai già contattato.
   // Per ora c'è solo il dipendente, che non è mai stato contattato: gli altri si aggiungono un po' alla volta (Ignazio 29/09: «parti in progressione»).
   const prossimamente = t => `<button disabled class="trn-rp-presto">${esc(t)}<small>in arrivo</small></button>`;
+  // La persona che chiami (Ignazio 30/09): non un nome inventato ma uno della tua lista, come un'esercitazione con uno che poi chiamerai davvero.
+  // Si sceglie dalla lista (o si cerca scrivendo); se nella scheda manca il sesso si chiede lì e si salva; se è una donna, si chiede se è mamma (gli impegni in più cambiano).
+  let donna = false, mamma = false, contatto = null;
+  const fem = t => (donna ? MB21Training.rpAlFemminile(t) : t);   // le parole dell'umore («infastidito») al femminile
   const scegliNome = () => {
-    st = null;
+    st = null; contatto = null; donna = false; mamma = false;
     chat.innerHTML = '';
-    fondo.innerHTML = `<div class="trn-chiede">${esc(convs[0].domanda_nome || 'Come si chiama la persona che chiami?')}</div>
+    fondo.innerHTML = `<div class="trn-chiede">${esc(convs[0].domanda_nome || 'Chi stai per chiamare?')}</div>
+      <div class="campo"><input id="trn-rp-cerca" maxlength="30" placeholder="Cerca nella tua lista" autocomplete="off"></div>
+      <div class="trn-risposte" id="trn-rp-elenco"></div>
+      <button class="link" id="trn-rp-scrivi">Non è nella lista: scrivo un nome</button>`;
+    const campo = fondo.querySelector('#trn-rp-cerca'), elenco = fondo.querySelector('#trn-rp-elenco');
+    let giro = 0;
+    const cerca = async () => {
+      const mio = ++giro, q = campo.value.replace(/[%_*\\,()]/g, ' ').trim();
+      let rich = supa.from('contatti').select('id, nome, sesso, lavoro').eq('user_id', ST.utente.id).is('eliminato_il', null).or('categoria.is.null,categoria.neq.Archiviato');
+      rich = q ? rich.ilike('nome', `%${q}%`).order('nome') : rich.order('creato_il', { ascending: false });
+      const { data, error } = await dbq('contatti per il role play', rich.limit(8));
+      if (mio !== giro) return;
+      const lista = error ? [] : data || [];
+      elenco.innerHTML = lista.length ? lista.map((c, i) => `<button data-i="${i}">${esc(c.nome)}</button>`).join('') : `<p class="sotto">${q ? 'Nessuno con questo nome.' : 'La tua lista è ancora vuota.'}</p>`;
+      elenco.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const c = lista[Number(b.dataset.i)]; contatto = c; nome = primoNome(c.nome); donna = c.sesso === 'F'; dopoPersona(); });
+    };
+    let t = null;
+    campo.oninput = () => { clearTimeout(t); t = setTimeout(cerca, 250); };
+    cerca();
+    fondo.querySelector('#trn-rp-scrivi').onclick = scriviNome;
+  };
+  const scriviNome = () => {
+    fondo.innerHTML = `<div class="trn-chiede">Come si chiama la persona che chiami?</div>
       <div class="campo"><input id="trn-rp-nome" maxlength="20" placeholder="Il nome, per esempio Mario" autocomplete="off" value="${esc(nome)}"></div>
-      <button class="primario" id="trn-rp-avanti">Avanti</button>`;
+      <button class="primario" id="trn-rp-avanti">Avanti</button><button class="link" id="trn-rp-indietro">‹ Torna alla lista</button>`;
     const campo = fondo.querySelector('#trn-rp-nome'), av = fondo.querySelector('#trn-rp-avanti');
-    const pronto = () => { nome = campo.value.trim(); av.disabled = !nome; };
+    const pronto = () => { av.disabled = !campo.value.trim(); };
     campo.oninput = pronto; pronto();
-    av.onclick = convs.some(x => x.profilo) ? scegliLavoro : () => { conv = convs[0]; scegliCarattere(); };   // Contattare: lavoro e passato; le altre conversazioni vanno dritte al carattere
+    av.onclick = () => { nome = campo.value.trim(); contatto = { nome, sesso: null, lavoro: null, scritto: true }; dopoPersona(); };
+    fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
+  };
+  // uomo o donna: se la scheda lo sa, non si chiede
+  const dopoPersona = () => {
+    if (contatto.sesso) return chiediMamma();
+    fondo.innerHTML = `<div class="trn-chiede">${esc(nome)} è un uomo o una donna?</div><div class="trn-risposte"><button data-s="M">Un uomo</button><button data-s="F">Una donna</button></div>
+      <button class="link" id="trn-rp-indietro">‹ Cambia persona</button>`;
+    fondo.querySelectorAll('[data-s]').forEach(b => b.onclick = async () => {
+      contatto.sesso = b.dataset.s;
+      if (contatto.id) { const { error } = await dbq('sesso', supa.from('contatti').update({ sesso: contatto.sesso }).eq('id', contatto.id)); if (error) mostraToast('Il sesso non è stato salvato nella scheda.'); }   // così lo ritrovi anche nella scheda
+      donna = contatto.sesso === 'F'; chiediMamma();
+    });
+    fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
+  };
+  const chiediMamma = () => {
+    if (!donna) { mamma = false; return dopoMamma(); }
+    fondo.innerHTML = `<div class="trn-chiede">${esc(nome)} ha dei figli piccoli?</div><div class="trn-risposte"><button data-m="1">Sì, è mamma<small>ha impegni in più: bambini, scuola, orari</small></button><button data-m="0">No</button></div>
+      <button class="link" id="trn-rp-indietro">‹ Cambia persona</button>`;
+    fondo.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { mamma = b.dataset.m === '1'; dopoMamma(); });
+    fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
+  };
+  // il lavoro: se la scheda lo sa (dipendente / autonomo) non si chiede
+  const dopoMamma = () => {
+    if (!convs.some(x => x.profilo)) { conv = convs[0]; return scegliCarattere(); }
+    const noto = { dipendente: 'dipendente', autonomo: 'imprenditore' }[contatto.lavoro];
+    if (noto && convs.some(x => x.profilo === noto)) { profilo = noto; return scegliPassato(); }
+    scegliLavoro();
   };
   let profilo = null;
   const scegliLavoro = () => {
     const previsti = [['imprenditore', 'È un imprenditore o un libero professionista'], ['dipendente', 'È un lavoratore dipendente'], ['presentato', "Me l'ha presentato qualcuno"]];
     fondo.innerHTML = `<div class="trn-chiede">Che lavoro fa ${esc(nome)}?</div><div class="trn-risposte">
       ${previsti.map(([k, t]) => { const c = convs.find(x => x.profilo === k); return c ? `<button data-p="${k}">${esc(c.profilo_testo || t)}</button>` : prossimamente(t); }).join('')}</div>
-      <button class="link" id="trn-rp-indietro">‹ Cambia il nome</button>`;
+      <button class="link" id="trn-rp-indietro">‹ Cambia persona</button>`;
     fondo.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { profilo = b.dataset.p; scegliPassato(); });
     fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
   };
@@ -708,20 +761,20 @@ function trnConversazione(convs) {
     const no = fondo.querySelector('#trn-rp-no'), si = fondo.querySelector('#trn-rp-si');
     if (no) no.onclick = () => via(false);
     if (si) si.onclick = () => via(true);
-    fondo.querySelector('#trn-rp-indietro').onclick = scegliLavoro;
+    fondo.querySelector('#trn-rp-indietro').onclick = contatto && contatto.lavoro ? scegliNome : scegliLavoro;
   };
   // com'è la persona: cambia le frasi, quanti errori regge, da che umore parte (Ignazio 30/09); ogni voce dice la sua difficoltà
   let carattere = null;
   const scegliCarattere = () => {
     fondo.innerHTML = `<div class="trn-chiede">Com'è ${esc(nome)} di carattere?</div><div class="trn-risposte">
-      ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(c.nome)} · ${esc(c.livello)}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
+      ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(donna && c.k === 'schietto' ? 'Schietta' : c.nome)} · ${esc(c.livello)}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
       <button class="link" id="trn-rp-indietro">‹ Indietro</button>`;
     fondo.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { carattere = b.dataset.c; parti(); });
     fondo.querySelector('#trn-rp-indietro').onclick = convs.some(x => x.profilo) ? scegliPassato : scegliNome;
   };
   const parti = () => {
-    cv = JSON.parse(JSON.stringify(conv).split('{nome}').join(JSON.stringify(nome).slice(1, -1)));
-    st = MB21Training.rpNuova(cv, null, carattere); cv = st.conv; disegna();   // cv = quello con le frasi pescate (varianti)
+    cv = MB21Training.rpPersona(conv, nome, donna);   // il nome vero e, per una donna, le parole al femminile
+    st = MB21Training.rpNuova(cv, null, carattere, mamma); cv = st.conv; disegna();   // cv = quello con le frasi pescate (varianti)
   };
   // solo per l'Admin: com'è andata ogni prova (tabella training_prove_rp), per vedere dove si sbaglia di più quando arriveranno i partner
   const registra = () => {
@@ -766,7 +819,7 @@ function trnConversazione(convs) {
       if (g.chi === 'lui') {
         righe.push({ carta: g.us ? `${cv.id}#u` : cid(g.primo), visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: g.us ? 'lui, frase di uscita' : 'lui' } });
         const v = g.principale ? (righe.push({ carta: cid(g.primo), visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
-        h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente" style="background:${trnColoreUmore(g.um)}">${esc(MB21Training.UMORI[MB21Training.rpUmoreDa(g.um)])}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
+        h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente" style="background:${trnColoreUmore(g.um)}">${esc(fem(MB21Training.UMORI[MB21Training.rpUmoreDa(g.um)]))}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
       } else {
         const q = (g.rec ? 'recupero, ' : '') + (g.giusta ? 'risposta giusta' : 'risposta sbagliata');
         righe.push({ carta: (g.us ? `${cv.id}#u` : cid(g.j)) + (g.rec ? 'r' : ''), visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });

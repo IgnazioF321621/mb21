@@ -474,4 +474,25 @@ prova('la conversazione: rispondere bene scalda il candidato (anche a scendere),
   assert.equal(T.rpTensione({ colpi: 0, conv: { colpi: 3 } }), 0);
 });
 
+prova('la persona vera: il nome dalla lista, le parole al femminile per una donna, gli impegni da mamma solo se è mamma', () => {
+  assert.equal(T.rpAlFemminile("Mi lascia un po' perplesso. Quando sei libero? Ok, tranquillo. Pronto?"), "Mi lascia un po' perplessa. Quando sei libera? Ok, tranquilla. Pronto?");
+  assert.equal(T.rpAlFemminile('È un imprenditore o un libero professionista'), "È un'imprenditrice o una libera professionista");
+  assert.equal(T.rpAlFemminile('Un amico che lavora come dipendente; È un lavoratore dipendente'), "Un'amica che lavora come dipendente; Una lavoratrice dipendente".replace('Una lavoratrice', 'È una lavoratrice'));
+  assert.equal(T.rpAlFemminile('Richiami un dipendente già sentito in passato; ci devo pensare da solo; tempo libero'), 'Richiami una dipendente già sentita in passato; ci devo pensare da sola; tempo libero');
+  const sc = (c, varianti) => ({ candidato: c, perche: 'p', varianti, risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }] });
+  const conv = { colpi: 3, candidato: '{nome}', testa: [sc('Pronto?')], obiezioni: [sc('non ho tempo', [{}, { candidato: 'ho i bambini', mamma: true }]), sc('costa troppo'), sc('è piramidale')],
+    coda: [sc('quando?')], uscite: [{ candidato: 'devo andare', ok: 'dimmi', perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'r' }, { testo: 'b', reazione: 'r' }] },
+      { candidato: 'devo correre dai bambini', ok: 'dimmi', mamma: true, perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'r' }, { testo: 'b', reazione: 'r' }] }] };
+  const p = T.rpPersona({ ...conv, saluto: 'Ciao {nome}, sei libero?' }, 'Maria', true);
+  assert.equal(p.saluto, 'Ciao Maria, sei libera?'); assert.equal(p.candidato, 'Maria');
+  assert.equal(T.rpPersona({ saluto: 'Ciao {nome}, sei libero?' }, 'Mario', false).saluto, 'Ciao Mario, sei libero?');
+  for (let i = 0; i < 200; i++) {
+    const senza = T.rpNuova(conv, Math.random, 'cordiale', false), con = T.rpNuova(conv, Math.random, 'cordiale', true);
+    const frasi = st => st.conv.scambi.map(x => [].concat(x.candidato).join(' ')).join('|');
+    assert.ok(!/bambini/.test(frasi(senza)) && !/bambini/.test(senza.uscita.candidato), 'senza mamma niente bambini');
+    assert.ok(/ho i bambini/.test(frasi(con)), 'con la mamma l\'obiezione del tempo arriva sempre');
+    assert.ok(/bambini/.test(con.uscita.candidato), 'e anche l\'uscita');
+  }
+});
+
 console.log(`\n${ok} prove superate`);
