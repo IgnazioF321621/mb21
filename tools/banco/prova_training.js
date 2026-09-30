@@ -413,8 +413,30 @@ prova('la conversazione: il carattere cambia le frasi, i passi falsi che regge e
   assert.equal(T.rpNuova(conv, null, 'cordiale').conv.colpi, 4);
   assert.equal(T.rpUmore(T.rpNuova(conv, null, 'cordiale')), 'cordiale');
   assert.equal(T.rpUmore(T.rpNuova(conv, null, 'schietto')), 'un po\' freddo');
-  assert.equal(T.rpUmoreN({ colpi: 2, base: 1 }), 2);                  // mai oltre l'ultimo umore
+  assert.equal(T.rpUmoreN({ colpi: 2, base: 1, conv: { colpi: 3 } }), 2);   // mai oltre l'ultimo umore
   assert.deepEqual(T.CARATTERI.map(x => x.livello), ['Facile', 'Media', 'Media', 'Difficile']);
+});
+
+prova('la conversazione: al colpo di troppo il candidato esce con la sua frase e c\'è un\'ultima occasione per agganciarlo; i colori salgono con i passi falsi', () => {
+  const sc = { candidato: 'c', perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }] };
+  const us = { candidato: 'non mi interessa', ok: 'richiamami', risposte: [{ testo: 'aggancio', giusta: true }, { testo: 'insisto', reazione: 'ciao' }, { testo: 'saluto', reazione: 'ciao' }] };
+  const conv = { colpi: 2, scambi: [sc, sc, sc], uscite: [us] };
+  const sbaglia = st => T.rpScegli(st, T.rpRisposte(st).find(r => !r.giusta).k);
+  let st = sbaglia(T.rpNuova(conv));
+  assert.ok(T.rpTensione(st) > 0.9 && T.rpUmore(st) === 'infastidito' || st.fase !== 'uscita');
+  st = sbaglia(st);                                                    // secondo errore: non chiude subito, esce con la sua frase
+  assert.equal(st.fine, null); assert.equal(st.fase, 'uscita'); assert.equal(st.uscita.candidato, 'non mi interessa'); assert.equal(st.uscitaDopo, 1);
+  assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['aggancio', 'insisto', 'saluto']);
+  const buono = T.rpScegli(st, T.rpRisposte(st).find(r => r.giusta).k);
+  assert.equal(buono.fine, 'richiamo');                               // agganciato: non l'hai perso
+  assert.equal(sbaglia(st).fine, 'chiusa');
+  // senza `uscite` chiude subito (come prima)
+  let v = T.rpNuova({ colpi: 2, scambi: [sc, sc] }); v = sbaglia(sbaglia(v));
+  assert.equal(v.fine, 'chiusa');
+  // i colori: da 0 a 1 col numero di errori, mai oltre
+  const t = (colpi, base, limite) => T.rpTensione({ colpi, base, conv: { colpi: limite } });
+  assert.equal(t(0, 0, 3), 0); assert.equal(t(1, 0, 3), 0.5); assert.equal(t(2, 0, 3), 1); assert.equal(t(5, 0, 3), 1);
+  assert.equal(t(0, 1, 2), 0.5);                                       // lo schietto parte già a metà strada
 });
 
 console.log(`\n${ok} prove superate`);

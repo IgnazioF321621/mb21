@@ -430,16 +430,25 @@
   function rpNuova(conv, rnd, car) {
     const c = rpCarattere(car), cv = rpScegliVarianti(conv, rnd, car);
     if (c) cv.colpi = c.colpi;
-    return { conv: cv, i: 0, colpi: 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0 };   // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero'
+    // la frase con cui, al colpo di troppo, il candidato esce dalla chiacchierata (`uscite` della conversazione, una per telefonata)
+    const us = Array.isArray(cv.uscite) && cv.uscite.length ? cv.uscite.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)) : [];
+    const pool = us.length ? us : (cv.uscite || []).filter(x => !x.carattere), uscita = pool.length ? pool[Math.floor((rnd || Math.random)() * pool.length)] : null;
+    return { conv: cv, i: 0, colpi: 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0, uscita, uscitaDopo: null };
+    // fine: null | 'ok' | 'chiusa' | 'richiamo' (l'aggancio in extremis: non l'hai perso); fase: 'principale' | 'recupero' | 'uscita'
   }
   // dopo un errore (Ignazio 30/09: le stesse risposte non tornano, «il Partner che chiama si trova a dover gestire la cosa»): il candidato reagisce e
   // tre risposte, scritte per quell'errore (`recupero` della risposta sbagliata; o quello dello scambio), servono a rimediare; poi si va avanti
   const rpRecupero = st => !st.fine && st.fase === 'recupero';
+  const rpUscita = st => !st.fine && st.fase === 'uscita';
   const rpRecuperoDi = (sc, k) => (sc.risposte[k] && sc.risposte[k].recupero) || sc.recupero || null;
-  const rpDelloScambio = st => (rpRecupero(st) ? rpRecuperoDi(st.conv.scambi[st.i], st.ultimo) : st.conv.scambi[st.i]);
+  const rpDelloScambio = st => (rpUscita(st) ? st.uscita : rpRecupero(st) ? rpRecuperoDi(st.conv.scambi[st.i], st.ultimo) : st.conv.scambi[st.i]);
   // le tre risposte dello scambio di adesso, mescolate (senza quelle già sbagliate qui, per gli scambi senza recupero)
   const rpRisposte = st => st.fine ? [] : mescola(rpDelloScambio(st).risposte.map((r, k) => ({ ...r, k })).filter(r => !st.fuori.includes(r.k)));
-  const rpUmoreN = st => Math.min(st.colpi + (st.base || 0), UMORI.length - 1);
+  // quanto è vicino a chiudere, da 0 (sereno) a 1 (il prossimo errore è l'ultimo): cresce coi passi falsi, e chi parte già freddo (`base`) è a metà strada
+  // (Ignazio 30/09: «i colori a salire da verde fino al rosso, la sensazione che lo sto perdendo e posso ancora rimediare»)
+  const rpTensione = (st, colpi = st.colpi) => Math.min(1, (colpi + (st.base || 0) * 0.5) / Math.max(1, (st.conv.colpi || 3) - 1));
+  const rpUmoreDa = t => (t < 0.25 ? 0 : t < 0.75 ? 1 : 2);
+  const rpUmoreN = st => rpUmoreDa(rpTensione(st));
   const rpUmore = st => UMORI[rpUmoreN(st)];
   // sceglie la risposta k: la giusta porta avanti; una sbagliata irrita e, se c'è il recupero, il candidato resta lì e tocca rimediare;
   // rimediare bene porta avanti, rimediare male irrita ancora (e si va avanti più freddi); al colpo di troppo il candidato chiude la telefonata
@@ -447,18 +456,26 @@
     if (st.fine) return st;
     const rec = rpRecupero(st), sc = st.conv.scambi[st.i], r = rpDelloScambio(st).risposte[k], nuovo = { ...st, fuori: [...st.fuori], giro: [...st.giro] };
     if (!r) return st;
+    if (rpUscita(st)) {   // l'ultima occasione: «Ok, tranquillo, ma quando posso richiamarti?» tiene il contatto, il resto lo chiude
+      nuovo.giro.push({ scambio: st.i, k, giusta: !!r.giusta, testo: r.testo, reazione: r.giusta ? '' : r.reazione, uscita: true, recupero: false });
+      nuovo.fine = r.giusta ? 'richiamo' : 'chiusa';
+      return nuovo;
+    }
     nuovo.giro.push({ scambio: st.i, k, giusta: !!r.giusta, testo: r.testo, reazione: r.giusta ? '' : r.reazione, perche: sc.perche, recupero: rec });
     const avanza = () => { nuovo.i = st.i + 1; nuovo.fuori = []; nuovo.fase = 'principale'; nuovo.ultimo = null; if (nuovo.i >= st.conv.scambi.length) nuovo.fine = 'ok'; };
     if (r.giusta) { avanza(); return nuovo; }
     nuovo.colpi = st.colpi + 1;
-    if (nuovo.colpi >= (st.conv.colpi || 3)) { nuovo.fine = 'chiusa'; return nuovo; }
+    if (nuovo.colpi >= (st.conv.colpi || 3)) {
+      if (!st.uscita) { nuovo.fine = 'chiusa'; return nuovo; }
+      nuovo.fase = 'uscita'; nuovo.fuori = []; nuovo.uscitaDopo = nuovo.giro.length - 1; return nuovo;
+    }
     if (rec) avanza();
     else if (rpRecuperoDi(sc, k)) { nuovo.fase = 'recupero'; nuovo.ultimo = k; }
     else nuovo.fuori.push(k);
     return nuovo;
   }
 
-  const api = { UMORI, CARATTERI, rpCarattere, rpUmoreN, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { UMORI, CARATTERI, rpCarattere, rpTensione, rpUmoreDa, rpUmoreN, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;
