@@ -593,6 +593,21 @@
   .trn-ses-n { flex: none; font-size: 13px; font-weight: 700; color: var(--testo-soft); min-width: 34px; text-align: right; }
   .trn-ses-titolo { font-size: 13px; color: var(--testo-soft); margin: 10px 2px 0; }
   .trn-ses-corpo { flex: 1; }
+  /* conversazione a scelte (29/09, in locale): fumetti del candidato e tuoi, l'umore di chi risponde */
+  .trn-rp-umore { margin: 4px 0 10px; padding: 8px 12px; border-radius: var(--raggio-riga); font-size: 15px; background: var(--ok-tinta); }
+  .trn-rp-umore.u1 { background: var(--proposta-tinta); } .trn-rp-umore.u2, .trn-rp-umore.u3 { background: var(--pericolo-tinta); }
+  .trn-rp-chat { display: grid; gap: 8px; }
+  .trn-rp-b { max-width: 86%; padding: 9px 12px; border-radius: 16px; font-size: 16px; line-height: 1.4; }
+  .trn-rp-b small { display: block; font-size: 11.5px; font-weight: 700; opacity: .65; margin-bottom: 2px; }
+  .trn-rp-b.lui { justify-self: start; background: var(--superficie); border: 1px solid var(--bordo); }
+  .trn-rp-b p { margin: 0; } .trn-rp-b p + p { margin-top: 10px; }   /* più frasi della stessa persona: un fumetto solo, con le frasi staccate */
+  .trn-rp-b.io { justify-self: end; background: var(--gr-crescita-tinta); }
+  .trn-rp-fondo { margin-top: 16px; display: grid; gap: 10px; }
+  .trn-rp-presto { opacity: .55; } .trn-rp-presto small { display: block; font-size: 12px; font-weight: 600; }
+  .trn-rp-nomi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .trn-rp-nomi button { border: 2px solid var(--bordo); border-bottom-width: 4px; background: var(--superficie); border-radius: var(--raggio-bottone); padding: 12px; font: inherit; font-size: 17px; font-weight: 600; color: var(--testo); }
+  .trn-rp-nomi button.scelto { border-color: var(--gr-crescita); background: var(--gr-crescita-tinta); }
+  .trn-rp-b .trn-correggi { display: block; margin: 6px 0 0; font-size: 12px; }
   .trn-carta { padding: 14px 2px 8px; }
   .trn-tema { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gr-crescita); }
   .trn-domanda { font-size: 19px; line-height: 1.4; font-weight: 600; margin: 8px 0 16px; }
@@ -1972,43 +1987,43 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="icone.js?v=202609300846"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
-<script src="coda.js?v=202609300846"></script>
-<script src="lista.js?v=202609300846"></script>
-<script src="esporta.js?v=202609300846"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
-<script src="rubrica.js?v=202609300846"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
-<script src="dashboard.js?v=202609300846"></script>
-<script src="agenda.js?v=202609300846"></script>
-<script src="spazi.js?v=202609300846"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
-<script src="coach.js?v=202609300846"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
-<script src="training.js?v=202609300846"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
-<script src="report.js?v=202609300846"></script>
-<script src="check.js?v=202609300846"></script>
-<script src="mappa.js?v=202609300846"></script>
-<script src="pagina-coach.js?v=202609300846"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
-<script src="pagina-training.js?v=202609300846"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
-<script src="pagina-dashboard.js?v=202609300846"></script>   <!-- pagina Dashboard: solo definizioni -->
-<script src="pagina-lista.js?v=202609300846"></script>   <!-- pagina Lista Nomi: solo definizioni -->
-<script src="pagina-rubrica.js?v=202609300846"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
-<script src="pagina-vendite.js?v=202609300846"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
-<script src="sharing.js?v=202609300846"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
-<script src="pagina-sharing.js?v=202609300846"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
-<script src="libri.js?v=202609300846"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
-<script src="core.js?v=202609300846"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
-<script src="core-pdf.js?v=202609300846"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
-<script src="pagina-core.js?v=202609300846"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
-<script src="pagina-agenda.js?v=202609300846"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
-<script src="pagina-libri.js?v=202609300846"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
-<script src="pagina-mappa.js?v=202609300846"></script>   <!-- pagina Mappa: solo definizioni -->
-<script src="admin.js?v=202609300846"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
-<script src="avvisi.js?v=202609300846"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
-<script src="pagina-profilo.js?v=202609300846"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
-<script src="novita.js?v=202609300846"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
-<script src="pagina-novita.js?v=202609300846"></script>
-<script src="benvenuto.js?v=202609300846"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
-<script src="pagina-benvenuto.js?v=202609300846"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
+<script src="icone.js?v=202609300849"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
+<script src="coda.js?v=202609300849"></script>
+<script src="lista.js?v=202609300849"></script>
+<script src="esporta.js?v=202609300849"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
+<script src="rubrica.js?v=202609300849"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
+<script src="dashboard.js?v=202609300849"></script>
+<script src="agenda.js?v=202609300849"></script>
+<script src="spazi.js?v=202609300849"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
+<script src="coach.js?v=202609300849"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
+<script src="training.js?v=202609300849"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
+<script src="report.js?v=202609300849"></script>
+<script src="check.js?v=202609300849"></script>
+<script src="mappa.js?v=202609300849"></script>
+<script src="pagina-coach.js?v=202609300849"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
+<script src="pagina-training.js?v=202609300849"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
+<script src="pagina-dashboard.js?v=202609300849"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-lista.js?v=202609300849"></script>   <!-- pagina Lista Nomi: solo definizioni -->
+<script src="pagina-rubrica.js?v=202609300849"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
+<script src="pagina-vendite.js?v=202609300849"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
+<script src="sharing.js?v=202609300849"></script>   <!-- Sharing (cantiere 40): il consiglio della prossima traccia, funzioni pure -->
+<script src="pagina-sharing.js?v=202609300849"></script>   <!-- Sharing nella scheda contatto (cantiere 40): solo definizioni -->
+<script src="libri.js?v=202609300849"></script>   <!-- I miei libri (cantiere 40): il diario di lettura dai Check, funzioni pure -->
+<script src="core.js?v=202609300849"></script>   <!-- Modulo Core N21 (cantiere 41): il foglio del mese, funzioni pure -->
+<script src="core-pdf.js?v=202609300849"></script>   <!-- Modulo Core in PDF (cantiere 41): il foglio A4 da stampare o condividere -->
+<script src="pagina-core.js?v=202609300849"></script>   <!-- pagina «Modulo Core» (cantiere 41): solo definizioni -->
+<script src="pagina-agenda.js?v=202609300849"></script>   <!-- MB Plan, l'Agenda (cantiere 41): solo definizioni e ascolti -->
+<script src="pagina-libri.js?v=202609300849"></script>   <!-- pagina «I miei libri» (cantiere 40): solo definizioni -->
+<script src="pagina-mappa.js?v=202609300849"></script>   <!-- pagina Mappa: solo definizioni -->
+<script src="admin.js?v=202609300849"></script>   <!-- pagina Admin: solo definizioni, partono quando l'Admin apre la tab -->
+<script src="avvisi.js?v=202609300849"></script>   <!-- avvisi push (cantiere 24): solo definizioni -->
+<script src="pagina-profilo.js?v=202609300849"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
+<script src="novita.js?v=202609300849"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
+<script src="pagina-novita.js?v=202609300849"></script>
+<script src="benvenuto.js?v=202609300849"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
+<script src="pagina-benvenuto.js?v=202609300849"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
-const APP_VERSION = '2026.09.30 · 08:46';
+const APP_VERSION = '2026.09.30 · 08:49';
 
 // Mai togliere dalla pagina un campo con la tastiera aperta (21/09, iPad di Isabella e di Ignazio: scelto il nome nel «Nuovo appuntamento»
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
@@ -4036,7 +4051,7 @@ supa.auth.onAuthStateChange((evento, sessione) => {
     if (!sessione) return REGISTRAZIONE.has('registrati') ? mostraRegistrazione() : mostraEmail();
     if (ST.utente || accessoInCorso) return;
     accessoInCorso = true;
-    dopoAccesso(sessione).finally(() => { accessoInCorso = false; });
+    dopoAccesso(sessione).finally(() => { accessoInCorso = false; if (typeof trnProvaDiretta === 'function') trnProvaDiretta(); });
   }, 0);
 });
 

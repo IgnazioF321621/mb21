@@ -408,7 +408,40 @@
     return (tutte || []).filter(c => parole.every(p => c.testo.includes(p)));
   }
 
-  const api = { LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  // ── Conversazione (role play a scelte, 29/09: il candidato risponde a quello che scegli, si irrigidisce se sbagli e, dopo troppi passi falsi, saluta) ──
+  // Il testo è nel mazzo privato (carte_contattare → conversazioni): qui solo la macchina degli scambi.
+  const UMORI = ['cordiale', 'un po\' freddo', 'infastidito'];
+  // uno scambio può avere `varianti`: più frasi possibili del candidato (Ignazio 30/09: «le obiezioni ne so a centinaia»), ognuna con le sue risposte;
+  // a ogni telefonata se ne pesca una, e con lei cambia tutto il resto dello scambio
+  const rpScegliVarianti = (conv, rnd = Math.random) => ({ ...conv, scambi: conv.scambi.map(sc => (Array.isArray(sc.varianti) && sc.varianti.length
+    ? { ...sc, ...sc.varianti[Math.floor(rnd() * sc.varianti.length)] } : sc)) });
+  const rpNuova = (conv, rnd) => ({ conv: rpScegliVarianti(conv, rnd), i: 0, colpi: 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null });   // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero'
+  // dopo un errore (Ignazio 30/09: le stesse risposte non tornano, «il Partner che chiama si trova a dover gestire la cosa»): il candidato reagisce e
+  // tre risposte, scritte per quell'errore (`recupero` della risposta sbagliata; o quello dello scambio), servono a rimediare; poi si va avanti
+  const rpRecupero = st => !st.fine && st.fase === 'recupero';
+  const rpRecuperoDi = (sc, k) => (sc.risposte[k] && sc.risposte[k].recupero) || sc.recupero || null;
+  const rpDelloScambio = st => (rpRecupero(st) ? rpRecuperoDi(st.conv.scambi[st.i], st.ultimo) : st.conv.scambi[st.i]);
+  // le tre risposte dello scambio di adesso, mescolate (senza quelle già sbagliate qui, per gli scambi senza recupero)
+  const rpRisposte = st => st.fine ? [] : mescola(rpDelloScambio(st).risposte.map((r, k) => ({ ...r, k })).filter(r => !st.fuori.includes(r.k)));
+  const rpUmore = st => UMORI[Math.min(st.colpi, UMORI.length - 1)];
+  // sceglie la risposta k: la giusta porta avanti; una sbagliata irrita e, se c'è il recupero, il candidato resta lì e tocca rimediare;
+  // rimediare bene porta avanti, rimediare male irrita ancora (e si va avanti più freddi); al colpo di troppo il candidato chiude la telefonata
+  function rpScegli(st, k) {
+    if (st.fine) return st;
+    const rec = rpRecupero(st), sc = st.conv.scambi[st.i], r = rpDelloScambio(st).risposte[k], nuovo = { ...st, fuori: [...st.fuori], giro: [...st.giro] };
+    if (!r) return st;
+    nuovo.giro.push({ scambio: st.i, k, giusta: !!r.giusta, testo: r.testo, reazione: r.giusta ? '' : r.reazione, perche: sc.perche, recupero: rec });
+    const avanza = () => { nuovo.i = st.i + 1; nuovo.fuori = []; nuovo.fase = 'principale'; nuovo.ultimo = null; if (nuovo.i >= st.conv.scambi.length) nuovo.fine = 'ok'; };
+    if (r.giusta) { avanza(); return nuovo; }
+    nuovo.colpi = st.colpi + 1;
+    if (nuovo.colpi >= (st.conv.colpi || 3)) { nuovo.fine = 'chiusa'; return nuovo; }
+    if (rec) avanza();
+    else if (rpRecuperoDi(sc, k)) { nuovo.fase = 'recupero'; nuovo.ultimo = k; }
+    else nuovo.fuori.push(k);
+    return nuovo;
+  }
+
+  const api = { UMORI, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;
