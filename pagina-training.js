@@ -72,6 +72,10 @@ function disegnaTraining() {
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('chiamata', 20)}</span>
       <div><b>Conversazione di prova</b><small>⚠️ Per ora la vedi solo tu · Telefonata o incontro: scegli chi hai davanti e rispondi; se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
+    ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-coppia style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('squadra', 20)}</span>
+      <div><b>Allenamento a coppia</b><small>⚠️ Per ora lo vedi solo tu · Con il tuo sponsor o il tuo upline, di persona o al telefono: uno ascolta, l'altro risponde, poi vi scambiate.</small></div><span class="trn-freccia">›</span></button>` : ''}
+    ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-voce style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('audio', 20)}</span>
+      <div><b>Allenati a voce</b><small>⚠️ Per ora lo vedi solo tu · Col cronometro: uno spunto da dire con parole tue e un'obiezione a sorpresa, in 3, 5 o 10 minuti.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
@@ -79,6 +83,8 @@ function disegnaTraining() {
   app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
   app.querySelectorAll('[data-medaglie]').forEach(b => b.onclick = trnMedaglie);
   app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = trnScegliConversazione);
+  app.querySelectorAll('[data-coppia]').forEach(b => b.onclick = trnCoppia);
+  app.querySelectorAll('[data-voce]').forEach(b => b.onclick = trnAllenatiAVoce);
   // la prima volta che si apre il Training (su questo telefono) la spiegazione si apre da sola, una volta (non se si arriva dal Profilo
   // per vedere le medaglie: allora aspetta la volta dopo)
   let spiegato = true;
@@ -201,6 +207,95 @@ function trnNodo(p, i, qui) {
 }
 // il role play accanto al suo percorso (solo Admin, Ignazio 29/09: «percorso parallelo e visibile, con icona propria, adeguato al livello»): un tondo piccolo
 // sotto il percorso
+// ── Allenamento a coppia e «Allenati a voce» (solo Admin, Ignazio 30/09) ──
+// A coppia («come chiede il manuale per i contatti: uno fa la parte del contatto, l'altro presenta, e alla fine si scambiano»): due persone, un telefono; chi ascolta
+// legge ad alta voce quello che dice il contatto (una conversazione del percorso, o le scene delle carte), l'altro risponde con parole sue; poi chi ascolta tocca
+// «Mostra la risposta del manuale» e dice com'è andata («Ci siamo» / «Da riprovare»). Alla fine: quante, cosa riprovare, il tempo; e «Scambiatevi».
+// A voce (da soli, col cronometro): si sceglie quanto tempo si ha (3, 5 o 10 minuti) e le tappe si adattano: uno spunto da dire con parole tue (le carte frase) e
+// un'obiezione a sorpresa (le carte scena), una dopo l'altra finché il tempo non finisce. Vale per tutti i percorsi che hanno scene o una conversazione.
+function trnSceneCoppia(m) {
+  const arr = x => (Array.isArray(x) ? x : [x]), caso = n => Math.floor(Math.random() * n), convs = trnConversazioniQui(m);
+  if (convs.length) {
+    const conv = convs[caso(convs.length)], car = MB21Training.CARATTERI[caso(2)].k;   // un contatto cordiale o di fretta
+    const st = MB21Training.rpNuova(MB21Training.rpPersona(conv, 'Mario', false), null, car);
+    return st.conv.scambi.map(sc => ({ dice: arr(sc.candidato).join(' '), giusta: sc.risposte.find(r => r.giusta).testo, perche: sc.perche, fonte: sc.fonte }));
+  }
+  const tutte = (m.carte || []).filter(c => c.tipo === 'scena' && Array.isArray(c.versioni) && c.versioni.length), mesc = tutte.map(c => [Math.random(), c]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+  return mesc.slice(0, 6).map(c => { const v = c.versioni[caso(c.versioni.length)]; return { dice: v.scena, giusta: v.risposte[0], perche: c.perche, fonte: c.fonte }; });
+}
+// le tappe di «Allenati a voce»: spunti (frasi) e obiezioni a sorpresa (scene) a turno; ognuna pensata per circa un minuto
+function trnTappeVoce(m, minuti) {
+  const caso = n => Math.floor(Math.random() * n), mesc = a => a.map(c => [Math.random(), c]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+  const frasi = mesc((m.carte || []).filter(c => c.tipo === 'frase' && c.davanti && c.dietro)), scene = mesc((m.carte || []).filter(c => c.tipo === 'scena' && Array.isArray(c.versioni) && c.versioni.length));
+  const tappe = [];
+  for (let i = 0; tappe.length < minuti && (frasi.length || scene.length); i++) {
+    if ((i % 2 === 0 && frasi.length) || !scene.length) { const c = frasi.shift(); tappe.push({ tipo: 'spunto', dice: c.davanti, giusta: c.dietro, perche: c.perche, fonte: c.fonte }); }
+    else { const c = scene.shift(), v = c.versioni[caso(c.versioni.length)]; tappe.push({ tipo: 'sorpresa', dice: v.scena, giusta: v.risposte[0], perche: c.perche, fonte: c.fonte }); }
+  }
+  return tappe;
+}
+function trnSeduta(modo) {
+  const coppia = modo === 'coppia';
+  const mazzi = (TRN.mazzi || []).filter(m => (coppia && Array.isArray(m.conversazioni)) || (m.carte || []).some(c => c.tipo === 'scena')).sort((a, b) => a.percorso.titolo.localeCompare(b.percorso.titolo, 'it'));
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto trn-sessione trn-rp"><div class="trn-ses-testa"><button class="trn-x" aria-label="Chiudi">${ic('chiudi')}</button><div class="trn-ses-titolo">${coppia ? 'Allenamento a coppia' : 'Allenati a voce'}</div></div>
+    <div class="trn-rp-chat"></div><div class="trn-rp-fondo"></div></div>`;
+  document.body.appendChild(velo);
+  const foglio = velo.querySelector('.foglio'), corpo = velo.querySelector('.trn-rp-chat'), fondo = velo.querySelector('.trn-rp-fondo');
+  let clock = null, minuti = 5;
+  const ferma = () => { clearInterval(clock); };
+  const chiudi = () => { ferma(); velo.remove(); };
+  velo.querySelector('.trn-x').onclick = chiudi;
+  const scegli = () => {
+    ferma();
+    corpo.innerHTML = `<p class="trn-prova">⚠️ Per ora lo vedi solo tu.</p>` + (coppia
+      ? `<div class="trn-esito si"><b>Uno ascolta, l'altro risponde</b>Con il tuo sponsor o il tuo upline, di persona o al telefono. Chi ascolta legge quello che dice il contatto; l'altro risponde con parole sue. Alla fine vi scambiate.</div>`
+      : `<div class="trn-esito si"><b>Parla ad alta voce</b>Uno spunto da dire con parole tue e un'obiezione a sorpresa, una dopo l'altra. Poi guardi la risposta del manuale e dici com'è andata.</div>`);
+    fondo.innerHTML = `${coppia ? '' : `<div class="trn-chiede">Quanto tempo hai?</div><div class="trn-risposte trn-tempi">${[3, 5, 10].map(n => `<button data-t="${n}" class="${n === minuti ? 'scelta' : ''}">${n} minuti</button>`).join('')}</div>`}
+      <div class="trn-chiede">Cosa ${coppia ? 'allenate' : 'alleni'}?</div><div class="trn-risposte">${mazzi.map((m, i) => `<button data-m="${i}">${esc(m.percorso.titolo)}${coppia && Array.isArray(m.conversazioni) ? '<small>con la conversazione</small>' : ''}</button>`).join('')}</div>`;
+    fondo.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { minuti = Number(b.dataset.t); fondo.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('scelta', x === b)); });
+    fondo.querySelectorAll('[data-m]').forEach(b => b.onclick = () => via(mazzi[Number(b.dataset.m)]));
+    foglio.scrollTo({ top: 0 });
+  };
+  const via = m => {
+    const tappe = coppia ? trnSceneCoppia(m) : trnTappeVoce(m, minuti), esiti = [], t0 = Date.now(), tot = minuti * 60;
+    const trascorso = () => Math.floor((Date.now() - t0) / 1000), mmss = s => `${Math.floor(Math.max(s, 0) / 60)}:${String(Math.max(s, 0) % 60).padStart(2, '0')}`;
+    const tempo = () => (coppia ? mmss(trascorso()) : `restano ${mmss(tot - trascorso())}`);
+    const passo = i => {
+      if (i >= tappe.length || (!coppia && trascorso() >= tot)) return fine(i);
+      const sc = tappe[i];
+      corpo.innerHTML = `<div class="trn-chiede">${esc(m.percorso.titolo)} · ${i + 1}${coppia ? ` di ${tappe.length}` : ''} · <span id="trn-cp-tempo">${tempo()}</span></div>
+        <div class="trn-rp-b lui"><small>${coppia ? 'Chi ascolta legge ad alta voce' : sc.tipo === 'spunto' ? 'Dillo a voce, con parole tue' : 'A sorpresa! Cosa rispondi?'}</small><p>${esc(sc.dice)}</p></div>`;
+      fondo.innerHTML = `<button class="primario" id="trn-cp-mostra">${coppia ? 'Ha risposto: mostra la risposta del manuale' : 'Ho risposto a voce: mostra la risposta del manuale'}</button><button class="link" id="trn-cp-esci">Chiudi</button>`;
+      fondo.querySelector('#trn-cp-esci').onclick = chiudi;
+      fondo.querySelector('#trn-cp-mostra').onclick = () => {
+        corpo.insertAdjacentHTML('beforeend', `<div class="trn-esito si"><b>La risposta del manuale</b>${esc(sc.giusta)}<br><small>${esc(sc.perche || '')}</small>${trnFonte(sc)}</div>`);
+        trnCollegaFonte(corpo);
+        fondo.innerHTML = `<div class="trn-chiede">Com'è andata?</div><div class="trn-risposte"><button data-e="1">Ci siamo</button><button data-e="0">Da riprovare</button></div>`;
+        fondo.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { esiti.push(b.dataset.e === '1'); passo(i + 1); });
+        foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' });
+      };
+      foglio.scrollTo({ top: 0 });
+    };
+    const fine = fatte => {
+      ferma();
+      const fatti = tappe.slice(0, fatte), bene = esiti.filter(Boolean).length, dariprovare = fatti.filter((_, i) => !esiti[i]);
+      corpo.innerHTML = `<div class="trn-esito ${dariprovare.length ? 'no' : 'si'}"><b>${bene} su ${fatti.length} ci siamo, in ${mmss(trascorso())}</b>${dariprovare.length ? 'Da riprovare la prossima volta:' : 'Tutte le risposte sono andate bene.'}</div>
+        ${dariprovare.map(sc => `<div class="trn-esito no"><b>${esc(sc.dice)}</b>${esc(sc.giusta)}</div>`).join('')}`;
+      fondo.innerHTML = `<button class="primario" id="trn-cp-scambio">${coppia ? "Scambiatevi: ora risponde l'altro" : 'Ancora, con altre tappe'}</button><button class="trn-secondo" id="trn-cp-altro">Un altro percorso</button><button class="link" id="trn-cp-chiudi">Chiudi</button>`;
+      fondo.querySelector('#trn-cp-scambio').onclick = () => via(m);
+      fondo.querySelector('#trn-cp-altro').onclick = scegli;
+      fondo.querySelector('#trn-cp-chiudi').onclick = chiudi;
+      foglio.scrollTo({ top: 0 });
+    };
+    clock = setInterval(() => { const e = document.getElementById('trn-cp-tempo'); if (e) e.textContent = tempo(); if (!velo.isConnected) ferma(); }, 1000);
+    if (!tappe.length) { corpo.innerHTML = '<div class="trn-esito no"><b>Non ci sono ancora tappe per questo percorso</b>Scegline un altro.</div>'; return; }
+    passo(0);
+  };
+  scegli();
+}
+const trnCoppia = () => trnSeduta('coppia'), trnAllenatiAVoce = () => trnSeduta('voce');
 // La prima telefonata del partner nuovo (solo Admin, dal passo «Role Play» di «Il mio avvio»): il mazzo «I primi passi» porta una conversazione semplice, con uno della sua lista
 async function trnProvaTelefonata() {
   const { data, error } = await dbq('la prima telefonata', supa.from('coach_batterie').select('batteria').eq('situazione', 'carte_primi_passi').maybeSingle());
