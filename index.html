@@ -3519,7 +3519,7 @@ function lc1Html(oggi) {
   // un consiglio sotto ogni gradino, in parallelo (Ignazio 27/09); per un altro partner la direzione da dargli, con testo neutro
   const consiglio = c => {
     if (!c) return '';
-    const t = esc(io || !nome ? `Ti consiglio ${c.di ? 'di ' : ''}${c.cosa}` : `Da consigliare a ${nome}: ${c.cosa}`);
+    const t = esc(`Per ${io || !nome ? 'te' : nome}: ${c.cosa}`);
     // con un posto dove andare il consiglio è un bottone: un tocco e si è lì (stella cometa, 27/09)
     return c.vai ? `<button class="prossimo vai" data-vai="${c.vai}"><span>${t}</span><span>›</span></button>` : `<div class="prossimo">${t}</div>`;
   };
@@ -3547,7 +3547,7 @@ const vociHtml = voci => `<div class="voci">${voci.map(v => `<div class="${v.fat
 // «I prossimi passi» del livello (Ignazio 27/09): al massimo 2, coi nomi; «Non ora» su una linea la toglie per questo mese
 function passiHtml(r, mese) {
   if (!r.passi.length && !r.info && !r.nonOra.length) return '';
-  return `<div class="passi">${r.passi.length ? `<b>I prossimi passi verso ${esc(r.titolo)}</b>` : ''}
+  return `<div class="passi">${r.passi.length ? `<b>Dove puoi crescere verso ${esc(r.titolo)}</b>` : ''}
     ${r.passi.map((p, i) => `<div class="passo">${p.vai ? `<button class="vai" data-vai="${p.vai}"${p.partner_id ? ` data-pid="${esc(p.partner_id)}"` : ''}>${i + 1}. ${esc(p.testo)}&nbsp;›</button>` : `<span>${i + 1}. ${esc(p.testo)}</span>`}${p.partner_id ? `<button data-nonora="${esc(p.partner_id)}" data-mese="${mese}">Non ora</button>` : ''}</div>`).join('')}
     ${r.info ? `<small>${esc(r.info)}</small>` : ''}
     ${r.nonOra.length ? `<small class="nonora">Non ora, questo mese: ${r.nonOra.map(x => `<button data-riprendi="${esc(x.partner_id)}" data-mese="${mese}">${esc(x.nome)} ↺</button>`).join(' ')}</small>` : ''}</div>`;
