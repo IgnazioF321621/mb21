@@ -92,3 +92,18 @@ export function riepilogoDomani(impegni: Impegno[]): { titolo: string; ora: stri
   const primo = [...impegni].sort((x, y) => x.inizio - y.inizio)[0];
   return { titolo: pezzi.join(' e '), ora: oraMinuti(primo.inizio), primo: primo.testo };
 }
+
+// ── I complimenti della sera (lista «Avvisi» di MB App, 30/09): la giornata già scritta nell'app, detta a parole ──
+// «3 contatti, 1 appuntamento fissato e 1 vendita»; niente di fatto = null (nessun complimento inventato).
+// Testi neutri (né maschile né femminile): il coach parla con gli stessi toni della chat, senza «io».
+export type ContiGiorno = { contatti: number; fissati: number; pm: number; vendite: number };
+export function complimentiDelGiorno(c: ContiGiorno): string | null {
+  const pezzi = [
+    c.contatti ? quanti(c.contatti, 'contatto', 'contatti') : '',
+    c.fissati ? quanti(c.fissati, 'appuntamento fissato', 'appuntamenti fissati') : '',
+    c.pm ? `${c.pm} PM` : '',
+    c.vendite ? quanti(c.vendite, 'vendita', 'vendite') : '',
+  ].filter(Boolean);
+  if (!pezzi.length) return null;
+  return pezzi.length === 1 ? pezzi[0] : `${pezzi.slice(0, -1).join(', ')} e ${pezzi[pezzi.length - 1]}`;
+}
