@@ -413,9 +413,25 @@
   const UMORI = ['cordiale', 'un po\' freddo', 'infastidito'];
   // uno scambio può avere `varianti`: più frasi possibili del candidato (Ignazio 30/09: «le obiezioni ne so a centinaia»), ognuna con le sue risposte;
   // a ogni telefonata se ne pesca una, e con lei cambia tutto il resto dello scambio
-  const rpScegliVarianti = (conv, rnd = Math.random) => ({ ...conv, scambi: conv.scambi.map(sc => (Array.isArray(sc.varianti) && sc.varianti.length
-    ? { ...sc, ...sc.varianti[Math.floor(rnd() * sc.varianti.length)] } : sc)) });
-  const rpNuova = (conv, rnd) => ({ conv: rpScegliVarianti(conv, rnd), i: 0, colpi: 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null });   // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero'
+  // com'è la persona che chiami (Ignazio 30/09: «cordiale, ruvido o un sinonimo e qualche altra voce»): cambia le frasi che dice (le `varianti` con `carattere`),
+  // quanti passi falsi regge (`colpi`) e da che umore parte (`base`: 0 cordiale, 1 già freddo). Ogni voce ha la sua difficoltà.
+  const CARATTERI = [
+    { k: 'cordiale', nome: 'Cordiale', livello: 'Facile', sotto: 'Ti ascolta volentieri e perdona qualche errore', colpi: 4, base: 0 },
+    { k: 'fretta', nome: 'Di fretta', livello: 'Media', sotto: 'Ha pochi minuti e vuole arrivare al punto', colpi: 3, base: 0 },
+    { k: 'diffidente', nome: 'Diffidente', livello: 'Media', sotto: 'Si fida poco e vuole capire dove vuoi arrivare', colpi: 3, base: 1 },
+    { k: 'schietto', nome: 'Schietto', livello: 'Difficile', sotto: 'Va dritto, poca pazienza, ti chiude al secondo errore', colpi: 2, base: 1 }];
+  const rpCarattere = k => CARATTERI.find(c => c.k === k) || null;
+  // uno scambio può avere `varianti`: più frasi possibili del candidato (Ignazio 30/09: «le obiezioni ne so a centinaia»), ognuna con le sue risposte;
+  // a ogni telefonata se ne pesca una, e con lei cambia tutto il resto dello scambio. Se ce ne sono per il carattere scelto si pesca fra quelle,
+  // altrimenti fra quelle valide per tutti (senza `carattere`)
+  const rpPool = (sc, car) => { const v = sc.varianti, per = v.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)); return per.length ? per : v.filter(x => !x.carattere); };
+  const rpScegliVarianti = (conv, rnd, car) => ({ ...conv, scambi: conv.scambi.map(sc => { const pool = Array.isArray(sc.varianti) && sc.varianti.length ? rpPool(sc, car) : [];
+    if (!pool.length) return sc; const { carattere, livello, ...v } = pool[Math.floor((rnd || Math.random)() * pool.length)]; return { ...sc, ...v }; }) });
+  function rpNuova(conv, rnd, car) {
+    const c = rpCarattere(car), cv = rpScegliVarianti(conv, rnd, car);
+    if (c) cv.colpi = c.colpi;
+    return { conv: cv, i: 0, colpi: 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0 };   // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero'
+  }
   // dopo un errore (Ignazio 30/09: le stesse risposte non tornano, «il Partner che chiama si trova a dover gestire la cosa»): il candidato reagisce e
   // tre risposte, scritte per quell'errore (`recupero` della risposta sbagliata; o quello dello scambio), servono a rimediare; poi si va avanti
   const rpRecupero = st => !st.fine && st.fase === 'recupero';
@@ -423,7 +439,8 @@
   const rpDelloScambio = st => (rpRecupero(st) ? rpRecuperoDi(st.conv.scambi[st.i], st.ultimo) : st.conv.scambi[st.i]);
   // le tre risposte dello scambio di adesso, mescolate (senza quelle già sbagliate qui, per gli scambi senza recupero)
   const rpRisposte = st => st.fine ? [] : mescola(rpDelloScambio(st).risposte.map((r, k) => ({ ...r, k })).filter(r => !st.fuori.includes(r.k)));
-  const rpUmore = st => UMORI[Math.min(st.colpi, UMORI.length - 1)];
+  const rpUmoreN = st => Math.min(st.colpi + (st.base || 0), UMORI.length - 1);
+  const rpUmore = st => UMORI[rpUmoreN(st)];
   // sceglie la risposta k: la giusta porta avanti; una sbagliata irrita e, se c'è il recupero, il candidato resta lì e tocca rimediare;
   // rimediare bene porta avanti, rimediare male irrita ancora (e si va avanti più freddi); al colpo di troppo il candidato chiude la telefonata
   function rpScegli(st, k) {
@@ -441,7 +458,7 @@
     return nuovo;
   }
 
-  const api = { UMORI, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
+  const api = { UMORI, CARATTERI, rpCarattere, rpUmoreN, rpNuova, rpRisposte, rpUmore, rpScegli, LIVELLI, livelliVisibili, inProva, RISORSE_AMWAY, MB21_PERCORSI, MENTALITA_PER_FASE, percorsiDaMb21, SCATOLE, LEZIONE, RIPASSO, TEST, TRABOCCHETTI, PER_IL_TEST, piuGiorni, dopoRisposta, nuove, segnali, daRipassare, prossimiRipassi, stelle,
     statoPercorso, scala, pescaTest, mescola, domanda, giorniDiFila, TRAGUARDI, complimenti, titoloMedaglia, medaglie, riepilogo, fonte, controllaMazzo, piega, carte, capitoloDi, dove, cerca };
   if (nodo) module.exports = api;
   else radice.MB21Training = api;
