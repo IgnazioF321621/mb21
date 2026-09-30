@@ -70,7 +70,7 @@ function disegnaTraining() {
       <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button>
       <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
-    ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
+    ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('chiamata', 20)}</span>
       <div><b>Conversazione di prova</b><small>⚠️ Per ora la vedi solo tu · Telefonata o incontro: scegli chi hai davanti e rispondi; se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
@@ -86,7 +86,7 @@ function disegnaTraining() {
   if (!spiegato) trnComeFunziona();
   if (TRN.vista === 'impara') {
     app.querySelectorAll('[data-percorso]').forEach(b => b.onclick = () => trnApriPercorso(b.dataset.percorso));
-    app.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { const m = TRN.mazzi.find(x => x.percorso.id === b.dataset.rp); if (m) trnConversazione(trnConversazioniQui(m), Number(b.dataset.livello)); });
+    app.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { const m = TRN.mazzi.find(x => x.percorso.id === b.dataset.rp); if (m) trnConversazione(trnConversazioniQui(m)); });
     // si parte da dove sei: la scala si apre in basso, sul percorso di adesso, e sopra si vede fin dove si può salire
     const qui = app.querySelector('.trn-nodo.qui') || app.querySelector('.trn-gradino.qui');
     if (qui) qui.scrollIntoView({ block: 'center' });
@@ -178,7 +178,7 @@ function trnScala(sc) {
         <small>${sopraQui ? `Si apre quando superi i test del livello ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
     }
     // un livello appena aperto i cui percorsi non sono ancora scritti: lo dice, invece di restare vuoto
-    const nodi = l.percorsi.length ? [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), l === sc.qui && p.id === sc.percorso) + trnNodoConversazione(p, l.percorsi.indexOf(p), l.numero)).join('')
+    const nodi = l.percorsi.length ? [...l.percorsi].reverse().map(p => trnNodo(p, l.percorsi.indexOf(p), l === sc.qui && p.id === sc.percorso) + trnNodoConversazione(p, l.percorsi.indexOf(p))).join('')
       : `<div class="trn-nodo presto" style="--x:0px"><span class="trn-tondo-n">${ic('crescita', 26)}</span><div><b>I percorsi del livello ${esc(l.nome)}</b><small>In preparazione</small></div></div>`;
     return `${nodi}<div class="trn-gradino ${l.superato ? 'fatto' : 'qui'}">${l.superato ? ic('fatto') : ''}<div><b>${esc(l.nome)}</b>
       <small>${l.superato ? 'Livello superato' : `Livello ${l.numero} di ${sc.livelli.length} · ${esc(l.sotto)}`}</small></div></div>`;
@@ -200,12 +200,12 @@ function trnNodo(p, i, qui) {
     <div><b>${esc(p.titolo)}${qui ? '<span class="trn-qui">Sei qui</span>' : ''}</b><small>${sotto}</small></div></button>`;
 }
 // il role play accanto al suo percorso (solo Admin, Ignazio 29/09: «percorso parallelo e visibile, con icona propria, adeguato al livello»): un tondo piccolo
-// sotto il percorso; il carattere consigliato sale col livello (cordiale → di fretta → diffidente → schietto)
-function trnNodoConversazione(p, i, livello) {
+// sotto il percorso
+function trnNodoConversazione(p, i) {
   const m = p.pronto && p.aperto && (TRN.mazzi || []).find(x => x.percorso.id === p.id), convs = m ? trnConversazioniQui(m) : [];
   if (!convs.length) return '';
   const x = [0, 56, 112, 56][i % 4] + 44;
-  return `<button class="trn-nodo trn-nodo-rp" data-rp="${esc(p.id)}" data-livello="${livello}" style="--x:${x}px"><span class="trn-tondo-n">${ic('messaggio', 22)}</span>
+  return `<button class="trn-nodo trn-nodo-rp" data-rp="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic('chiamata', 22)}</span>
     <div><b>${esc(convs[0].ingresso || 'Conversazione')}</b><small>⚠️ Per ora lo vedi solo tu</small></div></button>`;
 }
 const trnStelle = n => `<span class="trn-stelle">${[0, 1, 2].map(i => `<i class="${i < n ? 'presa' : ''}">${ic('stella', 14)}</i>`).join('')}</span>`;
@@ -257,7 +257,7 @@ function trnApriPercorso(id) {
         ${ultimo}
         ${s.testAperto ? `<button class="${daFare || suo.length ? 'trn-secondo' : 'primario trn-via'}" id="trn-test">${s.ultimo ? 'Rifai il test' : 'Fai il test'}</button>` : ''}
       </div>
-      ${conversazioni.length ? `<h4>Prova una conversazione</h4><button class="trn-riga" data-conv="0" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('messaggio', 20)}</span>
+      ${conversazioni.length ? `<h4>Prova una conversazione</h4><button class="trn-riga" data-conv="0" style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('chiamata', 20)}</span>
         <div><b>${esc(conversazioni[0].ingresso || 'Prova una conversazione')}</b><small>⚠️ Per ora lo vedi solo tu · Scegli chi hai davanti: se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
       ${studio.length || siti.length ? `<h4>Per approfondire e imparare</h4>${studio.map(c => trnRiga(c, c.tipo === 'libro' ? TRN_LIBRI : settore ? settore.colore : 'var(--gr-crescita)')).join('')}${
         mostraTutte ? '' : `<button class="trn-tutte" id="trn-tutte-percorso" style="--col:var(--gr-crescita)">Mostra tutte le ${tutteStudio.length} ›</button>`}${
@@ -273,7 +273,7 @@ function trnApriPercorso(id) {
   if (b1) b1.onclick = () => via(MB21Training.nuove(m, TRN.stati), 'impara', `${p.titolo} · Impara`);
   if (b2) b2.onclick = () => via(suo.slice(0, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', `${p.titolo} · Ripassa`);
   if (b3) b3.onclick = () => via(MB21Training.pescaTest(m, TRN.stati), 'test', `${p.titolo} · Test finale`);
-  velo.querySelectorAll('[data-conv]').forEach(b => b.onclick = () => { chiudi(); trnConversazione(conversazioni, MB21Training.livelliVisibili().indexOf(liv) + 1); });
+  velo.querySelectorAll('[data-conv]').forEach(b => b.onclick = () => { chiudi(); trnConversazione(conversazioni); });
   velo.querySelectorAll('[data-carta]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.carta));
   const bt = velo.querySelector('#trn-tutte-percorso');
   if (bt) bt.onclick = () => { TRN.tutte[kTutte] = true; chiudi(); trnApriPercorso(id); };
@@ -662,7 +662,7 @@ function trnNuovaVariante(carta, visto, nome) {
 }
 // il colore di «come si sente»: dal verde (sereno) al giallo al rosso (sta per chiudere), secondo la tensione da 0 a 1
 const trnColoreUmore = t => (t < 0.5 ? `color-mix(in srgb, var(--proposta-tinta) ${Math.round(t * 200)}%, var(--ok-tinta))` : `color-mix(in srgb, var(--pericolo-tinta) ${Math.round((t - 0.5) * 200)}%, var(--proposta-tinta))`);
-function trnConversazione(convs, livello) {
+function trnConversazione(convs) {
   let conv = convs[0], st = null, nome = '';
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -712,10 +712,9 @@ function trnConversazione(convs, livello) {
   };
   // com'è la persona: cambia le frasi, quanti errori regge, da che umore parte (Ignazio 30/09); ogni voce dice la sua difficoltà
   let carattere = null;
-  const consigliato = livello ? MB21Training.CARATTERI[Math.min(MB21Training.CARATTERI.length - 1, Math.floor((livello - 1) / 2))].k : null;   // livelli 1-2 cordiale, 3-4 di fretta, 5-6 diffidente, 7 schietto
   const scegliCarattere = () => {
     fondo.innerHTML = `<div class="trn-chiede">Com'è ${esc(nome)} di carattere?</div><div class="trn-risposte">
-      ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(c.nome)} · ${esc(c.livello)}${c.k === consigliato ? ' · consigliato per il tuo livello' : ''}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
+      ${MB21Training.CARATTERI.map(c => `<button data-c="${c.k}">${esc(c.nome)} · ${esc(c.livello)}<small>${esc(c.sotto)}</small></button>`).join('')}</div>
       <button class="link" id="trn-rp-indietro">‹ Indietro</button>`;
     fondo.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { carattere = b.dataset.c; parti(); });
     fondo.querySelector('#trn-rp-indietro').onclick = convs.some(x => x.profilo) ? scegliPassato : scegliNome;
@@ -741,15 +740,16 @@ function trnConversazione(convs, livello) {
     // i fumetti: se il candidato dice più frasi di fila (la reazione e la frase dopo) sono un fumetto solo, con le frasi staccate (Ignazio 30/09)
     // ogni fumetto del candidato dice come si sente in quel momento (Ignazio 30/09: «l'impatto di quello che sta passando Mario»): dipende dai passi falsi fatti fin lì
     const eventi = [], umoreDopo = n => MB21Training.rpTensione(st, n);   // la tensione: 0 sereno … 1 sta per chiudere
-    let errori = 0;
+    let errori = (st.base || 0) * MB21Training.RP_CALMA;   // i passi falsi pesati: quelli sbagliati salgono, le risposte giuste scaldano
     for (let j = 0; j <= Math.min(st.i, cv.scambi.length - 1); j++) {
       eventi.push({ chi: 'lui', j, frasi: arr(cv.scambi[j].candidato), principale: true, um: umoreDopo(errori) });
       st.giro.forEach((g, gi) => {
         if (g.scambio !== j) return;
         eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero, us: !!g.uscita });
+        if (g.giusta && !g.uscita) { errori = MB21Training.rpColpiDopo(errori, true); return; }
         if (g.uscita) eventi.push({ chi: 'lui', j, frasi: arr(g.giusta ? st.uscita.ok : g.reazione), um: g.giusta ? 0.75 : 1, us: true });
         else if (!g.giusta) {
-          errori++; eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) });
+          errori = MB21Training.rpColpiDopo(errori, false); eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) });
           if (gi === st.uscitaDopo) eventi.push({ chi: 'lui', j, frasi: arr(st.uscita.candidato), um: 1, us: true });   // al colpo di troppo esce con la sua frase (Ignazio 30/09)
         }
       });
