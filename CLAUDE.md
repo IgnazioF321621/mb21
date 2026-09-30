@@ -53,9 +53,9 @@ Il database Supabase è **uno solo, quello vero**: lo usano ogni giorno i partne
 - Nel dubbio se è un'aggiunta o una modifica: è una modifica → si chiede.
 
 ## 5. 🔒 Niente online: il rilascio unico
-- **Nessuna sessione pubblica.** Vietati: `git push`, qualsiasi comando `gh` che crea o cambia repo, Pages o release, qualsiasi deploy.
+- **Ogni sessione e ogni agente lavora a sé stante**, sul proprio titolo. **Pubblica soltanto la sessione «Rilascio»** (quella che Ignazio indica con questo nome); tutte le altre non pubblicano e non rilasciano mai nulla. Vietati alle altre: `git push`, qualsiasi comando `gh` che crea o cambia repo, Pages o release, qualsiasi deploy, `APP_VERSION` e `?v=`, modifiche al database in attesa di rilascio.
 - Si salva **solo in locale**: commit su `main`, aggiungendo **per nome** solo i propri file (mai `git add -A` né `git add .`). In un file toccato anche da altre sessioni (`index.html`, `STRUTTURA.md`, `CANTIERI.md`…) si salvano solo i propri pezzi (`git diff <file>` in una patch, si tolgono i pezzi degli altri, `git apply --cached`, poi `git diff --cached` per ricontrollare). Vedi `LEZIONI.md` L13.
-- **Il rilascio lo decide Ignazio** con la parola «rilascia». Lo fa una sessione sola:
+- **Il rilascio lo decide Ignazio** con la parola «rilascia», detta alla sessione «Rilascio». Se la parola arriva a un'altra sessione, questa non rilascia e lo dice a Ignazio. Passi:
   1. controlla che le altre sessioni abbiano salvato tutto (se no, lo dice e aspetta);
   2. rifà le prove di tutto quello che esce;
   3. applica le modifiche al database approvate e in attesa (§ 4);
