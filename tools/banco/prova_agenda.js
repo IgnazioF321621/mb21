@@ -739,4 +739,18 @@ prova('«Su cosa lavorate?»: le fasi del tipo di appuntamento, solo per un Part
   assert.equal(A.nomePasso('ListaStart'), 'ListaStart');   // gli altri come sono: i nomi salvati non cambiano
 });
 
+prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anche altro» con gli altri, tutti in ordine delle fasi; chiuso o senza scelta → il blocco di sempre', () => {
+  const a = { tipo_azione: 'Appuntamento', modalita: 'Avvio', categoria: 'Partner', esito: null, completata: false, su_cosa: ['ListaStart', 'Motivazione'] };
+  const inc = A.passiIncontro(a, 'Partner');
+  assert.equal(inc.titolo, 'Com\'è andato l\'incontro?');
+  assert.deepEqual(inc.scelti, ['Motivazione', 'ListaStart']);                                   // nell'ordine dell'Avvio, non in quello toccato
+  assert.deepEqual(inc.altri, ['OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione']);
+  assert.deepEqual(A.passiFatti(inc.tutti, ['Telefonate', 'Motivazione', 'Sconosciuto']), ['Motivazione', 'Telefonate']);   // il primo è l'esito
+  assert.equal(A.passiIncontro({ ...a, su_cosa: null }, 'Partner'), null);
+  assert.equal(A.passiIncontro({ ...a, su_cosa: [] }, 'Partner'), null);
+  assert.equal(A.passiIncontro({ ...a, esito: 'RolePlay', completata: true }, 'Partner'), null);   // già chiuso: «Cambia esito» come prima
+  assert.equal(A.passiIncontro({ ...a, tipo_azione: 'Piano Marketing', modalita: 'PM 1a1' }, 'Partner'), null);
+  assert.equal(A.passiIncontro({ ...a, categoria: null }, 'Prospect'), null);   // un Prospect non ha «Su cosa lavorate?»
+});
+
 console.log(`\n${ok} prove superate`);
