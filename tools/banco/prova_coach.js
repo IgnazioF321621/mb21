@@ -178,7 +178,7 @@ async function percorri(passi, tocchi) {
 const MAZZI = [
   { percorso: { id: 'contattare', titolo: 'Contattare' }, carte: [
     { id: 'con-10', tipo: 'scena', obiezione: 'Di cosa si tratta?', versioni: [{ scena: 'Un amico ti chiede: di cosa si tratta?', risposte: ['Gli dico che voglio spiegarglielo di persona'] }] },
-    { id: 'con-21', tipo: 'scena', obiezione: 'Non ho tempo', versioni: [{ scena: '«Non ho tempo.»', risposte: ['«Ti capisco: è proprio per questo che ti ho chiamato.» E propongo un caffè'] }] },
+    { id: 'con-21', tipo: 'scena', obiezione: 'Non ho tempo', perche: 'Il manuale lo usa a favore.', versioni: [{ scena: '«Non ho tempo.»', risposte: ['«Ti capisco: è proprio per questo che ti ho chiamato.» E propongo un caffè'] }] },
     { id: 'con-22', tipo: 'frase', obiezione: 'Non ho tempo', davanti: 'x', dietro: 'y' }] },
   { percorso: { id: 'clienti', titolo: 'I clienti' }, carte: [
     { id: 'cl-15', tipo: 'scena', obiezione: 'Non ne ho bisogno', situazioni: ['consulenza', 'telefonata_cliente'], versioni: [{ scena: '«Non ne ho bisogno.»', risposte: ['Gli chiedo cosa usa adesso e come si trova'] }] }] },
@@ -186,12 +186,21 @@ const MAZZI = [
 const carta = sits => async ob => C.cartaDi(MAZZI, ob, sits);
 
 prova('La carta del Training per un\'obiezione: la scena giusta per quella chat, mai una frase o un vero/falso', () => {
-  assert.deepEqual(C.cartaDi(MAZZI, 'Non ho tempo', ['telefonata']), { id: 'con-21', scena: '«Non ho tempo.»', giusta: '«Ti capisco: è proprio per questo che ti ho chiamato.» E propongo un caffè', percorso: 'Contattare' });
+  assert.deepEqual(C.cartaDi(MAZZI, 'Non ho tempo', ['telefonata']), { id: 'con-21', scena: '«Non ho tempo.»', giusta: '«Ti capisco: è proprio per questo che ti ho chiamato.» E propongo un caffè', perche: 'Il manuale lo usa a favore.', percorso: 'Contattare' });
   assert.equal(C.cartaDi(MAZZI, 'Non ne ho bisogno', ['telefonata']), null);                          // è dei clienti
   assert.equal(C.cartaDi(MAZZI, 'Non ne ho bisogno', ['telefonata_cliente']).id, 'cl-15');
   assert.equal(C.cartaDi(MAZZI, 'Non ne ho bisogno', ['telefonata', 'consulenza']).id, 'cl-15');       // Prospect chiamato per una consulenza prodotti
   assert.equal(C.cartaDi(MAZZI, 'Non esiste', ['telefonata']), null);
   assert.equal(C.cartaDi(null, 'Non ho tempo', ['telefonata']), null);
+});
+
+prova('«Se fa un\'obiezione…»: le obiezioni del telefono di quella categoria, ognuna con la sua risposta, senza frasi né vero/falso', () => {
+  const tel = C.obiezioniDelTelefono(MAZZI, 'telefonata');
+  assert.deepEqual(tel.map(x => x.nome), ['Di cosa si tratta?', 'Non ho tempo']);                    // quelle dei clienti non sono del Prospect
+  assert.equal(tel[1].carta.giusta.startsWith('«Ti capisco'), true);
+  assert.deepEqual(C.obiezioniDelTelefono(MAZZI, 'telefonata_cliente').map(x => x.nome), ['Non ne ho bisogno']);
+  assert.deepEqual(C.obiezioniDelTelefono(MAZZI, 'telefonata_partner'), []);
+  assert.deepEqual(C.obiezioniDelTelefono(null, 'telefonata'), []);
 });
 
 prova('Coach corto: Relazione e No Interesse una riga sola, niente chat', async () => {

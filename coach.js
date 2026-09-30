@@ -153,9 +153,17 @@
       if (c.tipo !== 'scena' || c.obiezione !== obiezione) continue;
       if (!(c.situazioni ? c.situazioni.some(s => situazioni.includes(s)) : situazioni.includes('telefonata'))) continue;
       const v = c.versioni && c.versioni[0];
-      if (v && v.scena && v.risposte && v.risposte[0]) return { id: c.id, scena: v.scena, giusta: v.risposte[0], percorso: m.percorso && m.percorso.titolo || '' };
+      if (v && v.scena && v.risposte && v.risposte[0]) return { id: c.id, scena: v.scena, giusta: v.risposte[0], perche: c.perche || '', percorso: m.percorso && m.percorso.titolo || '' };
     }
     return null;
+  }
+
+  // Le obiezioni del telefono con la loro risposta (cantiere 48): per «Se fa un'obiezione…» nella card della coda, senza quiz. `situazione` come
+  // quella della chat (telefonata · telefonata_partner · telefonata_cliente). → [{ nome, carta }] nell'ordine dei mazzi, una carta per obiezione
+  function obiezioniDelTelefono(mazzi, situazione) {
+    const nomi = [];
+    for (const m of mazzi || []) for (const c of (m && m.carte) || []) if (c.obiezione && !nomi.includes(c.obiezione)) nomi.push(c.obiezione);
+    return nomi.map(nome => ({ nome, carta: cartaDi(mazzi, nome, [situazione]) })).filter(x => x.carta);
   }
 
   // Le telefonate a Prospect, Partner e Clienti hanno la stessa forma, e dal 24/09 anche Piano Marketing, Follow Up, Consulenza, Appuntamento,
@@ -317,7 +325,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, situazione, riempi, telefonata, corta, cartaDi, monta, riflessioneDa, ricordi, chat };
+  const api = { SENZA_PAROLE, situazione, riempi, telefonata, corta, cartaDi, obiezioniDelTelefono, monta, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);

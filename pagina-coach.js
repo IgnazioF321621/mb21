@@ -133,3 +133,36 @@ function ricordoHtml(contattoId, nome) {
   const chi = primoNome(nome);
   return `<div class="ricordo">${ic('prossimo')}<div>${r.obiezioni.length ? `<small>L'ultima volta${chi ? ` con ${esc(chi)}` : ''}: ${esc(r.obiezioni.join(' · '))}${r.daRipassare ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}</div></div>`;
 }
+
+// «Se fa un'obiezione…» nella card della coda, durante la telefonata (cantiere 48, Ignazio 29/09): un tocco apre le obiezioni di quella
+// categoria (Prospect, Cliente, Partner) e, toccandone una, la risposta del manuale: la carta del Training, senza quiz. Le carte si leggono
+// la prima volta che si apre (carteCoach). Partner: non sono obiezioni ma freni («Se qualcosa lo frena…»).
+function obiezioniHtml(r) {
+  const cosa = r.categoria === 'Partner' ? 'Se qualcosa lo frena…' : 'Se fa un’obiezione…';
+  return `<div class="obiez" data-obiez="${esc(r.id)}" data-cat="${esc(r.categoria || '')}"><button class="link" data-obiez-apri>${ic('info')} ${cosa}</button><div class="obiez-corpo" hidden></div></div>`;
+}
+function collegaObiezioni() {
+  document.querySelectorAll('.obiez').forEach(box => {
+    const corpo = box.querySelector('.obiez-corpo');
+    box.querySelector('[data-obiez-apri]').onclick = async () => {
+      if (!corpo.hidden) { corpo.hidden = true; return; }
+      corpo.hidden = false;
+      if (corpo.dataset.pronto) return;
+      corpo.innerHTML = '<small class="obiez-nota">Carico le risposte…</small>';
+      const sit = MB21Coach.situazione('Contatto', 'Telefonata', box.dataset.cat, 'PM Fissato');   // l'esito conta poco: serve la chat del telefono di quella categoria
+      const lista = MB21Coach.obiezioniDelTelefono(await carteCoach(), sit);
+      if (!lista.length) { corpo.innerHTML = '<small class="obiez-nota">Non riesco a caricare le risposte: controlla la connessione e riprova.</small>'; return; }
+      corpo.dataset.pronto = '1';
+      corpo.innerHTML = `<div class="obiez-chips">${lista.map((x, i) => `<button type="button" data-i="${i}">${esc(x.nome)}</button>`).join('')}</div><div class="obiez-r" hidden></div>`;
+      const r = corpo.querySelector('.obiez-r');
+      corpo.querySelectorAll('.obiez-chips button').forEach(b => {
+        b.onclick = () => {
+          corpo.querySelectorAll('.obiez-chips button').forEach(x => x.classList.toggle('on', x === b));
+          const c = lista[Number(b.dataset.i)].carta;
+          r.innerHTML = `<small>La risposta del manuale</small>${esc(c.giusta)}${c.perche ? `<div class="obiez-perche">${esc(c.perche)}</div>` : ''}<span class="cch-fonte">✓ Training · ${esc(c.percorso)}</span>`;
+          r.hidden = false;
+        };
+      });
+    };
+  });
+}

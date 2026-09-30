@@ -170,6 +170,7 @@ function cardContatto(r, dareSeguito) {
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
+        ${obiezioniHtml(r)}
         <div class="bottoni due-righe">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
@@ -288,6 +289,7 @@ function disegnaOggi() {
     return;
   }
   collegaConferme();
+  collegaObiezioni();
   collegaRiordini();
   collegaTracce();
   collegaMioPercorso();
