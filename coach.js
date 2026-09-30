@@ -86,7 +86,9 @@
     ], nomi);
   }
 
-  // Il coach corto dopo la telefonata (cantiere 48, Ignazio 29-30/09: «il coach registra e indirizza, non insegna»): una reazione, un solo tocco
+  // Il coach corto (cantiere 48, Ignazio 29-30/09; dal 30/09 anche dopo il Piano Marketing, il Follow Up e la Consulenza prodotti, dove l'obiezione non
+  // è mai «superata»: si chiede sempre «L'hai gestita?»; restano le domande di prima del piano/follow up, cadono gli approfondimenti lunghi)
+  // dopo la telefonata (: «il coach registra e indirizza, non insegna»): una reazione, un solo tocco
   // sull'obiezione (o «Nessuna»), e poi dipende dall'esito. Se l'incontro è fissato (PM Fissato, Appuntamento, Consulenza Prodotti) l'hai superata
   // e il coach ti ricorda la risposta del manuale per quando vi vedete, senza altre domande; se no (Richiamare…) «L'hai gestita?»: «No» porta alla
   // carta del Training, e chiude la frase per la prossima volta. Se l'altra volta con la stessa persona è uscita un'obiezione, parte da lì
@@ -120,9 +122,9 @@
         ['Sì', [{ c: 'Bene.' }]],
         ['No', [{ dopo: async () => {
           const c = await cartaDi_(ob);
-          return c ? [{ c: `Succede. Nel Training c’è la carta «${ob}»: ripassala prima di richiamare ${nomi.chi}.` },
+          return c ? [{ c: `Succede. Nel Training c’è la carta «${ob}»: ripassala prima di ${esito === 'Richiamare' ? 'richiamare' : 'risentire'} ${nomi.chi}.` },
             { c: `La risposta del manuale: ${finePunto(c.giusta)}`, fonte: fonte(c) }]
-            : [{ c: `Succede. Ripassa la risposta del manuale prima di richiamare ${nomi.chi}.` }];
+            : [{ c: `Succede. Ripassa la risposta del manuale prima di ${esito === 'Richiamare' ? 'richiamare' : 'risentire'} ${nomi.chi}.` }];
         } }]],
       ] }];
     };
@@ -143,7 +145,7 @@
     ];
     const f = B.prossima && B.prossima.frasi && B.prossima.frasi[esito];
     const frase = fissato || !f || !f.length ? [] : [{ c: B.prossima.c }, { frase: f, poi: B.prossima.poi && B.prossima.poi[esito], salva: 'prossima' }];
-    return riempi([...reazione.slice(0, 1), ...domanda, ...frase], nomi);
+    return riempi([...reazione.slice(0, 1), ...(B.prima || []), ...domanda, ...frase], nomi);   // `prima`: «cosa ha colpito di più» dopo un piano, «il perché» dopo un Follow Up
   }
 
   // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per
@@ -172,7 +174,7 @@
   const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata,
     consulenza: telefonata, appuntamento_partner: telefonata, non_avvenuto: telefonata };
   // Nell'app (con `ctx`) le telefonate hanno la forma corta; senza `ctx` (la pagina privata di prova) la forma lunga di prima.
-  const CORTE = ['telefonata', 'telefonata_partner', 'telefonata_cliente'];
+  const CORTE = ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza'];
   const monta = (sit, B, esito, nomi, n, ctx) => (ctx && CORTE.includes(sit) ? corta(B, esito, nomi, n, ctx) : MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
 
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
