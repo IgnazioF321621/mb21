@@ -156,6 +156,11 @@ prova('La scala: Nuovo sempre aperto, i livelli sopra chiusi finché tutti i per
   assert.deepEqual(s3.livelli.map(l => l.aperto), [true, true, false, false, false, false, false]);
   assert.equal(s3.qui.nome, 'Sponsor');
   assert.equal(s3.livelli[0].superato, true);
+  // test d'ingresso (30/09): un percorso superato col test, senza aver visto le carte, apre il percorso dopo
+  const s4 = T.scala([mazzo, { ...mazzo, percorso: { id: 'primi_passi' } }], {}, [{ percorso: 'contattare', giuste: 7, totale: 10, fatto_il: '2026-09-30T10:00:00Z' }], OGGI);
+  assert.equal(s4.livelli[0].percorsi[0].stato.viste, 0);
+  assert.equal(s4.livelli[0].percorsi[1].aperto, true);
+  assert.equal(T.scala([mazzo, { ...mazzo, percorso: { id: 'primi_passi' } }], {}, [], OGGI).livelli[0].percorsi[1].aperto, false);
 });
 
 prova('Ogni livello ha i suoi percorsi (dallo Sponsor in su, anche uno di mentalità), con id unici e icone che esistono', () => {
