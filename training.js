@@ -416,10 +416,10 @@
   // com'è la persona che chiami (Ignazio 30/09: «cordiale, ruvido o un sinonimo e qualche altra voce»): cambia le frasi che dice (le `varianti` con `carattere`),
   // quanti passi falsi regge (`colpi`) e da che umore parte (`base`: 0 cordiale, 1 già freddo). Ogni voce ha la sua difficoltà.
   const CARATTERI = [
-    { k: 'cordiale', nome: 'Cordiale', livello: 'Facile', sotto: 'Ti ascolta volentieri e perdona qualche errore', colpi: 4, base: 0 },
-    { k: 'fretta', nome: 'Di fretta', livello: 'Media', sotto: 'Ha pochi minuti e vuole arrivare al punto', colpi: 3, base: 0 },
-    { k: 'diffidente', nome: 'Diffidente', livello: 'Media', sotto: 'Si fida poco e vuole capire dove vuoi arrivare', colpi: 3, base: 1 },
-    { k: 'schietto', nome: 'Schietto', livello: 'Difficile', sotto: 'Va dritto, poca pazienza, ti chiude al secondo errore', colpi: 2, base: 1 }];
+    { k: 'cordiale', nome: 'Cordiale', livello: 'Facile', sotto: 'Ti ascolta volentieri e perdona qualche errore', colpi: 4, base: 0, ob: [1, 1] },
+    { k: 'fretta', nome: 'Di fretta', livello: 'Media', sotto: 'Ha pochi minuti e vuole arrivare al punto', colpi: 3, base: 0, ob: [1, 2] },
+    { k: 'diffidente', nome: 'Diffidente', livello: 'Media', sotto: 'Si fida poco e vuole capire dove vuoi arrivare', colpi: 3, base: 1, ob: [2, 2] },
+    { k: 'schietto', nome: 'Schietto', livello: 'Difficile', sotto: 'Va dritto, poca pazienza, ti chiude al secondo errore', colpi: 2, base: 1, ob: [2, 3] }];
   const rpCarattere = k => CARATTERI.find(c => c.k === k) || null;
   // uno scambio può avere `varianti`: più frasi possibili del candidato (Ignazio 30/09: «le obiezioni ne so a centinaia»), ognuna con le sue risposte;
   // a ogni telefonata se ne pesca una, e con lei cambia tutto il resto dello scambio. Se ce ne sono per il carattere scelto si pesca fra quelle,
@@ -427,14 +427,28 @@
   const rpPool = (sc, car) => { const v = sc.varianti, per = v.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)); return per.length ? per : v.filter(x => !x.carattere); };
   const rpScegliVarianti = (conv, rnd, car) => ({ ...conv, scambi: conv.scambi.map(sc => { const pool = Array.isArray(sc.varianti) && sc.varianti.length ? rpPool(sc, car) : [];
     if (!pool.length) return sc; const { carattere, livello, ...v } = pool[Math.floor((rnd || Math.random)() * pool.length)]; return { ...sc, ...v }; }) });
+  // La chiamata dura finché il candidato non chiude (è rosso da due passaggi) o il partner non fissa l'appuntamento (Ignazio 30/09). Se la conversazione ha
+  // `testa` (i saluti e la presentazione), `obiezioni` (un gruppo) e `coda` (l'appuntamento e la conferma), a ogni telefonata si pescano da 1 a 3 obiezioni
+  // (quante dipende dal carattere, `ob`; a caso, dando la precedenza a quelle del carattere): l'appuntamento arriva sempre dopo almeno un'obiezione.
+  const rpMescolaCon = (a, rnd) => { const v = [...a]; for (let i = v.length - 1; i > 0; i--) { const j = Math.floor((rnd || Math.random)() * (i + 1)); [v[i], v[j]] = [v[j], v[i]]; } return v; };
+  function rpPercorso(conv, rnd, c, car) {
+    if (!Array.isArray(conv.obiezioni)) return conv;
+    const buone = conv.obiezioni.filter(o => !o.carattere || o.carattere.includes(car)), [min, max] = c ? c.ob : [1, 2];
+    const n = Math.min(buone.length, min + Math.floor((rnd || Math.random)() * (max - min + 1)));
+    return { ...conv, scambi: [...(conv.testa || []), ...rpMescolaCon(buone, rnd).slice(0, n), ...(conv.coda || [])] };
+  }
   function rpNuova(conv, rnd, car) {
-    const c = rpCarattere(car), cv = rpScegliVarianti(conv, rnd, car);
+    const c = rpCarattere(car), cv = rpScegliVarianti(rpPercorso(conv, rnd, c, car), rnd, car);
     if (c) cv.colpi = c.colpi;
-    // la frase con cui, al colpo di troppo, il candidato esce dalla chiacchierata (`uscite` della conversazione, una per telefonata)
+    // un'obiezione può avere un `seguito`: quello che il candidato dice subito dopo la risposta (per esempio «No, vendere non fa per me»), in testa alla frase dello scambio dopo
+    const lista = x => (Array.isArray(x) ? x : [x]);
+    cv.scambi = cv.scambi.map((sc, i) => (i > 0 && cv.scambi[i - 1].seguito ? { ...sc, candidato: [...lista(cv.scambi[i - 1].seguito), ...lista(sc.candidato)] } : sc));
+    // la frase con cui il candidato avvisa che sta per uscire, quando diventa rosso (`uscite` della conversazione, una per telefonata)
     const us = Array.isArray(cv.uscite) && cv.uscite.length ? cv.uscite.filter(x => Array.isArray(x.carattere) && x.carattere.includes(car)) : [];
     const pool = us.length ? us : (cv.uscite || []).filter(x => !x.carattere), uscita = pool.length ? pool[Math.floor((rnd || Math.random)() * pool.length)] : null;
-    return { conv: cv, i: 0, colpi: c ? c.base * RP_CALMA : 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0, uscita, uscitaDopo: null };
-    // fine: null | 'ok' | 'chiusa' | 'richiamo' (l'aggancio in extremis: non l'hai perso); fase: 'principale' | 'recupero' | 'uscita'
+    return { conv: cv, i: 0, colpi: c ? c.base * RP_CALMA : 0, fuori: [], fine: null, giro: [], fase: 'principale', ultimo: null, car: c ? c.k : null, base: c ? c.base : 0,
+      uscita, uscitaDopo: null, uscitaUsata: false, dopo: null, agganciato: false };
+    // fine: null | 'ok' | 'chiusa'; fase: 'principale' | 'recupero' | 'uscita'
   }
   // dopo un errore (Ignazio 30/09: le stesse risposte non tornano, «il Partner che chiama si trova a dover gestire la cosa»): il candidato reagisce e
   // tre risposte, scritte per quell'errore (`recupero` della risposta sbagliata; o quello dello scambio), servono a rimediare; poi si va avanti
@@ -443,7 +457,7 @@
   const rpRecuperoDi = (sc, k) => (sc.risposte[k] && sc.risposte[k].recupero) || sc.recupero || null;
   const rpDelloScambio = st => (rpUscita(st) ? st.uscita : rpRecupero(st) ? rpRecuperoDi(st.conv.scambi[st.i], st.ultimo) : st.conv.scambi[st.i]);
   // le tre risposte dello scambio di adesso, mescolate (senza quelle già sbagliate qui, per gli scambi senza recupero)
-  const rpRisposte = st => st.fine ? [] : mescola(rpDelloScambio(st).risposte.map((r, k) => ({ ...r, k })).filter(r => !st.fuori.includes(r.k)));
+  const rpRisposte = st => st.fine ? [] : mescola(rpDelloScambio(st).risposte.map((r, k) => ({ ...r, k })).filter(r => rpUscita(st) || !st.fuori.includes(r.k)));
   // quanto è vicino a chiudere, da 0 (sereno) a 1 (il prossimo errore è l'ultimo): cresce coi passi falsi, e chi parte già freddo (`base`) è a metà strada
   // (Ignazio 30/09: «i colori a salire da verde fino al rosso, la sensazione che lo sto perdendo e posso ancora rimediare»)
   // Anche a scendere (Ignazio 30/09: «ho risposto bene a tutto e Pino è rimasto freddo»): un passo falso pesa 1, una risposta giusta scalda di mezzo passo
@@ -460,22 +474,29 @@
     if (st.fine) return st;
     const rec = rpRecupero(st), sc = st.conv.scambi[st.i], r = rpDelloScambio(st).risposte[k], nuovo = { ...st, fuori: [...st.fuori], giro: [...st.giro] };
     if (!r) return st;
-    if (rpUscita(st)) {   // l'ultima occasione: «Ok, tranquillo, ma quando posso richiamarti?» tiene il contatto, il resto lo chiude
+    const avanza = () => { nuovo.i = st.i + 1; nuovo.fuori = []; nuovo.fase = 'principale'; nuovo.ultimo = null; if (nuovo.i >= st.conv.scambi.length) nuovo.fine = 'ok'; };
+    if (rpUscita(st)) {   // il candidato è rosso e avvisa che sta per uscire: «Ok, tranquillo, ma quando posso richiamarti?» lo scalda e la chiamata continua, il resto la chiude
       nuovo.giro.push({ scambio: st.i, k, giusta: !!r.giusta, testo: r.testo, reazione: r.giusta ? '' : r.reazione, uscita: true, recupero: false });
-      nuovo.fine = r.giusta ? 'richiamo' : 'chiusa';
+      nuovo.colpi = rpColpiDopo(st.colpi, !!r.giusta);
+      if (!r.giusta) { nuovo.fine = 'chiusa'; return nuovo; }
+      nuovo.agganciato = true; nuovo.fase = 'principale';
+      const d = st.dopo || {};
+      if (d.avanza) avanza(); else if (d.recupero !== undefined) { nuovo.fase = 'recupero'; nuovo.ultimo = d.recupero; } else if (d.fuori !== undefined) nuovo.fuori.push(d.fuori);
+      nuovo.dopo = null;
       return nuovo;
     }
     nuovo.giro.push({ scambio: st.i, k, giusta: !!r.giusta, testo: r.testo, reazione: r.giusta ? '' : r.reazione, perche: sc.perche, recupero: rec });
-    const avanza = () => { nuovo.i = st.i + 1; nuovo.fuori = []; nuovo.fase = 'principale'; nuovo.ultimo = null; if (nuovo.i >= st.conv.scambi.length) nuovo.fine = 'ok'; };
     if (r.giusta) { nuovo.colpi = rpColpiDopo(st.colpi, true); avanza(); return nuovo; }
     nuovo.colpi = rpColpiDopo(st.colpi, false);
-    if (nuovo.colpi >= (st.conv.colpi || 3)) {
-      if (!st.uscita) { nuovo.fine = 'chiusa'; return nuovo; }
-      nuovo.fase = 'uscita'; nuovo.fuori = []; nuovo.uscitaDopo = nuovo.giro.length - 1; return nuovo;
+    const tetto = st.conv.colpi || 3;
+    if (nuovo.colpi >= tetto) { nuovo.fine = 'chiusa'; return nuovo; }
+    // che cosa succede dopo questo errore: si rimedia (recupero), si riprova, o si va avanti (se era già un rimedio sbagliato)
+    const dopo = rec ? { avanza: true } : rpRecuperoDi(sc, k) ? { recupero: k } : { fuori: k };
+    if (st.uscita && !st.uscitaUsata && nuovo.colpi >= tetto - 1) {   // diventa rosso: il candidato avvisa che sta per uscire, ultima occasione
+      nuovo.fase = 'uscita'; nuovo.uscitaUsata = true; nuovo.uscitaDopo = nuovo.giro.length - 1; nuovo.dopo = dopo;
+      return nuovo;
     }
-    if (rec) avanza();
-    else if (rpRecuperoDi(sc, k)) { nuovo.fase = 'recupero'; nuovo.ultimo = k; }
-    else nuovo.fuori.push(k);
+    if (dopo.avanza) avanza(); else if (dopo.recupero !== undefined) { nuovo.fase = 'recupero'; nuovo.ultimo = k; } else nuovo.fuori.push(k);
     return nuovo;
   }
 
