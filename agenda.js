@@ -22,7 +22,7 @@
   const FASI_CONTATTO_PC = ['Appuntamento', 'Richiamare'];                        // decisione 2
   // Appuntamento: fasi per sottotipo (decisione 3; tolti i nomi vecchi non in Sequenze)
   const FASI_APPUNTAMENTO = {
-    'Avvio': ['Lista nomi', 'ListaStart', 'Motivazione', 'OrdineStart', 'RolePlay', 'Telefonate', 'Inaugurazione'],
+    'Avvio': ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'],   // l'ordine dell'Avvio (Ignazio 30/09); i nomi non cambiano: danno le statistiche
     'Counseling': ['c/Downline', 'c/Upline', 'Motivazione'],
     'Lista/Contatti': ['Lista nomi', 'Motivazione', 'Telefonate'],
     'Meeting/Evento': ['Incontro N21'],
