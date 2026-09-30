@@ -2648,10 +2648,13 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
   const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  // Avvio di un nuovo (cantiere 48): il passo fatto nell'incontro si spunta anche in «Il mio avvio» (se non lo era già); Annulla lo rimette com'era
+  const passoAvvio = await spuntaAvvio(e, esito);
   const annulla = async creato => {
     const { error: e2 } = await dbq('riapri appuntamento', supa.rpc('riapri_appuntamento', {
       p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
       p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
+    if (!e2 && passoAvvio) { await dbq('togli il passo dell\'avvio', supa.from('contatti').update({ [passoAvvio.col]: false }).eq('id', e.contatto_id)); passoInCache(e.contatto_id, passoAvvio.col, false); }
     if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
     await ridisegna();
@@ -2716,7 +2719,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
   });
   await ridisegna();
-  mostraToast(creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`, () => annulla(creato));
+  mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passoAvvio ? ` · segnato in «Il mio avvio»: ${passoAvvio.nome}` : ''}`, () => annulla(creato));
   // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
   if (MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
       && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
