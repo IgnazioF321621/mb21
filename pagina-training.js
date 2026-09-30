@@ -660,6 +660,8 @@ function trnNuovaVariante(carta, visto, nome) {
     chiudi(); mostraToast('Frase salvata: la scrivo con le sue risposte.');
   };
 }
+// il colore di «come si sente»: dal verde (sereno) al giallo al rosso (sta per chiudere), secondo la tensione da 0 a 1
+const trnColoreUmore = t => (t < 0.5 ? `color-mix(in srgb, var(--proposta-tinta) ${Math.round(t * 200)}%, var(--ok-tinta))` : `color-mix(in srgb, var(--pericolo-tinta) ${Math.round((t - 0.5) * 200)}%, var(--proposta-tinta))`);
 function trnConversazione(convs, livello) {
   let conv = convs[0], st = null, nome = '';
   const velo = document.createElement('div');
@@ -727,7 +729,7 @@ function trnConversazione(convs, livello) {
     if (!eAdmin() || !ST.utente) return;
     const sbagliati = [...new Set(st.giro.filter(g => !g.giusta).map(g => g.scambio + 1))];
     dbq('training: prova conversazione', supa.from('training_prove_rp').insert({ user_id: ST.utente.id, conversazione: cv.id, carattere: st.car,
-      esito: st.fine, scambi: st.i, passi_falsi: st.giro.filter(g => !g.giusta).length, sbagliati }));
+      esito: st.fine === 'ok' ? 'ok' : 'chiusa', agganciato: st.fine === 'richiamo', scambi: st.i, passi_falsi: st.giro.filter(g => !g.giusta).length, sbagliati }));
   };
   const btn = (n) => trnCorreggi(n, 'Correggi');
   const disegna = () => {
@@ -738,37 +740,45 @@ function trnConversazione(convs, livello) {
       return `<div class="trn-esito no"><b>${esc(arr(cv.scambi[j].candidato).join(' '))}</b>${esc(cv.scambi[j].perche)}${trnFonte(cv.scambi[j])}${btn(righe.length - 1)}</div>`; };
     // i fumetti: se il candidato dice più frasi di fila (la reazione e la frase dopo) sono un fumetto solo, con le frasi staccate (Ignazio 30/09)
     // ogni fumetto del candidato dice come si sente in quel momento (Ignazio 30/09: «l'impatto di quello che sta passando Mario»): dipende dai passi falsi fatti fin lì
-    const eventi = [], umoreDopo = n => Math.min(n + (st.base || 0), MB21Training.UMORI.length - 1);
+    const eventi = [], umoreDopo = n => MB21Training.rpTensione(st, n);   // la tensione: 0 sereno … 1 sta per chiudere
     let errori = 0;
     for (let j = 0; j <= Math.min(st.i, cv.scambi.length - 1); j++) {
       eventi.push({ chi: 'lui', j, frasi: arr(cv.scambi[j].candidato), principale: true, um: umoreDopo(errori) });
-      st.giro.filter(g => g.scambio === j).forEach(g => {
-        eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero });
-        if (!g.giusta) { errori++; eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) }); }
+      st.giro.forEach((g, gi) => {
+        if (g.scambio !== j) return;
+        eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero, us: !!g.uscita });
+        if (g.uscita) eventi.push({ chi: 'lui', j, frasi: arr(g.giusta ? st.uscita.ok : g.reazione), um: g.giusta ? 0.75 : 1, us: true });
+        else if (!g.giusta) {
+          errori++; eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) });
+          if (gi === st.uscitaDopo) eventi.push({ chi: 'lui', j, frasi: arr(st.uscita.candidato), um: 1, us: true });   // al colpo di troppo esce con la sua frase (Ignazio 30/09)
+        }
       });
     }
     const ult = cv.scambi.length - 1;
     if (st.fine === 'ok') eventi.push({ chi: 'lui', j: ult, frasi: arr(cv.chiusura), um: umoreDopo(errori) });
-    if (st.fine === 'chiusa') eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto), um: MB21Training.UMORI.length - 1 });
+    if (st.fine === 'chiusa' && !st.uscita) eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto), um: MB21Training.UMORI.length - 1 });
     const gruppi = [];
-    eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; u.um = e.um; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
+    eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; u.um = e.um; if (e.us) u.us = true; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
     let h = '';
     gruppi.forEach(g => {
       const pezzi = g.frasi.map(t => `<p>${esc(t)}</p>`).join('');
       if (g.chi === 'lui') {
-        righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: 'lui' } });
+        righe.push({ carta: `${cv.id}#${g.us ? 'u' : g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: g.us ? 'lui, frase di uscita' : 'lui' } });
         const v = g.principale ? (righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
-        h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente u${g.um}">${esc(MB21Training.UMORI[g.um])}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
+        h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente" style="background:${trnColoreUmore(g.um)}">${esc(MB21Training.UMORI[MB21Training.rpUmoreDa(g.um)])}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
       } else {
         const q = (g.rec ? 'recupero, ' : '') + (g.giusta ? 'risposta giusta' : 'risposta sbagliata');
-        righe.push({ carta: `${cv.id}#${g.j + 1}${g.rec ? 'r' : ''}`, visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
+        righe.push({ carta: `${cv.id}#${g.us ? 'u' : g.j + 1}${g.rec ? 'r' : ''}`, visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
         h += `<div class="trn-rp-b io"><small>Tu</small>${pezzi}${btn(righe.length - 1)}</div>`;
       }
     });
     // le spiegazioni del manuale non si vedono durante la chiacchierata (Ignazio 30/09: leggerle a metà toglie il gusto): solo alla fine,
     // per i passi in cui hai sbagliato
-    const rivedi = [...new Set(st.giro.filter(g => !g.giusta).map(g => g.scambio))].sort((x, y) => x - y);
-    if (st.fine && rivedi.length) h += `<h4 class="trn-rp-manuale">Cosa suggerisce il manuale, dove hai sbagliato</h4>${rivedi.map(nota).join('')}`;
+    const rivedi = [...new Set(st.giro.filter(g => !g.giusta && !g.uscita).map(g => g.scambio))].sort((x, y) => x - y);
+    const uscitaSbagliata = st.uscita && st.giro.some(g => g.uscita && !g.giusta);
+    const notaUscita = () => { righe.push({ carta: `${cv.id}#u`, visto: { dove: 'conversazione', titolo: 'Correggi la spiegazione', domanda: st.uscita.candidato, scelta: st.uscita.perche, quale: 'spiegazione' } });
+      return `<div class="trn-esito no"><b>${esc(st.uscita.candidato)}</b>${esc(st.uscita.perche)}${btn(righe.length - 1)}</div>`; };
+    if (st.fine && (rivedi.length || uscitaSbagliata)) h += `<h4 class="trn-rp-manuale">Cosa suggerisce il manuale, dove hai sbagliato</h4>${rivedi.map(nota).join('')}${uscitaSbagliata ? notaUscita() : ''}`;
     chat.innerHTML = h;
     chat.querySelectorAll('[data-variante]').forEach(b => b.onclick = () => { const r = righe[Number(b.dataset.variante)]; trnNuovaVariante({ id: r.carta }, r.visto, nome); });
     trnCollegaFonte(chat);
@@ -776,8 +786,8 @@ function trnConversazione(convs, livello) {
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
-      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
-        ${st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
+      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'chiusa' ? 'no' : 'si'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : st.fine === 'richiamo' ? `Non hai perso ${esc(nome)}: puoi richiamarlo` : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
+        ${st.fine === 'richiamo' ? `Sei riuscito ad agganciarlo mentre usciva: ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli} passi falsi. Il prossimo passo è la richiamata.` : st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
           : `Hai fatto ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
         <button class="primario" id="trn-rp-ancora">Riprova con ${esc(nome)}</button><button class="trn-secondo" id="trn-rp-altro">Cambia persona o carattere</button><button class="link" id="trn-rp-esci">Chiudi</button>`;
       fondo.querySelector('#trn-rp-ancora').onclick = () => { parti(); foglio.scrollTo({ top: 0 }); };
