@@ -745,9 +745,18 @@ function trnConversazione(convs) {
   const scegliLavoro = () => {
     const previsti = [['imprenditore', 'È un imprenditore o un libero professionista'], ['dipendente', 'È un lavoratore dipendente'], ['presentato', "Me l'ha presentato qualcuno"]];
     fondo.innerHTML = `<div class="trn-chiede">Che lavoro fa ${esc(nome)}?</div><div class="trn-risposte">
-      ${previsti.map(([k, t]) => { const c = convs.find(x => x.profilo === k); return c ? `<button data-p="${k}">${esc(c.profilo_testo || t)}</button>` : prossimamente(t); }).join('')}</div>
+      ${previsti.map(([k, t]) => { const c = convs.find(x => x.profilo === k); return c ? `<button data-p="${k}">${esc(fem(c.profilo_testo || t))}</button>` : prossimamente(t); }).join('')}</div>
       <button class="link" id="trn-rp-indietro">‹ Cambia persona</button>`;
-    fondo.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { profilo = b.dataset.p; scegliPassato(); });
+    fondo.querySelectorAll('[data-p]').forEach(b => b.onclick = async () => {
+      profilo = b.dataset.p;
+      // il lavoro detto qui si riscrive anche nella scheda del contatto (Ignazio 30/09: «inserendo quel dato, deve riscriversi sulla scheda»): dipendente → dipendente, imprenditore o libero professionista → autonomo
+      const lavoro = { dipendente: 'dipendente', imprenditore: 'autonomo' }[profilo];
+      if (lavoro && contatto && contatto.id && !contatto.lavoro) {
+        const { error } = await dbq('lavoro', supa.from('contatti').update({ lavoro }).eq('id', contatto.id));
+        if (error) mostraToast('Il lavoro non è stato salvato nella scheda.'); else contatto.lavoro = lavoro;
+      }
+      scegliPassato();
+    });
     fondo.querySelector('#trn-rp-indietro').onclick = scegliNome;
   };
   // «già contattato in passato?»: ogni risposta porta alla sua conversazione (manuale pag. 12 per chi era già stato sentito)
