@@ -272,4 +272,27 @@ prova('La card «Il tuo Check» della Dashboard (Ignazio 27/09): le stesse luci 
   esegui(`CK.di = 'io';`);
 });
 
+prova('Executive, «di cui 2 a Leaders Club» (Ignazio 30/09): l\'Admin apre l\'elenco e spunta le linee, gli altri leggono solo il conto', () => {
+  ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
+  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'GIAVATTO, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'CILIA, ALBERTO' }],
+    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 }, { partner_id: 'B', mese: 202609, vpp: 116, bonus: 0 }] };
+    CK.nonOra = []; CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('elc'); CK.lcLinee = [{ partner_id: 'A', mese: 202609 }, { partner_id: 'B', mese: 202608 }];`);
+  const voci = () => { const h = disegna(); return h.slice(h.indexOf('data-gradino="elc"'), h.indexOf('data-gradino="arg"')); };
+  // una persona qualsiasi: solo il conto (una segnata a settembre; quella di agosto non conta)
+  assert.match(voci(), /<div class=""><span>di cui 2 a Leaders Club<\/span><span>1 su 2<\/span><\/div>/);
+  assert.doesNotMatch(voci(), /data-lcapri/);
+  // l'Admin: la voce è un tocco che apre l'elenco delle linee attive, con la spunta su chi è già segnato
+  ctx.ST.utente.ruolo = 'Admin';
+  assert.match(voci(), /<button class="lc-apri" data-lcapri aria-expanded="false">di cui 2 a Leaders Club ›<\/button><span>1 su 2<\/span>/);
+  assert.doesNotMatch(voci(), /data-lc="A"/);
+  esegui(`CK.lcAperto = true;`);
+  assert.match(voci(), /<button class="su" data-lc="A" data-mese="202609" aria-pressed="true">✓ Simone Giavatto<\/button><button class="" data-lc="B" data-mese="202609" aria-pressed="false">Alberto Cilia<\/button>/);
+  // con 2 linee segnate la voce si accende
+  esegui(`CK.lcLinee.push({ partner_id: 'B', mese: 202609 });`);
+  assert.match(voci(), /<div class="ok"><button class="lc-apri" data-lcapri aria-expanded="true">✓ di cui 2 a Leaders Club ⌄<\/button><span>fatto<\/span>/);
+  delete ctx.ST.utente.ruolo;
+  esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear(); CK.lcLinee = []; CK.lcAperto = false;`);
+  ctx.visto = () => ({ id: 'io' });
+});
+
 console.log(`\n${ok} prove superate`);

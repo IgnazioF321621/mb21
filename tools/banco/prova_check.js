@@ -358,6 +358,11 @@ prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali
     ['Prime linee', '4 su 5'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
     ['Biglietti WES', '4 su 10'], ['Core', 'nel percorso sopra']]);
   assert.deepEqual(v.righe[1].voci.slice(9).map(x => [x.testo, x.stato]), [['Core', 'nel percorso sopra'], ['3 linee al 6%', '0 su 3'], ['di cui 2 a Leaders Club', 'da segnare']]);
+  // le linee a Leaders Club le segna l'Admin (30/09): contano solo quelle che sono prime linee della persona, con 2 la voce si accende
+  const con = ids => C.livelli({ core: false, bonus: 6, linee: linee.map((x, i) => ({ ...x, partner_id: 'L' + i })), lcLinee: ids }).righe[1].voci.find(x => x.chiave === 'lineeLc');
+  assert.deepEqual([con(['L0']).stato, con(['L0']).fatto], ['1 su 2', false]);
+  assert.deepEqual([con(['L0', 'L3']).stato, con(['L0', 'L3']).fatto], ['fatto', true]);
+  assert.equal(con(['L0', 'ZZ']).stato, '1 su 2');   // ZZ non è una sua linea
   assert.equal(v.righe[2].voci.length, 9);   // Argento: solo la riga della tabella
   assert.deepEqual(v.righe[3].voci[9], { chiave: 'mesi21', testo: '12 mesi di fila al 21%', fatto: false, stato: '0 su 12' });
   assert.deepEqual([v.righe[1].passi, v.righe[2].passi], [[], []]);   // i passi solo per il prossimo livello
