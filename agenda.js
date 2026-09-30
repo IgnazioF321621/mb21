@@ -584,6 +584,16 @@
     if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', domandaEsito(a.tipo_azione), due.esiti) : g('cambia', domandaEsito(a.tipo_azione), due.esiti, a.esito));
     return gruppi;
   }
+  // «Com'è andato l'incontro?» con un Partner che ha «Su cosa lavorate?» (cantiere 48): i passi scelti quando si è fissato, da toccare se fatti,
+  // e «anche altro» con gli altri passi del tipo. Tutto in ordine delle fasi. null = il blocco di sempre (un esito solo).
+  function passiIncontro(a, categoria) {
+    if (!a || a.tipo_azione !== 'Appuntamento' || !daChiudere(a)) return null;
+    const tutti = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    const scelti = tutti.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
+    return scelti.length ? { titolo: domandaEsito(a.tipo_azione), scelti, altri: tutti.filter(x => !scelti.includes(x)), tutti } : null;
+  }
+  // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
+  const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
   // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,
   // si chiede invece «Quando risentirlo?» con la data già a un anno, cambiabile a mano (7-8 mesi…)
@@ -848,7 +858,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, fatteDaEliminare, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

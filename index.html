@@ -497,7 +497,11 @@
     background: var(--cat-partner-tinta); color: var(--testo); font-size: 14.5px; line-height: 1.4; }
   .ricordo > svg.ic { flex: none; color: var(--cat-partner); width: 20px; height: 20px; margin-top: 1px; }
   .ricordo small { display: block; font-size: 12.5px; color: var(--cat-partner); font-weight: 600; margin-bottom: 2px; }
-  /* «Se fa un'obiezione…» nella card della coda: le obiezioni e la risposta del manuale, col colore del coach come il promemoria */
+  /* «Com'è andato l'incontro?» con i passi scelti: si toccano quelli fatti, poi «Fatto» (cantiere 48) */
+  .su-cosa-fatto { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 4px; }
+  .su-cosa-fatto small { color: var(--testo-tenue); }
+  .su-cosa-fatto .primario { align-self: stretch; }
+    /* «Se fa un'obiezione…» nella card della coda: le obiezioni e la risposta del manuale, col colore del coach come il promemoria */
   .obiez { margin: 2px 0 10px; }
   .obiez-corpo { margin-top: 8px; }
   .obiez-nota { color: var(--testo-tenue); }
@@ -2572,6 +2576,19 @@ function bottoniEsiti(bottoni, attuale, attr, classe) {
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
 function bloccoEsiti(a, categoria, aperto = false) {
+  // Un incontro con un Partner con «Su cosa lavorate?»: si toccano i passi fatti (quelli scelti, e «anche altro»), poi «Fatto»
+  const inc = MB21Agenda.passiIncontro(a, categoria);
+  if (inc) {
+    const tocchi = (lista, attr) => lista.map(x => `<button type="button" ${attr} data-passo-fatto="${esc(x)}">${esc(MB21Agenda.nomePasso(x))}</button>`).join('');
+    return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">${esc(inc.titolo)}</div>
+      <div class="su-cosa-fatto" data-incontro="${esc(a.id)}" data-tutti="${esc(JSON.stringify(inc.tutti))}">
+        <small>Tocca i passi che avete fatto</small>
+        <div class="ag-scelte">${tocchi(inc.scelti, '')}</div>
+        ${inc.altri.length ? `<button type="button" class="link" data-anche-altro>Abbiamo fatto anche altro ›</button>
+          <div class="ag-scelte" data-altri hidden>${tocchi(inc.altri, '')}</div>` : ''}
+        <button type="button" class="primario" data-incontro-fatto disabled>Fatto</button>
+      </div></div>`;
+  }
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
   const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
@@ -2594,6 +2611,20 @@ function collegaEsiti(el, a, contatto, dopo) {
     blocco.outerHTML = bloccoEsiti(a, contatto.categoria, true);
     collegaEsiti(el.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`) || el, a, contatto, dopo);
   };
+  el.querySelectorAll('.su-cosa-fatto').forEach(box => {   // i passi fatti nell'incontro (cantiere 48)
+    const fatto = box.querySelector('[data-incontro-fatto]'), tutti = JSON.parse(box.dataset.tutti);
+    const accesi = () => [...box.querySelectorAll('[data-passo-fatto].scelto')].map(b => b.dataset.passoFatto);
+    box.querySelectorAll('[data-passo-fatto]').forEach(b => b.onclick = () => { b.classList.toggle('scelto'); fatto.disabled = !accesi().length; });
+    const altro = box.querySelector('[data-anche-altro]');
+    if (altro) altro.onclick = () => { box.querySelector('[data-altri]').hidden = false; altro.hidden = true; };
+    fatto.onclick = () => {
+      if (soloGuardo()) return;
+      const passi = MB21Agenda.passiFatti(tutti, accesi());
+      if (!passi.length) return;
+      const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
+      chiudiAppuntamento(e, passi[0], { dopo, extra: passi.slice(1), testo: passi.map(MB21Agenda.nomePasso).join(' · ') });
+    };
+  });
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
     if (soloGuardo() || b.classList.contains('attuale')) return;
     const passo = b.closest('.ag-esiti').dataset.passo, esito = b.dataset.esito;
@@ -2649,12 +2680,21 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
   // Avvio di un nuovo (cantiere 48): il passo fatto nell'incontro si spunta anche in «Il mio avvio» (se non lo era già); Annulla lo rimette com'era
-  const passoAvvio = await spuntaAvvio(e, esito);
+  const passiAvvio = [];
+  for (const p of [esito, ...(opz.extra || [])]) { const r = await spuntaAvvio(e, p); if (r) passiAvvio.push(r); }
+  // «Su cosa lavorate?» (cantiere 48): i passi fatti in più, oltre al primo che è l'esito dell'appuntamento, una riga di azione ciascuno (stesso giorno e ora)
+  const inPiu = [];
+  for (const p of opz.extra || []) {
+    const { data: r, error: er } = await dbq('passo dell\'incontro', supa.from('azioni').insert({ contatto_id: e.contatto_id, user_id: e.user_id, categoria: e.categoria,
+      tipo_azione: e.tipo_azione, modalita: e.modalita, area: e.area, inizio: e.inizio, fine: e.fine || null, completata: true, esito: p, portato_da: e.portato_da || null }).select('id').single());
+    if (!er && r) inPiu.push(r.id);
+  }
   const annulla = async creato => {
     const { error: e2 } = await dbq('riapri appuntamento', supa.rpc('riapri_appuntamento', {
       p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
       p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
-    if (!e2 && passoAvvio) { await dbq('togli il passo dell\'avvio', supa.from('contatti').update({ [passoAvvio.col]: false }).eq('id', e.contatto_id)); passoInCache(e.contatto_id, passoAvvio.col, false); }
+    if (!e2) for (const p of passiAvvio) { await dbq('togli il passo dell\'avvio', supa.from('contatti').update({ [p.col]: false }).eq('id', e.contatto_id)); passoInCache(e.contatto_id, p.col, false); }
+    if (!e2 && inPiu.length) await dbq('togli i passi in più', supa.from('azioni').delete().in('id', inPiu));
     if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
     await ridisegna();
@@ -2719,7 +2759,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
   });
   await ridisegna();
-  mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passoAvvio ? ` · segnato in «Il mio avvio»: ${passoAvvio.nome}` : ''}`, () => annulla(creato));
+  mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passiAvvio.length ? ` · segnato in «Il mio avvio»: ${passiAvvio.map(p => p.nome).join(', ')}` : ''}`, () => annulla(creato));
   // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
   if (MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
       && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
