@@ -12,7 +12,8 @@
 // suo esito; PM e Follow Up Rimandati o No Show); altrove niente. Il foglietto a
 // bottoni del 23/09 è stato tolto il 24/09, in locale e online (Ignazio: «si toglie il foglietto vecchio e vediamo man mano
 // solo le cose nuove, sia in locale sia online, solo le cose approvate»).
-// `e`: l'azione con almeno id, tipo_azione, contatti.nome (modalita, categoria, contatto_id facoltativi).
+// `e`: l'azione con almeno id, tipo_azione, contatti.nome (modalita, categoria, contatto_id facoltativi; `fissato`: se è stato fissato l'appuntamento,
+// altrimenti lo dice l'esito; `contatto_id` serve al coach corto per ricordare l'altra volta).
 // Una chat nuova si prova prima sul Mac: finché Ignazio non dice «pubblica», la sua situazione sta in COACH_SOLO_ANTEPRIMA e si apre
 // solo nell'anteprima (127.0.0.1), anche se il codice va online prima (in questa cartella lavora anche un'altra sessione, che
 // pubblica il suo lavoro: il 24/09 ha pubblicato anche la chat di PM e Follow Up, prima della prova). Dopo l'ok si toglie dalla lista.
@@ -46,10 +47,26 @@ function voltaCoach() {
   catch (_) { return Math.floor(Math.random() * 1000); }
 }
 const primoNome = s => String(s || '').trim().split(/\s+/)[0];
+// Le carte del Training che rispondono alle obiezioni del telefono (Prospect, Clienti, Partner): si leggono una volta, in
+// background appena la chat si apre, e servono solo se si arriva alla risposta del manuale (MB21Coach.cartaDi).
+const MAZZI_COACH = ['carte_contattare', 'carte_clienti', 'carte_aiutare_partner'];
+function carteCoach() {
+  if (!COACH.carte) COACH.carte = dbq('carte del coach', supa.from('coach_batterie').select('situazione, batteria').in('situazione', MAZZI_COACH))
+    .then(({ data, error }) => {
+      if (error || !data) { COACH.carte = null; return []; }   // senza rete: la chat prosegue senza la carta, e ci riprova la prossima volta
+      return MAZZI_COACH.map(s => (data.find(r => r.situazione === s) || {}).batteria).filter(Boolean);
+    });
+  return COACH.carte;
+}
 async function chiediCoach(e, esito, situazione) {
   const B = await batteriaCoach(situazione);
   const nomi = { io: primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome)), chi: primoNome(e.contatti && e.contatti.nome) };
-  const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach()) : null;
+  // il coach corto (cantiere 48): ricorda l'altra volta con la stessa persona (RICORDI) e, se serve, porta la carta del Training
+  const sits = [situazione, ...(esito === 'Consulenza Prodotti' ? ['consulenza'] : [])];
+  const ctx = { fissato: e.fissato, ricordo: e.contatto_id ? RICORDI[e.contatto_id] || undefined : undefined,
+    carta: async ob => MB21Coach.cartaDi(await carteCoach(), ob, sits) };
+  const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
+  if (passi && !COACH.carte) carteCoach();
   if (!passi) return undefined;
   const A = MB21Agenda;
   return new Promise(risolvi => {
@@ -114,5 +131,5 @@ function ricordoHtml(contattoId, nome) {
   const r = RICORDI[contattoId];
   if (!r) return '';
   const chi = primoNome(nome);
-  return `<div class="ricordo">${ic('prossimo')}<div>${r.obiezioni.length ? `<small>L'ultima volta${chi ? ` con ${esc(chi)}` : ''}: ${esc(r.obiezioni.join(' · '))}</small>` : ''}Ti eri detto: <b>«${esc(r.frase)}»</b></div></div>`;
+  return `<div class="ricordo">${ic('prossimo')}<div>${r.obiezioni.length ? `<small>L'ultima volta${chi ? ` con ${esc(chi)}` : ''}: ${esc(r.obiezioni.join(' · '))}${r.daRipassare ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}</div></div>`;
 }
