@@ -274,10 +274,12 @@ prova('Coach corto: Ordine senza obiezioni; per i partner la domanda dei freni (
   assert.deepEqual(o.salvati.map(x => x.chiave), ['prossima']);
   const BP = { ...B, domanda_obiezione: { c: 'C’è qualcosa che frena {chi}? Tocca tutto quello che è uscito.', nessuna: 'Niente', altro: 'Altro', avanti: 'Avanti', salva: 'freni' },
     reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }]] }, obiezioni: { 'Poco tempo': { passi: [], frase: 'Organizzare l’agenda' } }, nessuna: {} };
+  // con un Partner niente freni dopo la telefonata (Ignazio 29/09): la reazione e basta (e, con l'incontro fissato, il giorno e i passi: prova sotto)
   const p = C.corta(BP, 'Appuntamento', nomi, 0, {});
-  assert.equal(p[1].c, 'C’è qualcosa che frena Anna?');                                                // «Tocca tutto quello che è uscito» non c'è: è un tocco solo
-  assert.equal(p[2].salva, 'freni');
-  assert.deepEqual(p[2].chiedi.map(x => x[0]), ['Niente', 'Poco tempo', 'Altro']);
+  assert.deepEqual(p.map(x => x.c), ['Bene: vi vedete.']);
+  const BR = { ...BP, esiti: ['Richiamare'], reazione: { Richiamare: [[{ c: 'Vi risentite.' }]] }, prossima: { c: 'Cosa farai la prossima volta?', frasi: { Richiamare: ['Richiamare {chi}'] }, poi: {} } };
+  const pr = await percorri(C.corta(BR, 'Richiamare', nomi, 0, {}), ['Richiamare Anna']);
+  assert.deepEqual(pr.salvati.map(x => x.chiave), ['prossima']);                                      // dopo il richiamo la frase, non i freni
   const BCP = { ...B, reazione: { ...B.reazione, 'Consulenza Prodotti': [[{ c: 'Consulenza fissata.' }]] } };
   const cp = C.corta(BCP, 'Consulenza Prodotti', nomi, 0, {});
   assert.deepEqual(cp[2].chiedi.map(x => x[0]).slice(0, 5), ['Nessuna', 'Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro']);
@@ -402,6 +404,29 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
   // senza rete (errore nella lettura) o per un Messaggio/Presenza: niente
   testo = undefined; await ctx.chiediRiflessione({ ...e, modalita: 'Messaggio' }, 'Telefono spento'); assert.equal(testo, undefined);
   await ctx.chiediRiflessione({ ...e, contatto_id: null }, 'Telefono spento'); assert.equal(testo, undefined);
+});
+
+prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e ListaStart», poi come prepararli dal manuale, senza freni né frase', async () => {
+  const BP = { ...B, reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }, { c: 'Seconda riga.' }]] }, domanda_obiezione: { c: 'Freni?', nessuna: 'Niente', salva: 'freni' }, obiezioni: {},
+    prossima: { c: 'Cosa farai la prossima volta?', frasi: { Appuntamento: ['Preparare'] }, poi: {} } };
+  const prep = { apertura: '{quando} con {chi} lavorate su {passi}.', passi: {
+    Motivazione: { c: 'Il manuale suggerisce tre domande.', fonte: ['Manuale di Avvio, pagina 28', true], manuale: 'leggi il Manuale di Avvio, pagina 28' },
+    ListaStart: { c: 'Il manuale propone di partire da 20-30 persone.', fonte: ['Manuale di Avvio, pagina 29', true], manuale: 'leggi il Manuale di Avvio, pagina 29' },
+    RolePlay: { c: 'Esercitarsi con l’upline.', fonte: ['Manuale di Avvio, pagina 8', true] } } };
+  const passi = C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['Motivazione', 'ListaStart'], quando: 'Giovedì' }, preparazione: prep });
+  assert.deepEqual(passi.map(p => p.c), ['Bene: vi vedete.', 'Giovedì con Anna lavorate su Il perché e Lista Start.', 'Il manuale suggerisce tre domande.', 'Il manuale propone di partire da 20-30 persone.']);
+  assert.deepEqual(passi[2].fonte, ['Manuale di Avvio, pagina 28', true]);
+  assert.deepEqual(passi[2].rif, ['manuale', 'leggi il Manuale di Avvio, pagina 28']);            // finisce in «Per approfondire»
+  assert.ok(!passi.some(p => p.chiedi || p.frase));                                                   // niente freni, niente frase: l'incontro è fissato
+  // un passo solo; tre passi (virgola e «e»); un passo che la preparazione non conosce si salta
+  assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Domani' }, preparazione: prep })[1].c, 'Domani con Anna lavorate su Role Play.');
+  assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['Motivazione', 'ListaStart', 'RolePlay'], quando: 'Oggi' }, preparazione: prep })[1].c, 'Oggi con Anna lavorate su Il perché, Lista Start e Role Play.');
+  assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['Inaugurazione'], quando: 'Oggi' }, preparazione: prep }).length, 1);
+  // senza passi scelti, o senza la riga di preparazione (niente rete): solo la reazione
+  assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: [], quando: 'Oggi' }, preparazione: prep }).length, 1);
+  assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' } }).length, 1);
+  // i Prospect non cambiano: niente di tutto questo
+  assert.ok(C.corta(B, 'PM Fissato', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' }, preparazione: prep }).some(p => p.chiedi));
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

@@ -93,7 +93,10 @@
   // e il coach ti ricorda la risposta del manuale per quando vi vedete, senza altre domande; se no (Richiamare…) «L'hai gestita?»: «No» porta alla
   // carta del Training, e chiude la frase per la prossima volta. Se l'altra volta con la stessa persona è uscita un'obiezione, parte da lì
   // («L'altra volta Mario diceva «Non ho tempo»: è tornato fuori?»). Dopo Relazione e No Interesse una riga sola, niente chat.
-  // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null }
+  // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null,
+  //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro») }
+  // Con un Partner niente domanda sui freni (Ignazio 29/09: «è raro che un partner dica non ho tempo»): dopo «Appuntamento» una riga con il giorno e i
+  // passi scelti e, per ognuno, come prepararlo dal Manuale di Avvio; dopo «Richiamare» la frase per la prossima volta.
   const RIGA_SOLA = ['Relazione', 'No Interesse'];
   const FISSATI = ['PM Fissato', 'Appuntamento', 'Consulenza Prodotti'];
   // Un Prospect chiamato per una consulenza prodotti: le obiezioni sono quelle «a vedersi» sui prodotti, non quelle dell'attività (Ignazio 29/09)
@@ -132,7 +135,8 @@
     const tutte = (escluse = []) => [...nomiOb.filter(ob => !escluse.includes(ob)).map(ob => [ob, dopoOb(ob)]), ...altro];
     const niente = [(B.nessuna && B.nessuna[esito] || [])[0]].filter(Boolean);
     const prima = (ctx.ricordo && ctx.ricordo.obiezioni || []).find(ob => nomiOb.includes(ob));
-    const domanda = (B.senza_obiezione || []).includes(esito) ? [] : prima ? [
+    const partner = D.salva === 'freni';
+    const domanda = partner || (B.senza_obiezione || []).includes(esito) ? [] : prima ? [
       { c: `L’altra volta {chi} diceva «${prima}»: è tornato fuori?` },
       { salva: chiave, elenco: true, chiedi: [
         ['Sì', dopoOb(prima), prima],
@@ -145,7 +149,16 @@
     ];
     const f = B.prossima && B.prossima.frasi && B.prossima.frasi[esito];
     const frase = fissato || !f || !f.length ? [] : [{ c: B.prossima.c }, { frase: f, poi: B.prossima.poi && B.prossima.poi[esito], salva: 'prossima' }];
-    return riempi([...reazione.slice(0, 1), ...(B.prima || []), ...domanda, ...frase], nomi);   // `prima`: «cosa ha colpito di più» dopo un piano, «il perché» dopo un Follow Up
+    // l'incontro con un Partner: il giorno, i passi scelti, come prepararli
+    const inc = ctx.incontro, prep = ctx.preparazione;
+    const scelti = partner && fissato && inc && Array.isArray(inc.su_cosa) && prep && prep.passi ? inc.su_cosa.filter(x => prep.passi[x]) : [];
+    const nomiPassi = scelti.map(x => A.nomePasso(x));
+    const elenco = nomiPassi.length > 1 ? `${nomiPassi.slice(0, -1).join(', ')} e ${nomiPassi[nomiPassi.length - 1]}` : nomiPassi[0];
+    const incontro = !scelti.length ? [] : [
+      { c: String(prep.apertura || '{quando} con {chi} lavorate su {passi}.').replace('{quando}', () => inc.quando || 'Presto').replace('{passi}', () => elenco) },
+      ...scelti.map(x => ({ c: prep.passi[x].c, fonte: prep.passi[x].fonte, ...(prep.passi[x].manuale ? { rif: ['manuale', prep.passi[x].manuale] } : {}) })),
+    ];
+    return riempi([...reazione.slice(0, 1), ...incontro, ...(B.prima || []), ...domanda, ...frase], nomi);   // `prima`: «cosa ha colpito di più» dopo un piano, «il perché» dopo un Follow Up
   }
 
   // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per

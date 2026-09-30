@@ -46,6 +46,15 @@ function voltaCoach() {
   try { const n = Number(localStorage.getItem('mb21-coach-volta')) || 0; localStorage.setItem('mb21-coach-volta', String(n + 1)); return n; }
   catch (_) { return Math.floor(Math.random() * 1000); }
 }
+// «Oggi» · «Domani» · il giorno della settimana («Giovedì»), da un orario ISO, col giorno di Roma
+function giornoParlato(iso) {
+  if (!iso) return '';
+  const oggi = MB21Coda.oggiRoma(), giorno = MB21Coda.oggiRoma(new Date(iso));
+  if (giorno === oggi) return 'Oggi';
+  if (giorno === MB21Agenda.spostaGiorno(oggi, 1)) return 'Domani';
+  const g = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'long' }).format(new Date(iso));
+  return g.charAt(0).toUpperCase() + g.slice(1);
+}
 const primoNome = s => String(s || '').trim().split(/\s+/)[0];
 // Le carte del Training che rispondono alle obiezioni (il telefono con Prospect, Clienti, Partner; dopo il piano e il Follow Up): si leggono una volta, in
 // background appena la chat si apre, e servono solo se si arriva alla risposta del manuale (MB21Coach.cartaDi).
@@ -63,7 +72,10 @@ async function chiediCoach(e, esito, situazione) {
   const nomi = { io: primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome)), chi: primoNome(e.contatti && e.contatti.nome) };
   // il coach corto (cantiere 48): ricorda l'altra volta con la stessa persona (RICORDI) e, se serve, porta la carta del Training
   const sits = [situazione, ...(esito === 'Consulenza Prodotti' ? ['consulenza'] : [])];
-  const ctx = { fissato: e.fissato, ricordo: e.contatto_id ? RICORDI[e.contatto_id] || undefined : undefined,
+  // l'incontro appena fissato con un Partner: «Giovedì con Mario lavorate su…» (i passi di «Su cosa lavorate?» e come prepararli)
+  const inc = e.incontro && Array.isArray(e.incontro.su_cosa) && e.incontro.su_cosa.length && situazione === 'telefonata_partner' ? e.incontro : null;
+  const preparazione = inc ? await batteriaCoach('preparazione_incontro') : null;
+  const ctx = { fissato: e.fissato, incontro: inc ? { su_cosa: inc.su_cosa, quando: giornoParlato(inc.inizio) } : undefined, preparazione: preparazione || undefined, ricordo: e.contatto_id ? RICORDI[e.contatto_id] || undefined : undefined,
     carta: async ob => MB21Coach.cartaDi(await carteCoach(), ob, sits) };
   const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
   if (passi && !COACH.carte) carteCoach();
