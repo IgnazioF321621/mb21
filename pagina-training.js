@@ -728,14 +728,15 @@ function trnConversazione(convs) {
     if (!eAdmin() || !ST.utente) return;
     const sbagliati = [...new Set(st.giro.filter(g => !g.giusta).map(g => g.scambio + 1))];
     dbq('training: prova conversazione', supa.from('training_prove_rp').insert({ user_id: ST.utente.id, conversazione: cv.id, carattere: st.car,
-      esito: st.fine === 'ok' ? 'ok' : 'chiusa', agganciato: st.fine === 'richiamo', scambi: st.i, passi_falsi: st.giro.filter(g => !g.giusta).length, sbagliati }));
+      esito: st.fine === 'ok' ? 'ok' : 'chiusa', agganciato: !!st.agganciato, scambi: st.i, passi_falsi: st.giro.filter(g => !g.giusta).length, sbagliati }));
   };
   const btn = (n) => trnCorreggi(n, 'Correggi');
   const disegna = () => {
     const righe = [];   // ogni frase che si può correggere: quella del candidato e la risposta giusta (Ignazio 29/09)
     const arr = x => (Array.isArray(x) ? x : [x]);
+    const cid = j => `${cv.id}#${cv.scambi[j].id || j + 1}`;   // le frasi si riconoscono dal nome dello scambio («tempo»), perché a ogni telefonata l'ordine cambia
     const nota = j => {
-      righe.push({ carta: `${cv.id}#${j + 1}`, visto: { dove: 'conversazione', titolo: 'Correggi la spiegazione', domanda: arr(cv.scambi[j].candidato).join(' '), scelta: cv.scambi[j].perche, quale: 'spiegazione' } });
+      righe.push({ carta: cid(j), visto: { dove: 'conversazione', titolo: 'Correggi la spiegazione', domanda: arr(cv.scambi[j].candidato).join(' '), scelta: cv.scambi[j].perche, quale: 'spiegazione' } });
       return `<div class="trn-esito no"><b>${esc(arr(cv.scambi[j].candidato).join(' '))}</b>${esc(cv.scambi[j].perche)}${trnFonte(cv.scambi[j])}${btn(righe.length - 1)}</div>`; };
     // i fumetti: se il candidato dice più frasi di fila (la reazione e la frase dopo) sono un fumetto solo, con le frasi staccate (Ignazio 30/09)
     // ogni fumetto del candidato dice come si sente in quel momento (Ignazio 30/09: «l'impatto di quello che sta passando Mario»): dipende dai passi falsi fatti fin lì
@@ -747,7 +748,7 @@ function trnConversazione(convs) {
         if (g.scambio !== j) return;
         eventi.push({ chi: 'io', j, frasi: [g.testo], giusta: g.giusta, rec: g.recupero, us: !!g.uscita });
         if (g.giusta && !g.uscita) { errori = MB21Training.rpColpiDopo(errori, true); return; }
-        if (g.uscita) eventi.push({ chi: 'lui', j, frasi: arr(g.giusta ? st.uscita.ok : g.reazione), um: g.giusta ? 0.75 : 1, us: true });
+        if (g.uscita) { errori = MB21Training.rpColpiDopo(errori, g.giusta); eventi.push({ chi: 'lui', j, frasi: arr(g.giusta ? st.uscita.ok : g.reazione), um: umoreDopo(errori), us: true }); }
         else if (!g.giusta) {
           errori = MB21Training.rpColpiDopo(errori, false); eventi.push({ chi: 'lui', j, frasi: arr(g.reazione), um: umoreDopo(errori) });
           if (gi === st.uscitaDopo) eventi.push({ chi: 'lui', j, frasi: arr(st.uscita.candidato), um: 1, us: true });   // al colpo di troppo esce con la sua frase (Ignazio 30/09)
@@ -756,19 +757,19 @@ function trnConversazione(convs) {
     }
     const ult = cv.scambi.length - 1;
     if (st.fine === 'ok') eventi.push({ chi: 'lui', j: ult, frasi: arr(cv.chiusura), um: umoreDopo(errori) });
-    if (st.fine === 'chiusa' && !st.uscita) eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto), um: MB21Training.UMORI.length - 1 });
+    if (st.fine === 'chiusa') eventi.push({ chi: 'lui', j: Math.min(st.i, ult), frasi: arr(cv.saluto), um: MB21Training.UMORI.length - 1 });
     const gruppi = [];
     eventi.forEach(e => { const u = gruppi[gruppi.length - 1]; if (u && u.chi === 'lui' && e.chi === 'lui') { u.frasi.push(...e.frasi); u.j = e.j; u.um = e.um; if (e.us) u.us = true; if (e.principale) { u.principale = true; u.primo = e.j; } } else gruppi.push({ ...e, frasi: [...e.frasi], primo: e.j, tutti: [e] }); });
     let h = '';
     gruppi.forEach(g => {
       const pezzi = g.frasi.map(t => `<p>${esc(t)}</p>`).join('');
       if (g.chi === 'lui') {
-        righe.push({ carta: `${cv.id}#${g.us ? 'u' : g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: g.us ? 'lui, frase di uscita' : 'lui' } });
-        const v = g.principale ? (righe.push({ carta: `${cv.id}#${g.primo + 1}`, visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
+        righe.push({ carta: g.us ? `${cv.id}#u` : cid(g.primo), visto: { dove: 'conversazione', titolo: `Correggi ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), scelta: g.frasi.join(' / '), quale: g.us ? 'lui, frase di uscita' : 'lui' } });
+        const v = g.principale ? (righe.push({ carta: cid(g.primo), visto: { dove: 'conversazione', titolo: `Un'altra frase di ${nome}`, domanda: arr(cv.scambi[g.primo].candidato).join(' '), quale: 'nuova frase del candidato' } }), righe.length - 1) : -1;
         h += `<div class="trn-rp-b lui"><small>${esc(nome)} · <span class="trn-rp-sente" style="background:${trnColoreUmore(g.um)}">${esc(MB21Training.UMORI[MB21Training.rpUmoreDa(g.um)])}</span></small>${pezzi}${btn(righe.length - (v >= 0 ? 2 : 1))}${v >= 0 && eAdmin() ? `<button class="trn-correggi" data-variante="${v}">+ Un'altra frase di ${esc(nome)}</button>` : ''}</div>`;
       } else {
         const q = (g.rec ? 'recupero, ' : '') + (g.giusta ? 'risposta giusta' : 'risposta sbagliata');
-        righe.push({ carta: `${cv.id}#${g.us ? 'u' : g.j + 1}${g.rec ? 'r' : ''}`, visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
+        righe.push({ carta: (g.us ? `${cv.id}#u` : cid(g.j)) + (g.rec ? 'r' : ''), visto: { dove: 'conversazione', titolo: `Correggi la ${g.rec ? 'risposta per rimediare' : g.giusta ? 'risposta giusta' : 'risposta sbagliata'}`, domanda: arr(cv.scambi[g.j].candidato).join(' '), scelta: g.frasi[0], giusta: g.giusta, quale: q } });
         h += `<div class="trn-rp-b io"><small>Tu</small>${pezzi}${btn(righe.length - 1)}</div>`;
       }
     });
@@ -786,8 +787,8 @@ function trnConversazione(convs) {
     if (st.fine) {
       if (!st.registrata) { st.registrata = true; registra(); }
       const sbagli = st.giro.filter(g => !g.giusta).length;
-      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'chiusa' ? 'no' : 'si'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : st.fine === 'richiamo' ? `Non hai perso ${esc(nome)}: puoi richiamarlo` : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
-        ${st.fine === 'richiamo' ? `Sei riuscito ad agganciarlo mentre usciva: ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli} passi falsi. Il prossimo passo è la richiamata.` : st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}.`
+      fondo.innerHTML = `<div class="trn-esito ${st.fine === 'ok' ? 'si' : 'no'}"><b>${st.fine === 'ok' ? esc(cv.esito_ok || `Appuntamento fissato con ${nome}`) : cv.esito_no ? esc(cv.esito_no) : 'Contatto perso'}</b>
+        ${st.fine === 'ok' ? `${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}, ${sbagli === 0 ? 'nessun passo falso' : sbagli === 1 ? '1 passo falso' : sbagli + ' passi falsi'}${st.agganciato ? ', e lo hai agganciato mentre stava uscendo' : ''}.`
           : `Hai fatto ${st.i} ${st.i === 1 ? 'scambio' : 'scambi'} su ${cv.scambi.length}; con ${sbagli} passi falsi ${esc(nome)} non c'era più.`}</div>
         <button class="primario" id="trn-rp-ancora">Riprova con ${esc(nome)}</button><button class="trn-secondo" id="trn-rp-altro">Cambia persona o carattere</button><button class="link" id="trn-rp-esci">Chiudi</button>`;
       fondo.querySelector('#trn-rp-ancora').onclick = () => { parti(); foglio.scrollTo({ top: 0 }); };

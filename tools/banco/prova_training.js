@@ -422,26 +422,43 @@ prova('la conversazione: il carattere cambia le frasi, i passi falsi che regge e
   assert.deepEqual(T.CARATTERI.map(x => x.livello), ['Facile', 'Media', 'Media', 'Difficile']);
 });
 
-prova('la conversazione: al colpo di troppo il candidato esce con la sua frase e c\'è un\'ultima occasione per agganciarlo; i colori salgono con i passi falsi', () => {
+prova('la conversazione: quando diventa rosso il candidato avvisa che esce e c\'è un\'ultima occasione; al passo falso dopo, chiude', () => {
   const sc = { candidato: 'c', perche: 'p', risposte: [{ testo: 'g', giusta: true }, { testo: 'a', reazione: 'ra' }, { testo: 'b', reazione: 'rb' }] };
-  const us = { candidato: 'non mi interessa', ok: 'richiamami', risposte: [{ testo: 'aggancio', giusta: true }, { testo: 'insisto', reazione: 'ciao' }, { testo: 'saluto', reazione: 'ciao' }] };
-  const conv = { colpi: 2, scambi: [sc, sc, sc], uscite: [us] };
+  const us = { candidato: 'non mi interessa', ok: 'dimmi pure', risposte: [{ testo: 'aggancio', giusta: true }, { testo: 'insisto', reazione: 'no' }, { testo: 'saluto', reazione: 'no' }] };
+  const conv = { colpi: 3, scambi: [sc, sc, sc], uscite: [us] };
   const sbaglia = st => T.rpScegli(st, T.rpRisposte(st).find(r => !r.giusta).k);
-  let st = sbaglia(T.rpNuova(conv));
-  assert.ok(T.rpTensione(st) > 0.9 && T.rpUmore(st) === 'infastidito' || st.fase !== 'uscita');
-  st = sbaglia(st);                                                    // secondo errore: non chiude subito, esce con la sua frase
+  const giusta = st => T.rpScegli(st, T.rpRisposte(st).find(r => r.giusta).k);
+  let st = sbaglia(T.rpNuova(conv));                                   // 1 su 3: ancora giallo
+  assert.equal(st.fase, 'principale'); assert.equal(T.rpUmore(st), 'un po\' freddo');
+  st = sbaglia(st);                                                    // 2 su 3: rosso, esce con la sua frase
   assert.equal(st.fine, null); assert.equal(st.fase, 'uscita'); assert.equal(st.uscita.candidato, 'non mi interessa'); assert.equal(st.uscitaDopo, 1);
-  assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['aggancio', 'insisto', 'saluto']);
-  const buono = T.rpScegli(st, T.rpRisposte(st).find(r => r.giusta).k);
-  assert.equal(buono.fine, 'richiamo');                               // agganciato: non l'hai perso
-  assert.equal(sbaglia(st).fine, 'chiusa');
-  // senza `uscite` chiude subito (come prima)
+  assert.equal(T.rpUmore(st), 'infastidito');
+  assert.deepEqual(T.rpRisposte(st).map(r => r.testo).sort(), ['aggancio', 'insisto', 'saluto']);   // sempre tutte e tre, anche dopo aver sbagliato prima
+  const buono = giusta(st);                                            // l'aggancio lo scalda e la chiamata continua
+  assert.equal(buono.fine, null); assert.equal(buono.fase, 'principale'); assert.equal(buono.agganciato, true); assert.equal(buono.colpi, 1.5);
+  assert.equal(T.rpRisposte(buono).length, 1);                         // lo scambio di prima: le due risposte sbagliate sono già andate
+  assert.equal(sbaglia(st).fine, 'chiusa');                            // rosso e un altro passo falso: chiude
+  assert.equal(buono.uscitaUsata, true);                              // l'avviso c'è una volta sola
+  // senza `uscite` chiude al tetto (come prima)
   let v = T.rpNuova({ colpi: 2, scambi: [sc, sc] }); v = sbaglia(sbaglia(v));
   assert.equal(v.fine, 'chiusa');
   // i colori: da 0 a 1 col numero di errori, mai oltre
   const t = (colpi, base, limite) => T.rpTensione({ colpi: colpi + base * 0.5, conv: { colpi: limite } });
   assert.equal(t(0, 0, 3), 0); assert.equal(t(1, 0, 3), 0.5); assert.equal(t(2, 0, 3), 1); assert.equal(t(5, 0, 3), 1);
   assert.equal(t(0, 1, 2), 0.5);                                       // lo schietto parte già a metà strada
+});
+
+prova('la conversazione: le obiezioni si pescano dal gruppo, almeno una prima dell\'appuntamento', () => {
+  const ob = n => ({ id: 'o' + n, candidato: 'obiezione ' + n, perche: 'p', risposte: [{ testo: 'g', giusta: true }] });
+  const conv = { testa: [{ id: 't1', candidato: 'pronto', risposte: [{ testo: 'g', giusta: true }] }], obiezioni: [ob(1), ob(2), ob(3), { ...ob(4), carattere: ['schietto'] }],
+    coda: [{ id: 'd', candidato: 'date', risposte: [{ testo: 'g', giusta: true }] }] };
+  for (let n = 0; n < 60; n++) {
+    const cordiale = T.rpNuova(conv, null, 'cordiale').conv.scambi.map(x => x.id);
+    assert.equal(cordiale.length, 3); assert.equal(cordiale[0], 't1'); assert.equal(cordiale[2], 'd'); assert.ok(!cordiale.includes('o4'));   // una sola obiezione, mai quella del carattere altrui
+    const schietto = T.rpNuova(conv, null, 'schietto').conv.scambi.map(x => x.id);
+    assert.ok(schietto.length >= 4 && schietto.length <= 5); assert.equal(schietto[schietto.length - 1], 'd');
+  }
+  assert.equal(T.rpNuova({ scambi: [{ id: 'x', candidato: 'c', risposte: [] }] }, null, 'schietto').conv.scambi.length, 1);   // senza gruppo, come prima
 });
 
 prova('la conversazione: rispondere bene scalda il candidato (anche a scendere), chi parte freddo si scioglie', () => {
