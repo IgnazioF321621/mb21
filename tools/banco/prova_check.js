@@ -395,6 +395,17 @@ prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi
   assert.equal(C.livelli({ core: false, bonus: 3, linee, cep: 7, mancaMio: 50 }).righe[0].info, 'Bonus al 3%: il 9% arriva con la crescita delle linee');
 });
 
+prova('Obiettivi «Del Sistema» (01/10): dal livello, VPG dalla progressione del bonus e Iscritti/BBS/WES/CEP dalla tabella; livello di partenza dal bonus del mese prima', () => {
+  assert.deepEqual(C.obiettiviDelLivello('lc'), { vpg: 1200, sponsor_gruppo: 5, bbs: 10, wes: 10, cep: 5 });
+  assert.deepEqual(C.obiettiviDelLivello('elc'), { vpg: 4200, sponsor_gruppo: 10, bbs: 20, wes: 20, cep: 15 });
+  assert.deepEqual(C.obiettiviDelLivello('arg'), { vpg: 10200, sponsor_gruppo: 16, bbs: 50, wes: 50, cep: 30 });
+  assert.deepEqual(C.obiettiviDelLivello('plat'), { vpg: 10200, sponsor_gruppo: 20, bbs: 80, wes: 80, cep: 50 });
+  assert.equal(C.obiettiviDelLivello('boh'), null);
+  for (const L of C.LIVELLI) assert.ok(C.VPG_PER_BONUS[L.sv.bonus] > 0, 'manca il VPG del ' + L.sv.bonus + '%');   // ogni livello ha la sua soglia
+  assert.deepEqual([0, 6, 9, 12, 15, 18, 21].map(C.livelloDalBonus), ['lc', 'lc', 'lc', 'lc', 'elc', 'elc', 'arg']);
+  assert.equal(C.livelloDalBonus(null), 'lc');
+});
+
 prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce e pagine → Training, squadra → Modulo Core', () => {
   const p = C.percorso({ lc1: lc1Di(40, false), modulo: moduloVuoto, sponsor: 0 });
   const dove = Object.fromEntries(p.gradini[1].mancano.map(x => [x.cosa.split(' (')[0], x.vai]));

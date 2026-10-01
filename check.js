@@ -379,6 +379,20 @@
     { chiave: 'plat', titolo: 'Platino', sotto: 'Argento 12 mesi di fila, da settembre ad agosto',
       sv: { bonus: 21, lineeBonus: 9, planner: 10, primeLinee: 20, iscritti: 20, totale: 200, cep: 50, bbs: 80, wes: 80 }, piu: { mesi21: 12 } },
   ];
+  // Obiettivi «Del Sistema» (Ignazio 01/10), per il foglio «Obiettivi del mese» della Dashboard: da un livello, le caselle di cui il
+  // Manuale dà il numero. Il VPG viene dalla progressione del Bonus Attività (VPG che serve per ogni %: 200 · 600 · 1.200 · 2.400 dai dati
+  // Amway, 4.200 · 10.200 dal Manuale di Avvio; il 18% non serve ai livelli e non c'è). Iscritti del mese, BBS, WES e CEP sono quelli
+  // della tabella dei Segni Vitali sopra (BBS, WES e CEP sono totali del gruppo, come nella Dashboard). Le altre caselle le scrive il partner.
+  const VPG_PER_BONUS = { 3: 200, 6: 600, 9: 1200, 12: 2400, 15: 4200, 21: 10200 };
+  function obiettiviDelLivello(chiave) {
+    const L = LIVELLI.find(x => x.chiave === chiave);
+    if (!L) return null;
+    return { vpg: VPG_PER_BONUS[L.sv.bonus], sponsor_gruppo: L.sv.iscritti, bbs: L.sv.bbs, wes: L.sv.wes, cep: L.sv.cep };
+  }
+  // Il livello di partenza: quello del mese prima, dal Bonus Attività di quel mese (9% Leaders Club · 15% Executive · 21% Argento);
+  // sotto il 9% o senza dato si parte dal primo, Leaders Club. Il Platino non si indovina dal bonus: lo sceglie il partner.
+  const livelloDalBonus = bonus => (Number(bonus) >= 21 ? 'arg' : Number(bonus) >= 15 ? 'elc' : 'lc');
+
   // i nomi delle colonne del Manuale, nel suo ordine
   const SV_NOMI = { bonus: 'Bonus attività', lineeBonus: 'Linee riceventi Bonus', planner: '15 Planner', primeLinee: 'Prime linee',
     iscritti: 'Iscritti al mese gruppo', totale: 'Totale gruppo', cep: 'Iscritti CEP', bbs: 'Biglietti BBS', wes: 'Biglietti WES' };
@@ -484,7 +498,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, lc1, percorso, livelli };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, VPG_PER_BONUS, obiettiviDelLivello, livelloDalBonus, lc1, percorso, livelli };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
