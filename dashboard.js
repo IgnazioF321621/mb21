@@ -326,7 +326,7 @@
     return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * CONTATTI_PER_PM), perPm: !!(n(pmScritti) > 0) };
   }
 
-  // Per chi sta sopra (Ignazio 01/10, «Obiettivi dei partner»): gli obiettivi del mese di chi gli sta sotto, in sola lettura. `obiettivi` e `linee` sono
+  // Per chi sta sopra (Ignazio 01/10, «Obiettivi mensili dei partner»): gli obiettivi del mese di chi gli sta sotto, in sola lettura. `obiettivi` e `linee` sono
   // quelli di `obiettivi_del_ramo()` (il database dà già solo il ramo di chi chiede), `squadra` la mappa Amway (nome e sponsor), `volumi` il VPG di adesso.
   // Restano le persone SOTTO `radice` (mai lei, mai un'altra linea) che hanno scritto almeno un obiettivo; prima le dirette, poi per nome.
   function obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice, mese }) {
