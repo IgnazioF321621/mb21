@@ -101,6 +101,7 @@ function disegnaMappa() {
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
+    ${righeTeamHtml()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
@@ -256,6 +257,7 @@ function radiceVista(cime) {
 
 function collegaMappa() {
   collegaPartnerSelect();
+  collegaRigheTeam();
   app.querySelectorAll('[data-mpfiltro]').forEach(b => b.onclick = () => { MP.filtro = b.dataset.mpfiltro; disegnaMappa(); });
   app.querySelectorAll('[data-mpapri]').forEach(b => b.onclick = () => {
     const id = b.dataset.mpapri;
