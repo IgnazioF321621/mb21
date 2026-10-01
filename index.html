@@ -876,6 +876,8 @@
   .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
   .ob-campi input { margin: 4px 0 0; padding: 10px; font-size: 17px; }
+  .ob-campi label.ob-totale { grid-column: 1 / -1; color: var(--gr-volume); font-weight: 700; }   /* VPP: il totale, a tutta larghezza, in evidenza (01/10) */
+  .ob-campi label.ob-totale input { background: var(--gr-volume-tinta); border: 2px solid var(--gr-volume); color: var(--gr-volume); font-size: 22px; font-weight: 800; }
   .visione { display: block; margin: 14px auto; min-height: var(--tocco); border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--testo-soft); }
   .sv { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
   .sv h3 { margin: 0; font-size: 20px; }

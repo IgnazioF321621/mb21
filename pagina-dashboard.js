@@ -1196,7 +1196,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>VP consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${k === 'vpp' ? ' class="ob-totale"' : ''}>${esc(k === 'vpp' ? 'VPP · totale' : k === 'vpv' ? 'di cui VP Clienti' : etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
     </div></div>`).join('')}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
@@ -1205,20 +1205,29 @@ function apriObiettivi() {
   const chiudi = () => velo.remove();
   velo.querySelector('#ob-x').onclick = chiudi;
   velo.querySelector('#ob-no').onclick = chiudi;
-  // VPP = VP consumo personale + VP Clienti (Ignazio 01/10): il VPP è il totale; toccando uno dei due, l'altro si aggiusta da solo.
-  // Il consumo personale non si salva: è VPP meno VP Clienti.
+  // VPP = consumo personale + VP Clienti (Ignazio 01/10): il VPP è il totale e si scrive per primo; «di cui consumo personale» e «di cui VP Clienti»
+  // dicono come si divide, e toccandone una l'altra si aggiusta da sola. Il consumo personale non si salva: è VPP meno VP Clienti.
+  // Cambiando il VPP la divisione si tiene IN PROPORZIONE (`quotaClienti`, ricordata finché non si tocca la divisione): scrivendo 100 cifra per cifra
+  // («1», «10», «100») i VP Clienti non restano schiacciati sul primo numero (01/10: con VPP 100 uscivano consumo 99 e clienti 1).
   const campo = id => velo.querySelector('#ob-' + id);
   const numero = id => { const x = Number(String(campo(id).value).trim().replace(',', '.')); return Number.isFinite(x) && x > 0 ? x : 0; };
   const scriviNum = (id, v) => { campo(id).value = v > 0 ? String(Math.round(v * 100) / 100) : (v === 0 ? '0' : ''); };
   const consumoDaVpp = () => { const t = numero('vpp'); campo('consumo').value = t > 0 ? String(Math.round((t - Math.min(numero('vpv'), t)) * 100) / 100) : ''; };
-  campo('vpp').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); });
-  campo('vpv').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); });
-  campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); });
+  let quotaClienti = 0;   // quanta parte del VPP viene dai clienti (0 … 1)
+  const ricordaQuota = () => { const t = numero('vpp'); if (t > 0) quotaClienti = Math.min(numero('vpv'), t) / t; else if (!numero('vpv')) quotaClienti = 0; };   // da vuoto si riparte senza divisione
+  campo('vpp').addEventListener('input', () => {
+    const t = numero('vpp');
+    if (t > 0 && quotaClienti > 0) scriviNum('vpv', Math.round(t * quotaClienti));
+    else if (t > 0 && numero('vpv') > t) scriviNum('vpv', t);
+    consumoDaVpp();
+  });
+  campo('vpv').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); ricordaQuota(); });
+  campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? (nuovi[k] ?? '') : '';
-    consumoDaVpp();
+    consumoDaVpp(); ricordaQuota();
   };
-  consumoDaVpp();
+  consumoDaVpp(); ricordaQuota();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
