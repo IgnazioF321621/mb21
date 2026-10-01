@@ -1213,16 +1213,17 @@ function apriObiettivi() {
   };
 }
 
-// Riquadro ampio degli obiettivi (Ignazio 01/10): nei primi giorni del mese, se gli obiettivi mancano, si apre da solo
-// una volta al giorno sopra la Dashboard. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
-const GIORNI_RIQUADRO_OBIETTIVI = 3;
-const CHIAVE_RIQUADRO_OB = 'mb21_riquadro_obiettivi';
+// Riquadro ampio degli obiettivi (Ignazio 01/10): dall'1 al 5 del mese, se gli obiettivi mancano, si apre da solo
+// ogni volta che si apre l'app (non a ogni ridisegno: si ricorda in memoria finché la pagina resta aperta) fino a quando
+// non sono impostati. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
+const GIORNI_RIQUADRO_OBIETTIVI = 5;
 function mostraRiquadroObiettivi() {
   const d = DS.dati;
   if (!d || !d.obiettiviMancanti || limitato() || ST.offline || soloGuardo() || vediTutti()) return;
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
-  try { if (localStorage.getItem(CHIAVE_RIQUADRO_OB) === ST.oggi) return; localStorage.setItem(CHIAVE_RIQUADRO_OB, ST.oggi); } catch (e) {}
+  if (ST.riquadroObMostrato) return;
+  ST.riquadroObMostrato = true;   // una volta per apertura dell'app: toccare una fascia ridisegna la Dashboard e non deve riaprirlo
   const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
   const velo = document.createElement('div');
   velo.className = 'velo centro';
