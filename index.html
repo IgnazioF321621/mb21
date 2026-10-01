@@ -2728,10 +2728,8 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       mostraToast('Annullato');
     };
     if (dopo.cosa === 'appuntamento') {   // PM Fissato → il piano · Appuntamento → appuntamento o consulenza · Consulenza Prodotti → la consulenza
-      const creato = await nuovoAppuntamento({
-        titolo: `Appuntamento · ${nome}`, resta: true, giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1), ora: '18:30',
-        contatto: { id: e.contatto_id, nome, categoria }, categoria: dopo.proposta.categoria, tipo: dopo.proposta.tipo, modalita: dopo.proposta.modalita, userId: e.user_id,
-      });
+      // lo stesso foglio della coda (appuntamentoDaCoda, pagina-dashboard.js)
+      const creato = await appuntamentoDaCoda({ id: e.contatto_id, nome, categoria, user_id: e.user_id }, esito);
       e.fissato = !!creato;   // il coach corto: foglio annullato = come un richiamo
       e.incontro = creato || undefined;   // il giorno e i passi scelti: «Giovedì con Mario lavorate su…»
       // fissato: il contatto esce dalla coda, lo segue l'appuntamento (come in coda, `registra_esito`)

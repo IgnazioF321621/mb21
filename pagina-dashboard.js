@@ -118,6 +118,7 @@ function rigaApribile(id, classe, icona, titolo, sotto, aperta, restano) {
 const COSA_FA_ESITO = {
   'PM Fissato': { data: 'giorno-ora', classe: 'appuntamento' },
   'Appuntamento': { data: 'giorno-ora', classe: 'appuntamento' },
+  'Consulenza Prodotti': { data: 'giorno-ora', classe: 'appuntamento' },   // 01/10 (Ignazio: «allineare assolutamente le schede e i passaggi»): la consulenza si fissa anche dalla coda, come da Agenda e scheda
   'Richiamare': { data: 'giorno' },
   'Relazione': { rientro: true },                            // «Quando risentirlo?» con 20 giorni proposti (Ignazio 25/09)
   'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
@@ -436,7 +437,7 @@ async function toccaBottone(id, indice) {
   const bottone = bottoniPer(pos.contatto.categoria)[indice];
   let data = null, appuntamento = null;
   if (bottone.classe === 'appuntamento') {   // dal 15/09 crea l'appuntamento vero in Agenda
-    appuntamento = await appuntamentoDaCoda(pos.contatto);
+    appuntamento = await appuntamentoDaCoda(pos.contatto, bottone.etichetta);
     if (!appuntamento) return;
     data = appuntamento.inizio;
   } else if (bottone.data) {
@@ -453,6 +454,8 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
+  // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento (registra_esito lo fa solo per quei due)
+  if (appuntamento && bottone.etichetta === 'Consulenza Prodotti') await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', id));
   const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
   setTimeout(() => {
@@ -473,8 +476,9 @@ async function toccaBottone(id, indice) {
 
 // Bottone «Appuntamento» (coda e «Azione +»): foglio Nuovo appuntamento dell'Agenda, già compilato.
 // Restituisce { id, inizio } dell'appuntamento creato, o null se annullato.
-function appuntamentoDaCoda(contatto) {
-  const proposta = MB21Agenda.tipoDaCoda(contatto.categoria);
+// Lo stesso foglio per tutti: dalla coda, dall'Agenda e dalla scheda (`MB21Agenda.dopoTelefonata` decide cosa si fissa per quell'esito)
+function appuntamentoDaCoda(contatto, esito) {
+  const proposta = (esito && MB21Agenda.dopoTelefonata(contatto.categoria, esito).proposta) || MB21Agenda.tipoDaCoda(contatto.categoria);
   return nuovoAppuntamento({
     titolo: `Appuntamento · ${contatto.nome}`, resta: true,
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1), ora: '18:30',
