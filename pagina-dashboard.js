@@ -950,9 +950,9 @@ async function caricaDashboard(oggi) {
       dbq('eventi BBS', supa.from('bbs').select('data, creato_il')),
       dbq('eventi WES', supa.from('wes').select('data, creato_il')),
     ]);
-    // `breve` = nel riquadro piccolo, `lungo` = nel foglio obiettivi; il CEP è un abbonamento: «oggi», come nell'intestazione della Mappa («CEP oggi»)
+    // `breve` = nel riquadro piccolo, `lungo` = nel foglio obiettivi. Solo BBS e WES hanno un evento: il CEP è un numero da raggiungere (Ignazio 01/10: «oggi 5, vogliamo arrivare a 10»)
     const sigla = e => (e ? { breve: e.etichetta, lungo: `${e.etichetta} · ${e.inCorso ? 'in corso' : 'il prossimo'}` } : null);
-    DS.eventi = { BBS: evBbs.error ? null : sigla(MB21Lista.eventoDaMostrare(evBbs.data, oggi)), WES: evWes.error ? null : sigla(MB21Lista.eventoDaMostrare(evWes.data, oggi)), CEP: { breve: 'oggi', lungo: 'abbonati oggi' } };
+    DS.eventi = { BBS: evBbs.error ? null : sigla(MB21Lista.eventoDaMostrare(evBbs.data, oggi)), WES: evWes.error ? null : sigla(MB21Lista.eventoDaMostrare(evWes.data, oggi)) };
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01', codiciDi()) : { checkMesi: cm.data, obiettivi: ob.data };
@@ -1163,7 +1163,7 @@ function collegaDashboard() {
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
-const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
+const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti', cep: 'CEP · abbonati del gruppo' };
 // Le sezioni del foglio si aprono e si chiudono, ognuna con una breve spiegazione (Ignazio 01/10: foglio unico per tutti, espandibile); Volume e Azione aperte, il resto chiuso
 const SEZIONI_FOGLIO = {
   'Volume': { id: 'volume', aperta: true, spiega: 'I punti che ti servono: quelli di tutto il gruppo, quanti sono tuoi e quanti arrivano da chi sta sotto di te.' },
@@ -1247,7 +1247,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `${aperturaSezione(pallino, gruppo)}<div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}${(k === 'bbs' || k === 'wes' || k === 'cep') && DS.eventi && DS.eventi[etichetta] ? ` <small class="ob-evento">${esc(DS.eventi[etichetta].lungo)}</small>` : ''}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}${(k === 'bbs' || k === 'wes') && DS.eventi && DS.eventi[etichetta] ? ` <small class="ob-evento">${esc(DS.eventi[etichetta].lungo)}</small>` : ''}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}${k === 'bbs' || k === 'wes' || k === 'cep' ? `<div class="ob-dal-gruppo ob-sv" id="ob-ora-${k}"></div>` : ''}`).join('')}
     </div></div></div></section>${gruppo === 'Squadra' ? `${aperturaSezione('⚪', 'Le tue linee')}<div class="riquadro mc-g ob-gruppo">
       <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
       <div id="ob-linee"></div>
@@ -1283,7 +1283,7 @@ function apriObiettivi() {
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k, , dec] of campi) campo(k).value = nuovi ? (dec ? fmtNum(nuovi[k]) : (nuovi[k] ?? '')) : '';
-    consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo(); sunti();
+    consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo(); sunti(); oraSegni();
   };
   // Nuovi Iscritti è il totale e Iscritti personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
   campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
@@ -1355,6 +1355,15 @@ function apriObiettivi() {
       : '<span class="ob-riepilogo-vuoto">Qui in cima compare il riassunto di quello che scegli.</span>';
   };
   riepilogoAgg = riepilogo;   // quando arriva la lettura del VPG di adesso, il riepilogo si aggiorna
+  // BBS, WES e CEP sono numeri da raggiungere (Ignazio 01/10: «oggi 5, vogliamo arrivare a 10»): sotto ognuno, quanti sono adesso nel gruppo e quanti ne mancano all'obiettivo scritto
+  const segniOra = (() => { const sc = ((DS.dati && DS.dati.schede) || []).find(x => x.chiave === 'segni'); const m = {};
+    for (const r of (sc && sc.riquadri) || []) { const x = Number(String(r.numero).replace(/\./g, '').replace(',', '.')); if (Number.isFinite(x)) m[r.titolo.toLowerCase()] = x; } return m; })();
+  const oraSegni = () => { for (const k of ['bbs', 'wes', 'cep']) {
+    const ora = segniOra[k], atteso = numero(k), el = velo.querySelector('#ob-ora-' + k);
+    el.textContent = ora == null ? '' : atteso > 0 ? (ora >= atteso ? `Ora sono ${f(ora)}: obiettivo raggiunto` : `Ora sono ${f(ora)}: ne mancano ${f(atteso - ora)}`) : `Ora sono ${f(ora)} nel gruppo`;
+  } };
+  oraSegni();
+  for (const k of ['bbs', 'wes', 'cep']) campo(k).addEventListener('input', oraSegni);
   const sunto = id => {
     const n = k => testoNum(k), unisci = (...p) => p.filter(Boolean).join(' · ');
     return { volume: unisci(n('vpg') && `VPG ${n('vpg')}`, n('vpp') && `VPP ${n('vpp')}`),
