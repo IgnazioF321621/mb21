@@ -245,6 +245,14 @@
     return meseEvento(presi.map(e => e.data).sort().pop());
   }
 
+  // L'evento da scrivere accanto a BBS e WES (Ignazio 01/10: «metti il prossimo che si effettuerà»): è lo stesso evento a cui si riferiscono i numeri (quello in vendita,
+  // `eventoAttivo`, lo stesso della Mappa), purché non sia già passato: «sempre successivo». { data, etichetta «11-2026», inCorso } oppure null.
+  function eventoDaMostrare(eventi, oggi) {
+    const m = eventoAttivo(eventi, null, null);
+    if (!m || String(m).slice(0, 7) < String(oggi).slice(0, 7)) return null;
+    return { data: m, etichetta: etichettaEvento(m), inCorso: String(m).slice(0, 7) === String(oggi).slice(0, 7) };
+  }
+
   // Mesi degli eventi (BBS o Wes) che il contatto non ha ancora, dal più recente
   function eventiLiberi(date, biglietti, tipo) {
     const presi = new Set((biglietti || []).filter(b => b.tipo === tipo).map(b => meseEvento(b.evento)));
@@ -405,7 +413,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -424,4 +424,13 @@ prova('spuntaAvvio nell\'app: segna il passo una volta, non tocca quello già fa
   assert.equal(await ctx.spuntaAvvio(e, 'ListaStart'), null);
 });
 
+prova('Segni vitali: accanto a BBS e WES l\'evento a cui si riferiscono i numeri, sempre successivo («11-2026», «in corso» se è questo mese)', () => {
+  const bbs = [{ data: '2026-09-01', creato_il: '2026-09-16T11:58:00Z' }, { data: '2026-11-01', creato_il: '2026-09-20T13:06:00Z' }], wes = [{ data: '2026-10-01', creato_il: '2026-09-15T13:48:00Z' }];
+  assert.deepEqual(L.eventoDaMostrare(bbs, '2026-10-01'), { data: '2026-11-01', etichetta: '11-2026', inCorso: false });   // novembre: l'evento in vendita
+  assert.deepEqual(L.eventoDaMostrare(wes, '2026-10-01'), { data: '2026-10-01', etichetta: '10-2026', inCorso: true });    // ottobre: è questo mese
+  assert.equal(L.eventoDaMostrare(wes, '2026-11-02'), null);                                                              // passato e nessuno dopo: niente, mai un evento vecchio
+  assert.equal(L.eventoDaMostrare([], '2026-10-01'), null); assert.equal(L.eventoDaMostrare(null, '2026-10-01'), null);
+  assert.deepEqual(L.eventoDaMostrare(bbs, '2026-11-15'), { data: '2026-11-01', etichetta: '11-2026', inCorso: true });
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
