@@ -348,6 +348,23 @@
       .sort((x, y) => (y.diretto - x.diretto) || String(x.nome).localeCompare(String(y.nome), 'it'));
   }
 
+  // Chi del ramo ha acceso l'app ma non ha ancora scritto gli obiettivi del mese (`utenti` di `obiettivi_del_ramo()`): chi ha più bisogno di una mano.
+  // `scritti` = i partner già nell'elenco di `obiettiviDelTeam`; stessa regola: solo sotto `radice`, mai lei né un'altra linea.
+  function senzaObiettivi({ utenti, squadra, scritti, radice }) {
+    if (!radice) return [];
+    const nomi = new Map((squadra || []).map(p => [p.partner_id, p]));
+    const sotto = new Set(), coda = [radice];
+    while (coda.length) {
+      const su = coda.shift();
+      for (const p of squadra || []) if (p.sponsor_id === su && p.partner_id !== radice && !sotto.has(p.partner_id)) { sotto.add(p.partner_id); coda.push(p.partner_id); }
+    }
+    const fatti = new Set(scritti || []);
+    return [...new Set(utenti || [])].filter(id => sotto.has(id) && !fatti.has(id)).map(id => {
+      const p = nomi.get(id) || {}, sp = nomi.get(p.sponsor_id) || {};
+      return { partner_id: id, nome: p.nome || '', sponsor_nome: sp.nome || '', diretto: p.sponsor_id === radice };
+    }).sort((x, y) => (y.diretto - x.diretto) || String(x.nome).localeCompare(String(y.nome), 'it'));
+  }
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -439,7 +456,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, obiettiviDelTeam, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, obiettiviDelTeam, senzaObiettivi, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
