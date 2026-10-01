@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="640" viewBox="0 0 680 640" role="img">
+<style>
+  text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; fill: #2C2C2A; }
+  .t { font-size: 14px; } .ts { font-size: 12px; fill: #5F5E5A; } .th { font-size: 14px; font-weight: 500; }
+  .arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; } .leader { stroke: #888780; stroke-width: 0.5; stroke-dasharray: 3 3; }
+  .c-teal > rect, rect.c-teal { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; } .c-teal .th { fill: #085041; } .c-teal .ts { fill: #0F6E56; }
+  .c-amber > rect, rect.c-amber { fill: #FAEEDA; stroke: #854F0B; stroke-width: 0.5; } .c-amber .th { fill: #633806; } .c-amber .ts { fill: #854F0B; }
+  .c-gray > rect, rect.c-gray { fill: #F1EFE8; stroke: #5F5E5A; stroke-width: 0.5; } .c-gray .th { fill: #444441; } .c-gray .ts { fill: #5F5E5A; }
+</style>
+<rect x="0" y="0" width="680" height="640" fill="#FFFFFF"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="40" y="20" width="600" height="116" rx="8" fill="none" stroke="#888780" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text class="th" x="52" y="40">Come si parte</text>
+<g class="c-teal"><rect x="52" y="50" width="135" height="44" rx="4"/><text class="th" x="119" y="68" text-anchor="middle">Scala dei bonus</text><text class="ts" x="119" y="84" text-anchor="middle">3% fino al 21%</text></g>
+<g class="c-teal"><rect x="197" y="50" width="135" height="44" rx="4"/><text class="th" x="264" y="68" text-anchor="middle">Mese scorso</text><text class="ts" x="264" y="84" text-anchor="middle">i tuoi traguardi</text></g>
+<g class="c-teal"><rect x="342" y="50" width="135" height="44" rx="4"/><text class="th" x="409" y="68" text-anchor="middle">Risultati</text><text class="ts" x="409" y="84" text-anchor="middle">Check e file Amway</text></g>
+<g class="c-gray"><rect x="487" y="50" width="135" height="44" rx="4"/><text class="th" x="554" y="68" text-anchor="middle">Scrivo io</text><text class="ts" x="554" y="84" text-anchor="middle">caselle vuote</text></g>
+<g class="c-gray"><rect x="52" y="104" width="570" height="24" rx="4"/><text class="ts" x="337" y="120" text-anchor="middle">Incremento da 0% a 50% sulla scelta fatta</text></g>
+<line class="arr" x1="340" y1="136" x2="340" y2="160" marker-end="url(#arrow)"/>
+<rect x="40" y="164" width="600" height="400" rx="8" fill="none" stroke="#888780" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text class="th" x="52" y="186">Volume</text><text class="th" x="252" y="186">Azione</text><text class="th" x="452" y="186">Squadra e il resto</text>
+<g class="c-teal"><rect x="52" y="196" width="180" height="38" rx="4"/><text class="th" x="142" y="212" text-anchor="middle">VPG, totale gruppo</text><text class="ts" x="142" y="227" text-anchor="middle">il risultato che voglio</text></g>
+<line class="arr" x1="142" y1="234" x2="142" y2="256" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="52" y="256" width="180" height="38" rx="4"/><text class="th" x="142" y="272" text-anchor="middle">Il tuo VPP</text><text class="ts" x="142" y="287" text-anchor="middle">consumo più clienti</text></g>
+<line class="arr" x1="142" y1="294" x2="142" y2="316" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="52" y="316" width="180" height="38" rx="4"/><text class="th" x="142" y="332" text-anchor="middle">Dal gruppo</text><text class="ts" x="142" y="347" text-anchor="middle">VPG meno VPP</text></g>
+<line class="arr" x1="142" y1="354" x2="142" y2="376" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="52" y="376" width="180" height="38" rx="4"/><text class="th" x="142" y="392" text-anchor="middle">Nuovi iscritti</text><text class="ts" x="142" y="407" text-anchor="middle">50 VP ciascuno</text></g>
+<line class="arr" x1="142" y1="414" x2="142" y2="436" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="52" y="436" width="180" height="38" rx="4"/><text class="th" x="142" y="452" text-anchor="middle">Le tue linee</text><text class="ts" x="142" y="467" text-anchor="middle">nome e VP attesi</text></g>
+<line class="arr" x1="142" y1="474" x2="142" y2="496" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="52" y="496" width="180" height="38" rx="4"/><text class="th" x="142" y="512" text-anchor="middle">Ancora da trovare</text><text class="ts" x="142" y="527" text-anchor="middle">quanto manca</text></g>
+<path class="arr" d="M232 395 L242 395 L242 215 L250 215" fill="none" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="252" y="196" width="180" height="38" rx="4"/><text class="th" x="342" y="212" text-anchor="middle">Nuovi iscritti</text><text class="ts" x="342" y="227" text-anchor="middle">il totale del mese</text></g>
+<line class="arr" x1="342" y1="234" x2="342" y2="256" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="252" y="256" width="180" height="38" rx="4"/><text class="th" x="342" y="272" text-anchor="middle">Di cui personali</text><text class="ts" x="342" y="287" text-anchor="middle">le tue prime linee</text></g>
+<line class="arr" x1="342" y1="294" x2="342" y2="316" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="252" y="316" width="180" height="38" rx="4"/><text class="th" x="342" y="332" text-anchor="middle">Piani Marketing</text><text class="ts" x="342" y="347" text-anchor="middle">5 per ogni iscritto</text></g>
+<line class="arr" x1="342" y1="354" x2="342" y2="376" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="252" y="376" width="180" height="38" rx="4"/><text class="th" x="342" y="392" text-anchor="middle">Contatti</text><text class="ts" x="342" y="407" text-anchor="middle">5 per ogni PM</text></g>
+<g class="c-amber"><rect x="252" y="436" width="180" height="38" rx="4"/><text class="th" x="342" y="452" text-anchor="middle">Storico del partner</text><text class="ts" x="342" y="467" text-anchor="middle">si correggono da soli</text></g>
+<line class="leader" x1="342" y1="414" x2="342" y2="436"/>
+<g class="c-teal"><rect x="452" y="196" width="180" height="38" rx="4"/><text class="th" x="542" y="212" text-anchor="middle">Squadra</text><text class="ts" x="542" y="227" text-anchor="middle">linee bonus, 15 Planner</text></g>
+<g class="c-teal"><rect x="452" y="256" width="180" height="38" rx="4"/><text class="th" x="542" y="272" text-anchor="middle">Prime linee e totale</text><text class="ts" x="542" y="287" text-anchor="middle">dal file Amway</text></g>
+<g class="c-teal"><rect x="452" y="316" width="180" height="38" rx="4"/><text class="th" x="542" y="332" text-anchor="middle">Segni vitali</text><text class="ts" x="542" y="347" text-anchor="middle">BBS, WES, CEP del gruppo</text></g>
+<g class="c-teal"><rect x="452" y="376" width="180" height="38" rx="4"/><text class="th" x="542" y="392" text-anchor="middle">Crescita</text><text class="ts" x="542" y="407" text-anchor="middle">tracce e pagine</text></g>
+<g class="c-amber"><rect x="452" y="436" width="180" height="38" rx="4"/><text class="th" x="542" y="452" text-anchor="middle">VP di ogni linea</text><text class="ts" x="542" y="467" text-anchor="middle">ora e obiettivo suo</text></g>
+<rect x="52" y="586" width="14" height="14" rx="2" class="c-teal"/><text class="ts" x="74" y="598">già online</text><rect x="170" y="586" width="14" height="14" rx="2" class="c-amber"/><text class="ts" x="192" y="598">da fare</text><rect x="270" y="586" width="14" height="14" rx="2" class="c-gray"/><text class="ts" x="292" y="598">scelta o aiuto</text>
+</svg>
