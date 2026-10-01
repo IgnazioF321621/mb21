@@ -188,10 +188,10 @@ prova('Obiettivi: «Porta le mie prime linee» dal file Amway: solo le prime lin
 
 prova('Obiettivi: come ci si arriva — 5 PM per 1 iscritto personale, 5 contatti per 1 PM (valori di partenza per tutti)', () => {
   assert.deepEqual([D.CONTATTI_PER_PM, D.PM_PER_ISCRITTO], [5, 5]);
-  assert.deepEqual(D.percorsoAzione(1, 1, ''), { iscritti: 1, personali: true, pm: 5, contatti: 25, perPm: false });
-  assert.deepEqual(D.percorsoAzione(2, 5, ''), { iscritti: 2, personali: true, pm: 10, contatti: 50, perPm: false });   // contano gli iscritti personali, non il totale del gruppo
-  assert.deepEqual(D.percorsoAzione('', 3, ''), { iscritti: 3, personali: false, pm: 15, contatti: 75, perPm: false });  // un nome scritto solo nel gruppo: lo stesso 5
-  assert.deepEqual(D.percorsoAzione(1, 1, 8), { iscritti: 1, personali: true, pm: 5, contatti: 40, perPm: true });       // i contatti si calcolano sui PM scritti
+  assert.deepEqual(D.percorsoAzione(1, 1, ''), { iscritti: 1, personali: true, pm: 5, contatti: 25, perPm: false, rapportoPm: 5, rapportoContatti: 5, fontePm: 'partenza', fonteContatti: 'partenza' });
+  assert.deepEqual(D.percorsoAzione(2, 5, ''), { iscritti: 2, personali: true, pm: 10, contatti: 50, perPm: false, rapportoPm: 5, rapportoContatti: 5, fontePm: 'partenza', fonteContatti: 'partenza' });   // contano gli iscritti personali, non il totale del gruppo
+  assert.deepEqual(D.percorsoAzione('', 3, ''), { iscritti: 3, personali: false, pm: 15, contatti: 75, perPm: false, rapportoPm: 5, rapportoContatti: 5, fontePm: 'partenza', fonteContatti: 'partenza' });  // un nome scritto solo nel gruppo: lo stesso 5
+  assert.deepEqual(D.percorsoAzione(1, 1, 8), { iscritti: 1, personali: true, pm: 5, contatti: 40, perPm: true, rapportoPm: 5, rapportoContatti: 5, fontePm: 'partenza', fonteContatti: 'partenza' });       // i contatti si calcolano sui PM scritti
   assert.equal(D.percorsoAzione('', '', 8), null); assert.equal(D.percorsoAzione(0, 0, 3), null);
 });
 
@@ -365,6 +365,28 @@ prova('Il mio mese a righe: sintesi di ogni riquadro e riga della sezione chiusa
   assert.equal(D.riassuntoScheda(d.schede[2]), 'Prime linee 3 su 8');
   const senza = D.calcola({ checkMesi: ck, obiettivi: ob, oggi: '2026-10-15', scadenza: '2026-12-10' });   // senza codice Amway: niente Squadra
   assert.deepEqual(senza.schede.map(s => s.chiave), ['volume', 'azione', 'segni', 'crescita']);
+});
+
+prova('Rapporti personali (3 bis): dal valore di partenza verso lo storico, più forte quanto più lo storico è abbondante', () => {
+  const mesi = (v) => v.map(([mese, contatti, pm, sp]) => ({ mese, contatti, pm, sponsor_personali: sp }));
+  // senza storico: valori di partenza
+  const vuoto = D.rapportiDalloStorico([], '2026-10-01');
+  assert.deepEqual(vuoto, { contattiPerPm: null, pmPerIscritto: null });
+  assert.equal(D.percorsoAzione(2, 2, '', vuoto).pm, 10);
+  // storico scarso (2 PM su 77 contatti: 38,5 per PM, ma il peso è 2/20 = 0,1) → si sposta poco: 5 × 0,9 + 38,5 × 0,1 = 8,35 → 8
+  const poco = D.rapportiDalloStorico(mesi([['2026-09-01', 77, 2, 0]]), '2026-10-01');
+  assert.equal(poco.pmPerIscritto, null);                          // nessun iscritto personale: il rapporto PM per iscritto resta di partenza
+  assert.equal(Math.round(poco.contattiPerPm.valore), 8);
+  const rp = D.percorsoAzione(1, 1, '', poco);
+  assert.deepEqual([rp.rapportoContatti, rp.fonteContatti, rp.fontePm, rp.contatti], [8, 'misto', 'partenza', 40]);
+  // storico pieno (20 PM e 5 iscritti): vale il rapporto vero, 6 contatti per PM e 4 PM per iscritto
+  const pieno = D.rapportiDalloStorico(mesi([['2026-08-01', 60, 10, 3], ['2026-10-01', 60, 10, 2]]), '2026-10-01');
+  assert.deepEqual([pieno.contattiPerPm.peso, pieno.pmPerIscritto.peso], [1, 1]);
+  const rq = D.percorsoAzione(3, 3, '', pieno);
+  assert.deepEqual([rq.rapportoPm, rq.pm, rq.rapportoContatti, rq.contatti, rq.fontePm, rq.fonteContatti], [4, 12, 6, 72, 'storico', 'storico']);
+  // contano solo gli ultimi 6 mesi, fino al mese in corso
+  const vecchio = D.rapportiDalloStorico(mesi([['2026-03-01', 500, 50, 10], ['2026-11-01', 500, 50, 10]]), '2026-10-01');
+  assert.deepEqual(vecchio, { contattiPerPm: null, pmPerIscritto: null });
 });
 
 console.log(`\n${ok} prove superate`);
