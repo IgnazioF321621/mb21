@@ -154,7 +154,7 @@ function cardContatto(r, dareSeguito) {
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
       <span class="rc-pastiglia">${esc(iniziali(r.nome))}</span><span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span>${dareSeguito ? badge : ''}</span>
       <span class="rc-glide">${esc(rigaGlide(r))}</span>
-      ${r.coach ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
+      ${r.coach && r.contattato ? `<span class="rc-coach">${esc(r.coach)}</span>` : ''}
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
   if (!aperta) {
@@ -167,6 +167,7 @@ function cardContatto(r, dareSeguito) {
       ${testa}
       <div class="corpo">
         ${ricordoHtml(r.id, r.nome)}
+        ${preparaChiamataHtml(r.id)}
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
