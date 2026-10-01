@@ -310,4 +310,25 @@ prova('Contatti e PM dalle azioni: dal 14/09/2026 in poi', () => {
   assert.equal(D.contattiDalleAzioni(''), false);
 });
 
+prova('Obiettivi dei partner (upline, sola lettura): solo chi sta sotto, mai se stessa né un\'altra linea', () => {
+  const squadra = [
+    { partner_id: 'IO', sponsor_id: 'SU', nome: 'Io' }, { partner_id: 'A', sponsor_id: 'IO', nome: 'Zeta' }, { partner_id: 'B', sponsor_id: 'A', nome: 'Bianchi' },
+    { partner_id: 'C', sponsor_id: 'IO', nome: 'Anna' }, { partner_id: 'X', sponsor_id: 'SU', nome: 'Altra linea' }, { partner_id: 'Y', sponsor_id: 'X', nome: 'Sotto altra linea' },
+  ];
+  const obiettivi = [
+    { partner_id: 'A', vpg: 600, vpp: 100 }, { partner_id: 'B', vpg: 200 }, { partner_id: 'C', vpg: 0, vpp: 0 },   // C non ha scritto niente
+    { partner_id: 'IO', vpg: 999 }, { partner_id: 'X', vpg: 500 }, { partner_id: 'Y', vpg: 300 },                 // se stessa e un'altra linea: mai
+  ];
+  const linee = [{ partner_utente: 'A', nome: 'Rossi', vp: '150.5' }, { partner_utente: 'B', nome: 'Verdi', vp: 10 }];
+  const volumi = [{ partner_id: 'A', mese: 202610, vpg: '310.6' }, { partner_id: 'A', mese: 202609, vpg: 900 }];
+  const r = D.obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice: 'IO', mese: 202610 });
+  assert.deepEqual(r.map(x => x.partner_id), ['A', 'B']);
+  assert.equal(r[0].diretto, true); assert.equal(r[1].diretto, false);
+  assert.equal(r[0].valori.vpg, 600); assert.equal(r[0].vpgOra, 310.6); assert.equal(r[1].vpgOra, null);
+  assert.equal(r[1].sponsor_nome, 'Zeta');
+  assert.deepEqual(r[0].linee, [{ nome: 'Rossi', vp: 150.5 }]);
+  assert.deepEqual(D.obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice: null, mese: 202610 }), []);
+  assert.deepEqual(D.obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice: 'Y', mese: 202610 }), []);
+});
+
 console.log(`\n${ok} prove superate`);
