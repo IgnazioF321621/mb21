@@ -2491,6 +2491,7 @@ function mostraTab() {
     ST.tab = 'oggi'; LS.ritorno = null;
     mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
   }
+  if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
   accendiTab();
   nav.querySelectorAll('button').forEach(b => {
     // «Progetti» è MB Plan aperto sull'ultimo progetto; «MB Plan» da un progetto torna al giorno (o alla vista di partenza)
