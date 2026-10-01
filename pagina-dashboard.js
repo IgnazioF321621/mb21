@@ -1157,7 +1157,7 @@ function collegaDashboard() {
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
-const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Sponsor Personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
+const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
 function apriObiettivi() {
   if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
@@ -1199,7 +1199,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
     </div></div>${gruppo === 'Squadra' ? `<h4 class="mc-t">${escIcone('⚪')}Le tue linee</h4><div class="riquadro mc-g ob-gruppo">
       <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
       <div id="ob-linee"></div>
@@ -1233,9 +1233,9 @@ function apriObiettivi() {
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? (nuovi[k] ?? '') : '';
-    consumoDaVpp(); ricordaQuota(); dalGruppo();
+    consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
   };
-  // Nuovi Iscritti è il totale e Sponsor Personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
+  // Nuovi Iscritti è il totale e Iscritti personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
   campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
   campo('sponsor_personali').addEventListener('input', () => { const p = numero('sponsor_personali'); if (p > numero('sponsor_gruppo')) scriviNum('sponsor_gruppo', p); });
   // «Le tue linee» (Ignazio 01/10, solo punti): righe nome + VP. Le linee già in possesso arrivano dal file Amway (nome fisso), quelle da creare si scrivono a mano.
@@ -1285,7 +1285,14 @@ function apriObiettivi() {
     if (r && r.data && r.data.length && !righeLinee.children.length) { r.data.forEach(l => aggiungiLinea({ partner_id: l.partner_id, nome: l.nome, vp: Number(l.vp) })); dalGruppo(); }
   }, () => {});
   for (const id of ['vpp', 'vpg', 'sponsor_gruppo']) campo(id).addEventListener('input', dalGruppo);
-  consumoDaVpp(); ricordaQuota(); dalGruppo();
+  // «Attraverso quanti PM e quanti contatti?»: l'indicazione sotto le due caselle (valori di partenza uguali per tutti, D.percorsoAzione); si scrive come si vuole
+  const indicazioni = () => {
+    const r = D.percorsoAzione(numero('sponsor_personali'), numero('sponsor_gruppo'), numero('pm'));
+    velo.querySelector('#ob-hint-pm').textContent = r ? `Per ${r.iscritti} ${r.personali ? (r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali') : (r.iscritti === 1 ? 'nuovo iscritto' : 'nuovi iscritti')}: circa ${f(r.pm)} PM (${D.PM_PER_ISCRITTO} per ognuno)` : '';
+    velo.querySelector('#ob-hint-contatti').textContent = r ? `Per ${f(r.perPm ? numero('pm') : r.pm)} PM: circa ${f(r.contatti)} contatti (${D.CONTATTI_PER_PM} per ogni PM)` : '';
+  };
+  for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
+  consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner

@@ -34,7 +34,7 @@
   const CAMPI_CHECK = [
     ['contatti', '📞 Contatti', 'Nr. contatti effettuati nella giornata'],
     ['pm', '🗓️ PM', 'Nr. PM effettuati nella giornata'],
-    ['sponsor_personali', '⭐ Sponsor Personali', 'Nr. iscritti personali nella giornata'],
+    ['sponsor_personali', '⭐ Iscritti personali', 'Nr. iscritti personali nella giornata'],
     ['sponsor_gruppo', '👥 Sponsor Gruppo', 'Nr. iscritti di gruppo nella giornata'],
     ['vp_clienti', '🛒 VP Clienti', 'VP da vendite effettuate nella giornata', true],
     ['tracce', '🎧 Tracce', 'Nr. tracce audio ascoltate nella giornata'],
@@ -56,8 +56,8 @@
   const CAMPI_OBIETTIVI = [
     // dal 01/10 in cima il risultato che si vuole ottenere: il VPG, poi il tuo VPP e le sue parti; in Azione i nuovi iscritti, poi come ci si arriva (PM e contatti)
     ['Volume', '🔵', [['vpg', 'VPG', true], ['vpp', 'VPP', true], ['vpv', 'VP Clienti', true]]],
-    // Nuovi Iscritti è il totale e Sponsor Personali «di cui» (01/10), quindi viene prima
-    ['Azione', '🟠', [['sponsor_gruppo', 'Nuovi Iscritti'], ['sponsor_personali', 'Sponsor Personali'], ['pm', 'PM'], ['contatti', 'Contatti']]],
+    // Nuovi Iscritti è il totale e Iscritti personali «di cui» (01/10), quindi viene prima
+    ['Azione', '🟠', [['sponsor_gruppo', 'Nuovi Iscritti'], ['sponsor_personali', 'Iscritti personali'], ['pm', 'PM'], ['contatti', 'Contatti']]],
     // dal 01/10 la squadra: le colonne della tabella dei Segni Vitali del Manuale che mancavano (4 campi nuovi in obiettivi_mese, facoltativi)
     ['Squadra', '⚪', [['linee_bonus', 'Linee riceventi Bonus'], ['planner', '15 Planner'], ['prime_linee', 'Prime linee'], ['totale_gruppo', 'Totale gruppo']]],
     ['Segni Vitali N21', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
@@ -287,6 +287,18 @@
       .sort((x, y) => y.vp - x.vp || String(x.nome).localeCompare(String(y.nome), 'it'));
   }
 
+  // Come ci si arriva (Ignazio 01/10): dagli iscritti ai PM e ai contatti. Valori di PARTENZA, uguali per tutti: in media 1 PM ogni 5 contatti e 1 iscritto
+  // personale ogni 5 PM; lo stesso per un nome scritto solo nel gruppo (senza iscritti personali scritti si parte dai nuovi iscritti). Dopo (passo 3 bis) lo
+  // storico di ogni partner li correggerà da solo. `pmScritti` = i PM che il partner ha già scritto: i contatti si calcolano su quelli.
+  const CONTATTI_PER_PM = 5, PM_PER_ISCRITTO = 5;
+  function percorsoAzione(iscrittiPersonali, nuoviIscritti, pmScritti) {
+    const personali = Math.max(0, Math.floor(n(iscrittiPersonali))), nuovi = Math.max(0, Math.floor(n(nuoviIscritti)));
+    const iscritti = personali || nuovi;
+    if (!iscritti) return null;
+    const pm = iscritti * PM_PER_ISCRITTO, pmBase = n(pmScritti) > 0 ? n(pmScritti) : pm;
+    return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * CONTATTI_PER_PM), perPm: !!(n(pmScritti) > 0) };
+  }
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -305,7 +317,7 @@
   }
 
   // Risultati di un mese, uno per ogni obiettivo del modulo (stessa origine dei riquadri delle schede: Check del mese, file
-  // Amway, BBS/WES/CEP delle persone; in più Sponsor Personali, che ha il suo campo nel Check). Serve alla scelta «Risultati di
+  // Amway, BBS/WES/CEP delle persone; in più Iscritti personali, che ha il suo campo nel Check). Serve alla scelta «Risultati di
   // <mese>» del modulo obiettivi. Restituisce { vpp, … , pagine } (0 dove non c'è niente) o null se il mese non ha nessun risultato.
   function risultatiMese({ checkMesi, obiettivi, mese, oggi, segniAl }) {
     const c = checkMesi.find(x => x.mese === mese) || {};
@@ -378,7 +390,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

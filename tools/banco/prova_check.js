@@ -334,11 +334,11 @@ prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mes
   assert.equal(chiuso.gradini[1].voci[3].stato, '0 su 31');
 });
 
-prova('Pacesetter (Ignazio 26/09): 2 sponsor personali del Check · 100 VP · CEP nello stesso mese; consiglia solo gli sponsor', () => {
+prova('Pacesetter (Ignazio 26/09): 2 iscritti personali del Check · 100 VP · CEP nello stesso mese; consiglia solo gli sponsor', () => {
   const p0 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 0 });
   const g = p0.gradini[2];
   assert.deepEqual([g.chiave, g.titolo, g.stato, g.fatto], ['pace', 'Pacesetter', '2 su 3', false]);
-  assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 sponsor personali', '0 su 2'], ['100 VP', 'fatto'], ['CEP', 'fatto']]);
+  assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 iscritti personali', '0 su 2'], ['100 VP', 'fatto'], ['CEP', 'fatto']]);
   assert.deepEqual(g.consiglio, { cosa: 'sponsorizzare ancora 2 persone', peso: 1, vai: 'lista' });
   assert.equal(C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 1 }).gradini[2].consiglio.cosa, 'sponsorizzare ancora una persona');
   const p2 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 3 });
@@ -408,7 +408,7 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   }
   // salendo non si scende mai (ogni colonna cresce o resta)
   for (const k of chiavi.filter(x => x !== 'sponsor_personali')) C.GRADINI_BONUS.reduce((prec, g) => { assert.ok(C.SCALA_BONUS[g][k] >= prec, k + ' scende al ' + g + '%'); return C.SCALA_BONUS[g][k]; }, 0);
-  // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 sponsor personale; nessuno riceve bonus: niente linee riceventi né 15 Planner
+  // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 iscritto personale; nessuno riceve bonus: niente linee riceventi né 15 Planner
   const r3 = C.SCALA_BONUS[3];
   assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [1, 1, 0, 0, 1, 3]);
   assert.equal(C.SCALA_BONUS[3].vpp, C.SCALA_BONUS[3].vpv + 100);                                                  // 100 consumo personale + 50 clienti

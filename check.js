@@ -19,7 +19,7 @@
     { etichetta: 'Azione', pallino: '🟠', colore: 'var(--gr-azione)', voci: [
       { chiave: 'contatti', titolo: 'Contatti', tipo: 'somma' },
       { chiave: 'pm', titolo: 'Piani Marketing', tipo: 'somma' },
-      { chiave: 'sponsor_personali', titolo: 'Sponsor Personali', tipo: 'somma' },
+      { chiave: 'sponsor_personali', titolo: 'Iscritti personali', tipo: 'somma' },
       { chiave: 'sponsor_gruppo', titolo: 'Nuovi Iscritti', tipo: 'somma' },
     ] },
     { etichetta: 'Segni Vitali N21', pallino: '🟢', colore: 'var(--gr-segni)', voci: [
@@ -318,7 +318,7 @@
   // (Profilo, o la scheda di chi guardi) · agenda = MB Plan · training · core = Modulo Core · lista = Lista Nomi · mappa · scheda = quella linea
   const COSE_LC1 = { vp: { cosa: 'arrivare a 100 VP' }, bbs: { cosa: 'il biglietto BBS', vai: 'segni' }, wes: { cosa: 'il biglietto WES', vai: 'segni' }, cep: { cosa: "l'abbonamento CEP", vai: 'segni' } };
   const piuVicina = xs => xs.length ? xs.reduce((a, b) => (b.peso < a.peso ? b : a)) : null;
-  // Pacesetter (Ignazio 26/09): nello stesso mese 2 sponsor personali · 100 VP · CEP. Gli sponsor sono solo quelli scritti nel
+  // Pacesetter (Ignazio 26/09): nello stesso mese 2 iscritti personali · 100 VP · CEP. Gli iscritti sono solo quelli scritti nel
   // Check (`sponsor`: la somma di sponsor_personali del mese), mai le prime linee del file Amway (chi mette il nuovo in
   // profondità l'ha sponsorizzato lui). 100 VP e CEP sono le stesse luci del 1° livello.
   const PACE_SPONSOR = 2;
@@ -341,14 +341,14 @@
     gradini.push(g2);
     const sp = Number(sponsor) || 0, luce = k => (l.luci || []).find(x => x.chiave === k) || {};
     const voci3 = [
-      { testo: `${PACE_SPONSOR} sponsor personali`, fatto: sp >= PACE_SPONSOR, stato: sp >= PACE_SPONSOR ? FATTO : `${sp} su ${PACE_SPONSOR}` },
+      { testo: `${PACE_SPONSOR} iscritti personali`, fatto: sp >= PACE_SPONSOR, stato: sp >= PACE_SPONSOR ? FATTO : `${sp} su ${PACE_SPONSOR}` },
       { testo: '100 VP', fatto: !!luce('vp').ok, stato: luce('vp').ok ? FATTO : luce('vp').testo || '—' },
       { testo: 'CEP', fatto: !!luce('cep').ok, stato: luce('cep').ok ? FATTO : luce('cep').testo || '—' },
     ];
     const accese3 = voci3.filter(v => v.fatto).length;
     const manca = PACE_SPONSOR - sp;
     // il consiglio: gli sponsor; 100 VP e CEP li consiglia già il 1° livello, qui non si ripetono
-    const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 sponsor personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
+    const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 iscritti personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
       stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, voci: voci3,
       mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, peso: manca / PACE_SPONSOR, vai: 'lista' }] : [] };
     g3.consiglio = g3.fatto ? null : piuVicina(g3.mancano);
@@ -387,9 +387,9 @@
   // prova_check.js le confronta con `LIVELLI`); le altre (3% · 6% · 12% · 18%) sono dedotte: sotto il 9% in proporzione al VPG, tra due livelli la media,
   // arrotondando in su. Il VPG: 200 · 600 · 1.200 · 2.400 dai dati Amway, 4.000 · 7.000 · 10.000 detti da Ignazio (i 4.200 e 10.200 del Manuale
   // sono esempi di squadra, non soglie). BBS, WES e CEP sono totali del gruppo, come nella Dashboard. Le caselle che la scala non ha (Contatti, PM,
-  // Sponsor Personali, Tracce, Pagine) le scrive il partner. Una tabella sola: si corregge qui.
+  // Iscritti personali, Tracce, Pagine) le scrive il partner. Una tabella sola: si corregge qui.
   const SCALA_BONUS = {
-    // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 sponsor personale; nessuno riceve ancora bonus, quindi niente linee riceventi Bonus e niente 15 Planner
+    // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 iscritto personale; nessuno riceve ancora bonus, quindi niente linee riceventi Bonus e niente 15 Planner
     3:  { vpp: 150, vpv: 50, vpg: 200,   sponsor_personali: 1,    sponsor_gruppo: 1,  prime_linee: 1,  linee_bonus: 0, planner: 0, totale_gruppo: 3,   cep: 1,  bbs: 2,  wes: 2 },
     // dal 6% in su: `sponsor_personali: null` = ancora da decidere con Ignazio (la casella resta al partner)
     6:  { vpp: 150, vpv: 50, vpg: 600,   sponsor_personali: null, sponsor_gruppo: 3,  prime_linee: 3,  linee_bonus: 2, planner: 1, totale_gruppo: 8,   cep: 3,  bbs: 5,  wes: 5 },
