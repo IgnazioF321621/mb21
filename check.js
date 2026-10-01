@@ -381,9 +381,9 @@
   ];
   // Obiettivi «Del Sistema» (Ignazio 01/10), per il foglio «Obiettivi del mese» della Dashboard: da un livello, le caselle di cui il
   // Manuale dà il numero. Il VPG viene dalla progressione del Bonus Attività (VPG che serve per ogni %: 200 · 600 · 1.200 · 2.400 dai dati
-  // Amway, 4.200 · 10.200 dal Manuale di Avvio; 7.000 per il 18%, Ignazio 01/10). Iscritti del mese, BBS, WES e CEP sono quelli
+  // Amway, 4.000 per il 15% e 7.000 per il 18% (Ignazio 01/10); 10.200 per il 21% da confermare). Iscritti del mese, BBS, WES e CEP sono quelli
   // della tabella dei Segni Vitali sopra (BBS, WES e CEP sono totali del gruppo, come nella Dashboard). Le altre caselle le scrive il partner.
-  const VPG_PER_BONUS = { 3: 200, 6: 600, 9: 1200, 12: 2400, 15: 4200, 18: 7000, 21: 10200 };   // 18%: 7.000 (Ignazio 01/10)
+  const VPG_PER_BONUS = { 3: 200, 6: 600, 9: 1200, 12: 2400, 15: 4000, 18: 7000, 21: 10200 };   // 15% 4.000 e 18% 7.000 (Ignazio 01/10); 21%: 10.200 viene dall'esempio del Manuale (51 persone × 200), da confermare
   function obiettiviDelLivello(chiave) {
     const L = LIVELLI.find(x => x.chiave === chiave);
     if (!L) return null;
