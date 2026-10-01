@@ -118,7 +118,7 @@ prova('Obiettivi: come il mese scorso, crescita 10% e 50%, attuali; partner nuov
   assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'uguale').valori.wes, 10);       // agosto
   const aZero = [{ mese: '2026-09-01', vpp: 0, contatti: 0 }];
   assert.equal(D.propostaObiettivi(aZero, '2026-10-01', 'uguale').mesePrima, null);           // mesi a zero non contano
-  assert.deepEqual(Object.values(D.propostaObiettivi([], '2026-10-01', 'crescita', 10).valori), Array(12).fill(''));
+  assert.deepEqual(Object.values(D.propostaObiettivi([], '2026-10-01', 'crescita', 10).valori), Array(16).fill(''));   // 12 obiettivi + 4 della squadra
   assert.equal(D.nomeMese('2026-09-01'), 'Settembre');
 });
 
@@ -139,7 +139,8 @@ prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento su
 });
 
 prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
-  assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 12);
+  assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 16);   // 12 + la squadra (linee riceventi, 15 Planner, prime linee, totale gruppo)
+  assert.deepEqual(D.CAMPI_OBIETTIVI.find(g => g[0] === 'Squadra')[2].map(c => c[0]), ['linee_bonus', 'planner', 'prime_linee', 'totale_gruppo']);
   assert.ok(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).some(c => c[0] === 'sponsor_personali'));
   assert.deepEqual(D.validaObiettivi({ contatti: '0', pm: '' }), { errore: 'Scrivi almeno un obiettivo.' });
   assert.deepEqual(D.validaObiettivi({ contatti: '2,5' }), { errore: 'Numero non valido: Contatti.' });
@@ -147,6 +148,12 @@ prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di z
   const ok1 = D.validaObiettivi({ vpp: '360,5', contatti: '30', pagine: '' });
   assert.equal(ok1.valori.vpp, 360.5);
   assert.equal(ok1.valori.contatti, 30);
+  const sq = D.validaObiettivi({ contatti: '30', prime_linee: '5', linee_bonus: '3', planner: '1', totale_gruppo: '15' });   // la squadra si salva come gli altri
+  assert.deepEqual([sq.valori.prime_linee, sq.valori.linee_bonus, sq.valori.planner, sq.valori.totale_gruppo], [5, 3, 1, 15]);
+  assert.deepEqual(D.validaObiettivi({ contatti: '30', prime_linee: '2,5' }), { errore: 'Numero non valido: Prime linee.' });
+  assert.deepEqual(D.validaObiettivi({ prime_linee: '5' }), { errore: 'Scrivi almeno un obiettivo.' });          // la sola squadra non basta: serve un obiettivo delle schede
+  const dalMese = D.propostaObiettivi([{ mese: '2026-09-01', contatti: 30, prime_linee: 5, totale_gruppo: 15 }], '2026-10-01', 'uguale').valori;
+  assert.deepEqual([dalMese.prime_linee, dalMese.totale_gruppo, dalMese.planner], [5, 15, '']);                  // «Obiettivi di settembre» porta anche la squadra
   assert.equal(ok1.valori.pagine, null);
 });
 

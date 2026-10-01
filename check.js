@@ -379,19 +379,28 @@
     { chiave: 'plat', titolo: 'Platino', sotto: 'Argento 12 mesi di fila, da settembre ad agosto',
       sv: { bonus: 21, lineeBonus: 9, planner: 10, primeLinee: 20, iscritti: 20, totale: 200, cep: 50, bbs: 80, wes: 80 }, piu: { mesi21: 12 } },
   ];
-  // Obiettivi «Del Sistema» (Ignazio 01/10), per il foglio «Obiettivi del mese» della Dashboard: da un livello, le caselle di cui il
-  // Manuale dà il numero. Il VPG viene dalla progressione del Bonus Attività (VPG che serve per ogni %: 200 · 600 · 1.200 · 2.400 dai dati
-  // Amway, 4.000 per il 15%, 7.000 per il 18% e 10.000 per il 21% (Ignazio 01/10)). Iscritti del mese, BBS, WES e CEP sono quelli
-  // della tabella dei Segni Vitali sopra (BBS, WES e CEP sono totali del gruppo, come nella Dashboard). Le altre caselle le scrive il partner.
-  const VPG_PER_BONUS = { 3: 200, 6: 600, 9: 1200, 12: 2400, 15: 4000, 18: 7000, 21: 10000 };   // 15% 4.000 · 18% 7.000 · 21% 10.000 (Ignazio 01/10); 4.200 e 10.200 del Manuale sono esempi (21 e 51 persone da 200), non soglie
-  function obiettiviDelLivello(chiave) {
-    const L = LIVELLI.find(x => x.chiave === chiave);
-    if (!L) return null;
-    return { vpg: VPG_PER_BONUS[L.sv.bonus], sponsor_gruppo: L.sv.iscritti, bbs: L.sv.bbs, wes: L.sv.wes, cep: L.sv.cep };
-  }
-  // Il livello di partenza: quello del mese prima, dal Bonus Attività di quel mese (9% Leaders Club · 15% Executive · 21% Argento);
-  // sotto il 9% o senza dato si parte dal primo, Leaders Club. Il Platino non si indovina dal bonus: lo sceglie il partner.
-  const livelloDalBonus = bonus => (Number(bonus) >= 21 ? 'arg' : Number(bonus) >= 15 ? 'elc' : 'lc');
+  // La SCALA DEI BONUS (Ignazio 01/10), per il foglio «Obiettivi del mese» della Dashboard: per ogni gradino del Bonus Attività (3% … 21%)
+  // una riga con tutti i numeri a cui puntare, nelle colonne della tabella dei Segni Vitali del Manuale (qui sopra, `sv`):
+  //  vpg (i punti di gruppo che servono per quel bonus) · vpp 150 = 100 consumo personale + 50 clienti, uguale a ogni gradino · sponsor_gruppo =
+  //  «Iscritti al mese gruppo» · prime_linee · linee_bonus = «Linee riceventi Bonus» · planner = «15 Planner» · totale_gruppo · cep · bbs · wes.
+  // Le righe 9% · 15% · 21% sono le righe ufficiali del Leaders Club, Executive Leader Club e Produttore Argento (un controllo in
+  // prova_check.js le confronta con `LIVELLI`); le altre (3% · 6% · 12% · 18%) sono dedotte: sotto il 9% in proporzione al VPG, tra due livelli la media,
+  // arrotondando in su. Il VPG: 200 · 600 · 1.200 · 2.400 dai dati Amway, 4.000 · 7.000 · 10.000 detti da Ignazio (i 4.200 e 10.200 del Manuale
+  // sono esempi di squadra, non soglie). BBS, WES e CEP sono totali del gruppo, come nella Dashboard. Le caselle che la scala non ha (Contatti, PM,
+  // Sponsor Personali, Tracce, Pagine) le scrive il partner. Una tabella sola: si corregge qui.
+  const SCALA_BONUS = {
+    3:  { vpp: 150, vpv: 50, vpg: 200,   sponsor_gruppo: 1,  prime_linee: 1,  linee_bonus: 1, planner: 1, totale_gruppo: 3,   cep: 1,  bbs: 2,  wes: 2 },
+    6:  { vpp: 150, vpv: 50, vpg: 600,   sponsor_gruppo: 3,  prime_linee: 3,  linee_bonus: 2, planner: 1, totale_gruppo: 8,   cep: 3,  bbs: 5,  wes: 5 },
+    9:  { vpp: 150, vpv: 50, vpg: 1200,  sponsor_gruppo: 5,  prime_linee: 5,  linee_bonus: 3, planner: 1, totale_gruppo: 15,  cep: 5,  bbs: 10, wes: 10 },
+    12: { vpp: 150, vpv: 50, vpg: 2400,  sponsor_gruppo: 8,  prime_linee: 8,  linee_bonus: 4, planner: 2, totale_gruppo: 33,  cep: 10, bbs: 15, wes: 15 },
+    15: { vpp: 150, vpv: 50, vpg: 4000,  sponsor_gruppo: 10, prime_linee: 10, linee_bonus: 4, planner: 3, totale_gruppo: 50,  cep: 15, bbs: 20, wes: 20 },
+    18: { vpp: 150, vpv: 50, vpg: 7000,  sponsor_gruppo: 13, prime_linee: 15, linee_bonus: 5, planner: 4, totale_gruppo: 100, cep: 23, bbs: 35, wes: 35 },
+    21: { vpp: 150, vpv: 50, vpg: 10000, sponsor_gruppo: 16, prime_linee: 20, linee_bonus: 6, planner: 5, totale_gruppo: 150, cep: 30, bbs: 50, wes: 50 },
+  };
+  const GRADINI_BONUS = Object.keys(SCALA_BONUS).map(Number);
+  const obiettiviDelBonus = bonus => (SCALA_BONUS[bonus] ? { ...SCALA_BONUS[bonus] } : null);
+  // Il gradino di partenza: quello del mese prima (il Bonus Attività di quel mese, arrotondato per difetto al gradino); senza bonus o senza dato, il 3%
+  const gradinoDalBonus = bonus => GRADINI_BONUS.filter(g => g <= Number(bonus)).pop() || GRADINI_BONUS[0];
 
   // i nomi delle colonne del Manuale, nel suo ordine
   const SV_NOMI = { bonus: 'Bonus attività', lineeBonus: 'Linee riceventi Bonus', planner: '15 Planner', primeLinee: 'Prime linee',
@@ -498,7 +507,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, VPG_PER_BONUS, obiettiviDelLivello, livelloDalBonus, lc1, percorso, livelli };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, lc1, percorso, livelli };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
