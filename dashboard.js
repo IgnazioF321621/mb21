@@ -55,7 +55,8 @@
   // Modulo obiettivi (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi, raggruppati come le 4 schede
   const CAMPI_OBIETTIVI = [
     ['Volume', '🔵', [['vpp', 'VPP', true], ['vpv', 'VP Clienti', true], ['vpg', 'VPG', true]]],
-    ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_personali', 'Sponsor Personali'], ['sponsor_gruppo', 'Nuovi Iscritti']]],
+    // Nuovi Iscritti è il totale e Sponsor Personali «di cui» (01/10), quindi viene prima
+    ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_gruppo', 'Nuovi Iscritti'], ['sponsor_personali', 'Sponsor Personali']]],
     // dal 01/10 la squadra: le colonne della tabella dei Segni Vitali del Manuale che mancavano (4 campi nuovi in obiettivi_mese, facoltativi)
     ['Squadra', '⚪', [['linee_bonus', 'Linee riceventi Bonus'], ['planner', '15 Planner'], ['prime_linee', 'Prime linee'], ['totale_gruppo', 'Totale gruppo']]],
     ['Segni Vitali N21', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
