@@ -401,6 +401,7 @@ prova('Obiettivi «Del Sistema» (01/10): dal livello, VPG dalla progressione de
   assert.deepEqual(C.obiettiviDelLivello('arg'), { vpg: 10200, sponsor_gruppo: 16, bbs: 50, wes: 50, cep: 30 });
   assert.deepEqual(C.obiettiviDelLivello('plat'), { vpg: 10200, sponsor_gruppo: 20, bbs: 80, wes: 80, cep: 50 });
   assert.equal(C.obiettiviDelLivello('boh'), null);
+  assert.deepEqual(Object.keys(C.VPG_PER_BONUS).map(Number), [3, 6, 9, 12, 15, 18, 21]);   // la scala dei bonus del Piano Marketing
   for (const L of C.LIVELLI) assert.ok(C.VPG_PER_BONUS[L.sv.bonus] > 0, 'manca il VPG del ' + L.sv.bonus + '%');   // ogni livello ha la sua soglia
   assert.deepEqual([0, 6, 9, 12, 15, 18, 21].map(C.livelloDalBonus), ['lc', 'lc', 'lc', 'lc', 'elc', 'elc', 'arg']);
   assert.equal(C.livelloDalBonus(null), 'lc');
