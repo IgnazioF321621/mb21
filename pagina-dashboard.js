@@ -1254,6 +1254,7 @@ function apriObiettivi() {
       <div class="ob-dal-gruppo" id="ob-linee-somma"></div>
       <div class="ob-linee-az">${pidVisto ? '<button type="button" class="link" id="ob-linee-porta">Porta le mie prime linee</button>' : ''}<button type="button" class="link" id="ob-linee-nuova">+ Aggiungi linea</button></div>
       <div class="ob-dal-gruppo" id="ob-linee-nota"></div></div></div></section>` : ''}`).join('')}
+    ${pidVisto ? '<p class="ob-visto">Chi sta sopra di te, nella tua linea, vede i tuoi obiettivi: per aiutarti a raggiungerli.</p>' : ''}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
   </div>`;
@@ -1308,9 +1309,10 @@ function apriObiettivi() {
   };
   // Sotto ogni linea già in possesso, i suoi punti piccoli: «settembre N · ora M» (VPG del mese scorso e di adesso, dal file Amway; Ignazio 01/10)
   const vpDelleLinee = new Map();   // partner_id → { prima, ora } (si riempie quando arriva la lettura)
+  const obiettivoDelleLinee = new Map();   // partner_id → il VPG che quella linea si è data per il mese (lo vede solo chi le sta sopra, `obiettivi_del_ramo`)
   const sottoLinea = r => {
-    const v = vpDelleLinee.get(r.dataset.pid), el = r.querySelector('.ob-linea-sub');
-    const parti = v ? [v.prima != null ? `${D.nomeMese(meseRis).toLowerCase()} ${f(Math.round(v.prima))}` : '', v.ora != null ? `ora ${f(Math.round(v.ora))}` : ''].filter(Boolean) : [];
+    const v = vpDelleLinee.get(r.dataset.pid), el = r.querySelector('.ob-linea-sub'), suo = obiettivoDelleLinee.get(r.dataset.pid);
+    const parti = [v && v.prima != null ? `${D.nomeMese(meseRis).toLowerCase()} ${f(Math.round(v.prima))}` : '', v && v.ora != null ? `ora ${f(Math.round(v.ora))}` : '', suo > 0 ? `suo obiettivo ${f(Math.round(suo))}` : ''].filter(Boolean);
     el.textContent = parti.join(' · ');
     el.hidden = !parti.length;
   };
@@ -1329,19 +1331,28 @@ function apriObiettivi() {
   const porta = velo.querySelector('#ob-linee-porta');
   if (porta) porta.onclick = async () => {
     porta.disabled = true; nota('Cerco le tue prime linee…');
-    const [sq, vol] = await Promise.all([dbq('prime linee', supa.from('squadra').select('partner_id, sponsor_id, nome')), dbq('punti delle linee', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mesePrimo))]);
+    const [sq, vol] = await Promise.all([dbq('prime linee', supa.from('squadra').select('partner_id, sponsor_id, nome')), dbq('punti delle linee', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mesePrimo)), lettura]);
     porta.disabled = false;
     if (sq.error || vol.error) return nota('Non riesco a leggere il file Amway: riprova.');
     const gia = new Set(leggiLinee().map(l => l.partner_id).filter(Boolean));
     const nuove = D.lineeDaSquadra(sq.data, vol.data, pidVisto, mesePrimo).filter(l => !gia.has(l.partner_id));
-    nuove.forEach(l => aggiungiLinea({ ...l, nome: MB21Mappa.nomeLeggibile(l.nome) }));
+    // i punti si scrivono (sono obiettivi, cose da fare, non quelle già fatte): settembre e ora stanno sotto come riferimento; se la linea ha già scelto il suo obiettivo, parte da quello
+    nuove.forEach(l => aggiungiLinea({ partner_id: l.partner_id, nome: MB21Mappa.nomeLeggibile(l.nome), vp: obiettivoDelleLinee.get(l.partner_id) || 0 }));
     dalGruppo();
-    nota(nuove.length ? `Aggiunte ${nuove.length} ${nuove.length === 1 ? 'linea' : 'linee'}, con i punti di ${D.nomeMese(meseRis).toLowerCase()}: puoi cambiarli.` : gia.size ? 'Le tue prime linee ci sono già.' : 'Non trovo prime linee nel file Amway: aggiungile a mano.');
+    const dalSuo = nuove.filter(l => obiettivoDelleLinee.has(l.partner_id)).length;
+    nota(nuove.length ? `Aggiunte ${nuove.length} ${nuove.length === 1 ? 'linea' : 'linee'}: ${dalSuo ? `dove la linea ha già scelto il suo obiettivo ho scritto quello, per le altre scrivi tu i punti.` : 'sotto ognuna trovi i punti di settembre e di adesso, i punti li scrivi tu.'}` : gia.size ? 'Le tue prime linee ci sono già.' : 'Non trovo prime linee nel file Amway: aggiungile a mano.');
   };
   // i punti di settembre e di adesso delle linee (una lettura sola; arriva anche dopo le righe, che si aggiornano)
   if (pidVisto) dbq('punti delle linee, settembre e ora', supa.from('volumi_mese').select('partner_id, mese, vpg').in('mese', [mesePrimo, meseOra])).then(r => {
     if (!r || r.error || !r.data) return;
     for (const v of r.data) { const x = vpDelleLinee.get(v.partner_id) || {}; x[v.mese === meseOra ? 'ora' : 'prima'] = v.vpg == null ? null : Number(v.vpg); vpDelleLinee.set(v.partner_id, x); }
+    righeLinee.querySelectorAll('.ob-linea').forEach(sottoLinea);
+  }, () => {});
+  // gli obiettivi che le linee si sono date (solo verso il basso, nella stessa linea: lo garantisce il database, `obiettivi_del_ramo`); per un partner senza
+  // nessuno sotto, o per chi non ha scritto obiettivi, resta vuoto. Il Admin riceve tutti, qui contano solo le prime linee di chi sta guardando.
+  const lettura = !pidVisto ? Promise.resolve() : dbq('obiettivi delle linee', supa.rpc('obiettivi_del_ramo', { p_mese: mese })).then(r => {
+    if (!r || r.error || !r.data) return;
+    for (const o of r.data.obiettivi || []) if (o.partner_id && Number(o.vpg) > 0) obiettivoDelleLinee.set(o.partner_id, Number(o.vpg));
     righeLinee.querySelectorAll('.ob-linea').forEach(sottoLinea);
   }, () => {});
   // quelle già salvate per questo mese
