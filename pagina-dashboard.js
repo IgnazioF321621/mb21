@@ -939,14 +939,18 @@ async function caricaDashboard(oggi) {
   CK.di = null;   // la card «Il tuo Check» rilegge i dati a ogni caricamento: dopo il Check del Giorno i numeri sono nuovi (27/09)
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl, scad, seg] = await Promise.all([
+    const [cm, ob, segniAl, scad, seg, evBbs, evWes] = await Promise.all([
       dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
       vediTutti() || visto().id !== ST.utente.id ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
+      // il prossimo BBS e il prossimo WES (01/10): il mese si legge accanto al nome, così si sa a quale evento ci si riferisce
+      dbq('prossimo BBS', supa.from('bbs').select('data').gte('data', oggi.slice(0, 8) + '01').order('data').limit(1)),
+      dbq('prossimo WES', supa.from('wes').select('data').gte('data', oggi.slice(0, 8) + '01').order('data').limit(1)),
     ]);
+    DS.eventi = { BBS: evBbs.error ? null : MB21Dashboard.eventoProssimo((evBbs.data || []).map(x => x.data), oggi), WES: evWes.error ? null : MB21Dashboard.eventoProssimo((evWes.data || []).map(x => x.data), oggi) };
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01', codiciDi()) : { checkMesi: cm.data, obiettivi: ob.data };
@@ -1086,7 +1090,7 @@ function dashboardNumeri() {
   html += `<div class="riquadro mese-card"><div class="mese-t">Dove sono</div><div class="schede-dash">${d.schede.map(x =>
     `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</button>`).join('')}</div>
     <div class="kpi">${s.riquadri.map(r => `<div>
-      <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
+      <div class="t" style="color:${s.colore}">${esc(r.titolo)}${DS.eventi && DS.eventi[r.titolo] ? ` <small class="ev">${esc(DS.eventi[r.titolo].etichetta)}</small>` : ''}</div>
       <div class="v" style="color:${s.colore}">${centesimi(r.numero)}</div>
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(!obiettiviAperti() && t === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t)}</li>`).join('')}</ul>
@@ -1241,7 +1245,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `${aperturaSezione(pallino, gruppo)}<div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}${(k === 'bbs' || k === 'wes') && DS.eventi && DS.eventi[etichetta] ? ` <small class="ob-evento">${esc(DS.eventi[etichetta].etichetta)} · ${DS.eventi[etichetta].inCorso ? 'in corso' : 'il prossimo'}</small>` : ''}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
     </div></div></div></section>${gruppo === 'Squadra' ? `${aperturaSezione('⚪', 'Le tue linee')}<div class="riquadro mc-g ob-gruppo">
       <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
       <div id="ob-linee"></div>

@@ -326,6 +326,14 @@
     return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * CONTATTI_PER_PM), perPm: !!(n(pmScritti) > 0) };
   }
 
+  // Il prossimo evento BBS o WES (Ignazio 01/10): accanto a BBS e WES si legge a quale evento si riferiscono, sempre il prossimo. `date` = le date (primo del mese) degli
+  // eventi; vale il primo dal mese di `oggi` in poi; «in corso» se è proprio il mese di oggi, altrimenti «il prossimo». Null se non ce n'è.
+  function eventoProssimo(date, oggi) {
+    const mese0 = String(oggi).slice(0, 7) + '-01';
+    const d = (date || []).map(x => String(x).slice(0, 10)).filter(x => x >= mese0).sort()[0];
+    return d ? { data: d, etichetta: d.slice(5, 7) + '/' + d.slice(0, 4), inCorso: d.slice(0, 7) === String(oggi).slice(0, 7) } : null;
+  }
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -417,7 +425,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, eventoProssimo, ripartoGruppo, lineeDaSquadra, risultatiAmway, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
