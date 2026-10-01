@@ -774,6 +774,23 @@ function collegaMioAvvio(ridisegna = disegnaOggi, ritorno = null) {
   if (riapri) riapri.onclick = () => concludi(false);
 }
 
+// ── Com'è andato il mese scorso (Ignazio 01/10, «a fine mese»): gli obiettivi di allora contro quello che è risultato; si legge soltanto ──
+function disegnaConfronto() {
+  const c = DS.confronto, D = MB21Dashboard, f = x => Number(x).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+  if (!c) return disegnaOggi();
+  const nome = D.nomeMese(c.mese).toLowerCase();
+  const riga = r => `<div class="dm-riga"><span class="n">${esc(r.etichetta)}</span><span class="g" style="color:${r.raggiunto ? 'var(--verde)' : 'var(--testo)'}">${r.raggiunto ? 'Raggiunto' : r.perc + '%'}</span>
+    <small>${centesimi(f(r.fatto))} su ${esc(f(r.obiettivo))}</small><small class="r">${r.raggiunto ? '' : `ne mancavano ${esc(f(Math.round((r.obiettivo - r.fatto) * 100) / 100))}`}</small>
+    <div class="dm-barra"><div style="width:${Math.min(100, r.perc)}%;background:${r.raggiunto ? 'var(--verde)' : 'var(--accento)'}"></div></div></div>`;
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+    <h1>${ic('obiettivi')} Com'è andato ${esc(nome)}</h1>
+    <div class="sotto" style="margin-bottom:8px">Gli obiettivi che ti eri dato e quello che è risultato (Check, file Amway e persone).</div>
+    <div class="riquadro mese-card"><div class="mese-t">${c.raggiunti} ${c.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${c.totali}</div>
+      ${c.gruppi.map(g => `<div class="dm-sez"><div class="dm-testa" style="cursor:default"><b>${escIcone(g.pallino)} ${esc(g.nome)}</b></div><div class="dm-corpo">${g.righe.map(riga).join('')}</div></div>`).join('')}
+    </div>${versione()}`;
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+}
+
 // ── Obiettivi mensili dei partner (Ignazio 01/10): per chi sta sopra, gli obiettivi del mese di chi gli sta sotto, SOLO IN LETTURA ──
 // Il database (`obiettivi_del_ramo`) dà già solo la discesa nella stessa linea; qui si tolgono anche l'Admin che guarda un altro (conta il ramo del partner
 // guardato) e chi non ha scritto niente. Con «Tutti» e offline non si mostra. Una riga grigia in Dashboard, il tocco apre la pagina dei nomi.
@@ -782,21 +799,29 @@ const OBT = { righe: [], senza: [], mese: null, aperto: null };   // righe: chi 
 function leggiSquadraMese(oggi, nuova) {
   if (!nuova && DS.sqLettura) return DS.sqLettura;
   const mese = Number(String(oggi).slice(0, 4) + String(oggi).slice(5, 7));
+  const scorso = MB21Dashboard.meseSpostato(String(oggi).slice(0, 7) + '-01', -1);
+  const prec = Number(scorso.slice(0, 4) + scorso.slice(5, 7));   // il mese scorso, per «Com'è andato»
   DS.sqLettura = (ST.offline || vediTutti() || !visto().partner_id || !obiettiviAperti()) ? Promise.resolve(null) : Promise.all([
     dbq('mappa del mese', supa.from('squadra').select('partner_id, sponsor_id, nome, data_ingresso')),
-    dbq('volumi del mese in corso', supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, dimensioni_gruppo').eq('mese', mese)),
-    dbq('15 Planner del mese in corso', supa.rpc('pm_del_ramo', { da: mese })),
-  ]).then(([sq, vol, pm]) => (sq.error || vol.error ? null : { mese, sq: sq.data, vol: vol.data, pm: pm.error ? null : pm.data }), () => null);
+    dbq('volumi del mese in corso', supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, dimensioni_gruppo').in('mese', [prec, mese])),
+    dbq('15 Planner del mese scorso e in corso', supa.rpc('pm_del_ramo', { da: prec })),
+  ]).then(([sq, vol, pm]) => (sq.error || vol.error ? null : { mese, prec, sq: sq.data, vol: vol.data, pm: pm.error ? null : pm.data }), () => null);
   return DS.sqLettura;
 }
 async function caricaObiettiviTeam(oggi) {
   OBT.righe = []; OBT.senza = []; OBT.mese = String(oggi).slice(0, 7) + '-01';
   if (ST.offline || vediTutti() || !obiettiviAperti() || !visto().partner_id) return;
   try {
-    const [ob, sqd] = await Promise.all([dbq('obiettivi dei partner', supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })), leggiSquadraMese(oggi)]);
+    const prima = MB21Dashboard.meseSpostato(OBT.mese, -1);
+    const [ob, obPrima, sqd] = await Promise.all([dbq('obiettivi dei partner', supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })), dbq('obiettivi dei partner, mese scorso', supa.rpc('obiettivi_del_ramo', { p_mese: prima })), leggiSquadraMese(oggi)]);
     if (ob.error || !sqd || !ob.data) return;
     const radice = visto().partner_id;
     OBT.righe = MB21Dashboard.obiettiviDelTeam({ obiettivi: ob.data.obiettivi, linee: ob.data.linee, squadra: sqd.sq, volumi: sqd.vol, radice, mese: sqd.mese });
+    // il mese scorso, solo per il VPG (è l'unico risultato di un partner che chi sta sopra può leggere: il file Amway): obiettivo di allora e VPG fatto
+    for (const r of OBT.righe) {
+      const o = obPrima.error || !obPrima.data ? null : (obPrima.data.obiettivi || []).find(x => x.partner_id === r.partner_id), v = sqd.vol.find(x => x.partner_id === r.partner_id && x.mese === sqd.prec);
+      if (o && Number(o.vpg) > 0 && v && v.vpg != null) r.prima = { mese: prima, obiettivo: Number(o.vpg), fatto: Number(v.vpg) };
+    }
     OBT.senza = MB21Dashboard.senzaObiettivi({ utenti: ob.data.utenti, squadra: sqd.sq, scritti: OBT.righe.map(r => r.partner_id), radice });
   } catch (e) {}
 }
@@ -820,7 +845,7 @@ function disegnaObiettiviTeam() {
       <button class="avv-testa" data-obt="${esc(r.partner_id)}">
         <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
           <small>${esc(riga) || 'Obiettivi scritti'}</small></span><span class="avv-conta">${aperto ? '⌄' : '›'}</span></button>
-      ${aperto ? `<div class="obt-corpo">${gruppi}${linee}</div>` : ''}
+      ${aperto ? `<div class="obt-corpo">${r.prima ? `<div class="obt-gruppo"><h4>${esc(D.nomeMese(r.prima.mese))}</h4><div><span>VPG: obiettivo ${f(r.prima.obiettivo)}</span><b>fatto ${f(Math.round(r.prima.fatto))} · ${Math.round(r.prima.fatto / r.prima.obiettivo * 100)}%</b></div></div>` : ''}${gruppi}${linee}</div>` : ''}
     </div>`;
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
@@ -1023,6 +1048,14 @@ async function caricaDashboard(oggi) {
     DS.obiettivi = dati.obiettivi; DS.checkMesi = dati.checkMesi; DS.segniAl = segniAl;   // anche per i «Risultati» del modulo obiettivi
     const squadraAl = sqd ? MB21Dashboard.risultatiAmway({ squadra: sqd.sq, volumi: sqd.vol, pm: sqd.pm, pid: visto().partner_id, mese: sqd.mese }) : null;
     DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl, squadraAl });
+    // «Com'è andato il mese scorso»: gli obiettivi di allora contro quello che è risultato (Check, file Amway, persone); solo con i propri obiettivi aperti
+    DS.confronto = null;
+    if (!vediTutti() && obiettiviAperti()) {
+      const prima = MB21Dashboard.meseSpostato(DS.dati.mese, -1);
+      const amwayPrec = sqd ? MB21Dashboard.risultatiAmway({ squadra: sqd.sq, volumi: sqd.vol, pm: sqd.pm, pid: visto().partner_id, mese: sqd.prec }) : null;
+      const c = MB21Dashboard.confrontoMese({ obiettivo: dati.obiettivi.find(o => o.mese === prima), risultati: MB21Dashboard.risultatiMese({ checkMesi: dati.checkMesi, obiettivi: dati.obiettivi, mese: prima, oggi, segniAl }), amway: amwayPrec });
+      if (c) DS.confronto = { mese: prima, ...c };
+    }
     if (!guardoAltri() && ST.utente.ruolo !== 'Admin' && !scad.error) { ST.scaduto = DS.dati.abbonamento === 'scaduto'; aggiornaTab(); }
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
@@ -1171,6 +1204,7 @@ function dashboardNumeri() {
   html += `<div class="riquadro mese-card"><div class="mese-t">Ti restano ${d.giorni} ${d.giorni === 1 ? 'giorno' : 'giorni'}</div>
     <div class="dm-guida">Il numero grande è quanto serve al giorno. Dove non si fa ogni giorno, quanti ne mancano.</div>
     ${d.schede.map(sezione).join('')}
+    ${!limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : ''}
     ${limitato() ? '' : `${d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`}
       <div id="ds-card-check">${cardCheckHtml(true)}</div>`}
     </div>`;
@@ -1225,6 +1259,7 @@ function collegaDashboard() {
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
+  su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
   // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
   app.querySelectorAll('[data-ds-sez]').forEach(b => {
     b.onclick = () => {

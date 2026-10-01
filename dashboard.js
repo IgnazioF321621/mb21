@@ -405,6 +405,31 @@
       .sort((x, y) => (y.diretto - x.diretto) || String(x.nome).localeCompare(String(y.nome), 'it'));
   }
 
+  // Confronto obiettivo-risultato di un mese (Ignazio 01/10, «a fine mese»): per ogni obiettivo scritto, quanto si è fatto davvero. `risultati` = `risultatiMese`
+  // (Check, file Amway, persone), `amway` = `risultatiAmway` di quel mese (iscritti, prime linee, linee riceventi Bonus, totale gruppo, 15 Planner): per gli iscritti vale
+  // il più alto dei due, per le quattro della squadra conta il file Amway (stessa unione della scelta «Risultati» del foglio). Null se quel mese non ha obiettivi.
+  function confrontoMese({ obiettivo, risultati, amway }) {
+    if (!obiettivo || !haObiettivi(obiettivo)) return null;
+    const ris = { ...(risultati || {}) };
+    if (amway) {
+      for (const k of ['sponsor_personali', 'sponsor_gruppo']) ris[k] = Math.max(n(ris[k]), n(amway[k]));
+      for (const k of ['prime_linee', 'linee_bonus', 'totale_gruppo', 'planner']) ris[k] = n(amway[k]);
+    }
+    const gruppi = [];
+    for (const [nome, pallino, campi] of CAMPI_OBIETTIVI) {
+      const righe = [];
+      for (const [k, etichetta] of campi) {
+        const ob = n(obiettivo[k]);
+        if (!(ob > 0)) continue;
+        const fatto = n(ris[k]);
+        righe.push({ k, etichetta, obiettivo: ob, fatto, perc: Math.round(fatto / ob * 100), raggiunto: fatto >= ob });
+      }
+      if (righe.length) gruppi.push({ nome, pallino, righe });
+    }
+    const tutte = gruppi.flatMap(g => g.righe);
+    return { gruppi, totali: tutte.length, raggiunti: tutte.filter(r => r.raggiunto).length };
+  }
+
   // Chi del ramo ha acceso l'app ma non ha ancora scritto gli obiettivi del mese (`utenti` di `obiettivi_del_ramo()`): chi ha più bisogno di una mano.
   // `scritti` = i partner già nell'elenco di `obiettiviDelTeam`; stessa regola: solo sotto `radice`, mai lei né un'altra linea.
   function senzaObiettivi({ utenti, squadra, scritti, radice }) {
@@ -513,7 +538,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, percorsoAzione, rapportiDalloStorico, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
