@@ -54,9 +54,10 @@
     'Cambia paradigma. Cambia la tua vita', 'Libro no N21'];
   // Modulo obiettivi (lavoro 5, decisioni di Ignazio 14/09): 12 obiettivi, raggruppati come le 4 schede
   const CAMPI_OBIETTIVI = [
-    ['Volume', '🔵', [['vpp', 'VPP', true], ['vpv', 'VP Clienti', true], ['vpg', 'VPG', true]]],
+    // dal 01/10 in cima il risultato che si vuole ottenere: il VPG, poi il tuo VPP e le sue parti; in Azione i nuovi iscritti, poi come ci si arriva (PM e contatti)
+    ['Volume', '🔵', [['vpg', 'VPG', true], ['vpp', 'VPP', true], ['vpv', 'VP Clienti', true]]],
     // Nuovi Iscritti è il totale e Sponsor Personali «di cui» (01/10), quindi viene prima
-    ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_gruppo', 'Nuovi Iscritti'], ['sponsor_personali', 'Sponsor Personali']]],
+    ['Azione', '🟠', [['sponsor_gruppo', 'Nuovi Iscritti'], ['sponsor_personali', 'Sponsor Personali'], ['pm', 'PM'], ['contatti', 'Contatti']]],
     // dal 01/10 la squadra: le colonne della tabella dei Segni Vitali del Manuale che mancavano (4 campi nuovi in obiettivi_mese, facoltativi)
     ['Squadra', '⚪', [['linee_bonus', 'Linee riceventi Bonus'], ['planner', '15 Planner'], ['prime_linee', 'Prime linee'], ['totale_gruppo', 'Totale gruppo']]],
     ['Segni Vitali N21', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],

@@ -1157,7 +1157,7 @@ function collegaDashboard() {
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
-const ETICHETTA_FOGLIO = { vpp: 'VPP · totale', vpv: 'di cui VP Clienti', vpg: 'VPG · totale del gruppo', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Sponsor Personali' };
+const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Sponsor Personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
 function apriObiettivi() {
   if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
@@ -1193,7 +1193,7 @@ function apriObiettivi() {
         <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}"${NOMI_GRADINI[g] ? ' class="traguardo"' : ''}>${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
       </div>
       <div class="ob-crescita">
-        <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
+        <div class="ob-crescita-testa">Incremento: <b id="ob-perc">0%</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="0">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
@@ -1294,7 +1294,7 @@ function apriObiettivi() {
   const barra = velo.querySelector('#ob-barra');
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
   const righeLivelli = velo.querySelector('#ob-sistema');
-  const azzeraBarra = () => { perc.textContent = 'scegli'; ambizioso.hidden = true; };
+  const azzeraBarra = () => { perc.textContent = '0%'; barra.value = 0; ambizioso.hidden = true; };   // scegliendo un'altra base l'incremento riparte da 0%
   const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === gradino));
   const mostraScala = () => { righeLivelli.hidden = base !== 'scala'; if (base === 'scala') { gradino = gradino || gradinoPartenza; sceltaGradino(); } };
   velo.querySelectorAll('.ob-modi button').forEach(b => {
