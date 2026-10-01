@@ -389,4 +389,19 @@ prova('Rapporti personali (3 bis): dal valore di partenza verso lo storico, più
   assert.deepEqual(vecchio, { contattiPerPm: null, pmPerIscritto: null });
 });
 
+prova('Confronto obiettivo-risultato di un mese: solo gli obiettivi scritti, risultati uniti al file Amway', () => {
+  const obiettivo = { mese: '2026-09-01', vpg: 2400, vpp: 360, contatti: 30, sponsor_gruppo: 10, prime_linee: 4, planner: 0, bbs: 7 };
+  const risultati = { vpg: 2100, vpp: 400, contatti: 28, sponsor_gruppo: 6, bbs: 7 };
+  const c = D.confrontoMese({ obiettivo, risultati, amway: { sponsor_gruppo: 9, prime_linee: 3, planner: 1 } });
+  const riga = k => c.gruppi.flatMap(g => g.righe).find(r => r.k === k);
+  assert.equal(c.totali, 6);   // il planner (0) non è un obiettivo
+  assert.deepEqual([riga('vpg').fatto, riga('vpg').perc, riga('vpg').raggiunto], [2100, 88, false]);
+  assert.equal(riga('vpp').raggiunto, true);
+  assert.equal(riga('sponsor_gruppo').fatto, 9);   // il più alto tra Check (6) e file Amway (9)
+  assert.deepEqual([riga('prime_linee').fatto, riga('prime_linee').raggiunto], [3, false]);   // la squadra conta il file Amway
+  assert.equal(c.raggiunti, 2);                    // VPP e BBS (7 su 7)
+  assert.equal(D.confrontoMese({ obiettivo: null, risultati, amway: null }), null);
+  assert.equal(D.confrontoMese({ obiettivo: { mese: '2026-09-01' }, risultati: null, amway: null }), null);
+});
+
 console.log(`\n${ok} prove superate`);
