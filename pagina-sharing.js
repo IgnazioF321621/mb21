@@ -432,3 +432,21 @@ function collegaMioPercorso() {
     disegnaOggi();
   });
 }
+
+// Dopo aver fissato un Piano Marketing a un candidato (cantiere 48, Ignazio 01/10): al posto del foglio «Prima del PM, manda a Mario…» la domanda
+// «Hai condiviso la traccia di apertura?». No: il processo continua (`poi`), niente Sharing. Sì: si apre la scheda del contatto sullo Sharing e,
+// tornando indietro, il processo continua (`poi`: di solito la chat del coach dopo l'esito). `creato`: l'appuntamento appena fissato (tipo_azione,
+// categoria); se non è un Piano Marketing per un candidato non si chiede niente e il processo continua subito.
+async function tracciaDiApertura(creato, contatto, poi) {
+  const continua = () => (poi ? poi() : null);
+  if (!creato || creato.tipo_azione !== 'Piano Marketing' || MB21Sharing.perChiDi({ categoria: creato.categoria }) !== 'ospite' || !contatto) return continua();
+  const si = await chiediConferma('Hai condiviso la traccia di apertura?', `Se sì, la segni nello Sharing della scheda di ${MB21Sharing.nomeCorto(contatto.nome)}.`, 'Sì', false, '', 'No');
+  if (!si) return continua();
+  if (ST.tab === 'lista' && LS.contatto && LS.contatto.id === contatto.id) {   // già nella sua scheda: basta cambiare sezione
+    LS.sezione = 'sharing'; disegnaScheda();
+    return continua();
+  }
+  LS.dopo = poi ? { id: contatto.id, quando: Date.now(), fn: poi } : null;   // un solo giro: lo esegue la freccia indietro della scheda (eseguiDopoScheda)
+  LS.apriSezione = 'sharing';
+  return apriContattoDa(contatto.id, ST.tab === 'oggi' ? 'oggi' : ST.tab === 'agenda' ? 'agenda' : undefined);
+}

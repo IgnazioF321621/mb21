@@ -437,10 +437,12 @@ function disegnaScheda() {
     <div id="sezione"></div>
     ${versione()}`;
   document.getElementById('indietro').onclick = () => {
+    eseguiDopoScheda(LS.contatto && LS.contatto.id);   // il processo lasciato a metà (dopo lo Sharing del Piano Marketing) riprende
     LS.contatto = null;
     if (!LS.ritorno) { disegnaLista(); return window.scrollTo(0, LS.scrollLista || 0); }
     if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
     if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
+    if (LS.ritorno === 'agenda') { LS.ritorno = null; ST.tab = 'agenda'; return mostraTab(); }   // dallo Sharing dopo un Piano Marketing fissato da MB Plan (01/10)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
       LS.ritorno = null; ST.tab = 'oggi'; ST.aperta = null;
       document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'oggi'));
@@ -730,6 +732,7 @@ async function azionePiu() {
   if (!creato) return;
   LS.azioni = null; LS.righe = [];
   await ricaricaERidisegna();
+  tracciaDiApertura(creato, c, null);   // un Piano Marketing a un candidato: «Hai condiviso la traccia di apertura?» (01/10)
   mostraToast('Appuntamento fissato', async () => {
     await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', creato.id));
     LS.azioni = null; LS.righe = [];
@@ -1324,4 +1327,12 @@ async function spuntaAvvio(e, esito) {
 // la scheda e l'elenco già letti restano allineati (senza rileggere)
 function passoInCache(contattoId, col, valore) {
   for (const r of [LS.contatto, ...(LS.righe || [])]) if (r && r.id === contattoId) r[col] = valore;
+}
+
+// Il processo lasciato a metà mentre si guarda la scheda (dopo «Sì» a «Hai condiviso la traccia di apertura?»): quando si torna indietro (o si cambia
+// pagina) riprende, una volta sola e solo per quella persona, entro mezz'ora.
+function eseguiDopoScheda(contattoId) {
+  const d = LS.dopo;
+  LS.dopo = null;
+  if (d && (!contattoId || d.id === contattoId) && Date.now() - d.quando < 30 * 60000) setTimeout(d.fn, 600);
 }
