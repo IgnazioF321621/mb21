@@ -165,7 +165,7 @@
   // il coach propone un altro canale. `esiti`: gli esiti delle telefonate di quel contatto, dal più recente (il tocco appena dato è il primo).
   const SOGLIA_VUOTI = { 'Telefono spento': 2, 'No Risposta': 3 };
   const VOLTE = { 2: 'due', 3: 'tre', 4: 'quattro', 5: 'cinque', 6: 'sei' };
-  const CANALI = ['Messaggio', 'Di persona', 'Chiedo a chi me l’ha dato', 'Lo metto da parte'];
+  const CANALI = ['Messaggio', 'Di persona', 'Chiedo a chi me l’ha dato', 'Lo archivio'];
   const vuotiDiFila = (esiti, esito) => { let n = 0; for (const e of esiti || []) { if (e !== esito) break; n++; } return n; };
   function altroCanale(esito, n, chi) {   // il testo del coach, o null se non ancora
     if (!SOGLIA_VUOTI[esito] || n < SOGLIA_VUOTI[esito]) return null;
