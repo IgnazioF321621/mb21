@@ -726,7 +726,11 @@ prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata s
   assert.deepEqual(A.dopoTelefonata('Cliente', 'Richiamare'), { cosa: 'giorno' });
   assert.deepEqual(A.dopoTelefonata('Prospect', 'Relazione'), { cosa: 'risentire', giorni: 20 });
   assert.deepEqual(A.dopoTelefonata('Cliente', 'No Interesse'), { cosa: 'risentire', giorni: 365 });
-  for (const es of ['No Risposta', 'Telefono spento', 'Ordine']) assert.deepEqual(A.dopoTelefonata('Cliente', es), { cosa: 'niente' });
+  assert.deepEqual(A.dopoTelefonata('Cliente', 'Ordine'), { cosa: 'niente' });
+  // No Risposta e Telefono spento (01/10): anche loro «Quando risentirlo?», con i giorni del rientro automatico, cambiabili
+  assert.deepEqual(A.dopoTelefonata('Cliente', 'No Risposta'), { cosa: 'risentire', giorni: 2 });
+  assert.deepEqual(A.dopoTelefonata('Prospect', 'Telefono spento'), { cosa: 'risentire', giorni: 7 });
+  assert.equal(A.giorniRisentire('No Risposta'), A.GIORNI_NO_RISPOSTA); assert.equal(A.giorniRisentire('Telefono spento'), A.GIORNI_TELEFONO_SPENTO);
 });
 
 prova('«Su cosa lavorate?»: le fasi del tipo di appuntamento, solo per un Partner; l\'Avvio nell\'ordine di Ignazio; «Motivazione» si legge «Il perché»', () => {

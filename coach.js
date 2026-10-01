@@ -92,13 +92,13 @@
   // Se l'incontro è fissato (PM Fissato, Appuntamento, Consulenza Prodotti) dopo il tocco il coach non dice altro (tolti il 01/10 «l'hai superata» e la risposta
   // del manuale, che è quella del telefono).
   // Se l'altra volta con la stessa persona è uscita un'obiezione, parte da lì («L'altra volta Mario diceva «Non ho tempo»: è tornato fuori?»).
-  // Dopo Relazione e No Interesse (e dopo un'Iscrizione, un Ordine, una Vendita: niente obiezioni) solo la reazione. Tolti il 01/10: «L'hai gestita?»,
+  // Dopo Relazione (e dopo un'Iscrizione, un Ordine, una Vendita: niente obiezioni) solo la reazione, in un fumetto solo; No Interesse chiede l'obiezione. Tolti il 01/10: «L'hai gestita?»,
   // la carta letta in chat, la frase per la prossima volta, le domande di prima del piano e del follow up, «Per approfondire».
   // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null,
   //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro») }
   // Con un Partner niente domanda sui freni (Ignazio 29/09: «è raro che un partner dica non ho tempo»): dopo «Appuntamento» una riga con il giorno e i
   // passi scelti e, per ognuno, come prepararlo dal Manuale di Avvio.
-  const RIGA_SOLA = ['Relazione', 'No Interesse'];
+  const RIGA_SOLA = ['Relazione'];   // No Interesse chiede l'obiezione anche lei (Ignazio 01/10: «così ce lo ritroviamo segnato»)
   const FISSATI = ['PM Fissato', 'Appuntamento', 'Consulenza Prodotti'];
   // Un Prospect chiamato per una consulenza prodotti: le obiezioni sono quelle «a vedersi» sui prodotti, non quelle dell'attività (Ignazio 29/09)
   const OBIEZIONI_PRODOTTI = ['Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro'];
@@ -107,7 +107,7 @@
     if (!B || !B.reazione || !B.reazione[esito]) return null;
     const varianti = B.reazione[esito];
     const reazione = varianti[Math.abs(n || 0) % varianti.length];
-    if (RIGA_SOLA.includes(esito)) return riempi(reazione, nomi);
+    if (RIGA_SOLA.includes(esito)) return riempi([{ c: reazione.map(x => x.c).filter(Boolean).join(' ') }], nomi);   // un fumetto solo (01/10: «unisci con quella successiva»)
     const D = B.domanda_obiezione || {}, O = B.obiezioni || {};
     const fissato = ctx.fissato === undefined ? FISSATI.includes(esito) : !!ctx.fissato;
     const nomiOb = esito === 'Consulenza Prodotti' ? OBIEZIONI_PRODOTTI : Object.keys(O);
