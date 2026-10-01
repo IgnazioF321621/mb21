@@ -1158,6 +1158,19 @@ function collegaDashboard() {
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
 const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
+// Le sezioni del foglio si aprono e si chiudono, ognuna con una breve spiegazione (Ignazio 01/10: foglio unico per tutti, espandibile); Volume e Azione aperte, il resto chiuso
+const SEZIONI_FOGLIO = {
+  'Volume': { id: 'volume', aperta: true, spiega: 'I punti che ti servono: quelli di tutto il gruppo, quanti sono tuoi e quanti arrivano da chi sta sotto di te.' },
+  'Azione': { id: 'azione', aperta: true, spiega: 'Cosa fai per arrivarci: quanti nuovi iscritti, e con quanti Piani Marketing e contatti.' },
+  'Squadra': { id: 'squadra', aperta: false, spiega: 'La struttura che ti aspetti nel gruppo: linee, Planner, quante persone in tutto.' },
+  'Le tue linee': { id: 'linee', aperta: false, spiega: 'Le persone che ti aspetti sotto di te, e quanti punti da ognuna.' },
+  'Segni Vitali N21': { id: 'segni', aperta: false, spiega: 'I biglietti BBS e WES e gli iscritti CEP del tuo gruppo: i numeri a cui punta il Manuale.' },
+  'Crescita': { id: 'crescita', aperta: false, spiega: 'Ascolti e letture: la tua crescita personale del mese.' },
+};
+const aperturaSezione = (pallino, nome) => {
+  const d = SEZIONI_FOGLIO[nome];
+  return `<section class="ob-sez" data-sez="${d.id}"><button type="button" class="ob-sez-testa" aria-expanded="${d.aperta}"><span><b>${escIcone(pallino)}${esc(nome)}</b><small>${esc(d.spiega)}</small></span><span class="ob-sez-dx"><em class="ob-sez-sunto"></em><i>${d.aperta ? '⌃' : '⌄'}</i></span></button><div class="ob-sez-corpo"${d.aperta ? '' : ' hidden'}>`;
+};
 // I punti con i centesimi nelle caselle si scrivono con la VIRGOLA, senza il punto delle migliaia (Ignazio 01/10: il punto si confondeva con la virgola)
 const fmtNum = v => (v === '' || v == null ? '' : Number(v).toLocaleString('it-IT', { useGrouping: false, maximumFractionDigits: 2 }));
 function apriObiettivi() {
@@ -1196,7 +1209,8 @@ function apriObiettivi() {
     ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
+    <div class="ob-riepilogo" id="ob-riepilogo"></div>
+    <div class="riquadro mc-g" style="margin-top:10px;padding-top:12px">
     <div class="ob-scala-testa"><b>Scala dei bonus</b><small>Un traguardo e il foglio si compila da solo</small></div>
       <div id="ob-sistema">
         <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}"${NOMI_GRADINI[g] ? ' class="traguardo"' : ''}>${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
@@ -1214,14 +1228,14 @@ function apriObiettivi() {
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
-    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
+    ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `${aperturaSezione(pallino, gruppo)}<div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
       ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
-    </div></div>${gruppo === 'Squadra' ? `<h4 class="mc-t">${escIcone('⚪')}Le tue linee</h4><div class="riquadro mc-g ob-gruppo">
+    </div></div></div></section>${gruppo === 'Squadra' ? `${aperturaSezione('⚪', 'Le tue linee')}<div class="riquadro mc-g ob-gruppo">
       <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
       <div id="ob-linee"></div>
       <div class="ob-dal-gruppo" id="ob-linee-somma"></div>
       <div class="ob-linee-az">${pidVisto ? '<button type="button" class="link" id="ob-linee-porta">Porta le mie prime linee</button>' : ''}<button type="button" class="link" id="ob-linee-nuova">+ Aggiungi linea</button></div>
-      <div class="ob-dal-gruppo" id="ob-linee-nota"></div></div>` : ''}`).join('')}
+      <div class="ob-dal-gruppo" id="ob-linee-nota"></div></div></div></section>` : ''}`).join('')}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
   </div>`;
@@ -1251,7 +1265,7 @@ function apriObiettivi() {
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k, , dec] of campi) campo(k).value = nuovi ? (dec ? fmtNum(nuovi[k]) : (nuovi[k] ?? '')) : '';
-    consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
+    consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo(); sunti();
   };
   // Nuovi Iscritti è il totale e Iscritti personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
   campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
@@ -1279,7 +1293,7 @@ function apriObiettivi() {
     r.className = 'ob-linea'; r.dataset.pid = l.partner_id || '';
     r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(fmtNum(l.vp)) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button>`;
     r.querySelector('.ob-linea-vp').addEventListener('input', dalGruppo);
-    r.querySelector('.ob-linea-x').onclick = () => { r.remove(); dalGruppo(); };
+    r.querySelector('.ob-linea-x').onclick = () => { r.remove(); dalGruppo(); riepilogo(); sunti(); };
     righeLinee.appendChild(r);
     return r;
   };
@@ -1309,7 +1323,35 @@ function apriObiettivi() {
     velo.querySelector('#ob-hint-contatti').textContent = r ? `Per ${f(r.perPm ? numero('pm') : r.pm)} PM: circa ${f(r.contatti)} contatti (${D.CONTATTI_PER_PM} per ogni PM)` : '';
   };
   for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
-  consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
+  // Il riepilogo fisso in cima («il risultato che voglio») e, a sezione chiusa, il suo riassunto sulla testata (Ignazio 01/10)
+  const testoNum = id => { const x = numero(id); return x > 0 ? f(x) : ''; };
+  const riepilogo = () => {
+    const vpg = testoNum('vpg'), vpp = testoNum('vpp'), nuovi = testoNum('sponsor_gruppo'), pers = testoNum('sponsor_personali');
+    const el = velo.querySelector('#ob-riepilogo');
+    el.innerHTML = vpg || nuovi
+      ? `<div><b>${vpg ? `VPG ${esc(vpg)}` : 'VPG da scegliere'}</b>${vpp ? ` <span>· di cui tuoi ${esc(vpp)} (consumo ${esc(testoNum('consumo') || '0')} + clienti ${esc(testoNum('vpv') || '0')})</span>` : ''}</div>`
+        + `<div><b>${nuovi ? `Nuovi iscritti ${esc(nuovi)}` : 'Nuovi iscritti da scegliere'}</b>${pers ? ` <span>· di cui personali ${esc(pers)}</span>` : ''}</div>`
+      : '<span class="ob-riepilogo-vuoto">Qui in cima compare il riassunto di quello che scegli.</span>';
+  };
+  const sunto = id => {
+    const n = k => testoNum(k), unisci = (...p) => p.filter(Boolean).join(' · ');
+    return { volume: unisci(n('vpg') && `VPG ${n('vpg')}`, n('vpp') && `VPP ${n('vpp')}`),
+      azione: unisci(n('sponsor_gruppo') && `${n('sponsor_gruppo')} nuovi iscritti`, n('pm') && `${n('pm')} PM`, n('contatti') && `${n('contatti')} contatti`),
+      squadra: unisci(n('prime_linee') && `${n('prime_linee')} prime linee`, n('totale_gruppo') && `${n('totale_gruppo')} nel gruppo`),
+      linee: (() => { const l = leggiLinee().filter(x => x.nome || x.vp); return l.length ? `${l.length} ${l.length === 1 ? 'linea' : 'linee'}${sommaLinee() ? ` · ${f(sommaLinee())} VP` : ''}` : ''; })(),
+      segni: unisci(n('bbs') && `BBS ${n('bbs')}`, n('wes') && `WES ${n('wes')}`, n('cep') && `CEP ${n('cep')}`),
+      crescita: unisci(n('tracce') && `${n('tracce')} tracce`, n('pagine') && `${n('pagine')} pagine`) }[id] || '';
+  };
+  const sunti = () => velo.querySelectorAll('.ob-sez').forEach(sez => { sez.querySelector('.ob-sez-sunto').textContent = sez.querySelector('.ob-sez-corpo').hidden ? sunto(sez.dataset.sez) : ''; });
+  velo.querySelectorAll('.ob-sez-testa').forEach(b => {
+    b.onclick = () => {
+      const corpo = b.nextElementSibling, apri = corpo.hidden;
+      corpo.hidden = !apri; b.setAttribute('aria-expanded', String(apri)); b.querySelector('i').textContent = apri ? '⌃' : '⌄';
+      sunti();
+    };
+  });
+  velo.addEventListener('input', () => { riepilogo(); sunti(); });
+  consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo(); sunti();
   const sceltaModo = b => velo.querySelectorAll('[data-modo]').forEach(x => x.classList.toggle('scelto', x === b));   // la scala (bottone grande) e le tre scelte sotto
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Scrivo io)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
