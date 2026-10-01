@@ -38,6 +38,8 @@ async function apriMappa() {
   disegnaMappa();
   // schede e targhette si rileggono a ogni apertura (possono essere cambiate nella scheda contatto)
   caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
+  // le statistiche del ramo: la card compare per un upline solo se sotto di lui c'è qualcuno con uno storico (offline no)
+  if (!ST.offline) leggiEfficacia().then(() => { if (ST.tab === 'mappa' && !MP.completa && !eAdmin() && haStatistiche()) disegnaMappa(); }).catch(() => {});
 }
 
 // Segni vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway in tutte le liste che posso
@@ -167,18 +169,27 @@ async function apriCompleta(id) {
   disegnaCompleta();
 }
 
-// «Statistiche» (Ignazio 01/10, solo Admin): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico
-// nel Check (contatti, Piani Marketing, iscritti personali) degli ultimi 6 mesi. Prima stava dentro la scheda di ogni partner. Il calcolo è `efficaciaDi` (dashboard.js).
+// «Statistiche» (Ignazio 01/10): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico nel Check
+// (contatti, Piani Marketing, iscritti personali) degli ultimi 6 mesi. L'Admin vede tutti; ogni upline chi gli sta sotto nella stessa linea (la linea la dà la
+// mappa Amway, `squadra`) e se stesso: lo decide il database, con `efficacia_del_ramo`. Il calcolo è `efficaciaDi` (dashboard.js).
 async function leggiEfficacia() {
   const oggi = MB21Coda.oggiRoma(), mese = oggi.slice(0, 7) + '-01', da = MB21Dashboard.meseSpostato(mese, -5);
-  const [ck, ut] = await Promise.all([
-    dbq('check degli ultimi mesi', supa.from('check_mesi').select('user_id, mese, contatti, pm, sponsor_personali').gte('mese', da)),
-    dbq('utenti per le statistiche', supa.from('utenti').select('id, partner_id, auth_id')),
-  ]);
-  MP.efficacia = ck.error || ut.error ? { errore: true } : { mese, check: ck.data, utenti: ut.data };
+  const { data, error } = await dbq('statistiche del ramo', supa.rpc('efficacia_del_ramo', { p_da: da }));
+  MP.efficacia = error ? { errore: true } : { mese, righe: data || [] };
 }
-const statisticheHtml = () => (eAdmin()
-  ? rigaApribile('mp-stat', 'catalogare', 'crescita', 'Statistiche', 'contatti per PM e PM per iscritto di ognuno · ⚠️ per ora lo vedi solo tu', false, 0) : '');
+// Le righe per persona (codice Amway): chi ha scritto qualcosa nel Check degli ultimi 6 mesi, prima chi ha più PM
+function statistichePerPersona() {
+  const E = MP.efficacia, D = MB21Dashboard, nomi = new Map((MP.squadra || []).map(x => [x.partner_id, MB21Mappa.nomeLeggibile(x.nome)]));
+  const per = new Map();
+  for (const x of E.righe) (per.get(x.partner_id) || per.set(x.partner_id, []).get(x.partner_id)).push(x);
+  return [...per].map(([pid, rr]) => ({ pid, nome: nomi.get(pid) || 'Senza nome in mappa', ...D.efficaciaDi(rr, E.mese) }))
+    .filter(r => r.contatti || r.pm || r.iscritti)
+    .sort((a, b) => b.pm - a.pm || a.nome.localeCompare(b.nome, 'it'));
+}
+// La card c'è per l'Admin sempre; per un upline solo se sotto di lui qualcuno ha uno storico (si legge in silenzio all'apertura della Mappa)
+const haStatistiche = () => eAdmin() || (MP.efficacia && !MP.efficacia.errore && statistichePerPersona().some(r => r.pid !== ST.utente.partner_id));
+const statisticheHtml = () => (haStatistiche()
+  ? rigaApribile('mp-stat', 'catalogare', 'crescita', 'Statistiche', `contatti per PM e PM per iscritto ${eAdmin() ? 'di ognuno' : 'di chi ti sta sotto'} · per aiutarli`, false, 0) : '');
 async function apriStatistiche() {
   ST.tornaA = 'mappa'; window.scrollTo(0, 0);
   app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button><h1>${ic('crescita')} Statistiche</h1><div class="vuoto">Carico il Check…</div>`;
@@ -187,31 +198,23 @@ async function apriStatistiche() {
   disegnaStatistiche();
 }
 function disegnaStatistiche() {
-  const E = MP.efficacia, D = MB21Dashboard, M = MB21Mappa;
-  const uno = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+  const E = MP.efficacia, D = MB21Dashboard, uno = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
   let corpo;
   if (!E || E.errore) {
     corpo = `<div class="avviso">Non riesco a leggere il Check. Riprova più tardi.</div>`;
   } else {
-    const nomi = new Map((MP.squadra || []).map(x => [x.partner_id, M.nomeLeggibile(x.nome)]));
-    const media = D.efficaciaDi(E.check, E.mese);
-    // una riga per persona che ha scritto qualcosa nel Check degli ultimi 6 mesi; prima chi ha più PM (il suo numero vale di più)
-    const righe = E.utenti.map(u => ({ u, r: D.efficaciaDi(E.check.filter(x => x.user_id === u.id), E.mese) }))
-      .filter(x => x.r.contatti || x.r.pm || x.r.iscritti)
-      .map(x => ({ nome: nomi.get(x.u.partner_id) || 'Senza nome in mappa', ...x.r }))
-      .sort((a, b) => b.pm - a.pm || a.nome.localeCompare(b.nome, 'it'));
-    const poco = r => r.pm < 10;
+    const righe = statistichePerPersona(), media = D.efficaciaDi(E.righe, E.mese), poco = r => r.pm < 10;
     corpo = `<div class="riquadro" style="padding:6px 12px"><table class="mp-tabella">
       <tr><th>Nome</th><th>Contatti per PM</th><th>PM per iscritto</th><th>PM fatti</th></tr>
-      <tr><td><b>Media di tutti</b></td><td>${uno(media.contattiPerPm)}</td><td>${uno(media.pmPerIscritto)}</td><td>${media.pm}</td></tr>
-      ${righe.map(r => `<tr${poco(r) ? ' style="color:var(--grigio-chiaro)"' : ''}><td>${esc(r.nome)}</td><td>${uno(r.contattiPerPm)}</td><td>${uno(r.pmPerIscritto)}</td><td>${r.pm}</td></tr>`).join('')}
+      <tr><td><b>${eAdmin() ? 'Media di tutti' : 'Media del tuo gruppo'}</b></td><td>${uno(media.contattiPerPm)}</td><td>${uno(media.pmPerIscritto)}</td><td>${media.pm}</td></tr>
+      ${righe.map(r => `<tr${poco(r) ? ' style="color:var(--grigio-chiaro)"' : ''}><td>${esc(r.nome)}${r.pid === ST.utente.partner_id ? ' (tu)' : ''}</td><td>${uno(r.contattiPerPm)}</td><td>${uno(r.pmPerIscritto)}</td><td>${r.pm}</td></tr>`).join('')}
     </table></div>
     ${righe.length ? '' : '<div class="vuoto">Nessuno ha ancora scritto contatti, PM o iscritti nel Check.</div>'}
     <div class="sotto">Ultimi 6 mesi dal Check. In grigio: ancora meno di 10 PM, il numero non è affidabile. «—» dove manca un dato (nessun PM o nessun iscritto personale).</div>`;
   }
   app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button>
     <h1>${ic('crescita')} Statistiche</h1>
-    <div class="sotto" style="margin-bottom:8px">⚠️ Per ora lo vedi solo tu. Quanti contatti servono per un Piano Marketing e quanti Piani Marketing per un iscritto personale, persona per persona, per tarare il Training su quello che succede davvero.</div>
+    <div class="sotto" style="margin-bottom:8px">Quanti contatti servono per un Piano Marketing e quanti Piani Marketing per un iscritto personale, ${eAdmin() ? 'persona per persona' : 'tuoi e di chi ti sta sotto nella tua linea'}: aiutano a capire dove una mano serve di più. Qui si legge soltanto.</div>
     ${corpo}${versione()}`;
   document.getElementById('indietro').onclick = tornaDaTeam;
 }
