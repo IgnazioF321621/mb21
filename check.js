@@ -403,6 +403,12 @@
   const GRADINI_BONUS = Object.keys(SCALA_BONUS).map(Number);
   const obiettiviDelBonus = bonus => (SCALA_BONUS[bonus] ? { ...SCALA_BONUS[bonus] } : null);
   // Il gradino di partenza: quello del mese prima (il Bonus Attività di quel mese, arrotondato per difetto al gradino); senza bonus o senza dato, il 3%
+  // Il gradino a cui corrisponde un VPG già scritto (Ignazio 01/10: riaprendo il foglio, il 12% scelto doveva ritrovarsi): il gradino più alto il cui VPG è raggiunto
+  // e non superato di oltre il 50% (l'incremento massimo della barra); nessuno se il VPG sta fuori da tutti, così non si indovina quello che non c'è.
+  const gradinoDaVpg = vpg => {
+    const v = Number(vpg);
+    return Number.isFinite(v) && v > 0 ? GRADINI_BONUS.filter(g => SCALA_BONUS[g].vpg <= v && v <= SCALA_BONUS[g].vpg * 1.5).pop() || null : null;
+  };
   const gradinoDalBonus = bonus => GRADINI_BONUS.filter(g => g <= Number(bonus)).pop() || GRADINI_BONUS[0];
 
   // i nomi delle colonne del Manuale, nel suo ordine
@@ -510,7 +516,7 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, lc1, percorso, livelli };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, livelli };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);
