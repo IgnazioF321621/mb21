@@ -1524,12 +1524,14 @@ function apriObiettivi() {
     notaBase();
   };
   barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (0%) vale anche senza spostarla: tiene la scelta com'è
+  // L'errore sta in fondo al foglio: chi tocca «Salva» da in alto non lo vedeva e credeva di aver salvato (Ignazio 01/10, il 600 di una linea tornava 400), quindi ci si porta lì
+  const mostraErrore = t => { const el = velo.querySelector('#ob-errore'); el.textContent = t; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
   velo.querySelector('#ob-si').onclick = async () => {
     const letti = {};
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
     const { errore, valori: v } = D.validaObiettivi(letti);
-    if (errore) { velo.querySelector('#ob-errore').textContent = errore; return; }
-    if (leggiLinee().some(l => l.vp > 0 && !l.nome)) { velo.querySelector('#ob-errore').textContent = 'Scrivi il nome della linea.'; return; }
+    if (errore) { mostraErrore(errore); return; }
+    if (leggiLinee().some(l => l.vp > 0 && !l.nome)) { mostraErrore('Scrivi il nome della linea.'); return; }
     const btn = velo.querySelector('#ob-si');
     btn.disabled = true; btn.textContent = 'Salvo…';
     // upsert sulla coppia partner+mese: tocca solo gli obiettivi (partenza e dati Amway restano)
@@ -1537,7 +1539,7 @@ function apriObiettivi() {
       .upsert({ user_id: visto().id, mese, ...v }, { onConflict: 'user_id,mese' }));   // Partner Select: a nome del partner scelto
     if (error) {
       btn.disabled = false; btn.textContent = 'Salva obiettivi';
-      velo.querySelector('#ob-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
+      mostraErrore('Non salvato: controlla la connessione e riprova.');
       return;
     }
     // le linee del mese: si riscrivono quelle del foglio (una sola lista per mese)
@@ -1546,7 +1548,7 @@ function apriObiettivi() {
     const messe = tolte.error || !linee.length ? tolte : await dbq('salva le linee', supa.from('obiettivi_linee').insert(linee.map(l => ({ user_id: visto().id, mese, partner_id: l.partner_id, nome: l.nome, vp: l.vp }))));
     if (messe.error) {
       btn.disabled = false; btn.textContent = 'Salva obiettivi';
-      velo.querySelector('#ob-errore').textContent = 'Obiettivi salvati, ma le linee no: controlla la connessione e riprova.';
+      mostraErrore('Obiettivi salvati, ma le linee no: controlla la connessione e riprova.');
       return;
     }
     chiudi();
