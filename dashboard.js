@@ -326,6 +326,28 @@
     return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * CONTATTI_PER_PM), perPm: !!(n(pmScritti) > 0) };
   }
 
+  // Per chi sta sopra (Ignazio 01/10, «Obiettivi dei partner»): gli obiettivi del mese di chi gli sta sotto, in sola lettura. `obiettivi` e `linee` sono
+  // quelli di `obiettivi_del_ramo()` (il database dà già solo il ramo di chi chiede), `squadra` la mappa Amway (nome e sponsor), `volumi` il VPG di adesso.
+  // Restano le persone SOTTO `radice` (mai lei, mai un'altra linea) che hanno scritto almeno un obiettivo; prima le dirette, poi per nome.
+  function obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice, mese }) {
+    if (!radice) return [];
+    const nomi = new Map((squadra || []).map(p => [p.partner_id, p]));
+    const sotto = new Set(), coda = [radice];
+    while (coda.length) {
+      const su = coda.shift();
+      for (const p of squadra || []) if (p.sponsor_id === su && p.partner_id !== radice && !sotto.has(p.partner_id)) { sotto.add(p.partner_id); coda.push(p.partner_id); }
+    }
+    const ora = new Map((volumi || []).filter(v => v.mese === mese).map(v => [v.partner_id, n(v.vpg)]));
+    return (obiettivi || []).filter(o => sotto.has(o.partner_id) && haObiettivi(o))
+      .map(o => {
+        const p = nomi.get(o.partner_id) || {}, sp = nomi.get(p.sponsor_id) || {};
+        return { partner_id: o.partner_id, nome: p.nome || '', sponsor_id: p.sponsor_id || null, sponsor_nome: sp.nome || '', diretto: p.sponsor_id === radice,
+          valori: Object.fromEntries(CHIAVI_FOGLIO.map(k => [k, n(o[k])])), vpgOra: ora.has(o.partner_id) ? ora.get(o.partner_id) : null,
+          linee: (linee || []).filter(l => l.partner_utente === o.partner_id).map(l => ({ nome: l.nome, vp: n(l.vp) })) };
+      })
+      .sort((x, y) => (y.diretto - x.diretto) || String(x.nome).localeCompare(String(y.nome), 'it'));
+  }
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -417,7 +439,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, obiettiviDelTeam, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
