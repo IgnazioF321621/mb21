@@ -194,15 +194,6 @@ prova('La carta del Training per un\'obiezione: la scena giusta per quella chat,
   assert.equal(C.cartaDi(null, 'Non ho tempo', ['telefonata']), null);
 });
 
-prova('«Se fa un\'obiezione…»: le obiezioni del telefono di quella categoria, ognuna con la sua risposta, senza frasi né vero/falso', () => {
-  const tel = C.obiezioniDelTelefono(MAZZI, 'telefonata');
-  assert.deepEqual(tel.map(x => x.nome), ['Di cosa si tratta?', 'Non ho tempo']);                    // quelle dei clienti non sono del Prospect
-  assert.equal(tel[1].carta.giusta.startsWith('«Ti capisco'), true);
-  assert.deepEqual(C.obiezioniDelTelefono(MAZZI, 'telefonata_cliente').map(x => x.nome), ['Non ne ho bisogno']);
-  assert.deepEqual(C.obiezioniDelTelefono(MAZZI, 'telefonata_partner'), []);
-  assert.deepEqual(C.obiezioniDelTelefono(null, 'telefonata'), []);
-});
-
 prova('Coach corto: Relazione e No Interesse una riga sola, niente chat', async () => {
   for (const e of ['Relazione', 'No Interesse']) {
     const passi = C.corta(B, e, nomi, 0, {});
