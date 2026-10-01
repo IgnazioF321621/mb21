@@ -1184,14 +1184,15 @@ function apriObiettivi() {
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
-    <p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
-      <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
-      <button data-modo="risultati"${ris ? '' : ' disabled'}>Risultati di ${esc(nomeRis)}</button>
-      <button data-modo="scala">Scala dei bonus</button>
-      <button data-modo="vuoti">Da zero</button></div>
+    <button type="button" class="ob-scala-btn" data-modo="scala"><b>Scala dei bonus</b><small>Un traguardo e il foglio si compila da solo</small></button>
       <div id="ob-sistema" hidden>
         <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}"${NOMI_GRADINI[g] ? ' class="traguardo"' : ''}>${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
       </div>
+      <p class="ob-oppure">Oppure si parte da</p>
+      <div class="chips ob-modi">
+        <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
+        <button data-modo="risultati"${ris ? '' : ' disabled'}>Risultati di ${esc(nomeRis)}</button>
+        <button data-modo="vuoti">Da zero</button></div>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Incremento: <b id="ob-perc">0%</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="0">
@@ -1293,7 +1294,7 @@ function apriObiettivi() {
   };
   for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
   consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
-  const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
+  const sceltaModo = b => velo.querySelectorAll('[data-modo]').forEach(x => x.classList.toggle('scelto', x === b));   // la scala (bottone grande) e le tre scelte sotto
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
   let base = null, gradino = null;
@@ -1304,18 +1305,18 @@ function apriObiettivi() {
   const azzeraBarra = () => { perc.textContent = '0%'; barra.value = 0; ambizioso.hidden = true; };   // scegliendo un'altra base l'incremento riparte da 0%
   const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === gradino));
   const mostraScala = () => { righeLivelli.hidden = base !== 'scala'; if (base === 'scala') { gradino = gradino || gradinoPartenza; sceltaGradino(); } };
-  velo.querySelectorAll('.ob-modi button').forEach(b => {
+  velo.querySelectorAll('[data-modo]').forEach(b => {
     b.onclick = () => { base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala(); scrivi(base === 'vuoti' ? null : valoriBase()); };
   });
   righeLivelli.querySelectorAll('button').forEach(b => {
-    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('.ob-modi button[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); };
+    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); };
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
     perc.textContent = p ? `+${p}%` : '0%';   // 0%: i numeri della scelta, com'è
     ambizioso.hidden = p <= D.SOGLIA_AMBIZIOSO;
     if (base === null || base === 'vuoti') { base = prima ? 'uguale' : ris ? 'risultati' : 'scala'; }
-    sceltaModo(velo.querySelector(`.ob-modi button[data-modo="${base}"]`));
+    sceltaModo(velo.querySelector(`[data-modo="${base}"]`));
     mostraScala();
     scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' || v == null ? '' : D.aumenta(Number(v), p)])));
   };
