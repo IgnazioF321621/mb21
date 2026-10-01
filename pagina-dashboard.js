@@ -1200,7 +1200,12 @@ function apriObiettivi() {
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
       ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}`).join('')}
-    </div></div>`).join('')}
+    </div></div>${gruppo === 'Squadra' ? `<h4 class="mc-t">${escIcone('⚪')}Le tue linee</h4><div class="riquadro mc-g ob-gruppo">
+      <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
+      <div id="ob-linee"></div>
+      <div class="ob-dal-gruppo" id="ob-linee-somma"></div>
+      <div class="ob-linee-az">${pidVisto ? '<button type="button" class="link" id="ob-linee-porta">Porta le mie prime linee</button>' : ''}<button type="button" class="link" id="ob-linee-nuova">+ Aggiungi linea</button></div>
+      <div class="ob-dal-gruppo" id="ob-linee-nota"></div></div>` : ''}`).join('')}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
   </div>`;
@@ -1233,16 +1238,52 @@ function apriObiettivi() {
   // Nuovi Iscritti è il totale e Sponsor Personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
   campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
   campo('sponsor_personali').addEventListener('input', () => { const p = numero('sponsor_personali'); if (p > numero('sponsor_gruppo')) scriviNum('sponsor_gruppo', p); });
+  // «Le tue linee» (Ignazio 01/10, solo punti): righe nome + VP. Le linee già in possesso arrivano dal file Amway (nome fisso), quelle da creare si scrivono a mano.
+  const righeLinee = velo.querySelector('#ob-linee');
+  const numeroDi = el => { const x = Number(String(el.value).trim().replace(',', '.')); return Number.isFinite(x) && x > 0 ? x : 0; };
+  const leggiLinee = () => [...righeLinee.querySelectorAll('.ob-linea')].map(r => ({ partner_id: r.dataset.pid || null, nome: r.querySelector('.ob-linea-nome').value.trim(), vp: numeroDi(r.querySelector('.ob-linea-vp')) }));
+  const sommaLinee = () => leggiLinee().reduce((t, l) => t + l.vp, 0);
+  const f = x => x.toLocaleString('it-IT');
   // «Gli altri da dove vengono?»: sotto il VPG, i punti che non sono i tuoi (VPG meno VPP) e chi li porta: i nuovi iscritti (50 VP a testa, quelli
-  // scritti in Nuovi Iscritti) e, per il resto, le linee già attive (D.ripartoGruppo)
+  // scritti in Nuovi Iscritti) e le linee (quelle scritte qui sotto; senza linee, «le linee già attive»), con quanto resta da trovare (D.ripartoGruppo)
   const dalGruppo = () => {
-    const r = D.ripartoGruppo(numero('vpg'), numero('vpp'), numero('sponsor_gruppo')), el = velo.querySelector('#ob-dal-gruppo');
-    const f = x => x.toLocaleString('it-IT');
+    const el = velo.querySelector('#ob-dal-gruppo'), somma = sommaLinee();
+    const r = D.ripartoGruppo(numero('vpg'), numero('vpp'), numero('sponsor_gruppo'), somma);
+    velo.querySelector('#ob-linee-somma').textContent = somma > 0 ? `Le tue linee: ${f(somma)} VP in tutto` : '';
     if (!r) { el.textContent = numero('vpg') > 0 && numero('vpp') > 0 ? 'Il VPG è già coperto dal tuo VPP' : ''; return; }
-    el.textContent = `Dal gruppo: ${f(r.altri)} VP · ` + (r.nuovi
-      ? `${r.nuovi} ${r.nuovi === 1 ? 'nuovo iscritto' : 'nuovi iscritti'} da ${D.VP_NUOVO_ISCRITTO} VP = ${f(r.nuovi * D.VP_NUOVO_ISCRITTO)} VP${r.daLinee ? ` · dalle linee già attive: ${f(r.daLinee)} VP` : ' · coprono tutto'}`
-      : `nuovi iscritti (${D.VP_NUOVO_ISCRITTO} VP a testa) e linee già attive`);
+    const nuovi = r.nuovi ? `${r.nuovi} ${r.nuovi === 1 ? 'nuovo iscritto' : 'nuovi iscritti'} da ${D.VP_NUOVO_ISCRITTO} VP = ${f(r.nuovi * D.VP_NUOVO_ISCRITTO)} VP` : '';
+    const linee = r.conLinee ? (r.daLinee || r.restano ? `dalle tue linee: ${f(r.daLinee)} VP · ${r.restano ? `ancora da trovare: ${f(r.restano)} VP` : 'coperti'}` : 'coprono tutto')
+      : r.daLinee ? `dalle linee già attive: ${f(r.daLinee)} VP` : 'coprono tutto';
+    el.textContent = `Dal gruppo: ${f(r.altri)} VP · ` + (r.nuovi || r.conLinee ? [nuovi, linee].filter(Boolean).join(' · ') : `nuovi iscritti (${D.VP_NUOVO_ISCRITTO} VP a testa) e linee già attive`);
   };
+  const aggiungiLinea = l => {
+    const r = document.createElement('div');
+    r.className = 'ob-linea'; r.dataset.pid = l.partner_id || '';
+    r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(l.vp) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button>`;
+    r.querySelector('.ob-linea-vp').addEventListener('input', dalGruppo);
+    r.querySelector('.ob-linea-x').onclick = () => { r.remove(); dalGruppo(); };
+    righeLinee.appendChild(r);
+    return r;
+  };
+  velo.querySelector('#ob-linee-nuova').onclick = () => { aggiungiLinea({}).querySelector('.ob-linea-nome').focus(); };
+  const nota = t => { velo.querySelector('#ob-linee-nota').textContent = t; };
+  const porta = velo.querySelector('#ob-linee-porta');
+  if (porta) porta.onclick = async () => {
+    porta.disabled = true; nota('Cerco le tue prime linee…');
+    const mesePrimo = Number(meseRis.slice(0, 4) + meseRis.slice(5, 7));
+    const [sq, vol] = await Promise.all([dbq('prime linee', supa.from('squadra').select('partner_id, sponsor_id, nome')), dbq('punti delle linee', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mesePrimo))]);
+    porta.disabled = false;
+    if (sq.error || vol.error) return nota('Non riesco a leggere il file Amway: riprova.');
+    const gia = new Set(leggiLinee().map(l => l.partner_id).filter(Boolean));
+    const nuove = D.lineeDaSquadra(sq.data, vol.data, pidVisto, mesePrimo).filter(l => !gia.has(l.partner_id));
+    nuove.forEach(l => aggiungiLinea({ ...l, nome: MB21Mappa.nomeLeggibile(l.nome) }));
+    dalGruppo();
+    nota(nuove.length ? `Aggiunte ${nuove.length} ${nuove.length === 1 ? 'linea' : 'linee'}, con i punti di ${D.nomeMese(meseRis).toLowerCase()}: puoi cambiarli.` : gia.size ? 'Le tue prime linee ci sono già.' : 'Non trovo prime linee nel file Amway: aggiungile a mano.');
+  };
+  // quelle già salvate per questo mese
+  dbq('linee del mese', supa.from('obiettivi_linee').select('partner_id, nome, vp').eq('user_id', visto().id).eq('mese', mese).order('creato_il')).then(r => {
+    if (r && r.data && r.data.length && !righeLinee.children.length) { r.data.forEach(l => aggiungiLinea({ partner_id: l.partner_id, nome: l.nome, vp: Number(l.vp) })); dalGruppo(); }
+  }, () => {});
   for (const id of ['vpp', 'vpg', 'sponsor_gruppo']) campo(id).addEventListener('input', dalGruppo);
   consumoDaVpp(); ricordaQuota(); dalGruppo();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
@@ -1277,6 +1318,7 @@ function apriObiettivi() {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
     const { errore, valori: v } = D.validaObiettivi(letti);
     if (errore) { velo.querySelector('#ob-errore').textContent = errore; return; }
+    if (leggiLinee().some(l => l.vp > 0 && !l.nome)) { velo.querySelector('#ob-errore').textContent = 'Scrivi il nome della linea.'; return; }
     const btn = velo.querySelector('#ob-si');
     btn.disabled = true; btn.textContent = 'Salvo…';
     // upsert sulla coppia partner+mese: tocca solo gli obiettivi (partenza e dati Amway restano)
@@ -1285,6 +1327,15 @@ function apriObiettivi() {
     if (error) {
       btn.disabled = false; btn.textContent = 'Salva obiettivi';
       velo.querySelector('#ob-errore').textContent = 'Non salvato: controlla la connessione e riprova.';
+      return;
+    }
+    // le linee del mese: si riscrivono quelle del foglio (una sola lista per mese)
+    const linee = leggiLinee().filter(l => l.nome);
+    const tolte = await dbq('togli le linee', supa.from('obiettivi_linee').delete().eq('user_id', visto().id).eq('mese', mese));
+    const messe = tolte.error || !linee.length ? tolte : await dbq('salva le linee', supa.from('obiettivi_linee').insert(linee.map(l => ({ user_id: visto().id, mese, partner_id: l.partner_id, nome: l.nome, vp: l.vp }))));
+    if (messe.error) {
+      btn.disabled = false; btn.textContent = 'Salva obiettivi';
+      velo.querySelector('#ob-errore').textContent = 'Obiettivi salvati, ma le linee no: controlla la connessione e riprova.';
       return;
     }
     chiudi();
