@@ -75,6 +75,7 @@ async function caricaOggi() {
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
   await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi)]);
+  ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   disegnaOggi();
 }
 

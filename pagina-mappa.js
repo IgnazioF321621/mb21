@@ -25,6 +25,8 @@ async function caricaAlberoMappa() {
   return { squadra: MP.squadra, volumi: MP.volumi };
 }
 
+// Per chi sono lette le righe del Team (Avvio e Obiettivi): il partner guardato, o «tutti»
+const chiaveTeam = () => (vediTutti() ? 'tutti' : visto().id);
 async function apriMappa() {
   if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
   if (!MP.squadra) {
@@ -36,6 +38,13 @@ async function apriMappa() {
     }
   }
   disegnaMappa();
+  // «Partner da avviare» e «Obiettivi mensili dei partner» si leggono con la Dashboard: se la Mappa si apre per prima (l'Admin che ricarica riparte
+  // da dove era) non ci sono ancora, e le due card mancavano. Si leggono qui, una volta per partner guardato.
+  if (!ST.offline && ST.teamLetto !== chiaveTeam()) {
+    const chiave = ST.teamLetto = chiaveTeam(), oggi = MB21Coda.oggiRoma();
+    DS.sqLettura = null; leggiSquadraMese(oggi, true);
+    Promise.all([caricaAvvio(), caricaObiettiviTeam(oggi)]).then(() => { if (ST.tab === 'mappa' && !MP.completa && ST.teamLetto === chiave) disegnaMappa(); }).catch(() => { ST.teamLetto = null; });
+  }
   // schede e targhette si rileggono a ogni apertura (possono essere cambiate nella scheda contatto)
   caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
   // le statistiche del ramo: la card compare per un upline solo se sotto di lui c'è qualcuno con uno storico (offline no)
