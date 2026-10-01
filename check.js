@@ -389,10 +389,11 @@
   // sono esempi di squadra, non soglie). BBS, WES e CEP sono totali del gruppo, come nella Dashboard. Le caselle che la scala non ha (Contatti, PM,
   // Iscritti personali, Tracce, Pagine) le scrive il partner. Una tabella sola: si corregge qui.
   const SCALA_BONUS = {
+    // 15 Planner: dal 9% (Leaders Club, segno vitale obbligatorio) in su; al 3% e al 6% ancora nessuno (Ignazio 01/10)
     // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 iscritto personale; nessuno riceve ancora bonus, quindi niente linee riceventi Bonus e niente 15 Planner
     3:  { vpp: 150, vpv: 50, vpg: 200,   sponsor_personali: 1,    sponsor_gruppo: 1,  prime_linee: 1,  linee_bonus: 0, planner: 0, totale_gruppo: 3,   cep: 1,  bbs: 2,  wes: 2 },
     // dal 6% in su: `sponsor_personali: null` = ancora da decidere con Ignazio (la casella resta al partner)
-    6:  { vpp: 150, vpv: 50, vpg: 600,   sponsor_personali: null, sponsor_gruppo: 3,  prime_linee: 3,  linee_bonus: 2, planner: 1, totale_gruppo: 8,   cep: 3,  bbs: 5,  wes: 5 },
+    6:  { vpp: 150, vpv: 50, vpg: 600,   sponsor_personali: null, sponsor_gruppo: 3,  prime_linee: 3,  linee_bonus: 2, planner: 0, totale_gruppo: 8,   cep: 3,  bbs: 5,  wes: 5 },
     9:  { vpp: 150, vpv: 50, vpg: 1200,  sponsor_personali: null, sponsor_gruppo: 5,  prime_linee: 5,  linee_bonus: 3, planner: 1, totale_gruppo: 15,  cep: 5,  bbs: 10, wes: 10 },
     12: { vpp: 150, vpv: 50, vpg: 2400,  sponsor_personali: null, sponsor_gruppo: 8,  prime_linee: 8,  linee_bonus: 4, planner: 2, totale_gruppo: 33,  cep: 10, bbs: 15, wes: 15 },
     15: { vpp: 150, vpv: 50, vpg: 4000,  sponsor_personali: null, sponsor_gruppo: 10, prime_linee: 10, linee_bonus: 4, planner: 3, totale_gruppo: 50,  cep: 15, bbs: 20, wes: 20 },
