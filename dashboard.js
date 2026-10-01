@@ -260,6 +260,18 @@
   // (0% = il numero com'è: la barra parte da zero, 01/10)
   const aumenta = (v, percento) => (percento ? Math.ceil(Number((v * (1 + percento / 100)).toFixed(6))) : v);
 
+  // Da dove vengono i punti del gruppo che non sono i tuoi (Ignazio 01/10: «gli altri 100 da dove vengono?»): VPG meno VPP. Ogni nuovo iscritto porta
+  // VP_NUOVO_ISCRITTO punti (l'esempio del 3%: 200 = 100 consumo + 50 clienti + 1 nuovo iscritto a 50 VP); quello che i nuovi iscritti non coprono
+  // viene dalle linee già attive (salendo di livello il gruppo che c'è pesa sempre di più). Restituisce null se il VPG non supera il VPP.
+  const VP_NUOVO_ISCRITTO = 50;
+  function ripartoGruppo(vpg, vpp, nuoviIscritti) {
+    const altri = Math.round((n(vpg) - n(vpp)) * 100) / 100;
+    if (!(n(vpg) > 0 && n(vpp) > 0) || altri <= 0) return null;
+    const nuovi = Math.max(0, Math.floor(n(nuoviIscritti)));
+    const daNuovi = Math.min(altri, nuovi * VP_NUOVO_ISCRITTO);
+    return { altri, nuovi, daNuovi, daLinee: Math.round((altri - daNuovi) * 100) / 100 };
+  }
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -351,7 +363,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
