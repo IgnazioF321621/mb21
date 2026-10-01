@@ -1044,9 +1044,7 @@ function collegaRiordini() {
 // la riga «Obiettivi di <mese>» e il foglio li vede e li usa solo l'Admin (era così nelle prime ore del 01/10, finché il foglio non era pronto).
 const OBIETTIVI_PER_TUTTI = true;
 const obiettiviAperti = () => OBIETTIVI_PER_TUTTI || eAdmin();
-// Le sezioni di «Il mio mese» che stanno aperte (Ignazio 01/10): di partenza solo Volume; la scelta si ricorda su questo telefono
-const sezioniAperte = () => { try { const v = JSON.parse(localStorage.getItem('mb21_ds_sezioni')); if (Array.isArray(v)) return new Set(v); } catch (e) {} return new Set(['volume']); };
-const DS = { dati: null, obiettivi: [], aperte: sezioniAperte() };
+const DS = { dati: null, obiettivi: [] };
 
 async function caricaDashboard(oggi) {
   CK.di = null;   // la card «Il tuo Check» rilegge i dati a ogni caricamento: dopo il Check del Giorno i numeri sono nuovi (27/09)
@@ -1206,35 +1204,55 @@ function dashboardTesta() {
   return html;
 }
 
+// ── IL MIO MESE, OBIETTIVI, DOVE VADO (Ignazio 01/10): tre blocchi staccati, ognuno col suo titolo. In Dashboard il quadro (una riga per area, col numero che serve
+// al giorno); il dettaglio, riga per riga, è una sottopagina (`disegnaMese`) che si apre sull'area toccata, senza fisarmoniche che allungano la pagina.
+// Una riga di «Il mio mese» a livello di sintesi: il suo primo numero (VPG 89 al giorno · Prime linee, ne mancano 5), la barra
+function rigaMeseHtml(x, r) {
+  const D = MB21Dashboard, t = D.sintesiRiquadro(r), colore = t.stato === 'ok' ? 'var(--verde)' : x.colore;
+  const ev = DS.eventi && DS.eventi[r.titolo] ? ` <small class="ev">${esc(DS.eventi[r.titolo].breve)}</small>` : '';
+  const sx = t.stato === 'senza' ? centesimi(r.numero) : `${centesimi(r.numero)} su ${esc(r.obiettivoTxt)}`;
+  return `<div class="dm-riga"><span class="n" style="color:${x.colore}">${esc(r.titolo)}${ev}</span><span class="g" style="color:${colore}">${esc(t.grande)}</span>
+    <small>${sx}</small><small class="r">${esc(!obiettiviAperti() && t.dx === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t.dx)}</small>
+    ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--verde)' : x.colore}"></div></div>`}</div>`;
+}
 function dashboardNumeri() {
   const d = DS.dati;
   if (!d) return '';
-  const mese = MB21Dashboard.nomeMese(d.mese);
-  let html = `<div class="zona-oggi">Il mio mese <span>· ${esc(mese.toLowerCase())}</span></div>`;
-  const D = MB21Dashboard;
-  const sezione = x => {
-    const aperta = DS.aperte.has(x.chiave);
-    const riga = r => {
-      const t = D.sintesiRiquadro(r), colore = t.stato === 'ok' ? 'var(--verde)' : x.colore;
-      const ev = DS.eventi && DS.eventi[r.titolo] ? ` <small class="ev">${esc(DS.eventi[r.titolo].breve)}</small>` : '';
-      const sx = t.stato === 'senza' ? centesimi(r.numero) : `${centesimi(r.numero)} su ${esc(r.obiettivoTxt)}`;
-      return `<div class="dm-riga"><span class="n" style="color:${x.colore}">${esc(r.titolo)}${ev}</span><span class="g" style="color:${colore}">${esc(t.grande)}</span>
-        <small>${sx}</small><small class="r">${esc(!obiettiviAperti() && t.dx === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t.dx)}</small>
-        ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--verde)' : x.colore}"></div></div>`}</div>`;
-    };
-    return `<div class="dm-sez"><button class="dm-testa" data-ds-sez="${x.chiave}" aria-expanded="${aperta}"><b style="color:${x.colore}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</b>
-      <span class="dm-sunto">${aperta ? '' : esc(D.riassuntoScheda(x))}</span><i class="dm-freccia">${aperta ? '⌃' : '⌄'}</i></button>
-      ${aperta ? `<div class="dm-corpo">${x.riquadri.map(riga).join('')}</div>` : ''}</div>`;
+  const D = MB21Dashboard, mese = D.nomeMese(d.mese).toLowerCase(), io = visto().id === ST.utente.id;
+  // 1. Il mio mese: una riga per area, toccandola si apre la sottopagina su quell'area
+  const riga = x => {
+    const r = x.riquadri[0], t = D.sintesiRiquadro(r);
+    const sx = t.stato === 'senza' ? centesimi(r.numero) : `${centesimi(r.numero)} su ${esc(r.obiettivoTxt)}`;
+    return `<button class="dm-sint" data-ds-vai="${x.chiave}"><b style="color:${x.colore}">${esc(x.etichetta)}</b>
+      <span class="g" style="color:${t.stato === 'ok' ? 'var(--verde)' : x.colore}">${esc(D.riassuntoScheda(x))}</span>
+      <small>${sx}</small><small class="r">›</small>
+      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--verde)' : x.colore}"></div></div>`}</button>`;
   };
-  html += `<div class="riquadro mese-card"><div class="mese-t">Ti restano ${d.giorni} ${d.giorni === 1 ? 'giorno' : 'giorni'}</div>
-    <div class="dm-guida">Il numero grande è quanto serve al giorno. Dove non si fa ogni giorno, quanti ne mancano.</div>
-    ${d.schede.map(sezione).join('')}
-    ${!limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : ''}
-    ${limitato() ? '' : `${d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`}
-      <div id="ds-card-check">${cardCheckHtml(true)}</div>`}
-    </div>`;
-  // la card «Il tuo Check» (Ignazio 27/09) prende il posto del tassello «Visione completa»/«Check»: una porta sola per il Check
+  let html = `<div class="zona-oggi">Il mio mese <span>· ${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</span></div>
+    <div class="riquadro mese-card dm-lista">${d.schede.map(riga).join('')}
+      <button class="dm-tutto" data-ds-vai="">Tutto il mese, riga per riga<em>›</em></button></div>`;
+  // 2. Obiettivi: guardare avanti (quelli di questo mese) e indietro (com'è andato il mese scorso)
+  const rigaOb = limitato() || d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(D.nomeMese(d.mese))}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
+  const rigaConf = !limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : '';
+  if (rigaOb || rigaConf) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}${rigaConf}</div>`;
+  // 3. Dove vado: il percorso verso il 1° livello (la card del Check), staccata, col suo titolo
+  if (!limitato()) html += `<div class="zona-oggi">${vediTutti() ? 'Dove vanno' : io || !nomeDi(visto()) ? 'Dove vado' : `Dove va ${esc(nomeDi(visto()).split(/\s+/)[0])}`}</div>
+    <div id="ds-card-check">${cardCheckHtml('fuori')}</div>`;
   return html;
+}
+// La sottopagina «Il mio mese»: tutte le aree già aperte, riga per riga; si scorre fino all'area toccata
+function disegnaMese(vai) {
+  const d = DS.dati, D = MB21Dashboard;
+  if (!d) return disegnaOggi();
+  const mese = D.nomeMese(d.mese).toLowerCase();
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+    <h1>Il mio mese · ${esc(mese)}</h1>
+    <div class="sotto" style="margin-bottom:8px">${d.giorni === 1 ? 'Resta 1 giorno' : `Restano ${d.giorni} giorni`}. Il numero grande è quanto serve al giorno; dove non si fa ogni giorno, quanti ne mancano.</div>
+    ${d.schede.map(x => `<div class="dm-etichetta" id="dm-${x.chiave}" style="color:${x.colore}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</div>
+      <div class="riquadro mese-card dm-corpo">${x.riquadri.map(r => rigaMeseHtml(x, r)).join('')}</div>`).join('')}${versione()}`;
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  const punto = vai && document.getElementById('dm-' + vai);
+  if (punto) punto.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
 }
 
 // i colori veri dell'app: BBS blu, WES rosso, CEP verde, come le targhette. `coloreSv(k)` il colore pieno, `tintaSv` la casella che si accende.
@@ -1286,14 +1304,7 @@ function collegaDashboard() {
   su('ds-check', apriCheck);
   su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
   // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
-  app.querySelectorAll('[data-ds-sez]').forEach(b => {
-    b.onclick = () => {
-      const k = b.dataset.dsSez;
-      if (DS.aperte.has(k)) DS.aperte.delete(k); else DS.aperte.add(k);
-      try { localStorage.setItem('mb21_ds_sezioni', JSON.stringify([...DS.aperte])); } catch (e) {}
-      disegnaOggi();
-    };
-  });
+  app.querySelectorAll('[data-ds-vai]').forEach(b => { b.onclick = () => disegnaMese(b.dataset.dsVai); });
 }
 
 // Obiettivi del mese (lavoro 5): un foglio con i 12 obiettivi raggruppati come le schede, già compilati
