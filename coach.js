@@ -173,14 +173,6 @@
     return null;
   }
 
-  // Le obiezioni del telefono con la loro risposta (cantiere 48): per «Se fa un'obiezione…» nella card della coda, senza quiz. `situazione` come
-  // quella della chat (telefonata · telefonata_partner · telefonata_cliente). → [{ nome, carta }] nell'ordine dei mazzi, una carta per obiezione
-  function obiezioniDelTelefono(mazzi, situazione) {
-    const nomi = [];
-    for (const m of mazzi || []) for (const c of (m && m.carte) || []) if (c.obiezione && !nomi.includes(c.obiezione)) nomi.push(c.obiezione);
-    return nomi.map(nome => ({ nome, carta: cartaDi(mazzi, nome, [situazione]) })).filter(x => x.carta);
-  }
-
   // I tentativi a vuoto di fila (cantiere 48, Ignazio 29/09: «risulta spento per due volte di fila»): al 2° «Telefono spento» o al 3° «No Risposta» di fila
   // il coach propone un altro canale. `esiti`: gli esiti delle telefonate di quel contatto, dal più recente (il tocco appena dato è il primo).
   const SOGLIA_VUOTI = { 'Telefono spento': 2, 'No Risposta': 3 };
@@ -352,7 +344,7 @@
     return { stato, fine };
   }
 
-  const api = { SENZA_PAROLE, SOGLIA_VUOTI, CANALI, vuotiDiFila, altroCanale, situazione, riempi, telefonata, corta, cartaDi, obiezioniDelTelefono, monta, riflessioneDa, ricordi, chat };
+  const api = { SENZA_PAROLE, SOGLIA_VUOTI, CANALI, vuotiDiFila, altroCanale, situazione, riempi, telefonata, corta, cartaDi, monta, riflessioneDa, ricordi, chat };
   if (nodo) module.exports = api;
   else radice.MB21Coach = api;
 })(this);
