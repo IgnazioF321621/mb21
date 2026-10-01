@@ -1155,6 +1155,9 @@ function collegaDashboard() {
 // con quelli del mese (o del mese scorso). «Come <mese>» riempie, «Scelgo io» svuota, la barra «Crescita su <mese>»
 // (5 · 10 · 20 · 30 · 40 · 50%) ricalcola tutti i campi mentre si sposta; sopra il 20% un avviso.
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
+// Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
+const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
+const ETICHETTA_FOGLIO = { vpp: 'VPP · totale', vpv: 'di cui VP Clienti', vpg: 'VPG · totale del gruppo', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Sponsor Personali' };
 function apriObiettivi() {
   if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
@@ -1196,7 +1199,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${k === 'vpp' ? ' class="ob-totale"' : ''}>${esc(k === 'vpp' ? 'VPP · totale' : k === 'vpv' ? 'di cui VP Clienti' : etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}`).join('')}
     </div></div>`).join('')}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
@@ -1225,9 +1228,19 @@ function apriObiettivi() {
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? (nuovi[k] ?? '') : '';
-    consumoDaVpp(); ricordaQuota();
+    consumoDaVpp(); ricordaQuota(); dalGruppo();
   };
-  consumoDaVpp(); ricordaQuota();
+  // Nuovi Iscritti è il totale e Sponsor Personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
+  campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
+  campo('sponsor_personali').addEventListener('input', () => { const p = numero('sponsor_personali'); if (p > numero('sponsor_gruppo')) scriviNum('sponsor_gruppo', p); });
+  // «Gli altri da dove vengono?»: sotto il VPG, quanti dei suoi punti non sono i tuoi (VPG meno VPP): li portano i nuovi iscritti e il gruppo, quindi le azioni qui sotto
+  const dalGruppo = () => {
+    const g = numero('vpg'), p = numero('vpp'), el = velo.querySelector('#ob-dal-gruppo');
+    const altri = Math.round((g - p) * 100) / 100;
+    el.textContent = g > 0 && p > 0 ? (altri > 0 ? `Dal gruppo: ${altri.toLocaleString('it-IT')} VP, con i nuovi iscritti (in Azione)` : 'Il VPG è già coperto dal tuo VPP') : '';
+  };
+  for (const id of ['vpp', 'vpg']) campo(id).addEventListener('input', dalGruppo);
+  consumoDaVpp(); ricordaQuota(); dalGruppo();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner

@@ -876,8 +876,11 @@
   .ob-campi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .ob-campi label { font-size: 13px; font-weight: 600; color: var(--grigio); }
   .ob-campi input { margin: 4px 0 0; padding: 10px; font-size: 17px; }
-  .ob-campi label.ob-totale { grid-column: 1 / -1; color: var(--gr-volume); font-weight: 700; }   /* VPP: il totale, a tutta larghezza, in evidenza (01/10) */
-  .ob-campi label.ob-totale input { background: var(--gr-volume-tinta); border: 2px solid var(--gr-volume); color: var(--gr-volume); font-size: 22px; font-weight: 800; }
+  .ob-campi label.ob-totale { grid-column: 1 / -1; font-weight: 700; --tot: var(--gr-volume); --tot-tinta: var(--gr-volume-tinta); color: var(--tot); }   /* i totali (VPP, VPG, Nuovi Iscritti): a tutta larghezza, in evidenza (01/10) */
+  .ob-campi label.ob-totale.ob-az { --tot: var(--gr-azione); --tot-tinta: var(--gr-azione-tinta); }
+  .ob-campi label.ob-totale input { background: var(--tot-tinta); border: 2px solid var(--tot); color: var(--tot); font-size: 22px; font-weight: 800; }
+  .ob-dal-gruppo { grid-column: 1 / -1; font-size: 13px; color: var(--gr-volume); margin: -2px 2px 2px; }
+  .ob-dal-gruppo:empty { display: none; }
   .visione { display: block; margin: 14px auto; min-height: var(--tocco); border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--testo-soft); }
   .sv { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
   .sv h3 { margin: 0; font-size: 20px; }
