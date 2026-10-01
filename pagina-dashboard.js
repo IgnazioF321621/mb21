@@ -929,6 +929,10 @@ function collegaRiordini() {
 // ── DASHBOARD (Fase 3) ───────────────────────────────────
 // Copia della Dashboard di Glide (docs/MB21_v3_Dashboard_Agenda_come_e.md), brief Fase 3. Calcoli in dashboard.js.
 // Ordine: Partner Select · banner · 4 schede · visione completa · [OGGI] · Segni Vitali · Mostra di più.
+// Obiettivi del mese spenti per i partner (Ignazio 01/10): finché il foglio nuovo (scala dei bonus, Segni Vitali) non è pronto, il riquadro,
+// il banner, la riga «Obiettivi di <mese>» e il foglio li vede e li usa solo l'Admin. Per riaprirli a tutti: `true`.
+const OBIETTIVI_PER_TUTTI = false;
+const obiettiviAperti = () => OBIETTIVI_PER_TUTTI || eAdmin();
 const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 
 async function caricaDashboard(oggi) {
@@ -1068,7 +1072,7 @@ function dashboardTesta() {
         <button id="ds-rinnova">Rinnova subito →</button></div>`;
   html += riquadriBiglietto();
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
-  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
+  if (d.obiettiviMancanti && !limitato() && obiettiviAperti()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
   return html;
 }
@@ -1085,9 +1089,9 @@ function dashboardNumeri() {
       <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
       <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
-      <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(t)}</li>`).join('')}</ul>
+      <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(!obiettiviAperti() && t === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t)}</li>`).join('')}</ul>
     </div>`).join('')}</div>
-    ${limitato() ? '' : `${d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`}
+    ${limitato() ? '' : `${d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`}
       <div id="ds-card-check">${cardCheckHtml(true)}</div>`}
     </div>`;
   // la card «Il tuo Check» (Ignazio 27/09) prende il posto del tassello «Visione completa»/«Check»: una porta sola per il Check
@@ -1152,7 +1156,7 @@ function collegaDashboard() {
 // (5 · 10 · 20 · 30 · 40 · 50%) ricalcola tutti i campi mentre si sposta; sopra il 20% un avviso.
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 function apriObiettivi() {
-  if (ST.offline || !DS.dati || soloGuardo()) return;
+  if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
   const { valori, mesePrima } = D.propostaObiettivi(DS.obiettivi, mese, 'attuali');
   const prima = mesePrima ? D.nomeMese(mesePrima).toLowerCase() : null;
@@ -1173,6 +1177,7 @@ function apriObiettivi() {
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34)
   velo.innerHTML = `<div class="foglio alto mc">
+    ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
@@ -1284,7 +1289,7 @@ function apriObiettivi() {
 const GIORNI_RIQUADRO_OBIETTIVI = 5;
 function mostraRiquadroObiettivi() {
   const d = DS.dati;
-  if (!d || !d.obiettiviMancanti || limitato() || ST.offline || soloGuardo() || vediTutti()) return;
+  if (!d || !d.obiettiviMancanti || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti()) return;
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
   if (ST.riquadroObMostrato) return;
@@ -1293,6 +1298,7 @@ function mostraRiquadroObiettivi() {
   const velo = document.createElement('div');
   velo.className = 'velo centro';
   velo.innerHTML = `<div class="riquadro-ob" role="dialog" aria-label="Obiettivi di ${esc(mese)}">
+    ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <span class="ico">${ic('obiettivi')}</span>
     <h2>È iniziato ${esc(mese)}</h2>
     <p>Prima di cominciare, ti consiglio di scegliere i tuoi obiettivi del mese: ti bastano due minuti e tutto il mese ha una direzione.</p>
