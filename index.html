@@ -881,6 +881,7 @@
   .ob-campi label.ob-totale input { background: var(--tot-tinta); border: 2px solid var(--tot); color: var(--tot); font-size: 22px; font-weight: 800; }
   .ob-dal-gruppo { grid-column: 1 / -1; font-size: 13px; color: var(--gr-volume); margin: -2px 2px 2px; }
   .ob-dal-gruppo:empty { display: none; }
+  .ob-dal-gruppo.ob-az { color: var(--gr-azione); }   /* le indicazioni sotto PM e Contatti, in arancio come l'Azione */
   /* «Le tue linee» (01/10): nome e VP per riga */
   .ob-linee-testo { margin: 0 0 8px; font-size: 13px; color: var(--grigio); }
   .ob-linea { display: grid; grid-template-columns: 1fr 96px 34px; gap: 6px; margin-bottom: 6px; align-items: center; }
@@ -3637,7 +3638,7 @@ function lc1Html(oggi) {
     ${aperto ? `<div class="voci">${g2.voci.length ? g2.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')
       : `<div><span>${core && core.errore ? 'Non riesco a leggere il Modulo Core: riprova' : 'Leggo il Modulo Core…'}</span><span></span></div>`}</div>${consiglio(g2.consiglio)}
     <button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : ''}
-    <button class="sez core ${g3.fatto ? 'ok' : ''}" data-gradino="pace" aria-expanded="${apertoPace ? 'true' : 'false'}"><b>${g3.fatto ? '✓ ' : ''}Pacesetter${apertoPace ? '' : '<small>2 sponsor personali, 100 VP e CEP</small>'}</b><span><span class="st">${esc(g3.stato)}</span><span class="apri">${apertoPace ? '⌄' : '›'}</span></span></button>
+    <button class="sez core ${g3.fatto ? 'ok' : ''}" data-gradino="pace" aria-expanded="${apertoPace ? 'true' : 'false'}"><b>${g3.fatto ? '✓ ' : ''}Pacesetter${apertoPace ? '' : '<small>2 iscritti personali, 100 VP e CEP</small>'}</b><span><span class="st">${esc(g3.stato)}</span><span class="apri">${apertoPace ? '⌄' : '›'}</span></span></button>
     ${apertoPace ? `<div class="voci">${g3.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>${consiglio(g3.consiglio)}` : ''}
     ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}
     ${lv ? `<div class="livelli-t">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ''}</div>${lv.righe.map(r => { const ap = CK.aperti.has(r.chiave); return `
@@ -3661,11 +3662,11 @@ function passiHtml(r, mese) {
 }
 
 // Il percorso di un mese, calcolato una volta sola per la card del Check e per quella della Dashboard (27/09): il Modulo Core
-// (letto al bisogno), i gradini del mese (MB21Check.percorso, con gli sponsor personali scritti nel Check) e i livelli
+// (letto al bisogno), i gradini del mese (MB21Check.percorso, con gli iscritti personali scritti nel Check) e i livelli
 function statoPercorso(l) {
   const core = CK.core[l.mese];
   if (!core) caricaCoreCheck(l.mese);
-  // Pacesetter: gli sponsor personali scritti nel Check in quel mese (con un partner solo, CK.giorni sono tutti suoi)
+  // Pacesetter: gli iscritti personali scritti nel Check in quel mese (con un partner solo, CK.giorni sono tutti suoi)
   const sponsor = (CK.giorni || []).filter(g => g.data.slice(0, 8) + '01' === l.mese).reduce((t, g) => t + (Number(g.sponsor_personali) || 0), 0);
   const pc = MB21Check.percorso({ lc1: l, modulo: core && core.modulo ? core.modulo : null, sponsor });
   return { core, pc, lv: livelliCheck(l, pc.gradini[1].fatto) };

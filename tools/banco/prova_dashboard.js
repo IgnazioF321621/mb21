@@ -167,7 +167,16 @@ prova('Obiettivi: «Porta le mie prime linee» dal file Amway: solo le prime lin
   assert.deepEqual(D.lineeDaSquadra(null, null, 'IO', 202609), []);
 });
 
-prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
+prova('Obiettivi: come ci si arriva — 5 PM per 1 iscritto personale, 5 contatti per 1 PM (valori di partenza per tutti)', () => {
+  assert.deepEqual([D.CONTATTI_PER_PM, D.PM_PER_ISCRITTO], [5, 5]);
+  assert.deepEqual(D.percorsoAzione(1, 1, ''), { iscritti: 1, personali: true, pm: 5, contatti: 25, perPm: false });
+  assert.deepEqual(D.percorsoAzione(2, 5, ''), { iscritti: 2, personali: true, pm: 10, contatti: 50, perPm: false });   // contano gli iscritti personali, non il totale del gruppo
+  assert.deepEqual(D.percorsoAzione('', 3, ''), { iscritti: 3, personali: false, pm: 15, contatti: 75, perPm: false });  // un nome scritto solo nel gruppo: lo stesso 5
+  assert.deepEqual(D.percorsoAzione(1, 1, 8), { iscritti: 1, personali: true, pm: 5, contatti: 40, perPm: true });       // i contatti si calcolano sui PM scritti
+  assert.equal(D.percorsoAzione('', '', 8), null); assert.equal(D.percorsoAzione(0, 0, 3), null);
+});
+
+prova('Obiettivi: 12 campi, Iscritti personali compreso; almeno uno maggiore di zero', () => {
   assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 16);   // 12 + la squadra (linee riceventi, 15 Planner, prime linee, totale gruppo)
   assert.deepEqual(D.CAMPI_OBIETTIVI.find(g => g[0] === 'Squadra')[2].map(c => c[0]), ['linee_bonus', 'planner', 'prime_linee', 'totale_gruppo']);
   assert.ok(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).some(c => c[0] === 'sponsor_personali'));
