@@ -1663,22 +1663,33 @@ function apriObiettivi() {
 // ogni volta che si entra in Dashboard o si rientra nell'app (non a ogni ridisegno: si ricorda in memoria, e si dimentica
 // lasciando la Dashboard o uscendo dall'app) fino a quando non sono impostati. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
 const GIORNI_RIQUADRO_OBIETTIVI = 5;
+// Foglio nuovo (Ignazio 01/10): chi gli obiettivi li aveva già scritti con il foglio vecchio vede il riquadro UNA volta (dall'1 al 3 ottobre 2026):
+// «puoi rifarli, riportando i dati». Mai all'Admin («tranne per me»). Stessa finestra dell'avviso della sera (regole.ts → FOGLIO_NUOVO).
+const RIFAI_OBIETTIVI = { dal: '2026-10-01', al: '2026-10-03' };
+const chiaveRifaiOb = mese => `mb21_ob_rifai_${ST.utente.id}_${mese}`;
 function mostraRiquadroObiettivi() {
   const d = DS.dati;
-  if (!d || !d.obiettiviMancanti || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti()) return;
+  if (!d || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti() || eAdmin()) return;
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
+  const rifai = !d.obiettiviMancanti;   // li ha già: solo l'invito a rifarli nel foglio nuovo, una volta
+  if (rifai) {
+    if (ST.oggi < RIFAI_OBIETTIVI.dal || ST.oggi > RIFAI_OBIETTIVI.al) return;
+    try { if (localStorage.getItem(chiaveRifaiOb(d.mese))) return; } catch (e) { /* senza memoria: si mostra */ }
+  }
   if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
   if (ST.riquadroObMostrato) return;
   ST.riquadroObMostrato = true;   // una volta per ingresso: toccare una fascia ridisegna la Dashboard e non deve riaprirlo
+  if (rifai) { try { localStorage.setItem(chiaveRifaiOb(d.mese), '1'); } catch (e) { /* pazienza */ } }
   const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
   const velo = document.createElement('div');
   velo.className = 'velo centro';
   velo.innerHTML = `<div class="riquadro-ob" role="dialog" aria-label="Obiettivi di ${esc(mese)}">
     ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <span class="ico">${ic('obiettivi')}</span>
-    <h2>È iniziato ${esc(mese)}</h2>
-    <p>Prima di cominciare, ti consiglio di scegliere i tuoi obiettivi del mese: ti bastano due minuti e tutto il mese ha una direzione.</p>
-    <button class="primario" id="rob-si">Scelgo i miei obiettivi</button>
+    <h2>${rifai ? `Gli obiettivi di ${esc(mese)}, nel foglio nuovo` : `È iniziato ${esc(mese)}`}</h2>
+    <p>${rifai ? 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Ti bastano due minuti.'
+      : 'Prima di cominciare, ti consiglio di scegliere i tuoi obiettivi del mese: ti bastano due minuti e tutto il mese ha una direzione.'}</p>
+    <button class="primario" id="rob-si">${rifai ? 'Apro il foglio nuovo' : 'Scelgo i miei obiettivi'}</button>
     <button class="link" id="rob-no">Più tardi, vado alla Dashboard</button></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();

@@ -107,3 +107,22 @@ export function complimentiDelGiorno(c: ContiGiorno): string | null {
   if (!pezzi.length) return null;
   return pezzi.length === 1 ? pezzi[0] : `${pezzi.slice(0, -1).join(', ')} e ${pezzi[pezzi.length - 1]}`;
 }
+
+// ── Gli obiettivi del mese nell'avviso della sera (Ignazio 01/10: «il foglio degli obiettivi è nuovo e speciale») ──
+// Un avviso a parte (tocco → Dashboard, dove ci sono il riquadro e la riga «Obiettivi di <mese>»), mandato insieme a quello del Check.
+//  - dall'1 al 5 del mese, a chi gli obiettivi del mese non li ha ancora impostati: l'invito, ogni sera finché li imposta (come il riquadro della Dashboard)
+//  - dall'1 al 3 ottobre 2026, a chi li aveva già scritti con il foglio vecchio: «puoi rifarli nel foglio nuovo, riportando i dati», UNA volta sola
+//    (segno `obiettivi-rifai:<mese>:<utente>` in avvisi_mandati, che si pulisce dopo 3 giorni: per questo la finestra è di 3 giorni)
+// STESSA regola di `haObiettivi` in dashboard.js: almeno uno dei 12 obiettivi maggiore di zero.
+export const CAMPI_OBIETTIVI = ['vpp', 'vpv', 'vpg', 'contatti', 'pm', 'sponsor_personali', 'sponsor_gruppo', 'bbs', 'wes', 'cep', 'tracce', 'pagine'];
+export const haObiettivi = (o: Record<string, unknown> | null | undefined) => !!o && CAMPI_OBIETTIVI.some(k => Number(o[k]) > 0);
+const NOMI_MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+export const FOGLIO_NUOVO = { dal: '2026-10-01', al: '2026-10-03' };
+export type AvvisoObiettivi = { titolo: string; testo: string; rifai: boolean };
+export function avvisoObiettivi(giorno: string, obiettivi: Record<string, unknown> | null | undefined): AvvisoObiettivi | null {
+  const giornoDelMese = Number(giorno.slice(8, 10)), mese = NOMI_MESI[Number(giorno.slice(5, 7)) - 1];
+  if (giornoDelMese > 5) return null;
+  if (!haObiettivi(obiettivi)) return { titolo: `🎯 Gli obiettivi di ${mese}`, testo: `È iniziato ${mese}: nel foglio nuovo si scelgono i traguardi del mese, con il consiglio e le linee. Tocca per aprirlo.`, rifai: false };
+  if (giorno >= FOGLIO_NUOVO.dal && giorno <= FOGLIO_NUOVO.al) return { titolo: `🎯 Gli obiettivi di ${mese}, nel foglio nuovo`, testo: 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Tocca per aprirlo.', rifai: true };
+  return null;
+}
