@@ -946,7 +946,7 @@ async function caricaDashboard(oggi) {
     DS.daSegnare = seg.error ? [] : (seg.data || []);
     if (cm.error || ob.error) throw cm.error || ob.error;
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01', codiciDi()) : { checkMesi: cm.data, obiettivi: ob.data };
-    DS.obiettivi = dati.obiettivi;
+    DS.obiettivi = dati.obiettivi; DS.checkMesi = dati.checkMesi; DS.segniAl = segniAl;   // anche per i «Risultati» del modulo obiettivi
     DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl });
     if (!guardoAltri() && ST.utente.ruolo !== 'Admin' && !scad.error) { ST.scaduto = DS.dati.abbonamento === 'scaduto'; aggiornaTab(); }
   } catch (e) {
@@ -1155,7 +1155,12 @@ function apriObiettivi() {
   if (ST.offline || !DS.dati || soloGuardo()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
   const { valori, mesePrima } = D.propostaObiettivi(DS.obiettivi, mese, 'attuali');
-  const prima = mesePrima ? D.nomeMese(mesePrima) : null;
+  const prima = mesePrima ? D.nomeMese(mesePrima).toLowerCase() : null;
+  // I risultati sono del mese di calendario scorso, i traguardi dell'ultimo mese che ne aveva: di solito è lo stesso mese
+  const meseRis = D.meseSpostato(mese, -1);
+  const ris = D.risultatiMese({ checkMesi: DS.checkMesi || [], obiettivi: DS.obiettivi, mese: meseRis, oggi: ST.oggi, segniAl: DS.segniAl });
+  const nomeRis = D.nomeMese(meseRis).toLowerCase();
+  const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
   const velo = document.createElement('div');
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34)
@@ -1163,11 +1168,12 @@ function apriObiettivi() {
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
-    ${prima ? `<p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
-      <button data-modo="uguale">Come ${esc(prima.toLowerCase())}</button>
-      <button data-modo="vuoti">Scelgo io</button></div>
+    ${prima || ris ? `<p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
+      ${prima ? `<button data-modo="uguale">Obiettivi di ${esc(prima)}</button>` : ''}
+      ${ris ? `<button data-modo="risultati">Risultati di ${esc(nomeRis)}</button>` : ''}
+      <button data-modo="vuoti">Da zero</button></div>
       <div class="ob-crescita">
-        <div class="ob-crescita-testa">Crescita su ${esc(prima.toLowerCase())}: <b id="ob-perc">scegli</b></div>
+        <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
@@ -1184,16 +1190,22 @@ function apriObiettivi() {
   velo.querySelector('#ob-no').onclick = chiudi;
   const scrivi = nuovi => { for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) velo.querySelector('#ob-' + k).value = nuovi ? nuovi[k] : ''; };
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
-  velo.querySelectorAll('.ob-modi button').forEach(b => {
-    b.onclick = () => { sceltaModo(b); scrivi(b.dataset.modo === 'vuoti' ? null : D.propostaObiettivi(DS.obiettivi, mese, b.dataset.modo).valori); };
-  });
+  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, o niente (Da zero)
+  let base = null;
+  const valoriBase = () => (base === 'risultati' ? risValori : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
   const barra = velo.querySelector('#ob-barra');
+  const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
+  const azzeraBarra = () => { if (perc) { perc.textContent = 'scegli'; ambizioso.hidden = true; } };
+  velo.querySelectorAll('.ob-modi button').forEach(b => {
+    b.onclick = () => { base = b.dataset.modo; sceltaModo(b); azzeraBarra(); scrivi(base === 'vuoti' ? null : valoriBase()); };
+  });
   if (barra) barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
-    velo.querySelector('#ob-perc').textContent = `+${p}%`;
-    velo.querySelector('#ob-ambizioso').hidden = p <= D.SOGLIA_AMBIZIOSO;
-    sceltaModo(null);
-    scrivi(D.propostaObiettivi(DS.obiettivi, mese, 'crescita', p).valori);
+    perc.textContent = `+${p}%`;
+    ambizioso.hidden = p <= D.SOGLIA_AMBIZIOSO;
+    if (base === null || base === 'vuoti') base = prima ? 'uguale' : 'risultati';   // senza una scelta, si parte dai traguardi (o dai risultati se non ce ne sono)
+    sceltaModo(velo.querySelector(`.ob-modi button[data-modo="${base}"]`));
+    scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' ? '' : D.aumenta(Number(v), p)])));
   };
   if (barra) barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
   velo.querySelector('#ob-si').onclick = async () => {

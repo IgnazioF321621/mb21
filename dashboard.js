@@ -251,6 +251,9 @@
     };
   }
 
+  // Un numero + `percento`%, arrotondato in su (la barra della crescita, sia sugli obiettivi sia sui risultati)
+  const aumenta = (v, percento) => Math.ceil(Number((v * (1 + percento / 100)).toFixed(6)));
+
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 
   // Valori con cui si apre il modulo obiettivi del mese.
@@ -263,9 +266,26 @@
     const valori = {};
     for (const k of OBIETTIVI) {
       const v = base && base[k] != null && base[k] !== '' ? Number(base[k]) : null;
-      valori[k] = v == null ? '' : modo === 'crescita' ? Math.ceil(Number((v * (1 + percento / 100)).toFixed(6))) : v;
+      valori[k] = v == null ? '' : modo === 'crescita' ? aumenta(v, percento) : v;
     }
     return { valori, mesePrima: prima ? prima.mese : null };
+  }
+
+  // Risultati di un mese, uno per ogni obiettivo del modulo (stessa origine dei riquadri delle schede: Check del mese, file
+  // Amway, BBS/WES/CEP delle persone; in più Sponsor Personali, che ha il suo campo nel Check). Serve alla scelta «Risultati di
+  // <mese>» del modulo obiettivi. Restituisce { vpp, … , pagine } (0 dove non c'è niente) o null se il mese non ha nessun risultato.
+  function risultatiMese({ checkMesi, obiettivi, mese, oggi, segniAl }) {
+    const c = checkMesi.find(x => x.mese === mese) || {};
+    const o = obiettivi.find(x => x.mese === mese) || {};
+    const tot = applicaPersone(totaliMesi(checkMesi, obiettivi, mese), mese, oggi, segniAl)[mese] || {};
+    const da = { sponsor_personali: 'check:sponsor_personali' };
+    for (const sc of SCHEDE) for (const r of sc.riquadri) da[r.obiettivo] = r.da;
+    const ris = {};
+    for (const k of OBIETTIVI) {
+      const [fonte, campo] = (da[k] || '').split(':');
+      ris[k] = n(fonte === 'check' ? c[campo] : fonte === 'amway' ? o[campo] : tot[campo]);
+    }
+    return OBIETTIVI.some(k => ris[k] > 0) ? ris : null;
   }
 
   function nomeMese(mese) { return NOMI_MESI[Number(mese.slice(5, 7)) - 1]; }
@@ -325,7 +345,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

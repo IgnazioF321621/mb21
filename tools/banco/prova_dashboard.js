@@ -122,6 +122,22 @@ prova('Obiettivi: come il mese scorso, crescita 10% e 50%, attuali; partner nuov
   assert.equal(D.nomeMese('2026-09-01'), 'Settembre');
 });
 
+prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento sulla base scelta', () => {
+  const checkMesi = [{ mese: '2026-09-01', contatti: 40, pm: 12, sponsor_personali: 2, sponsor_gruppo: 3, vp_clienti: 120.5, tracce: 20, pagine: 150 }];
+  const ob = [{ mese: '2026-09-01', vpp_amway: 500, vpg_amway: 2100, contatti: 50 }];
+  const segniAl = giorno => ({ bbs: 4, wes: 8, cep: 6 });
+  const r = D.risultatiMese({ checkMesi, obiettivi: ob, mese: '2026-09-01', oggi: '2026-10-01', segniAl });
+  assert.deepEqual([r.vpp, r.vpv, r.vpg, r.contatti, r.pm, r.sponsor_personali, r.sponsor_gruppo, r.tracce, r.pagine], [500, 120.5, 2100, 40, 12, 2, 3, 20, 150]);
+  assert.deepEqual([r.bbs, r.wes, r.cep], [4, 8, 6]);          // BBS/WES/CEP dalle persone, fotografia a fine mese
+  assert.equal(r.contatti, 40);                                 // il risultato (40), non il traguardo (50)
+  assert.equal(D.risultatiMese({ checkMesi: [], obiettivi: [], mese: '2026-09-01', oggi: '2026-10-01' }), null);   // partner nuovo: niente scelta
+  assert.equal(D.risultatiMese({ checkMesi, obiettivi: ob, mese: '2026-08-01', oggi: '2026-10-01' }), null);        // un mese vuoto
+  assert.equal(D.aumenta(40, 10), 44);
+  assert.equal(D.aumenta(120.5, 10), 133);                      // arrotondato in su, come sugli obiettivi
+  assert.equal(D.aumenta(7, 5), 8);
+  assert.equal(D.meseSpostato('2026-10-01', -1), '2026-09-01');
+});
+
 prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
   assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 12);
   assert.ok(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).some(c => c[0] === 'sponsor_personali'));
