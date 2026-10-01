@@ -1205,7 +1205,7 @@ function dashboardTesta() {
 }
 
 // ── IL MIO MESE, OBIETTIVI, DOVE VADO (Ignazio 01/10): tre blocchi staccati, ognuno col suo titolo. In Dashboard il quadro (una riga per area, col numero che serve
-// al giorno); il dettaglio, riga per riga, è una sottopagina (`disegnaMese`) che si apre sull'area toccata, senza fisarmoniche che allungano la pagina.
+// al giorno); il dettaglio, riga per riga, è una sottopagina (`disegnaMeseDashboard`) che si apre sull'area toccata, senza fisarmoniche che allungano la pagina.
 // Una riga di «Il mio mese» a livello di sintesi: il suo primo numero (VPG 89 al giorno · Prime linee, ne mancano 5), la barra
 function rigaMeseHtml(x, r) {
   const D = MB21Dashboard, t = D.sintesiRiquadro(r), colore = t.stato === 'ok' ? 'var(--verde)' : x.colore;
@@ -1241,7 +1241,7 @@ function dashboardNumeri() {
   return html;
 }
 // La sottopagina «Il mio mese»: tutte le aree già aperte, riga per riga; si scorre fino all'area toccata
-function disegnaMese(vai) {
+function disegnaMeseDashboard(vai) {
   const d = DS.dati, D = MB21Dashboard;
   if (!d) return disegnaOggi();
   const mese = D.nomeMese(d.mese).toLowerCase();
@@ -1304,7 +1304,7 @@ function collegaDashboard() {
   su('ds-check', apriCheck);
   su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
   // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
-  app.querySelectorAll('[data-ds-vai]').forEach(b => { b.onclick = () => disegnaMese(b.dataset.dsVai); });
+  app.querySelectorAll('[data-ds-vai]').forEach(b => { b.onclick = () => disegnaMeseDashboard(b.dataset.dsVai); });
 }
 
 // Obiettivi del mese (lavoro 5): un foglio con i 12 obiettivi raggruppati come le schede, già compilati
