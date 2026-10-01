@@ -1759,6 +1759,22 @@
   .mese-t { display: block; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 8px; }
   .pc-card.dentro { background: none; border: 0; box-shadow: none; border-radius: 0; padding: 14px 0 0; margin: 14px 0 0; border-top: 1px solid var(--linea); }
   .pc-card.dentro .pc-apri { margin-top: 12px; padding: 12px 14px; border: 0; border-radius: var(--raggio-riga); background: var(--accento); color: var(--accento-su); }
+  .mese-guida, .dm-guida { font-size: 12px; color: var(--testo-soft); margin: -4px 0 6px; }
+  .dm-sez { border-top: 1px solid var(--bordo, rgba(0,0,0,.07)); }
+  .dm-sez:first-of-type { border-top: 0; }
+  .dm-testa { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 11px 0; text-align: left; min-height: 44px; }
+  .dm-testa b { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+  .dm-sunto { flex: 1; text-align: right; font-size: 13px; color: var(--testo-soft); min-width: 0; }
+  .dm-freccia { font-style: normal; color: var(--testo-soft); flex: 0 0 auto; }
+  .dm-corpo { padding-bottom: 6px; }
+  .dm-riga { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: baseline; padding: 6px 0 4px; }
+  .dm-riga .n { font-size: 14px; font-weight: 700; }
+  .dm-riga .n small.ev { font-size: 11px; font-weight: 600; opacity: .8; }
+  .dm-riga .g { font-size: 16px; font-weight: 800; text-align: right; white-space: nowrap; }
+  .dm-riga small { font-size: 12px; color: var(--testo-soft); }
+  .dm-riga small.r { text-align: right; }
+  .dm-barra { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--superficie-2); overflow: hidden; margin-top: 3px; }
+  .dm-barra div { height: 100%; transition: width .4s ease; }
   .mese-riga { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; border-radius: var(--raggio-riga);
     background: var(--superficie-2); color: var(--testo); padding: 12px 14px; margin-top: 10px; font: inherit; font-weight: 600; }
   .mese-riga b { display: block; font-size: 14px; } .mese-riga small { display: block; font-size: 12px; font-weight: 400; color: var(--testo-soft); margin-top: 2px; }
