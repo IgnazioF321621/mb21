@@ -204,7 +204,7 @@ prova('Coach corto: Relazione e No Interesse una riga sola, niente chat', async 
   assert.equal(C.corta(null, 'PM Fissato', nomi, 0, {}), null);
 });
 
-prova('Coach corto, incontro fissato: un tocco sull\'obiezione, «l\'hai superata» e la risposta del manuale; niente «L\'hai gestita?» né frase', async () => {
+prova('Coach corto, incontro fissato: un tocco sull\'obiezione, «l\'hai superata» e la risposta del manuale; nient\'altro', async () => {
   const passi = C.corta(B, 'PM Fissato', nomi, 0, { carta: carta(['telefonata']) });
   const r = await percorri(passi, ['Non ho tempo']);
   assert.equal(r.fum[0], 'Ottimo, Isabella! Piano con Anna.');
@@ -212,34 +212,25 @@ prova('Coach corto, incontro fissato: un tocco sull\'obiezione, «l\'hai superat
   assert.ok(r.fum.some(f => f.startsWith('Se torna fuori quando vi vedete, la risposta del manuale è: «Ti capisco')));
   assert.ok(!r.fum.some(f => /gestita|prossima volta/.test(f)));
   assert.deepEqual(r.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);                 // un elenco, come il Training se lo aspetta
-  assert.deepEqual(r.rif, ['pagina 13']);
+  assert.deepEqual(r.rif, []);                                                                        // niente «Per approfondire»
   const nessuna = await percorri(passi, ['Nessuna']);
   assert.deepEqual(nessuna.salvati, [{ chiave: 'obiezioni', risposta: ['Nessuna'] }]);
   assert.ok(nessuna.fum.includes('Invito chiaro.'));                                                   // la risposta del coach a «Nessuna» (la prima riga)
-  // se il foglio del nuovo appuntamento è stato annullato (fissato: false) si comporta come un richiamo
-  const annullato = await percorri(C.corta(B, 'PM Fissato', nomi, 0, { fissato: false, carta: carta(['telefonata']) }), ['È Amway?', 'Sì', 'Confermare il giorno prima']);
-  assert.ok(annullato.fum.includes('L’hai gestita?'));
 });
 
-prova('Coach corto, da richiamare: «L\'hai gestita?»; «No» porta alla carta del Training; poi la frase per la prossima volta', async () => {
-  const B2 = { ...B, esiti: [...B.esiti, 'Richiamare'], reazione: { ...B.reazione, Richiamare: [[{ c: 'Un richiamo è una porta aperta.' }]] },
-    prossima: { ...B.prossima, frasi: { ...B.prossima.frasi, Richiamare: ['Richiamare {chi} nel giorno fissato'] }, poi: { ...B.prossima.poi, Richiamare: 'Te lo ricordo.' } } };
+prova('Coach corto, da richiamare: un tocco sull\'obiezione e basta; il coach dice che la ritrovi in «Ripassa»', async () => {
+  const B2 = { ...B, esiti: [...B.esiti, 'Richiamare'], reazione: { ...B.reazione, Richiamare: [[{ c: 'Un richiamo è una porta aperta.' }]] } };
   const passi = C.corta(B2, 'Richiamare', nomi, 0, { carta: carta(['telefonata']) });
-  const no = await percorri(passi, ['Non ho tempo', 'No', 'Proporre un caffè']);
-  assert.ok(no.fum.includes('Succede. Nel Training c’è la carta «Non ho tempo»: ripassala prima di richiamare Anna.'));
-  assert.ok(no.fum.some(f => f.startsWith('La risposta del manuale: «Ti capisco')));
-  assert.deepEqual(no.salvati.map(x => x.chiave), ['obiezioni', 'gestita', 'prossima']);
-  assert.deepEqual(no.salvati[1].risposta, 'No');
-  assert.ok(no.fum.includes('Cosa farai la prossima volta?'));
-  const si = await percorri(passi, ['Non ho tempo', 'Sì', 'Richiamare Anna nel giorno fissato']);
-  assert.ok(si.fum.includes('Bene.') && !si.fum.some(f => f.startsWith('La risposta del manuale')));
-  assert.equal(si.salvati[1].risposta, 'Sì');
-  // senza carta (niente rete): si consiglia di ripassare il manuale, la chat prosegue
-  const senza = await percorri(C.corta(B2, 'Richiamare', nomi, 0, {}), ['Non ho tempo', 'No', 'Proporre un caffè']);
-  assert.ok(senza.fum.includes('Succede. Ripassa la risposta del manuale prima di richiamare Anna.'));
+  const r = await percorri(passi, ['Non ho tempo']);
+  assert.deepEqual(r.fum.filter(f => !f.startsWith('>')).slice(-1), ['La ritrovi in «Ripassa», nel Training, quando vuoi.']);
+  assert.ok(!r.fum.some(f => /gestita|Cosa farai|La risposta del manuale/.test(f)));               // tolti il 01/10: un tocco solo
+  assert.deepEqual(r.salvati.map(x => x.chiave), ['obiezioni']);
+  // senza carta per quell'obiezione (o senza rete): nessuna frase in più
+  const senza = await percorri(C.corta(B2, 'Richiamare', nomi, 0, {}), ['Non ho tempo']);
+  assert.ok(!senza.fum.some(f => f.includes('Ripassa')));
   // «Altro»: si scrive una riga (facoltativa)
-  const altro = await percorri(passi, ['Altro', 'Quanto si guadagna?', 'Sì', 'Proporre un caffè'].slice(0, 2).concat(['Fissare e basta']));
-  assert.deepEqual(altro.salvati.map(x => x.chiave), ['obiezioni', 'altro', 'prossima']);
+  const altro = await percorri(passi, ['Altro', 'Quanto si guadagna?']);
+  assert.deepEqual(altro.salvati.map(x => x.chiave), ['obiezioni', 'altro']);
 });
 
 prova('Coach corto con memoria: «L\'altra volta Anna diceva…»; «Sì» riprende quell\'obiezione, «No» la chiude, «Un\'altra» fa scegliere', async () => {
@@ -258,19 +249,14 @@ prova('Coach corto con memoria: «L\'altra volta Anna diceva…»; «Sì» ripre
   assert.ok(C.corta(B, 'PM Fissato', nomi, 0, { ricordo: { obiezioni: ['Costa troppo'] } }).some(p => p.c === 'Anna ti ha fatto domande?'));
 });
 
-prova('Coach corto: Ordine senza obiezioni; per i partner la domanda dei freni (un tocco) e la chiave «freni»; Prospect per una consulenza prodotti: le obiezioni dei prodotti', async () => {
-  const BC = { ...B, esiti: ['Ordine'], senza_obiezione: ['Ordine'], reazione: { Ordine: [[{ c: 'Un ordine!' }]] },
-    prossima: { c: 'Cosa farai la prossima volta?', frasi: { Ordine: ['Chiedere come si trova'] }, poi: { Ordine: 'Bene.' } } };
-  const o = await percorri(C.corta(BC, 'Ordine', nomi, 0, {}), ['Chiedere come si trova']);
-  assert.deepEqual(o.salvati.map(x => x.chiave), ['prossima']);
+prova('Coach corto: Ordine solo la reazione; per i partner nessun freno (la reazione e basta); Prospect per una consulenza prodotti: le obiezioni dei prodotti', async () => {
+  const BC = { ...B, esiti: ['Ordine'], senza_obiezione: ['Ordine'], reazione: { Ordine: [[{ c: 'Un ordine!' }]] } };
+  assert.deepEqual(C.corta(BC, 'Ordine', nomi, 0, {}).map(x => x.c), ['Un ordine!']);
   const BP = { ...B, domanda_obiezione: { c: 'C’è qualcosa che frena {chi}? Tocca tutto quello che è uscito.', nessuna: 'Niente', altro: 'Altro', avanti: 'Avanti', salva: 'freni' },
-    reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }]] }, obiezioni: { 'Poco tempo': { passi: [], frase: 'Organizzare l’agenda' } }, nessuna: {} };
+    reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }]], Richiamare: [[{ c: 'Vi risentite.' }]] }, obiezioni: { 'Poco tempo': { passi: [], frase: 'Organizzare l’agenda' } }, nessuna: {} };
   // con un Partner niente freni dopo la telefonata (Ignazio 29/09): la reazione e basta (e, con l'incontro fissato, il giorno e i passi: prova sotto)
-  const p = C.corta(BP, 'Appuntamento', nomi, 0, {});
-  assert.deepEqual(p.map(x => x.c), ['Bene: vi vedete.']);
-  const BR = { ...BP, esiti: ['Richiamare'], reazione: { Richiamare: [[{ c: 'Vi risentite.' }]] }, prossima: { c: 'Cosa farai la prossima volta?', frasi: { Richiamare: ['Richiamare {chi}'] }, poi: {} } };
-  const pr = await percorri(C.corta(BR, 'Richiamare', nomi, 0, {}), ['Richiamare Anna']);
-  assert.deepEqual(pr.salvati.map(x => x.chiave), ['prossima']);                                      // dopo il richiamo la frase, non i freni
+  assert.deepEqual(C.corta(BP, 'Appuntamento', nomi, 0, {}).map(x => x.c), ['Bene: vi vedete.']);
+  assert.deepEqual(C.corta(BP, 'Richiamare', nomi, 0, {}).map(x => x.c), ['Vi risentite.']);
   const BCP = { ...B, reazione: { ...B.reazione, 'Consulenza Prodotti': [[{ c: 'Consulenza fissata.' }]] } };
   const cp = C.corta(BCP, 'Consulenza Prodotti', nomi, 0, {});
   assert.deepEqual(cp[2].chiedi.map(x => x[0]).slice(0, 5), ['Nessuna', 'Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro']);
@@ -280,12 +266,13 @@ prova('Coach corto: Ordine senza obiezioni; per i partner la domanda dei freni (
 
 prova('Quale montatore: con `ctx` le telefonate hanno la forma corta, senza (pagina di prova privata) quella lunga; gli altri come prima', () => {
   assert.ok(C.monta('telefonata', B, 'PM Fissato', nomi, 0, {}).length < C.monta('telefonata', B, 'PM Fissato', nomi, 0).length);
-  // dopo il piano, il follow up e la consulenza la forma corta c'è, ma l'obiezione non è mai «superata»: sempre «L'hai gestita?»; le «domande di prima» restano
+  // dopo il piano, il follow up e la consulenza la forma corta c'è, senza le domande di prima (tolte il 01/10: un tocco solo)
   const BP = { ...B, prima: [{ c: 'Cosa ha colpito di più {chi}?' }, { salva: 'colpito', chiedi: [['Il reddito', [{ c: 'Il reddito colpisce quasi tutti.' }]]] }] };
   for (const sit of ['piano_marketing', 'follow_up', 'consulenza']) {
     const passi = C.monta(sit, BP, 'PM Fissato', nomi, 0, {});
     assert.ok(passi.length < C.monta(sit, BP, 'PM Fissato', nomi, 0).length);
-    assert.equal(passi[1].c, 'Cosa ha colpito di più Anna?');
+    assert.ok(!passi.some(p => p.c === 'Cosa ha colpito di più Anna?'));
+    assert.ok(passi.some(p => p.chiedi));
   }
   // gli altri (Appuntamento con un Partner, Rimandato e No Show) restano come prima, anche con `ctx`
   for (const sit of ['appuntamento_partner', 'non_avvenuto'])
@@ -315,25 +302,23 @@ function foglioFinto() {
 }
 prova('Il motore: il tocco sull\'obiezione si salva come elenco, «Sì» dell\'altra volta salva l\'obiezione, la carta del Training arriva a chat in corso', async () => {
   const foglio = foglioFinto();
-  const passi = C.corta({ ...B, prossima: { ...B.prossima, frasi: { ...B.prossima.frasi, 'PM Fissato': ['Confermare il giorno prima'] } } }, 'PM Fissato', nomi, 0,
-    { ricordo: { obiezioni: ['Non ho tempo'] }, carta: carta(['telefonata']) });
+  const passi = C.corta(B, 'PM Fissato', nomi, 0, { ricordo: { obiezioni: ['Non ho tempo'] }, carta: carta(['telefonata']) });
   const { stato, fine } = C.chat(foglio, passi, { veloce: true });
   await foglio.tocca('Sì');
   const salvate = await fine;
   assert.deepEqual(salvate, [{ chiave: 'obiezioni', domanda: 'L’altra volta Anna diceva «Non ho tempo»: è tornato fuori?', risposta: ['Non ho tempo'] }]);
   assert.ok(foglio.fumetti.includes('> Sì'));
   assert.ok(foglio.fumetti.some(f => f.startsWith('Se torna fuori quando vi vedete')));
-  assert.ok(foglio.fumetti.includes('Per approfondire quello che ci siamo detti:'));                 // la pagina del manuale dell'obiezione
-  assert.deepEqual(stato.rif, [['manuale', 'pagina 13']]);
-  // da richiamare: obiezione nuova, «No» → la carta → la frase
+  assert.ok(!foglio.fumetti.includes('Per approfondire quello che ci siamo detti:'));                // tolto il 01/10
+  assert.deepEqual(stato.rif, []);
+  // da richiamare: obiezione nuova → una riga e basta, senza altri tocchi
   const f2 = foglioFinto();
-  const B2 = { ...B, reazione: { ...B.reazione, Richiamare: [[{ c: 'Porta aperta.' }]] },
-    prossima: { ...B.prossima, frasi: { Richiamare: ['Richiamare Anna'] }, poi: { Richiamare: 'Segnato.' } } };
+  const B2 = { ...B, reazione: { ...B.reazione, Richiamare: [[{ c: 'Porta aperta.' }]] } };
   const r2 = C.chat(f2, C.corta(B2, 'Richiamare', nomi, 0, { carta: carta(['telefonata']) }), { veloce: true });
-  await f2.tocca('È Amway?'); await f2.tocca('No'); await f2.tocca('Richiamare Anna');
+  await f2.tocca('Non ho tempo');
   const salvate2 = await r2.fine;
-  assert.deepEqual(salvate2.map(x => [x.chiave, x.risposta]), [['obiezioni', ['È Amway?']], ['gestita', 'No'], ['prossima', 'Richiamare Anna']]);
-  assert.ok(f2.fumetti.includes('Succede. Ripassa la risposta del manuale prima di richiamare Anna.'));   // per «È Amway?» qui non c'è la carta
+  assert.deepEqual(salvate2.map(x => [x.chiave, x.risposta]), [['obiezioni', ['Non ho tempo']]]);
+  assert.ok(f2.fumetti.includes('La ritrovi in «Ripassa», nel Training, quando vuoi.'));
 });
 
 prova('Tentativi a vuoto di fila: al 2° «Telefono spento» o al 3° «No Risposta» il coach propone un altro canale, con le parole di Ignazio', () => {
@@ -407,7 +392,7 @@ prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e Lis
   const passi = C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['Motivazione', 'ListaStart'], quando: 'Giovedì' }, preparazione: prep });
   assert.deepEqual(passi.map(p => p.c), ['Bene: vi vedete.', 'Giovedì con Anna lavorate su Il perché e Lista Start.', 'Il manuale suggerisce tre domande.', 'Il manuale propone di partire da 20-30 persone.']);
   assert.deepEqual(passi[2].fonte, ['Manuale di Avvio, pagina 28', true]);
-  assert.deepEqual(passi[2].rif, ['manuale', 'leggi il Manuale di Avvio, pagina 28']);            // finisce in «Per approfondire»
+  assert.ok(!passi.some(p => p.rif));                                                                 // niente «Per approfondire»: la pagina è già sotto il fumetto
   assert.ok(!passi.some(p => p.chiedi || p.frase));                                                   // niente freni, niente frase: l'incontro è fissato
   // un passo solo; tre passi (virgola e «e»); un passo che la preparazione non conosce si salta
   assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Domani' }, preparazione: prep })[1].c, 'Domani con Anna lavorate su Role Play.');
@@ -418,6 +403,27 @@ prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e Lis
   assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' } }).length, 1);
   // i Prospect non cambiano: niente di tutto questo
   assert.ok(C.corta(B, 'PM Fissato', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' }, preparazione: prep }).some(p => p.chiedi));
+});
+
+prova('Prima telefonata: la riga di preparazione solo per chi non è mai stato chiamato, mai insieme a «Ti eri detto…», mai un ordine', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const righe = { riflessione: [], esiti: [{ contatto_id: 'vecchio' }] };
+  const ctx = { MB21Coach: C, ST: {}, esc: x => x, ic: () => '', console, mostraToast() {},
+    supa: { from: (t) => { const q = { _s: null, select(c) { q._s = c; return q; }, eq() { return q; }, in() { return q; }, order() { return q; }, limit() { return q; },
+      maybeSingle() { q._m = true; return q; }, not() { return q; },
+      then(res) { if (t === 'coach_batterie') return res({ data: { batteria: { prima_telefonata: { c: 'Il manuale consiglia due date pronte.', fonte: 'Manuale di Avvio, pagine 8-11' } } }, error: null });
+        res({ data: q._s === 'contatto_id' ? righe.esiti : righe.riflessione, error: null }); } }; return q; } } };
+  ctx.dbq = (_, p) => Promise.resolve(p);
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  assert.equal(ctx.preparaChiamataHtml('nuovo'), '');                                   // prima di leggere niente: niente
+  await ctx.caricaRicordi(['nuovo', 'vecchio']);
+  assert.match(ctx.preparaChiamataHtml('nuovo'), /Il manuale consiglia due date pronte\..*Manuale di Avvio, pagine 8-11/);
+  assert.equal(ctx.preparaChiamataHtml('vecchio'), '');                                 // ha già un esito: non è la prima volta
+  assert.equal(ctx.preparaChiamataHtml('sconosciuto'), '');                             // non letto: niente
+  vm.runInContext("RICORDI.nuovo = { frase: 'x', obiezioni: [] }", ctx);
+  assert.equal(ctx.preparaChiamataHtml('nuovo'), '');                                   // con «Ti eri detto…» non si somma
+  assert.ok(!/\b(Prepara|Chiama|Scegli)\b/.test(ctx.preparaChiamataHtml('nuovo') + 'Il manuale consiglia'));
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

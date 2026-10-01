@@ -675,6 +675,8 @@ async function sezioneAzioni() {
   // il promemoria «Ti eri detto…» (cantiere 42): dalle azioni appena lette, lo stesso riquadro di MB Plan e della coda,
   // dentro l'azione ancora da completare (Ignazio 24/09: «aggiungilo anche nella scheda»)
   RICORDI[c.id] = MB21Coach.ricordi(LS.azioni.filter(a => a.contatto_id === c.id))[c.id] || null;
+  PRIME_VOLTE[c.id] = !LS.azioni.some(a => a.contatto_id === c.id && a.esito);   // mai chiamato: la riga di preparazione prima della prima telefonata
+  await batteriaCoach('preparazione_incontro');
   // Card stretta (Ignazio 24/09, «nel telefono è tutto molto lungo»): riga 1 tipo · modalità con la data a destra, riga 2 area · esito · nota.
   // Azione già chiusa: il blocco degli esiti resta vuoto e «Cambia esito» sta nella riga dei comandi; al tocco il blocco si apre lì sopra.
   const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}</div></div>`;
@@ -696,6 +698,7 @@ async function sezioneAzioni() {
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${a.esito ? '' : ricordoHtml(c.id, c.nome)}
+      ${a.esito || a.tipo_azione !== 'Contatto' || (a.modalita && a.modalita !== 'Telefonata') ? '' : preparaChiamataHtml(c.id)}
       ${chiusa ? `<div class="blocco-esiti" data-blocco="${esc(a.id)}"></div>` : blocco}
       <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;

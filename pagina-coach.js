@@ -165,11 +165,16 @@ async function tentativiAVuoto(e, esito) {
 // persona»): nella coda (la card aperta) e in Agenda (un impegno ancora da fare, o un richiamo dalla coda) torna la frase per la
 // prossima volta dell'ultima riflessione con quella persona, con le domande di quella volta. Si legge ogni volta che coda e Agenda
 // si caricano, solo per i contatti che servono (MB21Coach.ricordi sceglie l'ultima); senza rete, semplicemente non si vede.
+const PRIME_VOLTE = {};   // contatto_id → true se non ha ancora nessun esito (mai chiamato), false se sì; non letto = niente
 const RICORDI = {};   // contatto_id → { frase, obiezioni, … } oppure null (letto: niente da ricordare)
 async function caricaRicordi(ids) {
   const tutti = [...new Set((ids || []).filter(Boolean))];
+  if (tutti.length) await batteriaCoach('preparazione_incontro');   // la riga di preparazione per chi non è mai stato chiamato (preparaChiamataHtml)
   for (let i = 0; i < tutti.length; i += 80) {   // a pezzi: l'indirizzo della richiesta resta corto
     const pezzo = tutti.slice(i, i + 80);
+    // mai chiamato: nessuna azione con un esito (cantiere 48, Ignazio 01/10: la stessa riga di preparazione in coda, in MB Plan e nella scheda)
+    const fatte = await dbq('già chiamati', supa.from('azioni').select('contatto_id').in('contatto_id', pezzo).not('esito', 'is', null));
+    if (!fatte.error) { const gia = new Set((fatte.data || []).map(x => x.contatto_id)); for (const id of pezzo) PRIME_VOLTE[id] = !gia.has(id); }
     const { data, error } = await dbq('promemoria del coach', supa.from('azioni')
       .select('id, contatto_id, inizio, creato_il, riflessione').in('contatto_id', pezzo).not('riflessione', 'is', null));
     if (error) return;
@@ -182,4 +187,13 @@ function ricordoHtml(contattoId, nome) {
   if (!r) return '';
   const chi = primoNome(nome);
   return `<div class="ricordo">${ic('prossimo')}<div>${r.obiezioni.length ? `<small>L'ultima volta${chi ? ` con ${esc(chi)}` : ''}: ${esc(r.obiezioni.join(' · '))}${r.daRipassare ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}</div></div>`;
+}
+
+// La riga di preparazione prima della prima telefonata (cantiere 48, Ignazio 01/10: «stessa riga in tutte e due», coda e MB Plan; e nella scheda):
+// per chi non è mai stato chiamato, un consiglio dal manuale. Una riga, sempre la stessa, mai un ordine. Si vede solo se non c'è già «Ti eri detto…».
+// Il testo è nell'archivio privato (`preparazione_incontro` → `prima_telefonata`); senza rete non compare.
+function preparaChiamataHtml(contattoId) {
+  const prep = COACH.batterie.preparazione_incontro, r = prep && prep.prima_telefonata;
+  if (!r || PRIME_VOLTE[contattoId] !== true || RICORDI[contattoId]) return '';
+  return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}<small style="margin:4px 0 0">${esc(r.fonte)}</small></div></div>`;
 }
