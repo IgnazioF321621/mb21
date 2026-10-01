@@ -100,5 +100,19 @@ const assert = require('node:assert/strict');
     assert.equal(R.complimentiDelGiorno({ contatti: 0, fissati: 1, pm: 2, vendite: 0 }), '1 appuntamento fissato e 2 PM');
   });
 
+  prova('obiettivi del mese nell\'avviso: invito a chi non li ha, «rifalli» una volta a chi li aveva (1-3 ottobre), poi niente', () => {
+    assert.equal(R.haObiettivi(null), false); assert.equal(R.haObiettivi({ vpp: 0, pm: null }), false); assert.equal(R.haObiettivi({ vpp: 0, pm: 5 }), true);
+    const invito = R.avvisoObiettivi('2026-10-01', null);
+    assert.equal(invito.titolo, '🎯 Gli obiettivi di ottobre'); assert.equal(invito.rifai, false);
+    assert.equal(R.avvisoObiettivi('2026-10-05', { vpp: 0 }).rifai, false);                 // ancora senza obiettivi: l'invito dura fino al 5
+    assert.equal(R.avvisoObiettivi('2026-10-06', null), null);                              // dal 6 niente
+    const rifai = R.avvisoObiettivi('2026-10-01', { vpp: 120 });
+    assert.equal(rifai.rifai, true); assert.match(rifai.testo, /rifarli, riportando i dati/);
+    assert.equal(R.avvisoObiettivi('2026-10-03', { vpg: 1000 }).rifai, true);
+    assert.equal(R.avvisoObiettivi('2026-10-04', { vpg: 1000 }), null);                     // il «rifalli» è solo dei primi tre giorni
+    assert.equal(R.avvisoObiettivi('2026-11-01', { vpg: 1000 }), null);                     // a novembre chi li ha già non riceve niente
+    assert.equal(R.avvisoObiettivi('2026-11-02', null).titolo, '🎯 Gli obiettivi di novembre');
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
