@@ -73,7 +73,7 @@ async function caricaOggi() {
   }
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi)]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi)]);
   disegnaOggi();
 }
 
@@ -229,7 +229,7 @@ function zonaOggiHtml() {
     RIO.righe.length, true, riordiniHtml, true);
 
   // 5-7. Le grigie: tracce, da catalogare, partner da avviare (l'HTML ce l'hanno già loro)
-  const grigie = [tracceHtml(), catalogoHtml(), avvioHtml()].filter(Boolean);
+  const grigie = [tracceHtml(), catalogoHtml(), avvioHtml(), obiettiviTeamHtml()].filter(Boolean);
 
   // 8. Il Check della sera: grigio di giorno, blu (e primo) dalle 20 se non è ancora fatto
   let check = '';
@@ -282,6 +282,8 @@ function disegnaOggi() {
   }
   const sezGiorno = document.getElementById('sez-giorno');
   if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
+  const rigaObTeam = document.getElementById('dash-obteam');
+  if (rigaObTeam) rigaObTeam.onclick = () => { OBT.aperto = null; window.scrollTo(0, 0); disegnaObiettiviTeam(); };
   const rigaAvvio = document.getElementById('dash-avvio');
   if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('sez-riordini');
@@ -769,6 +771,55 @@ function collegaMioAvvio(ridisegna = disegnaOggi, ritorno = null) {
   if (concluso) concluso.onclick = () => concludi(true);
   const riapri = document.getElementById('mio-avvio-riapri');
   if (riapri) riapri.onclick = () => concludi(false);
+}
+
+// ── Obiettivi dei partner (Ignazio 01/10): per chi sta sopra, gli obiettivi del mese di chi gli sta sotto, SOLO IN LETTURA ──
+// Il database (`obiettivi_del_ramo`) dà già solo la discesa nella stessa linea; qui si tolgono anche l'Admin che guarda un altro (conta il ramo del partner
+// guardato) e chi non ha scritto niente. Con «Tutti» e offline non si mostra. Una riga grigia in Dashboard, il tocco apre la pagina dei nomi.
+const OBT = { righe: [], mese: null, aperto: null };
+async function caricaObiettiviTeam(oggi) {
+  OBT.righe = []; OBT.mese = String(oggi).slice(0, 7) + '-01';
+  if (ST.offline || vediTutti() || !obiettiviAperti() || !visto().partner_id) return;
+  try {
+    const mese = Number(OBT.mese.slice(0, 4) + OBT.mese.slice(5, 7));
+    const [ob, sq, vol] = await Promise.all([
+      dbq('obiettivi dei partner', supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })),
+      dbq('mappa per gli obiettivi', supa.from('squadra').select('partner_id, sponsor_id, nome')),
+      dbq('VPG di adesso dei partner', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mese)),
+    ]);
+    if (ob.error || sq.error || !ob.data) return;
+    OBT.righe = MB21Dashboard.obiettiviDelTeam({ obiettivi: ob.data.obiettivi, linee: ob.data.linee, squadra: sq.data, volumi: vol.error ? [] : vol.data, radice: visto().partner_id, mese });
+  } catch (e) {}
+}
+function obiettiviTeamHtml() {
+  const n = OBT.righe.length;
+  return n ? rigaApribile('dash-obteam', 'catalogare', 'obiettivi', 'Obiettivi dei partner',
+    `${n} ${n === 1 ? 'partner ha scritto' : 'partner hanno scritto'} gli obiettivi di ${MB21Dashboard.nomeMese(OBT.mese).toLowerCase()} · per aiutarli`, false, n) : '';
+}
+function disegnaObiettiviTeam() {
+  const D = MB21Dashboard, f = x => Number(x).toLocaleString('it-IT', { maximumFractionDigits: 2 }), altro = guardoAltri();
+  const nomeMese = D.nomeMese(OBT.mese).toLowerCase();
+  const card = r => {
+    const aperto = OBT.aperto === r.partner_id, gradino = r.valori.vpg > 0 ? MB21Check.gradinoDaVpg(r.valori.vpg) : null;
+    const riga = [r.valori.vpg > 0 ? `VPG ${f(r.valori.vpg)}${r.vpgOra != null ? ` · ora ${f(Math.round(r.vpgOra))}` : ''}` : '', gradino ? `bonus ${gradino}%` : '', r.valori.sponsor_gruppo > 0 ? `${f(r.valori.sponsor_gruppo)} ${r.valori.sponsor_gruppo === 1 ? 'nuovo iscritto' : 'nuovi iscritti'}` : ''].filter(Boolean).join(' · ');
+    const gruppi = D.CAMPI_OBIETTIVI.map(([nome, pallino, campi]) => {
+      const voci = campi.filter(([k]) => r.valori[k] > 0).map(([k, et, dec]) => `<div><span>${esc(et)}</span><b>${f(r.valori[k])}</b></div>`);
+      return voci.length ? `<div class="obt-gruppo"><h4>${escIcone(pallino)} ${esc(nome)}</h4>${voci.join('')}</div>` : '';
+    }).join('');
+    const linee = r.linee.length ? `<div class="obt-gruppo"><h4>Le sue linee</h4>${r.linee.map(l => `<div><span>${esc(MB21Mappa.nomeLeggibile(l.nome))}</span><b>${l.vp > 0 ? f(l.vp) : '—'}</b></div>`).join('')}</div>` : '';
+    return `<div class="riquadro avv-partner">
+      <button class="avv-testa" data-obt="${esc(r.partner_id)}">
+        <span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}
+          <small>${esc(riga) || 'Obiettivi scritti'}</small></span><span class="avv-conta">${aperto ? '⌄' : '›'}</span></button>
+      ${aperto ? `<div class="obt-corpo">${gruppi}${linee}</div>` : ''}
+    </div>`;
+  };
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+    <h1>${ic('obiettivi')} Obiettivi dei partner</h1>
+    <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner.</div>
+    ${OBT.righe.map(card).join('') || '<div class="vuoto">Nessun partner ha ancora scritto gli obiettivi.</div>'}${versione()}`;
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  app.querySelectorAll('[data-obt]').forEach(b => b.onclick = () => { OBT.aperto = OBT.aperto === b.dataset.obt ? null : b.dataset.obt; disegnaObiettiviTeam(); });
 }
 
 function disegnaAvvio() {
