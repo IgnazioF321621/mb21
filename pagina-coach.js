@@ -131,7 +131,7 @@ function recitaCoach(e, esito, passi, opz = {}) {
 
 // I tentativi a vuoto di fila (cantiere 48, Ignazio 29/09): dopo «Telefono spento» (2ª volta di fila) o «No Risposta» (3ª) il coach propone un altro
 // canale, a un tocco: Messaggio e Di persona aprono «Nuovo appuntamento» (Contatto, domani) col canale già scelto; «Chiedo a chi me l'ha dato» scrive
-// una cosa da fare per domani in MB Plan; «Lo metto da parte» chiede «Quando risentirlo?» (20 giorni). Gli esiti restano quelli (il Report li conta).
+// una cosa da fare per domani in MB Plan; «Lo archivio» sposta il contatto negli Archiviati (esce dalla coda; Annulla lo ripristina). Gli esiti restano quelli (il Report li conta).
 // Si apre da chiediRiflessione, cioè da dove si dà l'esito (coda e Agenda). Senza rete o con meno tentativi non succede niente.
 async function tentativiAVuoto(e, esito) {
   if (!MB21Coach.SOGLIA_VUOTI[esito] || !e.contatto_id) return null;
@@ -144,7 +144,7 @@ async function tentativiAVuoto(e, esito) {
   const C = MB21Coach.CANALI;
   const r = await recitaCoach(e, esito, [{ c: testo }, { salva: 'canale', chiedi: [
     [C[0], [{ c: 'Bene: un messaggio, scegli il giorno.' }]], [C[1], [{ c: 'Bene: di persona, scegli il giorno.' }]],
-    [C[2], [{ c: 'Bene: ti lascio una cosa da fare per domani.' }]], [C[3], [{ c: 'Bene: lo risenti più avanti.' }]]] }], { daSola: true, situazione: 'tentativi_a_vuoto' });
+    [C[2], [{ c: 'Bene: ti lascio una cosa da fare per domani.' }]], [C[3], [{ c: 'Bene: lo sposto negli Archiviati.' }]]] }], { daSola: true, situazione: 'tentativi_a_vuoto' });
   const canale = r && r.find(x => x.chiave === 'canale');
   if (!canale) return r || null;
   const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
@@ -156,8 +156,17 @@ async function tentativiAVuoto(e, esito) {
     const { error: e2 } = await dbq('cosa da fare', supa.from('cose_da_fare').insert({ user_id: e.user_id || ST.utente.id, contatto_id: e.contatto_id,
       testo: `Chiedere di ${primoNome(nome)} a chi ti ha dato il nome`, giorno: domani, scala: 'giorno', ordine: ((ultimo && ultimo[0] && ultimo[0].ordine) || 0) + 1 }));
     mostraToast(e2 ? 'Cosa da fare non salvata: riprova da MB Plan.' : 'Te la trovi in MB Plan, domani');
-  } else {
-    await chiediRientro(e.contatto_id, nome, 'Messo da parte', 20);
+  } else {   // «Lo archivio»: la stessa funzione di «Archivia» della Lista (`archivia_contatto`: esce dalla coda); con Annulla lo ripristini
+    const { error: e3 } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: e.contatto_id }));
+    if (e3) mostraToast('Non archiviato: riprova dalla scheda.');
+    else {
+      contattiMiei = null; LS.righe = [];
+      mostraToast(`${nome} spostato in Archiviati`, async () => {
+        const { error: e4 } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: e.contatto_id }));
+        contattiMiei = null; LS.righe = [];
+        mostraToast(e4 ? 'Non ripristinato: riprova dalla scheda.' : 'Ripristinato');
+      });
+    }
   }
   return r;
 }
