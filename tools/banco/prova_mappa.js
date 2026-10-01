@@ -288,6 +288,21 @@ prova('ordinePerMappa: i nomi come in Mappa, prima la propria squadra, con livel
   assert.equal(di.find(p => p.nome === 'Ignazio').livello, null);
 });
 
+prova('ordinePerMappa: il rientro conta solo gli avi presenti nell\'elenco — Valentina non è sotto Isabella (Ignazio 01/10)', () => {
+  // Valentina sta sotto Antonina, sotto Luca, sotto Ignazio; Luca e Antonina non sono nel menu: Valentina e Isabella restano alla pari
+  const sq = [{ partner_id: 'IG', sponsor_id: 'X', nome: 'FIORITO, IGNAZIO' }, { partner_id: 'IS', sponsor_id: 'IG', nome: 'SAMMITO, ISABELLA' },
+    { partner_id: 'LU', sponsor_id: 'IG', nome: 'CACCAMO, LUCA' }, { partner_id: 'AN', sponsor_id: 'LU', nome: 'ABELA, ANTONINA' },
+    { partner_id: 'VA', sponsor_id: 'AN', nome: 'SPADARO, VALENTINA' }, { partner_id: 'SI', sponsor_id: 'IG', nome: 'GIAVATTO, SIMONE' },
+    { partner_id: 'OR', sponsor_id: 'SI', nome: 'MICELI, ORNELLA' }, { partner_id: 'CA', sponsor_id: 'OR', nome: 'CARNEMOLLA, CAROLINA' }];
+  const vol = [{ partner_id: 'SI', dimensioni_gruppo: 10 }, { partner_id: 'IS', dimensioni_gruppo: 7 }, { partner_id: 'LU', dimensioni_gruppo: 5 }];
+  const persone = ['IG', 'IS', 'VA', 'OR', 'CA'].map((c, i) => ({ id: i, nome: c, partner_id: c }));
+  const o = M.ordinePerMappa(persone, sq, vol, 'IG');
+  const rientri = Object.fromEntries(o.map(p => [p.nome, p.rientro]));
+  assert.deepEqual(rientri, { IG: 0, IS: 1, VA: 1, OR: 1, CA: 2 });
+  assert.equal(o.find(p => p.nome === 'VA').livello, 3);          // il livello vero resta
+  assert.equal(o.find(p => p.nome === 'VA').sotto, 'Antonina Abela');
+});
+
 prova('lineePerCodice: una linea per codice Amway, la coppia è un partner solo (Ignazio 25/09)', () => {
   const sq = [{ partner_id: 'LU', nome: 'CACCAMO, LUCA' }, { partner_id: 'TO', nome: 'ABELA, ANTONINA' }, { partner_id: 'IS', nome: 'SAMMITO, ISABELLA' }];
   const persone = [{ id: 1, nome: 'Isabella Sammito', partner_id: 'IS' }, { id: 2, nome: 'Luca Caccamo', partner_id: 'LU' },

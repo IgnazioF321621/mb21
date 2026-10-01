@@ -318,29 +318,32 @@
   // scelta dei 12 mesi in ordine di mappa ed in base alla propria squadra»). Prima la squadra di `radice` (chi è
   // collegato) nell'ordine dell'albero — sotto ogni persona prima i team più grandi, come in Mappa (`albero`) —,
   // poi il resto dell'albero, poi chi nell'albero non c'è, per nome. Alle persone aggiunge `livello` (passi sotto la
-  // radice: 0 la radice, null fuori dalla sua squadra) e `sotto` (il nome dello sponsor, solo se non è tra le persone:
+  // radice: 0 la radice, null fuori dalla sua squadra), `rientro` (quanti avi sono nell'elenco: serve a rientrare i nomi) e `sotto` (il nome dello sponsor, solo se non è tra le persone:
   // spiega il rientro, es. Ornella sotto Simone Giavatto, che non usa l'app). Una coppia (stesso codice) sta insieme, per nome.
   function ordinePerMappa(persone, squadra, volumi, radice) {
     const cime = albero(squadra || [], volumi || []);
     const posto = {};
     let n = 0;
-    const visita = (nodo, livello) => {
+    const visita = (nodo, livello, avi) => {
       if (posto[nodo.id]) return;
-      posto[nodo.id] = { pos: n++, livello, sponsor: nodo.sponsor };
-      nodo.figli.forEach(f => visita(f, livello == null ? null : livello + 1));
+      posto[nodo.id] = { pos: n++, livello, sponsor: nodo.sponsor, avi };
+      nodo.figli.forEach(f => visita(f, livello == null ? null : livello + 1, [...avi, nodo.id]));
     };
     let mia = null;
     const cerca = x => { if (x.id === radice) mia = x; else if (!mia) x.figli.forEach(cerca); };
     cime.forEach(cerca);
-    if (mia) visita(mia, 0);
-    cime.forEach(c => visita(c, null));
+    if (mia) visita(mia, 0, []);
+    cime.forEach(c => visita(c, null, []));
     const nomi = {};
     for (const q of squadra || []) nomi[q.partner_id] = nomeLeggibile(q.nome);
     const presenti = new Set((persone || []).map(p => p.partner_id).filter(Boolean));
     return (persone || []).map(p => {
       const d = (p.partner_id && posto[p.partner_id]) || null;
       const sp = d && d.livello > 0 ? d.sponsor : null;
-      return { p: { ...p, livello: d ? d.livello : null, sotto: sp && !presenti.has(sp) && nomi[sp] ? nomi[sp] : null }, pos: d ? d.pos : Infinity };
+      // `rientro`: quanti degli avi sono nell'elenco. Il livello vero può contare persone che nell'elenco non ci sono
+      // (Valentina sta sotto Antonina, sotto Luca): col livello a destra sembrerebbe figlia di chi le sta sopra nella lista
+      const rientro = d ? d.avi.filter(a => presenti.has(a)).length : 0;
+      return { p: { ...p, livello: d ? d.livello : null, rientro, sotto: sp && !presenti.has(sp) && nomi[sp] ? nomi[sp] : null }, pos: d ? d.pos : Infinity };
     }).sort((x, y) => x.pos - y.pos || String(x.p.nome || '').localeCompare(String(y.p.nome || ''), 'it')).map(x => x.p);
   }
 

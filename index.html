@@ -2408,7 +2408,7 @@ async function inOrdineDiMappa(voci) {
   try {
     const { squadra, volumi } = await caricaAlberoMappa();
     return MB21Mappa.ordinePerMappa(voci, squadra, volumi, ST.utente.partner_id)
-      .map(v => ({ ...v, rientro: v.livello || 0, nota: [v.sotto && 'sotto ' + v.sotto, v.nota].filter(Boolean).join(' · ') }));
+      .map(v => ({ ...v, rientro: v.rientro || 0, nota: [v.sotto && 'sotto ' + v.sotto, v.nota].filter(Boolean).join(' · ') }));
   } catch (e) {
     return voci;
   }
@@ -3434,7 +3434,7 @@ function disegnaStorico(velo, dati) {
   const linee = MB21Mappa.ordinePerMappa(tutte.filter(l => l.partner_id && ramo.has(l.partner_id)),
     dati.squadra, dati.volumi, chi.partner_id);   // l'ordine della Mappa, a partire da chi guardi
   const livello = {};
-  for (const p of linee) livello[p.id] = p.livello || 0;
+  for (const p of linee) livello[p.id] = p.rientro || 0;
   let html = '';
   if (tutte.length > 1) html += `<button class="sl-chi" id="sl-chi">${ic('persona')} ${esc(chi.nome)}${chi.compagni.length ? `<small>con ${esc(chi.compagni.join(' e '))}</small>` : ''}<span>cambia ▾</span></button>`;
   html += tabellaSv(sv, chi.nome);
