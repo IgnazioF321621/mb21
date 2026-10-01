@@ -354,12 +354,33 @@
   // personale ogni 5 PM; lo stesso per un nome scritto solo nel gruppo (senza iscritti personali scritti si parte dai nuovi iscritti). Dopo (passo 3 bis) lo
   // storico di ogni partner li correggerà da solo. `pmScritti` = i PM che il partner ha già scritto: i contatti si calcolano su quelli.
   const CONTATTI_PER_PM = 5, PM_PER_ISCRITTO = 5;
-  function percorsoAzione(iscrittiPersonali, nuoviIscritti, pmScritti) {
+  // Passo 3 bis (Ignazio 01/10: «già da ora, per capire l'efficacia delle persone e tarare il Training su quello che succede davvero»): i due rapporti diventano
+  // personali. Si parte dal valore di partenza e ci si sposta verso il rapporto vero del partner (Check e azioni degli ultimi 6 mesi) tanto più quanto lo
+  // storico è abbondante: peso = PM fatti / 20 per i contatti per PM, iscritti personali / 5 per i PM per iscritto, al massimo 1. Senza dati resta il valore di partenza.
+  const MESI_STORICO = 6, PM_PER_FIDARSI = 20, ISCRITTI_PER_FIDARSI = 5;
+  function rapportiDalloStorico(checkMesi, mese) {
+    const da = meseSpostato(mese, -(MESI_STORICO - 1));
+    const m = (checkMesi || []).filter(x => x.mese >= da && x.mese <= mese);
+    const somma = k => m.reduce((t, x) => t + n(x[k]), 0);
+    const c = somma('contatti'), pm = somma('pm'), isc = somma('sponsor_personali');
+    const rapporto = (base, vero, dati, soglia) => { const peso = Math.min(1, dati / soglia); return { valore: base * (1 - peso) + vero * peso, peso, vero, dati }; };
+    return {
+      contattiPerPm: pm > 0 && c > 0 ? rapporto(CONTATTI_PER_PM, c / pm, pm, PM_PER_FIDARSI) : null,
+      pmPerIscritto: isc > 0 && pm > 0 ? rapporto(PM_PER_ISCRITTO, pm / isc, isc, ISCRITTI_PER_FIDARSI) : null,
+    };
+  }
+  const fonteRapporto = r => (!r || r.peso <= 0 ? 'partenza' : r.peso >= 1 ? 'storico' : 'misto');
+  const interoRapporto = r => (r ? Math.max(1, Math.round(r.valore)) : null);
+  // `pmScritti` = i PM che il partner ha già scritto: i contatti si calcolano su quelli. `rapporti` = `rapportiDalloStorico` (facoltativo)
+  function percorsoAzione(iscrittiPersonali, nuoviIscritti, pmScritti, rapporti) {
     const personali = Math.max(0, Math.floor(n(iscrittiPersonali))), nuovi = Math.max(0, Math.floor(n(nuoviIscritti)));
     const iscritti = personali || nuovi;
     if (!iscritti) return null;
-    const pm = iscritti * PM_PER_ISCRITTO, pmBase = n(pmScritti) > 0 ? n(pmScritti) : pm;
-    return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * CONTATTI_PER_PM), perPm: !!(n(pmScritti) > 0) };
+    const rp = rapporti && rapporti.pmPerIscritto, rc = rapporti && rapporti.contattiPerPm;
+    const rapportoPm = interoRapporto(rp) || PM_PER_ISCRITTO, rapportoContatti = interoRapporto(rc) || CONTATTI_PER_PM;
+    const pm = iscritti * rapportoPm, pmBase = n(pmScritti) > 0 ? n(pmScritti) : pm;
+    return { iscritti, personali: !!personali, pm, contatti: Math.ceil(pmBase * rapportoContatti), perPm: !!(n(pmScritti) > 0),
+      rapportoPm, rapportoContatti, fontePm: fonteRapporto(rp), fonteContatti: fonteRapporto(rc) };
   }
 
   // Per chi sta sopra (Ignazio 01/10, «Obiettivi mensili dei partner»): gli obiettivi del mese di chi gli sta sotto, in sola lettura. `obiettivi` e `linee` sono
@@ -492,7 +513,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, percorsoAzione, rapportiDalloStorico, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

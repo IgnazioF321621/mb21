@@ -1440,10 +1440,12 @@ function apriObiettivi() {
   }, () => {});
   for (const id of ['vpp', 'vpg', 'sponsor_gruppo']) campo(id).addEventListener('input', dalGruppo);
   // «Attraverso quanti PM e quanti contatti?»: l'indicazione sotto le due caselle (valori di partenza uguali per tutti, D.percorsoAzione); si scrive come si vuole
+  const rapportiStorico = D.rapportiDalloStorico(DS.checkMesi, mese);   // i rapporti veri del partner (Check e azioni degli ultimi 6 mesi), che correggono quelli di partenza
   const indicazioni = () => {
-    const r = D.percorsoAzione(numero('sponsor_personali'), numero('sponsor_gruppo'), numero('pm'));
-    velo.querySelector('#ob-hint-pm').textContent = r ? `Per ${r.iscritti} ${r.personali ? (r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali') : (r.iscritti === 1 ? 'nuovo iscritto' : 'nuovi iscritti')}: circa ${f(r.pm)} PM (${D.PM_PER_ISCRITTO} per un iscritto)` : '';
-    velo.querySelector('#ob-hint-contatti').textContent = r ? `Per ${f(r.perPm ? numero('pm') : r.pm)} PM: circa ${f(r.contatti)} contatti (${D.CONTATTI_PER_PM} per ogni PM)` : '';
+    const r = D.percorsoAzione(numero('sponsor_personali'), numero('sponsor_gruppo'), numero('pm'), rapportiStorico);
+    const fonte = t => (t === 'storico' ? 'dal tuo storico' : t === 'misto' ? 'in parte dal tuo storico' : 'valore di partenza');   // su cosa si basa, sempre scritto
+    velo.querySelector('#ob-hint-pm').textContent = r ? `Per ${r.iscritti} ${r.personali ? (r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali') : (r.iscritti === 1 ? 'nuovo iscritto' : 'nuovi iscritti')}: circa ${f(r.pm)} PM (${r.rapportoPm} per un iscritto · ${fonte(r.fontePm)})` : '';
+    velo.querySelector('#ob-hint-contatti').textContent = r ? `Per ${f(r.perPm ? numero('pm') : r.pm)} PM: circa ${f(r.contatti)} contatti (${r.rapportoContatti} per ogni PM · ${fonte(r.fonteContatti)})` : '';
   };
   for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
   // Il riepilogo fisso in cima («il risultato che voglio») e, a sezione chiusa, il suo riassunto sulla testata (Ignazio 01/10)
