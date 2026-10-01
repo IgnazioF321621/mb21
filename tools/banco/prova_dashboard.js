@@ -139,6 +139,17 @@ prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento su
   assert.equal(D.meseSpostato('2026-10-01', -1), '2026-09-01');
 });
 
+prova('Segni vitali: accanto a BBS e WES il mese del prossimo evento (sempre successivo; «in corso» se è questo mese)', () => {
+  const bbs = ['2026-09-01', '2026-11-01'], wes = ['2026-10-01'];
+  assert.deepEqual(D.eventoProssimo(bbs, '2026-10-01'), { data: '2026-11-01', etichetta: '11/2026', inCorso: false });   // settembre è passato: il prossimo BBS è novembre
+  assert.deepEqual(D.eventoProssimo(wes, '2026-10-01'), { data: '2026-10-01', etichetta: '10/2026', inCorso: true });    // il WES di questo mese è in corso
+  assert.deepEqual(D.eventoProssimo(wes, '2026-10-31'), { data: '2026-10-01', etichetta: '10/2026', inCorso: true });
+  assert.equal(D.eventoProssimo(wes, '2026-11-02'), null);                                                                // passato e nessun altro: niente
+  assert.equal(D.eventoProssimo([], '2026-10-01'), null); assert.equal(D.eventoProssimo(null, '2026-10-01'), null);
+  assert.equal(D.eventoProssimo(['2026-12-01', '2026-11-01'], '2026-10-15').etichetta, '11/2026');                        // l'ordine delle righe non conta
+  assert.equal(D.eventoProssimo(['2026-11-01T00:00:00Z'], '2026-10-15').etichetta, '11/2026');                            // anche con l'ora attaccata
+});
+
 prova('Obiettivi: da dove vengono i punti del gruppo (VPG meno VPP): i nuovi iscritti a 50 VP, il resto dalle linee; con «Le tue linee» quanto resta da trovare', () => {
   assert.equal(D.VP_NUOVO_ISCRITTO, 50);
   const senza = (altri, nuovi, daNuovi, daLinee) => ({ altri, nuovi, daNuovi, daLinee, restano: 0, conLinee: false });
