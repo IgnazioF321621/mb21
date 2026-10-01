@@ -195,12 +195,14 @@ prova('La carta del Training per un\'obiezione: la scena giusta per quella chat,
   assert.equal(C.cartaDi(null, 'Non ho tempo', ['telefonata']), null);
 });
 
-prova('Coach corto: Relazione e No Interesse una riga sola, niente chat', async () => {
-  for (const e of ['Relazione', 'No Interesse']) {
-    const passi = C.corta(B, e, nomi, 0, {});
-    assert.ok(passi.length >= 1 && passi.every(p => p.c));
-  }
-  assert.equal(C.corta(B, 'Relazione', nomi, 0, {})[0].c, 'Bella telefonata con Anna.');
+prova('Coach corto: Relazione un fumetto solo, niente chat; No Interesse chiede l\'obiezione come gli altri esiti (01/10: «così ce lo ritroviamo segnato»)', async () => {
+  const rel = C.corta(B, 'Relazione', nomi, 0, {});
+  assert.deepEqual(rel.map(p => p.c), ['Bella telefonata con Anna.']);
+  const B2 = { ...B, reazione: { ...B.reazione, 'No Interesse': [[{ c: 'Un no pesa, {io}, ma non è un no a te.' }, { c: 'Seconda riga.' }]] }, nessuna: { 'No Interesse': [{ c: 'Solo un no.' }] } };
+  const ni = C.corta(B2, 'No Interesse', nomi, 0, {});
+  assert.equal(ni[0].c, 'Un no pesa, Isabella, ma non è un no a te. Anna ti ha fatto domande?');           // la reazione e la domanda in un fumetto solo
+  const r = await percorri(ni, ['Non ho tempo']);
+  assert.deepEqual(r.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);                        // l'obiezione si segna
   assert.equal(C.corta(B, 'Sconosciuto', nomi, 0, {}), null);
   assert.equal(C.corta(null, 'PM Fissato', nomi, 0, {}), null);
 });

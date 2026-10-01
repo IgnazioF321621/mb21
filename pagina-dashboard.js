@@ -120,6 +120,8 @@ const COSA_FA_ESITO = {
   'Appuntamento': { data: 'giorno-ora', classe: 'appuntamento' },
   'Consulenza Prodotti': { data: 'giorno-ora', classe: 'appuntamento' },   // 01/10 (Ignazio: «allineare assolutamente le schede e i passaggi»): la consulenza si fissa anche dalla coda, come da Agenda e scheda
   'Richiamare': { data: 'giorno' },
+  'No Risposta': { rientro: true },                          // 01/10: anche «No Risposta» e «Telefono spento» chiedono «Quando risentirlo?» (2 e 7 giorni, cambiabili)
+  'Telefono spento': { rientro: true },
   'Relazione': { rientro: true },                            // «Quando risentirlo?» con 20 giorni proposti (Ignazio 25/09)
   'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
   'No Interesse': { classe: 'no', rientro: true },           // poi «Quando risentirlo?» (17/09)
