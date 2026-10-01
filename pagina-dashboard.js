@@ -1306,11 +1306,20 @@ function apriObiettivi() {
       : r.daLinee ? `dalle linee già attive: ${f(r.daLinee)} VP` : 'coprono tutto';
     el.textContent = `Dal gruppo: ${f(r.altri)} VP · ` + (r.nuovi || r.conLinee ? [nuovi, linee].filter(Boolean).join(' · ') : `nuovi iscritti (${D.VP_NUOVO_ISCRITTO} VP a testa) e linee già attive`);
   };
+  // Sotto ogni linea già in possesso, i suoi punti piccoli: «settembre N · ora M» (VPG del mese scorso e di adesso, dal file Amway; Ignazio 01/10)
+  const vpDelleLinee = new Map();   // partner_id → { prima, ora } (si riempie quando arriva la lettura)
+  const sottoLinea = r => {
+    const v = vpDelleLinee.get(r.dataset.pid), el = r.querySelector('.ob-linea-sub');
+    const parti = v ? [v.prima != null ? `${D.nomeMese(meseRis).toLowerCase()} ${f(Math.round(v.prima))}` : '', v.ora != null ? `ora ${f(Math.round(v.ora))}` : ''].filter(Boolean) : [];
+    el.textContent = parti.join(' · ');
+    el.hidden = !parti.length;
+  };
   const aggiungiLinea = l => {
     const r = document.createElement('div');
     r.className = 'ob-linea'; r.dataset.pid = l.partner_id || '';
-    r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(fmtNum(l.vp)) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button>`;
+    r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(fmtNum(l.vp)) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button><small class="ob-linea-sub"></small>`;
     r.querySelector('.ob-linea-vp').addEventListener('input', dalGruppo);
+    sottoLinea(r);
     r.querySelector('.ob-linea-x').onclick = () => { r.remove(); dalGruppo(); riepilogo(); sunti(); };
     righeLinee.appendChild(r);
     return r;
@@ -1329,6 +1338,12 @@ function apriObiettivi() {
     dalGruppo();
     nota(nuove.length ? `Aggiunte ${nuove.length} ${nuove.length === 1 ? 'linea' : 'linee'}, con i punti di ${D.nomeMese(meseRis).toLowerCase()}: puoi cambiarli.` : gia.size ? 'Le tue prime linee ci sono già.' : 'Non trovo prime linee nel file Amway: aggiungile a mano.');
   };
+  // i punti di settembre e di adesso delle linee (una lettura sola; arriva anche dopo le righe, che si aggiornano)
+  if (pidVisto) dbq('punti delle linee, settembre e ora', supa.from('volumi_mese').select('partner_id, mese, vpg').in('mese', [mesePrimo, meseOra])).then(r => {
+    if (!r || r.error || !r.data) return;
+    for (const v of r.data) { const x = vpDelleLinee.get(v.partner_id) || {}; x[v.mese === meseOra ? 'ora' : 'prima'] = v.vpg == null ? null : Number(v.vpg); vpDelleLinee.set(v.partner_id, x); }
+    righeLinee.querySelectorAll('.ob-linea').forEach(sottoLinea);
+  }, () => {});
   // quelle già salvate per questo mese
   dbq('linee del mese', supa.from('obiettivi_linee').select('partner_id, nome, vp').eq('user_id', visto().id).eq('mese', mese).order('creato_il')).then(r => {
     if (r && r.data && r.data.length && !righeLinee.children.length) { r.data.forEach(l => aggiungiLinea({ partner_id: l.partner_id, nome: l.nome, vp: Number(l.vp) })); dalGruppo(); }
