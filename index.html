@@ -919,6 +919,19 @@
   .obt-gruppo { margin-top: 8px; }
   .obt-gruppo h4 { margin: 0 0 3px; font-size: 12px; letter-spacing: .04em; color: var(--testo-soft); text-transform: uppercase; }
   .obt-gruppo > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 14px; border-bottom: 1px solid var(--bordo, rgba(0,0,0,.06)); }
+  /* «Il mio mese» in Dashboard (01/10): una riga per area, il tocco apre la sottopagina */
+  .dm-lista { padding: 4px 14px; }
+  .dm-sint { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--bordo, rgba(0,0,0,.07)); padding: 11px 0 9px; font: inherit; color: inherit; }
+  .dm-sint:first-child { border-top: 0; }
+  .dm-sint b { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
+  .dm-sint .g { font-size: 15px; font-weight: 800; text-align: right; }
+  .dm-sint small { font-size: 12px; color: var(--testo-soft); }
+  .dm-sint small.r { text-align: right; }
+  .dm-tutto { display: flex; justify-content: space-between; width: 100%; background: none; border: 0; border-top: 1px solid var(--bordo, rgba(0,0,0,.07)); padding: 12px 0 8px; font: inherit; font-size: 13px; color: var(--testo-soft); text-align: left; }
+  .dm-tutto em { font-style: normal; }
+  .dm-liste { padding: 2px 14px; }
+  .dm-liste .mese-riga { background: none; padding-left: 0; padding-right: 0; }
+  .dm-etichetta { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin: 14px 4px 6px; display: flex; align-items: center; gap: 6px; }
   .ls-catalogo { margin: 8px 0 4px; }
   .ob-visto { margin: 4px 4px 10px; font-size: 12px; color: var(--testo-soft); text-align: center; }
   .ob-linea-sub { grid-column: 1 / -1; margin: -2px 2px 4px; font-size: 12px; color: var(--testo-soft); }
@@ -1760,13 +1773,6 @@
   .mese-t { display: block; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 8px; }
   .pc-card.dentro { background: none; border: 0; box-shadow: none; border-radius: 0; padding: 14px 0 0; margin: 14px 0 0; border-top: 1px solid var(--linea); }
   .pc-card.dentro .pc-apri { margin-top: 12px; padding: 12px 14px; border: 0; border-radius: var(--raggio-riga); background: var(--accento); color: var(--accento-su); }
-  .mese-guida, .dm-guida { font-size: 12px; color: var(--testo-soft); margin: -4px 0 6px; }
-  .dm-sez { border-top: 1px solid var(--bordo, rgba(0,0,0,.07)); }
-  .dm-sez:first-of-type { border-top: 0; }
-  .dm-testa { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 11px 0; text-align: left; min-height: 44px; }
-  .dm-testa b { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-  .dm-sunto { flex: 1; text-align: right; font-size: 13px; color: var(--testo-soft); min-width: 0; }
-  .dm-freccia { font-style: normal; color: var(--testo-soft); flex: 0 0 auto; }
   .dm-corpo { padding-bottom: 6px; }
   .dm-riga { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: baseline; padding: 6px 0 4px; }
   .dm-riga .n { font-size: 14px; font-weight: 700; }
@@ -3816,8 +3822,8 @@ function cardCheckHtml(dentro) {
     }
   }
   const mm = MB21Report.testoPeriodo(MB21Report.periodoMese(oggi)).split(' ')[0].toLowerCase();
-  return `<button class="pc-card${dentro ? ' dentro' : ''}" id="ds-visione">
-    ${dentro ? `<span class="mese-t">${vediTutti() ? 'Dove vanno' : io || !nome ? 'Dove vado' : `Dove va ${esc(nome)}`}</span>`
+  return `<button class="pc-card${dentro === true ? ' dentro' : ''}" id="ds-visione">
+    ${dentro === 'fuori' ? '' : dentro ? `<span class="mese-t">${vediTutti() ? 'Dove vanno' : io || !nome ? 'Dove vado' : `Dove va ${esc(nome)}`}</span>`
       : `<span class="pc-testa">${ic('crescita')}<span><b>${titolo}</b><small>${vediTutti() ? 'i numeri di tutti' : io ? 'il tuo percorso' : 'il suo percorso'} · ${esc(mm)}</small></span></span>`}
     ${corpo}
     <span class="pc-apri">${vediTutti() ? 'Apri il Check: i numeri del periodo' : 'Apri il Check: CORE, Pacesetter e i livelli'}<em>›</em></span></button>`;
@@ -3825,7 +3831,7 @@ function cardCheckHtml(dentro) {
 function aggiornaCardCheck() {
   const posto = document.getElementById('ds-card-check');
   if (!posto) return;
-  posto.innerHTML = cardCheckHtml(true);   // in Dashboard sta sempre dentro «Il mio mese» (28/09)
+  posto.innerHTML = cardCheckHtml('fuori');   // in Dashboard è un blocco suo, «Dove vado», col titolo fuori dalla card (01/10)
   const b = document.getElementById('ds-visione');
   if (b) b.onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };   // la pagina Check (apriCheck è il Check del Giorno)
 }
