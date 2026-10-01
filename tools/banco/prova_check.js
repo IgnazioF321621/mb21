@@ -412,7 +412,8 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   assert.deepEqual([3, 6, 9, 12].map(g => C.SCALA_BONUS[g].planner), [0, 0, 1, 2]);   // i 15 Planner cominciano dal 9% Leaders Club (segno vitale obbligatorio)
   const r3 = C.SCALA_BONUS[3];
   assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [1, 1, 0, 0, 1, 3]);
-  assert.equal(C.SCALA_BONUS[3].vpp, C.SCALA_BONUS[3].vpv + 100);                                                  // 100 consumo personale + 50 clienti
+  assert.deepEqual(C.GRADINI_BONUS.map(g => C.SCALA_BONUS[g].vpp), [100, 100, 150, 200, 300, 300, 300]);            // i punti personali: 100 al 3% e 6%, 150 al 9%, 300 stabili dal 15% (Ignazio 01/10)
+  for (const g of C.GRADINI_BONUS) assert.ok(C.SCALA_BONUS[g].vpv <= C.SCALA_BONUS[g].vpp && C.SCALA_BONUS[g].vpp < C.SCALA_BONUS[g].vpg, 'VPP e VPG al ' + g + '%');   // i clienti sono una parte del VPP e il gruppo è più del VPP
   assert.equal(C.obiettiviDelBonus(9).vpg, 1200); assert.equal(C.obiettiviDelBonus(10), null);
   assert.deepEqual([0, 2, 3, 5, 6, 9, 11, 12, 15, 17, 18, 21, 25].map(C.gradinoDalBonus), [3, 3, 3, 3, 6, 9, 9, 12, 15, 15, 18, 21, 21]);
   assert.equal(C.gradinoDalBonus(null), 3);
