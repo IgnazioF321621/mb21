@@ -204,13 +204,11 @@ prova('Coach corto: Relazione e No Interesse una riga sola, niente chat', async 
   assert.equal(C.corta(null, 'PM Fissato', nomi, 0, {}), null);
 });
 
-prova('Coach corto, incontro fissato: un tocco sull\'obiezione, «l\'hai superata» e la risposta del manuale; nient\'altro', async () => {
+prova('Coach corto, incontro fissato: un tocco sull\'obiezione e nient\'altro (tolti «l\'hai superata» e la risposta del manuale, 01/10)', async () => {
   const passi = C.corta(B, 'PM Fissato', nomi, 0, { carta: carta(['telefonata']) });
   const r = await percorri(passi, ['Non ho tempo']);
   assert.equal(r.fum[0], 'Ottimo, Isabella! Piano con Anna.');
-  assert.ok(r.fum.includes('Bene: l’hai superata.'));
-  assert.ok(r.fum.some(f => f.startsWith('Se torna fuori quando vi vedete, la risposta del manuale è: «Ti capisco')));
-  assert.ok(!r.fum.some(f => /gestita|prossima volta/.test(f)));
+  assert.ok(!r.fum.some(f => /superata|Se torna fuori|manuale|gestita|prossima volta|Ripassa/.test(f)));
   assert.deepEqual(r.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);                 // un elenco, come il Training se lo aspetta
   assert.deepEqual(r.rif, []);                                                                        // niente «Per approfondire»
   const nessuna = await percorri(passi, ['Nessuna']);
@@ -239,7 +237,7 @@ prova('Coach corto con memoria: «L\'altra volta Anna diceva…»; «Sì» ripre
   assert.ok(passi().some(p => p.c === 'L’altra volta Anna diceva «Non ho tempo»: è tornato fuori?'));
   const si = await percorri(passi(), ['Sì']);
   assert.deepEqual(si.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);               // si salva l'obiezione, non «Sì»
-  assert.ok(si.fum.includes('Bene: l’hai superata.'));
+  assert.ok(!si.fum.some(f => /superata/.test(f)));                                                  // con l'incontro fissato dopo il tocco niente
   const no = await percorri(passi(), ['No']);
   assert.deepEqual(no.salvati, [{ chiave: 'obiezioni', risposta: ['Nessuna'] }]);
   assert.ok(no.fum.includes('Bene: superata.'));
@@ -261,7 +259,8 @@ prova('Coach corto: Ordine solo la reazione; per i partner nessun freno (la reaz
   const cp = C.corta(BCP, 'Consulenza Prodotti', nomi, 0, {});
   assert.deepEqual(cp[2].chiedi.map(x => x[0]).slice(0, 5), ['Nessuna', 'Di cosa si tratta?', 'Non ho tempo', 'Non ne ho bisogno', 'Compro già altro']);
   const r = await percorri(C.corta(BCP, 'Consulenza Prodotti', nomi, 0, { carta: carta(['telefonata', 'consulenza']) }), ['Non ne ho bisogno']);
-  assert.ok(r.fum.some(f => f === 'Se torna fuori quando vi vedete, la risposta del manuale è: Gli chiedo cosa usa adesso e come si trova.'));
+  assert.deepEqual(r.salvati, [{ chiave: 'obiezioni', risposta: ['Non ne ho bisogno'] }]);
+  assert.ok(!r.fum.some(f => /Se torna fuori/.test(f)));
 });
 
 prova('Quale montatore: con `ctx` le telefonate hanno la forma corta, senza (pagina di prova privata) quella lunga; gli altri come prima', () => {
@@ -310,7 +309,7 @@ prova('Il motore: il tocco sull\'obiezione si salva come elenco, «Sì» dell\'a
   const salvate = await fine;
   assert.deepEqual(salvate, [{ chiave: 'obiezioni', domanda: 'L’altra volta Anna diceva «Non ho tempo»: è tornato fuori?', risposta: ['Non ho tempo'] }]);
   assert.ok(foglio.fumetti.includes('> Sì'));
-  assert.ok(foglio.fumetti.some(f => f.startsWith('Se torna fuori quando vi vedete')));
+  assert.ok(!foglio.fumetti.some(f => /Se torna fuori|superata/.test(f)));
   assert.ok(!foglio.fumetti.includes('Per approfondire quello che ci siamo detti:'));                // tolto il 01/10
   assert.deepEqual(stato.rif, []);
   // da richiamare: obiezione nuova → una riga e basta, senza altri tocchi
