@@ -857,6 +857,15 @@
   .ds-azione.visione-completa { --richiamo: var(--gr-volume); --richiamo-tinta: var(--gr-volume-tinta); }   /* i numeri, non i Clienti (Ignazio 20/09) */
   .ds-azione.report { --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
   .ds-azione.griglia { --richiamo: var(--gr-azione); --richiamo-tinta: var(--gr-azione-tinta); }   /* i Piani Marketing stanno nel gruppo Azione, non sono i Partner */
+  /* «Scala dei bonus»: il bottone grande, al centro, con la freccia (si capisce che si tocca); le altre scelte stanno sotto, «Oppure si parte da» (01/10) */
+  .ob-scala-btn { position: relative; display: block; width: 100%; text-align: center; padding: 14px 40px 12px; margin-bottom: 10px; border: 2px solid var(--accento); border-radius: var(--raggio-bottone); background: var(--superficie); color: var(--testo); font-family: inherit; }
+  .ob-scala-btn b { display: block; font-size: 17px; }
+  .ob-scala-btn small { display: block; font-size: 12px; font-weight: 500; color: var(--testo-soft); margin-top: 2px; }
+  .ob-scala-btn::after { content: '⌄'; position: absolute; right: 16px; top: 50%; transform: translateY(-62%); font-size: 22px; font-weight: 700; }
+  .ob-scala-btn.scelto { background: var(--accento); color: var(--accento-su); }
+  .ob-scala-btn.scelto small { color: rgba(255,255,255,.8); }
+  .ob-scala-btn.scelto::after { content: '⌃'; }
+  .ob-oppure { margin: 6px 0 6px; font-size: 13px; color: var(--grigio); }
   .ob-modi { margin-bottom: 10px; flex-wrap: wrap; overflow-x: visible; }   /* tre scelte: a capo invece di scorrere di lato (01/10) */
   .ob-livelli { display: flex; flex-wrap: wrap; align-items: center; overflow-x: visible; margin-bottom: 10px; }   /* «Del Sistema»: i livelli e i bonus, sotto le scelte */
   .ob-livelli[hidden] { display: none; }
