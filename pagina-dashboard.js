@@ -229,8 +229,8 @@ function zonaOggiHtml() {
     `${RIO.righe.length} ${RIO.righe.length === 1 ? 'cliente da sentire' : 'clienti da sentire'}`,
     RIO.righe.length, true, riordiniHtml, true);
 
-  // 5-7. Le grigie: tracce, da catalogare, partner da avviare (l'HTML ce l'hanno già loro)
-  const grigie = [tracceHtml(), catalogoHtml(), avvioHtml(), obiettiviTeamHtml()].filter(Boolean);
+  // 5. La grigia: le tracce da controllare (un'azione tua: la traccia condivisa con una persona)
+  const grigie = [tracceHtml()].filter(Boolean);   // Da catalogare sta in Lista Nomi; Partner da avviare e Obiettivi mensili dei partner nella Mappa (Ignazio 01/10: la Dashboard era troppo piena)
 
   // 8. Il Check della sera: grigio di giorno, blu (e primo) dalle 20 se non è ancora fatto
   let check = '';
@@ -252,6 +252,7 @@ function zonaOggiHtml() {
 }
 
 function disegnaOggi() {
+  if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
   const r = ST.risultato;
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «🔁 N riordini da sentire» porta dritto al riquadro
   let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta();
@@ -283,10 +284,6 @@ function disegnaOggi() {
   }
   const sezGiorno = document.getElementById('sez-giorno');
   if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
-  const rigaObTeam = document.getElementById('dash-obteam');
-  if (rigaObTeam) rigaObTeam.onclick = () => { OBT.aperto = null; window.scrollTo(0, 0); disegnaObiettiviTeam(); };
-  const rigaAvvio = document.getElementById('dash-avvio');
-  if (rigaAvvio) rigaAvvio.onclick = () => { AVV.aperto = null; window.scrollTo(0, 0); disegnaAvvio(); };
   const titoloRio = vai === 'riordini' && document.getElementById('sez-riordini');
   if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
   const mioAvvio = vai === 'avvio' && document.getElementById('mio-avvio');   // cantiere 32: dal benvenuto si arriva su «Il mio avvio», con sotto i nomi da chiamare
@@ -299,6 +296,11 @@ function disegnaOggi() {
   collegaRiordini();
   collegaTracce();
   collegaMioPercorso();
+  collegaCarteCoda();
+}
+
+// Le card della coda e di «Da catalogare» (aprire, esiti, categorie, «Altri 5», scheda, elimina): stesse in Dashboard e nella pagina «Da catalogare» della Lista Nomi
+function collegaCarteCoda() {
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
   });
@@ -311,7 +313,7 @@ function disegnaOggi() {
   const altri = document.getElementById('altri-catalogo');
   if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; caricaOggi(); };
   app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
-    btn.onclick = () => apriContattoDa(btn.dataset.scheda, 'oggi');
+    btn.onclick = () => apriContattoDa(btn.dataset.scheda, ST.vistaCatalogo ? 'catalogo' : 'oggi');
   });
   app.querySelectorAll('button[data-elimina-cat]').forEach(btn => {   // Elimina dentro «Da catalogare» (Ignazio 24/09): stessa funzione della Lista Nomi
     btn.onclick = () => {
@@ -330,23 +332,34 @@ const CATEGORIE_CATALOGO = [
   { etichetta: 'Unlinked', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
 ];
 const ICONE_CAT = { 'Prospect': 'prospect', 'Partner': 'partner', 'Cliente': 'cliente', 'Ex Partner/Cliente': 'ex', 'Unlinked': 'unlinked', 'Archiviato': 'archiviato' };
-function catalogoHtml() {
+// «Da catalogare» sta in Lista Nomi (Ignazio 01/10): una riga in cima alla lista, il tocco apre la pagina con le stesse card di prima
+function catalogoRigaHtml() {
   const cat = ST.catalogo;
+  if (!cat || !ST.stato) return '';
   const fatti = ST.stato.catalogati_oggi || 0;
-  if (!cat || (!cat.totale && !fatti)) return '';
-  const altro = guardoAltri();
-  const aperta = apertaRigaDash('catalogo', false);   // da sola è sempre chiusa
-  // Ignazio 24/09: «fatti 20 di 20» sembrava un traguardo raggiunto (e con la quota piena il bottone non dava nomi).
-  // Adesso si dice quanti ne restano e quanti ne ha già fatti oggi: i 5 al giorno sono il ritmo, non un tetto.
-  const ne = altro ? 'ne ha catalogati' : 'ne hai catalogati';
+  if (!cat.totale && !fatti) return '';
+  // Ignazio 24/09: «fatti 20 di 20» sembrava un traguardo raggiunto: si dice quanti ne restano e quanti ne ha già fatti oggi (i 5 al giorno sono il ritmo, non un tetto)
+  const ne = guardoAltri() ? 'ne ha catalogati' : 'ne hai catalogati';
   const sotto = cat.totale ? `${cat.totale} ancora da catalogare · oggi ${ne} ${fatti}` : `Tutti catalogati · oggi ${ne} ${fatti}`;
-  let h = rigaApribile('sez-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare',
-    sotto, aperta, cat.righe.length);
-  if (!aperta) return h;
-  if (altro) h += `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>`;
-  if (cat.righe.length) return h + cat.righe.map(cardCatalogo).join('');
-  return h + `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
-    + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
+  return `<div class="ls-catalogo">${rigaApribile('lista-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare', sotto, false, cat.righe.length)}</div>`;
+}
+function disegnaCatalogo() {
+  const cat = ST.catalogo, altro = guardoAltri();
+  if (!cat || !ST.stato) { ST.vistaCatalogo = false; return disegnaLista(); }
+  const fatti = ST.stato.catalogati_oggi || 0, ne = altro ? 'ne ha catalogati' : 'ne hai catalogati';
+  const sotto = cat.totale ? `${cat.totale} ancora da catalogare · oggi ${ne} ${fatti}` : `Tutti catalogati · oggi ${ne} ${fatti}`;
+  const corpo = cat.righe.length ? cat.righe.map(cardCatalogo).join('')
+    : `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
+      + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Lista Nomi</button><h1>Da catalogare</h1>
+    <div class="sotto" style="margin-bottom:8px">${sotto}</div>
+    ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}`;
+  document.getElementById('indietro').onclick = () => { ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
+  if (limitato()) {   // abbonamento scaduto: si vede, non si tocca (come in Dashboard)
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    return;
+  }
+  collegaCarteCoda();
 }
 function cardCatalogo(r) {
   const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
@@ -794,6 +807,18 @@ function disegnaConfronto() {
 // ── Obiettivi mensili dei partner (Ignazio 01/10): per chi sta sopra, gli obiettivi del mese di chi gli sta sotto, SOLO IN LETTURA ──
 // Il database (`obiettivi_del_ramo`) dà già solo la discesa nella stessa linea; qui si tolgono anche l'Admin che guarda un altro (conta il ramo del partner
 // guardato) e chi non ha scritto niente. Con «Tutti» e offline non si mostra. Una riga grigia in Dashboard, il tocco apre la pagina dei nomi.
+// Le due righe da upline stanno in cima alla Mappa (Ignazio 01/10): Partner da avviare e Obiettivi mensili dei partner. Le pagine tornano dove sono nate.
+const righeTeamHtml = () => avvioHtml() + obiettiviTeamHtml();
+function collegaRigheTeam() {
+  const apri = (id, apre) => { const el = document.getElementById(id); if (el) el.onclick = () => { ST.tornaA = 'mappa'; window.scrollTo(0, 0); apre(); }; };
+  apri('dash-avvio', () => { AVV.aperto = null; disegnaAvvio(); });
+  apri('dash-obteam', () => { OBT.aperto = null; disegnaObiettiviTeam(); });
+}
+function tornaDaTeam() {
+  window.scrollTo(0, 0);
+  if (ST.tornaA === 'mappa') { ST.tornaA = null; ST.tab = 'mappa'; return mostraTab(); }
+  disegnaOggi();
+}
 const OBT = { righe: [], senza: [], mese: null, aperto: null };   // righe: chi ha scritto · senza: chi ha l'app e non ha ancora scritto
 // La mappa e i volumi del mese in corso, letti una volta sola per ogni Dashboard: servono alla sezione Squadra di «Il mio mese» e agli «Obiettivi mensili dei partner»
 function leggiSquadraMese(oggi, nuova) {
@@ -848,12 +873,12 @@ function disegnaObiettiviTeam() {
       ${aperto ? `<div class="obt-corpo">${r.prima ? `<div class="obt-gruppo"><h4>${esc(D.nomeMese(r.prima.mese))}</h4><div><span>VPG: obiettivo ${f(r.prima.obiettivo)}</span><b>fatto ${f(Math.round(r.prima.fatto))} · ${Math.round(r.prima.fatto / r.prima.obiettivo * 100)}%</b></div></div>` : ''}${gruppi}${linee}</div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Dashboard'}</button>
     <h1>${ic('obiettivi')} Obiettivi mensili dei partner</h1>
     <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner. Sono quelli che hanno già aperto l'app.</div>
     ${OBT.senza.length ? `<div class="obt-senza"><h4>Non ancora scritti · ${OBT.senza.length}</h4>${OBT.senza.map(r => `<div><span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}</span></div>`).join('')}</div>` : ''}
     ${OBT.righe.map(card).join('') || (OBT.senza.length ? '' : '<div class="vuoto">Nessun partner ha ancora scritto gli obiettivi.</div>')}${versione()}`;
-  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  document.getElementById('indietro').onclick = tornaDaTeam;
   app.querySelectorAll('[data-obt]').forEach(b => b.onclick = () => { OBT.aperto = OBT.aperto === b.dataset.obt ? null : b.dataset.obt; disegnaObiettiviTeam(); });
 }
 
@@ -891,7 +916,7 @@ function disegnaAvvio() {
         </div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Dashboard'}</button>
     <h1>${ic('avvio')} Partner da avviare</h1>
     <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
     <button class="ag-blocco avv-come" id="avv-come"><span>${ic('info')} Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
@@ -908,7 +933,7 @@ function disegnaAvvio() {
     ${AVV.righe.map(card).join('') || '<div class="vuoto">Nessun partner da avviare.</div>'}
     ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>${ic('pausa')} In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
-  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  document.getElementById('indietro').onclick = tornaDaTeam;
   const come = document.getElementById('avv-come');
   if (come) come.onclick = () => { AVV.comeAperto = !AVV.comeAperto; disegnaAvvio(); };
   const pausa = document.getElementById('avv-pausa');
@@ -939,7 +964,7 @@ function disegnaAvvio() {
     if (await scrivi(r, campi)) mostraToast(`${MB21Mappa.nomeLeggibile(r.nome)}: ${detto}`, () => scrivi(r, prima));
   });
   app.querySelectorAll('[data-apri-scheda]').forEach(b => b.onclick = async () => {
-    await apriContattoDa(b.dataset.apriScheda, 'oggi');
+    await apriContattoDa(b.dataset.apriScheda, ST.tornaA === 'mappa' ? 'mappa' : 'oggi');
     if (LS.contatto && LS.contatto.id === b.dataset.apriScheda) { LS.sezione = 'onboarding'; disegnaScheda(); }   // dritti sui 14 passi
   });
 }

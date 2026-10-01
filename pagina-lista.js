@@ -113,9 +113,12 @@ function disegnaLista() {
         <button id="altri" class="${f.altri ? 'scelto' : ''}">${altriScelto}</button>
       </div>
     </div>
+    ${catalogoRigaHtml()}
     <div id="elenco"></div>
     <div id="fondo"></div>
     ${versione()}`;
+  const rigaCat = document.getElementById('lista-catalogo');
+  if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
   document.getElementById('nuovo').onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });
@@ -414,7 +417,7 @@ async function avvioDellaScheda(c) {
 function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'check' ? 'Check' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
@@ -441,6 +444,7 @@ function disegnaScheda() {
     LS.contatto = null;
     if (!LS.ritorno) { disegnaLista(); return window.scrollTo(0, LS.scrollLista || 0); }
     if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
+    if (LS.ritorno === 'catalogo') { LS.ritorno = null; ST.vistaCatalogo = true; return caricaOggi(); }   // torna a «Da catalogare», ricaricato (caricaOggi lo ridisegna da sé)
     if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
     if (LS.ritorno === 'agenda') { LS.ritorno = null; ST.tab = 'agenda'; return mostraTab(); }   // dallo Sharing dopo un Piano Marketing fissato da MB Plan (01/10)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
