@@ -89,7 +89,8 @@
   // Il coach corto (cantiere 48, Ignazio 29/09-01/10: «il coach registra e indirizza, non insegna»; 01/10, «nei panni di un nuovo»: «togli tutto quello che ci
   // complica la vita»). Dopo una telefonata, un Piano Marketing, un Follow Up o una Consulenza prodotti: una frase di reazione e **un solo tocco**, quello
   // sull'obiezione uscita (o «Nessuna»). Il resto avviene da solo: l'obiezione toccata torna tra le carte di «Ripassa» del Training e come «Ti eri detto…».
-  // Se l'incontro è fissato (PM Fissato, Appuntamento, Consulenza Prodotti) il coach dice «l'hai superata» e la risposta del manuale per quando vi vedete.
+  // Se l'incontro è fissato (PM Fissato, Appuntamento, Consulenza Prodotti) dopo il tocco il coach non dice altro (tolti il 01/10 «l'hai superata» e la risposta
+  // del manuale, che è quella del telefono).
   // Se l'altra volta con la stessa persona è uscita un'obiezione, parte da lì («L'altra volta Mario diceva «Non ho tempo»: è tornato fuori?»).
   // Dopo Relazione e No Interesse (e dopo un'Iscrizione, un Ordine, una Vendita: niente obiezioni) solo la reazione. Tolti il 01/10: «L'hai gestita?»,
   // la carta letta in chat, la frase per la prossima volta, le domande di prima del piano e del follow up, «Per approfondire».
@@ -112,13 +113,9 @@
     const nomiOb = esito === 'Consulenza Prodotti' ? OBIEZIONI_PRODOTTI : Object.keys(O);
     const chiave = D.salva || 'obiezioni';   // i partner: «freni»
     const cartaDi_ = async ob => (ctx.carta ? await ctx.carta(ob, esito) : null);
-    // dopo l'obiezione toccata: nessun altro tocco
-    const dopoOb = ob => fissato
-      ? [{ c: 'Bene: l’hai superata.' }, { dopo: async () => {
-          const c = await cartaDi_(ob);
-          return c ? [{ c: `Se torna fuori quando vi vedete, la risposta del manuale è: ${finePunto(c.giusta)}`, fonte: [`Training · ${c.percorso}`, true] }] : [];
-        } }]
-      : [{ dopo: async () => (await cartaDi_(ob)) ? [{ c: 'La ritrovi in «Ripassa», nel Training, quando vuoi.' }] : [] }];
+    // dopo l'obiezione toccata: nessun altro tocco. Con l'incontro fissato niente (01/10, Ignazio: «eliminare questa frase»; la risposta del manuale delle carte è
+    // quella del telefono, «proporre un caffè»: all'incontro non vale); senza, se la carta c'è, dice che la ritrovi in «Ripassa»
+    const dopoOb = ob => fissato ? [] : [{ dopo: async () => (await cartaDi_(ob)) ? [{ c: 'La ritrovi in «Ripassa», nel Training, quando vuoi.' }] : [] }];
     const altro = B.altro ? [[D.altro || 'Altro', (B.altro.passi || []).slice(0, 2)]] : [];
     const tutte = (escluse = []) => [...nomiOb.filter(ob => !escluse.includes(ob)).map(ob => [ob, dopoOb(ob)]), ...altro];
     const niente = [(B.nessuna && B.nessuna[esito] || [])[0]].filter(Boolean);
