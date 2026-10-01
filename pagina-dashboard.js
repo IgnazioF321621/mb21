@@ -1168,6 +1168,7 @@ function apriObiettivi() {
   const ris = D.risultatiMese({ checkMesi: DS.checkMesi || [], obiettivi: DS.obiettivi, mese: meseRis, oggi: ST.oggi, segniAl: DS.segniAl });
   const nomeRis = D.nomeMese(meseRis).toLowerCase();
   const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
+  const mesePrimo = Number(meseRis.slice(0, 4) + meseRis.slice(5, 7));
   // «Scala dei bonus»: il gradino di partenza è quello del mese prima (il Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
   const NOMI_GRADINI = { 9: 'Leaders Club', 15: 'Executive', 21: 'Argento' };   // i livelli del Manuale che coincidono con un gradino
   const pidVisto = visto().partner_id;
@@ -1176,6 +1177,15 @@ function apriObiettivi() {
     dbq('bonus del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
       .then(r => { gradinoPartenza = MB21Check.gradinoDalBonus(r && r.data ? r.data.bonus : null); }, () => {});
   }
+  // «Risultati di <mese>»: oltre al Check, quello che dice il file Amway (entrati nel mese, prime linee, linee riceventi Bonus, totale gruppo, 15 Planner);
+  // si legge subito all'apertura, così al tocco è già pronto (D.risultatiAmway)
+  let risAmwayDati = null;
+  const risAmway = !pidVisto ? Promise.resolve(null) : Promise.all([
+    dbq('squadra del mese', supa.from('squadra').select('partner_id, sponsor_id, data_ingresso')),
+    dbq('volumi del mese', supa.from('volumi_mese').select('partner_id, mese, vpp, bonus, dimensioni_gruppo').eq('mese', mesePrimo)),
+    dbq('15 Planner del mese', supa.rpc('pm_del_ramo', { da: mesePrimo })),
+  ]).then(([sq, vol, pmr]) => (sq.error || vol.error ? null : D.risultatiAmway({ squadra: sq.data, volumi: vol.data, pm: pmr.error ? null : pmr.data, pid: pidVisto, mese: mesePrimo })), () => null)
+    .then(r => { risAmwayDati = r; return r; });
   const velo = document.createElement('div');
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34)
@@ -1193,6 +1203,7 @@ function apriObiettivi() {
         <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
         <button data-modo="risultati"${ris ? '' : ' disabled'}>Risultati di ${esc(nomeRis)}</button>
         <button data-modo="vuoti">Da zero</button></div>
+      <p class="ob-nota-base" id="ob-nota-base"></p>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Incremento: <b id="ob-perc">0%</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="0">
@@ -1214,6 +1225,8 @@ function apriObiettivi() {
   const chiudi = () => velo.remove();
   velo.querySelector('#ob-x').onclick = chiudi;
   velo.querySelector('#ob-no').onclick = chiudi;
+  // se il file Amway ha dei risultati, la scelta «Risultati» si accende anche quando il Check non ne aveva
+  risAmway.then(r => { const b = velo.querySelector('[data-modo="risultati"]'); if (b && r && Object.values(r).some(v => v > 0)) b.disabled = false; });
   // VPP = consumo personale + VP Clienti (Ignazio 01/10): il VPP è il totale e si scrive per primo; «di cui consumo personale» e «di cui VP Clienti»
   // dicono come si divide, e toccandone una l'altra si aggiusta da sola. Il consumo personale non si salva: è VPP meno VP Clienti.
   // Cambiando il VPP la divisione si tiene IN PROPORZIONE (`quotaClienti`, ricordata finché non si tocca la divisione): scrivendo 100 cifra per cifra
@@ -1271,7 +1284,6 @@ function apriObiettivi() {
   const porta = velo.querySelector('#ob-linee-porta');
   if (porta) porta.onclick = async () => {
     porta.disabled = true; nota('Cerco le tue prime linee…');
-    const mesePrimo = Number(meseRis.slice(0, 4) + meseRis.slice(5, 7));
     const [sq, vol] = await Promise.all([dbq('prime linee', supa.from('squadra').select('partner_id, sponsor_id, nome')), dbq('punti delle linee', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mesePrimo))]);
     porta.disabled = false;
     if (sq.error || vol.error) return nota('Non riesco a leggere il file Amway: riprova.');
@@ -1298,7 +1310,27 @@ function apriObiettivi() {
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
   let base = null, gradino = null;
-  const valoriBase = () => (base === 'risultati' ? risValori : base === 'scala' ? MB21Check.obiettiviDelBonus(gradino) : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
+  // i risultati: Check e file Amway insieme. Iscritti (personali e gruppo): il numero più alto dei due (il file arriva dopo, il Check si scrive a mano);
+  // prime linee, linee riceventi Bonus, totale gruppo, 15 Planner: solo dal file Amway; senza dato la casella resta vuota
+  const risUnito = () => {
+    const r = { ...(risValori || Object.fromEntries(D.CHIAVI_FOGLIO.map(k => [k, '']))) }, a = risAmwayDati;
+    if (!a) return r;
+    for (const k of ['sponsor_personali', 'sponsor_gruppo']) { const m = Math.max(Number(r[k]) || 0, a[k] || 0); r[k] = m > 0 ? m : ''; }
+    for (const k of ['prime_linee', 'linee_bonus', 'totale_gruppo', 'planner']) r[k] = a[k] > 0 ? a[k] : '';
+    return r;
+  };
+  const NOMI_CAMPI = Object.fromEntries(D.CAMPI_OBIETTIVI.flatMap(([, , campi]) => campi.map(([k, e]) => [k, e])));
+  // sotto le scelte, da dove arrivano i numeri e quali caselle restano vuote (e perché): nessuna casella vuota senza una spiegazione
+  const notaBase = () => {
+    const el = velo.querySelector('#ob-nota-base');
+    const vuote = Object.keys(NOMI_CAMPI).filter(k => !String(campo(k).value).trim() && !['pm', 'contatti'].includes(k));
+    const elenco = vuote.map(k => NOMI_CAMPI[k]).join(', ');
+    el.textContent = base === 'risultati' ? `Quello che risulta dal Check e dal file Amway di ${nomeRis}.${elenco ? ` Nessun dato per: ${elenco}.` : ''}`
+      : base === 'uguale' ? `I traguardi che ti eri dato a ${prima || nomeRis}.${elenco ? ` Non c'erano: ${elenco}.` : ''}`
+      : base === 'scala' ? `Numeri del bonus ${gradino}%.${elenco ? ` Da scrivere tu: ${elenco}.` : ''}`
+      : '';
+  };
+  const valoriBase = () => (base === 'risultati' ? risUnito() : base === 'scala' ? MB21Check.obiettiviDelBonus(gradino) : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
   const barra = velo.querySelector('#ob-barra');
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
   const righeLivelli = velo.querySelector('#ob-sistema');
@@ -1306,10 +1338,14 @@ function apriObiettivi() {
   const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === gradino));
   const mostraScala = () => { righeLivelli.hidden = base !== 'scala'; if (base === 'scala') { gradino = gradino || gradinoPartenza; sceltaGradino(); } };
   velo.querySelectorAll('[data-modo]').forEach(b => {
-    b.onclick = () => { base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala(); scrivi(base === 'vuoti' ? null : valoriBase()); };
+    b.onclick = async () => {
+      base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala();
+      if (base === 'risultati' && !risAmwayDati) { velo.querySelector('#ob-nota-base').textContent = 'Leggo i dati…'; await risAmway; if (base !== 'risultati') return; }
+      scrivi(base === 'vuoti' ? null : valoriBase()); notaBase();
+    };
   });
   righeLivelli.querySelectorAll('button').forEach(b => {
-    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); };
+    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); notaBase(); };
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
@@ -1319,6 +1355,7 @@ function apriObiettivi() {
     sceltaModo(velo.querySelector(`[data-modo="${base}"]`));
     mostraScala();
     scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' || v == null ? '' : D.aumenta(Number(v), p)])));
+    notaBase();
   };
   barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (0%) vale anche senza spostarla: tiene la scelta com'è
   velo.querySelector('#ob-si').onclick = async () => {
