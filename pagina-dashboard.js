@@ -776,9 +776,9 @@ function collegaMioAvvio(ridisegna = disegnaOggi, ritorno = null) {
 // ── Obiettivi dei partner (Ignazio 01/10): per chi sta sopra, gli obiettivi del mese di chi gli sta sotto, SOLO IN LETTURA ──
 // Il database (`obiettivi_del_ramo`) dà già solo la discesa nella stessa linea; qui si tolgono anche l'Admin che guarda un altro (conta il ramo del partner
 // guardato) e chi non ha scritto niente. Con «Tutti» e offline non si mostra. Una riga grigia in Dashboard, il tocco apre la pagina dei nomi.
-const OBT = { righe: [], mese: null, aperto: null };
+const OBT = { righe: [], senza: [], mese: null, aperto: null };   // righe: chi ha scritto · senza: chi ha l'app e non ha ancora scritto
 async function caricaObiettiviTeam(oggi) {
-  OBT.righe = []; OBT.mese = String(oggi).slice(0, 7) + '-01';
+  OBT.righe = []; OBT.senza = []; OBT.mese = String(oggi).slice(0, 7) + '-01';
   if (ST.offline || vediTutti() || !obiettiviAperti() || !visto().partner_id) return;
   try {
     const mese = Number(OBT.mese.slice(0, 4) + OBT.mese.slice(5, 7));
@@ -788,13 +788,15 @@ async function caricaObiettiviTeam(oggi) {
       dbq('VPG di adesso dei partner', supa.from('volumi_mese').select('partner_id, mese, vpg').eq('mese', mese)),
     ]);
     if (ob.error || sq.error || !ob.data) return;
-    OBT.righe = MB21Dashboard.obiettiviDelTeam({ obiettivi: ob.data.obiettivi, linee: ob.data.linee, squadra: sq.data, volumi: vol.error ? [] : vol.data, radice: visto().partner_id, mese });
+    const radice = visto().partner_id;
+    OBT.righe = MB21Dashboard.obiettiviDelTeam({ obiettivi: ob.data.obiettivi, linee: ob.data.linee, squadra: sq.data, volumi: vol.error ? [] : vol.data, radice, mese });
+    OBT.senza = MB21Dashboard.senzaObiettivi({ utenti: ob.data.utenti, squadra: sq.data, scritti: OBT.righe.map(r => r.partner_id), radice });
   } catch (e) {}
 }
 function obiettiviTeamHtml() {
-  const n = OBT.righe.length;
-  return n ? rigaApribile('dash-obteam', 'catalogare', 'obiettivi', 'Obiettivi dei partner',
-    `${n} ${n === 1 ? 'partner ha scritto' : 'partner hanno scritto'} gli obiettivi di ${MB21Dashboard.nomeMese(OBT.mese).toLowerCase()} · per aiutarli`, false, n) : '';
+  const n = OBT.righe.length, m = OBT.senza.length;
+  return n || m ? rigaApribile('dash-obteam', 'catalogare', 'obiettivi', 'Obiettivi dei partner',
+    `${n} ${n === 1 ? 'ha scritto' : 'hanno scritto'} gli obiettivi di ${MB21Dashboard.nomeMese(OBT.mese).toLowerCase()}${m ? ` · ${m} non ancora` : ''} · per aiutarli`, false, m) : '';
 }
 function disegnaObiettiviTeam() {
   const D = MB21Dashboard, f = x => Number(x).toLocaleString('it-IT', { maximumFractionDigits: 2 }), altro = guardoAltri();
@@ -816,8 +818,9 @@ function disegnaObiettiviTeam() {
   };
   app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
     <h1>${ic('obiettivi')} Obiettivi dei partner</h1>
-    <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner.</div>
-    ${OBT.righe.map(card).join('') || '<div class="vuoto">Nessun partner ha ancora scritto gli obiettivi.</div>'}${versione()}`;
+    <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner. Sono quelli che hanno già aperto l'app.</div>
+    ${OBT.senza.length ? `<div class="obt-senza"><h4>Non ancora scritti · ${OBT.senza.length}</h4>${OBT.senza.map(r => `<div><span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}</span></div>`).join('')}</div>` : ''}
+    ${OBT.righe.map(card).join('') || (OBT.senza.length ? '' : '<div class="vuoto">Nessun partner ha ancora scritto gli obiettivi.</div>')}${versione()}`;
   document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
   app.querySelectorAll('[data-obt]').forEach(b => b.onclick = () => { OBT.aperto = OBT.aperto === b.dataset.obt ? null : b.dataset.obt; disegnaObiettiviTeam(); });
 }

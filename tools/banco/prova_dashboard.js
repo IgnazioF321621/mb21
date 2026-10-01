@@ -331,4 +331,13 @@ prova('Obiettivi dei partner (upline, sola lettura): solo chi sta sotto, mai se 
   assert.deepEqual(D.obiettiviDelTeam({ obiettivi, linee, squadra, volumi, radice: 'Y', mese: 202610 }), []);
 });
 
+prova('Obiettivi dei partner: chi non ha ancora scritto (ha l\'app, sta sotto, non è già tra chi ha scritto)', () => {
+  const squadra = [{ partner_id: 'IO', sponsor_id: 'SU', nome: 'Io' }, { partner_id: 'A', sponsor_id: 'IO', nome: 'Zeta' }, { partner_id: 'B', sponsor_id: 'A', nome: 'Bianchi' },
+    { partner_id: 'C', sponsor_id: 'IO', nome: 'Anna' }, { partner_id: 'X', sponsor_id: 'SU', nome: 'Altra linea' }];
+  const r = D.senzaObiettivi({ utenti: ['A', 'B', 'C', 'C', 'X', 'IO', 'ZZ'], squadra, scritti: ['A'], radice: 'IO' });
+  assert.deepEqual(r.map(x => x.partner_id), ['C', 'B']);   // le dirette prima; non A (ha scritto), non X (altra linea), non IO, non chi non è in mappa
+  assert.equal(r[0].diretto, true); assert.equal(r[1].sponsor_nome, 'Zeta');
+  assert.deepEqual(D.senzaObiettivi({ utenti: ['A'], squadra, scritti: [], radice: null }), []);
+});
+
 console.log(`\n${ok} prove superate`);
