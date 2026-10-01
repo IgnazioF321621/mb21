@@ -141,7 +141,12 @@
       { c: String(prep.apertura || '{quando} con {chi} lavorate su {passi}.').replace('{quando}', () => inc.quando || 'Presto').replace('{passi}', () => elenco) },
       ...scelti.map(x => ({ c: prep.passi[x].c, fonte: prep.passi[x].fonte })),
     ];
-    return riempi([...reazione.slice(0, 1), ...incontro, ...domanda], nomi);
+    // la reazione e la domanda in un fumetto solo (Ignazio 01/10: «unire con la successiva»): meno fumetti, meno attese
+    const prima1 = reazione.slice(0, 1);
+    if (!incontro.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
+      return riempi([{ c: `${prima1[0].c} ${domanda[0].c}` }, ...domanda.slice(1)], nomi);
+    }
+    return riempi([...prima1, ...incontro, ...domanda], nomi);
   }
 
   // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per
@@ -207,7 +212,7 @@
         .filter(x => x !== 'Nessuna' && x !== 'Niente').map(x => (x === 'Altro' ? (altro && altro.risposta ? `«${altro.risposta}»` : null) : x)).filter(Boolean);
       // l'ultima chat di quella persona decide: se non ha lasciato niente da ricordare, le volte prima non tornano
       out[a.contatto_id] = frase || obiezioni.length
-        ? { frase, obiezioni, daRipassare: !!(gestita && gestita.risposta === 'No'), azione: a.id, quando: quando(a) } : null;
+        ? { frase, obiezioni, daFreni: !r('obiezioni') && !!r('freni'), daRipassare: !!(gestita && gestita.risposta === 'No'), azione: a.id, quando: quando(a) } : null;
     }
     return out;
   }

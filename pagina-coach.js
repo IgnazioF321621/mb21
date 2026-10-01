@@ -186,8 +186,13 @@ async function caricaRicordi(ids) {
 function ricordoHtml(contattoId, nome) {
   const r = RICORDI[contattoId];
   if (!r) return '';
-  const chi = primoNome(nome);
-  return `<div class="ricordo">${ic('prossimo')}<div>${r.obiezioni.length ? `<small>L'ultima volta${chi ? ` con ${esc(chi)}` : ''}: ${esc(r.obiezioni.join(' · '))}${r.daRipassare ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}</div></div>`;
+  const chi = primoNome(nome) || 'La persona';
+  const tra = x => (String(x).startsWith('«') ? x : `«${x}»`);
+  // «L'ultima volta con Mario: È vendita?» sembrava una vendita fatta (Ignazio 01/10): ora dice chi ha detto cosa
+  const ob = !r.obiezioni.length ? '' : r.daFreni ? `L'ultima volta ${esc(chi)} frenava per: ${esc(r.obiezioni.join(' · '))}` : `L'ultima volta ${esc(chi)} ha detto: ${r.obiezioni.map(x => esc(tra(x))).join(' · ')}`;
+  // dal ricordo alla carta del Training (Ignazio 01/10: «lo possiamo indirizzare verso il Training per la gestione della possibile obiezione»)
+  const training = r.obiezioni.length && typeof TRAINING_VISIBILE !== 'undefined' && TRAINING_VISIBILE ? `<button type="button" class="link" data-vai-ripasso style="padding:6px 0 0">Ripassa nel Training ›</button>` : '';
+  return `<div class="ricordo">${ic('prossimo')}<div>${ob ? `<small>${ob}${r.daRipassare ? ' · da ripassare' : ''}</small>` : ''}${r.frase ? `Ti eri detto: <b>«${esc(r.frase)}»</b>` : ''}${training}</div></div>`;
 }
 
 // La riga di preparazione prima della prima telefonata (cantiere 48, Ignazio 01/10: «stessa riga in tutte e due», coda e MB Plan; e nella scheda):
@@ -238,6 +243,10 @@ function foglioCorreggiCoach(visto, bottone) {
     mostraToast('Frase segnata per la correzione.');
   };
 }
+document.addEventListener('click', ev => {   // «Ripassa nel Training ›» dal ricordo: apre Ripassa, dove le obiezioni capitate sono in cima
+  const v = ev.target.closest && ev.target.closest('[data-vai-ripasso]');
+  if (v && typeof TRN !== 'undefined') { ev.stopPropagation(); TRN.vista = 'ripassa'; ST.tab = 'training'; mostraTab(); }
+}, true);
 document.addEventListener('click', ev => {   // il ✎ della riga di preparazione (e di ogni altra frase del coach fuori dalla chat)
   const b = ev.target.closest && ev.target.closest('[data-correggi-frase]');
   if (b && !b.disabled) foglioCorreggiCoach({ situazione: b.dataset.situazione || 'coach', frase: b.dataset.correggiFrase }, b);

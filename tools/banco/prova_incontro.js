@@ -66,4 +66,24 @@ prova('Chiudere con più passi: il primo è l\'esito, gli altri una riga di azio
   assert.deepEqual(righe, []);
 });
 
+prova('Consulenza Prodotti: lo stesso foglio dalla coda, dall\'Agenda e dalla scheda (la consulenza, non il piano), e il contatto esce dalla coda', () => {
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const taglio = (da, a) => { const i = dash.indexOf(da), j = dash.indexOf(a, i); assert.ok(i >= 0 && j > i, da); return dash.slice(i, j); };
+  const proposte = [];
+  const ctx = { MB21Agenda: A, MB21Coda: { oggiRoma: () => '2026-10-01' }, nuovoAppuntamento: async o => { proposte.push(o); return { id: 'n', inizio: 'x' }; }, console };
+  vm.createContext(ctx);
+  vm.runInContext(taglio('const COSA_FA_ESITO', 'function bottoniPer') + ';this.COSA_FA_ESITO = COSA_FA_ESITO;' + taglio('function appuntamentoDaCoda', '// Un esito (Dashboard e scheda contatto usano lo stesso codice)') + ';this.appuntamentoDaCoda = appuntamentoDaCoda', ctx);
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.COSA_FA_ESITO['Consulenza Prodotti'])), { data: 'giorno-ora', classe: 'appuntamento' });   // la coda lo fissa come PM Fissato
+  const chi = (categoria) => ({ id: 'c1', nome: 'Mario', categoria, user_id: 'u1' });
+  return (async () => {
+    for (const [cat, esito, tipo, modalita] of [['Prospect', 'PM Fissato', 'Piano Marketing', 'PM 1a1'], ['Prospect', 'Consulenza Prodotti', 'Consulenza PRD', null], ['Cliente', 'Consulenza Prodotti', 'Consulenza PRD', null],
+      ['Cliente', 'Appuntamento', 'Consulenza PRD', null], ['Partner', 'Appuntamento', 'Appuntamento', null]]) {
+      proposte.length = 0; await ctx.appuntamentoDaCoda(chi(cat), esito);
+      assert.deepEqual([proposte[0].tipo, proposte[0].modalita, proposte[0].userId], [tipo, modalita, 'u1'], `${cat} ${esito}`);
+    }
+    proposte.length = 0; await ctx.appuntamentoDaCoda(chi('Prospect'));   // senza esito (chiamate vecchie): come prima
+    assert.equal(proposte[0].tipo, 'Piano Marketing');
+  })();
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
