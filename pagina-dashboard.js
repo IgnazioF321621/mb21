@@ -1337,7 +1337,7 @@ function apriObiettivi() {
   // «Attraverso quanti PM e quanti contatti?»: l'indicazione sotto le due caselle (valori di partenza uguali per tutti, D.percorsoAzione); si scrive come si vuole
   const indicazioni = () => {
     const r = D.percorsoAzione(numero('sponsor_personali'), numero('sponsor_gruppo'), numero('pm'));
-    velo.querySelector('#ob-hint-pm').textContent = r ? `Per ${r.iscritti} ${r.personali ? (r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali') : (r.iscritti === 1 ? 'nuovo iscritto' : 'nuovi iscritti')}: circa ${f(r.pm)} PM (${D.PM_PER_ISCRITTO} per ognuno)` : '';
+    velo.querySelector('#ob-hint-pm').textContent = r ? `Per ${r.iscritti} ${r.personali ? (r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali') : (r.iscritti === 1 ? 'nuovo iscritto' : 'nuovi iscritti')}: circa ${f(r.pm)} PM (${D.PM_PER_ISCRITTO} per un iscritto)` : '';
     velo.querySelector('#ob-hint-contatti').textContent = r ? `Per ${f(r.perPm ? numero('pm') : r.pm)} PM: circa ${f(r.contatti)} contatti (${D.CONTATTI_PER_PM} per ogni PM)` : '';
   };
   for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
