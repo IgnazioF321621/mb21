@@ -169,7 +169,7 @@ async function apriCompleta(id) {
   disegnaCompleta();
 }
 
-// «Statistiche» (Ignazio 01/10): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico nel Check
+// «Dai contatti agli iscritti» (prima «Statistiche»; Ignazio 01/10): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico nel Check
 // (contatti, Piani Marketing, iscritti personali) degli ultimi 6 mesi. L'Admin vede tutti; ogni upline chi gli sta sotto nella stessa linea (la linea la dà la
 // mappa Amway, `squadra`) e se stesso: lo decide il database, con `efficacia_del_ramo`. Il calcolo è `efficaciaDi` (dashboard.js).
 async function leggiEfficacia() {
@@ -188,35 +188,123 @@ function statistichePerPersona() {
 }
 // La card c'è per l'Admin sempre; per un upline solo se sotto di lui qualcuno ha uno storico (si legge in silenzio all'apertura della Mappa)
 const haStatistiche = () => eAdmin() || (MP.efficacia && !MP.efficacia.errore && statistichePerPersona().some(r => r.pid !== ST.utente.partner_id));
+const TITOLO_STAT = 'Dai contatti agli iscritti';   // Ignazio 01/10: «un titolo più specifico» di «Statistiche»
 const statisticheHtml = () => (haStatistiche()
-  ? rigaApribile('mp-stat', 'catalogare', 'crescita', 'Statistiche', `contatti per PM e PM per iscritto ${eAdmin() ? 'di ognuno' : 'di chi ti sta sotto'} · per aiutarli`, false, 0) : '');
+  ? rigaApribile('mp-stat', 'catalogare', 'crescita', TITOLO_STAT, `quanti contatti per un PM e quanti PM per un iscritto ${eAdmin() ? 'di ognuno' : 'di chi ti sta sotto'}`, false, 0) : '');
 async function apriStatistiche() {
-  ST.tornaA = 'mappa'; window.scrollTo(0, 0);
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button><h1>${ic('crescita')} Statistiche</h1><div class="vuoto">Carico il Check…</div>`;
+  ST.tornaA = 'mappa'; MP.statPid = null; window.scrollTo(0, 0);
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button><h1>${ic('crescita')} ${TITOLO_STAT}</h1><div class="vuoto">Carico il Check…</div>`;
   document.getElementById('indietro').onclick = tornaDaTeam;
   await leggiEfficacia();
   disegnaStatistiche();
 }
+const unoStat = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+// «da maggio a ottobre 2026»: i 6 mesi su cui si contano i numeri
+function periodoStat(mese) {
+  const D = MB21Dashboard, da = D.meseSpostato(mese, -5);
+  const n = m => D.nomeMese(m).toLowerCase();
+  return da.slice(0, 4) === mese.slice(0, 4) ? `da ${n(da)} a ${n(mese)} ${mese.slice(0, 4)}` : `da ${n(da)} ${da.slice(0, 4)} a ${n(mese)} ${mese.slice(0, 4)}`;
+}
+const notaStat = r => (!r.pm ? 'Ancora nessun Piano Marketing in questi mesi.' : r.pm < 10 ? 'Ancora pochi Piani Marketing: i numeri sono indicativi.' : (r.iscritti < 3 ? 'Ancora pochi iscritti: il rapporto PM per iscritto è indicativo.' : ''));
+
+// L'immagine pulita da mandare a una persona (1080 × 1290): la stessa che si vede nella pagina, così quello che guardi è quello che invii
+function immagineStat(r, media, periodo, dataOggi, etMedia) {
+  const W = 1080, H = 1290, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), FONT = '-apple-system, "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif';
+  const tondo = (x, y, w, h, rr) => { g.beginPath(); g.moveTo(x + rr, y); g.arcTo(x + w, y, x + w, y + h, rr); g.arcTo(x + w, y + h, x, y + h, rr); g.arcTo(x, y + h, x, y, rr); g.arcTo(x, y, x + w, y, rr); g.closePath(); };
+  const testo = (t, x, y, px, peso, colore, allinea) => { g.font = `${peso} ${px}px ${FONT}`; g.fillStyle = colore; g.textAlign = allinea || 'left'; g.textBaseline = 'alphabetic'; g.fillText(t, x, y); };
+  const NERO = '#10151F', GRIGIO = '#5A6475', BLU = '#1D4ED8', TINTA = '#E7EFFE', LINEA = '#E3E7EE';
+  g.fillStyle = '#EFF1F5'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#FFFFFF'; tondo(60, 60, 960, 1170, 48); g.fill();
+  g.save(); g.font = `700 28px ${FONT}`; if ('letterSpacing' in g) g.letterSpacing = '3px';
+  g.fillStyle = BLU; g.textAlign = 'left'; g.fillText(TITOLO_STAT.toUpperCase(), 120, 150); g.restore();
+  let px = 80; g.font = `700 ${px}px ${FONT}`;
+  while (g.measureText(r.nome).width > 840 && px > 40) { px -= 4; g.font = `700 ${px}px ${FONT}`; }
+  testo(r.nome, 120, 250, px, 700, NERO);
+  testo(`Ultimi 6 mesi · ${periodo}`, 120, 310, 32, 400, GRIGIO);
+  // i tre numeri, dal contatto all'iscritto
+  [[r.contatti, 'contatti'], [r.pm, 'Piani Marketing'], [r.iscritti, 'iscritti personali']].forEach(([v, et], i) => {
+    const x = 120 + i * 300;
+    g.fillStyle = TINTA; tondo(x, 370, 240, 230, 32); g.fill();
+    testo(String(v), x + 120, 485, 104, 700, BLU, 'center');
+    g.font = `500 28px ${FONT}`;
+    let e = et, f = 28; while (g.measureText(e).width > 214 && f > 20) { f -= 2; g.font = `500 ${f}px ${FONT}`; }
+    testo(e, x + 120, 550, f, 500, NERO, 'center');
+    if (i < 2) testo('›', x + 270, 505, 72, 400, GRIGIO, 'center');
+  });
+  // i due rapporti, con la media di chi guarda come riferimento
+  [['Contatti per un Piano Marketing', r.contattiPerPm, media.contattiPerPm], ['Piani Marketing per un iscritto', r.pmPerIscritto, media.pmPerIscritto]].forEach(([et, v, m], i) => {
+    const y = 660 + i * 190;
+    g.fillStyle = LINEA; g.fillRect(120, y, 840, 2);
+    testo(et, 120, y + 80, 36, 600, NERO);
+    testo(`${etMedia}: ${unoStat(m)}`, 120, y + 130, 30, 400, GRIGIO);
+    testo(unoStat(v), 960, y + 118, 84, 700, NERO, 'right');
+  });
+  // la nota, a capo a mano
+  const nota = notaStat(r);
+  if (nota) {
+    g.font = `400 28px ${FONT}`; let riga = '', y = 1090;
+    for (const parola of nota.split(' ')) {
+      const prova = riga ? riga + ' ' + parola : parola;
+      if (g.measureText(prova).width > 840 && riga) { testo(riga, 120, y, 28, 400, GRIGIO); riga = parola; y += 40; } else riga = prova;
+    }
+    testo(riga, 120, y, 28, 400, GRIGIO);
+  }
+  testo(`MB21 · dai dati del Check · ${dataOggi}`, 540, 1190, 26, 400, GRIGIO, 'center');
+  return c;
+}
+const nomeFileStat = nome => `${TITOLO_STAT} - ${nome}.png`.replace(/[\\/:*?"<>|]/g, '');
+
+// La scheda di una persona: l'immagine e il tasto per mandarla (menu di condivisione del telefono; se non c'è, si scarica)
+function disegnaSchedaStat(pid) {
+  const E = MP.efficacia, r = statistichePerPersona().find(x => x.pid === pid);
+  if (!r) { MP.statPid = null; return disegnaStatistiche(); }
+  MP.statPid = pid;
+  const o = MB21Coda.oggiRoma(), dataOggi = `${Number(o.slice(8))}/${Number(o.slice(5, 7))}/${o.slice(0, 4)}`;
+  const canvas = immagineStat(r, MB21Dashboard.efficaciaDi(E.righe, E.mese), periodoStat(E.mese), dataOggi, eAdmin() ? 'media di tutti' : 'media del gruppo');
+  canvas.style.cssText = 'width:100%;height:auto;border-radius:16px;display:block';
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${TITOLO_STAT}</button>
+    <div id="stat-img"></div>
+    <button class="primario" id="stat-invia" style="margin-top:12px">${ic('condividi')} Invia l'immagine</button>
+    <div class="sotto">L'immagine è pulita, pronta da mandare a ${esc(r.nome)}. Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
+  document.getElementById('stat-img').appendChild(canvas);
+  document.getElementById('indietro').onclick = () => { MP.statPid = null; disegnaStatistiche(); };
+  document.getElementById('stat-invia').onclick = () => canvas.toBlob(async blob => {
+    if (!blob) return mostraToast('Non riesco a preparare l\'immagine: riprova.');
+    const nomeFile = nomeFileStat(r.nome), file = new File([blob], nomeFile, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: nomeFile.replace(/\.png$/, '') }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }   // menu chiuso senza scegliere: niente; altri errori → si scarica
+    }
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = nomeFile; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    mostraToast('Immagine scaricata: la trovi nei Download, pronta da allegare.');
+  }, 'image/png');
+}
+
 function disegnaStatistiche() {
-  const E = MP.efficacia, D = MB21Dashboard, uno = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+  const E = MP.efficacia, D = MB21Dashboard;
+  if (MP.statPid && E && !E.errore) return disegnaSchedaStat(MP.statPid);
   let corpo;
   if (!E || E.errore) {
     corpo = `<div class="avviso">Non riesco a leggere il Check. Riprova più tardi.</div>`;
   } else {
-    const righe = statistichePerPersona(), media = D.efficaciaDi(E.righe, E.mese), poco = r => r.pm < 10;
-    corpo = `<div class="riquadro" style="padding:6px 12px"><table class="mp-tabella">
-      <tr><th>Nome</th><th>Contatti per PM</th><th>PM per iscritto</th><th>PM fatti</th></tr>
-      <tr><td><b>${eAdmin() ? 'Media di tutti' : 'Media del tuo gruppo'}</b></td><td>${uno(media.contattiPerPm)}</td><td>${uno(media.pmPerIscritto)}</td><td>${media.pm}</td></tr>
-      ${righe.map(r => `<tr${poco(r) ? ' style="color:var(--grigio-chiaro)"' : ''}><td>${esc(r.nome)}${r.pid === ST.utente.partner_id ? ' (tu)' : ''}</td><td>${uno(r.contattiPerPm)}</td><td>${uno(r.pmPerIscritto)}</td><td>${r.pm}</td></tr>`).join('')}
-    </table></div>
-    ${righe.length ? '' : '<div class="vuoto">Nessuno ha ancora scritto contatti, PM o iscritti nel Check.</div>'}
-    <div class="sotto">Ultimi 6 mesi dal Check. In grigio: ancora meno di 10 PM, il numero non è affidabile. «—» dove manca un dato (nessun PM o nessun iscritto personale).</div>`;
+    const righe = statistichePerPersona(), media = D.efficaciaDi(E.righe, E.mese);
+    corpo = `<div class="mp-riquadro"><div class="tre" style="gap:6px"><div><small>${eAdmin() ? 'Media di tutti' : 'Media del gruppo'}</small><b style="font-size:13px;font-weight:400;opacity:.8">${esc(periodoStat(E.mese))}</b></div>
+        <div><small>Contatti per PM</small><b>${unoStat(media.contattiPerPm)}</b></div><div><small>PM per iscritto</small><b>${unoStat(media.pmPerIscritto)}</b></div></div></div>
+      ${righe.length ? `<h4 class="mc-t">${eAdmin() ? 'Persona per persona' : 'Tu e chi ti sta sotto'}</h4>` : '<div class="vuoto">Nessuno ha ancora scritto contatti, PM o iscritti nel Check.</div>'}
+      ${righe.map(r => `<button class="ag-blocco" data-stat="${esc(r.pid)}" style="text-align:left${r.pm < 10 ? ';opacity:.75' : ''}">
+          <span><b>${esc(r.nome)}${r.pid === ST.utente.partner_id ? ' (tu)' : ''}</b><small style="display:block;margin-top:2px;color:var(--grigio-chiaro)">${r.contatti} contatti · ${r.pm} PM · ${r.iscritti} ${r.iscritti === 1 ? 'iscritto' : 'iscritti'}</small></span>
+          <span style="text-align:right"><b>${unoStat(r.contattiPerPm)}</b> contatti per PM<small style="display:block;color:var(--grigio-chiaro)"><b>${unoStat(r.pmPerIscritto)}</b> PM per iscritto ›</small></span></button>`).join('')}
+      <div class="sotto">Ultimi 6 mesi dal Check. Le righe più chiare hanno meno di 10 Piani Marketing: i numeri sono ancora indicativi. Tocca un nome per vedere la scheda da inviargli.</div>`;
   }
   app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button>
-    <h1>${ic('crescita')} Statistiche</h1>
+    <h1>${ic('crescita')} ${TITOLO_STAT}</h1>
     <div class="sotto" style="margin-bottom:8px">Quanti contatti servono per un Piano Marketing e quanti Piani Marketing per un iscritto personale, ${eAdmin() ? 'persona per persona' : 'tuoi e di chi ti sta sotto nella tua linea'}: aiutano a capire dove una mano serve di più. Qui si legge soltanto.</div>
     ${corpo}${versione()}`;
   document.getElementById('indietro').onclick = tornaDaTeam;
+  app.querySelectorAll('[data-stat]').forEach(b => b.onclick = () => { window.scrollTo(0, 0); disegnaSchedaStat(b.dataset.stat); });
 }
 
 function disegnaCompleta() {
