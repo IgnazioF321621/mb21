@@ -1163,7 +1163,7 @@ function collegaDashboard() {
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
-const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti', cep: 'CEP · abbonati del gruppo' };
+const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM personali', contatti: 'e quanti Contatti', cep: 'CEP · abbonati del gruppo' };
 // Le sezioni del foglio si aprono e si chiudono, ognuna con una breve spiegazione (Ignazio 01/10: foglio unico per tutti, espandibile); Volume e Azione aperte, il resto chiuso
 const SEZIONI_FOGLIO = {
   'Volume': { id: 'volume', aperta: true, spiega: 'I punti che ti servono: quelli di tutto il gruppo, quanti sono tuoi e quanti arrivano da chi sta sotto di te.' },
