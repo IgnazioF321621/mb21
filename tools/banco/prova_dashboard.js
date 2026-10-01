@@ -340,4 +340,31 @@ prova('Obiettivi dei partner: chi non ha ancora scritto (ha l\'app, sta sotto, n
   assert.deepEqual(D.senzaObiettivi({ utenti: ['A'], squadra, scritti: [], radice: null }), []);
 });
 
+prova('«Quanto al giorno»: da 1 in su arrotondato in su, sotto 1 «1 ogni N giorni» arrotondato in giù', () => {
+  assert.equal(D.alGiornoTesto(1500 / 17), '89 al giorno');
+  assert.equal(D.alGiornoTesto(6.2), '7 al giorno');
+  assert.equal(D.alGiornoTesto(5 / 17), '1 ogni 3 giorni');   // 3,4 giorni → 3
+  assert.equal(D.alGiornoTesto(0.8), '1 al giorno');
+  assert.equal(D.alGiornoTesto(1), '1 al giorno');
+  assert.equal(D.alGiornoTesto(0), '');
+});
+
+prova('Il mio mese a righe: sintesi di ogni riquadro e riga della sezione chiusa', () => {
+  const ob = [{ mese: '2026-10-01', vpg: 2400, vpp: 500, contatti: 200, prime_linee: 8, planner: 2, bbs: 15 }];
+  const ck = [{ mese: '2026-10-01', ultimo_check: '2026-10-15', contatti: 95, pm: 0, sponsor_personali: 0, sponsor_gruppo: 0, vp_clienti: 90, tracce: 0, pagine: 0 }];
+  const sq = { prime_linee: 3, linee_bonus: 3, planner: 2, totale_gruppo: 18 };
+  const d = D.calcola({ checkMesi: ck, obiettivi: ob, oggi: '2026-10-15', scadenza: '2026-12-10', squadraAl: sq });
+  assert.deepEqual(d.schede.map(s => s.chiave), ['volume', 'azione', 'squadra', 'segni', 'crescita']);
+  assert.equal(d.schede[0].riquadri[0].titolo, 'VPG');   // il VPG è il primo del Volume
+  const c = riq(d, 'Contatti');   // 200 − 95 = 105 in 17 giorni
+  assert.deepEqual(D.sintesiRiquadro(c), { grande: '7 al giorno', sx: '95 su 200', dx: 'ne mancano 105', stato: 'manca' });
+  assert.deepEqual(D.sintesiRiquadro(riq(d, 'Prime linee')), { grande: 'ne mancano 5', sx: '3 su 8', dx: '', stato: 'manca' });
+  assert.equal(D.sintesiRiquadro(riq(d, '15 Planner')).grande, 'Raggiunto');
+  assert.equal(D.sintesiRiquadro(riq(d, 'Linee riceventi Bonus')).dx, 'Obiettivo da impostare');
+  assert.equal(D.riassuntoScheda(d.schede[1]), 'Contatti 7 al giorno');
+  assert.equal(D.riassuntoScheda(d.schede[2]), 'Prime linee 3 su 8');
+  const senza = D.calcola({ checkMesi: ck, obiettivi: ob, oggi: '2026-10-15', scadenza: '2026-12-10' });   // senza codice Amway: niente Squadra
+  assert.deepEqual(senza.schede.map(s => s.chiave), ['volume', 'azione', 'segni', 'crescita']);
+});
+
 console.log(`\n${ok} prove superate`);
