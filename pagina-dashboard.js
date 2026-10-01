@@ -1219,8 +1219,8 @@ function apriObiettivi() {
 }
 
 // Riquadro ampio degli obiettivi (Ignazio 01/10): dall'1 al 5 del mese, se gli obiettivi mancano, si apre da solo
-// ogni volta che si apre l'app (non a ogni ridisegno: si ricorda in memoria finché la pagina resta aperta) fino a quando
-// non sono impostati. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
+// ogni volta che si entra in Dashboard o si rientra nell'app (non a ogni ridisegno: si ricorda in memoria, e si dimentica
+// lasciando la Dashboard o uscendo dall'app) fino a quando non sono impostati. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
 const GIORNI_RIQUADRO_OBIETTIVI = 5;
 function mostraRiquadroObiettivi() {
   const d = DS.dati;
@@ -1228,7 +1228,7 @@ function mostraRiquadroObiettivi() {
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
   if (ST.riquadroObMostrato) return;
-  ST.riquadroObMostrato = true;   // una volta per apertura dell'app: toccare una fascia ridisegna la Dashboard e non deve riaprirlo
+  ST.riquadroObMostrato = true;   // una volta per ingresso: toccare una fascia ridisegna la Dashboard e non deve riaprirlo
   const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
   const velo = document.createElement('div');
   velo.className = 'velo centro';
@@ -1243,6 +1243,12 @@ function mostraRiquadroObiettivi() {
   velo.querySelector('#rob-no').onclick = chiudi;
   velo.querySelector('#rob-si').onclick = () => { chiudi(); apriObiettivi(); };
 }
+
+// Il telefono tiene l'app viva in secondo piano: uscendo dall'app il riquadro torna «da mostrare»; rientrando sulla Dashboard si riapre
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') ST.riquadroObMostrato = false;
+  else if (ST.utente && ST.tab === 'oggi') mostraRiquadroObiettivi();
+});
 
 // «Il mio giorno» (fino al 28/09 «Check del Giorno»): 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
 // e «Salva» lo corregge invece di aggiungerne un altro (prima si sommavano, decisione 9). I giorni di Glide con
