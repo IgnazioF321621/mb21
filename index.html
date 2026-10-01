@@ -881,6 +881,13 @@
   .ob-campi label.ob-totale input { background: var(--tot-tinta); border: 2px solid var(--tot); color: var(--tot); font-size: 22px; font-weight: 800; }
   .ob-dal-gruppo { grid-column: 1 / -1; font-size: 13px; color: var(--gr-volume); margin: -2px 2px 2px; }
   .ob-dal-gruppo:empty { display: none; }
+  /* «Le tue linee» (01/10): nome e VP per riga */
+  .ob-linee-testo { margin: 0 0 8px; font-size: 13px; color: var(--grigio); }
+  .ob-linea { display: grid; grid-template-columns: 1fr 96px 34px; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .ob-linea input { margin: 0; padding: 10px; font-size: 16px; min-width: 0; }
+  .ob-linea input[readonly] { background: var(--superficie-2); color: var(--testo-soft); }
+  .ob-linea-x { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--superficie-2); color: var(--testo-soft); font-size: 18px; line-height: 1; }
+  .ob-linee-az { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
   .visione { display: block; margin: 14px auto; min-height: var(--tocco); border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--testo-soft); }
   .sv { background: var(--accento); color: #fff; border-radius: var(--raggio-card); padding: 14px; margin: 16px 0 6px; }
   .sv h3 { margin: 0; font-size: 20px; }

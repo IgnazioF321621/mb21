@@ -261,15 +261,29 @@
   const aumenta = (v, percento) => (percento ? Math.ceil(Number((v * (1 + percento / 100)).toFixed(6))) : v);
 
   // Da dove vengono i punti del gruppo che non sono i tuoi (Ignazio 01/10: «gli altri 100 da dove vengono?»): VPG meno VPP. Ogni nuovo iscritto porta
-  // VP_NUOVO_ISCRITTO punti (l'esempio del 3%: 200 = 100 consumo + 50 clienti + 1 nuovo iscritto a 50 VP); quello che i nuovi iscritti non coprono
-  // viene dalle linee già attive (salendo di livello il gruppo che c'è pesa sempre di più). Restituisce null se il VPG non supera il VPP.
+  // VP_NUOVO_ISCRITTO punti (l'esempio del 3%: 200 = 100 consumo + 50 clienti + 1 nuovo iscritto a 50 VP); il resto viene dalle linee (salendo di livello
+  // il gruppo che c'è pesa sempre di più). Se il partner ha scritto «Le tue linee» (`vpLinee` = la somma dei loro VP) il resto è quello che le linee
+  // portano e `restano` sono i punti ancora da trovare; senza linee scritte tutto il resto è «dalle linee già attive». Null se il VPG non supera il VPP.
   const VP_NUOVO_ISCRITTO = 50;
-  function ripartoGruppo(vpg, vpp, nuoviIscritti) {
+  function ripartoGruppo(vpg, vpp, nuoviIscritti, vpLinee) {
     const altri = Math.round((n(vpg) - n(vpp)) * 100) / 100;
     if (!(n(vpg) > 0 && n(vpp) > 0) || altri <= 0) return null;
     const nuovi = Math.max(0, Math.floor(n(nuoviIscritti)));
     const daNuovi = Math.min(altri, nuovi * VP_NUOVO_ISCRITTO);
-    return { altri, nuovi, daNuovi, daLinee: Math.round((altri - daNuovi) * 100) / 100 };
+    const resto = Math.round((altri - daNuovi) * 100) / 100;
+    const conLinee = n(vpLinee) > 0;
+    const daLinee = conLinee ? Math.min(resto, n(vpLinee)) : resto;
+    return { altri, nuovi, daNuovi, daLinee: Math.round(daLinee * 100) / 100, restano: Math.round((resto - daLinee) * 100) / 100, conLinee };
+  }
+
+  // «Porta le mie prime linee» (Ignazio 01/10): dal file Amway (`squadra`: partner_id, sponsor_id, nome · `volumi_mese`: partner_id, mese, vpg) le prime linee
+  // di `pid`, ognuna col VPG che aveva nel `mese` (aaaamm), arrotondato: sono i punti che quella linea porta al tuo gruppo. Solo le linee di chi guarda.
+  function lineeDaSquadra(squadra, volumi, pid, mese) {
+    if (!pid) return [];
+    const vpg = new Map((volumi || []).filter(v => v.mese === mese).map(v => [v.partner_id, n(v.vpg)]));
+    return (squadra || []).filter(p => p.sponsor_id === pid && p.partner_id !== pid)
+      .map(p => ({ partner_id: p.partner_id, nome: p.nome, vp: Math.round(vpg.get(p.partner_id) || 0) }))
+      .sort((x, y) => y.vp - x.vp || String(x.nome).localeCompare(String(y.nome), 'it'));
   }
 
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
@@ -363,7 +377,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

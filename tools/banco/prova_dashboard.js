@@ -139,15 +139,32 @@ prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento su
   assert.equal(D.meseSpostato('2026-10-01', -1), '2026-09-01');
 });
 
-prova('Obiettivi: da dove vengono i punti del gruppo (VPG meno VPP): i nuovi iscritti a 50 VP, il resto dalle linee già attive', () => {
+prova('Obiettivi: da dove vengono i punti del gruppo (VPG meno VPP): i nuovi iscritti a 50 VP, il resto dalle linee; con «Le tue linee» quanto resta da trovare', () => {
   assert.equal(D.VP_NUOVO_ISCRITTO, 50);
-  assert.deepEqual(D.ripartoGruppo(200, 150, 1), { altri: 50, nuovi: 1, daNuovi: 50, daLinee: 0 });          // il 3%: tutto dal nuovo iscritto
-  assert.deepEqual(D.ripartoGruppo(600, 150, 3), { altri: 450, nuovi: 3, daNuovi: 150, daLinee: 300 });      // salendo, il resto dalle linee che già ci sono
-  assert.deepEqual(D.ripartoGruppo(200, 150, 5), { altri: 50, nuovi: 5, daNuovi: 50, daLinee: 0 });          // più nuovi iscritti del necessario: coprono tutto
-  assert.deepEqual(D.ripartoGruppo(200, 150, ''), { altri: 50, nuovi: 0, daNuovi: 0, daLinee: 50 });         // nuovi iscritti non scritti
-  assert.equal(D.ripartoGruppo(150, 150, 1), null);                                                          // il VPG è già il tuo VPP
+  const senza = (altri, nuovi, daNuovi, daLinee) => ({ altri, nuovi, daNuovi, daLinee, restano: 0, conLinee: false });
+  assert.deepEqual(D.ripartoGruppo(200, 150, 1), senza(50, 1, 50, 0));            // il 3%: tutto dal nuovo iscritto
+  assert.deepEqual(D.ripartoGruppo(600, 150, 3), senza(450, 3, 150, 300));        // salendo, il resto dalle linee che già ci sono
+  assert.deepEqual(D.ripartoGruppo(200, 150, 5), senza(50, 5, 50, 0));            // più nuovi iscritti del necessario: coprono tutto
+  assert.deepEqual(D.ripartoGruppo(200, 150, ''), senza(50, 0, 0, 50));           // nuovi iscritti non scritti
+  assert.equal(D.ripartoGruppo(150, 150, 1), null);                               // il VPG è già il tuo VPP
   assert.equal(D.ripartoGruppo(100, 150, 1), null);
   assert.equal(D.ripartoGruppo('', 150, 1), null); assert.equal(D.ripartoGruppo(200, '', 1), null);
+  // «Le tue linee» scritte (somma dei loro VP): il resto è quello che portano, il rimasto è da trovare
+  assert.deepEqual(D.ripartoGruppo(600, 150, 3, 200), { altri: 450, nuovi: 3, daNuovi: 150, daLinee: 200, restano: 100, conLinee: true });
+  assert.deepEqual(D.ripartoGruppo(600, 150, 3, 300), { altri: 450, nuovi: 3, daNuovi: 150, daLinee: 300, restano: 0, conLinee: true });
+  assert.deepEqual(D.ripartoGruppo(600, 150, 3, 900), { altri: 450, nuovi: 3, daNuovi: 150, daLinee: 300, restano: 0, conLinee: true });   // linee oltre il bisogno: coprono tutto
+  assert.deepEqual(D.ripartoGruppo(600, 150, 0, 100), { altri: 450, nuovi: 0, daNuovi: 0, daLinee: 100, restano: 350, conLinee: true });
+});
+
+prova('Obiettivi: «Porta le mie prime linee» dal file Amway: solo le prime linee di chi guarda, col VPG del mese scorso', () => {
+  const squadra = [
+    { partner_id: 'IO', sponsor_id: 'UP', nome: 'Io' }, { partner_id: 'A', sponsor_id: 'IO', nome: 'Anna' }, { partner_id: 'B', sponsor_id: 'IO', nome: 'Bruno' },
+    { partner_id: 'C', sponsor_id: 'A', nome: 'Carla (sotto Anna)' }, { partner_id: 'Z', sponsor_id: 'IO', nome: 'Zeno' } ];
+  const volumi = [{ partner_id: 'A', mese: 202609, vpg: '1200.4' }, { partner_id: 'B', mese: 202609, vpg: 300 }, { partner_id: 'B', mese: 202608, vpg: 999 }, { partner_id: 'C', mese: 202609, vpg: 50 }];
+  assert.deepEqual(D.lineeDaSquadra(squadra, volumi, 'IO', 202609),
+    [{ partner_id: 'A', nome: 'Anna', vp: 1200 }, { partner_id: 'B', nome: 'Bruno', vp: 300 }, { partner_id: 'Z', nome: 'Zeno', vp: 0 }]);   // Carla è seconda linea; Zeno senza dati = 0
+  assert.deepEqual(D.lineeDaSquadra(squadra, volumi, null, 202609), []);        // senza codice Amway niente linee
+  assert.deepEqual(D.lineeDaSquadra(null, null, 'IO', 202609), []);
 });
 
 prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
