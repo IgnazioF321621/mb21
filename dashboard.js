@@ -277,6 +277,33 @@
     return { altri, nuovi, daNuovi, daLinee: Math.round(daLinee * 100) / 100, restano: Math.round((resto - daLinee) * 100) / 100, conLinee };
   }
 
+  // «Risultati di <mese>» dal file Amway (Ignazio 01/10: Nuovi Iscritti e Squadra restavano vuoti perché il Check non li aveva): per il partner `pid`, nel `mese`
+  // (aaaamm), cosa dice il file Amway — `squadra` (partner_id, sponsor_id, data_ingresso) · `volumi` (partner_id, mese, vpp, bonus, dimensioni_gruppo) · `pm`
+  // (la lettura `pm_del_ramo`: partner_id, user_id, mese, pm). Stesso conto della pagina Check: entrati nel mese (personali = prime linee, gruppo = tutto il
+  // ramo sotto di sé), prime linee attive (con VPP), linee riceventi Bonus (attive con almeno il 3%), totale gruppo, 15 Planner. Null senza codice Amway o senza squadra;
+  // un valore non conosciuto è null (casella vuota), mai 0 inventato.
+  function risultatiAmway({ squadra, volumi, pm, pid, mese }) {
+    if (!pid || !Array.isArray(squadra) || !squadra.some(p => p.partner_id === pid)) return null;
+    const ym = String(mese).slice(0, 4) + '-' + String(mese).slice(4, 6);
+    const figli = new Map();
+    for (const p of squadra) { if (!figli.has(p.sponsor_id)) figli.set(p.sponsor_id, []); figli.get(p.sponsor_id).push(p.partner_id); }
+    const ramo = new Set(), pila = [pid];
+    while (pila.length) for (const f of figli.get(pila.pop()) || []) if (f !== pid && !ramo.has(f)) { ramo.add(f); pila.push(f); }
+    const entrato = p => String(p.data_ingresso || '').slice(0, 7) === ym;
+    const vol = new Map((volumi || []).filter(v => v.mese === mese).map(v => [v.partner_id, v]));
+    const linee = squadra.filter(p => p.sponsor_id === pid && p.partner_id !== pid);
+    const attive = linee.filter(p => n((vol.get(p.partner_id) || {}).vpp) > 0);
+    const io = vol.get(pid) || null;
+    return {
+      sponsor_personali: linee.filter(entrato).length,
+      sponsor_gruppo: squadra.filter(p => ramo.has(p.partner_id) && entrato(p)).length,
+      prime_linee: io ? attive.length : null,
+      linee_bonus: io ? attive.filter(p => n(vol.get(p.partner_id).bonus) >= 3).length : null,
+      totale_gruppo: io && io.dimensioni_gruppo != null ? n(io.dimensioni_gruppo) : null,
+      planner: Array.isArray(pm) ? new Set(pm.filter(x => x.mese === mese && ramo.has(x.partner_id) && n(x.pm) >= 15).map(x => x.user_id)).size : null,
+    };
+  }
+
   // «Porta le mie prime linee» (Ignazio 01/10): dal file Amway (`squadra`: partner_id, sponsor_id, nome · `volumi_mese`: partner_id, mese, vpg) le prime linee
   // di `pid`, ognuna col VPG che aveva nel `mese` (aaaamm), arrotondato: sono i punti che quella linea porta al tuo gruppo. Solo le linee di chi guarda.
   function lineeDaSquadra(squadra, volumi, pid, mese) {
@@ -390,7 +417,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
