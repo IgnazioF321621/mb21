@@ -929,9 +929,9 @@ function collegaRiordini() {
 // ── DASHBOARD (Fase 3) ───────────────────────────────────
 // Copia della Dashboard di Glide (docs/MB21_v3_Dashboard_Agenda_come_e.md), brief Fase 3. Calcoli in dashboard.js.
 // Ordine: Partner Select · banner · 4 schede · visione completa · [OGGI] · Segni Vitali · Mostra di più.
-// Obiettivi del mese spenti per i partner (Ignazio 01/10): finché il foglio nuovo (scala dei bonus, Segni Vitali) non è pronto, il riquadro,
-// il banner, la riga «Obiettivi di <mese>» e il foglio li vede e li usa solo l'Admin. Per riaprirli a tutti: `true`.
-const OBIETTIVI_PER_TUTTI = false;
+// Obiettivi del mese: il foglio nuovo (scala dei bonus, Segni Vitali, linee) è aperto a tutti i partner dal 01/10 (Ignazio). Con `false` il riquadro, il banner,
+// la riga «Obiettivi di <mese>» e il foglio li vede e li usa solo l'Admin (era così nelle prime ore del 01/10, finché il foglio non era pronto).
+const OBIETTIVI_PER_TUTTI = true;
 const obiettiviAperti = () => OBIETTIVI_PER_TUTTI || eAdmin();
 const DS = { dati: null, obiettivi: [], scheda: 'volume' };
 
