@@ -169,7 +169,7 @@ async function apriCompleta(id) {
   disegnaCompleta();
 }
 
-// «Dai contatti agli iscritti» (prima «Statistiche»; Ignazio 01/10): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico nel Check
+// «Quanto rende il lavoro» (prima «Statistiche»; Ignazio 01/10): una card in cima alla Mappa, sotto «Obiettivi mensili dei partner», che apre l'elenco delle persone con uno storico nel Check
 // (contatti, Piani Marketing, iscritti personali) degli ultimi 6 mesi. L'Admin vede tutti; ogni upline chi gli sta sotto nella stessa linea (la linea la dà la
 // mappa Amway, `squadra`) e se stesso: lo decide il database, con `efficacia_del_ramo`. Il calcolo è `efficaciaDi` (dashboard.js).
 async function leggiEfficacia() {
@@ -186,16 +186,19 @@ function statistichePerPersona() {
     .filter(r => r.contatti || r.pm || r.iscritti)
     .sort((a, b) => b.pm - a.pm || a.nome.localeCompare(b.nome, 'it'));
 }
-// La card c'è per l'Admin sempre; per un upline solo se sotto di lui qualcuno ha uno storico (si legge in silenzio all'apertura della Mappa)
-const haStatistiche = () => eAdmin() || (MP.efficacia && !MP.efficacia.errore && statistichePerPersona().some(r => r.pid !== ST.utente.partner_id));
-const TITOLO_STAT = 'Dai contatti agli iscritti';   // Ignazio 01/10: «un titolo più specifico» di «Statistiche»
+// La card c'è per l'Admin sempre; per un partner appena ha uno storico suo (la propria scheda) o di chi gli sta sotto
+const haStatistiche = () => eAdmin() || (MP.efficacia && !MP.efficacia.errore && statistichePerPersona().length > 0);
+// Un partner con solo il proprio storico (nessuno sotto con dati): niente elenco, la card apre subito la sua scheda
+const soloLei = () => !eAdmin() && MP.efficacia && !MP.efficacia.errore && statistichePerPersona().every(r => r.pid === ST.utente.partner_id);
+const TITOLO_STAT = 'Quanto rende il lavoro';   // Ignazio 01/10: «un titolo più specifico» di «Statistiche»; «Dai contatti agli iscritti» non gli piaceva
 const statisticheHtml = () => (haStatistiche()
-  ? rigaApribile('mp-stat', 'catalogare', 'crescita', TITOLO_STAT, `quanti contatti per un PM e quanti PM per un iscritto ${eAdmin() ? 'di ognuno' : 'di chi ti sta sotto'}`, false, 0) : '');
+  ? rigaApribile('mp-stat', 'catalogare', 'crescita', TITOLO_STAT, `quanti contatti per un PM e quanti PM per un iscritto ${eAdmin() ? 'di ognuno' : soloLei() ? 'tuoi' : 'tuoi e di chi ti sta sotto'}`, false, 0) : '');
 async function apriStatistiche() {
   ST.tornaA = 'mappa'; MP.statPid = null; window.scrollTo(0, 0);
   app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button><h1>${ic('crescita')} ${TITOLO_STAT}</h1><div class="vuoto">Carico il Check…</div>`;
   document.getElementById('indietro').onclick = tornaDaTeam;
   await leggiEfficacia();
+  if (soloLei()) MP.statPid = ST.utente.partner_id;   // solo il suo storico: apre direttamente la sua scheda
   disegnaStatistiche();
 }
 const unoStat = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
@@ -237,7 +240,7 @@ function immagineStat(r, media, periodo, dataOggi, etMedia) {
     const y = 660 + i * 190;
     g.fillStyle = LINEA; g.fillRect(120, y, 840, 2);
     testo(et, 120, y + 80, 36, 600, NERO);
-    testo(`${etMedia}: ${unoStat(m)}`, 120, y + 130, 30, 400, GRIGIO);
+    if (etMedia) testo(`${etMedia}: ${unoStat(m)}`, 120, y + 130, 30, 400, GRIGIO);
     testo(unoStat(v), 960, y + 118, 84, 700, NERO, 'right');
   });
   // la nota, a capo a mano
@@ -261,14 +264,15 @@ function disegnaSchedaStat(pid) {
   if (!r) { MP.statPid = null; return disegnaStatistiche(); }
   MP.statPid = pid;
   const o = MB21Coda.oggiRoma(), dataOggi = `${Number(o.slice(8))}/${Number(o.slice(5, 7))}/${o.slice(0, 4)}`;
-  const canvas = immagineStat(r, MB21Dashboard.efficaciaDi(E.righe, E.mese), periodoStat(E.mese), dataOggi, eAdmin() ? 'media di tutti' : 'media del gruppo');
+  const canvas = immagineStat(r, MB21Dashboard.efficaciaDi(E.righe, E.mese), periodoStat(E.mese), dataOggi, soloLei() ? null : eAdmin() ? 'media di tutti' : 'media del gruppo');
   canvas.style.cssText = 'width:100%;height:auto;border-radius:16px;display:block';
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${TITOLO_STAT}</button>
+  const sola = soloLei();
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${sola ? 'Mappa' : TITOLO_STAT}</button>
     <div id="stat-img"></div>
     <button class="primario" id="stat-invia" style="margin-top:12px">${ic('condividi')} Invia l'immagine</button>
-    <div class="sotto">L'immagine è pulita, pronta da mandare a ${esc(r.nome)}. Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
+    <div class="sotto">${sola ? 'Questa è la tua scheda: puoi tenerla o mandarla a chi vuoi.' : `L'immagine è pulita, pronta da mandare a ${esc(r.nome)}.`} Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
   document.getElementById('stat-img').appendChild(canvas);
-  document.getElementById('indietro').onclick = () => { MP.statPid = null; disegnaStatistiche(); };
+  document.getElementById('indietro').onclick = sola ? tornaDaTeam : () => { MP.statPid = null; disegnaStatistiche(); };
   document.getElementById('stat-invia').onclick = () => canvas.toBlob(async blob => {
     if (!blob) return mostraToast('Non riesco a preparare l\'immagine: riprova.');
     const nomeFile = nomeFileStat(r.nome), file = new File([blob], nomeFile, { type: 'image/png' });
