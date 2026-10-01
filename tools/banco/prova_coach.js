@@ -334,19 +334,19 @@ prova('Tentativi a vuoto di fila: al 2° «Telefono spento» o al 3° «No Rispo
   assert.equal(C.altroCanale('No Risposta', 3, 'Mario'), 'Mario non risponde per tre volte di fila: cerca un altro canale.');
   assert.equal(C.altroCanale('Telefono spento', 9, 'Mario'), 'Il telefono di Mario risulta spento per 9 volte di fila: cerca un altro canale.');
   assert.equal(C.altroCanale('Richiamare', 5, 'Mario'), null);
-  assert.deepEqual(C.CANALI, ['Messaggio', 'Di persona', 'Chiedo a chi me’ha dato'.replace('me’ha', 'me l’ha'), 'Lo metto da parte']);
+  assert.deepEqual(C.CANALI, ['Messaggio', 'Di persona', 'Chiedo a chi me’ha dato'.replace('me’ha', 'me l’ha'), 'Lo archivio']);
 });
 
-prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (Messaggio e Di persona → Nuovo appuntamento, «Chiedo…» → cosa da fare, «Lo metto da parte» → Quando risentirlo?)', async () => {
+prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (Messaggio e Di persona → Nuovo appuntamento, «Chiedo…» → cosa da fare, «Lo archivio» → Archiviati, con Annulla)', async () => {
   const vm = require('node:vm'), fs = require('node:fs');
   const chiamate = [];
   const ctx = { document: { addEventListener() {} }, eAdmin: () => false, MB21Coach: C, MB21Agenda: { spostaGiorno: (g, n) => `${g}+${n}` }, MB21Coda: { oggiRoma: () => '2026-09-30' }, ST: { utente: { id: 'io' } },
     esc: x => x, ic: () => '', console,
     mostraToast: t => chiamate.push(['toast', t]),
     nuovoAppuntamento: async o => { chiamate.push(['appuntamento', o.titolo, o.modalita, o.tipo, o.giorno, o.contatto.id, o.userId]); return { id: 'n' }; },
-    chiediRientro: async (...a) => { chiamate.push(['rientro', ...a]); return '2026-10-20'; } };
+    chiediRientro: async (...a) => { chiamate.push(['rientro', ...a]); return '2026-10-20'; }, contattiMiei: 'x', LS: { righe: ['x'] } };
   let esiti = [];
-  ctx.supa = { from: t => { const q = { t, _ins: null,
+  ctx.supa = { rpc: (n, p) => { chiamate.push(['rpc', n, p.p_contatto]); return { error: null }; }, from: t => { const q = { t, _ins: null,
     select() { return q; }, eq() { return q; }, not() { return q; }, limit() { return q; },
     order() { return q; }, insert(r) { chiamate.push(['insert', t, r]); q._ins = true; return q; },
     then(res) { res(t === 'azioni' ? { data: esiti.map(esito => ({ esito })), error: null } : q._ins ? { data: null, error: null } : { data: [{ ordine: 7 }], error: null }); } }; return q; } };
@@ -369,8 +369,8 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
   assert.deepEqual(chiamate.pop().slice(0, 4), ['appuntamento', 'Di persona · Mario Rossi', 'Presenza', 'Contatto']);
   scelta = 'Chiedo a chi me l’ha dato'; await ctx.chiediRiflessione(e, 'Telefono spento');
   assert.deepEqual(JSON.parse(JSON.stringify(chiamate.splice(0))), [['insert', 'cose_da_fare', { user_id: 'u1', contatto_id: 'c1', testo: 'Chiedere di Mario a chi ti ha dato il nome', giorno: '2026-09-30+1', scala: 'giorno', ordine: 8 }], ['toast', 'Te la trovi in MB Plan, domani']]);
-  scelta = 'Lo metto da parte'; await ctx.chiediRiflessione(e, 'Telefono spento');
-  assert.deepEqual(chiamate.pop(), ['rientro', 'c1', 'Mario Rossi', 'Messo da parte', 20]);
+  chiamate.length = 0; scelta = 'Lo archivio'; await ctx.chiediRiflessione(e, 'Telefono spento');
+  assert.deepEqual(chiamate, [['rpc', 'archivia_contatto', 'c1'], ['toast', 'Mario Rossi spostato in Archiviati']]);        // niente «Quando risentirlo?»: esce dalla coda
   // chiusa senza scegliere: non succede altro
   scelta = undefined; ctx.recitaCoach = async () => null; chiamate.length = 0;
   assert.equal(await ctx.chiediRiflessione(e, 'Telefono spento'), null);
