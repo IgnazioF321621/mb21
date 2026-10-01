@@ -409,6 +409,7 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   // salendo non si scende mai (ogni colonna cresce o resta)
   for (const k of chiavi.filter(x => x !== 'sponsor_personali')) C.GRADINI_BONUS.reduce((prec, g) => { assert.ok(C.SCALA_BONUS[g][k] >= prec, k + ' scende al ' + g + '%'); return C.SCALA_BONUS[g][k]; }, 0);
   // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 iscritto personale; nessuno riceve bonus: niente linee riceventi né 15 Planner
+  assert.deepEqual([3, 6, 9, 12].map(g => C.SCALA_BONUS[g].planner), [0, 0, 1, 2]);   // i 15 Planner cominciano dal 9% Leaders Club (segno vitale obbligatorio)
   const r3 = C.SCALA_BONUS[3];
   assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [1, 1, 0, 0, 1, 3]);
   assert.equal(C.SCALA_BONUS[3].vpp, C.SCALA_BONUS[3].vpv + 100);                                                  // 100 consumo personale + 50 clienti
