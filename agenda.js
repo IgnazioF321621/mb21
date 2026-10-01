@@ -605,7 +605,11 @@
   // gli stessi del rientro in coda (sequenze `Prospect-Contatto-Relazione`: se cambia uno, cambia l'altro)
   const GIORNI_RELAZIONE = 20;
   // Esiti dopo i quali si chiede solo quando risentire la persona: i giorni proposti, altrimenti null
-  const giorniRisentire = esito => chiudeRelazione(esito) ? GIORNI_CHIUSURA : esito === 'Relazione' ? GIORNI_RELAZIONE : null;
+  // No Risposta e Telefono spento (Ignazio 01/10: «lo dobbiamo mettere in coda fra due giorni o a una data che possiamo comunque scegliere»): lo stesso
+  // foglio, con i giorni del rientro automatico (sequenze `…-Contatto-No Risposta` 2, `…-Telefono spento` 7: se cambia uno, cambia l'altro)
+  const GIORNI_NO_RISPOSTA = 2, GIORNI_TELEFONO_SPENTO = 7;
+  const giorniRisentire = esito => chiudeRelazione(esito) ? GIORNI_CHIUSURA : esito === 'Relazione' ? GIORNI_RELAZIONE
+    : esito === 'No Risposta' ? GIORNI_NO_RISPOSTA : esito === 'Telefono spento' ? GIORNI_TELEFONO_SPENTO : null;
   // Cosa si apre dopo l'esito di una TELEFONATA, uguale da coda, scheda e MB Plan (Ignazio 29/09, cantiere 48; prima dalla scheda si apriva
   // «Fissa il prossimo appuntamento» che proponeva un'altra telefonata): si fissa quello che l'esito dice.
   //   { cosa: 'appuntamento', proposta } → «Nuovo appuntamento» già compilato: PM Fissato → il piano; Appuntamento → Partner: Appuntamento, Cliente: Consulenza PRD;
@@ -858,7 +862,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, fatteDaEliminare, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
