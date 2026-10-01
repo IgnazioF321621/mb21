@@ -1254,7 +1254,7 @@ function apriObiettivi() {
       <div class="ob-dal-gruppo" id="ob-linee-somma"></div>
       <div class="ob-linee-az">${pidVisto ? '<button type="button" class="link" id="ob-linee-porta">Porta le mie prime linee</button>' : ''}<button type="button" class="link" id="ob-linee-nuova">+ Aggiungi linea</button></div>
       <div class="ob-dal-gruppo" id="ob-linee-nota"></div></div></div></section>` : ''}`).join('')}
-    ${pidVisto ? '<p class="ob-visto">Chi sta sopra di te, nella tua linea, vede i tuoi obiettivi: per aiutarti a raggiungerli.</p>' : ''}
+    ${pidVisto ? '<p class="ob-visto">La tua Linea di Sponsorizzazione vede i tuoi obiettivi del mese, per aiutarti a raggiungerli.</p>' : ''}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
   </div>`;
