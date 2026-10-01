@@ -269,7 +269,8 @@ function disegnaOggi() {
   app.innerHTML = html + dashboardBasso() + versione();
   collegaDashboard();
   collegaMioAvvio();
-  mostraRigaTelefono();   // non fa aspettare la Dashboard
+  mostraRigaTelefono();
+  mostraRiquadroObiettivi();   // 01/10: nei primi giorni del mese, se mancano gli obiettivi   // non fa aspettare la Dashboard
   // Le fasce della zona OGGI si aprono e si chiudono anche con l'abbonamento scaduto (dentro non si tocca niente)
   const daSole = { conferme: true, dareseguito: true, coda: !!r.coda.length, riordini: true, catalogo: false };
   for (const k of Object.keys(daSole)) {
@@ -1210,6 +1211,31 @@ function apriObiettivi() {
     disegnaOggi();
     mostraToast(`Obiettivi di ${D.nomeMese(mese)} salvati`);
   };
+}
+
+// Riquadro ampio degli obiettivi (Ignazio 01/10): nei primi giorni del mese, se gli obiettivi mancano, si apre da solo
+// una volta al giorno sopra la Dashboard. Si chiude per proseguire (la Dashboard sotto resta com'è); il banner resta.
+const GIORNI_RIQUADRO_OBIETTIVI = 3;
+const CHIAVE_RIQUADRO_OB = 'mb21_riquadro_obiettivi';
+function mostraRiquadroObiettivi() {
+  const d = DS.dati;
+  if (!d || !d.obiettiviMancanti || limitato() || ST.offline || soloGuardo() || vediTutti()) return;
+  if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
+  if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
+  try { if (localStorage.getItem(CHIAVE_RIQUADRO_OB) === ST.oggi) return; localStorage.setItem(CHIAVE_RIQUADRO_OB, ST.oggi); } catch (e) {}
+  const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
+  const velo = document.createElement('div');
+  velo.className = 'velo centro';
+  velo.innerHTML = `<div class="riquadro-ob" role="dialog" aria-label="Obiettivi di ${esc(mese)}">
+    <span class="ico">${ic('obiettivi')}</span>
+    <h2>È iniziato ${esc(mese)}</h2>
+    <p>Prima di cominciare, ti consiglio di scegliere i tuoi obiettivi del mese: ti bastano due minuti e tutto il mese ha una direzione.</p>
+    <button class="primario" id="rob-si">Scelgo i miei obiettivi</button>
+    <button class="link" id="rob-no">Più tardi, vado alla Dashboard</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.querySelector('#rob-no').onclick = chiudi;
+  velo.querySelector('#rob-si').onclick = () => { chiudi(); apriObiettivi(); };
 }
 
 // «Il mio giorno» (fino al 28/09 «Check del Giorno»): 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
