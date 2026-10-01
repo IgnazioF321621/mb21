@@ -1206,7 +1206,7 @@ function apriObiettivi() {
       <div class="chips ob-modi">
         <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
         <button data-modo="risultati"${ris ? '' : ' disabled'}>Risultati di ${esc(nomeRis)}</button>
-        <button data-modo="vuoti">Da zero</button></div>
+        <button data-modo="vuoti">Scrivo io</button></div>
       <p class="ob-nota-base" id="ob-nota-base"></p>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Incremento: <b id="ob-perc">0%</b></div>
@@ -1311,7 +1311,7 @@ function apriObiettivi() {
   for (const id of ['sponsor_gruppo', 'sponsor_personali', 'pm']) campo(id).addEventListener('input', indicazioni);
   consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
   const sceltaModo = b => velo.querySelectorAll('[data-modo]').forEach(x => x.classList.toggle('scelto', x === b));   // la scala (bottone grande) e le tre scelte sotto
-  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
+  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Scrivo io)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
   let base = null, gradino = null;
   // i risultati: Check e file Amway insieme. Iscritti (personali e gruppo): il numero più alto dei due (il file arriva dopo, il Check si scrive a mano);
@@ -1332,6 +1332,7 @@ function apriObiettivi() {
     el.textContent = base === 'risultati' ? `Quello che risulta dal Check e dal file Amway di ${nomeRis}.${elenco ? ` Nessun dato per: ${elenco}.` : ''}`
       : base === 'uguale' ? `I traguardi che ti eri dato a ${prima || nomeRis}.${elenco ? ` Non c'erano: ${elenco}.` : ''}`
       : base === 'scala' ? `Numeri del bonus ${gradino}%.${elenco ? ` Da scrivere tu: ${elenco}.` : ''}`
+      : base === 'vuoti' ? 'Le caselle restano vuote: i numeri li scrivi tu.'
       : '';
   };
   const valoriBase = () => (base === 'risultati' ? risUnito() : base === 'scala' ? MB21Check.obiettiviDelBonus(gradino) : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
