@@ -113,7 +113,7 @@ prova('Obiettivi: come il mese scorso, crescita 10% e 50%, attuali; partner nuov
   assert.deepEqual([piu.vpg, piu.contatti, piu.pm, piu.sponsor_personali, piu.bbs], [2640, 33, 17, 5, 8]);
   const piu50 = D.propostaObiettivi(obiettivi, '2026-10-01', 'crescita', 50).valori;
   assert.deepEqual([piu50.vpg, piu50.contatti, piu50.pm, piu50.pagine], [3600, 45, 23, 450]);
-  assert.deepEqual(D.CRESCITE, [5, 10, 20, 30, 40, 50]);
+  assert.deepEqual(D.CRESCITE, [0, 5, 10, 20, 30, 40, 50]);   // la barra parte da 0%: lascia i numeri com'è
   assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'attuali').valori.wes, 12);      // già salvati nel mese
   assert.equal(D.propostaObiettivi(obiettivi, '2026-09-01', 'uguale').valori.wes, 10);       // agosto
   const aZero = [{ mese: '2026-09-01', vpp: 0, contatti: 0 }];
@@ -135,6 +135,7 @@ prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento su
   assert.equal(D.aumenta(40, 10), 44);
   assert.equal(D.aumenta(120.5, 10), 133);                      // arrotondato in su, come sugli obiettivi
   assert.equal(D.aumenta(7, 5), 8);
+  assert.equal(D.aumenta(120.5, 0), 120.5); assert.equal(D.aumenta(7, 0), 7);   // 0%: il numero com'è, senza arrotondare
   assert.equal(D.meseSpostato('2026-10-01', -1), '2026-09-01');
 });
 

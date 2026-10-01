@@ -63,7 +63,7 @@
   ];
   // Tutti i campi del foglio, nell'ordine dei gruppi: i 12 obiettivi delle schede e i 4 della squadra
   const CHIAVI_FOGLIO = CAMPI_OBIETTIVI.flatMap(g => g[2].map(c => c[0]));
-  const CRESCITE = [5, 10, 20, 30, 40, 50];   // scelte della barra (decisione di Ignazio 14/09), si parte da 10
+  const CRESCITE = [0, 5, 10, 20, 30, 40, 50];   // scelte della barra (decisione di Ignazio 14/09), si parte da 10
   const SOGLIA_AMBIZIOSO = 20;                // sopra: «Obiettivo ambizioso: parlane con il tuo upline»
   const NOMI_MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
   const MESI = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
@@ -256,7 +256,8 @@
   }
 
   // Un numero + `percento`%, arrotondato in su (la barra della crescita, sia sugli obiettivi sia sui risultati)
-  const aumenta = (v, percento) => Math.ceil(Number((v * (1 + percento / 100)).toFixed(6)));
+  // (0% = il numero com'è: la barra parte da zero, 01/10)
+  const aumenta = (v, percento) => (percento ? Math.ceil(Number((v * (1 + percento / 100)).toFixed(6))) : v);
 
   const haObiettivi = o => !!o && OBIETTIVI.some(k => n(o[k]) > 0);
 

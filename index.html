@@ -862,6 +862,8 @@
   .ob-livelli[hidden] { display: none; }
   .ob-livelli span { font-size: 13px; color: var(--grigio); margin-right: 2px; min-width: 52px; }
   .ob-livelli button { font-size: 13px; padding: 6px 11px; min-height: 32px; line-height: 1.2; }
+  .ob-livelli button.traguardo:not(.scelto) { background: var(--gr-segni-tinta); border-color: transparent; color: var(--gr-segni); }   /* 9% · 15% · 21%: i traguardi importanti, un verde tenue */
+  .ob-modi button:disabled { opacity: .45; }   /* «Obiettivi/Risultati di <mese>» senza dati: si vedono ma non si toccano */
   .ob-livelli button small { display: block; font-size: 10px; font-weight: 500; opacity: .7; line-height: 1.1; }   /* il livello del Manuale sotto il bonus (9% · 15% · 21%) */
   .ob-crescita { background: var(--gr-crescita-tinta); border-radius: var(--raggio-riga); padding: 12px 14px; margin-bottom: 6px; }
   .ob-crescita-testa { font-size: 15px; font-weight: 600; color: var(--gr-crescita); }
