@@ -46,6 +46,7 @@ prova('Chiudere con più passi: il primo è l\'esito, gli altri una riga di azio
   let toastAnnulla = null, toastTesto = '';
   ctx.mostraToast = (t, annulla) => { toastTesto = t; toastAnnulla = annulla; };
   ctx.apriAgenda = async () => {}; ctx.nuovoAppuntamento = async () => null; ctx.chiediRiflessione = async () => null; ctx.registraVenditaDa = async () => false;
+  ctx.tracciaDiApertura = async (c, k, poi) => (poi ? poi() : null);
   ctx.MB21Sharing = { proponeTraccia: () => false }; ctx.chiediRientro = async () => null; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => false;
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
@@ -84,6 +85,50 @@ prova('Consulenza Prodotti: lo stesso foglio dalla coda, dall\'Agenda e dalla sc
     proposte.length = 0; await ctx.appuntamentoDaCoda(chi('Prospect'));   // senza esito (chiamate vecchie): come prima
     assert.equal(proposte[0].tipo, 'Piano Marketing');
   })();
+});
+
+prova('«Hai condiviso la traccia di apertura?» dopo un Piano Marketing: No continua il processo, Sì apre lo Sharing e il processo riprende tornando indietro', async () => {
+  const sh = fs.readFileSync(path.join(__dirname, '../../pagina-sharing.js'), 'utf8'), li = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const codice = sh.slice(sh.indexOf('async function tracciaDiApertura')) + '\n' + li.slice(li.indexOf('function eseguiDopoScheda'));
+  const log = [];
+  let risposta = true;
+  const ctx = { MB21Sharing: { perChiDi: c => (['Prospect', 'Referral'].includes(c.categoria) ? 'ospite' : 'partner'), nomeCorto: n => n.split(' ')[0] }, ST: { tab: 'oggi' }, LS: { contatto: null, ritorno: null }, console,
+    chiediConferma: async (titolo, testo, si, _p, _s, no) => { log.push(['domanda', titolo, si, no]); return risposta; },
+    apriContattoDa: async (id, ritorno) => { log.push(['scheda', id, ritorno]); }, disegnaScheda: () => log.push(['sezione']) };
+  const timers = []; ctx.setTimeout = f => { timers.push(f); }; ctx.Date = Date;
+  vm.createContext(ctx); vm.runInContext(codice + ';this.tracciaDiApertura = tracciaDiApertura; this.eseguiDopoScheda = eseguiDopoScheda', ctx);
+  const pm = { tipo_azione: 'Piano Marketing', categoria: 'Prospect' }, mario = { id: 'c1', nome: 'Mario Rossi' };
+  const poi = () => log.push(['poi']);
+  // non è un piano a un candidato: niente domanda, il processo continua subito
+  await ctx.tracciaDiApertura({ tipo_azione: 'Follow Up', categoria: 'Prospect' }, mario, poi);
+  await ctx.tracciaDiApertura(pm, { ...mario }, null);
+  await ctx.tracciaDiApertura({ tipo_azione: 'Piano Marketing', categoria: 'Partner' }, mario, poi);
+  await ctx.tracciaDiApertura(null, mario, poi);
+  assert.equal(log.filter(x => x[0] === 'poi').length, 3);                                          // Follow Up, Partner, nessun appuntamento: avanti senza domanda
+  assert.equal(log.filter(x => x[0] === 'domanda').length, 1);                                      // solo il piano a un candidato (la prova con poi nullo)
+  log.length = 0;
+  // No: il processo continua, lo Sharing non si apre
+  risposta = false; await ctx.tracciaDiApertura(pm, mario, poi);
+  assert.deepEqual(log, [['domanda', 'Hai condiviso la traccia di apertura?', 'Sì', 'No'], ['poi']]);
+  log.length = 0;
+  // Sì dalla coda: si apre la scheda sullo Sharing, il processo aspetta il ritorno
+  risposta = true; await ctx.tracciaDiApertura(pm, mario, poi);
+  assert.deepEqual(log.map(x => x[0]), ['domanda', 'scheda']); assert.deepEqual(log[1], ['scheda', 'c1', 'oggi']);
+  assert.equal(ctx.LS.apriSezione, 'sharing');
+  ctx.eseguiDopoScheda('altro'); timers.splice(0).forEach(f => f());                                // un'altra persona: non riprende
+  assert.equal(log.filter(x => x[0] === 'poi').length, 0);
+  ctx.LS.dopo = null;
+  await ctx.tracciaDiApertura(pm, mario, poi); log.length = 0;
+  ctx.eseguiDopoScheda('c1'); timers.splice(0).forEach(f => f());                                   // la freccia indietro: il processo riprende, una volta sola
+  assert.deepEqual(log, [['poi']]);
+  ctx.eseguiDopoScheda('c1'); timers.splice(0).forEach(f => f()); assert.equal(log.length, 1);
+  // da MB Plan si torna a MB Plan; scaduto (più di mezz'ora): non riprende
+  ctx.ST.tab = 'agenda'; await ctx.tracciaDiApertura(pm, mario, poi); assert.deepEqual(log.at(-1), ['scheda', 'c1', 'agenda']);
+  ctx.LS.dopo.quando -= 31 * 60000; log.length = 0; ctx.eseguiDopoScheda('c1'); timers.splice(0).forEach(f => f()); assert.deepEqual(log, []);
+  // già nella sua scheda: si cambia solo sezione
+  ctx.ST.tab = 'lista'; ctx.LS.contatto = { id: 'c1' }; log.length = 0;
+  await ctx.tracciaDiApertura(pm, mario, poi);
+  assert.deepEqual(log.map(x => x[0]), ['domanda', 'sezione', 'poi']); assert.equal(ctx.LS.sezione, 'sharing');
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

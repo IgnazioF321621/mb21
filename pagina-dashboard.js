@@ -470,7 +470,7 @@ async function toccaBottone(id, indice) {
       contatti: { nome: pos.contatto.nome, categoria: pos.contatto.categoria } }, bottone.etichetta);
     if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria, undefined, riflessione)   // «Ordine»: «La registri adesso?»
       .then(registrata => { if (!registrata) riflessione(); });
-    else riflessione();
+    else tracciaDiApertura(appuntamento, pos.contatto, riflessione);   // un Piano Marketing fissato: prima «Hai condiviso la traccia di apertura?», poi la chat del coach
   }, 250);
 }
 
