@@ -1233,13 +1233,17 @@ function apriObiettivi() {
   // Nuovi Iscritti è il totale e Sponsor Personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
   campo('sponsor_gruppo').addEventListener('input', () => { const t = numero('sponsor_gruppo'); if (t > 0 && numero('sponsor_personali') > t) scriviNum('sponsor_personali', t); });
   campo('sponsor_personali').addEventListener('input', () => { const p = numero('sponsor_personali'); if (p > numero('sponsor_gruppo')) scriviNum('sponsor_gruppo', p); });
-  // «Gli altri da dove vengono?»: sotto il VPG, quanti dei suoi punti non sono i tuoi (VPG meno VPP): li portano i nuovi iscritti e il gruppo, quindi le azioni qui sotto
+  // «Gli altri da dove vengono?»: sotto il VPG, i punti che non sono i tuoi (VPG meno VPP) e chi li porta: i nuovi iscritti (50 VP a testa, quelli
+  // scritti in Nuovi Iscritti) e, per il resto, le linee già attive (D.ripartoGruppo)
   const dalGruppo = () => {
-    const g = numero('vpg'), p = numero('vpp'), el = velo.querySelector('#ob-dal-gruppo');
-    const altri = Math.round((g - p) * 100) / 100;
-    el.textContent = g > 0 && p > 0 ? (altri > 0 ? `Dal gruppo: ${altri.toLocaleString('it-IT')} VP, con i nuovi iscritti (in Azione)` : 'Il VPG è già coperto dal tuo VPP') : '';
+    const r = D.ripartoGruppo(numero('vpg'), numero('vpp'), numero('sponsor_gruppo')), el = velo.querySelector('#ob-dal-gruppo');
+    const f = x => x.toLocaleString('it-IT');
+    if (!r) { el.textContent = numero('vpg') > 0 && numero('vpp') > 0 ? 'Il VPG è già coperto dal tuo VPP' : ''; return; }
+    el.textContent = `Dal gruppo: ${f(r.altri)} VP · ` + (r.nuovi
+      ? `${r.nuovi} ${r.nuovi === 1 ? 'nuovo iscritto' : 'nuovi iscritti'} da ${D.VP_NUOVO_ISCRITTO} VP = ${f(r.nuovi * D.VP_NUOVO_ISCRITTO)} VP${r.daLinee ? ` · dalle linee già attive: ${f(r.daLinee)} VP` : ' · coprono tutto'}`
+      : `nuovi iscritti (${D.VP_NUOVO_ISCRITTO} VP a testa) e linee già attive`);
   };
-  for (const id of ['vpp', 'vpg']) campo(id).addEventListener('input', dalGruppo);
+  for (const id of ['vpp', 'vpg', 'sponsor_gruppo']) campo(id).addEventListener('input', dalGruppo);
   consumoDaVpp(); ricordaQuota(); dalGruppo();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)

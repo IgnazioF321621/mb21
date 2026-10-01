@@ -139,6 +139,17 @@ prova('Obiettivi: «Risultati di settembre» (quello che hai fatto) e aumento su
   assert.equal(D.meseSpostato('2026-10-01', -1), '2026-09-01');
 });
 
+prova('Obiettivi: da dove vengono i punti del gruppo (VPG meno VPP): i nuovi iscritti a 50 VP, il resto dalle linee già attive', () => {
+  assert.equal(D.VP_NUOVO_ISCRITTO, 50);
+  assert.deepEqual(D.ripartoGruppo(200, 150, 1), { altri: 50, nuovi: 1, daNuovi: 50, daLinee: 0 });          // il 3%: tutto dal nuovo iscritto
+  assert.deepEqual(D.ripartoGruppo(600, 150, 3), { altri: 450, nuovi: 3, daNuovi: 150, daLinee: 300 });      // salendo, il resto dalle linee che già ci sono
+  assert.deepEqual(D.ripartoGruppo(200, 150, 5), { altri: 50, nuovi: 5, daNuovi: 50, daLinee: 0 });          // più nuovi iscritti del necessario: coprono tutto
+  assert.deepEqual(D.ripartoGruppo(200, 150, ''), { altri: 50, nuovi: 0, daNuovi: 0, daLinee: 50 });         // nuovi iscritti non scritti
+  assert.equal(D.ripartoGruppo(150, 150, 1), null);                                                          // il VPG è già il tuo VPP
+  assert.equal(D.ripartoGruppo(100, 150, 1), null);
+  assert.equal(D.ripartoGruppo('', 150, 1), null); assert.equal(D.ripartoGruppo(200, '', 1), null);
+});
+
 prova('Obiettivi: 12 campi, Sponsor Personali compreso; almeno uno maggiore di zero', () => {
   assert.equal(D.CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 16);   // 12 + la squadra (linee riceventi, 15 Planner, prime linee, totale gruppo)
   assert.deepEqual(D.CAMPI_OBIETTIVI.find(g => g[0] === 'Squadra')[2].map(c => c[0]), ['linee_bonus', 'planner', 'prime_linee', 'totale_gruppo']);
