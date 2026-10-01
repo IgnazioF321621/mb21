@@ -56,9 +56,13 @@
   const CAMPI_OBIETTIVI = [
     ['Volume', '🔵', [['vpp', 'VPP', true], ['vpv', 'VP Clienti', true], ['vpg', 'VPG', true]]],
     ['Azione', '🟠', [['contatti', 'Contatti'], ['pm', 'PM'], ['sponsor_personali', 'Sponsor Personali'], ['sponsor_gruppo', 'Nuovi Iscritti']]],
+    // dal 01/10 la squadra: le colonne della tabella dei Segni Vitali del Manuale che mancavano (4 campi nuovi in obiettivi_mese, facoltativi)
+    ['Squadra', '⚪', [['linee_bonus', 'Linee riceventi Bonus'], ['planner', '15 Planner'], ['prime_linee', 'Prime linee'], ['totale_gruppo', 'Totale gruppo']]],
     ['Segni Vitali N21', '🟢', [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']]],
     ['Crescita', '🟣', [['tracce', 'Tracce audio'], ['pagine', 'Pagine libro']]],
   ];
+  // Tutti i campi del foglio, nell'ordine dei gruppi: i 12 obiettivi delle schede e i 4 della squadra
+  const CHIAVI_FOGLIO = CAMPI_OBIETTIVI.flatMap(g => g[2].map(c => c[0]));
   const CRESCITE = [5, 10, 20, 30, 40, 50];   // scelte della barra (decisione di Ignazio 14/09), si parte da 10
   const SOGLIA_AMBIZIOSO = 20;                // sopra: «Obiettivo ambizioso: parlane con il tuo upline»
   const NOMI_MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -264,7 +268,7 @@
     const prima = obiettivi.filter(o => o.mese < mese && haObiettivi(o)).sort((a, b) => (a.mese < b.mese ? 1 : -1))[0] || null;
     const base = modo === 'attuali' && haObiettivi(attuale) ? attuale : prima;
     const valori = {};
-    for (const k of OBIETTIVI) {
+    for (const k of CHIAVI_FOGLIO) {
       const v = base && base[k] != null && base[k] !== '' ? Number(base[k]) : null;
       valori[k] = v == null ? '' : modo === 'crescita' ? aumenta(v, percento) : v;
     }
@@ -345,7 +349,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
