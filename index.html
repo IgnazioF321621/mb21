@@ -823,6 +823,8 @@
   .banner-grande.check small { color: rgba(255,255,255,.8); }
   .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
   .velo.centro { align-items: center; padding: 16px; }
+  .cent { font-size: .72em; font-weight: 700; }   /* i centesimi dei punti: piccoli, dopo una virgola grande e ben visibile */
+  .cent i { font-style: normal; font-size: 1.5em; font-weight: 900; line-height: 0; margin: 0 .06em 0 .04em; }
   .solo-tu { display: block; font-weight: 600; font-size: 13px; color: var(--pericolo); margin: 0 0 10px; text-align: center; }   /* «Per ora lo vedi solo tu» (Admin) */
   .riquadro-ob { background: var(--superficie); width: 100%; max-width: 420px; margin: 0 auto; border-radius: var(--raggio-foglio); padding: 32px 22px 16px; text-align: center; box-shadow: 0 12px 40px rgba(16,21,31,.25); }
   .riquadro-ob .ico { width: 88px; height: 88px; border-radius: 50%; background: var(--pericolo-tinta); color: var(--pericolo); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
@@ -857,15 +859,12 @@
   .ds-azione.visione-completa { --richiamo: var(--gr-volume); --richiamo-tinta: var(--gr-volume-tinta); }   /* i numeri, non i Clienti (Ignazio 20/09) */
   .ds-azione.report { --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
   .ds-azione.griglia { --richiamo: var(--gr-azione); --richiamo-tinta: var(--gr-azione-tinta); }   /* i Piani Marketing stanno nel gruppo Azione, non sono i Partner */
-  /* «Scala dei bonus»: il bottone grande, al centro, con la freccia (si capisce che si tocca); le altre scelte stanno sotto, «Oppure si parte da» (01/10) */
-  .ob-scala-btn { position: relative; display: block; width: 100%; text-align: center; padding: 14px 40px 12px; margin-bottom: 10px; border: 2px solid var(--accento); border-radius: var(--raggio-bottone); background: var(--superficie); color: var(--testo); font-family: inherit; }
-  .ob-scala-btn b { display: block; font-size: 17px; }
-  .ob-scala-btn small { display: block; font-size: 12px; font-weight: 500; color: var(--testo-soft); margin-top: 2px; }
-  .ob-scala-btn::after { content: '⌄'; position: absolute; right: 16px; top: 50%; transform: translateY(-62%); font-size: 22px; font-weight: 700; }
-  .ob-scala-btn.scelto { background: var(--accento); color: var(--accento-su); }
-  .ob-scala-btn.scelto small { color: rgba(255,255,255,.8); }
-  .ob-scala-btn.scelto::after { content: '⌃'; }
-  .ob-nota-base { margin: 2px 2px 10px; font-size: 12px; color: var(--grigio); line-height: 1.35; }
+  /* «Scala dei bonus»: il titolo al centro e i bonus sempre in vista (01/10); le altre scelte stanno sotto, «Oppure si parte da» */
+  .ob-scala-testa { text-align: center; margin: 0 0 10px; }
+  .ob-scala-testa b { display: block; font-size: 18px; }
+  .ob-scala-testa small { display: block; font-size: 13px; color: var(--testo-soft); margin-top: 2px; }
+  .ob-livelli button.consigliato:not(.scelto) { outline: 2px dashed var(--accento); outline-offset: 2px; }   /* il gradino consigliato per partire, senza averlo scelto */
+  .ob-consiglio { margin: 0 2px 8px; font-size: 12px; color: var(--grigio); line-height: 1.35; }
   .ob-oppure { margin: 6px 0 6px; font-size: 13px; color: var(--grigio); }
   .ob-modi { margin-bottom: 10px; flex-wrap: wrap; overflow-x: visible; }   /* tre scelte: a capo invece di scorrere di lato (01/10) */
   .ob-livelli { display: flex; flex-wrap: wrap; align-items: center; overflow-x: visible; margin-bottom: 10px; }   /* «Del Sistema»: i livelli e i bonus, sotto le scelte */
@@ -2106,6 +2105,12 @@ function ic(nome, px) { return MB21Icone.icona(nome, px); }                     
 // Testi che arrivano già pronti dalle funzioni pure (agenda.js: «⏳ Da completare», «✅ Completato», «👍 confermato»): le funzioni e le loro
 // prove restano com'erano, qui il segno diventa l'icona. Si usa al posto di esc(): prima mette al sicuro il testo, poi cambia i segni.
 function escIcone(testo) { return MB21Icone.conIcone(esc(testo)); }
+// Il decimale dei punti ben riconoscibile (Ignazio 01/10: «la virgola dei centesimi sembra un punto»): `testo` è un numero già scritto all'italiana («1.234,56»);
+// restituisce HTML con una virgola grande e i centesimi più piccoli. Per i numeri senza decimali non cambia niente.
+function centesimi(testo) {
+  const m = /^(.*\d),(\d{1,2})$/.exec(String(testo));
+  return m ? `${esc(m[1])}<span class="cent"><i>,</i>${esc(m[2])}</span>` : esc(testo);
+}
 const CLASSI_CAT = { 'Prospect': 'cat-prospect', 'Cliente': 'cat-cliente', 'Partner': 'cat-partner', 'Ex Partner/Cliente': 'cat-ex',
   'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato' };
 function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }   // la classe che tinge card e righe del colore della categoria

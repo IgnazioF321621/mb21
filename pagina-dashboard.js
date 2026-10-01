@@ -1087,7 +1087,7 @@ function dashboardNumeri() {
     `<button data-ds-scheda="${x.chiave}" class="${x.chiave === DS.scheda ? 'scelto' : ''}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</button>`).join('')}</div>
     <div class="kpi">${s.riquadri.map(r => `<div>
       <div class="t" style="color:${s.colore}">${esc(r.titolo)}</div>
-      <div class="v" style="color:${s.colore}">${esc(r.numero)}</div>
+      <div class="v" style="color:${s.colore}">${centesimi(r.numero)}</div>
       ${r.senzaObiettivo ? '' : `<div class="barra"><div style="width:${r.percentuale}%;background:${r.raggiunto ? 'var(--verde)' : s.colore}"></div></div>`}
       <ul style="color:${s.colore}">${r.righe.map(t => `<li class="${r.raggiunto && t.startsWith(r.complimento) ? 'complimento' : ''}">${esc(!obiettiviAperti() && t === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t)}</li>`).join('')}</ul>
     </div>`).join('')}</div>
@@ -1158,6 +1158,8 @@ function collegaDashboard() {
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
 const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM', contatti: 'e quanti Contatti' };
+// I punti con i centesimi nelle caselle si scrivono con la VIRGOLA, senza il punto delle migliaia (Ignazio 01/10: il punto si confondeva con la virgola)
+const fmtNum = v => (v === '' || v == null ? '' : Number(v).toLocaleString('it-IT', { useGrouping: false, maximumFractionDigits: 2 }));
 function apriObiettivi() {
   if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
@@ -1172,10 +1174,11 @@ function apriObiettivi() {
   // «Scala dei bonus»: il gradino di partenza è quello del mese prima (il Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
   const NOMI_GRADINI = { 9: 'Leaders Club', 15: 'Executive', 21: 'Argento' };   // i livelli del Manuale che coincidono con un gradino
   const pidVisto = visto().partner_id;
-  let gradinoPartenza = MB21Check.gradinoDalBonus(null);   // finché non arriva la lettura (o se non arriva), il 3%
+  let gradinoPartenza = MB21Check.gradinoDalBonus(null), bonusPrima = null;   // finché non arriva la lettura (o se non arriva), il 3%
+  let consiglia = () => {};   // si riempie quando il foglio è disegnato
   if (pidVisto) {
     dbq('bonus del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
-      .then(r => { gradinoPartenza = MB21Check.gradinoDalBonus(r && r.data ? r.data.bonus : null); }, () => {});
+      .then(r => { gradinoPartenza = MB21Check.gradinoDalBonus(r && r.data ? r.data.bonus : null); bonusPrima = r && r.data && r.data.bonus != null ? Number(r.data.bonus) : null; consiglia(); }, () => {});
   }
   // «Risultati di <mese>»: oltre al Check, quello che dice il file Amway (entrati nel mese, prime linee, linee riceventi Bonus, totale gruppo, 15 Planner);
   // si legge subito all'apertura, così al tocco è già pronto (D.risultatiAmway)
@@ -1194,10 +1197,11 @@ function apriObiettivi() {
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
-    <button type="button" class="ob-scala-btn" data-modo="scala"><b>Scala dei bonus</b><small>Un traguardo e il foglio si compila da solo</small></button>
-      <div id="ob-sistema" hidden>
+    <div class="ob-scala-testa"><b>Scala dei bonus</b><small>Un traguardo e il foglio si compila da solo</small></div>
+      <div id="ob-sistema">
         <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}"${NOMI_GRADINI[g] ? ' class="traguardo"' : ''}>${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
       </div>
+      <p class="ob-consiglio" id="ob-consiglio"></p>
       <p class="ob-oppure">Oppure si parte da</p>
       <div class="chips ob-modi">
         <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
@@ -1211,7 +1215,7 @@ function apriObiettivi() {
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>di cui consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label${CLASSE_TOTALE[k] ? ` class="ob-totale ${CLASSE_TOTALE[k]}"` : ''}>${esc(ETICHETTA_FOGLIO[k] || etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(decimale ? fmtNum(valori[k]) : valori[k])}"></label>${k === 'vpg' ? '<div class="ob-dal-gruppo" id="ob-dal-gruppo"></div>' : ''}${k === 'pm' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-pm"></div>' : ''}${k === 'contatti' ? '<div class="ob-dal-gruppo ob-az" id="ob-hint-contatti"></div>' : ''}`).join('')}
     </div></div>${gruppo === 'Squadra' ? `<h4 class="mc-t">${escIcone('⚪')}Le tue linee</h4><div class="riquadro mc-g ob-gruppo">
       <p class="ob-linee-testo">I punti che ti aspetti dalle tue linee, già in possesso o da creare.</p>
       <div id="ob-linee"></div>
@@ -1233,8 +1237,8 @@ function apriObiettivi() {
   // («1», «10», «100») i VP Clienti non restano schiacciati sul primo numero (01/10: con VPP 100 uscivano consumo 99 e clienti 1).
   const campo = id => velo.querySelector('#ob-' + id);
   const numero = id => { const x = Number(String(campo(id).value).trim().replace(',', '.')); return Number.isFinite(x) && x > 0 ? x : 0; };
-  const scriviNum = (id, v) => { campo(id).value = v > 0 ? String(Math.round(v * 100) / 100) : (v === 0 ? '0' : ''); };
-  const consumoDaVpp = () => { const t = numero('vpp'); campo('consumo').value = t > 0 ? String(Math.round((t - Math.min(numero('vpv'), t)) * 100) / 100) : ''; };
+  const scriviNum = (id, v) => { campo(id).value = v > 0 ? fmtNum(v) : (v === 0 ? '0' : ''); };
+  const consumoDaVpp = () => { const t = numero('vpp'); campo('consumo').value = t > 0 ? fmtNum(t - Math.min(numero('vpv'), t)) : ''; };
   let quotaClienti = 0;   // quanta parte del VPP viene dai clienti (0 … 1)
   const ricordaQuota = () => { const t = numero('vpp'); if (t > 0) quotaClienti = Math.min(numero('vpv'), t) / t; else if (!numero('vpv')) quotaClienti = 0; };   // da vuoto si riparte senza divisione
   campo('vpp').addEventListener('input', () => {
@@ -1246,7 +1250,7 @@ function apriObiettivi() {
   campo('vpv').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); ricordaQuota(); });
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); ricordaQuota(); });
   const scrivi = nuovi => {
-    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? (nuovi[k] ?? '') : '';
+    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k, , dec] of campi) campo(k).value = nuovi ? (dec ? fmtNum(nuovi[k]) : (nuovi[k] ?? '')) : '';
     consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni();
   };
   // Nuovi Iscritti è il totale e Iscritti personali «di cui»: i personali non superano mai il totale (un personale è anche un nuovo iscritto)
@@ -1273,7 +1277,7 @@ function apriObiettivi() {
   const aggiungiLinea = l => {
     const r = document.createElement('div');
     r.className = 'ob-linea'; r.dataset.pid = l.partner_id || '';
-    r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(l.vp) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button>`;
+    r.innerHTML = `<input class="ob-linea-nome" placeholder="Nome della linea" value="${esc(l.nome || '')}"${l.partner_id ? ' readonly' : ''}><input class="ob-linea-vp" inputmode="decimal" placeholder="VP" value="${l.vp > 0 ? esc(fmtNum(l.vp)) : ''}"><button type="button" class="ob-linea-x" aria-label="Togli questa linea">×</button>`;
     r.querySelector('.ob-linea-vp').addEventListener('input', dalGruppo);
     r.querySelector('.ob-linea-x').onclick = () => { r.remove(); dalGruppo(); };
     righeLinee.appendChild(r);
@@ -1335,8 +1339,17 @@ function apriObiettivi() {
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
   const righeLivelli = velo.querySelector('#ob-sistema');
   const azzeraBarra = () => { perc.textContent = '0%'; barra.value = 0; ambizioso.hidden = true; };   // scegliendo un'altra base l'incremento riparte da 0%
-  const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === gradino));
-  const mostraScala = () => { righeLivelli.hidden = base !== 'scala'; if (base === 'scala') { gradino = gradino || gradinoPartenza; sceltaGradino(); } };
+  // I bonus stanno sempre in vista (Ignazio 01/10: «non è intuibile cliccare su Scala dei bonus»): nessuna scelta già fatta, un consiglio da dove partire
+  // (il bonus del mese prima, o il 3% per chi comincia) e il gradino toccato diventa scuro. Passando a un'altra base si spegne.
+  const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', base === 'scala' && Number(x.dataset.bonus) === gradino));
+  const mostraScala = () => { if (base === 'scala') gradino = gradino || gradinoPartenza; sceltaGradino(); };
+  consiglia = () => {
+    righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('consigliato', Number(x.dataset.bonus) === gradinoPartenza));
+    velo.querySelector('#ob-consiglio').textContent = bonusPrima != null && bonusPrima > 0
+      ? `Ti consiglio di partire dal ${gradinoPartenza}%: il tuo bonus di ${nomeRis} era ${f(bonusPrima)}%.`
+      : `Ti consiglio di partire dal ${gradinoPartenza}%, il primo gradino.`;
+  };
+  consiglia();
   velo.querySelectorAll('[data-modo]').forEach(b => {
     b.onclick = async () => {
       base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala();
@@ -1345,7 +1358,7 @@ function apriObiettivi() {
     };
   });
   righeLivelli.querySelectorAll('button').forEach(b => {
-    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); notaBase(); };
+    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(null); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); notaBase(); };
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
