@@ -1162,7 +1162,7 @@ function apriObiettivi() {
   const nomeRis = D.nomeMese(meseRis).toLowerCase();
   const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
   // «Del Sistema»: il livello di partenza è quello del mese prima (dal Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
-  const NOMI_LIVELLI = { lc: 'Leaders Club', elc: 'Executive', arg: 'Argento', plat: 'Platino' };
+  const NOMI_LIVELLI = { lc: 'Leaders Club', elc: 'Executive', arg: 'Argento' };   // il Platino non serve (Ignazio 01/10)
   const pidVisto = visto().partner_id;
   let livelloPartenza = 'lc';   // finché non arriva la lettura (o se non arriva), il primo livello
   if (pidVisto) {
@@ -1181,7 +1181,10 @@ function apriObiettivi() {
       ${ris ? `<button data-modo="risultati">Risultati di ${esc(nomeRis)}</button>` : ''}
       <button data-modo="sistema">Del Sistema</button>
       <button data-modo="vuoti">Da zero</button></div>
-      <div class="chips ob-livelli" id="ob-livelli" hidden><span>Livello</span>${Object.entries(NOMI_LIVELLI).map(([k, n]) => `<button data-livello="${k}">${n}</button>`).join('')}</div>
+      <div id="ob-sistema" hidden>
+        <div class="chips ob-livelli"><span>Livello</span>${Object.entries(NOMI_LIVELLI).map(([k, n]) => `<button data-livello="${k}">${n}</button>`).join('')}</div>
+        <div class="chips ob-livelli"><span>Bonus</span>${Object.keys(MB21Check.VPG_PER_BONUS).map(b => `<button data-bonus="${b}">${b}%</button>`).join('')}</div>
+      </div>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
@@ -1214,14 +1217,19 @@ function apriObiettivi() {
   consumoDaVpp();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, quelli del Sistema, o niente (Da zero)
-  let base = null, livello = null;
-  const delSistema = () => Object.fromEntries(D.CAMPI_OBIETTIVI.flatMap(([, , campi]) => campi.map(([k]) => [k, (MB21Check.obiettiviDelLivello(livello) || {})[k] ?? ''])));
+  // Del Sistema: `livello` riempie VPG, Iscritti, BBS, WES e CEP; `bonus` (3% … 21%, la scala del Piano Marketing) cambia solo il VPG
+  let base = null, livello = null, bonus = null;
+  const delSistema = () => {
+    const dal = { ...(MB21Check.obiettiviDelLivello(livello) || {}), ...(bonus ? { vpg: MB21Check.VPG_PER_BONUS[bonus] } : {}) };
+    return Object.fromEntries(D.CAMPI_OBIETTIVI.flatMap(([, , campi]) => campi.map(([k]) => [k, dal[k] ?? ''])));
+  };
   const valoriBase = () => (base === 'risultati' ? risValori : base === 'sistema' ? delSistema() : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
   const barra = velo.querySelector('#ob-barra');
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
-  const righeLivelli = velo.querySelector('#ob-livelli');
+  const righeLivelli = velo.querySelector('#ob-sistema');
   const azzeraBarra = () => { perc.textContent = 'scegli'; ambizioso.hidden = true; };
-  const sceltaLivello = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', x.dataset.livello === livello));
+  const bonusAcceso = () => bonus || (MB21Check.LIVELLI.find(x => x.chiave === livello) || { sv: {} }).sv.bonus;   // senza un bonus toccato, quello del livello
+  const sceltaLivello = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', x.dataset.livello ? x.dataset.livello === livello : Number(x.dataset.bonus) === Number(bonusAcceso())));
   velo.querySelectorAll('.ob-modi button').forEach(b => {
     b.onclick = () => {
       base = b.dataset.modo; sceltaModo(b); azzeraBarra();
@@ -1231,7 +1239,11 @@ function apriObiettivi() {
     };
   });
   righeLivelli.querySelectorAll('button').forEach(b => {
-    b.onclick = () => { livello = b.dataset.livello; base = 'sistema'; sceltaLivello(); azzeraBarra(); scrivi(valoriBase()); };
+    b.onclick = () => {
+      base = 'sistema'; azzeraBarra();
+      if (b.dataset.livello) { livello = b.dataset.livello; bonus = null; } else bonus = Number(b.dataset.bonus);
+      sceltaLivello(); scrivi(valoriBase());
+    };
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
