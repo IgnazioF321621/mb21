@@ -1165,13 +1165,13 @@ function apriObiettivi() {
   const ris = D.risultatiMese({ checkMesi: DS.checkMesi || [], obiettivi: DS.obiettivi, mese: meseRis, oggi: ST.oggi, segniAl: DS.segniAl });
   const nomeRis = D.nomeMese(meseRis).toLowerCase();
   const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
-  // «Del Sistema»: il livello di partenza è quello del mese prima (dal Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
-  const NOMI_LIVELLI = { lc: 'Leaders Club', elc: 'Executive', arg: 'Argento' };   // il Platino non serve (Ignazio 01/10)
+  // «Scala dei bonus»: il gradino di partenza è quello del mese prima (il Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
+  const NOMI_GRADINI = { 9: 'Leaders Club', 15: 'Executive', 21: 'Argento' };   // i livelli del Manuale che coincidono con un gradino
   const pidVisto = visto().partner_id;
-  let livelloPartenza = 'lc';   // finché non arriva la lettura (o se non arriva), il primo livello
+  let gradinoPartenza = MB21Check.gradinoDalBonus(null);   // finché non arriva la lettura (o se non arriva), il 3%
   if (pidVisto) {
-    dbq('livello del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
-      .then(r => { livelloPartenza = MB21Check.livelloDalBonus(r && r.data ? r.data.bonus : null); }, () => {});
+    dbq('bonus del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
+      .then(r => { gradinoPartenza = MB21Check.gradinoDalBonus(r && r.data ? r.data.bonus : null); }, () => {});
   }
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -1184,11 +1184,10 @@ function apriObiettivi() {
     <p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
       ${prima ? `<button data-modo="uguale">Obiettivi di ${esc(prima)}</button>` : ''}
       ${ris ? `<button data-modo="risultati">Risultati di ${esc(nomeRis)}</button>` : ''}
-      <button data-modo="sistema">Del Sistema</button>
+      <button data-modo="scala">Scala dei bonus</button>
       <button data-modo="vuoti">Da zero</button></div>
       <div id="ob-sistema" hidden>
-        <div class="chips ob-livelli"><span>Livello</span>${Object.entries(NOMI_LIVELLI).map(([k, n]) => `<button data-livello="${k}">${n}</button>`).join('')}</div>
-        <div class="chips ob-livelli"><span>Bonus</span>${Object.keys(MB21Check.VPG_PER_BONUS).map(b => `<button data-bonus="${b}">${b}%</button>`).join('')}</div>
+        <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}">${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
       </div>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
@@ -1216,48 +1215,34 @@ function apriObiettivi() {
   campo('vpv').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); });
   campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); });
   const scrivi = nuovi => {
-    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? nuovi[k] : '';
+    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? (nuovi[k] ?? '') : '';
     consumoDaVpp();
   };
   consumoDaVpp();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
-  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, quelli del Sistema, o niente (Da zero)
-  // Del Sistema: `livello` riempie VPG, Iscritti, BBS, WES e CEP; `bonus` (3% … 21%, la scala del Piano Marketing) cambia solo il VPG
-  let base = null, livello = null, bonus = null;
-  const delSistema = () => {
-    const dal = { ...(MB21Check.obiettiviDelLivello(livello) || {}), ...(bonus ? { vpg: MB21Check.VPG_PER_BONUS[bonus] } : {}) };
-    return Object.fromEntries(D.CAMPI_OBIETTIVI.flatMap(([, , campi]) => campi.map(([k]) => [k, dal[k] ?? ''])));
-  };
-  const valoriBase = () => (base === 'risultati' ? risValori : base === 'sistema' ? delSistema() : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
+  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Da zero)
+  // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
+  let base = null, gradino = null;
+  const valoriBase = () => (base === 'risultati' ? risValori : base === 'scala' ? MB21Check.obiettiviDelBonus(gradino) : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
   const barra = velo.querySelector('#ob-barra');
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
   const righeLivelli = velo.querySelector('#ob-sistema');
   const azzeraBarra = () => { perc.textContent = 'scegli'; ambizioso.hidden = true; };
-  const bonusAcceso = () => bonus || (MB21Check.LIVELLI.find(x => x.chiave === livello) || { sv: {} }).sv.bonus;   // senza un bonus toccato, quello del livello
-  const sceltaLivello = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', x.dataset.livello ? x.dataset.livello === livello : Number(x.dataset.bonus) === Number(bonusAcceso())));
+  const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === gradino));
+  const mostraScala = () => { righeLivelli.hidden = base !== 'scala'; if (base === 'scala') { gradino = gradino || gradinoPartenza; sceltaGradino(); } };
   velo.querySelectorAll('.ob-modi button').forEach(b => {
-    b.onclick = () => {
-      base = b.dataset.modo; sceltaModo(b); azzeraBarra();
-      righeLivelli.hidden = base !== 'sistema';
-      if (base === 'sistema') { livello = livello || livelloPartenza; sceltaLivello(); }
-      scrivi(base === 'vuoti' ? null : valoriBase());
-    };
+    b.onclick = () => { base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala(); scrivi(base === 'vuoti' ? null : valoriBase()); };
   });
   righeLivelli.querySelectorAll('button').forEach(b => {
-    b.onclick = () => {
-      base = 'sistema'; azzeraBarra();
-      if (b.dataset.livello) { livello = b.dataset.livello; bonus = null; } else bonus = Number(b.dataset.bonus);
-      sceltaLivello(); scrivi(valoriBase());
-    };
+    b.onclick = () => { base = 'scala'; gradino = Number(b.dataset.bonus); sceltaModo(velo.querySelector('.ob-modi button[data-modo="scala"]')); azzeraBarra(); sceltaGradino(); scrivi(valoriBase()); };
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
     perc.textContent = `+${p}%`;
     ambizioso.hidden = p <= D.SOGLIA_AMBIZIOSO;
-    if (base === null || base === 'vuoti') { base = prima ? 'uguale' : ris ? 'risultati' : 'sistema'; }
+    if (base === null || base === 'vuoti') { base = prima ? 'uguale' : ris ? 'risultati' : 'scala'; }
     sceltaModo(velo.querySelector(`.ob-modi button[data-modo="${base}"]`));
-    righeLivelli.hidden = base !== 'sistema';
-    if (base === 'sistema') { livello = livello || livelloPartenza; sceltaLivello(); }
+    mostraScala();
     scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' ? '' : D.aumenta(Number(v), p)])));
   };
   barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
