@@ -2497,7 +2497,7 @@ function mostraTab() {
     b.onclick = () => {
       if (b.dataset.tab === 'progetti') { ST.tab = 'progetti'; LS.ritorno = null; return mostraTab(); }
       if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined' && AG.vista === 'progetto') AG.vista = null;
-      ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab();
+      eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab();
     };
   });
   if (progetti && typeof vediProgetti === 'function' && vediProgetti()) { const apre = apriProgetti(); accendiTab(); return apre; }   // acceso subito, non a caricamento finito
@@ -2715,6 +2715,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   }
   // Una telefonata (cantiere 48, Ignazio 29/09): dopo l'esito si apre lo stesso foglio della coda, non «un'altra telefonata».
   if (e.tipo_azione === 'Contatto') {
+    let pianoFissato = null;
     const nome = e.contatti ? e.contatti.nome : '', categoria = e.contatti && e.contatti.categoria;
     const dopo = MB21Agenda.dopoTelefonata(categoria, esito);
     const annullaTel = async creato => {   // come `annulla`, ma rimette anche la coda e toglie il giorno del richiamo
@@ -2736,6 +2737,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       if (creato) await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', e.contatto_id));
       await ridisegna();
       mostraToast(creato ? `${esito} · appuntamento fissato` : `${esito} salvato`, () => annullaTel(creato));
+      pianoFissato = creato;   // se è un Piano Marketing a un candidato, prima della chat del coach «Hai condiviso la traccia di apertura?»
     } else if (dopo.cosa === 'giorno') {   // Richiamare: il giorno del richiamo (in coda quel giorno, in MB Plan come dalla coda)
       const iso = await chiediData({ etichetta: 'Richiamare', data: 'giorno' }, nome);
       if (iso) {
@@ -2750,7 +2752,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       await ridisegna();
       mostraToast(`${opz.testo || esito} salvato`, () => annulla(null));
     }
-    return chiediRiflessione(e, esito);
+    return tracciaDiApertura(pianoFissato, { id: e.contatto_id, nome }, () => chiediRiflessione(e, esito));
   }
   const creato = opz.senzaProssimo ? null : await nuovoAppuntamento({
     titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
@@ -2762,7 +2764,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
   if (MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
       && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
-  await chiediRiflessione(e, esito);
+  await tracciaDiApertura(creato, e.contatti && { id: e.contatto_id, nome: e.contatti.nome }, () => chiediRiflessione(e, esito));
 }
 
 // Il momento dopo l'esito (la chat del coach) e il promemoria «Ti eri detto…» (cantiere 42): in pagina-coach.js
@@ -3104,11 +3106,12 @@ async function nuovoAppuntamento(opz = {}) {
         await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
         if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
       }
-      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa });
+      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, categoria: v.categoria });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
-      // piano marketing»): subito il foglio «Prima del PM, manda a Mario…». Dopo che chi ha chiamato ha finito (coda, Agenda, scheda).
-      if (v.tipo_azione === 'Piano Marketing' && st.contatto && MB21Sharing.perChiDi({ categoria: v.categoria }) === 'ospite')
-        setTimeout(() => proponiTracciaDopo({ id: v.contatto_id, nome: st.contatto.nome, categoria: v.categoria }, { primaDelPm: v.giorno }), 400);
+      // piano marketing»): dal 01/10 la domanda «Hai condiviso la traccia di apertura?» (tracciaDiApertura, pagina-sharing.js). Da qui solo quando il
+      // foglio si apre da MB Plan; chi lo chiama con `resta` o `salta` (coda, scheda, esito) la fa da sé, a processo finito, perché dopo c'è la chat del coach.
+      if (!opz.resta && !opz.salta && st.contatto)
+        setTimeout(() => tracciaDiApertura({ tipo_azione: v.tipo_azione, categoria: v.categoria }, { id: v.contatto_id, nome: st.contatto.nome }, null), 400);
       if (!opz.salta && !opz.resta) {
         AG.aperta = data.id;
         await apriAgenda(v.giorno);
