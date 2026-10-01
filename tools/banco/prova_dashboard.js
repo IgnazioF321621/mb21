@@ -404,4 +404,11 @@ prova('Confronto obiettivo-risultato di un mese: solo gli obiettivi scritti, ris
   assert.equal(D.confrontoMese({ obiettivo: { mese: '2026-09-01' }, risultati: null, amway: null }), null);
 });
 
+prova('Efficacia: contatti per PM e PM per iscritto veri, ultimi 6 mesi (un partner o la media di tutti)', () => {
+  const r = D.efficaciaDi([{ mese: '2026-08-01', contatti: 30, pm: 5, sponsor_personali: 1 }, { mese: '2026-10-01', contatti: 24, pm: 5, sponsor_personali: 1 }, { mese: '2026-02-01', contatti: 999, pm: 99, sponsor_personali: 9 }], '2026-10-01');
+  assert.deepEqual(r, { contatti: 54, pm: 10, iscritti: 2, contattiPerPm: 5.4, pmPerIscritto: 5 });   // febbraio è fuori dai 6 mesi
+  assert.deepEqual(D.efficaciaDi([{ mese: '2026-09-01', contatti: 77, pm: 2, sponsor_personali: 0 }], '2026-10-01'), { contatti: 77, pm: 2, iscritti: 0, contattiPerPm: 38.5, pmPerIscritto: null });
+  assert.deepEqual(D.efficaciaDi([], '2026-10-01'), { contatti: 0, pm: 0, iscritti: 0, contattiPerPm: null, pmPerIscritto: null });
+});
+
 console.log(`\n${ok} prove superate`);
