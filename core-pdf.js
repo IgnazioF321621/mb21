@@ -216,7 +216,7 @@
     // Obiettivi del mese, su due colonne
     const o = m.obiettivi;
     y0 = y; y = testa(xs, y, null, 'Obiettivi del mese') + 5;
-    const obb = [['VP personali', o.vpp], ['VP gruppo', o.vpg], ['Sponsor. personale', o.sponsor_personali], ['Sponsor. gruppo', o.sponsor_gruppo], ['CEP', o.cep], ['BBS', o.bbs], ['WES', o.wes]];
+    const obb = [['VP personali', o.vpp], ['VP gruppo', o.vpg], ['Iscritti personali', o.sponsor_personali], ['Iscritti gruppo', o.sponsor_gruppo], ['CEP', o.cep], ['BBS', o.bbs], ['WES', o.wes]];
     obb.forEach(([t, v], i) => {
       const cx = xs + (i < 4 ? 0 : COL / 2), yb = y + (i % 4) * 5.2;
       font(7.5); doc.text(t, cx + 3, yb); valore(num(v), cx + COL / 2 - 2.5, yb, 13);

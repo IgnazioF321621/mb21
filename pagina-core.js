@@ -94,7 +94,7 @@ function moduloCoreHtml(m) {
 
   const o = m.obiettivi;
   const ob = `<section class="cm-sez ob"><div class="cm-sez-testa"><span>Obiettivi del mese</span></div>
-    ${[['VP personali', o.vpp], ['VP gruppo', o.vpg], ['Sponsorizzazione personale', o.sponsor_personali], ['Sponsorizzazione gruppo', o.sponsor_gruppo], ['CEP', o.cep], ['BBS', o.bbs], ['WES', o.wes]]
+    ${[['VP personali', o.vpp], ['VP gruppo', o.vpg], ['Iscritti personali', o.sponsor_personali], ['Nuovi Iscritti gruppo', o.sponsor_gruppo], ['CEP', o.cep], ['BBS', o.bbs], ['WES', o.wes]]
       .map(([t, v]) => `<div class="cm-riga"><span>${t}</span><b class="cm-auto">${v == null ? '—' : num(v)}</b></div>`).join('')}
     <div class="vn-aiuto">Dagli obiettivi del mese scritti nel Check.</div></section>`;
 
