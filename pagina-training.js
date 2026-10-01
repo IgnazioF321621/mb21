@@ -80,7 +80,7 @@ function disegnaTraining() {
       <div><b>Le prove del role play</b><small>⚠️ Per ora lo vedi solo tu · Quante telefonate, quante arrivano in fondo, dove si sbaglia di più.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${eAdmin() ? `<button class="trn-riga" data-ingresso style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
       <div><b>Test d'ingresso</b><small>⚠️ Per ora lo vedi solo tu · Sei già avanti? Supera i test dei livelli che conosci e parti dal tuo, senza rifare tutte le carte.</small></div><span class="trn-freccia">›</span></button>` : ''}
-    ${eAdmin() ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
+    ${eAdmin() && DOVE_SEI_VISIBILE ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
       <div><b>Dove sei, dove vuoi andare</b><small>⚠️ Per ora lo vedi solo tu · Scegli quanto vuoi guadagnare: vedi i tuoi numeri, cosa manca e cosa studiare.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
@@ -377,6 +377,8 @@ function trnTestIngresso() {
   corpo.querySelector('#trn-ti-no').onclick = () => velo.remove();
 }
 // ── «Dove sei, dove vuoi andare» (voluta da Ignazio il 24/09, solo Admin per ora) ──
+// Sospesa al rilascio del 01/10 (Ignazio: «fino a quando non lo capisco bene»): la tabella `training_obiettivo` non è ancora nel database. Per riaccenderla: `true` + applicare la migrazione 20260930210000.
+const DOVE_SEI_VISIBILE = false;
 // Un tocco su una delle tre fasce di guadagno del Manuale di Avvio (pag. 17), i tuoi numeri dell'ultimo mese (`volumi_mese`, gli stessi della Mappa), quanto manca,
 // la strada che mostra il manuale (esempi pag. 20-22) e il livello del Training da studiare. La scelta si salva in `training_obiettivo`.
 const TRN_FASCE = [
