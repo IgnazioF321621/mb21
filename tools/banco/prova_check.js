@@ -408,10 +408,11 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   }
   // salendo non si scende mai (ogni colonna cresce o resta)
   for (const k of chiavi.filter(x => x !== 'sponsor_personali')) C.GRADINI_BONUS.reduce((prec, g) => { assert.ok(C.SCALA_BONUS[g][k] >= prec, k + ' scende al ' + g + '%'); return C.SCALA_BONUS[g][k]; }, 0);
-  // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 iscritto personale; nessuno riceve bonus: niente linee riceventi né 15 Planner
+  // 3% (Ignazio 01/10): 2 nuovi iscritti = 2 iscritti personali = 2 prime linee; nessuno riceve bonus: niente linee riceventi né 15 Planner
   assert.deepEqual([3, 6, 9, 12].map(g => C.SCALA_BONUS[g].planner), [0, 0, 1, 2]);   // i 15 Planner cominciano dal 9% Leaders Club (segno vitale obbligatorio)
   const r3 = C.SCALA_BONUS[3];
-  assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [1, 1, 0, 0, 1, 3]);
+  assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [2, 2, 0, 0, 2, 4]);
+  assert.equal(r3.vpp + r3.sponsor_gruppo * 50, r3.vpg);   // al 3% il VPG è tutto spiegato: i tuoi 100 e 2 nuovi iscritti da 50 VP
   assert.deepEqual(C.GRADINI_BONUS.map(g => C.SCALA_BONUS[g].vpp), [100, 100, 150, 200, 300, 300, 300]);            // i punti personali: 100 al 3% e 6%, 150 al 9%, 300 stabili dal 15% (Ignazio 01/10)
   for (const g of C.GRADINI_BONUS) assert.ok(C.SCALA_BONUS[g].vpv <= C.SCALA_BONUS[g].vpp && C.SCALA_BONUS[g].vpp < C.SCALA_BONUS[g].vpg, 'VPP e VPG al ' + g + '%');   // i clienti sono una parte del VPP e il gruppo è più del VPP
   assert.equal(C.obiettiviDelBonus(9).vpg, 1200); assert.equal(C.obiettiviDelBonus(10), null);
