@@ -1161,6 +1161,14 @@ function apriObiettivi() {
   const ris = D.risultatiMese({ checkMesi: DS.checkMesi || [], obiettivi: DS.obiettivi, mese: meseRis, oggi: ST.oggi, segniAl: DS.segniAl });
   const nomeRis = D.nomeMese(meseRis).toLowerCase();
   const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
+  // «Del Sistema»: il livello di partenza è quello del mese prima (dal Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
+  const NOMI_LIVELLI = { lc: 'Leaders Club', elc: 'Executive', arg: 'Argento', plat: 'Platino' };
+  const pidVisto = visto().partner_id;
+  let livelloPartenza = 'lc';   // finché non arriva la lettura (o se non arriva), il primo livello
+  if (pidVisto) {
+    dbq('livello del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
+      .then(r => { livelloPartenza = MB21Check.livelloDalBonus(r && r.data ? r.data.bonus : null); }, () => {});
+  }
   const velo = document.createElement('div');
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34)
@@ -1168,18 +1176,20 @@ function apriObiettivi() {
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
-    ${prima || ris ? `<p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
+    <p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
       ${prima ? `<button data-modo="uguale">Obiettivi di ${esc(prima)}</button>` : ''}
       ${ris ? `<button data-modo="risultati">Risultati di ${esc(nomeRis)}</button>` : ''}
+      <button data-modo="sistema">Del Sistema</button>
       <button data-modo="vuoti">Da zero</button></div>
+      <div class="chips ob-livelli" id="ob-livelli" hidden><span>Livello</span>${Object.entries(NOMI_LIVELLI).map(([k, n]) => `<button data-livello="${k}">${n}</button>`).join('')}</div>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
         <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
-      </div>` : `<p style="margin:0">Scrivi i tuoi obiettivi per questo mese.</p>`}</div>
+      </div></div>
     ${D.CAMPI_OBIETTIVI.map(([gruppo, pallino, campi]) => `<h4 class="mc-t">${escIcone(pallino)}${esc(gruppo)}</h4><div class="riquadro mc-g ob-gruppo"><div class="ob-campi">
-      ${campi.map(([k, etichetta, decimale]) => `<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
+      ${campi.map(([k, etichetta, decimale]) => `${k === 'vpv' ? `<label>VP consumo personale<input id="ob-consumo" inputmode="decimal"></label>` : ''}<label>${esc(etichetta)}<input id="ob-${k}" inputmode="${decimale ? 'decimal' : 'numeric'}" value="${esc(valori[k])}"></label>`).join('')}
     </div></div>`).join('')}
     <div class="errore" id="ob-errore"></div>
     <div class="mc-fondo"><button class="link" id="ob-no">Annulla</button><button class="primario" id="ob-si">Salva obiettivi</button></div>
@@ -1188,26 +1198,52 @@ function apriObiettivi() {
   const chiudi = () => velo.remove();
   velo.querySelector('#ob-x').onclick = chiudi;
   velo.querySelector('#ob-no').onclick = chiudi;
-  const scrivi = nuovi => { for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) velo.querySelector('#ob-' + k).value = nuovi ? nuovi[k] : ''; };
+  // VPP = VP consumo personale + VP Clienti (Ignazio 01/10): il VPP è il totale; toccando uno dei due, l'altro si aggiusta da solo.
+  // Il consumo personale non si salva: è VPP meno VP Clienti.
+  const campo = id => velo.querySelector('#ob-' + id);
+  const numero = id => { const x = Number(String(campo(id).value).trim().replace(',', '.')); return Number.isFinite(x) && x > 0 ? x : 0; };
+  const scriviNum = (id, v) => { campo(id).value = v > 0 ? String(Math.round(v * 100) / 100) : (v === 0 ? '0' : ''); };
+  const consumoDaVpp = () => { const t = numero('vpp'); campo('consumo').value = t > 0 ? String(Math.round((t - Math.min(numero('vpv'), t)) * 100) / 100) : ''; };
+  campo('vpp').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); });
+  campo('vpv').addEventListener('input', () => { const t = numero('vpp'); if (t > 0 && numero('vpv') > t) scriviNum('vpv', t); consumoDaVpp(); });
+  campo('consumo').addEventListener('input', () => { const t = numero('vpp'); if (t > 0) scriviNum('vpv', t - Math.min(numero('consumo'), t)); consumoDaVpp(); });
+  const scrivi = nuovi => {
+    for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) campo(k).value = nuovi ? nuovi[k] : '';
+    consumoDaVpp();
+  };
+  consumoDaVpp();
   const sceltaModo = b => velo.querySelectorAll('.ob-modi button').forEach(x => x.classList.toggle('scelto', x === b));
-  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, o niente (Da zero)
-  let base = null;
-  const valoriBase = () => (base === 'risultati' ? risValori : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
+  // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, quelli del Sistema, o niente (Da zero)
+  let base = null, livello = null;
+  const delSistema = () => Object.fromEntries(D.CAMPI_OBIETTIVI.flatMap(([, , campi]) => campi.map(([k]) => [k, (MB21Check.obiettiviDelLivello(livello) || {})[k] ?? ''])));
+  const valoriBase = () => (base === 'risultati' ? risValori : base === 'sistema' ? delSistema() : D.propostaObiettivi(DS.obiettivi, mese, 'uguale').valori);
   const barra = velo.querySelector('#ob-barra');
   const perc = velo.querySelector('#ob-perc'), ambizioso = velo.querySelector('#ob-ambizioso');
-  const azzeraBarra = () => { if (perc) { perc.textContent = 'scegli'; ambizioso.hidden = true; } };
+  const righeLivelli = velo.querySelector('#ob-livelli');
+  const azzeraBarra = () => { perc.textContent = 'scegli'; ambizioso.hidden = true; };
+  const sceltaLivello = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', x.dataset.livello === livello));
   velo.querySelectorAll('.ob-modi button').forEach(b => {
-    b.onclick = () => { base = b.dataset.modo; sceltaModo(b); azzeraBarra(); scrivi(base === 'vuoti' ? null : valoriBase()); };
+    b.onclick = () => {
+      base = b.dataset.modo; sceltaModo(b); azzeraBarra();
+      righeLivelli.hidden = base !== 'sistema';
+      if (base === 'sistema') { livello = livello || livelloPartenza; sceltaLivello(); }
+      scrivi(base === 'vuoti' ? null : valoriBase());
+    };
   });
-  if (barra) barra.oninput = () => {
+  righeLivelli.querySelectorAll('button').forEach(b => {
+    b.onclick = () => { livello = b.dataset.livello; base = 'sistema'; sceltaLivello(); azzeraBarra(); scrivi(valoriBase()); };
+  });
+  barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
     perc.textContent = `+${p}%`;
     ambizioso.hidden = p <= D.SOGLIA_AMBIZIOSO;
-    if (base === null || base === 'vuoti') base = prima ? 'uguale' : 'risultati';   // senza una scelta, si parte dai traguardi (o dai risultati se non ce ne sono)
+    if (base === null || base === 'vuoti') { base = prima ? 'uguale' : ris ? 'risultati' : 'sistema'; }
     sceltaModo(velo.querySelector(`.ob-modi button[data-modo="${base}"]`));
+    righeLivelli.hidden = base !== 'sistema';
+    if (base === 'sistema') { livello = livello || livelloPartenza; sceltaLivello(); }
     scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' ? '' : D.aumenta(Number(v), p)])));
   };
-  if (barra) barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
+  barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
   velo.querySelector('#ob-si').onclick = async () => {
     const letti = {};
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
