@@ -919,6 +919,7 @@
   .obt-gruppo { margin-top: 8px; }
   .obt-gruppo h4 { margin: 0 0 3px; font-size: 12px; letter-spacing: .04em; color: var(--testo-soft); text-transform: uppercase; }
   .obt-gruppo > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 14px; border-bottom: 1px solid var(--bordo, rgba(0,0,0,.06)); }
+  .ls-catalogo { margin: 8px 0 4px; }
   .ob-visto { margin: 4px 4px 10px; font-size: 12px; color: var(--testo-soft); text-align: center; }
   .ob-linea-sub { grid-column: 1 / -1; margin: -2px 2px 4px; font-size: 12px; color: var(--testo-soft); }
   .ob-linea-sub[hidden] { display: none; }
@@ -2569,6 +2570,7 @@ function mostraTab() {
     ST.tab = 'oggi'; LS.ritorno = null;
     mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
   }
+  ST.vistaCatalogo = false; ST.tornaA = null;   // lasciata la pagina «Da catalogare» o i «Team» della Mappa si riparte dalla pagina scelta
   if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
   accendiTab();
   nav.querySelectorAll('button').forEach(b => {
