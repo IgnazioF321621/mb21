@@ -216,7 +216,7 @@
   }
 
   // ── il motore: recita un copione dentro `corpo` (un elemento della pagina) ──
-  // opz: icona(nome) → svg · fonti: 'tutte' (pagina di prova) o 'consigliabili' (app) · scorri(el): dopo ogni fumetto o bottone
+  // opz: icona(nome) → svg · fonti: 'tutte' (pagina di prova) o 'consigliabili' (app) · correggi(frase, bottone): il ✎ nei fumetti (solo Admin) · scorri(el): dopo ogni fumetto o bottone
   //      · rif: approfondimenti già in lista · veloce: senza attese (prove).
   // Restituisce { stato, fine }: stato.risposte si riempie a ogni risposta da salvare; fine si risolve a chat finita,
   // con gli approfondimenti già scritti (se la chat viene chiusa prima può anche non risolversi: vale stato.risposte).
@@ -229,7 +229,17 @@
     const stato = { rif: [...(opz.rif || [])], proposte: [], risposte: [], domanda: '' };
     const metti = html => { corpo.insertAdjacentHTML('beforeend', html); const el = corpo.lastElementChild; if (opz.scorri) opz.scorri(el); return el; };
     const fonte = f => (!f || (!f[1] && opz.fonti !== 'tutte')) ? '' : `<span class="cch-fonte${f[1] ? '' : ' no'}">${f[1] ? '✓ ' : ''}${esc(f[0])}</span>`;
-    const fumetto = (testo, mio, f) => metti(`<div class="cch-fumetto${mio ? ' cch-mio' : ''}">${mio ? '' : '<span class="cch-av">MB</span>'}<div class="cch-bolla">${esc(testo)}${mio ? '' : fonte(f)}</div></div>`);
+    // `opz.correggi(frase, bottone)`: solo per l'Admin (01/10), dentro ogni fumetto del coach un ✎ per segnare la frase da correggere (coach_correzioni)
+    const fumetto = (testo, mio, f) => {
+      const el = metti(`<div class="cch-fumetto${mio ? ' cch-mio' : ''}">${mio ? '' : '<span class="cch-av">MB</span>'}<div class="cch-bolla">${esc(testo)}${mio ? '' : fonte(f)}</div></div>`);
+      const bolla = !mio && opz.correggi && el && el.querySelector && el.querySelector('.cch-bolla');
+      if (bolla) {
+        bolla.insertAdjacentHTML('beforeend', '<button type="button" class="cch-corr" aria-label="Correggi questa frase" title="Correggi questa frase">✎</button>');
+        const b = bolla.lastElementChild;
+        b.onclick = () => opz.correggi(testo, b);
+      }
+      return el;
+    };
     async function scrive(testo, f) {
       const puntini = metti('<div class="cch-fumetto cch-puntini"><span class="cch-av">MB</span><div class="cch-bolla"><i></i><i></i><i></i></div></div>');
       await aspetta(opz.veloce ? 0 : Math.min(1400, 500 + testo.length * 12));

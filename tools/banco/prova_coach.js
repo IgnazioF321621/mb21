@@ -281,9 +281,11 @@ prova('Quale montatore: con `ctx` le telefonate hanno la forma corta, senza (pag
 
 // Il motore vero (C.chat) con un finto foglio: i fumetti si leggono, i bottoni si toccano
 function foglioFinto() {
-  const el = { fumetti: [], box: null, isConnected: true };
+  const el = { fumetti: [], matite: [], bolle: [], box: null, isConnected: true };
+  el.bolla = nodo => nodo.bolla || (nodo.bolla = (el.bolle.push({ insertAdjacentHTML(_, h) { el.matite.push(h); this.lastElementChild = { onclick: null }; this.matita = this.lastElementChild; } }), el.bolle[el.bolle.length - 1]));
   el.insertAdjacentHTML = (_, html) => {
-    const nodo = { remove() { if (el.box === nodo) el.box = null; }, html, querySelector: () => null };
+    const nodo = { remove() { if (el.box === nodo) el.box = null; }, html,
+      querySelector: sel => (sel === '.cch-bolla' && html.includes('cch-bolla') && !html.includes('cch-mio') ? el.bolla(nodo) : null) };
     if (html.includes('cch-risposte')) {
       nodo.bottoni = [...html.matchAll(/<button type="button"([^>]*)>([^<]*)<\/button>/g)].map(m => ({ attr: m[1], testo: m[2].replace(/&#39;|&amp;/g, x => (x === '&amp;' ? '&' : "'")) }));
       el.box = nodo;
@@ -338,7 +340,7 @@ prova('Tentativi a vuoto di fila: al 2° «Telefono spento» o al 3° «No Rispo
 prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (Messaggio e Di persona → Nuovo appuntamento, «Chiedo…» → cosa da fare, «Lo metto da parte» → Quando risentirlo?)', async () => {
   const vm = require('node:vm'), fs = require('node:fs');
   const chiamate = [];
-  const ctx = { MB21Coach: C, MB21Agenda: { spostaGiorno: (g, n) => `${g}+${n}` }, MB21Coda: { oggiRoma: () => '2026-09-30' }, ST: { utente: { id: 'io' } },
+  const ctx = { document: { addEventListener() {} }, eAdmin: () => false, MB21Coach: C, MB21Agenda: { spostaGiorno: (g, n) => `${g}+${n}` }, MB21Coda: { oggiRoma: () => '2026-09-30' }, ST: { utente: { id: 'io' } },
     esc: x => x, ic: () => '', console,
     mostraToast: t => chiamate.push(['toast', t]),
     nuovoAppuntamento: async o => { chiamate.push(['appuntamento', o.titolo, o.modalita, o.tipo, o.giorno, o.contatto.id, o.userId]); return { id: 'n' }; },
@@ -408,7 +410,7 @@ prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e Lis
 prova('Prima telefonata: la riga di preparazione solo per chi non è mai stato chiamato, mai insieme a «Ti eri detto…», mai un ordine', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const righe = { riflessione: [], esiti: [{ contatto_id: 'vecchio' }] };
-  const ctx = { MB21Coach: C, ST: {}, esc: x => x, ic: () => '', console, mostraToast() {},
+  const ctx = { document: { addEventListener() {} }, eAdmin: () => false, MB21Coach: C, ST: {}, esc: x => x, ic: () => '', console, mostraToast() {},
     supa: { from: (t) => { const q = { _s: null, select(c) { q._s = c; return q; }, eq() { return q; }, in() { return q; }, order() { return q; }, limit() { return q; },
       maybeSingle() { q._m = true; return q; }, not() { return q; },
       then(res) { if (t === 'coach_batterie') return res({ data: { batteria: { prima_telefonata: { c: 'Il manuale consiglia due date pronte.', fonte: 'Manuale di Avvio, pagine 8-11' } } }, error: null });
@@ -424,6 +426,42 @@ prova('Prima telefonata: la riga di preparazione solo per chi non è mai stato c
   vm.runInContext("RICORDI.nuovo = { frase: 'x', obiezioni: [] }", ctx);
   assert.equal(ctx.preparaChiamataHtml('nuovo'), '');                                   // con «Ti eri detto…» non si somma
   assert.ok(!/\b(Prepara|Chiama|Scegli)\b/.test(ctx.preparaChiamataHtml('nuovo') + 'Il manuale consiglia'));
+});
+
+prova('Correggere dal fumetto (solo Admin): un ✎ in ogni frase del coach, mai nelle tue risposte; il foglio salva la frase, la chat, il motivo e cosa cambiare in coach_correzioni', async () => {
+  const foglio = foglioFinto(), segnate = [];
+  const ch = C.chat(foglio, [{ c: 'Prima frase del coach.' }, { chiedi: [['Sì', [{ c: 'Seconda frase.' }]]] }], { veloce: true, correggi: (frase, b) => segnate.push([frase, b]) });
+  await foglio.tocca('Sì'); await ch.fine;
+  assert.equal(foglio.matite.length, 2);                                                            // le due frasi del coach; la tua risposta «Sì» non ha il ✎
+  foglio.bolle[1].matita.onclick();
+  assert.equal(segnate.length, 1); assert.equal(segnate[0][0], 'Seconda frase.');                   // il tocco passa la frase com'è scritta
+  // senza `correggi` (un partner) nessun ✎
+  const f2 = foglioFinto(); const c2 = C.chat(f2, [{ c: 'Frase.' }], { veloce: true }); await c2.fine;
+  assert.equal(f2.matite.length, 0);
+});
+
+prova('Il foglio «Correggi questa frase»: motivo o testo, poi coach_correzioni; senza niente il bottone è spento', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const righe = [], toast = [];
+  const stubs = {}, motivi = [{ dataset: { m: 'non_chiara' }, classList: { toggle() {} } }, { dataset: { m: 'lunga' }, classList: { toggle() {} } }];
+  const el = sel => stubs[sel] || (stubs[sel] = { disabled: false, value: '', textContent: '' });
+  let rimosso = false;
+  const velo = { set innerHTML(h) { this.h = h; }, querySelector: el, querySelectorAll: sel => (sel === '[data-m]' ? motivi : []), remove() { rimosso = true; } };
+  const ctx = { MB21Coach: C, ST: { utente: { id: 'ignazio' } }, esc: x => x, ic: () => '', console, mostraToast: t => toast.push(t),
+    document: { createElement: () => velo, body: { appendChild() {} }, addEventListener() {} },
+    supa: { from: t => ({ insert: r => { righe.push([t, r]); return { error: null }; } }) }, dbq: (_, p) => Promise.resolve(p), eAdmin: () => true };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  const bottone = { disabled: false, textContent: '✎' };
+  ctx.foglioCorreggiCoach({ situazione: 'telefonata', esito: 'PM Fissato', categoria: 'Prospect', frase: 'Ottimo, Ignazio!' }, bottone);
+  motivi[0].onclick(); assert.equal(el('#cch-corr-invia').disabled, false);                          // un motivo: acceso
+  motivi[0].onclick(); assert.equal(el('#cch-corr-invia').disabled, true);                           // tolto: niente motivo né testo, spento
+  motivi[1].onclick();                                                                              // «È troppo lunga»
+  el('textarea').value = ' Più corta, per favore '; el('textarea').oninput();
+  await el('#cch-corr-invia').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(righe)), [['coach_correzioni', { user_id: 'ignazio', situazione: 'telefonata', esito: 'PM Fissato', categoria: 'Prospect', frase: 'Ottimo, Ignazio!', motivo: 'lunga', testo: 'Più corta, per favore', visto: { dove: 'chat' } }]]);
+  assert.equal(rimosso, true); assert.equal(bottone.disabled, true); assert.equal(bottone.textContent, '✓');
+  assert.deepEqual(toast, ['Frase segnata per la correzione.']);
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

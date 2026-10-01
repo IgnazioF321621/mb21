@@ -80,7 +80,7 @@ async function chiediCoach(e, esito, situazione) {
   const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
   if (passi && !COACH.carte) carteCoach();
   if (!passi) return undefined;
-  return recitaCoach(e, esito, passi);
+  return recitaCoach(e, esito, passi, { situazione });
 }
 // Il foglio della chat: recita `passi` e salva le risposte. `opz.daSola`: a chat finita si chiude da sé (il passo dopo si apre subito).
 function recitaCoach(e, esito, passi, opz = {}) {
@@ -97,7 +97,8 @@ function recitaCoach(e, esito, passi, opz = {}) {
     document.body.appendChild(velo);
     const foglio = velo.querySelector('.foglio');
     const { stato, fine } = MB21Coach.chat(velo.querySelector('.cch-corpo'), passi, {
-      icona: ic, fonti: 'consigliabili', scorri: () => foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' }) });
+      icona: ic, fonti: 'consigliabili',
+      correggi: eAdmin() ? (frase, bottone) => foglioCorreggiCoach({ situazione: opz.situazione || 'coach', esito, categoria: (e.contatti && e.contatti.categoria) || e.categoria, frase }, bottone) : undefined, scorri: () => foglio.scrollTo({ top: foglio.scrollHeight, behavior: 'smooth' }) });
     // salva: la riflessione scritta · null se non c'è niente da salvare · false se non è riuscito
     const salva = async () => {
       const riflessione = MB21Coach.riflessioneDa(stato.risposte);
@@ -143,7 +144,7 @@ async function tentativiAVuoto(e, esito) {
   const C = MB21Coach.CANALI;
   const r = await recitaCoach(e, esito, [{ c: testo }, { salva: 'canale', chiedi: [
     [C[0], [{ c: 'Bene: un messaggio, scegli il giorno.' }]], [C[1], [{ c: 'Bene: di persona, scegli il giorno.' }]],
-    [C[2], [{ c: 'Bene: ti lascio una cosa da fare per domani.' }]], [C[3], [{ c: 'Bene: lo risenti più avanti.' }]]] }], { daSola: true });
+    [C[2], [{ c: 'Bene: ti lascio una cosa da fare per domani.' }]], [C[3], [{ c: 'Bene: lo risenti più avanti.' }]]] }], { daSola: true, situazione: 'tentativi_a_vuoto' });
   const canale = r && r.find(x => x.chiave === 'canale');
   if (!canale) return r || null;
   const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
@@ -195,5 +196,49 @@ function ricordoHtml(contattoId, nome) {
 function preparaChiamataHtml(contattoId) {
   const prep = COACH.batterie.preparazione_incontro, r = prep && prep.prima_telefonata;
   if (!r || PRIME_VOLTE[contattoId] !== true || RICORDI[contattoId]) return '';
-  return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}<small style="margin:4px 0 0">${esc(r.fonte)}</small></div></div>`;
+  const corr = eAdmin() ? `<button type="button" class="cch-corr" data-correggi-frase="${esc(r.c)}" data-situazione="prima_telefonata" title="Correggi questa frase" aria-label="Correggi questa frase">✎</button>` : '';
+  return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}${corr}<small style="margin:4px 0 0">${esc(r.fonte)}</small></div></div>`;
 }
+
+// Correggere una frase del coach dal suo fumetto (cantiere 48, Ignazio 01/10: «come già sto facendo nel training, in modo da correggere le frasi
+// che poi tu vedrai e sistemerai nell'app»). Solo per l'Admin: un ✎ dentro il fumetto apre un foglio con il motivo a un tocco e, se vuoi, come
+// la scriveresti; la frase com'era e dove (chat, esito, categoria) va in coach_correzioni; Claude corregge i messaggi nell'archivio e la segna risolta.
+// Lo stesso foglio vale per la riga prima della prima telefonata (`data-correggi-frase`).
+const COACH_MOTIVI = [['non_chiara', 'Non si capisce'], ['sbagliata', 'Non è giusta'], ['lunga', 'È troppo lunga'], ['altro', 'Altro']];
+function foglioCorreggiCoach(visto, bottone) {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio trn-corr"><h3>Correggi questa frase</h3>
+    <p>«${esc(visto.frase)}»</p>
+    <div class="trn-corr-motivi">${COACH_MOTIVI.map(([k, t]) => `<button data-m="${k}">${esc(t)}</button>`).join('')}</div>
+    <div class="campo"><textarea rows="3" maxlength="1000" placeholder="Come la scriveresti (se vuoi)"></textarea></div>
+    <button class="primario" id="cch-corr-invia" disabled>Invia</button>
+    <button class="link" id="cch-corr-no">Annulla</button>
+    <small style="color:var(--testo-soft)">⚠️ Per ora lo vedi solo tu</small></div>`;
+  document.body.appendChild(velo);
+  let motivo = null;
+  const invia = velo.querySelector('#cch-corr-invia'), testo = velo.querySelector('textarea');
+  const pronto = () => { invia.disabled = !motivo && !testo.value.trim(); };
+  velo.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    motivo = motivo === b.dataset.m ? null : b.dataset.m;
+    velo.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('scelto', x.dataset.m === motivo));
+    pronto();
+  });
+  testo.oninput = pronto;
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#cch-corr-no').onclick = chiudi;
+  invia.onclick = async () => {
+    invia.disabled = true;
+    const r = await dbq('coach: correzione', supa.from('coach_correzioni').insert({ user_id: ST.utente.id, situazione: visto.situazione || 'coach',
+      esito: visto.esito || null, categoria: visto.categoria || null, frase: String(visto.frase).slice(0, 1000), motivo, testo: testo.value.trim() || null, visto: { dove: 'chat' } }));
+    if (r.error) { pronto(); return mostraToast('Correzione non salvata: riprova.'); }
+    chiudi();
+    if (bottone) { bottone.disabled = true; bottone.textContent = '✓'; }
+    mostraToast('Frase segnata per la correzione.');
+  };
+}
+document.addEventListener('click', ev => {   // il ✎ della riga di preparazione (e di ogni altra frase del coach fuori dalla chat)
+  const b = ev.target.closest && ev.target.closest('[data-correggi-frase]');
+  if (b && !b.disabled) foglioCorreggiCoach({ situazione: b.dataset.situazione || 'coach', frase: b.dataset.correggiFrase }, b);
+});

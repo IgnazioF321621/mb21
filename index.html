@@ -479,6 +479,9 @@
   .cch-bolla { background: var(--superficie); border-radius: 18px 18px 18px 4px; padding: 10px 13px; font-size: 16px; line-height: 1.42; box-shadow: var(--ombra-card); max-width: 86%; overflow-wrap: anywhere; }
   .cch-mio { flex-direction: row-reverse; }
   .cch-mio .cch-bolla { background: var(--tipo); color: #fff; border-radius: 18px 18px 4px 18px; }
+  /* ✎ dentro il fumetto del coach: solo per l'Admin, per segnare la frase da correggere (coach_correzioni) */
+  .cch-corr { border: 0; background: none; padding: 0 0 0 8px; margin: 0; font-size: 14px; line-height: 1; color: var(--testo-soft); opacity: .65; cursor: pointer; vertical-align: baseline; }
+  .cch-corr:disabled { color: var(--ok); opacity: 1; }
   .cch-fonte { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--verde); }
   .cch-fonte.no { color: var(--testo-tenue); font-weight: 500; font-style: italic; }
   .cch-puntini .cch-bolla i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--testo-tenue); margin: 0 2px; animation: cch-salta 1s infinite; }
