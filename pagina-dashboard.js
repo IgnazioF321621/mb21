@@ -1182,16 +1182,16 @@ function apriObiettivi() {
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px;padding-top:12px">
     <p style="margin:0 0 8px">Come vuoi partire?</p><div class="chips ob-modi">
-      ${prima ? `<button data-modo="uguale">Obiettivi di ${esc(prima)}</button>` : ''}
-      ${ris ? `<button data-modo="risultati">Risultati di ${esc(nomeRis)}</button>` : ''}
+      <button data-modo="uguale"${prima ? '' : ' disabled'}>Obiettivi di ${esc(prima || nomeRis)}</button>
+      <button data-modo="risultati"${ris ? '' : ' disabled'}>Risultati di ${esc(nomeRis)}</button>
       <button data-modo="scala">Scala dei bonus</button>
       <button data-modo="vuoti">Da zero</button></div>
       <div id="ob-sistema" hidden>
-        <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}">${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
+        <div class="chips ob-livelli"><span>Bonus</span>${MB21Check.GRADINI_BONUS.map(g => `<button data-bonus="${g}"${NOMI_GRADINI[g] ? ' class="traguardo"' : ''}>${g}%${NOMI_GRADINI[g] ? `<small>${NOMI_GRADINI[g]}</small>` : ''}</button>`).join('')}</div>
       </div>
       <div class="ob-crescita">
         <div class="ob-crescita-testa">Aumento: <b id="ob-perc">scegli</b></div>
-        <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="${D.CRESCITE.indexOf(10)}">
+        <input type="range" id="ob-barra" min="0" max="${D.CRESCITE.length - 1}" step="1" value="0">
         <div class="ob-tacche">${D.CRESCITE.map(c => `<span>${c}%</span>`).join('')}</div>
         <div class="ob-ambizioso" id="ob-ambizioso" hidden>${ic('crescita')} Obiettivo ambizioso: parlane con il tuo upline</div>
       </div></div>
@@ -1238,14 +1238,14 @@ function apriObiettivi() {
   });
   barra.oninput = () => {
     const p = D.CRESCITE[Number(barra.value)];
-    perc.textContent = `+${p}%`;
+    perc.textContent = p ? `+${p}%` : '0%';   // 0%: i numeri della scelta, com'è
     ambizioso.hidden = p <= D.SOGLIA_AMBIZIOSO;
     if (base === null || base === 'vuoti') { base = prima ? 'uguale' : ris ? 'risultati' : 'scala'; }
     sceltaModo(velo.querySelector(`.ob-modi button[data-modo="${base}"]`));
     mostraScala();
-    scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' ? '' : D.aumenta(Number(v), p)])));
+    scrivi(Object.fromEntries(Object.entries(valoriBase()).map(([k, v]) => [k, v === '' || v == null ? '' : D.aumenta(Number(v), p)])));
   };
-  barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (10%) vale anche senza spostarla
+  barra.onclick = barra.oninput;   // un tocco sulla posizione di partenza (0%) vale anche senza spostarla: tiene la scelta com'è
   velo.querySelector('#ob-si').onclick = async () => {
     const letti = {};
     for (const [, , campi] of D.CAMPI_OBIETTIVI) for (const [k] of campi) letti[k] = velo.querySelector('#ob-' + k).value;
