@@ -398,7 +398,7 @@ prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi
 prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vitali; 9% · 15% · 21% coincidono con la tabella del Manuale; partenza dal bonus del mese prima', () => {
   assert.deepEqual(C.GRADINI_BONUS, [3, 6, 9, 12, 15, 18, 21]);
   assert.deepEqual(C.GRADINI_BONUS.map(g => C.SCALA_BONUS[g].vpg), [200, 600, 1200, 2400, 4000, 7000, 10000]);   // la progressione del bonus (Ignazio 01/10)
-  const chiavi = ['vpp', 'vpv', 'vpg', 'sponsor_gruppo', 'prime_linee', 'linee_bonus', 'planner', 'totale_gruppo', 'cep', 'bbs', 'wes'];
+  const chiavi = ['vpp', 'vpv', 'vpg', 'sponsor_personali', 'sponsor_gruppo', 'prime_linee', 'linee_bonus', 'planner', 'totale_gruppo', 'cep', 'bbs', 'wes'];
   for (const g of C.GRADINI_BONUS) assert.deepEqual(Object.keys(C.SCALA_BONUS[g]).sort(), chiavi.slice().sort(), 'colonne del ' + g + '%');
   // le righe ufficiali: 9% Leaders Club, 15% Executive, 21% Argento (stessa tabella del Manuale usata dalla pagina Check)
   for (const L of C.LIVELLI.filter(x => x.sv.bonus <= 21 && x.chiave !== 'plat')) {
@@ -407,7 +407,10 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
       [v.iscritti, v.primeLinee, v.lineeBonus, v.planner, v.totale, v.cep, v.bbs, v.wes], 'riga ' + L.titolo);
   }
   // salendo non si scende mai (ogni colonna cresce o resta)
-  for (const k of chiavi) C.GRADINI_BONUS.reduce((prec, g) => { assert.ok(C.SCALA_BONUS[g][k] >= prec, k + ' scende al ' + g + '%'); return C.SCALA_BONUS[g][k]; }, 0);
+  for (const k of chiavi.filter(x => x !== 'sponsor_personali')) C.GRADINI_BONUS.reduce((prec, g) => { assert.ok(C.SCALA_BONUS[g][k] >= prec, k + ' scende al ' + g + '%'); return C.SCALA_BONUS[g][k]; }, 0);
+  // 3% (Ignazio 01/10): 1 nuovo iscritto = 1 sponsor personale; nessuno riceve bonus: niente linee riceventi né 15 Planner
+  const r3 = C.SCALA_BONUS[3];
+  assert.deepEqual([r3.sponsor_personali, r3.sponsor_gruppo, r3.linee_bonus, r3.planner, r3.prime_linee, r3.totale_gruppo], [1, 1, 0, 0, 1, 3]);
   assert.equal(C.SCALA_BONUS[3].vpp, C.SCALA_BONUS[3].vpv + 100);                                                  // 100 consumo personale + 50 clienti
   assert.equal(C.obiettiviDelBonus(9).vpg, 1200); assert.equal(C.obiettiviDelBonus(10), null);
   assert.deepEqual([0, 2, 3, 5, 6, 9, 11, 12, 15, 17, 18, 21, 25].map(C.gradinoDalBonus), [3, 3, 3, 3, 6, 9, 9, 12, 15, 15, 18, 21, 21]);
