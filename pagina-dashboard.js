@@ -1184,6 +1184,13 @@ function apriObiettivi() {
   const nomeRis = D.nomeMese(meseRis).toLowerCase();
   const risValori = ris ? Object.fromEntries(Object.entries(ris).map(([k, v]) => [k, v > 0 ? v : ''])) : null;   // un obiettivo a 0 non serve: campo vuoto
   const mesePrimo = Number(meseRis.slice(0, 4) + meseRis.slice(5, 7));
+  // Gli obiettivi già salvati per questo mese (Ignazio 01/10: riaprendo il foglio il 12% scelto non si vedeva e restava il consiglio del 9%): se ci sono, il gradino
+  // a cui corrispondono si ritrova acceso e il consiglio lascia il posto a «Hai il bonus 12%»
+  const attuale = DS.obiettivi.find(o => o.mese === mese) || null;
+  const salvato = D.haObiettivi(attuale);
+  const gradinoSalvato = salvato ? MB21Check.gradinoDaVpg(attuale.vpg) : null;
+  const meseOra = Number(mese.slice(0, 4) + mese.slice(5, 7));
+  let vpgOra = null;   // il VPG del mese in corso, dal file Amway (si legge sotto, quando c'è il codice)
   // «Scala dei bonus»: il gradino di partenza è quello del mese prima (il Bonus Attività di quel mese, `volumi_mese`), si cambia con un tocco
   const NOMI_GRADINI = { 9: 'Leaders Club', 15: 'Executive', 21: 'Argento' };   // i livelli del Manuale che coincidono con un gradino
   const pidVisto = visto().partner_id;
@@ -1193,6 +1200,11 @@ function apriObiettivi() {
     dbq('bonus del mese prima', supa.from('volumi_mese').select('bonus').eq('partner_id', pidVisto).eq('mese', Number(meseRis.slice(0, 4) + meseRis.slice(5, 7))).maybeSingle())
       .then(r => { gradinoPartenza = MB21Check.gradinoDalBonus(r && r.data ? r.data.bonus : null); bonusPrima = r && r.data && r.data.bonus != null ? Number(r.data.bonus) : null; consiglia(); }, () => {});
   }
+  if (pidVisto) {
+    dbq('VPG di adesso', supa.from('volumi_mese').select('vpg').eq('partner_id', pidVisto).eq('mese', meseOra).maybeSingle())
+      .then(r => { vpgOra = r && r.data && r.data.vpg != null ? Number(r.data.vpg) : null; riepilogoAgg(); }, () => {});
+  }
+  let riepilogoAgg = () => {};   // si riempie quando il foglio è disegnato
   // «Risultati di <mese>»: oltre al Check, quello che dice il file Amway (entrati nel mese, prime linee, linee riceventi Bonus, totale gruppo, 15 Planner);
   // si legge subito all'apertura, così al tocco è già pronto (D.risultatiAmway)
   let risAmwayDati = null;
@@ -1327,12 +1339,16 @@ function apriObiettivi() {
   const testoNum = id => { const x = numero(id); return x > 0 ? f(x) : ''; };
   const riepilogo = () => {
     const vpg = testoNum('vpg'), vpp = testoNum('vpp'), nuovi = testoNum('sponsor_gruppo'), pers = testoNum('sponsor_personali');
+    // quanti VPG mancano rispetto a quello atteso (Ignazio 01/10): il VPG di adesso dal file Amway contro l'obiettivo scritto
+    const atteso = numero('vpg'), ora = vpgOra != null && atteso > 0 ? (vpgOra >= atteso ? 'Il VPG atteso è già raggiunto' : `Ora sei a ${f(Math.round(vpgOra * 100) / 100)} VPG: ne mancano ${f(Math.round((atteso - vpgOra) * 100) / 100)}`) : '';
     const el = velo.querySelector('#ob-riepilogo');
     el.innerHTML = vpg || nuovi
       ? `<div><b>${vpg ? `VPG ${esc(vpg)}` : 'VPG da scegliere'}</b>${vpp ? ` <span>· di cui tuoi ${esc(vpp)} (consumo ${esc(testoNum('consumo') || '0')} + clienti ${esc(testoNum('vpv') || '0')})</span>` : ''}</div>`
+        + (ora ? `<div class="ob-riepilogo-ora">${esc(ora)}</div>` : '')
         + `<div><b>${nuovi ? `Nuovi iscritti ${esc(nuovi)}` : 'Nuovi iscritti da scegliere'}</b>${pers ? ` <span>· di cui personali ${esc(pers)}</span>` : ''}</div>`
       : '<span class="ob-riepilogo-vuoto">Qui in cima compare il riassunto di quello che scegli.</span>';
   };
+  riepilogoAgg = riepilogo;   // quando arriva la lettura del VPG di adesso, il riepilogo si aggiorna
   const sunto = id => {
     const n = k => testoNum(k), unisci = (...p) => p.filter(Boolean).join(' · ');
     return { volume: unisci(n('vpg') && `VPG ${n('vpg')}`, n('vpp') && `VPP ${n('vpp')}`),
@@ -1384,15 +1400,17 @@ function apriObiettivi() {
   const azzeraBarra = () => { perc.textContent = '0%'; barra.value = 0; ambizioso.hidden = true; };   // scegliendo un'altra base l'incremento riparte da 0%
   // I bonus stanno sempre in vista (Ignazio 01/10: «non è intuibile cliccare su Scala dei bonus»): nessuna scelta già fatta, un consiglio da dove partire
   // (il bonus del mese prima, o il 3% per chi comincia) e il gradino toccato diventa scuro. Passando a un'altra base si spegne.
-  const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', base === 'scala' && Number(x.dataset.bonus) === gradino));
+  const sceltaGradino = () => righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('scelto', Number(x.dataset.bonus) === (base === 'scala' ? gradino : base === null ? gradinoSalvato : null)));   // senza una scelta nuova, si ritrova il gradino già salvato
   const mostraScala = () => { if (base === 'scala') gradino = gradino || gradinoPartenza; sceltaGradino(); };
   consiglia = () => {
-    righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('consigliato', Number(x.dataset.bonus) === gradinoPartenza));
-    velo.querySelector('#ob-consiglio').textContent = bonusPrima != null && bonusPrima > 0
+    righeLivelli.querySelectorAll('button').forEach(x => x.classList.toggle('consigliato', !salvato && Number(x.dataset.bonus) === gradinoPartenza));
+    velo.querySelector('#ob-consiglio').textContent = salvato
+      ? (gradinoSalvato ? `Hai il bonus ${gradinoSalvato}%: sono i tuoi obiettivi di ${D.nomeMese(mese).toLowerCase()}.` : `Questi sono i tuoi obiettivi di ${D.nomeMese(mese).toLowerCase()}.`)
+      : bonusPrima != null && bonusPrima > 0
       ? `Ti consiglio di partire dal ${gradinoPartenza}%: il tuo bonus di ${nomeRis} era ${f(bonusPrima)}%.`
       : `Ti consiglio di partire dal ${gradinoPartenza}%, il primo gradino.`;
   };
-  consiglia();
+  consiglia(); sceltaGradino();
   velo.querySelectorAll('[data-modo]').forEach(b => {
     b.onclick = async () => {
       base = b.dataset.modo; sceltaModo(b); azzeraBarra(); mostraScala();

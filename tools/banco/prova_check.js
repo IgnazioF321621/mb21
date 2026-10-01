@@ -418,6 +418,9 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   assert.equal(C.obiettiviDelBonus(9).vpg, 1200); assert.equal(C.obiettiviDelBonus(10), null);
   assert.deepEqual([0, 2, 3, 5, 6, 9, 11, 12, 15, 17, 18, 21, 25].map(C.gradinoDalBonus), [3, 3, 3, 3, 6, 9, 9, 12, 15, 15, 18, 21, 21]);
   assert.equal(C.gradinoDalBonus(null), 3);
+  // il VPG scritto riporta al suo gradino (anche con l'incremento fino al 50%), mai a uno inventato
+  assert.deepEqual([200, 250, 300, 600, 1200, 1800, 2400, 2640, 3600, 4000, 6000, 7000, 10000, 15000].map(C.gradinoDaVpg), [3, 3, 3, 6, 9, 9, 12, 12, 12, 15, 15, 18, 21, 21]);
+  assert.deepEqual([0, 100, 1900, 2399, 3700, 6500, 16000, '', null, 'x'].map(C.gradinoDaVpg), [null, null, null, null, null, null, null, null, null, null]);
 });
 
 prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce e pagine → Training, squadra → Modulo Core', () => {
