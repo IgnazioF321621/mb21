@@ -6,14 +6,21 @@
   // Le 4 schede, ordine e testi di Glide. `da`: da dove viene il numero · `obiettivo`: colonna di obiettivi_mese
   const SCHEDE = [
     { chiave: 'volume', etichetta: 'Volume', pallino: '🔵', colore: 'var(--gr-volume)', riquadri: [
+      { titolo: 'VPG', da: 'amway:vpg_amway', obiettivo: 'vpg', decimali: 2 },
       { titolo: 'VPP', da: 'amway:vpp_amway', obiettivo: 'vpp', decimali: 2 },
       { titolo: 'VP Clienti', da: 'check:vp_clienti', obiettivo: 'vpv', decimali: 2 },
-      { titolo: 'VPG', da: 'amway:vpg_amway', obiettivo: 'vpg', decimali: 2 },
     ] },
     { chiave: 'azione', etichetta: 'Azione', pallino: '🟠', colore: 'var(--gr-azione)', riquadri: [
       { titolo: 'Contatti', da: 'check:contatti', obiettivo: 'contatti' },
       { titolo: 'Piani Marketing', da: 'check:pm', obiettivo: 'pm' },
       { titolo: 'Nuovi Iscritti', da: 'check:sponsor_gruppo', obiettivo: 'sponsor_gruppo' },
+    ] },
+    // La Squadra (01/10): le quattro colonne del Manuale che si leggono dal file Amway del mese (`risultatiAmway`); c'è solo se si conosce il codice Amway di chi guarda
+    { chiave: 'squadra', etichetta: 'Squadra', pallino: '⚪', colore: 'var(--testo-tenue)', senzaGiorno: true, soloConSquadra: true, riquadri: [
+      { titolo: 'Prime linee', da: 'sq:prime_linee', obiettivo: 'prime_linee' },
+      { titolo: 'Linee riceventi Bonus', da: 'sq:linee_bonus', obiettivo: 'linee_bonus' },
+      { titolo: '15 Planner', da: 'sq:planner', obiettivo: 'planner' },
+      { titolo: 'Totale gruppo', da: 'sq:totale_gruppo', obiettivo: 'totale_gruppo' },
     ] },
     { chiave: 'segni', etichetta: 'Segni Vitali N21', pallino: '🟢', colore: 'var(--gr-segni)', senzaGiorno: true, riquadri: [
       { titolo: 'BBS', da: 'tot:bbs', obiettivo: 'bbs' },
@@ -188,11 +195,14 @@
 
   // Un riquadro: numero, %, quanto manca, quanto serve al giorno; oltre l'obiettivo complimento + nuovo traguardo
   function riquadro(def, numero, obiettivo, giorni, indice) {
-    const r = { titolo: def.titolo, numero: formato(numero, def.decimali), righe: [], raggiunto: false };
+    const r = { titolo: def.titolo, numero: formato(numero, def.decimali), righe: [], raggiunto: false, senzaGiorno: !!def.senzaGiorno };
     if (!n(obiettivo)) { r.righe = ['Obiettivo da impostare']; r.senzaObiettivo = true; return r; }
     const perc = numero / obiettivo * 100;
     const manca = obiettivo - numero;
     r.percentuale = Math.min(perc, 100);
+    r.obiettivoTxt = formatoLibero(obiettivo);   // per la vista a righe («900 su 2.400, ne mancano 1.500, 89 al giorno»)
+    if (manca > 0) { r.mancaTxt = formatoLibero(Math.round(manca * 100) / 100); r.alGiorno = manca / giorni; r.manca = manca; }
+    r.prossimo = formatoLibero(Math.ceil(Number((obiettivo * AUMENTO).toFixed(6))));
     r.righe.push(formato(perc, 1) + '%');
     if (manca > 0) {
       r.righe.push(formato(manca, def.decimali) + ' per obiettivo');
@@ -205,17 +215,43 @@
     return r;
   }
 
+  // «Quanto al giorno» (Ignazio 01/10: conta quello che si fa ogni giorno, non la percentuale): da 1 in su «89 al giorno» (arrotondato in su, per arrivarci);
+  // sotto 1 «1 ogni 3 giorni» (arrotondato in giù, per arrivarci). `a` = quanto serve al giorno.
+  function alGiornoTesto(a) {
+    if (!(a > 0)) return '';
+    if (a >= 1) return `${formatoLibero(Math.ceil(a - 1e-9))} al giorno`;
+    const ogni = Math.floor(1 / a + 1e-9);
+    return ogni <= 1 ? '1 al giorno' : `1 ogni ${ogni} giorni`;
+  }
+  // Una riga della vista «Il mio mese»: il numero grande (quanto al giorno, o «ne mancano N» dove non si fa ogni giorno), a sinistra «900 su 2.400»,
+  // a destra quanto manca. Obiettivo non scritto: solo il numero e «Obiettivo da impostare». Raggiunto: «Raggiunto» e il prossimo traguardo.
+  function sintesiRiquadro(r) {
+    if (r.senzaObiettivo) return { grande: '', sx: r.numero, dx: 'Obiettivo da impostare', stato: 'senza' };
+    if (r.raggiunto) return { grande: 'Raggiunto', sx: `${r.numero} su ${r.obiettivoTxt}`, dx: `Prossimo traguardo: ${r.prossimo}`, stato: 'ok' };
+    const ne = `ne ${r.manca === 1 ? 'manca' : 'mancano'} ${r.mancaTxt}`;
+    if (r.senzaGiorno) return { grande: ne, sx: `${r.numero} su ${r.obiettivoTxt}`, dx: '', stato: 'manca' };
+    return { grande: alGiornoTesto(r.alGiorno), sx: `${r.numero} su ${r.obiettivoTxt}`, dx: ne, stato: 'manca' };
+  }
+  // La riga della sezione chiusa: il suo primo numero («VPG 89 al giorno», «Prime linee 3 su 8», «Contatti 4»)
+  function riassuntoScheda(scheda) {
+    const r = (scheda.riquadri || [])[0];
+    if (!r) return '';
+    if (r.senzaObiettivo) return `${r.titolo} ${r.numero}`;
+    if (r.raggiunto) return `${r.titolo} raggiunto`;
+    return `${r.titolo} ${r.senzaGiorno ? `${r.numero} su ${r.obiettivoTxt}` : alGiornoTesto(r.alGiorno)}`;
+  }
+
   // Tutto quello che serve alla Dashboard per il mese di `oggi`
-  function calcola({ checkMesi, obiettivi, oggi, scadenza, segniAl }) {
+  function calcola({ checkMesi, obiettivi, oggi, scadenza, segniAl, squadraAl }) {
     const mese = primoDelMese(oggi);
     const giorni = giorniRimasti(oggi);
     const c = checkMesi.find(x => x.mese === mese) || {};
     const o = obiettivi.find(x => x.mese === mese) || null;
     const tot = applicaPersone(totaliMesi(checkMesi, obiettivi, mese), mese, oggi, segniAl);
     let i = 0;
-    const schede = SCHEDE.map(s => ({ ...s, riquadri: s.riquadri.map(def => {
+    const schede = SCHEDE.filter(s => !s.soloConSquadra || squadraAl).map(s => ({ ...s, riquadri: s.riquadri.map(def => {
       const [fonte, campo] = def.da.split(':');
-      const numero = fonte === 'check' ? n(c[campo]) : fonte === 'amway' ? n(o && o[campo]) : n((tot[mese] || {})[campo]);
+      const numero = fonte === 'check' ? n(c[campo]) : fonte === 'amway' ? n(o && o[campo]) : fonte === 'sq' ? n(squadraAl && squadraAl[campo]) : n((tot[mese] || {})[campo]);
       return riquadro({ ...def, senzaGiorno: s.senzaGiorno }, numero, o && o[def.obiettivo], giorni, i++);
     }) }));
     const ultimo = checkMesi.reduce((m, x) => (x.ultimo_check && (!m || x.ultimo_check > m) ? x.ultimo_check : m), null);
@@ -456,7 +492,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, obiettiviDelTeam, senzaObiettivi, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, percorsoAzione, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
