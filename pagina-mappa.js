@@ -163,7 +163,36 @@ async function apriCompleta(id) {
     }
     MP.storico[id] = data;
   }
+  await leggiEfficacia();
   disegnaCompleta();
+}
+
+// «Efficacia» nella scheda del partner (Ignazio 01/10, solo Admin): il Check degli ultimi 6 mesi di tutti, letto una volta, per i rapporti di ognuno e la media
+async function leggiEfficacia() {
+  if (!eAdmin() || MP.efficacia) return;
+  const oggi = MB21Coda.oggiRoma(), mese = oggi.slice(0, 7) + '-01', da = MB21Dashboard.meseSpostato(mese, -5);
+  const [ck, ut] = await Promise.all([
+    dbq('check degli ultimi mesi', supa.from('check_mesi').select('user_id, mese, contatti, pm, sponsor_personali').gte('mese', da)),
+    dbq('utenti per l\'efficacia', supa.from('utenti').select('id, partner_id, auth_id')),
+  ]);
+  MP.efficacia = ck.error || ut.error ? { errore: true } : { mese, check: ck.data, utenti: ut.data };
+}
+function efficaciaHtml(id) {
+  const E = MP.efficacia;
+  if (!eAdmin() || !E) return '';
+  if (E.errore) return `<div class="sotto">Efficacia: non riesco a leggere il Check. Riprova più tardi.</div>`;
+  const D = MB21Dashboard, uno = x => (x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+  // l'utente di questo partner: quello che ha fatto l'accesso, se ce ne sono due con lo stesso codice
+  const utenti = E.utenti.filter(u => u.partner_id === id).sort((a, b) => (b.auth_id ? 1 : 0) - (a.auth_id ? 1 : 0));
+  const media = D.efficaciaDi(E.check, E.mese);
+  const mediaTxt = `Media di tutti: ${uno(media.contattiPerPm)} contatti per PM · ${uno(media.pmPerIscritto)} PM per iscritto`;
+  if (!utenti.length || !utenti[0].auth_id) return `<h4 class="mc-t">Efficacia · solo tu</h4><div class="riquadro"><div class="sotto" style="margin:0">Non ha ancora aperto l'app: nessun dato del Check.</div><div class="sotto">${esc(mediaTxt)}</div></div>`;
+  const r = D.efficaciaDi(E.check.filter(x => x.user_id === utenti[0].id), E.mese);
+  const nota = !r.pm ? 'Nessun PM negli ultimi 6 mesi.' : r.pm < 10 ? 'Ancora pochi PM: il numero non è affidabile.' : (r.iscritti < 3 ? 'Pochi iscritti: il rapporto PM per iscritto non è ancora affidabile.' : '');
+  return `<h4 class="mc-t">Efficacia · solo tu</h4><div class="mp-riquadro">
+    <div class="tre"><div><small>Contatti per PM</small><b>${uno(r.contattiPerPm)}</b></div><div><small>PM per iscritto</small><b>${uno(r.pmPerIscritto)}</b></div><div><small>PM fatti</small><b>${r.pm}</b></div></div>
+    <div class="sotto" style="margin-top:8px;color:rgba(255,255,255,.8)">Ultimi 6 mesi: ${r.contatti} contatti · ${r.pm} PM · ${r.iscritti} ${r.iscritti === 1 ? 'iscritto personale' : 'iscritti personali'}.${nota ? ' ' + esc(nota) : ''}</div>
+    <div class="sotto" style="color:rgba(255,255,255,.8)">${esc(mediaTxt)}</div></div>`;
 }
 
 function disegnaCompleta() {
@@ -192,6 +221,7 @@ function disegnaCompleta() {
         <div class="mp-barra"><i style="width:${fatta.toFixed(1)}%"></i></div>` : ''}
     </div>`;
 
+  html += efficaciaHtml(id);
   if (!st.righe.length) {
     html += `<div class="vuoto">Nessun mese caricato per questo partner.</div>`;
   } else {

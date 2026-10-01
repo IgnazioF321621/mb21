@@ -358,11 +358,21 @@
   // personali. Si parte dal valore di partenza e ci si sposta verso il rapporto vero del partner (Check e azioni degli ultimi 6 mesi) tanto più quanto lo
   // storico è abbondante: peso = PM fatti / 20 per i contatti per PM, iscritti personali / 5 per i PM per iscritto, al massimo 1. Senza dati resta il valore di partenza.
   const MESI_STORICO = 6, PM_PER_FIDARSI = 20, ISCRITTI_PER_FIDARSI = 5;
-  function rapportiDalloStorico(checkMesi, mese) {
+  // Le somme di contatti, PM e iscritti personali negli ultimi 6 mesi (fino a `mese`): le usano i rapporti del foglio e la vista «Efficacia»
+  function sommeStorico(checkMesi, mese) {
     const da = meseSpostato(mese, -(MESI_STORICO - 1));
     const m = (checkMesi || []).filter(x => x.mese >= da && x.mese <= mese);
     const somma = k => m.reduce((t, x) => t + n(x[k]), 0);
-    const c = somma('contatti'), pm = somma('pm'), isc = somma('sponsor_personali');
+    return { contatti: somma('contatti'), pm: somma('pm'), iscritti: somma('sponsor_personali') };
+  }
+  // «Efficacia» (Ignazio 01/10, per tarare il Training su quello che succede davvero): quanti contatti servono per un PM e quanti PM per un iscritto personale,
+  // veri, negli ultimi 6 mesi. Valgono per un partner o, con le righe di tutti, per la media del gruppo. Null dove manca il denominatore.
+  function efficaciaDi(checkMesi, mese) {
+    const { contatti, pm, iscritti } = sommeStorico(checkMesi, mese);
+    return { contatti, pm, iscritti, contattiPerPm: pm > 0 && contatti > 0 ? contatti / pm : null, pmPerIscritto: iscritti > 0 && pm > 0 ? pm / iscritti : null };
+  }
+  function rapportiDalloStorico(checkMesi, mese) {
+    const { contatti: c, pm, iscritti: isc } = sommeStorico(checkMesi, mese);
     const rapporto = (base, vero, dati, soglia) => { const peso = Math.min(1, dati / soglia); return { valore: base * (1 - peso) + vero * peso, peso, vero, dati }; };
     return {
       contattiPerPm: pm > 0 && c > 0 ? rapporto(CONTATTI_PER_PM, c / pm, pm, PM_PER_FIDARSI) : null,
@@ -538,7 +548,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
