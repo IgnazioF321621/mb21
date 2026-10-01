@@ -97,7 +97,7 @@ function disegnaMappa() {
   const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
   const conta = M.conta(cime);
   const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
-  const num = (v, d = 2) => (v == null ? '—' : Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
@@ -174,7 +174,7 @@ function disegnaCompleta() {
   const st = M.storico(mesi);
   const ultimo = mesi.length ? mesi[mesi.length - 1] : {};
   const s = M.STATI[M.stato(ultimo.vpp)];
-  const num = (v, d = 2) => (v == null ? '—' : Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
   const manca = Number(ultimo.al_livello_successivo) || 0;
   const bonus = Number(ultimo.bonus) || 0;
   const fatta = manca ? Math.max(0, Math.min(100, 100 * (Number(ultimo.vpg) || 0) / ((Number(ultimo.vpg) || 0) + manca))) : 100;
