@@ -28,9 +28,11 @@
 //     un avviso solo per cosa, giorno e ora), ognuno con i suoi minuti prima; parte da «N minuti prima» fino all'inizio
 //   - senza_esito: «Com'è andata?» N minuti dopo la fine (30 · 60 · 120, scelta di ognuno)
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
+//  02/10 (Ignazio: «gli avvisi sono veramente tanti»): meno avvisi. Il Buongiorno parte solo se oltre alle telefonate c'è altro (appuntamenti, riordini);
+//   il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera): Check, complimenti, domani, Training e obiettivi.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, avvisoObiettivi, invitoObiettivi, haObiettivi, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -183,7 +185,7 @@ Deno.serve(async (req) => {
     // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Hai fatto il Check?» con in fondo
     // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
     const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }, { data: saltati, error: e10 }] = await Promise.all([
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }, { data: saltati, error: e10 }, { data: allenati, error: e11 }, { data: carte, error: e12 }] = await Promise.all([
       db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
@@ -196,8 +198,11 @@ Deno.serve(async (req) => {
       db.from('obiettivi_mese').select('*').eq('mese', `${oggi.slice(0, 8)}01`),
       db.from('avvisi_mandati').select('chiave').like('chiave', `obiettivi-rifai:${oggi.slice(0, 7)}:%`),
       db.from('obiettivi_salto').select('user_id').eq('mese', `${oggi.slice(0, 8)}01`),   // 02/10 chi ha toccato «Non questo mese»
+      // 02/10 il Training nella sera: chi si è già allenato oggi (complimenti) e le carte di ognuno (da ripassare)
+      db.from('training_giorni').select('user_id').eq('giorno', oggi),
+      db.from('training_carte').select('user_id, prossima'),
     ]);
-    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7 || e8 || e9 || e10;
+    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7 || e8 || e9 || e10 || e11 || e12;
     if (err) return risposta({ errore: err.message }, 500);
     const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
     const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda, come il promemoria
@@ -214,60 +219,32 @@ Deno.serve(async (req) => {
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
       // il coach guarda la giornata scritta nell'app: se c'è qualcosa la prima riga sono i complimenti, se no niente di inventato
       const mieiConti = (conti ?? []).filter(x => x.user_id === id);
+      const mieCarte = (carte ?? []).filter(c => c.user_id === id);
+      const allenato = (allenati ?? []).some(x => x.user_id === id);
       const bravo = complimentiDelGiorno({
         contatti: mieiConti.reduce((n, x) => n + (x.contatti || 0), 0),
         fissati: mieiConti.filter(x => x.esito === 'PM Fissato' || x.esito === 'Appuntamento').length,
         pm: mieiConti.reduce((n, x) => n + (x.pm || 0), 0),
         vendite: new Set((vend ?? []).filter(x => x.user_id === id).map(x => x.contatto_id)).size,
+        training: allenato,
       });
-      let avviso: Avviso | null;
-      if (!giaFatto.has(id)) avviso = bravo
-        ? { titolo: '👏 Bel lavoro oggi!', testo: `${bravo[0].toUpperCase()}${bravo.slice(1)}. Hai scritto il tuo giorno? Bastano due minuti: tocca per aprire «Il mio giorno».` + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' }
-        : { titolo: '⚡ Hai scritto il tuo giorno?', testo: 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».' + (d ? ` Domani: ${d.titolo}, si comincia alle ${d.ora} (${d.primo}).` : ''), url: './?apri=check', tag: 'check_sera' };
-      else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `${bravo ? `Oggi ${bravo}, bel lavoro. ` : ''}Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
-      else avviso = null;   // Check fatto e domani niente: si tace
-      // gli obiettivi del mese: un avviso a parte, perché il tocco porta alla Dashboard e non al Check
+      // gli obiettivi del mese: una riga dentro lo stesso avviso (02/10: un avviso solo, niente avviso a parte)
       let ob = avvisoObiettivi(oggi, (obMese ?? []).find(x => x.user_id === id), (saltati ?? []).some(x => x.user_id === id));
       const chiaveRifai = `obiettivi-rifai:${oggi.slice(0, 7)}:${id}`;
       if (ob?.rifai && (giaRifatto ?? []).some(x => x.chiave === chiaveRifai)) ob = null;
-      if (corpo.prova) { esiti.push({ utente: id, check: avviso, obiettivi: ob ? { titolo: ob.titolo, testo: ob.testo } : null }); continue; }
-      if (avviso) esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
-      if (ob) {
-        esiti.push({ utente: id, obiettivi: true, ...(await spedisciA([id], { titolo: ob.titolo, testo: ob.testo, url: './', tag: 'obiettivi' })) });
-        if (ob.rifai) await db.from('avvisi_mandati').upsert({ chiave: chiaveRifai, user_id: id }, { onConflict: 'chiave', ignoreDuplicates: true });
-      }
+      const avviso = messaggioSera({
+        bravo, checkFatto: giaFatto.has(id), domani: d, ilGiornoDopo, obiettivi: ob,
+        training: allenato ? 'fatto' : mieCarte.length ? 'da_fare' : 'mai', daRipassare: mieCarte.filter(c => c.prossima && c.prossima <= oggi).length,
+      });
+      if (!avviso) continue;   // Check fatto, domani niente, niente da consigliare: si tace
+      if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
+      esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
+      if (ob?.rifai) await db.from('avvisi_mandati').upsert({ chiave: chiaveRifai, user_id: id }, { onConflict: 'chiave', ignoreDuplicates: true });
     }
     return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
   }
 
-  // L'avviso del Training (lista «Avvisi» di MB App, Ignazio 25/09): tutti i giorni all'ora scelta (8 · 13 · 18 · 21, già impostato 13),
-  // solo a chi oggi non si è ancora allenato (nessuna riga in training_giorni per oggi). Tre testi: mai usato → «Prova il Training»;
-  // carte da ripassare oggi (training_carte.prossima ≤ oggi) → «Oggi hai N carte da ripassare», tocco su Ripassa; se no → «Continua il tuo percorso».
-  if (tipo === 'training') {
-    if (![8, 13, 18, 21].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il Training si sceglie alle 8, 13, 18 o 21` });
-    const oggi = oggiAdesso;
-    const [{ data: attivi, error: e1 }, { data: allenati, error: e2 }, { data: carte, error: e3 }] = await Promise.all([
-      db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
-      db.from('training_giorni').select('user_id').eq('giorno', oggi),
-      db.from('training_carte').select('user_id, prossima'),
-    ]);
-    const err = e1 || e2 || e3;
-    if (err) return risposta({ errore: err.message }, 500);
-    const giaAllenati = new Set((allenati ?? []).map(x => x.user_id));
-    const esiti: Record<string, unknown>[] = [];
-    for (const { id } of attivi ?? []) {
-      if (giaAllenati.has(id) || (!corpo.forza && quando(id, 'training') !== oraAdesso)) continue;
-      const mie = (carte ?? []).filter(c => c.user_id === id), daRipassare = mie.filter(c => c.prossima && c.prossima <= oggi).length;
-      const avviso: Avviso = !mie.length
-        ? { titolo: '🏋️ Prova il Training', testo: '5 minuti per il primo percorso del livello Nuovo: Contattare. Tocca per iniziare.', url: './?apri=training', tag: 'training' }
-        : daRipassare
-          ? { titolo: '🏋️ 5 minuti di Training?', testo: `Oggi hai ${daRipassare} ${daRipassare === 1 ? 'carta' : 'carte'} da ripassare. Tocca per iniziare.`, url: './?apri=training&vista=ripassa', tag: 'training' }
-          : { titolo: '🏋️ 5 minuti di Training?', testo: 'Il tuo percorso continua, una carta alla volta. Tocca per riprendere.', url: './?apri=training', tag: 'training' };
-      if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
-      esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
-    }
-    return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
-  }
+  // Il Training non ha più un avviso a parte (02/10, Ignazio: «gli avvisi sono veramente tanti»): lo ricorda o lo festeggia l'avviso della sera (`check_sera`).
 
   // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
   if (tipo === 'mattino') {
@@ -308,10 +285,10 @@ Deno.serve(async (req) => {
       const miei = tutti.filter(a => a.user_id === u.id);
       const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
       const riordini = riordiniDi.filter(id => id === u.id).length;
-      // 02/10 «0 contatti al giorno» = pausa (Ignazio): il Buongiorno non parte, a meno che ci sia già qualcosa di programmato
-      // (appuntamenti, riordini); e allora senza «0 telefonate»
+      // 02/10 (Ignazio: «gli avvisi sono veramente tanti»): il Buongiorno parte solo se oltre alle telefonate c'è altro di programmato
+      // (appuntamenti, riordini); con sole telefonate no. Con «0 contatti al giorno» (pausa) vale lo stesso, e senza «0 telefonate».
       const inPausa = u.contatti_al_giorno === 0;
-      if (inPausa && !miei.length && !riordini) continue;
+      if (!miei.length && !riordini) continue;
       const pezzi = inPausa ? [] : [plurale(telefonate, 'telefonata', 'telefonate')];
       if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
       const nome = String(u.nome ?? '').trim();   // nome proprio nel titolo (Ignazio 18/09); senza nome resta «Buongiorno!»
