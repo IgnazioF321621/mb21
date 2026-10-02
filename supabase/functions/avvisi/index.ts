@@ -14,10 +14,10 @@
 //      ancora senza esito, una volta sola (azioni.senza_esito_avvisato_il); non più vecchi di un giorno
 //    { tipo: 'tracce' } → ogni 15 minuti, solo tra le 9 e le 21 di Roma (cantiere 40, 22/09): la traccia condivisa dura 72 ore.
 //      A 48 ore dalla condivisione non ancora «ascoltata» (Ignazio: «48 ore sia per lo sponsor sia per chi deve ascoltare»):
-//      allo sponsor «⏳ La traccia di Mario scade domani: ricordaglielo» (condivisioni.avviso_48_il) e, se la persona usa MB21
+//      allo sponsor «⏳ La traccia di Mario scade domani: può essere il momento di ricordarglielo» (condivisioni.avviso_48_il) e, se la persona usa MB21
 //      (utenti.partner_id = contatti.codice_amway), a lei «⏳ La traccia che ti ha mandato Ignazio scade domani: ascoltala»
 //      (avviso_ascolto_il). Quando è il partner a segnare «ascoltata» dalla sua Dashboard (segnata_dal_partner), allo sponsor
-//      «🎧 Isabella ha ascoltato "…" e chiede la prossima. Sentitevi!» (avviso_sponsor_il; «chiede la prossima» se chiede_prossima_il).
+//      «🎧 Isabella ha ascoltato "…" e chiede la prossima. Può essere il momento di sentirvi!» (avviso_sponsor_il; «chiede la prossima» se chiede_prossima_il).
 //      Il momento della condivisione è `creato_il` se la riga è stata scritta il giorno stesso, altrimenti mezzogiorno di `condivisa_il`
 //      (le condivisioni scritte a mano per giorni passati). Mai per lo storico di Glide. Con { prova: true } dice cosa manderebbe senza mandare.
 //
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     if (!user) return risposta({ errore: 'non autorizzato' }, 401);
     const { data: u } = await db.from('utenti').select('id, avvisi_quando').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
     if (!u) return risposta({ errore: 'utente non trovato' }, 403);
-    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: `Da stasera alle ${scelta(u.avvisi_quando, 'check')} ti ricordo «Il mio giorno».`, url: './', tag: 'prova' });
+    const esito = await spedisciA([u.id], { titolo: 'MB21 · Avvisi accesi ✓', testo: `Da stasera, alle ${scelta(u.avvisi_quando, 'check')}, arriva il ricordo per «Il mio giorno».`, url: './', tag: 'prova' });
     return risposta(esito);
   }
 
@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
         ? { titolo: '🏋️ Prova il Training', testo: '5 minuti per il primo percorso del livello Nuovo: Contattare. Tocca per iniziare.', url: './?apri=training', tag: 'training' }
         : daRipassare
           ? { titolo: '🏋️ 5 minuti di Training?', testo: `Oggi hai ${daRipassare} ${daRipassare === 1 ? 'carta' : 'carte'} da ripassare. Tocca per iniziare.`, url: './?apri=training&vista=ripassa', tag: 'training' }
-          : { titolo: '🏋️ 5 minuti di Training?', testo: 'Continua il tuo percorso, una carta alla volta. Tocca per riprendere.', url: './?apri=training', tag: 'training' };
+          : { titolo: '🏋️ 5 minuti di Training?', testo: 'Il tuo percorso continua, una carta alla volta. Tocca per riprendere.', url: './?apri=training', tag: 'training' };
       if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
       esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
     }
@@ -430,11 +430,11 @@ Deno.serve(async (req) => {
       const urlScheda = `./?apri=lista&contatto=${k.contatto_id}&sezione=sharing`;
       const partner = utenteDi(k.contatti?.codice_amway);
       if (!k.ascoltata && ore >= 48) {
-        if (!k.avviso_48_il) await manda(k, [k.user_id], { titolo: `⏳ La traccia di ${nome} scade domani`, testo: `${traccia} · condivisa 2 giorni fa e non ancora ascoltata: ricordaglielo, poi segna qui.`, url: urlScheda, tag: `traccia-48-${k.id}` }, 'avviso_48_il');
-        if (partner && !k.avviso_ascolto_il) await manda(k, [partner], { titolo: `⏳ La traccia che ti ha mandato ${sponsor} scade domani`, testo: `${traccia} · ascoltala nell'app N21, poi tocca «Ascoltata» in MB21.`, url: './', tag: `traccia-ascolto-${k.id}` }, 'avviso_ascolto_il');
+        if (!k.avviso_48_il) await manda(k, [k.user_id], { titolo: `⏳ La traccia di ${nome} scade domani`, testo: `${traccia} · condivisa 2 giorni fa e non ancora ascoltata: può essere il momento di ricordarglielo, poi si segna qui.`, url: urlScheda, tag: `traccia-48-${k.id}` }, 'avviso_48_il');
+        if (partner && !k.avviso_ascolto_il) await manda(k, [partner], { titolo: `⏳ La traccia che ti ha mandato ${sponsor} scade domani`, testo: `${traccia} · si può ascoltare nell'app N21, poi si tocca «Ascoltata» in MB21.`, url: './', tag: `traccia-ascolto-${k.id}` }, 'avviso_ascolto_il');
       }
       if (k.ascoltata && k.segnata_dal_partner && !k.avviso_sponsor_il) {
-        await manda(k, [k.user_id], { titolo: `🎧 ${nome} ha ascoltato la traccia`, testo: `${traccia}${k.chiede_prossima_il ? ' · e chiede la prossima' : ''}. Sentitevi!`, url: urlScheda, tag: `traccia-ascoltata-${k.id}` }, 'avviso_sponsor_il');
+        await manda(k, [k.user_id], { titolo: `🎧 ${nome} ha ascoltato la traccia`, testo: `${traccia}${k.chiede_prossima_il ? ' · e chiede la prossima' : ''}. Può essere il momento di sentirvi!`, url: urlScheda, tag: `traccia-ascoltata-${k.id}` }, 'avviso_sponsor_il');
       }
     }
     return risposta({ tracce: esiti.length, esiti });

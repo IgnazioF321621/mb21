@@ -1193,11 +1193,11 @@ function dashboardTesta() {
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
   if (!vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09)
     ? (d.abbonamento === 'in_scadenza'
-      ? `<div class="banner-abb scaduto in-scadenza"><i class="pallino" style="background:var(--proposta)"></i>Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Rinnova entro la scadenza per continuare a usare tutta l'app</small>
-        <button id="ds-rinnova">Rinnova subito →</button></div>`
+      ? `<div class="banner-abb scaduto in-scadenza"><i class="pallino" style="background:var(--proposta)"></i>Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Con il rinnovo prima della scadenza si continua a usare tutta l'app</small>
+        <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`
       : `<div class="banner-abb attivo">${ic('fatto')} Abbonamento attivo · Buon lavoro!</div>`)
     : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
-        <button id="ds-rinnova">Rinnova subito →</button></div>`;
+        <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`;
   html += riquadriBiglietto();
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato() && obiettiviAperti()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
