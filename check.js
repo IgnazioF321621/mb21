@@ -422,6 +422,7 @@
   const SCALA = [3, 6, 9, 12, 15, 18, 21];
   const scalino = b => SCALA.find(x => x > (Number(b) || 0)) || null;
   const PASSI = 2;
+  const PASSI_ELC = 3;   // Executive Leader Club: tre passi, non due (Ignazio 02/10: «le tre voci che mancano»)
   function livelli({ core, bonus, linee, cep, mancaMio, nonOra, planner = null, iscritti = null, totale = null, bbs = null, wes = null, mesi21 = null, lcLinee = null }) {
     const salta = new Set(nonOra || []);
     const noto = bonus != null;
@@ -493,8 +494,9 @@
       // il posto va alla cosa dopo nell'ordine
       const nuove = passi.find(x => x.vai === 'lista'), aiuto = passi.find(x => x.vai === 'scheda');
       const scelti = [nuove, aiuto].filter(Boolean);
-      for (const x of passi) if (scelti.length < PASSI && !scelti.includes(x)) scelti.push(x);
-      r.passi = passi.filter(x => scelti.includes(x)).slice(0, PASSI);
+      const massimo = r.chiave === 'elc' ? PASSI_ELC : PASSI;
+      for (const x of passi) if (scelti.length < massimo && !scelti.includes(x)) scelti.push(x);
+      r.passi = passi.filter(x => scelti.includes(x)).slice(0, massimo);
       const obiettivo = L.sv.bonus;
       if (P.mesi21 && mesi21 != null && (!noto || Number(bonus) >= obiettivo)) r.info = `Mesi di fila al 21% da settembre: ${mesi21} su ${P.mesi21}`;
       else if (noto && obiettivo && Number(bonus) < obiettivo) r.info = scalino(bonus) === obiettivo && mancaMio != null
@@ -516,7 +518,23 @@
     return D.segniVitali(Object.values(perMese), dati.tot, oggi.slice(0, 8) + '01');
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, livelli };
+  // Il PROSSIMO TRAGUARDO e cosa manca (Ignazio 02/10, avviso della sera): prima il Leader 1° livello (le luci che mancano: una di solito),
+  // fatto quello il Leaders Club (i 2 passi), fatto quello l'Executive Leader Club (i 3 passi); oltre non si dice niente. Sono le stesse cose che l'app
+  // mostra come «cosa manca» e «I prossimi passi»: l'app le salva (`utenti.prossimo_traguardo`) e l'avviso le legge, senza copiare le regole nel server.
+  // `lc1` = il risultato di lc1() del mese · `lv` = il risultato di livelli() (null = file Amway non letto). Una luce «non lo so» non è una mancanza.
+  // Torna { nome, mancano: ['il biglietto BBS'] } oppure null (niente da dire).
+  function prossimoTraguardo({ lc1: l, lv }) {
+    if (!l || l.prima) return null;
+    if (!l.fatto) {
+      const mancano = (l.luci || []).filter(x => !x.ok && !x.ignoto).map(x => COSE_LC1[x.chiave].cosa);
+      return mancano.length ? { nome: 'Leader 1° livello', mancano } : null;
+    }
+    const r = lv && (lv.righe || []).find(x => x.passi && x.passi.length);
+    if (!r || (r.chiave !== 'lc' && r.chiave !== 'elc')) return null;
+    return { nome: r.titolo, mancano: r.passi.map(x => x.testo) };
+  }
+
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, livelli, prossimoTraguardo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);

@@ -459,4 +459,30 @@ prova('I passi (Ignazio 27/09): nell\'ordine di Ignazio — prime linee, iscritt
   assert.equal(arg.righe[3].info, 'Mesi di fila al 21% da settembre: 4 su 12');
 });
 
+prova('Il prossimo traguardo (02/10, avviso della sera): prima il 1° livello, poi il Leaders Club (2 passi), poi l\'Executive (3 passi)', () => {
+  const luce = (chiave, ok, ignoto) => ({ chiave, titolo: chiave.toUpperCase(), ok, ignoto: !!ignoto });
+  const lc = (luci, fatto = false) => ({ prima: false, fatto, luci });
+  // 1° livello non fatto: le luci che mancano, come le dice l'app; «non lo so» non è una mancanza
+  assert.deepEqual(C.prossimoTraguardo({ lc1: lc([luce('vp', true), luce('bbs', false), luce('wes', true), luce('cep', true)]) }), { nome: 'Leader 1° livello', mancano: ['il biglietto BBS'] });
+  assert.deepEqual(C.prossimoTraguardo({ lc1: lc([luce('vp', false), luce('bbs', false), luce('wes', true), luce('cep', false, true)]) }).mancano, ['arrivare a 100 VP', 'il biglietto BBS']);
+  assert.equal(C.prossimoTraguardo({ lc1: lc([luce('vp', false, true), luce('bbs', false, true), luce('wes', false, true), luce('cep', false, true)]) }), null);
+  assert.equal(C.prossimoTraguardo({ lc1: { prima: true, fatto: false, luci: [] } }), null);   // mesi prima di settembre: niente
+  assert.equal(C.prossimoTraguardo({ lc1: lc([], true), lv: null }), null);                     // 1° livello fatto ma file Amway non letto: niente
+  // 1° livello fatto: il Leaders Club con i suoi 2 passi (gli stessi dell'app)
+  const linee = [{ vpp: 107, bonus: 3 }, { vpp: 47, bonus: 0 }, { vpp: 78, bonus: 0 }, { vpp: 116, bonus: 0 }, ...Array(9).fill({ vpp: 0, bonus: 0 })];
+  const lv = C.livelli({ core: false, bonus: 6, linee: linee.map((x, i) => ({ ...x, partner_id: 'L' + i, nome: 'Linea' + i })), cep: 3, planner: 0, iscritti: 0, totale: 32, bbs: 3, wes: 4, mesi21: 0 });
+  const t = C.prossimoTraguardo({ lc1: lc([], true), lv });
+  assert.equal(t.nome, 'Leaders Club'); assert.equal(t.mancano.length, 2);
+  assert.deepEqual(t.mancano, lv.righe[0].passi.map(x => x.testo));
+  // Leaders Club fatto: l'Executive con 3 passi (non 2)
+  const pieno = { core: true, bonus: 9, linee: linee.map((x, i) => ({ ...x, vpp: 100, bonus: 3, partner_id: 'L' + i, nome: 'Linea' + i })), cep: 5, planner: 1, iscritti: 5, totale: 40, bbs: 10, wes: 10, mesi21: 0 };
+  const lv2 = C.livelli({ ...pieno, linee: pieno.linee.slice(0, 5), lcLinee: [] });
+  assert.equal(lv2.righe[0].fatto, true);
+  const t2 = C.prossimoTraguardo({ lc1: lc([], true), lv: lv2 });
+  assert.equal(t2.nome, 'Executive Leader Club'); assert.ok(t2.mancano.length >= 1 && t2.mancano.length <= 3);
+  assert.equal(lv2.righe[1].passi.length <= 3, true);
+  // oltre l'Executive non si dice niente
+  assert.equal(C.prossimoTraguardo({ lc1: lc([], true), lv: { righe: [{ chiave: 'arg', titolo: 'Produttore Argento', passi: [{ testo: 'x' }] }] } }), null);
+});
+
 console.log(`\n${ok} prove superate`);

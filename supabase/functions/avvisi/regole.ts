@@ -144,12 +144,15 @@ export function avvisoObiettivi(giorno: string, obiettivi: Record<string, unknow
 export type DatiSera = {
   bravo: string | null; checkFatto: boolean; domani: { titolo: string; ora: string; primo: string } | null; ilGiornoDopo: string;
   training: 'fatto' | 'mai' | 'da_fare'; daRipassare: number; obiettivi: AvvisoObiettivi | null;
+  traguardo?: string;   // la frase di rigaTraguardo(): cosa manca per il prossimo traguardo (vuota = niente)
 };
 export type MessaggioSera = { titolo: string; testo: string; url: string; tag: string };
 export function messaggioSera(d: DatiSera): MessaggioSera | null {
   const trainingRiga = d.training === 'fatto' ? '' : d.training === 'mai' ? 'Se ti va, 5 minuti per provare il Training.'
     : d.daRipassare > 0 ? `Se ti va, 5 minuti di Training: oggi ${quanti(d.daRipassare, 'carta', 'carte')} da ripassare.` : 'Se ti va, restano 5 minuti di Training.';
-  const coda = [trainingRiga, d.obiettivi?.riga ?? ''].filter(Boolean).join(' ');
+  // `coda` = le righe in fondo; il traguardo si aggiunge a un avviso che c'è già, non ne fa partire uno da solo (i consigli sì: Training e obiettivi)
+  const consigli = [trainingRiga, d.obiettivi?.riga ?? ''].filter(Boolean).join(' ');
+  const coda = [d.traguardo ?? '', consigli].filter(Boolean).join(' ');
   const fine = coda ? ` ${coda}` : '';
   const domaniRiga = d.domani ? ` Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';
   if (!d.checkFatto) return {
@@ -162,7 +165,7 @@ export function messaggioSera(d: DatiSera): MessaggioSera | null {
     testo: `${d.bravo ? `Oggi ${d.bravo}, bel lavoro. ` : ''}Si comincia alle ${d.domani.ora}: ${d.domani.primo}.${fine} Tocca per vedere la giornata.`,
     url: `./?apri=agenda&giorno=${d.ilGiornoDopo}`, tag: 'domani',
   };
-  if (!coda) return null;   // Check fatto, domani niente, niente da consigliare: si tace
+  if (!consigli) return null;   // Check fatto, domani niente, niente da consigliare: si tace (il traguardo da solo non fa partire un avviso)
   return {
     titolo: trainingRiga ? '🏋️ 5 minuti di Training?' : d.bravo ? '👏 Bel lavoro oggi!' : '🎯 Gli obiettivi del mese',
     testo: `${d.bravo ? `Oggi ${d.bravo}, bel lavoro. ` : ''}${coda}`,
@@ -201,4 +204,17 @@ export function raggruppaPerUtente<T extends { utente: string }>(voci: T[]): T[]
 // «alle 10:00 PM · Pino · 10:20 Telefonata · Anna · … e altre 2»: i primi tre, poi quanti altri
 export function elencoImpegni(righe: { inizio: number; riga: string }[]): string {
   return righe.slice(0, 3).map(v => `${oraMinuti(v.inizio)} ${v.riga}`).join(' · ') + (righe.length > 3 ? ` e altre ${righe.length - 3}` : '');
+}
+
+// ── Cosa manca per il prossimo traguardo (Ignazio 02/10) ──
+// L'app salva in `utenti.prossimo_traguardo` { nome, mancano[], mese, aggiornato_il } (check.js → prossimoTraguardo, le sue stesse regole);
+// qui si legge. Vale solo se è del mese in corso e aggiornato da non più di 4 giorni: chi non apre l'app non riceve una cosa vecchia.
+export type Traguardo = { nome?: string; mancano?: string[]; mese?: string; aggiornato_il?: string } | null | undefined;
+export const GIORNI_TRAGUARDO_VALIDO = 4;
+export function rigaTraguardo(t: Traguardo, oggi: string, adesso: number): string {
+  if (!t || !t.nome || !Array.isArray(t.mancano) || !t.mancano.length) return '';
+  if (t.mese !== `${oggi.slice(0, 8)}01`) return '';
+  if (!(adesso - Date.parse(t.aggiornato_il ?? '') <= GIORNI_TRAGUARDO_VALIDO * 86400000)) return '';   // vuota o data illeggibile: niente
+  const con = t.nome.startsWith('Executive') ? "l'" : 'il ';
+  return `Verso ${con}${t.nome}: ${t.mancano.join(' · ')}.`;
 }
