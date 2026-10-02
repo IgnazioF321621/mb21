@@ -207,11 +207,12 @@ prova('Coach corto: Relazione un fumetto solo, niente chat; No Interesse chiede 
   assert.equal(C.corta(null, 'PM Fissato', nomi, 0, {}), null);
 });
 
-prova('Coach corto, incontro fissato: un tocco sull\'obiezione e nient\'altro (tolti «l\'hai superata» e la risposta del manuale, 01/10)', async () => {
+prova('Coach corto, incontro fissato: un tocco sull\'obiezione e solo dove ripassarla (tolti «l\'hai superata» e la risposta del manuale, 01/10; «Ripassa» anche qui, 02/10)', async () => {
   const passi = C.corta(B, 'PM Fissato', nomi, 0, { carta: carta(['telefonata']) });
   const r = await percorri(passi, ['Non ho tempo']);
   assert.equal(r.fum[0], 'Ottimo, Isabella! Piano con Anna. Anna ti ha fatto domande?');   // reazione e domanda in un fumetto solo (01/10)
-  assert.ok(!r.fum.some(f => /superata|Se torna fuori|manuale|gestita|prossima volta|Ripassa/.test(f)));
+  assert.ok(!r.fum.some(f => /superata|Se torna fuori|manuale|gestita|prossima volta/.test(f)));
+  assert.deepEqual(r.fum.filter(f => !f.startsWith('>')).slice(-1), ['La ritrovi in «Ripassa», nel Training, quando vuoi.']);   // solo dove ripassare (02/10)
   assert.deepEqual(r.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);                 // un elenco, come il Training se lo aspetta
   assert.deepEqual(r.rif, []);                                                                        // niente «Per approfondire»
   const nessuna = await percorri(passi, ['Nessuna']);
@@ -240,7 +241,8 @@ prova('Coach corto con memoria: «L\'altra volta Anna diceva…»; «Sì» ripre
   assert.ok(passi().some(p => p.c === 'Ottimo, Isabella! Piano con Anna. L’altra volta Anna diceva «Non ho tempo»: è tornato fuori?'));
   const si = await percorri(passi(), ['Sì']);
   assert.deepEqual(si.salvati, [{ chiave: 'obiezioni', risposta: ['Non ho tempo'] }]);               // si salva l'obiezione, non «Sì»
-  assert.ok(!si.fum.some(f => /superata/.test(f)));                                                  // con l'incontro fissato dopo il tocco niente
+  assert.ok(!si.fum.some(f => /superata/.test(f)));                                                  // dopo il tocco solo dove ripassare
+  assert.deepEqual(si.fum.filter(f => !f.startsWith('>')).slice(-1), ['La ritrovi in «Ripassa», nel Training, quando vuoi.']);
   const no = await percorri(passi(), ['No']);
   assert.deepEqual(no.salvati, [{ chiave: 'obiezioni', risposta: ['Nessuna'] }]);
   assert.ok(no.fum.includes('Bene: superata.'));
