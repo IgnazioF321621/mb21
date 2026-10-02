@@ -150,26 +150,29 @@ export type MessaggioSera = { titolo: string; testo: string; url: string; tag: s
 export function messaggioSera(d: DatiSera): MessaggioSera | null {
   const trainingRiga = d.training === 'fatto' ? '' : d.training === 'mai' ? 'Se ti va, 5 minuti per provare il Training.'
     : d.daRipassare > 0 ? `Se ti va, 5 minuti di Training: oggi ${quanti(d.daRipassare, 'carta', 'carte')} da ripassare.` : 'Se ti va, restano 5 minuti di Training.';
-  // le righe in fondo: il traguardo (non fa partire un avviso da solo; su una riga sua, con la bandierina, 02/10) e i consigli (Training, obiettivi: sì)
-  const consigli = [trainingRiga, d.obiettivi?.riga ?? ''].filter(Boolean).join(' ');
-  const bandierina = d.traguardo ? `🚩 ${d.traguardo}` : '';
-  const blocchi = (...b: string[]) => b.filter(Boolean).join('\n');   // un avviso del telefono è testo semplice: la riga del traguardo si nota andando a capo
-  const domaniRiga = d.domani ? `Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';   // su una riga sua (02/10)
-  // il titolo è sempre lo stesso, anche con la giornata a zero: è comunque un riepilogo (Ignazio 02/10)
+  // Ogni riga comincia con il SUO segno, sempre lo stesso (Ignazio 02/10, tranne il titolo): 📝 il riepilogo di oggi e il Check · 📅 il domani ·
+  // 🚩 il prossimo traguardo · 🏋️ il Training · 🎯 gli obiettivi. Un avviso del telefono è testo semplice: ogni cosa va a capo.
+  const riga = (segno: string, testo: string) => (testo ? `${segno} ${testo}` : '');
+  const blocchi = (...b: string[]) => b.filter(Boolean).join('\n');
+  // il traguardo non fa partire un avviso da solo; Training e obiettivi sì
+  const bandierina = riga('🚩', d.traguardo ?? '');
+  const consigli = [riga('🏋️', trainingRiga), riga('🎯', d.obiettivi?.riga ?? '')];
+  const domaniRiga = d.domani ? `Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';
+  // il titolo è sempre lo stesso, anche con la giornata a zero: è comunque un riepilogo (Ignazio 02/10); senza segno nel titolo
   if (!d.checkFatto) return {
-    titolo: '⚡ Il riepilogo del «tuo giorno» è quasi pronto',
-    testo: blocchi(d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».', domaniRiga, bandierina, consigli),
+    titolo: 'Il riepilogo del «tuo giorno» è quasi pronto',
+    testo: blocchi(riga('📝', d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».'), riga('📅', domaniRiga), bandierina, ...consigli),
     url: './?apri=check', tag: 'check_sera',
   };
   if (d.domani) return {
     titolo: `📅 Domani hai ${d.domani.titolo}`,
-    testo: blocchi(`${d.bravo ? `Oggi ${d.bravo}, bel lavoro. ` : ''}Si comincia alle ${d.domani.ora}: ${d.domani.primo}. Tocca per vedere la giornata.`, bandierina, consigli),
+    testo: blocchi(riga('📝', d.bravo ? `Oggi ${d.bravo}, bel lavoro.` : ''), riga('📅', `Si comincia alle ${d.domani.ora}: ${d.domani.primo}. Tocca per vedere la giornata.`), bandierina, ...consigli),
     url: `./?apri=agenda&giorno=${d.ilGiornoDopo}`, tag: 'domani',
   };
-  if (!consigli) return null;   // Check fatto, domani niente, niente da consigliare: si tace (il traguardo da solo non fa partire un avviso)
+  if (!trainingRiga && !d.obiettivi) return null;   // Check fatto, domani niente, niente da consigliare: si tace (il traguardo da solo non fa partire un avviso)
   return {
     titolo: trainingRiga ? '🏋️ 5 minuti di Training?' : d.bravo ? '👏 Bel lavoro oggi!' : '🎯 Gli obiettivi del mese',
-    testo: blocchi(d.bravo ? `Oggi ${d.bravo}, bel lavoro.` : '', bandierina, consigli),
+    testo: blocchi(riga('📝', d.bravo ? `Oggi ${d.bravo}, bel lavoro.` : ''), bandierina, ...consigli),
     url: trainingRiga ? (d.daRipassare > 0 ? './?apri=training&vista=ripassa' : './?apri=training') : './', tag: 'sera',
   };
 }

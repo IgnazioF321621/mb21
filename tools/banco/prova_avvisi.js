@@ -126,40 +126,43 @@ const assert = require('node:assert/strict');
     assert.equal(R.complimentiDelGiorno({ contatti: 0, fissati: 0, pm: 0, vendite: 0, training: true }), '5 minuti di Training');
   });
 
-  prova('la sera, un avviso solo: Check, complimenti, domani, Training da consigliare, obiettivi', () => {
+  prova('la sera, un avviso solo: ogni riga col suo segno (📝 riepilogo e Check · 📅 domani · 🚩 traguardo · 🏋️ Training · 🎯 obiettivi), titolo senza segno', () => {
     const domani = { titolo: '2 appuntamenti', ora: '09:30', primo: 'PM · Pino' };
     const ob = R.avvisoObiettivi('2026-10-03', null), obRifai = R.avvisoObiettivi('2026-10-01', { vpp: 100 });
     const base = { bravo: null, checkFatto: false, domani: null, ilGiornoDopo: '2026-10-04', training: 'fatto', daRipassare: 0, obiettivi: null };
-    // Check non fatto
+    const TITOLO = 'Il riepilogo del «tuo giorno» è quasi pronto';
+    // Check non fatto: il titolo è sempre lo stesso, anche con la giornata a zero
     let m = R.messaggioSera({ ...base });
-    assert.equal(m.titolo, '⚡ Il riepilogo del «tuo giorno» è quasi pronto');   // sempre lo stesso, anche con la giornata a zero assert.equal(m.url, './?apri=check'); assert.equal(m.tag, 'check_sera');
-    assert.equal(m.testo, 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
+    assert.equal(m.titolo, TITOLO); assert.equal(m.url, './?apri=check'); assert.equal(m.tag, 'check_sera');
+    assert.equal(m.testo, '📝 Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
     m = R.messaggioSera({ ...base, bravo: '3 contatti, 1 vendita e 5 minuti di Training', domani });
-    assert.equal(m.titolo, '⚡ Il riepilogo del «tuo giorno» è quasi pronto');
-    assert.equal(m.testo, 'Oggi 3 contatti, 1 vendita e 5 minuti di Training. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».\nDomani: 2 appuntamenti, si comincia alle 09:30 (PM · Pino).');
-    // Training non fatto: un consiglio, mai un ordine; mai usato / da ripassare / niente da ripassare
-    assert.match(R.messaggioSera({ ...base, training: 'da_fare' }).testo, /\nSe ti va, restano 5 minuti di Training\.$/);
-    assert.match(R.messaggioSera({ ...base, training: 'mai' }).testo, /\nSe ti va, 5 minuti per provare il Training\.$/);
+    assert.equal(m.titolo, TITOLO);
+    assert.equal(m.testo, '📝 Oggi 3 contatti, 1 vendita e 5 minuti di Training. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».\n📅 Domani: 2 appuntamenti, si comincia alle 09:30 (PM · Pino).');
+    // Training non fatto: un consiglio, mai un ordine, su una riga sua; mai usato / da ripassare / niente da ripassare
+    assert.match(R.messaggioSera({ ...base, training: 'da_fare' }).testo, /\n🏋️ Se ti va, restano 5 minuti di Training\.$/);
+    assert.match(R.messaggioSera({ ...base, training: 'mai' }).testo, /\n🏋️ Se ti va, 5 minuti per provare il Training\.$/);
     assert.match(R.messaggioSera({ ...base, training: 'da_fare', daRipassare: 1 }).testo, /oggi 1 carta da ripassare\.$/);
     assert.match(R.messaggioSera({ ...base, training: 'da_fare', daRipassare: 4 }).testo, /oggi 4 carte da ripassare\.$/);
     // obiettivi: una riga dentro lo stesso avviso, niente avviso a parte
     m = R.messaggioSera({ ...base, obiettivi: ob });
-    assert.match(m.testo, /\nGli obiettivi di ottobre ti aspettano nel foglio nuovo\.$/); assert.equal(m.url, './?apri=check');
-    assert.match(R.messaggioSera({ ...base, obiettivi: obRifai }).testo, /\nGli obiettivi di ottobre sono nel foglio nuovo: chi li aveva già scritti può rifarli, riportando i dati\.$/);
-    // Check fatto: domani
+    assert.match(m.testo, /\n🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo\.$/); assert.equal(m.url, './?apri=check');
+    assert.match(R.messaggioSera({ ...base, obiettivi: obRifai }).testo, /\n🎯 Gli obiettivi di ottobre sono nel foglio nuovo: chi li aveva già scritti può rifarli, riportando i dati\.$/);
+    // tutto insieme, nell'ordine: riepilogo, domani, traguardo, Training, obiettivi
+    m = R.messaggioSera({ ...base, bravo: '3 contatti', domani, training: 'da_fare', obiettivi: ob, traguardo: 'Verso il Leaders Club: x (3 su 5).' });
+    assert.deepEqual(m.testo.split('\n').map(r => r.split(' ')[0]), ['📝', '📅', '🚩', '🏋️', '🎯']);
+    // Check fatto: domani (il titolo dice già il domani; il riepilogo e il domani sono due righe)
     m = R.messaggioSera({ ...base, checkFatto: true, bravo: '3 contatti', domani });
     assert.equal(m.titolo, '📅 Domani hai 2 appuntamenti'); assert.equal(m.url, './?apri=agenda&giorno=2026-10-04'); assert.equal(m.tag, 'domani');
-    assert.equal(m.testo, 'Oggi 3 contatti, bel lavoro. Si comincia alle 09:30: PM · Pino. Tocca per vedere la giornata.');
+    assert.equal(m.testo, '📝 Oggi 3 contatti, bel lavoro.\n📅 Si comincia alle 09:30: PM · Pino. Tocca per vedere la giornata.');
     // Check fatto, domani niente: silenzio, salvo Training da consigliare o obiettivi
     assert.equal(R.messaggioSera({ ...base, checkFatto: true, bravo: '3 contatti' }), null);
     m = R.messaggioSera({ ...base, checkFatto: true, bravo: '3 contatti', training: 'da_fare', daRipassare: 2 });
     assert.equal(m.titolo, '🏋️ 5 minuti di Training?'); assert.equal(m.url, './?apri=training&vista=ripassa');
-    assert.equal(m.testo, 'Oggi 3 contatti, bel lavoro.\nSe ti va, 5 minuti di Training: oggi 2 carte da ripassare.');
+    assert.equal(m.testo, '📝 Oggi 3 contatti, bel lavoro.\n🏋️ Se ti va, 5 minuti di Training: oggi 2 carte da ripassare.');
     assert.equal(R.messaggioSera({ ...base, checkFatto: true, training: 'mai' }).url, './?apri=training');
     m = R.messaggioSera({ ...base, checkFatto: true, bravo: '3 contatti', obiettivi: ob });
     assert.equal(m.titolo, '👏 Bel lavoro oggi!'); assert.equal(m.url, './');
     assert.equal(R.messaggioSera({ ...base, checkFatto: true, obiettivi: ob }).titolo, '🎯 Gli obiettivi del mese');
-    // un solo avviso: titolo e testo di un messaggio solo, mai due
     assert.equal(typeof R.messaggioSera({ ...base, training: 'da_fare', obiettivi: ob, domani }).testo, 'string');
   });
 
@@ -205,7 +208,7 @@ const assert = require('node:assert/strict');
     assert.match(R.messaggioSera(base).testo, /\n🚩 Verso il Leader 1° livello: il biglietto BBS\.$/);   // su una riga sua, con la bandierina
     assert.match(R.messaggioSera({ ...base, checkFatto: true, domani: { titolo: '2 appuntamenti', ora: '09:30', primo: 'PM' } }).testo, /Tocca per vedere la giornata\.\n🚩 Verso il Leader 1° livello: il biglietto BBS\.$/);
     assert.equal(R.messaggioSera({ ...base, checkFatto: true }), null);   // Check fatto, domani niente: il traguardo da solo non basta
-    assert.match(R.messaggioSera({ ...base, checkFatto: true, training: 'da_fare' }).testo, /^🚩 Verso il Leader 1° livello: il biglietto BBS\.\nSe ti va, restano 5 minuti di Training\.$/);
+    assert.match(R.messaggioSera({ ...base, checkFatto: true, training: 'da_fare' }).testo, /^🚩 Verso il Leader 1° livello: il biglietto BBS\.\n🏋️ Se ti va, restano 5 minuti di Training\.$/);
   });
 
   console.log(`\n${ok} prove superate`);
