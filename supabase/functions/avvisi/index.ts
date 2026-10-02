@@ -307,10 +307,14 @@ Deno.serve(async (req) => {
       const telefonate = Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length);
       const miei = tutti.filter(a => a.user_id === u.id);
       const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
-      const pezzi = [plurale(telefonate, 'telefonata', 'telefonate')];
+      const riordini = riordiniDi.filter(id => id === u.id).length;
+      // 02/10 «0 contatti al giorno» = pausa (Ignazio): il Buongiorno non parte, a meno che ci sia già qualcosa di programmato
+      // (appuntamenti, riordini); e allora senza «0 telefonate»
+      const inPausa = u.contatti_al_giorno === 0;
+      if (inPausa && !miei.length && !riordini) continue;
+      const pezzi = inPausa ? [] : [plurale(telefonate, 'telefonata', 'telefonate')];
       if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
       const nome = String(u.nome ?? '').trim();   // nome proprio nel titolo (Ignazio 18/09); senza nome resta «Buongiorno!»
-      const riordini = riordiniDi.filter(id => id === u.id).length;
       if (riordini) pezzi.push(plurale(riordini, 'riordino', 'riordini') + ' da sentire');
       const testo = `Oggi ${pezzi.length > 1 ? pezzi.slice(0, -1).join(', ') + ' e ' + pezzi[pezzi.length - 1] : pezzi[0]}. Tocca per aprire l'Agenda.`;
       if (corpo.prova) { esiti.push({ utente: u.id, testo }); continue; }

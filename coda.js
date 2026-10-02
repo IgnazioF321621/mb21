@@ -38,7 +38,8 @@
       || (a.nome || '').localeCompare(b.nome || '', 'it');
   }
 
-  function calcolaCoda(righe, oggi, capienza) {
+  // `inPausa` (02/10, «0 contatti al giorno»): niente coda e nemmeno i Dare Seguito scaduti, che tornano alla ripartenza
+  function calcolaCoda(righe, oggi, capienza, inPausa) {
     capienza = capienza == null ? CAPIENZA : Math.max(0, capienza);
     const dareSeguito = [];
     const candidati = [];
@@ -55,6 +56,7 @@
     }
 
     dareSeguito.sort((a, b) => a.rientro_il.localeCompare(b.rientro_il));
+    if (inPausa) dareSeguito.length = 0;
     candidati.sort(confronta);
 
     const giaInCoda = candidati.filter(r => r.gruppo === 1).slice(0, capienza);
