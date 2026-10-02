@@ -325,6 +325,15 @@ prova('Il motore: il tocco sull\'obiezione si salva come elenco, «Sì» dell\'a
   assert.ok(f2.fumetti.includes('La ritrovi in «Ripassa», nel Training, quando vuoi.'));
 });
 
+prova('Un passo che non riesce non lascia la chat appesa: finisce e restano le risposte già date', async () => {
+  const foglio = foglioFinto(), err = console.error; console.error = () => {};
+  const passi = [{ c: 'Come va?' }, { salva: 'obiezioni', elenco: true, chiedi: [['Non ho tempo', [{ dopo: async () => { throw new Error('rete'); } }]]] }];
+  const { fine } = C.chat(foglio, passi, { veloce: true });
+  await foglio.tocca('Non ho tempo');
+  const salvate = await fine; console.error = err;
+  assert.deepEqual(salvate.map(x => [x.chiave, x.risposta]), [['obiezioni', ['Non ho tempo']]]);
+});
+
 prova('Tentativi a vuoto di fila: al 2° «Telefono spento» o al 3° «No Risposta» il coach propone un altro canale, con le parole di Ignazio', () => {
   assert.deepEqual(C.SOGLIA_VUOTI, { 'Telefono spento': 2, 'No Risposta': 3 });
   assert.equal(C.vuotiDiFila(['Telefono spento', 'Telefono spento', 'Relazione', 'Telefono spento'], 'Telefono spento'), 2);   // di fila: si ferma al primo diverso

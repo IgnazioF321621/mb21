@@ -713,6 +713,16 @@ prova('Dopo l\'esito si chiede solo quando risentire: un anno per No Interesse /
   assert.equal(A.giorniRisentire('Richiamare'), null); assert.equal(A.giorniRisentire('PM Fissato'), null); assert.equal(A.giorniRisentire('Consulenza Prodotti'), null);
 });
 
+prova('Azione di più di 7 giorni fa (storico, 02/10): niente domande da coach; ieri e oggi sì', () => {
+  assert.equal(A.GIORNI_STORICO, 7);
+  assert.equal(A.nelPassato('2020-05-05T10:00:00Z', '2026-10-02'), true);
+  assert.equal(A.nelPassato('2026-09-24T10:00:00Z', '2026-10-02'), true);     // 8 giorni
+  assert.equal(A.nelPassato('2026-09-25T10:00:00Z', '2026-10-02'), false);    // 7 giorni: ancora «di questi giorni»
+  assert.equal(A.nelPassato('2026-10-01T22:30:00Z', '2026-10-02'), false);
+  assert.equal(A.nelPassato('2026-10-05T10:00:00Z', '2026-10-02'), false);    // nel futuro
+  assert.equal(A.nelPassato(null, '2026-10-02'), false); assert.equal(A.nelPassato('2020-05-05T10:00:00Z', null), false);
+});
+
 prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata si apre lo stesso foglio della coda', () => {
   assert.equal(A.domandaEsito('Contatto'), 'Com\'è andata la telefonata?'); assert.equal(A.domandaEsito('Appuntamento'), 'Com\'è andato l\'incontro?');
   assert.equal(A.domandaEsito('Piano Marketing'), 'Com\'è andato il piano?'); assert.equal(A.domandaEsito('Consulenza PRD'), 'Com\'è andata la consulenza?');
