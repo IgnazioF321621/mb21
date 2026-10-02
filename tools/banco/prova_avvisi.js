@@ -136,7 +136,7 @@ const assert = require('node:assert/strict');
     assert.equal(m.testo, 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
     m = R.messaggioSera({ ...base, bravo: '3 contatti, 1 vendita e 5 minuti di Training', domani });
     assert.equal(m.titolo, '⚡ Il riepilogo del «tuo giorno» è quasi pronto');
-    assert.equal(m.testo, 'Oggi 3 contatti, 1 vendita e 5 minuti di Training. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno». Domani: 2 appuntamenti, si comincia alle 09:30 (PM · Pino).');
+    assert.equal(m.testo, 'Oggi 3 contatti, 1 vendita e 5 minuti di Training. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».\nDomani: 2 appuntamenti, si comincia alle 09:30 (PM · Pino).');
     // Training non fatto: un consiglio, mai un ordine; mai usato / da ripassare / niente da ripassare
     assert.match(R.messaggioSera({ ...base, training: 'da_fare' }).testo, /\nSe ti va, restano 5 minuti di Training\.$/);
     assert.match(R.messaggioSera({ ...base, training: 'mai' }).testo, /\nSe ti va, 5 minuti per provare il Training\.$/);
