@@ -79,13 +79,13 @@ function collegaAvvisi() {
 // Ognuno sceglie solo il tempo, per tipo; niente «spento». In `utenti.avvisi_quando` ci sono solo le scelte cambiate:
 // quello che manca vale `gia` («già impostato»). Le stesse chiavi e gli stessi valori ammessi stanno in `imposta_avviso`
 // (migrazione 20260923143237_avvisi_quando.sql) e, dal lavoro 3, nella funzione Edge `avvisi`: se cambia uno, cambiano tutti.
-const PRIMA = [[0, 'all\'ora'], [5, '5′'], [10, '10′'], [15, '15′'], [30, '30′'], [60, '1 ora']];
+const PRIMA = [[15, '15′'], [30, '30′'], [60, '1 ora']];   // 02/10: tolti «all'ora», 5′ e 10′ (il controllo dei promemoria passa a ogni 5 minuti)
 const AVVISI_QUANDO = [
   { gruppo: 'Prima di', tipi: [
     { k: 'appuntamenti', titolo: 'Appuntamenti', sotto: 'PM, Follow Up, Counseling…', scelte: PRIMA, gia: 30 },
-    { k: 'telefonate', titolo: 'Telefonate', sotto: 'in agenda', scelte: PRIMA, gia: 10 },
-    { k: 'cose', titolo: 'Cose da fare', sotto: 'con l\'ora', scelte: PRIMA, gia: 10 },
-    { k: 'modelli', titolo: 'I miei modelli', sotto: 'Lettura, Workout…', scelte: PRIMA, gia: 0 } ] },
+    { k: 'telefonate', titolo: 'Telefonate', sotto: 'in agenda', scelte: PRIMA, gia: 15 },
+    { k: 'cose', titolo: 'Cose da fare', sotto: 'con l\'ora', scelte: PRIMA, gia: 15 },
+    { k: 'modelli', titolo: 'I miei modelli', sotto: 'Lettura, Workout…', scelte: PRIMA, gia: 15 } ] },
   { gruppo: 'Dopo un appuntamento', tipi: [
     { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: 'se manca l\'esito', scelte: [[30, '30′ dopo'], [60, '1 ora dopo'], [120, '2 ore dopo']], gia: 60 } ] },
   { gruppo: 'Ogni giorno', tipi: [
