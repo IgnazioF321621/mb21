@@ -90,8 +90,7 @@ const AVVISI_QUANDO = [
     { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: 'se manca l\'esito', scelte: [[30, '30′ dopo'], [60, '1 ora dopo'], [120, '2 ore dopo']], gia: 60 } ] },
   { gruppo: 'Ogni giorno', tipi: [
     { k: 'buongiorno', titolo: 'Buongiorno', sotto: 'il programma di oggi', scelte: [7, 8, 9, 10].map(h => [h, h + ':00']), gia: 9 },
-    { k: 'check', titolo: '«Il mio giorno», la sera', sotto: '', scelte: [20, 21, 22].map(h => [h, h + ':00']), gia: 22 },
-    { k: 'training', titolo: 'Training', sotto: '5 minuti, se oggi non ti sei allenato', scelte: [8, 13, 18, 21].map(h => [h, h + ':00']), gia: 13 } ] },   // 25/09
+    { k: 'check', titolo: '«Il mio giorno», la sera', sotto: '', scelte: [20, 21, 22].map(h => [h, h + ':00']), gia: 22 } ] },   // 02/10: il Training non ha più l'avviso a parte, lo ricorda la sera
 ];
 const sceltaAvviso = (u, k) => { const t = AVVISI_QUANDO.flatMap(g => g.tipi).find(t => t.k === k); const v = (u.avvisi_quando || {})[k]; return v == null ? t.gia : v; };
 

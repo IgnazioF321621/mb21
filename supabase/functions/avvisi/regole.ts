@@ -7,7 +7,7 @@
 export const GIA_IMPOSTATO: Record<string, number> = {
   appuntamenti: 30, telefonate: 15, cose: 15, modelli: 15,  // minuti prima (dal 02/10 si sceglie 15 · 30 · 60: tolti «all'ora», 5 e 10)
   com_e_andata: 60,                                          // minuti dopo la fine
-  buongiorno: 9, check: 22, training: 13,                    // ora di Roma
+  buongiorno: 9, check: 22,                                  // ora di Roma (il Training dal 02/10 non ha più l'avviso a parte: sta nella sera)
 };
 export function scelta(quando: Record<string, number> | null | undefined, k: string): number {
   const v = (quando ?? {})[k];
@@ -96,13 +96,14 @@ export function riepilogoDomani(impegni: Impegno[]): { titolo: string; ora: stri
 // ── I complimenti della sera (lista «Avvisi» di MB App, 30/09): la giornata già scritta nell'app, detta a parole ──
 // «3 contatti, 1 appuntamento fissato e 1 vendita»; niente di fatto = null (nessun complimento inventato).
 // Testi neutri (né maschile né femminile): il coach parla con gli stessi toni della chat, senza «io».
-export type ContiGiorno = { contatti: number; fissati: number; pm: number; vendite: number };
+export type ContiGiorno = { contatti: number; fissati: number; pm: number; vendite: number; training?: boolean };
 export function complimentiDelGiorno(c: ContiGiorno): string | null {
   const pezzi = [
     c.contatti ? quanti(c.contatti, 'contatto', 'contatti') : '',
     c.fissati ? quanti(c.fissati, 'appuntamento fissato', 'appuntamenti fissati') : '',
     c.pm ? `${c.pm} PM` : '',
     c.vendite ? quanti(c.vendite, 'vendita', 'vendite') : '',
+    c.training ? '5 minuti di Training' : '',   // 02/10: il Training fatto oggi si festeggia nella sera
   ].filter(Boolean);
   if (!pezzi.length) return null;
   return pezzi.length === 1 ? pezzi[0] : `${pezzi.slice(0, -1).join(', ')} e ${pezzi[pezzi.length - 1]}`;
@@ -121,16 +122,50 @@ export const haObiettivi = (o: Record<string, unknown> | null | undefined) => !!
 const NOMI_MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 export const FOGLIO_NUOVO = { dal: '2026-10-01', al: '2026-10-03' };
 export const GIORNI_INVITO_OBIETTIVI = [1, 3];   // le sere in cui parte l'invito automatico
-export type AvvisoObiettivi = { titolo: string; testo: string; rifai: boolean };
+export type AvvisoObiettivi = { titolo: string; testo: string; rifai: boolean; riga: string };   // `riga` = la frase che entra nell'avviso della sera (02/10: un avviso solo)
 // L'invito (anche quello mandato a mano dall'Admin: stesso testo)
 export function invitoObiettivi(giorno: string): AvvisoObiettivi {
   const mese = NOMI_MESI[Number(giorno.slice(5, 7)) - 1];
-  return { titolo: `🎯 Gli obiettivi di ${mese}`, testo: `È iniziato ${mese}: nel foglio nuovo si scelgono i traguardi del mese, con il consiglio e le linee. Tocca per aprirlo.`, rifai: false };
+  return { titolo: `🎯 Gli obiettivi di ${mese}`, testo: `È iniziato ${mese}: nel foglio nuovo si scelgono i traguardi del mese, con il consiglio e le linee. Tocca per aprirlo.`, rifai: false, riga: `Gli obiettivi di ${mese} ti aspettano nel foglio nuovo.` };
 }
 export function avvisoObiettivi(giorno: string, obiettivi: Record<string, unknown> | null | undefined, saltato = false): AvvisoObiettivi | null {
   if (saltato) return null;
   const giornoDelMese = Number(giorno.slice(8, 10)), mese = NOMI_MESI[Number(giorno.slice(5, 7)) - 1];
   if (!haObiettivi(obiettivi)) return GIORNI_INVITO_OBIETTIVI.includes(giornoDelMese) ? invitoObiettivi(giorno) : null;
-  if (giorno >= FOGLIO_NUOVO.dal && giorno <= FOGLIO_NUOVO.al) return { titolo: `🎯 Gli obiettivi di ${mese}, nel foglio nuovo`, testo: 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Tocca per aprirlo.', rifai: true };
+  if (giorno >= FOGLIO_NUOVO.dal && giorno <= FOGLIO_NUOVO.al) return { titolo: `🎯 Gli obiettivi di ${mese}, nel foglio nuovo`, testo: 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Tocca per aprirlo.', rifai: true, riga: `Gli obiettivi di ${mese} sono nel foglio nuovo: chi li aveva già scritti può rifarli, riportando i dati.` };
   return null;
+}
+
+// ── L'avviso della sera, uno solo e «omnicomprensivo» (Ignazio 02/10: «gli avvisi sono veramente tanti»; la sera è quello che conta di più: il Check) ──
+// Dentro: i complimenti per la giornata (compreso il Training fatto), il Check da chiudere, «Domani hai…», il Training se oggi non è stato fatto
+// (un consiglio) e, il 1° e il 3° del mese, gli obiettivi. Niente avvisi a parte per Training e obiettivi.
+//  · Check non fatto → apre il Check · Check fatto e domani c'è qualcosa → apre l'Agenda di domani
+//  · Check fatto, domani niente, ma c'è il Training da consigliare o gli obiettivi → un avviso corto; se non c'è niente di tutto questo si tace
+export type DatiSera = {
+  bravo: string | null; checkFatto: boolean; domani: { titolo: string; ora: string; primo: string } | null; ilGiornoDopo: string;
+  training: 'fatto' | 'mai' | 'da_fare'; daRipassare: number; obiettivi: AvvisoObiettivi | null;
+};
+export type MessaggioSera = { titolo: string; testo: string; url: string; tag: string };
+export function messaggioSera(d: DatiSera): MessaggioSera | null {
+  const trainingRiga = d.training === 'fatto' ? '' : d.training === 'mai' ? 'Se ti va, 5 minuti per provare il Training.'
+    : d.daRipassare > 0 ? `Se ti va, 5 minuti di Training: oggi ${quanti(d.daRipassare, 'carta', 'carte')} da ripassare.` : 'Se ti va, restano 5 minuti di Training.';
+  const coda = [trainingRiga, d.obiettivi?.riga ?? ''].filter(Boolean).join(' ');
+  const fine = coda ? ` ${coda}` : '';
+  const domaniRiga = d.domani ? ` Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';
+  if (!d.checkFatto) return {
+    titolo: d.bravo ? '⚡ Il tuo giorno è quasi pronto' : '⚡ Hai scritto il tuo giorno?',
+    testo: (d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».') + domaniRiga + fine,
+    url: './?apri=check', tag: 'check_sera',
+  };
+  if (d.domani) return {
+    titolo: `📅 Domani hai ${d.domani.titolo}`,
+    testo: `${d.bravo ? `Oggi ${d.bravo}, bel lavoro. ` : ''}Si comincia alle ${d.domani.ora}: ${d.domani.primo}.${fine} Tocca per vedere la giornata.`,
+    url: `./?apri=agenda&giorno=${d.ilGiornoDopo}`, tag: 'domani',
+  };
+  if (!coda) return null;   // Check fatto, domani niente, niente da consigliare: si tace
+  return {
+    titolo: trainingRiga ? '🏋️ 5 minuti di Training?' : d.bravo ? '👏 Bel lavoro oggi!' : '🎯 Gli obiettivi del mese',
+    testo: `${d.bravo ? `Oggi ${d.bravo}, bel lavoro. ` : ''}${coda}`,
+    url: trainingRiga ? (d.daRipassare > 0 ? './?apri=training&vista=ripassa' : './?apri=training') : './', tag: 'sera',
+  };
 }
