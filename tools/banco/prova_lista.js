@@ -433,4 +433,33 @@ prova('Segni vitali: accanto a BBS e WES l\'evento a cui si riferiscono i numeri
   assert.deepEqual(L.eventoDaMostrare(bbs, '2026-11-15'), { data: '2026-11-01', etichetta: '11-2026', inCorso: true });
 });
 
+prova('Lettura della Lista veloce (02/10): prima pagina da sola, poi cinque alla volta in ordine; dopo un\'azione si rilegge solo la riga', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function leggiLista()');
+  const pezzo = src.slice(da, src.indexOf('async function ricaricaERidisegna()'));
+  const quante = n => Array.from({ length: n }, (_, i) => ({ id: String(i).padStart(5, '0') }));
+  const prova1 = async totale => {
+    const richieste = [], tutte = quante(totale);
+    const ctx = { LS: { righe: [], usoApp: null }, console, dbq: (_, p) => p };
+    ctx.supa = { from: () => { const q = { select() { return q; }, order() { return q; }, eq() { return q; }, range(a, b) { richieste.push([a, b]); q._r = [a, b]; return q; },
+      maybeSingle() { q._one = true; return q; }, then(res) { res(q._one ? { data: { id: 'x', n: 'nuova' }, error: null } : { data: tutte.slice(q._r[0], q._r[1] + 1), error: null }); } }; return q; } };
+    vm.createContext(ctx); vm.runInContext(pezzo + ';this.leggiLista = leggiLista; this.aggiornaRiga = aggiornaRiga', ctx);
+    const r = await ctx.leggiLista();
+    return { r, richieste, ctx };
+  };
+  let x = await prova1(300);
+  assert.equal(x.r.length, 300); assert.equal(x.richieste.length, 1);                       // chi ha pochi nomi: una richiesta sola
+  x = await prova1(6654);
+  assert.equal(x.r.length, 6654); assert.equal(JSON.stringify(x.r.map(r => r.id)), JSON.stringify(quante(6654).map(r => r.id)));   // tutti, nell'ordine
+  assert.equal(x.richieste.length, 11);                                                      // 1 + 5 piene + 5 (una con il resto, le altre vuote)
+  x = await prova1(6000);
+  assert.equal(x.r.length, 6000);
+  // la riga: sostituita, aggiunta se manca, niente se la Lista non è stata letta
+  x.ctx.LS.righe = [{ id: 'x', n: 'vecchia' }, { id: 'y' }]; await x.ctx.aggiornaRiga('x');
+  assert.deepEqual(JSON.parse(JSON.stringify(x.ctx.LS.righe)), [{ id: 'x', n: 'nuova' }, { id: 'y' }]);
+  x.ctx.LS.righe = [{ id: 'y' }]; await x.ctx.aggiornaRiga('x'); assert.equal(x.ctx.LS.righe.length, 2);
+  x.ctx.LS.righe = []; await x.ctx.aggiornaRiga('x'); assert.equal(x.ctx.LS.righe.length, 0);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

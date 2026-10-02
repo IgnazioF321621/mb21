@@ -11,15 +11,30 @@ const BLOCCO = 40;                                    // card disegnate per volt
 const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', lettera: null, esporta: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
+// La prima pagina da sola (chi ha pochi nomi finisce lì); se è piena, le altre cinque alla volta: l'Admin ha oltre 6.000 nomi (6 MB) e le richieste
+// una dopo l'altra erano il tempo più lungo (Ignazio 02/10: «tutto molto lento nel registrare azioni e nell'aprire il nome»)
 async function leggiLista() {
-  const righe = [];
-  for (let da = 0; ; da += 1000) {
-    const { data, error } = await dbq('lettura lista',
-      supa.from('contatti_lista').select('*').order('id').range(da, da + 999));
-    if (error) throw error;
-    righe.push(...data);
-    if (data.length < 1000) return righe;
+  const pagina = k => dbq('lettura lista', supa.from('contatti_lista').select('*').order('id').range(k * 1000, k * 1000 + 999));
+  const prima = await pagina(0);
+  if (prima.error) throw prima.error;
+  const righe = [...prima.data];
+  if (prima.data.length < 1000) return righe;
+  for (let k = 1; ; k += 5) {
+    const pagine = await Promise.all([0, 1, 2, 3, 4].map(i => pagina(k + i)));
+    for (const p of pagine) { if (p.error) throw p.error; righe.push(...p.data); }
+    if (pagine[4].data.length < 1000) return righe;
   }
+}
+// Dopo un'azione cambia solo quella persona (fase, coda): si rilegge la sua riga e non tutta la Lista. Con la Lista non ancora letta non fa niente
+// (la leggerà chi la apre); se qualcosa non va la si svuota, e si rilegge intera come prima.
+async function aggiornaRiga(id) {
+  if (!LS.righe.length || !id) return;
+  const { data, error } = await dbq('riga della lista', supa.from('contatti_lista').select('*').eq('id', id).maybeSingle());
+  if (error) { LS.righe = []; return; }
+  const i = LS.righe.findIndex(x => x.id === id);
+  if (!data) { if (i >= 0) LS.righe.splice(i, 1); return; }
+  if (LS.usoApp) data.app = LS.usoApp[id] || null;
+  if (i >= 0) LS.righe[i] = data; else LS.righe.push(data);
 }
 
 // Targhette BBS · WES · CEP della Lista: biglietti per eventi non ancora passati, periodi CEP, coppie collegate.
@@ -294,7 +309,8 @@ async function menuCard(id) {
 }
 
 async function ricaricaERidisegna() {
-  try { LS.righe = await leggiLista(); } catch (e) { return mostraToast('Non riesco a ricaricare i nomi.'); }
+  if (LS.contatto) await aggiornaRiga(LS.contatto.id);   // la scheda aperta: basta la sua riga
+  if (!LS.righe.length) { try { LS.righe = await leggiLista(); } catch (e) { return mostraToast('Non riesco a ricaricare i nomi.'); } }
   segnaApp();
   if (LS.contatto) {
     LS.contatto = LS.righe.find(x => x.id === LS.contatto.id) || null;
@@ -711,7 +727,7 @@ async function sezioneAzioni() {
   }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
-  const dopo = async () => { LS.azioni = null; LS.righe = []; await ricaricaERidisegna(); };
+  const dopo = async () => { LS.azioni = null; await ricaricaERidisegna(); };
   const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo);
   box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(collega);
   box.querySelectorAll('[data-cambia-esito]').forEach(b => b.onclick = () => {   // stesso blocco dell'Agenda, aperto sul posto
@@ -734,12 +750,12 @@ async function azionePiu() {
   if (!MB21Agenda.tipiPer(c.categoria).length) return mostraToast('Il contatto non ha una categoria: dagliela con Modifica o da «Da catalogare».');
   const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
   if (!creato) return;
-  LS.azioni = null; LS.righe = [];
+  LS.azioni = null;
   await ricaricaERidisegna();
   tracciaDiApertura(creato, c, null);   // un Piano Marketing a un candidato: «Hai condiviso la traccia di apertura?» (01/10)
   mostraToast('Appuntamento fissato', async () => {
     await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', creato.id));
-    LS.azioni = null; LS.righe = [];
+    LS.azioni = null;
     await ricaricaERidisegna();
   });
 }

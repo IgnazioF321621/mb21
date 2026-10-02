@@ -2947,11 +2947,11 @@ function spostaAppuntamento(e, dopo) {
         p_azione: e.id, p_contatto: e.contatto_id, p_portato_da: e.portato_da || null, p_modalita: e.modalita || null, p_esito: e.esito || null,
         p_inizio: e.inizio, p_fine: e.fine || null, p_ospite: e.ospite || null, p_note: e.note || null, p_cambia_scelta: true, p_data_scelta: nuovaData }));
       if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
-      LS.righe = [];   // la Lista si ricarica: la coda può essere cambiata
+      await aggiornaRiga(e.contatto_id);   // la riga della Lista cambia (coda); non si rilegge tutta
       await dopo(g);
       return mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
         await dbq('annulla sposta', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
-        LS.righe = [];
+        await aggiornaRiga(e.contatto_id);
         await dopo(giorno);
       });
     }
@@ -3363,12 +3363,12 @@ async function foglioAzione(id, opz = {}) {
       ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     chiudi();
-    LS.righe = [];   // la Lista si ricarica: fase e coda possono essere cambiate
+    await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));   // fase e coda possono essere cambiate: si rilegge solo la riga di chi è toccato
     if (opz.dopo) await opz.dopo();
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
-      LS.righe = [];
+      await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));
       if (opz.dopo) await opz.dopo();
       mostraToast('Annullato');
     });
