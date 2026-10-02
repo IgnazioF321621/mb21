@@ -132,10 +132,10 @@ const assert = require('node:assert/strict');
     const base = { bravo: null, checkFatto: false, domani: null, ilGiornoDopo: '2026-10-04', training: 'fatto', daRipassare: 0, obiettivi: null };
     // Check non fatto
     let m = R.messaggioSera({ ...base });
-    assert.equal(m.titolo, '⚡ Hai scritto il tuo giorno?'); assert.equal(m.url, './?apri=check'); assert.equal(m.tag, 'check_sera');
+    assert.equal(m.titolo, '⚡ Hai scritto il riepilogo del «tuo giorno»?'); assert.equal(m.url, './?apri=check'); assert.equal(m.tag, 'check_sera');
     assert.equal(m.testo, 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
     m = R.messaggioSera({ ...base, bravo: '3 contatti, 1 vendita e 5 minuti di Training', domani });
-    assert.equal(m.titolo, '⚡ Il tuo giorno è quasi pronto');
+    assert.equal(m.titolo, '⚡ Il riepilogo del «tuo giorno» è quasi pronto');
     assert.equal(m.testo, 'Oggi 3 contatti, 1 vendita e 5 minuti di Training. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno». Domani: 2 appuntamenti, si comincia alle 09:30 (PM · Pino).');
     // Training non fatto: un consiglio, mai un ordine; mai usato / da ripassare / niente da ripassare
     assert.match(R.messaggioSera({ ...base, training: 'da_fare' }).testo, /Se ti va, restano 5 minuti di Training\.$/);
