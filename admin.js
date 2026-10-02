@@ -39,11 +39,58 @@ async function apriAdmin() {
       const { data: tel } = await dbq('telefoni delle schede', supa.from('contatti').select('codice_amway, telefono').in('codice_amway', codiciSenza).is('eliminato_il', null).like('telefono', '+%'));
       (tel || []).forEach(c => { AD.telSchede[c.codice_amway] = c.telefono; });
     }
+    // «Senza obiettivi del mese» (nota 040, 02/10): chi li ha già scritti, chi ha toccato «Non questo mese», e quando è stato mandato l'ultimo invito (la funzione, per i 3 giorni di pausa)
+    const mese = oggi.slice(0, 8) + '01';
+    AD.meseOb = mese;
+    const [ob, salto, stato] = await Promise.all([
+      dbq('obiettivi del mese di tutti', supa.from('obiettivi_mese').select('*').eq('mese', mese)),
+      dbq('obiettivi saltati', supa.from('obiettivi_salto').select('user_id').eq('mese', mese)),
+      supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'stato' } }).catch(() => ({ data: null })),
+    ]);
+    AD.conObiettivi = new Set((ob.error ? [] : ob.data).filter(o => MB21Dashboard.haObiettivi(o)).map(o => o.user_id));
+    AD.obSaltati = new Set((salto.error ? [] : salto.data).map(x => x.user_id));
+    AD.obUltimi = (stato && stato.data && stato.data.ultimi) || {};
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
   disegnaAdmin();
+}
+
+// ── SENZA OBIETTIVI DEL MESE (lista «Avvisi», nota 040, Ignazio 02/10) ── chi entra nell'app e gli obiettivi del mese non li ha ancora scritti:
+// un invito per persona, con calma (mai «a tutti»). Non insistente: l'invito è lo stesso avviso della sera, parte solo se ha gli avvisi accesi,
+// non se ha toccato «Non questo mese», e dopo l'invio il bottone si ferma 3 giorni (lo ferma anche la funzione `avvisi`, non solo la schermata).
+const PAUSA_INVITO_OB = 3 * 86400000;
+const senzaObiettivi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.conObiettivi || new Set()).has(u.id))
+  .sort((a, b) => Number((AD.obSaltati || new Set()).has(a.id)) - Number((AD.obSaltati || new Set()).has(b.id)));   // chi ha detto «non questo mese» in fondo
+const quandoInvitoOb = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(', ', ' alle ');
+function senzaObiettiviHtml() {
+  const senza = senzaObiettivi();
+  if (!senza.length) return '';
+  const mese = MESI_LUNGHI[Number(AD.meseOb.slice(5, 7)) - 1];
+  return `<div class="rp-wes ad-senza-ob"><h3>${ic('obiettivi')} Senza obiettivi di ${mese} (${senza.length})</h3>${senza.map(u => {
+    const ultimo = (AD.obUltimi || {})[u.id], inPausa = ultimo && Date.now() - Date.parse(ultimo) < PAUSA_INVITO_OB;
+    const acceso = (AD.dispositivi[u.id] || []).length > 0, saltato = (AD.obSaltati || new Set()).has(u.id);
+    const nota = saltato ? 'Ha scelto di non farli questo mese' : !acceso ? 'Avvisi spenti: l\'invito non può arrivare' : inPausa ? `Invito mandato il ${quandoInvitoOb(ultimo)}` : ultimo ? `Ultimo invito il ${quandoInvitoOb(ultimo)}` : 'Nessun invito mandato';
+    return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(nota)}</small>
+      ${saltato || !acceso ? '' : `<div class="ad-invita"><button data-ob-invito="${esc(u.id)}" ${inPausa ? 'disabled' : ''}>${ic('avvisi')} ${inPausa ? 'Mandato' : 'Manda l\'avviso'}</button></div>`}</div>`;
+  }).join('')}<small>Un invito per persona, senza fretta: dopo l'invio il bottone si ferma per 3 giorni.</small></div>`;
+}
+function collegaSenzaObiettivi() {
+  app.querySelectorAll('[data-ob-invito]').forEach(b => b.onclick = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.obInvito);
+    if (!u) return;
+    b.disabled = true;
+    const { data, error } = await supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'manda', utente: u.id } });
+    const nome = nomeDi(u).split(' ')[0];
+    if (error || !data) { b.disabled = false; return mostraToast('Non riesco a mandarlo: riprova.'); }
+    if (data.ultimo) AD.obUltimi = { ...(AD.obUltimi || {}), [u.id]: data.ultimo };
+    if (data.esito === 'non_questo_mese') AD.obSaltati.add(u.id);
+    if (data.esito === 'ha_gli_obiettivi') AD.conObiettivi.add(u.id);
+    mostraToast({ mandato: `Avviso mandato a ${nome}`, gia_mandato: `A ${nome} l'invito è già arrivato da poco`, non_questo_mese: `${nome} ha scelto di non farli questo mese`,
+      ha_gli_obiettivi: `${nome} ha già scritto gli obiettivi`, avvisi_spenti: `${nome} ha gli avvisi spenti: l'invito non può arrivare` }[data.esito] || 'Fatto');
+    disegnaAdmin();
+  });
 }
 
 // ── SENZA AVVISI (lista «Avvisi» di MB App, Ignazio 25/09) ── chi entra nell'app ma non ha gli avvisi accesi su nessun dispositivo:
@@ -194,6 +241,7 @@ function disegnaAdmin() {
           ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
       ${senzaAvvisiHtml()}
+      ${senzaObiettiviHtml()}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
       <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
@@ -425,6 +473,7 @@ function collegaAdmin() {
   });
   su('ad-nuovo-utente', () => foglioNuovoUtente());
   collegaSenzaAvvisi();
+  collegaSenzaObiettivi();
   su('ad-copia-link', foglioLinkInvito);
   app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
