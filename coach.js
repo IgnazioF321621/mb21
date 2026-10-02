@@ -338,7 +338,7 @@
           `<li>${icona(ICONA_RIF[r[0]] || 'info')} ${esc(r[1])}</li>`).join('')}</ul></div></div>`);
       }
       return stato.risposte;
-    });
+    }).catch(err => { console.error('[MB21] chat del coach', err); return stato.risposte; });   // un passo che non riesce non deve lasciare la chat appesa: si chiude e si salva quello che c'è
     return { stato, fine };
   }
 

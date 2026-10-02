@@ -131,4 +131,36 @@ prova('«Hai condiviso la traccia di apertura?» dopo un Piano Marketing: No con
   assert.deepEqual(log.map(x => x[0]), ['domanda', 'sezione', 'poi']); assert.equal(ctx.LS.sezione, 'sharing');
 });
 
+prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda da coach, né traccia di apertura, né «Quando risentirlo?»; il giorno del PM si chiede ancora', async () => {
+  const log = [], ctx = { MB21Agenda: A, MB21Coda: { oggiRoma: () => '2026-10-02' }, AG: {}, console };
+  ctx.supa = { rpc: () => ({ data: { esito_prec: null, completata_prec: false, contatto_id: 'c1', rientro_prec: null, in_coda_prec: false, rientro_cambiato: false }, error: null }),
+    from: () => { const q = { insert() { return q; }, select() { return q; }, single() { return q; }, delete() { return q; }, in() { return q; }, eq() { return q; }, update() { return q; }, then(res) { res({ data: null, error: null }); } }; return q; } };
+  ctx.dbq = (_, p) => Promise.resolve(p);
+  ctx.spuntaAvvio = async () => null; ctx.passoInCache = () => {}; ctx.mostraToast = t => log.push(['toast', t]);
+  ctx.apriAgenda = async () => {}; ctx.registraVenditaDa = async () => false; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => { log.push(['proponiTraccia']); return false; };
+  ctx.nuovoAppuntamento = async o => { log.push(['nuovoAppuntamento', o.titolo]); return o.salta ? { id: 'p' } : { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
+  ctx.appuntamentoDaCoda = async () => { log.push(['appuntamentoDaCoda']); return { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
+  ctx.chiediRiflessione = async () => { log.push(['coach']); return null; };
+  ctx.tracciaDiApertura = async (c, k, poi) => { log.push(['traccia']); return poi ? poi() : null; };
+  ctx.chiediRientro = async () => { log.push(['rientro']); return '2026-10-22'; }; ctx.dataBreve = g => g;
+  ctx.MB21Sharing = { proponeTraccia: () => true };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
+  const tel = inizio => ({ id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', area: 'Attività', inizio, contatti: { nome: 'Mario', categoria: 'Prospect' } });
+  const giro = async (esito, inizio) => { log.length = 0; await ctx.chiudiAppuntamento(tel(inizio), esito, { dopo: async () => {} }); return log.map(x => x[0]).filter(x => x !== 'toast'); };
+  // PM Fissato nel 2020: il giorno del PM sì, poi niente
+  assert.deepEqual(await giro('PM Fissato', '2020-05-05T10:00:00Z'), ['appuntamentoDaCoda']);
+  assert.deepEqual(await giro('Relazione', '2020-05-05T10:00:00Z'), []);                       // niente «Quando risentirlo?» né coach
+  assert.deepEqual(await giro('No Risposta', '2020-05-05T10:00:00Z'), []);
+  // oggi: tutto com'era
+  assert.deepEqual(await giro('PM Fissato', '2026-10-02T08:00:00Z'), ['appuntamentoDaCoda', 'traccia', 'coach']);
+  assert.deepEqual(await giro('Relazione', '2026-10-02T08:00:00Z'), ['rientro', 'coach']);
+  // un appuntamento (non una telefonata) chiuso nel passato: niente «prossimo appuntamento», niente coach
+  const pm = { id: 'a2', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Follow Up', modalita: 'FU 1a1', categoria: 'Prospect', area: 'Attività', inizio: '2020-05-05T10:00:00Z', contatti: { nome: 'Mario', categoria: 'Prospect' } };
+  log.length = 0; await ctx.chiudiAppuntamento(pm, 'Ulteriore Follow Up', { dopo: async () => {} });
+  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast'), []);
+  log.length = 0; await ctx.chiudiAppuntamento({ ...pm, inizio: '2026-10-02T08:00:00Z' }, 'Ulteriore Follow Up', { dopo: async () => {} });
+  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast'), ['nuovoAppuntamento', 'proponiTraccia', 'traccia', 'coach']);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

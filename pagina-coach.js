@@ -64,7 +64,7 @@ function carteCoach() {
     .then(({ data, error }) => {
       if (error || !data) { COACH.carte = null; return []; }   // senza rete: la chat prosegue senza la carta, e ci riprova la prossima volta
       return MAZZI_COACH.map(s => (data.find(r => r.situazione === s) || {}).batteria).filter(Boolean);
-    });
+    }).catch(() => { COACH.carte = null; return []; });
   return COACH.carte;
 }
 async function chiediCoach(e, esito, situazione) {
