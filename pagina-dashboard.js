@@ -1666,21 +1666,26 @@ function apriObiettivi() {
 const GIORNI_RIQUADRO_OBIETTIVI = 5;
 // Foglio nuovo (Ignazio 01/10): chi gli obiettivi li aveva già scritti con il foglio vecchio vede il riquadro UNA volta (dall'1 al 3 ottobre 2026):
 // «puoi rifarli, riportando i dati». Mai all'Admin («tranne per me»). Stessa finestra dell'avviso della sera (regole.ts → FOGLIO_NUOVO).
+// Non insistente né opprimente (Ignazio 02/10): a chi li deve ancora scegliere il riquadro si apre al massimo UNA volta al giorno su quel dispositivo
+// (anche se tocca «Più tardi» o esce e rientra), e con «Non questo mese» non si apre più per tutto il mese, né qui né come avviso (tabella `obiettivi_salto`).
 const RIFAI_OBIETTIVI = { dal: '2026-10-01', al: '2026-10-03' };
 const chiaveRifaiOb = mese => `mb21_ob_rifai_${ST.utente.id}_${mese}`;
-function mostraRiquadroObiettivi() {
+const chiaveOggiOb = oggi => `mb21_ob_riquadro_${ST.utente.id}_${oggi}`;
+const ricordoOb = chiave => { try { return !!localStorage.getItem(chiave); } catch (e) { return false; } };   // senza memoria del telefono: si mostra
+const segnaOb = chiave => { try { localStorage.setItem(chiave, '1'); } catch (e) { /* pazienza */ } };
+async function mostraRiquadroObiettivi() {
   const d = DS.dati;
   if (!d || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti() || eAdmin()) return;
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   const rifai = !d.obiettiviMancanti;   // li ha già: solo l'invito a rifarli nel foglio nuovo, una volta
-  if (rifai) {
-    if (ST.oggi < RIFAI_OBIETTIVI.dal || ST.oggi > RIFAI_OBIETTIVI.al) return;
-    try { if (localStorage.getItem(chiaveRifaiOb(d.mese))) return; } catch (e) { /* senza memoria: si mostra */ }
-  }
+  if (rifai && (ST.oggi < RIFAI_OBIETTIVI.dal || ST.oggi > RIFAI_OBIETTIVI.al || ricordoOb(chiaveRifaiOb(d.mese)))) return;
+  if (!rifai && ricordoOb(chiaveOggiOb(ST.oggi))) return;   // oggi l'ha già visto
   if (document.querySelector('.velo')) return;   // c'è già un foglio aperto (benvenuto, avviso…): non ci si sovrappone
   if (ST.riquadroObMostrato) return;
   ST.riquadroObMostrato = true;   // una volta per ingresso: toccare una fascia ridisegna la Dashboard e non deve riaprirlo
-  if (rifai) { try { localStorage.setItem(chiaveRifaiOb(d.mese), '1'); } catch (e) { /* pazienza */ } }
+  const { data: saltato } = await dbq('obiettivi saltati', supa.from('obiettivi_salto').select('user_id').eq('user_id', ST.utente.id).eq('mese', d.mese).maybeSingle());
+  if (saltato || document.querySelector('.velo') || ST.tab !== 'oggi') { ST.riquadroObMostrato = false; return; }   // «Non questo mese», o nel frattempo si è aperto altro
+  segnaOb(rifai ? chiaveRifaiOb(d.mese) : chiaveOggiOb(ST.oggi));
   const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
   const velo = document.createElement('div');
   velo.className = 'velo centro';
@@ -1691,11 +1696,18 @@ function mostraRiquadroObiettivi() {
     <p>${rifai ? 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Ti bastano due minuti.'
       : 'Prima di cominciare, ti consiglio di scegliere i tuoi obiettivi del mese: ti bastano due minuti e tutto il mese ha una direzione.'}</p>
     <button class="primario" id="rob-si">${rifai ? 'Apro il foglio nuovo' : 'Scelgo i miei obiettivi'}</button>
-    <button class="link" id="rob-no">Più tardi, vado alla Dashboard</button></div>`;
+    <button class="link" id="rob-no">Più tardi, vado alla Dashboard</button>
+    <button class="link" id="rob-mai" style="font-size:13px;color:var(--grigio)">Non questo mese</button></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.querySelector('#rob-no').onclick = chiudi;
   velo.querySelector('#rob-si').onclick = () => { chiudi(); apriObiettivi(); };
+  velo.querySelector('#rob-mai').onclick = async () => {
+    const { error } = await dbq('non questo mese', supa.from('obiettivi_salto').insert({ user_id: ST.utente.id, mese: d.mese }));
+    if (error && error.code !== '23505') return mostraToast('Non salvato: riprova.');   // 23505: già saltato, va bene lo stesso
+    chiudi();
+    mostraToast(`Va bene: per ${mese} non ti propongo più gli obiettivi`);
+  };
 }
 
 // Il telefono tiene l'app viva in secondo piano: uscendo dall'app il riquadro torna «da mostrare»; rientrando sulla Dashboard si riapre

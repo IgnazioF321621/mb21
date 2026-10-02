@@ -30,7 +30,7 @@
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, avvisoObiettivi, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, avvisoObiettivi, invitoObiettivi, haObiettivi, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -135,6 +135,41 @@ Deno.serve(async (req) => {
     return risposta(esito);
   }
 
+  // L'invito agli obiettivi mandato a mano dall'Admin (nota 040, 02/10): persona per persona, mai «a tutti», e non insistente:
+  // niente se ha già gli obiettivi o ha toccato «Non questo mese», niente se non ha gli avvisi accesi, e un invio ogni 3 giorni.
+  //   { tipo: 'obiettivi_admin', azione: 'stato' }            → { ultimi: { <utente>: <quando è stato mandato> } }
+  //   { tipo: 'obiettivi_admin', azione: 'manda', utente: id } → { esito: 'mandato' | 'avvisi_spenti' | 'ha_gia_gli_obiettivi' | 'non_questo_mese' | 'gia_mandato', ultimo? }
+  if (tipo === 'obiettivi_admin') {
+    const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const { data: { user } } = await db.auth.getUser(token);
+    if (!user) return risposta({ errore: 'non autorizzato' }, 401);
+    const { data: io } = await db.from('utenti').select('id, ruolo').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
+    if (!io || io.ruolo !== 'Admin') return risposta({ errore: 'solo l\'Admin' }, 403);
+    const oggi = giornoRomaDi(Date.now()), mese = `${oggi.slice(0, 8)}01`, prefisso = `obiettivi-admin:${mese}:`;
+    const { data: mandati, error: em } = await db.from('avvisi_mandati').select('chiave, mandato_il').like('chiave', `${prefisso}%`);
+    if (em) return risposta({ errore: em.message }, 500);
+    const ultimi: Record<string, string> = {};
+    for (const m of mandati ?? []) ultimi[m.chiave.slice(prefisso.length)] = m.mandato_il;
+    if (corpo.azione === 'stato') return risposta({ ultimi });
+    if (corpo.azione !== 'manda' || !corpo.utente) return risposta({ errore: 'richiesta non valida' }, 400);
+    const [{ data: p }, { data: ob }, { data: salto }] = await Promise.all([
+      db.from('utenti').select('id, ruolo, accesso_attivo').eq('id', corpo.utente).is('eliminato_il', null).maybeSingle(),
+      db.from('obiettivi_mese').select('*').eq('user_id', corpo.utente).eq('mese', mese).maybeSingle(),
+      db.from('obiettivi_salto').select('user_id').eq('user_id', corpo.utente).eq('mese', mese).maybeSingle(),
+    ]);
+    if (!p || p.ruolo === 'Admin' || !p.accesso_attivo) return risposta({ errore: 'utente non valido' }, 400);
+    if (salto) return risposta({ esito: 'non_questo_mese' });
+    if (haObiettivi(ob)) return risposta({ esito: 'ha_gli_obiettivi' });
+    const ultimo = ultimi[corpo.utente];
+    if (ultimo && Date.now() - Date.parse(ultimo) < 3 * 86400000) return risposta({ esito: 'gia_mandato', ultimo });
+    const invito = invitoObiettivi(oggi);
+    const spedito = await spedisciA([corpo.utente], { titolo: invito.titolo, testo: invito.testo, url: './', tag: 'obiettivi' });
+    if (!spedito.dispositivi) return risposta({ esito: 'avvisi_spenti' });
+    const adesso = new Date().toISOString();
+    await db.from('avvisi_mandati').upsert({ chiave: prefisso + corpo.utente, user_id: corpo.utente, mandato_il: adesso }, { onConflict: 'chiave' });
+    return risposta({ esito: 'mandato', ultimo: adesso, ...spedito });
+  }
+
   // Avvisi dell'orologio: solo con il segreto condiviso
   if (!SEGRETO || req.headers.get('x-avvisi-segreto') !== SEGRETO) return risposta({ errore: 'non autorizzato' }, 401);
   // «Adesso»: quello vero, oppure con { prova: true, adesso } quello finto (solo in prova: niente parte, niente si segna)
@@ -148,7 +183,7 @@ Deno.serve(async (req) => {
     // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Hai fatto il Check?» con in fondo
     // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
     const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }] = await Promise.all([
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }, { data: saltati, error: e10 }] = await Promise.all([
       db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
@@ -160,8 +195,9 @@ Deno.serve(async (req) => {
       // 01/10 gli obiettivi del mese: chi li ha già impostati e a chi è già stato mandato il «rifalli» (segno in avvisi_mandati)
       db.from('obiettivi_mese').select('*').eq('mese', `${oggi.slice(0, 8)}01`),
       db.from('avvisi_mandati').select('chiave').like('chiave', `obiettivi-rifai:${oggi.slice(0, 7)}:%`),
+      db.from('obiettivi_salto').select('user_id').eq('mese', `${oggi.slice(0, 8)}01`),   // 02/10 chi ha toccato «Non questo mese»
     ]);
-    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7 || e8 || e9;
+    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7 || e8 || e9 || e10;
     if (err) return risposta({ errore: err.message }, 500);
     const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
     const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda, come il promemoria
@@ -191,7 +227,7 @@ Deno.serve(async (req) => {
       else if (d) avviso = { titolo: `📅 Domani hai ${d.titolo}`, testo: `${bravo ? `Oggi ${bravo}, bel lavoro. ` : ''}Si comincia alle ${d.ora}: ${d.primo}. Tocca per vedere la giornata.`, url: `./?apri=agenda&giorno=${ilGiornoDopo}`, tag: 'domani' };
       else avviso = null;   // Check fatto e domani niente: si tace
       // gli obiettivi del mese: un avviso a parte, perché il tocco porta alla Dashboard e non al Check
-      let ob = avvisoObiettivi(oggi, (obMese ?? []).find(x => x.user_id === id));
+      let ob = avvisoObiettivi(oggi, (obMese ?? []).find(x => x.user_id === id), (saltati ?? []).some(x => x.user_id === id));
       const chiaveRifai = `obiettivi-rifai:${oggi.slice(0, 7)}:${id}`;
       if (ob?.rifai && (giaRifatto ?? []).some(x => x.chiave === chiaveRifai)) ob = null;
       if (corpo.prova) { esiti.push({ utente: id, check: avviso, obiettivi: ob ? { titolo: ob.titolo, testo: ob.testo } : null }); continue; }
