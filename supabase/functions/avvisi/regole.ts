@@ -156,7 +156,7 @@ export function messaggioSera(d: DatiSera): MessaggioSera | null {
   const fine = coda ? ` ${coda}` : '';
   const domaniRiga = d.domani ? ` Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';
   if (!d.checkFatto) return {
-    titolo: d.bravo ? '⚡ Il tuo giorno è quasi pronto' : '⚡ Hai scritto il tuo giorno?',
+    titolo: d.bravo ? '⚡ Il riepilogo del «tuo giorno» è quasi pronto' : '⚡ Hai scritto il riepilogo del «tuo giorno»?',
     testo: (d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».') + domaniRiga + fine,
     url: './?apri=check', tag: 'check_sera',
   };
