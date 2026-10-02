@@ -9,4 +9,6 @@ create table public.training_obiettivo (
 alter table public.training_obiettivo enable row level security;
 create policy "training_obiettivo_proprio" on public.training_obiettivo
   for all using (user_id = public.utente_corrente()) with check (user_id = public.utente_corrente());
+-- Permessi (dal 30/10/2026 Supabase non li dà più da solo alle tabelle nuove)
+grant select, insert, update, delete on public.training_obiettivo to authenticated, service_role;
 comment on table public.training_obiettivo is 'Training: la fascia di guadagno scelta da ogni utente in «Dove sei, dove vuoi andare» (arrotondamento, piano B, indipendenza).';

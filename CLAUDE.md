@@ -51,6 +51,7 @@ Il database Supabase è **uno solo, quello vero**: lo usano ogni giorno i partne
 - Prima di una modifica approvata: copia dei dati che si toccano.
 - Le modifiche approvate che servono solo alla versione nuova si applicano **al rilascio**, subito prima della pubblicazione (§ 5).
 - Nel dubbio se è un'aggiunta o una modifica: è una modifica → si chiede.
+- **Tabelle nuove e permessi (dal 30/10/2026):** Supabase non dà più da solo l'accesso alle tabelle nuove dello schema `public`; senza un `GRANT` esplicito l'app riceve «permission denied». Ogni migrazione che crea una tabella contiene quindi anche i suoi `GRANT`, insieme a RLS e alle sue regole: di norma `grant select, insert, update, delete on public.<tabella> to authenticated, service_role;` — `anon` solo se serve davvero a chi non è ancora entrato (e allora lo si dice a Ignazio). Vale anche per i campi e le funzioni nuove che hanno bisogno di permessi (`grant execute … to authenticated`).
 
 ## 5. 🔒 Niente online: il rilascio unico
 - **Ogni sessione e ogni agente lavora a sé stante**, sul proprio titolo. **Pubblica soltanto la sessione «Rilascio»** (quella che Ignazio indica con questo nome); tutte le altre non pubblicano e non rilasciano mai nulla. Vietati alle altre: `git push`, qualsiasi comando `gh` che crea o cambia repo, Pages o release, qualsiasi deploy, `APP_VERSION` e `?v=`, modifiche al database in attesa di rilascio.
@@ -97,6 +98,9 @@ Serve a Ignazio per avere **un flusso di lavoro solo**, senza saltare da un cant
 - Lavori aperti/chiusi in `CANTIERI.md`; lezioni apprese in `LEZIONI.md`.
 - Branch unico: `main`. GitHub Pages pubblica da `main` / root (solo al rilascio).
 - **Novità per i partner sospese** (dal 22/09): non si aggiungono righe a `novita.js` finché Ignazio non lo chiede.
+
+## 11. 💶 Costo zero
+MB21 e Zona Tracker sono due progetti nella stessa organizzazione Supabase, **piano gratuito**, e i limiti (traffico, database, spazio dei file, registri) si contano insieme. Regola di Ignazio: **costo zero, nessun piano a pagamento senza una sua decisione esplicita.** Se un lavoro richiede un piano a pagamento o avvicina un limite gratuito (letture ripetute a ogni apertura, funzioni che girano spesso, file pesanti, registri molto dettagliati), ci si ferma e si chiede a Ignazio.
 
 ## 10. Resoconto a 6 punti
 In modalità B uno solo, a fine titolo; in modalità A dopo ogni modifica.
