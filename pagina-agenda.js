@@ -113,7 +113,7 @@ function cambiaVista(v) {
 function richiamiAgenda(oggi) {
   const voci = [];
   const t = AG.telefonate;
-  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', `Contatti <b>${t.fatti_oggi}/${t.contatti_al_giorno}</b>`]);
+  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', (t.contatti_al_giorno === 0 ? 'Contatti <b>in pausa</b>' : `Contatti <b>${t.fatti_oggi}/${t.contatti_al_giorno}</b>`)]);
   else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
   if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
   if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);

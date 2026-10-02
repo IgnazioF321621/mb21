@@ -115,7 +115,7 @@ function disegnaProfilo() {
       <label>Telefono<input id="pf-tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" value="${esc(u.telefono || '')}" placeholder="+39 …"></label>
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
-    ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', esc(String(numero || '—')))}
+    ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—')))}
     ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
