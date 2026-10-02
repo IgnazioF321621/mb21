@@ -32,7 +32,7 @@
 //   il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera): Check, complimenti, domani, Training e obiettivi.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, raggruppaVicini, raggruppaPerUtente, elencoImpegni, oraMinuti, FINESTRA_VICINI, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce as VoceModello, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -304,8 +304,9 @@ Deno.serve(async (req) => {
   // Cantiere 43: i minuti prima sono la scelta di ognuno («appuntamenti», «telefonate», «cose», «modelli»); si guarda da 5 minuti fa
   // (per «all'ora») fino a un'ora avanti (la scelta più lunga) e decide `eMomentoPrima`.
   if (tipo === 'promemoria') {
-    const adesso = adessoVero, MASSIMO = 60;
-    const da = new Date(adesso - 5 * 60000).toISOString(), a = new Date(adesso + (MASSIMO + 1) * 60000).toISOString();
+    const adesso = adessoVero, MASSIMO = 60, MINUTO = 60000, VICINI = FINESTRA_VICINI / MINUTO;
+    // si guarda anche i 30 minuti oltre il più lontano momento possibile: chi scatta porta con sé i vicini (02/10, un avviso solo)
+    const da = new Date(adesso - 5 * MINUTO).toISOString(), a = new Date(adesso + (MASSIMO + VICINI + 1) * MINUTO).toISOString();
     const [{ data: appuntamenti, error: e1 }, { data: daCoda, error: e2 }] = await Promise.all([
       db.from('azioni').select('id, user_id, contatto_id, inizio, tipo_azione, modalita, esito, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).is('promemoria_il', null).gte('inizio', da).lt('inizio', a),
       db.from('azioni').select('id, user_id, contatto_id, data_scelta, tipo_azione, modalita, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).is('promemoria_il', null).gte('data_scelta', da).lt('data_scelta', a),
@@ -313,66 +314,64 @@ Deno.serve(async (req) => {
     if (e1 || e2) return risposta({ errore: (e1 || e2)!.message }, 500);
     const veri = new Set((appuntamenti ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));
     const tutti = [...(appuntamenti ?? []), ...(daCoda ?? []).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta)}`))];   // senza doppioni della coda
-    const esiti: Record<string, unknown>[] = [];
+
+    // Tutti gli impegni della finestra, di ogni tipo, come «voci»; `due` = è il momento (la scelta di minuti di ognuno). Poi si raggruppano i vicini.
+    type Voce = { utente: string; inizio: number; due: boolean; riga: string; testo: string; titoloExtra?: string; url: string; tag: string; giorno: string; azioni: string[]; chiavi: { chiave: string; user_id: string }[] };
+    const voci: Voce[] = [];
     for (const az of tutti) {
       const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
       const cosa = az.tipo_azione === 'Contatto' ? (az.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (az.modalita || az.tipo_azione);
       const ore = az as unknown as { inizio?: string; data_scelta?: string };   // appuntamento vero (inizio) o dalla coda (data_scelta)
-      const inizio = Date.parse((az.tipo_azione === 'Contatto' ? ore.data_scelta : ore.inizio) ?? '');
-      if (!eMomentoPrima(inizio, quando(az.user_id, 'appuntamenti'), adesso)) continue;   // non è ancora il momento
-      const avviso = { titolo: titoloPrima(inizio, adesso), testo: `${cosa} · ${nome}`, url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}` };
-      if (corpo.prova) { esiti.push({ azione: az.id, utente: az.user_id, ...avviso }); continue; }
-      const esito = await spedisciA([az.user_id], avviso);
-      await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).eq('id', az.id);
-      esiti.push({ azione: az.id, ...esito });
+      const iso = (az.tipo_azione === 'Contatto' ? ore.data_scelta : ore.inizio) ?? '';
+      const inizio = Date.parse(iso);
+      voci.push({ utente: az.user_id, inizio, due: eMomentoPrima(inizio, quando(az.user_id, 'appuntamenti'), adesso), riga: `${cosa} · ${nome}`, testo: `${cosa} · ${nome}`,
+        url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}`, giorno: giornoDi(iso), azioni: [az.id], chiavi: [] });
     }
-    // Le telefonate in Agenda: si guarda fino a 3 ore oltre per prendere tutto il giro, ma l'avviso parte solo quando è il momento
-    // della PRIMA ancora senza promemoria; con lei si segnano tutte quelle del giro.
+    // Le telefonate in Agenda: si guarda fino a 3 ore oltre per prendere tutto il giro (quelle una dietro l'altra sono UN impegno); il momento è quello della PRIMA
     const { data: tel, error: e3 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false)
-      .is('esito', null).is('promemoria_il', null).gte('inizio', da).lt('inizio', new Date(adesso + (MASSIMO + 180) * 60000).toISOString());
+      .is('esito', null).is('promemoria_il', null).gte('inizio', da).lt('inizio', new Date(adesso + (MASSIMO + 180) * MINUTO).toISOString());
     if (e3) return risposta({ errore: e3.message }, 500);
     for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
       const inizio = Date.parse(giro[0].inizio);
-      if (!eMomentoPrima(inizio, quando(giro[0].user_id, 'telefonate'), adesso)) continue;   // non è ancora il momento: se ne riparla al suo turno
-      const titolo = titoloPrima(inizio, adesso);
-      const avviso = giro.length === 1
-        ? { titolo, testo: `Telefonata · ${nomeDi(giro[0])}`, url: `./?apri=agenda&azione=${giro[0].id}`, tag: `promemoria-${giro[0].id}` }
-        : { titolo: `${titolo} · ${giro.length} telefonate`, testo: `dalle ${oraDi(giro[0].inizio)}: ${elencoNomi(giro)}`, url: `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`, tag: `promemoria-${giro[0].id}` };
-      if (corpo.prova) { esiti.push({ telefonate: giro.length, utente: giro[0].user_id, ...avviso }); continue; }
-      const esito = await spedisciA([giro[0].user_id], avviso);
-      await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).in('id', giro.map(x => x.id));
-      esiti.push({ telefonate: giro.length, ...esito });
+      voci.push({ utente: giro[0].user_id, inizio, due: eMomentoPrima(inizio, quando(giro[0].user_id, 'telefonate'), adesso),
+        riga: giro.length === 1 ? `Telefonata · ${nomeDi(giro[0])}` : `${giro.length} telefonate: ${elencoNomi(giro)}`,
+        testo: giro.length === 1 ? `Telefonata · ${nomeDi(giro[0])}` : `dalle ${oraDi(giro[0].inizio)}: ${elencoNomi(giro)}`,
+        titoloExtra: giro.length === 1 ? undefined : ` · ${giro.length} telefonate`,
+        url: giro.length === 1 ? `./?apri=agenda&azione=${giro[0].id}` : `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`,
+        tag: `promemoria-${giro[0].id}`, giorno: giornoDi(giro[0].inizio), azioni: giro.map(x => x.id), chiavi: [] });
     }
-    // Cantiere 43: le cose da fare con l'ora e le voci dei modelli (stessa regola della Timeline di MB Plan: `coseConOra` in regole.ts).
-    // Oggi, e domani se tra un'ora è già domani. Quelle della stessa persona alla stessa ora fanno un avviso solo.
-    const giorni = [...new Set([oggiAdesso, giornoRomaDi(adesso + (MASSIMO + 1) * 60000)])];
-    const [{ data: cose, error: e4 }, { data: voci, error: e5 }, { data: modelli, error: e6 }] = await Promise.all([
+    // Cantiere 43: le cose da fare con l'ora e le voci dei modelli (stessa regola della Timeline di MB Plan: `coseConOra` in regole.ts). Oggi, e domani se è vicino.
+    const giorni = [...new Set([oggiAdesso, giornoRomaDi(adesso + (MASSIMO + VICINI + 1) * MINUTO)])];
+    const [{ data: cose, error: e4 }, { data: vociModelli, error: e5 }, { data: modelli, error: e6 }] = await Promise.all([
       db.from('cose_da_fare').select('id, user_id, testo, giorno, ora, fatto_il, modello_id, core, scala').in('giorno', giorni),
       db.from('modello_giorno').select('id, user_id, testo, giorni, attivo, core, modello_id, ora').not('modello_id', 'is', null).is('core', null),
       db.from('modelli').select('id, attivo, scala'),
     ]);
     if (e4 || e5 || e6) return risposta({ errore: (e4 || e5 || e6)!.message }, 500);
-    const pronte = giorni.flatMap(g => coseConOra((cose ?? []) as Cosa[], (voci ?? []) as Voce[], (modelli ?? []) as Modello[], g))
-      .filter(x => eMomentoPrima(x.inizio, quando(x.user_id, x.tipo), adesso));
-    const { data: mandati, error: e7 } = pronte.length ? await db.from('avvisi_mandati').select('chiave').in('chiave', pronte.map(chiaveAvviso)) : { data: [], error: null };
+    const dellaFinestra = giorni.flatMap(g => coseConOra((cose ?? []) as Cosa[], (vociModelli ?? []) as VoceModello[], (modelli ?? []) as Modello[], g))
+      .filter(x => x.inizio >= adesso - 5 * MINUTO && x.inizio <= adesso + (MASSIMO + VICINI + 1) * MINUTO);
+    const { data: mandati, error: e7 } = dellaFinestra.length ? await db.from('avvisi_mandati').select('chiave').in('chiave', dellaFinestra.map(chiaveAvviso)) : { data: [], error: null };
     if (e7) return risposta({ errore: e7.message }, 500);
     const gia = new Set((mandati ?? []).map(m => m.chiave));
-    const gruppi = new Map<string, ConOra[]>();
-    for (const x of pronte) {
+    for (const x of dellaFinestra) {
       if (gia.has(chiaveAvviso(x))) continue;   // già avvisata
-      const k = `${x.user_id}|${x.inizio}`;
-      gruppi.set(k, [...(gruppi.get(k) ?? []), x]);
+      voci.push({ utente: x.user_id, inizio: x.inizio, due: eMomentoPrima(x.inizio, quando(x.user_id, x.tipo), adesso), riga: x.testo, testo: `${x.ora} · ${x.testo}`,
+        url: `./?apri=agenda&giorno=${x.giorno}`, tag: `cosa-${chiaveAvviso(x)}`, giorno: x.giorno, azioni: [], chiavi: [{ chiave: chiaveAvviso(x), user_id: x.user_id }] });
     }
-    for (const gruppo of gruppi.values()) {
+
+    // Un avviso per gruppo di vicini: da solo com'era; più di uno «Tra 30 minuti · 3 impegni» con l'elenco con le ore
+    const esiti: Record<string, unknown>[] = [];
+    for (const gruppo of raggruppaVicini(voci)) {
       const primo = gruppo[0], titolo = titoloPrima(primo.inizio, adesso);
-      const nomi = gruppo.slice(0, 3).map(x => x.testo).join(', ') + (gruppo.length > 3 ? ` e altre ${gruppo.length - 3}` : '');
       const avviso = gruppo.length === 1
-        ? { titolo, testo: `${primo.ora} · ${primo.testo}`, url: `./?apri=agenda&giorno=${primo.giorno}`, tag: `cosa-${chiaveAvviso(primo)}` }
-        : { titolo: `${titolo} · ${gruppo.length} cose`, testo: `alle ${primo.ora}: ${nomi}`, url: `./?apri=agenda&giorno=${primo.giorno}`, tag: `cosa-${chiaveAvviso(primo)}` };
-      if (corpo.prova) { esiti.push({ cose: gruppo.map(x => `${x.tipo} ${x.id}`), utente: primo.user_id, ...avviso }); continue; }
-      const esito = await spedisciA([primo.user_id], avviso);
-      await db.from('avvisi_mandati').upsert(gruppo.map(x => ({ chiave: chiaveAvviso(x), user_id: x.user_id })), { onConflict: 'chiave', ignoreDuplicates: true });
-      esiti.push({ cose: gruppo.length, ...esito });
+        ? { titolo: titolo + (primo.titoloExtra ?? ''), testo: primo.testo, url: primo.url, tag: primo.tag }
+        : { titolo: `${titolo} · ${gruppo.length} impegni`, testo: elencoImpegni(gruppo), url: `./?apri=agenda&giorno=${primo.giorno}`, tag: primo.tag };
+      if (corpo.prova) { esiti.push({ utente: primo.utente, impegni: gruppo.length, ...avviso }); continue; }
+      const esito = await spedisciA([primo.utente], avviso);
+      const idAzioni = gruppo.flatMap(x => x.azioni), segni = gruppo.flatMap(x => x.chiavi);
+      if (idAzioni.length) await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).in('id', idAzioni);
+      if (segni.length) await db.from('avvisi_mandati').upsert(segni, { onConflict: 'chiave', ignoreDuplicates: true });
+      esiti.push({ impegni: gruppo.length, ...esito });
     }
     // i segni più vecchi di 3 giorni non servono più (la chiave ha dentro il giorno): si puliscono una volta al giorno, alle 3 di notte
     if (!corpo.prova && oraAdesso === 3) await db.from('avvisi_mandati').delete().lt('mandato_il', new Date(adesso - 3 * 86400000).toISOString());
@@ -389,30 +388,39 @@ Deno.serve(async (req) => {
       .neq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).is('senza_esito_avvisato_il', null)
       .gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso - 30 * MINUTO).toISOString());
     if (error) return risposta({ errore: error.message }, 500);
-    const esiti: Record<string, unknown>[] = [];
+    // Appuntamenti e telefonate che adesso scattano, come «voci»; poi UN avviso per persona (02/10, Ignazio: gli avvisi sono veramente tanti)
+    type Voce = { utente: string; inizio: number; riga: string; testo: string; titoloExtra?: string; url: string; tag: string; giorno: string; ids: string[] };
+    const voci: Voce[] = [];
     for (const az of data ?? []) {
       const fine = az.fine ? Date.parse(az.fine) : Date.parse(az.inizio) + ORA;
       if (fine + dopo(az.user_id) > adesso) continue;   // dalla fine non è ancora passato il tempo scelto: si aspetta
       const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
       const testo = `${az.modalita || az.tipo_azione} · ${nome}`;
-      if (corpo.prova) { esiti.push({ azione: az.id, testo }); continue; }
-      const esito = await spedisciA([az.user_id], { titolo: '❓ Com\'è andata?', testo, url: `./?apri=agenda&azione=${az.id}&giorno=${giornoDi(az.inizio)}`, tag: `senza-esito-${az.id}` });
-      await db.from('azioni').update({ senza_esito_avvisato_il: new Date().toISOString() }).eq('id', az.id);
-      esiti.push({ azione: az.id, testo, ...esito });
+      voci.push({ utente: az.user_id, inizio: Date.parse(az.inizio), riga: testo, testo, url: `./?apri=agenda&azione=${az.id}&giorno=${giornoDi(az.inizio)}`, tag: `senza-esito-${az.id}`, giorno: giornoDi(az.inizio), ids: [az.id] });
     }
-    // Le telefonate in Agenda rimaste senza esito (21/09): un avviso solo per giro, un'ora dopo la fine dell'ULTIMA del giro
+    // Le telefonate in Agenda rimaste senza esito (21/09): quelle di un giro sono un impegno solo, un'ora dopo la fine dell'ULTIMA del giro
     const { data: tel, error: e2 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false)
       .is('esito', null).is('senza_esito_avvisato_il', null).gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso).toISOString());
     if (e2) return risposta({ errore: e2.message }, 500);
     for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
       if (fineTelefonata(giro[giro.length - 1]) + dopo(giro[0].user_id) > adesso) continue;   // l'ultima non è finita da abbastanza: si aspetta
-      const avviso = giro.length === 1
-        ? { titolo: '❓ Com\'è andata?', testo: `Telefonata · ${nomeDi(giro[0])}`, url: `./?apri=agenda&azione=${giro[0].id}&giorno=${giornoDi(giro[0].inizio)}`, tag: `senza-esito-${giro[0].id}` }
-        : { titolo: `❓ Com'è andata? · ${giro.length} telefonate senza esito`, testo: elencoNomi(giro), url: `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`, tag: `senza-esito-${giro[0].id}` };
-      if (corpo.prova) { esiti.push({ telefonate: giro.length, ...avviso }); continue; }
-      const esito = await spedisciA([giro[0].user_id], avviso);
-      await db.from('azioni').update({ senza_esito_avvisato_il: new Date().toISOString() }).in('id', giro.map(x => x.id));
-      esiti.push({ telefonate: giro.length, ...esito });
+      const una = giro.length === 1;
+      voci.push({ utente: giro[0].user_id, inizio: Date.parse(giro[0].inizio),
+        riga: una ? `Telefonata · ${nomeDi(giro[0])}` : `${giro.length} telefonate: ${elencoNomi(giro)}`, testo: una ? `Telefonata · ${nomeDi(giro[0])}` : elencoNomi(giro),
+        titoloExtra: una ? undefined : ` · ${giro.length} telefonate senza esito`,
+        url: una ? `./?apri=agenda&azione=${giro[0].id}&giorno=${giornoDi(giro[0].inizio)}` : `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`,
+        tag: `senza-esito-${giro[0].id}`, giorno: giornoDi(giro[0].inizio), ids: giro.map(x => x.id) });
+    }
+    const esiti: Record<string, unknown>[] = [];
+    for (const gruppo of raggruppaPerUtente(voci)) {
+      const primo = gruppo[0];
+      const avviso = gruppo.length === 1
+        ? { titolo: `❓ Com'è andata?${primo.titoloExtra ?? ''}`, testo: primo.testo, url: primo.url, tag: primo.tag }
+        : { titolo: `❓ Com'è andata? · ${gruppo.length} senza esito`, testo: elencoImpegni(gruppo), url: `./?apri=agenda&giorno=${primo.giorno}`, tag: primo.tag };
+      if (corpo.prova) { esiti.push({ utente: primo.utente, impegni: gruppo.length, ...avviso }); continue; }
+      const esito = await spedisciA([primo.utente], avviso);
+      await db.from('azioni').update({ senza_esito_avvisato_il: new Date().toISOString() }).in('id', gruppo.flatMap(x => x.ids));
+      esiti.push({ impegni: gruppo.length, ...esito });
     }
     return risposta({ appuntamenti: esiti.length, esiti });
   }
