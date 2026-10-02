@@ -154,11 +154,11 @@ export function messaggioSera(d: DatiSera): MessaggioSera | null {
   const consigli = [trainingRiga, d.obiettivi?.riga ?? ''].filter(Boolean).join(' ');
   const bandierina = d.traguardo ? `🚩 ${d.traguardo}` : '';
   const blocchi = (...b: string[]) => b.filter(Boolean).join('\n');   // un avviso del telefono è testo semplice: la riga del traguardo si nota andando a capo
-  const domaniRiga = d.domani ? ` Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';
+  const domaniRiga = d.domani ? `Domani: ${d.domani.titolo}, si comincia alle ${d.domani.ora} (${d.domani.primo}).` : '';   // su una riga sua (02/10)
   // il titolo è sempre lo stesso, anche con la giornata a zero: è comunque un riepilogo (Ignazio 02/10)
   if (!d.checkFatto) return {
     titolo: '⚡ Il riepilogo del «tuo giorno» è quasi pronto',
-    testo: blocchi((d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».') + domaniRiga, bandierina, consigli),
+    testo: blocchi(d.bravo ? `Oggi ${d.bravo}. Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno».` : 'Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».', domaniRiga, bandierina, consigli),
     url: './?apri=check', tag: 'check_sera',
   };
   if (d.domani) return {
