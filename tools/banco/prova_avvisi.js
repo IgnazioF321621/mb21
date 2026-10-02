@@ -163,5 +163,32 @@ const assert = require('node:assert/strict');
     assert.equal(typeof R.messaggioSera({ ...base, training: 'da_fare', obiettivi: ob, domani }).testo, 'string');
   });
 
+  prova('promemoria vicini in un avviso solo: chi scatta porta con sé gli impegni dei 30 minuti dopo, di qualunque tipo', () => {
+    const v = (utente, minuti, due, id) => ({ utente, inizio: t('2026-10-05T08:00:00Z') + minuti * M, due, id, riga: 'x' + id });
+    const ids = g => g.map(x => x.id);
+    // niente che scatta: nessun avviso
+    assert.deepEqual(R.raggruppaVicini([v('u', 10, false, 'a'), v('u', 20, false, 'b')]), []);
+    // uno che scatta, da solo
+    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 90, false, 'z')]).map(ids), [['a']]);
+    // scatta il primo: entrano anche quelli entro 30 minuti (il terzo, a 40 minuti dal primo, no)
+    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 25, false, 'b'), v('u', 40, false, 'c'), v('u', 41, false, 'd')]).map(ids), [['a', 'b', 'c']]);
+    // chi scatta dopo e ha un impegno prima (non scattato) porta con sé solo quelli da lui in avanti
+    assert.deepEqual(R.raggruppaVicini([v('u', 5, false, 'prima'), v('u', 30, true, 'a'), v('u', 50, false, 'b')]).map(ids), [['a', 'b']]);
+    // dopo un gruppo, quelli rimasti che scattano fanno un altro gruppo; il vicino di un vicino (oltre 30 dal primo) non entra
+    assert.deepEqual(R.raggruppaVicini([v('u', 0, true, 'a'), v('u', 25, false, 'b'), v('u', 50, true, 'c'), v('u', 60, false, 'd')]).map(ids), [['a', 'b'], ['c', 'd']]);
+    // persone diverse non si mescolano; stesso minuto = insieme
+    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('w', 12, true, 'b'), v('u', 10, false, 'c')]).map(ids).sort(), [['a', 'c'], ['b']]);
+    // senza «scatta» vicino: gli impegni dello stesso istante non si perdono
+    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 10, true, 'b')]).map(ids), [['a', 'b']]);
+  });
+
+  prova('«Com\'è andata?»: quelli che scattano insieme per la stessa persona sono uno; l\'elenco ne mostra tre e dice quanti altri', () => {
+    const g = R.raggruppaPerUtente([{ utente: 'u', n: 1 }, { utente: 'w', n: 2 }, { utente: 'u', n: 3 }]);
+    assert.deepEqual(g.map(x => x.map(y => y.n)), [[1, 3], [2]]);
+    const righe = [0, 1, 2, 3, 4].map(i => ({ inizio: t('2026-10-05T07:00:00Z') + i * 30 * M, riga: 'PM · P' + i }));
+    assert.equal(R.elencoImpegni(righe.slice(0, 2)), '09:00 PM · P0 · 09:30 PM · P1');
+    assert.equal(R.elencoImpegni(righe), '09:00 PM · P0 · 09:30 PM · P1 · 10:00 PM · P2 e altre 2');
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -169,3 +169,36 @@ export function messaggioSera(d: DatiSera): MessaggioSera | null {
     url: trainingRiga ? (d.daRipassare > 0 ? './?apri=training&vista=ripassa' : './?apri=training') : './', tag: 'sera',
   };
 }
+
+// ── Avvisi vicini in uno solo (Ignazio 02/10: «gli avvisi sono veramente tanti») ──
+// PROMEMORIA: quando di una persona scatta un promemoria (`due`), nello stesso avviso entrano anche gli impegni che cominciano entro 30 minuti dopo
+// il suo (appuntamenti, telefonate, cose da fare, modelli: di qualunque tipo), anche se il loro momento non è ancora arrivato: arrivano un po' prima,
+// ma in un avviso solo, e non se ne riparla. Gli impegni PRIMA di quello che scatta restano per conto loro (hanno la loro scelta di minuti).
+export const FINESTRA_VICINI = 30 * MINUTO;
+export function raggruppaVicini<T extends { utente: string; inizio: number; due: boolean }>(voci: T[], finestra = FINESTRA_VICINI): T[][] {
+  const perUtente = new Map<string, T[]>();
+  for (const v of voci) perUtente.set(v.utente, [...(perUtente.get(v.utente) ?? []), v]);
+  const gruppi: T[][] = [];
+  for (const sue of perUtente.values()) {
+    const ordinate = [...sue].sort((a, b) => a.inizio - b.inizio);
+    const presi = new Set<T>();
+    for (const ancora of ordinate) {
+      if (!ancora.due || presi.has(ancora)) continue;
+      const gruppo = ordinate.filter(v => !presi.has(v) && v.inizio >= ancora.inizio && v.inizio <= ancora.inizio + finestra);
+      gruppo.forEach(v => presi.add(v));
+      gruppi.push(gruppo);
+    }
+  }
+  return gruppi;
+}
+// «COM'È ANDATA?»: tutti quelli che scattano nello stesso giro per la stessa persona fanno un avviso solo (qui non si guarda avanti: non si chiede
+// com'è andata a un appuntamento che non è ancora finito). L'ordine resta quello di arrivo.
+export function raggruppaPerUtente<T extends { utente: string }>(voci: T[]): T[][] {
+  const per = new Map<string, T[]>();
+  for (const v of voci) per.set(v.utente, [...(per.get(v.utente) ?? []), v]);
+  return [...per.values()];
+}
+// «alle 10:00 PM · Pino · 10:20 Telefonata · Anna · … e altre 2»: i primi tre, poi quanti altri
+export function elencoImpegni(righe: { inizio: number; riga: string }[]): string {
+  return righe.slice(0, 3).map(v => `${oraMinuti(v.inizio)} ${v.riga}`).join(' · ') + (righe.length > 3 ? ` e altre ${righe.length - 3}` : '');
+}
