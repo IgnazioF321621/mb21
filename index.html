@@ -2788,17 +2788,24 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     mostraToast('Annullato');
   };
   AG.aperta = null;
+  // Azione di più di 7 giorni fa (chi importa lo storico): niente coach, traccia di apertura, «Quando risentirlo?», «prossimo appuntamento» (MB21Agenda.nelPassato)
+  const storico = MB21Agenda.nelPassato(e.inizio, MB21Coda.oggiRoma());
+  const riflessione = () => (storico ? null : chiediRiflessione(e, esito));
   // Consulenza PRD → «Vendita»: «Registri la vendita?». Se sì si va alla scheda del cliente con il modulo Vendita aperto
   // (il riordino lo scrive la vendita in Agenda, quindi niente «prossimo appuntamento»); se no, tutto come prima.
   if (MB21Agenda.proponeVendita(e.tipo_azione, esito)
       && await registraVenditaDa(e.contatto_id, e.contatti ? e.contatti.nome : 'Il contatto', e.contatti && e.contatti.categoria, e.brand,
-        () => chiediRiflessione(e, esito))) return;   // la riflessione alla chiusura del modulo Vendita
+        riflessione)) return;   // la riflessione alla chiusura del modulo Vendita
   const giorniRisentire = MB21Agenda.giorniRisentire(esito);
+  if (giorniRisentire && storico) {   // storico: l'esito si salva e basta
+    await ridisegna();
+    return mostraToast(`${esito} salvato`, () => annulla(null));
+  }
   if (giorniRisentire) {   // No Interesse / No BuonFine (un anno) e Relazione (20 giorni, Ignazio 25/09): niente prossimo appuntamento, «Quando risentirlo?»
     const giorno = await chiediRientro(e.contatto_id, e.contatti ? e.contatti.nome : '', esito, giorniRisentire);
     await ridisegna();
     mostraToast(`${esito}${giorno ? ' · risentirlo il ' + dataBreve(giorno) : ' salvato'}`, () => annulla(null));
-    return chiediRiflessione(e, esito);
+    return riflessione();
   }
   // Una telefonata (cantiere 48, Ignazio 29/09): dopo l'esito si apre lo stesso foglio della coda, non «un'altra telefonata».
   if (e.tipo_azione === 'Contatto') {
@@ -2839,9 +2846,9 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       await ridisegna();
       mostraToast(`${opz.testo || esito} salvato`, () => annulla(null));
     }
-    return tracciaDiApertura(pianoFissato, { id: e.contatto_id, nome }, () => chiediRiflessione(e, esito));
+    return storico ? null : tracciaDiApertura(pianoFissato, { id: e.contatto_id, nome }, riflessione);
   }
-  const creato = opz.senzaProssimo ? null : await nuovoAppuntamento({
+  const creato = opz.senzaProssimo || storico ? null : await nuovoAppuntamento({
     titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
@@ -2849,9 +2856,9 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   await ridisegna();
   mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passiAvvio.length ? ` · segnato in «Il mio avvio»: ${passiAvvio.map(p => p.nome).join(', ')}` : ''}`, () => annulla(creato));
   // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
-  if (MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
+  if (!storico && MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
       && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
-  await tracciaDiApertura(creato, e.contatti && { id: e.contatto_id, nome: e.contatti.nome }, () => chiediRiflessione(e, esito));
+  if (!storico) await tracciaDiApertura(creato, e.contatti && { id: e.contatto_id, nome: e.contatti.nome }, riflessione);
 }
 
 // Il momento dopo l'esito (la chat del coach) e il promemoria «Ti eri detto…» (cantiere 42): in pagina-coach.js
