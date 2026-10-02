@@ -114,5 +114,10 @@ const assert = require('node:assert/strict');
     assert.equal(R.avvisoObiettivi('2026-11-02', null).titolo, '🎯 Gli obiettivi di novembre');
   });
 
+  prova('la domanda leggera del database (promemoria_da_mandare) ha gli stessi «già impostato» di regole.ts', () => {
+    const sql = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../supabase/migrations/20261002130000_promemoria_da_mandare.sql'), 'utf8');
+    for (const k of ['appuntamenti', 'telefonate', 'cose', 'modelli']) assert.match(sql, new RegExp(`avvisi_quando ->> '${k}'\\)::int, ${R.GIA_IMPOSTATO[k]}\\)`), k);
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
