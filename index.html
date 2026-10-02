@@ -3734,7 +3734,25 @@ function statoPercorso(l) {
   // Pacesetter: gli iscritti personali scritti nel Check in quel mese (con un partner solo, CK.giorni sono tutti suoi)
   const sponsor = (CK.giorni || []).filter(g => g.data.slice(0, 8) + '01' === l.mese).reduce((t, g) => t + (Number(g.sponsor_personali) || 0), 0);
   const pc = MB21Check.percorso({ lc1: l, modulo: core && core.modulo ? core.modulo : null, sponsor });
-  return { core, pc, lv: livelliCheck(l, pc.gradini[1].fatto) };
+  const lv = livelliCheck(l, pc.gradini[1].fatto);
+  salvaTraguardo(l, lv);
+  return { core, pc, lv };
+}
+
+// Cosa manca per il PROSSIMO TRAGUARDO (Ignazio 02/10), salvato per l'avviso della sera (`utenti.prossimo_traguardo`, funzione `salva_prossimo_traguardo`):
+// le regole sono quelle dell'app (MB21Check.prossimoTraguardo: prima il Leader 1° livello, poi il Leaders Club, poi l'Executive), il server le legge e basta.
+// Solo la propria Dashboard e solo il mese in corso; si scrive quando cambia (una volta a sessione, di solito); con il 1° livello fatto ma il file Amway non
+// ancora letto non si scrive niente (non si cancella per un dato che deve ancora arrivare).
+let ultimoTraguardoSalvato;
+function salvaTraguardo(l, lv) {
+  if (ST.offline || vediTutti() || !ST.utente || visto().id !== ST.utente.id || l.mese !== (ST.oggi || '').slice(0, 8) + '01') return;
+  if (l.fatto && !lv) return;
+  const t = MB21Check.prossimoTraguardo({ lc1: l, lv });
+  const dati = t ? { nome: t.nome, mancano: t.mancano.slice(0, 5), mese: l.mese } : null;
+  const chiave = JSON.stringify(dati);
+  if (chiave === ultimoTraguardoSalvato) return;
+  ultimoTraguardoSalvato = chiave;
+  supa.rpc('salva_prossimo_traguardo', { p_dati: dati }).then(({ error }) => { if (error) ultimoTraguardoSalvato = undefined; });
 }
 
 // I livelli del mese della card (Ignazio 27/09): Leaders Club, Executive Leader Club, Produttore Argento (MB21Check.livelli)

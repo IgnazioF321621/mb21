@@ -30,7 +30,7 @@ const memoria = { dati: {}, rotta: false,
 const app = { innerHTML: '' };
 const ctx = {
   MB21Check: C, MB21Report: R, MB21Lista: L, MB21Core: K, MB21Mappa: M,
-  visto: () => ({ id: 'io' }), ST: { utente: { id: 'io' } },
+  visto: () => ({ id: 'io' }), ST: { utente: { id: 'io' } }, vediTutti: () => false, supa: { rpc: () => Promise.resolve({ error: null }) },   // 02/10: il salvataggio del prossimo traguardo
   MB21Coda: { oggiRoma: () => '2026-09-15' },
   localStorage: memoria, app,
   esc: t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])),

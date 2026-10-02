@@ -32,7 +32,7 @@
 //   il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera): Check, complimenti, domani, Training e obiettivi.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, raggruppaVicini, raggruppaPerUtente, elencoImpegni, oraMinuti, FINESTRA_VICINI, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce as VoceModello, type Modello } from './regole.ts';
+import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaVicini, raggruppaPerUtente, elencoImpegni, oraMinuti, FINESTRA_VICINI, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce as VoceModello, type Modello } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
     const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
     const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }, { data: saltati, error: e10 }, { data: allenati, error: e11 }, { data: carte, error: e12 }] = await Promise.all([
-      db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null),
+      db.from('utenti').select('id, prossimo_traguardo').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani.inizio).lt('data_scelta', domani.fine),
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     ];
     const giaFatto = new Set((fatti ?? []).map(x => x.user_id));
     const esiti: Record<string, unknown>[] = [];
-    for (const { id } of attivi ?? []) {
+    for (const { id, prossimo_traguardo } of attivi ?? []) {
       if (!corpo.forza && quando(id, 'check') !== oraAdesso) continue;
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
       // il coach guarda la giornata scritta nell'app: se c'è qualcosa la prima riga sono i complimenti, se no niente di inventato
@@ -235,6 +235,7 @@ Deno.serve(async (req) => {
       const avviso = messaggioSera({
         bravo, checkFatto: giaFatto.has(id), domani: d, ilGiornoDopo, obiettivi: ob,
         training: allenato ? 'fatto' : mieCarte.length ? 'da_fare' : 'mai', daRipassare: mieCarte.filter(c => c.prossima && c.prossima <= oggi).length,
+        traguardo: rigaTraguardo(prossimo_traguardo, oggi, adessoVero),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
       });
       if (!avviso) continue;   // Check fatto, domani niente, niente da consigliare: si tace
       if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }

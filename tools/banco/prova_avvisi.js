@@ -190,5 +190,23 @@ const assert = require('node:assert/strict');
     assert.equal(R.elencoImpegni(righe), '09:00 PM · P0 · 09:30 PM · P1 · 10:00 PM · P2 e altre 2');
   });
 
+  prova('cosa manca per il prossimo traguardo: del mese in corso, aggiornato da poco; il traguardo da solo non fa partire un avviso', () => {
+    const ora = t('2026-10-05T18:00:00Z'), fresco = new Date(ora - 2 * 86400000).toISOString();
+    const lc1 = { nome: 'Leader 1° livello', mancano: ['il biglietto BBS'], mese: '2026-10-01', aggiornato_il: fresco };
+    assert.equal(R.rigaTraguardo(lc1, '2026-10-05', ora), 'Verso il Leader 1° livello: il biglietto BBS.');
+    assert.equal(R.rigaTraguardo({ ...lc1, nome: 'Leaders Club', mancano: ['Un iscritto in più (3 su 5)', 'Una prima linea in più (4 su 5)'] }, '2026-10-05', ora), 'Verso il Leaders Club: Un iscritto in più (3 su 5) · Una prima linea in più (4 su 5).');
+    assert.match(R.rigaTraguardo({ ...lc1, nome: 'Executive Leader Club' }, '2026-10-05', ora), /^Verso l'Executive Leader Club: /);
+    assert.equal(R.rigaTraguardo({ ...lc1, aggiornato_il: new Date(ora - 5 * 86400000).toISOString() }, '2026-10-05', ora), '');   // vecchio di 5 giorni
+    assert.equal(R.rigaTraguardo({ ...lc1, mese: '2026-09-01' }, '2026-10-05', ora), '');                                         // del mese scorso
+    assert.equal(R.rigaTraguardo({ ...lc1, mancano: [] }, '2026-10-05', ora), ''); assert.equal(R.rigaTraguardo(null, '2026-10-05', ora), '');
+    assert.equal(R.rigaTraguardo({ ...lc1, aggiornato_il: 'boh' }, '2026-10-05', ora), '');
+    // dentro la sera: si aggiunge a un avviso che c'è già
+    const base = { bravo: null, checkFatto: false, domani: null, ilGiornoDopo: '2026-10-06', training: 'fatto', daRipassare: 0, obiettivi: null, traguardo: 'Verso il Leader 1° livello: il biglietto BBS.' };
+    assert.match(R.messaggioSera(base).testo, /Verso il Leader 1° livello: il biglietto BBS\.$/);
+    assert.match(R.messaggioSera({ ...base, checkFatto: true, domani: { titolo: '2 appuntamenti', ora: '09:30', primo: 'PM' } }).testo, /Verso il Leader 1° livello: il biglietto BBS\. Tocca per vedere la giornata\.$/);
+    assert.equal(R.messaggioSera({ ...base, checkFatto: true }), null);   // Check fatto, domani niente: il traguardo da solo non basta
+    assert.match(R.messaggioSera({ ...base, checkFatto: true, training: 'da_fare' }).testo, /^Verso il Leader 1° livello: il biglietto BBS\. Se ti va, restano 5 minuti di Training\.$/);
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
