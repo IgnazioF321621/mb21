@@ -5,7 +5,7 @@
 // STESSE chiavi e valori di `AVVISI_QUANDO` in avvisi.js e di `imposta_avviso` (migrazione 20260923143237_avvisi_quando.sql):
 // se cambia uno, cambiano tutti.
 export const GIA_IMPOSTATO: Record<string, number> = {
-  appuntamenti: 30, telefonate: 10, cose: 10, modelli: 0,   // minuti prima (0 = all'ora)
+  appuntamenti: 30, telefonate: 15, cose: 15, modelli: 15,  // minuti prima (dal 02/10 si sceglie 15 · 30 · 60: tolti «all'ora», 5 e 10)
   com_e_andata: 60,                                          // minuti dopo la fine
   buongiorno: 9, check: 22, training: 13,                    // ora di Roma
 };
@@ -15,7 +15,7 @@ export function scelta(quando: Record<string, number> | null | undefined, k: str
 }
 
 const MINUTO = 60000;
-export const RITARDO_ALL_ORA = 5;   // «all'ora»: se l'orologio salta un giro, l'avviso parte lo stesso nei 5 minuti dopo
+export const RITARDO_ALL_ORA = 5;   // «all'ora» (0, non più nelle scelte dal 02/10; resta per eventuali scelte vecchie): se l'orologio salta un giro, l'avviso parte lo stesso nei 5 minuti dopo
 // È il momento dell'avviso «prima»? Da `anticipo` minuti prima dell'inizio fino all'inizio (con «all'ora» fino a 5 minuti dopo).
 // Non una finestra stretta: se l'orologio salta un giro, o la cosa è stata messa in agenda da poco, l'avviso parte lo stesso.
 // Un avviso solo per cosa lo garantisce il segno «già avvisato» (promemoria_il, avvisi_mandati), non la finestra.
