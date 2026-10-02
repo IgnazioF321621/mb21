@@ -9,8 +9,8 @@ const assert = require('node:assert/strict');
   const M = 60000, t = s => Date.parse(s);
 
   prova('scelte: quello che manca vale «già impostato», il resto è la scelta', () => {
-    assert.equal(R.scelta({}, 'appuntamenti'), 30); assert.equal(R.scelta(null, 'telefonate'), 10);
-    assert.equal(R.scelta({ modelli: 15 }, 'modelli'), 15); assert.equal(R.scelta({ modelli: 0 }, 'modelli'), 0);
+    assert.equal(R.scelta({}, 'appuntamenti'), 30); assert.equal(R.scelta(null, 'telefonate'), 15); assert.equal(R.scelta({}, 'cose'), 15); assert.equal(R.scelta({}, 'modelli'), 15);   // dal 02/10 «già impostato» 15
+    assert.equal(R.scelta({ modelli: 30 }, 'modelli'), 30); assert.equal(R.scelta({ modelli: 0 }, 'modelli'), 0);   // una scelta vecchia (0) vale ancora finché non è cambiata
     assert.equal(R.scelta({}, 'buongiorno'), 9); assert.equal(R.scelta({}, 'check'), 22); assert.equal(R.scelta({}, 'com_e_andata'), 60);
   });
 
