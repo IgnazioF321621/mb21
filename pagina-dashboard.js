@@ -45,7 +45,7 @@ async function caricaOggi() {
     if (error) throw error;
     stato = data;   // { contatti_al_giorno, fatti_oggi }
     const posti = stato.contatti_al_giorno - stato.fatti_oggi;
-    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti);
+    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
     if (!altro && risultato.nuoviInCoda.length) {
       await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
@@ -215,9 +215,13 @@ function zonaOggiHtml() {
     `${r.dareSeguito.length} da richiamare`, r.dareSeguito.length, true,
     () => r.dareSeguito.map(x => cardContatto(x, true)).join(''), true);
 
-  // 3. Contatti del giorno
+  // 3. Contatti del giorno. Con «0 contatti al giorno» (02/10, Ignazio) si è in pausa: niente coda, e la frase per ripartire (consiglio, non ordine)
+  const inPausa = st.contatti_al_giorno === 0;
   const finito = st.fatti_oggi >= st.contatti_al_giorno;
-  metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
+  if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, true,
+    () => altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
+      : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`, true);
+  else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
     r.coda.length ? `${r.coda.length} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`
       : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`,
     r.coda.length, true, () => (altro ? `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>` : '')
@@ -588,19 +592,21 @@ function scegliNumero(dopo = caricaOggi) {
       <p>Quanti contatti vuoi lavorare ogni giorno. I Dare Seguito scaduti si aggiungono sempre.</p>
       <div class="numeri">${Array.from({ length: 10 }, (_, i) => i + 1).map(n =>
         `<button class="${n === attuale ? 'scelto' : ''}" data-n="${n}">${n}</button>`).join('')}</div>
+      <button class="link" data-n="0" style="display:block;margin:0 auto 4px;${attuale === 0 ? 'font-weight:700' : ''}">0 · Mi prendo una pausa</button>
+      <div class="sotto" style="text-align:center;margin-bottom:6px">In pausa: niente coda, niente Dare Seguito e niente Buongiorno del mattino. Si riparte quando vuoi.</div>
       <button class="link" id="numero-no">Annulla</button>
     </div>`;
   document.body.appendChild(velo);
   velo.onclick = e => { if (e.target === velo) velo.remove(); };
   velo.querySelector('#numero-no').onclick = () => velo.remove();
-  velo.querySelectorAll('.numeri button').forEach(b => {
+  velo.querySelectorAll('[data-n]').forEach(b => {
     b.onclick = async () => {
       const n = Number(b.dataset.n);
       velo.remove();
       if (n === attuale) return;
       const { error } = await dbq('contatti al giorno', supa.rpc('imposta_contatti_al_giorno', { p_numero: n }));
       if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
-      mostraToast(`Contatti al giorno: ${n}`);
+      mostraToast(n === 0 ? 'Sei in pausa: 0 contatti al giorno' : `Contatti al giorno: ${n}`);
       ST.stato.contatti_al_giorno = n;
       dopo();   // dalla Dashboard la coda si riempie con un numero più alto
     };
@@ -1294,6 +1300,7 @@ function collegaDashboard() {
   su('ds-sv', foglioStorico);   // la striscia dei Segni Vitali apre lo storico: stessa schermata del Check (Ignazio 25/09)
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
+  su('ds-riparto', () => scegliNumero(caricaOggi));   // 02/10: dalla pausa si riparte scegliendo quanti
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano
   su('ds-obiettivi', apriObiettivi);

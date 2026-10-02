@@ -209,4 +209,12 @@ prova('da catalogare: solo senza categoria, alfabetico, 5 meno i catalogati di o
   assert.deepEqual(daCatalogare(righe, 3, 5).righe.length, 7);     // i 2 rimasti dei 5 + altri 5
 });
 
+prova('pausa («0 contatti al giorno»): niente coda e niente Dare Seguito scaduti; a fine giornata (0 posti, non pausa) i Dare Seguito restano', () => {
+  const righe = [c('m'), c('ds', { contattato: true, ultima_fase: 'Dare Seguito', ultimi_giorni: 2, rientro_il: IERI })];
+  const pausa = calcolaCoda(righe, OGGI, 0, true);
+  assert.equal(pausa.coda.length, 0); assert.deepEqual(pausa.dareSeguito, []); assert.deepEqual(pausa.nuoviInCoda, []);
+  assert.deepEqual(calcolaCoda(righe, OGGI, 0, false).dareSeguito.map(x => x.id), ['ds']);   // non è la pausa: 5 su 5 fatti
+  assert.deepEqual(calcolaCoda(righe, OGGI, 5, false).dareSeguito.map(x => x.id), ['ds']);
+});
+
 console.log(`\n${ok} prove superate`);
