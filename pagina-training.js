@@ -377,7 +377,7 @@ function trnTestIngresso() {
   corpo.querySelector('#trn-ti-no').onclick = () => velo.remove();
 }
 // ── «Dove sei, dove vuoi andare» (voluta da Ignazio il 24/09, solo Admin per ora) ──
-// Sospesa al rilascio del 01/10 (Ignazio: «fino a quando non lo capisco bene»): la tabella `training_obiettivo` non è ancora nel database. Per riaccenderla: `true` + applicare la migrazione 20260930210000.
+// Sospesa al rilascio del 01/10 (Ignazio: «fino a quando non lo capisco bene»). La tabella `training_obiettivo` c'è nel database (dal 02/10; Fondamenta 015, 03/10): per riaccenderla basta `true`.
 const DOVE_SEI_VISIBILE = false;
 // Un tocco su una delle tre fasce di guadagno del Manuale di Avvio (pag. 17), i tuoi numeri dell'ultimo mese (`volumi_mese`, gli stessi della Mappa), quanto manca,
 // la strada che mostra il manuale (esempi pag. 20-22) e il livello del Training da studiare. La scelta si salva in `training_obiettivo`.
