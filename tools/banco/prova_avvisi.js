@@ -9,8 +9,8 @@ const assert = require('node:assert/strict');
   const M = 60000, t = s => Date.parse(s);
 
   prova('scelte: quello che manca vale «già impostato», il resto è la scelta', () => {
-    assert.equal(R.scelta({}, 'appuntamenti'), 30); assert.equal(R.scelta(null, 'telefonate'), 15); assert.equal(R.scelta({}, 'cose'), 15); assert.equal(R.scelta({}, 'modelli'), 15);   // dal 02/10 «già impostato» 15
-    assert.equal(R.scelta({ modelli: 30 }, 'modelli'), 30); assert.equal(R.scelta({ modelli: 0 }, 'modelli'), 0);   // una scelta vecchia (0) vale ancora finché non è cambiata
+    assert.equal(R.scelta({ com_e_andata: 30 }, 'com_e_andata'), 30); assert.equal(R.scelta(null, 'buongiorno'), 9);
+    assert.deepEqual(Object.keys(R.GIA_IMPOSTATO).sort(), ['buongiorno', 'check', 'com_e_andata']);   // 03/10: i promemoria «Prima di…» non ci sono più
     assert.equal(R.scelta({}, 'buongiorno'), 9); assert.equal(R.scelta({}, 'check'), 22); assert.equal(R.scelta({}, 'com_e_andata'), 60);
   });
 
@@ -19,68 +19,11 @@ const assert = require('node:assert/strict');
     for (const [k, v] of Object.entries(R.GIA_IMPOSTATO)) assert.match(src, new RegExp(`k: '${k}'.*gia: ${v} }`), k);
   });
 
-  prova('momento «prima»: da N minuti prima fino all\'inizio; «all\'ora» fino a 5 minuti dopo', () => {
-    const inizio = t('2026-09-23T10:00:00Z');
-    assert.equal(R.eMomentoPrima(inizio, 30, inizio - 31 * M), false);
-    assert.equal(R.eMomentoPrima(inizio, 30, inizio - 30 * M), true);
-    assert.equal(R.eMomentoPrima(inizio, 30, inizio - 12 * M), true);    // messo in agenda da poco: avvisa lo stesso
-    assert.equal(R.eMomentoPrima(inizio, 30, inizio), false);            // già cominciato: niente
-    assert.equal(R.eMomentoPrima(inizio, 0, inizio - M), false);
-    assert.equal(R.eMomentoPrima(inizio, 0, inizio), true);
-    assert.equal(R.eMomentoPrima(inizio, 0, inizio + 4 * M), true);
-    assert.equal(R.eMomentoPrima(inizio, 0, inizio + 5 * M), false);
-  });
-
-  prova('titolo: «Tra N minuti», «Tra 1 ora», «Adesso»', () => {
-    const inizio = t('2026-09-23T10:00:00Z');
-    assert.equal(R.titoloPrima(inizio, inizio - 10 * M), '⏰ Tra 10 minuti');
-    assert.equal(R.titoloPrima(inizio, inizio - 60 * M), '⏰ Tra 1 ora');
-    assert.equal(R.titoloPrima(inizio, inizio - M), '⏰ Tra 1 minuto');
-    assert.equal(R.titoloPrima(inizio, inizio), '⏰ Adesso');
-    assert.equal(R.titoloPrima(inizio, inizio + 3 * M), '⏰ Adesso');
-  });
-
-  prova('ora di Roma: legale e solare', () => {
-    assert.equal(new Date(R.istanteRoma('2026-09-23', '06:00')).toISOString(), '2026-09-23T04:00:00.000Z');
-    assert.equal(new Date(R.istanteRoma('2026-12-01', '06:00')).toISOString(), '2026-12-01T05:00:00.000Z');
-    assert.equal(R.oraDi(t('2026-09-23T07:00:00Z')), 9); assert.equal(R.oraDi(t('2026-12-01T08:00:00Z')), 9);
-    assert.equal(R.giornoDi(t('2026-09-23T22:30:00Z')), '2026-09-24');
-  });
-
   // 23/09/2026 è un mercoledì (3)
   const G = '2026-09-23';
   const cosa = (id, o) => ({ id, user_id: 'u1', testo: 'Cosa ' + id, giorno: G, ora: '11:00:00', fatto_il: null, modello_id: null, core: null, scala: 'giorno', ...o });
   const voce = (id, o) => ({ id, user_id: 'u1', testo: 'Voce ' + id, giorni: null, attivo: true, core: null, modello_id: 'm1', ora: '06:00:00', ...o });
   const MODELLI = [{ id: 'm1', attivo: true, scala: 'giorno' }, { id: 'm2', attivo: false, scala: 'giorno' }, { id: 'm3', attivo: true, scala: 'settimana' }];
-
-  prova('cose da fare: solo di oggi, con l\'ora, scritte a mano, di scala giorno, non fatte', () => {
-    const cose = [cosa('a'), cosa('b', { ora: null }), cosa('c', { fatto_il: '2026-09-23T08:00:00Z' }), cosa('d', { giorno: '2026-09-22' }),
-      cosa('e', { scala: 'settimana' }), cosa('f', { core: 'pagine' }), cosa('g', { modello_id: 'v9' })];
-    const r = R.coseConOra(cose, [], MODELLI, G);
-    assert.deepEqual(r.map(x => x.id), ['a']);
-    assert.equal(r[0].ora, '11:00'); assert.equal(r[0].tipo, 'cose'); assert.equal(new Date(r[0].inizio).toISOString(), '2026-09-23T09:00:00.000Z');
-  });
-
-  prova('voci dei modelli: modello acceso di scala giorno, voce accesa, giorno della settimana giusto, con l\'ora', () => {
-    const voci = [voce('v1'), voce('v2', { giorni: [3] }), voce('v3', { giorni: [1, 2] }), voce('v4', { attivo: false }), voce('v5', { modello_id: 'm2' }),
-      voce('v6', { modello_id: 'm3' }), voce('v7', { ora: null }), voce('v8', { core: 'cd' })];
-    assert.deepEqual(R.coseConOra([], voci, MODELLI, G).map(x => x.id), ['v1', 'v2']);
-  });
-
-  prova('voce spostata «solo oggi»: vale l\'ora del giorno; voce spuntata oggi: niente avviso', () => {
-    const voci = [voce('v1'), voce('v2'), voce('v3', { ora: null })];
-    const cose = [cosa('r1', { modello_id: 'v1', ora: '07:30:00' }), cosa('r2', { modello_id: 'v2', ora: null, fatto_il: '2026-09-23T04:10:00Z' }),
-      cosa('r3', { modello_id: 'v3', ora: '21:30:00' }), cosa('r4', { modello_id: 'v1', giorno: '2026-09-22', ora: '09:00:00' })];
-    const r = R.coseConOra(cose, voci, MODELLI, G);
-    assert.deepEqual(r.map(x => `${x.id} ${x.ora}`), ['v1 07:30', 'v3 21:30']);   // le righe del giorno non diventano cose a parte
-  });
-
-  prova('segno «già avvisato»: con giorno e ora, così una cosa spostata avvisa di nuovo', () => {
-    const [x] = R.coseConOra([cosa('a')], [], MODELLI, G);
-    assert.equal(R.chiaveAvviso(x), 'cosa:a:2026-09-23:11:00');
-    const [y] = R.coseConOra([], [voce('v1')], MODELLI, G);
-    assert.equal(R.chiaveAvviso(y), 'voce:v1:2026-09-23:06:00');
-  });
 
   prova('«Domani hai…»: conta appuntamenti e telefonate, il primo in ordine di ora; niente = niente avviso', () => {
     assert.equal(R.riepilogoDomani([]), null);
@@ -114,11 +57,6 @@ const assert = require('node:assert/strict');
     assert.equal(R.avvisoObiettivi('2026-10-04', { vpg: 1000 }), null);                     // il «rifalli» è solo dei primi tre giorni
     assert.equal(R.avvisoObiettivi('2026-11-01', { vpg: 1000 }), null);                     // a novembre chi li ha già non riceve niente
     assert.deepEqual(R.invitoObiettivi('2026-10-17'), R.avvisoObiettivi('2026-10-01', null)); // l'invio a mano dell'Admin è lo stesso testo, in qualunque giorno
-  });
-
-  prova('la domanda leggera del database (promemoria_da_mandare) ha gli stessi «già impostato» di regole.ts', () => {
-    const sql = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../supabase/migrations/20261002130000_promemoria_da_mandare.sql'), 'utf8');
-    for (const k of ['appuntamenti', 'telefonate', 'cose', 'modelli']) assert.match(sql, new RegExp(`avvisi_quando ->> '${k}'\\)::int, ${R.GIA_IMPOSTATO[k]}\\)`), k);
   });
 
   prova('complimenti: anche il Training fatto oggi', () => {
@@ -166,23 +104,44 @@ const assert = require('node:assert/strict');
     assert.equal(typeof R.messaggioSera({ ...base, training: 'da_fare', obiettivi: ob, domani }).testo, 'string');
   });
 
-  prova('promemoria vicini in un avviso solo: chi scatta porta con sé gli impegni dei 30 minuti dopo, di qualunque tipo', () => {
-    const v = (utente, minuti, due, id) => ({ utente, inizio: t('2026-10-05T08:00:00Z') + minuti * M, due, id, riga: 'x' + id });
-    const ids = g => g.map(x => x.id);
-    // niente che scatta: nessun avviso
-    assert.deepEqual(R.raggruppaVicini([v('u', 10, false, 'a'), v('u', 20, false, 'b')]), []);
-    // uno che scatta, da solo
-    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 90, false, 'z')]).map(ids), [['a']]);
-    // scatta il primo: entrano anche quelli entro 30 minuti (il terzo, a 40 minuti dal primo, no)
-    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 25, false, 'b'), v('u', 40, false, 'c'), v('u', 41, false, 'd')]).map(ids), [['a', 'b', 'c']]);
-    // chi scatta dopo e ha un impegno prima (non scattato) porta con sé solo quelli da lui in avanti
-    assert.deepEqual(R.raggruppaVicini([v('u', 5, false, 'prima'), v('u', 30, true, 'a'), v('u', 50, false, 'b')]).map(ids), [['a', 'b']]);
-    // dopo un gruppo, quelli rimasti che scattano fanno un altro gruppo; il vicino di un vicino (oltre 30 dal primo) non entra
-    assert.deepEqual(R.raggruppaVicini([v('u', 0, true, 'a'), v('u', 25, false, 'b'), v('u', 50, true, 'c'), v('u', 60, false, 'd')]).map(ids), [['a', 'b'], ['c', 'd']]);
-    // persone diverse non si mescolano; stesso minuto = insieme
-    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('w', 12, true, 'b'), v('u', 10, false, 'c')]).map(ids).sort(), [['a', 'c'], ['b']]);
-    // senza «scatta» vicino: gli impegni dello stesso istante non si perdono
-    assert.deepEqual(R.raggruppaVicini([v('u', 10, true, 'a'), v('u', 10, true, 'b')]).map(ids), [['a', 'b']]);
+  prova('le tre voci (Training · obiettivi · traguardo): ognuna una volta al giorno, la sera non ripete quelle del mattino', () => {
+    const c = { training: 'da_fare', daRipassare: 0, obiettivi: R.avvisoObiettivi('2026-10-03', null), traguardo: 'Verso il Leaders Club: x.' };
+    assert.deepEqual(R.righeConsigli(c), { training: '🏋️ Se ti va, restano 5 minuti di Training.', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '🚩 Verso il Leaders Club: x.' });
+    assert.deepEqual(R.righeConsigli(c, { training: true, traguardo: true }), { training: '', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '' });
+    assert.deepEqual(R.righeConsigli({ training: 'fatto', daRipassare: 0, obiettivi: null }), { training: '', obiettivi: '', traguardo: '' });
+    // la sera: voci già dette la mattina spariscono; se non resta niente e Check fatto, silenzio
+    const sera = { ...c, bravo: null, checkFatto: true, domani: null, ilGiornoDopo: '2026-10-04' };
+    assert.equal(R.messaggioSera({ ...sera, dette: { training: true, obiettivi: true, traguardo: true } }), null);
+    assert.equal(R.messaggioSera({ ...sera, dette: { training: true } }).titolo, '🎯 Gli obiettivi del mese');
+    assert.equal(R.messaggioSera({ ...sera, checkFatto: false, dette: { training: true, obiettivi: true, traguardo: true } }).testo, '📝 Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
+  });
+
+  prova('il Buongiorno parte sempre: con appuntamenti solo quelli, senza telefonate e riordini; poi 🚩 🏋️ 🎯', () => {
+    const nessuna = { training: 'fatto', daRipassare: 0, obiettivi: null };
+    const base = { ...nessuna, nome: 'Anna', appuntamenti: 0, conferme: 0, telefonate: 0, riordini: 0, inPausa: false };
+    // niente da dire = niente avviso
+    assert.equal(R.messaggioMattino(base), null);
+    // appuntamenti: solo quelli, le telefonate e i riordini restano fuori
+    let m = R.messaggioMattino({ ...base, appuntamenti: 2, conferme: 1, telefonate: 5, riordini: 3 });
+    assert.equal(m.titolo, '☀️ Buongiorno, Anna!'); assert.equal(m.url, './?apri=agenda'); assert.equal(m.tag, 'mattino');
+    assert.equal(m.testo, "📅 Oggi 2 appuntamenti (1 da confermare). Tocca per aprire l'Agenda.");
+    assert.equal(R.messaggioMattino({ ...base, appuntamenti: 1 }).testo, "📅 Oggi 1 appuntamento. Tocca per aprire l'Agenda.");
+    // senza appuntamenti: telefonate e riordini
+    assert.equal(R.messaggioMattino({ ...base, telefonate: 5, riordini: 2 }).testo, "📞 Oggi 5 telefonate e 2 riordini da sentire. Tocca per aprire l'Agenda.");
+    assert.equal(R.messaggioMattino({ ...base, telefonate: 1 }).testo, "📞 Oggi 1 telefonata. Tocca per aprire l'Agenda.");
+    assert.equal(R.messaggioMattino({ ...base, riordini: 1 }).testo, "📞 Oggi 1 riordino da sentire. Tocca per aprire l'Agenda.");
+    // in pausa: niente telefonate, restano i riordini
+    assert.equal(R.messaggioMattino({ ...base, telefonate: 5, riordini: 1, inPausa: true }).testo, "📞 Oggi 1 riordino da sentire. Tocca per aprire l'Agenda.");
+    assert.equal(R.messaggioMattino({ ...base, telefonate: 5, inPausa: true }), null);
+    // senza nome: «Buongiorno!»
+    assert.equal(R.messaggioMattino({ ...base, nome: ' ', appuntamenti: 1 }).titolo, '☀️ Buongiorno!');
+    // le tre voci, nell'ordine 🚩 🏋️ 🎯, anche da sole (si apre il Training)
+    const tre = { ...base, appuntamenti: 1, training: 'da_fare', obiettivi: R.avvisoObiettivi('2026-10-03', null), traguardo: 'Verso il Leader 1° livello: il biglietto BBS.' };
+    assert.deepEqual(R.messaggioMattino(tre).testo.split('\n').map(r => r.split(' ')[0]), ['📅', '🚩', '🏋️', '🎯']);
+    m = R.messaggioMattino({ ...base, training: 'mai' });
+    assert.equal(m.testo, '🏋️ Se ti va, 5 minuti per provare il Training.'); assert.equal(m.url, './?apri=training');
+    // la mattina ha già detto una voce: non si ripete (stesso giro con `dette`)
+    assert.equal(R.messaggioMattino({ ...tre, dette: { training: true, obiettivi: true, traguardo: true } }).testo, "📅 Oggi 1 appuntamento. Tocca per aprire l'Agenda.");
   });
 
   prova('«Com\'è andata?»: quelli che scattano insieme per la stessa persona sono uno; l\'elenco ne mostra tre e dice quanti altri', () => {

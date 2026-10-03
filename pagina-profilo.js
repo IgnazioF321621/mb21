@@ -79,10 +79,10 @@ function mioProfiloHtml() {
 }
 
 // «Avvisi» con lo schema del QUANDO (cantiere 43, schizzo approvato da Ignazio il 23/09; per tutti dal lavoro 4, stesso giorno):
-// ognuno sceglie quando, per tipo (avvisiQuandoHtml in avvisi.js). «Spegni» vale per il dispositivo; «Prova un avviso» in fondo.
+// ognuno sceglie quando, per tipo (avvisiQuandoHtml in avvisi.js; dal 03/10 senza i «Prima di…»: li fa il calendario). «Spegni» vale per il dispositivo; «Prova un avviso» in fondo.
 function avvisiNuoviHtml(statoDispositivo, destra) {
   return voceProfilo('avvisi', ic('avvisi') + ' Avvisi', { destra, corpo: `
-      <small style="margin-top:0">Tutto quello che in MB Plan ha un'ora ti avvisa, anche con l'app chiusa. Scegli tu <b>quando</b>: vale su telefono e iPad insieme.</small>
+      <small style="margin-top:0">Il buongiorno, il riepilogo della sera e il «Com'è andata?» ti arrivano anche con l'app chiusa. Scegli tu <b>quando</b>: vale su telefono e iPad insieme. Gli avvisi prima di un appuntamento li fa il tuo calendario: più sotto lo puoi collegare a MB21.</small>
       <div class="pf-avvisi">${statoDispositivo}</div>
       ${avvisiQuandoHtml(ST.utente)}
       <small>Le tracce condivise da controllare ti avvisano sempre, appena arrivano.</small>

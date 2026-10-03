@@ -3,13 +3,10 @@
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
-//    { tipo: 'mattino' } → alle 9 di Roma (dal cantiere 29; prima alle 8), «Buongiorno, Nome! Oggi N telefonate, N appuntamenti (N da confermare) e N riordini da sentire»
-//    { tipo: 'promemoria' } → ogni 5 minuti: «Tra 30 minuti: PM 1a1 · Pino Manolo» agli appuntamenti tra 25 e 35 minuti
-//      non ancora avvisati (azioni.promemoria_il); con { prova: true } dice cosa manderebbe senza mandare
-//      (e con { prova: true, adesso: '<ISO>' } fa finta che sia quell'ora: serve solo a provare).
-//      Dal 21/09 anche le TELEFONATE messe in Agenda con un orario (Contatto senza esito, non completato): quelle una dietro
-//      l'altra (ognuna entro 30 minuti dalla precedente) fanno UN avviso solo, «Tra 30 minuti · 3 telefonate». Mai per le telefonate
-//      di Riordino (le crea l'app: ci pensa l'avviso del mattino) né per la coda, che non ha orario.
+//    { tipo: 'mattino' } → alle 9 di Roma (dal 03/10 parte sempre che ci sia qualcosa da dire): «Buongiorno, Nome!» con gli appuntamenti di oggi, se ci sono,
+//      altrimenti telefonate e riordini; poi Training · obiettivi del mese · prossimo traguardo (regole.ts → messaggioMattino)
+//    { tipo: 'promemoria' } → TOLTO il 03/10 (Ignazio): appuntamenti, telefonate, cose e modelli li avvisa il calendario di ognuno (Apple o Google);
+//      la funzione risponde «saltato» se un orologio vecchio la chiama ancora
 //    { tipo: 'senza_esito' } → ogni 5 minuti: «Com'è andata? · PM 1a1 · Pino Manolo» un'ora dopo la fine di un appuntamento
 //      ancora senza esito, una volta sola (azioni.senza_esito_avvisato_il); non più vecchi di un giorno
 //    { tipo: 'tracce' } → ogni 15 minuti, solo tra le 9 e le 21 di Roma (cantiere 40, 22/09): la traccia condivisa dura 72 ore.
@@ -24,15 +21,15 @@
 //  CANTIERE 43 (23/09): ognuno sceglie QUANDO (utenti.avvisi_quando, schema nel Profilo; regole pure in ./regole.ts, provate con
 //  node tools/banco/prova_avvisi.js). Le ore e i minuti scritti qui sopra sono ora i valori «già impostato»:
 //   - check_sera e mattino: l'orologio chiama ogni ora nella fascia possibile, la funzione avvisa chi ha scelto quell'ora
-//   - promemoria (ogni minuto): appuntamenti, telefonate, e ANCHE cose da fare con l'ora e voci dei modelli (tabella avvisi_mandati:
-//     un avviso solo per cosa, giorno e ora), ognuno con i suoi minuti prima; parte da «N minuti prima» fino all'inizio
 //   - senza_esito: «Com'è andata?» N minuti dopo la fine (30 · 60 · 120, scelta di ognuno)
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
-//  02/10 (Ignazio: «gli avvisi sono veramente tanti»): meno avvisi. Il Buongiorno parte solo se oltre alle telefonate c'è altro (appuntamenti, riordini);
-//   il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera): Check, complimenti, domani, Training e obiettivi.
+//  02/10 (Ignazio: «gli avvisi sono veramente tanti»): meno avvisi. Il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera).
+//  03/10 (Ignazio): via i promemoria (li fa il calendario); restano Buongiorno, sera, «Com'è andata?» (serve per avere gli esiti) e le tracce.
+//   Buongiorno e sera sono «di base uguali»: Training · obiettivi · prossimo traguardo, ognuno UNA volta al giorno (la sera non ripete quel che la mattina ha già detto:
+//   segno `voce:<cosa>:<giorno>:<utente>` in avvisi_mandati).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, eMomentoPrima, titoloPrima, coseConOra, chiaveAvviso, riepilogoDomani, complimentiDelGiorno, messaggioSera, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaVicini, raggruppaPerUtente, elencoImpegni, oraMinuti, FINESTRA_VICINI, type Impegno, oraDi as oraRomaDi, giornoDi as giornoRomaDi, type ConOra, type Cosa, type Voce as VoceModello, type Modello } from './regole.ts';
+import { scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -48,9 +45,6 @@ function giornoRoma(giorno: string) {
   return { inizio: inizio.toISOString(), fine: new Date(inizio.getTime() + 86400000).toISOString() };
 }
 const giornoDi = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
-const plurale = (n: number, uno: string, tanti: string) => `${n} ${n === 1 ? uno : tanti}`;
-
-const oraDi = (iso: string) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
 
 // ── Telefonate in Agenda (21/09) ── quelle messe a mano con giorno e ora: Contatto senza esito e non completato.
 type Telefonata = { id: string; user_id: string; inizio: string; fine: string | null; contatti: unknown };
@@ -119,6 +113,42 @@ async function scelteDiTutti() {
   return (id: string, k: string) => scelta(per.get(id), k);
 }
 
+// Le tre voci di consiglio del Buongiorno e della sera (Training · obiettivi del mese · prossimo traguardo): stessi dati e stessa regola per tutti e due.
+// Si carica una volta per giro; `di(utente, prossimo_traguardo)` dà i consigli di quella persona e quali ha già ricevuto oggi.
+async function datiConsigli(oggi: string, adesso: number) {
+  const mese = `${oggi.slice(0, 8)}01`;
+  const [{ data: obMese, error: e1 }, { data: giaRifatto, error: e2 }, { data: saltati, error: e3 }, { data: allenati, error: e4 }, { data: carte, error: e5 }, { data: dette, error: e6 }] = await Promise.all([
+    db.from('obiettivi_mese').select('*').eq('mese', mese),
+    db.from('avvisi_mandati').select('chiave').like('chiave', `obiettivi-rifai:${oggi.slice(0, 7)}:%`),   // a chi è già stato mandato il «rifalli»
+    db.from('obiettivi_salto').select('user_id').eq('mese', mese),   // chi ha toccato «Non questo mese»
+    db.from('training_giorni').select('user_id').eq('giorno', oggi),
+    db.from('training_carte').select('user_id, prossima'),
+    db.from('avvisi_mandati').select('chiave').like('chiave', `voce:%:${oggi}:%`),   // le voci già dette oggi (la mattina)
+  ]);
+  const err = e1 || e2 || e3 || e4 || e5 || e6;
+  if (err) throw err;
+  const dette_ = new Set((dette ?? []).map(x => x.chiave));
+  return (id: string, prossimoTraguardo: unknown) => {
+    const mieCarte = (carte ?? []).filter(c => c.user_id === id);
+    const allenato = (allenati ?? []).some(x => x.user_id === id);
+    let ob = avvisoObiettivi(oggi, (obMese ?? []).find(x => x.user_id === id), (saltati ?? []).some(x => x.user_id === id));
+    const chiaveRifai = `obiettivi-rifai:${oggi.slice(0, 7)}:${id}`;
+    if (ob?.rifai && (giaRifatto ?? []).some(x => x.chiave === chiaveRifai)) ob = null;
+    const consigli: Consigli = {
+      training: allenato ? 'fatto' : mieCarte.length ? 'da_fare' : 'mai', daRipassare: mieCarte.filter(c => c.prossima && c.prossima <= oggi).length,
+      obiettivi: ob, traguardo: rigaTraguardo(prossimoTraguardo as Traguardo, oggi, adesso),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
+    };
+    const detta = (v: string) => dette_.has(`voce:${v}:${oggi}:${id}`);
+    return { allenato, consigli, rifai: ob?.rifai ? chiaveRifai : null, dette: { training: detta('training'), obiettivi: detta('obiettivi'), traguardo: detta('traguardo') } };
+  };
+}
+// Dopo l'invio: si segna quali voci sono partite oggi (la sera non le ripete) e, se c'era, il «rifalli» degli obiettivi
+async function segnaVoci(id: string, oggi: string, righe: RigheConsigli, rifai: string | null) {
+  const segni = (Object.keys(righe) as (keyof RigheConsigli)[]).filter(v => righe[v]).map(v => ({ chiave: `voce:${v}:${oggi}:${id}`, user_id: id }));
+  if (rifai && righe.obiettivi) segni.push({ chiave: rifai, user_id: id });
+  if (segni.length) await db.from('avvisi_mandati').upsert(segni, { onConflict: 'chiave', ignoreDuplicates: true });
+}
+
 const risposta = (corpo: unknown, stato = 200) => new Response(JSON.stringify(corpo), { status: stato, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
 
 Deno.serve(async (req) => {
@@ -182,10 +212,10 @@ Deno.serve(async (req) => {
   if (tipo === 'check_sera') {
     // cantiere 43: l'orologio chiama ogni ora dalle 20 alle 22 di Roma; avvisa chi ha scelto quest'ora (già impostato: 22)
     if (![20, 21, 22].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il Check della sera si sceglie tra le 20 e le 22` });
-    // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Hai fatto il Check?» con in fondo
+    // 24/09 («Domani hai…», lista Avvisi di MB App): un avviso solo la sera. Check non fatto → «Il riepilogo del «tuo giorno» è quasi pronto» con in fondo
     // gli impegni di domani; Check fatto → «📅 Domani hai…», solo se domani c'è qualcosa (appuntamenti e telefonate in agenda, mai Riordini).
     const oggi = oggiAdesso, domani = giornoRoma(giornoRomaDi(adessoVero + 86400000)), ilGiornoDopo = giornoRomaDi(adessoVero + 86400000);
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }, { data: obMese, error: e8 }, { data: giaRifatto, error: e9 }, { data: saltati, error: e10 }, { data: allenati, error: e11 }, { data: carte, error: e12 }] = await Promise.all([
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: app, error: e3 }, { data: daCoda, error: e4 }, { data: tel, error: e5 }, { data: conti, error: e6 }, { data: vend, error: e7 }] = await Promise.all([
       db.from('utenti').select('id, prossimo_traguardo').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
@@ -194,18 +224,12 @@ Deno.serve(async (req) => {
       // 30/09 i complimenti: la giornata già scritta, contata come la Dashboard (viste azioni_conti e vendite_conti, giorno di Roma)
       db.from('azioni_conti').select('user_id, esito, contatti, pm').eq('giorno', oggi),
       db.from('vendite_conti').select('user_id, contatto_id').eq('conta_il', oggi),
-      // 01/10 gli obiettivi del mese: chi li ha già impostati e a chi è già stato mandato il «rifalli» (segno in avvisi_mandati)
-      db.from('obiettivi_mese').select('*').eq('mese', `${oggi.slice(0, 8)}01`),
-      db.from('avvisi_mandati').select('chiave').like('chiave', `obiettivi-rifai:${oggi.slice(0, 7)}:%`),
-      db.from('obiettivi_salto').select('user_id').eq('mese', `${oggi.slice(0, 8)}01`),   // 02/10 chi ha toccato «Non questo mese»
-      // 02/10 il Training nella sera: chi si è già allenato oggi (complimenti) e le carte di ognuno (da ripassare)
-      db.from('training_giorni').select('user_id').eq('giorno', oggi),
-      db.from('training_carte').select('user_id, prossima'),
     ]);
-    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7 || e8 || e9 || e10 || e11 || e12;
+    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7;
     if (err) return risposta({ errore: err.message }, 500);
+    const consigliDi = await datiConsigli(oggi, adessoVero);   // Training, obiettivi del mese, prossimo traguardo (e quali ha già detto il Buongiorno)
     const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
-    const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda, come il promemoria
+    const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda
     const impegni: (Impegno & { user_id: string })[] = [
       ...(app ?? []).map(x => ({ user_id: x.user_id, inizio: Date.parse(x.inizio), testo: `${x.modalita || x.tipo_azione} · ${nome(x)}`, telefonata: false })),
       ...(daCoda ?? []).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta)}`))
@@ -219,35 +243,26 @@ Deno.serve(async (req) => {
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
       // il coach guarda la giornata scritta nell'app: se c'è qualcosa la prima riga sono i complimenti, se no niente di inventato
       const mieiConti = (conti ?? []).filter(x => x.user_id === id);
-      const mieCarte = (carte ?? []).filter(c => c.user_id === id);
-      const allenato = (allenati ?? []).some(x => x.user_id === id);
+      const mio = consigliDi(id, prossimo_traguardo);
       const bravo = complimentiDelGiorno({
         contatti: mieiConti.reduce((n, x) => n + (x.contatti || 0), 0),
         fissati: mieiConti.filter(x => x.esito === 'PM Fissato' || x.esito === 'Appuntamento').length,
         pm: mieiConti.reduce((n, x) => n + (x.pm || 0), 0),
         vendite: new Set((vend ?? []).filter(x => x.user_id === id).map(x => x.contatto_id)).size,
-        training: allenato,
+        training: mio.allenato,
       });
-      // gli obiettivi del mese: una riga dentro lo stesso avviso (02/10: un avviso solo, niente avviso a parte)
-      let ob = avvisoObiettivi(oggi, (obMese ?? []).find(x => x.user_id === id), (saltati ?? []).some(x => x.user_id === id));
-      const chiaveRifai = `obiettivi-rifai:${oggi.slice(0, 7)}:${id}`;
-      if (ob?.rifai && (giaRifatto ?? []).some(x => x.chiave === chiaveRifai)) ob = null;
-      const avviso = messaggioSera({
-        bravo, checkFatto: giaFatto.has(id), domani: d, ilGiornoDopo, obiettivi: ob,
-        training: allenato ? 'fatto' : mieCarte.length ? 'da_fare' : 'mai', daRipassare: mieCarte.filter(c => c.prossima && c.prossima <= oggi).length,
-        traguardo: rigaTraguardo(prossimo_traguardo, oggi, adessoVero),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
-      });
+      const avviso = messaggioSera({ ...mio.consigli, dette: mio.dette, bravo, checkFatto: giaFatto.has(id), domani: d, ilGiornoDopo });
       if (!avviso) continue;   // Check fatto, domani niente, niente da consigliare: si tace
       if (corpo.prova) { esiti.push({ utente: id, ...avviso }); continue; }
       esiti.push({ utente: id, ...(await spedisciA([id], avviso)) });
-      if (ob?.rifai) await db.from('avvisi_mandati').upsert({ chiave: chiaveRifai, user_id: id }, { onConflict: 'chiave', ignoreDuplicates: true });
+      await segnaVoci(id, oggi, righeConsigli(mio.consigli, mio.dette), mio.rifai);
     }
+    // i segni «già avvisato» più vecchi di 3 giorni non servono più: si puliscono una volta al giorno, con l'ultimo giro della sera (prima lo faceva l'orologio dei promemoria)
+    if (!corpo.prova && oraAdesso === 22) await db.from('avvisi_mandati').delete().lt('mandato_il', new Date(adessoVero - 3 * 86400000).toISOString());
     return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.prova ? esiti : undefined });
   }
 
-  // Il Training non ha più un avviso a parte (02/10, Ignazio: «gli avvisi sono veramente tanti»): lo ricorda o lo festeggia l'avviso della sera (`check_sera`).
-
-  // Riepilogo del mattino (cantiere 24 passo 2): stessi conti della Dashboard, ognuno per la propria agenda
+  // Il Buongiorno (cantiere 24 passo 2; dal 03/10 «di base uguale» alla sera): stessi conti della Dashboard, ognuno per la propria agenda
   if (tipo === 'mattino') {
     // cantiere 43: l'orologio chiama ogni ora dalle 7 alle 10 di Roma; avvisa chi ha scelto quest'ora (già impostato: 9)
     if (![7, 8, 9, 10].includes(oraAdesso) && !corpo.forza) return risposta({ saltato: `a Roma sono le ${oraAdesso}: il buongiorno si sceglie tra le 7 e le 10` });
@@ -256,7 +271,7 @@ Deno.serve(async (req) => {
     // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
     // (Contatto con glide_id ed esito «Riordino», non completate) dal 1° settembre 2026 (INIZIO_RIORDINI_GLIDE) a oggi.
     const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }, { data: vendite, error: e5 }, { data: glide, error: e6 }] = await Promise.all([
-      db.from('utenti').select('id, nome, contatti_al_giorno').eq('accesso_attivo', true).is('eliminato_il', null),
+      db.from('utenti').select('id, nome, contatti_al_giorno, prossimo_traguardo').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('azioni').select('user_id').eq('da_coda', true).gte('inizio', g.inizio).lt('inizio', g.fine),   // esiti dalla coda già dati oggi
       db.from('azioni').select('user_id, contatto_id, inizio, confermato_il').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', g.inizio).lt('inizio', g.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, confermato_il').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', g.inizio).lt('data_scelta', g.fine),
@@ -268,6 +283,7 @@ Deno.serve(async (req) => {
     if (err) return risposta({ errore: err.message }, 500);
     const { data: dispositivi } = await db.from('avvisi_dispositivi').select('user_id');
     const conDispositivo = new Set((dispositivi ?? []).map(x => x.user_id));
+    const consigliDi = await datiConsigli(oggi, adesso);
     const veri = new Set((appuntamenti ?? []).map(a => `${a.contatto_id}|${Date.parse(a.inizio)}`));
     const tutti = [
       ...(appuntamenti ?? []).map(a => ({ user_id: a.user_id, quando: a.inizio, confermato: !!a.confermato_il })),
@@ -282,102 +298,27 @@ Deno.serve(async (req) => {
     for (const u of attivi ?? []) {
       if (!conDispositivo.has(u.id)) continue;
       if (!corpo.forza && quando(u.id, 'buongiorno') !== oraAdesso) continue;
-      const telefonate = Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length);
       const miei = tutti.filter(a => a.user_id === u.id);
-      const conferme = miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length;
-      const riordini = riordiniDi.filter(id => id === u.id).length;
-      // 02/10 (Ignazio: «gli avvisi sono veramente tanti»): il Buongiorno parte solo se oltre alle telefonate c'è altro di programmato
-      // (appuntamenti, riordini); con sole telefonate no. Con «0 contatti al giorno» (pausa) vale lo stesso, e senza «0 telefonate».
-      const inPausa = u.contatti_al_giorno === 0;
-      if (!miei.length && !riordini) continue;
-      const pezzi = inPausa ? [] : [plurale(telefonate, 'telefonata', 'telefonate')];
-      if (miei.length) pezzi.push(plurale(miei.length, 'appuntamento', 'appuntamenti') + (conferme ? ` (${conferme} da confermare)` : ''));
-      const nome = String(u.nome ?? '').trim();   // nome proprio nel titolo (Ignazio 18/09); senza nome resta «Buongiorno!»
-      if (riordini) pezzi.push(plurale(riordini, 'riordino', 'riordini') + ' da sentire');
-      const testo = `Oggi ${pezzi.length > 1 ? pezzi.slice(0, -1).join(', ') + ' e ' + pezzi[pezzi.length - 1] : pezzi[0]}. Tocca per aprire l'Agenda.`;
-      if (corpo.prova) { esiti.push({ utente: u.id, testo }); continue; }
-      esiti.push({ utente: u.id, testo, ...(await spedisciA([u.id], { titolo: nome ? `☀️ Buongiorno, ${nome}!` : '☀️ Buongiorno!', testo, url: './?apri=agenda', tag: 'mattino' })) });
+      const mio = consigliDi(u.id, u.prossimo_traguardo);
+      // 03/10 (Ignazio): parte sempre che ci sia qualcosa da dire. Con appuntamenti, solo quelli; senza, le telefonate (quante ne restano da fare) e i riordini.
+      // Con «0 contatti al giorno» (pausa) niente telefonate.
+      const avviso = messaggioMattino({
+        ...mio.consigli, dette: mio.dette, nome: String(u.nome ?? ''),
+        appuntamenti: miei.length, conferme: miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length,
+        telefonate: Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length),
+        riordini: riordiniDi.filter(id => id === u.id).length, inPausa: u.contatti_al_giorno === 0,
+      });
+      if (!avviso) continue;
+      if (corpo.prova) { esiti.push({ utente: u.id, ...avviso }); continue; }
+      esiti.push({ utente: u.id, testo: avviso.testo, ...(await spedisciA([u.id], avviso)) });
+      await segnaVoci(u.id, oggi, righeConsigli(mio.consigli, mio.dette), mio.rifai);
     }
     return risposta({ oggi, ora: oraAdesso, utenti: esiti.length, esiti: corpo.forza || corpo.prova ? esiti : undefined });
   }
 
-  // Promemoria prima dell'appuntamento (cantiere 24 passo 3): stesso titolo dell'Agenda («PM 1a1 · Pino Manolo»).
-  // Cantiere 43: i minuti prima sono la scelta di ognuno («appuntamenti», «telefonate», «cose», «modelli»); si guarda da 5 minuti fa
-  // (per «all'ora») fino a un'ora avanti (la scelta più lunga) e decide `eMomentoPrima`.
-  if (tipo === 'promemoria') {
-    const adesso = adessoVero, MASSIMO = 60, MINUTO = 60000, VICINI = FINESTRA_VICINI / MINUTO;
-    // si guarda anche i 30 minuti oltre il più lontano momento possibile: chi scatta porta con sé i vicini (02/10, un avviso solo)
-    const da = new Date(adesso - 5 * MINUTO).toISOString(), a = new Date(adesso + (MASSIMO + VICINI + 1) * MINUTO).toISOString();
-    const [{ data: appuntamenti, error: e1 }, { data: daCoda, error: e2 }] = await Promise.all([
-      db.from('azioni').select('id, user_id, contatto_id, inizio, tipo_azione, modalita, esito, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).is('promemoria_il', null).gte('inizio', da).lt('inizio', a),
-      db.from('azioni').select('id, user_id, contatto_id, data_scelta, tipo_azione, modalita, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).is('promemoria_il', null).gte('data_scelta', da).lt('data_scelta', a),
-    ]);
-    if (e1 || e2) return risposta({ errore: (e1 || e2)!.message }, 500);
-    const veri = new Set((appuntamenti ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));
-    const tutti = [...(appuntamenti ?? []), ...(daCoda ?? []).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta)}`))];   // senza doppioni della coda
-
-    // Tutti gli impegni della finestra, di ogni tipo, come «voci»; `due` = è il momento (la scelta di minuti di ognuno). Poi si raggruppano i vicini.
-    type Voce = { utente: string; inizio: number; due: boolean; riga: string; testo: string; titoloExtra?: string; url: string; tag: string; giorno: string; azioni: string[]; chiavi: { chiave: string; user_id: string }[] };
-    const voci: Voce[] = [];
-    for (const az of tutti) {
-      const nome = (az.contatti as unknown as { nome?: string } | null)?.nome || '—';
-      const cosa = az.tipo_azione === 'Contatto' ? (az.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (az.modalita || az.tipo_azione);
-      const ore = az as unknown as { inizio?: string; data_scelta?: string };   // appuntamento vero (inizio) o dalla coda (data_scelta)
-      const iso = (az.tipo_azione === 'Contatto' ? ore.data_scelta : ore.inizio) ?? '';
-      const inizio = Date.parse(iso);
-      voci.push({ utente: az.user_id, inizio, due: eMomentoPrima(inizio, quando(az.user_id, 'appuntamenti'), adesso), riga: `${cosa} · ${nome}`, testo: `${cosa} · ${nome}`,
-        url: `./?apri=agenda&azione=${az.id}`, tag: `promemoria-${az.id}`, giorno: giornoDi(iso), azioni: [az.id], chiavi: [] });
-    }
-    // Le telefonate in Agenda: si guarda fino a 3 ore oltre per prendere tutto il giro (quelle una dietro l'altra sono UN impegno); il momento è quello della PRIMA
-    const { data: tel, error: e3 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false)
-      .is('esito', null).is('promemoria_il', null).gte('inizio', da).lt('inizio', new Date(adesso + (MASSIMO + 180) * MINUTO).toISOString());
-    if (e3) return risposta({ errore: e3.message }, 500);
-    for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
-      const inizio = Date.parse(giro[0].inizio);
-      voci.push({ utente: giro[0].user_id, inizio, due: eMomentoPrima(inizio, quando(giro[0].user_id, 'telefonate'), adesso),
-        riga: giro.length === 1 ? `Telefonata · ${nomeDi(giro[0])}` : `${giro.length} telefonate: ${elencoNomi(giro)}`,
-        testo: giro.length === 1 ? `Telefonata · ${nomeDi(giro[0])}` : `dalle ${oraDi(giro[0].inizio)}: ${elencoNomi(giro)}`,
-        titoloExtra: giro.length === 1 ? undefined : ` · ${giro.length} telefonate`,
-        url: giro.length === 1 ? `./?apri=agenda&azione=${giro[0].id}` : `./?apri=agenda&giorno=${giornoDi(giro[0].inizio)}`,
-        tag: `promemoria-${giro[0].id}`, giorno: giornoDi(giro[0].inizio), azioni: giro.map(x => x.id), chiavi: [] });
-    }
-    // Cantiere 43: le cose da fare con l'ora e le voci dei modelli (stessa regola della Timeline di MB Plan: `coseConOra` in regole.ts). Oggi, e domani se è vicino.
-    const giorni = [...new Set([oggiAdesso, giornoRomaDi(adesso + (MASSIMO + VICINI + 1) * MINUTO)])];
-    const [{ data: cose, error: e4 }, { data: vociModelli, error: e5 }, { data: modelli, error: e6 }] = await Promise.all([
-      db.from('cose_da_fare').select('id, user_id, testo, giorno, ora, fatto_il, modello_id, core, scala').in('giorno', giorni),
-      db.from('modello_giorno').select('id, user_id, testo, giorni, attivo, core, modello_id, ora').not('modello_id', 'is', null).is('core', null),
-      db.from('modelli').select('id, attivo, scala'),
-    ]);
-    if (e4 || e5 || e6) return risposta({ errore: (e4 || e5 || e6)!.message }, 500);
-    const dellaFinestra = giorni.flatMap(g => coseConOra((cose ?? []) as Cosa[], (vociModelli ?? []) as VoceModello[], (modelli ?? []) as Modello[], g))
-      .filter(x => x.inizio >= adesso - 5 * MINUTO && x.inizio <= adesso + (MASSIMO + VICINI + 1) * MINUTO);
-    const { data: mandati, error: e7 } = dellaFinestra.length ? await db.from('avvisi_mandati').select('chiave').in('chiave', dellaFinestra.map(chiaveAvviso)) : { data: [], error: null };
-    if (e7) return risposta({ errore: e7.message }, 500);
-    const gia = new Set((mandati ?? []).map(m => m.chiave));
-    for (const x of dellaFinestra) {
-      if (gia.has(chiaveAvviso(x))) continue;   // già avvisata
-      voci.push({ utente: x.user_id, inizio: x.inizio, due: eMomentoPrima(x.inizio, quando(x.user_id, x.tipo), adesso), riga: x.testo, testo: `${x.ora} · ${x.testo}`,
-        url: `./?apri=agenda&giorno=${x.giorno}`, tag: `cosa-${chiaveAvviso(x)}`, giorno: x.giorno, azioni: [], chiavi: [{ chiave: chiaveAvviso(x), user_id: x.user_id }] });
-    }
-
-    // Un avviso per gruppo di vicini: da solo com'era; più di uno «Tra 30 minuti · 3 impegni» con l'elenco con le ore
-    const esiti: Record<string, unknown>[] = [];
-    for (const gruppo of raggruppaVicini(voci)) {
-      const primo = gruppo[0], titolo = titoloPrima(primo.inizio, adesso);
-      const avviso = gruppo.length === 1
-        ? { titolo: titolo + (primo.titoloExtra ?? ''), testo: primo.testo, url: primo.url, tag: primo.tag }
-        : { titolo: `${titolo} · ${gruppo.length} impegni`, testo: elencoImpegni(gruppo), url: `./?apri=agenda&giorno=${primo.giorno}`, tag: primo.tag };
-      if (corpo.prova) { esiti.push({ utente: primo.utente, impegni: gruppo.length, ...avviso }); continue; }
-      const esito = await spedisciA([primo.utente], avviso);
-      const idAzioni = gruppo.flatMap(x => x.azioni), segni = gruppo.flatMap(x => x.chiavi);
-      if (idAzioni.length) await db.from('azioni').update({ promemoria_il: new Date().toISOString() }).in('id', idAzioni);
-      if (segni.length) await db.from('avvisi_mandati').upsert(segni, { onConflict: 'chiave', ignoreDuplicates: true });
-      esiti.push({ impegni: gruppo.length, ...esito });
-    }
-    // i segni più vecchi di 3 giorni non servono più (la chiave ha dentro il giorno): si puliscono una volta al giorno, alle 3 di notte
-    if (!corpo.prova && oraAdesso === 3) await db.from('avvisi_mandati').delete().lt('mandato_il', new Date(adesso - 3 * 86400000).toISOString());
-    return risposta({ avvisi: esiti.length, esiti });
-  }
+  // I promemoria «Tra N minuti» sono TOLTI (03/10, Ignazio): appuntamenti, telefonate, cose e modelli li avvisa il calendario di ognuno.
+  // Se un orologio vecchio chiama ancora, si risponde senza fare niente.
+  if (tipo === 'promemoria') return risposta({ saltato: 'i promemoria li fa il calendario di ognuno' });
 
   // Appuntamento passato senza esito (cantiere 24 passo 4): un'ora dopo la fine, «Com'è andata?»
   if (tipo === 'senza_esito') {
