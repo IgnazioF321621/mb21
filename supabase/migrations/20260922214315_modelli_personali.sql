@@ -32,3 +32,7 @@ insert into public.modelli (user_id, titolo)
 select distinct user_id, sezione from public.modello_giorno where core is null;
 update public.modello_giorno v set modello_id = m.id
   from public.modelli m where v.core is null and m.user_id = v.user_id and m.titolo = v.sezione;
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.modelli to authenticated, service_role;

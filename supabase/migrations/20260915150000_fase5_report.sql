@@ -48,3 +48,8 @@ create policy "griglia_write" on public.griglia_pm
 -- Dall'export (Report.csv) solo l'Admin aveva la griglia impostata: 50 PM dal 01/07/2026 al 31/12/2026 = 6 mesi
 insert into public.griglia_pm (user_id, obiettivo, inizio, mesi)
 select id, 50, '2026-07-01', 6 from public.utenti where ruolo = 'Admin';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.wes to authenticated, service_role;
+grant select, insert, update, delete on public.griglia_pm to authenticated, service_role;

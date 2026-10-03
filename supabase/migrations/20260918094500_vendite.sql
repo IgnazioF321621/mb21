@@ -66,3 +66,8 @@ left join lateral (
 ) f on true;   -- left join: senza un FC per quella data la vendita resta, con la provvigione vuota
 
 grant select on public.vendite_conti to authenticated;
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.fattori_conversione to authenticated, service_role;
+grant select, insert, update, delete on public.vendite to authenticated, service_role;

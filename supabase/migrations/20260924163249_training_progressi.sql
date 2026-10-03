@@ -55,3 +55,9 @@ create policy "training_test_mie" on public.training_test
 comment on table public.training_carte is 'Cantiere 45: le carte del Training viste da ognuno (scatola 1-5, prossimo ripasso); i testi delle carte sono nell''archivio privato coach_batterie.';
 comment on table public.training_giorni is 'Cantiere 45: i giorni di allenamento di ognuno (giorni di fila, avviso).';
 comment on table public.training_test is 'Cantiere 45: i test finali dei percorsi del Training (stelle, «la volta scorsa»).';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.training_carte to authenticated, service_role;
+grant select, insert, update, delete on public.training_giorni to authenticated, service_role;
+grant select, insert, update, delete on public.training_test to authenticated, service_role;

@@ -15,3 +15,7 @@ create policy "coach_batterie_write" on public.coach_batterie
   for all using (public.is_admin()) with check (public.is_admin());
 
 comment on table public.coach_batterie is 'Cantiere 42: i messaggi del coach (una batteria per situazione), letti dalla chat dopo un esito. Si riempie dalla cartella privata ~/mb21-import/training/coach.';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.coach_batterie to authenticated, service_role;
