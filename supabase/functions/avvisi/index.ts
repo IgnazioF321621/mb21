@@ -25,8 +25,8 @@
 //   Tutti accettano { prova: true, adesso: '<ISO>' }: dicono cosa manderebbero a quell'ora, senza mandare e senza segnare niente.
 //  02/10 (Ignazio: «gli avvisi sono veramente tanti»): meno avvisi. Il Training non ha più l'avviso a parte; la sera è UN avviso solo (regole.ts → messaggioSera).
 //  03/10 (Ignazio): via i promemoria (li fa il calendario); restano Buongiorno, sera, «Com'è andata?» (serve per avere gli esiti) e le tracce.
-//   Buongiorno e sera sono «di base uguali»: Training · obiettivi · prossimo traguardo, ognuno UNA volta al giorno (la sera non ripete quel che la mattina ha già detto:
-//   segno `voce:<cosa>:<giorno>:<utente>` in avvisi_mandati).
+//   Buongiorno e sera sono «di base uguali»: Training · obiettivi · prossimo traguardo. Obiettivi e traguardo UNA volta al giorno (la sera non ripete quel che la mattina
+//   ha già detto: segno `voce:<cosa>:<giorno>:<utente>` in avvisi_mandati); il Training anche la sera, se durante il giorno non è stato fatto.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 import { scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
@@ -139,12 +139,13 @@ async function datiConsigli(oggi: string, adesso: number) {
       obiettivi: ob, traguardo: rigaTraguardo(prossimoTraguardo as Traguardo, oggi, adesso),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
     };
     const detta = (v: string) => dette_.has(`voce:${v}:${oggi}:${id}`);
-    return { allenato, consigli, rifai: ob?.rifai ? chiaveRifai : null, dette: { training: detta('training'), obiettivi: detta('obiettivi'), traguardo: detta('traguardo') } };
+    // il Training non si segna: se durante il giorno non è stato fatto, la sera lo ricorda anche se la mattina l'ha già detto (Ignazio 03/10)
+    return { allenato, consigli, rifai: ob?.rifai ? chiaveRifai : null, dette: { obiettivi: detta('obiettivi'), traguardo: detta('traguardo') } };
   };
 }
-// Dopo l'invio: si segna quali voci sono partite oggi (la sera non le ripete) e, se c'era, il «rifalli» degli obiettivi
+// Dopo l'invio: si segna quali voci sono partite oggi (la sera non le ripete; il Training no, vedi sopra) e, se c'era, il «rifalli» degli obiettivi
 async function segnaVoci(id: string, oggi: string, righe: RigheConsigli, rifai: string | null) {
-  const segni = (Object.keys(righe) as (keyof RigheConsigli)[]).filter(v => righe[v]).map(v => ({ chiave: `voce:${v}:${oggi}:${id}`, user_id: id }));
+  const segni = (Object.keys(righe) as (keyof RigheConsigli)[]).filter(v => v !== 'training' && righe[v]).map(v => ({ chiave: `voce:${v}:${oggi}:${id}`, user_id: id }));
   if (rifai && righe.obiettivi) segni.push({ chiave: rifai, user_id: id });
   if (segni.length) await db.from('avvisi_mandati').upsert(segni, { onConflict: 'chiave', ignoreDuplicates: true });
 }
