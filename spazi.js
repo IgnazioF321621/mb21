@@ -1,20 +1,20 @@
 // MB21 · «Modello appuntamenti settimanale» (Ignazio 27/09/2026): gli spazi della settimana preparati prima, senza persona.
-// «Prepara la settimana» chiede cosa vuoi fare (un selettore: Piani Marketing, Consulenze prodotti, incontri di Team e LOS) e
+// «Prepara la settimana» chiede cosa vuoi fare (un selettore: Piani Marketing, Consulenze prodotti, incontri di Team e LdS) e
 // quanti, poi per ognuno il giorno e l'ora tra quelle libere (1 ora ciascuno: se serve di più si allunga nella Timeline); la
 // SdS/OPEN (Serata di sponsorizzazione / OPEN, una voce sola) si mette da sola il lunedì alle 21:30. Piani e Consulenze sono
-// spazi «da riempire»: mettendo un nome diventano un appuntamento vero. Team, LOS e SdS/OPEN sono incontri di gruppo, senza nome.
+// spazi «da riempire»: mettendo un nome diventano un appuntamento vero. Team, LdS e SdS/OPEN sono incontri di gruppo, senza nome.
 // Funzioni pure. Tabella `spazi`; il disegno è in pagina-agenda.js; prove in tools/banco/prova_spazi.js.
 (function (radice) {
   const A = typeof module !== 'undefined' && module.exports ? require('./agenda.js') : radice.MB21Agenda;
 
   // i tipi: la chiave è quella di `azioni.tipo_azione` (così lo spazio diventa l'appuntamento senza tradurre niente)
-  // Team e LOS (linea di sponsorizzazione): incontri di gruppo, senza nome e senza giorno fisso (Ignazio 27/09).
+  // Team e LdS (linea di sponsorizzazione; nel database il tipo resta «LOS», cambia solo il nome che si legge: Ignazio 03/10): incontri di gruppo, senza nome e senza giorno fisso (Ignazio 27/09).
   // uno / tanti / piccolo: le parole dentro le frasi («In che giorno fai l'incontro di Team?», «1 incontro di Team»); f = femminile
   const TIPI = {
     'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing?', max: 6, persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
     'Consulenza PRD': { nome: 'Consulenza prodotti', plurale: 'Consulenze prodotti', domanda: 'Quante Consulenze prodotti?', max: 4, persona: true, f: true, uno: 'la Consulenza prodotti', tanti: 'Consulenze prodotti', piccolo: 'Consulenza prodotti' },
     'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', domanda: 'Quanti incontri di Team?', max: 3, uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
-    'LOS': { nome: 'Incontro LOS', plurale: 'Incontri LOS', domanda: 'Quanti incontri LOS?', max: 3, uno: 'l\'incontro LOS', tanti: 'incontri LOS', piccolo: 'incontro LOS', sotto: 'Linea di sponsorizzazione' },
+    'LOS': { nome: 'Incontro LdS', plurale: 'Incontri LdS', domanda: 'Quanti incontri LdS?', max: 3, uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
     'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
   };
   const CON_PERSONA = ['Piano Marketing', 'Consulenza PRD'];   // spazi da riempire con un nome
@@ -85,7 +85,7 @@
   // La card «Programma della settimana» nel menu di MB Plan (Ignazio 27/09, al posto del Modulo Core): per Piani Marketing e
   // Consulenze quanti sono già fissati (appuntamenti veri) e quanti spazi restano da riempire, poi la SdS/OPEN.
   // azioni: righe di `azioni` (si contano quelle della settimana); spazi: righe di `spazi`.
-  // Team, LOS e SdS/OPEN: quando sono («Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00»).
+  // Team, LdS e SdS/OPEN: quando sono («Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00»).
   const quando = s => { const g = giornoDi(s.inizio); return `${A.GIORNI_SETTIMANA[A.giornoSettimana(g) - 1].toLowerCase()} ${Number(g.slice(8))} alle ${oraDi(s.inizio).slice(0, 5)}`; };
   function programma(settimana, azioni, spazi) {
     const dentro = iso => !!iso && settimana.includes(giornoDi(iso));

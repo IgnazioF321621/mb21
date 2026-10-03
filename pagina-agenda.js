@@ -1836,7 +1836,7 @@ function programmaSettimanaHtml() {
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>`
-      : `<p>${dom < oggi ? 'Niente in programma in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LOS.'}</p>`}
+      : `<p>${dom < oggi ? 'Niente in programma in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LdS.'}</p>`}
     ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -2362,7 +2362,7 @@ function collegaAgenda(eventi) {
 // dal 28/09 per tutti (Ignazio: «dobbiamo pubblicare a tutti»); prima solo l'Admin. Con «Tutti» no: sono personali
 const vediSpazi = () => typeof MB21Spazi !== 'undefined' && !vediTutti();
 const spaziDelGiorno = g => (vediSpazi() ? MB21Spazi.delGiorno(AG.spazi, g) : []);
-// Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LOS) col colore degli Appuntamenti
+// Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LdS) col colore degli Appuntamenti
 const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : 'var(--az-appuntamento)');
 const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.TIPI[s.tipo].sotto);
 const giornoBreve = g => `${MB21Agenda.GIORNI_SETTIMANA[MB21Agenda.giornoSettimana(g) - 1]} ${Number(g.slice(8))}`;
@@ -2406,7 +2406,7 @@ async function preparaSettimana() {
           Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
         + (restano.length ? `<button type="button" class="sp-aggiungi${st.menu ? ' aperto' : ''}" id="sp-aggiungi" aria-expanded="${st.menu}">${ic('piu')}<span>${st.tipi.length ? 'Aggiungi altro' : 'Aggiungi'}</span>${ic('freccia')}</button>
             ${st.menu ? `<div class="sp-menu">${gruppo('Con una persona', S.CON_PERSONA)}${gruppo('Di gruppo, senza nome', S.DI_GRUPPO)}</div>` : ''}` : '')
-        + (st.tipi.length ? '' : `<div class="vn-aiuto">Tocca «Aggiungi» e scegli: Piani Marketing, Consulenze prodotti, incontri di Team o LOS.</div>`)
+        + (st.tipi.length ? '' : `<div class="vn-aiuto">Tocca «Aggiungi» e scegli: Piani Marketing, Consulenze prodotti, incontri di Team o LdS.</div>`)
         + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge da sola. Se cambia giorno o ora, la sposti poi nella Timeline.</div>` : '');
     } else {
       const n = st.quanti[p], messi = st.scelti.filter(s => s.tipo === p).length;
@@ -2476,7 +2476,7 @@ async function preparaSettimana() {
 
 // Il foglio di uno spazio: mettere un nome (diventa l'appuntamento), cambiare giorno e ora, toglierlo.
 // La SdS/OPEN non ha nome: «Questa settimana non c'è» la toglie e nel Modulo Core la settimana diventa «l'OPEN non c'era».
-// Team e LOS (27/09): incontri di gruppo, senza nome: si spostano, si allungano, si tolgono.
+// Team e LdS (27/09): incontri di gruppo, senza nome: si spostano, si allungano, si tolgono.
 function foglioSpazio(id) {
   const S = MB21Spazi, A = MB21Agenda, s = (AG.spazi || []).find(x => x.id === id);
   if (!s) return;
