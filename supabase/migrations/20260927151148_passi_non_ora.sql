@@ -25,3 +25,7 @@ create policy "passi_non_ora_mie" on public.passi_non_ora
   with check (user_id = public.utente_corrente() or public.is_admin());
 
 comment on table public.passi_non_ora is 'Check, «I prossimi passi» dei livelli: le linee da non proporre in quel mese («Non ora», Ignazio 27/09/2026).';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.passi_non_ora to authenticated, service_role;

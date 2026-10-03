@@ -29,3 +29,7 @@ create policy "training_correzioni_admin" on public.training_correzioni
   for all using (public.is_admin()) with check (public.is_admin() and user_id = public.utente_corrente());
 
 comment on table public.training_correzioni is 'Cantiere 45: le carte del Training da correggere, segnate dall''Admin mentre si allena (Claude corregge il mazzo e segna risolta_il).';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.training_correzioni to authenticated, service_role;

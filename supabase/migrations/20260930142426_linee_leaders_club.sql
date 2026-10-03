@@ -25,3 +25,7 @@ create policy "linee_lc_admin_scrive" on public.linee_leaders_club
   for all using (public.is_admin()) with check (public.is_admin());
 
 comment on table public.linee_leaders_club is 'Check, Executive «di cui 2 a Leaders Club»: le linee segnate a mano dall''Admin, per persona e mese (Ignazio 30/09/2026).';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.linee_leaders_club to authenticated, service_role;

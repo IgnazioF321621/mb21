@@ -35,3 +35,8 @@ alter table public.libri_personali enable row level security;
 create policy "libri_personali_own" on public.libri_personali
   for all using (user_id = public.utente_corrente() or public.is_admin())
   with check (user_id = public.utente_corrente() or public.is_admin());
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.libri_letti to authenticated, service_role;
+grant select, insert, update, delete on public.libri_personali to authenticated, service_role;
