@@ -12,8 +12,10 @@
 --       La tabella è nata con i permessi di default, anche per `anon` (il file li dava solo a authenticated e service_role): qui si
 --       toglie `anon`, come dice il file. La RLS lo fermava comunque: nessun cambiamento per chi usa l'app.
 -- 037 · `pm_del_ramo`, `obiettivi_del_ramo`, `efficacia_del_ramo` non escludevano gli utenti eliminati (`utenti.eliminato_il`):
---       i loro numeri (PM, obiettivi, contatti/iscritti) comparivano ancora a chi sta sopra nel ramo. Si aggiunge il filtro, come già
---       fanno `avvio_del_team` e il feed del calendario. Stesso corpo di prima, più `u.eliminato_il is null`.
+--       i loro numeri (PM, obiettivi, contatti/iscritti) comparivano ancora a chi sta sopra nel ramo, anche nei mesi dopo l'uscita.
+--       Ignazio (03/10): lo storico resta («conta per il report, e per ricordarsi chi era e magari richiamarlo»): un eliminato si vede
+--       fino al mese in cui è stato tolto compreso, e sparisce dai mesi successivi. Stesso corpo di prima, più il confronto
+--       mese ↔ `date_trunc('month', u.eliminato_il)`. L'elenco «chi ha acceso l'app» (obiettivi_del_ramo → utenti) esclude gli eliminati.
 --
 -- Per tornare indietro: 015 → `grant all on public.training_obiettivo to anon`; 037 → le tre funzioni in 20260927154909,
 -- 20261001190000, 20261001200000.
@@ -37,7 +39,7 @@ language sql stable security definer set search_path = public as $$
       join ramo r on s.sponsor_id = r.partner_id
   ),
   utenti_ramo as (
-    select u.id, u.partner_id from public.utenti u where u.partner_id in (select partner_id from ramo) and u.eliminato_il is null
+    select u.id, u.partner_id, u.eliminato_il from public.utenti u where u.partner_id in (select partner_id from ramo)
   ),
   mesi as (
     select c.user_id, (to_char(c.data, 'YYYYMM'))::int as mese, sum(coalesce(c.pm, 0)) as pm
@@ -47,7 +49,8 @@ language sql stable security definer set search_path = public as $$
      group by 1, 2
   )
   select coalesce(jsonb_agg(jsonb_build_object('user_id', m.user_id, 'partner_id', u.partner_id, 'mese', m.mese, 'pm', m.pm)), '[]'::jsonb)
-    from mesi m join utenti_ramo u on u.id = m.user_id;
+    from mesi m join utenti_ramo u on u.id = m.user_id
+   where u.eliminato_il is null or m.mese <= to_char(u.eliminato_il at time zone 'Europe/Rome', 'YYYYMM')::int;
 $$;
 
 create or replace function public.obiettivi_del_ramo(p_mese date) returns jsonb
@@ -66,24 +69,23 @@ language sql stable security definer set search_path = public as $$
      where s.partner_id <> (select partner_id from io)
   ),
   visti as (
-    select u.id, u.partner_id
+    select u.id, u.partner_id, u.eliminato_il
       from public.utenti u
      where u.id <> public.utente_corrente()
        and public.utente_corrente() is not null
-       and u.eliminato_il is null
        and (public.is_admin() or u.partner_id in (select partner_id from ramo))
   )
   select jsonb_build_object(
     'obiettivi', coalesce((select jsonb_agg(to_jsonb(o) || jsonb_build_object('partner_id', v.partner_id))
                              from public.obiettivi_mese o join visti v on v.id = o.user_id
-                            where o.mese = p_mese), '[]'::jsonb),
+                            where o.mese = p_mese and (v.eliminato_il is null or p_mese <= date_trunc('month', v.eliminato_il at time zone 'Europe/Rome')::date)), '[]'::jsonb),
     'linee',     coalesce((select jsonb_agg(to_jsonb(l) || jsonb_build_object('partner_utente', v.partner_id))
                              from public.obiettivi_linee l join visti v on v.id = l.user_id
-                            where l.mese = p_mese), '[]'::jsonb),
+                            where l.mese = p_mese and (v.eliminato_il is null or p_mese <= date_trunc('month', v.eliminato_il at time zone 'Europe/Rome')::date)), '[]'::jsonb),
     -- chi del ramo ha acceso l'app (ha fatto l'accesso almeno una volta): solo il codice Amway, niente altro
     'utenti',    coalesce((select jsonb_agg(distinct u.partner_id)
                              from public.utenti u join visti v on v.id = u.id
-                            where u.partner_id is not null and u.auth_id is not null), '[]'::jsonb)
+                            where u.partner_id is not null and u.auth_id is not null and u.eliminato_il is null), '[]'::jsonb)
   );
 $$;
 
@@ -103,15 +105,14 @@ language sql stable security definer set search_path = public as $$
      where s.partner_id <> (select partner_id from io)
   ),
   visti as (
-    select u.id, u.partner_id
+    select u.id, u.partner_id, u.eliminato_il
       from public.utenti u
      where public.utente_corrente() is not null
        and u.partner_id is not null
-       and u.eliminato_il is null
        and (public.is_admin() or u.id = public.utente_corrente() or u.partner_id in (select partner_id from ramo))
   )
   select coalesce(jsonb_agg(jsonb_build_object('partner_id', v.partner_id, 'mese', c.mese, 'contatti', c.contatti, 'pm', c.pm,
                                                'sponsor_personali', c.sponsor_personali)), '[]'::jsonb)
     from public.check_mesi c join visti v on v.id = c.user_id
-   where c.mese >= p_da;
+   where c.mese >= p_da and (v.eliminato_il is null or c.mese <= date_trunc('month', v.eliminato_il at time zone 'Europe/Rome')::date);
 $$;
