@@ -5,7 +5,7 @@
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
+const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], doppioni: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
@@ -16,7 +16,8 @@ async function apriAdmin() {
       dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
       dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore').order('dal')),   // cantiere 26: l'FC di Amway nel tempo
       dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, abbonamento_scadenza, abbonamento_con, eliminato_il, ultimo_uso, creato_il')),
-      dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').eq('stato', 'in_attesa').order('creato_il')),
+      // dal 03/10 (Fondamenta 035) anche i doppioni degli ultimi 30 giorni: richieste con l'email di un utente che c'è già (a chi chiede l'app ha risposto «ok»)
+      dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').or(`stato.eq.in_attesa,and(stato.eq.gia_utente,creato_il.gte.${new Date(Date.now() - 30 * 86400000).toISOString()})`).order('creato_il')),
       dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
       dbq('dispositivi con gli avvisi', supa.from('avvisi_dispositivi').select('user_id, dispositivo')),   // cantiere 24: chi ha gli avvisi accesi
     ]);
@@ -24,7 +25,7 @@ async function apriAdmin() {
     AD.codiciMappa = new Set(sq.data.map(x => x.partner_id));
     AD.dispositivi = {};   // utente → dispositivi con gli avvisi accesi («iPhone · Safari · app»)
     (disp.error ? [] : disp.data).forEach(d => { (AD.dispositivi[d.user_id] = AD.dispositivi[d.user_id] || []).push(d.dispositivo || 'dispositivo'); });
-    AD.richieste = rich.data; AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
+    AD.richieste = rich.data.filter(r => r.stato === 'in_attesa'); AD.doppioni = rich.data.filter(r => r.stato === 'gia_utente'); AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
     AD.wes = wes.data; AD.bbs = bbs.data; AD.fc = fc.error ? [] : fc.data;
     // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
     const oggi = MB21Coda.oggiRoma(), ordine = { attivo: 0, in_scadenza: 1, scaduto: 2 };
@@ -240,6 +241,11 @@ function disegnaAdmin() {
           <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ${ic('attenzione')} codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
           ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
           <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
+      ${AD.doppioni.length ? `<div class="rp-wes ad-richieste"><h3>${ic('invito')} Richieste con l'email di chi è già utente (${AD.doppioni.length})</h3>
+        <small>L'app ha risposto «richiesta inviata» senza dire che l'email è già registrata. Se è la stessa persona, le si può dire di entrare con la sua email.</small>${AD.doppioni.map(r => {
+        const u = AD.tutti.find(x => x.id === r.utente_id);
+        return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
+          <small>${esc(r.email)} · codice ${esc(r.codice_amway)} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${u ? ` · l'email è di ${esc(nomeDi(u))}` : ''}</small></div>`; }).join('')}</div>` : ''}
       ${senzaAvvisiHtml()}
       ${senzaObiettiviHtml()}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>

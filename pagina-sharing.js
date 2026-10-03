@@ -417,15 +417,15 @@ function collegaMioPercorso() {
   app.querySelectorAll('[data-mia-ascoltata]').forEach(b => b.onclick = async () => {
     b.disabled = true; b.classList.add('si');
     const r = MIO.righe.find(x => x.id === b.dataset.miaAscoltata);
-    const { error } = await dbq('la mia traccia ascoltata', supa.from('condivisioni')
-      .update({ ascoltata: true, ascoltata_il: MB21Coda.oggiRoma(), segnata_dal_partner: true }).eq('id', b.dataset.miaAscoltata));
+    // dal 03/10 (Fondamenta 017) il partner non scrive più sulla tabella: la funzione `segna_mia_traccia` tocca solo le colonne dell'ascolto
+    const { error } = await dbq('la mia traccia ascoltata', supa.rpc('segna_mia_traccia', { p_id: b.dataset.miaAscoltata }));
     if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
     CK.giorni = null;   // le Tracce del Check cambiano
     // Ignazio 22/09: «gli deve uscire un messaggio: vuoi che lo sponsor ti condivida un'altra traccia?». Con «Sì» lo sponsor riceve
     // «… e chiede la prossima»; con «Non ora» riceve lo stesso «ha ascoltato»: «conviene sempre sentirsi»
     const sponsor = MB21Sharing.nomeCorto(r && r.sponsor) || 'il tuo sponsor';
     if (await chiediConferma(`Vuoi che ${sponsor} ti condivida la prossima traccia?`, `${sponsor} riceve un avviso e ti manda la prossima dall'app N21. Sentitevi: è il modo migliore per andare avanti.`, 'Sì, avvisalo', false, '', 'Non ora')) {
-      await dbq('chiede la prossima', supa.from('condivisioni').update({ chiede_prossima_il: new Date().toISOString() }).eq('id', b.dataset.miaAscoltata));
+      await dbq('chiede la prossima', supa.rpc('segna_mia_traccia', { p_id: b.dataset.miaAscoltata, p_chiede: true }));
       mostraToast(`${sponsor} riceve l'avviso · la traccia conta nelle Tracce di oggi`);
     } else mostraToast('Ascoltata: conta nelle Tracce di oggi');
     await caricaMioPercorso();
