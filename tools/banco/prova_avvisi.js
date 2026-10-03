@@ -104,7 +104,7 @@ const assert = require('node:assert/strict');
     assert.equal(typeof R.messaggioSera({ ...base, training: 'da_fare', obiettivi: ob, domani }).testo, 'string');
   });
 
-  prova('le tre voci (Training · obiettivi · traguardo): ognuna una volta al giorno, la sera non ripete quelle del mattino', () => {
+  prova('le tre voci (Training · obiettivi · traguardo): obiettivi e traguardo una volta al giorno, il Training anche la sera se non è stato fatto', () => {
     const c = { training: 'da_fare', daRipassare: 0, obiettivi: R.avvisoObiettivi('2026-10-03', null), traguardo: 'Verso il Leaders Club: x.' };
     assert.deepEqual(R.righeConsigli(c), { training: '🏋️ Se ti va, restano 5 minuti di Training.', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '🚩 Verso il Leaders Club: x.' });
     assert.deepEqual(R.righeConsigli(c, { training: true, traguardo: true }), { training: '', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '' });
@@ -113,6 +113,9 @@ const assert = require('node:assert/strict');
     const sera = { ...c, bravo: null, checkFatto: true, domani: null, ilGiornoDopo: '2026-10-04' };
     assert.equal(R.messaggioSera({ ...sera, dette: { training: true, obiettivi: true, traguardo: true } }), null);
     assert.equal(R.messaggioSera({ ...sera, dette: { training: true } }).titolo, '🎯 Gli obiettivi del mese');
+    // come in funzione: la mattina ha detto obiettivi e traguardo, non il Training (non si segna): la sera lo ricorda ancora
+    m = R.messaggioSera({ ...sera, dette: { obiettivi: true, traguardo: true } });
+    assert.equal(m.titolo, '🏋️ 5 minuti di Training?'); assert.equal(m.testo, '🏋️ Se ti va, restano 5 minuti di Training.');
     assert.equal(R.messaggioSera({ ...sera, checkFatto: false, dette: { training: true, obiettivi: true, traguardo: true } }).testo, '📝 Due minuti per chiudere la giornata: tocca per aprire «Il mio giorno».');
   });
 

@@ -78,7 +78,8 @@ export function avvisoObiettivi(giorno: string, obiettivi: Record<string, unknow
 // ── Buongiorno e sera: due avvisi «di base uguali» (Ignazio 03/10) ──
 // Gli appuntamenti e i promemoria li fa il calendario di ognuno; l'app avvisa solo dell'attività nel suo insieme.
 // Tre voci di consiglio, le stesse la mattina e la sera: 🏋️ Training · 🎯 obiettivi del mese · 🚩 cosa manca per il prossimo traguardo.
-// Ognuna una volta sola al giorno: se la mattina è già arrivata, la sera non la ripete (`dette`, che l'avviso del mattino segna in avvisi_mandati).
+// Obiettivi e traguardo una volta sola al giorno: se la mattina sono già arrivati, la sera non li ripete (`dette`, che l'avviso del mattino segna in avvisi_mandati).
+// Il Training invece torna la sera se durante il giorno non è stato fatto, anche se la mattina è già stato detto (Ignazio 03/10).
 export type Consigli = {
   training: 'fatto' | 'mai' | 'da_fare'; daRipassare: number; obiettivi: AvvisoObiettivi | null;
   traguardo?: string;   // la frase di rigaTraguardo(): cosa manca per il prossimo traguardo (vuota = niente)
