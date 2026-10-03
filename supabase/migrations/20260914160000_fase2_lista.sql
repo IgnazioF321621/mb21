@@ -166,3 +166,8 @@ left join lateral (
   order by a.inizio desc nulls last, a.creato_il desc limit 1
 ) u on true
 left join public.sequenze s on s.chiave = u.chiave;
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.telefoni_prima to authenticated, service_role;
+grant select, insert, update, delete on public.contatti_lista to authenticated, service_role;

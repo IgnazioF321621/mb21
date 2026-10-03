@@ -30,3 +30,7 @@ alter table public.cose_da_fare alter column giorno drop not null;
 -- senza giorno solo le righe di un progetto
 alter table public.cose_da_fare add constraint cose_da_fare_giorno_o_progetto check (giorno is not null or progetto_id is not null);
 create index cose_da_fare_progetto on public.cose_da_fare (progetto_id) where progetto_id is not null;
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.progetti to authenticated, service_role;

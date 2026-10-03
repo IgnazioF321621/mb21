@@ -56,3 +56,7 @@ create policy "materiali_write" on public.materiali
   for all using (public.is_admin()) with check (public.is_admin());
 
 comment on table public.materiali is 'Cantiere 40: biblioteca N21 (tracce, pack, libri, Manuale). L''unità del percorso è la traccia.';
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.materiali to authenticated, service_role;

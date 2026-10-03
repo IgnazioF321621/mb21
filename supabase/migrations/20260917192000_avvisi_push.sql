@@ -45,3 +45,7 @@ revoke all on function chiama_avvisi(text) from public, anon, authenticated;
 -- Avviso della sera: 22:00 di Roma = 20:00 UTC con l'ora legale, 21:00 UTC con quella solare.
 -- Si chiama a tutte e due le ore; la funzione Edge spedisce solo se a Roma sono le 22.
 select cron.schedule('avviso-check-sera', '0 20,21 * * *', $$select chiama_avvisi('check_sera')$$);
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.avvisi_dispositivi to authenticated, service_role;

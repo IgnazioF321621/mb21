@@ -90,3 +90,7 @@ revoke all on function public.biglietti_da_segnare() from public;
 revoke all on function public.segna_mio_biglietto(text, date, boolean, boolean, integer) from public;
 grant execute on function public.biglietti_da_segnare() to authenticated;
 grant execute on function public.segna_mio_biglietto(text, date, boolean, boolean, integer) to authenticated;
+
+-- Permessi (Fondamenta 010, 03/10/2026): dal 30/10/2026 Supabase non dà più da solo l'accesso alle tabelle nuove dello schema public.
+-- Nel database vero questi permessi ci sono già (dati da Supabase alla creazione): servono per ricostruire il database dal repo. Niente anon: prima di entrare l'app non legge tabelle.
+grant select, insert, update, delete on public.risposte_biglietto to authenticated, service_role;
