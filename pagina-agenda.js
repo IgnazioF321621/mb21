@@ -1790,12 +1790,15 @@ async function cercaMB(testo, box, chiudi) {
   const quandoCosa = c => !c.giorno ? `progetto «${(AG.progetti || []).find(x => x.id === c.progetto_id) ? AG.progetti.find(x => x.id === c.progetto_id).titolo : ''}»` : c.scala === 'mese' ? A.titoloMese(c.giorno) : c.scala === 'settimana' ? `settimana ${A.numeroSettimana(c.giorno)}` : titoloGiorno(c.giorno, oggi);
   const righe = elenco.map(a => {
     const p = A.partiRoma(a.quando), cat = (a.contatti && a.contatti.categoria) || a.categoria;
-    return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
+    // una telefonata già fatta nel giorno non c'è (MB Plan mostra solo i richiami aperti): il tocco apre la scheda della persona (Ignazio 03/10)
+    const daScheda = a.tipo_azione === 'Contatto' && a.completata && a.contatto_id;
+    return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"${daScheda ? ` data-scheda="${esc(a.contatto_id)}"` : ''}><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
   }).join('') + (cose.data || []).map(c => calcolati.get(c.id) ? { ...c, fatto_il: calcolati.get(c.id).fatto_il, giorno: calcolati.get(c.id).giorno } : c).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-progetto="${esc(c.progetto_id || '')}" data-cosa-id="${esc(c.id)}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
   const quanti = elenco.length + (cose.data || []).length;
   box.innerHTML = quanti ? `<div class="mb-ris-conto">${tutti.length > 50 ? 'Primi 50 risultati: scrivi qualcosa di più preciso' : `${quanti} ${quanti === 1 ? 'risultato' : 'risultati'}`}</div>${righe}` : '<div class="mb-vuoto">Nessun risultato.</div>';
   box.querySelectorAll('.mb-ris[data-evento]').forEach(b => { b.onclick = async () => {
     chiudi();
+    if (b.dataset.scheda) return apriContattoDa(b.dataset.scheda, 'agenda');
     const g = b.dataset.giorno, id = b.dataset.evento;
     AG.vista = 'giorno'; AG.aperta = id; AG.portato = null;
     await apriAgenda(g);

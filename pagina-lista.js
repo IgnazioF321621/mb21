@@ -433,7 +433,7 @@ async function avvioDellaScheda(c) {
 function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Dashboard' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'MB Plan' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
