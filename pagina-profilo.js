@@ -160,6 +160,7 @@ function calendarioHtml() {
   const bottoni = `<div class="pf-avvisi"><div class="riga" style="flex-wrap:wrap"><button class="primario" id="cal-apple">${ICONA_CAL} Calendario Apple</button><button class="primario" id="cal-google" style="background:var(--sfondo);color:var(--testo)">${ICONA_G} Google Calendar</button></div>`;
   return voceProfilo('calendario', ic('agenda') + ' MB21 nel tuo calendario', { destra: acceso ? 'collegato' : '', corpo: `
       <small style="margin-top:0">I tuoi appuntamenti e le telefonate con un orario compaiono <b>da soli</b> nel tuo calendario, in un calendario a parte che si chiama <b>MB21</b>: crei, sposti o elimini qui, e là cambia senza fare niente. Quello che scrivi là <b>non</b> torna in MB21. Non costa niente; lo spegni quando vuoi.</small>
+      <small>Nel calendario finiscono <b>tipo, nome dei tuoi contatti e orario</b> (mai le note). Chi ha l'indirizzo li legge: meglio non darlo a nessuno.</small>
       ${bottoni}${acceso ? `<div class="riga"><button class="link" id="cal-copia">Copia l'indirizzo</button> · <button class="link" id="cal-cambia">Cambia indirizzo</button> · <button class="link" id="cal-scollega" style="color:var(--rosso)">Scollega</button></div>` : ''}</div>
       <small><b>Apple</b> (iPhone, iPad, Mac) si aggiorna di solito entro un'ora. <b>Google</b> è più lento, anche mezza giornata o più, e si collega dal computer: l'app di Google sul telefono non lo permette.</small>` });
 }
@@ -179,7 +180,7 @@ function collegaCalendario() {
   });
   su('cal-copia', async () => {
     const indirizzo = URL_CALENDARIO(u.calendario_token).replace(/^webcal:/, 'https:');
-    copiaTesto(indirizzo, 'Indirizzo copiato. Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.', null, null, 'Non darlo a nessuno: chi ce l\'ha legge i tuoi appuntamenti.');
+    copiaTesto(indirizzo, 'Indirizzo copiato. Nel calendario finiscono tipo e nome dei tuoi contatti: meglio non darlo a nessuno.', null, null, 'Nel calendario finiscono tipo e nome dei tuoi contatti: meglio non dare questo indirizzo a nessuno.');
   });
   su('cal-cambia', async () => {
     if (!await chiediConferma('Cambiare indirizzo?', 'Serve se temi che l\'indirizzo sia finito in mano ad altri. Quello vecchio smette subito di funzionare: nel Calendario togli il calendario «MB21» di prima e collegalo di nuovo da qui.', 'Cambia indirizzo')) return;
