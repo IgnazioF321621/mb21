@@ -345,7 +345,8 @@ function comandiContatto(r) {
 async function archivia(r) {
   const { error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: r.id }));
   if (error) return mostraToast('Non archiviato: riprova.');
-  mostraToast(`${r.nome} spostato in Archiviati`);
+  // dal 04/10 (nota 046) «Archivia» toglie dall'Agenda le azioni ancora da fare (con una copia): si dice, e «Annulla» rimette tutto com'era
+  mostraToast(`${r.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina(r));
   if (LS.contatto) LS.contatto = null;
   ricaricaERidisegna();
 }
@@ -1334,7 +1335,8 @@ function apriModulo(c) {
     else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
     if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
     chiudi();
-    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati` : 'Modifiche salvate');
+    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
+      archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
     ricaricaERidisegna();
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
   };
