@@ -75,7 +75,7 @@ async function caricaAgenda() {
   if (AG.vista === 'periodo') await caricaPeriodo();
   if (AG.vista === 'anno') { const y = AG.giorno.slice(0, 4); await caricaIntervallo(`${y}-01-01`, `${Number(y) + 1}-01-01`); }
   AG.modelli = mm ? mm.data : [];
-  AG.misure = {};
+  AG.misure = null;   // niente numeri: le voci Core dei modelli si spuntano a mano (Ignazio 04/10, nota 021); i numeri veri stanno nel Check
   await caricaProgetti();
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   // Un giorno che deve venire (Ignazio 27/09): in coda contano solo le persone che quel giorno non hanno già un orario
@@ -286,7 +286,7 @@ function collegaCose(oggi) {
     if (!v) return;
     riga.querySelector('.spunta').onclick = () => { if (!v.stato) spuntaVoce(v); };
     riga.querySelector('.testo').onclick = () => {
-      if (v.stato && ['cd', 'pagine'].includes(v.core)) return AG.giorno === oggi ? apriCheck() : mostraToast('Il Check si compila per oggi');
+      if (['cd', 'pagine'].includes(v.core)) return AG.giorno === oggi ? apriCheck() : mostraToast('Il Check si compila per oggi');
       foglioModello(v.modello_id);
     };
   });

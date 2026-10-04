@@ -72,7 +72,7 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
   spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
     { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
 const stub = {
-  MB21Agenda: A, MB21Icone, MB21Spazi, app, AG,
+  MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { oggiRoma: () => OGGI },
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
