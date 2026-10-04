@@ -75,6 +75,25 @@ function collegaAvvisi() {
   });
 }
 
+// ── IL POP-UP DELL'AVVISO (Ignazio 04/10: l'avviso sul telefono si taglia se è lungo) ──
+// L'avviso porta con sé due testi: quello breve (nell'avviso) e quello completo (dentro i dati dell'avviso, `completo`: nessuna lettura da Supabase).
+// Toccando l'avviso, appena si entra nell'app il testo completo compare in un piccolo pop-up in alto, 3 secondi, poi sparisce da solo (o con un tocco).
+// Arriva dall'indirizzo (app chiusa: `avvT`, `avvM`, tolti subito) o dal messaggio «apri-avviso» di sw.js (app già aperta).
+const DURATA_POPUP_AVVISO = 3000;
+let timerPopupAvviso;
+function mostraAvvisoRicevuto(titolo, testo) {
+  if (!testo) return;
+  document.querySelectorAll('.avviso-ricevuto').forEach(x => x.remove());
+  clearTimeout(timerPopupAvviso);
+  const el = document.createElement('div');
+  el.className = 'avviso-ricevuto';
+  el.setAttribute('role', 'status');
+  el.innerHTML = (titolo ? `<b>${esc(titolo)}</b>` : '') + `<span>${esc(testo)}</span>`;
+  el.onclick = () => { el.remove(); clearTimeout(timerPopupAvviso); };
+  document.body.appendChild(el);
+  timerPopupAvviso = setTimeout(() => el.remove(), DURATA_POPUP_AVVISO);
+}
+
 // ── QUANDO AVVISARE (cantiere 43 lavoro 2, schizzo approvato da Ignazio il 23/09) ──
 // Ognuno sceglie solo il tempo, per tipo; niente «spento». In `utenti.avvisi_quando` ci sono solo le scelte cambiate:
 // quello che manca vale `gia` («già impostato»). Le stesse chiavi e gli stessi valori ammessi stanno in `imposta_avviso`

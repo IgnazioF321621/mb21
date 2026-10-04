@@ -80,7 +80,7 @@ function giriDiTelefonate(telefonate: Telefonata[]) {
 const elencoNomi = (giro: Telefonata[]) => giro.slice(0, 3).map(nomeDi).join(', ') + (giro.length > 3 ? ` e ${giro.length === 4 ? 'un\'altra' : `altre ${giro.length - 3}`}` : '');
 
 type Dispositivo = { id: string; endpoint: string; p256dh: string; auth: string };
-type Avviso = { titolo: string; testo: string; url: string; tag: string };
+type Avviso = { titolo: string; testo: string; completo?: string; url: string; tag: string };   // `completo` (04/10): il testo intero, che l'app mostra per 3 secondi quando si entra toccando l'avviso; `testo` è la versione breve
 
 // Spedisce un avviso a un dispositivo; se il dispositivo non esiste più (404/410) lo toglie dalla tabella
 async function spedisci(d: Dispositivo, avviso: Avviso) {
@@ -136,7 +136,7 @@ async function datiConsigli(oggi: string, adesso: number) {
     if (ob?.rifai && (giaRifatto ?? []).some(x => x.chiave === chiaveRifai)) ob = null;
     const consigli: Consigli = {
       training: allenato ? 'fatto' : mieCarte.length ? 'da_fare' : 'mai', daRipassare: mieCarte.filter(c => c.prossima && c.prossima <= oggi).length,
-      obiettivi: ob, traguardo: rigaTraguardo(prossimoTraguardo as Traguardo, oggi, adesso),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
+      obiettivi: ob, traguardo: rigaTraguardo(prossimoTraguardo as Traguardo, oggi, adesso), traguardoCorto: rigaTraguardo(prossimoTraguardo as Traguardo, oggi, adesso, 'corto'),   // cosa manca per il prossimo traguardo (l'app lo salva, check.js → prossimoTraguardo)
     };
     const detta = (v: string) => dette_.has(`voce:${v}:${oggi}:${id}`);
     // il Training non si segna: se durante il giorno non è stato fatto, la sera lo ricorda anche se la mattina l'ha già detto (Ignazio 03/10)
