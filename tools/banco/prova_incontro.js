@@ -32,17 +32,16 @@ prova('Il blocco: i passi scelti da toccare, «anche altro» con gli altri, «Fa
   assert.ok(vecchio.includes('data-esito="RolePlay"') && vecchio.includes('>Il perché<') && !vecchio.includes('data-incontro-fatto'));
 });
 
-prova('Chiudere con più passi: il primo è l\'esito, gli altri una riga di azione ciascuno (stesso giorno e ora), le spunte in «Il mio avvio»; Annulla toglie tutto', async () => {
-  const chiamate = [], ctx = { MB21Agenda: A, MB21Coda: { oggiRoma: () => '2026-10-01' }, AG: {}, console };
-  const righe = [];
-  ctx.supa = { rpc: (n, p) => { chiamate.push(['rpc', n, p.p_esito || null]); return { data: { esito_prec: null, completata_prec: false, contatto_id: 'c1', rientro_prec: null, in_coda_prec: false, rientro_cambiato: false }, error: null }; },
-    from: t => { const q = { t, insert(r) { chiamate.push(['insert', t, r.esito]); righe.push(r); q._i = true; return q; }, select() { return q; }, single() { return q; },
-      delete() { q._d = true; return q; }, in(c, v) { chiamate.push(['delete', t, v]); return q; }, eq() { return q; }, update(v) { chiamate.push(['update', t, v]); return q; },
-      then(res) { res({ data: q._i ? { id: 'nuova' + righe.length } : null, error: null }); } }; return q; } };
+prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in «Il mio avvio», righe in più); Annulla è una chiamata sola e toglie tutto', async () => {
+  const chiamate = [], ctx = { MB21Agenda: A, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-01' }, AG: {}, console };
+  const cache = [];
+  ctx.supa = { rpc: (n, p) => { chiamate.push(['rpc', n, p]);
+      if (n === 'chiudi_azione') return { data: { prima: { esito_prec: null, completata_prec: false, contatto_id: 'c1', rientro_prec: null, in_coda_prec: null, rientro_cambiato: false },
+        avvio: p.p_passi_avvio.filter(c => c !== 'onb_contatti'), extra: p.p_extra.map((_, i) => 'nuova' + (i + 1)) }, error: null };   // «onb_contatti» era già spuntato
+      return { data: null, error: null }; },
+    from: t => { const q = { delete() { q._d = true; return q; }, eq(c, v) { if (q._d) chiamate.push(['delete', t, v]); return q; }, then(res) { res({ data: null, error: null }); } }; return q; } };
   ctx.dbq = (_, p) => Promise.resolve(p);
-  const segnati = [];
-  ctx.spuntaAvvio = async (e, esito) => { const col = L.passoAvvioDa(e.tipo_azione, e.modalita, esito); if (!col) return null; segnati.push(col); return { col, nome: L.PASSI_ONBOARDING.find(p => p[0] === col)[1] }; };
-  ctx.passoInCache = () => {};
+  ctx.passoInCache = (c, col, v) => cache.push([c, col, v]);
   let toastAnnulla = null, toastTesto = '';
   ctx.mostraToast = (t, annulla) => { toastTesto = t; toastAnnulla = annulla; };
   ctx.apriAgenda = async () => {}; ctx.nuovoAppuntamento = async () => null; ctx.chiediRiflessione = async () => null; ctx.registraVenditaDa = async () => false;
@@ -52,19 +51,25 @@ prova('Chiudere con più passi: il primo è l\'esito, gli altri una riga di azio
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const e = { ...incontro, contatti: { nome: 'Mario', categoria: 'Partner' } };
   await ctx.chiudiAppuntamento(e, 'Motivazione', { dopo: async () => {}, extra: ['ListaStart', 'Telefonate'], testo: 'Il perché · Lista Start · Telefonate' });
-  assert.deepEqual(chiamate.filter(c => c[0] === 'rpc'), [['rpc', 'chiudi_appuntamento', 'Motivazione']]);
-  assert.deepEqual(righe.map(r => r.esito), ['ListaStart', 'Telefonate']);
-  for (const r of righe) assert.deepEqual([r.contatto_id, r.user_id, r.tipo_azione, r.modalita, r.categoria, r.inizio, r.fine, r.completata], ['c1', 'u1', 'Appuntamento', 'Avvio', 'Partner', incontro.inizio, incontro.fine, true]);
-  assert.deepEqual(segnati, ['onb_sogno', 'onb_lista_start', 'onb_contatti']);
-  assert.match(toastTesto, /^Il perché · Lista Start · Telefonate salvato · segnato in «Il mio avvio»: Il perché, Lista Start, Contatti$/);
-  chiamate.length = 0;
+  assert.equal(chiamate.filter(c => c[0] === 'rpc').length, 1);                                  // una chiamata sola
+  const c0 = chiamate[0]; assert.equal(c0[1], 'chiudi_azione');
+  assert.deepEqual(JSON.parse(JSON.stringify(c0[2])), { p_azione: 'a1', p_esito: 'Motivazione', p_passi_avvio: ['onb_sogno', 'onb_lista_start', 'onb_contatti'], p_extra: ['ListaStart', 'Telefonate'] });
+  assert.deepEqual(cache, [['c1', 'onb_sogno', true], ['c1', 'onb_lista_start', true]]);          // la cache solo per quelli spuntati adesso
+  assert.match(toastTesto, /^Il perché · Lista Start · Telefonate salvato · segnato in «Il mio avvio»: Il perché, Lista Start$/);
+  chiamate.length = 0; cache.length = 0;
   await toastAnnulla();
-  assert.ok(chiamate.some(c => c[0] === 'delete' && c[1] === 'azioni' && c[2].join() === 'nuova1,nuova2'));                       // le righe in più tolte
-  assert.deepEqual(chiamate.filter(c => c[0] === 'update' && c[1] === 'contatti').map(c => Object.keys(c[2])[0]), ['onb_sogno', 'onb_lista_start', 'onb_contatti']);
-  assert.ok(chiamate.some(c => c[0] === 'rpc' && c[1] === 'riapri_appuntamento'));
-  // un passo solo: come prima, nessuna riga in più
-  righe.length = 0; await ctx.chiudiAppuntamento(e, 'RolePlay', { dopo: async () => {} });
-  assert.deepEqual(righe, []);
+  const an = chiamate.filter(c => c[0] === 'rpc');
+  assert.equal(an.length, 1); assert.equal(an[0][1], 'annulla_chiusura');                         // Annulla: una chiamata sola
+  assert.equal(an[0][2].p_azione, 'a1'); assert.equal(an[0][2].p_rientro_cambiato, null);
+  assert.deepEqual(JSON.parse(JSON.stringify(an[0][2].p_prima.extra)), ['nuova1', 'nuova2']);   // quello che ha restituito la chiusura, com'è
+  assert.deepEqual(cache, [['c1', 'onb_sogno', false], ['c1', 'onb_lista_start', false]]);
+  // un passo solo: nessuna riga in più
+  chiamate.length = 0; await ctx.chiudiAppuntamento(e, 'RolePlay', { dopo: async () => {} });
+  assert.deepEqual(JSON.parse(JSON.stringify(chiamate[0][2])), { p_azione: 'a1', p_esito: 'RolePlay', p_passi_avvio: ['onb_role_play'], p_extra: [] });
+  // errore del database: niente a metà, solo l'avviso
+  ctx.supa.rpc = () => ({ data: null, error: { message: 'x' } }); toastTesto = '';
+  await ctx.chiudiAppuntamento(e, 'RolePlay', { dopo: async () => { throw new Error('non deve ridisegnare'); } });
+  assert.match(toastTesto, /Non salvato/);
 });
 
 prova('Consulenza Prodotti: lo stesso foglio dalla coda, dall\'Agenda e dalla scheda (la consulenza, non il piano), e il contatto esce dalla coda', () => {
@@ -133,10 +138,11 @@ prova('«Hai condiviso la traccia di apertura?» dopo un Piano Marketing: No con
 
 prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda da coach, né traccia di apertura, né «Quando risentirlo?»; il giorno del PM si chiede ancora', async () => {
   const log = [], ctx = { MB21Agenda: A, MB21Coda: { oggiRoma: () => '2026-10-02' }, AG: {}, console };
-  ctx.supa = { rpc: () => ({ data: { esito_prec: null, completata_prec: false, contatto_id: 'c1', rientro_prec: null, in_coda_prec: false, rientro_cambiato: false }, error: null }),
-    from: () => { const q = { insert() { return q; }, select() { return q; }, single() { return q; }, delete() { return q; }, in() { return q; }, eq() { return q; }, update() { return q; }, then(res) { res({ data: null, error: null }); } }; return q; } };
+  ctx.MB21Lista = L;
+  ctx.supa = { rpc: () => ({ data: { prima: { esito_prec: null, completata_prec: false, contatto_id: 'c1', rientro_prec: null, in_coda_prec: false, rientro_cambiato: false }, avvio: [], extra: [] }, error: null }),
+    from: t => { const q = { insert() { return q; }, select() { return q; }, single() { return q; }, delete() { return q; }, in() { return q; }, eq() { return q; }, update(v) { log.push(['scrive', t, Object.keys(v).join()]); return q; }, then(res) { res({ data: null, error: null }); } }; return q; } };
   ctx.dbq = (_, p) => Promise.resolve(p);
-  ctx.spuntaAvvio = async () => null; ctx.passoInCache = () => {}; ctx.mostraToast = t => log.push(['toast', t]);
+  ctx.passoInCache = () => {}; ctx.mostraToast = t => log.push(['toast', t]);
   ctx.apriAgenda = async () => {}; ctx.registraVenditaDa = async () => false; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => { log.push(['proponiTraccia']); return false; };
   ctx.nuovoAppuntamento = async o => { log.push(['nuovoAppuntamento', o.titolo]); return o.salta ? { id: 'p' } : { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
   ctx.appuntamentoDaCoda = async () => { log.push(['appuntamentoDaCoda']); return { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
@@ -147,20 +153,72 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const tel = inizio => ({ id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', area: 'Attività', inizio, contatti: { nome: 'Mario', categoria: 'Prospect' } });
-  const giro = async (esito, inizio) => { log.length = 0; await ctx.chiudiAppuntamento(tel(inizio), esito, { dopo: async () => {} }); return log.map(x => x[0]).filter(x => x !== 'toast'); };
+  const giro = async (esito, inizio) => { log.length = 0; await ctx.chiudiAppuntamento(tel(inizio), esito, { dopo: async () => {} }); return log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'); };
   // PM Fissato nel 2020: il giorno del PM sì, poi niente
-  assert.deepEqual(await giro('PM Fissato', '2020-05-05T10:00:00Z'), ['appuntamentoDaCoda']);
+  assert.deepEqual(await giro('PM Fissato', '2020-05-05T10:00:00Z'), ['appuntamentoDaCoda']);                // il giorno del PM sì; la coda del contatto non si tocca (nota 015)
+  assert.ok(!log.some(x => x[0] === 'scrive'));
   assert.deepEqual(await giro('Relazione', '2020-05-05T10:00:00Z'), []);                       // niente «Quando risentirlo?» né coach
   assert.deepEqual(await giro('No Risposta', '2020-05-05T10:00:00Z'), []);
+  ctx.chiediData = async () => { log.push(['giorno']); return '2020-06-01T10:00:00Z'; };
+  assert.deepEqual(await giro('Richiamare', '2020-05-05T10:00:00Z'), []);                                  // storico: nemmeno il giorno del richiamo, niente scritture
+  assert.ok(!log.some(x => x[0] === 'scrive'));
+  assert.deepEqual(await giro('Richiamare', '2026-10-02T08:00:00Z'), ['giorno', 'traccia', 'coach']);
   // oggi: tutto com'era
   assert.deepEqual(await giro('PM Fissato', '2026-10-02T08:00:00Z'), ['appuntamentoDaCoda', 'traccia', 'coach']);
+  assert.ok(log.some(x => x[0] === 'scrive' && x[1] === 'contatti' && x[2] === 'rientro_il,in_coda_dal'));   // oggi: il contatto esce dalla coda, come sempre
   assert.deepEqual(await giro('Relazione', '2026-10-02T08:00:00Z'), ['rientro', 'coach']);
   // un appuntamento (non una telefonata) chiuso nel passato: niente «prossimo appuntamento», niente coach
   const pm = { id: 'a2', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Follow Up', modalita: 'FU 1a1', categoria: 'Prospect', area: 'Attività', inizio: '2020-05-05T10:00:00Z', contatti: { nome: 'Mario', categoria: 'Prospect' } };
   log.length = 0; await ctx.chiudiAppuntamento(pm, 'Ulteriore Follow Up', { dopo: async () => {} });
   assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast'), []);
   log.length = 0; await ctx.chiudiAppuntamento({ ...pm, inizio: '2026-10-02T08:00:00Z' }, 'Ulteriore Follow Up', { dopo: async () => {} });
-  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast'), ['nuovoAppuntamento', 'proponiTraccia', 'traccia', 'coach']);
+  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'), ['nuovoAppuntamento', 'proponiTraccia', 'traccia', 'coach']);
+});
+
+prova('Eliminare un\'azione (nota 010): una funzione del database, il rientro riletto, Annulla la rimette con i legami; Sposta (nota 035): la riga «PM Fissato» della coda segue', async () => {
+  const log = [], ctx = { MB21Agenda: A, AG: {}, console };
+  const q = (t, ops) => { const o = { t, filtri: [], update(v) { ops.push(['update', t, v]); return o; }, eq(c, v) { o.filtri.push(c + '=' + v); return o; }, then(res) { ops.push(['filtri', t, o.filtri.join(' ')]); res({ data: null, error: null }); } }; return o; };
+  ctx.supa = { rpc: (n, p) => { log.push(['rpc', n, p]); return { data: {}, error: ctx.errore ? { message: 'x' } : null }; }, from: t => q(t, log) };
+  ctx.dbq = (_, p) => Promise.resolve(p);
+  ctx.chiediConferma = async () => true; ctx.aggiornaRiga = async id => log.push(['riga', id]);
+  let annulla = null, testo = '';
+  ctx.mostraToast = (t, a) => { testo = t; annulla = a; };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('async function eliminaAppuntamento', '\nfunction scegliPassato') + ';this.eliminaAppuntamento = eliminaAppuntamento;' + pezzo('async function allineaRigaCoda', 'function spostaAppuntamento') + ';this.allineaRigaCoda = allineaRigaCoda', ctx);
+  const e = { id: 'a9', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: null };
+  let ridisegnata = 0;
+  await ctx.eliminaAppuntamento(e, async () => { ridisegnata++; });
+  assert.deepEqual(log.filter(x => x[0] !== 'filtri').map(x => x[0] + ':' + (x[1] || x[2] || '')), ['rpc:elimina_azione', 'riga:c1']);   // nessun delete diretto dal telefono
+  assert.equal(log[0][2].p_azione, 'a9'); assert.equal(testo, 'Azione eliminata'); assert.equal(ridisegnata, 1);
+  log.length = 0; await annulla();
+  assert.deepEqual(log.filter(x => x[0] === 'rpc').map(x => [x[1], x[2].p_azione]), [['annulla_elimina_azione', 'a9']]);
+  assert.equal(ridisegnata, 2); assert.equal(testo, 'Azione ripristinata');
+  // errori: niente ridisegno, avviso
+  ctx.errore = true; log.length = 0; await ctx.eliminaAppuntamento(e, async () => { ridisegnata++; });
+  assert.match(testo, /Non eliminata/); assert.equal(ridisegnata, 2);
+  ctx.errore = false;
+  // la riga della coda segue lo spostamento
+  log.length = 0; await ctx.allineaRigaCoda(e, '2026-10-05T16:30:00+00:00', '2026-10-06T16:30:00.000Z');
+  assert.deepEqual(log.filter(x => x[0] === 'update').map(x => JSON.parse(JSON.stringify(x[2]))), [{ data_scelta: '2026-10-06T16:30:00.000Z', confermato_il: null }]);
+  assert.equal(log.find(x => x[0] === 'filtri')[2], 'contatto_id=c1 tipo_azione=Contatto data_scelta=2026-10-05T16:30:00+00:00 user_id=u1');
+  for (const [x, da, a] of [[{ ...e, tipo_azione: 'Contatto' }, '2026-10-05T16:30:00Z', '2026-10-06T16:30:00Z'], [e, '2026-10-05T16:30:00Z', '2026-10-05T16:30:00.000Z'], [e, null, '2026-10-06T16:30:00Z'], [{ ...e, contatto_id: null }, '2026-10-05T16:30:00Z', '2026-10-06T16:30:00Z']]) {
+    log.length = 0; await ctx.allineaRigaCoda(x, da, a); assert.deepEqual(log, []);   // telefonata, stesso orario, senza orario o senza contatto: niente
+  }
+});
+
+prova('«Annulla» di un esito dalla coda (nota 045): prima l\'esito, poi l\'appuntamento nato con lui; se l\'esito non si annulla l\'appuntamento resta', async () => {
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const log = []; let errore = false;
+  const ctx = { console, dbq: (_, p) => Promise.resolve(p) };
+  ctx.supa = { rpc: (n, p) => { log.push(['rpc', n]); return { data: null, error: errore ? { message: 'Dopo questo esito ce ne sono altri: non si può annullare' } : null }; },
+    from: t => { const o = { delete() { return o; }, eq(c, v) { log.push(['delete', t, v]); return o; }, then(res) { res({ data: null, error: null }); } }; return o; } };
+  vm.createContext(ctx);
+  vm.runInContext(dash.slice(dash.indexOf('async function annullaEsito'), dash.indexOf('async function annulla(pos, esito)')) + ';this.annullaEsito = annullaEsito', ctx);
+  await ctx.annullaEsito({ azione_id: 'e1', appuntamento_id: 'p1', rientro_prec: null, in_coda_prec: null });
+  assert.deepEqual(log, [['rpc', 'annulla_esito'], ['delete', 'azioni', 'p1']]);
+  log.length = 0; errore = true;
+  const r = await ctx.annullaEsito({ azione_id: 'e1', appuntamento_id: 'p1' });
+  assert.deepEqual(log, [['rpc', 'annulla_esito']]); assert.ok(r.error);                      // l'appuntamento non si tocca
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));
