@@ -434,6 +434,11 @@ prova('Nota 050: l\'incontro con un Partner in forma corta: reazione e la domand
   assert.deepEqual(await passi[1].chiedi[1][1][0].dopo(), [{ c: 'La ritrovi in «Ripassa», nel Training, quando vuoi.' }]);   // la carta c'è
   assert.deepEqual(await passi[1].chiedi[2][1][0].dopo(), []);
   assert.equal(passi.length, 2);   // niente «A che punto è la lista?» né il resto della chat lunga
+  // nota 040: il passo dopo dell'Avvio, prima della domanda sui freni; con l'avvio finito (niente passo) la chat è quella di prima
+  const conPasso = C.monta('appuntamento_partner', BA, 'Lista nomi', nomi, 0, { carta, passoDopo: { nome: 'Role Play', descr: 'Esercitazione e prove' } });
+  assert.deepEqual(conPasso.slice(0, 3).map(p => p.c), ['Isabella, con Anna avete lavorato sulla lista.', 'Il passo dopo nell’Avvio di Anna, per il manuale: Role Play (esercitazione e prove).', 'Durante l’incontro, è venuto fuori qualcosa che frena Anna?']);
+  assert.equal(conPasso[3].salva, 'freni');
+  assert.equal(C.monta('telefonata_partner', { ...BA, reazione: { Appuntamento: [[{ c: 'Bene.' }]] } }, 'Appuntamento', nomi, 0, { passoDopo: { nome: 'Role Play' } }).length, 1);   // solo dopo l'incontro
   // la telefonata al Partner resta senza freni (Ignazio 29/09)
   const BT = { ...BA, reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }]] } };
   assert.deepEqual(C.monta('telefonata_partner', BT, 'Appuntamento', nomi, 0, {}).map(p => p.c), ['Bene: vi vedete.']);
