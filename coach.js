@@ -97,7 +97,8 @@
   // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null,
   //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro»),
   //        presentazione? { quando } (la Consulenza Prodotti appena fissata come Presentazione: il consiglio di prepararla, regola 4),
-  //        sit (la situazione, la mette `monta`: dopo l'incontro con un Partner i freni si chiedono, dopo la telefonata no) }
+  //        sit (la situazione, la mette `monta`: dopo l'incontro con un Partner i freni si chiedono, dopo la telefonata no),
+  //        passoDopo? { nome, descr } (dopo l'incontro con un Partner: il primo passo dell'Avvio non ancora spuntato, nota 040) }
   // Con un Partner niente domanda sui freni (Ignazio 29/09: «è raro che un partner dica non ho tempo»): dopo «Appuntamento» una riga con il giorno e i
   // passi scelti e, per ognuno, come prepararlo dal Manuale di Avvio.
   const RIGA_SOLA = ['Relazione'];   // No Interesse chiede l'obiezione anche lei (Ignazio 01/10: «così ce lo ritroviamo segnato»)
@@ -152,12 +153,15 @@
       ? [{ c: `${String(rp.apertura || '{quando} presenti a {chi}.').replace('{quando}', () => pres.quando || 'Presto')} ${rp.c}`, fonte: rp.fonte ? [rp.fonte, true] : undefined }] : [];
     // Rimandato / No Show (nota 050): niente obiezioni; il tocco è «Cosa è successo?» con i motivi (si salva «motivo»), dopo il consiglio dei leader
     const motivo = !domanda.length && !senzaFreni && B.extra && Array.isArray(B.extra[esito]) ? passoMotivo(B.extra[esito]) : [];
+    // dopo l'incontro con un Partner (nota 040: «partire dall'Avvio, il coach propone il passo dopo»): il primo dei 14 passi non ancora spuntato
+    const pd = ctx.sit === 'appuntamento_partner' ? ctx.passoDopo : null;
+    const dopoAvvio = pd && pd.nome ? [{ c: `Il passo dopo nell’Avvio di {chi}, per il manuale: ${pd.nome}${pd.descr ? ` (${String(pd.descr).toLowerCase()})` : ''}.` }] : [];
     // la reazione e la domanda in un fumetto solo (Ignazio 01/10: «unire con la successiva»): meno fumetti, meno attese
     const prima1 = reazione.slice(0, 1);
-    if (!incontro.length && !presentazione.length && !motivo.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
+    if (!incontro.length && !presentazione.length && !motivo.length && !dopoAvvio.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
       return riempi([{ c: `${prima1[0].c} ${domanda[0].c}` }, ...domanda.slice(1)], nomi);
     }
-    return riempi([...prima1, ...incontro, ...presentazione, ...domanda, ...motivo], nomi);
+    return riempi([...prima1, ...incontro, ...presentazione, ...dopoAvvio, ...domanda, ...motivo], nomi);
   }
   // Dai passi lunghi di un esito (`extra`), la forma corta del «Cosa è successo?»: il primo consiglio, la domanda e i motivi da toccare (solo le
   // frasi, con la fonte; niente «Per approfondire»). Senza una domanda con i motivi, niente.
