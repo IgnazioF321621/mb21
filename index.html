@@ -168,6 +168,11 @@
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 78px); max-width: 488px; margin: 0 auto;
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 8px 16px; min-height: 52px; display: flex; align-items: center;
     justify-content: space-between; gap: 12px; font-size: 15px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  /* il pop-up dell'avviso toccato (avvisi.js mostraAvvisoRicevuto): in alto, 3 secondi, testo a capo come nell'avviso */
+  .avviso-ricevuto { position: fixed; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 12px); max-width: 488px; margin: 0 auto; z-index: 40;
+    background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .avviso-ricevuto b { display: block; margin-bottom: 4px; }
+  .avviso-ricevuto span { display: block; white-space: pre-line; }
   .toast button { background: none; border: 0; color: var(--accento-su); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; font-weight: 700; padding: 4px 0; min-height: var(--tocco); }
 
   /* ── Lista Nomi ── */
@@ -2439,8 +2444,9 @@ async function dopoAccesso(sessione) {
   const [, percorso] = await Promise.all([caricaPersone(), leggiPercorso()]);   // il percorso serve al benvenuto (cantiere 32); non letto = null, si apre come sempre
   // Toccando un avviso push con l'app chiusa, l'app parte dal suo indirizzo «…/?apri=agenda…» (cantiere 24): si va dritti lì
   const apri = REGISTRAZIONE.get('apri');
+  const avvisoT = REGISTRAZIONE.get('avvT'), avvisoM = REGISTRAZIONE.get('avvM');   // il testo intero dell'avviso toccato (04/10): pop-up di 3 secondi
   if (preparaApertura(REGISTRAZIONE)) history.replaceState(null, '', location.pathname);
-  else riprendiPagina();   // l'Admin, ricaricando, riparte dalla pagina dov'era
+  else { riprendiPagina(); if (avvisoM) history.replaceState(null, '', location.pathname); }   // l'Admin, ricaricando, riparte dalla pagina dov'era
   // Un foglio alla volta: la password per chi è entrato col link, altrimenti le novità (che aspettano la prossima apertura)
   // Dopo la password e le novità, l'annuncio del Training (lista «Avvisi», 25/09) a chi non l'ha mai usato; mai se si arriva da un avviso
   const dopo = () => {
@@ -2454,10 +2460,12 @@ async function dopoAccesso(sessione) {
   // ma vanno segnate come viste (cantiere 28), altrimenti al secondo ingresso uscirebbero tutte; agli altri arrivano alla prossima apertura
   if (MB21Benvenuto.daAprire(percorso, { limitato: limitato(), daAvviso: ['check', 'agenda'].includes(apri) })) {
     if (!ultimoUso) controllaNovita(ultimoUso);
+    if (avvisoM) mostraAvvisoRicevuto(avvisoT, avvisoM);
     return apriBenvenuto({ percorso, dopo: () => { if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true); } });
   }
   mostraTab();
   dopo();
+  if (avvisoM) mostraAvvisoRicevuto(avvisoT, avvisoM);
 }
 
 // ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
@@ -2605,6 +2613,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
   }
   document.querySelectorAll('.velo').forEach(v => v.remove());
   mostraTab();
+  mostraAvvisoRicevuto(m.titolo, m.completo);   // 04/10: il testo intero dell'avviso, 3 secondi
 });
 
 function mostraTab() {

@@ -47,20 +47,24 @@ self.addEventListener('push', event => {
   try { a = event.data ? event.data.json() : {}; } catch (e) { a = { testo: event.data && event.data.text() }; }
   event.waitUntil(self.registration.showNotification(a.titolo || 'MB21', {
     body: a.testo || '', tag: a.tag || 'mb21', icon: 'icone/icona-192.png', badge: 'icone/icona-192.png',
-    data: { url: a.url || './' },
+    data: { url: a.url || './', titolo: a.titolo || '', completo: a.completo || '' },   // `completo` (04/10): il testo intero, mostrato dall'app per 3 secondi quando si entra toccando l'avviso
   }));
 });
 
 // Toccando l'avviso si apre l'app (se è già aperta la si porta davanti) sulla pagina indicata
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
+  const dati = event.notification.data || {};
+  const url = new URL(dati.url || './', self.registration.scope).href;
+  // App chiusa: il testo intero viaggia nell'indirizzo (avvT, avvM: l'app li legge e li toglie subito); app aperta: dentro il messaggio
+  const indirizzo = new URL(url);
+  if (dati.completo) { indirizzo.searchParams.set('avvT', dati.titolo || ''); indirizzo.searchParams.set('avvM', dati.completo); }
   // App già aperta: la si porta davanti e le si dice dove andare (index.html, «apri-avviso»); cambiare il suo indirizzo con navigate()
   // sull'iPhone non funzionava e restava sulla Dashboard (24/09). App chiusa: si apre sull'indirizzo dell'avviso.
   event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(finestre => {
     const aperta = finestre.find(f => f.url.startsWith(self.registration.scope));
-    if (!aperta) return clients.openWindow(url);
-    aperta.postMessage({ tipo: 'apri-avviso', url });
+    if (!aperta) return clients.openWindow(indirizzo.href);
+    aperta.postMessage({ tipo: 'apri-avviso', url, titolo: dati.titolo || '', completo: dati.completo || '' });
     return aperta.focus().catch(() => {});
   }));
 });
