@@ -53,8 +53,10 @@ async function caricaOggi() {
     const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
     if (error) throw error;
     stato = data;   // { contatti_al_giorno, fatti_oggi }
-    const posti = stato.contatti_al_giorno - stato.fatti_oggi;
-    risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
+    const posti = stato.contatti_al_giorno - stato.fatti_oggi;   // `fatti_oggi` conta anche le telefonate scelte a mano fatte oggi (stato_oggi): chi ne ha fatte 5 ha fatto i suoi 5
+    // le telefonate scelte a mano (nota 012) si leggono insieme ai candidati: chi ne ha una aperta non entra anche nella coda automatica (una scheda sola)
+    const [candidati] = await Promise.all([leggiCandidati(oggi), caricaScelte(oggi)]);
+    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(candidati, SCE.righe), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
     if (!altro && risultato.nuoviInCoda.length) {
       await dbqAvvisa('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri la Dashboard.');
@@ -72,6 +74,7 @@ async function caricaOggi() {
     }
     risultato = cache.risultato; offline = cache.salvata;
     stato = cache.stato || { contatti_al_giorno: MB21Coda.CAPIENZA, fatti_oggi: 0 };   // copia salvata da una versione precedente
+    SCE.righe = [];   // le telefonate scelte a mano non stanno nella copia offline (si chiudono solo in rete)
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline && !altro) salvaCache();
@@ -229,14 +232,15 @@ function nuovoInAvvio() {
 }
 function contiOggi() {
   const r = ST.risultato || { coda: [], dareSeguito: [] };
-  return { coda: r.coda.length, dare: r.dareSeguito.length, conf: CONF.righe.length, rio: RIO.righe.length };
+  return { coda: r.coda.length, dare: r.dareSeguito.length, conf: CONF.righe.length, rio: RIO.righe.length, scelte: SCE.righe.length };
 }
-const totaleOggi = c => c.coda + c.dare + c.conf + c.rio;
+const totaleOggi = c => c.coda + c.dare + c.conf + c.rio + c.scelte;
 function fraseOggi(c) {
   const p = [];
   if (c.conf) p.push(`${c.conf} ${c.conf === 1 ? 'conferma' : 'conferme'}`);
   if (c.dare) p.push(`${c.dare} Dare Seguito`);
   if (c.coda) p.push(`${c.coda} ${c.coda === 1 ? 'telefonata' : 'telefonate'}`);
+  if (c.scelte) p.push(`${c.scelte} ${c.scelte === 1 ? 'scelta' : 'scelte'} a mano`);
   if (c.rio) p.push(`${c.rio} ${c.rio === 1 ? 'riordino' : 'riordini'}`);
   return p.join(', ');
 }
@@ -332,21 +336,25 @@ function disegnaOggiLV() {
   if (r.dareSeguito.length || fatteDi('ds').length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti', c.dare ? `${c.dare} da richiamare` : 'tutti fatti', c.dare, 'ds',
     r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`)));
   const inPausa = st.contatti_al_giorno === 0;
+  const conto = esc(MB21Coda.contoGiorno(st.fatti_oggi, st.contatti_al_giorno));   // «3 di 5» · «5 di 5 ✓ e 2 in più» (le telefonate scelte a mano oltre il traguardo)
   if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, 'coda', [],
     () => altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
       : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`);
   else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
-    c.coda ? `${c.coda} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}` : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, c.coda, 'coda',
+    c.coda ? `${c.coda} ancora da chiamare · fatti ${conto}` : `Fatti ${conto}`, c.coda, 'coda',
     r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')),
     altro ? () => `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>${r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')).join('')}` : null);
+  // le telefonate scelte a mano (nota 012): in più dei contatti del giorno, restano finché non hanno un esito
+  if (SCE.righe.length || fatteDi('scelta').length) metti('scelte', 'telefonate', 'Telefonate scelte a mano',
+    c.scelte ? `${c.scelte} ancora da chiamare · in più dei contatti del giorno` : 'tutte fatte', c.scelte, 'scelta',
+    SCE.righe.map(a => rigaPersona('scelta', a.id, a.contatti ? a.contatti.nome : '', sottoScelta(a))));
   if (RIO.righe.length || fatteDi('rio').length) metti('riordini', 'riordini', 'Riordini da sentire', c.rio ? `${c.rio} ${c.rio === 1 ? 'cliente da sentire' : 'clienti da sentire'}` : 'tutti sentiti', c.rio, 'rio',
     RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))));
-  const fatti = st.fatti_oggi, tot = st.contatti_al_giorno;
   const finito = !totaleOggi(c);
-  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${tot ? ` · fatti ${fatti} di ${tot}` : ''}</div>` + (ST.offline ? '<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.</div>' : '')
+  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${conto ? ` · fatti ${conto}` : ''}</div>` + (ST.offline ? '<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.</div>' : '')
     + sezioni.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
   app.innerHTML = html + versione();
-  const daSole = { conferme: false, dareseguito: false, coda: false, riordini: false };
+  const daSole = { conferme: false, dareseguito: false, coda: false, scelte: false, riordini: false };
   for (const k of Object.keys(daSole)) { const b = document.getElementById('sez-' + k); if (b) b.onclick = () => cambiaRigaDash(k, false); }
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   attaccaIndietroLV();
@@ -369,6 +377,9 @@ function disegnaPersonaLV() {
   } else if (tipo === 'rio') {
     const x = RIO.righe.find(y => y.id === id);
     if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Riordino'; ST.aperta = id; corpo = riordiniHtml(id); }
+  } else if (tipo === 'scelta') {   // una telefonata scelta a mano (nota 012): la stessa scheda, gli esiti della telefonata
+    const x = SCE.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Scelta a mano'; ST.aperta = id; corpo = sceltaHtml(x); }
   }
   if (!corpo) {   // l'esito è stato dato (o la persona non c'è più): si torna all'elenco, con la spunta
     const nomeFatto = LV.nomePersona || '';
@@ -533,6 +544,7 @@ function collegaVistaLV() {
   if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
   collegaConferme();
   collegaRiordini();
+  collegaScelte();
   collegaTracce();
   collegaMioPercorso();
   collegaCarteCoda();
@@ -933,6 +945,63 @@ async function annullaAppuntamentoDash(c) {
     await caricaConferme();
     disegnaOggi();
     mostraToast('Appuntamento ripristinato');
+  });
+}
+
+// ── TELEFONATE SCELTE A MANO (Azioni, nota 012; decisioni di Ignazio 04/10/2026) ────
+// Una telefonata che il partner programma da sé (scheda → «Nuova azione», Agenda → «+», tipo Contatto · Telefonata: `azioni.scelta_a_mano`)
+// sta qui, in più dei contatti del giorno, dal giorno scelto e finché non ha un esito (anche il giorno dopo: non sparisce). Con l'ora sta anche
+// in Agenda; senza (`senza_ora`) solo qui. La scheda è una sola: è la riga di `azioni`, e l'esito la chiude con `chiudiAppuntamento` come dall'Agenda
+// (stesso foglio dopo la telefonata, stessa chat del coach, stesso Annulla). Chi ha una telefonata aperta qui non entra nella coda automatica.
+// Il conto del giorno (`stato_oggi`) conta anche queste, fatte oggi: «5 di 5 ✓ e 3 in più» (MB21Coda.contoGiorno), mai «3 di 10».
+const SCE = { righe: [] };
+async function caricaScelte(oggi) {
+  try {
+    if (vediTutti()) { SCE.righe = []; return; }
+    const { data, error } = await dbq('telefonate scelte a mano', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti())
+      .eq('tipo_azione', 'Contatto').eq('scelta_a_mano', true).eq('completata', false).is('esito', null)
+      .lt('inizio', MB21Agenda.isoDaRoma(MB21Agenda.spostaGiorno(oggi, 1), '00:00')).order('inizio'));
+    if (error) throw error;
+    SCE.righe = MB21Coda.telefonateScelte(data, oggi);
+  } catch (e) {
+    SCE.righe = [];
+  }
+}
+// la riga sotto il nome: «Alle 10:30» · «Senza orario» · «… · era per ieri» se è rimasta aperta
+function sottoScelta(a) {
+  const quando = a.senza_ora ? 'Senza orario' : `Alle ${MB21Agenda.partiRoma(a.inizio).ora}`;
+  return a.ritardo ? `${quando} · era per ${a.ritardo === 1 ? 'ieri' : 'il ' + dataBreve(a.giorno)}` : quando;
+}
+// la scheda aperta: promemoria e preparazione come in coda, telefono, gli esiti della telefonata su due righe (gli stessi della coda), «Apri contatto»
+function sceltaHtml(a) {
+  const categoria = (a.contatti && a.contatti.categoria) || a.categoria, nome = a.contatti ? a.contatti.nome : '';
+  const tutti = bottoniPer(categoria), spento = ST.offline || soloGuardo() ? 'disabled' : '';
+  const bottoni = MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).map((riga, n) =>
+    `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga.map(f => `<button class="${(tutti.find(b => b.etichetta === f) || {}).classe || ''}" data-scelta-id="${esc(a.id)}" data-scelta-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}</div>`).join('');
+  return `<div class="card compatta aperta ${classeCat(categoria)}" data-scelta="${esc(a.id)}">
+      <div class="corpo">
+        <div class="luogo">${esc(sottoScelta(a))}${a.note ? ` · ${esc(a.note)}` : ''}</div>
+        ${ricordoHtml(a.contatto_id, nome)}
+        ${preparaChiamataHtml(a.contatto_id)}
+        ${contattaHtml(a.contatti && a.contatti.telefono)}
+        <div class="bottoni due-righe">${bottoni}</div>
+        <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
+      </div></div>`;
+}
+// dopo l'esito (o il suo Annulla) si rileggono le telefonate scelte e il conto di oggi: due letture leggere, non tutta la Dashboard
+async function rileggiStato() {
+  const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {}));
+  if (!error && data) ST.stato = data;
+}
+function collegaScelte() {
+  app.querySelectorAll('[data-scelta-esito]').forEach(b => {
+    const a = SCE.righe.find(x => x.id === b.dataset.sceltaId);
+    if (!a) return;
+    // dopo l'esito (o il suo Annulla): le telefonate scelte, il conto di oggi e la riga della persona in Lista; non tutta la Dashboard
+    const dopo = async () => { await Promise.all([caricaScelte(ST.oggi), rileggiStato(), aggiornaRiga(a.contatto_id)]); salvaCache(); disegnaOggi(); };
+    // senza orario l'ora della telefonata è adesso (la mette anche il database, chiudendo): così non passa per «storico» e il coach si apre
+    const e = { ...a, categoria: a.categoria || (a.contatti && a.contatti.categoria), inizio: a.senza_ora ? new Date().toISOString() : a.inizio };
+    b.onclick = () => chiudiAppuntamento(e, b.dataset.sceltaEsito, { dopo });
   });
 }
 

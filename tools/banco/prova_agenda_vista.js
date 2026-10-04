@@ -176,7 +176,7 @@ prova('I richiami stanno SOPRA la giornata, in pastiglie corte, e in fondo non r
   assert.doesNotMatch(g, /ag-blocco/);                       // niente più righe grandi in fondo
   // ci sono tutte e quattro, con gli id di prima (i tocchi portano dove portavano)
   for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme', 'ag-passati']) assert.match(g, new RegExp(`id="${id}"`));
-  assert.match(g, /Contatti <b>4\/10<\/b>/);
+  assert.match(g, /Contatti <b>4 di 10<\/b>/);   // dal 04/10 (nota 012) il conto a parole di MB21Coda.contoGiorno: «4 di 10», «10 di 10 ✓ e 2 in più»
   assert.match(g, /<b>2<\/b> conferme/);
   assert.match(g, /<b>1<\/b> riordino/);
   assert.match(g, /<b>1<\/b> senza esito/);

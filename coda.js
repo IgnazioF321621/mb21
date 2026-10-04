@@ -13,6 +13,7 @@
 //       2. posti liberi divisi 60% rientri + 40% mai contattati (3+2 su 5). Nei rientri: prima i richiami con data
 //          odierna, poi i rientrati dopo l'attesa. Se un gruppo non basta, i posti vanno all'altro
 //   - a parità: rientro più vecchio, poi nome
+//   - telefonate scelte a mano (nota 012, 04/10): sopra la capienza, finché non hanno un esito (telefonateScelte, senzaScelte, contoGiorno in fondo)
 (function (radice) {
   const CAPIENZA = 5;               // predefinita, se l'utente non ha scelto
   const QUOTA_RIENTRI = 3 / 5;      // il resto ai mai contattati
@@ -101,7 +102,38 @@
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(adesso || new Date());
   }
 
-  const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE };
+  // ── Telefonate scelte a mano (Azioni, nota 012; decisioni di Ignazio 04/10/2026) ──
+  // Una telefonata «Contatto · Telefonata» che il partner programma da sé (scheda → «Nuova azione», Agenda → «+»; `azioni.scelta_a_mano`)
+  // entra in CODA, sopra la capienza (in coda si può avere 10 o 14 telefonate), dal giorno scelto e finché non ha un esito: non sparisce
+  // a fine giornata. L'orario è facoltativo (`senza_ora`): con l'ora sta anche in Agenda e nella timeline, senza l'ora solo in coda.
+  // La scheda è una sola (la riga di `azioni`): chiusa da un posto è chiusa ovunque.
+  // `azioni` = righe lette dall'app (CAMPI_AZIONE); escono quelle completate o con esito; `giorno` = giorno della telefonata a Roma;
+  // `ritardo` = giorni passati da quel giorno (0 = oggi). Le future non ci sono ancora. Ordine: le più vecchie prima, poi per orario.
+  function telefonateScelte(azioni, oggi) {
+    return (azioni || [])
+      .filter(a => a.tipo_azione === 'Contatto' && a.scelta_a_mano && !a.completata && !a.esito && a.inizio)
+      .map(a => { const giorno = oggiRoma(new Date(a.inizio)); return Object.assign({}, a, { giorno, ritardo: giorniTra(giorno, oggi) }); })
+      .filter(a => a.ritardo >= 0)
+      .sort((a, b) => a.inizio.localeCompare(b.inizio));
+  }
+
+  // Chi ha una telefonata scelta a mano aperta non entra anche nella coda automatica (né nei Dare Seguito scaduti): una scheda sola per persona
+  function senzaScelte(righe, scelte) {
+    const presi = new Set((scelte || []).map(a => a.contatto_id));
+    return righe.filter(r => !presi.has(r.id));
+  }
+
+  // Il conto del giorno a parole (DECISO 1, Ignazio 04/10): il traguardo resta quello scelto, le telefonate oltre contano «in più».
+  // «3 di 5» · «5 di 5 ✓ e 3 in più», mai «3 di 10». Con 0 contatti al giorno (pausa) niente.
+  function contoGiorno(fatti, tot) {
+    fatti = Math.max(0, Number(fatti) || 0); tot = Math.max(0, Number(tot) || 0);
+    if (!tot) return '';
+    if (fatti <= tot) return `${fatti} di ${tot}`;
+    return `${tot} di ${tot} ✓ e ${fatti - tot} in più`;
+  }
+
+  const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE,
+    telefonateScelte, senzaScelte, contoGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;
 })(this);

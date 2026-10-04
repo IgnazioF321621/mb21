@@ -217,4 +217,44 @@ prova('pausa («0 contatti al giorno»): niente coda e niente Dare Seguito scadu
   assert.deepEqual(calcolaCoda(righe, OGGI, 5, false).dareSeguito.map(x => x.id), ['ds']);
 });
 
+// ── Telefonate scelte a mano (nota 012, decisioni di Ignazio 04/10/2026) ──
+const { telefonateScelte, senzaScelte, contoGiorno } = require('../../coda.js');
+const tel = (id, contatto, inizio, extra) => Object.assign({ id, contatto_id: contatto, tipo_azione: 'Contatto', modalita: 'Telefonata', scelta_a_mano: true,
+  completata: false, esito: null, inizio, senza_ora: false }, extra);
+const OGGI2 = '2026-10-04';
+
+prova('telefonate scelte a mano: in coda dal giorno scelto, le vecchie restano (anche il giorno dopo), le future no, le chiuse escono', () => {
+  const r = telefonateScelte([
+    tel('t1', 'c1', '2026-10-04T08:00:00.000Z'),                        // oggi alle 10:00 di Roma
+    tel('t2', 'c2', '2026-10-01T22:00:00.000Z', { senza_ora: true }),   // il 2 ottobre a mezzanotte di Roma, senza orario: in coda da 2 giorni
+    tel('t3', 'c3', '2026-10-05T07:00:00.000Z'),                        // domani: non ancora
+    tel('t4', 'c4', '2026-10-04T06:00:00.000Z', { completata: true, esito: 'Richiamare' }),   // fatta
+    tel('t5', 'c5', '2026-10-04T06:00:00.000Z', { scelta_a_mano: false }),                   // una telefonata vecchia maniera, non scelta a mano
+    tel('t6', 'c6', '2026-10-03T12:00:00.000Z', { tipo_azione: 'Piano Marketing' }),
+  ], OGGI2);
+  assert.deepEqual(r.map(x => x.id), ['t2', 't1']);   // le più vecchie prima
+  assert.deepEqual(r.map(x => [x.giorno, x.ritardo]), [['2026-10-02', 2], ['2026-10-04', 0]]);
+  assert.deepEqual(telefonateScelte([], OGGI2), []);
+  assert.deepEqual(telefonateScelte(null, OGGI2), []);
+});
+
+prova('una scheda sola per persona: chi ha una telefonata scelta a mano aperta non entra nella coda automatica', () => {
+  const righe = [c('c1'), c('c2'), c('c9')];
+  const scelte = telefonateScelte([tel('t1', 'c1', '2026-10-04T08:00:00.000Z')], OGGI2);
+  assert.deepEqual(senzaScelte(righe, scelte).map(x => x.id), ['c2', 'c9']);
+  assert.deepEqual(senzaScelte(righe, []).map(x => x.id), ['c1', 'c2', 'c9']);
+  const r = calcolaCoda(senzaScelte(righe, scelte), '2026-09-14');
+  assert.ok(!r.coda.some(x => x.id === 'c1'));
+});
+
+prova('il conto del giorno: il traguardo resta quello scelto, le telefonate oltre contano «in più»; mai «3 di 10»', () => {
+  assert.equal(contoGiorno(0, 5), '0 di 5');
+  assert.equal(contoGiorno(3, 5), '3 di 5');
+  assert.equal(contoGiorno(5, 5), '5 di 5');
+  assert.equal(contoGiorno(8, 5), '5 di 5 ✓ e 3 in più');
+  assert.equal(contoGiorno(11, 10), '10 di 10 ✓ e 1 in più');
+  assert.equal(contoGiorno(2, 0), '');          // in pausa
+  assert.equal(contoGiorno(undefined, 5), '0 di 5');
+});
+
 console.log(`\n${ok} prove superate`);

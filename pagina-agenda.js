@@ -90,7 +90,8 @@ async function caricaAgenda() {
   AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
   for (const r of [app1, ric, pas, tel, cd, md, mm]) if (r && r.error) throw r.error;
-  AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
+  // una telefonata scelta a mano senza orario (nota 012) sta solo in coda, in Dashboard: in Agenda entra quando ha un'ora o quando è fatta (allora l'ora è quella)
+  AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]).filter(a => !(a.senza_ora && !a.completata));
   AG.passati = pas.data;
   // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
   const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
@@ -140,7 +141,7 @@ function cambiaVista(v) {
 function richiamiAgenda(oggi) {
   const voci = [];
   const t = AG.telefonate;
-  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', (t.contatti_al_giorno === 0 ? 'Contatti <b>in pausa</b>' : `Contatti <b>${t.fatti_oggi}/${t.contatti_al_giorno}</b>`)]);
+  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', (t.contatti_al_giorno === 0 ? 'Contatti <b>in pausa</b>' : `Contatti <b>${esc(MB21Coda.contoGiorno(t.fatti_oggi, t.contatti_al_giorno))}</b>`)]);   // «5 di 5 ✓ e 2 in più» (nota 012)
   else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
   if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
   if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);

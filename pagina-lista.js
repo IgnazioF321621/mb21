@@ -767,7 +767,7 @@ async function azionePiu() {
   LS.azioni = null;
   await ricaricaERidisegna();
   tracciaDiApertura(creato, c, null);   // un Piano Marketing a un candidato: «Hai condiviso la traccia di apertura?» (01/10)
-  mostraToast('Appuntamento fissato', async () => {
+  mostraToast(MB21Agenda.avvisoFissato(creato), async () => {   // una telefonata scelta a mano (nota 012): «in coda», non «fissato»
     await dbqAvvisa('annulla nuovo', supa.from('azioni').delete().eq('id', creato.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
     LS.azioni = null;
     await ricaricaERidisegna();

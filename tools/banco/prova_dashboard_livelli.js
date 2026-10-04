@@ -214,6 +214,55 @@ prova('Il mese: la card apre l\'area, l\'area porta al Check; il traguardo apre 
   assert.equal(m.LV.vista, 'traguardo');
 });
 
+// ── Telefonate scelte a mano (Azioni, nota 012; decisioni di Ignazio 04/10/2026) ──
+prova('Telefonate scelte a mano: in più dei contatti del giorno, con giorno e ora; il conto dice «5 di 5 ✓ e 2 in più», mai «7 di 5»', () => {
+  let h = P.vista('oggi', { scelte: true, fatti: 7 }).html;
+  assert.match(h, /id="sez-scelte"[\s\S]*?Telefonate scelte a mano[\s\S]*?2 ancora da chiamare · in più dei contatti del giorno/);
+  assert.match(h, /id="sez-coda"[\s\S]*?3 ancora da chiamare · fatti 5 di 5 ✓ e 2 in più/);
+  assert.match(h, /<div class="sotto">[^<]*· fatti 5 di 5 ✓ e 2 in più<\/div>/);
+  assert.doesNotMatch(h, /7 di 5/);
+  h = P.vista('oggi', { scelte: true, apri: ['scelte'] }).html;
+  assert.deepEqual([...h.matchAll(/data-lv-persona="(scelta\|[^"]+)"/g)].map(m => m[1]), ['scelta|s2', 'scelta|s1']);   // la rimasta da ieri prima
+  assert.match(h, /<b>Dario Lupo<\/b><small>Alle 17:30 · era per ieri<\/small>/);
+  assert.match(h, /<b>Carla Bo<\/b><small>Senza orario<\/small>/);
+  assert.match(h, /fatti 2 di 5/);   // sotto il traguardo il conto è quello di sempre
+  const home = P.vista('home', { scelte: true }).html;   // il primo livello le conta tra le cose di oggi
+  assert.match(home, /1 conferma, 1 Dare Seguito, 3 telefonate, 2 scelte a mano, 2 riordini/);
+  assert.match(home, /<i class="lv-n">9<\/i>/);
+  delete P.memo.scelte;
+});
+
+prova('La telefonata scelta a mano: la stessa scheda, gli esiti della telefonata chiudono QUELLA azione (chiudiAppuntamento, non registra_esito); senza orario l\'ora è adesso', async () => {
+  const { m, html: h } = P.vista('persona', { scelte: true, persona: 'scelta|s1' });
+  assert.match(h, /<span class="lv-chip">Scelta a mano<\/span><\/div><h1[^>]*>Carla Bo<\/h1>/);
+  assert.match(h, /Senza orario · Richiamarla per il libro/);
+  assert.match(h, /class="contatta"/);
+  assert.match(h, /data-scelta-esito="PM Fissato"/);
+  assert.match(h, /data-scelta-esito="No Risposta"/);
+  assert.doesNotMatch(h, /data-bottone=/);   // non sono i bottoni della coda: non nasce una seconda azione
+  P.chiusure.length = 0;
+  await P.clic('[data-scelta-esito="Richiamare"]');
+  assert.equal(P.chiusure.length, 1);
+  const [e, esito, opz] = P.chiusure[0];
+  assert.deepEqual([e.id, e.contatto_id, e.categoria, esito], ['s1', 'x5', 'Prospect', 'Richiamare']);
+  assert.equal(e.contatti.nome, 'Carla Bo');
+  assert.notEqual(e.inizio, P.iso(P.OGGI, '00:00'));   // senza orario: l'ora della telefonata è adesso, non la mezzanotte del giorno scelto
+  assert.equal(typeof opz.dopo, 'function');
+  // con l'ora resta la sua; il Partner ha i suoi esiti
+  P.chiusure.length = 0;
+  const { m: m2, html: hp } = P.vista('persona', { scelte: true, persona: 'scelta|s2' });
+  assert.match(hp, /data-scelta-esito="Appuntamento"/);
+  assert.doesNotMatch(hp, /data-scelta-esito="PM Fissato"/);
+  await P.clic('[data-scelta-esito="Appuntamento"]');
+  assert.equal(P.chiusure[0][0].inizio, P.iso('2026-10-03', '17:30'));
+  // dato l'esito la riga sparisce: si torna all'elenco con la spunta
+  m2.SCE.righe = m2.SCE.righe.filter(x => x.id !== 's2');
+  m2.disegnaOggi();
+  assert.equal(m2.LV.vista, 'oggi');
+  assert.deepEqual(m2.LV.fatte, [{ tipo: 'scelta', id: 's2', nome: 'Dario Lupo' }]);
+  assert.equal(m.LV.vista, 'persona');   // il primo mondo non c'entra
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
