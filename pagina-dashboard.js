@@ -1948,9 +1948,9 @@ function apriCheck() {
   // Ogni voce del Check è una riga numerata come nel modulo Core (Ignazio 22/09: «integrare sempre di più il Check nel Core»):
   // numero · titolo · targhetta «Core» se riempie il foglio Core del mese · come si riempie (automatico o a mano).
   const CK = Object.fromEntries(MB21Dashboard.CAMPI_CHECK.map(([k, etichetta, suggerimento, decimale]) => [k, { etichetta, suggerimento, decimale }]));
-  const riga = (n, k, opz = {}) => `<div class="ckr${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
+  const riga = (n, k, opz = {}) => `<div class="ckr riga1${opz.core ? ' core' : ''}" id="ck-campo-${k}"><b class="ck-n">${n}</b><div class="ck-corpo">
       <label for="ck-${k}">${escIcone(CK[k].etichetta)}${opz.core ? '<span class="ck-tag">Core</span>' : ''}</label>
-      <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="${esc(CK[k].suggerimento)}">
+      <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="0" aria-label="${esc(CK[k].suggerimento)}">
       <div class="ck-auto" id="ck-auto-${k}" style="display:none"></div>
       <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>`;
   velo.innerHTML = `<div class="foglio alto mc">
@@ -1964,7 +1964,7 @@ function apriCheck() {
     ${riga(2, 'pm', { core: 1, spiega: 'Automatico: dai Piani Marketing avvenuti in Agenda → riempie la sezione 1 del foglio Core.' })}
     ${riga(3, 'sponsor_personali', { spiega: 'A mano: gli iscritti che hai sponsorizzato tu oggi.' })}
     ${riga(4, 'sponsor_gruppo', { spiega: 'A mano finché il file ufficiale Amway non è caricato dal tuo Leader/Upline.' })}
-    <div class="ckr core auto volume" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
+    <div class="ckr riga1 core auto volume" id="ck-campo-consumo"><b class="ck-n">5</b><div class="ck-corpo"><label>🛒 Consumo personale<span class="ck-tag">Core</span></label>
       <div class="ck-valore" id="ck-consumo">—</div><div class="vn-aiuto">Automatico: VP personali Amway del mese − VP clienti (il VPP non è autoconsumo: dentro ci sono anche i clienti) → sezione 2 del foglio Core.</div></div></div>
     ${riga(6, 'vp_clienti', { core: 2, spiega: 'Automatico dal 18/09: dalle vendite registrate nella scheda del cliente → sezione 3 del foglio Core.' })}
     </div><h4 class="mc-t">Crescita</h4><div class="riquadro mc-g" id="ck-crescita">

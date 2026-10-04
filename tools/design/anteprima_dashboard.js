@@ -69,6 +69,16 @@ const documento = {
   body: { appendChild() {} }, addEventListener() {}, hidden: false,
 };
 const clic = (sel, n = 0) => { const e = cerca(sel)[n]; if (!e) throw new Error('non trovo ' + sel); if (!e.onclick) throw new Error('nessun clic su ' + sel); return e.onclick(); };
+const catena = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : catena), apply: () => catena });
+// un elemento qualunque (per i fogli che l'anteprima non deve far funzionare, solo disegnare)
+const finto = () => ({ value: '', checked: false, style: {}, textContent: '', innerHTML: '', options: [], classList: { toggle() {}, add() {}, remove() {} }, addEventListener() {},
+  querySelector: () => finto(), querySelectorAll: () => [], insertBefore() {}, remove() {}, appendChild() {}, oninput() {}, onclick: null, onchange: null });
+const fogli = [];
+documento.createElement = () => {
+  const v = finto(); fogli.push(v);
+  return v;
+};
+documento.body.appendChild = () => {};
 const toast = [];
 const stub = {
   app, document: documento, window: { scrollY: 0, innerHeight: 800, scrollTo() {}, addEventListener() {} },
@@ -76,7 +86,8 @@ const stub = {
   MB21Dashboard: D, MB21Check: C, MB21Core: K, MB21Agenda: A, MB21Report: R, MB21Lista: L, MB21Mappa: M, MB21Icone: Icone,
   MB21Coda: { oggiRoma: () => OGGI, QUOTA_CATALOGO: 5, CAPIENZA: 10 },
   MB21Benvenuto: { pulisciPerche: () => [] },
-  supa: { rpc: () => Promise.resolve({ error: null }), from: () => ({ select: () => Promise.resolve({ data: [], error: null }) }) },
+  supa: { rpc: () => Promise.resolve({ error: null }), from: () => catena },
+  Option: class { constructor(t, v) { this.text = t; this.value = v; } }, moduloSemplice: async () => null,
   dbq: async () => ({ data: null, error: null }), dbqAvvisa: async () => ({ data: null, error: null }),
   SCRITTURE: { ultima: 0 }, CHIAVE_CACHE: 'x',
   mostraToast: t => toast.push(t), mostraTab: () => {}, chiediConferma: async () => true, aggiornaRiga: async () => {},
@@ -85,7 +96,7 @@ const stub = {
   tracceHtml: () => '', mioPercorsoHtml: () => '', collegaTracce() {}, collegaMioPercorso() {},
   contattaHtml: tel => `<div class="contatta"><a>Chiama</a><a>SMS</a><a>WhatsApp</a><a>Telegram</a></div>`,
   ricordoHtml: () => '', preparaChiamataHtml: () => '', nuovoBadge: () => '', guardoAltriDi: () => false,
-  caricaCardCheck() {}, apriCheck() {}, apriObiettivi() {}, apriBenvenuto() {}, apriContattoDa() {}, foglioRinnovo() {}, foglioStorico() {}, scegliNumero() {}, caricaOggi: async () => {},
+  caricaCardCheck() {}, aNome: () => '', apriObiettivi() {}, apriBenvenuto() {}, apriContattoDa() {}, foglioRinnovo() {}, foglioStorico() {}, scegliNumero() {}, caricaOggi: async () => {},
   chiudiAppuntamento: async () => {}, spostaAppuntamento: async () => {}, toccaBottone: async () => {}, calcolatoreSegni: () => ({}),
   caricaDatiCheck: async () => {}, caricaSchedeMappa: async () => {}, trnProvaTelefonata() {}, elimina() {}, PF: { aperte: new Set() }, RP: {},
   eAdmin: () => false, soloGuardo: () => false, idVisti: () => ['io'], codiciDi: () => [], nomeVisto: () => 'Isabella',
@@ -110,7 +121,7 @@ const nomi = Object.keys(stub);
 const prefazio = `const ST = ${JSON.stringify(stato.ST)}; const PS = { scelto: null }; const MP = {}; const AG = {}; const CM = {}; const LS = {}; const VER = {};
 const guardoAltri = () => !!PS.scelto, vediTutti = () => PS.scelto === 'tutti';
 let ultimoTraguardoSalvato;\n`;
-const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, CK, ST, PS, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio };';
+const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio };';
 let mondo;
 function avvia() {
   const g = new Function(...nomi, prefazio + pezzi + '\n' + pagina + uscita);
@@ -169,7 +180,15 @@ const localStorage_get = () => JSON.stringify(memo);
 const localStorage_set = v => Object.assign(memo, JSON.parse(v));
 stub.localStorage = { getItem: () => JSON.stringify(Object.assign({ giorno: OGGI }, memo)), setItem: (k, v) => Object.assign(memo, JSON.parse(v)) };
 
-module.exports = { vista, avvia, carica, stub, app, memo, clic, cerca, toast, OGGI, stile };
+// «Il mio giorno»: il foglio com'è disegnato (le righe automatiche si accendono a mano, come fa la pagina quando arrivano i dati)
+function foglioGiorno(auto = true) {
+  const m = avvia(); carica(m);
+  fogli.length = 0;
+  m.apriCheck();
+  const h = fogli[0].innerHTML || '';
+  return auto ? h.replace(/class="ckr riga1( core)?" id="ck-campo-(contatti|pm|vp_clienti)"/g, 'class="ckr riga1$1 auto" id="ck-campo-$2"') : h;
+}
+module.exports = { vista, avvia, carica, foglioGiorno, stub, app, memo, clic, cerca, toast, OGGI, stile };
 if (require.main !== module) return;
 
 const quale = process.argv[2] || 'tutte', dove = process.argv[3];
