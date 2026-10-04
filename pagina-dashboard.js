@@ -47,8 +47,8 @@ async function caricaOggi() {
     const posti = stato.contatti_al_giorno - stato.fatti_oggi;
     risultato = MB21Coda.calcolaCoda(await leggiCandidati(oggi), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
     if (!altro && risultato.nuoviInCoda.length) {
-      await dbq('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
-        .in('id', risultato.nuoviInCoda).is('in_coda_dal', null));
+      await dbqAvvisa('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
+        .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri la Dashboard.');
     }
   } catch (e) {
     if (altro) {
@@ -671,7 +671,7 @@ function collegaConferme() {
       CONF.righe = CONF.righe.filter(x => x.id !== c.id);
       disegnaOggi();
       mostraToast(`${c.contatti ? c.contatti.nome : ''} · confermato`, async () => {
-        await dbq('annulla conferma', supa.from('azioni').update({ confermato_il: null }).eq('id', c.id));
+        await dbqAvvisa('annulla conferma', supa.from('azioni').update({ confermato_il: null }).eq('id', c.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
         await caricaConferme();
         disegnaOggi();
       });

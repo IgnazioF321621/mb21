@@ -1292,7 +1292,7 @@ async function caricaIntervallo(da, a) {
     const righe = [];
     for (let da0 = 0; da0 < 20000; da0 += 1000) {
       const { data, error } = await dbq(cosa, fai().range(da0, da0 + 999));
-      if (error || !data) break;
+      if (error || !data) { mostraToast('Alcuni impegni del mese non si sono caricati: riapri la pagina per riprovare.'); break; }
       righe.push(...data);
       if (data.length < 1000) break;
     }
@@ -2478,7 +2478,7 @@ async function preparaSettimana() {
       chiudi();
       await apriAgenda(AG.giorno);
       mostraToast(`Settimana pronta: ${S.riassunto(righe)}`, async () => {
-        await dbq('annulla prepara', supa.from('spazi').delete().in('id', data.map(r => r.id)));
+        await dbqAvvisa('annulla prepara', supa.from('spazi').delete().in('id', data.map(r => r.id)), 'Annullamento non riuscito: controlla la connessione e riprova.');
         await apriAgenda(AG.giorno);
       });
     };
@@ -2535,8 +2535,8 @@ function foglioSpazio(id) {
     const segnato = sds ? await segnaSenzaOpen(lun, true) : false;
     await apriAgenda(AG.giorno);
     const rimetti = async () => {
-      await dbq('rimetti spazio', supa.from('spazi').insert({ id: s.id, user_id: s.user_id, tipo: s.tipo, inizio: s.inizio, durata: s.durata }));
-      if (segnato) await segnaSenzaOpen(lun, false);
+      const { error: eRimetti } = await dbqAvvisa('rimetti spazio', supa.from('spazi').insert({ id: s.id, user_id: s.user_id, tipo: s.tipo, inizio: s.inizio, durata: s.durata }), 'Non rimesso: controlla la connessione e riprova.');
+      if (segnato && !eRimetti) await segnaSenzaOpen(lun, false);
       await apriAgenda(AG.giorno);
     };
     mostraToast(sds ? (segnato ? 'Tolta: nel Modulo Core questa settimana «l\'OPEN non c\'era»' : 'Tolta. Nel Modulo Core non sono riuscito a segnarla: toccala lì.') : persona ? 'Spazio tolto' : 'Incontro tolto', rimetti);
