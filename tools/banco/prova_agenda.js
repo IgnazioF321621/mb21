@@ -69,7 +69,7 @@ prova('Riga con le parole di Glide; [Partner] all\'inizio solo per l\'Admin sugl
     { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | Counseling a un partner • ✅ Completato', colore: 'var(--az-appuntamento)' });
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).titolo, 'Counseling · Carolina C.');
   assert.equal(A.riga(carolina, { mioId: carolina.user_id, admin: true }).titolo, 'Counseling · Carolina C.');   // Partner Select su di lei
-  assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).sotto, 'Attività | c/Downline • ✅ Completato');
+  assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).sotto, 'Attività | Counseling a un partner • ✅ Completato');
   assert.equal(A.riga(samantha, { mioId: 'io', admin: true }).sotto, 'Attività • ⏳ Da completare');
   assert.equal(A.orario(carolina), '09:45–10:45');
   const [anna] = A.eventiDelGiorno(azioni, '2026-09-12');
