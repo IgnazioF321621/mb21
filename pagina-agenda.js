@@ -8,6 +8,7 @@
 // Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
+const LIMITE_SENZA_ESITO = 50;   // quanti «senza esito» si leggono; se sono tanti la pastiglia dice «50+» (nota 021)
 const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null, cose: [], modello: [], modelli: [] };
 
 
@@ -43,7 +44,7 @@ async function caricaAgenda() {
     // Contatti: richiami/appuntamenti dati dalla coda (data scelta) e telefonate programmate dall'Agenda (non completate)
     dbq('agenda contatti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).eq('tipo_azione', 'Contatto')
       .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
-    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(50)),
+    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(LIMITE_SENZA_ESITO)),
   ];
   const conferme = AG.giorno === oggi ? Promise.all([caricaConferme(), caricaRiordini(oggi)]) : null;   // cantiere 29: stesso elenco del riquadro in Dashboard
   if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
@@ -117,7 +118,7 @@ function richiamiAgenda(oggi) {
   else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
   if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
   if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);
-  if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length}</b> senza esito`]);
+  if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length >= LIMITE_SENZA_ESITO ? LIMITE_SENZA_ESITO + '+' : AG.passati.length}</b> senza esito`]);
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
@@ -862,7 +863,8 @@ function foglioModello(id) {
       if (testo) aggiungi(testo);
     };
     velo.querySelector('#fm-elimina').onclick = async () => {
-      if (!(await chiediConferma(`Eliminare il modello «${m.titolo}»?`, 'Le sue voci spariscono dal foglio; le cose scritte a mano restano, sotto «Da fare».', 'Elimina', true))) return;
+      const spunte = await contaSpunteDelleVoci(AG.modello.filter(v => v.modello_id === m.id).map(v => v.id));
+      if (!(await chiediConferma(`Eliminare il modello «${m.titolo}»?`, `Le sue voci spariscono dal foglio. ${fraseSpunte(spunte)} Le cose scritte a mano restano, sotto «Da fare».`, 'Elimina', true))) return;
       const { error } = await dbq('elimina modello', supa.from('modelli').delete().eq('id', m.id));
       if (error) return;
       AG.modelli = AG.modelli.filter(x => x.id !== m.id);
@@ -887,6 +889,15 @@ function foglioModello(id) {
 }
 
 // Una voce del modello: il testo e i giorni in cui compare (Ogni giorno · Lun-Ven · Sab e Dom · a scelta).
+// Quante spunte (giorni fatti) si cancellano insieme alle voci del modello che si elimina: la cancellazione è a cascata
+// (`cose_da_fare.modello_id … on delete cascade`) e prima la conferma non lo diceva (nota 021). null = non si riesce a contare.
+async function contaSpunteDelleVoci(idVoci) {
+  if (!idVoci.length) return 0;
+  const r = await dbq('spunte del modello', supa.from('cose_da_fare').select('id', { count: 'exact', head: true }).in('modello_id', idVoci).not('fatto_il', 'is', null));
+  return r.error || r.count == null ? null : r.count;
+}
+const fraseSpunte = n => n === null ? 'Spariscono anche i giorni già fatti nel passato.' : n === 0 ? 'Nessun giorno già fatto va perso.' : `Spariscono anche ${n === 1 ? 'il giorno già fatto' : n + ' giorni già fatti'} nel passato.`;
+
 function foglioVoceModello(v, salva, elimina) {
   const A = MB21Agenda;
   const delGiorno = ((AG.modelli.find(m => m.id === v.modello_id) || {}).scala || 'giorno') === 'giorno';
@@ -926,7 +937,8 @@ function foglioVoceModello(v, salva, elimina) {
       velo.remove();
     };
     velo.querySelector('#fv-elimina').onclick = async () => {
-      if (!(await chiediConferma(`Togliere «${v.testo}» dal modello?`, 'Le spunte dei giorni passati si cancellano.', 'Elimina', true))) return;
+      const spunte = await contaSpunteDelleVoci([v.id]);
+      if (!(await chiediConferma(`Togliere «${v.testo}» dal modello?`, fraseSpunte(spunte), 'Elimina', true))) return;
       await elimina();
       velo.remove();
     };
