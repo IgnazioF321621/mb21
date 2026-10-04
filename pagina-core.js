@@ -106,12 +106,19 @@ function moduloCoreHtml(m) {
 
 // I campi a mano si salvano da soli in core_mese.dati (una riga per mese); dopo ogni salvataggio il modulo si ricalcola.
 function collegaModuloCore(m, disegna) {
+  // Si manda al server SOLO la chiave cambiata (`core_mese_imposta`: dati = dati || {chiave: valore}): un telefono non cancella i campi dell'altro (nota 019)
   const salva = async cambia => {
-    const dati = JSON.parse(JSON.stringify(CM.dati));
+    const prima = CM.dati || {}, dati = JSON.parse(JSON.stringify(prima));
     cambia(dati);
-    const { data, error } = await dbq('modulo core', supa.from('core_mese').upsert({ user_id: visto().id, mese: CM.mese + '-01', dati, aggiornato_il: new Date().toISOString() }, { onConflict: 'user_id,mese' }).select().single());
-    if (error) return mostraToast('Non salvato: riprova.');
-    CM.riga = data; CM.dati = data.dati || dati;
+    const chiavi = [...new Set([...Object.keys(prima), ...Object.keys(dati)])].filter(k => JSON.stringify(prima[k]) !== JSON.stringify(dati[k]));
+    if (!chiavi.length) return;
+    let riga = null;
+    for (const k of chiavi) {
+      const { data, error } = await dbq('modulo core', supa.rpc('core_mese_imposta', { p_user: visto().id, p_mese: CM.mese + '-01', p_chiave: k, p_valore: dati[k] === undefined ? null : dati[k] }));
+      if (error || !data) return mostraToast('Non salvato: riprova.');
+      riga = data;
+    }
+    CM.riga = riga; CM.dati = riga.dati || dati;
     disegna();
   };
   const numero = s => { const v = String(s).trim().replace(',', '.'); return v === '' ? null : Number(v); };
@@ -191,7 +198,7 @@ async function datiCoreDelMese(io, mese) {
     dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
     dbq('date dei WES', supa.from('wes').select('data, giorno')),
   ]);
-  const errore = [az, ve, ck].find(r => r.error);
+  const errore = [az, ve, ck, cm].find(r => r.error);   // anche core_mese: se non si legge, il modulo non si apre vuoto (il primo salvataggio cancellerebbe i campi a mano, nota 019)
   if (errore) throw errore.error;
   // Le tracce del percorso ascoltate nel mese e i biglietti stanno sulla propria scheda (il contatto con il proprio codice
   // Amway), che per un partner sta nella lista dell'upline: le regole di sicurezza non gliela fanno leggere e il modulo
