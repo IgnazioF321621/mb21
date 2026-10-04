@@ -1297,6 +1297,16 @@ function apriModulo(c) {
     $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
     compleannoLetto = true;
   });
+  // Un numero incollato con il prefisso («+39 338 1234567», «0039…») non resta «+39» accanto a «+39…»: il prefisso va nella casella del prefisso,
+  // nel campo resta il numero (nota 080). Il salvataggio comunque lo componeva giusto; era solo la vista che sembrava doppia.
+  $('f-tel').addEventListener('input', () => {
+    const v = $('f-tel').value;
+    if (!/^\s*(\+|00)/.test(v)) return;
+    const intero = MB21Lista.componiTelefono('+39', v);
+    const { prefisso, numero } = intero ? MB21Lista.separaTelefono(intero) : {};
+    const casella = $('f-prefisso');
+    if (prefisso && numero && [...casella.options].some(o => o.value === prefisso)) { casella.value = prefisso; $('f-tel').value = numero; }
+  });
   $('invia').onclick = async () => {
     const telefono = MB21Lista.componiTelefono($('f-prefisso').value, $('f-tel').value);
     const riga = {
