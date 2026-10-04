@@ -4133,7 +4133,7 @@ function disegnaReport() {
         const scelto = RP.esito === e.esito;
         if (!e.conta && !divisore) { divisore = true; h += `<div class="rp-altre">Non contano nel totale · ${g.nonContano}</div>`; }   // cantiere 27: tentativi a vuoto, senza esito, PM non avvenuti
         h += riga(`esito ${e.verde ? 'verde' : ''} ${e.n && e.conta ? '' : 'zero'}`, `data-esito="${esc(e.esito)}" ${e.n ? '' : 'disabled'}`,
-          esc(e.esito), e.n, e.conta ? `${e.percentuale}%` : '', e.n ? (scelto ? '⌄' : '›') : '');
+          esc(MB21Agenda.nomePasso(e.esito)), e.n, e.conta ? `${e.percentuale}%` : '', e.n ? (scelto ? '⌄' : '›') : '');   // i passi col loro nome leggibile (nota 070)
         if (!scelto) continue;
         h += e.persone.map(x => `<button class="rp-riga nome ${classeCat(x.categoria)}" data-azione="${esc(x.id)}">
           <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(x.nome))}</i><span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}${x.portato ? ' · ' + rigaPortato(x.portato) : ''}</small></span></span><span></span><span class="f">›</span></button>`).join('');

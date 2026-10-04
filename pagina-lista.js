@@ -723,7 +723,7 @@ async function sezioneAzioni() {
     if (a.contatto_id !== c.id) return `
     <div class="azione">
       ${testa(`${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')}`, a)}
-      ${dettagli([esc(a.tipo_azione || ''), esc(a.modalita || ''), a.esito ? `<b>${esc(a.esito)}</b>` : ''])}
+      ${dettagli([esc(a.tipo_azione || ''), esc(a.modalita || ''), a.esito ? `<b>${esc(MB21Agenda.nomePasso(a.esito))}</b>` : ''])}
       <div class="comandi"><span class="stato-az"></span>${link('data-modifica-azione', a.id, 'Modifica')}</div>
     </div>`;
     const blocco = bloccoEsiti(a, c.categoria);
@@ -731,7 +731,7 @@ async function sezioneAzioni() {
     return `
     <div class="azione">
       ${testa(esc([a.tipo_azione, a.modalita].filter(Boolean).join(' · ')), a)}
-      ${dettagli([esc(a.area || ''), a.esito ? `<b>${esc(a.esito)}</b>` : '', esc(a.note || '')])}
+      ${dettagli([esc(a.area || ''), a.esito ? `<b>${esc(MB21Agenda.nomePasso(a.esito))}</b>` : '', esc(a.note || '')])}
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${a.esito ? '' : ricordoHtml(c.id, c.nome)}

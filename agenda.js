@@ -63,7 +63,9 @@
   // di appuntamento (Avvio: Motivazione · ListaStart · OrdineStart · Lista nomi · RolePlay · Telefonate · Inaugurazione). Per gli altri, niente.
   const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
   // Il nome che si legge: Il perché (lo stesso passo di «Il mio avvio»), Lista Start, Ordine Start, Lista Nomi, Role Play; i nomi salvati non cambiano (il Report)
-  const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play' };   // come li scrive Ignazio (30/09)
+  // come li scrive Ignazio (30/09); «c/Downline» e «c/Upline» si leggono per intero dal 04/10 (nota Azioni 070): i nomi salvati restano, le statistiche non cambiano
+  const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play',
+    'c/Downline': 'Counseling a un partner', 'c/Upline': 'Counseling con l’upline' };
   const nomePasso = f => NOMI_PASSO[f] || f;
   function fasiPer(categoria, tipo, sottotipo) {
     const f = (TIPI[categoria] || {})[tipo];
@@ -467,7 +469,7 @@
     const titolo = `${partner}${a.modalita || a.tipo_azione || ''} · ${nome}`;
     const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;   // Richiamare / PM Fissato dati dalla coda
     const stato = (dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare') + (a.confermato_il && !a.completata ? ' · 👍 confermato' : '');
-    const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito].filter(Boolean).join(' | ');
+    const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito ? nomePasso(a.esito) : null].filter(Boolean).join(' | ');   // i passi col loro nome leggibile (nota 070)
     return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
   }
   function orario(a) {
