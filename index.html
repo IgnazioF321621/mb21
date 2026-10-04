@@ -2199,6 +2199,14 @@ async function dbq(cosa, promessa) {
   if (res.error) console.error('[MB21] ' + cosa, res.error);
   return res;
 }
+// Come dbq, ma se non riesce avvisa subito (nota 067, 04/10): per le scritture dove l'errore si perdeva in silenzio e lo schermo
+// restava diverso dai dati («Annulla», «Ripristina», rimettere uno spazio…). Il toast dura finché non ne arriva un altro:
+// dopo una chiamata che avvisa non si mostra un toast di «fatto».
+async function dbqAvvisa(cosa, promessa, testo = 'Non salvato: controlla la connessione e riprova.') {
+  const res = await dbq(cosa, promessa);
+  if (res.error) mostraToast(testo);
+  return res;
+}
 
 // ── Accesso ──────────────────────────────────────────────
 function mostraEmail(errore) {
@@ -2792,10 +2800,11 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const annulla = async creato => {
     const { error: e2 } = await annullaChiusura(null);
     if (!e2) for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, false);
-    if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+    let parziale = false;
+    if (creato) parziale = !!(await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id))).error;
     await ridisegna();
-    mostraToast('Annullato');
+    mostraToast(parziale ? 'Annullato solo in parte: il passo dopo resta, puoi toglierlo a mano.' : 'Annullato');
   };
   AG.aperta = null;
   // Azione di più di 7 giorni fa (chi importa lo storico): niente coach, traccia di apertura, «Quando risentirlo?», «prossimo appuntamento» (MB21Agenda.nelPassato)
@@ -2824,11 +2833,12 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     const dopo = MB21Agenda.dopoTelefonata(categoria, esito);
     const annullaTel = async creato => {   // come `annulla`, ma rimette anche la coda e toglie il giorno del richiamo
       const { error: e2 } = await annullaChiusura(!storico);
-      if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
-      if (!e2 && dopo.cosa === 'giorno' && !storico) await dbq('togli richiamo', supa.from('azioni').update({ data_scelta: null }).eq('id', e.id));
       if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+      let parziale = false;
+      if (creato) parziale = !!(await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id))).error;
+      if (dopo.cosa === 'giorno' && !storico) parziale = !!(await dbq('togli richiamo', supa.from('azioni').update({ data_scelta: null }).eq('id', e.id))).error || parziale;
       await ridisegna();
-      mostraToast('Annullato');
+      mostraToast(parziale ? 'Annullato solo in parte: controlla il richiamo e il passo dopo.' : 'Annullato');
     };
     if (dopo.cosa === 'appuntamento') {   // PM Fissato → il piano · Appuntamento → appuntamento o consulenza · Consulenza Prodotti → la consulenza
       // lo stesso foglio della coda (appuntamentoDaCoda, pagina-dashboard.js)
@@ -2974,7 +2984,7 @@ function spostaAppuntamento(e, dopo) {
       await aggiornaRiga(e.contatto_id);   // la riga della Lista cambia (coda); non si rilegge tutta
       await dopo(g);
       return mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
-        await dbq('annulla sposta', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
+        await dbqAvvisa('annulla sposta', supa.rpc('annulla_modifica_azione', { p_prima: prima }), 'Annullamento non riuscito: controlla la connessione e riprova.');
         await aggiornaRiga(e.contatto_id);
         await dopo(giorno);
       });
@@ -2986,8 +2996,8 @@ function spostaAppuntamento(e, dopo) {
     await allineaRigaCoda(e, e.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
     await dopo(g);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
-      await dbq('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id));
-      await allineaRigaCoda(e, nuovaData, e.inizio);
+      const { error: eAnnulla } = await dbqAvvisa('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+      if (!eAnnulla) await allineaRigaCoda(e, nuovaData, e.inizio);
       await dopo(giorno);
     });
   };
@@ -3240,8 +3250,8 @@ async function nuovoAppuntamento(opz = {}) {
         AG.aperta = data.id;
         await apriAgenda(v.giorno);
         mostraToast('Appuntamento fissato', async () => {
-          await dbq('annulla nuovo', supa.from('azioni').delete().eq('id', data.id));
-          if (usato) await dbq('rimetti spazio', supa.from('spazi').insert({ id: usato.id, user_id: usato.user_id, tipo: usato.tipo, inizio: usato.inizio, durata: usato.durata }));
+          const { error: eNuovo } = await dbqAvvisa('annulla nuovo', supa.from('azioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+          if (usato && !eNuovo) await dbqAvvisa('rimetti spazio', supa.from('spazi').insert({ id: usato.id, user_id: usato.user_id, tipo: usato.tipo, inizio: usato.inizio, durata: usato.durata }));
           await apriAgenda();
         });
       }

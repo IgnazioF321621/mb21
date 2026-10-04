@@ -107,7 +107,7 @@ async function registraCondivisione(c, materialeId, materiali) {
   if (error) { if (b) b.disabled = false; return mostraToast('Non salvato: riprova.'); }
   SH.saltate = [];
   mostraToast(`Condivisa: ${t ? t.titolo : 'traccia'}`, async () => {
-    await dbq('annulla condivisa', supa.from('condivisioni').delete().eq('id', data.id));
+    await dbqAvvisa('annulla condivisa', supa.from('condivisioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
     if (LS.contatto === c && LS.sezione === 'sharing') sezioneSharing();
   });
   sezioneSharing();
@@ -425,8 +425,8 @@ function collegaMioPercorso() {
     // «… e chiede la prossima»; con «Non ora» riceve lo stesso «ha ascoltato»: «conviene sempre sentirsi»
     const sponsor = MB21Sharing.nomeCorto(r && r.sponsor) || 'il tuo sponsor';
     if (await chiediConferma(`Vuoi che ${sponsor} ti condivida la prossima traccia?`, `${sponsor} riceve un avviso e ti manda la prossima dall'app N21. Sentitevi: è il modo migliore per andare avanti.`, 'Sì, avvisalo', false, '', 'Non ora')) {
-      await dbq('chiede la prossima', supa.rpc('segna_mia_traccia', { p_id: b.dataset.miaAscoltata, p_chiede: true }));
-      mostraToast(`${sponsor} riceve l'avviso · la traccia conta nelle Tracce di oggi`);
+      const { error: eChiede } = await dbq('chiede la prossima', supa.rpc('segna_mia_traccia', { p_id: b.dataset.miaAscoltata, p_chiede: true }));
+      mostraToast(eChiede ? `Ascoltata: conta nelle Tracce di oggi. L'avviso a ${sponsor} non è partito: riprova più tardi.` : `${sponsor} riceve l'avviso · la traccia conta nelle Tracce di oggi`);
     } else mostraToast('Ascoltata: conta nelle Tracce di oggi');
     await caricaMioPercorso();
     disegnaOggi();
