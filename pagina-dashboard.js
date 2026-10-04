@@ -2228,7 +2228,7 @@ function apriCheck() {
     if (error) { for (const d of CARD) auto(d.k, dentro('?', 'Non riesco a leggere le azioni: riprova.')); return; }
     for (const d of CARD) {
       const sue = righe.filter(r => r[d.k]);
-      auto(d.k, dentro(sue.length, sue.length ? d.pieno : d.vuoto, sue.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')}${r.modalita ? ' · ' + esc(r.modalita) : ''}</span><b>${esc(r.esito || '')} ›</b></button>`).join('')));
+      auto(d.k, dentro(sue.length, sue.length ? d.pieno : d.vuoto, sue.map(r => `<button type="button" class="ck-vn-riga" data-contatto-az="${r.contatto_id}"><span>${esc(r.contatto ? r.contatto.nome : 'Contatto')}${r.modalita ? ' · ' + esc(r.modalita) : ''}</span><b>${esc(MB21Agenda.nomePasso(r.esito || ''))} ›</b></button>`).join('')));
       if (d.k === 'pm') velo.querySelector('#ck-campo-pm').classList.toggle('fatta', sue.length > 0);   // Core: verde con almeno un PM fatto oggi
     }
     velo.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });

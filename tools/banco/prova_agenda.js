@@ -66,7 +66,7 @@ prova('Eventi del giorno in ordine d\'ora; il Contatto conta alla data scelta; p
 prova('Riga con le parole di Glide; [Partner] all\'inizio solo per l\'Admin sugli appuntamenti degli altri', () => {
   const [carolina, samantha] = A.eventiDelGiorno(azioni, '2026-09-11');
   assert.deepEqual(A.riga(carolina, { mioId: 'io', admin: true }),
-    { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | c/Downline • ✅ Completato', colore: 'var(--az-appuntamento)' });
+    { titolo: '[Carolina] Counseling · Carolina C.', sotto: 'Attività | Counseling a un partner • ✅ Completato', colore: 'var(--az-appuntamento)' });
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).titolo, 'Counseling · Carolina C.');
   assert.equal(A.riga(carolina, { mioId: carolina.user_id, admin: true }).titolo, 'Counseling · Carolina C.');   // Partner Select su di lei
   assert.equal(A.riga(carolina, { mioId: 'io', admin: false }).sotto, 'Attività | c/Downline • ✅ Completato');
@@ -751,6 +751,8 @@ prova('«Su cosa lavorate?»: le fasi del tipo di appuntamento, solo per un Part
     assert.deepEqual(A.suCosaPer(c, t, m), [], `${c} ${t} ${m}`);
   assert.equal(A.nomePasso('Motivazione'), 'Il perché');
   assert.deepEqual(['ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'].map(A.nomePasso), ['Lista Start', 'Ordine Start', 'Lista Nomi', 'Role Play', 'Telefonate', 'Inaugurazione']);   // come li scrive Ignazio; i nomi salvati non cambiano
+  assert.deepEqual(['c/Downline', 'c/Upline'].map(A.nomePasso), ['Counseling a un partner', 'Counseling con l’upline']);   // nota 070 (Ignazio 04/10): leggibili, salvati come prima
+  assert.equal(A.riga({ tipo_azione: 'Appuntamento', modalita: 'Counseling', esito: 'c/Downline', completata: true, contatti: { nome: 'Anna' } }, { mioId: 'io', admin: false }).sotto, 'Counseling a un partner • ✅ Completato');
 });
 
 prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anche altro» con gli altri, tutti in ordine delle fasi; chiuso o senza scelta → il blocco di sempre', () => {
