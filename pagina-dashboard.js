@@ -203,121 +203,346 @@ const ORA_CHECK = 20;
 function oraRoma() {
   return Number(new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).format(new Date()));
 }
-function zonaOggiHtml() {
-  const r = ST.risultato, st = ST.stato, altro = guardoAltri();
+// ══ LA DASHBOARD «A LIVELLI» (Pagine 040; Ignazio 04/10/2026, studiata schermata per schermata con un disegno cliccabile) ══
+// Primo livello: poche idee iniziali, ognuna una domanda che si capisce al primo sguardo: «Chi sento oggi?» · «Come sto andando questo mese?» ·
+// «Qual è il mio prossimo traguardo?» · «Com'è andata oggi?», con Report e Griglia PM in piccolo. Il tocco apre la sottopagina (secondo livello);
+// da lì un tocco su una persona o su un'area apre il terzo. Il nuovo parte da «Il mio avvio», con un consiglio (sentire lo sponsor o l'upline attivo).
+// Le pagine sono fatte con i pezzi che c'erano già (coda, conferme, riordini, numeri del mese, percorso del Check, «Il mio giorno»): cambia dove
+// stanno e come si arriva, non cosa fanno. Con «Tutti» (Partner Select) la Dashboard resta quella dei soli numeri.
+const LV = { vista: 'home', area: null, persona: null, gradino: null, fatte: [], giorno: null };
+const NOMI_LV = { home: 'Oggi', oggi: 'Chi sento oggi?', mese: 'Come sto andando questo mese?', traguardo: 'Qual è il mio prossimo traguardo?', avvio: 'Il mio avvio' };
+const PADRE_LV = { persona: 'oggi', area: 'mese', gradino: 'traguardo' };
+function vaiLV(vista, extra) {
+  LV.vista = vista; LV.area = null; LV.persona = null; LV.gradino = null;
+  Object.assign(LV, extra || {});
+  window.scrollTo(0, 0);
+  disegnaOggi();
+}
+const indietroLV = () => `<button class="indietro" id="lv-indietro">‹ ${esc(NOMI_LV[PADRE_LV[LV.vista] || 'home'])}</button>`;
+const attaccaIndietroLV = () => { const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(PADRE_LV[LV.vista] || 'home'); };
+const nomeProprio = () => String(nomeDi(visto()) || '').trim().split(/\s+/)[0];
+
+// Chi è nuovo e sta facendo il suo avvio (stessa regola del riquadro «Il mio avvio»)
+function nuovoInAvvio() {
+  const m = AVV.mio;
+  return !guardoAltri() && !!m && !m.avvio_concluso_il && !m.avvio_in_pausa_dal && !!MB21Lista.prossimoPasso(m);
+}
+function contiOggi() {
+  const r = ST.risultato || { coda: [], dareSeguito: [] };
+  return { coda: r.coda.length, dare: r.dareSeguito.length, conf: CONF.righe.length, rio: RIO.righe.length };
+}
+const totaleOggi = c => c.coda + c.dare + c.conf + c.rio;
+function fraseOggi(c) {
+  const p = [];
+  if (c.conf) p.push(`${c.conf} ${c.conf === 1 ? 'conferma' : 'conferme'}`);
+  if (c.dare) p.push(`${c.dare} Dare Seguito`);
+  if (c.coda) p.push(`${c.coda} ${c.coda === 1 ? 'telefonata' : 'telefonate'}`);
+  if (c.rio) p.push(`${c.rio} ${c.rio === 1 ? 'riordino' : 'riordini'}`);
+  return p.join(', ');
+}
+function fraseMese() {
   const d = DS.dati;
-  const pezzi = [];   // { html, blu }
-  const metti = (id, icona, titolo, sotto, quanti, blu, contenuto, apertaDaSola) => {
-    const aperta = contenuto != null && apertaRigaDash(id, !!apertaDaSola);
-    const classe = quanti ? (blu ? '' : 'catalogare') : 'fatta';
-    pezzi.push({ blu: blu && !!quanti,
-      html: rigaApribile('sez-' + id, classe, quanti ? icona : 'fatto', titolo, sotto, aperta, quanti)
-        + (aperta ? contenuto() : '') });
-  };
-
-  // 1. Conferme: gli appuntamenti di oggi da confermare
-  if (CONF.righe.length) metti('conferme', 'conferme', 'Conferme',
-    `${CONF.righe.length} ${CONF.righe.length === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}`,
-    CONF.righe.length, true, confermeHtml, true);
-
-  // 2. Dare Seguito scaduti
-  if (r.dareSeguito.length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti',
-    `${r.dareSeguito.length} da richiamare`, r.dareSeguito.length, true,
-    () => r.dareSeguito.map(x => cardContatto(x, true)).join(''), true);
-
-  // 3. Contatti del giorno. Con «0 contatti al giorno» (02/10, Ignazio) si è in pausa: niente coda, e la frase per ripartire (consiglio, non ordine)
-  const inPausa = st.contatti_al_giorno === 0;
-  const finito = st.fatti_oggi >= st.contatti_al_giorno;
-  if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, true,
-    () => altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
-      : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`, true);
-  else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
-    r.coda.length ? `${r.coda.length} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`
-      : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`,
-    r.coda.length, true, () => (altro ? `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>` : '')
-      + (r.coda.length ? r.coda.map(x => cardContatto(x, false)).join('')
-        : `<div class="vuoto">${finito ? `${altro ? 'Per oggi ha finito' : 'Per oggi hai finito'}: ${st.fatti_oggi} di ${st.contatti_al_giorno}. ${ic('complimenti')}` : 'Nessuno da chiamare oggi.'}</div>`),
-    !!r.coda.length);
-
-  // 4. Riordini da sentire
-  if (RIO.righe.length) metti('riordini', 'riordini', 'Riordini da sentire',
-    `${RIO.righe.length} ${RIO.righe.length === 1 ? 'cliente da sentire' : 'clienti da sentire'}`,
-    RIO.righe.length, true, riordiniHtml, true);
-
-  // 5. La grigia: le tracce da controllare (un'azione tua: la traccia condivisa con una persona)
-  const grigie = [tracceHtml()].filter(Boolean);   // Da catalogare sta in Lista Nomi; Partner da avviare e Obiettivi mensili dei partner nella Mappa (Ignazio 01/10: la Dashboard era troppo piena)
-
-  // 8. Il Check della sera: grigio di giorno, blu (e primo) dalle 20 se non è ancora fatto
-  let check = '';
-  if (!limitato() && d) {
-    const fatto = d.ultimoCheck === ST.oggi;
-    const sera = oraRoma() >= ORA_CHECK;
-    check = rigaApribile('sez-giorno', fatto ? 'fatta' : (sera ? '' : 'catalogare'), fatto ? 'fatto' : 'lampo',
-      'Il mio giorno',
-      fatto ? 'fatto oggi · tocca per rivederlo'
-        : sera ? 'è ora: scrivi cosa hai fatto oggi in attività'
-        : `cosa hai fatto oggi in attività · da scrivere stasera`,
-      false, 0);
-    if (!fatto && sera) pezzi.unshift({ blu: true, html: check }), check = '';
-  }
-  const restano = pezzi.filter(x => x.blu).length;
-  const titolo = `<div class="zona-oggi">Oggi ${restano ? `<span>· ti ${restano === 1 ? 'resta 1 cosa' : `restano ${restano} cose`}</span>`
-    : `<span>· hai finito ${ic('complimenti')}</span>`}</div>`;
-  return titolo + pezzi.map(x => x.html).join('') + grigie.join('') + check;
+  if (!d) return 'I numeri non si leggono ora: riprova più tardi';
+  const D = MB21Dashboard, primo = d.schede[0] ? D.riassuntoScheda(d.schede[0]) : '';
+  return `${D.nomeMese(d.mese).toLowerCase()} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}${primo ? ' · ' + primo : ''}`;
+}
+// Il percorso del mese (Leader 1° livello, Core, Pacesetter, i livelli): gli stessi dati del Check; null finché non sono arrivati
+function percorsoDash() {
+  if (vediTutti() || limitato() || ST.offline || !CK.lc1 || !(CK.giorni && CK.di === visto().id)) return null;
+  const oggi = MB21Coda.oggiRoma();
+  const l = MB21Check.lc1({ mese: oggi.slice(0, 8) + '01', oggi, obiettivi: CK.obiettivi, biglietti: CK.lc1.biglietti, cep: CK.lc1.cep, eventi: CK.eventi });
+  return l.prima ? null : { l, ...statoPercorso(l) };
+}
+// i quattro punti del Leader 1° livello con le parole di Ignazio (04/10); nel Check, nelle caselline strette, restano 100 VP · BBS · WES · CEP
+const PUNTI_LC1 = { vp: '100 VPP', bbs: 'Ticket BBS', wes: 'Ticket WES', cep: 'Abbonamento CEP' };
+const nomeGradino = g => (g.chiave === 'core' ? 'Core' : g.titolo);
+function fraseTraguardo(p) {
+  if (!p) return 'Leggo il percorso…';
+  const g = MB21Check.piuVicino(p.pc.gradini);
+  if (g) { const m = g.totale - g.fatti; return `${nomeGradino(g)}: ${m === 1 ? 'ti manca 1 passo' : `ti mancano ${m} passi`}`; }
+  const prossimo = p.lv && p.lv.righe.find(r => !r.fatto && r.chiave !== 'plat');
+  return prossimo ? `${prossimo.titolo}: ${prossimo.stato}` : 'Leader 1° livello, Core e Pacesetter: fatti';
 }
 
-function disegnaOggi() {
-  if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
-  const r = ST.risultato;
-  const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «🔁 N riordini da sentire» porta dritto al riquadro
-  let html = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta();
-  if (vediTutti()) {
-    html += `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>`;
-    app.innerHTML = html + dashboardBasso() + versione();
-    return collegaDashboard();
-  }
+// ── Il primo livello ──
+function tessera(go, icona, colore, tinta, titolo, riga, n, opz = {}) {
+  const dentro = `<span class="lv-ic">${ic(icona)}</span><span class="lv-testo"><b>${titolo}</b><small>${riga}</small></span>
+    <span class="lv-dx">${n ? `<i class="lv-n">${n}</i>` : ''}${opz.spenta ? '' : '<em>›</em>'}</span>`;
+  const stile = `--c:var(--${colore});--t:var(--${tinta})`;
+  return opz.spenta ? `<div class="lv-tile ghost" style="${stile}">${dentro}</div>`
+    : `<button class="lv-tile${opz.blu ? ' blu' : ''}" data-lv="${go}" style="${stile}">${dentro}</button>`;
+}
+const consiglioNuovoHtml = () => {
+  const m = AVV.mio;
+  return `<div class="avv-consiglio"><b>Un consiglio</b>Prima di cambiare qualcosa, senti ${m && m.sponsor_nome ? `${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, il tuo sponsor` : 'il tuo sponsor'}, oppure il tuo upline attivo e in azione. Insieme si va più veloci.</div>`;
+};
+function disegnaHome() {
+  const altro = guardoAltri(), nuovo = nuovoInAvvio(), d = DS.dati, c = contiOggi(), totale = totaleOggi(c);
+  const fattoGiorno = !!d && d.ultimoCheck === ST.oggi, sera = oraRoma() >= ORA_CHECK;
+  const nome = nomeProprio();
+  let html = `<div class="testa-pagina"><div><div class="sotto" style="margin:0">${esc(dataEstesa(ST.oggi))}</div><h1>${altro || !nome ? 'Dashboard' : `Ciao ${esc(nome)}`}</h1></div>${cerchiettoProfilo()}</div>` + dashboardTesta();
   if (ST.offline) {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
   }
-  html += rigaTelefonoHtml();   // cantiere 32: «📲 Metti MB21 sul telefono e accendi gli avvisi», dal secondo ingresso (pagina-benvenuto.js)
-  html += zonaOggiHtml();       // 28/09: prima cosa che si vede, tutte le cose del giorno con lo stesso aspetto
-  html += mioAvvioHtml();       // il proprio avvio (14 passi), subito sotto le cose di oggi
-  html += mioPercorsoHtml();    // cantiere 40 lavoro 6: «Il mio percorso» (pagina-sharing.js)
-  html += dashboardNumeri();    // i numeri del mese vengono dopo: sono il risultato, non un compito
-  // Scaduto (Ignazio 17/09): conferme, coda e «Da catalogare» si vedono ma non si toccano
-  app.innerHTML = html + dashboardBasso() + versione();
+  html += rigaTelefonoHtml();   // cantiere 32: «Metti MB21 sul telefono e accendi gli avvisi»
+  const tessere = [];
+  const chi = tessera('oggi', 'telefonate', 'ct-chiama', 'ok-tinta', 'Chi sento oggi?', esc(totale ? fraseOggi(c) : (ST.stato && ST.stato.contatti_al_giorno === 0 ? 'In pausa · 0 contatti al giorno' : 'Per oggi hai finito')), totale, { blu: totale > 0 });
+  const haNumeri = !!d && ((DS.checkMesi || []).some(x => Number(x.contatti) > 0) || (ST.stato && ST.stato.fatti_oggi > 0));
+  const mese = tessera('mese', 'report', 'gr-volume', 'gr-volume-tinta', 'Come sto andando questo mese?', esc(nuovo && !haNumeri ? 'Si accende dopo le prime telefonate' : fraseMese()), 0, { spenta: nuovo && !haNumeri });
+  const p = percorsoDash();
+  const traguardo = tessera('traguardo', 'crescita', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : limitato() ? 'Con l\'abbonamento attivo' : fraseTraguardo(p)), 0, { spenta: nuovo });
+  const giorno = tessera('giorno', 'lampo', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
+  if (nuovo) {
+    const m = AVV.mio, { fatti, totale: tot } = MB21Lista.contatoreOnboarding(m);
+    tessere.push(tessera('avvio', 'avvio', 'cat-partner', 'cat-partner-tinta', 'Il mio avvio', esc(`Fatti ${fatti} passi su ${tot} · prossimo: ${MB21Lista.prossimoPasso(m).nome}`), 1, { blu: true }), chi, mese, traguardo);
+  } else if (sera && !fattoGiorno && !altro) tessere.push(giorno, chi, mese, traguardo);
+  else tessere.push(chi, mese, traguardo, giorno);
+  html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
+  if (!vediTutti() && !limitato()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
+  if (nuovo) html += consiglioNuovoHtml();
+  html += tracceHtml() + mioPercorsoHtml();   // le due righe grigie di prima (tracce condivise e percorso di chi parte): per ora restano qui sotto
+  app.innerHTML = html + versione();
+  app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
+    const go = b.dataset.lv;
+    if (go === 'giorno') { if (!ST.offline && !limitato()) apriCheck(); return; }
+    if (go === 'avvio') AVV.mioAperto = true;
+    vaiLV(go);
+  });
+}
+
+// ── Chi sento oggi? (secondo livello): le righe partono chiuse, un tocco le apre su un elenco corto, una riga per persona ──
+function rigaPersona(tipo, id, nome, sotto) {
+  return `<button class="lv-persona" data-lv-persona="${tipo}|${esc(id)}"><span class="rc-pastiglia">${esc(iniziali(nome))}</span>
+    <span class="lv-pt"><b>${esc(nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
+}
+const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastiglia">${ic('fatto')}</span><span class="lv-pt"><b>${esc(nome)}</b><small>fatto</small></span></div>`;
+const fatteDi = tipo => LV.fatte.filter(x => x.tipo === tipo);
+function disegnaOggiLV() {
+  const r = ST.risultato, st = ST.stato, altro = guardoAltri(), c = contiOggi();
+  const sezioni = [];
+  const metti = (id, icona, titolo, sotto, quanti, tipo, righe, contenutoSpeciale) => {
+    const fatte = fatteDi(tipo), aperta = apertaRigaDash(id, false);
+    const finita = !quanti;
+    sezioni.push(rigaApribile('sez-' + id, finita ? 'fatta' : '', finita ? 'fatto' : icona, titolo, sotto, aperta, quanti)
+      + (aperta ? (contenutoSpeciale ? contenutoSpeciale() : righe.join('') + fatte.map(x => rigaFatta(x.nome)).join('')) : ''));
+  };
+  if (CONF.righe.length || fatteDi('conf').length) metti('conferme', 'conferme', 'Conferme', c.conf ? `${c.conf} ${c.conf === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}` : 'tutte fatte', c.conf, 'conf',
+    CONF.righe.map(x => rigaPersona('conf', x.id, x.contatti ? x.contatti.nome : '', MB21Agenda.testoConferma(x, new Date().toISOString()))));
+  if (r.dareSeguito.length || fatteDi('ds').length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti', c.dare ? `${c.dare} da richiamare` : 'tutti fatti', c.dare, 'ds',
+    r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`)));
+  const inPausa = st.contatti_al_giorno === 0;
+  if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, 'coda', [],
+    () => altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
+      : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`);
+  else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
+    c.coda ? `${c.coda} ancora da chiamare · fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}` : `Fatti ${st.fatti_oggi} di ${st.contatti_al_giorno}`, c.coda, 'coda',
+    r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')),
+    altro ? () => `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>${r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')).join('')}` : null);
+  if (RIO.righe.length || fatteDi('rio').length) metti('riordini', 'riordini', 'Riordini da sentire', c.rio ? `${c.rio} ${c.rio === 1 ? 'cliente da sentire' : 'clienti da sentire'}` : 'tutti sentiti', c.rio, 'rio',
+    RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))));
+  const fatti = st.fatti_oggi, tot = st.contatti_al_giorno;
+  const finito = !totaleOggi(c);
+  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${tot ? ` · fatti ${fatti} di ${tot}` : ''}</div>` + (ST.offline ? '<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.</div>' : '')
+    + sezioni.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
+  app.innerHTML = html + versione();
+  const daSole = { conferme: false, dareseguito: false, coda: false, riordini: false };
+  for (const k of Object.keys(daSole)) { const b = document.getElementById('sez-' + k); if (b) b.onclick = () => cambiaRigaDash(k, false); }
+  app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
+  attaccaIndietroLV();
+  const vai = LV.vaiA; LV.vaiA = null;
+  const titolo = vai && document.getElementById('sez-' + vai);
+  if (titolo) titolo.scrollIntoView({ block: 'start' });
+}
+
+// ── La persona (terzo livello): la stessa scheda per tutti, cambia il motivo e quello che si preme; finito l'esito si torna all'elenco con la spunta ──
+function disegnaPersonaLV() {
+  const [tipo, id] = String(LV.persona).split('|');
+  const r = ST.risultato;
+  let corpo = '', chip = '', nome = '';
+  if (tipo === 'coda' || tipo === 'ds') {
+    const x = (tipo === 'ds' ? r.dareSeguito : r.coda).find(y => y.id === id);
+    if (x) { nome = x.nome; chip = tipo === 'ds' ? 'Dare Seguito scaduto' : x.contattato ? 'Da chiamare' : 'Mai contattato'; ST.aperta = id; corpo = cardContatto(x, tipo === 'ds'); }
+  } else if (tipo === 'conf') {
+    const x = CONF.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Da confermare'; corpo = confermeHtml(id); }
+  } else if (tipo === 'rio') {
+    const x = RIO.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Riordino'; ST.aperta = id; corpo = riordiniHtml(id); }
+  }
+  if (!corpo) {   // l'esito è stato dato (o la persona non c'è più): si torna all'elenco, con la spunta
+    const nomeFatto = LV.nomePersona || '';
+    if (nomeFatto && !LV.fatte.some(x => x.tipo === tipo && x.id === id)) LV.fatte.push({ tipo, id, nome: nomeFatto });
+    LV.nomePersona = null;
+    return vaiLV('oggi');
+  }
+  LV.nomePersona = nome;
+  app.innerHTML = indietroLV() + `<div><span class="lv-chip">${esc(chip)}</span></div><h1 style="margin-top:2px">${esc(nome)}</h1>${corpo}` + versione();
+  attaccaIndietroLV();
+}
+
+// ── Come sto andando questo mese? (secondo livello): una card per area, con tutte le sue voci e la barra; "Dettaglio ›" apre l'area (terzo livello) ──
+function cardArea(x) {
+  const D = MB21Dashboard;
+  const voci = x.riquadri.map(r => {
+    const sx = r.senzaObiettivo ? centesimi(r.numero) : `${centesimi(r.numero)} <small>su ${esc(r.obiettivoTxt)}</small>`;
+    return `<div class="lv-voce"><span>${esc(r.titolo)}</span><b>${sx}</b></div>
+      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${D.sintesiRiquadro(r).stato === 'ok' ? 'var(--ok)' : x.colore}"></div></div>`}`;
+  }).join('');
+  return `<button class="lv-area" data-lv-area="${x.chiave}"><span class="lv-area-t"><b style="color:${x.colore}">${esc(x.etichetta)}</b><span class="lv-pill">Dettaglio ›</span></span>${voci}
+    <small class="lv-frase">${esc(D.riassuntoScheda(x))}</small></button>`;
+}
+function disegnaMeseLV() {
+  const d = DS.dati, D = MB21Dashboard;
+  if (!d) { app.innerHTML = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
+  const mese = D.nomeMese(d.mese);
+  let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
+    <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}`;
+  const rigaOb = limitato() || d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
+  const rigaConf = !limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : '';
+  if (rigaOb || rigaConf) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}${rigaConf}</div>`;
+  app.innerHTML = html + versione();
+  attaccaIndietroLV();
+  app.querySelectorAll('[data-lv-area]').forEach(b => b.onclick = () => vaiLV('area', { area: b.dataset.lvArea }));
+}
+// L'area (terzo livello): le stesse voci con il mese scorso accanto, con le parole (Raggiunto · Quasi · A metà strada · Lontano) e il collegamento al Check
+function disegnaMeseDashboard(vai) {
+  const d = DS.dati, D = MB21Dashboard, x = d && d.schede.find(s => s.chiave === (vai || LV.area));
+  if (!x) return vaiLV('mese');
+  const prima = DS.confronto ? D.nomeMese(DS.confronto.mese) : null;
+  const righeConf = DS.confronto ? DS.confronto.gruppi.flatMap(g => g.righe) : [];
+  const voce = r => {
+    const t = D.sintesiRiquadro(r), cf = righeConf.find(y => y.k === r.campo);
+    const f = n => Number(n).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+    return `<div class="dm-riga"><span class="n">${esc(r.titolo)}</span><span class="g" style="color:${t.stato === 'ok' ? 'var(--ok)' : x.colore}">${r.senzaObiettivo ? centesimi(r.numero) : `${centesimi(r.numero)} <small>su ${esc(r.obiettivoTxt)}</small>`}</span>
+      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--ok)' : x.colore}"></div></div>`}
+      ${cf ? `<small class="lv-prima">${esc(prima)}: ${esc(f(cf.fatto))} su ${esc(f(cf.obiettivo))} · <b class="lv-${cf.livello}">${esc(cf.parola)}</b></small>` : ''}</div>`;
+  };
+  app.innerHTML = indietroLV() + `<h1 style="color:${x.colore}">${esc(x.etichetta)}</h1><div class="sotto">${esc(D.nomeMese(d.mese))}${prima ? `, con ${esc(prima.toLowerCase())} accanto` : ''}</div>
+    <div class="riquadro mese-card dm-corpo">${x.riquadri.map(voce).join('')}</div>
+    <p class="sotto lv-frase-area">${esc(D.riassuntoScheda(x))}</p>
+    <button class="mese-riga" id="lv-12mesi">${ic('report')}<span><b>Vedi i 12 mesi nel Check</b><small>l'andamento mese per mese</small></span><em>›</em></button>` + versione();
+  attaccaIndietroLV();
+  document.getElementById('lv-12mesi').onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };
+}
+
+// ── Qual è il mio prossimo traguardo? (secondo livello): Leader 1° livello, Core, Pacesetter e i livelli; il più vicino è segnato ──
+const elencoVoci = xs => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`);
+// la riga di un gradino dice cosa manca, ma corta: le prime due cose e «e altre N»
+const mancaCorto = xs => (xs.length > 3 ? `${xs.slice(0, 2).join(', ')} e altre ${xs.length - 2}` : elencoVoci(xs));
+function rigaGradino(chiave, titolo, sotto, fatti, totale, vicino) {
+  const ok = totale > 0 && fatti >= totale;
+  return `<button class="lv-grad${vicino ? ' vicino' : ''}${ok ? ' fatto' : ''}" data-lv-grad="${chiave}"><span class="lv-tick">${ok ? ic('fatto') : ''}</span>
+    <span class="lv-gt"><b>${esc(titolo)}</b>${vicino ? '<span class="lv-chip">Il più vicino</span>' : ''}<small>${esc(sotto)}</small>
+    <span class="lv-prog"><i style="width:${totale ? Math.round(fatti / totale * 100) : 0}%"></i></span></span><span class="lv-gn">${fatti}/${totale}</span></button>`;
+}
+const conteggioVoci = voci => { const v = voci.filter(x => !x.sotto); return [v.filter(x => x.fatto).length, v.length]; };
+function disegnaTraguardoLV() {
+  const p = percorsoDash();
+  let html = indietroLV() + '<h1>Qual è il mio prossimo traguardo?</h1>';
+  if (!p) {
+    app.innerHTML = html + `<div class="vuoto">${limitato() ? 'Con l\'abbonamento attivo.' : 'Leggo il percorso…'}</div>` + versione();
+    return attaccaIndietroLV();
+  }
+  const { l, pc, lv } = p, vicino = MB21Check.piuVicino(pc.gradini), io = visto().id === ST.utente.id;
+  html += `<div class="sotto">${esc(fraseTraguardo(p))}</div>`;
+  for (const g of pc.gradini) {
+    const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok })) : (g.voci || []);
+    const mancano = g.chiave === 'leader1' ? (l.luci || []).filter(x => !x.ok).map(x => PUNTI_LC1[x.chiave] || x.titolo) : lista.filter(x => !x.fatto).map(x => x.testo);
+    const sotto = g.fatto ? 'Raggiunto' : !g.pronto ? 'Leggo il Modulo Core…' : `${mancano.length === 1 ? 'Manca' : 'Mancano'}: ${mancaCorto(mancano)}`;
+    html += rigaGradino(g.chiave, nomeGradino(g), sotto, g.fatti, g.totale, !!vicino && vicino.chiave === g.chiave);
+  }
+  if (lv) {
+    html += `<div class="zona-oggi">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ' · ancora nessuno raggiunto'}</div>`;
+    for (const r of lv.righe.filter(x => x.chiave !== 'plat')) { const [f, t] = conteggioVoci(r.voci); html += rigaGradino(r.chiave, r.titolo, r.sotto, f, t, false); }
+  } else html += `<div class="zona-oggi">I livelli</div><div class="sotto">Leggo il file Amway…</div>`;
+  app.innerHTML = html + versione();
+  attaccaIndietroLV();
+  app.querySelectorAll('[data-lv-grad]').forEach(b => b.onclick = () => vaiLV('gradino', { gradino: b.dataset.lvGrad }));
+}
+// Il gradino o il livello (terzo livello): la sua lista, voce per voce; per i livelli anche «Dove puoi crescere» con le persone da aiutare
+function disegnaGradinoLV() {
+  const p = percorsoDash();
+  if (!p) return vaiLV('traguardo');
+  const { l, pc, lv } = p, io = visto().id === ST.utente.id, nome = nomeProprio();
+  const consiglio = c => !c ? '' : (() => {
+    const t = esc(`Per ${io || !nome ? 'te' : nome}: ${c.cosa}`);
+    return c.vai ? `<button class="prossimo vai" data-vai="${c.vai}"><span>${t}</span><span>›</span></button>` : `<div class="prossimo">${t}</div>`;
+  })();
+  const g = pc.gradini.find(x => x.chiave === LV.gradino), r = !g && lv && lv.righe.find(x => x.chiave === LV.gradino);
+  if (!g && !r) return vaiLV('traguardo');
+  let titolo, sotto, corpo;
+  if (g) {
+    titolo = nomeGradino(g);
+    sotto = g.fatto ? 'Raggiunto' : g.chiave === 'core' ? `${g.fatti} abitudini su 7` : `Fatti ${g.fatti} passi su ${g.totale}`;
+    const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok, stato: x.ok ? 'fatto' : x.ignoto ? 'non lo so' : x.testo })) : (g.voci || []);
+    corpo = vociHtml(lista, null) + consiglio(g.consiglio) + (g.chiave === 'core' ? `<button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : '');
+  } else {
+    const [f, t] = conteggioVoci(r.voci);
+    titolo = r.titolo; sotto = r.fatto ? 'Raggiunto' : f === 0 ? `Ancora nessun passo su ${t}` : `${f === 1 ? 'Fatto 1 passo' : `Fatti ${f} passi`} su ${t}`;
+    corpo = `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci, lv)}${passiHtml(r, lv.mese)}<p class="sotto">Il livello si accende quando tutta la lista è fatta.</p>`;
+  }
+  app.innerHTML = indietroLV() + `<h1>${esc(titolo)}</h1><div class="sotto">${esc(sotto)}</div><div class="riquadro lv-lista"><div class="ck-lc1">${corpo}</div></div>` + versione();
+  attaccaIndietroLV();
+}
+
+// ── Il mio avvio (secondo livello del nuovo) ──
+function disegnaAvvioLV() {
+  AVV.mioAperto = true;   // nella sua pagina i 14 passi sono sempre aperti
+  const dentro = mioAvvioHtml();
+  if (!dentro) return vaiLV('home');   // avvio finito o in pausa: torna alla Dashboard
+  app.innerHTML = indietroLV() + dentro + versione();
+  attaccaIndietroLV();
+}
+
+// ── Il router: chi disegna cosa ──
+function disegnaOggi() {
+  if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
+  const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «N riordini da sentire» porta dritto al riquadro; dal benvenuto su «Il mio avvio»
+  if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; cambiaRigaDashAperta('riordini'); }
+  if (vai === 'avvio') LV.vista = 'avvio';
+  if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
+  if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
+    app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta()
+      + `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>` + dashboardBasso() + versione();
+    return collegaDashboard();
+  }
+  switch (LV.vista) {
+    case 'oggi': disegnaOggiLV(); break;
+    case 'persona': disegnaPersonaLV(); break;
+    case 'mese': disegnaMeseLV(); break;
+    case 'area': disegnaMeseDashboard(LV.area); break;
+    case 'traguardo': disegnaTraguardoLV(); break;
+    case 'gradino': disegnaGradinoLV(); break;
+    case 'avvio': disegnaAvvioLV(); break;
+    default: LV.vista = 'home'; disegnaHome();
+  }
+  collegaVistaLV();
+}
+function cambiaRigaDashAperta(nome) { const a = aperteDash(); a[nome] = true; try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {} }
+// I collegamenti che servono a più pagine: le righe dell'avvio, i pulsanti dei numeri, i consigli del percorso, le card della coda
+function collegaVistaLV() {
   collegaDashboard();
   collegaMioAvvio();
-  mostraRigaTelefono();
-  mostraRiquadroObiettivi();   // 01/10: nei primi giorni del mese, se mancano gli obiettivi   // non fa aspettare la Dashboard
-  // Le fasce della zona OGGI si aprono e si chiudono anche con l'abbonamento scaduto (dentro non si tocca niente)
-  const daSole = { conferme: true, dareseguito: true, coda: !!r.coda.length, riordini: true, catalogo: false };
-  for (const k of Object.keys(daSole)) {
-    const b = document.getElementById('sez-' + k);
-    if (b) b.onclick = () => cambiaRigaDash(k, daSole[k]);
+  if (LV.vista === 'home') { mostraRigaTelefono(); mostraRiquadroObiettivi(); }
+  if (ST.offline || limitato()) {
+    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
+    if (limitato()) return;
   }
   const sezGiorno = document.getElementById('sez-giorno');
   if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
-  const titoloRio = vai === 'riordini' && document.getElementById('sez-riordini');
-  if (titoloRio) titoloRio.scrollIntoView({ block: 'start' });
-  const mioAvvio = vai === 'avvio' && document.getElementById('mio-avvio');   // cantiere 32: dal benvenuto si arriva su «Il mio avvio», con sotto i nomi da chiamare
-  if (mioAvvio) mioAvvio.scrollIntoView({ block: 'start' });
-  if (limitato()) {
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
-    return;
-  }
   collegaConferme();
   collegaRiordini();
   collegaTracce();
   collegaMioPercorso();
   collegaCarteCoda();
+  collegaPercorso(disegnaOggi);   // «Per te: …», i passi, «Non ora» (stessi del Check)
 }
 
 // Le card della coda e di «Da catalogare» (aprire, esiti, categorie, «Altri 5», scheda, elimina): stesse in Dashboard e nella pagina «Da catalogare» della Lista Nomi
 function collegaCarteCoda() {
   app.querySelectorAll('.riga-coda').forEach(b => {
-    b.onclick = () => { ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };
+    b.onclick = () => { if (LV.vista === 'persona') return; ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };   // nella scheda della persona la card resta aperta
   });
   app.querySelectorAll('.bottoni button[data-contatto]').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
@@ -649,9 +874,9 @@ async function caricaConferme() {
   }
 }
 
-function confermeHtml() {
+function confermeHtml(solo) {
   if (!CONF.righe.length) return '';
-  const ordinate = [...CONF.righe].sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
+  const ordinate = CONF.righe.filter(c => !solo || c.id === solo).sort((a, b) => CONF.nonRisponde.has(a.id) - CONF.nonRisponde.has(b.id));
   return ordinate.map(c => {
     const tel = c.contatti && c.contatti.telefono;
     return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || 'var(--az-contatto)'}"></div>
@@ -663,6 +888,7 @@ function confermeHtml() {
         <div class="bottoni conf-bottoni">
           <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
           <button data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
+          <button class="no" data-conferma="annulla" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Annullato</button>
           <button data-conferma="nr" data-id="${esc(c.id)}">Non risponde</button>
         </div>
       </div></div>`;
@@ -674,8 +900,9 @@ function collegaConferme() {
     b.onclick = async () => {
       const c = CONF.righe.find(x => x.id === b.dataset.id);
       if (!c) return;
-      if (b.dataset.conferma === 'nr') { CONF.nonRisponde.add(c.id); return disegnaOggi(); }
+      if (b.dataset.conferma === 'nr') { CONF.nonRisponde.add(c.id); return LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); }   // dalla scheda si torna all'elenco
       if (b.dataset.conferma === 'sposta') return spostaAppuntamento(c, async () => { await caricaConferme(); disegnaOggi(); });
+      if (b.dataset.conferma === 'annulla') return annullaAppuntamentoDash(c);
       const { error } = await dbq('conferma', supa.from('azioni').update({ confermato_il: new Date().toISOString() }).eq('id', c.id));
       if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
       CONF.righe = CONF.righe.filter(x => x.id !== c.id);
@@ -686,6 +913,26 @@ function collegaConferme() {
         disegnaOggi();
       });
     };
+  });
+}
+
+// «Annullato» (Ignazio 04/10): l'appuntamento non si fa più. Sparisce dall'Agenda e dalle conferme; la funzione del database tiene una copia (la stessa di «Elimina»,
+// nota 010) e «Annulla» nell'avviso lo rimette com'era, con il rientro del contatto.
+async function annullaAppuntamentoDash(c) {
+  const nome = c.contatti ? c.contatti.nome : '';
+  if (!await chiediConferma('Annullo questo appuntamento?', `${nome ? nome + ': ' : ''}sparisce dall'Agenda e dalle conferme. Se cambi idea, dopo tocchi «Annulla».`, 'Sì, annullo', true)) return;
+  const { error } = await dbq('annulla appuntamento', supa.rpc('elimina_azione', { p_azione: c.id }));
+  if (error) return mostraToast('Non annullato: controlla la connessione e riprova.');
+  CONF.righe = CONF.righe.filter(x => x.id !== c.id);
+  await aggiornaRiga(c.contatto_id);   // il rientro del contatto può essere cambiato
+  disegnaOggi();
+  mostraToast(`${nome ? nome + ' · ' : ''}appuntamento annullato`, async () => {
+    const { error: e2 } = await dbq('ripristina appuntamento', supa.rpc('annulla_elimina_azione', { p_azione: c.id }));
+    if (e2) return mostraToast('Non ripristinato: riprova.');
+    await aggiornaRiga(c.contatto_id);
+    await caricaConferme();
+    disegnaOggi();
+    mostraToast('Appuntamento ripristinato');
   });
 }
 
@@ -813,16 +1060,17 @@ function disegnaConfronto() {
   const c = DS.confronto, D = MB21Dashboard, f = x => Number(x).toLocaleString('it-IT', { maximumFractionDigits: 2 });
   if (!c) return disegnaOggi();
   const nome = D.nomeMese(c.mese).toLowerCase();
-  const riga = r => `<div class="dm-riga"><span class="n">${esc(r.etichetta)}</span><span class="g" style="color:${r.raggiunto ? 'var(--verde)' : 'var(--testo)'}">${r.raggiunto ? 'Raggiunto' : r.perc + '%'}</span>
-    <small>${centesimi(f(r.fatto))} su ${esc(f(r.obiettivo))}</small><small class="r">${r.raggiunto ? '' : `ne mancavano ${esc(f(Math.round((r.obiettivo - r.fatto) * 100) / 100))}`}</small>
-    <div class="dm-barra"><div style="width:${Math.min(100, r.perc)}%;background:${r.raggiunto ? 'var(--verde)' : 'var(--accento)'}"></div></div></div>`;
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
+  // le parole sono quelle di tutta l'app (Ignazio 04/10): Raggiunto · Superato · Quasi · A metà strada · Lontano; mai «mancato»
+  const riga = r => `<div class="dm-riga"><span class="n">${esc(r.etichetta)}</span><span class="g"><b class="lv-${r.livello}">${esc(r.parola)}</b></span>
+    <small>${centesimi(f(r.fatto))} su ${esc(f(r.obiettivo))}</small><small class="r">${r.perc}%</small>
+    <div class="dm-barra"><div style="width:${Math.min(100, r.perc)}%;background:${r.raggiunto ? 'var(--ok)' : 'var(--accento)'}"></div></div></div>`;
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Come sto andando questo mese?</button>
     <h1>${ic('obiettivi')} Com'è andato ${esc(nome)}</h1>
     <div class="sotto" style="margin-bottom:8px">Gli obiettivi che ti eri dato e quello che è risultato (Check, file Amway e persone).</div>
     <div class="riquadro mese-card"><div class="mese-t">${c.raggiunti} ${c.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${c.totali}</div>
       ${c.gruppi.map(g => `<div class="dm-sez"><div class="dm-testa" style="cursor:default"><b>${escIcone(g.pallino)} ${esc(g.nome)}</b></div><div class="dm-corpo">${g.righe.map(riga).join('')}</div></div>`).join('')}
     </div>${versione()}`;
-  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); vaiLV('mese'); };
 }
 
 // ── Obiettivi mensili dei partner (Ignazio 01/10): per chi sta sopra, gli obiettivi del mese di chi gli sta sotto, SOLO IN LETTURA ──
@@ -990,7 +1238,7 @@ function disegnaAvvio() {
   });
 }
 
-const RIO = { righe: [], nonRisponde: new Set() };
+const RIO = { righe: [], nonRisponde: new Set(), spento: new Set() };
 
 async function caricaRiordini(oggi) {
   try {
@@ -1012,9 +1260,9 @@ async function caricaRiordini(oggi) {
 
 // Righe chiuse come la coda (cantiere 29 lavoro 1 bis, Ignazio 18/09: «aperto si prende tre quarti di schermo»):
 // stessa `riga-coda` e stesso `ST.aperta` della coda, quindi il tocco che apre e chiude è quello di `disegnaOggi`.
-function riordiniHtml() {
+function riordiniHtml(solo) {
   if (!RIO.righe.length) return '';
-  const ordinate = [...RIO.righe].sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
+  const ordinate = RIO.righe.filter(a => !solo || a.id === solo).sort((a, b) => RIO.nonRisponde.has(a.id) - RIO.nonRisponde.has(b.id));
   return ordinate.map(a => {
     const categoria = a.contatti ? a.contatti.categoria : a.categoria;
     const aperta = ST.aperta === a.id;
@@ -1023,20 +1271,22 @@ function riordiniHtml() {
       <button class="riga-coda" data-apri="${esc(a.id)}" aria-expanded="${aperta}">
         <span class="rc-alto"><span class="nome">${esc(a.contatti ? a.contatti.nome : '')}</span></span>
         <span class="rc-glide">${esc(['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))}${a.riordino ? ` · finisce il ${esc(dataBreve(a.riordino))}` : a.glide_id ? ` · era del ${esc(dataBreve(MB21Agenda.partiRoma(a.inizio).giorno))}` : ''}</span>
-        ${RIO.nonRisponde.has(a.id) ? '<span class="conf-nr">' + ic('telefonooff') + ' Non risponde · riprova più tardi</span>' : ''}
+        ${RIO.nonRisponde.has(a.id) ? '<span class="conf-nr">' + ic('telefonooff') + (RIO.spento.has(a.id) ? ' Telefono spento · riprova più tardi' : ' Non risponde · riprova più tardi') + '</span>' : ''}
         <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
       </button>`;
     if (!aperta) return `<div class="card compatta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}</div>`;
     const fasi = MB21Agenda.fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     const spento = ST.offline || soloGuardo() ? 'disabled' : '';
-    // gli esiti non andati del Cliente qui no: c'è «Non risponde», che lascia il riordino aperto («riprova più tardi»)
+    // Ignazio 04/10: Ordine · Richiamare, poi Non risponde · Telefono spento (che lasciano il riordino aperto: «riprova più tardi») · Nessun ordine (è «No Interesse»: il cliente
+    // torna, l'app chiede tra quanti giorni risentirlo). Il telefono spento si distingue dal non risponde.
     return `<div class="card compatta aperta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}
       <div class="corpo">
         ${contattaHtml(a.contatti && a.contatti.telefono)}
         <div class="bottoni">
-          ${fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f)).map(f => `<button class="${f === 'Ordine' || f === 'Appuntamento' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
+          ${fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f) && f !== 'Appuntamento').map(f => `<button class="${f === 'Ordine' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
-          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>No Interesse</button>` : ''}
+          <button data-riordino-spento="${esc(a.id)}">Telefono spento</button>
+          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Nessun ordine</button>` : ''}
         </div>
         <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
       </div></div>`;
@@ -1054,7 +1304,9 @@ function collegaRiordini() {
       b.onclick = () => chiudiAppuntamento({ ...a, categoria: a.categoria || categoria }, b.dataset.riordinoEsito, { dopo });
     });
     const nr = el.querySelector('[data-riordino-nr]');   // c'è solo nella riga aperta
-    if (nr) nr.onclick = () => { RIO.nonRisponde.add(a.id); ST.aperta = null; disegnaOggi(); };
+    if (nr) nr.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.delete(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); };
+    const sp = el.querySelector('[data-riordino-spento]');
+    if (sp) sp.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.add(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); };
   });
 }
 
@@ -1206,7 +1458,7 @@ async function rispondiBiglietto(box, si, dopo) {
 function testataDashboard() { return `<div class="testa-pagina"><h1>Dashboard</h1>${cerchiettoProfilo()}</div>`; }
 
 // Dal 28/09 la testata (Partner Select, abbonamento, biglietti da segnare) resta in cima, mentre i numeri
-// del mese scendono sotto la zona OGGI: `dashboardNumeri()`. Il banner nero del Check è diventato una fascia della zona OGGI.
+// del mese stanno nei livelli (`disegnaMeseLV`).
 function dashboardTesta() {
   const d = DS.dati;
   let html = partnerSelect();
@@ -1225,56 +1477,7 @@ function dashboardTesta() {
   return html;
 }
 
-// ── IL MIO MESE, OBIETTIVI, DOVE VADO (Ignazio 01/10): tre blocchi staccati, ognuno col suo titolo. In Dashboard il quadro (una riga per area, col numero che serve
-// al giorno); il dettaglio, riga per riga, è una sottopagina (`disegnaMeseDashboard`) che si apre sull'area toccata, senza fisarmoniche che allungano la pagina.
-// Una riga di «Il mio mese» a livello di sintesi: il suo primo numero (VPG 89 al giorno · Prime linee, ne mancano 5), la barra
-function rigaMeseHtml(x, r) {
-  const D = MB21Dashboard, t = D.sintesiRiquadro(r), colore = t.stato === 'ok' ? 'var(--verde)' : x.colore;
-  const ev = DS.eventi && DS.eventi[r.titolo] ? ` <small class="ev">${esc(DS.eventi[r.titolo].breve)}</small>` : '';
-  const sx = t.stato === 'senza' ? centesimi(r.numero) : `${centesimi(r.numero)} su ${esc(r.obiettivoTxt)}`;
-  return `<div class="dm-riga"><span class="n" style="color:${x.colore}">${esc(r.titolo)}${ev}</span><span class="g" style="color:${colore}">${esc(t.grande)}</span>
-    <small>${sx}</small><small class="r">${esc(!obiettiviAperti() && t.dx === 'Obiettivo da impostare' ? 'Obiettivi in arrivo' : t.dx)}</small>
-    ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--verde)' : x.colore}"></div></div>`}</div>`;
-}
-function dashboardNumeri() {
-  const d = DS.dati;
-  if (!d) return '';
-  const D = MB21Dashboard, mese = D.nomeMese(d.mese).toLowerCase(), io = visto().id === ST.utente.id;
-  // 1. Il mio mese: una riga per area, toccandola si apre la sottopagina su quell'area
-  const riga = x => {
-    const r = x.riquadri[0], t = D.sintesiRiquadro(r);
-    const sx = t.stato === 'senza' ? centesimi(r.numero) : `${centesimi(r.numero)} su ${esc(r.obiettivoTxt)}`;
-    return `<button class="dm-sint" data-ds-vai="${x.chiave}"><b style="color:${x.colore}">${esc(x.etichetta)}</b>
-      <span class="g" style="color:${t.stato === 'ok' ? 'var(--verde)' : x.colore}">${esc(D.riassuntoScheda(x))}</span>
-      <small>${sx}</small><small class="r">›</small>
-      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--verde)' : x.colore}"></div></div>`}</button>`;
-  };
-  let html = `<div class="zona-oggi">Il mio mese <span>· ${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</span></div>
-    <div class="riquadro mese-card dm-lista">${d.schede.map(riga).join('')}
-      <button class="dm-tutto" data-ds-vai="">Tutto il mese, riga per riga<em>›</em></button></div>`;
-  // 2. Obiettivi: guardare avanti (quelli di questo mese) e indietro (com'è andato il mese scorso)
-  const rigaOb = limitato() || d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(D.nomeMese(d.mese))}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
-  const rigaConf = !limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : '';
-  if (rigaOb || rigaConf) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}${rigaConf}</div>`;
-  // 3. Dove vado: il percorso verso il 1° livello (la card del Check), staccata, col suo titolo
-  if (!limitato()) html += `<div class="zona-oggi">${vediTutti() ? 'Dove vanno' : io || !nomeDi(visto()) ? 'Dove vado' : `Dove va ${esc(nomeDi(visto()).split(/\s+/)[0])}`}</div>
-    <div id="ds-card-check">${cardCheckHtml('fuori')}</div>`;
-  return html;
-}
-// La sottopagina «Il mio mese»: tutte le aree già aperte, riga per riga; si scorre fino all'area toccata
-function disegnaMeseDashboard(vai) {
-  const d = DS.dati, D = MB21Dashboard;
-  if (!d) return disegnaOggi();
-  const mese = D.nomeMese(d.mese).toLowerCase();
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Dashboard</button>
-    <h1>Il mio mese · ${esc(mese)}</h1>
-    <div class="sotto" style="margin-bottom:8px">${d.giorni === 1 ? 'Resta 1 giorno' : `Restano ${d.giorni} giorni`}. Il numero grande è quanto serve al giorno; dove non si fa ogni giorno, quanti ne mancano.</div>
-    ${d.schede.map(x => `<div class="dm-etichetta" id="dm-${x.chiave}" style="color:${x.colore}"><i class="pallino" style="background:${x.colore}"></i>${esc(x.etichetta)}</div>
-      <div class="riquadro mese-card dm-corpo">${x.riquadri.map(r => rigaMeseHtml(x, r)).join('')}</div>`).join('')}${versione()}`;
-  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaOggi(); };
-  const punto = vai && document.getElementById('dm-' + vai);
-  if (punto) punto.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
-}
+// (Il mese, gli obiettivi e il percorso stanno nei livelli della Dashboard: `disegnaMeseLV`, `disegnaMeseDashboard`, `disegnaTraguardoLV`.)
 
 // i colori veri dell'app: BBS blu, WES rosso, CEP verde, come le targhette. `coloreSv(k)` il colore pieno, `tintaSv` la casella che si accende.
 const COLORI_SV = { contatti: 'tenue', pm: 'gr-azione', bbs: 'bbs', wes: 'wes', cep: 'cep' };
@@ -1319,14 +1522,11 @@ function collegaDashboard() {
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano
   su('ds-obiettivi', apriObiettivi);
   su('ds-obiettivi-mod', apriObiettivi);
-  su('ds-visione', () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); });
   caricaCardCheck();   // i dati del percorso dopo la Dashboard, che non aspetta (27/09)
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
   su('ds-check', apriCheck);
   su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
-  // data-ds-scheda, non data-scheda: quello è di «Apri contatto» nella coda (17/09: «Azione» apriva la Lista Nomi)
-  app.querySelectorAll('[data-ds-vai]').forEach(b => { b.onclick = () => disegnaMeseDashboard(b.dataset.dsVai); });
 }
 
 // Obiettivi del mese (lavoro 5): un foglio con i 12 obiettivi raggruppati come le schede, già compilati
@@ -2013,3 +2213,6 @@ function apriCheck() {
     });
   };
 }
+
+// Il tab «Oggi» della barra riporta al primo livello (Pagine 040)
+function vaiAlPrimoLivello() { LV.vista = 'home'; LV.area = null; LV.persona = null; LV.gradino = null; }

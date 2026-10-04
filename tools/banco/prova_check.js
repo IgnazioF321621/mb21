@@ -353,11 +353,15 @@ prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali
   // come Ignazio a settembre 2026: 6%, 4 prime linee con VP (una al 3%), 9 ferme
   const linee = [{ vpp: 107.38, bonus: 3 }, { vpp: 47.46, bonus: 0 }, { vpp: 78.27, bonus: 0 }, { vpp: 116.36, bonus: 0 }, ...Array(9).fill({ vpp: 0, bonus: 0 })];
   const v = C.livelli({ core: false, bonus: 6, linee, cep: 3, planner: 0, iscritti: 0, totale: 32, bbs: 3, wes: 4, mesi21: 0 });
-  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '1 su 10', false], ['Executive Leader Club', '0 su 12', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
+  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '1 su 9', false], ['Executive Leader Club', '0 su 9', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
   assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Bonus attività', '6% su 9%'], ['Linee riceventi Bonus', '1 su 3'], ['15 Planner', '0 su 1'],
     ['Prime linee', '4 su 5'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
-    ['Biglietti WES', '4 su 10'], ['Core', 'nel percorso sopra']]);
-  assert.deepEqual(v.righe[1].voci.slice(9).map(x => [x.testo, x.stato]), [['Core', 'nel percorso sopra'], ['3 linee al 6%', '0 su 3'], ['di cui 2 a Leaders Club', 'da segnare']]);
+    ['Biglietti WES', '4 su 10']]);   // Ignazio 04/10: il Core non c'è nel Manuale, né al Leaders Club né all'Executive
+  // Executive: sotto «Linee riceventi Bonus» le due righe «di cui al 6%» (almeno 3) e «di cui Leaders Club» (almeno 2), che non contano come passi a parte
+  assert.deepEqual(v.righe[1].voci.filter(x => x.sotto).map(x => [x.testo, x.stato]), [['di cui al 6%', '0 su 3'], ['di cui Leaders Club', 'da segnare']]);
+  assert.deepEqual(v.righe[1].voci.map(x => x.chiave).slice(0, 4), ['bonus', 'lineeBonus', 'linee', 'lineeLc']);
+  assert.equal(v.righe[1].voci.find(x => x.chiave === 'lineeBonus').q, 1);
+  assert.equal(v.righe[1].voci.some(x => x.chiave === 'core') || v.righe[0].voci.some(x => x.chiave === 'core'), false);
   // le linee a Leaders Club le segna l'Admin (30/09): contano solo quelle che sono prime linee della persona, con 2 la voce si accende
   const con = ids => C.livelli({ core: false, bonus: 6, linee: linee.map((x, i) => ({ ...x, partner_id: 'L' + i })), lcLinee: ids }).righe[1].voci.find(x => x.chiave === 'lineeLc');
   assert.deepEqual([con(['L0']).stato, con(['L0']).fatto], ['1 su 2', false]);
@@ -483,6 +487,39 @@ prova('Il prossimo traguardo (02/10, avviso della sera): prima il 1° livello, p
   assert.equal(lv2.righe[1].passi.length <= 3, true);
   // oltre l'Executive non si dice niente
   assert.equal(C.prossimoTraguardo({ lc1: lc([], true), lv: { righe: [{ chiave: 'arg', titolo: 'Produttore Argento', passi: [{ testo: 'x' }] }] } }), null);
+});
+
+prova('«Il più vicino» (Ignazio 04/10): tra Leader 1° livello, Core e Pacesetter, quello a cui mancano meno passi; a parità il più avanti', () => {
+  const g = (chiave, fatti, totale, extra) => ({ chiave, fatti, totale, fatto: fatti === totale, pronto: true, ...(extra || {}) });
+  // 2 su 4 (mancano 2), 4 su 7 (mancano 3), 2 su 3 (manca 1): vince il Pacesetter, non il primo
+  assert.equal(C.piuVicino([g('leader1', 2, 4), g('core', 4, 7), g('pace', 2, 3)]).chiave, 'pace');
+  // a parità (mancano 2 e 2): il più avanti, 3 su 5 batte 2 su 4
+  assert.equal(C.piuVicino([g('leader1', 2, 4), g('core', 3, 5)]).chiave, 'core');
+  // a parità di tutto: l'ordine di sempre
+  assert.equal(C.piuVicino([g('leader1', 2, 4), g('pace', 2, 4)]).chiave, 'leader1');
+  // un gradino fatto non si sceglie; uno non ancora letto nemmeno; tutti fatti = nessuno
+  assert.equal(C.piuVicino([g('leader1', 4, 4), g('core', 0, 7, { pronto: false }), g('pace', 1, 3)]).chiave, 'pace');
+  assert.equal(C.piuVicino([g('leader1', 4, 4), g('pace', 3, 3)]), null);
+  assert.equal(C.piuVicino([]), null);
+  // il percorso vero porta fatti e totale
+  const p = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 1 });
+  assert.deepEqual(p.gradini.map(x => [x.chiave, x.totale]), [['leader1', 4], ['core', 7], ['pace', 3]]);
+  assert.ok(p.gradini.every(x => Number.isInteger(x.fatti)));
+  assert.ok(['leader1', 'core', 'pace'].includes(C.piuVicino(p.gradini).chiave));
+});
+
+prova('Executive (Ignazio 04/10): «Linee riceventi Bonus» è fatta solo con le sue due righe sotto (almeno 3 al 6%, almeno 2 Leaders Club)', () => {
+  const linee = Array.from({ length: 10 }, (_, i) => ({ partner_id: 'L' + i, vpp: 50, bonus: 6 }));
+  const base = { bonus: 15, linee, cep: 15, planner: 3, iscritti: 10, totale: 50, bbs: 20, wes: 20 };
+  const elc = lcLinee => C.livelli({ ...base, lcLinee }).righe[1];
+  // 10 linee al 6% (>= 4 riceventi bonus): senza i due Leaders Club la voce e il livello non sono fatti
+  assert.equal(elc([]).voci.find(x => x.chiave === 'lineeBonus').fatto, false);
+  assert.equal(elc([]).fatto, false);
+  assert.equal(elc(['L0']).fatto, false);
+  // con 2 Leaders Club il livello si accende, e le righe sotto non contano come passi a parte
+  const ok = elc(['L0', 'L1']);
+  assert.deepEqual([ok.voci.find(x => x.chiave === 'lineeBonus').fatto, ok.fatto, ok.stato], [true, true, 'fatto']);
+  assert.equal(ok.voci.filter(x => x.sotto).length, 2);
 });
 
 console.log(`\n${ok} prove superate`);
