@@ -11,6 +11,8 @@
 //    (stessa regola del promemoria in `avvisi`).
 // IL FORMATO vive solo qui (il bottone del lavoro 1, `fileCalendario` in agenda.js, è stato tolto il 21/09: «solo specchi, mai copie»):
 // titolo «MB21 · PM 1a1 · Nome», senza fine 1 ora, ora di Roma con VTIMEZONE, UID fisso `azione-<id>@mb21`, niente telefono.
+// RISERVATEZZA (Ignazio 04/10/2026, opzione B): nel calendario finiscono solo tipo di incontro, nome del contatto e orario; mai note
+// dell'azione né nome dell'ospite (nessuna DESCRIPTION). Chi ha il link legge il feed: meno c'è dentro, meno si espone.
 // Gli appuntamenti eliminati spariscono e basta: il Calendario Apple a ogni rilettura prende l'elenco intero.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -37,7 +39,7 @@ const aRoma = (iso: string | number) => FMT.format(new Date(iso)).replace(/[-:]/
 const compatto = (d: Date) => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
 
 type Azione = { id: string; contatto_id: string | null; tipo_azione: string; modalita: string | null; esito: string | null; inizio: string; fine: string | null;
-  data_scelta: string | null; ospite: string | null; note: string | null; contatti: unknown };
+  data_scelta: string | null; contatti: unknown };
 
 function evento(a: Azione, adesso: Date) {
   const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;
@@ -45,11 +47,9 @@ function evento(a: Azione, adesso: Date) {
   const fine = !dallaCoda && a.fine ? a.fine : Date.parse(inizio) + 3600000;
   const nome = (a.contatti as { nome?: string } | null)?.nome || '—';
   const cosa = dallaCoda ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione || '');
-  const dettagli = [a.ospite ? `Ospite: ${a.ospite}` : '', a.note || ''].filter(Boolean).join('\n');
   return ['BEGIN:VEVENT', `UID:azione-${a.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
     `SUMMARY:${testoIcs(`MB21 · ${cosa} · ${nome}`)}`,
-    ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     'END:VEVENT'];
 }
 
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
   if (!utente) return niente();
 
   const adesso = new Date(), da = new Date(adesso.getTime() - 30 * 86400000).toISOString();
-  const CAMPI = 'id, contatto_id, tipo_azione, modalita, esito, inizio, fine, data_scelta, ospite, note, contatti(nome)';
+  const CAMPI = 'id, contatto_id, tipo_azione, modalita, esito, inizio, fine, data_scelta, contatti(nome)';
   const [app, tel, coda] = await Promise.all([
     db.from('azioni').select(CAMPI).eq('user_id', utente.id).neq('tipo_azione', 'Contatto').gte('inizio', da).order('inizio').limit(2000),
     db.from('azioni').select(CAMPI).eq('user_id', utente.id).eq('tipo_azione', 'Contatto').is('data_scelta', null).eq('completata', false).gte('inizio', da).order('inizio').limit(2000),
