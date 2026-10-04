@@ -409,7 +409,7 @@
   // Lo stato di un'abitudine Core con misura, dai numeri del giorno/mese (`misure`: { tracce, pagine, pm_mese, clienti_mese })
   function statoCore(voce, misure) {
     const def = CORE_N21.find(c => c.core === voce.core);
-    if (!def || !def.misura) return null;
+    if (!def || !def.misura || !misure) return null;   // senza numeri la voce Core si spunta a mano (Ignazio 04/10, nota 021: prima «0/8» per sempre)
     const n = Number((misure || {})[def.misura]) || 0;
     return { quanto: n, obiettivo: def.obiettivo, fatta: n >= def.obiettivo, testo: `${n}/${def.obiettivo}` };
   }
