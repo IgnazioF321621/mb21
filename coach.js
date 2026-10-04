@@ -95,7 +95,8 @@
   // Dopo Relazione (e dopo un'Iscrizione, un Ordine, una Vendita: niente obiezioni) solo la reazione, in un fumetto solo; No Interesse chiede l'obiezione. Tolti il 01/10: «L'hai gestita?»,
   // la carta letta in chat, la frase per la prossima volta, le domande di prima del piano e del follow up, «Per approfondire».
   // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null,
-  //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro») }
+  //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro»),
+  //        presentazione? { quando } (la Consulenza Prodotti appena fissata come Presentazione: il consiglio di prepararla, regola 4) }
   // Con un Partner niente domanda sui freni (Ignazio 29/09: «è raro che un partner dica non ho tempo»): dopo «Appuntamento» una riga con il giorno e i
   // passi scelti e, per ognuno, come prepararlo dal Manuale di Avvio.
   const RIGA_SOLA = ['Relazione'];   // No Interesse chiede l'obiezione anche lei (Ignazio 01/10: «così ce lo ritroviamo segnato»)
@@ -141,12 +142,17 @@
       { c: String(prep.apertura || '{quando} con {chi} lavorate su {passi}.').replace('{quando}', () => inc.quando || 'Presto').replace('{passi}', () => elenco) },
       ...scelti.map(x => ({ c: prep.passi[x].c, fonte: prep.passi[x].fonte })),
     ];
+    // la Consulenza Prodotti fissata come Presentazione (regola 4 del coach, Ignazio 29/09; nota Azioni 020): «Giovedì presenti a Mario.» e il consiglio
+    // di prepararla (`preparazione_incontro.presentazione`: ripassare prodotto e marchio, garanzia di soddisfazione, come si diventa cliente registrato)
+    const pres = ctx.presentazione, rp = prep && prep.presentazione;
+    const presentazione = fissato && esito === 'Consulenza Prodotti' && pres && rp && rp.c
+      ? [{ c: `${String(rp.apertura || '{quando} presenti a {chi}.').replace('{quando}', () => pres.quando || 'Presto')} ${rp.c}`, fonte: rp.fonte ? [rp.fonte, true] : undefined }] : [];
     // la reazione e la domanda in un fumetto solo (Ignazio 01/10: «unire con la successiva»): meno fumetti, meno attese
     const prima1 = reazione.slice(0, 1);
-    if (!incontro.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
+    if (!incontro.length && !presentazione.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
       return riempi([{ c: `${prima1[0].c} ${domanda[0].c}` }, ...domanda.slice(1)], nomi);
     }
-    return riempi([...prima1, ...incontro, ...domanda], nomi);
+    return riempi([...prima1, ...incontro, ...presentazione, ...domanda], nomi);
   }
 
   // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per

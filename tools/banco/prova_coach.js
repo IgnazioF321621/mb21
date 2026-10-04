@@ -420,6 +420,21 @@ prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e Lis
   assert.ok(C.corta(B, 'PM Fissato', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' }, preparazione: prep }).some(p => p.chiedi));
 });
 
+prova('Regola 4 (nota Azioni 020): dopo «Consulenza Prodotti» fissata come Presentazione, «Giovedì presenti a Anna.» e il consiglio di prepararla, con la fonte', () => {
+  const BC = { ...B, reazione: { 'Consulenza Prodotti': [[{ c: 'Bene: le fai vedere i prodotti.' }]] }, domanda_obiezione: { c: 'Domande o dubbi?', nessuna: 'Nessuna' }, obiezioni: {} };
+  const prep = { presentazione: { c: 'Conviene ripassare il prodotto e il marchio che presenti, la garanzia di soddisfazione e come si diventa cliente registrato.', apertura: '{quando} presenti a {chi}.', fonte: 'Regola del coach n. 4 · Ignazio, 29/09/2026' } };
+  const passi = C.corta(BC, 'Consulenza Prodotti', nomi, 0, { presentazione: { quando: 'Giovedì' }, preparazione: prep });
+  assert.equal(passi[0].c, 'Bene: le fai vedere i prodotti.');
+  assert.equal(passi[1].c, 'Giovedì presenti a Anna. Conviene ripassare il prodotto e il marchio che presenti, la garanzia di soddisfazione e come si diventa cliente registrato.');
+  assert.deepEqual(passi[1].fonte, ['Regola del coach n. 4 · Ignazio, 29/09/2026', true]);
+  assert.equal(passi[2].c, 'Domande o dubbi?');   // poi la domanda sulle obiezioni «a vedersi», come prima
+  assert.ok(passi[3].chiedi);
+  // senza la Presentazione (Demo, o foglio annullato), o senza la riga nell'archivio (niente rete): la chat di prima, reazione e domanda in un fumetto solo
+  assert.equal(C.corta(BC, 'Consulenza Prodotti', nomi, 0, { preparazione: prep })[0].c, 'Bene: le fai vedere i prodotti. Domande o dubbi?');
+  assert.equal(C.corta(BC, 'Consulenza Prodotti', nomi, 0, { presentazione: { quando: 'Oggi' } })[0].c, 'Bene: le fai vedere i prodotti. Domande o dubbi?');
+  assert.equal(C.corta(BC, 'Consulenza Prodotti', nomi, 0, { presentazione: { quando: 'Oggi' }, preparazione: prep, fissato: false }).length, 2);   // foglio annullato: niente «presenti a»
+});
+
 prova('Prima telefonata: la riga di preparazione solo per chi non è mai stato chiamato, mai insieme a «Ti eri detto…», mai un ordine', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const righe = { riflessione: [], esiti: [{ contatto_id: 'vecchio' }] };
