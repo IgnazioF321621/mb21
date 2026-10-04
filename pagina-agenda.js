@@ -14,6 +14,8 @@ const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null,
 
 async function apriAgenda(giorno) {
   AG.giorno = giorno || AG.giorno || MB21Coda.oggiRoma();
+  AG.oggiVisto = MB21Coda.oggiRoma();   // il giorno di Roma in cui è stata disegnata: serve a capire se al ritorno nell'app è passata la notte
+  const mia = AG.richiesta = (AG.richiesta || 0) + 1;   // due aperture ravvicinate: disegna solo l'ultima (nota 021)
   if (!AG.vista) AG.vista = vistaSalvata();   // cantiere 37: si riapre come l'hai lasciata
   if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>MB Plan</h1><div class="vuoto">Carico MB Plan…</div>`;
   try { await caricaAgenda(); }
@@ -22,6 +24,7 @@ async function apriAgenda(giorno) {
     app.innerHTML = `<h1>MB Plan</h1><div class="avviso">Non riesco a caricare MB Plan. Controlla la connessione e riprova.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
     return;
   }
+  if (mia !== AG.richiesta) return;
   // se il disegno si rompe, la pagina lo dice invece di restare su «Carico…» (22/09: pagina ferma senza spiegazione)
   try { disegnaAgenda(); }
   catch (e) {
@@ -29,6 +32,22 @@ async function apriAgenda(giorno) {
     app.innerHTML = `<h1>MB Plan</h1><div class="avviso">MB Plan non riesce a disegnare la pagina.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
   }
 }
+
+// Tornando nell'app (nota 021, Ignazio 04/10: «apre sempre su oggi e si aggiorna da sola»): se è passata la notte MB Plan va su oggi,
+// se no resta sul giorno guardato; in tutti e due i casi rilegge, così si vedono le spunte fatte dall'altro telefono. Non tocca niente
+// se si sta scrivendo (un foglio aperto o un campo con del testo) né se si è stati via meno di mezzo minuto.
+let agNascostaDal = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { agNascostaDal = Date.now(); return; }
+  if (!agNascostaDal || Date.now() - agNascostaDal < 30000) return;
+  agNascostaDal = 0;
+  if (!ST.utente || ST.tab !== 'agenda' || !AG.giorno || AG.vista === 'progetto') return;
+  if (document.querySelector('.velo')) return;
+  const f = document.activeElement;
+  if (f && f.tagName && /^(INPUT|TEXTAREA)$/.test(f.tagName) && f.value) return;
+  const oggi = MB21Coda.oggiRoma();
+  apriAgenda(AG.oggiVisto && AG.oggiVisto !== oggi ? oggi : AG.giorno);
+});
 
 async function caricaAgenda() {
   const A = MB21Agenda;
