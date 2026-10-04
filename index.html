@@ -1933,6 +1933,15 @@
   .acc-box p { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
   .acc-box.prima { border: 2px solid #C4B5FD; }
   .acc-box.prima button.primario { background: var(--coach); }
+  /* Privacy (Partner 005, 04/10): la casella «accetto» alla registrazione, il foglio e il link in fondo all'accesso */
+  .accesso label.pv-casella { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 4px; }
+  .pv-casella input { flex: none; width: 22px; height: 22px; margin: 1px 0 0; }
+  .pv-casella span { font-size: 14px; line-height: 1.35; }
+  .pv-casella .link { display: inline; padding: 0; font-size: inherit; text-align: left; }
+  .pv-foglio h4 { margin: 14px 0 4px; font-size: 15px; }
+  .pv-foglio p, .pv-foglio li { font-size: 14px; line-height: 1.4; color: var(--grigio); }
+  .pv-foglio ul { margin: 4px 0 4px; padding-left: 18px; }
+  .pv-fondo { margin-top: 14px; }
   .accesso .acc-nota { font-size: 13px; margin-top: 14px; text-align: center; }
   .foglio.nu { max-height: 90vh; overflow-y: auto; font-size: 14px; }
   .foglio.nu select { display: block; width: 100%; font-size: 16px; padding: 12px; border-radius: var(--raggio-bottone); border: 1px solid var(--linea); background: var(--superficie); margin: 6px 0 12px; }
@@ -2122,6 +2131,8 @@
 <script src="pagina-profilo.js?v=202610032328"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script src="novita.js?v=202610032328"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script src="pagina-novita.js?v=202610032328"></script>
+<script src="privacy.js?v=202610032328"></script>   <!-- informativa privacy (Partner 005): il testo e le funzioni pure -->
+<script src="pagina-privacy.js?v=202610032328"></script>   <!-- privacy: il foglio e la casella «accetto» -->
 <script src="benvenuto.js?v=202610032328"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
 <script src="pagina-benvenuto.js?v=202610032328"></script>   <!-- benvenuto (cantiere 32): le schermate, la cerchia ristretta e la riga «📲» in Dashboard -->   <!-- «✨ Novità» e avviso di versione (cantiere 28): fogli e riga in fondo alle pagine -->
 <script>
@@ -2208,10 +2219,12 @@ function mostraEmail(errore) {
         <button class="primario" id="invia">Mandami il link</button>
       </div>
       <p class="acc-nota">Ognuno entra con la sua email e la sua password, anche chi è in coppia con lo stesso codice Amway.</p>
+      <button class="link" id="acc-privacy" style="display:block;margin:6px auto 0">${ic('lucchetto')} Privacy: come trattiamo i tuoi dati</button>
       ${versione()}
     </div>`;
   document.getElementById('invia').onclick = inviaLink;
   document.getElementById('entra').onclick = entraConPassword;
+  document.getElementById('acc-privacy').onclick = foglioPrivacy;
   mostraPassword(app);
 }
 
@@ -2243,7 +2256,7 @@ const REGISTRAZIONE = new URLSearchParams(location.search);
 function mostraRegistrazione(esito) {
   document.getElementById('tab').hidden = true;
   const testi = { gia_utente: 'Questa email è già registrata: apri l\'app ed entra.', gia_richiesta: 'Hai già mandato la richiesta con questa email: aspetta l\'approvazione.',
-    troppe: 'Troppe richieste in questo momento: riprova tra un\'ora.', password: 'La password deve avere almeno 8 caratteri.', dati: 'Controlla i dati: nome, email e codice Amway (solo numeri) sono obbligatori.' };
+    troppe: 'Troppe richieste in questo momento: riprova tra un\'ora.', privacy: 'Per registrarti serve spuntare la casella sulla privacy.', password: 'La password deve avere almeno 8 caratteri.', dati: 'Controlla i dati: nome, email e codice Amway (solo numeri) sono obbligatori.' };
   if (esito === 'ok') {
     app.innerHTML = `<div class="accesso"><h1>Richiesta inviata ${ic('fatto')}</h1>
       <p>Quando viene approvata, apri <b>${esc(location.origin + location.pathname)}</b> e scrivi la stessa email: ti arriva il link per entrare.</p>${versione()}</div>`;
@@ -2257,18 +2270,21 @@ function mostraRegistrazione(esito) {
     <label>Telefono<input id="rg-tel" type="tel" autocomplete="tel" inputmode="tel"></label>
     <label>Codice Amway<input id="rg-codice" inputmode="numeric" autocomplete="off"></label>
     <label>Scegli una password (almeno 8 caratteri)<input id="rg-password" type="password" autocomplete="new-password"></label>
+    ${casellaPrivacyHtml()}
     <div class="errore">${esc(testi[esito] || esito || '')}</div>
     <button class="primario" id="rg-invia">Invia la richiesta</button>
     <button class="link" id="rg-entra">Sono già registrato: entra</button>
     ${versione()}</div>`;
   document.getElementById('rg-entra').onclick = () => { history.replaceState(null, '', location.pathname); mostraEmail(); };
   mostraPassword(app);
+  document.getElementById('rg-privacy-leggi').onclick = foglioPrivacy;
   document.getElementById('rg-invia').onclick = async () => {
     const v = id => document.getElementById(id).value.trim();
     const codice = v('rg-codice').replace(/\s/g, '');
     const password = document.getElementById('rg-password').value;
     if (v('rg-nome').length < 3 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('rg-email')) || !/^\d{3,15}$/.test(codice)) return mostraRegistrazione('dati');
     if (password.length < 8) return mostraRegistrazione('password');
+    if (!document.getElementById('rg-privacy').checked) { document.querySelector('.accesso .errore').textContent = testi.privacy; return; }   // sul posto: i dati scritti restano
     const b = document.getElementById('rg-invia'); b.disabled = true; b.textContent = 'Invio…';
     const da = /^[0-9a-f-]{36}$/.test(REGISTRAZIONE.get('da') || '') ? REGISTRAZIONE.get('da') : null;
     const { data, error } = await dbq('richiesta di registrazione', supa.rpc('richiedi_accesso',
@@ -2277,7 +2293,7 @@ function mostraRegistrazione(esito) {
     if (data !== 'ok') return mostraRegistrazione(data);
     // Account con password: si resta dentro in attesa (mostraAttesa). Se non riesce (es. email già con un account), vale il link dell'email
     history.replaceState(null, '', location.pathname);
-    const iscr = await dbq('account con password', supa.auth.signUp({ email: v('rg-email').toLowerCase(), password, options: { data: { password_scelta: true } } }));
+    const iscr = await dbq('account con password', supa.auth.signUp({ email: v('rg-email').toLowerCase(), password, options: { data: { password_scelta: true, ...MB21Privacy.datiAccetto() } } }));
     if (!iscr.error && iscr.data.session) return;   // SIGNED_IN → dopoAccesso → mostraAttesa
     mostraRegistrazione('ok');
   };
