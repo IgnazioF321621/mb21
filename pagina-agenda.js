@@ -1469,7 +1469,7 @@ function giorniSettimanaHtml(opz, oggi) {
     const ev = A.eventiDelGiorno(AG.azioni, g);
     const cose = A.coseDelGiorno(AG.cose, g, oggi);   // le cose da fare di quel giorno, sotto gli impegni (come i riferimenti di NotePlan)
     const coseHtml = cose.map(c => `<span class="ss-riga ss-cosa${c.fatto_il ? ' fatta' : ''}"><i></i>${c.ora ? `<em>${esc(String(c.ora).slice(0, 5))}</em>` : ''}${c.progetto_id ? '📁 ' : ''}${esc(c.testo)}</span>`).join('')
-      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.nome(x.tipo))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('');
+      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('');
     return `<button class="ss-g${g === oggi ? ' oggi' : ''}" data-apri="${g}"><span class="ss-data"><small>${A.GIORNI_SETTIMANA[i]}</small><b>${Number(g.slice(8))}</b></span>
       <span class="ss-ev">${ev.length ? ev.map(e => { const cat = (e.contatti && e.contatti.categoria) || e.categoria;
         return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`; }).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
@@ -1609,7 +1609,7 @@ async function fineBlocco() {
     const { error } = await dbq('sposta spazio', supa.from('spazi').update({ inizio }).eq('id', x.id));
     if (error) { mostraToast('Ora non salvata: riprova.'); return ridisegnaDopoBlocco(velo); }
     x.inizio = inizio;
-    mostraToast(`${MB21Spazi.nome(x.tipo)}: alle ${ora}`);
+    mostraToast(`${MB21Spazi.titolo(x)}: alle ${ora}`);
     return ridisegnaDopoBlocco(velo);
   }
   const voce = id.startsWith('voce-'), vero = id.replace(/^(cosa|voce)-/, '');
@@ -2140,7 +2140,7 @@ function grigliaSettimana(opz) {
       gruppi.set(b.gruppo, chi);
     }
     for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
-      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.nome(b.x.tipo))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}"></button>`;
+      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.titolo(b.x))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}"></button>`;
     for (const chi of gruppi.values()) {
       const cima = Math.min(...chi.map(b => b.cima)), giu = Math.max(...chi.map(b => b.cima + b.alta));
       const alto = Math.max(11, y(giu) - y(cima) - 2);
@@ -2406,17 +2406,18 @@ const vediSpazi = () => typeof MB21Spazi !== 'undefined' && !vediTutti();
 const spaziDelGiorno = g => (vediSpazi() ? MB21Spazi.delGiorno(AG.spazi, g) : []);
 // Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LdS) col colore degli Appuntamenti
 const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : 'var(--az-appuntamento)');
-const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.TIPI[s.tipo].sotto);
+// col nome della serata (Team e LdS, nota 022) sotto resta il tipo; senza nome come sempre
+const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.titolo(s) !== MB21Spazi.nome(s.tipo) ? `${MB21Spazi.nome(s.tipo)} · ${MB21Spazi.TIPI[s.tipo].sotto}` : MB21Spazi.TIPI[s.tipo].sotto);
 const giornoBreve = g => `${MB21Agenda.GIORNI_SETTIMANA[MB21Agenda.giornoSettimana(g) - 1]} ${Number(g.slice(8))}`;
 // la riga nella card degli impegni e nell'elenco della settimana
 function rigaSpazioHtml(s) {
   const o = MB21Spazi.orario(s);
-  return `<button class="ag-imp sp-imp" data-spazio="${esc(s.id)}" style="--tinta:${coloreSpazio(s.tipo)}"><i></i><span>${esc(MB21Spazi.nome(s.tipo))}<small>${esc(sottoSpazio(s))}</small></span><b>${o.ora}–${o.fine}</b></button>`;
+  return `<button class="ag-imp sp-imp" data-spazio="${esc(s.id)}" style="--tinta:${coloreSpazio(s.tipo)}"><i></i><span>${esc(MB21Spazi.titolo(s))}<small>${esc(sottoSpazio(s))}</small></span><b>${o.ora}–${o.fine}</b></button>`;
 }
 // i blocchi della Timeline: come le cose da fare con l'ora (tratteggiati, si trascinano), ma col colore del tipo
 function spaziComeBlocchi(g) {
   return spaziDelGiorno(g).map(s => ({ id: 'spazio-' + s.id, tipo_azione: 'Spazio', inizio: s.inizio, quando: s.inizio,
-    fine: new Date(Date.parse(s.inizio) + (s.durata || 60) * 60000).toISOString(), testo: MB21Spazi.nome(s.tipo), _spazio: s }));
+    fine: new Date(Date.parse(s.inizio) + (s.durata || 60) * 60000).toISOString(), testo: MB21Spazi.titolo(s), _spazio: s }));
 }
 
 async function preparaSettimana() {
@@ -2447,7 +2448,7 @@ async function preparaSettimana() {
         + st.tipi.map(t => `<div class="campo sp-tipo"><label>${esc(S.TIPI[t].domanda)}<button type="button" class="sp-via" data-via="${esc(t)}" aria-label="Togli: ${esc(S.TIPI[t].plurale)}">${ic('chiudi')}</button></label><div class="ag-scelte" data-quanti="${esc(t)}">${
           Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
         + (restano.length ? `<button type="button" class="sp-aggiungi${st.menu ? ' aperto' : ''}" id="sp-aggiungi" aria-expanded="${st.menu}">${ic('piu')}<span>${st.tipi.length ? 'Aggiungi altro' : 'Aggiungi'}</span>${ic('freccia')}</button>
-            ${st.menu ? `<div class="sp-menu">${gruppo('Con una persona', S.CON_PERSONA)}${gruppo('Di gruppo, senza nome', S.DI_GRUPPO)}</div>` : ''}` : '')
+            ${st.menu ? `<div class="sp-menu">${gruppo('Con una persona', S.CON_PERSONA)}${gruppo('Di gruppo', S.DI_GRUPPO)}</div>` : ''}` : '')
         + (st.tipi.length ? '' : `<div class="vn-aiuto">Tocca «Aggiungi» e scegli: Piani Marketing, Consulenze prodotti, incontri di Team o LdS.</div>`)
         + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge da sola. Se cambia giorno o ora, la sposti poi nella Timeline.</div>` : '');
     } else {
@@ -2462,7 +2463,9 @@ async function preparaSettimana() {
             miei.map(s => `<span class="sp-chip" style="--tinta:${coloreSpazio(p)}">${s.ora}<button type="button" data-togli="${s.i}" aria-label="Togli quello delle ${s.ora}">${ic('chiudi')}</button></span>`).join('')}</div>
             ${ore ? `<div class="sp-ore">${ore.length ? ore.map(o => `<button type="button" data-ora="${o}">${o}</button>`).join('') : '<small>Nessuna ora libera in questo giorno.</small>'}</div>` : ''}`;
         }).join('')}
-        <p class="sp-conto${messi === n ? ' pieno' : ''}">${esc(S.conto(p, messi, n))}</p>`;
+        <p class="sp-conto${messi === n ? ' pieno' : ''}">${esc(S.conto(p, messi, n))}</p>
+        ${S.puoAvereNome(p) ? st.scelti.map((x, i) => ({ ...x, i })).filter(x => x.tipo === p).sort((x, y) => (x.giorno + x.ora).localeCompare(y.giorno + y.ora)).map(x => `<div class="campo sp-nome-serata"><label>${esc(giornoBreve(x.giorno))} alle ${x.ora}: nome della serata <small>facoltativo</small></label>
+          <input data-nome-serata="${x.i}" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(x.nome || '')}"></div>`).join('') : ''}`;
     }
     velo.innerHTML = `<div class="foglio alto mc sp-foglio">
       <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Prepara la settimana</small><b>Settimana ${A.numeroSettimana(settimana[0])}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
@@ -2492,6 +2495,7 @@ async function preparaSettimana() {
     }; });
     velo.querySelectorAll('[data-ora]').forEach(b => { b.onclick = () => { st.scelti.push({ tipo: p, giorno: st.aperto, ora: b.dataset.ora, durata: S.DURATA }); st.aperto = null; disegna(); }; });
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
+    velo.querySelectorAll('[data-nome-serata]').forEach(inp => { inp.oninput = () => { st.scelti[Number(inp.dataset.nomeSerata)].nome = inp.value; }; });   // si ricorda senza ridisegnare (la tastiera resta)
     velo.querySelector('#sp-si').onclick = async () => {
       if (p === 'quanti' && lista.length === 1) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
       if (p !== 'quanti') {
@@ -2518,7 +2522,7 @@ async function preparaSettimana() {
 
 // Il foglio di uno spazio: mettere un nome (diventa l'appuntamento), cambiare giorno e ora, toglierlo.
 // La SdS/OPEN non ha nome: «Questa settimana non c'è» la toglie e nel Modulo Core la settimana diventa «l'OPEN non c'era».
-// Team e LdS (27/09): incontri di gruppo, senza nome: si spostano, si allungano, si tolgono.
+// Team e LdS (27/09): incontri di gruppo, senza persona: si spostano, si allungano, si tolgono; dal 04/10 (nota 022) hanno un nome della serata, facoltativo.
 function foglioSpazio(id) {
   const S = MB21Spazi, A = MB21Agenda, s = (AG.spazi || []).find(x => x.id === id);
   if (!s) return;
@@ -2526,15 +2530,15 @@ function foglioSpazio(id) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
-    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}${persona ? ' · da riempire' : ''}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="testa-foglio"><h3>${esc(S.titolo(s))}${persona ? ' · da riempire' : ''}</h3><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
-      : `${esc(S.TIPI[s.tipo].sotto)}: un incontro senza nome. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
+      : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora${S.puoAvereNome(s.tipo) ? ' e nome' : ''}» o nella Timeline.`}</div>
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
-      <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
+      <button id="sp-cambia">${ic('orario')} Cambia giorno e ora${S.puoAvereNome(s.tipo) ? ' e nome' : ''}</button>
       <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : 'Togli l\'incontro'}</button></div>
-    <div id="sp-campi" hidden><div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
+    <div id="sp-campi" hidden>${S.puoAvereNome(s.tipo) ? `<div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="sp-nome-serata" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome della serata, la tipologia, la linea o la squadra" value="${esc(S.pulisciNome(s.nome) || '')}"></div>` : ''}<div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
       <div class="campo"><label>Durata</label>${pilloleDurata('sp-durata', o.durata, o.ora)}</div>
       <div class="mc-fondo"><button class="link" id="sp-annulla">Annulla</button><button class="primario" id="sp-salva">Salva</button></div></div></div>`;
   document.body.appendChild(velo);
@@ -2551,11 +2555,15 @@ function foglioSpazio(id) {
     const g = velo.querySelector('#sp-giorno').value, ora = velo.querySelector('#sp-ora').value;
     if (!g || !ora) return mostraToast('Scegli il giorno e l\'ora');
     const inizio = A.isoDaRoma(g, ora.slice(0, 5));
-    const { error } = await dbq('sposta spazio', supa.from('spazi').update({ inizio, durata }).eq('id', s.id));
+    const cambio = { inizio, durata };
+    // il nome va nella chiamata solo se è cambiato: chi non lo tocca salva giorno e ora come sempre
+    const campoNome = velo.querySelector('#sp-nome-serata'), nomeNuovo = campoNome ? S.pulisciNome(campoNome.value) : null;
+    if (campoNome && nomeNuovo !== (S.pulisciNome(s.nome) || null)) cambio.nome = nomeNuovo;
+    const { error } = await dbq('sposta spazio', supa.from('spazi').update(cambio).eq('id', s.id));
     if (error) return mostraToast('Non salvato: riprova.');
     chiudi();
     await apriAgenda(g);
-    mostraToast(`${S.nome(s.tipo)}: ${giornoBreve(g).toLowerCase()} alle ${ora.slice(0, 5)}`);
+    mostraToast(`${S.titolo({ ...s, nome: 'nome' in cambio ? nomeNuovo : s.nome })}: ${giornoBreve(g).toLowerCase()} alle ${ora.slice(0, 5)}`);
   };
   velo.querySelector('#sp-togli').onclick = async () => {
     chiudi();
@@ -2565,7 +2573,7 @@ function foglioSpazio(id) {
     const segnato = sds ? await segnaSenzaOpen(lun, true) : false;
     await apriAgenda(AG.giorno);
     const rimetti = async () => {
-      const { error: eRimetti } = await dbqAvvisa('rimetti spazio', supa.from('spazi').insert({ id: s.id, user_id: s.user_id, tipo: s.tipo, inizio: s.inizio, durata: s.durata }), 'Non rimesso: controlla la connessione e riprova.');
+      const { error: eRimetti } = await dbqAvvisa('rimetti spazio', supa.from('spazi').insert({ id: s.id, user_id: s.user_id, tipo: s.tipo, inizio: s.inizio, durata: s.durata, ...(S.pulisciNome(s.nome) ? { nome: S.pulisciNome(s.nome) } : {}) }), 'Non rimesso: controlla la connessione e riprova.');
       if (segnato && !eRimetti) await segnaSenzaOpen(lun, false);
       await apriAgenda(AG.giorno);
     };

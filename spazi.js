@@ -2,13 +2,13 @@
 // «Prepara la settimana» chiede cosa vuoi fare (un selettore: Piani Marketing, Consulenze prodotti, incontri di Team e LdS) e
 // quanti, poi per ognuno il giorno e l'ora tra quelle libere (1 ora ciascuno: se serve di più si allunga nella Timeline); la
 // SdS/OPEN (Serata di sponsorizzazione / OPEN, una voce sola) si mette da sola il lunedì alle 21:30. Piani e Consulenze sono
-// spazi «da riempire»: mettendo un nome diventano un appuntamento vero. Team, LdS e SdS/OPEN sono incontri di gruppo, senza nome.
+// spazi «da riempire»: mettendo un nome diventano un appuntamento vero. Team, LdS e SdS/OPEN sono incontri di gruppo, senza persona; Team e LdS hanno un nome della serata facoltativo (nota 022, 04/10).
 // Funzioni pure. Tabella `spazi`; il disegno è in pagina-agenda.js; prove in tools/banco/prova_spazi.js.
 (function (radice) {
   const A = typeof module !== 'undefined' && module.exports ? require('./agenda.js') : radice.MB21Agenda;
 
   // i tipi: la chiave è quella di `azioni.tipo_azione` (così lo spazio diventa l'appuntamento senza tradurre niente)
-  // Team e LdS (linea di sponsorizzazione; nel database il tipo resta «LOS», cambia solo il nome che si legge: Ignazio 03/10): incontri di gruppo, senza nome e senza giorno fisso (Ignazio 27/09).
+  // Team e LdS (linea di sponsorizzazione; nel database il tipo resta «LOS», cambia solo il nome che si legge: Ignazio 03/10): incontri di gruppo, senza persona e senza giorno fisso (Ignazio 27/09); il nome della serata, facoltativo, nella colonna `nome` (puoAvereNome).
   // uno / tanti / piccolo: le parole dentro le frasi («In che giorno fai l'incontro di Team?», «1 incontro di Team»); f = femminile
   const TIPI = {
     'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing?', max: 6, persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
@@ -21,6 +21,12 @@
   const DI_GRUPPO = ['Team', 'LOS'];
   const DA_PREPARARE = [...CON_PERSONA, ...DI_GRUPPO];         // le scelte del selettore «Aggiungi», in quest'ordine
   const daRiempire = tipo => CON_PERSONA.includes(tipo);
+  const NOME_MAX = 60;
+  // Il nome della serata (nota 022, Ignazio 04/10): un campo libero e facoltativo per Team e LdS (nome della serata, tipologia, linea, squadra); la SdS/OPEN è sempre la stessa
+  const puoAvereNome = tipo => DI_GRUPPO.includes(tipo);
+  const pulisciNome = t => { const v = String(t == null ? '' : t).replace(/\s+/g, ' ').trim().slice(0, NOME_MAX).trim(); return v || null; };
+  // Come si legge uno spazio: col nome della serata davanti («Serata Rubino») e il tipo sotto; senza nome come sempre
+  const titolo = s => (puoAvereNome(s.tipo) && pulisciNome(s.nome)) || TIPI[s.tipo].nome;
   const DURATA = 60;
   const SDS = { giorno: 0, ora: '21:30', durata: 60 };   // lunedì (il primo giorno della settimana) alle 21:30
   const DALLE = 9 * 60, ALLE = 22 * 60;                    // le ore proposte: dalle 9 (ultimo inizio alle 21)
@@ -71,7 +77,7 @@
   // Le righe da scrivere in `spazi` quando si chiude «Prepara la settimana»: gli scelti (tipo, giorno, ora) e la SdS/OPEN
   // del lunedì, se la settimana non ce l'ha già e il lunedì non è passato.
   function righeNuove(userId, settimana, scelti, esistenti, oggi) {
-    const righe = scelti.map(s => ({ user_id: userId, tipo: s.tipo, inizio: A.isoDaRoma(s.giorno, s.ora), durata: s.durata || DURATA }));
+    const righe = scelti.map(s => ({ user_id: userId, tipo: s.tipo, inizio: A.isoDaRoma(s.giorno, s.ora), durata: s.durata || DURATA, ...(puoAvereNome(s.tipo) && pulisciNome(s.nome) ? { nome: pulisciNome(s.nome) } : {}) }));
     const lun = settimana[SDS.giorno];
     const giaSds = (esistenti || []).some(s => s.tipo === 'SdS/OPEN' && settimana.includes(giornoDi(s.inizio)));
     if (!giaSds && lun >= oggi) righe.unshift({ user_id: userId, tipo: 'SdS/OPEN', inizio: A.isoDaRoma(lun, SDS.ora), durata: SDS.durata });
@@ -100,7 +106,7 @@
     }
     for (const t of [...DI_GRUPPO, 'SdS/OPEN']) {
       const questi = suoi.filter(s => s.tipo === t);
-      if (questi.length) righe.push({ tipo: t, testo: `${questi.length === 1 ? TIPI[t].nome : TIPI[t].plurale}: ${questi.map(quando).join(' · ')}` });
+      if (questi.length) righe.push({ tipo: t, testo: `${questi.length === 1 ? TIPI[t].nome : TIPI[t].plurale}: ${questi.map(s => quando(s) + (puoAvereNome(t) && pulisciNome(s.nome) ? ` (${pulisciNome(s.nome)})` : '')).join(' · ')}` });
     }
     return { righe, preparata: suoi.length > 0 };
   }
@@ -118,7 +124,7 @@
     return parti.length > 1 ? parti.slice(0, -1).join(', ') + ' e ' + parti[parti.length - 1] : (parti[0] || '');
   }
 
-  const api = { TIPI, CON_PERSONA, DI_GRUPPO, DA_PREPARARE, daRiempire, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, domandaGiorni, conto, manca, riassunto };
+  const api = { TIPI, CON_PERSONA, DI_GRUPPO, DA_PREPARARE, daRiempire, NOME_MAX, puoAvereNome, pulisciNome, titolo, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, domandaGiorni, conto, manca, riassunto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Spazi = api;
 })(this);
