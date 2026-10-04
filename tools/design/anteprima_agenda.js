@@ -74,7 +74,7 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
 const stub = {
   MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
-  MB21Coda: { oggiRoma: () => OGGI },
+  MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI },   // il motore vero (contoGiorno), con l'oggi fermo
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',

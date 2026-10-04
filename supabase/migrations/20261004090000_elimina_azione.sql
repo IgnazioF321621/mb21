@@ -98,10 +98,11 @@ begin
   -- `chiave` si calcola da sola (colonna generata): non si scrive
   insert into public.azioni (id, user_id, contatto_id, categoria, tipo_azione, modalita, esito, inizio, fine, completata, area, brand, ospite, note,
                              coach_script, glide_id, creato_il, data_scelta, da_coda, confermato_il, portato_da, promemoria_il, senza_esito_avvisato_il,
-                             riflessione, su_cosa)
+                             riflessione, su_cosa, scelta_a_mano, senza_ora)
   values (v_az.id, v_az.user_id, v_az.contatto_id, v_az.categoria, v_az.tipo_azione, v_az.modalita, v_az.esito, v_az.inizio, v_az.fine, v_az.completata,
           v_az.area, v_az.brand, v_az.ospite, v_az.note, v_az.coach_script, v_az.glide_id, v_az.creato_il, v_az.data_scelta, v_az.da_coda, v_az.confermato_il,
-          v_az.portato_da, v_az.promemoria_il, v_az.senza_esito_avvisato_il, v_az.riflessione, v_az.su_cosa);
+          v_az.portato_da, v_az.promemoria_il, v_az.senza_esito_avvisato_il, v_az.riflessione, v_az.su_cosa,
+          coalesce(v_az.scelta_a_mano, false), coalesce(v_az.senza_ora, false));   -- telefonate scelte a mano (nota 012, migrazione 20261004085000)
 
   -- i legami con le vendite (il riordino e la consegna restano quelli: il trigger delle vendite non crea niente, la data non cambia)
   update public.vendite set azione_riordino_id = p_azione
