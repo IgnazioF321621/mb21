@@ -14,6 +14,11 @@ const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 // La prima pagina da sola (chi ha pochi nomi finisce lì); se è piena, le altre cinque alla volta: l'Admin ha oltre 6.000 nomi (6 MB) e le richieste
 // una dopo l'altra erano il tempo più lungo (Ignazio 02/10: «tutto molto lento nel registrare azioni e nell'aprire il nome»)
 async function leggiLista() {
+  const righe = await leggiListaPagine();
+  LS.letta = Date.now();   // ogni lettura intera rinfresca la copia in memoria (listaFresca)
+  return righe;
+}
+async function leggiListaPagine() {
   const pagina = k => dbq('lettura lista', supa.from('contatti_lista').select('*').order('id').range(k * 1000, k * 1000 + 999));
   const prima = await pagina(0);
   if (prima.error) throw prima.error;
@@ -25,6 +30,11 @@ async function leggiLista() {
     if (pagine[4].data.length < 1000) return righe;
   }
 }
+// La Lista letta si tiene in memoria per 10 minuti (nota 015 / 013, registri di Supabase): toccare il tab Lista, tornare da una scheda o da Agenda
+// non rilegge più tutto. Si rilegge intera se: sono passati 10 minuti, `LS.righe` è stata svuotata (nuovo contatto, import, collegamento: segnale già usato
+// da tutta l'app), si esce dall'app o si tocca «Aggiorna i nomi». Dopo un'azione cambia solo la riga (`aggiornaRiga`).
+const LISTA_FRESCA_MS = 10 * 60000;
+const listaFresca = () => LS.righe.length > 0 && !!LS.letta && Date.now() - LS.letta < LISTA_FRESCA_MS && !!LS.usoApp;
 // Dopo un'azione cambia solo quella persona (fase, coda): si rilegge la sua riga e non tutta la Lista. Con la Lista non ancora letta non fa niente
 // (la leggerà chi la apre); se qualcosa non va la si svuota, e si rilegge intera come prima.
 async function aggiornaRiga(id) {
@@ -68,8 +78,10 @@ function segnaApp() { if (LS.usoApp) for (const r of LS.righe) r.app = LS.usoApp
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
-  try { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]); segnaApp(); }
-  catch (e) {
+  try {
+    if (!listaFresca()) { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]); LS.letta = Date.now(); }
+    segnaApp();
+  } catch (e) {
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
@@ -131,7 +143,9 @@ function disegnaLista() {
     ${catalogoRigaHtml()}
     <div id="elenco"></div>
     <div id="fondo"></div>
+    <button class="link" id="ls-aggiorna">Aggiorna i nomi</button>
     ${versione()}`;
+  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; apriLista(); };
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
