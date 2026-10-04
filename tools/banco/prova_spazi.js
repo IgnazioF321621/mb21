@@ -86,4 +86,27 @@ prova('Team e LdS (27/09): incontri di gruppo, senza nome, nel selettore dopo Pi
   assert.deepEqual(p.righe.map(x => x.testo), ['Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00', 'Incontro LdS: gio 1 alle 20:00', 'SdS/OPEN: lun 28 alle 21:30']);
 });
 
+prova('Il nome della serata (nota 022, Ignazio 04/10): facoltativo, solo per Team e LdS; la SdS/OPEN non ce l\'ha; si legge dove compare l\'incontro', () => {
+  assert.deepEqual([S.puoAvereNome('Team'), S.puoAvereNome('LOS'), S.puoAvereNome('SdS/OPEN'), S.puoAvereNome('Piano Marketing')], [true, true, false, false]);
+  // pulito: spazi in più via, vuoto = niente, al massimo 60 caratteri
+  assert.equal(S.pulisciNome('  Serata   Rubino '), 'Serata Rubino');
+  assert.deepEqual([S.pulisciNome(''), S.pulisciNome('   '), S.pulisciNome(null), S.pulisciNome(undefined)], [null, null, null, null]);
+  assert.equal(S.pulisciNome('x'.repeat(100)).length, S.NOME_MAX);
+  // come si legge: col nome davanti, senza nome come sempre; per gli altri tipi il nome non conta
+  assert.equal(S.titolo({ tipo: 'LOS', nome: 'Serata Rubino' }), 'Serata Rubino');
+  assert.equal(S.titolo({ tipo: 'LOS', nome: null }), 'Incontro LdS');
+  assert.equal(S.titolo({ tipo: 'Team', nome: '  ' }), 'Incontro di Team');
+  assert.equal(S.titolo({ tipo: 'SdS/OPEN', nome: 'Altro' }), 'SdS/OPEN');
+  // al salvataggio il nome viaggia solo se c'è ed è di Team o LdS
+  const r = S.righeNuove('io', SETT, [{ tipo: 'LOS', giorno: '2026-10-01', ora: '20:00', nome: ' Linea Rubino ' }, { tipo: 'Team', giorno: '2026-09-30', ora: '21:00' },
+    { tipo: 'Piano Marketing', giorno: '2026-09-29', ora: '10:00', nome: 'Non conta' }], [], '2026-09-27');
+  assert.equal(r.find(x => x.tipo === 'LOS').nome, 'Linea Rubino');
+  assert.equal('nome' in r.find(x => x.tipo === 'Team'), false);
+  assert.equal('nome' in r.find(x => x.tipo === 'Piano Marketing'), false);
+  assert.equal('nome' in r.find(x => x.tipo === 'SdS/OPEN'), false);
+  // il Programma della settimana lo scrive accanto all'ora
+  const p = S.programma(SETT, [], [{ ...sp('LOS', '2026-10-01', '20:00'), nome: 'Serata Rubino' }, sp('Team', '2026-09-30', '21:00')]);
+  assert.deepEqual(p.righe.map(x => x.testo), ['Incontro di Team: mer 30 alle 21:00', 'Incontro LdS: gio 1 alle 20:00 (Serata Rubino)']);
+});
+
 console.log(`\n${ok} prove superate`);
