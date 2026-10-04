@@ -132,9 +132,9 @@ prova('Conferme: da 12 ore prima fino all\'inizio; esclusi confermati, completat
   assert.deepEqual(A.confermeDaFare(lista, adesso).map(a => a.id), ['stasera', 'coda', 'notte']);
   assert.deepEqual(A.confermeDaFare(lista, '2026-09-15T19:00:01Z').map(a => a.id), ['stasera', 'coda', 'notte', 'domattina']);   // alle 21:00 entra il PM delle 9
   const [stasera, coda, notte] = A.confermeDaFare(lista, adesso);
-  assert.equal(A.testoConferma(stasera, adesso), 'Conferma appuntamento · Avvio · oggi ore 21:30');
-  assert.equal(A.testoConferma(notte, adesso), 'Conferma appuntamento · Personale · domani ore 06:30');
-  assert.equal(A.testoConferma(coda, adesso), 'Conferma appuntamento · PM · oggi ore 22:00');
+  assert.equal(A.testoConferma(stasera, adesso), 'Da confermare · Avvio · oggi ore 21:30');
+  assert.equal(A.testoConferma(notte, adesso), 'Da confermare · Personale · domani ore 06:30');
+  assert.equal(A.testoConferma(coda, adesso), 'Da confermare · PM · oggi ore 22:00');
   assert.equal(A.ORE_CONFERMA, 12);
   assert.equal(A.riga({ tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', area: 'Attività', completata: false, confermato_il: 'x', contatti: { nome: 'M' } }, { mioId: 'io', admin: false }).sotto,
     'Attività • ⏳ Da completare · 👍 confermato');
