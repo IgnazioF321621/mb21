@@ -18,7 +18,7 @@
   // `leader` (Ignazio 25/09): il titolo della medaglia del percorso, «Complimenti, sei leader nel contattare!» (senza «un»: va bene per tutti)
   const LIVELLI = [
     { nome: 'Nuovo', sotto: 'La lista, la telefonata, i primi passi, dire il vero, il Sistema', percorsi: [
-      { id: 'contattare', titolo: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate', leader: 'nel contattare' },
+      { id: 'contattare', titolo: 'Lista e Contatti', settore: 'Contattare', sotto: 'La lista, la telefonata, le obiezioni al telefono', icona: 'telefonate', leader: 'nel contattare' },
       { id: 'primi_passi', titolo: 'I primi passi', sotto: "I prodotti per te, l'ordine ricorrente, l'inaugurazione", icona: 'avvio', leader: 'nei primi passi' },
       // 28/09 (Ignazio: «le aree di mercato le farei partire già dal nuovo, e il nuovo deve conoscere l'Energy Program»): le quattro
       // aree in generale; il dettaglio per area sta nel livello Sponsor. Provato da Ignazio e aperto a tutti lo stesso giorno
