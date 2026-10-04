@@ -96,7 +96,8 @@
   // la carta letta in chat, la frase per la prossima volta, le domande di prima del piano e del follow up, «Per approfondire».
   // ctx: { fissato? (se manca: dall'esito), ricordo? (MB21Coach.ricordi di quel contatto), carta?(obiezione, esito) → promessa di cartaDi(…) o null,
   //        incontro? { su_cosa, quando } (l'incontro appena fissato: i passi di «Su cosa lavorate?» e «Giovedì»), preparazione? (la riga «preparazione_incontro»),
-  //        presentazione? { quando } (la Consulenza Prodotti appena fissata come Presentazione: il consiglio di prepararla, regola 4) }
+  //        presentazione? { quando } (la Consulenza Prodotti appena fissata come Presentazione: il consiglio di prepararla, regola 4),
+  //        sit (la situazione, la mette `monta`: dopo l'incontro con un Partner i freni si chiedono, dopo la telefonata no) }
   // Con un Partner niente domanda sui freni (Ignazio 29/09: «è raro che un partner dica non ho tempo»): dopo «Appuntamento» una riga con il giorno e i
   // passi scelti e, per ognuno, come prepararlo dal Manuale di Avvio.
   const RIGA_SOLA = ['Relazione'];   // No Interesse chiede l'obiezione anche lei (Ignazio 01/10: «così ce lo ritroviamo segnato»)
@@ -122,7 +123,9 @@
     const niente = [(B.nessuna && B.nessuna[esito] || [])[0]].filter(Boolean);
     const prima = (ctx.ricordo && ctx.ricordo.obiezioni || []).find(ob => nomiOb.includes(ob));
     const partner = D.salva === 'freni';
-    const domanda = partner || (B.senza_obiezione || []).includes(esito) ? [] : prima ? [
+    // con un Partner i freni non si chiedono dopo la telefonata (Ignazio 29/09), ma sì dopo l'incontro (nota 050: «semmai dopo l'incontro»)
+    const senzaFreni = partner && ctx.sit !== 'appuntamento_partner';
+    const domanda = senzaFreni || (B.senza_obiezione || []).includes(esito) ? [] : prima ? [
       { c: `L’altra volta {chi} diceva «${prima}»: è tornato fuori?` },
       { salva: chiave, elenco: true, chiedi: [
         ['Sì', dopoOb(prima), prima],
@@ -147,12 +150,24 @@
     const pres = ctx.presentazione, rp = prep && prep.presentazione;
     const presentazione = fissato && esito === 'Consulenza Prodotti' && pres && rp && rp.c
       ? [{ c: `${String(rp.apertura || '{quando} presenti a {chi}.').replace('{quando}', () => pres.quando || 'Presto')} ${rp.c}`, fonte: rp.fonte ? [rp.fonte, true] : undefined }] : [];
+    // Rimandato / No Show (nota 050): niente obiezioni; il tocco è «Cosa è successo?» con i motivi (si salva «motivo»), dopo il consiglio dei leader
+    const motivo = !domanda.length && !senzaFreni && B.extra && Array.isArray(B.extra[esito]) ? passoMotivo(B.extra[esito]) : [];
     // la reazione e la domanda in un fumetto solo (Ignazio 01/10: «unire con la successiva»): meno fumetti, meno attese
     const prima1 = reazione.slice(0, 1);
-    if (!incontro.length && !presentazione.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
+    if (!incontro.length && !presentazione.length && !motivo.length && domanda.length && domanda[0].c && prima1.length === 1 && prima1[0].c && !prima1[0].fonte) {
       return riempi([{ c: `${prima1[0].c} ${domanda[0].c}` }, ...domanda.slice(1)], nomi);
     }
-    return riempi([...prima1, ...incontro, ...presentazione, ...domanda], nomi);
+    return riempi([...prima1, ...incontro, ...presentazione, ...domanda, ...motivo], nomi);
+  }
+  // Dai passi lunghi di un esito (`extra`), la forma corta del «Cosa è successo?»: il primo consiglio, la domanda e i motivi da toccare (solo le
+  // frasi, con la fonte; niente «Per approfondire»). Senza una domanda con i motivi, niente.
+  function passoMotivo(extra) {
+    const i = extra.findIndex(p => p && p.chiedi && p.salva);
+    if (i < 1 || !extra[i - 1].c) return [];
+    const frase = p => ({ c: p.c, ...(p.fonte ? { fonte: p.fonte } : {}) });
+    const consiglio = extra.slice(0, i - 1).filter(p => p.c).slice(0, 1).map(frase);
+    const chiedi = extra[i].chiedi.map(([etichetta, passi, ...resto]) => [etichetta, (passi || []).filter(p => p && p.c).map(frase), ...resto]);
+    return [...consiglio, { c: extra[i - 1].c }, { salva: extra[i].salva, chiedi }];
   }
 
   // La carta del Training che risponde a un'obiezione: tra i mazzi (coach_batterie «carte_…»), la prima scena che la nomina e che vale per
@@ -185,8 +200,9 @@
   const MONTATORI = { telefonata, telefonata_partner: telefonata, telefonata_cliente: telefonata, piano_marketing: telefonata, follow_up: telefonata,
     consulenza: telefonata, appuntamento_partner: telefonata, non_avvenuto: telefonata };
   // Nell'app (con `ctx`) le telefonate hanno la forma corta; senza `ctx` (la pagina privata di prova) la forma lunga di prima.
-  const CORTE = ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza'];
-  const monta = (sit, B, esito, nomi, n, ctx) => (ctx && CORTE.includes(sit) ? corta(B, esito, nomi, n, ctx) : MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
+  // Dal 04/10 (nota 050) anche l'incontro con un Partner (i freni si chiedono qui, non dopo la telefonata) e Rimandato / No Show («Cosa è successo?»)
+  const CORTE = ['telefonata', 'telefonata_partner', 'telefonata_cliente', 'piano_marketing', 'follow_up', 'consulenza', 'appuntamento_partner', 'non_avvenuto'];
+  const monta = (sit, B, esito, nomi, n, ctx) => (ctx && CORTE.includes(sit) ? corta(B, esito, nomi, n, { ...ctx, sit }) : MONTATORI[sit] ? MONTATORI[sit](B, esito, nomi, n) : null);
 
   // Cosa si salva in azioni.riflessione: le risposte date, nell'ordine, ognuna con la domanda com'era scritta nella chat:
   // { chiave: 'obiezioni' o 'freni' (elenco) · 'risposta' (con obiezione) · 'altro' · 'prossima' · le domande di prima ('colpito', 'perche')
