@@ -2780,24 +2780,18 @@ async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
 // opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda) · senzaProssimo: niente «Fissa il prossimo appuntamento» · testo: parola dell'avviso
 async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
-  const { data: prima, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_appuntamento', { p_azione: e.id, p_esito: esito }));
+  // Una chiamata sola (nota 045, 03/10): l'esito, la spunta dei passi in «Il mio avvio» (cantiere 48: il passo fatto nell'incontro si spunta anche lì, se non lo era già)
+  // e una riga di azione per ogni passo in più («Su cosa lavorate?», stesso giorno e ora) si scrivono insieme sul database, o niente: prima erano 3-5 chiamate una dopo l'altra
+  const passi = [...new Set([esito, ...(opz.extra || [])].map(p => MB21Lista.passoAvvioDa(e.tipo_azione, e.modalita, p)).filter(Boolean))];
+  const { data: chiusura, error } = await dbq('chiudi appuntamento', supa.rpc('chiudi_azione', { p_azione: e.id, p_esito: esito, p_passi_avvio: passi, p_extra: opz.extra || [] }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
-  // Avvio di un nuovo (cantiere 48): il passo fatto nell'incontro si spunta anche in «Il mio avvio» (se non lo era già); Annulla lo rimette com'era
-  const passiAvvio = [];
-  for (const p of [esito, ...(opz.extra || [])]) { const r = await spuntaAvvio(e, p); if (r) passiAvvio.push(r); }
-  // «Su cosa lavorate?» (cantiere 48): i passi fatti in più, oltre al primo che è l'esito dell'appuntamento, una riga di azione ciascuno (stesso giorno e ora)
-  const inPiu = [];
-  for (const p of opz.extra || []) {
-    const { data: r, error: er } = await dbq('passo dell\'incontro', supa.from('azioni').insert({ contatto_id: e.contatto_id, user_id: e.user_id, categoria: e.categoria,
-      tipo_azione: e.tipo_azione, modalita: e.modalita, area: e.area, inizio: e.inizio, fine: e.fine || null, completata: true, esito: p, portato_da: e.portato_da || null }).select('id').single());
-    if (!er && r) inPiu.push(r.id);
-  }
+  const passiAvvio = (chiusura.avvio || []).map(col => ({ col, nome: MB21Lista.PASSI_ONBOARDING.find(p => p[0] === col)[1] }));   // quelli che non erano già spuntati
+  for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, true);
+  // Annulla: l'esito com'era, le spunte e le righe in più tolte, tutto in una chiamata; `rientroCambiato` (null = come dice la chiusura) per la telefonata, che cambia la coda da sé
+  const annullaChiusura = rientroCambiato => dbq('riapri appuntamento', supa.rpc('annulla_chiusura', { p_azione: e.id, p_prima: chiusura, p_rientro_cambiato: rientroCambiato }));
   const annulla = async creato => {
-    const { error: e2 } = await dbq('riapri appuntamento', supa.rpc('riapri_appuntamento', {
-      p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
-      p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: prima.rientro_cambiato }));
-    if (!e2) for (const p of passiAvvio) { await dbq('togli il passo dell\'avvio', supa.from('contatti').update({ [p.col]: false }).eq('id', e.contatto_id)); passoInCache(e.contatto_id, p.col, false); }
-    if (!e2 && inPiu.length) await dbq('togli i passi in più', supa.from('azioni').delete().in('id', inPiu));
+    const { error: e2 } = await annullaChiusura(null);
+    if (!e2) for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, false);
     if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
     await ridisegna();
@@ -2829,11 +2823,9 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     const nome = e.contatti ? e.contatti.nome : '', categoria = e.contatti && e.contatti.categoria;
     const dopo = MB21Agenda.dopoTelefonata(categoria, esito);
     const annullaTel = async creato => {   // come `annulla`, ma rimette anche la coda e toglie il giorno del richiamo
-      const { error: e2 } = await dbq('riapri telefonata', supa.rpc('riapri_appuntamento', {
-        p_azione: e.id, p_esito: prima.esito_prec, p_completata: prima.completata_prec, p_contatto: prima.contatto_id,
-        p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec, p_rientro_cambiato: true }));
+      const { error: e2 } = await annullaChiusura(!storico);
       if (!e2 && creato) await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id));
-      if (!e2 && dopo.cosa === 'giorno') await dbq('togli richiamo', supa.from('azioni').update({ data_scelta: null }).eq('id', e.id));
+      if (!e2 && dopo.cosa === 'giorno' && !storico) await dbq('togli richiamo', supa.from('azioni').update({ data_scelta: null }).eq('id', e.id));
       if (e2) return mostraToast('Annullamento non riuscito: riprova.');
       await ridisegna();
       mostraToast('Annullato');
@@ -2844,17 +2836,22 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       e.fissato = !!creato;   // il coach corto: foglio annullato = come un richiamo
       e.incontro = creato || undefined;   // il giorno e i passi scelti: «Giovedì con Mario lavorate su…»
       // fissato: il contatto esce dalla coda, lo segue l'appuntamento (come in coda, `registra_esito`)
-      if (creato) await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', e.contatto_id));
+      // storico (nota 015, 03/10): una telefonata di più di 7 giorni fa non tocca la coda del contatto; il foglio del giorno resta, perché l'appuntamento compaia con la sua data
+      if (creato && !storico) {
+        const { error: ec } = await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', e.contatto_id));
+        if (ec) mostraToast('Appuntamento fissato, ma il nome è ancora in coda: riprova da Modifica.');
+      }
       await ridisegna();
       mostraToast(creato ? `${esito} · appuntamento fissato` : `${esito} salvato`, () => annullaTel(creato));
       pianoFissato = creato;   // se è un Piano Marketing a un candidato, prima della chat del coach «Hai condiviso la traccia di apertura?»
-    } else if (dopo.cosa === 'giorno') {   // Richiamare: il giorno del richiamo (in coda quel giorno, in MB Plan come dalla coda)
+    } else if (dopo.cosa === 'giorno' && !storico) {   // Richiamare: il giorno del richiamo (in coda quel giorno, in MB Plan come dalla coda); storico: niente giorno, niente coda
       const iso = await chiediData({ etichetta: 'Richiamare', data: 'giorno' }, nome);
       if (iso) {
         const giorno = MB21Coda.oggiRoma(new Date(iso));
         const { error: e3 } = await dbq('giorno del richiamo', supa.from('azioni').update({ data_scelta: iso }).eq('id', e.id));
-        if (!e3) await dbq('rientro del richiamo', supa.from('contatti').update({ rientro_il: giorno, in_coda_dal: null }).eq('id', e.contatto_id));
+        const { error: e4 } = e3 ? {} : await dbq('rientro del richiamo', supa.from('contatti').update({ rientro_il: giorno, in_coda_dal: null }).eq('id', e.contatto_id));
         if (e3) mostraToast('Giorno non salvato: riprova da Modifica.');
+        else if (e4) mostraToast('Giorno salvato, ma il nome non rientra in coda quel giorno: riprova da Modifica.');
       }
       await ridisegna();
       mostraToast(`Richiamare${iso ? ' · il ' + dataBreve(MB21Coda.oggiRoma(new Date(iso))) : ' salvato'}`, () => annullaTel(null));
@@ -2913,6 +2910,17 @@ function legaInizioFine(campoOra, campoFine) {
 }
 
 // (predefinito: l'Agenda su quel giorno). Spostando, la conferma torna da fare.
+// Un appuntamento fissato dalla coda ha anche la riga «Contatto» con l'esito (PM Fissato, Appuntamento) che porta lo stesso giorno in `data_scelta` (registraEsito):
+// l'Agenda la nasconde solo se i due orari coincidono (MB21Agenda.senzaDoppioniCoda) e la conferma «12 ore prima» si legge dalla data scelta. Se l'appuntamento si sposta
+// (foglio «Sposta» o «Modifica»), la riga lo segue: senza, in Agenda restava una riga fantasma all'ora vecchia e la conferma scattava per il giorno vecchio (nota 035, 03/10).
+// Niente se l'azione è già una telefonata o l'orario non cambia; `da` = orario di prima, `a` = quello nuovo.
+async function allineaRigaCoda(e, da, a) {
+  if (!e || e.tipo_azione === 'Contatto' || !e.contatto_id || !da || !a || Date.parse(da) === Date.parse(a)) return;
+  let q = supa.from('azioni').update({ data_scelta: a, confermato_il: null }).eq('contatto_id', e.contatto_id).eq('tipo_azione', 'Contatto').eq('data_scelta', da);
+  if (e.user_id) q = q.eq('user_id', e.user_id);
+  await dbq('riga della coda', q);
+}
+
 function spostaAppuntamento(e, dopo) {
   const A = MB21Agenda;
   const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
@@ -2975,9 +2983,11 @@ function spostaAppuntamento(e, dopo) {
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
     const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
+    await allineaRigaCoda(e, e.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
     await dopo(g);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
       await dbq('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id));
+      await allineaRigaCoda(e, nuovaData, e.inizio);
       await dopo(giorno);
     });
   };
@@ -2987,15 +2997,19 @@ function spostaAppuntamento(e, dopo) {
 async function eliminaAppuntamento(e, dopo) {
   const ridisegna = dopo || apriAgenda;
   if (!await chiediConferma('Eliminare questa azione?', `${e.tipo_azione || 'Azione'}${e.modalita ? ' · ' + e.modalita : ''}${e.esito ? ' · ' + e.esito : ''}`, 'Elimina', true)) return;   // conferma dell'app, non confirm(): in Arc/Claude non compariva (Ignazio 17/09)
-  const { error } = await dbq('elimina azione', supa.from('azioni').delete().eq('id', e.id));
+  // Una funzione del database (nota 010, 03/10): tiene una copia dell'azione (anche dopo che l'avviso è sparito), ricalcola il rientro se era l'ultima e conserva il legame
+  // con le vendite (riordino, consegna) per Annulla, che rimette tutto com'era
+  const { error } = await dbq('elimina azione', supa.rpc('elimina_azione', { p_azione: e.id }));
   if (error) return mostraToast('Non eliminata: controlla la connessione e riprova.');
   AG.aperta = null;
+  await aggiornaRiga(e.contatto_id);   // il rientro del contatto può essere cambiato
   await ridisegna();
-  const copia = { ...e };
-  for (const k of ['quando', 'contatti', 'utenti', 'chiave', 'portatoNome']) delete copia[k];
   mostraToast('Azione eliminata', async () => {
-    await dbq('ripristina azione', supa.from('azioni').insert(copia));
+    const { error: e2 } = await dbq('ripristina azione', supa.rpc('annulla_elimina_azione', { p_azione: e.id }));
+    if (e2) return mostraToast('Non ripristinata: riprova.');
+    await aggiornaRiga(e.contatto_id);
     await ridisegna();
+    mostraToast('Azione ripristinata');
   });
 }
 
@@ -3379,11 +3393,13 @@ async function foglioAzione(id, opz = {}) {
       ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     chiudi();
+    if (st.contatto.id === a.contatto_id) await allineaRigaCoda(a, a.inizio, inizio);   // la riga «PM Fissato» dalla coda segue l'appuntamento spostato (nota 035)
     await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));   // fase e coda possono essere cambiate: si rilegge solo la riga di chi è toccato
     if (opz.dopo) await opz.dopo();
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+      if (st.contatto.id === a.contatto_id) await allineaRigaCoda(a, inizio, a.inizio);
       await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));
       if (opz.dopo) await opz.dopo();
       mostraToast('Annullato');

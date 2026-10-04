@@ -401,27 +401,15 @@ prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il 
   for (const col of Object.values(L.AVVIO_DA_INCONTRO)) assert.ok(L.PASSI_ONBOARDING.some(p => p[0] === col), col);   // la colonna esiste davvero
 });
 
-prova('spuntaAvvio nell\'app: segna il passo una volta, non tocca quello già fatto, niente rete = niente', async () => {
+prova('passoInCache: la scheda e l\'elenco già letti restano allineati dopo la spunta del passo dell\'Avvio (che ora scrive il database, in chiudi_azione), e Annulla li rimette', () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
-  const da = src.indexOf('async function spuntaAvvio'), codice = src.slice(da);
-  const chiamate = []; let riga = { onb_lista_start: false }, errore = null;
-  const ctx = { MB21Lista: L, LS: { contatto: { id: 'c1', onb_lista_start: false }, righe: [{ id: 'c1', onb_lista_start: false }, { id: 'c2' }] },
-    dbq: (_, p) => p, supa: { from: () => { const q = { select() { return q; }, eq() { return q; }, maybeSingle() { return q; },
-      update(v) { chiamate.push(['update', v]); q._u = true; return q; }, then(r) { r(q._u ? { error: errore } : { data: riga, error: errore }); } }; return q; } } };
+  const da = src.indexOf('function passoInCache'), codice = src.slice(da, src.indexOf('\n}\n', da) + 3);
+  const ctx = { LS: { contatto: { id: 'c1', onb_lista_start: false }, righe: [{ id: 'c1', onb_lista_start: false }, { id: 'c2' }] } };
   vm.createContext(ctx); vm.runInContext(codice, ctx);
-  const e = { tipo_azione: 'Appuntamento', modalita: 'Avvio', contatto_id: 'c1' };
-  const r = await ctx.spuntaAvvio(e, 'ListaStart');
-  assert.deepEqual(JSON.parse(JSON.stringify(r)), { col: 'onb_lista_start', nome: 'Lista Start' });
-  assert.deepEqual(JSON.parse(JSON.stringify(chiamate)), [['update', { onb_lista_start: true }]]);
-  assert.equal(ctx.LS.contatto.onb_lista_start, true); assert.equal(ctx.LS.righe[0].onb_lista_start, true);   // la scheda già letta resta allineata
-  ctx.passoInCache('c1', 'onb_lista_start', false); assert.equal(ctx.LS.contatto.onb_lista_start, false);        // e Annulla la rimette
-  chiamate.length = 0; riga = { onb_lista_start: true };
-  assert.equal(await ctx.spuntaAvvio(e, 'ListaStart'), null); assert.deepEqual(chiamate, []);                     // già segnato: niente, e Annulla non lo toglie
-  assert.equal(await ctx.spuntaAvvio(e, 'Lista nomi'), null);                                                      // senza riga
-  assert.equal(await ctx.spuntaAvvio({ ...e, modalita: 'Counseling' }, 'Motivazione'), null);
-  riga = { onb_lista_start: false }; errore = { message: 'rete' };
-  assert.equal(await ctx.spuntaAvvio(e, 'ListaStart'), null);
+  ctx.passoInCache('c1', 'onb_lista_start', true);
+  assert.equal(ctx.LS.contatto.onb_lista_start, true); assert.equal(ctx.LS.righe[0].onb_lista_start, true); assert.equal(ctx.LS.righe[1].onb_lista_start, undefined);
+  ctx.passoInCache('c1', 'onb_lista_start', false); assert.equal(ctx.LS.contatto.onb_lista_start, false);
 });
 
 prova('Segni vitali: accanto a BBS e WES l\'evento a cui si riferiscono i numeri, sempre successivo («11-2026», «in corso» se è questo mese)', () => {

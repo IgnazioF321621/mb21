@@ -516,15 +516,18 @@ function registraEsito(contattoId, bottone, data, daCoda) {
   return dbq('registra esito', supa.rpc('registra_esito',
     { p_contatto: contattoId, p_chiave: bottone.chiave, p_data: data, p_da_coda: daCoda }));
 }
+// Prima l'esito (il database rifiuta se nel frattempo ce n'è un altro, nota 045), poi l'appuntamento nato con lui: se il secondo passo non riesce resta un appuntamento
+// in più da eliminare, non un esito vivo senza appuntamento (prima l'ordine era l'opposto)
 async function annullaEsito(esito) {
-  if (esito.appuntamento_id) await dbq('annulla appuntamento', supa.from('azioni').delete().eq('id', esito.appuntamento_id));
-  return await dbq('annulla esito', supa.rpc('annulla_esito',
+  const r = await dbq('annulla esito', supa.rpc('annulla_esito',
     { p_azione: esito.azione_id, p_rientro: esito.rientro_prec, p_in_coda: esito.in_coda_prec }));
+  if (!r.error && esito.appuntamento_id) await dbq('annulla appuntamento', supa.from('azioni').delete().eq('id', esito.appuntamento_id));
+  return r;
 }
 
 async function annulla(pos, esito) {
   const { error } = await annullaEsito(esito);
-  if (error) return mostraToast('Annullamento non riuscito: riprova.');
+  if (error) return mostraToast(/altri|altre azioni/i.test(error.message || '') ? 'Non si può annullare: dopo questo esito ce ne sono altri.' : 'Annullamento non riuscito: riprova.');
   listaDi(pos.lista).splice(pos.i, 0, pos.contatto);
   if (pos.lista === 'coda') ST.stato.fatti_oggi--;
   salvaCache();
