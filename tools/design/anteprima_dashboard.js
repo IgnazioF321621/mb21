@@ -79,12 +79,12 @@ documento.createElement = () => {
   return v;
 };
 documento.body.appendChild = () => {};
-const toast = [];
+const toast = [], chiusure = [];   // gli avvisi mostrati e le chiusure chieste a chiudiAppuntamento (telefonate scelte a mano, riordini)
 const stub = {
   app, document: documento, window: { scrollY: 0, innerHeight: 800, scrollTo() {}, addEventListener() {} },
   localStorage: { getItem: () => null, setItem() {} },
   MB21Dashboard: D, MB21Check: C, MB21Core: K, MB21Agenda: A, MB21Report: R, MB21Lista: L, MB21Mappa: M, MB21Icone: Icone,
-  MB21Coda: { oggiRoma: () => OGGI, QUOTA_CATALOGO: 5, CAPIENZA: 10 },
+  MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI, CAPIENZA: 10 },   // il motore vero della coda (contoGiorno, telefonateScelte…), con l'oggi fermo
   MB21Benvenuto: { pulisciPerche: () => [] },
   supa: { rpc: () => Promise.resolve({ error: null }), from: () => catena },
   Option: class { constructor(t, v) { this.text = t; this.value = v; } }, moduloSemplice: async () => null,
@@ -97,7 +97,7 @@ const stub = {
   contattaHtml: tel => `<div class="contatta"><a>Chiama</a><a>SMS</a><a>WhatsApp</a><a>Telegram</a></div>`,
   ricordoHtml: () => '', preparaChiamataHtml: () => '', nuovoBadge: () => '', guardoAltriDi: () => false,
   caricaCardCheck() {}, aNome: () => '', apriObiettivi() {}, apriBenvenuto() {}, apriContattoDa() {}, foglioRinnovo() {}, foglioStorico() {}, scegliNumero() {}, caricaOggi: async () => {},
-  chiudiAppuntamento: async () => {}, spostaAppuntamento: async () => {}, toccaBottone: async () => {}, calcolatoreSegni: () => ({}),
+  chiudiAppuntamento: async (...a) => { chiusure.push(a); }, spostaAppuntamento: async () => {}, toccaBottone: async () => {}, calcolatoreSegni: () => ({}),
   caricaDatiCheck: async () => {}, caricaSchedeMappa: async () => {}, trnProvaTelefonata() {}, elimina() {}, PF: { aperte: new Set() }, RP: {},
   eAdmin: () => false, soloGuardo: () => false, idVisti: () => ['io'], codiciDi: () => [], nomeVisto: () => 'Isabella',
   datiCoreDelMese: async () => ({}), aggiornaTab() {}, leggiSquadraMese: async () => null, setTimeout: () => 0,
@@ -121,7 +121,7 @@ const nomi = Object.keys(stub);
 const prefazio = `const ST = ${JSON.stringify(stato.ST)}; const PS = { scelto: null }; const MP = {}; const AG = {}; const CM = {}; const LS = {}; const VER = {};
 const guardoAltri = () => !!PS.scelto, vediTutti = () => PS.scelto === 'tutti';
 let ultimoTraguardoSalvato;\n`;
-const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio };';
+const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, SCE, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio };';
 let mondo;
 function avvia() {
   const g = new Function(...nomi, prefazio + pezzi + '\n' + pagina + uscita);
@@ -137,7 +137,14 @@ function carica(m, opz = {}) {
   m.ST.risultato = opz.vuoto ? { coda: [], dareSeguito: [] } : {
     coda: [cand('c1', 'Laura Ferri'), cand('c2', 'Marco Neri', { contattato: true, ultima_fase: 'Richiamare', categoria: 'Cliente' }), cand('c3', 'Anna Villa', { contattato: true, ultima_fase: 'Relazione' })],
     dareSeguito: [cand('d1', 'Gino Pace', { contattato: true, ultima_fase: 'Dare Seguito', scadutoDa: 3 })] };
-  m.ST.stato = { contatti_al_giorno: 5, fatti_oggi: opz.nuovo ? 0 : 2 };
+  m.ST.stato = { contatti_al_giorno: 5, fatti_oggi: opz.fatti != null ? opz.fatti : opz.nuovo ? 0 : 2 };
+  // le telefonate scelte a mano (nota 012): una senza orario per oggi, una con l'ora rimasta da ieri (solo se la prova le chiede)
+  m.SCE.righe = !opz.scelte ? [] : stub.MB21Coda.telefonateScelte([
+    { id: 's1', contatto_id: 'x5', user_id: 'io', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', scelta_a_mano: true, senza_ora: true, completata: false, esito: null,
+      inizio: iso(OGGI, '00:00'), note: 'Richiamarla per il libro', contatti: { nome: 'Carla Bo', telefono: '333 555', categoria: 'Prospect' } },
+    { id: 's2', contatto_id: 'x6', user_id: 'io', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Partner', scelta_a_mano: true, senza_ora: false, completata: false, esito: null,
+      inizio: iso('2026-10-03', '17:30'), contatti: { nome: 'Dario Lupo', telefono: '333 666', categoria: 'Partner' } },
+  ], OGGI);
   m.CONF.righe = opz.vuoto ? [] : [{ id: 'k1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: iso(OGGI, '18:30'), contatto_id: 'x1', contatti: { nome: 'Giulia Conti', telefono: '333 7654321', categoria: 'Prospect' } }];
   m.RIO.righe = opz.vuoto ? [] : [{ id: 'r1', contatto_id: 'x2', brand: 'Nutrilite', prodotto: 'Daily', riordino: '2026-10-12', contatti: { nome: 'Rosa Aprile', telefono: '333 111', categoria: 'Cliente' }, categoria: 'Cliente', tipo_azione: 'Contatto', inizio: iso(OGGI, '10:00') },
     { id: 'r2', contatto_id: 'x3', brand: 'Artistry', prodotto: '', riordino: '2026-10-14', contatti: { nome: 'Pino Manolo', telefono: '333 222', categoria: 'Cliente' }, categoria: 'Cliente', tipo_azione: 'Contatto', inizio: iso(OGGI, '10:00') }];
@@ -188,7 +195,7 @@ function foglioGiorno(auto = true) {
   const h = fogli[0].innerHTML || '';
   return auto ? h.replace(/class="ckr riga1( core)?" id="ck-campo-(contatti|pm|vp_clienti)"/g, 'class="ckr riga1$1 auto" id="ck-campo-$2"') : h;
 }
-module.exports = { vista, avvia, carica, foglioGiorno, stub, app, memo, clic, cerca, toast, OGGI, stile };
+module.exports = { vista, avvia, carica, foglioGiorno, stub, app, memo, clic, cerca, toast, chiusure, iso, OGGI, stile };
 if (require.main !== module) return;
 
 const quale = process.argv[2] || 'tutte', dove = process.argv[3];
