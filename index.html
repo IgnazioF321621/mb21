@@ -4307,7 +4307,7 @@ let accessoInCorso = false;
 const togliCopiaOffline = () => { try { localStorage.removeItem(CHIAVE_CACHE); } catch (e) {} };
 supa.auth.onAuthStateChange((evento, sessione) => {
   setTimeout(() => {
-    if (evento === 'SIGNED_OUT') { togliCopiaOffline(); ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
+    if (evento === 'SIGNED_OUT') { togliCopiaOffline(); LS.righe = []; LS.letta = 0; LS.usoApp = null; ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
     if (evento !== 'INITIAL_SESSION' && evento !== 'SIGNED_IN') return;
     if (!sessione) { togliCopiaOffline(); return REGISTRAZIONE.has('registrati') ? mostraRegistrazione() : mostraEmail(); }
     if (ST.utente || accessoInCorso) return;
