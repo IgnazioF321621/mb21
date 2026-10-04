@@ -1019,6 +1019,15 @@
   .ag-esiti .buoni, .ag-esiti .nonandati, .ag-scelte .buoni, .ag-scelte .nonandati { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
   .ag-esiti .buoni button, .ag-scelte .buoni button { flex: 1 1 40%; }
   .ag-esiti .nonandati button, .ag-scelte .nonandati button { flex: 1 1 auto; white-space: nowrap; font-size: 13px; min-height: 34px; padding: 6px 10px; color: var(--testo-soft); }
+  /* Nota 020 (Ignazio 04/10, «A»): i bottoni degli esiti hanno la grafica della coda ovunque (Agenda, scheda, foglio Modifica): rettangoli senza bordo,
+     verde per l'esito che fissa o chiude bene, rosso per «No Interesse»; quello già scelto resta pieno (.attuale / .scelto, più sotto, vincono) */
+  .ag-esiti button.esito-btn, .ag-scelte button.esito-btn { border: 0; border-radius: var(--raggio-bottone); background: var(--sfondo); color: var(--testo); font-size: 15px; font-weight: 600; min-height: var(--tocco); padding: 12px 6px; min-width: 0; }
+  .ag-esiti .nonandati button.esito-btn, .ag-scelte .nonandati button.esito-btn { flex: 1 1 28%; white-space: normal; font-size: 14px; min-height: var(--tocco); padding: 12px 6px; color: var(--testo); }
+  .ag-esiti button.esito-btn:active, .ag-scelte button.esito-btn:active { transform: scale(.97); }
+  .ag-esiti button.esito-btn.appuntamento, .ag-esiti button.esito-btn.ordine, .ag-scelte button.esito-btn.appuntamento, .ag-scelte button.esito-btn.ordine { background: var(--ok-tinta); color: var(--ok); }
+  .ag-esiti button.esito-btn.no, .ag-scelte button.esito-btn.no { background: var(--pericolo-tinta); color: var(--pericolo); }
+  .ag-esiti, .ag-esiti .buoni, .ag-esiti .nonandati, .ag-scelte .buoni, .ag-scelte .nonandati { gap: 8px; }
+  .ag-esiti button.esito-btn.attuale, .ag-scelte button.esito-btn.scelto { background: var(--accento); color: var(--accento-su); }   /* il già scelto vince sul verde e sul rosso */
   .ag-esiti button.attuale { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
   .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
   .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
@@ -2693,7 +2702,7 @@ const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa 
 // poi, su una riga loro, quelli non andati (MB21Agenda.esitiInDueRighe). `attr`: data-esito o data-v; `classe`: quella del bottone scelto.
 function bottoniEsiti(bottoni, attuale, attr, classe) {
   return MB21Agenda.esitiInDueRighe(bottoni).map(riga => riga.map(f =>
-    `<button ${attr}="${esc(f)}" class="${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
+    `<button ${attr}="${esc(f)}" class="esito-btn ${(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || ''} ${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
 function bloccoEsiti(a, categoria, aperto = false) {
