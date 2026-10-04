@@ -3,6 +3,14 @@
 Vale per **ogni sessione, agente e subagente** che lavora su questa cartella. Riscritto il 30/09/2026 con Ignazio.
 Contesto completo: `docs/MB21_v4_Brief_Sviluppo.md` · mappa tecnica: `STRUTTURA.md` · lavori: `CANTIERI.md` · lezioni: `LEZIONI.md`.
 
+## 🔒 0. Regola fondamentale e obbligatoria: una domanda per volta (Ignazio 04/10/2026)
+**Vale per ogni sessione, agente e subagente, in qualsiasi modalità e in ogni ramo di lavoro.** Quando serve una risposta di Ignazio:
+1. **Una sola domanda per volta**, breve e in parole semplici, con le scelte possibili (e quella consigliata) se ce ne sono.
+2. **Poi ci si ferma e si aspetta la risposta.** Non si elencano altre domande, non si mettono domande «in fondo» insieme alla prima, non si prosegue indovinando.
+3. **Avuta la risposta, si propone la domanda successiva** (sempre una sola), e così via. Le domande che dipendono dalla risposta alla prima non si fanno finché la prima non ha risposta.
+4. Quello che non dipende dalla risposta si fa intanto; quello che ne dipende resta fermo e lo si dice.
+5. Il resoconto a 6 punti (§ 10) fa eccezione solo per la forma: il punto 6 contiene **una sola** domanda, la più importante. Le altre restano in una nota Evernote (§ 7) e si fanno una alla volta, dopo.
+
 ## ⭐ 1. Stella cometa (Ignazio 19/09/2026)
 **Da qualsiasi punto dell'app mi trovo, il percorso deve essere veramente semplice, e tutto collegato di conseguenza.** Ogni schermata porta da sola al passo dopo; una cosa fatta in un punto si ritrova già fatta negli altri (niente da riscrivere, niente da andare a cercare). Prima di proporre o costruire qualcosa chiedersi: «da qui, il passo dopo è a un tocco? e quello che ho appena fatto, dove altro deve comparire?»
 
@@ -27,7 +35,7 @@ Tre domande prima di ogni scelta:
    - serve un'autorizzazione (§ 4 database, § 5 pubblicazione, § 6 cose che funzionano);
    - la nota non è chiara, o ci sono due modi diversi di farla che cambiano ciò che vede il partner;
    - c'è un blocco (errore che non si risolve, prova che fallisce, pezzo mancante di un'altra sessione).
-   Quando ci si ferma: **una domanda sola**, breve, con cosa è fatto e cosa aspetta. Avuta la risposta si riparte da soli.
+   Quando ci si ferma: **una domanda sola**, breve, con cosa è fatto e cosa aspetta (regola fondamentale § 0: una domanda per volta, poi si aspetta la risposta). Avuta la risposta si riparte da soli.
 4. Lavori nuovi o difetti visti strada facendo, **anche se sono di un altro titolo** (es. la sessione Evernote nota un difetto in Azioni): non si fanno e non si dimenticano. Si scrivono subito in Evernote, nel taccuino giusto e al loro posto (§ 7), e si avvisa Ignazio con la riga di spiegazione del § 7 (dove l'hai messo, al quale posto, perché).
 5. A fine titolo (o quando Ignazio dice «basta»): **un solo resoconto a 6 punti** (§ 10).
 
@@ -100,4 +108,4 @@ In modalità B uno solo, a fine titolo; in modalità A dopo ogni modifica.
 3. **Commit** locali su `main`
 4. **Database:** aggiunte fatte · modifiche in attesa di «ok» o di rilascio
 5. **Pubblicazione:** non fatta, in attesa del rilascio (al rilascio: fatta, e quando si vede online)
-6. **Domande aperte** per Ignazio (se ci sono)
+6. **Domanda aperta** per Ignazio (se c'è): **una sola**, la più importante (§ 0); le altre in una nota Evernote, da fare una alla volta
