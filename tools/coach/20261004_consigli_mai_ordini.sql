@@ -4,6 +4,8 @@
 -- Lasciate così: le frasi del manuale da dire al candidato («Ascolta queste tracce…», «Fidati di me, vieni solo a dare un’occhiata…»), le «E ricorda…» (ricordano
 -- la voce dei leader, non danno un ordine) e le etichette «leggi…/ascolta…» dei riferimenti, che la chat corta non mostra più.
 -- Ogni riga cambia solo se il testo è ancora quello letto (where … = vecchio). Copia di prima: scratchpad/copie/batterie_chat_20261004.json (sessione Azioni).
+-- Applicato da Ignazio il 04/10/2026 sera: 30 righe su 31; la 31ª (counseling a un downline, chiave «c/Downline» con la barra dentro) aveva il percorso
+-- spezzato in due e non è cambiata: corretta qui e ribattuta in 20261004_sequenze_coach_consigli.sql (nota 027).
 -- Da applicare con:  supabase db query --linked -f tools/coach/20261004_consigli_mai_ordini.sql
 
 update public.coach_batterie set batteria = jsonb_set(batteria::jsonb, '{"extra","Dare Seguito","2","chiedi","1","1","1","c"}', to_jsonb('La prossima volta conviene stringere: entro 72 ore l’entusiasmo del piano è ancora vivo.'::text))::json
@@ -66,8 +68,8 @@ update public.coach_batterie set batteria = jsonb_set(batteria::jsonb, '{"extra"
  where situazione = 'telefonata_partner' and batteria::jsonb #>> '{"extra","Appuntamento","2","c"}' = 'E il consiglio del manuale per il counseling: fate i complimenti per il lavoro fatto, e che l’incontro finisca con fiducia ed entusiasmo.';
 update public.coach_batterie set batteria = jsonb_set(batteria::jsonb, '{"nessuna","Appuntamento","0","c"}', to_jsonb('Niente freni: è il momento di accelerare. All’incontro si fissano insieme gli obiettivi del mese.'::text))::json
  where situazione = 'telefonata_partner' and batteria::jsonb #>> '{"nessuna","Appuntamento","0","c"}' = 'Niente freni: è il momento di spingere. All’incontro fissate insieme gli obiettivi del mese.';
-update public.coach_batterie set batteria = jsonb_set(batteria::jsonb, '{"extra","c","Downline","2","chiedi","1","1","0","c"}', to_jsonb('La prossima volta conviene partire da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.'::text))::json
- where situazione = 'appuntamento_partner' and batteria::jsonb #>> '{"extra","c","Downline","2","chiedi","1","1","0","c"}' = 'La prossima volta partite da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.';
+update public.coach_batterie set batteria = jsonb_set(batteria::jsonb, '{"extra","c/Downline","2","chiedi","1","1","0","c"}', to_jsonb('La prossima volta conviene partire da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.'::text))::json
+ where situazione = 'appuntamento_partner' and batteria::jsonb #>> '{"extra","c/Downline","2","chiedi","1","1","0","c"}' = 'La prossima volta partite da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.';
 
 -- controllo: quante delle righe nuove sono al loro posto (devono essere 31)
 select (select count(*) from public.coach_batterie where situazione = 'piano_marketing' and batteria::jsonb #>> '{"extra","Dare Seguito","2","chiedi","1","1","1","c"}' = 'La prossima volta conviene stringere: entro 72 ore l’entusiasmo del piano è ancora vivo.')
@@ -100,4 +102,4 @@ select (select count(*) from public.coach_batterie where situazione = 'piano_mar
      + (select count(*) from public.coach_batterie where situazione = 'telefonata_partner' and batteria::jsonb #>> '{"extra","Appuntamento","1","chiedi","4","1","0","c"}' = 'Si fissano insieme gli obiettivi del mese nei Segni Vitali, e un piano d’azione: su cosa si concentra {chi} e come lo aiuti tu.')
      + (select count(*) from public.coach_batterie where situazione = 'telefonata_partner' and batteria::jsonb #>> '{"extra","Appuntamento","2","c"}' = 'E il consiglio del manuale per il counseling: i complimenti per il lavoro fatto, e un incontro che finisce con fiducia ed entusiasmo.')
      + (select count(*) from public.coach_batterie where situazione = 'telefonata_partner' and batteria::jsonb #>> '{"nessuna","Appuntamento","0","c"}' = 'Niente freni: è il momento di accelerare. All’incontro si fissano insieme gli obiettivi del mese.')
-     + (select count(*) from public.coach_batterie where situazione = 'appuntamento_partner' and batteria::jsonb #>> '{"extra","c","Downline","2","chiedi","1","1","0","c"}' = 'La prossima volta conviene partire da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.') as righe_nuove;
+     + (select count(*) from public.coach_batterie where situazione = 'appuntamento_partner' and batteria::jsonb #>> '{"extra","c/Downline","2","chiedi","1","1","0","c"}' = 'La prossima volta conviene partire da lì: gli obiettivi del mese nei Segni Vitali, e un piano d’azione per raggiungerli.') as righe_nuove;

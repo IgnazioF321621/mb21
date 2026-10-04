@@ -536,12 +536,12 @@
       ...glide.filter(a => a.glide_id && a.esito === 'Riordino' && !a.completata && fin(a) && partiRoma(a.inizio).giorno >= INIZIO_RIORDINI_GLIDE),
     ].sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
   }
-  // «Conferma appuntamento · PM 1a1 · oggi ore 18:30» (o «domani»)
+  // «Da confermare · PM 1a1 · oggi ore 18:30» (o «domani»); fino al 04/10 «Conferma appuntamento · …» (era un ordine: nota Azioni 027, CLAUDE.md § 1)
   function testoConferma(a, adessoIso) {
     const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
     const giorno = quando.giorno === oggi ? 'oggi' : quando.giorno === spostaGiorno(oggi, 1) ? 'domani' : quando.giorno.split('-').reverse().join('/');
     const cosa = a.tipo_azione === 'Contatto' ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione);
-    return `Conferma appuntamento · ${cosa} · ${giorno} ore ${quando.ora}`;
+    return `Da confermare · ${cosa} · ${giorno} ore ${quando.ora}`;
   }
 
   // Appuntamenti passati senza esito: non completati, tipo ≠ Contatto, iniziati prima di adesso
