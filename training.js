@@ -348,7 +348,9 @@
       // fonte: il collegamento della carta; fonte2 (dal 29/09, Ignazio) un secondo collegamento, solo dove servono due fonti
       const fonteOk = f => (f.tipo === 'manuale' && f.pag) || (f.tipo === 'traccia' && f.id && f.titolo && f.oratore) || (f.tipo === 'libro' && f.id && f.titolo && f.autore)
         || (f.tipo === 'sito' && f.titolo && !f.url);
-      if (c.fonte && !fonteOk(c.fonte)) p.push(`${chi}: fonte incompleta`);
+      if (!c.fonte) p.push(`${chi}: manca la fonte`);   // 04/10 (Ignazio): niente carta senza fonte (manuale, traccia BSM certificata, libro certificato o pagina Risorse di Amway)
+      else if (!fonteOk(c.fonte)) p.push(`${chi}: fonte incompleta`);
+      if (/\b(devi|dovresti|abbonati)\b/i.test(c.perche || '')) p.push(`${chi}: il perché dà un ordine («devi», «dovresti», «abbonati»): meglio un consiglio`);
       if (c.fonte2 && (!c.fonte || !fonteOk(c.fonte2) || c.fonte2.tipo === 'sito')) p.push(`${chi}: seconda fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
     }

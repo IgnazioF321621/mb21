@@ -55,10 +55,10 @@ prova('Cerca: tutte le parole, senza accenti né maiuscole, anche dentro appunti
 });
 
 // ── Allenarsi: le carte a scatole, il ripasso, il test, la scala dei livelli ──
-const scena = (id, piu = {}) => ({ id, tipo: 'scena', tema: 'Telefonata', versioni: [{ scena: 'Scena ' + id, risposte: ['giusta', 'sbagliata 1', 'sbagliata 2'] }], perche: 'Perché sì.', ...piu });
-const vf = (id, piu = {}) => ({ id, tipo: 'vf', tema: 'Obiezioni', frase: 'Frase ' + id, vero: false, perche: 'Perché no.', ...piu });
+const scena = (id, piu = {}) => ({ id, tipo: 'scena', tema: 'Telefonata', versioni: [{ scena: 'Scena ' + id, risposte: ['giusta', 'sbagliata 1', 'sbagliata 2'] }], perche: 'Perché sì.', fonte: { tipo: 'manuale', pag: '1' }, ...piu });
+const vf = (id, piu = {}) => ({ id, tipo: 'vf', tema: 'Obiezioni', frase: 'Frase ' + id, vero: false, perche: 'Perché no.', fonte: { tipo: 'manuale', pag: '1' }, ...piu });
 const mazzo = { situazione: 'carte_contattare', percorso: { id: 'contattare' }, carte: [
-  scena('a'), scena('b', { obiezione: 'Non ho tempo' }), vf('c', { trabocchetto: true }), { id: 'd', tipo: 'frase', tema: 'Lista', davanti: 'Quanti nomi?', dietro: '200' },
+  scena('a'), scena('b', { obiezione: 'Non ho tempo' }), vf('c', { trabocchetto: true }), { id: 'd', tipo: 'frase', tema: 'Lista', davanti: 'Quanti nomi?', dietro: '200', fonte: { tipo: 'manuale', pag: '1' } },
   scena('e'), scena('f'), vf('g', { trabocchetto: true }), scena('h'), scena('i'), scena('l'), scena('m', { obiezione: 'È vendita?', situazioni: ['telefonata', 'piano_marketing'] }), vf('n', { trabocchetto: true }),
 ] };
 const OGGI = '2026-09-24';
@@ -234,7 +234,7 @@ prova('Il test: 10 domande solo a risposta, prima le più deboli, almeno tre tra
 });
 
 prova('Frase «scegli quella completa»: con 3 sbagliate diventa una domanda a 4 risposte (una giusta), entra nel test; senza resta a voce; controllo delle alternative', () => {
-  const f = { id: 'q', tipo: 'frase', tema: 'x', davanti: 'Quanti nomi?', dietro: '200', sbagliate: ['100', '20', '2000'] };
+  const f = { id: 'q', tipo: 'frase', tema: 'x', davanti: 'Quanti nomi?', dietro: '200', fonte: { tipo: 'manuale', pag: '1' }, sbagliate: ['100', '20', '2000'] };
   const d = T.domanda(f, () => 0.5);
   assert.equal(d.tipo, 'scelta'); assert.equal(d.testo, 'Quanti nomi?'); assert.equal(d.risposte.length, 4);
   assert.equal(d.risposte.filter(r => r.giusta).length, 1); assert.equal(d.risposte.find(r => r.giusta).testo, '200');
@@ -291,7 +291,10 @@ prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte
   assert.ok(p.some(x => x.startsWith('z: servono 3 risposte')));
   assert.ok(p.includes('w: fonte incompleta'));
   assert.ok(p.includes('q: tipo sconosciuto «boh»'));
-  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { id: 'k', tipo: 'frase', tema: 'x', davanti: 'a', dietro: 'b', aiuto: '' }] }), ['k: aiuto vuoto o lungo']);
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { id: 'k', tipo: 'frase', tema: 'x', davanti: 'a', dietro: 'b', aiuto: '', fonte: { tipo: 'manuale', pag: '1' } }] }), ['k: aiuto vuoto o lungo']);
+  // 04/10 (Ignazio): niente carta senza fonte, e il perché non dà ordini
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...scena('s1'), fonte: undefined }] }), ['s1: manca la fonte']);
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('s2', { perche: 'Devi chiamare ogni giorno.' })] }).length, 1);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, percorso: { id: 'boh' } }), ['percorso sconosciuto: boh']);
   assert.ok(T.controllaMazzo({ ...mazzo, situazione: 'carte_x' })[0].startsWith('situazione'));
 });
