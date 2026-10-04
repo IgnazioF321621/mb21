@@ -756,6 +756,7 @@ function mioAvvioHtml() {
       <span class="avv-conta">${fatti}/${totale}</span></button>
     <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
     ${AVV.mioAperto ? mioPassiHtml(m) : ''}
+    <div class="avv-consiglio"><b>Un consiglio</b>Prima di cambiare qualcosa, senti ${m.sponsor_nome ? `${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, il tuo sponsor` : 'il tuo sponsor'}, oppure il tuo upline attivo e in azione. Insieme si va più veloci.</div>
   </div>`;
 }
 // I 14 passi di chi è entrato: la stessa griglia in «🚀 Il mio avvio» (Dashboard) e nel Profilo. Ignazio 19/09, dopo la prova con un
