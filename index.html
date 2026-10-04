@@ -4303,11 +4303,13 @@ function impostaGriglia() {
 // SIGNED_IN dopo il link. Callback sincrona: le chiamate al DB partono fuori (setTimeout),
 // altrimenti supabase-js si blocca aspettando se stesso.
 let accessoInCorso = false;
+// La copia offline della coda (nomi, telefoni e note dei contatti, `CHIAVE_CACHE`) non resta sul telefono dopo l'uscita dall'app (nota 095, 04/10/2026).
+const togliCopiaOffline = () => { try { localStorage.removeItem(CHIAVE_CACHE); } catch (e) {} };
 supa.auth.onAuthStateChange((evento, sessione) => {
   setTimeout(() => {
-    if (evento === 'SIGNED_OUT') { ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
+    if (evento === 'SIGNED_OUT') { togliCopiaOffline(); ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
     if (evento !== 'INITIAL_SESSION' && evento !== 'SIGNED_IN') return;
-    if (!sessione) return REGISTRAZIONE.has('registrati') ? mostraRegistrazione() : mostraEmail();
+    if (!sessione) { togliCopiaOffline(); return REGISTRAZIONE.has('registrati') ? mostraRegistrazione() : mostraEmail(); }
     if (ST.utente || accessoInCorso) return;
     accessoInCorso = true;
     dopoAccesso(sessione).finally(() => { accessoInCorso = false; if (typeof trnProvaDiretta === 'function') trnProvaDiretta(); });
