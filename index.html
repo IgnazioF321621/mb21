@@ -3324,7 +3324,7 @@ async function nuovoAppuntamento(opz = {}) {
         await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
         if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
       }
-      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, categoria: v.categoria, scelta_a_mano: riga.scelta_a_mano, senza_ora: riga.senza_ora });
+      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, modalita: v.modalita, categoria: v.categoria, scelta_a_mano: riga.scelta_a_mano, senza_ora: riga.senza_ora });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
       // piano marketing»): dal 01/10 la domanda «Hai condiviso la traccia di apertura?» (tracciaDiApertura, pagina-sharing.js). Da qui solo quando il
       // foglio si apre da MB Plan; chi lo chiama con `resta` o `salta` (coda, scheda, esito) la fa da sé, a processo finito, perché dopo c'è la chat del coach.

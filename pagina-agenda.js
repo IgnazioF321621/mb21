@@ -2231,7 +2231,8 @@ function extraEvento(e) {
   // prima dell'appuntamento (ancora da fare, o un richiamo dalla coda): il promemoria del coach, «Ti eri detto…» (cantiere 42)
   const ricordo = richiamo || !e.esito ? ricordoHtml(e.contatto_id, e.contatti && e.contatti.nome) : '';
   // la prima telefonata a una persona mai chiamata: la riga di preparazione, la stessa della coda (cantiere 48)
-  const prima = !richiamo && !e.esito && e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? preparaChiamataHtml(e.contatto_id) : '';
+  // … e prima di una Presentazione (Consulenza PRD) ancora da fare, il consiglio di prepararla (regola 4 del coach, nota Azioni 020)
+  const prima = !richiamo && !e.esito && e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? preparaChiamataHtml(e.contatto_id) : richiamo ? '' : preparaPresentazioneHtml(e);
   const suCosa = !richiamo && Array.isArray(e.su_cosa) && e.su_cosa.length ? `<div class="note-ev">Su cosa lavorate: ${esc(e.su_cosa.map(A.nomePasso).join(' · '))}</div>` : '';
   return `${ricordo}${prima}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}

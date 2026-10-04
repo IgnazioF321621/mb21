@@ -734,7 +734,7 @@ async function sezioneAzioni() {
       ${a.ospite ? `<div class="s">Ospite: ${esc(a.ospite)}</div>` : ''}
       ${a.portatoNome && a.portato_da !== c.id ? `<div class="s">${rigaPortato(a.portatoNome)}</div>` : ''}
       ${a.esito ? '' : ricordoHtml(c.id, c.nome)}
-      ${a.esito || a.tipo_azione !== 'Contatto' || (a.modalita && a.modalita !== 'Telefonata') ? '' : preparaChiamataHtml(c.id)}
+      ${a.esito || a.tipo_azione !== 'Contatto' || (a.modalita && a.modalita !== 'Telefonata') ? preparaPresentazioneHtml(a) : preparaChiamataHtml(c.id)}
       ${chiusa ? `<div class="blocco-esiti" data-blocco="${esc(a.id)}"></div>` : blocco}
       <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;
