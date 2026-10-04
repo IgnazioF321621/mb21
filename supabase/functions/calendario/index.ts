@@ -9,51 +9,16 @@
 //  - le telefonate messe in Agenda con un orario e non ancora fatte (come le mostra l'Agenda), MAI i Riordini (li crea l'app);
 //  - i «PM Fissato» / «Appuntamento» dati dalla coda con giorno e ora, finché non c'è l'appuntamento vero alla stessa ora
 //    (stessa regola del promemoria in `avvisi`).
-// IL FORMATO vive solo qui (il bottone del lavoro 1, `fileCalendario` in agenda.js, è stato tolto il 21/09: «solo specchi, mai copie»):
-// titolo «MB21 · PM 1a1 · Nome», senza fine 1 ora, ora di Roma con VTIMEZONE, UID fisso `azione-<id>@mb21`, niente telefono.
+//  - gli incontri di gruppo (nota 024, Ignazio 04/10/2026): Team, LdS e SdS/OPEN, righe della tabella `spazi`, con il nome della serata se c'è.
+// IL FORMATO vive solo in `formato.ts` (provato da Node: tools/banco/prova_calendario.js; il bottone del lavoro 1, `fileCalendario` in agenda.js, è stato tolto il 21/09:
+// «solo specchi, mai copie»): titolo «MB21 · PM 1a1 · Nome», senza fine 1 ora, ora di Roma con VTIMEZONE, UID fisso `azione-<id>@mb21` (`spazio-<id>@mb21` per gli incontri di gruppo), niente telefono.
 // NOTE E OSPITE (Ignazio 04/10/2026): per un'ora il feed li ha tolti per riservatezza (opzione B), poi rimessi lo stesso giorno: senza le note
 // nell'appuntamento si perde il contesto del lavoro da fare. Nella DESCRIPTION: «Ospite: …» e le note dell'azione. Il Profilo avvisa che chi ha il link le legge.
 // Gli appuntamenti eliminati spariscono e basta: il Calendario Apple a ogni rilettura prende l'elenco intero.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { calendario, type Azione, type Spazio, TIPI_SPAZIO_NEL_CALENDARIO } from './formato.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
-
-const FUSO_ROMA_ICS = ['BEGIN:VTIMEZONE', 'TZID:Europe/Rome',
-  'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
-  'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
-  'END:VTIMEZONE'];
-const testoIcs = (s: string) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-// le righe di un .ics non passano i 75 byte: il resto va a capo con uno spazio davanti
-function piegaIcs(riga: string) {
-  const pezzi: string[] = []; let corrente = '', peso = 0;
-  for (const ch of riga) {
-    const b = new TextEncoder().encode(ch).length;
-    if (peso + b > (pezzi.length ? 74 : 75)) { pezzi.push(corrente); corrente = ''; peso = 0; }
-    corrente += ch; peso += b;
-  }
-  pezzi.push(corrente);
-  return pezzi.join('\r\n ');
-}
-const FMT = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-const aRoma = (iso: string | number) => FMT.format(new Date(iso)).replace(/[-:]/g, '').replace(' ', 'T');   // «20260918T183000»
-const compatto = (d: Date) => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
-
-type Azione = { id: string; contatto_id: string | null; tipo_azione: string; modalita: string | null; esito: string | null; inizio: string; fine: string | null;
-  data_scelta: string | null; ospite: string | null; note: string | null; contatti: unknown };
-
-function evento(a: Azione, adesso: Date) {
-  const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;
-  const inizio = dallaCoda ? a.data_scelta! : a.inizio;
-  const fine = !dallaCoda && a.fine ? a.fine : Date.parse(inizio) + 3600000;
-  const nome = (a.contatti as { nome?: string } | null)?.nome || '—';
-  const cosa = dallaCoda ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione || '');
-  const dettagli = [a.ospite ? `Ospite: ${a.ospite}` : '', a.note || ''].filter(Boolean).join('\n');
-  return ['BEGIN:VEVENT', `UID:azione-${a.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
-    `DTSTART;TZID=Europe/Rome:${aRoma(inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
-    `SUMMARY:${testoIcs(`MB21 · ${cosa} · ${nome}`)}`,
-    ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
-    'END:VEVENT'];
-}
 
 const niente = () => new Response('', { status: 404 });
 
@@ -83,10 +48,13 @@ Deno.serve(async (req) => {
   const veri = new Set(((app.data ?? []) as Azione[]).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));
   const daCoda = ((coda.data ?? []) as Azione[]).filter(x => !veri.has(`${x.contatto_id}|${Date.parse(x.data_scelta!)}`));
 
-  const righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MB21//Agenda//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'X-WR-CALNAME:MB21', 'X-WR-TIMEZONE:Europe/Rome', ...FUSO_ROMA_ICS,
-    ...[...((app.data ?? []) as Azione[]), ...telefonate, ...daCoda].flatMap(a => evento(a, adesso)),
-    'END:VCALENDAR', ''];
-  const corpo = righe.map(piegaIcs).join('\r\n');
+  // Gli incontri di gruppo stanno in `spazi`, non in `azioni`. Sono un'aggiunta: se la lettura non riesce (o la colonna `nome` non c'è ancora, prima della migrazione
+  // `20261004170000_spazi_nome_serata`), il calendario esce lo stesso, senza di loro, invece di sparire per tutti.
+  const leggiSpazi = (campi: string) => db.from('spazi').select(campi).eq('user_id', utente.id).in('tipo', TIPI_SPAZIO_NEL_CALENDARIO).gte('inizio', da).order('inizio').limit(2000);
+  let sp = await leggiSpazi('id, tipo, inizio, durata, nome');
+  if (sp.error) sp = await leggiSpazi('id, tipo, inizio, durata');
+  const spazi = (sp.error ? [] : sp.data ?? []) as unknown as Spazio[];
+
+  const corpo = calendario([...((app.data ?? []) as Azione[]), ...telefonate, ...daCoda], spazi, adesso);
   return new Response(req.method === 'HEAD' ? null : corpo, { headers: { 'Content-Type': 'text/calendar; charset=utf-8', 'Cache-Control': 'no-store' } });
 });
