@@ -1178,35 +1178,43 @@
   .ag-cronologia svg.ic:last-child { transform: rotate(-90deg); color: var(--testo-tenue); }
   .foglio.crono { padding-bottom: 20px; }
   .foglio.crono .ag-griglia { box-shadow: none; padding-left: 0; }
-  /* il Check a righe numerate come il modulo Core (cantiere 41, 22/09): numero blu N21, targhetta «Core», come si riempie */
-  .ckr { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid var(--superficie-2); }
+  /* «Il mio giorno» ripulito (Pagine 040, Ignazio 04/10): una riga per voce, il numero piccolo, il titolo con le targhette «Core» e «Automatico», il valore (o il campo) a destra,
+     sotto una frase corta; sì/no come interruttori. Stessi comandi e stesse righe di prima (cantiere 41): cambia solo la grafica. */
+  .ckr { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--bordo); }
   .ckr:first-child { border-top: 0; }
-  .ckr .ck-n { flex: none; width: 28px; height: 28px; margin-top: 8px; border-radius: 50%; background: var(--sfondo); color: var(--testo-tenue); font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
-  .ckr.core .ck-n { background: #eef3fa; color: #2c4a7c; }
+  .ckr .ck-n { flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; background: var(--sfondo); color: var(--testo-tenue); font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
   .ckr.fatta .ck-n { background: var(--ok); color: #fff; }
   .ckr .ck-corpo { flex: 1; min-width: 0; }
-  .ckr .ck-corpo > label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; margin: 8px 0 2px; }
-  .ckr .ck-corpo > input, .ckr .ck-corpo > select { width: 100%; min-height: var(--bottone-h); font-size: 17px; padding: 12px 14px; border-radius: var(--raggio-bottone); border: 1px solid var(--bordo); background: var(--superficie-2); margin: 6px 0 2px; font-family: inherit; color: var(--testo); }
+  .ckr .ck-corpo > label { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+  .ckr .ck-corpo > input, .ckr .ck-corpo > select { width: 100%; min-height: var(--bottone-h); font-size: 17px; padding: 12px 14px; border-radius: var(--raggio-bottone); border: 1px solid var(--bordo); background: var(--superficie-2); margin: 8px 0 2px; font-family: inherit; color: var(--testo); }
   .ckr .ck-corpo > input[readonly] { background: var(--sfondo); color: var(--testo-soft); }
-  .ckr .ck-corpo .vn-aiuto { margin-top: 4px; }
-  .ckr.core .ck-corpo .vn-aiuto { color: #2c4a7c; }
-  .ck-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: #2c4a7c; border-radius: 6px; padding: 2px 6px; }
-  .ck-valore { font-size: 17px; font-weight: 700; padding: 10px 0 2px; color: var(--testo); }
+  .ckr .ck-corpo .vn-aiuto { margin-top: 4px; font-size: 12.5px; }
+  /* le righe con un numero solo (voci 1-7): titolo a sinistra, campo o valore a destra, la frase sotto */
+  .ckr.riga1 .ck-corpo { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
+  .ckr.riga1 .ck-corpo > label { grid-column: 1; grid-row: 1; margin: 0; }
+  .ckr.riga1 .ck-corpo > input { grid-column: 2; grid-row: 1; width: 96px; margin: 0; padding: 10px 12px; text-align: right; }
+  .ckr.riga1 .ck-corpo .vn-aiuto { grid-column: 1 / -1; }
+  .ckr.riga1 .ck-auto { display: contents; }   /* acceso e spento da script (style.display): spento resta spento */
+  .ckr.riga1 .ck-valore { grid-column: 2; grid-row: 1; padding: 0; text-align: right; white-space: nowrap; }
+  .ckr.riga1 .ck-vn-riga { grid-column: 1 / -1; }
+  .ck-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cat-partner); background: var(--cat-partner-tinta); border-radius: 6px; padding: 2px 6px; }
+  .ck-valore { font-size: 17px; font-weight: 700; padding: 8px 0 2px; color: var(--testo); }
   .ck-badge-riga { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--testo-soft); margin: 8px 0 2px; flex-wrap: wrap; }
   .ck-badge { font-weight: 700; background: var(--sfondo); border-radius: 8px; padding: 4px 10px; color: var(--testo-tenue); }
   .ck-badge.si { background: var(--ok-tinta); color: var(--ok); }
-  /* regola unica (Ignazio 22/09): automatico = riga colorata del suo gruppo (rosa Azione, lilla Volumi), con numero e targhetta; a mano = riga bianca con il campo */
-  .ckr.auto { background: var(--gr-azione-tinta); border-top: 0; border-radius: var(--raggio-bottone); padding: 10px 10px 12px; margin: 6px -4px; color: var(--gr-azione); }
-  .ckr.auto.volume { background: var(--gr-volume-tinta); color: var(--cat-cliente); }
-  .ckr.auto .ck-corpo > label, .ckr.auto .vn-aiuto { color: inherit; }
-  .ckr.auto .ck-valore { color: inherit; }
-  .ckr.auto .ck-n { background: var(--superficie); color: inherit; }
-  .ckr.auto.fatta .ck-n { background: var(--ok); color: #fff; }
-  .ckr.auto .ck-vn-riga { background: var(--superficie); color: var(--testo); }
+  /* automatico = la targhetta «Automatico» e il valore in verde; a mano = il campo (Ignazio 22/09, ripulito il 04/10: niente più righe colorate) */
+  .ckr.auto .ck-corpo > label::after { content: 'Automatico'; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ok); background: var(--ok-tinta); border-radius: 6px; padding: 2px 6px; }
+  .ckr.auto .ck-valore { color: var(--ok); }
+  .ckr.auto .ck-vn-riga { background: var(--sfondo); color: var(--testo); }
   .ckr.auto .ck-vn-riga b { color: inherit; }
-  .ckr .ck-sotto { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 400; color: var(--testo); margin-top: 8px; }
+  .ckr .ck-sotto { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 400; color: var(--testo); margin-top: 8px; }
   .ckr .ck-sotto span { flex: 1; line-height: 1.3; }
-  .ckr .ck-sotto input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: none; }
+  /* sì/no come interruttori (la casella resta quella: si legge e si salva allo stesso modo) */
+  .ckr .ck-sotto input[type="checkbox"] { appearance: none; -webkit-appearance: none; position: relative; width: 38px; height: 22px; margin: 0; flex: none; flex-shrink: 0; order: -1; border-radius: 11px; background: var(--bordo); transition: background .15s; cursor: pointer; }
+  .ckr .ck-sotto input[type="checkbox"]::after { content: ''; position: absolute; left: 2px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(16,21,31,.25); transition: left .15s; }
+  .ckr .ck-sotto input[type="checkbox"]:checked { background: var(--ok); }
+  .ckr .ck-sotto input[type="checkbox"]:checked::after { left: 18px; }
+  @media (prefers-reduced-motion: reduce) { .ckr .ck-sotto input[type="checkbox"], .ckr .ck-sotto input[type="checkbox"]::after { transition: none; } }
   /* (le righe .ck-core di prima, tenute per il banco) */
   .ck-core { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--superficie-2); font-size: 14px; }
   .ck-core:first-child { border-top: 0; }
