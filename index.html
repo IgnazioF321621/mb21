@@ -2607,7 +2607,7 @@ function mostraTab() {
     // «Progetti» è MB Plan aperto sull'ultimo progetto; «MB Plan» da un progetto torna al giorno (o alla vista di partenza)
     b.onclick = () => {
       if (b.dataset.tab === 'progetti') { ST.tab = 'progetti'; LS.ritorno = null; return mostraTab(); }
-      if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined' && AG.vista === 'progetto') AG.vista = null;
+      if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined') { if (AG.vista === 'progetto') AG.vista = null; AG.giorno = null; }   // il tab «MB Plan» apre su oggi (Ignazio 04/10, nota 021)
       eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab();
     };
   });
