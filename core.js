@@ -7,7 +7,10 @@
   const MESE_A_TOTALE = '2026-09';   // tracce e pagine: il mese del passaggio all'app nuova, contato sul totale (vedi s4, s5)
   const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-  const NON_AVVENUTI = ['No Show', 'Rimandato'];   // un PM con questo esito non è stato presentato (stessa regola di azioni_conti)
+  // Cosa conta come PM presentato: la stessa regola di Report, Griglia e della vista azioni_conti (MB21Report.contaAzione; nota Azioni 030 punto 3).
+  // Prima qui si escludevano solo No Show e Rimandato: un esito fuori lista (dati vecchi) contava nel Core e non nel Report.
+  const R = typeof module !== 'undefined' && module.exports ? require('./report.js') : radice.MB21Report;
+  const NON_AVVENUTI = ['No Show', 'Rimandato'];   // resta per chi lo legge da fuori; il conto usa R.contaAzione
 
   const giorniDelMese = mese => new Date(Date.UTC(Number(mese.slice(0, 4)), Number(mese.slice(5, 7)), 0)).getUTCDate();
   const gg = giorno => `${Number(giorno.slice(8))}/${Number(giorno.slice(5, 7))}`;
@@ -61,7 +64,7 @@
 
     // 1 · Presentare almeno 8 PM al mese
     const pm = azioni
-      .filter(a => a.tipo_azione === 'Piano Marketing' && a.completata && !NON_AVVENUTI.includes(a.esito) && nelMese(giornoRoma(a.inizio), mese))
+      .filter(a => a.tipo_azione === 'Piano Marketing' && R.contaAzione(a) && nelMese(giornoRoma(a.inizio), mese))
       .sort((x, y) => (x.inizio < y.inizio ? -1 : 1))
       .map(a => {
         const mano = (d.pm || {})[a.id] || {};

@@ -1480,7 +1480,7 @@ async function cepDiChiGuardo(io) {
 }
 
 const inArrivo = cosa => mostraToast(`${cosa}: in arrivo`);
-const dataBreve = iso => iso ? iso.split('-').reverse().join('/') : '—';
+const dataBreve = giorno => (giorno ? MB21Report.dataLunga(giorno) : '—');   // «02/10/2026»: la stessa di Report e Check (nota Azioni 030 punto 3: una data sola)
 
 // «Nuovo BBS 10-2026 · Hai il biglietto?» (cantiere 20 lavoro 2, Ignazio 17/09): il partner risponde una volta sola
 // (io · compagno/a · ospiti insieme); dopo, correzioni e aggiunte le fa l'Admin dalla scheda
