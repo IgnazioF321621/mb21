@@ -77,8 +77,17 @@ async function chiediCoach(e, esito, situazione) {
   // la Consulenza Prodotti appena fissata come Presentazione (regola 4, nota Azioni 020): «Giovedì presenti a Mario.» e come prepararla
   const pres = esito === 'Consulenza Prodotti' && e.incontro && e.incontro.modalita === 'Presentazione' ? e.incontro : null;
   const preparazione = inc || pres ? await batteriaCoach('preparazione_incontro') : null;
+  // dopo l'incontro con un Partner (nota 040): il passo dopo dell'Avvio, il primo dei 14 non ancora spuntato (la chiusura ha già spuntato quello fatto);
+  // con l'avvio concluso o in pausa niente. Senza rete, niente.
+  let passoDopo;
+  if (situazione === 'appuntamento_partner' && e.contatto_id) {
+    const { data } = await dbq('avvio del partner', supa.from('contatti')
+      .select([...MB21Lista.PASSI_ONBOARDING.map(p => p[0]), 'avvio_concluso_il', 'avvio_in_pausa_dal'].join(',')).eq('id', e.contatto_id).maybeSingle());
+    if (data && !data.avvio_concluso_il && !data.avvio_in_pausa_dal) passoDopo = MB21Lista.prossimoPasso(data) || undefined;
+  }
   const ctx = { fissato: e.fissato, incontro: inc ? { su_cosa: inc.su_cosa, quando: giornoParlato(inc.inizio) } : undefined, preparazione: preparazione || undefined, ricordo: e.contatto_id ? RICORDI[e.contatto_id] || undefined : undefined,
     presentazione: pres ? { quando: giornoParlato(pres.inizio) } : undefined,
+    passoDopo: passoDopo ? { nome: passoDopo.nome, descr: passoDopo.descr } : undefined,
     carta: async ob => MB21Coach.cartaDi(await carteCoach(), ob, sits) };
   const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
   if (passi && !COACH.carte) carteCoach();
