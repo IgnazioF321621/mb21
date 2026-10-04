@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const P = require('../design/anteprima_dashboard.js');
 
 let ok = 0;
-function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
+const coda = [];   // le prove girano una dopo l'altra (alcune aspettano una risposta)
+function prova(nome, fn) { coda.push([nome, fn]); }
 const testo = h => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const tessere = h => [...h.matchAll(/<(?:button|div) class="lv-tile[^"]*"[^>]*>[\s\S]*?<\/(?:button|div)>/g)].map(m => m[0]);
 const titoli = h => tessere(h).map(t => (t.match(/<b>([^<]*)<\/b>/) || [])[1]);
@@ -165,4 +166,55 @@ prova('Il tab «Oggi» riporta al primo livello', () => {
   assert.deepEqual([m.LV.vista, m.LV.area], ['home', null]);
 });
 
-console.log(`\n${ok} prove superate`);
+prova('Toccando: dal primo livello alla sottopagina, alla persona e indietro (la strada vera, con i legami della pagina)', () => {
+  const { m } = P.vista('home');
+  P.clic('[data-lv]', 0);   // Chi sento oggi?
+  assert.equal(m.LV.vista, 'oggi');
+  P.clic('#sez-coda');      // la riga dei contatti si apre
+  assert.match(P.app.innerHTML, /data-lv-persona="coda\|c1"/);
+  P.clic('[data-lv-persona="coda|c1"]');
+  assert.equal(m.LV.vista, 'persona');
+  assert.match(P.app.innerHTML, /<h1[^>]*>Laura Ferri<\/h1>/);
+  P.clic('#lv-indietro');
+  assert.equal(m.LV.vista, 'oggi');
+  P.clic('#lv-indietro');
+  assert.equal(m.LV.vista, 'home');
+  // Report e Griglia PM aprono le pagine di prima
+  P.clic('#ds-altro');
+  assert.deepEqual([m.ST.tab, m.vistaReport && m.vistaReport()], ['report', undefined]);
+});
+
+prova('«Annullato» su una conferma: chiede, toglie l\'appuntamento, si torna all\'elenco e la riga resta con la spunta', () => {
+  const { m } = P.vista('persona', { persona: 'conf|k1' });
+  const chiamate = [];
+  const rpc = P.stub.supa.rpc;
+  P.stub.supa.rpc = (nome, arg) => { chiamate.push([nome, arg]); return Promise.resolve({ error: null }); };
+  P.stub.dbq = async (_, p) => p;   // dbq(etichetta, promessa) → la risposta della promessa
+  return Promise.resolve(P.clic('[data-conferma="annulla"]')).then(() => {
+    P.stub.supa.rpc = rpc;
+    assert.deepEqual(chiamate.filter(c => c[0] !== 'salva_prossimo_traguardo'), [['elimina_azione', { p_azione: 'k1' }]]);
+    assert.equal(m.CONF.righe.length, 0);
+    assert.equal(m.LV.vista, 'oggi');   // la scheda non c'è più
+    assert.deepEqual(m.LV.fatte.map(x => [x.tipo, x.nome]), [['conf', 'Giulia Conti']]);
+    assert.ok(P.toast.some(t => /Giulia Conti · appuntamento annullato/.test(t)));
+  });
+});
+
+prova('Il mese: la card apre l\'area, l\'area porta al Check; il traguardo apre il gradino', () => {
+  const { m } = P.vista('mese');
+  P.clic('[data-lv-area="azione"]');
+  assert.deepEqual([m.LV.vista, m.LV.area], ['area', 'azione']);
+  P.clic('#lv-12mesi');
+  assert.equal(m.ST.tab, 'check');
+  m.ST.tab = 'oggi';
+  m.LV.vista = 'traguardo'; m.disegnaOggi();
+  P.clic('[data-lv-grad="core"]');
+  assert.deepEqual([m.LV.vista, m.LV.gradino], ['gradino', 'core']);
+  P.clic('#lv-indietro');
+  assert.equal(m.LV.vista, 'traguardo');
+});
+
+(async () => {
+  for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
+  console.log(`\n${ok} prove superate`);
+})().catch(e => { console.error(e); process.exit(1); });
