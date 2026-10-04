@@ -71,8 +71,14 @@ async function caricaAgenda() {
   else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id, nome, categoria').eq('user_id', visto().id).eq('rientro_il', AG.giorno).order('nome').limit(300)));
   // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
   // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
+  // Solo gli ultimi 12 mesi (Ignazio 04/10, nota 021): le non fatte del passato e le cose di mese, settimana e periodo più vecchie di un anno
+  // non si leggono più a ogni apertura; «Vedi tutto» in fondo al foglio le carica (AG.tutteLeCose). Le cose dell'anno sono poche e restano sempre.
+  const limite = AG.tutteLeCose ? null : A.spostaGiorno(oggi, -366), dal = limite ? `,giorno.gte.${limite}` : '';
   const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id)
-    .or(`and(giorno.gte.${griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0]},giorno.lte.${griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01),scala.eq.mese,scala.eq.settimana,scala.eq.periodo,scala.eq.anno`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
+    .or(`and(giorno.gte.${griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0]},giorno.lte.${griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null${dal}),and(core.not.is.null,giorno.gte.${AG.giorno.slice(0, 8)}01),and(scala.eq.mese${dal}),and(scala.eq.settimana${dal}),and(scala.eq.periodo${dal}),scala.eq.anno`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
+  // c'è qualcosa di più vecchio che non si legge? (solo se serve il «Vedi tutto»; una chiamata leggera, senza righe)
+  const vecchie = vediTutti() || !limite ? null : dbq('cose più vecchie', supa.from('cose_da_fare').select('id', { count: 'exact', head: true }).eq('user_id', visto().id)
+    .lt('giorno', limite).is('fatto_il', null).is('progetto_id', null).is('modello_id', null).is('core', null).in('scala', ['giorno', 'settimana', 'mese', 'periodo']));
   const modello = vediTutti() ? null : dbq('modello del giorno', supa.from('modello_giorno').select('*').eq('user_id', visto().id));
   const modelli = vediTutti() ? null : dbq('modelli personali', supa.from('modelli').select('*').eq('user_id', visto().id).order('ordine'));
   // (le misure del Core non si leggono più qui: dal 22/09 il Core vive nel Check e nel Modulo Core del mese)
@@ -80,7 +86,8 @@ async function caricaAgenda() {
   await conferme;
   // gli spazi della settimana preparati prima («Modello appuntamenti settimanale», 27/09): solo l'Admin, per ora
   const spazi = vediSpazi() ? dbq('spazi', supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
-  const [cd, md, mm, sp] = await Promise.all([cose, modello, modelli, spazi]);
+  const [cd, md, mm, sp, vc] = await Promise.all([cose, modello, modelli, spazi, vecchie]);
+  AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
   for (const r of [app1, ric, pas, tel, cd, md, mm]) if (r && r.error) throw r.error;
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]);
@@ -201,6 +208,7 @@ function foglioHtml(oggi) {
   const libere = cose.filter(c => !c.gruppo_id || !attivi.some(m => m.id === c.gruppo_id));
   const nomeGiorno = AG.giorno === oggi ? 'oggi' : AG.giorno === MB21Agenda.spostaGiorno(oggi, 1) ? 'domani' : titoloGiorno(AG.giorno, oggi).toLowerCase();
   h += blocco('da-fare', `<span>Da fare ${esc(nomeGiorno)}</span>`, libere.map(c => riga(c, 'data-cosa')).join(''), libere.filter(c => !c.fatto_il).length, campo(null));
+  if (AG.cosePiuVecchie && !AG.tutteLeCose) h += '<button class="link" id="ag-vedi-tutto">Ci sono cose da fare più vecchie di un anno · Vedi tutto</button>';
   h += '</div>';
   return h;
 }
@@ -2302,6 +2310,7 @@ function collegaAgenda(eventi) {
   const A = MB21Agenda;
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ag-oggi', () => apriAgenda(MB21Coda.oggiRoma()));
+  su('ag-vedi-tutto', () => { AG.tutteLeCose = true; apriAgenda(AG.giorno); });
   su('ag-prima', () => apriAgenda(A.spostaGiorno(AG.giorno, -7)));
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
   collegaPartnerSelect();
