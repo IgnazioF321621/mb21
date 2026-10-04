@@ -74,8 +74,11 @@ async function chiediCoach(e, esito, situazione) {
   const sits = [situazione, ...(esito === 'Consulenza Prodotti' ? ['consulenza'] : [])];
   // l'incontro appena fissato con un Partner: «Giovedì con Mario lavorate su…» (i passi di «Su cosa lavorate?» e come prepararli)
   const inc = e.incontro && Array.isArray(e.incontro.su_cosa) && e.incontro.su_cosa.length && situazione === 'telefonata_partner' ? e.incontro : null;
-  const preparazione = inc ? await batteriaCoach('preparazione_incontro') : null;
+  // la Consulenza Prodotti appena fissata come Presentazione (regola 4, nota Azioni 020): «Giovedì presenti a Mario.» e come prepararla
+  const pres = esito === 'Consulenza Prodotti' && e.incontro && e.incontro.modalita === 'Presentazione' ? e.incontro : null;
+  const preparazione = inc || pres ? await batteriaCoach('preparazione_incontro') : null;
   const ctx = { fissato: e.fissato, incontro: inc ? { su_cosa: inc.su_cosa, quando: giornoParlato(inc.inizio) } : undefined, preparazione: preparazione || undefined, ricordo: e.contatto_id ? RICORDI[e.contatto_id] || undefined : undefined,
+    presentazione: pres ? { quando: giornoParlato(pres.inizio) } : undefined,
     carta: async ob => MB21Coach.cartaDi(await carteCoach(), ob, sits) };
   const passi = B ? MB21Coach.monta(situazione, B, esito, nomi, voltaCoach(), ctx) : null;
   if (passi && !COACH.carte) carteCoach();
@@ -210,8 +213,19 @@ function ricordoHtml(contattoId, nome) {
 function preparaChiamataHtml(contattoId) {
   const prep = COACH.batterie.preparazione_incontro, r = prep && prep.prima_telefonata;
   if (!r || PRIME_VOLTE[contattoId] !== true || RICORDI[contattoId]) return '';
-  const corr = eAdmin() ? `<button type="button" class="cch-corr" data-correggi-frase="${esc(r.c)}" data-situazione="prima_telefonata" title="Correggi questa frase" aria-label="Correggi questa frase">✎</button>` : '';
-  return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}${corr}<small style="margin:4px 0 0">${esc(r.fonte)}</small></div></div>`;
+  return rigaPreparazione(r, 'prima_telefonata');
+}
+// La riga prima della Presentazione (regola 4 del coach, Ignazio 29/09; nota Azioni 020): una Consulenza PRD · Presentazione ancora da fare, in MB Plan e nella scheda,
+// ha sotto il consiglio di prepararla (`preparazione_incontro` → `presentazione`: ripassare prodotto e marchio, garanzia di soddisfazione, come si diventa cliente registrato).
+function preparaPresentazioneHtml(a) {
+  const prep = COACH.batterie.preparazione_incontro, r = prep && prep.presentazione;
+  if (!r || !a || a.tipo_azione !== 'Consulenza PRD' || a.modalita !== 'Presentazione' || a.completata || a.esito) return '';
+  return rigaPreparazione(r, 'presentazione');
+}
+// Lo stesso riquadro `.ricordo` per tutte le righe di preparazione: il consiglio, il ✎ dell'Admin, la fonte in piccolo (se c'è)
+function rigaPreparazione(r, situazione) {
+  const corr = eAdmin() ? `<button type="button" class="cch-corr" data-correggi-frase="${esc(r.c)}" data-situazione="${esc(situazione)}" title="Correggi questa frase" aria-label="Correggi questa frase">✎</button>` : '';
+  return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}${corr}${r.fonte ? `<small style="margin:4px 0 0">${esc(r.fonte)}</small>` : ''}</div></div>`;
 }
 
 // Correggere una frase del coach dal suo fumetto (cantiere 48, Ignazio 01/10: «come già sto facendo nel training, in modo da correggere le frasi
