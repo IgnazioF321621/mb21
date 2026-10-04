@@ -26,6 +26,7 @@ function apriImportaRubrica() {
     <button class="indietro" id="rb-indietro">‹ Lista Nomi</button>
     <h1>Importa dalla rubrica</h1>
     <div class="sotto">Porta in MB21 i nomi che hai nel telefono${esc(aNome())}. Chi è già nella Lista viene saltato.</div>
+    <div class="sotto">Sono dati di altre persone: li vedi tu (e l'Admin, per aiutarti), non chi ti segue. Conviene importare chi conosci. <button class="link" id="rb-privacy" style="display:inline;padding:0;font-size:inherit">Privacy</button></div>
     <div class="riquadro rb-passi"><b>${RB.telefono === 'android' ? 'Come si fa da Android' : 'Come si fa da iPhone'}</b>
       ${RB.telefono === 'android' ? `<ol>
         <li>Apri <b>Contatti</b> (su alcuni telefoni è dentro <b>Telefono</b>)</li>
@@ -44,6 +45,7 @@ function apriImportaRubrica() {
     <div id="rb-stato" class="sotto"></div>
     ${versione()}`;
   document.getElementById('rb-indietro').onclick = disegnaLista;
+  document.getElementById('rb-privacy').onclick = foglioPrivacy;
   document.getElementById('rb-altro').onclick = () => { RB.telefono = RB.telefono === 'android' ? 'iphone' : 'android'; apriImportaRubrica(); };
   document.getElementById('rb-file').onchange = async e => {
     const file = e.target.files && e.target.files[0];

@@ -122,6 +122,7 @@ function disegnaProfilo() {
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
     ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
+    ${rigaProfilo('pf-privacy', ic('lucchetto') + ' Privacy', '', 'Come sono trattati i tuoi dati')}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
@@ -138,6 +139,7 @@ function disegnaProfilo() {
   collegaMioAvvio(disegnaProfilo, 'profilo');
   su('pf-benvenuto', () => apriBenvenuto());   // cantiere 32: le cinque schermate da capo, con quello che aveva già scelto
   su('pf-password', () => foglioPassword(false));
+  su('pf-privacy', foglioPrivacy);
   su('pf-esci', () => supa.auth.signOut());
   collegaAvvisi();
   collegaCalendario();
