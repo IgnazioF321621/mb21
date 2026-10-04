@@ -463,7 +463,7 @@ function trnApriPercorso(id) {
   // del settore di Studia con lo stesso nome; senza doppioni, prima il manuale
   const fonti = m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(Boolean)
     .map(f => (f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id))).filter(v => !v || v.cert);   // solo il certificato (29/09)
-  const delSettore = (TRN.voci || []).filter(c => c.cert && c.settori.includes(p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
+  const delSettore = (TRN.voci || []).filter(c => c.cert && c.settori.includes(p.settore || p.titolo) && (c.tipo === 'manuale' || (c.tipo === 'traccia' && c.sezione)));
   // dal 26/09 anche le tracce che la riga «MB21:» del loro PAL manda a questo percorso
   // le tracce del BSM con il PAL nuovo e, dal 27/09, i libri con il PAL nuovo (la riga MB21 del libro; per i libri niente fase, quindi «Mentalità» non porta da sola)
   const daMb21 = (TRN.voci || []).filter(c => c.cert && ((c.tipo === 'traccia' && c.sezione && MB21Training.percorsiDaMb21(c.appunti).includes(p.id))
@@ -475,7 +475,7 @@ function trnApriPercorso(id) {
   const kTutte = 'percorso|' + p.id, mostraTutte = TRN.tutte[kTutte] || tutteStudio.length <= TRN_PRIME + 2;
   const studio = mostraTutte ? tutteStudio : tutteStudio.slice(0, TRN_PRIME);
   const siti = [...new Set(m.carte.flatMap(c => [c.fonte, c.fonte2]).filter(f => f && f.tipo === 'sito').map(f => f.titolo))];   // in fondo, i documenti Amway da cercare in Risorse
-  const settore = TRN.cat.settori.find(x => x.nome === p.titolo);
+  const settore = TRN.cat.settori.find(x => x.nome === (p.settore || p.titolo));
   const conversazioni = trnConversazioniQui(m);
   const velo = document.createElement('div');
   velo.className = 'velo';

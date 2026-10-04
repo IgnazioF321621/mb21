@@ -198,7 +198,7 @@ prova('Dentro un livello i percorsi si aprono uno dopo l\'altro: il successivo q
   const p = s => s.livelli[0].percorsi.map(x => [x.id, x.pronto, x.aperto]);
   let s = T.scala([mazzo, primi], {}, [], OGGI);
   assert.deepEqual(p(s), [['contattare', true, true], ['primi_passi', true, false], ['aree', false, false], ['dire_il_vero', false, false], ['sistema', false, false], ['principi', false, false]]);
-  assert.equal(s.livelli[0].percorsi[1].prima, 'Contattare');
+  assert.equal(s.livelli[0].percorsi[1].prima, 'Lista e Contatti');
   assert.equal(s.percorso, 'contattare');
   // 11 carte di Contattare viste su 12: ancora chiuso
   const quasi = Object.fromEntries(mazzo.carte.slice(0, 11).map(c => [c.id, { scatola: 1, prossima: '2026-09-25' }]));
