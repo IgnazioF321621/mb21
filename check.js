@@ -305,7 +305,7 @@
     return [
       { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? FATTO : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
       { testo: 'Consumo personale', fatto: f[1], stato: f[1] ? FATTO : vp },
-      { testo: '10 clienti', fatto: f[2], stato: f[2] ? FATTO : `mancano ${m.s3.obiettivo - m.s3.quanti}` },
+      { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? FATTO : `mancano ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10
       { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : m.s4.aTotale ? `${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : m.s5.aTotale ? `${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''}` : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },
@@ -326,7 +326,7 @@
     const gradini = [];
     const mancaLc1 = (l.luci || []).filter(x => !x.ok);
     const g1 = { chiave: 'leader1', titolo: 'Leader 1° livello', sotto: 'i primi 4 punti Core', fatto: !!l.fatto, pronto: true,
-      stato: l.fatto ? 'fatto' : `${l.accese} su 4`,
+      stato: l.fatto ? 'fatto' : `${l.accese} su 4`, fatti: l.accese || 0, totale: 4,
       mancano: mancaLc1.map(x => ({ ...COSE_LC1[x.chiave], peso: x.chiave === 'vp' ? 0.6 : 0.2 })) };
     g1.consiglio = g1.fatto ? null : piuVicina(g1.mancano);
     gradini.push(g1);
@@ -335,7 +335,7 @@
     const giaDetti = mancaLc1.filter(x => x.chiave === 'bbs' || x.chiave === 'wes').map(x => x.titolo);
     const g2 = { chiave: 'core', titolo: 'CORE',   // «Leader Core» diventa «CORE», maiuscolo (Ignazio 27/09)
                  sotto: 'le 7 abitudini del mese', fatto: !!m && m.fatte === 7, pronto: !!m,
-      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${m.fatte} su 7`, mancano: m ? mancanzeCore(m, finora, giaDetti) : [],
+      stato: !m ? '…' : m.fatte === 7 ? '7 su 7' : `${m.fatte} su 7`, fatti: m ? m.fatte : 0, totale: 7, mancano: m ? mancanzeCore(m, finora, giaDetti) : [],
       voci: m ? vociCore(m, finora) : [] };
     g2.consiglio = g2.fatto || !g2.pronto ? null : piuVicina(g2.mancano);
     gradini.push(g2);
@@ -349,7 +349,7 @@
     const manca = PACE_SPONSOR - sp;
     // il consiglio: gli sponsor; 100 VP e CEP li consiglia già il 1° livello, qui non si ripetono
     const g3 = { chiave: 'pace', titolo: 'Pacesetter', sotto: '2 iscritti personali, 100 VP e CEP nello stesso mese', fatto: accese3 === 3, pronto: true,
-      stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, voci: voci3,
+      stato: accese3 === 3 ? 'fatto' : `${accese3} su 3`, fatti: accese3, totale: 3, voci: voci3,
       mancano: manca > 0 ? [{ cosa: manca === 1 ? 'sponsorizzare ancora una persona' : `sponsorizzare ancora ${manca} persone`, peso: manca / PACE_SPONSOR, vai: 'lista' }] : [] };
     g3.consiglio = g3.fatto ? null : piuVicina(g3.mancano);
     gradini.push(g3);
@@ -371,9 +371,9 @@
   // da settembre. «di cui 2 a Leaders Club» resta «da segnare» (dopo: il Leaders Club di quella persona o la spunta dell'Admin).
   const LIVELLI = [
     { chiave: 'lc', titolo: 'Leaders Club', sotto: 'Segni Vitali: 9% · 5 prime linee · 5 CEP · 15 nel gruppo',
-      sv: { bonus: 9, lineeBonus: 3, planner: 1, primeLinee: 5, iscritti: 5, totale: 15, cep: 5, bbs: 10, wes: 10 }, piu: { core: true } },
+      sv: { bonus: 9, lineeBonus: 3, planner: 1, primeLinee: 5, iscritti: 5, totale: 15, cep: 5, bbs: 10, wes: 10 }, piu: {} },
     { chiave: 'elc', titolo: 'Executive Leader Club', sotto: 'Segni Vitali: 15% · 10 prime linee · 15 CEP · 50 nel gruppo',
-      sv: { bonus: 15, lineeBonus: 4, planner: 3, primeLinee: 10, iscritti: 10, totale: 50, cep: 15, bbs: 20, wes: 20 }, piu: { core: true, linee: { quante: 3, al: 6, lc: 2 } } },
+      sv: { bonus: 15, lineeBonus: 4, planner: 3, primeLinee: 10, iscritti: 10, totale: 50, cep: 15, bbs: 20, wes: 20 }, piu: { linee: { quante: 3, al: 6, lc: 2 } } },
     { chiave: 'arg', titolo: 'Produttore Argento', sotto: 'Segni Vitali: 21% · 20 prime linee · 30 CEP · 150 nel gruppo',
       sv: { bonus: 21, lineeBonus: 6, planner: 5, primeLinee: 20, iscritti: 16, totale: 150, cep: 30, bbs: 50, wes: 50 }, piu: {} },
     { chiave: 'plat', titolo: 'Platino', sotto: 'Argento 12 mesi di fila, da settembre ad agosto',
@@ -432,23 +432,26 @@
       iscritti, totale, cep: cep == null ? null : Number(cep), bbs, wes };
     const righe = LIVELLI.map(L => {
       const voci = [], P = L.piu;
-      const voce = (chiave, testo, ok, stato) => voci.push({ chiave, testo, fatto: !!ok, stato: ok ? FATTO : stato });
+      const voce = (chiave, testo, ok, stato, extra) => voci.push({ chiave, testo, fatto: !!ok, stato: ok ? FATTO : stato, ...(extra || {}) });
       for (const [k, t] of Object.entries(L.sv)) {
         const q = quanti[k];
-        voce(k, SV_NOMI[k], q != null && q >= t, q == null ? (k === 'bonus' ? 'dati Amway non arrivati' : 'non lo so') : k === 'bonus' ? `${formato(q, 0)}% su ${t}%` : `${q} su ${t}`);
-      }
-      if (P.core) voce('core', 'Core', core, 'nel percorso sopra');   // i suoi passi sono in Leader Core
-      if (P.linee) {
-        const al = noto ? conBonus(P.linee.al) : null;
-        voce('linee', `${P.linee.quante} linee al ${P.linee.al}%`, noto && al >= P.linee.quante, noto ? `${al} su ${P.linee.quante}` : '—');
-        // a Leaders Club: le segna a mano l'Admin (tabella linee_leaders_club, 30/09); `lcLinee` = i codici già segnati
-        const lc = (lcLinee || []).filter(id => (linee || []).some(x => x.partner_id === id)).length;
-        voce('lineeLc', `di cui ${P.linee.lc} a Leaders Club`, lc >= P.linee.lc, lc ? `${lc} su ${P.linee.lc}` : 'da segnare');
+        let ok = q != null && q >= t;
+        let sub = null;
+        if (k === 'lineeBonus' && P.linee) {
+          // Executive (Ignazio 04/10): sotto «Linee riceventi Bonus», quante sono già al 6% (almeno 3) e quante sono Leaders Club (almeno 2, le segna l'Admin)
+          const al = noto ? conBonus(P.linee.al) : null;
+          const lc = (lcLinee || []).filter(id => (linee || []).some(x => x.partner_id === id)).length;
+          sub = [{ chiave: 'linee', testo: `di cui al ${P.linee.al}%`, ok: noto && al >= P.linee.quante, stato: noto ? `${al} su ${P.linee.quante}` : '—', q: al, t: P.linee.quante },
+            { chiave: 'lineeLc', testo: 'di cui Leaders Club', ok: lc >= P.linee.lc, stato: lc ? `${lc} su ${P.linee.lc}` : 'da segnare', q: lc, t: P.linee.lc }];
+          ok = ok && sub.every(x => x.ok);   // la voce è fatta solo con le sue due righe
+        }
+        voce(k, SV_NOMI[k], ok, q == null ? (k === 'bonus' ? 'dati Amway non arrivati' : 'non lo so') : k === 'bonus' ? `${formato(q, 0)}% su ${t}%` : `${q} su ${t}`, { q, t });
+        if (sub) for (const x of sub) voce(x.chiave, x.testo, x.ok, x.stato, { q: x.q, t: x.t, sotto: true });
       }
       if (P.mesi21) voce('mesi21', `${P.mesi21} mesi di fila al 21%`, mesi21 != null && mesi21 >= P.mesi21, mesi21 == null ? 'non lo so' : `${mesi21} su ${P.mesi21}`);
       const fatto = voci.every(v => v.fatto);
       return { chiave: L.chiave, titolo: L.titolo, sotto: L.sotto, fatto, voci,
-        stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto).length} su ${voci.length}` };
+        stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto && !v.sotto).length} su ${voci.filter(v => !v.sotto).length}` };
     });
     // i passi solo per il prossimo traguardo: il primo livello non fatto SOPRA il più alto raggiunto (chi è Argento guarda
     // al Platino anche se l'Executive, con «da segnare», non si accende)
@@ -507,6 +510,17 @@
     return { righe, doveSei: fatti.length ? fatti[fatti.length - 1].titolo : null, noto, linee: attive.map(x => ({ partner_id: x.partner_id, nome: x.nome })) };
   }
 
+  // «Il più vicino» (Ignazio 04/10): tra Leader 1° livello, Core e Pacesetter, quello a cui mancano meno passi (a parità, quello più avanti, poi l'ordine di sempre).
+  // Un gradino non ancora letto (`pronto` falso, il Core senza dati) non si sceglie. Torna il gradino o null (tutti fatti).
+  function piuVicino(gradini) {
+    const aperti = (gradini || []).filter(g => !g.fatto && g.pronto && g.totale);
+    if (!aperti.length) return null;
+    return aperti.reduce((a, b) => {
+      const ma = a.totale - a.fatti, mb = b.totale - b.fatti;
+      return mb < ma || (mb === ma && b.fatti / b.totale > a.fatti / a.totale) ? b : a;
+    });
+  }
+
   function segniVitali({ giorni, obiettivi, oggi, segniAl }) {
     const dati = prepara(giorni, obiettivi, oggi, segniAl);
     const perMese = {};
@@ -534,7 +548,7 @@
     return { nome: r.titolo, mancano: r.passi.map(x => x.testo) };
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, livelli, prossimoTraguardo };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, piuVicino, livelli, prossimoTraguardo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);

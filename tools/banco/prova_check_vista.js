@@ -254,42 +254,24 @@ prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Am
   ctx.visto = () => ({ id: 'io' });
 });
 
-prova('La card «Il tuo Check» della Dashboard (Ignazio 27/09): le stesse luci del Check, una riga su dove sei, l\'invito ad aprire', () => {
-  Object.assign(ctx, { vediTutti: () => false, nomeDi: p => String(p.nome_cognome || p.nome || ''), limitato: () => false });
-  esegui(`CK.di = 'io'; CK.meseCard = null; CK.obiettivi[1].vpp_amway = 120;`);
-  let h = esegui('cardCheckHtml()');
-  assert.match(h, /<b>Il tuo Check<\/b><small>il tuo percorso · settembre<\/small>/);
-  assert.match(h, /<span class="luce vp on "><i>✓<\/i>100 VP<small>120,00<\/small><\/span>/);   // la luce del Check, uguale
-  assert.match(h, /<span class="pc-apri">Apri il Check: CORE, Pacesetter e i livelli<em>›<\/em><\/span>/);
-  assert.match(h, /<span class="pc-riga ok">✓ Leader 1° livello · CORE /);
-  esegui(`CK.obiettivi[1].vpp_amway = 40;`);
-  assert.match(esegui('cardCheckHtml()'), /<span class="pc-riga ">Leader 1° livello 3 su 4 · manca 100 VP<\/span>/);
-  esegui(`CK.obiettivi[1].vpp_amway = 120; CK.di = 'altro';`);
-  assert.match(esegui('cardCheckHtml()'), /<span class="pc-riga attesa">Leggo il percorso…<\/span>/);   // i dati di un'altra persona: si aspetta
-  ctx.visto = () => ({ id: 'isa', nome: 'Isabella Sammito' });
-  assert.match(esegui('cardCheckHtml()'), /<b>Il Check di Isabella<\/b><small>il suo percorso · settembre<\/small>/);
-  ctx.visto = () => ({ id: 'io' });
-  esegui(`CK.di = 'io';`);
-});
-
-prova('Executive, «di cui 2 a Leaders Club» (Ignazio 30/09): l\'Admin apre l\'elenco e spunta le linee, gli altri leggono solo il conto', () => {
+prova('Executive, «di cui Leaders Club» (Ignazio 30/09; sotto «Linee riceventi Bonus» dal 04/10): l\'Admin apre l\'elenco e spunta le linee, gli altri leggono solo il conto', () => {
   ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
   esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'GIAVATTO, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'CILIA, ALBERTO' }],
     volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 }, { partner_id: 'B', mese: 202609, vpp: 116, bonus: 0 }] };
     CK.nonOra = []; CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('elc'); CK.lcLinee = [{ partner_id: 'A', mese: 202609 }, { partner_id: 'B', mese: 202608 }];`);
   const voci = () => { const h = disegna(); return h.slice(h.indexOf('data-gradino="elc"'), h.indexOf('data-gradino="arg"')); };
   // una persona qualsiasi: solo il conto (una segnata a settembre; quella di agosto non conta)
-  assert.match(voci(), /<div class=""><span>di cui 2 a Leaders Club<\/span><span>1 su 2<\/span><\/div>/);
+  assert.match(voci(), /<div class=" sottovoce"><span>di cui Leaders Club<\/span><span>1 su 2<\/span><\/div>/);
   assert.doesNotMatch(voci(), /data-lcapri/);
   // l'Admin: la voce è un tocco che apre l'elenco delle linee attive, con la spunta su chi è già segnato
   ctx.ST.utente.ruolo = 'Admin';
-  assert.match(voci(), /<button class="lc-apri" data-lcapri aria-expanded="false">di cui 2 a Leaders Club ›<\/button><span>1 su 2<\/span>/);
+  assert.match(voci(), /<button class="lc-apri" data-lcapri aria-expanded="false">di cui Leaders Club ›<\/button><span>1 su 2<\/span>/);
   assert.doesNotMatch(voci(), /data-lc="A"/);
   esegui(`CK.lcAperto = true;`);
   assert.match(voci(), /<button class="su" data-lc="A" data-mese="202609" aria-pressed="true">✓ Simone Giavatto<\/button><button class="" data-lc="B" data-mese="202609" aria-pressed="false">Alberto Cilia<\/button>/);
   // con 2 linee segnate la voce si accende
   esegui(`CK.lcLinee.push({ partner_id: 'B', mese: 202609 });`);
-  assert.match(voci(), /<div class="ok"><button class="lc-apri" data-lcapri aria-expanded="true">✓ di cui 2 a Leaders Club ⌄<\/button><span>fatto<\/span>/);
+  assert.match(voci(), /<div class="ok sottovoce"><button class="lc-apri" data-lcapri aria-expanded="true">✓ di cui Leaders Club ⌄<\/button><span>fatto<\/span>/);
   delete ctx.ST.utente.ruolo;
   esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear(); CK.lcLinee = []; CK.lcAperto = false;`);
   ctx.visto = () => ({ id: 'io' });

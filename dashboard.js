@@ -195,7 +195,7 @@
 
   // Un riquadro: numero, %, quanto manca, quanto serve al giorno; oltre l'obiettivo complimento + nuovo traguardo
   function riquadro(def, numero, obiettivo, giorni, indice) {
-    const r = { titolo: def.titolo, numero: formato(numero, def.decimali), righe: [], raggiunto: false, senzaGiorno: !!def.senzaGiorno };
+    const r = { titolo: def.titolo, campo: def.obiettivo, numero: formato(numero, def.decimali), righe: [], raggiunto: false, senzaGiorno: !!def.senzaGiorno };   // `campo` = la colonna degli obiettivi (per accostare il mese scorso)
     if (!n(obiettivo)) { r.righe = ['Obiettivo da impostare']; r.senzaObiettivo = true; return r; }
     const perc = numero / obiettivo * 100;
     const manca = obiettivo - numero;
@@ -415,6 +415,17 @@
       .sort((x, y) => (y.diretto - x.diretto) || String(x.nome).localeCompare(String(y.nome), 'it'));
   }
 
+  // Le parole per il mese scorso (Ignazio 04/10, «parole e soglie perfette»; mai «mancato»): Raggiunto (100% o più, «Superato» se oltre) ·
+  // Quasi (dall'80%) · A metà strada (dal 50%) · Lontano (sotto il 50%). Torna { parola, livello }: livello per il colore (ok · quasi · meta · lontano).
+  function parolaRisultato(fatto, obiettivo) {
+    const f = n(fatto), o = n(obiettivo);
+    if (!(o > 0)) return { parola: '', livello: 'senza' };
+    const r = f / o;
+    if (r >= 1) return { parola: f > o ? 'Superato' : 'Raggiunto', livello: 'ok' };
+    if (r >= 0.8) return { parola: 'Quasi', livello: 'quasi' };
+    if (r >= 0.5) return { parola: 'A metà strada', livello: 'meta' };
+    return { parola: 'Lontano', livello: 'lontano' };
+  }
   // Confronto obiettivo-risultato di un mese (Ignazio 01/10, «a fine mese»): per ogni obiettivo scritto, quanto si è fatto davvero. `risultati` = `risultatiMese`
   // (Check, file Amway, persone), `amway` = `risultatiAmway` di quel mese (iscritti, prime linee, linee riceventi Bonus, totale gruppo, 15 Planner): per gli iscritti vale
   // il più alto dei due, per le quattro della squadra conta il file Amway (stessa unione della scelta «Risultati» del foglio). Null se quel mese non ha obiettivi.
@@ -432,7 +443,7 @@
         const ob = n(obiettivo[k]);
         if (!(ob > 0)) continue;
         const fatto = n(ris[k]);
-        righe.push({ k, etichetta, obiettivo: ob, fatto, perc: Math.round(fatto / ob * 100), raggiunto: fatto >= ob });
+        righe.push({ k, etichetta, obiettivo: ob, fatto, perc: Math.round(fatto / ob * 100), raggiunto: fatto >= ob, ...parolaRisultato(fatto, ob) });
       }
       if (righe.length) gruppi.push({ nome, pallino, righe });
     }
@@ -548,7 +559,7 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

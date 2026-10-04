@@ -10,12 +10,12 @@ async function apriCoreMese(mese, da) {
   CM.mese = mese || CM.mese || MB21Coda.oggiRoma().slice(0, 7);
   caricaJsPdf().catch(() => {});   // pronta prima del tocco su «Condividi PDF» (il menu di condivisione vuole il tocco «fresco»)
   const titolo = () => `${MB21Rubrica.MESI[Number(CM.mese.slice(5, 7)) - 1]} ${CM.mese.slice(0, 4)}`;
-  const testa = () => `<button class="indietro" id="cm-indietro">‹ ${CM.da === 'check' ? 'Check' : 'MB Plan'}</button>
+  const testa = () => `<button class="indietro" id="cm-indietro">‹ ${CM.da === 'check' ? 'Check' : CM.da === 'oggi' ? 'Dashboard' : 'MB Plan'}</button>
     <div class="cm-testa"><button class="freccia" id="cm-prima" aria-label="Mese prima">‹</button><h1>${ic('crescita')} Modulo Core</h1><button class="freccia" id="cm-dopo" aria-label="Mese dopo">›</button></div>
     <div class="cm-mese">${esc(titolo())}${aNome() ? esc(aNome()) : ''}</div>`;
   app.innerHTML = `${testa()}<div class="vuoto">Compilo il modulo…</div>`;
   const collegaTesta = () => {
-    document.getElementById('cm-indietro').onclick = () => { ST.tab = CM.da === 'check' ? 'check' : 'agenda'; CM.da = 'agenda'; mostraTab(); };
+    document.getElementById('cm-indietro').onclick = () => { ST.tab = CM.da === 'check' ? 'check' : CM.da === 'oggi' ? 'oggi' : 'agenda'; CM.da = 'agenda'; mostraTab(); };
     document.getElementById('cm-prima').onclick = () => apriCoreMese(MB21Agenda.spostaGiorno(CM.mese + '-01', -1).slice(0, 7));
     document.getElementById('cm-dopo').onclick = () => apriCoreMese(MB21Agenda.spostaGiorno(CM.mese + '-01', 32).slice(0, 7));
   };
@@ -60,7 +60,7 @@ function moduloCoreHtml(m) {
     <div class="cm-riga"><span>Totale VP prodotti dal consumo personale</span>${m.s2.auto ? `<b class="cm-auto">${num(m.s2.vp)}</b>` : `<input class="cm-num larga" id="cm-vp-consumo" inputmode="decimal" value="${num(m.s2.vp)}" placeholder="VP">`}</div>
     <div class="vn-aiuto">${m.s2.auto ? `VP personali Amway ${num(m.s2.vpAmway)} − VP venduti ai clienti ${num(m.s2.vpClienti)}: quello che resta è consumo.` : 'Senza dati Amway del mese si scrive a mano: VP personali meno VP venduti ai clienti.'}</div>`, m.s2.vp != null && m.s2.vp > 0);
 
-  const s3 = sez(3, 'Servire almeno 10 clienti al mese [100-300 VP]', `
+  const s3 = sez(3, 'Sviluppa 100 VP (10 clienti)', `
     <div class="cm-conto"><b>${m.s3.quanti}</b>/${m.s3.obiettivo} clienti · <b>${num(m.s3.vp)}</b> VP</div>
     ${m.s3.righe.length ? `<table class="cm-tab"><thead><tr><th></th><th>Nome cliente</th><th class="r">Valore Punti</th></tr></thead><tbody>
       ${m.s3.righe.map((r, i) => `<tr><td>${i + 1}</td><td class="nome">${esc(r.nome)}</td><td class="r">${num(r.vp)}</td></tr>`).join('')}

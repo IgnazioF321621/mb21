@@ -411,4 +411,14 @@ prova('Efficacia: contatti per PM e PM per iscritto veri, ultimi 6 mesi (un part
   assert.deepEqual(D.efficaciaDi([], '2026-10-01'), { contatti: 0, pm: 0, iscritti: 0, contattiPerPm: null, pmPerIscritto: null });
 });
 
+prova('Le parole del mese scorso (Ignazio 04/10): Raggiunto · Superato · Quasi (dall\'80%) · A metà strada (dal 50%) · Lontano; mai «mancato»', () => {
+  const w = (f, o) => D.parolaRisultato(f, o).parola;
+  assert.deepEqual([w(100, 100), w(120, 100), w(80, 100), w(79, 100), w(50, 100), w(49, 100), w(0, 100)], ['Raggiunto', 'Superato', 'Quasi', 'A metà strada', 'A metà strada', 'Lontano', 'Lontano']);
+  assert.equal(D.parolaRisultato(5, 0).livello, 'senza');   // senza obiettivo non si giudica
+  assert.deepEqual([D.parolaRisultato(100, 100).livello, D.parolaRisultato(85, 100).livello, D.parolaRisultato(60, 100).livello, D.parolaRisultato(10, 100).livello], ['ok', 'quasi', 'meta', 'lontano']);
+  // le righe del confronto portano la parola
+  const c = D.confrontoMese({ obiettivo: { mese: '2026-09-01', vpg: 1000, contatti: 60 }, risultati: { vpg: 850, contatti: 71 }, amway: null });
+  assert.deepEqual(c.gruppi.flatMap(g => g.righe).map(r => [r.k, r.parola]), [['vpg', 'Quasi'], ['contatti', 'Superato']]);
+});
+
 console.log(`\n${ok} prove superate`);

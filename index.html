@@ -367,6 +367,47 @@
   .ag-blocco.tracce small { display: block; color: var(--grigio); font-size: 13px; font-weight: 400; margin-top: 2px; }
   /* Righe «Contatti del giorno» e «Da catalogare» che si aprono e si chiudono (Ignazio 24/09) */
   /* Titolo di zona (Ignazio 28/09): «Oggi · ti restano 2 cose», «Il mio mese» */
+  /* ── La Dashboard «a livelli» (Pagine 040, Ignazio 04/10): tessere del primo livello, elenco delle persone, card delle aree, gradini del traguardo ── */
+  .lv-dom { margin: 20px 2px 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-tenue); }
+  .lv-tile { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: var(--superficie); border-radius: 18px; padding: 16px 14px; margin-bottom: 10px; font-family: inherit; color: var(--testo); box-shadow: var(--ombra-card); min-height: var(--tocco); }
+  .lv-tile.blu { box-shadow: 0 0 0 2px var(--c) inset; }
+  .lv-tile.ghost { opacity: .5; }
+  .lv-ic { width: 50px; height: 50px; border-radius: 16px; background: var(--t); color: var(--c); display: grid; place-items: center; flex: none; }
+  .lv-ic svg.ic { width: 26px; height: 26px; }
+  .lv-testo { flex: 1; min-width: 0; } .lv-testo b { display: block; font-size: 17px; }
+  .lv-testo small { display: block; margin-top: 3px; font-size: 13px; color: var(--testo-soft); line-height: 1.3; }
+  .lv-dx { display: flex; align-items: center; gap: 8px; } .lv-dx em { font-style: normal; font-size: 22px; color: var(--testo-tenue); }
+  .lv-n { font-style: normal; background: var(--c); color: #fff; font-weight: 700; font-size: 13px; min-width: 24px; height: 24px; border-radius: 12px; display: grid; place-items: center; padding: 0 7px; }
+  .lv-pic { display: flex; gap: 10px; margin: 6px 0 14px; }
+  .lv-pic button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1.5px solid var(--bordo); border-radius: 14px; padding: 12px; font: 600 14px var(--font); color: var(--testo-soft); min-height: var(--tocco); }
+  .lv-pic svg.ic { width: 18px; height: 18px; }
+  .lv-persona { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: var(--superficie); border-radius: var(--raggio-riga); padding: 10px 12px; margin: 0 0 6px; font-family: inherit; color: var(--testo); min-height: var(--tocco); }
+  .lv-persona.fatta { opacity: .65; }
+  .lv-persona .rc-pastiglia { flex: none; } .lv-persona.fatta .rc-pastiglia { color: var(--ok); background: var(--ok-tinta); }
+  .lv-pt { flex: 1; min-width: 0; } .lv-pt b { display: block; font-size: 15px; } .lv-pt small { display: block; color: var(--testo-soft); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lv-persona em { font-style: normal; font-size: 20px; color: var(--testo-tenue); }
+  .lv-chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--cat-partner-tinta); color: var(--cat-partner); border-radius: 8px; padding: 2px 8px; margin: 2px 0 6px; }
+  .lv-area { display: block; width: 100%; text-align: left; background: var(--superficie); border: 0; border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 14px; margin: 0 0 10px; font-family: inherit; color: var(--testo); }
+  .lv-area-t { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; } .lv-area-t b { font-size: 15px; }
+  .lv-pill { font-size: 12px; font-weight: 700; color: var(--testo); background: var(--sfondo); border: 1px solid var(--bordo); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+  .lv-voce { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 14px; } .lv-voce span { color: var(--testo-soft); } .lv-voce small { color: var(--testo-tenue); font-weight: 500; }
+  .lv-area .dm-barra, .dm-corpo .dm-barra { margin-top: 5px; }
+  .lv-frase { display: block; margin-top: 10px; font-size: 13px; color: var(--testo-soft); }
+  .lv-frase-area { margin: 8px 2px 12px; }
+  .lv-prima { display: block; margin-top: 6px; color: var(--testo-soft); font-size: 12.5px; }
+  .lv-ok { color: var(--ok); } .lv-quasi { color: var(--proposta); } .lv-meta { color: var(--gr-azione); } .lv-lontano { color: var(--pericolo); }
+  .lv-grad { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--superficie); border: 0; border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 14px; margin: 0 0 8px; font-family: inherit; color: var(--testo); }
+  .lv-grad.vicino { box-shadow: 0 0 0 2px var(--gr-crescita) inset; }
+  .lv-grad.fatto .lv-gt b { color: var(--ok); }
+  .lv-tick { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--bordo); flex: none; display: grid; place-items: center; color: var(--ok); } .lv-grad.fatto .lv-tick { border-color: var(--ok); }
+  .lv-tick svg.ic { width: 16px; height: 16px; }
+  .lv-gt { flex: 1; min-width: 0; } .lv-gt b { font-size: 16px; } .lv-gt small { display: block; color: var(--testo-soft); font-size: 12.5px; margin-top: 2px; }
+  .lv-gt .lv-chip { margin-left: 8px; background: var(--gr-crescita-tinta); color: var(--gr-crescita); }
+  .lv-prog { display: block; height: 6px; border-radius: 3px; background: var(--bordo); margin-top: 8px; overflow: hidden; } .lv-prog i { display: block; height: 100%; background: var(--testo-tenue); border-radius: 3px; }
+  .lv-grad.vicino .lv-prog i { background: var(--gr-crescita); } .lv-grad.fatto .lv-prog i { background: var(--ok); }
+  .lv-gn { font-weight: 700; color: var(--testo-soft); }
+  .lv-lista { padding: 4px 12px; }
+  .ck-lc1 .voci div.sottovoce { padding-left: 22px; font-size: 12.5px; }
   .zona-oggi { margin: 22px 2px 6px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-tenue); }
   .zona-oggi span { display: inline; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--testo-soft); white-space: nowrap; }
   .zona-oggi svg.ic { width: 16px; height: 16px; vertical-align: -3px; }
@@ -1776,20 +1817,9 @@
   .ck-lc1 .ck-modulo { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 9px 12px; border: 1px solid var(--bordo); border-radius: var(--raggio-bottone);
     background: var(--superficie-2); color: var(--blu); font: inherit; font-size: 14px; font-weight: 700; text-align: left; }
   .ck-lc1 .ck-modulo > span { margin-left: auto; font-size: 18px; line-height: 1; }
-  /* la card «Il tuo Check» in Dashboard (27/09): azzurro chiaro N21, le stesse luci del Check, un invito esplicito in fondo */
-  .pc-card { display: block; width: 100%; text-align: left; border: 1px solid var(--pc-bordo, #C9DDF6); background: var(--pc-sfondo, #EAF3FD); border-radius: var(--raggio-card); padding: 14px 14px 12px; margin: 12px 0; font: inherit; color: var(--testo); box-shadow: var(--ombra-card); }
-  .pc-testa { display: flex; align-items: center; gap: 8px; color: var(--blu); }
-  .pc-testa > span { display: flex; align-items: baseline; gap: 8px; flex: 1; } .pc-testa b { font-size: 17px; } .pc-testa small { margin-left: auto; color: var(--testo-soft); font-size: 13px; }
-  .pc-dentro { display: block; background: none; box-shadow: none; border: 0; padding: 0; margin: 0; }
-  .pc-dentro .luci { margin: 10px 0 8px; } .pc-dentro .luce { background: var(--superficie); }
-  .pc-riga { display: block; font-size: 13.5px; font-weight: 600; color: var(--proposta); margin-top: 6px; } .pc-riga.ok { color: var(--ok); } .pc-riga.attesa { color: var(--testo-soft); font-weight: 500; }
-  .pc-apri { display: flex; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--pc-bordo, #C9DDF6); font-size: 14px; font-weight: 700; color: var(--blu); }
-  .pc-apri em { margin-left: auto; font-style: normal; font-size: 20px; line-height: 1; }
   /* «IL MIO MESE», un riquadro solo: sopra «Dove sono» (i numeri), sotto «Dove vado» (il percorso) — Ignazio 28/09 */
   .mese-card { padding: 14px; }
   .mese-t { display: block; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 8px; }
-  .pc-card.dentro { background: none; border: 0; box-shadow: none; border-radius: 0; padding: 14px 0 0; margin: 14px 0 0; border-top: 1px solid var(--linea); }
-  .pc-card.dentro .pc-apri { margin-top: 12px; padding: 12px 14px; border: 0; border-radius: var(--raggio-riga); background: var(--accento); color: var(--accento-su); }
   .dm-corpo { padding-bottom: 6px; }
   .dm-riga { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: baseline; padding: 6px 0 4px; }
   .dm-riga .n { font-size: 14px; font-weight: 700; }
@@ -2639,7 +2669,7 @@ function mostraTab() {
     b.onclick = () => {
       if (b.dataset.tab === 'progetti') { ST.tab = 'progetti'; LS.ritorno = null; return mostraTab(); }
       if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined') { if (AG.vista === 'progetto') AG.vista = null; AG.giorno = null; }   // il tab «MB Plan» apre su oggi (Ignazio 04/10, nota 021)
-      eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; mostraTab();
+      eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; if (ST.tab === 'oggi') vaiAlPrimoLivello(); mostraTab();
     };
   });
   if (progetti && typeof vediProgetti === 'function' && vediProgetti()) { const apre = apriProgetti(); accendiTab(); return apre; }   // acceso subito, non a caricamento finito
@@ -3797,8 +3827,8 @@ function lc1Html(oggi) {
 const vociHtml = (voci, lv) => `<div class="voci">${voci.map(v => {
   const t = `${v.fatto ? '✓ ' : ''}${esc(v.testo)}`;
   // «di cui 2 a Leaders Club»: l'Admin apre l'elenco delle linee e spunta chi lo è (30/09); gli altri leggono solo il conto
-  if (v.chiave === 'lineeLc' && lv && lv.segnaLc) return `<div class="${v.fatto ? 'ok' : ''}"><button class="lc-apri" data-lcapri aria-expanded="${CK.lcAperto}">${t} ${CK.lcAperto ? '⌄' : '›'}</button><span>${esc(v.stato)}</span></div>${CK.lcAperto ? `<div class="lc-scelta"><small>Chi è già Leaders Club, in questo mese</small>${lv.linee.map(x => { const su = CK.lcLinee.some(y => y.partner_id === x.partner_id && y.mese === lv.mese); return `<button class="${su ? 'su' : ''}" data-lc="${esc(x.partner_id)}" data-mese="${lv.mese}" aria-pressed="${su}">${su ? '✓ ' : ''}${esc(x.nome)}</button>`; }).join('') || '<small>Nessuna linea attiva</small>'}</div>` : ''}`;
-  return `<div class="${v.fatto ? 'ok' : ''}"><span>${t}</span><span>${esc(v.stato)}</span></div>`;
+  if (v.chiave === 'lineeLc' && lv && lv.segnaLc) return `<div class="${v.fatto ? 'ok' : ''}${v.sotto ? ' sottovoce' : ''}"><button class="lc-apri" data-lcapri aria-expanded="${CK.lcAperto}">${t} ${CK.lcAperto ? '⌄' : '›'}</button><span>${esc(v.stato)}</span></div>${CK.lcAperto ? `<div class="lc-scelta"><small>Chi è già Leaders Club, in questo mese</small>${lv.linee.map(x => { const su = CK.lcLinee.some(y => y.partner_id === x.partner_id && y.mese === lv.mese); return `<button class="${su ? 'su' : ''}" data-lc="${esc(x.partner_id)}" data-mese="${lv.mese}" aria-pressed="${su}">${su ? '✓ ' : ''}${esc(x.nome)}</button>`; }).join('') || '<small>Nessuna linea attiva</small>'}</div>` : ''}`;
+  return `<div class="${v.fatto ? 'ok' : ''}${v.sotto ? ' sottovoce' : ''}"><span>${t}</span><span>${esc(v.stato)}</span></div>`;
 }).join('')}</div>`;
 
 // «I prossimi passi» del livello (Ignazio 27/09): al massimo 2, coi nomi; «Non ora» su una linea la toglie per questo mese
@@ -3889,61 +3919,18 @@ async function caricaCoreCheck(mese) {
   if (ST.tab === 'oggi' && visto().id === chi) aggiornaCardCheck();   // la card «Il tuo Check» della Dashboard (27/09)
 }
 
-// ── La card «Il tuo Check» della Dashboard (Ignazio 27/09): una finestra sul percorso del mese in corso, che porta al Check.
-// La Dashboard fa vedere, il Check spiega: qui solo le 4 luci (le stesse del Check) e una riga su dove sei; il resto è dentro.
-// I dati arrivano dopo la Dashboard (caricaDatiCheck, gli stessi del Check), così la Dashboard non aspetta.
-// `dentro` (Ignazio 28/09): dentro il riquadro «Il mio mese» la card non ha la sua testata,
-// perché è la metà «Dove vado» di quel riquadro; da sola (com'era) tiene la testata «Il tuo Check».
-function cardCheckHtml(dentro) {
-  const oggi = MB21Coda.oggiRoma(), mese = oggi.slice(0, 8) + '01';
-  const io = visto().id === ST.utente.id, nome = vediTutti() ? '' : nomeDi(visto()).split(/\s+/)[0];
-  const titolo = vediTutti() ? 'Il Check di tutti' : io || !nome ? 'Il tuo Check' : `Il Check di ${esc(nome)}`;
-  const pronto = CK.giorni && CK.di === (vediTutti() ? 'tutti' : visto().id);
-  let corpo = '';
-  if (!vediTutti()) {
-    if (!pronto) corpo = `<span class="pc-riga attesa">Leggo il percorso…</span>`;
-    else if (CK.lc1) {
-      const l = MB21Check.lc1({ mese, oggi, obiettivi: CK.obiettivi, biglietti: CK.lc1.biglietti, cep: CK.lc1.cep, eventi: CK.eventi });
-      if (!l.prima) {
-        const { core, pc, lv } = statoPercorso(l);
-        const elenco = xs => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`);
-        let riga, ok = l.fatto;
-        if (!l.fatto) riga = `Leader 1° livello ${l.accese} su 4 · ${l.mancano.length === 1 ? 'manca' : 'mancano'} ${elenco(l.mancano)}`;
-        else {
-          const g2 = pc.gradini[1], pezzi = ['✓ Leader 1° livello', `CORE ${core && core.modulo ? g2.stato : '…'}`];
-          if (lv) {
-            const ultimo = lv.righe.reduce((u, r, i) => (r.fatto ? i : u), -1), dopo = lv.righe.slice(ultimo + 1).find(r => !r.fatto);
-            if (lv.doveSei) pezzi.push(`✓ ${lv.doveSei}`);
-            if (dopo) pezzi.push(`${dopo.titolo} ${dopo.stato}`);
-          }
-          riga = pezzi.join(' · ');
-        }
-        corpo = `<span class="ck-lc1 pc-dentro"><span class="luci">${l.luci.map(x => `<span class="luce ${x.chiave} ${x.ok ? 'on' : ''} ${x.ignoto ? 'ignoto' : ''}"><i>${x.ok ? '✓' : x.ignoto ? '?' : ''}</i>${esc(x.titolo)}<small>${esc(x.testo)}</small></span>`).join('')}</span></span>
-          <span class="pc-riga ${ok ? 'ok' : ''}">${esc(riga)}</span>`;
-      }
-    }
-  }
-  const mm = MB21Report.testoPeriodo(MB21Report.periodoMese(oggi)).split(' ')[0].toLowerCase();
-  return `<button class="pc-card${dentro === true ? ' dentro' : ''}" id="ds-visione">
-    ${dentro === 'fuori' ? '' : dentro ? `<span class="mese-t">${vediTutti() ? 'Dove vanno' : io || !nome ? 'Dove vado' : `Dove va ${esc(nome)}`}</span>`
-      : `<span class="pc-testa">${ic('crescita')}<span><b>${titolo}</b><small>${vediTutti() ? 'i numeri di tutti' : io ? 'il tuo percorso' : 'il suo percorso'} · ${esc(mm)}</small></span></span>`}
-    ${corpo}
-    <span class="pc-apri">${vediTutti() ? 'Apri il Check: i numeri del periodo' : 'Apri il Check: CORE, Pacesetter e i livelli'}<em>›</em></span></button>`;
-}
+// ── I dati del percorso per i livelli della Dashboard (Pagine 040): gli stessi del Check, letti dopo la Dashboard così non la fanno aspettare.
+// Quando arrivano (o quando arriva il Modulo Core) si ridisegna il livello che ne ha bisogno: la tessera «Qual è il mio prossimo traguardo?» e la sua pagina.
 function aggiornaCardCheck() {
-  const posto = document.getElementById('ds-card-check');
-  if (!posto) return;
-  posto.innerHTML = cardCheckHtml('fuori');   // in Dashboard è un blocco suo, «Dove vado», col titolo fuori dalla card (01/10)
-  const b = document.getElementById('ds-visione');
-  if (b) b.onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };   // la pagina Check (apriCheck è il Check del Giorno)
+  if (ST.tab !== 'oggi' || ST.vistaCatalogo || !['home', 'traguardo', 'gradino'].includes(LV.vista)) return;
+  disegnaOggi();
 }
 // dopo la Dashboard: i dati del Check, se non ci sono già per la persona che si guarda
 async function caricaCardCheck() {
   if (vediTutti() || limitato() || ST.offline) return;
   const di = visto().id;
-  if (!(CK.giorni && CK.di === di)) {
-    try { await caricaDatiCheck(); } catch (e) { return; }   // senza: la card resta con «Apri il Check»
-  }
+  if (CK.giorni && CK.di === di) return;   // già letti: la Dashboard li ha usati subito
+  try { await caricaDatiCheck(); } catch (e) { return; }   // senza: la tessera resta con «Leggo il percorso…»
   if (ST.tab === 'oggi' && visto().id === di) aggiornaCardCheck();
 }
 
@@ -3977,18 +3964,7 @@ function collegaCheck() {
   su('ck-dopo', () => sposta(1));
   const meseCard = n => { CK.meseCard = R.spostaMese(CK.meseCard || oggi.slice(0, 8) + '01', n); disegnaCheck(); };   // il mese della card, da solo (Ignazio 27/09)
   su('ck-mese-prima', () => meseCard(-1));
-  app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
-  // «Non ora» su un passo e ↺ per riprenderlo (Ignazio 27/09): una riga in passi_non_ora per il mese della card, a nome di chi si guarda
-  app.querySelectorAll('[data-nonora], [data-riprendi]').forEach(b => b.onclick = async () => {
-    const pid = b.dataset.nonora || b.dataset.riprendi, mese = Number(b.dataset.mese), uid = visto().id;
-    b.disabled = true;
-    const { error } = b.dataset.nonora
-      ? await dbq('«Non ora»', supa.from('passi_non_ora').insert({ user_id: uid, partner_id: pid, mese }))
-      : await dbq('riprendi il passo', supa.from('passi_non_ora').delete().eq('user_id', uid).eq('partner_id', pid).eq('mese', mese));
-    if (error) { b.disabled = false; mostraToast('Non riesco a salvare: riprova'); return; }
-    CK.nonOra = b.dataset.nonora ? [...CK.nonOra, { partner_id: pid, mese }] : CK.nonOra.filter(x => !(x.partner_id === pid && x.mese === mese));
-    disegnaCheck();
-  });
+  collegaPercorso(disegnaCheck);
   su('ck-mese-dopo', () => meseCard(1));
   // le linee a Leaders Club, a mano dell'Admin (30/09): il tocco apre l'elenco, ogni nome si spunta e si toglie
   app.querySelectorAll('[data-lcapri]').forEach(b => b.onclick = () => { CK.lcAperto = !CK.lcAperto; disegnaCheck(); });
@@ -4005,6 +3981,22 @@ function collegaCheck() {
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
 }
 
+// I legami di «Per te: …», dei passi e di «Non ora»: gli stessi nel Check e nei livelli della Dashboard (`ridisegna` = chi li ha aperti)
+function collegaPercorso(ridisegna) {
+  app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
+  // «Non ora» su un passo e ↺ per riprenderlo (Ignazio 27/09): una riga in passi_non_ora per il mese della card, a nome di chi si guarda
+  app.querySelectorAll('[data-nonora], [data-riprendi]').forEach(b => b.onclick = async () => {
+    const pid = b.dataset.nonora || b.dataset.riprendi, mese = Number(b.dataset.mese), uid = visto().id;
+    b.disabled = true;
+    const { error } = b.dataset.nonora
+      ? await dbq('«Non ora»', supa.from('passi_non_ora').insert({ user_id: uid, partner_id: pid, mese }))
+      : await dbq('riprendi il passo', supa.from('passi_non_ora').delete().eq('user_id', uid).eq('partner_id', pid).eq('mese', mese));
+    if (error) { b.disabled = false; mostraToast('Non riesco a salvare: riprova'); return; }
+    CK.nonOra = b.dataset.nonora ? [...CK.nonOra, { partner_id: pid, mese }] : CK.nonOra.filter(x => !(x.partner_id === pid && x.mese === mese));
+    ridisegna();
+  });
+}
+
 // Il tocco su un consiglio o su un passo del percorso porta dove si fa (Ignazio, stella cometa; MB21Check: `vai`).
 // segni: per sé il Profilo con «I miei Segni vitali» aperto; guardando un altro partner la sua scheda (le targhette sono lì)
 async function vaiDalCheck(vai, pid) {
@@ -4012,7 +4004,7 @@ async function vaiDalCheck(vai, pid) {
   if (vai === 'scheda') return schedaDalCheck(pid);
   if (vai === 'segni' && !io) return schedaDalCheck(visto().partner_id);
   if (vai === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); vai = 'profilo'; }
-  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7), 'check');   // «‹ Check» per tornare
+  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7), ST.tab === 'oggi' ? 'oggi' : 'check');   // «‹ Check» (o «‹ Dashboard») per tornare
   ST.tab = vai; mostraTab(); window.scrollTo(0, 0);
 }
 // la scheda contatto di una linea (codice Amway), con lo stesso aggancio della Mappa; la freccia della scheda torna al Check
@@ -4024,7 +4016,7 @@ async function schedaDalCheck(pid) {
   }
   const sc = MB21Mappa.schedaDelPartner(r, MP.schede, visto().id);
   if (!sc) return mostraToast(`${r.nome || 'Questa persona'} non ha una scheda collegata nella lista: collegala dalla Mappa`);
-  apriContattoDa(sc.id, 'check');
+  apriContattoDa(sc.id, ST.tab === 'oggi' ? 'oggi' : 'check');
 }
 
 // ── MAPPA (Fase 8) ── la pagina è in pagina-mappa.js (albero, targhette, visione completa, lettura dei segni vitali)
