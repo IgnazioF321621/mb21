@@ -1331,19 +1331,7 @@ async function aggiungiPortatoDa(azioni) {
 }
 const rigaPortato = nome => nome ? `${ic('squadra')} Portato da ${esc(nome)}` : '';
 
-// Il passo dell'Avvio fatto in un incontro si spunta anche in «Il mio avvio» (cantiere 48, Ignazio 30/09): dopo l'esito di un Appuntamento · Avvio,
-// se il passo ha la sua riga (MB21Lista.passoAvvioDa) e non era già segnato, lo segna su contatti.onb_… Restituisce { col, nome } se l'ha segnato adesso
-// (serve per l'avviso e per Annulla), altrimenti null (passo senza riga, già segnato, senza rete: l'incontro si chiude lo stesso).
-async function spuntaAvvio(e, esito) {
-  const col = MB21Lista.passoAvvioDa(e.tipo_azione, e.modalita, esito);
-  if (!col || !e.contatto_id) return null;
-  const { data, error } = await dbq('passo dell\'avvio', supa.from('contatti').select(col).eq('id', e.contatto_id).maybeSingle());
-  if (error || !data || data[col] === true) return null;
-  const { error: e2 } = await dbq('segno il passo dell\'avvio', supa.from('contatti').update({ [col]: true }).eq('id', e.contatto_id));
-  if (e2) return null;
-  passoInCache(e.contatto_id, col, true);
-  return { col, nome: MB21Lista.PASSI_ONBOARDING.find(p => p[0] === col)[1] };
-}
+// (La spunta del passo dell'Avvio dopo l'esito di un incontro, cantiere 48, la fa ora la funzione `chiudi_azione` del database insieme alla chiusura: nota 045, 03/10.)
 // la scheda e l'elenco già letti restano allineati (senza rileggere)
 function passoInCache(contattoId, col, valore) {
   for (const r of [LS.contatto, ...(LS.righe || [])]) if (r && r.id === contattoId) r[col] = valore;
