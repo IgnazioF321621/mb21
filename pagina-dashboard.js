@@ -724,8 +724,8 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
-  // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento (registra_esito lo fa solo per quei due)
-  if (appuntamento && bottone.etichetta === 'Consulenza Prodotti') await dbq('esce dalla coda', supa.from('contatti').update({ rientro_il: null, in_coda_dal: null }).eq('id', id));
+  // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento: dal 04/10 lo fa
+  // `registra_esito` con la regola unica del rientro (applica_rientro, nota 030); prima qui c'era una scrittura in più dal telefono
   const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
   setTimeout(() => {
