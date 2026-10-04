@@ -1,8 +1,10 @@
 // MB21 — Service Worker (stesso schema di Zona Tracker)
 // Pagina e coda.js: prima la rete, poi la copia salvata (offline).
-// Libreria supabase-js da jsdelivr: prima la copia salvata.
+// Libreria supabase-js da jsdelivr: prima la copia salvata. La versione è fissa nell'indirizzo (index.html): così ogni telefono ha la stessa
+// e non resta ferma per sempre su quella della prima visita. Quando si cambia versione si cambia anche il nome della cache qui sotto:
+// le copie vecchie si cancellano e i telefoni prendono la nuova.
 // Le chiamate a *.supabase.co non passano di qui: sempre dalla rete.
-const CACHE = 'mb21-v1';
+const CACHE = 'mb21-v202610';
 
 self.addEventListener('install', () => self.skipWaiting());
 
