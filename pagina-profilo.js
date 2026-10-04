@@ -195,7 +195,7 @@ function calendarioHtml() {
   const bottoni = `<div class="pf-avvisi"><div class="riga" style="flex-wrap:wrap"><button class="primario" id="cal-apple">${ICONA_CAL} Calendario Apple</button><button class="primario" id="cal-google" style="background:var(--sfondo);color:var(--testo)">${ICONA_G} Google Calendar</button></div>`;
   return voceProfilo('calendario', ic('agenda') + ' MB21 nel tuo calendario', { destra: acceso ? 'collegato' : '', corpo: `
       <small style="margin-top:0">I tuoi appuntamenti e le telefonate con un orario compaiono <b>da soli</b> nel tuo calendario, in un calendario a parte che si chiama <b>MB21</b>: crei, sposti o elimini qui, e là cambia senza fare niente. Quello che scrivi là <b>non</b> torna in MB21. Non costa niente; lo spegni quando vuoi.</small>
-      <small>Nel calendario finiscono <b>tipo, nome dei tuoi contatti, orario e note</b> degli appuntamenti. Chi ha l'indirizzo li legge: meglio non darlo a nessuno.</small>
+      <small>Nel calendario finiscono <b>tipo, nome dei tuoi contatti, orario e note</b> degli appuntamenti, e gli incontri di gruppo (Team, LdS, SdS/OPEN) col loro nome. Chi ha l'indirizzo li legge: meglio non darlo a nessuno.</small>
       ${bottoni}${acceso ? `<div class="riga"><button class="link" id="cal-copia">Copia l'indirizzo</button> · <button class="link" id="cal-cambia">Cambia indirizzo</button> · <button class="link" id="cal-scollega" style="color:var(--rosso)">Scollega</button></div>` : ''}</div>
       <small><b>Apple</b> (iPhone, iPad, Mac) si aggiorna di solito entro un'ora. <b>Google</b> è più lento, anche mezza giornata o più, e si collega dal computer: l'app di Google sul telefono non lo permette.</small>` });
 }

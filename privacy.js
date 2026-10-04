@@ -31,7 +31,7 @@
       '• I dati sono nel database di Supabase, con i server in Europa (Francoforte).',
       '• L\'app è pubblicata su GitHub Pages: lì c\'è l\'app, non i tuoi dati.',
       '• Se accendi gli avvisi, il tuo telefono li riceve tramite il servizio di Apple, Google o del tuo browser.',
-      '• Se colleghi il calendario, nel tuo calendario compaiono il tipo di incontro, il nome del contatto, l\'orario e le note dell\'appuntamento. Chi ha il link del calendario li può leggere: il link è personale e conviene non darlo a nessuno.']},
+      '• Se colleghi il calendario, nel tuo calendario compaiono il tipo di incontro, il nome del contatto, l\'orario e le note dell\'appuntamento, e gli incontri di gruppo (Team, LdS, SdS/OPEN) col loro nome. Chi ha il link del calendario li può leggere: il link è personale e conviene non darlo a nessuno.']},
     { titolo: 'Per quanto tempo', righe: [
       `Finché usi MB21. Quando smetti, o quando vuoi, scrivi a ${CONTATTO} e i tuoi dati vengono cancellati.`]},
     { titolo: 'I tuoi diritti', righe: [
