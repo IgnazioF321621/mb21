@@ -2427,7 +2427,7 @@ async function preparaSettimana() {
   const esistenti = (AG.spazi || []).filter(s => settimana.includes(S.orario(s).giorno));
   const sds = S.sdsDaMettere(settimana, esistenti, oggi) ? [{ giorno: settimana[S.SDS.giorno], ora: S.SDS.ora, durata: S.SDS.durata }] : [];
   // tipi: quelli aggiunti dal selettore «Aggiungi ▾» (Ignazio 27/09: «se no le scritte diventano tante»), nell'ordine scelto
-  const st = { passo: 0, tipi: [], quanti: {}, scelti: [], aperto: null, menu: false };
+  const st = { passo: 0, tipi: [], quanti: {}, scelti: [], aperto: null, menu: false, nomeAperto: null };
   const passi = () => ['quanti', ...st.tipi];
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -2460,12 +2460,11 @@ async function preparaSettimana() {
           const ore = st.aperto === g ? oreDi(g) : null;
           return `<div class="sp-giorno${st.aperto === g ? ' aperto' : ''}"><button type="button" class="sp-g" data-g="${g}"><b>${esc(giornoBreve(g))}</b>${
             miei.length ? '' : `<small>${messi < n ? 'tocca per aggiungere' : ''}</small>`}</button>${
-            miei.map(s => `<span class="sp-chip" style="--tinta:${coloreSpazio(p)}">${s.ora}<button type="button" data-togli="${s.i}" aria-label="Togli quello delle ${s.ora}">${ic('chiudi')}</button></span>`).join('')}</div>
+            miei.map(s => `<span class="sp-chip" style="--tinta:${coloreSpazio(p)}">${s.ora}${S.puoAvereNome(p) ? `<button type="button" class="sp-nome" data-nome-apri="${s.i}" aria-label="Nome della serata delle ${s.ora}">${S.pulisciNome(s.nome) ? esc(S.pulisciNome(s.nome)) : '＋ nome'}</button>` : ''}<button type="button" data-togli="${s.i}" aria-label="Togli quello delle ${s.ora}">${ic('chiudi')}</button></span>`).join('')}</div>
+            ${miei.some(s => s.i === st.nomeAperto) ? `<div class="sp-nome-riga"><input data-nome-serata="${st.nomeAperto}" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Nome della serata, tipologia, linea o squadra" value="${esc(st.scelti[st.nomeAperto].nome || '')}"><button type="button" data-nome-ok>Ok</button></div>` : ''}
             ${ore ? `<div class="sp-ore">${ore.length ? ore.map(o => `<button type="button" data-ora="${o}">${o}</button>`).join('') : '<small>Nessuna ora libera in questo giorno.</small>'}</div>` : ''}`;
         }).join('')}
-        <p class="sp-conto${messi === n ? ' pieno' : ''}">${esc(S.conto(p, messi, n))}</p>
-        ${S.puoAvereNome(p) ? st.scelti.map((x, i) => ({ ...x, i })).filter(x => x.tipo === p).sort((x, y) => (x.giorno + x.ora).localeCompare(y.giorno + y.ora)).map(x => `<div class="campo sp-nome-serata"><label>${esc(giornoBreve(x.giorno))} alle ${x.ora}: nome della serata <small>facoltativo</small></label>
-          <input data-nome-serata="${x.i}" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(x.nome || '')}"></div>`).join('') : ''}`;
+        <p class="sp-conto${messi === n ? ' pieno' : ''}">${esc(S.conto(p, messi, n))}</p>`;
     }
     velo.innerHTML = `<div class="foglio alto mc sp-foglio">
       <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Prepara la settimana</small><b>Settimana ${A.numeroSettimana(settimana[0])}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
@@ -2494,8 +2493,13 @@ async function preparaSettimana() {
       st.aperto = st.aperto === b.dataset.g ? null : b.dataset.g; disegna();
     }; });
     velo.querySelectorAll('[data-ora]').forEach(b => { b.onclick = () => { st.scelti.push({ tipo: p, giorno: st.aperto, ora: b.dataset.ora, durata: S.DURATA }); st.aperto = null; disegna(); }; });
-    velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
-    velo.querySelectorAll('[data-nome-serata]').forEach(inp => { inp.oninput = () => { st.scelti[Number(inp.dataset.nomeSerata)].nome = inp.value; }; });   // si ricorda senza ridisegnare (la tastiera resta)
+    velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); st.nomeAperto = null; disegna(); }; });
+    velo.querySelectorAll('[data-nome-apri]').forEach(b => { b.onclick = () => { const i = Number(b.dataset.nomeApri); st.nomeAperto = st.nomeAperto === i ? null : i; disegna(); const c = velo.querySelector('[data-nome-serata]'); if (c) c.focus(); }; });
+    velo.querySelectorAll('[data-nome-serata]').forEach(inp => {
+      inp.oninput = () => { st.scelti[Number(inp.dataset.nomeSerata)].nome = inp.value; };   // si ricorda senza ridisegnare (la tastiera resta)
+      inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); st.nomeAperto = null; disegna(); } };
+    });
+    velo.querySelectorAll('[data-nome-ok]').forEach(b => { b.onclick = () => { st.nomeAperto = null; disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {
       if (p === 'quanti' && lista.length === 1) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
       if (p !== 'quanti') {
@@ -2534,11 +2538,12 @@ function foglioSpazio(id) {
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
-      : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora${S.puoAvereNome(s.tipo) ? ' e nome' : ''}» o nella Timeline.`}</div>
+      : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi dargli il nome della serata (o la tipologia, la linea, la squadra)' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
-      <button id="sp-cambia">${ic('orario')} Cambia giorno e ora${S.puoAvereNome(s.tipo) ? ' e nome' : ''}</button>
+      ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia il nome' : 'Metti il nome della serata'}</button>` : ''}
+      <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
       <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : 'Togli l\'incontro'}</button></div>
-    <div id="sp-campi" hidden>${S.puoAvereNome(s.tipo) ? `<div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="sp-nome-serata" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome della serata, la tipologia, la linea o la squadra" value="${esc(S.pulisciNome(s.nome) || '')}"></div>` : ''}<div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
+    <div id="sp-campi" hidden><div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
       <div class="campo"><label>Durata</label>${pilloleDurata('sp-durata', o.durata, o.ora)}</div>
       <div class="mc-fondo"><button class="link" id="sp-annulla">Annulla</button><button class="primario" id="sp-salva">Salva</button></div></div></div>`;
   document.body.appendChild(velo);
@@ -2547,6 +2552,8 @@ function foglioSpazio(id) {
   velo.querySelector('#sp-x').onclick = chiudi;
   const nome = velo.querySelector('#sp-nome');
   if (nome) nome.onclick = () => { chiudi(); nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: s.tipo, durata: o.durata, spazio: s, titolo: S.nome(s.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: scrivi il nome di chi viene.` }); };
+  const serata = velo.querySelector('#sp-serata');
+  if (serata) serata.onclick = () => { chiudi(); foglioNomeSerata(s); };
   let durata = o.durata;
   velo.querySelector('#sp-cambia').onclick = () => { velo.querySelector('#sp-campi').hidden = false; velo.querySelector('.sp-comandi').hidden = true; };
   velo.querySelector('#sp-annulla').onclick = () => { velo.querySelector('#sp-campi').hidden = true; velo.querySelector('.sp-comandi').hidden = false; };
@@ -2555,15 +2562,11 @@ function foglioSpazio(id) {
     const g = velo.querySelector('#sp-giorno').value, ora = velo.querySelector('#sp-ora').value;
     if (!g || !ora) return mostraToast('Scegli il giorno e l\'ora');
     const inizio = A.isoDaRoma(g, ora.slice(0, 5));
-    const cambio = { inizio, durata };
-    // il nome va nella chiamata solo se è cambiato: chi non lo tocca salva giorno e ora come sempre
-    const campoNome = velo.querySelector('#sp-nome-serata'), nomeNuovo = campoNome ? S.pulisciNome(campoNome.value) : null;
-    if (campoNome && nomeNuovo !== (S.pulisciNome(s.nome) || null)) cambio.nome = nomeNuovo;
-    const { error } = await dbq('sposta spazio', supa.from('spazi').update(cambio).eq('id', s.id));
+    const { error } = await dbq('sposta spazio', supa.from('spazi').update({ inizio, durata }).eq('id', s.id));
     if (error) return mostraToast('Non salvato: riprova.');
     chiudi();
     await apriAgenda(g);
-    mostraToast(`${S.titolo({ ...s, nome: 'nome' in cambio ? nomeNuovo : s.nome })}: ${giornoBreve(g).toLowerCase()} alle ${ora.slice(0, 5)}`);
+    mostraToast(`${S.titolo(s)}: ${giornoBreve(g).toLowerCase()} alle ${ora.slice(0, 5)}`);
   };
   velo.querySelector('#sp-togli').onclick = async () => {
     chiudi();
@@ -2579,6 +2582,41 @@ function foglioSpazio(id) {
     };
     mostraToast(sds ? (segnato ? 'Tolta: nel Modulo Core questa settimana «l\'OPEN non c\'era»' : 'Tolta. Nel Modulo Core non sono riuscito a segnarla: toccala lì.') : persona ? 'Spazio tolto' : 'Incontro tolto', rimetti);
   };
+}
+
+// Il nome della serata di un incontro di Team o LdS (nota 022, Ignazio 04/10): un foglio piccolo col solo campo, come «Metti un nome» dei PM.
+// Vuoto = senza nome. Il nome si vede dove l'incontro compare; «Annulla» nell'avviso rimette quello di prima.
+function foglioNomeSerata(s) {
+  const S = MB21Spazi, o = S.orario(s), prima = S.pulisciNome(s.nome);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
+    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}</h3><button id="sn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
+    <div class="campo"><label>Nome della serata <small>facoltativo</small></label>
+      <input id="sn-nome" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(prima || '')}"></div>
+    <div class="mc-fondo"><button class="link" id="sn-no">Annulla</button><button class="primario" id="sn-si">Salva</button></div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#sn-x').onclick = chiudi;
+  velo.querySelector('#sn-no').onclick = chiudi;
+  const campo = velo.querySelector('#sn-nome');
+  campo.focus();
+  const salva = async () => {
+    const nuovo = S.pulisciNome(campo.value);
+    if (nuovo === prima) return chiudi();
+    const { error } = await dbq('nome della serata', supa.from('spazi').update({ nome: nuovo }).eq('id', s.id));
+    if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+    chiudi();
+    await apriAgenda(AG.giorno);
+    mostraToast(nuovo ? `${nuovo}: nome messo` : 'Nome tolto', async () => {
+      await dbqAvvisa('annulla nome serata', supa.from('spazi').update({ nome: prima }).eq('id', s.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+      await apriAgenda(AG.giorno);
+    });
+  };
+  velo.querySelector('#sn-si').onclick = salva;
+  campo.onkeydown = ev => { if (ev.key === 'Enter') salva(); };
 }
 
 // Nel Modulo Core (core_mese.dati.senza_open, i lunedì delle settimane senza OPEN): la settimana si segna, o si toglie il segno.
