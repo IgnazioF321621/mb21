@@ -3018,7 +3018,7 @@ function scegliPassato() {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('attenzione')} Senza esito</h3><button id="ps-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <p>Tocca un appuntamento per dargli l'esito.</p>
+    <p>Tocca un appuntamento per dargli l'esito.${AG.passati.length >= LIMITE_SENZA_ESITO ? ` Qui vedi i ${LIMITE_SENZA_ESITO} più recenti: man mano che li chiudi compaiono gli altri.` : ''}</p>
     <div class="altri-voci">${AG.passati.map(e => { const r = A.riga(e, opz), p = A.partiRoma(e.inizio);
       return `<button data-id="${esc(e.id)}"><b>${esc(p.giorno.split('-').reverse().join('/'))} ${esc(p.ora)}</b> · ${esc(r.titolo)}</button>`; }).join('')}</div></div>`;
   document.body.appendChild(velo);
