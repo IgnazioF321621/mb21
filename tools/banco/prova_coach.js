@@ -278,9 +278,9 @@ prova('Quale montatore: con `ctx` le telefonate hanno la forma corta, senza (pag
     assert.ok(!passi.some(p => p.c === 'Cosa ha colpito di più Anna?'));
     assert.ok(passi.some(p => p.chiedi));
   }
-  // gli altri (Appuntamento con un Partner, Rimandato e No Show) restano come prima, anche con `ctx`
+  // dal 04/10 (nota 050) anche l'Appuntamento con un Partner e Rimandato / No Show hanno la forma corta con `ctx` (prove apposta più sotto)
   for (const sit of ['appuntamento_partner', 'non_avvenuto'])
-    assert.equal(C.monta(sit, B, 'PM Fissato', nomi, 0, {}).length, C.monta(sit, B, 'PM Fissato', nomi, 0).length);
+    assert.ok(C.monta(sit, B, 'PM Fissato', nomi, 0, {}).length <= C.monta(sit, B, 'PM Fissato', nomi, 0).length);
 });
 
 // Il motore vero (C.chat) con un finto foglio: i fumetti si leggono, i bottoni si toccano
@@ -418,6 +418,39 @@ prova('Incontro con un Partner: «Giovedì con Anna lavorate su Il perché e Lis
   assert.equal(C.corta(BP, 'Appuntamento', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' } }).length, 1);
   // i Prospect non cambiano: niente di tutto questo
   assert.ok(C.corta(B, 'PM Fissato', nomi, 0, { incontro: { su_cosa: ['RolePlay'], quando: 'Oggi' }, preparazione: prep }).some(p => p.chiedi));
+});
+
+prova('Nota 050: l\'incontro con un Partner in forma corta: reazione e la domanda sui freni in un fumetto, i freni da toccare, «Ripassa» se la carta c\'è; dopo la telefonata i freni restano fuori', async () => {
+  const BA = { reazione: { 'Lista nomi': [[{ c: '{io}, con {chi} avete lavorato sulla lista.' }, { c: 'Bene.' }]] },
+    domanda_obiezione: { c: 'Durante l’incontro, è venuto fuori qualcosa che frena {chi}? Tocca tutto quello che è uscito.', nessuna: 'Niente', salva: 'freni' },
+    obiezioni: { 'Poco tempo': { frase: 'x' }, 'Lista finita': { frase: 'y' } }, nessuna: { 'Lista nomi': [{ c: 'Niente che frena {chi}: bene, si va avanti.' }] },
+    extra: { 'Lista nomi': [{ c: 'Il manuale chiede 200 nomi.' }, { c: 'A che punto è la lista di {chi}?' }, { chiedi: [['Meno di 50', [{ c: 'È un inizio.' }]]] }] } };
+  const carta = async ob => (ob === 'Poco tempo' ? { id: 'k1' } : null);
+  const passi = C.monta('appuntamento_partner', BA, 'Lista nomi', nomi, 0, { carta });
+  assert.equal(passi[0].c, 'Isabella, con Anna avete lavorato sulla lista. Durante l’incontro, è venuto fuori qualcosa che frena Anna?');   // un fumetto solo
+  assert.equal(passi[1].salva, 'freni');
+  assert.deepEqual(passi[1].chiedi.map(x => x[0]), ['Niente', 'Poco tempo', 'Lista finita']);
+  assert.equal(passi[1].chiedi[0][1][0].c, 'Niente che frena Anna: bene, si va avanti.');
+  assert.deepEqual(await passi[1].chiedi[1][1][0].dopo(), [{ c: 'La ritrovi in «Ripassa», nel Training, quando vuoi.' }]);   // la carta c'è
+  assert.deepEqual(await passi[1].chiedi[2][1][0].dopo(), []);
+  assert.equal(passi.length, 2);   // niente «A che punto è la lista?» né il resto della chat lunga
+  // la telefonata al Partner resta senza freni (Ignazio 29/09)
+  const BT = { ...BA, reazione: { Appuntamento: [[{ c: 'Bene: vi vedete.' }]] } };
+  assert.deepEqual(C.monta('telefonata_partner', BT, 'Appuntamento', nomi, 0, {}).map(p => p.c), ['Bene: vi vedete.']);
+});
+
+prova('Nota 050: Rimandato / No Show in forma corta: la reazione, il consiglio dei leader, «Cosa è successo?» con i motivi (senza «Per approfondire»)', () => {
+  const BN = { reazione: { 'No Show': [[{ c: '{io}, l’incontro con {chi} è saltato.' }, { c: 'Capita a chiunque.' }]] }, senza_obiezione: ['No Show', 'Rimandato'],
+    extra: { 'No Show': [{ c: 'Il consiglio dei leader: una telefonata il giorno dopo.' }, { c: 'Se è {chi} a chiedere di rifissare, bene.' }, { c: 'Cosa è successo?' },
+      { chiedi: [['Imprevisto vero', [{ c: 'Succede. Conta la nuova data.' }]], ['Scusa, poco interesse', [{ c: 'È un’informazione preziosa.' }, { c: 'Massimo Bini consiglia di non insistere.', fonte: ['BSM', true], rif: ['traccia', 'ascolta…'] }]]], salva: 'motivo' }] } };
+  const passi = C.monta('non_avvenuto', BN, 'No Show', nomi, 0, {});
+  assert.deepEqual(passi.map(p => p.c), ['Isabella, l’incontro con Anna è saltato.', 'Il consiglio dei leader: una telefonata il giorno dopo.', 'Cosa è successo?', undefined]);
+  assert.equal(passi[3].salva, 'motivo');
+  assert.deepEqual(passi[3].chiedi[0], ['Imprevisto vero', [{ c: 'Succede. Conta la nuova data.' }]]);
+  assert.deepEqual(passi[3].chiedi[1][1], [{ c: 'È un’informazione preziosa.' }, { c: 'Massimo Bini consiglia di non insistere.', fonte: ['BSM', true] }]);   // niente rif
+  // senza i passi lunghi, o senza la domanda con i motivi: solo la reazione
+  assert.equal(C.monta('non_avvenuto', { ...BN, extra: {} }, 'No Show', nomi, 0, {}).length, 1);
+  assert.equal(C.monta('non_avvenuto', { ...BN, extra: { 'No Show': [{ c: 'Solo un consiglio.' }] } }, 'No Show', nomi, 0, {}).length, 1);
 });
 
 prova('Regola 4 (nota Azioni 020): dopo «Consulenza Prodotti» fissata come Presentazione, «Giovedì presenti a Anna.» e il consiglio di prepararla, con la fonte', () => {
