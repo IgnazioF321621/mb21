@@ -22,16 +22,53 @@ const stile = fra('<style>', '</style>').replace('<style>', '');
 const OGGI = '2026-10-04';
 
 // ── il finto mondo: tutto quello che nell'app arriva dal database o da altre pagine ──
-const app = { innerHTML: '' };
-const registro = [];   // i legami chiesti alla pagina (id → funzione), per la prova
-const elementi = {};
+// Un piccolo DOM: legge i tag dell'HTML disegnato e dà indietro elementi (gli stessi a ogni richiesta) a cui la pagina attacca i suoi onclick,
+// così la prova può «toccare» davvero (clic(selettore, n)). Capisce i selettori semplici che la Dashboard usa: tag, .classe, #id, [attributo], [attributo="v"].
+let html = '', elementiCache = new Map();
+function leggiTag(h) {
+  const out = [];
+  for (const m of h.matchAll(/<([a-z0-9]+)((?:\s+[\w-]+(?:="[^"]*")?)*)\s*\/?>/gi)) {
+    const attr = {};
+    for (const a of m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)) attr[a[1]] = a[2] == null ? '' : a[2];
+    out.push({ tag: m[1].toLowerCase(), attr, pos: m.index });
+  }
+  return out;
+}
+function corrisponde(t, comp) {
+  const m = comp.match(/^([a-z0-9]*)((?:[.#][\w-]+|\[[\w-]+(?:="[^"]*")?\])*)$/i);
+  if (!m) return false;
+  if (m[1] && m[1].toLowerCase() !== t.tag) return false;
+  for (const p of m[2].matchAll(/([.#])([\w-]+)|\[([\w-]+)(?:="([^"]*)")?\]/g)) {
+    if (p[1] === '.' && !(t.attr.class || '').split(/\s+/).includes(p[2])) return false;
+    if (p[1] === '#' && t.attr.id !== p[2]) return false;
+    if (p[3] && !(p[3] in t.attr)) return false;
+    if (p[3] && p[4] != null && t.attr[p[3]] !== p[4]) return false;
+  }
+  return true;
+}
+function elemento(t) {
+  if (!elementiCache.has(t.pos)) {
+    const dataset = {};
+    for (const [k, v] of Object.entries(t.attr)) if (k.startsWith('data-')) dataset[k.slice(5).replace(/-(\w)/g, (x, c) => c.toUpperCase())] = v;
+    elementiCache.set(t.pos, { tag: t.tag, attr: t.attr, dataset, onclick: null, disabled: false, value: '', style: {}, classList: { toggle() {}, add() {}, remove() {} },
+      hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], scrollIntoView() {}, querySelector: () => null, querySelectorAll: () => [], closest: () => null });
+  }
+  return elementiCache.get(t.pos);
+}
+function cerca(sel) {
+  const tag = leggiTag(html);
+  return sel.split(',').flatMap(x => { const ultimo = x.trim().split(/\s+/).pop(); return tag.filter(t => corrisponde(t, ultimo)); })
+    .sort((a, b) => a.pos - b.pos).filter((t, i, v) => !i || v[i - 1].pos !== t.pos).map(elemento);
+}
+const app = { querySelectorAll: sel => cerca(sel), querySelector: sel => cerca(sel)[0] || null };
+Object.defineProperty(app, 'innerHTML', { get: () => html, set: v => { html = v; elementiCache = new Map(); } });
 const documento = {
-  getElementById: id => elementi[id] || { scrollIntoView() {}, style: {}, classList: { toggle() {}, add() {} } },
-  querySelector: () => null, querySelectorAll: () => [],
+  getElementById: id => cerca('#' + id)[0] || null,
+  querySelector: sel => cerca(sel)[0] || null, querySelectorAll: sel => cerca(sel),
   createElement: () => ({ style: {}, classList: { add() {} }, appendChild() {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }),
   body: { appendChild() {} }, addEventListener() {}, hidden: false,
 };
-app.querySelectorAll = sel => { registro.push(sel); return []; };
+const clic = (sel, n = 0) => { const e = cerca(sel)[n]; if (!e) throw new Error('non trovo ' + sel); if (!e.onclick) throw new Error('nessun clic su ' + sel); return e.onclick(); };
 const toast = [];
 const stub = {
   app, document: documento, window: { scrollY: 0, innerHeight: 800, scrollTo() {}, addEventListener() {} },
@@ -132,7 +169,7 @@ const localStorage_get = () => JSON.stringify(memo);
 const localStorage_set = v => Object.assign(memo, JSON.parse(v));
 stub.localStorage = { getItem: () => JSON.stringify(Object.assign({ giorno: OGGI }, memo)), setItem: (k, v) => Object.assign(memo, JSON.parse(v)) };
 
-module.exports = { vista, avvia, carica, stub, app, memo, OGGI, stile };
+module.exports = { vista, avvia, carica, stub, app, memo, clic, cerca, toast, OGGI, stile };
 if (require.main !== module) return;
 
 const quale = process.argv[2] || 'tutte', dove = process.argv[3];
