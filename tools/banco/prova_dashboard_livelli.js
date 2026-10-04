@@ -27,6 +27,21 @@ prova('Il primo livello: quattro idee in fila, una domanda ciascuna, con Report 
   assert.match(html, /id="ds-altro">[\s\S]*? Report<\/button><button id="ds-griglia">[\s\S]*? Griglia PM<\/button>/);
 });
 
+prova('La sera «Com\'è andata oggi?» sale in cima, in blu, finché il giorno non è scritto (dalle 20)', () => {
+  P.impostaOra('21:00');
+  let h = P.vista('home').html;
+  assert.equal(titoli(h)[0], 'Com\'è andata oggi?');
+  assert.match(tessere(h)[0], /lv-tile blu/);
+  assert.match(tessere(h)[0], /È ora: scrivi cosa hai fatto oggi/);
+  // il giorno scritto: torna al suo posto
+  const m = P.avvia(); P.carica(m); m.DS.dati.ultimoCheck = P.OGGI; m.LV.vista = 'home'; m.disegnaOggi();
+  assert.equal(titoli(P.app.innerHTML)[3], 'Com\'è andata oggi?');
+  assert.match(tessere(P.app.innerHTML)[3], /Il tuo giorno è scritto/);
+  P.impostaOra('12:00');
+  h = P.vista('home').html;
+  assert.equal(titoli(h)[3], 'Com\'è andata oggi?');
+});
+
 prova('Il traguardo sulla tessera: il gradino più vicino, non per forza il primo', () => {
   // 100 VP fatti, 2 iscritti fatti, CEP no: al Pacesetter manca 1 solo passo (il CEP), al Leader 1° livello due (WES e CEP)
   const { html } = P.vista('home', { vp: 150, sponsor: 2, cep: false });

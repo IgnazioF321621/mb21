@@ -71,13 +71,17 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
   // gli spazi da riempire (27/09): si vedono solo all'Admin (modo.admin)
   spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
     { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
-// i fogli che salgono dal basso (Prepara la settimana, il foglio di uno spazio): la prova li legge dall'HTML che la pagina scrive
+// i fogli che salgono dal basso (Prepara la settimana, il foglio di uno spazio) sono Nodi del piccolo DOM (tools/design/mini_dom.js): la prova li tocca davvero
+const { Nodo } = require('./mini_dom.js');
 const fogli = [];
-const finto = () => ({ value: '', checked: false, hidden: false, style: {}, textContent: '', innerHTML: '', classList: { toggle() {}, add() {}, remove() {} }, addEventListener() {}, appendChild() {}, remove() {},
-  querySelector: () => finto(), querySelectorAll: () => [], onclick: null, oninput: null });
 const documento = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, body: { appendChild() {} },
-  createElement: () => { const v = finto(); fogli.push(v); return v; } };
+  createElement: () => { const v = new Nodo(); fogli.push(v); return v; } };
+// un finto database: si ricorda le scritture (insert · update · delete) e risponde «fatto»
+const scritture = [], avvisi = [];
+const tabella = nome => new Proxy({}, { get: (t, op) => (...args) => { if (['insert', 'update', 'delete', 'upsert'].includes(op)) scritture.push({ tabella: nome, op, args }); return fine; } });
+const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : fine), apply: () => fine });
 const stub = {
+  supa: { from: tabella, rpc: () => fine }, dbq: async () => ({ data: [{ id: 'nuovo-1' }], error: null }),
   MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI },   // il motore vero (contoGiorno), con l'oggi fermo
@@ -85,11 +89,11 @@ const stub = {
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',
   rigaPortato: n => 'portato da ' + n,
-  collegaEsiti: () => {}, mostraToast: () => {}, mostraTab: () => {},
+  collegaEsiti: () => {}, mostraToast: (t, annulla) => { avvisi.push({ t, annulla }); }, mostraTab: () => {},
   nuovoAppuntamento: () => {}, spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
   apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
-  pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async () => ({}),
+  pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
   window: { scrollY: 0, innerHeight: 800, scrollTo: () => {}, addEventListener: () => {} },
   localStorage: { getItem: () => null, setItem: () => {} },
@@ -108,7 +112,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli };
+module.exports = { A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html

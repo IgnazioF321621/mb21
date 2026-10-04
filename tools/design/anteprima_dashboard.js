@@ -20,55 +20,26 @@ const riga = inizio => { const r = sorgente.split('\n').find(x => x.startsWith(i
 
 const stile = fra('<style>', '</style>').replace('<style>', '');
 const OGGI = '2026-10-04';
+// l'ora «di adesso» è finta e si cambia (impostaOra('21:00')): così le prove non dipendono dall'ora in cui girano
+let oraFinta = '12:00';
+class DataFinta extends Date {
+  constructor(...a) { if (a.length) super(...a); else super(`${OGGI}T${oraFinta}:00+02:00`); }
+  static now() { return new Date(`${OGGI}T${oraFinta}:00+02:00`).getTime(); }
+}
+const impostaOra = h => { oraFinta = h; };
 
 // ── il finto mondo: tutto quello che nell'app arriva dal database o da altre pagine ──
-// Un piccolo DOM: legge i tag dell'HTML disegnato e dà indietro elementi (gli stessi a ogni richiesta) a cui la pagina attacca i suoi onclick,
-// così la prova può «toccare» davvero (clic(selettore, n)). Capisce i selettori semplici che la Dashboard usa: tag, .classe, #id, [attributo], [attributo="v"].
-let html = '', elementiCache = new Map();
-function leggiTag(h) {
-  const out = [];
-  for (const m of h.matchAll(/<([a-z0-9]+)((?:\s+[\w-]+(?:="[^"]*")?)*)\s*\/?>/gi)) {
-    const attr = {};
-    for (const a of m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)) attr[a[1]] = a[2] == null ? '' : a[2];
-    out.push({ tag: m[1].toLowerCase(), attr, pos: m.index });
-  }
-  return out;
-}
-function corrisponde(t, comp) {
-  const m = comp.match(/^([a-z0-9]*)((?:[.#][\w-]+|\[[\w-]+(?:="[^"]*")?\])*)$/i);
-  if (!m) return false;
-  if (m[1] && m[1].toLowerCase() !== t.tag) return false;
-  for (const p of m[2].matchAll(/([.#])([\w-]+)|\[([\w-]+)(?:="([^"]*)")?\]/g)) {
-    if (p[1] === '.' && !(t.attr.class || '').split(/\s+/).includes(p[2])) return false;
-    if (p[1] === '#' && t.attr.id !== p[2]) return false;
-    if (p[3] && !(p[3] in t.attr)) return false;
-    if (p[3] && p[4] != null && t.attr[p[3]] !== p[4]) return false;
-  }
-  return true;
-}
-function elemento(t) {
-  if (!elementiCache.has(t.pos)) {
-    const dataset = {};
-    for (const [k, v] of Object.entries(t.attr)) if (k.startsWith('data-')) dataset[k.slice(5).replace(/-(\w)/g, (x, c) => c.toUpperCase())] = v;
-    elementiCache.set(t.pos, { tag: t.tag, attr: t.attr, dataset, onclick: null, disabled: false, value: '', style: {}, classList: { toggle() {}, add() {}, remove() {} },
-      hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], scrollIntoView() {}, querySelector: () => null, querySelectorAll: () => [], closest: () => null });
-  }
-  return elementiCache.get(t.pos);
-}
-function cerca(sel) {
-  const tag = leggiTag(html);
-  return sel.split(',').flatMap(x => { const ultimo = x.trim().split(/\s+/).pop(); return tag.filter(t => corrisponde(t, ultimo)); })
-    .sort((a, b) => a.pos - b.pos).filter((t, i, v) => !i || v[i - 1].pos !== t.pos).map(elemento);
-}
-const app = { querySelectorAll: sel => cerca(sel), querySelector: sel => cerca(sel)[0] || null };
-Object.defineProperty(app, 'innerHTML', { get: () => html, set: v => { html = v; elementiCache = new Map(); } });
+// Il piccolo DOM (tools/design/mini_dom.js): la pagina intera è un Nodo; i fogli che salgono dal basso sono altri Nodi
+const { Nodo } = require('./mini_dom.js');
+const app = new Nodo();
+const cerca = sel => app.querySelectorAll(sel);
 const documento = {
-  getElementById: id => cerca('#' + id)[0] || null,
-  querySelector: sel => cerca(sel)[0] || null, querySelectorAll: sel => cerca(sel),
-  createElement: () => ({ style: {}, classList: { add() {} }, appendChild() {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }),
+  getElementById: id => app.getElementById(id),
+  querySelector: sel => app.querySelector(sel), querySelectorAll: sel => app.querySelectorAll(sel),
+  createElement: () => new Nodo(),
   body: { appendChild() {} }, addEventListener() {}, hidden: false,
 };
-const clic = (sel, n = 0) => { const e = cerca(sel)[n]; if (!e) throw new Error('non trovo ' + sel); if (!e.onclick) throw new Error('nessun clic su ' + sel); return e.onclick(); };
+const clic = (sel, n = 0) => app.clic(sel, n);
 const catena = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : catena), apply: () => catena });
 // un elemento qualunque (per i fogli che l'anteprima non deve far funzionare, solo disegnare)
 const finto = () => ({ value: '', checked: false, style: {}, textContent: '', innerHTML: '', options: [], classList: { toggle() {}, add() {}, remove() {} }, addEventListener() {},
@@ -102,7 +73,7 @@ const stub = {
   eAdmin: () => false, soloGuardo: () => false, idVisti: () => ['io'], codiciDi: () => [], nomeVisto: () => 'Isabella',
   datiCoreDelMese: async () => ({}), aggiornaTab() {}, leggiSquadraMese: async () => null, setTimeout: () => 0,
   visto: () => ({ id: 'io', partner_id: 'P1', nome_cognome: 'Isabella Sammito', ruolo: 'Partner' }),
-  Intl, Date, JSON, Math, console,
+  Intl, Date: DataFinta, JSON, Math, console,
 };
 const stato = {
   ST: { utente: { id: 'io', ruolo: 'Partner' }, oggi: OGGI, tab: 'oggi', offline: false, scaduto: false, aperta: null },
@@ -195,7 +166,7 @@ function foglioGiorno(auto = true) {
   const h = fogli[0].innerHTML || '';
   return auto ? h.replace(/class="ckr riga1( core)?" id="ck-campo-(contatti|pm|vp_clienti)"/g, 'class="ckr riga1$1 auto" id="ck-campo-$2"') : h;
 }
-module.exports = { vista, avvia, carica, foglioGiorno, stub, app, memo, clic, cerca, toast, chiusure, iso, OGGI, stile };
+module.exports = { vista, avvia, carica, foglioGiorno, impostaOra, stub, app, memo, clic, cerca, toast, chiusure, iso, OGGI, stile };
 if (require.main !== module) return;
 
 const quale = process.argv[2] || 'tutte', dove = process.argv[3];
