@@ -1,5 +1,6 @@
 // MB21 · pagina personale «Profilo» (cantiere 25, decisioni di Ignazio 17/09): si apre dal cerchietto con le iniziali
-// in alto a destra in Dashboard, niente settima tab. È sempre la pagina di chi è entrato (il Partner Select non conta).
+// in alto a destra in Dashboard, niente settima tab. È la pagina di chi è entrato; con il Partner Select su un altro partner (solo Admin) si apre invece
+// il suo, da guardare e basta (`apriProfiloDiAltro`, nota 070, Ignazio 04/10: «A»); con «Tutti» è il proprio.
 // Dal cantiere 25 bis è «il mio quadro»: ogni voce è chiusa e si apre al tocco; la foto si cambia dal cerchio in alto a destra.
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
 // avvisi sul telefono (da qui, non più in Dashboard), «✨ Novità dell'app» (cantiere 28), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
@@ -24,7 +25,41 @@ function cerchiettoProfilo() {
   return `<button class="cerchio" id="ds-profilo" aria-label="Profilo">${dentroCerchio(ST.utente)}</button>`;
 }
 
+// Il Profilo di un altro partner, scelto nel Partner Select (nota 070): solo da guardare. Nome, foto, telefono, contatti al giorno e le sue targhette
+// BBS · WES · CEP. Password, calendario, avvisi e il resto restano del proprio Profilo: sono personali e non si cambiano per un altro.
+async function apriProfiloDiAltro(p) {
+  const nome = nomeDi(p);
+  const testa = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>`;
+  app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="vuoto">Carico…</div>`;
+  const torna = () => { document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); }; collegaPartnerSelect(); };
+  torna();
+  const [dati, sc] = await Promise.all([
+    dbq('profilo di un altro', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', p.id).maybeSingle()),
+    p.partner_id ? dbq('scheda del partner', supa.from('contatti').select('id, user_id, nome, categoria').eq('user_id', ST.utente.id).eq('codice_amway', p.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
+  ]);
+  if (dati.error || !dati.data) { app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="avviso">Non riesco a caricare il profilo. Controlla la connessione e riprova.</div>${versione()}`; return torna(); }
+  const d = dati.data, scheda = sc.data && sc.data[0];
+  const SV = scheda ? await segniDellaScheda(scheda).catch(() => null) : null;
+  const targhe = SV ? targheHtml(MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi)) : '';
+  const n = d.contatti_al_giorno;
+  app.innerHTML = `${testa}
+    <div class="testa-pagina"><h1>Profilo di ${esc(nomeDi(d))}</h1><span class="cerchio grande">${dentroCerchio(d)}</span></div>
+    ${partnerSelect()}
+    <div class="sotto">Da guardare soltanto: per tornare al tuo Profilo scegli te stesso nel Partner Select</div>
+    <div class="pf-box"><div class="pf-corpo">
+      <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(d))}</b></div>
+      <div class="pf-riga"><span>Telefono</span><b>${esc(d.telefono || '—')}</b></div>
+      <div class="pf-riga"><span>Email</span><b>${esc(d.email || '—')}</b></div>
+      <div class="pf-riga"><span>Codice Amway</span><b>${esc(d.partner_id || '—')}</b></div>
+      <div class="pf-riga"><span>Contatti al giorno</span><b>${n === 0 ? 'In pausa' : esc(String(n == null ? '—' : n))}</b></div></div></div>
+    <div class="pf-box"><div class="pf-corpo"><b>${ic('segnivitali')} Segni vitali</b>
+      ${scheda ? `<div class="pf-targhe">${targhe}</div>` : '<small>Non c\'è ancora una scheda col suo codice Amway nella tua lista.</small>'}</div></div>
+    ${versione()}`;
+  torna();
+}
+
 async function apriProfilo() {
+  if (guardoAltri() && !vediTutti()) return apriProfiloDiAltro(visto());
   const u = ST.utente;
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button><h1>Profilo</h1><div class="vuoto">Carico…</div>`;
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
