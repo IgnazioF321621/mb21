@@ -2177,7 +2177,17 @@ function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }
 function iniziali(nome) { const p = String(nome || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 const CHIAVE_CACHE = 'mb21_coda';
 
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Quando è stata l'ultima scrittura verso il database (nota 013/017, registri Supabase): le pagine che tengono una copia in memoria (Dashboard,
+// Report, Check) la riusano finché dopo di lei non c'è stata nessuna scrittura. Conta ogni chiamata a /rest/v1/ che non sia una lettura (GET/HEAD):
+// anche le funzioni lette con POST contano, così nel dubbio si rilegge. Il resto passa come prima.
+const SCRITTURE = { ultima: 0 };
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: (...a) => {
+  try {
+    const m = String((a[1] && a[1].method) || (a[0] && a[0].method) || 'GET').toUpperCase(), u = String((a[0] && a[0].url) || a[0]);
+    if (m !== 'GET' && m !== 'HEAD' && u.includes('/rest/v1/')) SCRITTURE.ultima = Date.now();
+  } catch (e) {}
+  return fetch(...a);
+} } });
 const app = document.getElementById('app');
 const ST = { email: '', utente: null, tab: 'oggi' };
 
@@ -3594,8 +3604,12 @@ const CAMPI_CK = 'user_id, data, ' + MB21Check.CAMPI_GIORNO.join(', ');
 
 // I dati del Check in CK (numeri, obiettivi, eventi, percorso, livelli): li leggono la pagina Check e la card «Il tuo Check»
 // della Dashboard (27/09), con le stesse funzioni. `CK.di` = di chi sono (con «Tutti»: 'tutti'). Se non riesce, lancia l'errore.
+// Riusa quello che ha già letto per 5 minuti se non c'è stata nessuna scrittura (nota 017: la Dashboard e la pagina Check rifacevano ogni volta
+// 12 richieste e la lettura di tutta la storia dei giorni). `CK.giorni = null` o una scrittura la fanno rileggere.
+const CK_FRESCO_MS = 5 * 60000;
 async function caricaDatiCheck() {
   const di = vediTutti() ? 'tutti' : visto().id;
+  if (CK.giorni && CK.di === di && CK.letta && SCRITTURE.ultima < CK.letta && Date.now() - CK.letta < CK_FRESCO_MS) return;
   {
     const giorni = [];
     for (let da = 0; ; da += 1000) {
@@ -3633,7 +3647,7 @@ async function caricaDatiCheck() {
     CK.obiettivi = vediTutti()
       ? MB21Dashboard.unisciPartner(MB21Dashboard.mesiDaGiorni(giorni, ['bbs', 'wes', 'cep']), ob.data, MB21Coda.oggiRoma().slice(0, 8) + '01', codiciDi()).obiettivi
       : ob.data;
-    CK.giorni = giorni; CK.wes = wes.data.map(w => w.data); CK.di = di;
+    CK.giorni = giorni; CK.wes = wes.data.map(w => w.data); CK.di = di; CK.letta = Date.now();
   }
 }
 
@@ -4022,15 +4036,18 @@ function collegaTornaInDashboard() {
 
 async function apriReport(vista) {
   RP.vista = vista || RP.vista;
+  // Come il Check (nota 017): le azioni di tutta la storia si rileggono solo dopo 5 minuti, se si guarda un'altra persona o dopo una scrittura
+  const chiaveRp = vediTutti() ? 'tutti' : visto().id;
+  const fresco = !!RP.azioni && RP.chiave === chiaveRp && !!RP.letta && SCRITTURE.ultima < RP.letta && Date.now() - RP.letta < 5 * 60000;
   if (!RP.azioni) app.innerHTML = `${tornaInDashboard()}<h1>Report</h1><div class="vuoto">Carico i numeri…</div>`;
-  try {
+  if (!fresco) try {
     const [azioni, wes, gr] = await Promise.all([
       leggiAzioniMie(),
       dbq('date dei WES', supa.from('wes').select('id, data').order('data')),
       vediTutti() ? { data: null } : dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle()),
     ]);
     if (wes.error || gr.error) throw wes.error || gr.error;
-    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data;
+    RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data; RP.chiave = chiaveRp; RP.letta = Date.now();
   } catch (e) {
     app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
     return;

@@ -28,12 +28,21 @@ async function leggiSenzaCategoria() {
   }
 }
 
+// Riaprire la Dashboard entro 5 minuti, per la stessa persona e lo stesso giorno, senza nessuna scrittura nel frattempo (esito, azione, conferma…),
+// riusa quello che ha già letto: prima ogni tocco sul tab, o ogni ritorno da una scheda, rifaceva 25-30 richieste (nota 017).
+const DASH_FRESCA_MS = 5 * 60000;
+const dashFresca = (oggi) => ST.dashLetta && ST.dashChiave === `${visto().id}|${vediTutti() ? 'tutti' : ''}|${oggi}` && Date.now() - ST.dashLetta < DASH_FRESCA_MS
+  && SCRITTURE.ultima < ST.dashLetta && ST.oggi === oggi && !ST.offline && (vediTutti() || ST.risultato);
+const dashLetta = (oggi) => { ST.dashChiave = `${visto().id}|${vediTutti() ? 'tutti' : ''}|${oggi}`; ST.dashLetta = Date.now(); };
+
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
+  if (dashFresca(oggi)) return disegnaOggi();
   app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     ST.oggi = oggi; ST.offline = false;
     await caricaDashboard(oggi);
+    dashLetta(oggi);
     return disegnaOggi();
   }
   // Partner Select su un altro partner: la sua coda si guarda (gli esiti li preme lui, decisione A) e non si tocca:
@@ -76,6 +85,7 @@ async function caricaOggi() {
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
   await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi)]);
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
+  if (!offline) dashLetta(oggi);
   disegnaOggi();
 }
 
@@ -316,7 +326,7 @@ function collegaCarteCoda() {
     btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
   });
   const altri = document.getElementById('altri-catalogo');
-  if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; caricaOggi(); };
+  if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; ST.dashLetta = 0; caricaOggi(); };
   app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
     btn.onclick = () => apriContattoDa(btn.dataset.scheda, ST.vistaCatalogo ? 'catalogo' : 'oggi');
   });
