@@ -551,6 +551,28 @@ prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anch
   assert.equal(A.passiIncontro({ ...a, categoria: null }, 'Prospect'), null);   // un Prospect non ha «Su cosa lavorate?»
 });
 
+prova('I passi suggeriti guardano la persona (nota 055, Ignazio 05/10): partner nuovo → i passi del tipo più quelli dell\'Avvio che gli mancano; fermo → i tre della ripresa; concluso o sconosciuto → quelli del tipo', () => {
+  const nuovo = { nuovo: true, fermo: false, fatti: ['Motivazione', 'OrdineStart'] };
+  // Counseling con un partner nuovo che ha già «Il perché» e «Ordine Start»: i suoi due passi, più Lista Start, Role Play, Telefonate (ordine dell'Avvio prima)
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Counseling', nuovo), ['ListaStart', 'RolePlay', 'Telefonate', 'c/Downline', 'c/Upline']);
+  // un incontro di Avvio con lo stesso partner: i passi dell'Avvio senza quelli già spuntati (Lista nomi e Inaugurazione restano: non hanno una riga in «Il mio avvio»)
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Avvio', nuovo), ['ListaStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione']);
+  // fermo (in pausa): i passi del tipo più Il perché · Lista nomi · Telefonate
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Ordine', { nuovo: false, fermo: true, fatti: ['Motivazione'] }), ['Motivazione', 'OrdineStart', 'Lista nomi', 'Telefonate', 'VP Personali']);
+  assert.deepEqual(A.PASSI_RIPRESA.map(A.nomePasso), ['Il perché', 'Lista Nomi', 'Telefonate']);
+  // Avvio concluso, o persona non ancora letta: i passi del tipo, come prima
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Counseling', { nuovo: false, fermo: false, fatti: [] }), ['c/Downline', 'c/Upline', 'Motivazione']);
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Counseling', null), ['c/Downline', 'c/Upline', 'Motivazione']);
+  assert.deepEqual(A.passiSuggeriti('Prospect', 'Piano Marketing', 'PM 1a1', nuovo), []);   // non è un incontro con un Partner
+  // alla chiusura i passi ammessi sono quelli del tipo più quelli scelti fissando (anche dell'Avvio), in un ordine solo; l'esito può essere uno di questi
+  const c = { tipo_azione: 'Appuntamento', modalita: 'Counseling', categoria: 'Partner', esito: null, completata: false, su_cosa: ['Telefonate', 'c/Upline'] };
+  assert.deepEqual(A.passiAmmessi(c, 'Partner'), ['Motivazione', 'Telefonate', 'c/Downline', 'c/Upline']);
+  const inc = A.passiIncontro(c, 'Partner');
+  assert.deepEqual(inc.scelti, ['Telefonate', 'c/Upline']); assert.deepEqual(inc.altri, ['Motivazione', 'c/Downline']);
+  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['c/Upline', 'Telefonate']), { esito: 'Telefonate', extra: ['c/Upline'] });
+  assert.deepEqual(A.passiAmmessi({ ...c, categoria: 'Prospect', tipo_azione: 'Piano Marketing' }, 'Prospect'), []);   // senza i passi del tipo niente, anche con su_cosa
+});
+
 prova('Senza l\'app (05/10 sera): il ramo del Team o di una Linea, chi non ha un utente attivo, chi condivide escluso, in ordine di nome', () => {
   const sq = [{ partner_id: 'IO', sponsor_id: null, nome: 'FIORITO, IGNAZIO' }, { partner_id: 'A', sponsor_id: 'IO', nome: 'ROSSI, CARLA' }, { partner_id: 'A1', sponsor_id: 'A', nome: 'VERDI, DARIO' },
     { partner_id: 'A2', sponsor_id: 'A', nome: 'ALBI, ZOE' }, { partner_id: 'B', sponsor_id: 'IO', nome: 'BIANCHI, LUCA' }, { partner_id: 'X', sponsor_id: 'ALTRO', nome: 'FUORI, UNO' }];

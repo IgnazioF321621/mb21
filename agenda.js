@@ -64,6 +64,28 @@
   // Solo i passi del tipo scelto (nota Pagine 011, Ignazio 05/10: «Counseling mi deve mostrare solo le voci inerenti al Counseling»; per un'ora,
   // versione 17:24, c'erano tutti e 11). Si scelgono da un selettore che si apre, non da pillole.
   const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
+  // Tutti i passi degli incontri con un Partner, in un ordine solo (prima l'Avvio, poi gli altri tipi): serve a mettere in fila i passi
+  // quando vengono da più tipi (nota Azioni 055)
+  const TUTTI_I_PASSI = [...new Set(Object.values(FASI_APPUNTAMENTO).flat())];
+  // I passi suggeriti guardano la persona (nota Azioni 055, Ignazio 05/10): `persona` = { nuovo, fermo, fatti } (da MB21Lista.situazioneAvvio).
+  // Partner in Avvio («nuovo»): i passi del tipo più i passi dell'Avvio che non ha ancora spuntato in «Il mio avvio», senza quelli già fatti.
+  // Partner fermo (in pausa): i passi del tipo più «Il perché · Lista nomi · Telefonate» (riparte dalla base, scelta di Ignazio 05/10).
+  // Avvio concluso, o persona non conosciuta: i passi del tipo, come prima. Per gli altri (non Partner/Appuntamento): niente.
+  const PASSI_RIPRESA = ['Motivazione', 'Lista nomi', 'Telefonate'];
+  const PASSI_AVVIO_SPUNTABILI = ['Motivazione', 'ListaStart', 'OrdineStart', 'RolePlay', 'Telefonate'];   // quelli con una riga in «Il mio avvio»
+  function passiSuggeriti(categoria, tipo, sottotipo, persona) {
+    const base = suCosaPer(categoria, tipo, sottotipo);
+    if (!base.length || !persona) return base;
+    const fatti = Array.isArray(persona.fatti) ? persona.fatti : [];
+    if (persona.fermo) return TUTTI_I_PASSI.filter(x => base.includes(x) || PASSI_RIPRESA.includes(x));
+    if (persona.nuovo) return TUTTI_I_PASSI.filter(x => (base.includes(x) || PASSI_AVVIO_SPUNTABILI.includes(x)) && !fatti.includes(x));
+    return base;
+  }
+  // I passi ammessi quando si chiude l'incontro: quelli del tipo più quelli già scelti fissandolo (possono venire dall'Avvio, nota 055), in ordine
+  const passiAmmessi = (a, categoria) => {
+    const base = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), scelti = Array.isArray(a.su_cosa) ? a.su_cosa : [];
+    return base.length ? TUTTI_I_PASSI.filter(x => base.includes(x) || scelti.includes(x)) : [];
+  };
   // Il nome che si legge: Il perché (lo stesso passo di «Il mio avvio»), Lista Start, Ordine Start, Lista Nomi, Role Play; i nomi salvati non cambiano (il Report)
   // come li scrive Ignazio (30/09); «c/Downline» e «c/Upline» si leggono per intero dal 04/10 (nota Azioni 070): i nomi salvati restano, le statistiche non cambiano
   const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play',
@@ -431,7 +453,7 @@
   // e «anche altro» con gli altri passi del tipo. Tutto in ordine delle fasi. null = il blocco di sempre (un esito solo).
   function passiIncontro(a, categoria) {
     if (!a || a.tipo_azione !== 'Appuntamento' || !daChiudere(a)) return null;
-    const tutti = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    const tutti = passiAmmessi(a, categoria);
     const scelti = tutti.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
     return scelti.length ? { titolo: domandaEsito(a.tipo_azione), scelti, altri: tutti.filter(x => !scelti.includes(x)), tutti } : null;
   }
@@ -456,7 +478,7 @@
   const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
   // L'esito dell'incontro è il primo passo fatto (nell'ordine delle fasi), gli altri diventano righe di azione in più; senza passi: null
   function esitoDaiPassi(a, categoria, fatti) {
-    const ordinati = passiFatti(suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), fatti);
+    const ordinati = passiFatti(passiAmmessi(a, categoria), fatti);
     return { esito: ordinati[0] || null, extra: ordinati.slice(1) };
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
@@ -729,7 +751,7 @@
       .map(x => daMinuti(x.m));
   }
 
-  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
+  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,

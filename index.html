@@ -3189,6 +3189,7 @@ async function nuovoAppuntamento(opz = {}) {
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
     tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: opz.durata || 60, durataToccata: !!opz.durata, altra: false, portato: null,
     spazio: opz.spazio || null, suCosa: [],   // «Su cosa lavorate?» (cantiere 48): i passi dell'incontro con un Partner, anche più d'uno
+    avvio: null,   // la riga dell'Avvio della persona (letta quando serve: Partner + Appuntamento), per i passi suggeriti (nota Azioni 055)
     // Una telefonata scelta a mano (nota 012, Ignazio 04/10): entra in coda dal giorno scelto, l'orario è facoltativo. Senza un'ora chiesta
     // (dalla scheda) si parte «senza orario»; da un'ora dell'Agenda si parte con quell'ora
     senzaOra: opz.senzaOra != null ? !!opz.senzaOra : !opz.ora,
@@ -3201,6 +3202,16 @@ async function nuovoAppuntamento(opz = {}) {
   const puoPersona = () => !!st.contatto && st.categoria === 'Partner' && st.tipo !== 'Contatto';
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
   const puoInCoda = () => st.tipo === 'Contatto' && st.modalita === 'Telefonata' && !st.spazio;
+  // I passi suggeriti guardano la persona (nota Azioni 055): con un Partner e un Appuntamento si legge una volta la sua riga dell'Avvio
+  // (concluso / in pausa / passi spuntati); finché non arriva, i passi del tipo. Letta, si ridisegna.
+  const passiOfferti = () => A.passiSuggeriti(st.categoria, st.tipo, st.modalita, st.avvio && st.avvio.id === (st.contatto && st.contatto.id) ? MB21Lista.situazioneAvvio(st.avvio) : null);
+  let avvioInLettura = null;
+  const leggiAvvio = ridisegna => {
+    if (!st.contatto || st.categoria !== 'Partner' || st.tipo !== 'Appuntamento' || (st.avvio && st.avvio.id === st.contatto.id) || avvioInLettura === st.contatto.id) return;
+    avvioInLettura = st.contatto.id;
+    dbq('avvio per i passi', supa.from('contatti').select('id, avvio_concluso_il, avvio_in_pausa_dal, onb_sogno, onb_lista_start, onb_ordine, onb_role_play, onb_contatti')
+      .eq('id', st.contatto.id).maybeSingle()).then(({ data }) => { avvioInLettura = null; if (data && data.id) { st.avvio = data; ridisegna(); } });
+  };
   const inCoda = () => puoInCoda() && st.senzaOra;
   // il tipo chiesto (lo spazio da riempire: «Piano Marketing») torna appena si sceglie una persona che lo può avere
   const tipoVoluto = st.tipo;
@@ -3306,7 +3317,9 @@ async function nuovoAppuntamento(opz = {}) {
           h += `<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="na-dove" maxlength="${A.MAX_LINK}" autocomplete="off" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo…" value="${esc(campi.dove)}"></div>`;
           // Con un Partner, i passi dell'incontro (tutti e 11, prima quelli del tipo scelto) si scelgono da un selettore che si apre
           // (Ignazio 05/10 sera: niente pillole da cliccare); i passi scelti stanno scritti sul bottone e diventano righe dei punti
-          const passi = serata() ? [] : A.suCosaPer(st.categoria, st.tipo, st.modalita);
+          // i passi guardano la persona (nota Azioni 055): per un partner nuovo anche i passi dell'Avvio che gli mancano, per chi è fermo quelli della ripresa
+          if (!serata()) leggiAvvio(() => disegna());
+          const passi = serata() ? [] : passiOfferti();
           st.suCosa = st.suCosa.filter(x => passi.includes(x));
           const scelti = passi.filter(x => st.suCosa.includes(x)).map(A.nomePasso);
           h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'i passi dell\'incontro, o scrivi: uno per riga' : 'uno per riga'}</small></label>
@@ -3357,7 +3370,7 @@ async function nuovoAppuntamento(opz = {}) {
       const selPassi = velo.querySelector('#na-passi');
       if (selPassi) selPassi.onclick = async () => {
         leggiCampi();
-        const passi = A.suCosaPer(st.categoria, st.tipo, st.modalita);
+        const passi = passiOfferti();
         const nuovi = await scelteMultiple('Su cosa lavorate?', passi.map(x => ({ k: x, etichetta: A.nomePasso(x) })), st.suCosa);
         if (!nuovi) return;
         // ogni passo scelto è anche una riga dei punti: le righe dei passi tolti spariscono, quelle dei nuovi si aggiungono in fondo (nell'ordine dei passi)
@@ -3448,7 +3461,7 @@ async function nuovoAppuntamento(opz = {}) {
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + durata * 60000).toISOString(),
         completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null,
-        su_cosa: st.suCosa.length ? A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) || null : null,
+        su_cosa: st.suCosa.length ? passiOfferti().filter(x => st.suCosa.includes(x)) || null : null,   // nell'ordine dei passi offerti (nota 055)
         // una telefonata scelta a mano entra in coda (nota 012): dal giorno scelto, finché non ha un esito; con l'ora sta anche in Agenda
         scelta_a_mano: v.tipo_azione === 'Contatto' && v.modalita === 'Telefonata', senza_ora: soloGiorno,
         // «Dove» (link o posto) e i punti da trattare (nota 026): solo se scritti
