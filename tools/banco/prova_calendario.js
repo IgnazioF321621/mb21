@@ -87,5 +87,22 @@ const fs = require('node:fs'), path = require('node:path');
     assert.deepEqual(F.TIPI_SPAZIO_NEL_CALENDARIO, ['Team', 'LOS', 'SdS/OPEN']);
   });
 
+  prova('Un impegno ricevuto da un altro (nota 027): titolo «… · da Ignazio», UID fisso, link e punti nella descrizione; «Non ci sono» lo segna annullato e libero', () => {
+    const r = { origine: 'spazio', id: 'r1', inizio: '2026-10-07T18:00:00Z', fine: '2026-10-07T19:30:00Z', titolo: 'Serata Linea Rossi', da_nome: 'Ignazio',
+      link: 'https://zoom.us/j/555', punti: [{ t: 'Benvenuto ai nuovi', fatto: true }, { t: 'Risultati del mese' }, { t: '  ' }], risposta: null };
+    const e = F.eventoRicevuto(r, ADESSO);
+    assert.equal(campo(e, 'UID'), 'UID:ricevuto-spazio-r1@mb21');
+    assert.equal(campo(e, 'DTSTART'), 'DTSTART;TZID=Europe/Rome:20261007T200000'); assert.equal(campo(e, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T213000');
+    assert.equal(campo(e, 'SUMMARY'), 'SUMMARY:MB21 · Serata Linea Rossi · da Ignazio');
+    assert.equal(campo(e, 'DESCRIPTION'), 'DESCRIPTION:Chiamata: https://zoom.us/j/555\\nPunti da trattare:\\n✓ Benvenuto ai nuovi\\n• Risultati del mese');
+    assert.equal(campo(e, 'STATUS'), null);
+    const no = F.eventoRicevuto({ ...r, risposta: 'non_ci_sono', link: null, punti: null, fine: null }, ADESSO);
+    assert.equal(campo(no, 'STATUS'), 'STATUS:CANCELLED'); assert.equal(campo(no, 'TRANSP'), 'TRANSP:TRANSPARENT');
+    assert.equal(campo(no, 'DESCRIPTION'), null); assert.equal(campo(no, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T210000');   // senza fine: un'ora
+    const cal = F.calendario([], [], ADESSO, [r]);
+    assert.match(cal, /UID:ricevuto-spazio-r1@mb21/);
+    assert.match(F.calendario([], [], ADESSO), /END:VCALENDAR/);   // senza il quarto argomento, come prima
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

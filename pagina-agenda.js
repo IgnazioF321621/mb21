@@ -83,9 +83,12 @@ async function caricaAgenda() {
   await conferme;
   // gli spazi della settimana preparati prima («Modello appuntamenti settimanale», 27/09): solo l'Admin, per ora
   const spazi = vediSpazi() ? dbq('spazi', supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
-  const [cd, sp, vc] = await Promise.all([cose, spazi, vecchie]);
+  // gli impegni ricevuti da altri (nota 027): mai con «Tutti»; se la funzione non c'è ancora o non risponde, l'Agenda si apre senza di loro
+  const ricevuti = vediTutti() ? null : dbq('impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a }));
+  const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali()]);
   AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
+  AG.ricevuti = rc && !rc.error && Array.isArray(rc.data) ? rc.data : [];
   for (const r of [app1, ric, pas, tel, cd]) if (r && r.error) throw r.error;
   // una telefonata scelta a mano senza orario (nota 012) sta solo in coda, in Dashboard: in Agenda entra quando ha un'ora o quando è fatta (allora l'ora è quella)
   AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]).filter(a => !(a.senza_ora && !a.completata));
@@ -241,11 +244,12 @@ function scalaSopraHtml(scala, oggi) {
 function impegniHtml(eventi, opz) {
   const A = MB21Agenda;
   const spazi = spaziDelGiorno(AG.giorno);   // gli spazi «da riempire» stanno in mezzo agli impegni, al loro orario
-  if (!eventi.length && !spazi.length) return `<div class="ag-impegni vuota">Nessun impegno. Tocca <b>+</b> o apri la Timeline.</div>`;
+  const ricevuti = ricevutiDelGiornoMB(AG.giorno);   // e gli impegni ricevuti da altri (nota 027)
+  if (!eventi.length && !spazi.length && !ricevuti.length) return `<div class="ag-impegni vuota">Nessun impegno. Tocca <b>+</b> o apri la Timeline.</div>`;
   const righe = eventi.map(e => {
     const r = A.riga(e, opz), cat = (e.contatti && e.contatti.categoria) || e.categoria;
     return { t: Date.parse(e.quando || e.inizio), h: `<button class="ag-imp${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}"><i class="${classeCat(cat)}"></i><span>${esc(r.titolo)}${e.portatoNome ? `<small>${rigaPortato(e.portatoNome)}</small>` : ''}</span><b>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' 👍' : ''}</b></button>` };
-  }).concat(spazi.map(x => ({ t: Date.parse(x.inizio), h: rigaSpazioHtml(x) })));
+  }).concat(spazi.map(x => ({ t: Date.parse(x.inizio), h: rigaSpazioHtml(x) })), ricevuti.map(x => ({ t: Date.parse(x.inizio), h: rigaRicevutoHtml(x) })));
   return `<div class="ag-impegni">${righe.sort((x, y) => x.t - y.t).map(x => x.h).join('')}</div>`;
 }
 
@@ -789,7 +793,8 @@ function giorniSettimanaHtml(opz, oggi) {
     const ev = A.eventiDelGiorno(AG.azioni, g);
     const cose = A.coseDelGiorno(AG.cose, g, oggi);   // le cose da fare di quel giorno, sotto gli impegni (come i riferimenti di NotePlan)
     const coseHtml = cose.map(c => `<span class="ss-riga ss-cosa${c.fatto_il ? ' fatta' : ''}"><i></i>${c.ora ? `<em>${esc(String(c.ora).slice(0, 5))}</em>` : ''}${esc(c.testo)}</span>`).join('')
-      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('');
+      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('')
+      + ricevutiDelGiornoMB(g).map(x => `<span class="ss-riga ss-ricevuto"><i></i><em>${esc(A.orario(x).split('–')[0])}</em>${esc(A.titoloRicevuto(x))}</span>`).join('');
     return `<button class="ss-g${g === oggi ? ' oggi' : ''}" data-apri="${g}"><span class="ss-data"><small>${A.GIORNI_SETTIMANA[i]}</small><b>${Number(g.slice(8))}</b></span>
       <span class="ss-ev">${ev.length ? ev.map(e => { const cat = (e.contatti && e.contatti.categoria) || e.categoria;
         return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`; }).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
@@ -1235,6 +1240,7 @@ function collegaGriglia(radice, eventi, prima) {
     if (x) b.onclick = () => { if (prima) prima(); spuntaCosa(x._cosa.cosa); };
   });
   radice.querySelectorAll('[data-spazio]').forEach(b => { b.onclick = () => { if (prima) prima(); foglioSpazio(b.dataset.spazio); }; });
+  radice.querySelectorAll('[data-ricevuto]').forEach(b => { b.onclick = () => { if (prima) prima(); const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   portaInVista();
   aggiornaVaiOra();
 }
@@ -1282,7 +1288,7 @@ const oraDurata = x => x.ora ? `${String(x.ora).slice(0, 5)}${x.durata ? ` · ${
 
 function grigliaGiorno(eventi, opz) {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const blocchiCose = [...coseConOra(AG.giorno), ...spaziComeBlocchi(AG.giorno)];
+  const blocchiCose = [...coseConOra(AG.giorno), ...spaziComeBlocchi(AG.giorno), ...ricevutiComeBlocchi(AG.giorno)];
   const d = A.disposizioneGiorno([...eventi, ...blocchiCose]);
   const dVeri = blocchiCose.length ? A.disposizioneGiorno(eventi) : d;   // l'avviso «si accavallano» guarda solo gli appuntamenti
   const y = m => Math.round((m - d.da) / 60 * ALT_ORA);
@@ -1319,6 +1325,11 @@ function grigliaGiorno(eventi, opz) {
   for (const b of d.blocchi) {
     const e = b.ev, larga = 100 / b.colonne, sin = b.col * larga;
     const alto = Math.max(18, y(b.cima + b.alta) - y(b.cima) - 3);
+    if (e._ricevuto) {   // un impegno ricevuto da un altro (nota 027): pieno, non si trascina; il tocco apre il suo foglio
+      h += `<button class="ag-ev ag-ricevuto${e._ricevuto.risposta === 'non_ci_sono' ? ' noci' : ''}${alto < 26 ? ' bassa' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(e._ricevuto))}" aria-label="${esc(A.titoloRicevuto(e._ricevuto))}"
+        style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)"><b>${esc(e.testo)}</b>${alto < 32 ? '' : `<small>${esc(A.orario(e))} · da ${esc(e._ricevuto.da_nome || '—')}</small>`}</button>`;
+      continue;
+    }
     if (e._spazio) {   // uno spazio da riempire (27/09): tratteggiato col colore del tipo, si trascina; il tocco apre il suo foglio
       h += `<button class="ag-ev ag-cosa ag-spazio${alto < 26 ? ' bassa' : ''}" data-cosa-blocco="${esc(e.id)}" data-spazio="${esc(e._spazio.id)}" aria-label="${esc(e.testo)}, ${esc(sottoSpazio(e._spazio))}"
         style="--tinta:${coloreSpazio(e._spazio.tipo)};top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)"><b>${esc(e.testo)}</b>${alto < 32 ? '' : `<small>${esc(A.orario(e))}${MB21Spazi.daRiempire(e._spazio.tipo) ? ' · da riempire' : ''}</small>`}</button>`;
@@ -1552,6 +1563,177 @@ function collegaPunti(el, ogg, tabella, ridisegna) {
   });
 }
 
+// ── Impegni condivisi (nota Pagine 027, Ignazio 05/10) ──
+// CHI ORGANIZZA: un appuntamento con un Partner che usa l'app si condivide con lui («Condividi con Laura», funzione `condividi_azione`); una serata
+// Team/LdS/OPEN la condivide solo l'Admin con tutto il Team o con una Linea (campi `condiviso_con` · `linea_codice` di `spazi`). «Vedono anche i
+// punti?» sì/no. Chi organizza vede i nomi e il conto delle risposte (`risposte_impegno`): «Ci sono 6 · Non ci sono 2 · Senza risposta 4».
+// CHI RICEVE: l'impegno compare nella sua Agenda (impegni del giorno, Settimana, Timeline) con «da Ignazio», in sola lettura, con il link della
+// chiamata e, se condivisi, i punti; risponde «Ci sono / Non ci sono» (tabella `impegni_risposte`). All'apertura dell'app un pop-up
+// «Hai un nuovo appuntamento» per quelli non ancora visti. Niente avvisi push: l'avviso lo dà il suo calendario (funzione `calendario`).
+const ricevutiDelGiornoMB = g => (vediTutti() ? [] : MB21Agenda.ricevutiDelGiorno(AG.ricevuti, g));
+const giornoOraRicevuto = r => `${dataLunga(MB21Agenda.partiRoma(r.inizio).giorno)} · ${MB21Agenda.orario(r)}`;
+// la riga nella card degli impegni e nell'elenco della settimana: pallino pieno grigio-blu, «da Ignazio» sotto, la risposta se c'è
+function rigaRicevutoHtml(r) {
+  const A = MB21Agenda;
+  return `<button class="ag-imp ric-imp${r.risposta === 'non_ci_sono' ? ' noci' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(r))}"><i></i><span>${esc(r.titolo)}<small>da ${esc(r.da_nome || '—')}${r.risposta ? ' · ' + esc(A.nomeRisposta(r.risposta)) : !r.visto_il ? ' · nuovo' : ''}</small></span><b>${esc(A.orario(r))}</b></button>`;
+}
+// i blocchi della Timeline, come gli spazi ma pieni e senza trascinamento
+function ricevutiComeBlocchi(g) {
+  return ricevutiDelGiornoMB(g).map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, tipo_azione: 'Ricevuto', inizio: r.inizio, quando: r.inizio, fine: r.fine, testo: r.titolo, _ricevuto: r }));
+}
+const ricevutoDaChiave = k => (AG.ricevuti || []).find(r => MB21Agenda.chiaveRicevuto(r) === k);
+// la risposta di chi riceve (visto, ci sono / non ci sono): una riga sola per persona e impegno, si riscrive intera
+async function rispondiImpegno(r, risposta) {
+  const adesso = new Date().toISOString();
+  const riga = { origine: r.origine, impegno_id: r.id, utente_id: visto().id, visto_il: r.visto_il || adesso, risposta: risposta || r.risposta || null, risposto_il: risposta ? adesso : null };
+  const { error } = await dbq('risposta impegno', supa.from('impegni_risposte').upsert(riga, { onConflict: 'origine,impegno_id,utente_id' }));
+  if (error) { mostraToast('Non salvato: controlla la connessione e riprova.'); return false; }
+  r.visto_il = riga.visto_il; if (risposta) r.risposta = risposta;
+  return true;
+}
+const puntiSolaLetturaHtml = r => {
+  const punti = MB21Agenda.puntiDi(r);
+  if (!punti.length) return '';
+  return `<div class="pt"><div class="pt-testa"><b>Punti da trattare</b><small>${esc(MB21Agenda.contoPunti(punti))}</small></div>${punti.map(p => `<div class="pt-riga${p.fatto ? ' fatta' : ''}"><span class="spunta">${p.fatto ? ic('fatto') : ''}</span><span class="pt-testo">${testoConLink(p.t)}</span></div>`).join('')}</div>`;
+};
+const rispostaBottoniHtml = (r, attr) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>`;
+// Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Ci sono / Non ci sono». Aprirlo lo segna visto.
+function foglioRicevuto(r) {
+  const A = MB21Agenda;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  const disegna = () => {
+    velo.innerHTML = `<div class="foglio alto ric-foglio">
+      <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="ri-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <p>${esc(giornoOraRicevuto(r))}</p>
+      <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario. Dì se ci sei.</div>
+      ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>` : ''}
+      ${puntiSolaLetturaHtml(r)}
+      <div class="campo"><label>Ci sei?</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div></div>`;
+    velo.querySelector('#ri-x').onclick = chiudi;
+    velo.querySelectorAll('[data-ri-risposta]').forEach(b => { b.onclick = async () => {
+      if (await rispondiImpegno(r, b.dataset.riRisposta)) { chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: ci sei' : 'Segnato: non ci sei'); }
+    }; });
+  };
+  disegna();
+  if (!r.visto_il) rispondiImpegno(r, null);   // visto: il pop-up non lo ripropone
+}
+// All'apertura dell'app (index.html, dopoAccesso): gli impegni ricevuti non ancora visti, da oggi in avanti. Chiamato da index.html, mai con «Tutti».
+async function controllaImpegniNuovi() {
+  if (!ST.utente || !ST.utente.id || vediTutti()) return;
+  const A = MB21Agenda, adesso = new Date();
+  const { data, error } = await dbq('impegni nuovi', supa.rpc('impegni_ricevuti', { p_da: new Date(adesso.getTime() - 86400000).toISOString(), p_a: new Date(adesso.getTime() + 366 * 86400000).toISOString() }));
+  if (error || !Array.isArray(data)) return;
+  const nuovi = A.ricevutiNuovi(data, adesso.toISOString());
+  if (nuovi.length) foglioImpegniNuovi(nuovi);
+}
+// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Ci sono / Non ci sono»; «Lo guardo dopo» lo lascia nuovo finché non si risponde.
+function foglioImpegniNuovi(nuovi) {
+  const A = MB21Agenda;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  const disegna = () => {
+    if (!nuovi.length) return chiudi();
+    velo.innerHTML = `<div class="foglio alto ric-foglio">
+      <div class="testa-foglio"><h3>${nuovi.length === 1 ? 'Hai un nuovo appuntamento' : `Hai ${nuovi.length} nuovi appuntamenti`}</h3><button id="rn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      ${nuovi.map(r => `<div class="ric-nuovo" data-rn="${esc(A.chiaveRicevuto(r))}"><b>${esc(r.titolo)}</b><span>da ${esc(r.da_nome || '—')} · ${esc(giornoOraRicevuto(r))}</span>
+        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta')}</div>`).join('')}
+      <div class="mc-fondo"><button class="link" id="rn-dopo">Lo guardo dopo</button></div></div>`;
+    velo.querySelector('#rn-x').onclick = chiudi;
+    velo.querySelector('#rn-dopo').onclick = chiudi;
+    velo.querySelectorAll('.ric-nuovo').forEach(riga => {
+      const r = nuovi.find(x => A.chiaveRicevuto(x) === riga.dataset.rn);
+      riga.querySelectorAll('[data-rn-risposta]').forEach(b => { b.onclick = async () => {
+        if (!(await rispondiImpegno(r, b.dataset.rnRisposta))) return;
+        nuovi = nuovi.filter(x => x !== r);
+        if (!nuovi.length) mostraToast(b.dataset.rnRisposta === 'ci_sono' ? 'Segnato: ci sei. Lo trovi in MB Plan' : 'Segnato: non ci sei');
+        disegna();
+      }; });
+    });
+  };
+  disegna();
+}
+// ── chi organizza: il riquadro «Condividi» ──
+const nomePersona = e => (e.contatti && e.contatti.nome) || 'la persona';
+function condivisioneAzioneHtml(e) {
+  const A = MB21Agenda;
+  if (!A.puoCondividereAzione(e)) return '';
+  if (!e.condiviso_con) return `<div class="cd chiuso" data-cd="${esc(e.id)}"><button type="button" class="link" data-cd-con>${ic('condividi')} Condividi con ${esc(nomePersona(e))}</button></div>`;
+  return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>Condiviso con ${esc(nomePersona(e))}</b><small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small></div>
+    <div class="cd-risposte" data-cd-risposte>…</div>
+    <div class="pt-comandi"><button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button><button type="button" class="link" data-cd-togli>Non condividere più</button></div></div>`;
+}
+// le risposte di chi riceve, scritte a parole con i nomi (si leggono dopo, senza fermare il disegno)
+async function mostraRisposte(el, origine, id) {
+  const A = MB21Agenda, dove = el.querySelector('[data-cd-risposte]');
+  if (!dove) return;
+  const { data, error } = await dbq('risposte impegno', supa.rpc('risposte_impegno', { p_origine: origine, p_id: id }));
+  if (error || !Array.isArray(data)) { dove.innerHTML = ''; return; }
+  const n = A.nomiPerRisposta(data), c = A.contoRisposte(data);
+  if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRisposta(data[0].risposta))}</b>` : ''; return; }
+  const gruppo = (titolo, nomi) => (nomi.length ? `<div><b>${esc(titolo)} ${nomi.length}</b>: ${esc(nomi.join(', '))}</div>` : '');
+  dove.innerHTML = `<div class="cd-conto">${esc(c.testo)}</div>${gruppo('Ci sono', n.ci_sono)}${gruppo('Non ci sono', n.non_ci_sono)}${gruppo('Senza risposta', n.senza)}`;
+}
+function collegaCondivisioneAzione(el, e, ridisegna) {
+  const blocco = el.querySelector(`[data-cd="${e.id}"]`);
+  if (!blocco) return;
+  const localmente = campi => { Object.assign(e, campi); const o = (AG.azioni || []).find(x => x.id === e.id); if (o && o !== e) Object.assign(o, campi); };
+  const chiama = async (con, punti, toast) => {
+    const { data, error } = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: e.id, p_con: con, p_punti: punti }));
+    const r = data || {};
+    if (error || !r.esito) return mostraToast('Non salvato: controlla la connessione e riprova.');
+    if (r.esito === 'non_usa_app') return mostraToast(`${nomePersona(e)} non usa ancora l'app: non si può condividere`);
+    if (r.esito === 'se_stesso') return mostraToast('Questo appuntamento è con te stesso');
+    if (r.esito !== 'ok') return mostraToast('Non è un tuo appuntamento');
+    localmente(con ? { condiviso_con: r.utente || e.condiviso_con, punti_condivisi: !!punti } : { condiviso_con: null, punti_condivisi: false });
+    ridisegna();
+    if (toast) mostraToast(toast);
+  };
+  const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
+  su('[data-cd-con]', () => chiama(true, false, `Condiviso con ${nomePersona(e)}: lo trova nella sua Agenda e nel suo calendario`));
+  su('[data-cd-punti]', b => chiama(true, b.dataset.cdPunti === '1', b.dataset.cdPunti === '1' ? `${nomePersona(e)} vede anche i punti` : 'I punti restano solo tuoi'));
+  su('[data-cd-togli]', () => chiama(false, false, 'Non più condiviso'));
+  if (e.condiviso_con) mostraRisposte(blocco, 'azione', e.id);
+}
+// la serata di gruppo (solo l'Admin): con chi, la Linea (uno dei suoi frontali, da `squadra`), i punti sì/no, le risposte con i nomi
+function condivisioneSpazioHtml(s) {
+  const A = MB21Agenda;
+  if (!A.puoCondividereSpazio(s, eAdmin())) return '';
+  const con = s.condiviso_con || '';
+  const frontali = AG.frontali || [];
+  return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>${con === 'team' ? 'tutto il Team' : 'una Linea'}${s.punti_condivisi ? ' · vedono i punti' : ''}</small>` : ''}</div>
+    <div class="ag-scelte">${A.CONDIVISIONI_SPAZIO.map(([k, n]) => `<button type="button" data-cd-con="${k}" class="${con === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>
+    ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${s.linea_codice === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessun frontale nella Mappa.</span>'}</div></div>` : ''}
+    ${con ? `<div class="campo"><label>Vedono anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
+}
+function collegaCondivisioneSpazio(el, s, ridisegna) {
+  const blocco = el.querySelector(`[data-cd="${s.id}"]`);
+  if (!blocco) return;
+  const salva = async campi => {
+    const prima = { condiviso_con: s.condiviso_con, linea_codice: s.linea_codice, punti_condivisi: s.punti_condivisi };
+    Object.assign(s, campi);
+    const { error } = await dbq('condividi spazio', supa.from('spazi').update(campi).eq('id', s.id));
+    if (error) { Object.assign(s, prima); return mostraToast('Non salvato: controlla la connessione e riprova.'); }
+    ridisegna();
+  };
+  const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
+  su('[data-cd-con]', b => { const k = b.dataset.cdCon || null; if (k !== (s.condiviso_con || null)) salva({ condiviso_con: k, linea_codice: k === 'linea' ? s.linea_codice || null : null, punti_condivisi: k ? !!s.punti_condivisi : false }); });
+  su('[data-cd-linea]', b => salva({ linea_codice: b.dataset.cdLinea }));
+  su('[data-cd-punti]', b => salva({ punti_condivisi: b.dataset.cdPunti === '1' }));
+  if (s.condiviso_con) mostraRisposte(blocco, 'spazio', s.id);
+}
+// i frontali dell'Admin (per «Una Linea»): si leggono una volta, dalla Mappa (`squadra`, chi ha come sponsor il suo codice)
+async function caricaFrontali() {
+  if (AG.frontali !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;
+  const { data, error } = await dbq('frontali', supa.from('squadra').select('partner_id, nome').eq('sponsor_id', ST.utente.partner_id).order('nome'));
+  AG.frontali = error || !Array.isArray(data) ? [] : data;
+}
+
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
 // si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
 function extraEvento(e) {
@@ -1569,6 +1751,7 @@ function extraEvento(e) {
   return `${ricordo}${prima}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${testoConLink(e.note)}</div>` : ''}
       ${richiamo ? '' : puntiHtml(e, 'azioni')}
+      ${richiamo ? '' : condivisioneAzioneHtml(e)}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
@@ -1635,6 +1818,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
   const giorno = A.partiRoma(e.quando || e.inizio).giorno;
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
   collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
+  collegaCondivisioneAzione(el, e, ridisegna || disegnaAgenda);
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };
@@ -1657,6 +1841,7 @@ function collegaAgenda(eventi) {
   collegaPartnerSelect();
   su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
+  app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
   su('ag-in-coda', codaDelGiorno);
   su('ag-riordini', () => { ST.tab = 'oggi'; ST.vaiA = 'riordini'; mostraTab(); });
@@ -1879,6 +2064,7 @@ function foglioSpazio(id) {
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
       : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi dargli il nome della serata (o la tipologia, la linea, la squadra)' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
     ${puntiHtml(s, 'spazi')}
+    ${condivisioneSpazioHtml(s)}
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
       ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia il nome' : 'Metti il nome della serata'}</button>` : ''}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
@@ -1891,6 +2077,7 @@ function foglioSpazio(id) {
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   velo.querySelector('#sp-x').onclick = chiudi;
   collegaPunti(velo, s, 'spazi', () => { chiudi(); foglioSpazio(id); });   // i punti della serata (nota 026): il foglio si riapre aggiornato
+  collegaCondivisioneSpazio(velo, s, () => { chiudi(); foglioSpazio(id); });   // con chi la condivido (nota 027, solo l'Admin)
   const nome = velo.querySelector('#sp-nome');
   if (nome) nome.onclick = () => { chiudi(); nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: s.tipo, durata: o.durata, spazio: s, titolo: S.nome(s.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: scrivi il nome di chi viene.` }); };
   const serata = velo.querySelector('#sp-serata');
