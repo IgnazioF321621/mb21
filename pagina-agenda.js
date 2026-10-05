@@ -1594,7 +1594,8 @@ async function rispondiImpegno(r, risposta) {
 const puntiSolaLetturaHtml = r => {
   const punti = MB21Agenda.puntiDi(r);
   if (!punti.length) return '';
-  return `<div class="pt"><div class="pt-testa"><b>Punti da trattare</b><small>${esc(MB21Agenda.contoPunti(punti))}</small></div>${punti.map(p => `<div class="pt-riga${p.fatto ? ' fatta' : ''}"><span class="spunta">${p.fatto ? ic('fatto') : ''}</span><span class="pt-testo">${testoConLink(p.t)}</span></div>`).join('')}</div>`;
+  // in sola lettura: niente cerchietti da spuntare (li spunta chi organizza; Ignazio 05/10: «non capisco questa card»): un elenco con • e ✓
+  return `<div class="pt pt-lettura"><div class="pt-testa"><b>Punti da trattare</b><small>li spunta chi organizza</small></div>${punti.map(p => `<div class="pt-riga${p.fatto ? ' fatta' : ''}"><span class="pt-segno">${p.fatto ? '✓' : '•'}</span><span class="pt-testo">${testoConLink(p.t)}</span></div>`).join('')}</div>`;
 };
 // le due risposte; nel pop-up anche «Decido dopo» accanto (Ignazio 05/10): toglie la riga dal pop-up senza salvare niente, l'impegno resta «nuovo»
 const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}${conDopo ? `<button type="button" ${attr}="dopo" class="dopo">Decido dopo</button>` : ''}</div>`;
