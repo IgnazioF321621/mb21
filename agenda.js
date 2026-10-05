@@ -198,6 +198,26 @@
   const GIORNI_SETTIMANA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];   // 1 = lunedì … 7 = domenica
   // Il numero del giorno della settimana di una data (1 = lunedì … 7 = domenica)
   function giornoSettimana(giorno) { return (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1; }
+  // ── La ripetizione (Ignazio 05/10/2026): una cosa da fare con `ripeti` = 'settimana' o 'mese' ricompare da sola quando la spunti.
+  // `ripeti` ha senso per le cose del Giorno (ogni settimana: lo stesso giorno della settimana dopo; ogni mese: lo stesso numero del
+  // mese dopo, o l'ultimo giorno se il mese è più corto), della Settimana (ogni settimana) e del Mese (ogni mese). Le altre scale no.
+  const RIPETIZIONI = [['settimana', 'Ogni settimana'], ['mese', 'Ogni mese']];
+  const ripetizioniPer = scala => RIPETIZIONI.filter(([k]) => (scala || 'giorno') === 'giorno' || (scala === 'settimana' && k === 'settimana') || (scala === 'mese' && k === 'mese'));
+  // Il giorno (e la scala) della prossima volta. Parte sempre dal giorno in cui era fissata e va avanti finché è dopo `fatta` (il giorno in
+  // cui si spunta): fatta in anticipo → quella dopo; fatta in ritardo → la prima che non è già passata. Senza ripetizione, null.
+  function prossimaRipetizione(c, fatta) {
+    const r = c && c.ripeti, sc = (c && c.scala) || 'giorno';
+    if (!r || !c.giorno || !ripetizioniPer(sc).some(x => x[0] === r)) return null;
+    const dopo = n => {
+      if (r === 'settimana') return spostaGiorno(c.giorno, 7 * n);
+      const m = meseAccanto(c.giorno.slice(0, 8) + '01', n);
+      if (sc === 'mese') return m;
+      const ultimo = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).getUTCDate();
+      return m.slice(0, 8) + String(Math.min(Number(c.giorno.slice(8)), ultimo)).padStart(2, '0');
+    };
+    for (let n = 1; n <= 120; n++) { const g = dopo(n); if (g > fatta) return { giorno: g, scala: sc }; }
+    return null;
+  }
   // A chi o a cosa si riferisce una cosa da fare (Ignazio 05/10/2026: ogni cosa di MB Plan è legata a una persona della lista o al
   // Team, al LdS, a Network 21, ad Amway). `contatto_id` = la persona; `legato_a` = uno di LEGAMI. Rende { tipo, nome } oppure null.
   const LEGAMI = [['Team', 'Team'], ['LdS', 'LdS'], ['N21', 'Network 21'], ['Amway', 'Amway']];
@@ -624,7 +644,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

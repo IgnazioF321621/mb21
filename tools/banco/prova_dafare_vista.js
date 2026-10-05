@@ -105,6 +105,35 @@ prova('Il filtro sopra la lista mostra solo i legami presenti e nasconde le altr
   P.AG.filtro = '';
 });
 
+prova('Ripetizione: nel foglio si sceglie «Ogni settimana»; spuntando nasce la copia della settimana dopo (stesso legame e ripetizione); se c\'è già non se ne fa un\'altra', async () => {
+  pulisci(); P.vista('giorno');
+  const c = { id: 'r1', user_id: 'io', testo: 'Serata di Team', giorno: P.OGGI, scala: 'giorno', ordine: 1, fatto_il: null, legato_a: 'Team' };
+  P.AG.cose.push(c);
+  P.foglioCosa(c, P.OGGI);
+  const v = P.fogli[0];
+  assert.match(v.innerHTML, /Si ripete/); assert.match(v.innerHTML, /data-ripeti="settimana"/); assert.match(v.innerHTML, /data-ripeti="mese"/);
+  v.querySelector('#fc-testo').value = c.testo;
+  await v.clic('[data-ripeti="settimana"]');
+  await v.clic('#fc-salva');
+  assert.equal(modifiche()[0].args[0].ripeti, 'settimana');
+  assert.equal(c.ripeti, 'settimana');
+  pulisci();
+  await P.spuntaCosa(c);
+  const ins = aggiunte()[0].args[0];
+  assert.equal(ins.testo, 'Serata di Team'); assert.equal(ins.legato_a, 'Team'); assert.equal(ins.ripeti, 'settimana');
+  assert.equal(ins.giorno, P.A.spostaGiorno(P.OGGI, 7)); assert.equal(ins.scala, 'giorno');
+  assert.match(P.avvisi.at(-1).t, /tornerà/);
+  // già c'è una copia aperta quel giorno: spunta, toglie la spunta, spunta di nuovo → una sola copia
+  pulisci(); c.fatto_il = null; P.scelta.esiste = true;
+  await P.spuntaCosa(c);
+  assert.equal(aggiunte().length, 0);
+  P.scelta.esiste = false;
+  // senza ripetizione, niente copia
+  pulisci(); const senza = { id: 'r2', user_id: 'io', testo: 'Una volta sola', giorno: P.OGGI, scala: 'giorno', fatto_il: null, legato_a: 'Amway' };
+  await P.spuntaCosa(senza);
+  assert.equal(aggiunte().length, 0);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

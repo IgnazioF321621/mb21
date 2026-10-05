@@ -426,6 +426,25 @@ prova('Per chi è (05/10): persona, Team, LdS, Network 21, Amway; i due campi si
   assert.equal(A.campiLegame(null), null);
 });
 
+prova('Ripetizione (05/10): ogni settimana lo stesso giorno, ogni mese lo stesso numero (o l\'ultimo giorno); in ritardo salta quelle già passate', () => {
+  const P = (c, fatta) => A.prossimaRipetizione(c, fatta);
+  assert.deepEqual(P({ giorno: '2026-10-07', ripeti: 'settimana' }, '2026-10-05'), { giorno: '2026-10-14', scala: 'giorno' });   // fatta in anticipo: la prossima è quella dopo
+  assert.deepEqual(P({ giorno: '2026-10-07', ripeti: 'settimana' }, '2026-10-07'), { giorno: '2026-10-14', scala: 'giorno' });
+  assert.deepEqual(P({ giorno: '2026-10-07', ripeti: 'settimana' }, '2026-10-22'), { giorno: '2026-10-28', scala: 'giorno' });   // fatta con 15 giorni di ritardo: salta il 14 e il 21
+  assert.deepEqual(P({ giorno: '2026-01-31', ripeti: 'mese' }, '2026-01-31'), { giorno: '2026-02-28', scala: 'giorno' });       // febbraio è più corto
+  assert.deepEqual(P({ giorno: '2026-01-31', ripeti: 'mese' }, '2026-03-01'), { giorno: '2026-03-31', scala: 'giorno' });       // il 31 resta 31 (non scivola al 28)
+  assert.deepEqual(P({ giorno: '2026-10-01', scala: 'mese', ripeti: 'mese' }, '2026-10-20'), { giorno: '2026-11-01', scala: 'mese' });
+  assert.deepEqual(P({ giorno: '2026-10-05', scala: 'settimana', ripeti: 'settimana' }, '2026-10-06'), { giorno: '2026-10-12', scala: 'settimana' });
+  assert.equal(P({ giorno: '2026-10-05', scala: 'mese', ripeti: 'settimana' }, '2026-10-20'), null);   // una cosa del mese non si ripete ogni settimana
+  assert.equal(P({ giorno: '2026-10-05', scala: 'settimana', ripeti: 'mese' }, '2026-10-20'), null);
+  assert.equal(P({ giorno: '2026-10-05', scala: 'periodo', ripeti: 'mese' }, '2026-10-20'), null);
+  assert.equal(P({ giorno: '2026-10-05' }, '2026-10-20'), null);                                          // senza ripetizione niente
+  assert.deepEqual(A.ripetizioniPer('giorno').map(x => x[0]), ['settimana', 'mese']);
+  assert.deepEqual(A.ripetizioniPer('settimana').map(x => x[0]), ['settimana']);
+  assert.deepEqual(A.ripetizioniPer('mese').map(x => x[0]), ['mese']);
+  assert.deepEqual(A.ripetizioniPer('anno'), []);
+});
+
 prova('Cose da fare del mese (vista Mese): riporto al mese di oggi, le fatte restano nel loro mese', () => {
   const cose = [
     { id: 'a', scala: 'mese', giorno: '2026-08-01', fatto_il: null, testo: 'Biglietti WES' },
