@@ -15,7 +15,7 @@ const MB21Spazi = require(path.join(BASE, 'spazi.js'));   // «Modello appuntame
 
 const fra = (da, a) => sorgente.slice(sorgente.indexOf(da), sorgente.indexOf(a, sorgente.indexOf(da)));
 const funzione = nome => {
-  const m = sorgente.match(new RegExp('^(function ' + nome + '\\b[\\s\\S]*?)\\n\\}', 'm'));
+  const m = sorgente.match(new RegExp('^((?:async )?function ' + nome + '\\b[\\s\\S]*?)\\n\\}', 'm'));
   if (!m) throw new Error('non trovo la funzione ' + nome);
   return m[1] + '\n}';
 };
@@ -29,9 +29,10 @@ const stile = fra('<style>', '</style>').replace('<style>', '');
 const codice = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'),
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
-  funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
+  funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
+  funzione('nuovoAppuntamento'),   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -88,7 +89,8 @@ const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefine
 const finto = { ricevuti: [{ origine: 'azione', id: 'a-ric', inizio: q(OGGI, '17:00'), fine: q(OGGI, '18:00'), titolo: 'PM 1a1', tipo: 'Piano Marketing', da_utente: 'u-ign', da_nome: 'Ignazio',
     link: 'https://zoom.us/j/555', punti: [{ t: 'Il perché', fatto: false }], punti_condivisi: true, visto_il: null, risposta: null }],
   risposte: [{ utente_id: 'u-isa', nome: 'Isabella Rossi', risposta: 'ci_sono', risposto_il: q(OGGI, '08:00'), visto_il: q(OGGI, '08:00') }],
-  condividi: { esito: 'ok', nome: 'Isabella Rossi', utente: 'u-isa' } };
+  condividi: { esito: 'ok', nome: 'Isabella Rossi', utente: 'u-isa' },
+  contatti: [{ id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }] };
 const stub = {
   supa: { from: tabella, rpc: (nome, args) => { scritture.push({ tabella: 'rpc:' + nome, op: 'rpc', args: [args] }); return fine; } }, dbq: async nome => (nome === 'ripetizione già c\'è' ? { data: scelta.esiste ? [{ id: 'gia' }] : [], error: null }
     : nome === 'punto nel Da fare' ? { data: { id: 'nuovo-1', testo: 'x', giorno: OGGI, scala: 'giorno' }, error: null }   // `.single()`: una riga sola, non un elenco
@@ -96,6 +98,8 @@ const stub = {
     : nome === 'impegni ricevuti' || nome === 'impegni nuovi' ? { data: finto.ricevuti, error: null }
     : nome === 'risposte impegno' ? { data: finto.risposte, error: null }
     : nome === 'condividi azione' ? { data: finto.condividi, error: null }
+    : nome === 'nuovo appuntamento' ? { data: { id: 'az-nuova' }, error: null }
+    : nome === 'nuova serata' ? { data: { id: 'sp-nuova', ...(scritture.at(-1) || { args: [{}] }).args[0] }, error: null }
     : { data: [{ id: 'nuovo-1' }], error: null }),
   MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
   ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
@@ -106,7 +110,9 @@ const stub = {
   rigaPortato: n => 'portato da ' + n,
   ricordoHtml: () => '', preparaChiamataHtml: () => '', preparaPresentazioneHtml: () => '',   // il coach non c'entra qui (il foglio dell'impegno, per i punti da trattare)
   collegaEsiti: () => {}, mostraToast: (t, annulla) => { avvisi.push({ t, annulla }); }, mostraTab: () => {},
-  nuovoAppuntamento: () => {}, spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
+  spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
+  // per il modulo «+» vero: i contatti della lista, niente spazi liberi, niente domande dopo il salvataggio
+  leggiContattiMiei: async () => finto.contatti, spaziLiberi: async () => [], legaInizioFine() {}, domandaInvito() {}, tracciaDiApertura() {}, contattiMiei: null, LS: { righe: [] },
   aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
   pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
@@ -115,7 +121,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -128,7 +134,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
