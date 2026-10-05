@@ -106,5 +106,13 @@ const fs = require('node:fs'), path = require('node:path');
     assert.match(F.calendario([], [], ADESSO), /END:VCALENDAR/);   // senza il quarto argomento, come prima
   });
 
+  prova('Il posto dal vivo (nota 028) anche sui propri appuntamenti e sulle serate: LOCATION; senza posto niente riga', () => {
+    const a = { id: 'a9', contatto_id: 'c1', tipo_azione: 'Appuntamento', modalita: 'Counseling', esito: null, inizio: '2026-10-06T16:30:00Z', fine: null, data_scelta: null, ospite: null, note: null, luogo: ' Bar Centrale, Catania ', contatti: { nome: 'Isabella Rossi' } };
+    assert.equal(campo(F.evento(a, ADESSO), 'LOCATION'), 'LOCATION:Bar Centrale\\, Catania');
+    assert.equal(campo(F.evento({ ...a, luogo: null }, ADESSO), 'LOCATION'), null);
+    assert.equal(campo(F.eventoSpazio(sp({ luogo: 'Hotel Villa Rosa' }), ADESSO), 'LOCATION'), 'LOCATION:Hotel Villa Rosa');
+    assert.equal(campo(F.eventoSpazio(sp({}), ADESSO), 'LOCATION'), null);
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
