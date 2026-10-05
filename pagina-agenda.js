@@ -1596,7 +1596,8 @@ const puntiSolaLetturaHtml = r => {
   if (!punti.length) return '';
   return `<div class="pt"><div class="pt-testa"><b>Punti da trattare</b><small>${esc(MB21Agenda.contoPunti(punti))}</small></div>${punti.map(p => `<div class="pt-riga${p.fatto ? ' fatta' : ''}"><span class="spunta">${p.fatto ? ic('fatto') : ''}</span><span class="pt-testo">${testoConLink(p.t)}</span></div>`).join('')}</div>`;
 };
-const rispostaBottoniHtml = (r, attr) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>`;
+// le due risposte; nel pop-up anche «Decido dopo» accanto (Ignazio 05/10): toglie la riga dal pop-up senza salvare niente, l'impegno resta «nuovo»
+const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}${conDopo ? `<button type="button" ${attr}="dopo" class="dopo">Decido dopo</button>` : ''}</div>`;
 // Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Ci sono / Non ci sono». Aprirlo lo segna visto.
 function foglioRicevuto(r) {
   const A = MB21Agenda;
@@ -1630,7 +1631,7 @@ async function controllaImpegniNuovi() {
   const nuovi = A.ricevutiNuovi(data, adesso.toISOString());
   if (nuovi.length) foglioImpegniNuovi(nuovi);
 }
-// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Ci sono / Non ci sono»; «Lo guardo dopo» lo lascia nuovo finché non si risponde.
+// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Ci sono / Non ci sono / Decido dopo»; «Decido dopo» lo lascia nuovo finché non si risponde.
 function foglioImpegniNuovi(nuovi) {
   const A = MB21Agenda;
   const velo = document.createElement('div');
@@ -1642,16 +1643,15 @@ function foglioImpegniNuovi(nuovi) {
     velo.innerHTML = `<div class="foglio alto ric-foglio">
       <div class="testa-foglio"><h3>${nuovi.length === 1 ? 'Hai un nuovo appuntamento' : `Hai ${nuovi.length} nuovi appuntamenti`}</h3><button id="rn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${nuovi.map(r => `<div class="ric-nuovo" data-rn="${esc(A.chiaveRicevuto(r))}"><b>${esc(r.titolo)}</b><span>da ${esc(r.da_nome || '—')} · ${esc(giornoOraRicevuto(r))}</span>
-        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta')}</div>`).join('')}
-      <div class="mc-fondo"><button class="link" id="rn-dopo">Lo guardo dopo</button></div></div>`;
+        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}</div>`).join('')}</div>`;
     velo.querySelector('#rn-x').onclick = chiudi;
-    velo.querySelector('#rn-dopo').onclick = chiudi;
     velo.querySelectorAll('.ric-nuovo').forEach(riga => {
       const r = nuovi.find(x => A.chiaveRicevuto(x) === riga.dataset.rn);
       riga.querySelectorAll('[data-rn-risposta]').forEach(b => { b.onclick = async () => {
-        if (!(await rispondiImpegno(r, b.dataset.rnRisposta))) return;
+        const risposta = b.dataset.rnRisposta;
+        if (risposta !== 'dopo' && !(await rispondiImpegno(r, risposta))) return;
         nuovi = nuovi.filter(x => x !== r);
-        if (!nuovi.length) mostraToast(b.dataset.rnRisposta === 'ci_sono' ? 'Segnato: ci sei. Lo trovi in MB Plan' : 'Segnato: non ci sei');
+        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: ci sei. Lo trovi in MB Plan' : 'Segnato: non ci sei');
         disegna();
       }; });
     });
