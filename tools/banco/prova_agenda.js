@@ -592,12 +592,12 @@ prova('Impegni ricevuti: quelli del giorno (ora di Roma), i nuovi (non visti e n
   assert.deepEqual(A.ricevutiNuovi(lista, '2026-10-06T17:00:00Z').map(x => x.id), ['b']);   // «a» è passato
   assert.equal(A.titoloRicevuto(lista[0]), 'PM 1a1 · da Ignazio');
   assert.equal(A.chiaveRicevuto(lista[0]), 'azione:a');
-  assert.equal(A.nomeRisposta('ci_sono'), 'Ci sono'); assert.equal(A.nomeRisposta(null), 'Senza risposta');
+  assert.equal(A.nomeRisposta('ci_sono'), 'Partecipo'); assert.equal(A.nomeRisposta(null), 'Senza risposta'); assert.equal(A.nomeRispostaDiLui('non_ci_sono'), 'Non può');
 });
 prova('Le risposte di chi riceve: il conto a parole e i nomi per gruppo', () => {
   const risposte = [{ nome: 'Anna', risposta: 'ci_sono' }, { nome: 'Bruno', risposta: 'ci_sono' }, { nome: 'Carla', risposta: 'non_ci_sono' }, { nome: 'Dino', risposta: null }];
-  assert.equal(A.contoRisposte(risposte).testo, 'Ci sono 2 · Non ci sono 1 · Senza risposta 1');
-  assert.equal(A.contoRisposte([]).testo, 'Ci sono 0 · Non ci sono 0 · Senza risposta 0');
+  assert.equal(A.contoRisposte(risposte).testo, 'Partecipano 2 · Non possono 1 · Senza risposta 1');
+  assert.equal(A.contoRisposte([]).testo, 'Partecipano 0 · Non possono 0 · Senza risposta 0');
   assert.deepEqual(A.nomiPerRisposta(risposte), { ci_sono: ['Anna', 'Bruno'], non_ci_sono: ['Carla'], senza: ['Dino'] });
 });
 prova('Chi può condividere: un appuntamento con un Partner (non una telefonata, non un Prospect); una serata di gruppo solo l\'Admin', () => {

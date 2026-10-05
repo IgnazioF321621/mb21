@@ -214,9 +214,11 @@
   // ── Impegni condivisi (nota Pagine 027, Ignazio 05/10/2026) ──
   // Un appuntamento lo condivide ogni partner con la persona dell'appuntamento (se usa l'app); una serata Team/LdS/OPEN la condivide solo
   // l'Admin con tutto il Team o con una Linea (il ramo di un suo frontale). Chi riceve lo vede nella sua Agenda («da Ignazio»), con il link
-  // e, se condivisi, i punti in sola lettura; risponde «Ci sono / Non ci sono». Qui le regole; la funzione `impegni_ricevuti` del database
+  // e, se condivisi, i punti in sola lettura; risponde «Partecipo / Non posso». Qui le regole; la funzione `impegni_ricevuti` del database
   // dà le righe { origine, id, inizio, fine, titolo, tipo, da_nome, link, punti, punti_condivisi, visto_il, risposta }.
-  const RISPOSTE = [['ci_sono', 'Ci sono'], ['non_ci_sono', 'Non ci sono']];
+  const RISPOSTE = [['ci_sono', 'Partecipo'], ['non_ci_sono', 'Non posso']];   // le chiavi restano nel database; le parole sono di Ignazio (05/10: «Partecipi?»)
+  const RISPOSTA_DI_LUI = { ci_sono: 'Partecipa', non_ci_sono: 'Non può' };   // la stessa risposta letta da chi organizza
+  const nomeRispostaDiLui = r => RISPOSTA_DI_LUI[r] || 'Senza risposta';
   const nomeRisposta = r => (RISPOSTE.find(x => x[0] === r) || [])[1] || 'Senza risposta';
   const CONDIVISIONI_SPAZIO = [['', 'Nessuno'], ['team', 'Tutto il Team'], ['linea', 'Una Linea']];
   const chiaveRicevuto = r => `${r.origine}:${r.id}`;
@@ -225,11 +227,11 @@
   const titoloRicevuto = r => `${r.titolo} · da ${r.da_nome || '—'}`;
   // quelli ancora da vedere (per il pop-up «Hai un nuovo appuntamento»): non visti e non ancora passati
   const ricevutiNuovi = (ricevuti, adesso) => (ricevuti || []).filter(r => !r.visto_il && Date.parse(r.fine || r.inizio) >= Date.parse(adesso));
-  // il conto delle risposte, a parole: «Ci sono 6 · Non ci sono 2 · Senza risposta 4»
+  // il conto delle risposte, a parole: «Partecipano 6 · Non possono 2 · Senza risposta 4»
   function contoRisposte(risposte) {
     const q = { ci_sono: 0, non_ci_sono: 0, senza: 0 };
     for (const r of risposte || []) q[r.risposta === 'ci_sono' ? 'ci_sono' : r.risposta === 'non_ci_sono' ? 'non_ci_sono' : 'senza']++;
-    return { ...q, testo: [`Ci sono ${q.ci_sono}`, `Non ci sono ${q.non_ci_sono}`, `Senza risposta ${q.senza}`].join(' · ') };
+    return { ...q, testo: [`Partecipano ${q.ci_sono}`, `Non possono ${q.non_ci_sono}`, `Senza risposta ${q.senza}`].join(' · ') };
   }
   // i nomi per gruppo di risposta (chi c'è, chi non c'è, chi non ha risposto), per la lista di chi organizza
   const nomiPerRisposta = risposte => ({
@@ -699,7 +701,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti,
-    RISPOSTE, nomeRisposta, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

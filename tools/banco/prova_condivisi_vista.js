@@ -30,7 +30,7 @@ prova('Chi riceve: l\'impegno sta tra gli impegni del giorno («da Ignazio · nu
   P.modo.tutti = false;
 });
 
-prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in sola lettura, «Ci sono / Non ci sono»; aprirlo lo segna visto, rispondere salva la risposta', async () => {
+prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in sola lettura, «Partecipo / Non posso»; aprirlo lo segna visto, rispondere salva la risposta', async () => {
   pulisci();
   const r = ricevuto();
   P.AG.ricevuti = [r];
@@ -49,10 +49,10 @@ prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in so
   up = scritte('impegni_risposte', 'upsert');
   assert.equal(up.length, 2); assert.equal(up[1].args[0].risposta, 'ci_sono'); assert.ok(up[1].args[0].risposto_il);
   assert.equal(r.risposta, 'ci_sono');
-  assert.match(P.avvisi.at(-1).t, /ci sei/);
+  assert.match(P.avvisi.at(-1).t, /partecipi/);
   // già visto e con risposta: aprendo non si riscrive il visto, la risposta è evidenziata
   pulisci(); P.vista('giorno');
-  assert.match(P.app.innerHTML, /da Ignazio · Ci sono</);
+  assert.match(P.app.innerHTML, /da Ignazio · Partecipo</);
   P.foglioRicevuto(r);
   await attendi();
   assert.equal(scritte('impegni_risposte').length, 0);
@@ -78,7 +78,7 @@ prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; ri
   assert.match(v.innerHTML, /Hai un nuovo appuntamento/); assert.doesNotMatch(v.innerHTML, /data-rn="spazio:n2"/);
   await v.clic('[data-rn="azione:n1"] [data-rn-risposta="ci_sono"]');
   assert.equal(scritte('impegni_risposte', 'upsert').length, 2);
-  assert.match(P.avvisi.at(-1).t, /ci sei/);
+  assert.match(P.avvisi.at(-1).t, /partecipi/);
   // «Decido dopo»: la riga va via, niente scritto, l'impegno resta nuovo
   pulisci();
   P.finto.ricevuti = [ricevuto({ id: 'd1', visto_il: null, ...futuro })];
