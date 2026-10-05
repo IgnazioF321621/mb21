@@ -68,11 +68,11 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   assert.match(v.innerHTML, /data-v="team"/); assert.match(v.innerHTML, /data-v="linea"/);
   await scegli(v, 'condividi', 'team');
   assert.doesNotMatch(v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(v.innerHTML, /Area e tipo/);
-  assert.match(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/); assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-link"/);
+  assert.match(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/); assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-dove"/);
   assert.match(v.innerHTML, /data-scelta="durata"[\s\S]*?data-v="60" class="scelto"/);
   await scegli(v, 'serataTipo', 'LOS');
   v.querySelector('#na-serata').value = 'Serata Linea Rossi';
-  v.querySelector('#na-link').value = 'zoom.us/j/9';
+  v.querySelector('#na-dove').value = 'zoom.us/j/9';
   v.querySelector('#na-punti').value = 'Benvenuto\nRisultati';
   await scegli(v, 'puntiCond', '1');
   await v.clic('#na-si');
@@ -84,7 +84,7 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   const r = ins[0].args[0];
   assert.equal(r.tipo, 'LOS'); assert.equal(r.nome, 'Serata Linea Rossi'); assert.equal(r.durata, 60);
   assert.equal(r.inizio, P.A.isoDaRoma(P.OGGI, '18:00'));
-  assert.equal(r.link, 'https://zoom.us/j/9'); assert.deepEqual(r.punti, [{ t: 'Benvenuto', fatto: false }, { t: 'Risultati', fatto: false }]);
+  assert.equal(r.link, 'https://zoom.us/j/9'); assert.equal(r.luogo, null); assert.deepEqual(r.punti, [{ t: 'Benvenuto', fatto: false }, { t: 'Risultati', fatto: false }]);
   assert.equal(r.condiviso_con, 'team'); assert.equal(r.linea_codice, null); assert.equal(r.punti_condivisi, true);
   assert.match(P.avvisi.at(-1).t, /Serata Linea Rossi: condivisa con tutto il Team/);
   assert.ok(P.AG.spazi.find(s => s.id === 'sp-nuova'));
@@ -100,8 +100,10 @@ prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scel
   assert.equal(scritte('spazi').length, 0);
   assert.equal(v.querySelector('#na-errore').textContent, 'Scegli la Linea.');
   await scegli(v, 'linea', 'FR2');
+  v.querySelector('#na-dove').value = 'Hotel Villa Rosa, Catania';   // dal vivo: il posto, non un link
   await v.clic('#na-si'); await p;
   const r = scritte('spazi', 'insert')[0].args[0];
+  assert.equal(r.link, null); assert.equal(r.luogo, 'Hotel Villa Rosa, Catania');
   assert.equal(r.condiviso_con, 'linea'); assert.equal(r.linea_codice, 'FR2'); assert.equal(r.tipo, 'Team'); assert.equal(r.punti_condivisi, false);
   assert.match(P.avvisi.at(-1).t, /condivisa con la Linea BIANCHI, LUCA/);
   P.AG.spazi = P.AG.spazi.filter(s => s.id !== 'sp-nuova');

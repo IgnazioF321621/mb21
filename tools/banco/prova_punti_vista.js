@@ -23,7 +23,7 @@ prova('Nel foglio dell\'appuntamento: il bottone «Entra nella chiamata», i tre
   assert.match(h, /Punti da trattare<\/b><small>Trattati 1 su 3<\/small>/);
   assert.match(h, /pt-riga fatta[\s\S]*?Raccontare la mia storia/);
   assert.equal((h.match(/data-pt-dafare=/g) || []).length, 2);   // «→ Da fare» solo sui due non trattati
-  assert.match(h, /data-pt-nuovo/); assert.match(h, /Cambia il link/);
+  assert.match(h, /data-pt-nuovo/); assert.match(h, /Cambia dove/);
   assert.doesNotMatch(apri('t1').innerHTML, /data-pt=/);
 });
 
@@ -88,33 +88,37 @@ prova('«→ Da fare»: il punto diventa una cosa da fare di oggi legata alla st
   assert.equal(P.AG.cose.length, prima);
 });
 
-prova('Il link: con un indirizzo senza senso avvisa e non salva; «meet.google.com/…» si salva con https://; vuoto lo toglie', async () => {
+prova('«Dove»: un posto dal vivo si salva come luogo (si apre nelle Mappe); «meet.google.com/…» come link con https://; vuoto toglie tutti e due', async () => {
   pulisci();
   const v = apri('p1');
   await v.clic('[data-pt-link-apri]');
   let form = v.querySelector('form[data-pt-link]');
-  form.querySelector('input').value = 'ci sentiamo su zoom';
+  form.querySelector('input').value = 'Hotel Villa Rosa, Catania';
   await invia(form);
-  assert.equal(salvataggi('azioni').length, 0);
-  assert.match(P.avvisi.at(-1).t, /indirizzo completo/);
+  assert.deepEqual(salvataggi('azioni')[0].args[0], { link: null, luogo: 'Hotel Villa Rosa, Catania' });
+  assert.match(v.innerHTML, /pt-luogo" href="https:\/\/maps\.apple\.com\/\?q=Hotel%20Villa%20Rosa%2C%20Catania"[^>]*>[\s\S]*?Hotel Villa Rosa, Catania/);
+  assert.doesNotMatch(v.innerHTML, /Entra nella chiamata/);
+  await v.clic('[data-pt-link-apri]');
+  form = v.querySelector('form[data-pt-link]');
+  assert.match(form.querySelector('input').attr.value, /Hotel Villa Rosa/);   // il campo riparte dal posto scritto
   form.querySelector('input').value = 'meet.google.com/xyz';
   await invia(form);
-  assert.equal(salvataggi('azioni')[0].args[0].link, 'https://meet.google.com/xyz');
+  assert.deepEqual(salvataggi('azioni')[1].args[0], { link: 'https://meet.google.com/xyz', luogo: null });
   assert.match(v.innerHTML, /href="https:\/\/meet\.google\.com\/xyz"/);
   await v.clic('[data-pt-link-apri]');
   form = v.querySelector('form[data-pt-link]');
   form.querySelector('input').value = '';
   await invia(form);
-  assert.equal(salvataggi('azioni')[1].args[0].link, null);
+  assert.deepEqual(salvataggi('azioni')[2].args[0], { link: null, luogo: null });
   assert.doesNotMatch(v.innerHTML, /Entra nella chiamata/);
-  assert.match(v.innerHTML, /Link della chiamata/);
+  assert.match(v.innerHTML, /Dove si fa/);
 });
 
 prova('Un appuntamento senza punti: riquadro chiuso con «Punti da trattare» e «Link della chiamata»; il tocco apre il campo', async () => {
   pulisci();
   const v = apri('c1');
   const h = v.innerHTML;
-  assert.match(h, /class="pt chiuso" data-pt="c1"/); assert.match(h, /data-pt-apri/); assert.doesNotMatch(h, /data-pt-nuovo/);
+  assert.match(h, /class="pt chiuso" data-pt="c1"/); assert.match(h, /data-pt-apri/); assert.doesNotMatch(h, /data-pt-nuovo/); assert.match(h, /Dove si fa/);
   await v.clic('[data-pt-apri]');
   assert.match(v.innerHTML, /data-pt="c1">[\s\S]*?Punti da trattare<\/b>[\s\S]*?data-pt-nuovo/);
   assert.equal(salvataggi('azioni').length, 0);   // aprire il campo non scrive niente
