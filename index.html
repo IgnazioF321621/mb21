@@ -3284,6 +3284,7 @@ async function nuovoAppuntamento(opz = {}) {
       // la testa segue il contatto e la categoria scelti nel foglio (visto da Ignazio 19/09: restava «Con chi?» con il nome già scritto)
       const testa = velo.querySelector('#na-testa');
       testa.className = 'mc-testa ' + (serata() ? '' : classeCat(st.categoria));
+      testa.querySelector('small').textContent = serata() ? 'Nuova serata' : (opz.titolo || 'Nuovo appuntamento');
       testa.querySelector('.ts-pastiglia').innerHTML = serata() ? ic('squadra') : st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda');
       testa.querySelector('b').textContent = serata() ? (MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo)) : st.contatto ? st.contatto.nome : 'Con chi?';
       const ns = velo.querySelector('#na-serata');
