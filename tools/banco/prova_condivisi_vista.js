@@ -59,7 +59,7 @@ prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in so
   assert.match(P.fogli.at(-1).innerHTML, /data-ri-risposta="ci_sono" class="scelto"/);
 });
 
-prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; rispondendo la riga sparisce e alla fine si chiude; «Lo guardo dopo» non segna niente', async () => {
+prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; rispondendo la riga sparisce e alla fine si chiude; «Decido dopo» toglie la riga senza segnare niente', async () => {
   pulisci();
   const futuro = { inizio: '2027-01-10T17:00:00Z', fine: '2027-01-10T18:00:00Z' };   // il pop-up guarda l'oggi vero: gli impegni devono venire
   P.finto.ricevuti = [ricevuto({ id: 'n1', visto_il: null, ...futuro }), ricevuto({ id: 'n2', titolo: 'Serata Linea Rossi', origine: 'spazio', visto_il: null, ...futuro }),
@@ -70,6 +70,8 @@ prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; ri
   assert.match(v.innerHTML, /Hai 2 nuovi appuntamenti/);
   assert.match(v.innerHTML, /data-rn="azione:n1"/); assert.match(v.innerHTML, /data-rn="spazio:n2"/); assert.doesNotMatch(v.innerHTML, /data-rn="azione:v1"/); assert.doesNotMatch(v.innerHTML, /data-rn="azione:p1"/);
   assert.match(v.innerHTML, /Link della chiamata/);
+  assert.equal((v.innerHTML.match(/data-rn-risposta="dopo"/g) || []).length, 2);   // «Decido dopo» accanto alle due risposte, in ogni riga
+  assert.doesNotMatch(v.innerHTML, /Lo guardo dopo/);
   await v.clic('[data-rn="spazio:n2"] [data-rn-risposta="non_ci_sono"]');
   const up = scritte('impegni_risposte', 'upsert');
   assert.equal(up.length, 1); assert.equal(up[0].args[0].origine, 'spazio'); assert.equal(up[0].args[0].risposta, 'non_ci_sono');
@@ -77,6 +79,12 @@ prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; ri
   await v.clic('[data-rn="azione:n1"] [data-rn-risposta="ci_sono"]');
   assert.equal(scritte('impegni_risposte', 'upsert').length, 2);
   assert.match(P.avvisi.at(-1).t, /ci sei/);
+  // «Decido dopo»: la riga va via, niente scritto, l'impegno resta nuovo
+  pulisci();
+  P.finto.ricevuti = [ricevuto({ id: 'd1', visto_il: null, ...futuro })];
+  await P.controllaImpegniNuovi();
+  await P.fogli.at(-1).clic('[data-rn="azione:d1"] [data-rn-risposta="dopo"]');
+  assert.equal(scritte('impegni_risposte').length, 0); assert.equal(P.avvisi.length, 0);
   // tutti visti: nessun pop-up
   pulisci();
   P.finto.ricevuti = [ricevuto({ visto_il: '2026-09-20T10:00:00Z' })];

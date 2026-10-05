@@ -607,6 +607,7 @@ prova('Chi può condividere: un appuntamento con un Partner (non una telefonata,
   assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Appuntamento', categoria: 'Partner' }), true);
   assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, false), false);
   assert.equal(A.puoCondividereSpazio({ tipo: 'Piano Marketing' }, true), false);
+  assert.equal(A.puoCondividereSpazio({ tipo: 'LOS' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'SdS/OPEN' }, true), false);   // l'OPEN la organizza Network 21
   assert.deepEqual(A.CONDIVISIONI_SPAZIO.map(x => x[1]), ['Nessuno', 'Tutto il Team', 'Una Linea']);
 });
 
