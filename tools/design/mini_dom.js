@@ -37,7 +37,11 @@ class Nodo {
       for (const [k, v] of Object.entries(t.attr)) if (k.startsWith('data-')) dataset[k.slice(5).replace(/-(\w)/g, (x, c) => c.toUpperCase())] = v;
       this._cache.set(t.pos, { tag: t.tag, attr: t.attr, dataset, onclick: null, oninput: null, onkeydown: null, onchange: null, disabled: false, hidden: 'hidden' in t.attr,
         value: t.attr.value || '', checked: false, style: {}, textContent: '', classList: { toggle() {}, add() {}, remove() {} },
-        parentElement: t.padre >= 0 && tag ? this.elemento(tag[t.padre], tag) : null, hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], scrollIntoView() {}, focus() {}, addEventListener() {}, querySelector: () => null, querySelectorAll: () => [], closest: () => null });
+        parentElement: t.padre >= 0 && tag ? this.elemento(tag[t.padre], tag) : null, hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], scrollIntoView() {}, focus() {}, addEventListener() {}, closest: () => null });
+      // dentro un elemento si cerca come nella pagina: solo i suoi discendenti (05/10, per provare il campo «Aggiungi…» di MB Plan)
+      const el = this._cache.get(t.pos);
+      el.querySelectorAll = sel => this.querySelectorAll(sel).filter(e => { for (let p = e.parentElement; p; p = p.parentElement) if (p === el) return true; return false; });
+      el.querySelector = sel => el.querySelectorAll(sel)[0] || null;
     }
     return this._cache.get(t.pos);
   }

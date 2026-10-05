@@ -30,13 +30,21 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   assert.match(f, /class="ag-impegni"/);                 // la card degli impegni
   assert.match(f, /class="ag-imp[^"]*" data-evento="p1"/);
   assert.match(f, /Oggi, lun 21 set/);                   // il titolo del giorno
-  assert.doesNotMatch(f, /id="ag-core-mese"/);                       // il Modulo Core non sta nel foglio del giorno: è nel menu (22/09)
-  assert.doesNotMatch(f, /ag-sez">Core/);                            // la sezione Core non sta più nel foglio: vive nel Check e nel modulo
-  assert.doesNotMatch(f, /Presentare almeno 8 Piani Marketing/);
-  assert.ok(f.indexOf('data-apri-modello="g1"') > 0 && f.indexOf('data-apri-modello="g1"') < f.indexOf('Da fare oggi'));   // il modello, poi «Da fare oggi»
-  assert.equal((f.match(/data-chiudi-sez=/g) || []).length, 3);                      // le due sezioni si chiudono, e la settimana ripiegata in cima si apre
+  assert.doesNotMatch(f, /id="ag-core-mese"/);                       // il Modulo Core non sta nel foglio del giorno
+  assert.doesNotMatch(f, /Presentare almeno 8 Piani Marketing/);     // né le sue abitudini: non c'entrano con MB Plan (Ignazio 05/10)
+  assert.doesNotMatch(f, /Modelli personali|data-apri-modello|Progett/);   // via i Modelli personali e i Progetti (05/10)
+  assert.match(f, /Da fare oggi/);
+  assert.equal((f.match(/class="cosa[ "]/g) || []).length, 4);       // le quattro cose del giorno (una riportata, una con l'ora)
+  assert.match(f, /lg-pastiglia lg-N21[^>]*>Network 21</);           // ogni cosa dice per chi è
+  assert.match(f, /lg-pastiglia lg-persona[^>]*>.*Laura Bianchi</);
+  assert.match(f, /lg-pastiglia lg-Team[^>]*>Team</);
+  assert.match(f, /lg-pastiglia lg-no">Da collegare</);              // una vecchia senza legame lo dice
+  assert.match(f, /class="ag-cosa-nuova" data-scala="giorno"><div class="lg-nuova"><b>Per chi è\?<\/b>/);   // il campo chiede prima per chi è
+  for (const k of ['Team', 'LdS', 'N21', 'Amway', 'persona']) assert.match(f, new RegExp(`data-lg="${k}"`));
+  assert.match(f, /class="lg-filtro"/);                              // con 4 cose di legami diversi c'è il filtro
+  assert.equal((f.match(/data-chiudi-sez=/g) || []).length, 1);      // solo la settimana ripiegata in cima si apre
   assert.match(f, /class="ag-sopra sc-settimana/);                   // la settimana sempre in cima al Giorno, come NotePlan (23/09)
-  assert.ok(f.indexOf('ag-sopra') < f.indexOf('data-apri-modello="g1"'));
+  assert.ok(f.indexOf('ag-sopra') < f.indexOf('Da fare oggi'));
   assert.match(f, /da 19\/9/);                                       // la cosa non fatta di sabato si vede oggi
   assert.match(f, /id="ag-cronologia"/);                             // il cassetto in fondo
   assert.doesNotMatch(f, /class="ag-griglia"/);                      // la griglia non sta nella pagina
@@ -205,7 +213,7 @@ prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Tim
   const modo = V.modo, prima = modo.admin;
   modo.admin = true; modo.tutti = true;
   assert.doesNotMatch(V.vista('giorno'), /data-spazio=/);                 // con «Tutti» no: sono personali
-  assert.match(V.menuAgendaHtml(), /data-cmd="core" class="mb-core"/);
+  assert.doesNotMatch(V.menuAgendaHtml(), /data-cmd="core"|Modelli personali|Progetti/);   // né il Core né modelli né progetti nel menu (05/10)
   modo.tutti = false; modo.admin = false;                                  // un partner li vede (dal 28/09)
   const f = V.vista('giorno');
   assert.match(f, /class="ag-imp sp-imp" data-spazio="s2"/);
@@ -224,7 +232,7 @@ prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Tim
   assert.match(m, /Consulenze prodotti: 2 fissate · 1 da riempire/);
   assert.match(m, /SdS\/OPEN: lun 21 alle 21:30/);
   assert.match(m, /data-cmd="prepara" class="mb-prog-bottone">.*Aggiungi appuntamenti/);
-  assert.ok(m.indexOf('data-scala="anno"') < m.indexOf('Programma della settimana') && m.indexOf('Programma della settimana') < m.indexOf('Modelli personali'));   // subito sotto le scale (28/09: in fondo restava tagliata)
+  assert.ok(m.indexOf('data-scala="anno"') < m.indexOf('Programma della settimana') && m.indexOf('Programma della settimana') > 0);   // subito sotto le scale (28/09: in fondo restava tagliata)
   assert.match(s, /ss-spazio[^>]*><i><\/i><em>10:00<\/em>Consulenza prodotti · da riempire/);
   assert.equal((s.match(/class="ag-sev ag-spazio"/g) || []).length, 3);
   modo.admin = prima;

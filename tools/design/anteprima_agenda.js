@@ -31,7 +31,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -60,24 +60,25 @@ const AZIONI = [
 // ── finte le cose che nell'app arrivano dal database o da altre pagine ──
 // `modo`: per provare anche l'Admin con il Partner Select su «Tutti» (più agende insieme)
 const modo = { admin: false, tutti: false };
-const app = { innerHTML: '', querySelectorAll: () => [], querySelector: () => null };
+const { Nodo } = require('./mini_dom.js');
+const app = new Nodo();   // dal 05/10 un piccolo DOM: la prova può toccare le pastiglie «Per chi è?» e il campo «Aggiungi…»
 const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati: [{}], aperta: null,
   telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'giorno', portato: 'fatto',
-  // cantiere 41: il foglio del giorno con il Core N21 (pagine e CD dal Check, PM e clienti dal mese) e due cose a mano
-  cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null }, { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null }],
-  modello: A.CORE_N21.map((c, i) => ({ id: 'm' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })).concat([{ id: 'mr', modello_id: 'g1', testo: 'Meditazione', sezione: 'Routine', scala: 'giorno', giorni: [], ordine: 20, attivo: true }]),
-  modelli: [{ id: 'g1', titolo: 'Routine', icona: 'orario', attivo: true, ordine: 1 }],
-  misure: { tracce: 1, pagine: 6, pm_mese: 3, clienti_mese: 4 }, progetti: [],
+  // MB Plan «Da fare» (05/10): ogni cosa è legata a una persona o a Team · LdS · Network 21 · Amway; una vecchia non ha il legame
+  cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null, legato_a: 'N21' },
+    { id: 'k2', testo: 'Preparare il PM di giovedì', giorno: OGGI, ordine: 1, fatto_il: null, contatto_id: 'c1', contatti: { nome: 'Laura Bianchi', categoria: 'Prospect' } },
+    { id: 'k3', testo: 'Serata di Team da organizzare', giorno: OGGI, ordine: 2, fatto_il: null, legato_a: 'Team' },
+    { id: 'k4', testo: 'Una cosa vecchia, ancora da collegare', giorno: OGGI, ordine: 3, fatto_il: null }],
+  legame: null, filtro: '',
   // gli spazi da riempire (27/09): si vedono solo all'Admin (modo.admin)
   spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
     { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
 // i fogli che salgono dal basso (Prepara la settimana, il foglio di uno spazio) sono Nodi del piccolo DOM (tools/design/mini_dom.js): la prova li tocca davvero
-const { Nodo } = require('./mini_dom.js');
 const fogli = [];
 const documento = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, body: { appendChild() {} },
   createElement: () => { const v = new Nodo(); fogli.push(v); return v; } };
 // un finto database: si ricorda le scritture (insert · update · delete) e risponde «fatto»
-const scritture = [], avvisi = [];
+const scritture = [], avvisi = [], scelta = { persona: null };   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
 const tabella = nome => new Proxy({}, { get: (t, op) => (...args) => { if (['insert', 'update', 'delete', 'upsert'].includes(op)) scritture.push({ tabella: nome, op, args }); return fine; } });
 const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : fine), apply: () => fine });
 const stub = {
@@ -91,7 +92,7 @@ const stub = {
   rigaPortato: n => 'portato da ' + n,
   collegaEsiti: () => {}, mostraToast: (t, annulla) => { avvisi.push({ t, annulla }); }, mostraTab: () => {},
   nuovoAppuntamento: () => {}, spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
-  apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
+  aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
   pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
@@ -99,7 +100,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -112,7 +113,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCosa, collegaCose, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html

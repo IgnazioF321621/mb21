@@ -93,14 +93,13 @@
   svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; flex: none; }
   nav button { background: none; border: 0; font-size: 10.5px; font-weight: 500; color: var(--testo-soft); padding: 4px 2px; min-height: var(--tocco); min-width: 44px; white-space: nowrap; }   /* 24/09: con «Training» le voci arrivano a 7; 25/09: per l'Admin 8 con «Progetti» (44 px, su una riga) */
   nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
-  nav:has(button[data-tab="progetti"]:not([hidden])) button { font-size: 9.5px; padding: 4px 0; min-width: 40px; }   /* l'Admin con 8 voci (25/09): su un iPhone da 375 punti le scritte si toccavano */
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
   /* La pagina in cui sei: pastiglia grigia sotto l'icona (Ignazio 28/09: «così so dove sono») */
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); background: var(--tab-attiva); border-radius: 14px; }
-  /* Progetti e Admin, solo per l'Admin (Ignazio 25/09): in fondo alla barra, su fondo scuro, «così subito risaltano e so che sono solo per l'admin» */
-  #tab button[data-tab="progetti"], #tab button[data-tab="admin"] { background: var(--testo); color: rgba(255,255,255,.7); border-radius: 12px; padding: 4px 5px; }
-  #tab button.attiva[data-tab="progetti"], #tab button.attiva[data-tab="admin"] { color: #fff; }
+  /* Admin, solo per l'Admin (Ignazio 25/09): in fondo alla barra, su fondo scuro, «così subito risaltano e so che sono solo per l'admin» */
+  #tab button[data-tab="admin"] { background: var(--testo); color: rgba(255,255,255,.7); border-radius: 12px; padding: 4px 5px; }
+  #tab button.attiva[data-tab="admin"] { color: #fff; }
   /* Gli esiti (Ignazio 19/09): l'esito buono per intero in alto, i neutri in fila (fino a tre), «No Interesse» per intero in fondo (parole ufficiali dal cantiere 39).
      Due esiti buoni (Cliente: Ordine · Appuntamento) si dividono la prima riga. */
   .bottoni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -1172,6 +1171,37 @@
   /* fatta: grigia e spenta, senza riga sopra, come NotePlan (Ignazio 23/09) */
   .ag-foglio .cosa.fatta .testo span, .ag-foglio .cosa.fatta .testo small { color: var(--testo-tenue); opacity: .75; }
   .ag-foglio .ag-cosa-nuova { border-top: 0; padding-top: 2px; }
+  /* MB Plan «Da fare» (Ignazio 05/10): ogni cosa dice per chi è con una pastiglia colorata — Team verde · LdS viola · Network 21 blu · Amway arancio · persona grigio scuro */
+  .lg, .lg-pastiglia { --t: #4A5568; --tb: rgba(74,85,104,.12); }
+  .lg-Team { --t: #0F7B5F; --tb: rgba(15,123,95,.13); }
+  .lg-LdS { --t: #6D3FC7; --tb: rgba(109,63,199,.12); }
+  .lg-N21 { --t: #1D5FBF; --tb: rgba(29,95,191,.12); }
+  .lg-Amway { --t: #C2570C; --tb: rgba(194,87,12,.13); }
+  .lg-no { --t: #8A6D1F; --tb: rgba(180,83,9,.12); }
+  .lg-scelte { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lg-scelte .lg { display: inline-flex; align-items: center; gap: 5px; border: 1.5px solid var(--t); background: var(--tb); color: var(--t); font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 999px; min-height: 34px; padding: 4px 12px; }
+  .lg-scelte .lg svg.ic { width: 15px; height: 15px; }
+  .lg-scelte .lg.scelto { background: var(--t); color: #fff; }
+  .lg-pastiglia { display: inline-flex; align-items: center; gap: 4px; background: var(--tb); color: var(--t); font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; line-height: 1.4; }
+  .lg-pastiglia svg.ic { width: 12px; height: 12px; }
+  .ag-foglio .cosa .testo small.cosa-sotto { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 3px; }
+  .ag-foglio .cosa .testo small.cosa-sotto em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
+  .ag-foglio .cosa.fatta .lg-pastiglia { opacity: .6; }
+  .ag-dafare { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 16px 14px; margin: 14px 0 8px; }
+  .ag-foglio .ag-dafare h2.ag-sez { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 6px; }
+  .ag-dafare .ag-sez-conto { margin-left: 0; white-space: nowrap; }
+  .ag-dafare-vuoto { color: var(--testo-soft); font-size: 14px; line-height: 1.4; margin: 6px 0 10px; }
+  .lg-filtro { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; margin: 0 -2px; -webkit-overflow-scrolling: touch; }
+  .lg-filtro button { flex: none; border: 0; background: var(--superficie-2); color: var(--testo-soft); font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 12px; min-height: 32px; }
+  .lg-filtro button.scelto { background: var(--testo); color: #fff; }
+  .ag-foglio .ag-cosa-nuova, .ag-cosa-nuova { flex-direction: column; align-items: stretch; gap: 6px; border-top: 1px solid var(--superficie-2); padding-top: 10px; margin-top: 4px; }
+  .ag-cosa-nuova .lg-nuova { display: flex; flex-direction: column; gap: 6px; }
+  .ag-cosa-nuova .lg-nuova > b { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-tenue); }
+  .ag-cosa-nuova .lg-nuova.manca > b { color: var(--pericolo); }
+  .ag-cosa-nuova .lg-nuova.manca .lg-scelte { outline: 2px solid var(--pericolo); outline-offset: 3px; border-radius: 18px; }
+  .ag-cosa-nuova .ag-cosa-riga { display: flex; align-items: center; gap: 8px; }
+  .ag-cosa-nuova .lg-scelte .lg { width: auto; height: auto; }
+  .ag-cosa-nuova .ag-cosa-riga input { border-bottom: 1.5px solid var(--superficie-2); }
   .ag-cronologia { position: sticky; bottom: 92px; display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--superficie); box-shadow: 0 -2px 14px rgba(16,21,31,.12); border-radius: 18px 18px 0 0; padding: 12px 16px; margin-top: 12px; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--testo); }
   .ag-cronologia span { flex: 1; text-align: left; font-size: 13px; font-weight: 500; color: var(--testo-soft); }
   .ag-cronologia svg.ic { width: 20px; height: 20px; }
@@ -1384,40 +1414,6 @@
   .ag-sopra.aperta .ag-sopra-testa svg.ic:first-child { transform: rotate(90deg); }
   .ag-sopra-dentro { padding: 0 12px 8px; }
   .ag-sopra-apri { display: block; margin: 2px 0 0 auto; font-size: 13px; }
-  /* i Progetti di MB Plan (23/09) */
-  .pj-conto { display: flex; flex-direction: column; gap: 6px; margin: 2px 4px 12px; font-size: 14px; color: var(--testo-soft); }
-  .pj-conto b { color: var(--testo); }
-  .pj-conto-riga { display: flex; justify-content: space-between; align-items: center; gap: 10px; }   /* il conto e «Elimina le N fatte» (25/09) */
-  .pj-conto-riga button.link { font-size: 14px; padding: 0; min-height: 36px; display: flex; align-items: center; gap: 4px; }
-  .ag-foglio .cosa .spunta.segno { border: 0; background: none; color: var(--testo-soft); font-weight: 700; font-size: 15px; width: 24px; justify-content: flex-end; }
-  .ag-foglio .cosa.pj-punto .spunta.segno { font-size: 20px; justify-content: center; }
-  .pj-nuova .pj-tipi { display: inline-flex; gap: 4px; flex: none; }
-  .ag-foglio .cosa.pj-titolo .spunta { width: 20px; height: 20px; margin: 16px 0 0; border-width: 1.5px; }
-  .ag-foglio .cosa.pj-titolo .spunta svg.ic { width: 20px; height: 20px; }
-  /* numeri, puntini e titoli completati: cancellati (barrati), come chiesto da Ignazio il 23/09 */
-  .ag-foglio .cosa.pj-titolo.fatta .testo span, .ag-foglio .cosa.pj-numero.fatta .testo span, .ag-foglio .cosa.pj-punto.fatta .testo span { text-decoration: line-through; color: var(--testo-tenue); opacity: 1; }
-  .ag-foglio .cosa.pj-numero.fatta .spunta.segno, .ag-foglio .cosa.pj-punto.fatta .spunta.segno { color: #1D9E75; background: none; text-decoration: line-through; }
-  .ag-foglio .cosa .spunta.segno { cursor: pointer; }
-  .ag-foglio .cosa.al-seguito { display: none; }
-  .ag-foglio .cosa.pj-nascosta { display: none; }
-  .ag-foglio .cosa.pj-titolo .ag-sez-chiudi { margin: 14px -6px 0 -4px; }
-  .ag-foglio .cosa.pj-titolo.chiusa .ag-sez-chiudi svg.ic { transform: rotate(0deg); }
-  .ag-foglio .cosa.pj-titolo .testo small { font-size: 12px; font-weight: 600; text-decoration: none; }
-  /* l'iconcina accanto al titolo che lo copia con le sue righe (24/09): come la freccetta, a destra */
-  .ag-foglio .cosa.pj-titolo .pj-copia { border: 0; background: none; padding: 0; width: 34px; height: 34px; margin: 10px -6px 0 0; display: inline-flex; align-items: center; justify-content: center; color: var(--testo-tenue); flex: none; cursor: pointer; }
-  .ag-foglio .cosa.pj-titolo .pj-copia svg.ic { width: 18px; height: 18px; }
-  .ag-foglio .cosa.pj-titolo .pj-copia:active { color: var(--accento); }
-  .pj-aggiungi { display: flex; align-items: center; gap: 6px; border: 0; background: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo-tenue); padding: 2px 0 8px 36px; }
-  .pj-aggiungi svg.ic { width: 14px; height: 14px; }
-  .pj-aggiungi:hover { color: var(--accento); }
-  .ag-foglio .pj-inline { border-top: 0; padding: 0 0 6px 36px; }
-  .ag-foglio .pj-inline input { border-bottom: 1.5px solid var(--accento); }
-  .ag-foglio .cosa.trascina[data-seguito]::after { content: attr(data-seguito); align-self: center; margin-left: auto; margin-right: 8px; font-size: 12px; font-weight: 700; color: var(--testo-soft); background: var(--superficie-2); border-radius: 8px; padding: 2px 7px; }
-  .ag-foglio .cosa.pj-titolo .testo { font-size: 19px; font-weight: 800; color: var(--testo); padding-top: 14px; }
-  .pj-nuova { flex-wrap: wrap; }
-  .pj-nuova .pj-rientri button { font-size: 16px; }
-  .pj-nuova .pj-tipi button { width: auto; height: 30px; min-width: 32px; padding: 0 8px; border-radius: 8px; background: var(--superficie-2); color: var(--testo-soft); font-weight: 700; font-size: 14px; }
-  .pj-nuova .pj-tipi button.scelto { background: var(--accento); color: var(--accento-su); }
   /* le cose da fare della persona, nella sua scheda (23/09) */
   .riquadro.scheda-cose { padding: 10px 16px 6px; margin-top: 12px; }
   .riquadro.scheda-cose h2.ag-sez { font-size: 18px; margin: 2px 0 2px; }
@@ -1437,8 +1433,6 @@
   .fc-fine input { font-family: inherit; font-size: 15px; margin-left: 8px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   .fm-matita { border: 0; background: var(--sfondo); border-radius: 50%; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-left: 6px; color: var(--testo-soft); }
   .fm-matita svg.ic { width: 16px; height: 16px; }
-  .ag-sez-modello { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; }
-  .ag-sez-modello svg.ic:last-child { width: 16px; height: 16px; opacity: .45; }
   .fc-chi { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 8px 14px; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--testo); }
   .fc-chi svg.ic { width: 18px; height: 18px; }
   /* il colore di ogni scala (Ignazio 23/09): tondo pieno con l'icona bianca, velo sulla voce scelta, barra accanto al titolo */
@@ -1511,23 +1505,6 @@
   .ag-lato button.mb-core span { display: flex; flex-direction: column; gap: 2px; }
   .ag-lato button.mb-core b { font-weight: 800; }
   .ag-lato button.mb-core small { color: var(--testo-soft); font-weight: 500; line-height: 1.3; }
-  /* i due gruppi del foglio del giorno (lavoro 2): «Ogni giorno» dal modello, «Oggi» a mano; la rotellina apre il modello */
-  .ag-cose-gruppo { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-tenue); padding: 8px 0 2px; }
-  .ag-cose-modello { border: 0; background: none; padding: 4px; margin-left: 4px; color: var(--testo-tenue); display: inline-flex; }
-  .ag-cose-testa .ag-cose-modello svg.ic { width: 20px; height: 20px; color: var(--testo-tenue); }
-  .ag-cose-invito { display: flex; align-items: center; gap: 8px; width: 100%; border: 1px dashed var(--bordo); background: var(--sfondo); border-radius: 12px; padding: 10px 12px; margin: 4px 0 6px; font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--testo-soft); text-align: left; }
-  .ag-cose-invito svg.ic { width: 20px; height: 20px; flex: none; color: var(--gr-crescita, var(--proposta)); }
-  /* il modello: una riga per voce con l'interruttore a sinistra */
-  .foglio.mod .mod-voce { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--superficie-2); }
-  .foglio.mod .mod-voce button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
-  .foglio.mod .mod-voce .mod-int { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--ok); position: relative; transition: background .15s; }   /* più specifico di «.mod-voce button», se no resta senza sfondo (visto da Ignazio 22/09) */
-  .foglio.mod .mod-int i { position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s; }
-  .foglio.mod .mod-voce.spenta .mod-int { background: var(--spento); }
-  .foglio.mod .spenta .mod-int i { left: 3px; }
-  .foglio.mod .mod-testo { flex: 1; min-height: 48px; padding: 8px 0; display: flex; flex-direction: column; gap: 1px; font-size: 15px; }
-  .foglio.mod .mod-testo small { font-size: 12px; color: var(--testo-tenue); }
-  .foglio.mod .spenta .mod-testo span { color: var(--testo-tenue); }
-  .foglio.mod .ag-cosa-nuova { border-top: 1px solid var(--superficie-2); margin-top: 4px; }
   .fv-giorni button { flex: 1; padding: 8px 4px; }
   .fc-quando { color: var(--testo-soft); font-size: 14px; }
   .fc-scala { display: flex; align-items: center; gap: 8px; }
@@ -2151,7 +2128,6 @@
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
   <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
   <button data-tab="training" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg>Training</button>   <!-- cantiere 45: per tutti dal 24/09 sera (TRAINING_VISIBILE) -->
-  <button data-tab="progetti" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-obiettivi"/></svg>Progetti</button>   <!-- 25/09: solo l'Admin (vediProgetti), apre l'ultimo progetto; in fondo, prima di Admin, e scuro come lui -->
   <button data-tab="admin" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-admin"/></svg>Admin</button>
 </nav>
 
@@ -2600,25 +2576,21 @@ const TRAINING_VISIBILE = true;
 function aggiornaTab() {
   document.querySelectorAll('#tab button').forEach(b => {
     b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE)
-      // Progetti: per tutti dentro MB Plan (menu), ma l'icona nella barra solo per l'Admin (Ignazio 28/09)
-      || (b.dataset.tab === 'progetti' && !(eAdmin() && typeof vediProgetti === 'function' && vediProgetti()))
       || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
   });
 }
-// Il bottone acceso nella barra: «Progetti» (Ignazio 25/09, solo l'Admin) quando MB Plan è su un progetto, se no quello della
-// pagina. La chiama anche disegnaAgenda: dentro MB Plan si passa da un progetto al giorno senza passare dalla barra.
+// Il bottone acceso nella barra: quello della pagina in cui si è.
 function accendiTab() {
   aggiornaTab();
-  const suProgetto = ST.tab === 'agenda' && typeof AG !== 'undefined' && AG.vista === 'progetto' && eAdmin();   // un partner su un progetto: resta acceso MB Plan
-  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', suProgetto ? b.dataset.tab === 'progetti' : b.dataset.tab === ST.tab));
-  ricordaPagina(suProgetto ? 'progetti' : ST.tab);
+  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === ST.tab));
+  ricordaPagina(ST.tab);
 }
 
 // L'Admin riparte da dov'era (Ignazio 25/09: «se sto lavorando su Lista Nomi e faccio aggiornamento, mi riapre Lista Nomi», per andare
-// più veloce): ricaricando (⌘R sul Mac, «Aggiorna ora») si riapre la stessa pagina, o l'ultimo progetto, invece della Dashboard.
+// più veloce): ricaricando (⌘R sul Mac, «Aggiorna ora») si riapre la stessa pagina invece della Dashboard.
 // Si ricorda solo in questa finestra (sessionStorage): aprendo l'app da capo si parte dalla Dashboard. La scrive accendiTab, la legge dopoAccesso.
 const CHIAVE_PAGINA = 'mb21-pagina-admin';
-const PAGINE = ['oggi', 'lista', 'agenda', 'progetti', 'report', 'mappa', 'check', 'admin', 'profilo', 'training'];
+const PAGINE = ['oggi', 'lista', 'agenda', 'report', 'mappa', 'check', 'admin', 'profilo', 'training'];
 function ricordaPagina(pagina) {
   if (eAdmin()) try { sessionStorage.setItem(CHIAVE_PAGINA, pagina); } catch (e) {}
 }
@@ -2665,9 +2637,6 @@ function mostraTab() {
   nav.hidden = false;
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
-  // «Progetti»: MB Plan aperto sull'ultimo progetto, dal bottone della barra e al rientro dell'Admin (riprendiPagina)
-  const progetti = ST.tab === 'progetti';
-  if (progetti) ST.tab = 'agenda';
   if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
     ST.tab = 'oggi'; LS.ritorno = null;
     mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
@@ -2676,14 +2645,11 @@ function mostraTab() {
   if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
   accendiTab();
   nav.querySelectorAll('button').forEach(b => {
-    // «Progetti» è MB Plan aperto sull'ultimo progetto; «MB Plan» da un progetto torna al giorno (o alla vista di partenza)
     b.onclick = () => {
-      if (b.dataset.tab === 'progetti') { ST.tab = 'progetti'; LS.ritorno = null; return mostraTab(); }
-      if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined') { if (AG.vista === 'progetto') AG.vista = null; AG.giorno = null; }   // il tab «MB Plan» apre su oggi (Ignazio 04/10, nota 021)
+      if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined') AG.giorno = null;   // il tab «MB Plan» apre su oggi (Ignazio 04/10, nota 021)
       eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; if (ST.tab === 'oggi') vaiAlPrimoLivello(); mostraTab();
     };
   });
-  if (progetti && typeof vediProgetti === 'function' && vediProgetti()) { const apre = apriProgetti(); accendiTab(); return apre; }   // acceso subito, non a caricamento finito
   if (ST.tab === 'oggi') return caricaOggi();
   if (ST.tab === 'lista') return apriLista();
   if (ST.tab === 'agenda') return apriAgenda();

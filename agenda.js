@@ -124,22 +124,20 @@
   }
 
   // ── Cose da fare del giorno (cantiere 41, lavoro 1) ──────────────────────────
-  // Le cose non legate a una persona, nel foglio del giorno. Il riporto a domani è una regola di lettura:
-  // una cosa non fatta con giorno passato si vede OGGI (con «da <giorno>»), finché non la spunti; nel suo
+  // Le cose da fare del foglio del giorno, ognuna legata a una persona o al Team, al LdS, a Network 21, ad Amway (legameDi). Il riporto a
+  // domani è una regola di lettura: una cosa non fatta con giorno passato si vede OGGI (con «da <giorno>»), finché non la spunti; nel suo
   // giorno di origine non si vede più. Le cose fatte stanno nel giorno in cui le hai spuntate (`giorno`).
-  // Ordine: prima le da fare (le riportate per prime, le più vecchie in cima), poi le fatte; a parità `ordine`, poi creazione.
-  // Le righe con `modello_id` sono le spunte delle voci del modello (le legge `vociDelGiorno`), non cose scritte a mano;
+  // Ordine: prima le da fare, poi le fatte; a parità `ordine` (il trascinamento), poi le riportate (le più vecchie per prime), poi creazione.
+  // Restano fuori le righe dei vecchi modelli, progetti e Core (`modello_id`, `progetto_id`, `core`): dal 05/10/2026 non fanno parte di MB Plan;
   // e qui contano solo le cose sulla scala del giorno (`scala` vuota = giorno).
+  const daMBPlan = c => !c.modello_id && !c.progetto_id && !c.core;
   function coseDelGiorno(cose, giorno, oggi) {
-    const mie = conTitoliFatti(cose).filter(c => !c.modello_id && (!c.scala || c.scala === 'giorno')).filter(c => {
+    const mie = (cose || []).filter(c => daMBPlan(c) && (!c.scala || c.scala === 'giorno')).filter(c => {
       if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
       return c.giorno === giorno;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
-    // fatte in fondo; poi le righe dei progetti dopo le altre, nell'ordine del progetto (24/09: nel giorno non si trascinano);
-    // poi l'ordine scelto trascinando (Ignazio 23/09: vince lui); a parità le riportate prima (le più vecchie per prime)
     return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
-      || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0) || String(x.progetto_id || '').localeCompare(String(y.progetto_id || ''))
-      || (x.ordine || 0) - (y.ordine || 0)
+      || (x.ordine || 0) - (y.ordine || 0)   // l'ordine scelto trascinando (Ignazio 23/09: vince lui)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1)
       || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
       || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
@@ -148,40 +146,15 @@
   // una non fatta di un mese passato si vede nel mese di oggi con «riportata» = il suo mese; le fatte restano nel loro.
   // La stessa regola vale per la SETTIMANA (`scala = 'settimana'`, `giorno` = il lunedì): coseDellaScala.
   function coseDellaScala(cose, scala, inizio, inizioOggi) {
-    const mie = conTitoliFatti(cose).filter(c => c.scala === scala && !c.modello_id && !c.core).filter(c => {
+    const mie = (cose || []).filter(c => c.scala === scala && daMBPlan(c)).filter(c => {
       if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
       return c.giorno === inizio;
     }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
-    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.progetto_id ? 1 : 0) - (y.progetto_id ? 1 : 0)   // i progetti dopo (24/09), ognuno insieme
-      || String(x.progetto_id || '').localeCompare(String(y.progetto_id || ''))
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
       || (x.ordine || 0) - (y.ordine || 0)
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
-  // Un cantiere in programma (Ignazio 24/09, passo 3): il titolo di un progetto con un giorno è UNA riga del giorno, della
-  // settimana o del mese («una riga sola»). È fatto quando sono fatti tutti i suoi passi — non si salva, si calcola, come nel
-  // progetto: allora sta tra le fatte nel giorno (o nella settimana, nel mese) dell'ultima spunta — ma non prima del giorno in
-  // cui era in programma (revisione 24/09: finito in anticipo resta dove l'avevi messo, come le altre cose); un passo nuovo lo riapre e,
-  // se il suo giorno è passato, si riporta come le altre cose. Rende la lista con, al posto di ogni titolo in programma, una
-  // copia con `fatto_il` e `giorno` calcolati e `passi` / `fatti` (per «1 di 4 fatte»); le altre righe restano le stesse.
-  function conTitoliFatti(cose) {
-    const lista = cose || [];
-    if (!lista.some(c => c.tipo === 'titolo' && c.progetto_id && c.giorno)) return lista;
-    const perProgetto = new Map(), passi = new Map();
-    for (const c of lista) if (c.progetto_id) { if (!perProgetto.has(c.progetto_id)) perProgetto.set(c.progetto_id, []); perProgetto.get(c.progetto_id).push(c); }
-    for (const righe of perProgetto.values()) {
-      righe.sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
-      let titolo = null;
-      for (const r of righe) { if (r.tipo === 'titolo') { titolo = r; passi.set(r.id, []); } else if (titolo) passi.get(titolo.id).push(r); }
-    }
-    return lista.map(c => {
-      if (c.tipo !== 'titolo' || !c.progetto_id || !c.giorno) return c;
-      const suoi = passi.get(c.id) || [], fatti = suoi.filter(x => x.fatto_il);
-      const ultima = suoi.length && fatti.length === suoi.length ? fatti.map(x => x.fatto_il).sort().pop() : null;
-      const finito = ultima ? inizioScala(c.scala || 'giorno', partiRoma(ultima).giorno) : null;
-      return { ...c, passi: suoi.length, fatti: fatti.length, fatto_il: ultima, giorno: finito && finito > c.giorno ? finito : c.giorno };
-    });
-  }
   // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
   function numeroSettimana(giorno) {
     const d = new Date(giorno + 'T12:00:00Z');
@@ -209,198 +182,12 @@
 
   // Il primo giorno del mese dopo (o prima, con n = -1)
   function meseAccanto(mese0, n) { const d = new Date(mese0 + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n, 1); return d.toISOString().slice(0, 10); }
-  // Il segno davanti a ogni riga di un progetto, come in Word (Ignazio 23/09): numerate 1. 2. → con un rientro 1.1 1.2 →
-  // 1.1.1; sotto una riga non numerata si riparte da «1.»; un titolo fa ripartire tutto; i puntini cambiano con il rientro
-  // (• ◦ ▪). Una riga meno rientrata chiude le parti più rientrate. Le cose da fare e i titoli non hanno segno ('').
-  function numeraRighe(righe) {
-    const cont = [], etich = [], PUNTI = ['•', '◦', '▪'];
-    return (righe || []).map(r => {
-      const L = Math.max(0, Math.min(4, r.livello || 0)), t = r.tipo || 'cosa';
-      if (t === 'titolo') { cont.length = 0; etich.length = 0; return ''; }
-      cont.length = Math.min(cont.length, L + 1); etich.length = Math.min(etich.length, L + 1);
-      if (t === 'numero') {
-        cont[L] = (cont[L] || 0) + 1;
-        const pre = L > 0 && etich[L - 1] ? etich[L - 1] : '';
-        etich[L] = pre ? `${pre}.${cont[L]}` : String(cont[L]);
-        return pre ? etich[L] : etich[L] + '.';
-      }
-      etich[L] = '';
-      return t === 'punto' ? PUNTI[L % PUNTI.length] : '';
-    });
-  }
-  // Nei progetti le fatte vanno in fondo (Ignazio 24/09, al posto del «restano al loro posto» del 23/09): dentro ogni titolo
-  // prima le righe da fare, nel loro ordine, poi le fatte; una riga si porta dietro le più rientrate che la seguono e va in
-  // fondo solo se sono fatte tutte (dentro, la stessa regola). I titoli restano al loro posto, anche con tutti i passi fatti
-  // (Ignazio 25/09: con i titoli in ordine alfabetico «rimane in ordine alfabetico, come sono gli altri»; dal 24/09 un titolo
-  // finito andava in fondo al progetto); le righe prima del primo titolo restano in cima.
-  // Riceve le righe nell'ordine salvato, le rende nell'ordine in cui si vedono (i numeri 1. 2. 3. li fa poi numeraRighe).
-  function fatteInFondo(righe) {
-    const fatta = r => !!r.fatto_il;
-    const inFondo = lista => {
-      const gruppi = [];
-      for (let k = 0; k < lista.length;) {
-        const liv = lista[k].livello || 0;
-        let m = k + 1;
-        while (m < lista.length && (lista[m].livello || 0) > liv) m++;
-        const dentro = inFondo(lista.slice(k + 1, m));
-        gruppi.push({ righe: [lista[k], ...dentro], fatto: fatta(lista[k]) && dentro.every(fatta) });
-        k = m;
-      }
-      return [...gruppi.filter(g => !g.fatto), ...gruppi.filter(g => g.fatto)].flatMap(g => g.righe);
-    };
-    const pezzi = [{ titolo: null, passi: [] }];
-    for (const r of righe || []) {
-      if (r.tipo === 'titolo') pezzi.push({ titolo: r, passi: [] });
-      else pezzi[pezzi.length - 1].passi.push(r);
-    }
-    return pezzi.flatMap(p => [...(p.titolo ? [p.titolo] : []), ...inFondo(p.passi)]);
-  }
-  // Dove sta una riga nel suo progetto (24/09): il titolo sopra di lei e il suo segno come sullo schermo («3.», «2.1», «•»).
-  // `righe` = il progetto come si vede (fatteInFondo). Serve alla riga «📁 MB App › Cantiere 41 · 3.» nel giorno e nella settimana.
-  function postoNelProgetto(righe, id) {
-    const tutte = righe || [], i = tutte.findIndex(r => r.id === id);
-    if (i < 0) return null;
-    let t = i - 1;
-    while (t >= 0 && tutte[t].tipo !== 'titolo') t--;
-    return { titolo: t >= 0 ? tutte[t].testo : '', segno: numeraRighe(tutte)[i] || '' };
-  }
-  // Copiare un pezzo di progetto (Ignazio 24/09): per incollarlo in una chat di Claude o altrove, e di nuovo in un progetto.
-  // `righe` = tutte le righe del progetto come si vedono (fatteInFondo), così i numeri sono quelli dello schermo.
-  // `id`: un titolo → il titolo e le sue righe fino al titolo dopo; una riga → lei e le più rientrate che la seguono;
-  // vuoto → tutto il progetto (una riga vuota prima di ogni titolo). Il formato è quello che leggiRiga rilegge:
-  // «## titolo» · «1. » «2.1 » numerate · «- » puntini · «- [ ] » da fare, «- [x] » fatta · «✓ » dopo il numero o il
-  // puntino = fatta · due spazi per ogni rientro, quello vero anche copiando una voce rientrata (una «2.1 » con due spazi
-  // davanti e i suoi sottopunti con quattro: reincollati restano figli suoi, revisione 24/09). Rende { testo, voci }.
-  // Dal 25/09 (Ignazio: «devono essere copiate solo quelle che non sono state eseguite… quelle fatte non ci servono») si copiano
-  // solo le voci da fare: le fatte le toglie fatteDaEliminare (una fatta con sotto punti da fare resta, con «✓»); la riga scelta
-  // c'è sempre; copiando tutto il progetto un titolo con tutte le voci fatte non c'è. I numeri restano quelli dello schermo
-  // (le fatte stanno in fondo, dopo le da fare). `voci` = le righe copiate, titoli esclusi.
-  function testoDaCopiare(righe, id) {
-    const tutte = righe || [], segni = numeraRighe(tutte);
-    let da = 0, a = tutte.length;
-    if (id) {
-      da = tutte.findIndex(r => r.id === id);
-      if (da < 0) return { testo: '', voci: 0 };
-      const capo = tutte[da];
-      a = da + 1;
-      while (a < tutte.length && tutte[a].tipo !== 'titolo' && (capo.tipo === 'titolo' || (tutte[a].livello || 0) > (capo.livello || 0))) a++;
-    }
-    const via = new Set(fatteDaEliminare(tutte.slice(da, a)));
-    if (id) via.delete(id);
-    const finito = i => { let k = i + 1; for (; k < a && tutte[k].tipo !== 'titolo'; k++) if (!via.has(tutte[k].id)) return false; return k > i + 1; };
-    const out = [];
-    let voci = 0;
-    for (let i = da; i < a; i++) {
-      const r = tutte[i], t = r.tipo || 'cosa', testo = String(r.testo || '').replace(/\s+/g, ' ').trim();
-      if (via.has(r.id)) continue;
-      if (t === 'titolo') {
-        if (!id && finito(i)) continue;   // tutto il progetto: un titolo finito non serve
-        if (out.length) out.push(''); out.push('## ' + testo); continue;
-      }
-      voci++;
-      const rientro = '  '.repeat(r.livello || 0), fatta = r.fatto_il ? '✓ ' : '';
-      if (t === 'numero') out.push(`${rientro}${segni[i]} ${fatta}${testo}`);
-      else if (t === 'punto') out.push(`${rientro}- ${fatta}${testo}`);
-      else out.push(`${rientro}- [${r.fatto_il ? 'x' : ' '}] ${testo}`);
-    }
-    return { testo: out.join('\n'), voci };
-  }
-  // Le voci fatte che si possono eliminare (Ignazio 25/09: «le voci smarcate in quanto fatte le eliminiamo, perché creano
-  // confusione inutile»): fatte e con tutto quello che hanno dentro fatto. Una fatta con sotto punti ancora da fare resta,
-  // se no i suoi punti finirebbero sotto la voce sopra. I titoli non ci sono mai. `righe` = il progetto (o un suo pezzo)
-  // come si vede (fatteInFondo); rende gli id, nell'ordine dello schermo.
-  function fatteDaEliminare(righe) {
-    const tutte = righe || [], out = [];
-    for (let i = 0; i < tutte.length; i++) {
-      const r = tutte[i];
-      if (r.tipo === 'titolo' || !r.fatto_il) continue;
-      let tutteFatte = true;
-      for (let j = i + 1; j < tutte.length && tutte[j].tipo !== 'titolo' && (tutte[j].livello || 0) > (r.livello || 0); j++) if (!tutte[j].fatto_il) tutteFatte = false;
-      if (tutteFatte) out.push(r.id);
-    }
-    return out;
-  }
-  // Spostare una riga sotto un altro titolo, anche di un altro progetto (Ignazio 25/09: con la lista lunga, trascinando non
-  // sempre si arriva al titolo giusto). `righe` = il progetto della riga come si vede (fatteInFondo); `id` = la riga, che si
-  // porta dietro i suoi sottopunti (un titolo tutte le sue righe, come trascinando); `titoloId` = il titolo d'arrivo (vuoto =
-  // tra le righe senza titolo, in cima; un titolo va sempre in fondo al progetto). Per un altro progetto `altre` = le sue righe
-  // come si vedono e `progettoId` il suo id. La riga va in fondo alle cose da fare del titolo, con il rientro più piccolo delle
-  // sue voci (di solito nessuno; revisione 25/09: con voci rientrate subito sotto il titolo, senza rientro «adottava» una fatta
-  // rientrata come suo sottopunto), e i sottopunti scalano con lei; poi tutto torna nell'ordine che si vede (fatteInFondo) e si
-  // numera 1…N, come quando si aggiungono righe.
-  // Rende le righe che cambiano, con i valori nuovi: [{ id, ordine, livello, progetto_id }]; null se la riga o il titolo non ci sono.
-  function spostaRighe(righe, id, titoloId, altre, progettoId) {
-    const da = righe || [], i = da.findIndex(r => r.id === id);
-    if (i < 0) return null;
-    const capo = da[i], eTitolo = capo.tipo === 'titolo';
-    let j = i + 1;
-    while (j < da.length && da[j].tipo !== 'titolo' && (eTitolo || (da[j].livello || 0) > (capo.livello || 0))) j++;
-    const resto = [...da.slice(0, i), ...da.slice(j)], arrivo = altre ? [...altre] : resto;
-    let k, inizio;   // le voci del titolo d'arrivo: da `inizio` a `k` (escluso); la riga va in `k`
-    if (eTitolo) k = inizio = arrivo.length;
-    else if (titoloId) {
-      k = arrivo.findIndex(r => r.id === titoloId && r.tipo === 'titolo');
-      if (k < 0) return null;
-      for (inizio = ++k; k < arrivo.length && arrivo[k].tipo !== 'titolo'; k++);
-    } else { inizio = 0; k = arrivo.findIndex(r => r.tipo === 'titolo'); if (k < 0) k = arrivo.length; }
-    const livelli = arrivo.slice(inizio, k).map(r => r.livello || 0), base = livelli.length ? Math.min(...livelli) : 0;
-    const giu = eTitolo ? 0 : capo.livello || 0, su = eTitolo ? 0 : base;
-    const blocco = da.slice(i, j).map(r => ({ ...r, livello: Math.min(4, su + Math.max(0, (r.livello || 0) - giu)), progetto_id: progettoId || r.progetto_id }));
-    const prima = new Map([...da, ...(altre || [])].map(r => [r.id, r])), cambi = [];
-    const numera = lista => fatteInFondo(lista).forEach((r, n) => {
-      const x = prima.get(r.id), nuova = { id: r.id, ordine: n + 1, livello: r.livello || 0, progetto_id: r.progetto_id };
-      if (x.ordine !== nuova.ordine || (x.livello || 0) !== nuova.livello || x.progetto_id !== nuova.progetto_id) cambi.push(nuova);
-    });
-    numera([...arrivo.slice(0, k), ...blocco, ...arrivo.slice(k)]);
-    if (altre) numera(resto);   // il progetto di partenza, senza le righe spostate
-    return cambi;
-  }
-  // Una riga scritta o incollata in un progetto → { tipo, testo, livello, fatta } (null se vuota). Il tipo si scrive all'inizio
-  // come in NotePlan: «## » titolo, «1. » o «1.2 » numerata, «- » «• » puntini, «[] » «☐ » «- [ ] » da fare, «- [x] » fatta;
-  // «✓ » dopo il numero o il puntino = fatta (è il testo che fa testoDaCopiare, 24/09). Se no vale `tipoScelto` (i bottoni).
-  // Il rientro si legge dall'inizio (un Tab o due spazi = un livello), al massimo 4 come nel database. Toglie «**» e «__».
-  function leggiRiga(riga, livelloScelto, tipoScelto) {
-    const grezza = String(riga || '').replace(/\u00a0/g, ' ');   // lo spazio che non va a capo (testi copiati) → spazio
-    const inizio = (grezza.match(/^[\t ]*/) || [''])[0];
-    let livello = (inizio.match(/\t/g) || []).length + Math.floor(inizio.replace(/\t/g, '').length / 2);
-    let testo = grezza.trim(), tipo = tipoScelto || 'cosa', fatta = false;
-    const spuntata = () => { if (/^✓\s*/.test(testo)) { fatta = true; testo = testo.replace(/^✓\s*/, ''); } };
-    const casella = /^(?:[-*•]\s+)?(\[\s?\]|\[[xX]\]|☐)\s*/;
-    if (/^#{1,6}\s+/.test(testo)) { tipo = 'titolo'; testo = testo.replace(/^#{1,6}\s+/, ''); livello = 0; }
-    else if (/^\d+(\.\d+)+\.?\s+/.test(testo)) { tipo = 'numero'; livello = Math.max(livello, testo.match(/^[\d.]+/)[0].replace(/\.$/, '').split('.').length - 1); testo = testo.replace(/^\d+(\.\d+)+\.?\s+/, ''); spuntata(); }   // «1.2 » → secondo livello
-    else if (/^\d+[.)]\s+/.test(testo)) { tipo = 'numero'; testo = testo.replace(/^\d+[.)]\s+/, ''); spuntata(); }
-    else if (casella.test(testo)) { tipo = 'cosa'; fatta = /x/i.test(testo.match(casella)[1]); testo = testo.replace(casella, ''); }
-    else if (/^[-•*–◦▪]\s+/.test(testo)) { tipo = 'punto'; testo = testo.replace(/^[-•*–◦▪]\s+/, ''); spuntata(); }
-    else if (!inizio && livelloScelto != null) livello = livelloScelto;
-    testo = testoCosa(testo.replace(/\*\*/g, '').replace(/__/g, ''));
-    return testo ? { tipo, testo, livello: tipo === 'titolo' ? 0 : Math.min(4, livello), fatta: tipo === 'titolo' ? false : fatta } : null;
-  }
-  // Il testo di una cosa da fare, pulito: senza spazi ai bordi, mai vuoto (→ null), al massimo `max` lettere: 1000 per le
-  // cose da fare e le righe dei progetti (Ignazio 24/09: col dettato le 200 di prima tagliavano la fine senza dirlo),
-  // 200 per le voci dei modelli (MAX_VOCE, etichette corte). Chi scrive avvisa con `testoTroppoLungo`.
   const MAX_COSA = 1000, MAX_VOCE = 200;
   const pulisciTesto = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   function testoCosa(s, max = MAX_COSA) { const t = pulisciTesto(s).slice(0, max); return t || null; }
   function testoTroppoLungo(s, max = MAX_COSA) { return pulisciTesto(s).length > max; }
 
-  // ── Il modello del giorno (cantiere 41, lavoro 2) ────────────────────────────
-  // Le cose di ogni giorno, scritte una volta: compaiono da sole nel foglio del giorno. L'app le propone già
-  // pronte con le abitudini Core N21 (Ignazio 22/09: «un modello legato all'attività Amway o al sistema N21»);
-  // ognuna si accende o si spegne, e si aggiungono le proprie.
-  // Le 7 abitudini della persona Core (modulo di auto-valutazione N21, R10), come voci del modello: `scala` dice
-  // dove vivono (giorno · settimana · mese · periodo); `misura` dice cosa l'app sa contare da sola (da Check, azioni,
-  // vendite) e `obiettivo` quanto serve per la spunta. Senza `misura` la spunta è a mano.
-  const CORE_N21 = [
-    { core: 'pm', testo: 'Presentare almeno 8 Piani Marketing al mese', scala: 'mese', misura: 'pm_mese', obiettivo: 8 },
-    { core: 'prodotti', testo: 'Consumare i prodotti Amway', scala: 'mese' },
-    { core: 'clienti', testo: 'Servire almeno 10 clienti al mese', scala: 'mese', misura: 'clienti_mese', obiettivo: 10 },
-    { core: 'cd', testo: 'Ascoltare 1 traccia al giorno', scala: 'giorno', misura: 'tracce', obiettivo: 1 },   // Ignazio 22/09: «traccia, non CD»
-    { core: 'pagine', testo: 'Leggere 10 pagine al giorno', scala: 'giorno', misura: 'pagine', obiettivo: 10 },
-    { core: 'open', testo: 'Partecipare all\'OPEN settimanale', scala: 'settimana' },
-    { core: 'squadra', testo: 'Lavorare di squadra', scala: 'mese' },
-  ].map(v => ({ sezione: 'Core', ...v }));
   const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
-  const DI_SCALA = { giorno: '', settimana: 'questa settimana', mese: 'questo mese', periodo: 'questo periodo', anno: 'quest\'anno' };
   // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
   function inizioScala(scala, giorno) {
     if (scala === 'settimana') return settimana(giorno)[0];
@@ -408,59 +195,24 @@
     if (scala === 'anno') return giorno.slice(0, 4) + '-01-01';
     return giorno;   // giorno (e, finché non c'è la tabella dei periodi, anche periodo)
   }
-  // Lo stato di un'abitudine Core con misura, dai numeri del giorno/mese (`misure`: { tracce, pagine, pm_mese, clienti_mese })
-  function statoCore(voce, misure) {
-    const def = CORE_N21.find(c => c.core === voce.core);
-    if (!def || !def.misura || !misure) return null;   // senza numeri la voce Core si spunta a mano (Ignazio 04/10, nota 021: prima «0/8» per sempre)
-    const n = Number((misure || {})[def.misura]) || 0;
-    return { quanto: n, obiettivo: def.obiettivo, fatta: n >= def.obiettivo, testo: `${n}/${def.obiettivo}` };
-  }
   const GIORNI_SETTIMANA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];   // 1 = lunedì … 7 = domenica
   // Il numero del giorno della settimana di una data (1 = lunedì … 7 = domenica)
   function giornoSettimana(giorno) { return (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1; }
-  // Le voci del modello che compaiono in quel giorno, in ordine, con la spunta di quel giorno se c'è (`fatto_il`).
-  // Le voci Core compaiono sempre (anche quelle del mese o della settimana, con «questo mese» accanto, finché non
-  // c'è il foglio della loro scala): se hanno una misura la spunta viene dai numeri (`misure`), se no dalla riga
-  // a mano con `core` nel primo giorno della scala. Le voci personali: dalla riga con `modello_id` di quel giorno.
-  function vociDelGiorno(modello, cose, giorno, misure) {
-    const dow = giornoSettimana(giorno);
-    return (modello || [])
-      .filter(v => v.attivo !== false && (v.core || !v.giorni || !v.giorni.length || v.giorni.includes(dow)))
-      .sort((x, y) => (x.ordine || 0) - (y.ordine || 0) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1))
-      .map(v => {
-        const scala = v.scala || 'giorno';
-        const stato = v.core ? statoCore(v, misure) : null;
-        const inizio = inizioScala(scala, giorno);
-        // la riga del giorno (cose_da_fare con modello_id): c'è quando la voce è spuntata OPPURE quando quel giorno ha un'ora
-        // sua (spostata nella Timeline solo per quella volta, Ignazio 23/09: il modello resta com'è nei giorni dopo)
-        const delGiorno = v.core ? null : (cose || []).find(c => c.modello_id === v.id && c.giorno === giorno) || null;
-        const spunta = v.core ? (cose || []).find(c => c.fatto_il && c.core === v.core && c.giorno === inizio) : delGiorno && delGiorno.fatto_il ? delGiorno : null;
-        const suaOra = delGiorno && delGiorno.ora ? { ora: delGiorno.ora, durata: delGiorno.durata || v.durata, oraDelModello: v.ora || null } : {};
-        return { ...v, ...suaOra, scala, stato, diScala: DI_SCALA[scala] || '', giornoSpunta: v.core ? inizio : giorno,
-          fatto_il: stato ? (stato.fatta ? 'misura' : null) : spunta ? spunta.fatto_il : null, spunta_id: spunta ? spunta.id : null,
-          riga_id: delGiorno ? delGiorno.id : null };
-      });
+  // A chi o a cosa si riferisce una cosa da fare (Ignazio 05/10/2026: ogni cosa di MB Plan è legata a una persona della lista o al
+  // Team, al LdS, a Network 21, ad Amway). `contatto_id` = la persona; `legato_a` = uno di LEGAMI. Rende { tipo, nome } oppure null.
+  const LEGAMI = [['Team', 'Team'], ['LdS', 'LdS'], ['N21', 'Network 21'], ['Amway', 'Amway']];
+  function legameDi(c) {
+    if (!c) return null;
+    if (c.contatto_id) return { tipo: 'persona', nome: (c.contatti && c.contatti.nome) || 'Persona' };
+    const l = LEGAMI.find(x => x[0] === c.legato_a);
+    return l ? { tipo: l[0], nome: l[1] } : null;
   }
-  // Le sezioni del foglio, in ordine: «Core» per prima, poi le altre come compaiono nel modello; ogni sezione con le sue voci
-  function sezioniFoglio(voci) {
-    const ordine = [], per = new Map();
-    for (const v of voci) {
-      const s = v.sezione || 'Routine';
-      if (!per.has(s)) { per.set(s, []); ordine.push(s); }
-      per.get(s).push(v);
-    }
-    ordine.sort((a, b) => (a === 'Core' ? -1 : b === 'Core' ? 1 : 0));
-    return ordine.map(nome => ({ nome, voci: per.get(nome) }));
+  // I due campi da scrivere nel database per un legame: l'uno esclude l'altro. `l` = { tipo, contatto_id? } (tipo 'persona' o uno di LEGAMI)
+  function campiLegame(l) {
+    if (!l) return null;
+    if (l.tipo === 'persona') return l.contatto_id ? { contatto_id: l.contatto_id, legato_a: null } : null;
+    return LEGAMI.some(x => x[0] === l.tipo) ? { contatto_id: null, legato_a: l.tipo } : null;
   }
-  // «Ogni giorno» · «Lun-Ven» · «Sab e Dom» · «Lun, Mer, Ven»: come si dice quando compare una voce
-  function testoGiorni(giorni) {
-    const g = [...new Set((giorni || []).filter(n => n >= 1 && n <= 7))].sort((a, b) => a - b);
-    if (!g.length || g.length === 7) return 'Ogni giorno';
-    if (g.join() === '1,2,3,4,5') return 'Lun-Ven';
-    if (g.join() === '6,7') return 'Sab e Dom';
-    return g.map(n => GIORNI_SETTIMANA[n - 1]).join(', ');
-  }
-
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
     const nome = (a.contatti && a.contatti.nome) || '—';
@@ -872,7 +624,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, numeraRighe, fatteInFondo, fatteDaEliminare, testoDaCopiare, spostaRighe, leggiRiga, postoNelProgetto, conTitoliFatti, CORE_N21, SCALE, DI_SCALA, inizioScala, statoCore, GIORNI_SETTIMANA, giornoSettimana, vociDelGiorno, sezioniFoglio, testoGiorni };
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
