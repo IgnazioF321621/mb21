@@ -3349,7 +3349,10 @@ async function nuovoAppuntamento(opz = {}) {
         leggiCampi();
         const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
         const tel = String(r.telefono || '').replace(/\s+/g, '');
-        foglioLinkInvito({ da: visto().id, nome: leggibile(r.nome), telefono: /^\+/.test(tel) ? tel : tel ? '+39' + tel.replace(/^0+/, '') : '' });
+        // il messaggio di sempre più l'occasione (Ignazio 05/10 sera): la serata e il giorno, così registrandosi la trova e può partecipare
+        const cosa = MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo);
+        const poi = `Così trovi «${cosa}»${campi.giorno ? ' di ' + dataLunga(campi.giorno) : ''} nella tua Agenda e puoi partecipare.`;
+        foglioLinkInvito({ da: visto().id, nome: leggibile(r.nome), telefono: /^\+/.test(tel) ? tel : tel ? '+39' + tel.replace(/^0+/, '') : '', poi });
       }; });
       const selPassi = velo.querySelector('#na-passi');
       if (selPassi) selPassi.onclick = async () => {
@@ -4394,7 +4397,8 @@ function indirizzoApp() {
 function foglioLinkInvito(opz = {}) {
   const link = opz.link || `${indirizzoApp()}?registrati&da=${opz.da || ST.utente.id}`;
   // Messaggio con il saluto, modificabile nel riquadro: Copia e tutti i bottoni mandano il testo com'è in quel momento (Ignazio 16/09)
-  const messaggio = opz.messaggio || `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link:\n${link}`;
+  // `opz.poi`: una riga in più dopo il link (05/10 sera: l'invito dalla serata dice anche cosa ci si trova); resta modificabile nel riquadro
+  const messaggio = opz.messaggio || `${opz.nome ? 'Ciao ' + opz.nome.split(' ')[0] + ', r' : 'R'}egistrati all'app MB21 da questo link:\n${link}${opz.poi ? '\n' + opz.poi : ''}`;
   const tel = opz.telefono && opz.telefono.startsWith('+') ? opz.telefono : '';   // i numeri dubbi non partono
   const velo = document.createElement('div');
   velo.className = 'velo';
