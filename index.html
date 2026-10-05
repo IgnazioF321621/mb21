@@ -3231,7 +3231,7 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', voci.map(x => x[0]), st.condividi, voci.map(x => x[1]))}</div>`;
         if (st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label>${frontali().length
           ? scelte('linea', frontali().map(f => f.partner_id), st.linea, frontali().map(f => f.nome)) : '<div class="errore">Nessun frontale nella Mappa.</div>'}</div>`;
-        if (st.condividi) h += `<div class="campo"><label>Vedono anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+        if (st.condividi) h += `<div class="campo"><label>${st.condividi === 'persona' ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
       }
       if (st.contatto && !serata()) {
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia

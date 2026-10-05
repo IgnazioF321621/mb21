@@ -113,11 +113,17 @@ prova('Chi organizza, appuntamento con un Partner: «Condividi con Isabella Ross
   await v.clic('[data-cd-togli]');
   assert.deepEqual(chiamate('condividi_azione')[2].args[0], { p_azione: 'c1', p_con: false, p_punti: false });
   assert.equal(c1.condiviso_con, null); assert.match(v.innerHTML, /Condividi con Isabella Rossi/);
-  // la persona non usa l'app: lo dice e non cambia niente
+  // la persona non usa l'app: lo scrive nel riquadro e offre l'invito (il foglio del link di registrazione della scheda)
   P.finto.condividi = { esito: 'non_usa_app' };
   await v.clic('[data-cd-con]');
-  assert.match(P.avvisi.at(-1).t, /non usa ancora l'app/); assert.equal(c1.condiviso_con, null);
+  assert.match(P.avvisi.at(-1).t, /non usa ancora MB21/); assert.equal(c1.condiviso_con, null);
+  assert.match(v.innerHTML, /Isabella Rossi non usa ancora MB21/); assert.match(v.innerHTML, /data-cd-invita/);
+  await v.clic('[data-cd-invita]');
+  assert.equal(P.avvisi.at(-1).t, 'invito:Isabella Rossi');
   P.finto.condividi = { esito: 'ok', nome: 'Isabella Rossi', utente: 'u-isa' };
+  await v.clic('[data-cd-con]');   // «Riprova»: ora usa l'app
+  assert.equal(c1.condiviso_con, 'u-isa'); assert.doesNotMatch(v.innerHTML, /non usa ancora MB21/);
+  await v.clic('[data-cd-togli]');
   // un Prospect: niente riquadro
   pulisci();
   v = apri('p1');
