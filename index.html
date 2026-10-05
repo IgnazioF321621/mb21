@@ -242,6 +242,14 @@
   .cn .menu { flex: none; border: 0; background: none; font-size: 22px; color: var(--testo-tenue); padding: 0 10px 0 6px; height: 44px; min-width: 40px; }
   .altri-voci button { display: block; width: 100%; text-align: left; font-size: 17px; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--linea); background: none; color: var(--testo); }
   .altri-voci button.pericolo { color: var(--rosso); }
+  /* scelta multipla (05/10): il segno ✓ si accende sulle voci scelte */
+  .scelte-multiple button { display: flex; align-items: center; gap: 12px; }
+  .scelte-multiple .sm-segno { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--linea); display: inline-flex; align-items: center; justify-content: center; flex: none; color: transparent; }
+  .scelte-multiple button.scelto .sm-segno { background: var(--accento); border-color: var(--accento); color: var(--accento-su); }
+  .scelte-multiple .sm-segno svg.ic { margin: 0; width: 14px; height: 14px; }
+  /* il selettore dei passi nel modulo «+»: un bottone largo che si apre */
+  .na-selettore { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 8px; padding: 10px 12px; border: 1px solid var(--linea); border-radius: var(--raggio-riga); background: var(--superficie); color: var(--testo); font-size: 15px; text-align: left; min-height: var(--tocco); }
+  .na-selettore span { flex: 1; } .na-selettore svg.ic { flex: none; }
   /* elenchi ad albero (ordine della Mappa, Ignazio 25/09): ogni livello sotto la radice va più a destra, con ↳ */
   .altri-voci button.rientrata { padding-left: calc(4px + var(--rientro, 0) * 18px); }
   .altri-voci button i.ramo { font-style: normal; color: var(--testo-tenue); margin-right: 6px; }
@@ -2799,6 +2807,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
         <div class="ag-scelte">${tocchi(inc.scelti, '')}</div>
         ${inc.altri.length ? `<button type="button" class="link" data-anche-altro>Abbiamo fatto anche altro ›</button>
           <div class="ag-scelte" data-altri hidden>${tocchi(inc.altri, '')}</div>` : ''}
+        <small data-serve-suo hidden>Serve almeno un passo di ${esc(MB21Agenda.nomePasso(a.modalita || ''))}: è lui l'esito dell'incontro.</small>
         <button type="button" class="primario" data-incontro-fatto disabled>Fatto</button>
       </div></div>`;
   }
@@ -2827,15 +2836,17 @@ function collegaEsiti(el, a, contatto, dopo) {
   el.querySelectorAll('.su-cosa-fatto').forEach(box => {   // i passi fatti nell'incontro (cantiere 48)
     const fatto = box.querySelector('[data-incontro-fatto]'), tutti = JSON.parse(box.dataset.tutti);
     const accesi = () => [...box.querySelectorAll('[data-passo-fatto].scelto')].map(b => b.dataset.passoFatto);
-    box.querySelectorAll('[data-passo-fatto]').forEach(b => b.onclick = () => { b.classList.toggle('scelto'); fatto.disabled = !accesi().length; });
+    const e0 = { ...a, categoria: a.categoria || contatto.categoria };
+    const aggiorna = () => { const r = MB21Agenda.esitoDaiPassi(e0, contatto.categoria, accesi()); fatto.disabled = !r.esito; const h = box.querySelector('[data-serve-suo]'); if (h) h.hidden = !!r.esito || !accesi().length; };
+    box.querySelectorAll('[data-passo-fatto]').forEach(b => b.onclick = () => { b.classList.toggle('scelto'); aggiorna(); });
     const altro = box.querySelector('[data-anche-altro]');
     if (altro) altro.onclick = () => { box.querySelector('[data-altri]').hidden = false; altro.hidden = true; };
     fatto.onclick = () => {
       if (soloGuardo()) return;
-      const passi = MB21Agenda.passiFatti(tutti, accesi());
-      if (!passi.length) return;
       const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
-      chiudiAppuntamento(e, passi[0], { dopo, extra: passi.slice(1), testo: passi.map(MB21Agenda.nomePasso).join(' · ') });
+      const { esito, extra } = MB21Agenda.esitoDaiPassi(e, contatto.categoria, accesi());   // l'esito è un passo del tipo scelto (05/10)
+      if (!esito) return;
+      chiudiAppuntamento(e, esito, { dopo, extra, testo: [esito, ...extra].map(MB21Agenda.nomePasso).join(' · ') });
     };
   });
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
@@ -3280,10 +3291,13 @@ async function nuovoAppuntamento(opz = {}) {
         if (!soloGiorno) {
           // «Dove» (Ignazio 05/10): un campo solo, il link se è online, il posto o l'indirizzo se dal vivo (A.doveDa decide)
           h += `<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="na-dove" maxlength="${A.MAX_LINK}" autocomplete="off" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo…" value="${esc(campi.dove)}"></div>`;
+          // Con un Partner, i passi dell'incontro (tutti e 11, prima quelli del tipo scelto) si scelgono da un selettore che si apre
+          // (Ignazio 05/10 sera: niente pillole da cliccare); i passi scelti stanno scritti sul bottone e diventano righe dei punti
           const passi = serata() ? [] : A.suCosaPer(st.categoria, st.tipo, st.modalita);
           st.suCosa = st.suCosa.filter(x => passi.includes(x));
-          h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga'}</small></label>
-            ${passi.length ? `<div class="ag-scelte" id="na-su-cosa" style="margin-bottom:8px">${passi.map(x => `<button type="button" data-passo="${esc(x)}" class="${st.suCosa.includes(x) ? 'scelto' : ''}">${esc(A.nomePasso(x))}</button>`).join('')}</div>` : ''}
+          const scelti = passi.filter(x => st.suCosa.includes(x)).map(A.nomePasso);
+          h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'i passi dell\'incontro, o scrivi: uno per riga' : 'uno per riga'}</small></label>
+            ${passi.length ? `<button type="button" class="na-selettore" id="na-passi"><span>${scelti.length ? esc(scelti.join(' · ')) : 'Scegli i passi dell\'incontro'}</span><b>▾</b></button>` : ''}
             <textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`;
         }
       }
@@ -3316,16 +3330,19 @@ async function nuovoAppuntamento(opz = {}) {
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); disegna();
       };
-      velo.querySelectorAll('#na-su-cosa [data-passo]').forEach(b => { b.onclick = () => {
+      const selPassi = velo.querySelector('#na-passi');
+      if (selPassi) selPassi.onclick = async () => {
         leggiCampi();
-        const x = b.dataset.passo, nome = A.nomePasso(x);
-        const tolto = st.suCosa.includes(x);
-        st.suCosa = tolto ? st.suCosa.filter(y => y !== x) : [...st.suCosa, x];
-        // il passo toccato è anche una riga dei punti: si aggiunge, o si toglie se c'era
-        const righe = campi.punti.split(/\r?\n/).filter(r => r.trim() && r.trim() !== nome);
-        campi.punti = (tolto ? righe : [...righe, nome]).join('\n');
+        const passi = A.suCosaPer(st.categoria, st.tipo, st.modalita);
+        const nuovi = await scelteMultiple('Su cosa lavorate?', passi.map(x => ({ k: x, etichetta: A.nomePasso(x) })), st.suCosa);
+        if (!nuovi) return;
+        // ogni passo scelto è anche una riga dei punti: le righe dei passi tolti spariscono, quelle dei nuovi si aggiungono in fondo
+        const via = st.suCosa.filter(x => !nuovi.includes(x)).map(A.nomePasso), piu = nuovi.filter(x => !st.suCosa.includes(x)).map(A.nomePasso);
+        const righe = campi.punti.split(/\r?\n/).filter(r => r.trim() && !via.includes(r.trim()));
+        campi.punti = [...righe, ...piu.filter(n => !righe.some(r => r.trim() === n))].join('\n');
+        st.suCosa = passi.filter(x => nuovi.includes(x));
         disegna();
-      }; });
+      };
       velo.querySelectorAll('[data-libero]').forEach(b => { b.onclick = () => {
         leggiCampi();
         const x = liberi.find(y => y.id === b.dataset.libero), o = MB21Spazi.orario(x);
@@ -3406,7 +3423,7 @@ async function nuovoAppuntamento(opz = {}) {
       const riga = { contatto_id: v.contatto_id, user_id: opz.userId || visto().id, categoria: v.categoria, tipo_azione: v.tipo_azione,
         modalita: v.modalita, area: v.area, inizio, fine: new Date(Date.parse(inizio) + durata * 60000).toISOString(),
         completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null,
-        su_cosa: st.suCosa.length && A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).length ? A.fasiPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) : null,
+        su_cosa: st.suCosa.length ? A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) || null : null,
         // una telefonata scelta a mano entra in coda (nota 012): dal giorno scelto, finché non ha un esito; con l'ora sta anche in Agenda
         scelta_a_mano: v.tipo_azione === 'Contatto' && v.modalita === 'Telefonata', senza_ora: soloGiorno,
         // «Dove» (link o posto) e i punti da trattare (nota 026): solo se scritti
@@ -4308,6 +4325,24 @@ function foglioRinnovo() {
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
 // e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
 // Con `spunta` (testo) sotto il testo c'è una casella: la risposta «sì» diventa { spunta: true | false } (cantiere 33: «Togli anche biglietti e CEP»)
+// Foglio a scelta multipla (05/10 sera, per i passi dell'incontro): voci { k, etichetta }, `scelte` = le chiavi già accese; «Fatto» dà l'elenco
+// delle chiavi accese (nell'ordine delle voci), «Annulla» null. Le voci si toccano per accenderle e spegnerle (✓ davanti).
+function scelteMultiple(titolo, voci, scelte = []) {
+  return new Promise(risolvi => {
+    const accese = new Set(scelte);
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3><div class="altri-voci scelte-multiple">
+      ${voci.map(v => `<button type="button" data-k="${esc(v.k)}" class="${accese.has(v.k) ? 'scelto' : ''}"><span class="sm-segno">${ic('fatto')}</span>${esc(v.etichetta)}</button>`).join('')}</div>
+      <div class="due"><button class="link" id="sm-no">Annulla</button><button class="primario" id="sm-si">Fatto</button></div></div>`;
+    document.body.appendChild(velo);
+    const chiudi = v => { velo.remove(); risolvi(v); };
+    velo.onclick = e => { if (e.target === velo) chiudi(null); };
+    velo.querySelector('#sm-no').onclick = () => chiudi(null);
+    velo.querySelector('#sm-si').onclick = () => chiudi(voci.map(v => v.k).filter(k => accese.has(k)));
+    velo.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (accese.has(k)) accese.delete(k); else accese.add(k); b.classList.toggle('scelto', accese.has(k)); });
+  });
+}
 function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta = '', no = 'Annulla') {
   return new Promise(risolvi => {
     const velo = document.createElement('div');

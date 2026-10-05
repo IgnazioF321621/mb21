@@ -61,7 +61,14 @@
   const sottotipiPer = tipo => SOTTOTIPI[tipo] || [];
   // «Su cosa lavorate?» (cantiere 48): gli incontri con un Partner si fissano con i passi su cui si lavora, anche più d'uno: le fasi di quel tipo
   // di appuntamento (Avvio: Motivazione · ListaStart · OrdineStart · Lista nomi · RolePlay · Telefonate · Inaugurazione). Per gli altri, niente.
-  const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
+  // Dal 05/10 sera (Ignazio: «tutto, piuttosto che metterne solo tre e poi gli altri ricordarseli»): con un Partner escono TUTTI i passi di tutti i tipi
+  // di appuntamento (11), prima quelli del tipo scelto, poi gli altri nell'ordine dell'Avvio. Si scelgono da un selettore, non da pillole.
+  const PASSI_PARTNER = [...new Set(Object.values(FASI_APPUNTAMENTO).flat())];
+  const suCosaPer = (categoria, tipo, sottotipo) => {
+    if (categoria !== 'Partner' || tipo !== 'Appuntamento') return [];
+    const suoi = fasiPer(categoria, tipo, sottotipo);
+    return suoi.length ? [...suoi, ...PASSI_PARTNER.filter(x => !suoi.includes(x))] : [];
+  };
   // Il nome che si legge: Il perché (lo stesso passo di «Il mio avvio»), Lista Start, Ordine Start, Lista Nomi, Role Play; i nomi salvati non cambiano (il Report)
   // come li scrive Ignazio (30/09); «c/Downline» e «c/Upline» si leggono per intero dal 04/10 (nota Azioni 070): i nomi salvati restano, le statistiche non cambiano
   const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play',
@@ -435,6 +442,14 @@
   }
   // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
   const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
+  // L'esito dell'incontro è il primo passo fatto DEL TIPO scelto (Ignazio 05/10 sera: «Counseling non si chiude con Inaugurazione»); i passi
+  // degli altri tipi diventano solo righe di azione in più. Senza un passo del tipo: esito null (il bottone «Fatto» resta spento).
+  function esitoDaiPassi(a, categoria, fatti) {
+    const tutti = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), suoi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    const ordinati = passiFatti(tutti, fatti);
+    const esito = ordinati.find(x => suoi.includes(x)) || null;
+    return { esito, extra: esito ? ordinati.filter(x => x !== esito) : ordinati };
+  }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
   // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,
   // si chiede invece «Quando risentirlo?» con la data già a un anno, cambiabile a mano (7-8 mesi…)
@@ -710,7 +725,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, PASSI_PARTNER, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
