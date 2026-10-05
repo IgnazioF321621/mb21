@@ -1566,9 +1566,9 @@ function collegaPunti(el, ogg, tabella, ridisegna) {
 // ── Impegni condivisi (nota Pagine 027, Ignazio 05/10) ──
 // CHI ORGANIZZA: un appuntamento con un Partner che usa l'app si condivide con lui («Condividi con Laura», funzione `condividi_azione`); una serata
 // Team/LdS/OPEN la condivide solo l'Admin con tutto il Team o con una Linea (campi `condiviso_con` · `linea_codice` di `spazi`). «Vedono anche i
-// punti?» sì/no. Chi organizza vede i nomi e il conto delle risposte (`risposte_impegno`): «Ci sono 6 · Non ci sono 2 · Senza risposta 4».
+// punti?» sì/no. Chi organizza vede i nomi e il conto delle risposte (`risposte_impegno`): «Partecipano 6 · Non possono 2 · Senza risposta 4»: due liste con i nomi, solo per lui.
 // CHI RICEVE: l'impegno compare nella sua Agenda (impegni del giorno, Settimana, Timeline) con «da Ignazio», in sola lettura, con il link della
-// chiamata e, se condivisi, i punti; risponde «Ci sono / Non ci sono» (tabella `impegni_risposte`). All'apertura dell'app un pop-up
+// chiamata e, se condivisi, i punti; risponde «Partecipo / Non posso» (tabella `impegni_risposte`). All'apertura dell'app un pop-up
 // «Hai un nuovo appuntamento» per quelli non ancora visti. Niente avvisi push: l'avviso lo dà il suo calendario (funzione `calendario`).
 const ricevutiDelGiornoMB = g => (vediTutti() ? [] : MB21Agenda.ricevutiDelGiorno(AG.ricevuti, g));
 const giornoOraRicevuto = r => `${dataLunga(MB21Agenda.partiRoma(r.inizio).giorno)} · ${MB21Agenda.orario(r)}`;
@@ -1599,7 +1599,7 @@ const puntiSolaLetturaHtml = r => {
 };
 // le due risposte; nel pop-up anche «Decido dopo» accanto (Ignazio 05/10): toglie la riga dal pop-up senza salvare niente, l'impegno resta «nuovo»
 const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}${conDopo ? `<button type="button" ${attr}="dopo" class="dopo">Decido dopo</button>` : ''}</div>`;
-// Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Ci sono / Non ci sono». Aprirlo lo segna visto.
+// Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Partecipi? Partecipo / Non posso». Aprirlo lo segna visto.
 function foglioRicevuto(r) {
   const A = MB21Agenda;
   const velo = document.createElement('div');
@@ -1611,13 +1611,13 @@ function foglioRicevuto(r) {
     velo.innerHTML = `<div class="foglio alto ric-foglio">
       <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="ri-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <p>${esc(giornoOraRicevuto(r))}</p>
-      <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario. Dì se ci sei.</div>
+      <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario.</div>
       ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>` : ''}
       ${puntiSolaLetturaHtml(r)}
-      <div class="campo"><label>Ci sei?</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div></div>`;
+      <div class="campo"><label>Partecipi?</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div></div>`;
     velo.querySelector('#ri-x').onclick = chiudi;
     velo.querySelectorAll('[data-ri-risposta]').forEach(b => { b.onclick = async () => {
-      if (await rispondiImpegno(r, b.dataset.riRisposta)) { chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: ci sei' : 'Segnato: non ci sei'); }
+      if (await rispondiImpegno(r, b.dataset.riRisposta)) { chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: partecipi' : 'Segnato: non puoi'); }
     }; });
   };
   disegna();
@@ -1632,7 +1632,7 @@ async function controllaImpegniNuovi() {
   const nuovi = A.ricevutiNuovi(data, adesso.toISOString());
   if (nuovi.length) foglioImpegniNuovi(nuovi);
 }
-// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Ci sono / Non ci sono / Decido dopo»; «Decido dopo» lo lascia nuovo finché non si risponde.
+// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Partecipo / Non posso / Decido dopo»; «Decido dopo» lo lascia nuovo finché non si risponde.
 function foglioImpegniNuovi(nuovi) {
   const A = MB21Agenda;
   const velo = document.createElement('div');
@@ -1652,7 +1652,7 @@ function foglioImpegniNuovi(nuovi) {
         const risposta = b.dataset.rnRisposta;
         if (risposta !== 'dopo' && !(await rispondiImpegno(r, risposta))) return;
         nuovi = nuovi.filter(x => x !== r);
-        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: ci sei. Lo trovi in MB Plan' : 'Segnato: non ci sei');
+        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: partecipi. Lo trovi in MB Plan' : 'Segnato: non puoi');
         disegna();
       }; });
     });
@@ -1679,9 +1679,10 @@ async function mostraRisposte(el, origine, id) {
   const { data, error } = await dbq('risposte impegno', supa.rpc('risposte_impegno', { p_origine: origine, p_id: id }));
   if (error || !Array.isArray(data)) { dove.innerHTML = ''; return; }
   const n = A.nomiPerRisposta(data), c = A.contoRisposte(data);
-  if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRisposta(data[0].risposta))}</b>` : ''; return; }
-  const gruppo = (titolo, nomi) => (nomi.length ? `<div><b>${esc(titolo)} ${nomi.length}</b>: ${esc(nomi.join(', '))}</div>` : '');
-  dove.innerHTML = `<div class="cd-conto">${esc(c.testo)}</div>${gruppo('Ci sono', n.ci_sono)}${gruppo('Non ci sono', n.non_ci_sono)}${gruppo('Senza risposta', n.senza)}`;
+  if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRispostaDiLui(data[0].risposta))}</b>` : ''; return; }
+  // due liste con i nomi (Ignazio 05/10): chi partecipa e chi non può; sotto, piccolo, chi non ha risposto
+  const gruppo = (titolo, nomi, cl) => `<div class="${cl}"><b>${esc(titolo)} ${nomi.length}</b>${nomi.length ? ': ' + esc(nomi.join(', ')) : ''}</div>`;
+  dove.innerHTML = `${gruppo('Partecipano', n.ci_sono, 'cd-si')}${gruppo('Non possono', n.non_ci_sono, 'cd-no')}${gruppo('Senza risposta', n.senza, 'cd-senza')}`; void c;
 }
 function collegaCondivisioneAzione(el, e, ridisegna) {
   const blocco = el.querySelector(`[data-cd="${e.id}"]`);
