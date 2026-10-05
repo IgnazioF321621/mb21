@@ -1739,7 +1739,9 @@ function collegaCondivisioneSpazio(el, s, ridisegna) {
 async function caricaFrontali() {
   if (AG.frontali !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;
   const { data, error } = await dbq('frontali', supa.from('squadra').select('partner_id, nome').eq('sponsor_id', ST.utente.partner_id).order('nome'));
-  AG.frontali = error || !Array.isArray(data) ? [] : data;
+  // i nomi come nella Mappa, «Ignazio Fiorito» (il file Amway li ha «FIORITO, IGNAZIO», a volte in minuscolo; Ignazio 05/10)
+  const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
+  AG.frontali = error || !Array.isArray(data) ? [] : data.map(f => ({ ...f, nome: leggibile(f.nome) })).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
 }
 
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
