@@ -71,6 +71,8 @@
   .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--sfondo); color: var(--testo-soft); }
   .badge.scaduto { background: var(--pericolo-tinta); color: var(--rosso); }
   .badge.new { background: var(--ok-tinta); color: var(--ok); }
+  .badge.arch { background: var(--cat-archiviato-tinta); color: var(--cat-archiviato); }   /* nota Pagine 012: la card archiviata in fondo a una ricerca */
+  .f-arch { margin-top: 6px; font-size: 14px; color: var(--testo-soft); } .f-arch div { margin-top: 2px; } .f-arch button.link { padding: 0 4px; min-height: 0; font-size: 14px; }
   .coach { margin-top: 12px; padding: 10px 12px; border-radius: var(--raggio-bottone); background: var(--cat-partner-tinta); color: var(--cat-partner);
     font-size: 15px; font-weight: 600; line-height: 1.3; }
   .coach small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--coach); margin-bottom: 2px; }
@@ -3149,7 +3151,7 @@ async function leggiContattiMiei() {
   const righe = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('contatti per appuntamento', supa.from('contatti').select('id, nome, categoria')
-      .eq('user_id', visto().id).neq('categoria', 'Archiviato').order('nome').range(da, da + 999));
+      .eq('user_id', visto().id).order('nome').range(da, da + 999));   // anche gli archiviati (05/10): si possono servire
     if (error) throw error;
     righe.push(...data);
     if (data.length < 1000) break;

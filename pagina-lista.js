@@ -266,7 +266,8 @@ function cardNome(r) {
   // La prima riga è tutta del nome (Ignazio 19/09: con «nuovo» e le targhette accanto «si vede solo il nome e non si capisce»):
   // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
   // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
-  const segni = nuovoBadge(r) + targheCard(r);
+  // «archiviato» (nota 012): la card si riconosce anche quando esce in fondo a una ricerca dalla Lista; dal menu «…» c'è «Ripristina»
+  const segni = (r.categoria === 'Archiviato' ? '<span class="badge arch">archiviato</span>' : '') + nuovoBadge(r) + targheCard(r);
   return `
     <div class="cn ${classeCat(r.categoria)} ${LS.esporta && sceltoEsporta(r.id) ? 'spuntata' : ''}" data-id="${esc(r.id)}">
       ${LS.esporta ? `<span class="cn-spunta" aria-hidden="true">${ic('fatto')}</span>` : `<span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>`}
@@ -317,7 +318,7 @@ async function menuCard(id) {
   if (!r) return;
   // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
   const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
-  const voci = [...apri, ...(soloGuardo() ? [] : [...(r.categoria === 'Archiviato' ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }]), ...comandiContatto(r)])];
+  const voci = [...apri, ...(soloGuardo() ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
   if (v) v.fai();
 }
@@ -402,7 +403,7 @@ function sezioniPer(c) {
   const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'],
     ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []),
     // «Sharing» (cantiere 40): il percorso delle tracce è per candidati e partner (come in Glide), non per Ex e Archiviati
-    ...(MB21Sharing.perChiDi(c) && c.categoria !== 'Archiviato' ? [['sharing', 'Sharing']] : []), ['segni', 'Segni vitali']];
+    ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []), ['segni', 'Segni vitali']];
   // La linguetta «Onboarding» dei Partner non c'è più (cantiere 31, Ignazio 18/09: «recuperiamo spazio»): i passi si aprono dalla riga «🚀 Avvio» in testata
   return base;
 }
@@ -458,7 +459,7 @@ function disegnaScheda() {
             <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
-          ${c.categoria === 'Archiviato' ? '' : '<button class="modifica" id="modifica">Modifica</button>'}
+          <button class="modifica" id="modifica">Modifica</button>
         </div>
         ${contattaHtml(c.telefono)}
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
@@ -646,7 +647,7 @@ async function riquadroCoppia(c) {
   try { SV = await segniDellaScheda(c); } catch (e) { return; }
   const box = document.getElementById('coppia');
   if (!box || LS.contatto !== c || LS.sezione !== 'dati') return;
-  const a = SV.ana, archiviato = c.categoria === 'Archiviato';
+  const a = SV.ana;
   const chi = SV.compagno
     ? `<button class="sv-link" id="cp-apri">${esc(SV.compagno.nome)} ›</button>`
     : a.compagno_nome || a.compagno_telefono
@@ -654,7 +655,7 @@ async function riquadroCoppia(c) {
       : '<span class="sotto" style="margin:0">—</span>';
   const presente = SV.compagno || a.compagno_nome || a.compagno_telefono;
   box.innerHTML = `<div class="riquadro sv-comp"><span class="sotto" style="margin:0">Coppia con</span>${chi}
-    ${archiviato ? '' : `<button class="sv-piu" id="cp-cambia">${presente ? 'Cambia' : 'Collega'}</button>`}</div>`;
+    <button class="sv-piu" id="cp-cambia">${presente ? 'Cambia' : 'Collega'}</button></div>`;
 
   const apri = document.getElementById('cp-apri');
   if (apri) apri.onclick = () => apriContattoDa(SV.compagno.id, LS.ritorno);
@@ -698,7 +699,8 @@ async function sezioneAzioni() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
   // Niente riquadro FASE (Ignazio 24/09: «residuo di Glide»): dove si è con la persona lo dice la prima card, l'ultima azione con il suo esito.
-  const piuHtml = c.categoria === 'Archiviato' ? '' : '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
+  // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
+  const piuHtml = '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
   box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';
   if (!LS.azioni) {
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
@@ -780,7 +782,7 @@ const TIPI_COACH = ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento', 
 async function sezioneCoach() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
-  const piu = c.categoria === 'Archiviato' ? '' : '<button class="piccolo" id="coach-piu">Coach+</button>';
+  const piu = '<button class="piccolo" id="coach-piu">Coach+</button>';
   box.innerHTML = piu + '<div class="vuoto">Carico le note…</div>';
   if (!LS.note) {
     const { data, error } = await dbq('lettura note', supa.from('coach_note')
@@ -838,7 +840,7 @@ async function notaCoach(n) {
 function sezioneOnboarding() {
   const c = LS.contatto;
   const box = document.getElementById('sezione');
-  const fermo = c.categoria === 'Archiviato';
+  const fermo = false;   // fino al 05/10 un archiviato aveva l'Avvio bloccato; ora si lavora come gli altri
   const disegna = () => {
     const { fatti, totale } = MB21Lista.contatoreOnboarding(c);
     const prossimo = MB21Lista.prossimoPasso(c), a = LS.avvio && LS.avvio.id === c.id ? LS.avvio : null;
@@ -1041,8 +1043,8 @@ async function sezioneSegni() {
     return;
   }
   if (LS.contatto !== c || LS.sezione !== 'segni') return;
-  const admin = eAdmin(), archiviato = c.categoria === 'Archiviato';
-  const dis = admin && !archiviato ? '' : 'disabled';
+  const admin = eAdmin();
+  const dis = admin ? '' : 'disabled';
   const primo = n => String(n || '').trim().split(/\s+/)[0] || '';
   const breve = d => MB21Lista.etichettaEvento(d);
   const nomeDi = id => (id === c.id ? c.nome : SV.compagno && SV.compagno.id === id ? SV.compagno.nome : '');
@@ -1221,7 +1223,7 @@ function apriModulo(c) {
   const tel = MB21Lista.separaTelefono(c && c.telefono);
   // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner scelto nel Partner Select)
   const proprietario = c ? c.user_id : visto().id;
-  const miei = LS.righe.filter(r => r.user_id === proprietario && r.categoria !== 'Archiviato' && (!c || r.id !== c.id));
+  const miei = LS.righe.filter(r => r.user_id === proprietario && (!c || r.id !== c.id));
   const opz = (lista, valore, vuoto) => (vuoto ? `<option value="">${vuoto}</option>` : '') +
     lista.map(o => `<option ${o === valore ? 'selected' : ''}>${esc(o)}</option>`).join('');
   // valori storici fuori elenco (es. fascia «36-45») restano sceglibili in modifica
@@ -1250,7 +1252,7 @@ function apriModulo(c) {
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"></div>
+    <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"><div id="f-arch" class="f-arch" hidden></div></div>
     <div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
@@ -1284,6 +1286,18 @@ function apriModulo(c) {
   const controlla = () => {
     $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
     velo.querySelectorAll('[data-conta]').forEach(d => { const el = $(d.dataset.conta); d.textContent = `${el.value.length}/${el.maxLength}`; });
+    avvisaArchiviati();
+  };
+  // Nuovo nome che c'è già tra gli archiviati (nota 012, Ignazio 05/10): mentre si scrive, sotto il nome «C'è già Carla Verdi tra gli archiviati»
+  // con «Ripristina» a un tocco (chiude il modulo e rimette la scheda com'era: stessa funzione del menu «…»). In modifica non serve.
+  const avvisaArchiviati = () => {
+    const box = $('f-arch');
+    if (!box || !nuovo) return;
+    const uguali = MB21Lista.archiviatiUguali(LS.righe, { nome: $('f-nome').value, telefono: MB21Lista.componiTelefono($('f-prefisso').value, $('f-tel').value), utenteId: proprietario });
+    box.hidden = !uguali.length;
+    if (!uguali.length) { box.innerHTML = ''; return; }
+    box.innerHTML = uguali.slice(0, 3).map(d => `<div>C'è già <b>${esc(d.nome)}</b>${d.telefono ? ' · ' + esc(d.telefono) : ''} tra gli archiviati. <button type="button" class="link" data-ripristina="${esc(d.id)}">Ripristina</button></div>`).join('');
+    box.querySelectorAll('[data-ripristina]').forEach(b => { b.onclick = () => { const d = uguali.find(x => x.id === b.dataset.ripristina); chiudi(); ripristina(d); }; });
   };
   velo.querySelectorAll('input, select').forEach(el => { el.oninput = controlla; el.onchange = controlla; });
   controlla();
