@@ -1203,6 +1203,33 @@
   .ag-cosa-nuova .ag-cosa-riga { display: flex; align-items: center; gap: 8px; }
   .ag-cosa-nuova .lg-scelte .lg { width: auto; height: auto; }
   .ag-cosa-nuova .ag-cosa-riga input { border-bottom: 1.5px solid var(--superficie-2); }
+  /* Punti da trattare e link della chiamata (nota Pagine 026, Ignazio 05/10): lo stesso riquadro nell'appuntamento e nella serata Team/LdS/OPEN.
+     Righe spuntabili come le cose del «Da fare» (stesso tondo), «→ Da fare» sul punto non trattato, il link come bottone pieno «Entra nella chiamata». */
+  .pt { margin: 0 0 10px; padding: 10px 12px; background: var(--sfondo); border-radius: var(--raggio-riga); }
+  .pt.chiuso { padding: 6px 8px; background: none; }
+  .pt-link { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco); padding: 10px 14px; margin-bottom: 8px; border-radius: var(--raggio-bottone); background: var(--accento); color: var(--accento-su); font-weight: 700; font-size: 15px; text-decoration: none; }
+  .pt-link svg.ic { width: 20px; height: 20px; }
+  .pt-testa { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .pt-testa b { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-tenue); }
+  .pt-testa small { font-size: 12px; color: var(--grigio); }
+  .pt-riga { display: flex; align-items: flex-start; gap: 10px; }
+  .pt-riga button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; }
+  .pt-riga .spunta { flex: none; width: 24px; height: 24px; margin: 7px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+  .pt-riga .spunta svg.ic { width: 24px; height: 24px; }
+  .pt-riga.fatta .spunta { background: #4fb3a9; border-color: #4fb3a9; }
+  .pt-riga .pt-testo { flex: 1; min-width: 0; padding: 8px 0; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+  .pt-riga.fatta .pt-testo { color: var(--grigio); text-decoration: line-through; }
+  .pt-riga .pt-dafare { flex: none; font-size: 12px; font-weight: 700; color: var(--accento); padding: 9px 6px; white-space: nowrap; }
+  .pt-riga .pt-togli { flex: none; padding: 7px 0; color: var(--testo-tenue); }
+  .pt-riga .pt-togli svg.ic { width: 18px; height: 18px; }
+  .pt-nuovo { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .pt-nuovo input { flex: 1; min-width: 0; border: 0; border-bottom: 1.5px solid var(--superficie-2); background: none; padding: 8px 0; font-family: inherit; font-size: 15px; color: var(--testo); }
+  .pt-nuovo button { border: 0; background: var(--superficie); border-radius: var(--raggio-pill); min-height: 36px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo); display: inline-flex; align-items: center; }
+  .pt-comandi { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+  .pt-comandi button.link { padding: 6px 0; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .pt-comandi .pt-link-campo { flex: 1 1 100%; }
+  /* nel modulo «nuovo appuntamento»: un punto per riga */
+  #na-punti { min-height: 84px; }
   .ag-cronologia { position: sticky; bottom: 92px; display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: var(--superficie); box-shadow: 0 -2px 14px rgba(16,21,31,.12); border-radius: 18px 18px 0 0; padding: 12px 16px; margin-top: 12px; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--testo); }
   .ag-cronologia span { flex: 1; text-align: left; font-size: 13px; font-weight: 500; color: var(--testo-soft); }
   .ag-cronologia svg.ic { width: 20px; height: 20px; }
@@ -3146,10 +3173,11 @@ async function nuovoAppuntamento(opz = {}) {
     const chiudi = valore => { velo.remove(); risolvi(valore); };
     velo.querySelector('#na-x').onclick = () => chiudi(null);
     velo.querySelector('#na-no').onclick = () => chiudi(null);
-    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '' };
+    // `link` e `punti` (nota Pagine 026, 05/10): il link della chiamata online e i punti da trattare, uno per riga; il riquadro dei punti si apre con un tocco
+    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '', link: '', punti: '' };
     const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
       `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
-    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
+    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note', 'link', 'punti']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
     const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id));
@@ -3200,6 +3228,13 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
+        // i punti da trattare e il link della chiamata (nota 026): non per la telefonata in coda; i punti si vedono spuntabili nell'appuntamento
+        if (!soloGiorno) {
+          h += `<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="na-link" type="url" inputmode="url" maxlength="${A.MAX_LINK}" placeholder="Incolla il link di Zoom, Meet, Teams…" value="${esc(campi.link)}"></div>`;
+          h += st.mostraPunti || campi.punti.trim()
+            ? `<div class="campo"><label>Punti da trattare <small>uno per riga</small></label><textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`
+            : `<div class="campo"><button type="button" class="link" id="na-punti-apri">${ic('piu')} Punti da trattare</button></div>`;
+        }
       }
       velo.querySelector('#na-corpo').innerHTML = h + '</div>';
       // la testa segue il contatto e la categoria scelti nel foglio (visto da Ignazio 19/09: restava «Con chi?» con il nome già scritto)
@@ -3207,6 +3242,8 @@ async function nuovoAppuntamento(opz = {}) {
       testa.className = 'mc-testa ' + classeCat(st.categoria);
       testa.querySelector('.ts-pastiglia').innerHTML = st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda');
       testa.querySelector('b').textContent = st.contatto ? st.contatto.nome : 'Con chi?';
+      const pa = velo.querySelector('#na-punti-apri');
+      if (pa) pa.onclick = () => { leggiCampi(); st.mostraPunti = true; disegna(); const t = velo.querySelector('#na-punti'); if (t) t.focus(); };
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
@@ -3283,7 +3320,9 @@ async function nuovoAppuntamento(opz = {}) {
         completata: false, portato_da: st.portato && st.portato.id !== v.contatto_id ? st.portato.id : null, note: v.note || null,
         su_cosa: st.suCosa.length && A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).length ? A.fasiPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) : null,
         // una telefonata scelta a mano entra in coda (nota 012): dal giorno scelto, finché non ha un esito; con l'ora sta anche in Agenda
-        scelta_a_mano: v.tipo_azione === 'Contatto' && v.modalita === 'Telefonata', senza_ora: soloGiorno };
+        scelta_a_mano: v.tipo_azione === 'Contatto' && v.modalita === 'Telefonata', senza_ora: soloGiorno,
+        // il link della chiamata e i punti da trattare (nota 026): solo se scritti
+        link: soloGiorno ? null : A.linkChiamata(campi.link), punti: soloGiorno ? null : A.puntiDaRighe(campi.punti) };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
