@@ -141,6 +141,18 @@ prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Li
   assert.match(v.innerHTML, /data-v="persona"/); assert.doesNotMatch(v.innerHTML, /data-v="team"/);
 });
 
+prova('Cambiando il giorno (o l\'ora) il modulo NON si ridisegna (05/10 sera, iPad: il calendario di sistema si chiudeva appena toccato l\'anno); si rifà solo l\'avviso delle sovrapposizioni', async () => {
+  pulisci();
+  const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, tipo: 'Appuntamento', modalita: 'Counseling' });
+  const note = v.querySelector('#na-note'); note.value = 'da ricordare'; note._segno = 'stesso';
+  const giorno = v.querySelector('#na-giorno'); giorno.value = '2027-03-15';
+  assert.ok(v.querySelector('#na-avviso'), 'c\'è il riquadro dell\'avviso');
+  await giorno.onchange();
+  assert.equal(v.querySelector('#na-note')._segno, 'stesso');                 // lo stesso elemento di prima: niente ridisegno
+  assert.equal(v.querySelector('#na-giorno').value, '2027-03-15');
+  assert.equal(v.querySelector('#na-note').value, 'da ricordare');
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
