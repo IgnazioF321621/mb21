@@ -172,6 +172,14 @@
   /* il pop-up dell'avviso toccato (avvisi.js mostraAvvisoRicevuto): in alto, 10 secondi (o un tocco), testo a capo come nell'avviso */
   .avviso-ricevuto { position: fixed; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 12px); max-width: 488px; margin: 0 auto; z-index: 40;
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  /* «Segnala» (nota Pagine 009): il piccolo insetto, sempre nello stesso angolo di ogni schermata e foglio (sopra i veli, sotto il toast) */
+  .segnala-bottone { position: fixed; top: calc(env(safe-area-inset-top) + 8px); right: 8px; z-index: 25; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea);
+    background: var(--superficie); color: var(--testo-soft); display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 8px rgba(16,21,31,.14); opacity: .88; }
+  .segnala-bottone[hidden] { display: none; }
+  .segnala-bottone svg.ic { width: 19px; height: 19px; margin: 0; }
+  .sg-motivi { margin: 10px 0 12px; } .sg-motivi button { flex: 1; }
+  .sg-testo { width: 100%; box-sizing: border-box; min-height: 92px; }
+  .sg-dove { font-size: 13px; color: var(--testo-tenue); margin: 8px 0 0; }
   .avviso-ricevuto b { display: block; margin-bottom: 4px; }
   .avviso-ricevuto span { display: block; white-space: pre-line; }
   .toast button { background: none; border: 0; color: var(--accento-su); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; font-weight: 700; padding: 4px 0; min-height: var(--tocco); }
@@ -2203,6 +2211,7 @@
   <button data-tab="training" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg>Training</button>   <!-- cantiere 45: per tutti dal 24/09 sera (TRAINING_VISIBILE) -->
   <button data-tab="admin" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-admin"/></svg>Admin</button>
 </nav>
+<button id="segnala" class="segnala-bottone" hidden aria-label="Segnala" title="Segnala"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-segnala"/></svg></button>   <!-- «Segnala» (nota Pagine 009): si accende in mostraTab -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><!-- versione FISSA (nota 075, 04/10/2026): per cambiarla si cambia il numero qui E il nome della cache in sw.js -->
 <script src="icone.js?v=202610052359"></script>   <!-- le icone a tratto (cantiere 34): mette nella pagina l'elenco dei disegni -->
@@ -2212,6 +2221,7 @@
 <script src="rubrica.js?v=202610052359"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
 <script src="dashboard.js?v=202610052359"></script>
 <script src="agenda.js?v=202610052359"></script>
+<script src="segnala.js?v=202610052359"></script>   <!-- «Segnala» (nota Pagine 009): le regole pure del foglio delle segnalazioni -->
 <script src="spazi.js?v=202610052359"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
 <script src="coach.js?v=202610052359"></script>   <!-- il coach che parla (cantiere 42): monta e recita la chat dopo un esito; i messaggi sono nell'archivio privato -->
 <script src="training.js?v=202610052359"></script>   <!-- la pagina Training (cantiere 42): le carte, la ricerca, «Per te», gli allenamenti; i testi sono nell'archivio privato -->
@@ -2710,6 +2720,8 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
 function mostraTab() {
   const nav = document.getElementById('tab');
   nav.hidden = false;
+  const sg = document.getElementById('segnala');   // «Segnala» (nota 009): visibile da quando si è dentro, su ogni schermata e foglio
+  if (sg) { sg.hidden = false; sg.onclick = foglioSegnala; }
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
   if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
@@ -4334,6 +4346,48 @@ function collegaReport() {
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
+}
+
+// ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Cosa non va, o cosa proponi?», tre scelte e un testo.
+// L'app aggiunge da sola dove era il partner (`doveSono`: il tab, la sezione, i fogli aperti dal primo all'ultimo, il contatto), la versione e il telefono.
+// Si salva in `segnalazioni` (segnala.js per le regole pure); al partner «Grazie, l'abbiamo ricevuta». Mai la parola «errore».
+function doveSono() {
+  const fogli = [...document.querySelectorAll('.velo .foglio')].filter(f => !f.closest('#sg-velo'))
+    .map(f => { const t = f.querySelector('.mc-testa b, h3, h2, .pt-testa b'); return t ? t.textContent : ''; });
+  const scheda = typeof LS !== 'undefined' && LS.contatto;
+  const sezione = scheda ? 'Scheda contatto · ' + (LS.sezione || '') : ST.tab === 'admin' && typeof AD !== 'undefined' ? AD.sezione : ST.tab === 'report' && typeof RP !== 'undefined' ? RP.vista : '';
+  return MB21Segnala.doveDa({ pagina: ST.tab, sezione, fogli, contatto: scheda ? LS.contatto.id : null, vista: ST.tab === 'agenda' && typeof AG !== 'undefined' ? AG.vista : null });
+}
+function foglioSegnala() {
+  if (document.getElementById('sg-velo') || !ST.utente) return;
+  const S = MB21Segnala, dove = doveSono();
+  const velo = document.createElement('div');
+  velo.className = 'velo'; velo.id = 'sg-velo';
+  velo.innerHTML = `<div class="foglio"><h3>Cosa non va, o cosa proponi?</h3>
+    <div class="ag-scelte sg-motivi">${S.MOTIVI.map(([k, n]) => `<button type="button" data-motivo="${k}">${esc(n)}</button>`).join('')}</div>
+    <textarea id="sg-testo" class="sg-testo" maxlength="${S.MAX_TESTO}" placeholder="Scrivi qui, anche due parole"></textarea>
+    <div class="sg-dove">Dove sei: ${esc(S.descrizioneDove(dove) || 'nell\'app')} · versione ${esc(APP_VERSION)}</div>
+    <div class="due"><button class="link" id="sg-no">Annulla</button><button class="primario" id="sg-si" disabled>Invia</button></div></div>`;
+  document.body.appendChild(velo);
+  let motivo = null;
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#sg-no').onclick = chiudi;
+  velo.querySelectorAll('[data-motivo]').forEach(b => b.onclick = () => {
+    motivo = b.dataset.motivo;
+    velo.querySelectorAll('[data-motivo]').forEach(x => x.classList.toggle('scelto', x === b));
+    velo.querySelector('#sg-si').disabled = false;
+  });
+  velo.querySelector('#sg-si').onclick = async () => {
+    const standalone = !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+    const riga = S.riga({ userId: ST.utente.id, motivo, testo: velo.querySelector('#sg-testo').value, dove, versione: APP_VERSION, telefono: S.telefonoDa(navigator.userAgent, standalone) });
+    if (!riga) return;
+    velo.querySelector('#sg-si').disabled = true;
+    const { error } = await dbq('segnalazione', supa.from('segnalazioni').insert(riga));
+    if (error) { velo.querySelector('#sg-si').disabled = false; return mostraToast('Non inviata: controlla la connessione e riprova.'); }
+    chiudi();
+    mostraToast('Grazie, l\'abbiamo ricevuta');
+  };
 }
 
 // ── Admin ── la pagina Admin è in admin.js; qui restano i fogli usati anche da Dashboard e Lista Nomi

@@ -120,6 +120,8 @@
     'stella': '<path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',   // le stelle dei test
     'fiamma': '<path d="M12 21a6 6 0 0 0 6-6c0-2.3-1.1-4.2-2.2-5.4-.6 1.9-1.7 2.9-2.8 3.2.5-3.2-.7-6.4-3.6-8.8.2 3.2-1.6 5.3-2.9 6.9A7 7 0 0 0 6 15a6 6 0 0 0 6 6z"/>',   // i giorni di fila
     'medaglia': '<circle cx="12" cy="9" r="5.6"/><path d="M8.5 13.4 7 21l5-2.7 5 2.7-1.5-7.6"/>',   // le medaglie dei percorsi, dei livelli e dei giorni di fila (25/09)
+    // Aggiunta a mano per «Segnala» (nota Pagine 009, 05/10): il piccolo insetto, come in Claude
+    'segnala': '<path d="M12 8.6a4.4 4.4 0 0 1 4.4 4.4v2.6a4.4 4.4 0 0 1-8.8 0V13A4.4 4.4 0 0 1 12 8.6z"/><path d="M12 8.6v11.4M9.3 8.8a2.7 2.7 0 0 1 5.4 0"/><path d="m8.8 6.4 1.2 1.6M15.2 6.4 14 8M4.6 11.2l3.1.9M19.4 11.2l-3.1.9M4.6 17.6l3.1-1.3M19.4 17.6l-3.1-1.3M7.6 13.6l-3 .3M16.4 13.6l3 .3"/>',
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto
