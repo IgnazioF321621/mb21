@@ -166,7 +166,7 @@ function codaDelGiorno() {
 // Chi decide cosa si vede in che giorno è MB21Agenda.coseDelGiorno: una cosa non fatta ieri si vede oggi con «da <giorno>».
 // Una riga: la spunta tonda, il testo e sotto la pastiglia del legame con, se ci sono, l'ora e «da GG/MM».
 function rigaCosaHtml(c, attr, riportata) {
-  const sotto = [oraDurata(c), riportata || ''].filter(Boolean).join(' · ');
+  const sotto = [oraDurata(c), riportata || '', c.ripeti ? '↻ ' + ((MB21Agenda.RIPETIZIONI.find(x => x[0] === c.ripeti) || [])[1] || '').toLowerCase() : ''].filter(Boolean).join(' · ');
   return `<div class="cosa${c.fatto_il ? ' fatta' : ''}" ${attr}="${esc(c.id)}">
       <button class="spunta" aria-label="${c.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${c.fatto_il ? ic('fatto') : ''}</button>
       <button class="testo"><span>${esc(c.testo)}</span><small class="cosa-sotto">${legamePastiglia(c)}${sotto ? `<em>${esc(sotto)}</em>` : ''}</small></button>
@@ -317,16 +317,35 @@ async function spuntaCosa(c, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const prima = { fatto_il: c.fatto_il, giorno: c.giorno };
   const dopo = c.fatto_il ? { fatto_il: null } : { fatto_il: new Date().toISOString(), giorno: inizioScalaMB(c.scala || 'giorno', opz.giorno || AG.giorno) };
+  const prossima = dopo.fatto_il ? MB21Agenda.prossimaRipetizione(c, MB21Coda.oggiRoma()) : null;   // una cosa che si ripete (05/10)
   const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update(dopo).eq('id', c.id));
   if (error) return;
   Object.assign(c, dopo);
+  const nuova = prossima ? await creaProssima(c, prossima) : null;
   ridisegna();
-  if (dopo.fatto_il) mostraToast('Fatta ✓', async () => {
+  if (dopo.fatto_il) mostraToast(nuova ? `Fatta ✓ · tornerà ${dataLunga(nuova.giorno)}` : 'Fatta ✓', async () => {
     const r = await dbq('cosa da fare', supa.from('cose_da_fare').update(prima).eq('id', c.id));
     if (r.error) return;
     Object.assign(c, prima);
+    if (nuova && nuova.id) {   // l'Annulla toglie anche la copia appena nata
+      await dbq('ripetizione', supa.from('cose_da_fare').delete().eq('id', nuova.id));
+      AG.cose = AG.cose.filter(x => x.id !== nuova.id);
+    }
     ridisegna();
   });
+}
+// La copia per la prossima volta: stesso testo, legame, ora e ripetizione, aperta, nel giorno calcolato. Se c'è già una uguale aperta in quel
+// giorno (spunta, toglie la spunta, spunta di nuovo) non se ne fa un'altra. Rende la riga nuova ({ giorno } anche senza id se c'era già).
+async function creaProssima(c, p) {
+  const ce = await dbq('ripetizione già c\'è', supa.from('cose_da_fare').select('id').eq('user_id', c.user_id).eq('testo', c.testo).eq('giorno', p.giorno).eq('scala', p.scala).is('fatto_il', null).limit(1));
+  if (ce.error) return null;
+  if (ce.data && ce.data.length) return { giorno: p.giorno };
+  const riga = { user_id: c.user_id, testo: c.testo, giorno: p.giorno, scala: p.scala, ordine: c.ordine || 0, contatto_id: c.contatto_id || null, legato_a: c.legato_a || null,
+    ora: c.ora || null, durata: c.durata || null, ripeti: c.ripeti };
+  const { data, error } = await dbq('ripetizione', supa.from('cose_da_fare').insert(riga).select('*, contatti(nome, categoria)').single());
+  if (error || !data) return null;
+  if (typeof AG !== 'undefined' && Array.isArray(AG.cose)) AG.cose.push(data);
+  return { ...data, giorno: p.giorno };
 }
 
 // ── «Per chi è» (Ignazio 05/10/2026): ogni cosa da fare di MB Plan è legata a una persona della lista o al Team, al LdS, a Network 21,
@@ -393,6 +412,8 @@ function foglioCosa(c, oggi, opz = {}) {
   ].filter(([, , d]) => !(d.scala === scalaC && d.giorno === (rip ? (scalaC === 'giorno' ? oggi : inizioScalaMB(scalaC, oggi)) : c.giorno)))
     .filter(([k]) => !inProgramma || k !== 'mese' || scalaC === 'mese' || scalaC === 'settimana');
   let lg = A.legameDi(c); if (lg && lg.tipo === 'persona') lg = { ...lg, contatto_id: c.contatto_id };   // il legame che si sta scegliendo; si salva con «Salva»
+  const ripetizioni = c.giorno ? A.ripetizioniPer(scalaC) : [];   // solo per le cose del Giorno, della Settimana e del Mese
+  let ripetiScelta = c.ripeti || '';
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><h3>Cosa da fare${esc(aNome())}</h3>
@@ -409,6 +430,7 @@ function foglioCosa(c, oggi, opz = {}) {
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(rip ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
+    ${ripetizioni.length && !c.fatto_il ? `<div class="campo"><label>↻ Si ripete <small>quando la spunti, ricompare da sola</small></label><div class="ag-scelte" id="fc-ripeti">${[['', 'Mai'], ...ripetizioni].map(([k, t]) => `<button type="button" data-ripeti="${k}" class="${(ripetiScelta || '') === k ? 'scelto' : ''}">${t}</button>`).join('')}</div></div>` : ''}
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} ${inProgramma ? 'Sposta a' : 'Metti in programma'} <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
     <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
@@ -452,6 +474,7 @@ function foglioCosa(c, oggi, opz = {}) {
   };
   let durata = c.durata || 30;
   collegaPilloleDurata(velo, 'fc-durate', () => { const o = velo.querySelector('#fc-ora'); return o && o.value; }, d => { durata = d; });
+  velo.querySelectorAll('#fc-ripeti [data-ripeti]').forEach(b => { b.onclick = () => { ripetiScelta = b.dataset.ripeti; velo.querySelectorAll('#fc-ripeti [data-ripeti]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
   const apriC = velo.querySelector('#fc-apri-contatto');
   if (apriC) apriC.onclick = () => { chiudi(); apriContattoDa(c.contatto_id); };
   const togli = velo.querySelector('#fc-togli-ora');
@@ -461,6 +484,7 @@ function foglioCosa(c, oggi, opz = {}) {
     if (!testo) return mostraToast('Scrivi cosa c\'è da fare');
     const campoOra = velo.querySelector('#fc-ora'), campoGiorno = velo.querySelector('#fc-giorno');
     const dopo = { testo };
+    if (ripetizioni.length && !c.fatto_il && ripetiScelta !== (c.ripeti || '')) dopo.ripeti = ripetiScelta || null;
     if (!opz.dallaScheda) {
       const campi = A.campiLegame(lg);
       if (!campi) return mostraToast('Scegli per chi è: una persona, Team, LdS, Network 21 o Amway');

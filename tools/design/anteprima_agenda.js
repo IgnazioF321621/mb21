@@ -31,7 +31,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -78,11 +78,11 @@ const fogli = [];
 const documento = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, body: { appendChild() {} },
   createElement: () => { const v = new Nodo(); fogli.push(v); return v; } };
 // un finto database: si ricorda le scritture (insert · update · delete) e risponde «fatto»
-const scritture = [], avvisi = [], scelta = { persona: null };   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
+const scritture = [], avvisi = [], scelta = { persona: null, esiste: false };   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
 const tabella = nome => new Proxy({}, { get: (t, op) => (...args) => { if (['insert', 'update', 'delete', 'upsert'].includes(op)) scritture.push({ tabella: nome, op, args }); return fine; } });
 const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : fine), apply: () => fine });
 const stub = {
-  supa: { from: tabella, rpc: () => fine }, dbq: async () => ({ data: [{ id: 'nuovo-1' }], error: null }),
+  supa: { from: tabella, rpc: () => fine }, dbq: async nome => (nome === 'ripetizione già c\'è' ? { data: scelta.esiste ? [{ id: 'gia' }] : [], error: null } : { data: [{ id: 'nuovo-1' }], error: null }),
   MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
   ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI },   // il motore vero (contoGiorno), con l'oggi fermo
@@ -100,7 +100,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -113,7 +113,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCosa, collegaCose, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
