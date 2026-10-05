@@ -187,6 +187,30 @@
   function testoCosa(s, max = MAX_COSA) { const t = pulisciTesto(s).slice(0, max); return t || null; }
   function testoTroppoLungo(s, max = MAX_COSA) { return pulisciTesto(s).length > max; }
 
+  // ── Punti da trattare e link della chiamata (nota Pagine 026, Ignazio 05/10/2026) ──
+  // Un appuntamento (tabella `azioni`) o una serata Team/LdS/OPEN (`spazi`) ha `punti`: righe spuntabili [{ t, fatto }], e `link`: l'indirizzo
+  // della chiamata online. Qui solo le regole; il disegno è in pagina-agenda.js (puntiHtml). Un punto non trattato può passare al «Da fare».
+  const MAX_PUNTO = 200, MAX_PUNTI = 30, MAX_LINK = 500;
+  const puntiDi = x => (Array.isArray(x && x.punti) ? x.punti : []).filter(r => r && typeof r.t === 'string' && r.t.trim()).map(r => ({ t: r.t, fatto: !!r.fatto }));
+  function aggiungiPunto(punti, testo) { const t = testoCosa(testo, MAX_PUNTO); if (!t || punti.length >= MAX_PUNTI) return null; return [...punti, { t, fatto: false }]; }
+  // dal modulo «nuovo appuntamento»: una riga per punto, senza quelle vuote; null se non c'è niente da salvare
+  function puntiDaRighe(testo) { const p = String(testo || '').split(/\r?\n/).reduce((acc, r) => aggiungiPunto(acc, r) || acc, []); return p.length ? p : null; }
+  const spuntaPunto = (punti, i) => punti.map((r, j) => (j === i ? { ...r, fatto: !r.fatto } : r));
+  const togliPunto = (punti, i) => punti.filter((r, j) => j !== i);
+  // il conto scritto a parole, come «Messi 3 su 3» (stella cometa)
+  function contoPunti(punti) { const fatti = punti.filter(r => r.fatto).length; return punti.length ? `Trattati ${fatti} su ${punti.length}` : ''; }
+  // l'indirizzo della chiamata: con https:// davanti se manca; vuoto o senza senso → null (niente da salvare)
+  function linkChiamata(s) {
+    const t = pulisciTesto(s).replace(/\s/g, '').slice(0, MAX_LINK);
+    if (!t) return null;
+    const url = /^https?:\/\//i.test(t) ? t : 'https://' + t;
+    return /^https?:\/\/[^\s/.]+\.[^\s]+$/i.test(url) ? url : null;
+  }
+  // a cosa si lega il punto che passa al «Da fare»: l'appuntamento alla sua persona, la serata al suo gruppo (Team, LdS, OPEN = Network 21)
+  const LEGAME_SPAZIO = { 'Team': 'Team', 'LOS': 'LdS', 'SdS/OPEN': 'N21' };
+  const legamePunti = (ogg, tabella) => (tabella === 'spazi' ? (LEGAME_SPAZIO[ogg.tipo] ? { tipo: LEGAME_SPAZIO[ogg.tipo] } : null) : ogg.contatto_id ? { tipo: 'persona', contatto_id: ogg.contatto_id } : null);
+  const conPunti = (ogg, tabella) => tabella !== 'spazi' || ogg.tipo in LEGAME_SPAZIO;   // le serate di gruppo sì, gli spazi da riempire no
+
   const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
   // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
   function inizioScala(scala, giorno) {
@@ -644,7 +668,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
