@@ -52,6 +52,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
   var LINEE = [{ id: 'FR1', nome: 'ROSSI, CARLA', membri: ['Anna Verdi', 'Bruno Neri', 'Carla Rossi'] }, { id: 'FR2', nome: 'BIANCHI, LUCA', membri: ['Dino Gallo', 'Elena Riva'] }];
   var TEAM = ['Anna Verdi', 'Bruno Neri', 'Carla Rossi', 'Dino Gallo', 'Elena Riva', 'Isabella Rossi'];
   var TIPI = ['Counseling', 'Avvio', 'PM 1a1', 'Follow Up'];
+  var PASSI = { 'Counseling': ['Counseling a un partner', 'Counseling con l\\'upline', 'Il perché'], 'Avvio': ['Motivazione', 'Lista nomi', 'Primo ordine', 'Telefonate'], 'PM 1a1': ['Il piano', 'Il perché'], 'Follow Up': ['Domande', 'Prossimo passo'] };
   var DURATE = [[30, '30 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];
   var st = { cosa: null, persona: null, tipo: null, linea: null, serataTipo: 'Team', nome: '', giorno: '2026-10-08', ora: '18:30', durata: 60, link: '', punti: '', condividi: null, puntiCond: null, salvato: false, risposte: {} };
   var io = document.getElementById('io'), loro = document.getElementById('loro'), chiTitolo = document.getElementById('chi-titolo');
@@ -86,7 +87,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
       + (st.cosa === 'linea' ? '<div class="campo" style="margin-top:10px"><label>Quale Linea? <small>uno dei tuoi frontali</small></label>' + pill('linea', LINEE.map(function (l) { return [l.id, l.nome]; }), st.linea) + '</div>' : '')
       + (serata() ? '<div class="campo"><label>Serata <small>Team o LdS</small></label>' + pill('serataTipo', [['Team', 'Team'], ['LOS', 'LdS']], st.serataTipo) + '</div><div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="f-nome" maxlength="60" placeholder="Il nome, la tipologia, la linea o la squadra" value="' + esc(st.nome) + '"></div>' : ''), !!st.cosa && false);
     h += liv(2, l1ok(), 'Quando?', '<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi"><input id="f-giorno" type="date" value="' + st.giorno + '"><input id="f-ora" type="time" value="' + st.ora + '"></div></div><div class="campo"><label>Durata</label>' + pill('durata', DURATE, st.durata) + '</div>');
-    h += liv(3, l1ok() && l3ok(), 'Link e punti da trattare', '<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="f-link" type="url" placeholder="Incolla il link di Zoom, Meet, Teams…" value="' + esc(st.link) + '"></div><div class="campo"><label>Punti da trattare <small>uno per riga</small></label><textarea id="f-punti" rows="3" placeholder="Scrivi un punto per riga">' + esc(st.punti) + '</textarea></div>');
+    h += liv(3, l1ok() && l3ok(), 'Link e punti da trattare', '<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="f-link" type="url" placeholder="Incolla il link di Zoom, Meet, Teams…" value="' + esc(st.link) + '"></div><div class="campo"><label>Punti da trattare <small>' + (st.cosa === 'persona' ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga') + '</small></label>' + (st.cosa === 'persona' ? '<div class="ag-scelte" data-p="passo" style="margin-bottom:8px">' + PASSI[st.tipo].map(function (x) { return '<button type="button" data-v="' + esc(x) + '" class="' + (puntiLista().indexOf(x) >= 0 ? 'scelto' : '') + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '') + '<textarea id="f-punti" rows="3" placeholder="Scrivi un punto per riga">' + esc(st.punti) + '</textarea></div>');
     h += liv(4, l1ok() && l3ok(), 'Condividi con', pill('condividi', sceltaCond(), st.condividi)
       + (st.cosa === 'persona' && persona() && persona().cat !== 'Partner' ? '<p class="vn-aiuto">' + esc(persona().nome) + ' è un ' + esc(persona().cat) + ': non ha l\\'app, non si può condividere.</p>' : '')
       + (st.cosa === 'persona' && persona() && persona().cat === 'Partner' && !persona().app ? '<div class="cd" style="margin-top:10px"><div class="pt-testa"><b>' + esc(persona().nome) + ' non usa ancora MB21</b></div><div class="pt-comandi"><button type="button" class="link" data-azione="invita">' + ic('invito') + ' Invitalo nell\\'app</button></div></div>' : '')
@@ -141,6 +142,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
   io.addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-p] button'); if (b) {
       var p = b.parentElement.getAttribute('data-p'), v = b.getAttribute('data-v');
+      if (p === 'passo') { var righe = puntiLista().filter(function (x) { return x !== v; }); if (puntiLista().indexOf(v) < 0) righe.push(v); st.punti = righe.join('\\n'); return tutto(); }
       if (p === 'durata') st.durata = +v; else st[p] = v;
       if (p === 'cosa') { st.condividi = null; st.puntiCond = null; st.risposte = {}; }
       if (p === 'persona' || p === 'linea') { st.condividi = null; st.puntiCond = null; }

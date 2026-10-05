@@ -3249,11 +3249,6 @@ async function nuovoAppuntamento(opz = {}) {
       }
       if (st.tipo && !serata()) {
         h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))} <small>Obbligatorio</small></label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
-        // Un incontro con un Partner: su cosa si lavora, anche più d'uno (le fasi del tipo; si ritrovano nell'appuntamento). Facoltativo.
-        const passi = A.suCosaPer(st.categoria, st.tipo, st.modalita);
-        st.suCosa = st.suCosa.filter(x => passi.includes(x));
-        if (passi.length) h += `<div class="campo"><label>Su cosa lavorate? <small>anche più d'uno</small></label><div class="ag-scelte" id="na-su-cosa">${passi.map(x =>
-          `<button type="button" data-passo="${esc(x)}" class="${st.suCosa.includes(x) ? 'scelto' : ''}">${esc(A.nomePasso(x))}</button>`).join('')}</div></div>`;
       }
       if (st.tipo || serata()) {
         h += `</div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">`;
@@ -3276,12 +3271,16 @@ async function nuovoAppuntamento(opz = {}) {
         if (!serata()) h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         if (!serata()) h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
-        // i punti da trattare e il link della chiamata (nota 026): non per la telefonata in coda; i punti si vedono spuntabili nell'appuntamento
+        // il link della chiamata e i punti da trattare (nota 026): non per la telefonata in coda; i punti si vedono spuntabili nell'appuntamento.
+        // Un riquadro solo (Ignazio 05/10: «Su cosa lavorate?» e «Punti da trattare» si cozzavano): in alto i passi dell'incontro con un Partner
+        // (cantiere 48, si salvano in `su_cosa` per il coach e il Report), toccati diventano righe dei punti; sotto le righe libere, una per riga.
         if (!soloGiorno) {
           h += `<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="na-link" type="url" inputmode="url" maxlength="${A.MAX_LINK}" placeholder="Incolla il link di Zoom, Meet, Teams…" value="${esc(campi.link)}"></div>`;
-          h += st.mostraPunti || campi.punti.trim()
-            ? `<div class="campo"><label>Punti da trattare <small>uno per riga</small></label><textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`
-            : `<div class="campo"><button type="button" class="link" id="na-punti-apri">${ic('piu')} Punti da trattare</button></div>`;
+          const passi = serata() ? [] : A.suCosaPer(st.categoria, st.tipo, st.modalita);
+          st.suCosa = st.suCosa.filter(x => passi.includes(x));
+          h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga'}</small></label>
+            ${passi.length ? `<div class="ag-scelte" id="na-su-cosa" style="margin-bottom:8px">${passi.map(x => `<button type="button" data-passo="${esc(x)}" class="${st.suCosa.includes(x) ? 'scelto' : ''}">${esc(A.nomePasso(x))}</button>`).join('')}</div>` : ''}
+            <textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`;
         }
       }
       velo.querySelector('#na-corpo').innerHTML = h + '</div>';
@@ -3293,8 +3292,6 @@ async function nuovoAppuntamento(opz = {}) {
       testa.querySelector('b').textContent = serata() ? (MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo)) : st.contatto ? st.contatto.nome : 'Con chi?';
       const ns = velo.querySelector('#na-serata');
       if (ns) ns.onchange = () => { leggiCampi(); testa.querySelector('b').textContent = MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo); };
-      const pa = velo.querySelector('#na-punti-apri');
-      if (pa) pa.onclick = () => { leggiCampi(); st.mostraPunti = true; disegna(); const t = velo.querySelector('#na-punti'); if (t) t.focus(); };
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
@@ -3317,8 +3314,12 @@ async function nuovoAppuntamento(opz = {}) {
       };
       velo.querySelectorAll('#na-su-cosa [data-passo]').forEach(b => { b.onclick = () => {
         leggiCampi();
-        const x = b.dataset.passo;
-        st.suCosa = st.suCosa.includes(x) ? st.suCosa.filter(y => y !== x) : [...st.suCosa, x];
+        const x = b.dataset.passo, nome = A.nomePasso(x);
+        const tolto = st.suCosa.includes(x);
+        st.suCosa = tolto ? st.suCosa.filter(y => y !== x) : [...st.suCosa, x];
+        // il passo toccato è anche una riga dei punti: si aggiunge, o si toglie se c'era
+        const righe = campi.punti.split(/\r?\n/).filter(r => r.trim() && r.trim() !== nome);
+        campi.punti = (tolto ? righe : [...righe, nome]).join('\n');
         disegna();
       }; });
       velo.querySelectorAll('[data-libero]').forEach(b => { b.onclick = () => {
