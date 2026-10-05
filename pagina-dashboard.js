@@ -28,9 +28,9 @@ async function leggiSenzaCategoria() {
   }
 }
 
-// Riaprire la Dashboard entro 5 minuti, per la stessa persona e lo stesso giorno, senza nessuna scrittura nel frattempo (esito, azione, conferma…),
+// Riaprire la Dashboard entro 15 minuti (Ignazio 05/10: «portiamo a 15»), per la stessa persona e lo stesso giorno, senza nessuna scrittura nel frattempo (esito, azione, conferma…),
 // riusa quello che ha già letto: prima ogni tocco sul tab, o ogni ritorno da una scheda, rifaceva 25-30 richieste (nota 017).
-const DASH_FRESCA_MS = 5 * 60000;
+const DASH_FRESCA_MS = 15 * 60000;
 const dashFresca = (oggi) => ST.dashLetta && ST.dashChiave === `${visto().id}|${vediTutti() ? 'tutti' : ''}|${oggi}` && Date.now() - ST.dashLetta < DASH_FRESCA_MS
   && SCRITTURE.ultima < ST.dashLetta && ST.oggi === oggi && !ST.offline && (vediTutti() || ST.risultato);
 const dashLetta = (oggi) => { ST.dashChiave = `${visto().id}|${vediTutti() ? 'tutti' : ''}|${oggi}`; ST.dashLetta = Date.now(); };
