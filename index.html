@@ -3267,7 +3267,7 @@ async function nuovoAppuntamento(opz = {}) {
         if (!soloGiorno) {
           h += `<div class="campo"><label>Durata</label>${scelte('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
           if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
-          h += avvisoOre();
+          h += `<div id="na-avviso">${avvisoOre()}</div>`;
         }
         if (!serata()) h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
@@ -3331,14 +3331,17 @@ async function nuovoAppuntamento(opz = {}) {
         else { st.spazio = x; campi.giorno = o.giorno; campi.ora = o.ora; st.durata = o.durata; st.durataToccata = true; st.altra = false; }
         disegna();
       }; });
-      velo.querySelectorAll('.ag-orelibere button').forEach(b => {
+      // cambiando giorno, ora o fine si rifà SOLO l'avviso delle sovrapposizioni, senza ridisegnare il modulo (Ignazio 05/10 sera, iPad: ridisegnando
+      // tutto, il calendario di sistema si chiudeva appena toccato l'anno, prima di scegliere mese e giorno e dare la spunta)
+      const legaOreLibere = () => velo.querySelectorAll('.ag-orelibere button').forEach(b => {
         b.onclick = () => { leggiCampi(); campi.ora = b.dataset.ora; if (st.altra) campi.fine = A.daMinuti(Math.min(1440, A.inMinuti(campi.ora) + (st.durata || 60))); disegna(); };
       });
-      // cambiando giorno, ora o fine l'avviso si rifà subito
+      const rifaiAvviso = () => { const av = velo.querySelector('#na-avviso'); if (av) { av.innerHTML = avvisoOre(); legaOreLibere(); } };
+      legaOreLibere();
       legaInizioFine(velo.querySelector('#na-ora'), velo.querySelector('#na-fine'));
       for (const k of ['giorno', 'ora', 'fine']) {
         const el = velo.querySelector('#na-' + k);
-        if (el) el.onchange = () => { leggiCampi(); disegna(); };
+        if (el) el.onchange = () => { leggiCampi(); rifaiAvviso(); };
       }
       velo.querySelectorAll('[data-scelta]').forEach(g => g.querySelectorAll('button').forEach(b => {
         b.onclick = () => {
