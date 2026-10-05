@@ -82,7 +82,7 @@ const fogli = [];
 const documento = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, body: { appendChild() {} },
   createElement: () => { const v = new Nodo(); fogli.push(v); return v; } };
 // un finto database: si ricorda le scritture (insert · update · delete) e risponde «fatto»
-const scritture = [], avvisi = [], scelta = { persona: null, esiste: false };   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
+const scritture = [], avvisi = [], scelta = { persona: null, esiste: false, passi: null };   // `scelta.passi`: cosa sceglie nel selettore dei passi (null = Annulla)   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
 const tabella = nome => new Proxy({}, { get: (t, op) => (...args) => { if (['insert', 'update', 'delete', 'upsert'].includes(op)) scritture.push({ tabella: nome, op, args }); return fine; } });
 const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : fine), apply: () => fine });
 // impegni condivisi (nota 027): cosa risponde il finto database alle funzioni (si cambia dalle prove); le chiamate alle funzioni finiscono in `scritture` come op 'rpc'
@@ -114,7 +114,7 @@ const stub = {
   // per il modulo «+» vero: i contatti della lista, niente spazi liberi, niente domande dopo il salvataggio
   foglioLinkInvito: c => { avvisi.push({ t: 'invito:' + c.nome }); },
   leggiContattiMiei: async () => finto.contatti, spaziLiberi: async () => [], legaInizioFine() {}, domandaInvito() {}, tracciaDiApertura() {}, contattiMiei: null, LS: { righe: [] },
-  aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
+  aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, scelteMultiple: async () => scelta.passi, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
   pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
