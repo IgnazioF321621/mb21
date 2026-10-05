@@ -16,7 +16,7 @@
 // nell'appuntamento si perde il contesto del lavoro da fare. Nella DESCRIPTION: «Ospite: …» e le note dell'azione. Il Profilo avvisa che chi ha il link le legge.
 // Gli appuntamenti eliminati spariscono e basta: il Calendario Apple a ogni rilettura prende l'elenco intero.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendario, type Azione, type Spazio, TIPI_SPAZIO_NEL_CALENDARIO } from './formato.ts';
+import { calendario, type Azione, type Spazio, type Ricevuto, TIPI_SPAZIO_NEL_CALENDARIO } from './formato.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 
@@ -55,6 +55,11 @@ Deno.serve(async (req) => {
   if (sp.error) sp = await leggiSpazi('id, tipo, inizio, durata');
   const spazi = (sp.error ? [] : sp.data ?? []) as unknown as Spazio[];
 
-  const corpo = calendario([...((app.data ?? []) as Azione[]), ...telefonate, ...daCoda], spazi, adesso);
+  // Gli impegni ricevuti da altri (nota Pagine 027, 05/10/2026): funzione `impegni_ricevuti_di` (migrazione `20261005150000_impegni_condivisi.sql`).
+  // Anche loro un'aggiunta: se la funzione non c'è ancora o non risponde, il calendario esce senza di loro.
+  const ric = await db.rpc('impegni_ricevuti_di', { p_utente: utente.id, p_da: da, p_a: new Date(adesso.getTime() + 366 * 86400000).toISOString() });
+  const ricevuti = (ric.error || !Array.isArray(ric.data) ? [] : ric.data) as Ricevuto[];
+
+  const corpo = calendario([...((app.data ?? []) as Azione[]), ...telefonate, ...daCoda], spazi, adesso, ricevuti);
   return new Response(req.method === 'HEAD' ? null : corpo, { headers: { 'Content-Type': 'text/calendar; charset=utf-8', 'Cache-Control': 'no-store' } });
 });

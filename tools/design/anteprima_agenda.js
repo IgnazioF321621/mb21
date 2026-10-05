@@ -31,7 +31,7 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'),
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento };',
+  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -71,6 +71,8 @@ const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati
     { id: 'k3', testo: 'Serata di Team da organizzare', giorno: OGGI, ordine: 2, fatto_il: null, legato_a: 'Team' },
     { id: 'k4', testo: 'Una cosa vecchia, ancora da collegare', giorno: OGGI, ordine: 3, fatto_il: null }],
   legame: null, filtro: '',
+  // impegni ricevuti da altri (nota 027): nell'anteprima nessuno (le prove li mettono da `finto.ricevuti`); i frontali dell'Admin per «Una Linea»
+  ricevuti: [], frontali: [{ partner_id: 'FR1', nome: 'ROSSI, CARLA' }, { partner_id: 'FR2', nome: 'BIANCHI, LUCA' }],
   // gli spazi da riempire (27/09): si vedono solo all'Admin (modo.admin)
   spazi: [{ id: 's1', user_id: 'io', tipo: 'SdS/OPEN', inizio: q(OGGI, '21:30'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Piano Marketing', inizio: q(OGGI, '13:00'), durata: 60 },
     { id: 's3', user_id: 'io', tipo: 'Consulenza PRD', inizio: q('2026-09-23', '10:00'), durata: 60 }] };
@@ -82,12 +84,21 @@ const documento = { getElementById: () => null, querySelector: () => null, query
 const scritture = [], avvisi = [], scelta = { persona: null, esiste: false };   // `scelta.persona`: chi sceglie l'utente dalla lista quando tocca «Una persona»
 const tabella = nome => new Proxy({}, { get: (t, op) => (...args) => { if (['insert', 'update', 'delete', 'upsert'].includes(op)) scritture.push({ tabella: nome, op, args }); return fine; } });
 const fine = new Proxy(function () {}, { get: (t, p) => (p === 'then' ? undefined : fine), apply: () => fine });
+// impegni condivisi (nota 027): cosa risponde il finto database alle funzioni (si cambia dalle prove); le chiamate alle funzioni finiscono in `scritture` come op 'rpc'
+const finto = { ricevuti: [{ origine: 'azione', id: 'a-ric', inizio: q(OGGI, '17:00'), fine: q(OGGI, '18:00'), titolo: 'PM 1a1', tipo: 'Piano Marketing', da_utente: 'u-ign', da_nome: 'Ignazio',
+    link: 'https://zoom.us/j/555', punti: [{ t: 'Il perché', fatto: false }], punti_condivisi: true, visto_il: null, risposta: null }],
+  risposte: [{ utente_id: 'u-isa', nome: 'Isabella Rossi', risposta: 'ci_sono', risposto_il: q(OGGI, '08:00'), visto_il: q(OGGI, '08:00') }],
+  condividi: { esito: 'ok', nome: 'Isabella Rossi', utente: 'u-isa' } };
 const stub = {
-  supa: { from: tabella, rpc: () => fine }, dbq: async nome => (nome === 'ripetizione già c\'è' ? { data: scelta.esiste ? [{ id: 'gia' }] : [], error: null }
+  supa: { from: tabella, rpc: (nome, args) => { scritture.push({ tabella: 'rpc:' + nome, op: 'rpc', args: [args] }); return fine; } }, dbq: async nome => (nome === 'ripetizione già c\'è' ? { data: scelta.esiste ? [{ id: 'gia' }] : [], error: null }
     : nome === 'punto nel Da fare' ? { data: { id: 'nuovo-1', testo: 'x', giorno: OGGI, scala: 'giorno' }, error: null }   // `.single()`: una riga sola, non un elenco
+    // impegni condivisi (nota 027): le risposte finte del database
+    : nome === 'impegni ricevuti' || nome === 'impegni nuovi' ? { data: finto.ricevuti, error: null }
+    : nome === 'risposte impegno' ? { data: finto.risposte, error: null }
+    : nome === 'condividi azione' ? { data: finto.condividi, error: null }
     : { data: [{ id: 'nuovo-1' }], error: null }),
   MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50,
-  ST: { utente: { id: 'io' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
+  ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI },   // il motore vero (contoGiorno), con l'oggi fermo
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
@@ -104,7 +115,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -117,7 +128,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
