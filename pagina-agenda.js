@@ -46,11 +46,20 @@ document.addEventListener('visibilitychange', () => {
   const f = document.activeElement;
   if (f && f.tagName && /^(INPUT|TEXTAREA)$/.test(f.tagName) && f.value) return;
   const oggi = MB21Coda.oggiRoma();
+  AG.lettaAlle = 0;   // al ritorno si rilegge comunque (le spunte dell'altro telefono), anche dentro i 5 minuti della memoria
   apriAgenda(AG.oggiVisto && AG.oggiVisto !== oggi ? oggi : AG.giorno);
 });
 
+// Riaprire MB Plan entro 5 minuti sullo stesso giorno, per la stessa persona, senza nessuna scrittura nel frattempo, riusa quello che ha già letto
+// (note 013/017, registri Supabase): prima ogni tocco sul tab, o ogni ritorno da una scheda, rifaceva le 10-12 richieste.
+const AG_FRESCA_MS = 5 * 60000;
+const chiaveAgenda = () => `${visto().id}|${vediTutti() ? 'tutti' : ''}|${AG.giorno}|${AG.vista}|${AG.tutteLeCose ? 1 : 0}`;
+const agendaFresca = () => !!AG.lettaAlle && AG.lettaChiave === chiaveAgenda() && Date.now() - AG.lettaAlle < AG_FRESCA_MS
+  && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < AG.lettaAlle);
 async function caricaAgenda() {
   const A = MB21Agenda;
+  if (agendaFresca()) return;
+  AG.lettaAlle = 0;
   AG.settimana = A.settimana(AG.giorno);
   // si legge la settimana E la griglia del mese (6 settimane): servono i pallini del mese nella colonna destra (22/09)
   const griglia0 = A.settimana(AG.giorno.slice(0, 8) + '01')[0], griglia1 = A.spostaGiorno(griglia0, 42);
@@ -106,6 +115,7 @@ async function caricaAgenda() {
   const conOrario = new Set(MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno).map(e => e.contatto_id));
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, inCoda: (tel.data || []).filter(c => !conOrario.has(c.id)) };
   await ricordi;
+  AG.lettaChiave = chiaveAgenda(); AG.lettaAlle = Date.now();   // letta adesso: per 5 minuti, senza scritture, non si rilegge
 }
 
 // ── Come si guarda l'Agenda (cantiere 37): «orario» (la griglia del giorno), «settimana», «elenco».
