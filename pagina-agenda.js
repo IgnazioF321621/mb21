@@ -1755,6 +1755,18 @@ async function caricaFrontali() {
   AG.frontali = error || !Array.isArray(data) ? [] : data.map(f => ({ ...f, nome: leggibile(f.nome) })).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
 }
 
+// Il Team e chi ha l'app, per «Senza l'app» nel modulo della serata (Ignazio 05/10 sera): due letture piccole, una volta per sessione, solo l'Admin
+// quando sceglie Team o Linea. `AG.ramo` = { squadra: [{partner_id, sponsor_id, nome, telefono}], conApp: [codici Amway degli utenti attivi] }.
+async function caricaRamoApp() {
+  if (AG.ramo !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;
+  AG.ramo = null;   // in lettura: non si rilegge se il modulo ridisegna
+  const [sq, ut] = await Promise.all([
+    dbq('squadra per l\'invito', supa.from('squadra').select('partner_id, sponsor_id, nome, telefono')),
+    dbq('utenti con l\'app', supa.from('utenti').select('partner_id').not('partner_id', 'is', null).is('eliminato_il', null).eq('accesso_attivo', true)),
+  ]);
+  AG.ramo = sq.error || ut.error || !Array.isArray(sq.data) || !Array.isArray(ut.data) ? undefined
+    : { squadra: sq.data, conApp: ut.data.map(u => u.partner_id) };
+}
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
 // si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
 function extraEvento(e) {
