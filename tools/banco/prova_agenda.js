@@ -545,4 +545,41 @@ prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anch
   assert.equal(A.passiIncontro({ ...a, categoria: null }, 'Prospect'), null);   // un Prospect non ha «Su cosa lavorate?»
 });
 
+// ── Punti da trattare e link della chiamata (nota Pagine 026, 05/10) ──
+prova('Punti: si leggono solo le righe buone, si aggiungono (puliti, al massimo 30), si spuntano e si tolgono senza toccare l\'elenco di prima', () => {
+  assert.deepEqual(A.puntiDi({ punti: [{ t: 'Uno', fatto: 1 }, { t: '  ' }, null, { t: 'Due' }] }), [{ t: 'Uno', fatto: true }, { t: 'Due', fatto: false }]);
+  assert.deepEqual(A.puntiDi({}), []); assert.deepEqual(A.puntiDi({ punti: 'x' }), []);
+  const p = A.aggiungiPunto([], '  Il piano   in 20 minuti ');
+  assert.deepEqual(p, [{ t: 'Il piano in 20 minuti', fatto: false }]);
+  assert.equal(A.aggiungiPunto(p, '   '), null);
+  assert.equal(A.aggiungiPunto(Array.from({ length: A.MAX_PUNTI }, () => ({ t: 'x', fatto: false })), 'uno di troppo'), null);
+  assert.equal(A.aggiungiPunto([], 'a'.repeat(300))[0].t.length, A.MAX_PUNTO);
+  const s = A.spuntaPunto(p, 0);
+  assert.equal(s[0].fatto, true); assert.equal(p[0].fatto, false);
+  assert.deepEqual(A.spuntaPunto(s, 0)[0].fatto, false);
+  assert.deepEqual(A.togliPunto([{ t: 'a', fatto: false }, { t: 'b', fatto: false }], 0), [{ t: 'b', fatto: false }]);
+  assert.equal(A.contoPunti(s), 'Trattati 1 su 1'); assert.equal(A.contoPunti([]), '');
+  assert.deepEqual(A.puntiDaRighe('Uno\n\n  Due  \r\n'), [{ t: 'Uno', fatto: false }, { t: 'Due', fatto: false }]);
+  assert.equal(A.puntiDaRighe('\n  \n'), null); assert.equal(A.puntiDaRighe(null), null);
+});
+prova('Link della chiamata: https:// aggiunto se manca, spazi tolti, roba senza senso → niente', () => {
+  assert.equal(A.linkChiamata(' meet.google.com/abc-defg '), 'https://meet.google.com/abc-defg');
+  assert.equal(A.linkChiamata('https://zoom.us/j/123?pwd=x'), 'https://zoom.us/j/123?pwd=x');
+  assert.equal(A.linkChiamata('HTTP://teams.microsoft.com/l/x'), 'HTTP://teams.microsoft.com/l/x');
+  assert.equal(A.linkChiamata(''), null); assert.equal(A.linkChiamata(null), null);
+  assert.equal(A.linkChiamata('ci sentiamo su zoom'), null); assert.equal(A.linkChiamata('zoom'), null);
+  assert.equal(A.linkChiamata('https://x.it/' + 'a'.repeat(600)).length, A.MAX_LINK);   // tagliato a 500
+});
+prova('Il legame del punto che passa al Da fare: l\'appuntamento alla sua persona, la serata al gruppo (LOS = LdS, OPEN = Network 21); gli spazi da riempire niente punti', () => {
+  assert.deepEqual(A.legamePunti({ contatto_id: 'c1' }, 'azioni'), { tipo: 'persona', contatto_id: 'c1' });
+  assert.equal(A.legamePunti({}, 'azioni'), null);
+  assert.deepEqual(A.legamePunti({ tipo: 'Team' }, 'spazi'), { tipo: 'Team' });
+  assert.deepEqual(A.legamePunti({ tipo: 'LOS' }, 'spazi'), { tipo: 'LdS' });
+  assert.deepEqual(A.legamePunti({ tipo: 'SdS/OPEN' }, 'spazi'), { tipo: 'N21' });
+  assert.equal(A.legamePunti({ tipo: 'Piano Marketing' }, 'spazi'), null);
+  assert.equal(A.conPunti({ tipo: 'Piano Marketing' }, 'spazi'), false); assert.equal(A.conPunti({ tipo: 'Team' }, 'spazi'), true); assert.equal(A.conPunti({}, 'azioni'), true);
+  assert.deepEqual(A.campiLegame(A.legamePunti({ tipo: 'LOS' }, 'spazi')), { contatto_id: null, legato_a: 'LdS' });
+  assert.deepEqual(A.campiLegame(A.legamePunti({ contatto_id: 'c1' }, 'azioni')), { contatto_id: 'c1', legato_a: null });
+});
+
 console.log(`\n${ok} prove superate`);

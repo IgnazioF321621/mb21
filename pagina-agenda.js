@@ -1464,6 +1464,94 @@ const ICONA_G = `<svg width="16" height="16" viewBox="0 0 48 48" style="vertical
 // Icona del Calendario Apple: quella vera dell'app Calendario del Mac (icone/calendario-apple-32.png; Ignazio 21/09: «trova anche l'icona corretta»)
 const ICONA_CAL = `<img src="icone/calendario-apple-32.png" width="16" height="16" alt="" style="vertical-align:-3px;margin-right:2px">`;
 
+// ── Punti da trattare e link della chiamata (nota Pagine 026, Ignazio 05/10) ──
+// Lo stesso riquadro dentro l'appuntamento (card dell'elenco e foglio della griglia) e nel foglio di una serata Team/LdS/OPEN:
+// righe spuntabili (una sola forma, scelta di Ignazio), «+ Aggiungi un punto», «→ Da fare» sul punto non trattato (va in MB Plan
+// legato alla stessa persona o allo stesso gruppo), e il link della chiamata online, che diventa il bottone «Entra nella chiamata».
+// Si salva direttamente da qui (campi `punti` e `link` di azioni/spazi), senza passare dal foglio «Modifica». Le regole stanno in agenda.js.
+const PUNTI_APERTI = new Set(), LINK_APERTI = new Set();   // gli id in cui si sta scrivendo (il riquadro chiuso mostra solo i due bottoni)
+// un indirizzo scritto dentro un punto si può toccare
+const testoConLink = t => esc(t).replace(/https?:\/\/[^\s<]+/g, m => `<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+function puntiHtml(ogg, tabella) {
+  const A = MB21Agenda;
+  if (!A.conPunti(ogg, tabella)) return '';
+  const punti = A.puntiDi(ogg), link = A.linkChiamata(ogg.link), legame = A.campiLegame(A.legamePunti(ogg, tabella));
+  const chiamata = link ? `<a class="pt-link" href="${esc(link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>` : '';
+  const campoLink = LINK_APERTI.has(ogg.id)
+    ? `<form class="pt-nuovo pt-link-campo" data-pt-link><input type="url" inputmode="url" placeholder="Incolla il link di Zoom, Meet, Teams…" value="${esc(ogg.link || '')}" autocomplete="off" maxlength="${A.MAX_LINK}"><button type="submit">Salva</button></form>`
+    : `<button type="button" class="link" data-pt-link-apri>${link ? `${ic('modifica')} Cambia il link` : `${ic('piu')} Link della chiamata`}</button>`;
+  if (!punti.length && !PUNTI_APERTI.has(ogg.id))
+    return `<div class="pt chiuso" data-pt="${esc(ogg.id)}">${chiamata}<div class="pt-comandi"><button type="button" class="link" data-pt-apri>${ic('piu')} Punti da trattare</button>${campoLink}</div></div>`;
+  const righe = punti.map((r, i) => `<div class="pt-riga${r.fatto ? ' fatta' : ''}">
+      <button type="button" class="spunta" data-pt-spunta="${i}" aria-label="${r.fatto ? 'Trattato: rimetti da trattare' : 'Trattato'}">${r.fatto ? ic('fatto') : ''}</button>
+      <span class="pt-testo">${testoConLink(r.t)}</span>
+      ${!r.fatto && legame ? `<button type="button" class="pt-dafare" data-pt-dafare="${i}" title="Passa al Da fare">→ Da fare</button>` : ''}
+      <button type="button" class="pt-togli" data-pt-togli="${i}" aria-label="Togli il punto">${ic('chiudi')}</button></div>`).join('');
+  return `<div class="pt" data-pt="${esc(ogg.id)}">${chiamata}
+    <div class="pt-testa"><b>Punti da trattare</b>${punti.length ? `<small>${esc(A.contoPunti(punti))}</small>` : ''}</div>${righe}
+    ${punti.length < A.MAX_PUNTI ? `<form class="pt-nuovo" data-pt-nuovo><input type="text" placeholder="Aggiungi un punto" autocomplete="off" maxlength="${A.MAX_PUNTO}"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>` : ''}
+    <div class="pt-comandi">${campoLink}</div></div>`;
+}
+// `ridisegna()` rifà chi mostra il riquadro (l'elenco, il foglio dell'impegno, il foglio della serata)
+function collegaPunti(el, ogg, tabella, ridisegna) {
+  const A = MB21Agenda;
+  const blocco = el.querySelector(`[data-pt="${ogg.id}"]`);
+  if (!blocco) return;
+  // l'oggetto mostrato può essere una copia: si aggiorna anche quello nella lista dell'Agenda
+  const localmente = campi => { Object.assign(ogg, campi); const o = (tabella === 'spazi' ? AG.spazi : AG.azioni || []).find(x => x.id === ogg.id); if (o && o !== ogg) Object.assign(o, campi); };
+  const salva = async campi => {
+    const prima = { punti: ogg.punti, link: ogg.link };
+    localmente(campi);
+    const { error } = await dbq('punti da trattare', supa.from(tabella).update(campi).eq('id', ogg.id));
+    if (error) { localmente(prima); mostraToast('Non salvato: controlla la connessione e riprova.'); return false; }
+    ridisegna();
+    return true;
+  };
+  const coiPunti = p => ({ punti: p.length ? p : null });
+  const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
+  su('[data-pt-apri]', () => { PUNTI_APERTI.add(ogg.id); ridisegna(); });
+  su('[data-pt-link-apri]', () => { LINK_APERTI.add(ogg.id); ridisegna(); });
+  su('[data-pt-spunta]', b => salva(coiPunti(A.spuntaPunto(A.puntiDi(ogg), Number(b.dataset.ptSpunta)))));
+  su('[data-pt-togli]', async b => {
+    const punti = A.puntiDi(ogg), i = Number(b.dataset.ptTogli), tolto = punti[i];
+    if (await salva(coiPunti(A.togliPunto(punti, i)))) mostraToast('Punto tolto', () => salva(coiPunti(punti)));
+    return tolto;
+  });
+  // il punto non trattato passa al «Da fare» di oggi, legato alla stessa persona o allo stesso gruppo (nota ✅ 025); con «Annulla» torna qui
+  su('[data-pt-dafare]', async b => {
+    const punti = A.puntiDi(ogg), i = Number(b.dataset.ptDafare), r = punti[i];
+    const campi = A.campiLegame(A.legamePunti(ogg, tabella));
+    if (!r || !campi) return;
+    const ordine = (AG.cose || []).reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
+    const { data, error } = await dbq('punto nel Da fare', supa.from('cose_da_fare').insert({ user_id: visto().id, testo: r.t, giorno: MB21Coda.oggiRoma(), scala: 'giorno', ordine, ...campi }).select('*, contatti(nome, categoria)').single());
+    if (error) return mostraToast('Non messo nel Da fare: controlla la connessione e riprova.');
+    if (data && data.id && AG.cose) AG.cose.push(data);
+    await salva(coiPunti(A.togliPunto(punti, i)));
+    mostraToast(`«${r.t}» è nel Da fare di oggi`, async () => {
+      if (data && data.id) { await dbq('annulla punto nel Da fare', supa.from('cose_da_fare').delete().eq('id', data.id)); if (AG.cose) AG.cose = AG.cose.filter(c => c.id !== data.id); }
+      salva(coiPunti(punti));
+    });
+  });
+  blocco.querySelectorAll('form[data-pt-link]').forEach(form => {
+    form.onsubmit = async ev => {
+      ev.preventDefault();
+      const scritto = form.querySelector('input').value, link = A.linkChiamata(scritto);
+      if (scritto.trim() && !link) return mostraToast('Scrivi l\'indirizzo completo della chiamata, per esempio https://meet.google.com/…');
+      LINK_APERTI.delete(ogg.id);
+      salva({ link });
+    };
+  });
+  blocco.querySelectorAll('form[data-pt-nuovo]').forEach(form => {
+    form.onsubmit = async ev => {
+      ev.preventDefault();
+      const nuovi = A.aggiungiPunto(A.puntiDi(ogg), form.querySelector('input').value);
+      if (!nuovi) return;
+      PUNTI_APERTI.add(ogg.id);
+      if (await salva(coiPunti(nuovi))) { const c2 = el.querySelector(`[data-pt="${ogg.id}"] form[data-pt-nuovo] input`); if (c2) c2.focus(); }   // si continua col prossimo
+    };
+  });
+}
+
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
 // si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
 function extraEvento(e) {
@@ -1479,7 +1567,8 @@ function extraEvento(e) {
   const prima = !richiamo && !e.esito && e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? preparaChiamataHtml(e.contatto_id) : richiamo ? '' : preparaPresentazioneHtml(e);
   const suCosa = !richiamo && Array.isArray(e.su_cosa) && e.su_cosa.length ? `<div class="note-ev">Su cosa lavorate: ${esc(e.su_cosa.map(A.nomePasso).join(' · '))}</div>` : '';
   return `${ricordo}${prima}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
-      ${e.note ? `<div class="note-ev">${esc(e.note)}</div>` : ''}
+      ${e.note ? `<div class="note-ev">${testoConLink(e.note)}</div>` : ''}
+      ${richiamo ? '' : puntiHtml(e, 'azioni')}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
@@ -1515,31 +1604,37 @@ function foglioEvento(e) {
   const giorno = A.partiRoma(e.quando || e.inizio).giorno;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto ${classeCat(cat)}">
-    <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="fe-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <p>${esc(dataLunga(giorno))} · ${esc(A.orario(e))} · ${escIcone(r.sotto)}</p>
-    ${extraEvento(e)}</div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
-  velo.querySelector('#fe-x').onclick = chiudi;
   // toccando un esito il foglio sparisce subito: il resto del flusso (prossimo appuntamento, vendita…) trova la scena libera
   velo.addEventListener('click', ev => { if (ev.target.closest('[data-esito]')) velo.style.display = 'none'; }, true);
-  collegaComandiEvento(velo, e, async () => {
-    chiudi();
-    await apriAgenda(giorno);
-    const agg = AG.azioni.find(x => x.id === e.id);   // se manca un passo (PM «Fatto» → risultato) si riapre
-    if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando });
-  });
+  // il foglio si ridisegna sul posto quando cambiano i punti da trattare (nota 026)
+  const disegna = () => {
+    velo.innerHTML = `<div class="foglio alto ${classeCat(cat)}">
+      <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="fe-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <p>${esc(dataLunga(giorno))} · ${esc(A.orario(e))} · ${escIcone(r.sotto)}</p>
+      ${extraEvento(e)}</div>`;
+    velo.querySelector('#fe-x').onclick = chiudi;
+    collegaComandiEvento(velo, e, async () => {
+      chiudi();
+      await apriAgenda(giorno);
+      const agg = AG.azioni.find(x => x.id === e.id);   // se manca un passo (PM «Fatto» → risultato) si riapre
+      if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando });
+    }, disegna);
+  };
+  disegna();
 }
 
 const dataLunga = g => new Date(g + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
-// Esiti e comandi di un impegno: gli stessi nell'elenco e nel foglio della griglia. `dopo()` ridisegna chi l'ha aperto.
-function collegaComandiEvento(el, e, dopo) {
+// Esiti e comandi di un impegno: gli stessi nell'elenco e nel foglio della griglia. `dopo()` ridisegna chi l'ha aperto;
+// `ridisegna()` (facoltativo) rifà solo il pezzo mostrato quando cambiano i punti da trattare (nell'elenco basta disegnaAgenda).
+function collegaComandiEvento(el, e, dopo, ridisegna) {
   const A = MB21Agenda;
   const giorno = A.partiRoma(e.quando || e.inizio).giorno;
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
+  collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };
@@ -1783,6 +1878,7 @@ function foglioSpazio(id) {
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
       : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi dargli il nome della serata (o la tipologia, la linea, la squadra)' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
+    ${puntiHtml(s, 'spazi')}
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
       ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia il nome' : 'Metti il nome della serata'}</button>` : ''}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
@@ -1794,6 +1890,7 @@ function foglioSpazio(id) {
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   velo.querySelector('#sp-x').onclick = chiudi;
+  collegaPunti(velo, s, 'spazi', () => { chiudi(); foglioSpazio(id); });   // i punti della serata (nota 026): il foglio si riapre aggiornato
   const nome = velo.querySelector('#sp-nome');
   if (nome) nome.onclick = () => { chiudi(); nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: s.tipo, durata: o.durata, spazio: s, titolo: S.nome(s.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: scrivi il nome di chi viene.` }); };
   const serata = velo.querySelector('#sp-serata');
