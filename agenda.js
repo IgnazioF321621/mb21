@@ -442,13 +442,14 @@
   }
   // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
   const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
-  // L'esito dell'incontro è il primo passo fatto DEL TIPO scelto (Ignazio 05/10 sera: «Counseling non si chiude con Inaugurazione»); i passi
-  // degli altri tipi diventano solo righe di azione in più. Senza un passo del tipo: esito null (il bottone «Fatto» resta spento).
+  // L'esito dell'incontro è il primo passo fatto DEL TIPO scelto, se c'è (Ignazio 05/10 sera: «Counseling non si chiude con Inaugurazione»);
+  // se avete fatto solo passi di altri tipi, l'incontro si chiude lo stesso (Ignazio: «l'appuntamento si deve chiudere») con il primo di quelli.
+  // Gli altri passi fatti diventano righe di azione in più. Senza passi: esito null.
   function esitoDaiPassi(a, categoria, fatti) {
     const tutti = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), suoi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     const ordinati = passiFatti(tutti, fatti);
-    const esito = ordinati.find(x => suoi.includes(x)) || null;
-    return { esito, extra: esito ? ordinati.filter(x => x !== esito) : ordinati };
+    const esito = ordinati.find(x => suoi.includes(x)) || ordinati[0] || null;
+    return { esito, extra: ordinati.filter(x => x !== esito) };
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
   // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,

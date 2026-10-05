@@ -544,7 +544,7 @@ prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anch
   // l'esito è il primo passo fatto DEL TIPO (05/10: «Counseling non si chiude con Inaugurazione»); gli altri sono righe in più
   const c = { ...a, modalita: 'Counseling', su_cosa: ['c/Upline', 'Telefonate'] };
   assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['Telefonate', 'Inaugurazione', 'c/Upline']), { esito: 'c/Upline', extra: ['Telefonate', 'Inaugurazione'] });
-  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['Inaugurazione', 'Telefonate']), { esito: null, extra: ['Telefonate', 'Inaugurazione'] });   // nessun passo di Counseling: non si chiude
+  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['Inaugurazione', 'Telefonate']), { esito: 'Telefonate', extra: ['Inaugurazione'] });   // nessun passo di Counseling: si chiude lo stesso col primo fatto
   assert.deepEqual(A.esitoDaiPassi(a, 'Partner', ['Telefonate', 'Motivazione']), { esito: 'Motivazione', extra: ['Telefonate'] });
   assert.deepEqual(A.esitoDaiPassi(a, 'Partner', []), { esito: null, extra: [] });
   assert.equal(A.passiIncontro({ ...a, su_cosa: null }, 'Partner'), null);

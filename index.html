@@ -2807,7 +2807,6 @@ function bloccoEsiti(a, categoria, aperto = false) {
         <div class="ag-scelte">${tocchi(inc.scelti, '')}</div>
         ${inc.altri.length ? `<button type="button" class="link" data-anche-altro>Abbiamo fatto anche altro ›</button>
           <div class="ag-scelte" data-altri hidden>${tocchi(inc.altri, '')}</div>` : ''}
-        <small data-serve-suo hidden>Serve almeno un passo di ${esc(MB21Agenda.nomePasso(a.modalita || ''))}: è lui l'esito dell'incontro.</small>
         <button type="button" class="primario" data-incontro-fatto disabled>Fatto</button>
       </div></div>`;
   }
@@ -2837,7 +2836,7 @@ function collegaEsiti(el, a, contatto, dopo) {
     const fatto = box.querySelector('[data-incontro-fatto]'), tutti = JSON.parse(box.dataset.tutti);
     const accesi = () => [...box.querySelectorAll('[data-passo-fatto].scelto')].map(b => b.dataset.passoFatto);
     const e0 = { ...a, categoria: a.categoria || contatto.categoria };
-    const aggiorna = () => { const r = MB21Agenda.esitoDaiPassi(e0, contatto.categoria, accesi()); fatto.disabled = !r.esito; const h = box.querySelector('[data-serve-suo]'); if (h) h.hidden = !!r.esito || !accesi().length; };
+    const aggiorna = () => { fatto.disabled = !MB21Agenda.esitoDaiPassi(e0, contatto.categoria, accesi()).esito; };
     box.querySelectorAll('[data-passo-fatto]').forEach(b => b.onclick = () => { b.classList.toggle('scelto'); aggiorna(); });
     const altro = box.querySelector('[data-anche-altro]');
     if (altro) altro.onclick = () => { box.querySelector('[data-altri]').hidden = false; altro.hidden = true; };
