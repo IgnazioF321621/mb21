@@ -412,7 +412,7 @@ prova('Dati personali: un elenco solo per modulo e sezione Dati, nell\'ordine di
   assert.equal(L.nomeScelta(L.SESSI, 'F'), 'Donna'); assert.equal(L.nomeScelta(L.LAVORI, 'autonomo'), 'Autonomo'); assert.equal(L.nomeScelta(L.SESSI, 'X'), 'X');
 });
 
-prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il mio avvio»; solo per l\'incontro di Avvio e per i passi che hanno una riga', () => {
+prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il mio avvio»; in qualsiasi incontro con un Partner (dal 05/10), solo per i passi che hanno una riga', () => {
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Motivazione'), 'onb_sogno');
   // dove sta il partner nell'Avvio, per i passi suggeriti del modulo «+» (nota Azioni 055)
   assert.deepEqual(L.situazioneAvvio({ id: 'x', onb_sogno: true, onb_contatti: true, onb_ordine: false }), { nuovo: true, fermo: false, fatti: ['Motivazione', 'Telefonate'] });
@@ -425,7 +425,8 @@ prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il 
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Telefonate'), 'onb_contatti');
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Lista nomi'), null);          // non ha una riga in «Il mio avvio»
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Inaugurazione'), null);
-  assert.equal(L.passoAvvioDa('Appuntamento', 'Counseling', 'Motivazione'), null);    // solo l'Avvio
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Counseling', 'Motivazione'), 'onb_sogno');   // anche in un Counseling (nota 055, ok di Ignazio 05/10)
+  assert.equal(L.passoAvvioDa('Appuntamento', 'Counseling', 'c/Upline'), null);            // un passo che non è dell'Avvio
   assert.equal(L.passoAvvioDa('Piano Marketing', 'Avvio', 'Motivazione'), null);
   for (const col of Object.values(L.AVVIO_DA_INCONTRO)) assert.ok(L.PASSI_ONBOARDING.some(p => p[0] === col), col);   // la colonna esiste davvero
 });
