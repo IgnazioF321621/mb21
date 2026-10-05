@@ -22,7 +22,10 @@ export const aRoma = (iso: string | number) => FMT.format(new Date(iso)).replace
 export const compatto = (d: Date) => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
 
 export type Azione = { id: string; contatto_id: string | null; tipo_azione: string; modalita: string | null; esito: string | null; inizio: string; fine: string | null;
-  data_scelta: string | null; ospite: string | null; note: string | null; contatti: unknown };
+  data_scelta: string | null; ospite: string | null; note: string | null; luogo?: string | null; contatti: unknown };
+
+// il posto, dal vivo (nota 028, 05/10): LOCATION, così il Calendario mostra la mappa (vale per i propri appuntamenti, le serate e gli impegni ricevuti)
+const rigaLuogo = (luogo: unknown) => { const l = String(luogo ?? '').replace(/\s+/g, ' ').trim(); return l ? [`LOCATION:${testoIcs(l)}`] : []; };
 
 export function evento(a: Azione, adesso: Date) {
   const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;
@@ -34,6 +37,7 @@ export function evento(a: Azione, adesso: Date) {
   return ['BEGIN:VEVENT', `UID:azione-${a.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
     `SUMMARY:${testoIcs(`MB21 · ${cosa} · ${nome}`)}`,
+    ...rigaLuogo(a.luogo),
     ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     'END:VEVENT'];
 }
@@ -44,7 +48,7 @@ export function evento(a: Azione, adesso: Date) {
 // UID fisso `spazio-<id>@mb21`, così uno spostamento aggiorna lo stesso evento nel Calendario.
 export const TIPI_SPAZIO_NEL_CALENDARIO = ['Team', 'LOS', 'SdS/OPEN'];
 const NOME_SPAZIO: Record<string, string> = { 'Team': 'Incontro di Team', 'LOS': 'Incontro LdS', 'SdS/OPEN': 'SdS/OPEN' };
-export type Spazio = { id: string; tipo: string; inizio: string; durata: number | null; nome?: string | null };
+export type Spazio = { id: string; tipo: string; inizio: string; durata: number | null; nome?: string | null; luogo?: string | null };
 export function eventoSpazio(s: Spazio, adesso: Date) {
   const nomeTipo = NOME_SPAZIO[s.tipo] || s.tipo;
   const serata = (s.tipo === 'SdS/OPEN' ? '' : String(s.nome ?? '').replace(/\s+/g, ' ').trim());   // la SdS/OPEN è sempre la stessa: niente nome
@@ -52,6 +56,7 @@ export function eventoSpazio(s: Spazio, adesso: Date) {
   return ['BEGIN:VEVENT', `UID:spazio-${s.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(s.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(Date.parse(s.inizio) + minuti * 60000)}`,
     `SUMMARY:${testoIcs(['MB21', nomeTipo, serata].filter(Boolean).join(' · '))}`,
+    ...rigaLuogo(s.luogo),
     'END:VEVENT'];
 }
 
@@ -64,11 +69,10 @@ export function eventoRicevuto(r: Ricevuto, adesso: Date) {
   const fine = r.fine || Date.parse(r.inizio) + 3600000;
   const punti = Array.isArray(r.punti) ? r.punti.filter(p => p && typeof p.t === 'string' && p.t.trim()).map(p => `${p.fatto ? '✓' : '•'} ${p.t}`) : [];
   const dettagli = [r.link ? `Chiamata: ${r.link}` : '', punti.length ? ['Punti da trattare:', ...punti].join('\n') : ''].filter(Boolean).join('\n');
-  const luogo = String(r.luogo ?? '').replace(/\s+/g, ' ').trim();   // il posto, dal vivo (Ignazio 05/10): LOCATION, così il Calendario mostra la mappa
   return ['BEGIN:VEVENT', `UID:ricevuto-${r.origine}-${r.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(r.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
     `SUMMARY:${testoIcs(`MB21 · ${r.titolo} · da ${r.da_nome || '—'}`)}`,
-    ...(luogo ? [`LOCATION:${testoIcs(luogo)}`] : []),
+    ...rigaLuogo(r.luogo),
     ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     ...(r.risposta === 'non_ci_sono' ? ['STATUS:CANCELLED', 'TRANSP:TRANSPARENT'] : []),   // «Non ci sono»: resta nel calendario, ma non occupa
     'END:VEVENT'];
