@@ -868,7 +868,7 @@ function scegliNumero(dopo = caricaOggi) {
 // Appuntamenti del partner loggato da confermare: compaiono 12 ore prima, fino all'inizio (agenda.js → confermeDaFare).
 // In Dashboard sopra la coda, non contano nei contatti al giorno. In Agenda, per oggi, il riepilogo.
 const CONF = { righe: [], nonRisponde: new Set() };
-const CAMPI_AZIONE = '*, contatti(nome, categoria, telefono), utenti(nome, nome_cognome)';
+const CAMPI_AZIONE = '*, contatti(nome, categoria, telefono), utenti!azioni_user_id_fkey(nome, nome_cognome)';
 
 async function caricaConferme() {
   try {

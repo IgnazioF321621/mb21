@@ -1072,7 +1072,7 @@ async function cercaMB(testo, box, chiudi) {
   box.innerHTML = '<div class="mb-vuoto">Cerco…</div>';
   const ids = idVisti();
   const [perNome, perTipo, cose] = await Promise.all([
-    dbq('cerca per nome', supa.from('azioni').select('*, contatti!inner(nome, categoria, telefono), utenti(nome, nome_cognome)').in('user_id', ids).ilike('contatti.nome', `%${t}%`).order('inizio', { ascending: false }).limit(60)),
+    dbq('cerca per nome', supa.from('azioni').select('*, contatti!inner(nome, categoria, telefono), utenti!azioni_user_id_fkey(nome, nome_cognome)').in('user_id', ids).ilike('contatti.nome', `%${t}%`).order('inizio', { ascending: false }).limit(60)),
     dbq('cerca per tipo', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).or(`tipo_azione.ilike.*${t}*,modalita.ilike.*${t}*,esito.ilike.*${t}*`).order('inizio', { ascending: false }).limit(60)),
     dbq('cerca nelle cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').in('user_id', ids).is('core', null).is('modello_id', null).is('progetto_id', null).or(`testo.ilike.*${t}*${legameDaParola(t) ? `,legato_a.eq.${legameDaParola(t)}` : ''}`).order('giorno', { ascending: false }).limit(20)),
   ]);
