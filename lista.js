@@ -218,10 +218,11 @@
     if (!r || !r.avvio_in_pausa_dal || !oggi) return false;
     return (Date.parse(oggi + 'T12:00:00Z') - Date.parse(String(r.avvio_in_pausa_dal).slice(0, 10) + 'T12:00:00Z')) / 86400000 > 365;
   }
-  // Il passo dell'Avvio fatto in un incontro → la sua riga in «Il mio avvio» (cantiere 48, Ignazio 30/09: «si spunta lì da soli»). Solo per gli
-  // incontri di Avvio e solo per i passi che esistono in tutti e due gli elenchi: Lista nomi e Inaugurazione non hanno una riga in «Il mio avvio».
+  // Il passo dell'Avvio fatto in un incontro → la sua riga in «Il mio avvio» (cantiere 48, Ignazio 30/09: «si spunta lì da soli»). Solo per i passi
+  // che esistono in tutti e due gli elenchi: Lista nomi e Inaugurazione non hanno una riga in «Il mio avvio». Dal 05/10 (nota Azioni 055, ok di
+  // Ignazio) vale in qualsiasi incontro con un Partner, non solo in quello di Avvio: un passo dell'Avvio fatto in un Counseling si spunta lo stesso.
   const AVVIO_DA_INCONTRO = { Motivazione: 'onb_sogno', ListaStart: 'onb_lista_start', OrdineStart: 'onb_ordine', RolePlay: 'onb_role_play', Telefonate: 'onb_contatti' };
-  const passoAvvioDa = (tipo, modalita, esito) => (tipo === 'Appuntamento' && modalita === 'Avvio' ? AVVIO_DA_INCONTRO[esito] || null : null);
+  const passoAvvioDa = (tipo, modalita, esito) => (tipo === 'Appuntamento' ? AVVIO_DA_INCONTRO[esito] || null : null);
   // Dove sta il partner nell'Avvio, per i passi suggeriti del modulo «+» (nota Azioni 055): `nuovo` = Avvio in corso (né concluso né in pausa),
   // `fermo` = in pausa, `fatti` = i passi dell'incontro che in «Il mio avvio» sono già spuntati. Senza la riga: null (il modulo propone i passi del tipo)
   function situazioneAvvio(r) {
