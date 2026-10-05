@@ -139,6 +139,35 @@ prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un seletto
   assert.deepEqual(r.punti, [{ t: 'Counseling con l’upline', fatto: false }, { t: 'Lista nomi: i primi 10', fatto: false }]);
 });
 
+prova('I passi suggeriti guardano la persona (nota Azioni 055): partner nuovo con 3 passi dell\'Avvio fatti → nel Counseling anche i passi dell\'Avvio che gli mancano; in pausa → i tre della ripresa; concluso → solo quelli del tipo', async () => {
+  pulisci();
+  // Isabella: Avvio in corso, fatti Il perché, Ordine Start e Amway (3 su 7 della scheda; per gli incontri contano i 5 con una riga)
+  P.finto.avvio = { id: 'c-isa', avvio_concluso_il: null, avvio_in_pausa_dal: null, onb_sogno: true, onb_ordine: true, onb_amway: true, onb_lista_start: false, onb_role_play: false, onb_contatti: false };
+  const { v, p } = await apri({});
+  await contatto(v, 'Isabella Rossi'); await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
+  await attendi(); await attendi();   // la lettura dell'Avvio, poi il ridisegno
+  P.scelta.passi = ['Telefonate', 'c/Upline', 'Motivazione'];   // «Il perché» è già fatto: non è tra i passi offerti, non entra
+  await v.clic('#na-passi');
+  assert.match(v.innerHTML, /id="na-passi"><span>Telefonate · Counseling con l’upline<\/span>/);   // nell'ordine: prima l'Avvio, poi il Counseling
+  await v.clic('#na-si'); await p;
+  assert.deepEqual(scritte('azioni', 'insert')[0].args[0].su_cosa, ['Telefonate', 'c/Upline']);
+  // in pausa: i passi del tipo più Il perché · Lista nomi · Telefonate
+  pulisci(); P.finto.avvio = { id: 'c-isa', avvio_concluso_il: null, avvio_in_pausa_dal: '2026-09-01', onb_sogno: true };
+  const s2 = await apri({});
+  await contatto(s2.v, 'Isabella Rossi'); await scegli(s2.v, 'tipo', 'Appuntamento'); await scegli(s2.v, 'modalita', 'Counseling'); await attendi(); await attendi();
+  P.scelta.passi = ['Lista nomi', 'Motivazione', 'c/Downline'];
+  await s2.v.clic('#na-passi');
+  assert.match(s2.v.innerHTML, /id="na-passi"><span>Il perché · Lista Nomi · Counseling a un partner<\/span>/);
+  // Avvio concluso: solo i passi del Counseling (come prima)
+  pulisci(); P.finto.avvio = { id: 'c-isa', avvio_concluso_il: '2026-09-01', avvio_in_pausa_dal: null, onb_sogno: true };
+  const s3 = await apri({});
+  await contatto(s3.v, 'Isabella Rossi'); await scegli(s3.v, 'tipo', 'Appuntamento'); await scegli(s3.v, 'modalita', 'Counseling'); await attendi(); await attendi();
+  P.scelta.passi = ['Telefonate', 'c/Upline'];
+  await s3.v.clic('#na-passi');
+  assert.match(s3.v.innerHTML, /id="na-passi"><span>Counseling con l’upline<\/span>/);
+  P.finto.avvio = null;
+});
+
 prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ramo che non usano MB21, con «Invita» che apre il link di registrazione', async () => {
   pulisci(); P.modo.admin = true;
   const { v } = await apri({});

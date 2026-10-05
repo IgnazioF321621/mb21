@@ -91,6 +91,7 @@ const finto = { ricevuti: [{ origine: 'azione', id: 'a-ric', inizio: q(OGGI, '17
   risposte: [{ utente_id: 'u-isa', nome: 'Isabella Rossi', risposta: 'ci_sono', risposto_il: q(OGGI, '08:00'), visto_il: q(OGGI, '08:00') }],
   condividi: { esito: 'ok', nome: 'Isabella Rossi', utente: 'u-isa' },
   contatti: [{ id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }],
+  avvio: null,   // cosa risponde «avvio per i passi» (nota 055): le prove mettono la riga di Isabella (Avvio in corso, in pausa, concluso)
   // il Team per «Senza l'app» (05/10 sera): IO1 → FR1 (Carla, con l'app) → SOTTO1 (Dario, senza); FR2 (Luca, senza)
   squadra: [{ partner_id: 'IO1', sponsor_id: null, nome: 'FIORITO, IGNAZIO', telefono: '' }, { partner_id: 'FR1', sponsor_id: 'IO1', nome: 'ROSSI, CARLA', telefono: '+393331112222' },
     { partner_id: 'SOTTO1', sponsor_id: 'FR1', nome: 'VERDI, DARIO', telefono: '3334445555' }, { partner_id: 'FR2', sponsor_id: 'IO1', nome: 'BIANCHI, LUCA', telefono: '' }],
@@ -105,9 +106,10 @@ const stub = {
     : nome === 'nuovo appuntamento' ? { data: { id: 'az-nuova' }, error: null }
     : nome === 'squadra per l\'invito' ? { data: finto.squadra, error: null }
     : nome === 'utenti con l\'app' ? { data: finto.conApp, error: null }
+    : nome === 'avvio per i passi' ? { data: finto.avvio, error: null }   // la riga dell'Avvio della persona (nota Azioni 055; null = non si sa)
     : nome === 'nuova serata' ? { data: { id: 'sp-nuova', ...(scritture.at(-1) || { args: [{}] }).args[0] }, error: null }
     : { data: [{ id: 'nuovo-1' }], error: null }),
-  MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50, MB21Mappa: require(path.join(BASE, 'mappa.js')),
+  MB21Agenda: A, MB21Icone, MB21Spazi, app, AG, LIMITE_SENZA_ESITO: 50, MB21Mappa: require(path.join(BASE, 'mappa.js')), MB21Lista: require(path.join(BASE, 'lista.js')),
   ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI },   // il motore vero (contoGiorno), con l'oggi fermo
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,

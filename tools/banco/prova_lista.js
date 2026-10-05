@@ -414,6 +414,11 @@ prova('Dati personali: un elenco solo per modulo e sezione Dati, nell\'ordine di
 
 prova('Avvio di un nuovo: il passo fatto nell\'incontro → la sua riga in «Il mio avvio»; solo per l\'incontro di Avvio e per i passi che hanno una riga', () => {
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'Motivazione'), 'onb_sogno');
+  // dove sta il partner nell'Avvio, per i passi suggeriti del modulo «+» (nota Azioni 055)
+  assert.deepEqual(L.situazioneAvvio({ id: 'x', onb_sogno: true, onb_contatti: true, onb_ordine: false }), { nuovo: true, fermo: false, fatti: ['Motivazione', 'Telefonate'] });
+  assert.deepEqual(L.situazioneAvvio({ id: 'x', avvio_in_pausa_dal: '2026-09-01', onb_sogno: true }), { nuovo: false, fermo: true, fatti: ['Motivazione'] });
+  assert.deepEqual(L.situazioneAvvio({ id: 'x', avvio_concluso_il: '2026-09-01', avvio_in_pausa_dal: '2026-08-01' }), { nuovo: false, fermo: false, fatti: [] });
+  assert.equal(L.situazioneAvvio(null), null);
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'ListaStart'), 'onb_lista_start');
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'OrdineStart'), 'onb_ordine');
   assert.equal(L.passoAvvioDa('Appuntamento', 'Avvio', 'RolePlay'), 'onb_role_play');
