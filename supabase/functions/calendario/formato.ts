@@ -59,14 +59,16 @@ export function eventoSpazio(s: Spazio, adesso: Date) {
 // condivisa da Ignazio. Righe della funzione `impegni_ricevuti_di`. Niente avvisi push: l'avviso lo dà il calendario personale, quindi entrano qui.
 // Titolo «MB21 · PM 1a1 · da Ignazio»; nella descrizione il link della chiamata e, se condivisi, i punti da trattare; UID fisso `ricevuto-<origine>-<id>@mb21`.
 export type Ricevuto = { origine: string; id: string; inizio: string; fine: string | null; titolo: string; da_nome: string | null; link: string | null;
-  punti: { t: string; fatto?: boolean }[] | null; risposta?: string | null };
+  luogo?: string | null; punti: { t: string; fatto?: boolean }[] | null; risposta?: string | null };
 export function eventoRicevuto(r: Ricevuto, adesso: Date) {
   const fine = r.fine || Date.parse(r.inizio) + 3600000;
   const punti = Array.isArray(r.punti) ? r.punti.filter(p => p && typeof p.t === 'string' && p.t.trim()).map(p => `${p.fatto ? '✓' : '•'} ${p.t}`) : [];
   const dettagli = [r.link ? `Chiamata: ${r.link}` : '', punti.length ? ['Punti da trattare:', ...punti].join('\n') : ''].filter(Boolean).join('\n');
+  const luogo = String(r.luogo ?? '').replace(/\s+/g, ' ').trim();   // il posto, dal vivo (Ignazio 05/10): LOCATION, così il Calendario mostra la mappa
   return ['BEGIN:VEVENT', `UID:ricevuto-${r.origine}-${r.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(r.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
     `SUMMARY:${testoIcs(`MB21 · ${r.titolo} · da ${r.da_nome || '—'}`)}`,
+    ...(luogo ? [`LOCATION:${testoIcs(luogo)}`] : []),
     ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     ...(r.risposta === 'non_ci_sono' ? ['STATUS:CANCELLED', 'TRANSP:TRANSPARENT'] : []),   // «Non ci sono»: resta nel calendario, ma non occupa
     'END:VEVENT'];

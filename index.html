@@ -1209,6 +1209,7 @@
   .pt.chiuso { padding: 6px 8px; background: none; }
   .pt-link { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco); padding: 10px 14px; margin-bottom: 8px; border-radius: var(--raggio-bottone); background: var(--accento); color: var(--accento-su); font-weight: 700; font-size: 15px; text-decoration: none; }
   .pt-link svg.ic { width: 20px; height: 20px; }
+  .pt-link.pt-luogo { background: var(--superficie); color: var(--testo); border: 1.5px solid var(--bordo); }   /* il posto, dal vivo: si apre nelle Mappe */
   .pt-testa { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
   .pt-testa b { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-tenue); }
   .pt-testa small { font-size: 12px; color: var(--grigio); }
@@ -3208,10 +3209,10 @@ async function nuovoAppuntamento(opz = {}) {
     velo.querySelector('#na-x').onclick = () => chiudi(null);
     velo.querySelector('#na-no').onclick = () => chiudi(null);
     // `link` e `punti` (nota Pagine 026, 05/10): il link della chiamata online e i punti da trattare, uno per riga; il riquadro dei punti si apre con un tocco
-    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '', link: '', punti: '', serata: '' };
+    const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '', dove: '', punti: '', serata: '' };
     const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
       `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
-    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note', 'link', 'punti', 'serata']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
+    const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note', 'dove', 'punti', 'serata']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
     const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id));
@@ -3275,7 +3276,8 @@ async function nuovoAppuntamento(opz = {}) {
         // Un riquadro solo (Ignazio 05/10: «Su cosa lavorate?» e «Punti da trattare» si cozzavano): in alto i passi dell'incontro con un Partner
         // (cantiere 48, si salvano in `su_cosa` per il coach e il Report), toccati diventano righe dei punti; sotto le righe libere, una per riga.
         if (!soloGiorno) {
-          h += `<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="na-link" type="url" inputmode="url" maxlength="${A.MAX_LINK}" placeholder="Incolla il link di Zoom, Meet, Teams…" value="${esc(campi.link)}"></div>`;
+          // «Dove» (Ignazio 05/10): un campo solo, il link se è online, il posto o l'indirizzo se dal vivo (A.doveDa decide)
+          h += `<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="na-dove" maxlength="${A.MAX_LINK}" autocomplete="off" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo…" value="${esc(campi.dove)}"></div>`;
           const passi = serata() ? [] : A.suCosaPer(st.categoria, st.tipo, st.modalita);
           st.suCosa = st.suCosa.filter(x => passi.includes(x));
           h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga'}</small></label>
@@ -3367,7 +3369,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.condividi === 'linea' && !st.linea) { errore.textContent = 'Scegli la Linea.'; return; }
       const inizio = A.isoDaRoma(campi.giorno, campi.ora);
       const riga = { user_id: opz.userId || visto().id, tipo: st.serataTipo, inizio, durata, nome: MB21Spazi.pulisciNome(campi.serata),
-        link: A.linkChiamata(campi.link), punti: A.puntiDaRighe(campi.punti), condiviso_con: st.condividi, linea_codice: st.condividi === 'linea' ? st.linea : null, punti_condivisi: st.puntiCond };
+        ...A.doveDa(campi.dove), punti: A.puntiDaRighe(campi.punti), condiviso_con: st.condividi, linea_codice: st.condividi === 'linea' ? st.linea : null, punti_condivisi: st.puntiCond };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       const { data, error } = await dbq('nuova serata', supa.from('spazi').insert(riga).select('*').single());
@@ -3402,8 +3404,8 @@ async function nuovoAppuntamento(opz = {}) {
         su_cosa: st.suCosa.length && A.suCosaPer(v.categoria, v.tipo_azione, v.modalita).length ? A.fasiPer(v.categoria, v.tipo_azione, v.modalita).filter(x => st.suCosa.includes(x)) : null,
         // una telefonata scelta a mano entra in coda (nota 012): dal giorno scelto, finché non ha un esito; con l'ora sta anche in Agenda
         scelta_a_mano: v.tipo_azione === 'Contatto' && v.modalita === 'Telefonata', senza_ora: soloGiorno,
-        // il link della chiamata e i punti da trattare (nota 026): solo se scritti
-        link: soloGiorno ? null : A.linkChiamata(campi.link), punti: soloGiorno ? null : A.puntiDaRighe(campi.punti) };
+        // «Dove» (link o posto) e i punti da trattare (nota 026): solo se scritti
+        ...(soloGiorno ? { link: null, luogo: null } : A.doveDa(campi.dove)), punti: soloGiorno ? null : A.puntiDaRighe(campi.punti) };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto

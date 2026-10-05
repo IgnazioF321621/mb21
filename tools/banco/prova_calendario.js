@@ -95,7 +95,9 @@ const fs = require('node:fs'), path = require('node:path');
     assert.equal(campo(e, 'DTSTART'), 'DTSTART;TZID=Europe/Rome:20261007T200000'); assert.equal(campo(e, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T213000');
     assert.equal(campo(e, 'SUMMARY'), 'SUMMARY:MB21 · Serata Linea Rossi · da Ignazio');
     assert.equal(campo(e, 'DESCRIPTION'), 'DESCRIPTION:Chiamata: https://zoom.us/j/555\\nPunti da trattare:\\n✓ Benvenuto ai nuovi\\n• Risultati del mese');
-    assert.equal(campo(e, 'STATUS'), null);
+    assert.equal(campo(e, 'STATUS'), null); assert.equal(campo(e, 'LOCATION'), null);
+    const dalVivo = F.eventoRicevuto({ ...r, link: null, luogo: ' Hotel Villa Rosa,  Catania ' }, ADESSO);
+    assert.equal(campo(dalVivo, 'LOCATION'), 'LOCATION:Hotel Villa Rosa\\, Catania');   // il posto, dal vivo: il Calendario mostra la mappa
     const no = F.eventoRicevuto({ ...r, risposta: 'non_ci_sono', link: null, punti: null, fine: null }, ADESSO);
     assert.equal(campo(no, 'STATUS'), 'STATUS:CANCELLED'); assert.equal(campo(no, 'TRANSP'), 'TRANSP:TRANSPARENT');
     assert.equal(campo(no, 'DESCRIPTION'), null); assert.equal(campo(no, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T210000');   // senza fine: un'ora

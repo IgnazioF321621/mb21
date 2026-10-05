@@ -35,6 +35,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
 .cal b { font-size: 14px; }
 .nomi { font-size: 13px; color: var(--testo-soft); line-height: 1.45; }
 .nomi b { color: var(--testo); }
+.pt-link.pt-luogo { background: var(--superficie); color: #10151F !important; border: 1.5px solid var(--bordo); }
 .tel h3, .tel h4, .tel label, .tel .mc-testa b, .tel .pt-testo, .tel .ric-nuovo b, .tel .cd-conto, .tel .nomi b, .tel .cal b, .tel .cal, .tel .pt-testa b, .tel .ag-imp span { color: #10151F !important; }
 .tel .ag-imp small, .tel .ric-nuovo > span, .tel .pt-testa small { color: #5A6475 !important; }
 </style>
@@ -54,7 +55,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
   var TIPI = ['Counseling', 'Avvio', 'PM 1a1', 'Follow Up'];
   var PASSI = { 'Counseling': ['Counseling a un partner', 'Counseling con l\\'upline', 'Il perché'], 'Avvio': ['Motivazione', 'Lista nomi', 'Primo ordine', 'Telefonate'], 'PM 1a1': ['Il piano', 'Il perché'], 'Follow Up': ['Domande', 'Prossimo passo'] };
   var DURATE = [[30, '30 min'], [60, '1 ora'], [90, '1h 30'], [120, '2 ore']];
-  var st = { cosa: null, persona: null, tipo: null, linea: null, serataTipo: 'Team', nome: '', giorno: '2026-10-08', ora: '18:30', durata: 60, link: '', punti: '', condividi: null, puntiCond: null, salvato: false, risposte: {} };
+  var st = { cosa: null, persona: null, tipo: null, linea: null, serataTipo: 'Team', nome: '', giorno: '2026-10-08', ora: '18:30', durata: 60, dove: '', punti: '', condividi: null, puntiCond: null, salvato: false, risposte: {} };
   var io = document.getElementById('io'), loro = document.getElementById('loro'), chiTitolo = document.getElementById('chi-titolo');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function ic(n) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-' + n + '"/></svg>'; }
@@ -63,6 +64,10 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
   var persona = function () { return PERSONE.filter(function (p) { return p.id === st.persona; })[0]; };
   var linea = function () { return LINEE.filter(function (l) { return l.id === st.linea; })[0]; };
   var serata = function () { return st.cosa === 'team' || st.cosa === 'linea'; };
+  var eLink = function () { return /^(https?:\\/\\/)?[^\\s/.]+\\.[^\\s]+$/i.test(st.dove); };
+  var linkDi = function () { return !st.dove ? '' : eLink() ? (/^https?:/i.test(st.dove) ? st.dove : 'https://' + st.dove) : ''; };
+  var luogoDi = function () { return st.dove && !eLink() ? st.dove : ''; };
+  var doveHtml = function () { return linkDi() ? '<a class="pt-link" href="' + esc(linkDi()) + '" target="_blank" rel="noopener">' + ic('chiamata') + ' Entra nella chiamata</a>' : luogoDi() ? '<a class="pt-link pt-luogo" href="https://maps.apple.com/?q=' + encodeURIComponent(luogoDi()) + '" target="_blank" rel="noopener">' + ic('mappa') + ' ' + esc(luogoDi()) + '</a>' : ''; };
   var puntiLista = function () { return st.punti.split('\\n').map(function (x) { return x.trim(); }).filter(Boolean); };
   var titolo = function () { return serata() ? (st.nome || (st.serataTipo === 'LOS' ? 'Incontro LdS' : 'Incontro di Team')) : (st.tipo || 'Appuntamento') + ' · ' + (persona() ? persona().nome : ''); };
   var fine = function () { var m = +st.ora.slice(0, 2) * 60 + +st.ora.slice(3) + st.durata; return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2); };
@@ -87,7 +92,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
       + (st.cosa === 'linea' ? '<div class="campo" style="margin-top:10px"><label>Quale Linea? <small>uno dei tuoi frontali</small></label>' + pill('linea', LINEE.map(function (l) { return [l.id, l.nome]; }), st.linea) + '</div>' : '')
       + (serata() ? '<div class="campo"><label>Serata <small>Team o LdS</small></label>' + pill('serataTipo', [['Team', 'Team'], ['LOS', 'LdS']], st.serataTipo) + '</div><div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="f-nome" maxlength="60" placeholder="Il nome, la tipologia, la linea o la squadra" value="' + esc(st.nome) + '"></div>' : ''), !!st.cosa && false);
     h += liv(2, l1ok(), 'Quando?', '<div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi"><input id="f-giorno" type="date" value="' + st.giorno + '"><input id="f-ora" type="time" value="' + st.ora + '"></div></div><div class="campo"><label>Durata</label>' + pill('durata', DURATE, st.durata) + '</div>');
-    h += liv(3, l1ok() && l3ok(), 'Link e punti da trattare', '<div class="campo"><label>Link della chiamata <small>se è online</small></label><input id="f-link" type="url" placeholder="Incolla il link di Zoom, Meet, Teams…" value="' + esc(st.link) + '"></div><div class="campo"><label>Punti da trattare <small>' + (st.cosa === 'persona' ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga') + '</small></label>' + (st.cosa === 'persona' ? '<div class="ag-scelte" data-p="passo" style="margin-bottom:8px">' + PASSI[st.tipo].map(function (x) { return '<button type="button" data-v="' + esc(x) + '" class="' + (puntiLista().indexOf(x) >= 0 ? 'scelto' : '') + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '') + '<textarea id="f-punti" rows="3" placeholder="Scrivi un punto per riga">' + esc(st.punti) + '</textarea></div>');
+    h += liv(3, l1ok() && l3ok(), 'Dove e punti da trattare', '<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="f-dove" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo…" value="' + esc(st.dove) + '"></div><div class="campo"><label>Punti da trattare <small>' + (st.cosa === 'persona' ? 'tocca un passo, o scrivi: uno per riga' : 'uno per riga') + '</small></label>' + (st.cosa === 'persona' ? '<div class="ag-scelte" data-p="passo" style="margin-bottom:8px">' + PASSI[st.tipo].map(function (x) { return '<button type="button" data-v="' + esc(x) + '" class="' + (puntiLista().indexOf(x) >= 0 ? 'scelto' : '') + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '') + '<textarea id="f-punti" rows="3" placeholder="Scrivi un punto per riga">' + esc(st.punti) + '</textarea></div>');
     h += liv(4, l1ok() && l3ok(), 'Condividi con', pill('condividi', sceltaCond(), st.condividi)
       + (st.cosa === 'persona' && persona() && persona().cat !== 'Partner' ? '<p class="vn-aiuto">' + esc(persona().nome) + ' è un ' + esc(persona().cat) + ': non ha l\\'app, non si può condividere.</p>' : '')
       + (st.cosa === 'persona' && persona() && persona().cat === 'Partner' && !persona().app ? '<div class="cd" style="margin-top:10px"><div class="pt-testa"><b>' + esc(persona().nome) + ' non usa ancora MB21</b></div><div class="pt-comandi"><button type="button" class="link" data-azione="invita">' + ic('invito') + ' Invitalo nell\\'app</button></div></div>' : '')
@@ -107,7 +112,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
   function disegnaDopo() {
     var p = puntiLista();
     var h = '<div class="foglio alto"><div class="testa-foglio"><h3>' + esc(titolo()) + '</h3></div><p>' + esc(data()) + ' · ' + st.ora + '–' + fine() + '</p>';
-    if (st.link) h += '<a class="pt-link" href="' + esc(st.link) + '" target="_blank" rel="noopener">' + ic('chiamata') + ' Entra nella chiamata</a>';
+    h += doveHtml();
     if (p.length) h += '<div class="pt"><div class="pt-testa"><b>Punti da trattare</b><small>Trattati 0 su ' + p.length + '</small></div>' + p.map(function (t) { return '<div class="pt-riga"><button type="button" class="spunta"></button><span class="pt-testo">' + esc(t) + '</span><button type="button" class="pt-dafare">→ Da fare</button></div>'; }).join('') + '</div>';
     if (condiviso()) h += '<div class="cd"><div class="pt-testa"><b>Condiviso con ' + esc(st.cosa === 'team' ? 'tutto il Team' : st.cosa === 'linea' ? 'la Linea ' + linea().nome : persona().nome) + '</b><small>' + (st.puntiCond === '1' ? 'vedono i punti' : 'senza i punti') + '</small></div>' + risposteHtml() + '<div class="pt-comandi"><button type="button" class="link" data-azione="punti">' + (st.puntiCond === '1' ? 'Nascondi i punti' : 'Fai vedere i punti') + '</button><button type="button" class="link" data-azione="togli">Non condividere più</button></div></div>';
     else h += '<div class="cd chiuso"><button type="button" class="link" data-azione="condividi">' + ic('condividi') + ' Condividi con ' + esc(st.cosa === 'team' ? 'tutto il Team' : st.cosa === 'linea' ? 'la Linea' : persona().nome) + '</button></div>';
@@ -125,16 +130,16 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
     var uno = d[0], p = st.puntiCond === '1' ? puntiLista() : [], t = esc(titolo().replace(' · ' + (persona() ? persona().nome : ''), '')), r = st.risposte[uno];
     var h = '<p class="ricevente">Nel telefono di <b>' + esc(uno) + '</b>' + (d.length > 1 ? ' (e di altri ' + (d.length - 1) + ')' : '') + (st.salvato ? '' : ' · appena salvi') + '</p>';
     // il pop-up all'apertura
-    if (!r) h += '<div class="foglio ric-foglio"><div class="testa-foglio"><h3>Hai un nuovo appuntamento</h3></div><div class="ric-nuovo"><b>' + t + '</b><span>da Ignazio · ' + esc(data()) + ' · ' + st.ora + '–' + fine() + '</span>' + (st.link ? '<a class="link" href="' + esc(st.link) + '" target="_blank" rel="noopener">Link della chiamata</a>' : '') + '<div class="ag-scelte ric-risposta"><button type="button" data-r="ci_sono">Partecipo</button><button type="button" data-r="non_ci_sono">Non posso</button><button type="button" class="dopo" data-r="dopo">Decido dopo</button></div></div></div>';
+    if (!r) h += '<div class="foglio ric-foglio"><div class="testa-foglio"><h3>Hai un nuovo appuntamento</h3></div><div class="ric-nuovo"><b>' + t + '</b><span>da Ignazio · ' + esc(data()) + ' · ' + st.ora + '–' + fine() + '</span>' + (linkDi() ? '<a class="link" href="' + esc(linkDi()) + '" target="_blank" rel="noopener">Link della chiamata</a>' : luogoDi() ? '<a class="link" href="https://maps.apple.com/?q=' + encodeURIComponent(luogoDi()) + '" target="_blank" rel="noopener">' + ic('mappa') + ' ' + esc(luogoDi()) + '</a>' : '') + '<div class="ag-scelte ric-risposta"><button type="button" data-r="ci_sono">Partecipo</button><button type="button" data-r="non_ci_sono">Non posso</button><button type="button" class="dopo" data-r="dopo">Decido dopo</button></div></div></div>';
     // la riga in Agenda
     h += '<p class="rit">In MB Plan, ' + esc(data()) + '</p><div class="ag-impegni"><button type="button" class="ag-imp ric-imp' + (r === 'non_ci_sono' ? ' noci' : '') + '"><i></i><span>' + t + '<small>da Ignazio' + (r === 'ci_sono' ? ' · Partecipo' : r === 'non_ci_sono' ? ' · Non posso' : ' · nuovo') + '</small></span><b>' + st.ora + '–' + fine() + '</b></button></div>';
     // il foglio
     h += '<p class="rit">Toccando la riga</p><div class="foglio ric-foglio"><div class="testa-foglio"><h3>' + t + '</h3></div><p>' + esc(data()) + ' · ' + st.ora + '–' + fine() + '</p><div class="vn-aiuto">Te lo ha mandato <b>Ignazio</b>: sta nella tua Agenda e nel tuo calendario. </div>'
-      + (st.link ? '<a class="pt-link" href="' + esc(st.link) + '" target="_blank" rel="noopener">' + ic('chiamata') + ' Entra nella chiamata</a>' : '')
+      + doveHtml()
       + (p.length ? '<div class="pt pt-lettura"><div class="pt-testa"><b>Punti da trattare</b><small>li spunta chi organizza</small></div>' + p.map(function (x) { return '<div class="pt-riga"><span class="pt-segno">•</span><span class="pt-testo">' + esc(x) + '</span></div>'; }).join('') + '</div>' : '')
       + '<div class="campo"><label>Partecipi?</label><div class="ag-scelte ric-risposta"><button type="button" data-r="ci_sono" class="' + (r === 'ci_sono' ? 'scelto' : '') + '">Partecipo</button><button type="button" data-r="non_ci_sono" class="' + (r === 'non_ci_sono' ? 'scelto' : '') + '">Non posso</button></div></div></div>';
     // il calendario personale
-    h += '<p class="rit">Nel suo Calendario Apple / Google</p><div class="cal"' + (r === 'non_ci_sono' ? ' style="opacity:.55;text-decoration:line-through"' : '') + '><b>MB21 · ' + t + ' · da Ignazio</b><div>' + st.ora + '–' + fine() + '</div>' + (st.link || p.length ? '<div style="white-space:pre-line;margin-top:4px">' + (st.link ? 'Chiamata: ' + esc(st.link) + '\\n' : '') + (p.length ? 'Punti da trattare:\\n' + p.map(function (x) { return '• ' + esc(x); }).join('\\n') : '') + '</div>' : '') + '</div>';
+    h += '<p class="rit">Nel suo Calendario Apple / Google</p><div class="cal"' + (r === 'non_ci_sono' ? ' style="opacity:.55;text-decoration:line-through"' : '') + '><b>MB21 · ' + t + ' · da Ignazio</b><div>' + st.ora + '–' + fine() + '</div>' + (luogoDi() ? '<div>📍 ' + esc(luogoDi()) + '</div>' : '') + (linkDi() || p.length ? '<div style="white-space:pre-line;margin-top:4px">' + (linkDi() ? 'Chiamata: ' + esc(linkDi()) + '\\n' : '') + (p.length ? 'Punti da trattare:\\n' + p.map(function (x) { return '• ' + esc(x); }).join('\\n') : '') + '</div>' : '') + '</div>';
     if (d.length > 1) h += '<p class="rit">Solo qui nella simulazione: rispondi al posto degli altri</p><div class="nomi">' + d.slice(1).map(function (n) { return '<div>' + esc(n) + ': <b>' + (st.risposte[n] === 'ci_sono' ? 'Partecipa' : st.risposte[n] === 'non_ci_sono' ? 'Non può' : 'Senza risposta') + '</b> <button type="button" class="link" data-rn="' + esc(n) + '" data-r="ci_sono">partecipa</button> <button type="button" class="link" data-rn="' + esc(n) + '" data-r="non_ci_sono">non può</button></div>'; }).join('') + '</div>';
     loro.innerHTML = h;
   }
@@ -152,7 +157,7 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
     var a = ev.target.closest('[data-azione]'); if (!a) return;
     var z = a.getAttribute('data-azione');
     if (z === 'salva') { if (a.disabled) return; st.salvato = true; }
-    if (z === 'annulla') { st = { cosa: null, persona: null, tipo: null, linea: null, serataTipo: 'Team', nome: '', giorno: '2026-10-08', ora: '18:30', durata: 60, link: '', punti: '', condividi: null, puntiCond: null, salvato: false, risposte: {} }; }
+    if (z === 'annulla') { st = { cosa: null, persona: null, tipo: null, linea: null, serataTipo: 'Team', nome: '', giorno: '2026-10-08', ora: '18:30', durata: 60, dove: '', punti: '', condividi: null, puntiCond: null, salvato: false, risposte: {} }; }
     if (z === 'togli') { st.condividi = 'no'; st.risposte = {}; }
     if (z === 'condividi') { st.condividi = st.cosa === 'team' ? 'team' : st.cosa === 'linea' ? 'linea' : 'persona'; st.puntiCond = st.puntiCond || '0'; }
     if (z === 'punti') st.puntiCond = st.puntiCond === '1' ? '0' : '1';
@@ -164,10 +169,10 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
     if (id === 'f-nome') { st.nome = t.value; disegnaLoro(); var b = io.querySelector('.mc-testa b'); if (b) b.textContent = st.nome || titolo(); }
     if (id === 'f-giorno') { st.giorno = t.value; disegnaLoro(); }
     if (id === 'f-ora') { st.ora = t.value; disegnaLoro(); }
-    if (id === 'f-link') { st.link = t.value.trim(); disegnaLoro(); }
+    if (id === 'f-dove') { st.dove = t.value.trim(); disegnaLoro(); }
     if (id === 'f-punti') { st.punti = t.value; disegnaLoro(); }
   });
-  io.addEventListener('change', function (ev) { if (['f-giorno', 'f-ora', 'f-link', 'f-punti', 'f-nome'].indexOf(ev.target.id) >= 0) disegnaIo(); });
+  io.addEventListener('change', function (ev) { if (['f-giorno', 'f-ora', 'f-dove', 'f-punti', 'f-nome'].indexOf(ev.target.id) >= 0) disegnaIo(); });
   loro.addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-r]'); if (!b) return;
     var r = b.getAttribute('data-r'), n = b.getAttribute('data-rn') || destinatari()[0];
@@ -175,8 +180,8 @@ body { background: var(--pv-fondo); color: var(--testo); margin: 0; padding: 0; 
     st.risposte[n] = r; tutto();
   });
   // solo per le foto di controllo: #demo = un appuntamento con Isabella già compilato; #demoteam = una serata di Linea salvata
-  if (location.hash === '#demo') Object.assign(st, { cosa: 'persona', persona: 'isa', tipo: 'Counseling', link: 'https://meet.google.com/abc-defg-hij', punti: 'Il perché\\nLista nomi: i primi 10', condividi: 'persona', puntiCond: '1' });
-  if (location.hash === '#demoteam') Object.assign(st, { cosa: 'linea', linea: 'FR1', nome: 'Serata Linea Rossi', link: 'https://zoom.us/j/555', punti: 'Benvenuto ai nuovi\\nRisultati del mese', condividi: 'linea', puntiCond: '0', salvato: true, risposte: { 'Anna Verdi': 'ci_sono', 'Carla Rossi': 'non_ci_sono' } });
+  if (location.hash === '#demo') Object.assign(st, { cosa: 'persona', persona: 'isa', tipo: 'Counseling', dove: 'https://meet.google.com/abc-defg-hij', punti: 'Il perché\\nLista nomi: i primi 10', condividi: 'persona', puntiCond: '1' });
+  if (location.hash === '#demoteam') Object.assign(st, { cosa: 'linea', linea: 'FR1', nome: 'Serata Linea Rossi', dove: 'Hotel Villa Rosa, Catania', punti: 'Benvenuto ai nuovi\\nRisultati del mese', condividi: 'linea', puntiCond: '0', salvato: true, risposte: { 'Anna Verdi': 'ci_sono', 'Carla Rossi': 'non_ci_sono' } });
   tutto();
 })();
 </script>`;
