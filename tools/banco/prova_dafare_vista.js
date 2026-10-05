@@ -96,6 +96,7 @@ prova('Il filtro sopra la lista mostra solo i legami presenti e nasconde le altr
   P.vista('giorno');
   assert.match(P.app.innerHTML, /data-filtro="Team"/); assert.match(P.app.innerHTML, /data-filtro="persona"/); assert.match(P.app.innerHTML, /data-filtro="no"/);
   assert.doesNotMatch(P.app.innerHTML, /data-filtro="Amway"/);    // di Amway non c'è nessuna cosa oggi
+  assert.match(P.app.innerHTML, /data-filtro="Team">Team <b>1<\/b>/);   // il conto delle ancora da fare sulla pastiglia
   await P.app.clic('[data-filtro="Team"]');
   assert.equal(P.AG.filtro, 'Team');
   const h = P.app.innerHTML.slice(P.app.innerHTML.indexOf('Da fare oggi'));

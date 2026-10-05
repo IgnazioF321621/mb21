@@ -195,11 +195,12 @@ prova('I richiami stanno SOPRA la giornata, in pastiglie corte, e in fondo non r
 
 prova('Le cose da fare con l\'ora stanno nella Timeline, tratteggiate, e non fanno scattare «si accavallano»', () => {
   const prima = AG.cose;
-  AG.cose = [...prima, { id: 'k9', testo: 'Preparare il PM', giorno: OGGI, ora: '18:30:00', durata: 45, fatto_il: null }];   // alle 18:30 ci sono già Pino e Anna
+  AG.cose = [...prima, { id: 'k9', testo: 'Preparare il PM', giorno: OGGI, ora: '18:30:00', durata: 45, fatto_il: null, legato_a: 'Team' }];   // alle 18:30 ci sono già Pino e Anna
   const g = V.vista('orario');
   AG.cose = prima;
   assert.match(g, /class="ag-ev ag-cosa[^"]*" data-cosa-blocco="cosa-k9"/);
   assert.match(g, /Preparare il PM/);
+  assert.match(g, /class="ag-ev ag-cosa lg-Team" data-cosa-blocco="cosa-k9"/);   // il colore del legame anche nella Timeline (05/10)
   assert.match(g, /2 impegni si accavallano/);   // conta solo Pino e Anna, non la cosa da fare
 });
 

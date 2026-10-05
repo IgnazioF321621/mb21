@@ -180,10 +180,11 @@ function nuovaCosaHtml(scala, segnaposto) {
 }
 // Il filtro sopra la lista: solo i legami che hanno almeno una cosa (con una sola cosa o un solo legame non serve)
 function filtroLegamiHtml(cose) {
-  const A = MB21Agenda, per = new Set(cose.map(c => { const l = A.legameDi(c); return l ? l.tipo : 'no'; }));
-  if (cose.length < 3 || per.size < 2) return '';
-  const voci = [...A.LEGAMI.map(([k, n]) => [k, n]), ['persona', 'Persone'], ['no', 'Da collegare']].filter(([k]) => per.has(k));
-  return `<div class="lg-filtro" role="group" aria-label="Mostra solo">${[['', 'Tutte'], ...voci].map(([k, n]) => `<button type="button" class="${(AG.filtro || '') === k ? 'scelto' : ''}" data-filtro="${k}">${esc(n)}</button>`).join('')}</div>`;
+  const A = MB21Agenda, quante = {};   // quante ancora da fare per ogni legame (il conto sta sulla pastiglia)
+  for (const c of cose) { const l = A.legameDi(c), k = l ? l.tipo : 'no'; quante[k] = (quante[k] || 0) + (c.fatto_il ? 0 : 1); }
+  if (cose.length < 3 || Object.keys(quante).length < 2) return '';
+  const voci = [...A.LEGAMI.map(([k, n]) => [k, n]), ['persona', 'Persone'], ['no', 'Da collegare']].filter(([k]) => k in quante);
+  return `<div class="lg-filtro" role="group" aria-label="Mostra solo">${[['', 'Tutte'], ...voci].map(([k, n]) => `<button type="button" class="${(AG.filtro || '') === k ? 'scelto' : ''}" data-filtro="${k}">${esc(n)}${k ? ` <b>${quante[k]}</b>` : ''}</button>`).join('')}</div>`;
 }
 const passaFiltro = c => { const f = AG.filtro; if (!f) return true; const l = MB21Agenda.legameDi(c); return f === 'no' ? !l : !!l && l.tipo === f; };
 
@@ -1300,7 +1301,8 @@ function grigliaGiorno(eventi, opz) {
       continue;
     }
     if (e._cosa) {   // una cosa da fare con l'ora: tratteggiata, col cerchietto; il tocco la spunta
-      h += `<button class="ag-ev ag-cosa${e.fatto ? ' fatta' : ''}${alto < 26 ? ' bassa' : ''}" data-cosa-blocco="${esc(e.id)}" aria-label="${esc(e.testo)}${e.fatto ? ', fatta' : ''}"
+      const lgc = A.legameDi(e._cosa.cosa);   // il colore del legame (05/10): Team verde, LdS viola, Network 21 blu, Amway arancio, persona grigio
+      h += `<button class="ag-ev ag-cosa${lgc ? ' lg-' + esc(lgc.tipo) : ''}${e.fatto ? ' fatta' : ''}${alto < 26 ? ' bassa' : ''}" data-cosa-blocco="${esc(e.id)}" aria-label="${esc(e.testo)}${lgc ? ', ' + esc(lgc.nome) : ''}${e.fatto ? ', fatta' : ''}"
         style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sin}% + 2px);width:calc(${larga}% - 6px)"><i></i><b>${esc(e.testo)}</b>${alto < 32 ? '' : `<small>${esc(A.orario(e))}</small>`}</button>`;
       continue;
     }
