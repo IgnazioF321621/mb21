@@ -1755,7 +1755,8 @@ function extraEvento(e) {
   // la prima telefonata a una persona mai chiamata: la riga di preparazione, la stessa della coda (cantiere 48)
   // … e prima di una Presentazione (Consulenza PRD) ancora da fare, il consiglio di prepararla (regola 4 del coach, nota Azioni 020)
   const prima = !richiamo && !e.esito && e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? preparaChiamataHtml(e.contatto_id) : richiamo ? '' : preparaPresentazioneHtml(e);
-  const suCosa = !richiamo && Array.isArray(e.su_cosa) && e.su_cosa.length ? `<div class="note-ev">Su cosa lavorate: ${esc(e.su_cosa.map(A.nomePasso).join(' · '))}</div>` : '';
+  // «Su cosa lavorate» solo se l'appuntamento non ha i punti da trattare (dal 05/10 i passi toccati sono già righe dei punti)
+  const suCosa = !richiamo && Array.isArray(e.su_cosa) && e.su_cosa.length && !A.puntiDi(e).length ? `<div class="note-ev">Su cosa lavorate: ${esc(e.su_cosa.map(A.nomePasso).join(' · '))}</div>` : '';
   return `${ricordo}${prima}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${testoConLink(e.note)}</div>` : ''}
       ${richiamo ? '' : puntiHtml(e, 'azioni')}
