@@ -69,7 +69,8 @@ Il database Supabase è **uno solo, quello vero**: lo usano ogni giorno i partne
   2. rifà le prove di tutto quello che esce;
   3. applica le modifiche al database approvate e in attesa (§ 4);
   4. mette `APP_VERSION` e i `?v=` con l'ora di adesso (§ 9);
-  5. pubblica (`git push` su `origin/main`), controlla il sito e fa il resoconto.
+  5. pubblica (`git push` su `origin/main`), controlla il sito e fa il resoconto;
+  6. **copia privata di `~/mb21-import`** (dal 05/10/2026, archivio GitHub **privato** `IgnazioF321621/mb21-import`, solo la parte senza nomi di clienti): copia la memoria delle sessioni in `~/mb21-import/memoria-sessioni/` (`rsync -a --delete <cartella memory>/ memoria-sessioni/`), controlla che nei file nuovi non ci siano email, telefoni, chiavi o nomi di partner (`grep`), salva un commit lì e fa `git -C ~/mb21-import push`. Mai spingere i CSV, la foto dei codici o `prodotti/` (sono già fuori dalla storia per `.gitignore`).
 - Se il lavoro di una sessione ha bisogno di un pezzo non salvato di un'altra, non lo si prende: lo si dice a Ignazio.
 
 ## 6. Non rompere quello che funziona
