@@ -51,6 +51,30 @@ prova('ricerca: nome, professione, telefono, in qualunque punto, mentre si scriv
   assert.deepEqual(ids(L.filtraContatti(righe, { filtro: 'prospect', testo: 'bianchi', utenteId: IO })), []);   // si combina col filtro
 });
 
+prova('ricerca con gli archiviati (nota 012): con un testo, «Lista» e «All» trovano anche gli archiviati, in fondo; senza testo e con gli altri filtri no', () => {
+  const cerca = (testo, filtro = 'lista', admin = false) => ids(L.filtraContatti(righe, { filtro, testo, utenteId: IO, admin }));
+  assert.deepEqual(cerca('verdi'), ['5']);                                // Carla Verdi, archiviata: trovata
+  assert.deepEqual(cerca('carla'), ['5']);
+  assert.deepEqual(cerca('+39333'), ['5']);                               // anche dal telefono
+  assert.deepEqual(cerca('a'), ['2', '6', '7', '3', '1', '5']);           // tutti quelli con una «a» (Bruno Neri no), l'archiviata in fondo
+  assert.deepEqual(cerca('verdi', 'all', true), ['5']);
+  assert.deepEqual(cerca(''), ['2', '4', '6', '7', '3', '1']);            // senza testo come prima: archiviati fuori
+  assert.deepEqual(cerca('  '), ['2', '4', '6', '7', '3', '1']);
+  assert.deepEqual(cerca('verdi', 'prospect'), []);                       // gli altri filtri non cambiano
+  assert.deepEqual(cerca('verdi', 'archiviati'), ['5']);
+});
+
+prova('nuovo nome già tra gli archiviati (nota 012): stesso nome intero (o telefono), solo tra i miei, solo archiviati', () => {
+  const u = (nome, telefono = '') => ids(L.archiviatiUguali(righe, { nome, telefono, utenteId: IO }));
+  assert.deepEqual(u('carla verdi'), ['5']);
+  assert.deepEqual(u(' CARLA  Verdi '), ['5']);
+  assert.deepEqual(u('Carla'), []);                       // una parola sola: non si avvisa a ogni lettera
+  assert.deepEqual(u('Zeno Rossi'), []);                  // c'è, ma non è archiviato (lo dice il salvataggio)
+  assert.deepEqual(u('Nuova Persona', '+39 333 1112222'), ['5']);   // dal telefono
+  assert.deepEqual(u('Nuova Persona', '+39 333'), []);
+  assert.deepEqual(ids(L.archiviatiUguali(righe, { nome: 'Carla Verdi', telefono: '', utenteId: ALTRO })), []);
+});
+
 prova('numeri nelle pillole: come i filtri; «Lista» senza gli archiviati, che hanno il loro numero', () => {
   const c = L.contaFiltri(righe, { utenteId: IO, admin: true });
   assert.equal(c.lista, 6);
@@ -58,12 +82,12 @@ prova('numeri nelle pillole: come i filtri; «Lista» senza gli archiviati, che 
   assert.equal(c.lista, L.filtraContatti(righe, { filtro: 'lista', utenteId: IO }).length);   // stessa fonte dell'elenco
 });
 
-prova('la scheda si apre su Azioni con telefono e categoria, altrimenti su Dati (anche se archiviata)', () => {
+prova('la scheda si apre su Azioni con telefono e categoria, altrimenti su Dati (anche un archiviato: dal 05/10 si lavora come gli altri)', () => {
   const s = id => L.sezioneIniziale(righe.find(r => r.id === id));
   assert.equal(s('1'), 'azioni');   // telefono e categoria
   assert.equal(s('3'), 'dati');     // manca il telefono
   assert.equal(s('4'), 'dati');     // manca la categoria
-  assert.equal(s('5'), 'dati');     // archiviata
+  assert.equal(s('5'), 'azioni');   // archiviata, con telefono e categoria: come gli altri
   assert.equal(L.sezioneIniziale(null), 'dati');
 });
 

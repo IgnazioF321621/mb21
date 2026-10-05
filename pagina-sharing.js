@@ -37,7 +37,7 @@ async function sezioneSharing() {
 
   // ── il consiglio ──
   let consiglio = '', proposta = null;
-  if (perChi && c.categoria !== 'Archiviato') {
+  if (perChi) {   // anche un archiviato (05/10: si lavora come gli altri)
     const r = MB21Sharing.prossima(materiali, condivisioni, c, SH.saltate);
     if (r.fine) {
       consiglio = `<div class="riquadro sh-fine">${ic('complimenti')} <b>${esc(nome)} ha ricevuto tutte le tracce del percorso.</b><div class="sotto" style="margin:4px 0 0">Se ne vuoi mandare un'altra, aggiungila a mano qui sotto.</div></div>`;
@@ -74,7 +74,7 @@ async function sezioneSharing() {
   }).join('')}</div>` : '<div class="vuoto">Nessuna traccia condivisa finora.</div>';
 
   box.innerHTML = `${consiglio}<h2>Tracce condivise</h2>${elenco}
-    ${c.categoria === 'Archiviato' ? '' : `<button class="sh-mano" id="sh-mano">${ic('piu')} Aggiungi una condivisione a mano</button>`}`;
+    <button class="sh-mano" id="sh-mano">${ic('piu')} Aggiungi una condivisione a mano</button>`;
 
   // riassunto e «per chi è indicata» si aprono e si chiudono al tocco (Ignazio 22/09)
   const apri = document.getElementById('sh-apri');

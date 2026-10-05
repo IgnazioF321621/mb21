@@ -75,12 +75,17 @@
   const diChi = (r, utenteId) => (Array.isArray(utenteId) ? utenteId.includes(r.user_id) : r.user_id === utenteId);
 
   // righe: tutte quelle visibili all'utente (per l'Admin: di tutti i partner)
+  // Con un testo in «Cerca», «Lista» e «All» trovano anche gli archiviati, in fondo (nota Pagine 012, Ignazio 05/10/2026: chi non trovava
+  // un nome messo da parte lo inseriva di nuovo). Senza testo gli archiviati restano fuori, come prima.
+  const eArchiviato = r => r.categoria === 'Archiviato';
   function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az', lettera = null } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
+    const ancheArchiviati = !!piega(testo) && (f === FILTRI.lista || f === FILTRI.all);
+    const dopo = confrontoPer(ordine, oggi);
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && f.prova(r) && corrisponde(r, testo, oggi) && (!lettera || iniziale(r) === lettera))
-      .sort(confrontoPer(ordine, oggi));
+      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo, oggi) && (!lettera || iniziale(r) === lettera))
+      .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || dopo(a, b));
   }
 
   // Lettera con cui inizia il nome così com'è scritto (di solito il nome di battesimo; Ignazio 18/09): A-Z senza accenti, il resto «#»
@@ -139,7 +144,7 @@
   // Sezione con cui si apre la scheda (cantiere 30, Ignazio 18/09: «fare meno azioni possibile»): con telefono e categoria
   // i dati base ci sono → «Azioni»; se ne manca uno (o la scheda è archiviata) → «Dati», così si vede cosa completare.
   function sezioneIniziale(c) {
-    return c && c.telefono && c.categoria && c.categoria !== 'Archiviato' ? 'azioni' : 'dati';
+    return c && c.telefono && c.categoria ? 'azioni' : 'dati';   // anche un archiviato (05/10): si lavora come gli altri
   }
 
   // Telefono dal modulo: prefisso scelto + numero scritto → «+39…» senza spazi. Numero vuoto → null.
@@ -167,6 +172,13 @@
     const cifre = soloCifre(telefono);
     return righe.filter(r => r.user_id === utenteId && r.id !== escludiId &&
       ((n && piega(r.nome) === n) || (cifre.length >= 6 && soloCifre(r.telefono) === cifre)));
+  }
+  // Gli archiviati con lo stesso nome (o telefono) di chi si sta inserendo: nel modulo «+ Nuovo nome», mentre si scrive, l'avviso
+  // «C'è già … tra gli archiviati · Ripristina» (nota Pagine 012). Serve un nome intero (almeno due parole) o un telefono.
+  function archiviatiUguali(righe, { nome, telefono, utenteId }) {
+    const n = piega(nome);
+    if (n.split(' ').length < 2 && soloCifre(telefono).length < 6) return [];
+    return trovaDoppioni(righe, { nome, telefono, utenteId }).filter(eArchiviato);
   }
 
   function contatoreOnboarding(c) {
@@ -413,7 +425,7 @@
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
   const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

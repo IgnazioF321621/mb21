@@ -37,7 +37,8 @@ async function sezioneVendite() {
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
   const oggi = MB21Coda.oggiRoma();
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
-  box.innerHTML = (c.categoria === 'Archiviato' ? '' : '<button class="primario piu-sezione" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>') + `
+  // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
+  box.innerHTML = '<button class="primario piu-sezione" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>' + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
@@ -52,7 +53,7 @@ async function sezioneVendite() {
           ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
-      </button>${MB21Lista.daConsegnare(v) && c.categoria !== 'Archiviato' ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
+      </button>${MB21Lista.daConsegnare(v) ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
   const p = document.getElementById('vendita-piu');
   if (p) p.onclick = () => moduloVendita(null);
   box.querySelectorAll('[data-vendita]').forEach(b => b.onclick = () => moduloVendita(vendite.find(v => v.id === b.dataset.vendita)));
