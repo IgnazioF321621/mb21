@@ -114,25 +114,29 @@ prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scel
   assert.match(s2.v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(s2.v.innerHTML, /id="na-serata"/);
 });
 
-prova('Un riquadro solo «Punti da trattare» (05/10): i passi dell\'incontro con un Partner stanno sopra, toccati diventano righe dei punti (e restano in su_cosa); niente più «Su cosa lavorate?»', async () => {
+prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un selettore che si apre con tutti gli 11 passi (niente pillole); i passi scelti diventano righe dei punti e restano in su_cosa', async () => {
   pulisci();
   const { v, p } = await apri({});
   await contatto(v, 'Isabella Rossi'); await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
-  assert.doesNotMatch(v.innerHTML, /Su cosa lavorate\?/); assert.doesNotMatch(v.innerHTML, /na-punti-apri/);
-  assert.match(v.innerHTML, /Punti da trattare <small>tocca un passo, o scrivi: uno per riga<\/small>/);
-  assert.match(v.innerHTML, /#na-su-cosa|id="na-su-cosa"/); assert.match(v.innerHTML, /id="na-punti"/);
-  await v.clic('#na-su-cosa [data-passo="Motivazione"]');
-  assert.match(v.innerHTML, /data-passo="Motivazione" class="scelto"/);
-  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Il perché<\/textarea>/);
-  v.querySelector('#na-punti').value = 'Il perché\nLista nomi: i primi 10';
-  await v.clic('#na-su-cosa [data-passo="Motivazione"]');   // tolto: sparisce anche dalle righe, la riga libera resta
-  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Lista nomi: i primi 10<\/textarea>/);
-  await v.clic('#na-su-cosa [data-passo="Motivazione"]');
-  v.querySelector('#na-punti').value = 'Lista nomi: i primi 10\nIl perché';
+  assert.doesNotMatch(v.innerHTML, /Su cosa lavorate\?/); assert.doesNotMatch(v.innerHTML, /na-su-cosa|data-passo=/);
+  assert.match(v.innerHTML, /Punti da trattare <small>i passi dell'incontro, o scrivi: uno per riga<\/small>/);
+  assert.match(v.innerHTML, /id="na-passi"><span>Scegli i passi dell'incontro<\/span>/); assert.match(v.innerHTML, /id="na-punti"/);
+  P.scelta.passi = ['Motivazione', 'Telefonate'];            // nel selettore: Il perché e Telefonate (uno di Counseling, uno dell'Avvio)
+  await v.clic('#na-passi');
+  assert.match(v.innerHTML, /id="na-passi"><span>Il perché · Telefonate<\/span>/);
+  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Il perché\nTelefonate<\/textarea>/);
+  v.querySelector('#na-punti').value = 'Il perché\nTelefonate\nLista nomi: i primi 10';
+  P.scelta.passi = ['Telefonate'];                            // tolto «Il perché»: sparisce anche dalle righe, la riga libera resta
+  await v.clic('#na-passi');
+  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Telefonate\nLista nomi: i primi 10<\/textarea>/);
+  v.querySelector('#na-punti').value = 'Telefonate\nLista nomi: i primi 10';   // (il finto DOM non aggiorna .value da solo)
+  P.scelta.passi = null;                                      // Annulla: niente cambia
+  await v.clic('#na-passi');
+  assert.match(v.innerHTML, /id="na-passi"><span>Telefonate<\/span>/);
   await v.clic('#na-si'); await p;
   const r = scritte('azioni', 'insert')[0].args[0];
-  assert.deepEqual(r.su_cosa, ["Motivazione"]);
-  assert.deepEqual(r.punti, [{ t: 'Lista nomi: i primi 10', fatto: false }, { t: 'Il perché', fatto: false }]);
+  assert.deepEqual(r.su_cosa, ['Telefonate']);
+  assert.deepEqual(r.punti, [{ t: 'Telefonate', fatto: false }, { t: 'Lista nomi: i primi 10', fatto: false }]);
 });
 
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {
