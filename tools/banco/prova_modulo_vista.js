@@ -152,8 +152,11 @@ prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ra
   await scegli(v, 'condividi', 'team');
   assert.match(v.innerHTML, /Senza l'app <small>2 non la troveranno/); assert.match(v.innerHTML, /Dario Verdi[\s\S]*Luca Bianchi/);
   assert.doesNotMatch(v.innerHTML, /Ignazio Fiorito/);                     // chi condivide non conta
+  v.querySelector('#na-serata').value = 'Serata Rubino';
   await v.clic('[data-invita="SOTTO1"]');
   assert.equal(P.avvisi.at(-1).t, 'invito:Dario Verdi');
+  assert.equal(P.avvisi.at(-1).telefono, '+393334445555');                 // il numero della squadra, col prefisso
+  assert.match(P.avvisi.at(-1).poi, /^Così trovi «Serata Rubino» di lunedì 21 settembre nella tua Agenda e puoi partecipare\.$/);   // la riga in più sulla serata
   assert.equal(P.scritture.filter(x => x.op !== 'rpc').length, 0);       // nessuna scrittura: solo il foglio del link
 });
 
