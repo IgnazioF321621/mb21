@@ -3436,7 +3436,7 @@ async function nuovoAppuntamento(opz = {}) {
     velo.querySelector('#na-si').onclick = async () => {
       leggiCampi();
       if (serata()) return salvaSerata();
-      // senza orario (nota 012) la telefonata sta sul giorno, alla mezzanotte di Roma: in Agenda non si vede, in coda sì; chiusa, prende l'ora di adesso (chiudi_azione)
+      // senza orario (nota 012) la telefonata sta sul giorno, alla mezzanotte di Roma: in Agenda non si vede, in coda sì; chiusa, prende l'ora di adesso se è di oggi, altrimenti resta sul suo giorno alle 12:00 (chiudi_azione, note 012 e 013)
       const soloGiorno = inCoda();
       const v = { contatto_id: st.contatto && st.contatto.id, categoria: st.categoria, area: st.area, tipo_azione: st.tipo, modalita: st.modalita,
         giorno: campi.giorno, ora: soloGiorno ? '00:00' : campi.ora, ospite: A.conOspite(st.tipo) ? campi.ospite.trim() : '', note: campi.note.trim() };
