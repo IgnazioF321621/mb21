@@ -1660,9 +1660,12 @@ function foglioImpegniNuovi(nuovi) {
 }
 // ── chi organizza: il riquadro «Condividi» ──
 const nomePersona = e => (e.contatti && e.contatti.nome) || 'la persona';
+const SENZA_APP = new Set();   // le azioni la cui persona non usa ancora MB21 (lo dice `condividi_azione`): si scrive e si offre l'invito (Ignazio 05/10)
 function condivisioneAzioneHtml(e) {
   const A = MB21Agenda;
   if (!A.puoCondividereAzione(e)) return '';
+  if (!e.condiviso_con && SENZA_APP.has(e.id)) return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>${esc(nomePersona(e))} non usa ancora MB21</b></div>
+    <div class="pt-comandi"><button type="button" class="link" data-cd-invita>${ic('invito')} Invitalo nell'app</button><button type="button" class="link" data-cd-con>Riprova</button></div></div>`;
   if (!e.condiviso_con) return `<div class="cd chiuso" data-cd="${esc(e.id)}"><button type="button" class="link" data-cd-con>${ic('condividi')} Condividi con ${esc(nomePersona(e))}</button></div>`;
   return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>Condiviso con ${esc(nomePersona(e))}</b><small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small></div>
     <div class="cd-risposte" data-cd-risposte>…</div>
@@ -1687,7 +1690,8 @@ function collegaCondivisioneAzione(el, e, ridisegna) {
     const { data, error } = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: e.id, p_con: con, p_punti: punti }));
     const r = data || {};
     if (error || !r.esito) return mostraToast('Non salvato: controlla la connessione e riprova.');
-    if (r.esito === 'non_usa_app') return mostraToast(`${nomePersona(e)} non usa ancora l'app: non si può condividere`);
+    if (r.esito === 'non_usa_app') { SENZA_APP.add(e.id); ridisegna(); return mostraToast(`${nomePersona(e)} non usa ancora MB21: puoi invitarlo nell'app`); }
+    SENZA_APP.delete(e.id);
     if (r.esito === 'se_stesso') return mostraToast('Questo appuntamento è con te stesso');
     if (r.esito !== 'ok') return mostraToast('Non è un tuo appuntamento');
     localmente(con ? { condiviso_con: r.utente || e.condiviso_con, punti_condivisi: !!punti } : { condiviso_con: null, punti_condivisi: false });
@@ -1698,6 +1702,8 @@ function collegaCondivisioneAzione(el, e, ridisegna) {
   su('[data-cd-con]', () => chiama(true, false, `Condiviso con ${nomePersona(e)}: lo trova nella sua Agenda e nel suo calendario`));
   su('[data-cd-punti]', b => chiama(true, b.dataset.cdPunti === '1', b.dataset.cdPunti === '1' ? `${nomePersona(e)} vede anche i punti` : 'I punti restano solo tuoi'));
   su('[data-cd-togli]', () => chiama(false, false, 'Non più condiviso'));
+  // il link per registrarsi (lo stesso della scheda: foglioLinkInvito, cantiere 32)
+  su('[data-cd-invita]', () => foglioLinkInvito({ da: visto().id, nome: nomePersona(e), telefono: e.contatti && e.contatti.telefono }));
   if (e.condiviso_con) mostraRisposte(blocco, 'azione', e.id);
 }
 // la serata di gruppo (solo l'Admin): con chi, la Linea (uno dei suoi frontali, da `squadra`), i punti sì/no, le risposte con i nomi

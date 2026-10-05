@@ -29,7 +29,7 @@ prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Pa
   assert.doesNotMatch(v.innerHTML, /data-v="team"/);   // Team e Linea solo l'Admin
   assert.doesNotMatch(v.innerHTML, /Vedono anche i punti/);
   await scegli(v, 'condividi', 'persona');
-  assert.match(v.innerHTML, /data-v="persona" class="scelto"/); assert.match(v.innerHTML, /Vedono anche i punti da trattare\?/);
+  assert.match(v.innerHTML, /data-v="persona" class="scelto"/); assert.match(v.innerHTML, /Vede anche i punti da trattare\?/);   // una persona sola: «Vede»
   await scegli(v, 'puntiCond', '1');
   assert.match(v.innerHTML, /data-scelta="puntiCond"[\s\S]*?data-v="1" class="scelto"/);
 });

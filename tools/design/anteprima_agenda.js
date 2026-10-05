@@ -112,6 +112,7 @@ const stub = {
   collegaEsiti: () => {}, mostraToast: (t, annulla) => { avvisi.push({ t, annulla }); }, mostraTab: () => {},
   spostaAppuntamento: () => {}, foglioAzione: () => {}, eliminaAppuntamento: () => {},
   // per il modulo «+» vero: i contatti della lista, niente spazi liberi, niente domande dopo il salvataggio
+  foglioLinkInvito: c => { avvisi.push({ t: 'invito:' + c.nome }); },
   leggiContattiMiei: async () => finto.contatti, spaziLiberi: async () => [], legaInizioFine() {}, domandaInvito() {}, tracciaDiApertura() {}, contattiMiei: null, LS: { righe: [] },
   aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
