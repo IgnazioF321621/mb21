@@ -236,9 +236,10 @@
     ci_sono: (risposte || []).filter(r => r.risposta === 'ci_sono').map(r => r.nome),
     non_ci_sono: (risposte || []).filter(r => r.risposta === 'non_ci_sono').map(r => r.nome),
     senza: (risposte || []).filter(r => !r.risposta).map(r => r.nome) });
-  // cosa si può condividere: un appuntamento con un Partner (gli altri non hanno l'app); una serata di gruppo solo l'Admin
+  // cosa si può condividere: un appuntamento con un Partner (gli altri non hanno l'app); una serata Team o LdS solo l'Admin.
+  // La SdS/OPEN no (Ignazio 05/10): la organizza Network 21, noi ci partecipiamo; come Amway e Network 21 nel «Da fare» sono solo appunti.
   const puoCondividereAzione = e => !!e && !!e.contatto_id && ((e.contatti && e.contatti.categoria) || e.categoria) === 'Partner' && e.tipo_azione !== 'Contatto';
-  const puoCondividereSpazio = (s, admin) => !!admin && !!s && s.tipo in LEGAME_SPAZIO;
+  const puoCondividereSpazio = (s, admin) => !!admin && !!s && (s.tipo === 'Team' || s.tipo === 'LOS');
 
   const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
   // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
