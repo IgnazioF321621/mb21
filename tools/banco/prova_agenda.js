@@ -372,208 +372,6 @@ prova('Cantiere 39 · spostando l\'inizio la fine slitta e la durata resta quell
   assert.equal(A.fineSlittata('18:30', '', '19:30'), null);
 });
 
-prova('Progetti come Word (23/09): numeri 1. → 1.1 → 1.1.1, i titoli fanno ripartire, i puntini cambiano col rientro', () => {
-  const r = (tipo, livello) => ({ tipo, livello });
-  assert.deepEqual(A.numeraRighe([
-    r('titolo', 0), r('numero', 0), r('numero', 1), r('numero', 1), r('numero', 2), r('numero', 0), r('punto', 1), r('numero', 1),
-    r('titolo', 0), r('numero', 0), r('cosa', 0), r('numero', 0), r('punto', 0), r('punto', 2),
-  ]), ['', '1.', '1.1', '1.2', '1.2.1', '2.', '◦', '2.1', '', '1.', '', '2.', '•', '▪']);
-});
-
-prova('Progetti (24/09): le fatte in fondo al loro titolo, con i sottopunti; dal 25/09 i titoli tutti fatti restano al loro posto', () => {
-  const r = (id, tipo, livello, fatto) => ({ id, tipo, livello, fatto_il: fatto ? '2026-09-24T10:00:00Z' : null });
-  const vista = righe => A.fatteInFondo(righe).map(x => x.id);
-  // dentro un titolo: prima le da fare nel loro ordine, poi le fatte nel loro ordine
-  assert.deepEqual(vista([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('b', 'numero', 0), r('c', 'numero', 0, true), r('d', 'numero', 0)]), ['T1', 'b', 'd', 'a', 'c']);
-  // i numeri seguono quello che si vede: le da fare partono da 1.
-  assert.deepEqual(A.numeraRighe(A.fatteInFondo([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('b', 'numero', 0), r('d', 'numero', 0)])), ['', '1.', '2.', '3.']);
-  // una riga si porta dietro i sottopunti e va in fondo solo se sono fatti tutti; dentro, la stessa regola
-  assert.deepEqual(vista([r('T1', 'titolo', 0), r('p', 'numero', 0), r('p1', 'numero', 1, true), r('p2', 'numero', 1), r('q', 'numero', 0, true), r('q1', 'numero', 1, true), r('s', 'numero', 0, true), r('s1', 'numero', 1), r('u', 'numero', 0)]),
-    ['T1', 'p', 'p2', 'p1', 's', 's1', 'u', 'q', 'q1']);
-  // titolo tutto fatto al suo posto, con i suoi passi (25/09: l'ordine alfabetico dei titoli non si rompe); titolo senza passi al
-  // suo posto; le righe prima del primo titolo in cima
-  assert.deepEqual(vista([r('x', 'cosa', 0, true), r('y', 'cosa', 0), r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('T2', 'titolo', 0), r('b', 'numero', 0), r('T3', 'titolo', 0), r('T4', 'titolo', 0), r('c', 'numero', 0, true), r('d', 'numero', 0, true)]),
-    ['y', 'x', 'T1', 'a', 'T2', 'b', 'T3', 'T4', 'c', 'd']);
-  // un passo da fare riapre il titolo: torna al suo posto
-  assert.deepEqual(vista([r('T1', 'titolo', 0), r('a', 'numero', 0, true), r('n', 'numero', 0), r('T2', 'titolo', 0), r('b', 'numero', 0)]), ['T1', 'n', 'a', 'T2', 'b']);
-  assert.deepEqual(A.fatteInFondo([]), []);
-});
-
-prova('Progetti (24/09): copiare un titolo, una voce o tutto, con i numeri dello schermo; dal 25/09 solo le voci da fare', () => {
-  const r = (id, tipo, livello, testo, fatto) => ({ id, tipo, livello, testo, fatto_il: fatto ? '2026-09-24T10:00:00Z' : null });
-  const vista = A.fatteInFondo([
-    r('T1', 'titolo', 0, 'Cantiere 41 – MB Plan'), r('a', 'numero', 0, 'Le fatte in fondo', true), r('b', 'numero', 0, 'Copiare negli appunti'),
-    r('c', 'numero', 0, 'Mettere un punto in un giorno'), r('c1', 'numero', 1, 'anche nella settimana'), r('d', 'punto', 0, 'Foto dal telefono'),
-    r('e', 'cosa', 0, 'Provare su iPhone'), r('f', 'cosa', 0, 'Scrivere a Isabella', true),
-    r('h', 'numero', 0, 'Fatta con sotto', true), r('h1', 'punto', 1, 'ancora da fare'), r('h2', 'punto', 1, 'fatto anche lui', true),
-    r('T2', 'titolo', 0, 'Evernote'), r('g', 'numero', 0, 'Parole chiave'),
-    r('T3', 'titolo', 0, 'Finito'), r('z', 'numero', 0, 'Tutto fatto', true),
-  ]);
-  const titolo = A.testoDaCopiare(vista, 'T1');
-  // solo le da fare (25/09): via «Le fatte in fondo», «Scrivere a Isabella» e «fatto anche lui»; «Fatta con sotto» resta, con ✓,
-  // perché sotto ha un punto da fare; i numeri sono quelli dello schermo («3.» continua dopo puntini e ☐)
-  assert.equal(titolo.testo, [
-    '## Cantiere 41 – MB Plan', '1. Copiare negli appunti', '2. Mettere un punto in un giorno', '  2.1 anche nella settimana',
-    '- Foto dal telefono', '- [ ] Provare su iPhone', '3. ✓ Fatta con sotto', '  - ancora da fare'].join('\n'));
-  assert.equal(titolo.voci, 7);
-  assert.deepEqual(A.numeraRighe(vista).slice(1, 11), ['1.', '2.', '2.1', '•', '', '3.', '◦', '◦', '4.', '']);   // sullo schermo (h, h1, h2, poi le fatte a, f): il «3.» è lo stesso
-  // una voce: lei e i suoi sottopunti, con il rientro vero
-  assert.deepEqual(A.testoDaCopiare(vista, 'c'), { testo: '2. Mettere un punto in un giorno\n  2.1 anche nella settimana', voci: 2 });
-  assert.deepEqual(A.testoDaCopiare(vista, 'c1'), { testo: '  2.1 anche nella settimana', voci: 1 });
-  // una voce rientrata con sottopunti (revisione 24/09): reincollata, i sottopunti restano figli suoi
-  const rientrata = A.fatteInFondo([r('P', 'numero', 0, 'Padre'), r('F', 'numero', 1, 'Figlio'), r('N', 'punto', 2, 'Nipote'), r('D', 'cosa', 2, 'Da fare'), r('M', 'numero', 2, 'Numerata'), r('Q', 'punto', 3, 'Pronipote')]);
-  const copiaF = A.testoDaCopiare(rientrata, 'F');
-  assert.equal(copiaF.testo, '  1.1 Figlio\n    - Nipote\n    - [ ] Da fare\n    1.1.1 Numerata\n      - Pronipote');
-  assert.deepEqual(copiaF.testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [1, 2, 2, 2, 3]);
-  assert.deepEqual(A.testoDaCopiare(rientrata, 'M').testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa').livello), [2, 3]);
-  assert.deepEqual(A.testoDaCopiare(vista, 'g'), { testo: '1. Parole chiave', voci: 1 });
-  // tutto il progetto: una riga vuota prima di ogni titolo (non prima del primo); il titolo tutto fatto non c'è
-  const tutto = A.testoDaCopiare(vista, null).testo.split('\n');
-  assert.equal(tutto[0], '## Cantiere 41 – MB Plan'); assert.equal(tutto[8], ''); assert.equal(tutto[9], '## Evernote');
-  assert.equal(tutto.length, 11); assert.ok(!tutto.some(x => /Finito|Tutto fatto|Isabella|Le fatte in fondo/.test(x)));
-  // copiato da solo (l'iconcina), il titolo finito dà il titolo; una voce fatta scelta dal suo foglio si copia (con ✓), senza i sottopunti fatti
-  assert.deepEqual(A.testoDaCopiare(vista, 'T3'), { testo: '## Finito', voci: 0 });
-  assert.deepEqual(A.testoDaCopiare(vista, 'h'), { testo: '3. ✓ Fatta con sotto\n  - ancora da fare', voci: 2 });
-  assert.deepEqual(A.testoDaCopiare(vista, 'f'), { testo: '- [x] Scrivere a Isabella', voci: 1 });
-  assert.deepEqual(A.testoDaCopiare(vista, 'nessuno'), { testo: '', voci: 0 });
-  // reincollato: stessi tipi, rientri e fatte
-  const letto = titolo.testo.split('\n').map(x => A.leggiRiga(x, 0, 'cosa'));
-  assert.deepEqual(letto.map(x => [x.tipo, x.livello, x.fatta, x.testo]), [
-    ['titolo', 0, false, 'Cantiere 41 – MB Plan'], ['numero', 0, false, 'Copiare negli appunti'], ['numero', 0, false, 'Mettere un punto in un giorno'],
-    ['numero', 1, false, 'anche nella settimana'], ['punto', 0, false, 'Foto dal telefono'], ['cosa', 0, false, 'Provare su iPhone'],
-    ['numero', 0, true, 'Fatta con sotto'], ['punto', 1, false, 'ancora da fare']]);
-  assert.equal(A.leggiRiga('- [x] Scrivere a Isabella', 0, 'cosa').fatta, true);   // «- [x] » si rilegge ancora (testi copiati prima del 25/09)
-  // come prima: tipo scelto con i bottoni, rientro scritto, «[] », «☐ », puntini e **grassetto**; vuota → null
-  assert.deepEqual(A.leggiRiga('Solo testo', 2, 'numero'), { tipo: 'numero', testo: 'Solo testo', livello: 2, fatta: false });
-  assert.deepEqual(A.leggiRiga('\t\t• **Punto** rientrato', 0, 'cosa'), { tipo: 'punto', testo: 'Punto rientrato', livello: 2, fatta: false });
-  assert.equal(A.leggiRiga('[] Da fare', 0, 'numero').tipo, 'cosa');
-  assert.equal(A.leggiRiga('☐ Da fare', 0, 'numero').tipo, 'cosa');
-  assert.equal(A.leggiRiga('* [X] Fatta', 0, 'numero').fatta, true);
-  assert.equal(A.leggiRiga('1.2.3 Terzo livello', 0, 'cosa').livello, 2);
-  assert.equal(A.leggiRiga('   ', 0, 'cosa'), null);
-  assert.equal(A.leggiRiga('Spazio speciale', 0, 'cosa').testo, 'Spazio speciale');
-});
-
-prova('Progetti (25/09): le voci fatte da eliminare; una fatta con sotto punti da fare resta, i titoli restano', () => {
-  const r = (id, tipo, livello, fatto) => ({ id, tipo, livello, fatto_il: fatto ? '2026-09-25T08:00:00Z' : null });
-  const vista = A.fatteInFondo([
-    r('x', 'cosa', 0, true),                                                           // prima del primo titolo
-    r('T1', 'titolo', 0), r('a', 'numero', 0), r('a1', 'numero', 1, true), r('b', 'numero', 0, true), r('b1', 'numero', 1), r('b2', 'punto', 1, true),
-    r('c', 'numero', 0, true), r('c1', 'numero', 1, true), r('c2', 'numero', 2, true),
-    r('T2', 'titolo', 0), r('d', 'numero', 0, true), r('T3', 'titolo', 0)]);          // T2 tutto fatto: resta, vuoto; T3 senza voci
-  assert.deepEqual(A.fatteDaEliminare(vista), ['x', 'a1', 'b2', 'c', 'c1', 'c2', 'd']);   // «b» resta: sotto ha «b1» da fare
-  assert.deepEqual(A.fatteDaEliminare([]), []);
-  assert.deepEqual(A.fatteDaEliminare(A.fatteInFondo([r('T', 'titolo', 0), r('e', 'numero', 0)])), []);
-});
-
-prova('Progetti (25/09): spostare una riga sotto un altro titolo o in un altro progetto, con i suoi sottopunti', () => {
-  const r = (id, tipo, ordine, livello, fatto, pj = 'P') => ({ id, tipo, ordine, livello, progetto_id: pj, testo: id, fatto_il: fatto ? '2026-09-25T08:00:00Z' : null });
-  const pr = [r('T1', 'titolo', 1, 0), r('a', 'numero', 2, 0), r('b', 'numero', 3, 0, true), r('T2', 'titolo', 4, 0), r('c', 'numero', 5, 0), r('c1', 'numero', 6, 1), r('c2', 'punto', 7, 2), r('e', 'numero', 8, 0)];
-  const vista = A.fatteInFondo(pr);
-  // «c1» (rientrata, con il suo sottopunto) sotto T1: in fondo alle cose da fare (prima della fatta «b»), senza rientro; il resto si rinumera
-  assert.deepEqual(A.spostaRighe(vista, 'c1', 'T1'), [
-    { id: 'c1', ordine: 3, livello: 0, progetto_id: 'P' }, { id: 'c2', ordine: 4, livello: 1, progetto_id: 'P' },
-    { id: 'b', ordine: 5, livello: 0, progetto_id: 'P' }, { id: 'T2', ordine: 6, livello: 0, progetto_id: 'P' }, { id: 'c', ordine: 7, livello: 0, progetto_id: 'P' }]);
-  assert.equal(pr[5].livello, 1);   // le righe di prima non si toccano: i cambi li salva la pagina
-  // una fatta va in fondo al titolo, dopo le da fare
-  assert.deepEqual(A.spostaRighe(vista, 'b', 'T2').map(x => [x.id, x.ordine]), [['T2', 3], ['c', 4], ['c1', 5], ['c2', 6], ['e', 7], ['b', 8]]);
-  // un titolo in un altro progetto: con tutte le sue righe, in fondo (dal 25/09 anche dopo un titolo tutto fatto, che resta al suo posto)
-  const altro = A.fatteInFondo([r('X1', 'titolo', 1, 0, false, 'Q'), r('x', 'numero', 2, 0, false, 'Q'), r('X2', 'titolo', 3, 0, false, 'Q'), r('y', 'numero', 4, 0, true, 'Q')]);
-  assert.deepEqual(A.spostaRighe(vista, 'T2', null, altro, 'Q').map(x => [x.id, x.ordine, x.livello, x.progetto_id]), [
-    ['T2', 5, 0, 'Q'], ['c', 6, 0, 'Q'], ['c1', 7, 1, 'Q'], ['c2', 8, 2, 'Q'], ['e', 9, 0, 'Q']]);
-  // una riga sotto un titolo di un altro progetto; quello di partenza si rinumera (qui non cambia niente: era l'ultima)
-  assert.deepEqual(A.spostaRighe(vista, 'e', 'X1', altro, 'Q').map(x => [x.id, x.ordine, x.progetto_id]), [['e', 3, 'Q'], ['X2', 4, 'Q'], ['y', 5, 'Q']]);
-  // in un progetto senza titoli va in fondo; nel progetto di partenza T1, rimasto con la sola fatta, resta al suo posto (25/09)
-  const cambi = A.spostaRighe(vista, 'a', null, [r('z', 'cosa', 1, 0, false, 'R')], 'R');
-  assert.deepEqual(cambi[0], { id: 'a', ordine: 2, livello: 0, progetto_id: 'R' });
-  assert.deepEqual(cambi.slice(1).map(x => [x.id, x.ordine]), [['b', 2], ['T2', 3], ['c', 4], ['c1', 5], ['c2', 6], ['e', 7]]);
-  assert.deepEqual(A.spostaRighe(vista, 'a', null, [], 'R'), [{ id: 'a', ordine: 1, livello: 0, progetto_id: 'R' }, ...cambi.slice(1)]);
-  // senza titolo nello stesso progetto: tra le righe in cima, prima del primo titolo
-  assert.deepEqual(A.spostaRighe(vista, 'e', null).map(x => [x.id, x.ordine]), [['e', 1], ['T1', 2], ['a', 3], ['b', 4], ['T2', 5], ['c', 6], ['c1', 7], ['c2', 8]]);
-  // un titolo con le voci rientrate subito sotto (incollate): la riga prende il loro rientro e non «adotta» la fatta (revisione 25/09)
-  const ev = A.fatteInFondo([r('E', 'titolo', 1, 0), r('sala', 'numero', 2, 1), r('inv', 'numero', 3, 1, true), r('A', 'titolo', 4, 0), r('buf', 'numero', 5, 0), r('buf1', 'punto', 6, 1)]);
-  const dopo = A.spostaRighe(ev, 'buf', 'E');
-  assert.deepEqual(dopo.map(x => [x.id, x.ordine, x.livello]), [['buf', 3, 1], ['buf1', 4, 2], ['inv', 5, 1], ['A', 6, 0]]);
-  const nuova = A.fatteInFondo(ev.map(x => ({ ...x, ...(dopo.find(y => y.id === x.id) || {}) })).sort((x, y) => x.ordine - y.ordine));
-  assert.deepEqual(A.numeraRighe(nuova), ['', '1.', '2.', '▪', '3.', '']);   // «inv» resta sorella di «sala» (3.), non figlia di «buf»
-  // la riga o il titolo che non ci sono: niente
-  assert.equal(A.spostaRighe(vista, 'nessuna', 'T1'), null);
-  assert.equal(A.spostaRighe(vista, 'a', 'nessuno'), null);
-  assert.equal(A.spostaRighe(vista, 'a', 'c'), null);   // «c» non è un titolo
-});
-
-prova('Progetti in programma (24/09): nel giorno le righe dei progetti dopo le altre; dove sta una riga nel progetto', () => {
-  const g = '2026-09-24';
-  const cose = [
-    { id: 'p2', testo: 'Seconda del progetto', giorno: g, ordine: 2, progetto_id: 'pj', tipo: 'numero', fatto_il: null },
-    { id: 'm1', testo: 'Scritta a mano', giorno: g, ordine: 90, fatto_il: null },
-    { id: 'p1', testo: 'Prima del progetto', giorno: g, ordine: 1, progetto_id: 'pj', tipo: 'punto', fatto_il: null },
-    { id: 'f1', testo: 'Fatta', giorno: g, ordine: 0, fatto_il: '2026-09-24T08:00:00Z' },
-    { id: 'n0', testo: 'Senza giorno, solo nel progetto', giorno: null, ordine: 3, progetto_id: 'pj', tipo: 'numero', fatto_il: null },
-  ];
-  assert.deepEqual(A.coseDelGiorno(cose, g, g).map(c => c.id), ['m1', 'p1', 'p2', 'f1']);   // la riga senza giorno non c'è
-  const sett = cose.map(c => ({ ...c, scala: 'settimana', giorno: c.giorno ? '2026-09-21' : null }));
-  assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => c.id), ['m1', 'p1', 'p2', 'f1']);
-  // due progetti nello stesso giorno: ognuno insieme, nel suo ordine (revisione 24/09)
-  const due = [{ id: 'a2', giorno: g, ordine: 2, progetto_id: 'pa' }, { id: 'b3', giorno: g, ordine: 3, progetto_id: 'pb' }, { id: 'a25', giorno: g, ordine: 25, progetto_id: 'pa' }, { id: 'b1', giorno: g, ordine: 1, progetto_id: 'pb' }];
-  assert.deepEqual(A.coseDelGiorno(due, g, g).map(c => c.id), ['a2', 'a25', 'b1', 'b3']);
-  const vista = A.fatteInFondo([
-    { id: 'x', tipo: 'numero', livello: 0, fatto_il: null }, { id: 'T', tipo: 'titolo', testo: 'Cantiere 41 – MB Plan' },
-    { id: 'a', tipo: 'numero', livello: 0, fatto_il: '2026-09-24T08:00:00Z' }, { id: 'b', tipo: 'numero', livello: 0, fatto_il: null },
-    { id: 'b1', tipo: 'numero', livello: 1, fatto_il: null }, { id: 'c', tipo: 'punto', livello: 0, fatto_il: null },
-  ]);
-  assert.deepEqual(A.postoNelProgetto(vista, 'b'), { titolo: 'Cantiere 41 – MB Plan', segno: '1.' });   // la fatta è in fondo: «b» è la prima
-  assert.deepEqual(A.postoNelProgetto(vista, 'b1'), { titolo: 'Cantiere 41 – MB Plan', segno: '1.1' });
-  assert.deepEqual(A.postoNelProgetto(vista, 'c'), { titolo: 'Cantiere 41 – MB Plan', segno: '•' });
-  assert.deepEqual(A.postoNelProgetto(vista, 'x'), { titolo: '', segno: '1.' });   // prima del primo titolo
-  assert.equal(A.postoNelProgetto(vista, 'nessuna'), null);
-});
-
-prova('Cantiere in programma (24/09, passo 3): una riga sola, fatto quando sono fatti tutti i passi, nel giorno dell\'ultima spunta', () => {
-  const r = (id, tipo, ordine, extra) => ({ id, tipo, ordine, progetto_id: 'pj', testo: id, fatto_il: null, giorno: null, scala: 'giorno', ...extra });
-  const lista = [
-    r('T', 'titolo', 1, { giorno: '2026-09-21' }), r('a', 'numero', 2, { fatto_il: '2026-09-23T10:00:00Z' }), r('b', 'numero', 3),
-    r('U', 'titolo', 4), r('c', 'numero', 5),                                  // titolo non in programma: non compare mai
-    r('V', 'titolo', 6, { giorno: '2026-09-22' }),                             // in programma ma senza passi: resta aperto
-    { id: 'm', testo: 'a mano', giorno: '2026-09-24', ordine: 9, fatto_il: null },
-  ];
-  // aperto (1 di 2): riportato a oggi come le altre cose
-  const oggi = A.coseDelGiorno(lista, '2026-09-24', '2026-09-24');
-  assert.deepEqual(oggi.map(c => c.id), ['m', 'T', 'V']);
-  const t = oggi.find(c => c.id === 'T');
-  assert.deepEqual([t.passi, t.fatti, t.fatto_il, t.riportata], [2, 1, null, '2026-09-21']);
-  assert.equal(A.coseDelGiorno(lista, '2026-09-21', '2026-09-24').length, 0);   // nel giorno vecchio non c'è più
-  // tutti i passi fatti: fatto, nel giorno (di Roma) dell'ultima spunta, anche se era in programma per un altro giorno
-  const finito = lista.map(c => c.id === 'b' ? { ...c, fatto_il: '2026-09-23T22:30:00Z' } : c);   // 00:30 del 24 a Roma
-  const f = A.conTitoliFatti(finito).find(c => c.id === 'T');
-  assert.deepEqual([f.fatto_il, f.giorno, f.passi, f.fatti], ['2026-09-23T22:30:00Z', '2026-09-24', 2, 2]);
-  assert.deepEqual(A.coseDelGiorno(finito, '2026-09-24', '2026-09-24').map(c => [c.id, !!c.fatto_il]), [['m', false], ['V', false], ['T', true]]);
-  // nella settimana: finito, va nella settimana dell'ultima spunta (il lunedì)
-  const sett = finito.map(c => c.id === 'T' ? { ...c, scala: 'settimana', giorno: '2026-09-14' } : c);
-  assert.deepEqual(A.coseDellaScala(sett, 'settimana', '2026-09-21', '2026-09-21').map(c => [c.id, !!c.fatto_il]), [['T', true]]);
-  assert.equal(A.coseDellaScala(sett, 'settimana', '2026-09-14', '2026-09-21').length, 0);
-  // finito in anticipo (era in programma per la settimana dopo): resta dove l'avevi messo, come le altre cose (revisione 24/09)
-  const avanti = finito.map(c => c.id === 'T' ? { ...c, scala: 'settimana', giorno: '2026-09-28' } : c);
-  assert.equal(A.conTitoliFatti(avanti).find(c => c.id === 'T').giorno, '2026-09-28');
-  assert.deepEqual(A.coseDellaScala(avanti, 'settimana', '2026-09-28', '2026-09-21').map(c => [c.id, !!c.fatto_il]), [['T', true]]);
-  // senza titoli in programma la lista resta la stessa (niente copie)
-  const senza = lista.filter(c => c.id !== 'T' && c.id !== 'V');
-  assert.equal(A.conTitoliFatti(senza), senza);
-});
-
-prova('Voce del modello spostata nella Timeline solo per un giorno (23/09): il modello resta com\'è', () => {
-  const modello = [{ id: 'v1', testo: 'Lettura', ora: '06:00:00', durata: 60, attivo: true }];
-  const cose = [{ id: 'r1', modello_id: 'v1', giorno: '2026-09-23', ora: '11:30:00', durata: 60, fatto_il: null }];
-  const oggi = A.vociDelGiorno(modello, cose, '2026-09-23', {})[0];
-  assert.equal(oggi.ora, '11:30:00'); assert.equal(oggi.oraDelModello, '06:00:00'); assert.equal(oggi.fatto_il, null); assert.equal(oggi.riga_id, 'r1');
-  const domani = A.vociDelGiorno(modello, cose, '2026-09-24', {})[0];
-  assert.equal(domani.ora, '06:00:00'); assert.equal(domani.oraDelModello, undefined); assert.equal(domani.riga_id, null);
-  const fatta = A.vociDelGiorno(modello, [{ ...cose[0], fatto_il: '2026-09-23T10:00:00Z' }], '2026-09-23', {})[0];
-  assert.ok(fatta.fatto_il); assert.equal(fatta.ora, '11:30:00');
-  const soloSpunta = A.vociDelGiorno(modello, [{ id: 's1', modello_id: 'v1', giorno: '2026-09-23', fatto_il: '2026-09-23T07:00:00Z' }], '2026-09-23', {})[0];
-  assert.equal(soloSpunta.ora, '06:00:00'); assert.equal(soloSpunta.spunta_id, 's1'); assert.equal(soloSpunta.oraDelModello, undefined);
-});
-
 prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte restano nel loro giorno', () => {
   const cose = [
     { id: 'a', testo: 'Biglietti BBS', giorno: '2026-09-20', ordine: 0, fatto_il: null, creato_il: '2026-09-20T10:00:00Z' },   // vecchia, non fatta → oggi
@@ -599,74 +397,33 @@ prova('Cose da fare (cantiere 41): il riporto è una regola di lettura, le fatte
   assert.equal(A.testoCosa('   '), null);
   assert.equal(A.testoCosa('x'.repeat(300)).length, 300);   // dal 24/09 le cose da fare arrivano a 1000 lettere
   assert.equal(A.testoCosa('x'.repeat(1300)).length, 1000);
-  assert.equal(A.testoCosa('x'.repeat(300), A.MAX_VOCE).length, 200);   // le voci dei modelli restano a 200
   assert.equal(A.testoTroppoLungo('x'.repeat(1000)), false); assert.equal(A.testoTroppoLungo('x'.repeat(1001)), true);
-  assert.equal(A.testoTroppoLungo('  ' + 'x'.repeat(200) + '  ', A.MAX_VOCE), false);   // gli spazi ai bordi non contano
-  // le spunte del modello e le cose su altre scale non sono cose del giorno
+  assert.equal(A.testoTroppoLungo('  ' + 'x'.repeat(1000) + '  '), false);   // gli spazi ai bordi non contano
+  // le righe dei vecchi modelli, progetti e Core (dal 05/10/2026 non fanno parte di MB Plan) e le cose su altre scale non sono cose del giorno
   const altre = [
     { id: 'm', testo: 'Leggere', giorno: '2026-09-22', modello_id: 'v1', fatto_il: '2026-09-22T10:00:00Z' },
+    { id: 'p', testo: 'Riga di progetto', giorno: '2026-09-22', progetto_id: 'p1', fatto_il: null },
+    { id: 'k', testo: 'Abitudine Core', giorno: '2026-09-22', core: 'pm', fatto_il: null },
     { id: 's', testo: 'Settimana', giorno: '2026-09-21', scala: 'settimana', fatto_il: null },
     { id: 'z', testo: 'A mano', giorno: '2026-09-22', scala: 'giorno', fatto_il: null },
   ];
   assert.deepEqual(A.coseDelGiorno(altre, '2026-09-22', '2026-09-22').map(c => c.id), ['z']);
 });
 
-prova('Modello del giorno (cantiere 41 lavoro 2): voci per giorno della settimana, spunta del giorno, testo dei giorni', () => {
-  assert.equal(A.giornoSettimana('2026-09-21'), 1);   // lunedì
-  assert.equal(A.giornoSettimana('2026-09-27'), 7);   // domenica
-  const modello = [
-    { id: 'v1', testo: 'Leggere 15 minuti', giorni: [], ordine: 1, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
-    { id: 'v2', testo: 'Meditazione', giorni: [1, 2, 3, 4, 5], ordine: 0, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
-    { id: 'v3', testo: 'Spenta', giorni: [], ordine: 0, attivo: false, creato_il: '2026-09-22T08:00:00Z' },
-    { id: 'v4', testo: 'Solo domenica', giorni: [7], ordine: 2, attivo: true, creato_il: '2026-09-22T08:00:00Z' },
-  ];
-  const cose = [
-    { id: 'c1', modello_id: 'v1', giorno: '2026-09-22', fatto_il: '2026-09-22T21:00:00Z' },
-    { id: 'c2', modello_id: 'v1', giorno: '2026-09-21', fatto_il: '2026-09-21T21:00:00Z' },   // ieri: non conta oggi
-  ];
-  const mar = A.vociDelGiorno(modello, cose, '2026-09-22');
-  assert.deepEqual(mar.map(v => v.id), ['v2', 'v1']);            // per ordine; la spenta e la domenicale non ci sono
-  assert.equal(mar[1].fatto_il, '2026-09-22T21:00:00Z');
-  assert.equal(mar[1].spunta_id, 'c1');
-  assert.equal(mar[0].fatto_il, null);
-  assert.deepEqual(A.vociDelGiorno(modello, cose, '2026-09-27').map(v => v.id), ['v1', 'v4']);   // domenica: niente Lun-Ven
-  assert.deepEqual(A.vociDelGiorno([], cose, '2026-09-22'), []);
-  assert.equal(A.testoGiorni([]), 'Ogni giorno');
-  assert.equal(A.testoGiorni([1, 2, 3, 4, 5, 6, 7]), 'Ogni giorno');
-  assert.equal(A.testoGiorni([5, 1, 2, 3, 4]), 'Lun-Ven');
-  assert.equal(A.testoGiorni([6, 7]), 'Sab e Dom');
-  assert.equal(A.testoGiorni([1, 3, 5]), 'Lun, Mer, Ven');
-});
-
-prova('Core N21 nel foglio: 7 abitudini, spunta dai numeri o a mano nel primo giorno della scala, sezioni con Core in cima', () => {
-  assert.equal(A.CORE_N21.length, 7);
-  assert.equal(A.inizioScala('settimana', '2026-09-24'), '2026-09-21');
-  assert.equal(A.inizioScala('mese', '2026-09-24'), '2026-09-01');
-  assert.equal(A.inizioScala('anno', '2026-09-24'), '2026-01-01');
-  assert.equal(A.inizioScala('giorno', '2026-09-24'), '2026-09-24');
-  const modello = [
-    ...A.CORE_N21.map((c, i) => ({ id: 'c' + c.core, ...c, attivo: c.core !== 'squadra', giorni: [], ordine: i })),
-    { id: 'p1', testo: 'Meditazione', sezione: 'Routine', giorni: [], ordine: 10, attivo: true },
-  ];
-  const cose = [
-    { id: 's1', core: 'open', giorno: '2026-09-21', fatto_il: '2026-09-23T20:00:00Z' },   // OPEN spuntato a mano, vale tutta la settimana
-    { id: 's2', core: 'prodotti', giorno: '2026-08-01', fatto_il: '2026-08-05T20:00:00Z' },   // mese scorso: non conta
-  ];
-  const misure = { tracce: 1, pagine: 6, pm_mese: 9, clienti_mese: 3 };
-  const voci = A.vociDelGiorno(modello, cose, '2026-09-24', misure);
-  const per = Object.fromEntries(voci.map(v => [v.core || v.id, v]));
-  assert.equal(voci.length, 7);                                  // 6 Core accese + Meditazione; «squadra» è spenta
-  assert.equal(per.cd.fatto_il, 'misura'); assert.equal(per.cd.stato.testo, '1/1');
-  assert.equal(per.pagine.fatto_il, null); assert.equal(per.pagine.stato.testo, '6/10');
-  assert.equal(per.pm.fatto_il, 'misura'); assert.equal(per.pm.diScala, 'questo mese');
-  assert.equal(per.clienti.fatto_il, null);
-  assert.equal(per.open.fatto_il, '2026-09-23T20:00:00Z'); assert.equal(per.open.spunta_id, 's1'); assert.equal(per.open.giornoSpunta, '2026-09-21');
-  assert.equal(per.prodotti.fatto_il, null); assert.equal(per.prodotti.giornoSpunta, '2026-09-01');
-  assert.equal(per.p1.stato, null); assert.equal(per.p1.giornoSpunta, '2026-09-24');
-  const sez = A.sezioniFoglio(voci);
-  assert.deepEqual(sez.map(s => s.nome), ['Core', 'Routine']);
-  assert.equal(sez[0].voci.length, 6);
-  assert.equal(A.statoCore({ core: 'open' }, misure), null);
+prova('Per chi è (05/10): persona, Team, LdS, Network 21, Amway; i due campi si escludono; senza legame niente da salvare', () => {
+  assert.deepEqual(A.LEGAMI.map(x => x[0]), ['Team', 'LdS', 'N21', 'Amway']);
+  assert.deepEqual(A.legameDi({ legato_a: 'N21' }), { tipo: 'N21', nome: 'Network 21' });
+  assert.deepEqual(A.legameDi({ legato_a: 'Team' }), { tipo: 'Team', nome: 'Team' });
+  assert.deepEqual(A.legameDi({ contatto_id: 'c1', contatti: { nome: 'Laura', categoria: 'Prospect' } }), { tipo: 'persona', nome: 'Laura' });
+  assert.equal(A.legameDi({ contatto_id: 'c1' }).nome, 'Persona');   // la riga letta senza il nome
+  assert.equal(A.legameDi({ testo: 'vecchia, senza legame' }), null);
+  assert.equal(A.legameDi({ legato_a: 'Altro' }), null);
+  assert.equal(A.legameDi(null), null);
+  assert.deepEqual(A.campiLegame({ tipo: 'LdS' }), { contatto_id: null, legato_a: 'LdS' });
+  assert.deepEqual(A.campiLegame({ tipo: 'persona', contatto_id: 'c9' }), { contatto_id: 'c9', legato_a: null });
+  assert.equal(A.campiLegame({ tipo: 'persona' }), null);      // «Una persona» scelta ma non ancora la persona
+  assert.equal(A.campiLegame({ tipo: 'Pizza' }), null);
+  assert.equal(A.campiLegame(null), null);
 });
 
 prova('Cose da fare del mese (vista Mese): riporto al mese di oggi, le fatte restano nel loro mese', () => {
