@@ -77,9 +77,9 @@ function collegaAvvisi() {
 
 // ── IL POP-UP DELL'AVVISO (Ignazio 04/10: l'avviso sul telefono si taglia se è lungo) ──
 // L'avviso porta con sé due testi: quello breve (nell'avviso) e quello completo (dentro i dati dell'avviso, `completo`: nessuna lettura da Supabase).
-// Toccando l'avviso, appena si entra nell'app il testo completo compare in un piccolo pop-up in alto, 3 secondi, poi sparisce da solo (o con un tocco).
+// Toccando l'avviso, appena si entra nell'app il testo completo compare in un piccolo pop-up in alto, 10 secondi (Ignazio 05/10 sera: 3 erano troppo pochi per leggerlo), poi sparisce da solo (o prima, con un tocco).
 // Arriva dall'indirizzo (app chiusa: `avvT`, `avvM`, tolti subito) o dal messaggio «apri-avviso» di sw.js (app già aperta).
-const DURATA_POPUP_AVVISO = 3000;
+const DURATA_POPUP_AVVISO = 10000;
 let timerPopupAvviso;
 function mostraAvvisoRicevuto(titolo, testo) {
   if (!testo) return;

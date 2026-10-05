@@ -167,7 +167,7 @@
   .toast { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 78px); max-width: 488px; margin: 0 auto;
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 8px 16px; min-height: 52px; display: flex; align-items: center;
     justify-content: space-between; gap: 12px; font-size: 15px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-  /* il pop-up dell'avviso toccato (avvisi.js mostraAvvisoRicevuto): in alto, 3 secondi, testo a capo come nell'avviso */
+  /* il pop-up dell'avviso toccato (avvisi.js mostraAvvisoRicevuto): in alto, 10 secondi (o un tocco), testo a capo come nell'avviso */
   .avviso-ricevuto { position: fixed; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 12px); max-width: 488px; margin: 0 auto; z-index: 40;
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   .avviso-ricevuto b { display: block; margin-bottom: 4px; }
@@ -2691,7 +2691,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
   }
   document.querySelectorAll('.velo').forEach(v => v.remove());
   mostraTab();
-  mostraAvvisoRicevuto(m.titolo, m.completo);   // 04/10: il testo intero dell'avviso, 3 secondi
+  mostraAvvisoRicevuto(m.titolo, m.completo);   // 04/10: il testo intero dell'avviso; 10 secondi dal 05/10, o un tocco
 });
 
 function mostraTab() {
