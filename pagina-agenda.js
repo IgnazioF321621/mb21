@@ -1487,10 +1487,12 @@ function puntiHtml(ogg, tabella) {
   const A = MB21Agenda;
   if (!A.conPunti(ogg, tabella)) return '';
   const punti = A.puntiDi(ogg), link = A.linkChiamata(ogg.link), legame = A.campiLegame(A.legamePunti(ogg, tabella));
-  const chiamata = link ? `<a class="pt-link" href="${esc(link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>` : '';
+  // «Dove» (Ignazio 05/10): il link se è online → «Entra nella chiamata»; il posto se dal vivo → si apre nelle Mappe
+  const chiamata = link ? `<a class="pt-link" href="${esc(link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>`
+    : ogg.luogo ? `<a class="pt-link pt-luogo" href="${esc(A.linkMappa(ogg.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(ogg.luogo)}</a>` : '';
   const campoLink = LINK_APERTI.has(ogg.id)
-    ? `<form class="pt-nuovo pt-link-campo" data-pt-link><input type="url" inputmode="url" placeholder="Incolla il link di Zoom, Meet, Teams…" value="${esc(ogg.link || '')}" autocomplete="off" maxlength="${A.MAX_LINK}"><button type="submit">Salva</button></form>`
-    : `<button type="button" class="link" data-pt-link-apri>${link ? `${ic('modifica')} Cambia il link` : `${ic('piu')} Link della chiamata`}</button>`;
+    ? `<form class="pt-nuovo pt-link-campo" data-pt-link><input placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo…" value="${esc(A.testoDove(ogg))}" autocomplete="off" maxlength="${A.MAX_LINK}"><button type="submit">Salva</button></form>`
+    : `<button type="button" class="link" data-pt-link-apri>${link || ogg.luogo ? `${ic('modifica')} Cambia dove` : `${ic('piu')} Dove si fa`}</button>`;
   if (!punti.length && !PUNTI_APERTI.has(ogg.id))
     return `<div class="pt chiuso" data-pt="${esc(ogg.id)}">${chiamata}<div class="pt-comandi"><button type="button" class="link" data-pt-apri>${ic('piu')} Punti da trattare</button>${campoLink}</div></div>`;
   const righe = punti.map((r, i) => `<div class="pt-riga${r.fatto ? ' fatta' : ''}">
@@ -1511,7 +1513,7 @@ function collegaPunti(el, ogg, tabella, ridisegna) {
   // l'oggetto mostrato può essere una copia: si aggiorna anche quello nella lista dell'Agenda
   const localmente = campi => { Object.assign(ogg, campi); const o = (tabella === 'spazi' ? AG.spazi : AG.azioni || []).find(x => x.id === ogg.id); if (o && o !== ogg) Object.assign(o, campi); };
   const salva = async campi => {
-    const prima = { punti: ogg.punti, link: ogg.link };
+    const prima = { punti: ogg.punti, link: ogg.link, luogo: ogg.luogo };
     localmente(campi);
     const { error } = await dbq('punti da trattare', supa.from(tabella).update(campi).eq('id', ogg.id));
     if (error) { localmente(prima); mostraToast('Non salvato: controlla la connessione e riprova.'); return false; }
@@ -1546,10 +1548,8 @@ function collegaPunti(el, ogg, tabella, ridisegna) {
   blocco.querySelectorAll('form[data-pt-link]').forEach(form => {
     form.onsubmit = async ev => {
       ev.preventDefault();
-      const scritto = form.querySelector('input').value, link = A.linkChiamata(scritto);
-      if (scritto.trim() && !link) return mostraToast('Scrivi l\'indirizzo completo della chiamata, per esempio https://meet.google.com/…');
       LINK_APERTI.delete(ogg.id);
-      salva({ link });
+      salva(A.doveDa(form.querySelector('input').value));   // link se è online, posto se dal vivo, vuoto toglie
     };
   });
   blocco.querySelectorAll('form[data-pt-nuovo]').forEach(form => {
@@ -1612,7 +1612,8 @@ function foglioRicevuto(r) {
       <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="ri-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <p>${esc(giornoOraRicevuto(r))}</p>
       <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario.</div>
-      ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>` : ''}
+      ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>`
+        : r.luogo ? `<a class="pt-link pt-luogo" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}
       ${puntiSolaLetturaHtml(r)}
       <div class="campo"><label>Partecipi?</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div></div>`;
     velo.querySelector('#ri-x').onclick = chiudi;
@@ -1644,7 +1645,7 @@ function foglioImpegniNuovi(nuovi) {
     velo.innerHTML = `<div class="foglio alto ric-foglio">
       <div class="testa-foglio"><h3>${nuovi.length === 1 ? 'Hai un nuovo appuntamento' : `Hai ${nuovi.length} nuovi appuntamenti`}</h3><button id="rn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${nuovi.map(r => `<div class="ric-nuovo" data-rn="${esc(A.chiaveRicevuto(r))}"><b>${esc(r.titolo)}</b><span>da ${esc(r.da_nome || '—')} · ${esc(giornoOraRicevuto(r))}</span>
-        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}</div>`).join('')}</div>`;
+        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : r.luogo ? `<a class="link" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}</div>`).join('')}</div>`;
     velo.querySelector('#rn-x').onclick = chiudi;
     velo.querySelectorAll('.ric-nuovo').forEach(riga => {
       const r = nuovi.find(x => A.chiaveRicevuto(x) === riga.dataset.rn);

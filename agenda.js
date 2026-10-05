@@ -206,6 +206,17 @@
     const url = /^https?:\/\//i.test(t) ? t : 'https://' + t;
     return /^https?:\/\/[^\s/.]+\.[^\s]+$/i.test(url) ? url : null;
   }
+  // «Dove» (Ignazio 05/10): un campo solo per il link se è online e per il posto se è dal vivo (hotel, indirizzo). Quello che inizia come
+  // un indirizzo web è il link (`link`), il resto è il posto (`luogo`); vuoto = niente. Il posto si apre nelle Mappe.
+  const MAX_LUOGO = 200;
+  function doveDa(testo) {
+    const t = pulisciTesto(testo);
+    if (!t) return { link: null, luogo: null };
+    const link = linkChiamata(t);
+    return link ? { link, luogo: null } : { link: null, luogo: t.slice(0, MAX_LUOGO) };
+  }
+  const testoDove = ogg => (ogg && (ogg.link || ogg.luogo)) || '';
+  const linkMappa = luogo => 'https://maps.apple.com/?q=' + encodeURIComponent(String(luogo || '').trim());
   // a cosa si lega il punto che passa al «Da fare»: l'appuntamento alla sua persona, la serata al suo gruppo (Team, LdS, OPEN = Network 21)
   const LEGAME_SPAZIO = { 'Team': 'Team', 'LOS': 'LdS', 'SdS/OPEN': 'N21' };
   const legamePunti = (ogg, tabella) => (tabella === 'spazi' ? (LEGAME_SPAZIO[ogg.tipo] ? { tipo: LEGAME_SPAZIO[ogg.tipo] } : null) : ogg.contatto_id ? { tipo: 'persona', contatto_id: ogg.contatto_id } : null);
@@ -700,7 +711,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti,
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

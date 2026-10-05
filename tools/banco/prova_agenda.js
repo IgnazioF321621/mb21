@@ -570,6 +570,14 @@ prova('Link della chiamata: https:// aggiunto se manca, spazi tolti, roba senza 
   assert.equal(A.linkChiamata('ci sentiamo su zoom'), null); assert.equal(A.linkChiamata('zoom'), null);
   assert.equal(A.linkChiamata('https://x.it/' + 'a'.repeat(600)).length, A.MAX_LINK);   // tagliato a 500
 });
+prova('«Dove»: un campo solo: un indirizzo web è il link, il resto è il posto (fino a 200), vuoto toglie tutti e due; il posto si apre nelle Mappe', () => {
+  assert.deepEqual(A.doveDa(' meet.google.com/abc '), { link: 'https://meet.google.com/abc', luogo: null });
+  assert.deepEqual(A.doveDa('Hotel Villa Rosa, Catania'), { link: null, luogo: 'Hotel Villa Rosa, Catania' });
+  assert.deepEqual(A.doveDa('  '), { link: null, luogo: null }); assert.deepEqual(A.doveDa(null), { link: null, luogo: null });
+  assert.equal(A.doveDa('x'.repeat(300)).luogo.length, A.MAX_LUOGO);
+  assert.equal(A.testoDove({ link: 'https://a.it/b' }), 'https://a.it/b'); assert.equal(A.testoDove({ luogo: 'Sala Blu' }), 'Sala Blu'); assert.equal(A.testoDove({}), '');
+  assert.equal(A.linkMappa('Hotel Villa Rosa, Catania'), 'https://maps.apple.com/?q=Hotel%20Villa%20Rosa%2C%20Catania');
+});
 prova('Il legame del punto che passa al Da fare: l\'appuntamento alla sua persona, la serata al gruppo (LOS = LdS, OPEN = Network 21); gli spazi da riempire niente punti', () => {
   assert.deepEqual(A.legamePunti({ contatto_id: 'c1' }, 'azioni'), { tipo: 'persona', contatto_id: 'c1' });
   assert.equal(A.legamePunti({}, 'azioni'), null);
