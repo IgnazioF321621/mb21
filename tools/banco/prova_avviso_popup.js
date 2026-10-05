@@ -72,7 +72,7 @@ const tocco = (sw, data) => { let chiusa = false; sw.ascolta.notificationclick({
     ctx.mostra(AVVISO.titolo, AVVISO.completo);
     assert.equal(nodi.length, 1); assert.equal(nodi[0].className, 'avviso-ricevuto');
     assert.match(nodi[0].innerHTML, /<b>Il riepilogo del «tuo giorno» è quasi pronto<\/b>/); assert.match(nodi[0].innerHTML, /<span>📝 Oggi 3 contatti\. Bastano due minuti\.\n🏋️ Se ti va/);
-    assert.equal(ctx.DURATA, 3000); assert.equal(timer[0].ms, 3000);
+    assert.equal(ctx.DURATA, 10000); assert.equal(timer[0].ms, 10000);
     timer[0].f(); assert.equal(nodi.length, 0);
   });
 
