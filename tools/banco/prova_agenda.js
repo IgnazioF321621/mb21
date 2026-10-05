@@ -519,13 +519,11 @@ prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata s
   assert.equal(A.giorniRisentire('No Risposta'), A.GIORNI_NO_RISPOSTA); assert.equal(A.giorniRisentire('Telefono spento'), A.GIORNI_TELEFONO_SPENTO);
 });
 
-prova('I passi dell\'incontro: con un Partner TUTTI e 11 (05/10 sera), prima quelli del tipo scelto, poi gli altri nell\'ordine dell\'Avvio; «Motivazione» si legge «Il perché»', () => {
-  const AVVIO = ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'];
-  assert.deepEqual(A.PASSI_PARTNER, [...AVVIO, 'c/Downline', 'c/Upline', 'Incontro N21', 'VP Personali']);
-  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Avvio'), [...AVVIO, 'c/Downline', 'c/Upline', 'Incontro N21', 'VP Personali']);
-  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Ordine'), ['OrdineStart', 'VP Personali', 'Motivazione', 'ListaStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione', 'c/Downline', 'c/Upline', 'Incontro N21']);
-  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Counseling').slice(0, 3), ['c/Downline', 'c/Upline', 'Motivazione']);
-  assert.equal(A.suCosaPer('Partner', 'Appuntamento', 'Counseling').length, 11);
+prova('I passi dell\'incontro: solo quelli del tipo scelto (nota 011: Counseling → solo i suoi), solo per un Partner; l\'Avvio nell\'ordine di Ignazio; «Motivazione» si legge «Il perché»', () => {
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Avvio'), ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione']);
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Ordine'), ['OrdineStart', 'VP Personali']);
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Counseling'), ['c/Downline', 'c/Upline', 'Motivazione']);
+  assert.deepEqual(A.suCosaPer('Partner', 'Appuntamento', 'Meeting/Evento'), ['Incontro N21']);
   for (const [c, t, m] of [['Prospect', 'Appuntamento', 'Avvio'], ['Cliente', 'Appuntamento', 'Avvio'], ['Partner', 'Piano Marketing', 'PM 1a1'], ['Partner', 'Appuntamento', null], ['Partner', 'Contatto', 'Telefonata']])
     assert.deepEqual(A.suCosaPer(c, t, m), [], `${c} ${t} ${m}`);
   assert.equal(A.nomePasso('Motivazione'), 'Il perché');
@@ -539,12 +537,11 @@ prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anch
   const inc = A.passiIncontro(a, 'Partner');
   assert.equal(inc.titolo, 'Com\'è andato l\'incontro?');
   assert.deepEqual(inc.scelti, ['Motivazione', 'ListaStart']);                                   // nell'ordine dell'Avvio, non in quello toccato
-  assert.deepEqual(inc.altri, ['OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione', 'c/Downline', 'c/Upline', 'Incontro N21', 'VP Personali']);
+  assert.deepEqual(inc.altri, ['OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione']);
   assert.deepEqual(A.passiFatti(inc.tutti, ['Telefonate', 'Motivazione', 'Sconosciuto']), ['Motivazione', 'Telefonate']);   // il primo è l'esito
-  // l'esito è il primo passo fatto DEL TIPO (05/10: «Counseling non si chiude con Inaugurazione»); gli altri sono righe in più
-  const c = { ...a, modalita: 'Counseling', su_cosa: ['c/Upline', 'Telefonate'] };
-  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['Telefonate', 'Inaugurazione', 'c/Upline']), { esito: 'c/Upline', extra: ['Telefonate', 'Inaugurazione'] });
-  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['Inaugurazione', 'Telefonate']), { esito: 'Telefonate', extra: ['Inaugurazione'] });   // nessun passo di Counseling: si chiude lo stesso col primo fatto
+  // l'esito è il primo passo fatto nell'ordine delle fasi, gli altri righe in più; un passo di un altro tipo non conta (nota 011: nel foglio non c'è)
+  const c = { ...a, modalita: 'Counseling', su_cosa: ['c/Upline'] };
+  assert.deepEqual(A.esitoDaiPassi(c, 'Partner', ['c/Upline', 'c/Downline', 'Inaugurazione']), { esito: 'c/Downline', extra: ['c/Upline'] });
   assert.deepEqual(A.esitoDaiPassi(a, 'Partner', ['Telefonate', 'Motivazione']), { esito: 'Motivazione', extra: ['Telefonate'] });
   assert.deepEqual(A.esitoDaiPassi(a, 'Partner', []), { esito: null, extra: [] });
   assert.equal(A.passiIncontro({ ...a, su_cosa: null }, 'Partner'), null);
@@ -552,6 +549,19 @@ prova('«Com\'è andato l\'incontro?» con i passi scelti: quelli scelti, «anch
   assert.equal(A.passiIncontro({ ...a, esito: 'RolePlay', completata: true }, 'Partner'), null);   // già chiuso: «Cambia esito» come prima
   assert.equal(A.passiIncontro({ ...a, tipo_azione: 'Piano Marketing', modalita: 'PM 1a1' }, 'Partner'), null);
   assert.equal(A.passiIncontro({ ...a, categoria: null }, 'Prospect'), null);   // un Prospect non ha «Su cosa lavorate?»
+});
+
+prova('Senza l\'app (05/10 sera): il ramo del Team o di una Linea, chi non ha un utente attivo, chi condivide escluso, in ordine di nome', () => {
+  const sq = [{ partner_id: 'IO', sponsor_id: null, nome: 'FIORITO, IGNAZIO' }, { partner_id: 'A', sponsor_id: 'IO', nome: 'ROSSI, CARLA' }, { partner_id: 'A1', sponsor_id: 'A', nome: 'VERDI, DARIO' },
+    { partner_id: 'A2', sponsor_id: 'A', nome: 'ALBI, ZOE' }, { partner_id: 'B', sponsor_id: 'IO', nome: 'BIANCHI, LUCA' }, { partner_id: 'X', sponsor_id: 'ALTRO', nome: 'FUORI, UNO' }];
+  const ids = r => r.map(x => x.partner_id);
+  assert.deepEqual(ids(A.senzaApp(sq, ['IO', 'A'], 'IO', null)), ['A2', 'B', 'A1']);      // il Team: tutti sotto Ignazio, Carla ha l'app; «Fuori» non è del ramo
+  assert.deepEqual(ids(A.senzaApp(sq, ['IO', 'A'], 'IO', 'A')), ['A2', 'A1']);            // la Linea di Carla: lei (con l'app) e i suoi
+  assert.deepEqual(ids(A.senzaApp(sq, ['IO'], 'IO', 'A')), ['A2', 'A', 'A1']);            // Carla senza l'app: anche lei
+  assert.deepEqual(ids(A.senzaApp(sq, ['IO'], 'IO', 'B')), ['B']);
+  assert.deepEqual(A.senzaApp(sq, [], null, null), []); assert.deepEqual(A.senzaApp(null, [], 'IO', null), []);
+  const giro = [{ partner_id: 'P', sponsor_id: 'Q', nome: 'P' }, { partner_id: 'Q', sponsor_id: 'P', nome: 'Q' }];   // un anello nei dati non blocca
+  assert.deepEqual(ids(A.senzaApp(giro, [], 'P', null)), ['Q']);
 });
 
 // ── Punti da trattare e link della chiamata (nota Pagine 026, 05/10) ──

@@ -8,7 +8,7 @@ const P = require('../design/anteprima_agenda.js');
 let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
-const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.modo.admin = false; P.modo.tutti = false; };
+const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.modo.admin = false; P.modo.tutti = false; P.AG.ramo = undefined; };
 const scritte = (tab, op) => P.scritture.filter(x => x.tabella === tab && (!op || x.op === op));
 const chiamate = nome => P.scritture.filter(x => x.tabella === 'rpc:' + nome);
 const attendi = () => new Promise(r => setTimeout(r, 0));
@@ -114,29 +114,47 @@ prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scel
   assert.match(s2.v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(s2.v.innerHTML, /id="na-serata"/);
 });
 
-prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un selettore che si apre con tutti gli 11 passi (niente pillole); i passi scelti diventano righe dei punti e restano in su_cosa', async () => {
+prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un selettore che si apre con i passi del tipo scelto (nota 011; niente pillole); i passi scelti diventano righe dei punti e restano in su_cosa', async () => {
   pulisci();
   const { v, p } = await apri({});
   await contatto(v, 'Isabella Rossi'); await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
   assert.doesNotMatch(v.innerHTML, /Su cosa lavorate\?/); assert.doesNotMatch(v.innerHTML, /na-su-cosa|data-passo=/);
   assert.match(v.innerHTML, /Punti da trattare <small>i passi dell'incontro, o scrivi: uno per riga<\/small>/);
   assert.match(v.innerHTML, /id="na-passi"><span>Scegli i passi dell'incontro<\/span>/); assert.match(v.innerHTML, /id="na-punti"/);
-  P.scelta.passi = ['Motivazione', 'Telefonate'];            // nel selettore: Il perché e Telefonate (uno di Counseling, uno dell'Avvio)
+  P.scelta.passi = ['Motivazione', 'c/Upline', 'Telefonate'];   // nel selettore: Il perché e Counseling con l'upline («Telefonate» non è del Counseling: non entra)
   await v.clic('#na-passi');
-  assert.match(v.innerHTML, /id="na-passi"><span>Il perché · Telefonate<\/span>/);
-  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Il perché\nTelefonate<\/textarea>/);
-  v.querySelector('#na-punti').value = 'Il perché\nTelefonate\nLista nomi: i primi 10';
-  P.scelta.passi = ['Telefonate'];                            // tolto «Il perché»: sparisce anche dalle righe, la riga libera resta
+  assert.match(v.innerHTML, /id="na-passi"><span>Counseling con l’upline · Il perché<\/span>/);
+  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Counseling con l’upline\nIl perché<\/textarea>/);   // nell'ordine dei passi del Counseling
+  v.querySelector('#na-punti').value = 'Counseling con l’upline\nIl perché\nLista nomi: i primi 10';
+  P.scelta.passi = ['c/Upline'];                              // tolto «Il perché»: sparisce anche dalle righe, la riga libera resta
   await v.clic('#na-passi');
-  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Telefonate\nLista nomi: i primi 10<\/textarea>/);
-  v.querySelector('#na-punti').value = 'Telefonate\nLista nomi: i primi 10';   // (il finto DOM non aggiorna .value da solo)
+  assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Counseling con l’upline\nLista nomi: i primi 10<\/textarea>/);
+  v.querySelector('#na-punti').value = 'Counseling con l’upline\nLista nomi: i primi 10';   // (il finto DOM non aggiorna .value da solo)
   P.scelta.passi = null;                                      // Annulla: niente cambia
   await v.clic('#na-passi');
-  assert.match(v.innerHTML, /id="na-passi"><span>Telefonate<\/span>/);
+  assert.match(v.innerHTML, /id="na-passi"><span>Counseling con l’upline<\/span>/);
   await v.clic('#na-si'); await p;
   const r = scritte('azioni', 'insert')[0].args[0];
-  assert.deepEqual(r.su_cosa, ['Telefonate']);
-  assert.deepEqual(r.punti, [{ t: 'Telefonate', fatto: false }, { t: 'Lista nomi: i primi 10', fatto: false }]);
+  assert.deepEqual(r.su_cosa, ['c/Upline']);
+  assert.deepEqual(r.punti, [{ t: 'Counseling con l’upline', fatto: false }, { t: 'Lista nomi: i primi 10', fatto: false }]);
+});
+
+prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ramo che non usano MB21, con «Invita» che apre il link di registrazione', async () => {
+  pulisci(); P.modo.admin = true;
+  const { v } = await apri({});
+  await scegli(v, 'condividi', 'linea');
+  assert.doesNotMatch(v.innerHTML, /Senza l'app/);                       // senza una Linea scelta non si sa chi
+  await scegli(v, 'linea', 'FR1'); await attendi(); await attendi();       // la lettura del Team, poi il ridisegno
+  assert.match(v.innerHTML, /Senza l'app <small>non la troverà/); assert.match(v.innerHTML, /<span>Dario Verdi<\/span><button[^>]*data-invita="SOTTO1">Invita</);
+  assert.doesNotMatch(v.innerHTML, /Carla Rossi|Luca Bianchi/);           // Carla ha l'app; Luca è un'altra Linea
+  await scegli(v, 'linea', 'FR2');
+  assert.match(v.innerHTML, /<span>Luca Bianchi<\/span>/); assert.doesNotMatch(v.innerHTML, /Dario Verdi/);
+  await scegli(v, 'condividi', 'team');
+  assert.match(v.innerHTML, /Senza l'app <small>2 non la troveranno/); assert.match(v.innerHTML, /Dario Verdi[\s\S]*Luca Bianchi/);
+  assert.doesNotMatch(v.innerHTML, /Ignazio Fiorito/);                     // chi condivide non conta
+  await v.clic('[data-invita="SOTTO1"]');
+  assert.equal(P.avvisi.at(-1).t, 'invito:Dario Verdi');
+  assert.equal(P.scritture.filter(x => x.op !== 'rpc').length, 0);       // nessuna scrittura: solo il foglio del link
 });
 
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {

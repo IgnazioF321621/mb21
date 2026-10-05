@@ -250,6 +250,9 @@
   /* il selettore dei passi nel modulo «+»: un bottone largo che si apre */
   .na-selettore { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 8px; padding: 10px 12px; border: 1px solid var(--linea); border-radius: var(--raggio-riga); background: var(--superficie); color: var(--testo); font-size: 15px; text-align: left; min-height: var(--tocco); }
   .na-selettore span { flex: 1; } .na-selettore svg.ic { flex: none; }
+  /* «Senza l'app» nel modulo della serata (05/10): un nome per riga con «Invita» */
+  .na-fuori { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
+  .na-fuori:last-child { border-bottom: 0; } .na-fuori button.link { padding: 4px 6px; min-height: 0; }
   /* elenchi ad albero (ordine della Mappa, Ignazio 25/09): ogni livello sotto la radice va più a destra, con ↳ */
   .altri-voci button.rientrata { padding-left: calc(4px + var(--rientro, 0) * 18px); }
   .altri-voci button i.ramo { font-style: normal; color: var(--testo-tenue); margin-right: 6px; }
@@ -3248,6 +3251,17 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', voci.map(x => x[0]), st.condividi, voci.map(x => x[1]))}</div>`;
         if (st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label>${frontali().length
           ? scelte('linea', frontali().map(f => f.partner_id), st.linea, frontali().map(f => f.nome)) : '<div class="errore">Nessun frontale nella Mappa.</div>'}</div>`;
+        // Chi del Team (o della Linea scelta) non usa ancora MB21 (Ignazio 05/10 sera): lo si vede subito, con «Invita» che apre il link di registrazione
+        if (serata() && (st.condividi === 'team' || st.linea)) {
+          const r = typeof AG !== 'undefined' ? AG.ramo : undefined;
+          if (r === undefined && typeof caricaRamoApp === 'function') caricaRamoApp().then(() => disegna());   // letto: si ridisegna con i nomi
+          const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
+          // i nomi come nella Mappa («Dario Verdi»), in ordine di nome come i frontali
+          const fuori = (r ? A.senzaApp(r.squadra, r.conApp, ST.utente.partner_id, st.condividi === 'linea' ? st.linea : null) : [])
+            .map(f => ({ ...f, nome: leggibile(f.nome) })).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+          if (fuori.length) h += `<div class="campo na-senza-app"><label>Senza l'app <small>${fuori.length === 1 ? 'non la troverà nella sua Agenda: puoi invitarlo adesso' : `${fuori.length} non la troveranno nella loro Agenda: puoi invitarli adesso`}</small></label>
+            ${fuori.slice(0, 30).map(f => `<div class="na-fuori"><span>${esc(f.nome)}</span><button type="button" class="link" data-invita="${esc(f.partner_id)}">Invita</button></div>`).join('')}</div>`;
+        }
         if (st.condividi) h += `<div class="campo"><label>${st.condividi === 'persona' ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
       }
       if (st.contatto && !serata()) {
@@ -3329,17 +3343,26 @@ async function nuovoAppuntamento(opz = {}) {
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); disegna();
       };
+      velo.querySelectorAll('[data-invita]').forEach(b => { b.onclick = () => {
+        const r = typeof AG !== 'undefined' && AG.ramo ? AG.ramo.squadra.find(s => s.partner_id === b.dataset.invita) : null;
+        if (!r) return;
+        leggiCampi();
+        const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
+        const tel = String(r.telefono || '').replace(/\s+/g, '');
+        foglioLinkInvito({ da: visto().id, nome: leggibile(r.nome), telefono: /^\+/.test(tel) ? tel : tel ? '+39' + tel.replace(/^0+/, '') : '' });
+      }; });
       const selPassi = velo.querySelector('#na-passi');
       if (selPassi) selPassi.onclick = async () => {
         leggiCampi();
         const passi = A.suCosaPer(st.categoria, st.tipo, st.modalita);
         const nuovi = await scelteMultiple('Su cosa lavorate?', passi.map(x => ({ k: x, etichetta: A.nomePasso(x) })), st.suCosa);
         if (!nuovi) return;
-        // ogni passo scelto è anche una riga dei punti: le righe dei passi tolti spariscono, quelle dei nuovi si aggiungono in fondo
-        const via = st.suCosa.filter(x => !nuovi.includes(x)).map(A.nomePasso), piu = nuovi.filter(x => !st.suCosa.includes(x)).map(A.nomePasso);
+        // ogni passo scelto è anche una riga dei punti: le righe dei passi tolti spariscono, quelle dei nuovi si aggiungono in fondo (nell'ordine dei passi)
+        const scelti = passi.filter(x => nuovi.includes(x));
+        const via = st.suCosa.filter(x => !scelti.includes(x)).map(A.nomePasso), piu = scelti.filter(x => !st.suCosa.includes(x)).map(A.nomePasso);
         const righe = campi.punti.split(/\r?\n/).filter(r => r.trim() && !via.includes(r.trim()));
         campi.punti = [...righe, ...piu.filter(n => !righe.some(r => r.trim() === n))].join('\n');
-        st.suCosa = passi.filter(x => nuovi.includes(x));
+        st.suCosa = scelti;
         disegna();
       };
       velo.querySelectorAll('[data-libero]').forEach(b => { b.onclick = () => {

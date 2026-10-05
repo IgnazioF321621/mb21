@@ -61,14 +61,9 @@
   const sottotipiPer = tipo => SOTTOTIPI[tipo] || [];
   // «Su cosa lavorate?» (cantiere 48): gli incontri con un Partner si fissano con i passi su cui si lavora, anche più d'uno: le fasi di quel tipo
   // di appuntamento (Avvio: Motivazione · ListaStart · OrdineStart · Lista nomi · RolePlay · Telefonate · Inaugurazione). Per gli altri, niente.
-  // Dal 05/10 sera (Ignazio: «tutto, piuttosto che metterne solo tre e poi gli altri ricordarseli»): con un Partner escono TUTTI i passi di tutti i tipi
-  // di appuntamento (11), prima quelli del tipo scelto, poi gli altri nell'ordine dell'Avvio. Si scelgono da un selettore, non da pillole.
-  const PASSI_PARTNER = [...new Set(Object.values(FASI_APPUNTAMENTO).flat())];
-  const suCosaPer = (categoria, tipo, sottotipo) => {
-    if (categoria !== 'Partner' || tipo !== 'Appuntamento') return [];
-    const suoi = fasiPer(categoria, tipo, sottotipo);
-    return suoi.length ? [...suoi, ...PASSI_PARTNER.filter(x => !suoi.includes(x))] : [];
-  };
+  // Solo i passi del tipo scelto (nota Pagine 011, Ignazio 05/10: «Counseling mi deve mostrare solo le voci inerenti al Counseling»; per un'ora,
+  // versione 17:24, c'erano tutti e 11). Si scelgono da un selettore che si apre, non da pillole.
+  const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
   // Il nome che si legge: Il perché (lo stesso passo di «Il mio avvio»), Lista Start, Ordine Start, Lista Nomi, Role Play; i nomi salvati non cambiano (il Report)
   // come li scrive Ignazio (30/09); «c/Downline» e «c/Upline» si leggono per intero dal 04/10 (nota Azioni 070): i nomi salvati restano, le statistiche non cambiano
   const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play',
@@ -440,16 +435,29 @@
     const scelti = tutti.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
     return scelti.length ? { titolo: domandaEsito(a.tipo_azione), scelti, altri: tutti.filter(x => !scelti.includes(x)), tutti } : null;
   }
+  // Chi del Team (o di una Linea) non usa ancora MB21 (Ignazio 05/10 sera: «quando scelgo la Linea, se c'è qualcuno che non ha l'app, è il momento
+  // di mandargli il link»). `squadra` = righe {partner_id, sponsor_id, nome, telefono}; `conApp` = i codici Amway degli utenti attivi dell'app;
+  // `radice` = il codice di chi condivide (il Team è tutto il suo ramo), `linea` = il codice del frontale (solo il suo ramo). Chi condivide non conta.
+  function senzaApp(squadra, conApp, radice, linea) {
+    const partenza = linea || radice;
+    if (!partenza || !Array.isArray(squadra)) return [];
+    const figli = {};
+    for (const s of squadra) if (s.sponsor_id) (figli[s.sponsor_id] = figli[s.sponsor_id] || []).push(s);
+    const ha = new Set(conApp || []), ramo = [], visti = new Set([partenza]);
+    const coda = [partenza];
+    for (let giro = 0; coda.length && giro < 5000; giro++) {
+      const c = coda.shift();
+      for (const f of figli[c] || []) if (!visti.has(f.partner_id)) { visti.add(f.partner_id); ramo.push(f); coda.push(f.partner_id); }
+    }
+    const dentro = linea ? [squadra.find(s => s.partner_id === linea), ...ramo].filter(Boolean) : ramo;
+    return dentro.filter(s => s.partner_id !== radice && !ha.has(s.partner_id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
+  }
   // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
   const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
-  // L'esito dell'incontro è il primo passo fatto DEL TIPO scelto, se c'è (Ignazio 05/10 sera: «Counseling non si chiude con Inaugurazione»);
-  // se avete fatto solo passi di altri tipi, l'incontro si chiude lo stesso (Ignazio: «l'appuntamento si deve chiudere») con il primo di quelli.
-  // Gli altri passi fatti diventano righe di azione in più. Senza passi: esito null.
+  // L'esito dell'incontro è il primo passo fatto (nell'ordine delle fasi), gli altri diventano righe di azione in più; senza passi: null
   function esitoDaiPassi(a, categoria, fatti) {
-    const tutti = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), suoi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
-    const ordinati = passiFatti(tutti, fatti);
-    const esito = ordinati.find(x => suoi.includes(x)) || ordinati[0] || null;
-    return { esito, extra: ordinati.filter(x => x !== esito) };
+    const ordinati = passiFatti(suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), fatti);
+    return { esito: ordinati[0] || null, extra: ordinati.slice(1) };
   }
   const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
   // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,
@@ -726,7 +734,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, PASSI_PARTNER, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
