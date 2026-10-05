@@ -55,12 +55,30 @@ export function eventoSpazio(s: Spazio, adesso: Date) {
     'END:VEVENT'];
 }
 
-// Il calendario intero: la testata, il fuso, gli eventi (appuntamenti e telefonate, poi gli incontri di gruppo), la coda; ogni riga piegata a 75 byte
-export function calendario(azioni: Azione[], spazi: Spazio[], adesso: Date) {
+// Gli impegni ricevuti da altri (nota Pagine 027, Ignazio 05/10/2026): un appuntamento condiviso dalla persona con cui è fissato, o una serata di Team/Linea
+// condivisa da Ignazio. Righe della funzione `impegni_ricevuti_di`. Niente avvisi push: l'avviso lo dà il calendario personale, quindi entrano qui.
+// Titolo «MB21 · PM 1a1 · da Ignazio»; nella descrizione il link della chiamata e, se condivisi, i punti da trattare; UID fisso `ricevuto-<origine>-<id>@mb21`.
+export type Ricevuto = { origine: string; id: string; inizio: string; fine: string | null; titolo: string; da_nome: string | null; link: string | null;
+  punti: { t: string; fatto?: boolean }[] | null; risposta?: string | null };
+export function eventoRicevuto(r: Ricevuto, adesso: Date) {
+  const fine = r.fine || Date.parse(r.inizio) + 3600000;
+  const punti = Array.isArray(r.punti) ? r.punti.filter(p => p && typeof p.t === 'string' && p.t.trim()).map(p => `${p.fatto ? '✓' : '•'} ${p.t}`) : [];
+  const dettagli = [r.link ? `Chiamata: ${r.link}` : '', punti.length ? ['Punti da trattare:', ...punti].join('\n') : ''].filter(Boolean).join('\n');
+  return ['BEGIN:VEVENT', `UID:ricevuto-${r.origine}-${r.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
+    `DTSTART;TZID=Europe/Rome:${aRoma(r.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
+    `SUMMARY:${testoIcs(`MB21 · ${r.titolo} · da ${r.da_nome || '—'}`)}`,
+    ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
+    ...(r.risposta === 'non_ci_sono' ? ['STATUS:CANCELLED', 'TRANSP:TRANSPARENT'] : []),   // «Non ci sono»: resta nel calendario, ma non occupa
+    'END:VEVENT'];
+}
+
+// Il calendario intero: la testata, il fuso, gli eventi (appuntamenti e telefonate, poi gli incontri di gruppo, poi quelli ricevuti), la coda; ogni riga piegata a 75 byte
+export function calendario(azioni: Azione[], spazi: Spazio[], adesso: Date, ricevuti: Ricevuto[] = []) {
   const righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MB21//Agenda//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'X-WR-CALNAME:MB21', 'X-WR-TIMEZONE:Europe/Rome', ...FUSO_ROMA_ICS,
     ...azioni.flatMap(a => evento(a, adesso)),
     ...spazi.filter(s => TIPI_SPAZIO_NEL_CALENDARIO.includes(s.tipo)).flatMap(s => eventoSpazio(s, adesso)),
+    ...ricevuti.flatMap(r => eventoRicevuto(r, adesso)),
     'END:VCALENDAR', ''];
   return righe.map(piegaIcs).join('\r\n');
 }

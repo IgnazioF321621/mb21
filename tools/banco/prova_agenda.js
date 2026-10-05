@@ -582,4 +582,32 @@ prova('Il legame del punto che passa al Da fare: l\'appuntamento alla sua person
   assert.deepEqual(A.campiLegame(A.legamePunti({ contatto_id: 'c1' }, 'azioni')), { contatto_id: 'c1', legato_a: null });
 });
 
+// ── Impegni condivisi (nota Pagine 027, 05/10) ──
+prova('Impegni ricevuti: quelli del giorno (ora di Roma), i nuovi (non visti e non passati), il titolo «da Ignazio»', () => {
+  const r = (id, inizio, o) => ({ origine: 'azione', id, inizio, fine: null, titolo: 'PM 1a1', da_nome: 'Ignazio', visto_il: null, ...o });
+  const lista = [r('a', '2026-10-06T16:30:00Z'), r('b', '2026-10-06T22:30:00Z'), r('c', '2026-10-05T08:00:00Z', { visto_il: 'x' })];   // b: le 00:30 del 7 a Roma
+  assert.deepEqual(A.ricevutiDelGiorno(lista, '2026-10-06').map(x => x.id), ['a']);
+  assert.deepEqual(A.ricevutiDelGiorno(lista, '2026-10-07').map(x => x.id), ['b']);
+  assert.deepEqual(A.ricevutiNuovi(lista, '2026-10-06T00:00:00Z').map(x => x.id), ['a', 'b']);
+  assert.deepEqual(A.ricevutiNuovi(lista, '2026-10-06T17:00:00Z').map(x => x.id), ['b']);   // «a» è passato
+  assert.equal(A.titoloRicevuto(lista[0]), 'PM 1a1 · da Ignazio');
+  assert.equal(A.chiaveRicevuto(lista[0]), 'azione:a');
+  assert.equal(A.nomeRisposta('ci_sono'), 'Ci sono'); assert.equal(A.nomeRisposta(null), 'Senza risposta');
+});
+prova('Le risposte di chi riceve: il conto a parole e i nomi per gruppo', () => {
+  const risposte = [{ nome: 'Anna', risposta: 'ci_sono' }, { nome: 'Bruno', risposta: 'ci_sono' }, { nome: 'Carla', risposta: 'non_ci_sono' }, { nome: 'Dino', risposta: null }];
+  assert.equal(A.contoRisposte(risposte).testo, 'Ci sono 2 · Non ci sono 1 · Senza risposta 1');
+  assert.equal(A.contoRisposte([]).testo, 'Ci sono 0 · Non ci sono 0 · Senza risposta 0');
+  assert.deepEqual(A.nomiPerRisposta(risposte), { ci_sono: ['Anna', 'Bruno'], non_ci_sono: ['Carla'], senza: ['Dino'] });
+});
+prova('Chi può condividere: un appuntamento con un Partner (non una telefonata, non un Prospect); una serata di gruppo solo l\'Admin', () => {
+  assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Appuntamento', contatti: { categoria: 'Partner' } }), true);
+  assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Contatto', contatti: { categoria: 'Partner' } }), false);
+  assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Piano Marketing', contatti: { categoria: 'Prospect' } }), false);
+  assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Appuntamento', categoria: 'Partner' }), true);
+  assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, false), false);
+  assert.equal(A.puoCondividereSpazio({ tipo: 'Piano Marketing' }, true), false);
+  assert.deepEqual(A.CONDIVISIONI_SPAZIO.map(x => x[1]), ['Nessuno', 'Tutto il Team', 'Una Linea']);
+});
+
 console.log(`\n${ok} prove superate`);
