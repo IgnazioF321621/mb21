@@ -4402,7 +4402,7 @@ function collegaReport() {
 
 // ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Invia il tuo feedback» (nota 006, prima «Cosa non va, o cosa proponi?»), tre scelte e un testo.
 // L'app aggiunge da sola dove era il partner (`doveSono`: il tab, la sezione, i fogli aperti dal primo all'ultimo, il contatto), la versione e il telefono.
-// Si salva in `segnalazioni` (segnala.js per le regole pure); al partner «Grazie, l'abbiamo ricevuta». Mai la parola «errore».
+// Si salva in `segnalazioni` (segnala.js per le regole pure); al partner «Grazie, abbiamo ricevuto il feedback.» (nota 002). Mai la parola «errore».
 function doveSono() {
   const fogli = [...document.querySelectorAll('.velo .foglio')].filter(f => !f.closest('#sg-velo'))
     .map(f => { const t = f.querySelector('.mc-testa b, h3, h2, .pt-testa b'); return t ? t.textContent : ''; });
@@ -4475,7 +4475,7 @@ function foglioSegnala() {
     const { error } = await dbq('segnalazione', supa.from('segnalazioni').insert(riga));
     if (error) { bottone.disabled = false; return mostraToast('Non inviata: controlla la connessione e riprova.'); }
     chiudi();
-    mostraToast('Grazie, l\'abbiamo ricevuta');
+    mostraToast('Grazie, abbiamo ricevuto il feedback.');   // nota 002 (Ignazio 06/10)
   };
 }
 // Lo screenshot ridotto sul telefono prima di caricarlo (nota 014): lato lungo al massimo MAX_LATO (misuraRidotta in segnala.js), JPEG QUALITA.
