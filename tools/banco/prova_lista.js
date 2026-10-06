@@ -502,4 +502,25 @@ prova('Nota 031: nei Dati la riga «Codice Amway» (se c\'è), che si copia con 
   await bottone.onclick(); assert.equal(avvisi.at(-1), 'Codice Amway: 7001234');
 });
 
+prova('Nota 033: la nota del Coach si elimina dopo la conferma (dalla lettura e da «Modifica nota»); senza conferma resta', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function eliminaNota'), a = src.indexOf('\n}\n', da) + 3;
+  const da2 = src.indexOf('async function notaCoach'), a2 = src.indexOf('\n}\n', da2) + 3;
+  const cancellate = [], avvisi = []; let risposta = false, modulo = null, disegni = 0;
+  const ctx = { LS: { note: [{ id: 'n1' }], contatto: { id: 'c1', user_id: 'u1' } }, CY: { letta: 5 },
+    soloGuardo: () => false, mostraToast: t => avvisi.push(t), disegnaScheda: () => { disegni++; },
+    chiediConferma: async () => risposta, moduloSemplice: async () => modulo, TIPI_COACH: ['Contatto'],
+    dbq: async (_, q) => q, supa: { from: () => ({ delete: () => ({ eq: (k, v) => { cancellate.push(v); return { error: null }; } }) }) } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + src.slice(da2, a2) + ';this.eliminaNota = eliminaNota; this.notaCoach = notaCoach;', ctx);
+  await ctx.eliminaNota({ id: 'n1' });
+  assert.deepEqual(cancellate, []); assert.equal(disegni, 0);   // conferma annullata: la nota resta
+  risposta = true; await ctx.eliminaNota({ id: 'n1' });
+  assert.deepEqual(cancellate, ['n1']); assert.equal(ctx.LS.note, null); assert.equal(ctx.CY.letta, 0);
+  assert.equal(avvisi.at(-1), 'Nota eliminata.'); assert.equal(disegni, 1);
+  modulo = 'elimina'; await ctx.notaCoach({ id: 'n2', tipo_azione: 'Contatto', testo: 'x' });
+  assert.deepEqual(cancellate, ['n1', 'n2']);
+  assert.match(src, /id="elimina-nota">\$\{ic\('elimina'\)\} Elimina nota<\/button>/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
