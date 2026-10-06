@@ -64,10 +64,10 @@ prova('Il programma della settimana: fissati e da riempire per tipo, poi la SdS/
     { tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-10-06', '19:00') }];   // quello della settimana dopo non conta
   const spazi = [sp('Piano Marketing', '2026-09-30', '19:00'), sp('Piano Marketing', '2026-10-01', '19:00'), sp('SdS/OPEN', '2026-09-28', '21:30')];
   const p = S.programma(SETT, az, spazi);
-  assert.deepEqual(p.righe.map(r => r.testo), ['Piani Marketing: 1 fissato · 2 da riempire', 'SdS/OPEN: lun 28 alle 21:30']);
+  assert.deepEqual(p.righe.map(r => r.testo), ['Piani Marketing: 1 da fare · 2 da riempire', 'SdS/OPEN: lun 28 alle 21:30']);
   assert.equal(p.preparata, true);
   const v = S.programma(SETT, [], []);
-  assert.deepEqual(v, { righe: [], preparata: false });
+  assert.deepEqual(v, { righe: [], preparata: false, daChiudere: [], fatti: [] });
   assert.equal(S.programma(SETT, [], [sp('Consulenza PRD', '2026-10-02', '10:00')]).righe[0].testo, 'Consulenze prodotti: 1 da riempire');
 });
 
@@ -107,6 +107,29 @@ prova('Il nome della serata (nota 022, Ignazio 04/10): facoltativo, solo per Tea
   // il Programma della settimana lo scrive accanto all'ora
   const p = S.programma(SETT, [], [{ ...sp('LOS', '2026-10-01', '20:00'), nome: 'Serata Rubino' }, sp('Team', '2026-09-30', '21:00')]);
   assert.deepEqual(p.righe.map(x => x.testo), ['Incontro di Team: mer 30 alle 21:00', 'Incontro LdS: gio 1 alle 20:00 (Serata Rubino)']);
+});
+
+prova('Nota 004: nella card solo quello che deve venire; i passati senza esito «da chiudere»; i fatti a parte, per cambiare l\'esito', () => {
+  const adesso = A.isoDaRoma('2026-10-01', '12:00');   // giovedì a mezzogiorno
+  const az = [
+    { id: 'p1', tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-09-29', '19:00'), esito: 'Relazione', completata: true },   // fatto
+    { id: 'p2', tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-09-30', '18:30'), esito: null, completata: false },        // passato senza esito
+    { id: 'p3', tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-10-02', '19:00'), esito: null, completata: false },        // da fare
+    { id: 'c1', tipo_azione: 'Consulenza PRD', inizio: A.isoDaRoma('2026-10-01', '10:00'), esito: 'Ordine', completata: true },     // fatta stamattina
+    { id: 't1', tipo_azione: 'Contatto', inizio: A.isoDaRoma('2026-09-29', '10:00'), esito: null, completata: false },              // le telefonate non c'entrano
+    { id: 'p4', tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-10-06', '19:00') }];                                      // settimana dopo
+  const spazi = [sp('Piano Marketing', '2026-10-03', '19:00'), sp('Team', '2026-09-28', '21:00'), sp('Team', '2026-10-02', '21:00'), sp('SdS/OPEN', '2026-09-28', '21:30')];
+  const p = S.programma(SETT, az, spazi, adesso);
+  assert.deepEqual(p.righe.map(r => r.testo), ['Piani Marketing: 1 da fare · 1 da riempire', 'Incontro di Team: ven 2 alle 21:00']);   // niente lunedì
+  assert.deepEqual(p.daChiudere.map(a => a.id), ['p2']);
+  assert.deepEqual(p.fatti.map(a => a.id), ['p1', 'c1']);
+  assert.equal(p.preparata, true);
+  // fatto in anticipo (esito su un appuntamento futuro): esce dai «da fare» ed entra nei fatti
+  const q = S.programma(SETT, [{ ...az[2], esito: 'Relazione' }], [], adesso);
+  assert.deepEqual([q.righe.length, q.fatti.length], [0, 1]);
+  // a settimana finita: niente da fare, tutto nei fatti o da chiudere
+  const fine = S.programma(SETT, az, spazi, A.isoDaRoma('2026-10-05', '09:00'));
+  assert.deepEqual([fine.righe.length, fine.daChiudere.map(a => a.id), fine.fatti.length], [0, ['p2', 'p3'], 2]);
 });
 
 console.log(`\n${ok} prove superate`);
