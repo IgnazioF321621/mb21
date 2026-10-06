@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Aggiungi a livelli</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --testo: #10151F; --soft: #5A6475; --tenue: #7B8496; --linea: #E3E7EE; --blu: #2c4a7c; --blu-tinta: #d6e4f5; --pm: #1D4ED8; --cons: #0E7490; --team: #6D28D9; --sds: #15803D; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #EFF1F5; color: var(--testo); margin: 0; padding: 20px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } .nota { color: var(--soft); font-size: 14px; margin: 0 0 18px; max-width: 1000px; }
+  .fila { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .col { width: 290px; } .col h2 { font-size: 15px; margin: 0 0 6px; } .col p.s { font-size: 13px; color: var(--soft); margin: 0 0 10px; min-height: 68px; }
+  .foglio { background: #fff; border-radius: 18px; padding: 18px 14px 16px; box-shadow: 0 4px 18px rgba(0,0,0,.08); font-size: 13px; position: relative; }
+  .foglio::before { content: ''; position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 9px; background: #C3C8D1; }
+  .foglio h3 { margin: 4px 0 4px; font-size: 17px; } .foglio .sotto { color: var(--soft); margin: 0 0 12px; font-size: 12.5px; }
+  .ind { color: var(--soft); font-size: 12.5px; margin: 0 0 4px; }
+  .grande { display: flex; gap: 12px; align-items: center; border: 1px solid var(--linea); border-radius: 14px; padding: 12px; margin: 0 0 8px; }
+  .grande .t { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; flex: none; }
+  .grande b { display: block; font-size: 15px; } .grande small { color: var(--soft); font-size: 12px; line-height: 1.3; display: block; }
+  .grande em { margin-left: auto; font-style: normal; color: var(--tenue); font-size: 18px; }
+  .riga { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--linea); padding: 9px 2px; font-size: 14px; font-weight: 600; }
+  .riga:last-child { border-bottom: 0; } .riga small { font-weight: 500; color: var(--soft); }
+  .num { display: flex; gap: 6px; } .num span { border: 1px solid var(--linea); border-radius: 8px; padding: 3px 9px; } .num span.si { background: var(--testo); color: #fff; }
+  .tag { display: inline-block; background: #F2F4F7; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; color: var(--soft); margin-left: 4px; }
+  .frecce { font-size: 13px; color: var(--soft); margin: 12px 0 0; }
+</style></head><body>
+<h1>Un solo «+», a livelli: dentro c'è tutto quello che si può fare oggi</h1>
+<p class="nota">Nota 005. Il «+» in alto e il bottone della card blu aprono lo stesso foglio. Al primo livello due strade: <b>Programma la settimana</b>, cioè gli spazi da riempire, Team, LdS e SdS/OPEN come oggi, oppure <b>Un incontro</b>. Dentro «Un incontro»: con una persona, con il Team o con una Linea. Ogni strada porta al foglio che c'è già: niente si perde, cambia solo da dove si entra.</p>
+<div class="fila">
+  <div class="col"><h2>Livello 1 · Cosa vuoi aggiungere?</h2><p class="s">Si apre toccando il «+» in alto o «Aggiungi» nella card «Programma della settimana». Due strade, ognuna con una riga che dice cosa contiene.</p>
+    <div class="foglio"><h3>Cosa vuoi aggiungere?</h3><div class="sotto">Settimana 41 · 5 – 11 ottobre</div>
+      <div class="grande"><span class="t" style="background:var(--blu)">▦</span><span><b>Programma la settimana</b><small>Quanti Piani Marketing e Consulenze, e quando; incontri di Team, LdS, SdS/OPEN</small></span><em>›</em></div>
+      <div class="grande"><span class="t" style="background:var(--pm)">+</span><span><b>Un incontro</b><small>Con una persona, con il Team o con una Linea</small></span><em>›</em></div>
+    </div>
+  </div>
+  <div class="col"><h2>Livello 2a · Programma la settimana</h2><p class="s">È «Prepara la settimana» di oggi, uguale: si scelgono quanti e quando, restano gli spazi «da riempire» e la SdS/OPEN del lunedì.</p>
+    <div class="foglio"><div class="ind">‹ Cosa vuoi aggiungere?</div><h3>Programma la settimana</h3><div class="sotto">Cosa vuoi fare questa settimana?</div>
+      <div class="riga"><span>Piani Marketing</span><span class="num"><span>1</span><span class="si">2</span><span>3</span></span></div>
+      <div class="riga"><span>Consulenze prodotti</span><span class="num"><span class="si">1</span><span>2</span><span>3</span></span></div>
+      <div class="riga"><span>Incontri di Team</span><span class="num"><span class="si">1</span><span>2</span><span>3</span></span></div>
+      <div class="riga"><span>Incontri LdS</span><span class="num"><span>1</span><span>2</span><span>3</span></span></div>
+      <div class="riga"><span>SdS/OPEN <small>lunedì, da sola</small></span><span>✓</span></div>
+      <div class="frecce">Poi, come oggi: tocca un giorno e scegli l'ora.</div>
+    </div>
+  </div>
+  <div class="col"><h2>Livello 2b · Un incontro</h2><p class="s">Tre scelte. «Con una persona» apre il modulo «+» di oggi. «Con il Team» e «Con una Linea» aprono la serata con «Condividi con» già scelto; dentro la Linea si tocca una persona.</p>
+    <div class="foglio"><div class="ind">‹ Cosa vuoi aggiungere?</div><h3>Un incontro</h3><div class="sotto">Con chi?</div>
+      <div class="grande"><span class="t" style="background:var(--pm)">●</span><span><b>Con una persona</b><small>Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista</small></span><em>›</em></div>
+      <div class="grande"><span class="t" style="background:var(--team)">●●</span><span><b>Con il Team</b><span class="tag">Admin</span><small>Una serata per tutto il Team: la trovano nella loro Agenda</small></span><em>›</em></div>
+      <div class="grande"><span class="t" style="background:var(--sds)">↳</span><span><b>Con una Linea</b><span class="tag">Admin</span><small>Una Linea, o una persona dentro la Linea e chi sta sotto</small></span><em>›</em></div>
+    </div>
+  </div>
+</div>
+</body></html>

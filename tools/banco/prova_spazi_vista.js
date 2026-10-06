@@ -14,8 +14,7 @@ prova('Prepara la settimana: accanto all\'ora di un incontro LdS c\'è «+ nome�
   pulisci(); P.AG.spazi = [];
   await P.preparaSettimana();
   const v = P.fogli[0];
-  v.clic('#sp-aggiungi');                       // «Aggiungi» apre il selettore
-  v.clic('[data-tipo="LOS"]');                  // → LdS (1 incontro)
+  v.clic('[data-quanti="LOS"] [data-n="1"]');   // LdS: 1 (nota 005: tutte le righe, i numeri partono spenti)
   v.clic('#sp-si');                             // Avanti → il giorno e l'ora
   v.clic('[data-g="2026-09-23"]');              // mercoledì
   v.clic('[data-ora]', 0);                      // la prima ora libera
@@ -39,18 +38,34 @@ prova('Prepara la settimana: senza scrivere il nome l\'incontro si crea come sem
   pulisci(); P.AG.spazi = [];
   await P.preparaSettimana();
   const v = P.fogli[0];
-  v.clic('#sp-aggiungi'); v.clic('[data-tipo="Team"]'); v.clic('#sp-si'); v.clic('[data-g="2026-09-24"]'); v.clic('[data-ora]', 0);
+  v.clic('[data-quanti="Team"] [data-n="1"]'); v.clic('#sp-si'); v.clic('[data-g="2026-09-24"]'); v.clic('[data-ora]', 0);
   await v.clic('#sp-si');
   const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
   assert.equal('nome' in righe.find(r => r.tipo === 'Team'), false);
+});
+
+prova('Nota 005: «Programmare la settimana»: tutte le righe, numeri da 1 a 4 tutti spenti; di nuovo sullo stesso numero si spegne; senza numeri non si va avanti', async () => {
+  pulisci(); P.AG.spazi = [];
+  await P.preparaSettimana();
+  const v = P.fogli[0];
+  const accesi = () => [...v.innerHTML.matchAll(/data-quanti="([^"]+)">([\s\S]*?)<\/div>/g)].map(m => m[1] + ':' + ((m[2].match(/data-n="(\d)" class="scelto"/) || [])[1] || '-'));
+  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:-', 'LOS:-']);
+  assert.equal((v.innerHTML.match(/data-quanti="Team">[\s\S]*?<\/div>/)[0].match(/data-n=/g) || []).length, 4);
+  assert.match(v.innerHTML, /<small>Programmare la settimana<\/small>/);
+  await v.clic('#sp-si');
+  assert.match(v.innerHTML, /id="sp-errore">Tocca un numero accanto ad almeno un appuntamento o un incontro\.</);
+  v.clic('[data-quanti="Team"] [data-n="2"]');
+  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:2', 'LOS:-']);
+  v.clic('[data-quanti="Team"] [data-n="2"]');
+  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:-', 'LOS:-']);
 });
 
 prova('Per un Piano Marketing non c\'è il nome della serata (ha il nome della persona, come sempre)', async () => {
   pulisci(); P.AG.spazi = [];
   await P.preparaSettimana();
   const v = P.fogli[0];
-  v.clic('#sp-aggiungi'); v.clic('[data-tipo]', 0);   // il primo del selettore è il Piano Marketing
-   v.clic('#sp-si'); v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
+  v.clic('[data-n="1"]', 0);   // la prima riga è il Piano Marketing
+  v.clic('#sp-si'); v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
   assert.doesNotMatch(v.innerHTML, /data-nome-apri/);
 });
 

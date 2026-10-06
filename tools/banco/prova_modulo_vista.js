@@ -68,9 +68,8 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   assert.match(v.innerHTML, /data-v="team"/); assert.match(v.innerHTML, /data-v="linea"/);
   await scegli(v, 'condividi', 'team');
   assert.doesNotMatch(v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(v.innerHTML, /Area e tipo/);
-  assert.match(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/); assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-dove"/);
+  assert.doesNotMatch(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/);   // nota 005: da me in giù è sempre Team assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-dove"/);
   assert.match(v.innerHTML, /data-scelta="durata"[\s\S]*?data-v="60" class="scelto"/);
-  await scegli(v, 'serataTipo', 'LOS');
   v.querySelector('#na-serata').value = 'Serata Linea Rossi';
   v.querySelector('#na-dove').value = 'zoom.us/j/9';
   v.querySelector('#na-punti').value = 'Benvenuto\nRisultati';
@@ -82,7 +81,7 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   const ins = scritte('spazi', 'insert');
   assert.equal(ins.length, 1);
   const r = ins[0].args[0];
-  assert.equal(r.tipo, 'LOS'); assert.equal(r.nome, 'Serata Linea Rossi'); assert.equal(r.durata, 60);
+  assert.equal(r.tipo, 'Team'); assert.equal(r.nome, 'Serata Linea Rossi'); assert.equal(r.durata, 60);
   assert.equal(r.inizio, P.A.isoDaRoma(P.OGGI, '18:00'));
   assert.equal(r.link, 'https://zoom.us/j/9'); assert.equal(r.luogo, null); assert.deepEqual(r.punti, [{ t: 'Benvenuto', fatto: false }, { t: 'Risultati', fatto: false }]);
   assert.equal(r.condiviso_con, 'team'); assert.equal(r.linea_codice, null); assert.equal(r.punti_condivisi, true);
@@ -200,11 +199,11 @@ prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi st
     await scegli(v, 'linea', 'FR1'); await attendi(); await attendi();
     const albero = () => [...v.innerHTML.matchAll(/data-parte="([^"]+)" class="([^"]+)"/g)].map(m => m[1] + ':' + m[2]);
     assert.deepEqual(albero(), ['FR1:acceso', 'SOTTO3:acceso', 'SOTTO1:acceso', 'SOTTO2:acceso']);   // la Linea come nella Mappa, tutta accesa
-    assert.match(v.innerHTML, /<b>Carla Rossi<\/b><small>frontale<\/small>/); assert.match(v.innerHTML, /<b>Dario Verdi<\/b><small>1 sotto<\/small>/);
+    assert.match(v.innerHTML, /<b>Carla Rossi<\/b><small>Prima Linea<\/small>/); assert.match(v.innerHTML, /<b>Dario Verdi<\/b><small>1 sotto<\/small>/);
     assert.match(v.innerHTML, /Lo ricevono <b>4 persone<\/b>: tutta la Linea Carla Rossi\./);
     await v.clic('[data-parte="SOTTO1"]');
     assert.deepEqual(albero(), ['FR1:spento', 'SOTTO3:spento', 'SOTTO1:lei', 'SOTTO2:acceso']);
-    assert.match(v.innerHTML, /Lo ricevono <b>2 persone<\/b>: Dario Verdi e chi sta sotto\./);
+    assert.match(v.innerHTML, /Lo ricevono <b>2 persone<\/b>: Dario Verdi e la sua downline\./);
     assert.match(v.innerHTML, /Senza l'app <small>2 non la troveranno/); assert.doesNotMatch(v.innerHTML, /<span>Pia Bruno<\/span>/);   // solo la sua parte
     await v.clic('[data-parte="SOTTO1"]');                                                                   // di nuovo: tutta la Linea
     assert.deepEqual(albero(), ['FR1:acceso', 'SOTTO3:acceso', 'SOTTO1:acceso', 'SOTTO2:acceso']);
@@ -216,7 +215,7 @@ prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi st
     await v.clic('#na-si'); await p;
     const r = scritte('spazi', 'insert')[0].args[0];
     assert.equal(r.condiviso_con, 'linea'); assert.equal(r.linea_codice, 'SOTTO1');   // il database manda a lei e a chi sta sotto (sotto_il_codice)
-    assert.match(P.avvisi.at(-1).t, /condivisa con Dario Verdi e chi sta sotto/);
+    assert.match(P.avvisi.at(-1).t, /condivisa con Dario Verdi e la sua downline/);
     P.AG.spazi = P.AG.spazi.filter(s => s.id !== 'sp-nuova');
   } finally { P.finto.squadra = prima; }
 });
@@ -237,6 +236,38 @@ prova('Nota 005, il foglio della serata già salvata: la Linea è quella del fro
     await f.clic('[data-parte="SOTTO2"]'); await attendi();
     assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { linea_codice: 'SOTTO2' });
   } finally { P.AG.frontali = fr; P.AG.spazi = sp; P.AG.ramo = undefined; }
+});
+
+prova('Nota 005: un solo ingresso a livelli: «Cosa vuoi aggiungere?» → Programmare la settimana · Appuntamento singolo → (Admin) persona · Team · Linea, con «Condividi con» già scelto', async () => {
+  pulisci(); P.modo.admin = true;
+  const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"[\s\S]*?<b>([^<]+)<\/b>/g)].map(m => m[1] + ':' + m[2]);
+  P.foglioAggiungi(); await attendi();
+  let f = P.fogli.at(-1);
+  assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'singolo:Appuntamento singolo']);
+  await f.clic('[data-strada="singolo"]'); await attendi();
+  f = P.fogli.at(-1);
+  assert.deepEqual(strade(f), ['persona:Con una persona', 'team:Con il Team', 'linea:Con una Linea']);
+  assert.match(f.innerHTML, /id="st-indietro">‹ Cosa vuoi aggiungere\?/);
+  await f.clic('#st-indietro'); await attendi();                         // indietro: di nuovo il primo livello
+  f = P.fogli.at(-1); assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
+  await f.clic('[data-strada="singolo"]'); await attendi();
+  await P.fogli.at(-1).clic('[data-strada="linea"]'); await attendi(); await attendi();
+  const m = P.fogli.at(-1);
+  assert.match(m.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="linea" class="scelto"/);   // il modulo «+» con la Linea già scelta
+  assert.match(m.innerHTML, /Quale Linea\? <small>una delle tue Prime Linee<\/small>/);
+  // chi non è Admin: «Appuntamento singolo» apre subito il modulo, senza Team e Linea
+  pulisci();
+  P.foglioAggiungi(); await attendi();
+  f = P.fogli.at(-1);
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'singolo:Appuntamento singolo']);
+  await f.clic('[data-strada="singolo"]'); await attendi(); await attendi();
+  assert.match(P.fogli.at(-1).innerHTML, /id="na-contatto"/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada=/);
+  // «Programmare la settimana» apre il foglio della settimana
+  pulisci(); P.AG.spazi = [];
+  P.foglioAggiungi(); await attendi();
+  await P.fogli.at(-1).clic('[data-strada="settimana"]'); await attendi();
+  assert.match(P.fogli.at(-1).innerHTML, /<small>Programmare la settimana<\/small>/);
 });
 
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {
