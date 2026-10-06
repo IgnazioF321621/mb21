@@ -173,8 +173,11 @@
   .avviso-ricevuto { position: fixed; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 12px); max-width: 488px; margin: 0 auto; z-index: 40;
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   /* «Segnala» (nota Pagine 009): il piccolo insetto, sempre nello stesso angolo di ogni schermata e foglio (sopra i veli, sotto il toast) */
-  .segnala-bottone { position: fixed; top: calc(env(safe-area-inset-top) + 8px); right: 8px; z-index: 25; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea);
+  /* Nota Pagine 008 (Ignazio 06/10, scelta A): in basso a destra sopra la barra dei tab, su tutte le pagine (in alto a destra copriva la foto del profilo
+     e il «+» di MB Plan). Con un foglio aperto (`.in-foglio`, messa da `seguiFogli`) sale in alto a destra, sull'ombra scura: lì non c'è nessun bottone. */
+  .segnala-bottone { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 66px); right: 8px; z-index: 25; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea);
     background: var(--superficie); color: var(--testo-soft); display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 8px rgba(16,21,31,.14); opacity: .88; }
+  .segnala-bottone.in-foglio { bottom: auto; top: calc(env(safe-area-inset-top) + 8px); }
   .segnala-bottone[hidden] { display: none; }
   .segnala-bottone svg.ic { width: 19px; height: 19px; margin: 0; }
   .sg-motivi { margin: 10px 0 12px; } .sg-motivi button { flex: 1; }
@@ -2730,7 +2733,7 @@ function mostraTab() {
   const nav = document.getElementById('tab');
   nav.hidden = false;
   const sg = document.getElementById('segnala');   // «Segnala» (nota 009): visibile da quando si è dentro, su ogni schermata e foglio
-  if (sg) { sg.hidden = false; sg.onclick = foglioSegnala; }
+  if (sg) { sg.hidden = false; sg.onclick = foglioSegnala; seguiFogli(); }
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
   if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
@@ -4370,6 +4373,17 @@ function doveSono() {
   const scheda = typeof LS !== 'undefined' && LS.contatto;
   const sezione = scheda ? 'Scheda contatto · ' + (LS.sezione || '') : ST.tab === 'admin' && typeof AD !== 'undefined' ? AD.sezione : ST.tab === 'report' && typeof RP !== 'undefined' ? RP.vista : '';
   return MB21Segnala.doveDa({ pagina: ST.tab, sezione, fogli, contatto: scheda ? LS.contatto.id : null, vista: ST.tab === 'agenda' && typeof AG !== 'undefined' ? AG.vista : null });
+}
+// Nota 008: con un foglio aperto (un `.velo` qualsiasi, tranne quello di Segnala) l'insetto sale in alto a destra, sull'ombra scura, così non copre
+// «Salva», «Invia» e le scelte in fondo al foglio. Si guarda il corpo della pagina: i fogli si aggiungono e si tolgono lì.
+let osservaFogli = null;
+function seguiFogli() {
+  const sg = document.getElementById('segnala');
+  if (!sg || osservaFogli || typeof MutationObserver === 'undefined') return;
+  const aggiorna = () => sg.classList.toggle('in-foglio', !![...document.querySelectorAll('.velo')].find(v => v.id !== 'sg-velo'));
+  osservaFogli = new MutationObserver(aggiorna);
+  osservaFogli.observe(document.body, { childList: true, subtree: true });
+  aggiorna();
 }
 function foglioSegnala() {
   if (document.getElementById('sg-velo') || !ST.utente) return;
