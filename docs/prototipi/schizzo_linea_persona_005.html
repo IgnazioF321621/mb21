@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Linea e persona</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --testo: #10151F; --soft: #5A6475; --tenue: #7B8496; --linea: #E3E7EE; --blu: #1D4ED8; --blu-tinta: #E7EFFE; --ok: #15803D; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #EFF1F5; color: var(--testo); margin: 0; padding: 20px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } .nota { color: var(--soft); font-size: 14px; margin: 0 0 18px; max-width: 980px; }
+  .fila { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .col { width: 300px; } .col h2 { font-size: 15px; margin: 0 0 6px; } .col p.s { font-size: 13px; color: var(--soft); margin: 0 0 10px; min-height: 70px; }
+  .foglio { background: #fff; border-radius: 18px; padding: 16px 14px; box-shadow: 0 4px 18px rgba(0,0,0,.08); font-size: 13px; }
+  .foglio h3 { margin: 0 0 10px; font-size: 16px; }
+  .campo { margin: 0 0 12px; } .campo label { display: block; font-weight: 700; font-size: 13px; margin: 0 0 6px; } .campo label small { font-weight: 500; color: var(--soft); }
+  .pill { display: flex; flex-wrap: wrap; gap: 6px; } .pill span { border: 1px solid var(--linea); border-radius: 10px; padding: 7px 10px; font-weight: 600; }
+  .pill span.si { background: var(--testo); color: #fff; border-color: var(--testo); }
+  .albero { border: 1px solid var(--linea); border-radius: 12px; padding: 6px; }
+  .p { display: flex; align-items: center; gap: 8px; padding: 6px 6px; border-radius: 8px; font-size: 13.5px; }
+  .p i { font-style: normal; color: var(--tenue); width: calc(var(--l) * 16px); text-align: right; flex: none; }
+  .p b { font-weight: 600; } .p small { color: var(--soft); margin-left: auto; font-size: 11.5px; }
+  .p.spento { color: #B7BDC8; } .p.spento small { color: #C3C8D1; }
+  .p.acceso { background: var(--blu-tinta); } .p.lei { background: var(--blu); color: #fff; } .p.lei small { color: #dbe6ff; }
+  .p.fuori { color: #B7BDC8; text-decoration: line-through; }
+  .chi { margin: 8px 0 0; padding: 8px 10px; background: #F7F8FA; border-radius: 10px; font-size: 12.5px; color: var(--soft); }
+  .chi b { color: var(--testo); }
+</style></head><body>
+<h1>«Condividi con: Una Linea» → e dentro la Linea, una persona</h1>
+<p class="nota">Nota 005. Oggi si sceglie la Linea (uno dei frontali) e l'appuntamento arriva a tutto il suo ramo. La novità: dentro la Linea si tocca una persona, e l'appuntamento arriva solo alla sua parte di Mappa. Esempio: Linea Rubino, tocchi Marco Neri.</p>
+<div class="fila">
+  <div class="col"><h2>1 · La Linea, come oggi</h2><p class="s">Scelta la Linea, sotto compare la sua Mappa. Se non tocchi nessuno, l'appuntamento va a tutta la Linea (com'è oggi).</p>
+    <div class="foglio"><h3>Nuovo appuntamento · Serata</h3>
+      <div class="campo"><label>Condividi con</label><div class="pill"><span>Nessuno</span><span>Tutto il Team</span><span class="si">Una Linea</span></div></div>
+      <div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label><div class="pill"><span class="si">Rubino</span><span>Conti</span><span>Villa</span></div></div>
+      <div class="campo"><label>Solo una parte? <small>tocca una persona</small></label>
+        <div class="albero">
+          <div class="p acceso" style="--l:0"><i></i><b>Rubino Salvatore</b><small>frontale</small></div>
+          <div class="p acceso" style="--l:1"><i>↳</i><b>Marco Neri</b><small>3 sotto</small></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Anna Villa</b></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Luca Bo</b><small>1 sotto</small></div>
+          <div class="p acceso" style="--l:3"><i>↳</i><b>Pia Sala</b></div>
+          <div class="p acceso" style="--l:1"><i>↳</i><b>Giulia Conti</b><small>1 sotto</small></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Dario Lupo</b></div>
+        </div>
+        <div class="chi">Lo ricevono <b>7 persone</b>: tutta la Linea Rubino.</div></div>
+    </div>
+  </div>
+  <div class="col"><h2>2a · Tocchi Marco: lei compresa (consigliata)</h2><p class="s">Si accendono Marco e chi sta sotto di lui. Gli altri della Linea si spengono. È come funziona oggi la Linea (il frontale la riceve anche lui).</p>
+    <div class="foglio"><h3>Nuovo appuntamento · Serata</h3>
+      <div class="campo"><label>Solo una parte? <small>tocca una persona · di nuovo per tornare a tutta la Linea</small></label>
+        <div class="albero">
+          <div class="p spento" style="--l:0"><i></i><b>Rubino Salvatore</b><small>frontale</small></div>
+          <div class="p lei" style="--l:1"><i>↳</i><b>Marco Neri</b><small>3 sotto</small></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Anna Villa</b></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Luca Bo</b><small>1 sotto</small></div>
+          <div class="p acceso" style="--l:3"><i>↳</i><b>Pia Sala</b></div>
+          <div class="p spento" style="--l:1"><i>↳</i><b>Giulia Conti</b><small>1 sotto</small></div>
+          <div class="p spento" style="--l:2"><i>↳</i><b>Dario Lupo</b></div>
+        </div>
+        <div class="chi">Lo ricevono <b>4 persone</b>: Marco Neri e chi sta sotto di lui.</div></div>
+    </div>
+  </div>
+  <div class="col"><h2>2b · Tocchi Marco: lei esclusa</h2><p class="s">Solo chi sta sotto di Marco; Marco no (per esempio se è lui che organizza con te). Serve una regola nuova nel database.</p>
+    <div class="foglio"><h3>Nuovo appuntamento · Serata</h3>
+      <div class="campo"><label>Solo una parte? <small>tocca una persona</small></label>
+        <div class="albero">
+          <div class="p spento" style="--l:0"><i></i><b>Rubino Salvatore</b><small>frontale</small></div>
+          <div class="p fuori" style="--l:1"><i>↳</i><b>Marco Neri</b><small>3 sotto</small></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Anna Villa</b></div>
+          <div class="p acceso" style="--l:2"><i>↳</i><b>Luca Bo</b><small>1 sotto</small></div>
+          <div class="p acceso" style="--l:3"><i>↳</i><b>Pia Sala</b></div>
+          <div class="p spento" style="--l:1"><i>↳</i><b>Giulia Conti</b><small>1 sotto</small></div>
+          <div class="p spento" style="--l:2"><i>↳</i><b>Dario Lupo</b></div>
+        </div>
+        <div class="chi">Lo ricevono <b>3 persone</b>: chi sta sotto Marco Neri.</div></div>
+    </div>
+  </div>
+</div>
+</body></html>
