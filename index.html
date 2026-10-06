@@ -3207,9 +3207,10 @@ async function nuovoAppuntamento(opz = {}) {
     tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: opz.durata || 60, durataToccata: !!opz.durata, altra: false, portato: null,
     spazio: opz.spazio || null, suCosa: [],   // «Su cosa lavorate?» (cantiere 48): i passi dell'incontro con un Partner, anche più d'uno
     avvio: null,   // la riga dell'Avvio della persona (letta quando serve: Partner + Appuntamento), per i passi suggeriti (nota Azioni 055)
-    // Una telefonata scelta a mano (nota 012, Ignazio 04/10): entra in coda dal giorno scelto, l'orario è facoltativo. Senza un'ora chiesta
-    // (dalla scheda) si parte «senza orario»; da un'ora dell'Agenda si parte con quell'ora
-    senzaOra: opz.senzaOra != null ? !!opz.senzaOra : !opz.ora,
+    // Una telefonata scelta a mano (nota 012, Ignazio 04/10): entra in coda dal giorno scelto, l'orario è facoltativo. Si parte SEMPRE «senza
+    // orario» (nota 014, 06/10: 12 telefonate di domani salvate tutte alle 18:00 toccando l'ora in Agenda), anche da un'ora dell'Agenda: chi la
+    // vuole a un'ora tocca «A un'ora» e trova quell'ora già scritta
+    senzaOra: opz.senzaOra != null ? !!opz.senzaOra : true,
     // «Condividi con» (nota Pagine 027, Ignazio 05/10, come il Calendario Apple): '' · 'persona' (la persona dell'appuntamento, se è un Partner) ·
     // 'team' / 'linea' (solo l'Admin, dal «+» di MB Plan: il modulo crea la serata Team/LdS, non un appuntamento). `linea` = il codice del frontale.
     condividi: '', linea: null, puntiCond: false, serataTipo: 'Team',
@@ -3493,6 +3494,9 @@ async function nuovoAppuntamento(opz = {}) {
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+      // la lista dell'Agenda sa subito del nuovo impegno con l'ora (nota 014): così la prossima ora proposta viene dopo, anche se chi ha aperto
+      // il modulo (scheda, coda, coach: `resta`/`salta`) non ricarica MB Plan
+      if (!riga.senza_ora && typeof AG !== 'undefined' && Array.isArray(AG.azioni) && !AG.azioni.some(x => x.id === data.id)) AG.azioni.push({ id: data.id, ...riga });
       // «Condividi con la persona» (nota 027): subito dopo il salvataggio; se non usa l'app l'appuntamento resta, non condiviso
       let condiviso = '';
       if (st.condividi === 'persona' && puoPersona()) {
