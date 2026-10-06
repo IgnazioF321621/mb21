@@ -180,6 +180,11 @@
   .sg-motivi { margin: 10px 0 12px; } .sg-motivi button { flex: 1; }
   .sg-testo { width: 100%; box-sizing: border-box; min-height: 92px; }
   .sg-dove { font-size: 13px; color: var(--testo-tenue); margin: 8px 0 0; }
+  .sg-allega { margin: 10px 0 0; display: flex; align-items: center; gap: 12px; min-height: 36px; }
+  .sg-allega label { display: inline-block; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: var(--testo); background: var(--superficie-2, var(--superficie)); border: 1px solid var(--linea); border-radius: var(--raggio-bottone); cursor: pointer; }
+  .sg-allega label[hidden], .sg-allega #sg-anteprima[hidden] { display: none; }
+  #sg-anteprima { display: flex; align-items: center; gap: 10px; }
+  #sg-anteprima img { height: 72px; max-width: 120px; object-fit: contain; border-radius: 8px; border: 1px solid var(--linea); background: var(--superficie); }
   .avviso-ricevuto b { display: block; margin-bottom: 4px; }
   .avviso-ricevuto span { display: block; white-space: pre-line; }
   .toast button { background: none; border: 0; color: var(--accento-su); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; font-weight: 700; padding: 4px 0; min-height: var(--tocco); }
@@ -4366,6 +4371,8 @@ function foglioSegnala() {
   velo.innerHTML = `<div class="foglio"><h3>Cosa non va, o cosa proponi?</h3>
     <div class="ag-scelte sg-motivi">${S.MOTIVI.map(([k, n]) => `<button type="button" data-motivo="${k}">${esc(n)}</button>`).join('')}</div>
     <textarea id="sg-testo" class="sg-testo" maxlength="${S.MAX_TESTO}" placeholder="Scrivi qui, anche due parole"></textarea>
+    <div class="sg-allega"><label id="sg-allega">Allega lo screenshot<input type="file" id="sg-file" accept="image/*" hidden></label>
+      <div id="sg-anteprima" hidden><img alt="Lo screenshot allegato"><button type="button" class="link" id="sg-togli">Togli</button></div></div>
     <div class="sg-dove">Dove sei: ${esc(S.descrizioneDove(dove) || 'nell\'app')} · versione ${esc(APP_VERSION)}</div>
     <div class="due"><button class="link" id="sg-no">Annulla</button><button class="primario" id="sg-si" disabled>Invia</button></div></div>`;
   document.body.appendChild(velo);
@@ -4378,16 +4385,57 @@ function foglioSegnala() {
     velo.querySelectorAll('[data-motivo]').forEach(x => x.classList.toggle('scelto', x === b));
     velo.querySelector('#sg-si').disabled = false;
   });
+  // Lo screenshot (nota 014): il partner lo sceglie dalle foto, l'app lo riduce subito (riduciScreenshot) e mostra l'anteprima con «Togli»
+  let immagine = null;   // il JPEG ridotto, pronto da caricare
+  const fileInput = velo.querySelector('#sg-file'), etichetta = velo.querySelector('#sg-allega'), anteprima = velo.querySelector('#sg-anteprima'), img = anteprima.querySelector('img');
+  const mostraAnteprima = () => {
+    if (img.src) { URL.revokeObjectURL(img.src); img.removeAttribute('src'); }
+    if (immagine) img.src = URL.createObjectURL(immagine);
+    anteprima.hidden = !immagine; etichetta.hidden = !!immagine;
+  };
+  fileInput.onchange = async () => {
+    const f = fileInput.files[0]; fileInput.value = '';
+    if (!f) return;
+    try { immagine = await riduciScreenshot(f); } catch (e) { return mostraToast(e.message || 'Non riesco a leggere questa immagine'); }
+    mostraAnteprima();
+  };
+  velo.querySelector('#sg-togli').onclick = () => { immagine = null; mostraAnteprima(); };
   velo.querySelector('#sg-si').onclick = async () => {
+    if (!motivo) return;
     const standalone = !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
-    const riga = S.riga({ userId: ST.utente.id, motivo, testo: velo.querySelector('#sg-testo').value, dove, versione: APP_VERSION, telefono: S.telefonoDa(navigator.userAgent, standalone) });
-    if (!riga) return;
-    velo.querySelector('#sg-si').disabled = true;
+    // l'id si sceglie qui, così lo screenshot si carica PRIMA della riga con lo stesso nome (il partner non può aggiornare la riga dopo)
+    const id = S.nuovoId(n => crypto.getRandomValues(new Uint8Array(n)));
+    const bottone = velo.querySelector('#sg-si');
+    bottone.disabled = true;
+    let percorso = null;
+    if (immagine) {
+      percorso = S.percorsoImmagine(ST.utente.id, id);
+      const { error } = await dbq('screenshot della segnalazione', supa.storage.from(S.BUCKET).upload(percorso, immagine, { contentType: 'image/jpeg', upsert: true }));
+      if (error) { bottone.disabled = false; return mostraToast('Non inviata: controlla la connessione e riprova.'); }
+    }
+    const riga = S.riga({ id, userId: ST.utente.id, motivo, testo: velo.querySelector('#sg-testo').value, dove, versione: APP_VERSION, telefono: S.telefonoDa(navigator.userAgent, standalone), immagine: percorso });
     const { error } = await dbq('segnalazione', supa.from('segnalazioni').insert(riga));
-    if (error) { velo.querySelector('#sg-si').disabled = false; return mostraToast('Non inviata: controlla la connessione e riprova.'); }
+    if (error) { bottone.disabled = false; return mostraToast('Non inviata: controlla la connessione e riprova.'); }
     chiudi();
     mostraToast('Grazie, l\'abbiamo ricevuta');
   };
+}
+// Lo screenshot ridotto sul telefono prima di caricarlo (nota 014): lato lungo al massimo MAX_LATO (misuraRidotta in segnala.js), JPEG QUALITA.
+// Da 2-4 MB a 150-250 KB: lo spazio dei file su Supabase è contato (piano gratuito). Safari converte da solo le HEIC di iPhone nell'input file.
+function riduciScreenshot(file) {
+  const S = MB21Segnala, non = 'Non riesco a leggere questa immagine';
+  return new Promise((ok, no) => {
+    const img = new Image();
+    img.onload = () => {
+      const { w, h } = S.misuraRidotta(img.naturalWidth, img.naturalHeight);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b => b ? ok(b) : no(new Error(non)), 'image/jpeg', S.QUALITA);
+    };
+    img.onerror = () => { URL.revokeObjectURL(img.src); no(new Error(non)); };
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 // ── Admin ── la pagina Admin è in admin.js; qui restano i fogli usati anche da Dashboard e Lista Nomi
