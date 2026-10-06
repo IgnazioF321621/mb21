@@ -148,6 +148,7 @@ function disegnaMappa() {
           <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
           <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
             MP.segni && MP.segni.gruppo[r.id])}</span>
+          <div class="mp-codice">Codice ${esc(r.id)}</div>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
