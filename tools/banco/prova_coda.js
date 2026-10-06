@@ -258,7 +258,7 @@ prova('il conto del giorno: il traguardo resta quello scelto, le telefonate oltr
 });
 
 // ── Nota Pagine 016 · 018 (06/10/2026): la frase sotto il nome, e «Non ora» ──
-const { ultimaVolta, quandoFa, giornoDopo, giornoRinvio, testoRinvio } = require('../../coda.js');
+const { ultimaVolta, quandoFa, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio } = require('../../coda.js');
 prova('sotto il nome: cosa è successo l\'ultima volta e quando, in parole chiare', () => {
   const oggi = '2026-10-06';
   assert.equal(ultimaVolta({ contattato: false }, oggi), 'Mai contattato');
@@ -271,13 +271,15 @@ prova('sotto il nome: cosa è successo l\'ultima volta e quando, in parole chiar
   assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Piano Marketing', ultima_fase: 'PM Fissato', ultima_il: '2026-10-07T18:00:00+02:00' }, oggi), 'Ultimo PM: PM Fissato · domani');
   assert.equal(quandoFa('2026-09-06', oggi), '30 giorni fa'); assert.equal(quandoFa('2026-09-05', oggi), 'il 05/09/2026'); assert.equal(quandoFa(null, oggi), '');
 });
-prova('«Non ora»: In coda = domani, Scegli la data = quel giorno (mai nel passato); il testo del toast', () => {
-  const oggi = '2026-10-06';
+prova('«Non ora»: Salta = tra GIORNI_SALTA giorni (mai l\'indomani), Scegli la data = quel giorno (mai nel passato); il testo del toast', () => {
+  const oggi = '2026-10-06', salto = giornoDopo(oggi, GIORNI_SALTA);
   assert.equal(giornoDopo(oggi), '2026-10-07'); assert.equal(giornoDopo('2026-12-31'), '2027-01-01'); assert.equal(giornoDopo(oggi, -1), '2026-10-05');
-  assert.equal(giornoRinvio(oggi, 'coda'), '2026-10-07');
+  assert.ok(GIORNI_SALTA >= 2, 'Salta non è mai l\'indomani');
+  assert.equal(giornoRinvio(oggi, 'salta'), salto);
   assert.equal(giornoRinvio(oggi, 'data', '2026-10-20'), '2026-10-20');
-  assert.equal(giornoRinvio(oggi, 'data', '2026-10-01'), '2026-10-07');   // una data passata: domani
-  assert.equal(giornoRinvio(oggi, 'data', null), '2026-10-07');
+  assert.equal(giornoRinvio(oggi, 'data', '2026-10-01'), salto);   // una data passata: come Salta
+  assert.equal(giornoRinvio(oggi, 'data', null), salto);
+  assert.equal(testoRinvio(salto, oggi), `torna tra ${GIORNI_SALTA} giorni (il ${salto.split('-').reverse().join('/')})`);
   assert.equal(testoRinvio('2026-10-07', oggi), 'torna domani'); assert.equal(testoRinvio('2026-10-20', oggi), 'torna il 20/10/2026');
 });
 console.log(`\n${ok} prove superate`);
