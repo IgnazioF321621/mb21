@@ -341,6 +341,22 @@ prova('«Da catalogare» è del partner visto (nota 019): manca o è di un altro
   } finally { P.stub.supa = supaPrima; P.stub.dbq = dbqPrima; }
 });
 
+prova('Nota 001: in «Chi sento oggi?» il segnale Coach Yes accanto ai nomi con una nota, nella riga e nella scheda; mai sulle conferme', () => {
+  const m = P.avvia(); P.carica(m);
+  m.CY.di = 'io'; m.CY.letta = Date.now(); m.CY.ids = new Set(['c2', 'x1', 'x2']);   // x1 è la persona della conferma, x2 di un riordino
+  m.LV.vista = 'oggi'; P.memo.coda = true; P.memo.conferme = true; P.memo.riordini = true; m.disegnaOggi();
+  const h = P.app.innerHTML;
+  assert.match(h, /<b>Marco Neri<span class="segno-coach"[^>]*data-coach-yes="c2"/);
+  assert.doesNotMatch(h, /<b>Laura Ferri<span class="segno-coach"/);
+  assert.match(h, /<b>Rosa Aprile<span class="segno-coach"[^>]*data-coach-yes="x2"/);   // il riordino è una telefonata
+  assert.doesNotMatch(h, /data-coach-yes="x1"/);                                          // la conferma no
+  m.LV.vista = 'persona'; m.LV.persona = 'coda|c2'; m.disegnaOggi();
+  assert.match(P.app.innerHTML, /<h1[^>]*>Marco Neri<span class="segno-coach"/);
+  m.PS.scelto = 'tutti';                                                                    // con «Tutti» niente
+  assert.equal(m.CY.ids.size, 3);
+  delete P.memo.coda; delete P.memo.conferme; delete P.memo.riordini;
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
