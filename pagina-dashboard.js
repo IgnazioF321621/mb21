@@ -86,7 +86,7 @@ async function caricaOggi() {
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi)]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes()]);
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
   disegnaOggi();
@@ -335,9 +335,10 @@ function disegnaHome() {
 }
 
 // ── Chi sento oggi? (secondo livello): le righe partono chiuse, un tocco le apre su un elenco corto, una riga per persona ──
-function rigaPersona(tipo, id, nome, sotto) {
+// `contatto` (nota 001): l'id della persona, per il segnale Coach Yes accanto al nome (solo dove c'è una telefonata da fare)
+function rigaPersona(tipo, id, nome, sotto, contatto) {
   return `<button class="lv-persona" data-lv-persona="${tipo}|${esc(id)}"><span class="rc-pastiglia">${esc(iniziali(nome))}</span>
-    <span class="lv-pt"><b>${esc(nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
+    <span class="lv-pt"><b>${esc(nome)}${contatto ? segnoCoach(contatto, nome) : ''}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
 }
 const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastiglia">${ic('fatto')}</span><span class="lv-pt"><b>${esc(nome)}</b><small>fatto</small></span></div>`;
 // La riga di un contatto del giorno: sotto il nome cosa è successo l'ultima volta e quando (nota 016, MB21Coda.ultimaVolta) e, sulla propria coda,
@@ -345,7 +346,7 @@ const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastigl
 // Nota Pagine 003 (Ignazio 06/10, urgente): c'è anche guardando un altro partner col Partner Select (solo l'Admin: la regola `contatti_own`
 // gli lascia scrivere `rientro_il` dei contatti di tutti, provato sul database in una prova annullata); con «Tutti» la coda non c'è.
 function rigaCoda(x) {
-  const riga = rigaPersona('coda', x.id, x.nome, MB21Coda.ultimaVolta(x, ST.oggi));
+  const riga = rigaPersona('coda', x.id, x.nome, MB21Coda.ultimaVolta(x, ST.oggi), x.id);
   if (vediTutti() || ST.offline) return riga;
   return `<div class="lv-riga">${riga}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>`;
 }
@@ -389,7 +390,7 @@ function disegnaOggiLV() {
   if (CONF.righe.length || fatteDi('conf').length) metti('conferme', 'conferme', 'Conferme', c.conf ? `${c.conf} ${c.conf === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}` : 'tutte fatte', c.conf, 'conf',
     CONF.righe.map(x => rigaPersona('conf', x.id, x.contatti ? x.contatti.nome : '', MB21Agenda.testoConferma(x, new Date().toISOString()))));
   if (r.dareSeguito.length || fatteDi('ds').length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti', c.dare ? `${c.dare} da richiamare` : 'tutti fatti', c.dare, 'ds',
-    r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`)));
+    r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`, x.id)));
   const inPausa = st.contatti_al_giorno === 0;
   const conto = esc(MB21Coda.contoGiorno(st.fatti_oggi, st.contatti_al_giorno));   // «3 di 5» · «5 di 5 ✓ e 2 in più» (le telefonate scelte a mano oltre il traguardo)
   if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, 'coda', [],
@@ -402,9 +403,9 @@ function disegnaOggiLV() {
   // le telefonate scelte a mano (nota 012): in più dei contatti del giorno, restano finché non hanno un esito
   if (SCE.righe.length || fatteDi('scelta').length) metti('scelte', 'telefonate', 'Telefonate scelte a mano',
     c.scelte ? `${c.scelte} ancora da chiamare · in più dei contatti del giorno` : 'tutte fatte', c.scelte, 'scelta',
-    SCE.righe.map(a => rigaPersona('scelta', a.id, a.contatti ? a.contatti.nome : '', sottoScelta(a))));
+    SCE.righe.map(a => rigaPersona('scelta', a.id, a.contatti ? a.contatti.nome : '', sottoScelta(a), a.contatto_id)));
   if (RIO.righe.length || fatteDi('rio').length) metti('riordini', 'riordini', 'Riordini da sentire', c.rio ? `${c.rio} ${c.rio === 1 ? 'cliente da sentire' : 'clienti da sentire'}` : 'tutti sentiti', c.rio, 'rio',
-    RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '))));
+    RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '), a.contatto_id)));
   const finito = !totaleOggi(c);
   let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${conto ? ` · fatti ${conto}` : ''}</div>` + (ST.offline ? '<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.</div>' : '')
     + sezioni.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
@@ -444,7 +445,9 @@ function disegnaPersonaLV() {
     return vaiLV('oggi');
   }
   LV.nomePersona = nome;
-  app.innerHTML = indietroLV() + `<div><span class="lv-chip">${esc(chip)}</span></div><h1 style="margin-top:2px">${esc(nome)}</h1>${corpo}` + versione();
+  // nota 001: accanto al nome il segnale Coach Yes, dove c'è una telefonata da fare (non sulle conferme)
+  const chiContatto = tipo === 'coda' || tipo === 'ds' ? id : tipo === 'rio' ? (RIO.righe.find(y => y.id === id) || {}).contatto_id : tipo === 'scelta' ? (SCE.righe.find(y => y.id === id) || {}).contatto_id : null;
+  app.innerHTML = indietroLV() + `<div><span class="lv-chip">${esc(chip)}</span></div><h1 style="margin-top:2px">${esc(nome)}${segnoCoach(chiContatto, nome)}</h1>${corpo}` + versione();
   attaccaIndietroLV();
 }
 

@@ -87,13 +87,14 @@ const pezzi = [
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),
   fra('const vociHtml = ', '\n// «I prossimi passi» del livello'), funzione('passiHtml'), funzione('collegaPercorso'), funzione('aggiornaCardCheck'),
   fra('const CK = {', 'const CAMPI_CK'),
+  fra('const CY = {', '\nfunction doveSono'),   // nota 001: il segnale Coach Yes, vero
 ].join('\n');
 const nomi = Object.keys(stub);
 // ST, PS e il resto nascono in index.html: qui se ne mettono di finti, poi la pagina vera e quello che serve alla prova
 const prefazio = `const ST = ${JSON.stringify(stato.ST)}; const PS = { scelto: null }; const MP = {}; const AG = {}; const CM = {}; const LS = {}; const VER = {};
 const guardoAltri = () => !!PS.scelto, vediTutti = () => PS.scelto === 'tutti';
 let ultimoTraguardoSalvato;\n`;
-const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, SCE, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio, nonOra, caricaCatalogo };';
+const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, SCE, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio, nonOra, caricaCatalogo, CY };';
 let mondo;
 function avvia() {
   const g = new Function(...nomi, prefazio + pezzi + '\n' + pagina + uscita);

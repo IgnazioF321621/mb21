@@ -835,6 +835,7 @@ async function notaCoach(n) {
   const { error } = await dbq('nota coach', q);
   if (error) return mostraToast('Non salvata: riprova.');
   LS.note = null;
+  if (typeof CY !== 'undefined') CY.letta = 0;   // nota 001: il segnale Coach Yes si rilegge
   disegnaScheda();
 }
 

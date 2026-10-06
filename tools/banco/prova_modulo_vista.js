@@ -270,6 +270,27 @@ prova('Nota 005: un solo ingresso a livelli: «Cosa vuoi aggiungere?» → Progr
   assert.match(P.fogli.at(-1).innerHTML, /<small>Programmare la settimana<\/small>/);
 });
 
+prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
+  pulisci();
+  P.CY.di = 'io'; P.CY.letta = Date.now(); P.CY.ids = new Set(['ct1', 'c-isa']);
+  try {
+    const giorno = P.vista('giorno');
+    assert.match(giorno, /data-evento="t1"[^>]*>[\s\S]*?data-coach-yes="ct1" data-coach-nome="Marco Bini"/);   // la telefonata non fatta di Marco Bini
+    assert.equal((giorno.match(/data-coach-yes=/g) || []).length, 1);                                               // solo lì
+    // il modulo «+» con una telefonata a una persona che ha una nota
+    const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, tipo: 'Contatto', modalita: 'Telefonata' });
+    assert.match(v.innerHTML, /<span>Isabella Rossi<span class="segno-coach"[^>]*data-coach-yes="c-isa"/);
+    const { v: v2 } = await apri({ contatto: { id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, tipo: 'Appuntamento', modalita: 'Counseling' });
+    assert.doesNotMatch(v2.innerHTML, /data-coach-yes/);                                                           // non è una telefonata
+    // il foglio: le note della persona, la più recente prima
+    P.finto.coachNote = [{ id: 'n1', tipo_azione: 'Contatto', testo: 'Chiedile del viaggio', scritta_il: '2026-09-30T10:00:00+02:00' }];
+    await P.foglioCoachYes('c-isa', 'Isabella Rossi'); await attendi();
+    const f = P.fogli.at(-1);
+    assert.match(f.innerHTML, /<small>Coach Yes<\/small><b>Isabella Rossi<\/b>/);
+    assert.match(f.innerHTML, /<small>Contatto · 30\/09\/2026<\/small><div>Chiedile del viaggio<\/div>/);
+  } finally { P.CY.di = null; P.CY.ids = new Set(); P.finto.coachNote = undefined; }
+});
+
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {
   pulisci(); P.modo.admin = true;
   const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Isabella Rossi', categoria: 'Partner' }, tipo: 'Appuntamento', modalita: 'Counseling' });
