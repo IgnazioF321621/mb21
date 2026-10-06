@@ -209,5 +209,13 @@ const assert = require('node:assert/strict');
     assert.match(siSera({ ...base, checkFatto: true, training: 'da_fare' }).testo, /^🚩 Verso il Leader 1° livello: il biglietto BBS\.\n🏋️ Se ti va, restano 5 minuti di Training\.$/);
   });
 
+  prova('telefonate «senza orario» (in coda): mai «passate senza esito» né «Domani hai…» (nota Avvisi 003)', () => {
+    const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../supabase/functions/avvisi/index.ts'), 'utf8');
+    // ogni ricerca di telefonate non completate (tipo_azione = 'Contatto' + completata = false) deve escludere senza_ora = true
+    const righe = src.split('\n').filter(r => r.includes(".eq('tipo_azione', 'Contatto').eq('completata', false)"));
+    assert.equal(righe.length, 2);   // «Domani hai…» (sera) e «Com'è andata?» (senza_esito)
+    for (const r of righe) assert.match(r, /\.eq\('senza_ora', false\)/);
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
