@@ -179,6 +179,11 @@
     background: var(--superficie); color: var(--testo-soft); display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 8px rgba(16,21,31,.14); opacity: .88; }
   .segnala-bottone.in-foglio { bottom: auto; top: calc(env(safe-area-inset-top) + 8px); }
   .segnala-bottone[hidden] { display: none; }
+  /* nota Pagine 001: il segnale «Coach Yes» accanto al nome, dove c'è una telefonata da fare */
+  .segno-coach { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 0 0 6px; border-radius: 50%; background: var(--cat-partner-tinta); color: var(--cat-partner); vertical-align: -5px; cursor: pointer; flex: none; }
+  .segno-coach svg.ic { width: 14px; height: 14px; margin: 0; }
+  .cy-nota { padding: 10px 0; border-top: 1px solid var(--linea); } .cy-nota:first-child { border-top: 0; padding-top: 0; }
+  .cy-nota small { display: block; color: var(--testo-soft); font-size: 13px; margin: 0 0 4px; } .cy-nota div { white-space: pre-wrap; line-height: 1.45; }
   .segnala-bottone svg.ic { width: 19px; height: 19px; margin: 0; }
   .sg-titolo { display: flex; align-items: center; gap: 8px; } .sg-titolo svg.ic { width: 20px; height: 20px; color: var(--testo-soft); }   /* nota 006: lo stesso insetto del tasto, piccolo, a sinistra del titolo */
   .sg-motivi { margin: 10px 0 12px; } .sg-motivi button { flex: 1; }
@@ -3236,6 +3241,7 @@ async function nuovoAppuntamento(opz = {}) {
   const A = MB21Agenda;
   let elenco = [];
   const liberi = !opz.spazio && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
+  await caricaCoachYes();   // nota 001: il segnale Coach Yes accanto al nome della telefonata (di solito già in memoria)
   if (!opz.contatto) {
     try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   }
@@ -3306,10 +3312,10 @@ async function nuovoAppuntamento(opz = {}) {
         // la serata è sempre Team (Ignazio 06/10, nota 005: «da me in poi è soltanto Team», la LdS viene dall'alto)
         h += `<div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="na-serata" maxlength="${MB21Spazi.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(campi.serata)}"></div>`;
       } else h += st.contatto && opz.contatto
-        ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}</span>
+        ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}${st.tipo === 'Contatto' ? segnoCoach(st.contatto.id, st.contatto.nome) : ''}</span>
             ${st.portato ? '' : '<button class="link" id="na-porta">' + ic('squadra') + ' Porta qualcuno</button>'}</div></div>`
         : `<div class="campo"><label>Contatto <small>${st.contatto ? 'l\'esito è suo' : 'Obbligatorio'}</small></label>
-            <div class="fa-persona"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off" style="flex:1">
+            <div class="fa-persona"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="${esc(st.contatto ? st.contatto.nome : '')}" autocomplete="off" style="flex:1">${st.contatto && st.tipo === 'Contatto' ? segnoCoach(st.contatto.id, st.contatto.nome) : ''}
             ${st.contatto && !st.portato ? '<button class="link" id="na-porta">' + ic('squadra') + ' Porta qualcuno</button>' : ''}</div>
             <datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
       // «Condividi con» (nota 027, come il Calendario Apple): Nessuno · la persona (un Partner con l'app) · Tutto il Team · Una Linea (solo l'Admin);
@@ -4403,6 +4409,54 @@ function collegaReport() {
 // ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Invia il tuo feedback» (nota 006, prima «Cosa non va, o cosa proponi?»), tre scelte e un testo.
 // L'app aggiunge da sola dove era il partner (`doveSono`: il tab, la sezione, i fogli aperti dal primo all'ultimo, il contatto), la versione e il telefono.
 // Si salva in `segnalazioni` (segnala.js per le regole pure); al partner «Grazie, abbiamo ricevuto il feedback.» (nota 002). Mai la parola «errore».
+// ── «Coach Yes» accanto al nome (nota Pagine 001, Ignazio 06/10/2026) ── solo dove c'è una telefonata da fare: Chi sento oggi? (coda, Dare Seguito,
+// telefonate scelte a mano, riordini), MB Plan (le telefonate non fatte) e il modulo «+» quando si programma una telefonata; non in Lista Nomi.
+// Costo zero: una sola lettura leggera (solo `contatto_id` delle note del partner visto), tenuta 15 minuti e svuotata quando si salva una nota
+// (notaCoach, pagina-lista.js). Il tocco sul segnale apre il foglio «Coach Yes» con le note di quella persona (lette in quel momento).
+const CY = { di: null, letta: 0, ids: new Set() };
+const CY_FRESCA_MS = 15 * 60000;
+async function caricaCoachYes() {
+  if (vediTutti() || ST.offline || !ST.utente) return;
+  const di = visto().id;
+  if (CY.di === di && Date.now() - CY.letta < CY_FRESCA_MS) return;
+  const { data, error } = await dbq('chi ha una nota Coach Yes', supa.from('coach_note').select('contatto_id').eq('user_id', di));
+  if (error || !Array.isArray(data)) return;   // senza la lettura niente segnali: la pagina resta com'era
+  CY.di = di; CY.letta = Date.now(); CY.ids = new Set(data.map(r => r.contatto_id));
+}
+// Il segnale (uno <span>: sta anche dentro le righe che sono bottoni); `nome` serve al titolo del foglio
+function segnoCoach(contattoId, nome) {
+  if (!contattoId || vediTutti() || CY.di !== visto().id || !CY.ids.has(contattoId)) return '';
+  return `<span class="segno-coach" role="button" tabindex="0" data-coach-yes="${esc(contattoId)}" data-coach-nome="${esc(nome || '')}" aria-label="Coach Yes: leggi la nota" title="Coach Yes">${ic('libro')}</span>`;
+}
+async function foglioCoachYes(contattoId, nome) {
+  const { data, error } = await dbq('note Coach Yes', supa.from('coach_note').select('id, tipo_azione, testo, scritta_il').eq('contatto_id', contattoId).order('scritta_il', { ascending: false }));
+  if (error) return mostraToast('Non riesco a leggere la nota: controlla la connessione e riprova.');
+  const quando = iso => new Date(iso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric' });
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto mc">
+    <div class="mc-testa"><span class="ts-pastiglia">${ic('libro')}</span><div><small>Coach Yes</small><b>${esc(nome || '')}</b></div><button id="cy-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="riquadro mc-g" style="margin-top:14px">${(data || []).length ? data.map(n => `<div class="cy-nota"><small>${esc([n.tipo_azione, quando(n.scritta_il)].filter(Boolean).join(' · '))}</small><div>${esc(n.testo)}</div></div>`).join('') : '<div class="vuoto">Nessuna nota.</div>'}</div>
+    <div class="mc-fondo"><button class="link" id="cy-chiudi">Chiudi</button></div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#cy-x').onclick = chiudi;
+  velo.querySelector('#cy-chiudi').onclick = chiudi;
+}
+// Un solo ascolto per tutta l'app, prima di ogni altro: il tocco sul segnale apre il foglio e non apre la riga che lo contiene
+if (typeof document !== 'undefined' && document.addEventListener) {
+  const apriSegno = e => {
+    const s = e.target && e.target.closest && e.target.closest('[data-coach-yes]');
+    if (!s) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault(); e.stopPropagation();
+    foglioCoachYes(s.dataset.coachYes, s.dataset.coachNome);
+  };
+  document.addEventListener('click', apriSegno, true);
+  document.addEventListener('keydown', apriSegno, true);
+}
+
 function doveSono() {
   const fogli = [...document.querySelectorAll('.velo .foglio')].filter(f => !f.closest('#sg-velo'))
     .map(f => { const t = f.querySelector('.mc-testa b, h3, h2, .pt-testa b'); return t ? t.textContent : ''; });

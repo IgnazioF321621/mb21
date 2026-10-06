@@ -94,7 +94,7 @@ async function caricaAgenda() {
   const spazi = vediSpazi() ? dbq('spazi', supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
   // gli impegni ricevuti da altri (nota 027): mai con «Tutti»; se la funzione non c'è ancora o non risponde, l'Agenda si apre senza di loro
   const ricevuti = vediTutti() ? null : dbq('impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a }));
-  const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali()]);
+  const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali(), caricaCoachYes()]);   // nota 001: chi ha una nota Coach Yes, letto una volta ogni 15 minuti
   AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
   AG.ricevuti = rc && !rc.error && Array.isArray(rc.data) ? rc.data : [];
@@ -258,7 +258,7 @@ function impegniHtml(eventi, opz) {
   if (!eventi.length && !spazi.length && !ricevuti.length) return `<div class="ag-impegni vuota">Nessun impegno. Tocca <b>+</b> o apri la Timeline.</div>`;
   const righe = eventi.map(e => {
     const r = A.riga(e, opz), cat = (e.contatti && e.contatti.categoria) || e.categoria;
-    return { t: Date.parse(e.quando || e.inizio), h: `<button class="ag-imp${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}"><i class="${classeCat(cat)}"></i><span>${esc(r.titolo)}${e.portatoNome ? `<small>${rigaPortato(e.portatoNome)}</small>` : ''}</span><b>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' 👍' : ''}</b></button>` };
+    return { t: Date.parse(e.quando || e.inizio), h: `<button class="ag-imp${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}"><i class="${classeCat(cat)}"></i><span>${esc(r.titolo)}${e.tipo_azione === 'Contatto' && !e.completata ? segnoCoach(e.contatto_id, (e.contatti || {}).nome) : ''}${e.portatoNome ? `<small>${rigaPortato(e.portatoNome)}</small>` : ''}</span><b>${esc(A.orario(e))}${e.confermato_il && !e.completata ? ' 👍' : ''}</b></button>` };
   }).concat(spazi.map(x => ({ t: Date.parse(x.inizio), h: rigaSpazioHtml(x) })), ricevuti.map(x => ({ t: Date.parse(x.inizio), h: rigaRicevutoHtml(x) })));
   return `<div class="ag-impegni">${righe.sort((x, y) => x.t - y.t).map(x => x.h).join('')}</div>`;
 }
