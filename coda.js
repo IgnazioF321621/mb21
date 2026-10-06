@@ -97,6 +97,8 @@
     return { righe: senza.slice(0, posti), totale: senza.length };
   }
 
+  // Adesso (ISO): una funzione sola, così i banchi di prova la fermano insieme a oggiRoma (nota Pagine 004)
+  const adesso = () => new Date().toISOString();
   // Data di oggi a Roma, AAAA-MM-GG
   function oggiRoma(adesso) {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(adesso || new Date());
@@ -171,7 +173,7 @@
   }
 
   const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE,
-    giorniTra, quandoFa, ultimaVolta, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio,
+    adesso, giorniTra, quandoFa, ultimaVolta, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio,
     telefonateScelte, senzaScelte, contoGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;

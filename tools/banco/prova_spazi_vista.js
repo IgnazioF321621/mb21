@@ -92,7 +92,30 @@ prova('Il nome si legge dove l\'incontro compare: la riga degli impegni e il Pro
   const riga = P.rigaSpazioHtml(P.AG.spazi[0]).replace(/<[^>]+>/g, '|');
   assert.match(riga, /Serata Rubino\|Incontro LdS · Linea di sponsorizzazione/);
   assert.match(P.rigaSpazioHtml(P.AG.spazi[1]).replace(/<[^>]+>/g, '|'), /Incontro di Team\|Incontro di gruppo/);
-  assert.match(P.programmaSettimanaHtml(), /Incontro LdS: lun 21 alle 20:00 \(Serata Rubino\)/);
+  assert.match(P.programmaSettimanaHtml(), /Incontro LdS: lun 21 alle 20:00 \(Serata Rubino\)/);   // «adesso» del banco: lunedì a mezzogiorno
+});
+
+prova('Programma della settimana (nota 004): «Da chiudere» in alto, solo il futuro nelle righe, «Fatti e passati» chiusa con i fatti dentro', () => {
+  pulisci();
+  const domani = P.A.spostaGiorno(P.OGGI, 1);   // la settimana del banco parte da OGGI (lunedì)
+  const prima = P.AG.azioni;
+  P.AG.azioni = [
+    P.az('f1', P.OGGI, '09:00', 60, 'Piano Marketing', 'PM 1a1', 'Marco Neri', 'Prospect', { esito: 'Relazione', completata: true }),
+    P.az('c1', P.OGGI, '10:00', 60, 'Piano Marketing', 'PM 1a1', 'Giulia Conti', 'Prospect', { esito: null, completata: false }),
+    P.az('d1', domani, '19:00', 60, 'Piano Marketing', 'PM 1a1', 'Anna Villa', 'Prospect', { esito: null, completata: false })];
+  P.AG.spazi = [{ id: 's1', user_id: 'io', tipo: 'Team', inizio: iso(P.OGGI, '11:00'), durata: 60 }, { id: 's2', user_id: 'io', tipo: 'Team', inizio: iso(domani, '21:00'), durata: 60 }];
+  try {
+    P.AG.fattiAperti = false;
+    let h = P.programmaSettimanaHtml();
+    assert.match(h, /Da chiudere · 1<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="c1">[\s\S]*?senza esito/);
+    assert.match(h, /Piani Marketing: 1 da fare/);
+    assert.match(h, /Incontro di Team: mar 22 alle 21:00/);
+    assert.doesNotMatch(h, /lun 21 alle 11:00/);   // lo spazio di stamattina non si scrive più
+    assert.match(h, /data-cmd="fatti" aria-expanded="false"><span>Fatti e passati<i>1<\/i>/);
+    assert.match(h, /<div class="mb-prog-elenco" hidden><button class="mb-prog-app" data-prog-evento="f1">[\s\S]*?Relazione/);
+    P.AG.fattiAperti = true;
+    assert.match(P.programmaSettimanaHtml(), /<div class="mb-prog-elenco"><button/);
+  } finally { P.AG.azioni = prima; P.AG.spazi = []; P.AG.fattiAperti = false; }
 });
 
 (async () => {

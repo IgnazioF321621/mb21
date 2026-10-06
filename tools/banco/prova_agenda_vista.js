@@ -229,8 +229,11 @@ prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Tim
   const m = V.menuAgendaHtml();
   assert.doesNotMatch(m, /data-cmd="core"/);                                  // il Modulo Core resta dal Check
   assert.match(m, /<b>Programma della settimana<\/b><small>Settimana 39 · 21 set – 27 set/);
-  assert.match(m, /Piani Marketing: 5 fissati · 1 da riempire/);            // i 5 PM veri della settimana, più lo spazio di lunedì
-  assert.match(m, /Consulenze prodotti: 2 fissate · 1 da riempire/);
+  // nota 004: «adesso» del banco è lunedì a mezzogiorno: il PM delle 11 senza esito va in «Da chiudere», gli altri 4 sono da fare
+  assert.match(m, /Da chiudere · 1<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="p1">/);
+  assert.match(m, /Piani Marketing: 4 da fare · 1 da riempire/);
+  assert.match(m, /Consulenze prodotti: 2 da fare · 1 da riempire/);
+  assert.match(m, /Fatti e passati<i>1<\/i>/);
   assert.match(m, /SdS\/OPEN: lun 21 alle 21:30/);
   assert.match(m, /data-cmd="prepara" class="mb-prog-bottone">.*Aggiungi appuntamenti/);
   assert.ok(m.indexOf('data-scala="anno"') < m.indexOf('Programma della settimana') && m.indexOf('Programma della settimana') > 0);   // subito sotto le scale (28/09: in fondo restava tagliata)

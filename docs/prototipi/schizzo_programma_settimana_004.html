@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Programma della settimana</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --blu: #2c4a7c; --blu-tinta: #d6e4f5; --testo: #16202E; --soft: #5B6675; --linea: #E3E7EE; --rosso: #C2410C; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #EFF1F5; color: var(--testo); margin: 0; padding: 20px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } .nota { color: var(--soft); font-size: 14px; margin: 0 0 18px; max-width: 900px; }
+  .fila { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .col { width: 290px; } .col h2 { font-size: 15px; margin: 0 0 6px; } .col p.s { font-size: 13px; color: var(--soft); margin: 0 0 10px; min-height: 52px; }
+  .card { border: 1.5px solid var(--blu); background: var(--blu-tinta); color: var(--blu); border-radius: 12px; padding: 11px 10px 10px; }
+  .testa b { display: block; font-size: 16px; font-weight: 800; } .testa small { font-size: 12px; color: var(--soft); }
+  ul { list-style: none; margin: 10px 0 0; padding: 0 0 0 4px; display: grid; gap: 5px; }
+  li { font-size: 14px; font-weight: 600; color: var(--testo); display: flex; gap: 8px; align-items: center; }
+  li i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed var(--blu); flex: none; }
+  .vecchio li { color: var(--soft); }
+  .chiudere { margin: 10px 0 0; background: #fff; border-radius: 10px; padding: 8px; }
+  .chiudere .tit { font-size: 12px; font-weight: 800; color: var(--rosso); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; }
+  .riga { display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 9px; padding: 7px 8px; margin: 4px 0 0; font-size: 13px; color: var(--testo); border: 1px solid var(--linea); }
+  .riga small { display: block; color: var(--soft); font-size: 11.5px; } .riga em { font-style: normal; color: var(--soft); }
+  .riga.rossa { border-color: #f3c6ad; }
+  .fatti { margin: 10px 0 0; display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 10px; padding: 9px 10px; font-size: 14px; font-weight: 700; color: var(--testo); }
+  .fatti span.n { background: var(--blu); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 12px; margin-left: 6px; }
+  .bot { margin: 10px 0 0; background: var(--blu); color: #fff; border-radius: 10px; padding: 10px; text-align: center; font-size: 14px; font-weight: 700; }
+  .foglio { background: #fff; border-radius: 18px 18px 0 0; padding: 18px 14px; box-shadow: 0 -4px 20px rgba(0,0,0,.12); font-size: 13px; }
+  .foglio h3 { margin: 0 0 2px; font-size: 16px; } .foglio .sotto { color: var(--soft); margin: 0 0 10px; }
+  .esiti { display: flex; flex-wrap: wrap; gap: 6px; } .esiti span { border: 1px solid var(--linea); border-radius: 10px; padding: 7px 10px; font-weight: 600; }
+  .esiti span.si { background: var(--testo); color: #fff; }
+  .x { color: var(--rosso); font-weight: 700; font-size: 12px; }
+</style></head><body>
+<h1>«Programma della settimana»: solo quello che resta da fare</h1>
+<p class="nota">Nota 004. A sinistra com'è oggi, al centro la proposta, a destra cosa succede toccando un appuntamento già fatto. Esempio: oggi è giovedì 8 ottobre.</p>
+<div class="fila">
+  <div class="col"><h2>Oggi</h2><p class="s">Tutto insieme, anche quello di lunedì e martedì: con tante serate la lista si allunga.</p>
+    <div class="card vecchio"><div class="testa"><b>Programma della settimana</b><small>Settimana 41 · 5 ott – 11 ott</small></div>
+      <ul><li><i></i>Piani Marketing: 4 fissati · 1 da riempire</li><li><i></i>Consulenze: 2 fissate</li><li><i></i>Incontri di Team: lun 5 alle 21:00 · mer 7 alle 21:00 · ven 9 alle 21:00</li><li><i></i>LdS: mar 6 alle 21:00</li><li><i></i>SdS/OPEN: lun 5 alle 20:30</li></ul>
+      <div class="bot">+ Aggiungi appuntamenti</div></div>
+  </div>
+  <div class="col"><h2>Proposta</h2><p class="s">In alto, in arancio, quello che è passato senza esito: resta lì finché non lo chiudi. Sotto solo quello che deve ancora venire. In fondo una riga chiusa con quelli fatti.</p>
+    <div class="card"><div class="testa"><b>Programma della settimana</b><small>Settimana 41 · 5 ott – 11 ott</small></div>
+      <div class="chiudere"><div class="tit">Da chiudere · 1</div>
+        <div class="riga rossa"><span>PM · Giulia Conti<small>mer 7 alle 18:30 · senza esito</small></span><em>›</em></div></div>
+      <ul><li><i></i>Piani Marketing: 2 da fare · 1 da riempire</li><li><i></i>Consulenze: 1 da fare</li><li><i></i>Incontri di Team: ven 9 alle 21:00</li></ul>
+      <div class="fatti"><span>Fatti e passati<span class="n">6</span></span><span>›</span></div>
+      <div class="bot">+ Aggiungi appuntamenti</div></div>
+  </div>
+  <div class="col"><h2>Toccando «Fatti e passati»</h2><p class="s">La riga si apre sul posto con gli appuntamenti fatti della settimana, col loro esito. Un tocco apre la stessa scheda «Com'è andata?» di MB Plan: si cambia l'esito come oggi.</p>
+    <div class="card"><div class="testa"><b>Programma della settimana</b><small>Settimana 41 · 5 ott – 11 ott</small></div>
+      <div class="fatti"><span>Fatti e passati<span class="n">6</span></span><span>⌄</span></div>
+      <div class="riga"><span>PM · Marco Neri<small>lun 5 alle 18:30 · Relazione</small></span><em>›</em></div>
+      <div class="riga"><span>Incontro di Team<small>lun 5 alle 21:00 · Fatto</small></span><em>›</em></div>
+      <div class="riga"><span>SdS/OPEN<small>lun 5 alle 20:30 · Fatto</small></span><em>›</em></div>
+      <div class="riga"><span>LdS<small>mar 6 alle 21:00 · Fatto</small></span><em>›</em></div>
+      <div class="riga"><span>Consulenza · Rosa Aprile<small>mar 6 alle 10:00 · Ordine</small></span><em>›</em></div>
+      <div class="riga"><span>Incontro di Team<small>mer 7 alle 21:00 · Fatto</small></span><em>›</em></div>
+    </div>
+    <div class="foglio" style="margin-top:12px"><h3>PM · Marco Neri</h3><div class="sotto">lun 5 alle 18:30 · Com'è andata?</div>
+      <div class="esiti"><span>Relazione</span><span class="si">Iscrizione</span><span>Dare Seguito</span><span>No Show</span><span>Non è andata</span></div></div>
+  </div>
+</div>
+</body></html>
