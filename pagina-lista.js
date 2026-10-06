@@ -627,15 +627,25 @@ function disegnaDati(c, extra) {
   }).filter(Boolean);
   const resto = [['Area', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
     .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
+  // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
+  const codice = valore('codice_amway');
+  if (codice) resto.unshift(['Codice Amway', `<button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button>`]);
   const riquadro = `<div class="riquadro dati" id="dati-riquadro">${[...persona, ...resto].map(([k, v]) => `<div><small>${k}</small>${v}</div>`).join('')}</div>`;
   const vecchio = document.getElementById('dati-riquadro');
   if (vecchio) vecchio.outerHTML = riquadro; else box.innerHTML = `<div id="coppia"></div>${riquadro}`;
+  const copia = document.querySelector('[data-copia-codice]');
+  if (copia) copia.onclick = () => copiaCodice(copia.dataset.copiaCodice);
+}
+// Copia il codice negli appunti; se il telefono non lo lascia fare, il codice resta scritto nel messaggio (si legge e si scrive a mano)
+async function copiaCodice(codice) {
+  try { await navigator.clipboard.writeText(codice); mostraToast(`Codice ${codice} copiato`); }
+  catch (e) { mostraToast(`Codice Amway: ${codice}`); }
 }
 
 // Compleanno (cantiere 30, Ignazio 18/09: «domani potremmo mandare messaggi di auguri»), sesso e lavoro (cantiere 40): la vista della Lista
 // non li ha, si leggono da `contatti` quando si apre «Dati», come la coppia. Senza rete restano fuori.
 async function datiPersonaExtra(c) {
-  const { data, error } = await dbq('dati personali', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle());
+  const { data, error } = await dbq('dati personali', supa.from('contatti').select('compleanno, sesso, lavoro, codice_amway').eq('id', c.id).maybeSingle());   // + il codice Amway (nota 031)
   if (error || !data || LS.contatto !== c || LS.sezione !== 'dati') return;
   disegnaDati(c, data);
 }
