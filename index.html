@@ -425,7 +425,7 @@
   .lv-pic svg.ic { width: 18px; height: 18px; }
   .lv-persona { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: var(--superficie); border-radius: var(--raggio-riga); padding: 10px 12px; margin: 0 0 6px; font-family: inherit; color: var(--testo); min-height: var(--tocco); }
   .lv-persona.fatta { opacity: .65; }
-  .lv-persona .rc-pastiglia { flex: none; } .lv-persona.fatta .rc-pastiglia { color: var(--ok); background: var(--ok-tinta); }
+  .lv-persona .rc-pastiglia { position: static; transform: none; flex: none; }   /* nota 032: qui il tondo sta nella riga (flex), non ancorato a sinistra */ .lv-persona.fatta .rc-pastiglia { color: var(--ok); background: var(--ok-tinta); }
   .lv-pt { flex: 1; min-width: 0; } .lv-pt b { display: block; font-size: 15px; } .lv-pt small { display: block; color: var(--testo-soft); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lv-persona em { font-style: normal; font-size: 20px; color: var(--testo-tenue); }
   .lv-riga { display: flex; align-items: stretch; gap: 6px; margin: 0 0 6px; } .lv-riga .lv-persona { flex: 1; min-width: 0; margin: 0; }
