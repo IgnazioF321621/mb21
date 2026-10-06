@@ -666,4 +666,19 @@ prova('Chi può condividere: un appuntamento con un Partner (non una telefonata,
   assert.deepEqual(A.CONDIVISIONI_SPAZIO.map(x => x[1]), ['Nessuno', 'Tutto il Team', 'Una Linea']);
 });
 
+prova('Nota 005: la Linea come nella Mappa, la parte di una persona (lei compresa), il frontale sopra un codice', () => {
+  const sq = [{ partner_id: 'IO', sponsor_id: null, nome: 'IO' }, { partner_id: 'R', sponsor_id: 'IO', nome: 'RUBINO' }, { partner_id: 'M', sponsor_id: 'R', nome: 'NERI, MARCO' },
+    { partner_id: 'G', sponsor_id: 'R', nome: 'CONTI, GIULIA' }, { partner_id: 'A', sponsor_id: 'M', nome: 'VILLA, ANNA' }, { partner_id: 'L', sponsor_id: 'M', nome: 'BO, LUCA' },
+    { partner_id: 'P', sponsor_id: 'L', nome: 'SALA, PIA' }, { partner_id: 'D', sponsor_id: 'G', nome: 'LUPO, DARIO' }];
+  const r = A.ramoDellaLinea(sq, 'R');
+  assert.deepEqual(r.map(x => `${x.livello}:${x.partner_id}:${x.sotto}`), ['0:R:6', '1:G:1', '2:D:0', '1:M:3', '2:L:1', '3:P:0', '2:A:0']);
+  assert.deepEqual([...A.parteDi(r, 'M')], ['M', 'L', 'P', 'A']);
+  assert.deepEqual([...A.parteDi(r, 'P')], ['P']);
+  assert.equal(A.parteDi(r, 'X').size, 0);
+  assert.equal(A.frontaleDi(sq, 'P', 'IO'), 'R'); assert.equal(A.frontaleDi(sq, 'R', 'IO'), 'R'); assert.equal(A.frontaleDi(sq, 'X', 'IO'), null);
+  assert.deepEqual(A.ramoDellaLinea(sq, null), []); assert.equal(A.ramoDellaLinea(sq, 'R', 3).length, 3);
+  // senzaApp con il codice della persona: solo la sua parte
+  assert.deepEqual(A.senzaApp(sq, ['IO', 'M'], 'IO', 'M').map(x => x.partner_id), ['L', 'P', 'A']);
+});
+
 console.log(`\n${ok} prove superate`);
