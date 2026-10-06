@@ -34,5 +34,25 @@ prova('la riga da salvare: serve chi segnala e un motivo dei tre; il testo è fa
   assert.deepEqual(S.riga({ userId: 'u1', motivo: 'non_capisco' }).dove, {});
   assert.equal(S.riga({ userId: 'u1', motivo: 'altro' }), null); assert.equal(S.riga({ motivo: 'idea' }), null); assert.equal(S.riga(), null);
   assert.equal(S.riga({ userId: 'u1', motivo: 'idea', testo: 'a'.repeat(2000) }).testo.length, S.MAX_TESTO);
+  assert.equal('immagine' in S.riga({ userId: 'u1', motivo: 'idea' }), false);   // senza screenshot: niente campo
+  assert.equal('id' in S.riga({ userId: 'u1', motivo: 'idea' }), false);
+});
+prova('lo screenshot (nota 014): lato lungo al massimo 1200, proporzioni uguali, le piccole restano', () => {
+  assert.equal(S.MAX_LATO, 1200); assert.equal(S.QUALITA, 0.7); assert.equal(S.BUCKET, 'segnalazioni');
+  assert.deepEqual(S.misuraRidotta(1179, 2556), { w: 554, h: 1200 });   // iPhone in verticale
+  assert.deepEqual(S.misuraRidotta(2556, 1179), { w: 1200, h: 554 });   // in orizzontale
+  assert.deepEqual(S.misuraRidotta(800, 600), { w: 800, h: 600 });      // già piccola
+  assert.deepEqual(S.misuraRidotta(1200, 1200), { w: 1200, h: 1200 });
+  assert.deepEqual(S.misuraRidotta(0, 0), { w: 1, h: 1 });
+});
+prova('la riga con lo screenshot: id scelto prima, percorso <chi>/<id>.jpg nel bucket', () => {
+  const id = S.nuovoId(() => Array.from({ length: 16 }, (_, i) => i * 16));
+  assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.notEqual(S.nuovoId(), S.nuovoId());
+  assert.equal(S.percorsoImmagine('u1', id), `u1/${id}.jpg`);
+  assert.equal(S.percorsoImmagine('u1', null), null); assert.equal(S.percorsoImmagine(null, id), null);
+  const r = S.riga({ id, userId: 'u1', motivo: 'non_funziona', testo: 'Il bottone non risponde', immagine: S.percorsoImmagine('u1', id) });
+  assert.equal(r.id, id); assert.equal(r.immagine, `u1/${id}.jpg`); assert.equal(r.user_id, 'u1');
+  assert.equal(S.riga({ id, userId: 'u1', motivo: 'boh', immagine: 'u1/x.jpg' }), null);
 });
 console.log(`\n${ok} prove superate`);
