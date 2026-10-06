@@ -1,0 +1,331 @@
+<title>Aggiungi in MB Plan</title>
+<style>
+/* Layout: a sinistra il telefono finto (MB Plan con il «+» a livelli), a destra il quaderno delle note per Claude; su telefono uno sotto l'altro */
+:root {
+  --bg: #E9ECF2; --carta: #FFFFFF; --fg: #10151F; --soft: #5A6475; --tenue: #8A93A4; --bordo: #DCE1EA;
+  --blu: #2c4a7c; --blu-tinta: #d6e4f5; --pm: #1D4ED8; --pm-tinta: #E7EFFE; --cons: #0E7490; --team: #6D28D9; --team-tinta: #F0E9FD;
+  --sds: #15803D; --sds-tinta: #E4F3E8; --arancio: #B45309; --arancio-tinta: #FEF3C8; --scuro: #10151F; --su-scuro: #FFFFFF; --velo: rgba(16,21,31,.42);
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif; --testo: "Figtree", -apple-system, system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E1219; --carta: #171C26; --fg: #EEF1F6; --soft: #A3ACBC; --tenue: #7A8395; --bordo: #2A3140;
+  --blu: #9DB8E6; --blu-tinta: #1D2A40; --pm: #8DB0FF; --pm-tinta: #1B2747; --cons: #5CC3D9; --team: #B79CFF; --team-tinta: #2A2245;
+  --sds: #6FD08F; --sds-tinta: #17301F; --arancio: #F2B25C; --arancio-tinta: #3A2A10; --scuro: #EEF1F6; --su-scuro: #10151F; --velo: rgba(0,0,0,.6); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0E1219; --carta: #171C26; --fg: #EEF1F6; --soft: #A3ACBC; --tenue: #7A8395; --bordo: #2A3140;
+  --blu: #9DB8E6; --blu-tinta: #1D2A40; --pm: #8DB0FF; --pm-tinta: #1B2747; --cons: #5CC3D9; --team: #B79CFF; --team-tinta: #2A2245;
+  --sds: #6FD08F; --sds-tinta: #17301F; --arancio: #F2B25C; --arancio-tinta: #3A2A10; --scuro: #EEF1F6; --su-scuro: #10151F; --velo: rgba(0,0,0,.6); color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--testo); font-size: 15px; }
+.pagina { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 22px 40px; }
+h1 { font-family: var(--display); font-size: clamp(22px, 3.2vw, 30px); letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+.intro { color: var(--soft); margin: 0 0 18px; max-width: 70ch; line-height: 1.45; }
+.zona { display: grid; grid-template-columns: 390px minmax(0, 1fr); gap: 26px; align-items: start; }
+@media (max-width: 820px) { .zona { grid-template-columns: minmax(0, 1fr); } }
+
+/* il telefono */
+.telefono { width: 100%; max-width: 390px; height: 760px; background: var(--bg); border: 10px solid var(--scuro); border-radius: 44px; position: relative; overflow: hidden; margin: 0 auto; box-shadow: 0 18px 50px rgba(16,21,31,.18); }
+.schermo { position: absolute; inset: 0; overflow-y: auto; padding: 22px 14px 90px; }
+.testa { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 12px; }
+.testa small { display: block; color: var(--soft); font-size: 12px; } .testa b { font-family: var(--display); font-size: 24px; }
+.piu { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--scuro); color: var(--su-scuro); font-size: 26px; line-height: 1; cursor: pointer; }
+.giorno { background: var(--carta); border-radius: 14px; padding: 10px 12px; margin: 0 0 8px; display: flex; gap: 10px; align-items: center; }
+.giorno i { width: 10px; height: 10px; border-radius: 50%; flex: none; } .giorno b { display: block; font-size: 14px; } .giorno small { color: var(--soft); font-size: 12px; }
+.card { border: 1.5px solid var(--blu); background: var(--blu-tinta); color: var(--blu); border-radius: 14px; padding: 12px; margin: 14px 0 0; }
+.card .t b { display: block; font-weight: 800; font-size: 16px; } .card .t small { color: var(--soft); font-size: 12px; }
+.card ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; } .card li { color: var(--fg); font-weight: 600; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.card li i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed var(--blu); flex: none; }
+.card .vuota { color: var(--soft); font-size: 13px; margin: 8px 0 0; line-height: 1.35; }
+.card button.agg { margin: 12px 0 0; width: 100%; border: 0; border-radius: 10px; background: var(--blu); color: var(--carta); font: 700 14px var(--testo); padding: 11px; cursor: pointer; }
+.barra { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: var(--carta); border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; font-size: 10.5px; color: var(--soft); }
+.barra span { text-align: center; } .barra span.si { color: var(--fg); font-weight: 700; } .barra i { display: block; width: 20px; height: 20px; border: 1.6px solid currentColor; border-radius: 6px; margin: 0 auto 3px; }
+
+/* i fogli che salgono dal basso */
+.velo { position: absolute; inset: 0; background: var(--velo); display: flex; align-items: flex-end; z-index: 5; }
+.foglio { background: var(--carta); width: 100%; max-height: 92%; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 22px 16px 18px; position: relative; animation: sale .22s ease-out; }
+@media (prefers-reduced-motion: reduce) { .foglio { animation: none; } }
+@keyframes sale { from { transform: translateY(30px); opacity: .6; } to { transform: none; opacity: 1; } }
+.foglio::before { content: ''; position: absolute; top: 8px; left: 50%; width: 42px; height: 5px; margin-left: -21px; border-radius: 9px; background: var(--bordo); }
+.foglio h3 { font-family: var(--display); font-size: 20px; margin: 4px 0 2px; } .foglio .sotto { color: var(--soft); font-size: 13px; margin: 0 0 14px; }
+.indietro { border: 0; background: none; color: var(--soft); font: 600 13px var(--testo); padding: 0; margin: 0 0 4px; cursor: pointer; }
+.strada { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; border: 1px solid var(--bordo); background: var(--carta); color: var(--fg); border-radius: 16px; padding: 13px 12px; margin: 0 0 9px; font: inherit; cursor: pointer; }
+.strada:hover, .strada:focus-visible { border-color: var(--fg); outline: none; }
+.strada .tondo { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; flex: none; font-size: 15px; }
+.strada b { display: block; font-size: 15.5px; } .strada small { display: block; color: var(--soft); font-size: 12.5px; line-height: 1.3; margin-top: 2px; }
+.strada em { margin-left: auto; font-style: normal; color: var(--tenue); font-size: 20px; }
+.etichetta { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--soft); background: var(--bg); border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+.campo { margin: 0 0 14px; } .campo > label { display: block; font-weight: 700; font-size: 13.5px; margin: 0 0 6px; } .campo > label small { font-weight: 500; color: var(--soft); }
+.pillole { display: flex; flex-wrap: wrap; gap: 6px; }
+.pillole button { border: 1px solid var(--bordo); background: var(--carta); color: var(--fg); border-radius: 11px; padding: 8px 12px; font: 600 14px var(--testo); cursor: pointer; }
+.pillole button.si { background: var(--scuro); color: var(--su-scuro); border-color: var(--scuro); }
+.riga-num { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--bordo); }
+.riga-num:last-of-type { border-bottom: 0; } .riga-num b { font-size: 14.5px; } .riga-num small { display: block; color: var(--soft); font-size: 12px; font-weight: 500; }
+.riga-num .pillole button { padding: 6px 11px; min-width: 36px; }
+input[type=text], input[type=date], input[type=time], select, textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--bordo); background: var(--carta); color: var(--fg); border-radius: 11px; padding: 11px; font: 15px var(--testo); }
+.due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fondo { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 16px; }
+.btn { border: 0; border-radius: 12px; padding: 12px; font: 700 15px var(--testo); cursor: pointer; }
+.btn.no { background: none; color: var(--soft); } .btn.si { background: var(--scuro); color: var(--su-scuro); } .btn:disabled { opacity: .4; cursor: default; }
+.albero { border: 1px solid var(--bordo); border-radius: 12px; padding: 4px; max-height: 230px; overflow-y: auto; }
+.albero button { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; border-radius: 8px; padding: 8px 8px 8px calc(8px + var(--l) * 16px); font: 14.5px var(--testo); color: var(--fg); text-align: left; cursor: pointer; }
+.albero button b { font-weight: 600; flex: 1; } .albero button small { color: var(--soft); font-size: 12px; } .albero button i { font-style: normal; color: var(--tenue); }
+.albero button.acceso { background: var(--pm-tinta); } .albero button.lei { background: var(--pm); color: var(--carta); } .albero button.lei small, .albero button.lei i { color: var(--carta); }
+.albero button.spento { color: var(--tenue); }
+.chi { margin: 8px 0 0; padding: 9px 11px; background: var(--bg); border-radius: 10px; font-size: 13.5px; color: var(--soft); } .chi b { color: var(--fg); }
+.giorni { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.giorni button { border: 1px solid var(--bordo); background: var(--carta); color: var(--fg); border-radius: 10px; padding: 7px 0; font: 600 12px var(--testo); cursor: pointer; }
+.giorni button small { display: block; font-size: 15px; font-weight: 700; } .giorni button.si { background: var(--scuro); color: var(--su-scuro); border-color: var(--scuro); }
+.giorni button:disabled { opacity: .35; cursor: default; }
+.messi { font-weight: 700; font-size: 13.5px; margin: 10px 0 6px; } .messi.ok { color: var(--sds); }
+.scelti { display: grid; gap: 5px; margin: 0 0 10px; } .scelti span { background: var(--bg); border-radius: 9px; padding: 7px 10px; font-size: 13.5px; }
+.toast { position: absolute; left: 12px; right: 12px; bottom: 76px; background: var(--scuro); color: var(--su-scuro); border-radius: 14px; padding: 12px 14px; font-size: 14px; z-index: 9; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+
+/* il quaderno */
+.quaderno { background: var(--carta); border-radius: 18px; padding: 18px; display: grid; gap: 14px; }
+.dove { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+.dove b { display: block; font-family: var(--display); font-size: 19px; letter-spacing: 0; text-transform: none; color: var(--fg); margin-top: 3px; }
+.percorso { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--soft); } .percorso span { background: var(--bg); border-radius: 8px; padding: 3px 8px; }
+.quaderno textarea { min-height: 110px; resize: vertical; }
+.azioni-q { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.stato { font-size: 13px; color: var(--soft); } .stato.ok { color: var(--sds); } .stato.no { color: var(--arancio); }
+.rapide { display: flex; flex-wrap: wrap; gap: 6px; } .rapide button { border: 1px solid var(--bordo); background: var(--bg); color: var(--fg); border-radius: 20px; padding: 6px 12px; font: 600 13px var(--testo); cursor: pointer; }
+.legenda { font-size: 13px; color: var(--soft); line-height: 1.45; border-top: 1px solid var(--bordo); padding-top: 12px; }
+:focus-visible { outline: 2px solid var(--pm); outline-offset: 2px; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+
+<div class="pagina">
+  <h1>Un solo «+» in MB Plan, a livelli</h1>
+  <p class="intro">Prova di nota 005, con dati finti: niente si salva davvero. Tocca il «+» in alto o «Aggiungi» nella card blu e prova tutte le strade. A destra scrivi cosa va e cosa cambieresti: il messaggio arriva subito alla sessione Pagine e Grafica, con la schermata su cui sei.</p>
+  <div class="zona">
+    <div class="telefono" id="telefono"><div class="schermo" id="schermo"></div><div id="sopra"></div></div>
+    <aside class="quaderno" id="quaderno">
+      <div class="dove">Sei su<b id="dove-nome">MB Plan · settimana</b></div>
+      <div class="percorso" id="percorso"></div>
+      <div class="rapide" id="rapide">
+        <button type="button" data-rapida="Questa schermata va bene così.">Va bene così</button>
+        <button type="button" data-rapida="Questa schermata non è chiara: ">Non è chiara</button>
+        <button type="button" data-rapida="Qui manca: ">Manca qualcosa</button>
+        <button type="button" data-rapida="Qui toglierei: ">Toglierei</button>
+      </div>
+      <label for="nota" class="dove" style="font-size:11px">La tua nota</label>
+      <textarea id="nota" maxlength="3000" placeholder="Scrivi qui, anche due parole. Esempio: in «Appuntamento singolo» metterei prima il Team."></textarea>
+      <div class="azioni-q"><button type="button" class="btn si" id="manda">Manda a Claude</button><span class="stato" id="stato"></span></div>
+      <div class="legenda">Ogni nota porta con sé la schermata e la strada fatta, così so di cosa parli. Se «Manda a Claude» non è disponibile qui, la nota resta come commento sulla pagina e la leggo lo stesso.</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── dati finti: una settimana, una lista, una Linea ──
+  const GIORNI = [['lun', 5], ['mar', 6], ['mer', 7], ['gio', 8], ['ven', 9], ['sab', 10], ['dom', 11]];
+  const OGGI = 3;   // giovedì 8
+  const NOMI = [{ n: 'Giulia Conti', c: 'Prospect' }, { n: 'Marco Neri', c: 'Partner' }, { n: 'Rosa Aprile', c: 'Cliente' }, { n: 'Elena Ferri', c: 'Partner' }, { n: 'Pino Manolo', c: 'Prospect' }];
+  const TIPI_PERSONA = { Prospect: ['Piano Marketing', 'Consulenza prodotti', 'Telefonata'], Cliente: ['Consulenza prodotti', 'Telefonata'], Partner: ['Appuntamento', 'Counseling', 'Piano Marketing', 'Telefonata'] };
+  const LINEE = {
+    Gallo: [['Paolo Gallo', 0, 6], ['Giulia Conti', 1, 1], ['Dario Lupo', 2, 0], ['Marco Neri', 1, 3], ['Luca Bo', 2, 1], ['Pia Sala', 3, 0], ['Anna Villa', 2, 0]],
+    Rossi: [['Carla Rossi', 0, 2], ['Dario Verdi', 1, 1], ['Anna Neri', 2, 0]],
+  };
+  const st = { pila: [], prog: [{ t: 'Piani Marketing', v: '1 da fare · 1 da riempire' }, { t: 'Incontro di Team', v: 'ven 9 alle 21:00' }], agenda: [] };
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let dove = 'MB Plan · settimana';
+  const strada = [];
+
+  // ── la pagina sotto: MB Plan, settimana ──
+  function base() {
+    $('#schermo').innerHTML = `<div class="testa"><div><small>Settimana 41 · 5 – 11 ottobre</small><b>MB Plan</b></div><button class="piu" id="piu" aria-label="Aggiungi">+</button></div>
+      ${st.agenda.map(a => `<div class="giorno"><i style="background:${a.colore}"></i><span><b>${esc(a.titolo)}</b><small>${esc(a.quando)}</small></span></div>`).join('')}
+      <div class="giorno"><i style="background:var(--pm)"></i><span><b>PM 1a1 · Giulia Conti</b><small>ven 9 alle 18:30</small></span></div>
+      <div class="giorno"><i style="background:var(--cons)"></i><span><b>Consulenza · Rosa Aprile</b><small>sab 10 alle 10:00</small></span></div>
+      <div class="card"><div class="t"><b>Programma della settimana</b><small>Settimana 41 · 5 ott – 11 ott</small></div>
+        ${st.prog.length ? `<ul>${st.prog.map(r => `<li><i></i>${esc(r.t)}: ${esc(r.v)}</li>`).join('')}</ul>` : '<p class="vuota">Non ancora preparata.</p>'}
+        <button class="agg" id="agg">+ Aggiungi</button></div>`;
+    $('#piu').onclick = () => { strada.length = 0; segna('Il «+» in alto'); livello1(); };
+    $('#agg').onclick = () => { strada.length = 0; segna('«Aggiungi» nella card blu'); livello1(); };
+  }
+  const barra = () => `<div class="barra"><span><i></i>Dashboard</span><span class="si"><i></i>MB Plan</span><span><i></i>Lista Nomi</span><span><i></i>Mappa</span></div>`;
+
+  // ── i fogli ──
+  function foglio(nome, html, collega) {
+    dove = nome;
+    $('#sopra').innerHTML = `<div class="velo" id="velo"><div class="foglio" role="dialog" aria-label="${esc(nome)}">${html}</div></div>`;
+    $('#velo').onclick = e => { if (e.target.id === 'velo') chiudi(); };
+    document.querySelectorAll('[data-indietro]').forEach(b => b.onclick = () => { strada.pop(); const f = st.pila.pop(); (st.pila.pop() || livello1)(); });
+    document.querySelectorAll('[data-chiudi]').forEach(b => b.onclick = chiudi);
+    collega && collega();
+    aggiornaQuaderno();
+  }
+  function chiudi() { $('#sopra').innerHTML = barra(); dove = 'MB Plan · settimana'; st.pila = []; aggiornaQuaderno(); }
+  function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; $('#telefono').appendChild(d); setTimeout(() => d.remove(), 3200); }
+  function segna(passo) { strada.push(passo); }
+  const indietro = testo => `<button class="indietro" data-indietro>‹ ${esc(testo)}</button>`;
+  const pillole = (nome, voci, scelta) => `<div class="pillole" data-p="${nome}">${voci.map(v => `<button type="button" data-v="${esc(v)}" class="${v === scelta ? 'si' : ''}">${esc(v)}</button>`).join('')}</div>`;
+  const suPillole = (nome, fn) => document.querySelectorAll(`[data-p="${nome}"] button`).forEach(b => b.onclick = () => fn(b.dataset.v));
+
+  // Livello 1
+  function livello1() {
+    st.pila = [livello1];
+    foglio('Cosa vuoi aggiungere?', `<h3>Cosa vuoi aggiungere?</h3><div class="sotto">Settimana 41 · 5 – 11 ottobre</div>
+      <button class="strada" id="s-sett"><span class="tondo" style="background:var(--blu)">▦</span><span><b>Programmare la settimana</b><small>Quanti Piani Marketing e Consulenze, e quando; incontri di Team, LdS, SdS/OPEN</small></span><em>›</em></button>
+      <button class="strada" id="s-inc"><span class="tondo" style="background:var(--pm)">+</span><span><b>Appuntamento singolo</b><small>Con una persona, con il Team o con una Linea</small></span><em>›</em></button>
+      <div class="fondo" style="grid-template-columns:1fr"><button class="btn no" data-chiudi>Annulla</button></div>`, () => {
+      $('#s-sett').onclick = () => { segna('Programmare la settimana'); settimana(); };
+      $('#s-inc').onclick = () => { segna('Appuntamento singolo'); incontro(); };
+    });
+  }
+
+  // Livello 2a: Programmare la settimana (come «Prepara la settimana» di oggi)
+  const sett = { PM: 0, Cons: 0, Team: 0, LdS: 0 };   // partono tutti spenti (Ignazio 06/10)
+  function settimana() {
+    st.pila.push(settimana);
+    const riga = (k, t, sotto) => `<div class="riga-num"><span><b>${t}</b>${sotto ? `<small>${sotto}</small>` : ''}</span>${pillole('n' + k, ['1', '2', '3', '4'], String(sett[k]))}</div>`;
+    foglio('Programmare la settimana', `${indietro('Cosa vuoi aggiungere?')}<h3>Programmare la settimana</h3><div class="sotto">Cosa vuoi fare questa settimana? Tocca un numero; toccalo di nuovo per toglierlo. Gli spazi restano «da riempire» finché non metti un nome.</div>
+      ${riga('PM', 'Piani Marketing', 'spazi da riempire con un nome')}${riga('Cons', 'Consulenze prodotti', 'spazi da riempire con un nome')}${riga('Team', 'Incontri di Team')}${riga('LdS', 'Incontri LdS')}
+      <div class="riga-num"><span><b>SdS/OPEN</b><small>il lunedì, la mette l'app da sola</small></span><span style="color:var(--sds);font-weight:800">✓</span></div>
+      <div class="fondo"><button class="btn no" data-chiudi>Annulla</button><button class="btn si" id="avanti" ${Object.values(sett).some(Boolean) ? '' : 'disabled'}>Avanti: i giorni</button></div>`, () => {
+      for (const k of Object.keys(sett)) suPillole('n' + k, v => { sett[k] = sett[k] === Number(v) ? 0 : Number(v); st.pila.pop(); settimana(); });   // di nuovo sullo stesso numero: si spegne
+      $('#avanti').onclick = () => { segna('i giorni'); giorniSettimana(0, []); };
+    });
+  }
+  // le parole come nell'app (MB21Spazi.domandaGiorni): LdS sempre con la L e la S maiuscole (Ignazio 06/10)
+  const UNO = { PM: 'il Piano Marketing', Cons: 'la Consulenza prodotti', Team: "l'incontro di Team", LdS: "l'incontro LdS" };
+  const TANTI = { PM: n => `i ${n} Piani Marketing`, Cons: n => `le ${n} Consulenze prodotti`, Team: n => `i ${n} incontri di Team`, LdS: n => `i ${n} incontri LdS` };
+  function giorniSettimana(i, messi) {
+    const lista = [['PM', 'Piano Marketing', 'var(--pm)'], ['Cons', 'Consulenza prodotti', 'var(--cons)'], ['Team', 'Incontro di Team', 'var(--team)'], ['LdS', 'Incontro LdS', 'var(--team)']].filter(x => sett[x[0]] > 0);
+    if (i >= lista.length) return riepilogoSettimana(messi);
+    const [k, nome, colore] = lista[i], n = sett[k], questi = messi.filter(m => m.k === k);
+    let giorno = null;
+    foglio('Programmare la settimana · ' + nome, `${indietro('Programmare la settimana')}<h3>${n === 1 ? `In che giorno fai ${UNO[k]}?` : `In che giorni fai ${TANTI[k](n)}?`}</h3>
+      <div class="sotto">Tocca un giorno, scegli l'ora, poi «Metti».</div>
+      <div class="giorni">${GIORNI.map(([g, d], j) => `<button type="button" data-g="${j}" ${j < OGGI ? 'disabled' : ''}>${g}<small>${d}</small></button>`).join('')}</div>
+      <div class="campo" style="margin-top:10px"><label for="ora-s">Ora</label><input type="time" id="ora-s" value="${k === 'Team' || k === 'LdS' ? '21:00' : '19:00'}"></div>
+      <div class="messi ${questi.length === n ? 'ok' : ''}">Messi ${questi.length} su ${n}${questi.length === n ? ' ✓' : ''}</div>
+      <div class="scelti">${questi.map(m => `<span>${esc(m.testo)}</span>`).join('')}</div>
+      <div class="fondo"><button class="btn no" id="metti" ${questi.length >= n ? 'disabled' : ''}>Metti</button><button class="btn si" id="dopo" ${questi.length < n ? 'disabled' : ''}>${i === lista.length - 1 ? 'Riepilogo' : 'Avanti'}</button></div>`, () => {
+      document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { giorno = Number(b.dataset.g); document.querySelectorAll('[data-g]').forEach(x => x.classList.toggle('si', x === b)); });
+      $('#metti').onclick = () => {
+        if (giorno == null) return toast('Tocca prima un giorno');
+        const [g, d] = GIORNI[giorno];
+        messi.push({ k, nome, colore, testo: `${nome}: ${g} ${d} alle ${$('#ora-s').value}`, quando: `${g} ${d} alle ${$('#ora-s').value}` });
+        st.pila.pop(); giorniSettimana(i, messi);
+      };
+      $('#dopo').onclick = () => giorniSettimana(i + 1, messi);
+    });
+    st.pila.push(() => giorniSettimana(i, messi));
+  }
+  function riepilogoSettimana(messi) {
+    st.pila.push(() => riepilogoSettimana(messi));
+    foglio('Programmare la settimana · riepilogo', `${indietro('I giorni')}<h3>Ecco la tua settimana</h3><div class="sotto">Più la SdS/OPEN di lunedì alle 20:30.</div>
+      <div class="scelti">${messi.map(m => `<span>${esc(m.testo)}${m.k === 'PM' || m.k === 'Cons' ? ' · da riempire' : ''}</span>`).join('') || '<span>Niente di nuovo</span>'}</div>
+      <div class="fondo"><button class="btn no" data-chiudi>Annulla</button><button class="btn si" id="salva">Salva la settimana</button></div>`, () => {
+      $('#salva').onclick = () => {
+        for (const m of messi) st.agenda.push({ titolo: m.nome + (m.k === 'PM' || m.k === 'Cons' ? ' · da riempire' : ''), quando: m.quando, colore: m.colore });
+        const pm = messi.filter(m => m.k === 'PM').length, co = messi.filter(m => m.k === 'Cons').length;
+        st.prog = [{ t: 'Piani Marketing', v: `1 da fare${pm ? ` · ${pm + 1} da riempire` : ' · 1 da riempire'}` }, ...(co ? [{ t: 'Consulenze prodotti', v: `${co} da riempire` }] : []),
+          ...messi.filter(m => m.k === 'Team' || m.k === 'LdS').map(m => ({ t: m.nome, v: m.quando })), { t: 'Incontro di Team', v: 'ven 9 alle 21:00' }];
+        segna('Salva la settimana'); chiudi(); base(); toast('Settimana programmata (prova: niente salvato)');
+      };
+    });
+  }
+
+  // Livello 2b: Appuntamento singolo
+  function incontro() {
+    st.pila.push(incontro);
+    foglio('Appuntamento singolo', `${indietro('Cosa vuoi aggiungere?')}<h3>Appuntamento singolo</h3><div class="sotto">Con chi?</div>
+      <button class="strada" id="c-pers"><span class="tondo" style="background:var(--pm)">●</span><span><b>Con una persona</b><small>Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista</small></span><em>›</em></button>
+      <button class="strada" id="c-team"><span class="tondo" style="background:var(--team)">●●</span><span><b>Con il Team <span class="etichetta">Admin</span></b><small>Una serata per tutto il Team: la trovano nella loro Agenda</small></span><em>›</em></button>
+      <button class="strada" id="c-linea"><span class="tondo" style="background:var(--sds)">↳</span><span><b>Con una Linea <span class="etichetta">Admin</span></b><small>Una Linea, o una persona dentro la Linea e la sua downline</small></span><em>›</em></button>`, () => {
+      $('#c-pers').onclick = () => { segna('Con una persona'); persona({}); };
+      $('#c-team').onclick = () => { segna('Con il Team'); serata({ con: 'team' }); };
+      $('#c-linea').onclick = () => { segna('Con una Linea'); serata({ con: 'linea', linea: 'Gallo', parte: null }); };
+    });
+  }
+  function persona(p) {
+    const chi = NOMI.find(x => x.n === p.nome), tipi = chi ? TIPI_PERSONA[chi.c] : [];
+    foglio('Appuntamento singolo · con una persona', `${indietro('Appuntamento singolo')}<h3>Nuovo appuntamento</h3><div class="sotto">Il modulo «+» di oggi.</div>
+      <div class="campo"><label for="p-nome">Con chi? <small>un nome della tua lista</small></label><select id="p-nome"><option value="">Scegli un nome…</option>${NOMI.map(x => `<option ${x.n === p.nome ? 'selected' : ''}>${esc(x.n)}</option>`).join('')}</select></div>
+      ${chi ? `<div class="campo"><label>Cosa fate? <small>${esc(chi.c)}</small></label>${pillole('tipo', tipi, p.tipo)}</div>` : ''}
+      <div class="campo"><label>Giorno e ora</label><div class="due"><input type="date" id="p-g" value="2026-10-09"><input type="time" id="p-o" value="18:30"></div></div>
+      ${chi && p.tipo && p.tipo !== 'Telefonata' ? `<div class="campo"><label for="p-punti">Punti da trattare <small>uno per riga</small></label><textarea id="p-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(p.punti || '')}</textarea></div>` : ''}
+      ${chi && chi.c === 'Partner' && p.tipo && p.tipo !== 'Telefonata' ? `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda</small></label>${pillole('cond', ['Nessuno', chi.n], p.cond || 'Nessuno')}</div>` : ''}
+      ${p.cond && p.cond !== 'Nessuno' ? `<div class="campo"><label>Vede anche i punti da trattare?</label>${pillole('vede', ['Sì', 'No'], p.vede || 'Sì')}</div>` : ''}
+      <div class="fondo"><button class="btn no" data-chiudi>Annulla</button><button class="btn si" id="p-salva" ${chi && p.tipo ? '' : 'disabled'}>Salva</button></div>`, () => {
+      $('#p-nome').onchange = e => { st.pila.pop(); persona({ nome: e.target.value }); };
+      suPillole('tipo', v => { st.pila.pop(); persona({ ...p, tipo: v }); });
+      const leggiP = () => ({ ...p, punti: $('#p-punti') ? $('#p-punti').value : p.punti });
+      suPillole('cond', v => { st.pila.pop(); persona({ ...leggiP(), cond: v }); });
+      suPillole('vede', v => { st.pila.pop(); persona({ ...leggiP(), vede: v }); });
+      $('#p-salva').onclick = () => { st.agenda.push({ titolo: `${p.tipo} · ${p.nome}`, quando: 'ven 9 alle ' + $('#p-o').value, colore: 'var(--pm)' }); segna('Salva'); chiudi(); base(); toast(`${p.tipo} con ${p.nome} (prova: niente salvato)`); };
+    });
+    st.pila.push(() => persona(p));
+  }
+  function serata(s) {
+    const righe = s.con === 'linea' ? LINEE[s.linea] : null;
+    let parte = '';
+    if (righe) {
+      const i = s.parte == null ? -1 : s.parte, fine = i >= 0 ? i + 1 + righe[i][2] : -1;
+      const quanti = i >= 0 ? righe[i][2] + 1 : righe.length;
+      parte = `<div class="campo"><label>Solo una parte? <small>tocca una persona${i >= 0 ? ' · di nuovo per tutta la Linea' : ''}</small></label>
+        <div class="albero">${righe.map(([n, l, sotto], j) => `<button type="button" data-parte="${j}" style="--l:${l}" class="${i < 0 ? 'acceso' : j === i ? 'lei' : j > i && j < fine ? 'acceso' : 'spento'}">${l ? '<i>↳</i>' : ''}<b>${esc(n)}</b>${l === 0 ? '<small>Prima Linea</small>' : sotto ? `<small>${sotto} sotto</small>` : ''}</button>`).join('')}</div>
+        <div class="chi">Lo ricevono <b>${quanti} persone</b>: ${i >= 0 ? esc(righe[i][0]) + ' e la sua downline' : 'tutta la Linea ' + esc(righe[0][0])}.</div></div>`;
+    }
+    foglio(`Appuntamento singolo · ${s.con === 'team' ? 'con il Team' : 'con una Linea'}`, `${indietro('Appuntamento singolo')}<h3>Nuova serata</h3><div class="sotto">${s.con === 'team' ? 'La trova tutto il Team nella sua Agenda.' : 'La trova la Linea scelta nella sua Agenda.'}</div>
+      <div class="campo"><label for="s-nome">Nome della serata <small>facoltativo</small></label><input type="text" id="s-nome" value="${esc(s.nome || '')}" placeholder="Il nome, la tipologia, la linea o la squadra"></div>
+      ${s.con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label>${pillole('linea', Object.keys(LINEE), s.linea)}</div>${parte}` : ''}
+      <div class="campo"><label>Giorno e ora</label><div class="due"><input type="date" id="s-g" value="2026-10-09"><input type="time" id="s-o" value="21:00"></div></div>
+      <div class="campo"><label for="s-dove">Dove <small>il link se è online, il posto se dal vivo</small></label><input type="text" id="s-dove" value="${esc(s.dove || '')}" placeholder="Link di Zoom, oppure hotel, sala, indirizzo…"></div>
+      <div class="campo"><label for="s-punti">Punti da trattare <small>uno per riga</small></label><textarea id="s-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(s.punti || '')}</textarea></div>
+      <div class="campo"><label>Vedono anche i punti da trattare?</label>${pillole('puntiS', ['Sì', 'No'], s.vedono || 'Sì')}</div>
+      <div class="fondo"><button class="btn no" data-chiudi>Annulla</button><button class="btn si" id="s-salva">Salva</button></div>`, () => {
+      const leggi = () => ({ ...s, nome: $('#s-nome').value, dove: $('#s-dove').value, punti: $('#s-punti').value });
+      suPillole('puntiS', v => { st.pila.pop(); serata({ ...leggi(), vedono: v }); });
+      suPillole('linea', v => { st.pila.pop(); serata({ ...leggi(), linea: v, parte: null }); segna('Linea ' + v); });
+      document.querySelectorAll('[data-parte]').forEach(b => b.onclick = () => { const j = Number(b.dataset.parte); const nuovo = j === 0 || j === s.parte ? null : j; if (nuovo != null) segna('tocca ' + righe[j][0]); st.pila.pop(); serata({ ...leggi(), parte: nuovo }); });
+      $('#s-salva').onclick = () => {
+        const nome = $('#s-nome').value || 'Incontro di Team';   // da me in giù è sempre Team (Ignazio 06/10): la LdS viene dall'alto
+        const con = s.con === 'team' ? 'tutto il Team' : s.parte != null ? `${righe[s.parte][0]} e la sua downline` : `la Linea ${righe[0][0]}`;
+        st.agenda.push({ titolo: nome, quando: 'ven 9 alle ' + $('#s-o').value + ' · con ' + con, colore: 'var(--team)' });
+        segna('Salva'); chiudi(); base(); toast(`${nome}: condivisa con ${con} (prova: niente salvato)`);
+      };
+    });
+    st.pila.push(() => serata(s));
+  }
+
+  // ── il quaderno: la nota arriva alla sessione con la schermata e la strada ──
+  function aggiornaQuaderno() {
+    $('#dove-nome').textContent = dove;
+    $('#percorso').innerHTML = strada.length ? strada.map(x => `<span>${esc(x)}</span>`).join('') : '<span>Tocca il «+» o «Aggiungi» per partire</span>';
+  }
+  document.querySelectorAll('[data-rapida]').forEach(b => b.onclick = () => { const t = $('#nota'); t.value = (t.value ? t.value + '\n' : '') + b.dataset.rapida; t.focus(); });
+  let commenti = null, puoClaude = 'off';
+  const stato = (t, cl) => { const s = $('#stato'); s.textContent = t; s.className = 'stato ' + (cl || ''); };
+  async function prepara() {
+    try { commenti = window.claude && window.claude.use ? await window.claude.use('comments') : null; } catch (e) { commenti = null; }
+    if (!commenti) { stato('Le note da qui non sono disponibili in questa vista: scrivimele in chat.', 'no'); $('#manda').disabled = true; return; }
+    try { puoClaude = await commenti.canSendToClaude(); } catch (e) { puoClaude = 'off'; }
+    $('#manda').textContent = puoClaude === 'available' ? 'Manda a Claude' : 'Lascia la nota';
+  }
+  $('#manda').onclick = async () => {
+    const testo = $('#nota').value.trim();
+    if (!testo) return stato('Scrivi prima la nota.', 'no');
+    if (!commenti) return;
+    const corpo = `[Nota 005 · ${dove}]\nStrada: ${strada.join(' › ') || '—'}\n\n${testo}`.slice(0, 3900);
+    $('#manda').disabled = true; stato('Invio…');
+    try {
+      try { puoClaude = await commenti.canSendToClaude(); } catch (e) { puoClaude = 'off'; }
+      const anchor = await commenti.anchorFor($('#telefono'));
+      if (puoClaude === 'available') { await commenti.sendToClaude({ anchor, text: corpo }); stato('Arrivata a Claude ✓', 'ok'); }
+      else { await commenti.create({ anchor, text: corpo }); stato('Lasciata come commento sulla pagina ✓', 'ok'); }
+      $('#nota').value = '';
+    } catch (e) {
+      const c = e && e.code;
+      stato(c === 'consent_required' ? 'Non inviata: serve il tuo permesso. Riprova e consenti.' : c === 'forbidden' ? 'Le note da qui sono spente: scrivimele in chat.' : 'Non inviata: riprova tra poco.', 'no');
+    } finally { $('#manda').disabled = false; }
+  };
+
+  base(); $('#sopra').innerHTML = barra(); aggiornaQuaderno(); prepara();
+})();
+</script>

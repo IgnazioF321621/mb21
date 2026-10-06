@@ -1154,7 +1154,7 @@ function programmaSettimanaHtml() {
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>` : `<p>${vuoto}</p>`}
     ${p.fatti.length ? `<button class="mb-prog-fatti" data-cmd="fatti" aria-expanded="${aperti}"><span>Fatti e passati<i>${p.fatti.length}</i></span><span>${aperti ? '⌄' : '›'}</span></button>
       <div class="mb-prog-elenco"${aperti ? '' : ' hidden'}>${p.fatti.map(a => riga(a, false)).join('')}</div>` : ''}
-    ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
+    ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>Aggiungi</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
   // la ricerca (Ignazio 22/09): un nome, un tipo («piano marketing», «PM», «counseling»), le cose da fare
@@ -1173,7 +1173,7 @@ function collegaMenuAgenda(radice, chiudi) {
     if (!VISTE.includes(b.dataset.scala)) return mostraToast('Il foglio di questa scala arriva presto');
     chiudi(); cambiaVista(b.dataset.scala);
   }; });
-  const prepara = radice.querySelector('[data-cmd="prepara"]'); if (prepara) prepara.onclick = () => { chiudi(); preparaSettimana(); };
+  const prepara = radice.querySelector('[data-cmd="prepara"]'); if (prepara) prepara.onclick = () => { chiudi(); foglioAggiungi(); };   // nota 005: lo stesso foglio del «+»
   // nota 004: «Fatti e passati» si apre e si chiude sul posto; un appuntamento apre «Com'è andata?» per cambiare l'esito
   const fatti = radice.querySelector('[data-cmd="fatti"]');
   if (fatti) fatti.onclick = () => {
@@ -1754,7 +1754,7 @@ function condivisioneSpazioHtml(s) {
     : A.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
   return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>${con === 'team' ? 'tutto il Team' : 'una Linea'}${s.punti_condivisi ? ' · vedono i punti' : ''}</small>` : ''}</div>
     <div class="ag-scelte">${A.CONDIVISIONI_SPAZIO.map(([k, n]) => `<button type="button" data-cd-con="${k}" class="${con === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>
-    ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${frontale === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessun frontale nella Mappa.</span>'}</div></div>${frontale && AG.ramo ? parteLineaHtml(frontale, s.linea_codice, AG.ramo.squadra) : ''}` : ''}
+    ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${frontale === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessuna Prima Linea nella Mappa.</span>'}</div></div>${frontale && AG.ramo ? parteLineaHtml(frontale, s.linea_codice, AG.ramo.squadra) : ''}` : ''}
     ${con ? `<div class="campo"><label>Vedono anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
 }
 function collegaCondivisioneSpazio(el, s, ridisegna) {
@@ -1906,7 +1906,7 @@ function collegaAgenda(eventi) {
   su('ag-prima', () => apriAgenda(A.spostaGiorno(AG.giorno, -7)));
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
   collegaPartnerSelect();
-  su('ag-nuovo', () => (vediTutti() ? mostraToast('Con «Tutti» scegli prima il partner nel Partner Select') : nuovoAppuntamento({ giorno: AG.giorno })));
+  su('ag-nuovo', foglioAggiungi);   // nota 005: un solo ingresso, a livelli
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
@@ -2011,6 +2011,48 @@ function spaziComeBlocchi(g) {
     fine: new Date(Date.parse(s.inizio) + (s.durata || 60) * 60000).toISOString(), testo: MB21Spazi.titolo(s), _spazio: s }));
 }
 
+// ── Un solo ingresso per aggiungere (nota Pagine 005, Ignazio 06/10/2026; provata nella pagina interattiva docs/prototipi/prova_aggiungi_mbplan.html) ──
+// Il «+» in alto e «Aggiungi» nella card «Programma della settimana» aprono lo stesso foglio, a livelli:
+//   1. «Cosa vuoi aggiungere?» → «Programmare la settimana» (preparaSettimana) · «Appuntamento singolo»
+//   2. «Appuntamento singolo» (solo l'Admin ha Team e Linea) → Con una persona · Con il Team · Con una Linea: il modulo «+» di sempre (nuovoAppuntamento),
+//      con «Condividi con» già scelto. Per chi non è Admin «Appuntamento singolo» apre subito il modulo.
+// `voci`: { k, icona, titolo, sotto, tinta }; risolve la `k` scelta, 'indietro' o null
+function foglioStrade(titolo, sotto, voci, conIndietro) {
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio mc strade">${conIndietro ? `<button class="link st-indietro" id="st-indietro">‹ ${esc(conIndietro)}</button>` : ''}<h3>${esc(titolo)}</h3><p>${esc(sotto)}</p>
+      ${voci.map(v => `<button type="button" class="strada" data-strada="${esc(v.k)}"><span class="st-tondo" style="--tinta:${v.tinta}">${ic(v.icona)}</span><span class="st-testo"><b>${esc(v.titolo)}</b><small>${esc(v.sotto)}</small></span><em>›</em></button>`).join('')}
+      <button class="link" id="st-no">Annulla</button></div>`;
+    document.body.appendChild(velo);
+    const fine = v => { velo.remove(); risolvi(v); };
+    velo.onclick = e => { if (e.target === velo) fine(null); };
+    velo.querySelector('#st-no').onclick = () => fine(null);
+    const ind = velo.querySelector('#st-indietro'); if (ind) ind.onclick = () => fine('indietro');
+    velo.querySelectorAll('[data-strada]').forEach(b => { b.onclick = () => fine(b.dataset.strada); });
+  });
+}
+async function foglioAggiungi() {
+  if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
+  const A = MB21Agenda, lun = AG.settimana[0], dom = AG.settimana[6], mese = g => A.titoloMese(g).toLowerCase();
+  const admin = eAdmin();
+  for (;;) {
+    const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
+      { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Quanti Piani Marketing e Consulenze, e quando; incontri di Team, LdS, SdS/OPEN' },
+      { k: 'singolo', icona: 'piu', tinta: 'var(--cat-partner)', titolo: 'Appuntamento singolo', sotto: admin ? 'Con una persona, con il Team o con una Linea' : 'Con una persona della tua lista' }]);
+    if (!k) return;
+    if (k === 'settimana') return preparaSettimana();
+    if (!admin) return nuovoAppuntamento({ giorno: AG.giorno });
+    const chi = await foglioStrade('Appuntamento singolo', 'Con chi?', [
+      { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
+      { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Con il Team', sotto: 'Una serata per tutto il Team: la trovano nella loro Agenda' },
+      { k: 'linea', icona: 'mappa', tinta: 'var(--ok)', titolo: 'Con una Linea', sotto: 'Una Prima Linea, o una persona dentro la Linea e la sua downline' }], 'Cosa vuoi aggiungere?');
+    if (chi === 'indietro') continue;
+    if (!chi) return;
+    return nuovoAppuntamento({ giorno: AG.giorno, ...(chi === 'persona' ? {} : { condividi: chi }) });
+  }
+}
+
 async function preparaSettimana() {
   const S = MB21Spazi, A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const settimana = AG.settimana.slice(), giorni = settimana.filter(g => g >= oggi);
@@ -2033,14 +2075,12 @@ async function preparaSettimana() {
     const lista = passi(), p = lista[st.passo], ultimo = p !== 'quanti' && st.passo === lista.length - 1;
     let corpo;
     if (p === 'quanti') {
-      const restano = S.DA_PREPARARE.filter(t => !st.tipi.includes(t));
-      const gruppo = (titolo, tipi) => { const qui = tipi.filter(t => restano.includes(t)); return qui.length ? `<small>${titolo}</small>${qui.map(t => `<button type="button" data-tipo="${esc(t)}"><i style="--tinta:${coloreSpazio(t)}"></i>${esc(S.TIPI[t].plurale)}</button>`).join('')}` : ''; };
-      corpo = `<p class="sp-domanda">Cosa vuoi fare questa settimana?</p>`
-        + st.tipi.map(t => `<div class="campo sp-tipo"><label>${esc(S.TIPI[t].domanda)}<button type="button" class="sp-via" data-via="${esc(t)}" aria-label="Togli: ${esc(S.TIPI[t].plurale)}">${ic('chiudi')}</button></label><div class="ag-scelte" data-quanti="${esc(t)}">${
+      // Nota Pagine 005 (Ignazio 06/10/2026, provata nella pagina interattiva): tutte le righe insieme, i numeri da 1 a 4 partono spenti;
+      // toccando di nuovo lo stesso numero si spegne. Prima c'era «Aggiungi ▾» con i tipi da scegliere e 1 già acceso.
+      corpo = `<p class="sp-domanda">Cosa vuoi fare questa settimana?</p>
+        <div class="vn-aiuto">Tocca un numero; toccalo di nuovo per toglierlo. Piani Marketing e Consulenze restano «da riempire» finché non metti un nome.</div>`
+        + S.DA_PREPARARE.map(t => `<div class="sp-riga-num"><span><b>${esc(S.TIPI[t].plurale)}</b>${S.daRiempire(t) ? '<small>spazi da riempire con un nome</small>' : ''}</span><div class="ag-scelte" data-quanti="${esc(t)}">${
           Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
-        + (restano.length ? `<button type="button" class="sp-aggiungi${st.menu ? ' aperto' : ''}" id="sp-aggiungi" aria-expanded="${st.menu}">${ic('piu')}<span>${st.tipi.length ? 'Aggiungi altro' : 'Aggiungi'}</span>${ic('freccia')}</button>
-            ${st.menu ? `<div class="sp-menu">${gruppo('Con una persona', S.CON_PERSONA)}${gruppo('Di gruppo', S.DI_GRUPPO)}</div>` : ''}` : '')
-        + (st.tipi.length ? '' : `<div class="vn-aiuto">Tocca «Aggiungi» e scegli: Piani Marketing, Consulenze prodotti, incontri di Team o LdS.</div>`)
         + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge da sola. Se cambia giorno o ora, la sposti poi nella Timeline.</div>` : '');
     } else {
       const n = st.quanti[p], messi = st.scelti.filter(s => s.tipo === p).length;
@@ -2058,7 +2098,7 @@ async function preparaSettimana() {
         <p class="sp-conto${messi === n ? ' pieno' : ''}">${esc(S.conto(p, messi, n))}</p>`;
     }
     velo.innerHTML = `<div class="foglio alto mc sp-foglio">
-      <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Prepara la settimana</small><b>Settimana ${A.numeroSettimana(settimana[0])}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Programmare la settimana</small><b>Settimana ${A.numeroSettimana(settimana[0])}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <div class="riquadro mc-g" style="margin-top:14px">${corpo}</div>
       <div class="errore" id="sp-errore">${errore ? esc(errore) : ''}</div>
       <div class="mc-fondo"><button class="link" id="sp-no">${st.passo ? 'Indietro' : 'Annulla'}</button><button class="primario" id="sp-si">${ultimo ? 'Crea gli spazi' : 'Avanti'}</button></div></div>`;
@@ -2073,9 +2113,11 @@ async function preparaSettimana() {
       disegna();
     }; });
     velo.querySelectorAll('[data-quanti] button').forEach(b => { b.onclick = () => {
-      const t = b.parentElement.dataset.quanti;
-      st.quanti[t] = Number(b.dataset.n);
-      let troppi = st.scelti.filter(s => s.tipo === t).length - st.quanti[t];   // se si scende, si tolgono gli ultimi messi
+      const t = b.parentElement.dataset.quanti, n = Number(b.dataset.n);
+      if (st.quanti[t] === n) delete st.quanti[t]; else st.quanti[t] = n;   // di nuovo sullo stesso numero: si spegne
+      st.tipi = S.DA_PREPARARE.filter(x => st.quanti[x]);
+      if (!st.quanti[t]) st.scelti = st.scelti.filter(x => x.tipo !== t);
+      let troppi = st.scelti.filter(s => s.tipo === t).length - (st.quanti[t] || 0);   // se si scende, si tolgono gli ultimi messi
       for (let i = st.scelti.length - 1; i >= 0 && troppi > 0; i--) if (st.scelti[i].tipo === t) { st.scelti.splice(i, 1); troppi--; }
       disegna();
     }; });
@@ -2092,14 +2134,14 @@ async function preparaSettimana() {
     });
     velo.querySelectorAll('[data-nome-ok]').forEach(b => { b.onclick = () => { st.nomeAperto = null; disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {
-      if (p === 'quanti' && lista.length === 1) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
+      if (p === 'quanti' && lista.length === 1) return disegna('Tocca un numero accanto ad almeno un appuntamento o un incontro.');
       if (p !== 'quanti') {
         const mancano = st.quanti[p] - st.scelti.filter(s => s.tipo === p).length;
         if (mancano > 0) return disegna(S.manca(p, mancano));
       }
       if (!ultimo) { st.passo++; st.aperto = null; return disegna(); }
       const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi);
-      if (!righe.length) return disegna('Tocca «Aggiungi» e scegli almeno un appuntamento o un incontro.');
+      if (!righe.length) return disegna('Tocca un numero accanto ad almeno un appuntamento o un incontro.');
       const btn = velo.querySelector('#sp-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       const { data, error } = await dbq('prepara la settimana', supa.from('spazi').insert(righe).select('id'));
