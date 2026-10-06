@@ -180,6 +180,7 @@
   .segnala-bottone.in-foglio { bottom: auto; top: calc(env(safe-area-inset-top) + 8px); }
   .segnala-bottone[hidden] { display: none; }
   .segnala-bottone svg.ic { width: 19px; height: 19px; margin: 0; }
+  .sg-titolo { display: flex; align-items: center; gap: 8px; } .sg-titolo svg.ic { width: 20px; height: 20px; color: var(--testo-soft); }   /* nota 006: lo stesso insetto del tasto, piccolo, a sinistra del titolo */
   .sg-motivi { margin: 10px 0 12px; } .sg-motivi button { flex: 1; }
   .sg-testo { width: 100%; box-sizing: border-box; min-height: 92px; }
   .sg-dove { font-size: 13px; color: var(--testo-tenue); margin: 8px 0 0; }
@@ -4390,7 +4391,7 @@ function foglioSegnala() {
   const S = MB21Segnala, dove = doveSono();
   const velo = document.createElement('div');
   velo.className = 'velo'; velo.id = 'sg-velo';
-  velo.innerHTML = `<div class="foglio"><h3>Invia il tuo feedback</h3>
+  velo.innerHTML = `<div class="foglio"><h3 class="sg-titolo">${ic('segnala')}Invia il tuo feedback</h3>
     <div class="ag-scelte sg-motivi">${S.MOTIVI.map(([k, n]) => `<button type="button" data-motivo="${k}">${esc(n)}</button>`).join('')}</div>
     <textarea id="sg-testo" class="sg-testo" maxlength="${S.MAX_TESTO}" placeholder="Scrivi qui, anche due parole"></textarea>
     <div class="sg-allega"><label id="sg-allega">Allega lo screenshot<input type="file" id="sg-file" accept="image/*" hidden></label>
