@@ -822,6 +822,7 @@ function leggiNota(n, quando) {
     <div class="riquadro mc-g" style="margin-top:14px">
       ${n.tipo_azione ? `<p class="sotto" style="margin:0 0 8px">${esc(n.tipo_azione)}</p>` : ''}
       <div class="testo-nota">${esc(n.testo)}</div></div>
+    ${soloGuardo() ? '' : `<button class="link elimina-qui" id="elimina-nota">${ic('elimina')} Elimina nota</button>`}
     <div class="mc-fondo"><button class="link" id="chiudi2">Chiudi</button><button class="primario" id="modifica-nota">Modifica</button></div>
   </div>`;
   document.body.appendChild(velo);
@@ -830,6 +831,20 @@ function leggiNota(n, quando) {
   velo.querySelector('#chiudi').onclick = chiudi;
   velo.querySelector('#chiudi2').onclick = chiudi;
   velo.querySelector('#modifica-nota').onclick = () => { chiudi(); notaCoach(n); };
+  const el = velo.querySelector('#elimina-nota');
+  if (el) el.onclick = () => { chiudi(); eliminaNota(n); };
+}
+
+// Nota Pagine 033 (feedback di Isabella, 06/10/2026): la nota del Coach si cancella, dalla lettura o da «Modifica nota», dopo una conferma
+async function eliminaNota(n) {
+  if (soloGuardo()) return;
+  if (!await chiediConferma('Eliminare questa nota?', 'Non si può tornare indietro.', 'Elimina', true)) return;
+  const { error } = await dbq('elimina nota coach', supa.from('coach_note').delete().eq('id', n.id));
+  if (error) return mostraToast('Non eliminata: riprova.');
+  LS.note = null;
+  if (typeof CY !== 'undefined') CY.letta = 0;   // il segnale Coach Yes sparisce se era l'ultima
+  mostraToast('Nota eliminata.');
+  disegnaScheda();
 }
 
 async function notaCoach(n) {
@@ -837,8 +852,9 @@ async function notaCoach(n) {
   const valori = await moduloSemplice(n ? 'Modifica nota' : 'Nuova nota Coach', [
     { k: 'tipo', etichetta: 'Tipo di azione', tipo: 'select', opzioni: TIPI_COACH, valore: n ? n.tipo_azione : 'Contatto' },
     { k: 'testo', etichetta: 'Testo', tipo: 'textarea', valore: n ? n.testo : '', obbligatorio: true, righe: 10 },
-  ]);
+  ], n ? { elimina: 'Elimina nota' } : {});
   if (!valori) return;
+  if (valori === 'elimina') return eliminaNota(n);
   const riga = { tipo_azione: valori.tipo, testo: valori.testo.trim() };
   const q = n ? supa.from('coach_note').update(riga).eq('id', n.id)
     : supa.from('coach_note').insert({ ...riga, contatto_id: LS.contatto.id, user_id: LS.contatto.user_id });
