@@ -480,4 +480,26 @@ prova('Lettura della Lista veloce (02/10): prima pagina da sola, poi cinque alla
   x.ctx.LS.righe = []; await x.ctx.aggiornaRiga('x'); assert.equal(x.ctx.LS.righe.length, 0);
 });
 
+prova('Nota 031: nei Dati la riga «Codice Amway» (se c\'è), che si copia con un tocco; senza codice la riga non c\'è', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('function disegnaDati'), a = src.indexOf('\n}\n', src.indexOf('async function copiaCodice')) + 3;
+  const box = { innerHTML: '' }, bottone = { dataset: {}, onclick: null }, avvisi = [], copiati = [];
+  const ctx = { MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), esc: x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])), ic: n => `<i data-ic="${n}"></i>`,
+    mostraToast: t => avvisi.push(t), navigator: { clipboard: { writeText: async t => { copiati.push(t); } } },
+    document: { getElementById: id => (id === 'sezione' ? box : null), querySelector: () => (/data-copia-codice/.test(box.innerHTML) ? Object.assign(bottone, { dataset: { copiaCodice: '7001234' } }) : null) } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.disegnaDati = disegnaDati;', ctx);
+  ctx.disegnaDati({ nome: 'Marco Neri', categoria: 'Partner', contatti_fatti: 3 }, { codice_amway: '7001234' });
+  assert.match(box.innerHTML, /<div><small>Codice Amway<\/small><button type="button" class="codice-copia" data-copia-codice="7001234"[^>]*>7001234<i data-ic="copia"><\/i><\/button><\/div>/);
+  await bottone.onclick();
+  assert.deepEqual(copiati, ['7001234']); assert.equal(avvisi.at(-1), 'Codice 7001234 copiato');
+  box.innerHTML = '';
+  ctx.disegnaDati({ nome: 'Pino', categoria: 'Prospect', contatti_fatti: 0 }, { codice_amway: null });
+  assert.doesNotMatch(box.innerHTML, /Codice Amway/);
+  // se il telefono non lascia copiare, il codice si legge nel messaggio
+  ctx.navigator.clipboard.writeText = async () => { throw new Error('no'); };
+  ctx.disegnaDati({ nome: 'Marco Neri', categoria: 'Partner', contatti_fatti: 3 }, { codice_amway: '7001234' });
+  await bottone.onclick(); assert.equal(avvisi.at(-1), 'Codice Amway: 7001234');
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
