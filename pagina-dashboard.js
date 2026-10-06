@@ -78,10 +78,10 @@ async function caricaOggi() {
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline && !altro) salvaCache();
-  ST.catalogo = null;   // offline o errore: il riquadro Da catalogare non si mostra
+  ST.catalogo = null; ST.catalogoDi = null;   // offline o errore: il riquadro Da catalogare non si mostra
   if (!offline) {
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
-    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); } catch (e) {}
+    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); ST.catalogoDi = visto().id; } catch (e) {}
   }
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
@@ -90,6 +90,25 @@ async function caricaOggi() {
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
   disegnaOggi();
+}
+
+// «Da catalogare» per la Lista Nomi (nota Pagine 019, 06/10/2026): la Lista lo disegna da `ST.catalogo`, che prima si riempiva solo dalla Dashboard;
+// al cambio del Partner Select restava quello del partner di prima (Ignazio: «mi propone i nomi degli altri utenti»). Ora la Lista, se `ST.catalogo`
+// manca o è di un altro partner (`ST.catalogoDi`), lo legge da sé: lo stato di oggi (per «ne hai catalogati N») e i senza categoria del partner visto.
+async function caricaCatalogo() {
+  const oggi = MB21Coda.oggiRoma();
+  if (ST.catalogo && ST.catalogoDi === visto().id && ST.catalogoGiorno === oggi) return;
+  ST.catalogo = null; ST.catalogoDi = null;
+  if (vediTutti() || ST.offline) return;   // con «Tutti» nessuna lista è di qualcuno; offline non si legge
+  const altro = guardoAltri();
+  try {
+    const { data: stato, error } = await dbq('stato di oggi', supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
+    if (error) throw error;
+    ST.stato = stato;
+    if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }
+    ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri);
+    ST.catalogoDi = visto().id;
+  } catch (e) { ST.catalogo = null; ST.catalogoDi = null; }
 }
 
 // ── Righe che si aprono e si chiudono (Ignazio 24/09: la Dashboard sul telefono era lunghissima) ──
@@ -321,6 +340,40 @@ function rigaPersona(tipo, id, nome, sotto) {
     <span class="lv-pt"><b>${esc(nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
 }
 const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastiglia">${ic('fatto')}</span><span class="lv-pt"><b>${esc(nome)}</b><small>fatto</small></span></div>`;
+// La riga di un contatto del giorno: sotto il nome cosa è successo l'ultima volta e quando (nota 016, MB21Coda.ultimaVolta) e, sulla propria coda,
+// «Non ora» per saltarlo senza aprire la scheda (nota 018: poi «In coda» o «Scegli la data»). Guardando un altro partner o offline: solo la riga.
+function rigaCoda(x) {
+  const riga = rigaPersona('coda', x.id, x.nome, MB21Coda.ultimaVolta(x, ST.oggi));
+  if (guardoAltri() || ST.offline) return riga;
+  return `<div class="lv-riga">${riga}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>`;
+}
+async function nonOra(id) {
+  const x = (ST.risultato.coda || []).find(y => y.id === id);
+  if (!x || ST.offline || guardoAltri()) return;
+  const v = await sceltaDa(`Non ora · ${x.nome}`, [
+    { id: 'coda', etichetta: 'In coda', icona: 'telefonate', nota: 'Torna domani tra i contatti del giorno' },
+    { id: 'data', etichetta: 'Scegli la data', icona: 'agenda', nota: 'Torna il giorno che scegli' }]);
+  if (!v) return;
+  let scelto = null;
+  if (v.id === 'data') {
+    const iso = await chiediData({ etichetta: 'Non ora: quando?', data: 'giorno', testo: 'Quel giorno torna tra i contatti del giorno, senza contare come fatto' }, x.nome);
+    if (!iso) return;
+    scelto = MB21Coda.oggiRoma(new Date(iso));
+  }
+  const giorno = MB21Coda.giornoRinvio(ST.oggi, v.id, scelto), prima = x.rientro_il;
+  const { error } = await dbq('non ora', supa.from('contatti').update({ rientro_il: giorno, aggiornato_il: new Date().toISOString() }).eq('id', id));
+  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  const posto = ST.risultato.coda.indexOf(x);
+  ST.risultato.coda.splice(posto, 1);
+  disegnaOggi();
+  mostraToast(`${x.nome} · non ora, ${MB21Coda.testoRinvio(giorno, ST.oggi)}`, async () => {
+    const { error: e2 } = await dbq('annulla non ora', supa.from('contatti').update({ rientro_il: prima, aggiornato_il: new Date().toISOString() }).eq('id', id));
+    if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+    ST.risultato.coda.splice(Math.min(posto, ST.risultato.coda.length), 0, x);
+    disegnaOggi();
+    mostraToast('Annullato');
+  });
+}
 const fatteDi = tipo => LV.fatte.filter(x => x.tipo === tipo);
 function disegnaOggiLV() {
   const r = ST.risultato, st = ST.stato, altro = guardoAltri(), c = contiOggi();
@@ -342,8 +395,8 @@ function disegnaOggiLV() {
       : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`);
   else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
     c.coda ? `${c.coda} ancora da chiamare · fatti ${conto}` : `Fatti ${conto}`, c.coda, 'coda',
-    r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')),
-    altro ? () => `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>${r.coda.map(x => rigaPersona('coda', x.id, x.nome, x.contattato ? (x.ultima_fase || 'Senza esito') : 'Mai contattato')).join('')}` : null);
+    r.coda.map(rigaCoda),
+    altro ? () => `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>${r.coda.map(rigaCoda).join('')}` : null);
   // le telefonate scelte a mano (nota 012): in più dei contatti del giorno, restano finché non hanno un esito
   if (SCE.righe.length || fatteDi('scelta').length) metti('scelte', 'telefonate', 'Telefonate scelte a mano',
     c.scelte ? `${c.scelte} ancora da chiamare · in più dei contatti del giorno` : 'tutte fatte', c.scelte, 'scelta',
@@ -357,6 +410,7 @@ function disegnaOggiLV() {
   const daSole = { conferme: false, dareseguito: false, coda: false, scelte: false, riordini: false };
   for (const k of Object.keys(daSole)) { const b = document.getElementById('sez-' + k); if (b) b.onclick = () => cambiaRigaDash(k, false); }
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
+  app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
   attaccaIndietroLV();
   const vai = LV.vaiA; LV.vaiA = null;
   const titolo = vai && document.getElementById('sez-' + vai);

@@ -278,6 +278,64 @@ prova('La telefonata scelta a mano: la stessa scheda, gli esiti della telefonata
   assert.equal(m.LV.vista, 'persona');   // il primo mondo non c'entra
 });
 
+// ── Note Pagine 016 · 018 · 019 (segnalazioni di Ignazio, 06/10/2026) ──
+prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 016); «Non ora» solo sulla propria coda, online', () => {
+  const h = P.vista('oggi', { apri: ['coda', 'dareseguito'] }).html;
+  assert.match(h, /<b>Laura Ferri<\/b><small>Mai contattato<\/small>/);
+  assert.match(h, /<b>Marco Neri<\/b><small>Ultima telefonata: Richiamare · 3 giorni fa<\/small>/);
+  assert.match(h, /<b>Anna Villa<\/b><small>Ultimo appuntamento: Relazione · ieri<\/small>/);
+  assert.deepEqual([...h.matchAll(/data-non-ora="([^"]+)"/g)].map(m => m[1]), ['c1', 'c2', 'c3']);   // non sui Dare Seguito
+  assert.match(h, /<div class="lv-riga"><button class="lv-persona" data-lv-persona="coda\|c1"[\s\S]*?<\/button><button class="lv-nonora" data-non-ora="c1" title="Non ora">Non ora<\/button><\/div>/);
+  // offline: niente «Non ora»
+  const m = P.avvia(); P.carica(m); m.ST.offline = true; m.LV.vista = 'oggi'; m.disegnaOggi();
+  assert.doesNotMatch(P.app.innerHTML, /data-non-ora=/);
+  assert.match(P.app.innerHTML, /Ultima telefonata: Richiamare · 3 giorni fa/);
+});
+
+prova('«Non ora» → «In coda»: la persona esce dalla coda di oggi con rientro domani, non conta come fatta; «Annulla» la rimette', async () => {
+  const scritte = [], supaPrima = P.stub.supa, dbqPrima = P.stub.dbq, sceltaPrima = P.stub.sceltaDa;
+  let chiesto = null;
+  P.stub.supa = { rpc: () => Promise.resolve({ error: null }), from: tab => ({ update: v => ({ eq: (k, id) => { scritte.push({ tab, v, id }); return Promise.resolve({ error: null }); } }) }) };
+  P.stub.dbq = (_, p) => p;
+  P.stub.sceltaDa = async (titolo, voci) => { chiesto = { titolo, voci: voci.map(v => v.etichetta) }; return voci[0]; };
+  try {
+    const { m } = P.vista('oggi', { apri: ['coda'] });
+    P.toast.length = 0;
+    await m.nonOra('c2');
+    assert.deepEqual(chiesto, { titolo: 'Non ora · Marco Neri', voci: ['In coda', 'Scegli la data'] });
+    assert.equal(scritte.length, 1);
+    assert.equal(scritte[0].tab, 'contatti'); assert.equal(scritte[0].id, 'c2'); assert.equal(scritte[0].v.rientro_il, '2026-10-05');
+    assert.deepEqual(m.ST.risultato.coda.map(x => x.id), ['c1', 'c3']);
+    assert.doesNotMatch(P.app.innerHTML, /Marco Neri/);
+    assert.match(P.app.innerHTML, /2 ancora da chiamare · fatti 2 di 5/);   // non conta come fatta
+    assert.deepEqual(m.LV.fatte, []);
+    assert.equal(P.toast[P.toast.length - 1], 'Marco Neri · non ora, torna domani');
+    await P.toast.annulla();
+    assert.equal(scritte[1].v.rientro_il, P.OGGI);   // com'era prima
+    assert.deepEqual(m.ST.risultato.coda.map(x => x.id), ['c1', 'c2', 'c3']);
+    assert.match(P.app.innerHTML, /Marco Neri/);
+  } finally { P.stub.supa = supaPrima; P.stub.dbq = dbqPrima; P.stub.sceltaDa = sceltaPrima; }
+});
+
+prova('«Da catalogare» è del partner visto (nota 019): manca o è di un altro → si rilegge; già suo e di oggi → niente', async () => {
+  const supaPrima = P.stub.supa, dbqPrima = P.stub.dbq;
+  let letture = 0;
+  const righe = [{ id: 'z1', nome: 'Zeta Uno', categoria: null, user_id: 'io' }];
+  P.stub.supa = { rpc: () => Promise.resolve({ data: { contatti_al_giorno: 5, fatti_oggi: 0, catalogati_oggi: 1 }, error: null }),
+    from: () => { const q = { select: () => q, eq: () => q, is: () => q, order: () => q, range: () => { letture++; return Promise.resolve({ data: righe, error: null }); } }; return q; } };
+  P.stub.dbq = (_, p) => p;
+  try {
+    const { m } = P.vista('oggi');
+    m.ST.catalogo = { righe: [{ id: 'altrui', nome: 'Di Ornella' }], totale: 1 }; m.ST.catalogoDi = 'ornella'; m.ST.catalogoGiorno = P.OGGI;
+    await m.caricaCatalogo();
+    assert.equal(letture, 1);
+    assert.deepEqual(m.ST.catalogo.righe.map(x => x.nome), ['Zeta Uno']); assert.equal(m.ST.catalogoDi, 'io'); assert.equal(m.ST.stato.catalogati_oggi, 1);
+    await m.caricaCatalogo();   // già suo e di oggi
+    assert.equal(letture, 1);
+    m.ST.catalogo = null; await m.caricaCatalogo(); assert.equal(letture, 2);   // mancava
+  } finally { P.stub.supa = supaPrima; P.stub.dbq = dbqPrima; }
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

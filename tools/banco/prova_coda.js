@@ -257,4 +257,27 @@ prova('il conto del giorno: il traguardo resta quello scelto, le telefonate oltr
   assert.equal(contoGiorno(undefined, 5), '0 di 5');
 });
 
+// ── Nota Pagine 016 · 018 (06/10/2026): la frase sotto il nome, e «Non ora» ──
+const { ultimaVolta, quandoFa, giornoDopo, giornoRinvio, testoRinvio } = require('../../coda.js');
+prova('sotto il nome: cosa è successo l\'ultima volta e quando, in parole chiare', () => {
+  const oggi = '2026-10-06';
+  assert.equal(ultimaVolta({ contattato: false }, oggi), 'Mai contattato');
+  assert.equal(ultimaVolta(null, oggi), 'Mai contattato');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_modalita: 'Telefonata', ultima_fase: 'No Risposta', ultima_il: '2026-10-03T15:00:00+02:00' }, oggi), 'Ultima telefonata: No Risposta · 3 giorni fa');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_fase: 'Richiamare', ultima_il: '2026-10-05T23:30:00+02:00' }, oggi), 'Ultima telefonata: Richiamare · ieri');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Appuntamento', ultima_fase: 'Relazione', ultima_il: '2026-10-06T09:00:00+02:00' }, oggi), 'Ultimo appuntamento: Relazione · oggi');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_modalita: 'Messaggio', ultima_fase: 'Relazione', ultima_il: '2026-08-01T09:00:00+02:00' }, oggi), 'Ultimo contatto: Relazione · il 01/08/2026');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_fase: null, ultima_il: null }, oggi), 'Ultima telefonata: senza esito');
+  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Piano Marketing', ultima_fase: 'PM Fissato', ultima_il: '2026-10-07T18:00:00+02:00' }, oggi), 'Ultimo PM: PM Fissato · domani');
+  assert.equal(quandoFa('2026-09-06', oggi), '30 giorni fa'); assert.equal(quandoFa('2026-09-05', oggi), 'il 05/09/2026'); assert.equal(quandoFa(null, oggi), '');
+});
+prova('«Non ora»: In coda = domani, Scegli la data = quel giorno (mai nel passato); il testo del toast', () => {
+  const oggi = '2026-10-06';
+  assert.equal(giornoDopo(oggi), '2026-10-07'); assert.equal(giornoDopo('2026-12-31'), '2027-01-01'); assert.equal(giornoDopo(oggi, -1), '2026-10-05');
+  assert.equal(giornoRinvio(oggi, 'coda'), '2026-10-07');
+  assert.equal(giornoRinvio(oggi, 'data', '2026-10-20'), '2026-10-20');
+  assert.equal(giornoRinvio(oggi, 'data', '2026-10-01'), '2026-10-07');   // una data passata: domani
+  assert.equal(giornoRinvio(oggi, 'data', null), '2026-10-07');
+  assert.equal(testoRinvio('2026-10-07', oggi), 'torna domani'); assert.equal(testoRinvio('2026-10-20', oggi), 'torna il 20/10/2026');
+});
 console.log(`\n${ok} prove superate`);
