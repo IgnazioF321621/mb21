@@ -155,16 +155,23 @@
   }
 
   // ── «Non ora» (nota Pagine 018, Ignazio 06/10/2026): saltare un nome dalla riga, senza esito e senza contare come fatto ──
-  // «In coda» = torna domani tra i contatti del giorno (rientro_il = domani; `in_coda_dal` resta: rientra per primo); «Scegli la data» = quel giorno.
+  // «Salta» = torna tra GIORNI_SALTA giorni, non l'indomani (Ignazio 06/10: «nel futuro, ma non l'indomani»; rientro_il = oggi + GIORNI_SALTA,
+  // `in_coda_dal` resta: quel giorno rientra per primo); «Scegli la data» = il giorno scelto (mai nel passato: in quel caso come «Salta»).
+  const GIORNI_SALTA = 7;
   function giornoDopo(oggi, n = 1) { return new Date(Date.parse(oggi + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
   function giornoRinvio(oggi, scelta, giornoScelto) {
     if (scelta === 'data' && giornoScelto && giornoScelto > oggi) return giornoScelto;
-    return giornoDopo(oggi, 1);
+    return giornoDopo(oggi, GIORNI_SALTA);
   }
-  const testoRinvio = (giorno, oggi) => (giorniTra(oggi, giorno) === 1 ? 'torna domani' : `torna il ${dataIt(giorno)}`);
+  function testoRinvio(giorno, oggi) {
+    const n = giorniTra(oggi, giorno);
+    if (n === 1) return 'torna domani';
+    if (n === GIORNI_SALTA) return `torna tra ${n} giorni (il ${dataIt(giorno)})`;
+    return `torna il ${dataIt(giorno)}`;
+  }
 
   const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE,
-    giorniTra, quandoFa, ultimaVolta, giornoDopo, giornoRinvio, testoRinvio,
+    giorniTra, quandoFa, ultimaVolta, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio,
     telefonateScelte, senzaScelte, contoGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;

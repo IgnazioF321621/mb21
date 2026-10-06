@@ -292,7 +292,7 @@ prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 01
   assert.match(P.app.innerHTML, /Ultima telefonata: Richiamare · 3 giorni fa/);
 });
 
-prova('«Non ora» → «In coda»: la persona esce dalla coda di oggi con rientro domani, non conta come fatta; «Annulla» la rimette', async () => {
+prova('«Non ora» → «Salta»: la persona esce dalla coda di oggi e torna tra GIORNI_SALTA giorni (non domani), non conta come fatta; «Annulla» la rimette', async () => {
   const scritte = [], supaPrima = P.stub.supa, dbqPrima = P.stub.dbq, sceltaPrima = P.stub.sceltaDa;
   let chiesto = null;
   P.stub.supa = { rpc: () => Promise.resolve({ error: null }), from: tab => ({ update: v => ({ eq: (k, id) => { scritte.push({ tab, v, id }); return Promise.resolve({ error: null }); } }) }) };
@@ -302,14 +302,16 @@ prova('«Non ora» → «In coda»: la persona esce dalla coda di oggi con rient
     const { m } = P.vista('oggi', { apri: ['coda'] });
     P.toast.length = 0;
     await m.nonOra('c2');
-    assert.deepEqual(chiesto, { titolo: 'Non ora · Marco Neri', voci: ['In coda', 'Scegli la data'] });
+    assert.deepEqual(chiesto, { titolo: 'Non ora · Marco Neri', voci: ['Salta', 'Scegli la data'] });
     assert.equal(scritte.length, 1);
-    assert.equal(scritte[0].tab, 'contatti'); assert.equal(scritte[0].id, 'c2'); assert.equal(scritte[0].v.rientro_il, '2026-10-05');
+    const G = P.stub.MB21Coda.GIORNI_SALTA, salto = P.stub.MB21Coda.giornoDopo(P.OGGI, G);
+    assert.equal(scritte[0].tab, 'contatti'); assert.equal(scritte[0].id, 'c2'); assert.equal(scritte[0].v.rientro_il, salto);
+    assert.notEqual(salto, '2026-10-05');   // mai l'indomani
     assert.deepEqual(m.ST.risultato.coda.map(x => x.id), ['c1', 'c3']);
     assert.doesNotMatch(P.app.innerHTML, /Marco Neri/);
     assert.match(P.app.innerHTML, /2 ancora da chiamare · fatti 2 di 5/);   // non conta come fatta
     assert.deepEqual(m.LV.fatte, []);
-    assert.equal(P.toast[P.toast.length - 1], 'Marco Neri · non ora, torna domani');
+    assert.equal(P.toast[P.toast.length - 1], `Marco Neri · non ora, torna tra ${G} giorni (il ${salto.split('-').reverse().join('/')})`);
     await P.toast.annulla();
     assert.equal(scritte[1].v.rientro_il, P.OGGI);   // com'era prima
     assert.deepEqual(m.ST.risultato.coda.map(x => x.id), ['c1', 'c2', 'c3']);

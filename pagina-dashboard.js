@@ -341,7 +341,7 @@ function rigaPersona(tipo, id, nome, sotto) {
 }
 const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastiglia">${ic('fatto')}</span><span class="lv-pt"><b>${esc(nome)}</b><small>fatto</small></span></div>`;
 // La riga di un contatto del giorno: sotto il nome cosa è successo l'ultima volta e quando (nota 016, MB21Coda.ultimaVolta) e, sulla propria coda,
-// «Non ora» per saltarlo senza aprire la scheda (nota 018: poi «In coda» o «Scegli la data»). Guardando un altro partner o offline: solo la riga.
+// «Non ora» per saltarlo senza aprire la scheda (nota 018: poi «Salta», tra GIORNI_SALTA giorni, o «Scegli la data»). Guardando un altro partner o offline: solo la riga.
 function rigaCoda(x) {
   const riga = rigaPersona('coda', x.id, x.nome, MB21Coda.ultimaVolta(x, ST.oggi));
   if (guardoAltri() || ST.offline) return riga;
@@ -351,7 +351,7 @@ async function nonOra(id) {
   const x = (ST.risultato.coda || []).find(y => y.id === id);
   if (!x || ST.offline || guardoAltri()) return;
   const v = await sceltaDa(`Non ora · ${x.nome}`, [
-    { id: 'coda', etichetta: 'In coda', icona: 'telefonate', nota: 'Torna domani tra i contatti del giorno' },
+    { id: 'salta', etichetta: 'Salta', icona: 'rimandato', nota: `Torna tra ${MB21Coda.GIORNI_SALTA} giorni tra i contatti del giorno` },
     { id: 'data', etichetta: 'Scegli la data', icona: 'agenda', nota: 'Torna il giorno che scegli' }]);
   if (!v) return;
   let scelto = null;
