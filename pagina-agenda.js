@@ -1137,13 +1137,23 @@ function menuAgendaHtml() {
 // La card «Programma della settimana» (Ignazio 27/09: «la settimana messa là la devo andare a cercare»): al posto del Modulo Core
 // (che resta dal Check), sempre a portata da ogni vista. La settimana è quella che si sta guardando. Dal 28/09 subito sotto
 // Giorno…Anno: in fondo alla colonna di sinistra (ferma, con un'altezza massima) sull'iPad di Isabella restava tagliata.
+// Nota Pagine 004 (Ignazio 06/10/2026): nella card solo quello che deve ancora venire; in alto «Da chiudere» (passati senza esito, finché non si chiudono);
+// in fondo la riga chiusa «Fatti e passati · N» che si apre sul posto: un tocco su un appuntamento apre la stessa scheda «Com'è andata?» (foglioEvento).
 function programmaSettimanaHtml() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), lun = AG.settimana[0], dom = AG.settimana[6];
-  const p = MB21Spazi.programma(AG.settimana, AG.azioni, AG.spazi);
+  const p = MB21Spazi.programma(AG.settimana, AG.azioni, AG.spazi, MB21Coda.adesso());
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
+  const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const riga = (a, rossa) => { const g = A.partiRoma(a.inizio);
+    return `<button class="mb-prog-app${rossa ? ' da-chiudere' : ''}" data-prog-evento="${esc(a.id)}"><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(g.giorno, oggi))} alle ${esc(g.ora)} · ${esc(a.esito || (rossa ? 'senza esito' : 'fatto'))}</small></span><em>›</em></button>`; };
+  const vuoto = dom < oggi ? 'Settimana finita.' : p.preparata || p.fatti.length ? 'Niente altro in programma questa settimana.'
+    : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LdS.';
+  const aperti = !!AG.fattiAperti;
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
-    ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>`
-      : `<p>${dom < oggi ? 'Niente in programma in questa settimana.' : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LdS.'}</p>`}
+    ${p.daChiudere.length ? `<div class="mb-prog-chiudere"><div class="mb-prog-tit">Da chiudere · ${p.daChiudere.length}</div>${p.daChiudere.map(a => riga(a, true)).join('')}</div>` : ''}
+    ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>` : `<p>${vuoto}</p>`}
+    ${p.fatti.length ? `<button class="mb-prog-fatti" data-cmd="fatti" aria-expanded="${aperti}"><span>Fatti e passati<i>${p.fatti.length}</i></span><span>${aperti ? '⌄' : '›'}</span></button>
+      <div class="mb-prog-elenco"${aperti ? '' : ' hidden'}>${p.fatti.map(a => riga(a, false)).join('')}</div>` : ''}
     ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>${p.preparata ? 'Aggiungi appuntamenti' : 'Prepara la settimana'}</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -1164,6 +1174,20 @@ function collegaMenuAgenda(radice, chiudi) {
     chiudi(); cambiaVista(b.dataset.scala);
   }; });
   const prepara = radice.querySelector('[data-cmd="prepara"]'); if (prepara) prepara.onclick = () => { chiudi(); preparaSettimana(); };
+  // nota 004: «Fatti e passati» si apre e si chiude sul posto; un appuntamento apre «Com'è andata?» per cambiare l'esito
+  const fatti = radice.querySelector('[data-cmd="fatti"]');
+  if (fatti) fatti.onclick = () => {
+    AG.fattiAperti = !AG.fattiAperti;
+    fatti.setAttribute('aria-expanded', String(AG.fattiAperti));
+    fatti.lastElementChild.textContent = AG.fattiAperti ? '⌄' : '›';
+    const el = radice.querySelector('.mb-prog-elenco'); if (el) el.hidden = !AG.fattiAperti;
+  };
+  radice.querySelectorAll('[data-prog-evento]').forEach(b => { b.onclick = () => {
+    const e = (AG.azioni || []).find(x => x.id === b.dataset.progEvento);
+    if (!e) return;
+    chiudi();
+    foglioEvento(MB21Agenda.eventiDelGiorno([e], MB21Agenda.partiRoma(e.inizio).giorno)[0] || e);
+  }; });
 }
 function menuAgenda() {
   const velo = document.createElement('div');

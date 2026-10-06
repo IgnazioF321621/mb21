@@ -93,22 +93,34 @@
   // azioni: righe di `azioni` (si contano quelle della settimana); spazi: righe di `spazi`.
   // Team, LdS e SdS/OPEN: quando sono («Incontri di Team: mer 30 alle 21:00 · ven 2 alle 21:00»).
   const quando = s => { const g = giornoDi(s.inizio); return `${A.GIORNI_SETTIMANA[A.giornoSettimana(g) - 1].toLowerCase()} ${Number(g.slice(8))} alle ${oraDi(s.inizio).slice(0, 5)}`; };
-  function programma(settimana, azioni, spazi) {
+  // Nota Pagine 004 (Ignazio 06/10/2026): nella card resta solo quello che deve ancora venire, così la lista non si allunga.
+  // `adesso` (ISO): gli appuntamenti della settimana (tutti tranne le telefonate) si dividono in tre:
+  //   daChiudere = passati senza esito (in alto, finché non si chiudono) · da fare = futuri senza esito (contati nelle righe)
+  //   fatti = con esito o completati (la riga chiusa «Fatti e passati», da cui si cambia l'esito).
+  // Gli spazi (da riempire, Team, LdS, SdS/OPEN) passati non si scrivono più. Senza `adesso` tutto conta come futuro.
+  function programma(settimana, azioni, spazi, adesso) {
     const dentro = iso => !!iso && settimana.includes(giornoDi(iso));
-    const suoi = (spazi || []).filter(s => dentro(s.inizio)).sort((x, y) => x.inizio.localeCompare(y.inizio));
+    const futuro = iso => !adesso || Date.parse(iso) >= Date.parse(adesso);
+    const inOrdine = (x, y) => x.inizio.localeCompare(y.inizio);
+    const tutti = (spazi || []).filter(s => dentro(s.inizio)).sort(inOrdine);
+    const suoi = tutti.filter(s => futuro(s.inizio));
+    const appuntamenti = (azioni || []).filter(a => a.tipo_azione !== 'Contatto' && dentro(a.inizio));
+    const chiuso = a => !!a.esito || !!a.completata;
+    const daChiudere = appuntamenti.filter(a => !chiuso(a) && !futuro(a.inizio)).sort(inOrdine);
+    const fatti = appuntamenti.filter(chiuso).sort(inOrdine);
+    const daFare = appuntamenti.filter(a => !chiuso(a) && futuro(a.inizio));
     const righe = [];
     for (const t of CON_PERSONA) {
-      const fissati = (azioni || []).filter(a => a.tipo_azione === t && dentro(a.inizio)).length;
+      const fissati = daFare.filter(a => a.tipo_azione === t).length;
       const vuoti = suoi.filter(s => s.tipo === t).length;
       if (!fissati && !vuoti) continue;
-      const f = t === 'Piano Marketing' ? (fissati === 1 ? 'fissato' : 'fissati') : (fissati === 1 ? 'fissata' : 'fissate');
-      righe.push({ tipo: t, testo: `${TIPI[t].plurale}: ${[fissati ? `${fissati} ${f}` : '', vuoti ? `${vuoti} da riempire` : ''].filter(Boolean).join(' · ')}` });
+      righe.push({ tipo: t, testo: `${TIPI[t].plurale}: ${[fissati ? `${fissati} da fare` : '', vuoti ? `${vuoti} da riempire` : ''].filter(Boolean).join(' · ')}` });
     }
     for (const t of [...DI_GRUPPO, 'SdS/OPEN']) {
       const questi = suoi.filter(s => s.tipo === t);
       if (questi.length) righe.push({ tipo: t, testo: `${questi.length === 1 ? TIPI[t].nome : TIPI[t].plurale}: ${questi.map(s => quando(s) + (puoAvereNome(t) && pulisciNome(s.nome) ? ` (${pulisciNome(s.nome)})` : '')).join(' · ')}` });
     }
-    return { righe, preparata: suoi.length > 0 };
+    return { righe, preparata: tutti.length > 0, daChiudere, fatti };
   }
 
   // Le parole dei passi, pensate per chi è appena arrivato (Ignazio 27/09: «nei panni di un nuovo»): una domanda chiara,

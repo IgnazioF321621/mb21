@@ -1779,6 +1779,16 @@
   .mb-programma li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--testo); }
   .mb-programma li i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed var(--tinta); flex: none; box-sizing: border-box; }
   .mb-programma p { margin: 8px 0 0 4px; font-size: 13px; line-height: 1.35; color: var(--testo-soft); }
+  /* nota Pagine 004: «Da chiudere» in alto, «Fatti e passati» chiusa in fondo; ogni appuntamento apre «Com'è andata?» */
+  .mb-prog-chiudere { margin: 10px 0 0; background: var(--superficie); border-radius: 10px; padding: 8px; }
+  .mb-prog-tit { font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--proposta); margin: 0 0 2px 2px; }
+  .ag-lato .mb-programma button.mb-prog-app, .mb-programma button.mb-prog-app { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; text-align: left; background: var(--superficie); border: 1px solid var(--linea); border-radius: 9px; padding: 7px 9px; margin: 5px 0 0; color: var(--testo); font: inherit; white-space: normal; }
+  .mb-programma button.mb-prog-app.da-chiudere { border-color: var(--proposta); background: var(--proposta-tinta); }
+  .mb-programma button.mb-prog-app b { display: block; font-size: 13.5px; font-weight: 700; } .mb-programma button.mb-prog-app small { display: block; font-size: 12px; color: var(--testo-soft); }
+  .mb-programma button.mb-prog-app em { font-style: normal; color: var(--testo-tenue); font-size: 18px; }
+  .ag-lato .mb-programma button.mb-prog-fatti, .mb-programma button.mb-prog-fatti { display: flex; width: 100%; justify-content: space-between; align-items: center; margin: 10px 0 0; background: var(--superficie); border: 0; border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 14px; font-weight: 700; color: var(--testo); }
+  .mb-prog-fatti i { font-style: normal; background: #2c4a7c; color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 12px; margin-left: 6px; }
+  .mb-prog-elenco[hidden] { display: none; }
   .ag-lato .mb-programma button.mb-prog-bottone { margin: 10px 0 0; justify-content: center; gap: 6px; background: #2c4a7c; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 8px; white-space: normal; text-align: center; }
   .ag-lato .mb-programma button.mb-prog-bottone svg.ic { color: #fff; width: 18px; height: 18px; }
   .ag-lato .mb-programma button.mb-prog-bottone span { flex: 0 1 auto; }
