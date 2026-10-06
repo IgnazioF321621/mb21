@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
       db.from('check_giorno').select('user_id').eq('data', oggi),
       db.from('azioni').select('user_id, contatto_id, inizio, tipo_azione, modalita, contatti(nome)').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
       db.from('azioni').select('user_id, contatto_id, data_scelta, esito, contatti(nome)').eq('tipo_azione', 'Contatto').in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani.inizio).lt('data_scelta', domani.fine),
-      db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).gte('inizio', domani.inizio).lt('inizio', domani.fine),
+      db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false).is('esito', null).eq('senza_ora', false).gte('inizio', domani.inizio).lt('inizio', domani.fine),
       // 30/09 i complimenti: la giornata già scritta, contata come la Dashboard (viste azioni_conti e vendite_conti, giorno di Roma)
       db.from('azioni_conti').select('user_id, esito, contatti, pm').eq('giorno', oggi),
       db.from('vendite_conti').select('user_id, contatto_id').eq('conta_il', oggi),
@@ -341,8 +341,9 @@ Deno.serve(async (req) => {
       const testo = `${az.modalita || az.tipo_azione} · ${nome}`;
       voci.push({ utente: az.user_id, inizio: Date.parse(az.inizio), riga: testo, testo, url: `./?apri=agenda&azione=${az.id}&giorno=${giornoDi(az.inizio)}`, tag: `senza-esito-${az.id}`, giorno: giornoDi(az.inizio), ids: [az.id] });
     }
-    // Le telefonate in Agenda rimaste senza esito (21/09): quelle di un giro sono un impegno solo, un'ora dopo la fine dell'ULTIMA del giro
-    const { data: tel, error: e2 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false)
+    // Le telefonate in Agenda rimaste senza esito (21/09): quelle di un giro sono un impegno solo, un'ora dopo la fine dell'ULTIMA del giro.
+    // 06/10 (nota Avvisi 003): quelle «senza orario» (in coda, non in Agenda) stanno alle 00:00 del giorno e non sono «passate»: si escludono.
+    const { data: tel, error: e2 } = await db.from('azioni').select('id, user_id, inizio, fine, contatti(nome)').eq('tipo_azione', 'Contatto').eq('completata', false).eq('senza_ora', false)
       .is('esito', null).is('senza_esito_avvisato_il', null).gte('inizio', new Date(adesso - 24 * ORA).toISOString()).lt('inizio', new Date(adesso).toISOString());
     if (e2) return risposta({ errore: e2.message }, 500);
     for (const giro of giriDiTelefonate(await senzaRiordini((tel ?? []) as Telefonata[]))) {
