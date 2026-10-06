@@ -1,5 +1,5 @@
 // MB21 · «Segnala» (nota Pagine 009, Ignazio 05/10/2026): da ogni schermata, pagina e foglio un piccolo insetto in alto a destra apre
-// «Cosa non va, o cosa proponi?» con tre scelte a un tocco e un testo; l'app aggiunge da sola dove era il partner, la versione e il telefono.
+// «Invia il tuo feedback» (nota 006; prima «Cosa non va, o cosa proponi?») con tre scelte a un tocco e un testo; l'app aggiunge da sola dove era il partner, la versione e il telefono.
 // Qui le regole pure (niente rete, niente pagina): le usano index.html (foglioSegnala) e tools/banco/prova_segnala.js.
 // Le segnalazioni vanno nella tabella `segnalazioni` (migrazione 20261006001000); le legge l'Admin (pagina a parte, titolo Admin e Controlli).
 // Nota 014 (06/10/2026): si può allegare uno screenshot (dalle foto del telefono), ridotto prima di salvarlo (lato lungo MAX_LATO, JPEG QUALITA)

@@ -4364,7 +4364,7 @@ function collegaReport() {
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
 }
 
-// ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Cosa non va, o cosa proponi?», tre scelte e un testo.
+// ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Invia il tuo feedback» (nota 006, prima «Cosa non va, o cosa proponi?»), tre scelte e un testo.
 // L'app aggiunge da sola dove era il partner (`doveSono`: il tab, la sezione, i fogli aperti dal primo all'ultimo, il contatto), la versione e il telefono.
 // Si salva in `segnalazioni` (segnala.js per le regole pure); al partner «Grazie, l'abbiamo ricevuta». Mai la parola «errore».
 function doveSono() {
@@ -4390,7 +4390,7 @@ function foglioSegnala() {
   const S = MB21Segnala, dove = doveSono();
   const velo = document.createElement('div');
   velo.className = 'velo'; velo.id = 'sg-velo';
-  velo.innerHTML = `<div class="foglio"><h3>Cosa non va, o cosa proponi?</h3>
+  velo.innerHTML = `<div class="foglio"><h3>Invia il tuo feedback</h3>
     <div class="ag-scelte sg-motivi">${S.MOTIVI.map(([k, n]) => `<button type="button" data-motivo="${k}">${esc(n)}</button>`).join('')}</div>
     <textarea id="sg-testo" class="sg-testo" maxlength="${S.MAX_TESTO}" placeholder="Scrivi qui, anche due parole"></textarea>
     <div class="sg-allega"><label id="sg-allega">Allega lo screenshot<input type="file" id="sg-file" accept="image/*" hidden></label>
