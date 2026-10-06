@@ -207,6 +207,28 @@ prova('Cambiando il giorno (o l\'ora) il modulo NON si ridisegna (05/10 sera, iP
   assert.equal(v.querySelector('#na-note').value, 'da ricordare');
 });
 
+prova('Una Telefonata parte sempre «Senza orario · solo in coda», anche da un\'ora dell\'Agenda (nota 014, 06/10); «A un\'ora» ritrova quell\'ora; salvata con l\'ora entra subito nella lista di MB Plan', async () => {
+  pulisci();
+  P.AG.azioni = P.AG.azioni.filter(x => x.id !== 'az-nuova');   // le prove di prima hanno già salvato (e messo in lista) un impegno
+  const prima = P.AG.azioni.length;
+  const { v, p } = await apri({ contatto: { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
+  assert.match(v.innerHTML, /data-scelta="quando"[\s\S]*?data-v="coda" class="scelto"/);
+  assert.equal(v.querySelector('#na-ora'), null);                                 // solo il giorno
+  await scegli(v, 'quando', 'ora');
+  assert.equal(v.querySelector('#na-ora').value, '18:00');                        // l'ora toccata in Agenda è già lì
+  await v.clic('#na-si'); await attendi(); await attendi();
+  const esito = await p;
+  assert.equal(esito.senza_ora, false);
+  assert.equal(P.AG.azioni.length, prima + 1);                                    // con `resta` MB Plan non si ricarica: la lista lo sa lo stesso
+  assert.equal(P.AG.azioni.at(-1).id, 'az-nuova');
+  P.AG.azioni.pop();
+  // senza orario resta fuori dalla lista di MB Plan (l'Agenda non la mostra)
+  const seconda = await apri({ contatto: { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
+  await seconda.v.clic('#na-si'); await attendi(); await attendi();
+  assert.equal((await seconda.p).senza_ora, true);
+  assert.equal(P.AG.azioni.length, prima);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
