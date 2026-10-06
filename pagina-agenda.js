@@ -1749,9 +1749,12 @@ function condivisioneSpazioHtml(s) {
   if (!A.puoCondividereSpazio(s, eAdmin())) return '';
   const con = s.condiviso_con || '';
   const frontali = AG.frontali || [];
+  // nota 005: il codice salvato può essere di una persona dentro la Linea: la Linea è il suo frontale
+  const frontale = !s.linea_codice || frontali.some(f => f.partner_id === s.linea_codice) || !AG.ramo ? s.linea_codice
+    : A.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
   return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>${con === 'team' ? 'tutto il Team' : 'una Linea'}${s.punti_condivisi ? ' · vedono i punti' : ''}</small>` : ''}</div>
     <div class="ag-scelte">${A.CONDIVISIONI_SPAZIO.map(([k, n]) => `<button type="button" data-cd-con="${k}" class="${con === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>
-    ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${s.linea_codice === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessun frontale nella Mappa.</span>'}</div></div>` : ''}
+    ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${frontale === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessun frontale nella Mappa.</span>'}</div></div>${frontale && AG.ramo ? parteLineaHtml(frontale, s.linea_codice, AG.ramo.squadra) : ''}` : ''}
     ${con ? `<div class="campo"><label>Vedono anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
 }
 function collegaCondivisioneSpazio(el, s, ridisegna) {
@@ -1767,6 +1770,12 @@ function collegaCondivisioneSpazio(el, s, ridisegna) {
   const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
   su('[data-cd-con]', b => { const k = b.dataset.cdCon || null; if (k !== (s.condiviso_con || null)) salva({ condiviso_con: k, linea_codice: k === 'linea' ? s.linea_codice || null : null, punti_condivisi: k ? !!s.punti_condivisi : false }); });
   su('[data-cd-linea]', b => salva({ linea_codice: b.dataset.cdLinea }));
+  // nota 005: una persona dentro la Linea (lei e chi sta sotto); di nuovo, o il frontale, per tutta la Linea
+  su('[data-parte]', b => {
+    const frontale = (AG.frontali || []).some(f => f.partner_id === s.linea_codice) ? s.linea_codice : MB21Agenda.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
+    salva({ linea_codice: parteDopoTocco(frontale, s.linea_codice, b.dataset.parte) || frontale });
+  });
+  if (s.condiviso_con === 'linea' && AG.ramo === undefined) caricaRamoApp().then(() => { if (AG.ramo) ridisegna(); });   // la Mappa per l'albero, letta una volta
   su('[data-cd-punti]', b => salva({ punti_condivisi: b.dataset.cdPunti === '1' }));
   if (s.condiviso_con) mostraRisposte(blocco, 'spazio', s.id);
 }

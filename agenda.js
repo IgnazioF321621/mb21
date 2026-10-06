@@ -477,6 +477,41 @@
     const dentro = linea ? [squadra.find(s => s.partner_id === linea), ...ramo].filter(Boolean) : ramo;
     return dentro.filter(s => s.partner_id !== radice && !ha.has(s.partner_id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
   }
+  // ── Dentro una Linea, una persona (nota Pagine 005, Ignazio 06/10/2026: «si attivano solo le persone collegate a quella persona nella Mappa», lei compresa) ──
+  // `ramoDellaLinea`: la Linea di un frontale come nella Mappa, dall'alto in basso (ogni persona seguita da chi sta sotto di lei, in ordine di nome):
+  // [{ partner_id, nome, livello (0 = il frontale), sotto (quanti ha sotto, tutti i livelli) }]. Al massimo `max` righe.
+  function ramoDellaLinea(squadra, radice, max = 500) {
+    if (!radice || !Array.isArray(squadra)) return [];
+    const figli = {}, chi = {};
+    for (const s of squadra) { chi[s.partner_id] = s; if (s.sponsor_id) (figli[s.sponsor_id] = figli[s.sponsor_id] || []).push(s); }
+    for (const k of Object.keys(figli)) figli[k].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
+    const conta = {}, visti = new Set();
+    const quanti = c => { if (conta[c] != null) return conta[c]; if (visti.has(c)) return 0; visti.add(c); let n = 0; for (const f of figli[c] || []) n += 1 + quanti(f.partner_id); return (conta[c] = n); };
+    const fuori = [], gia = new Set();
+    const giu = (s, livello) => {
+      if (fuori.length >= max || gia.has(s.partner_id)) return;
+      gia.add(s.partner_id);
+      fuori.push({ partner_id: s.partner_id, nome: s.nome, livello, sotto: quanti(s.partner_id) });
+      for (const f of figli[s.partner_id] || []) giu(f, livello + 1);
+    };
+    giu(chi[radice] || { partner_id: radice, nome: radice }, 0);
+    return fuori;
+  }
+  // I codici della parte di Linea di una persona: lei e chi sta sotto di lei (come `sotto_il_codice` nel database)
+  function parteDi(righe, codice) {
+    const i = (righe || []).findIndex(r => r.partner_id === codice);
+    if (i < 0) return new Set();
+    const fine = i + 1 + righe[i].sotto;   // nell'ordine dall'alto in basso, chi sta sotto viene subito dopo
+    return new Set(righe.slice(i, fine).map(r => r.partner_id));
+  }
+  // Il frontale (chi ha `me` come sponsor) sopra un codice: per ritrovare la Linea di un impegno condiviso con una parte. null se non è sotto `me`.
+  function frontaleDi(squadra, codice, me) {
+    const sponsor = {};
+    for (const s of squadra || []) sponsor[s.partner_id] = s.sponsor_id;
+    let c = codice;
+    for (let giro = 0; c && giro < 50; giro++) { if (sponsor[c] === me) return c; c = sponsor[c]; }
+    return null;
+  }
   // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
   const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
   // L'esito dell'incontro è il primo passo fatto (nell'ordine delle fasi), gli altri diventano righe di azione in più; senza passi: null
@@ -759,7 +794,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

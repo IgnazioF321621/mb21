@@ -175,9 +175,10 @@ prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ra
   assert.doesNotMatch(v.innerHTML, /Senza l'app/);                       // senza una Linea scelta non si sa chi
   await scegli(v, 'linea', 'FR1'); await attendi(); await attendi();       // la lettura del Team, poi il ridisegno
   assert.match(v.innerHTML, /Senza l'app <small>non la troverà/); assert.match(v.innerHTML, /<span>Dario Verdi<\/span><button[^>]*data-invita="SOTTO1">Invita</);
-  assert.doesNotMatch(v.innerHTML, /Carla Rossi|Luca Bianchi/);           // Carla ha l'app; Luca è un'altra Linea
+  const senza = () => (v.innerHTML.match(/na-senza-app[\s\S]*?(?=<div class="campo"><label>Vedono)/) || [''])[0];
+  assert.doesNotMatch(senza(), /Carla Rossi|Luca Bianchi/);               // Carla ha l'app; Luca è un'altra Linea
   await scegli(v, 'linea', 'FR2');
-  assert.match(v.innerHTML, /<span>Luca Bianchi<\/span>/); assert.doesNotMatch(v.innerHTML, /Dario Verdi/);
+  assert.match(senza(), /<span>Luca Bianchi<\/span>/); assert.doesNotMatch(senza(), /Dario Verdi/);
   await scegli(v, 'condividi', 'team');
   assert.match(v.innerHTML, /Senza l'app <small>2 non la troveranno/); assert.match(v.innerHTML, /Dario Verdi[\s\S]*Luca Bianchi/);
   assert.doesNotMatch(v.innerHTML, /Ignazio Fiorito/);                     // chi condivide non conta
@@ -187,6 +188,55 @@ prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ra
   assert.equal(P.avvisi.at(-1).telefono, '+393334445555');                 // il numero della squadra, col prefisso
   assert.match(P.avvisi.at(-1).poi, /^Così trovi «Serata Rubino» di lunedì 21 settembre nella tua Agenda e puoi partecipare\.$/);   // la riga in più sulla serata
   assert.equal(P.scritture.filter(x => x.op !== 'rpc').length, 0);       // nessuna scrittura: solo il foglio del link
+});
+
+prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi sta sotto (lei compresa); la serata porta il suo codice; un secondo tocco torna a tutta la Linea', async () => {
+  pulisci(); P.modo.admin = true;
+  const prima = P.finto.squadra;
+  P.finto.squadra = [...prima, { partner_id: 'SOTTO2', sponsor_id: 'SOTTO1', nome: 'NERI, ANNA', telefono: '' }, { partner_id: 'SOTTO3', sponsor_id: 'FR1', nome: 'BRUNO, PIA', telefono: '' }];
+  try {
+    const { v, p } = await apri({});
+    await scegli(v, 'condividi', 'linea');
+    await scegli(v, 'linea', 'FR1'); await attendi(); await attendi();
+    const albero = () => [...v.innerHTML.matchAll(/data-parte="([^"]+)" class="([^"]+)"/g)].map(m => m[1] + ':' + m[2]);
+    assert.deepEqual(albero(), ['FR1:acceso', 'SOTTO3:acceso', 'SOTTO1:acceso', 'SOTTO2:acceso']);   // la Linea come nella Mappa, tutta accesa
+    assert.match(v.innerHTML, /<b>Carla Rossi<\/b><small>frontale<\/small>/); assert.match(v.innerHTML, /<b>Dario Verdi<\/b><small>1 sotto<\/small>/);
+    assert.match(v.innerHTML, /Lo ricevono <b>4 persone<\/b>: tutta la Linea Carla Rossi\./);
+    await v.clic('[data-parte="SOTTO1"]');
+    assert.deepEqual(albero(), ['FR1:spento', 'SOTTO3:spento', 'SOTTO1:lei', 'SOTTO2:acceso']);
+    assert.match(v.innerHTML, /Lo ricevono <b>2 persone<\/b>: Dario Verdi e chi sta sotto\./);
+    assert.match(v.innerHTML, /Senza l'app <small>2 non la troveranno/); assert.doesNotMatch(v.innerHTML, /<span>Pia Bruno<\/span>/);   // solo la sua parte
+    await v.clic('[data-parte="SOTTO1"]');                                                                   // di nuovo: tutta la Linea
+    assert.deepEqual(albero(), ['FR1:acceso', 'SOTTO3:acceso', 'SOTTO1:acceso', 'SOTTO2:acceso']);
+    await v.clic('[data-parte="SOTTO1"]');
+    await scegli(v, 'linea', 'FR2');                                                                         // un'altra Linea: di nuovo tutta
+    await scegli(v, 'linea', 'FR1');
+    assert.deepEqual(albero(), ['FR1:acceso', 'SOTTO3:acceso', 'SOTTO1:acceso', 'SOTTO2:acceso']);
+    await v.clic('[data-parte="SOTTO1"]');
+    await v.clic('#na-si'); await p;
+    const r = scritte('spazi', 'insert')[0].args[0];
+    assert.equal(r.condiviso_con, 'linea'); assert.equal(r.linea_codice, 'SOTTO1');   // il database manda a lei e a chi sta sotto (sotto_il_codice)
+    assert.match(P.avvisi.at(-1).t, /condivisa con Dario Verdi e chi sta sotto/);
+    P.AG.spazi = P.AG.spazi.filter(s => s.id !== 'sp-nuova');
+  } finally { P.finto.squadra = prima; }
+});
+
+prova('Nota 005, il foglio della serata già salvata: la Linea è quella del frontale sopra la persona, l\'albero mostra la sua parte; un tocco cambia il codice', async () => {
+  pulisci(); P.modo.admin = true;
+  const fr = P.AG.frontali, sp = P.AG.spazi;
+  P.AG.frontali = [{ partner_id: 'FR1', nome: 'Carla Rossi' }, { partner_id: 'FR2', nome: 'Luca Bianchi' }];
+  P.AG.ramo = { squadra: [...P.finto.squadra, { partner_id: 'SOTTO2', sponsor_id: 'SOTTO1', nome: 'NERI, ANNA', telefono: '' }], conApp: [] };
+  P.AG.spazi = [{ id: 'z1', user_id: 'io', tipo: 'Team', inizio: P.A.isoDaRoma(P.OGGI, '21:00'), durata: 60, condiviso_con: 'linea', linea_codice: 'SOTTO1', punti_condivisi: false }];
+  try {
+    P.foglioSpazio('z1'); await attendi();
+    const f = P.fogli.at(-1);
+    assert.match(f.innerHTML, /data-cd-linea="FR1" class="scelto"/);
+    assert.deepEqual([...f.innerHTML.matchAll(/data-parte="([^"]+)" class="([^"]+)"/g)].map(m => m[1] + ':' + m[2]), ['FR1:spento', 'SOTTO1:lei', 'SOTTO2:acceso']);
+    await f.clic('[data-parte="SOTTO1"]'); await attendi();
+    assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { linea_codice: 'FR1' });   // di nuovo: tutta la Linea
+    await f.clic('[data-parte="SOTTO2"]'); await attendi();
+    assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { linea_codice: 'SOTTO2' });
+  } finally { P.AG.frontali = fr; P.AG.spazi = sp; P.AG.ramo = undefined; }
 });
 
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {
