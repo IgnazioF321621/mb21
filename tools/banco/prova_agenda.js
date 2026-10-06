@@ -21,6 +21,12 @@ prova('Fasi: per tipo, per sottotipo dentro Appuntamento; PRD Vendita/No Vendita
   assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Appuntamento', 'Richiamare', 'Telefono spento', 'No Interesse', 'No Risposta']);   // «Ordine» dal 18/09, i non andati dal 25/09
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Counseling'), ['c/Downline', 'c/Upline', 'Motivazione']);
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Meeting/Evento'), ['Incontro N21']);
+  // «Laboratorio» (nota Azioni 060, 06/10): per un Partner un tipo di appuntamento con i passi dell'Avvio; per un Prospect un tipo di follow up con gli esiti del Follow Up
+  assert.ok(A.sottotipiPer('Appuntamento').includes('Laboratorio') && A.sottotipiPer('Follow Up').includes('Laboratorio'));
+  assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Laboratorio'), A.fasiPer('Partner', 'Appuntamento', 'Avvio'));
+  assert.deepEqual(A.fasiPer('Prospect', 'Follow Up', 'Laboratorio'), A.fasiPer('Prospect', 'Follow Up', 'Personale'));
+  assert.deepEqual(A.passiSuggeriti('Partner', 'Appuntamento', 'Laboratorio', { nuovo: true, fermo: false, fatti: ['Motivazione', 'ListaStart'] }).slice(0, 2), ['OrdineStart', 'Lista nomi']);   // il secondo incontro propone quello che manca
+  assert.equal(A.validaAppuntamento({ contatto_id: 'c1', categoria: 'Prospect', area: 'Attività', tipo_azione: 'Follow Up', modalita: 'Laboratorio', giorno: '2026-10-10', ora: '18:00', ospite: '' }), null);
   assert.equal(A.fasiPer('Partner', 'Piano Marketing', 'PM 1a1')[0], 'Presentazione');
   assert.deepEqual(A.fasiPer('Cliente', 'Piano Marketing', 'PM 1a1'), []);
   assert.equal(A.conOspite('Follow Up'), true);

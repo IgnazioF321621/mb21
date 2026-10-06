@@ -6,8 +6,10 @@
   const SOTTOTIPI = {
     'Contatto': ['Telefonata', 'Messaggio', 'Presenza'],
     'Piano Marketing': ['PM 1a1', 'PM Upline', 'PM Casa/Pull', 'PM Open'],
-    'Follow Up': ['Personale', 'Upline', 'Meeting/Evento'],
-    'Appuntamento': ['Avvio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'],
+    // «Laboratorio» (nota Azioni 060, Ignazio 06/10): il percorso in più incontri che avvia i nuovi iscritti; ci va anche un Prospect che ha visto
+    // il piano ed è in fase decisionale, e per lui vale come un follow up. Ogni incontro è un appuntamento a sé
+    'Follow Up': ['Personale', 'Upline', 'Meeting/Evento', 'Laboratorio'],
+    'Appuntamento': ['Avvio', 'Laboratorio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'],
     'Consulenza PRD': ['Presentazione', 'Demo', 'Promo/Sconto', 'Riordino'],   // «Presentazione» al posto di «Assistenza» (Ignazio 29/09; cantiere 48)
   };
   // Nome del campo sottotipo per ogni tipo, stile Glide «Tipo di contatto» (decisione di Ignazio 15/09)
@@ -23,6 +25,7 @@
   // Appuntamento: fasi per sottotipo (decisione 3; tolti i nomi vecchi non in Sequenze)
   const FASI_APPUNTAMENTO = {
     'Avvio': ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'],   // l'ordine dell'Avvio (Ignazio 30/09); i nomi non cambiano: danno le statistiche
+    'Laboratorio': ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'],   // gli stessi passi dell'Avvio (nota 060): a ogni incontro si spuntano quelli fatti, il prossimo propone quelli che mancano (nota 055)
     'Counseling': ['c/Downline', 'c/Upline', 'Motivazione'],
     'Lista/Contatti': ['Lista nomi', 'Motivazione', 'Telefonate'],
     'Meeting/Evento': ['Incontro N21'],
