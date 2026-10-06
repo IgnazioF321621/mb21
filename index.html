@@ -1801,6 +1801,18 @@
   .ag-lato .mb-programma button.mb-prog-bottone svg.ic { color: #fff; width: 18px; height: 18px; }
   .ag-lato .mb-programma button.mb-prog-bottone span { flex: 0 1 auto; }
   .sp-domanda { font-size: 17px; font-weight: 700; margin: 4px 0 6px; }
+  /* nota Pagine 005: «Programmare la settimana», una riga per tipo con i numeri da 1 a 4 */
+  .sp-riga-num { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linea); }
+  .sp-riga-num:last-of-type { border-bottom: 0; } .sp-riga-num > span { min-width: 0; } .sp-riga-num b { display: block; font-size: 15px; } .sp-riga-num small { display: block; color: var(--testo-soft); font-size: 12.5px; }
+  .sp-riga-num .ag-scelte { flex: none; flex-wrap: nowrap; margin: 0; } .sp-riga-num .ag-scelte button { min-width: 38px; padding-inline: 10px; }
+  /* nota Pagine 005: il foglio a livelli «Cosa vuoi aggiungere?» */
+  .foglio.strade { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
+  .foglio.strade .st-indietro { display: block; padding: 0; margin: 0 0 6px; min-height: 0; color: var(--testo-soft); font-size: 14px; font-weight: 600; text-align: left; width: auto; }
+  .strada { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); border-radius: 16px; padding: 13px 12px; margin: 0 0 9px; font: inherit; }
+  .strada .st-tondo { width: 42px; height: 42px; border-radius: 50%; background: var(--tinta); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .strada .st-tondo svg.ic { width: 21px; height: 21px; margin: 0; } .strada .st-testo { flex: 1; min-width: 0; }
+  .strada b { display: block; font-size: 16px; } .strada small { display: block; color: var(--testo-soft); font-size: 13px; line-height: 1.3; margin-top: 2px; }
+  .strada em { font-style: normal; color: var(--testo-tenue); font-size: 20px; }
   .sp-giorno { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--superficie-2); }
   .sp-g { flex: 1 1 140px; display: flex; align-items: baseline; gap: 10px; min-height: 40px; border: 1px solid var(--bordo); border-radius: 12px; background: var(--superficie);
     padding: 8px 12px; font-family: inherit; font-size: 15px; color: var(--testo); text-align: left; }
@@ -3239,12 +3251,13 @@ async function nuovoAppuntamento(opz = {}) {
     senzaOra: opz.senzaOra != null ? !!opz.senzaOra : true,
     // «Condividi con» (nota Pagine 027, Ignazio 05/10, come il Calendario Apple): '' · 'persona' (la persona dell'appuntamento, se è un Partner) ·
     // 'team' / 'linea' (solo l'Admin, dal «+» di MB Plan: il modulo crea la serata Team/LdS, non un appuntamento). `linea` = il codice del frontale.
-    condividi: '', linea: null, parte: null, puntiCond: false, serataTipo: 'Team',
+    condividi: ['team', 'linea'].includes(opz.condividi) ? opz.condividi : '', linea: null, parte: null, puntiCond: false, serataTipo: 'Team',   // nota 005: «Con il Team» / «Con una Linea» dal foglio a livelli
   };
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
   const puoTeam = () => typeof eAdmin === 'function' && eAdmin() && !opz.contatto && !opz.spazio;
   const puoPersona = () => !!st.contatto && st.categoria === 'Partner' && st.tipo !== 'Contatto';
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
+  if (st.condividi === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id;   // una sola Prima Linea: già scelta
   const puoInCoda = () => st.tipo === 'Contatto' && st.modalita === 'Telefonata' && !st.spazio;
   // I passi suggeriti guardano la persona (nota Azioni 055): con un Partner e un Appuntamento si legge una volta la sua riga dell'Avvio
   // (concluso / in pausa / passi spuntati); finché non arriva, i passi del tipo. Letta, si ridisegna.
@@ -3290,8 +3303,8 @@ async function nuovoAppuntamento(opz = {}) {
       const tipi = A.tipiPer(st.categoria);
       let h = '<div class="riquadro mc-g" style="margin-top:14px">';
       if (serata()) {   // Team o Linea (solo l'Admin): il modulo crea la serata, senza persona
-        h += `<div class="campo"><label>Serata <small>Team o LdS</small></label>${scelte('serataTipo', ['Team', 'LOS'], st.serataTipo, ['Team', 'LdS'])}</div>
-          <div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="na-serata" maxlength="${MB21Spazi.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(campi.serata)}"></div>`;
+        // la serata è sempre Team (Ignazio 06/10, nota 005: «da me in poi è soltanto Team», la LdS viene dall'alto)
+        h += `<div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="na-serata" maxlength="${MB21Spazi.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(campi.serata)}"></div>`;
       } else h += st.contatto && opz.contatto
         ? `<div class="campo"><label>Contatto <small>l'esito è suo</small></label><div class="fa-persona"><span>${esc(st.contatto.nome)}</span>
             ${st.portato ? '' : '<button class="link" id="na-porta">' + ic('squadra') + ' Porta qualcuno</button>'}</div></div>`
@@ -3304,8 +3317,8 @@ async function nuovoAppuntamento(opz = {}) {
       if (puoTeam() || puoPersona()) {
         const voci = [['', 'Nessuno'], ...(puoPersona() ? [['persona', st.contatto.nome]] : []), ...(puoTeam() ? [['team', 'Tutto il Team'], ['linea', 'Una Linea']] : [])];
         h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', voci.map(x => x[0]), st.condividi, voci.map(x => x[1]))}</div>`;
-        if (st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>uno dei tuoi frontali</small></label>${frontali().length
-          ? scelte('linea', frontali().map(f => f.partner_id), st.linea, frontali().map(f => f.nome)) : '<div class="errore">Nessun frontale nella Mappa.</div>'}</div>`;
+        if (st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label>${frontali().length
+          ? scelte('linea', frontali().map(f => f.partner_id), st.linea, frontali().map(f => f.nome)) : '<div class="errore">Nessuna Prima Linea nella Mappa.</div>'}</div>`;
         if (st.condividi === 'linea' && st.linea && typeof AG !== 'undefined' && AG.ramo) h += parteLineaHtml(st.linea, st.parte, AG.ramo.squadra);   // nota 005
         // Chi del Team (o della Linea scelta) non usa ancora MB21 (Ignazio 05/10 sera): lo si vede subito, con «Invita» che apre il link di registrazione
         if (serata() && (st.condividi === 'team' || st.linea)) {
@@ -3484,7 +3497,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (AG.spazi && data) AG.spazi.push(data);
       chiudi({ id: data && data.id, inizio, spazio: true });
       const nomeParte = st.parte && AG.ramo ? MB21Mappa.nomeLeggibile((AG.ramo.squadra.find(x => x.partner_id === st.parte) || {}).nome || '') : '';
-      const conChi = st.condividi === 'team' ? 'tutto il Team' : nomeParte ? `${nomeParte} e chi sta sotto` : `la Linea ${(frontali().find(f => f.partner_id === st.linea) || {}).nome || ''}`.trim();
+      const conChi = st.condividi === 'team' ? 'tutto il Team' : nomeParte ? `${nomeParte} e la sua downline` : `la Linea ${(frontali().find(f => f.partner_id === st.linea) || {}).nome || ''}`.trim();
       if (!opz.salta && !opz.resta) {
         await apriAgenda(campi.giorno);
         mostraToast(`${riga.nome || MB21Spazi.nome(riga.tipo)}: condivisa con ${conChi}`, async () => {
@@ -4564,10 +4577,10 @@ function parteLineaHtml(frontale, parte, squadra) {
   const dentro = parte && parte !== frontale ? A.parteDi(righe, parte) : null;
   const lei = dentro && righe.find(r => r.partner_id === parte);
   const quanti = dentro ? dentro.size : righe.length;
-  const chi = lei ? `${leggibile(lei.nome)} e chi sta sotto` : `tutta la Linea ${leggibile(righe[0].nome)}`;
+  const chi = lei ? `${leggibile(lei.nome)} e la sua downline` : `tutta la Linea ${leggibile(righe[0].nome)}`;
   const classe = r => (!dentro ? 'acceso' : r.partner_id === parte ? 'lei' : dentro.has(r.partner_id) ? 'acceso' : 'spento');
   return `<div class="campo"><label>Solo una parte? <small>tocca una persona${dentro ? ' · di nuovo per tornare a tutta la Linea' : ''}</small></label>
-    <div class="na-albero">${righe.map(r => `<button type="button" data-parte="${esc(r.partner_id)}" class="${classe(r)}" style="--l:${Math.min(r.livello, 8)}">${r.livello ? '<i>↳</i>' : ''}<b>${esc(leggibile(r.nome))}</b>${r.livello === 0 ? '<small>frontale</small>' : r.sotto ? `<small>${r.sotto} sotto</small>` : ''}</button>`).join('')}</div>
+    <div class="na-albero">${righe.map(r => `<button type="button" data-parte="${esc(r.partner_id)}" class="${classe(r)}" style="--l:${Math.min(r.livello, 8)}">${r.livello ? '<i>↳</i>' : ''}<b>${esc(leggibile(r.nome))}</b>${r.livello === 0 ? '<small>Prima Linea</small>' : r.sotto ? `<small>${r.sotto} sotto</small>` : ''}</button>`).join('')}</div>
     <div class="na-chi">Lo ${quanti === 1 ? 'riceve' : 'ricevono'} <b>${quanti === 1 ? '1 persona' : quanti + ' persone'}</b>: ${esc(chi)}.</div></div>`;
 }
 // Il codice dopo un tocco su una persona dell'albero: la stessa persona (o il frontale) torna a tutta la Linea

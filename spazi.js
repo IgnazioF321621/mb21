@@ -11,10 +11,10 @@
   // Team e LdS (linea di sponsorizzazione; nel database il tipo resta «LOS», cambia solo il nome che si legge: Ignazio 03/10): incontri di gruppo, senza persona e senza giorno fisso (Ignazio 27/09); il nome della serata, facoltativo, nella colonna `nome` (puoAvereNome).
   // uno / tanti / piccolo: le parole dentro le frasi («In che giorno fai l'incontro di Team?», «1 incontro di Team»); f = femminile
   const TIPI = {
-    'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing?', max: 6, persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
+    'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', domanda: 'Quanti Piani Marketing?', max: 4, persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
     'Consulenza PRD': { nome: 'Consulenza prodotti', plurale: 'Consulenze prodotti', domanda: 'Quante Consulenze prodotti?', max: 4, persona: true, f: true, uno: 'la Consulenza prodotti', tanti: 'Consulenze prodotti', piccolo: 'Consulenza prodotti' },
-    'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', domanda: 'Quanti incontri di Team?', max: 3, uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
-    'LOS': { nome: 'Incontro LdS', plurale: 'Incontri LdS', domanda: 'Quanti incontri LdS?', max: 3, uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
+    'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', domanda: 'Quanti incontri di Team?', max: 4, uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
+    'LOS': { nome: 'Incontro LdS', plurale: 'Incontri LdS', domanda: 'Quanti incontri LdS?', max: 4, uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
     'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
   };
   const CON_PERSONA = ['Piano Marketing', 'Consulenza PRD'];   // spazi da riempire con un nome

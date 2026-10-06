@@ -76,7 +76,7 @@ prova('Team e LdS (27/09): incontri di gruppo, senza nome, nel selettore dopo Pi
   assert.equal(S.daRiempire('Piano Marketing'), true);
   assert.equal(S.daRiempire('Team'), false);
   assert.equal(S.daRiempire('SdS/OPEN'), false);
-  assert.equal(S.TIPI.Team.max, 3);
+  assert.deepEqual(S.DA_PREPARARE.map(t => S.TIPI[t].max), [4, 4, 4, 4]);   // nota 005: fino a 4 per tipo (Ignazio 06/10)
   assert.equal(S.domandaGiorni('Team', 1), 'In che giorno fai l\'incontro di Team?');
   assert.equal(S.domandaGiorni('LOS', 2), 'In che giorni fai i 2 incontri LdS?');
   assert.equal(S.conto('LOS', 1, 1), 'Messi 1 su 1 ✓');

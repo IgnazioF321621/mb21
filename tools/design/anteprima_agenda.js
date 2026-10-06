@@ -32,7 +32,7 @@ const codice = [
   funzione('esc'), funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento };',
+  'return { foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -130,7 +130,7 @@ const stub = {
   localStorage: { getItem: () => null, setItem: () => {} },
 };
 const nomi = Object.keys(stub);
-const { disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -143,7 +143,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
