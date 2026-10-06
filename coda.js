@@ -132,7 +132,39 @@
     return `${tot} di ${tot} ✓ e ${fatti - tot} in più`;
   }
 
+  // ── Sotto il nome, in parole chiare (nota Pagine 016, segnalazione di Ignazio 06/10/2026: «non si capisce cosa indica e quando») ──
+  // «Ultima telefonata: No Risposta · 3 giorni fa» · «Ultimo appuntamento: Relazione · ieri» · «Mai contattato». L'esito è la parola ufficiale
+  // (le stesse dei bottoni, cantiere 39); `quando` da `ultima_il` (giorno a Roma): oggi · ieri · N giorni fa (fino a 30) · il gg/mm/aaaa.
+  const giornoRoma = iso => (iso ? oggiRoma(new Date(iso)) : null);
+  const dataIt = giorno => { const [a, m, g] = giorno.split('-'); return `${g}/${m}/${a}`; };
+  function quandoFa(giorno, oggi) {
+    if (!giorno || !oggi) return '';
+    const n = giorniTra(giorno, oggi);
+    if (n === 0) return 'oggi';
+    if (n === 1) return 'ieri';
+    if (n === -1) return 'domani';
+    if (n > 1 && n <= 30) return `${n} giorni fa`;
+    return `il ${dataIt(giorno)}`;
+  }
+  const COSA_ULTIMA = { 'Contatto': 'Ultima telefonata', 'Appuntamento': 'Ultimo appuntamento', 'Piano Marketing': 'Ultimo PM', 'Consulenza PRD': 'Ultima consulenza' };
+  function ultimaVolta(r, oggi) {
+    if (!r || !r.contattato) return 'Mai contattato';
+    const cosa = r.ultimo_tipo === 'Contatto' && r.ultima_modalita && r.ultima_modalita !== 'Telefonata' ? 'Ultimo contatto' : COSA_ULTIMA[r.ultimo_tipo] || 'Ultima volta';
+    const quando = quandoFa(giornoRoma(r.ultima_il), oggi);
+    return `${cosa}: ${r.ultima_fase || 'senza esito'}${quando ? ' · ' + quando : ''}`;
+  }
+
+  // ── «Non ora» (nota Pagine 018, Ignazio 06/10/2026): saltare un nome dalla riga, senza esito e senza contare come fatto ──
+  // «In coda» = torna domani tra i contatti del giorno (rientro_il = domani; `in_coda_dal` resta: rientra per primo); «Scegli la data» = quel giorno.
+  function giornoDopo(oggi, n = 1) { return new Date(Date.parse(oggi + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+  function giornoRinvio(oggi, scelta, giornoScelto) {
+    if (scelta === 'data' && giornoScelto && giornoScelto > oggi) return giornoScelto;
+    return giornoDopo(oggi, 1);
+  }
+  const testoRinvio = (giorno, oggi) => (giorniTra(oggi, giorno) === 1 ? 'torna domani' : `torna il ${dataIt(giorno)}`);
+
   const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE,
+    giorniTra, quandoFa, ultimaVolta, giornoDopo, giornoRinvio, testoRinvio,
     telefonateScelte, senzaScelte, contoGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;

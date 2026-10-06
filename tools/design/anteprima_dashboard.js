@@ -61,7 +61,8 @@ const stub = {
   Option: class { constructor(t, v) { this.text = t; this.value = v; } }, moduloSemplice: async () => null,
   dbq: async () => ({ data: null, error: null }), dbqAvvisa: async () => ({ data: null, error: null }),
   SCRITTURE: { ultima: 0 }, CHIAVE_CACHE: 'x',
-  mostraToast: t => toast.push(t), mostraTab: () => {}, chiediConferma: async () => true, aggiornaRiga: async () => {},
+  mostraToast: (t, annulla) => { toast.push(t); toast.annulla = annulla || null; }, mostraTab: () => {}, chiediConferma: async () => true, aggiornaRiga: async () => {},
+  sceltaDa: async () => null,   // «Non ora» (nota 018): le prove lo sostituiscono (chiediData è della pagina stessa)
   partnerSelect: () => '', collegaPartnerSelect() {}, versione: () => '', cerchiettoProfilo: () => '<span class="cerchietto">IS</span>',
   rigaTelefonoHtml: () => '', mostraRigaTelefono() {}, mostraRiquadroObiettivi() {}, riquadriBiglietto: () => '', collegaDomandaBiglietto() {},
   tracceHtml: () => '', mioPercorsoHtml: () => '', collegaTracce() {}, collegaMioPercorso() {},
@@ -92,7 +93,7 @@ const nomi = Object.keys(stub);
 const prefazio = `const ST = ${JSON.stringify(stato.ST)}; const PS = { scelto: null }; const MP = {}; const AG = {}; const CM = {}; const LS = {}; const VER = {};
 const guardoAltri = () => !!PS.scelto, vediTutti = () => PS.scelto === 'tutti';
 let ultimoTraguardoSalvato;\n`;
-const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, SCE, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio };';
+const uscita = '\nreturn { LV, DS, AVV, CONF, RIO, SCE, CK, ST, PS, apriCheck, disegnaOggi, vaiLV, vaiAlPrimoLivello, statoPercorso, percorsoDash, fraseTraguardo, nuovoInAvvio, nonOra, caricaCatalogo };';
 let mondo;
 function avvia() {
   const g = new Function(...nomi, prefazio + pezzi + '\n' + pagina + uscita);
@@ -106,7 +107,8 @@ function carica(m, opz = {}) {
   Object.assign(m.ST, { oggi: OGGI, offline: false, scaduto: false, aperta: null, tab: 'oggi', utente: { id: 'io', ruolo: 'Partner', nome_cognome: 'Isabella Sammito' } });
   const cand = (id, nome, extra) => Object.assign({ id, nome, categoria: 'Prospect', contattato: false, telefono: '333 1234567', coach: '', ultima_fase: null }, extra || {});
   m.ST.risultato = opz.vuoto ? { coda: [], dareSeguito: [] } : {
-    coda: [cand('c1', 'Laura Ferri'), cand('c2', 'Marco Neri', { contattato: true, ultima_fase: 'Richiamare', categoria: 'Cliente' }), cand('c3', 'Anna Villa', { contattato: true, ultima_fase: 'Relazione' })],
+    coda: [cand('c1', 'Laura Ferri'), cand('c2', 'Marco Neri', { contattato: true, ultima_fase: 'Richiamare', categoria: 'Cliente', ultimo_tipo: 'Contatto', ultima_modalita: 'Telefonata', ultima_il: iso('2026-10-01', '17:00'), rientro_il: OGGI }),
+      cand('c3', 'Anna Villa', { contattato: true, ultima_fase: 'Relazione', ultimo_tipo: 'Appuntamento', ultima_il: iso('2026-10-03', '10:00'), rientro_il: OGGI })],
     dareSeguito: [cand('d1', 'Gino Pace', { contattato: true, ultima_fase: 'Dare Seguito', scadutoDa: 3 })] };
   m.ST.stato = { contatti_al_giorno: 5, fatti_oggi: opz.fatti != null ? opz.fatti : opz.nuovo ? 0 : 2 };
   // le telefonate scelte a mano (nota 012): una senza orario per oggi, una con l'ora rimasta da ieri (solo se la prova le chiede)

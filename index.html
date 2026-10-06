@@ -411,6 +411,9 @@
   .lv-persona .rc-pastiglia { flex: none; } .lv-persona.fatta .rc-pastiglia { color: var(--ok); background: var(--ok-tinta); }
   .lv-pt { flex: 1; min-width: 0; } .lv-pt b { display: block; font-size: 15px; } .lv-pt small { display: block; color: var(--testo-soft); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lv-persona em { font-style: normal; font-size: 20px; color: var(--testo-tenue); }
+  .lv-riga { display: flex; align-items: stretch; gap: 6px; margin: 0 0 6px; } .lv-riga .lv-persona { flex: 1; min-width: 0; margin: 0; }
+  .lv-nonora { flex: none; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo-soft); border-radius: var(--raggio-riga); padding: 0 12px; font-family: inherit; font-size: 13px; font-weight: 600; min-width: var(--tocco); }
+  .lv-nonora:disabled { opacity: .5; }
   .lv-chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--cat-partner-tinta); color: var(--cat-partner); border-radius: 8px; padding: 2px 8px; margin: 2px 0 6px; }
   .lv-area { display: block; width: 100%; text-align: left; background: var(--superficie); border: 0; border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 14px; margin: 0 0 10px; font-family: inherit; color: var(--testo); }
   .lv-area-t { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; } .lv-area-t b { font-size: 15px; }
@@ -2640,6 +2643,7 @@ async function scegliPartner() {
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
   CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  ST.catalogo = null; ST.catalogoDi = null; ST.vistaCatalogo = false;   // nota Pagine 019: «Da catalogare» della Lista mostrava i nomi del partner di prima
   MP.schede = null; MP.targhe = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
   mostraTab();

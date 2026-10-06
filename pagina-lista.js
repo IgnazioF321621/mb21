@@ -81,6 +81,7 @@ async function apriLista() {
   try {
     if (!listaFresca()) { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]); LS.letta = Date.now(); }
     segnaApp();
+    await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
   } catch (e) {
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
     return;
