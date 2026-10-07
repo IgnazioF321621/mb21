@@ -22,7 +22,7 @@ async function sezioneSharing() {
   box.innerHTML = '<div class="vuoto">Carico lo Sharing…</div>';
   const [materiali, cond, chi] = await Promise.all([
     leggiMateriali(),
-    dbq('condivisioni', supa.from('condivisioni').select('id, materiale_id, condivisa_il, ascoltata, ascoltata_il, note, creato_il').eq('contatto_id', c.id).order('condivisa_il', { ascending: false }).order('creato_il', { ascending: false })),
+    dbq('condivisioni', supa.from('condivisioni').select('id, materiale_id, condivisa_il, ascoltata, ascoltata_il, non_ascoltata_il, note, creato_il').eq('contatto_id', c.id).order('condivisa_il', { ascending: false }).order('creato_il', { ascending: false })),
     // la Lista non ha il sesso: si legge da `contatti` (come il compleanno)
     dbq('sesso e lavoro', supa.from('contatti').select('sesso, lavoro').eq('id', c.id).maybeSingle()),
   ]);
@@ -69,7 +69,7 @@ async function sezioneSharing() {
     return `<div class="sh-riga">
       <button class="sh-riga-testo" data-modifica="${k.id}"><div class="sh-riga-titolo">${titolo(m)}</div>
         <div class="sh-riga-sotto">${m && m.autore ? esc(m.autore) + ' · ' : ''}${esc(MB21Lista.data(k.condivisa_il))}${k.note ? ' · ' + esc(k.note) : ''}</div></button>
-      <button class="sh-sw ${k.ascoltata ? 'si' : 'no'}" data-ascoltata="${k.id}" aria-label="${k.ascoltata ? 'Ascoltata' : 'Da ascoltare'}"><i></i><span>${k.ascoltata ? 'ascoltata' : 'da ascoltare'}</span></button>
+      <button class="sh-sw ${k.ascoltata ? 'si' : 'no'}" data-ascoltata="${k.id}" aria-label="${k.ascoltata ? 'Ascoltata' : k.non_ascoltata_il ? 'Non ascoltata' : 'Da ascoltare'}"><i></i><span>${k.ascoltata ? 'ascoltata' : k.non_ascoltata_il ? 'non ascoltata' : 'da ascoltare'}</span></button>
     </div>`;
   }).join('')}</div>` : '<div class="vuoto">Nessuna traccia condivisa finora.</div>';
 
@@ -117,7 +117,7 @@ async function registraCondivisione(c, materialeId, materiali) {
 async function segnaAscoltata(c, k) {
   if (!k || soloGuardo()) return;
   const ascoltata = !k.ascoltata;
-  const { error } = await dbq('ascoltata', supa.from('condivisioni').update({ ascoltata, ascoltata_il: ascoltata ? MB21Coda.oggiRoma() : null }).eq('id', k.id));
+  const { error } = await dbq('ascoltata', supa.from('condivisioni').update({ ascoltata, ascoltata_il: ascoltata ? MB21Coda.oggiRoma() : null, non_ascoltata_il: null }).eq('id', k.id));
   if (error) return mostraToast('Non salvato: riprova.');
   if (LS.contatto === c && LS.sezione === 'sharing') sezioneSharing();
 }
@@ -190,13 +190,19 @@ async function chiediSeServe(c, r) {
   return fatto;
 }
 
+// Nota Pagine 039 (Carolina, scelta B di Ignazio 07/10): «Non l'ha ascoltata» chiude la traccia: esce dalle «Tracce condivise» della Dashboard
+// e resta nella scheda come «non ascoltata». Si segnano anche i promemoria come già mandati (avviso_48_il, avviso_ascolto_il: campi che ci sono già),
+// così gli avvisi sul telefono non la ricordano più, senza toccare la funzione degli avvisi.
+const NON_ASCOLTATA = 'Non l\'ha ascoltata';
+const CHIUDI_AVVISI = { avviso_48_il: new Date().toISOString(), avviso_ascolto_il: new Date().toISOString() };
+
 // Un tocco sulla riga: si corregge il giorno, «ascoltata» e le note, oppure si elimina (con conferma). La traccia non si cambia: si elimina e si rifà.
 async function modificaCondivisione(c, k, materiali) {
   if (!k || soloGuardo()) return;
   const m = materiali.find(x => x.id === k.materiale_id);
   const valori = await moduloSemplice(`Condivisione · ${m ? m.titolo : 'traccia'}`, [
     { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: k.condivisa_il, obbligatorio: true },
-    { k: 'ascoltata', etichetta: 'L\'ha ascoltata?', tipo: 'select', opzioni: ['No', 'Sì'], valore: k.ascoltata ? 'Sì' : 'No' },
+    { k: 'ascoltata', etichetta: 'L\'ha ascoltata?', tipo: 'select', opzioni: ['Non ancora', 'Sì', NON_ASCOLTATA], valore: k.ascoltata ? 'Sì' : k.non_ascoltata_il ? NON_ASCOLTATA : 'Non ancora' },
     { k: 'note', etichetta: 'Note', tipo: 'textarea', valore: k.note || '', righe: 2 },
   ], { elimina: 'Elimina questa condivisione' });
   if (!valori) return;
@@ -206,9 +212,10 @@ async function modificaCondivisione(c, k, materiali) {
     if (error) return mostraToast('Non eliminata: riprova.');
     mostraToast('Condivisione eliminata');
   } else {
-    const ascoltata = valori.ascoltata === 'Sì';
+    const ascoltata = valori.ascoltata === 'Sì', non = valori.ascoltata === NON_ASCOLTATA;
     const { error } = await dbq('modifica condivisione', supa.from('condivisioni').update({
-      condivisa_il: valori.giorno, ascoltata, ascoltata_il: ascoltata ? (k.ascoltata_il || valori.giorno) : null, note: valori.note.trim().slice(0, 300) || null }).eq('id', k.id));
+      condivisa_il: valori.giorno, ascoltata, ascoltata_il: ascoltata ? (k.ascoltata_il || valori.giorno) : null, note: valori.note.trim().slice(0, 300) || null,
+      non_ascoltata_il: non ? (k.non_ascoltata_il || MB21Coda.oggiRoma()) : null, ...(non ? CHIUDI_AVVISI : {}) }).eq('id', k.id));
     if (error) return mostraToast('Non salvato: riprova.');
     mostraToast('Modifiche salvate');
   }
@@ -281,10 +288,15 @@ async function caricaTracceDaControllare(oggi) {
   try {
     const da = MB21Agenda.spostaGiorno(oggi, -7);
     const { data, error } = await letta('tracce', 'tracce', () => supa.from('condivisioni')   // dalla Dashboard arriva con apri_oggi() (pagina-dashboard.js)
-      .select('id, contatto_id, condivisa_il, ascoltata, ascoltata_il, segnata_dal_partner, chiede_prossima_il, contatti(nome), materiali(titolo)').in('user_id', idVisti())
+      .select('id, contatto_id, condivisa_il, ascoltata, ascoltata_il, non_ascoltata_il, segnata_dal_partner, chiede_prossima_il, contatti(nome), materiali(titolo)').in('user_id', idVisti())
       .or(`and(ascoltata.eq.false,condivisa_il.gte.${da},condivisa_il.lte.${oggi}),and(ascoltata.eq.true,ascoltata_il.gte.${da})`));
     if (error) throw error;
-    TRC.righe = MB21Sharing.daControllare((data || []).filter(k => !k.ascoltata), oggi);
+    let aperte = (data || []).filter(k => !k.ascoltata && !k.non_ascoltata_il);
+    if (aperte.length && !('non_ascoltata_il' in aperte[0])) {   // da apri_oggi(): quali sono già chiuse con «Non l'ha ascoltata»
+      const chiuse = await dbq('tracce non ascoltate', supa.from('condivisioni').select('id').in('id', aperte.map(k => k.id)).not('non_ascoltata_il', 'is', null));
+      if (!chiuse.error) { const via = new Set((chiuse.data || []).map(k => k.id)); aperte = aperte.filter(k => !via.has(k.id)); }
+    }
+    TRC.righe = MB21Sharing.daControllare(aperte, oggi);
     TRC.ascoltate = (data || []).filter(k => k.ascoltata).sort((a, b) => (b.chiede_prossima_il ? 1 : 0) - (a.chiede_prossima_il ? 1 : 0) || b.ascoltata_il.localeCompare(a.ascoltata_il));
   } catch (e) {
     TRC.righe = []; TRC.ascoltate = [];
@@ -312,7 +324,8 @@ function righeTracceHtml() {
       <button class="sh-riga-testo" data-traccia-scheda="${esc(k.contatto_id)}">
         <div class="sh-riga-titolo">${esc(k.contatti ? k.contatti.nome : '')}</div>
         <div class="sh-riga-sotto">${esc(k.materiali ? k.materiali.titolo : 'traccia')} · <span class="sh-stato ${stato}">${k.giorni >= 3 ? `scaduta: ${k.giorni} giorni` : testo[stato]}</span></div></button>
-      <button class="sh-ok" data-traccia-ascoltata="${esc(k.id)}" ${spento}>${ic('fatto', 16)} Ascoltata</button>
+      <span class="sh-tr-bottoni"><button class="sh-ok" data-traccia-ascoltata="${esc(k.id)}" ${spento}>${ic('fatto', 16)} Ascoltata</button>
+        <button class="sh-ok sh-non" data-traccia-non="${esc(k.id)}" ${spento}>${ic('chiudi', 16)} Non l'ha ascoltata</button></span>
     </div>`;
   }).join('') + '</div>' : '';
   const ascoltate = TRC.ascoltate.length ? `<h2>Ascoltate di recente · ${TRC.ascoltate.length}</h2><div class="riquadro sh-elenco">` + TRC.ascoltate.map(k => `<div class="sh-riga">
@@ -335,6 +348,16 @@ async function apriPaginaTracce() {
 function collegaTracce(ridisegna) {
   const riga = document.getElementById('dash-tracce');
   if (riga) riga.onclick = () => apriPaginaTracce();
+  app.querySelectorAll('[data-traccia-non]').forEach(b => b.onclick = async () => {   // nota 039: la traccia si chiude, resta nella scheda
+    if (soloGuardo()) return;
+    b.disabled = true;
+    const { error } = await dbq('non ascoltata da dashboard', supa.from('condivisioni').update({ non_ascoltata_il: MB21Coda.oggiRoma(), ...CHIUDI_AVVISI }).eq('id', b.dataset.tracciaNon));
+    if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
+    mostraToast('Segnata: non l\'ha ascoltata. Resta nella sua scheda.');
+    if (ridisegna) return ridisegna();
+    await caricaTracceDaControllare(ST.oggi);
+    disegnaOggi();
+  });
   app.querySelectorAll('[data-traccia-ascoltata]').forEach(b => b.onclick = async () => {
     if (soloGuardo()) return;
     b.disabled = true; b.classList.add('si');
