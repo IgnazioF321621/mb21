@@ -258,6 +258,14 @@ function coppiaCard(r) {
   return nome ? `<div class="prof">Coppia con ${esc(nome)}</div>` : '';
 }
 
+// Nota Pagine 036 (Ignazio 07/10): con «Tutti» accanto al nome, tra parentesi quadre, di chi è il nome («Mario Rossi [Carolina]»)
+function diChiCard(r) {
+  if (!vediTutti()) return '';
+  const p = PS.persone.find(x => x.id === r.user_id);
+  const chi = p ? String(p.nome || nomeDi(p)).trim() : '';
+  return chi ? ` <span class="cn-dichi">[${esc(chi)}]</span>` : '';
+}
+
 // Card che parla (cantiere 30, lavoro 4; disegno approvato da Ignazio il 18/09): nome · frase («Fermo da 10 mesi · telefonata»,
 // 📅 se è in programma) · area e professione · cornetta per chiamare. Gli altri bottoni stanno nei tre puntini (`menuCard`).
 function cardNome(r) {
@@ -273,7 +281,7 @@ function cardNome(r) {
     <div class="cn ${classeCat(r.categoria)} ${LS.esporta && sceltoEsporta(r.id) ? 'spuntata' : ''}" data-id="${esc(r.id)}">
       ${LS.esporta ? `<span class="cn-spunta" aria-hidden="true">${ic('fatto')}</span>` : `<span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>`}
       <div class="dentro">
-        <div class="nome">${esc(r.nome)}</div>
+        <div class="nome">${esc(r.nome)}${diChiCard(r)}</div>
         <div class="frase">${frase.futuro ? ic('agenda') + ' ' : ''}${esc(frase.testo)}</div>
         ${sotto ? `<div class="prof">${esc(sotto)}</div>` : ''}
         ${segni ? `<div class="cn-segni">${segni}</div>` : ''}

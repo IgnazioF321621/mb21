@@ -523,4 +523,19 @@ prova('Nota 033: la nota del Coach si elimina dopo la conferma (dalla lettura e 
   assert.match(src, /id="elimina-nota">\$\{ic\('elimina'\)\} Elimina nota<\/button>/);
 });
 
+prova('Nota 036: con «Tutti» accanto al nome, tra parentesi quadre, di chi è; negli altri casi niente', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('function diChiCard'), a = src.indexOf('\n}\n', da) + 3;
+  let tutti = true;
+  const ctx = { vediTutti: () => tutti, PS: { persone: [{ id: 'u1', nome: 'Carolina' }, { id: 'u2', nome: '', nome_cognome: 'Luca Bianchi' }] },
+    nomeDi: p => String(p.nome_cognome || p.nome || '').trim(), esc: x => String(x).replace(/</g, '&lt;') };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.diChiCard = diChiCard;', ctx);
+  assert.equal(ctx.diChiCard({ user_id: 'u1' }), ' <span class="cn-dichi">[Carolina]</span>');
+  assert.equal(ctx.diChiCard({ user_id: 'u2' }), ' <span class="cn-dichi">[Luca Bianchi]</span>');
+  assert.equal(ctx.diChiCard({ user_id: 'u9' }), '');
+  tutti = false; assert.equal(ctx.diChiCard({ user_id: 'u1' }), '');
+  assert.match(src, /<div class="nome">\$\{esc\(r\.nome\)\}\$\{diChiCard\(r\)\}<\/div>/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
