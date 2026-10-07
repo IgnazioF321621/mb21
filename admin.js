@@ -5,7 +5,10 @@
 // ── Admin ─────────────────────────────────────────────────
 // Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
-const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], doppioni: [], aperti: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse)
+const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], doppioni: [], aperti: new Set(), riquadri: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse) · riquadri: gruppi della pagina Utenti aperti (all'inizio tutti chiusi)
+// Un gruppo della pagina Utenti: chiuso mostra titolo, numero di persone e freccia; al tocco si apre l'elenco (Ignazio 07/10, nota Admin 009)
+const riquadro = (chiave, titolo, corpo, classe = '') => { const ap = AD.riquadri.has(chiave);
+  return `<button class="rp-apri ad-voce${ap ? ' aperto' : ''}" data-riq="${chiave}" aria-expanded="${ap}" style="margin-top:10px"><span>${titolo}</span><span>${ap ? '⌄' : '›'}</span></button>${ap ? `<div class="rp-wes ${classe}">${corpo}</div>` : ''}`; };
 
 async function apriAdmin() {
   if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
@@ -69,13 +72,13 @@ function senzaObiettiviHtml() {
   const senza = senzaObiettivi();
   if (!senza.length) return '';
   const mese = MESI_LUNGHI[Number(AD.meseOb.slice(5, 7)) - 1];
-  return `<div class="rp-wes ad-senza-ob"><h3>${ic('obiettivi')} Senza obiettivi di ${mese} (${senza.length})</h3>${senza.map(u => {
+  return riquadro('senza-ob', `${ic('obiettivi')} Senza obiettivi di ${mese} (${senza.length})`, `${senza.map(u => {
     const ultimo = (AD.obUltimi || {})[u.id], inPausa = ultimo && Date.now() - Date.parse(ultimo) < PAUSA_INVITO_OB;
     const acceso = (AD.dispositivi[u.id] || []).length > 0, saltato = (AD.obSaltati || new Set()).has(u.id);
     const nota = saltato ? 'Ha scelto di non farli questo mese' : !acceso ? 'Avvisi spenti: l\'invito non può arrivare' : inPausa ? `Invito mandato il ${quandoInvitoOb(ultimo)}` : ultimo ? `Ultimo invito il ${quandoInvitoOb(ultimo)}` : 'Nessun invito mandato';
     return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(nota)}</small>
       ${saltato || !acceso ? '' : `<div class="ad-invita"><button data-ob-invito="${esc(u.id)}" ${inPausa ? 'disabled' : ''}>${ic('avvisi')} ${inPausa ? 'Mandato' : 'Manda l\'avviso'}</button></div>`}</div>`;
-  }).join('')}<small>Un invito per persona, senza fretta: dopo l'invio il bottone si ferma per 3 giorni.</small></div>`;
+  }).join('')}<small>Un invito per persona, senza fretta: dopo l'invio il bottone si ferma per 3 giorni.</small>`, 'ad-senza-ob');
 }
 function collegaSenzaObiettivi() {
   app.querySelectorAll('[data-ob-invito]').forEach(b => b.onclick = async () => {
@@ -116,7 +119,7 @@ function invitoAvvisi(u) {
 function senzaAvvisiHtml() {
   const senza = senzaAvvisi();
   if (!senza.length) return '';
-  return `<div class="rp-wes ad-senza-avvisi"><h3>${ic('avvisi-spenti')} Senza avvisi (${senza.length})</h3>${senza.map(u => {
+  return riquadro('senza-avvisi', `${ic('avvisi-spenti')} Senza avvisi (${senza.length})`, `${senza.map(u => {
     const tel = telefonoInvito(u), android = (AD.telefonoDi || {})[u.id] === 'android';
     return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(usoBreve(u))}</small>
       <div class="pf-scelte"><button class="${android ? '' : 'scelto'}" data-invito-tel="${esc(u.id)}:iphone">iPhone</button><button class="${android ? 'scelto' : ''}" data-invito-tel="${esc(u.id)}:android">Android</button></div>
@@ -124,7 +127,7 @@ function senzaAvvisiHtml() {
         <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button>` : ''}
         <button data-invito-copia="${esc(u.id)}">${ic('copia')} Copia</button></div>
       ${tel ? '' : '<small>Manca il telefono: copia il messaggio e mandalo come vuoi</small>'}</div>`;
-  }).join('')}<small>Scegli il suo telefono, poi mandale l'invito già scritto: WhatsApp, Telegram, o Copia e incollalo dove vuoi.</small></div>`;
+  }).join('')}<small>Scegli il suo telefono, poi mandale l'invito già scritto: WhatsApp, Telegram, o Copia e incollalo dove vuoi.</small>`, 'ad-senza-avvisi');
 }
 function collegaSenzaAvvisi() {
   const di = id => AD.utenti.find(x => x.id === id);
@@ -234,22 +237,21 @@ function disegnaAdmin() {
   if (AD.sezione === 'utenti') {
     html = `${indietro}<h1>Utenti dell'app</h1>
       <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
-      ${AD.richieste.length ? `<div class="rp-wes ad-richieste"><h3>${ic('invito')} Richieste da approvare (${AD.richieste.length})</h3>${AD.richieste.map(r => {
+      ${AD.richieste.length ? riquadro('richieste', `${ic('invito')} Richieste da approvare (${AD.richieste.length})`, `${AD.richieste.map(r => {
         const da = AD.tutti.find(u => u.id === r.invitato_da), gia = AD.tutti.filter(u => u.partner_id === r.codice_amway);
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
           <small>${esc(r.email)}${r.telefono ? ' · ' + esc(r.telefono) : ''} · codice ${esc(r.codice_amway)}</small>
           <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ${ic('attenzione')} codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
           ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
-          <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}</div>` : ''}
-      ${AD.doppioni.length ? `<div class="rp-wes ad-richieste"><h3>${ic('invito')} Richieste con l'email di chi è già utente (${AD.doppioni.length})</h3>
-        <small>L'app ha risposto «richiesta inviata» senza dire che l'email è già registrata. Se è la stessa persona, le si può dire di entrare con la sua email.</small>${AD.doppioni.map(r => {
+          <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}`, 'ad-richieste') : ''}
+      ${AD.doppioni.length ? riquadro('doppioni', `${ic('invito')} Richieste con l'email di chi è già utente (${AD.doppioni.length})`, `<small>L'app ha risposto «richiesta inviata» senza dire che l'email è già registrata. Se è la stessa persona, le si può dire di entrare con la sua email.</small>${AD.doppioni.map(r => {
         const u = AD.tutti.find(x => x.id === r.utente_id);
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
-          <small>${esc(r.email)} · codice ${esc(r.codice_amway)} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${u ? ` · l'email è di ${esc(nomeDi(u))}` : ''}</small></div>`; }).join('')}</div>` : ''}
+          <small>${esc(r.email)} · codice ${esc(r.codice_amway)} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${u ? ` · l'email è di ${esc(nomeDi(u))}` : ''}</small></div>`; }).join('')}`, 'ad-richieste') : ''}
       ${senzaAvvisiHtml()}
       ${senzaObiettiviHtml()}
-      <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
-      ${AD.aperti.size ? `<button class="link" id="ad-chiudi-tutte">⌃ Chiudi le schede aperte</button>` : ''}
+      ${riquadro('utenti', `${ic('squadra')} Utenti generali (${AD.utenti.length})`, `${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}
+        ${AD.aperti.size ? `<button class="link" id="ad-chiudi-tutte">⌃ Chiudi le schede aperte</button>` : ''}`)}
       <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
         ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
@@ -460,7 +462,7 @@ function foglioNuovoUtente(u) {
     chiudi();
     mostraToast(u ? `${nome}: salvato` : `${nome} aggiunto: accendi «Può entrare» quando è pronto`);
     if (u && u.id === ST.utente.id) Object.assign(ST.utente, campi);
-    AD.aperti.add(data.id);
+    AD.aperti.add(data.id); AD.riquadri.add('utenti');
     await apriAdmin();
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;   // nel Partner Select
   };
@@ -491,7 +493,7 @@ function collegaAdmin() {
     b.disabled = true;
     const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
     if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
-    AD.aperti.add(data);
+    AD.aperti.add(data); AD.riquadri.add('utenti');
     await apriAdmin();
     // Avviso già pronto (Ignazio 17/09: dopo «Approva» il passaggio successivo non c'era): numero del modulo con +39 se scritto senza prefisso
     foglioPerEntrare(r.nome_cognome, r.email, r.telefono, `${ic('fatto')} Avvisa ${r.nome_cognome}`);
@@ -525,7 +527,7 @@ function collegaAdmin() {
     const { error } = await dbq('ripristina utente', supa.from('utenti').update({ eliminato_il: null, accesso_attivo: true, nel_partner_select: true }).eq('id', u.id));
     if (error) return mostraToast('Non ripristinato: riprova.');
     mostraToast(`${nomeDi(u)} ripristinato`);
-    AD.aperti.add(u.id);
+    AD.aperti.add(u.id); AD.riquadri.add('utenti');
     await apriAdmin();
     const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
   });
@@ -556,6 +558,11 @@ function collegaAdmin() {
     if (!era) AD.aperti.add(id);
     disegnaAdmin();
     if (!era) { const r = app.querySelector(`[data-apri-ut="${CSS.escape(id)}"]`); if (r) r.scrollIntoView({ block: 'start' }); }
+  });
+  app.querySelectorAll('[data-riq]').forEach(b => b.onclick = () => {
+    const k = b.dataset.riq;
+    AD.riquadri.has(k) ? AD.riquadri.delete(k) : AD.riquadri.add(k);
+    disegnaAdmin();
   });
   const chiudiTutte = app.querySelector('#ad-chiudi-tutte');
   if (chiudiTutte) chiudiTutte.onclick = () => { AD.aperti.clear(); disegnaAdmin(); };
