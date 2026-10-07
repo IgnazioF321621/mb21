@@ -75,11 +75,27 @@ async function leggiUsoApp() {
 }
 function segnaApp() { if (LS.usoApp) for (const r of LS.righe) r.app = LS.usoApp[r.id] || null; }
 
+// Una lettura sola (Pagine 029 / Fondamenta 031, 07/10/2026: ogni richiesta costa ~2,6 KB di registro su Supabase): la funzione `lista_nomi()`
+// (migrazione 20261007190000) restituisce lista, targhette e utenti dell'app in UNA richiesta al posto di 7 (15 per l'Admin). Gira con i permessi
+// di chi chiama: gli stessi dati delle letture separate. Se la funzione manca (prima del rilascio) o fallisce, si rilegge come prima.
+async function leggiTuttoLista() {
+  const { data, error } = await dbq('lista in una lettura', supa.rpc('lista_nomi'));
+  if (error || !data || !Array.isArray(data.righe)) return Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]);
+  const oggi = MB21Coda.oggiRoma();
+  LS.coppie = {};
+  for (const r of data.coppie) LS.coppie[r.id] = r;
+  const targhe = MB21Lista.targhePerContatto(data.biglietti, data.cep, data.coppie, oggi, { bbs: MB21Lista.eventoAttivo(data.bbs), wes: MB21Lista.eventoAttivo(data.wes) });
+  LS.usoApp = {};
+  for (const u of data.uso_app) LS.usoApp[u.contatto_id] = { ultimo_uso: u.ultimo_uso, nomi: u.nomi };
+  LS.letta = Date.now();
+  return [data.righe, targhe];
+}
+
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
   try {
-    if (!listaFresca()) { [LS.righe, LS.targhe] = await Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]); LS.letta = Date.now(); }
+    if (!listaFresca()) { [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now(); }
     segnaApp();
     await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
   } catch (e) {
