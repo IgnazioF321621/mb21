@@ -640,7 +640,7 @@ function collegaCarteCoda() {
 const CATEGORIE_CATALOGO = [
   { etichetta: 'Prospect', categoria: 'Prospect' }, { etichetta: 'Partner', categoria: 'Partner' },
   { etichetta: 'Cliente', categoria: 'Cliente' }, { etichetta: 'Ex Partner/Cliente', categoria: 'Ex Partner/Cliente' },
-  { etichetta: 'Unlinked', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
+  { etichetta: 'Non collegato', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
 ];
 const ICONE_CAT = { 'Prospect': 'prospect', 'Partner': 'partner', 'Cliente': 'cliente', 'Ex Partner/Cliente': 'ex', 'Unlinked': 'unlinked', 'Archiviato': 'archiviato' };
 // «Da catalogare» sta in Lista Nomi (Ignazio 01/10): una riga in cima alla lista, il tocco apre la pagina con le stesse card di prima
@@ -677,7 +677,7 @@ function cardCatalogo(r) {
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
       <span class="rc-pastiglia">${esc(iniziali(r.nome))}</span><span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span></span>
-      <span class="rc-glide">${esc(r.categoria ? `✓ ${r.categoria} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
+      <span class="rc-glide">${esc(r.categoria ? `✓ ${MB21Lista.nomeCategoria(r.categoria)} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
   if (!aperta) return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
@@ -698,6 +698,7 @@ function cardCatalogo(r) {
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
         <div class="bottoni ${r.categoria ? 'due-righe' : 'scegli-cat'}">${bottoni}</div>
+        ${r.categoria ? '' : `<small class="mc-cat-nota">Non collegato: ${esc(MB21Lista.SPIEGA_CATEGORIA.Unlinked.toLowerCase())}</small>`}
         <div class="cat-comandi">
           <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
           ${guardoAltri() ? '' : `<button class="link elimina-qui" data-elimina-cat="${esc(r.id)}">${ic('elimina')} Elimina</button>`}
