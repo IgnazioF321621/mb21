@@ -220,6 +220,7 @@
   .cn .striscia { width: 4px; flex: none; align-self: stretch; }
   .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
   .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mc-cat-nota { display: block; margin-top: 6px; font-size: 12.5px; color: var(--testo-soft); }   /* nota 037: cosa vuol dire «Non collegato» */
   .cn .cn-dichi { font-weight: 500; color: var(--testo-soft); }   /* nota 036: con «Tutti», di chi è il nome */
   /* la prima riga è solo del nome; «nuovo» e le targhette hanno una riga loro in fondo alla card (Ignazio 19/09: accanto al nome «ci si perde») */
   .cn-segni { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
@@ -2956,7 +2957,7 @@ async function cambiaEsito(a, esito, dopo, testo) {
 async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
   if (!await chiediConferma('Vendita! La registri adesso?',
     'I VP Clienti contano solo dalle vendite registrate. Dalla vendita nasce anche la telefonata di riordino.', 'Registra la vendita')) return false;
-  if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria || 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
+  if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria ? MB21Lista.nomeCategoria(categoria) : 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
     const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', contattoId));
     if (ec) mostraToast('Categoria non cambiata: riprova dalla scheda.');
     else { contattiMiei = null; LS.righe = []; }
@@ -3348,7 +3349,7 @@ async function nuovoAppuntamento(opz = {}) {
       }
       if (st.contatto && !serata()) {
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
-        h += `<div class="campo"><label>Categoria <small>dal contatto</small></label>${scelte('categoria', categorie, st.categoria)}
+        h += `<div class="campo"><label>Categoria <small>dal contatto</small></label>${scelte('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}
           ${!tipi.length ? '<div class="errore">Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.</div>' : ''}</div>`;
       }
       if (tipi.length && !serata()) {
