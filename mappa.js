@@ -118,7 +118,14 @@
   function schedaDelPartner(partner, contatti, preferito) {
     const piega = piegaNome;
     const scegli = trovati => (trovati.find(c => c.user_id === preferito) || trovati[0] || null);
-    return scegli((contatti || []).filter(c => c.codice_amway && c.codice_amway === partner.id))
+    // stesso codice su più schede (il collaboratore ha il codice del titolare, 07/10): prima quella con lo stesso nome del partner,
+    // poi quella con una parola del nome in comune (il cognome: «Tonya Abela» per «Abela, Antonina»), poi le altre
+    const conCodice = (contatti || []).filter(c => c.codice_amway && c.codice_amway === partner.id);
+    const parole = n => piega(n).split(/[^a-zà-ÿ]+/).filter(x => x.length > 2);
+    const suoi = parole(partner.nome);
+    const stessoNome = conCodice.filter(c => piega(c.nome) === piega(nomeLeggibile(partner.nome)) || piega(c.nome) === piega(partner.nome));
+    const parente = conCodice.filter(c => parole(c.nome).some(x => suoi.includes(x)));
+    return scegli(stessoNome) || scegli(parente) || scegli(conCodice)
       || scegli((contatti || []).filter(c => !c.codice_amway && piega(c.nome) === piega(partner.nome)));
   }
 

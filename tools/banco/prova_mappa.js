@@ -131,6 +131,18 @@ prova('scheda del partner: prima il codice Amway, poi il nome; vince la lista di
   assert.equal(M.schedaDelPartner({ id: '3', nome: 'Nessuno' }, contatti, 'ignazio'), null);
 });
 
+prova('scheda del partner: stesso codice su più schede (collaboratore col codice del titolare) → quella col suo nome o il suo cognome', () => {
+  const contatti = [
+    { id: 'fil', nome: 'Filippo Arcoraci', user_id: 'ignazio', codice_amway: '7027598793' },
+    { id: 'tonya', nome: 'Tonya Abela', user_id: 'ignazio', codice_amway: '7027598793' },
+    { id: 'cat', nome: 'Caterina Licitra', user_id: 'ignazio', codice_amway: '7028207858' },
+    { id: 'sal', nome: 'Salvatore Floridia', user_id: 'ignazio', codice_amway: '7028207858' },
+  ];
+  assert.equal(M.schedaDelPartner({ id: '7027598793', nome: 'Abela, Antonina' }, contatti, 'ignazio').id, 'tonya');
+  assert.equal(M.schedaDelPartner({ id: '7028207858', nome: 'Floridia, Salvatore' }, contatti, 'ignazio').id, 'sal');
+  assert.equal(M.schedaDelPartner({ id: '7028207858', nome: 'FLORIDIA, SALVATORE' }, [...contatti].reverse(), 'ignazio').id, 'sal');
+});
+
 prova('partner della scheda: prima il codice Amway, poi lo stesso nome (data di ingresso nella scheda)', () => {
   const squadra = [
     { partner_id: '7027598793', nome: 'ABELA, ANTONINA', data_ingresso: '2026-09-06' },
