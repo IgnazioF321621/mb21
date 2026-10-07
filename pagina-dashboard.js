@@ -16,6 +16,7 @@ async function preleggiOggi(oggi, altro) {
     const { data, error } = await dbq('la Dashboard in una lettura', supa.rpc('apri_oggi', { p_utente: visto().id, p_oggi: oggi, p_altro: !!altro }));
     if (!error && data && typeof data === 'object' && Array.isArray(data.coda)) PRE.dati = data;
   } catch (e) { PRE.dati = null; }
+  if (PRE.dati && !altro && typeof segnaleRisposte === 'function') segnaleRisposte(PRE.dati.risposte);   // nota 041: «hai una risposta» sul tasto Invia Feedback
 }
 // `richiesta` è una funzione che costruisce la richiesta: si chiama solo se il dato non è già arrivato con apri_oggi
 function letta(chiave, cosa, richiesta) {

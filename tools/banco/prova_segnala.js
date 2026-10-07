@@ -65,4 +65,13 @@ prova('Nota 040: «Le tue segnalazioni», stato in parole semplici, un pezzo del
   assert.equal(S.anteprima(null), '');
   assert.ok(!S.COLONNE_MIE.includes('immagine')); assert.equal(S.QUANTE_MIE, 10);
 });
+prova('Nota 041: il segnale «hai una risposta»: nuove = quelle non ancora viste sul telefono; dopo la lettura si ricordano', () => {
+  assert.deepEqual(S.risposteNuove(['a', 'b', 'c'], ['b']), ['a', 'c']);
+  assert.deepEqual(S.risposteNuove(['a'], ['a']), []);
+  assert.deepEqual(S.risposteNuove(null, ['a']), []);
+  assert.deepEqual(S.risposteNuove(['a'], null), ['a']);
+  assert.deepEqual(S.conViste(['b'], ['a', 'b']), ['a', 'b']);
+  assert.equal(S.conViste(Array.from({ length: 60 }, (_, i) => 'v' + i), ['n']).length, 50);
+  assert.equal(S.conViste([], ['n'])[0], 'n');
+});
 console.log(`\n${ok} prove superate`);

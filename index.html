@@ -196,6 +196,9 @@
   .sg-stato { flex: none; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: var(--raggio-pill); background: var(--sfondo); color: var(--testo-soft); }
   .sg-stato.letta { background: var(--cat-cliente-tinta, var(--sfondo)); color: var(--cat-cliente, var(--testo)); } .sg-stato.risolta { background: var(--ok-tinta); color: var(--ok); }
   .sg-mia-testo { margin-top: 4px; font-size: 14px; color: var(--testo); }
+  .sg-mia.nuova { margin: 6px -10px; padding: 10px; border-radius: 12px; background: var(--ok-tinta); border-bottom: 0; }   /* nota 041 */
+  .sg-nuova { font-size: 13px; font-weight: 700; color: var(--ok); margin-bottom: 4px; } .sg-mia.nuova .sg-risposta { background: var(--superficie); }
+  .segnala-bottone.con-risposta::after { content: ''; position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--rosso); border: 2px solid var(--superficie); }   /* nota 041: «hai una risposta» */
   .sg-risposta { margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: var(--ok-tinta); color: var(--testo); font-size: 14px; line-height: 1.35; }
   .sg-allega { margin: 10px 0 0; display: flex; align-items: center; gap: 12px; min-height: 36px; }
   .sg-allega label { display: inline-block; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: var(--testo); background: var(--superficie-2, var(--superficie)); border: 1px solid var(--linea); border-radius: var(--raggio-bottone); cursor: pointer; }
@@ -4493,6 +4496,24 @@ function seguiFogli() {
   osservaFogli.observe(document.body, { childList: true, subtree: true });
   aggiorna();
 }
+// Nota Pagine 041 (Ignazio 07/10): un puntino sul tasto Invia Feedback quando c'è una risposta nuova a una segnalazione del partner.
+// Gli id arrivano con apri_oggi() (nessuna richiesta in più); «già vista» la tiene il telefono (localStorage), mai il database.
+const RISP = { nuove: [] };
+function risposteViste() { try { return JSON.parse(localStorage.getItem(MB21Segnala.CHIAVE_VISTE) || '[]'); } catch (e) { return []; } }
+function segnaleRisposte(ids) {
+  if (!Array.isArray(ids) || eAdmin()) return;
+  RISP.nuove = MB21Segnala.risposteNuove(ids, risposteViste());
+  const sg = document.getElementById('segnala');
+  if (!sg) return;
+  sg.classList.toggle('con-risposta', RISP.nuove.length > 0);
+  sg.setAttribute('aria-label', RISP.nuove.length ? 'Invia Feedback · hai una risposta' : 'Invia Feedback');
+}
+function risposteLette() {
+  if (RISP.nuove.length) { try { localStorage.setItem(MB21Segnala.CHIAVE_VISTE, JSON.stringify(MB21Segnala.conViste(risposteViste(), RISP.nuove))); } catch (e) { /* senza memoria: il segnale torna, pazienza */ } }
+  RISP.nuove = [];
+  const sg = document.getElementById('segnala');
+  if (sg) { sg.classList.remove('con-risposta'); sg.setAttribute('aria-label', 'Invia Feedback'); }
+}
 function foglioSegnala() {
   if (document.getElementById('sg-velo') || !ST.utente) return;
   const S = MB21Segnala, dove = doveSono();
@@ -4508,7 +4529,7 @@ function foglioSegnala() {
     <div class="due"><button class="link" id="sg-no">Annulla</button><button class="primario" id="sg-si" disabled>Invia</button></div>
     ${mie ? '<div id="sg-mie"></div>' : ''}</div>`;
   document.body.appendChild(velo);
-  if (mie) mieSegnalazioni(velo.querySelector('#sg-mie'));
+  if (mie) { const nuove = RISP.nuove.slice(); if (nuove.length) SGM.righe = null; risposteLette(); mieSegnalazioni(velo.querySelector('#sg-mie'), nuove); }
   let motivo = null;
   const chiudi = () => velo.remove();
   velo.onclick = e => { if (e.target === velo) chiudi(); };
@@ -4558,7 +4579,7 @@ function foglioSegnala() {
 // Costo zero: UNA lettura leggera solo quando si apre il foglio (mai all'apertura dell'app), tenuta in memoria 5 minuti;
 // la regola segnalazioni_leggi dà a ognuno solo le sue.
 const SGM = { righe: null, letta: 0 };
-async function mieSegnalazioni(box) {
+async function mieSegnalazioni(box, nuove = []) {
   const S = MB21Segnala;
   if (!SGM.righe || Date.now() - SGM.letta > S.MEMORIA_MIE) {
     const { data, error } = await dbq('le mie segnalazioni', supa.from('segnalazioni').select(S.COLONNE_MIE)
@@ -4570,10 +4591,13 @@ async function mieSegnalazioni(box) {
   const giorno = iso => new Date(iso).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short' });
   box.innerHTML = `<h4 class="sg-mie-t">Le tue segnalazioni</h4>` + SGM.righe.map(s => {
     const stato = S.statoSegnalazione(s);
-    return `<div class="sg-mia"><div class="sg-mia-alto"><span>${esc(giorno(s.creata_il))} · ${esc(S.nomeMotivo(s.motivo))}</span><span class="sg-stato ${stato.toLowerCase()}">${esc(stato)}</span></div>
+    const nuova = nuove.includes(s.id);   // nota 041: la risposta appena arrivata, in evidenza
+    return `<div class="sg-mia${nuova ? ' nuova' : ''}">${nuova ? '<div class="sg-nuova">Ignazio ti ha risposto 👇</div>' : ''}<div class="sg-mia-alto"><span>${esc(giorno(s.creata_il))} · ${esc(S.nomeMotivo(s.motivo))}</span><span class="sg-stato ${stato.toLowerCase()}">${esc(stato)}</span></div>
       ${s.testo ? `<div class="sg-mia-testo">${esc(S.anteprima(s.testo))}</div>` : ''}
       ${s.risposta ? `<div class="sg-risposta"><b>Risposta:</b> ${esc(s.risposta)}</div>` : ''}</div>`;
   }).join('');
+  const prima = box.querySelector('.sg-mia.nuova');
+  if (prima && prima.scrollIntoView) prima.scrollIntoView({ block: 'center' });
 }
 // Lo screenshot ridotto sul telefono prima di caricarlo (nota 014): lato lungo al massimo MAX_LATO (misuraRidotta in segnala.js), JPEG QUALITA.
 // Da 2-4 MB a 150-250 KB: lo spazio dei file su Supabase è contato (piano gratuito). Safari converte da solo le HEIC di iPhone nell'input file.
