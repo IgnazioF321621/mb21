@@ -1,10 +1,15 @@
 // MB21 — Service Worker (stesso schema di Zona Tracker)
-// Pagina e coda.js: prima la rete, poi la copia salvata (offline).
+// Pagina e script: prima la rete, poi la copia salvata (offline).
 // Libreria supabase-js da jsdelivr: prima la copia salvata. La versione è fissa nell'indirizzo (index.html): così ogni telefono ha la stessa
 // e non resta ferma per sempre su quella della prima visita. Quando si cambia versione si cambia anche il nome della cache qui sotto:
 // le copie vecchie si cancellano e i telefoni prendono la nuova.
 // Le chiamate a *.supabase.co non passano di qui: sempre dalla rete.
-const CACHE = 'mb21-v202610';
+// 07/10/2026 (nota Fondamenta 032, Isabella: «MB21Coda.contoGiorno is not a function» su Android): ogni `?v=` di uno script finiva nella cache come
+// una copia in più, mai cancellata, e quando la rete non rispondeva `caches.match(…, { ignoreSearch: true })` dava la PIÙ VECCHIA (coda.js di
+// settembre con l'index.html di oggi). Ora: (1) nome della cache nuovo → al prossimo avvio ogni telefono butta via tutte le copie vecchie;
+// (2) `salva` tiene UNA copia per file (cancella le altre `?v=` dello stesso indirizzo); (3) senza rete si prova prima la copia esatta, poi quella
+// senza `?v=`. Da ora in poi, a ogni rilascio, il nome della cache = la versione (AAAAMMGGHHMM, le stesse cifre dei `?v=`).
+const CACHE = 'mb21-v202610072130';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -17,7 +22,15 @@ self.addEventListener('activate', event => {
 });
 
 function salva(request, res) {
-  if (res.ok) { const copia = res.clone(); caches.open(CACHE).then(c => c.put(request, copia)); }
+  if (res.ok) {
+    const copia = res.clone();
+    caches.open(CACHE).then(async c => {
+      // una copia sola per file: le altre versioni (`?v=` diversi) dello stesso indirizzo si tolgono prima di mettere questa
+      const vecchie = await c.keys(request, { ignoreSearch: true });
+      await Promise.all(vecchie.filter(k => k.url !== request.url).map(k => c.delete(k)));
+      await c.put(request, copia);
+    }).catch(() => {});
+  }
   return res;
 }
 
@@ -29,7 +42,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request, { cache: 'no-cache' })
         .then(res => salva(event.request, res))
-        .catch(() => caches.match(event.request, { ignoreSearch: true }))
+        .catch(() => caches.match(event.request).then(c => c || caches.match(event.request, { ignoreSearch: true })))   // prima la copia esatta (stesso ?v=), poi l'ultima salvata
     );
     return;
   }
