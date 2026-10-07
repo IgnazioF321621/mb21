@@ -538,4 +538,13 @@ prova('Nota 036: con «Tutti» accanto al nome, tra parentesi quadre, di chi è;
   assert.match(src, /<div class="nome">\$\{esc\(r\.nome\)\}\$\{diChiCard\(r\)\}<\/div>/);
 });
 
+prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); il dato resta «Unlinked»', () => {
+  assert.equal(L.nomeCategoria('Unlinked'), 'Non collegato');
+  assert.equal(L.nomeCategoria('Prospect'), 'Prospect');
+  assert.equal(L.SPIEGA_CATEGORIA.Unlinked, 'Conosciuto/a, nessun recapito');
+  assert.equal(L.FILTRI.unlinked.etichetta, 'Non collegato');
+  assert.ok(L.CATEGORIE.includes('Unlinked'));
+  assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

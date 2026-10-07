@@ -36,7 +36,7 @@
     partner:  { etichetta: 'Partner', prova: r => r.categoria === 'Partner' },
     clienti:  { etichetta: 'Clienti', prova: r => r.categoria === 'Cliente' },
     ex:       { etichetta: 'Ex', altri: true, prova: r => r.categoria === 'Ex Partner/Cliente' },
-    unlinked: { etichetta: 'Unlinked', altri: true, prova: r => r.categoria === 'Unlinked' },
+    unlinked: { etichetta: 'Non collegato', altri: true, prova: r => r.categoria === 'Unlinked' },
     archiviati: { etichetta: 'Archiviati', altri: true, prova: r => r.categoria === 'Archiviato' },
     senza:    { etichetta: 'Senza categoria', altri: true, prova: r => !r.categoria },
   };
@@ -432,7 +432,12 @@
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
-  const api = { CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  // Nota Pagine 037 (Ignazio 07/10): il nome che si legge di una categoria; nel database resta il valore di sempre («Unlinked»)
+  const NOMI_CATEGORIA = { 'Unlinked': 'Non collegato' };
+  const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
+  const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
+
+  const api = { NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;

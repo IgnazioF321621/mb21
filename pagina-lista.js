@@ -464,7 +464,7 @@ function disegnaScheda() {
         <div class="alto">
           <span class="ts-pastiglia">${esc(iniziali(c.nome))}</span>
           <div class="ts-chi">
-            <div class="cat">${esc(c.categoria || 'Senza categoria')}</div>
+            <div class="cat">${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</div>
             <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
@@ -1296,7 +1296,8 @@ function apriModulo(c) {
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
     <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
-      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div></div>
+      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
+      ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>
     <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
     <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
