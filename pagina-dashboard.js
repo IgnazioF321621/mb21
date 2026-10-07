@@ -314,8 +314,8 @@ function disegnaHome() {
   const haNumeri = !!d && ((DS.checkMesi || []).some(x => Number(x.contatti) > 0) || (ST.stato && ST.stato.fatti_oggi > 0));
   const mese = tessera('mese', 'report', 'gr-volume', 'gr-volume-tinta', 'Come sto andando questo mese?', esc(nuovo && !haNumeri ? 'Si accende dopo le prime telefonate' : fraseMese()), 0, { spenta: nuovo && !haNumeri });
   const p = percorsoDash();
-  const traguardo = tessera('traguardo', 'crescita', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : limitato() ? 'Con l\'abbonamento attivo' : fraseTraguardo(p)), 0, { spenta: nuovo });
-  const giorno = tessera('giorno', 'lampo', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
+  const traguardo = tessera('traguardo', 'traguardo', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : limitato() ? 'Con l\'abbonamento attivo' : fraseTraguardo(p)), 0, { spenta: nuovo });
+  const giorno = tessera('giorno', 'diario', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
   if (nuovo) {
     const m = AVV.mio, { fatti, totale: tot } = MB21Lista.contatoreOnboarding(m);
     tessere.push(tessera('avvio', 'avvio', 'cat-partner', 'cat-partner-tinta', 'Il mio avvio', esc(`Fatti ${fatti} passi su ${tot} · prossimo: ${MB21Lista.prossimoPasso(m).nome}`), 1, { blu: true }), chi, mese, traguardo);
@@ -2086,7 +2086,7 @@ function apriCheck() {
       <div class="ck-auto" id="ck-auto-${k}" style="display:none"></div>
       <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>`;
   velo.innerHTML = `<div class="foglio alto mc">
-    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('lampo')}</span>
+    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('diario')}</span>
       <div><small>Oggi${esc(aNome())}</small><b>Il mio giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>${ic('conferme')} Giorno <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
