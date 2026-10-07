@@ -95,7 +95,7 @@ Dal 02/10/2026 la lista dei lavori **non sta più nell'app** (MB Plan → «MB P
 - Leggono, cercano, provano, rivedono, propongono modifiche ai file. **Non** fanno commit, **non** scrivono nel database, **non** spuntano la lista dei lavori (§ 7): lo fa solo la sessione principale, dopo aver controllato il loro lavoro.
 
 ## 9. Regole tecniche
-- `APP_VERSION` in `index.html`, formato `AAAA.MM.GG · HH:MM` (ora di Roma), insieme al `?v=AAAAMMGGHHMM` degli `<script src="….js?v=…">` (stesse cifre, altrimenti il telefono tiene gli script vecchi). **Li mette solo il rilascio.**
+- `APP_VERSION` in `index.html`, formato `AAAA.MM.GG · HH:MM` (ora di Roma), insieme al `?v=AAAAMMGGHHMM` degli `<script src="….js?v=…">` (stesse cifre, altrimenti il telefono tiene gli script vecchi). **Li mette solo il rilascio.** **E con loro il nome della cache in `sw.js`** (dal 07/10/2026, Ignazio, nota Fondamenta 032): `const CACHE = 'mb21-v' + le stesse cifre AAAAMMGGHHMM`; se il nome non cambia, i telefoni tengono le copie vecchie degli script e, con la rete che va e viene, possono mischiare pagina nuova e script vecchio («X is not a function» su un telefono solo).
 - `STRUTTURA.md` si aggiorna a ogni modifica di schema o logica, nello stesso commit.
 - Lavori aperti/chiusi in `CANTIERI.md`; lezioni apprese in `LEZIONI.md`.
 - Branch unico: `main`. GitHub Pages pubblica da `main` / root (solo al rilascio).
