@@ -62,7 +62,16 @@
     if (immagine) r.immagine = immagine;
     return r;
   }
-  const api = { MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
+  // Nota Pagine 040 (Ignazio 07/10): «Le tue segnalazioni» nel foglio. Lo stato in parole semplici e un pezzo del testo.
+  const COLONNE_MIE = 'id,creata_il,testo,motivo,risposta,letta_il,risolta_il';   // niente immagine né altro: una lettura leggera
+  const QUANTE_MIE = 10, MEMORIA_MIE = 5 * 60 * 1000;   // le ultime 10, tenute in memoria 5 minuti
+  const statoSegnalazione = s => (s.risolta_il ? 'Risolta' : s.letta_il ? 'Letta' : 'Ricevuta');
+  function anteprima(testo, max = 90) {
+    const t = String(testo || '').replace(/\s+/g, ' ').trim();
+    return t.length > max ? t.slice(0, max - 1).trimEnd() + '…' : t;
+  }
+
+  const api = { COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Segnala = api;
 })(this);
