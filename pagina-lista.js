@@ -78,7 +78,11 @@ function segnaApp() { if (LS.usoApp) for (const r of LS.righe) r.app = LS.usoApp
 // Una lettura sola (Pagine 029 / Fondamenta 031, 07/10/2026: ogni richiesta costa ~2,6 KB di registro su Supabase): la funzione `lista_nomi()`
 // (migrazione 20261007190000) restituisce lista, targhette e utenti dell'app in UNA richiesta al posto di 7 (15 per l'Admin). Gira con i permessi
 // di chi chiama: gli stessi dati delle letture separate. Se la funzione manca (prima del rilascio) o fallisce, si rilegge come prima.
+// L'Admin NO (Regia, 07/10 sera: «lentissima»): le regole di accesso gli danno tutte le 8.300 schede anche se guarda solo la sua lista (il filtro è
+// nell'app), e una risposta unica da 8 MB costa 2,3 s sul database contro ~1 s delle pagine da 1.000 lette 5 per volta in parallelo: per lui restano
+// le letture di prima. Per un partner (fino a ~3.000 nomi, 0,2 s) la funzione è più veloce e fa una richiesta sola.
 async function leggiTuttoLista() {
+  if (eAdmin()) return Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]);
   const { data, error } = await dbq('lista in una lettura', supa.rpc('lista_nomi'));
   if (error || !data || !Array.isArray(data.righe)) return Promise.all([leggiLista(), leggiTarghe(), leggiUsoApp()]);
   const oggi = MB21Coda.oggiRoma();
