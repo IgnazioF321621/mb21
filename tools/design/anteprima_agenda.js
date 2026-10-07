@@ -127,6 +127,7 @@ const stub = {
   leggiContattiMiei: async () => finto.contatti, spaziLiberi: async () => [], legaInizioFine() {}, domandaInvito() {}, tracciaDiApertura() {}, contattiMiei: null, LS: { righe: [] },
   aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, scelteMultiple: async () => scelta.passi, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
+  letta: (chiave, cosa, richiesta) => stub.dbq(cosa, richiesta()),   // la lettura che dalla Dashboard arriva con apri_oggi() (c2d4a23): qui come una dbq
   pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
   setInterval: () => 0,   // qui non serve la linea di «adesso» che si muove da sola: l'anteprima è una foto
   window: { scrollY: 0, innerHeight: 800, scrollTo: () => {}, addEventListener: () => {} },
