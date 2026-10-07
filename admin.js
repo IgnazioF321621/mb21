@@ -272,7 +272,7 @@ function disegnaAdmin() {
       for (const r of p.righe) (perUtente[r.utente] = perUtente[r.utente] || []).push(r);
       html += `<div class="riquadro" style="margin-bottom:10px">Da fare: <b>${p.create} schede nuove</b> · <b>${p.collegate} schede già in lista da collegare al codice</b></div>
         ${Object.entries(perUtente).map(([ut, righe]) => `<div class="rp-wes"><h3>Lista di ${esc(ut)}</h3>${righe.map(r => `<div class="ad-richiesta">
-          <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(r.categoria) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
+          <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(MB21Lista.nomeCategoria(r.categoria)) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
         <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
     }
   } else if (AD.sezione === 'training') {
@@ -437,7 +437,7 @@ function foglioNuovoUtente(u) {
     const data = r.data.filter(c => parole.every(w => String(c.nome || '').toLowerCase().includes(w))).slice(0, 10);
     const di = id => { const u = AD.utenti.find(x => x.id === id); return u ? nomeDi(u) : ''; };
     $('nu-trovati').innerHTML = data.length ? data.map(c => `<button class="rp-riga nome" data-c="${esc(c.id)}"><span>${esc(c.nome)}<br>
-      <small>${esc(c.categoria || 'senza categoria')}${c.codice_amway ? ' · codice ' + esc(c.codice_amway) : ''} · lista di ${esc(di(c.user_id))}</small></span><span></span><span class="f">›</span></button>`).join('')
+      <small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'senza categoria')}${c.codice_amway ? ' · codice ' + esc(c.codice_amway) : ''} · lista di ${esc(di(c.user_id))}</small></span><span></span><span class="f">›</span></button>`).join('')
       : '<div class="sotto">Nessun nome trovato: scrivilo qui sotto.</div>';
     $('nu-trovati').querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
       const c = data.find(x => x.id === b.dataset.c);
