@@ -589,7 +589,7 @@ function trnSessione(carte, modo, titolo, dopo) {
         corpo.innerHTML = `<div class="trn-carta">${testa}<div class="trn-frase-davanti piccola">${esc(d.davanti)}</div>
           <div class="trn-frase-dietro">${esc(d.dietro)}</div>${trnFonte(c)}
           <div class="trn-sapevo"><button class="no" data-s="0">Non la sapevo</button><button class="si" data-s="1">La sapevo</button></div>${trnCorreggi()}</div>`;
-        trnCollegaFonte(corpo);
+        trnCollegaFonte(corpo, c, { dove: modo, domanda: d.davanti });
         trnCollegaCorreggi(corpo, c, { dove: modo, domanda: d.davanti });
         corpo.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { risposto(b.dataset.s === '1', { scelta: b.textContent }); i++; mostra(); });
       };
@@ -611,7 +611,7 @@ function trnSessione(carte, modo, titolo, dopo) {
       if (!r.giusta) corpo.querySelectorAll('[data-r]').forEach(x => { if (d.risposte[Number(x.dataset.r)].giusta) x.classList.add('giusta'); });
       corpo.querySelector('.trn-esito-posto').innerHTML = `<div class="trn-esito ${r.giusta ? 'si' : 'no'}"><b>${r.giusta ? 'Giusto!' : c.trabocchetto ? 'Era un trabocchetto!' : 'Non proprio'}</b>
         ${esc(c.perche || '')}${d.tipo === 'scelta' ? '<p class="trn-a-voce">Ora dilla a voce, con le tue parole.</p>' : ''}${trnFonte(c)}</div>${trnCorreggi()}`;
-      trnCollegaFonte(corpo);
+      trnCollegaFonte(corpo, c, { dove: modo, domanda: d.testo, scelta: r.testo, giusta: r.giusta });
       trnCollegaCorreggi(corpo, c, { dove: modo, domanda: d.testo, scelta: r.testo, giusta: r.giusta });
       risposto(r.giusta, { scelta: r.testo });
       fondo.hidden = false;
@@ -724,7 +724,7 @@ function trnFonteUna(f) {
   const voce = f.tipo === 'manuale' ? MB21Training.capitoloDi(TRN.voci, f.pag) : (TRN.voci || []).find(v => v.id === f.id);
   return `<button class="trn-fonte" ${voce ? `data-fonte="${esc(voce.id)}"${f.tipo === 'libro' && f.capitolo ? ` data-cap="${esc(f.capitolo)}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}${f.tipo === 'traccia' ? ` data-sez="${esc(f.sezione || '')}" data-voce="${esc(f.voce || '')}" data-vi="${f.vi || 0}" data-pt="${(f.pt || []).join(',')}" data-az="${(f.az || []).join(',')}" data-tr="${(f.tr || []).join(',')}"` : ''}` : 'disabled'}>${ic(TRN_ICONA[f.tipo] || 'info', 16)} ${esc(t)}${voce ? ' ›' : ''}</button>`;
 }
-function trnCollegaFonte(el) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, (b.dataset.sez !== undefined || b.dataset.cap) ? { sezione: b.dataset.sez || '', voce: b.dataset.voce || '', vi: Number(b.dataset.vi || 0), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null, az: b.dataset.az ? b.dataset.az.split(',').map(Number) : [], tr: b.dataset.tr ? b.dataset.tr.split(',').map(Number) : [] } : null)); }
+function trnCollegaFonte(el, carta, visto) { el.querySelectorAll('[data-fonte]').forEach(b => b.onclick = () => trnApriCarta(b.dataset.fonte, b.dataset.cap, (b.dataset.sez !== undefined || b.dataset.cap) ? { sezione: b.dataset.sez || '', voce: b.dataset.voce || '', vi: Number(b.dataset.vi || 0), pt: b.dataset.pt ? b.dataset.pt.split(',').map(Number) : null, az: b.dataset.az ? b.dataset.az.split(',').map(Number) : [], tr: b.dataset.tr ? b.dataset.tr.split(',').map(Number) : [] } : null, carta, visto)); }
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
@@ -1113,7 +1113,7 @@ function trnConversazione(convs) {
   scegliNome();
 }
 
-function trnApriCarta(id, cap, punto) {
+function trnApriCarta(id, cap, punto, carta, visto) {   // carta/visto: se si arriva da una carta del Ripasso, l'Admin trova qui «Correggi» (07/10, nota Training 016)
   let testa, corpo, colore;
   if (id === 'manuale') {
     colore = TRN_LIBRI;
@@ -1181,6 +1181,10 @@ function trnApriCarta(id, cap, punto) {
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   velo.querySelector('.trn-x').onclick = chiudi;
+  if (carta && eAdmin()) {
+    velo.querySelector('.trn-foglio-corpo').insertAdjacentHTML('beforeend', trnCorreggi('', 'Correggi questa carta'));
+    velo.querySelector('[data-correggi]').onclick = ev => trnFoglioCorreggi(carta, { ...visto, quale: 'fonte', titolo: 'Correggi la fonte di questa carta' }, ev.currentTarget);
+  }
   const tutto = velo.querySelector('[data-tutto]');
   if (tutto) tutto.onclick = () => { velo.remove(); trnApriCarta(id); };
 }
