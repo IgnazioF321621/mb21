@@ -143,4 +143,28 @@ prova('tracce da controllare: non ascoltate, da 0 a 7 giorni, dalla più vecchia
   assert.equal(S.statoControllo(0), 'attesa'); assert.equal(S.statoControllo(1), 'chiedi'); assert.equal(S.statoControllo(2), 'ricordaglielo'); assert.equal(S.statoControllo(5), 'scaduta');
 });
 
-console.log(`\n${ok} prove superate`);
+// Nota Pagine 039 (Carolina, scelta B di Ignazio 07/10): «Non l'ha ascoltata» toglie la traccia dalle «Tracce condivise» della Dashboard
+(async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-sharing.js'), 'utf8');
+  const da = src.indexOf('async function caricaTracceDaControllare'), a = src.indexOf('\n}\n', da) + 3;
+  const OGGI = '2026-10-07';
+  const riga = (id, extra) => ({ id, contatto_id: 'c' + id, condivisa_il: '2026-10-06', ascoltata: false, ascoltata_il: null, ...extra });
+  let dati, chiuse = [];
+  const catena = { in: () => catena, not: () => Promise.resolve({ data: chiuse.map(id => ({ id })), error: null }), select: () => catena };
+  const ctx = { TRC: { righe: [], ascoltate: [] }, MB21Agenda: { spostaGiorno: () => '2026-09-30' }, MB21Sharing: S, idVisti: () => ['u'],
+    letta: async () => ({ data: dati, error: null }), dbq: async (_, q) => q, supa: { from: () => catena } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.carica = caricaTracceDaControllare;', ctx);
+  // lettura diretta (col campo nuovo)
+  dati = [riga('1', { non_ascoltata_il: null }), riga('2', { non_ascoltata_il: '2026-10-07' })];
+  await ctx.carica(OGGI);
+  assert.deepEqual(ctx.TRC.righe.map(k => k.id), ['1']);
+  // da apri_oggi(): il campo non c'è, la piccola lettura in più dice quali sono chiuse
+  dati = [riga('1'), riga('2')]; chiuse = ['2'];
+  await ctx.carica(OGGI);
+  assert.deepEqual(ctx.TRC.righe.map(k => k.id), ['1']);
+  assert.match(src, /data-traccia-non="\$\{esc\(k\.id\)\}" \$\{spento\}>\$\{ic\('chiudi', 16\)\} Non l'ha ascoltata<\/button>/);
+  ok++; console.log('OK  Nota 039: «Non l\'ha ascoltata» toglie la traccia dalla Dashboard (lettura diretta e da apri_oggi)');
+  console.log(`\n${ok} prove superate`);
+})();
+
