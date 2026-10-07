@@ -9,7 +9,7 @@
 // settembre con l'index.html di oggi). Ora: (1) nome della cache nuovo → al prossimo avvio ogni telefono butta via tutte le copie vecchie;
 // (2) `salva` tiene UNA copia per file (cancella le altre `?v=` dello stesso indirizzo); (3) senza rete si prova prima la copia esatta, poi quella
 // senza `?v=`. Da ora in poi, a ogni rilascio, il nome della cache = la versione (AAAAMMGGHHMM, le stesse cifre dei `?v=`).
-const CACHE = 'mb21-v202610072120';
+const CACHE = 'mb21-v202610072132';
 
 self.addEventListener('install', () => self.skipWaiting());
 
