@@ -8,7 +8,7 @@ const SH = { materiali: null, saltate: [] };   // la biblioteca si legge una vol
 
 async function leggiMateriali() {
   if (SH.materiali) return SH.materiali;
-  const { data, error } = await dbq('materiali', supa.from('materiali')
+  const { data, error } = await letta('materiali', 'materiali', () => supa.from('materiali')   // dalla Dashboard arriva con apri_oggi() (pagina-dashboard.js)
     .select('id, tipo, titolo, autore, pack_id, per_chi, fase, ordine, straniero, solo_donne, per_lavoro, fuori_catalogo, minuti, riassunto, punti_chiave, per_chi_testo')
     .in('tipo', ['traccia', 'pack']));
   if (error) return null;
@@ -280,7 +280,7 @@ const TRC = { righe: [], ascoltate: [] };
 async function caricaTracceDaControllare(oggi) {
   try {
     const da = MB21Agenda.spostaGiorno(oggi, -7);
-    const { data, error } = await dbq('tracce', supa.from('condivisioni')
+    const { data, error } = await letta('tracce', 'tracce', () => supa.from('condivisioni')   // dalla Dashboard arriva con apri_oggi() (pagina-dashboard.js)
       .select('id, contatto_id, condivisa_il, ascoltata, ascoltata_il, segnata_dal_partner, chiede_prossima_il, contatti(nome), materiali(titolo)').in('user_id', idVisti())
       .or(`and(ascoltata.eq.false,condivisa_il.gte.${da},condivisa_il.lte.${oggi}),and(ascoltata.eq.true,ascoltata_il.gte.${da})`));
     if (error) throw error;
@@ -357,11 +357,11 @@ async function caricaMioPercorso() {
   MIO.righe = null;
   if (vediTutti() || guardoAltri() || ST.offline) return;
   try {
-    const [mio, materiali, libri, letti] = await Promise.all([
-      dbq('il mio percorso', supa.rpc('mio_sharing')),
+    const [mio, materiali, libri, letti] = await Promise.all([   // dalla Dashboard arrivano con apri_oggi() (pagina-dashboard.js)
+      letta('mio_sharing', 'il mio percorso', () => supa.rpc('mio_sharing')),
       leggiMateriali(),
-      dbq('libri del percorso', supa.from('materiali').select('id, tipo, titolo, autore, ordine_libro, solo_n21').not('ordine_libro', 'is', null).order('ordine_libro').order('titolo')),
-      dbq('libri letti', supa.from('check_giorno').select('libro').eq('user_id', ST.utente.id).not('libro', 'is', null)),
+      letta('libri', 'libri del percorso', () => supa.from('materiali').select('id, tipo, titolo, autore, ordine_libro, solo_n21').not('ordine_libro', 'is', null).order('ordine_libro').order('titolo')),
+      letta('letti', 'libri letti', () => supa.from('check_giorno').select('libro').eq('user_id', ST.utente.id).not('libro', 'is', null)),
     ]);
     if (mio.error || !materiali) return;
     const righe = (mio.data || []);

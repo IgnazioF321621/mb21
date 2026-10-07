@@ -3,8 +3,29 @@
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, LS, esc, mostraToast, visto, guardoAltri, limitato, mostraTab…);
 // alcune sue funzioni servono anche alle altre pagine (caricaOggi, registraEsito, annullaEsito, chiediData, bottoniPer,
 // appuntamentoDaCoda, dataBreve, CONF, CAMPI_AZIONE). Si carica prima dello script della pagina: solo definizioni.
+// ── Una lettura per schermata (Pagine 029 / Fondamenta 031, 07/10/2026: ogni richiesta costa ~2,6 KB di registro su Supabase) ──
+// `apri_oggi()` (migrazione 20261007200000) restituisce in UNA richiesta quello che la Dashboard leggeva con ~28 richieste separate (coda, telefonate
+// scelte, da catalogare, conferme, riordini, numeri del mese, obiettivi, avvio, tracce, segni, Coach Yes, percorso, materiali, griglia PM…). Gira con i
+// permessi di chi chiama: gli stessi dati di prima, con gli stessi campi. `PRE.dati` vale solo mentre la Dashboard si carica: ogni lettura chiede prima
+// qui (`letta`) e, se la chiave manca o la funzione non c'è ancora (prima del rilascio), fa la sua richiesta come prima. Con Partner Select «Tutti»
+// non si usa (ogni coda è di un partner). Fuori dal caricamento (dopo un esito, una conferma…) `PRE.dati` è vuoto e si rilegge dalla rete.
+const PRE = { dati: null };
+async function preleggiOggi(oggi, altro) {
+  PRE.dati = null;
+  try {
+    const { data, error } = await dbq('la Dashboard in una lettura', supa.rpc('apri_oggi', { p_utente: visto().id, p_oggi: oggi, p_altro: !!altro }));
+    if (!error && data && typeof data === 'object' && Array.isArray(data.coda)) PRE.dati = data;
+  } catch (e) { PRE.dati = null; }
+}
+// `richiesta` è una funzione che costruisce la richiesta: si chiama solo se il dato non è già arrivato con apri_oggi
+function letta(chiave, cosa, richiesta) {
+  if (PRE.dati && PRE.dati[chiave] !== undefined) return Promise.resolve({ data: PRE.dati[chiave], error: null });
+  return dbq(cosa, richiesta());
+}
+
 // ── OGGI ─────────────────────────────────────────────────
 async function leggiCandidati(oggi) {
+  if (PRE.dati && Array.isArray(PRE.dati.coda)) return PRE.dati.coda.slice();
   const righe = [];
   for (let da = 0; ; da += 1000) {   // PostgREST restituisce al massimo 1000 righe per volta
     const { data, error } = await dbq('lettura coda',
@@ -17,6 +38,7 @@ async function leggiCandidati(oggi) {
 
 // Senza categoria del partner visto (cantiere 16 · Da catalogare)
 async function leggiSenzaCategoria() {
+  if (PRE.dati && Array.isArray(PRE.dati.senza_categoria)) return PRE.dati.senza_categoria.slice();
   const righe = [];
   for (let da = 0; ; da += 1000) {
     const { data, error } = await dbq('lettura da catalogare',
@@ -49,8 +71,9 @@ async function caricaOggi() {
   // niente `in_coda_dal` scritto da qui, niente copia offline
   const altro = guardoAltri();
   let risultato, stato, offline = false;
+  await preleggiOggi(oggi, altro);   // una richiesta sola per tutto quello che segue (se riesce)
   try {
-    const { data, error } = await dbq('stato di oggi', supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
+    const { data, error } = await letta('stato', 'stato di oggi', () => supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
     if (error) throw error;
     stato = data;   // { contatti_al_giorno, fatti_oggi }
     const posti = stato.contatti_al_giorno - stato.fatti_oggi;   // `fatti_oggi` conta anche le telefonate scelte a mano fatte oggi (stato_oggi): chi ne ha fatte 5 ha fatto i suoi 5
@@ -62,6 +85,7 @@ async function caricaOggi() {
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri la Dashboard.');
     }
   } catch (e) {
+    PRE.dati = null;
     if (altro) {
       app.innerHTML = `${testataDashboard()}${partnerSelect()}<div class="avviso">Non riesco a caricare la coda di ${esc(nomeVisto())}. Controlla la connessione e riprova.</div>${versione()}`;
       return collegaPartnerSelect();
@@ -87,6 +111,7 @@ async function caricaOggi() {
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
   await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes()]);
+  PRE.dati = null;   // da qui in poi ogni lettura torna alla rete (dopo un esito, una conferma, un ritorno sulla Dashboard scaduta)
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
   disegnaOggi();
@@ -934,9 +959,9 @@ async function caricaConferme() {
   try {
     const A = MB21Agenda, adesso = new Date(), limite = new Date(adesso.getTime() + A.ORE_CONFERMA * 3600000);
     const [app1, coda] = await Promise.all([
-      dbq('conferme appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).neq('tipo_azione', 'Contatto')
+      letta('conferme_app', 'conferme appuntamenti', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).neq('tipo_azione', 'Contatto')
         .eq('completata', false).is('confermato_il', null).gt('inizio', adesso.toISOString()).lte('inizio', limite.toISOString())),
-      dbq('conferme dalla coda', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto')
+      letta('conferme_coda', 'conferme dalla coda', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto')
         .in('esito', ['PM Fissato', 'Appuntamento']).is('confermato_il', null).gt('data_scelta', adesso.toISOString()).lte('data_scelta', limite.toISOString())),
     ]);
     if (app1.error || coda.error) throw app1.error || coda.error;
@@ -1018,7 +1043,7 @@ const SCE = { righe: [] };
 async function caricaScelte(oggi) {
   try {
     if (vediTutti()) { SCE.righe = []; return; }
-    const { data, error } = await dbq('telefonate scelte a mano', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti())
+    const { data, error } = await letta('scelte', 'telefonate scelte a mano', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti())
       .eq('tipo_azione', 'Contatto').eq('scelta_a_mano', true).eq('completata', false).is('esito', null)
       .lt('inizio', MB21Agenda.isoDaRoma(MB21Agenda.spostaGiorno(oggi, 1), '00:00')).order('inizio'));
     if (error) throw error;
@@ -1099,8 +1124,8 @@ async function caricaAvvio() {
   AVV.tutte = []; AVV.mio = null; AVV.perche = {};
   if (!ST.offline && !vediTutti()) try {
     const [team, mio] = await Promise.all([
-      dbq('avvio del Team', supa.rpc('avvio_del_team')),
-      guardoAltri() ? { data: null } : dbq('il mio percorso', supa.rpc('mio_percorso')),
+      letta('avvio_team', 'avvio del Team', () => supa.rpc('avvio_del_team')),
+      guardoAltri() ? { data: null } : letta('mio_percorso', 'il mio percorso', () => supa.rpc('mio_percorso')),
     ]);
     if (!team.error && team.data) { AVV.tutte = team.data.ramo || []; AVV.perche = team.data.perche || {}; }
     if (!mio.error) AVV.mio = mio.data || null;
@@ -1225,9 +1250,9 @@ function leggiSquadraMese(oggi, nuova) {
   const scorso = MB21Dashboard.meseSpostato(String(oggi).slice(0, 7) + '-01', -1);
   const prec = Number(scorso.slice(0, 4) + scorso.slice(5, 7));   // il mese scorso, per «Com'è andato»
   DS.sqLettura = (ST.offline || vediTutti() || !visto().partner_id || !obiettiviAperti()) ? Promise.resolve(null) : Promise.all([
-    dbq('mappa del mese', supa.from('squadra').select('partner_id, sponsor_id, nome, data_ingresso')),
-    dbq('volumi del mese in corso', supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, dimensioni_gruppo').in('mese', [prec, mese])),
-    dbq('15 Planner del mese scorso e in corso', supa.rpc('pm_del_ramo', { da: prec })),
+    letta('squadra', 'mappa del mese', () => supa.from('squadra').select('partner_id, sponsor_id, nome, data_ingresso')),
+    letta('volumi', 'volumi del mese in corso', () => supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, dimensioni_gruppo').in('mese', [prec, mese])),
+    letta('pm_ramo', '15 Planner del mese scorso e in corso', () => supa.rpc('pm_del_ramo', { da: prec })),
   ]).then(([sq, vol, pm]) => (sq.error || vol.error ? null : { mese, prec, sq: sq.data, vol: vol.data, pm: pm.error ? null : pm.data }), () => null);
   return DS.sqLettura;
 }
@@ -1236,7 +1261,7 @@ async function caricaObiettiviTeam(oggi) {
   if (ST.offline || vediTutti() || !obiettiviAperti() || !visto().partner_id) return;
   try {
     const prima = MB21Dashboard.meseSpostato(OBT.mese, -1);
-    const [ob, obPrima, sqd] = await Promise.all([dbq('obiettivi dei partner', supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })), dbq('obiettivi dei partner, mese scorso', supa.rpc('obiettivi_del_ramo', { p_mese: prima })), leggiSquadraMese(oggi)]);
+    const [ob, obPrima, sqd] = await Promise.all([letta('obiettivi_ramo', 'obiettivi dei partner', () => supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })), letta('obiettivi_ramo_prima', 'obiettivi dei partner, mese scorso', () => supa.rpc('obiettivi_del_ramo', { p_mese: prima })), leggiSquadraMese(oggi)]);
     if (ob.error || !sqd || !ob.data) return;
     const radice = visto().partner_id;
     OBT.righe = MB21Dashboard.obiettiviDelTeam({ obiettivi: ob.data.obiettivi, linee: ob.data.linee, squadra: sqd.sq, volumi: sqd.vol, radice, mese: sqd.mese });
@@ -1373,10 +1398,10 @@ async function caricaRiordini(oggi) {
   try {
     const A = MB21Agenda;
     const [v, g] = await Promise.all([
-      dbq('riordini da sentire', supa.from('vendite')
+      letta('riordini_vendite', 'riordini da sentire', () => supa.from('vendite')
         .select(`riordino, prodotto, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null)),
       // le telefonate di riordino importate da Glide, non ancora fatte, dal 1° settembre 2026 a oggi
-      dbq('riordini di Glide', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto').eq('esito', 'Riordino')
+      letta('riordini_glide', 'riordini di Glide', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto').eq('esito', 'Riordino')
         .not('glide_id', 'is', null).or('completata.is.null,completata.eq.false')
         .gte('inizio', A.isoDaRoma(A.INIZIO_RIORDINI_GLIDE, '00:00')).lt('inizio', A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00'))),
     ]);
@@ -1453,15 +1478,15 @@ async function caricaDashboard(oggi) {
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
     const [cm, ob, segniAl, scad, seg, evBbs, evWes, sqd] = await Promise.all([
-      dbq('check dei mesi', supa.from('check_mesi').select('*').in('user_id', ids)),
-      dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', ids)),
+      letta('check_mesi', 'check dei mesi', () => supa.from('check_mesi').select('*').in('user_id', ids)),
+      letta('obiettivi_mese', 'obiettivi del mese', () => supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
-      vediTutti() ? { data: null } : dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
+      vediTutti() ? { data: null } : letta('scadenza', 'scadenza abbonamento', () => supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
-      vediTutti() || visto().id !== ST.utente.id ? { data: [] } : dbq('biglietti da segnare', supa.rpc('biglietti_da_segnare')),
+      vediTutti() || visto().id !== ST.utente.id ? { data: [] } : letta('da_segnare', 'biglietti da segnare', () => supa.rpc('biglietti_da_segnare')),
       // gli eventi BBS e WES (01/10): il mese si legge accanto al nome, così si sa a quale evento si riferiscono i numeri (l'evento in vendita, come nella Mappa)
-      dbq('eventi BBS', supa.from('bbs').select('data, creato_il')),
-      dbq('eventi WES', supa.from('wes').select('data, creato_il')),
+      letta('bbs', 'eventi BBS', () => supa.from('bbs').select('data, creato_il')),
+      letta('wes', 'eventi WES', () => supa.from('wes').select('data, creato_il')),
       leggiSquadraMese(oggi),   // la Squadra del mese (prime linee, linee riceventi Bonus, 15 Planner, totale gruppo) dal file Amway
     ]);
     // `breve` = nel riquadro piccolo, `lungo` = nel foglio obiettivi. Solo BBS e WES hanno un evento: il CEP è un numero da raggiungere (Ignazio 01/10: «oggi 5, vogliamo arrivare a 10»)
@@ -1493,9 +1518,9 @@ async function caricaRichiamoGriglia(oggi) {
   DS.griglia = null;
   if (vediTutti()) return;   // la griglia è di un partner
   try {
-    const { data: imp, error } = await dbq('griglia PM', supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle());
+    const { data: imp, error } = await letta('griglia', 'griglia PM', () => supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle());
     if (error || !imp) return;
-    const { data: pm, error: e2 } = await dbq('PM della griglia', supa.from('azioni').select('id, inizio, esito')   // esito: la Griglia conta solo i PM avvenuti
+    const { data: pm, error: e2 } = await letta('griglia_pm', 'PM della griglia', () => supa.from('azioni').select('id, inizio, esito')   // esito: la Griglia conta solo i PM avvenuti
       .eq('user_id', visto().id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
     if (e2) return;
     DS.griglia = MB21Report.griglia(pm, imp, oggi);
