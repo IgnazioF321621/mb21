@@ -252,12 +252,14 @@ function disegnaAdmin() {
       ${senzaObiettiviHtml()}
       ${riquadro('utenti', `${ic('squadra')} Utenti generali (${AD.utenti.length})`, `${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}
         ${AD.aperti.size ? `<button class="link" id="ad-chiudi-tutte">⌃ Chiudi le schede aperte</button>` : ''}`)}
+      <hr class="ad-linea">
       <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
+      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>${ic('collega')} Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>
+      <hr class="ad-linea">
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
         ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
           <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
-          <button class="link ripristina" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}
-      <button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>${ic('collega')} Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>`;
+          <button class="link ripristina" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}`;
   } else if (AD.sezione === 'schede') {
     const p = AD.schede;
     html = `${indietro}<h1>Schede dei partner</h1>
