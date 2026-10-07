@@ -249,6 +249,7 @@ function disegnaAdmin() {
       ${senzaAvvisiHtml()}
       ${senzaObiettiviHtml()}
       <div class="rp-wes">${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}</div>
+      ${AD.aperti.size ? `<button class="link" id="ad-chiudi-tutte">⌃ Chiudi le schede aperte</button>` : ''}
       <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
       ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
         ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
@@ -550,9 +551,14 @@ function collegaAdmin() {
   });
   app.querySelectorAll('[data-apri-ut]').forEach(b => b.onclick = () => {
     const id = b.dataset.apriUt;
-    AD.aperti.has(id) ? AD.aperti.delete(id) : AD.aperti.add(id);
+    const era = AD.aperti.has(id);
+    AD.aperti.clear();   // una scheda per volta: la pagina resta corta
+    if (!era) AD.aperti.add(id);
     disegnaAdmin();
+    if (!era) { const r = app.querySelector(`[data-apri-ut="${CSS.escape(id)}"]`); if (r) r.scrollIntoView({ block: 'start' }); }
   });
+  const chiudiTutte = app.querySelector('#ad-chiudi-tutte');
+  if (chiudiTutte) chiudiTutte.onclick = () => { AD.aperti.clear(); disegnaAdmin(); };
   const salvaScadenza = async (u, scadenza, testo) => {
     const { error } = await dbq('scadenza abbonamento', supa.from('utenti').update({ abbonamento_scadenza: scadenza }).eq('id', u.id));
     if (error) return mostraToast('Non salvato: riprova.');
