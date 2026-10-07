@@ -4427,7 +4427,7 @@ async function caricaCoachYes() {
   if (vediTutti() || ST.offline || !ST.utente) return;
   const di = visto().id;
   if (CY.di === di && Date.now() - CY.letta < CY_FRESCA_MS) return;
-  const { data, error } = await dbq('chi ha una nota Coach Yes', supa.from('coach_note').select('contatto_id').eq('user_id', di));
+  const { data, error } = await letta('coach_yes', 'chi ha una nota Coach Yes', () => supa.from('coach_note').select('contatto_id').eq('user_id', di));   // dalla Dashboard arriva con apri_oggi() (pagina-dashboard.js)
   if (error || !Array.isArray(data)) return;   // senza la lettura niente segnali: la pagina resta com'era
   CY.di = di; CY.letta = Date.now(); CY.ids = new Set(data.map(r => r.contatto_id));
 }
