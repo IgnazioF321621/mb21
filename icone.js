@@ -122,6 +122,9 @@
     'medaglia': '<circle cx="12" cy="9" r="5.6"/><path d="M8.5 13.4 7 21l5-2.7 5 2.7-1.5-7.6"/>',   // le medaglie dei percorsi, dei livelli e dei giorni di fila (25/09)
     // Aggiunta a mano per «Segnala» (nota Pagine 009, 05/10): il piccolo insetto, come in Claude
     'segnala': '<path d="M12 8.6a4.4 4.4 0 0 1 4.4 4.4v2.6a4.4 4.4 0 0 1-8.8 0V13A4.4 4.4 0 0 1 12 8.6z"/><path d="M12 8.6v11.4M9.3 8.8a2.7 2.7 0 0 1 5.4 0"/><path d="m8.8 6.4 1.2 1.6M15.2 6.4 14 8M4.6 11.2l3.1.9M19.4 11.2l-3.1.9M4.6 17.6l3.1-1.3M19.4 17.6l-3.1-1.3M7.6 13.6l-3 .3M16.4 13.6l3 .3"/>',
+    // Aggiunte a mano (nota Pagine 038, Ignazio 07/10, schizzo docs/prototipi/schizzo_icone_038.png): icone diverse dal Training e dal lampo
+    'traguardo': '<path d="M3 20.5 9.6 9.8l3.6 5.4 2.2-3.1 5.6 8.4z"/><path d="M9.6 9.8V3.4l4.4 1.8-4.4 1.8"/>',   // la vetta con la bandierina: «Qual è il mio prossimo traguardo?»
+    'diario': '<rect x="4.5" y="3.5" width="11.5" height="17" rx="2"/><path d="M8 8h4.5M8 11.5h4.5"/><path d="m14 18.6 5.8-5.8 1.6 1.6-5.8 5.8H14z"/>',   // il quaderno con la matita: «Com'è andata oggi?»
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);
   // Un nome che non esiste dà una stringa vuota: meglio niente che un quadratino rotto
