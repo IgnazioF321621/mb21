@@ -4592,7 +4592,7 @@ async function mieSegnalazioni(box, nuove = []) {
   box.innerHTML = `<h4 class="sg-mie-t">Le tue segnalazioni</h4>` + SGM.righe.map(s => {
     const stato = S.statoSegnalazione(s);
     const nuova = nuove.includes(s.id);   // nota 041: la risposta appena arrivata, in evidenza
-    return `<div class="sg-mia${nuova ? ' nuova' : ''}">${nuova ? '<div class="sg-nuova">Ignazio ti ha risposto 👇</div>' : ''}<div class="sg-mia-alto"><span>${esc(giorno(s.creata_il))} · ${esc(S.nomeMotivo(s.motivo))}</span><span class="sg-stato ${stato.toLowerCase()}">${esc(stato)}</span></div>
+    return `<div class="sg-mia${nuova ? ' nuova' : ''}">${nuova ? '<div class="sg-nuova">MB21 ti ha risposto 👇</div>' : ''}<div class="sg-mia-alto"><span>${esc(giorno(s.creata_il))} · ${esc(S.nomeMotivo(s.motivo))}</span><span class="sg-stato ${stato.toLowerCase()}">${esc(stato)}</span></div>
       ${s.testo ? `<div class="sg-mia-testo">${esc(S.anteprima(s.testo))}</div>` : ''}
       ${s.risposta ? `<div class="sg-risposta"><b>Risposta:</b> ${esc(s.risposta)}</div>` : ''}</div>`;
   }).join('');
