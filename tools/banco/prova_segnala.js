@@ -55,4 +55,14 @@ prova('la riga con lo screenshot: id scelto prima, percorso <chi>/<id>.jpg nel b
   assert.equal(r.id, id); assert.equal(r.immagine, `u1/${id}.jpg`); assert.equal(r.user_id, 'u1');
   assert.equal(S.riga({ id, userId: 'u1', motivo: 'boh', immagine: 'u1/x.jpg' }), null);
 });
+prova('Nota 040: «Le tue segnalazioni», stato in parole semplici, un pezzo del testo, lettura leggera', () => {
+  assert.equal(S.statoSegnalazione({}), 'Ricevuta');
+  assert.equal(S.statoSegnalazione({ letta_il: '2026-10-07' }), 'Letta');
+  assert.equal(S.statoSegnalazione({ letta_il: '2026-10-07', risolta_il: '2026-10-08' }), 'Risolta');
+  assert.equal(S.anteprima('  due   parole  '), 'due parole');
+  const lungo = 'a'.repeat(200);
+  assert.equal(S.anteprima(lungo).length, 90); assert.ok(S.anteprima(lungo).endsWith('…'));
+  assert.equal(S.anteprima(null), '');
+  assert.ok(!S.COLONNE_MIE.includes('immagine')); assert.equal(S.QUANTE_MIE, 10);
+});
 console.log(`\n${ok} prove superate`);
