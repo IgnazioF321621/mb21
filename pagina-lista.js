@@ -1412,9 +1412,14 @@ function apriModulo(c) {
 // «Portato da» uguale dappertutto (decisione di Ignazio 15/09): Agenda, Report, Griglia PM, scheda contatto.
 // Aggiunge `portatoNome` alle azioni con portato_da (una lettura sola dei nomi). Senza rete i nomi restano vuoti.
 async function aggiungiPortatoDa(azioni) {
-  const ids = [...new Set(azioni.map(a => a.portato_da).filter(Boolean))];
+  let ids = [...new Set(azioni.map(a => a.portato_da).filter(Boolean))];
   if (!ids.length) return azioni;
   const nomi = {};
+  // da MB Plan i nomi arrivano già con apri_agenda() (`PRE.dati.portato_da`, pagina-dashboard.js): si chiedono alla rete solo quelli che mancano
+  if (typeof PRE !== 'undefined' && PRE.dati && Array.isArray(PRE.dati.portato_da)) {
+    for (const x of PRE.dati.portato_da) nomi[x.id] = x.nome;
+    ids = ids.filter(id => nomi[id] === undefined);
+  }
   for (let i = 0; i < ids.length; i += 200) {
     const { data } = await dbq('nomi portato da', supa.from('contatti').select('id, nome').in('id', ids.slice(i, i + 200)));
     for (const x of data || []) nomi[x.id] = x.nome;
