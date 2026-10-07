@@ -968,7 +968,8 @@
   .ob-sez-testa b { display: block; font-size: var(--dim-etichetta); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--testo-soft); }
   .ob-sez-testa small { display: block; font-size: 12px; font-weight: 400; color: var(--testo-soft); margin-top: 2px; line-height: 1.35; }
   .ob-sez-dx { display: flex; align-items: center; gap: 8px; flex: none; }
-  .ob-sez-sunto { font-style: normal; font-size: 12px; font-weight: 600; color: var(--testo); text-align: right; max-width: 120px; }
+  .ob-sez-sunto { display: block; font-style: normal; font-size: 13px; font-weight: 500; color: var(--testo); margin-top: 4px; }   /* nota 035: sotto la spiegazione, larga quanto la riga (prima a destra in 120 px: andava a capo e si tagliava) */
+  .ob-sez-sunto:empty { display: none; } .ob-sez-sunto strong { font-weight: 800; }
   .ob-sez-testa i { font-style: normal; font-size: 18px; font-weight: 700; color: var(--testo-soft); }
   .ob-sez-corpo[hidden] { display: none; }
   .ob-oppure { margin: 6px 0 6px; font-size: 13px; color: var(--grigio); }
