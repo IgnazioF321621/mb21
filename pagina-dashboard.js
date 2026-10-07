@@ -1663,7 +1663,8 @@ function collegaDashboard() {
 // Partenza di BBS/WES/CEP automatica: non si chiede. Si salva solo con almeno un obiettivo.
 // Nel foglio i totali stanno in evidenza (VPP e VPG in azzurro, Nuovi Iscritti in arancio) e le parti sono «di cui» (Ignazio 01/10)
 const CLASSE_TOTALE = { vpp: 'ob-vol', vpg: 'ob-vol', sponsor_gruppo: 'ob-az' };   // nomi propri: `.azione` e simili esistono già nell'app
-const ETICHETTA_FOGLIO = { vpg: 'VPG · totale del gruppo', vpp: 'di cui il tuo VPP', vpv: 'di cui VP Clienti', sponsor_gruppo: 'Nuovi Iscritti · totale', sponsor_personali: 'di cui Iscritti personali', pm: 'attraverso quanti PM personali', contatti: 'e quanti Contatti', cep: 'CEP · abbonati del gruppo' };
+// nota 035 (Ignazio 07/10): parole semplici, la sigla tra parentesi
+const ETICHETTA_FOGLIO = { vpg: 'Punti attesi dal gruppo (VPG)', vpp: 'di cui tuoi (VPP)', vpv: 'di cui dai clienti (VP Clienti)', sponsor_gruppo: 'Nuovi iscritti attesi dal gruppo', sponsor_personali: 'di cui iscritti da te', pm: 'con quanti Piani Marketing tuoi', contatti: 'e quanti contatti', cep: 'Abbonati CEP nel gruppo' };
 // Le sezioni del foglio si aprono e si chiudono, ognuna con una breve spiegazione (Ignazio 01/10: foglio unico per tutti, espandibile); Volume e Azione aperte, il resto chiuso
 const SEZIONI_FOGLIO = {
   'Volume': { id: 'volume', aperta: true, spiega: 'I punti che ti servono: quelli di tutto il gruppo, quanti sono tuoi e quanti arrivano da chi sta sotto di te.' },
@@ -1675,7 +1676,7 @@ const SEZIONI_FOGLIO = {
 };
 const aperturaSezione = (pallino, nome) => {
   const d = SEZIONI_FOGLIO[nome];
-  return `<section class="ob-sez" data-sez="${d.id}"><button type="button" class="ob-sez-testa" aria-expanded="${d.aperta}"><span><b>${escIcone(pallino)}${esc(nome)}</b><small>${esc(d.spiega)}</small></span><span class="ob-sez-dx"><em class="ob-sez-sunto"></em><i>${d.aperta ? '⌃' : '⌄'}</i></span></button><div class="ob-sez-corpo"${d.aperta ? '' : ' hidden'}>`;
+  return `<section class="ob-sez" data-sez="${d.id}"><button type="button" class="ob-sez-testa" aria-expanded="${d.aperta}"><span><b>${escIcone(pallino)}${esc(nome)}</b><small>${esc(d.spiega)}</small><em class="ob-sez-sunto"></em></span><span class="ob-sez-dx"><i>${d.aperta ? '⌃' : '⌄'}</i></span></button><div class="ob-sez-corpo"${d.aperta ? '' : ' hidden'}>`;
 };
 // I punti con i centesimi nelle caselle si scrivono con la VIRGOLA, senza il punto delle migliaia (Ignazio 01/10: il punto si confondeva con la virgola)
 const fmtNum = v => (v === '' || v == null ? '' : Number(v).toLocaleString('it-IT', { useGrouping: false, maximumFractionDigits: 2 }));
@@ -1892,16 +1893,18 @@ function apriObiettivi() {
   } };
   oraSegni();
   for (const k of ['bbs', 'wes', 'cep']) campo(k).addEventListener('input', oraSegni);
+  // nota 035 (Ignazio 07/10): il riassunto sta su una riga sotto la spiegazione, in parole semplici e con i numeri in grassetto
   const sunto = id => {
-    const n = k => testoNum(k), unisci = (...p) => p.filter(Boolean).join(' · ');
-    return { volume: unisci(n('vpg') && `VPG ${n('vpg')}`, n('vpp') && `VPP ${n('vpp')}`),
-      azione: unisci(n('sponsor_gruppo') && `${n('sponsor_gruppo')} nuovi iscritti`, n('pm') && `${n('pm')} PM`, n('contatti') && `${n('contatti')} contatti`),
-      squadra: unisci(n('prime_linee') && `${n('prime_linee')} prime linee`, n('totale_gruppo') && `${n('totale_gruppo')} nel gruppo`),
-      linee: (() => { const l = leggiLinee().filter(x => x.nome || x.vp); return l.length ? `${l.length} ${l.length === 1 ? 'linea' : 'linee'}${sommaLinee() ? ` · ${f(sommaLinee())} VP` : ''}` : ''; })(),
-      segni: unisci(n('bbs') && `BBS ${n('bbs')}`, n('wes') && `WES ${n('wes')}`, n('cep') && `CEP ${n('cep')}`),
+    const n = k => { const t = testoNum(k); return t ? `<strong>${esc(t)}</strong>` : ''; }, unisci = (...p) => p.filter(Boolean).join(' · ');
+    const biglietti = unisci(n('bbs') && `BBS ${n('bbs')}`, n('wes') && `WES ${n('wes')}`);
+    return { volume: unisci(n('vpg') && `Punti del gruppo (VPG) ${n('vpg')}`, n('vpp') && `tuoi (VPP) ${n('vpp')}`),
+      azione: unisci(n('sponsor_gruppo') && `${n('sponsor_gruppo')} nuovi iscritti`, n('pm') && `${n('pm')} Piani Marketing`, n('contatti') && `${n('contatti')} contatti`),
+      squadra: unisci(n('prime_linee') && `${n('prime_linee')} prime linee`, n('totale_gruppo') && `${n('totale_gruppo')} persone nel gruppo`),
+      linee: (() => { const l = leggiLinee().filter(x => x.nome || x.vp); return l.length ? `<strong>${l.length}</strong> ${l.length === 1 ? 'linea' : 'linee'}${sommaLinee() ? ` · <strong>${esc(f(sommaLinee()))}</strong> punti` : ''}` : ''; })(),
+      segni: unisci(biglietti && `Biglietti ${biglietti}`, n('cep') && `abbonati CEP ${n('cep')}`),
       crescita: unisci(n('tracce') && `${n('tracce')} tracce`, n('pagine') && `${n('pagine')} pagine`) }[id] || '';
   };
-  const sunti = () => velo.querySelectorAll('.ob-sez').forEach(sez => { sez.querySelector('.ob-sez-sunto').textContent = sez.querySelector('.ob-sez-corpo').hidden ? sunto(sez.dataset.sez) : ''; });
+  const sunti = () => velo.querySelectorAll('.ob-sez').forEach(sez => { sez.querySelector('.ob-sez-sunto').innerHTML = sez.querySelector('.ob-sez-corpo').hidden ? sunto(sez.dataset.sez) : ''; });
   velo.querySelectorAll('.ob-sez-testa').forEach(b => {
     b.onclick = () => {
       const corpo = b.nextElementSibling, apri = corpo.hidden;
