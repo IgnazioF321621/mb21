@@ -71,7 +71,12 @@
     return t.length > max ? t.slice(0, max - 1).trimEnd() + '…' : t;
   }
 
-  const api = { COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
+  // Nota Pagine 041: le risposte non ancora viste su questo telefono (gli id da apri_oggi contro quelli già visti, in localStorage)
+  const CHIAVE_VISTE = 'mb21-risposte-viste';
+  const risposteNuove = (ids, viste) => (Array.isArray(ids) ? ids : []).filter(id => !(viste || []).includes(id));
+  const conViste = (viste, nuove) => [...new Set([...(nuove || []), ...(viste || [])])].slice(0, 50);   // le più recenti prima, al massimo 50
+
+  const api = { CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Segnala = api;
 })(this);
