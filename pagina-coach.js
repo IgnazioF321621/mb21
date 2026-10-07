@@ -192,6 +192,15 @@ const RICORDI = {};   // contatto_id → { frase, obiezioni, … } oppure null (
 async function caricaRicordi(ids) {
   const tutti = [...new Set((ids || []).filter(Boolean))];
   if (tutti.length) await batteriaCoach('preparazione_incontro');   // la riga di preparazione per chi non è mai stato chiamato (preparaChiamataHtml)
+  // da MB Plan «già chiamati» e riflessioni arrivano con apri_agenda() (`PRE.dati`, pagina-dashboard.js: una lettura per schermata), per un insieme
+  // di contatti che contiene questo: si usano quelli e non si fa nessuna richiesta
+  if (tutti.length && typeof PRE !== 'undefined' && PRE.dati && Array.isArray(PRE.dati.gia_chiamati) && Array.isArray(PRE.dati.promemoria)) {
+    const gia = new Set(PRE.dati.gia_chiamati.map(x => x.contatto_id)), miei = new Set(tutti);
+    for (const id of tutti) PRIME_VOLTE[id] = !gia.has(id);
+    const trovati = MB21Coach.ricordi(PRE.dati.promemoria.filter(x => miei.has(x.contatto_id)));
+    for (const id of tutti) RICORDI[id] = trovati[id] || null;
+    return;
+  }
   for (let i = 0; i < tutti.length; i += 80) {   // a pezzi: l'indirizzo della richiesta resta corto
     const pezzo = tutti.slice(i, i + 80);
     // mai chiamato: nessuna azione con un esito (cantiere 48, Ignazio 01/10: la stessa riga di preparazione in coda, in MB Plan e nella scheda)

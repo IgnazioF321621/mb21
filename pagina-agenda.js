@@ -56,7 +56,13 @@ const AG_FRESCA_MS = 15 * 60000;
 const chiaveAgenda = () => `${visto().id}|${vediTutti() ? 'tutti' : ''}|${AG.giorno}|${AG.vista}|${AG.tutteLeCose ? 1 : 0}`;
 const agendaFresca = () => !!AG.lettaAlle && AG.lettaChiave === chiaveAgenda() && Date.now() - AG.lettaAlle < AG_FRESCA_MS
   && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < AG.lettaAlle);
+// Una lettura per schermata (Pagine 029 / Fondamenta 031, 07/10/2026): `apri_agenda()` (migrazione 20261007210000) restituisce in UNA richiesta le 12-14
+// letture dell'apertura di MB Plan. Usa `PRE.dati` e `letta` di pagina-dashboard.js: ogni lettura chiede prima lì e, se la chiave manca o la funzione non
+// c'è ancora, fa la sua richiesta come prima. Con «Tutti» non si usa. Alla fine (anche in errore) `PRE.dati` si svuota: le letture dopo tornano alla rete.
 async function caricaAgenda() {
+  try { await caricaAgendaLetture(); } finally { PRE.dati = null; }
+}
+async function caricaAgendaLetture() {
   const A = MB21Agenda;
   if (agendaFresca()) return;
   AG.lettaAlle = 0;
@@ -67,33 +73,41 @@ async function caricaAgenda() {
   const a = A.isoDaRoma(griglia1 > A.spostaGiorno(AG.settimana[6], 1) ? griglia1 : A.spostaGiorno(AG.settimana[6], 1), '00:00');
   const oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
   const ids = idVisti();   // Partner Select (lavoro 3): il partner scelto, o tutti
-  const richieste = [
-    dbq('agenda appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
-    // Contatti: richiami/appuntamenti dati dalla coda (data scelta) e telefonate programmate dall'Agenda (non completate)
-    dbq('agenda contatti', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).eq('tipo_azione', 'Contatto')
-      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
-    dbq('agenda senza esito', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(LIMITE_SENZA_ESITO)),
-  ];
-  const conferme = AG.giorno === oggi ? Promise.all([caricaConferme(), caricaRiordini(oggi)]) : null;   // cantiere 29: stesso elenco del riquadro in Dashboard
-  if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
-  else if (AG.giorno === oggi) richieste.push(dbq('stato di oggi', supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
-  else if (AG.giorno > oggi) richieste.push(dbq('rientri del giorno', supa.from('contatti_coda').select('id, nome, categoria').eq('user_id', visto().id).eq('rientro_il', AG.giorno).order('nome').limit(300)));
-  // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
-  // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
   // Solo gli ultimi 12 mesi (Ignazio 04/10, nota 021): le non fatte del passato e le cose di mese, settimana e periodo più vecchie di un anno
   // non si leggono più a ogni apertura; «Vedi tutto» in fondo al foglio le carica (AG.tutteLeCose). Le cose dell'anno sono poche e restano sempre.
   const limite = AG.tutteLeCose ? null : A.spostaGiorno(oggi, -366), dal = limite ? `,giorno.gte.${limite}` : '';
-  const cose = vediTutti() ? null : dbq('cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id)
-    .or(`and(giorno.gte.${griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0]},giorno.lte.${griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6]}),and(giorno.lt.${oggi},fatto_il.is.null${dal}),and(scala.eq.mese${dal}),and(scala.eq.settimana${dal}),and(scala.eq.periodo${dal}),scala.eq.anno`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
-  // c'è qualcosa di più vecchio che non si legge? (solo se serve il «Vedi tutto»; una chiamata leggera, senza righe)
-  const vecchie = vediTutti() || !limite ? null : dbq('cose più vecchie', supa.from('cose_da_fare').select('id', { count: 'exact', head: true }).eq('user_id', visto().id)
-    .lt('giorno', limite).is('fatto_il', null).is('progetto_id', null).is('modello_id', null).is('core', null).in('scala', ['giorno', 'settimana', 'mese', 'periodo']));
+  const coseDa = griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0], coseA = griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6];
+  PRE.dati = null;
+  if (!vediTutti()) try {
+    const { data, error } = await dbq('MB Plan in una lettura', supa.rpc('apri_agenda', { p_utente: visto().id, p_giorno: AG.giorno, p_da: da, p_a: a,
+      p_cose_da: coseDa, p_cose_a: coseA, p_limite: limite, p_spazi: vediSpazi(), p_oggi: oggi }));
+    if (!error && data && typeof data === 'object' && Array.isArray(data.appuntamenti)) PRE.dati = data;
+  } catch (e) { PRE.dati = null; }
+  const richieste = [
+    letta('appuntamenti', 'agenda appuntamenti', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
+    // Contatti: richiami/appuntamenti dati dalla coda (data scelta) e telefonate programmate dall'Agenda (non completate)
+    letta('contatti', 'agenda contatti', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).eq('tipo_azione', 'Contatto')
+      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
+    letta('senza_esito', 'agenda senza esito', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').eq('completata', false).lt('inizio', adesso).order('inizio', { ascending: false }).limit(LIMITE_SENZA_ESITO)),
+  ];
+  const conferme = AG.giorno === oggi ? Promise.all([caricaConferme(), caricaRiordini(oggi)]) : null;   // cantiere 29: stesso elenco del riquadro in Dashboard
+  if (vediTutti()) { /* telefonate e rientri sono di un partner */ }
+  else if (AG.giorno === oggi) richieste.push(letta('stato', 'stato di oggi', () => supa.rpc('stato_oggi', guardoAltri() ? { p_utente: visto().id } : {})));
+  else if (AG.giorno > oggi) richieste.push(letta('rientri', 'rientri del giorno', () => supa.from('contatti_coda').select('id, nome, categoria').eq('user_id', visto().id).eq('rientro_il', AG.giorno).order('nome').limit(300)));
+  // Cose da fare (cantiere 41): quelle della settimana più tutte le non fatte del passato (si riportano a oggi).
+  // Con «Tutti» niente: sono un foglio personale, non un elenco di squadra.
+  const cose = vediTutti() ? null : letta('cose', 'cose da fare', () => supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('user_id', visto().id)
+    .or(`and(giorno.gte.${coseDa},giorno.lte.${coseA}),and(giorno.lt.${oggi},fatto_il.is.null${dal}),and(scala.eq.mese${dal}),and(scala.eq.settimana${dal}),and(scala.eq.periodo${dal}),scala.eq.anno`));   // + le cose del mese e della settimana   // le spunte Core del mese vivono sul primo del mese
+  // c'è qualcosa di più vecchio che non si legge? (solo se serve il «Vedi tutto»; una chiamata leggera, senza righe; da apri_agenda arriva il numero)
+  const vecchie = vediTutti() || !limite ? null : letta('cose_vecchie', 'cose più vecchie', () => supa.from('cose_da_fare').select('id', { count: 'exact', head: true }).eq('user_id', visto().id)
+    .lt('giorno', limite).is('fatto_il', null).is('progetto_id', null).is('modello_id', null).is('core', null).in('scala', ['giorno', 'settimana', 'mese', 'periodo']))
+    .then(r => (r.count === undefined ? { count: Number(r.data) || 0, error: r.error } : r));
   const [app1, ric, pas, tel] = await Promise.all(richieste);
   await conferme;
   // gli spazi della settimana preparati prima («Modello appuntamenti settimanale», 27/09): solo l'Admin, per ora
-  const spazi = vediSpazi() ? dbq('spazi', supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
+  const spazi = vediSpazi() ? letta('spazi', 'spazi', () => supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
   // gli impegni ricevuti da altri (nota 027): mai con «Tutti»; se la funzione non c'è ancora o non risponde, l'Agenda si apre senza di loro
-  const ricevuti = vediTutti() ? null : dbq('impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a }));
+  const ricevuti = vediTutti() ? null : letta('ricevuti', 'impegni ricevuti', () => supa.rpc('impegni_ricevuti', { p_da: da, p_a: a }));
   const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali(), caricaCoachYes()]);   // nota 001: chi ha una nota Coach Yes, letto una volta ogni 15 minuti
   AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
@@ -105,7 +119,7 @@ async function caricaAgenda() {
   // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
   const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
   AG.cose = cd ? cd.data : [];
-  const w = await dbq('WES', supa.from('wes').select('data, giorno').order('data'));
+  const w = await letta('wes', 'WES', () => supa.from('wes').select('data, giorno').order('data'));
   AG.wes = w.error ? [] : w.data;
   if (AG.vista === 'periodo') await caricaPeriodo();
   if (AG.vista === 'anno') { const y = AG.giorno.slice(0, 4); await caricaIntervallo(`${y}-01-01`, `${Number(y) + 1}-01-01`); }
@@ -1782,7 +1796,7 @@ function collegaCondivisioneSpazio(el, s, ridisegna) {
 // i frontali dell'Admin (per «Una Linea»): si leggono una volta, dalla Mappa (`squadra`, chi ha come sponsor il suo codice)
 async function caricaFrontali() {
   if (AG.frontali !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;
-  const { data, error } = await dbq('frontali', supa.from('squadra').select('partner_id, nome').eq('sponsor_id', ST.utente.partner_id).order('nome'));
+  const { data, error } = await letta('frontali', 'frontali', () => supa.from('squadra').select('partner_id, nome').eq('sponsor_id', ST.utente.partner_id).order('nome'));   // da MB Plan arriva con apri_agenda()
   // i nomi come nella Mappa, «Ignazio Fiorito» (il file Amway li ha «FIORITO, IGNAZIO», a volte in minuscolo; Ignazio 05/10)
   const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
   AG.frontali = error || !Array.isArray(data) ? [] : data.map(f => ({ ...f, nome: leggibile(f.nome) })).sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
