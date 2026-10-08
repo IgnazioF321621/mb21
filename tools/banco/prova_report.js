@@ -136,4 +136,10 @@ prova('contaAzione: la stessa regola della vista azioni_conti (cantiere 27)', ()
   assert.deepEqual([g.totale, g.nonContano, g.esiti.find(e => e.n).esito], [0, 1, 'Verso un Partner']);
 });
 
+prova('«Ordina da solo» conta come contatto fatto (nota Azioni 025), come «Ordine»', () => {
+  assert.ok(R.CONTATTO_PARLATO.includes('Ordina da solo'));
+  const a = { tipo_azione: 'Contatto', categoria: 'Cliente', esito: 'Ordina da solo', inizio: '2026-10-08T10:00:00Z' };
+  assert.deepEqual(R.contaAzione(a), R.contaAzione({ ...a, esito: 'Ordine' }));
+});
+
 console.log(`\n${ok} prove superate`);
