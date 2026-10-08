@@ -98,7 +98,7 @@ function moduloVendita(v, proposta) {
     </div>
 
     <h4 class="mc-t">Quando</h4><div class="riquadro mc-g">
-      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : MB21Coda.oggiRoma())}"></div>
+      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
       <div class="campo"><label>Quando consegni?</label>
         <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
       <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
@@ -131,7 +131,8 @@ function moduloVendita(v, proposta) {
   segnaQuando();
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
-  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); };   // anche le azioni: la vendita scrive in Agenda
+  // `proposta.salvata`: solo dopo un salvataggio riuscito (l'attesa «Ordina da solo» si chiude con la vendita, nota Azioni 025); `poi` anche con Annulla
+  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
     if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
@@ -150,4 +151,49 @@ function moduloVendita(v, proposta) {
     if (error) return mostraToast('Non eliminata: riprova.');
     fatto('Vendita eliminata');
   };
+}
+
+// ── «Ordina da solo» (nota Azioni 025, Ignazio 08/10/2026) ───────────────────────────────────
+// Il cliente, alla telefonata di riordino, dice «ordino io dal mio account»: l'esito «Ordina da solo» chiude la telefonata e apre un'attesa sulla
+// stessa riga di `azioni` (attesa_dal · attesa_chiedi_il · attesa_chiusa_il; funzione `attesa_ordine`). Nessuna vendita si registra da sola.
+// La parte che si vede (scheda e Dashboard) è in pagina-lista.js / pagina-dashboard.js (nota Pagine 043); qui la lettura e i tre tocchi.
+// Le attese aperte dei partner `userIds`, già passate dalla regola `MB21Agenda.attesaOrdini` ([] anche se la lettura non riesce)
+async function leggiAttesaOrdini(userIds, oggi) {
+  if (!Array.isArray(userIds) || !userIds.length) return [];
+  const { data, error } = await dbq('attese ordini', supa.from('azioni').select('id, user_id, contatto_id, esito, inizio, attesa_dal, attesa_chiedi_il, attesa_chiusa_il, contatti(nome, categoria, telefono)')
+    .in('user_id', userIds).not('attesa_dal', 'is', null).is('attesa_chiusa_il', null));
+  if (error) return [];
+  return MB21Agenda.attesaOrdini(data || [], oggi || MB21Coda.oggiRoma());
+}
+const attesaOrdineRpc = (a, cosa, giorno) => dbq('attesa ordine ' + cosa, supa.rpc('attesa_ordine', { p_azione: a.id, p_cosa: cosa, p_giorno: giorno || null }));
+// «Ha ordinato»: si chiede il giorno vero dell'ordine, si apre la scheda sulle Vendite col modulo già su quel giorno; l'attesa si chiude SOLO quando la vendita è salvata
+async function attesaHaOrdinato(a, poi) {
+  if (soloGuardo()) return;
+  const valori = await moduloSemplice('Quando ha ordinato?', [{ k: 'giorno', etichetta: `${a.nome || 'Il cliente'} · la vendita conta nel mese di questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true }]);
+  if (!valori) return;
+  await apriContattoDa(a.contattoId);
+  if (!(LS.contatto && LS.contatto.id === a.contattoId)) return mostraToast('Non riesco ad aprire la scheda: riprova.');
+  LS.sezione = 'vendite'; disegnaScheda();
+  moduloVendita(null, { data: valori.giorno, salvata: async () => {
+    const { error } = await attesaOrdineRpc(a, 'chiudi', valori.giorno);
+    if (error) mostraToast('Vendita registrata, ma l\'attesa è rimasta aperta: tocca «Non ordina più» per chiuderla.');
+    LS.azioni = null; disegnaScheda();
+    if (poi) poi();
+  } });
+}
+// «Non ancora»: l'app lo richiede tra 7 giorni
+async function attesaNonAncora(a, poi) {
+  if (soloGuardo()) return;
+  const { error } = await attesaOrdineRpc(a, 'non_ancora');
+  if (error) return mostraToast('Non salvato: riprova.');
+  mostraToast(`${a.nome || 'Il cliente'}: te lo richiedo tra 7 giorni`);
+  if (poi) poi();
+}
+// «Non ordina più»: l'attesa si chiude senza vendita; il cliente torna nel giro normale (coda e riordini)
+async function attesaNonOrdinaPiu(a, poi) {
+  if (soloGuardo()) return;
+  const { error } = await attesaOrdineRpc(a, 'chiudi');
+  if (error) return mostraToast('Non salvato: riprova.');
+  mostraToast(`${a.nome || 'Il cliente'}: attesa chiusa, nessuna vendita`);
+  if (poi) poi();
 }
