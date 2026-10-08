@@ -47,6 +47,7 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   ctx.apriAgenda = async () => {}; ctx.nuovoAppuntamento = async () => null; ctx.chiediRiflessione = async () => null; ctx.registraVenditaDa = async () => false;
   ctx.tracciaDiApertura = async (c, k, poi) => (poi ? poi() : null);
   ctx.MB21Sharing = { proponeTraccia: () => false }; ctx.chiediRientro = async () => null; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => false;
+  ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const e = { ...incontro, contatti: { nome: 'Mario', categoria: 'Partner' } };
@@ -150,6 +151,7 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   ctx.tracciaDiApertura = async (c, k, poi) => { log.push(['traccia']); return poi ? poi() : null; };
   ctx.chiediRientro = async () => { log.push(['rientro']); return '2026-10-22'; }; ctx.dataBreve = g => g;
   ctx.MB21Sharing = { proponeTraccia: () => true };
+  ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const tel = inizio => ({ id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', area: 'Attività', inizio, contatti: { nome: 'Mario', categoria: 'Prospect' } });
