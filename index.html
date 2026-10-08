@@ -2846,15 +2846,19 @@ function mostraTab() {
 
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine
 let timerToast;
+const DURATA_ANNULLA = 4000;   // quanto resta il messaggio con «Annulla» dopo un esito (nota Azioni 027)
 function mostraToast(testo, suAnnulla) {
   document.querySelectorAll('.toast').forEach(t => t.remove());
   clearTimeout(timerToast);
   const t = document.createElement('div');
   t.className = 'toast';
   t.innerHTML = `<span>${esc(testo)}</span>${suAnnulla ? '<button>Annulla</button>' : ''}`;
-  if (suAnnulla) t.querySelector('button').onclick = () => { t.remove(); clearTimeout(timerToast); suAnnulla(); };
+  if (suAnnulla) t.querySelector('button').onclick = ev => { ev.stopPropagation(); t.remove(); clearTimeout(timerToast); suAnnulla(); };
+  // un tocco sul messaggio lo chiude (nota Azioni 027, idea di Isabella 08/10: copriva i bottoni di chi dà più esiti di fila)
+  t.onclick = () => { t.remove(); clearTimeout(timerToast); };
   document.body.appendChild(t);
-  timerToast = setTimeout(() => t.remove(), suAnnulla ? 6000 : 3500);
+  // con «Annulla» 4 secondi (erano 6: nota Azioni 027), senza 3,5; un messaggio nuovo (un altro esito) toglie subito quello di prima
+  timerToast = setTimeout(() => t.remove(), suAnnulla ? DURATA_ANNULLA : 3500);
 }
 
 // Copiare negli appunti, uguale ovunque (Progetti di MB Plan, Rinnovo, Invito, Calendario: 24/09). Va chiamata SUBITO nel tocco,
