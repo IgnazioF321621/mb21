@@ -165,7 +165,18 @@ async function leggiAttesaOrdini(userIds, oggi) {
   if (error) return [];
   return MB21Agenda.attesaOrdini(data || [], oggi || MB21Coda.oggiRoma());
 }
-const attesaOrdineRpc = (a, cosa, giorno) => dbq('attesa ordine ' + cosa, supa.rpc('attesa_ordine', { p_azione: a.id, p_cosa: cosa, p_giorno: giorno || null }));
+// Dopo ogni cambio dell'attesa riuscito (apri, non ancora, chiudi, annulla, da qualsiasi strada): la lettura tenuta dalla scheda (LS.attesa)
+// si butta, così al ridisegno si rilegge; quella della Dashboard (ATT.righe) si rilegge subito. L'08/10 dalla scheda l'attesa partiva
+// ma la riga non compariva: la scheda mostrava la lettura vuota di prima (segnalato dalla Regia)
+async function attesaCambiata() {
+  if (typeof LS !== 'undefined') LS.attesa = null;
+  if (typeof caricaAttese === 'function') await caricaAttese();
+}
+async function attesaOrdineRpc(a, cosa, giorno) {
+  const r = await dbq('attesa ordine ' + cosa, supa.rpc('attesa_ordine', { p_azione: a.id, p_cosa: cosa, p_giorno: giorno || null }));
+  if (!r.error) await attesaCambiata();
+  return r;
+}
 // «Ha ordinato»: si chiede il giorno vero dell'ordine, si apre la scheda sulle Vendite col modulo già su quel giorno; l'attesa si chiude SOLO quando la vendita è salvata
 async function attesaHaOrdinato(a, poi) {
   if (soloGuardo()) return;

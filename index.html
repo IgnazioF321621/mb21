@@ -3006,6 +3006,7 @@ async function attesaDaEsito(azioneId, prima, dopo) {
   if (!cosa || !azioneId) return false;
   const { error } = await dbq(cosa + ' attesa ordine', supa.rpc('attesa_ordine', { p_azione: azioneId, p_cosa: cosa }));
   if (error) mostraToast(cosa === 'apri' ? 'Esito salvato, ma l\'attesa «ha ordinato?» non è partita: riprova dalla scheda.' : 'L\'attesa «ha ordinato?» non è stata tolta: riprova.');
+  else if (typeof attesaCambiata === 'function') await attesaCambiata();   // scheda e Dashboard rileggono l'attesa al ridisegno che segue
   return !error;
 }
 async function chiudiAppuntamento(e, esito, opz = {}) {
