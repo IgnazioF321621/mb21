@@ -414,6 +414,18 @@
   .sh-ok { flex: none; min-height: 36px; padding: 6px 12px; border-radius: var(--raggio-pill); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font-size: 13px; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
   .sh-ok.si { border-color: var(--ok); background: var(--ok); color: #fff; }
   .sh-ok:disabled:not(.si) { opacity: .5; }
+  /* «Ordina da solo» (nota Pagine 043): la stessa riga nella scheda del cliente e in Dashboard; dal 7° giorno in evidenza */
+  .ao-riga { background: var(--superficie); border: 1px solid var(--bordo); border-radius: var(--raggio-card); padding: 12px 14px; margin: 10px 0; text-align: left; }
+  .ao-riga.da-chiedere { border: 2px solid var(--accento); box-shadow: var(--ombra-card); }
+  .ao-testo { display: flex; gap: 10px; align-items: flex-start; }
+  .ao-ic { flex: none; width: 34px; height: 34px; border-radius: var(--raggio-riga); background: var(--sfondo); display: flex; align-items: center; justify-content: center; }
+  .ao-testo b { display: block; font-size: 15px; color: var(--testo); }
+  .ao-testo small { display: block; font-size: 12px; color: var(--testo-tenue); margin-top: 2px; }
+  .ao-tasti { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .ao-tasti button { flex: 1 1 auto; min-height: 40px; border-radius: var(--raggio-riga); border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); font: inherit; font-weight: 600; padding: 0 12px; }
+  .ao-tasti button.si { background: var(--accento); color: var(--accento-su); border-color: var(--accento); }
+  .ao-tasti button.no { color: var(--pericolo); }
+  .ao-scheda { margin-top: 6px; }
   .sh-tr-bottoni { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }   /* nota 039: «Ascoltata» e «Non l'ha ascoltata» uno sopra l'altro */
   .sh-ok.sh-non { color: var(--testo-tenue); font-weight: 600; }
   .avv-partner.percorso .sh-fase { margin-top: 8px; }
