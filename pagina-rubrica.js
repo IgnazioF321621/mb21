@@ -6,7 +6,7 @@ const RB = { esito: null, proprietario: null, telefono: null };   // telefono: '
 
 // Il «+» della Lista: nuovo contatto a mano oppure tutta la rubrica
 async function scegliAggiungi() {
-  if (soloGuardo()) return;
+  if (soloGuardo() || limitato()) return;   // abbonamento scaduto: niente nomi nuovi (nota Pagine 042)
   // l'icona si passa nel campo `icona`: `etichetta` esce come testo, quindi un disegno messo lì si legge come codice (trovato il 20/09)
   const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: 'Nuovo contatto', icona: 'persona', k: 'uno' },
     { etichetta: 'Importa dalla rubrica del telefono', icona: 'rubrica', k: 'rubrica' }]);

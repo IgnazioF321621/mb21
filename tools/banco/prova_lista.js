@@ -547,4 +547,28 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Nota 042: abbonamento scaduto, la scheda non si apre (da nessuna strada) e dal menu resta solo «Elimina»', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
+  const s0 = src.indexOf('const SOLO_GUARDARE'), s1 = src.indexOf('\n', s0);
+  let scaduto = true, voci = null, toast = null, lista = 0, scheda = 0;
+  const ctx = { limitato: () => scaduto, soloGuardo: () => false, LS: { righe: [{ id: 'c1', nome: 'Anna', categoria: 'Prospect' }], esporta: null },
+    mostraToast: t => { toast = t; }, disegnaLista: () => { lista++; }, disegnaScheda: () => { scheda++; }, contattaHtml: () => '',
+    sceltaDa: async (t, v) => { voci = v; return null; }, MB21Lista: { sezioneIniziale: () => 'dati' }, sezioniPer: () => [], ST: { tab: 'lista' },
+    window: { scrollY: 0, scrollTo() {} } };
+  vm.createContext(ctx);
+  vm.runInContext(src.slice(s0, s1) + pezzo('function apriScheda') + pezzo('async function menuCard') + pezzo('function comandiContatto')
+    + ';this.apriScheda = apriScheda; this.menuCard = menuCard;', ctx);
+  ctx.apriScheda('c1');
+  assert.equal(scheda, 0); assert.equal(lista, 1); assert.match(toast, /abbonamento attivo/); assert.equal(ctx.LS.contatto, null);
+  await ctx.menuCard('c1');
+  assert.equal(voci.map(v => v.etichetta).join(), 'Elimina');
+  scaduto = false; ctx.apriScheda('c1'); assert.equal(scheda, 1);
+  await ctx.menuCard('c1');
+  assert.equal(voci.map(v => v.etichetta).join(), 'Modifica,Archivia,Elimina');
+  assert.match(src, /limitato\(\) \? '' : '<button class="ag-piu" id="nuovo"/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-rubrica.js'), 'utf8'), /if \(soloGuardo\(\) \|\| limitato\(\)\) return;/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

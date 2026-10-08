@@ -150,7 +150,8 @@ function disegnaLista() {
   app.innerHTML = `
     <div class="ls-testa">
       <div class="ag-testa"><h1>Lista Nomi</h1>
-        <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
+        ${limitato() ? '' : '<button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button>'}</div>
+      ${limitato() ? `<div class="sotto">${ic('visione')} ${SOLO_GUARDARE}</div>` : ''}
       ${partnerSelect()}
       <div class="cerca">
         <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
@@ -170,7 +171,8 @@ function disegnaLista() {
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
-  document.getElementById('nuovo').onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
+  const nuovo = document.getElementById('nuovo');
+  if (nuovo) nuovo.onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });
   document.getElementById('altri').onclick = scegliAltri;
   const cerca = document.getElementById('cerca');
@@ -195,7 +197,7 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => {
       if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
-      if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id);
+      if (!e.target.closest('a, .menu')) (limitato() ? menuCard : apriScheda)(c.dataset.id);   // scaduto: solo «Elimina» (nota 042)
     };
   });
   const esportaB = document.getElementById('esporta');
@@ -346,6 +348,10 @@ async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
   // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
+  if (limitato()) {   // abbonamento scaduto (nota 042): niente scheda né Modifica, resta solo «Elimina»
+    const v = await sceltaDa(r.nome, comandiContatto(r).filter(x => x.icona === 'elimina'), contattaHtml(r.telefono));
+    return v && v.fai();
+  }
   const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
   const voci = [...apri, ...(soloGuardo() ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
@@ -417,7 +423,12 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
 }
 
 // ── Scheda contatto ──
+// Abbonamento scaduto (nota Pagine 042, Ignazio 08/10/2026): la Lista Nomi si guarda e si possono solo eliminare i nomi;
+// niente «+», niente Modifica, niente scheda. Il blocco della scheda sta qui, così vale per ogni strada che porta a una
+// scheda (avvisi «apri=lista&contatto», Oggi, Agenda, Mappa, Sharing…), e chi ci arriva si ritrova sulla Lista.
+const SOLO_GUARDARE = 'Solo da guardare: con l\'abbonamento attivo si aggiungono, si modificano e si aprono le schede dei nomi.';
 function apriScheda(id) {
+  if (limitato()) { LS.contatto = null; mostraToast(SOLO_GUARDARE); return disegnaLista(); }
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
