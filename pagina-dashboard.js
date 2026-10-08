@@ -813,7 +813,7 @@ async function toccaBottone(id, indice) {
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
   // «Ordina da solo» (nota Azioni 025): l'attesa si apre sulla telefonata appena registrata; se non parte, l'esito resta e lo si dice
-  if (bottone.attesa && esito.azione_id) { const r = await dbq('apri attesa ordine', supa.rpc('attesa_ordine', { p_azione: esito.azione_id, p_cosa: 'apri' })); if (r.error) mostraToast('Esito salvato, ma l\'attesa non è partita: riprova dalla scheda.'); }
+  if (bottone.attesa) await attesaDaEsito(esito.azione_id, null, bottone.etichetta);   // la stessa funzione di Agenda, scheda e «Cambia esito»
   // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento: dal 04/10 lo fa
   // `registra_esito` con la regola unica del rientro (applica_rientro, nota 030); prima qui c'era una scrittura in più dal telefono
   const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
