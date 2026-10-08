@@ -104,6 +104,15 @@ async function spedisciA(utenti: string[], avviso: Avviso) {
   return { dispositivi: esiti.length, ok: esiti.filter(x => x === 'ok').length, tolti: esiti.filter(x => x === 'tolto').length, errori: esiti.filter(x => x === 'errore').length };
 }
 
+// Nota Fondamenta 033 (08/10): chi ha l'abbonamento scaduto non riceve la sera né il mattino. Stessa scadenza dell'app
+// (scadenza_abbonamento: con l'abbonamento in comune conta chi paga; l'Admin mai scaduto), letta con utenti_abbonamento_scaduto().
+// Se la funzione non è ancora applicata (errore) si va avanti come prima: meglio un avviso in più che nessun avviso a tutti.
+async function utentiScaduti(): Promise<Set<string>> {
+  const { data, error } = await db.rpc('utenti_abbonamento_scaduto');
+  if (error) return new Set();
+  return new Set(((data ?? []) as { id: string }[]).map(x => x.id));
+}
+
 // Le scelte del QUANDO di tutti gli utenti (cantiere 43): (utente, chiave) → la sua scelta o il «già impostato»
 async function scelteDiTutti() {
   const { data, error } = await db.from('utenti').select('id, avvisi_quando');
@@ -229,6 +238,7 @@ Deno.serve(async (req) => {
     const err = e1 || e2 || e3 || e4 || e5 || e6 || e7;
     if (err) return risposta({ errore: err.message }, 500);
     const consigliDi = await datiConsigli(oggi, adessoVero);   // Training, obiettivi del mese, prossimo traguardo (e quali ha già detto il Buongiorno)
+    const scaduti = await utentiScaduti();   // nota 033
     const nome = (x: { contatti: unknown }) => (x.contatti as { nome?: string } | null)?.nome || '—';
     const veri = new Set((app ?? []).map(x => `${x.contatto_id}|${Date.parse(x.inizio)}`));   // senza doppioni della coda
     const impegni: (Impegno & { user_id: string })[] = [
@@ -240,6 +250,7 @@ Deno.serve(async (req) => {
     const giaFatto = new Set((fatti ?? []).map(x => x.user_id));
     const esiti: Record<string, unknown>[] = [];
     for (const { id, prossimo_traguardo } of attivi ?? []) {
+      if (scaduti.has(id)) continue;   // abbonamento scaduto: niente avviso (nota 033)
       if (!corpo.forza && quando(id, 'check') !== oraAdesso) continue;
       const d = riepilogoDomani(impegni.filter(x => x.user_id === id));
       // il coach guarda la giornata scritta nell'app: se c'è qualcosa la prima riga sono i complimenti, se no niente di inventato
@@ -285,6 +296,7 @@ Deno.serve(async (req) => {
     const { data: dispositivi } = await db.from('avvisi_dispositivi').select('user_id');
     const conDispositivo = new Set((dispositivi ?? []).map(x => x.user_id));
     const consigliDi = await datiConsigli(oggi, adesso);
+    const scaduti = await utentiScaduti();   // nota 033
     const veri = new Set((appuntamenti ?? []).map(a => `${a.contatto_id}|${Date.parse(a.inizio)}`));
     const tutti = [
       ...(appuntamenti ?? []).map(a => ({ user_id: a.user_id, quando: a.inizio, confermato: !!a.confermato_il })),
@@ -298,6 +310,7 @@ Deno.serve(async (req) => {
     const esiti: Record<string, unknown>[] = [];
     for (const u of attivi ?? []) {
       if (!conDispositivo.has(u.id)) continue;
+      if (scaduti.has(u.id)) continue;   // abbonamento scaduto: niente avviso (nota 033)
       if (!corpo.forza && quando(u.id, 'buongiorno') !== oraAdesso) continue;
       const miei = tutti.filter(a => a.user_id === u.id);
       const mio = consigliDi(u.id, u.prossimo_traguardo);

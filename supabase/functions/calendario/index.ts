@@ -41,6 +41,9 @@ async function righeInUnaChiamata(token: string) {
 async function righeSeparate(token: string) {
   const { data: utente } = await db.from('utenti').select('id').eq('calendario_token', token).eq('accesso_attivo', true).is('eliminato_il', null).maybeSingle();
   if (!utente) return null;
+  // nota Fondamenta 033 (08/10): scaduto = come un segreto spento (la stessa scadenza dell'app; se la funzione manca si va avanti come prima)
+  const { data: attivo } = await db.rpc('abbonamento_attivo', { p_utente: utente.id });
+  if (attivo === false) return null;
   const da = new Date(Date.now() - 30 * 86400000).toISOString();
   const CAMPI = 'id, contatto_id, tipo_azione, modalita, esito, inizio, fine, data_scelta, ospite, note, contatti(nome)';
   const [app, tel, coda] = await Promise.all([

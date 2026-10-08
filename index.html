@@ -2719,9 +2719,10 @@ const limitato = () => !!ST.scaduto;
 async function controllaAbbonamento() {
   if (!ST.utente || !ST.utente.id || ST.utente.ruolo === 'Admin') { ST.scaduto = false; return; }
   const { data, error } = await dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: ST.utente.id }));
-  if (error && !navigator.onLine) return;   // offline: resta com'era
-  const scadenza = error ? ST.utente.abbonamento_scadenza : data;
-  ST.scaduto = MB21Dashboard.statoAbbonamento(scadenza, MB21Coda.oggiRoma()) === 'scaduto';
+  // Errore di lettura (anche con la rete): resta com'era (nota Fondamenta 033, 08/10). Prima si ripiegava sulla scadenza personale,
+  // e un collaboratore con l'abbonamento in comune (la sua è vuota) veniva trattato da scaduto per un errore passeggero.
+  if (error) return;
+  ST.scaduto = MB21Dashboard.statoAbbonamento(data, MB21Coda.oggiRoma()) === 'scaduto';
 }
 
 // La pagina Training (cantiere 42 e 45, pagina-training.js): accesa per tutti il 24/09 sera (Ignazio: «pubblicarlo direttamente e, se ci
