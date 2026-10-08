@@ -433,7 +433,7 @@ function apriScheda(id) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null;
+  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.attesa = null;
   LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
@@ -453,6 +453,50 @@ function sezioniPer(c) {
 // Riga dell'avvio nella testata, sotto «Usa l'app» (Ignazio 18/09: si deve capire senza entrare in una sezione, e al posto della
 // linguetta Onboarding): aperto → passi fatti e prossimo passo; concluso → «✅ Avvio concluso · fatti/14». Il tocco apre i 14 passi
 // (sezione `onboarding`, senza linguetta); un secondo tocco li richiude e torna alla sezione con cui si apre la scheda.
+// «Ordina da solo» (nota Pagine 043 con Azioni 025, Ignazio 08/10/2026): il cliente ha detto «ordino io dal mio account».
+// La vendita si registra solo quando ordina davvero. Stessa riga nella scheda del cliente e in Dashboard: prima dei 7 giorni
+// «Ha ordinato»; dal 7° giorno la domanda «X ha ordinato?» con tre tocchi. Stato, regola (`MB21Agenda.attesaOrdini`), lettura
+// (`leggiAttesaOrdini`) e le tre funzioni dei tocchi sono della sessione Azioni (agenda.js, pagina-vendite.js); qui solo la parte che si vede.
+// `a` = una riga di attesaOrdini { id, contattoId, nome, dal, chiediIl, daChiedere }; dove = 'scheda' | 'dashboard'.
+function attesaOrdineHtml(a, dove) {
+  const detto = `Ordina da solo dal suo account · detto il ${esc(dataBreve(a.dal))}`;
+  const titolo = a.daChiedere ? `${esc(a.nome)} ha ordinato?` : dove === 'dashboard' ? esc(a.nome) : 'Ordina da solo dal suo account';
+  const sotto = a.daChiedere || dove === 'dashboard' ? detto : `Detto il ${esc(dataBreve(a.dal))} · la vendita si registra quando ordina`;
+  const tasto = (cosa, testo, classe = '') => `<button class="${classe}" data-attesa-fai="${cosa}|${esc(a.id)}" ${ST.offline ? 'disabled' : ''}>${testo}</button>`;
+  // con l'abbonamento scaduto (nota 042) si vede ma non si tocca
+  const tasti = limitato() ? '' : `<div class="ao-tasti">${a.daChiedere
+    ? tasto('ordinato', 'Sì, ha ordinato', 'si') + tasto('ancora', 'Non ancora') + tasto('piu', 'Non ordina più', 'no')
+    : tasto('ordinato', 'Ha ordinato', 'si')}</div>`;
+  const scheda = dove === 'dashboard' && !limitato() ? `<button class="link ao-scheda" data-attesa-scheda="${esc(a.contattoId)}">${ic('persona')} Apri contatto</button>` : '';
+  return `<div class="ao-riga${a.daChiedere ? ' da-chiedere' : ''}"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span><span><b>${titolo}</b><small>${sotto}</small></span></div>${tasti}${scheda}</div>`;
+}
+function collegaAttesaOrdine(box, righe, poi) {
+  if (!box) return;
+  const fai = { ordinato: attesaHaOrdinato, ancora: attesaNonAncora, piu: attesaNonOrdinaPiu };
+  box.querySelectorAll('[data-attesa-fai]').forEach(b => b.onclick = () => {
+    if (soloGuardo() || limitato() || ST.offline) return;
+    const [cosa, id] = b.dataset.attesaFai.split('|');
+    const a = righe.find(x => x.id === id);
+    if (a) fai[cosa](a, poi);
+  });
+  box.querySelectorAll('[data-attesa-scheda]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.attesaScheda, 'oggi'));
+}
+// Scheda del Cliente: l'attesa aperta di questa persona (una lettura sola per scheda, solo per i Clienti)
+async function mostraAttesaOrdine(c) {
+  const posto = document.getElementById('attesa-posto');
+  if (!posto || typeof leggiAttesaOrdini !== 'function') return;
+  if (!LS.attesa || LS.attesa.id !== c.id) {
+    let righe = [];
+    try { righe = (await leggiAttesaOrdini([c.user_id])).filter(a => a.contattoId === c.id); } catch (e) { return; }
+    if (LS.contatto !== c) return;
+    LS.attesa = { id: c.id, righe };
+  }
+  const righe = LS.attesa.righe, qui = document.getElementById('attesa-posto');
+  if (!qui) return;
+  qui.innerHTML = righe.map(a => attesaOrdineHtml(a, 'scheda')).join('');
+  collegaAttesaOrdine(qui, righe, async () => { LS.attesa = null; LS.vendite = null; LS.azioni = null; await ricaricaERidisegna(); });
+}
+
 function mostraAvvio(c) {
   const posto = document.getElementById('avvio-posto');
   if (!posto || !LS.avvio || LS.avvio.id !== c.id || c.categoria !== 'Partner') return;
@@ -505,6 +549,7 @@ function disegnaScheda() {
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
         <div class="vn-brand-testata" id="vn-brand-testata"></div>
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span><span id="avvio-posto"></span>' : ''}
+        ${c.categoria === 'Cliente' ? '<div id="attesa-posto"></div>' : ''}
       </div>
     </div>
     ${['Prospect', 'Partner', 'Cliente'].includes(c.categoria) ? '<div id="scheda-cose"></div>' : ''}
@@ -532,6 +577,7 @@ function disegnaScheda() {
   if (m) m.onclick = () => apriModulo(c);
   mostraInvito(c);
   mostraAvvio(c);
+  mostraAttesaOrdine(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});

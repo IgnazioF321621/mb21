@@ -111,7 +111,7 @@ async function caricaOggi() {
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes()]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes(), caricaAttese()]);
   PRE.dati = null;   // da qui in poi ogni lettura torna alla rete (dopo un esito, una conferma, un ritorno sulla Dashboard scaduta)
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
@@ -350,7 +350,7 @@ function disegnaHome() {
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
   if (!vediTutti() && !limitato()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
   if (nuovo) html += consiglioNuovoHtml();
-  html += tracceHtml() + mioPercorsoHtml();   // le due righe grigie di prima (tracce condivise e percorso di chi parte): per ora restano qui sotto
+  html += atteseHtml() + tracceHtml() + mioPercorsoHtml();   // «Ordina da solo» (nota 043), poi le due righe grigie di prima (tracce condivise e percorso di chi parte): per ora restano qui sotto
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
     const go = b.dataset.lv;
@@ -620,6 +620,7 @@ function cambiaRigaDashAperta(nome) { const a = aperteDash(); a[nome] = true; tr
 function collegaVistaLV() {
   collegaDashboard();
   collegaMioAvvio();
+  collegaAttese();   // «Ordina da solo» (nota 043): la riga si apre anche con l'abbonamento scaduto, i tocchi no
   if (LV.vista === 'home') { mostraRigaTelefono(); mostraRiquadroObiettivi(); }
   if (ST.offline || limitato()) {
     app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
@@ -1394,6 +1395,31 @@ function disegnaAvvio() {
 }
 
 const RIO = { righe: [], nonRisponde: new Set(), spento: new Set() };
+
+// «Ordina da solo» in Dashboard (nota Pagine 043 con Azioni 025): dal 7° giorno un avviso in evidenza per ogni cliente
+// («X ha ordinato?» con tre tocchi, i più vecchi prima); prima solo una riga discreta «N clienti ordinano da solo» che si apre.
+// La riga è quella della scheda (`attesaOrdineHtml` in pagina-lista.js).
+const ATT = { righe: [], aperta: false };
+async function caricaAttese() {
+  ATT.righe = [];
+  if (vediTutti() || typeof leggiAttesaOrdini !== 'function') return;
+  try { ATT.righe = await leggiAttesaOrdini(idVisti()); } catch (e) {}
+}
+function atteseHtml() {
+  if (!ATT.righe.length) return '';
+  const chiedere = ATT.righe.filter(a => a.daChiedere), dopo = ATT.righe.filter(a => !a.daChiedere);
+  const n = dopo.length;
+  return `<div class="ao-dash">${chiedere.map(a => attesaOrdineHtml(a, 'dashboard')).join('')}${n
+    ? rigaApribile('dash-attese', 'catalogare', 'vendite', `${n} ${n === 1 ? 'cliente ordina' : 'clienti ordinano'} da solo`, 'In attesa che ordinino dal loro account', ATT.aperta, 0)
+      + (ATT.aperta ? dopo.map(a => attesaOrdineHtml(a, 'dashboard')).join('') : '') : ''}</div>`;
+}
+function collegaAttese() {
+  const box = app.querySelector('.ao-dash');
+  if (!box) return;
+  const riga = document.getElementById('dash-attese');
+  if (riga) riga.onclick = () => { ATT.aperta = !ATT.aperta; disegnaOggi(); };
+  collegaAttesaOrdine(box, ATT.righe, async () => { await caricaAttese(); disegnaOggi(); });
+}
 
 async function caricaRiordini(oggi) {
   try {

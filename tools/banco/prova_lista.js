@@ -571,4 +571,38 @@ prova('Nota 042: abbonamento scaduto, la scheda non si apre (da nessuna strada) 
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-rubrica.js'), 'utf8'), /if \(soloGuardo\(\) \|\| limitato\(\)\) return;/);
 });
 
+prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° giorno la domanda con tre tocchi; scaduto senza tocchi', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
+  let scaduto = false, chiamata = null;
+  const bottoni = [];
+  const ctx = { limitato: () => scaduto, soloGuardo: () => false, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`,
+    dataBreve: g => g.slice(8, 10) + '/' + g.slice(5, 7),
+    attesaHaOrdinato: (a, poi) => { chiamata = ['ordinato', a.id, poi]; }, attesaNonAncora: (a, poi) => { chiamata = ['ancora', a.id, poi]; },
+    attesaNonOrdinaPiu: (a, poi) => { chiamata = ['piu', a.id, poi]; }, apriContattoDa: (id, r) => { chiamata = ['scheda', id, r]; } };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('function attesaOrdineHtml') + pezzo('function collegaAttesaOrdine') + ';this.html = attesaOrdineHtml; this.collega = collegaAttesaOrdine;', ctx);
+  const prima = { id: 'a1', contattoId: 'c1', nome: 'Francesco', dal: '2026-10-08', chiediIl: '2026-10-15', daChiedere: false };
+  const dopo = { ...prima, id: 'a2', daChiedere: true };
+  let h = ctx.html(prima, 'scheda');
+  assert.match(h, /Ordina da solo dal suo account/); assert.match(h, /Detto il 08\/10/); assert.match(h, /Ha ordinato/); assert.doesNotMatch(h, /Non ancora/);
+  h = ctx.html(dopo, 'scheda');
+  assert.match(h, /Francesco ha ordinato\?/); assert.match(h, /Sì, ha ordinato/); assert.match(h, /Non ancora/); assert.match(h, /Non ordina più/); assert.match(h, /da-chiedere/);
+  assert.doesNotMatch(h, /Apri contatto/);
+  assert.match(ctx.html(prima, 'dashboard'), /<b>Francesco<\/b>.*detto il 08\/10.*Apri contatto/s);
+  scaduto = true; assert.doesNotMatch(ctx.html(dopo, 'dashboard'), /data-attesa-fai|Apri contatto/); scaduto = false;
+  // i tocchi: ognuno chiama la sua funzione con la riga giusta e il ridisegno
+  const box = { querySelectorAll: sel => sel === '[data-attesa-fai]'
+    ? ['ordinato|a2', 'ancora|a2', 'piu|a2'].map(v => { const b = { dataset: { attesaFai: v } }; bottoni.push(b); return b; })
+    : [{ dataset: { attesaScheda: 'c1' } }].map(b => { bottoni.push(b); return b; }) };
+  const poi = () => {};
+  ctx.collega(box, [prima, dopo], poi);
+  bottoni[0].onclick(); assert.equal(chiamata[0] + chiamata[1], 'ordinatoa2'); assert.equal(chiamata[2], poi);
+  bottoni[1].onclick(); assert.equal(chiamata[0], 'ancora');
+  bottoni[2].onclick(); assert.equal(chiamata[0], 'piu');
+  bottoni[3].onclick(); assert.equal(chiamata.join(), 'scheda,c1,oggi');
+  scaduto = true; chiamata = null; bottoni[0].onclick(); assert.equal(chiamata, null);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
