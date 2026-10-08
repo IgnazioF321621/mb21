@@ -2968,10 +2968,12 @@ async function cambiaEsito(a, esito, dopo, testo) {
     p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito || null,
     p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  await attesaDaEsito(a.id, a.esito, esito);   // «Ordina da solo» anche da «Cambia esito» (nota Azioni 025)
   await dopo();
   mostraToast(`Esito: ${testo || esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
     const { error: e3 } = await dbq('annulla cambio esito', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
     if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+    await attesaDaEsito(a.id, esito, a.esito);
     await dopo();
     mostraToast('Annullato');
   });
@@ -2995,6 +2997,17 @@ async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
 }
 
 // opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda) · senzaProssimo: niente «Fissa il prossimo appuntamento» · testo: parola dell'avviso
+// «Ordina da solo» (nota Azioni 025): l'attesa «ha ordinato?» segue l'esito da QUALSIASI strada (chiusura dall'Agenda, dalla scheda, dai Riordini
+// da sentire, «Cambia esito», foglio Modifica, coda; l'08/10 dalla scheda non partiva). `prima` = l'esito che aveva, `dopo` = quello nuovo:
+// diventa «Ordina da solo» → si apre; non lo è più → si toglie. Torna true se ha scritto; se non riesce lo dice (l'esito resta salvato).
+async function attesaDaEsito(azioneId, prima, dopo) {
+  const E = MB21Agenda.ESITO_ATTESA_ORDINE;
+  const cosa = dopo === E && prima !== E ? 'apri' : prima === E && dopo !== E ? 'annulla' : null;
+  if (!cosa || !azioneId) return false;
+  const { error } = await dbq(cosa + ' attesa ordine', supa.rpc('attesa_ordine', { p_azione: azioneId, p_cosa: cosa }));
+  if (error) mostraToast(cosa === 'apri' ? 'Esito salvato, ma l\'attesa «ha ordinato?» non è partita: riprova dalla scheda.' : 'L\'attesa «ha ordinato?» non è stata tolta: riprova.');
+  return !error;
+}
 async function chiudiAppuntamento(e, esito, opz = {}) {
   const ridisegna = opz.dopo || apriAgenda;
   // Una chiamata sola (nota 045, 03/10): l'esito, la spunta dei passi in «Il mio avvio» (cantiere 48: il passo fatto nell'incontro si spunta anche lì, se non lo era già)
@@ -3006,12 +3019,11 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, true);
   // «Ordina da solo» (nota Azioni 025): la telefonata di riordino è chiusa (esce dai Riordini da sentire) e sulla stessa riga si apre l'attesa:
   // tra 7 giorni la Dashboard e la scheda chiedono «ha ordinato?». Nessuna vendita registrata da sola. Se l'attesa non parte, l'esito resta e lo si dice
-  const attesaOrdine = esito === MB21Agenda.ESITO_ATTESA_ORDINE;
-  if (attesaOrdine) { const r = await dbq('apri attesa ordine', supa.rpc('attesa_ordine', { p_azione: e.id, p_cosa: 'apri' })); if (r.error) mostraToast('Esito salvato, ma l\'attesa non è partita: riprova dalla scheda.'); }
+  await attesaDaEsito(e.id, e.esito, esito);
   // Annulla: l'esito com'era, le spunte e le righe in più tolte, tutto in una chiamata; `rientroCambiato` (null = come dice la chiusura) per la telefonata, che cambia la coda da sé
   const annullaChiusura = rientroCambiato => dbq('riapri appuntamento', supa.rpc('annulla_chiusura', { p_azione: e.id, p_prima: chiusura, p_rientro_cambiato: rientroCambiato }));
   const annulla = async creato => {
-    if (attesaOrdine) await dbq('annulla attesa ordine', supa.rpc('attesa_ordine', { p_azione: e.id, p_cosa: 'annulla' }));   // prima l'attesa, poi l'esito com'era
+    await attesaDaEsito(e.id, esito, e.esito);   // prima l'attesa, poi l'esito com'era
     const { error: e2 } = await annullaChiusura(null);
     if (!e2) for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, false);
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
@@ -3767,6 +3779,7 @@ async function foglioAzione(id, opz = {}) {
       p_ospite: st.ospite || null, p_note: $('fa-note').value.trim() || null,
       ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+    await attesaDaEsito(a.id, a.esito, st.esito || null);   // «Ordina da solo» anche dal foglio Modifica (nota Azioni 025)
     // la telefonata senza orario che prende un'ora, o un esito da qui, non è più «senza orario» (nota 012): da ora si vede in Agenda
     if (senzaOra && (st.conOra || st.esito)) {
       const { error: e4 } = await dbq('orario messo', supa.from('azioni').update({ senza_ora: false }).eq('id', a.id));
@@ -3778,6 +3791,7 @@ async function foglioAzione(id, opz = {}) {
     if (opz.dopo) await opz.dopo();
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
+      if (!e3) await attesaDaEsito(a.id, st.esito || null, a.esito);
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
       if (st.contatto.id === a.contatto_id) await allineaRigaCoda(a, inizio, a.inizio);
       await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));
