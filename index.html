@@ -2352,11 +2352,26 @@ function lasciaIlCampo() {
 function tastieraAperta() {
   const vv = window.visualViewport;
   const bassa = !!vv && vv.height * (vv.scale || 1) < window.innerHeight * 0.75;   // con lo zoom delle dita la finestra visibile si stringe ma non è la tastiera
-  document.body.classList.toggle('tastiera', campoDiTesto(document.activeElement) || bassa);
+  const prima = document.body.classList.contains('tastiera'), ora = campoDiTesto(document.activeElement) || bassa;
+  document.body.classList.toggle('tastiera', ora);
+  if (prima && !ora) riallineaBarra();   // tastiera appena chiusa
+}
+// Anche senza tastiera (Ignazio 08/10: «in entrambi i casi»): chiusa la tastiera, tornando nell'app dallo sfondo o girando il telefono,
+// Safari a volte lascia la pagina spostata e la barra fissa resta a metà schermo finché non si ricarica. Si rimette a posto:
+// la pagina riparte da dov'era e la barra si ridisegna in fondo (la si toglie e la si rimette, il telefono ricalcola il posto).
+function riallineaBarra() {
+  if (document.body.classList.contains('tastiera')) return;
+  window.scrollTo(window.scrollX, window.scrollY);
+  const nav = document.getElementById('tab');
+  if (!nav || nav.hidden) return;
+  nav.style.display = 'none'; void nav.offsetHeight; nav.style.display = '';
 }
 document.addEventListener('focusin', tastieraAperta);
 document.addEventListener('focusout', () => setTimeout(tastieraAperta, 60));   // da un campo all'altro il cursore passa senza far saltare la barra
 if (window.visualViewport) window.visualViewport.addEventListener('resize', tastieraAperta);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(riallineaBarra, 300); });
+window.addEventListener('pageshow', () => setTimeout(riallineaBarra, 300));
+window.addEventListener('orientationchange', () => setTimeout(riallineaBarra, 400));
 document.addEventListener('click', ev => {
   const el = document.activeElement, t = ev.target;
   if (!el || !t.closest || t.closest('input, textarea, select, label')) return;
