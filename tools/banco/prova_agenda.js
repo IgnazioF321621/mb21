@@ -18,7 +18,7 @@ prova('Tipi per categoria (Scelte.csv); Ex/Referral/Unlinked/Archiviato come Pro
 
 prova('Fasi: per tipo, per sottotipo dentro Appuntamento; PRD Vendita/No Vendita; Contatto di Partner/Cliente', () => {
   assert.deepEqual(A.fasiPer('Prospect', 'Consulenza PRD', 'Demo'), ['Vendita', 'No Vendita']);
-  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Appuntamento', 'Richiamare', 'Telefono spento', 'No Interesse', 'No Risposta']);   // «Ordine» dal 18/09, i non andati dal 25/09
+  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Ordina da solo', 'Appuntamento', 'Richiamare', 'Telefono spento', 'No Interesse', 'No Risposta']);   // «Ordine» dal 18/09, i non andati dal 25/09
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Counseling'), ['c/Downline', 'c/Upline', 'Motivazione']);
   assert.deepEqual(A.fasiPer('Partner', 'Appuntamento', 'Meeting/Evento'), ['Incontro N21']);
   // «Laboratorio» (nota Azioni 060, 06/10): per un Partner un tipo di appuntamento con i passi dell'Avvio; per un Prospect un tipo di follow up con gli esiti del Follow Up
@@ -192,7 +192,7 @@ prova('Esito «Vendita» di una Consulenza PRD: si propone di registrare la vend
   assert.equal(A.proponeVendita('Piano Marketing', 'Prodotti'), false);
   assert.equal(A.proponeVendita('Contatto', 'Vendita'), false);
   assert.equal(A.proponeVendita('Contatto', 'Ordine'), true);   // telefonata al Cliente finita con un ordine (riordino)
-  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Appuntamento', 'Richiamare', 'Telefono spento', 'No Interesse', 'No Risposta']);
+  assert.deepEqual(A.fasiPer('Cliente', 'Contatto', 'Telefonata'), ['Ordine', 'Ordina da solo', 'Appuntamento', 'Richiamare', 'Telefono spento', 'No Interesse', 'No Risposta']);
   assert.deepEqual(A.fasiPer('Partner', 'Contatto', 'Telefonata'), ['Appuntamento', 'Richiamare', 'Telefono spento', 'No Risposta']);
 });
 
@@ -360,7 +360,7 @@ prova('Cantiere 39 · esiti del Contatto: i buoni prima, quelli non andati su un
   assert.deepEqual(A.esitiInDueRighe(f), [['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti'], ['Telefono spento', 'No Interesse', 'No Risposta']]);
   assert.deepEqual(A.esitiInDueRighe(['Appuntamento', 'Richiamare']), [['Appuntamento', 'Richiamare']]);   // solo buoni: una riga sola
   assert.deepEqual(A.esitiInDueRighe(A.fasiPer('Partner', 'Contatto', 'Telefonata')), [['Appuntamento', 'Richiamare'], ['Telefono spento', 'No Risposta']]);
-  assert.deepEqual(A.esitiInDueRighe(A.fasiPer('Cliente', 'Contatto', 'Telefonata')), [['Ordine', 'Appuntamento', 'Richiamare'], ['Telefono spento', 'No Interesse', 'No Risposta']]);
+  assert.deepEqual(A.esitiInDueRighe(A.fasiPer('Cliente', 'Contatto', 'Telefonata')), [['Ordine', 'Ordina da solo', 'Appuntamento', 'Richiamare'], ['Telefono spento', 'No Interesse', 'No Risposta']]);
   // un'azione vecchia con un esito tolto dall'elenco lo tiene sceglibile nel foglio «Modifica»
   assert.ok(A.sceltePerModifica({ categoria: 'Prospect', tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Mai contattato o 2+ anni' }).esiti.includes('Mai contattato o 2+ anni'));
   assert.deepEqual(A.ESITI_CON_GIORNO, ['Richiamare', 'PM Fissato', 'Appuntamento']);
@@ -679,6 +679,24 @@ prova('Nota 005: la Linea come nella Mappa, la parte di una persona (lei compres
   assert.deepEqual(A.ramoDellaLinea(sq, null), []); assert.equal(A.ramoDellaLinea(sq, 'R', 3).length, 3);
   // senzaApp con il codice della persona: solo la sua parte
   assert.deepEqual(A.senzaApp(sq, ['IO', 'M'], 'IO', 'M').map(x => x.partner_id), ['L', 'P', 'A']);
+});
+
+
+prova('«In attesa che ordini» (nota Azioni 025): solo le attese aperte, le più vecchie prima; daChiedere quando oggi ≥ chiedi_il', () => {
+  const c = nome => ({ nome });
+  const lista = [
+    { id: 'a', contatto_id: 'c1', contatti: c('Francesco'), esito: 'Ordina da solo', attesa_dal: '2026-10-05', attesa_chiedi_il: '2026-10-12', attesa_chiusa_il: null },
+    { id: 'b', contatto_id: 'c2', contatti: c('Anna'), esito: 'Ordina da solo', attesa_dal: '2026-09-28', attesa_chiedi_il: '2026-10-05', attesa_chiusa_il: null },
+    { id: 'c', contatto_id: 'c3', contatti: c('Chiusa'), esito: 'Ordina da solo', attesa_dal: '2026-09-20', attesa_chiedi_il: '2026-09-27', attesa_chiusa_il: '2026-09-29' },
+    { id: 'd', contatto_id: 'c4', contatti: c('Normale'), esito: 'Ordine', attesa_dal: null },
+  ];
+  const r = A.attesaOrdini(lista, '2026-10-08');
+  assert.deepEqual(r.map(x => [x.id, x.nome, x.daChiedere]), [['b', 'Anna', true], ['a', 'Francesco', false]]);
+  assert.equal(r[0].contattoId, 'c2'); assert.equal(r[1].chiediIl, '2026-10-12');
+  assert.deepEqual(A.attesaOrdini([], '2026-10-08'), []); assert.deepEqual(A.attesaOrdini(null, '2026-10-08'), []);
+  assert.equal(A.ESITO_ATTESA_ORDINE, 'Ordina da solo');
+  assert.ok(A.fasiPer('Cliente', 'Contatto', 'Telefonata').includes('Ordina da solo'));
+  assert.equal(A.giorniRisentire('Ordina da solo'), null);   // niente «Quando risentirlo?»: ordina da solo
 });
 
 console.log(`\n${ok} prove superate`);

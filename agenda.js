@@ -43,7 +43,8 @@
     },
     // Ignazio 25/09: «No Risposta» e «Telefono spento» anche per Partner e Clienti (in Glide c'erano; prima il Cliente li aveva solo in coda)
     'Partner': { 'Contatto': [...FASI_CONTATTO_PC, 'Telefono spento', 'No Risposta'], 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
-    'Cliente': { 'Contatto': ['Ordine', ...FASI_CONTATTO_PC, 'Telefono spento', 'No Interesse', 'No Risposta'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
+    // «Ordina da solo» (nota Azioni 025, Ignazio 08/10): il cliente ordina dal suo account; non è un no e non è una vendita: apre l'attesa (attesaOrdini)
+    'Cliente': { 'Contatto': ['Ordine', 'Ordina da solo', ...FASI_CONTATTO_PC, 'Telefono spento', 'No Interesse', 'No Risposta'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
   };
   for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
@@ -404,6 +405,16 @@
       ...glide.filter(a => a.glide_id && a.esito === 'Riordino' && !a.completata && fin(a) && partiRoma(a.inizio).giorno >= INIZIO_RIORDINI_GLIDE),
     ].sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
   }
+  // «In attesa che ordini» (nota Azioni 025): le telefonate di riordino chiuse «Ordina da solo» con l'attesa ancora aperta
+  // (`attesa_dal` pieno, `attesa_chiusa_il` vuoto). `daChiedere` = è ora di chiedere «ha ordinato?» (oggi ≥ `attesa_chiedi_il`). Le più vecchie prima.
+  // Le righe sono azioni con `contatti(nome, …)` dentro; la scheda e la Dashboard usano questa stessa regola.
+  function attesaOrdini(azioni, oggi) {
+    return (azioni || []).filter(a => a.attesa_dal && !a.attesa_chiusa_il)
+      .map(a => ({ id: a.id, contattoId: a.contatto_id, nome: a.contatti ? a.contatti.nome : '', dal: a.attesa_dal, chiediIl: a.attesa_chiedi_il,
+        daChiedere: !!a.attesa_chiedi_il && a.attesa_chiedi_il <= oggi, azione: a }))
+      .sort((x, y) => (x.dal < y.dal ? -1 : x.dal > y.dal ? 1 : 0));
+  }
+  const ESITO_ATTESA_ORDINE = 'Ordina da solo';
   // «Da confermare · PM 1a1 · oggi ore 18:30» (o «domani»); fino al 04/10 «Conferma appuntamento · …» (era un ordine: nota Azioni 027, CLAUDE.md § 1)
   function testoConferma(a, adessoIso) {
     const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
@@ -791,7 +802,7 @@
 
   const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
