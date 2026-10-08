@@ -295,6 +295,11 @@ prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte
   // 04/10 (Ignazio): niente carta senza fonte, e il perché non dà ordini
   assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { ...scena('s1'), fonte: undefined }] }), ['s1: manca la fonte']);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('s2', { perche: 'Devi chiamare ogni giorno.' })] }).length, 1);
+  // 08/10 (Ignazio, nota Training 017): la giusta non si riconosce dalla lunghezza
+  const lunga = 'Una risposta giusta scritta in modo molto, molto più lungo e dettagliato di tutte le altre';
+  assert.equal(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('l1', { versioni: [{ scena: 'x', risposte: [lunga, 'corta uno', 'corta due'] }] })] }).length, 1);
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('l2', { versioni: [{ scena: 'x', risposte: ['una risposta abbastanza lunga', 'un\'altra risposta lunga uguale', 'e una terza dello stesso tipo'] }] })] }), []);
+  assert.equal(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { id: 'l3', tipo: 'frase', tema: 'x', davanti: 'Cosa?', dietro: lunga, sbagliate: ['no uno', 'no due', 'no tre'], fonte: { tipo: 'manuale', pag: '1' } }] }).length, 1);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, percorso: { id: 'boh' } }), ['percorso sconosciuto: boh']);
   assert.ok(T.controllaMazzo({ ...mazzo, situazione: 'carte_x' })[0].startsWith('situazione'));
 });
