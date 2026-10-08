@@ -314,6 +314,12 @@
   function inProva(v) { IN_PROVA = !!v; }
   function livelliVisibili() { return IN_PROVA ? LIVELLI : LIVELLI.map(l => ({ ...l, percorsi: l.percorsi.filter(p => !p.solo_admin) })); }
 
+  // La giusta è la prima. «Molto più lunga»: oltre 1,4 volte la media delle sbagliate e di almeno 15 caratteri più lunga della più lunga di loro.
+  function giustaTroppoLunga(r) {
+    if (!Array.isArray(r) || r.length < 2 || !r.every(x => typeof x === 'string')) return false;
+    const altre = r.slice(1).map(x => x.length), media = altre.reduce((t, x) => t + x, 0) / altre.length;
+    return r[0].length > 1.4 * media && r[0].length - Math.max(...altre) >= 15;
+  }
   function controllaMazzo(m) {
     const p = [], ids = new Set();
     const testo = (v, max) => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
@@ -353,6 +359,9 @@
       if (/\b(devi|dovresti|abbonati)\b/i.test(c.perche || '')) p.push(`${chi}: il perché dà un ordine («devi», «dovresti», «abbonati»): meglio un consiglio`);
       if (c.fonte2 && (!c.fonte || !fonteOk(c.fonte2) || c.fonte2.tipo === 'sito')) p.push(`${chi}: seconda fonte incompleta`);
       if (c.situazioni && !(Array.isArray(c.situazioni) && c.situazioni.length && c.obiezione)) p.push(`${chi}: situazioni senza obiezione`);
+      // 08/10 (Ignazio, nota Training 017): la risposta giusta non si deve riconoscere dalla lunghezza
+      const scelte = c.tipo === 'scena' ? (c.versioni || []).map(v => v && v.risposte) : c.tipo === 'frase' && Array.isArray(c.sbagliate) ? [[c.dietro, ...c.sbagliate]] : [];
+      for (const r of scelte.filter(giustaTroppoLunga)) p.push(`${chi}: la risposta giusta è molto più lunga delle altre (${r[0].length} caratteri contro ${Math.round(r.slice(1).reduce((t, x) => t + x.length, 0) / (r.length - 1))} di media): accorciarla o allungare le sbagliate`);
     }
     if ((m.carte || []).filter(aRisposta).length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte a risposta per il test`);
     return p;
