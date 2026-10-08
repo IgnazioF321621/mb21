@@ -97,6 +97,7 @@
   nav button svg.ic { display: block; width: 23px; height: 23px; margin: 0 auto 3px; }
   nav[hidden] { display: none; }   /* cantiere 32: «display: flex» qui sopra vinceva su hidden, e la barra restava a video anche quando il codice la nascondeva (benvenuto, accesso) */
   nav button[hidden] { display: none; }
+  body.tastiera nav { display: none; }   /* nota Pagine 044: mentre si scrive la barra non sale sopra la tastiera (vedi `tastieraAperta`) */
   /* La pagina in cui sei: pastiglia grigia sotto l'icona (Ignazio 28/09: «così so dove sono») */
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); background: var(--tab-attiva); border-radius: 14px; }
   /* Admin, solo per l'Admin (Ignazio 25/09): in fondo alla barra, su fondo scuro, «così subito risaltano e so che sono solo per l'admin» */
@@ -2339,10 +2340,23 @@ const APP_VERSION = '2026.10.08 · 15:47';
 // il foglio si ridisegnava buttando via il campo, la tastiera si chiudeva male e la barra in basso restava a metà schermo fino allo standby).
 // Regola unica per tutta l'app: prima che un tocco o una scelta dall'elenco dei suggerimenti faccia ridisegnare o chiudere qualcosa,
 // il campo in cui si stava scrivendo viene lasciato nel modo normale. I bottoni accanto al campo (occhio della password, ✕ della ricerca) no.
+const campoDiTesto = el => !!el && (el.tagName === 'TEXTAREA' || el.isContentEditable || (el.tagName === 'INPUT' && !/^(checkbox|radio|range|file|button|submit|color)$/.test(el.type)));
 function lasciaIlCampo() {
   const el = document.activeElement;
-  if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|range|file|button|submit)$/.test(el.type)))) el.blur();
+  if (campoDiTesto(el)) el.blur();
 }
+// La barra delle pagine con la tastiera aperta (nota Pagine 044, feedback di Ignazio 08/10/2026: «si alza fino a metà spesso e volentieri,
+// impedendo di scrivere»): sul telefono la barra fissata in basso sale sopra la tastiera e copre il campo, e a volte, chiusa la tastiera,
+// resta a metà. Regola unica per tutte le pagine e i fogli: finché c'è un campo di testo col cursore, o la parte visibile della finestra
+// è molto più bassa del solito (la tastiera), la barra sparisce (classe `tastiera` sul body); chiusa la tastiera torna al suo posto.
+function tastieraAperta() {
+  const vv = window.visualViewport;
+  const bassa = !!vv && vv.height * (vv.scale || 1) < window.innerHeight * 0.75;   // con lo zoom delle dita la finestra visibile si stringe ma non è la tastiera
+  document.body.classList.toggle('tastiera', campoDiTesto(document.activeElement) || bassa);
+}
+document.addEventListener('focusin', tastieraAperta);
+document.addEventListener('focusout', () => setTimeout(tastieraAperta, 60));   // da un campo all'altro il cursore passa senza far saltare la barra
+if (window.visualViewport) window.visualViewport.addEventListener('resize', tastieraAperta);
 document.addEventListener('click', ev => {
   const el = document.activeElement, t = ev.target;
   if (!el || !t.closest || t.closest('input, textarea, select, label')) return;
