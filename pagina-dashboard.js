@@ -598,6 +598,7 @@ function disegnaOggi() {
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «N riordini da sentire» porta dritto al riquadro; dal benvenuto su «Il mio avvio»
   if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; cambiaRigaDashAperta('riordini'); }
   if (vai === 'avvio') LV.vista = 'avvio';
+  if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta()
@@ -614,6 +615,8 @@ function disegnaOggi() {
     case 'avvio': disegnaAvvioLV(); break;
     default: LV.vista = 'home'; disegnaHome();
   }
+  // prima dei collegamenti: aperto il modulo, il riquadro degli obiettivi non si sovrappone (si apre solo senza fogli aperti)
+  if (vai === 'giorno' && !ST.offline && !limitato() && !document.querySelector('.velo')) apriCheck();
   collegaVistaLV();
 }
 function cambiaRigaDashAperta(nome) { const a = aperteDash(); a[nome] = true; try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {} }
