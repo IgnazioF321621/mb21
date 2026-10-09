@@ -2806,6 +2806,9 @@ function preparaApertura(p) {
   const apri = p.get('apri');
   if (!['check', 'agenda', 'lista', 'training'].includes(apri) || limitato()) return false;
   if (apri === 'training' && !TRAINING_VISIBILE) return false;
+  // «?apri=check» (l'avviso della sera, regole.ts) vuol dire «Il mio giorno»: dal 28/09 il modulo della sera sta in Dashboard e la pagina
+  // «check» è quella dei traguardi (nota Pagine 045, Ignazio 09/10). Stesso indirizzo di sempre, così valgono anche gli avvisi già arrivati.
+  if (apri === 'check') { ST.tab = 'oggi'; ST.vaiA = 'giorno'; return true; }
   ST.tab = apri;
   if (apri === 'training') TRN.vista = p.get('vista') === 'ripassa' ? 'ripassa' : 'impara';   // l'avviso del Training (25/09): Ripassa se ci sono carte da ripassare
   if (apri === 'agenda') { AG.vista = 'giorno'; AG.giorno = p.get('giorno') || MB21Coda.oggiRoma(); AG.aperta = p.get('azione') || null; AG.portato = null; }
