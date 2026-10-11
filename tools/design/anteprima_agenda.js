@@ -29,7 +29,7 @@ const stile = fra('<style>', '</style>').replace('<style>', '');
 const codice = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'),
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
-  funzione('esc'), riga('function percheHtml'), riga('function diPerche'),   // «Perché?» (nota 048)
+  funzione('esc'), riga('function percheHtml'), riga('function diPerche'), funzione('fermoScaduto'),   // «Perché?» (nota 048)
   funzione('bottoniEsiti'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   fra('const CY = {', '\nfunction doveSono'),   // nota 001: il segnale Coach Yes, vero
   funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
@@ -63,7 +63,7 @@ const AZIONI = [
 
 // ── finte le cose che nell'app arrivano dal database o da altre pagine ──
 // `modo`: per provare anche l'Admin con il Partner Select su «Tutti» (più agende insieme)
-const modo = { admin: false, tutti: false };
+const modo = { admin: false, tutti: false, scaduto: false };   // scaduto: abbonamento scaduto (nota Pagine 050)
 const { Nodo } = require('./mini_dom.js');
 const app = new Nodo();   // dal 05/10 un piccolo DOM: la prova può toccare le pastiglie «Per chi è?» e il campo «Aggiungi…»
 const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati: [{}], aperta: null,
@@ -116,7 +116,7 @@ const stub = {
   MB21Agenda: A, MB21Icone, MB21Spazi, MB21Perche: require(path.join(BASE, 'perche.js')), app, AG, LIMITE_SENZA_ESITO: 50, MB21Mappa: require(path.join(BASE, 'mappa.js')), MB21Lista: require(path.join(BASE, 'lista.js')),
   ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI, adesso: () => A.isoDaRoma(OGGI, '12:00') },   // il motore vero (contoGiorno), con l'oggi fermo e «adesso» a mezzogiorno
-  vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
+  vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false, limitato: () => modo.scaduto,
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',
   rigaPortato: n => 'portato da ' + n,
