@@ -1663,14 +1663,55 @@ function foglioRicevuto(r) {
       ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>`
         : r.luogo ? `<a class="pt-link pt-luogo" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}
       ${puntiSolaLetturaHtml(r)}
-      <div class="campo"><label>Partecipi?</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div></div>`;
+      <div class="campo"><label>${A.conOspiti(r) ? 'Conferma della presenza' : 'Partecipi?'}</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div>
+      ${ospitiHtml(r)}</div>`;
     velo.querySelector('#ri-x').onclick = chiudi;
     velo.querySelectorAll('[data-ri-risposta]').forEach(b => { b.onclick = async () => {
-      if (await rispondiImpegno(r, b.dataset.riRisposta)) { chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: partecipi' : 'Segnato: non puoi'); }
+      if (!(await rispondiImpegno(r, b.dataset.riRisposta))) return;
+      // la SdS/OPEN (nota 047): con «Partecipo» il foglio resta aperto, per scrivere subito gli ospiti
+      if (A.conOspiti(r) && b.dataset.riRisposta === 'ci_sono') { mostraToast('Segnato: partecipi'); return disegna(); }
+      chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: partecipi' : 'Segnato: non puoi');
     }; });
+    collegaOspiti(velo, r, disegna);
   };
   disegna();
   if (!r.visto_il) rispondiImpegno(r, null);   // visto: il pop-up non lo ripropone
+  if (A.conOspiti(r)) leggiOspiti(r).then(() => { if (velo.isConnected) disegna(); });
+}
+// ── Gli ospiti della SdS/OPEN (nota Pagine 047, Ignazio 11/10/2026): chi partecipa scrive i nomi di chi porta, anche più tardi riaprendo
+// la serata; stanno nella sua riga di `impegni_risposte` (campo `ospiti`). Stesso blocco nel foglio della serata e nel pop-up.
+async function leggiOspiti(r) {
+  if (r.ospiti) return r.ospiti;
+  const { data, error } = await dbq('ospiti', supa.from('impegni_risposte').select('ospiti').eq('origine', r.origine).eq('impegno_id', r.id).eq('utente_id', visto().id).maybeSingle());
+  r.ospiti = !error && data && Array.isArray(data.ospiti) ? data.ospiti : [];
+  return r.ospiti;
+}
+function ospitiHtml(r) {
+  if (!MB21Agenda.conOspiti(r) || r.risposta !== 'ci_sono') return '';
+  const lista = r.ospiti || [];
+  return `<div class="campo osp"><label>Ospiti${lista.length ? ` <small>${lista.length}</small>` : ''}</label>
+    <div class="vn-aiuto">${esc(MB21Agenda.FRASE_OSPITI)}</div>
+    ${lista.length ? `<div class="osp-nomi">${lista.map((n, i) => `<span class="sp-chip">${esc(n)}<button type="button" data-osp-togli="${i}" aria-label="Togli ${esc(n)}">${ic('chiudi')}</button></span>`).join('')}</div>` : ''}
+    <div class="sp-nome-riga"><input data-osp-nome maxlength="60" autocomplete="off" placeholder="Nome e cognome dell'ospite"><button type="button" data-osp-ok>Aggiungi</button></div></div>`;
+}
+function collegaOspiti(el, r, ridisegna) {
+  const salva = async lista => {
+    const prima = r.ospiti;
+    r.ospiti = lista;
+    const { error } = await dbq('salva ospiti', supa.from('impegni_risposte').update({ ospiti: lista }).eq('origine', r.origine).eq('impegno_id', r.id).eq('utente_id', visto().id));
+    if (error) { r.ospiti = prima; mostraToast('Non salvato: controlla la connessione e riprova.'); }
+    ridisegna();
+  };
+  const campo = el.querySelector('[data-osp-nome]');
+  const aggiungi = () => {
+    const lista = MB21Agenda.aggiungiOspite(r.ospiti, campo.value);
+    if (lista.length === (r.ospiti || []).length) { campo.value = ''; return; }
+    salva(lista);
+  };
+  const ok = el.querySelector('[data-osp-ok]');
+  if (ok) ok.onclick = aggiungi;
+  if (campo) campo.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); aggiungi(); } };
+  el.querySelectorAll('[data-osp-togli]').forEach(b => { b.onclick = () => salva((r.ospiti || []).filter((_, i) => i !== Number(b.dataset.ospTogli))); });
 }
 // All'apertura dell'app (index.html, dopoAccesso): gli impegni ricevuti non ancora visti, da oggi in avanti. Chiamato da index.html, mai con «Tutti».
 async function controllaImpegniNuovi() {
@@ -1693,17 +1734,24 @@ function foglioImpegniNuovi(nuovi) {
     velo.innerHTML = `<div class="foglio alto ric-foglio">
       <div class="testa-foglio"><h3>${nuovi.length === 1 ? 'Hai un nuovo appuntamento' : `Hai ${nuovi.length} nuovi appuntamenti`}</h3><button id="rn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       ${nuovi.map(r => `<div class="ric-nuovo" data-rn="${esc(A.chiaveRicevuto(r))}"><b>${esc(r.titolo)}</b><span>da ${esc(r.da_nome || '—')} · ${esc(giornoOraRicevuto(r))}</span>
-        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : r.luogo ? `<a class="link" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}</div>`).join('')}</div>`;
+        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : r.luogo ? `<a class="link" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}${
+          A.conOspiti(r) ? '<small class="ric-conferma">Conferma della presenza</small>' : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}${
+          A.conOspiti(r) && r.risposta === 'ci_sono' ? ospitiHtml(r) + '<button type="button" class="link" data-rn-fatto>Fatto</button>' : ''}</div>`).join('')}</div>`;
     velo.querySelector('#rn-x').onclick = chiudi;
     velo.querySelectorAll('.ric-nuovo').forEach(riga => {
       const r = nuovi.find(x => A.chiaveRicevuto(x) === riga.dataset.rn);
       riga.querySelectorAll('[data-rn-risposta]').forEach(b => { b.onclick = async () => {
         const risposta = b.dataset.rnRisposta;
         if (risposta !== 'dopo' && !(await rispondiImpegno(r, risposta))) return;
+        // la SdS/OPEN (nota 047): con «Partecipo» la riga resta, con gli ospiti da scrivere e «Fatto»
+        if (A.conOspiti(r) && risposta === 'ci_sono') { await leggiOspiti(r); return disegna(); }
         nuovi = nuovi.filter(x => x !== r);
         if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: partecipi. Lo trovi in MB Plan' : 'Segnato: non puoi');
         disegna();
       }; });
+      collegaOspiti(riga, r, disegna);
+      const fatto = riga.querySelector('[data-rn-fatto]');
+      if (fatto) fatto.onclick = () => { nuovi = nuovi.filter(x => x !== r); if (!nuovi.length) mostraToast('Segnato: partecipi. Lo trovi in MB Plan'); disegna(); };
     });
   };
   disegna();
@@ -1731,7 +1779,12 @@ async function mostraRisposte(el, origine, id) {
   if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRispostaDiLui(data[0].risposta))}</b>` : ''; return; }
   // due liste con i nomi (Ignazio 05/10): chi partecipa e chi non può; sotto, piccolo, chi non ha risposto
   const gruppo = (titolo, nomi, cl) => `<div class="${cl}"><b>${esc(titolo)} ${nomi.length}</b>${nomi.length ? ': ' + esc(nomi.join(', ')) : ''}</div>`;
-  dove.innerHTML = `${gruppo('Partecipano', n.ci_sono, 'cd-si')}${gruppo('Non possono', n.non_ci_sono, 'cd-no')}${gruppo('Senza risposta', n.senza, 'cd-senza')}`; void c;
+  // gli ospiti (nota 047): chi organizza legge le righe di tutti (regola di accesso dell'Admin); se non si leggono, i nomi restano senza
+  const o = await dbq('ospiti della serata', supa.from('impegni_risposte').select('utente_id, ospiti').eq('origine', 'spazio').eq('impegno_id', id).not('ospiti', 'is', null));
+  const di = Object.fromEntries((!o.error && Array.isArray(o.data) ? o.data : []).map(x => [x.utente_id, x.ospiti || []]));
+  const osp = A.ospitiPerChiOrganizza(data, di);
+  if (osp.totale) n.ci_sono = osp.nomi;
+  dove.innerHTML = `${osp.totale ? `<div class="cd-si"><b>Ospiti ${osp.totale}</b></div>` : ''}${gruppo('Partecipano', n.ci_sono, 'cd-si')}${gruppo('Non possono', n.non_ci_sono, 'cd-no')}${gruppo('Senza risposta', n.senza, 'cd-senza')}`; void c;
 }
 function collegaCondivisioneAzione(el, e, ridisegna) {
   const blocco = el.querySelector(`[data-cd="${e.id}"]`);
@@ -2072,7 +2125,9 @@ async function preparaSettimana() {
   const settimana = AG.settimana.slice(), giorni = settimana.filter(g => g >= oggi);
   if (!giorni.length) return mostraToast('Questa settimana è già passata: vai alla prossima con ›');
   const esistenti = (AG.spazi || []).filter(s => settimana.includes(S.orario(s).giorno));
-  const sds = S.sdsDaMettere(settimana, esistenti, oggi) ? [{ giorno: settimana[S.SDS.giorno], ora: S.SDS.ora, durata: S.SDS.durata }] : [];
+  // la SdS/OPEN è una sola, quella del Team (nota 047, Ignazio 11/10): la crea l'Admin per sé, già condivisa; i partner non la aggiungono più
+  const sdsMia = eAdmin() && visto().id === ST.utente.id;
+  const sds = sdsMia && S.sdsDaMettere(settimana, esistenti, oggi) ? [{ giorno: settimana[S.SDS.giorno], ora: S.SDS.ora, durata: S.SDS.durata }] : [];
   // tipi: quelli aggiunti dal selettore «Aggiungi ▾» (Ignazio 27/09: «se no le scritte diventano tante»), nell'ordine scelto
   const st = { passo: 0, tipi: [], quanti: {}, scelti: [], aperto: null, menu: false, nomeAperto: null };
   const passi = () => ['quanti', ...st.tipi];
@@ -2097,8 +2152,9 @@ async function preparaSettimana() {
           Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
         // Nota Pagine 046 (Ignazio 11/10/2026): «si aggiunge da sola» faceva credere che ci fosse già, ma si scrive solo con «Crea gli spazi»
         // (e senza nessun numero «Avanti» non va). Ora la si mette anche da sola, con un tocco, senza preparare altro.
-        + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge insieme agli spazi che crei. Se ti serve solo quella, basta un tocco qui sotto. Se cambia giorno o ora, la sposti poi nella Timeline.</div>
-          <button type="button" class="link" id="sp-solo-sds">${ic('piu')} Aggiungi solo la SdS/OPEN di lunedì alle 21:30</button>` : '');
+        + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge insieme agli spazi che crei, già condivisa con tutto il Team. Se ti serve solo quella, basta un tocco qui sotto. Se cambia giorno o ora, la sposti poi nella Timeline.</div>
+          <button type="button" class="link" id="sp-solo-sds">${ic('piu')} Aggiungi solo la SdS/OPEN di lunedì alle 21:30</button>`
+          : sdsMia ? '' : `<div class="vn-aiuto"><b>SdS/OPEN</b> · ${esc(A.SDS_DEL_TEAM)}</div>`);
     } else {
       const n = st.quanti[p], messi = st.scelti.filter(s => s.tipo === p).length;
       corpo = `<p class="sp-domanda">${esc(S.domandaGiorni(p, n))}</p>
@@ -2152,14 +2208,14 @@ async function preparaSettimana() {
     velo.querySelectorAll('[data-nome-ok]').forEach(b => { b.onclick = () => { st.nomeAperto = null; disegna(); }; });
     const soloSds = velo.querySelector('#sp-solo-sds');
     if (soloSds) soloSds.onclick = async () => {
-      const righe = S.righeNuove(visto().id, settimana, [], esistenti, oggi);   // stessa regola: niente doppioni nella settimana, niente lunedì passato
+      const righe = S.righeNuove(visto().id, settimana, [], esistenti, oggi, { sds: sdsMia, team: true });   // stessa regola: niente doppioni nella settimana, niente lunedì passato; già condivisa col Team (047)
       if (!righe.length) return disegna('La SdS/OPEN di questa settimana c\'è già.');
       soloSds.disabled = true;
       const { data, error } = await dbq('solo la SdS/OPEN', supa.from('spazi').insert(righe).select('id'));
       if (error) { soloSds.disabled = false; return disegna('Non salvata: controlla la connessione e riprova.'); }
       chiudi();
       await apriAgenda(AG.giorno);
-      mostraToast('Fatto: la SdS/OPEN la trovi in Timeline lunedì alle 21:30', async () => {
+      mostraToast('Fatto: la SdS/OPEN è in Timeline lunedì alle 21:30, condivisa con tutto il Team', async () => {
         await dbqAvvisa('annulla SdS/OPEN', supa.from('spazi').delete().in('id', data.map(r => r.id)), 'Annullamento non riuscito: controlla la connessione e riprova.');
         await apriAgenda(AG.giorno);
       });
@@ -2171,7 +2227,7 @@ async function preparaSettimana() {
         if (mancano > 0) return disegna(S.manca(p, mancano));
       }
       if (!ultimo) { st.passo++; st.aperto = null; return disegna(); }
-      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi);
+      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi, { sds: sdsMia, team: true });
       if (!righe.length) return disegna('Tocca un numero accanto ad almeno un appuntamento o un incontro.');
       const btn = velo.querySelector('#sp-si');
       btn.disabled = true; btn.textContent = 'Salvo…';

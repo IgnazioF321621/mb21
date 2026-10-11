@@ -31,7 +31,23 @@ prova('Prepara la settimana: accanto all\'ora di un incontro LdS c\'è «+ nome�
   const ins = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert');
   const righe = ins.args[0];
   assert.equal(righe.find(r => r.tipo === 'LOS').nome, 'Serata Rubino');
-  assert.equal('nome' in righe.find(r => r.tipo === 'SdS/OPEN'), false);   // la SdS/OPEN non ha nome
+  assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);   // nota 047: un partner non aggiunge più la SdS/OPEN (è quella del Team)
+});
+
+prova('Nota 047: l\'Admin, con «Crea gli spazi» o col tasto «solo la SdS/OPEN», la crea già condivisa con tutto il Team; il partner legge la frase di Ignazio', async () => {
+  pulisci(); P.AG.spazi = [];
+  await P.preparaSettimana();
+  assert.match(P.fogli[0].innerHTML, /Questa serata viene creata per tutto il team automaticamente/);
+  assert.doesNotMatch(P.fogli[0].innerHTML, /sp-solo-sds/);
+  pulisci(); P.modo.admin = true;
+  try {
+    await P.preparaSettimana();
+    const v = P.fogli[0];
+    assert.match(v.innerHTML, /id="sp-solo-sds"/);
+    await v.clic('#sp-solo-sds');
+    const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    assert.equal(righe.length, 1); assert.equal(righe[0].tipo, 'SdS/OPEN'); assert.equal(righe[0].condiviso_con, 'team');
+  } finally { P.modo.admin = false; }
 });
 
 prova('Prepara la settimana: senza scrivere il nome l\'incontro si crea come sempre, senza il campo nome (la colonna può mancare)', async () => {
