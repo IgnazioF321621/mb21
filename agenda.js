@@ -265,6 +265,10 @@
   // gli impegni ricevuti di un giorno (ora di Roma), in ordine d'ora
   const ricevutiDelGiorno = (ricevuti, g) => (ricevuti || []).filter(r => partiRoma(r.inizio).giorno === g).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
   const titoloRicevuto = r => `${r.titolo} · da ${r.da_nome || '—'}`;
+  // Gli impegni ricevuti di un giorno come impegni dell'agenda, per l'avviso «A quest'ora hai già…» e le ore libere (nota Pagine 049,
+  // 11/10/2026): una SdS/OPEN o una serata Team/LdS ricevuta occupa quell'ora come un impegno proprio. Chi ha risposto «Non posso» è libero.
+  const ricevutiComeEventi = (ricevuti, g, utenteId) => ricevutiDelGiorno(ricevuti, g).filter(r => r.risposta !== 'non_ci_sono')
+    .map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, user_id: utenteId, tipo_azione: 'Ricevuto', inizio: r.inizio, quando: r.inizio, fine: r.fine, _ricevuto: r }));
   // quelli ancora da vedere (per il pop-up «Hai un nuovo appuntamento»): non visti e non ancora passati
   const ricevutiNuovi = (ricevuti, adesso) => (ricevuti || []).filter(r => !r.visto_il && Date.parse(r.fine || r.inizio) >= Date.parse(adesso));
   // il conto delle risposte, a parole: «Partecipano 6 · Non possono 2 · Senza risposta 4»
@@ -828,7 +832,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
-    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

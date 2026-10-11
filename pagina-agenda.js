@@ -2138,7 +2138,8 @@ async function preparaSettimana() {
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   function oreDi(g) {
-    const occ = S.occupati(g, A.eventiDelGiorno(AG.azioni, g), esistenti, [...st.scelti, ...sds]);
+    const ricevuti = visto().id === ST.utente.id ? A.ricevutiComeEventi(AG.ricevuti, g, visto().id) : [];   // nota 049: le serate ricevute occupano l'ora
+    const occ = S.occupati(g, [...A.eventiDelGiorno(AG.azioni, g), ...ricevuti], esistenti, [...st.scelti, ...sds]);
     return S.oreLibere(occ, { adesso: g === oggi ? A.inMinuti(A.partiRoma(new Date().toISOString()).ora) : null });
   }
   function disegna(errore) {
