@@ -415,6 +415,12 @@
   .sh-ok { flex: none; min-height: 36px; padding: 6px 12px; border-radius: var(--raggio-pill); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font-size: 13px; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
   .sh-ok.si { border-color: var(--ok); background: var(--ok); color: #fff; }
   .sh-ok:disabled:not(.si) { opacity: .5; }
+  /* «Perché?» (nota Pagine 048): riga piccola grigia che si apre sulla frase del motivo */
+  .perche { font-size: 13px; color: var(--testo-tenue); margin: 6px 0; }
+  .perche summary { cursor: pointer; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 4px; }
+  .perche summary::-webkit-details-marker { display: none; }
+  .perche summary::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid currentColor; font-size: 11px; }
+  .perche[open] summary { margin-bottom: 4px; }
   /* gli ospiti della SdS/OPEN del Team (nota Pagine 047): nel foglio della serata ricevuta e nel pop-up */
   .osp-nomi { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; --tinta: var(--accento); }
   .ric-nuovo .ric-conferma { display: block; font-weight: 700; color: var(--testo); margin-top: 8px; }
@@ -2305,6 +2311,7 @@
 <script src="esporta.js?v=202610111912"></script>   <!-- Lista Nomi → file Excel per l'altro programma (MB Project → Lista Nomi): funzioni pure -->
 <script src="rubrica.js?v=202610111912"></script>   <!-- lettore della rubrica del telefono (cantiere 30): funzioni pure -->
 <script src="dashboard.js?v=202610111912"></script>
+<script src="perche.js?v=202610111912"></script>   <!-- «Perché?» (nota Pagine 048): l'elenco unico dei motivi brevi, funzioni pure; prima di agenda.js che lo usa -->
 <script src="agenda.js?v=202610111912"></script>
 <script src="segnala.js?v=202610111912"></script>   <!-- «Segnala» (nota Pagine 009): le regole pure del foglio delle segnalazioni -->
 <script src="spazi.js?v=202610111912"></script>   <!-- MB Plan, «Modello appuntamenti settimanale» (27/09): funzioni pure -->
@@ -2395,6 +2402,10 @@ function ic(nome, px) { return MB21Icone.icona(nome, px); }                     
 // Testi che arrivano già pronti dalle funzioni pure (agenda.js: «⏳ Da completare», «✅ Completato», «👍 confermato»): le funzioni e le loro
 // prove restano com'erano, qui il segno diventa l'icona. Si usa al posto di esc(): prima mette al sicuro il testo, poi cambia i segni.
 function escIcone(testo) { return MB21Icone.conIcone(esc(testo)); }
+// «Perché?» (nota Pagine 048, Ignazio 11/10/2026): dove l'app dice no, una frase breve dice perché (i testi in perche.js, uno per motivo).
+// Al posto di un tasto che manca: una riga piccola grigia «Perché?» che si apre sulla frase. Dopo un tocco su qualcosa di spento: l'avviso breve.
+function percheHtml(codice) { const t = MB21Perche.perche(codice); return t ? `<details class="perche"><summary>Perché?</summary>${esc(t)}</details>` : ''; }
+function diPerche(codice) { const t = MB21Perche.perche(codice); if (t) mostraToast(t); return !!t; }
 // Il decimale dei punti ben riconoscibile (Ignazio 01/10: «la virgola dei centesimi sembra un punto»): `testo` è un numero già scritto all'italiana («1.234,56»);
 // restituisce HTML con una virgola grande e i centesimi più piccoli. Per i numeri senza decimali non cambia niente.
 function centesimi(testo) {
