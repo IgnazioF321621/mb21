@@ -30,12 +30,12 @@ async function apriAdmin() {
     (disp.error ? [] : disp.data).forEach(d => { (AD.dispositivi[d.user_id] = AD.dispositivi[d.user_id] || []).push(d.dispositivo || 'dispositivo'); });
     AD.richieste = rich.data.filter(r => r.stato === 'in_attesa'); AD.doppioni = rich.data.filter(r => r.stato === 'gia_utente'); AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
     AD.wes = wes.data; AD.bbs = bbs.data; AD.fc = fc.error ? [] : fc.data;
-    // Ignazio 16/09: in alto i verdi (attivi), poi in scadenza, poi scaduti; dentro ogni gruppo in ordine alfabetico
-    const oggi = MB21Coda.oggiRoma(), ordine = { attivo: 0, in_scadenza: 1, scaduto: 2 };
-    const gruppo = u => ordine[MB21Dashboard.statoAbbonamento(MB21Dashboard.scadenzaDi(u, ut.data), oggi)];
+    // Ignazio 11/10 (nota Admin 012): in alto chi ha usato l'app da poco, in fondo chi non l'ha mai usata; a parità il nome (prima: per abbonamento, 16/09)
+    const oggi = MB21Coda.oggiRoma();
+    const uso = u => (u.ultimo_uso ? Date.parse(u.ultimo_uso) : 0) || 0;
     // l'Admin non è nell'elenco e non ha scadenza (Ignazio 16/09)
     AD.eliminati = ut.data.filter(u => u.eliminato_il).sort((a, b) => nomeDi(a).localeCompare(nomeDi(b), 'it'));
-    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin' && !u.eliminato_il).sort((a, b) => gruppo(a) - gruppo(b) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin' && !u.eliminato_il).sort((a, b) => uso(b) - uso(a) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
     // «Senza avvisi» (25/09): il telefono per l'invito si prende dalla scheda della persona in Lista Nomi (codice Amway = partner_id), che ha il +39
     const codiciSenza = senzaAvvisi().map(u => u.partner_id).filter(Boolean);
     AD.telSchede = {};
