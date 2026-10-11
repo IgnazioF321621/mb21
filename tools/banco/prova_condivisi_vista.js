@@ -161,6 +161,29 @@ prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea»
   P.modo.admin = false;
 });
 
+prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partecipo» il foglio resta aperto con la frase sugli ospiti; un nome si salva nella propria riga', async () => {
+  pulisci();
+  const r = ricevuto({ origine: 'spazio', id: 'sds1', titolo: 'SdS/OPEN', tipo: 'SdS/OPEN', link: null, punti: null, punti_condivisi: false, visto_il: '2026-09-20T10:00:00Z', risposta: null });
+  delete r.ospiti;
+  P.foglioRicevuto(r);
+  await attendi();
+  let v = P.fogli.at(-1);
+  assert.match(v.innerHTML, /<label>Conferma della presenza<\/label>/);
+  assert.doesNotMatch(v.innerHTML, /data-osp-nome/);   // gli ospiti solo dopo «Partecipo»
+  await v.clic('[data-ri-risposta="ci_sono"]');
+  v = P.fogli.at(-1);
+  assert.match(v.innerHTML, /Hai ospiti\? Scrivi i loro nomi qui\. Puoi aggiungerli anche più tardi/);
+  const campo = v.querySelector('[data-osp-nome]');
+  campo.value = '  Anna   Rossi ';
+  await v.clic('[data-osp-ok]');
+  const up = scritte('impegni_risposte', 'update');
+  assert.equal(up.length, 1); assert.deepEqual(JSON.parse(JSON.stringify(up[0].args[0])), { ospiti: ['Anna Rossi'] });
+  assert.match(P.fogli.at(-1).innerHTML, /<span class="sp-chip">Anna Rossi<button type="button" data-osp-togli="0"/);
+  // un altro impegno ricevuto (non SdS/OPEN) resta come prima
+  pulisci(); P.foglioRicevuto(ricevuto({ visto_il: '2026-09-20T10:00:00Z' })); await attendi();
+  assert.match(P.fogli.at(-1).innerHTML, /<label>Partecipi\?<\/label>/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Hai ospiti/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

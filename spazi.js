@@ -76,11 +76,13 @@
 
   // Le righe da scrivere in `spazi` quando si chiude «Prepara la settimana»: gli scelti (tipo, giorno, ora) e la SdS/OPEN
   // del lunedì, se la settimana non ce l'ha già e il lunedì non è passato.
-  function righeNuove(userId, settimana, scelti, esistenti, oggi) {
+  // opz (nota Pagine 047, Ignazio 11/10/2026): `sds: false` = niente SdS/OPEN (i partner: la loro è quella del Team);
+  // `team: true` = la SdS/OPEN nasce già condivisa con tutto il Team (l'Admin).
+  function righeNuove(userId, settimana, scelti, esistenti, oggi, opz = {}) {
     const righe = scelti.map(s => ({ user_id: userId, tipo: s.tipo, inizio: A.isoDaRoma(s.giorno, s.ora), durata: s.durata || DURATA, ...(puoAvereNome(s.tipo) && pulisciNome(s.nome) ? { nome: pulisciNome(s.nome) } : {}) }));
     const lun = settimana[SDS.giorno];
     const giaSds = (esistenti || []).some(s => s.tipo === 'SdS/OPEN' && settimana.includes(giornoDi(s.inizio)));
-    if (!giaSds && lun >= oggi) righe.unshift({ user_id: userId, tipo: 'SdS/OPEN', inizio: A.isoDaRoma(lun, SDS.ora), durata: SDS.durata });
+    if (opz.sds !== false && !giaSds && lun >= oggi) righe.unshift({ user_id: userId, tipo: 'SdS/OPEN', inizio: A.isoDaRoma(lun, SDS.ora), durata: SDS.durata, ...(opz.team ? { condiviso_con: 'team' } : {}) });
     return righe;
   }
 

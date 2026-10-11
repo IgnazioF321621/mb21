@@ -278,9 +278,29 @@
     non_ci_sono: (risposte || []).filter(r => r.risposta === 'non_ci_sono').map(r => r.nome),
     senza: (risposte || []).filter(r => !r.risposta).map(r => r.nome) });
   // cosa si può condividere: un appuntamento con un Partner (gli altri non hanno l'app); una serata Team o LdS solo l'Admin.
-  // La SdS/OPEN no (Ignazio 05/10): la organizza Network 21, noi ci partecipiamo; come Amway e Network 21 nel «Da fare» sono solo appunti.
+  // La SdS/OPEN dall'11/10 sì (nota Pagine 047, Ignazio): la crea l'Admin, già condivisa con tutto il Team; i partner non ne hanno più una loro.
   const puoCondividereAzione = e => !!e && !!e.contatto_id && ((e.contatti && e.contatti.categoria) || e.categoria) === 'Partner' && e.tipo_azione !== 'Contatto';
-  const puoCondividereSpazio = (s, admin) => !!admin && !!s && (s.tipo === 'Team' || s.tipo === 'LOS');
+  const puoCondividereSpazio = (s, admin) => !!admin && !!s && (s.tipo === 'Team' || s.tipo === 'LOS' || s.tipo === 'SdS/OPEN');
+  // ── La SdS/OPEN del Team (nota Pagine 047, Ignazio 11/10/2026): chi la riceve conferma la presenza e scrive gli ospiti con il nome,
+  // anche dopo (riaprendo la serata). Gli ospiti stanno nella propria riga di `impegni_risposte` (campo `ospiti`, un elenco di nomi).
+  const SDS_DEL_TEAM = 'Questa serata viene creata per tutto il team automaticamente, non serve crearne un altro.';   // parole di Ignazio
+  const FRASE_OSPITI = 'Hai ospiti? Scrivi i loro nomi qui. Puoi aggiungerli anche più tardi: riapri questa serata e li trovi ancora qui.';
+  const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
+  const OSPITE_MAX = 60, OSPITI_MAX = 30;
+  // un nome in più nell'elenco: spazi puliti, niente vuoti né doppioni (maiuscole a parte), al massimo 30
+  function aggiungiOspite(ospiti, nome) {
+    const n = String(nome == null ? '' : nome).replace(/\s+/g, ' ').trim().slice(0, OSPITE_MAX).trim();
+    const lista = Array.isArray(ospiti) ? ospiti.slice() : [];
+    if (!n || lista.length >= OSPITI_MAX || lista.some(x => x.toLowerCase() === n.toLowerCase())) return lista;
+    return [...lista, n];
+  }
+  // per chi organizza: quanti ospiti in tutto e, per ognuno che partecipa, chi porta («Carolina (+ Anna, Luca)»)
+  function ospitiPerChiOrganizza(risposte, ospitiDi) {
+    const di = ospitiDi || {};
+    const nomi = (risposte || []).filter(r => r.risposta === 'ci_sono').map(r => (di[r.utente_id] || []).length ? `${r.nome} (+ ${di[r.utente_id].join(', ')})` : r.nome);
+    const totale = (risposte || []).filter(r => r.risposta === 'ci_sono').reduce((n, r) => n + (di[r.utente_id] || []).length, 0);
+    return { nomi, totale };
+  }
 
   const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
   // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
@@ -807,7 +827,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
-    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);
