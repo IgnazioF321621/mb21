@@ -35,4 +35,10 @@ prova('offline: la frase approvata, sotto i due avvisi «Sei offline» della Das
   assert.equal((d.match(/Solo lettura\.\$\{percheHtml\('offline'\)\}<\/div>/g) || []).length, 2);
   assert.match(d, /window\.addEventListener\('online', \(\) => \{ if \(ST\.offline && ST\.utente && ST\.tab === 'oggi'\) caricaOggi\(\); \}\);/);
 });
+prova('«Tutti»: la frase senza ordini, detta da soloGuardo', () => {
+  assert.equal(P.perche('tutti'), 'Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.');
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /function soloGuardo\(\) \{\n  if \(!vediTutti\(\) \|\| ST\.tab === 'agenda'\) return false;\n  diPerche\('tutti'\);/);
+  assert.doesNotMatch(idx, /scegli un partner per modificare/);
+});
 console.log(`\n${ok} prove superate`);
