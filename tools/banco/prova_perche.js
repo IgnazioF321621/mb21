@@ -41,4 +41,10 @@ prova('«Tutti»: la frase senza ordini, detta da soloGuardo', () => {
   assert.match(idx, /function soloGuardo\(\) \{\n  if \(!vediTutti\(\) \|\| ST\.tab === 'agenda'\) return false;\n  diPerche\('tutti'\);/);
   assert.doesNotMatch(idx, /scegli un partner per modificare/);
 });
+prova('abbonamento scaduto: una frase sola (fermoScaduto, mostraTab, benvenuto), senza «rinnova»', () => {
+  assert.equal(P.perche('scaduto'), 'Con l\'abbonamento scaduto l\'app si guarda soltanto: rinnovandolo, tutto torna come prima.');
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8'), ben = fs.readFileSync(path.join(__dirname, '../../pagina-benvenuto.js'), 'utf8');
+  assert.match(idx, /function fermoScaduto\(\) \{\n  if \(!limitato\(\)\) return false;\n  diPerche\('scaduto'\);/);
+  assert.doesNotMatch(idx + ben, /Abbonamento scaduto: rinnova/);
+});
 console.log(`\n${ok} prove superate`);
