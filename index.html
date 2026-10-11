@@ -2724,7 +2724,7 @@ const aNome = () => (guardoAltri() && !vediTutti() ? ` · ${nomeDi(visto())}` : 
 
 function soloGuardo() {
   if (!vediTutti() || ST.tab === 'agenda') return false;
-  mostraToast('Con «Tutti» si guarda soltanto: scegli un partner per modificare');
+  diPerche('tutti');   // nota 048: la frase nell'elenco unico dei motivi
   return true;
 }
 function partnerSelect() {

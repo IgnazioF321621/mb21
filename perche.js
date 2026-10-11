@@ -14,6 +14,8 @@
     ricevuto_sds: 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.',
     // senza rete la Dashboard mostra la coda salvata e spegne i tasti (Ignazio 11/10: «va bene così»)
     offline: 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.',
+    // l'Admin con il Partner Select su «Tutti» tocca qualcosa che modifica (soloGuardo; Ignazio 11/10: «va bene così»; prima «scegli un partner…»)
+    tutti: 'Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.',
   };
   const perche = codice => MOTIVI[codice] || '';
   // il motivo di una serata ricevuta, dal suo tipo (`spazi.tipo`: Team · LOS · SdS/OPEN); per gli altri nessuno
