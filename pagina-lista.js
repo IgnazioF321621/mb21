@@ -1331,7 +1331,7 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
 function apriModulo(c) {
-  if (soloGuardo()) return;
+  if (soloGuardo() || fermoScaduto()) return;   // nota 050
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
   // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner scelto nel Partner Select)
