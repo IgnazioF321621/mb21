@@ -132,4 +132,15 @@ prova('Nota 004: nella card solo quello che deve venire; i passati senza esito �
   assert.deepEqual([fine.righe.length, fine.daChiudere.map(a => a.id), fine.fatti.length], [0, ['p2', 'p3'], 2]);
 });
 
+prova('Nota Pagine 046: «Aggiungi solo la SdS/OPEN» scrive solo lei, una volta sola, mai per un lunedì passato', () => {
+  const r = S.righeNuove('io', SETT, [], [], '2026-09-27');
+  assert.equal(r.length, 1); assert.equal(r[0].tipo, 'SdS/OPEN'); assert.equal(r[0].inizio, A.isoDaRoma('2026-09-28', '21:30')); assert.equal(r[0].durata, 60);
+  assert.equal(S.righeNuove('io', SETT, [], [sp('SdS/OPEN', '2026-09-28', '21:30')], '2026-09-27').length, 0);   // secondo tocco: niente doppione
+  assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-29').length, 0);   // lunedì passato
+  const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  assert.match(pag, /id="sp-solo-sds">\$\{ic\('piu'\)\} Aggiungi solo la SdS\/OPEN di lunedì alle 21:30/);
+  assert.doesNotMatch(pag, /si aggiunge da sola\. Se cambia/);
+  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, \[\], esistenti, oggi\)/);
+});
+
 console.log(`\n${ok} prove superate`);
