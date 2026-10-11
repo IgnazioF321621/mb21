@@ -23,4 +23,10 @@ prova('percheHtml: «Perché?» che si apre sulla frase (testo messo al sicuro);
   assert.equal(ctx.diPerche('nessuno'), false); assert.equal(avvisi.length, 1);
   assert.ok(src.indexOf('<script src="perche.js') < src.indexOf('<script src="agenda.js'), 'perche.js si carica prima di agenda.js');
 });
+prova('serate ricevute: chi le organizza (Ignazio 11/10: Team Ignazio, LdS il Leader, SdS/OPEN il Leader/Platino)', () => {
+  assert.equal(P.perche(P.codiceRicevuto('Team')), 'Questa serata la organizza Ignazio: da qui si conferma la presenza.');
+  assert.equal(P.perche(P.codiceRicevuto('LOS')), 'Questa serata la organizza il Leader: da qui si conferma la presenza.');
+  assert.equal(P.perche(P.codiceRicevuto('SdS/OPEN')), 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.');
+  assert.equal(P.codiceRicevuto('Piano Marketing'), null);
+});
 console.log(`\n${ok} prove superate`);

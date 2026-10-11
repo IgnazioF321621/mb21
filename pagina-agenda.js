@@ -1660,6 +1660,7 @@ function foglioRicevuto(r) {
       <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="ri-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <p>${esc(giornoOraRicevuto(r))}</p>
       <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario.</div>
+      ${r.origine === 'spazio' ? percheHtml(MB21Perche.codiceRicevuto(r.tipo)) : ''}
       ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>`
         : r.luogo ? `<a class="pt-link pt-luogo" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}
       ${puntiSolaLetturaHtml(r)}
