@@ -29,4 +29,10 @@ prova('serate ricevute: chi le organizza (Ignazio 11/10: Team Ignazio, LdS il Le
   assert.equal(P.perche(P.codiceRicevuto('SdS/OPEN')), 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.');
   assert.equal(P.codiceRicevuto('Piano Marketing'), null);
 });
+prova('offline: la frase approvata, sotto i due avvisi «Sei offline» della Dashboard; al ritorno della rete la Dashboard si rilegge', () => {
+  assert.equal(P.perche('offline'), 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.');
+  const d = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  assert.equal((d.match(/Solo lettura\.\$\{percheHtml\('offline'\)\}<\/div>/g) || []).length, 2);
+  assert.match(d, /window\.addEventListener\('online', \(\) => \{ if \(ST\.offline && ST\.utente && ST\.tab === 'oggi'\) caricaOggi\(\); \}\);/);
+});
 console.log(`\n${ok} prove superate`);

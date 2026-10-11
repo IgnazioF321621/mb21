@@ -12,6 +12,8 @@
     ricevuto_team: 'Questa serata la organizza Ignazio: da qui si conferma la presenza.',
     ricevuto_lds: 'Questa serata la organizza il Leader: da qui si conferma la presenza.',
     ricevuto_sds: 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.',
+    // senza rete la Dashboard mostra la coda salvata e spegne i tasti (Ignazio 11/10: «va bene così»)
+    offline: 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.',
   };
   const perche = codice => MOTIVI[codice] || '';
   // il motivo di una serata ricevuta, dal suo tipo (`spazi.tipo`: Team · LOS · SdS/OPEN); per gli altri nessuno
