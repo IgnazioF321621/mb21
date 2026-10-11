@@ -3171,15 +3171,17 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
 function avvisoSovrapposti(giorno, ora, durata, salta, diChi) {
   const A = MB21Agenda;
   if (!AG.settimana.includes(giorno) || !(durata > 0) || !/^\d\d:\d\d$/.test(ora || '')) return '';
-  const delGiorno = A.eventiDelGiorno(AG.azioni, giorno);
   const suo = diChi || (vediTutti() ? null : visto().id);   // con «Tutti» l'Admin ha in mano più agende: si guarda solo la sua
+  // nota 049: anche le serate ricevute (SdS/OPEN, Team, LdS) occupano l'ora; sono di chi è entrato, quindi contano solo nella sua agenda
+  const ricevuti = !vediTutti() && suo && ST.utente && suo === ST.utente.id ? A.ricevutiComeEventi(AG.ricevuti, giorno, suo) : [];
+  const delGiorno = [...A.eventiDelGiorno(AG.azioni, giorno), ...ricevuti];
   const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta, suo);
   if (!scontri.length) return '';
   const oggi = MB21Coda.oggiRoma();
   const vicino = { vicinoA: A.inMinuti(ora), soloDi: suo };
   const libere = A.oreProposte(delGiorno, durata, giorno === oggi ? { ...vicino, daMinuti: A.inMinuti(A.partiRoma(new Date().toISOString()).ora) } : vicino);
   return `<div class="ag-scontro">${ic('attenzione')} A quest'ora hai già ${scontri.length === 1 ? 'un impegno' : scontri.length + ' impegni'}
-    ${scontri.map(e => `<span>${esc(A.riga(e, { mioId: null, admin: false }).titolo)} <em>${esc(A.orario(e))}</em></span>`).join('')}
+    ${scontri.map(e => `<span>${esc(e._ricevuto ? A.titoloRicevuto(e._ricevuto) : A.riga(e, { mioId: null, admin: false }).titolo)} <em>${esc(A.orario(e))}</em></span>`).join('')}
     ${libere.length ? `<div class="ag-orelibere">${libere.map(o => `<button data-ora="${o}">${o}</button>`).join('')}</div>` : ''}</div>`;
 }
 

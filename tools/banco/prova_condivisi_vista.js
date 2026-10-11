@@ -186,6 +186,20 @@ prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partec
   assert.doesNotMatch(P.fogli.at(-1).innerHTML, /class="perche"/);   // un appuntamento ricevuto (non una serata): nessun «Perché?»
 });
 
+prova('Nota 049: «A quest\'ora hai già…» conta anche la serata ricevuta (con chi la organizza); a un\'ora non a cavallo niente; con «Tutti» o su un altro partner no', () => {
+  pulisci();
+  const g = P.AG.giorno, prima = P.AG.ricevuti;
+  try {
+    P.AG.ricevuti = [ricevuto({ origine: 'spazio', id: 'sds9', titolo: 'SdS/OPEN', tipo: 'SdS/OPEN', inizio: P.A.isoDaRoma(g, '21:30'), fine: P.A.isoDaRoma(g, '22:30'), risposta: null })];
+    const h = P.avvisoSovrapposti(g, '21:00', 60, null, 'io');
+    assert.match(h, /A quest'ora hai già un impegno[\s\S]*?SdS\/OPEN · da Ignazio <em>21:30–22:30<\/em>/);
+    assert.doesNotMatch(h, /data-ora="21:30"/);   // le ore libere non propongono la serata
+    assert.equal(P.avvisoSovrapposti(g, '22:45', 60, null, 'io'), '');
+    assert.equal(P.avvisoSovrapposti(g, '21:00', 60, null, 'altro'), '');   // l'agenda di un altro partner: i ricevuti sono di chi è entrato
+    P.modo.tutti = true; assert.doesNotMatch(P.avvisoSovrapposti(g, '21:00', 60, null, null), /SdS\/OPEN/); P.modo.tutti = false;
+  } finally { P.AG.ricevuti = prima; P.modo.tutti = false; }
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
