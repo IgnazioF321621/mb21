@@ -2776,7 +2776,7 @@ const limitato = () => !!ST.scaduto;
 // chiudiAppuntamento, apriModulo (contatto), moduloVendita —, così nessuna strada, anche futura, lo aggira. Dice perché (nota 048).
 function fermoScaduto() {
   if (!limitato()) return false;
-  if (!(typeof diPerche === 'function' && diPerche('scaduto'))) mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
+  diPerche('scaduto');
   return true;
 }
 
@@ -2863,7 +2863,7 @@ function mostraTab() {
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
   if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
     ST.tab = 'oggi'; LS.ritorno = null;
-    mostraToast('Abbonamento scaduto: rinnova per usare anche le altre pagine');
+    diPerche('scaduto');   // nota 048: la stessa frase ovunque
   }
   ST.vistaCatalogo = false; ST.tornaA = null;   // lasciata la pagina «Da catalogare» o i «Team» della Mappa si riparte dalla pagina scelta
   if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
