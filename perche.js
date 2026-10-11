@@ -13,7 +13,7 @@
     ricevuto_lds: 'Questa serata la organizza il Leader: da qui si conferma la presenza.',
     ricevuto_sds: 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.',
     // un appuntamento singolo condiviso (nota 027): parole di Ignazio, 11/10; {nome} = chi l'ha fissato
-    ricevuto_azione: 'Questo appuntamento lo ha fissato {nome}, conferma la presenza o contattalo per una modifica.',
+    ricevuto_azione: 'Questo appuntamento lo ha fissato {nome}, conferma la presenza o contattalo/a per una modifica.',
     // senza rete la Dashboard mostra la coda salvata e spegne i tasti (Ignazio 11/10: «va bene così»)
     offline: 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.',
     // l'Admin con il Partner Select su «Tutti» tocca qualcosa che modifica (soloGuardo; Ignazio 11/10: «va bene così»; prima «scegli un partner…»)
