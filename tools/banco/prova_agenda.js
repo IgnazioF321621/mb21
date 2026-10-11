@@ -717,4 +717,15 @@ prova('Nota Pagine 047: SdS/OPEN del Team, ospiti con nome (puliti, senza doppio
   assert.match(A.FRASE_OSPITI, /Puoi aggiungerli anche più tardi/);
 });
 
+prova('Nota Pagine 049: le serate ricevute contano negli scontri e nelle ore libere; «Non posso» libera l\'ora', () => {
+  const ric = [{ origine: 'spazio', id: 's1', inizio: A.isoDaRoma('2026-10-12', '21:30'), fine: A.isoDaRoma('2026-10-12', '22:30'), titolo: 'SdS/OPEN', tipo: 'SdS/OPEN', da_nome: 'Ignazio', risposta: null },
+    { origine: 'spazio', id: 's2', inizio: A.isoDaRoma('2026-10-12', '18:00'), fine: A.isoDaRoma('2026-10-12', '19:00'), titolo: 'Incontro di Team', tipo: 'Team', da_nome: 'Ignazio', risposta: 'non_ci_sono' },
+    { origine: 'spazio', id: 's3', inizio: A.isoDaRoma('2026-10-13', '21:30'), fine: A.isoDaRoma('2026-10-13', '22:30'), titolo: 'LdS', tipo: 'LOS', da_nome: 'Ignazio', risposta: null }];
+  const ev = A.ricevutiComeEventi(ric, '2026-10-12', 'io');
+  assert.equal(ev.length, 1); assert.equal(ev[0].user_id, 'io'); assert.equal(ev[0]._ricevuto.id, 's1');
+  assert.equal(A.sovrapposti(ev, A.isoDaRoma('2026-10-12', '21:00'), 60, null, 'io').length, 1);   // a cavallo
+  assert.equal(A.sovrapposti(ev, A.isoDaRoma('2026-10-12', '20:00'), 60, null, 'io').length, 0);   // prima, non a cavallo
+  assert.equal(A.sovrapposti(ev, A.isoDaRoma('2026-10-12', '18:00'), 60, null, 'io').length, 0);   // la serata a cui non va
+  assert.ok(!A.oreProposte(ev, 60, { vicinoA: 21 * 60, quante: 10 }).includes('21:30'));
+});
 console.log(`\n${ok} prove superate`);
