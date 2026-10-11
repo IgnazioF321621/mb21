@@ -3,6 +3,7 @@
 // Nessun accesso alla rete: la usano l'app e tools/banco/prova_agenda.js.
 // Scelte: docs/MB21_v4_Scelte_Agenda.md, decisioni di Ignazio del 14/09 (le fasi di Appuntamento sono da migliorare).
 (function (radice) {
+  const PERCHE = typeof module !== 'undefined' && module.exports ? require('./perche.js') : radice.MB21Perche;   // i motivi brevi (nota 048)
   const SOTTOTIPI = {
     'Contatto': ['Telefonata', 'Messaggio', 'Presenza'],
     'Piano Marketing': ['PM 1a1', 'PM Upline', 'PM Casa/Pull', 'PM Open'],
@@ -283,7 +284,7 @@
   const puoCondividereSpazio = (s, admin) => !!admin && !!s && (s.tipo === 'Team' || s.tipo === 'LOS' || s.tipo === 'SdS/OPEN');
   // ── La SdS/OPEN del Team (nota Pagine 047, Ignazio 11/10/2026): chi la riceve conferma la presenza e scrive gli ospiti con il nome,
   // anche dopo (riaprendo la serata). Gli ospiti stanno nella propria riga di `impegni_risposte` (campo `ospiti`, un elenco di nomi).
-  const SDS_DEL_TEAM = 'Questa serata viene creata per tutto il team automaticamente, non serve crearne un altro.';   // parole di Ignazio
+  const SDS_DEL_TEAM = PERCHE.perche('sds_team');   // parole di Ignazio, nell'elenco unico dei motivi (perche.js, nota 048)
   const FRASE_OSPITI = 'Hai ospiti? Scrivi i loro nomi qui. Puoi aggiungerli anche più tardi: riapri questa serata e li trovi ancora qui.';
   const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
   const OSPITE_MAX = 60, OSPITI_MAX = 30;
