@@ -2095,7 +2095,10 @@ async function preparaSettimana() {
         <div class="vn-aiuto">Tocca un numero; toccalo di nuovo per toglierlo. Piani Marketing e Consulenze restano «da riempire» finché non metti un nome.</div>`
         + S.DA_PREPARARE.map(t => `<div class="sp-riga-num"><span><b>${esc(S.TIPI[t].plurale)}</b>${S.daRiempire(t) ? '<small>spazi da riempire con un nome</small>' : ''}</span><div class="ag-scelte" data-quanti="${esc(t)}">${
           Array.from({ length: S.TIPI[t].max }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${st.quanti[t] === n ? 'scelto' : ''}">${n}</button>`).join('')}</div></div>`).join('')
-        + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge da sola. Se cambia giorno o ora, la sposti poi nella Timeline.</div>` : '');
+        // Nota Pagine 046 (Ignazio 11/10/2026): «si aggiunge da sola» faceva credere che ci fosse già, ma si scrive solo con «Crea gli spazi»
+        // (e senza nessun numero «Avanti» non va). Ora la si mette anche da sola, con un tocco, senza preparare altro.
+        + (sds.length ? `<div class="vn-aiuto">La SdS/OPEN di lunedì alle 21:30 si aggiunge insieme agli spazi che crei. Se ti serve solo quella, basta un tocco qui sotto. Se cambia giorno o ora, la sposti poi nella Timeline.</div>
+          <button type="button" class="link" id="sp-solo-sds">${ic('piu')} Aggiungi solo la SdS/OPEN di lunedì alle 21:30</button>` : '');
     } else {
       const n = st.quanti[p], messi = st.scelti.filter(s => s.tipo === p).length;
       corpo = `<p class="sp-domanda">${esc(S.domandaGiorni(p, n))}</p>
@@ -2147,6 +2150,20 @@ async function preparaSettimana() {
       inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); st.nomeAperto = null; disegna(); } };
     });
     velo.querySelectorAll('[data-nome-ok]').forEach(b => { b.onclick = () => { st.nomeAperto = null; disegna(); }; });
+    const soloSds = velo.querySelector('#sp-solo-sds');
+    if (soloSds) soloSds.onclick = async () => {
+      const righe = S.righeNuove(visto().id, settimana, [], esistenti, oggi);   // stessa regola: niente doppioni nella settimana, niente lunedì passato
+      if (!righe.length) return disegna('La SdS/OPEN di questa settimana c\'è già.');
+      soloSds.disabled = true;
+      const { data, error } = await dbq('solo la SdS/OPEN', supa.from('spazi').insert(righe).select('id'));
+      if (error) { soloSds.disabled = false; return disegna('Non salvata: controlla la connessione e riprova.'); }
+      chiudi();
+      await apriAgenda(AG.giorno);
+      mostraToast('Fatto: la SdS/OPEN la trovi in Timeline lunedì alle 21:30', async () => {
+        await dbqAvvisa('annulla SdS/OPEN', supa.from('spazi').delete().in('id', data.map(r => r.id)), 'Annullamento non riuscito: controlla la connessione e riprova.');
+        await apriAgenda(AG.giorno);
+      });
+    };
     velo.querySelector('#sp-si').onclick = async () => {
       if (p === 'quanti' && lista.length === 1) return disegna('Tocca un numero accanto ad almeno un appuntamento o un incontro.');
       if (p !== 'quanti') {
