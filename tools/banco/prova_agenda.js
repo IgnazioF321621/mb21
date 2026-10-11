@@ -662,7 +662,7 @@ prova('Chi può condividere: un appuntamento con un Partner (non una telefonata,
   assert.equal(A.puoCondividereAzione({ contatto_id: 'c', tipo_azione: 'Appuntamento', categoria: 'Partner' }), true);
   assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'Team' }, false), false);
   assert.equal(A.puoCondividereSpazio({ tipo: 'Piano Marketing' }, true), false);
-  assert.equal(A.puoCondividereSpazio({ tipo: 'LOS' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'SdS/OPEN' }, true), false);   // l'OPEN la organizza Network 21
+  assert.equal(A.puoCondividereSpazio({ tipo: 'LOS' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'SdS/OPEN' }, true), true); assert.equal(A.puoCondividereSpazio({ tipo: 'SdS/OPEN' }, false), false);   // dall'11/10 (nota 047) la SdS/OPEN del Team, solo l'Admin
   assert.deepEqual(A.CONDIVISIONI_SPAZIO.map(x => x[1]), ['Nessuno', 'Tutto il Team', 'Una Linea']);
 });
 
@@ -697,6 +697,24 @@ prova('«In attesa che ordini» (nota Azioni 025): solo le attese aperte, le pi�
   assert.equal(A.ESITO_ATTESA_ORDINE, 'Ordina da solo');
   assert.ok(A.fasiPer('Cliente', 'Contatto', 'Telefonata').includes('Ordina da solo'));
   assert.equal(A.giorniRisentire('Ordina da solo'), null);   // niente «Quando risentirlo?»: ordina da solo
+});
+
+prova('Nota Pagine 047: SdS/OPEN del Team, ospiti con nome (puliti, senza doppioni, al massimo 30) e chi porta chi per chi organizza', () => {
+  assert.equal(A.conOspiti({ origine: 'spazio', tipo: 'SdS/OPEN' }), true);
+  assert.equal(A.conOspiti({ origine: 'spazio', tipo: 'Team' }), false);
+  assert.equal(A.conOspiti({ origine: 'azione', tipo: 'SdS/OPEN' }), false);
+  let l = A.aggiungiOspite(null, '  Anna   Rossi ');
+  assert.equal(l.join('|'), 'Anna Rossi');
+  l = A.aggiungiOspite(l, 'anna rossi'); assert.equal(l.length, 1);   // doppione
+  l = A.aggiungiOspite(l, '   '); assert.equal(l.length, 1);           // vuoto
+  l = A.aggiungiOspite(l, 'Luca Bianchi'); assert.equal(l.join('|'), 'Anna Rossi|Luca Bianchi');
+  let tanti = []; for (let i = 0; i < 40; i++) tanti = A.aggiungiOspite(tanti, 'Ospite ' + i);
+  assert.equal(tanti.length, 30);
+  const risp = [{ utente_id: 'u1', nome: 'Carolina', risposta: 'ci_sono' }, { utente_id: 'u2', nome: 'Luca', risposta: 'ci_sono' }, { utente_id: 'u3', nome: 'Pino', risposta: 'non_ci_sono' }];
+  const o = A.ospitiPerChiOrganizza(risp, { u1: ['Anna', 'Marco'], u3: ['Zeno'] });
+  assert.equal(o.totale, 2); assert.equal(o.nomi.join(' · '), 'Carolina (+ Anna, Marco) · Luca');   // chi non partecipa non conta
+  assert.match(A.SDS_DEL_TEAM, /viene creata per tutto il team automaticamente/);
+  assert.match(A.FRASE_OSPITI, /Puoi aggiungerli anche più tardi/);
 });
 
 console.log(`\n${ok} prove superate`);

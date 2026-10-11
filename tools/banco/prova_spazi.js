@@ -140,7 +140,19 @@ prova('Nota Pagine 046: «Aggiungi solo la SdS/OPEN» scrive solo lei, una volta
   const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
   assert.match(pag, /id="sp-solo-sds">\$\{ic\('piu'\)\} Aggiungi solo la SdS\/OPEN di lunedì alle 21:30/);
   assert.doesNotMatch(pag, /si aggiunge da sola\. Se cambia/);
-  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, \[\], esistenti, oggi\)/);
+  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, \[\], esistenti, oggi, \{ sds: sdsMia, team: true \}\)/);
+});
+
+prova('Nota Pagine 047: i partner non aggiungono più la SdS/OPEN; l\'Admin la crea già condivisa con il Team', () => {
+  const scelti = [{ tipo: 'Team', giorno: '2026-09-30', ora: '21:00' }];
+  assert.equal(S.righeNuove('io', SETT, scelti, [], '2026-09-27', { sds: false }).map(r => r.tipo).join(), 'Team');
+  assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-27', { sds: false }).length, 0);
+  const r = S.righeNuove('io', SETT, [], [], '2026-09-27', { sds: true, team: true });
+  assert.equal(r.length, 1); assert.equal(r[0].condiviso_con, 'team');
+  assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-27')[0].condiviso_con, undefined);   // senza opz come prima
+  const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  assert.match(pag, /const sdsMia = eAdmin\(\) && visto\(\)\.id === ST\.utente\.id;/);
+  assert.match(pag, /esc\(A\.SDS_DEL_TEAM\)/);
 });
 
 console.log(`\n${ok} prove superate`);
