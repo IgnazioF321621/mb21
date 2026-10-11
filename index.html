@@ -2404,8 +2404,8 @@ function ic(nome, px) { return MB21Icone.icona(nome, px); }                     
 function escIcone(testo) { return MB21Icone.conIcone(esc(testo)); }
 // «Perché?» (nota Pagine 048, Ignazio 11/10/2026): dove l'app dice no, una frase breve dice perché (i testi in perche.js, uno per motivo).
 // Al posto di un tasto che manca: una riga piccola grigia «Perché?» che si apre sulla frase. Dopo un tocco su qualcosa di spento: l'avviso breve.
-function percheHtml(codice) { const t = MB21Perche.perche(codice); return t ? `<details class="perche"><summary>Perché?</summary>${esc(t)}</details>` : ''; }
-function diPerche(codice) { const t = MB21Perche.perche(codice); if (t) mostraToast(t); return !!t; }
+function percheHtml(codice, valori) { const t = MB21Perche.perche(codice, valori); return t ? `<details class="perche"><summary>Perché?</summary>${esc(t)}</details>` : ''; }
+function diPerche(codice, valori) { const t = MB21Perche.perche(codice, valori); if (t) mostraToast(t); return !!t; }
 // Il decimale dei punti ben riconoscibile (Ignazio 01/10: «la virgola dei centesimi sembra un punto»): `testo` è un numero già scritto all'italiana («1.234,56»);
 // restituisce HTML con una virgola grande e i centesimi più piccoli. Per i numeri senza decimali non cambia niente.
 function centesimi(testo) {

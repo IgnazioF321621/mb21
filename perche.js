@@ -12,6 +12,8 @@
     ricevuto_team: 'Questa serata la organizza Ignazio: da qui si conferma la presenza.',
     ricevuto_lds: 'Questa serata la organizza il Leader: da qui si conferma la presenza.',
     ricevuto_sds: 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.',
+    // un appuntamento singolo condiviso (nota 027): parole di Ignazio, 11/10; {nome} = chi l'ha fissato
+    ricevuto_azione: 'Questo appuntamento lo ha fissato {nome}, conferma la presenza o contattalo per una modifica.',
     // senza rete la Dashboard mostra la coda salvata e spegne i tasti (Ignazio 11/10: «va bene così»)
     offline: 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.',
     // l'Admin con il Partner Select su «Tutti» tocca qualcosa che modifica (soloGuardo; Ignazio 11/10: «va bene così»; prima «scegli un partner…»)
@@ -19,9 +21,10 @@
     // abbonamento scaduto (note 042 e 050; Ignazio 11/10: «va bene così»; prima «Abbonamento scaduto: rinnova per…»)
     scaduto: 'Abbonamento scaduto, rinnovando hai nuovamente la possibilità di utilizzare il 100% dell\'app!',   // parole di Ignazio, 11/10 sera
   };
-  const perche = codice => MOTIVI[codice] || '';
+  // `valori` riempie i segnaposto della frase ({nome} → valori.nome); un segnaposto senza valore resta «—»
+  const perche = (codice, valori) => (MOTIVI[codice] || '').replace(/\{(\w+)\}/g, (_, k) => (valori && valori[k]) || '—');
   // il motivo di una serata ricevuta, dal suo tipo (`spazi.tipo`: Team · LOS · SdS/OPEN); per gli altri nessuno
-  const codiceRicevuto = tipo => ({ Team: 'ricevuto_team', LOS: 'ricevuto_lds', 'SdS/OPEN': 'ricevuto_sds' })[tipo] || null;
+  const codiceRicevuto = tipo => ({ Team: 'ricevuto_team', LOS: 'ricevuto_lds', 'SdS/OPEN': 'ricevuto_sds' })[tipo] || null;   // le serate; un appuntamento è 'ricevuto_azione'
   const api = { MOTIVI, perche, codiceRicevuto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Perche = api;

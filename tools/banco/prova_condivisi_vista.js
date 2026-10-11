@@ -183,7 +183,7 @@ prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partec
   // un altro impegno ricevuto (non SdS/OPEN) resta come prima
   pulisci(); P.foglioRicevuto(ricevuto({ visto_il: '2026-09-20T10:00:00Z' })); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /<label>Partecipi\?<\/label>/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Hai ospiti/);
-  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /class="perche"/);   // un appuntamento ricevuto (non una serata): nessun «Perché?»
+  assert.match(P.fogli.at(-1).innerHTML, /<details class="perche"><summary>Perché\?<\/summary>Questo appuntamento lo ha fissato Ignazio, conferma la presenza o contattalo per una modifica\.<\/details>/);   // un appuntamento ricevuto: chi l'ha fissato (Ignazio 11/10)
 });
 
 prova('Nota 049: «A quest\'ora hai già…» conta anche la serata ricevuta (con chi la organizza); a un\'ora non a cavallo niente; con «Tutti» o su un altro partner no', () => {
