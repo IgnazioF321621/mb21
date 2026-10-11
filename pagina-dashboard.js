@@ -333,7 +333,7 @@ function disegnaHome() {
   let html = `<div class="testa-pagina"><div><div class="sotto" style="margin:0">${esc(dataEstesa(ST.oggi))}</div><h1>${altro || !nome ? 'Dashboard' : `Ciao ${esc(nome)}`}</h1></div>${cerchiettoProfilo()}</div>` + dashboardTesta();
   if (ST.offline) {
     const ora = new Date(ST.offline).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.</div>`;
+    html += `<div class="avviso">Sei offline: questa è la coda salvata il ${esc(ora)}. Solo lettura.${percheHtml('offline')}</div>`;   // «Perché?» (nota 048)
   }
   html += rigaTelefonoHtml();   // cantiere 32: «Metti MB21 sul telefono e accendi gli avvisi»
   const tessere = [];
@@ -434,7 +434,7 @@ function disegnaOggiLV() {
   if (RIO.righe.length || fatteDi('rio').length) metti('riordini', 'riordini', 'Riordini da sentire', c.rio ? `${c.rio} ${c.rio === 1 ? 'cliente da sentire' : 'clienti da sentire'}` : 'tutti sentiti', c.rio, 'rio',
     RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '), a.contatto_id)));
   const finito = !totaleOggi(c);
-  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${conto ? ` · fatti ${conto}` : ''}</div>` + (ST.offline ? '<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.</div>' : '')
+  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${conto ? ` · fatti ${conto}` : ''}</div>` + (ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : '')
     + sezioni.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
   app.innerHTML = html + versione();
   const daSole = { conferme: false, dareseguito: false, coda: false, scelte: false, riordini: false };
@@ -2122,6 +2122,8 @@ async function mostraRiquadroObiettivi() {
   };
 }
 
+// Torna la rete (nota 048: «quando torna la rete, i tasti si riaccendono»): la Dashboard salvata si rilegge da sola
+window.addEventListener('online', () => { if (ST.offline && ST.utente && ST.tab === 'oggi') caricaOggi(); });
 // Il telefono tiene l'app viva in secondo piano: uscendo dall'app il riquadro torna «da mostrare»; rientrando sulla Dashboard si riapre
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') ST.riquadroObMostrato = false;
