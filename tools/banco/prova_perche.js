@@ -48,8 +48,8 @@ prova('abbonamento scaduto: una frase sola (fermoScaduto, mostraTab, benvenuto),
   assert.doesNotMatch(idx + ben, /Abbonamento scaduto: rinnova/);
 });
 prova('appuntamento ricevuto: le parole di Ignazio con il nome di chi l\'ha fissato', () => {
-  assert.equal(P.perche('ricevuto_azione', { nome: 'Carolina' }), 'Questo appuntamento lo ha fissato Carolina, conferma la presenza o contattalo per una modifica.');
-  assert.equal(P.perche('ricevuto_azione'), 'Questo appuntamento lo ha fissato —, conferma la presenza o contattalo per una modifica.');
+  assert.equal(P.perche('ricevuto_azione', { nome: 'Carolina' }), 'Questo appuntamento lo ha fissato Carolina, conferma la presenza o contattalo/a per una modifica.');
+  assert.equal(P.perche('ricevuto_azione'), 'Questo appuntamento lo ha fissato —, conferma la presenza o contattalo/a per una modifica.');
   assert.equal(P.perche('tutti', { nome: 'x' }), P.perche('tutti'));   // le frasi senza segnaposto non cambiano
 });
 console.log(`\n${ok} prove superate`);
