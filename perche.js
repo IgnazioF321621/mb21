@@ -7,9 +7,16 @@
   const MOTIVI = {
     // Ignazio 11/10/2026, tale e quale (note 047 e 048): un partner e la SdS/OPEN, che è una sola, quella del Team
     sds_team: 'Questa serata viene creata per tutto il team automaticamente, non serve crearne un altro.',
+    // una serata ricevuta (nota 027/047) si guarda soltanto: chi la organizza (Ignazio 11/10/2026: «Ignazio organizza Team, Leader organizza LdS,
+    // Leader/Platino organizza SdS/OPEN»); chi la riceve conferma la presenza
+    ricevuto_team: 'Questa serata la organizza Ignazio: da qui si conferma la presenza.',
+    ricevuto_lds: 'Questa serata la organizza il Leader: da qui si conferma la presenza.',
+    ricevuto_sds: 'Questa serata la organizza il Leader/Platino: da qui si conferma la presenza.',
   };
   const perche = codice => MOTIVI[codice] || '';
-  const api = { MOTIVI, perche };
+  // il motivo di una serata ricevuta, dal suo tipo (`spazi.tipo`: Team · LOS · SdS/OPEN); per gli altri nessuno
+  const codiceRicevuto = tipo => ({ Team: 'ricevuto_team', LOS: 'ricevuto_lds', 'SdS/OPEN': 'ricevuto_sds' })[tipo] || null;
+  const api = { MOTIVI, perche, codiceRicevuto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Perche = api;
 })(this);

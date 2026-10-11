@@ -169,6 +169,7 @@ prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partec
   await attendi();
   let v = P.fogli.at(-1);
   assert.match(v.innerHTML, /<label>Conferma della presenza<\/label>/);
+  assert.match(v.innerHTML, /<details class="perche"><summary>Perché\?<\/summary>Questa serata la organizza il Leader\/Platino: da qui si conferma la presenza\.<\/details>/);   // nota 048
   assert.doesNotMatch(v.innerHTML, /data-osp-nome/);   // gli ospiti solo dopo «Partecipo»
   await v.clic('[data-ri-risposta="ci_sono"]');
   v = P.fogli.at(-1);
@@ -182,6 +183,7 @@ prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partec
   // un altro impegno ricevuto (non SdS/OPEN) resta come prima
   pulisci(); P.foglioRicevuto(ricevuto({ visto_il: '2026-09-20T10:00:00Z' })); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /<label>Partecipi\?<\/label>/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Hai ospiti/);
+  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /class="perche"/);   // un appuntamento ricevuto (non una serata): nessun «Perché?»
 });
 
 (async () => {
