@@ -3245,6 +3245,7 @@ async function allineaRigaCoda(e, da, a) {
 
 function spostaAppuntamento(e, dopo) {
   const A = MB21Agenda;
+  if (A.eConsegna(e)) return mostraToast('La consegna si sposta con «Sposta la consegna»: cambia anche la data nella vendita');   // nota 051
   const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
   const quando = dallaCoda ? e.data_scelta : e.inizio;
   const { giorno, ora } = A.partiRoma(quando);
@@ -3731,6 +3732,7 @@ async function foglioAzione(id, opz = {}) {
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
     .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, data_scelta, ospite, note, senza_ora, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
+  if (MB21Agenda.eConsegna(a)) return mostraToast('La consegna si sposta con «Sposta la consegna»: cambia anche la data nella vendita');   // nota 051
   let portato = null;
   if (a.portato_da) {
     const { data } = await dbq('portato da', supa.from('contatti').select('id, nome, categoria').eq('id', a.portato_da).maybeSingle());

@@ -835,7 +835,7 @@ async function sezioneAzioni() {
       ${a.esito ? '' : ricordoHtml(c.id, c.nome)}
       ${a.esito || a.tipo_azione !== 'Contatto' || (a.modalita && a.modalita !== 'Telefonata') ? preparaPresentazioneHtml(a) : preparaChiamataHtml(c.id)}
       ${chiusa ? `<div class="blocco-esiti" data-blocco="${esc(a.id)}"></div>` : blocco}
-      <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
+      <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${MB21Agenda.eConsegna(a) ? '' : link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;
   }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   const piu = document.getElementById('azione-piu');

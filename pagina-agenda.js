@@ -1892,7 +1892,8 @@ function extraEvento(e) {
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria ? MB21Lista.nomeCategoria(e.categoria) : 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
       <div class="ag-comandi">
-        ${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>
+        ${MB21Agenda.eConsegna(e) ? '' /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
+          : `${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>`}
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>`;
