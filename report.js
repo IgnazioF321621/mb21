@@ -76,8 +76,11 @@
   const testoPeriodo = p => p.tipo !== 'wes' ? p.etichetta
     : `${p.etichetta} · ${dataBreve(p.da)} → ${p.inCorso ? 'in corso' : dataBreve(spostaGiorno(p.a, -1))}`;
 
-  // Solo le azioni fatte: giorno dell'azione fino a oggi compreso
-  const giornoAzione = a => a.inizio ? giornoRoma(a.inizio) : null;
+  // Solo le azioni fatte, fino a oggi compreso, nel giorno in cui contano (nota Azioni 030, Ignazio 12/10/2026: «quello che conta è il reale,
+  // non il previsto»): un Contatto (telefonata, messaggio…) nel giorno in cui è stato dato l'esito (`esito_il`; vuoto per le azioni di prima:
+  // allora il giorno dell'azione); Piano Marketing e appuntamenti nel giorno dell'incontro. ⚠️ La stessa regola è nella vista `azioni_conti`
+  // (migrazione 20261012185700): si cambiano insieme.
+  const giornoAzione = a => (a.tipo_azione === 'Contatto' && a.esito_il ? a.esito_il : a.inizio ? giornoRoma(a.inizio) : null);
 
   // ── Numeri a scalini ──
   function numeri(azioni, periodo, oggi) {

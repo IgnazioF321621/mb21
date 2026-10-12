@@ -4438,7 +4438,7 @@ async function schedaDalCheck(pid) {
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
 const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
-const CAMPI_REPORT = 'id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, inizio, ospite, contatti(nome, categoria)';   // categoria e completata: servono a `contaAzione`
+const CAMPI_REPORT = 'id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, inizio, esito_il, ospite, contatti(nome, categoria)';   // categoria e completata: servono a `contaAzione`; esito_il: il giorno in cui conta un Contatto (nota Azioni 030, `giornoAzione`)
 
 async function leggiAzioniMie() {
   const righe = [];
