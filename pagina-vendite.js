@@ -107,6 +107,13 @@ function moduloVendita(v, proposta) {
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
     </div>
 
+    ${eAdmin() ? `<h4 class="mc-t">Incasso (per Wallet)</h4><div class="riquadro mc-g">
+      <div class="vn-aiuto">⚠️ Per ora lo vedi solo tu</div>
+      <div class="campo"><label>Come ha pagato</label>
+        <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
+      <div class="campo"><label>Incassato (€)</label><div class="vn-aiuto">Quanto ha pagato il cliente.</div><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div>
+    </div>` : ''}
+
     <h4 class="mc-t">Il prossimo riordino</h4><div class="riquadro mc-g">
       <div class="campo"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
       ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
@@ -131,6 +138,15 @@ function moduloVendita(v, proposta) {
   };
   velo.querySelectorAll('[data-quando]').forEach(b => b.onclick = () => { dopo = b.dataset.quando === 'dopo'; segnaQuando(); });
   segnaQuando();
+  // Nota Admin 013: «Come ha pagato» e «Incassato» (solo Admin, facoltativi). Non stanno in `vendite_conti`: si leggono dalla vendita.
+  let pagato = null;
+  const segnaPagato = () => velo.querySelectorAll('[data-pagato]').forEach(b => b.classList.toggle('scelto', b.dataset.pagato === pagato));
+  velo.querySelectorAll('[data-pagato]').forEach(b => b.onclick = () => { pagato = pagato === b.dataset.pagato ? null : b.dataset.pagato; segnaPagato(); });
+  if (eAdmin() && v) dbq('incasso vendita', supa.from('vendite').select('pagato_con, incassato').eq('id', v.id).single()).then(({ data }) => {
+    if (!data) return;
+    pagato = data.pagato_con; segnaPagato();
+    $('v-incassato').value = data.incassato == null ? '' : MB21Lista.numero(data.incassato).replace(/\./g, '');
+  });
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
   // `proposta.salvata`: solo dopo un salvataggio riuscito (l'attesa «Ordina da solo» si chiude con la vendita, nota Azioni 025); `poi` anche con Annulla
@@ -140,6 +156,11 @@ function moduloVendita(v, proposta) {
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
       sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value }, !!(v && !v.riordino));
     if (esito.errore) return mostraToast(esito.errore);
+    if (eAdmin()) {
+      const t = $('v-incassato').value.trim().replace(/\s/g, '').replace(',', '.'), inc = t === '' ? null : Number(t);
+      if (inc !== null && (!isFinite(inc) || inc < 0)) return mostraToast('L\'incassato non è un numero');
+      esito.riga.pagato_con = pagato; esito.riga.incassato = inc === null ? null : Math.round(inc * 100) / 100;
+    }
     $('invia').disabled = true;
     const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)
       : supa.from('vendite').insert({ ...esito.riga, contatto_id: c.id, user_id: c.user_id });
