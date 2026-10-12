@@ -142,4 +142,19 @@ prova('«Ordina da solo» conta come contatto fatto (nota Azioni 025), come «Or
   assert.deepEqual(R.contaAzione(a), R.contaAzione({ ...a, esito: 'Ordine' }));
 });
 
+prova('Il giorno reale (nota Azioni 030): la telefonata conta nel giorno dell\'esito, il PM nel giorno dell\'incontro, le vecchie come prima', () => {
+  const o = '2026-10-12';
+  const tel = { id: 1, tipo_azione: 'Contatto', categoria: 'Cliente', esito: 'No Interesse', completata: true, inizio: '2026-09-29T08:00:00Z', esito_il: '2026-10-02' };
+  const pm = { id: 2, tipo_azione: 'Piano Marketing', categoria: 'Prospect', esito: 'Presentazione', completata: true, inizio: '2026-09-29T17:00:00Z', esito_il: '2026-10-02' };
+  const vecchia = { id: 3, tipo_azione: 'Contatto', categoria: 'Prospect', esito: 'Richiamare', inizio: '2026-09-29T08:00:00Z' };
+  const conti = periodo => Object.fromEntries(R.numeri([tel, pm, vecchia], periodo, o).map(g => [g.chiave, g.totale]));
+  const sett = conti(R.periodoMese('2026-09-01')), ott = conti(R.periodoMese('2026-10-01'));
+  assert.equal(sett.pm, 1); assert.equal(ott.pm, 0);               // il PM resta il 29/09, giorno dell'incontro
+  const contattiSett = R.numeri([tel, vecchia], R.periodoMese('2026-09-01'), o).find(g => g.tipi.includes('Contatto'));
+  const contattiOtt = R.numeri([tel, vecchia], R.periodoMese('2026-10-01'), o).find(g => g.tipi.includes('Contatto'));
+  assert.equal(contattiSett.totale, 1); assert.equal(contattiOtt.totale, 1);   // la vecchia a settembre, la telefonata chiusa in ritardo a ottobre
+  // un esito dato «domani» (orologio avanti) non conta oggi
+  assert.equal(R.numeri([{ ...tel, esito_il: '2026-10-13' }], R.periodoMese(o), o).find(g => g.tipi.includes('Contatto')).totale, 0);
+});
+
 console.log(`\n${ok} prove superate`);
