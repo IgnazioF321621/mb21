@@ -1,6 +1,9 @@
--- Prova della nota Azioni 030 (giorno reale) in una transazione ANNULLATA: nessun dato cambia. Uso: supabase db query --linked -f tools/banco/prova_giorno_reale_030.sql
--- Dentro: le migrazioni 20261012185500 e 20261012185700 e le due bozze in attesa di ok (trigger esito_il, stato_oggi). Esito atteso: «PROVA FINITA (tutto verde)».
+-- Prova della nota Azioni 030 (giorno reale) in una transazione ANNULLATA: nessun dato cambia.
+-- Uso: supabase db query --linked -f tools/banco/prova_giorno_reale_030.sql  · Esito atteso: «PROVA FINITA (tutto verde)».
+-- Dentro, nell'ordine del rilascio: le migrazioni 20261012185500 · 185600 · 185700 · 185800 (copiate: il comando non legge \i).
 begin;
+create temp table prima as select u.id, (public.stato_oggi(u.id)->>'fatti_oggi')::int f from utenti u;
+create temp table prima_conti as select count(*) n, sum(contatti) c, sum(pm) p from azioni_conti;
 -- ═══════════════════════════════════════════════════════════
 -- Nota Azioni 030 (Ignazio 12/10/2026: «quello che conta è il reale, non il previsto»; ok al campo nuovo nella nota).
 -- Solo aggiunta: campo nuovo facoltativo, nessun cambio a quello che c'è.
@@ -11,7 +14,7 @@ begin;
 alter table public.azioni add column if not exists esito_il date;
 comment on column public.azioni.esito_il is 'Giorno (Roma) in cui è stato dato l''esito (nota Azioni 030). Vuoto = senza esito o azione di prima del 12/10/2026.';
 -- ═══════════════════════════════════════════════════════════
--- ⚠️ TRIGGER NUOVO su una tabella esistente (azioni): CLAUDE.md § 4 chiede l'ok esplicito di Ignazio. Si applica al rilascio, solo con l'ok,
+-- TRIGGER NUOVO su una tabella esistente (azioni): ok esplicito di Ignazio del 12/10/2026 («ok procedi con tutti e 2»). Si applica al rilascio,
 -- dopo 20261012185500 (il campo) e prima di 20261012185700 (la vista).
 -- Nota Azioni 030: un punto solo per tutte le strade che danno un esito (chiudi_azione, modifica_azione, «Cambia esito», foglio Modifica,
 -- Riordini da sentire, Dashboard, MB Plan, scheda, e i loro Annulla). Il trigger tocca SOLO il campo nuovo `esito_il`, nient'altro.
@@ -67,6 +70,46 @@ create or replace view public.azioni_conti as
           AND (a.esito = ANY (ARRAY['PM Fissato', 'Appuntamento', 'Ordine', 'Ordina da solo', 'Richiamare', 'Relazione', 'No Interesse', 'Consulenza Prodotti'])
                OR a.esito = 'Riordino' AND coalesce(a.completata, false)))
          OR (a.tipo_azione = 'Piano Marketing' AND a.esito = ANY (ARRAY['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti'])));
+-- ═══════════════════════════════════════════════════════════
+-- MODIFICA di una funzione esistente (stato_oggi): ok esplicito di Ignazio del 12/10/2026 («ok procedi con tutti e 2»; nota Azioni 030).
+-- Si applica al rilascio, dopo 20261012185500 (campo) e 20261012185600 (trigger).
+-- «Contatti 3 di 5» (Dashboard e MB Plan): una telefonata scelta a mano conta nel giorno in cui le si dà l'esito (`esito_il`),
+-- non in quello in cui era prevista; le righe della coda come prima (nascono già con l'esito, nel momento in cui si dà).
+-- Per le telefonate di prima (esito_il vuoto) resta il giorno dell'azione. Copia di com'era: tools/banco/copie/stato_oggi_prima_030.sql.
+-- ═══════════════════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION public.stato_oggi(p_utente uuid DEFAULT NULL::uuid)
+ RETURNS json
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  select json_build_object(
+    'contatti_al_giorno', u.contatti_al_giorno,
+    'fatti_oggi', (select count(*) from public.azioni a
+                   where a.user_id = u.id
+                     and ((a.da_coda
+                           and a.inizio >= (date_trunc('day', now() at time zone 'Europe/Rome') at time zone 'Europe/Rome')
+                           and a.inizio <  (date_trunc('day', now() at time zone 'Europe/Rome') at time zone 'Europe/Rome') + interval '1 day')
+                       or (a.scelta_a_mano and coalesce(a.completata, false) and a.esito is not null
+                           and coalesce(a.esito_il, (a.inizio at time zone 'Europe/Rome')::date) = (now() at time zone 'Europe/Rome')::date))),
+    'catalogati_oggi', (select count(*) from public.contatti c
+                        where c.user_id = u.id and c.catalogato_il = (now() at time zone 'Europe/Rome')::date))
+  from public.utenti u where u.id = coalesce(p_utente, public.utente_corrente());
+$function$;
+do $$ declare r record; q record; begin select * into q from prima_conti; select count(*) n, sum(contatti) c, sum(pm) p into r from azioni_conti;
+  if (r.n, r.c, r.p) is distinct from (q.n, q.c, q.p) then raise exception 'la vista conta diverso: % % % invece di % % %', r.n, r.c, r.p, q.n, q.c, q.p; end if; end $$;
+do $$ declare diversi int; r record; t uuid; f0 int; f1 int; begin
+  select count(*) into diversi from prima p where p.f is distinct from (public.stato_oggi(p.id)->>'fatti_oggi')::int;
+  if diversi > 0 then raise exception 'cambiati % utenti', diversi; end if;
+  select user_id, contatto_id into r from azioni where tipo_azione='Contatto' limit 1;
+  f0 := (public.stato_oggi(r.user_id)->>'fatti_oggi')::int;
+  insert into azioni (user_id, contatto_id, categoria, tipo_azione, modalita, inizio, completata, scelta_a_mano)
+    values (r.user_id, r.contatto_id, 'Prospect', 'Contatto', 'Telefonata', now() - interval '1 day', false, true) returning id into t;
+  update azioni set esito='Richiamare', completata=true where id=t;
+  f1 := (public.stato_oggi(r.user_id)->>'fatti_oggi')::int;
+  if f1 <> f0 + 1 then raise exception 'telefonata di ieri chiusa oggi non contata: % -> %', f0, f1; end if;
+  raise notice 'Parte 1 (tutto verde): nessun utente cambia oggi; la telefonata di ieri chiusa oggi conta oggi (% -> %)', f0, f1;
+end $$;
 do $$
 declare t uuid; p uuid; r record; oggi date := (now() at time zone 'Europe/Rome')::date; n_prima int; n_dopo int; msg text := '';
 begin
@@ -101,44 +144,6 @@ begin
   -- le righe vecchie: il conto per giorno di prima e di dopo è uguale (esito_il vuoto ovunque)
   select count(*) into n_dopo from azioni_conti;
   msg := msg || 'righe nella vista: ' || n_dopo;
-  raise notice 'Parte 1 verde: %', msg;
+  raise exception 'PROVA FINITA (tutto verde): conti di oggi invariati · stato_oggi conta la telefonata di ieri chiusa oggi · %', msg;
 end $$;
-create temp table prima as select u.id, (public.stato_oggi(u.id)->>'fatti_oggi')::int f from utenti u;
--- ═══════════════════════════════════════════════════════════
--- ⚠️ MODIFICA di una funzione esistente (stato_oggi): serve l'ok esplicito di Ignazio (nota Azioni 030: «il resto si chiede di nuovo»).
--- Si applica al rilascio, dopo 20261012185500 (campo) e 20261012185600 (trigger).
--- «Contatti 3 di 5» (Dashboard e MB Plan): una telefonata scelta a mano conta nel giorno in cui le si dà l'esito (`esito_il`),
--- non in quello in cui era prevista; le righe della coda come prima (nascono già con l'esito, nel momento in cui si dà).
--- Per le telefonate di prima (esito_il vuoto) resta il giorno dell'azione. Copia di com'era: tools/banco/copie/stato_oggi_prima_030.sql.
--- ═══════════════════════════════════════════════════════════
-CREATE OR REPLACE FUNCTION public.stato_oggi(p_utente uuid DEFAULT NULL::uuid)
- RETURNS json
- LANGUAGE sql
- STABLE
- SET search_path TO 'public'
-AS $function$
-  select json_build_object(
-    'contatti_al_giorno', u.contatti_al_giorno,
-    'fatti_oggi', (select count(*) from public.azioni a
-                   where a.user_id = u.id
-                     and ((a.da_coda
-                           and a.inizio >= (date_trunc('day', now() at time zone 'Europe/Rome') at time zone 'Europe/Rome')
-                           and a.inizio <  (date_trunc('day', now() at time zone 'Europe/Rome') at time zone 'Europe/Rome') + interval '1 day')
-                       or (a.scelta_a_mano and coalesce(a.completata, false) and a.esito is not null
-                           and coalesce(a.esito_il, (a.inizio at time zone 'Europe/Rome')::date) = (now() at time zone 'Europe/Rome')::date))),
-    'catalogati_oggi', (select count(*) from public.contatti c
-                        where c.user_id = u.id and c.catalogato_il = (now() at time zone 'Europe/Rome')::date))
-  from public.utenti u where u.id = coalesce(p_utente, public.utente_corrente());
-$function$;
-do $$ declare diversi int; r record; t uuid; f0 int; f1 int; begin
-  select count(*) into diversi from prima p where p.f is distinct from (public.stato_oggi(p.id)->>'fatti_oggi')::int;
-  if diversi > 0 then raise exception 'cambiati % utenti', diversi; end if;
-  select user_id, contatto_id into r from azioni where tipo_azione='Contatto' limit 1;
-  f0 := (public.stato_oggi(r.user_id)->>'fatti_oggi')::int;
-  insert into azioni (user_id, contatto_id, categoria, tipo_azione, modalita, inizio, completata, scelta_a_mano)
-    values (r.user_id, r.contatto_id, 'Prospect', 'Contatto', 'Telefonata', now() - interval '1 day', false, true) returning id into t;
-  update azioni set esito='Richiamare', completata=true where id=t;
-  f1 := (public.stato_oggi(r.user_id)->>'fatti_oggi')::int;
-  if f1 <> f0 + 1 then raise exception 'telefonata di ieri chiusa oggi non contata: % -> %', f0, f1; end if;
-  raise exception 'PROVA FINITA (tutto verde): nessun utente cambia oggi; la telefonata di ieri chiusa oggi conta oggi (% -> %)', f0, f1;
-end $$; rollback;
+rollback;
