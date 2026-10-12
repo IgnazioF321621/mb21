@@ -291,6 +291,10 @@
   const SDS_DEL_TEAM = PERCHE.perche('sds_team');   // parole di Ignazio, nell'elenco unico dei motivi (perche.js, nota 048)
   const FRASE_OSPITI = 'Hai ospiti? Scrivi i loro nomi qui. Puoi aggiungerli anche più tardi: riapri questa serata e li trovi ancora qui.';
   const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
+  // La carta «Consegna» (nota Pagine 051, Ignazio 12/10/2026): il promemoria che la vendita «Più avanti» scrive in Agenda (trigger
+  // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andata la telefonata?»,
+  // solo «Consegnato» (= «Ordine fatto» della vendita) e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
+  const eConsegna = a => !!a && a.tipo_azione === 'Contatto' && a.modalita === 'Presenza' && /^Consegna · /.test(a.note || '');
   const OSPITE_MAX = 60, OSPITI_MAX = 30;
   // un nome in più nell'elenco: spazi puliti, niente vuoti né doppioni (maiuscole a parte), al massimo 30
   function aggiungiOspite(ospiti, nome) {
@@ -832,7 +836,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
-    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

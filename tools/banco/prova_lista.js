@@ -605,4 +605,15 @@ prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° 
   scaduto = true; chiamata = null; bottoni[0].onclick(); assert.equal(chiamata, null);
 });
 
+prova('Nota 051: «Prossimo riordino», per ogni brand conta solo la vendita più recente (anche con la consegna lontana)', () => {
+  const oggi = '2026-10-12';
+  const vecchia = { brand: 'eSpring', data: '2025-09-20', riordino: '2026-10-15' };
+  const nuova = { brand: 'eSpring', data: '2026-10-11', consegna: '2027-05-20', riordino: '2028-05-10' };
+  assert.equal(L.prossimoRiordino([nuova, vecchia], oggi), nuova);   // il caso di Aldo: prima diceva 15/10/2026
+  assert.equal(L.prossimoRiordino([vecchia, nuova], oggi), nuova);   // l'ordine dell'elenco non conta
+  const altro = { brand: 'Nutrilite', data: '2026-01-10', riordino: '2026-11-01' };
+  assert.equal(L.prossimoRiordino([nuova, vecchia, altro], oggi), altro);   // gli altri brand restano
+  assert.equal(L.prossimoRiordino([{ brand: 'eSpring', data: '2026-10-11', riordino: null }, vecchia], oggi), null);   // la nuova senza riordino toglie anche la vecchia
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
