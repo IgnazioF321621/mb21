@@ -63,6 +63,21 @@ prova('senza vendita collegata, o con l\'abbonamento scaduto, non si scrive nien
   assert.equal(b.scritte.length, 0);
 });
 
+prova('Ignazio 12/10 («toglierli»): sulla carta Consegna niente «Sposta» né «Modifica» (MB Plan e scheda); se ci si arriva lo stesso, l\'avviso', async () => {
+  const P = require('../design/anteprima_agenda.js');
+  P.fogli.length = 0; P.avvisi.length = 0;
+  const e = { id: 'cons1', user_id: 'io', contatto_id: 'c9', tipo_azione: 'Contatto', modalita: 'Presenza', area: 'Prodotti', note: 'Consegna · Filtro di ricambio',
+    inizio: P.A.isoDaRoma(P.OGGI, '10:00'), fine: P.A.isoDaRoma(P.OGGI, '10:30'), completata: false, esito: null, contatti: { nome: 'Aldo', categoria: 'Cliente', telefono: '' }, categoria: 'Cliente' };
+  P.foglioEvento({ ...e, quando: e.inizio });
+  const h = P.fogli.at(-1).innerHTML;
+  assert.doesNotMatch(h, /data-cmd="sposta"|data-cmd="modifica"/);
+  assert.match(h, /data-consegna="sposta"/); assert.match(h, /data-cmd="contatto"/);
+  const lista = leggi('pagina-lista.js');
+  assert.match(lista, /\$\{MB21Agenda\.eConsegna\(a\) \? '' : link\('data-modifica-azione', a\.id, 'Modifica'\)\}/);
+  assert.match(idx, /function spostaAppuntamento\(e, dopo\) \{\n  const A = MB21Agenda;\n  if \(A\.eConsegna\(e\)\) return mostraToast/);
+  assert.match(idx, /if \(MB21Agenda\.eConsegna\(a\)\) return mostraToast\('La consegna si sposta con «Sposta la consegna»/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
