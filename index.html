@@ -2953,6 +2953,9 @@ function bottoniEsiti(bottoni, attuale, attr, classe) {
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
 function bloccoEsiti(a, categoria, aperto = false) {
+  // la carta «Consegna» (nota Pagine 051): due scelte sole, quelle della vendita; fatta la consegna non c'è più niente da toccare
+  if (MB21Agenda.eConsegna(a)) return a.completata ? '' : `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">La consegna</div>
+    <div class="ag-scelte"><button type="button" data-consegna="fatta">${ic('consegna')} Consegnato</button><button type="button" data-consegna="sposta">${ic('orario')} Sposta la consegna</button></div></div>`;
   // Un incontro con un Partner con «Su cosa lavorate?»: si toccano i passi fatti (quelli scelti, e «anche altro»), poi «Fatto»
   const inc = MB21Agenda.passiIncontro(a, categoria);
   if (inc) {
@@ -2982,6 +2985,7 @@ function statoAzione(a) {
 }
 // Collega i bottoni del blocco dentro `el`; `dopo()` ridisegna chi l'ha aperto
 function collegaEsiti(el, a, contatto, dopo) {
+  el.querySelectorAll('[data-consegna]').forEach(b => { b.onclick = () => consegnaDaCarta(a, b.dataset.consegna, dopo); });   // nota 051
   const apri = el.querySelector('[data-apri-esiti]');
   if (apri) apri.onclick = () => {   // si apre sul posto, senza ricaricare
     const blocco = apri.closest('.blocco-esiti');
@@ -3021,6 +3025,25 @@ function collegaEsiti(el, a, contatto, dopo) {
     if (passo.startsWith('cambia')) return cambiaEsito(a, esito, dopo);
     chiudiAppuntamento(e, esito, { dopo });
   });
+}
+// La carta «Consegna» (nota Pagine 051): si lavora sulla vendita che l'ha scritta (vendite.azione_consegna_id). «Consegnato» è «Ordine fatto»
+// (ordinata_il: i VP contano da quel giorno, il promemoria si chiude da solo); «Sposta la consegna» cambia vendite.consegna e il promemoria
+// lo segue da solo (trigger mb21_vendita_agenda), quindi la scheda Vendite, MB Plan e gli avvisi dicono la data nuova.
+async function consegnaDaCarta(a, cosa, dopo) {
+  if (soloGuardo() || fermoScaduto()) return;
+  const { data: v, error } = await dbq('vendita della consegna', supa.from('vendite').select('id, data, prodotto, consegna, ordinata_il').eq('azione_consegna_id', a.id).maybeSingle());
+  if (error || !v) return mostraToast('Vendita non trovata: si cambia dalla scheda, in Vendite.');
+  if (cosa === 'fatta') return segnaOrdineFatto(v, dopo);
+  const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
+  const valori = await moduloSemplice('Sposta la consegna', [{ k: 'giorno', etichetta: `${v.prodotto} · la nuova data della consegna`, tipo: 'date', valore: v.consegna && v.consegna >= domani ? v.consegna : domani, obbligatorio: true }]);
+  if (!valori) return;
+  if (valori.giorno < domani) return mostraToast('La consegna nuova va da domani in poi; se è già fatta, tocca «Consegnato»');
+  if (valori.giorno < v.data) return mostraToast('La consegna è prima della vendita');
+  const { error: e2 } = await dbq('sposta consegna', supa.from('vendite').update({ consegna: valori.giorno }).eq('id', v.id));
+  if (e2) return mostraToast('Non salvato: riprova.');
+  if (typeof LS !== 'undefined') { LS.vendite = null; LS.azioni = null; }
+  mostraToast(`Consegna spostata al ${MB21Lista.data(valori.giorno)}`);
+  if (dopo) await dopo();
 }
 async function cambiaEsito(a, esito, dopo, testo) {
   const { data: prima, error } = await dbq('cambia esito', supa.rpc('modifica_azione', {

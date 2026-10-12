@@ -728,4 +728,10 @@ prova('Nota Pagine 049: le serate ricevute contano negli scontri e nelle ore lib
   assert.equal(A.sovrapposti(ev, A.isoDaRoma('2026-10-12', '18:00'), 60, null, 'io').length, 0);   // la serata a cui non va
   assert.ok(!A.oreProposte(ev, 60, { vicinoA: 21 * 60, quante: 10 }).includes('21:30'));
 });
+prova('Nota Pagine 051: la carta «Consegna» si riconosce (Contatto · Presenza · «Consegna · prodotto»); una visita qualsiasi no', () => {
+  assert.equal(A.eConsegna({ tipo_azione: 'Contatto', modalita: 'Presenza', note: 'Consegna · Filtro di ricambio' }), true);
+  assert.equal(A.eConsegna({ tipo_azione: 'Contatto', modalita: 'Presenza', note: 'passo a trovarla' }), false);
+  assert.equal(A.eConsegna({ tipo_azione: 'Contatto', modalita: 'Telefonata', note: 'Riordino · Filtro' }), false);
+  assert.equal(A.eConsegna(null), false);
+});
 console.log(`\n${ok} prove superate`);

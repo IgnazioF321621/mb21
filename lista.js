@@ -394,9 +394,15 @@
       attesaVp: somma((vendite || []).filter(daConsegnare), 'vp') };
   }
 
-  // Il prossimo riordino del cliente (da oggi in poi), per la riga «🔁 Prossimo riordino»
-  const prossimoRiordino = (vendite, oggi) => (vendite || []).filter(v => v.riordino && v.riordino >= oggi)
-    .sort((a, b) => a.riordino < b.riordino ? -1 : 1)[0] || null;
+  // Il prossimo riordino del cliente (da oggi in poi), per la riga «🔁 Prossimo riordino».
+  // Nota Pagine 051 (Ignazio 11-12/10/2026): per ogni brand conta solo la vendita più recente: una vendita nuova dello stesso brand
+  // sostituisce il riordino della vecchia, anche con la consegna lontana (promo pagata in anticipo). A parità di giorno vale la prima
+  // dell'elenco (la scheda le legge dalla più nuova). Una vendita senza brand fa storia a sé.
+  function prossimoRiordino(vendite, oggi) {
+    const ultima = new Map();
+    (vendite || []).forEach((v, i) => { const k = v.brand || '#' + i, u = ultima.get(k); if (!u || (v.data || '') > (u.data || '')) ultima.set(k, v); });
+    return [...ultima.values()].filter(v => v.riordino && v.riordino >= oggi).sort((a, b) => a.riordino < b.riordino ? -1 : 1)[0] || null;
+  }
 
   // Admin → Fattore di conversione (lavoro 1 bis): dal giorno e dal numero scritti alla riga da salvare. `{ riga }` oppure `{ errore }`.
   // L'FC di Amway è un numero piccolo con 5 decimali (2,21759 · 2,26194): fuori da 1–5 è quasi certamente un errore di battitura.
