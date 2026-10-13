@@ -626,4 +626,14 @@ prova('Nota 052: gli importi scritti a mano (prezzo al pubblico, incassato): vuo
   assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /select\('[^']*wallet|riga\.wallet/);   // i dati di Wallet non compaiono
 });
 
+prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sotto ogni vendita della scheda', () => {
+  assert.equal(L.rigaPrezzo(150, 15), 'Sconto 15,00 € (10%) · il cliente paga 135,00 €');
+  assert.equal(L.rigaPrezzo(89.9, 0), 'Sconto 0,00 € · il cliente paga 89,90 €');
+  assert.equal(L.rigaPrezzo(null, 15), ''); assert.equal(L.rigaPrezzo(0, 0), ''); assert.equal(L.rigaPrezzo(100, -1), '');
+  assert.equal(L.rigaPrezzo(100, 120), 'Sconto 120,00 € (120%) · il cliente paga 0,00 €');   // mai sotto zero
+  const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
+  assert.match(ven, /<div class="vn-prezzo" id="v-riga-prezzo" hidden><\/div>/);
+  assert.match(ven, /<div class="vn-prezzo">\$\{esc\(MB21Lista\.rigaPrezzo\(v\.prezzo_pubblico, v\.sconto\)\)\}<\/div>/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));
