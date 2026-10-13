@@ -435,6 +435,14 @@
       sconto: Math.round((sconto || 0) * 100) / 100, consegna: differita ? v.consegna : null, ordinata_il: differita && v.ordinata_il ? v.ordinata_il : null, riordino: v.riordino || null } };
   }
 
+  // Un importo scritto a mano («135,50», «135.5», vuoto): null se vuoto, NaN se non è un numero valido (negativo compreso), se no arrotondato ai centesimi
+  // (nota Pagine 052: prezzo al pubblico e incassato).
+  function importo(t) {
+    const s = String(t == null ? '' : t).trim().replace(/\s/g, '').replace(',', '.');
+    if (s === '') return null;
+    const x = Number(s);
+    return isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : NaN;
+  }
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
@@ -443,7 +451,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { importo, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
