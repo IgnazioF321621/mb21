@@ -347,7 +347,7 @@ prova('Vendite: i totali si sommano interi e si arrotondano solo a schermo (come
 
 prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virgola', () => {
   const base = { data: '2026-09-18', brand: 'eSpring', prodotto: ' Filtro ', vp: '176,94', sconto: '', riordino: '2027-09-18' };
-  assert.deepEqual(L.rigaVendita(base).riga, { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: 176.94, sconto: 0, consegna: null, ordinata_il: null, riordino: '2027-09-18' });
+  assert.deepEqual(L.rigaVendita(base).riga, { data: '2026-09-18', brand: 'eSpring', prodotto: 'Filtro', vp: 176.94, sconto: 0, consegna: null, ordinata_il: null, riordino: '2027-09-18', riordino_a_rottura: false, durata_mesi: null });
   assert.equal(L.rigaVendita({ ...base, vp: '53.5', sconto: '10,50' }).riga.sconto, 10.5);
   assert.equal(L.rigaVendita({ ...base, brand: '' }).errore, 'Scegli il brand');
   assert.equal(L.rigaVendita({ ...base, brand: 'Nutrilite' }).errore, 'Scegli il brand');
@@ -643,6 +643,23 @@ prova('Nota 053 (Ignazio 14/10): il modulo vendita in tre gruppi, che cosa · i 
     '>I tempi<', 'id="v-data"', 'data-quando="subito"', 'id="v-consegna"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
   assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
   assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>/);
+});
+
+prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né telefonata; «di solito dura» solo da leggere', () => {
+  const base = { data: '2026-10-14', brand: 'eSpring', prodotto: 'Lampada UV', vp: '20', sconto: '', consegna: '', riordino: '' };
+  assert.equal(L.rigaVendita(base).errore, 'Manca la data di riordino');   // senza «A rottura» resta obbligatoria
+  let r = L.rigaVendita({ ...base, aRottura: true, durata: '24' }).riga;
+  assert.equal(r.riordino, null); assert.equal(r.riordino_a_rottura, true); assert.equal(r.durata_mesi, 24);
+  r = L.rigaVendita({ ...base, aRottura: true, riordino: '2027-01-01', durata: '' }).riga;   // la data scritta prima si toglie
+  assert.equal(r.riordino, null); assert.equal(r.durata_mesi, null);
+  assert.equal(L.rigaVendita({ ...base, aRottura: true, durata: '0' }).errore, 'Quanto dura: scrivi i mesi, da 1 a 120');
+  assert.equal(L.rigaVendita({ ...base, aRottura: true, durata: '2,5' }).errore, 'Quanto dura: scrivi i mesi, da 1 a 120');
+  r = L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '24' }).riga;   // con la data: come prima, «dura» non si salva
+  assert.equal(r.riordino, '2027-01-01'); assert.equal(r.riordino_a_rottura, false); assert.equal(r.durata_mesi, null);
+  assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2025-08-20', durata_mesi: 24 }, '2026-10-14'), 'A rottura · venduto 13 mesi fa, di solito dura 24 mesi');
+  assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2026-10-01' }, '2026-10-14'), 'A rottura · venduto questo mese');
+  assert.equal(L.rigaRottura({ riordino_a_rottura: false, data: '2026-10-01' }, '2026-10-14'), '');
+  assert.equal(L.prossimoRiordino([{ brand: 'eSpring', data: '2026-10-14', riordino: null, riordino_a_rottura: true }, { brand: 'eSpring', data: '2025-01-01', riordino: '2026-12-01' }], '2026-10-14'), null);
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));
