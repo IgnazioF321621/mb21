@@ -418,6 +418,8 @@
   // Modulo «Vendita» (lavoro 3b): dai campi scritti alla riga da salvare. `{ riga }` oppure `{ errore }` (cosa manca).
   // I numeri si scrivono all'italiana («88,47») o con il punto. Il riordino è obbligatorio (come in Glide),
   // tranne che modificando una vendita dello storico che non l'aveva (`senzaRiordino`).
+  // Nota Pagine 054 (Ignazio 14/10/2026): `aRottura` = il pezzo si riordina quando si rompe: niente data (quindi niente telefonata),
+  // e `durata` facoltativa («di solito dura N mesi», da 1 a 120), solo da leggere.
   function rigaVendita(v, senzaRiordino) {
     const num = t => { const x = String(t == null ? '' : t).trim().replace(/\s/g, '').replace(',', '.'); return x === '' ? null : Number(x); };
     const vp = num(v.vp), sconto = num(v.sconto), prodotto = String(v.prodotto || '').trim();
@@ -429,10 +431,22 @@
     if (v.consegna && v.consegna < v.data) return { errore: 'La consegna è prima della vendita' };
     const differita = v.consegna && v.consegna !== v.data;
     if (differita && v.ordinata_il && v.ordinata_il < v.data) return { errore: 'L\'ordine è prima della vendita' };
-    if (!v.riordino && !senzaRiordino) return { errore: 'Manca la data di riordino' };
+    const durata = v.aRottura ? num(v.durata) : null;
+    if (durata !== null && (!Number.isInteger(durata) || durata < 1 || durata > 120)) return { errore: 'Quanto dura: scrivi i mesi, da 1 a 120' };
+    if (v.aRottura) v = { ...v, riordino: '' };
+    if (!v.riordino && !senzaRiordino && !v.aRottura) return { errore: 'Manca la data di riordino' };
     if (v.riordino && v.riordino < (v.consegna || v.data)) return { errore: v.consegna ? 'Il riordino è prima della consegna' : 'Il riordino è prima della vendita' };
     return { riga: { data: v.data, brand: v.brand, prodotto: prodotto.slice(0, 50), vp: Math.round(vp * 100) / 100,
-      sconto: Math.round((sconto || 0) * 100) / 100, consegna: differita ? v.consegna : null, ordinata_il: differita && v.ordinata_il ? v.ordinata_il : null, riordino: v.riordino || null } };
+      sconto: Math.round((sconto || 0) * 100) / 100, consegna: differita ? v.consegna : null, ordinata_il: differita && v.ordinata_il ? v.ordinata_il : null, riordino: v.riordino || null,
+      riordino_a_rottura: !!v.aRottura, durata_mesi: durata } };
+  }
+  // La riga di una vendita «A rottura» nella scheda › Vendite (nota 054): «A rottura · venduto 14 mesi fa, di solito dura 24 mesi»
+  function rigaRottura(v, oggi) {
+    if (!v || !v.riordino_a_rottura) return '';
+    const [a1, m1, g1] = String(v.data).split('-').map(Number), [a2, m2, g2] = String(oggi).split('-').map(Number);
+    const mesi = Math.max(0, (a2 - a1) * 12 + (m2 - m1) - (g2 < g1 ? 1 : 0));
+    const fa = mesi === 0 ? 'venduto questo mese' : `venduto ${mesi === 1 ? '1 mese' : mesi + ' mesi'} fa`;
+    return `A rottura · ${fa}${v.durata_mesi ? `, di solito dura ${v.durata_mesi === 1 ? '1 mese' : v.durata_mesi + ' mesi'}` : ''}`;
   }
 
   // Un importo scritto a mano («135,50», «135.5», vuoto): null se vuoto, NaN se non è un numero valido (negativo compreso), se no arrotondato ai centesimi
@@ -458,7 +472,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { importo, rigaPrezzo, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { importo, rigaPrezzo, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
