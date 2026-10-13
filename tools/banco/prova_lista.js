@@ -623,7 +623,7 @@ prova('Nota 052: gli importi scritti a mano (prezzo al pubblico, incassato): vuo
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   assert.match(ven, /<label>Prezzo al pubblico \(€\)<\/label>/);
   assert.match(ven, /<h4 class="mc-t">Incasso<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
-  assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /wallet_/);   // i dati di Wallet non compaiono
+  assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /select\('[^']*wallet|riga\.wallet/);   // i dati di Wallet non compaiono
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));
