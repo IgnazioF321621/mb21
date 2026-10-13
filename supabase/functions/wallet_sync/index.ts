@@ -7,7 +7,7 @@ const IGNAZIO = 'c49c1286-7567-461b-b7e8-ef520ccdb9c6';
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 
 async function elenca(): Promise<Vendita[]> {
-  const { data: v, error } = await db.from('vendite').select('id, data, prodotto, pagato_con, incassato, contatto_id')
+  const { data: v, error } = await db.from('vendite').select('id, data, brand, prodotto, pagato_con, incassato, contatto_id')
     .eq('user_id', IGNAZIO).not('pagato_con', 'is', null).not('incassato', 'is', null).is('wallet_il', null).order('data');
   if (error) throw error;
   if (!v.length) return [];
@@ -17,7 +17,7 @@ async function elenca(): Promise<Vendita[]> {
   ]);
   if (conti.error || contatti.error) throw conti.error || contatti.error;
   const prov = new Map(conti.data.map(x => [x.id, x.provvigione])), nomi = new Map(contatti.data.map(x => [x.id, x.nome]));
-  return v.map(x => ({ id: x.id, data: x.data, prodotto: x.prodotto, pagato_con: x.pagato_con, incassato: Number(x.incassato),
+  return v.map(x => ({ id: x.id, data: x.data, brand: x.brand, prodotto: x.prodotto, pagato_con: x.pagato_con, incassato: Number(x.incassato),
     provvigione: prov.get(x.id) == null ? null : Number(prov.get(x.id)), cliente: nomi.get(x.contatto_id) ?? '' }));
 }
 
