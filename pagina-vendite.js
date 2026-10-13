@@ -96,6 +96,7 @@ function moduloVendita(v, proposta) {
         <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div></div>
       <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
       <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
+      <div class="campo"><label>Prezzo al pubblico (€)</label><div class="vn-aiuto">Quanto costava al pubblico quel giorno: resta così anche se i prezzi cambiano.</div><input id="v-prezzo" inputmode="decimal" placeholder="0,00"><div id="v-prezzo-aiuto"></div></div>
       <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
     </div>
 
@@ -107,12 +108,11 @@ function moduloVendita(v, proposta) {
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
     </div>
 
-    ${eAdmin() ? `<h4 class="mc-t">Incasso (per Wallet)</h4><div class="riquadro mc-g">
-      <div class="vn-aiuto">⚠️ Per ora lo vedi solo tu</div>
+    <h4 class="mc-t">Incasso</h4><div class="riquadro mc-g">
       <div class="campo"><label>Come ha pagato</label>
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
       <div class="campo"><label>Incassato (€)</label><div class="vn-aiuto">Quanto ha pagato il cliente.</div><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div>
-    </div>` : ''}
+    </div>
 
     <h4 class="mc-t">Il prossimo riordino</h4><div class="riquadro mc-g">
       <div class="campo"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
@@ -138,15 +138,32 @@ function moduloVendita(v, proposta) {
   };
   velo.querySelectorAll('[data-quando]').forEach(b => b.onclick = () => { dopo = b.dataset.quando === 'dopo'; segnaQuando(); });
   segnaQuando();
-  // Nota Admin 013: «Come ha pagato» e «Incassato» (solo Admin, facoltativi). Non stanno in `vendite_conti`: si leggono dalla vendita.
+  // Nota Admin 013, aperta a tutti dalla nota Pagine 052 (Ignazio 13/10): «Come ha pagato», «Incassato» e «Prezzo al pubblico», facoltativi.
+  // Non stanno in `vendite_conti`: si leggono dalla vendita. I dati di Wallet (wallet_il, wallet_id) restano solo dell'Admin e qui non compaiono.
   let pagato = null;
   const segnaPagato = () => velo.querySelectorAll('[data-pagato]').forEach(b => b.classList.toggle('scelto', b.dataset.pagato === pagato));
   velo.querySelectorAll('[data-pagato]').forEach(b => b.onclick = () => { pagato = pagato === b.dataset.pagato ? null : b.dataset.pagato; segnaPagato(); });
-  if (eAdmin() && v) dbq('incasso vendita', supa.from('vendite').select('pagato_con, incassato').eq('id', v.id).single()).then(({ data }) => {
+  const euro = x => (x == null ? '' : MB21Lista.numero(x).replace(/\./g, ''));
+  if (v) dbq('incasso vendita', supa.from('vendite').select('pagato_con, incassato, prezzo_pubblico').eq('id', v.id).single()).then(({ data }) => {
     if (!data) return;
     pagato = data.pagato_con; segnaPagato();
-    $('v-incassato').value = data.incassato == null ? '' : MB21Lista.numero(data.incassato).replace(/\./g, '');
+    $('v-incassato').value = euro(data.incassato);
+    $('v-prezzo').value = euro(data.prezzo_pubblico);
   });
+  // l'aiuto del prezzo (nota 052): l'ultimo prezzo al pubblico usato per lo stesso prodotto (stesso nome, maiuscole a parte), a un tocco
+  const aiutoPrezzo = async () => {
+    const box = $('v-prezzo-aiuto'), nome = $('v-prodotto').value.trim();
+    box.innerHTML = '';
+    if (!nome || $('v-prezzo').value.trim() || !c) return;
+    const { data } = await dbq('ultimo prezzo', supa.from('vendite').select('prezzo_pubblico, data').eq('user_id', c.user_id).ilike('prodotto', nomeEsatto(nome))
+      .not('prezzo_pubblico', 'is', null).order('data', { ascending: false }).limit(1));
+    const u = Array.isArray(data) && data[0];
+    if (!u || $('v-prezzo').value.trim() || $('v-prodotto').value.trim() !== nome) return;
+    box.innerHTML = `<button type="button" class="link" id="v-prezzo-usa">L'ultima volta ${esc(MB21Lista.numero(u.prezzo_pubblico, true))} (${esc(MB21Lista.data(u.data))}) · usa questo</button>`;
+    $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; };
+  };
+  $('v-prodotto').addEventListener('change', aiutoPrezzo);
+  if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
   // `proposta.salvata`: solo dopo un salvataggio riuscito (l'attesa «Ordina da solo» si chiude con la vendita, nota Azioni 025); `poi` anche con Annulla
@@ -156,11 +173,10 @@ function moduloVendita(v, proposta) {
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
       sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value }, !!(v && !v.riordino));
     if (esito.errore) return mostraToast(esito.errore);
-    if (eAdmin()) {
-      const t = $('v-incassato').value.trim().replace(/\s/g, '').replace(',', '.'), inc = t === '' ? null : Number(t);
-      if (inc !== null && (!isFinite(inc) || inc < 0)) return mostraToast('L\'incassato non è un numero');
-      esito.riga.pagato_con = pagato; esito.riga.incassato = inc === null ? null : Math.round(inc * 100) / 100;
-    }
+    const inc = MB21Lista.importo($('v-incassato').value), prezzo = MB21Lista.importo($('v-prezzo').value);
+    if (Number.isNaN(prezzo)) return mostraToast('Il prezzo al pubblico non è un numero');
+    if (Number.isNaN(inc)) return mostraToast('L\'incassato non è un numero');
+    esito.riga.pagato_con = pagato; esito.riga.incassato = inc; esito.riga.prezzo_pubblico = prezzo;
     $('invia').disabled = true;
     const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)
       : supa.from('vendite').insert({ ...esito.riga, contatto_id: c.id, user_id: c.user_id });
