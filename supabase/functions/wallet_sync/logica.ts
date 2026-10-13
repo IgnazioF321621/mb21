@@ -5,7 +5,7 @@
 //  { azione: 'segna', id, wallet_id }         → segna la vendita come mandata (wallet_il = oggi di Roma, wallet_id = il movimento in Wallet)
 // Niente log con i nomi dei clienti.
 
-export type Vendita = { id: string; data: string; prodotto: string; pagato_con: string; incassato: number; provvigione: number | null; cliente: string };
+export type Vendita = { id: string; data: string; brand: string; prodotto: string; pagato_con: string; incassato: number; provvigione: number | null; cliente: string };
 export type Accesso = {
   chiave: string;                                                  // il segreto WALLET_SYNC_KEY (vuoto = funzione chiusa)
   elenca: () => Promise<Vendita[]>;

@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
   const L = await import('../../supabase/functions/wallet_sync/logica.ts');
   let ok = 0;
   const prova = async (nome, fn) => { await fn(); ok++; console.log('OK  ' + nome); };
-  const V = { id: '11111111-2222-3333-4444-555555555555', data: '2026-10-12', prodotto: 'Nutrilite', pagato_con: 'Contanti', incassato: 120.5, provvigione: 40.02, cliente: 'Mario Rossi' };
+  const V = { id: '11111111-2222-3333-4444-555555555555', data: '2026-10-12', brand: 'Nutrilite/XS', prodotto: 'Vitamine', pagato_con: 'Contanti', incassato: 120.5, provvigione: 40.02, cliente: 'Mario Rossi' };
   const finto = (extra = {}) => { const chiamate = { elenca: 0, segna: [] };
     return { chiamate, acc: { chiave: 'segreta', elenca: async () => { chiamate.elenca++; return [V]; }, segna: async (...a) => { chiamate.segna.push(a); return true; },
       adesso: () => Date.parse('2026-10-13T22:30:00Z'), ...extra } }; };   // 22:30 UTC = 00:30 del 14/10 a Roma
