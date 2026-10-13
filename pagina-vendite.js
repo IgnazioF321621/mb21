@@ -26,8 +26,10 @@ async function venditeDellaScheda(c) {
   if (error) return null;
   // il prezzo al pubblico (nota 052) sta sulla vendita, non nella vista vendite_conti: una lettura piccola, solo le vendite che lo hanno;
   // se non va (campo non ancora nel database) le vendite si vedono come prima
-  const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico').eq('contatto_id', c.id).not('prezzo_pubblico', 'is', null));
-  if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x.prezzo_pubblico])); data.forEach(v => { if (di.has(v.id)) v.prezzo_pubblico = di.get(v.id); }); }
+  // (con la nota 054 anche «A rottura» e «di solito dura», stessa lettura)
+  const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico, riordino_a_rottura, durata_mesi').eq('contatto_id', c.id)
+    .or('prezzo_pubblico.not.is.null,riordino_a_rottura.eq.true'));
+  if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x])); data.forEach(v => { const x = di.get(v.id); if (x) Object.assign(v, { prezzo_pubblico: x.prezzo_pubblico, riordino_a_rottura: x.riordino_a_rottura, durata_mesi: x.durata_mesi }); }); }
   if (LS.contatto === c) LS.vendite = data;
   return data;
 }
@@ -55,6 +57,7 @@ async function sezioneVendite() {
           <div class="vn-prodotto">${esc(v.prodotto)}</div>
           <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) && !MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${v.ordinata_il ? ' · ordine del ' + esc(MB21Lista.data(v.ordinata_il)) : ''}</div>
           ${MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? `<div class="vn-prezzo">${esc(MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto))}</div>` : ''}
+          ${v.riordino_a_rottura ? `<div class="vn-rottura">${ic('riordini')} ${esc(MB21Lista.rigaRottura(v, oggi))}</div>` : ''}
           ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
@@ -119,7 +122,10 @@ function moduloVendita(v, proposta) {
         <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
       <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
-      <div class="campo"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+      <div class="campo"><label>Il prossimo riordino</label>
+        <div class="vn-quando"><button type="button" data-riordino="data">Con una data</button><button type="button" data-riordino="rottura">A rottura</button></div></div>
+      <div class="campo" id="v-riordino-data"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino && !v.riordino_a_rottura ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+      <div class="campo" id="v-rottura"><label>Di solito dura (mesi)</label><div class="vn-aiuto">Per i pezzi che si riordinano quando si rompono: nessuna telefonata di riordino. Quanto dura di solito resta solo da leggere nella scheda.</div><input id="v-durata" inputmode="numeric" placeholder="24" value="${v && v.durata_mesi ? esc(v.durata_mesi) : ''}"></div>
       ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
     </div>
 
@@ -142,6 +148,15 @@ function moduloVendita(v, proposta) {
   };
   velo.querySelectorAll('[data-quando]').forEach(b => b.onclick = () => { dopo = b.dataset.quando === 'dopo'; segnaQuando(); });
   segnaQuando();
+  // «A rottura» (nota Pagine 054, Ignazio 14/10): niente data di riordino (quindi niente telefonata), solo «di solito dura» facoltativo
+  let rottura = !!(v && v.riordino_a_rottura);
+  const segnaRottura = () => {
+    velo.querySelectorAll('[data-riordino]').forEach(b => b.classList.toggle('scelto', (b.dataset.riordino === 'rottura') === rottura));
+    $('v-riordino-data').style.display = rottura ? 'none' : '';
+    $('v-rottura').style.display = rottura ? '' : 'none';
+  };
+  velo.querySelectorAll('[data-riordino]').forEach(b => b.onclick = () => { rottura = b.dataset.riordino === 'rottura'; segnaRottura(); });
+  segnaRottura();
   // Nota Admin 013, aperta a tutti dalla nota Pagine 052 (Ignazio 13/10): «Come ha pagato», «Incassato» e «Prezzo al pubblico», facoltativi.
   // Non stanno in `vendite_conti`: si leggono dalla vendita. I dati di Wallet (wallet_il, wallet_id) restano solo dell'Admin e qui non compaiono.
   let pagato = null;
@@ -179,7 +194,8 @@ function moduloVendita(v, proposta) {
   $('invia').onclick = async () => {
     if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
-      sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value }, !!(v && !v.riordino));
+      sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value,
+      aRottura: rottura, durata: $('v-durata').value }, !!(v && !v.riordino && !v.riordino_a_rottura));
     if (esito.errore) return mostraToast(esito.errore);
     const inc = MB21Lista.importo($('v-incassato').value), prezzo = MB21Lista.importo($('v-prezzo').value);
     if (Number.isNaN(prezzo)) return mostraToast('Il prezzo al pubblico non è un numero');
