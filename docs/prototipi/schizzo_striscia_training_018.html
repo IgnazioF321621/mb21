@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Striscia Impara · Ripassa · Studia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background: #EFF1F5; color: #10151F; margin: 0; padding: 20px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } .nota { color: #5A6475; font-size: 14px; margin: 0 0 18px; max-width: 760px; }
+  .fila { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .col { width: 270px; } .col h2 { font-size: 15px; margin: 0 0 6px; } .col p { font-size: 13px; color: #5A6475; margin: 0 0 10px; min-height: 52px; }
+  .tel { width: 270px; height: 420px; background: #EFF1F5; border: 8px solid #10151F; border-radius: 34px; overflow: hidden; box-sizing: border-box; padding: 22px 14px; }
+  .tel h3 { margin: 0 0 10px; font-size: 20px; }
+  .ciao { background: #fff; border-radius: 14px; padding: 10px 12px; font-size: 13px; margin: 0 0 12px; box-shadow: 0 2px 12px rgba(16,21,31,.05); }
+  .card { background: #fff; border-radius: 14px; padding: 12px; margin: 0 0 8px; font-size: 12px; box-shadow: 0 2px 12px rgba(16,21,31,.05); }
+  .card b { display: block; font-size: 13px; } .card small { color: #5A6475; }
+  .num { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 5px; border-radius: 99px; background: #E0782E; color: #fff; font-size: 11px; line-height: 18px; }
+  .bar { display: flex; border-radius: 99px; margin: 0 0 14px; }
+  .bar span { flex: 1; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: #5A6475; height: 38px; border-radius: 99px; }
+  /* oggi */
+  .oggi { background: #fff; padding: 4px; gap: 4px; box-shadow: 0 2px 12px rgba(16,21,31,.05); }
+  .oggi .sc { background: #6D28D9; color: #fff; }
+  /* A · come la barra dell'Agenda: pista grigia, voce accesa bianca in rilievo */
+  .A { background: #E2E5EC; padding: 3px; }
+  .A .sc { background: #fff; color: #10151F; font-weight: 700; box-shadow: 0 1px 4px rgba(16,21,31,.14); }
+  /* B · pista grigia scura, voce accesa viola piena */
+  .B { background: #D3DAE6; padding: 4px; gap: 2px; }
+  .B .sc { background: #6D28D9; color: #fff; font-weight: 700; box-shadow: 0 2px 6px rgba(109,40,217,.35); }
+</style></head><body>
+<h1>La striscia Impara · Ripassa · Studia</h1>
+<p class="nota">Oggi la striscia è bianca come tutti gli altri riquadri, quindi si nota poco. Qui accanto due modi per farla spiccare, con le stesse tinte già usate in altre pagine. Guarda dove si capisce meglio «dove sono».</p>
+<div class="fila">
+  <div class="col"><h2>Com'è oggi</h2><p>Bianca come i riquadri sotto: si confonde con loro.</p>
+    <div class="tel"><h3>Training</h3><div class="ciao"><b>Ciao Isabella</b></div>
+      <div class="bar oggi"><span class="sc">Impara</span><span>Ripassa<i class="num">4</i></span><span>Studia</span></div>
+      <div class="card"><b>Il Sistema</b><small>Livello Nuovo · 6 carte nuove</small></div><div class="card"><b>Contattare</b><small>Livello Nuovo</small></div></div></div>
+  <div class="col"><h2>A · Pista grigia, voce accesa bianca</h2><p>Come la barra Giorno · Settimana · Mese dell'Agenda: stesso aspetto in tutta l'app.</p>
+    <div class="tel"><h3>Training</h3><div class="ciao"><b>Ciao Isabella</b></div>
+      <div class="bar A"><span class="sc">Impara</span><span>Ripassa<i class="num">4</i></span><span>Studia</span></div>
+      <div class="card"><b>Il Sistema</b><small>Livello Nuovo · 6 carte nuove</small></div><div class="card"><b>Contattare</b><small>Livello Nuovo</small></div></div></div>
+  <div class="col"><h2>B · Pista grigia scura, voce accesa viola</h2><p>Il viola del Training resta sulla voce dove sei: si vede da lontano.</p>
+    <div class="tel"><h3>Training</h3><div class="ciao"><b>Ciao Isabella</b></div>
+      <div class="bar B"><span class="sc">Impara</span><span>Ripassa<i class="num">4</i></span><span>Studia</span></div>
+      <div class="card"><b>Il Sistema</b><small>Livello Nuovo · 6 carte nuove</small></div><div class="card"><b>Contattare</b><small>Livello Nuovo</small></div></div></div>
+</div>
+</body></html>
