@@ -24,6 +24,10 @@ async function venditeDellaScheda(c) {
     .select('id, data, brand, prodotto, vp, sconto, consegna, ordinata_il, riordino, conta_il, provvigione, guadagno_netto')
     .eq('contatto_id', c.id).order('data', { ascending: false }).order('creato_il', { ascending: false }));
   if (error) return null;
+  // il prezzo al pubblico (nota 052) sta sulla vendita, non nella vista vendite_conti: una lettura piccola, solo le vendite che lo hanno;
+  // se non va (campo non ancora nel database) le vendite si vedono come prima
+  const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico').eq('contatto_id', c.id).not('prezzo_pubblico', 'is', null));
+  if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x.prezzo_pubblico])); data.forEach(v => { if (di.has(v.id)) v.prezzo_pubblico = di.get(v.id); }); }
   if (LS.contatto === c) LS.vendite = data;
   return data;
 }
@@ -49,7 +53,8 @@ async function sezioneVendite() {
       <button class="vn-riga" data-vendita="${v.id}">
         <div>
           <div class="vn-prodotto">${esc(v.prodotto)}</div>
-          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${v.ordinata_il ? ' · ordine del ' + esc(MB21Lista.data(v.ordinata_il)) : ''}</div>
+          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) && !MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${v.ordinata_il ? ' · ordine del ' + esc(MB21Lista.data(v.ordinata_il)) : ''}</div>
+          ${MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? `<div class="vn-prezzo">${esc(MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto))}</div>` : ''}
           ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
         </div>
         <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
@@ -98,6 +103,7 @@ function moduloVendita(v, proposta) {
       <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
       <div class="campo"><label>Prezzo al pubblico (€)</label><div class="vn-aiuto">Quanto costava al pubblico quel giorno: resta così anche se i prezzi cambiano.</div><input id="v-prezzo" inputmode="decimal" placeholder="0,00"><div id="v-prezzo-aiuto"></div></div>
       <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
+      <div class="vn-prezzo" id="v-riga-prezzo" hidden></div>
     </div>
 
     <h4 class="mc-t">Quando</h4><div class="riquadro mc-g">
@@ -149,6 +155,7 @@ function moduloVendita(v, proposta) {
     pagato = data.pagato_con; segnaPagato();
     $('v-incassato').value = euro(data.incassato);
     $('v-prezzo').value = euro(data.prezzo_pubblico);
+    rigaPrezzo();
   });
   // l'aiuto del prezzo (nota 052): l'ultimo prezzo al pubblico usato per lo stesso prodotto (stesso nome, maiuscole a parte), a un tocco
   const aiutoPrezzo = async () => {
@@ -160,8 +167,11 @@ function moduloVendita(v, proposta) {
     const u = Array.isArray(data) && data[0];
     if (!u || $('v-prezzo').value.trim() || $('v-prodotto').value.trim() !== nome) return;
     box.innerHTML = `<button type="button" class="link" id="v-prezzo-usa">L'ultima volta ${esc(MB21Lista.numero(u.prezzo_pubblico, true))} (${esc(MB21Lista.data(u.data))}) · usa questo</button>`;
-    $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; };
+    $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; rigaPrezzo(); };
   };
+  // la riga «Sconto … · il cliente paga …» (nota 052) si aggiorna mentre si scrivono prezzo e sconto
+  const rigaPrezzo = () => { const t = MB21Lista.rigaPrezzo(MB21Lista.importo($('v-prezzo').value), MB21Lista.importo($('v-sconto').value)); $('v-riga-prezzo').textContent = t; $('v-riga-prezzo').hidden = !t; };
+  $('v-prezzo').addEventListener('input', rigaPrezzo); $('v-sconto').addEventListener('input', rigaPrezzo);
   $('v-prodotto').addEventListener('change', aiutoPrezzo);
   if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };

@@ -443,6 +443,13 @@
     const x = Number(s);
     return isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : NaN;
   }
+  // La riga del prezzo (nota Pagine 052, Ignazio 13/10: nel modulo e sotto ogni vendita della scheda): «Sconto 15,00 € (10%) · il cliente paga 135,00 €».
+  // Senza prezzo al pubblico (o prezzo zero) niente riga; senza sconto «Sconto 0,00 €», senza percentuale.
+  function rigaPrezzo(prezzo, sconto) {
+    const p = Number(prezzo), s = Number(sconto) || 0;
+    if (prezzo == null || prezzo === '' || !isFinite(p) || p <= 0 || !isFinite(s) || s < 0) return '';
+    return `Sconto ${numero(s, true)}${s ? ` (${Math.round(s / p * 100)}%)` : ''} · il cliente paga ${numero(Math.max(0, p - s), true)}`;
+  }
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
@@ -451,7 +458,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { importo, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { importo, rigaPrezzo, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
