@@ -90,6 +90,7 @@ function moduloVendita(v, proposta) {
   velo.className = 'velo';
   // forma `mc` come gli altri moduli (cantiere 34, 20/09): testa con la persona, tre gruppi, «Annulla · Salva» fermi in fondo.
   // I campi e i loro id non cambiano: cambia solo come sono raccolti.
+  // Nota Pagine 053 (Ignazio 14/10/2026): tre gruppi, «Che cosa hai venduto» · «I soldi» · «I tempi» (prima soldi e tempi erano mescolati).
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('vendite')}</span>
       <div><small>${v ? 'Modifica vendita' : 'Nuova vendita'}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
@@ -100,27 +101,24 @@ function moduloVendita(v, proposta) {
       <div class="campo"><label>Brand <small>Obbligatorio</small></label>
         <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div></div>
       <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
+    </div>
+
+    <h4 class="mc-t">I soldi</h4><div class="riquadro mc-g">
       <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
       <div class="campo"><label>Prezzo al pubblico (€)</label><div class="vn-aiuto">Quanto costava al pubblico quel giorno: resta così anche se i prezzi cambiano.</div><input id="v-prezzo" inputmode="decimal" placeholder="0,00"><div id="v-prezzo-aiuto"></div></div>
       <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
       <div class="vn-prezzo" id="v-riga-prezzo" hidden></div>
-    </div>
-
-    <h4 class="mc-t">Quando</h4><div class="riquadro mc-g">
-      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
-      <div class="campo"><label>Quando consegni?</label>
-        <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
-      <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
-        ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
-    </div>
-
-    <h4 class="mc-t">Incasso</h4><div class="riquadro mc-g">
       <div class="campo"><label>Come ha pagato</label>
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
       <div class="campo"><label>Incassato (€)</label><div class="vn-aiuto">Quanto ha pagato il cliente.</div><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div>
     </div>
 
-    <h4 class="mc-t">Il prossimo riordino</h4><div class="riquadro mc-g">
+    <h4 class="mc-t">I tempi</h4><div class="riquadro mc-g">
+      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
+      <div class="campo"><label>Quando consegni?</label>
+        <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
+      <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
+        ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
       <div class="campo"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
       ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
     </div>
