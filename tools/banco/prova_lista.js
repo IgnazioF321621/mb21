@@ -622,7 +622,7 @@ prova('Nota 052: gli importi scritti a mano (prezzo al pubblico, incassato): vuo
   assert.ok(Number.isNaN(L.importo('-3'))); assert.ok(Number.isNaN(L.importo('abc')));
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   assert.match(ven, /<label>Prezzo al pubblico \(€\)<\/label>/);
-  assert.match(ven, /<h4 class="mc-t">Incasso<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
+  assert.match(ven, /<h4 class="mc-t">I soldi<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
   assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /select\('[^']*wallet|riga\.wallet/);   // i dati di Wallet non compaiono
 });
 
@@ -634,6 +634,15 @@ prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sot
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   assert.match(ven, /<div class="vn-prezzo" id="v-riga-prezzo" hidden><\/div>/);
   assert.match(ven, /<div class="vn-prezzo">\$\{esc\(MB21Lista\.rigaPrezzo\(v\.prezzo_pubblico, v\.sconto\)\)\}<\/div>/);
+});
+
+prova('Nota 053 (Ignazio 14/10): il modulo vendita in tre gruppi, che cosa · i soldi · i tempi, con i campi al loro posto', () => {
+  const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
+  const pos = t => { const i = ven.indexOf(t); assert.ok(i > 0, t); return i; };
+  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>I soldi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-sconto"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"', 'id="v-incassato"',
+    '>I tempi<', 'id="v-data"', 'data-quando="subito"', 'id="v-consegna"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
+  assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
+  assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>/);
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));
