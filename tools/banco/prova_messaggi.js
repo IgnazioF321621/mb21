@@ -5,6 +5,7 @@ const fs = require('node:fs'), path = require('node:path'), vm = require('node:v
 let ok = 0;
 const prova = async (nome, fn) => { await fn(); ok++; console.log('OK  ' + nome); };
 
+const guardo = { altri: false };
 function nuovoMondo({ messaggi = [], letti = [], velo = false, limitato = false, esitoInsert = null } = {}) {
   const inseriti = [], fogli = [], toast = [];
   const crea = () => { const bottoni = {}; const el = { className: '', _h: '', onclick: null, remove() { el.rimosso = true; }, bottoni,
@@ -14,10 +15,10 @@ function nuovoMondo({ messaggi = [], letti = [], velo = false, limitato = false,
     insert(riga) { inseriti.push({ tabella, riga }); return Promise.resolve({ error: esitoInsert }); } });
   const ctx = { ST: { utente: { id: 'u1' } }, esc: s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     ic: n => `[${n}]`, limitato: () => limitato, mostraToast: t => toast.push(t), dbq: (_, p) => p, rigaProfilo: (id, t, d) => `<riga id="${id}">${t}${d}</riga>`,
-    supa: { from: consulta }, MB21Agenda: { linkMappa: l => 'https://maps.apple.com/?q=' + encodeURIComponent(l) }, AD: {}, app: {},
+    guardoAltri: () => !!guardo.altri, supa: { from: consulta }, MB21Agenda: { linkMappa: l => 'https://maps.apple.com/?q=' + encodeURIComponent(l) }, AD: {}, app: {},
     document: { querySelector: () => velo, createElement: () => { const e = crea(); fogli.push(e); return e; }, body: { appendChild() {} } }, Promise, Set, Date, Intl, console };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-messaggi.js'), 'utf8') + '\nthis.__M = { MSG, annuncioMessaggi, messaggioHtml, rigaMessaggiProfilo, messaggiAdminHtml, destinatariDi };', ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-messaggi.js'), 'utf8') + '\nthis.__M = { bannerMessaggi, MSG, annuncioMessaggi, messaggioHtml, rigaMessaggiProfilo, messaggiAdminHtml, destinatariDi };', ctx);
   return { ...ctx.__M, inseriti, fogli, toast, ctx };
 }
 const M1 = { id: 'm1', titolo: 'Hotel del WES', testo: 'Ci vediamo alle 9.\nPortate il badge.', luogo: 'Hotel Roma, Via Appia 1', link_materiale: 'https://esempio.it/bsm.pdf', creato_il: '2026-10-14T10:00:00Z' };
@@ -63,6 +64,15 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
     w.ctx.AD.messaggi = { elenco: [{ ...M1, per_tutti: true }, { ...M2, per_tutti: false }], destinatari: { m2: new Set(['c']) }, letti: { m1: new Set(['a']), m2: new Set() } };
     const h = w.messaggiAdminHtml(); assert.match(h, /letto da 1 su 2/); assert.match(h, /per persone scelte · letto da 0 su 1/);
     w.ctx.AD.messaggioAperto = 'm1'; const h2 = w.messaggiAdminHtml(); assert.match(h2, /✅ Anna/); assert.match(h2, /▫️ Bruno/); assert.ok(!/Carla/.test(h2.split('Secondo')[0]));
+  });
+  await prova('Dashboard: la riga c\'è finché c\'è un messaggio (anche già letto), è cliccabile; non con il Partner Select su un altro, non senza messaggi, non con accesso limitato', async () => {
+    const w = nuovoMondo({ messaggi: [M1, M2], letti: ['m1', 'm2'] }); assert.equal(w.bannerMessaggi(), ''); await w.annuncioMessaggi(true);   // prima della lettura niente
+    assert.equal(w.fogli.length, 0);   // tutti letti: nessun foglio, ma la riga resta
+    const h = w.bannerMessaggi(); assert.match(h, /<button class="banner-grande messaggi" id="ds-messaggi"/); assert.match(h, /2 messaggi dalla squadra/); assert.match(h, /Il più recente: Hotel del WES/);
+    const uno = nuovoMondo({ messaggi: [M2] }); await uno.annuncioMessaggi(false); assert.match(uno.bannerMessaggi(), /Un messaggio dalla squadra.*Secondo/s);
+    guardo.altri = true; assert.equal(w.bannerMessaggi(), ''); guardo.altri = false;
+    const lim = nuovoMondo({ messaggi: [M1], limitato: true }); await lim.annuncioMessaggi(true); assert.equal(lim.bannerMessaggi(), '');
+    assert.equal(nuovoMondo().bannerMessaggi(), '');
   });
   console.log(`\n${ok} prove ok`);
 })().catch(e => { console.error('FALLITA', e); process.exit(1); });

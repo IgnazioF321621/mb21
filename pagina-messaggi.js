@@ -29,7 +29,9 @@ function messaggioHtml(m) {
 async function annuncioMessaggi(aprire) {
   if (limitato() || !ST.utente || !ST.utente.id) return false;
   const r = await leggiMessaggi();
-  if (!r || !aprire) return false;
+  if (!r) return false;
+  if (r.elenco.length && ST.tab === 'oggi' && !document.querySelector('.velo')) disegnaOggi();   // la riga della Dashboard (già disegnata prima che i messaggi arrivassero)
+  if (!aprire) return false;
   const nuovi = r.elenco.filter(m => !r.letti.has(m.id));
   if (!nuovi.length || document.querySelector('.velo')) return false;
   foglioNuovoMessaggio(nuovi, 0);
@@ -53,7 +55,16 @@ function foglioNuovoMessaggio(nuovi, i) {
   };
 }
 
-// Dal Profilo: tutti i messaggi, anche quelli già letti
+// Dashboard (Ignazio 14/10: «teniamolo nella Dashboard fino a quando non viene eliminato, cliccabile»): una riga in cima finché c'è almeno un messaggio.
+// Solo per chi è entrato (non guardando un altro con il Partner Select) e senza accesso limitato; si apre l'elenco, come dal Profilo.
+function bannerMessaggi() {
+  const e = MSG.elenco;
+  if (!e || !e.length || limitato() || guardoAltri()) return '';
+  return `<button class="banner-grande messaggi" id="ds-messaggi"><span class="ico">${ic('messaggio')}</span>
+    <span><b>${e.length > 1 ? `${e.length} messaggi dalla squadra` : 'Un messaggio dalla squadra'}</b><small>${e.length > 1 ? 'Il più recente: ' : ''}${esc(e[0].titolo)}</small></span></button>`;
+}
+
+// Dal Profilo e dalla Dashboard: tutti i messaggi, anche quelli già letti
 const rigaMessaggiProfilo = () => (MSG.elenco && MSG.elenco.length ? rigaProfilo('pf-messaggi', ic('messaggio') + ' Messaggi dalla squadra', String(MSG.elenco.length)) : '');
 async function foglioMessaggi() {
   const r = await leggiMessaggi();
@@ -78,6 +89,7 @@ async function caricaMessaggiAdmin() {
     const per = (righe, campo) => righe.reduce((o, x) => ((o[x.messaggio_id] = o[x.messaggio_id] || new Set()).add(x[campo]), o), {});
     AD.messaggi = { elenco: m.data, destinatari: per(d.data, 'utente_id'), letti: per(l.data, 'utente_id') };
   }
+  leggiMessaggi().catch(() => {});   // la riga della Dashboard dell'Admin si aggiorna con i messaggi appena scritti o eliminati
   if (AD.sezione === 'messaggi') disegnaAdmin();
 }
 // A chi arriva: tutti gli utenti che possono entrare, oppure le persone scelte
