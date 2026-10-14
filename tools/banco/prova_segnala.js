@@ -74,17 +74,21 @@ prova('Nota 041: il segnale «hai una risposta»: nuove = quelle non ancora vist
   assert.equal(S.conViste(Array.from({ length: 60 }, (_, i) => 'v' + i), ['n']).length, 50);
   assert.equal(S.conViste([], ['n'])[0], 'n');
 });
-prova('Nota 056: lo screenshot incollato: il primo file immagine degli appunti; il testo o niente non contano', () => {
-  const file = { name: 'shot.png' };
+prova('Note 056 e 057: lo screenshot incollato (come Zona Tracker): immagine sì, altro file no con avviso, solo testo niente', () => {
+  const png = { name: 'shot.png', type: 'image/png' }, pdf = { name: 'a.pdf', type: 'application/pdf' };
   const voce = (kind, type, f) => ({ kind, type, getAsFile: () => f });
-  assert.equal(S.immagineIncollata({ items: [voce('string', 'text/plain'), voce('file', 'image/png', file)] }), file);
-  assert.equal(S.immagineIncollata({ items: [voce('string', 'text/plain')] }), null);
-  assert.equal(S.immagineIncollata({ items: [voce('file', 'application/pdf', file)] }), null);
-  assert.equal(S.immagineIncollata(null), null); assert.equal(S.immagineIncollata({}), null);
+  assert.equal(S.immagineDaAppunti({ items: [voce('string', 'text/plain'), voce('file', 'image/png', png)] }).immagine, png);
+  assert.equal(S.immagineDaAppunti({ files: [png], items: [] }).immagine, png);   // Safari su iPhone: il file in `files`
+  assert.deepEqual(S.immagineDaAppunti({ items: [voce('file', 'application/pdf', pdf)] }), { altroFile: true });
+  assert.deepEqual(S.immagineDaAppunti({ items: [voce('string', 'text/plain')] }), {});
+  assert.deepEqual(S.immagineDaAppunti(null), {});
   const idx = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
   assert.match(idx, /document\.addEventListener\('paste', incolla\);/);
   assert.match(idx, /if \(!velo\.isConnected\) return document\.removeEventListener\('paste', incolla\);/);
-  assert.match(idx, /<small class="sg-incolla" id="sg-incolla">si può anche incollare<\/small>/);
+  assert.match(idx, /<div id="sg-incolla" class="sg-incolla" contenteditable="true"[^>]*data-vuoto="oppure tocca qui e scegli Incolla"><\/div>/);
+  assert.match(idx, /if \(cera\) mostraToast\('Screenshot sostituito'\);/);
+  assert.match(idx, /mostraToast\('Qui si allega solo un\\'immagine'\)/);
+  assert.match(idx, /\.sg-incolla \{[^}]*font-size: 16px;/);
 });
 
 console.log(`\n${ok} prove superate`);

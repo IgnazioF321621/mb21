@@ -204,7 +204,11 @@
   .sg-allega { margin: 10px 0 0; display: flex; align-items: center; gap: 12px; min-height: 36px; }
   .sg-allega label { display: inline-block; padding: 8px 14px; font-size: 14px; font-weight: 600; margin: 0; color: var(--testo); background: var(--superficie-2, var(--superficie)); border: 1px solid var(--linea); border-radius: var(--raggio-bottone); cursor: pointer; }
   .sg-allega label[hidden], .sg-allega #sg-anteprima[hidden], .sg-incolla[hidden] { display: none; }
-  .sg-incolla { font-size: 13px; color: var(--testo-tenue); }   /* nota Pagine 056: lo screenshot si incolla anche (Cmd/Ctrl+V, «Incolla») */
+  /* note Pagine 056 e 057: la zona tratteggiata dove toccare e scegliere «Incolla» (uguale a Zona Tracker); 16 px, così Safari non ingrandisce */
+  .sg-incolla { flex: 1; min-width: 140px; min-height: 40px; padding: 9px 10px; border: 1px dashed var(--linea); border-radius: var(--raggio-bottone); font-size: 16px; line-height: 1.3;
+    color: var(--testo-tenue); caret-color: transparent; outline: none; cursor: text; -webkit-user-select: text; user-select: text; box-sizing: border-box; }
+  .sg-incolla:empty::before { content: attr(data-vuoto); }
+  .sg-incolla:focus { border-color: var(--accento); }
   #sg-anteprima { display: flex; align-items: center; gap: 10px; }
   #sg-anteprima img { height: 72px; max-width: 120px; object-fit: contain; border-radius: 8px; border: 1px solid var(--linea); background: var(--superficie); }
   .avviso-ricevuto b { display: block; margin-bottom: 4px; }
@@ -4653,7 +4657,7 @@ function foglioSegnala() {
   velo.innerHTML = `<div class="foglio${mie ? ' alto' : ''}"><h3 class="sg-titolo">${ic('segnala')}Invia il tuo feedback</h3>
     <div class="ag-scelte sg-motivi">${S.MOTIVI.map(([k, n]) => `<button type="button" data-motivo="${k}">${esc(n)}</button>`).join('')}</div>
     <textarea id="sg-testo" class="sg-testo" maxlength="${S.MAX_TESTO}" placeholder="Scrivi qui, anche due parole"></textarea>
-    <div class="sg-allega"><label id="sg-allega">Allega lo screenshot<input type="file" id="sg-file" accept="image/*" hidden></label><small class="sg-incolla" id="sg-incolla">si può anche incollare</small>
+    <div class="sg-allega"><label id="sg-allega">Allega lo screenshot<input type="file" id="sg-file" accept="image/*" hidden></label><div id="sg-incolla" class="sg-incolla" contenteditable="true" role="textbox" aria-label="Incolla qui lo screenshot" data-vuoto="oppure tocca qui e scegli Incolla"></div>
       <div id="sg-anteprima" hidden><img alt="Lo screenshot allegato"><button type="button" class="link" id="sg-togli">Togli</button></div></div>
     <div class="sg-dove">Dove sei: ${esc(S.descrizioneDove(dove) || 'nell\'app')} · versione ${esc(APP_VERSION)}</div>
     <div class="due"><button class="link" id="sg-no">Annulla</button><button class="primario" id="sg-si" disabled>Invia</button></div>
@@ -4677,24 +4681,34 @@ function foglioSegnala() {
     if (immagine) img.src = URL.createObjectURL(immagine);
     anteprima.hidden = !immagine; etichetta.hidden = !!immagine; velo.querySelector('#sg-incolla').hidden = !!immagine;
   };
-  const usa = async f => {   // dalle foto o incollato (nota 056): stessa riduzione, stessa anteprima
-    try { immagine = await riduciScreenshot(f); } catch (e) { return mostraToast(e.message || 'Non riesco a leggere questa immagine'); }
+  // dalle foto o incollato (note 056 e 057): stessa riduzione, stessa anteprima; se ce n'era già uno, il nuovo lo sostituisce e lo si dice
+  const usa = async f => {
+    const cera = !!immagine;
+    let ridotta;
+    try { ridotta = await riduciScreenshot(f); } catch (e) { return mostraToast(e.message || 'Non riesco a leggere questa immagine'); }
+    immagine = ridotta;
     mostraAnteprima();
+    if (cera) mostraToast('Screenshot sostituito');
   };
   fileInput.onchange = () => {
     const f = fileInput.files[0]; fileInput.value = '';
     if (f) usa(f);
   };
-  // Incollare (nota Pagine 056): un'immagine negli appunti, con il foglio aperto, diventa lo screenshot; il testo si incolla come sempre.
-  // L'ascolto sta sul documento (il cursore può non essere nel foglio) e si toglie da solo quando il foglio non c'è più.
+  // Incollare (note Pagine 056 e 057): un'immagine negli appunti, con il foglio aperto, diventa lo screenshot; il testo si incolla come sempre
+  // nel campo; un file che non è un'immagine si ignora e lo si dice. Su iPhone Safari offre «Incolla» per un'immagine in una zona modificabile:
+  // la zona tratteggiata (#sg-incolla, provata in Zona Tracker) non tiene testo ed è solo il posto da toccare. L'ascolto sta sul documento
+  // (il cursore può non essere nel foglio) e si toglie da solo quando il foglio non c'è più.
+  const zona = velo.querySelector('#sg-incolla');
   const incolla = ev => {
     if (!velo.isConnected) return document.removeEventListener('paste', incolla);
-    const f = S.immagineIncollata(ev.clipboardData);
-    if (!f) return;
-    ev.preventDefault();
-    usa(f);
+    const { immagine: f, altroFile } = S.immagineDaAppunti(ev.clipboardData);
+    if (f) { ev.preventDefault(); return usa(f); }
+    if (altroFile) { ev.preventDefault(); return mostraToast('Qui si allega solo un\'immagine'); }
+    if (zona.contains(ev.target)) ev.preventDefault();   // nella zona il testo non entra
   };
   document.addEventListener('paste', incolla);
+  zona.addEventListener('input', () => { zona.textContent = ''; });
+  zona.addEventListener('keydown', ev => { if (ev.key.length === 1 && !ev.metaKey && !ev.ctrlKey) ev.preventDefault(); });
   velo.querySelector('#sg-togli').onclick = () => { immagine = null; mostraAnteprima(); };
   velo.querySelector('#sg-si').onclick = async () => {
     if (!motivo) return;
