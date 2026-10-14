@@ -12,7 +12,7 @@ function nuovoMondo({ messaggi = [], letti = [], velo = false, limitato = false,
     set innerHTML(h) { el._h = h; for (const m of h.matchAll(/id="([\w-]+)"/g)) bottoni[m[1]] = bottoni[m[1]] || { disabled: false, onclick: null }; }, get innerHTML() { return el._h; },
     querySelector(s) { return bottoni[s.replace('#', '')] || null; }, querySelectorAll() { return []; } }; return el; };
   const consulta = (tabella) => ({ select() { const q = { order() { return Promise.resolve({ data: tabella === 'messaggi' ? messaggi : [], error: null }); }, eq() { return Promise.resolve({ data: letti.map(id => ({ messaggio_id: id })), error: null }); } }; return q; },
-    insert(riga) { inseriti.push({ tabella, riga }); return Promise.resolve({ error: esitoInsert }); } });
+    upsert(righe, opzioni) { inseriti.push({ tabella, riga: righe, opzioni }); return Promise.resolve({ error: esitoInsert }); } });
   const ctx = { ST: { utente: { id: 'u1' } }, esc: s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     ic: n => `[${n}]`, limitato: () => limitato, mostraToast: t => toast.push(t), dbq: (_, p) => p, rigaProfilo: (id, t, d) => `<riga id="${id}">${t}${d}</riga>`,
     guardoAltri: () => !!guardo.altri, supa: { from: consulta }, MB21Agenda: { linkMappa: l => 'https://maps.apple.com/?q=' + encodeURIComponent(l) }, AD: {}, app: {},
@@ -31,10 +31,10 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
     assert.match(h, /href="https:\/\/esempio\.it\/bsm\.pdf"[^>]*rel="noopener">Apri il materiale/);
     const solo = w.messaggioHtml(M2); assert.ok(!/Apri il materiale|pt-luogo/.test(solo));
   });
-  await prova('all\'apertura: il foglio mostra il primo non letto, e solo quelli non letti', async () => {
+  await prova('all\'apertura: il foglio mostra solo i messaggi non letti, al singolare', async () => {
     const w = nuovoMondo({ messaggi: [M1, M2], letti: ['m2'] });
     assert.equal(await w.annuncioMessaggi(true), true); assert.equal(w.fogli.length, 1);
-    assert.match(w.fogli[0].innerHTML, /Hotel del WES/); assert.ok(!/Secondo/.test(w.fogli[0].innerHTML)); assert.ok(!/ di /.test(w.fogli[0].innerHTML.split('Dalla squadra')[1].slice(0, 6)));
+    assert.match(w.fogli[0].innerHTML, /Hai un nuovo messaggio/); assert.match(w.fogli[0].innerHTML, /Hotel del WES/); assert.ok(!/Secondo/.test(w.fogli[0].innerHTML));
   });
   await prova('tutti letti, nessun messaggio, un altro foglio aperto, accesso limitato, apertura da un avviso: nessun foglio', async () => {
     for (const [nome, o, aprire] of [['letti', { messaggi: [M1], letti: ['m1'] }, true], ['vuoto', {}, true], ['altro foglio', { messaggi: [M1], velo: true }, true], ['limitato', { messaggi: [M1], limitato: true }, true], ['da avviso', { messaggi: [M1] }, false]]) {
@@ -42,21 +42,20 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
     }
   });
   await prova('da avviso: non apre ma legge comunque (la riga del Profilo)', async () => {
-    const w = nuovoMondo({ messaggi: [M1, M2] }); await w.annuncioMessaggi(false); assert.equal(w.MSG.elenco.length, 2); assert.match(w.rigaMessaggiProfilo(), /pf-messaggi.*Messaggi dalla squadra.*2/);
+    const w = nuovoMondo({ messaggi: [M1, M2] }); await w.annuncioMessaggi(false); assert.equal(w.MSG.elenco.length, 2); assert.match(w.rigaMessaggiProfilo(), /pf-messaggi.*I tuoi messaggi.*2/);
     assert.equal(nuovoMondo().rigaMessaggiProfilo(), '');
   });
-  await prova('«Ho capito»: segna letto (messaggio e utente giusti), chiude e apre il successivo "1 di 2" → "2 di 2"', async () => {
+  await prova('più messaggi: UN foglio solo, «Hai 2 nuovi messaggi», una scheda per messaggio; un «Ho capito» li segna tutti e chiude', async () => {
     const w = nuovoMondo({ messaggi: [M1, M2] }); await w.annuncioMessaggi(true);
-    assert.match(w.fogli[0].innerHTML, /1 di 2/);
+    assert.equal(w.fogli.length, 1); const h = w.fogli[0].innerHTML;
+    assert.match(h, /Hai 2 nuovi messaggi/); assert.match(h, /Hotel del WES/); assert.match(h, /Secondo/); assert.equal((h.match(/class="riquadro"/g) || []).length, 2); assert.equal((h.match(/id="ms-capito"/g) || []).length, 1);
     await w.fogli[0].bottoni['ms-capito'].onclick();
-    assert.deepEqual(JSON.parse(JSON.stringify(w.inseriti)), [{ tabella: 'messaggi_letti', riga: { messaggio_id: 'm1', utente_id: 'u1' } }]);
-    assert.equal(w.fogli[0].rimosso, true); assert.equal(w.fogli.length, 2); assert.match(w.fogli[1].innerHTML, /2 di 2/);
-    await w.fogli[1].bottoni['ms-capito'].onclick(); assert.equal(w.fogli.length, 2); assert.equal(w.MSG.letti.size, 2);
+    assert.deepEqual(JSON.parse(JSON.stringify(w.inseriti)), [{ tabella: 'messaggi_letti', riga: [{ messaggio_id: 'm1', utente_id: 'u1' }, { messaggio_id: 'm2', utente_id: 'u1' }], opzioni: { onConflict: 'messaggio_id,utente_id', ignoreDuplicates: true } }]);
+    assert.equal(w.fogli[0].rimosso, true); assert.equal(w.fogli.length, 1); assert.equal(w.MSG.letti.size, 2);
   });
-  await prova('«Ho capito» già segnato da un altro telefono (23505) va bene; un altro errore lascia il foglio aperto', async () => {
-    const a = nuovoMondo({ messaggi: [M1], esitoInsert: { code: '23505' } }); await a.annuncioMessaggi(true); await a.fogli[0].bottoni['ms-capito'].onclick(); assert.equal(a.fogli[0].rimosso, true);
+  await prova('se il salvataggio non riesce il foglio resta aperto e riprova', async () => {
     const b = nuovoMondo({ messaggi: [M1], esitoInsert: { code: '42501' } }); await b.annuncioMessaggi(true); await b.fogli[0].bottoni['ms-capito'].onclick();
-    assert.ok(!b.fogli[0].rimosso); assert.equal(b.fogli[0].bottoni['ms-capito'].disabled, false); assert.deepEqual(Array.from(b.toast), ['Non salvato: riprova.']);
+    assert.ok(!b.fogli[0].rimosso); assert.equal(b.fogli[0].bottoni['ms-capito'].disabled, false); assert.deepEqual(Array.from(b.toast), ['Non salvato: riprova.']); assert.equal(b.MSG.letti.size, 0);
   });
   await prova('Admin: elenco con «letto da X su Y»; a tutti = chi può entrare; persone scelte = solo loro', () => {
     const w = nuovoMondo(); const U = [{ id: 'a', nome_cognome: 'Anna', accesso_attivo: true }, { id: 'b', nome_cognome: 'Bruno', accesso_attivo: true }, { id: 'c', nome_cognome: 'Carla', accesso_attivo: false }];
@@ -68,8 +67,8 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
   await prova('Dashboard: la riga c\'è finché c\'è un messaggio (anche già letto), è cliccabile; non con il Partner Select su un altro, non senza messaggi, non con accesso limitato', async () => {
     const w = nuovoMondo({ messaggi: [M1, M2], letti: ['m1', 'm2'] }); assert.equal(w.bannerMessaggi(), ''); await w.annuncioMessaggi(true);   // prima della lettura niente
     assert.equal(w.fogli.length, 0);   // tutti letti: nessun foglio, ma la riga resta
-    const h = w.bannerMessaggi(); assert.match(h, /<button class="banner-grande messaggi" id="ds-messaggi"/); assert.match(h, /2 messaggi dalla squadra/); assert.match(h, /Il più recente: Hotel del WES/);
-    const uno = nuovoMondo({ messaggi: [M2] }); await uno.annuncioMessaggi(false); assert.match(uno.bannerMessaggi(), /Un messaggio dalla squadra.*Secondo/s);
+    const h = w.bannerMessaggi(); assert.match(h, /<button class="banner-grande messaggi" id="ds-messaggi"/); assert.match(h, /Hai 2 messaggi per te/); assert.match(h, /<small>Hotel del WES<\/small>/);
+    const uno = nuovoMondo({ messaggi: [M2] }); await uno.annuncioMessaggi(false); assert.match(uno.bannerMessaggi(), /Hai 1 messaggio per te.*Secondo/s);
     guardo.altri = true; assert.equal(w.bannerMessaggi(), ''); guardo.altri = false;
     const lim = nuovoMondo({ messaggi: [M1], limitato: true }); await lim.annuncioMessaggi(true); assert.equal(lim.bannerMessaggi(), '');
     assert.equal(nuovoMondo().bannerMessaggi(), '');

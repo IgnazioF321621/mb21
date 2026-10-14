@@ -1,6 +1,6 @@
-// MB21 · MESSAGGI DALLA SQUADRA (nota Admin 014, Ignazio 14/10): l'Admin scrive un messaggio (titolo, testo, luogo, link al materiale), lo vede
+// MB21 · MESSAGGI (nota Admin 014, Ignazio 14/10): l'Admin scrive un messaggio (titolo, testo, luogo, link al materiale), lo vede
 // chi è indicato all'apertura dell'app in un foglio con «Ho capito»; una volta letto non torna su nessun dispositivo. Il messaggio non scade e
-// non si cancella da solo: resta finché l'Admin lo elimina (e chi l'ha letto lo ritrova in Profilo → «Messaggi dalla squadra»).
+// non si cancella da solo: resta finché l'Admin lo elimina (e chi l'ha letto lo ritrova in Dashboard e in Profilo → «I tuoi messaggi»).
 // Tabelle `messaggi`, `messaggi_destinatari`, `messaggi_letti`. Usa ciò che definisce index.html (supa, dbq, ST, esc, ic, limitato, mostraToast,
 // chiediConferma) e admin.js (AD, nomeDi). Solo definizioni: partono dall'apertura dell'app (index.html), dal Profilo e dalla pagina Admin.
 
@@ -34,24 +34,26 @@ async function annuncioMessaggi(aprire) {
   if (!aprire) return false;
   const nuovi = r.elenco.filter(m => !r.letti.has(m.id));
   if (!nuovi.length || document.querySelector('.velo')) return false;
-  foglioNuovoMessaggio(nuovi, 0);
+  foglioNuovoMessaggio(nuovi);
   return true;
 }
-function foglioNuovoMessaggio(nuovi, i) {
-  const m = nuovi[i], velo = document.createElement('div');
+// Un foglio solo per tutti i messaggi non letti (Ignazio 14/10 sera): una scheda per messaggio, un solo «Ho capito» in fondo che li segna tutti
+function foglioNuovoMessaggio(nuovi) {
+  const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><small>${ic('messaggio')} Dalla squadra${nuovi.length > 1 ? ` · ${i + 1} di ${nuovi.length}` : ''}</small></div>
-    ${messaggioHtml(m)}<button class="primario" id="ms-capito" style="margin-top:14px">Ho capito</button></div>`;
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('messaggio')} ${nuovi.length > 1 ? `Hai ${nuovi.length} nuovi messaggi` : 'Hai un nuovo messaggio'}</h3></div>
+    ${nuovi.map(m => `<div class="riquadro" style="margin-bottom:12px">${messaggioHtml(m)}</div>`).join('')}
+    <button class="primario" id="ms-capito" style="margin-top:6px">Ho capito</button></div>`;
   document.body.appendChild(velo);
   velo.onclick = e => { if (e.target === velo) velo.remove(); };   // il tocco fuori lo chiude senza segnarlo: torna alla prossima apertura
   const b = velo.querySelector('#ms-capito');
   b.onclick = async () => {
     b.disabled = true;
-    const { error } = await dbq('messaggio letto', supa.from('messaggi_letti').insert({ messaggio_id: m.id, utente_id: ST.utente.id }));
-    if (error && error.code !== '23505') { b.disabled = false; return mostraToast('Non salvato: riprova.'); }   // 23505 = già segnato da un altro dispositivo
-    MSG.letti.add(m.id);
+    // upsert che ignora i doppioni: se un messaggio è già stato segnato da un altro telefono, gli altri si segnano comunque
+    const { error } = await dbq('messaggi letti', supa.from('messaggi_letti').upsert(nuovi.map(m => ({ messaggio_id: m.id, utente_id: ST.utente.id })), { onConflict: 'messaggio_id,utente_id', ignoreDuplicates: true }));
+    if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
+    nuovi.forEach(m => MSG.letti.add(m.id));
     velo.remove();
-    if (nuovi[i + 1]) foglioNuovoMessaggio(nuovi, i + 1);
   };
 }
 
@@ -61,17 +63,17 @@ function bannerMessaggi() {
   const e = MSG.elenco;
   if (!e || !e.length || limitato() || guardoAltri()) return '';
   return `<button class="banner-grande messaggi" id="ds-messaggi"><span class="ico">${ic('messaggio')}</span>
-    <span><b>${e.length > 1 ? `${e.length} messaggi dalla squadra` : 'Un messaggio dalla squadra'}</b><small>${e.length > 1 ? 'Il più recente: ' : ''}${esc(e[0].titolo)}</small></span></button>`;
+    <span><b>Hai ${e.length} ${e.length > 1 ? 'messaggi' : 'messaggio'} per te</b><small>${esc(e[0].titolo)}</small></span></button>`;
 }
 
 // Dal Profilo e dalla Dashboard: tutti i messaggi, anche quelli già letti
-const rigaMessaggiProfilo = () => (MSG.elenco && MSG.elenco.length ? rigaProfilo('pf-messaggi', ic('messaggio') + ' Messaggi dalla squadra', String(MSG.elenco.length)) : '');
+const rigaMessaggiProfilo = () => (MSG.elenco && MSG.elenco.length ? rigaProfilo('pf-messaggi', ic('messaggio') + ' I tuoi messaggi', String(MSG.elenco.length)) : '');
 async function foglioMessaggi() {
   const r = await leggiMessaggi();
   if (!r) return mostraToast('Non riesco a leggere i messaggi: riprova.');
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('messaggio')} Messaggi dalla squadra</h3><button id="ms-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('messaggio')} I tuoi messaggi</h3><button id="ms-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     ${r.elenco.length ? r.elenco.map(m => `<div class="riquadro" style="margin-bottom:12px">${messaggioHtml(m)}</div>`).join('') : '<div class="vuoto">Nessun messaggio.</div>'}</div>`;
   document.body.appendChild(velo);
   velo.onclick = e => { if (e.target === velo) velo.remove(); };
@@ -131,7 +133,7 @@ function foglioMessaggioAdmin(m) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto mc">
-    <div class="mc-testa"><span class="ts-pastiglia">${ic('messaggio')}</span><div><small>${m ? 'Modifica messaggio' : 'Nuovo messaggio'}</small><b>Alla squadra</b></div><button id="ms-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <div class="mc-testa"><span class="ts-pastiglia">${ic('messaggio')}</span><div><small>${m ? 'Modifica messaggio' : 'Nuovo messaggio'}</small><b>Per chi lo riceve</b></div><button id="ms-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <h4 class="mc-t">Il messaggio</h4><div class="riquadro mc-g">
       <label>Titolo <small>Obbligatorio</small><input id="ms-titolo" maxlength="80" value="${esc(m ? m.titolo : '')}"></label>
       <label>Testo<textarea id="ms-testo" rows="5" maxlength="1500">${esc(m ? m.testo || '' : '')}</textarea></label>

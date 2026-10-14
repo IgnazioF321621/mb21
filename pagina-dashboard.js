@@ -1659,7 +1659,7 @@ function dashboardTesta() {
     : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`;
   html += riquadriBiglietto();
-  html += bannerMessaggi();   // nota Admin 014: i messaggi dalla squadra restano qui finché l'Admin non li elimina (pagina-messaggi.js)
+  html += bannerMessaggi();   // nota Admin 014: i messaggi restano qui finché l'Admin non li elimina (pagina-messaggi.js)
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato() && obiettiviAperti()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
