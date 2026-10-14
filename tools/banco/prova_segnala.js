@@ -74,4 +74,17 @@ prova('Nota 041: il segnale «hai una risposta»: nuove = quelle non ancora vist
   assert.equal(S.conViste(Array.from({ length: 60 }, (_, i) => 'v' + i), ['n']).length, 50);
   assert.equal(S.conViste([], ['n'])[0], 'n');
 });
+prova('Nota 056: lo screenshot incollato: il primo file immagine degli appunti; il testo o niente non contano', () => {
+  const file = { name: 'shot.png' };
+  const voce = (kind, type, f) => ({ kind, type, getAsFile: () => f });
+  assert.equal(S.immagineIncollata({ items: [voce('string', 'text/plain'), voce('file', 'image/png', file)] }), file);
+  assert.equal(S.immagineIncollata({ items: [voce('string', 'text/plain')] }), null);
+  assert.equal(S.immagineIncollata({ items: [voce('file', 'application/pdf', file)] }), null);
+  assert.equal(S.immagineIncollata(null), null); assert.equal(S.immagineIncollata({}), null);
+  const idx = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /document\.addEventListener\('paste', incolla\);/);
+  assert.match(idx, /if \(!velo\.isConnected\) return document\.removeEventListener\('paste', incolla\);/);
+  assert.match(idx, /<small class="sg-incolla" id="sg-incolla">si può anche incollare<\/small>/);
+});
+
 console.log(`\n${ok} prove superate`);
