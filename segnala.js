@@ -76,7 +76,14 @@
   const risposteNuove = (ids, viste) => (Array.isArray(ids) ? ids : []).filter(id => !(viste || []).includes(id));
   const conViste = (viste, nuove) => [...new Set([...(nuove || []), ...(viste || [])])].slice(0, 50);   // le più recenti prima, al massimo 50
 
-  const api = { CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
+  // Nota Pagine 056 (Ignazio 14/10/2026, uguale a Zona Tracker): lo screenshot si può anche incollare nel foglio (Cmd/Ctrl+V, «Incolla»).
+  // Dagli appunti dell'evento «paste» (clipboardData) il primo file immagine, o null se non c'è (per esempio si incolla solo testo).
+  function immagineIncollata(appunti) {
+    const voci = appunti && appunti.items ? Array.from(appunti.items) : [];
+    const v = voci.find(x => x && x.kind === 'file' && /^image\//.test(x.type || ''));
+    return v ? v.getAsFile() : null;
+  }
+  const api = { immagineIncollata, CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Segnala = api;
 })(this);
