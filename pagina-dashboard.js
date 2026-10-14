@@ -1659,7 +1659,7 @@ function dashboardTesta() {
     : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`;
   html += riquadriBiglietto();
-  html += bannerMessaggi();   // nota Admin 014: i messaggi restano qui finché l'Admin non li elimina (pagina-messaggi.js)
+  if (typeof bannerMessaggi === 'function') html += bannerMessaggi();   // nota Admin 014: i messaggi restano qui finché l'Admin non li elimina (pagina-messaggi.js); se non si è caricato, la Dashboard resta com'è
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
   if (d.obiettiviMancanti && !limitato() && obiettiviAperti()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
@@ -1710,7 +1710,7 @@ function collegaDashboard() {
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano
   su('ds-obiettivi', apriObiettivi);
-  su('ds-messaggi', foglioMessaggi);
+  if (typeof foglioMessaggi === 'function') su('ds-messaggi', foglioMessaggi);
   su('ds-obiettivi-mod', apriObiettivi);
   caricaCardCheck();   // i dati del percorso dopo la Dashboard, che non aspetta (27/09)
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
