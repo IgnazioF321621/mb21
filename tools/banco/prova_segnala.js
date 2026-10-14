@@ -91,4 +91,13 @@ prova('Note 056 e 057: lo screenshot incollato (come Zona Tracker): immagine sì
   assert.match(idx, /\.sg-incolla \{[^}]*font-size: 16px;/);
 });
 
+prova('Nota 057 (Ignazio 14/10, «sì, tutti a 16 px»): nessun campo sotto i 16 px, così Safari su iPhone non ingrandisce la pagina al tocco', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /\n  select, textarea \{ font-size: 16px; \}\n/);
+  const piccoli = idx.split('\n').filter(l => /(^|[\s,>])(input|select|textarea)(\[[^\]]*\])?\s*(,[^{]*)?\{[^}]*font-size: ?(1[0-5]|[0-9])px/.test(l));
+  assert.deepEqual(piccoli, []);
+  const js = fs.readdirSync(path.join(__dirname, '../..')).filter(f => /\.js$/.test(f)).map(f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8')).join('\n') + idx;
+  assert.doesNotMatch(js, /<(input|textarea|select)[^>]*font-size: ?(1[0-5]|[0-9])px/);
+});
 console.log(`\n${ok} prove superate`);
