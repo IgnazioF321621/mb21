@@ -275,6 +275,8 @@ function disegnaAdmin() {
           <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(MB21Lista.nomeCategoria(r.categoria)) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
         <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
     }
+  } else if (AD.sezione === 'messaggi') {
+    html = indietro + messaggiAdminHtml();   // pagina-messaggi.js (nota Admin 014)
   } else if (AD.sezione === 'training') {
     const t = AD.training;
     html = `${indietro}<h1>${ic('medaglia')} Training</h1>
@@ -335,6 +337,7 @@ function disegnaAdmin() {
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
+      ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'scrivi alla squadra: si apre da solo, vedi chi ha letto')}
       ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
       ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
@@ -474,6 +477,8 @@ function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); caricaMessaggiAdmin(); });
+  if (AD.sezione === 'messaggi') collegaMessaggiAdmin();
   su('ad-vai-training', () => { AD.sezione = 'training'; AD.training = null; disegnaAdmin(); window.scrollTo(0, 0); caricaTrainingAdmin(); });
   su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
   su('ad-allinea', async () => {
