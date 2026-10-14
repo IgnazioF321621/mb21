@@ -337,7 +337,7 @@ function disegnaAdmin() {
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
-      ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'scrivi alla squadra: si apre da solo, vedi chi ha letto')}
+      ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto')}
       ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
       ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
       ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
