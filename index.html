@@ -54,6 +54,9 @@
     font-family: var(--font); font-size: var(--dim-corpo); line-height: var(--interlinea);
     -webkit-font-smoothing: antialiased; }
   button, input, select, textarea { font-family: inherit; }
+  /* nota Pagine 057 (Ignazio 14/10/2026, «sì, tutti a 16 px»): sotto i 16 px Safari su iPhone ingrandisce la pagina al tocco di un campo.
+     I campi di testo e le scelte partono da 16 px (prima i textarea senza classe avevano la misura del browser, circa 13 px). */
+  select, textarea { font-size: 16px; }
   main { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 16px) 16px 110px; }
   h1 { font-size: var(--dim-pagina); font-weight: var(--peso-forte); line-height: 1.15; margin: 8px 0 2px; letter-spacing: -0.5px; }
   .sotto { color: var(--grigio); font-size: 14px; margin-bottom: 18px; }
@@ -272,7 +275,7 @@
   .rb-riga input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 0; }
   .rb-riga .rb-nome { margin: 0; padding: 8px 10px; font-size: 16px; }
   .rb-riga small { display: block; margin: 4px 0 0 32px; font-size: 12px; color: var(--grigio); line-height: 1.4; }
-  .rb-riga select { width: 100%; margin: 8px 0 0; font-size: 14px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--superficie); }
+  .rb-riga select { width: 100%; margin: 8px 0 0; font-size: 16px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--superficie); }
   .rb-fondo { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 70px); padding-top: 8px; }
   .ls-ordina span button { border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); border-radius: 999px; padding: 2px 9px; font-weight: 400; }
   .lettere-titolo { display: block; color: var(--grigio); font-size: 13px; margin: 14px 4px 8px; }
@@ -1223,7 +1226,7 @@
   .ag-cose .cosa .testo small { font-size: 11.5px; font-weight: 600; color: var(--proposta); }
   .ag-cose .cosa.fatta .testo span { color: var(--testo-tenue); }
   .ag-cosa-nuova { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--superficie-2); padding-top: 6px; }
-  .ag-cosa-nuova input { flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 15px; color: var(--testo); padding: 8px 0; outline: none; }
+  .ag-cosa-nuova input { flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 16px; color: var(--testo); padding: 8px 0; outline: none; }
   .ag-cosa-nuova input::placeholder { color: var(--testo-tenue); }
   .ag-cosa-nuova button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--accento); color: var(--accento-su); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
   .ag-cosa-nuova button svg.ic { width: 18px; height: 18px; }
@@ -1321,7 +1324,7 @@
   .pt-riga .pt-togli { flex: none; padding: 7px 0; color: var(--testo-tenue); }
   .pt-riga .pt-togli svg.ic { width: 18px; height: 18px; }
   .pt-nuovo { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-  .pt-nuovo input { flex: 1; min-width: 0; border: 0; border-bottom: 1.5px solid var(--superficie-2); background: none; padding: 8px 0; font-family: inherit; font-size: 15px; color: var(--testo); }
+  .pt-nuovo input { flex: 1; min-width: 0; border: 0; border-bottom: 1.5px solid var(--superficie-2); background: none; padding: 8px 0; font-family: inherit; font-size: 16px; color: var(--testo); }
   .pt-nuovo button { border: 0; background: var(--superficie); border-radius: var(--raggio-pill); min-height: 36px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--testo); display: inline-flex; align-items: center; }
   .pt-comandi { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
   .pt-comandi button.link { padding: 6px 0; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
@@ -1533,7 +1536,7 @@
   .ss-destra .ag-griglia.sett { box-shadow: none; }
   /* Cerca in MB Plan */
   .mb-cerca { padding: 2px 4px 6px; }
-  .mb-cerca input { width: 100%; box-sizing: border-box; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 10px; padding: 9px 12px; font-family: inherit; font-size: 15px; color: var(--testo); }
+  .mb-cerca input { width: 100%; box-sizing: border-box; border: 1px solid var(--bordo); background: var(--superficie); border-radius: 10px; padding: 9px 12px; font-family: inherit; font-size: 16px; color: var(--testo); }
   .mb-risultati { display: flex; flex-direction: column; gap: 2px; max-height: 45vh; overflow-y: auto; }
   .mb-ris-conto { font-size: 12px; color: var(--testo-tenue); padding: 2px 10px 4px; }
   .ag-lato button.mb-ris { align-items: flex-start; gap: 9px; padding: 8px 10px; font-size: 14px; font-weight: 500; background: var(--superficie); }
@@ -1587,7 +1590,7 @@
   .nm-scale button.scelto { background: var(--sc); border-color: var(--sc); color: #fff; }
   .nm-scale button.scelto svg.ic { color: #fff; }
   .fc-fine { margin-top: 8px; font-size: 14px; color: var(--testo-soft); }
-  .fc-fine input { font-family: inherit; font-size: 15px; margin-left: 8px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
+  .fc-fine input { font-family: inherit; font-size: 16px; margin-left: 8px; padding: 6px 8px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   .fm-matita { border: 0; background: var(--sfondo); border-radius: 50%; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-left: 6px; color: var(--testo-soft); }
   .fm-matita svg.ic { width: 16px; height: 16px; }
   .fc-chi { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); padding: 8px 14px; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--testo); }
@@ -1629,7 +1632,7 @@
   .pw-barra small.pw-manca { color: var(--proposta); font-weight: 600; }
   .mm-testa .freccia:disabled { opacity: .35; }
   .ad-wes-giorno { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--testo-soft); margin-top: 6px; }
-  .ad-wes-giorno input { font-family: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
+  .ad-wes-giorno input { font-family: inherit; font-size: 16px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
   .velo.lato { align-items: stretch; justify-content: flex-start; }
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
@@ -2268,13 +2271,13 @@
   .sv-ev { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 0; border-top: 1px solid var(--linea); }
   .sv-testa + .sv-ev { border-top: 0; }
   .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
-  .sv-ev input[type="date"] { width: auto; margin: 0; padding: 6px 8px; font-size: 15px; }
+  .sv-ev input[type="date"] { width: auto; margin: 0; padding: 6px 8px; font-size: 16px; }
   .sv-chip { border: 1px solid var(--linea); background: var(--superficie); color: var(--grigio); border-radius: 999px; padding: 5px 11px; font-size: 14px; font-weight: 600; }
   .sv-chip.on.bbs { background: var(--bbs); border-color: var(--bbs); color: #fff; }
   .sv-chip.on.wes { background: var(--pericolo); border-color: var(--pericolo); color: #fff; }
   .sv-chip:disabled { opacity: 1; }
   .sv-osp { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--grigio); margin-left: auto; }
-  .sv-osp input { width: 46px; margin: 0; padding: 5px; font-size: 15px; text-align: center; }
+  .sv-osp input { width: 46px; margin: 0; padding: 5px; font-size: 16px; text-align: center; }
   .sv-ico { border: 0; background: var(--testo); color: #fff; border-radius: 8px; width: 34px; height: 34px; font-size: 16px; }
   .sv-ico.no { background: var(--sfondo); color: var(--grigio); }
   .sv-piu { border: 0; background: none; color: var(--blu); font-size: 14px; font-weight: 600; padding: 4px 0; }
@@ -4872,7 +4875,7 @@ function foglioLinkInvito(opz = {}) {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${opz.titolo ? esc(opz.titolo) : ic('collega') + ' ' + (opz.nome ? 'Invita ' + esc(opz.nome) + " nell'app MB21" : 'Link di registrazione')}</h3>
     <p>${opz.spiega ? esc(opz.spiega) : opz.nome ? 'Mandagli il messaggio (puoi cambiarlo): si registra, e l\'Admin approva la richiesta.' : 'Manda il messaggio (puoi cambiarlo) a chi si deve registrare: la richiesta arriva all\'Admin, che la approva.'}</p>
-    <textarea id="li-testo" rows="4" style="width:100%;font-size:15px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(messaggio)}</textarea>
+    <textarea id="li-testo" rows="4" style="width:100%;font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(messaggio)}</textarea>
     <div class="li-canali">
       <a href="#" data-canale="wa">WhatsApp</a><a href="#" data-canale="tg">Telegram</a><a href="#" data-canale="sms">SMS</a>
     </div>
