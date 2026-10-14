@@ -76,14 +76,20 @@
   const risposteNuove = (ids, viste) => (Array.isArray(ids) ? ids : []).filter(id => !(viste || []).includes(id));
   const conViste = (viste, nuove) => [...new Set([...(nuove || []), ...(viste || [])])].slice(0, 50);   // le più recenti prima, al massimo 50
 
-  // Nota Pagine 056 (Ignazio 14/10/2026, uguale a Zona Tracker): lo screenshot si può anche incollare nel foglio (Cmd/Ctrl+V, «Incolla»).
-  // Dagli appunti dell'evento «paste» (clipboardData) il primo file immagine, o null se non c'è (per esempio si incolla solo testo).
-  function immagineIncollata(appunti) {
-    const voci = appunti && appunti.items ? Array.from(appunti.items) : [];
-    const v = voci.find(x => x && x.kind === 'file' && /^image\//.test(x.type || ''));
-    return v ? v.getAsFile() : null;
+  // Note Pagine 056 e 057 (Ignazio 14/10/2026, uguale a Zona Tracker, app/segnala.js): lo screenshot si può anche incollare nel foglio
+  // (Cmd/Ctrl+V, «Incolla»). Dagli appunti dell'evento «paste» (clipboardData: i file in `files`, se no le voci di tipo file in `items`):
+  // { immagine } il primo file immagine · { altroFile: true } se ci sono solo file che non sono immagini · {} se non c'è nessun file (solo testo).
+  function immagineDaAppunti(dati) {
+    if (!dati) return {};
+    const eImmagine = f => !!(f && /^image\//i.test(f.type || ''));
+    const file = Array.from(dati.files || []);
+    const daVoci = Array.from(dati.items || []).filter(it => it && it.kind === 'file').map(it => { try { return it.getAsFile(); } catch (e) { return null; } }).filter(Boolean);
+    const tutti = file.length ? file : daVoci;
+    const immagine = tutti.find(eImmagine);
+    if (immagine) return { immagine };
+    return tutti.length ? { altroFile: true } : {};
   }
-  const api = { immagineIncollata, CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
+  const api = { immagineDaAppunti, CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Segnala = api;
 })(this);
