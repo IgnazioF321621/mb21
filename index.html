@@ -2344,6 +2344,7 @@
 <script src="pagina-profilo.js?v=202610132255"></script>   <!-- pagina Profilo (cantiere 25): solo definizioni -->
 <script src="novita.js?v=202610132255"></script>   <!-- «✨ Novità» (cantiere 28): elenco e logica, solo definizioni -->
 <script src="pagina-novita.js?v=202610132255"></script>
+<script src="pagina-messaggi.js?v=202610132255"></script>   <!-- Messaggi dalla squadra (nota Admin 014): solo definizioni -->
 <script src="privacy.js?v=202610132255"></script>   <!-- informativa privacy (Partner 005): il testo e le funzioni pure -->
 <script src="pagina-privacy.js?v=202610132255"></script>   <!-- privacy: il foglio e la casella «accetto» -->
 <script src="benvenuto.js?v=202610132255"></script>   <!-- benvenuto per chi entra la prima volta (cantiere 32): testi, elenchi e funzioni pure -->
@@ -2684,7 +2685,8 @@ async function dopoAccesso(sessione) {
     if (!(sessione.user.user_metadata || {}).password_scelta) return foglioPassword(true);
     controllaNovita(ultimoUso);
     if (REGISTRAZIONE.get('annuncio') === 'training') { history.replaceState(null, '', location.pathname); annuncioTraining(true); }
-    else if (!apri) annuncioTraining(false).catch(() => {});
+    // Messaggi dalla squadra (nota Admin 014): prima di tutto, mai se l'app si apre da un avviso; se se ne apre uno, l'annuncio del Training aspetta
+    else annuncioMessaggi(!apri).then(aperto => { if (!aperto && !apri) return annuncioTraining(false); }).catch(() => {});
   };
   // Benvenuto (cantiere 32): si apre da solo una volta sola, al posto della Dashboard, a chi non l'ha ancora visto: chi entra la prima
   // volta e, una volta, chi usava già l'app. All'uscita porta in Dashboard su «Il mio avvio». Al primo ingresso le novità non si aprono
