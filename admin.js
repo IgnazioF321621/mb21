@@ -276,7 +276,7 @@ function disegnaAdmin() {
         <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
     }
   } else if (AD.sezione === 'messaggi') {
-    html = indietro + messaggiAdminHtml();   // pagina-messaggi.js (nota Admin 014)
+    html = indietro + (typeof messaggiAdminHtml === 'function' ? messaggiAdminHtml() : '<div class="avviso">Messaggi non disponibili: riapri l\'app.</div>');   // pagina-messaggi.js (nota Admin 014)
   } else if (AD.sezione === 'training') {
     const t = AD.training;
     html = `${indietro}<h1>${ic('medaglia')} Training</h1>
@@ -477,8 +477,8 @@ function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
-  su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); caricaMessaggiAdmin(); });
-  if (AD.sezione === 'messaggi') collegaMessaggiAdmin();
+  su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaMessaggiAdmin === 'function') caricaMessaggiAdmin(); });
+  if (AD.sezione === 'messaggi' && typeof collegaMessaggiAdmin === 'function') collegaMessaggiAdmin();
   su('ad-vai-training', () => { AD.sezione = 'training'; AD.training = null; disegnaAdmin(); window.scrollTo(0, 0); caricaTrainingAdmin(); });
   su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
   su('ad-allinea', async () => {

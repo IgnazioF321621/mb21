@@ -154,7 +154,7 @@ function disegnaProfilo() {
     ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
-    ${rigaMessaggiProfilo()}
+    ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
     ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
@@ -170,7 +170,7 @@ function disegnaProfilo() {
   su('pf-numero', () => scegliNumero(disegnaProfilo));
   su('pf-training', () => { TRN.vista = 'impara'; TRN.dopo = 'medaglie'; ST.tab = 'training'; mostraTab(); });
   su('pf-libri', () => apriLibri('profilo'));   // cantiere 40 lavoro 7: il diario di lettura (pagina-libri.js)
-  su('pf-messaggi', foglioMessaggi);   // nota Admin 014 (pagina-messaggi.js)
+  if (typeof foglioMessaggi === 'function') su('pf-messaggi', foglioMessaggi);   // nota Admin 014 (pagina-messaggi.js)
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
   collegaMioAvvio(disegnaProfilo, 'profilo');
