@@ -45,6 +45,18 @@ prova('scaduto: dallo spazio «da riempire» di MB Plan, «Metti un nome» non a
   } finally { P.AG.spazi = prima; P.modo.scaduto = false; }
 });
 
+prova('Nota 058 (Ignazio 19/10, «spegni i limiti»): un solo interruttore spento: nessuno è limitato e in Dashboard niente fascia dell\'abbonamento', () => {
+  const vm = require('node:vm');
+  const idx = leggi('index.html'), dash = leggi('pagina-dashboard.js');
+  assert.match(idx, /\nconst LIMITI_ABBONAMENTO = false;\nconst limitato = \(\) => LIMITI_ABBONAMENTO && !!ST\.scaduto;\n/);
+  const ctx = { ST: { scaduto: true } };
+  vm.createContext(ctx);
+  vm.runInContext(idx.match(/\nconst LIMITI_ABBONAMENTO = false;\nconst limitato = [^\n]*\n/)[0] + ';this.limitato = limitato;', ctx);
+  assert.equal(ctx.limitato(), false);   // anche chi risulta scaduto usa tutto
+  assert.match(dash, /if \(LIMITI_ABBONAMENTO && !vediTutti\(\) && visto\(\)\.ruolo !== 'Admin'\) html \+= d\.abbonamentoAttivo/);
+  assert.match(leggi('supabase/migrations/20261019114715_abbonamento_senza_limiti.sql'), /select true from public\.utenti u where u\.id = p_utente;/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

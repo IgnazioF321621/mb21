@@ -1651,7 +1651,7 @@ function dashboardTesta() {
   const d = DS.dati;
   let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
-  if (!vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09)
+  if (LIMITI_ABBONAMENTO && !vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09); nota 058: spento
     ? (d.abbonamento === 'in_scadenza'
       ? `<div class="banner-abb scaduto in-scadenza"><i class="pallino" style="background:var(--proposta)"></i>Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Con il rinnovo prima della scadenza si continua a usare tutta l'app</small>
         <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`

@@ -83,7 +83,8 @@ const stato = {
 // il codice: la pagina intera + i pezzi di index.html che usa
 const pezzi = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'),
-  riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'), riga('const limitato'),
+  riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'), riga('const LIMITI_ABBONAMENTO'), riga('const limitato'),   // nota 058: l'interruttore dei limiti
+ 
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),
   fra('const vociHtml = ', '\n// «I prossimi passi» del livello'), funzione('passiHtml'), funzione('collegaPercorso'), funzione('aggiornaCardCheck'),
   fra('const CK = {', 'const CAMPI_CK'),

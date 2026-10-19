@@ -2786,7 +2786,11 @@ async function scegliPartner() {
 // Scaduto = solo Dashboard e propria Lista Nomi: le altre tab spariscono e i collegamenti verso altre pagine pure.
 // Controllo nell'app (come «Può entrare»): le regole del database non cambiano.
 const TAB_SCADUTO = ['oggi', 'lista', 'profilo'];   // scaduto: anche il Profilo (password, Esci)
-const limitato = () => !!ST.scaduto;
+// Nota Pagine 058 (Ignazio 19/10/2026: «al momento apriamo MB21 a tutti senza limiti; successivamente studieremo qualcosa di diverso»):
+// un solo interruttore. Con false nessuno è limitato (limitato, fermoScaduto, TAB_SCADUTO, avvisi e calendario: tutto passa da qui e da
+// abbonamento_attivo nel database) e in Dashboard non c'è la fascia dell'abbonamento né «Rinnovo». Il codice dei limiti resta, spento.
+const LIMITI_ABBONAMENTO = false;
+const limitato = () => LIMITI_ABBONAMENTO && !!ST.scaduto;
 // Abbonamento scaduto (nota Pagine 050, Ignazio 11/10/2026: «qualcuno riesce ancora a mettere appuntamenti»): oltre ai blocchi sulle strade
 // (barra, mostraTab, apriScheda, tasti spenti), un blocco solo DENTRO le funzioni che scrivono — nuovoAppuntamento, foglioAzione,
 // chiudiAppuntamento, apriModulo (contatto), moduloVendita —, così nessuna strada, anche futura, lo aggira. Dice perché (nota 048).
