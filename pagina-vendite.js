@@ -110,6 +110,7 @@ function moduloVendita(v, proposta) {
       <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
       <div class="campo"><label>Prezzo al pubblico (€)</label><div class="vn-aiuto">Quanto costava al pubblico quel giorno: resta così anche se i prezzi cambiano.</div><input id="v-prezzo" inputmode="decimal" placeholder="0,00"><div id="v-prezzo-aiuto"></div></div>
       <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
+      <div class="vn-aiuto" id="v-sconto-come"></div>
       <div class="vn-prezzo" id="v-riga-prezzo" hidden></div>
       <div class="campo"><label>Come ha pagato</label>
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
@@ -168,7 +169,8 @@ function moduloVendita(v, proposta) {
     pagato = data.pagato_con; segnaPagato();
     $('v-incassato').value = euro(data.incassato);
     $('v-prezzo').value = euro(data.prezzo_pubblico);
-    rigaPrezzo();
+    scontoAManoSi = MB21Lista.scontoAMano(v.sconto, data.prezzo_pubblico, data.incassato);
+    calcolaSconto();
   });
   // l'aiuto del prezzo (nota 052): l'ultimo prezzo al pubblico usato per lo stesso prodotto (stesso nome, maiuscole a parte), a un tocco
   const aiutoPrezzo = async () => {
@@ -180,11 +182,21 @@ function moduloVendita(v, proposta) {
     const u = Array.isArray(data) && data[0];
     if (!u || $('v-prezzo').value.trim() || $('v-prodotto').value.trim() !== nome) return;
     box.innerHTML = `<button type="button" class="link" id="v-prezzo-usa">L'ultima volta ${esc(MB21Lista.numero(u.prezzo_pubblico, true))} (${esc(MB21Lista.data(u.data))}) · usa questo</button>`;
-    $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; rigaPrezzo(); };
+    $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; calcolaSconto(); };
   };
   // la riga «Sconto … · il cliente paga …» (nota 052) si aggiorna mentre si scrivono prezzo e sconto
   const rigaPrezzo = () => { const t = MB21Lista.rigaPrezzo(MB21Lista.importo($('v-prezzo').value), MB21Lista.importo($('v-sconto').value)); $('v-riga-prezzo').textContent = t; $('v-riga-prezzo').hidden = !t; };
-  $('v-prezzo').addEventListener('input', rigaPrezzo); $('v-sconto').addEventListener('input', rigaPrezzo);
+  // lo sconto da solo (nota 065, Ignazio 19/10, «A»): con prezzo e incassato scritti, sconto = prezzo − incassato, finché non lo scrivi tu;
+  // scritto a mano resta il tuo («scritto da te»); cancellato, torna quello calcolato
+  let scontoAManoSi = !!(v && Number(v.sconto));
+  const calcolaSconto = () => {
+    const c = MB21Lista.scontoCalcolato(MB21Lista.importo($('v-prezzo').value), MB21Lista.importo($('v-incassato').value));
+    if (!scontoAManoSi && c != null) $('v-sconto').value = euro(c);
+    $('v-sconto-come').textContent = scontoAManoSi ? (c != null ? 'scritto da te' : '') : c != null ? 'calcolato: prezzo al pubblico − incassato' : '';
+    rigaPrezzo();
+  };
+  $('v-prezzo').addEventListener('input', calcolaSconto); $('v-incassato').addEventListener('input', calcolaSconto);
+  $('v-sconto').addEventListener('input', () => { scontoAManoSi = $('v-sconto').value.trim() !== ''; calcolaSconto(); });
   $('v-prodotto').addEventListener('change', aiutoPrezzo);
   if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
