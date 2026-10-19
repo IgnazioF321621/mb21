@@ -54,11 +54,18 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   await s2.v.clic('#na-si'); await s2.p;
   assert.match(P.avvisi.at(-1).t, /non usa ancora l'app: non condiviso/);
   P.finto.condividi = { esito: 'ok', nome: 'Fiammetta Rossi', utente: 'u-isa' };
-  // senza scegliere niente: nessuna chiamata
+  // nota 059 (Ignazio 19/10, «sì, già condiviso»): senza toccare niente l'appuntamento con un Partner parte già condiviso con lui
   pulisci();
   const s3 = await apri({});
   await contatto(s3.v, 'Fiammetta Rossi'); await scegli(s3.v, 'tipo', 'Appuntamento'); await scegli(s3.v, 'modalita', 'Counseling');
+  assert.match(s3.v.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="persona" class="scelto"/);
   await s3.v.clic('#na-si'); await s3.p;
+  assert.equal(chiamate('condividi_azione').length, 1);
+  // scegliendo «Nessuno» resta solo suo: nessuna chiamata
+  pulisci();
+  const s4 = await apri({});
+  await contatto(s4.v, 'Fiammetta Rossi'); await scegli(s4.v, 'tipo', 'Appuntamento'); await scegli(s4.v, 'modalita', 'Counseling'); await scegli(s4.v, 'condividi', '');
+  await s4.v.clic('#na-si'); await s4.p;
   assert.equal(chiamate('condividi_azione').length, 0);
 });
 
