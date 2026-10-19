@@ -153,7 +153,7 @@ async function annuncioTraining(forza) {
       <div>${ic('fiamma')}<p><b>Ripassa</b> · 5 minuti al giorno: tornano le carte da ripassare, anche le obiezioni capitate davvero</p></div>
       <div>${ic('libro')}<p><b>Studia</b> · il Manuale di Avvio e le tracce del BSM, a portata di mano</p></div>
     </div>
-    <button class="primario" id="an-inizia">Inizia dal livello ${esc(livelli[0])}</button>
+    <button class="primario" id="an-inizia">Mi alleno ora</button>
     <button class="link an-dopo" id="an-dopo">Più tardi</button>
     <small class="an-nota">Lo ritrovi sempre nella barra in basso: ${ic('crescita')} Training</small>
   </div>`;
