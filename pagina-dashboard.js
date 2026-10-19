@@ -2103,6 +2103,7 @@ const ricordoOb = chiave => { try { return !!localStorage.getItem(chiave); } cat
 const segnaOb = chiave => { try { localStorage.setItem(chiave, '1'); } catch (e) { /* pazienza */ } };
 async function mostraRiquadroObiettivi() {
   const d = DS.dati;
+  if (ST.codaApertura) return;   // nota 064: all'apertura aspetta il suo turno, in fondo alla fila (codaApertura in index.html)
   if (!d || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti() || eAdmin()) return;
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   const rifai = !d.obiettiviMancanti;   // li ha già: solo l'invito a rifarli nel foglio nuovo, una volta
