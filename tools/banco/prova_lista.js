@@ -662,4 +662,17 @@ prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né tele
   assert.equal(L.prossimoRiordino([{ brand: 'eSpring', data: '2026-10-14', riordino: null, riordino_a_rottura: true }, { brand: 'eSpring', data: '2025-01-01', riordino: '2026-12-01' }], '2026-10-14'), null);
 });
 
+prova('Nota 065 (Ignazio 19/10, «A, da solo»): lo sconto = prezzo al pubblico − incassato; scritto a mano resta il tuo', () => {
+  assert.equal(L.scontoCalcolato(150, 135), 15); assert.equal(L.scontoCalcolato(89.9, 89.9), 0); assert.equal(L.scontoCalcolato(100.1, 90.05), 10.05);
+  assert.equal(L.scontoCalcolato(null, 135), null); assert.equal(L.scontoCalcolato(150, null), null); assert.equal(L.scontoCalcolato(100, 120), null);   // incassato sopra il prezzo: niente
+  assert.equal(L.scontoAMano(15, 150, 135), false);   // uguale alla differenza: è quello calcolato
+  assert.equal(L.scontoAMano(20, 150, 135), true);    // diverso: scritto a mano, resta
+  assert.equal(L.scontoAMano(10, null, null), true);  // una vendita vecchia con lo sconto e senza prezzo: resta com'è
+  assert.equal(L.scontoAMano(0, 150, 135), false); assert.equal(L.scontoAMano(null, 150, 135), false);
+  const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
+  assert.match(ven, /<div class="vn-aiuto" id="v-sconto-come"><\/div>/);
+  assert.match(ven, /'calcolato: prezzo al pubblico − incassato'/); assert.match(ven, /'scritto da te'/);
+  assert.match(ven, /\$\('v-prezzo'\)\.addEventListener\('input', calcolaSconto\); \$\('v-incassato'\)\.addEventListener\('input', calcolaSconto\);/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

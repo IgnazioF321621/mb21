@@ -457,6 +457,10 @@
     const x = Number(s);
     return isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : NaN;
   }
+  // Nota Pagine 065 (Ignazio 19/10/2026, versione «A, da solo»): lo sconto = prezzo al pubblico − incassato, quando ci sono tutti e due e il prezzo
+  // non è sotto l'incassato (null se no). Lo sconto scritto a mano resta: `scontoAMano` dice se uno sconto già salvato è diverso dalla differenza.
+  const scontoCalcolato = (prezzo, incassato) => (prezzo == null || incassato == null || !isFinite(prezzo) || !isFinite(incassato) || prezzo < incassato ? null : Math.round((prezzo - incassato) * 100) / 100);
+  const scontoAMano = (sconto, prezzo, incassato) => sconto != null && Number(sconto) > 0 && scontoCalcolato(prezzo, incassato) !== Math.round(Number(sconto) * 100) / 100;
   // La riga del prezzo (nota Pagine 052, Ignazio 13/10: nel modulo e sotto ogni vendita della scheda): «Sconto 15,00 € (10%) · il cliente paga 135,00 €».
   // Senza prezzo al pubblico (o prezzo zero) niente riga; senza sconto «Sconto 0,00 €», senza percentuale.
   function rigaPrezzo(prezzo, sconto) {
@@ -472,7 +476,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { importo, rigaPrezzo, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
