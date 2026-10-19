@@ -456,6 +456,40 @@
   // Conta la risposta di adesso (se cambia idea, cambia la riga) e solo se data dopo l'ultimo «Sposta» (`spostato_il`): spostato, si aspetta la nuova.
   // risposta: { risposta, risposto_il } (da `risposte_impegno`) o null.
   const rispostaValida = (r, a) => (!r || !r.risposta || (a.spostato_il && !(r.risposto_il && r.risposto_il > a.spostato_il)) ? null : r.risposta);
+  // ── Nota Pagine 066 (Ignazio 19/10/2026): all'apertura, a chi ha fissato, le risposte nuove («Valentina partecipa», «Mario non può · da spostare»);
+  // le serate con tanti invitati in una riga sola. Cosa è già stato visto lo ricorda il telefono (`viste`: le chiavi delle risposte).
+  // azioni: [{ a, r }] (appuntamento e risposta valida della persona) · serate: [{ s, titolo, risposte: [{ utente_id, nome, risposta, risposto_il }] }]
+  function quandoBreve(iso, adessoIso) {
+    const q = partiRoma(iso), oggi = partiRoma(adessoIso).giorno;
+    const g = q.giorno === oggi ? 'oggi' : q.giorno === spostaGiorno(oggi, 1) ? 'domani'
+      : `${GIORNI_SETTIMANA[giornoSettimana(q.giorno) - 1].toLowerCase()} ${Number(q.giorno.slice(8))}/${Number(q.giorno.slice(5, 7))}`;
+    return `${g} alle ${q.ora}`;
+  }
+  const nomeCorto = n => String(n || '').trim().split(/\s+/)[0] || 'Qualcuno';
+  const elencoNomi = nomi => (nomi.length < 2 ? nomi.join('') : `${nomi.slice(0, -1).join(', ')} e ${nomi[nomi.length - 1]}`);
+  const chiaveRisposta = (origine, id, x) => `${origine}:${id}:${x.utente_id || ''}:${x.risposta}:${x.risposto_il || ''}`;
+  function risposteNuove({ azioni, serate, viste, adessoIso }) {
+    const visto = k => viste && viste.has(k), righe = [], chiavi = [];
+    for (const { a, r } of azioni || []) {
+      if (!r || !['ci_sono', 'non_ci_sono'].includes(r.risposta)) continue;
+      const k = chiaveRisposta('azione', a.id, r);
+      if (visto(k)) continue;
+      const cosa = `${a.modalita || a.tipo_azione}, ${quandoBreve(a.inizio, adessoIso)}`;
+      righe.push({ quando: a.inizio, nonPuo: r.risposta === 'non_ci_sono',
+        testo: r.risposta === 'ci_sono' ? `${nomeCorto(r.nome)} partecipa · ${cosa}` : `${nomeCorto(r.nome)} non può · ${cosa} · da spostare` });
+      chiavi.push(k);
+    }
+    for (const { s, titolo, risposte } of serate || []) {
+      const nuove = (risposte || []).filter(x => ['ci_sono', 'non_ci_sono'].includes(x.risposta) && !visto(chiaveRisposta('spazio', s.id, x)));
+      if (!nuove.length) continue;
+      const si = nuove.filter(x => x.risposta === 'ci_sono').map(x => nomeCorto(x.nome)), no = nuove.filter(x => x.risposta === 'non_ci_sono').map(x => nomeCorto(x.nome));
+      const parti = [si.length ? `${si.length === 1 ? 'partecipa' : 'partecipano'} ${elencoNomi(si)}` : '', no.length ? `${no.length === 1 ? 'non può' : 'non possono'} ${elencoNomi(no)}` : ''].filter(Boolean);
+      righe.push({ quando: s.inizio, nonPuo: false, testo: `${titolo} di ${quandoBreve(s.inizio, adessoIso)}: ${nuove.length === 1 ? '1 nuova risposta' : nuove.length + ' nuove risposte'} · ${parti.join(', ')}` });
+      nuove.forEach(x => chiavi.push(chiaveRisposta('spazio', s.id, x)));
+    }
+    righe.sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
+    return { righe, chiavi };
+  }
   // conferme: le righe di confermeDaFare; condivise: gli appuntamenti futuri non completati condivisi con una persona; risposte: { [id azione]: risposta }
   function confermeConRisposte(conferme, condivise, risposte, adessoIso) {
     const adesso = Date.parse(adessoIso), fuori = new Set(), nonPuo = [];
@@ -871,7 +905,7 @@
 
   const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,

@@ -1824,7 +1824,8 @@
   .pf-avvio .avv-testa small { font-size: 13px; margin-top: 2px; }
   .avv-perche, .interruttore small.avv-perche { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--testo-soft); }
   .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: var(--ok); margin-top: 2px; }
-  .card.conferma .conf-testo.non-puo { color: var(--pericolo); }   /* nota Pagine 061: il Partner ha risposto «Non può» */
+  .card.conferma .conf-testo.non-puo { color: var(--pericolo); }
+  .ric-nuovo.non-puo b { color: var(--pericolo); }   /* nota Pagine 066: «non può» nel foglio delle risposte */   /* nota Pagine 061: il Partner ha risposto «Non può» */
   .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
   .card.riordino .rc-glide { color: var(--proposta); }
   .riga-coda .conf-nr { display: block; }
@@ -2729,7 +2730,7 @@ async function dopoAccesso(sessione) {
 // I fogli all'apertura dell'app, UNO ALLA VOLTA (nota Pagine 064, Ignazio 19/10/2026: prima «Hai un nuovo appuntamento» si apriva sopra un
 // messaggio o una risposta e se ne vedevano due insieme). In fila, ognuno solo se ha qualcosa da dire; il successivo parte quando il foglio
 // prima è chiuso: messaggi dalla squadra (nota Admin 014) · risposta alla segnalazione (nota Admin 016) · nuovi appuntamenti ricevuti (nota
-// Pagine 027: singoli, Team, Linea, SdS/OPEN) · annuncio del Training («Inizia» o «Più tardi») · riquadro degli obiettivi (dall'1 al 5).
+// Pagine 027: singoli, Team, Linea, SdS/OPEN) · le risposte ai tuoi appuntamenti (nota 066) · annuncio del Training («Inizia» o «Più tardi») · riquadro degli obiettivi (dall'1 al 5).
 // Aprendo l'app da un avviso (`apri`): niente messaggi, risposte e Training; gli appuntamenti nuovi sì.
 function aspettaFogliChiusi() {
   return new Promise(ok => {
@@ -2746,6 +2747,7 @@ async function codaApertura(apri) {
     if (typeof annuncioMessaggi === 'function') await passo(() => annuncioMessaggi(!apri));
     if (typeof annuncioRisposte === 'function') await passo(() => annuncioRisposte(!apri));
     if (typeof controllaImpegniNuovi === 'function') await passo(() => controllaImpegniNuovi());
+    if (typeof annuncioRisposteAppuntamenti === 'function') await passo(() => annuncioRisposteAppuntamenti());   // nota 066: chi ha risposto ai tuoi appuntamenti
     if (!apri) await passo(() => annuncioTraining(false));
   } finally { ST.codaApertura = false; }
   if (ST.tab === 'oggi' && typeof mostraRiquadroObiettivi === 'function') mostraRiquadroObiettivi();
