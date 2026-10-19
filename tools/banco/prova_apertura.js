@@ -52,5 +52,8 @@ let ok = 0;
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8'), /if \(ST\.codaApertura\) return;/);
   assert.doesNotMatch(idx, /setTimeout\(\(\) => controllaImpegniNuovi\(\)/);
   ok++; console.log('OK  il riquadro degli obiettivi aspetta la fila; gli appuntamenti non si aprono più da soli sopra gli altri');
+  const avv = fs.readFileSync(path.join(__dirname, '../../avvisi.js'), 'utf8');
+  assert.match(avv, /<button class="primario" id="an-inizia">Mi alleno ora<\/button>/); assert.match(avv, /id="an-dopo">Più tardi<\/button>/);
+  ok++; console.log('OK  il foglio del Training: «Mi alleno ora» o «Più tardi» (Ignazio 19/10)');
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
