@@ -85,6 +85,12 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - Admin → Utenti: accendendo «Può entrare» la riga mostra subito la nuova scadenza e l'avviso «prova gratuita fino al …»
 - provato sul DB il 16/09 (poi annullato): creato spento → nessuna data; abilitato → 01/10/2026; approvato dal link → 01/10/2026; riabilitato con scadenza vecchia → resta la vecchia
 
+**⚠️ Dal 19/10/2026 i limiti sono SPENTI (nota Pagine 058, Ignazio: «al momento apriamo MB21 a tutti senza limiti; successivamente studieremo qualcosa di diverso»)**:
+- **Nell'app** c'è un solo interruttore, `LIMITI_ABBONAMENTO = false` in index.html. Con false `limitato()` è sempre falso: `fermoScaduto`, `TAB_SCADUTO`, la Lista solo da guardare e la Dashboard spenta non scattano più, e in Dashboard non c'è più la fascia dell'abbonamento né «Rinnovo l'abbonamento» (quindi nemmeno `foglioRinnovo`). Per riaccendere tutto basta mettere true.
+- **Sul database** `abbonamento_attivo` risponde «attivo» per ogni utente (migrazione `20261019114715_abbonamento_senza_limiti.sql`, con dentro com'era): avvisi della sera e del mattino e calendario esterno tornano per tutti, senza ripubblicare le funzioni online.
+- Il CEP (abbonamento Amway) e Admin › Utenti (pagamenti, scadenze) non cambiano.
+- Quello che segue descrive i limiti com'erano, ora spenti.
+
 **Abbonamento scaduto** (cantiere 19 lavoro 6, decisione di Ignazio 16/09; solo app, nessuna migrazione):
 - all'accesso `controllaAbbonamento()` legge `scadenza_abbonamento(utente)` (con abbonamento in comune: quella di chi paga) → `ST.scaduto` se `statoAbbonamento` è «scaduto» (nessuna data o data passata). L'Admin mai. Offline: resta com'era
 - scaduto = **solo Dashboard e Lista Nomi**: `aggiornaTab()` nasconde le altre tab; `mostraTab()` riporta alla Dashboard con l'avviso «Abbonamento scaduto: rinnova per usare anche le altre pagine»; in Dashboard spariscono «visione completa», «Griglia PM» e «Mostra di più»; **dal 17/09 (Ignazio)** spariscono anche «Compila il Check del Giorno», «Imposta gli obiettivi» e «🎯 Obiettivi del mese», e **conferme, coda e «Da catalogare» si vedono ma non si toccano** (bottoni spenti, righe che non si aprono, nessuna scritta: Ignazio 17/09, «suona come un rimprovero»). L'Admin con il Partner Select su un partner scaduto vede e apre tutto (il blocco guarda chi è entrato)
