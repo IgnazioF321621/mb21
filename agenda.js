@@ -521,13 +521,17 @@
   // `voci`: quelle scelte quando si è fissato («previsti») per prime, poi le altre; `ordine`: l'ordine delle fasi, che decide l'esito.
   // null = non è un appuntamento da chiudere, o il suo tipo non ha voci: il blocco di sempre.
   const ESITO_ALTRO = 'Altro';
-  function vociIncontro(a, categoria) {
-    if (!a || a.tipo_azione !== 'Appuntamento' || !daChiudere(a)) return null;
+  // `aperto`: un appuntamento già chiuso con «Cambia esito ›» toccato (nota Azioni 032, Ignazio 19/10: «la lista come abbiamo fatto prima»):
+  // lo stesso elenco, con `fatti` = l'esito già dato (le altre voci dello stesso incontro le aggiunge chi disegna, dopo averle lette).
+  function vociIncontro(a, categoria, aperto) {
+    const chiuso = !!a && !daChiudere(a);
+    if (!a || a.tipo_azione !== 'Appuntamento' || (chiuso && !aperto)) return null;
     const ammessi = passiAmmessi(a, categoria);
     const ordine = ammessi.length ? ammessi : fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
     if (!ordine.length) return null;
     const previsti = ordine.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
-    return { titolo: domandaEsito(a.tipo_azione), voci: [...previsti, ...ordine.filter(x => !previsti.includes(x))], previsti, ordine };
+    return { titolo: chiuso ? 'Esito' : domandaEsito(a.tipo_azione), voci: [...previsti, ...ordine.filter(x => !previsti.includes(x))], previsti, ordine,
+      chiuso, fatti: chiuso && a.esito ? [a.esito] : [] };
   }
   // Dalle voci spuntate all'esito: il primo nell'ordine delle fasi è l'esito, gli altri una riga ciascuno (come prima, `chiudi_azione`).
   // Solo «Altro» (con la frase) → esito «Altro», che non spunta passi dell'Avvio e non entra nei conti di contatti e PM.

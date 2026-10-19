@@ -70,6 +70,54 @@ prova('Toccare l\'elenco (nota Azioni 031): spunte multiple → un esito e le ri
   assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Telefonate', [], 'Telefonate · Altro', 'Ha chiamato due persone']);
 });
 
+prova('Già chiuso (nota Azioni 032, Isabella Moretti · Lista/Contatti chiuso con «Telefonate»): «Cambia esito» apre lo stesso elenco, spuntato com\'era, «Salva» solo se cambia; si aggiunge, si toglie, Annulla rimette', async () => {
+  const { Nodo } = require('../design/mini_dom.js');
+  const chiuso = { id: 'b1', contatto_id: 'c9', user_id: 'u1', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', categoria: 'Partner', area: 'Attività',
+    inizio: '2026-10-19T16:00:00Z', fine: '2026-10-19T17:00:00Z', esito: 'Telefonate', completata: true, su_cosa: null, portato_da: null, note: null };
+  const altraRiga = { id: 'x1', esito: 'Lista nomi', user_id: 'u1', contatto_id: 'c9', categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', area: 'Attività', inizio: chiuso.inizio, fine: chiuso.fine, portato_da: null };
+  const chiamate = [], cache = [];
+  let toastAnnulla = null, toastTesto = '';
+  const tabella = { select() { return tabella; }, eq() { return tabella; }, neq() { return tabella; }, then(ok) { return Promise.resolve(ok({ data: [altraRiga], error: null })); } };
+  const scrivi = t => { const q = { update(v) { q.op = ['update', v]; return q; }, delete() { q.op = ['delete']; return q; }, insert(v) { chiamate.push(['insert', t, JSON.parse(JSON.stringify(v))]); return Promise.resolve({ error: null }); },
+    eq(c, v) { chiamate.push([...q.op, t, JSON.parse(JSON.stringify(v))]); return Promise.resolve({ error: null }); }, in(c, v) { chiamate.push([...q.op, t, JSON.parse(JSON.stringify(v))]); return Promise.resolve({ error: null }); } }; return q; };
+  const ctx = { MB21Agenda: A, MB21Lista: L, esc, FATTO_APERTO: new Set(), ic: () => '', soloGuardo: () => false, consegnaDaCarta: () => {}, cambiaEsito: () => {}, chiudiAppuntamento: () => { throw new Error('non chiude di nuovo'); },
+    supa: { from: t => ({ select: () => tabella, update: v => scrivi(t).update(v), delete: () => scrivi(t).delete(), insert: v => scrivi(t).insert(v) }),
+      rpc: (n, p) => { chiamate.push(['rpc', n, JSON.parse(JSON.stringify(p))]); return Promise.resolve(n === 'chiudi_azione' ? { data: { prima: {}, avvio: ['onb_sogno'], extra: ['nuova1'] }, error: null } : { data: null, error: null }); } },
+    dbq: (_, p) => Promise.resolve(p), passoInCache: (c, col, v) => cache.push([col, v]), mostraToast: (t, an) => { toastTesto = t; toastAnnulla = an; } };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// La carta «Consegna» (nota Pagine 051)') + pezzo('async function scriviFraseEsito', 'async function chiudiAppuntamento')
+    + ';this.bloccoEsiti = bloccoEsiti; this.collegaEsiti = collegaEsiti', ctx);
+  // chiuso e non toccato: «Cambia esito ›», come prima
+  assert.match(ctx.bloccoEsiti(chiuso, 'Partner'), /Cambia esito/);
+  const h = ctx.bloccoEsiti(chiuso, 'Partner', true);
+  assert.match(h, /incontro-lista/); assert.match(h, /data-il-voci>/); assert.match(h, />Salva</); assert.ok(!h.includes('esito-btn'));   // l'elenco aperto, niente tasti
+  const n = new Nodo(); n.innerHTML = h;
+  let ridisegni = 0;
+  ctx.collegaEsiti(n, chiuso, { nome: 'Isabella', categoria: 'Partner' }, async () => { ridisegni++; });
+  n.querySelector('[data-il-apri]').setAttribute = () => {};
+  await new Promise(r => setTimeout(r, 0));
+  const casella = v => n.querySelectorAll('input[value]').find(x => x.value === v);
+  assert.equal(casella('Telefonate').checked, true); assert.equal(casella('Lista nomi').checked, true);   // l'esito e l'altra riga dello stesso incontro
+  assert.equal(n.querySelector('[data-il-fatto]').disabled, true);                                         // niente cambiato: «Salva» spento
+  // tolgo «Lista nomi», aggiungo «Il perché»
+  casella('Lista nomi').checked = false; casella('Lista nomi').onchange();
+  casella('Motivazione').checked = true; casella('Motivazione').onchange();
+  assert.equal(n.querySelector('[data-il-fatto]').disabled, false);
+  await n.querySelector('[data-il-fatto]').onclick();
+  await new Promise(r => setTimeout(r, 0));
+  const rpc = chiamate.find(c => c[0] === 'rpc');
+  assert.deepEqual(rpc[2], { p_azione: 'b1', p_esito: 'Motivazione', p_passi_avvio: ['onb_sogno', 'onb_contatti'], p_extra: ['Telefonate'] });   // l'esito nell'ordine delle fasi, una riga per il passo rimasto
+  assert.ok(chiamate.some(c => c[0] === 'delete' && c[1] === 'azioni' && c[2][0] === 'x1'));   // via la riga di «Lista nomi»
+  assert.equal(toastTesto, 'Esito: Il perché · Telefonate'); assert.equal(ridisegni, 1);
+  // Annulla: annulla_chiusura, la riga tolta rimessa
+  chiamate.length = 0;
+  await toastAnnulla();
+  assert.equal(chiamate[0][1], 'annulla_chiusura');
+  const rimessa = chiamate.find(c => c[0] === 'insert');
+  assert.equal(rimessa[2][0].esito, 'Lista nomi'); assert.ok(!('id' in rimessa[2][0]));
+  assert.equal(toastTesto, 'Annullato');
+});
+
 prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in «Il mio avvio», righe in più); Annulla è una chiamata sola e toglie tutto', async () => {
   const chiamate = [], ctx = { MB21Agenda: A, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-01' }, AG: {}, console };
   const cache = [];
@@ -88,7 +136,7 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
   ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
   vm.createContext(ctx);
-  vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
+  vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const e = { ...incontro, contatti: { nome: 'Mario', categoria: 'Partner' } };
   await ctx.chiudiAppuntamento(e, 'Motivazione', { dopo: async () => {}, extra: ['ListaStart', 'Telefonate'], testo: 'Il perché · Lista Start · Telefonate' });
   assert.equal(chiamate.filter(c => c[0] === 'rpc').length, 1);                                  // una chiamata sola
@@ -202,7 +250,7 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
   ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
   vm.createContext(ctx);
-  vm.runInContext(pezzo('async function chiudiAppuntamento', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
+  vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const tel = inizio => ({ id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', area: 'Attività', inizio, contatti: { nome: 'Mario', categoria: 'Prospect' } });
   const giro = async (esito, inizio) => { log.length = 0; await ctx.chiudiAppuntamento(tel(inizio), esito, { dopo: async () => {} }); return log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'); };
   // PM Fissato nel 2020: il giorno del PM sì, poi niente

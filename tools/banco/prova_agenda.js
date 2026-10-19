@@ -769,6 +769,9 @@ prova('«Cosa avete fatto?» a elenco (nota Azioni 031): le voci del tipo, prima
   // non un appuntamento, o già chiuso: niente elenco
   assert.equal(A.vociIncontro({ ...a, tipo_azione: 'Piano Marketing' }, 'Partner'), null);
   assert.equal(A.vociIncontro({ ...a, esito: 'RolePlay', completata: true }, 'Partner'), null);
+  // già chiuso e «Cambia esito» toccato (nota 032): lo stesso elenco, con l'esito già dato spuntato e il titolo «Esito»
+  const c = A.vociIncontro({ ...a, modalita: 'Lista/Contatti', su_cosa: null, esito: 'Telefonate', completata: true }, 'Partner', true);
+  assert.deepEqual([c.chiuso, c.fatti, c.titolo], [true, ['Telefonate'], 'Esito']);
   // chiuso con «Altro»: in «Cambia esito» resta acceso
   const g = A.passiEsito({ ...a, su_cosa: null, esito: 'Altro', completata: true }, 'Partner');
   assert.equal(g[0].attuale, 'Altro'); assert.ok(g[0].bottoni.includes('Altro'));
