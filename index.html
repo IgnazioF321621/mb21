@@ -3061,7 +3061,7 @@ function collegaElenco(box, a, poi = () => {}) {
   apriL.onclick = () => { voci.hidden = !voci.hidden; apriL.setAttribute('aria-expanded', String(!voci.hidden)); };
   voci.querySelectorAll('input').forEach(i => i.onchange = () => { aggiorna(); if (i === altro && altro.checked) testo.focus(); });
   testo.oninput = aggiorna;
-  return { scelta, cambiato: () => firma() !== prima, altreRighe: () => righe, nomi: r => [r.esito, ...r.extra].map(MB21Agenda.nomePasso).concat(r.frase && r.esito !== ESITO_ALTRO ? ['Altro'] : []).join(' · ') };
+  return { scelta, cambiato: () => firma() !== prima, altreRighe: () => righe, manca: () => altro.checked && !frase() && !giaAltro(), nomi: r => [r.esito, ...r.extra].map(MB21Agenda.nomePasso).concat(r.frase && r.esito !== ESITO_ALTRO ? ['Altro'] : []).join(' · ') };
 }
 function bloccoEsiti(a, categoria, aperto = false) {
   // la carta «Consegna» (nota Pagine 051): due scelte sole, quelle della vendita; fatta la consegna non c'è più niente da toccare
@@ -3097,8 +3097,10 @@ function collegaEsiti(el, a, contatto, dopo) {
   };
   el.querySelectorAll('.incontro-lista').forEach(box => {   // «Cosa avete fatto?» a elenco (nota Azioni 031); già chiuso: «Salva» (nota 032)
     const fatto = box.querySelector('[data-il-fatto]'), chiuso = box.dataset.chiuso != null;
-    const el2 = collegaElenco(box, a, () => { fatto.disabled = !el2.scelta() || (chiuso && !el2.cambiato()); });
-    fatto.disabled = !el2.scelta() || (chiuso && !el2.cambiato());
+    let el2 = null;
+    const accendi = () => { if (el2) fatto.disabled = !el2.scelta() || (chiuso && !el2.cambiato()); };
+    el2 = collegaElenco(box, a, accendi);
+    accendi();
     fatto.onclick = () => {
       if (soloGuardo() || fatto.disabled) return;
       const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
@@ -3229,6 +3231,35 @@ async function cambiaDaElenco(e, { esito, extra, altreRighe = [], nota, testo, d
     await dopo();
     mostraToast(parziale ? 'Annullato solo in parte: controlla i passi da Modifica.' : 'Annullato');
   });
+}
+// I passi dell'incontro dal foglio «Modifica» (nota Azioni 032), dopo `modifica_azione`: via le righe dei passi tolti, quelle rimaste seguono
+// contatto, giorno e tipo dell'appuntamento, e per i passi aggiunti `chiudi_azione` (spunte in «Il mio avvio» e una riga per passo).
+// Restituisce la funzione che annulla tutto questo (da chiamare PRIMA di `annulla_modifica_azione`), o null se non c'era niente da fare.
+async function passiDaModifica(a, { lista, cambiato, righe, contatto, modalita, inizio, fine }) {
+  const restano = cambiato ? righe.filter(r => lista && r.esito !== lista.esito && lista.extra.includes(r.esito)) : righe;
+  const via = righe.filter(r => !restano.includes(r));
+  const nuove = cambiato && lista ? lista.extra.filter(x => !restano.some(r => r.esito === x)) : [];
+  let tolte = [], spostate = false, chiusura = null, avviso = false;
+  if (via.length) { if ((await dbq('togli passi', supa.from('azioni').delete().in('id', via.map(r => r.id)))).error) avviso = true; else tolte = via; }
+  const sposta = contatto !== a.contatto_id || modalita !== a.modalita || inizio !== a.inizio || (fine || null) !== (a.fine || null);
+  if (restano.length && sposta) {
+    if ((await dbq('passi seguono', supa.from('azioni').update({ contatto_id: contatto, modalita, inizio, fine }).in('id', restano.map(r => r.id)))).error) avviso = true; else spostate = true;
+  }
+  if (cambiato && lista && lista.esito) {
+    const passi = [...new Set([lista.esito, ...nuove].map(p => MB21Lista.passoAvvioDa(a.tipo_azione, modalita, p)).filter(Boolean))];
+    const { data, error } = await dbq('passi aggiunti', supa.rpc('chiudi_azione', { p_azione: a.id, p_esito: lista.esito, p_passi_avvio: passi, p_extra: nuove }));
+    if (error) avviso = true; else { chiusura = data; for (const col of data.avvio || []) passoInCache(contatto, col, true); }
+  }
+  if (avviso) mostraToast('Salvato, ma non tutti i passi dell\'incontro sono stati aggiornati: controlla e riprova.');
+  if (!tolte.length && !spostate && !chiusura) return null;
+  return async () => {
+    if (chiusura) {
+      await dbq('annulla passi aggiunti', supa.rpc('annulla_chiusura', { p_azione: a.id, p_prima: chiusura, p_rientro_cambiato: null }));
+      for (const col of chiusura.avvio || []) passoInCache(contatto, col, false);
+    }
+    if (spostate) await dbq('passi tornano', supa.from('azioni').update({ contatto_id: a.contatto_id, modalita: a.modalita, inizio: a.inizio, fine: a.fine || null }).in('id', restano.map(r => r.id)));
+    if (tolte.length) await dbq('rimetti passi', supa.from('azioni').insert(tolte.map(({ id, ...r }) => ({ ...r, completata: true }))));
+  };
 }
 async function chiudiAppuntamento(e, esito, opz = {}) {
   if (fermoScaduto()) return;   // nota 050
@@ -3878,7 +3909,7 @@ async function nuovoAppuntamento(opz = {}) {
 async function foglioAzione(id, opz = {}) {
   if (soloGuardo() || fermoScaduto()) return;   // nota 050
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
-    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, inizio, fine, data_scelta, ospite, note, senza_ora, contatti(nome, categoria)').eq('id', id).maybeSingle());
+    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, su_cosa, area, inizio, fine, data_scelta, ospite, note, senza_ora, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
   if (MB21Agenda.eConsegna(a)) return mostraToast('La consegna si sposta con «Sposta la consegna»: cambia anche la data nella vendita');   // nota 051
   let portato = null;
@@ -3953,6 +3984,16 @@ async function foglioAzione(id, opz = {}) {
   const disegnaScelte = () => {   // gli esiti di Appuntamento cambiano col sottotipo
     // Piano Marketing e Follow Up: gli stessi passi di Agenda e scheda (Ignazio 17/09, dalla Griglia PM: «seguire il flusso che stiamo creando»)
     const stato = { ...a, modalita: st.sottotipo, esito: st.esito, completata: !!st.esito, data_scelta: null };
+    // Appuntamento (nota Azioni 032, Ignazio 19/10: «mettilo anche in modifica»): lo stesso elenco «Cosa avete fatto?» di MB Plan e scheda
+    const inc = a.tipo_azione === 'Appuntamento' ? A.vociIncontro({ ...a, modalita: st.sottotipo }, a.contatti ? a.contatti.categoria : null, true) : null;
+    st.elenco = null;
+    if (inc) {
+      $('fa-esito-titolo').textContent = 'Esito'; $('fa-esito-nota').textContent = '';
+      $('fa-esiti').innerHTML = elencoEsitoHtml(a, inc.chiuso ? inc : { ...inc, chiuso: true, fatti: [] }, false);   // aperto anche se da chiudere
+      st.elenco = collegaElenco($('fa-esiti').querySelector('.incontro-lista'), { ...a, modalita: st.sottotipo });
+      velo.querySelectorAll('#fa-sottotipi button').forEach(b => b.classList.toggle('scelto', b.dataset.v === st.sottotipo));
+      return;
+    }
     const gruppi = A.RISULTATI[a.tipo_azione] ? A.passiEsito(stato, a.contatti ? a.contatti.categoria : null, st.fattoAperto)
       : [{ passo: 'cambia', titolo: 'Esito', bottoni: A.sceltePerModifica(stato).esiti, attuale: st.esito }];
     $('fa-esito-titolo').textContent = gruppi.length === 1 ? gruppi[0].titolo : '';
@@ -4009,14 +4050,23 @@ async function foglioAzione(id, opz = {}) {
       if (st.esito && !A.ESITI_CON_GIORNO.includes(st.esito)
         && await chiediConferma(`Tolgo dall'Agenda il giorno scelto?`, `${st.contatto.nome} è in Agenda ${dataLunga($('fa-scelta-giorno').value)}. Con «${st.esito}» di solito non serve più.`, 'Sì, togli', false, '', 'No, lascialo in Agenda')) dataScelta = null;
     }
+    // l'elenco degli appuntamenti (nota 032): l'esito è il primo passo spuntato; la frase di «Altro» va in fondo alle note
+    let lista = null;
+    if (st.elenco) {
+      if (st.elenco.manca()) { $('fa-errore').textContent = 'Manca la frase di «Altro».'; return; }
+      if (st.elenco.cambiato()) { lista = st.elenco.scelta(); st.esito = lista ? lista.esito : null; }
+    }
+    const noteNuove = [$('fa-note').value.trim(), lista && lista.frase ? lista.frase : ''].filter(Boolean).join('\n') || null;
     $('fa-si').disabled = true;
     const { data: prima, error: e2 } = await dbq('modifica azione', supa.rpc('modifica_azione', {
       p_azione: a.id, p_contatto: st.contatto.id, p_portato_da: st.portato ? st.portato.id : null,
       p_modalita: st.sottotipo || null, p_esito: st.esito || null, p_inizio: inizio, p_fine: fine || null,
-      p_ospite: st.ospite || null, p_note: $('fa-note').value.trim() || null,
+      p_ospite: st.ospite || null, p_note: noteNuove,
       ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
     await attesaDaEsito(a.id, a.esito, st.esito || null);   // «Ordina da solo» anche dal foglio Modifica (nota Azioni 025)
+    const annullaPassi = st.elenco ? await passiDaModifica(a, { lista, cambiato: st.elenco.cambiato(), righe: st.elenco.altreRighe(),
+      contatto: st.contatto.id, modalita: st.sottotipo || null, inizio, fine: fine || null }) : null;
     // la telefonata senza orario che prende un'ora, o un esito da qui, non è più «senza orario» (nota 012): da ora si vede in Agenda
     if (senzaOra && (st.conOra || st.esito)) {
       const { error: e4 } = await dbq('orario messo', supa.from('azioni').update({ senza_ora: false }).eq('id', a.id));
@@ -4027,6 +4077,7 @@ async function foglioAzione(id, opz = {}) {
     await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));   // fase e coda possono essere cambiate: si rilegge solo la riga di chi è toccato
     if (opz.dopo) await opz.dopo();
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
+      if (annullaPassi) await annullaPassi();   // prima i passi dell'incontro, poi l'azione com'era
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
       if (!e3) await attesaDaEsito(a.id, st.esito || null, a.esito);
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
