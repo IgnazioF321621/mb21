@@ -50,6 +50,7 @@ function collegaSegnalazioniAdmin() {
   const dai = id => A.elenco.find(x => x.id === id);
   const scritta = () => { const t = app.querySelector('#sg-risposta'); return t ? t.value.trim() : ''; };
   const scrivi = async (s, campi, messaggio) => {
+    if ('risposta' in campi && campi.risposta !== (s.risposta || null)) campi = { ...campi, risposta_letta_il: null };   // risposta cambiata: il partner la rivede (nota Admin 016)
     const { error } = await dbq('segnalazione', supa.from('segnalazioni').update(campi).eq('id', s.id));
     if (error) return mostraToast('Non salvato: riprova.'), false;
     mostraToast(messaggio); await caricaSegnalazioniAdmin(); return true;
@@ -73,4 +74,34 @@ function collegaSegnalazioniAdmin() {
     if (r.error || !r.data) { if (f) f.close(); return mostraToast('Non riesco ad aprire lo screenshot'); }
     if (f) f.location = r.data.signedUrl; else mostraToast('Il telefono ha bloccato la finestra: riprova');
   });
+}
+
+// ── Il PARTNER ── «Hai una risposta alla tua segnalazione» (nota Admin 016, Ignazio 19/10/2026): all'apertura dell'app, dopo i messaggi, un foglio
+// con le risposte non ancora lette (domanda del partner + risposta), un solo «Ho capito». Non per l'Admin, mai sopra un altro foglio.
+// Dà true se ha aperto il foglio (allora l'annuncio del Training aspetta). Una lettura leggera, solo all'apertura.
+async function annuncioRisposte(aprire) {
+  if (!aprire || limitato() || eAdmin() || !ST.utente || !ST.utente.id || document.querySelector('.velo')) return false;
+  const r = await supa.from('segnalazioni').select('id, creata_il, testo, risposta').not('risposta', 'is', null).is('risposta_letta_il', null).order('creata_il', { ascending: true }).limit(10);
+  if (r.error || !r.data || !r.data.length || document.querySelector('.velo')) return false;   // anche se il campo non c'è ancora: niente foglio, niente errore
+  foglioRisposte(r.data);
+  return true;
+}
+function foglioRisposte(righe) {
+  const n = righe.length, velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('segnala')} ${n > 1 ? `Hai ${n} risposte alle tue segnalazioni` : 'Hai una risposta alla tua segnalazione'}</h3></div>
+    ${righe.map(x => `<div class="riquadro" style="margin-bottom:12px">
+      ${x.testo ? `<small>Avevi scritto: «${esc(MB21Segnala.anteprima(x.testo, 140))}»</small>` : ''}
+      <p style="white-space:pre-line;margin:8px 0 0"><b>${esc(x.risposta)}</b></p></div>`).join('')}
+    <button class="primario" id="sg-capito" style="margin-top:6px">Ho capito</button></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) velo.remove(); };   // il tocco fuori lo chiude senza segnarla: torna alla prossima apertura
+  const b = velo.querySelector('#sg-capito');
+  b.onclick = async () => {
+    b.disabled = true;
+    const { error } = await dbq('risposte lette', supa.rpc('segna_risposte_lette', { p_ids: righe.map(x => x.id) }));
+    if (error) { b.disabled = false; return mostraToast('Non salvato: riprova.'); }
+    if (typeof risposteLette === 'function') risposteLette();   // il puntino sul tasto «Invia Feedback» si spegne
+    velo.remove();
+  };
 }
