@@ -7,6 +7,9 @@
 // Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
 const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], doppioni: [], aperti: new Set(), riquadri: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse) · riquadri: gruppi della pagina Utenti aperti (all'inizio tutti chiusi)
 // Un gruppo della pagina Utenti: chiuso mostra titolo, numero di persone e freccia; al tocco si apre l'elenco (Ignazio 07/10, nota Admin 009)
+// Nota Admin 015 (Ignazio 19/10): con i limiti dell'abbonamento spenti (LIMITI_ABBONAMENTO in index.html, nota Pagine 058) la gestione dell'abbonamento
+// sparisce da Admin › Utenti; il codice resta, si riaccende con lo stesso interruttore. I dati degli utenti e il database non cambiano.
+const conAbbonamento = () => typeof LIMITI_ABBONAMENTO !== 'undefined' && LIMITI_ABBONAMENTO;
 const riquadro = (chiave, titolo, corpo, classe = '') => { const ap = AD.riquadri.has(chiave);
   return `<button class="rp-apri ad-voce${ap ? ' aperto' : ''}" data-riq="${chiave}" aria-expanded="${ap}" style="margin-top:10px"><span>${titolo}</span><span>${ap ? '⌄' : '›'}</span></button>${ap ? `<div class="rp-wes ${classe}">${corpo}</div>` : ''}`; };
 
@@ -201,8 +204,8 @@ function rigaUtenteAdmin(u) {
   const pallino = { attivo: '🟢', in_scadenza: '🟠', scaduto: '🔴' }[stato];
   const data = d => (d ? d.split('-').reverse().join('/') : '—');
   // cantiere 25 (Ignazio 17/09): la foto del Profilo anche qui, letta da `utenti.foto` (stesso cerchietto della Dashboard)
-  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${escIcone(pallino)}${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
-    <small>${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}${u.accesso_attivo ? '' : ' · non entra'}${(AD.dispositivi[u.id] || []).length ? ' · ' + ic('avvisi') : ''} · ${esc(usoBreve(u))}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${conAbbonamento() ? escIcone(pallino) : ''}${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
+    <small>${[conAbbonamento() && `${stato === 'scaduto' ? 'scaduto' : 'scade'} ${data(scad)}`, !u.accesso_attivo && 'non entra', (AD.dispositivi[u.id] || []).length && ic('avvisi'), esc(usoBreve(u))].filter(Boolean).join(' · ')}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
   if (!aperto) return h;
   h += `<div class="ad-dettaglio">
     <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
@@ -213,7 +216,8 @@ function rigaUtenteAdmin(u) {
     <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">${ic('elimina')} Elimina</button>
     <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
     <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
-    <div class="ad-abb"><b>Abbonamento</b>`;
+    ${conAbbonamento() ? '<div class="ad-abb"><b>Abbonamento</b>' : ''}`;
+  if (!conAbbonamento()) return h + `</div>`;   // nota Admin 015: niente abbonamento finché i limiti sono spenti
   if (chiPaga) {
     h += `<div>In comune con <b>${esc(nomeDi(chiPaga))}</b>: vale la sua scadenza (${data(scad)}).</div>`;
   } else {
@@ -236,7 +240,7 @@ function disegnaAdmin() {
   let html;
   if (AD.sezione === 'utenti') {
     html = `${indietro}<h1>Utenti dell'app</h1>
-      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
+      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}${conAbbonamento() ? ` · ${escIcone('🟢')}attivo · ${escIcone('🟠')}scade entro ${D.GIORNI_PREAVVISO} giorni · ${escIcone('🔴')}scaduto` : ''} · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
       ${AD.richieste.length ? riquadro('richieste', `${ic('invito')} Richieste da approvare (${AD.richieste.length})`, `${AD.richieste.map(r => {
         const da = AD.tutti.find(u => u.id === r.invitato_da), gia = AD.tutti.filter(u => u.partner_id === r.codice_amway);
         return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
@@ -335,7 +339,7 @@ function disegnaAdmin() {
     html = `<h1>Admin</h1>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
-      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>`)}
+      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}${conAbbonamento() ? ` · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>` : ''}`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto')}
       ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
@@ -416,7 +420,7 @@ function foglioNuovoUtente(u) {
     <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
     <label>Codice Amway <small style="color:var(--grigio)">(obbligatorio, solo numeri, anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off" value="${esc(u ? u.partner_id || '' : '')}"></label>
     <label>Email con cui entrerà${bloccaEmail ? ' <small style="color:var(--grigio)">(è già entrato: non si cambia)</small>' : ''}<input id="nu-email" type="email" autocomplete="off" autocapitalize="off" value="${esc(u ? u.email || '' : '')}" ${bloccaEmail ? 'disabled' : ''}></label>
-    </div>${u ? '' : `<h4 class="mc-t">Abbonamento</h4><div class="riquadro mc-g">
+    </div>${u || !conAbbonamento() ? '' : `<h4 class="mc-t">Abbonamento</h4><div class="riquadro mc-g">
     <label>In comune con<select id="nu-comune"><option value="">nessuno (paga per sé)</option>${AD.utenti.filter(x => !x.abbonamento_con)
       .map(x => `<option value="${esc(x.id)}">${esc(nomeDi(x))}</option>`).join('')}</select></label></div>`}
     <div class="errore" id="nu-errore"></div>
@@ -462,7 +466,7 @@ function foglioNuovoUtente(u) {
     if (!bloccaEmail) campi.email = email;
     const { data, error } = u
       ? await dbq('modifica utente', supa.from('utenti').update(campi).eq('id', u.id).select('id').single())
-      : await dbq('nuovo utente', supa.from('utenti').insert({ ...campi, abbonamento_con: $('nu-comune').value || null, accesso_attivo: false }).select('id').single());
+      : await dbq('nuovo utente', supa.from('utenti').insert({ ...campi, abbonamento_con: ($('nu-comune') && $('nu-comune').value) || null, accesso_attivo: false }).select('id').single());
     if (error) { $('nu-crea').disabled = false; $('nu-crea').textContent = testo; $('nu-errore').textContent = error.code === '23505' ? 'Questa email è già di un utente' : 'Non salvato: riprova.'; return; }
     chiudi();
     mostraToast(u ? `${nome}: salvato` : `${nome} aggiunto: accendi «Può entrare» quando è pronto`);
@@ -495,8 +499,8 @@ function collegaAdmin() {
     const r = AD.richieste.find(x => x.id === b.dataset.approva);
     // Stessa regola di approva_richiesta (Ignazio 17/09): stesso codice Amway di un utente che paga per sé → in comune con il primo registrato
     const paga = AD.utenti.filter(x => x.partner_id === r.codice_amway && !x.abbonamento_con).sort((a, b) => String(a.creato_il).localeCompare(String(b.creato_il)))[0];
-    const abb = paga ? `In comune con ${nomeDi(paga)}: nessun giorno gratis.` : '15 giorni gratis da oggi.';
-    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}. ${abb}`, 'Approva')) return;
+    const abb = !conAbbonamento() ? '' : paga ? ` In comune con ${nomeDi(paga)}: nessun giorno gratis.` : ' 15 giorni gratis da oggi.';
+    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}.${abb}`, 'Approva')) return;
     b.disabled = true;
     const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
     if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
@@ -551,7 +555,7 @@ function collegaAdmin() {
     const { data: dopo, error } = await dbq('cambia utente', supa.from('utenti').update({ [campo]: valore }).eq('id', u.id).select('abbonamento_scadenza').single());
     b.disabled = false;
     if (error) { b.checked = !valore; return mostraToast('Non salvato: riprova.'); }
-    const prova = campo === 'accesso_attivo' && valore && !u.abbonamento_scadenza && dopo && dopo.abbonamento_scadenza;   // 15 giorni gratis dal database
+    const prova = conAbbonamento() && campo === 'accesso_attivo' && valore && !u.abbonamento_scadenza && dopo && dopo.abbonamento_scadenza;   // 15 giorni gratis dal database
     u[campo] = valore;
     if (dopo) u.abbonamento_scadenza = dopo.abbonamento_scadenza;
     if (campo === 'nel_partner_select') { const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto; }   // il menu si aggiorna subito, la scelta resta
