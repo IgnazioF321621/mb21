@@ -2711,7 +2711,7 @@ async function dopoAccesso(sessione) {
     controllaNovita(ultimoUso);
     if (REGISTRAZIONE.get('annuncio') === 'training') { history.replaceState(null, '', location.pathname); annuncioTraining(true); }
     // Messaggi dalla squadra (nota Admin 014): prima di tutto, mai se l'app si apre da un avviso; se se ne apre uno, l'annuncio del Training aspetta
-    else (typeof annuncioMessaggi === 'function' ? annuncioMessaggi(!apri) : Promise.resolve(false)).then(aperto => (aperto || typeof annuncioRisposte !== 'function') ? aperto : annuncioRisposte(!apri)).then(aperto => { if (!aperto && !apri) return annuncioTraining(false); }).catch(() => {});   // poi le risposte alle segnalazioni (nota Admin 016)
+    else codaApertura(apri);
   };
   // Benvenuto (cantiere 32): si apre da solo una volta sola, al posto della Dashboard, a chi non l'ha ancora visto: chi entra la prima
   // volta e, una volta, chi usava già l'app. All'uscita porta in Dashboard su «Il mio avvio». Al primo ingresso le novità non si aprono
@@ -2724,8 +2724,31 @@ async function dopoAccesso(sessione) {
   mostraTab();
   dopo();
   if (avvisoM) mostraAvvisoRicevuto(avvisoT, avvisoM);
-  // gli impegni ricevuti da altri non ancora visti (nota Pagine 027): il pop-up «Hai un nuovo appuntamento», un attimo dopo la pagina
-  if (typeof controllaImpegniNuovi === 'function') setTimeout(() => controllaImpegniNuovi().catch(() => {}), 1200);
+}
+
+// I fogli all'apertura dell'app, UNO ALLA VOLTA (nota Pagine 064, Ignazio 19/10/2026: prima «Hai un nuovo appuntamento» si apriva sopra un
+// messaggio o una risposta e se ne vedevano due insieme). In fila, ognuno solo se ha qualcosa da dire; il successivo parte quando il foglio
+// prima è chiuso: messaggi dalla squadra (nota Admin 014) · risposta alla segnalazione (nota Admin 016) · nuovi appuntamenti ricevuti (nota
+// Pagine 027: singoli, Team, Linea, SdS/OPEN) · annuncio del Training («Inizia» o «Più tardi») · riquadro degli obiettivi (dall'1 al 5).
+// Aprendo l'app da un avviso (`apri`): niente messaggi, risposte e Training; gli appuntamenti nuovi sì.
+function aspettaFogliChiusi() {
+  return new Promise(ok => {
+    const chiusi = () => !document.querySelector('.velo');
+    if (chiusi()) return ok();
+    const o = new MutationObserver(() => { if (chiusi()) { o.disconnect(); ok(); } });
+    o.observe(document.body, { childList: true, subtree: true });
+  });
+}
+async function codaApertura(apri) {
+  ST.codaApertura = true;   // intanto il riquadro degli obiettivi non si apre da solo (mostraRiquadroObiettivi)
+  const passo = async f => { try { await f(); } catch (e) {} await aspettaFogliChiusi(); };
+  try {
+    if (typeof annuncioMessaggi === 'function') await passo(() => annuncioMessaggi(!apri));
+    if (typeof annuncioRisposte === 'function') await passo(() => annuncioRisposte(!apri));
+    if (typeof controllaImpegniNuovi === 'function') await passo(() => controllaImpegniNuovi());
+    if (!apri) await passo(() => annuncioTraining(false));
+  } finally { ST.codaApertura = false; }
+  if (ST.tab === 'oggi' && typeof mostraRiquadroObiettivi === 'function') mostraRiquadroObiettivi();
 }
 
 // ── PARTNER SELECT (cantiere 15, decisioni di Ignazio 15/09) ──
