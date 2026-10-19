@@ -414,7 +414,8 @@ function disegnaOggiLV() {
     sezioni.push(rigaApribile('sez-' + id, finita ? 'fatta' : '', finita ? 'fatto' : icona, titolo, sotto, aperta, quanti)
       + (aperta ? (contenutoSpeciale ? contenutoSpeciale() : righe.join('') + fatte.map(x => rigaFatta(x.nome)).join('')) : ''));
   };
-  if (CONF.righe.length || fatteDi('conf').length) metti('conferme', 'conferme', 'Conferme', c.conf ? `${c.conf} ${c.conf === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}` : 'tutte fatte', c.conf, 'conf',
+  const nonPuo = CONF.righe.filter(x => x.nonPuo).length, daConf = c.conf - nonPuo;   // nota 061: «Non può · da spostare»
+  if (CONF.righe.length || fatteDi('conf').length) metti('conferme', 'conferme', 'Conferme', c.conf ? [daConf ? `${daConf} ${daConf === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}` : '', nonPuo ? `${nonPuo} da spostare` : ''].filter(Boolean).join(' · ') : 'tutte fatte', c.conf, 'conf',
     CONF.righe.map(x => rigaPersona('conf', x.id, x.contatti ? x.contatti.nome : '', MB21Agenda.testoConferma(x, new Date().toISOString()))));
   if (r.dareSeguito.length || fatteDi('ds').length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti', c.dare ? `${c.dare} da richiamare` : 'tutti fatti', c.dare, 'ds',
     r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`, x.id)));
@@ -457,7 +458,7 @@ function disegnaPersonaLV() {
     if (x) { nome = x.nome; chip = tipo === 'ds' ? 'Dare Seguito scaduto' : x.contattato ? 'Da chiamare' : 'Mai contattato'; ST.aperta = id; corpo = cardContatto(x, tipo === 'ds'); }
   } else if (tipo === 'conf') {
     const x = CONF.righe.find(y => y.id === id);
-    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Da confermare'; corpo = confermeHtml(id); }
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = x.nonPuo ? 'Non può · da spostare' : 'Da confermare'; corpo = confermeHtml(id); }
   } else if (tipo === 'rio') {
     const x = RIO.righe.find(y => y.id === id);
     if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Riordino'; ST.aperta = id; corpo = riordiniHtml(id); }
@@ -973,7 +974,18 @@ async function caricaConferme() {
         .in('esito', ['PM Fissato', 'Appuntamento']).is('confermato_il', null).gt('data_scelta', adesso.toISOString()).lte('data_scelta', limite.toISOString())),
     ]);
     if (app1.error || coda.error) throw app1.error || coda.error;
-    CONF.righe = A.confermeDaFare(A.senzaDoppioniCoda([...app1.data, ...coda.data]), adesso.toISOString());
+    const conferme = A.confermeDaFare(A.senzaDoppioniCoda([...app1.data, ...coda.data]), adesso.toISOString());
+    // nota 061: la risposta del Partner agli appuntamenti condivisi (futuri, non completati); una lettura leggera per appuntamento,
+    // con la funzione che già dà le risposte a chi organizza. Se qualcosa non va, le Conferme restano come prima.
+    let condivise = [], risposte = {};
+    try {
+      const cd = await dbq('appuntamenti condivisi', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).not('condiviso_con', 'is', null)
+        .eq('completata', false).gt('inizio', adesso.toISOString()).order('inizio').limit(30));
+      condivise = !cd.error && Array.isArray(cd.data) ? cd.data : [];
+      const rr = await Promise.all(condivise.map(a => dbq('risposte impegno', supa.rpc('risposte_impegno', { p_origine: 'azione', p_id: a.id }))));
+      condivise.forEach((a, i) => { const d = rr[i] && !rr[i].error && Array.isArray(rr[i].data) ? rr[i].data[0] : null; if (d) risposte[a.id] = d; });
+    } catch (e) { condivise = []; }
+    CONF.righe = A.confermeConRisposte(conferme, condivise, risposte, adesso.toISOString());
   } catch (e) {
     CONF.righe = [];
   }
@@ -987,14 +999,16 @@ function confermeHtml(solo) {
     return `<div class="card conferma" id="conf-${esc(c.id)}"><div class="strip" style="background:${MB21Agenda.COLORI[c.tipo_azione] || 'var(--az-contatto)'}"></div>
       <div class="corpo">
         <div class="nome">${esc(c.contatti ? c.contatti.nome : '')}</div>
-        <div class="conf-testo">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
+        <div class="conf-testo${c.nonPuo ? ' non-puo' : ''}">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
         ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">' + ic('telefonooff') + ' Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(tel)}
-        <div class="bottoni conf-bottoni">
+        <div class="bottoni conf-bottoni">${c.nonPuo ? `
+          <button class="appuntamento" data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
+          <button class="no" data-conferma="annulla" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Annullato</button>` : `
           <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
           <button data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
           <button class="no" data-conferma="annulla" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Annullato</button>
-          <button data-conferma="nr" data-id="${esc(c.id)}">Non risponde</button>
+          <button data-conferma="nr" data-id="${esc(c.id)}">Non risponde</button>`}
         </div>
       </div></div>`;
   }).join('');
