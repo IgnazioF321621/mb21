@@ -961,7 +961,9 @@ function scegliNumero(dopo = caricaOggi) {
 // ── CONFERME (15/09) ─────────────────────────────────────
 // Appuntamenti del partner loggato da confermare: compaiono 12 ore prima, fino all'inizio (agenda.js → confermeDaFare).
 // In Dashboard sopra la coda, non contano nei contatti al giorno. In Agenda, per oggi, il riepilogo.
-const CONF = { righe: [], nonRisponde: new Set() };
+const CONF = { righe: [], nonRisponde: new Set(), risposte: null };   // risposte (nota 066): [{ a, r }] delle risposte valide, lette con le Conferme
+let fineConferme;
+CONF.letta = new Promise(ok => { fineConferme = ok; });   // nota 066: il foglio all'apertura aspetta le Conferme già lette, senza leggerle una seconda volta
 const CAMPI_AZIONE = '*, contatti(nome, categoria, telefono), utenti!azioni_user_id_fkey(nome, nome_cognome)';
 
 async function caricaConferme() {
@@ -986,9 +988,48 @@ async function caricaConferme() {
       condivise.forEach((a, i) => { const d = rr[i] && !rr[i].error && Array.isArray(rr[i].data) ? rr[i].data[0] : null; if (d) risposte[a.id] = d; });
     } catch (e) { condivise = []; }
     CONF.righe = A.confermeConRisposte(conferme, condivise, risposte, adesso.toISOString());
+    if (!guardoAltri()) CONF.risposte = condivise.map(a => ({ a, r: A.rispostaValida(risposte[a.id], a) ? risposte[a.id] : null })).filter(x => x.r);
   } catch (e) {
     CONF.righe = [];
   }
+  fineConferme();
+}
+
+// ── All'apertura, le risposte nuove a chi ha fissato (nota Pagine 066, Ignazio 19/10/2026): un foglio con «Valentina partecipa · Avvio, domani alle 17:15»,
+// «Mario non può · … · da spostare» e, per le serate con tanti invitati (solo l'Admin le crea), una riga per serata. Niente notifiche sul telefono (costo zero):
+// gli appuntamenti usano le risposte già lette con le Conferme; per le serate una lettura sola per serata dei prossimi giorni. «Ho capito» le ricorda sul
+// telefono, così non tornano. Nella fila dei fogli all'apertura (codaApertura, nota 064), dopo i nuovi appuntamenti e prima del Training.
+const chiaveRisposteViste = () => 'mb21_risposte_appuntamenti_' + (ST.utente && ST.utente.id);
+async function annuncioRisposteAppuntamenti() {
+  if (!ST.utente || !ST.utente.id || guardoAltri() || ST.offline) return false;
+  await Promise.race([CONF.letta, new Promise(ok => setTimeout(ok, 8000))]);
+  const A = MB21Agenda, adesso = new Date().toISOString();
+  let viste = new Set();
+  try { viste = new Set(JSON.parse(localStorage.getItem(chiaveRisposteViste()) || '[]')); } catch (e) { return false; }   // senza memoria del telefono il foglio tornerebbe sempre: meglio niente
+  let serate = [];
+  if (eAdmin()) {
+    const sp = await dbq('serate condivise', supa.from('spazi').select('id, tipo, nome, inizio').eq('user_id', ST.utente.id).not('condiviso_con', 'is', null).gt('inizio', adesso).order('inizio').limit(10));
+    if (!sp.error && Array.isArray(sp.data) && sp.data.length) {
+      const rr = await Promise.all(sp.data.map(s => dbq('risposte impegno', supa.rpc('risposte_impegno', { p_origine: 'spazio', p_id: s.id }))));
+      serate = sp.data.map((s, i) => ({ s, titolo: MB21Spazi.titolo(s), risposte: rr[i] && !rr[i].error && Array.isArray(rr[i].data) ? rr[i].data : [] }));
+    }
+  }
+  const { righe, chiavi } = A.risposteNuove({ azioni: CONF.risposte || [], serate, viste, adessoIso: adesso });
+  if (!righe.length || document.querySelector('.velo')) return false;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto ric-foglio">
+    <div class="testa-foglio"><h3>${righe.length === 1 ? 'Una risposta ai tuoi appuntamenti' : `${righe.length} risposte ai tuoi appuntamenti`}</h3></div>
+    ${righe.map(x => `<div class="ric-nuovo${x.nonPuo ? ' non-puo' : ''}"><b>${esc(x.testo)}</b></div>`).join('')}
+    <button class="primario" id="ra-ok">Ho capito</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => {
+    try { localStorage.setItem(chiaveRisposteViste(), JSON.stringify([...viste, ...chiavi].slice(-300))); } catch (e) {}
+    velo.remove();
+  };
+  velo.querySelector('#ra-ok').onclick = chiudi;
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  return true;
 }
 
 function confermeHtml(solo) {

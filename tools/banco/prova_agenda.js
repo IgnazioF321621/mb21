@@ -777,4 +777,25 @@ prova('«Cosa avete fatto?» a elenco (nota Azioni 031): le voci del tipo, prima
   assert.equal(g[0].attuale, 'Altro'); assert.ok(g[0].bottoni.includes('Altro'));
 });
 
+prova('Nota Pagine 066 (Ignazio 19/10): le risposte nuove a chi ha fissato: partecipa e non può; le serate in una riga; quelle già viste non tornano', () => {
+  const adesso = '2026-10-19T10:00:00Z';
+  const a1 = { id: 'a1', modalita: 'Avvio', inizio: A.isoDaRoma('2026-10-20', '17:15') }, a2 = { id: 'a2', tipo_azione: 'Follow Up', inizio: A.isoDaRoma('2026-10-19', '18:00') };
+  const azioni = [{ a: a1, r: { utente_id: 'u1', nome: 'Valentina Pellegrini', risposta: 'ci_sono', risposto_il: 't1' } }, { a: a2, r: { utente_id: 'u2', nome: 'Mario', risposta: 'non_ci_sono', risposto_il: 't2' } }];
+  const serate = [{ s: { id: 's1', inizio: A.isoDaRoma('2026-10-21', '21:30') }, titolo: 'SdS/OPEN', risposte: [
+    { utente_id: '1', nome: 'Carolina', risposta: 'ci_sono' }, { utente_id: '2', nome: 'Luca Bianchi', risposta: 'ci_sono' }, { utente_id: '3', nome: 'Pino', risposta: 'non_ci_sono' }, { utente_id: '4', nome: 'Zeno', risposta: null }] }];
+  const r = A.risposteNuove({ azioni, serate, viste: new Set(), adessoIso: adesso });
+  assert.deepEqual(r.righe.map(x => x.testo), [
+    'Mario non può · Follow Up, oggi alle 18:00 · da spostare',
+    'Valentina partecipa · Avvio, domani alle 17:15',
+    'SdS/OPEN di mer 21/10 alle 21:30: 3 nuove risposte · partecipano Carolina e Luca, non può Pino']);
+  assert.equal(r.chiavi.length, 5);   // 2 appuntamenti + 3 risposte alla serata (chi non ha risposto non conta)
+  // viste: non tornano; una risposta nuova alla serata sì, da sola
+  const viste = new Set(r.chiavi);
+  assert.equal(A.risposteNuove({ azioni, serate, viste, adessoIso: adesso }).righe.length, 0);
+  serate[0].risposte[3].risposta = 'ci_sono';
+  assert.deepEqual(A.risposteNuove({ azioni, serate, viste, adessoIso: adesso }).righe.map(x => x.testo), ['SdS/OPEN di mer 21/10 alle 21:30: 1 nuova risposta · partecipa Zeno']);
+  // cambia idea: è una risposta nuova
+  azioni[0].r = { ...azioni[0].r, risposta: 'non_ci_sono', risposto_il: 't3' };
+  assert.match(A.risposteNuove({ azioni, serate: [], viste, adessoIso: adesso }).righe[0].testo, /^Valentina non può · Avvio, domani alle 17:15 · da spostare$/);
+});
 console.log(`\n${ok} prove superate`);
