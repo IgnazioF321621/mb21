@@ -734,4 +734,26 @@ prova('Nota Pagine 051: la carta «Consegna» si riconosce (Contatto · Presenza
   assert.equal(A.eConsegna({ tipo_azione: 'Contatto', modalita: 'Telefonata', note: 'Riordino · Filtro' }), false);
   assert.equal(A.eConsegna(null), false);
 });
+prova('Nota Pagine 061: «Partecipa» toglie dalle Conferme, «Non può» le mette subito come da spostare (qualunque giorno); conta la risposta dopo l\'ultimo «Sposta»', () => {
+  const adesso = '2026-10-19T10:00:00Z';
+  const az = (id, giorno, ora, extra) => ({ id, tipo_azione: 'Appuntamento', modalita: 'Avvio', inizio: A.isoDaRoma(giorno, ora), completata: false, contatti: { nome: 'Valentina' }, ...extra });
+  const conferme = A.confermeDaFare([az('a1', '2026-10-19', '17:15'), az('a2', '2026-10-19', '18:00')], adesso);
+  assert.equal(conferme.length, 2);
+  const condivise = [az('a1', '2026-10-19', '17:15', { condiviso_con: 'u-val' }), az('a2', '2026-10-19', '18:00', { condiviso_con: 'u-isa' }), az('a3', '2026-10-25', '21:00', { condiviso_con: 'u-val' })];
+  const risposte = { a1: { risposta: 'ci_sono', risposto_il: '2026-10-19T09:00:00Z' }, a3: { risposta: 'non_ci_sono', risposto_il: '2026-10-19T09:30:00Z' } };
+  let r = A.confermeConRisposte(conferme, condivise, risposte, adesso);
+  assert.deepEqual(r.map(x => x.id + (x.nonPuo ? ':non' : '')), ['a2', 'a3:non']);   // a1 confermato dal Partner; a3 tra sei giorni, subito
+  assert.match(A.testoConferma(r[1], adesso), /^Non può · da spostare · Avvio · 25\/10\/2026 ore 21:00$/);
+  assert.match(A.testoConferma(r[0], adesso), /^Da confermare · /);
+  // spostato dopo la risposta: la vecchia risposta non conta più, si aspetta la nuova
+  const spostate = condivise.map(a => a.id === 'a3' ? { ...a, spostato_il: '2026-10-19T09:45:00Z' } : a);
+  r = A.confermeConRisposte(conferme, spostate, risposte, adesso);
+  assert.deepEqual(r.map(x => x.id), ['a2']);
+  r = A.confermeConRisposte(conferme, spostate, { ...risposte, a3: { risposta: 'non_ci_sono', risposto_il: '2026-10-19T09:50:00Z' } }, adesso);
+  assert.deepEqual(r.map(x => x.id + (x.nonPuo ? ':non' : '')), ['a2', 'a3:non']);
+  // cambia idea: da «Non può» a «Partecipa» la riga sparisce
+  assert.deepEqual(A.confermeConRisposte(conferme, condivise, { a3: { risposta: 'ci_sono', risposto_il: '2026-10-19T09:40:00Z' } }, adesso).map(x => x.id), ['a1', 'a2']);
+  // senza risposte le Conferme restano come prima
+  assert.deepEqual(A.confermeConRisposte(conferme, [], {}, adesso).map(x => x.id), ['a1', 'a2']);
+});
 console.log(`\n${ok} prove superate`);

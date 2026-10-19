@@ -449,7 +449,22 @@
     const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
     const giorno = quando.giorno === oggi ? 'oggi' : quando.giorno === spostaGiorno(oggi, 1) ? 'domani' : quando.giorno.split('-').reverse().join('/');
     const cosa = a.tipo_azione === 'Contatto' ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione);
-    return `Da confermare · ${cosa} · ${giorno} ore ${quando.ora}`;
+    return `${a.nonPuo ? 'Non può · da spostare' : 'Da confermare'} · ${cosa} · ${giorno} ore ${quando.ora}`;
+  }
+  // ── Nota Pagine 061 (Ignazio 19/10/2026): la risposta del Partner a un appuntamento condiviso entra nelle Conferme di chi lo ha fissato ──
+  // «Partecipa» = già confermato dalla persona: esce dalle Conferme. «Non può» = subito, qualunque giorno, una riga «Non può · da spostare».
+  // Conta la risposta di adesso (se cambia idea, cambia la riga) e solo se data dopo l'ultimo «Sposta» (`spostato_il`): spostato, si aspetta la nuova.
+  // risposta: { risposta, risposto_il } (da `risposte_impegno`) o null.
+  const rispostaValida = (r, a) => (!r || !r.risposta || (a.spostato_il && !(r.risposto_il && r.risposto_il > a.spostato_il)) ? null : r.risposta);
+  // conferme: le righe di confermeDaFare; condivise: gli appuntamenti futuri non completati condivisi con una persona; risposte: { [id azione]: risposta }
+  function confermeConRisposte(conferme, condivise, risposte, adessoIso) {
+    const adesso = Date.parse(adessoIso), fuori = new Set(), nonPuo = [];
+    for (const a of condivise || []) {
+      const r = rispostaValida((risposte || {})[a.id], a);
+      if (r === 'ci_sono') fuori.add(a.id);
+      if (r === 'non_ci_sono' && !a.completata && Date.parse(a.inizio) > adesso) { fuori.add(a.id); nonPuo.push({ ...a, quando: a.inizio, nonPuo: true }); }
+    }
+    return [...(conferme || []).filter(c => !fuori.has(c.id)), ...nonPuo].sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
   }
 
   // Appuntamenti passati senza esito: non completati, tipo ≠ Contatto, iniziati prima di adesso
@@ -831,7 +846,7 @@
 
   const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
-    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,

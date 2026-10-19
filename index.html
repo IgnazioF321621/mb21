@@ -1811,6 +1811,7 @@
   .pf-avvio .avv-testa small { font-size: 13px; margin-top: 2px; }
   .avv-perche, .interruttore small.avv-perche { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--testo-soft); }
   .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: var(--ok); margin-top: 2px; }
+  .card.conferma .conf-testo.non-puo { color: var(--pericolo); }   /* nota Pagine 061: il Partner ha risposto «Non può» */
   .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
   .card.riordino .rc-glide { color: var(--proposta); }
   .riga-coda .conf-nr { display: block; }
@@ -3324,6 +3325,8 @@ function spostaAppuntamento(e, dopo) {
     }
     const nuovo = { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata * 60000).toISOString() : null, confermato_il: null };
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
+    // nota 061: spostato un appuntamento condiviso, la vecchia risposta del Partner non conta più (si aspetta quella alla data nuova)
+    if (e.condiviso_con) { nuovo.spostato_il = new Date().toISOString(); prima.spostato_il = e.spostato_il || null; }
     const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
     await allineaRigaCoda(e, e.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
