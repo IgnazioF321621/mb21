@@ -100,4 +100,15 @@ prova('Nota 057 (Ignazio 14/10, «sì, tutti a 16 px»): nessun campo sotto i 16
   const js = fs.readdirSync(path.join(__dirname, '../..')).filter(f => /\.js$/.test(f)).map(f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8')).join('\n') + idx;
   assert.doesNotMatch(js, /<(input|textarea|select)[^>]*font-size: ?(1[0-5]|[0-9])px/);
 });
+prova('Admin 005: aperte prima, poi le risolte, dalla più recente; il conto delle aperte', () => {
+  const r = [{ id: 1, creata_il: '2026-10-01T10:00:00Z', risolta_il: '2026-10-02T00:00:00Z' }, { id: 2, creata_il: '2026-10-03T10:00:00Z' }, { id: 3, creata_il: '2026-10-05T10:00:00Z' }, { id: 4, creata_il: '2026-10-09T10:00:00Z', risolta_il: 'x' }];
+  assert.deepEqual(S.ordinaSegnalazioni(r).map(x => x.id), [3, 2, 4, 1]);
+  assert.equal(S.quanteAperte(r), 2); assert.equal(S.quanteAperte(null), 0);
+});
+prova('Admin 005: il link WhatsApp col testo già scritto; senza numero col + niente link', () => {
+  assert.equal(S.linkWhatsApp('+39 338 123 4567', 'Ciao! Sì, c’è'), 'https://wa.me/393381234567?text=' + encodeURIComponent('Ciao! Sì, c’è'));
+  assert.equal(S.linkWhatsApp('3381234567', 'x'), 'https://wa.me/393381234567?text=x');
+  assert.equal(S.linkWhatsApp('', 'x'), null); assert.equal(S.linkWhatsApp(null, 'x'), null); assert.equal(S.linkWhatsApp('12', 'x'), null);
+  assert.match(S.FRASE_GIA_C_E, /^Questa funzione già c’è: $/);
+});
 console.log(`\n${ok} prove superate`);

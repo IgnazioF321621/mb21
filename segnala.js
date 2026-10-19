@@ -89,7 +89,21 @@
     if (immagine) return { immagine };
     return tutti.length ? { altroFile: true } : {};
   }
-  const api = { immagineDaAppunti, CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
+
+  // Nota Admin 005 (Ignazio 19/10/2026): l'Admin legge le segnalazioni e risponde. Le aperte prima, dalla più recente; poi le risolte.
+  const FRASE_GIA_C_E = 'Questa funzione già c’è: ';   // frase di partenza, da modificare
+  const eAperta = s => !s.risolta_il;
+  const ordinaSegnalazioni = righe => (Array.isArray(righe) ? righe : []).slice().sort((a, b) => Number(eAperta(b)) - Number(eAperta(a)) || String(b.creata_il).localeCompare(String(a.creata_il)));
+  const quanteAperte = righe => (Array.isArray(righe) ? righe : []).filter(eAperta).length;
+  // Il link che apre WhatsApp con il testo già scritto (niente invio automatico); null se manca un numero con il +
+  function linkWhatsApp(telefono, testo) {
+    const n = String(telefono || '').replace(/[^0-9+]/g, '');
+    const num = n.startsWith('+') ? n.slice(1) : /^3\d{8,9}$/.test(n) ? '39' + n : '';
+    return /^\d{8,15}$/.test(num) ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(String(testo || '').trim()) : null;
+  }
+  const COLONNE_ADMIN = 'id,user_id,creata_il,motivo,testo,dove,versione,telefono,letta_il,risolta_il,risposta,immagine';
+  const QUANTE_ADMIN = 100;
+  const api = { FRASE_GIA_C_E, ordinaSegnalazioni, quanteAperte, linkWhatsApp, COLONNE_ADMIN, QUANTE_ADMIN, immagineDaAppunti, CHIAVE_VISTE, risposteNuove, conViste, COLONNE_MIE, QUANTE_MIE, MEMORIA_MIE, statoSegnalazione, anteprima, MOTIVI, MAX_TESTO, MAX_LATO, QUALITA, BUCKET, NOMI_PAGINE, nomeMotivo, nomePagina, doveDa, descrizioneDove, telefonoDa, misuraRidotta, percorsoImmagine, nuovoId, riga };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Segnala = api;
 })(this);
