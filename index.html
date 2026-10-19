@@ -3465,6 +3465,9 @@ async function nuovoAppuntamento(opz = {}) {
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
     const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id));
     function disegna() {
+      // nota Pagine 059 (Ignazio 19/10/2026, «sì, già condiviso»): un appuntamento con un Partner parte già condiviso con lui (prima partiva
+      // da «Nessuno» e Valentina non vedeva l'appuntamento delle 17:15); finché non si tocca «Condividi con» segue la persona scelta
+      if (!st.condivisoAMano && !serata()) st.condividi = puoPersona() ? 'persona' : '';
       const tipi = A.tipiPer(st.categoria);
       let h = '<div class="riquadro mc-g" style="margin-top:14px">';
       if (serata()) {   // Team o Linea (solo l'Admin): il modulo crea la serata, senza persona
@@ -3634,7 +3637,7 @@ async function nuovoAppuntamento(opz = {}) {
             else { st.altra = false; st.durata = Number(v); }
           } else if (nome === 'quando') st.senzaOra = v === 'coda';
           else if (nome === 'puntiCond') st.puntiCond = v === '1';
-          else if (nome === 'condividi') { st.condividi = v; st.parte = null; if (v === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id; if (v === 'team' || v === 'linea') st.durataToccata = false; }
+          else if (nome === 'condividi') { st.condividi = v; st.condivisoAMano = true; st.parte = null; if (v === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id; if (v === 'team' || v === 'linea') st.durataToccata = false; }
           else st[nome] = v;
           if (nome === 'linea') st.parte = null;   // un'altra Linea: di nuovo tutta
           if (nome === 'categoria') st.categoriaToccata = true;
