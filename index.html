@@ -2698,7 +2698,7 @@ async function dopoAccesso(sessione) {
     controllaNovita(ultimoUso);
     if (REGISTRAZIONE.get('annuncio') === 'training') { history.replaceState(null, '', location.pathname); annuncioTraining(true); }
     // Messaggi dalla squadra (nota Admin 014): prima di tutto, mai se l'app si apre da un avviso; se se ne apre uno, l'annuncio del Training aspetta
-    else (typeof annuncioMessaggi === 'function' ? annuncioMessaggi(!apri) : Promise.resolve(false)).then(aperto => { if (!aperto && !apri) return annuncioTraining(false); }).catch(() => {});
+    else (typeof annuncioMessaggi === 'function' ? annuncioMessaggi(!apri) : Promise.resolve(false)).then(aperto => (aperto || typeof annuncioRisposte !== 'function') ? aperto : annuncioRisposte(!apri)).then(aperto => { if (!aperto && !apri) return annuncioTraining(false); }).catch(() => {});   // poi le risposte alle segnalazioni (nota Admin 016)
   };
   // Benvenuto (cantiere 32): si apre da solo una volta sola, al posto della Dashboard, a chi non l'ha ancora visto: chi entra la prima
   // volta e, una volta, chi usava già l'app. All'uscita porta in Dashboard su «Il mio avvio». Al primo ingresso le novità non si aprono

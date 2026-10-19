@@ -27,4 +27,24 @@ prova('stati: caricamento, errore, vuoto', () => {
   ctx.AD.segnalazioni = { errore: 'No' }; assert.match(ctx.html(), /No/);
   ctx.AD.segnalazioni = { elenco: [] }; assert.match(ctx.html(), /Ancora nessuna/);
 });
-console.log(`\n${ok} prove superate`);
+// ── nota Admin 016: il foglio del partner (finto DOM minimo)
+const fogli = []; let rpcChiamata = null, lette = 0;
+const bottone = { disabled: false, onclick: null }, velo = { innerHTML: '', onclick: null, remove() { velo.tolto = true; }, querySelector: () => bottone };
+Object.assign(ctx, { limitato: () => false, eAdmin: () => false, ST: { utente: { id: 'u1' } }, mostraToast() {}, risposteLette() { lette++; },
+  dbq: async (n, q) => q,
+  document: { querySelector: () => null, createElement: () => velo, body: { appendChild: v => fogli.push(v) } },
+  supa: { from: () => { const q = { select: () => q, not: () => q, is: () => q, order: () => q, limit: () => Promise.resolve({ data: ctx.righe, error: null }) }; return q; }, rpc: (f, a) => { rpcChiamata = [f, a]; return Promise.resolve({ error: null }); } } });
+vm.runInContext('this.annuncio = annuncioRisposte;', ctx);
+(async () => {
+  ctx.righe = [{ id: 'r1', testo: 'Come cambio la data?', risposta: 'Questa funzione già c’è: tocca la data.' }, { id: 'r2', testo: null, risposta: 'Sistemato' }];
+  assert.equal(await ctx.annuncio(false), false); assert.equal(fogli.length, 0);   // app aperta da un avviso: niente foglio
+  assert.equal(await ctx.annuncio(true), true); assert.equal(fogli.length, 1);
+  assert.match(velo.innerHTML, /Hai 2 risposte alle tue segnalazioni/); assert.match(velo.innerHTML, /Avevi scritto: «Come cambio la data\?»/); assert.match(velo.innerHTML, /Questa funzione già c’è/);
+  await bottone.onclick();
+  assert.equal(JSON.stringify(rpcChiamata), JSON.stringify(['segna_risposte_lette', { p_ids: ['r1', 'r2'] }])); assert.equal(lette, 1); assert.equal(velo.tolto, true);
+  ok += 1; console.log('OK  il foglio delle risposte: due schede, «Ho capito» le segna con la funzione');
+  ctx.righe = []; assert.equal(await ctx.annuncio(true), false); ok += 1; console.log('OK  nessuna risposta da leggere: niente foglio');
+  ctx.righe = [{ id: 'r3', testo: 'x', risposta: 'y' }]; fogli.length = 0; velo.innerHTML = ''; assert.equal(await ctx.annuncio(true), true); assert.match(velo.innerHTML, /Hai una risposta alla tua segnalazione/);
+  ctx.eAdmin = () => true; assert.equal(await ctx.annuncio(true), false); ok += 1; console.log('OK  una risposta sola: titolo al singolare; l\'Admin non lo vede');
+  console.log(`\n${ok} prove superate`);
+})().catch(e => { console.error(e); process.exit(1); });
