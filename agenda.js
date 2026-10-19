@@ -501,7 +501,7 @@
       if (fattoAperto) return [g('avvenuto', 'È avvenuto?', AVVENUTO, 'Fatto'), g('risultato', domandaEsito(a.tipo_azione), due.esiti)];
       return [g('avvenuto', 'È avvenuto?', AVVENUTO)];
     }
-    if (!due) return [g('cambia', 'Esito', fasi, a.esito)];
+    if (!due) return [g('cambia', 'Esito', a.esito === ESITO_ALTRO && !fasi.includes(a.esito) ? [...fasi, a.esito] : fasi, a.esito)];   // chiuso con «Altro» (nota 031): resta acceso
     const nonAvvenuto = AVVENUTO.includes(a.esito) ? a.esito : null;   // Rimandato / No Show
     const gruppi = [g('cambia-avvenuto', 'È avvenuto?', AVVENUTO, nonAvvenuto || 'Fatto')];
     if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', domandaEsito(a.tipo_azione), due.esiti) : g('cambia', domandaEsito(a.tipo_azione), due.esiti, a.esito));
@@ -514,6 +514,27 @@
     const tutti = passiAmmessi(a, categoria);
     const scelti = tutti.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
     return scelti.length ? { titolo: domandaEsito(a.tipo_azione), scelti, altri: tutti.filter(x => !scelti.includes(x)), tutti } : null;
+  }
+  // «Com'è andato l'incontro?» a elenco (nota Azioni 031, Ignazio 19/10/2026): ogni appuntamento da chiudere mostra le cose del SUO tipo
+  // («vanno per quello per cui sono impostati») in un elenco che si apre verso il basso, da spuntare anche più d'una, e in fondo «Altro»
+  // con una frase scritta a mano (finisce nelle note dell'appuntamento). Prima: le pillole fisse, e senza un passo fatto non si chiudeva.
+  // `voci`: quelle scelte quando si è fissato («previsti») per prime, poi le altre; `ordine`: l'ordine delle fasi, che decide l'esito.
+  // null = non è un appuntamento da chiudere, o il suo tipo non ha voci: il blocco di sempre.
+  const ESITO_ALTRO = 'Altro';
+  function vociIncontro(a, categoria) {
+    if (!a || a.tipo_azione !== 'Appuntamento' || !daChiudere(a)) return null;
+    const ammessi = passiAmmessi(a, categoria);
+    const ordine = ammessi.length ? ammessi : fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    if (!ordine.length) return null;
+    const previsti = ordine.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
+    return { titolo: domandaEsito(a.tipo_azione), voci: [...previsti, ...ordine.filter(x => !previsti.includes(x))], previsti, ordine };
+  }
+  // Dalle voci spuntate all'esito: il primo nell'ordine delle fasi è l'esito, gli altri una riga ciascuno (come prima, `chiudi_azione`).
+  // Solo «Altro» (con la frase) → esito «Altro», che non spunta passi dell'Avvio e non entra nei conti di contatti e PM.
+  function esitoDaVoci(ordine, fatti, altro) {
+    const scelti = (ordine || []).filter(x => (fatti || []).includes(x));
+    if (scelti.length) return { esito: scelti[0], extra: scelti.slice(1) };
+    return altro ? { esito: ESITO_ALTRO, extra: [] } : { esito: null, extra: [] };
   }
   // Chi del Team (o di una Linea) non usa ancora MB21 (Ignazio 05/10 sera: «quando scelgo la Linea, se c'è qualcuno che non ha l'app, è il momento
   // di mandargli il link»). `squadra` = righe {partner_id, sponsor_id, nome, telefono}; `conApp` = i codici Amway degli utenti attivi dell'app;
@@ -849,7 +870,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, attesaOrdini, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

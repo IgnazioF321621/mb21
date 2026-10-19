@@ -756,4 +756,22 @@ prova('Nota Pagine 061: «Partecipa» toglie dalle Conferme, «Non può» le met
   // senza risposte le Conferme restano come prima
   assert.deepEqual(A.confermeConRisposte(conferme, [], {}, adesso).map(x => x.id), ['a1', 'a2']);
 });
+prova('«Cosa avete fatto?» a elenco (nota Azioni 031): le voci del tipo, prima le previste; l\'esito dalle spunte; solo «Altro» → esito «Altro»', () => {
+  const a = { tipo_azione: 'Appuntamento', categoria: 'Partner', modalita: 'Avvio', su_cosa: ['ListaStart'], inizio: '2026-10-19T10:00:00Z', esito: null, completata: false };
+  const v = A.vociIncontro(a, 'Partner');
+  assert.deepEqual(v.previsti, ['ListaStart']);
+  assert.equal(v.voci[0], 'ListaStart'); assert.equal(v.voci.length, 7); assert.equal(v.ordine[0], 'Motivazione');
+  assert.deepEqual(A.esitoDaVoci(v.ordine, ['RolePlay', 'Motivazione'], ''), { esito: 'Motivazione', extra: ['RolePlay'] });
+  assert.deepEqual(A.esitoDaVoci(v.ordine, [], 'ci vediamo alla serata'), { esito: 'Altro', extra: [] });
+  assert.deepEqual(A.esitoDaVoci(v.ordine, [], ''), { esito: null, extra: [] });
+  // ogni tipo con le sue voci: il Counseling le sue tre
+  assert.deepEqual(A.vociIncontro({ ...a, modalita: 'Counseling', su_cosa: null }, 'Partner').voci.slice().sort(), ['Motivazione', 'c/Downline', 'c/Upline'].sort());
+  // non un appuntamento, o già chiuso: niente elenco
+  assert.equal(A.vociIncontro({ ...a, tipo_azione: 'Piano Marketing' }, 'Partner'), null);
+  assert.equal(A.vociIncontro({ ...a, esito: 'RolePlay', completata: true }, 'Partner'), null);
+  // chiuso con «Altro»: in «Cambia esito» resta acceso
+  const g = A.passiEsito({ ...a, su_cosa: null, esito: 'Altro', completata: true }, 'Partner');
+  assert.equal(g[0].attuale, 'Altro'); assert.ok(g[0].bottoni.includes('Altro'));
+});
+
 console.log(`\n${ok} prove superate`);
