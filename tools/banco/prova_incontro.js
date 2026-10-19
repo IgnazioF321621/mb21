@@ -118,6 +118,58 @@ prova('Già chiuso (nota Azioni 032, Fiammetta Moretti · Lista/Contatti chiuso 
   assert.equal(toastTesto, 'Annullato');
 });
 
+prova('Il foglio «Modifica» (nota Azioni 032, Ignazio 19/10: «mettilo anche in modifica»): l\'elenco al posto dei tasti, spuntato com\'era; Salva cambia esito e passi; Annulla rimette tutto', async () => {
+  const { Nodo } = require('../design/mini_dom.js');
+  const az = { id: 'b1', contatto_id: 'c9', user_id: 'u1', portato_da: null, categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', esito: 'Telefonate', completata: true,
+    su_cosa: null, area: 'Attività', inizio: '2026-10-19T16:00:00Z', fine: '2026-10-19T17:00:00Z', data_scelta: null, ospite: null, note: 'Portare la lista', senza_ora: false, contatti: { nome: 'Fiammetta Moretti', categoria: 'Partner' } };
+  const altraRiga = { id: 'x1', esito: 'Lista nomi', user_id: 'u1', contatto_id: 'c9', categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', area: 'Attività', inizio: az.inizio, fine: az.fine, portato_da: null };
+  const chiamate = [], fogli = [];
+  let toastAnnulla = null, toastTesto = '';
+  const leggi = { select() { return leggi; }, eq() { return leggi; }, neq() { return leggi; }, maybeSingle() { return Promise.resolve({ data: az, error: null }); },
+    then(ok) { return Promise.resolve(ok({ data: [altraRiga], error: null })); } };
+  const scrivi = t => { const q = { update(v) { q.op = ['update', v]; return q; }, delete() { q.op = ['delete']; return q; }, insert(v) { chiamate.push(['insert', t, JSON.parse(JSON.stringify(v))]); return Promise.resolve({ error: null }); },
+    eq(c, v) { chiamate.push([...q.op, t, v]); return Promise.resolve({ error: null }); }, in(c, v) { chiamate.push([...q.op, t, JSON.parse(JSON.stringify(v))]); return Promise.resolve({ error: null }); } }; return q; };
+  const ctx = { MB21Agenda: A, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-19' }, esc, ic: () => '', console, Promise,
+    document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } },
+    supa: { from: t => ({ select: () => leggi, update: v => scrivi(t).update(v), delete: () => scrivi(t).delete(), insert: v => scrivi(t).insert(v) }),
+      rpc: (n, p) => { chiamate.push(['rpc', n, JSON.parse(JSON.stringify(p))]); return Promise.resolve({ data: n === 'chiudi_azione' ? { prima: {}, avvio: [], extra: ['n1'] } : { rientro_cambiato: false }, error: null }); } },
+    dbq: (_, p) => Promise.resolve(p), soloGuardo: () => false, fermoScaduto: () => false, classeCat: () => '', iniziali: () => 'IS', avvisoSovrapposti: () => '', legaInizioFine() {},
+    attesaDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast: (t, an) => { toastTesto = t; toastAnnulla = an; },
+    chiediConferma: async () => false, sceltaContatto: async () => null, apriContattoDa() {}, dataLunga: x => x };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti(') + pezzo('function bottoniEsiti(', 'function elencoEsitoHtml(')
+    + pezzo('// I passi dell\'incontro dal foglio «Modifica»', 'async function chiudiAppuntamento') + pezzo('async function foglioAzione(', '// Scelta di un contatto tra i propri')
+    + ';this.foglioAzione = foglioAzione', ctx);
+  let ridisegni = 0;
+  await ctx.foglioAzione('b1', { dopo: async () => { ridisegni++; } });
+  await new Promise(r => setTimeout(r, 0));
+  const v = fogli[0];
+  for (const sel of ['[data-il-apri]']) v.querySelector(sel).setAttribute = () => {};
+  assert.ok(v.innerHTML.includes('incontro-lista') && !v.querySelector('#fa-esiti').innerHTML.includes('esito-btn'));   // l'elenco, niente tasti
+  const casella = x => v.querySelectorAll('input[value]').find(i => i.value === x);
+  assert.equal(casella('Telefonate').checked, true); assert.equal(casella('Lista nomi').checked, true);
+  // tolgo «Lista nomi», aggiungo «Il perché», e «Altro» con la frase
+  casella('Lista nomi').checked = false; casella('Lista nomi').onchange();
+  casella('Motivazione').checked = true; casella('Motivazione').onchange();
+  const altro = v.querySelector('[data-il-altro]'); altro.checked = true; altro.onchange();
+  v.querySelector('#fa-note').value = 'Portare la lista';
+  await v.querySelector('#fa-si').onclick();
+  assert.equal(v.querySelector('#fa-errore').textContent, 'Manca la frase di «Altro».');   // senza frase non si salva
+  const t = v.querySelector('[data-il-testo]'); t.value = 'Ci vediamo alla serata'; t.oninput();
+  await v.querySelector('#fa-si').onclick();
+  const mod = chiamate.find(c => c[1] === 'modifica_azione')[2];
+  assert.equal(mod.p_esito, 'Motivazione'); assert.equal(mod.p_note, 'Portare la lista\nCi vediamo alla serata');
+  assert.ok(chiamate.some(c => c[0] === 'delete' && c[2][0] === 'x1'));                                       // via «Lista nomi»
+  assert.deepEqual(chiamate.find(c => c[1] === 'chiudi_azione')[2], { p_azione: 'b1', p_esito: 'Motivazione', p_passi_avvio: ['onb_sogno', 'onb_contatti'], p_extra: ['Telefonate'] });
+  assert.equal(ridisegni, 1); assert.match(toastTesto, /Azione modificata/);
+  // Annulla: prima i passi (annulla_chiusura, la riga rimessa), poi l'azione com'era
+  chiamate.length = 0;
+  await toastAnnulla();
+  const ordine = chiamate.map(c => c[0] === 'rpc' ? c[1] : c[0]);
+  assert.deepEqual(ordine, ['annulla_chiusura', 'insert', 'annulla_modifica_azione']);
+  assert.equal(chiamate[1][2][0].esito, 'Lista nomi');
+});
+
 prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in «Il mio avvio», righe in più); Annulla è una chiamata sola e toglie tutto', async () => {
   const chiamate = [], ctx = { MB21Agenda: A, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-01' }, AG: {}, console };
   const cache = [];
