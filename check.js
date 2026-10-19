@@ -427,7 +427,9 @@
     const salta = new Set(nonOra || []);
     const noto = bonus != null;
     const attive = (linee || []).filter(x => Number(x.vpp) > 0);
-    const conBonus = al => attive.filter(x => Number(x.bonus) >= al).length;
+    // nota Pagine 062 (Ignazio 19/10/2026): una linea riceve il bonus per la percentuale della squadra, anche se quel mese non ha VP personali
+    // (Simone Ferrara: 3% con 509 VP di gruppo e 0 personali non era contato). Le «prime linee» invece restano quelle con VP personali.
+    const conBonus = al => (linee || []).filter(x => Number(x.bonus) >= al).length;
     const quanti = { bonus: noto ? Number(bonus) : null, lineeBonus: noto ? conBonus(3) : null, planner, primeLinee: noto ? attive.length : null,
       iscritti, totale, cep: cep == null ? null : Number(cep), bbs, wes };
     const righe = LIVELLI.map(L => {

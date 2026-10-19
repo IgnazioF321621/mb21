@@ -522,4 +522,14 @@ prova('Executive (Ignazio 04/10): «Linee riceventi Bonus» è fatta solo con le
   assert.equal(ok.voci.filter(x => x.sotto).length, 2);
 });
 
+prova('Nota Pagine 062 (Ignazio 19/10): una linea riceve il bonus per la percentuale della squadra, anche senza VP personali; le prime linee restano quelle con VP', () => {
+  const linee = [{ partner_id: 'SG', nome: 'Simone', vpp: 0, bonus: 3 }, { partner_id: 'A', nome: 'Anna', vpp: 120, bonus: 0 }, { partner_id: 'B', nome: 'Bea', vpp: 0, bonus: 6 }];
+  const v = C.livelli({ core: false, bonus: 6, linee, cep: 0 });
+  const lc = v.righe[0].voci;
+  assert.equal(lc.find(x => x.chiave === 'lineeBonus').testo, 'Linee riceventi Bonus');
+  assert.match(lc.find(x => x.chiave === 'lineeBonus').stato, /^2 su 3$/);   // Simone al 3% e Bea al 6%, anche con 0 VPP
+  assert.match(lc.find(x => x.chiave === 'primeLinee').stato, /^1 su 5$/);   // le prime linee attive: solo Anna
+  assert.match(v.righe[1].voci.find(x => x.testo === 'di cui al 6%').stato, /^1 su 3$/);   // Bea, anche senza VPP
+});
+
 console.log(`\n${ok} prove superate`);

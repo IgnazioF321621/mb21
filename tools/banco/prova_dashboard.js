@@ -421,4 +421,11 @@ prova('Le parole del mese scorso (Ignazio 04/10): Raggiunto · Superato · Quasi
   assert.deepEqual(c.gruppi.flatMap(g => g.righe).map(r => [r.k, r.parola]), [['vpg', 'Quasi'], ['contatti', 'Superato']]);
 });
 
+prova('Nota Pagine 062: «Linee riceventi Bonus» dal file Amway conta la percentuale della squadra, anche senza VPP', () => {
+  const squadra = [{ partner_id: 'IO', sponsor_id: 'X' }, { partner_id: 'SG', sponsor_id: 'IO' }, { partner_id: 'A', sponsor_id: 'IO' }];
+  const volumi = [{ partner_id: 'IO', mese: 202610, vpp: 300, bonus: 6, dimensioni_gruppo: 10 }, { partner_id: 'SG', mese: 202610, vpp: 0, bonus: 3 }, { partner_id: 'A', mese: 202610, vpp: 50, bonus: 0 }];
+  const r = D.risultatiAmway({ squadra, volumi, pm: [], pid: 'IO', mese: 202610 });
+  assert.equal(r.linee_bonus, 1); assert.equal(r.prime_linee, 1);
+});
+
 console.log(`\n${ok} prove superate`);

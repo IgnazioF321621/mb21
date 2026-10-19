@@ -316,7 +316,7 @@
   // «Risultati di <mese>» dal file Amway (Ignazio 01/10: Nuovi Iscritti e Squadra restavano vuoti perché il Check non li aveva): per il partner `pid`, nel `mese`
   // (aaaamm), cosa dice il file Amway — `squadra` (partner_id, sponsor_id, data_ingresso) · `volumi` (partner_id, mese, vpp, bonus, dimensioni_gruppo) · `pm`
   // (la lettura `pm_del_ramo`: partner_id, user_id, mese, pm). Stesso conto della pagina Check: entrati nel mese (personali = prime linee, gruppo = tutto il
-  // ramo sotto di sé), prime linee attive (con VPP), linee riceventi Bonus (attive con almeno il 3%), totale gruppo, 15 Planner. Null senza codice Amway o senza squadra;
+  // ramo sotto di sé), prime linee attive (con VPP), linee riceventi Bonus (prime linee con almeno il 3%, anche senza VPP: nota 062), totale gruppo, 15 Planner. Null senza codice Amway o senza squadra;
   // un valore non conosciuto è null (casella vuota), mai 0 inventato.
   function risultatiAmway({ squadra, volumi, pm, pid, mese }) {
     if (!pid || !Array.isArray(squadra) || !squadra.some(p => p.partner_id === pid)) return null;
@@ -334,7 +334,7 @@
       sponsor_personali: linee.filter(entrato).length,
       sponsor_gruppo: squadra.filter(p => ramo.has(p.partner_id) && entrato(p)).length,
       prime_linee: io ? attive.length : null,
-      linee_bonus: io ? attive.filter(p => n(vol.get(p.partner_id).bonus) >= 3).length : null,
+      linee_bonus: io ? linee.filter(p => n((vol.get(p.partner_id) || {}).bonus) >= 3).length : null,   // nota Pagine 062: conta la percentuale della squadra, non i VP personali
       totale_gruppo: io && io.dimensioni_gruppo != null ? n(io.dimensioni_gruppo) : null,
       planner: Array.isArray(pm) ? new Set(pm.filter(x => x.mese === mese && ramo.has(x.partner_id) && n(x.pm) >= 15).map(x => x.user_id)).size : null,
     };
