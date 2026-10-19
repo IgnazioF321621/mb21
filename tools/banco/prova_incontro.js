@@ -16,20 +16,58 @@ function prova(nome, fn) { coda = coda.then(async () => { await fn(); ok++; cons
 const incontro = { id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Appuntamento', modalita: 'Avvio', categoria: 'Partner', area: 'Attività',
   inizio: '2026-10-01T16:00:00Z', fine: '2026-10-01T17:00:00Z', esito: null, completata: false, su_cosa: ['Motivazione', 'ListaStart'], portato_da: null };
 
-prova('Il blocco: i passi scelti da toccare, «anche altro» con gli altri, «Fatto» spento finché non si tocca; «Motivazione» si legge «Il perché»', () => {
-  const ctx = { MB21Agenda: A, esc, FATTO_APERTO: new Set() };
+prova('Il blocco a elenco (nota Azioni 031): «Cosa avete fatto?» si apre verso il basso, le voci del tipo (prima le previste), «Altro» con la frase, «Fatto» spento', () => {
+  const ctx = { MB21Agenda: A, esc, FATTO_APERTO: new Set(), ic: n => `<svg data-ic="${n}"></svg>` };
   vm.createContext(ctx);
   vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// Stato scritto accanto all\'azione') + ';this.bloccoEsiti = bloccoEsiti', ctx);
   const h = ctx.bloccoEsiti(incontro, 'Partner');
   assert.match(h, /Com'è andato l'incontro\?/);
-  assert.match(h, /data-passo-fatto="Motivazione">Il perché</);
-  assert.match(h, /data-passo-fatto="ListaStart">Lista Start</);
-  const scelti = h.split('Tocca i passi')[1].split('data-anche-altro')[0], altri = h.split('data-altri')[1];
-  assert.ok(!scelti.includes('RolePlay') && altri.includes('data-passo-fatto="RolePlay"') && altri.includes('Inaugurazione'));   // gli altri stanno dietro «anche altro»
-  assert.match(h, /data-incontro-fatto disabled/);
-  // senza «Su cosa lavorate?» il blocco è quello di sempre, con i bottoni dell'esito
-  const vecchio = ctx.bloccoEsiti({ ...incontro, su_cosa: null }, 'Partner');
-  assert.ok(vecchio.includes('data-esito="RolePlay"') && vecchio.includes('>Il perché<') && !vecchio.includes('data-incontro-fatto'));
+  assert.match(h, /data-il-apri aria-expanded="false"><span><b>Cosa avete fatto\?<\/b>/);
+  assert.match(h, /data-il-voci hidden/);                                                   // chiuso finché non si tocca
+  const voci = [...h.matchAll(/value="([^"]+)"><span>([^<]+)<\/span>(<small>previsto<\/small>)?/g)].map(m => [m[1], m[2], !!m[3]]);
+  assert.deepEqual(voci.slice(0, 2), [['Motivazione', 'Il perché', true], ['ListaStart', 'Lista Start', true]]);   // le previste per prime
+  assert.equal(voci.length, 7); assert.ok(voci.some(v => v[0] === 'Inaugurazione' && !v[2]));
+  assert.match(h, /data-il-altro><span>Altro</); assert.match(h, /data-il-testo[^>]*hidden/);
+  assert.match(h, /data-il-fatto disabled/);
+  // senza «Su cosa lavorate?» (Avvio fissato prima del cantiere 48): lo stesso elenco, senza «previsto»
+  assert.ok(!ctx.bloccoEsiti({ ...incontro, su_cosa: null }, 'Partner').includes('previsto'));
+  // già chiuso: «Cambia esito ›», come prima; un Piano Marketing: le sue pillole, come prima
+  assert.match(ctx.bloccoEsiti({ ...incontro, esito: 'RolePlay', completata: true }, 'Partner'), /Cambia esito/);
+  assert.ok(!ctx.bloccoEsiti({ ...incontro, tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', su_cosa: null }, 'Prospect').includes('incontro-lista'));
+});
+
+prova('Toccare l\'elenco (nota Azioni 031): spunte multiple → un esito e le righe in più; «Altro» senza frase non chiude; solo «Altro» con la frase → esito «Altro» e la frase', () => {
+  const { Nodo } = require('../design/mini_dom.js');
+  const chiusure = [];
+  const ctx = { MB21Agenda: A, esc, FATTO_APERTO: new Set(), ic: () => '', soloGuardo: () => false, chiudiAppuntamento: (e, esito, o) => chiusure.push([esito, o.extra, o.testo, o.nota]),
+    consegnaDaCarta: () => {}, cambiaEsito: () => {} };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// La carta «Consegna» (nota Pagine 051)') + ';this.bloccoEsiti = bloccoEsiti; this.collegaEsiti = collegaEsiti', ctx);
+  const giro = () => { const n = new Nodo(); n.innerHTML = ctx.bloccoEsiti(incontro, 'Partner'); ctx.collegaEsiti(n, incontro, { nome: 'Valentina', categoria: 'Partner' }, async () => {}); n.querySelector('[data-il-apri]').setAttribute = () => {}; return n; };   // il finto DOM non ha setAttribute
+  const spunta = (n, v) => { const i = n.querySelectorAll('input[value]').find(x => x.value === v); i.checked = true; i.onchange(); };
+  let n = giro();
+  n.querySelector('[data-il-apri]').onclick();
+  assert.equal(n.querySelector('[data-il-voci]').hidden, false);                               // si apre
+  spunta(n, 'RolePlay'); spunta(n, 'Motivazione');
+  assert.equal(n.querySelector('[data-il-fatto]').disabled, false);
+  assert.equal(n.querySelector('[data-il-conto]').textContent, 'Il perché · Role Play');   // nell'ordine dell'elenco
+  n.querySelector('[data-il-fatto]').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Motivazione', ['RolePlay'], 'Il perché · Role Play', '']);   // l'esito nell'ordine delle fasi
+  // solo «Altro»: senza frase «Fatto» resta spento; con la frase chiude con «Altro» e la frase va nelle note
+  n = giro();
+  const altro = n.querySelector('[data-il-altro]'); altro.checked = true; altro.onchange();
+  assert.equal(n.querySelector('[data-il-testo]').hidden, false);
+  assert.equal(n.querySelector('[data-il-fatto]').disabled, true);
+  const t = n.querySelector('[data-il-testo]'); t.value = 'Ci siamo sentiti, ci vediamo domani alla serata'; t.oninput();
+  assert.equal(n.querySelector('[data-il-fatto]').disabled, false);
+  n.querySelector('[data-il-fatto]').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Altro', [], 'Altro', 'Ci siamo sentiti, ci vediamo domani alla serata']);
+  // un passo e «Altro» insieme: l'esito è il passo, la frase va comunque nelle note
+  n = giro(); spunta(n, 'Telefonate');
+  const a2 = n.querySelector('[data-il-altro]'); a2.checked = true; a2.onchange();
+  const t2 = n.querySelector('[data-il-testo]'); t2.value = 'Ha chiamato due persone'; t2.oninput();
+  n.querySelector('[data-il-fatto]').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Telefonate', [], 'Telefonate · Altro', 'Ha chiamato due persone']);
 });
 
 prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in «Il mio avvio», righe in più); Annulla è una chiamata sola e toglie tutto', async () => {
@@ -65,6 +103,15 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   assert.equal(an[0][2].p_azione, 'a1'); assert.equal(an[0][2].p_rientro_cambiato, null);
   assert.deepEqual(JSON.parse(JSON.stringify(an[0][2].p_prima.extra)), ['nuova1', 'nuova2']);   // quello che ha restituito la chiusura, com'è
   assert.deepEqual(cache, [['c1', 'onb_sogno', false], ['c1', 'onb_lista_start', false]]);
+  // «Altro» con la frase (nota Azioni 031): la frase va in fondo alle note; Annulla rimette le note di prima
+  const scritte = [];
+  ctx.supa.from = t => { const q = { update(v) { q._u = v; return q; }, delete() { q._d = true; return q; }, eq(c, v) { if (q._u) scritte.push([t, q._u, v]); if (q._d) chiamate.push(['delete', t, v]); return q; }, then(res) { res({ data: null, error: null }); } }; return q; };
+  await ctx.chiudiAppuntamento({ ...e, note: 'Portare il libro' }, 'Altro', { dopo: async () => {}, testo: 'Altro', nota: 'Ci vediamo alla serata' });
+  assert.deepEqual(JSON.parse(JSON.stringify(scritte.pop())), ['azioni', { note: 'Portare il libro\nCi vediamo alla serata' }, 'a1']);
+  await toastAnnulla();
+  assert.deepEqual(JSON.parse(JSON.stringify(scritte.pop())), ['azioni', { note: 'Portare il libro' }, 'a1']);
+  // senza frase: le note non si toccano
+  await ctx.chiudiAppuntamento(e, 'Motivazione', { dopo: async () => {} }); assert.equal(scritte.length, 0);
   // un passo solo: nessuna riga in più
   chiamate.length = 0; await ctx.chiudiAppuntamento(e, 'RolePlay', { dopo: async () => {} });
   assert.deepEqual(JSON.parse(JSON.stringify(chiamate[0][2])), { p_azione: 'a1', p_esito: 'RolePlay', p_passi_avvio: ['onb_role_play'], p_extra: [] });
