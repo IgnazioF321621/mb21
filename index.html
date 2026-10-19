@@ -1824,8 +1824,8 @@
   .pf-avvio .avv-testa small { font-size: 13px; margin-top: 2px; }
   .avv-perche, .interruttore small.avv-perche { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--testo-soft); }
   .card.conferma .conf-testo { font-size: 14px; font-weight: 700; color: var(--ok); margin-top: 2px; }
-  .card.conferma .conf-testo.non-puo { color: var(--pericolo); }
-  .ric-nuovo.non-puo b { color: var(--pericolo); }   /* nota Pagine 066: «non può» nel foglio delle risposte */   /* nota Pagine 061: il Partner ha risposto «Non può» */
+  .card.conferma .conf-testo.non-puo { color: var(--pericolo); }   /* nota Pagine 061: il Partner ha risposto «Non può» */
+  .ric-nuovo.non-puo b { color: var(--pericolo); }   /* nota Pagine 066: «non può» nel foglio delle risposte */
   .card.conferma .conf-nr { font-size: 13px; color: var(--rosso); margin-top: 4px; }
   .card.riordino .rc-glide { color: var(--proposta); }
   .riga-coda .conf-nr { display: block; }
@@ -3012,6 +3012,57 @@ function bottoniEsiti(bottoni, attuale, attr, classe) {
     `<button ${attr}="${esc(f)}" class="esito-btn ${(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || ''} ${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
+// «Cosa avete fatto?» (note Azioni 031-032): l'elenco che si apre verso il basso, uguale in MB Plan, nella scheda e nel foglio «Modifica».
+// `inc` = MB21Agenda.vociIncontro; `bottone`: con «Fatto»/«Salva» suo (MB Plan e scheda) o senza (Modifica, che ha il suo «Salva»).
+function elencoEsitoHtml(a, inc, bottone) {
+  const voce = x => `<label class="il-voce"><input type="checkbox" value="${esc(x)}"><span>${esc(MB21Agenda.nomePasso(x))}</span>${inc.previsti.includes(x) ? '<small>previsto</small>' : ''}</label>`;
+  return `<div class="incontro-lista" data-incontro="${esc(a.id)}" data-ordine="${esc(inc.ordine.join('|'))}"${inc.chiuso ? ` data-chiuso data-fatti="${esc(inc.fatti.join('|'))}"` : ''}>
+      <button type="button" class="il-apri" data-il-apri aria-expanded="${inc.chiuso}"><span><b>Cosa avete fatto?</b><small data-il-conto>Tocca per scegliere, anche più di una</small></span>${ic('freccia')}</button>
+      <div class="il-voci" data-il-voci${inc.chiuso ? '' : ' hidden'}>${inc.voci.map(voce).join('')}
+        <label class="il-voce"><input type="checkbox" data-il-altro><span>Altro</span></label>
+        <textarea data-il-testo rows="2" maxlength="200" placeholder="Com'è andata, in una frase (es. ci siamo sentiti, ci vediamo alla serata)" hidden></textarea>
+      </div>
+      ${bottone ? `<button type="button" class="primario" data-il-fatto disabled>${inc.chiuso ? 'Salva' : 'Fatto'}</button>` : ''}
+    </div>`;
+}
+// Collega un elenco: spunte, «Altro» con la frase, riepilogo; da chiuso spunta com'era e legge le righe degli altri passi dello stesso incontro.
+// `a` = l'azione com'è nel database; `poi()` a ogni cambio. Restituisce chi legge lo stato: { scelta() → { esito, extra, frase } o null, cambiato(), altreRighe() }.
+function collegaElenco(box, a, poi = () => {}) {
+  const ordine = box.dataset.ordine.split('|'), voci = box.querySelector('[data-il-voci]'), apriL = box.querySelector('[data-il-apri]');
+  const altro = box.querySelector('[data-il-altro]'), testo = box.querySelector('[data-il-testo]');
+  const chiuso = box.dataset.chiuso != null, ESITO_ALTRO = MB21Agenda.ESITO_ALTRO;
+  const caselle = () => [...voci.querySelectorAll('input[value]')];
+  const spuntati = () => caselle().filter(i => i.checked).map(i => i.value);
+  const frase = () => (altro.checked ? testo.value.trim() : '');
+  const giaAltro = () => chiuso && a.esito === ESITO_ALTRO && altro.checked;   // la frase di allora è già nelle note: non si richiede
+  let prima = '', righe = [];
+  const firma = () => [...spuntati()].sort().join('|') + (altro.checked ? '|+' + frase() : '');
+  const scelta = () => {
+    if (altro.checked && !frase() && !giaAltro()) return null;   // «Altro» chiede la sua frase
+    const r = MB21Agenda.esitoDaVoci(ordine, spuntati(), frase() || giaAltro());
+    return r.esito ? { ...r, frase: frase() } : null;
+  };
+  const aggiorna = () => {
+    const nomi = [...spuntati().map(MB21Agenda.nomePasso), ...(altro.checked ? ['Altro'] : [])];
+    box.querySelector('[data-il-conto]').textContent = nomi.length ? nomi.join(' · ') : 'Tocca per scegliere, anche più di una';
+    testo.hidden = !altro.checked;
+    poi();
+  };
+  const spunta = valori => caselle().forEach(i => { if (valori.includes(i.value)) i.checked = true; });
+  if (chiuso) {
+    const fatti = (box.dataset.fatti || '').split('|').filter(Boolean);
+    spunta(fatti); if (fatti.includes(ESITO_ALTRO)) altro.checked = true;
+    prima = firma(); aggiorna();
+    // gli altri passi segnati nello stesso incontro sono righe a parte (chiudi_azione, nota 045): si leggono e si spuntano
+    supa.from('azioni').select('id, esito, user_id, contatto_id, categoria, tipo_azione, modalita, area, inizio, fine, portato_da')
+      .eq('contatto_id', a.contatto_id).eq('tipo_azione', 'Appuntamento').eq('inizio', a.inizio).eq('completata', true).neq('id', a.id)
+      .then(({ data }) => { righe = (data || []).filter(r => ordine.includes(r.esito)); spunta(righe.map(r => r.esito)); prima = firma(); aggiorna(); }, () => {});
+  }
+  apriL.onclick = () => { voci.hidden = !voci.hidden; apriL.setAttribute('aria-expanded', String(!voci.hidden)); };
+  voci.querySelectorAll('input').forEach(i => i.onchange = () => { aggiorna(); if (i === altro && altro.checked) testo.focus(); });
+  testo.oninput = aggiorna;
+  return { scelta, cambiato: () => firma() !== prima, altreRighe: () => righe, nomi: r => [r.esito, ...r.extra].map(MB21Agenda.nomePasso).concat(r.frase && r.esito !== ESITO_ALTRO ? ['Altro'] : []).join(' · ') };
+}
 function bloccoEsiti(a, categoria, aperto = false) {
   // la carta «Consegna» (nota Pagine 051): due scelte sole, quelle della vendita; fatta la consegna non c'è più niente da toccare
   if (MB21Agenda.eConsegna(a)) return a.completata ? '' : `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">La consegna</div>
@@ -3020,18 +3071,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
   // del suo tipo (prima quelle previste quando si è fissato), da spuntare anche più d'una, e in fondo «Altro» con una frase scritta a mano
   // Già chiuso e «Cambia esito ›» toccato (nota Azioni 032): lo stesso elenco, aperto, con spuntato quello che era stato segnato e «Salva»
   const inc = MB21Agenda.vociIncontro(a, categoria, aperto);
-  if (inc) {
-    const voce = x => `<label class="il-voce"><input type="checkbox" value="${esc(x)}"><span>${esc(MB21Agenda.nomePasso(x))}</span>${inc.previsti.includes(x) ? '<small>previsto</small>' : ''}</label>`;
-    return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">${esc(inc.titolo)}</div>
-      <div class="incontro-lista" data-incontro="${esc(a.id)}" data-ordine="${esc(inc.ordine.join('|'))}"${inc.chiuso ? ` data-chiuso data-fatti="${esc(inc.fatti.join('|'))}"` : ''}>
-        <button type="button" class="il-apri" data-il-apri aria-expanded="${inc.chiuso}"><span><b>Cosa avete fatto?</b><small data-il-conto>Tocca per scegliere, anche più di una</small></span>${ic('freccia')}</button>
-        <div class="il-voci" data-il-voci${inc.chiuso ? '' : ' hidden'}>${inc.voci.map(voce).join('')}
-          <label class="il-voce"><input type="checkbox" data-il-altro><span>Altro</span></label>
-          <textarea data-il-testo rows="2" maxlength="200" placeholder="Com'è andata, in una frase (es. ci siamo sentiti, ci vediamo alla serata)" hidden></textarea>
-        </div>
-        <button type="button" class="primario" data-il-fatto disabled>${inc.chiuso ? 'Salva' : 'Fatto'}</button>
-      </div></div>`;
-  }
+  if (inc) return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">${esc(inc.titolo)}</div>${elencoEsitoHtml(a, inc, true)}</div>`;
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
   const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
@@ -3056,44 +3096,16 @@ function collegaEsiti(el, a, contatto, dopo) {
     collegaEsiti(el.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`) || el, a, contatto, dopo);
   };
   el.querySelectorAll('.incontro-lista').forEach(box => {   // «Cosa avete fatto?» a elenco (nota Azioni 031); già chiuso: «Salva» (nota 032)
-    const ordine = box.dataset.ordine.split('|'), voci = box.querySelector('[data-il-voci]'), apriL = box.querySelector('[data-il-apri]');
-    const fatto = box.querySelector('[data-il-fatto]'), altro = box.querySelector('[data-il-altro]'), testo = box.querySelector('[data-il-testo]');
-    const chiuso = box.dataset.chiuso != null, ESITO_ALTRO = MB21Agenda.ESITO_ALTRO;
-    const caselle = () => [...voci.querySelectorAll('input[value]')];
-    const spuntati = () => caselle().filter(i => i.checked).map(i => i.value);
-    const frase = () => (altro.checked ? testo.value.trim() : '');
-    let prima = '', altreRighe = [];   // chiuso: com'era (per accendere «Salva» solo se cambia) e le righe degli altri passi dello stesso incontro
-    const firma = () => [...spuntati()].sort().join('|') + (altro.checked ? '|+' + frase() : '');
-    const aggiorna = () => {
-      const nomi = [...spuntati().map(MB21Agenda.nomePasso), ...(altro.checked ? ['Altro'] : [])];
-      box.querySelector('[data-il-conto]').textContent = nomi.length ? nomi.join(' · ') : 'Tocca per scegliere, anche più di una';
-      testo.hidden = !altro.checked;
-      const giaAltro = chiuso && a.esito === ESITO_ALTRO;   // la frase di allora è già nelle note: non si richiede
-      const valido = !!MB21Agenda.esitoDaVoci(ordine, spuntati(), frase() || (giaAltro && altro.checked)).esito && !(altro.checked && !frase() && !giaAltro);
-      fatto.disabled = !valido || (chiuso && firma() === prima);
-    };
-    const spunta = valori => caselle().forEach(i => { if (valori.includes(i.value)) i.checked = true; });
-    if (chiuso) {
-      const fatti = (box.dataset.fatti || '').split('|').filter(Boolean);
-      spunta(fatti); if (fatti.includes(ESITO_ALTRO)) altro.checked = true;
-      prima = firma(); aggiorna();
-      // gli altri passi segnati nello stesso incontro sono righe a parte (chiudi_azione, nota 045): si leggono e si spuntano
-      supa.from('azioni').select('id, esito, user_id, contatto_id, categoria, tipo_azione, modalita, area, inizio, fine, portato_da')
-        .eq('contatto_id', a.contatto_id).eq('tipo_azione', 'Appuntamento').eq('inizio', a.inizio).eq('completata', true).neq('id', a.id)
-        .then(({ data }) => { altreRighe = (data || []).filter(r => ordine.includes(r.esito)); spunta(altreRighe.map(r => r.esito)); prima = firma(); aggiorna(); }, () => {});
-    }
-    apriL.onclick = () => { voci.hidden = !voci.hidden; apriL.setAttribute('aria-expanded', String(!voci.hidden)); };
-    voci.querySelectorAll('input').forEach(i => i.onchange = () => { aggiorna(); if (i === altro && altro.checked) testo.focus(); });
-    testo.oninput = aggiorna;
+    const fatto = box.querySelector('[data-il-fatto]'), chiuso = box.dataset.chiuso != null;
+    const el2 = collegaElenco(box, a, () => { fatto.disabled = !el2.scelta() || (chiuso && !el2.cambiato()); });
+    fatto.disabled = !el2.scelta() || (chiuso && !el2.cambiato());
     fatto.onclick = () => {
       if (soloGuardo() || fatto.disabled) return;
       const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
-      const giaAltro = chiuso && a.esito === ESITO_ALTRO && altro.checked;
-      const { esito, extra } = MB21Agenda.esitoDaVoci(ordine, spuntati(), frase() || giaAltro);
-      if (!esito) return;
-      const nomi = [esito, ...extra].map(MB21Agenda.nomePasso).concat(frase() && esito !== ESITO_ALTRO ? ['Altro'] : []);
-      if (chiuso) return cambiaDaElenco(e, { esito, extra, altreRighe, nota: frase(), testo: nomi.join(' · '), dopo });
-      chiudiAppuntamento(e, esito, { dopo, extra, testo: nomi.join(' · '), nota: frase() });
+      const r = el2.scelta();
+      if (!r) return;
+      if (chiuso) return cambiaDaElenco(e, { esito: r.esito, extra: r.extra, altreRighe: el2.altreRighe(), nota: r.frase, testo: el2.nomi(r), dopo });
+      chiudiAppuntamento(e, r.esito, { dopo, extra: r.extra, testo: el2.nomi(r), nota: r.frase });
     };
   });
   el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
