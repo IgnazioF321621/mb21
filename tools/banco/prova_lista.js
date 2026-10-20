@@ -639,7 +639,7 @@ prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sot
 prova('Nota 053 (Ignazio 14/10): il modulo vendita in tre gruppi, che cosa · i soldi · i tempi, con i campi al loro posto', () => {
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   const pos = t => { const i = ven.indexOf(t); assert.ok(i > 0, t); return i; };
-  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>I soldi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-sconto"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"', 'id="v-incassato"',
+  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>I soldi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
     '>I tempi<', 'id="v-data"', 'data-quando="subito"', 'id="v-consegna"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
   assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
   assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>/);
