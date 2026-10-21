@@ -53,5 +53,14 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     const altro = mondo(); altro.document.querySelector = () => ({}); assert.equal(await altro.X.annuncioChiusura(true), false);   // sopra un altro foglio, mai
     const admin = mondo({ admin: true }); assert.equal(await admin.X.annuncioChiusura(true), false);
   });
+  await prova('il giorno prima (24/10, ora di Roma): il promemoria al posto del testo normale, solo a chi non ha scaricato', async () => {
+    const m = mondo(), velo = { querySelector: () => ({}), remove() {} };
+    m.MB21Coda.oggiRoma = () => '2026-10-24'; m.document.createElement = () => velo; m.localStorage = { getItem: () => null, setItem() {} };
+    assert.equal(await m.X.annuncioChiusura(true), true);
+    assert.match(velo.innerHTML, /Domani l'accesso a MB21 viene chiuso/); assert.match(velo.innerHTML, /Se non l'hai ancora fatto, puoi scaricare ora la tua Lista Nomi/); assert.match(velo.innerHTML, /Scarica la mia lista/); assert.doesNotMatch(velo.innerHTML, /Grazie per aver usato/);
+    const gia = mondo(); gia.MB21Coda.oggiRoma = () => '2026-10-24'; gia.localStorage = { getItem: () => '2026-10-25', setItem() {} }; assert.equal(await gia.X.annuncioChiusura(true), false);   // ha scaricato: niente promemoria
+    const prima = mondo(); prima.MB21Coda.oggiRoma = () => '2026-10-23'; prima.document.createElement = () => velo; prima.localStorage = { getItem: () => null, setItem() {} };
+    await prima.X.annuncioChiusura(true); assert.match(velo.innerHTML, /MB21 torna personale dal 25 ottobre/);
+  });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
