@@ -54,14 +54,18 @@ async function toccoScaricaLista(b) {
 const CHIAVE_SCARICATA = 'mb21-lista-scaricata';
 const giaScaricata = () => { try { return localStorage.getItem(CHIAVE_SCARICATA) === CHIUSURA.data; } catch (e) { return false; } };
 const ricordaScaricata = () => { try { localStorage.setItem(CHIAVE_SCARICATA, CHIUSURA.data); } catch (e) { /* senza memoria: il foglio torna, pazienza */ } };
+// Il giorno prima della chiusura (ora di Roma) il foglio cambia testo: il promemoria («Domani l'accesso a MB21 viene chiuso…»). Sempre e solo a chi non ha ancora scaricato il file.
+const giornoPrima = () => new Date(Date.parse(CHIUSURA.data + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10);
+const eVigilia = () => !!CHIUSURA.data && MB21Coda.oggiRoma() === giornoPrima();
 async function annuncioChiusura(aprire) {
   if (!aprire || !chiusuraPerMe() || giaScaricata() || document.querySelector('.velo')) return false;
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('file')} MB21 torna personale dal ${esc(giornoChiusura())}</h3></div>
-    <div class="riquadro" style="margin-bottom:12px"><p style="margin:0 0 8px">Fino ad allora puoi scaricare la tua Lista Nomi completa (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('file')} ${eVigilia() ? `Domani l'accesso a MB21 viene chiuso` : `MB21 torna personale dal ${esc(giornoChiusura())}`}</h3></div>
+    <div class="riquadro" style="margin-bottom:12px">${eVigilia() ? `<p style="margin:0 0 8px">Se non l'hai ancora fatto, puoi scaricare ora la tua Lista Nomi (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
+      <p style="margin:0">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro 30 giorni.</p>` : `<p style="margin:0 0 8px">Fino ad allora puoi scaricare la tua Lista Nomi completa (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
       <p style="margin:0 0 8px">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro 30 giorni.</p>
-      <p style="margin:0">Grazie per aver usato MB21!</p></div>
+      <p style="margin:0">Grazie per aver usato MB21!</p>`}</div>
     <button class="primario" id="cl-scarica">${ic('file')} Scarica la mia lista</button>
     <button class="link" id="cl-dopo" style="display:block;margin:10px auto 0">Più tardi</button></div>`;
   document.body.appendChild(velo);
