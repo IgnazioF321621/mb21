@@ -59,7 +59,54 @@
     return `MB21 · ${etichetta || 'Lista Nomi'} · ${d[2]}-${d[1]}-${d[0]}.xlsx`.replace(/[\\/:*?"<>|]/g, '');
   }
 
-  const api = { INTESTAZIONI, righeEsporta, fogliXlsx, zipStore, xlsxBytes, nomeFile, crc32 };
+
+  // ── Nota Admin 008 (Ignazio 21/10/2026): «Scarica la mia lista» completa ── più fogli, tutte le colonne, solo dati propri.
+  // fogli = [{ nome, colonne: [chiave…], righe: [oggetto…], intestazioni?: [testo…] }]; ogni cella è testo (null → vuoto, oggetti → JSON).
+  const testoCella = v => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v));
+  const nomeFoglio = (n, usati) => {
+    const base = (String(n || 'Foglio').replace(/[\[\]*?\/\\:]/g, ' ').trim() || 'Foglio').slice(0, 28);
+    let nome = base, k = 2;
+    while (usati.has(nome.toLowerCase())) nome = `${base} ${k++}`;
+    usati.add(nome.toLowerCase()); return nome;
+  };
+  function fogliXlsxMulti(fogli) {
+    const usati = new Set(), lista = (fogli || []).map(f => ({ ...f, nome: nomeFoglio(f.nome, usati) }));
+    const ns = lista.map((_, i) => i + 1);
+    const foglio = f => {
+      const testa = f.intestazioni || f.colonne;
+      const tutte = [testa, ...f.righe.map(r => f.colonne.map(c => r[c]))];
+      const col = i => { let n = i, s = ''; do { s = String.fromCharCode(65 + n % 26) + s; n = Math.floor(n / 26) - 1; } while (n >= 0); return s; };
+      const corpo = tutte.map((r, i) => `<row r="${i + 1}">${r.map((v, j) => cella(col(j) + (i + 1), testoCella(v))).join('')}</row>`).join('');
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${corpo}</sheetData></worksheet>`;
+    };
+    const fuori = {
+      '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + ns.map(n => `<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>',
+      '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+      'xl/workbook.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + lista.map((f, i) => `<sheet name="${xml(f.nome)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>',
+      'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + ns.map(n => `<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${n}.xml"/>`).join('') + '</Relationships>',
+    };
+    lista.forEach((f, i) => { fuori[`xl/worksheets/sheet${i + 1}.xml`] = foglio(f); });
+    return fuori;
+  }
+  const xlsxBytesMulti = fogli => zipStore(fogliXlsxMulti(fogli));
+  // Le tre parti della lista di un partner (schede, azioni, note), con il nome della persona accanto a ogni azione e nota
+  // e senza le chiavi interne (user_id, id di collegamento): solo ciò che serve a chi legge il file.
+  const NASCOSTE = new Set(['user_id', 'glide_id']);
+  function fogliMiaLista({ contatti, azioni, note }) {
+    const nomi = new Map((contatti || []).map(c => [c.id, c.nome]));
+    const colonneDi = (righe, prime = []) => [...new Set([...prime, ...(righe || []).flatMap(r => Object.keys(r))])].filter(c => !NASCOSTE.has(c));
+    const conNome = righe => (righe || []).map(r => ({ persona: nomi.get(r.contatto_id) || '', ...r }));
+    const a = conNome(azioni), n = conNome(note);
+    return [
+      { nome: 'Schede', righe: contatti || [], colonne: colonneDi(contatti, ['nome']).filter(c => c !== 'id') },
+      { nome: 'Azioni', righe: a, colonne: colonneDi(a, ['persona']).filter(c => !['id', 'contatto_id', 'chiave'].includes(c)) },
+      { nome: 'Note', righe: n, colonne: colonneDi(n, ['persona']).filter(c => !['id', 'contatto_id'].includes(c)) },
+    ];
+  }
+  // «MB21 · La mia lista · 21-10-2026.xlsx»
+  const nomeFileMiaLista = oggi => nomeFile('La mia lista', oggi);
+
+  const api = { fogliXlsxMulti, xlsxBytesMulti, fogliMiaLista, nomeFileMiaLista, INTESTAZIONI, righeEsporta, fogliXlsx, zipStore, xlsxBytes, nomeFile, crc32 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Esporta = api;
 })(this);

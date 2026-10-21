@@ -43,4 +43,26 @@ prova('nome del file: etichetta e data italiana, senza caratteri vietati', () =>
   assert.equal(E.nomeFile('Lista: G/1', '2026-09-27'), 'MB21 · Lista G1 · 27-09-2026.xlsx');
 });
 
+prova('Admin 008: la mia lista a più fogli, tutte le colonne, il nome accanto a azioni e note, senza chiavi interne', () => {
+  const f = E.fogliMiaLista({
+    contatti: [{ id: 'c1', user_id: 'u', nome: 'Zeno Rossi', telefono: '+393381234567', categoria: 'Prospect', note: 'Ama il <mare>', glide_id: 'g', citta: null }],
+    azioni: [{ id: 'a1', user_id: 'u', contatto_id: 'c1', tipo_azione: 'Contatto', esito: 'No Risposta', chiave: 'x', inizio: '2026-10-01T10:00:00Z' }, { id: 'a2', user_id: 'u', contatto_id: 'zz', tipo_azione: 'Contatto' }],
+    note: [{ id: 'n1', user_id: 'u', contatto_id: 'c1', testo: 'Chiamare giovedì', scritta_il: '2026-10-02T00:00:00Z' }] });
+  assert.deepEqual(f.map(x => x.nome), ['Schede', 'Azioni', 'Note']);
+  assert.deepEqual(f[0].colonne.slice(0, 2), ['nome', 'telefono']); assert.ok(f[0].colonne.includes('citta') && f[0].colonne.includes('note'));
+  for (const x of f) assert.ok(!x.colonne.includes('user_id') && !x.colonne.includes('glide_id') && !x.colonne.includes('id'));
+  assert.equal(f[1].colonne[0], 'persona'); assert.equal(f[1].righe[0].persona, 'Zeno Rossi'); assert.equal(f[1].righe[1].persona, '');
+  const x = E.fogliXlsxMulti(f);
+  assert.ok(x['xl/workbook.xml'].includes('name="Schede"') && x['xl/workbook.xml'].includes('name="Azioni"') && x['xl/workbook.xml'].includes('name="Note"'));
+  assert.ok(x['xl/worksheets/sheet1.xml'].includes('Ama il &lt;mare&gt;'));
+  assert.ok(x['xl/worksheets/sheet3.xml'].includes('Chiamare giovedì'));
+  assert.ok(x['[Content_Types].xml'].includes('sheet3.xml'));
+  const b = Buffer.from(E.xlsxBytesMulti(f)); assert.equal((b.toString('latin1').match(/PK\x01\x02/g) || []).length, 4 + 3);
+  assert.equal(E.nomeFileMiaLista('2026-10-21'), 'MB21 · La mia lista · 21-10-2026.xlsx');
+});
+prova('Admin 008: foglio vuoto (nessuna nota) con le sole intestazioni, nomi foglio senza doppioni né caratteri vietati', () => {
+  const x = E.fogliXlsxMulti([{ nome: 'A/B', colonne: ['x'], righe: [] }, { nome: 'a b', colonne: ['x'], righe: [{ x: 1 }] }]);
+  assert.ok(x['xl/workbook.xml'].includes('name="A B"') && x['xl/workbook.xml'].includes('name="a b 2"'));
+  assert.ok(x['xl/worksheets/sheet2.xml'].includes('<t>1</t>'));
+});
 console.log(`\n${ok} prove superate`);

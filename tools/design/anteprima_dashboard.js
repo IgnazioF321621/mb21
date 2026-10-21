@@ -64,7 +64,7 @@ const stub = {
   mostraToast: (t, annulla) => { toast.push(t); toast.annulla = annulla || null; }, mostraTab: () => {}, chiediConferma: async () => true, aggiornaRiga: async () => {},
   sceltaDa: async () => null,   // «Non ora» (nota 018): le prove lo sostituiscono (chiediData è della pagina stessa)
   partnerSelect: () => '', collegaPartnerSelect() {}, versione: () => '', cerchiettoProfilo: () => '<span class="cerchietto">IS</span>',
-  rigaTelefonoHtml: () => '', mostraRigaTelefono() {}, mostraRiquadroObiettivi() {}, riquadriBiglietto: () => '', bannerMessaggi: () => '', foglioMessaggi() {}, collegaDomandaBiglietto() {},
+  rigaTelefonoHtml: () => '', mostraRigaTelefono() {}, mostraRiquadroObiettivi() {}, riquadriBiglietto: () => '', bannerMessaggi: () => '', bannerScaricaLista: () => '', toccoScaricaLista() {}, foglioMessaggi() {}, collegaDomandaBiglietto() {},
   tracceHtml: () => '', mioPercorsoHtml: () => '', collegaTracce() {}, collegaMioPercorso() {},
   contattaHtml: tel => `<div class="contatta"><a>Chiama</a><a>SMS</a><a>WhatsApp</a><a>Telegram</a></div>`,
   ricordoHtml: () => '', preparaChiamataHtml: () => '', nuovoBadge: () => '', guardoAltriDi: () => false,
