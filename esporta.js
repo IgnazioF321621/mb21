@@ -91,22 +91,36 @@
   const xlsxBytesMulti = fogli => zipStore(fogliXlsxMulti(fogli));
   // Le tre parti della lista di un partner (schede, azioni, note), con il nome della persona accanto a ogni azione e nota
   // e senza le chiavi interne (user_id, id di collegamento): solo ciò che serve a chi legge il file.
-  const NASCOSTE = new Set(['user_id', 'glide_id']);
+  // Nascoste: gli id interni dell'app e i campi di servizio, che a chi legge il file non dicono nulla
+  const NASCOSTE = new Set(['user_id', 'glide_id', 'portato_da', 'condiviso_con', 'compagno_id', 'utente_id', 'archiviato_prima', 'eliminato_prima', 'categoria_prec', 'senza_esito_avvisato_il', 'da_coda', 'scelta_a_mano']);
+  // Le intestazioni in italiano normale (Ignazio 21/10/2026); una colonna nuova senza nome qui prende il suo nome con gli spazi e la maiuscola
+  const ETICHETTE = {
+    persona: 'Persona', nome: 'Nome e cognome', professione: 'Professione', fascia_eta: 'Fascia di età', citta: 'Città', telefono: 'Telefono', categoria: 'Categoria', area: 'Area', brand: 'Brand',
+    referral_di: 'Referral di', note: 'Note', rientro_il: 'Torna in coda il', creato_il: 'Creato il', aggiornato_il: 'Aggiornato il', in_coda_dal: 'In coda dal', catalogato_il: 'Catalogato il',
+    compagno_nome: 'Compagno/a (nome)', compagno_telefono: 'Compagno/a (telefono)', codice_amway: 'Codice Amway', compleanno: 'Compleanno', sesso: 'Sesso', lavoro: 'Lavoro',
+    avvio_concluso_il: 'Avvio concluso il', avvio_in_pausa_dal: 'Avvio in pausa dal', eliminato_il: 'Eliminato il',
+    onb_amway: 'Avvio: Amway', onb_ordine: 'Avvio: ordine', onb_n21: 'Avvio: N21', onb_sogno: 'Avvio: sogno', onb_starter_pack: 'Avvio: Starter Pack', onb_lista_start: 'Avvio: lista di partenza', onb_role_play: 'Avvio: role play',
+    onb_contatti: 'Avvio: contatti', onb_pack_ds: 'Avvio: Pack DS', onb_bbs: 'Avvio: BBS', onb_wes: 'Avvio: WES', onb_cep: 'Avvio: CEP', onb_primo_pm: 'Avvio: primo PM', onb_primo_abo: 'Avvio: primo ABO',
+    tipo_azione: 'Tipo di azione', modalita: 'Modalità', esito: 'Esito', inizio: 'Inizio', fine: 'Fine', completata: 'Completata', ospite: 'Ospite', coach_script: 'Script del coach', data_scelta: 'Data scelta',
+    confermato_il: 'Confermato il', promemoria_il: 'Promemoria il', riflessione: 'Riflessione', su_cosa: 'Su cosa', senza_ora: 'Senza ora', punti: 'Punti', link: 'Link', punti_condivisi: 'Punti condivisi',
+    luogo: 'Luogo', attesa_dal: 'In attesa dal', attesa_chiedi_il: 'Da richiedere il', attesa_chiusa_il: 'Attesa chiusa il', esito_il: 'Esito dato il', spostato_il: 'Spostato il', testo: 'Testo', scritta_il: 'Scritta il' };
+  const etichetta = c => ETICHETTE[c] || (c.charAt(0).toUpperCase() + c.slice(1).replace(/_/g, ' '));
   function fogliMiaLista({ contatti, azioni, note }) {
     const nomi = new Map((contatti || []).map(c => [c.id, c.nome]));
     const colonneDi = (righe, prime = []) => [...new Set([...prime, ...(righe || []).flatMap(r => Object.keys(r))])].filter(c => !NASCOSTE.has(c));
     const conNome = righe => (righe || []).map(r => ({ persona: nomi.get(r.contatto_id) || '', ...r }));
     const a = conNome(azioni), n = conNome(note);
+    const foglio = (nome, righe, colonne) => ({ nome, righe, colonne, intestazioni: colonne.map(etichetta) });
     return [
-      { nome: 'Schede', righe: contatti || [], colonne: colonneDi(contatti, ['nome']).filter(c => c !== 'id') },
-      { nome: 'Azioni', righe: a, colonne: colonneDi(a, ['persona']).filter(c => !['id', 'contatto_id', 'chiave'].includes(c)) },
-      { nome: 'Note', righe: n, colonne: colonneDi(n, ['persona']).filter(c => !['id', 'contatto_id'].includes(c)) },
+      foglio('Schede', contatti || [], colonneDi(contatti, ['nome']).filter(c => c !== 'id')),
+      foglio('Azioni', a, colonneDi(a, ['persona']).filter(c => !['id', 'contatto_id', 'chiave'].includes(c))),
+      foglio('Note', n, colonneDi(n, ['persona']).filter(c => !['id', 'contatto_id'].includes(c))),
     ];
   }
   // «MB21 · La mia lista · 21-10-2026.xlsx»
   const nomeFileMiaLista = oggi => nomeFile('La mia lista', oggi);
 
-  const api = { fogliXlsxMulti, xlsxBytesMulti, fogliMiaLista, nomeFileMiaLista, INTESTAZIONI, righeEsporta, fogliXlsx, zipStore, xlsxBytes, nomeFile, crc32 };
+  const api = { ETICHETTE, fogliXlsxMulti, xlsxBytesMulti, fogliMiaLista, nomeFileMiaLista, INTESTAZIONI, righeEsporta, fogliXlsx, zipStore, xlsxBytes, nomeFile, crc32 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Esporta = api;
 })(this);
