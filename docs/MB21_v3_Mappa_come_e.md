@@ -116,7 +116,7 @@ e quattro bottoni: **telefona · messaggia · email · copia**. Tre schede:
    - *Informazioni qualifica*: **Livello di qualifica PY26** (15%) · Tracciamento PY27 · **Massimo livello di qualifica** (un livello e il mese in cui è stato raggiunto)
    - *Date importanti*: **Compleanno** (giorno e mese) · Rinnovo/scadenza (es. 31 dicembre) · **Data di ingresso** · **Data ultima sponsorizzazione** · **Data ultimo ordine**
    - *Informazioni aggiuntive*: Blocco ordini · Blocco sponsorizzazione · Contratto firmato
-   - *Collaboratore* e **Sponsor** (con i loro contatti): PARISI, Danilo `9010380` (Sponsor) · Persona E `9502631` (Platino)
+   - *Collaboratore* e **Sponsor** (con i loro contatti): ROSSI, Mario `9010380` (Sponsor) · BIANCHI, Paolo `9502631` (il primo Platino sopra)
 3. **Note** — Amway ha già le note sulla persona: «Nessuna nota creata. **Aggiungi nuova**».
 
 ### 8.3 Cosa ci serve per la v4
