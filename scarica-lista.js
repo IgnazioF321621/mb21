@@ -27,10 +27,10 @@ async function scaricaMiaLista() {
 }
 
 // ── Il tasto in Dashboard ── (Ignazio 21/10/2026: «direttamente nella pagina Dashboard, togliendo le altre opzioni»; nessun'altra posizione)
-// UN SOLO PUNTO da cambiare: `CHIUSURA.data` (AAAA-MM-GG, il giorno di chiusura). Finché è vuota (`null`) il tasto non compare a nessuno:
+// UN SOLO PUNTO da cambiare: `CHIUSURA.data` (AAAA-MM-GG, il giorno di chiusura) e `CHIUSURA.ora` (HH:MM, ora di Roma; vuota = solo il giorno). Data data da Ignazio il 21/10/2026: 25/10/2026 alle 18:00. Se `data` è vuota (`null`) il tasto non compare a nessuno:
 // la data la dà Ignazio, dopo il suo messaggio su WhatsApp. `esenti`: le persone per cui non cambia nulla (oltre all'Admin): la persona di fiducia.
-const CHIUSURA = { data: null, esenti: ['831417a9-6649-44e8-8eb2-e5d79d0595e5'] };
-const giornoChiusura = () => new Date(CHIUSURA.data + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' });
+const CHIUSURA = { data: '2026-10-25', ora: '18:00', esenti: ['831417a9-6649-44e8-8eb2-e5d79d0595e5'] };
+const giornoChiusura = () => new Date(CHIUSURA.data + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' }) + (CHIUSURA.ora ? ` alle ${CHIUSURA.ora}` : '');
 function bannerScaricaLista() {
   if (!CHIUSURA.data || eAdmin() || limitato() || guardoAltri() || !ST.utente || CHIUSURA.esenti.includes(ST.utente.id)) return '';
   return `<button class="banner-grande messaggi" id="ds-scarica-lista"><span class="ico">${ic('file')}</span>
