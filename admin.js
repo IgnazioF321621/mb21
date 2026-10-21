@@ -282,6 +282,8 @@ function disegnaAdmin() {
     }
   } else if (AD.sezione === 'messaggi') {
     html = indietro + (typeof messaggiAdminHtml === 'function' ? messaggiAdminHtml() : '<div class="avviso">Messaggi non disponibili: riapri l\'app.</div>');   // pagina-messaggi.js (nota Admin 014)
+  } else if (AD.sezione === 'chiusura') {
+    html = indietro + (typeof chiusuraAdminHtml === 'function' ? chiusuraAdminHtml() : '<div class="avviso">Non disponibile: riapri l\'app.</div>');   // scarica-lista.js (nota Admin 009)
   } else if (AD.sezione === 'segnalazioni') {
     html = indietro + (typeof segnalazioniAdminHtml === 'function' ? segnalazioniAdminHtml() : '<div class="avviso">Segnalazioni non disponibili: riapri l\'app.</div>');   // pagina-segnalazioni.js (nota Admin 005)
   } else if (AD.sezione === 'training') {
@@ -345,6 +347,7 @@ function disegnaAdmin() {
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}${conAbbonamento() ? ` · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>` : ''}`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto')}
+      ${typeof chiusuraAdminHtml === 'function' ? voce('ad-vai-chiusura', ic('whatsapp') + ' Avvisa della chiusura', `manda il messaggio a ogni partner · mandati ${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
       ${voce('ad-vai-segnalazioni', ic('segnala') + ' Segnalazioni', AD.segnAperte ? `<b class="ad-scad">${AD.segnAperte} aperte</b> · feedback dei partner, rispondi anche su WhatsApp` : 'feedback dei partner, rispondi anche su WhatsApp')}
       ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
       ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
@@ -487,6 +490,8 @@ function collegaAdmin() {
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
   su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaMessaggiAdmin === 'function') caricaMessaggiAdmin(); });
   if (AD.sezione === 'messaggi' && typeof collegaMessaggiAdmin === 'function') collegaMessaggiAdmin();
+  su('ad-vai-chiusura', () => { AD.sezione = 'chiusura'; AD.chiusuraPronta = false; disegnaAdmin(); window.scrollTo(0, 0); caricaChiusuraAdmin(); });
+  if (AD.sezione === 'chiusura' && typeof collegaChiusuraAdmin === 'function') collegaChiusuraAdmin();
   su('ad-vai-segnalazioni', () => { AD.sezione = 'segnalazioni'; AD.segnalazioni = null; AD.segnalazioneAperta = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaSegnalazioniAdmin === 'function') caricaSegnalazioniAdmin(); });
   if (AD.sezione === 'segnalazioni' && typeof collegaSegnalazioniAdmin === 'function') collegaSegnalazioniAdmin();
   su('ad-vai-training', () => { AD.sezione = 'training'; AD.training = null; disegnaAdmin(); window.scrollTo(0, 0); caricaTrainingAdmin(); });

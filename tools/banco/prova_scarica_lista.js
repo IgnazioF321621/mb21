@@ -14,7 +14,7 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
   ctx.document.body.appendChild = () => {};
   ctx.supa = { from: t => { const q = { filtro: null, select: () => q, eq: (c, v) => (richieste.push([t, c, v]), q), order: () => q, range: () => Promise.resolve({ data: dati[t] || [], error: null }) }; return q; } };
   ctx.app = { innerHTML: '' }; ctx.document.getElementById = () => ({}); vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura, chiusuraAvvenuta, mostraChiusura };', ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura, chiusuraAvvenuta, mostraChiusura, messaggioChiusura, chiusuraAdminHtml, mandati, salvaMandati, daAvvisare };', ctx);
   return ctx;
 }
 (async () => {
@@ -74,6 +74,18 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     }
     m.X.mostraChiusura();
     assert.match(m.app.innerHTML, /L'accesso a MB21 è chiuso dal 25 ottobre alle 18:00/); assert.match(m.app.innerHTML, /cancellati entro il 30 novembre/); assert.match(m.app.innerHTML, /scrivi a Ignazio/); assert.doesNotMatch(m.app.innerHTML, /password|input/);
+  });
+  await prova('Admin 009: messaggio con nome e date da CHIUSURA; elenco senza esenti; conto mandati; «manca il numero»', async () => {
+    const m = mondo(); const mem = {}; m.localStorage = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
+    m.MB21Segnala = require('../../segnala.js'); m.nomeDi = u => u.nome; m.telefonoInvito = u => (u.telefono || '').startsWith('+') ? u.telefono : null; m.AD = { chiusuraPronta: true, sezione: 'chiusura',
+      utenti: [{ id: 'a', nome: 'Carolina Rossi', telefono: '+393381234567' }, { id: 'b', nome: 'Luca Verdi', telefono: '' }, { id: ESENTE, nome: 'Isabella' }] };
+    const t = m.X.messaggioChiusura('Carolina');
+    assert.match(t, /^Ciao Carolina, ti scrivo per una novità su MB21\./); assert.match(t, /Dal 25 ottobre alle 18:00 MB21 tornerà/); assert.match(t, /entro il 24 ottobre/); assert.match(t, /cancellati entro il 30 novembre/); assert.match(t, /tasto «Scarica la mia lista»/); assert.match(t, /Ignazio$/);
+    let h = m.X.chiusuraAdminHtml();
+    assert.match(h, /Mandati 0 su 2/); assert.doesNotMatch(h, /Isabella/); assert.match(h, /Manca il numero/);
+    const href = /href="([^"]+)"/.exec(h)[1].replace(/&amp;/g, '&'); assert.match(href, /^https:\/\/wa\.me\/393381234567\?text=/); assert.match(decodeURIComponent(href), /Ciao Carolina,/);
+    const f = m.X.mandati(); f.add('a'); m.X.salvaMandati(f); h = m.X.chiusuraAdminHtml();
+    assert.match(h, /Mandati 1 su 2/); assert.match(h, /✅ Carolina Rossi/); assert.match(h, /Manda di nuovo/);
   });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

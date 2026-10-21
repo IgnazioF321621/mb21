@@ -92,3 +92,53 @@ function mostraChiusura() {
       <p style="margin:0 0 8px">I tuoi dati verranno cancellati entro il ${esc(giornoCancellazione())}.</p>
       <p style="margin:0">Per qualsiasi cosa scrivi a Ignazio.</p></div></div>`;
 }
+
+// ── ADMIN · «Avvisa i partner della chiusura» ── (nota Admin 009, Ignazio 21/10/2026): per ogni partner un tasto «Manda WhatsApp» che apre la chat con il
+// messaggio già scritto e il suo nome; Ignazio preme solo «Invia» (nessun invio automatico). La spunta «mandato» sta SOLO su questo telefono
+// (localStorage, nessuna scrittura nel database). Date prese da CHIUSURA. Testo definitivo: Conformità 160 (approvato da Ignazio il 21/10/2026).
+const giornoDi = iso => new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' });
+function messaggioChiusura(nome) {
+  return `Ciao ${nome}, ti scrivo per una novità su MB21.
+
+Dal ${giornoChiusura()} MB21 tornerà a essere uno strumento personale, come era nato all'inizio: l'accesso per la squadra verrà chiuso. È una scelta fatta con calma, per tenere tutto in ordine e nel modo più corretto.
+
+Prima di allora puoi scaricare la tua Lista Nomi con tutto quello che hai fatto (schede, azioni, note) in un file Excel, che si apre anche con Google Fogli: lo trovi aprendo MB21, nella Dashboard, con il tasto «Scarica la mia lista». Ti consiglio di farlo entro il ${giornoDi(giornoPrima())}.
+
+Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro il ${giornoCancellazione()}. Se hai difficoltà a scaricare il file, scrivimi e te lo preparo io.
+
+Grazie di cuore per aver usato MB21, per i consigli e le segnalazioni che l'hanno fatta crescere. Andiamo avanti insieme come sempre!
+
+Ignazio`;
+}
+const CHIAVE_MANDATI = 'mb21-chiusura-mandati';
+function mandati() { try { return new Set(JSON.parse(localStorage.getItem(CHIAVE_MANDATI) || '[]')); } catch (e) { return new Set(); } }
+function salvaMandati(set) { try { localStorage.setItem(CHIAVE_MANDATI, JSON.stringify([...set])); } catch (e) { /* senza memoria: la spunta non resta, pazienza */ } }
+const daAvvisare = () => AD.utenti.filter(u => !CHIUSURA.esenti.includes(u.id));
+// Prima la scheda del partner nella Lista di Ignazio (ha il +39), poi il numero del Profilo: letti ora, prima che i telefoni escano dalla tabella `squadra`
+async function caricaChiusuraAdmin() {
+  const codici = daAvvisare().map(u => u.partner_id).filter(Boolean);
+  AD.telSchede = AD.telSchede || {};
+  if (codici.length) {
+    const { data } = await dbq('telefoni delle schede', supa.from('contatti').select('codice_amway, telefono').in('codice_amway', codici).is('eliminato_il', null).like('telefono', '+%'));
+    (data || []).forEach(c => { AD.telSchede[c.codice_amway] = c.telefono; });
+  }
+  AD.chiusuraPronta = true;
+  if (AD.sezione === 'chiusura') disegnaAdmin();
+}
+function chiusuraAdminHtml() {
+  const tutti = daAvvisare(), fatti = mandati();
+  const h = `<h1>${ic('whatsapp')} Avvisa della chiusura</h1><div class="sotto" style="margin:0 0 8px">Un tocco per persona: si apre WhatsApp con il messaggio già scritto e il suo nome, tu premi solo «Invia». La spunta resta solo su questo telefono.</div>
+    <div class="avviso"><b>Mandati ${tutti.filter(u => fatti.has(u.id)).length} su ${tutti.length}</b></div>`;
+  if (!AD.chiusuraPronta) return h + `<div class="vuoto">Carico i numeri…</div>`;
+  return h + tutti.map(u => {
+    const nome = (u.nome || nomeDi(u)).split(' ')[0], tel = telefonoInvito(u), link = tel ? MB21Segnala.linkWhatsApp(tel, messaggioChiusura(nome)) : null, fatto = fatti.has(u.id);
+    return `<div class="ad-richiesta"><b>${fatto ? '✅ ' : ''}${esc(nomeDi(u))}</b>
+      ${link ? `<div class="ad-invita"><a class="ct-whatsapp" data-cw="${esc(u.id)}" href="${esc(link)}" target="_blank" rel="noopener">${ic('whatsapp')} ${fatto ? 'Manda di nuovo' : 'Manda WhatsApp'}</a>
+        <button data-cw-spunta="${esc(u.id)}">${fatto ? 'Non mandato' : 'Segna come mandato'}</button></div>` : '<small>Manca il numero: avvisalo a voce</small>'}</div>`;
+  }).join('');
+}
+function collegaChiusuraAdmin() {
+  const su = (sel, fn) => app.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => fn(b)));
+  su('[data-cw]', b => { const f = mandati(); f.add(b.dataset.cw); salvaMandati(f); setTimeout(() => AD.sezione === 'chiusura' && disegnaAdmin(), 400); });   // il link si apre da solo; la spunta si accende subito dopo
+  su('[data-cw-spunta]', b => { const f = mandati(), id = b.dataset.cwSpunta; if (f.has(id)) f.delete(id); else f.add(id); salvaMandati(f); disegnaAdmin(); });
+}
