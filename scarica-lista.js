@@ -100,13 +100,13 @@ const giornoDi = iso => new Date(iso + 'T12:00:00').toLocaleDateString('it-IT', 
 function messaggioChiusura(nome) {
   return `Ciao ${nome}, ti scrivo per una novità su MB21.
 
-Dal ${giornoChiusura()} MB21 tornerà a essere uno strumento personale, come era nato all'inizio: l'accesso per la squadra verrà chiuso. È una scelta fatta con calma, per tenere tutto in ordine e nel modo più corretto.
+Dalle ore ${CHIUSURA.ora} del ${giornoDi(CHIUSURA.data)} MB21 tornerà ad essere uno strumento strettamente personale ed ad uso del sottoscritto, come era nato nell'idea iniziale; l’accesso per la squadra verrà chiuso. È una scelta fatta con calma e ponderata a lungo, per tenere tutto in ordine e nel modo più corretto.
 
 Prima di allora puoi scaricare la tua Lista Nomi con tutto quello che hai fatto (schede, azioni, note) in un file Excel, che si apre anche con Google Fogli: lo trovi aprendo MB21, nella Dashboard, con il tasto «Scarica la mia lista». Ti consiglio di farlo entro il ${giornoDi(giornoPrima())}.
 
-Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro il ${giornoCancellazione()}. Se hai difficoltà a scaricare il file, scrivimi e te lo preparo io.
+Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati definitivamente entro il ${giornoCancellazione()}. Se hai difficoltà a scaricare il file, scrivimi e te lo preparo io.
 
-Grazie di cuore per aver usato MB21, per i consigli e le segnalazioni che l'hanno fatta crescere. Andiamo avanti insieme come sempre!
+Grazie di cuore per aver usato MB21, per i consigli e le segnalazioni che l’hanno fatta crescere. Andiamo avanti insieme come sempre!
 
 Ignazio`;
 }

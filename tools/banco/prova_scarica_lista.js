@@ -80,7 +80,7 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     m.MB21Segnala = require('../../segnala.js'); m.nomeDi = u => u.nome; m.telefonoInvito = u => (u.telefono || '').startsWith('+') ? u.telefono : null; m.AD = { chiusuraPronta: true, sezione: 'chiusura',
       utenti: [{ id: 'a', nome: 'Carolina Rossi', telefono: '+393381234567' }, { id: 'b', nome: 'Luca Verdi', telefono: '' }, { id: ESENTE, nome: 'Isabella' }] };
     const t = m.X.messaggioChiusura('Carolina');
-    assert.match(t, /^Ciao Carolina, ti scrivo per una novità su MB21\./); assert.match(t, /Dal 25 ottobre alle 18:00 MB21 tornerà/); assert.match(t, /entro il 24 ottobre/); assert.match(t, /cancellati entro il 30 novembre/); assert.match(t, /tasto «Scarica la mia lista»/); assert.match(t, /Ignazio$/);
+    assert.match(t, /^Ciao Carolina, ti scrivo per una novità su MB21\./); assert.match(t, /Dalle ore 18:00 del 25 ottobre MB21 tornerà ad essere uno strumento strettamente personale ed ad uso del sottoscritto/); assert.doesNotMatch(t, /18\.00/); assert.match(t, /l’accesso per la squadra/); assert.match(t, /l’hanno fatta crescere/); assert.match(t, /cancellati definitivamente entro il 30 novembre/); assert.match(t, /entro il 24 ottobre/); assert.match(t, /tasto «Scarica la mia lista»/); assert.match(t, /Ignazio$/);
     let h = m.X.chiusuraAdminHtml();
     assert.match(h, /Mandati 0 su 2/); assert.doesNotMatch(h, /Isabella/); assert.match(h, /Manca il numero/);
     const href = /href="([^"]+)"/.exec(h)[1].replace(/&amp;/g, '&'); assert.match(href, /^https:\/\/wa\.me\/393381234567\?text=/); assert.match(decodeURIComponent(href), /Ciao Carolina,/);
