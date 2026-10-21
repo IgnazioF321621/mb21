@@ -9,12 +9,12 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
   const ctx = { MB21Esporta: E, MB21Coda: { oggiRoma: () => '2026-10-21' }, esc: s => String(s), ic: n => `[${n}]`, ST: { utente }, eAdmin: () => admin, guardoAltri: () => altri, limitato: () => lim,
     mostraToast: t => toast.push(t), dbq: async (n, q) => q, richieste, scaricati, toast, URL: { createObjectURL: b => (scaricati.push(b), 'blob:x'), revokeObjectURL() {} },
     Blob: function (parti) { this.parti = parti; }, setTimeout: () => 0,
-    document: { createElement: () => ({ click() {} }), body: { appendChild() {} } } };
+    document: { querySelector: () => null, createElement: () => ({ click() {} }), body: { appendChild() {} } } };
   ctx.document.createElement = () => ({ click() { ctx.cliccato = (ctx.cliccato || 0) + 1; }, remove() {} });
   ctx.document.body.appendChild = () => {};
   ctx.supa = { from: t => { const q = { filtro: null, select: () => q, eq: (c, v) => (richieste.push([t, c, v]), q), order: () => q, range: () => Promise.resolve({ data: dati[t] || [], error: null }) }; return q; } };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista };', ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura };', ctx);
   return ctx;
 }
 (async () => {
@@ -38,6 +38,20 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     const m = mondo(); m.supa.from = () => { const q = { select: () => q, eq: () => q, order: () => q, range: () => Promise.resolve({ data: null, error: { message: 'x' } }) }; return q; };
     assert.equal((await m.X.scaricaMiaLista()).ok, false); assert.ok(!m.cliccato);
     await m.X.toccoScaricaLista({}); assert.match(m.toast.join('|'), /Non riesco a preparare il file/);
+  });
+  await prova('messaggio all\'apertura: testo approvato, [Scarica la mia lista] e [Più tardi]; chiude e ricorda solo dopo il download', async () => {
+    const m = mondo({ dati: { contatti: [{ id: 'c', nome: 'A' }] } });
+    const bott = {}, velo = { remove() { velo.tolto = true; } }; velo.querySelector = sel => (bott[sel] = bott[sel] || { disabled: false });
+    const mem = {}; m.localStorage = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
+    m.document.createElement = t => (t === 'div' ? velo : { click() { m.cliccato = (m.cliccato || 0) + 1; }, remove() {} });
+    assert.equal(await m.X.annuncioChiusura(false), false);   // app aperta da un avviso
+    assert.equal(await m.X.annuncioChiusura(true), true);
+    assert.match(velo.innerHTML, /torna personale dal 25 ottobre alle 18:00/); assert.match(velo.innerHTML, /anche con Google Fogli/); assert.match(velo.innerHTML, /cancellati entro 30 giorni/); assert.match(velo.innerHTML, /Scarica la mia lista/); assert.match(velo.innerHTML, /Più tardi/);
+    velo.tolto = false; bott['#cl-dopo'].onclick(); assert.equal(velo.tolto, true); assert.equal(mem['mb21-lista-scaricata'], undefined);   // «Più tardi»: non ricorda
+    velo.tolto = false; await bott['#cl-scarica'].onclick(); assert.equal(velo.tolto, true); assert.equal(mem['mb21-lista-scaricata'], '2026-10-25'); assert.equal(m.cliccato, 1);
+    assert.equal(await m.X.annuncioChiusura(true), false);   // già scaricata su questo telefono
+    const altro = mondo(); altro.document.querySelector = () => ({}); assert.equal(await altro.X.annuncioChiusura(true), false);   // sopra un altro foglio, mai
+    const admin = mondo({ admin: true }); assert.equal(await admin.X.annuncioChiusura(true), false);
   });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
