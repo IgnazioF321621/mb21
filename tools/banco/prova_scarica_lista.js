@@ -18,10 +18,11 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
   return ctx;
 }
 (async () => {
-  await prova('senza la data di chiusura il tasto non compare a nessuno', () => { assert.equal(mondo().X.bannerScaricaLista(), ''); });
+  await prova('senza la data di chiusura il tasto non compare a nessuno', () => { const m = mondo(); m.X.CHIUSURA.data = null; assert.equal(m.X.bannerScaricaLista(), ''); });
+  await prova('la data data da Ignazio: 25 ottobre 2026 alle 18:00, scritta nel riquadro', () => { const m = mondo(); assert.equal(m.X.CHIUSURA.data, '2026-10-25'); assert.equal(m.X.CHIUSURA.ora, '18:00'); assert.match(m.X.bannerScaricaLista(), /torna personale dal 25 ottobre alle 18:00/); });
   await prova('con la data: compare al partner, con il giorno scritto a parole', () => {
     const m = mondo(); m.X.CHIUSURA.data = '2026-10-30';
-    const h = m.X.bannerScaricaLista(); assert.match(h, /id="ds-scarica-lista"/); assert.match(h, /torna personale dal 30 ottobre/); assert.match(h, /anche per Google Fogli/);
+    const h = m.X.bannerScaricaLista(); assert.match(h, /id="ds-scarica-lista"/); assert.match(h, /torna personale dal 30 ottobre alle 18:00/); assert.match(h, /anche per Google Fogli/);
   });
   await prova('non compare a: Admin, persona di fiducia, accesso limitato, chi guarda un altro partner', () => {
     for (const o of [{ admin: true }, { utente: { id: ESENTE } }, { lim: true }, { altri: true }]) { const m = mondo(o); m.X.CHIUSURA.data = '2026-10-30'; assert.equal(m.X.bannerScaricaLista(), '', JSON.stringify(o)); }
