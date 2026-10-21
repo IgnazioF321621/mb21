@@ -13,8 +13,8 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
   ctx.document.createElement = () => ({ click() { ctx.cliccato = (ctx.cliccato || 0) + 1; }, remove() {} });
   ctx.document.body.appendChild = () => {};
   ctx.supa = { from: t => { const q = { filtro: null, select: () => q, eq: (c, v) => (richieste.push([t, c, v]), q), order: () => q, range: () => Promise.resolve({ data: dati[t] || [], error: null }) }; return q; } };
-  vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura };', ctx);
+  ctx.app = { innerHTML: '' }; ctx.document.getElementById = () => ({}); vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura, chiusuraAvvenuta, mostraChiusura };', ctx);
   return ctx;
 }
 (async () => {
@@ -46,7 +46,7 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     m.document.createElement = t => (t === 'div' ? velo : { click() { m.cliccato = (m.cliccato || 0) + 1; }, remove() {} });
     assert.equal(await m.X.annuncioChiusura(false), false);   // app aperta da un avviso
     assert.equal(await m.X.annuncioChiusura(true), true);
-    assert.match(velo.innerHTML, /torna personale dal 25 ottobre alle 18:00/); assert.match(velo.innerHTML, /anche con Google Fogli/); assert.match(velo.innerHTML, /cancellati entro 30 giorni/); assert.match(velo.innerHTML, /Scarica la mia lista/); assert.match(velo.innerHTML, /Più tardi/);
+    assert.match(velo.innerHTML, /torna personale dal 25 ottobre alle 18:00/); assert.match(velo.innerHTML, /anche con Google Fogli/); assert.match(velo.innerHTML, /cancellati entro il 30 novembre/); assert.match(velo.innerHTML, /Scarica la mia lista/); assert.match(velo.innerHTML, /Più tardi/);
     velo.tolto = false; bott['#cl-dopo'].onclick(); assert.equal(velo.tolto, true); assert.equal(mem['mb21-lista-scaricata'], undefined);   // «Più tardi»: non ricorda
     velo.tolto = false; await bott['#cl-scarica'].onclick(); assert.equal(velo.tolto, true); assert.equal(mem['mb21-lista-scaricata'], '2026-10-25'); assert.equal(m.cliccato, 1);
     assert.equal(await m.X.annuncioChiusura(true), false);   // già scaricata su questo telefono
@@ -61,6 +61,19 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     const gia = mondo(); gia.MB21Coda.oggiRoma = () => '2026-10-24'; gia.localStorage = { getItem: () => '2026-10-25', setItem() {} }; assert.equal(await gia.X.annuncioChiusura(true), false);   // ha scaricato: niente promemoria
     const prima = mondo(); prima.MB21Coda.oggiRoma = () => '2026-10-23'; prima.document.createElement = () => velo; prima.localStorage = { getItem: () => null, setItem() {} };
     await prima.X.annuncioChiusura(true); assert.match(velo.innerHTML, /MB21 torna personale dal 25 ottobre/);
+  });
+  await prova('schermata di chiusura: scatta solo dal 25/10 ore 18:00 (ora di Roma); testo con la cancellazione il 30 novembre, senza modulo di ingresso', () => {
+    const m = mondo(), d = Date, finto = iso => { m.Date = class extends d { constructor(...a) { super(...(a.length ? a : [iso])); } static now() { return new d(iso).getTime(); } }; };
+    {
+      m.MB21Coda.oggiRoma = () => '2026-10-25'; finto('2026-10-25T15:00:00Z');   // 16:00 a Roma (il 25/10 torna l'ora solare)
+      assert.equal(m.X.chiusuraAvvenuta(), false);
+      finto('2026-10-25T17:30:00Z');   // 18:30 a Roma
+      assert.equal(m.X.chiusuraAvvenuta(), true);
+      m.MB21Coda.oggiRoma = () => '2026-10-24'; assert.equal(m.X.chiusuraAvvenuta(), false);
+      m.MB21Coda.oggiRoma = () => '2026-11-02'; assert.equal(m.X.chiusuraAvvenuta(), true);
+    }
+    m.X.mostraChiusura();
+    assert.match(m.app.innerHTML, /L'accesso a MB21 è chiuso dal 25 ottobre alle 18:00/); assert.match(m.app.innerHTML, /cancellati entro il 30 novembre/); assert.match(m.app.innerHTML, /scrivi a Ignazio/); assert.doesNotMatch(m.app.innerHTML, /password|input/);
   });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

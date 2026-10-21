@@ -27,12 +27,13 @@ async function scaricaMiaLista() {
 }
 
 // ── Il tasto in Dashboard ── (Ignazio 21/10/2026: «direttamente nella pagina Dashboard, togliendo le altre opzioni»; nessun'altra posizione)
-// UN SOLO PUNTO da cambiare: `CHIUSURA.data` (AAAA-MM-GG, il giorno di chiusura) e `CHIUSURA.ora` (HH:MM, ora di Roma; vuota = solo il giorno). Data data da Ignazio il 21/10/2026: 25/10/2026 alle 18:00. Se `data` è vuota (`null`) il tasto non compare a nessuno:
+// UN SOLO PUNTO da cambiare: `CHIUSURA.data` (AAAA-MM-GG, il giorno di chiusura) e `CHIUSURA.ora` (HH:MM, ora di Roma; vuota = solo il giorno) e `CHIUSURA.cancellazione` (il giorno entro cui si cancellano i dati: 30/11/2026, dato da Ignazio il 21/10). Data data da Ignazio il 21/10/2026: 25/10/2026 alle 18:00. Se `data` è vuota (`null`) il tasto non compare a nessuno:
 // la data la dà Ignazio, dopo il suo messaggio su WhatsApp. `esenti`: le persone per cui non cambia nulla (oltre all'Admin): la persona di fiducia.
-const CHIUSURA = { data: '2026-10-25', ora: '18:00', esenti: ['831417a9-6649-44e8-8eb2-e5d79d0595e5'] };
+const CHIUSURA = { data: '2026-10-25', ora: '18:00', cancellazione: '2026-11-30', esenti: ['831417a9-6649-44e8-8eb2-e5d79d0595e5'] };
 const giornoChiusura = () => new Date(CHIUSURA.data + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' }) + (CHIUSURA.ora ? ` alle ${CHIUSURA.ora}` : '');
 // Chi è interessato dalla chiusura: ci deve essere la data, e non l'Admin, non la persona di fiducia, non chi ha l'accesso limitato né chi guarda un altro partner
 const chiusuraPerMe = () => !!CHIUSURA.data && !eAdmin() && !limitato() && !guardoAltri() && !!ST.utente && !CHIUSURA.esenti.includes(ST.utente.id);
+const giornoCancellazione = () => new Date(CHIUSURA.cancellazione + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' });
 function bannerScaricaLista() {
   if (!chiusuraPerMe()) return '';
   return `<button class="banner-grande messaggi" id="ds-scarica-lista"><span class="ico">${ic('file')}</span>
@@ -63,8 +64,8 @@ async function annuncioChiusura(aprire) {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('file')} ${eVigilia() ? `Domani l'accesso a MB21 viene chiuso` : `MB21 torna personale dal ${esc(giornoChiusura())}`}</h3></div>
     <div class="riquadro" style="margin-bottom:12px">${eVigilia() ? `<p style="margin:0 0 8px">Se non l'hai ancora fatto, puoi scaricare ora la tua Lista Nomi (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
-      <p style="margin:0">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro 30 giorni.</p>` : `<p style="margin:0 0 8px">Fino ad allora puoi scaricare la tua Lista Nomi completa (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
-      <p style="margin:0 0 8px">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro 30 giorni.</p>
+      <p style="margin:0">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro il ${esc(giornoCancellazione())}.</p>` : `<p style="margin:0 0 8px">Fino ad allora puoi scaricare la tua Lista Nomi completa (schede, azioni e note) in un file Excel, che si apre anche con Google Fogli.</p>
+      <p style="margin:0 0 8px">Dopo la chiusura i tuoi dati non saranno più visibili a nessuno e verranno cancellati entro il ${esc(giornoCancellazione())}.</p>
       <p style="margin:0">Grazie per aver usato MB21!</p>`}</div>
     <button class="primario" id="cl-scarica">${ic('file')} Scarica la mia lista</button>
     <button class="link" id="cl-dopo" style="display:block;margin:10px auto 0">Più tardi</button></div>`;
@@ -74,4 +75,20 @@ async function annuncioChiusura(aprire) {
   const b = velo.querySelector('#cl-scarica');
   b.onclick = async () => { const r = await toccoScaricaLista(b); if (r && r.ok) velo.remove(); };
   return true;
+}
+
+// ── La schermata dopo la chiusura ── (Ignazio 21/10/2026, testo di Conformità 160, cancellazione il 30 novembre): per chi prova a entrare quando l'accesso
+// è chiuso. Il blocco vero (account senza accesso) è della nota Fondamenta 011: qui, se un utente senza accesso entra dopo la data e l'ora di chiusura,
+// invece di «Utente non abilitato.» vede questa schermata, senza il modulo di ingresso. Prima della chiusura nulla cambia.
+const chiusuraAvvenuta = () => {
+  if (!CHIUSURA.data) return false;
+  const ora = new Date().toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  return `${MB21Coda.oggiRoma()} ${ora}` >= `${CHIUSURA.data} ${CHIUSURA.ora || '00:00'}`;
+};
+function mostraChiusura() {
+  const tab = document.getElementById('tab'); if (tab) tab.hidden = true;
+  app.innerHTML = `<div class="accesso"><h1>MB21</h1>
+    <div class="riquadro"><p style="margin:0 0 8px"><b>L'accesso a MB21 è chiuso dal ${esc(giornoChiusura())}.</b></p>
+      <p style="margin:0 0 8px">I tuoi dati verranno cancellati entro il ${esc(giornoCancellazione())}.</p>
+      <p style="margin:0">Per qualsiasi cosa scrivi a Ignazio.</p></div></div>`;
 }

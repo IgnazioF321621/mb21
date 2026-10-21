@@ -2692,7 +2692,7 @@ async function dopoAccesso(sessione) {
     if (stato === 'in_attesa') return mostraAttesa(sessione);
   }
   if (!data || !data.accesso_attivo) {   // accesso tolto dall'Admin (pagina Admin → Utenti): esce anche chi era già entrato
-    ST.motivoUscita = 'Utente non abilitato.';
+    ST.motivoUscita = typeof chiusuraAvvenuta === 'function' && chiusuraAvvenuta() ? 'CHIUSURA' : 'Utente non abilitato.';   // dopo la chiusura di MB21: la schermata di chiusura (nota Admin 008)
     return supa.auth.signOut();   // → SIGNED_OUT mostra il motivo
   }
   ST.utente = data;
@@ -5199,7 +5199,7 @@ let accessoInCorso = false;
 const togliCopiaOffline = () => { try { localStorage.removeItem(CHIAVE_CACHE); } catch (e) {} };
 supa.auth.onAuthStateChange((evento, sessione) => {
   setTimeout(() => {
-    if (evento === 'SIGNED_OUT') { togliCopiaOffline(); LS.righe = []; LS.letta = 0; LS.usoApp = null; ST.utente = null; mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
+    if (evento === 'SIGNED_OUT') { togliCopiaOffline(); LS.righe = []; LS.letta = 0; LS.usoApp = null; ST.utente = null; if (ST.motivoUscita === 'CHIUSURA') mostraChiusura(); else mostraEmail(ST.motivoUscita); ST.motivoUscita = ''; return; }
     if (evento !== 'INITIAL_SESSION' && evento !== 'SIGNED_IN') return;
     if (!sessione) { togliCopiaOffline(); return REGISTRAZIONE.has('registrati') ? mostraRegistrazione() : mostraEmail(); }
     if (ST.utente || accessoInCorso) return;
