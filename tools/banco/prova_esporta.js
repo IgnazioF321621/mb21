@@ -52,7 +52,12 @@ prova('Admin 008: la mia lista a più fogli, tutte le colonne, il nome accanto a
   assert.deepEqual(f[0].colonne.slice(0, 2), ['nome', 'telefono']); assert.ok(f[0].colonne.includes('citta') && f[0].colonne.includes('note'));
   for (const x of f) assert.ok(!x.colonne.includes('user_id') && !x.colonne.includes('glide_id') && !x.colonne.includes('id'));
   assert.equal(f[1].colonne[0], 'persona'); assert.equal(f[1].righe[0].persona, 'Zeno Rossi'); assert.equal(f[1].righe[1].persona, '');
+  assert.deepEqual(f[0].intestazioni.slice(0, 3), ['Nome e cognome', 'Telefono', 'Categoria']); assert.ok(f[0].intestazioni.includes('Città'));
+  assert.equal(f[1].intestazioni[0], 'Persona'); assert.ok(f[1].intestazioni.includes('Tipo di azione') && f[1].intestazioni.includes('Inizio'));
+  const nuovo = E.fogliMiaLista({ contatti: [{ id: 'c', nome: 'A', campo_nuovo: 'x', compagno_id: 'uuid', condiviso_con: 'uuid' }], azioni: [], note: [] })[0];
+  assert.ok(nuovo.intestazioni.includes('Campo nuovo')); assert.ok(!nuovo.colonne.includes('compagno_id') && !nuovo.colonne.includes('condiviso_con'));
   const x = E.fogliXlsxMulti(f);
+  assert.ok(x['xl/worksheets/sheet1.xml'].includes('<t>Città</t>') && !x['xl/worksheets/sheet1.xml'].includes('<t>citta</t>'));
   assert.ok(x['xl/workbook.xml'].includes('name="Schede"') && x['xl/workbook.xml'].includes('name="Azioni"') && x['xl/workbook.xml'].includes('name="Note"'));
   assert.ok(x['xl/worksheets/sheet1.xml'].includes('Ama il &lt;mare&gt;'));
   assert.ok(x['xl/worksheets/sheet3.xml'].includes('Chiamare giovedì'));
