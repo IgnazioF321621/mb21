@@ -70,7 +70,7 @@ async function sezioneVendite() {
 
 // «📦 Ordine fatto»: la promo differita conta da QUESTO giorno (quello vero, non quello previsto). Si propone oggi, si può correggere.
 async function ordineFatto(v) { return segnaOrdineFatto(v, disegnaScheda); }
-// «Ordine fatto» dalla riga della vendita o «Consegnato» dalla carta «Consegna» in Azioni (nota 051): un modulo solo; `dopo` ridisegna chi l'ha aperto
+// «Ordine fatto» dalla riga della vendita o dalla carta «Consegna» in Azioni (nota 051; V1 22/10: lo stesso nome in tutti e due): un modulo solo; `dopo` ridisegna chi l'ha aperto
 async function segnaOrdineFatto(v, dopo) {
   if (soloGuardo()) return;
   const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true }]);

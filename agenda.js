@@ -293,7 +293,7 @@
   const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
   // La carta «Consegna» (nota Pagine 051, Ignazio 12/10/2026): il promemoria che la vendita «Più avanti» scrive in Agenda (trigger
   // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andata la telefonata?»,
-  // solo «Consegnato» (= «Ordine fatto» della vendita) e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
+  // solo «Ordine fatto» (lo stesso tasto della vendita, V1 22/10; prima «Consegnato») e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
   const eConsegna = a => !!a && a.tipo_azione === 'Contatto' && a.modalita === 'Presenza' && /^Consegna · /.test(a.note || '');
   const OSPITE_MAX = 60, OSPITI_MAX = 30;
   // un nome in più nell'elenco: spazi puliti, niente vuoti né doppioni (maiuscole a parte), al massimo 30

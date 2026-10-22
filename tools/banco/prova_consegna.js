@@ -1,5 +1,5 @@
 // MB21 · prova della carta «Consegna» in Azioni (nota Pagine 051, Ignazio 12/10/2026): niente «Com'è andata la telefonata?»,
-// solo «Consegnato» (= «Ordine fatto» della vendita) e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue il trigger).
+// solo «Ordine fatto» (V1 22/10: lo stesso nome della vendita, prima «Consegnato») e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue il trigger).
 // Codice vero di index.html e pagina-vendite.js, con finti database e moduli.
 const assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
 const leggi = f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8');
@@ -31,13 +31,13 @@ function banco({ vendita, modulo } = {}) {
 prova('la carta «Consegna» ha due scelte sole; fatta, niente; le altre azioni come prima', () => {
   const { ctx } = banco();
   const h = ctx.bloccoEsiti(consegna, 'Cliente');
-  assert.match(h, /La consegna/); assert.match(h, /data-consegna="fatta">\[consegna\] Consegnato/); assert.match(h, /data-consegna="sposta">\[orario\] Sposta la consegna/);
+  assert.match(h, /La consegna/); assert.match(h, /data-consegna="fatta">\[consegna\] Ordine fatto/); assert.doesNotMatch(h, /Consegnato/); assert.match(h, /data-consegna="sposta">\[orario\] Sposta la consegna/);
   assert.doesNotMatch(h, /telefonata|data-esito/);
   assert.equal(ctx.bloccoEsiti({ ...consegna, completata: true }, 'Cliente'), '');
   assert.match(ctx.bloccoEsiti({ ...consegna, modalita: 'Telefonata', note: 'Riordino · Filtro' }, 'Cliente'), /data-esito/);   // la telefonata di riordino non cambia
 });
 
-prova('«Consegnato» = «Ordine fatto» della vendita (ordinata_il), poi si ridisegna', async () => {
+prova('«Ordine fatto» dalla carta = «Ordine fatto» della vendita (ordinata_il), poi si ridisegna', async () => {
   const b = banco({ vendita: { id: 'v1', data: '2026-10-11', prodotto: 'Filtro', consegna: '2027-05-20' }, modulo: { giorno: '2026-10-12' } });
   await b.ctx.consegnaDaCarta(consegna, 'fatta', b.dopo);
   assert.deepEqual(JSON.parse(JSON.stringify(b.scritte)), [{ ordinata_il: '2026-10-12' }]);

@@ -3049,7 +3049,7 @@ function collegaElenco(box, a, poi = () => {}) {
 function bloccoEsiti(a, categoria, aperto = false) {
   // la carta «Consegna» (nota Pagine 051): due scelte sole, quelle della vendita; fatta la consegna non c'è più niente da toccare
   if (MB21Agenda.eConsegna(a)) return a.completata ? '' : `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">La consegna</div>
-    <div class="ag-scelte"><button type="button" data-consegna="fatta">${ic('consegna')} Consegnato</button><button type="button" data-consegna="sposta">${ic('orario')} Sposta la consegna</button></div></div>`;
+    <div class="ag-scelte"><button type="button" data-consegna="fatta">${ic('consegna')} Ordine fatto</button><button type="button" data-consegna="sposta">${ic('orario')} Sposta la consegna</button></div></div>`;
   // Un appuntamento da chiudere (nota Azioni 031, Ignazio 19/10/2026): «Cosa avete fatto?» è un elenco che si apre verso il basso con le voci
   // del suo tipo (prima quelle previste quando si è fissato), da spuntare anche più d'una, e in fondo «Altro» con una frase scritta a mano
   // Già chiuso e «Cambia esito ›» toccato (nota Azioni 032): lo stesso elenco, aperto, con spuntato quello che era stato segnato e «Salva»
@@ -3111,7 +3111,7 @@ function collegaEsiti(el, a, contatto, dopo) {
     chiudiAppuntamento(e, esito, { dopo });
   });
 }
-// La carta «Consegna» (nota Pagine 051): si lavora sulla vendita che l'ha scritta (vendite.azione_consegna_id). «Consegnato» è «Ordine fatto»
+// La carta «Consegna» (nota Pagine 051): si lavora sulla vendita che l'ha scritta (vendite.azione_consegna_id). Il tasto è «Ordine fatto» come nella scheda (V1, Ignazio 22/10: un nome solo; prima «Consegnato»)
 // (ordinata_il: i VP contano da quel giorno, il promemoria si chiude da solo); «Sposta la consegna» cambia vendite.consegna e il promemoria
 // lo segue da solo (trigger mb21_vendita_agenda), quindi la scheda Vendite, MB Plan e gli avvisi dicono la data nuova.
 async function consegnaDaCarta(a, cosa, dopo) {
@@ -3122,7 +3122,7 @@ async function consegnaDaCarta(a, cosa, dopo) {
   const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
   const valori = await moduloSemplice('Sposta la consegna', [{ k: 'giorno', etichetta: `${v.prodotto} · la nuova data della consegna`, tipo: 'date', valore: v.consegna && v.consegna >= domani ? v.consegna : domani, obbligatorio: true }]);
   if (!valori) return;
-  if (valori.giorno < domani) return mostraToast('La consegna nuova va da domani in poi; se è già fatta, tocca «Consegnato»');
+  if (valori.giorno < domani) return mostraToast('La consegna nuova va da domani in poi; se è già fatta, tocca «Ordine fatto»');
   if (valori.giorno < v.data) return mostraToast('La consegna è prima della vendita');
   const { error: e2 } = await dbq('sposta consegna', supa.from('vendite').update({ consegna: valori.giorno }).eq('id', v.id));
   if (e2) return mostraToast('Non salvato: riprova.');
