@@ -315,6 +315,19 @@ function fraseTraguardo(p) {
 }
 
 // ── Il primo livello ──
+// Verifica della Dashboard, tappa 3 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): le due righe grigie in fondo alla Home, «Tracce condivise»
+// (le tracce mandate agli altri, da controllare) e «Il mio percorso» (le tracce ricevute da chi parte), diventano UNA riga «Da seguire», chiusa;
+// un tocco la apre sulle due cose di prima (stessi pezzi e stessi tasti: tracceHtml, mioPercorsoHtml), un altro la richiude.
+const DSG = { aperto: false };
+function daSeguireHtml() {
+  const tracce = tracceHtml(), percorso = mioPercorsoHtml();
+  if (!tracce && !percorso) return '';
+  const daControllare = TRC.righe.length, daAscoltare = (MIO.righe || []).filter(r => !r.ascoltata).length;
+  const sotto = [daControllare ? `${daControllare} ${daControllare === 1 ? 'traccia condivisa da controllare' : 'tracce condivise da controllare'}` : tracce ? 'tracce condivise' : '',
+    daAscoltare ? `${daAscoltare} ${daAscoltare === 1 ? 'traccia da ascoltare' : 'tracce da ascoltare'}` : percorso ? 'il mio percorso' : ''].filter(Boolean).join(' · ');
+  return rigaApribile('dash-seguire', 'catalogare', 'crescita', 'Da seguire', esc(sotto), DSG.aperto, daControllare + daAscoltare)
+    + (DSG.aperto ? `<div class="da-seguire">${tracce}${percorso}</div>` : '');
+}
 function tessera(go, icona, colore, tinta, titolo, riga, n, opz = {}) {
   const dentro = `<span class="lv-ic">${ic(icona)}</span><span class="lv-testo"><b>${titolo}</b><small>${riga}</small></span>
     <span class="lv-dx">${n ? `<i class="lv-n">${n}</i>` : ''}${opz.spenta ? '' : '<em>›</em>'}</span>`;
@@ -347,7 +360,7 @@ function disegnaHome() {
   else tessere.push(chi, mese, traguardo, giorno);
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
   if (!vediTutti() && !limitato()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
-  html += atteseHtml() + tracceHtml() + mioPercorsoHtml();   // «Ordina da solo» (nota 043), poi le due righe grigie di prima (tracce condivise e percorso di chi parte): per ora restano qui sotto
+  html += atteseHtml() + daSeguireHtml();   // «Ordina da solo» (nota 043), poi «Da seguire» (tappa 3: tracce condivise e il mio percorso in una riga sola)
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
     const go = b.dataset.lv;
@@ -493,8 +506,8 @@ function disegnaMeseLV() {
   let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
     <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}`;
   const rigaOb = limitato() || d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
-  const rigaConf = !limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : '';
-  if (rigaOb || rigaConf) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}${rigaConf}</div>`;
+  // tappa 3 (22/10): «Com'è andato [mese scorso]» ha una strada sola, il confronto dentro le card del mese (qui sopra): la riga doppia del pannello va via
+  if (rigaOb) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}</div>`;
   app.innerHTML = html + versione();
   attaccaIndietroLV();
   app.querySelectorAll('[data-lv-area]').forEach(b => b.onclick = () => vaiLV('area', { area: b.dataset.lvArea }));
@@ -622,6 +635,8 @@ function collegaVistaLV() {
   collegaDashboard();
   collegaMioAvvio();
   collegaAttese();   // «Ordina da solo» (nota 043): la riga si apre anche con l'abbonamento scaduto, i tocchi no
+  const seguire = document.getElementById('dash-seguire');   // tappa 3: «Da seguire» si apre e si chiude sul posto
+  if (seguire) seguire.onclick = () => { DSG.aperto = !DSG.aperto; disegnaOggi(); };
   if (LV.vista === 'home') { mostraRigaTelefono(); mostraRiquadroObiettivi(); }
   if (ST.offline || limitato()) {
     app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
