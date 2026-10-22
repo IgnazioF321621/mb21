@@ -547,6 +547,18 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Scheda contatto S1 (Ignazio 22/10): Invita / Usa l\'app / Collega spenti con un interruttore, la lettura e_utente_mb21 non parte', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  assert.match(src, /\nconst INVITO_APP = false;\nasync function mostraInvito\(c\) \{\n  const posto = document\.getElementById\('invita-posto'\);\n  if \(!INVITO_APP \|\| !posto\) return;/);
+  const da = src.indexOf('const INVITO_APP'), a = src.indexOf('\n}\n', da) + 3;
+  let letture = 0, posto = { innerHTML: '', isConnected: true };
+  const ctx = { document: { getElementById: () => posto }, LS: { utenteMb21: {} }, supa: { rpc: () => { letture++; return Promise.resolve({ data: 'amway' }); } }, dbq: (_, p) => p };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.mostraInvito = mostraInvito;', ctx);
+  await ctx.mostraInvito({ id: 'c1' });
+  assert.equal(letture, 0); assert.equal(posto.innerHTML, '');
+});
+
 prova('Pagine 071 (Ignazio 22/10): niente più abbonamento nella Lista Nomi — «+», scheda e Modifica per tutti, nessun «Solo da guardare»', () => {
   const fs = require('node:fs'), path = require('node:path');
   for (const f of ['pagina-lista.js', 'pagina-rubrica.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), /limitato\(|fermoScaduto|SOLO_GUARDARE|abbonamento attivo/, f);
