@@ -564,7 +564,7 @@
   // targhetta «Telefonata · scelta» (la coda «Telefonata»). Un conto solo «fatti N di M»: fatto = esito dato oggi (nota Azioni 030), `fatte` le righe chiuse oggi.
   // Le scelte non sono già in coda (MB21Coda.senzaScelte). La usa «Chi sento oggi?» (tappa 6); `dato` è la riga di partenza.
   const GRUPPI_OGGI = [
-    { chiave: 'chiudere', titolo: 'Da chiudere' },
+    { chiave: 'chiudere', titolo: 'Prima si chiude ciò che è aperto' },   // T6b: il titolo del disegno approvato da Ignazio
     { chiave: 'contattare', titolo: 'Poi si contatta (nomi in coda o scelte personali)' },
   ];
   function elencoOggi(conf, rio, ds, coda, scelte, fatte) {

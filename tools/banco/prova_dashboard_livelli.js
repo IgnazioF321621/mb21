@@ -63,7 +63,7 @@ prova('Il nuovo parte dal suo avvio: la tessera in blu, niente tessere grigie sp
 prova('Chi sento oggi? (tappa 6): un elenco solo, prima da chiudere poi si contatta, il motivo davanti, un conto solo', () => {
   const h = P.vista('oggi').html;
   assert.deepEqual([...h.matchAll(/data-lv-persona="([^"]+)"/g)].map(m => m[1]), ['conf|k1', 'rio|r1', 'rio|r2', 'ds|d1', 'coda|c1', 'coda|c2', 'coda|c3']);
-  assert.match(h, /<div class="lv-dom">Da chiudere<\/div>[\s\S]*<div class="lv-dom">Poi si contatta \(nomi in coda o scelte personali\)<\/div>/);
+  assert.match(h, /<div class="lv-dom">Prima si chiude ciò che è aperto<\/div>[\s\S]*<div class="lv-dom">Poi si contatta \(nomi in coda o scelte personali\)<\/div>/);
   assert.match(h, /<b>Laura Ferri<\/b><small>Telefonata · Mai contattato<\/small>/);
   assert.match(h, /<b>Rosa Aprile<\/b><small>Riordino · Nutrilite · Daily<\/small>/);
   assert.match(h, /<small>Dare Seguito · scaduto da 3 giorni<\/small>/);   // la fase uguale al motivo non si ripete
