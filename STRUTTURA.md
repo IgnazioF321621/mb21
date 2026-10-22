@@ -423,6 +423,12 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - **«Com'è andato [mese scorso]»**: ha una strada sola, il confronto dentro le card di «Come sto andando questo mese?». La riga doppia del pannello Obiettivi (`ds-confronto`) è stata tolta; `disegnaConfronto` resta nel codice, senza strada.
 - Prove in `prova_dashboard_livelli.js`.
 
+**Verifica della Dashboard, tappa 4 (Ignazio 22/10/2026):** il foglio Obiettivi è più corto, senza perdere dati.
+- Le 6 sezioni si aprono una alla volta: aprirne una chiude le altre (`imposta`, `testate` in `apriObiettivi`).
+- All'apertura è aperta solo la prima sezione con caselle ancora da scrivere; le altre sono chiuse con il loro sunto.
+- La scala dei bonus (`.ob-livelli`) sta in una riga sola che scorre di lato.
+- Campi e salvataggio come prima (`obiettivi_mese`, `obiettivi_linee`). Prova in `prova_dashboard_livelli.js`.
+
 **Riquadro degli obiettivi (Ignazio 01/10):** dall'1 al 5 del mese, se gli obiettivi del mese mancano (`obiettiviMancanti`), la Dashboard apre da sola un riquadro ampio al centro («È iniziato ottobre» · «Scelgo i miei obiettivi» / «Più tardi, vado alla Dashboard»), **ogni volta che si entra in Dashboard o si rientra nell'app (anche dal telefono, che la tiene viva in secondo piano), finché gli obiettivi non sono impostati**: si ricorda in memoria (`ST.riquadroObMostrato`), così toccare una fascia (che ridisegna la Dashboard) non lo riapre; il ricordo si azzera lasciando la Dashboard (`mostraTab`) e uscendo dall'app (`visibilitychange`). Non si apre con abbonamento scaduto, offline, a nome di un altro partner, in «Tutti» o se c'è già un foglio aperto. Il banner «Imposta gli obiettivi del mese!» resta. Codice: `mostraRiquadroObiettivi()` in `pagina-dashboard.js` (giorni: `GIORNI_RIQUADRO_OBIETTIVI`), stili `.velo.centro` e `.riquadro-ob` in `index.html`.
 
 **Ordine del foglio obiettivi (Ignazio 01/10):** in cima il risultato che si vuole ottenere. **Volume:** VPG · totale del gruppo (con la riga «Dal gruppo»), poi «di cui il tuo VPP» e, sotto, «di cui consumo personale» e «di cui VP Clienti». **Azione:** Nuovi Iscritti · totale, «di cui Sponsor Personali», poi «attraverso quanti PM personali» e «e quanti Contatti» (come ci si arriva; l'indicazione di quanti ne servono è il passo 3). La barra si chiama **«Incremento»**, parte da **0%** (niente «scegli»), e cambiando scelta riparte da 0%.

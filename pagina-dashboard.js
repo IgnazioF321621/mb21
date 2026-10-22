@@ -2047,15 +2047,22 @@ function apriObiettivi() {
       crescita: unisci(n('tracce') && `${n('tracce')} tracce`, n('pagine') && `${n('pagine')} pagine`) }[id] || '';
   };
   const sunti = () => velo.querySelectorAll('.ob-sez').forEach(sez => { sez.querySelector('.ob-sez-sunto').innerHTML = sez.querySelector('.ob-sez-corpo').hidden ? sunto(sez.dataset.sez) : ''; });
-  velo.querySelectorAll('.ob-sez-testa').forEach(b => {
+  // Verifica della Dashboard, tappa 4 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): le sezioni si aprono UNA alla volta (aprirne una chiude
+  // le altre); all'apertura del foglio è aperta solo la prima con caselle ancora da scrivere, le altre chiuse con il loro sunto. Campi e salvataggio come prima.
+  const imposta = (b, apri) => { b.nextElementSibling.hidden = !apri; b.setAttribute('aria-expanded', String(apri)); const i = b.querySelector('i'); if (i) i.textContent = apri ? '⌃' : '⌄'; };
+  const testate = [...velo.querySelectorAll('.ob-sez-testa')];
+  testate.forEach(b => {
     b.onclick = () => {
-      const corpo = b.nextElementSibling, apri = corpo.hidden;
-      corpo.hidden = !apri; b.setAttribute('aria-expanded', String(apri)); b.querySelector('i').textContent = apri ? '⌃' : '⌄';
+      const apri = b.nextElementSibling.hidden;
+      testate.forEach(x => imposta(x, apri && x === b));
       sunti();
     };
   });
   velo.addEventListener('input', () => { riepilogo(); sunti(); });
-  consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo(); sunti();
+  consumoDaVpp(); ricordaQuota(); dalGruppo(); indicazioni(); riepilogo();
+  const daScrivere = testate.find(b => [...b.nextElementSibling.querySelectorAll('input')].some(x => x.id !== 'ob-consumo' && String(x.value).trim() === ''));
+  testate.forEach(x => imposta(x, x === daScrivere));
+  sunti();
   const sceltaModo = b => velo.querySelectorAll('[data-modo]').forEach(x => x.classList.toggle('scelto', x === b));   // la scala (bottone grande) e le tre scelte sotto
   // «Base» = da cosa parte l'aumento: i traguardi del mese scorso, i risultati, la scala dei bonus, o niente (Scrivo io)
   // Scala dei bonus: il `gradino` (3% … 21%) riempie tutte le caselle di cui la scala ha il numero (MB21Check.SCALA_BONUS), le altre restano al partner
