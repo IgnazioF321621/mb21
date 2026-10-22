@@ -547,6 +547,25 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('S7 (Ignazio 22/10): le scelte (sceltaDa, una funzione per tutta l\'app) compaiono al centro; toccare fuori chiude come prima; se lunghe scorrono dentro', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  const da = src.indexOf('function sceltaDa'), a = src.indexOf('\n}\n', da) + 3;
+  let velo = null, tolto = 0;
+  const bottoni = [];
+  const ctx = { esc: x => String(x), ic: n => `[${n}]`, document: { body: { appendChild: v => { velo = v; } }, createElement: () => ({ className: '', innerHTML: '', remove: () => { tolto++; },
+    querySelector: () => ({ onclick: null }), querySelectorAll: sel => (sel === 'button[data-i]' ? [0, 1].map(i => { const b = { dataset: { i: String(i) } }; bottoni.push(b); return b; }) : []) }) } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.scelta = sceltaDa;', ctx);
+  let p = ctx.scelta('Nuova azione', [{ etichetta: 'Uno' }, { etichetta: 'Due' }]);
+  assert.equal(velo.className, 'velo centro');
+  velo.onclick({ target: velo }); assert.equal(await p, null); assert.equal(tolto, 1);   // fuori: si chiude senza scelta
+  p = ctx.scelta('Nuova azione', [{ etichetta: 'Uno' }, { etichetta: 'Due' }]);
+  bottoni.at(-1).onclick(); assert.equal((await p).etichetta, 'Due');
+  assert.equal((src.match(/\nfunction sceltaDa\(/g) || []).length, 1);   // una sola funzione: vale in Lista, Dashboard, rubrica, MB Plan
+  assert.match(idx, /\.velo\.centro \.foglio \{ max-width: 440px; border-radius: var\(--raggio-foglio\); max-height: calc\(100vh - 32px\); max-height: calc\(100dvh - 32px\); overflow-y: auto;/);
+  assert.match(idx, /\.velo\.centro \.foglio::before \{ display: none; \}/);   // al centro niente maniglia
+});
+
 prova('Scheda contatto S5/S5c (nota Pagine 072, Ignazio 22/10): «Cose da fare» per tutti; senza categoria «Nuova azione» apre prima «Modifica», poi l\'azione', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
