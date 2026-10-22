@@ -137,28 +137,6 @@ async function caricaCatalogo() {
   } catch (e) { ST.catalogo = null; ST.catalogoDi = null; }
 }
 
-// ── Righe che si aprono e si chiudono (Ignazio 24/09: la Dashboard sul telefono era lunghissima) ──
-// «Contatti del giorno» e «Da catalogare» sono due righe come «Partner da avviare»: il tocco le apre sul posto.
-// Da sole: la coda è aperta se c'è qualcuno da chiamare, «Da catalogare» è sempre chiusa.
-// La scelta di Ignazio (aperta/chiusa) resta su questo telefono fino al giorno dopo.
-const CHIAVE_APERTE = 'mb21_dash_aperte';
-function aperteDash() {
-  if (ST.aperteDash && ST.aperteDash.giorno === ST.oggi) return ST.aperteDash;
-  let salvate = null;
-  try { salvate = JSON.parse(localStorage.getItem(CHIAVE_APERTE)); } catch (e) {}
-  ST.aperteDash = salvate && salvate.giorno === ST.oggi ? salvate : { giorno: ST.oggi };
-  return ST.aperteDash;
-}
-function apertaRigaDash(nome, daSola) {
-  const scelta = aperteDash()[nome];
-  return scelta === undefined ? daSola : scelta;
-}
-function cambiaRigaDash(nome, daSola) {
-  const a = aperteDash();
-  a[nome] = !apertaRigaDash(nome, daSola);
-  try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {}
-  disegnaOggi();
-}
 // `restano` = quanti ne restano da fare: chiusa, il numero si vede in una pastiglia prima della freccia
 // (Ignazio 24/09: «non si capisce che ci sono 4 persone da chiamare»)
 function rigaApribile(id, classe, icona, titolo, sotto, aperta, restano) {
@@ -276,19 +254,13 @@ function nuovoInAvvio() {
   const m = AVV.mio;
   return !guardoAltri() && !!m && !m.avvio_concluso_il && !m.avvio_in_pausa_dal && !!MB21Lista.prossimoPasso(m);
 }
-function contiOggi() {
-  const r = ST.risultato || { coda: [], dareSeguito: [] };
-  return { coda: r.coda.length, dare: r.dareSeguito.length, conf: CONF.righe.length, rio: RIO.righe.length, scelte: SCE.righe.length };
-}
-const totaleOggi = c => c.coda + c.dare + c.conf + c.rio + c.scelte;
-function fraseOggi(c) {
-  const p = [];
-  if (c.conf) p.push(`${c.conf} ${c.conf === 1 ? 'conferma' : 'conferme'}`);
-  if (c.dare) p.push(`${c.dare} Dare Seguito`);
-  if (c.coda) p.push(`${c.coda} ${c.coda === 1 ? 'telefonata' : 'telefonate'}`);
-  if (c.scelte) p.push(`${c.scelte} ${c.scelte === 1 ? 'scelta' : 'scelte'} a mano`);
-  if (c.rio) p.push(`${c.rio} ${c.rio === 1 ? 'riordino' : 'riordini'}`);
-  return p.join(', ');
+// L'elenco di «Oggi» (tappe 5-8): lo stesso per la tessera in Home e per «Chi sento oggi?».
+// Fatti: gli esiti di oggi della coda e delle scelte (`stato_oggi.fatti_oggi`) più le righe chiuse da qui (LV.fatte di conferme, riordini, Dare Seguito).
+function elencoDiOggi() {
+  const r = ST.risultato || { coda: [], dareSeguito: [] }, st = ST.stato || {}, inPausa = st.contatti_al_giorno === 0;
+  const daQui = LV.fatte.filter(x => x.tipo !== 'coda' && x.tipo !== 'scelta');
+  const fatte = [...daQui, ...Array.from({ length: st.fatti_oggi || 0 }, () => ({ tipo: 'coda' }))];
+  return MB21Dashboard.elencoOggi(CONF.righe, RIO.righe, r.dareSeguito, inPausa ? [] : r.coda, SCE.righe, fatte);
 }
 function fraseMese() {
   const d = DS.dati;
@@ -336,7 +308,7 @@ function tessera(go, icona, colore, tinta, titolo, riga, n, opz = {}) {
     : `<button class="lv-tile${opz.blu ? ' blu' : ''}" data-lv="${go}" style="${stile}">${dentro}</button>`;
 }
 function disegnaHome() {
-  const altro = guardoAltri(), nuovo = nuovoInAvvio(), d = DS.dati, c = contiOggi(), totale = totaleOggi(c);
+  const altro = guardoAltri(), nuovo = nuovoInAvvio(), d = DS.dati, e = elencoDiOggi(), totale = e.totale - e.fatti;   // tappa 8: i numeri dell'elenco unico
   const fattoGiorno = !!d && d.ultimoCheck === ST.oggi, sera = oraRoma() >= ORA_CHECK;
   const nome = nomeProprio();
   let html = `<div class="testa-pagina"><div><div class="sotto" style="margin:0">${esc(dataEstesa(ST.oggi))}</div><h1>${altro || !nome ? 'Dashboard' : `Ciao ${esc(nome)}`}</h1></div>${cerchiettoProfilo()}</div>` + dashboardTesta();
@@ -346,7 +318,7 @@ function disegnaHome() {
   }
   html += rigaTelefonoHtml();   // cantiere 32: «Metti MB21 sul telefono e accendi gli avvisi»
   const tessere = [];
-  const chi = tessera('oggi', 'telefonate', 'ct-chiama', 'ok-tinta', 'Chi sento oggi?', esc(totale ? fraseOggi(c) : (ST.stato && ST.stato.contatti_al_giorno === 0 ? 'In pausa · 0 contatti al giorno' : 'Per oggi hai finito')), totale, { blu: totale > 0 });
+  const chi = tessera('oggi', 'telefonate', 'ct-chiama', 'ok-tinta', 'Chi sento oggi?', esc(totale ? MB21Dashboard.fraseElencoOggi(e) : (ST.stato && ST.stato.contatti_al_giorno === 0 ? 'In pausa · 0 contatti al giorno' : 'Per oggi hai finito')), totale, { blu: totale > 0 });
   const haNumeri = !!d && ((DS.checkMesi || []).some(x => Number(x.contatti) > 0) || (ST.stato && ST.stato.fatti_oggi > 0));
   const mese = tessera('mese', 'report', 'gr-volume', 'gr-volume-tinta', 'Come sto andando questo mese?', esc(nuovo && !haNumeri ? 'Si accende dopo le prime telefonate' : fraseMese()), 0, { spenta: nuovo && !haNumeri });
   const p = percorsoDash();
@@ -415,7 +387,7 @@ async function nonOra(id) {
 }
 // Tappa 6 della verifica (Ignazio 22/10): un elenco solo, in ordine (MB21Dashboard.elencoOggi): prima ciò che è aperto da chiudere,
 // poi «Poi si contatta»; su ogni riga il motivo davanti («Conferma · …», «Telefonata · scelta · …»); un conto solo «fatti N di M».
-// Fatti: gli esiti di oggi della coda e delle scelte (`stato_oggi.fatti_oggi`) più le righe chiuse da qui (LV.fatte); le chiuse restano con la spunta.
+// Le righe chiuse restano con la spunta, in fondo al loro gruppo.
 function sottoOggi(x) {
   const d = x.dato;
   if (x.motivo === 'conf') return MB21Agenda.testoConferma(d, new Date().toISOString());
@@ -425,10 +397,7 @@ function sottoOggi(x) {
   return sottoScelta(d);
 }
 function disegnaOggiLV() {
-  const r = ST.risultato, st = ST.stato, altro = guardoAltri(), inPausa = st.contatti_al_giorno === 0;
-  const daQui = LV.fatte.filter(x => x.tipo !== 'coda' && x.tipo !== 'scelta');   // coda e scelte fatte oggi sono già in fatti_oggi
-  const fatte = [...daQui, ...Array.from({ length: st.fatti_oggi || 0 }, () => ({ tipo: 'coda' }))];
-  const e = MB21Dashboard.elencoOggi(CONF.righe, RIO.righe, r.dareSeguito, inPausa ? [] : r.coda, SCE.righe, fatte);
+  const r = ST.risultato, st = ST.stato, altro = guardoAltri(), inPausa = st.contatti_al_giorno === 0, e = elencoDiOggi();
   const gruppoDi = tipo => (tipo === 'coda' || tipo === 'scelta' ? 'contattare' : 'chiudere');
   const blocchi = MB21Dashboard.GRUPPI_OGGI.map(g => {
     const righe = ((e.gruppi.find(x => x.chiave === g.chiave) || {}).righe || []).map(x => {
@@ -609,7 +578,7 @@ function disegnaAvvioLV() {
 function disegnaOggi() {
   if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «N riordini da sentire» porta dritto al riquadro; dal benvenuto su «Il mio avvio»
-  if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; cambiaRigaDashAperta('riordini'); }
+  if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; }
   if (vai === 'avvio') LV.vista = 'avvio';
   if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
@@ -632,7 +601,6 @@ function disegnaOggi() {
   if (vai === 'giorno' && !ST.offline && !limitato() && !document.querySelector('.velo')) apriCheck();
   collegaVistaLV();
 }
-function cambiaRigaDashAperta(nome) { const a = aperteDash(); a[nome] = true; try { localStorage.setItem(CHIAVE_APERTE, JSON.stringify(a)); } catch (e) {} }
 // I collegamenti che servono a più pagine: le righe dell'avvio, i pulsanti dei numeri, i consigli del percorso, le card della coda
 function collegaVistaLV() {
   collegaDashboard();

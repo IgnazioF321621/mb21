@@ -19,7 +19,7 @@ prova('Il primo livello: quattro idee in fila, una domanda ciascuna, con Report 
   // «Chi sento oggi?» dice cosa c'è e quante sono, in blu; il resto no
   const chi = tessere(html)[0];
   assert.match(chi, /lv-tile blu/);
-  assert.match(chi, /1 conferma, 1 Dare Seguito, 3 telefonate, 2 riordini/);
+  assert.match(chi, /<small>4 da chiudere · 3 da chiamare · fatti 2 di 9<\/small>/);   // tappa 8: la frase corta dell'elenco unico
   assert.match(chi, /<i class="lv-n">7<\/i>/);
   assert.doesNotMatch(tessere(html)[1], /lv-tile blu/);
   assert.match(tessere(html)[1], /ottobre · restano 28 giorni · VPG 48 al giorno/);
@@ -93,6 +93,13 @@ prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cam
   assert.match(h, /data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button>/);
   assert.match(h, /<div class="coppia"><button data-riordino-spento="r1">Telefono spento<\/button><button class="no" data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button><\/div>/);   // T7b: sulla stessa riga
   assert.match(P.stile, /\.bottoni \.coppia \{ flex: 1 1 100%; display: flex; gap: 8px; \}/);   // «Nessun ordine» salva «No Interesse»: il cliente torna, l'app chiede tra quanti giorni
+});
+
+prova('Tappa 8: via il codice delle 5 righe che si aprivano (aperteDash, contiOggi, fraseOggi); la Home e l\'elenco leggono lo stesso elencoDiOggi', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  assert.doesNotMatch(dash, /aperteDash|apertaRigaDash|cambiaRigaDash|CHIAVE_APERTE|contiOggi|totaleOggi|fraseOggi/);
+  assert.equal((dash.match(/elencoDiOggi\(\)/g) || []).length, 3);   // la funzione, la Home, «Chi sento oggi?»
 });
 
 prova('Tappa 7: una scheda sola per ogni motivo — stessa testata (motivo, nome, riga di sotto), cambiano solo i tasti', () => {
@@ -257,7 +264,7 @@ prova('Telefonate scelte a mano: in più dei contatti del giorno, con giorno e o
   assert.match(h, /<b>Carla Bo<\/b><small>Telefonata · scelta · Senza orario<\/small>/);
   assert.match(h, /data-lv-persona="coda\|c3"[\s\S]*data-lv-persona="scelta\|s2"/);   // nel gruppo «Poi si contatta», dopo la coda
   const home = P.vista('home', { scelte: true }).html;   // il primo livello le conta tra le cose di oggi
-  assert.match(home, /1 conferma, 1 Dare Seguito, 3 telefonate, 2 scelte a mano, 2 riordini/);
+  assert.match(home, /<small>4 da chiudere · 5 da chiamare · fatti 2 di 11<\/small>/);
   assert.match(home, /<i class="lv-n">9<\/i>/);
   delete P.memo.scelte;
 });
