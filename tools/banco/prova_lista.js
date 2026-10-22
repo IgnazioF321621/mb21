@@ -547,6 +547,35 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Scheda contatto S3 (Ignazio 22/10): le azioni chiuse in una riga «data · tipo · esito», al tocco la card; quella da fare resta aperta', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function sezioneAzioni'), a = src.indexOf('\n}\n', da) + 3;
+  const c = { id: 'c1', nome: 'Contatto A', categoria: 'Prospect' };
+  const azioni = [
+    { id: 'a1', contatto_id: 'c1', tipo_azione: 'Contatto', modalita: 'Telefonata', inizio: '2026-10-23T16:00:00Z', esito: null },
+    { id: 'a2', contatto_id: 'c1', tipo_azione: 'Piano Marketing', modalita: '1a1', inizio: '2026-10-10T16:00:00Z', esito: 'Relazione', note: 'nota finta' },
+  ];
+  let clic = [];
+  const box = { innerHTML: '', querySelectorAll: sel => (sel === '[data-az-apri]' ? [...box.innerHTML.matchAll(/data-az-apri="([^"]+)"/g)].map(m => { const b = { dataset: { azApri: m[1] } }; clic.push(b); return b; }) : []) };
+  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
+    document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
+    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7) }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false },
+    bloccoEsiti: a => (a.esito ? '<i data-apri-esiti></i>' : '<div class="bottoni">ESITI</div>'), ricordoHtml: () => '', preparaPresentazioneHtml: () => '', preparaChiamataHtml: () => '',
+    rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.sez = sezioneAzioni;', ctx);
+  await ctx.sez();
+  let h = box.innerHTML;
+  assert.match(h, /id="azione-piu"[\s\S]*<div class="azione">[\s\S]*ESITI/);   // «Nuova azione» in alto, poi quella da fare, aperta
+  assert.match(h, /<button class="azione az-riga" data-az-apri="a2"><small>10\/10<\/small><span>Piano Marketing · 1a1 · Relazione<\/span><em>›<\/em><\/button>/);
+  assert.doesNotMatch(h, /nota finta|data-elimina-azione="a2"/);   // chiusa: niente card
+  clic.find(b => b.dataset.azApri === 'a2').onclick(); await new Promise(r => setTimeout(r, 0));
+  h = box.innerHTML;
+  assert.equal(ctx.LS.azAperta, 'a2');
+  assert.match(h, /az-riga aperta" data-az-apri="a2">[\s\S]*?⌃[\s\S]*?nota finta[\s\S]*?data-cambia-esito="a2"[\s\S]*?data-modifica-azione="a2"[\s\S]*?data-elimina-azione="a2"/);
+  assert.doesNotMatch(h, /Carico le azioni/);   // aprire una riga non rilegge e non fa saltare la pagina
+});
+
 prova('Scheda contatto S2 (Ignazio 22/10): «+ Una cosa da fare» che si apre al tocco; l\'elenco «Da fare» solo se ci sono cose', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');

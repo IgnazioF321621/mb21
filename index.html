@@ -351,6 +351,11 @@
   .azione .t { font-weight: 700; font-size: 15px; }
   .azione .s { font-size: 13px; color: var(--testo-soft); }
   .azione .comandi { display: flex; align-items: center; gap: 14px; }
+  /* Scheda contatto S3 (Ignazio 22/10): l'azione già chiusa in una riga «data · tipo · esito ›», al tocco si apre la card */
+  .azione.az-riga { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; font: inherit; color: var(--testo); padding: 10px 12px 10px 20px; }
+  .az-riga small { flex: none; font-size: 13px; color: var(--testo-soft); } .az-riga em { font-style: normal; font-size: 18px; color: var(--testo-tenue); }
+  .az-riga span { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .azione.az-riga.aperta { margin-bottom: 2px; box-shadow: none; background: transparent; }
   /* card stretta (Ignazio 24/09): data a destra del titolo, esito in grassetto, comandi su una riga sola con «Cambia esito» */
   .azione .testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .azione .testa .q { font-size: 13px; color: var(--testo-tenue); flex: none; }

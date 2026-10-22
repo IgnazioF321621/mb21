@@ -434,7 +434,7 @@ function apriScheda(id) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.attesa = null;
+  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.attesa = null;
   LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
@@ -812,8 +812,8 @@ async function sezioneAzioni() {
   // Niente riquadro FASE (Ignazio 24/09: «residuo di Glide»): dove si è con la persona lo dice la prima card, l'ultima azione con il suo esito.
   // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
   const piuHtml = '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
-  box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';
   if (!LS.azioni) {
+    box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';   // solo alla prima lettura: aprire una riga (S3) non fa saltare la pagina
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
     const { data, error } = await dbq('lettura azioni', supa.from('azioni')
       .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, area, ospite, note, inizio, fine, completata, data_scelta, riflessione, creato_il, contatti(nome)')
@@ -832,7 +832,20 @@ async function sezioneAzioni() {
   const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}</div></div>`;
   const dettagli = parti => { const p = parti.filter(Boolean); return p.length ? `<div class="s">${p.join(' · ')}</div>` : ''; };
   const link = (attr, id, testo, rosso) => `<button class="link" ${attr}="${esc(id)}"${rosso ? ' style="color:var(--rosso)"' : ''}>${testo}</button>`;
+  // Verifica Scheda contatto S3 (Ignazio 22/10): un'azione già chiusa (con l'esito) è UNA riga «data · tipo · esito ›»; al tocco si apre
+  // la card di sempre (Modifica, Elimina, Cambia esito, note) e la riga resta sopra per richiuderla. L'azione ancora da fare resta aperta.
+  const rigaChiusa = a => {
+    const tipo = a.contatto_id !== c.id ? `Ha portato ${a.contatti ? a.contatti.nome : '—'}` : [a.tipo_azione, a.modalita].filter(Boolean).join(' · ');
+    const aperta = LS.azAperta === a.id;
+    return `<button class="azione az-riga${aperta ? ' aperta' : ''}" data-az-apri="${esc(a.id)}"><small>${esc(MB21Lista.data(a.inizio, true))}</small>`
+      + `<span>${esc([tipo, a.esito ? MB21Agenda.nomePasso(a.esito) : ''].filter(Boolean).join(' · '))}</span><em>${aperta ? '⌃' : '›'}</em></button>`;
+  };
   box.innerHTML = piuHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => {
+    if (a.esito && LS.azAperta !== a.id) return rigaChiusa(a);
+    const sopra = a.esito ? rigaChiusa(a) : '';
+    return sopra + cardAzione(a);
+  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
+  function cardAzione(a) {
     if (a.contatto_id !== c.id) return `
     <div class="azione">
       ${testa(`${ic('squadra')} Ha portato ${esc(a.contatti ? a.contatti.nome : '—')}`, a)}
@@ -852,7 +865,8 @@ async function sezioneAzioni() {
       ${chiusa ? `<div class="blocco-esiti" data-blocco="${esc(a.id)}"></div>` : blocco}
       <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${MB21Agenda.eConsegna(a) ? '' : link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;
-  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
+  }
+  box.querySelectorAll('[data-az-apri]').forEach(b => b.onclick = () => { LS.azAperta = LS.azAperta === b.dataset.azApri ? null : b.dataset.azApri; sezioneAzioni(); });
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; await ricaricaERidisegna(); };
