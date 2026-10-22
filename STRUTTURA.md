@@ -499,6 +499,13 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - Il segno Coach Yes accanto al nome (coda, Agenda, scheda della persona) apre il suo foglio come prima (`foglioCoachYes` in `index.html`).
 - Prova in `prova_lista.js`; disegno con dati finti in `docs/prototipi/schizzo_scheda_coach_S4.png`.
 
+**Scheda contatto, tappa S5 (nota Pagine 072, Ignazio 22/10/2026: «la vecchia telefonata la voglio conservare»):**
+- Il riquadro delle cose da fare c'è per ogni categoria, anche Archiviato, Ex, Unlinked e senza categoria.
+- Un contatto senza categoria usa i tipi e gli esiti del Prospect. In `azionePiu` ci sono `nuovoAppuntamento({ …, categoria: c.categoria || 'Prospect' })` e `catEsiti` per `bloccoEsiti` e `collegaEsiti` in `sezioneAzioni`.
+- L'azione si salva con categoria «Prospect»; quella del contatto non cambia (`categoriaToccata` resta falsa), quindi non entra in coda e resta in «Da catalogare».
+- Archiviato, Unlinked, Ex e Referral avevano già i tipi del Prospect (`agenda.js`, `TIPI`). Coda e Sharing non sono toccati.
+- Prove in `prova_lista.js` e `prova_modulo_vista.js`.
+
 **Riquadro degli obiettivi (Ignazio 01/10):** dall'1 al 5 del mese, se gli obiettivi del mese mancano (`obiettiviMancanti`), la Dashboard apre da sola un riquadro ampio al centro («È iniziato ottobre» · «Scelgo i miei obiettivi» / «Più tardi, vado alla Dashboard»), **ogni volta che si entra in Dashboard o si rientra nell'app (anche dal telefono, che la tiene viva in secondo piano), finché gli obiettivi non sono impostati**: si ricorda in memoria (`ST.riquadroObMostrato`), così toccare una fascia (che ridisegna la Dashboard) non lo riapre; il ricordo si azzera lasciando la Dashboard (`mostraTab`) e uscendo dall'app (`visibilitychange`). Non si apre con abbonamento scaduto, offline, a nome di un altro partner, in «Tutti» o se c'è già un foglio aperto. Il banner «Imposta gli obiettivi del mese!» resta. Codice: `mostraRiquadroObiettivi()` in `pagina-dashboard.js` (giorni: `GIORNI_RIQUADRO_OBIETTIVI`), stili `.velo.centro` e `.riquadro-ob` in `index.html`.
 
 **Ordine del foglio obiettivi (Ignazio 01/10):** in cima il risultato che si vuole ottenere. **Volume:** VPG · totale del gruppo (con la riga «Dal gruppo»), poi «di cui il tuo VPP» e, sotto, «di cui consumo personale» e «di cui VP Clienti». **Azione:** Nuovi Iscritti · totale, «di cui Sponsor Personali», poi «attraverso quanti PM personali» e «e quanti Contatti» (come ci si arriva; l'indicazione di quanti ne servono è il passo 3). La barra si chiama **«Incremento»**, parte da **0%** (niente «scegli»), e cambiando scelta riparte da 0%.
