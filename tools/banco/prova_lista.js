@@ -355,7 +355,7 @@ prova('Vendite: il modulo controlla i campi e legge i numeri scritti con la virg
   assert.equal(L.rigaVendita({ ...base, vp: '' }).errore, 'Scrivi i VP della vendita');
   assert.equal(L.rigaVendita({ ...base, vp: 'abc' }).errore, 'Scrivi i VP della vendita');
   assert.equal(L.rigaVendita({ ...base, sconto: '-1' }).errore, 'Lo sconto non è un numero');
-  assert.equal(L.rigaVendita({ ...base, riordino: '' }).errore, 'Manca la data di riordino');
+  assert.equal(L.rigaVendita({ ...base, riordino: '' }).riga.riordino, null);   // V2b (22/10): il riordino è facoltativo
   assert.equal(L.rigaVendita({ ...base, riordino: '' }, true).riga.riordino, null);
   assert.equal(L.rigaVendita({ ...base, riordino: '2026-09-01' }).errore, 'Il riordino è prima della vendita');
   assert.equal(L.rigaVendita({ ...base, data: '' }).errore, 'Manca la data di vendita');
@@ -556,13 +556,14 @@ prova('Vendite V2 (Ignazio 22/10): «Quando lo risento?» — riordinoFra, mesiF
   assert.equal(JSON.stringify(L.modoRiordino({ data: '2026-10-20', riordino: '2026-12-20', durata_mesi: 2 })), '{"modo":"fra","mesi":2,"data":"2026-12-20"}');
   assert.equal(L.modoRiordino({ data: '2026-10-20', consegna: '2026-11-01', riordino: '2027-01-01', durata_mesi: 2 }).modo, 'fra');   // dalla consegna
   assert.equal(L.modoRiordino({ data: '2026-10-20', riordino: '2026-12-19', durata_mesi: 2 }).modo, 'data');   // la data non torna: scelta a mano
-  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino_a_rottura: true, durata_mesi: 24 }).modo, 'rottura');
-  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino: null }).modo, null);   // lo storico senza riordino
+  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino_a_rottura: true, durata_mesi: 24 }).modo, 'nessuno');   // V2b: la vecchia «a rottura» = nessun riordino
+  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino: null }).modo, 'nessuno');   // lo storico senza riordino
+  assert.equal(L.modoRiordino(null).modo, null);   // vendita nuova: niente scelto
   const st = [{ prodotto: 'Filtro', brand: 'eSpring', data: '2025-01-10', riordino: '2026-01-10' }, { prodotto: 'Crema', brand: 'Artistry', data: '2026-05-01', riordino: '2026-07-01' },
     { prodotto: 'Pentola', brand: 'iCook', data: '2025-03-01', riordino_a_rottura: true, durata_mesi: 60 }, { prodotto: 'Siero', brand: 'Artistry', data: '2026-09-01', riordino: '2026-12-01', durata_mesi: 3 }];
   assert.equal(JSON.stringify(L.propostaRiordino(st, ' filtro ', 'eSpring')), '{"modo":"fra","mesi":12}');   // stesso prodotto: i mesi fra vendita e riordino
   assert.equal(JSON.stringify(L.propostaRiordino(st, 'Rossetto', 'Artistry')), '{"modo":"fra","mesi":3}');   // stesso brand, la più recente, i mesi scelti
-  assert.equal(JSON.stringify(L.propostaRiordino(st, 'Coperchio', 'iCook')), '{"modo":"rottura","mesi":60}');
+  assert.equal(JSON.stringify(L.propostaRiordino(st, 'Coperchio', 'iCook')), '{"modo":"nessuno","mesi":null}');   // V2b: dopo una «a rottura», nessun riordino
   assert.equal(L.propostaRiordino(st, 'Altro', 'Nutrilite'), null); assert.equal(L.propostaRiordino(null, 'x', 'y'), null);
 });
 
@@ -804,9 +805,9 @@ prova('Nota 053 e V3 (Ignazio 14/10 e 22/10): il modulo vendita — che cosa (co
   assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>|>I tempi<\/h4>/);
 });
 
-prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né telefonata; «di solito dura» solo da leggere', () => {
+prova('Nota 054 e V2b (Ignazio 22/10): «A rottura» non si sceglie più; le vendite vecchie restano com\'erano nel database; il riordino è facoltativo', () => {
   const base = { data: '2026-10-14', brand: 'eSpring', prodotto: 'Lampada UV', vp: '20', sconto: '', consegna: '', riordino: '' };
-  assert.equal(L.rigaVendita(base).errore, 'Manca la data di riordino');   // senza «A rottura» resta obbligatoria
+  assert.equal(L.rigaVendita(base).riga.riordino, null);   // V2b: senza riordino si salva
   let r = L.rigaVendita({ ...base, aRottura: true, durata: '24' }).riga;
   assert.equal(r.riordino, null); assert.equal(r.riordino_a_rottura, true); assert.equal(r.durata_mesi, 24);
   r = L.rigaVendita({ ...base, aRottura: true, riordino: '2027-01-01', durata: '' }).riga;   // la data scritta prima si toglie
@@ -816,9 +817,9 @@ prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né tele
   r = L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '24' }).riga;   // V2: con «Fra N mesi» i mesi si salvano (durata_mesi), la data è quella
   assert.equal(r.riordino, '2027-01-01'); assert.equal(r.riordino_a_rottura, false); assert.equal(r.durata_mesi, 24);
   assert.equal(L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '' }).riga.durata_mesi, null);   // data scelta a mano: niente mesi
-  assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2025-08-20', durata_mesi: 24 }, '2026-10-14'), 'A rottura · venduto 13 mesi fa, di solito dura 24 mesi');
-  assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2026-10-01' }, '2026-10-14'), 'A rottura · venduto questo mese');
-  assert.equal(L.rigaRottura({ riordino_a_rottura: false, data: '2026-10-01' }, '2026-10-14'), '');
+  assert.equal(L.rigaRottura, undefined);   // V2b: la riga «A rottura · venduto … fa» nella scheda non c'è più
+  const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
+  assert.doesNotMatch(ven, /A rottura<\/button>|data-riordino="rottura"|v-durata|vn-rottura/);
   assert.equal(L.prossimoRiordino([{ brand: 'eSpring', data: '2026-10-14', riordino: null, riordino_a_rottura: true }, { brand: 'eSpring', data: '2025-01-01', riordino: '2026-12-01' }], '2026-10-14'), null);
 });
 

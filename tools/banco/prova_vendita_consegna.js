@@ -73,11 +73,11 @@ prova('modifica di una vendita che ha già quella consegna, o con «Ordine fatto
 // ── V2 (Verifica Vendite, Ignazio 22/10): il riordino con una domanda sola «Quando lo risento?» ──
 const scegli = (f, attr, val) => f.querySelectorAll(`[data-${attr}]`).find(b => b.dataset[attr === 'riordino' ? 'riordino' : 'mesi'] === String(val)).onclick();
 function base(s) { s.f.querySelectorAll('[data-brand]')[0].onclick(); s.$('v-prodotto').value = 'Filtro di ricambio'; s.$('v-vp').value = '88,47'; s.$('v-data').value = '2026-10-20'; }
-prova('V2: senza storico niente è scelto; Salva chiede «quando lo risenti», poi «fra quanti mesi»; «Fra 2 mesi» salva il 20/12 e durata_mesi 2', async () => {
+prova('V2/V2b: senza storico niente è scelto e si può salvare senza riordino; «Fra» chiede quanti mesi; «Fra 2 mesi» salva il 20/12 e durata_mesi 2', async () => {
   const s = apri(null, true); base(s);
   await new Promise(r => setTimeout(r, 0));
   assert.equal(s.$('v-fra-tasto').textContent, 'Fra … mesi'); assert.equal(s.$('v-riordino-aiuto').textContent, '');   // niente scelto
-  await s.$('invia').onclick(); assert.equal(s.avvisi.at(-1), 'Scegli quando lo risenti'); assert.equal(s.scritte.length, 0);
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Facoltativo');
   scegli(s.f, 'riordino', 'fra');
   await s.$('invia').onclick(); assert.equal(s.avvisi.at(-1), 'Scegli fra quanti mesi lo risenti');
   scegli(s.f, 'mesi', 2);
@@ -95,10 +95,20 @@ prova('V2: con lo storico la scelta è già messa (stesso prodotto: «Fra 12 mes
   await s.$('invia').onclick();
   assert.equal(s.scritte[0][1].riordino, '2027-11-05'); assert.equal(s.scritte[0][1].durata_mesi, 12);
 });
-prova('V2: «A rottura» non scrive la data e tiene «di solito dura»; «Scegli la data» salva la data senza mesi', async () => {
-  let s = apri(null, true); base(s); scegli(s.f, 'riordino', 'rottura'); s.$('v-durata').value = '24';
+prova('V2b: niente scelto o «Nessun riordino» salva senza riordino; «Scegli la data» salva la data senza mesi', async () => {
+  let s = apri(null, true); base(s);
   await s.$('invia').onclick();
-  assert.equal(s.scritte[0][1].riordino, null); assert.equal(s.scritte[0][1].riordino_a_rottura, true); assert.equal(s.scritte[0][1].durata_mesi, 24);
+  assert.equal(s.scritte.length, 1); assert.equal(s.scritte[0][1].riordino, null); assert.equal(s.scritte[0][1].riordino_a_rottura, false);
+  s = apri(null, true); base(s); scegli(s.f, 'riordino', 'nessuno');
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Nessun riordino'); assert.match(s.$('v-riordino-aiuto').textContent, /torna tra i contatti del giorno/);
+  await s.$('invia').onclick();
+  assert.equal(s.scritte[0][1].riordino, null); assert.equal(s.scritte[0][1].durata_mesi, null);
+  // una vendita vecchia «a rottura»: si apre come «Nessun riordino» e, salvata, resta com'era nel database
+  const vecchia = { id: 'v9', brand: L.BRAND[0][0], prodotto: 'Pentola', vp: 50, sconto: 0, data: '2025-03-01', consegna: null, ordinata_il: null, riordino: null, riordino_a_rottura: true, durata_mesi: 60 };
+  s = apri(vecchia, true);
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Nessun riordino');
+  await s.$('invia').onclick();
+  assert.equal(s.scritte[0][1].riordino_a_rottura, true); assert.equal(s.scritte[0][1].durata_mesi, 60); assert.equal(s.scritte[0][1].riordino, null);
   s = apri(null, true); base(s); scegli(s.f, 'riordino', 'data'); s.$('v-riordino').value = '2027-01-15';
   await s.$('invia').onclick();
   assert.equal(s.scritte[0][1].riordino, '2027-01-15'); assert.equal(s.scritte[0][1].durata_mesi, null);
@@ -121,7 +131,7 @@ prova('V3: brand, prodotti, data, VP, prezzo, incassato e sconto fuori dai grupp
   assert.ok(h.indexOf('data-brand') < gruppi);
   await new Promise(r => setTimeout(r, 0));
   assert.equal(s.$('v-dentro-consegna').style.display, 'none'); assert.equal(s.$('v-sunto-consegna').textContent, 'Subito');
-  assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-sunto-riordino').textContent, 'Da scegliere');
+  assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-sunto-riordino').textContent, 'Facoltativo');
   scegli(s.f, 'riordino', 'fra'); scegli(s.f, 'mesi', 3);
   assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 3 mesi · il 20/01/2027');
 });

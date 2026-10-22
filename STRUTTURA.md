@@ -115,17 +115,23 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
   - Sempre in vista: brand, prodotti, data di vendita (spostata in «Che cosa hai venduto»), VP, prezzo al pubblico, incassato, sconto e come ha pagato. Ignazio: «voci fondamentali per farsi un calcolo».
   - «Consegna» e «Riordino» sono due righe chiuse (`.vn-gruppi`, `.vn-apri` in `index.html`) con la scelta in vista: «Subito», «Più avanti · 05/11/2026», «Fra 12 mesi · il 22/10/2027», «A rottura», «Da scegliere». Si aprono al tocco (⌃ / ›).
   - Il riordino da scegliere parte aperto; arrivata la proposta (V2) si chiude, se non l'hai aperto tu.
-  - Se al Salva manca la data di consegna o la scelta del riordino, il gruppo si riapre con l'avviso.
+  - Se al Salva manca la data di consegna (o i mesi di «Fra N mesi»), il gruppo si riapre con l'avviso. Dalla V2b il riordino non scelto si legge «Facoltativo».
   - Campi e salvataggio sono quelli di prima. Prove in `prova_vendita_consegna.js`; disegno con il codice vero in `docs/prototipi/schizzo_vendite_modulo_V3.png`.
-- **Riordino con una domanda sola (Verifica Vendite V2, Ignazio 22/10/2026):** nel modulo vendita c'è «Quando lo risento?», con tre scelte: «Fra N mesi» · «A rottura» · «Scegli la data». Prima c'erano «Con una data / A rottura», la data e «di solito dura».
+- **Riordino con una domanda sola (Verifica Vendite V2, Ignazio 22/10/2026):** nel modulo vendita c'è «Quando lo risento?», con tre scelte: «Fra N mesi» · «A rottura» (tolta dalla V2b, sotto) · «Scegli la data». Prima c'erano «Con una data / A rottura», la data e «di solito dura».
   - «Fra N mesi»: pastiglie 1 · 2 · 3 · 4 · 6 · 12, più quella proposta se è un altro numero. Scrive `riordino` = consegna (o vendita) + N mesi (`MB21Lista.riordinoFra`) e `durata_mesi` = N; sotto si legge «Il GG/MM/AAAA: 10 giorni prima…».
-  - «A rottura»: com'era (nessuna data, «di solito dura» facoltativo).
+  - **V2b (Ignazio 22/10/2026, «sì perfetto»): il riordino è facoltativo e «A rottura» non c'è più.**
+    - Le scelte sono «Fra N mesi» · «Scegli la data» · «Nessun riordino»; anche senza scelta la vendita si salva (`rigaVendita` non chiede più la data; resta obbligatoria la data di vendita).
+    - Senza riordino nessuna telefonata: il cliente torna nella coda dei contatti alla sua data di rientro (`riordino_programmato`, `coda.js`), come prima con «a rottura». Ignazio lo sa e lo accetta.
+    - Le vendite vecchie con `riordino_a_rottura = true` non si toccano: si aprono come «Nessun riordino» (`modoRiordino`), e salvate restano com'erano (`riordino_a_rottura`, `durata_mesi`).
+    - La proposta dopo una vendita «a rottura» è «nessun riordino».
+    - Tolte la riga «A rottura · venduto … fa» nella scheda (`MB21Lista.rigaRottura`, `.vn-rottura`) e il campo «di solito dura».
+    - Disegno: `docs/prototipi/schizzo_vendite_riordino_V2b.png`.
   - «Scegli la data»: la data a mano, senza mesi.
   - **Proposta per una vendita nuova:** una lettura delle vendite di chi vende (ultime 200). `MB21Lista.propostaRiordino` prende l'ultima vendita dello stesso prodotto, se no dello stesso brand, e propone a rottura o fra N mesi (i mesi scelti allora, o quelli fra vendita/consegna e riordino). Si rifà quando cambiano brand o prodotto, finché non si sceglie a mano.
   - **Riaprendo una vendita:** `MB21Lista.modoRiordino` la legge.
   - **Database:** stessi campi, nessuna migrazione. `rigaVendita` salva `durata_mesi` anche con «Fra N mesi». La scheda legge `durata_mesi` anche per queste vendite.
   - Prove in `prova_lista.js` e `prova_vendita_consegna.js`; disegno con il codice vero in `docs/prototipi/schizzo_vendite_riordino_V2.png`.
-- **Riordino «A rottura» (nota Pagine 054, Ignazio 14/10/2026, per tutti)**:
+- **Riordino «A rottura» (nota Pagine 054, Ignazio 14/10/2026, per tutti; ⛔ dal 22/10 non si sceglie più, V2b sopra: resta la storia)**:
   - **Campi nuovi** su `vendite` (migrazione `20261013225242_vendite_a_rottura.sql`, sola aggiunta): `riordino_a_rottura` (boolean, default false) e `durata_mesi` (1-120, facoltativo).
   - **Nel modulo**, gruppo «I tempi»: «Il prossimo riordino» ha due scelte, «Con una data» o «A rottura». Con «A rottura» la data sparisce, `rigaVendita` salva `riordino` vuoto e chiede solo «Di solito dura (mesi)», facoltativo.
   - **Cosa ne segue**: con il riordino vuoto il trigger `mb21_vendita_agenda` (non toccato) non crea la telefonata; «Prossimo riordino», Riordini da sentire, avvisi e calendario la saltano, come per lo storico senza data. Il Cliente non ha un «riordino programmato», quindi torna nella coda come lo storico.
