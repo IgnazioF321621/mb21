@@ -388,7 +388,7 @@ prova('Verifica Dashboard, tappa 1 (Ignazio 22/10): riga del telefono spenta (co
   assert.doesNotMatch(dash, /su\('ds-sv'|su\('ds-check'|OBIETTIVI_PER_TUTTI|obiettiviAperti/);
   const riq = dash.slice(dash.indexOf('async function mostraRiquadroObiettivi'), dash.indexOf('\n}\n', dash.indexOf('async function mostraRiquadroObiettivi')));
   assert.doesNotMatch(riq.split('\n').slice(0, 5).join('\n'), /eAdmin\(\)/);   // l'invito «È iniziato [mese]» anche all'Admin
-  assert.match(dash, /LIMITI_ABBONAMENTO|limitato\(\)/);   // l'abbonamento non è toccato: resta spento e pronto
+  assert.doesNotMatch(dash, /LIMITI_ABBONAMENTO|limitato\(\)|ds-rinnova|scadenza_abbonamento/);   // Pagine 071 (22/10): l'abbonamento non c'è più
 });
 
 prova('Verifica Dashboard, tappa 2 (Ignazio 22/10): in cima un avviso solo, il più urgente; gli altri in «Altri avvisi (N) ›»', () => {
@@ -415,7 +415,7 @@ prova('Verifica Dashboard, tappa 2b (Ignazio 22/10): messaggi, «Scarica la mia 
   assert.match(dash, /AVVISI_TEAM\.biglietti \? riquadriBiglietto\(\) : ''/);
   assert.match(dash, /AVVISI_TEAM\.scaricaLista && typeof bannerScaricaLista === 'function'/);
   assert.match(dash, /!AVVISI_TEAM\.biglietti \|\| vediTutti\(\) \|\| visto\(\)\.id !== ST\.utente\.id \? \{ data: \[\] \} : letta\('da_segnare'/);
-  assert.match(dash, /d\.obiettiviMancanti && !limitato\(\) \? `<button class="banner-grande obiettivi" id="ds-obiettivi">/);
+  assert.match(dash, /d\.obiettiviMancanti \? `<button class="banner-grande obiettivi" id="ds-obiettivi">/);
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-messaggi.js'), 'utf8'), /function bannerMessaggi/);   // il codice resta
 });
 

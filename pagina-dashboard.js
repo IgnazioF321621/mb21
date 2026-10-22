@@ -1,6 +1,6 @@
 // MB21 · pagina Dashboard (OGGI): coda delle telefonate, «Da catalogare», conferme, numeri del mese, Obiettivi e «Il mio giorno» (il modulo della sera, fino al 28/09 «Check del Giorno»).
 // Spostata da index.html il 17/09 (pausa di sistemazione, richiesta di Ignazio). Nessun cambiamento di funzionamento.
-// Usa ciò che definisce index.html (supa, dbq, ST, PS, LS, esc, mostraToast, visto, guardoAltri, limitato, mostraTab…);
+// Usa ciò che definisce index.html (supa, dbq, ST, PS, LS, esc, mostraToast, visto, guardoAltri, mostraTab…);
 // alcune sue funzioni servono anche alle altre pagine (caricaOggi, registraEsito, annullaEsito, chiediData, bottoniPer,
 // appuntamentoDaCoda, dataBreve, CONF, CAMPI_AZIONE). Si carica prima dello script della pagina: solo definizioni.
 // ── Una lettura per schermata (Pagine 029 / Fondamenta 031, 07/10/2026: ogni richiesta costa ~2,6 KB di registro su Supabase) ──
@@ -270,7 +270,7 @@ function fraseMese() {
 }
 // Il percorso del mese (Leader 1° livello, Core, Pacesetter, i livelli): gli stessi dati del Check; null finché non sono arrivati
 function percorsoDash() {
-  if (vediTutti() || limitato() || ST.offline || !CK.lc1 || !(CK.giorni && CK.di === visto().id)) return null;
+  if (vediTutti() || ST.offline || !CK.lc1 || !(CK.giorni && CK.di === visto().id)) return null;
   const oggi = MB21Coda.oggiRoma();
   const l = MB21Check.lc1({ mese: oggi.slice(0, 8) + '01', oggi, obiettivi: CK.obiettivi, biglietti: CK.lc1.biglietti, cep: CK.lc1.cep, eventi: CK.eventi });
   return l.prima ? null : { l, ...statoPercorso(l) };
@@ -322,7 +322,7 @@ function disegnaHome() {
   const haNumeri = !!d && ((DS.checkMesi || []).some(x => Number(x.contatti) > 0) || (ST.stato && ST.stato.fatti_oggi > 0));
   const mese = tessera('mese', 'report', 'gr-volume', 'gr-volume-tinta', 'Come sto andando questo mese?', esc(nuovo && !haNumeri ? 'Si accende dopo le prime telefonate' : fraseMese()), 0, { spenta: nuovo && !haNumeri });
   const p = percorsoDash();
-  const traguardo = tessera('traguardo', 'traguardo', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : limitato() ? 'Con l\'abbonamento attivo' : fraseTraguardo(p)), 0, { spenta: nuovo });
+  const traguardo = tessera('traguardo', 'traguardo', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : fraseTraguardo(p)), 0, { spenta: nuovo });
   const giorno = tessera('giorno', 'diario', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
   if (nuovo) {
     const m = AVV.mio, { fatti, totale: tot } = MB21Lista.contatoreOnboarding(m);
@@ -331,12 +331,12 @@ function disegnaHome() {
   } else if (sera && !fattoGiorno && !altro) tessere.push(giorno, chi, mese, traguardo);
   else tessere.push(chi, mese, traguardo, giorno);
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
-  if (!vediTutti() && !limitato()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
+  if (!vediTutti()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
   html += atteseHtml() + daSeguireHtml();   // «Ordina da solo» (nota 043), poi «Da seguire» (tappa 3: tracce condivise e il mio percorso in una riga sola)
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
     const go = b.dataset.lv;
-    if (go === 'giorno') { if (!ST.offline && !limitato()) apriCheck(); return; }
+    if (go === 'giorno') { if (!ST.offline) apriCheck(); return; }
     if (go === 'avvio') AVV.mioAperto = true;
     vaiLV(go);
   });
@@ -477,7 +477,7 @@ function disegnaMeseLV() {
   const mese = D.nomeMese(d.mese);
   let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
     <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}`;
-  const rigaOb = limitato() || d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
+  const rigaOb = d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
   // tappa 3 (22/10): «Com'è andato [mese scorso]» ha una strada sola, il confronto dentro le card del mese (qui sopra): la riga doppia del pannello va via
   if (rigaOb) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}</div>`;
   app.innerHTML = html + versione();
@@ -520,7 +520,7 @@ function disegnaTraguardoLV() {
   const p = percorsoDash();
   let html = indietroLV() + '<h1>Qual è il mio prossimo traguardo?</h1>';
   if (!p) {
-    app.innerHTML = html + `<div class="vuoto">${limitato() ? 'Con l\'abbonamento attivo.' : 'Leggo il percorso…'}</div>` + versione();
+    app.innerHTML = html + `<div class="vuoto">Leggo il percorso…</div>` + versione();
     return attaccaIndietroLV();
   }
   const { l, pc, lv } = p, vicino = MB21Check.piuVicino(pc.gradini), io = visto().id === ST.utente.id;
@@ -598,23 +598,20 @@ function disegnaOggi() {
     default: LV.vista = 'home'; disegnaHome();
   }
   // prima dei collegamenti: aperto il modulo, il riquadro degli obiettivi non si sovrappone (si apre solo senza fogli aperti)
-  if (vai === 'giorno' && !ST.offline && !limitato() && !document.querySelector('.velo')) apriCheck();
+  if (vai === 'giorno' && !ST.offline && !document.querySelector('.velo')) apriCheck();
   collegaVistaLV();
 }
 // I collegamenti che servono a più pagine: le righe dell'avvio, i pulsanti dei numeri, i consigli del percorso, le card della coda
 function collegaVistaLV() {
   collegaDashboard();
   collegaMioAvvio();
-  collegaAttese();   // «Ordina da solo» (nota 043): la riga si apre anche con l'abbonamento scaduto, i tocchi no
+  collegaAttese();   // «Ordina da solo» (nota 043)
   const seguire = document.getElementById('dash-seguire');   // tappa 3: «Da seguire» si apre e si chiude sul posto
   if (seguire) seguire.onclick = () => { DSG.aperto = !DSG.aperto; disegnaOggi(); };
   if (LV.vista === 'home') { mostraRigaTelefono(); mostraRiquadroObiettivi(); }
-  if (ST.offline || limitato()) {
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
-    if (limitato()) return;
-  }
+  if (ST.offline) app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], button[data-conferma], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
   const sezGiorno = document.getElementById('sez-giorno');
-  if (sezGiorno && !ST.offline && !limitato()) sezGiorno.onclick = apriCheck;
+  if (sezGiorno && !ST.offline) sezGiorno.onclick = apriCheck;
   collegaConferme();
   collegaRiordini();
   collegaScelte();
@@ -680,10 +677,6 @@ function disegnaCatalogo() {
     <div class="sotto" style="margin-bottom:8px">${sotto}</div>
     ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}`;
   document.getElementById('indietro').onclick = () => { ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
-  if (limitato()) {   // abbonamento scaduto: si vede, non si tocca (come in Dashboard)
-    app.querySelectorAll('.riga-coda, .bottoni button, button[data-scheda], #altri-catalogo').forEach(b => { b.disabled = true; b.onclick = null; });
-    return;
-  }
   collegaCarteCoda();
 }
 function cardCatalogo(r) {
@@ -1545,11 +1538,10 @@ async function caricaDashboard(oggi) {
   CK.di = null;   // la card «Il tuo Check» rilegge i dati a ogni caricamento: dopo il Check del Giorno i numeri sono nuovi (27/09)
   try {
     const ids = idVisti();   // Partner Select: il partner scelto, o tutti
-    const [cm, ob, segniAl, scad, seg, evBbs, evWes, sqd] = await Promise.all([
+    const [cm, ob, segniAl, seg, evBbs, evWes, sqd] = await Promise.all([
       letta('check_mesi', 'check dei mesi', () => supa.from('check_mesi').select('*').in('user_id', ids)),
       letta('obiettivi_mese', 'obiettivi del mese', () => supa.from('obiettivi_mese').select('*').in('user_id', ids)),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
-      vediTutti() ? { data: null } : letta('scadenza', 'scadenza abbonamento', () => supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
       !AVVISI_TEAM.biglietti || vediTutti() || visto().id !== ST.utente.id ? { data: [] } : letta('da_segnare', 'biglietti da segnare', () => supa.rpc('biglietti_da_segnare')),   // T2b: spento, non si legge
       // gli eventi BBS e WES (01/10): il mese si legge accanto al nome, così si sa a quale evento si riferiscono i numeri (l'evento in vendita, come nella Mappa)
@@ -1565,7 +1557,7 @@ async function caricaDashboard(oggi) {
     const dati = vediTutti() ? MB21Dashboard.unisciPartner(cm.data, ob.data, oggi.slice(0, 8) + '01', codiciDi()) : { checkMesi: cm.data, obiettivi: ob.data };
     DS.obiettivi = dati.obiettivi; DS.checkMesi = dati.checkMesi; DS.segniAl = segniAl;   // anche per i «Risultati» del modulo obiettivi
     const squadraAl = sqd ? MB21Dashboard.risultatiAmway({ squadra: sqd.sq, volumi: sqd.vol, pm: sqd.pm, pid: visto().partner_id, mese: sqd.mese }) : null;
-    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl, squadraAl });
+    DS.dati = MB21Dashboard.calcola({ ...dati, oggi, segniAl, squadraAl });   // Pagine 071: niente abbonamento, la scadenza non si legge più
     // «Com'è andato il mese scorso»: gli obiettivi di allora contro quello che è risultato (Check, file Amway, persone); solo con i propri obiettivi aperti
     DS.confronto = null;
     if (!vediTutti()) {
@@ -1574,7 +1566,6 @@ async function caricaDashboard(oggi) {
       const c = MB21Dashboard.confrontoMese({ obiettivo: dati.obiettivi.find(o => o.mese === prima), risultati: MB21Dashboard.risultatiMese({ checkMesi: dati.checkMesi, obiettivi: dati.obiettivi, mese: prima, oggi, segniAl }), amway: amwayPrec });
       if (c) DS.confronto = { mese: prima, ...c };
     }
-    if (!guardoAltri() && ST.utente.ruolo !== 'Admin' && !scad.error) { ST.scaduto = DS.dati.abbonamento === 'scaduto'; aggiornaTab(); }
   } catch (e) {
     DS.dati = null;   // la coda si mostra lo stesso
   }
@@ -1679,26 +1670,19 @@ async function rispondiBiglietto(box, si, dopo) {
 // Testata con il cerchietto del Profilo (cantiere 25): sempre di chi è entrato, anche col Partner Select
 function testataDashboard() { return `<div class="testa-pagina"><h1>Dashboard</h1>${cerchiettoProfilo()}</div>`; }
 
-// Dal 28/09 la testata (Partner Select, abbonamento, biglietti da segnare) resta in cima, mentre i numeri
+// Dal 28/09 la testata (Partner Select, biglietti da segnare) resta in cima, mentre i numeri
 // del mese stanno nei livelli (`disegnaMeseLV`).
 function dashboardTesta() {
   const d = DS.dati;
   let html = partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
-  if (LIMITI_ABBONAMENTO && !vediTutti() && visto().ruolo !== 'Admin') html += d.abbonamentoAttivo   // l'Admin non ha abbonamento (Ignazio 16/09); nota 058: spento
-    ? (d.abbonamento === 'in_scadenza'
-      ? `<div class="banner-abb scaduto in-scadenza"><i class="pallino" style="background:var(--proposta)"></i>Abbonamento in scadenza il ${esc(d.scadenza.split('-').reverse().join('/'))}<small>Con il rinnovo prima della scadenza si continua a usare tutta l'app</small>
-        <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`
-      : `<div class="banner-abb attivo">${ic('fatto')} Abbonamento attivo · Buon lavoro!</div>`)
-    : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
-        <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`;
   // Verifica della Dashboard, tappa 2 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): in cima al massimo UN avviso, il più urgente; gli altri
   // in una riga «Altri avvisi (N) ›» che si apre sul posto. Ordine: messaggi dalla squadra (nota Admin 014) › obiettivi del mese mancanti ›
   // biglietti da segnare › «Scarica la mia lista» (nota Admin 008). Gli avvisi restano gli stessi, con gli stessi tasti.
   const avvisi = [
     AVVISI_TEAM.messaggi && typeof bannerMessaggi === 'function' ? bannerMessaggi() : '',
     // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
-    d.obiettiviMancanti && !limitato() ? `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
+    d.obiettiviMancanti ? `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>` : '',
     AVVISI_TEAM.biglietti ? riquadriBiglietto() : '',
     AVVISI_TEAM.scaricaLista && typeof bannerScaricaLista === 'function' ? bannerScaricaLista() : '',
@@ -1706,7 +1690,7 @@ function dashboardTesta() {
   return html + unAvvisoAllaVolta(avvisi);
 }
 // Verifica della Dashboard, tappa 2b (Ignazio 22/10/2026): ciò che serve solo a un team che non c'è ancora si SPEGNE con un interruttore
-// (il codice resta, non si legge e non pesa; si riaccende con true quando il team c'è), come la riga del telefono e l'abbonamento.
+// (il codice resta, non si legge e non pesa; si riaccende con true quando il team c'è), come la riga del telefono.
 // messaggi = il banner «Hai N messaggi per te» (nota Admin 014) · scaricaLista = «Scarica la mia lista» (resta nel Profilo) · biglietti = «Hai il
 // biglietto BBS/WES/CEP?» (senza squadra non c'è chi li segna: altra soluzione nella nota Pagine 070; la lettura biglietti_da_segnare non parte).
 // messaggiApertura (tappa 2c, Ignazio 22/10): anche il foglio dei messaggi all'apertura dell'app (annuncioMessaggi nella fila di codaApertura)
@@ -1744,7 +1728,7 @@ function tabellaSv(sv, nome) {
 }
 function dashboardBasso() {
   const d = DS.dati;
-  if (!d || limitato()) return '';
+  if (!d) return '';
   // Dal 28/09 il riquadro nero dei Segni Vitali non c'è più: erano gli stessi numeri della linguetta
   // «Segni Vitali N21» qui sopra, e i 12 mesi si aprono dal Check. In fondo resta solo la consultazione.
   return `<div class="zona-oggi">Approfondisci</div>
@@ -1756,7 +1740,6 @@ function dashboardBasso() {
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
-  su('ds-rinnova', foglioRinnovo);
   su('ds-riparto', () => scegliNumero(caricaOggi));   // 02/10: dalla pausa si riparte scegliendo quanti
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano
@@ -2147,7 +2130,7 @@ const segnaOb = chiave => { try { localStorage.setItem(chiave, '1'); } catch (e)
 async function mostraRiquadroObiettivi() {
   const d = DS.dati;
   if (ST.codaApertura) return;   // nota 064: all'apertura aspetta il suo turno, in fondo alla fila (codaApertura in index.html)
-  if (!d || limitato() || ST.offline || soloGuardo() || vediTutti()) return;   // verifica Dashboard, tappa 1 (22/10): anche l'Admin
+  if (!d || ST.offline || soloGuardo() || vediTutti()) return;   // verifica Dashboard, tappa 1 (22/10): anche l'Admin
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   const rifai = !d.obiettiviMancanti;   // li ha già: solo l'invito a rifarli nel foglio nuovo, una volta
   if (rifai && (ST.oggi < RIFAI_OBIETTIVI.dal || ST.oggi > RIFAI_OBIETTIVI.al || ricordoOb(chiaveRifaiOb(d.mese)))) return;

@@ -24,7 +24,7 @@ prova('abbonamento scaduto: nessun salto', () => {
 });
 prova('la Dashboard apre il modulo della sera quando arriva «giorno» (prima dei collegamenti, mai offline né scaduto)', () => {
   assert.match(dash, /if \(vai === 'giorno'\) LV\.vista = 'home';/);
-  assert.match(dash, /if \(vai === 'giorno' && !ST\.offline && !limitato\(\) && !document\.querySelector\('\.velo'\)\) apriCheck\(\);\n  collegaVistaLV\(\);/);
+  assert.match(dash, /if \(vai === 'giorno' && !ST\.offline && !document\.querySelector\('\.velo'\)\) apriCheck\(\);\n  collegaVistaLV\(\);/);
   assert.match(leggi('supabase/functions/avvisi/regole.ts'), /url: '\.\/\?apri=check', tag: 'check_sera'/);   // l'indirizzo dell'avviso resta quello di sempre
 });
 console.log(`\n${ok} prove superate`);
