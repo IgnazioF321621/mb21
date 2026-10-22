@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- Cantiere 18 · COMPAGNO/A COLLEGATO A UNA SCHEDA (Ignazio 16/09, esempio Tonya Russo e Persona G)
+-- Cantiere 18 · COMPAGNO/A COLLEGATO A UNA SCHEDA (Ignazio 16/09, esempio Tonya Russo e Partner G)
 -- Quando il compagno/a ha già la sua scheda nella lista, le due schede si collegano nei due sensi.
 -- I segni vitali della coppia si leggono da tutte e due le schede e si contano una volta sola.
 -- Il nome/telefono scritti a mano restano per chi non è in lista.

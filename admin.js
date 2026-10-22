@@ -422,7 +422,7 @@ function foglioNuovoUtente(u) {
       <div><small>${u ? 'Modifica utente' : 'Nuovo utente'}</small><b>${u ? esc(nomeDi(u)) : "Chi entra nell'app"}</b></div>
       <button id="nu-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
-    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Persona G" autocomplete="off"></label>
+    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Partner G" autocomplete="off"></label>
     <div id="nu-trovati"></div>
     <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
     <label>Codice Amway <small style="color:var(--grigio)">(obbligatorio, solo numeri, anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off" value="${esc(u ? u.partner_id || '' : '')}"></label>
@@ -442,7 +442,7 @@ function foglioNuovoUtente(u) {
   $('nu-cerca').oninput = async () => {
     const q = $('nu-cerca').value.trim(), mio = ++giro;
     if (q.length < 2) { $('nu-trovati').innerHTML = ''; return; }
-    // più parole («Persona G», «Persona G»): si cerca la più lunga e si tengono i nomi che le hanno tutte
+    // più parole («Partner G», «G Partner»): si cerca la più lunga e si tengono i nomi che le hanno tutte
     const parole = q.toLowerCase().replace(/[%_,]/g, ' ').split(/\s+/).filter(Boolean);
     const lunga = [...parole].sort((a, b) => b.length - a.length)[0] || '';
     const r = await dbq('cerca nella Lista', supa.from('contatti').select('id, nome, codice_amway, user_id, categoria')

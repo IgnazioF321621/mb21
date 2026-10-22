@@ -120,22 +120,22 @@ prova('storico: tiene solo gli ultimi mesi chiesti', () => {
 prova('scheda del partner: prima il codice Amway, poi il nome; vince la lista di chi guarda', () => {
   const contatti = [
     { id: 'tonya', nome: 'Tonya Russo', user_id: 'ignazio', codice_amway: '9027598793' },
-    { id: 'fil-luca', nome: 'Persona G', user_id: 'luca' },
-    { id: 'fil-ign', nome: 'Persona G', user_id: 'ignazio' },
+    { id: 'fil-luca', nome: 'Gino Verdi', user_id: 'luca' },
+    { id: 'fil-ign', nome: 'Gino  verdi', user_id: 'ignazio' },
     { id: 'vecchio', nome: 'Mario Rossi', user_id: 'ignazio', codice_amway: '999' },
   ];
   assert.equal(M.schedaDelPartner({ id: '9027598793', nome: 'Antonina Russo' }, contatti, 'ignazio').id, 'tonya');
-  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Persona G' }, contatti, 'ignazio').id, 'fil-ign');
-  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Persona G' }, contatti, 'luca').id, 'fil-luca');
+  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Gino Verdi' }, contatti, 'ignazio').id, 'fil-ign');
+  assert.equal(M.schedaDelPartner({ id: '1', nome: 'Gino Verdi' }, contatti, 'luca').id, 'fil-luca');
   assert.equal(M.schedaDelPartner({ id: '2', nome: 'Mario Rossi' }, contatti, 'ignazio'), null);   // quella scheda è di un altro codice
   assert.equal(M.schedaDelPartner({ id: '3', nome: 'Nessuno' }, contatti, 'ignazio'), null);
 });
 
 prova('scheda del partner: stesso codice su più schede (collaboratore col codice del titolare) → quella col suo nome o il suo cognome', () => {
   const contatti = [
-    { id: 'fil', nome: 'Persona G', user_id: 'ignazio', codice_amway: '9027598793' },
+    { id: 'fil', nome: 'Gino Verdi', user_id: 'ignazio', codice_amway: '9027598793' },
     { id: 'tonya', nome: 'Tonya Russo', user_id: 'ignazio', codice_amway: '9027598793' },
-    { id: 'cat', nome: 'Persona F', user_id: 'ignazio', codice_amway: '9028207858' },
+    { id: 'cat', nome: 'Elsa Bruni', user_id: 'ignazio', codice_amway: '9028207858' },
     { id: 'sal', nome: 'Salvatore Ruggeri', user_id: 'ignazio', codice_amway: '9028207858' },
   ];
   assert.equal(M.schedaDelPartner({ id: '9027598793', nome: 'Russo, Antonina' }, contatti, 'ignazio').id, 'tonya');
@@ -146,11 +146,11 @@ prova('scheda del partner: stesso codice su più schede (collaboratore col codic
 prova('partner della scheda: prima il codice Amway, poi lo stesso nome (data di ingresso nella scheda)', () => {
   const squadra = [
     { partner_id: '9027598793', nome: 'RUSSO, ANTONINA', data_ingresso: '2026-09-06' },
-    { partner_id: '1', nome: 'Persona G', data_ingresso: '2010-03-15' },
+    { partner_id: '1', nome: 'VERDI,  GINO', data_ingresso: '2010-03-15' },
   ];
   assert.equal(M.partnerDellaScheda({ nome: 'Tonya Russo', codice_amway: '9027598793' }, squadra).data_ingresso, '2026-09-06');
-  assert.equal(M.partnerDellaScheda({ nome: 'Persona G' }, squadra).partner_id, '1');
-  assert.equal(M.partnerDellaScheda({ nome: 'Persona G', codice_amway: '999' }, squadra), null);   // ha un altro codice: il nome non vale
+  assert.equal(M.partnerDellaScheda({ nome: 'gino  verdi' }, squadra).partner_id, '1');
+  assert.equal(M.partnerDellaScheda({ nome: 'Gino Verdi', codice_amway: '999' }, squadra), null);   // ha un altro codice: il nome non vale
   assert.equal(M.partnerDellaScheda({ nome: 'Nessuno' }, squadra), null);
   assert.equal(M.partnerDellaScheda(null, squadra), null);
   assert.equal(M.partnerDellaScheda({ nome: 'Tonya Russo' }, null), null);
@@ -318,13 +318,13 @@ prova('ordinePerMappa: il rientro conta solo gli avi presenti nell\'elenco — V
 prova('lineePerCodice: una linea per codice Amway, la coppia è un partner solo (Ignazio 25/09)', () => {
   const sq = [{ partner_id: 'LU', nome: 'GALLI, LUCA' }, { partner_id: 'TO', nome: 'RUSSO, ANTONINA' }, { partner_id: 'IS', nome: 'MORETTI, ISABELLA' }];
   const persone = [{ id: 1, nome: 'Isabella Moretti', partner_id: 'IS' }, { id: 2, nome: 'Luca Galli', partner_id: 'LU' },
-    { id: 3, nome: 'Persona H', partner_id: 'LU' }, { id: 4, nome: 'Persona G', partner_id: 'TO' },
+    { id: 3, nome: 'Dario Neri', partner_id: 'LU' }, { id: 4, nome: 'Gino Verdi', partner_id: 'TO' },
     { id: 5, nome: 'Tonya Russo', partner_id: 'TO' }, { id: 6, nome: 'Senza Codice', partner_id: null }];
   const l = M.lineePerCodice(persone, sq);
   assert.deepEqual(l.map(x => x.nome), ['Isabella Moretti', 'Luca Galli', 'Antonina Russo', 'Senza Codice']);
   assert.deepEqual(l.map(x => x.utenti), [[1], [2, 3], [4, 5], [6]]);
-  assert.deepEqual(l[1].compagni, ['Persona H']);
-  assert.deepEqual(l[2].compagni, ['Persona G']);   // Tonya Russo è Antonina (stesso cognome): non è una compagna
+  assert.deepEqual(l[1].compagni, ['Dario Neri']);
+  assert.deepEqual(l[2].compagni, ['Gino Verdi']);   // Tonya Russo è Antonina (stesso cognome): non è una compagna
   assert.deepEqual(l[0].compagni, []);
   assert.equal(l[2].id, 4);                                  // l'id della linea è il primo utente
   assert.equal(M.lineePerCodice([{ id: 7, nome: 'Anna', partner_id: 'ZZ' }], []).at(0).nome, 'Anna');   // senza nome Amway resta il suo
