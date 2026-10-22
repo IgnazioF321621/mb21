@@ -27,7 +27,7 @@ function messaggioHtml(m) {
 // All'apertura dell'app: legge sempre (serve alla riga del Profilo); il foglio si apre solo se `aprire`, se non c'è un altro foglio e se c'è
 // qualcosa di non letto. Dà true se ha aperto il foglio (allora l'annuncio del Training aspetta).
 async function annuncioMessaggi(aprire) {
-  if (limitato() || !ST.utente || !ST.utente.id) return false;
+  if (!ST.utente || !ST.utente.id) return false;
   const r = await leggiMessaggi();
   if (!r) return false;
   if (r.elenco.length && ST.tab === 'oggi' && !document.querySelector('.velo')) disegnaOggi();   // la riga della Dashboard (già disegnata prima che i messaggi arrivassero)
@@ -61,7 +61,7 @@ function foglioNuovoMessaggio(nuovi) {
 // Solo per chi è entrato (non guardando un altro con il Partner Select) e senza accesso limitato; si apre l'elenco, come dal Profilo.
 function bannerMessaggi() {
   const e = MSG.elenco;
-  if (!e || !e.length || limitato() || guardoAltri()) return '';
+  if (!e || !e.length || guardoAltri()) return '';
   return `<button class="banner-grande messaggi" id="ds-messaggi"><span class="ico">${ic('messaggio')}</span>
     <span><b>Hai ${e.length} ${e.length > 1 ? 'messaggi' : 'messaggio'} per te</b><small>${esc(e[0].titolo)}</small></span></button>`;
 }

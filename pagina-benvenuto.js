@@ -175,7 +175,6 @@ async function caricaCerchia() {
 // Nome e cellulare → un Prospect nella Lista (il database lo mette nella coda di oggi). Il numero passa da `componiTelefono`, la regola
 // unica dell'app: incollato con «+39…» o «0039…» resta uno solo, scritto «338…» diventa +39 (decisione 12)
 async function aggiungiNomeVeloce() {
-  if (limitato()) return diPerche('scaduto');   // nota 048: la stessa frase ovunque
   const campoNome = document.getElementById('bv-nome'), campoNumero = document.getElementById('bv-numero'), btn = document.getElementById('bv-aggiungi');
   const nome = MB21Benvenuto.nomeVeloce(campoNome.value);
   if (!nome) { campoNome.focus(); return mostraToast('Scrivi il nome'); }
@@ -224,7 +223,7 @@ async function finitaCerchia() {
 const RIGA_TELEFONO = false;
 function rigaTelefonoHtml() { return RIGA_TELEFONO ? '<span id="riga-telefono"></span>' : ''; }
 async function mostraRigaTelefono() {
-  if (!RIGA_TELEFONO || !document.getElementById('riga-telefono') || guardoAltri() || limitato() || ST.offline) return;
+  if (!RIGA_TELEFONO || !document.getElementById('riga-telefono') || guardoAltri() || ST.offline) return;
   let stato = null;
   try { stato = await Promise.race([leggiStatoAvvisi(), new Promise(ok => setTimeout(() => ok(null), 2000))]); } catch (e) {}
   const testo = MB21Benvenuto.rigaTelefono(stato, appInstallata(), ST.primoIngresso === true);

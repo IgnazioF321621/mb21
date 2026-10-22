@@ -129,12 +129,12 @@ async function impostaAvviso(k, v) {
 // ── L'ANNUNCIO DEL TRAINING (lista «Avvisi» di MB App, schizzo approvato da Ignazio il 25/09) ──
 // Un foglio che si apre da solo all'apertura dell'app a chi non ha MAI usato il Training (nessuna risposta in training_carte):
 // appena risponde alla prima carta non lo vede più, su nessun dispositivo. «Più tardi» (o il tocco fuori) lo rimanda di 3 giorni
-// su quel dispositivo (localStorage). Mai se l'app si apre da un avviso, mai sopra un altro foglio, mai a chi ha l'abbonamento scaduto.
+// su quel dispositivo (localStorage). Mai se l'app si apre da un avviso, mai sopra un altro foglio.
 // `forza` (indirizzo «?annuncio=training») lo mostra comunque: per vederlo anche da chi il Training l'ha già usato.
 const RIMANDO_ANNUNCIO = 3 * 86400000;
 const chiaveAnnuncio = () => 'mb21_annuncio_training_' + ST.utente.id;
 async function annuncioTraining(forza) {
-  if (typeof TRAINING_VISIBILE === 'undefined' || !TRAINING_VISIBILE || limitato() || !ST.utente || !ST.utente.id) return;
+  if (typeof TRAINING_VISIBILE === 'undefined' || !TRAINING_VISIBILE || !ST.utente || !ST.utente.id) return;
   if (!forza) {
     try { if (Date.now() - Number(localStorage.getItem(chiaveAnnuncio()) || 0) < RIMANDO_ANNUNCIO) return; } catch (e) { return; }
     const { count, error } = await supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', ST.utente.id);

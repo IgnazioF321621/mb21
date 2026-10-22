@@ -4,9 +4,9 @@ const assert = require('node:assert/strict'), fs = require('fs'), path = require
 const E = require('../../esporta.js');
 const ESENTE = '831417a9-6649-44e8-8eb2-e5d79d0595e5';
 let ok = 0; const prova = async (n, f) => { await f(); ok++; console.log('OK  ' + n); };
-function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = false, dati = {} } = {}) {
+function mondo({ utente = { id: 'u1' }, admin = false, altri = false, dati = {} } = {}) {
   const richieste = [], scaricati = [], toast = [];
-  const ctx = { MB21Esporta: E, MB21Coda: { oggiRoma: () => '2026-10-21' }, esc: s => String(s), ic: n => `[${n}]`, ST: { utente }, eAdmin: () => admin, guardoAltri: () => altri, limitato: () => lim,
+  const ctx = { MB21Esporta: E, MB21Coda: { oggiRoma: () => '2026-10-21' }, esc: s => String(s), ic: n => `[${n}]`, ST: { utente }, eAdmin: () => admin, guardoAltri: () => altri,
     mostraToast: t => toast.push(t), dbq: async (n, q) => q, richieste, scaricati, toast, URL: { createObjectURL: b => (scaricati.push(b), 'blob:x'), revokeObjectURL() {} },
     navigator: { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15' }, Blob: function (parti) { this.parti = parti; }, setTimeout: () => 0,
     document: { querySelector: () => null, createElement: () => ({ click() {} }), body: { appendChild() {} } } };
@@ -24,8 +24,8 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     const m = mondo(); m.X.CHIUSURA.data = '2026-10-30';
     const h = m.X.bannerScaricaLista(); assert.match(h, /id="ds-scarica-lista"/); assert.match(h, /torna personale dal 30 ottobre alle 18:00/); assert.match(h, /anche per Google Fogli/);
   });
-  await prova('non compare a: Admin, persona di fiducia, accesso limitato, chi guarda un altro partner', () => {
-    for (const o of [{ admin: true }, { utente: { id: ESENTE } }, { lim: true }, { altri: true }]) { const m = mondo(o); m.X.CHIUSURA.data = '2026-10-30'; assert.equal(m.X.bannerScaricaLista(), '', JSON.stringify(o)); }
+  await prova('non compare a: Admin, persona di fiducia, chi guarda un altro partner', () => {
+    for (const o of [{ admin: true }, { utente: { id: ESENTE } }, { altri: true }]) { const m = mondo(o); m.X.CHIUSURA.data = '2026-10-30'; assert.equal(m.X.bannerScaricaLista(), '', JSON.stringify(o)); }
   });
   await prova('il file legge solo le righe di chi è entrato (user_id), 3 tabelle, e conta schede, azioni, note', async () => {
     const m = mondo({ utente: { id: 'u7' }, dati: { contatti: [{ id: 'c1', nome: 'Zeno', user_id: 'u7' }], azioni: [{ id: 'a', contatto_id: 'c1' }, { id: 'b', contatto_id: 'c1' }], coach_note: [] } });

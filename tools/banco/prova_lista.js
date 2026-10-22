@@ -547,37 +547,18 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
-prova('Nota 042: abbonamento scaduto, la scheda non si apre (da nessuna strada) e dal menu resta solo «Elimina»', async () => {
-  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
-  const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
-  const s0 = src.indexOf('const SOLO_GUARDARE'), s1 = src.indexOf('\n', s0);
-  let scaduto = true, voci = null, toast = null, lista = 0, scheda = 0;
-  const ctx = { limitato: () => scaduto, soloGuardo: () => false, LS: { righe: [{ id: 'c1', nome: 'Anna', categoria: 'Prospect' }], esporta: null },
-    mostraToast: t => { toast = t; }, disegnaLista: () => { lista++; }, disegnaScheda: () => { scheda++; }, contattaHtml: () => '',
-    sceltaDa: async (t, v) => { voci = v; return null; }, MB21Lista: { sezioneIniziale: () => 'dati' }, sezioniPer: () => [], ST: { tab: 'lista' },
-    window: { scrollY: 0, scrollTo() {} } };
-  vm.createContext(ctx);
-  vm.runInContext(src.slice(s0, s1) + pezzo('function apriScheda') + pezzo('async function menuCard') + pezzo('function comandiContatto')
-    + ';this.apriScheda = apriScheda; this.menuCard = menuCard;', ctx);
-  ctx.apriScheda('c1');
-  assert.equal(scheda, 0); assert.equal(lista, 1); assert.match(toast, /abbonamento attivo/); assert.equal(ctx.LS.contatto, null);
-  await ctx.menuCard('c1');
-  assert.equal(voci.map(v => v.etichetta).join(), 'Elimina');
-  scaduto = false; ctx.apriScheda('c1'); assert.equal(scheda, 1);
-  await ctx.menuCard('c1');
-  assert.equal(voci.map(v => v.etichetta).join(), 'Modifica,Archivia,Elimina');
-  assert.match(src, /limitato\(\) \? '' : '<button class="ag-piu" id="nuovo"/);
-  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-rubrica.js'), 'utf8'), /if \(soloGuardo\(\) \|\| limitato\(\)\) return;/);
+prova('Pagine 071 (Ignazio 22/10): niente più abbonamento nella Lista Nomi — «+», scheda e Modifica per tutti, nessun «Solo da guardare»', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  for (const f of ['pagina-lista.js', 'pagina-rubrica.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), /limitato\(|fermoScaduto|SOLO_GUARDARE|abbonamento attivo/, f);
 });
 
-prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° giorno la domanda con tre tocchi; scaduto senza tocchi', () => {
+prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° giorno la domanda con tre tocchi', () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
   const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
-  let scaduto = false, chiamata = null;
+  let chiamata = null;
   const bottoni = [];
-  const ctx = { limitato: () => scaduto, soloGuardo: () => false, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`,
+  const ctx = { soloGuardo: () => false, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`,
     dataBreve: g => g.slice(8, 10) + '/' + g.slice(5, 7),
     attesaHaOrdinato: (a, poi) => { chiamata = ['ordinato', a.id, poi]; }, attesaNonAncora: (a, poi) => { chiamata = ['ancora', a.id, poi]; },
     attesaNonOrdinaPiu: (a, poi) => { chiamata = ['piu', a.id, poi]; }, apriContattoDa: (id, r) => { chiamata = ['scheda', id, r]; } };
@@ -591,7 +572,6 @@ prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° 
   assert.match(h, /Francesco ha ordinato\?/); assert.match(h, /Sì, ha ordinato/); assert.match(h, /Non ancora/); assert.match(h, /Non ordina più/); assert.match(h, /da-chiedere/);
   assert.doesNotMatch(h, /Apri contatto/);
   assert.match(ctx.html(prima, 'dashboard'), /<b>Francesco<\/b>.*detto il 08\/10.*Apri contatto/s);
-  scaduto = true; assert.doesNotMatch(ctx.html(dopo, 'dashboard'), /data-attesa-fai|Apri contatto/); scaduto = false;
   // i tocchi: ognuno chiama la sua funzione con la riga giusta e il ridisegno
   const box = { querySelectorAll: sel => sel === '[data-attesa-fai]'
     ? ['ordinato|a2', 'ancora|a2', 'piu|a2'].map(v => { const b = { dataset: { attesaFai: v } }; bottoni.push(b); return b; })
@@ -602,7 +582,6 @@ prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° 
   bottoni[1].onclick(); assert.equal(chiamata[0], 'ancora');
   bottoni[2].onclick(); assert.equal(chiamata[0], 'piu');
   bottoni[3].onclick(); assert.equal(chiamata.join(), 'scheda,c1,oggi');
-  scaduto = true; chiamata = null; bottoni[0].onclick(); assert.equal(chiamata, null);
 });
 
 prova('Nota 051: «Prossimo riordino», per ogni brand conta solo la vendita più recente (anche con la consegna lontana)', () => {

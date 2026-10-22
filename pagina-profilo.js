@@ -256,7 +256,7 @@ function mieiSegniHtml() {
   return voceProfilo('segni', ic('segnivitali') + ' I miei Segni vitali', {
     sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
     corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
-      ${limitato() ? '' : '<button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>'}` });
+      <button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>` });
 }
 function collegaMieiSegni() {
   app.querySelectorAll('[data-mia-targa]').forEach(b => { b.onclick = () => (b.dataset.miaTarga === 'cep' ? toccaMioCep() : foglioMioBiglietto(b.dataset.miaTarga === 'bbs' ? 'BBS' : 'WES')); });
