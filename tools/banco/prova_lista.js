@@ -675,4 +675,34 @@ prova('Nota 065 (Ignazio 19/10, «A, da solo»): lo sconto = prezzo al pubblico 
   assert.match(ven, /\$\('v-prezzo'\)\.addEventListener\('input', calcolaSconto\); \$\('v-incassato'\)\.addEventListener\('input', calcolaSconto\);/);
 });
 
+prova('Nota 068 (feedback 20/10, «non mi fa eliminare i doppioni»): il nome eliminato esce subito dalla Lista; con «Annulla» torna', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const pezzo = inizio => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
+  let eliminato = false, annulla = null, disegnata = null;
+  const riga = { id: 'd2', nome: 'Anna Rossi', categoria: 'Prospect' };
+  const q = { select() { return this; }, eq(k, v) { this.id = v; return this; }, maybeSingle() { return this; }, gte() { return this; }, order() { return this; }, is() { return this; } };
+  const ctx = {
+    LS: { righe: [{ id: 'd1', nome: 'Anna Rossi' }, riga], contatto: null, usoApp: null },
+    MB21Lista: { meseEvento: () => '2026-10-01', etichettaEvento: x => x }, MB21Coda: { oggiRoma: () => '2026-10-22' },
+    supa: { from: () => Object.create(q), rpc: (n) => ({ n }) },
+    dbq: async (nome, x) => {
+      if (nome === 'elimina') { eliminato = true; return { error: null }; }
+      if (nome === 'annulla elimina') { eliminato = false; return { error: null }; }
+      if (nome === 'riga della lista') return { data: x.id === 'd2' && !eliminato ? riga : null, error: null };
+      return { data: [], error: null };
+    },
+    chiediConferma: async () => ({}), eAdmin: () => false, segnaApp() {}, leggiLista: async () => { throw new Error('non deve rileggere tutto'); },
+    disegnaLista: () => { disegnata = ctx.LS.righe.map(x => x.id).join(); }, disegnaScheda() {},
+    mostraToast: (t, f) => { if (f) annulla = f; },
+  };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('async function aggiornaRiga') + pezzo('async function ricaricaERidisegna') + pezzo('async function elimina(r, dopo)') + ';this.elimina = elimina;', ctx);
+  await ctx.elimina(riga);
+  assert.equal(disegnata, 'd1');   // il doppione eliminato non c'è più, senza rileggere tutta la Lista
+  await annulla();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(disegnata, 'd1,d2');
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

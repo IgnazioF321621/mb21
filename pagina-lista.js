@@ -384,6 +384,7 @@ async function archivia(r) {
   // dal 04/10 (nota 046) «Archivia» toglie dall'Agenda le azioni ancora da fare (con una copia): si dice, e «Annulla» rimette tutto com'era
   mostraToast(`${r.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina(r));
   if (LS.contatto) LS.contatto = null;
+  await aggiornaRiga(r.id);   // nota 068: la riga in memoria prende subito la categoria nuova
   ricaricaERidisegna();
 }
 
@@ -391,6 +392,7 @@ async function ripristina(r) {
   const { error } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: r.id }));
   if (error) return mostraToast('Non ripristinato: riprova.');
   mostraToast(`${r.nome} ripristinato`);
+  await aggiornaRiga(r.id);   // nota 068
   ricaricaERidisegna();
 }
 
@@ -414,10 +416,14 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
   const { error } = await dbq('elimina', supa.rpc('elimina_contatto', { p_contatto: r.id, p_togli_segni: !!si.spunta }));
   if (error) return mostraToast('Non eliminato: riprova.');
   LS.contatto = null;
+  // nota Pagine 068 (feedback del 20/10, «non mi fa eliminare i doppioni»): il nome eliminato esce subito dai nomi in memoria; prima restava
+  // a video finché la Lista non si rileggeva, e un secondo «Elimina» sullo stesso nome diceva «Non eliminato: riprova»
+  await aggiornaRiga(r.id);
   await (dopo || ricaricaERidisegna)();
   mostraToast(`${r.nome} eliminato`, async () => {
     const { error } = await dbq('annulla elimina', supa.rpc('annulla_elimina_contatto', { p_contatto: r.id }));
     if (error) return mostraToast('Non annullato: riprova.');
+    await aggiornaRiga(r.id);   // e con «Annulla» torna subito
     (dopo || ricaricaERidisegna)();
   });
 }
