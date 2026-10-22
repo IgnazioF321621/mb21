@@ -761,6 +761,30 @@ prova('V4 Vendite (Ignazio 22/10, strada B): in testata «Ordina dal suo account
   await ctx.mostra(c); assert.equal(posto.innerHTML, 'prima');
 });
 
+prova('V4 Vendite (punto b, Ignazio 22/10): il tasto «Ordina da solo» segna l\'account cliente (solo se non c\'era); l\'Annulla lo toglie solo se l\'ha messo lui', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  const da = idx.indexOf('const ACCOUNT_DA_ESITO'), a = idx.indexOf('\n}\n', idx.indexOf('async function accountDaEsito')) + 3;
+  const scritte = []; let giaSegnato = false;
+  const tab = nome => { const q = { _nome: nome, _filtri: [], _v: null,
+    select() { return q; }, eq(k, v) { q._filtri.push([k, v]); return q; }, is(k, v) { q._filtri.push([k + ' is', v]); return q; },
+    update(v) { q._v = v; return q; }, maybeSingle() { return Promise.resolve({ data: { contatto_id: 'c1' }, error: null }); },
+    then(ok) { if (q._v) scritte.push({ tab: nome, v: q._v, filtri: q._filtri }); const tocca = q._v && !(giaSegnato && q._filtri.some(f => f[0] === 'account_cliente_dal is'));
+      return Promise.resolve(ok({ data: tocca ? [{ id: 'c1' }] : [], error: null })); } }; return q; };
+  const ctx = { MB21Agenda: require('../../agenda.js'), MB21Coda: { oggiRoma: () => '2026-10-22' }, dbq: (_, p) => p, supa: { from: tab }, mostraToast() {}, LS: { account: { id: 'c1' } } };
+  vm.createContext(ctx); vm.runInContext(idx.slice(da, a) + ';this.f = accountDaEsito;', ctx);
+  assert.equal(await ctx.f('az1', null, 'Ordina da solo'), true);
+  assert.equal(JSON.stringify(scritte[0]), JSON.stringify({ tab: 'contatti', v: { account_cliente_dal: '2026-10-22' }, filtri: [['id', 'c1'], ['account_cliente_dal is', null]] }));
+  assert.equal(ctx.LS.account, null);   // la testata si rilegge
+  assert.equal(await ctx.f('az1', 'Ordina da solo', null), true);   // Annulla: l'aveva messo lui, si toglie
+  assert.equal(JSON.stringify(scritte[1].v), '{"account_cliente_dal":null}');
+  giaSegnato = true;   // il cliente aveva già l'account: l'esito non lo cambia, e l'Annulla non lo toglie
+  await ctx.f('az2', null, 'Ordina da solo'); scritte.length = 0;
+  assert.equal(await ctx.f('az2', 'Ordina da solo', 'Richiamare'), false); assert.equal(scritte.length, 0);
+  assert.equal(await ctx.f('az3', 'Richiamare', 'Relazione'), false);   // un altro esito: niente
+  assert.doesNotMatch(idx, /attesaDaEsito|rpc\('attesa_ordine'/);   // l'attesa non si apre più da nessuna strada
+});
+
 prova('V4 Vendite: «Ha un account cliente: ordina da solo» in Modifica (solo Clienti, solo se letto e cambiato); via la riga e la domanda dei 7 giorni', () => {
   const fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), ven = fs.readFileSync(path.join(__dirname, '../../pagina-vendite.js'), 'utf8');

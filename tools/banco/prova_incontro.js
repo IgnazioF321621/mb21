@@ -134,7 +134,7 @@ prova('Il foglio «Modifica» (nota Azioni 032, Ignazio 19/10: «mettilo anche i
     supa: { from: t => ({ select: () => leggi, update: v => scrivi(t).update(v), delete: () => scrivi(t).delete(), insert: v => scrivi(t).insert(v) }),
       rpc: (n, p) => { chiamate.push(['rpc', n, JSON.parse(JSON.stringify(p))]); return Promise.resolve({ data: n === 'chiudi_azione' ? { prima: {}, avvio: [], extra: ['n1'] } : { rientro_cambiato: false }, error: null }); } },
     dbq: (_, p) => Promise.resolve(p), soloGuardo: () => false, fermoScaduto: () => false, classeCat: () => '', iniziali: () => 'IS', avvisoSovrapposti: () => '', legaInizioFine() {},
-    attesaDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast: (t, an) => { toastTesto = t; toastAnnulla = an; },
+    accountDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast: (t, an) => { toastTesto = t; toastAnnulla = an; },
     chiediConferma: async () => false, sceltaContatto: async () => null, apriContattoDa() {}, dataLunga: x => x };
   vm.createContext(ctx);
   vm.runInContext(pezzo('// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti(') + pezzo('function bottoniEsiti(', 'function elencoEsitoHtml(')
@@ -186,7 +186,7 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   ctx.tracciaDiApertura = async (c, k, poi) => (poi ? poi() : null);
   ctx.MB21Sharing = { proponeTraccia: () => false }; ctx.chiediRientro = async () => null; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => false;
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
-  ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
+  ctx.accountDaEsito = async () => false;   // «Ordina da solo» (V4 Vendite): qui non c'entra, la sua prova è in prova_lista.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const e = { ...incontro, contatti: { nome: 'Mario', categoria: 'Partner' } };
@@ -300,7 +300,7 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   ctx.chiediRientro = async () => { log.push(['rientro']); return '2026-10-22'; }; ctx.dataBreve = g => g;
   ctx.MB21Sharing = { proponeTraccia: () => true };
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
-  ctx.attesaDaEsito = async () => false;   // «Ordina da solo» (nota Azioni 025): qui non c'entra, la sua prova è prova_attesa_scheda.js
+  ctx.accountDaEsito = async () => false;   // «Ordina da solo» (V4 Vendite): qui non c'entra, la sua prova è in prova_lista.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
   const tel = inizio => ({ id: 'a1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect', area: 'Attività', inizio, contatti: { nome: 'Mario', categoria: 'Prospect' } });

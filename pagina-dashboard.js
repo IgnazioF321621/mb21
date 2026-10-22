@@ -162,7 +162,7 @@ const COSA_FA_ESITO = {
   'Telefono spento': { rientro: true },
   'Relazione': { rientro: true },                            // «Quando risentirlo?» con 20 giorni proposti (Ignazio 25/09)
   'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
-  'Ordina da solo': { attesa: true },                        // apre l'attesa «ha ordinato?» sulla telefonata (nota Azioni 025): niente vendita, niente rientro
+  'Ordina da solo': { account: true },                       // segna il cliente «Ha un account cliente» (V4 Vendite, 22/10; prima l'attesa): niente vendita, niente rientro
   'No Interesse': { classe: 'no', rientro: true },           // poi «Quando risentirlo?» (17/09)
 };
 function bottoniPer(categoria) {
@@ -790,8 +790,8 @@ async function toccaBottone(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
-  // «Ordina da solo» (nota Azioni 025): l'attesa si apre sulla telefonata appena registrata; se non parte, l'esito resta e lo si dice
-  if (bottone.attesa) await attesaDaEsito(esito.azione_id, null, bottone.etichetta);   // la stessa funzione di Agenda, scheda e «Cambia esito»
+  // «Ordina da solo» (V4 Vendite, 22/10): il cliente è segnato «Ha un account cliente»; se non parte, l'esito resta e lo si dice
+  if (bottone.account) await accountDaEsito(esito.azione_id, null, bottone.etichetta);   // la stessa funzione di Agenda, scheda e «Cambia esito»
   // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento: dal 04/10 lo fa
   // `registra_esito` con la regola unica del rientro (applica_rientro, nota 030); prima qui c'era una scrittura in più dal telefono
   const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
