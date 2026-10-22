@@ -966,6 +966,13 @@
   .banner-abb.in-scadenza { background: var(--proposta-tinta); color: var(--proposta); }
   .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: var(--raggio-bottone); background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
   .banner-abb.in-scadenza button { background: var(--proposta); }
+  /* verifica Dashboard, tappa 2: un avviso solo in cima, gli altri in «Altri avvisi (N) ›» */
+  .altri-avvisi { margin: 0 0 10px; }
+  .altri-avvisi > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: var(--raggio-riga); background: var(--superficie); border: 1px solid var(--bordo); font-size: 14px; font-weight: 600; color: var(--testo-soft); }
+  .altri-avvisi > summary::-webkit-details-marker { display: none; }
+  .altri-avvisi[open] > summary { margin-bottom: 10px; }
+  .altri-avvisi[open] > summary em { transform: rotate(90deg); }
+  .altri-avvisi > summary em { font-style: normal; transition: transform .15s; }
   .banner-grande { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border-radius: var(--raggio-card); padding: 14px 16px; margin-bottom: 10px; font-family: inherit; }
   .banner-grande .ico { width: 46px; height: 46px; border-radius: var(--raggio-riga); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
   .banner-grande b { display: block; font-size: 16px; }

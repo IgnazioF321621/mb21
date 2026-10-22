@@ -367,6 +367,22 @@ prova('Verifica Dashboard, tappa 1 (Ignazio 22/10): riga del telefono spenta (co
   assert.match(dash, /LIMITI_ABBONAMENTO|limitato\(\)/);   // l'abbonamento non è toccato: resta spento e pronto
 });
 
+prova('Verifica Dashboard, tappa 2 (Ignazio 22/10): in cima un avviso solo, il più urgente; gli altri in «Altri avvisi (N) ›»', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const da = dash.indexOf('function unAvvisoAllaVolta'), a = dash.indexOf('\n}\n', da) + 3;
+  const ctx = {}; vm.createContext(ctx); vm.runInContext(dash.slice(da, a) + ';this.f = unAvvisoAllaVolta;', ctx);
+  assert.equal(ctx.f([]), '');
+  assert.equal(ctx.f(['<b>M</b>']), '<b>M</b>');   // uno solo: niente riga in più
+  const h = ctx.f(['<b>M</b>', '<b>O</b>', '<b>B</b>']);
+  assert.match(h, /^<b>M<\/b><details class="altri-avvisi"><summary>Altri avvisi \(2\) <em>›<\/em><\/summary><b>O<\/b><b>B<\/b><\/details>$/);
+  // l'ordine: messaggi › obiettivi mancanti › biglietti da segnare › scarica la lista
+  const t = dash.slice(dash.indexOf('function dashboardTesta'), da);
+  const pos = ['bannerMessaggi()', 'id="ds-obiettivi"', 'riquadriBiglietto()', 'bannerScaricaLista()'].map(x => t.indexOf(x));
+  assert.ok(pos.every(x => x > 0)); assert.deepEqual(pos, [...pos].sort((x, y) => x - y));
+  assert.match(t, /return html \+ unAvvisoAllaVolta\(avvisi\);/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
