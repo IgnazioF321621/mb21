@@ -1724,7 +1724,8 @@ function dashboardTesta() {
 // (il codice resta, non si legge e non pesa; si riaccende con true quando il team c'è), come la riga del telefono e l'abbonamento.
 // messaggi = il banner «Hai N messaggi per te» (nota Admin 014) · scaricaLista = «Scarica la mia lista» (resta nel Profilo) · biglietti = «Hai il
 // biglietto BBS/WES/CEP?» (senza squadra non c'è chi li segna: altra soluzione nella nota Pagine 070; la lettura biglietti_da_segnare non parte).
-const AVVISI_TEAM = { messaggi: false, scaricaLista: false, biglietti: false };
+// messaggiApertura (tappa 2c, Ignazio 22/10): anche il foglio dei messaggi all'apertura dell'app (annuncioMessaggi nella fila di codaApertura)
+const AVVISI_TEAM = { messaggi: false, scaricaLista: false, biglietti: false, messaggiApertura: false };
 // il primo avviso a vista, gli altri chiusi in «Altri avvisi (N) ›» (un tocco li apre, un altro li richiude: <details>, i tasti dentro restano collegati)
 function unAvvisoAllaVolta(avvisi) {
   if (!avvisi.length) return '';

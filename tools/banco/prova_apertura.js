@@ -10,7 +10,7 @@ const chiudi = nome => { aperti.splice(aperti.indexOf(nome), 1); diario.push('ch
 const ctx = {
   document: { querySelector: s => (s === '.velo' && aperti.length ? {} : null), body: {} },
   MutationObserver: class { constructor(cb) { this.cb = cb; } observe() { osservatori.add(this); } disconnect() { osservatori.delete(this); } },
-  ST: { tab: 'oggi' }, console,
+  ST: { tab: 'oggi' }, console, AVVISI_TEAM: { messaggiApertura: true },   // nella prova della fila il foglio dei messaggi è acceso
 };
 vm.createContext(ctx);
 vm.runInContext(idx.slice(da, a) + ';this.codaApertura = codaApertura;', ctx);
@@ -54,6 +54,13 @@ let ok = 0;
   ok++; console.log('OK  il riquadro degli obiettivi aspetta la fila; gli appuntamenti non si aprono più da soli sopra gli altri');
   assert.match(idx, /controllaImpegniNuovi\(\)\);\n    if \(typeof annuncioRisposteAppuntamenti === 'function'\) await passo\(\(\) => annuncioRisposteAppuntamenti\(\)\);[^\n]*\n    if \(!apri\) await passo\(\(\) => annuncioTraining\(false\)\);/);
   ok++; console.log('OK  nota 066: le risposte ai tuoi appuntamenti dopo i nuovi appuntamenti, prima del Training');
+  // tappa 2c (Ignazio 22/10): con l'interruttore spento il foglio dei messaggi non compare e la fila va avanti
+  ctx.AVVISI_TEAM.messaggiApertura = false; viste.length = 0;
+  ctx.annuncioMessaggi = async () => { viste.push(['messaggi']); return true; };
+  await ctx.codaApertura(null);
+  assert.equal(viste.some(v => v[0] === 'messaggi'), false);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8'), /messaggiApertura: false \};/);
+  ok++; console.log('OK  tappa 2c: il foglio dei messaggi all\'apertura è spento (interruttore AVVISI_TEAM.messaggiApertura)');
   const avv = fs.readFileSync(path.join(__dirname, '../../avvisi.js'), 'utf8');
   assert.match(avv, /<button class="primario" id="an-inizia">Mi alleno ora<\/button>/); assert.match(avv, /id="an-dopo">Più tardi<\/button>/);
   ok++; console.log('OK  il foglio del Training: «Mi alleno ora» o «Più tardi» (Ignazio 19/10)');

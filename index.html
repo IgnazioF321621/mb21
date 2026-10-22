@@ -2753,7 +2753,7 @@ async function codaApertura(apri) {
   const passo = async f => { try { await f(); } catch (e) {} await aspettaFogliChiusi(); };
   try {
     if (typeof annuncioChiusura === 'function') await passo(() => annuncioChiusura(!apri));   // nota Admin 008: la chiusura di MB21 e «Scarica la mia lista», prima di tutto (solo fino al download su questo telefono)
-    if (typeof annuncioMessaggi === 'function') await passo(() => annuncioMessaggi(!apri));
+    if (typeof annuncioMessaggi === 'function' && typeof AVVISI_TEAM !== 'undefined' && AVVISI_TEAM.messaggiApertura) await passo(() => annuncioMessaggi(!apri));   // tappa 2c: spento
     if (typeof annuncioRisposte === 'function') await passo(() => annuncioRisposte(!apri));
     if (typeof controllaImpegniNuovi === 'function') await passo(() => controllaImpegniNuovi());
     if (typeof annuncioRisposteAppuntamenti === 'function') await passo(() => annuncioRisposteAppuntamenti());   // nota 066: chi ha risposto ai tuoi appuntamenti

@@ -386,7 +386,7 @@ prova('Verifica Dashboard, tappa 2 (Ignazio 22/10): in cima un avviso solo, il p
 prova('Verifica Dashboard, tappa 2b (Ignazio 22/10): messaggi, «Scarica la mia lista» e biglietti da segnare spenti con un interruttore (codice resta, la lettura dei biglietti non parte); «Imposta gli obiettivi» resta', () => {
   const fs = require('node:fs'), path = require('node:path');
   const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
-  assert.match(dash, /\nconst AVVISI_TEAM = \{ messaggi: false, scaricaLista: false, biglietti: false \};\n/);
+  assert.match(dash, /\nconst AVVISI_TEAM = \{ messaggi: false, scaricaLista: false, biglietti: false, messaggiApertura: false \};\n/);
   assert.match(dash, /AVVISI_TEAM\.messaggi && typeof bannerMessaggi === 'function' \? bannerMessaggi\(\) : ''/);
   assert.match(dash, /AVVISI_TEAM\.biglietti \? riquadriBiglietto\(\) : ''/);
   assert.match(dash, /AVVISI_TEAM\.scaricaLista && typeof bannerScaricaLista === 'function'/);
