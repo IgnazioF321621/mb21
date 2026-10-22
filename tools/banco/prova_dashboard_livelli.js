@@ -74,24 +74,41 @@ prova('Chi sento oggi? (tappa 6): un elenco solo, prima da chiudere poi si conta
 
 prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cambia gli esiti', () => {
   let h = P.vista('persona', { persona: 'coda|c1' }).html;
-  assert.match(h, /<span class="lv-chip">Mai contattato<\/span><\/div><h1[^>]*>Laura Ferri<\/h1>/);
+  assert.match(h, /<span class="lv-chip">Telefonata<\/span><\/div><h1[^>]*>Laura Ferri<\/h1><div class="sotto">Mai contattato<\/div><div class="lv-scheda">/);
   assert.match(h, /‹ Chi sento oggi\?/);
   assert.match(h, /class="contatta"/);
   assert.match(h, /data-bottone=/);   // gli esiti della telefonata
   // un cliente che si richiama: un altro motivo
-  assert.match(P.vista('persona', { persona: 'coda|c2' }).html, /<span class="lv-chip">Da chiamare<\/span>/);
-  assert.match(P.vista('persona', { persona: 'ds|d1' }).html, /<span class="lv-chip">Dare Seguito scaduto<\/span>/);
+  assert.match(P.vista('persona', { persona: 'coda|c2' }).html, /<span class="lv-chip">Telefonata<\/span>[\s\S]*?<div class="sotto">Ultima telefonata: Richiamare · 3 giorni fa<\/div>/);
   // la conferma: Confermato · Sposta · Annullato (nuovo) · Non risponde
   h = P.vista('persona', { persona: 'conf|k1' }).html;
-  assert.match(h, /<span class="lv-chip">Da confermare<\/span>/);
+  assert.match(h, /<span class="lv-chip">Conferma<\/span>[\s\S]*?<div class="sotto">Da confermare · /);
   assert.deepEqual([...h.matchAll(/data-conferma="(\w+)"/g)].map(m => m[1]), ['si', 'sposta', 'annulla', 'nr']);
   assert.match(h, /class="no" data-conferma="annulla"[^>]*>Annullato<\/button>/);
   // il riordino: Ordine · Richiamare, poi Non risponde · Telefono spento · Nessun ordine
   h = P.vista('persona', { persona: 'rio|r1' }).html;
-  assert.match(h, /<span class="lv-chip">Riordino<\/span>/);
+  assert.match(h, /<span class="lv-chip">Riordino<\/span>[\s\S]*?<div class="sotto">Nutrilite · Daily<\/div>/);
   assert.doesNotMatch(h, />Appuntamento<\/button>/);
   assert.ok(h.indexOf('Non risponde') < h.indexOf('Telefono spento') && h.indexOf('Telefono spento') < h.indexOf('Nessun ordine'));
   assert.match(h, /data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button>/);   // «Nessun ordine» salva «No Interesse»: il cliente torna, l'app chiede tra quanti giorni
+});
+
+prova('Tappa 7: una scheda sola per ogni motivo — stessa testata (motivo, nome, riga di sotto), cambiano solo i tasti', () => {
+  const testata = (h, chip, nome) => assert.match(h, new RegExp(`<span class="lv-chip">${chip}</span></div><h1[^>]*>${nome}(<span[^>]*>[^<]*</span>)?</h1><div class="sotto">[^<]+</div><div class="lv-scheda">`));
+  const tasti = h => [...h.matchAll(/data-(bottone|conferma|riordino-esito|riordino-nr|riordino-spento|scelta-esito)=/g)].map(m => m[1]);
+  let h = P.vista('persona', { persona: 'coda|c1' }).html;              // coda: gli esiti della telefonata
+  testata(h, 'Telefonata', 'Laura Ferri'); assert.ok(tasti(h).length >= 6 && tasti(h).every(t => t === 'bottone'));
+  h = P.vista('persona', { persona: 'ds|d1' }).html;                    // Dare Seguito: gli stessi esiti
+  testata(h, 'Dare Seguito', 'Gino Pace'); assert.match(h, /<div class="sotto">scaduto da 3 giorni<\/div>/); assert.ok(tasti(h).every(t => t === 'bottone'));
+  h = P.vista('persona', { persona: 'conf|k1' }).html;                  // conferma: Confermato · Sposta · Annullato · Non risponde
+  testata(h, 'Conferma', 'Giulia Conti'); assert.deepEqual(tasti(h), ['conferma', 'conferma', 'conferma', 'conferma']);
+  h = P.vista('persona', { persona: 'rio|r1' }).html;                   // riordino: i suoi esiti
+  testata(h, 'Riordino', 'Rosa Aprile'); assert.ok(tasti(h).includes('riordino-esito') && tasti(h).includes('riordino-nr'));
+  h = P.vista('persona', { persona: 'scelta|s1', scelte: true }).html;  // scelta a mano: gli esiti della telefonata
+  testata(h, 'Telefonata · scelta', 'Carla Bo'); assert.ok(tasti(h).length >= 6 && tasti(h).every(t => t === 'scelta-esito'));
+  delete P.memo.scelte;
+  // la testata interna delle card (nome ripetuto, striscia, freccia) è nascosta da una regola sola
+  assert.match(P.stile, /\.lv-scheda \.riga-coda, \.lv-scheda \.strip, \.lv-scheda \.conferma > \.corpo > \.nome, \.lv-scheda \.conf-testo \{ display: none; \}/);
 });
 
 prova('Dato l\'esito la persona sparisce dalla coda: si torna all\'elenco e la riga resta, con la spunta', () => {
@@ -245,8 +262,9 @@ prova('Telefonate scelte a mano: in più dei contatti del giorno, con giorno e o
 
 prova('La telefonata scelta a mano: la stessa scheda, gli esiti della telefonata chiudono QUELLA azione (chiudiAppuntamento, non registra_esito); senza orario l\'ora è adesso', async () => {
   const { m, html: h } = P.vista('persona', { scelte: true, persona: 'scelta|s1' });
-  assert.match(h, /<span class="lv-chip">Scelta a mano<\/span><\/div><h1[^>]*>Carla Bo<\/h1>/);
-  assert.match(h, /Senza orario · Richiamarla per il libro/);
+  assert.match(h, /<span class="lv-chip">Telefonata · scelta<\/span><\/div><h1[^>]*>Carla Bo<\/h1><div class="sotto">Senza orario<\/div>/);
+  assert.match(h, /<div class="luogo">Richiamarla per il libro<\/div>/);
+  assert.equal((h.match(/Senza orario/g) || []).length, 1);   // tappa 7: una volta sola
   assert.match(h, /class="contatta"/);
   assert.match(h, /data-scelta-esito="PM Fissato"/);
   assert.match(h, /data-scelta-esito="No Risposta"/);

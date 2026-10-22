@@ -460,19 +460,19 @@ function disegnaOggiLV() {
 function disegnaPersonaLV() {
   const [tipo, id] = String(LV.persona).split('|');
   const r = ST.risultato;
-  let corpo = '', chip = '', nome = '';
+  let corpo = '', nome = '', dato = null;
   if (tipo === 'coda' || tipo === 'ds') {
-    const x = (tipo === 'ds' ? r.dareSeguito : r.coda).find(y => y.id === id);
-    if (x) { nome = x.nome; chip = tipo === 'ds' ? 'Dare Seguito scaduto' : x.contattato ? 'Da chiamare' : 'Mai contattato'; ST.aperta = id; corpo = cardContatto(x, tipo === 'ds'); }
+    const x = dato = (tipo === 'ds' ? r.dareSeguito : r.coda).find(y => y.id === id);
+    if (x) { nome = x.nome; ST.aperta = id; corpo = cardContatto(x, tipo === 'ds'); }
   } else if (tipo === 'conf') {
-    const x = CONF.righe.find(y => y.id === id);
-    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = x.nonPuo ? 'Non può · da spostare' : 'Da confermare'; corpo = confermeHtml(id); }
+    const x = dato = CONF.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; corpo = confermeHtml(id); }
   } else if (tipo === 'rio') {
-    const x = RIO.righe.find(y => y.id === id);
-    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Riordino'; ST.aperta = id; corpo = riordiniHtml(id); }
+    const x = dato = RIO.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; ST.aperta = id; corpo = riordiniHtml(id); }
   } else if (tipo === 'scelta') {   // una telefonata scelta a mano (nota 012): la stessa scheda, gli esiti della telefonata
-    const x = SCE.righe.find(y => y.id === id);
-    if (x) { nome = x.contatti ? x.contatti.nome : ''; chip = 'Scelta a mano'; ST.aperta = id; corpo = sceltaHtml(x); }
+    const x = dato = SCE.righe.find(y => y.id === id);
+    if (x) { nome = x.contatti ? x.contatti.nome : ''; ST.aperta = id; corpo = sceltaHtml(x); }
   }
   if (!corpo) {   // l'esito è stato dato (o la persona non c'è più): si torna all'elenco, con la spunta
     const nomeFatto = LV.nomePersona || '';
@@ -483,7 +483,11 @@ function disegnaPersonaLV() {
   LV.nomePersona = nome;
   // nota 001: accanto al nome il segnale Coach Yes, dove c'è una telefonata da fare (non sulle conferme)
   const chiContatto = tipo === 'coda' || tipo === 'ds' ? id : tipo === 'rio' ? (RIO.righe.find(y => y.id === id) || {}).contatto_id : tipo === 'scelta' ? (SCE.righe.find(y => y.id === id) || {}).contatto_id : null;
-  app.innerHTML = indietroLV() + `<div><span class="lv-chip">${esc(chip)}</span></div><h1 style="margin-top:2px">${esc(nome)}${segnoCoach(chiContatto, nome)}</h1>${corpo}` + versione();
+  // Tappa 7 (Ignazio 22/10): una scheda sola, uguale per tutti i motivi: il motivo (le parole dell'elenco), il nome, la riga di sotto
+  // dell'elenco; poi contatti ed esiti. Cambiano solo i tasti. La testata interna delle card (nome ripetuto, striscia, freccia) la nasconde `.lv-scheda`.
+  const chip = { conf: 'Conferma', rio: 'Riordino', ds: 'Dare Seguito', coda: 'Telefonata', scelta: 'Telefonata · scelta' }[tipo];
+  app.innerHTML = indietroLV() + `<div><span class="lv-chip">${esc(chip)}</span></div><h1 style="margin-top:2px">${esc(nome)}${segnoCoach(chiContatto, nome)}</h1>`
+    + `<div class="sotto">${esc(sottoOggi({ motivo: tipo, dato }))}</div><div class="lv-scheda">${corpo}</div>` + versione();
   attaccaIndietroLV();
 }
 
@@ -1131,14 +1135,14 @@ function sottoScelta(a) {
   return a.ritardo ? `${quando} · era per ${a.ritardo === 1 ? 'ieri' : 'il ' + dataBreve(a.giorno)}` : quando;
 }
 // la scheda aperta: promemoria e preparazione come in coda, telefono, gli esiti della telefonata su due righe (gli stessi della coda), «Apri contatto»
-function sceltaHtml(a) {
+function sceltaHtml(a) {   // tappa 7: il giorno e l'ora stanno già sotto il nome, qui solo la nota
   const categoria = (a.contatti && a.contatti.categoria) || a.categoria, nome = a.contatti ? a.contatti.nome : '';
   const tutti = bottoniPer(categoria), spento = ST.offline || soloGuardo() ? 'disabled' : '';
   const bottoni = MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).map((riga, n) =>
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga.map(f => `<button class="${(tutti.find(b => b.etichetta === f) || {}).classe || ''}" data-scelta-id="${esc(a.id)}" data-scelta-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}</div>`).join('');
   return `<div class="card compatta aperta ${classeCat(categoria)}" data-scelta="${esc(a.id)}">
       <div class="corpo">
-        <div class="luogo">${esc(sottoScelta(a))}${a.note ? ` · ${esc(a.note)}` : ''}</div>
+        ${a.note ? `<div class="luogo">${esc(a.note)}</div>` : ''}
         ${ricordoHtml(a.contatto_id, nome)}
         ${preparaChiamataHtml(a.contatto_id)}
         ${contattaHtml(a.contatti && a.contatti.telefono)}
