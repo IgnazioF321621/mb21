@@ -436,7 +436,7 @@ function apriScheda(id) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.attesa = null;
+  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null;
   LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
@@ -452,54 +452,44 @@ function sezioniPer(c) {
   return base;
 }
 
+// V4 (Verifica Vendite, Ignazio 22/10/2026, strada B): «Ha un account cliente: ordina da solo» al posto dell'attesa «Ordina da solo» (note 043 e
+// Azioni 025): niente domanda «ha ordinato?» dopo 7 giorni né riquadro in Dashboard. Il dato è `contatti.account_cliente_dal` (da quando ordina dal suo
+// account); si segna da «Modifica»; in testata la riga «Ordina dal suo account cliente · dal …» con «Togli». Una lettura per scheda, solo per i Clienti.
+async function leggiAccountCliente(id) {
+  const { data, error } = await dbq('account cliente', supa.from('contatti').select('account_cliente_dal').eq('id', id).maybeSingle());
+  return error ? undefined : (data && data.account_cliente_dal) || null;   // undefined = non letto (senza rete, o prima della migrazione)
+}
+async function mostraAccountCliente(c) {
+  if (!document.getElementById('account-posto')) return;
+  if (!LS.account || LS.account.id !== c.id) {
+    const dal = await leggiAccountCliente(c.id);
+    if (dal === undefined || LS.contatto !== c) return;
+    LS.account = { id: c.id, dal };
+  }
+  const qui = document.getElementById('account-posto');
+  if (!qui) return;
+  qui.innerHTML = LS.account.dal ? `<div class="ao-riga"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span>
+    <span><b>Ordina dal suo account cliente</b><small>dal ${esc(MB21Lista.data(LS.account.dal))} · nessuna telefonata di riordino</small></span></div>
+    ${vediTutti() || ST.offline ? '' : '<button class="link" id="account-togli">Togli</button>'}</div>` : '';
+  const togli = document.getElementById('account-togli');
+  if (togli) togli.onclick = async () => {
+    if (soloGuardo() || ST.offline) return;
+    const prima = LS.account.dal;
+    const { error } = await dbq('togli account cliente', supa.from('contatti').update({ account_cliente_dal: null }).eq('id', c.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    LS.account = { id: c.id, dal: null }; mostraAccountCliente(c);
+    mostraToast(`${c.nome}: niente più account cliente`, async () => {
+      const { error: e2 } = await dbq('annulla account cliente', supa.from('contatti').update({ account_cliente_dal: prima }).eq('id', c.id));
+      if (e2) return mostraToast('Annullamento non riuscito: riprova.');
+      LS.account = { id: c.id, dal: prima }; mostraAccountCliente(c);
+    });
+  };
+}
 // Avvio del Partner (cantiere 31). «Avvio concluso» e la data di ingresso (file Amway → `squadra`) non sono nella vista della Lista:
 // si leggono all'apertura della scheda di un Partner. LS.avvio = { id, concluso (giorno o null), ingresso (giorno o null) }
 // Riga dell'avvio nella testata, sotto «Usa l'app» (Ignazio 18/09: si deve capire senza entrare in una sezione, e al posto della
 // linguetta Onboarding): aperto → passi fatti e prossimo passo; concluso → «✅ Avvio concluso · fatti/14». Il tocco apre i 14 passi
 // (sezione `onboarding`, senza linguetta); un secondo tocco li richiude e torna alla sezione con cui si apre la scheda.
-// «Ordina da solo» (nota Pagine 043 con Azioni 025, Ignazio 08/10/2026): il cliente ha detto «ordino io dal mio account».
-// La vendita si registra solo quando ordina davvero. Stessa riga nella scheda del cliente e in Dashboard: prima dei 7 giorni
-// «Ha ordinato»; dal 7° giorno la domanda «X ha ordinato?» con tre tocchi. Stato, regola (`MB21Agenda.attesaOrdini`), lettura
-// (`leggiAttesaOrdini`) e le tre funzioni dei tocchi sono della sessione Azioni (agenda.js, pagina-vendite.js); qui solo la parte che si vede.
-// `a` = una riga di attesaOrdini { id, contattoId, nome, dal, chiediIl, daChiedere }; dove = 'scheda' | 'dashboard'.
-function attesaOrdineHtml(a, dove) {
-  const detto = `Ordina da solo dal suo account · detto il ${esc(dataBreve(a.dal))}`;
-  const titolo = a.daChiedere ? `${esc(a.nome)} ha ordinato?` : dove === 'dashboard' ? esc(a.nome) : 'Ordina da solo dal suo account';
-  const sotto = a.daChiedere || dove === 'dashboard' ? detto : `Detto il ${esc(dataBreve(a.dal))} · la vendita si registra quando ordina`;
-  const tasto = (cosa, testo, classe = '') => `<button class="${classe}" data-attesa-fai="${cosa}|${esc(a.id)}" ${ST.offline ? 'disabled' : ''}>${testo}</button>`;
-  const tasti = `<div class="ao-tasti">${a.daChiedere
-    ? tasto('ordinato', 'Sì, ha ordinato', 'si') + tasto('ancora', 'Non ancora') + tasto('piu', 'Non ordina più', 'no')
-    : tasto('ordinato', 'Ha ordinato', 'si')}</div>`;
-  const scheda = dove === 'dashboard' ? `<button class="link ao-scheda" data-attesa-scheda="${esc(a.contattoId)}">${ic('persona')} Apri contatto</button>` : '';
-  return `<div class="ao-riga${a.daChiedere ? ' da-chiedere' : ''}"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span><span><b>${titolo}</b><small>${sotto}</small></span></div>${tasti}${scheda}</div>`;
-}
-function collegaAttesaOrdine(box, righe, poi) {
-  if (!box) return;
-  const fai = { ordinato: attesaHaOrdinato, ancora: attesaNonAncora, piu: attesaNonOrdinaPiu };
-  box.querySelectorAll('[data-attesa-fai]').forEach(b => b.onclick = () => {
-    if (soloGuardo() || ST.offline) return;
-    const [cosa, id] = b.dataset.attesaFai.split('|');
-    const a = righe.find(x => x.id === id);
-    if (a) fai[cosa](a, poi);
-  });
-  box.querySelectorAll('[data-attesa-scheda]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.attesaScheda, 'oggi'));
-}
-// Scheda del Cliente: l'attesa aperta di questa persona (una lettura sola per scheda, solo per i Clienti)
-async function mostraAttesaOrdine(c) {
-  const posto = document.getElementById('attesa-posto');
-  if (!posto || typeof leggiAttesaOrdini !== 'function') return;
-  if (!LS.attesa || LS.attesa.id !== c.id) {
-    let righe = [];
-    try { righe = (await leggiAttesaOrdini([c.user_id])).filter(a => a.contattoId === c.id); } catch (e) { return; }
-    if (LS.contatto !== c) return;
-    LS.attesa = { id: c.id, righe };
-  }
-  const righe = LS.attesa.righe, qui = document.getElementById('attesa-posto');
-  if (!qui) return;
-  qui.innerHTML = righe.map(a => attesaOrdineHtml(a, 'scheda')).join('');
-  collegaAttesaOrdine(qui, righe, async () => { LS.attesa = null; LS.vendite = null; LS.azioni = null; await ricaricaERidisegna(); });
-}
-
 function mostraAvvio(c) {
   const posto = document.getElementById('avvio-posto');
   if (!posto || !LS.avvio || LS.avvio.id !== c.id || c.categoria !== 'Partner') return;
@@ -552,7 +542,7 @@ function disegnaScheda() {
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
         <div class="vn-brand-testata" id="vn-brand-testata"></div>
         ${c.categoria === 'Partner' ? '<span id="invita-posto"></span><span id="avvio-posto"></span>' : ''}
-        ${c.categoria === 'Cliente' ? '<div id="attesa-posto"></div>' : ''}
+        ${c.categoria === 'Cliente' ? '<div id="account-posto"></div>' : ''}
       </div>
     </div>
     <div id="scheda-cose"></div>
@@ -580,7 +570,7 @@ function disegnaScheda() {
   if (m) m.onclick = () => apriModulo(c);
   mostraInvito(c);
   mostraAvvio(c);
-  mostraAttesaOrdine(c);
+  mostraAccountCliente(c);
   app.querySelectorAll('.sezioni button[data-s]').forEach(b => b.onclick = () => { LS.sezione = b.dataset.s; disegnaScheda(); });
   if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);
   else segniDellaScheda(c).then(mostraTarghe).catch(() => {});
@@ -1417,6 +1407,9 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     <div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>
+    <div class="campo" id="f-account-campo"><label>Ha un account cliente: ordina da solo</label>
+      <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
+      <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>
     <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
     <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
@@ -1469,6 +1462,19 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
     compleannoLetto = true;
   });
+  // V4 Vendite (Ignazio 22/10): «Ha un account cliente: ordina da solo», solo per i Clienti (contatti.account_cliente_dal). Come il compleanno:
+  // si legge a parte (o dalla scheda aperta) e il salvataggio lo tocca solo se è stato letto e se è cambiato; «Sì» tiene la data di prima o mette oggi.
+  const account = { letto: nuovo, prima: null, si: false };
+  const segnaAccount = () => {
+    $('f-account-campo').style.display = $('f-cat').value === 'Cliente' && account.letto ? '' : 'none';
+    velo.querySelectorAll('[data-account]').forEach(b => b.classList.toggle('scelto', (b.dataset.account === 'si') === account.si));
+  };
+  const accountLetto = dal => { if (dal === undefined || !velo.isConnected) return; Object.assign(account, { letto: true, prima: dal, si: !!dal }); segnaAccount(); };
+  velo.querySelectorAll('[data-account]').forEach(b => b.onclick = () => { account.si = b.dataset.account === 'si'; segnaAccount(); });
+  $('f-cat').addEventListener('change', segnaAccount);
+  if (!nuovo && LS.account && LS.account.id === c.id) accountLetto(LS.account.dal);
+  else if (!nuovo) leggiAccountCliente(c.id).then(accountLetto);
+  segnaAccount();
   // Un numero incollato con il prefisso («+39 338 1234567», «0039…») non resta «+39» accanto a «+39…»: il prefisso va nella casella del prefisso,
   // nel campo resta il numero (nota 080). Il salvataggio comunque lo componeva giusto; era solo la vista che sembrava doppia.
   $('f-tel').addEventListener('input', () => {
@@ -1489,6 +1495,10 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     };
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
     if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
+    if (account.letto && riga.categoria === 'Cliente') {   // V4: solo se letto e cambiato (prima della migrazione la colonna non si tocca)
+      const dal = account.si ? account.prima || MB21Coda.oggiRoma() : null;
+      if (dal !== account.prima) riga.account_cliente_dal = dal;
+    }
     if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; riga.lavoro = $('f-lavoro').value || null; }
     const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
@@ -1505,6 +1515,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     // stesso percorso di «Archivia» dal menu: categoria di prima in `categoria_prec`, fuori coda
     else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
     if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
+    if ('account_cliente_dal' in riga) LS.account = null;   // V4: la riga in testata si rilegge
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
       archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)

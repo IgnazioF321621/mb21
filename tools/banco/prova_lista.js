@@ -732,36 +732,45 @@ prova('Pagine 071 (Ignazio 22/10): niente più abbonamento nella Lista Nomi — 
   for (const f of ['pagina-lista.js', 'pagina-rubrica.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), /limitato\(|fermoScaduto|SOLO_GUARDARE|abbonamento attivo/, f);
 });
 
-prova('Nota 043: «Ordina da solo», stessa riga in scheda e Dashboard; dal 7° giorno la domanda con tre tocchi', () => {
+prova('V4 Vendite (Ignazio 22/10, strada B): in testata «Ordina dal suo account cliente · dal …» con «Togli» (e Annulla); niente riga senza account', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
   const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
-  let chiamata = null;
-  const bottoni = [];
-  const ctx = { soloGuardo: () => false, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`,
-    dataBreve: g => g.slice(8, 10) + '/' + g.slice(5, 7),
-    attesaHaOrdinato: (a, poi) => { chiamata = ['ordinato', a.id, poi]; }, attesaNonAncora: (a, poi) => { chiamata = ['ancora', a.id, poi]; },
-    attesaNonOrdinaPiu: (a, poi) => { chiamata = ['piu', a.id, poi]; }, apriContattoDa: (id, r) => { chiamata = ['scheda', id, r]; } };
+  const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
+  let dalDb = '2026-10-22', letture = 0, toast = null;
+  const scritte = [], posto = { innerHTML: '' }, togli = { onclick: null };
+  const q = { select() { return q; }, eq() { return q; }, maybeSingle() { letture++; return Promise.resolve({ data: { account_cliente_dal: dalDb }, error: null }); },
+    update(v) { scritte.push(v); return { eq: () => Promise.resolve({ error: null }) }; } };
+  const ctx = { LS: { contatto: c, account: null }, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`, MB21Lista: L, soloGuardo: () => false, vediTutti: () => false,
+    dbq: (_, p) => p, supa: { from: () => q }, mostraToast: (t, annulla) => { toast = { t, annulla }; },
+    document: { getElementById: id => (id === 'account-posto' ? posto : id === 'account-togli' && /account-togli/.test(posto.innerHTML) ? togli : null) } };
   vm.createContext(ctx);
-  vm.runInContext(pezzo('function attesaOrdineHtml') + pezzo('function collegaAttesaOrdine') + ';this.html = attesaOrdineHtml; this.collega = collegaAttesaOrdine;', ctx);
-  const prima = { id: 'a1', contattoId: 'c1', nome: 'Francesco', dal: '2026-10-08', chiediIl: '2026-10-15', daChiedere: false };
-  const dopo = { ...prima, id: 'a2', daChiedere: true };
-  let h = ctx.html(prima, 'scheda');
-  assert.match(h, /Ordina da solo dal suo account/); assert.match(h, /Detto il 08\/10/); assert.match(h, /Ha ordinato/); assert.doesNotMatch(h, /Non ancora/);
-  h = ctx.html(dopo, 'scheda');
-  assert.match(h, /Francesco ha ordinato\?/); assert.match(h, /Sì, ha ordinato/); assert.match(h, /Non ancora/); assert.match(h, /Non ordina più/); assert.match(h, /da-chiedere/);
-  assert.doesNotMatch(h, /Apri contatto/);
-  assert.match(ctx.html(prima, 'dashboard'), /<b>Francesco<\/b>.*detto il 08\/10.*Apri contatto/s);
-  // i tocchi: ognuno chiama la sua funzione con la riga giusta e il ridisegno
-  const box = { querySelectorAll: sel => sel === '[data-attesa-fai]'
-    ? ['ordinato|a2', 'ancora|a2', 'piu|a2'].map(v => { const b = { dataset: { attesaFai: v } }; bottoni.push(b); return b; })
-    : [{ dataset: { attesaScheda: 'c1' } }].map(b => { bottoni.push(b); return b; }) };
-  const poi = () => {};
-  ctx.collega(box, [prima, dopo], poi);
-  bottoni[0].onclick(); assert.equal(chiamata[0] + chiamata[1], 'ordinatoa2'); assert.equal(chiamata[2], poi);
-  bottoni[1].onclick(); assert.equal(chiamata[0], 'ancora');
-  bottoni[2].onclick(); assert.equal(chiamata[0], 'piu');
-  bottoni[3].onclick(); assert.equal(chiamata.join(), 'scheda,c1,oggi');
+  vm.runInContext(pezzo('async function leggiAccountCliente') + pezzo('async function mostraAccountCliente') + ';this.mostra = mostraAccountCliente;', ctx);
+  await ctx.mostra(c);
+  assert.equal(letture, 1);
+  assert.match(posto.innerHTML, /<b>Ordina dal suo account cliente<\/b><small>dal 22\/10\/2026 · nessuna telefonata di riordino<\/small>/);
+  assert.match(posto.innerHTML, /id="account-togli">Togli</);
+  await ctx.mostra(c); assert.equal(letture, 1);   // una lettura sola per scheda
+  await togli.onclick();
+  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":null}'); assert.equal(posto.innerHTML, ''); assert.match(toast.t, /niente più account cliente/);
+  await toast.annulla();
+  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":"2026-10-22"}'); assert.match(posto.innerHTML, /Ordina dal suo account cliente/);
+  // senza account: nessuna riga; lettura non riuscita (es. prima della migrazione): la scheda resta com'era
+  ctx.LS.account = null; dalDb = null; await ctx.mostra(c); assert.equal(posto.innerHTML, '');
+  ctx.LS.account = null; posto.innerHTML = 'prima'; q.maybeSingle = () => Promise.resolve({ data: null, error: { message: 'column does not exist' } });
+  await ctx.mostra(c); assert.equal(posto.innerHTML, 'prima');
+});
+
+prova('V4 Vendite: «Ha un account cliente: ordina da solo» in Modifica (solo Clienti, solo se letto e cambiato); via la riga e la domanda dei 7 giorni', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), ven = fs.readFileSync(path.join(__dirname, '../../pagina-vendite.js'), 'utf8');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  assert.match(src, /<label>Ha un account cliente: ordina da solo<\/label>\s*<div class="vn-quando"><button type="button" data-account="si">Sì<\/button><button type="button" data-account="no">No<\/button><\/div>/);
+  assert.match(src, /\$\('f-account-campo'\)\.style\.display = \$\('f-cat'\)\.value === 'Cliente' && account\.letto \? '' : 'none';/);
+  assert.match(src, /if \(account\.letto && riga\.categoria === 'Cliente'\) \{[\s\S]*?const dal = account\.si \? account\.prima \|\| MB21Coda\.oggiRoma\(\) : null;\s*if \(dal !== account\.prima\) riga\.account_cliente_dal = dal;/);
+  assert.match(src, /\$\{c\.categoria === 'Cliente' \? '<div id="account-posto"><\/div>' : ''\}/);
+  // l'attesa «Ordina da solo» non si vede più da nessuna parte: né riga, né domanda dei 7 giorni, né riquadro in Dashboard
+  assert.doesNotMatch(src + ven + dash, /attesaOrdineHtml|collegaAttesaOrdine|mostraAttesaOrdine|leggiAttesaOrdini|attesaHaOrdinato|attesaNonAncora|attesaNonOrdinaPiu|caricaAttese|atteseHtml|attesa-posto/);
 });
 
 prova('Nota 051: «Prossimo riordino», per ogni brand conta solo la vendita più recente (anche con la consegna lontana)', () => {

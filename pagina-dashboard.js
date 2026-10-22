@@ -111,7 +111,7 @@ async function caricaOggi() {
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes(), caricaAttese()]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes()]);
   PRE.dati = null;   // da qui in poi ogni lettura torna alla rete (dopo un esito, una conferma, un ritorno sulla Dashboard scaduta)
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
@@ -332,7 +332,7 @@ function disegnaHome() {
   else tessere.push(chi, mese, traguardo, giorno);
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
   if (!vediTutti()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
-  html += atteseHtml() + daSeguireHtml();   // «Ordina da solo» (nota 043), poi «Da seguire» (tappa 3: tracce condivise e il mio percorso in una riga sola)
+  html += daSeguireHtml();   // «Da seguire» (tappa 3: tracce condivise e il mio percorso in una riga sola)
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
     const go = b.dataset.lv;
@@ -605,7 +605,6 @@ function disegnaOggi() {
 function collegaVistaLV() {
   collegaDashboard();
   collegaMioAvvio();
-  collegaAttese();   // «Ordina da solo» (nota 043)
   const seguire = document.getElementById('dash-seguire');   // tappa 3: «Da seguire» si apre e si chiude sul posto
   if (seguire) seguire.onclick = () => { DSG.aperto = !DSG.aperto; disegnaOggi(); };
   if (LV.vista === 'home') { mostraRigaTelefono(); mostraRiquadroObiettivi(); }
@@ -1432,31 +1431,8 @@ function disegnaAvvio() {
 
 const RIO = { righe: [], nonRisponde: new Set(), spento: new Set() };
 
-// «Ordina da solo» in Dashboard (nota Pagine 043 con Azioni 025): dal 7° giorno un avviso in evidenza per ogni cliente
-// («X ha ordinato?» con tre tocchi, i più vecchi prima); prima solo una riga discreta «N clienti ordinano da solo» che si apre.
-// La riga è quella della scheda (`attesaOrdineHtml` in pagina-lista.js).
-const ATT = { righe: [], aperta: false };
-async function caricaAttese() {
-  ATT.righe = [];
-  if (vediTutti() || typeof leggiAttesaOrdini !== 'function') return;
-  try { ATT.righe = await leggiAttesaOrdini(idVisti()); } catch (e) {}
-}
-function atteseHtml() {
-  if (!ATT.righe.length) return '';
-  const chiedere = ATT.righe.filter(a => a.daChiedere), dopo = ATT.righe.filter(a => !a.daChiedere);
-  const n = dopo.length;
-  return `<div class="ao-dash">${chiedere.map(a => attesaOrdineHtml(a, 'dashboard')).join('')}${n
-    ? rigaApribile('dash-attese', 'catalogare', 'vendite', `${n} ${n === 1 ? 'cliente ordina' : 'clienti ordinano'} da solo`, 'In attesa che ordinino dal loro account', ATT.aperta, 0)
-      + (ATT.aperta ? dopo.map(a => attesaOrdineHtml(a, 'dashboard')).join('') : '') : ''}</div>`;
-}
-function collegaAttese() {
-  const box = app.querySelector('.ao-dash');
-  if (!box) return;
-  const riga = document.getElementById('dash-attese');
-  if (riga) riga.onclick = () => { ATT.aperta = !ATT.aperta; disegnaOggi(); };
-  // «Ha ordinato» porta alla scheda del cliente (sezione Vendite) e chiama il ridisegno a vendita salvata: lì si resta sulla scheda
-  collegaAttesaOrdine(box, ATT.righe, async () => { await caricaAttese(); if (ST.tab === 'oggi') disegnaOggi(); });
-}
+// «Ordina da solo» in Dashboard (nota 043): il riquadro «N clienti ordinano da solo» e la domanda dei 7 giorni non ci sono più (V4 Vendite, 22/10:
+// al loro posto il dato del cliente «Ha un account cliente», nella sua scheda).
 
 async function caricaRiordini(oggi) {
   try {

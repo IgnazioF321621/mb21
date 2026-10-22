@@ -430,7 +430,7 @@ prova('Verifica Dashboard, tappa 3 (Ignazio 22/10): tracce condivise e «Il mio 
   ctx.DSG.aperto = true;
   assert.match(ctx.f(), /\|true\|3\]<div class="da-seguire"><i>TRACCE<\/i><i>PERCORSO<\/i><\/div>$/);
   ctx.tracceHtml = () => ''; ctx.mioPercorsoHtml = () => ''; assert.equal(ctx.f(), '');   // niente da seguire: niente riga
-  assert.match(dash, /html \+= atteseHtml\(\) \+ daSeguireHtml\(\);/);
+  assert.match(dash, /html \+= daSeguireHtml\(\);/); assert.doesNotMatch(dash, /atteseHtml/);   // V4 Vendite (22/10): via il riquadro «ordinano da solo»
 });
 
 prova('Verifica Dashboard, tappa 4 (Ignazio 22/10): foglio Obiettivi, sezioni una alla volta; aperta solo la prima con caselle da scrivere; scala dei bonus in una riga; salvataggio uguale a prima', () => {
