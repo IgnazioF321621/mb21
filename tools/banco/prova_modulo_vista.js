@@ -17,6 +17,18 @@ const apri = async opz => { const p = P.nuovoAppuntamento({ giorno: P.OGGI, ora:
 const scegli = async (v, nome, valore) => { await v.clic(`[data-scelta="${nome}"] [data-v="${valore}"]`); };
 const contatto = (v, nome) => { const inp = v.querySelector('#na-contatto'); inp.value = nome; return inp.onchange(); };
 
+prova('Scheda contatto S5 (nota Pagine 072): un contatto SENZA categoria apre il modulo con i tipi del Prospect; salvando la sua categoria non cambia', async () => {
+  pulisci();
+  const { v, p } = await apri({ contatto: { id: 'senza1', nome: 'Contatto senza categoria', categoria: null }, categoria: 'Prospect', resta: true });
+  assert.match(v.innerHTML, /data-scelta="tipo"[\s\S]*?data-v="Contatto"[\s\S]*?data-v="Piano Marketing"/);
+  await scegli(v, 'tipo', 'Contatto'); await scegli(v, 'modalita', 'Telefonata');
+  await v.clic('#na-si');
+  await p;
+  const ins = scritte('azioni', 'insert');
+  assert.equal(ins.length, 1); assert.equal(ins[0].args[0].categoria, 'Prospect');
+  assert.equal(scritte('contatti', 'update').length, 0);   // la categoria del contatto resta vuota: niente coda, resta in «Da catalogare»
+});
+
 prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Partner compare «Nessuno · Fiammetta Rossi» e, scelta la persona, «Vedono anche i punti?»', async () => {
   pulisci();
   const { v } = await apri({});

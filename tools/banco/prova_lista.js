@@ -547,6 +547,16 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Scheda contatto S5 (nota Pagine 072): anche archiviati e senza categoria — «Cose da fare» per tutti, «Nuova azione» con i tipi del Prospect', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  assert.match(src, /\n    <div id="scheda-cose"><\/div>\n/);   // senza condizione sulla categoria
+  assert.doesNotMatch(src, /Il contatto non ha una categoria: dagliela/);
+  assert.match(src, /nuovoAppuntamento\(\{ contatto: \{ id: c\.id, nome: c\.nome, categoria: c\.categoria \}, categoria: c\.categoria \|\| 'Prospect', resta: true \}\)/);
+  assert.match(src, /const catEsiti = c\.categoria \|\| 'Prospect';/);
+  assert.equal(require('../../agenda.js').tipiPer('Archiviato').join(), require('../../agenda.js').tipiPer('Prospect').join());   // gli archiviati li avevano già
+});
+
 prova('Scheda contatto S4 (Ignazio 22/10): «Coach Yes» non è più una linguetta; le note in un riquadro dentro Azioni, con Coach+', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');

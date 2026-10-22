@@ -553,7 +553,7 @@ function disegnaScheda() {
         ${c.categoria === 'Cliente' ? '<div id="attesa-posto"></div>' : ''}
       </div>
     </div>
-    ${['Prospect', 'Partner', 'Cliente'].includes(c.categoria) ? '<div id="scheda-cose"></div>' : ''}
+    <div id="scheda-cose"></div>
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
     <div id="sezione"></div>
     ${versione()}`;
@@ -600,7 +600,7 @@ function disegnaScheda() {
 }
 
 // Le cose da fare collegate a questa persona (cantiere 41, Ignazio 23/09: quello che fai in MB Plan si ritrova nella scheda).
-// Sotto la testata, prima delle linguette: le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
+// Sotto la testata, prima delle linguette, per ogni categoria (S5, nota 072: anche archiviati e senza categoria): le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
 // (lo stesso di MB Plan), e «+ Una cosa da fare» per aggiungerne una già collegata, da fare oggi.
 async function coseDellaScheda(c) {
   const posto = document.getElementById('scheda-cose');
@@ -813,6 +813,9 @@ async function sezioneAzioni() {
   // Niente riquadro FASE (Ignazio 24/09: «residuo di Glide»): dove si è con la persona lo dice la prima card, l'ultima azione con il suo esito.
   // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
   const piuHtml = '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
+  // S5 (nota Pagine 072, Ignazio 22/10): un contatto senza categoria si lavora con i tipi e gli esiti del Prospect, senza cambiargli la categoria
+  // (resta fuori dalla coda e in «Da catalogare»). Archiviato, Unlinked, Ex e Referral li hanno già (agenda.js, TIPI).
+  const catEsiti = c.categoria || 'Prospect';
   if (!LS.azioni) {
     box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';   // solo alla prima lettura: aprire una riga (S3) non fa saltare la pagina
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
@@ -861,7 +864,7 @@ async function sezioneAzioni() {
       ${dettagli([esc(a.tipo_azione || ''), esc(a.modalita || ''), a.esito ? `<b>${esc(MB21Agenda.nomePasso(a.esito))}</b>` : ''])}
       <div class="comandi"><span class="stato-az"></span>${link('data-modifica-azione', a.id, 'Modifica')}</div>
     </div>`;
-    const blocco = bloccoEsiti(a, c.categoria);
+    const blocco = bloccoEsiti(a, catEsiti);
     const chiusa = blocco.includes('data-apri-esiti');
     return `
     <div class="azione">
@@ -880,13 +883,13 @@ async function sezioneAzioni() {
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; await ricaricaERidisegna(); };
-  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo);
+  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), { ...c, categoria: catEsiti }, dopo);
   box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(collega);
   box.querySelectorAll('[data-cambia-esito]').forEach(b => b.onclick = () => {   // stesso blocco dell'Agenda, aperto sul posto
     const a = LS.azioni.find(x => x.id === b.dataset.cambiaEsito);
     const vuoto = box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`);
     if (!vuoto) return;
-    vuoto.outerHTML = bloccoEsiti(a, c.categoria, true);
+    vuoto.outerHTML = bloccoEsiti(a, catEsiti, true);
     b.remove();
     collega(box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`));
   });
@@ -899,8 +902,8 @@ async function sezioneAzioni() {
 async function azionePiu() {
   if (soloGuardo()) return;
   const c = LS.contatto;
-  if (!MB21Agenda.tipiPer(c.categoria).length) return mostraToast('Il contatto non ha una categoria: dagliela con Modifica o da «Da catalogare».');
-  const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
+  // S5 (nota Pagine 072): senza categoria i tipi del Prospect; la categoria del contatto non cambia (categoriaToccata resta falsa)
+  const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, categoria: c.categoria || 'Prospect', resta: true });
   if (!creato) return;
   LS.azioni = null;
   await ricaricaERidisegna();
