@@ -155,8 +155,7 @@ function disegnaLista() {
   app.innerHTML = `
     <div class="ls-testa">
       <div class="ag-testa"><h1>Lista Nomi</h1>
-        ${limitato() ? '' : '<button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button>'}</div>
-      ${limitato() ? `<div class="sotto">${ic('visione')} ${SOLO_GUARDARE}</div>` : ''}
+        <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
       ${partnerSelect()}
       <div class="cerca">
         <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
@@ -202,7 +201,7 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => {
       if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
-      if (!e.target.closest('a, .menu')) (limitato() ? menuCard : apriScheda)(c.dataset.id);   // scaduto: solo «Elimina» (nota 042)
+      if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id);
     };
   });
   const esportaB = document.getElementById('esporta');
@@ -353,10 +352,6 @@ async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
   // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
-  if (limitato()) {   // abbonamento scaduto (nota 042): niente scheda né Modifica, resta solo «Elimina»
-    const v = await sceltaDa(r.nome, comandiContatto(r).filter(x => x.icona === 'elimina'), contattaHtml(r.telefono));
-    return v && v.fai();
-  }
   const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
   const voci = [...apri, ...(soloGuardo() ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
@@ -434,12 +429,7 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
 }
 
 // ── Scheda contatto ──
-// Abbonamento scaduto (nota Pagine 042, Ignazio 08/10/2026): la Lista Nomi si guarda e si possono solo eliminare i nomi;
-// niente «+», niente Modifica, niente scheda. Il blocco della scheda sta qui, così vale per ogni strada che porta a una
-// scheda (avvisi «apri=lista&contatto», Oggi, Agenda, Mappa, Sharing…), e chi ci arriva si ritrova sulla Lista.
-const SOLO_GUARDARE = 'Solo da guardare: con l\'abbonamento attivo si aggiungono, si modificano e si aprono le schede dei nomi.';
 function apriScheda(id) {
-  if (limitato()) { LS.contatto = null; mostraToast(SOLO_GUARDARE); return disegnaLista(); }
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
@@ -474,18 +464,17 @@ function attesaOrdineHtml(a, dove) {
   const titolo = a.daChiedere ? `${esc(a.nome)} ha ordinato?` : dove === 'dashboard' ? esc(a.nome) : 'Ordina da solo dal suo account';
   const sotto = a.daChiedere || dove === 'dashboard' ? detto : `Detto il ${esc(dataBreve(a.dal))} · la vendita si registra quando ordina`;
   const tasto = (cosa, testo, classe = '') => `<button class="${classe}" data-attesa-fai="${cosa}|${esc(a.id)}" ${ST.offline ? 'disabled' : ''}>${testo}</button>`;
-  // con l'abbonamento scaduto (nota 042) si vede ma non si tocca
-  const tasti = limitato() ? '' : `<div class="ao-tasti">${a.daChiedere
+  const tasti = `<div class="ao-tasti">${a.daChiedere
     ? tasto('ordinato', 'Sì, ha ordinato', 'si') + tasto('ancora', 'Non ancora') + tasto('piu', 'Non ordina più', 'no')
     : tasto('ordinato', 'Ha ordinato', 'si')}</div>`;
-  const scheda = dove === 'dashboard' && !limitato() ? `<button class="link ao-scheda" data-attesa-scheda="${esc(a.contattoId)}">${ic('persona')} Apri contatto</button>` : '';
+  const scheda = dove === 'dashboard' ? `<button class="link ao-scheda" data-attesa-scheda="${esc(a.contattoId)}">${ic('persona')} Apri contatto</button>` : '';
   return `<div class="ao-riga${a.daChiedere ? ' da-chiedere' : ''}"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span><span><b>${titolo}</b><small>${sotto}</small></span></div>${tasti}${scheda}</div>`;
 }
 function collegaAttesaOrdine(box, righe, poi) {
   if (!box) return;
   const fai = { ordinato: attesaHaOrdinato, ancora: attesaNonAncora, piu: attesaNonOrdinaPiu };
   box.querySelectorAll('[data-attesa-fai]').forEach(b => b.onclick = () => {
-    if (soloGuardo() || limitato() || ST.offline) return;
+    if (soloGuardo() || ST.offline) return;
     const [cosa, id] = b.dataset.attesaFai.split('|');
     const a = righe.find(x => x.id === id);
     if (a) fai[cosa](a, poi);
@@ -1349,7 +1338,7 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
 function apriModulo(c) {
-  if (soloGuardo() || fermoScaduto()) return;   // nota 050
+  if (soloGuardo()) return;
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
   // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner scelto nel Partner Select)

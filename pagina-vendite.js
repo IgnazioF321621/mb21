@@ -72,7 +72,7 @@ async function sezioneVendite() {
 async function ordineFatto(v) { return segnaOrdineFatto(v, disegnaScheda); }
 // «Ordine fatto» dalla riga della vendita o «Consegnato» dalla carta «Consegna» in Azioni (nota 051): un modulo solo; `dopo` ridisegna chi l'ha aperto
 async function segnaOrdineFatto(v, dopo) {
-  if (soloGuardo() || fermoScaduto()) return;
+  if (soloGuardo()) return;
   const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true }]);
   if (!valori) return;
   if (valori.giorno < v.data) return mostraToast('L\'ordine è prima della vendita');
@@ -86,7 +86,7 @@ async function segnaOrdineFatto(v, dopo) {
 // «Vendita +» e, toccando una riga, la stessa vendita da cambiare o eliminare: un modulo solo (campi di Glide).
 // `proposta.brand`: brand già scelto quando la vendita nasce dall'esito «Vendita» di una Consulenza PRD.
 function moduloVendita(v, proposta) {
-  if (soloGuardo() || fermoScaduto()) return;   // nota 050
+  if (soloGuardo()) return;
   const c = LS.contatto;
   let brand = v ? v.brand : (proposta && MB21Lista.BRAND.some(b => b[0] === proposta.brand) ? proposta.brand : '');
   const velo = document.createElement('div');

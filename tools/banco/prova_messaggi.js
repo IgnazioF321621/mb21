@@ -6,7 +6,7 @@ let ok = 0;
 const prova = async (nome, fn) => { await fn(); ok++; console.log('OK  ' + nome); };
 
 const guardo = { altri: false };
-function nuovoMondo({ messaggi = [], letti = [], velo = false, limitato = false, esitoInsert = null } = {}) {
+function nuovoMondo({ messaggi = [], letti = [], velo = false, esitoInsert = null } = {}) {
   const inseriti = [], fogli = [], toast = [];
   const crea = () => { const bottoni = {}; const el = { className: '', _h: '', onclick: null, remove() { el.rimosso = true; }, bottoni,
     set innerHTML(h) { el._h = h; for (const m of h.matchAll(/id="([\w-]+)"/g)) bottoni[m[1]] = bottoni[m[1]] || { disabled: false, onclick: null }; }, get innerHTML() { return el._h; },
@@ -14,7 +14,7 @@ function nuovoMondo({ messaggi = [], letti = [], velo = false, limitato = false,
   const consulta = (tabella) => ({ select() { const q = { order() { return Promise.resolve({ data: tabella === 'messaggi' ? messaggi : [], error: null }); }, eq() { return Promise.resolve({ data: letti.map(id => ({ messaggio_id: id })), error: null }); } }; return q; },
     upsert(righe, opzioni) { inseriti.push({ tabella, riga: righe, opzioni }); return Promise.resolve({ error: esitoInsert }); } });
   const ctx = { ST: { utente: { id: 'u1' } }, esc: s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
-    ic: n => `[${n}]`, limitato: () => limitato, mostraToast: t => toast.push(t), dbq: (_, p) => p, rigaProfilo: (id, t, d) => `<riga id="${id}">${t}${d}</riga>`,
+    ic: n => `[${n}]`, mostraToast: t => toast.push(t), dbq: (_, p) => p, rigaProfilo: (id, t, d) => `<riga id="${id}">${t}${d}</riga>`,
     guardoAltri: () => !!guardo.altri, supa: { from: consulta }, MB21Agenda: { linkMappa: l => 'https://maps.apple.com/?q=' + encodeURIComponent(l) }, AD: {}, app: {},
     document: { querySelector: () => velo, createElement: () => { const e = crea(); fogli.push(e); return e; }, body: { appendChild() {} } }, Promise, Set, Date, Intl, console };
   vm.createContext(ctx);
@@ -36,8 +36,8 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
     assert.equal(await w.annuncioMessaggi(true), true); assert.equal(w.fogli.length, 1);
     assert.match(w.fogli[0].innerHTML, /Hai un nuovo messaggio/); assert.match(w.fogli[0].innerHTML, /Hotel del WES/); assert.ok(!/Secondo/.test(w.fogli[0].innerHTML));
   });
-  await prova('tutti letti, nessun messaggio, un altro foglio aperto, accesso limitato, apertura da un avviso: nessun foglio', async () => {
-    for (const [nome, o, aprire] of [['letti', { messaggi: [M1], letti: ['m1'] }, true], ['vuoto', {}, true], ['altro foglio', { messaggi: [M1], velo: true }, true], ['limitato', { messaggi: [M1], limitato: true }, true], ['da avviso', { messaggi: [M1] }, false]]) {
+  await prova('tutti letti, nessun messaggio, un altro foglio aperto, apertura da un avviso: nessun foglio', async () => {
+    for (const [nome, o, aprire] of [['letti', { messaggi: [M1], letti: ['m1'] }, true], ['vuoto', {}, true], ['altro foglio', { messaggi: [M1], velo: true }, true], ['da avviso', { messaggi: [M1] }, false]]) {
       const w = nuovoMondo(o); assert.equal(await w.annuncioMessaggi(aprire), false, nome); assert.equal(w.fogli.length, 0, nome);
     }
   });
@@ -64,13 +64,12 @@ const M2 = { id: 'm2', titolo: 'Secondo', testo: null, luogo: null, link_materia
     const h = w.messaggiAdminHtml(); assert.match(h, /letto da 1 su 2/); assert.match(h, /per persone scelte · letto da 0 su 1/);
     w.ctx.AD.messaggioAperto = 'm1'; const h2 = w.messaggiAdminHtml(); assert.match(h2, /✅ Anna/); assert.match(h2, /▫️ Bruno/); assert.ok(!/Carla/.test(h2.split('Secondo')[0]));
   });
-  await prova('Dashboard: la riga c\'è finché c\'è un messaggio (anche già letto), è cliccabile; non con il Partner Select su un altro, non senza messaggi, non con accesso limitato', async () => {
+  await prova('Dashboard: la riga c\'è finché c\'è un messaggio (anche già letto), è cliccabile; non con il Partner Select su un altro, non senza messaggi', async () => {
     const w = nuovoMondo({ messaggi: [M1, M2], letti: ['m1', 'm2'] }); assert.equal(w.bannerMessaggi(), ''); await w.annuncioMessaggi(true);   // prima della lettura niente
     assert.equal(w.fogli.length, 0);   // tutti letti: nessun foglio, ma la riga resta
     const h = w.bannerMessaggi(); assert.match(h, /<button class="banner-grande messaggi" id="ds-messaggi"/); assert.match(h, /Hai 2 messaggi per te/); assert.match(h, /<small>Hotel del WES<\/small>/);
     const uno = nuovoMondo({ messaggi: [M2] }); await uno.annuncioMessaggi(false); assert.match(uno.bannerMessaggi(), /Hai 1 messaggio per te.*Secondo/s);
     guardo.altri = true; assert.equal(w.bannerMessaggi(), ''); guardo.altri = false;
-    const lim = nuovoMondo({ messaggi: [M1], limitato: true }); await lim.annuncioMessaggi(true); assert.equal(lim.bannerMessaggi(), '');
     assert.equal(nuovoMondo().bannerMessaggi(), '');
   });
   console.log(`\n${ok} prove ok`);

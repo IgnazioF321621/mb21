@@ -80,7 +80,7 @@ function collegaSegnalazioniAdmin() {
 // con le risposte non ancora lette (domanda del partner + risposta), un solo «Ho capito». Non per l'Admin, mai sopra un altro foglio.
 // Dà true se ha aperto il foglio (allora l'annuncio del Training aspetta). Una lettura leggera, solo all'apertura.
 async function annuncioRisposte(aprire) {
-  if (!aprire || limitato() || eAdmin() || !ST.utente || !ST.utente.id || document.querySelector('.velo')) return false;
+  if (!aprire || eAdmin() || !ST.utente || !ST.utente.id || document.querySelector('.velo')) return false;
   const r = await supa.from('segnalazioni').select('id, creata_il, testo, risposta').not('risposta', 'is', null).is('risposta_letta_il', null).order('creata_il', { ascending: true }).limit(10);
   if (r.error || !r.data || !r.data.length || document.querySelector('.velo')) return false;   // anche se il campo non c'è ancora: niente foglio, niente errore
   foglioRisposte(r.data);

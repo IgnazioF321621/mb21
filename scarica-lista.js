@@ -31,8 +31,8 @@ async function scaricaMiaLista() {
 // la data la dà Ignazio, dopo il suo messaggio su WhatsApp. `esenti`: le persone per cui non cambia nulla (oltre all'Admin): la persona di fiducia.
 const CHIUSURA = { data: '2026-10-25', ora: '18:00', cancellazione: '2026-11-30', esenti: ['831417a9-6649-44e8-8eb2-e5d79d0595e5'] };
 const giornoChiusura = () => new Date(CHIUSURA.data + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' }) + (CHIUSURA.ora ? ` alle ${CHIUSURA.ora}` : '');
-// Chi è interessato dalla chiusura: ci deve essere la data, e non l'Admin, non la persona di fiducia, non chi ha l'accesso limitato né chi guarda un altro partner
-const chiusuraPerMe = () => !!CHIUSURA.data && !eAdmin() && !limitato() && !guardoAltri() && !!ST.utente && !CHIUSURA.esenti.includes(ST.utente.id);
+// Chi è interessato dalla chiusura: ci deve essere la data, e non l'Admin, non la persona di fiducia, né chi guarda un altro partner
+const chiusuraPerMe = () => !!CHIUSURA.data && !eAdmin() && !guardoAltri() && !!ST.utente && !CHIUSURA.esenti.includes(ST.utente.id);
 const giornoCancellazione = () => new Date(CHIUSURA.cancellazione + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' });
 function bannerScaricaLista() {
   if (!chiusuraPerMe()) return '';
