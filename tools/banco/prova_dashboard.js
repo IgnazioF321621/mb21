@@ -455,4 +455,11 @@ prova('T5 elencoOggi: gruppi vuoti nascosti, tutto fatto, niente da fare', () =>
   assert.equal(D.elencoOggi().conto, '');
 });
 
+prova('T8 fraseElencoOggi: corta, i gruppi che ci sono e il conto solo se qualcosa è fatto', () => {
+  const coda = [{ id: 'c1', nome: 'X' }, { id: 'c2', nome: 'Y' }];
+  assert.equal(D.fraseElencoOggi(D.elencoOggi([{ id: 'a1', contatti: { nome: 'Z' } }], [], [], coda, [], [{ motivo: 'coda' }])), '1 da chiudere · 2 da chiamare · fatti 1 di 4');
+  assert.equal(D.fraseElencoOggi(D.elencoOggi([], [], [], coda, [], [])), '2 da chiamare');
+  assert.equal(D.fraseElencoOggi(D.elencoOggi()), '');
+});
+
 console.log(`\n${ok} prove superate`);
