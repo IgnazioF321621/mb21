@@ -323,10 +323,12 @@ function cardNome(r) {
 // Con tante voci il foglio scorre (`alto`, 25/09: i titoli di un progetto in «Sposta sotto un altro titolo» di MB Plan)
 // voci: { etichetta, icona?, tono?, pericolo?, lettera? } e, per gli elenchi ad albero (Partner Select, «Gli ultimi
 // 12 mesi»), `rientro` (livelli sotto la radice: sposta la voce a destra con ↳) e `nota` (una riga piccola sotto il nome)
+// Scheda contatto S7 (Ignazio 22/10): le scelte compaiono AL CENTRO della pagina, in tutti i punti (una funzione sola: «+ Nuova azione», menu della
+// card, «Non ora», rubrica…), con la forma centrata del riquadro «È iniziato [mese]» (.velo.centro); se sono tante scorrono dentro il foglio.
 function sceltaDa(titolo, voci, sopra) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
-    velo.className = 'velo';
+    velo.className = 'velo centro';
     velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
       ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${esc(v.etichetta)}${v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : ''}</button>`).join('')}
       </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">

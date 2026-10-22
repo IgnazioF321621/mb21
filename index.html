@@ -984,6 +984,9 @@
   .banner-grande.check small { color: rgba(255,255,255,.8); }
   .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
   .velo.centro { align-items: center; padding: 16px; }
+  /* S7 (Ignazio 22/10): il foglio delle scelte al centro, tutto arrotondato, senza maniglia; se è lungo scorre dentro e non esce dallo schermo */
+  .velo.centro .foglio { max-width: 440px; border-radius: var(--raggio-foglio); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 22px 16px 16px; }
+  .velo.centro .foglio::before { display: none; }
   .cent { font-size: .72em; font-weight: 700; }   /* i centesimi dei punti: piccoli, dopo una virgola grande e ben visibile */
   .cent i { font-style: normal; font-size: 1.5em; font-weight: 900; line-height: 0; margin: 0 .06em 0 .04em; }
   .solo-tu { display: block; font-weight: 600; font-size: 13px; color: var(--pericolo); margin: 0 0 10px; text-align: center; }   /* «Per ora lo vedi solo tu» (Admin) */

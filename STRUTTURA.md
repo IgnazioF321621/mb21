@@ -499,6 +499,11 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - Il segno Coach Yes accanto al nome (coda, Agenda, scheda della persona) apre il suo foglio come prima (`foglioCoachYes` in `index.html`).
 - Prova in `prova_lista.js`; disegno con dati finti in `docs/prototipi/schizzo_scheda_coach_S4.png`.
 
+**Tappa S7 (Ignazio 22/10/2026): le scelte al centro.** Il foglio delle scelte (`sceltaDa` in `pagina-lista.js`: «+ Nuova azione», menu della card, «Non ora», rubrica, Ordina, Altri… in Lista, Dashboard, rubrica e MB Plan) non sale più dal basso: compare al centro della pagina.
+- È la stessa forma del riquadro «È iniziato [mese]» (`.velo.centro`).
+- In `index.html` `.velo.centro .foglio` è tutto arrotondato, senza maniglia, largo al massimo 440 px e alto al massimo lo schermo meno 32 px; se è lungo scorre dentro.
+- Toccare fuori chiude come prima. Prova in `prova_lista.js`; disegno con il codice vero in `docs/prototipi/schizzo_scelte_al_centro_S7.png` (anche 320×480).
+
 **Scheda contatto, tappa S6 (Ignazio 22/10/2026, disegno approvato «Azioni e Coach nella scheda»):** nella linguetta Azioni.
 - **Azione chiusa aperta al tocco:** non c'è più la riga del titolo sopra. La ⌃ per richiuderla sta dentro la card, accanto alla data (`.az-su`, sempre `data-az-apri`).
 - **Note del coach:** niente più riquadro «Coach Yes» in fondo né «Coach+». Ogni nota è una riga gialla «Coach Yes · tipo ›» (`.az-coach`) tra le azioni, al suo posto per data.
