@@ -381,8 +381,8 @@ const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastigl
 // «Non ora» per saltarlo senza aprire la scheda (nota 018: poi «Salta», tra GIORNI_SALTA giorni, o «Scegli la data»). Offline: solo la riga.
 // Nota Pagine 003 (Ignazio 06/10, urgente): c'è anche guardando un altro partner col Partner Select (solo l'Admin: la regola `contatti_own`
 // gli lascia scrivere `rientro_il` dei contatti di tutti, provato sul database in una prova annullata); con «Tutti» la coda non c'è.
-function rigaCoda(x) {
-  const riga = rigaPersona('coda', x.id, x.nome, MB21Coda.ultimaVolta(x, ST.oggi), x.id);
+function rigaCoda(x, sotto) {
+  const riga = rigaPersona('coda', x.id, x.nome, sotto || MB21Coda.ultimaVolta(x, ST.oggi), x.id);
   if (vediTutti() || ST.offline) return riga;
   return `<div class="lv-riga">${riga}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>`;
 }
@@ -413,48 +413,47 @@ async function nonOra(id) {
     mostraToast('Annullato');
   });
 }
-const fatteDi = tipo => LV.fatte.filter(x => x.tipo === tipo);
+// Tappa 6 della verifica (Ignazio 22/10): un elenco solo, in ordine (MB21Dashboard.elencoOggi): prima ciò che è aperto da chiudere,
+// poi «Poi si contatta»; su ogni riga il motivo davanti («Conferma · …», «Telefonata · scelta · …»); un conto solo «fatti N di M».
+// Fatti: gli esiti di oggi della coda e delle scelte (`stato_oggi.fatti_oggi`) più le righe chiuse da qui (LV.fatte); le chiuse restano con la spunta.
+function sottoOggi(x) {
+  const d = x.dato;
+  if (x.motivo === 'conf') return MB21Agenda.testoConferma(d, new Date().toISOString());
+  if (x.motivo === 'rio') return [d.brand, d.prodotto].filter(Boolean).join(' · ');
+  if (x.motivo === 'ds') return [d.ultima_fase === 'Dare Seguito' ? '' : d.ultima_fase || 'Senza esito', `scaduto da ${d.scadutoDa} ${d.scadutoDa === 1 ? 'giorno' : 'giorni'}`].filter(Boolean).join(' · ');   // mai «Dare Seguito · Dare Seguito»
+  if (x.motivo === 'coda') return MB21Coda.ultimaVolta(d, ST.oggi);
+  return sottoScelta(d);
+}
 function disegnaOggiLV() {
-  const r = ST.risultato, st = ST.stato, altro = guardoAltri(), c = contiOggi();
-  const sezioni = [];
-  const metti = (id, icona, titolo, sotto, quanti, tipo, righe, contenutoSpeciale) => {
-    const fatte = fatteDi(tipo), aperta = apertaRigaDash(id, false);
-    const finita = !quanti;
-    sezioni.push(rigaApribile('sez-' + id, finita ? 'fatta' : '', finita ? 'fatto' : icona, titolo, sotto, aperta, quanti)
-      + (aperta ? (contenutoSpeciale ? contenutoSpeciale() : righe.join('') + fatte.map(x => rigaFatta(x.nome)).join('')) : ''));
-  };
-  const nonPuo = CONF.righe.filter(x => x.nonPuo).length, daConf = c.conf - nonPuo;   // nota 061: «Non può · da spostare»
-  if (CONF.righe.length || fatteDi('conf').length) metti('conferme', 'conferme', 'Conferme', c.conf ? [daConf ? `${daConf} ${daConf === 1 ? 'appuntamento da confermare' : 'appuntamenti da confermare'}` : '', nonPuo ? `${nonPuo} da spostare` : ''].filter(Boolean).join(' · ') : 'tutte fatte', c.conf, 'conf',
-    CONF.righe.map(x => rigaPersona('conf', x.id, x.contatti ? x.contatti.nome : '', MB21Agenda.testoConferma(x, new Date().toISOString()))));
-  if (r.dareSeguito.length || fatteDi('ds').length) metti('dareseguito', 'rimandato', 'Dare Seguito scaduti', c.dare ? `${c.dare} da richiamare` : 'tutti fatti', c.dare, 'ds',
-    r.dareSeguito.map(x => rigaPersona('ds', x.id, x.nome, `${x.ultima_fase || 'Senza esito'} · scaduto da ${x.scadutoDa} ${x.scadutoDa === 1 ? 'giorno' : 'giorni'}`, x.id)));
-  const inPausa = st.contatti_al_giorno === 0;
-  const conto = esc(MB21Coda.contoGiorno(st.fatti_oggi, st.contatti_al_giorno));   // «3 di 5» · «5 di 5 ✓ e 2 in più» (le telefonate scelte a mano oltre il traguardo)
-  if (inPausa) metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno', 'In pausa · 0 contatti al giorno', 0, 'coda', [],
-    () => altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
-      : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`);
-  else metti('coda', 'telefonate', altro ? `Contatti del giorno di ${esc(nomeDi(visto()))}` : 'Contatti del giorno',
-    c.coda ? `${c.coda} ancora da chiamare · fatti ${conto}` : `Fatti ${conto}`, c.coda, 'coda',
-    r.coda.map(rigaCoda),
-    altro ? () => `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>${r.coda.map(rigaCoda).join('')}` : null);
-  // le telefonate scelte a mano (nota 012): in più dei contatti del giorno, restano finché non hanno un esito
-  if (SCE.righe.length || fatteDi('scelta').length) metti('scelte', 'telefonate', 'Telefonate scelte a mano',
-    c.scelte ? `${c.scelte} ancora da chiamare · in più dei contatti del giorno` : 'tutte fatte', c.scelte, 'scelta',
-    SCE.righe.map(a => rigaPersona('scelta', a.id, a.contatti ? a.contatti.nome : '', sottoScelta(a), a.contatto_id)));
-  if (RIO.righe.length || fatteDi('rio').length) metti('riordini', 'riordini', 'Riordini da sentire', c.rio ? `${c.rio} ${c.rio === 1 ? 'cliente da sentire' : 'clienti da sentire'}` : 'tutti sentiti', c.rio, 'rio',
-    RIO.righe.map(a => rigaPersona('rio', a.id, a.contatti ? a.contatti.nome : '', ['Riordino', a.brand, a.prodotto].filter(Boolean).join(' · '), a.contatto_id)));
-  const finito = !totaleOggi(c);
-  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${conto ? ` · fatti ${conto}` : ''}</div>` + (ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : '')
-    + sezioni.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
+  const r = ST.risultato, st = ST.stato, altro = guardoAltri(), inPausa = st.contatti_al_giorno === 0;
+  const daQui = LV.fatte.filter(x => x.tipo !== 'coda' && x.tipo !== 'scelta');   // coda e scelte fatte oggi sono già in fatti_oggi
+  const fatte = [...daQui, ...Array.from({ length: st.fatti_oggi || 0 }, () => ({ tipo: 'coda' }))];
+  const e = MB21Dashboard.elencoOggi(CONF.righe, RIO.righe, r.dareSeguito, inPausa ? [] : r.coda, SCE.righe, fatte);
+  const gruppoDi = tipo => (tipo === 'coda' || tipo === 'scelta' ? 'contattare' : 'chiudere');
+  const blocchi = MB21Dashboard.GRUPPI_OGGI.map(g => {
+    const righe = ((e.gruppi.find(x => x.chiave === g.chiave) || {}).righe || []).map(x => {
+      const sotto = [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
+      return x.motivo === 'coda' ? rigaCoda(x.dato, sotto) : rigaPersona(x.motivo, x.id, x.nome, sotto, x.motivo === 'conf' ? null : x.contatto_id);
+    });
+    const chiuse = LV.fatte.filter(x => gruppoDi(x.tipo) === g.chiave).map(x => rigaFatta(x.nome));
+    let extra = '';
+    if (g.chiave === 'contattare') {
+      if (inPausa) extra = altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
+        : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`;
+      else if (altro && r.coda.length) extra = `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
+    }
+    return righe.length || chiuse.length || extra ? `<div class="lv-dom">${esc(g.titolo)}</div>${extra}${righe.join('')}${chiuse.join('')}` : '';
+  });
+  const finito = !e.gruppi.length && !inPausa;
+  let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${e.conto ? ` · ${e.conto}` : ''}</div>` + (ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : '')
+    + blocchi.join('') + (finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : '');
   app.innerHTML = html + versione();
-  const daSole = { conferme: false, dareseguito: false, coda: false, scelte: false, riordini: false };
-  for (const k of Object.keys(daSole)) { const b = document.getElementById('sez-' + k); if (b) b.onclick = () => cambiaRigaDash(k, false); }
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
   attaccaIndietroLV();
-  const vai = LV.vaiA; LV.vaiA = null;
-  const titolo = vai && document.getElementById('sez-' + vai);
-  if (titolo) titolo.scrollIntoView({ block: 'start' });
+  const vai = LV.vaiA; LV.vaiA = null;   // dall'Agenda «N riordini da sentire»: si scende al primo riordino
+  const primo = vai && app.querySelector(`[data-lv-persona^="${vai === 'riordini' ? 'rio' : vai}|"]`);
+  if (primo) primo.scrollIntoView({ block: 'start' });
 }
 
 // ── La persona (terzo livello): la stessa scheda per tutti, cambia il motivo e quello che si preme; finito l'esito si torna all'elenco con la spunta ──

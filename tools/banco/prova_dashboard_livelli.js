@@ -60,17 +60,16 @@ prova('Il nuovo parte dal suo avvio: la tessera in blu, niente tessere grigie sp
   assert.doesNotMatch(titoli(html).join('|'), /Com'è andata oggi/);   // il nuovo non scrive ancora il suo giorno
 });
 
-prova('Chi sento oggi?: le righe partono chiuse, un tocco le apre su un elenco corto, una riga per persona', () => {
-  let h = P.vista('oggi').html;
-  assert.equal((h.match(/data-lv-persona=/g) || []).length, 0);   // tutto chiuso, con il numero
-  assert.match(h, /id="sez-conferme"[\s\S]*?1 appuntamento da confermare/);
-  assert.match(h, /id="sez-coda"[\s\S]*?3 ancora da chiamare · fatti 2 di 5/);
-  assert.match(h, /id="sez-riordini"[\s\S]*?2 clienti da sentire/);
-  assert.match(h, /fatti 2 di 5/);
-  h = P.vista('oggi', { apri: ['coda', 'conferme', 'riordini', 'dareseguito'] }).html;
-  assert.deepEqual([...h.matchAll(/data-lv-persona="([^"]+)"/g)].map(m => m[1]), ['conf|k1', 'ds|d1', 'coda|c1', 'coda|c2', 'coda|c3', 'rio|r1', 'rio|r2']);
-  assert.match(h, /<b>Laura Ferri<\/b><small>Mai contattato<\/small>/);
+prova('Chi sento oggi? (tappa 6): un elenco solo, prima da chiudere poi si contatta, il motivo davanti, un conto solo', () => {
+  const h = P.vista('oggi').html;
+  assert.deepEqual([...h.matchAll(/data-lv-persona="([^"]+)"/g)].map(m => m[1]), ['conf|k1', 'rio|r1', 'rio|r2', 'ds|d1', 'coda|c1', 'coda|c2', 'coda|c3']);
+  assert.match(h, /<div class="lv-dom">Da chiudere<\/div>[\s\S]*<div class="lv-dom">Poi si contatta \(nomi in coda o scelte personali\)<\/div>/);
+  assert.match(h, /<b>Laura Ferri<\/b><small>Telefonata · Mai contattato<\/small>/);
   assert.match(h, /<b>Rosa Aprile<\/b><small>Riordino · Nutrilite · Daily<\/small>/);
+  assert.match(h, /<small>Dare Seguito · scaduto da 3 giorni<\/small>/);   // la fase uguale al motivo non si ripete
+  assert.match(h, /<small>Conferma · /);
+  assert.match(h, /<div class="sotto">[^<]*· fatti 2 di 9<\/div>/);   // 2 esiti di oggi, 7 ancora da fare
+  assert.doesNotMatch(h, /id="sez-|class="lv-riga-apri/);
 });
 
 prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cambia gli esiti', () => {
@@ -185,7 +184,6 @@ prova('Toccando: dal primo livello alla sottopagina, alla persona e indietro (la
   const { m } = P.vista('home');
   P.clic('[data-lv]', 0);   // Chi sento oggi?
   assert.equal(m.LV.vista, 'oggi');
-  P.clic('#sez-coda');      // la riga dei contatti si apre
   assert.match(P.app.innerHTML, /data-lv-persona="coda\|c1"/);
   P.clic('[data-lv-persona="coda|c1"]');
   assert.equal(m.LV.vista, 'persona');
@@ -232,15 +230,13 @@ prova('Il mese: la card apre l\'area, l\'area porta al Check; il traguardo apre 
 // ── Telefonate scelte a mano (Azioni, nota 012; decisioni di Ignazio 04/10/2026) ──
 prova('Telefonate scelte a mano: in più dei contatti del giorno, con giorno e ora; il conto dice «5 di 5 ✓ e 2 in più», mai «7 di 5»', () => {
   let h = P.vista('oggi', { scelte: true, fatti: 7 }).html;
-  assert.match(h, /id="sez-scelte"[\s\S]*?Telefonate scelte a mano[\s\S]*?2 ancora da chiamare · in più dei contatti del giorno/);
-  assert.match(h, /id="sez-coda"[\s\S]*?3 ancora da chiamare · fatti 5 di 5 ✓ e 2 in più/);
-  assert.match(h, /<div class="sotto">[^<]*· fatti 5 di 5 ✓ e 2 in più<\/div>/);
+  assert.match(h, /<div class="sotto">[^<]*· fatti 7 di 16<\/div>/);   // tappa 6: un conto solo, 7 esiti di oggi e 9 righe aperte
   assert.doesNotMatch(h, /7 di 5/);
   h = P.vista('oggi', { scelte: true, apri: ['scelte'] }).html;
   assert.deepEqual([...h.matchAll(/data-lv-persona="(scelta\|[^"]+)"/g)].map(m => m[1]), ['scelta|s2', 'scelta|s1']);   // la rimasta da ieri prima
-  assert.match(h, /<b>Dario Lupo<\/b><small>Alle 17:30 · era per ieri<\/small>/);
-  assert.match(h, /<b>Carla Bo<\/b><small>Senza orario<\/small>/);
-  assert.match(h, /fatti 2 di 5/);   // sotto il traguardo il conto è quello di sempre
+  assert.match(h, /<b>Dario Lupo<\/b><small>Telefonata · scelta · Alle 17:30 · era per ieri<\/small>/);
+  assert.match(h, /<b>Carla Bo<\/b><small>Telefonata · scelta · Senza orario<\/small>/);
+  assert.match(h, /data-lv-persona="coda\|c3"[\s\S]*data-lv-persona="scelta\|s2"/);   // nel gruppo «Poi si contatta», dopo la coda
   const home = P.vista('home', { scelte: true }).html;   // il primo livello le conta tra le cose di oggi
   assert.match(home, /1 conferma, 1 Dare Seguito, 3 telefonate, 2 scelte a mano, 2 riordini/);
   assert.match(home, /<i class="lv-n">9<\/i>/);
@@ -281,9 +277,9 @@ prova('La telefonata scelta a mano: la stessa scheda, gli esiti della telefonata
 // ── Note Pagine 016 · 018 · 019 (segnalazioni di Ignazio, 06/10/2026) ──
 prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 016); «Non ora» online, anche guardando un altro partner (nota 003)', () => {
   const h = P.vista('oggi', { apri: ['coda', 'dareseguito'] }).html;
-  assert.match(h, /<b>Laura Ferri<\/b><small>Mai contattato<\/small>/);
-  assert.match(h, /<b>Marco Neri<\/b><small>Ultima telefonata: Richiamare · 3 giorni fa<\/small>/);
-  assert.match(h, /<b>Anna Villa<\/b><small>Ultimo appuntamento: Relazione · ieri<\/small>/);
+  assert.match(h, /<b>Laura Ferri<\/b><small>Telefonata · Mai contattato<\/small>/);
+  assert.match(h, /<b>Marco Neri<\/b><small>Telefonata · Ultima telefonata: Richiamare · 3 giorni fa<\/small>/);
+  assert.match(h, /<b>Anna Villa<\/b><small>Telefonata · Ultimo appuntamento: Relazione · ieri<\/small>/);
   assert.deepEqual([...h.matchAll(/data-non-ora="([^"]+)"/g)].map(m => m[1]), ['c1', 'c2', 'c3']);   // non sui Dare Seguito
   assert.match(h, /<div class="lv-riga"><button class="lv-persona" data-lv-persona="coda\|c1"[\s\S]*?<\/button><button class="lv-nonora" data-non-ora="c1" title="Non ora">Non ora<\/button><\/div>/);
   // nota 003: guardando un altro partner (Partner Select, solo l'Admin) «Non ora» c'è lo stesso
@@ -312,7 +308,7 @@ prova('«Non ora» → «Salta»: la persona esce dalla coda di oggi e torna tra
     assert.notEqual(salto, '2026-10-05');   // mai l'indomani
     assert.deepEqual(m.ST.risultato.coda.map(x => x.id), ['c1', 'c3']);
     assert.doesNotMatch(P.app.innerHTML, /Marco Neri/);
-    assert.match(P.app.innerHTML, /2 ancora da chiamare · fatti 2 di 5/);   // non conta come fatta
+    assert.match(P.app.innerHTML, /· fatti 2 di 8</);   // non conta come fatta: esce dalle righe aperte
     assert.deepEqual(m.LV.fatte, []);
     assert.equal(P.toast[P.toast.length - 1], `Marco Neri · non ora, torna tra ${G} giorni (il ${salto.split('-').reverse().join('/')})`);
     await P.toast.annulla();
