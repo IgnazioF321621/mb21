@@ -384,6 +384,14 @@
   // anche se la data prevista è passata (allora è «da confermare», arancione).
   const daConsegnare = v => !!v.consegna && !v.ordinata_il;
   const daConfermare = (v, oggi) => daConsegnare(v) && v.consegna < oggi;
+  // Consegna lontana (nota Azioni 033, Ignazio 22/10: una vendita del 20/10 era finita al 02/05/2027 e non contava da nessuna parte): una data di
+  // consegna oltre GIORNI_CONSEGNA_LONTANA da oggi fa chiedere conferma nel modulo vendita. `consegna` e `oggi` «AAAA-MM-GG»; vuota = no.
+  const GIORNI_CONSEGNA_LONTANA = 60;
+  const consegnaLontana = (consegna, oggi) => {
+    if (!consegna || !oggi) return false;
+    const giorni = Math.round((Date.parse(consegna + 'T12:00:00Z') - Date.parse(oggi + 'T12:00:00Z')) / 86400000);
+    return giorni > GIORNI_CONSEGNA_LONTANA;
+  };
 
   // Totali della scheda dalle righe di `vendite_conti`: si sommano i numeri interi e si arrotonda solo a schermo (come Glide).
   // `attesaVp` = VP delle vendite ancora da consegnare (fuori dai tre totali).
@@ -477,7 +485,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

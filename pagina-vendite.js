@@ -209,6 +209,13 @@ function moduloVendita(v, proposta) {
       sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value,
       aRottura: rottura, durata: $('v-durata').value }, !!(v && !v.riordino && !v.riordino_a_rottura));
     if (esito.errore) return mostraToast(esito.errore);
+    // consegna oltre due mesi, cambiata adesso e senza ordine fatto (nota Azioni 033): una conferma, per le date sbagliate (02/05/2027 al posto di …)
+    const consegna = dopo ? $('v-consegna').value : '', ordinata = dopo && $('v-ordinata') ? $('v-ordinata').value : '';
+    if (consegna && !ordinata && consegna !== (v && v.consegna) && MB21Lista.consegnaLontana(consegna, MB21Coda.oggiRoma())
+      && !await chiediConferma(`Consegna il ${MB21Lista.data(consegna)}?`, 'Mancano più di due mesi. I VP di questa vendita contano solo dal giorno in cui tocchi «Ordine fatto».', 'Sì, è giusta', false, '', 'Cambio la data')) {
+      $('v-consegna').focus();
+      return;
+    }
     const inc = MB21Lista.importo($('v-incassato').value), prezzo = MB21Lista.importo($('v-prezzo').value);
     if (Number.isNaN(prezzo)) return mostraToast('Il prezzo al pubblico non è un numero');
     if (Number.isNaN(inc)) return mostraToast('L\'incassato non è un numero');
