@@ -400,6 +400,14 @@ la testata del foglio, gli avvisi del Profilo (««Il mio giorno», la sera»), 
 Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, `ST.tab = 'check'`, `?apri=check`, `validaCheck`,
 `d.ultimoCheck` — cambiano solo le parole che si leggono. I testi vecchi in `novita.js` non si toccano: raccontano cosa è successo allora.
 
+**Verifica della Dashboard, tappa 1 (Ignazio 22/10/2026, criterio «serve al team?»):**
+- la riga «📲 Metti MB21 sul telefono» è spenta con `RIGA_TELEFONO = false` in pagina-benvenuto.js; il codice resta e si riaccende con true;
+- in Home, chi è in avvio non ha più le tessere grigie spente e il consiglio «senti il tuo sponsor» compare una volta sola, nel riquadro «Il mio avvio»;
+- via i collegamenti senza tasto `ds-sv` e `ds-check`;
+- via l'interruttore `OBIETTIVI_PER_TUTTI` / `obiettiviAperti`: gli obiettivi valgono per tutti, e il riquadro «È iniziato [mese]» compare anche all'Admin;
+- l'abbonamento (`LIMITI_ABBONAMENTO`) non è toccato;
+- prova in `prova_dashboard_livelli.js`.
+
 **Riquadro degli obiettivi (Ignazio 01/10):** dall'1 al 5 del mese, se gli obiettivi del mese mancano (`obiettiviMancanti`), la Dashboard apre da sola un riquadro ampio al centro («È iniziato ottobre» · «Scelgo i miei obiettivi» / «Più tardi, vado alla Dashboard»), **ogni volta che si entra in Dashboard o si rientra nell'app (anche dal telefono, che la tiene viva in secondo piano), finché gli obiettivi non sono impostati**: si ricorda in memoria (`ST.riquadroObMostrato`), così toccare una fascia (che ridisegna la Dashboard) non lo riapre; il ricordo si azzera lasciando la Dashboard (`mostraTab`) e uscendo dall'app (`visibilitychange`). Non si apre con abbonamento scaduto, offline, a nome di un altro partner, in «Tutti» o se c'è già un foglio aperto. Il banner «Imposta gli obiettivi del mese!» resta. Codice: `mostraRiquadroObiettivi()` in `pagina-dashboard.js` (giorni: `GIORNI_RIQUADRO_OBIETTIVI`), stili `.velo.centro` e `.riquadro-ob` in `index.html`.
 
 **Ordine del foglio obiettivi (Ignazio 01/10):** in cima il risultato che si vuole ottenere. **Volume:** VPG · totale del gruppo (con la riga «Dal gruppo»), poi «di cui il tuo VPP» e, sotto, «di cui consumo personale» e «di cui VP Clienti». **Azione:** Nuovi Iscritti · totale, «di cui Sponsor Personali», poi «attraverso quanti PM personali» e «e quanti Contatti» (come ci si arriva; l'indicazione di quanti ne servono è il passo 3). La barra si chiama **«Incremento»**, parte da **0%** (niente «scegli»), e cambiando scelta riparte da 0%.

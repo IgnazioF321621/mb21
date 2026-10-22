@@ -220,9 +220,11 @@ async function finitaCerchia() {
 // ── La riga «📲 Metti MB21 sul telefono e accendi gli avvisi» in Dashboard (decisione 16) ──
 // Dal secondo ingresso, solo su telefono o tablet e finché c'è qualcosa da fare; porta al Profilo, dove le due cose si fanno già.
 // Si riempie dopo che la Dashboard è disegnata e non la fa mai aspettare: se lo stato degli avvisi non risponde, la riga non compare.
-function rigaTelefonoHtml() { return '<span id="riga-telefono"></span>'; }
+// Verifica della Dashboard, tappa 1 (Ignazio 22/10/2026): la riga è spenta; il codice resta, si riaccende con true (per il team).
+const RIGA_TELEFONO = false;
+function rigaTelefonoHtml() { return RIGA_TELEFONO ? '<span id="riga-telefono"></span>' : ''; }
 async function mostraRigaTelefono() {
-  if (!document.getElementById('riga-telefono') || guardoAltri() || limitato() || ST.offline) return;
+  if (!RIGA_TELEFONO || !document.getElementById('riga-telefono') || guardoAltri() || limitato() || ST.offline) return;
   let stato = null;
   try { stato = await Promise.race([leggiStatoAvvisi(), new Promise(ok => setTimeout(() => ok(null), 2000))]); } catch (e) {}
   const testo = MB21Benvenuto.rigaTelefono(stato, appInstallata(), ST.primoIngresso === true);
