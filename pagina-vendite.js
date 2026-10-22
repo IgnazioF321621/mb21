@@ -94,6 +94,8 @@ function moduloVendita(v, proposta) {
   // forma `mc` come gli altri moduli (cantiere 34, 20/09): testa con la persona, tre gruppi, «Annulla · Salva» fermi in fondo.
   // I campi e i loro id non cambiano: cambia solo come sono raccolti.
   // Nota Pagine 053 (Ignazio 14/10/2026): tre gruppi, «Che cosa hai venduto» · «I soldi» · «I tempi» (prima soldi e tempi erano mescolati).
+  // V3 (Verifica Vendite, Ignazio 22/10): sempre in vista brand, prodotti, data, VP, prezzo al pubblico, incassato e sconto («voci fondamentali per farsi un
+  // calcolo»); consegna (Subito già scelto) e riordino (la domanda della V2) in due righe chiuse con la scelta già messa, che si aprono al tocco.
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('vendite')}</span>
       <div><small>${v ? 'Modifica vendita' : 'Nuova vendita'}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
@@ -104,6 +106,7 @@ function moduloVendita(v, proposta) {
       <div class="campo"><label>Brand <small>Obbligatorio</small></label>
         <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div></div>
       <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
+      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
     </div>
 
     <h4 class="mc-t">I soldi</h4><div class="riquadro mc-g">
@@ -117,20 +120,26 @@ function moduloVendita(v, proposta) {
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
     </div>
 
-    <h4 class="mc-t">I tempi</h4><div class="riquadro mc-g">
-      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
+    <!-- V3 (Verifica Vendite, Ignazio 22/10): consegna e riordino chiusi, con la scelta già messa in vista; si aprono al tocco -->
+    <div class="riquadro mc-g vn-gruppi">
+      <button type="button" class="vn-apri" data-apri="consegna"><span>Consegna</span><b id="v-sunto-consegna"></b><em id="v-freccia-consegna">›</em></button>
+      <div id="v-dentro-consegna">
       <div class="campo"><label>Quando consegni?</label>
         <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
       <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
+      </div>
+      <button type="button" class="vn-apri" data-apri="riordino"><span>Riordino</span><b id="v-sunto-riordino"></b><em id="v-freccia-riordino">›</em></button>
+      <div id="v-dentro-riordino">
       <div class="campo" id="v-riordino-campo"><label>Quando lo risento? ${v && !v.riordino && !v.riordino_a_rottura ? '' : '<small>Obbligatorio</small>'}</label>
         <div class="vn-quando tre"><button type="button" data-riordino="fra" id="v-fra-tasto">Fra … mesi</button><button type="button" data-riordino="rottura">A rottura</button><button type="button" data-riordino="data">Scegli la data</button></div>
         <div id="v-fra"><div class="vn-mesi">${MB21Lista.MESI_RIORDINO.map(m => `<button type="button" data-mesi="${m}">${m}</button>`).join('')}</div></div>
         <div class="vn-aiuto" id="v-riordino-aiuto"></div></div>
       <div class="campo" id="v-riordino-data"><label id="v-riordino-titolo"></label><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
       <div class="campo" id="v-rottura"><label>Di solito dura (mesi)</label><div class="vn-aiuto">Per i pezzi che si riordinano quando si rompono: nessuna telefonata di riordino. Quanto dura di solito resta solo da leggere nella scheda.</div><input id="v-durata" inputmode="numeric" placeholder="24" value="${v && v.durata_mesi ? esc(v.durata_mesi) : ''}"></div>
-      ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
+      </div>
     </div>
+    ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
 
     <div class="mc-fondo"><button class="link" id="annulla">Annulla</button><button class="primario" id="invia">Salva</button></div>
   </div>`;
@@ -155,6 +164,19 @@ function moduloVendita(v, proposta) {
   // Nel database gli stessi campi: «Fra N mesi» scrive riordino = consegna (o vendita) + N mesi e durata_mesi = N.
   const prima = MB21Lista.modoRiordino(v);
   let modoR = prima.modo, mesiR = prima.mesi, toccatoR = !!v;
+  const senzaR = !!(v && !v.riordino && !v.riordino_a_rottura);
+  const aperti = { consegna: false, riordino: !modoR && !senzaR, aMano: false };   // il riordino da scegliere parte aperto
+  const segnaGruppi = () => {
+    for (const k of ['consegna', 'riordino']) { $(`v-dentro-${k}`).style.display = aperti[k] ? '' : 'none'; $(`v-freccia-${k}`).textContent = aperti[k] ? '⌃' : '›'; }
+    const cons = $('v-consegna').value, ord = $('v-ordinata') && $('v-ordinata').value;
+    $('v-sunto-consegna').textContent = dopo ? ['Più avanti', cons ? MB21Lista.data(cons) : '', ord ? 'ordine fatto' : ''].filter(Boolean).join(' · ') : 'Subito';
+    const quando = modoR === 'fra' && mesiR && baseR() ? MB21Lista.riordinoFra(baseR(), mesiR) : '';
+    $('v-sunto-riordino').textContent = modoR === 'fra' ? (mesiR ? `Fra ${mesiR} ${mesiR === 1 ? 'mese' : 'mesi'}${quando ? ' · il ' + MB21Lista.data(quando) : ''}` : 'Fra … mesi')
+      : modoR === 'rottura' ? 'A rottura' : modoR === 'data' ? ($('v-riordino').value ? 'Il ' + MB21Lista.data($('v-riordino').value) : 'Scegli la data') : senzaR ? 'Nessuno' : 'Da scegliere';
+  };
+  const apriGruppo = k => { aperti[k] = true; segnaGruppi(); };
+  velo.querySelectorAll('[data-apri]').forEach(b => b.onclick = () => { aperti[b.dataset.apri] = !aperti[b.dataset.apri]; if (b.dataset.apri === 'riordino') aperti.aMano = true; segnaGruppi(); });
+  ['v-consegna', 'v-riordino', 'v-ordinata'].forEach(id => { if ($(id)) $(id).addEventListener('change', segnaGruppi); });
   const baseR = () => (dopo && $('v-consegna').value) || $('v-data').value;
   const segnaRiordino = () => {
     velo.querySelectorAll('[data-riordino]').forEach(b => b.classList.toggle('scelto', b.dataset.riordino === modoR));
@@ -166,6 +188,7 @@ function moduloVendita(v, proposta) {
     const quando = modoR === 'fra' && mesiR && baseR() ? MB21Lista.riordinoFra(baseR(), mesiR) : '';
     $('v-riordino-aiuto').textContent = quando ? `Il ${MB21Lista.data(quando)}: 10 giorni prima trovi in Agenda la telefonata «Riordino».`
       : modoR === 'data' ? '10 giorni prima trovi in Agenda la telefonata «Riordino».' : modoR === 'fra' ? 'Scegli fra quanti mesi.' : '';
+    segnaGruppi();
   };
   velo.querySelectorAll('[data-riordino]').forEach(b => b.onclick = () => { modoR = b.dataset.riordino; toccatoR = true; segnaRiordino(); });
   velo.querySelectorAll('[data-mesi]').forEach(b => b.onclick = () => { mesiR = Number(b.dataset.mesi); toccatoR = true; segnaRiordino(); });
@@ -179,6 +202,7 @@ function moduloVendita(v, proposta) {
     if (toccatoR || !storico) return;
     const p = MB21Lista.propostaRiordino(storico, $('v-prodotto').value, brand);
     modoR = p ? p.modo : null; mesiR = p ? p.mesi : null;
+    if (!aperti.aMano) aperti.riordino = !p;   // con la proposta il riordino si chiude, con la scelta in vista
     if (p && p.modo === 'rottura' && p.mesi && !$('v-durata').value) $('v-durata').value = p.mesi;
     if (p && p.modo === 'fra' && !MB21Lista.MESI_RIORDINO.includes(p.mesi)) {   // un numero di mesi fuori dalle pastiglie: se ne aggiunge una
       $('v-fra').querySelector('.vn-mesi').insertAdjacentHTML('beforeend', `<button type="button" data-mesi="${p.mesi}">${p.mesi}</button>`);
@@ -234,10 +258,9 @@ function moduloVendita(v, proposta) {
   // `proposta.salvata`: solo dopo un salvataggio riuscito (l'attesa «Ordina da solo» si chiude con la vendita, nota Azioni 025); `poi` anche con Annulla
   const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
-    if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
-    const senzaR = !!(v && !v.riordino && !v.riordino_a_rottura);
-    if (!modoR && !senzaR) return mostraToast('Scegli quando lo risenti');
-    if (modoR === 'fra' && !mesiR) return mostraToast('Scegli fra quanti mesi lo risenti');
+    if (dopo && !$('v-consegna').value) { apriGruppo('consegna'); return mostraToast('Scrivi quando consegni'); }
+    if (!modoR && !senzaR) { apriGruppo('riordino'); return mostraToast('Scegli quando lo risenti'); }
+    if (modoR === 'fra' && !mesiR) { apriGruppo('riordino'); return mostraToast('Scegli fra quanti mesi lo risenti'); }
     const riordino = modoR === 'fra' ? MB21Lista.riordinoFra(baseR(), mesiR) : modoR === 'data' ? $('v-riordino').value : '';
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
       sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino,
