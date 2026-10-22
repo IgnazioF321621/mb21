@@ -460,6 +460,7 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
   - coda, Dare Seguito e scelta: gli esiti della telefonata.
 - Restano le funzioni di prima (`cardContatto`, `confermeHtml`, `riordiniHtml`, `sceltaHtml`) con i loro collegamenti. La loro testata interna (nome ripetuto, striscia colorata, freccia) la nasconde una regola sola in `index.html` (`.lv-scheda …`).
 - Nella telefonata scelta il giorno e l'ora non si ripetono: nella card resta solo la nota.
+- **T7b (Ignazio 22/10):** nel riordino «Telefono spento» e «Nessun ordine» stanno sulla stessa riga, uno accanto all'altro (`<div class="coppia">` in `riordiniHtml`, regola `.bottoni .coppia` in `index.html`).
 - Dopo l'esito si torna all'elenco con la spunta, come prima.
 - Prove in `prova_dashboard_livelli.js` (una per motivo); disegno con dati finti in `docs/prototipi/schizzo_scheda_persona_T7.png`.
 

@@ -1542,8 +1542,7 @@ function riordiniHtml(solo) {
         <div class="bottoni">
           ${fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f) && f !== 'Appuntamento').map(f => `<button class="${f === 'Ordine' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
           <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
-          <button data-riordino-spento="${esc(a.id)}">Telefono spento</button>
-          ${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Nessun ordine</button>` : ''}
+          <div class="coppia"><button data-riordino-spento="${esc(a.id)}">Telefono spento</button>${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Nessun ordine</button>` : ''}</div>
         </div>
         <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
       </div></div>`;
