@@ -179,7 +179,7 @@ prova('Le linee nell\'ordine della Mappa, a partire da chi guardi, con il rientr
 prova('La coppia (stesso codice) è una linea sola, col nome di Amway, e somma i due (Ignazio 25/09)', () => {
   const dc = {
     persone: [{ id: 'A', nome: 'Ignazio', partner_id: 'IG' }, { id: 'E1', nome: 'Luca Galli', partner_id: 'LU' },
-      { id: 'E2', nome: 'Persona H', partner_id: 'LU' }],
+      { id: 'E2', nome: 'Dario Neri', partner_id: 'LU' }],
     squadra: [{ partner_id: 'IG', sponsor_id: 'X', nome: 'FIORITO, IGNAZIO' }, { partner_id: 'LU', sponsor_id: 'IG', nome: 'GALLI, LUCA' }],
     giorni: [{ user_id: 'E2', data: '2026-09-10', contatti: 0, pm: 0, bbs: 1, wes: 0, cep: 0 }],
     obiettivi: [{ user_id: 'A', mese: '2026-09-01', bbs_partenza: 5, wes_partenza: 0, cep_partenza: 0 },
@@ -198,7 +198,7 @@ prova('La coppia (stesso codice) è una linea sola, col nome di Amway, e somma i
   imposta('chi', 'E2');                                  // guardando Michaela si guarda la linea di Luca
   ctx.disegnaStorico(velo, dc);
   h = velo.corpo.innerHTML;
-  assert.match(h, /id="sl-chi">.*Luca Galli<small>con Persona H<\/small>/);
+  assert.match(h, /id="sl-chi">.*Luca Galli<small>con Dario Neri<\/small>/);
   assert.match(h, /GRIGLIA di Luca Galli:.*SET 3\//);  // anche la griglia in cima somma i due
   imposta('chi', 'A');
 });
