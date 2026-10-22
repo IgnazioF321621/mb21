@@ -410,6 +410,30 @@ prova('Verifica Dashboard, tappa 3 (Ignazio 22/10): tracce condivise e «Il mio 
   assert.match(dash, /html \+= atteseHtml\(\) \+ daSeguireHtml\(\);/);
 });
 
+prova('Verifica Dashboard, tappa 4 (Ignazio 22/10): foglio Obiettivi, sezioni una alla volta; aperta solo la prima con caselle da scrivere; scala dei bonus in una riga; salvataggio uguale a prima', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const da = dash.indexOf('  const imposta = (b, apri) =>'), a = dash.indexOf('  sunti();', dash.indexOf('const daScrivere')) + 11;
+  // finte sezioni: Volume tutta scritta, Azione con una casella vuota, Squadra vuota
+  const sez = (vals) => { const corpo = { hidden: false, querySelectorAll: () => vals.map((v, i) => ({ id: 'x' + i, value: v })) };
+    return { nextElementSibling: corpo, attr: {}, setAttribute(k, v) { this.attr[k] = v; }, querySelector: () => ({ textContent: '' }) }; };
+  const testate = [sez(['4000', '500']), sez(['', '8']), sez(['', ''])];
+  let sunti = 0;
+  const ctx = { velo: { querySelectorAll: s => (s === '.ob-sez-testa' ? testate : []), addEventListener() {} }, riepilogo() {}, sunti: () => { sunti++; },
+    consumoDaVpp() {}, ricordaQuota() {}, dalGruppo() {}, indicazioni() {} };
+  vm.createContext(ctx); vm.runInContext(dash.slice(da, a), ctx);
+  assert.deepEqual(testate.map(t => t.nextElementSibling.hidden), [true, false, true]);   // aperta solo Azione, la prima con caselle vuote
+  testate[2].onclick();   // aprire Squadra chiude Azione
+  assert.deepEqual(testate.map(t => t.nextElementSibling.hidden), [true, true, false]);
+  testate[2].onclick();   // di nuovo: si richiude, tutte chiuse
+  assert.deepEqual(testate.map(t => t.nextElementSibling.hidden), [true, true, true]);
+  // il salvataggio e i campi non cambiano: il tasto «Salva obiettivi» scrive come prima (stessa tabella), i campi sono quelli di dashboard.js (16)
+  const i = dash.indexOf("velo.querySelector('#ob-si').onclick");
+  assert.ok(i > 0); assert.match(dash.slice(i, i + 4000), /dbq\('salva obiettivi', supa\.from\('obiettivi_mese'\)/); assert.match(dash.slice(i, i + 4000), /supa\.from\('obiettivi_linee'\)\.insert/);
+  assert.equal(require('../../dashboard.js').CAMPI_OBIETTIVI.flatMap(g => g[2]).length, 16);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8'), /\.ob-livelli \{ display: flex; flex-wrap: nowrap;[^}]*overflow-x: auto;/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
