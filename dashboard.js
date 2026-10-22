@@ -561,20 +561,20 @@
 
   // L'elenco unico di «Oggi» (verifica Dashboard T5, ordine deciso da Ignazio 22/10): prima ciò che è aperto da chiudere
   // (Conferme, Riordini, Dare Seguito), poi «Poi si contatta»: i nomi in coda e le telefonate scelte a mano insieme, queste con la
-  // targhetta «Telefonata · scelta». Un conto solo «fatti N di M»: fatto = esito dato oggi (nota Azioni 030), `fatte` le righe chiuse oggi.
-  // Le scelte non sono già in coda (MB21Coda.senzaScelte). Solo regola: nessuna schermata la usa ancora.
+  // targhetta «Telefonata · scelta» (la coda «Telefonata»). Un conto solo «fatti N di M»: fatto = esito dato oggi (nota Azioni 030), `fatte` le righe chiuse oggi.
+  // Le scelte non sono già in coda (MB21Coda.senzaScelte). La usa «Chi sento oggi?» (tappa 6); `dato` è la riga di partenza.
   const GRUPPI_OGGI = [
     { chiave: 'chiudere', titolo: 'Da chiudere' },
     { chiave: 'contattare', titolo: 'Poi si contatta (nomi in coda o scelte personali)' },
   ];
   function elencoOggi(conf, rio, ds, coda, scelte, fatte) {
     const nome = x => (x.contatti && x.contatti.nome) || x.nome || '';
-    const riga = (motivo, gruppo, targhetta) => x => ({ motivo, gruppo, id: x.id, contatto_id: x.contatto_id || (motivo === 'ds' || motivo === 'coda' ? x.id : null), nome: nome(x), targhetta });
+    const riga = (motivo, gruppo, targhetta) => x => ({ motivo, gruppo, dato: x, id: x.id, contatto_id: x.contatto_id || (motivo === 'ds' || motivo === 'coda' ? x.id : null), nome: nome(x), targhetta });
     const righe = [
       ...(conf || []).map(riga('conf', 'chiudere', 'Conferma')),
       ...(rio || []).map(riga('rio', 'chiudere', 'Riordino')),
       ...(ds || []).map(riga('ds', 'chiudere', 'Dare Seguito')),
-      ...(coda || []).map(riga('coda', 'contattare', '')),
+      ...(coda || []).map(riga('coda', 'contattare', 'Telefonata')),
       ...(scelte || []).map(riga('scelta', 'contattare', 'Telefonata · scelta')),
     ];
     const fatti = (fatte || []).length, totale = fatti + righe.length;

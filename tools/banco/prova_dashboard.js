@@ -440,7 +440,8 @@ prova('T5 elencoOggi: prima da chiudere (Conferme, Riordini, Dare Seguito), poi 
   assert.deepEqual(e.gruppi[0].righe.map(x => x.motivo), ['conf', 'rio', 'ds']);
   assert.deepEqual(e.gruppi[1].righe.map(x => x.nome), ['Contatto D', 'Contatto E', 'Contatto F']);
   assert.equal(e.gruppi[1].righe[2].targhetta, 'Telefonata · scelta');
-  assert.equal(e.gruppi[1].righe[0].targhetta, '');
+  assert.equal(e.gruppi[1].righe[0].targhetta, 'Telefonata');
+  assert.equal(e.gruppi[1].righe[0].dato, coda[0]);
   assert.deepEqual(e.gruppi[0].righe.map(x => x.contatto_id), ['c1', 'c2', 'c3']);
   assert.equal(e.fatti, 2); assert.equal(e.totale, 8); assert.equal(e.conto, 'fatti 2 di 8');
 });
