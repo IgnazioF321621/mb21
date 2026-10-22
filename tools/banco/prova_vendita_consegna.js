@@ -113,6 +113,29 @@ prova('V2: riaprendo una vendita «Fra 2 mesi» si ritrova «Fra 2 mesi»; una v
   assert.equal(s.scritte.length, 1); assert.equal(s.scritte[0][1].riordino, null);
 });
 
+// ── V3 (Verifica Vendite, Ignazio 22/10): modulo più corto, le voci per il calcolo sempre in vista, consegna e riordino chiusi con la scelta messa ──
+prova('V3: brand, prodotti, data, VP, prezzo, incassato e sconto fuori dai gruppi chiusi; consegna chiusa su «Subito»; riordino da scegliere aperto', async () => {
+  const s = apri(null, true); base(s);
+  const h = s.f.innerHTML, gruppi = h.indexOf('vn-gruppi');
+  for (const id of ['v-prodotto', 'v-data', 'v-vp', 'v-prezzo', 'v-incassato', 'v-sconto']) assert.ok(h.indexOf(`id="${id}"`) > 0 && h.indexOf(`id="${id}"`) < gruppi, id);
+  assert.ok(h.indexOf('data-brand') < gruppi);
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(s.$('v-dentro-consegna').style.display, 'none'); assert.equal(s.$('v-sunto-consegna').textContent, 'Subito');
+  assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-sunto-riordino').textContent, 'Da scegliere');
+  scegli(s.f, 'riordino', 'fra'); scegli(s.f, 'mesi', 3);
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 3 mesi · il 20/01/2027');
+});
+prova('V3: con la proposta il riordino è già chiuso con la scelta in vista; «Più avanti» senza data riapre la consegna', async () => {
+  const s = apri(null, true, [{ prodotto: 'filtro di ricambio', brand: L.BRAND[0][0], data: '2025-03-01', riordino: '2026-03-01' }]); base(s);
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(s.$('v-dentro-riordino').style.display, 'none'); assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 12 mesi · il 20/10/2027');
+  s.f.querySelectorAll('[data-apri]').find(b => b.dataset.apri === 'riordino').onclick();   // al tocco si apre
+  assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-freccia-riordino').textContent, '⌃');
+  s.f.querySelectorAll('[data-quando]').find(b => b.dataset.quando === 'dopo').onclick();
+  await s.$('invia').onclick();
+  assert.equal(s.avvisi.at(-1), 'Scrivi quando consegni'); assert.equal(s.$('v-dentro-consegna').style.display, '');
+});
+
 prova('la regola: oltre 60 giorni da oggi', () => {
   assert.equal(L.GIORNI_CONSEGNA_LONTANA, 60);
   assert.equal(L.consegnaLontana('2026-12-21', '2026-10-22'), false);

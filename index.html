@@ -593,6 +593,11 @@
   .vn-mesi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
   .vn-mesi button { min-width: 44px; font-size: 15px; font-weight: 600; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); }
   .vn-mesi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  /* V3 (Verifica Vendite 22/10): consegna e riordino in due righe chiuse con la scelta in vista, che si aprono al tocco */
+  .vn-apri { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: transparent; font: inherit; color: var(--testo); padding: 12px 2px; text-align: left; cursor: pointer; }
+  .vn-apri span { font-weight: 600; font-size: 15px; } .vn-apri em { font-style: normal; font-size: 18px; color: var(--testo-tenue); }
+  .vn-apri b { flex: 1; min-width: 0; text-align: right; font-weight: 500; font-size: 14px; color: var(--testo-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vn-gruppi .vn-apri[data-apri="riordino"] { border-top: 1px solid var(--linea); }
   .vn-attesa { color: var(--grigio); font-size: 13px; font-weight: 600; margin-top: 3px; }
   .vn-attesa.tardi { color: var(--proposta); }
   .vn-fatto { display: block; width: 100%; margin: -2px 0 12px; border: 1.5px solid var(--proposta); background: var(--proposta-tinta); color: var(--proposta); font-size: 15px; font-weight: 700; padding: 10px; border-radius: var(--raggio-bottone); }

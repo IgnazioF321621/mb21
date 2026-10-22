@@ -794,13 +794,14 @@ prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sot
   assert.match(ven, /<div class="vn-prezzo">\$\{esc\(MB21Lista\.rigaPrezzo\(v\.prezzo_pubblico, v\.sconto\)\)\}<\/div>/);
 });
 
-prova('Nota 053 (Ignazio 14/10): il modulo vendita in tre gruppi, che cosa · i soldi · i tempi, con i campi al loro posto', () => {
+prova('Nota 053 e V3 (Ignazio 14/10 e 22/10): il modulo vendita — che cosa (con la data) · i soldi · consegna e riordino chiusi, con i campi al loro posto', () => {
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   const pos = t => { const i = ven.indexOf(t); assert.ok(i > 0, t); return i; };
   const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>I soldi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
-    '>I tempi<', 'id="v-data"', 'data-quando="subito"', 'id="v-consegna"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
+    'data-apri="consegna"', 'data-quando="subito"', 'id="v-consegna"', 'data-apri="riordino"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
+  assert.ok(pos('id="v-data"') > pos('id="v-prodotto"') && pos('id="v-data"') < pos('>I soldi<'));   // V3: la data con «Che cosa hai venduto»
   assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
-  assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>/);
+  assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>|>I tempi<\/h4>/);
 });
 
 prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né telefonata; «di solito dura» solo da leggere', () => {
