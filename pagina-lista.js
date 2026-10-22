@@ -1404,6 +1404,8 @@ function apriModulo(c) {
   // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
   // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria);
+  // S5 bis (Ignazio 22/10, «sì»): un contatto già senza categoria si modifica anche lasciandolo così (resta in «Da catalogare»)
+  const senzaCat = !!c && !c.categoria;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
@@ -1415,7 +1417,7 @@ function apriModulo(c) {
     </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
+    <div class="campo"><label>Categoria <small>${senzaCat ? 'Facoltativa: senza resta in «Da catalogare»' : 'Obbligatorio'}</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>
     <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
@@ -1441,7 +1443,7 @@ function apriModulo(c) {
   // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
-    $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
+    $('invia').disabled = !$('f-nome').value.trim() || (!$('f-cat').value && !senzaCat);
     velo.querySelectorAll('[data-conta]').forEach(d => { const el = $(d.dataset.conta); d.textContent = `${el.value.length}/${el.maxLength}`; });
     avvisaArchiviati();
   };
@@ -1484,7 +1486,7 @@ function apriModulo(c) {
     const riga = {
       nome: $('f-nome').value.trim(), telefono, fascia_eta: $('f-eta').value || null,
       professione: $('f-prof').value.trim() || null, citta: $('f-citta').value.trim() || null,
-      categoria: $('f-cat').value, referral_di: $('f-ref').value.trim() || null,
+      categoria: $('f-cat').value || null, referral_di: $('f-ref').value.trim() || null,
       area: $('f-area').value || null, note: $('f-note').value.trim() || null,
     };
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
