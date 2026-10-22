@@ -330,6 +330,14 @@ prova('lineePerCodice: una linea per codice Amway, la coppia è un partner solo 
   assert.equal(M.lineePerCodice([{ id: 7, nome: 'Anna', partner_id: 'ZZ' }], []).at(0).nome, 'Anna');   // senza nome Amway resta il suo
 });
 
+prova('Nota Pagine 069 (Ignazio 22/10): il CEP è unico per codice: due schede con lo stesso codice contano un abbonato solo, e vale per tutte', () => {
+  const squadra = [{ partner_id: 'IO', sponsor_id: null, nome: 'ADMIN, PROVA' }, { partner_id: 'PA', sponsor_id: 'IO', nome: 'A, Partner' }, { partner_id: '1234567890', sponsor_id: 'PA', nome: 'B, Partner' }];
+  const schede = [{ id: 's-b1', nome: 'Partner B', codice_amway: '1234567890', user_id: 'u-io' }, { id: 's-b2', nome: 'Collaboratore B', codice_amway: '1234567890', user_id: 'u-io' },
+    { id: 's-b3', nome: 'Partner B', codice_amway: '1234567890', user_id: 'u-altro' }];
+  const cep = [{ contatto_id: 's-b1', dal: '2026-07-01', uscito_il: null }, { contatto_id: 's-b2', dal: '2026-09-01', uscito_il: null }];
+  const r = M.segniGruppo({ squadra, schede, coppie: [], utenti: [], biglietti: [], cep, oggi: '2026-10-22' });
+  assert.equal(r.proprio['1234567890'].cep, 1); assert.equal(r.gruppo.PA.cep, 1); assert.equal(r.gruppo.IO.cep, 1);
+});
 console.log(`\n${ok} prove passate in tutto.`);
 
 prova('targhetta 📱 dell\'app: uso per partner (coppia: uso più recente, nomi sommati; eliminati fuori) ed etichetta dei giorni', () => {
