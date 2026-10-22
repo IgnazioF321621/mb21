@@ -449,6 +449,20 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - Dall'Agenda «N riordini da sentire» porta al primo riordino.
 - Prove in `prova_dashboard_livelli.js`; disegno con dati finti in `docs/prototipi/schizzo_chi_sento_oggi_T6.png`.
 
+**Verifica della Dashboard, tappa 7 (Ignazio 22/10/2026):** la scheda della persona (`disegnaPersonaLV`) è una sola e uguale per tutti i motivi.
+- In alto ci sono tre cose:
+  - il motivo, con le parole dell'elenco (Conferma · Riordino · Dare Seguito · Telefonata · Telefonata · scelta);
+  - il nome;
+  - la stessa riga di sotto dell'elenco (`sottoOggi`).
+- Poi vengono i contatti e gli esiti. Cambiano solo i tasti:
+  - conferma: Confermato, Sposta, Annullato, Non risponde;
+  - riordino: i suoi esiti;
+  - coda, Dare Seguito e scelta: gli esiti della telefonata.
+- Restano le funzioni di prima (`cardContatto`, `confermeHtml`, `riordiniHtml`, `sceltaHtml`) con i loro collegamenti. La loro testata interna (nome ripetuto, striscia colorata, freccia) la nasconde una regola sola in `index.html` (`.lv-scheda …`).
+- Nella telefonata scelta il giorno e l'ora non si ripetono: nella card resta solo la nota.
+- Dopo l'esito si torna all'elenco con la spunta, come prima.
+- Prove in `prova_dashboard_livelli.js` (una per motivo); disegno con dati finti in `docs/prototipi/schizzo_scheda_persona_T7.png`.
+
 **Riquadro degli obiettivi (Ignazio 01/10):** dall'1 al 5 del mese, se gli obiettivi del mese mancano (`obiettiviMancanti`), la Dashboard apre da sola un riquadro ampio al centro («È iniziato ottobre» · «Scelgo i miei obiettivi» / «Più tardi, vado alla Dashboard»), **ogni volta che si entra in Dashboard o si rientra nell'app (anche dal telefono, che la tiene viva in secondo piano), finché gli obiettivi non sono impostati**: si ricorda in memoria (`ST.riquadroObMostrato`), così toccare una fascia (che ridisegna la Dashboard) non lo riapre; il ricordo si azzera lasciando la Dashboard (`mostraTab`) e uscendo dall'app (`visibilitychange`). Non si apre con abbonamento scaduto, offline, a nome di un altro partner, in «Tutti» o se c'è già un foglio aperto. Il banner «Imposta gli obiettivi del mese!» resta. Codice: `mostraRiquadroObiettivi()` in `pagina-dashboard.js` (giorni: `GIORNI_RIQUADRO_OBIETTIVI`), stili `.velo.centro` e `.riquadro-ob` in `index.html`.
 
 **Ordine del foglio obiettivi (Ignazio 01/10):** in cima il risultato che si vuole ottenere. **Volume:** VPG · totale del gruppo (con la riga «Dal gruppo»), poi «di cui il tuo VPP» e, sotto, «di cui consumo personale» e «di cui VP Clienti». **Azione:** Nuovi Iscritti · totale, «di cui Sponsor Personali», poi «attraverso quanti PM personali» e «e quanti Contatti» (come ci si arriva; l'indicazione di quanti ne servono è il passo 3). La barra si chiama **«Incremento»**, parte da **0%** (niente «scegli»), e cambiando scelta riparte da 0%.
