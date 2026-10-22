@@ -143,6 +143,13 @@
 
   // Sezione con cui si apre la scheda (cantiere 30, Ignazio 18/09: «fare meno azioni possibile»): con telefono e categoria
   // i dati base ci sono → «Azioni»; se ne manca uno (o la scheda è archiviata) → «Dati», così si vede cosa completare.
+  // Scheda contatto S6 (Ignazio 22/10): azioni e note del coach in un elenco solo, dalla più recente; l'azione per `inizio`, la nota per
+  // `scritta_il`. Un'azione senza data resta in fondo, come prima. A pari data prima l'azione.
+  function azioniENote(azioni, note) {
+    const voci = [...(azioni || []).map((a, i) => ({ azione: a, quando: a.inizio || '', i })), ...(note || []).map((n, i) => ({ nota: n, quando: n.scritta_il || '', i: 1e6 + i }))];
+    return voci.sort((x, y) => (!x.quando - !y.quando) || (x.quando < y.quando ? 1 : x.quando > y.quando ? -1 : x.i - y.i));
+  }
+
   function sezioneIniziale(c) {
     return c && c.telefono && c.categoria ? 'azioni' : 'dati';   // anche un archiviato (05/10): si lavora come gli altri
   }
@@ -497,7 +504,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, azioniENote, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

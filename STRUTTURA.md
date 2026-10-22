@@ -499,6 +499,19 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - Il segno Coach Yes accanto al nome (coda, Agenda, scheda della persona) apre il suo foglio come prima (`foglioCoachYes` in `index.html`).
 - Prova in `prova_lista.js`; disegno con dati finti in `docs/prototipi/schizzo_scheda_coach_S4.png`.
 
+**Scheda contatto, tappa S6 (Ignazio 22/10/2026, disegno approvato «Azioni e Coach nella scheda»):** nella linguetta Azioni.
+- **Azione chiusa aperta al tocco:** non c'è più la riga del titolo sopra. La ⌃ per richiuderla sta dentro la card, accanto alla data (`.az-su`, sempre `data-az-apri`).
+- **Note del coach:** niente più riquadro «Coach Yes» in fondo né «Coach+». Ogni nota è una riga gialla «Coach Yes · tipo ›» (`.az-coach`) tra le azioni, al suo posto per data.
+  - L'ordine lo fa `MB21Lista.azioniENote(azioni, note)` in `lista.js`: dalla più recente, l'azione per `inizio`, la nota per `scritta_il`, senza data in fondo, a pari data prima l'azione.
+  - Al tocco la nota si apre come prima (`leggiNota`).
+- **Scrivere una nota:** «+ Nuova azione» (`azionePiu`) propone come prima scelta «Nota del coach (prima dell'azione)» (`notaCoach`), poi «Telefonata, Piano Marketing, Follow Up…», cioè il modulo di sempre.
+- **Interruttore `COACH_YES = true` in `index.html`** (per la conformità). Con false:
+  - niente segno Coach Yes (`segnoCoach`), e `caricaCoachYes` non legge;
+  - niente righe gialle e nessuna lettura delle note nella scheda;
+  - «+ Nuova azione» va dritta al modulo;
+  - le note restano nel database.
+- Prove in `prova_lista.js` (anche a interruttore spento); disegno con il codice vero e dati finti in `docs/prototipi/schizzo_scheda_azioni_coach_S6.png`.
+
 **Scheda contatto, tappe S5 e S5c (nota Pagine 072, Ignazio 22/10/2026: «la vecchia telefonata la voglio conservare»; poi «se non hai dati, bisogna partire dai dati e dalla categoria; eventualmente poi azioni»):**
 - Il riquadro delle cose da fare c'è per ogni categoria, anche Archiviato, Ex, Unlinked e senza categoria.
 - Archiviato, Unlinked, Ex e Referral usano i tipi e gli esiti del Prospect (`agenda.js`, `TIPI`, com'era già).
