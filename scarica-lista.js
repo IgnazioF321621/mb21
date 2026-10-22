@@ -37,15 +37,36 @@ const giornoCancellazione = () => new Date(CHIUSURA.cancellazione + 'T12:00:00')
 function bannerScaricaLista() {
   if (!chiusuraPerMe()) return '';
   return `<button class="banner-grande messaggi" id="ds-scarica-lista"><span class="ico">${ic('file')}</span>
-    <span><b>MB21 torna personale dal ${esc(giornoChiusura())}</b><small>Scarica la tua lista completa: schede, azioni e note, in un file Excel (anche per Google Fogli)</small></span></button>`;
+    <span><b>MB21 torna personale dal ${esc(giornoChiusura())}</b><small>Tocca qui per scaricare la tua lista completa: schede, azioni e note, in un file Excel (anche per Google Fogli)</small></span></button>`;
+}
+// Dove finisce il file, a parole, secondo il dispositivo (nota Admin 017: una partner non capiva dove trovarlo)
+function doveFinisceIlFile(ua) {
+  const u = String(ua || '');
+  if (/iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && /Mobile/.test(u))) return ['Sul telefono si apre il foglio di condivisione: tocca «Salva su File» e scegli dove tenerlo.', 'Lo ritrovi nell\'app File. Per Google Fogli: dall\'app File toccalo e scegli «Apri con» Fogli Google.'];
+  if (/Android/.test(u)) return ['Il file è nella cartella «Download» del telefono (anche nelle notifiche, appena scaricato).', 'Toccalo per aprirlo con Fogli Google o con Excel.'];
+  if (/Macintosh/.test(u)) return ['Il file è nella cartella «Download» del Mac (in Safari anche con la freccia in alto a destra).', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
+  return ['Il file è nella cartella «Download» del computer.', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
+}
+function foglioFilePronto(r) {
+  const [dove, poi] = doveFinisceIlFile(navigator.userAgent), nome = MB21Esporta.nomeFileMiaLista(MB21Coda.oggiRoma());
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('fatto')} Il file è pronto</h3></div>
+    <div class="riquadro" style="margin-bottom:12px"><p style="margin:0 0 8px"><b>${esc(nome)}</b></p>
+      <p style="margin:0 0 8px">${r.schede.toLocaleString('it-IT')} schede, ${r.azioni.toLocaleString('it-IT')} azioni, ${r.note.toLocaleString('it-IT')} note.</p>
+      <p style="margin:0 0 8px">${esc(dove)}</p><p style="margin:0">${esc(poi)}</p></div>
+    <button class="primario" id="fp-ok">Ho capito</button></div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) velo.remove(); };
+  velo.querySelector('#fp-ok').onclick = () => velo.remove();
 }
 async function toccoScaricaLista(b) {
   b.disabled = true;
   mostraToast('Preparo il file…');
   const r = await scaricaMiaLista();
   b.disabled = false;
-  if (r.ok) ricordaScaricata();
-  mostraToast(r.ok ? `File pronto: ${r.schede.toLocaleString('it-IT')} schede, ${r.azioni.toLocaleString('it-IT')} azioni, ${r.note.toLocaleString('it-IT')} note` : 'Non riesco a preparare il file: controlla la connessione e riprova');
+  if (r.ok) { ricordaScaricata(); foglioFilePronto(r); }
+  else mostraToast('Non riesco a preparare il file: controlla la connessione e riprova');
   return r;
 }
 
