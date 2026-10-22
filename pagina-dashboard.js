@@ -322,10 +322,6 @@ function tessera(go, icona, colore, tinta, titolo, riga, n, opz = {}) {
   return opz.spenta ? `<div class="lv-tile ghost" style="${stile}">${dentro}</div>`
     : `<button class="lv-tile${opz.blu ? ' blu' : ''}" data-lv="${go}" style="${stile}">${dentro}</button>`;
 }
-const consiglioNuovoHtml = () => {
-  const m = AVV.mio;
-  return `<div class="avv-consiglio"><b>Un consiglio</b>Prima di cambiare qualcosa, senti ${m && m.sponsor_nome ? `${esc(MB21Mappa.nomeLeggibile(m.sponsor_nome))}, il tuo sponsor` : 'il tuo sponsor'}, oppure il tuo upline attivo e in azione. Insieme si va più veloci.</div>`;
-};
 function disegnaHome() {
   const altro = guardoAltri(), nuovo = nuovoInAvvio(), d = DS.dati, c = contiOggi(), totale = totaleOggi(c);
   const fattoGiorno = !!d && d.ultimoCheck === ST.oggi, sera = oraRoma() >= ORA_CHECK;
@@ -345,12 +341,12 @@ function disegnaHome() {
   const giorno = tessera('giorno', 'diario', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
   if (nuovo) {
     const m = AVV.mio, { fatti, totale: tot } = MB21Lista.contatoreOnboarding(m);
-    tessere.push(tessera('avvio', 'avvio', 'cat-partner', 'cat-partner-tinta', 'Il mio avvio', esc(`Fatti ${fatti} passi su ${tot} · prossimo: ${MB21Lista.prossimoPasso(m).nome}`), 1, { blu: true }), chi, mese, traguardo);
+    // verifica Dashboard, tappa 1 (22/10): niente tessere grigie spente («si accende dopo…»): restano l'avvio, chi sento oggi e il mese se ha già numeri
+    tessere.push(tessera('avvio', 'avvio', 'cat-partner', 'cat-partner-tinta', 'Il mio avvio', esc(`Fatti ${fatti} passi su ${tot} · prossimo: ${MB21Lista.prossimoPasso(m).nome}`), 1, { blu: true }), chi, ...(haNumeri ? [mese] : []));
   } else if (sera && !fattoGiorno && !altro) tessere.push(giorno, chi, mese, traguardo);
   else tessere.push(chi, mese, traguardo, giorno);
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
   if (!vediTutti() && !limitato()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
-  if (nuovo) html += consiglioNuovoHtml();
   html += atteseHtml() + tracceHtml() + mioPercorsoHtml();   // «Ordina da solo» (nota 043), poi le due righe grigie di prima (tracce condivise e percorso di chi parte): per ora restano qui sotto
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
@@ -496,7 +492,7 @@ function disegnaMeseLV() {
   const mese = D.nomeMese(d.mese);
   let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
     <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}`;
-  const rigaOb = limitato() || d.obiettiviMancanti || !obiettiviAperti() ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
+  const rigaOb = limitato() || d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
   const rigaConf = !limitato() && DS.confronto ? `<button class="mese-riga" id="ds-confronto">${ic('obiettivi')}<span><b>Com'è andato ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}</b><small>${DS.confronto.raggiunti} ${DS.confronto.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${DS.confronto.totali}</small></span><em>›</em></button>` : '';
   if (rigaOb || rigaConf) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}${rigaConf}</div>`;
   app.innerHTML = html + versione();
@@ -1312,7 +1308,7 @@ function leggiSquadraMese(oggi, nuova) {
   const mese = Number(String(oggi).slice(0, 4) + String(oggi).slice(5, 7));
   const scorso = MB21Dashboard.meseSpostato(String(oggi).slice(0, 7) + '-01', -1);
   const prec = Number(scorso.slice(0, 4) + scorso.slice(5, 7));   // il mese scorso, per «Com'è andato»
-  DS.sqLettura = (ST.offline || vediTutti() || !visto().partner_id || !obiettiviAperti()) ? Promise.resolve(null) : Promise.all([
+  DS.sqLettura = (ST.offline || vediTutti() || !visto().partner_id) ? Promise.resolve(null) : Promise.all([
     letta('squadra', 'mappa del mese', () => supa.from('squadra').select('partner_id, sponsor_id, nome, data_ingresso')),
     letta('volumi', 'volumi del mese in corso', () => supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, dimensioni_gruppo').in('mese', [prec, mese])),
     letta('pm_ramo', '15 Planner del mese scorso e in corso', () => supa.rpc('pm_del_ramo', { da: prec })),
@@ -1321,7 +1317,7 @@ function leggiSquadraMese(oggi, nuova) {
 }
 async function caricaObiettiviTeam(oggi) {
   OBT.righe = []; OBT.senza = []; OBT.mese = String(oggi).slice(0, 7) + '-01';
-  if (ST.offline || vediTutti() || !obiettiviAperti() || !visto().partner_id) return;
+  if (ST.offline || vediTutti() || !visto().partner_id) return;
   try {
     const prima = MB21Dashboard.meseSpostato(OBT.mese, -1);
     const [ob, obPrima, sqd] = await Promise.all([letta('obiettivi_ramo', 'obiettivi dei partner', () => supa.rpc('obiettivi_del_ramo', { p_mese: OBT.mese })), letta('obiettivi_ramo_prima', 'obiettivi dei partner, mese scorso', () => supa.rpc('obiettivi_del_ramo', { p_mese: prima })), leggiSquadraMese(oggi)]);
@@ -1556,10 +1552,8 @@ function collegaRiordini() {
 // ── DASHBOARD (Fase 3) ───────────────────────────────────
 // Copia della Dashboard di Glide (docs/MB21_v3_Dashboard_Agenda_come_e.md), brief Fase 3. Calcoli in dashboard.js.
 // Ordine: Partner Select · banner · 4 schede · visione completa · [OGGI] · Segni Vitali · Mostra di più.
-// Obiettivi del mese: il foglio nuovo (scala dei bonus, Segni Vitali, linee) è aperto a tutti i partner dal 01/10 (Ignazio). Con `false` il riquadro, il banner,
-// la riga «Obiettivi di <mese>» e il foglio li vede e li usa solo l'Admin (era così nelle prime ore del 01/10, finché il foglio non era pronto).
-const OBIETTIVI_PER_TUTTI = true;
-const obiettiviAperti = () => OBIETTIVI_PER_TUTTI || eAdmin();
+// Obiettivi del mese: il foglio nuovo (scala dei bonus, Segni Vitali, linee) è aperto a tutti dal 01/10 (Ignazio); dal 22/10 (verifica della
+// Dashboard, tappa 1) non c'è più l'interruttore «solo Admin»: valgono per tutti, Admin compreso.
 const DS = { dati: null, obiettivi: [] };
 
 async function caricaDashboard(oggi) {
@@ -1589,7 +1583,7 @@ async function caricaDashboard(oggi) {
     DS.dati = MB21Dashboard.calcola({ ...dati, oggi, scadenza: scad.error ? visto().abbonamento_scadenza : scad.data, segniAl, squadraAl });
     // «Com'è andato il mese scorso»: gli obiettivi di allora contro quello che è risultato (Check, file Amway, persone); solo con i propri obiettivi aperti
     DS.confronto = null;
-    if (!vediTutti() && obiettiviAperti()) {
+    if (!vediTutti()) {
       const prima = MB21Dashboard.meseSpostato(DS.dati.mese, -1);
       const amwayPrec = sqd ? MB21Dashboard.risultatiAmway({ squadra: sqd.sq, volumi: sqd.vol, pm: sqd.pm, pid: visto().partner_id, mese: sqd.prec }) : null;
       const c = MB21Dashboard.confrontoMese({ obiettivo: dati.obiettivi.find(o => o.mese === prima), risultati: MB21Dashboard.risultatiMese({ checkMesi: dati.checkMesi, obiettivi: dati.obiettivi, mese: prima, oggi, segniAl }), amway: amwayPrec });
@@ -1717,7 +1711,7 @@ function dashboardTesta() {
   if (typeof bannerScaricaLista === 'function') html += bannerScaricaLista();   // nota Admin 008: «Scarica la mia lista», solo quando c'è la data di chiusura e solo per chi è interessato (scarica-lista.js)
   if (typeof bannerMessaggi === 'function') html += bannerMessaggi();   // nota Admin 014: i messaggi restano qui finché l'Admin non li elimina (pagina-messaggi.js); se non si è caricato, la Dashboard resta com'è
   // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
-  if (d.obiettiviMancanti && !limitato() && obiettiviAperti()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
+  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
   return html;
 }
@@ -1759,7 +1753,6 @@ function dashboardBasso() {
 
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
-  su('ds-sv', foglioStorico);   // la striscia dei Segni Vitali apre lo storico: stessa schermata del Check (Ignazio 25/09)
   collegaPartnerSelect();
   su('ds-rinnova', foglioRinnovo);
   su('ds-riparto', () => scegliNumero(caricaOggi));   // 02/10: dalla pausa si riparte scegliendo quanti
@@ -1772,7 +1765,6 @@ function collegaDashboard() {
   caricaCardCheck();   // i dati del percorso dopo la Dashboard, che non aspetta (27/09)
   su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
   su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
-  su('ds-check', apriCheck);
   su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
 }
 
@@ -1800,7 +1792,7 @@ const aperturaSezione = (pallino, nome) => {
 // I punti con i centesimi nelle caselle si scrivono con la VIRGOLA, senza il punto delle migliaia (Ignazio 01/10: il punto si confondeva con la virgola)
 const fmtNum = v => (v === '' || v == null ? '' : Number(v).toLocaleString('it-IT', { useGrouping: false, maximumFractionDigits: 2 }));
 function apriObiettivi() {
-  if (ST.offline || !DS.dati || soloGuardo() || !obiettiviAperti()) return;
+  if (ST.offline || !DS.dati || soloGuardo()) return;
   const D = MB21Dashboard, mese = DS.dati.mese;
   const { valori, mesePrima } = D.propostaObiettivi(DS.obiettivi, mese, 'attuali');
   const prima = mesePrima ? D.nomeMese(mesePrima).toLowerCase() : null;
@@ -1844,7 +1836,6 @@ function apriObiettivi() {
   velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34)
   velo.innerHTML = `<div class="foglio alto mc">
-    ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--pericolo-tinta);color:var(--pericolo)">${ic('obiettivi')}</span>
       <div><small>Obiettivi del mese${esc(aNome())}</small><b>${esc(D.nomeMese(mese))}</b></div><button id="ob-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="ob-riepilogo" id="ob-riepilogo"></div>
@@ -2147,7 +2138,7 @@ const segnaOb = chiave => { try { localStorage.setItem(chiave, '1'); } catch (e)
 async function mostraRiquadroObiettivi() {
   const d = DS.dati;
   if (ST.codaApertura) return;   // nota 064: all'apertura aspetta il suo turno, in fondo alla fila (codaApertura in index.html)
-  if (!d || !obiettiviAperti() || limitato() || ST.offline || soloGuardo() || vediTutti() || eAdmin()) return;
+  if (!d || limitato() || ST.offline || soloGuardo() || vediTutti()) return;   // verifica Dashboard, tappa 1 (22/10): anche l'Admin
   if (Number(ST.oggi.slice(8, 10)) > GIORNI_RIQUADRO_OBIETTIVI) return;
   const rifai = !d.obiettiviMancanti;   // li ha già: solo l'invito a rifarli nel foglio nuovo, una volta
   if (rifai && (ST.oggi < RIFAI_OBIETTIVI.dal || ST.oggi > RIFAI_OBIETTIVI.al || ricordoOb(chiaveRifaiOb(d.mese)))) return;
@@ -2162,7 +2153,6 @@ async function mostraRiquadroObiettivi() {
   const velo = document.createElement('div');
   velo.className = 'velo centro';
   velo.innerHTML = `<div class="riquadro-ob" role="dialog" aria-label="Obiettivi di ${esc(mese)}">
-    ${OBIETTIVI_PER_TUTTI ? '' : '<small class="solo-tu">⚠️ Per ora lo vedi solo tu</small>'}
     <span class="ico">${ic('obiettivi')}</span>
     <h2>${rifai ? `Gli obiettivi di ${esc(mese)}, nel foglio nuovo` : `È iniziato ${esc(mese)}`}</h2>
     <p>${rifai ? 'Il foglio degli obiettivi è nuovo: chi li aveva già scritti può rifarli, riportando i dati. Ti bastano due minuti.'

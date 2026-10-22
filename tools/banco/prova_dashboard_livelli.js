@@ -50,14 +50,13 @@ prova('Il traguardo sulla tessera: il gradino più vicino, non per forza il prim
   assert.match(m.fraseTraguardo(m.percorsoDash()), /ti mancano \d passi/);
 });
 
-prova('Il nuovo parte dal suo avvio: la tessera in blu, le altre due spente, il consiglio per sentire sponsor o upline', () => {
+prova('Il nuovo parte dal suo avvio: la tessera in blu, niente tessere grigie spente, il consiglio per sentire sponsor o upline una volta sola (verifica Dashboard, tappa 1)', () => {
   const { html } = P.vista('home', { nuovo: true });
-  assert.deepEqual(titoli(html), ['Il mio avvio', 'Chi sento oggi?', 'Come sto andando questo mese?', 'Qual è il mio prossimo traguardo?']);
+  assert.deepEqual(titoli(html), ['Il mio avvio', 'Chi sento oggi?']);
   assert.match(tessere(html)[0], /lv-tile blu/);
   assert.match(tessere(html)[0], /Fatti 3 passi su 14 · prossimo: Network 21/);
-  assert.match(tessere(html)[2], /lv-tile ghost/);
-  assert.match(tessere(html)[3], /lv-tile ghost[\s\S]*Si accende quando finisci l(?:'|&#39;)avvio/);
-  assert.match(html, /<div class="avv-consiglio"><b>Un consiglio<\/b>Prima di cambiare qualcosa, senti Giulia Conti, il tuo sponsor, oppure il tuo upline attivo e in azione/);
+  assert.doesNotMatch(html, /lv-tile ghost/);
+  assert.ok((html.match(/<div class="avv-consiglio">/g) || []).length <= 1, 'il consiglio non è doppio');
   assert.doesNotMatch(titoli(html).join('|'), /Com'è andata oggi/);   // il nuovo non scrive ancora il suo giorno
 });
 
@@ -355,6 +354,17 @@ prova('Nota 001: in «Chi sento oggi?» il segnale Coach Yes accanto ai nomi con
   m.PS.scelto = 'tutti';                                                                    // con «Tutti» niente
   assert.equal(m.CY.ids.size, 3);
   delete P.memo.coda; delete P.memo.conferme; delete P.memo.riordini;
+});
+
+prova('Verifica Dashboard, tappa 1 (Ignazio 22/10): riga del telefono spenta (codice resta), via ds-sv/ds-check e OBIETTIVI_PER_TUTTI, invito agli obiettivi anche all\'Admin', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8'), ben = fs.readFileSync(path.join(__dirname, '../../pagina-benvenuto.js'), 'utf8');
+  assert.match(ben, /\nconst RIGA_TELEFONO = false;\nfunction rigaTelefonoHtml\(\) \{ return RIGA_TELEFONO \? /);
+  assert.match(ben, /if \(!RIGA_TELEFONO \|\| !document\.getElementById\('riga-telefono'\)/);
+  assert.doesNotMatch(dash, /su\('ds-sv'|su\('ds-check'|OBIETTIVI_PER_TUTTI|obiettiviAperti/);
+  const riq = dash.slice(dash.indexOf('async function mostraRiquadroObiettivi'), dash.indexOf('\n}\n', dash.indexOf('async function mostraRiquadroObiettivi')));
+  assert.doesNotMatch(riq.split('\n').slice(0, 5).join('\n'), /eAdmin\(\)/);   // l'invito «È iniziato [mese]» anche all'Admin
+  assert.match(dash, /LIMITI_ABBONAMENTO|limitato\(\)/);   // l'abbonamento non è toccato: resta spento e pronto
 });
 
 (async () => {
