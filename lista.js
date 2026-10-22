@@ -458,7 +458,8 @@
     if (v.consegna && v.consegna < v.data) return { errore: 'La consegna è prima della vendita' };
     const differita = v.consegna && v.consegna !== v.data;
     if (differita && v.ordinata_il && v.ordinata_il < v.data) return { errore: 'L\'ordine è prima della vendita' };
-    const durata = v.aRottura ? num(v.durata) : null;
+    // V2 (22/10): `durata` c'è anche con «Fra N mesi» (i mesi scelti, così la prossima volta si propongono gli stessi); con una data scelta a mano no
+    const durata = num(v.durata);
     if (durata !== null && (!Number.isInteger(durata) || durata < 1 || durata > 120)) return { errore: 'Quanto dura: scrivi i mesi, da 1 a 120' };
     if (v.aRottura) v = { ...v, riordino: '' };
     if (!v.riordino && !senzaRiordino && !v.aRottura) return { errore: 'Manca la data di riordino' };
@@ -467,6 +468,41 @@
       sconto: Math.round((sconto || 0) * 100) / 100, consegna: differita ? v.consegna : null, ordinata_il: differita && v.ordinata_il ? v.ordinata_il : null, riordino: v.riordino || null,
       riordino_a_rottura: !!v.aRottura, durata_mesi: durata } };
   }
+  // ── V2 (Verifica Vendite, Ignazio 22/10/2026): il riordino con una domanda sola, «Quando lo risento?» ──
+  // fra N mesi (proposto dalla durata solita) · a rottura · scegli la data. Nel database gli stessi campi: riordino, riordino_a_rottura, durata_mesi.
+  const MESI_RIORDINO = [1, 2, 3, 4, 6, 12];
+  // la data N mesi dopo `base` (la consegna o la vendita): stesso giorno, o l'ultimo del mese se quel giorno non c'è (31/01 + 1 = 28/02)
+  function riordinoFra(base, mesi) {
+    const [a, m, g] = String(base).split('-').map(Number);
+    const tot = (m - 1) + Number(mesi), na = a + Math.floor(tot / 12), nm = tot % 12 + 1;
+    const ultimo = new Date(Date.UTC(na, nm, 0)).getUTCDate();
+    return `${na}-${String(nm).padStart(2, '0')}-${String(Math.min(g, ultimo)).padStart(2, '0')}`;
+  }
+  // i mesi interi fra due date («2026-10-22» → «2026-12-22» = 2)
+  function mesiFra(da, a) {
+    const [a1, m1, g1] = String(da).split('-').map(Number), [a2, m2, g2] = String(a).split('-').map(Number);
+    return (a2 - a1) * 12 + (m2 - m1) - (g2 < g1 ? 1 : 0);
+  }
+  // come si legge una vendita già salvata: { modo: 'fra' | 'rottura' | 'data' | null, mesi, data }
+  function modoRiordino(v) {
+    if (!v) return { modo: null, mesi: null, data: '' };
+    if (v.riordino_a_rottura) return { modo: 'rottura', mesi: v.durata_mesi || null, data: '' };
+    if (!v.riordino) return { modo: null, mesi: null, data: '' };
+    const fra = v.durata_mesi && riordinoFra(v.consegna || v.data, v.durata_mesi) === v.riordino;
+    return fra ? { modo: 'fra', mesi: v.durata_mesi, data: v.riordino } : { modo: 'data', mesi: null, data: v.riordino };
+  }
+  // la proposta per una vendita nuova: l'ultima vendita dello stesso prodotto (maiuscole a parte), se no dello stesso brand, che dice quando risentirlo.
+  // «A rottura» se quella era a rottura; se no «Fra N mesi», con N = i mesi scelti allora o quelli fra vendita (o consegna) e riordino (1-120). null se niente.
+  function propostaRiordino(vendite, prodotto, brand) {
+    const utili = (vendite || []).filter(v => v.riordino_a_rottura || v.riordino).slice().sort((x, y) => (x.data < y.data ? 1 : x.data > y.data ? -1 : 0));
+    const nome = String(prodotto || '').trim().toLowerCase();
+    const v = (nome && utili.find(x => String(x.prodotto || '').trim().toLowerCase() === nome)) || utili.find(x => x.brand === brand);
+    if (!v) return null;
+    if (v.riordino_a_rottura) return { modo: 'rottura', mesi: v.durata_mesi || null };
+    const mesi = v.durata_mesi || mesiFra(v.consegna || v.data, v.riordino);
+    return mesi >= 1 && mesi <= 120 ? { modo: 'fra', mesi } : null;
+  }
+
   // La riga di una vendita «A rottura» nella scheda › Vendite (nota 054): «A rottura · venduto 14 mesi fa, di solito dura 24 mesi»
   function rigaRottura(v, oggi) {
     if (!v || !v.riordino_a_rottura) return '';
@@ -504,7 +540,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, azioniENote, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

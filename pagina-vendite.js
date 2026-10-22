@@ -28,7 +28,7 @@ async function venditeDellaScheda(c) {
   // se non va (campo non ancora nel database) le vendite si vedono come prima
   // (con la nota 054 anche «A rottura» e «di solito dura», stessa lettura)
   const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico, riordino_a_rottura, durata_mesi').eq('contatto_id', c.id)
-    .or('prezzo_pubblico.not.is.null,riordino_a_rottura.eq.true'));
+    .or('prezzo_pubblico.not.is.null,riordino_a_rottura.eq.true,durata_mesi.not.is.null'));   // V2: anche «Fra N mesi» (durata_mesi)
   if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x])); data.forEach(v => { const x = di.get(v.id); if (x) Object.assign(v, { prezzo_pubblico: x.prezzo_pubblico, riordino_a_rottura: x.riordino_a_rottura, durata_mesi: x.durata_mesi }); }); }
   if (LS.contatto === c) LS.vendite = data;
   return data;
@@ -123,9 +123,11 @@ function moduloVendita(v, proposta) {
         <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
       <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
-      <div class="campo"><label>Il prossimo riordino</label>
-        <div class="vn-quando"><button type="button" data-riordino="data">Con una data</button><button type="button" data-riordino="rottura">A rottura</button></div></div>
-      <div class="campo" id="v-riordino-data"><label><span id="v-riordino-titolo"></span> ${v && !v.riordino && !v.riordino_a_rottura ? '' : '<small>Obbligatorio</small>'}</label><div class="vn-aiuto">10 giorni prima trovi in Agenda la telefonata «Riordino».</div><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
+      <div class="campo" id="v-riordino-campo"><label>Quando lo risento? ${v && !v.riordino && !v.riordino_a_rottura ? '' : '<small>Obbligatorio</small>'}</label>
+        <div class="vn-quando tre"><button type="button" data-riordino="fra" id="v-fra-tasto">Fra … mesi</button><button type="button" data-riordino="rottura">A rottura</button><button type="button" data-riordino="data">Scegli la data</button></div>
+        <div id="v-fra"><div class="vn-mesi">${MB21Lista.MESI_RIORDINO.map(m => `<button type="button" data-mesi="${m}">${m}</button>`).join('')}</div></div>
+        <div class="vn-aiuto" id="v-riordino-aiuto"></div></div>
+      <div class="campo" id="v-riordino-data"><label id="v-riordino-titolo"></label><input id="v-riordino" type="date" value="${esc(v && v.riordino ? v.riordino : '')}"></div>
       <div class="campo" id="v-rottura"><label>Di solito dura (mesi)</label><div class="vn-aiuto">Per i pezzi che si riordinano quando si rompono: nessuna telefonata di riordino. Quanto dura di solito resta solo da leggere nella scheda.</div><input id="v-durata" inputmode="numeric" placeholder="24" value="${v && v.durata_mesi ? esc(v.durata_mesi) : ''}"></div>
       ${v ? '<button class="link elimina-qui" id="elimina">Elimina questa vendita</button>' : ''}
     </div>
@@ -138,7 +140,7 @@ function moduloVendita(v, proposta) {
   $('chiudi').onclick = chiudi;
   $('annulla').onclick = chiudi;
   const segnaBrand = () => velo.querySelectorAll('[data-brand]').forEach(b => b.classList.toggle('scelto', b.dataset.brand === brand));
-  velo.querySelectorAll('[data-brand]').forEach(b => b.onclick = () => { brand = b.dataset.brand; segnaBrand(); });
+  velo.querySelectorAll('[data-brand]').forEach(b => b.onclick = () => { brand = b.dataset.brand; segnaBrand(); proponi(); });
   segnaBrand();
   // «Quando consegni?»: Subito = il modulo di Glide; Più avanti = la promo con consegna differita (compare la data dell'ordine)
   let dopo = !!(v && v.consegna);
@@ -146,18 +148,46 @@ function moduloVendita(v, proposta) {
     velo.querySelectorAll('[data-quando]').forEach(b => b.classList.toggle('scelto', (b.dataset.quando === 'dopo') === dopo));
     $('v-consegna-campo').style.display = dopo ? '' : 'none';
     $('v-riordino-titolo').textContent = dopo ? 'Quando finirà il prodotto che consegni?' : 'Data di riordino: quando finirà il prodotto?';
+    segnaRiordino();
   };
+  // V2 (Verifica Vendite, Ignazio 22/10): il riordino con una domanda sola, «Quando lo risento?»: fra N mesi (proposto dall'ultima vendita dello
+  // stesso prodotto o brand, MB21Lista.propostaRiordino) · a rottura (nota 054: nessuna telefonata, «di solito dura» facoltativo) · scegli la data.
+  // Nel database gli stessi campi: «Fra N mesi» scrive riordino = consegna (o vendita) + N mesi e durata_mesi = N.
+  const prima = MB21Lista.modoRiordino(v);
+  let modoR = prima.modo, mesiR = prima.mesi, toccatoR = !!v;
+  const baseR = () => (dopo && $('v-consegna').value) || $('v-data').value;
+  const segnaRiordino = () => {
+    velo.querySelectorAll('[data-riordino]').forEach(b => b.classList.toggle('scelto', b.dataset.riordino === modoR));
+    velo.querySelectorAll('[data-mesi]').forEach(b => b.classList.toggle('scelto', modoR === 'fra' && Number(b.dataset.mesi) === mesiR));
+    $('v-fra-tasto').textContent = modoR === 'fra' && mesiR ? `Fra ${mesiR} ${mesiR === 1 ? 'mese' : 'mesi'}` : 'Fra … mesi';
+    $('v-fra').style.display = modoR === 'fra' ? '' : 'none';
+    $('v-riordino-data').style.display = modoR === 'data' ? '' : 'none';
+    $('v-rottura').style.display = modoR === 'rottura' ? '' : 'none';
+    const quando = modoR === 'fra' && mesiR && baseR() ? MB21Lista.riordinoFra(baseR(), mesiR) : '';
+    $('v-riordino-aiuto').textContent = quando ? `Il ${MB21Lista.data(quando)}: 10 giorni prima trovi in Agenda la telefonata «Riordino».`
+      : modoR === 'data' ? '10 giorni prima trovi in Agenda la telefonata «Riordino».' : modoR === 'fra' ? 'Scegli fra quanti mesi.' : '';
+  };
+  velo.querySelectorAll('[data-riordino]').forEach(b => b.onclick = () => { modoR = b.dataset.riordino; toccatoR = true; segnaRiordino(); });
+  velo.querySelectorAll('[data-mesi]').forEach(b => b.onclick = () => { mesiR = Number(b.dataset.mesi); toccatoR = true; segnaRiordino(); });
+  $('v-data').addEventListener('change', segnaRiordino);
+  if ($('v-consegna')) $('v-consegna').addEventListener('change', segnaRiordino);
   velo.querySelectorAll('[data-quando]').forEach(b => b.onclick = () => { dopo = b.dataset.quando === 'dopo'; segnaQuando(); });
   segnaQuando();
-  // «A rottura» (nota Pagine 054, Ignazio 14/10): niente data di riordino (quindi niente telefonata), solo «di solito dura» facoltativo
-  let rottura = !!(v && v.riordino_a_rottura);
-  const segnaRottura = () => {
-    velo.querySelectorAll('[data-riordino]').forEach(b => b.classList.toggle('scelto', (b.dataset.riordino === 'rottura') === rottura));
-    $('v-riordino-data').style.display = rottura ? 'none' : '';
-    $('v-rottura').style.display = rottura ? '' : 'none';
+  // la proposta per una vendita nuova: una lettura sola delle vendite di chi vende; si rifà quando cambiano brand o prodotto, finché non si sceglie a mano
+  let storico = null;
+  const proponi = () => {
+    if (toccatoR || !storico) return;
+    const p = MB21Lista.propostaRiordino(storico, $('v-prodotto').value, brand);
+    modoR = p ? p.modo : null; mesiR = p ? p.mesi : null;
+    if (p && p.modo === 'rottura' && p.mesi && !$('v-durata').value) $('v-durata').value = p.mesi;
+    if (p && p.modo === 'fra' && !MB21Lista.MESI_RIORDINO.includes(p.mesi)) {   // un numero di mesi fuori dalle pastiglie: se ne aggiunge una
+      $('v-fra').querySelector('.vn-mesi').insertAdjacentHTML('beforeend', `<button type="button" data-mesi="${p.mesi}">${p.mesi}</button>`);
+      const b = $('v-fra').querySelector(`[data-mesi="${p.mesi}"]`); b.onclick = () => { mesiR = p.mesi; toccatoR = true; segnaRiordino(); };
+    }
+    segnaRiordino();
   };
-  velo.querySelectorAll('[data-riordino]').forEach(b => b.onclick = () => { rottura = b.dataset.riordino === 'rottura'; segnaRottura(); });
-  segnaRottura();
+  if (!v && c) dbq('riordini di prima', supa.from('vendite').select('prodotto, brand, data, consegna, riordino, riordino_a_rottura, durata_mesi').eq('user_id', c.user_id)
+    .order('data', { ascending: false }).limit(200)).then(({ data }) => { storico = Array.isArray(data) ? data : null; proponi(); });
   // Nota Admin 013, aperta a tutti dalla nota Pagine 052 (Ignazio 13/10): «Come ha pagato», «Incassato» e «Prezzo al pubblico», facoltativi.
   // Non stanno in `vendite_conti`: si leggono dalla vendita. I dati di Wallet (wallet_il, wallet_id) restano solo dell'Admin e qui non compaiono.
   let pagato = null;
@@ -197,7 +227,7 @@ function moduloVendita(v, proposta) {
   };
   $('v-prezzo').addEventListener('input', calcolaSconto); $('v-incassato').addEventListener('input', calcolaSconto);
   $('v-sconto').addEventListener('input', () => { scontoAManoSi = $('v-sconto').value.trim() !== ''; calcolaSconto(); });
-  $('v-prodotto').addEventListener('change', aiutoPrezzo);
+  $('v-prodotto').addEventListener('change', aiutoPrezzo); $('v-prodotto').addEventListener('change', () => proponi());
   if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
   const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
   $('v-prodotto').oninput = conta; conta();
@@ -205,9 +235,13 @@ function moduloVendita(v, proposta) {
   const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata(); };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
     if (dopo && !$('v-consegna').value) return mostraToast('Scrivi quando consegni');
+    const senzaR = !!(v && !v.riordino && !v.riordino_a_rottura);
+    if (!modoR && !senzaR) return mostraToast('Scegli quando lo risenti');
+    if (modoR === 'fra' && !mesiR) return mostraToast('Scegli fra quanti mesi lo risenti');
+    const riordino = modoR === 'fra' ? MB21Lista.riordinoFra(baseR(), mesiR) : modoR === 'data' ? $('v-riordino').value : '';
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,
-      sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino: $('v-riordino').value,
-      aRottura: rottura, durata: $('v-durata').value }, !!(v && !v.riordino && !v.riordino_a_rottura));
+      sconto: $('v-sconto').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '', riordino,
+      aRottura: modoR === 'rottura', durata: modoR === 'fra' ? mesiR : modoR === 'rottura' ? $('v-durata').value : '' }, senzaR);
     if (esito.errore) return mostraToast(esito.errore);
     // consegna oltre due mesi, cambiata adesso e senza ordine fatto (nota Azioni 033): una conferma, per le date sbagliate (02/05/2027 al posto di …)
     const consegna = dopo ? $('v-consegna').value : '', ordinata = dopo && $('v-ordinata') ? $('v-ordinata').value : '';

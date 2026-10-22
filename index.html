@@ -588,6 +588,11 @@
   .vn-quando { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 8px; }
   .vn-quando button { font-size: 16px; font-weight: 600; padding: 12px; border-radius: var(--raggio-bottone); border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); }
   .vn-quando button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
+  /* V2 (Verifica Vendite 22/10): «Quando lo risento?» a tre scelte; i mesi in pastiglie piccole */
+  .vn-quando.tre { grid-template-columns: 1fr 1fr 1fr; } .vn-quando.tre button { font-size: 14px; padding: 12px 6px; }
+  .vn-mesi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+  .vn-mesi button { min-width: 44px; font-size: 15px; font-weight: 600; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo); }
+  .vn-mesi button.scelto { background: var(--testo); color: #fff; border-color: var(--testo); }
   .vn-attesa { color: var(--grigio); font-size: 13px; font-weight: 600; margin-top: 3px; }
   .vn-attesa.tardi { color: var(--proposta); }
   .vn-fatto { display: block; width: 100%; margin: -2px 0 12px; border: 1.5px solid var(--proposta); background: var(--proposta-tinta); color: var(--proposta); font-size: 15px; font-weight: 700; padding: 10px; border-radius: var(--raggio-bottone); }
