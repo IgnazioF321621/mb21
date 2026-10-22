@@ -353,6 +353,18 @@
     return esito;
   }
 
+  // Nota Pagine 069 (Ignazio 22/10/2026: «il CEP è unico perché va per codice»): un CEP attivo su una scheda vale per tutte le schede con lo stesso
+  // codice Amway (il collaboratore e il titolare, la stessa persona in più liste). `codici`: [{ id, codice_amway }]. Solo il CEP: i biglietti restano per persona.
+  function cepPerCodice(targhe, codici) {
+    const t = { ...(targhe || {}) }, perCodice = {};
+    for (const c of codici || []) if (c.codice_amway) (perCodice[c.codice_amway] = perCodice[c.codice_amway] || []).push(c.id);
+    for (const ids of Object.values(perCodice)) {
+      if (!ids.some(id => t[id] && t[id].cep)) continue;
+      for (const id of ids) t[id] = { bbs: false, wes: false, ...(t[id] || {}), cep: true };
+    }
+    return t;
+  }
+
   // Date nel fuso di Roma: lunga «11/12/2024», breve «11/12/24»
   function data(iso, breve) {
     if (!iso) return '';
@@ -484,7 +496,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, rigaRottura, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;

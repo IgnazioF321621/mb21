@@ -166,9 +166,14 @@
       if (b.tipo === 'BBS' && d.attivoBbs && b.evento === d.attivoBbs) t.bbs += posti(b);
       if (b.tipo === 'WES' && d.attivoWes && b.evento === d.attivoWes) t.wes += posti(b);
     }
+    // nota Pagine 069: il CEP è unico per codice: due schede dello stesso partner (titolare e collaboratore, più liste) contano un abbonato solo
+    const cepContati = new Set();
     for (const p of d.cep || []) {
       const t = a(p);
-      if (t && p.dal <= d.oggi && (!p.uscito_il || p.uscito_il >= d.oggi)) t.cep += 1;
+      if (!t || !(p.dal <= d.oggi && (!p.uscito_il || p.uscito_il >= d.oggi))) continue;
+      const k = delContatto[p.contatto_id] ? 'codice:' + delContatto[p.contatto_id] : 'scheda:' + p.contatto_id;
+      if (cepContati.has(k)) continue;
+      cepContati.add(k); t.cep += 1;
     }
     const figli = {};
     for (const p of squadra) if (p.sponsor_id) (figli[p.sponsor_id] = figli[p.sponsor_id] || []).push(p.partner_id);

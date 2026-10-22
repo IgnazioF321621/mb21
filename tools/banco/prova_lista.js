@@ -705,4 +705,16 @@ prova('Nota 068 (feedback 20/10, «non mi fa eliminare i doppioni»): il nome el
   assert.equal(disegnata, 'd1,d2');
 });
 
+prova('Nota 069: la targhetta CEP vale per codice: anche le altre schede con lo stesso codice; i biglietti no', () => {
+  const targhe = { 's-b1': { bbs: true, wes: false, cep: true }, 's-x': { bbs: false, wes: false, cep: false } };
+  const codici = [{ id: 's-b1', codice_amway: 'T' }, { id: 's-b2', codice_amway: 'T' }, { id: 's-x', codice_amway: 'X' }, { id: 's-y', codice_amway: 'X' }];
+  const t = L.cepPerCodice(targhe, codici);
+  assert.deepEqual(t['s-b2'], { bbs: false, wes: false, cep: true });
+  assert.equal(t['s-b1'].bbs, true);
+  assert.equal(t['s-y'], undefined);
+  assert.equal(Object.keys(L.cepPerCodice(null, null)).length, 0);
+  const pl = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-lista.js'), 'utf8');
+  assert.match(pl, /dbq\('cep', supa\.from\('cep'\)\.select\('\*'\)\.in\('contatto_id', idsCep\)/);
+});
+
 coda.then(() => console.log(`\n${ok} prove superate`));

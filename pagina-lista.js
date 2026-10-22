@@ -99,7 +99,12 @@ async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
   try {
-    if (!listaFresca()) { [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now(); }
+    if (!listaFresca()) {
+      [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now();
+      // nota 069: il CEP va per codice: la targhetta CEP anche sulle altre schede con lo stesso codice Amway (una lettura leggera, solo i codici)
+      const cd = await dbq('codici delle schede', supa.from('contatti').select('id, codice_amway').not('codice_amway', 'is', null).is('eliminato_il', null).limit(5000));
+      if (!cd.error && Array.isArray(cd.data)) LS.targhe = MB21Lista.cepPerCodice(LS.targhe, cd.data);
+    }
     segnaApp();
     await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
   } catch (e) {
@@ -1078,9 +1083,16 @@ async function caricaSegni(c) {
     compagno = r.data || null;
   }
   const ids = [c.id, compagno && compagno.id].filter(Boolean);
+  // nota 069 (Ignazio 22/10/2026: «il CEP è unico perché va per codice»): il CEP si legge anche dalle altre schede con lo stesso codice Amway
+  // (il caso del 22/10: il CEP era segnato su una sola delle schede con quel codice); i biglietti restano della persona
+  let idsCep = ids;
+  if (ana.codice_amway) {
+    const sc = await dbq('schede con lo stesso codice', supa.from('contatti').select('id').eq('codice_amway', ana.codice_amway).is('eliminato_il', null));
+    if (!sc.error && Array.isArray(sc.data)) idsCep = [...new Set([...ids, ...sc.data.map(x => x.id)])];
+  }
   const [big, cep, bbs, wes] = await Promise.all([
     dbq('biglietti', supa.from('biglietti').select('*').in('contatto_id', ids)),
-    dbq('cep', supa.from('cep').select('*').in('contatto_id', ids).order('dal', { ascending: false })),
+    dbq('cep', supa.from('cep').select('*').in('contatto_id', idsCep).order('dal', { ascending: false })),
     dbq('date dei BBS', supa.from('bbs').select('data').order('data')),
     dbq('date dei Wes', supa.from('wes').select('data').order('data')),
   ]);
