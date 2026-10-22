@@ -813,9 +813,6 @@ async function sezioneAzioni() {
   // Niente riquadro FASE (Ignazio 24/09: «residuo di Glide»): dove si è con la persona lo dice la prima card, l'ultima azione con il suo esito.
   // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
   const piuHtml = '<button class="primario piu-sezione" id="azione-piu">' + ic('piu') + ' Nuova azione</button>';
-  // S5 (nota Pagine 072, Ignazio 22/10): un contatto senza categoria si lavora con i tipi e gli esiti del Prospect, senza cambiargli la categoria
-  // (resta fuori dalla coda e in «Da catalogare»). Archiviato, Unlinked, Ex e Referral li hanno già (agenda.js, TIPI).
-  const catEsiti = c.categoria || 'Prospect';
   if (!LS.azioni) {
     box.innerHTML = piuHtml + '<div class="vuoto">Carico le azioni…</div>';   // solo alla prima lettura: aprire una riga (S3) non fa saltare la pagina
     // anche le azioni in cui questo contatto ha portato qualcuno (portato_da), con il nome dell'altra persona
@@ -864,7 +861,7 @@ async function sezioneAzioni() {
       ${dettagli([esc(a.tipo_azione || ''), esc(a.modalita || ''), a.esito ? `<b>${esc(MB21Agenda.nomePasso(a.esito))}</b>` : ''])}
       <div class="comandi"><span class="stato-az"></span>${link('data-modifica-azione', a.id, 'Modifica')}</div>
     </div>`;
-    const blocco = bloccoEsiti(a, catEsiti);
+    const blocco = bloccoEsiti(a, c.categoria);
     const chiusa = blocco.includes('data-apri-esiti');
     return `
     <div class="azione">
@@ -883,13 +880,13 @@ async function sezioneAzioni() {
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; await ricaricaERidisegna(); };
-  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), { ...c, categoria: catEsiti }, dopo);
+  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo);
   box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(collega);
   box.querySelectorAll('[data-cambia-esito]').forEach(b => b.onclick = () => {   // stesso blocco dell'Agenda, aperto sul posto
     const a = LS.azioni.find(x => x.id === b.dataset.cambiaEsito);
     const vuoto = box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`);
     if (!vuoto) return;
-    vuoto.outerHTML = bloccoEsiti(a, catEsiti, true);
+    vuoto.outerHTML = bloccoEsiti(a, c.categoria, true);
     b.remove();
     collega(box.querySelector(`.blocco-esiti[data-blocco="${a.id}"]`));
   });
@@ -902,8 +899,10 @@ async function sezioneAzioni() {
 async function azionePiu() {
   if (soloGuardo()) return;
   const c = LS.contatto;
-  // S5 (nota Pagine 072): senza categoria i tipi del Prospect; la categoria del contatto non cambia (categoriaToccata resta falsa)
-  const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, categoria: c.categoria || 'Prospect', resta: true });
+  // S5c (nota Pagine 072, Ignazio 22/10: «se non hai dati, bisogna partire dai dati e dalla categoria; eventualmente poi azioni»): senza categoria
+  // si apre «Modifica» con la categoria da scegliere; salvata con una categoria, prosegue da sola con «Nuova azione». Chiuso senza salvare: niente.
+  if (!MB21Agenda.tipiPer(c.categoria).length) return apriModulo(c, { poiAzione: true });
+  const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
   if (!creato) return;
   LS.azioni = null;
   await ricaricaERidisegna();
@@ -1373,7 +1372,7 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
 }
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
-function apriModulo(c) {
+function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»
   if (soloGuardo()) return;
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
@@ -1404,8 +1403,6 @@ function apriModulo(c) {
   // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
   // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria);
-  // S5 bis (Ignazio 22/10, «sì»): un contatto già senza categoria si modifica anche lasciandolo così (resta in «Da catalogare»)
-  const senzaCat = !!c && !c.categoria;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
@@ -1417,7 +1414,7 @@ function apriModulo(c) {
     </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Categoria <small>${senzaCat ? 'Facoltativa: senza resta in «Da catalogare»' : 'Obbligatorio'}</small></label><select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
+    <div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>
     <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
@@ -1433,6 +1430,7 @@ function apriModulo(c) {
   const chiudi = () => velo.remove();
   $('chiudi').onclick = chiudi;
   $('annulla').onclick = chiudi;
+  if (poi.poiAzione && $('f-cat-prima') && $('f-cat-prima').scrollIntoView) $('f-cat-prima').scrollIntoView({ block: 'center' });   // S5c: la categoria in evidenza
   // le pastiglie della categoria scrivono nel menu nascosto e avvisano il modulo, come se si fosse scelto dal menu
   velo.querySelectorAll('.mc-cat').forEach(b => b.onclick = () => {
     $('f-cat').value = b.dataset.cat;
@@ -1443,7 +1441,7 @@ function apriModulo(c) {
   // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
-    $('invia').disabled = !$('f-nome').value.trim() || (!$('f-cat').value && !senzaCat);
+    $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
     velo.querySelectorAll('[data-conta]').forEach(d => { const el = $(d.dataset.conta); d.textContent = `${el.value.length}/${el.maxLength}`; });
     avvisaArchiviati();
   };
@@ -1486,7 +1484,7 @@ function apriModulo(c) {
     const riga = {
       nome: $('f-nome').value.trim(), telefono, fascia_eta: $('f-eta').value || null,
       professione: $('f-prof').value.trim() || null, citta: $('f-citta').value.trim() || null,
-      categoria: $('f-cat').value || null, referral_di: $('f-ref').value.trim() || null,
+      categoria: $('f-cat').value, referral_di: $('f-ref').value.trim() || null,
       area: $('f-area').value || null, note: $('f-note').value.trim() || null,
     };
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
@@ -1510,7 +1508,8 @@ function apriModulo(c) {
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
       archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
-    ricaricaERidisegna();
+    const ridisegnato = ricaricaERidisegna();
+    if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
   };
 }
