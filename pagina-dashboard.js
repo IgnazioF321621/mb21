@@ -1566,7 +1566,7 @@ async function caricaDashboard(oggi) {
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       vediTutti() ? { data: null } : letta('scadenza', 'scadenza abbonamento', () => supa.rpc('scadenza_abbonamento', { p_utente: visto().id })),   // con abbonamento in comune: quella di chi paga
       // cantiere 20 lavoro 2: BBS/Wes in vendita senza ancora il proprio biglietto (solo sulla propria Dashboard, anche l'Admin)
-      vediTutti() || visto().id !== ST.utente.id ? { data: [] } : letta('da_segnare', 'biglietti da segnare', () => supa.rpc('biglietti_da_segnare')),
+      !AVVISI_TEAM.biglietti || vediTutti() || visto().id !== ST.utente.id ? { data: [] } : letta('da_segnare', 'biglietti da segnare', () => supa.rpc('biglietti_da_segnare')),   // T2b: spento, non si legge
       // gli eventi BBS e WES (01/10): il mese si legge accanto al nome, così si sa a quale evento si riferiscono i numeri (l'evento in vendita, come nella Mappa)
       letta('bbs', 'eventi BBS', () => supa.from('bbs').select('data, creato_il')),
       letta('wes', 'eventi WES', () => supa.from('wes').select('data, creato_il')),
@@ -1711,15 +1711,20 @@ function dashboardTesta() {
   // in una riga «Altri avvisi (N) ›» che si apre sul posto. Ordine: messaggi dalla squadra (nota Admin 014) › obiettivi del mese mancanti ›
   // biglietti da segnare › «Scarica la mia lista» (nota Admin 008). Gli avvisi restano gli stessi, con gli stessi tasti.
   const avvisi = [
-    typeof bannerMessaggi === 'function' ? bannerMessaggi() : '',
+    AVVISI_TEAM.messaggi && typeof bannerMessaggi === 'function' ? bannerMessaggi() : '',
     // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
     d.obiettiviMancanti && !limitato() ? `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
     <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>` : '',
-    riquadriBiglietto(),
-    typeof bannerScaricaLista === 'function' ? bannerScaricaLista() : '',
+    AVVISI_TEAM.biglietti ? riquadriBiglietto() : '',
+    AVVISI_TEAM.scaricaLista && typeof bannerScaricaLista === 'function' ? bannerScaricaLista() : '',
   ].filter(x => x && String(x).trim());
   return html + unAvvisoAllaVolta(avvisi);
 }
+// Verifica della Dashboard, tappa 2b (Ignazio 22/10/2026): ciò che serve solo a un team che non c'è ancora si SPEGNE con un interruttore
+// (il codice resta, non si legge e non pesa; si riaccende con true quando il team c'è), come la riga del telefono e l'abbonamento.
+// messaggi = il banner «Hai N messaggi per te» (nota Admin 014) · scaricaLista = «Scarica la mia lista» (resta nel Profilo) · biglietti = «Hai il
+// biglietto BBS/WES/CEP?» (senza squadra non c'è chi li segna: altra soluzione nella nota Pagine 070; la lettura biglietti_da_segnare non parte).
+const AVVISI_TEAM = { messaggi: false, scaricaLista: false, biglietti: false };
 // il primo avviso a vista, gli altri chiusi in «Altri avvisi (N) ›» (un tocco li apre, un altro li richiude: <details>, i tasti dentro restano collegati)
 function unAvvisoAllaVolta(avvisi) {
   if (!avvisi.length) return '';
