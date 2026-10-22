@@ -120,7 +120,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - **Riordino e consegna (nota Pagine 051, Ignazio 11-12/10/2026)**:
   - **«Prossimo riordino»** della scheda Vendite: `MB21Lista.prossimoRiordino` tiene, per ogni brand, solo la vendita più recente. Una vendita nuova dello stesso brand sostituisce il riordino della vecchia, anche con la consegna lontana (promo pagata in anticipo).
   - **La carta «Consegna»** in Azioni e in MB Plan non è una telefonata. È il promemoria scritto dal trigger `mb21_vendita_agenda` e si riconosce con `MB21Agenda.eConsegna`: Contatto · Presenza, nota «Consegna · …». In `bloccoEsiti` ha due scelte sole, e `collegaEsiti` → `consegnaDaCarta` trova la vendita da `vendite.azione_consegna_id`:
-    - «Consegnato» = `segnaOrdineFatto`, lo stesso «Ordine fatto» della scheda (`ordineFatto`): `ordinata_il`, poi il promemoria si chiude da solo;
+    - «Ordine fatto» (V1, Ignazio 22/10: un nome solo, prima la carta diceva «Consegnato») = `segnaOrdineFatto`, lo stesso «Ordine fatto» della scheda (`ordineFatto`): `ordinata_il`, poi il promemoria si chiude da solo;
     - «Sposta la consegna» = `vendite.consegna` nuova, da domani in poi; il promemoria, MB Plan e gli avvisi la seguono da soli.
   - **Niente «Sposta» né «Modifica» sulla carta Consegna** (Ignazio 12/10, «toglierli»): mancano nel foglio di MB Plan e nella scheda › Azioni. Se ci si arriva lo stesso, `spostaAppuntamento` e `foglioAzione` si fermano con l'avviso; la data si cambia solo con «Sposta la consegna», così azione e vendita restano uguali.
   - Prove in `prova_lista.js`, `prova_agenda.js` e `prova_consegna.js`. Il 12/10 sul database c'erano 5 promemoria di consegna, tutti riconosciuti, e nessuna visita scambiata per una consegna.
