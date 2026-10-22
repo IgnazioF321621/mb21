@@ -557,6 +557,16 @@ prova('Scheda contatto S5 (nota Pagine 072): anche archiviati e senza categoria 
   assert.equal(require('../../agenda.js').tipiPer('Archiviato').join(), require('../../agenda.js').tipiPer('Prospect').join());   // gli archiviati li avevano già
 });
 
+prova('Scheda contatto S5 bis (Ignazio 22/10, «sì»): Modifica di un contatto senza categoria, anche lasciandolo senza (resta in «Da catalogare»)', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  assert.match(src, /const senzaCat = !!c && !c\.categoria;/);
+  assert.match(src, /\$\{senzaCat \? 'Facoltativa: senza resta in «Da catalogare»' : 'Obbligatorio'\}/);
+  assert.match(src, /\$\('invia'\)\.disabled = !\$\('f-nome'\)\.value\.trim\(\) \|\| \(!\$\('f-cat'\)\.value && !senzaCat\);/);   // un contatto nuovo la deve avere ancora
+  assert.match(src, /categoria: \$\('f-cat'\)\.value \|\| null, referral_di:/);   // vuota = null, non ''
+  assert.match(src, /const catalogo = !nuovo && !c\.categoria && riga\.categoria;/);   // scegliendola si cataloga come prima
+});
+
 prova('Scheda contatto S4 (Ignazio 22/10): «Coach Yes» non è più una linguetta; le note in un riquadro dentro Azioni, con Coach+', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
