@@ -652,9 +652,12 @@ async function coseDellaScheda(c) {
 // Lo dice il database (`e_utente_mb21`): 'amway' = codice Amway della scheda → email nel file Amway → utente con quella email
 // (Ignazio 17/09; niente nome, niente solo codice: la coppia lo condivide); 'collegato' = a mano dall'Admin (`collega_utente_mb21`),
 // per chi non si aggancia così (es. il compagno/a senza codice). Risposta ricordata per scheda finché la Lista resta aperta.
+// Verifica Scheda contatto S1 (Ignazio 22/10): «Invita nell'app», «Usa l'app · ultimo uso · N nomi» e «Collega all'utente» servono a un team
+// che oggi non c'è: spenti con un interruttore, come AVVISI_TEAM (il codice resta; la lettura e_utente_mb21 non parte). Si riaccende con true.
+const INVITO_APP = false;
 async function mostraInvito(c) {
   const posto = document.getElementById('invita-posto');
-  if (!posto) return;
+  if (!INVITO_APP || !posto) return;
   if (!(c.id in LS.utenteMb21)) {
     const { data, error } = await dbq('utente MB21?', supa.rpc('e_utente_mb21', { p_contatto: c.id }));
     if (error) return;   // in dubbio niente: si riprova riaprendo la scheda
