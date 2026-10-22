@@ -355,7 +355,8 @@
   .azione.az-riga { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; font: inherit; color: var(--testo); padding: 10px 12px 10px 20px; }
   .az-riga small { flex: none; font-size: 13px; color: var(--testo-soft); } .az-riga em { font-style: normal; font-size: 18px; color: var(--testo-tenue); }
   .az-riga span { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .azione.az-riga.aperta { margin-bottom: 2px; box-shadow: none; background: transparent; }
+  .azione.az-riga.az-coach { background: var(--proposta-tinta); --cat: var(--proposta); }   /* S6: la nota del coach, gialla, tra le azioni */
+  .azione .q .az-su { border: 0; background: transparent; font: inherit; font-size: 18px; line-height: 1; color: var(--testo-tenue); padding: 0 0 0 10px; cursor: pointer; }   /* S6: richiude l'azione aperta */
   /* card stretta (Ignazio 24/09): data a destra del titolo, esito in grassetto, comandi su una riga sola con «Cambia esito» */
   .azione .testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .azione .testa .q { font-size: 13px; color: var(--testo-tenue); flex: none; }
@@ -4732,9 +4733,12 @@ function collegaReport() {
 // Costo zero: una sola lettura leggera (solo `contatto_id` delle note del partner visto), tenuta 15 minuti e svuotata quando si salva una nota
 // (notaCoach, pagina-lista.js). Il tocco sul segnale apre il foglio «Coach Yes» con le note di quella persona (lette in quel momento).
 const CY = { di: null, letta: 0, ids: new Set() };
+// Scheda contatto S6 (Ignazio 22/10): tutto il coach dietro un interruttore, perché per la conformità potrebbe dover essere spento. Con false niente
+// segno Coach Yes (coda, Agenda, scheda della persona), niente righe gialle né «Nota del coach» nella scheda; le note restano nel database.
+const COACH_YES = true;
 const CY_FRESCA_MS = 15 * 60000;
 async function caricaCoachYes() {
-  if (vediTutti() || ST.offline || !ST.utente) return;
+  if (!COACH_YES || vediTutti() || ST.offline || !ST.utente) return;
   const di = visto().id;
   if (CY.di === di && Date.now() - CY.letta < CY_FRESCA_MS) return;
   const { data, error } = await letta('coach_yes', 'chi ha una nota Coach Yes', () => supa.from('coach_note').select('contatto_id').eq('user_id', di));   // dalla Dashboard arriva con apri_oggi() (pagina-dashboard.js)
@@ -4743,7 +4747,7 @@ async function caricaCoachYes() {
 }
 // Il segnale (uno <span>: sta anche dentro le righe che sono bottoni); `nome` serve al titolo del foglio
 function segnoCoach(contattoId, nome) {
-  if (!contattoId || vediTutti() || CY.di !== visto().id || !CY.ids.has(contattoId)) return '';
+  if (!COACH_YES || !contattoId || vediTutti() || CY.di !== visto().id || !CY.ids.has(contattoId)) return '';
   return `<span class="segno-coach" role="button" tabindex="0" data-coach-yes="${esc(contattoId)}" data-coach-nome="${esc(nome || '')}" aria-label="Coach Yes: leggi la nota" title="Coach Yes">${ic('libro')}</span>`;
 }
 async function foglioCoachYes(contattoId, nome) {

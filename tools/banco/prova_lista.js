@@ -560,7 +560,7 @@ prova('Scheda contatto S5/S5c (nota Pagine 072, Ignazio 22/10): «Cose da fare»
   // il tocco su «Nuova azione»: senza categoria apre Modifica con poiAzione; con una categoria il modulo dell'azione
   const da = src.indexOf('async function azionePiu'), a = src.indexOf('\n}\n', da) + 3;
   const log = [];
-  const ctx = { LS: { contatto: { id: 'c1', nome: 'Contatto A', categoria: null } }, MB21Agenda: A, soloGuardo: () => false,
+  const ctx = { COACH_YES: false, LS: { contatto: { id: 'c1', nome: 'Contatto A', categoria: null } }, MB21Agenda: A, soloGuardo: () => false,
     apriModulo: (c, poi) => { log.push(['modifica', c.id, poi && poi.poiAzione]); }, nuovoAppuntamento: async o => { log.push(['azione', o.contatto.categoria, o.categoria]); return null; },
     mostraToast: t => log.push(['toast', t]) };
   vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.piu = azionePiu;', ctx);
@@ -571,60 +571,84 @@ prova('Scheda contatto S5/S5c (nota Pagine 072, Ignazio 22/10): «Cose da fare»
   assert.equal(A.tipiPer(null).length, 0);
 });
 
-prova('Scheda contatto S4 (Ignazio 22/10): «Coach Yes» non è più una linguetta; le note in un riquadro dentro Azioni, con Coach+', async () => {
+prova('Scheda contatto S3+S6 (Ignazio 22/10): azioni chiuse in una riga; aperta, la ⌃ sta dentro la card; le note del coach righe gialle al loro posto per data', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
-  const pezzo = (inizio, fine = '\n}\n') => { const da = src.indexOf(inizio), a = src.indexOf(fine, da) + fine.length; return src.slice(da, a); };
-  const c = { id: 'c1', user_id: 'io', nome: 'Contatto A', categoria: 'Prospect' };
-  let letture = 0, aperta = null;
-  const box = { innerHTML: '', querySelectorAll: sel => (sel === '[data-nota]' ? [...box.innerHTML.matchAll(/data-nota="([^"]+)"/g)].map(m => ({ dataset: { nota: m[1] } })) : []) };
-  const q = { select() { return q; }, eq() { return q; }, order() { letture++; return Promise.resolve({ data: [{ id: 'n1', tipo_azione: 'Contatto', testo: 'testo finto', scritta_il: '2026-10-20T10:00:00Z' }], error: null }); } };
-  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni: [] }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
-    document: { getElementById: id => (id === 'sezione' ? box : id === 'coach-piu' ? { onclick: null } : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
-    dbq: (_, p) => p, supa: { from: () => q }, CY: { letta: 1, di: 'io', ids: new Set(['c1']) }, leggiNota: n => { aperta = n; }, notaCoach: () => {}, collegaEsiti: () => {} };
-  vm.createContext(ctx);
-  vm.runInContext(pezzo('function sezioniPer') + pezzo('async function sezioneAzioni') + pezzo('const quandoNota', ';\n') + pezzo('function coachHtml') + pezzo('function collegaCoach')
-    + ';this.sez = sezioneAzioni; this.sezioni = sezioniPer;', Object.assign(ctx, { MB21Lista: { haVendite: () => false }, MB21Sharing: { perChiDi: () => false } }));
-  assert.equal(ctx.sezioni(c).map(x => x[0]).join(), 'dati,azioni,segni');   // niente linguetta «coach»
-  await ctx.sez();
-  assert.equal(letture, 1);
-  assert.match(box.innerHTML, /<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes<\/h2>[\s\S]*data-nota="n1"[\s\S]*<button class="piccolo" id="coach-piu">Coach\+<\/button><\/div>$/);
-  box.querySelectorAll('[data-nota]').forEach(b => { b.onclick = null; });
-  // senza note (il segnale Coach Yes già letto lo dice): nessuna lettura, solo «Coach+»
-  ctx.LS.note = null; ctx.CY.ids = new Set(); letture = 0;
-  await ctx.sez();
-  assert.equal(letture, 0);
-  assert.match(box.innerHTML, /<div class="scheda-coach"><button class="piccolo" id="coach-piu">Coach\+<\/button><\/div>$/);
-  assert.match(src, /coach: sezioneAzioni, onboarding:/);   // un indirizzo vecchio «sezione=coach» porta ad Azioni
-});
-
-prova('Scheda contatto S3 (Ignazio 22/10): le azioni chiuse in una riga «data · tipo · esito», al tocco la card; quella da fare resta aperta', async () => {
-  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const L = require('../../lista.js');
   const da = src.indexOf('async function sezioneAzioni'), a = src.indexOf('\n}\n', da) + 3;
-  const c = { id: 'c1', nome: 'Contatto A', categoria: 'Prospect' };
+  const c = { id: 'c1', user_id: 'io', nome: 'Contatto A', categoria: 'Prospect' };
   const azioni = [
     { id: 'a1', contatto_id: 'c1', tipo_azione: 'Contatto', modalita: 'Telefonata', inizio: '2026-10-23T16:00:00Z', esito: null },
     { id: 'a2', contatto_id: 'c1', tipo_azione: 'Piano Marketing', modalita: '1a1', inizio: '2026-10-10T16:00:00Z', esito: 'Relazione', note: 'nota finta' },
+    { id: 'a3', contatto_id: 'c1', tipo_azione: 'Contatto', modalita: 'Telefonata', inizio: '2026-09-02T16:00:00Z', esito: 'PM Fissato' },
   ];
-  let clic = [];
-  const box = { innerHTML: '', querySelectorAll: sel => (sel === '[data-az-apri]' ? [...box.innerHTML.matchAll(/data-az-apri="([^"]+)"/g)].map(m => { const b = { dataset: { azApri: m[1] } }; clic.push(b); return b; }) : []) };
-  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni, note: [] }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
-    document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
-    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7) }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false },
+  const note = [{ id: 'n1', tipo_azione: 'Contatto', testo: 'testo finto', scritta_il: '2026-09-24T16:52:00Z' }];
+  let letto = null, letture = 0;
+  const presi = [];
+  const box = { innerHTML: '', querySelectorAll: sel => {
+    const re = sel === '[data-az-apri]' ? /data-az-apri="([^"]+)"/g : sel === '[data-nota]' ? /data-nota="([^"]+)"/g : null;
+    const b = re ? [...box.innerHTML.matchAll(re)].map(m => ({ dataset: sel === '[data-nota]' ? { nota: m[1] } : { azApri: m[1] } })) : [];
+    presi.push(...b); return b; } };
+  const q = { select() { return q; }, eq() { return q; }, order() { letture++; return Promise.resolve({ data: note, error: null }); } };
+  const ctx = { COACH_YES: true, LS: { contatto: c, sezione: 'azioni', azioni }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
+    document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat', dbq: (_, p) => p, supa: { from: () => q },
+    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7), azioniENote: L.azioniENote }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false },
     bloccoEsiti: a => (a.esito ? '<i data-apri-esiti></i>' : '<div class="bottoni">ESITI</div>'), ricordoHtml: () => '', preparaPresentazioneHtml: () => '', preparaChiamataHtml: () => '',
-    rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false, coachHtml: () => '', collegaCoach: () => {} };
+    rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false, leggiNota: n => { letto = n; }, quandoNota: x => x };
   vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.sez = sezioneAzioni;', ctx);
   await ctx.sez();
   let h = box.innerHTML;
-  assert.match(h, /id="azione-piu"[\s\S]*<div class="azione">[\s\S]*ESITI/);   // «Nuova azione» in alto, poi quella da fare, aperta
+  assert.equal(letture, 1);
+  // l'ordine per data: da fare (23/10) · PM chiuso (10/10) · nota del coach (24/09) · telefonata chiusa (02/09)
+  assert.equal([...h.matchAll(/data-(?:az-apri|nota)="([^"]+)"|<div class="azione">/g)].map(m => m[1] || 'card').join(), 'card,a2,n1,a3');
   assert.match(h, /<button class="azione az-riga" data-az-apri="a2"><small>10\/10<\/small><span>Piano Marketing · 1a1 · Relazione<\/span><em>›<\/em><\/button>/);
-  assert.doesNotMatch(h, /nota finta|data-elimina-azione="a2"/);   // chiusa: niente card
-  clic.find(b => b.dataset.azApri === 'a2').onclick(); await new Promise(r => setTimeout(r, 0));
+  assert.match(h, /<button class="azione az-riga az-coach" data-nota="n1"><small>24\/09<\/small><span>Coach Yes · Contatto<\/span><em>›<\/em><\/button>/);
+  assert.doesNotMatch(h, /nota finta|scheda-coach|Coach\+/);   // chiusa: niente card; niente più riquadro in fondo
+  presi.find(b => b.dataset.nota === 'n1').onclick(); assert.equal(letto.id, 'n1');   // la nota si apre come prima
+  presi.find(b => b.dataset.azApri === 'a2').onclick(); await new Promise(r => setTimeout(r, 0));
   h = box.innerHTML;
   assert.equal(ctx.LS.azAperta, 'a2');
-  assert.match(h, /az-riga aperta" data-az-apri="a2">[\s\S]*?⌃[\s\S]*?nota finta[\s\S]*?data-cambia-esito="a2"[\s\S]*?data-modifica-azione="a2"[\s\S]*?data-elimina-azione="a2"/);
+  assert.doesNotMatch(h, /az-riga[^"]*" data-az-apri="a2"/);   // niente riga del titolo sopra
+  assert.match(h, /<div class="azione">\s*<div class="testa"><div class="t">Piano Marketing · 1a1<\/div><div class="q">10\/10<button class="az-su" data-az-apri="a2" aria-label="Richiudi">⌃<\/button><\/div><\/div>[\s\S]*?nota finta[\s\S]*?data-cambia-esito="a2"[\s\S]*?data-elimina-azione="a2"/);
   assert.doesNotMatch(h, /Carico le azioni/);   // aprire una riga non rilegge e non fa saltare la pagina
+  // coach spento: niente righe gialle e nessuna lettura delle note
+  ctx.COACH_YES = false; ctx.LS.note = null; ctx.LS.azAperta = null; letture = 0;
+  await ctx.sez();
+  assert.equal(letture, 0); assert.doesNotMatch(box.innerHTML, /az-coach|Coach Yes/);
+});
+
+prova('Scheda contatto S6: «+ Nuova azione» propone prima «Nota del coach (prima dell\'azione)», poi i tipi; con il coach spento va dritta all\'azione', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function azionePiu'), a = src.indexOf('\n}\n', da) + 3;
+  const log = []; let risposta = 'nota', voci = null;
+  const ctx = { COACH_YES: true, LS: { contatto: { id: 'c1', nome: 'Contatto A', categoria: 'Prospect' } }, MB21Agenda: require('../../agenda.js'), soloGuardo: () => false,
+    sceltaDa: async (t, v) => { voci = v.map(x => x.etichetta); return v.find(x => x.id === risposta) || null; },
+    notaCoach: n => log.push(['nota', n]), nuovoAppuntamento: async () => { log.push(['azione']); return null; }, apriModulo: () => log.push(['modifica']) };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.piu = azionePiu;', ctx);
+  await ctx.piu();
+  assert.equal(voci[0], 'Nota del coach (prima dell\'azione)'); assert.equal(voci.length, 2);
+  risposta = 'azione'; await ctx.piu();
+  risposta = null; await ctx.piu();   // chiuso senza scegliere: niente
+  ctx.COACH_YES = false; voci = null; await ctx.piu();
+  assert.equal(voci, null);
+  assert.equal(JSON.stringify(log), JSON.stringify([['nota', null], ['azione'], ['azione']]));
+});
+
+prova('Scheda contatto S6: azioniENote — un elenco solo dalla più recente, l\'azione senza data in fondo, a pari data prima l\'azione', () => {
+  const L = require('../../lista.js');
+  const v = L.azioniENote([{ id: 'a', inizio: '2026-10-01T10:00:00Z' }, { id: 'b', inizio: null }, { id: 'c', inizio: '2026-09-01T10:00:00Z' }],
+    [{ id: 'n', scritta_il: '2026-09-15T10:00:00Z' }, { id: 'm', scritta_il: '2026-10-01T10:00:00Z' }]);
+  assert.equal(v.map(x => (x.azione || x.nota).id).join(), 'a,m,n,c,b');
+  assert.equal(L.azioniENote([], null).length, 0);
+});
+
+prova('Scheda contatto S6: l\'interruttore COACH_YES in index.html spegne anche il segno Coach Yes e la sua lettura', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /\nconst COACH_YES = true;\n/);
+  assert.match(idx, /async function caricaCoachYes\(\) \{\n  if \(!COACH_YES \|\| /);
+  assert.match(idx, /function segnoCoach\(contattoId, nome\) \{\n  if \(!COACH_YES \|\| /);
 });
 
 prova('Scheda contatto S2 (Ignazio 22/10): «+ Una cosa da fare» che si apre al tocco; l\'elenco «Da fare» solo se ci sono cose', async () => {

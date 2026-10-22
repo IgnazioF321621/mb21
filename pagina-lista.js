@@ -822,7 +822,8 @@ async function sezioneAzioni() {
     if (error) { box.innerHTML = piuHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
-  if (!LS.note) {   // S4: le note del coach, nel riquadro in fondo; se l'elenco Coach Yes già letto dice che non ce ne sono, niente lettura
+  if (!COACH_YES) LS.note = [];   // S6: coach spento (conformità): niente righe gialle e nessuna lettura; le note restano nel database
+  else if (!LS.note) {   // le note del coach, tra le azioni (S6); se l'elenco Coach Yes già letto dice che non ce ne sono, niente lettura
     if (typeof CY !== 'undefined' && CY.letta && CY.di === c.user_id && !CY.ids.has(c.id)) LS.note = [];
     else {
       const { data, error } = await dbq('lettura note', supa.from('coach_note')
@@ -838,22 +839,24 @@ async function sezioneAzioni() {
   await batteriaCoach('preparazione_incontro');
   // Card stretta (Ignazio 24/09, «nel telefono è tutto molto lungo»): riga 1 tipo · modalità con la data a destra, riga 2 area · esito · nota.
   // Azione già chiusa: il blocco degli esiti resta vuoto e «Cambia esito» sta nella riga dei comandi; al tocco il blocco si apre lì sopra.
-  const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}</div></div>`;
+  // S6: l'azione chiusa aperta al tocco ha la ⌃ per richiuderla dentro la card, accanto alla data (niente più riga del titolo sopra)
+  const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}${a.esito ? `<button class="az-su" data-az-apri="${esc(a.id)}" aria-label="Richiudi">⌃</button>` : ''}</div></div>`;
   const dettagli = parti => { const p = parti.filter(Boolean); return p.length ? `<div class="s">${p.join(' · ')}</div>` : ''; };
   const link = (attr, id, testo, rosso) => `<button class="link" ${attr}="${esc(id)}"${rosso ? ' style="color:var(--rosso)"' : ''}>${testo}</button>`;
   // Verifica Scheda contatto S3 (Ignazio 22/10): un'azione già chiusa (con l'esito) è UNA riga «data · tipo · esito ›»; al tocco si apre
-  // la card di sempre (Modifica, Elimina, Cambia esito, note) e la riga resta sopra per richiuderla. L'azione ancora da fare resta aperta.
+  // la card di sempre (Modifica, Elimina, Cambia esito, note), con la ⌃ dentro (S6). L'azione ancora da fare resta aperta.
   const rigaChiusa = a => {
     const tipo = a.contatto_id !== c.id ? `Ha portato ${a.contatti ? a.contatti.nome : '—'}` : [a.tipo_azione, a.modalita].filter(Boolean).join(' · ');
-    const aperta = LS.azAperta === a.id;
-    return `<button class="azione az-riga${aperta ? ' aperta' : ''}" data-az-apri="${esc(a.id)}"><small>${esc(MB21Lista.data(a.inizio, true))}</small>`
-      + `<span>${esc([tipo, a.esito ? MB21Agenda.nomePasso(a.esito) : ''].filter(Boolean).join(' · '))}</span><em>${aperta ? '⌃' : '›'}</em></button>`;
+    return `<button class="azione az-riga" data-az-apri="${esc(a.id)}"><small>${esc(MB21Lista.data(a.inizio, true))}</small>`
+      + `<span>${esc([tipo, a.esito ? MB21Agenda.nomePasso(a.esito) : ''].filter(Boolean).join(' · '))}</span><em>›</em></button>`;
   };
-  box.innerHTML = piuHtml + (LS.azioni.length ? `<div class="arancio ${classeCat(c.categoria)}">${LS.azioni.map(a => {
-    if (a.esito && LS.azAperta !== a.id) return rigaChiusa(a);
-    const sopra = a.esito ? rigaChiusa(a) : '';
-    return sopra + cardAzione(a);
-  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>') + coachHtml();
+  // S6 (Ignazio 22/10): ogni nota del coach è una riga gialla «Coach Yes · tipo ›» in mezzo alle azioni, al suo posto per data (scritta_il)
+  const rigaNota = n => `<button class="azione az-riga az-coach" data-nota="${esc(n.id)}"><small>${esc(MB21Lista.data(n.scritta_il, true))}</small>`
+    + `<span>Coach Yes · ${esc(n.tipo_azione || 'Nota')}</span><em>›</em></button>`;
+  const voci = MB21Lista.azioniENote(LS.azioni, LS.note || []);
+  box.innerHTML = piuHtml + (LS.note === null ? '<div class="avviso">Non riesco a caricare le note del coach.</div>' : '')
+    + (voci.length ? `<div class="arancio ${classeCat(c.categoria)}">${voci.map(v => v.nota ? rigaNota(v.nota)
+      : v.azione.esito && LS.azAperta !== v.azione.id ? rigaChiusa(v.azione) : cardAzione(v.azione)).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   function cardAzione(a) {
     if (a.contatto_id !== c.id) return `
     <div class="azione">
@@ -875,7 +878,7 @@ async function sezioneAzioni() {
       <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${MB21Agenda.eConsegna(a) ? '' : link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;
   }
-  collegaCoach(box);
+  box.querySelectorAll('[data-nota]').forEach(b => b.onclick = () => leggiNota(LS.note.find(n => n.id === b.dataset.nota), quandoNota));
   box.querySelectorAll('[data-az-apri]').forEach(b => b.onclick = () => { LS.azAperta = LS.azAperta === b.dataset.azApri ? null : b.dataset.azApri; sezioneAzioni(); });
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
@@ -902,6 +905,13 @@ async function azionePiu() {
   // S5c (nota Pagine 072, Ignazio 22/10: «se non hai dati, bisogna partire dai dati e dalla categoria; eventualmente poi azioni»): senza categoria
   // si apre «Modifica» con la categoria da scegliere; salvata con una categoria, prosegue da sola con «Nuova azione». Chiuso senza salvare: niente.
   if (!MB21Agenda.tipiPer(c.categoria).length) return apriModulo(c, { poiAzione: true });
+  // S6 (Ignazio 22/10: la nota del coach di solito viene prima dell'azione): la prima scelta è «Nota del coach», poi i tipi di sempre
+  if (COACH_YES) {
+    const v = await sceltaDa('Nuova azione', [{ id: 'nota', etichetta: 'Nota del coach (prima dell\'azione)', icona: 'libro' },
+      { id: 'azione', etichetta: 'Telefonata, Piano Marketing, Follow Up…', icona: 'agenda' }]);
+    if (!v) return;
+    if (v.id === 'nota') return notaCoach(null);
+  }
   const creato = await nuovoAppuntamento({ contatto: { id: c.id, nome: c.nome, categoria: c.categoria }, resta: true });
   if (!creato) return;
   LS.azioni = null;
@@ -916,21 +926,9 @@ async function azionePiu() {
 
 const TIPI_COACH = ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento', 'Counseling', 'Avvio', 'Consulenza PRD'];
 
-// Le note del coach (S4, Ignazio 22/10): un riquadro in fondo ad «Azioni» con «Coach+»; senza note solo il bottone. Il segno Coach Yes
-// accanto al nome (coda, Agenda) apre il suo foglio come prima (foglioCoachYes in index.html).
+// Le note del coach (S4, poi S6 Ignazio 22/10): righe gialle tra le azioni; si scrivono da «+ Nuova azione» → «Nota del coach». Il segno Coach Yes
+// accanto al nome (coda, Agenda) apre il suo foglio come prima (foglioCoachYes in index.html). Tutto dietro COACH_YES (index.html).
 const quandoNota = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-function coachHtml() {
-  const piu = '<button class="piccolo" id="coach-piu">Coach+</button>';
-  if (!LS.note) return `<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes</h2><div class="avviso">Non riesco a caricare le note.</div>${piu}</div>`;
-  if (!LS.note.length) return `<div class="scheda-coach">${piu}</div>`;
-  return `<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes</h2>${LS.note.map(n => `
-    <button class="nota" data-nota="${n.id}"><b>${esc(n.tipo_azione || 'Nota')}</b><br><span class="s">${esc(quandoNota(n.scritta_il))}</span></button>`).join('')}${piu}</div>`;
-}
-function collegaCoach(box) {
-  const p = document.getElementById('coach-piu');
-  if (p) p.onclick = () => notaCoach(null);
-  box.querySelectorAll('[data-nota]').forEach(b => b.onclick = () => leggiNota(LS.note.find(n => n.id === b.dataset.nota), quandoNota));
-}
 
 function leggiNota(n, quando) {
   const velo = document.createElement('div');
