@@ -3,8 +3,7 @@ const assert = require('node:assert/strict'), vm = require('node:vm'), fs = requ
 const leggi = f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8');
 const idx = leggi('index.html'), dash = leggi('pagina-dashboard.js');
 const da = idx.indexOf('function preparaApertura'), a = idx.indexOf('\n}\n', da) + 3;
-let scaduto = false;
-const ctx = { ST: {}, AG: {}, LS: {}, TRN: {}, TRAINING_VISIBILE: true, limitato: () => scaduto, MB21Coda: { oggiRoma: () => '2026-10-09' } };
+const ctx = { ST: {}, AG: {}, LS: {}, TRN: {}, TRAINING_VISIBILE: true, MB21Coda: { oggiRoma: () => '2026-10-09' } };
 vm.createContext(ctx);
 vm.runInContext(idx.slice(da, a) + ';this.preparaApertura = preparaApertura;', ctx);
 let ok = 0;
@@ -19,10 +18,7 @@ prova('gli altri indirizzi non cambiano (agenda, lista)', () => {
   assert.equal(ctx.ST.tab, 'agenda'); assert.equal(ctx.ST.vaiA, undefined);
   assert.equal(ctx.preparaApertura(new URLSearchParams('apri=lista&contatto=c1')), true); assert.equal(ctx.ST.tab, 'lista');
 });
-prova('abbonamento scaduto: nessun salto', () => {
-  scaduto = true; assert.equal(ctx.preparaApertura(new URLSearchParams('apri=check')), false); scaduto = false;
-});
-prova('la Dashboard apre il modulo della sera quando arriva «giorno» (prima dei collegamenti, mai offline né scaduto)', () => {
+prova('la Dashboard apre il modulo della sera quando arriva «giorno» (prima dei collegamenti, mai offline)', () => {
   assert.match(dash, /if \(vai === 'giorno'\) LV\.vista = 'home';/);
   assert.match(dash, /if \(vai === 'giorno' && !ST\.offline && !document\.querySelector\('\.velo'\)\) apriCheck\(\);\n  collegaVistaLV\(\);/);
   assert.match(leggi('supabase/functions/avvisi/regole.ts'), /url: '\.\/\?apri=check', tag: 'check_sera'/);   // l'indirizzo dell'avviso resta quello di sempre

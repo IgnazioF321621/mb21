@@ -56,10 +56,10 @@
   }
 
   // Il benvenuto si apre da solo una volta sola: a chi non l'ha ancora visto (nuovi e chi usa già l'app, decisione 15).
-  // Mai con l'abbonamento scaduto, offline (percorso non letto) o quando si arriva da un avviso («…/?apri=agenda»).
+  // Mai offline (percorso non letto) o quando si arriva da un avviso («…/?apri=agenda»).
   function daAprire(percorso, opz) {
     const o = opz || {};
-    return !!percorso && !percorso.benvenuto_visto_il && !o.limitato && !o.daAvviso;
+    return !!percorso && !percorso.benvenuto_visto_il && !o.daAvviso;
   }
 
   // «12 nomi · il Manuale ne consiglia 20-30»

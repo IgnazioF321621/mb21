@@ -29,7 +29,6 @@
     /* i tipi di azione: si vedono nella strisciolina delle Conferme e dei Riordini e nei calendari */
     --az-pm: #1D4ED8; --az-followup: #15803D; --az-appuntamento: #6D28D9; --az-consulenza: #C2410C; --az-contatto: #5A6475;
     /* i brand dei prodotti Amway: colori loro, decisi da Amway */
-    --revolut: #185FA5;   /* il blu del marchio Revolut, per il bottone del rinnovo */
     --brand-artistry: #BE185D; --brand-espring: #1D4ED8; --brand-home: #C2410C; --brand-nutrilite: #15803D; --brand-persona: #6D28D9; --brand-altro: #5A6475;
     /* gli stessi colori in numeri, per le caselle della tabella dei Segni Vitali che si accendono piano piano */
     --tenue-rgb: 123, 132, 150; --gr-azione-rgb: 221, 95, 13; --bbs-rgb: 29, 78, 216; --wes-rgb: 192, 38, 38; --cep-rgb: 21, 128, 61;
@@ -917,10 +916,6 @@
   .partner-select.altro small { color: rgba(255,255,255,.85); }
   .partner-select.altro button { background: rgba(255,255,255,.2); color: #fff; }
   .partner-select.altro button span { color: #fff; }
-  .banner-abb { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-  .banner-abb.attivo { background: var(--ok-tinta); color: var(--ok); }
-  .banner-abb.scaduto { border-radius: var(--raggio-card); display: block; background: var(--pericolo-tinta); color: var(--pericolo); padding: 14px 16px; }
-  .banner-abb.scaduto small { display: block; font-weight: 400; font-size: 12px; color: inherit; opacity: .85; }
   .banner-big { border-radius: var(--raggio-card); background: var(--superficie); border: 1.5px solid var(--linea); padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
   .banner-big.bbs { border-color: var(--bbs-tinta); background: var(--bbs-tinta); }
   .banner-big.wes { border-color: var(--pericolo-tinta); background: var(--pericolo-tinta); }
@@ -965,9 +960,6 @@
   .banner-big .riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .banner-big .riga .primario { width: auto; padding: 8px 14px; font-size: 14px; }
   .banner-big small { display: block; margin-top: 6px; color: var(--grigio); font-size: 12px; }
-  .banner-abb.in-scadenza { background: var(--proposta-tinta); color: var(--proposta); }
-  .banner-abb.scaduto button { width: 100%; margin-top: 10px; border: 0; border-radius: var(--raggio-bottone); background: var(--rosso); color: #fff; font-size: 15px; font-weight: 700; padding: 11px; }
-  .banner-abb.in-scadenza button { background: var(--proposta); }
   /* verifica Dashboard, tappa 2: un avviso solo in cima, gli altri in «Altri avvisi (N) ›» */
   .altri-avvisi { margin: 0 0 10px; }
   .altri-avvisi > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: var(--raggio-riga); background: var(--superficie); border: 1px solid var(--bordo); font-size: 14px; font-weight: 600; color: var(--testo-soft); }
@@ -2708,7 +2700,6 @@ async function dopoAccesso(sessione) {
   ST.utente = data;
   const ultimoUso = data.ultimo_uso;   // letto PRIMA di segna_uso: è l'ingresso precedente (per «✨ Novità», cantiere 28)
   ST.primoIngresso = !ultimoUso;   // cantiere 32: al primo ingresso la riga «📲 Metti MB21 sul telefono» non si mostra
-  await controllaAbbonamento();
   dbq('ultimo utilizzo', supa.rpc('segna_uso'));   // per «ultimo utilizzo» in Admin → Utenti; se non riesce non blocca
   const [, percorso] = await Promise.all([caricaPersone(), leggiPercorso()]);   // il percorso serve al benvenuto (cantiere 32); non letto = null, si apre come sempre
   // Toccando un avviso push con l'app chiusa, l'app parte dal suo indirizzo «…/?apri=agenda…» (cantiere 24): si va dritti lì
@@ -2728,7 +2719,7 @@ async function dopoAccesso(sessione) {
   // Benvenuto (cantiere 32): si apre da solo una volta sola, al posto della Dashboard, a chi non l'ha ancora visto: chi entra la prima
   // volta e, una volta, chi usava già l'app. All'uscita porta in Dashboard su «Il mio avvio». Al primo ingresso le novità non si aprono
   // ma vanno segnate come viste (cantiere 28), altrimenti al secondo ingresso uscirebbero tutte; agli altri arrivano alla prossima apertura
-  if (MB21Benvenuto.daAprire(percorso, { limitato: limitato(), daAvviso: ['check', 'agenda'].includes(apri) })) {
+  if (MB21Benvenuto.daAprire(percorso, { daAvviso: ['check', 'agenda'].includes(apri) })) {
     if (!ultimoUso) controllaNovita(ultimoUso);
     if (avvisoM) mostraAvvisoRicevuto(avvisoT, avvisoM);
     return apriBenvenuto({ percorso, dopo: () => { if (!(sessione.user.user_metadata || {}).password_scelta) foglioPassword(true); } });
@@ -2834,40 +2825,15 @@ async function scegliPartner() {
 }
 
 // ── Tab ──────────────────────────────────────────────────
-// ── Abbonamento scaduto (cantiere 19 lavoro 6, decisione di Ignazio 16/09) ──
-// Scaduto = solo Dashboard e propria Lista Nomi: le altre tab spariscono e i collegamenti verso altre pagine pure.
-// Controllo nell'app (come «Può entrare»): le regole del database non cambiano.
-const TAB_SCADUTO = ['oggi', 'lista', 'profilo'];   // scaduto: anche il Profilo (password, Esci)
-// Nota Pagine 058 (Ignazio 19/10/2026: «al momento apriamo MB21 a tutti senza limiti; successivamente studieremo qualcosa di diverso»):
-// un solo interruttore. Con false nessuno è limitato (limitato, fermoScaduto, TAB_SCADUTO, avvisi e calendario: tutto passa da qui e da
-// abbonamento_attivo nel database) e in Dashboard non c'è la fascia dell'abbonamento né «Rinnovo». Il codice dei limiti resta, spento.
-const LIMITI_ABBONAMENTO = false;
-const limitato = () => LIMITI_ABBONAMENTO && !!ST.scaduto;
-// Abbonamento scaduto (nota Pagine 050, Ignazio 11/10/2026: «qualcuno riesce ancora a mettere appuntamenti»): oltre ai blocchi sulle strade
-// (barra, mostraTab, apriScheda, tasti spenti), un blocco solo DENTRO le funzioni che scrivono — nuovoAppuntamento, foglioAzione,
-// chiudiAppuntamento, apriModulo (contatto), moduloVendita —, così nessuna strada, anche futura, lo aggira. Dice perché (nota 048).
-function fermoScaduto() {
-  if (!limitato()) return false;
-  diPerche('scaduto');
-  return true;
-}
-
-async function controllaAbbonamento() {
-  if (!ST.utente || !ST.utente.id || ST.utente.ruolo === 'Admin') { ST.scaduto = false; return; }
-  const { data, error } = await dbq('scadenza abbonamento', supa.rpc('scadenza_abbonamento', { p_utente: ST.utente.id }));
-  // Errore di lettura (anche con la rete): resta com'era (nota Fondamenta 033, 08/10). Prima si ripiegava sulla scadenza personale,
-  // e un collaboratore con l'abbonamento in comune (la sua è vuota) veniva trattato da scaduto per un errore passeggero.
-  if (error) return;
-  ST.scaduto = MB21Dashboard.statoAbbonamento(data, MB21Coda.oggiRoma()) === 'scaduto';
-}
+// Pagine 071 (Ignazio 22/10/2026: «un abbonamento vero non ci sarà mai»): nell'app nessun limite per l'abbonamento. Nel database restano
+// scadenza_abbonamento e abbonamento_attivo (sempre true, nota 058); in admin.js la gestione resta spenta.
 
 // La pagina Training (cantiere 42 e 45, pagina-training.js): accesa per tutti il 24/09 sera (Ignazio: «pubblicarlo direttamente e, se ci
 // sono cose, le sistemo a volo»); per nasconderla di nuovo basta false. Sta qui e non nella pagina: se pagina-training.js mancasse, la barra funziona lo stesso.
 const TRAINING_VISIBILE = true;
 function aggiornaTab() {
   document.querySelectorAll('#tab button').forEach(b => {
-    b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE)
-      || (limitato() && !TAB_SCADUTO.includes(b.dataset.tab));
+    b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE);
   });
 }
 // Il bottone acceso nella barra: quello della pagina in cui si è.
@@ -2899,7 +2865,7 @@ function riprendiPagina() {
 // «apri-avviso», qui sotto). Un avviso di MB Plan apre sempre la vista Giorno, con l'appuntamento o la telefonata già aperti.
 function preparaApertura(p) {
   const apri = p.get('apri');
-  if (!['check', 'agenda', 'lista', 'training'].includes(apri) || limitato()) return false;
+  if (!['check', 'agenda', 'lista', 'training'].includes(apri)) return false;
   if (apri === 'training' && !TRAINING_VISIBILE) return false;
   // «?apri=check» (l'avviso della sera, regole.ts) vuol dire «Il mio giorno»: dal 28/09 il modulo della sera sta in Dashboard e la pagina
   // «check» è quella dei traguardi (nota Pagine 045, Ignazio 09/10). Stesso indirizzo di sempre, così valgono anche gli avvisi già arrivati.
@@ -2918,7 +2884,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
   let p;
   try { p = new URL(m.url, location.href).searchParams; } catch (err) { return; }
   if (!preparaApertura(p)) {
-    if (p.get('apri') || limitato()) return;
+    if (p.get('apri')) return;
     ST.tab = 'oggi';   // l'avviso senza «apri» (la traccia da ascoltare, la prova) porta alla Dashboard
   }
   document.querySelectorAll('.velo').forEach(v => v.remove());
@@ -2933,10 +2899,6 @@ function mostraTab() {
   if (sg) { sg.hidden = false; sg.onclick = foglioSegnala; seguiFogli(); }
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
-  if (limitato() && !TAB_SCADUTO.includes(ST.tab)) {
-    ST.tab = 'oggi'; LS.ritorno = null;
-    diPerche('scaduto');   // nota 048: la stessa frase ovunque
-  }
   ST.vistaCatalogo = false; ST.tornaA = null;   // lasciata la pagina «Da catalogare» o i «Team» della Mappa si riparte dalla pagina scelta
   if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
   accendiTab();
@@ -2974,7 +2936,7 @@ function mostraToast(testo, suAnnulla) {
   timerToast = setTimeout(() => t.remove(), suAnnulla ? DURATA_ANNULLA : 3500);
 }
 
-// Copiare negli appunti, uguale ovunque (Progetti di MB Plan, Rinnovo, Invito, Calendario: 24/09). Va chiamata SUBITO nel tocco,
+// Copiare negli appunti, uguale ovunque (Progetti di MB Plan, Invito, Calendario: 24/09). Va chiamata SUBITO nel tocco,
 // senza attese prima: su iPhone, dopo un'attesa, il permesso di copiare si perde. Se il telefono non lascia copiare: con `campo`
 // (il riquadro di testo del foglio) lo seleziona e dice `aiuto`; senza, apre un foglio con il testo già selezionato (in sola
 // lettura: si tiene premuto e si sceglie «Copia»), con in più la `nota` se c'è (il Calendario: «Non darlo a nessuno…»).
@@ -3144,7 +3106,7 @@ function collegaEsiti(el, a, contatto, dopo) {
 // (ordinata_il: i VP contano da quel giorno, il promemoria si chiude da solo); «Sposta la consegna» cambia vendite.consegna e il promemoria
 // lo segue da solo (trigger mb21_vendita_agenda), quindi la scheda Vendite, MB Plan e gli avvisi dicono la data nuova.
 async function consegnaDaCarta(a, cosa, dopo) {
-  if (soloGuardo() || fermoScaduto()) return;
+  if (soloGuardo()) return;
   const { data: v, error } = await dbq('vendita della consegna', supa.from('vendite').select('id, data, prodotto, consegna, ordinata_il').eq('azione_consegna_id', a.id).maybeSingle());
   if (error || !v) return mostraToast('Vendita non trovata: si cambia dalla scheda, in Vendite.');
   if (cosa === 'fatta') return segnaOrdineFatto(v, dopo);
@@ -3274,7 +3236,6 @@ async function passiDaModifica(a, { lista, cambiato, righe, contatto, modalita, 
   };
 }
 async function chiudiAppuntamento(e, esito, opz = {}) {
-  if (fermoScaduto()) return;   // nota 050
   const ridisegna = opz.dopo || apriAgenda;
   // Una chiamata sola (nota 045, 03/10): l'esito, la spunta dei passi in «Il mio avvio» (cantiere 48: il passo fatto nell'incontro si spunta anche lì, se non lo era già)
   // e una riga di azione per ogni passo in più («Su cosa lavorate?», stesso giorno e ora) si scrivono insieme sul database, o niente: prima erano 3-5 chiamate una dopo l'altra
@@ -3564,7 +3525,6 @@ async function leggiContattiMiei() {
 // Senza `spazio`, per Piano Marketing e Consulenza PRD il foglio propone gli spazi liberi dello stesso tipo (anche dalla scheda).
 // Restituisce { id, inizio } o null. `salta`: il bottone in basso dice «Salta»; `salta`/`resta`: non si va in Agenda dopo il salvataggio.
 async function nuovoAppuntamento(opz = {}) {
-  if (fermoScaduto()) return null;   // nota 050: nessun appuntamento nuovo, da qualunque strada
   const A = MB21Agenda;
   let elenco = [];
   const liberi = !opz.spazio && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
@@ -3919,7 +3879,7 @@ async function nuovoAppuntamento(opz = {}) {
 // Coda: se è l'ultima azione del contatto e cambia l'esito o il contatto, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
 // opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' per «Apri contatto» (senza = niente bottone) }
 async function foglioAzione(id, opz = {}) {
-  if (soloGuardo() || fermoScaduto()) return;   // nota 050
+  if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
     .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, su_cosa, area, inizio, fine, data_scelta, ospite, note, senza_ora, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
@@ -4550,7 +4510,7 @@ function aggiornaCardCheck() {
 }
 // dopo la Dashboard: i dati del Check, se non ci sono già per la persona che si guarda
 async function caricaCardCheck() {
-  if (vediTutti() || limitato() || ST.offline) return;
+  if (vediTutti() || ST.offline) return;
   const di = visto().id;
   if (CK.giorni && CK.di === di) return;   // già letti: la Dashboard li ha usati subito
   try { await caricaDatiCheck(); } catch (e) { return; }   // senza: la tessera resta con «Leggo il percorso…»
@@ -4972,29 +4932,6 @@ function riduciScreenshot(file) {
 }
 
 // ── Admin ── la pagina Admin è in admin.js; qui restano i fogli usati anche da Dashboard e Lista Nomi
-// Rinnovo abbonamento (cantiere 19 lavoro 5): come il riquadro di Glide. € 5/mese entro il 5, pagamento su Revolut con causale;
-// il pagamento lo controlla l'Admin a mano (Admin → Utenti → ✓ Pagamento ricevuto).
-const REVOLUT = 'https://revolut.me/ignafio2310/pocket/tSaRdpBNVk';
-function foglioRinnovo() {
-  const oggi = MB21Coda.oggiRoma(), mese = MB21Dashboard.nomeMese(oggi.slice(0, 8) + '01');
-  const causale = `${nomeDi(visto())} - MB21 ${mese} ${oggi.slice(0, 4)}`;
-  const velo = document.createElement('div');
-  velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio"><h3>Rinnovo abbonamento MB21</h3>
-    <p>Costo: <b>€ 5,00 al mese</b> · da pagare <b>entro il 5 di ogni mese</b>.</p>
-    <p>Causale da scrivere su Revolut:</p>
-    <textarea id="rn-causale" readonly rows="2" style="width:100%;font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--linea)">${esc(causale)}</textarea>
-    <button class="primario" id="rn-copia" style="margin-top:8px;background:var(--superficie-2);color:var(--testo)">⧉ Copia la causale</button>
-    <a class="primario" href="${REVOLUT}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:8px;background:var(--revolut);color:#fff;font-size:17px;font-weight:600;padding:14px;border-radius:12px">Paga su Revolut</a>
-    <p style="margin-top:12px">Dopo il pagamento l'abbonamento viene rinnovato da Ignazio appena lo vede.</p>
-    <button class="link" id="rn-chiudi">Chiudi</button></div>`;
-  document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
-  velo.onclick = e => { if (e.target === velo) chiudi(); };
-  velo.querySelector('#rn-chiudi').onclick = chiudi;
-  velo.querySelector('#rn-copia').onclick = () => copiaTesto(causale, 'Causale copiata', velo.querySelector('#rn-causale'), 'Tieni premuto sulla causale e scegli Copia');
-}
-
 // Conferma dentro l'app al posto di confirm(): in alcuni browser la finestra del sistema non compare
 // e il bottone sembra non fare niente (Ignazio 16/09: «non mi fa cliccare né rifiuta né approva»).
 // Con `spunta` (testo) sotto il testo c'è una casella: la risposta «sì» diventa { spunta: true | false } (cantiere 33: «Togli anche biglietti e CEP»)

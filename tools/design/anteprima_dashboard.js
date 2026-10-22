@@ -77,13 +77,13 @@ const stub = {
   Intl, Date: DataFinta, JSON, Math, console,
 };
 const stato = {
-  ST: { utente: { id: 'io', ruolo: 'Partner' }, oggi: OGGI, tab: 'oggi', offline: false, scaduto: false, aperta: null },
+  ST: { utente: { id: 'io', ruolo: 'Partner' }, oggi: OGGI, tab: 'oggi', offline: false, aperta: null },
   PS: { scelto: null }, DS: null, AVV: null, CONF: null, RIO: null, CK: null,
 };
 // il codice: la pagina intera + i pezzi di index.html che usa
 const pezzi = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'),
-  riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'), riga('const LIMITI_ABBONAMENTO'), riga('const limitato'),   // nota 058: l'interruttore dei limiti
+  riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'),
  
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),
   fra('const vociHtml = ', '\n// «I prossimi passi» del livello'), funzione('passiHtml'), funzione('collegaPercorso'), funzione('aggiornaCardCheck'),
@@ -106,7 +106,7 @@ function avvia() {
 // ── i dati finti ──
 const iso = (g, o) => A.isoDaRoma(g, o);
 function carica(m, opz = {}) {
-  Object.assign(m.ST, { oggi: OGGI, offline: false, scaduto: false, aperta: null, tab: 'oggi', utente: { id: 'io', ruolo: 'Partner', nome_cognome: 'Isabella Moretti' } });
+  Object.assign(m.ST, { oggi: OGGI, offline: false, aperta: null, tab: 'oggi', utente: { id: 'io', ruolo: 'Partner', nome_cognome: 'Isabella Moretti' } });
   const cand = (id, nome, extra) => Object.assign({ id, nome, categoria: 'Prospect', contattato: false, telefono: '333 1234567', coach: '', ultima_fase: null }, extra || {});
   m.ST.risultato = opz.vuoto ? { coda: [], dareSeguito: [] } : {
     coda: [cand('c1', 'Laura Ferri'), cand('c2', 'Marco Neri', { contattato: true, ultima_fase: 'Richiamare', categoria: 'Cliente', ultimo_tipo: 'Contatto', ultima_modalita: 'Telefonata', ultima_il: iso('2026-10-01', '17:00'), rientro_il: OGGI }),

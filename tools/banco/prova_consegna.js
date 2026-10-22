@@ -11,13 +11,13 @@ const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 
 const consegna = { id: 'az1', tipo_azione: 'Contatto', modalita: 'Presenza', note: 'Consegna · Filtro di ricambio', completata: false, esito: null };
-function banco({ vendita, modulo, scaduto = false } = {}) {
+function banco({ vendita, modulo } = {}) {
   const scritte = [], avvisi = [];
   let ridisegni = 0;
   const query = { select() { return this; }, eq() { return this; }, maybeSingle() { return this; }, update(campi) { scritte.push(campi); return this; } };
   const ctx = {
     MB21Agenda: A, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-12' }, FATTO_APERTO: new Set(),
-    esc: s => String(s), ic: n => `[${n}]`, soloGuardo: () => false, fermoScaduto: () => scaduto,
+    esc: s => String(s), ic: n => `[${n}]`, soloGuardo: () => false,
     supa: { from: () => query }, dbq: async (nome) => (nome === 'vendita della consegna' ? { data: vendita || null, error: null } : { data: null, error: null }),
     moduloSemplice: async () => modulo || null, mostraToast: t => avvisi.push(t), LS: {}, CK: {},
     disegnaScheda: () => {},
@@ -54,13 +54,10 @@ prova('«Sposta la consegna»: la data nuova va sulla vendita (da domani in poi,
   assert.equal(b.scritte.length, 0); assert.match(b.avvisi.at(-1), /da domani in poi/);
 });
 
-prova('senza vendita collegata, o con l\'abbonamento scaduto, non si scrive niente', async () => {
+prova('senza vendita collegata non si scrive niente', async () => {
   let b = banco({ vendita: null, modulo: { giorno: '2027-06-03' } });
   await b.ctx.consegnaDaCarta(consegna, 'sposta', b.dopo);
   assert.equal(b.scritte.length, 0); assert.match(b.avvisi.at(-1), /Vendita non trovata/);
-  b = banco({ vendita: { id: 'v1', data: '2026-10-11', prodotto: 'Filtro' }, modulo: { giorno: '2027-06-03' }, scaduto: true });
-  await b.ctx.consegnaDaCarta(consegna, 'sposta', b.dopo);
-  assert.equal(b.scritte.length, 0);
 });
 
 prova('Ignazio 12/10 («toglierli»): sulla carta Consegna niente «Sposta» né «Modifica» (MB Plan e scheda); se ci si arriva lo stesso, l\'avviso', async () => {

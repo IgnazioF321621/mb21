@@ -1,7 +1,7 @@
 // MB21 · MESSAGGI (nota Admin 014, Ignazio 14/10): l'Admin scrive un messaggio (titolo, testo, luogo, link al materiale), lo vede
 // chi è indicato all'apertura dell'app in un foglio con «Ho capito»; una volta letto non torna su nessun dispositivo. Il messaggio non scade e
 // non si cancella da solo: resta finché l'Admin lo elimina (e chi l'ha letto lo ritrova in Dashboard e in Profilo → «I tuoi messaggi»).
-// Tabelle `messaggi`, `messaggi_destinatari`, `messaggi_letti`. Usa ciò che definisce index.html (supa, dbq, ST, esc, ic, limitato, mostraToast,
+// Tabelle `messaggi`, `messaggi_destinatari`, `messaggi_letti`. Usa ciò che definisce index.html (supa, dbq, ST, esc, ic, mostraToast,
 // chiediConferma) e admin.js (AD, nomeDi). Solo definizioni: partono dall'apertura dell'app (index.html), dal Profilo e dalla pagina Admin.
 
 const MSG = { elenco: null, letti: new Set() };   // l'ultima lettura (serve anche alla riga del Profilo)
@@ -58,7 +58,7 @@ function foglioNuovoMessaggio(nuovi) {
 }
 
 // Dashboard (Ignazio 14/10: «teniamolo nella Dashboard fino a quando non viene eliminato, cliccabile»): una riga in cima finché c'è almeno un messaggio.
-// Solo per chi è entrato (non guardando un altro con il Partner Select) e senza accesso limitato; si apre l'elenco, come dal Profilo.
+// Solo per chi è entrato (non guardando un altro con il Partner Select); si apre l'elenco, come dal Profilo.
 function bannerMessaggi() {
   const e = MSG.elenco;
   if (!e || !e.length || guardoAltri()) return '';

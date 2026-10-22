@@ -8,7 +8,7 @@
 // Si apre da solo UNA volta (al primo ingresso, e una volta a chi usava già l'app): si ricorda nel database. «Lo faccio dopo» c'è
 // sempre: niente è vincolante. Poi si rivede dal Profilo («👋 Rivedi il benvenuto») e le schermate 3 e 5 si riaprono da sole
 // toccando i passi «Perché iniziare» e «Lista Start» di «Il mio avvio» (`apriBenvenuto({ solo })`).
-// Usa ciò che definisce index.html (supa, dbq, ST, app, esc, mostraToast, mostraTab, chiediConferma, limitato), lista.js
+// Usa ciò che definisce index.html (supa, dbq, ST, app, esc, mostraToast, mostraTab, chiediConferma), lista.js
 // (componiTelefono, trovaDoppioni) e avvisi.js (leggiStatoAvvisi, appInstallata). Si carica prima dello script della pagina: solo definizioni.
 const BV = { percorso: null, i: 0, solo: null, scelte: {}, nomi: [], conto: null, dopo: null, ritorno: null };
 

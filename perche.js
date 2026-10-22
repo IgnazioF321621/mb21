@@ -18,8 +18,6 @@
     offline: 'Senza connessione si guarda soltanto: quando torna la rete, i tasti si riaccendono.',
     // l'Admin con il Partner Select su «Tutti» tocca qualcosa che modifica (soloGuardo; Ignazio 11/10: «va bene così»; prima «scegli un partner…»)
     tutti: 'Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.',
-    // abbonamento scaduto (note 042 e 050; Ignazio 11/10: «va bene così»; prima «Abbonamento scaduto: rinnova per…»)
-    scaduto: 'Abbonamento scaduto, rinnovando hai nuovamente la possibilità di utilizzare il 100% dell\'app!',   // parole di Ignazio, 11/10 sera
   };
   // `valori` riempie i segnaposto della frase ({nome} → valori.nome); un segnaposto senza valore resta «—»
   const perche = (codice, valori) => (MOTIVI[codice] || '').replace(/\{(\w+)\}/g, (_, k) => (valori && valori[k]) || '—');
