@@ -428,4 +428,30 @@ prova('Nota Pagine 062: «Linee riceventi Bonus» dal file Amway conta la percen
   assert.equal(r.linee_bonus, 1); assert.equal(r.prime_linee, 1);
 });
 
+prova('T5 elencoOggi: prima da chiudere (Conferme, Riordini, Dare Seguito), poi coda e scelte insieme; conto «fatti N di M»', () => {
+  const conf = [{ id: 'a1', contatto_id: 'c1', contatti: { nome: 'Contatto A' } }];
+  const rio = [{ id: 'a2', contatto_id: 'c2', contatti: { nome: 'Cliente B' }, brand: 'Marca' }];
+  const ds = [{ id: 'c3', nome: 'Contatto C' }];
+  const coda = [{ id: 'c4', nome: 'Contatto D' }, { id: 'c5', nome: 'Contatto E' }];
+  const scelte = [{ id: 'a6', contatto_id: 'c6', contatti: { nome: 'Contatto F' } }];
+  const e = D.elencoOggi(conf, rio, ds, coda, scelte, [{ motivo: 'coda', id: 'c9' }, { motivo: 'conf', id: 'a9' }]);
+  assert.deepEqual(e.gruppi.map(g => g.chiave), ['chiudere', 'contattare']);
+  assert.equal(e.gruppi[1].titolo, 'Poi si contatta (nomi in coda o scelte personali)');
+  assert.deepEqual(e.gruppi[0].righe.map(x => x.motivo), ['conf', 'rio', 'ds']);
+  assert.deepEqual(e.gruppi[1].righe.map(x => x.nome), ['Contatto D', 'Contatto E', 'Contatto F']);
+  assert.equal(e.gruppi[1].righe[2].targhetta, 'Telefonata · scelta');
+  assert.equal(e.gruppi[1].righe[0].targhetta, '');
+  assert.deepEqual(e.gruppi[0].righe.map(x => x.contatto_id), ['c1', 'c2', 'c3']);
+  assert.equal(e.fatti, 2); assert.equal(e.totale, 8); assert.equal(e.conto, 'fatti 2 di 8');
+});
+
+prova('T5 elencoOggi: gruppi vuoti nascosti, tutto fatto, niente da fare', () => {
+  const solo = D.elencoOggi([], [], [], [{ id: 'c1', nome: 'X' }], [], []);
+  assert.deepEqual(solo.gruppi.map(g => g.chiave), ['contattare']);
+  assert.equal(solo.conto, 'fatti 0 di 1');
+  const finito = D.elencoOggi(null, null, null, null, null, [{ motivo: 'coda', id: 'c1' }]);
+  assert.equal(finito.gruppi.length, 0); assert.equal(finito.conto, 'fatti 1 di 1');
+  assert.equal(D.elencoOggi().conto, '');
+});
+
 console.log(`\n${ok} prove superate`);

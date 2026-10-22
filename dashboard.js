@@ -559,7 +559,32 @@
     return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni };
+  // L'elenco unico di «Oggi» (verifica Dashboard T5, ordine deciso da Ignazio 22/10): prima ciò che è aperto da chiudere
+  // (Conferme, Riordini, Dare Seguito), poi «Poi si contatta»: i nomi in coda e le telefonate scelte a mano insieme, queste con la
+  // targhetta «Telefonata · scelta». Un conto solo «fatti N di M»: fatto = esito dato oggi (nota Azioni 030), `fatte` le righe chiuse oggi.
+  // Le scelte non sono già in coda (MB21Coda.senzaScelte). Solo regola: nessuna schermata la usa ancora.
+  const GRUPPI_OGGI = [
+    { chiave: 'chiudere', titolo: 'Da chiudere' },
+    { chiave: 'contattare', titolo: 'Poi si contatta (nomi in coda o scelte personali)' },
+  ];
+  function elencoOggi(conf, rio, ds, coda, scelte, fatte) {
+    const nome = x => (x.contatti && x.contatti.nome) || x.nome || '';
+    const riga = (motivo, gruppo, targhetta) => x => ({ motivo, gruppo, id: x.id, contatto_id: x.contatto_id || (motivo === 'ds' || motivo === 'coda' ? x.id : null), nome: nome(x), targhetta });
+    const righe = [
+      ...(conf || []).map(riga('conf', 'chiudere', 'Conferma')),
+      ...(rio || []).map(riga('rio', 'chiudere', 'Riordino')),
+      ...(ds || []).map(riga('ds', 'chiudere', 'Dare Seguito')),
+      ...(coda || []).map(riga('coda', 'contattare', '')),
+      ...(scelte || []).map(riga('scelta', 'contattare', 'Telefonata · scelta')),
+    ];
+    const fatti = (fatte || []).length, totale = fatti + righe.length;
+    return {
+      gruppi: GRUPPI_OGGI.map(g => ({ ...g, righe: righe.filter(x => x.gruppo === g.chiave) })).filter(g => g.righe.length),
+      fatti, totale, conto: totale ? `fatti ${fatti} di ${totale}` : '',
+    };
+  }
+
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni, GRUPPI_OGGI, elencoOggi };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
