@@ -115,7 +115,8 @@ prova('Come sto andando questo mese?: una card per area, con tutte le voci e il 
   assert.match(volume, /Dettaglio ›/);
   assert.deepEqual([...volume.matchAll(/<div class="lv-voce"><span>([^<]*)<\/span>/g)].map(m => m[1]), ['VPG', 'VPP', 'VP Clienti']);
   assert.match(h, /Obiettivi di Ottobre/);
-  assert.match(h, /Com'è andato settembre/);
+  assert.doesNotMatch(h, /Com'è andato settembre|id="ds-confronto"/);   // tappa 3: il confronto ha una strada sola, nelle card (qui sotto)
+  assert.match(h, /e il confronto con settembre/);
 });
 
 prova('L\'area: le stesse voci con il mese scorso accanto, a parole; mai «mancato»; il collegamento ai 12 mesi nel Check', () => {
@@ -393,6 +394,20 @@ prova('Verifica Dashboard, tappa 2b (Ignazio 22/10): messaggi, «Scarica la mia 
   assert.match(dash, /!AVVISI_TEAM\.biglietti \|\| vediTutti\(\) \|\| visto\(\)\.id !== ST\.utente\.id \? \{ data: \[\] \} : letta\('da_segnare'/);
   assert.match(dash, /d\.obiettiviMancanti && !limitato\(\) \? `<button class="banner-grande obiettivi" id="ds-obiettivi">/);
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-messaggi.js'), 'utf8'), /function bannerMessaggi/);   // il codice resta
+});
+
+prova('Verifica Dashboard, tappa 3 (Ignazio 22/10): tracce condivise e «Il mio percorso» in una riga sola «Da seguire», chiusa; un tocco la apre sulle due cose', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const i = dash.indexOf('const DSG = '), j = dash.indexOf('\n}\n', dash.indexOf('function daSeguireHtml')) + 3;
+  const ctx = { TRC: { righe: [{}, {}] }, MIO: { righe: [{ ascoltata: false }, { ascoltata: true }] }, esc: x => x,
+    tracceHtml: () => '<i>TRACCE</i>', mioPercorsoHtml: () => '<i>PERCORSO</i>', rigaApribile: (id, cl, ic, t, sotto, aperta, n) => `[${id}|${t}|${sotto}|${aperta}|${n}]` };
+  vm.createContext(ctx); vm.runInContext(dash.slice(i, j) + ';this.f = daSeguireHtml; this.DSG = DSG;', ctx);
+  assert.equal(ctx.f(), '[dash-seguire|Da seguire|2 tracce condivise da controllare · 1 traccia da ascoltare|false|3]');   // chiusa: le due cose non si vedono
+  ctx.DSG.aperto = true;
+  assert.match(ctx.f(), /\|true\|3\]<div class="da-seguire"><i>TRACCE<\/i><i>PERCORSO<\/i><\/div>$/);
+  ctx.tracceHtml = () => ''; ctx.mioPercorsoHtml = () => ''; assert.equal(ctx.f(), '');   // niente da seguire: niente riga
+  assert.match(dash, /html \+= atteseHtml\(\) \+ daSeguireHtml\(\);/);
 });
 
 (async () => {
