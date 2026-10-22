@@ -90,7 +90,9 @@ prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cam
   assert.match(h, /<span class="lv-chip">Riordino<\/span>[\s\S]*?<div class="sotto">Nutrilite · Daily<\/div>/);
   assert.doesNotMatch(h, />Appuntamento<\/button>/);
   assert.ok(h.indexOf('Non risponde') < h.indexOf('Telefono spento') && h.indexOf('Telefono spento') < h.indexOf('Nessun ordine'));
-  assert.match(h, /data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button>/);   // «Nessun ordine» salva «No Interesse»: il cliente torna, l'app chiede tra quanti giorni
+  assert.match(h, /data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button>/);
+  assert.match(h, /<div class="coppia"><button data-riordino-spento="r1">Telefono spento<\/button><button class="no" data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button><\/div>/);   // T7b: sulla stessa riga
+  assert.match(P.stile, /\.bottoni \.coppia \{ flex: 1 1 100%; display: flex; gap: 8px; \}/);   // «Nessun ordine» salva «No Interesse»: il cliente torna, l'app chiede tra quanti giorni
 });
 
 prova('Tappa 7: una scheda sola per ogni motivo — stessa testata (motivo, nome, riga di sotto), cambiano solo i tasti', () => {
