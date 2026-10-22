@@ -3144,12 +3144,12 @@ async function cambiaEsito(a, esito, dopo, testo) {
     p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito || null,
     p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
-  await attesaDaEsito(a.id, a.esito, esito);   // «Ordina da solo» anche da «Cambia esito» (nota Azioni 025)
+  await accountDaEsito(a.id, a.esito, esito);   // «Ordina da solo» anche da «Cambia esito»: segna l'account cliente (V4)
   await dopo();
   mostraToast(`Esito: ${testo || esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
     const { error: e3 } = await dbq('annulla cambio esito', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
     if (e3) return mostraToast('Annullamento non riuscito: riprova.');
-    await attesaDaEsito(a.id, esito, a.esito);
+    await accountDaEsito(a.id, esito, a.esito);
     await dopo();
     mostraToast('Annullato');
   });
@@ -3173,17 +3173,32 @@ async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
 }
 
 // opz.dopo(): cosa ridisegnare dopo (predefinito: l'Agenda; dalla scheda contatto, la scheda) · senzaProssimo: niente «Fissa il prossimo appuntamento» · testo: parola dell'avviso
-// «Ordina da solo» (nota Azioni 025): l'attesa «ha ordinato?» segue l'esito da QUALSIASI strada (chiusura dall'Agenda, dalla scheda, dai Riordini
-// da sentire, «Cambia esito», foglio Modifica, coda; l'08/10 dalla scheda non partiva). `prima` = l'esito che aveva, `dopo` = quello nuovo:
-// diventa «Ordina da solo» → si apre; non lo è più → si toglie. Torna true se ha scritto; se non riesce lo dice (l'esito resta salvato).
-async function attesaDaEsito(azioneId, prima, dopo) {
+// «Ordina da solo» (V4 Vendite, Ignazio 22/10/2026, strada B; prima nota Azioni 025): l'esito resta con lo stesso nome e conta come prima
+// (azioni_conti, Report), ma invece dell'attesa «ha ordinato?» segna il cliente «Ha un account cliente» (contatti.account_cliente_dal = oggi), da
+// QUALSIASI strada (Agenda, scheda, Riordini da sentire, «Cambia esito», foglio Modifica, coda). Solo se non l'aveva già: così l'Annulla o un esito
+// cambiato tolgono il segno solo se l'ha messo questa stessa azione (ACCOUNT_DA_ESITO). `prima`/`dopo` = esito di prima e nuovo. True se ha scritto.
+const ACCOUNT_DA_ESITO = new Map();   // id dell'azione → contatto a cui questo esito ha messo l'account cliente
+async function accountDaEsito(azioneId, prima, dopo) {
   const E = MB21Agenda.ESITO_ATTESA_ORDINE;
-  const cosa = dopo === E && prima !== E ? 'apri' : prima === E && dopo !== E ? 'annulla' : null;
-  if (!cosa || !azioneId) return false;
-  const { error } = await dbq(cosa + ' attesa ordine', supa.rpc('attesa_ordine', { p_azione: azioneId, p_cosa: cosa }));
-  if (error) mostraToast(cosa === 'apri' ? 'Esito salvato, ma l\'attesa «ha ordinato?» non è partita: riprova dalla scheda.' : 'L\'attesa «ha ordinato?» non è stata tolta: riprova.');
-  else if (typeof attesaCambiata === 'function') await attesaCambiata();   // scheda e Dashboard rileggono l'attesa al ridisegno che segue
-  return !error;
+  if (!azioneId || prima === dopo) return false;
+  if (dopo === E) {
+    const { data: az } = await dbq('contatto dell\'esito', supa.from('azioni').select('contatto_id').eq('id', azioneId).maybeSingle());
+    if (!az || !az.contatto_id) return false;
+    const { data, error } = await dbq('account cliente dall\'esito', supa.from('contatti').update({ account_cliente_dal: MB21Coda.oggiRoma() })
+      .eq('id', az.contatto_id).is('account_cliente_dal', null).select('id'));
+    if (error) { mostraToast('Esito salvato, ma l\'account cliente non è segnato: si può segnare da Modifica.'); return false; }
+    if (Array.isArray(data) && data.length) ACCOUNT_DA_ESITO.set(azioneId, az.contatto_id);
+    if (typeof LS !== 'undefined') LS.account = null;   // la testata della scheda si rilegge
+    return true;
+  }
+  if (prima === E && ACCOUNT_DA_ESITO.has(azioneId)) {
+    const { error } = await dbq('togli account cliente', supa.from('contatti').update({ account_cliente_dal: null }).eq('id', ACCOUNT_DA_ESITO.get(azioneId)));
+    if (error) { mostraToast('L\'account cliente è rimasto: si toglie dalla scheda, con «Togli».'); return false; }
+    ACCOUNT_DA_ESITO.delete(azioneId);
+    if (typeof LS !== 'undefined') LS.account = null;
+    return true;
+  }
+  return false;
 }
 // La frase di «Altro» in fondo alle note dell'appuntamento (nota Azioni 031): true se scritta. Stessa funzione per chiudere e per cambiare.
 async function scriviFraseEsito(e, frase) {
@@ -3265,13 +3280,13 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const notaPrima = e.note || null;
   const notaScritta = await scriviFraseEsito(e, opz.nota);
   for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, true);
-  // «Ordina da solo» (nota Azioni 025): la telefonata di riordino è chiusa (esce dai Riordini da sentire) e sulla stessa riga si apre l'attesa:
-  // tra 7 giorni la Dashboard e la scheda chiedono «ha ordinato?». Nessuna vendita registrata da sola. Se l'attesa non parte, l'esito resta e lo si dice
-  await attesaDaEsito(e.id, e.esito, esito);
+  // «Ordina da solo» (V4 Vendite, 22/10): la telefonata di riordino è chiusa (esce dai Riordini da sentire) e il cliente è segnato «Ha un account
+  // cliente». Nessuna vendita registrata da sola, nessuna domanda dopo 7 giorni. Se il segno non parte, l'esito resta e lo si dice
+  await accountDaEsito(e.id, e.esito, esito);
   // Annulla: l'esito com'era, le spunte e le righe in più tolte, tutto in una chiamata; `rientroCambiato` (null = come dice la chiusura) per la telefonata, che cambia la coda da sé
   const annullaChiusura = rientroCambiato => dbq('riapri appuntamento', supa.rpc('annulla_chiusura', { p_azione: e.id, p_prima: chiusura, p_rientro_cambiato: rientroCambiato }));
   const annulla = async creato => {
-    await attesaDaEsito(e.id, esito, e.esito);   // prima l'attesa, poi l'esito com'era
+    await accountDaEsito(e.id, esito, e.esito);   // prima l'account cliente (se l'aveva messo questo esito), poi l'esito com'era
     if (notaScritta) await dbq('togli frase dell\'esito', supa.from('azioni').update({ note: notaPrima }).eq('id', e.id));
     const { error: e2 } = await annullaChiusura(null);
     if (!e2) for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, false);
@@ -4054,7 +4069,7 @@ async function foglioAzione(id, opz = {}) {
       p_ospite: st.ospite || null, p_note: noteNuove,
       ...(dallaCoda ? { p_cambia_scelta: true, p_data_scelta: dataScelta } : {}) }));
     if (e2) { $('fa-si').disabled = false; $('fa-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
-    await attesaDaEsito(a.id, a.esito, st.esito || null);   // «Ordina da solo» anche dal foglio Modifica (nota Azioni 025)
+    await accountDaEsito(a.id, a.esito, st.esito || null);   // «Ordina da solo» anche dal foglio Modifica (V4: account cliente)
     const annullaPassi = st.elenco ? await passiDaModifica(a, { lista, cambiato: st.elenco.cambiato(), righe: st.elenco.altreRighe(),
       contatto: st.contatto.id, modalita: st.sottotipo || null, inizio, fine: fine || null }) : null;
     // la telefonata senza orario che prende un'ora, o un esito da qui, non è più «senza orario» (nota 012): da ora si vede in Agenda
@@ -4069,7 +4084,7 @@ async function foglioAzione(id, opz = {}) {
     mostraToast(`Azione modificata${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
       if (annullaPassi) await annullaPassi();   // prima i passi dell'incontro, poi l'azione com'era
       const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
-      if (!e3) await attesaDaEsito(a.id, st.esito || null, a.esito);
+      if (!e3) await accountDaEsito(a.id, st.esito || null, a.esito);
       if (e3) return mostraToast('Annullamento non riuscito: riprova.');
       if (st.contatto.id === a.contatto_id) await allineaRigaCoda(a, inizio, a.inizio);
       await Promise.all([...new Set([a.contatto_id, st.contatto.id])].map(aggiornaRiga));

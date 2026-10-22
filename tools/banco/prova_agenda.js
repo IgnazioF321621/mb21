@@ -682,21 +682,11 @@ prova('Nota 005: la Linea come nella Mappa, la parte di una persona (lei compres
 });
 
 
-prova('«In attesa che ordini» (nota Azioni 025): solo le attese aperte, le più vecchie prima; daChiedere quando oggi ≥ chiedi_il', () => {
-  const c = nome => ({ nome });
-  const lista = [
-    { id: 'a', contatto_id: 'c1', contatti: c('Francesco'), esito: 'Ordina da solo', attesa_dal: '2026-10-05', attesa_chiedi_il: '2026-10-12', attesa_chiusa_il: null },
-    { id: 'b', contatto_id: 'c2', contatti: c('Anna'), esito: 'Ordina da solo', attesa_dal: '2026-09-28', attesa_chiedi_il: '2026-10-05', attesa_chiusa_il: null },
-    { id: 'c', contatto_id: 'c3', contatti: c('Chiusa'), esito: 'Ordina da solo', attesa_dal: '2026-09-20', attesa_chiedi_il: '2026-09-27', attesa_chiusa_il: '2026-09-29' },
-    { id: 'd', contatto_id: 'c4', contatti: c('Normale'), esito: 'Ordine', attesa_dal: null },
-  ];
-  const r = A.attesaOrdini(lista, '2026-10-08');
-  assert.deepEqual(r.map(x => [x.id, x.nome, x.daChiedere]), [['b', 'Anna', true], ['a', 'Francesco', false]]);
-  assert.equal(r[0].contattoId, 'c2'); assert.equal(r[1].chiediIl, '2026-10-12');
-  assert.deepEqual(A.attesaOrdini([], '2026-10-08'), []); assert.deepEqual(A.attesaOrdini(null, '2026-10-08'), []);
+prova('«Ordina da solo» (nota Azioni 025; V4 Vendite 22/10): l\'esito resta per il Cliente, senza «Quando risentirlo?»; l\'attesa «ha ordinato?» non c\'è più', () => {
   assert.equal(A.ESITO_ATTESA_ORDINE, 'Ordina da solo');
   assert.ok(A.fasiPer('Cliente', 'Contatto', 'Telefonata').includes('Ordina da solo'));
   assert.equal(A.giorniRisentire('Ordina da solo'), null);   // niente «Quando risentirlo?»: ordina da solo
+  assert.equal(A.attesaOrdini, undefined);   // la regola dell'attesa è tolta: l'esito segna l'account cliente (index.html, accountDaEsito)
 });
 
 prova('Nota Pagine 047: SdS/OPEN del Team, ospiti con nome (puliti, senza doppioni, al massimo 30) e chi porta chi per chi organizza', () => {
