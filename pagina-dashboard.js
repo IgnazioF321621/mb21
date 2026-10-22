@@ -1707,13 +1707,24 @@ function dashboardTesta() {
       : `<div class="banner-abb attivo">${ic('fatto')} Abbonamento attivo · Buon lavoro!</div>`)
     : `<div class="banner-abb scaduto"><i class="pallino" style="background:var(--pericolo)"></i>Abbonamento scaduto<small>Accesso limitato alle funzionalità</small>
         <button id="ds-rinnova">Rinnovo l'abbonamento →</button></div>`;
-  html += riquadriBiglietto();
-  if (typeof bannerScaricaLista === 'function') html += bannerScaricaLista();   // nota Admin 008: «Scarica la mia lista», solo quando c'è la data di chiusura e solo per chi è interessato (scarica-lista.js)
-  if (typeof bannerMessaggi === 'function') html += bannerMessaggi();   // nota Admin 014: i messaggi restano qui finché l'Admin non li elimina (pagina-messaggi.js); se non si è caricato, la Dashboard resta com'è
-  // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
-  if (d.obiettiviMancanti && !limitato()) html += `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
-    <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>`;
-  return html;
+  // Verifica della Dashboard, tappa 2 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): in cima al massimo UN avviso, il più urgente; gli altri
+  // in una riga «Altri avvisi (N) ›» che si apre sul posto. Ordine: messaggi dalla squadra (nota Admin 014) › obiettivi del mese mancanti ›
+  // biglietti da segnare › «Scarica la mia lista» (nota Admin 008). Gli avvisi restano gli stessi, con gli stessi tasti.
+  const avvisi = [
+    typeof bannerMessaggi === 'function' ? bannerMessaggi() : '',
+    // Scaduto (Ignazio 17/09): niente Check del Giorno e niente Obiettivi, i numeri si guardano soltanto
+    d.obiettiviMancanti && !limitato() ? `<button class="banner-grande obiettivi" id="ds-obiettivi"><span class="ico">${ic('obiettivi')}</span>
+    <span><b>Imposta gli obiettivi del mese!</b><small>Clicca su questo banner</small></span></button>` : '',
+    riquadriBiglietto(),
+    typeof bannerScaricaLista === 'function' ? bannerScaricaLista() : '',
+  ].filter(x => x && String(x).trim());
+  return html + unAvvisoAllaVolta(avvisi);
+}
+// il primo avviso a vista, gli altri chiusi in «Altri avvisi (N) ›» (un tocco li apre, un altro li richiude: <details>, i tasti dentro restano collegati)
+function unAvvisoAllaVolta(avvisi) {
+  if (!avvisi.length) return '';
+  const [primo, ...altri] = avvisi;
+  return primo + (altri.length ? `<details class="altri-avvisi"><summary>Altri avvisi (${altri.length}) <em>›</em></summary>${altri.join('')}</details>` : '');
 }
 
 // (Il mese, gli obiettivi e il percorso stanno nei livelli della Dashboard: `disegnaMeseLV`, `disegnaMeseDashboard`, `disegnaTraguardoLV`.)
