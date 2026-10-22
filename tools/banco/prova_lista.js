@@ -547,6 +547,25 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Vendite V2 (Ignazio 22/10): «Quando lo risento?» — riordinoFra, mesiFra, modoRiordino, propostaRiordino', () => {
+  assert.equal(L.MESI_RIORDINO.join(), '1,2,3,4,6,12');
+  assert.equal(L.riordinoFra('2026-10-20', 2), '2026-12-20');
+  assert.equal(L.riordinoFra('2026-11-15', 3), '2027-02-15');   // passa l'anno
+  assert.equal(L.riordinoFra('2026-01-31', 1), '2026-02-28');   // il 31 che non c'è: l'ultimo del mese
+  assert.equal(L.mesiFra('2026-10-22', '2026-12-22'), 2); assert.equal(L.mesiFra('2026-10-22', '2026-12-21'), 1);
+  assert.equal(JSON.stringify(L.modoRiordino({ data: '2026-10-20', riordino: '2026-12-20', durata_mesi: 2 })), '{"modo":"fra","mesi":2,"data":"2026-12-20"}');
+  assert.equal(L.modoRiordino({ data: '2026-10-20', consegna: '2026-11-01', riordino: '2027-01-01', durata_mesi: 2 }).modo, 'fra');   // dalla consegna
+  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino: '2026-12-19', durata_mesi: 2 }).modo, 'data');   // la data non torna: scelta a mano
+  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino_a_rottura: true, durata_mesi: 24 }).modo, 'rottura');
+  assert.equal(L.modoRiordino({ data: '2026-10-20', riordino: null }).modo, null);   // lo storico senza riordino
+  const st = [{ prodotto: 'Filtro', brand: 'eSpring', data: '2025-01-10', riordino: '2026-01-10' }, { prodotto: 'Crema', brand: 'Artistry', data: '2026-05-01', riordino: '2026-07-01' },
+    { prodotto: 'Pentola', brand: 'iCook', data: '2025-03-01', riordino_a_rottura: true, durata_mesi: 60 }, { prodotto: 'Siero', brand: 'Artistry', data: '2026-09-01', riordino: '2026-12-01', durata_mesi: 3 }];
+  assert.equal(JSON.stringify(L.propostaRiordino(st, ' filtro ', 'eSpring')), '{"modo":"fra","mesi":12}');   // stesso prodotto: i mesi fra vendita e riordino
+  assert.equal(JSON.stringify(L.propostaRiordino(st, 'Rossetto', 'Artistry')), '{"modo":"fra","mesi":3}');   // stesso brand, la più recente, i mesi scelti
+  assert.equal(JSON.stringify(L.propostaRiordino(st, 'Coperchio', 'iCook')), '{"modo":"rottura","mesi":60}');
+  assert.equal(L.propostaRiordino(st, 'Altro', 'Nutrilite'), null); assert.equal(L.propostaRiordino(null, 'x', 'y'), null);
+});
+
 prova('S7 (Ignazio 22/10): le scelte (sceltaDa, una funzione per tutta l\'app) compaiono al centro; toccare fuori chiude come prima; se lunghe scorrono dentro', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
@@ -793,8 +812,9 @@ prova('Nota 054 (Ignazio 14/10): «A rottura», niente data di riordino né tele
   assert.equal(r.riordino, null); assert.equal(r.durata_mesi, null);
   assert.equal(L.rigaVendita({ ...base, aRottura: true, durata: '0' }).errore, 'Quanto dura: scrivi i mesi, da 1 a 120');
   assert.equal(L.rigaVendita({ ...base, aRottura: true, durata: '2,5' }).errore, 'Quanto dura: scrivi i mesi, da 1 a 120');
-  r = L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '24' }).riga;   // con la data: come prima, «dura» non si salva
-  assert.equal(r.riordino, '2027-01-01'); assert.equal(r.riordino_a_rottura, false); assert.equal(r.durata_mesi, null);
+  r = L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '24' }).riga;   // V2: con «Fra N mesi» i mesi si salvano (durata_mesi), la data è quella
+  assert.equal(r.riordino, '2027-01-01'); assert.equal(r.riordino_a_rottura, false); assert.equal(r.durata_mesi, 24);
+  assert.equal(L.rigaVendita({ ...base, riordino: '2027-01-01', durata: '' }).riga.durata_mesi, null);   // data scelta a mano: niente mesi
   assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2025-08-20', durata_mesi: 24 }, '2026-10-14'), 'A rottura · venduto 13 mesi fa, di solito dura 24 mesi');
   assert.equal(L.rigaRottura({ riordino_a_rottura: true, data: '2026-10-01' }, '2026-10-14'), 'A rottura · venduto questo mese');
   assert.equal(L.rigaRottura({ riordino_a_rottura: false, data: '2026-10-01' }, '2026-10-14'), '');

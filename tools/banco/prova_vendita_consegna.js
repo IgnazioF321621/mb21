@@ -14,10 +14,10 @@ let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 
-function apri(v, risposta) {
+function apri(v, risposta, storico = null) {
   const fogli = [], scritte = [], domande = [], avvisi = [];
   const q = { insert(r) { scritte.push(['insert', r]); return q; }, update(r) { scritte.push(['update', r]); return q; }, eq() { return q; }, select() { return q; }, single() { return q; },
-    ilike() { return q; }, not() { return q; }, order() { return q; }, limit() { return q; }, then(ok) { return Promise.resolve(ok({ data: null, error: null })); } };
+    ilike() { return q; }, not() { return q; }, order() { return q; }, limit() { return q; }, then(ok) { return Promise.resolve(ok({ data: storico, error: null })); } };
   const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-22' }, esc, ic: () => '', classeCat: () => '', iniziali: () => 'SM', nomeEsatto: x => x, console,
     LS: { contatto: { id: 'c1', user_id: 'u1', nome: 'Persona A', categoria: 'Cliente' } }, CK: {}, soloGuardo: () => false, fermoScaduto: () => false,
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } },
@@ -33,7 +33,8 @@ function riempi({ f, $ }, consegna) {
   f.querySelectorAll('[data-brand]')[0].onclick();
   $('v-prodotto').value = 'Filtro di ricambio'; $('v-vp').value = '88,47'; $('v-data').value = '2026-10-20';
   f.querySelectorAll('[data-quando]').find(b => b.dataset.quando === 'dopo').onclick();
-  $('v-consegna').value = consegna; $('v-riordino').value = '2027-10-20';
+  $('v-consegna').value = consegna;
+  f.querySelectorAll('[data-riordino]').find(b => b.dataset.riordino === 'data').onclick(); $('v-riordino').value = '2027-10-20';   // V2: «Scegli la data»
 }
 
 prova('consegna al 02/05/2027: chiede «Consegna il 02/05/2027?»; «Cambio la data» non salva', async () => {
@@ -67,6 +68,49 @@ prova('modifica di una vendita che ha già quella consegna, o con «Ordine fatto
   s2.$('v-consegna').value = '2027-05-02'; s2.$('v-ordinata').value = '2026-10-21'; s2.$('v-riordino').value = '2027-10-20';
   await s2.$('invia').onclick();
   assert.equal(s2.domande.length, 0); assert.equal(s2.scritte.length, 1);
+});
+
+// ── V2 (Verifica Vendite, Ignazio 22/10): il riordino con una domanda sola «Quando lo risento?» ──
+const scegli = (f, attr, val) => f.querySelectorAll(`[data-${attr}]`).find(b => b.dataset[attr === 'riordino' ? 'riordino' : 'mesi'] === String(val)).onclick();
+function base(s) { s.f.querySelectorAll('[data-brand]')[0].onclick(); s.$('v-prodotto').value = 'Filtro di ricambio'; s.$('v-vp').value = '88,47'; s.$('v-data').value = '2026-10-20'; }
+prova('V2: senza storico niente è scelto; Salva chiede «quando lo risenti», poi «fra quanti mesi»; «Fra 2 mesi» salva il 20/12 e durata_mesi 2', async () => {
+  const s = apri(null, true); base(s);
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(s.$('v-fra-tasto').textContent, 'Fra … mesi'); assert.equal(s.$('v-riordino-aiuto').textContent, '');   // niente scelto
+  await s.$('invia').onclick(); assert.equal(s.avvisi.at(-1), 'Scegli quando lo risenti'); assert.equal(s.scritte.length, 0);
+  scegli(s.f, 'riordino', 'fra');
+  await s.$('invia').onclick(); assert.equal(s.avvisi.at(-1), 'Scegli fra quanti mesi lo risenti');
+  scegli(s.f, 'mesi', 2);
+  assert.equal(s.$('v-fra-tasto').textContent, 'Fra 2 mesi');
+  assert.match(s.$('v-riordino-aiuto').textContent, /^Il 20\/12\/2026: 10 giorni prima/);
+  await s.$('invia').onclick();
+  assert.equal(s.scritte.length, 1);
+  const r = s.scritte[0][1]; assert.equal(r.riordino, '2026-12-20'); assert.equal(r.durata_mesi, 2); assert.equal(r.riordino_a_rottura, false);
+});
+prova('V2: con lo storico la scelta è già messa (stesso prodotto: «Fra 12 mesi»); con la consegna più avanti si conta dalla consegna', async () => {
+  const s = apri(null, true, [{ prodotto: 'filtro di ricambio', brand: L.BRAND[0][0], data: '2025-03-01', riordino: '2026-03-01' }]); base(s);
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(s.$('v-fra-tasto').textContent, 'Fra 12 mesi');
+  s.f.querySelectorAll('[data-quando]').find(b => b.dataset.quando === 'dopo').onclick(); s.$('v-consegna').value = '2026-11-05';
+  await s.$('invia').onclick();
+  assert.equal(s.scritte[0][1].riordino, '2027-11-05'); assert.equal(s.scritte[0][1].durata_mesi, 12);
+});
+prova('V2: «A rottura» non scrive la data e tiene «di solito dura»; «Scegli la data» salva la data senza mesi', async () => {
+  let s = apri(null, true); base(s); scegli(s.f, 'riordino', 'rottura'); s.$('v-durata').value = '24';
+  await s.$('invia').onclick();
+  assert.equal(s.scritte[0][1].riordino, null); assert.equal(s.scritte[0][1].riordino_a_rottura, true); assert.equal(s.scritte[0][1].durata_mesi, 24);
+  s = apri(null, true); base(s); scegli(s.f, 'riordino', 'data'); s.$('v-riordino').value = '2027-01-15';
+  await s.$('invia').onclick();
+  assert.equal(s.scritte[0][1].riordino, '2027-01-15'); assert.equal(s.scritte[0][1].durata_mesi, null);
+});
+prova('V2: riaprendo una vendita «Fra 2 mesi» si ritrova «Fra 2 mesi»; una vecchia senza riordino si salva lo stesso', async () => {
+  const v = { id: 'v1', brand: L.BRAND[0][0], prodotto: 'Filtro', vp: 88.47, sconto: 0, data: '2026-10-20', consegna: null, ordinata_il: null, riordino: '2026-12-20', riordino_a_rottura: false, durata_mesi: 2 };
+  let s = apri(v, true);
+  assert.equal(s.$('v-fra-tasto').textContent, 'Fra 2 mesi');
+  assert.equal(s.$('v-fra').style.display, '');   // le pastiglie dei mesi aperte
+  s = apri({ ...v, riordino: null, durata_mesi: null }, true);
+  await s.$('invia').onclick();
+  assert.equal(s.scritte.length, 1); assert.equal(s.scritte[0][1].riordino, null);
 });
 
 prova('la regola: oltre 60 giorni da oggi', () => {
