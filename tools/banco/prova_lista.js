@@ -547,6 +547,31 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Scheda contatto S2 (Ignazio 22/10): «+ Una cosa da fare» che si apre al tocco; l\'elenco «Da fare» solo se ci sono cose', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = src.indexOf('async function coseDellaScheda'), a = src.indexOf('\n}\n', da) + 3;
+  let cose = [], focus = 0;
+  const posto = { innerHTML: '', isConnected: true, querySelectorAll: () => [] };
+  const piu = { onclick: null }, form = { onsubmit: null, querySelector: () => ({ value: '' }) };
+  const c = { id: 'c1', user_id: 'io' };
+  const q = { select() { return q; }, eq() { return q; }, or() { return q; }, order() { return q; }, then: f => f({ data: cose, error: null }) };
+  const ctx = { LS: { contatto: c }, MB21Coda: { oggiRoma: () => '2026-10-22' }, MB21Agenda: { spostaGiorno: g => g }, esc: x => String(x), ic: n => `[${n}]`,
+    soloGuardo: () => false, dbq: (_, p) => p, supa: { from: () => q },
+    document: { getElementById: id => (id === 'scheda-cose' ? posto : id === 'sc-cosa-piu' && /sc-cosa-piu/.test(posto.innerHTML) ? piu : id === 'sc-cosa-nuova' && /sc-cosa-nuova/.test(posto.innerHTML) ? form : null),
+      querySelector: () => ({ focus: () => { focus++; } }) } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.cose = coseDellaScheda;', ctx);
+  await ctx.cose(c);
+  assert.equal(posto.innerHTML, '<button class="link" id="sc-cosa-piu">+ Una cosa da fare</button>');   // nessuna cosa: solo la riga
+  piu.onclick();
+  assert.equal(ctx.LS.coseAperto, 'c1'); assert.equal(focus, 1);
+  assert.match(posto.innerHTML, /^<div class="riquadro ag-foglio scheda-cose"><form class="ag-cosa-nuova" id="sc-cosa-nuova">/);
+  assert.doesNotMatch(posto.innerHTML, /Da fare<\/h2>/);
+  ctx.LS.coseAperto = null; cose = [{ id: 'k1', testo: 'Portare il catalogo', giorno: '2026-10-22', scala: 'giorno' }];
+  await ctx.cose(c);
+  assert.match(posto.innerHTML, /<h2 class="ag-sez">Da fare<\/h2>[\s\S]*Portare il catalogo[\s\S]*<button class="link" id="sc-cosa-piu">\+ Una cosa da fare<\/button><\/div>$/);
+});
+
 prova('Scheda contatto S1 (Ignazio 22/10): Invita / Usa l\'app / Collega spenti con un interruttore, la lettura e_utente_mb21 non parte', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');

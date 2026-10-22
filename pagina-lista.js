@@ -600,7 +600,7 @@ function disegnaScheda() {
 
 // Le cose da fare collegate a questa persona (cantiere 41, Ignazio 23/09: quello che fai in MB Plan si ritrova nella scheda).
 // Sotto la testata, prima delle linguette: le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
-// (lo stesso di MB Plan), e il campo per aggiungerne una già collegata, da fare oggi.
+// (lo stesso di MB Plan), e «+ Una cosa da fare» per aggiungerne una già collegata, da fare oggi.
 async function coseDellaScheda(c) {
   const posto = document.getElementById('scheda-cose');
   if (!posto) return;
@@ -619,30 +619,42 @@ async function coseDellaScheda(c) {
     if (x.giorno === oggi) return 'oggi' + (x.ora ? ' · ' + String(x.ora).slice(0, 5) : '');
     return (x.giorno === MB21Agenda.spostaGiorno(oggi, 1) ? 'domani' : gg(x.giorno)) + (x.ora ? ' · ' + String(x.ora).slice(0, 5) : '');
   };
-  posto.innerHTML = `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>
-    ${cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
+  // Verifica Scheda contatto S2 (Ignazio 22/10): niente riquadro sempre aperto; una riga «+ Una cosa da fare» che al tocco apre il campo,
+  // e l'elenco solo se ci sono cose. Il campo resta aperto su questa scheda per scriverne un'altra (LS.coseAperto).
+  const disegna = () => {
+    if (LS.contatto !== c || !posto.isConnected) return;
+    const aperto = LS.coseAperto === c.id;
+    const piu = aperto
+      ? `<form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`
+      : `<button class="link" id="sc-cosa-piu">+ Una cosa da fare</button>`;
+    const elenco = cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
       <button class="spunta" aria-label="${x.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${x.fatto_il ? ic('fatto') : ''}</button>
-      <button class="testo"><span>${esc(x.testo)}</span><small>${esc([quando(x), typeof nomeProgetto === 'function' ? nomeProgetto(x) : ''].filter(Boolean).join(' · '))}</small></button></div>`).join('')}
-    <form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form></div>`;
-  const ridisegna = () => coseDellaScheda(c);
-  posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
-    const x = cose.find(y => y.id === r.dataset.cosa);
-    r.querySelector('.spunta').onclick = () => { if (!soloGuardo()) spuntaCosa(x, { ridisegna, giorno: oggi }); };
-    r.querySelector('.testo').onclick = () => foglioCosa(x, oggi, { ridisegna, dallaScheda: true });
-  });
-  const form = document.getElementById('sc-cosa-nuova');
-  form.onsubmit = async ev => {
-    ev.preventDefault();
-    if (soloGuardo()) return;
-    const testo = MB21Agenda.testoCosa(form.querySelector('input').value); if (typeof avvisaSeLungo === 'function') avvisaSeLungo(form.querySelector('input').value);
-    if (!testo) return;
-    // la cosa è del proprietario della scheda (l'Admin su una scheda di un partner la mette nel suo MB Plan)
-    const { error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: c.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c.id }));
-    if (error) return mostraToast('Non salvato: riprova.');
-    await coseDellaScheda(c);
-    const campo = document.querySelector('#sc-cosa-nuova input');
-    if (campo) campo.focus();   // si continua a scrivere la prossima
+      <button class="testo"><span>${esc(x.testo)}</span><small>${esc([quando(x), typeof nomeProgetto === 'function' ? nomeProgetto(x) : ''].filter(Boolean).join(' · '))}</small></button></div>`).join('');
+    posto.innerHTML = cose.length ? `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>${elenco}${piu}</div>`
+      : aperto ? `<div class="riquadro ag-foglio scheda-cose">${piu}</div>` : piu;
+    const ridisegna = () => coseDellaScheda(c);
+    posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
+      const x = cose.find(y => y.id === r.dataset.cosa);
+      r.querySelector('.spunta').onclick = () => { if (!soloGuardo()) spuntaCosa(x, { ridisegna, giorno: oggi }); };
+      r.querySelector('.testo').onclick = () => foglioCosa(x, oggi, { ridisegna, dallaScheda: true });
+    });
+    const apri = document.getElementById('sc-cosa-piu');
+    if (apri) apri.onclick = () => { if (soloGuardo()) return; LS.coseAperto = c.id; disegna(); const campo = document.querySelector('#sc-cosa-nuova input'); if (campo) campo.focus(); };
+    const form = document.getElementById('sc-cosa-nuova');
+    if (form) form.onsubmit = async ev => {
+      ev.preventDefault();
+      if (soloGuardo()) return;
+      const testo = MB21Agenda.testoCosa(form.querySelector('input').value); if (typeof avvisaSeLungo === 'function') avvisaSeLungo(form.querySelector('input').value);
+      if (!testo) return;
+      // la cosa è del proprietario della scheda (l'Admin su una scheda di un partner la mette nel suo MB Plan)
+      const { error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: c.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c.id }));
+      if (error) return mostraToast('Non salvato: riprova.');
+      await coseDellaScheda(c);
+      const campo = document.querySelector('#sc-cosa-nuova input');
+      if (campo) campo.focus();   // si continua a scrivere la prossima
+    };
   };
+  disegna();
 }
 
 // ── Vendite ── sezione «Vendite», modulo «Nuova vendita», «Ordine fatto» e targhette Brand sono in pagina-vendite.js
