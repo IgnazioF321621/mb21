@@ -547,6 +547,33 @@ prova('Nota 037: «Unlinked» si legge «Non collegato» (con la spiegazione); i
   assert.equal(L.filtraContatti([{ id: 'a', nome: 'Anna', categoria: 'Unlinked', user_id: 'u' }, { id: 'b', nome: 'Bea', categoria: 'Prospect', user_id: 'u' }], { filtro: 'unlinked', utenteId: 'u' }).map(r => r.id).join(), 'a');
 });
 
+prova('Scheda contatto S4 (Ignazio 22/10): «Coach Yes» non è più una linguetta; le note in un riquadro dentro Azioni, con Coach+', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const pezzo = (inizio, fine = '\n}\n') => { const da = src.indexOf(inizio), a = src.indexOf(fine, da) + fine.length; return src.slice(da, a); };
+  const c = { id: 'c1', user_id: 'io', nome: 'Contatto A', categoria: 'Prospect' };
+  let letture = 0, aperta = null;
+  const box = { innerHTML: '', querySelectorAll: sel => (sel === '[data-nota]' ? [...box.innerHTML.matchAll(/data-nota="([^"]+)"/g)].map(m => ({ dataset: { nota: m[1] } })) : []) };
+  const q = { select() { return q; }, eq() { return q; }, order() { letture++; return Promise.resolve({ data: [{ id: 'n1', tipo_azione: 'Contatto', testo: 'testo finto', scritta_il: '2026-10-20T10:00:00Z' }], error: null }); } };
+  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni: [] }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
+    document: { getElementById: id => (id === 'sezione' ? box : id === 'coach-piu' ? { onclick: null } : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
+    dbq: (_, p) => p, supa: { from: () => q }, CY: { letta: 1, di: 'io', ids: new Set(['c1']) }, leggiNota: n => { aperta = n; }, notaCoach: () => {}, collegaEsiti: () => {} };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('function sezioniPer') + pezzo('async function sezioneAzioni') + pezzo('const quandoNota', ';\n') + pezzo('function coachHtml') + pezzo('function collegaCoach')
+    + ';this.sez = sezioneAzioni; this.sezioni = sezioniPer;', Object.assign(ctx, { MB21Lista: { haVendite: () => false }, MB21Sharing: { perChiDi: () => false } }));
+  assert.equal(ctx.sezioni(c).map(x => x[0]).join(), 'dati,azioni,segni');   // niente linguetta «coach»
+  await ctx.sez();
+  assert.equal(letture, 1);
+  assert.match(box.innerHTML, /<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes<\/h2>[\s\S]*data-nota="n1"[\s\S]*<button class="piccolo" id="coach-piu">Coach\+<\/button><\/div>$/);
+  box.querySelectorAll('[data-nota]').forEach(b => { b.onclick = null; });
+  // senza note (il segnale Coach Yes già letto lo dice): nessuna lettura, solo «Coach+»
+  ctx.LS.note = null; ctx.CY.ids = new Set(); letture = 0;
+  await ctx.sez();
+  assert.equal(letture, 0);
+  assert.match(box.innerHTML, /<div class="scheda-coach"><button class="piccolo" id="coach-piu">Coach\+<\/button><\/div>$/);
+  assert.match(src, /coach: sezioneAzioni, onboarding:/);   // un indirizzo vecchio «sezione=coach» porta ad Azioni
+});
+
 prova('Scheda contatto S3 (Ignazio 22/10): le azioni chiuse in una riga «data · tipo · esito», al tocco la card; quella da fare resta aperta', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
@@ -558,11 +585,11 @@ prova('Scheda contatto S3 (Ignazio 22/10): le azioni chiuse in una riga «data �
   ];
   let clic = [];
   const box = { innerHTML: '', querySelectorAll: sel => (sel === '[data-az-apri]' ? [...box.innerHTML.matchAll(/data-az-apri="([^"]+)"/g)].map(m => { const b = { dataset: { azApri: m[1] } }; clic.push(b); return b; }) : []) };
-  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
+  const ctx = { LS: { contatto: c, sezione: 'azioni', azioni, note: [] }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
     document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
     MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7) }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false },
     bloccoEsiti: a => (a.esito ? '<i data-apri-esiti></i>' : '<div class="bottoni">ESITI</div>'), ricordoHtml: () => '', preparaPresentazioneHtml: () => '', preparaChiamataHtml: () => '',
-    rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false };
+    rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false, coachHtml: () => '', collegaCoach: () => {} };
   vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.sez = sezioneAzioni;', ctx);
   await ctx.sez();
   let h = box.innerHTML;

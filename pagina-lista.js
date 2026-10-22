@@ -441,7 +441,8 @@ function apriScheda(id) {
 }
 
 function sezioniPer(c) {
-  const base = [['dati', 'Dati'], ['azioni', 'Azioni'], ['coach', 'Coach Yes'],
+  // Verifica Scheda contatto S4 (Ignazio 22/10): «Coach Yes» non è più una linguetta: le note stanno in un riquadro dentro «Azioni»
+  const base = [['dati', 'Dati'], ['azioni', 'Azioni'],
     ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []),
     // «Sharing» (cantiere 40): il percorso delle tracce è per candidati e partner (come in Glide), non per Ex e Archiviati
     ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []), ['segni', 'Segni vitali']];
@@ -595,7 +596,7 @@ function disegnaScheda() {
     else mostraAvvio(c);
   }).catch(() => {});
   coseDellaScheda(c);
-  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneCoach, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite, sharing: sezioneSharing }[LS.sezione] || sezioneDati)();
+  ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneAzioni, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite, sharing: sezioneSharing }[LS.sezione] || sezioneDati)();
 }
 
 // Le cose da fare collegate a questa persona (cantiere 41, Ignazio 23/09: quello che fai in MB Plan si ritrova nella scheda).
@@ -821,7 +822,15 @@ async function sezioneAzioni() {
     if (error) { box.innerHTML = piuHtml + '<div class="avviso">Non riesco a caricare le azioni.</div>'; return; }
     LS.azioni = await aggiungiPortatoDa(data.filter(a => a.portato_da !== c.id || a.contatto_id !== c.id));
   }
-  if (LS.sezione !== 'azioni') return;
+  if (!LS.note) {   // S4: le note del coach, nel riquadro in fondo; se l'elenco Coach Yes già letto dice che non ce ne sono, niente lettura
+    if (typeof CY !== 'undefined' && CY.letta && CY.di === c.user_id && !CY.ids.has(c.id)) LS.note = [];
+    else {
+      const { data, error } = await dbq('lettura note', supa.from('coach_note')
+        .select('id, tipo_azione, testo, scritta_il').eq('contatto_id', c.id).eq('user_id', c.user_id).order('scritta_il', { ascending: false }));
+      LS.note = error ? null : data;
+    }
+  }
+  if (LS.sezione !== 'azioni' && LS.sezione !== 'coach') return;
   // il promemoria «Ti eri detto…» (cantiere 42): dalle azioni appena lette, lo stesso riquadro di MB Plan e della coda,
   // dentro l'azione ancora da completare (Ignazio 24/09: «aggiungilo anche nella scheda»)
   RICORDI[c.id] = MB21Coach.ricordi(LS.azioni.filter(a => a.contatto_id === c.id))[c.id] || null;
@@ -844,7 +853,7 @@ async function sezioneAzioni() {
     if (a.esito && LS.azAperta !== a.id) return rigaChiusa(a);
     const sopra = a.esito ? rigaChiusa(a) : '';
     return sopra + cardAzione(a);
-  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
+  }).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>') + coachHtml();
   function cardAzione(a) {
     if (a.contatto_id !== c.id) return `
     <div class="azione">
@@ -866,6 +875,7 @@ async function sezioneAzioni() {
       <div class="comandi">${statoAzione(a)}${chiusa ? link('data-cambia-esito', a.id, 'Cambia esito') : ''}${MB21Agenda.eConsegna(a) ? '' : link('data-modifica-azione', a.id, 'Modifica')}${link('data-elimina-azione', a.id, 'Elimina', true)}</div>
     </div>`;
   }
+  collegaCoach(box);
   box.querySelectorAll('[data-az-apri]').forEach(b => b.onclick = () => { LS.azAperta = LS.azAperta === b.dataset.azApri ? null : b.dataset.azApri; sezioneAzioni(); });
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
@@ -904,26 +914,20 @@ async function azionePiu() {
 
 const TIPI_COACH = ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento', 'Counseling', 'Avvio', 'Consulenza PRD'];
 
-async function sezioneCoach() {
-  const c = LS.contatto;
-  const box = document.getElementById('sezione');
+// Le note del coach (S4, Ignazio 22/10): un riquadro in fondo ad «Azioni» con «Coach+»; senza note solo il bottone. Il segno Coach Yes
+// accanto al nome (coda, Agenda) apre il suo foglio come prima (foglioCoachYes in index.html).
+const quandoNota = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+function coachHtml() {
   const piu = '<button class="piccolo" id="coach-piu">Coach+</button>';
-  box.innerHTML = piu + '<div class="vuoto">Carico le note…</div>';
-  if (!LS.note) {
-    const { data, error } = await dbq('lettura note', supa.from('coach_note')
-      .select('id, tipo_azione, testo, scritta_il').eq('contatto_id', c.id).eq('user_id', c.user_id)
-      .order('scritta_il', { ascending: false }));
-    if (error) { box.innerHTML = piu + '<div class="avviso">Non riesco a caricare le note.</div>'; return; }
-    LS.note = data;
-  }
-  if (LS.sezione !== 'coach') return;
-  const quando = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  box.innerHTML = piu + (LS.note.length ? LS.note.map(n => `
-    <button class="nota" data-nota="${n.id}"><b>${esc(n.tipo_azione || 'Nota')}</b><br><span class="s">${esc(quando(n.scritta_il))}</span></button>`).join('')
-    : '<div class="vuoto">Nessuna nota.</div>');
+  if (!LS.note) return `<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes</h2><div class="avviso">Non riesco a caricare le note.</div>${piu}</div>`;
+  if (!LS.note.length) return `<div class="scheda-coach">${piu}</div>`;
+  return `<div class="riquadro scheda-coach"><h2 class="ag-sez">Coach Yes</h2>${LS.note.map(n => `
+    <button class="nota" data-nota="${n.id}"><b>${esc(n.tipo_azione || 'Nota')}</b><br><span class="s">${esc(quandoNota(n.scritta_il))}</span></button>`).join('')}${piu}</div>`;
+}
+function collegaCoach(box) {
   const p = document.getElementById('coach-piu');
   if (p) p.onclick = () => notaCoach(null);
-  box.querySelectorAll('[data-nota]').forEach(b => b.onclick = () => leggiNota(LS.note.find(n => n.id === b.dataset.nota), quando));
+  box.querySelectorAll('[data-nota]').forEach(b => b.onclick = () => leggiNota(LS.note.find(n => n.id === b.dataset.nota), quandoNota));
 }
 
 function leggiNota(n, quando) {
