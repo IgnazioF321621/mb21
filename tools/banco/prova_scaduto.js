@@ -9,9 +9,9 @@ let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 
-// i file già ripuliti (tappe di Pagine 071)
+// i file dell'app ripuliti (Pagine 071); admin.js è della sessione Admin: la sua gestione dell'abbonamento resta spenta (conAbbonamento)
 const FILE = ['pagina-lista.js', 'pagina-rubrica.js', 'pagina-vendite.js', 'pagina-messaggi.js', 'pagina-segnalazioni.js', 'pagina-benvenuto.js',
-  'pagina-profilo.js', 'scarica-lista.js', 'avvisi.js', 'pagina-dashboard.js'];
+  'pagina-profilo.js', 'scarica-lista.js', 'avvisi.js', 'pagina-dashboard.js', 'index.html', 'benvenuto.js', 'perche.js', 'pagina-agenda.js'];
 prova('Pagine 071: nei file dell\'app nessun blocco dell\'abbonamento (limitato, fermoScaduto, «solo da guardare», «abbonamento attivo»)', () => {
   for (const f of FILE) assert.doesNotMatch(leggi(f), /limitato\(|fermoScaduto|LIMITI_ABBONAMENTO|TAB_SCADUTO|ST\.scaduto|foglioRinnovo|Rinnovo l'abbonamento|abbonamento attivo|abbonamento scaduto/i, f);
 });

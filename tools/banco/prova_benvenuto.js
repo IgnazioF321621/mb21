@@ -39,12 +39,11 @@ prova('percheRighe: in piccolo sotto il passo «Perché iniziare»', () => {
   assert.deepEqual(B.percheRighe(undefined), []);
 });
 
-prova('daAprire: una volta sola, a chi non l\'ha visto; mai da scaduto, offline o arrivando da un avviso', () => {
+prova('daAprire: una volta sola, a chi non l\'ha visto; mai offline o arrivando da un avviso', () => {
   assert.equal(B.daAprire({ benvenuto_visto_il: null }), true);
   assert.equal(B.daAprire({}), true);
   assert.equal(B.daAprire({ benvenuto_visto_il: '2026-09-19T08:00:00Z' }), false);
   assert.equal(B.daAprire(null), false);                                     // offline o funzione non raggiunta: l'app si apre come sempre
-  assert.equal(B.daAprire({}, { limitato: true }), false);
   assert.equal(B.daAprire({}, { daAvviso: true }), false);
 });
 

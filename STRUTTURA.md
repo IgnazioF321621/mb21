@@ -86,6 +86,12 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
 - Admin → Utenti: accendendo «Può entrare» la riga mostra subito la nuova scadenza e l'avviso «prova gratuita fino al …»
 - provato sul DB il 16/09 (poi annullato): creato spento → nessuna data; abilitato → 01/10/2026; approvato dal link → 01/10/2026; riabilitato con scadenza vecchia → resta la vecchia
 
+**⛔ Dal 22/10/2026 l'abbonamento è TOLTO dal codice dell'app (nota Pagine 071, Ignazio: «un abbonamento vero non ci sarà mai; al massimo un contributo, altra cosa»).**
+- Non ci sono più: `LIMITI_ABBONAMENTO`, `limitato()`, `fermoScaduto()`, `TAB_SCADUTO`, `ST.scaduto`, `controllaAbbonamento()` (la lettura di `scadenza_abbonamento` all'accesso e a ogni Dashboard), `foglioRinnovo` con il link Revolut, la fascia «Abbonamento…» e «Rinnovo l'abbonamento» in Dashboard, le scritte «Con l'abbonamento attivo» e «Solo da guardare» della Lista, la frase `perche('scaduto')`, gli stili `.banner-abb` e `--revolut`.
+- Resta `soloGuardo()`: chi guarda un altro partner o «Tutti» col Partner Select continua a guardare soltanto.
+- Il database non è toccato: `scadenza_abbonamento`, `abbonamento_attivo` (sempre «attivo», nota 058) e le colonne restano. In `dashboard.js` restano `statoAbbonamento`, `scadenzaDopoPagamento`, `scadenzaDi`, che usa `admin.js`; lì la gestione resta spenta, perché `conAbbonamento()` dà falso senza `LIMITI_ABBONAMENTO`.
+- Prova: `tools/banco/prova_scaduto.js`. Quello che segue (note 058, 042, 050) è storia.
+
 **⚠️ Dal 19/10/2026 i limiti sono SPENTI (nota Pagine 058, Ignazio: «al momento apriamo MB21 a tutti senza limiti; successivamente studieremo qualcosa di diverso»)**:
 - **Nell'app** c'è un solo interruttore, `LIMITI_ABBONAMENTO = false` in index.html. Con false `limitato()` è sempre falso: `fermoScaduto`, `TAB_SCADUTO`, la Lista solo da guardare e la Dashboard spenta non scattano più, e in Dashboard non c'è più la fascia dell'abbonamento né «Rinnovo l'abbonamento» (quindi nemmeno `foglioRinnovo`). Per riaccendere tutto basta mettere true.
 - **Sul database** `abbonamento_attivo` risponde «attivo» per ogni utente (migrazione `20261019114715_abbonamento_senza_limiti.sql`, con dentro com'era): avvisi della sera e del mattino e calendario esterno tornano per tutti, senza ripubblicare le funzioni online.
