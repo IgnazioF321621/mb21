@@ -14,12 +14,12 @@ let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 
-function apri(v, risposta, storico = null) {
+function apri(v, risposta, storico = null, account = null) {
   const fogli = [], scritte = [], domande = [], avvisi = [];
   const q = { insert(r) { scritte.push(['insert', r]); return q; }, update(r) { scritte.push(['update', r]); return q; }, eq() { return q; }, select() { return q; }, single() { return q; },
     ilike() { return q; }, not() { return q; }, order() { return q; }, limit() { return q; }, then(ok) { return Promise.resolve(ok({ data: storico, error: null })); } };
   const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-22' }, esc, ic: () => '', classeCat: () => '', iniziali: () => 'SM', nomeEsatto: x => x, console,
-    LS: { contatto: { id: 'c1', user_id: 'u1', nome: 'Persona A', categoria: 'Cliente' } }, CK: {}, soloGuardo: () => false, fermoScaduto: () => false,
+    LS: { contatto: { id: 'c1', user_id: 'u1', nome: 'Cliente A', categoria: 'Cliente' }, account }, CK: {}, soloGuardo: () => false, fermoScaduto: () => false,
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } },
     supa: { from: () => q }, dbq: (_, p) => Promise.resolve(p), disegnaScheda() {}, mostraToast: t => avvisi.push(t),
     chiediConferma: async (titolo, testo) => { domande.push([titolo, testo]); return risposta; } };
@@ -144,6 +144,19 @@ prova('V3: con la proposta il riordino è già chiuso con la scelta in vista; «
   s.f.querySelectorAll('[data-quando]').find(b => b.dataset.quando === 'dopo').onclick();
   await s.$('invia').onclick();
   assert.equal(s.avvisi.at(-1), 'Scrivi quando consegni'); assert.equal(s.$('v-dentro-consegna').style.display, '');
+});
+
+prova('V4 (Ignazio 22/10): un cliente con l\'account cliente parte su «Nessun riordino», anche con lo storico; si può cambiare', async () => {
+  const st = [{ prodotto: 'filtro di ricambio', brand: L.BRAND[0][0], data: '2025-03-01', riordino: '2026-03-01' }];
+  let s = apri(null, true, st, { id: 'c1', dal: '2026-10-01' }); base(s);
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Nessun riordino'); assert.match(s.$('v-riordino-aiuto').textContent, /Ha un account cliente: ordina da solo/);
+  assert.equal(s.$('v-dentro-riordino').style.display, 'none');
+  await s.$('invia').onclick(); assert.equal(s.scritte[0][1].riordino, null);
+  s = apri(null, true, st, { id: 'c1', dal: '2026-10-01' }); base(s); scegli(s.f, 'riordino', 'fra'); scegli(s.f, 'mesi', 2);
+  await s.$('invia').onclick(); assert.equal(s.scritte[0][1].riordino, '2026-12-20');
+  s = apri(null, true, st, { id: 'c1', dal: null }); base(s);   // senza account: la proposta di sempre
+  await new Promise(r => setTimeout(r, 0)); assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 12 mesi · il 20/10/2027');
 });
 
 prova('la regola: oltre 60 giorni da oggi', () => {
