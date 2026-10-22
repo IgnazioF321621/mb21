@@ -12,6 +12,7 @@ Contesto completo: `docs/MB21_v4_Brief_Sviluppo.md` · mappa tecnica: `STRUTTURA
 5. Il resoconto a 6 punti (§ 10) fa eccezione solo per la forma: il punto 6 contiene **una sola** domanda, la più importante. Le altre restano in una nota Evernote (§ 7) e si fanno una alla volta, dopo.
 
 ## ⭐ 1. Stella cometa (Ignazio 19/09/2026)
+**Il nostro motto (Ignazio 22/10/2026): MB21 è la stella cometa. Tutto deve essere semplice, intuitivo e veloce.** Si tende sempre a semplificare: ogni cosa che si aggiunge o si cambia si misura su queste tre parole.
 **Da qualsiasi punto dell'app mi trovo, il percorso deve essere veramente semplice, e tutto collegato di conseguenza.** Ogni schermata porta da sola al passo dopo; una cosa fatta in un punto si ritrova già fatta negli altri (niente da riscrivere, niente da andare a cercare). Prima di proporre o costruire qualcosa chiedersi: «da qui, il passo dopo è a un tocco? e quello che ho appena fatto, dove altro deve comparire?»
 
 Tre domande prima di ogni scelta:
