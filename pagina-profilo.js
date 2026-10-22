@@ -155,6 +155,7 @@ function disegnaProfilo() {
     ${calendarioHtml()}
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
     ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
+    ${typeof toccoScaricaLista === 'function' ? rigaProfilo('pf-scarica-lista', ic('file') + ' Scarica la mia lista', '', 'Schede, azioni e note in un file Excel') : ''}
     ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
     ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
@@ -171,6 +172,7 @@ function disegnaProfilo() {
   su('pf-training', () => { TRN.vista = 'impara'; TRN.dopo = 'medaglie'; ST.tab = 'training'; mostraTab(); });
   su('pf-libri', () => apriLibri('profilo'));   // cantiere 40 lavoro 7: il diario di lettura (pagina-libri.js)
   if (typeof foglioMessaggi === 'function') su('pf-messaggi', foglioMessaggi);   // nota Admin 014 (pagina-messaggi.js)
+  if (typeof toccoScaricaLista === 'function') su('pf-scarica-lista', () => toccoScaricaLista(document.getElementById('pf-scarica-lista')));   // nota Admin 017: per tutti, anche per chi è esente dalla chiusura (scarica-lista.js)
   su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
   collegaMioAvvio(disegnaProfilo, 'profilo');

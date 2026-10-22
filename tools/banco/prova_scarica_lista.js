@@ -98,5 +98,10 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     assert.equal(r.ok, true); assert.match(velo.innerHTML, /Il file è pronto/); assert.match(velo.innerHTML, /MB21 · La mia lista · 21-10-2026\.xlsx/); assert.match(velo.innerHTML, /1 schede, 0 azioni, 0 note/); assert.match(velo.innerHTML, /cartella «Download» del Mac/);
     assert.match(m.X.bannerScaricaLista(), /Tocca qui per scaricare/);
   });
+  await prova('Profilo: la riga «Scarica la mia lista» c\'è per tutti (anche per gli esenti) e usa lo stesso tasto', () => {
+    const pf = fs.readFileSync(path.join(__dirname, '../../pagina-profilo.js'), 'utf8');
+    assert.match(pf, /rigaProfilo\('pf-scarica-lista', ic\('file'\) \+ ' Scarica la mia lista'/); assert.match(pf, /su\('pf-scarica-lista', \(\) => toccoScaricaLista\(/);
+    assert.doesNotMatch(pf.match(/rigaProfilo\('pf-scarica-lista'[^\n]*/)[0], /esenti|chiusuraPerMe|eAdmin/);   // nessuna condizione: per tutti
+  });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
