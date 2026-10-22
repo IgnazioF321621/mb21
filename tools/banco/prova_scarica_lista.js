@@ -8,13 +8,13 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
   const richieste = [], scaricati = [], toast = [];
   const ctx = { MB21Esporta: E, MB21Coda: { oggiRoma: () => '2026-10-21' }, esc: s => String(s), ic: n => `[${n}]`, ST: { utente }, eAdmin: () => admin, guardoAltri: () => altri, limitato: () => lim,
     mostraToast: t => toast.push(t), dbq: async (n, q) => q, richieste, scaricati, toast, URL: { createObjectURL: b => (scaricati.push(b), 'blob:x'), revokeObjectURL() {} },
-    Blob: function (parti) { this.parti = parti; }, setTimeout: () => 0,
+    navigator: { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15' }, Blob: function (parti) { this.parti = parti; }, setTimeout: () => 0,
     document: { querySelector: () => null, createElement: () => ({ click() {} }), body: { appendChild() {} } } };
   ctx.document.createElement = () => ({ click() { ctx.cliccato = (ctx.cliccato || 0) + 1; }, remove() {} });
   ctx.document.body.appendChild = () => {};
   ctx.supa = { from: t => { const q = { filtro: null, select: () => q, eq: (c, v) => (richieste.push([t, c, v]), q), order: () => q, range: () => Promise.resolve({ data: dati[t] || [], error: null }) }; return q; } };
   ctx.app = { innerHTML: '' }; ctx.document.getElementById = () => ({}); vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura, chiusuraAvvenuta, mostraChiusura, messaggioChiusura, chiusuraAdminHtml, mandati, salvaMandati, daAvvisare };', ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../scarica-lista.js'), 'utf8') + '\nthis.X = { CHIUSURA, bannerScaricaLista, scaricaMiaLista, toccoScaricaLista, annuncioChiusura, doveFinisceIlFile, chiusuraAvvenuta, mostraChiusura, messaggioChiusura, chiusuraAdminHtml, mandati, salvaMandati, daAvvisare };', ctx);
   return ctx;
 }
 (async () => {
@@ -86,6 +86,17 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, lim = fals
     const href = /href="([^"]+)"/.exec(h)[1].replace(/&amp;/g, '&'); assert.match(href, /^https:\/\/wa\.me\/393381234567\?text=/); assert.match(decodeURIComponent(href), /Ciao Carolina,/);
     const f = m.X.mandati(); f.add('a'); m.X.salvaMandati(f); h = m.X.chiusuraAdminHtml();
     assert.match(h, /Mandati 1 su 2/); assert.match(h, /✅ Carolina Rossi/); assert.match(h, /Manda di nuovo/);
+  });
+  await prova('Admin 017: dove finisce il file, a parole, per iPhone, Android, Mac; foglio «Il file è pronto» dopo il download', async () => {
+    const X = mondo().X;
+    assert.match(X.doveFinisceIlFile('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148 Safari/604.1')[0], /Salva su File/);
+    assert.match(X.doveFinisceIlFile('Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile Safari/537.36')[0], /cartella «Download» del telefono/);
+    assert.match(X.doveFinisceIlFile('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15')[0], /cartella «Download» del Mac/);
+    const m = mondo({ dati: { contatti: [{ id: 'c', nome: 'A' }] } }), velo = { remove() {} }, bott = {}; velo.querySelector = sel => (bott[sel] = bott[sel] || {});
+    m.document.createElement = t => (t === 'div' ? velo : { click() {}, remove() {} });
+    const r = await m.X.toccoScaricaLista({});
+    assert.equal(r.ok, true); assert.match(velo.innerHTML, /Il file è pronto/); assert.match(velo.innerHTML, /MB21 · La mia lista · 21-10-2026\.xlsx/); assert.match(velo.innerHTML, /1 schede, 0 azioni, 0 note/); assert.match(velo.innerHTML, /cartella «Download» del Mac/);
+    assert.match(m.X.bannerScaricaLista(), /Tocca qui per scaricare/);
   });
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
