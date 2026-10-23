@@ -390,7 +390,7 @@ async function caricaTrainingAdmin() {
 async function allineaSchede(prova = false) {
   const { data, error } = await dbq('schede dei partner', supa.rpc('allinea_schede_partner', { p_prova: prova }));
   if (error) { mostraToast('Schede dei partner non allineate: riprova da Admin.'); return null; }
-  if (!prova && (data.create || data.collegate)) { LS.righe = []; contattiMiei = null; MP.schede = null; }
+  if (!prova && (data.create || data.collegate)) { LS.righe = []; MP.schede = null; }
   return data;
 }
 async function anteprimaSchede() {

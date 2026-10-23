@@ -460,7 +460,8 @@ prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo 
     dbq: (n, p) => (n === 'compleanno' ? new Promise(() => {}) : Promise.resolve(p)), supa: { from: () => q, rpc: () => Promise.resolve({ error: null }) }, leggiAccountCliente: () => new Promise(() => {}),
     aggiornaRiga: async id => { letture.push(id); }, ricaricaERidisegna: () => Promise.resolve(), mostraToast() {}, chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
-  vm.createContext(ctx); vm.runInContext(CONTA[0] + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  vm.createContext(ctx);
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
   // nuovo
   ctx.apri(null, {}); let f = fogli.pop(), $ = id => f.querySelector('#' + id);
   $('f-nome').value = 'Persona Nuova'; $('f-cat').value = 'Prospect'; $('f-cat').onchange();
@@ -485,10 +486,9 @@ prova('L7: le altre pagine non buttano via tutta la Lista: rileggono solo la per
   assert.deepEqual(svuotano.map(x => x.split(':')[0]), ['index.html', 'admin.js', 'pagina-lista.js', 'pagina-lista.js']);   // uscita dall'app · import dell'Admin · lettura non riuscita · «Aggiorna i nomi»
   assert.match(IDX, /SIGNED_OUT'\) \{ togliCopiaOffline\(\); LS\.righe = \[\];/);
   assert.match(leggi('pagina-mappa.js'), /await aggiornaRiga\(data\.id\);/);
-  assert.match(leggi('pagina-coach.js'), /contattiMiei = null; aggiornaRiga\(e\.contatto_id\);/);
-  assert.match(IDX, /else \{ contattiMiei = null; aggiornaRiga\(contattoId\); \}/);
-  assert.match(IDX, /contattiMiei = null; aggiornaRiga\(v\.contatto_id\);/);
-  assert.match(IDX, /contattiMiei = null; aggiornaRiga\(data\.id\);/);
+  assert.match(leggi('pagina-coach.js'), /\n      aggiornaRiga\(e\.contatto_id\);   \/\/ Lista Nomi L7/);
+  assert.match(IDX, /else aggiornaRiga\(contattoId\);/);
+  assert.match(IDX, /\n        aggiornaRiga\(v\.contatto_id\);/);
 });
 
 prova('L8: le targhette leggono solo i biglietti dei BBS e WES in corso e i CEP non chiusi (poche righe: all\'Admin non ne manca più nessuna)', async () => {
@@ -523,6 +523,58 @@ prova('L8: la lettura dell\'Admin e la riga riletta prendono le colonne usate, u
   assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.order\('id'\)/);
   assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.eq\('id', id\)/);
   assert.doesNotMatch(PL, /from\('contatti_lista'\)\.select\('\*'\)/);
+});
+
+prova('L9: una ricerca sola (cercaNomi) per i fogli di scelta, con la regola di Cerca: nome, professione, numero; solo i nomi di chi, archiviati in fondo', () => {
+  const righe = [{ id: '1', user_id: 'io', nome: 'Zeno Bianchi', professione: 'barista', telefono: '+393330000001', categoria: 'Prospect' },
+    { id: '2', user_id: 'io', nome: 'Anna Barbieri', professione: null, telefono: '+393330000002', categoria: 'Archiviato' },
+    { id: '3', user_id: 'io', nome: 'Bruno Neri', professione: 'Barista', telefono: null, categoria: 'Cliente' },
+    { id: '4', user_id: 'altro', nome: 'Barbara Altri', telefono: null, categoria: 'Prospect' }];
+  const ids = x => x.map(r => r.id).join();
+  assert.equal(ids(L.cercaNomi(righe, { testo: 'bar', utenteId: 'io' })), '3,1,2');   // nome o professione, in ordine, l'archiviata in fondo
+  assert.equal(ids(L.cercaNomi(righe, { testo: '333 0000002', utenteId: 'io' })), '2');   // anche il numero
+  assert.equal(ids(L.cercaNomi(righe, { testo: 'bar', utenteId: 'io', max: 1 })), '3');
+  assert.equal(L.cercaNomi(righe, { testo: '  ', utenteId: 'io' }).length, 0);
+});
+
+prova('L9: «Cerca nella lista» (coppia, Mappa) cerca nella copia della Lista con la stessa regola: niente lettura a ogni tasto, gli eliminati non ci sono', async () => {
+  const fogli = [];
+  const righe = [{ id: 'a', user_id: 'io', nome: 'Persona Alfa', professione: 'idraulico', categoria: 'Prospect' }, { id: 'b', user_id: 'io', nome: 'Persona Beta', professione: 'idraulico', categoria: 'Unlinked' }];
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, nomiDellaLista: async () => righe, supa: { from: () => { throw new Error('niente database'); } }, setTimeout: () => 0,
+    document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function scegliScheda') + ';this.scegli = scegliScheda;', ctx);
+  ctx.scegli({ titolo: 'Coppia con', userId: 'io', escludi: 'a' });
+  const f = fogli[0], input = f.querySelector('#sc-cerca');
+  input.value = 'idraul'; await input.oninput(); await input.oninput();
+  const h = f.querySelector('#sc-elenco').innerHTML;
+  assert.match(h, /data-id="b"><b>Persona Beta<\/b> <small>Non collegato<\/small>/);   // trovata per la professione, non solo il nome
+  assert.doesNotMatch(h, /data-id="a"/);   // esclusa (è la persona stessa)
+  assert.doesNotMatch(PL, /ilike\('nome', `%\$\{testo/);
+});
+
+prova('L9: un nome nuovo da ogni strada passa da salvaNomeNuovo: «Salvo lo stesso?» sui doppioni (archiviati compresi), poi la riga subito nella Lista', async () => {
+  const domande = [], letture = [], inseriti = [];
+  const q = { insert: r => { inseriti.push(r); return q; }, select: () => q, single: () => Promise.resolve({ data: { id: 'n1', ...inseriti.at(-1) }, error: null }) };
+  const ctx = { MB21Lista: L, ST: { utente: { id: 'io' } }, risposta: true, LS: { righe: [{ id: 'x', user_id: 'io', nome: 'Persona Doppia', telefono: '+393330000009', categoria: 'Archiviato' }] },
+    chiediConferma: async (t, testo, si) => { domande.push([t, testo, si]); return ctx.risposta; }, supa: { from: () => q }, dbq: (_, p) => p, aggiornaRiga: async id => { letture.push(id); } };
+  vm.createContext(ctx);
+  vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), 'this.salva = salvaNomeNuovo;'].join('\n'), ctx);
+  let e = await ctx.salva({ user_id: 'io', nome: 'Persona Nuova', telefono: '+393330000001', categoria: 'Prospect' });
+  assert.equal(e.riga.id, 'n1'); assert.equal(domande.length, 0); uguale(letture, ['n1']);
+  ctx.risposta = false;
+  e = await ctx.salva({ user_id: 'io', nome: 'persona doppia', telefono: null, categoria: 'Prospect' });   // archiviata, stesso nome: si chiede
+  assert.equal(e.annullato, true); uguale(domande[0], ['Salvo lo stesso?', 'Attenzione: tra i tuoi nomi c\'è già Persona Doppia · +393330000009.', 'Salva lo stesso']);
+  assert.equal(inseriti.length, 1);
+  // le strade: il «+» della Lista, «Scegli dalla tua lista», la Cerchia del Benvenuto
+  assert.match(PL, /const esito = await salvaNomeNuovo\(riga\);/);
+  assert.match(IDX, /const esito = await salvaNomeNuovo\(\{ nome: t, categoria: 'Prospect', user_id: visto\(\)\.id \}\);/);
+  assert.match(leggi('pagina-benvenuto.js'), /const esito = await salvaNomeNuovo\(\{ user_id: ST\.utente\.id, nome, telefono, categoria: 'Prospect' \}\);/);
+  assert.doesNotMatch(leggi('pagina-benvenuto.js'), /supa\.from\('contatti'\)\.insert/);
+  // «Scegli dalla tua lista» e il nuovo appuntamento prendono i nomi dalla copia della Lista, con la ricerca sola
+  assert.match(IDX, /return \(await nomiDellaLista\(\)\)\.filter\(r => r\.user_id === id\)/);
+  assert.match(IDX, /const trovati = MB21Lista\.cercaNomi\(elenco, \{ testo: t, utenteId: visto\(\)\.id \}\);/);
+  assert.doesNotMatch(IDX + PL + leggi('admin.js') + leggi('pagina-coach.js'), /contattiMiei/);
+  assert.match(IDX, /velo\.className = 'velo centro';\n    velo\.style\.zIndex = 30;/);   // la domanda sopra «Scegli dalla tua lista»
 });
 
 (async () => {

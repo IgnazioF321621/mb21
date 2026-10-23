@@ -695,6 +695,16 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - `conCepPerCodice(targhe)` è la funzione sola per il CEP per codice (nota 069), dopo la lettura intera e dopo aver collegato una coppia. Prima, dopo la coppia, il CEP delle altre schede si spegneva.
     - `COLONNE_LISTA`: le colonne di `contatti_lista` scritte una per una al posto di `*`, senza `fase_icona` che nessuna pagina usa. Valgono per la lettura a pagine dell'Admin e per `aggiornaRiga`.
     - Restano ferme, perché toccano il database: la lettura dei partner con `lista_nomi()` e «contatti fatti» calcolato nella vista.
+  - **L9 · una funzione sola per un nome nuovo, una ricerca sola**:
+    - `salvaNomeNuovo(riga)` (pagina-lista.js) è la funzione sola per i nomi nuovi. La usano il «+» della Lista (`apriModulo`), «Scegli dalla tua lista» (`sceltaContatto`, «Non c'è: aggiungi … come Prospect») e la Cerchia del Benvenuto (`aggiungiNomeVeloce`).
+      - Guarda i doppioni con `doppioniDi`, archiviati compresi: dalla Lista già letta oppure, se non c'è, con due letture piccole.
+      - Fa la domanda «Salvo lo stesso?», con il testo `testoDoppioni` e il bottone «Salva lo stesso».
+      - Salva e mette la riga nella Lista (`aggiornaRiga`). Dà `{ riga }`, `{ annullato }` o `{ errore }`.
+      - La rubrica salva a blocchi con il suo controllo sui numeri (`preparaImport`), sulla stessa Lista.
+    - `MB21Lista.cercaNomi(righe, { testo, utenteId, max })` è la ricerca sola dei fogli di scelta, con la regola di Cerca: nome, professione, numero; archiviati in fondo; gli eliminati non ci sono.
+      - `scegliScheda` («Cerca nella lista»: coppia, Mappa) la usa sulla copia della Lista (`nomiDellaLista`), invece di un `ilike` sul nome a ogni tasto.
+      - `sceltaContatto` la usa sui nomi di `leggiContattiMiei`, che ora vengono dalla copia della Lista (prima una lettura a parte, eliminati compresi). Tolta la copia `contattiMiei`.
+    - `chiediConferma` sta sopra ogni foglio (`z-index` 30).
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi

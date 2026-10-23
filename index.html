@@ -2827,7 +2827,7 @@ async function scegliPartner() {
   const nuovo = v.id === ST.utente.id ? null : v.id;
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
-  CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; contattiMiei = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
   ST.catalogo = null; ST.catalogoDi = null; ST.vistaCatalogo = false;   // nota Pagine 019: «Da catalogare» della Lista mostrava i nomi del partner di prima
   MP.schede = null; MP.targhe = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
@@ -3156,7 +3156,7 @@ async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
   if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria ? MB21Lista.nomeCategoria(categoria) : 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
     const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', contattoId));
     if (ec) mostraToast('Categoria non cambiata: riprova dalla scheda.');
-    else { contattiMiei = null; aggiornaRiga(contattoId); }   // Lista Nomi L7: solo la riga di quella persona
+    else aggiornaRiga(contattoId);   // Lista Nomi L7: solo la riga di quella persona
   }
   await apriContattoDa(contattoId);
   if (LS.contatto && LS.contatto.id === contattoId) { LS.sezione = 'vendite'; disegnaScheda(); moduloVendita(null, { brand, poi }); }
@@ -3511,18 +3511,11 @@ async function eliminaAppuntamento(e, dopo) {
 }
 // (P3 Agenda, 23/10: il foglio «Senza esito» della pastiglia non c'è più: gli appuntamenti senza esito sono in «Da chiudere» del Programma della settimana)
 
-let contattiMiei = null;   // per l'elenco del nuovo appuntamento: solo i nomi del partner scelto (Partner Select; «Tutti» = sé stesso)
+// I nomi del partner scelto (Partner Select; «Tutti» = sé stesso) per il nuovo appuntamento e «Scegli dalla tua lista», anche gli archiviati (05/10).
+// Lista Nomi L9 (Ignazio 23/10): dalla copia della Lista (nomiDellaLista, pagina-lista.js), non più una lettura a parte (che dava anche gli eliminati)
 async function leggiContattiMiei() {
-  if (contattiMiei) return contattiMiei;
-  const righe = [];
-  for (let da = 0; ; da += 1000) {
-    const { data, error } = await dbq('contatti per appuntamento', supa.from('contatti').select('id, nome, categoria')
-      .eq('user_id', visto().id).order('nome').range(da, da + 999));   // anche gli archiviati (05/10): si possono servire
-    if (error) throw error;
-    righe.push(...data);
-    if (data.length < 1000) break;
-  }
-  return (contattiMiei = righe);
+  const id = visto().id;
+  return (await nomiDellaLista()).filter(r => r.user_id === id).sort((a, b) => MB21Lista.piega(a.nome).localeCompare(MB21Lista.piega(b.nome), 'it'));
 }
 
 // Chi può creare una serata con il Team o con una Linea (Agenda P5, Ignazio 23/10): una regola sola, usata dal foglio «Cosa vuoi aggiungere?»
@@ -3848,7 +3841,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
         const { error: ec } = await dbq('categoria contatto', supa.from('contatti').update({ categoria: v.categoria }).eq('id', v.contatto_id));
         if (ec) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: riprova.'; return; }
-        contattiMiei = null; aggiornaRiga(v.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
+        aggiornaRiga(v.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
         if (v.categoria === 'Partner') setTimeout(() => domandaInvito({ ...st.contatto, user_id: riga.user_id }), 400);
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
@@ -4103,7 +4096,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
     const inp = velo.querySelector('#sc-testo');
     const disegna = () => {
       const t = inp.value.trim();
-      const trovati = t ? elenco.filter(c => MB21Lista.corrisponde(c, t)).slice(0, 20) : [];
+      const trovati = MB21Lista.cercaNomi(elenco, { testo: t, utenteId: visto().id });   // L9: la ricerca sola, con la regola di Cerca
       const uguale = trovati.some(c => MB21Lista.piega(c.nome) === MB21Lista.piega(t));
       velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => escludi.includes(c.id)
           ? `<button disabled>${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(motivo)}</small></button>`
@@ -4113,11 +4106,11 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
       const n = velo.querySelector('[data-nuovo]');
       if (n) n.onclick = async () => {
         n.disabled = true;
-        const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert({ nome: t, categoria: 'Prospect', user_id: visto().id }).select('id, nome, categoria').single());
-        if (error) { n.disabled = false; return mostraToast('Non salvato: riprova.'); }
-        contattiMiei = null; aggiornaRiga(data.id);   // Lista Nomi L7: entra solo il nome nuovo
+        // Lista Nomi L9: la funzione sola per i nomi nuovi (doppioni con «Salvo lo stesso?», archiviati compresi; la riga nuova nella Lista)
+        const esito = await salvaNomeNuovo({ nome: t, categoria: 'Prospect', user_id: visto().id });
+        if (!esito.riga) { n.disabled = false; return esito.errore ? mostraToast('Non salvato: riprova.') : null; }
         mostraToast(`${t} aggiunto alla Lista`);
-        chiudi(data);
+        chiudi(esito.riga);
       };
     };
     inp.oninput = disegna;
@@ -4982,6 +4975,7 @@ function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo centro';
+    velo.style.zIndex = 30;   // L9: la domanda sta sopra ogni foglio (anche «Scegli dalla tua lista», che è a 25)
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${testo ? `<p>${esc(testo)}</p>` : ''}
       ${spunta ? `<label class="cf-spunta"><input type="checkbox" id="cf-spunta"> <span>${esc(spunta)}</span></label>` : ''}
       <button class="primario" id="cf-si" ${pericolo ? 'style="background:var(--rosso)"' : ''}>${esc(si)}</button>
