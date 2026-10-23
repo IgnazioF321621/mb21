@@ -182,19 +182,13 @@ async function aggiungiNomeVeloce() {
   const telefono = scritto ? MB21Lista.componiTelefono('+39', scritto) : null;
   if (scritto && (!telefono || telefono.replace(/\D/g, '').length < 8)) { campoNumero.focus(); return mostraToast('Controlla il numero: sembra troppo corto'); }
   btn.disabled = true;
-  const me = ST.utente.id;
-  // Doppioni: stessa regola del modulo Nuovo Contatto (`trovaDoppioni`), sui soli candidati con lo stesso numero o lo stesso nome
-  const cerche = [];
-  if (telefono) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).is('eliminato_il', null).eq('telefono', telefono).limit(5));
-  if (!/[%_*\\,()]/.test(nome)) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', me).is('eliminato_il', null).ilike('nome', nome).limit(5));
-  const trovati = (await Promise.all(cerche.map(q => dbq('doppioni', q)))).flatMap(r => (r.error ? [] : r.data || []));
-  const doppi = MB21Lista.trovaDoppioni(trovati, { nome, telefono, utenteId: me });
-  if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: tra i tuoi nomi c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva lo stesso')) {
-    btn.disabled = false; return;
-  }
-  const { data, error } = await dbq('nome della cerchia ristretta', supa.from('contatti').insert({ user_id: me, nome, telefono, categoria: 'Prospect' }).select('id, nome, telefono').single());
+  // Lista Nomi L9 (Ignazio 23/10): la stessa funzione del «+» della Lista (salvaNomeNuovo, pagina-lista.js): doppioni con «Salvo lo stesso?»
+  // (stesso nome o stesso numero, archiviati compresi), salvataggio, il nome nuovo subito nella Lista
+  const esito = await salvaNomeNuovo({ user_id: ST.utente.id, nome, telefono, categoria: 'Prospect' });
   btn.disabled = false;
-  if (error || !data) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  if (esito.annullato) return;
+  const data = esito.riga;
+  if (!data) return mostraToast('Non salvato: controlla la connessione e riprova.');
   BV.nomi.unshift(data);
   BV.conto = (BV.conto || 0) + 1;
   disegnaBenvenuto();

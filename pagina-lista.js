@@ -122,6 +122,36 @@ async function leggiTuttaLaLista() {
   segnaApp();
 }
 
+// I nomi della Lista per i fogli di scelta e le ricerche (Lista Nomi L9): la copia già letta; se non c'è ancora, la si legge una volta (leggiTuttaLaLista)
+async function nomiDellaLista() {
+  if (!LS.righe.length) await leggiTuttaLaLista();
+  return LS.righe;
+}
+
+// ── Un nome nuovo, da qualsiasi strada (Lista Nomi L9, Ignazio 23/10: «quattro strade per aggiungere un nome») ──
+// Il «+» della Lista, «Scegli dalla tua lista» (Agenda) e la Cerchia del Benvenuto salvano con la stessa funzione: l'avviso dei doppioni
+// «Salvo lo stesso?» (stesso nome o stesso numero, archiviati compresi), il salvataggio, la riga nuova nella copia della Lista (compare subito).
+// La rubrica salva a blocchi e tiene il suo controllo sui numeri (preparaImport), sulla stessa Lista.
+const testoDoppioni = (doppi, utenteId) => `Attenzione: ${utenteId === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`;
+// i nomi uguali: dalla Lista già letta; se non c'è (la Cerchia, all'inizio), due letture piccole con la stessa regola
+async function doppioniDi({ nome, telefono, utenteId }) {
+  if (LS.righe.length) return MB21Lista.trovaDoppioni(LS.righe, { nome, telefono, utenteId });
+  const cerche = [];
+  if (telefono) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', utenteId).is('eliminato_il', null).eq('telefono', telefono).limit(5));
+  if (!/[%_*\\,()]/.test(nome)) cerche.push(supa.from('contatti').select('id, user_id, nome, telefono').eq('user_id', utenteId).is('eliminato_il', null).ilike('nome', nome).limit(5));
+  const trovati = (await Promise.all(cerche.map(q => dbq('doppioni', q)))).flatMap(r => (r.error ? [] : r.data || []));
+  return MB21Lista.trovaDoppioni(trovati, { nome, telefono, utenteId });
+}
+// → { riga } (salvato: id, user_id, nome, telefono, categoria) · { annullato: true } · { errore }
+async function salvaNomeNuovo(riga) {
+  const doppi = await doppioniDi({ nome: riga.nome, telefono: riga.telefono, utenteId: riga.user_id });
+  if (doppi.length && !await chiediConferma('Salvo lo stesso?', testoDoppioni(doppi, riga.user_id), 'Salva lo stesso')) return { annullato: true };
+  const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert(riga).select('id, user_id, nome, telefono, categoria').single());
+  if (error || !data) return { errore: error || true };
+  await aggiornaRiga(data.id);
+  return { riga: data };
+}
+
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
@@ -1195,15 +1225,15 @@ function scegliScheda(opz) {
     velo.querySelector('#sc-x').onclick = () => chiudi(null);
     if (opz.mano) velo.querySelector('#sc-mano').onclick = () => chiudi('mano');
     const input = velo.querySelector('#sc-cerca'), elenco = velo.querySelector('#sc-elenco');
-    let giro = 0;
+    // Lista Nomi L9 (Ignazio 23/10): la ricerca sola (MB21Lista.cercaNomi, la regola di Cerca) sulla copia della Lista, invece di leggere il database a ogni tasto
+    // (prima solo il nome, con ilike); gli eliminati non ci sono. Se la Lista non è ancora in memoria la si legge una volta.
+    let righe = null;
+    const pronti = nomiDellaLista().then(x => { righe = x; }, () => { righe = []; });
     input.oninput = async () => {
-      const testo = input.value.trim(), mio = ++giro;
-      if (testo.length < 2) { elenco.innerHTML = ''; return; }
-      let q = supa.from('contatti').select('id, nome, categoria').eq('user_id', opz.userId).is('eliminato_il', null);   // un eliminato non si sceglie (cantiere 33)
-      if (opz.escludi) q = q.neq('id', opz.escludi);
-      const { data, error } = await dbq('cerca scheda', q.ilike('nome', `%${testo.replace(/[%_,]/g, ' ')}%`).order('nome').limit(15));
-      if (mio !== giro) return;
-      if (error) { elenco.innerHTML = '<div class="sotto">Ricerca non riuscita: riprova.</div>'; return; }
+      const testo = input.value.trim();
+      if (!testo) { elenco.innerHTML = ''; return; }
+      if (!righe) { elenco.innerHTML = '<div class="sotto">Carico i nomi…</div>'; await pronti; if (input.value.trim() !== testo) return; }
+      const data = MB21Lista.cercaNomi(righe, { testo, utenteId: opz.userId, max: 15 }).filter(r => r.id !== opz.escludi);
       elenco.innerHTML = data.length
         ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc(r.categoria ? MB21Lista.nomeCategoria(r.categoria) : 'Senza categoria')}</small></button>`).join('')
         : '<div class="sotto">Nessun nome trovato</div>';
@@ -1544,17 +1574,25 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
       if (dal !== account.prima) riga.account_cliente_dal = dal;
     }
     if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; riga.lavoro = $('f-lavoro').value || null; }
-    const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c && c.id });
     if (nuovo) riga.user_id = proprietario;
-    if (doppi.length && !await chiediConferma('Salvo lo stesso?', `Attenzione: ${proprietario === ST.utente.id ? 'tra i tuoi nomi' : 'tra i nomi di questo partner'} c'è già ${doppi.slice(0, 3).map(d => `${d.nome}${d.telefono ? ' · ' + d.telefono : ''}`).join(', ')}.`, 'Salva')) return;
+    else {   // in Modifica i doppioni si guardano qui (gli altri nomi); un nome nuovo li guarda salvaNomeNuovo (L9), con lo stesso avviso
+      const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c.id });
+      if (doppi.length && !await chiediConferma('Salvo lo stesso?', testoDoppioni(doppi, proprietario), 'Salva lo stesso')) return;
+    }
     $('invia').disabled = true;
     // da senza categoria a una categoria: la sceglie `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani)
     const catalogo = !nuovo && !c.categoria && riga.categoria;
     // Archiviato scelto nel modulo (17/09): la categoria la scrive `archivia_contatto`, che tiene quella di prima per il Ripristina
     const archiviare = !nuovo && !catalogo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
-    const q = nuovo ? supa.from('contatti').insert(riga)
-      : supa.from('contatti').update({ ...riga, categoria: catalogo ? null : archiviare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
-    let { data: salvato, error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', nuovo ? q.select('id').single() : q);
+    let error = null;
+    if (nuovo) {
+      const esito = await salvaNomeNuovo(riga);   // L9: doppioni, salvataggio, riga nuova nella Lista
+      if (esito.annullato) { $('invia').disabled = false; return; }
+      error = esito.errore || null;
+    } else {
+      ({ error } = await dbq('modifica contatto', supa.from('contatti')
+        .update({ ...riga, categoria: catalogo ? null : archiviare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)));
+    }
     if (!error && catalogo) ({ error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
     // stesso percorso di «Archivia» dal menu: categoria di prima in `categoria_prec`, fuori coda
     else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
@@ -1563,10 +1601,9 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
       archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
-    // L7 (Ignazio 23/10): la riga della persona si rilegge sempre, anche dalla Lista (tre puntini · Modifica) e per un nome nuovo, che compare subito
-    // (prima un nome nuovo si vedeva solo dopo 10 minuti o con «Aggiorna i nomi»); con la scheda aperta la rilegge già ricaricaERidisegna
-    const idSalvato = nuovo ? salvato && salvato.id : c.id;
-    if (idSalvato && (!LS.contatto || LS.contatto.id !== idSalvato)) await aggiornaRiga(idSalvato);
+    // L7 (Ignazio 23/10): la riga della persona si rilegge sempre, anche dalla Lista (tre puntini · Modifica); un nome nuovo l'ha già messa salvaNomeNuovo
+    // (prima si vedeva solo dopo 10 minuti o con «Aggiorna i nomi»); con la scheda aperta la rilegge già ricaricaERidisegna
+    if (!nuovo && (!LS.contatto || LS.contatto.id !== c.id)) await aggiornaRiga(c.id);
     const ridisegnato = ricaricaERidisegna();
     if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
