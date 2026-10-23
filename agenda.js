@@ -612,6 +612,18 @@
     return new Set(righe.slice(i, fine).map(r => r.partner_id));
   }
   // Il frontale (chi ha `me` come sponsor) sopra un codice: per ritrovare la Linea di un impegno condiviso con una parte. null se non è sotto `me`.
+  // Agenda P5b (Ignazio 23/10/2026: «si manda solo alla persona che usa l'app con me»): le persone del gruppo che usano l'app. `utenti` = gli utenti
+  // attivi { partner_id, nome_cognome }; si tengono quelli nel ramo di `me` (il codice di chi manda, in `squadra`), mai chi ha il codice di `me`
+  // (i collaboratori hanno il codice del titolare), uno per codice. Il nome si legge dai dati, mai scritto nel codice. In ordine di nome.
+  function personeConApp(squadra, utenti, me) {
+    const visti = new Set(), fuori = [];
+    for (const u of utenti || []) {
+      const c = u && u.partner_id;
+      if (!c || c === me || visti.has(c) || !frontaleDi(squadra, c, me)) continue;
+      visti.add(c); fuori.push({ partner_id: c, nome: u.nome_cognome || u.nome || '' });
+    }
+    return fuori.sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+  }
   function frontaleDi(squadra, codice, me) {
     const sponsor = {};
     for (const s of squadra || []) sponsor[s.partner_id] = s.sponsor_id;
@@ -901,7 +913,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

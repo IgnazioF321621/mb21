@@ -8,6 +8,8 @@ const P = require('../design/anteprima_agenda.js');
 let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
+// P5b (23/10): le prove del funzionamento con Team e Linea girano con l'interruttore CONDIVISIONE_LINEE acceso (il codice resta, spento nell'app)
+const conLinee = fn => async () => { P.impostaLinee(true); try { return await fn(); } finally { P.impostaLinee(false); } };
 const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.modo.admin = false; P.modo.tutti = false; P.AG.ramo = undefined; };
 const scritte = (tab, op) => P.scritture.filter(x => x.tabella === tab && (!op || x.op === op));
 const chiamate = nome => P.scritture.filter(x => x.tabella === 'rpc:' + nome);
@@ -69,7 +71,7 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   assert.equal(chiamate('condividi_azione').length, 0);
 });
 
-prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con Team il modulo diventa la serata (Team/LdS, nome, giorno e ora, link, punti) e salva in `spazi` già condivisa', async () => {
+prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con Team il modulo diventa la serata (Team/LdS, nome, giorno e ora, link, punti) e salva in `spazi` già condivisa', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const { v, p } = await apri({});
   assert.match(v.innerHTML, /data-v="team"/); assert.match(v.innerHTML, /data-v="linea"/);
@@ -95,9 +97,9 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   assert.match(P.avvisi.at(-1).t, /Serata Linea Rossi: condivisa con tutto il Team/);
   assert.ok(P.AG.spazi.find(s => s.id === 'sp-nuova'));
   P.AG.spazi = P.AG.spazi.filter(s => s.id !== 'sp-nuova');
-});
+}));
 
-prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scelto, la serata porta il suo codice', async () => {
+prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scelto, la serata porta il suo codice', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const { v, p } = await apri({});
   await scegli(v, 'condividi', 'linea');
@@ -118,7 +120,7 @@ prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scel
   const s2 = await apri({});
   await scegli(s2.v, 'condividi', 'team'); await scegli(s2.v, 'condividi', '');
   assert.match(s2.v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(s2.v.innerHTML, /id="na-serata"/);
-});
+}));
 
 prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un selettore che si apre con i passi del tipo scelto (nota 011; niente pillole); i passi scelti diventano righe dei punti e restano in su_cosa', async () => {
   pulisci();
@@ -174,7 +176,7 @@ prova('I passi suggeriti guardano la persona (nota Azioni 055): partner nuovo co
   P.finto.avvio = null;
 });
 
-prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ramo che non usano MB21, con «Invita» che apre il link di registrazione', async () => {
+prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ramo che non usano MB21, con «Invita» che apre il link di registrazione', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const { v } = await apri({});
   await scegli(v, 'condividi', 'linea');
@@ -194,9 +196,9 @@ prova('«Senza l\'app» (05/10 sera): scelta la Linea (o il Team), i nomi del ra
   assert.equal(P.avvisi.at(-1).telefono, '+393334445555');                 // il numero della squadra, col prefisso
   assert.match(P.avvisi.at(-1).poi, /^Così trovi «Serata Rubino» di lunedì 21 settembre nella tua Agenda e puoi partecipare\.$/);   // la riga in più sulla serata
   assert.equal(P.scritture.filter(x => x.op !== 'rpc').length, 0);       // nessuna scrittura: solo il foglio del link
-});
+}));
 
-prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi sta sotto (lei compresa); la serata porta il suo codice; un secondo tocco torna a tutta la Linea', async () => {
+prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi sta sotto (lei compresa); la serata porta il suo codice; un secondo tocco torna a tutta la Linea', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const prima = P.finto.squadra;
   P.finto.squadra = [...prima, { partner_id: 'SOTTO2', sponsor_id: 'SOTTO1', nome: 'NERI, ANNA', telefono: '' }, { partner_id: 'SOTTO3', sponsor_id: 'FR1', nome: 'BRUNO, PIA', telefono: '' }];
@@ -225,9 +227,9 @@ prova('Nota 005: dentro la Linea si tocca una persona: si accendono lei e chi st
     assert.match(P.avvisi.at(-1).t, /condivisa con Dario Verdi e la sua downline/);
     P.AG.spazi = P.AG.spazi.filter(s => s.id !== 'sp-nuova');
   } finally { P.finto.squadra = prima; }
-});
+}));
 
-prova('Nota 005, il foglio della serata già salvata: la Linea è quella del frontale sopra la persona, l\'albero mostra la sua parte; un tocco cambia il codice', async () => {
+prova('Nota 005, il foglio della serata già salvata: la Linea è quella del frontale sopra la persona, l\'albero mostra la sua parte; un tocco cambia il codice', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const fr = P.AG.frontali, sp = P.AG.spazi;
   P.AG.frontali = [{ partner_id: 'FR1', nome: 'Carla Rossi' }, { partner_id: 'FR2', nome: 'Luca Bianchi' }];
@@ -243,9 +245,9 @@ prova('Nota 005, il foglio della serata già salvata: la Linea è quella del fro
     await f.clic('[data-parte="SOTTO2"]'); await attendi();
     assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { linea_codice: 'SOTTO2' });
   } finally { P.AG.frontali = fr; P.AG.spazi = sp; P.AG.ramo = undefined; }
-});
+}));
 
-prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiungere?» con tre voci che aprono subito il modulo; via «Con chi?»', async () => {
+prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiungere?» con tre voci che aprono subito il modulo; via «Con chi?»', conLinee(async () => {
   pulisci(); P.modo.admin = true;
   const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"[\s\S]*?<b>([^<]+)<\/b>/g)].map(m => m[1] + ':' + m[2]);
   P.foglioAggiungi(); await attendi();
@@ -277,7 +279,7 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
   assert.match(P.fogli.at(-1).innerHTML, /<small>Programmare la settimana<\/small>/);
   const idx = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
   assert.match(idx, /const puoTeam = \(\) => puoSerataTeam\(\) && !opz\.contatto && !opz\.spazio;/);   // una regola sola, foglio e modulo
-});
+}));
 
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
   pulisci();
@@ -298,6 +300,44 @@ prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da f
     assert.match(f.innerHTML, /<small>Coach Yes<\/small><b>Fiammetta Rossi<\/b>/);
     assert.match(f.innerHTML, /<small>Contatto · 30\/09\/2026<\/small><div>Chiedile del viaggio<\/div>/);
   } finally { P.CY.di = null; P.CY.ids = new Set(); P.finto.coachNote = undefined; }
+});
+
+// ── Agenda P5b (Ignazio 23/10): si manda solo alle persone del gruppo che usano l'app (nomi dai dati); CONDIVISIONE_LINEE spento ──
+const RAMO_FINTO = { squadra: [{ partner_id: 'X1', sponsor_id: 'IO1', nome: 'PROVA, PERSONA' }], conApp: ['X1'], utenti: [{ partner_id: 'X1', nome_cognome: 'Persona Prova' }] };
+prova('P5b: «Cosa vuoi aggiungere?» → «Serata da mandare · La riceve: [nome dai dati]»; il modulo ha «Nessuno · [nome]» già scelto; salvata va a lei (linea + codice)', async () => {
+  pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO;
+  const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"[\s\S]*?<b>([^<]+)<\/b><small>([^<]*)<\/small>/g)].map(m => m[1] + ':' + m[2] + ':' + m[3]);
+  try {
+    P.foglioAggiungi(); await attendi();
+    let f = P.fogli.at(-1);
+    assert.equal(strade(f).at(-1), 'manda:Serata da mandare:La riceve: Persona Prova');
+    assert.doesNotMatch(f.innerHTML, /Team o una Linea/);
+    await f.clic('[data-strada="manda"]'); await attendi(); await attendi();
+    const m = P.fogli.at(-1);
+    assert.match(m.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="" class="">Nessuno<\/button><button data-v="p:X1" class="scelto">Persona Prova<\/button><\/div>/);
+    assert.doesNotMatch(m.innerHTML, /Tutto il Team|Una Linea|Quale Linea|Solo una parte|Senza l'app/);
+    assert.match(m.innerHTML, /Vede anche i punti da trattare\?/);
+    m.querySelector('#na-serata') && (m.querySelector('#na-serata').value = 'Serata prova');
+    await m.clic('#na-si'); await attendi();
+    const ins = scritte('spazi', 'insert').at(-1).args[0];
+    assert.equal(ins.condiviso_con, 'linea'); assert.equal(ins.linea_codice, 'X1');
+    assert.match(P.avvisi.at(-1).t, /mandata a Persona Prova/);
+    // nessuna persona con l'app: la voce non c'è
+    pulisci(); P.AG.ramo = { squadra: [], conApp: [], utenti: [] };
+    P.foglioAggiungi(); await attendi();
+    assert.deepEqual(strade(P.fogli.at(-1)).map(x => x.split(':')[0]), ['settimana', 'persona']);
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; }
+});
+
+prova('P5b, il tranello: nel modulo con una persona (anche dalla Timeline) «Condividi con» è solo «Nessuno · [la persona]»; il nome non sparisce più', async () => {
+  pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO;
+  try {
+    const { v } = await apri({});   // come il tocco su un'ora vuota della Timeline: nessuna persona data
+    assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);   // senza persona niente condivisione
+    await contatto(v, 'Fiammetta Rossi'); await scegli(v, 'tipo', 'Appuntamento');
+    assert.match(v.innerHTML, /data-scelta="condividi"><button data-v="" [^>]*>Nessuno<\/button><button data-v="persona"[^>]*>Fiammetta Rossi<\/button><\/div>/);
+    assert.doesNotMatch(v.innerHTML, /data-v="team"|data-v="linea"|data-v="p:/);
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; }
 });
 
 prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Linea: solo la persona', async () => {
