@@ -83,7 +83,7 @@ async function conCepPerCodice(targhe) {
 // Schede che sono utenti dell'app (`schede_utenti_app`: aggancio Amway o collegamento dell'Admin) con ultimo uso e nomi in lista:
 // targhetta 📱 sulle card e nella scheda, parola «app» in Cerca (cantiere 20 lavoro 4). Se la lettura non riesce, niente targhette.
 // Lista Nomi L3 (Ignazio 23/10): spento con lo stesso interruttore dell'invito (INVITO_APP), finché non c'è un team: niente lettura,
-// niente targhetta sulle card e nella scheda; «app» in Cerca torna una parola come le altre (le righe non hanno `app`).
+// niente targhetta sulle card e nella scheda. (L1b: «app» in Cerca non è più una parola nascosta.)
 async function leggiUsoApp() {
   if (!INVITO_APP) { LS.usoApp = {}; return; }
   const { data, error } = await dbq('schede utenti app', supa.rpc('schede_utenti_app'));
@@ -518,7 +518,8 @@ function sezioniPer(c) {
 
 // V4 (Verifica Vendite, Ignazio 22/10/2026, strada B): «Ha un account cliente: ordina da solo» al posto dell'attesa «Ordina da solo» (note 043 e
 // Azioni 025): niente domanda «ha ordinato?» dopo 7 giorni né riquadro in Dashboard. Il dato è `contatti.account_cliente_dal` (da quando ordina dal suo
-// account); si segna da «Modifica»; in testata la riga «Ordina dal suo account cliente · dal …» con «Togli». Una lettura per scheda, solo per i Clienti.
+// account); si segna da «Modifica»; in testata la riga «Cliente con account · dal …» con «Togli» (Lista Nomi L1b, Ignazio 23/10: l'etichetta
+// «Cliente con account» al posto di «Ha un account cliente: ordina da solo», ovunque; stesso dato). Una lettura per scheda, solo per i Clienti.
 async function leggiAccountCliente(id) {
   const { data, error } = await dbq('account cliente', supa.from('contatti').select('account_cliente_dal').eq('id', id).maybeSingle());
   return error ? undefined : (data && data.account_cliente_dal) || null;   // undefined = non letto (senza rete, o prima della migrazione)
@@ -533,7 +534,7 @@ async function mostraAccountCliente(c) {
   const qui = document.getElementById('account-posto');
   if (!qui) return;
   qui.innerHTML = LS.account.dal ? `<div class="ao-riga"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span>
-    <span><b>Ordina dal suo account cliente</b><small>dal ${esc(MB21Lista.data(LS.account.dal))} · nessuna telefonata di riordino</small></span></div>
+    <span><b>Cliente con account · dal ${esc(MB21Lista.data(LS.account.dal))}</b><small>nessuna telefonata di riordino</small></span></div>
     ${vediTutti() || ST.offline ? '' : '<button class="link" id="account-togli">Togli</button>'}</div>` : '';
   const togli = document.getElementById('account-togli');
   if (togli) togli.onclick = async () => {
@@ -542,7 +543,7 @@ async function mostraAccountCliente(c) {
     const { error } = await dbq('togli account cliente', supa.from('contatti').update({ account_cliente_dal: null }).eq('id', c.id));
     if (error) return mostraToast('Non salvato: riprova.');
     LS.account = { id: c.id, dal: null }; mostraAccountCliente(c);
-    mostraToast(`${c.nome}: niente più account cliente`, async () => {
+    mostraToast(`${c.nome}: non più «Cliente con account»`, async () => {
       const { error: e2 } = await dbq('annulla account cliente', supa.from('contatti').update({ account_cliente_dal: prima }).eq('id', c.id));
       if (e2) return mostraToast('Annullamento non riuscito: riprova.');
       LS.account = { id: c.id, dal: prima }; mostraAccountCliente(c);
@@ -1467,7 +1468,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>`;
-  const campoAccount = `<div class="campo" id="f-account-campo"><label>Ha un account cliente: ordina da solo</label>
+  const campoAccount = `<div class="campo" id="f-account-campo"><label>Cliente con account</label>
       <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
       <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>`;
   const datiPersona = `<h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">

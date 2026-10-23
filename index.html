@@ -3183,14 +3183,14 @@ async function accountDaEsito(azioneId, prima, dopo) {
     if (!az || !az.contatto_id) return false;
     const { data, error } = await dbq('account cliente dall\'esito', supa.from('contatti').update({ account_cliente_dal: MB21Coda.oggiRoma() })
       .eq('id', az.contatto_id).is('account_cliente_dal', null).select('id'));
-    if (error) { mostraToast('Esito salvato, ma l\'account cliente non è segnato: si può segnare da Modifica.'); return false; }
+    if (error) { mostraToast('Esito salvato, ma «Cliente con account» non è segnato: si può segnare da Modifica.'); return false; }
     if (Array.isArray(data) && data.length) ACCOUNT_DA_ESITO.set(azioneId, az.contatto_id);
     if (typeof LS !== 'undefined') LS.account = null;   // la testata della scheda si rilegge
     return true;
   }
   if (prima === E && ACCOUNT_DA_ESITO.has(azioneId)) {
     const { error } = await dbq('togli account cliente', supa.from('contatti').update({ account_cliente_dal: null }).eq('id', ACCOUNT_DA_ESITO.get(azioneId)));
-    if (error) { mostraToast('L\'account cliente è rimasto: si toglie dalla scheda, con «Togli».'); return false; }
+    if (error) { mostraToast('È rimasto «Cliente con account»: si toglie dalla scheda, con «Togli».'); return false; }
     ACCOUNT_DA_ESITO.delete(azioneId);
     if (typeof LS !== 'undefined') LS.account = null;
     return true;

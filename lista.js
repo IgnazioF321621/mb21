@@ -43,7 +43,7 @@
   };
 
   // Targhetta «nuovo» (richiesta di Ignazio 16/09): contatti creati dentro l'app (non importati da Glide)
-  // nei primi GIORNI_NEW giorni. `oggi` in AAAA-MM-GG; scritto «nuovo» (o «new») in Cerca, escono solo loro.
+  // nei primi GIORNI_NEW giorni. `oggi` in AAAA-MM-GG. (Lista Nomi L1b, Ignazio 23/10: «nuovo» e «new» in Cerca non sono più parole nascoste; c'è «Ordina: nuovi».)
   const GIORNI_NEW = 30;
   function eNuovo(r, oggi) {
     if (!r || !r.creato_il || r.glide_id) return false;
@@ -57,13 +57,11 @@
   }
   function soloCifre(s) { return String(s || '').replace(/[^0-9]/g, ''); }
 
-  // Ricerca come Glide: nome + professione + telefono, in qualunque punto del testo
-  function corrisponde(r, testo, oggi) {
+  // Ricerca come Glide: nome + professione + telefono, in qualunque punto del testo. Lista Nomi L1b (Ignazio 23/10): niente più parole nascoste
+  // («nuovo», «new», «app»): Cerca cerca solo nel nome, nella professione e nel numero; per i nomi recenti c'è «Ordina: nuovi».
+  function corrisponde(r, testo) {
     const t = piega(testo);
     if (!t) return true;
-    if (t === 'nuovo' || t === 'new') return eNuovo(r, oggi);
-    // schede che sono utenti dell'app (segnate da pagina-lista.js); con l'invito spento (Lista Nomi L3) le righe non hanno `app` e «app» si cerca come le altre parole
-    if (t === 'app' && 'app' in r) return !!r.app;
     if (piega(r.nome).includes(t) || piega(r.professione).includes(t)) return true;
     const cifre = soloCifre(t);
     return cifre.length >= 3 && /^[+\d\s]+$/.test(t) && soloCifre(r.telefono).includes(cifre);
@@ -86,7 +84,7 @@
     const ancheArchiviati = !!piega(testo) && (f === FILTRI.lista || f === FILTRI.all);
     const dopo = confrontoPer(ordine, oggi);
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo, oggi))
+      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo))
       .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || dopo(a, b));
   }
 

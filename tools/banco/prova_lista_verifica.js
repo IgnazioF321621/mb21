@@ -214,7 +214,7 @@ prova('L3: la targhetta dell\'app (📱 «3 gg») e la sua lettura spente con lo
   // Cerca: senza `app` nelle righe, «app» trova i nomi che la contengono; con le righe segnate resta la scorciatoia
   const righe = [{ id: 'p', user_id: 'io', nome: 'Persona Pappalardo', categoria: 'Prospect' }, { id: 'q', user_id: 'io', nome: 'Persona Q', categoria: 'Prospect' }];
   assert.deepEqual(L.filtraContatti(righe, { testo: 'app', utenteId: 'io', oggi: '2026-10-23' }).map(x => x.id), ['p']);
-  assert.deepEqual(L.filtraContatti(righe.map(r => ({ ...r, app: r.id === 'q' ? { nomi: 1 } : null })), { testo: 'app', utenteId: 'io', oggi: '2026-10-23' }).map(x => x.id), ['q']);
+  assert.deepEqual(L.filtraContatti(righe.map(r => ({ ...r, app: r.id === 'q' ? { nomi: 1 } : null })), { testo: 'app', utenteId: 'io', oggi: '2026-10-23' }).map(x => x.id), ['p']);   // L1b: niente parole nascoste, anche con `app`
 });
 
 prova('L3: con «Tutti» nel menu della card una riga fissa al posto dell\'avviso a ogni apertura', async () => {
@@ -322,7 +322,7 @@ prova('L5: il telefono si riconosce da solo (la funzione di «Il file è pronto�
   assert.match(SL5, /function doveFinisceIlFile\(ua\) \{\n  const d = dispositivoDi\(ua\);/);
   for (const [ua, attesa, domande] of [['iPhone Mobile', 'iphone', 0], ['Linux; Android 14', 'android', 0], ['Macintosh Safari', 'android', 1]]) {
     const chieste = [];
-    const c = { RB: {}, navigator: { userAgent: ua }, soloGuardo: () => false, aNome: () => '', apriModulo() {}, apriImportaRubrica() {},
+    const c = { RUBRICA: true, RB: {}, navigator: { userAgent: ua }, soloGuardo: () => false, aNome: () => '', apriModulo() {}, apriImportaRubrica() {},   // L1b: la rubrica è spenta; qui si prova com'è da accesa
       sceltaDa: async (t, v) => { chieste.push(t); return t === 'Aggiungi nomi' ? v[1] : v[1]; } };
     vm.createContext(c); vm.runInContext(pezzo(SL5, 'function dispositivoDi') + pezzo(PR, 'async function scegliAggiungi') + ';this.aggiungi = scegliAggiungi;', c);
     await c.aggiungi();
@@ -623,6 +623,31 @@ prova('L11: dopo il 25/10 alle 18 il riquadro, il messaggio all\'apertura e «Av
   assert.match(leggi('admin.js'), /typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta\(\) \? voce\('ad-vai-chiusura'/);
   assert.match(leggi('pagina-profilo.js'), /typeof toccoScaricaLista === 'function' \? rigaProfilo\('pf-scarica-lista'/);   // il Profilo resta
   assert.match(SL, /function mostraChiusura\(\)/);   // e la schermata di chiusura
+});
+
+prova('L1b (Ignazio 23/10): «Importa dalla rubrica» spento (RUBRICA = false): il «+» apre subito il Nuovo contatto, senza il foglio «Aggiungi nomi»', async () => {
+  const PR1 = leggi('pagina-rubrica.js');
+  assert.match(PR1, /\nconst RUBRICA = false;\n/);
+  const moduli = [], fogli = [];
+  const c = { RUBRICA: false, soloGuardo: () => false, aNome: () => '', apriModulo: x => moduli.push(x), sceltaDa: async t => { fogli.push(t); return null; } };
+  vm.createContext(c); vm.runInContext(pezzo(PR1, 'async function scegliAggiungi') + ';this.aggiungi = scegliAggiungi;', c);
+  await c.aggiungi();
+  assert.equal(moduli.length, 1); assert.equal(moduli[0], null); assert.equal(fogli.length, 0);
+});
+
+prova('L1b: «Cliente con account» al posto di «Ha un account cliente: ordina da solo», ovunque (stesso dato)', () => {
+  const tutto = PL + leggi('pagina-vendite.js') + IDX + leggi('pagina-dashboard.js');
+  assert.doesNotMatch(tutto.split('\n').filter(x => !/^\s*\/\//.test(x)).join('\n').replace(/\/\/.*$/gm, ''), /Ha un account cliente|Ordina dal suo account cliente|niente più account cliente|l\\'account cliente/);
+  assert.match(PL, /<label>Cliente con account<\/label>/);
+  assert.match(PL, /<b>Cliente con account · dal \$\{esc\(MB21Lista\.data\(LS\.account\.dal\)\)\}<\/b><small>nessuna telefonata di riordino<\/small>/);
+});
+
+prova('L1b: Cerca senza parole nascoste — «nuovo», «new» e «app» si cercano come le altre parole (nome, professione, numero)', () => {
+  const oggi = '2026-10-23', r = { id: 'a', user_id: 'io', nome: 'Persona A', categoria: 'Prospect', creato_il: '2026-10-22T10:00:00Z', app: { nomi: 2 } };
+  assert.equal(L.eNuovo(r, oggi), true);   // la targhetta «nuovo» resta
+  for (const t of ['nuovo', 'new', 'app']) assert.equal(L.filtraContatti([r], { testo: t, utenteId: 'io', oggi }).length, 0, t);
+  assert.equal(L.filtraContatti([{ ...r, nome: 'Persona Nuovo' }], { testo: 'nuovo', utenteId: 'io', oggi }).length, 1);
+  assert.doesNotMatch(leggi('lista.js'), /t === 'nuovo'|t === 'app'/);
 });
 
 (async () => {
