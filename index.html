@@ -252,6 +252,10 @@
   .cn .chiama { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--sfondo); color: var(--cat, var(--testo)); display: flex; align-items: center; justify-content: center; }
   .cn .chiama svg.ic { width: 19px; height: 19px; }
   .cn .chiama.spento { opacity: .3; pointer-events: none; }
+  /* Lista Nomi L3: la cornetta spenta si tocca e dice perché (un avviso); in «Scarica nomi e numeri» resta un link spento che non si tocca */
+  .cn button.chiama { border: 0; padding: 0; cursor: pointer; }
+  .cn button.chiama.spento { pointer-events: auto; }
+  .foglio .scelta-nota { font-size: 13px; color: var(--testo-tenue); margin: 2px 4px 10px; }
   .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; }
   .cn-spunta { flex: none; width: 26px; height: 26px; margin: 0 8px; border-radius: 50%; border: 2px solid var(--bordo); color: transparent; display: grid; place-items: center; }
   .cn-spunta .ic { width: 16px; height: 16px; }
@@ -2773,8 +2777,10 @@ const codiciDi = persone => Object.fromEntries((persone || PS.persone).filter(p 
 const nomeVisto = () => (vediTutti() ? 'Tutti' : nomeDi(visto()));
 const aNome = () => (guardoAltri() && !vediTutti() ? ` · ${nomeDi(visto())}` : '');   // nei titoli dei fogli: a nome di chi si scrive
 
+// Lista Nomi L3: la stessa domanda senza avviso, per chi scrive la riga fissa nel foglio (menu della card)
+const soloLettura = () => vediTutti() && ST.tab !== 'agenda';
 function soloGuardo() {
-  if (!vediTutti() || ST.tab === 'agenda') return false;
+  if (!soloLettura()) return false;
   diPerche('tutti');   // nota 048: la frase nell'elenco unico dei motivi
   return true;
 }
@@ -5040,8 +5046,10 @@ function foglioLinkInvito(opz = {}) {
 }
 
 // Contatto appena diventato Partner (Ignazio 16/09): domanda «Vuoi invitarlo nell'app MB21?». Invitato da = proprietario della lista.
+// Lista Nomi L3 (Ignazio 23/10: «Spegnere»): spenta con lo stesso interruttore dell'invito nella scheda (INVITO_APP, pagina-lista.js),
+// in tutti e tre i punti che la chiamano (modulo, «Da catalogare», esito di un'azione): la domanda è una sola, qui.
 async function domandaInvito(c) {
-  if (!c || !c.nome) return;
+  if (!INVITO_APP || !c || !c.nome) return;
   const si = await chiediConferma(`${c.nome} è diventato Partner`, "Vuoi invitarlo nell'app MB21? Puoi farlo anche dopo, dalla sua scheda.", "Invita nell'app MB21");
   if (si) foglioLinkInvito({ da: c.user_id || visto().id, nome: c.nome, telefono: c.telefono });
 }
