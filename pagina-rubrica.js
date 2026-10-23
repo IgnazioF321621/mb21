@@ -3,10 +3,14 @@
 // 1 · scegli il file  →  2 · riepilogo prima di salvare  →  3 · fatto («Da catalogare»).
 // Il file si legge sul telefono: niente parte verso il database finché non si tocca «Salva».
 const RB = { esito: null, proprietario: null, telefono: null };   // telefono: 'iphone' | 'android'
+// Lista Nomi L1b (Ignazio 23/10, «finché sono in due»): «Importa dalla rubrica del telefono» spento con un interruttore; il «+» della Lista apre subito
+// il modulo «Nuovo contatto», senza il foglio «Aggiungi nomi». Il codice della rubrica resta (anche i ritocchi della L5): si riaccende con true.
+const RUBRICA = false;
 
 // Il «+» della Lista: nuovo contatto a mano oppure tutta la rubrica
 async function scegliAggiungi() {
   if (soloGuardo()) return;
+  if (!RUBRICA) return apriModulo(null);
   // l'icona si passa nel campo `icona`: `etichetta` esce come testo, quindi un disegno messo lì si legge come codice (trovato il 20/09)
   const v = await sceltaDa('Aggiungi nomi' + aNome(), [{ etichetta: 'Nuovo contatto', icona: 'persona', k: 'uno' },
     { etichetta: 'Importa dalla rubrica del telefono', icona: 'rubrica', k: 'rubrica' }]);

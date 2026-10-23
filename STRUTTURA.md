@@ -646,6 +646,10 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - Sotto Archivia ed Elimina (`comandiContatto`) una riga piccola con la differenza. `sceltaDa` mette etichetta e `nota` in `.voce-nota` solo nelle voci colorate (`tono`); il Partner Select resta com'era.
     - `contaLettere(campo, posto)` (index.html): il conto «n/max» si vede solo nelle ultime 10 lettere (`ULTIME_LETTERE`). Lo usano il modulo della Lista, la vendita e le note del Check.
     - Cerca senza risultati: «+ Aggiungi «testo» alla Lista» (non con «Tutti») apre `apriModulo(null, { nome })` con il nome già scritto.
+  - **L1b · decisioni di Ignazio del 23/10 sulle voci ferme**:
+    - `RUBRICA = false` (pagina-rubrica.js, «finché sono in due»): il «+» della Lista apre subito `apriModulo(null)`, senza il foglio «Aggiungi nomi»; il codice della rubrica resta (anche i ritocchi della L5), si riaccende con true.
+    - «Cliente con account» al posto di «Ha un account cliente: ordina da solo», ovunque: modulo (etichetta), testata della scheda («Cliente con account · dal …», sotto «nessuna telefonata di riordino»), modulo vendita, avvisi. Stesso dato (`account_cliente_dal`).
+    - Cerca senza parole nascoste: `corrisponde(r, testo)` guarda solo nome, professione e numero. Via «nuovo», «new» e «app». Per i nomi recenti c'è «Ordina: nuovi».
   - **L2 · Ordina e «Scarica nomi e numeri»**:
     - Via le lettere A-Z: tolti da «Ordina» la griglia, la pastiglia «A ✕», «Nessun nome con questa lettera», `LS.lettera`, `MB21Lista.iniziale`/`lettereConNomi`, l'opzione `lettera` di `filtraContatti`, le voci `lettera` di `sceltaDa` e lo stile `.lettere`.
     - «Esporta» si chiama «Scarica nomi e numeri» e lo vede solo l'Admin (`eAdmin()`).
@@ -655,7 +659,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
   - **L3 · interruttori**:
     - `INVITO_APP` (pagina-lista.js, spento dalla verifica Scheda contatto S1) spegne anche `domandaInvito` («… è diventato Partner: vuoi invitarlo?»). La funzione è una sola, quindi vale per tutti e tre i punti che la chiamano: modulo, «Da catalogare», esito di un'azione.
     - Lo stesso interruttore spegne anche la targhetta 📱 dell'app: `leggiUsoApp` non legge più `schede_utenti_app` (`LS.usoApp = {}`), `segnaApp` e `aggiornaRiga` non scrivono `app` nelle righe, e la testata della scheda non la mostra. La Mappa ha la sua lettura e resta com'è.
-    - In Cerca, la scorciatoia «app» vale solo se le righe hanno `app` (`'app' in r`, lista.js); con l'interruttore spento «app» si cerca come le altre parole.
+    - (In Cerca la scorciatoia «app» c'era ancora; dal L1b non c'è più nessuna parola nascosta.)
     - Menu della card con «Tutti»: `soloLettura()` (index.html, la domanda di `soloGuardo` senza avviso). Il foglio mostra una riga fissa `.scelta-nota` con la frase `tutti` di perche.js al posto dell'avviso a ogni apertura; va via con il Partner Select.
     - La cornetta della card usa `numeroDaChiamare(telefono)`, la stessa regola dei 4 tasti (`contattaHtml`). Spenta è un `<button class="chiama spento">`: il tocco dice `diPerche('telefono')` («Manca un numero che inizia con «+».», frase nuova in perche.js) e non apre la scheda. In «Scarica nomi e numeri» resta un link spento che non si tocca.
   - **L4 · modulo del nuovo contatto e conferma al centro**:

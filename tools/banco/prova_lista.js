@@ -223,7 +223,7 @@ prova('Partner Select: un partner scelto o «Tutti» (elenco di partner)', () =>
   assert.equal(L.contaFiltri(righe, { utenteId: ALTRO, admin: true }).prospect, 1);
 });
 
-prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca trova solo quelli', () => {
+prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; in Cerca «nuovo» e «app» non sono più parole nascoste (L1b)', () => {
   const OGGI = '2026-09-16';
   const giorniFa = n => new Date(Date.parse(OGGI + 'T10:00:00Z') - n * 86400000).toISOString();
   const nuovo = { id: 'n', nome: 'Nuovo', user_id: 'u', categoria: 'Prospect', creato_il: giorniFa(3) };
@@ -235,7 +235,8 @@ prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; «nuovo» in Cerca tr
   assert.equal(L.eNuovo({ nome: 'senza data' }, OGGI), false);
   assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'Nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);
   const utente = { id: 'm', nome: 'Utente', user_id: 'u', categoria: 'Partner', app: { ultimo_uso: null, nomi: 3 } };
-  assert.deepEqual(L.filtraContatti([nuovo, vecchio, utente], { testo: 'app', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['m']);
+  assert.deepEqual(L.filtraContatti([nuovo, vecchio, utente], { testo: 'app', utenteId: 'u', oggi: OGGI }).map(x => x.id), []);   // nessuno ha «app» nel nome
+  assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);   // solo per il nome
 });
 
 prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', () => {
@@ -757,7 +758,7 @@ prova('Pagine 071 (Ignazio 22/10): niente più abbonamento nella Lista Nomi — 
   for (const f of ['pagina-lista.js', 'pagina-rubrica.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), /limitato\(|fermoScaduto|SOLO_GUARDARE|abbonamento attivo/, f);
 });
 
-prova('V4 Vendite (Ignazio 22/10, strada B): in testata «Ordina dal suo account cliente · dal …» con «Togli» (e Annulla); niente riga senza account', async () => {
+prova('V4 Vendite (Ignazio 22/10, strada B; L1b «Cliente con account»): in testata «Cliente con account · dal …» con «Togli» (e Annulla); niente riga senza account', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
   const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
@@ -773,13 +774,13 @@ prova('V4 Vendite (Ignazio 22/10, strada B): in testata «Ordina dal suo account
   vm.runInContext(pezzo('async function leggiAccountCliente') + pezzo('async function mostraAccountCliente') + ';this.mostra = mostraAccountCliente;', ctx);
   await ctx.mostra(c);
   assert.equal(letture, 1);
-  assert.match(posto.innerHTML, /<b>Ordina dal suo account cliente<\/b><small>dal 22\/10\/2026 · nessuna telefonata di riordino<\/small>/);
+  assert.match(posto.innerHTML, /<b>Cliente con account · dal 22\/10\/2026<\/b><small>nessuna telefonata di riordino<\/small>/);
   assert.match(posto.innerHTML, /id="account-togli">Togli</);
   await ctx.mostra(c); assert.equal(letture, 1);   // una lettura sola per scheda
   await togli.onclick();
-  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":null}'); assert.equal(posto.innerHTML, ''); assert.match(toast.t, /niente più account cliente/);
+  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":null}'); assert.equal(posto.innerHTML, ''); assert.match(toast.t, /non più «Cliente con account»/);
   await toast.annulla();
-  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":"2026-10-22"}'); assert.match(posto.innerHTML, /Ordina dal suo account cliente/);
+  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":"2026-10-22"}'); assert.match(posto.innerHTML, /Cliente con account/);
   // senza account: nessuna riga; lettura non riuscita (es. prima della migrazione): la scheda resta com'era
   ctx.LS.account = null; dalDb = null; await ctx.mostra(c); assert.equal(posto.innerHTML, '');
   ctx.LS.account = null; posto.innerHTML = 'prima'; q.maybeSingle = () => Promise.resolve({ data: null, error: { message: 'column does not exist' } });
@@ -810,11 +811,11 @@ prova('V4 Vendite (punto b, Ignazio 22/10): il tasto «Ordina da solo» segna l\
   assert.doesNotMatch(idx, /attesaDaEsito|rpc\('attesa_ordine'/);   // l'attesa non si apre più da nessuna strada
 });
 
-prova('V4 Vendite: «Ha un account cliente: ordina da solo» in Modifica (solo Clienti, solo se letto e cambiato); via la riga e la domanda dei 7 giorni', () => {
+prova('V4 Vendite: «Cliente con account» (L1b) in Modifica (solo Clienti, solo se letto e cambiato); via la riga e la domanda dei 7 giorni', () => {
   const fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), ven = fs.readFileSync(path.join(__dirname, '../../pagina-vendite.js'), 'utf8');
   const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
-  assert.match(src, /<label>Ha un account cliente: ordina da solo<\/label>\s*<div class="vn-quando"><button type="button" data-account="si">Sì<\/button><button type="button" data-account="no">No<\/button><\/div>/);
+  assert.match(src, /<label>Cliente con account<\/label>\s*<div class="vn-quando"><button type="button" data-account="si">Sì<\/button><button type="button" data-account="no">No<\/button><\/div>/);
   assert.match(src, /\$\('f-account-campo'\)\.style\.display = \$\('f-cat'\)\.value === 'Cliente' && account\.letto \? '' : 'none';/);
   assert.match(src, /if \(account\.letto && riga\.categoria === 'Cliente'\) \{[\s\S]*?const dal = account\.si \? account\.prima \|\| MB21Coda\.oggiRoma\(\) : null;\s*if \(dal !== account\.prima\) riga\.account_cliente_dal = dal;/);
   assert.match(src, /\$\{c\.categoria === 'Cliente' \? '<div id="account-posto"><\/div>' : ''\}/);

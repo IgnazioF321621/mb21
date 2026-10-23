@@ -153,7 +153,7 @@ prova('V4 (Ignazio 22/10): un cliente con l\'account cliente parte su «Nessun r
   const st = [{ prodotto: 'filtro di ricambio', brand: L.BRAND[0][0], data: '2025-03-01', riordino: '2026-03-01' }];
   let s = apri(null, true, st, { id: 'c1', dal: '2026-10-01' }); base(s);
   await new Promise(r => setTimeout(r, 0));
-  assert.equal(s.$('v-sunto-riordino').textContent, 'Nessun riordino'); assert.match(s.$('v-riordino-aiuto').textContent, /Ha un account cliente: ordina da solo/);
+  assert.equal(s.$('v-sunto-riordino').textContent, 'Nessun riordino'); assert.match(s.$('v-riordino-aiuto').textContent, /Cliente con account: nessuna telefonata di riordino/);
   assert.equal(s.$('v-dentro-riordino').style.display, 'none');
   await s.$('invia').onclick(); assert.equal(s.scritte[0][1].riordino, null);
   s = apri(null, true, st, { id: 'c1', dal: '2026-10-01' }); base(s); scegli(s.f, 'riordino', 'fra'); scegli(s.f, 'mesi', 2);

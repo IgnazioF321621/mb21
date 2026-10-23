@@ -187,7 +187,7 @@ function moduloVendita(v, proposta) {
     const quando = modoR === 'fra' && mesiR && baseR() ? MB21Lista.riordinoFra(baseR(), mesiR) : '';
     $('v-riordino-aiuto').textContent = quando ? `Il ${MB21Lista.data(quando)}: 10 giorni prima trovi in Agenda la telefonata «Riordino».`
       : modoR === 'data' ? '10 giorni prima trovi in Agenda la telefonata «Riordino».' : modoR === 'fra' ? 'Scegli fra quanti mesi.'
-      : modoR === 'nessuno' ? (conAccount ? 'Ha un account cliente: ordina da solo, nessuna telefonata di riordino.' : 'Nessuna telefonata di riordino: torna tra i contatti del giorno quando è il suo momento.') : '';
+      : modoR === 'nessuno' ? (conAccount ? 'Cliente con account: nessuna telefonata di riordino.' : 'Nessuna telefonata di riordino: torna tra i contatti del giorno quando è il suo momento.') : '';
     segnaGruppi();
   };
   velo.querySelectorAll('[data-riordino]').forEach(b => b.onclick = () => { modoR = b.dataset.riordino; toccatoR = true; segnaRiordino(); });
