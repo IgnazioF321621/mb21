@@ -607,6 +607,24 @@ prova('L10: nell\'Agenda di oggi chi compie gli anni, con i bottoni per scrivere
   assert.match(PA, /AG\.giorno === oggi \? caricaCompleanni\(oggi\) : null\]\);/);
 });
 
+prova('L11: dopo il 25/10 alle 18 il riquadro, il messaggio all\'apertura e «Avvisa della chiusura» spariscono da soli; restano il Profilo e la schermata di chiusura', async () => {
+  const SL = leggi('scarica-lista.js');
+  const mondo = adesso => {
+    const ctx = { MB21Coda: { oggiRoma: () => adesso.slice(0, 10) }, Date: class extends Date { constructor(...a) { super(...(a.length ? a : [adesso + ':00+02:00'])); } toLocaleTimeString() { return adesso.slice(11, 16); } },
+      esc, ic: n => `[${n}]`, ST: { utente: { id: 'u1' } }, eAdmin: () => false, guardoAltri: () => false, localStorage: { getItem: () => null, setItem() {} },
+      document: { querySelector: () => null, createElement: () => new Nodo(), body: { appendChild() {} } } };
+    vm.createContext(ctx); vm.runInContext(SL + '\nthis.X = { bannerScaricaLista, annuncioChiusura, chiusuraAvvenuta, CHIUSURA };', ctx);
+    return ctx.X;
+  };
+  const prima = mondo('2026-10-25T17:59'), dopo = mondo('2026-10-25T18:00');
+  assert.equal(prima.chiusuraAvvenuta(), false); assert.equal(dopo.chiusuraAvvenuta(), true);
+  assert.match(prima.bannerScaricaLista(), /MB21 torna personale/); assert.equal(dopo.bannerScaricaLista(), '');
+  assert.equal(await prima.annuncioChiusura(true), true); assert.equal(await dopo.annuncioChiusura(true), false);
+  assert.match(leggi('admin.js'), /typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta\(\) \? voce\('ad-vai-chiusura'/);
+  assert.match(leggi('pagina-profilo.js'), /typeof toccoScaricaLista === 'function' \? rigaProfilo\('pf-scarica-lista'/);   // il Profilo resta
+  assert.match(SL, /function mostraChiusura\(\)/);   // e la schermata di chiusura
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

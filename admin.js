@@ -347,7 +347,7 @@ function disegnaAdmin() {
       ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}${conAbbonamento() ? ` · <b class="ad-scad">${stati.filter(x => x === 'in_scadenza').length} in scadenza</b> · <b class="ad-fuori">${stati.filter(x => x === 'scaduto').length} scaduti</b>` : ''}`)}
       ${voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra')}
       ${voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto')}
-      ${typeof chiusuraAdminHtml === 'function' ? voce('ad-vai-chiusura', ic('whatsapp') + ' Avvisa della chiusura', `manda il messaggio a ogni partner · mandati ${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
+      ${typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta() ? voce('ad-vai-chiusura', ic('whatsapp') + ' Avvisa della chiusura', `manda il messaggio a ogni partner · mandati ${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
       ${voce('ad-vai-segnalazioni', ic('segnala') + ' Segnalazioni', AD.segnAperte ? `<b class="ad-scad">${AD.segnAperte} aperte</b> · feedback dei partner, rispondi anche su WhatsApp` : 'feedback dei partner, rispondi anche su WhatsApp')}
       ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
       ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
