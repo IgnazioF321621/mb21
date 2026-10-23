@@ -1400,29 +1400,36 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   // Il modulo (cantiere 34, prova approvata da Ignazio il 19/09: tools/design/confronto_modulo.html): in testa chi è, tre gruppi con un titoletto
   // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
   // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
-  const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria);
+  // Lista Nomi L4 (Ignazio 23/10): nel nuovo contatto niente «Archiviato» (resta in Modifica)
+  const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria).filter(k => !nuovo || k !== 'Archiviato');
+  const campoNome = `<div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>`;
+  const campoTel = `<div class="campo"><label>Telefono</label><div class="telefono-campo">
+      <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
+      <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>`;
+  const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
+      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
+      ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>`;
+  const campoAccount = `<div class="campo" id="f-account-campo"><label>Ha un account cliente: ordina da solo</label>
+      <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
+      <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>`;
+  const datiPersona = `<h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
+    ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
+    </div>`;
+  const altriAttivita = `<div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
+      <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
+    <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
+    <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>`;
+  // Lista Nomi L4 (Ignazio 23/10): un contatto NUOVO mostra subito nome, telefono e categoria (con «Ha un account cliente», che si vede solo per un Cliente);
+  // il resto sta nella riga chiusa «Altri dati (facoltativi)». In Modifica i tre gruppi restano com'erano. Campi e id sono gli stessi: il salvataggio non cambia.
+  const corpo = nuovo
+    ? `<div class="riquadro mc-g" style="margin-top:14px">${campoNome}${campoTel}${campoCat}${campoAccount}</div>
+    <details class="mc-altri"><summary>Altri dati <small>(facoltativi)</small></summary>${datiPersona}<h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${altriAttivita}</div></details>`
+    : `<h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">${campoNome}${campoTel}</div>${datiPersona}
+    <h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${campoCat}${campoAccount}${altriAttivita}</div>`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>
-    <div class="campo"><label>Telefono</label><div class="telefono-campo">
-      <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
-      <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
-    </div><h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
-    ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
-    </div><h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
-      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
-      ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>
-    <div class="campo" id="f-account-campo"><label>Ha un account cliente: ordina da solo</label>
-      <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
-      <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>
-    <div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
-      <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
-    <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
-    <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>
-    </div>
+    ${corpo}
     ${c ? `<button class="link elimina-qui" id="elimina-qui">${ic('elimina')} Elimina dalla lista</button>` : ''}
     <div class="mc-fondo"><button class="link" id="annulla">Annulla</button><button class="primario" id="invia" disabled>Salva</button></div>
   </div>`;
@@ -1442,7 +1449,9 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
-    $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
+    // Lista Nomi L4 (Ignazio 23/10): finché manca qualcosa, il bottone spento dice cosa (come «Scegli almeno un nome» in Scarica nomi e numeri)
+    const manca = !$('f-nome').value.trim() ? 'Scrivi il nome' : !$('f-cat').value ? 'Scegli la categoria' : '';
+    $('invia').disabled = !!manca; $('invia').textContent = manca || 'Salva';
     velo.querySelectorAll('[data-conta]').forEach(d => contaLettere($(d.dataset.conta), d));   // L1: il conto solo nelle ultime 10 lettere
     avvisaArchiviati();
   };

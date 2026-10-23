@@ -619,7 +619,7 @@ prova('Scheda contatto S5/S5c (nota Pagine 072, Ignazio 22/10): «Cose da fare»
   // S5c: niente ripiego sul Prospect, niente categoria facoltativa (la S5 bis è tolta)
   assert.doesNotMatch(src, /catEsiti|senzaCat|c\.categoria \|\| 'Prospect'|Facoltativa/);
   assert.match(src, /const blocco = bloccoEsiti\(a, c\.categoria\);/);
-  assert.match(src, /\$\('invia'\)\.disabled = !\$\('f-nome'\)\.value\.trim\(\) \|\| !\$\('f-cat'\)\.value;/);   // la categoria in Modifica è obbligatoria
+  assert.match(src, /const manca = !\$\('f-nome'\)\.value\.trim\(\) \? 'Scrivi il nome' : !\$\('f-cat'\)\.value \? 'Scegli la categoria' : '';\n    \$\('invia'\)\.disabled = !!manca;/);   // la categoria in Modifica è obbligatoria (L4: il bottone dice cosa manca)
   assert.match(src, /if \(poi\.poiAzione && riga\.categoria\) return ridisegnato\.then\(\(\) => azionePiu\(\)\);/);   // salvata la categoria, «Nuova azione»
   // il tocco su «Nuova azione»: senza categoria apre Modifica con poiAzione; con una categoria il modulo dell'azione
   const da = src.indexOf('async function azionePiu'), a = src.indexOf('\n}\n', da) + 3;

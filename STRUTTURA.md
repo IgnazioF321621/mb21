@@ -658,6 +658,12 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - In Cerca, la scorciatoia «app» vale solo se le righe hanno `app` (`'app' in r`, lista.js); con l'interruttore spento «app» si cerca come le altre parole.
     - Menu della card con «Tutti»: `soloLettura()` (index.html, la domanda di `soloGuardo` senza avviso). Il foglio mostra una riga fissa `.scelta-nota` con la frase `tutti` di perche.js al posto dell'avviso a ogni apertura; va via con il Partner Select.
     - La cornetta della card usa `numeroDaChiamare(telefono)`, la stessa regola dei 4 tasti (`contattaHtml`). Spenta è un `<button class="chiama spento">`: il tocco dice `diPerche('telefono')` («Manca un numero che inizia con «+».», frase nuova in perche.js) e non apre la scheda. In «Scarica nomi e numeri» resta un link spento che non si tocca.
+  - **L4 · modulo del nuovo contatto e conferma al centro**:
+    - `apriModulo` per un contatto **nuovo** mostra subito nome, telefono e categoria (con «Ha un account cliente», che si vede solo per un Cliente). Il resto (Dati personali, «Contatto e/o Incaricato di», Area, Note) sta nella riga chiusa `details.mc-altri` «Altri dati (facoltativi)».
+    - In Modifica i tre gruppi restano com'erano. I campi e i loro id sono gli stessi in tutti e due i casi (pezzi `campoNome`, `campoTel`, `campoCat`, `campoAccount`, `datiPersona`, `altriAttivita`): il salvataggio non cambia.
+    - Nel nuovo contatto niente «Archiviato» tra le categorie (resta in Modifica).
+    - Il bottone spento dice cosa manca: «Scrivi il nome», poi «Scegli la categoria», poi «Salva».
+    - `chiediConferma` (una funzione per tutta l'app) apre il foglio al centro (`velo centro`), come `sceltaDa`.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
