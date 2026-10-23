@@ -245,6 +245,61 @@ prova('L3: la cornetta prende il numero con la regola dei 4 tasti; spenta, un to
   assert.match(IDX, /\.cn button\.chiama\.spento \{ pointer-events: auto; \}/);
 });
 
+// il modulo vero (apriModulo) con il finto DOM: dà il foglio disegnato
+function apriModuloVero(c, poi) {
+  const fogli = [];
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: { righe: [], account: null },
+    soloGuardo: () => false, visto: () => ({ id: 'io' }), aNome: () => '', classeCat: k => 'cat-' + (k || 'nessuna'), iniziali: () => 'PA', Event: class {},
+    dbq: () => new Promise(() => {}), supa: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => null }) }) }) }, leggiAccountCliente: () => new Promise(() => {}),
+    document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx);
+  vm.runInContext(CONTA[0] + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  ctx.apri(c, poi || {});
+  return fogli[0];
+}
+
+prova('L4: un contatto nuovo mostra subito nome, telefono e categoria; il resto in «Altri dati (facoltativi)», chiusa; niente «Archiviato»', () => {
+  const f = apriModuloVero(null), h = f.innerHTML;
+  const altri = h.indexOf('<details class="mc-altri"><summary>Altri dati <small>(facoltativi)</small></summary>');
+  assert.ok(altri > 0, 'la riga chiusa');
+  for (const id of ['f-nome', 'f-tel', 'f-cat', 'f-account-campo']) assert.ok(h.indexOf(`id="${id}"`) > 0 && h.indexOf(`id="${id}"`) < altri, id + ' sopra');
+  for (const id of ['f-eta', 'f-cg', 'f-sesso', 'f-prof', 'f-citta', 'f-lavoro', 'f-ref', 'f-area', 'f-note']) assert.ok(h.indexOf(`id="${id}"`) > altri, id + ' dentro');
+  assert.doesNotMatch(h, /<details class="mc-altri" open/);   // chiusa
+  assert.doesNotMatch(h, /<h4 class="mc-t">Chi è<\/h4>/);
+  assert.doesNotMatch(h, /data-cat="Archiviato"/);
+  assert.match(h, /data-cat="Prospect"[\s\S]*data-cat="Unlinked"/);
+  assert.match(IDX, /\.mc-altri > summary \{/);
+});
+
+prova('L4: finché manca qualcosa, sul bottone c\'è scritto cosa: «Scrivi il nome», «Scegli la categoria», poi «Salva»', () => {
+  const f = apriModuloVero(null, { nome: '' }), $ = id => f.querySelector('#' + id);
+  assert.equal($('invia').textContent, 'Scrivi il nome'); assert.equal($('invia').disabled, true);
+  $('f-nome').value = 'Persona A'; $('f-nome').oninput();
+  assert.equal($('invia').textContent, 'Scegli la categoria'); assert.equal($('invia').disabled, true);
+  $('f-cat').value = 'Prospect'; $('f-cat').onchange();
+  assert.equal($('invia').textContent, 'Salva'); assert.equal($('invia').disabled, false);
+  $('f-nome').value = '  '; $('f-nome').oninput();
+  assert.equal($('invia').textContent, 'Scrivi il nome');
+});
+
+prova('L4: in Modifica i tre gruppi di sempre, con «Archiviato» tra le categorie', () => {
+  const h = apriModuloVero({ id: 'c1', user_id: 'io', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001' }).innerHTML;
+  assert.doesNotMatch(h, /mc-altri/);
+  assert.deepEqual([...h.matchAll(/<h4 class="mc-t">([^<]+)<\/h4>/g)].map(m => m[1]), ['Chi è', 'Dati personali', 'Per l\'attività']);
+  assert.match(h, /data-cat="Archiviato"/);
+  assert.ok(h.indexOf('id="f-cat"') > h.indexOf('Per l\'attività'));
+});
+
+prova('L4: la domanda di conferma (chiediConferma, una per tutta l\'app) sta al centro, come le scelte', async () => {
+  const fogli = [];
+  const ctx = { esc, document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx); vm.runInContext(pezzo(IDX, 'function chiediConferma') + ';this.chiedi = chiediConferma;', ctx);
+  const p = ctx.chiedi('Eliminare Persona A dalla lista?', 'Sparisce dalla lista.', 'Elimina', true);
+  assert.equal(fogli[0].className, 'velo centro');
+  fogli[0].querySelector('#cf-si').onclick();
+  assert.equal(await p, true);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
