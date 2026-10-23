@@ -30,7 +30,7 @@ function mondo({ utente = { id: 'u1' }, admin = false, altri = false, dati = {} 
   await prova('il file legge solo le righe di chi è entrato (user_id), 3 tabelle, e conta schede, azioni, note', async () => {
     const m = mondo({ utente: { id: 'u7' }, dati: { contatti: [{ id: 'c1', nome: 'Zeno', user_id: 'u7' }], azioni: [{ id: 'a', contatto_id: 'c1' }, { id: 'b', contatto_id: 'c1' }], coach_note: [] } });
     const r = await m.X.scaricaMiaLista();
-    assert.deepEqual(JSON.parse(JSON.stringify(r)), { ok: true, schede: 1, azioni: 2, note: 0 });
+    assert.deepEqual(JSON.parse(JSON.stringify(r)), { ok: true, nome: 'MB21 · La mia lista · 21-10-2026.xlsx', schede: 1, azioni: 2, note: 0 });
     assert.deepEqual(m.richieste.map(x => x.join(':')).sort(), ['azioni:user_id:u7', 'coach_note:user_id:u7', 'contatti:user_id:u7']);
     assert.equal(m.cliccato, 1);
   });
