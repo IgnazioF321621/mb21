@@ -176,17 +176,16 @@ prova('Le parti invisibili che si toccano hanno una dimensione (se no non succed
   assert.equal((sett.match(/class="ag-colonna ag-libero/g) || []).length, 7);
 });
 
-prova('I richiami stanno SOPRA la giornata, in pastiglie corte, e in fondo non resta niente', () => {
+prova('I richiami stanno SOPRA la giornata, in pastiglie corte; P2 (23/10): oggi una pastiglia sola «Chi sento oggi?»', () => {
   const g = V.vista('giorno');
-  // sopra: dopo il titolo del giorno, prima della card degli impegni (cantiere 41: la pagina formato NotePlan)
-  assert.ok(g.indexOf('class="ag-rich"') > g.indexOf('class="ag-titolo"'), 'le pastiglie vengono dopo il titolo');
+  // sopra: dopo il titolo del giorno, prima della card degli impegni (cantiere 41). P2: il titolo è <h1 class="ag-titolo …» (prima la prova
+  // cercava class="ag-titolo" scritto così, non lo trovava mai e passava sempre)
+  assert.ok(g.indexOf('<h1 class="ag-titolo') > 0, 'il titolo del giorno');
+  assert.ok(g.indexOf('class="ag-rich"') > g.indexOf('<h1 class="ag-titolo'), 'le pastiglie vengono dopo il titolo');
   assert.ok(g.indexOf('class="ag-rich"') < g.indexOf('class="ag-impegni"'), 'le pastiglie devono stare sopra la giornata');
   assert.doesNotMatch(g, /ag-blocco/);                       // niente più righe grandi in fondo
-  // ci sono tutte e quattro, con gli id di prima (i tocchi portano dove portavano)
-  for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme', 'ag-passati']) assert.match(g, new RegExp(`id="${id}"`));
-  assert.match(g, /Contatti <b>4 di 10<\/b>/);   // dal 04/10 (nota 012) il conto a parole di MB21Coda.contoGiorno: «4 di 10», «10 di 10 ✓ e 2 in più»
-  assert.match(g, /<b>2<\/b> conferme/);
-  assert.match(g, /<b>1<\/b> riordino/);
+  assert.match(g, /<button id="ag-chi-sento" class="telefonate">[\s\S]*?<span>Chi sento oggi\?<\/span><\/button>/);   // senza la Dashboard letta, senza numero
+  for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme']) assert.doesNotMatch(g, new RegExp(`id="${id}"`));
   assert.match(g, /<b>1<\/b> senza esito/);
   // le stesse pastiglie in tutte e tre le viste
   assert.match(V.vista('settimana'), /class="ag-rich"/);

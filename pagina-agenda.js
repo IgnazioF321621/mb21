@@ -155,16 +155,18 @@ function cambiaVista(v) {
   apriAgenda(AG.giorno);
 }
 
-// I richiami del giorno (contatti, conferme, riordini, appuntamenti senza esito) in una riga di pastiglie
-// corte **sopra** la giornata: in fondo alla griglia a orario finivano dopo mezzo metro di schermo e non
-// si guardavano più (Ignazio 21/09). Gli id sono gli stessi di prima, così i tocchi portano dove portavano.
+// I richiami del giorno in una riga di pastiglie corte **sopra** la giornata (Ignazio 21/09: in fondo alla griglia non si guardavano più).
+// Verifica Agenda P2 (Ignazio 23/10): oggi UNA pastiglia «Chi sento oggi? N» al posto di contatti, riordini e conferme: porta all'elenco
+// unico della Dashboard («Chi sento oggi?», tappe 5-8). N = le righe ancora aperte di `elencoDiOggi()` (lo stesso conto della Dashboard);
+// se la Dashboard non è ancora stata letta oggi il numero non c'è. Un giorno che deve venire: «N in coda» com'era (apre i nomi).
 function richiamiAgenda(oggi) {
   const voci = [];
   const t = AG.telefonate;
-  if (t && t.oggi) voci.push(['ag-telefonate', 'telefonate', 'telefonate', (t.contatti_al_giorno === 0 ? 'Contatti <b>in pausa</b>' : `Contatti <b>${esc(MB21Coda.contoGiorno(t.fatti_oggi, t.contatti_al_giorno))}</b>`)]);   // «5 di 5 ✓ e 2 in più» (nota 012)
-  else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
-  if (AG.giorno === oggi && RIO.righe.length) voci.push(['ag-riordini', 'riordini', 'riordini', `<b>${RIO.righe.length}</b> ${RIO.righe.length === 1 ? 'riordino' : 'riordini'}`]);
-  if (AG.giorno === oggi && CONF.righe.length) voci.push(['ag-conferme', 'conferme', 'conferme', `<b>${CONF.righe.length}</b> ${CONF.righe.length === 1 ? 'conferma' : 'conferme'}`]);
+  if (t ? t.oggi : AG.giorno === oggi) {   // `t.oggi` lo mette caricaAgenda quando il giorno aperto è oggi
+    const e = typeof elencoDiOggi === 'function' && ST.risultato && ST.oggi === oggi ? elencoDiOggi() : null;
+    const n = e ? e.totale - e.fatti : null;
+    if (n !== 0) voci.push(['ag-chi-sento', 'telefonate', 'telefonate', `Chi sento oggi?${n ? ` <b>${n}</b>` : ''}`]);
+  } else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
   if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length >= LIMITE_SENZA_ESITO ? LIMITE_SENZA_ESITO + '+' : AG.passati.length}</b> senza esito`]);
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
@@ -1978,11 +1980,9 @@ function collegaAgenda(eventi) {
   su('ag-nuovo', foglioAggiungi);   // nota 005: un solo ingresso, a livelli
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
-  su('ag-telefonate', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ag-chi-sento', () => { ST.tab = 'oggi'; ST.vaiA = 'oggi'; mostraTab(); });   // P2: dritto all'elenco unico «Chi sento oggi?»
   su('ag-in-coda', codaDelGiorno);
-  su('ag-riordini', () => { ST.tab = 'oggi'; ST.vaiA = 'riordini'; mostraTab(); });
   su('ag-passati', scegliPassato);
-  su('ag-conferme', () => { ST.tab = 'oggi'; mostraTab(); });
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
   app.querySelectorAll('.ag-giorno').forEach(b => {

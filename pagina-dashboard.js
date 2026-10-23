@@ -579,6 +579,7 @@ function disegnaOggi() {
   if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «N riordini da sentire» porta dritto al riquadro; dal benvenuto su «Il mio avvio»
   if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; }
+  if (vai === 'oggi') LV.vista = 'oggi';   // Agenda P2 (23/10): la pastiglia «Chi sento oggi? N» apre l'elenco unico
   if (vai === 'avvio') LV.vista = 'avvio';
   if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
