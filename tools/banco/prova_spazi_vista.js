@@ -31,6 +31,7 @@ prova('P6: una schermata sola — «Cosa metti in settimana?» con Piano Marketi
   assert.equal(righe.filter(r => r.tipo === 'Piano Marketing').length, 6); assert.equal(righe.filter(r => r.tipo === 'Team').length, 1);
   assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);   // nota 047: un partner non aggiunge la SdS/OPEN (è quella del Team)
   assert.equal('nome' in righe.find(r => r.tipo === 'Team'), false);   // il nome della serata si mette dopo, dal foglio dell'incontro
+  assert.ok(righe.every(r => !('condiviso_con' in r) && !('linea_codice' in r)));   // Ignazio 23/10: gli incontri di Team/LdS sono solo suoi, non si mandano a nessuno
   assert.match(P.avvisi.at(-1).t, /^Settimana pronta: 6 Piani Marketing e 1 incontro di Team/);
 });
 
