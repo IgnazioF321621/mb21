@@ -916,7 +916,7 @@ prova('Nota 068 (feedback 20/10, «non mi fa eliminare i doppioni»): il nome el
     mostraToast: (t, f) => { if (f) annulla = f; },
   };
   vm.createContext(ctx);
-  vm.runInContext(pezzo('async function aggiornaRiga') + pezzo('async function ricaricaERidisegna') + pezzo('async function elimina(r, dopo)') + ';this.elimina = elimina;', ctx);
+  vm.runInContext("const COLONNE_LISTA = '*';" + pezzo('async function aggiornaRiga') + pezzo('async function ricaricaERidisegna') + pezzo('async function elimina(r, dopo)') + ';this.elimina = elimina;', ctx);   // L8: le colonne scritte una per una
   await ctx.elimina(riga);
   assert.equal(disegnata, 'd1');   // il doppione eliminato non c'è più, senza rileggere tutta la Lista
   await annulla();

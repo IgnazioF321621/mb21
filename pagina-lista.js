@@ -18,8 +18,13 @@ async function leggiLista() {
   LS.letta = Date.now();   // ogni lettura intera rinfresca la copia in memoria (listaFresca)
   return righe;
 }
+// Lista Nomi L8 (Ignazio 23/10): le colonne di `contatti_lista` che l'app usa, scritte una per una al posto di `*`: via l'icona della fase (fase_icona),
+// che nessuna pagina usa. Valgono per la lettura a pagine (l'Admin) e per la riga riletta; i partner leggono con `lista_nomi()` (nel database, com'è).
+const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, '
+  + 'onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, '
+  + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, contatti_fatti';
 async function leggiListaPagine() {
-  const pagina = k => dbq('lettura lista', supa.from('contatti_lista').select('*').order('id').range(k * 1000, k * 1000 + 999));
+  const pagina = k => dbq('lettura lista', supa.from('contatti_lista').select(COLONNE_LISTA).order('id').range(k * 1000, k * 1000 + 999));
   const prima = await pagina(0);
   if (prima.error) throw prima.error;
   const righe = [...prima.data];
@@ -39,7 +44,7 @@ const listaFresca = () => LS.righe.length > 0 && !!LS.letta && Date.now() - LS.l
 // (la leggerà chi la apre); se qualcosa non va la si svuota, e si rilegge intera come prima.
 async function aggiornaRiga(id) {
   if (!LS.righe.length || !id) return;
-  const { data, error } = await dbq('riga della lista', supa.from('contatti_lista').select('*').eq('id', id).maybeSingle());
+  const { data, error } = await dbq('riga della lista', supa.from('contatti_lista').select(COLONNE_LISTA).eq('id', id).maybeSingle());
   if (error) { LS.righe = []; return; }
   const i = LS.righe.findIndex(x => x.id === id);
   if (!data) { if (i >= 0) LS.righe.splice(i, 1); return; }
@@ -49,20 +54,30 @@ async function aggiornaRiga(id) {
 
 // Targhette BBS · WES · CEP della Lista: biglietti per eventi non ancora passati, periodi CEP, coppie collegate.
 // Se la lettura non riesce la Lista si apre lo stesso, senza targhette colorate.
+// Lista Nomi L8 (Ignazio 23/10): prima i due eventi in corso (BBS e WES, poche righe), poi SOLO i biglietti di quei due eventi e i CEP non chiusi:
+// prima si leggevano tutti i biglietti e tutti i CEP, oltre le 1000 righe che il database dà per richiesta, e all'Admin qualche targhetta mancava a caso.
 async function leggiTarghe() {
   const oggi = MB21Coda.oggiRoma();
-  const [big, cep, coppie, bbs, wes] = await Promise.all([
-    dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').limit(10000)),
-    dbq('targhe CEP', supa.from('cep').select('contatto_id, dal, uscito_il').limit(5000)),
+  const [bbs, wes] = await Promise.all([dbq('targhe BBS', supa.from('bbs').select('data')), dbq('targhe Wes', supa.from('wes').select('data'))]);
+  if (bbs.error || wes.error) return {};
+  const attivi = { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) };
+  const eventi = [attivi.bbs, attivi.wes].filter(Boolean);
+  const [big, cep, coppie] = await Promise.all([
+    eventi.length ? dbq('targhe biglietti', supa.from('biglietti').select('contatto_id, tipo, evento, contatto, compagno, ospiti').in('evento', eventi).limit(10000)) : { data: [], error: null },
+    dbq('targhe CEP', supa.from('cep').select('contatto_id, dal, uscito_il').or(`uscito_il.is.null,uscito_il.gte.${oggi}`).limit(5000)),
     dbq('targhe coppie', supa.from('contatti').select('id, compagno_id, compagno_nome')
       .or('compagno_id.not.is.null,compagno_nome.not.is.null').limit(5000)),
-    dbq('targhe BBS', supa.from('bbs').select('data')),
-    dbq('targhe Wes', supa.from('wes').select('data')),
   ]);
-  if (big.error || cep.error || coppie.error || bbs.error || wes.error) return {};
+  if (big.error || cep.error || coppie.error) return {};
   LS.coppie = {};
   for (const r of coppie.data) LS.coppie[r.id] = r;
-  return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi, { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) });
+  return MB21Lista.targhePerContatto(big.data, cep.data, coppie.data, oggi, attivi);
+}
+// Il CEP per codice (nota 069) sulle targhette appena lette: la stessa funzione dopo la lettura intera e dopo aver collegato una coppia (L8: prima,
+// dopo la coppia, il CEP delle altre schede con lo stesso codice si spegneva fino alla lettura intera seguente)
+async function conCepPerCodice(targhe) {
+  const cd = await dbq('codici delle schede', supa.from('contatti').select('id, codice_amway').not('codice_amway', 'is', null).is('eliminato_il', null).limit(5000));
+  return !cd.error && Array.isArray(cd.data) ? MB21Lista.cepPerCodice(targhe, cd.data) : targhe;
 }
 
 // Schede che sono utenti dell'app (`schede_utenti_app`: aggancio Amway o collegamento dell'Admin) con ultimo uso e nomi in lista:
@@ -103,9 +118,7 @@ async function leggiTuttoLista() {
 // le targhette restavano spente e «Coppia con …» mancava. Per un partner è anche una richiesta in meno (`lista_nomi()` invece di pagine + utenti dell'app).
 async function leggiTuttaLaLista() {
   [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now();
-  // nota 069: il CEP va per codice: la targhetta CEP anche sulle altre schede con lo stesso codice Amway (una lettura leggera, solo i codici)
-  const cd = await dbq('codici delle schede', supa.from('contatti').select('id, codice_amway').not('codice_amway', 'is', null).is('eliminato_il', null).limit(5000));
-  if (!cd.error && Array.isArray(cd.data)) LS.targhe = MB21Lista.cepPerCodice(LS.targhe, cd.data);
+  LS.targhe = await conCepPerCodice(LS.targhe);   // nota 069: il CEP va per codice (una lettura leggera, solo i codici)
   segnaApp();
 }
 
@@ -812,7 +825,7 @@ async function riquadroCoppia(c) {
       mostraToast(`Coppia con ${scelta.nome}`);
     }
     LS.sv = null; LS.svLettura = null; LS.coppie = null;   // la coppia è cambiata: si rilegge
-    leggiTarghe().then(t => { LS.targhe = t; }).catch(() => {});
+    leggiTarghe().then(conCepPerCodice).then(t => { LS.targhe = t; }).catch(() => {});   // L8: con il CEP per codice, come la lettura intera
     riquadroCoppia(c);
     segniDellaScheda(c).then(mostraTarghe).catch(() => {});
   };
