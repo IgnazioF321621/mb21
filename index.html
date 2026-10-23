@@ -1895,10 +1895,6 @@
   .ag-lato .mb-programma button.mb-prog-bottone svg.ic { color: #fff; width: 18px; height: 18px; }
   .ag-lato .mb-programma button.mb-prog-bottone span { flex: 0 1 auto; }
   .sp-domanda { font-size: 17px; font-weight: 700; margin: 4px 0 6px; }
-  /* nota Pagine 005: «Programmare la settimana», una riga per tipo con i numeri da 1 a 4 */
-  .sp-riga-num { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linea); }
-  .sp-riga-num:last-of-type { border-bottom: 0; } .sp-riga-num > span { min-width: 0; } .sp-riga-num b { display: block; font-size: 15px; } .sp-riga-num small { display: block; color: var(--testo-soft); font-size: 12.5px; }
-  .sp-riga-num .ag-scelte { flex: none; flex-wrap: nowrap; margin: 0; } .sp-riga-num .ag-scelte button { min-width: 38px; padding-inline: 10px; }
   /* nota Pagine 005: il foglio a livelli «Cosa vuoi aggiungere?» */
   .foglio.strade { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
   .foglio.strade .st-indietro { display: block; padding: 0; margin: 0 0 6px; min-height: 0; color: var(--testo-soft); font-size: 14px; font-weight: 600; text-align: left; width: auto; }
@@ -1917,25 +1913,11 @@
   .sp-chip button { border: 0; background: none; color: inherit; padding: 4px; display: inline-flex; }
   .sp-ore { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 10px; }
   .sp-ore button { border: 1px solid var(--bordo); background: var(--superficie); border-radius: var(--raggio-pill); font-size: 14px; font-weight: 600; min-height: var(--pill-h); padding: 8px 14px; color: var(--testo); }
-  .sp-chip .sp-nome { font-size: 12.5px; font-weight: 600; padding: 2px 8px; margin: 0 2px; border-radius: 999px; background: var(--superficie); color: var(--testo-soft); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
   .sp-nome-riga { display: flex; gap: 8px; align-items: center; padding: 4px 0 8px; } .sp-nome-riga input { flex: 1; min-width: 0; }
   .sp-nome-riga button { border: 0; background: var(--accento); color: var(--accento-su); font-weight: 700; border-radius: var(--raggio-bottone); padding: 10px 16px; min-height: var(--tocco); }
   .sp-conto { margin: 12px 0 0; font-size: 15px; font-weight: 700; color: var(--testo-soft); }
   .sp-conto.pieno { color: var(--verde, #15803D); }
-  .sp-tipo label { display: flex; align-items: center; justify-content: space-between; }
-  .sp-via { border: 0; background: none; color: var(--testo-tenue); padding: 4px; display: inline-flex; }
-  .sp-aggiungi { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 11px 12px; border: 1px solid var(--bordo); border-radius: 12px;
-    background: var(--superficie); font-family: inherit; font-size: 15px; font-weight: 700; color: var(--accento); text-align: left; }
-  .sp-aggiungi span { flex: 1; }
-  .sp-aggiungi svg.ic:last-child { transform: rotate(90deg); transition: transform .15s; color: var(--testo-tenue); }
-  .sp-aggiungi.aperto { border-color: var(--accento); border-radius: 12px 12px 0 0; }
-  .sp-aggiungi.aperto svg.ic:last-child { transform: rotate(-90deg); }
-  .sp-menu { border: 1px solid var(--accento); border-top: 0; border-radius: 0 0 12px 12px; padding: 4px 12px 8px; background: var(--superficie); }
-  .sp-menu small { display: block; margin: 8px 0 2px; font-size: 12px; font-weight: 600; color: var(--testo-tenue); }
-  .sp-menu button { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-top: 1px solid var(--superficie-2); background: none; padding: 10px 2px;
-    font-family: inherit; font-size: 15px; color: var(--testo); text-align: left; }
-  .sp-menu small + button { border-top: 0; }
-  .sp-menu button i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px dashed var(--tinta); box-sizing: border-box; flex: none; }
+  .sp-tipi { margin: 2px 0 10px; } .sp-gia { font-size: 13px; color: var(--testo-tenue); padding: 2px 4px; }   /* P6 (23/10): cosa mettere, e quello che c'è già nel giorno */
   .sp-comandi { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .sp-comandi[hidden], #sp-campi[hidden] { display: none; }
   .ag-due-campi { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
