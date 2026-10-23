@@ -184,25 +184,15 @@
       || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
   }
   const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
+  // Agenda P9 (Ignazio 23/10): le viste sono quattro, Giorno · Settimana · Mese · Anno; il Periodo WES non c'è più. Una cosa salvata
+  // prima con la scala 'periodo' si legge come una cosa del Mese che contiene il suo giorno: solo sullo schermo, nel database resta com'è.
+  const senzaPeriodo = c => (c && c.scala === 'periodo' ? { ...c, scala: 'mese', giorno: c.giorno ? c.giorno.slice(0, 8) + '01' : c.giorno } : c);
   // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
   function numeroSettimana(giorno) {
     const d = new Date(giorno + 'T12:00:00Z');
     d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7));
     const primo = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
     return 1 + Math.round(((d - primo) / 86400000 - 3 + ((primo.getUTCDay() + 6) % 7)) / 7);
-  }
-  // ── Il Periodo WES (cantiere 41): da un WES al successivo. `wes` = righe { data (primo del mese), giorno (primo giorno
-  // del WES, facoltativo) }. Il periodo che contiene `giorno` va dal mese di un WES (compreso) al mese del successivo (escluso);
-  // null prima del primo WES. `fino` = il giorno del WES che chiude il periodo (o il primo del suo mese se manca il giorno).
-  function periodoWesDi(giorno, wes) {
-    const d = [...(wes || [])].filter(w => w && w.data).sort((x, y) => (x.data < y.data ? -1 : 1));
-    let i = -1;
-    for (let k = 0; k < d.length; k++) if (d[k].data <= giorno) i = k;
-    if (i < 0) return null;
-    const dopo = d[i + 1] || null;
-    // `inizio` = il giorno del WES che apre (o il primo del suo mese): da lì si contano settimane e giorni (Ignazio 23/09)
-    return { da: d[i].data, a: dopo ? dopo.data : null, apre: d[i], chiude: dopo, inizio: d[i].giorno || d[i].data, fino: dopo ? (dopo.giorno || dopo.data) : null,
-      prima: i > 0 ? d[i - 1].data : null, poi: dopo ? dopo.data : null, senzaGiorno: !!dopo && !dopo.giorno };
   }
   // I mesi (primo giorno) da `da` compreso ad `a` escluso
   function mesiTra(da, a) { const out = []; for (let m = da; a && m < a && out.length < 24; m = meseAccanto(m, 1)) out.push(m); return out; }
@@ -914,7 +904,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, numeroSettimana, meseAccanto, periodoWesDi, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

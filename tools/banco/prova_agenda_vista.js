@@ -273,4 +273,50 @@ prova('Un giorno che deve venire: «N in coda» conta chi non ha già un orario 
   AG.telefonate = prima;
 });
 
+prova('P9 (Ignazio 23/10, «4 con anno»): quattro viste, Giorno · Settimana · Mese · Anno; via il Periodo WES; le sue vecchie cose stanno nel Mese del loro giorno', () => {
+  const vm = require('node:vm');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  // il menu: quattro scale, niente «Periodo WES» né «presto»
+  const menu = V.menuAgendaHtml();
+  assert.deepEqual([...menu.matchAll(/<button data-scala="([a-z]+)"/g)].map(m => m[1]), ['giorno', 'settimana', 'mese', 'anno']);
+  assert.doesNotMatch(menu, /Periodo|periodo|presto/);
+  // una vista «periodo» salvata prima sul telefono: si apre il Giorno (le altre restano come sono)
+  const da = src.indexOf('const VISTE ='), fino = src.indexOf('function cambiaVista');
+  for (const [salvata, attesa] of [['periodo', 'giorno'], ['mese', 'mese'], ['anno', 'anno'], ['settimana', 'settimana'], [null, 'giorno']]) {
+    const ctx = { localStorage: { getItem: () => salvata, setItem() {} } };
+    vm.createContext(ctx); vm.runInContext(src.slice(da, fino) + ';this.v = vistaSalvata();', ctx);
+    assert.equal(ctx.v, attesa, String(salvata));
+  }
+  // una cosa salvata col periodo (letta dal database così) sta nel Mese che contiene il suo giorno, con la spunta e il suo foglio
+  const prima = { cose: AG.cose, vista: AG.vista, giorno: AG.giorno };
+  try {
+    AG.cose = [{ id: 'pw1', user_id: 'io', testo: 'Cosa finta del periodo', giorno: '2026-09-01', scala: 'periodo', fatto_il: null, legato_a: 'Team' }].map(A.senzaPeriodo);
+    AG.giorno = OGGI;
+    for (const vista of ['giorno', 'settimana', 'mese', 'anno']) {
+      AG.vista = vista; V.disegnaAgenda();
+      const h = V.app.innerHTML;
+      assert.doesNotMatch(h, /data-scala="periodo"|Periodo WES|periodo dopo/, vista);   // il campo «Da fare» non offre più il periodo
+      if (vista === 'mese') {
+        const elenco = h.slice(h.indexOf('Da fare questo mese'));
+        assert.match(elenco, /data-cosa="pw1"[\s\S]*?Cosa finta del periodo[\s\S]*?<form class="ag-cosa-nuova" data-scala="mese">/);
+      }
+    }
+    // il foglio della cosa, anche aperto dalla scheda con la riga del database: è una cosa del Mese, niente «Sposta al periodo dopo»
+    V.fogli.length = 0;
+    const riga = { id: 'pw2', user_id: 'io', testo: 'Dalla scheda', giorno: '2026-09-01', scala: 'periodo', fatto_il: null, contatto_id: 'c1' };
+    V.foglioCosa(riga, OGGI, { dallaScheda: true });
+    const f = V.fogli[0].innerHTML;
+    assert.equal(riga.scala, 'mese');
+    assert.match(f, /Da fare nel mese di settembre 2026/); assert.match(f, /id="fc-sc-prima"/);
+    assert.doesNotMatch(f, /periodo|id="fc-domani"/);
+    V.fogli.length = 0;
+  } finally { AG.cose = prima.cose; AG.vista = prima.vista; AG.giorno = prima.giorno; }
+  // nel codice: si leggono ancora (non spariscono), diventano del Mese appena arrivano e nel Cerca; via la vista e il suo conto
+  assert.match(src, /and\(scala\.eq\.periodo\$\{dal\}\)/);
+  assert.match(src, /\n  AG\.cose = cd \? cd\.data\.map\(MB21Agenda\.senzaPeriodo\) : \[\];/);
+  assert.match(src, /\(cose\.data \|\| \[\]\)\.map\(A\.senzaPeriodo\)\.map\(c => `<button class="mb-ris cosa-r"/);
+  assert.doesNotMatch(src, /periodoWesDi|disegnaPeriodo|caricaPeriodo|'Periodo WES'|AG\.vista === 'periodo'|nuovaCosaHtml\('periodo'/);
+  assert.doesNotMatch(SORGENTE, /\.sc-periodo|\.pw-barra|\.pw-traccia/);
+});
+
 console.log(`\n${ok} prove superate`);

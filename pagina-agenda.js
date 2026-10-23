@@ -1,4 +1,4 @@
-// MB21 · MB Plan (l'Agenda, cantiere 41): la pagina — foglio del giorno, Settimana, Mese, Periodo WES, Anno,
+// MB21 · MB Plan (l'Agenda, cantiere 41): la pagina — foglio del giorno, Settimana, Mese, Anno (P9, 23/10: niente più Periodo WES),
 // cose da fare (ognuna legata a una persona o al Team, LdS, Network 21, Amway: dal 05/10/2026 niente più Modelli personali né Progetti), Timeline, cerca, trascinamento. Spostata così com'era da index.html il 23/09/2026 (Ignazio:
 // «ok procedi»), codice identico. Si carica prima dello script della pagina: solo definizioni e ascolti, che usano le
 // funzioni di index.html (supa, dbq, esc, ic, mostraToast, versione…) soltanto quando partono.
@@ -118,10 +118,9 @@ async function caricaAgendaLetture() {
   AG.passati = pas.data;
   // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
   const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
-  AG.cose = cd ? cd.data : [];
+  AG.cose = cd ? cd.data.map(MB21Agenda.senzaPeriodo) : [];   // P9: le cose del vecchio Periodo WES stanno nel Mese del loro giorno
   const w = await letta('wes', 'WES', () => supa.from('wes').select('data, giorno').order('data'));
   AG.wes = w.error ? [] : w.data;
-  if (AG.vista === 'periodo') await caricaPeriodo();
   if (AG.vista === 'anno') { const y = AG.giorno.slice(0, 4); await caricaIntervallo(`${y}-01-01`, `${Number(y) + 1}-01-01`); }
   await aggiungiPortatoDa([...AG.azioni, ...AG.passati]);
   // Un giorno che deve venire (Ignazio 27/09): in coda contano solo le persone che quel giorno non hanno già un orario
@@ -136,10 +135,11 @@ async function caricaAgendaLetture() {
 // La scelta si ricorda sul telefono: chi lavora a orario riapre a orario.
 // Dal cantiere 41 (pagina formato NotePlan) le viste sono due: «giorno» (il foglio del giorno, con la griglia a orario
 // nel cassetto «Timeline») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
-const VISTE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
+// Agenda P9 (Ignazio 23/10, «4 con anno»): quattro viste. Una vista «periodo» salvata prima sul telefono non c'è più: si apre il Giorno.
+const VISTE = ['giorno', 'settimana', 'mese', 'anno'];
 const CHIAVE_VISTA = 'mb21-agenda-vista';
-// Ogni scala ha la sua icona e il suo colore (Ignazio 23/09): Giorno verde · Settimana blu · Mese viola · Periodo WES lampone · Anno arancio
-const SCALE_MENU = [['giorno', 'Giorno', 'scala-giorno'], ['settimana', 'Settimana', 'scala-settimana'], ['mese', 'Mese', 'scala-mese'], ['periodo', 'Periodo WES', 'biglietto'], ['anno', 'Anno', 'scala-anno']];
+// Ogni scala ha la sua icona e il suo colore (Ignazio 23/09): Giorno verde · Settimana blu · Mese viola · Anno arancio
+const SCALE_MENU = [['giorno', 'Giorno', 'scala-giorno'], ['settimana', 'Settimana', 'scala-settimana'], ['mese', 'Mese', 'scala-mese'], ['anno', 'Anno', 'scala-anno']];
 const ALT_ORA = 58;        // quanto è alta un'ora nella griglia del giorno (px)
 const ALT_ORA_SETT = 42;   // nella settimana: compressa, ma un impegno di mezz'ora resta leggibile
 function vistaSalvata() {
@@ -150,8 +150,7 @@ function cambiaVista(v) {
   AG.vista = v;
   try { localStorage.setItem(CHIAVE_VISTA, v); } catch (e) {}
   AG.portato = null;   // la griglia si riposiziona su «adesso»
-  // si ricarica: Periodo WES e Anno leggono i loro dati solo nel caricamento (prima il Periodo WES si apriva vuoto,
-  // «Nessun WES registrato», e l'Anno senza puntini: Ignazio 23/09)
+  // si ricarica: l'Anno legge i suoi dati solo nel caricamento (prima si apriva senza puntini: Ignazio 23/09)
   apriAgenda(AG.giorno);
 }
 
@@ -202,7 +201,7 @@ function rigaCosaHtml(c, attr, riportata) {
       <button class="testo"><span>${esc(c.testo)}</span><small class="cosa-sotto">${legamePastiglia(c)}${sotto ? `<em>${esc(sotto)}</em>` : ''}</small></button>
     </div>`;
 }
-// Il campo per aggiungere (P8, uguale in Giorno, Settimana, Mese, Periodo, Anno e nella scala sopra): il testo e, accanto, «Tipo ▾» (facoltativo;
+// Il campo per aggiungere (P8, uguale in Giorno, Settimana, Mese, Anno e nella scala sopra): il testo e, accanto, «Tipo ▾» (facoltativo;
 // resta quello dell'ultima cosa scritta, per averne di seguito dello stesso tipo). Invio o «+» salvano, con o senza tipo.
 function nuovaCosaHtml(scala, segnaposto) {
   return `<form class="ag-cosa-nuova" data-scala="${scala}">
@@ -316,7 +315,7 @@ function collegaCose(oggi) {
   app.querySelectorAll('[data-apri-scala]').forEach(b => { b.onclick = () => cambiaVista(b.dataset.apriScala); });
 }
 
-// La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Periodo, Anno e della scala sopra: le parti non
+// La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Anno e della scala sopra: le parti non
 // vuote separate da « · » (la riportata)
 const sottoCosa = parti => { const s = parti.filter(Boolean).join(' · '); return s ? `<small>${esc(s)}</small>` : ''; };
 // Il tipo di una riga: scelto con i tre bottoni, oppure scritto all'inizio come in NotePlan («1. » numerato, «- » o «• »
@@ -398,6 +397,7 @@ async function scegliTipo(prima) {
 function foglioCosa(c, oggi, opz = {}) {
   const ridisegna = opz.ridisegna || disegnaAgenda;
   const A = MB21Agenda;
+  if (c.scala === 'periodo') Object.assign(c, A.senzaPeriodo(c));   // P9: dalla scheda arriva la riga del database; qui è una cosa del Mese
   // Rimasta indietro (Ignazio 24/09): non fatta e con il giorno prima dell'inizio della sua scala di oggi. Si calcola qui,
   // perché il foglio si apre anche dalla riga salvata (giorno, scheda del contatto, Cerca), che «riportata» non ce l'ha:
   // prima diceva la data vecchia e le frecce di Settimana/Mese partivano da lì.
@@ -455,7 +455,7 @@ function foglioCosa(c, oggi, opz = {}) {
     ${ripetizioni.length && !c.fatto_il ? `<div class="campo"><label>↻ Si ripete <small>quando la spunti, ricompare da sola</small></label><div class="ag-scelte" id="fc-ripeti">${[['', 'Mai'], ...ripetizioni].map(([k, t]) => `<button type="button" data-ripeti="${k}" class="${(ripetiScelta || '') === k ? 'scelto' : ''}">${t}</button>`).join('')}</div></div>` : ''}
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} ${inProgramma ? 'Sposta a' : 'Metti in programma'} <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
-    <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'periodo' ? 'Sposta al periodo dopo' : c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
+    <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
     <button class="link elimina-qui" id="fc-elimina">Elimina</button></div>
     <button class="link" id="fc-no">Annulla</button></div>`;
   document.body.appendChild(velo);
@@ -539,10 +539,7 @@ function foglioCosa(c, oggi, opz = {}) {
   };
   velo.querySelectorAll('#fc-rapide [data-rapida]').forEach(b => { b.onclick = () => cambia({ ...rapide.find(([k]) => k === b.dataset.rapida)[2] }); });
   const domani = velo.querySelector('#fc-domani');
-  const pw = c.scala === 'periodo' ? A.periodoWesDi(rip ? oggi : c.giorno, AG.wes) : null;
-  if (domani && c.scala === 'periodo' && !(pw && pw.poi)) domani.remove();   // non c'è ancora il WES dopo: niente «periodo dopo»
-  else if (domani && c.scala === 'periodo') domani.onclick = () => cambia({ giorno: pw.poi });
-  else if (domani && c.scala === 'anno') domani.onclick = () => cambia({ giorno: `${Number((rip ? oggi : c.giorno).slice(0, 4)) + 1}-01-01` });
+  if (domani && c.scala === 'anno') domani.onclick = () => cambia({ giorno: `${Number((rip ? oggi : c.giorno).slice(0, 4)) + 1}-01-01` });
   else if (domani) domani.onclick = () => cambia({ giorno: A.spostaGiorno(rip ? oggi : c.giorno, 1) });
   velo.querySelector('#fc-elimina').onclick = async () => {
     const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').delete().eq('id', c.id));
@@ -562,7 +559,6 @@ function disegnaAgenda() {
   const conCose = giorniConCose(AG.cose, oggi);
   if (AG.vista === 'mese') return disegnaMese();
   if (AG.vista === 'settimana') return disegnaSettimana();
-  if (AG.vista === 'periodo') return disegnaPeriodo();
   if (AG.vista === 'anno') return disegnaAnno();
   // P4 (Ignazio 23/10): la data si scrive una volta sola. La prima riga è quella di tutte le viste (testaScala: «Oggi» se serve, «+»);
   // la scelta del giorno sta sul titolo «Oggi, ven 23 ott ▾» (stesso id ag-scegli, stessa ruota delle date). L'anno solo se non è quello di oggi.
@@ -655,14 +651,13 @@ function disegnaMese() {
   app.querySelectorAll('.mm-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
 }
 
-// Il primo giorno della scala: giorno, lunedì, primo del mese, o il mese del WES che apre il periodo
+// Il primo giorno della scala: giorno, lunedì, primo del mese, primo dell'anno
 function inizioScalaMB(scala, giorno) {
   if (scala === 'giorno') return giorno;
-  if (scala === 'periodo') { const p = MB21Agenda.periodoWesDi(giorno, AG.wes); return p ? p.da : MB21Agenda.inizioScala('mese', giorno); }
   return MB21Agenda.inizioScala(scala, giorno);
 }
 
-// ── Periodo WES e Anno sono AGENDE, non numeri (Ignazio 22/09: «noi ci basiamo su un calendario, se no ripetiamo il
+// ── L'Anno è un'AGENDA, non numeri (Ignazio 22/09: «noi ci basiamo su un calendario, se no ripetiamo il
 // Report»): mesi piccoli con un puntino nei giorni in cui c'è stato (o ci sarà) lavoro, i WES segnati, le cose da fare.
 // I puntini: tutte le azioni con giorno nell'intervallo (anche le telefonate fatte dalla coda) e i richiami con giorno scelto.
 async function caricaIntervallo(da, a) {
@@ -720,15 +715,15 @@ function collegaMesiMini() {
   app.querySelectorAll('.mn [data-giorno]').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
   app.querySelectorAll('.mn-titolo[data-mese]').forEach(b => { b.onclick = () => { AG.vista = 'mese'; apriAgenda(b.dataset.mese); }; });
 }
-// L'elenco «Da fare» di una scala (mese, settimana, periodo, anno): le righe con il loro legame e il campo «Per chi è?» + testo
+// L'elenco «Da fare» di una scala (mese, settimana, anno): le righe con il loro legame e il campo «Per chi è?» + testo
 function elencoDaFareHtml(titolo, cose, scala, riportataDi) {
   return `<h2 class="ag-sez"><span>${esc(titolo)}</span></h2>
       ${cose.map(c => rigaCosaHtml(c, 'data-cosa', c.riportata ? riportataDi(c.riportata) : '')).join('')}
       ${nuovaCosaHtml(scala, 'Cosa c\'è da fare…')}`;
 }
-// Il foglio con titolo e frecce, mesi piccoli e le cose da fare della scala: lo stesso per Periodo WES e Anno
+// Il foglio con titolo e frecce, mesi piccoli e le cose da fare della scala: quello dell'Anno
 function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, titoloCose, cose, riportataDi, oggi }) {
-  return `${testaHtml}<div class="mm-testa sc-${scala}"><button class="freccia" id="sc-prima" aria-label="Prima"${prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo sc-titolo">${ic(scala === 'periodo' ? 'biglietto' : 'scala-anno')}<button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="Dopo"${dopo ? '' : ' disabled'}>›</button></div>
+  return `${testaHtml}<div class="mm-testa sc-${scala}"><button class="freccia" id="sc-prima" aria-label="Prima"${prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-anno')}<button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="Dopo"${dopo ? '' : ' disabled'}>›</button></div>
     ${partnerSelect()}${sopra || ''}${mesiMiniHtml(mesi, oggi)}
     <div class="ag-foglio">${elencoDaFareHtml(titoloCose, cose, scala, riportataDi)}
     </div>`;
@@ -753,42 +748,6 @@ function testaScala(mostraOggi) {
   return `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
     ${mostraOggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
     <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>`;
-}
-
-// ── Il PERIODO WES (Ignazio 22/09): un'agenda di 4 mesi da WES a WES, con la barra dei giorni che mancano al WES
-async function caricaPeriodo() {
-  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  let p = A.periodoWesDi(AG.giorno, AG.wes);
-  // una data prima del primo WES (arrivando dall'Anno sfogliato all'indietro, 23/09): si apre il primo periodo, non una pagina vuota
-  if (!p && (AG.wes || []).length) {
-    const primo = [...AG.wes].sort((x, y) => (x.data < y.data ? -1 : 1))[0];
-    if (AG.giorno < primo.data) p = A.periodoWesDi(primo.data, AG.wes);
-  }
-  AG.pd = { p };
-  if (p) await caricaIntervallo(p.da, p.a ? A.meseAccanto(p.a, 1) : A.meseAccanto(oggi.slice(0, 8) + '01', 1));
-}
-function disegnaPeriodo() {
-  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const p = (AG.pd || {}).p;
-  const mese = g => A.titoloMese(g).split(' ')[0].toLowerCase();
-  if (!p) return montaScala(testaScala(true) + `<h1 class="ag-titolo">Periodo WES</h1><div class="vuoto">Nessun WES registrato. L'Admin inserisce i WES in Admin → WES.</div>`);
-  let barra = '';
-  if (p.a) {
-    // da WES a WES (Ignazio 23/09): si conta dal giorno del WES che apre al giorno del WES che chiude
-    const tot = Math.max(1, A.giorniTra(p.inizio, p.fino)), fatti = Math.min(tot, Math.max(0, A.giorniTra(p.inizio, oggi)));
-    const mancano = A.giorniTra(oggi, p.fino), circa = p.senzaGiorno ? 'circa ' : '';
-    const dice = oggi < p.inizio ? `inizia tra ${A.giorniTra(oggi, p.inizio)} giorni` : mancano > 1 ? `mancano ${circa}${mancano} giorni al WES` : mancano === 1 ? 'domani c\'è il WES' : mancano === 0 ? 'oggi c\'è il WES' : 'periodo concluso';
-    barra = `<div class="pw-barra"><div class="pw-barra-testa"><span>Settimana ${Math.min(Math.ceil(tot / 7), Math.max(1, Math.ceil((fatti + 1) / 7)))} di ${Math.ceil(tot / 7)}</span><b>${dice}</b></div>
-      <div class="pw-traccia"><i style="width:${Math.round(fatti / tot * 100)}%"></i></div>
-      ${p.senzaGiorno ? '<small class="pw-manca">Manca il giorno del WES: si conta fino al 1° del mese. Il giorno si scrive in Admin → WES.</small>' : `<small>WES dal ${esc(dataLunga(p.fino))}</small>`}</div>`;
-  }
-  const inCorso = oggi >= p.da && (!p.a || oggi < p.a);
-  const html = foglioScalaHtml({ testaHtml: testaScala(!inCorso), oggi,
-    titolo: `Periodo WES · ${mese(p.da)} → ${p.a ? `${mese(p.a)} ${p.a.slice(0, 4)}` : 'in corso'}`, prima: p.prima, dopo: p.poi, sopra: barra,
-    mesi: A.mesiTra(p.da, p.a || A.meseAccanto(oggi.slice(0, 8) + '01', 1)).concat(p.a ? [p.a] : []),   // anche il mese del WES che chiude
-    scala: 'periodo', titoloCose: 'Da fare in questo periodo', cose: A.coseDellaScala(AG.cose, 'periodo', p.da, inizioScalaMB('periodo', oggi)),
-    riportataDi: g => `dal periodo di ${mese(g)}` });
-  montaScala(html, p.prima, p.poi);
 }
 
 // ── L'ANNO (Ignazio 22/09): un calendario classico, gennaio → dicembre, i 12 mesi piccoli, i WES e gli obiettivi dell'anno
@@ -1069,7 +1028,7 @@ if (typeof window !== 'undefined' && window.matchMedia) {
 }
 
 // Il menu ☰ dell'Agenda, come la colonna sinistra di NotePlan: le scale del tempo (per ora funzionano Giorno e
-// Settimana; Mese, Periodo WES e Anno arrivano col lavoro 6) e i modelli.
+// Settimana; Mese e Anno arrivano col lavoro 6) e i modelli.
 // ── Cerca in MB Plan: impegni per nome della persona o per tipo (PM, Follow Up, Counseling, telefonata, esito),
 // e le cose da fare scritte a mano. Di chi è scelto nel Partner Select (l'Admin con «Tutti» vede tutto).
 // Prima i prossimi (da adesso in avanti), poi i passati dal più recente; al massimo 50.
@@ -1109,7 +1068,7 @@ async function cercaMB(testo, box, chiudi) {
     // una telefonata già fatta nel giorno non c'è (MB Plan mostra solo i richiami aperti): il tocco apre la scheda della persona (Ignazio 03/10)
     const daScheda = a.tipo_azione === 'Contatto' && a.completata && a.contatto_id;
     return `<button class="mb-ris" data-giorno="${p.giorno}" data-evento="${esc(a.id)}"${daScheda ? ` data-scheda="${esc(a.contatto_id)}"` : ''}><i class="${classeCat(cat)}"></i><span><b>${esc(A.riga(a, opz).titolo)}</b><small>${esc(titoloGiorno(p.giorno, oggi))} · ${esc(p.ora)}${a.esito ? ' · ' + esc(a.esito) : ''}</small></span></button>`;
-  }).join('') + (cose.data || []).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-id="${esc(c.id)}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc((MB21Agenda.legameDi(c) || { nome: 'da collegare' }).nome)} · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
+  }).join('') + (cose.data || []).map(A.senzaPeriodo).map(c => `<button class="mb-ris cosa-r" data-cosa-giorno="${c.giorno || ''}" data-cosa-id="${esc(c.id)}" data-cosa-scala="${esc(c.scala || 'giorno')}"><i class="${c.fatto_il ? 'fatta' : ''}"></i><span><b>${esc(c.testo)}</b><small>Da fare · ${esc((MB21Agenda.legameDi(c) || { nome: 'da collegare' }).nome)} · ${esc(quandoCosa(c))}${c.fatto_il ? ' · fatta' : ''}</small></span></button>`).join('');
   const quanti = elenco.length + (cose.data || []).length;
   box.innerHTML = quanti ? `<div class="mb-ris-conto">${tutti.length > 50 ? 'Primi 50 risultati: scrivi qualcosa di più preciso' : `${quanti} ${quanti === 1 ? 'risultato' : 'risultati'}`}</div>${righe}` : '<div class="mb-vuoto">Nessun risultato.</div>';
   box.querySelectorAll('.mb-ris[data-evento]').forEach(b => { b.onclick = async () => {
@@ -1214,8 +1173,8 @@ function menuAgenda() {
 function largo() { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches; }   // function, non const: la usa anche il codice che parte al caricamento (pagina bianca del 22/09)
 // Il mese a griglia per la colonna destra: si tocca un giorno per aprirlo (i pallini della settimana stanno nella striscia)
 // I giorni con cose da fare ancora aperte (Ignazio 23/09: «sul giorno non vedo nessun riferimento»): un cerchietto verde
-// vuoto accanto al numero, uguale ovunque — striscia della settimana, mese grande, mese piccolo, mesi di Periodo WES e Anno.
-// Come nel foglio: una cosa non fatta di un giorno passato sta su oggi. `lista` = AG.cose (+ AG.coseLunghe per Periodo/Anno).
+// vuoto accanto al numero, uguale ovunque — striscia della settimana, mese grande, mese piccolo, mesi dell'Anno.
+// Come nel foglio: una cosa non fatta di un giorno passato sta su oggi. `lista` = AG.cose (+ AG.coseLunghe per l'Anno).
 function giorniConCose(lista, oggi) {
   const si = new Set();
   for (const c of lista || []) {
