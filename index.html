@@ -1254,6 +1254,11 @@
   /* i richiami del giorno, pastiglie corte sopra la giornata (cantiere 37): il tondo dell'icona tiene il
      colore del richiamo, come le righe grandi della Dashboard */
   .ag-rich { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  /* Lista Nomi L10: chi compie gli anni oggi, una card per persona con i bottoni per scrivere */
+  .ag-compleanno { background: var(--superficie); border-radius: 14px; box-shadow: var(--ombra-card); padding: 10px 12px; margin-bottom: 10px; }
+  .ag-comp-nome { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 0 0 8px; text-align: left; font-size: 15px; color: var(--testo); }
+  .ag-comp-nome svg.ic { width: 16px; height: 16px; vertical-align: -2px; }
+  .contatta.tre { grid-template-columns: repeat(3, 1fr); }
   .ag-rich button { flex: none; display: inline-flex; align-items: center; gap: 7px; border: 0; background: var(--superficie); box-shadow: var(--ombra-card);
     border-radius: var(--raggio-pill); min-height: 38px; padding: 5px 13px 5px 5px; font-family: inherit; font-size: 13px; color: var(--testo);
     --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }

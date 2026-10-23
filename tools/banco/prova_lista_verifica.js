@@ -238,7 +238,7 @@ prova('L3: la cornetta prende il numero con la regola dei 4 tasti; spenta, un to
   assert.equal(ctx.numero('+39 333 000 0001'), '+393330000001'); assert.equal(ctx.numero('333 0000001'), null); assert.equal(ctx.numero(null), null);
   assert.match(ctx.card({ id: 'a', nome: 'Persona A', telefono: '+39 333 000 0001' }), /<a class="chiama " href="tel:\+393330000001" aria-label="Chiama">/);
   assert.match(ctx.card({ id: 'b', nome: 'Persona B', telefono: '333 0000001' }), /<button class="chiama spento" aria-label="Chiama: perché è spenta">\[contatto\]<\/button>/);
-  assert.match(PL, /function contattaHtml\(telefono\) \{\n  const tel = numeroDaChiamare\(telefono\);/);
+  assert.match(PL, /function contattaHtml\(telefono, soloScrivere\) \{\n  const tel = numeroDaChiamare\(telefono\);/);
   assert.match(PL, /elenco\.querySelectorAll\('\.cn button\.chiama'\)\.forEach\(b => b\.onclick = \(\) => diPerche\('telefono'\)\);/);
   assert.match(PL, /if \(!e\.target\.closest\('a, \.menu, \.chiama'\)\) apriScheda\(c\.dataset\.id\);/);   // il tocco sulla cornetta non apre la scheda
   assert.equal(require('../../perche.js').perche('telefono'), 'Manca un numero che inizia con «+».');
@@ -575,6 +575,36 @@ prova('L9: un nome nuovo da ogni strada passa da salvaNomeNuovo: «Salvo lo stes
   assert.match(IDX, /const trovati = MB21Lista\.cercaNomi\(elenco, \{ testo: t, utenteId: visto\(\)\.id \}\);/);
   assert.doesNotMatch(IDX + PL + leggi('admin.js') + leggi('pagina-coach.js'), /contattiMiei/);
   assert.match(IDX, /velo\.className = 'velo centro';\n    velo\.style\.zIndex = 30;/);   // la domanda sopra «Scegli dalla tua lista»
+});
+
+prova('L10: nell\'Agenda di oggi chi compie gli anni, con i bottoni per scrivere (SMS, WhatsApp, Telegram); una lettura leggera al giorno per persona', async () => {
+  // chi compie gli anni: stesso giorno e mese, l'anno non conta (1604 = non si sa); il 29 febbraio si festeggia il 28 negli anni non bisestili
+  const righe = [{ id: 'a', nome: 'Persona B', compleanno: '1985-10-23' }, { id: 'b', nome: 'Persona A', compleanno: '1604-10-23' }, { id: 'c', nome: 'Persona C', compleanno: '1990-10-24' }, { id: 'd', nome: 'Persona D', compleanno: '2000-02-29' }];
+  assert.deepEqual(L.compieOggi(righe, '2026-10-23').map(r => r.nome), ['Persona A', 'Persona B']);
+  assert.deepEqual(L.compieOggi(righe, '2027-02-28').map(r => r.nome), ['Persona D']);
+  assert.deepEqual(L.compieOggi(righe, '2028-02-28').map(r => r.nome), []);   // bisestile: il 29
+  // la lettura: una volta al giorno per persona, con «Tutti» niente
+  let letture = 0;
+  const q = { select: () => q, eq: () => q, not: () => q, is: () => q, order: () => q, range: () => { letture++; return Promise.resolve({ data: righe, error: null }); } };
+  const ctx = { MB21Lista: L, AG: { giorno: '2026-10-23' }, tutti: false, vediTutti: () => ctx.tutti, visto: () => ({ id: 'io' }), supa: { from: () => q }, dbq: (_, p) => p,
+    esc, ic: n => `[${n}]`, classeCat: () => 'cat', iniziali: () => 'PA', contattaHtml: (t, solo) => `<div class="contatta${solo ? ' tre' : ''}"></div>` };
+  const PA = leggi('pagina-agenda.js');
+  vm.createContext(ctx);
+  vm.runInContext([PA.match(/^const chiaveCompleanni = .*$/m)[0], pezzo(PA, 'async function caricaCompleanni'), pezzo(PA, 'function compleanniHtml'), 'this.carica = caricaCompleanni; this.html = compleanniHtml;'].join('\n'), ctx);
+  await ctx.carica('2026-10-23'); await ctx.carica('2026-10-23');
+  assert.equal(letture, 1);
+  const h = ctx.html('2026-10-23');
+  assert.match(h, /data-compleanno="b"[\s\S]*?\[compleanno\] Compie gli anni: <b>Persona A<\/b>[\s\S]*?<div class="contatta tre"><\/div>[\s\S]*?Compie gli anni: <b>Persona B<\/b>/);
+  ctx.AG.giorno = '2026-10-24'; assert.equal(ctx.html('2026-10-23'), '');   // un altro giorno: niente
+  ctx.AG.giorno = '2026-10-23'; ctx.tutti = true; assert.equal(ctx.html('2026-10-23'), '');
+  // i bottoni per scrivere: la stessa funzione dei 4 tasti, senza la cornetta
+  const c = { esc, ic: n => `[${n}]` };
+  vm.createContext(c); vm.runInContext(PL.slice(PL.indexOf('const ICONE_CONTATTA = {'), PL.indexOf('\nfunction disegnaLista')) + ';this.c = contattaHtml;', c);
+  const tre = c.c('+393330000001', true);
+  assert.match(tre, /^<div class="contatta tre">/); assert.doesNotMatch(tre, /Chiama/); assert.match(tre, /SMS[\s\S]*WhatsApp[\s\S]*Telegram/);
+  assert.match(c.c('+393330000001'), /Chiama/);   // altrove i 4 tasti come prima
+  assert.match(PA, /html \+= richiamiAgenda\(oggi\) \+ compleanniHtml\(oggi\);/);
+  assert.match(PA, /AG\.giorno === oggi \? caricaCompleanni\(oggi\) : null\]\);/);
 });
 
 (async () => {
