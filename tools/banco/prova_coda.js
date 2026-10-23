@@ -258,19 +258,7 @@ prova('il conto del giorno: il traguardo resta quello scelto, le telefonate oltr
 });
 
 // ── Nota Pagine 016 · 018 (06/10/2026): la frase sotto il nome, e «Non ora» ──
-const { ultimaVolta, quandoFa, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio } = require('../../coda.js');
-prova('sotto il nome: cosa è successo l\'ultima volta e quando, in parole chiare', () => {
-  const oggi = '2026-10-06';
-  assert.equal(ultimaVolta({ contattato: false }, oggi), 'Mai contattato');
-  assert.equal(ultimaVolta(null, oggi), 'Mai contattato');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_modalita: 'Telefonata', ultima_fase: 'No Risposta', ultima_il: '2026-10-03T15:00:00+02:00' }, oggi), 'Ultima telefonata: No Risposta · 3 giorni fa');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_fase: 'Richiamare', ultima_il: '2026-10-05T23:30:00+02:00' }, oggi), 'Ultima telefonata: Richiamare · ieri');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Appuntamento', ultima_fase: 'Relazione', ultima_il: '2026-10-06T09:00:00+02:00' }, oggi), 'Ultimo appuntamento: Relazione · oggi');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_modalita: 'Messaggio', ultima_fase: 'Relazione', ultima_il: '2026-08-01T09:00:00+02:00' }, oggi), 'Ultimo contatto: Relazione · il 01/08/2026');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Contatto', ultima_fase: null, ultima_il: null }, oggi), 'Ultima telefonata: senza esito');
-  assert.equal(ultimaVolta({ contattato: true, ultimo_tipo: 'Piano Marketing', ultima_fase: 'PM Fissato', ultima_il: '2026-10-07T18:00:00+02:00' }, oggi), 'Ultimo PM: PM Fissato · domani');
-  assert.equal(quandoFa('2026-09-06', oggi), '30 giorni fa'); assert.equal(quandoFa('2026-09-05', oggi), 'il 05/09/2026'); assert.equal(quandoFa(null, oggi), '');
-});
+const { GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio } = require('../../coda.js');   // la frase sotto il nome: dal 23/10 MB21Lista.fraseCard (prova_lista_verifica.js, L6)
 prova('«Non ora»: Salta = tra GIORNI_SALTA giorni (mai l\'indomani), Scegli la data = quel giorno (mai nel passato); il testo del toast', () => {
   const oggi = '2026-10-06', salto = giornoDopo(oggi, GIORNI_SALTA);
   assert.equal(giornoDopo(oggi), '2026-10-07'); assert.equal(giornoDopo('2026-12-31'), '2027-01-01'); assert.equal(giornoDopo(oggi, -1), '2026-10-05');

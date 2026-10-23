@@ -184,9 +184,9 @@ prova('pausa lunga: più di un anno in pausa → si propone di rifare l\'avvio d
 prova('card che parla: da quanto è fermo, mai contattato, azione in programma', () => {
   const f = (r) => L.fraseCard(r, '2026-09-18');
   assert.deepEqual(f({}), { testo: 'Mai contattato', futuro: false });
-  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-18T08:00:00Z' }).testo, 'Sentito oggi · telefonata');
-  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-17T08:00:00Z' }).testo, 'Sentito ieri · telefonata');
-  assert.equal(f({ ultimo_tipo: 'Contatto', ultima_il: '2026-09-06T08:00:00Z' }).testo, 'Sentito 12 giorni fa · contatto');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-18T08:00:00Z', ultima_fase: 'Relazione' }).testo, 'Sentito oggi · telefonata · Relazione');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-09-17T08:00:00Z', ultima_fase: 'Richiamare' }).testo, 'Sentito ieri · telefonata · Richiamare');
+  assert.equal(f({ ultimo_tipo: 'Contatto', ultima_il: '2026-09-06T08:00:00Z' }).testo, 'Ultima azione 12 giorni fa · contatto');   // L6: senza esito non si sa se ci si è parlati
   assert.equal(f({ ultima_modalita: 'Contattare', ultima_il: '2025-11-18T10:00:00Z' }).testo, 'Fermo da 10 mesi · contattare');
   assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2026-08-10T10:00:00Z' }).testo, 'Fermo da 1 mese · telefonata');
   assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: '2023-01-04T10:00:00Z' }).testo, 'Fermo da 3 anni · telefonata');

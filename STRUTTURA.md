@@ -678,6 +678,11 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
       - il ritorno dalla scheda → `allineaCatalogo(id)`, che guarda quella persona com'è nella Lista.
     - Dopo una scelta e dopo Annulla, `aggiornaRiga` della persona: la Lista si aggiorna subito.
     - Via «Senza categoria» da «Altri ▾»: la strada è una sola, «Da catalogare».
+  - **L6 · una frase sola per l'ultimo contatto**:
+    - `MB21Lista.fraseCard` vale per la card della Lista e per la riga della coda in Dashboard (`rigaCoda`, `sottoOggi`). Tolte `MB21Coda.ultimaVolta` e `quandoFa`; resta `dataIt` per «Non ora».
+    - «Sentito» solo se l'ultimo esito non è tra `SENZA_PARLARE` (No Risposta · Telefono spento · Rimandato · No Show) e c'è un esito; altrimenti «Ultima azione».
+    - In fondo l'esito (`ultima_fase`), se c'è: «Sentito 3 giorni fa · telefonata · Relazione», «Ultima azione ieri · telefonata · No Risposta», «Fermo da 2 mesi · telefonata · No Risposta». «In programma» e «Mai contattato» restano com'erano.
+    - La frase va a capo invece di perdere la fine (l'esito): `.cn .frase` e la riga della coda (`.lv-persona[data-lv-persona^="coda|"]`) con `white-space: normal`.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
