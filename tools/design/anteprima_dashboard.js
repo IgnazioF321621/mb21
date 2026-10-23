@@ -122,7 +122,7 @@ function carica(m, opz = {}) {
   ], OGGI);
   m.CONF.righe = opz.vuoto ? [] : [{ id: 'k1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: iso(OGGI, '18:30'), contatto_id: 'x1', contatti: { nome: 'Giulia Conti', telefono: '333 7654321', categoria: 'Prospect' } }];
   m.RIO.righe = opz.vuoto ? [] : [{ id: 'r1', contatto_id: 'x2', brand: 'Nutrilite', prodotto: 'Daily', riordino: '2026-10-12', contatti: { nome: 'Rosa Aprile', telefono: '333 111', categoria: 'Cliente' }, categoria: 'Cliente', tipo_azione: 'Contatto', inizio: iso(OGGI, '10:00') },
-    { id: 'r2', contatto_id: 'x3', brand: 'Artistry', prodotto: '', riordino: '2026-10-14', contatti: { nome: 'Pino Manolo', telefono: '333 222', categoria: 'Cliente' }, categoria: 'Cliente', tipo_azione: 'Contatto', inizio: iso(OGGI, '10:00') }];
+    { id: 'r2', contatto_id: 'x3', brand: 'Artistry', prodotto: '', riordino: '2026-10-14', contatti: { nome: 'Tito Rovere', telefono: '333 222', categoria: 'Cliente' }, categoria: 'Cliente', tipo_azione: 'Contatto', inizio: iso(OGGI, '10:00') }];
   // i numeri del mese
   const checkMesi = opz.nuovo ? [] : [{ mese: '2026-09-01', contatti: 71, pm: 8, sponsor_gruppo: 2, vp_clienti: 260, tracce: 28, pagine: 260 }, { mese: '2026-10-01', contatti: 24, pm: 2, sponsor_gruppo: 0, vp_clienti: 120, tracce: 3, pagine: 40, ultimo_check: '2026-10-03' }];
   const obiettivi = [{ mese: '2026-09-01', vpg: 3800, vpp: 500, vpv: 300, contatti: 60, pm: 8, sponsor_gruppo: 2, bbs: 3, wes: 3, cep: 1, tracce: 30, pagine: 300, vpg_amway: 3100, vpp_amway: 480 },

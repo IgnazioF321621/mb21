@@ -23,7 +23,7 @@ prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Pa
   pulisci();
   const { v } = await apri({});
   assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);
-  await contatto(v, 'Pino Manolo');
+  await contatto(v, 'Tito Rovere');
   assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);
   await contatto(v, 'Isabella Rossi');
   await scegli(v, 'tipo', 'Appuntamento');
@@ -362,7 +362,7 @@ prova('Una Telefonata parte sempre «Senza orario · solo in coda», anche da un
   pulisci();
   P.AG.azioni = P.AG.azioni.filter(x => x.id !== 'az-nuova');   // le prove di prima hanno già salvato (e messo in lista) un impegno
   const prima = P.AG.azioni.length;
-  const { v, p } = await apri({ contatto: { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
+  const { v, p } = await apri({ contatto: { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
   assert.match(v.innerHTML, /data-scelta="quando"[\s\S]*?data-v="coda" class="scelto"/);
   assert.equal(v.querySelector('#na-ora'), null);                                 // solo il giorno
   await scegli(v, 'quando', 'ora');
@@ -374,7 +374,7 @@ prova('Una Telefonata parte sempre «Senza orario · solo in coda», anche da un
   assert.equal(P.AG.azioni.at(-1).id, 'az-nuova');
   P.AG.azioni.pop();
   // senza orario resta fuori dalla lista di MB Plan (l'Agenda non la mostra)
-  const seconda = await apri({ contatto: { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
+  const seconda = await apri({ contatto: { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
   await seconda.v.clic('#na-si'); await attendi(); await attendi();
   assert.equal((await seconda.p).senza_ora, true);
   assert.equal(P.AG.azioni.length, prima);

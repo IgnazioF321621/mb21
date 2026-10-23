@@ -12,7 +12,7 @@ let ok = 0;
 function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
 
 const mese = '2026-09';
-const nomi = ['Laura Ferri', 'Pino Manolo', 'Giovanna Maria Esposito De Santis', 'Luca Neri', 'Sara Colombo', 'Marco Gallo', 'Elena Riva', 'Paolo Conti', 'Anna Villa'];
+const nomi = ['Laura Ferri', 'Tito Rovere', 'Giovanna Maria Esposito De Santis', 'Luca Neri', 'Sara Colombo', 'Marco Gallo', 'Elena Riva', 'Paolo Conti', 'Anna Villa'];
 const modalita = ['PM 1a1', 'PM Casa/Pull'], esiti = ['Iscrizione', 'Prodotti', 'No BuonFine', 'Dare Seguito'];
 const azioni = nomi.map((n, i) => ({ id: 'a' + i, tipo_azione: 'Piano Marketing', modalita: modalita[i % 2], esito: esiti[i % 4], completata: true,
   inizio: `2026-09-${String(2 + i * 3).padStart(2, '0')}T17:00:00Z`, contatti: { nome: n } }));

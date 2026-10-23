@@ -18,7 +18,7 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   const mese = '2026-09';
   const azioni = [
     { id: 'a1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'Iscrizione', completata: true, inizio: '2026-09-03T17:00:00Z', contatti: { nome: 'Laura Ferri' } },
-    { id: 'a2', tipo_azione: 'Piano Marketing', modalita: 'PM Casa/Pull', esito: 'Dare Seguito', completata: true, inizio: '2026-09-10T17:00:00Z', contatti: { nome: 'Pino Manolo' } },
+    { id: 'a2', tipo_azione: 'Piano Marketing', modalita: 'PM Casa/Pull', esito: 'Dare Seguito', completata: true, inizio: '2026-09-10T17:00:00Z', contatti: { nome: 'Tito Rovere' } },
     { id: 'a3', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: 'No Show', completata: true, inizio: '2026-09-12T17:00:00Z', contatti: { nome: 'Non venuto' } },
     { id: 'a4', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: null, completata: false, inizio: '2026-09-25T17:00:00Z', contatti: { nome: 'Futuro' } },
     { id: 'a5', tipo_azione: 'Follow Up', modalita: 'Personale', esito: 'Iscrizione', completata: true, inizio: '2026-09-05T17:00:00Z', contatti: { nome: 'Altro tipo' } },
@@ -45,7 +45,7 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   const m = C.modulo({ mese, azioni, vendite, check, tracce, biglietti, obiettivi, dati });
 
   // 1 · PM: solo i Piani Marketing del mese, avvenuti (No Show fuori, non completati fuori, agosto fuori, Follow Up fuori)
-  assert.deepEqual(m.s1.righe.map(r => r.nome), ['Laura Ferri', 'Pino Manolo']);
+  assert.deepEqual(m.s1.righe.map(r => r.nome), ['Laura Ferri', 'Tito Rovere']);
   assert.equal(m.s1.quanti, 2); assert.equal(m.s1.obiettivo, 8); assert.equal(m.s1.raggiunto, false);
   assert.equal(m.s1.righe[0].data, '3/9'); assert.equal(m.s1.righe[0].uno_a_uno, true); assert.equal(m.s1.righe[0].iscritti, true);
   assert.equal(m.s1.righe[1].casa, true); assert.equal(m.s1.righe[1].candidati, 3); assert.equal(m.s1.righe[0].candidati, 1);

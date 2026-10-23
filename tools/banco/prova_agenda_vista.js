@@ -21,8 +21,8 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   const g = V.vista('orario');
   assert.match(g, /class="ag-griglia"/);
   assert.doesNotMatch(g, /lunedì 21 settembre/);   // il giorno si legge nella striscia: sotto non si ripete (Ignazio 21/09)
-  assert.match(g, /2 impegni si accavallano/);          // Pino e Anna alle 18:30
-  assert.match(g, /PM 1a1 · Pino Manolo/);
+  assert.match(g, /2 impegni si accavallano/);          // Tito e Anna alle 18:30
+  assert.match(g, /PM 1a1 · Tito Rovere/);
   const s = V.vista('settimana');
   assert.match(s, /class="ag-griglia sett"/);
   assert.equal((s.match(/class="ag-colonna/g) || []).length, 7);
@@ -102,7 +102,7 @@ prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore li
   let a;
   try { a = V.avvisoSovrapposti(OGGI, '18:30', 60, null); } finally { global.Date = VeroDate; }
   assert.match(a, /A quest'ora hai già 2 impegni/);
-  assert.match(a, /PM 1a1 · Pino Manolo/);
+  assert.match(a, /PM 1a1 · Tito Rovere/);
   assert.match(a, /Riordino · Anna Villa/);
   assert.match(a, /class="ag-orelibere"/);
   // spostando proprio quello, non litiga con sé stesso
@@ -115,7 +115,7 @@ prova('L\'avviso «a quest\'ora hai già…» dice chi c\'è e propone le ore li
 
 prova('Con «Tutti»: niente avviso per due partner diversi alla stessa ora, e se è la stessa persona si dice chi', () => {
   const con = (righe, vista) => { const tutte = AG.azioni; AG.azioni = righe; const h = V.vista(vista || 'orario'); AG.azioni = tutte; return h; };
-  const mio = { ...V.az('mio', V.OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Pino M.', 'Prospect'), user_id: 'ignazio', utenti: { nome: 'Ignazio' } };
+  const mio = { ...V.az('mio', V.OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Tito R.', 'Prospect'), user_id: 'ignazio', utenti: { nome: 'Ignazio' } };
   const suo = { ...V.az('suo', V.OGGI, '18:30', 30, 'Contatto', 'Telefonata', 'Elsa V.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
   const suo2 = { ...V.az('suo2', V.OGGI, '18:40', 30, 'Contatto', 'Telefonata', 'Bruno S.', 'Prospect'), user_id: 'isabella', utenti: { nome: 'Isabella' } };
   const duePartner = con([mio, suo]);
@@ -151,7 +151,7 @@ prova('Settimana: gli impegni ci sono tutti e il giorno scelto si riconosce', ()
 
 prova('Settimana: due accavallati diventano un blocco solo che dice quanti sono, invece di nomi tagliati', () => {
   const s = V.vista('settimana');
-  // lunedì Pino e Anna alle 18:30, venerdì Gruppo e Nina alle 18:00/18:30 → due blocchi «2»
+  // lunedì Tito e Anna alle 18:30, venerdì Gruppo e Nina alle 18:00/18:30 → due blocchi «2»
   assert.equal((s.match(/class="ag-sev molti"/g) || []).length, 2);
   assert.equal((s.match(/<b>2<\/b><\/button>/g) || []).length, 2);   // il numero dentro il blocco unito (non le pastiglie dei richiami)
   assert.doesNotMatch(s, />(G|N|P|A)\.<\/span>/);                 // niente nomi ridotti a una lettera
@@ -215,13 +215,13 @@ prova('I richiami stanno SOPRA la giornata, in pastiglie corte; P2 (23/10): oggi
 
 prova('Le cose da fare con l\'ora stanno nella Timeline, tratteggiate, e non fanno scattare «si accavallano»', () => {
   const prima = AG.cose;
-  AG.cose = [...prima, { id: 'k9', testo: 'Preparare il PM', giorno: OGGI, ora: '18:30:00', durata: 45, fatto_il: null, legato_a: 'Team' }];   // alle 18:30 ci sono già Pino e Anna
+  AG.cose = [...prima, { id: 'k9', testo: 'Preparare il PM', giorno: OGGI, ora: '18:30:00', durata: 45, fatto_il: null, legato_a: 'Team' }];   // alle 18:30 ci sono già Tito e Anna
   const g = V.vista('orario');
   AG.cose = prima;
   assert.match(g, /class="ag-ev ag-cosa[^"]*" data-cosa-blocco="cosa-k9"/);
   assert.match(g, /Preparare il PM/);
   assert.match(g, /class="ag-ev ag-cosa lg-Team" data-cosa-blocco="cosa-k9"/);   // il colore del legame anche nella Timeline (05/10)
-  assert.match(g, /2 impegni si accavallano/);   // conta solo Pino e Anna, non la cosa da fare
+  assert.match(g, /2 impegni si accavallano/);   // conta solo Tito e Anna, non la cosa da fare
 });
 
 prova('La Settimana mostra sotto ogni giorno anche le sue cose da fare (Ignazio 23/09)', () => {

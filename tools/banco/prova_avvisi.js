@@ -32,9 +32,9 @@ const assert = require('node:assert/strict');
     assert.equal(R.riepilogoDomani([]), null);
     const r = R.riepilogoDomani([
       { inizio: t('2026-09-25T15:00:00Z'), testo: 'Telefonata · Anna', telefonata: true },
-      { inizio: t('2026-09-25T07:30:00Z'), testo: 'PM · Pino Manolo', telefonata: false },
+      { inizio: t('2026-09-25T07:30:00Z'), testo: 'PM · Tito Rovere', telefonata: false },
       { inizio: t('2026-09-25T10:00:00Z'), testo: 'Follow Up · Rita', telefonata: false }]);
-    assert.deepEqual(r, { titolo: '2 appuntamenti e 1 telefonata', ora: '09:30', primo: 'PM · Pino Manolo' });
+    assert.deepEqual(r, { titolo: '2 appuntamenti e 1 telefonata', ora: '09:30', primo: 'PM · Tito Rovere' });
     assert.equal(R.riepilogoDomani([{ inizio: t('2026-09-25T07:30:00Z'), testo: 'Telefonata · Anna', telefonata: true }]).titolo, '1 telefonata');
   });
 
