@@ -43,7 +43,7 @@ async function aggiornaRiga(id) {
   if (error) { LS.righe = []; return; }
   const i = LS.righe.findIndex(x => x.id === id);
   if (!data) { if (i >= 0) LS.righe.splice(i, 1); return; }
-  if (LS.usoApp) data.app = LS.usoApp[id] || null;
+  if (LS.usoApp && INVITO_APP) data.app = LS.usoApp[id] || null;
   if (i >= 0) LS.righe[i] = data; else LS.righe.push(data);
 }
 
@@ -67,13 +67,16 @@ async function leggiTarghe() {
 
 // Schede che sono utenti dell'app (`schede_utenti_app`: aggancio Amway o collegamento dell'Admin) con ultimo uso e nomi in lista:
 // targhetta 📱 sulle card e nella scheda, parola «app» in Cerca (cantiere 20 lavoro 4). Se la lettura non riesce, niente targhette.
+// Lista Nomi L3 (Ignazio 23/10): spento con lo stesso interruttore dell'invito (INVITO_APP), finché non c'è un team: niente lettura,
+// niente targhetta sulle card e nella scheda; «app» in Cerca torna una parola come le altre (le righe non hanno `app`).
 async function leggiUsoApp() {
+  if (!INVITO_APP) { LS.usoApp = {}; return; }
   const { data, error } = await dbq('schede utenti app', supa.rpc('schede_utenti_app'));
   LS.usoApp = {};
   for (const u of error ? [] : data) LS.usoApp[u.contatto_id] = { ultimo_uso: u.ultimo_uso, nomi: u.nomi };
   segnaApp();
 }
-function segnaApp() { if (LS.usoApp) for (const r of LS.righe) r.app = LS.usoApp[r.id] || null; }
+function segnaApp() { if (LS.usoApp && INVITO_APP) for (const r of LS.righe) r.app = LS.usoApp[r.id] || null; }
 
 // Una lettura sola (Pagine 029 / Fondamenta 031, 07/10/2026: ogni richiesta costa ~2,6 KB di registro su Supabase): la funzione `lista_nomi()`
 // (migrazione 20261007190000) restituisce lista, targhette e utenti dell'app in UNA richiesta al posto di 7 (15 per l'Admin). Gira con i permessi
@@ -138,8 +141,10 @@ const ICONE_CONTATTA = {
 
 // Dal cantiere 34 i bottoni per contattare usano le icone a tratto, ognuna con il suo colore (quella di Telegram è provvisoria, di Code: da chiedere a Design)
 const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp', telegram: 'telegram' };
+// Il numero da chiamare, una regola sola per i 4 tasti e la cornetta della card (Lista Nomi L3): solo un numero che inizia per «+», senza spazi; altrimenti null
+const numeroDaChiamare = telefono => (telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null);
 function contattaHtml(telefono) {
-  const tel = telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null;
+  const tel = numeroDaChiamare(telefono);
   const link = (href, icona, testo) => `<a href="${esc(href)}" class="ct-${icona} ${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
   return `<div class="contatta">${link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
 }
@@ -205,13 +210,14 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => {
       if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
-      if (!e.target.closest('a, .menu')) apriScheda(c.dataset.id);
+      if (!e.target.closest('a, .menu, .chiama')) apriScheda(c.dataset.id);
     };
   });
   const esportaB = document.getElementById('esporta');
   if (esportaB) esportaB.onclick = () => { LS.esporta = { modo: 'tutti', eccezioni: new Set() }; disegnaElenco(); };
   barraEsporta(trovati);
   elenco.querySelectorAll('.cn .menu').forEach(b => b.onclick = () => menuCard(b.dataset.id));
+  elenco.querySelectorAll('.cn button.chiama').forEach(b => b.onclick = () => diPerche('telefono'));   // L3: la cornetta spenta dice perché
   const ordinaB = document.getElementById('ordina');
   if (ordinaB) ordinaB.onclick = async () => {
     const v = await sceltaDa('Ordina i nomi', Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })));
@@ -295,7 +301,7 @@ function diChiCard(r) {
 function cardNome(r) {
   const frase = MB21Lista.fraseCard(r, MB21Coda.oggiRoma());
   const sotto = r.professione || '';
-  const tel = !LS.esporta && r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml; in Esporta spenta (L2)
+  const tel = LS.esporta ? null : numeroDaChiamare(r.telefono);   // stessa regola dei 4 tasti (L3); in Esporta spenta (L2)
   // La prima riga è tutta del nome (Ignazio 19/09: con «nuovo» e le targhette accanto «si vede solo il nome e non si capisce»):
   // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
   // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
@@ -311,7 +317,8 @@ function cardNome(r) {
         ${segni ? `<div class="cn-segni">${segni}</div>` : ''}
         ${coppiaCard(r)}
       </div>
-      <a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ic('contatto')}</a>
+      ${tel || LS.esporta ? `<a class="chiama ${tel ? '' : 'spento'}" href="tel:${esc(tel || '')}" aria-label="Chiama">${ic('contatto')}</a>`
+        : `<button class="chiama spento" aria-label="Chiama: perché è spenta">${ic('contatto')}</button>`}
       <button class="menu" data-id="${esc(r.id)}" aria-label="Menu">${ic('puntini')}</button>
     </div>`;
 }
@@ -354,8 +361,10 @@ async function menuCard(id) {
   if (!r) return;
   // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
   const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
-  const voci = [...apri, ...(soloGuardo() ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
-  const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono));
+  // Lista Nomi L3 (Ignazio 23/10): con «Tutti» una riga fissa nel foglio al posto dell'avviso a ogni apertura (va via con il Partner Select)
+  const guardo = soloLettura();
+  const voci = [...apri, ...(guardo ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
+  const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono) + (guardo ? `<p class="scelta-nota">${esc(MB21Perche.perche('tutti'))}</p>` : ''));
   if (v) v.fai();
 }
 
@@ -1131,7 +1140,7 @@ function mostraTarghe(SV) {
   const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
   LS.targhe = LS.targhe || {};
   for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
-  if (el) el.innerHTML = targaAppHtml(LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id])) + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
+  if (el) el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);

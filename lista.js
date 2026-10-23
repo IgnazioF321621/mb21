@@ -62,7 +62,8 @@
     const t = piega(testo);
     if (!t) return true;
     if (t === 'nuovo' || t === 'new') return eNuovo(r, oggi);
-    if (t === 'app') return !!r.app;   // schede che sono utenti dell'app (segnate da pagina-lista.js)
+    // schede che sono utenti dell'app (segnate da pagina-lista.js); con l'invito spento (Lista Nomi L3) le righe non hanno `app` e «app» si cerca come le altre parole
+    if (t === 'app' && 'app' in r) return !!r.app;
     if (piega(r.nome).includes(t) || piega(r.professione).includes(t)) return true;
     const cifre = soloCifre(t);
     return cifre.length >= 3 && /^[+\d\s]+$/.test(t) && soloCifre(r.telefono).includes(cifre);

@@ -38,7 +38,7 @@ prova('offline: la frase approvata, sotto i due avvisi «Sei offline» della Das
 prova('«Tutti»: la frase senza ordini, detta da soloGuardo', () => {
   assert.equal(P.perche('tutti'), 'Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.');
   const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
-  assert.match(idx, /function soloGuardo\(\) \{\n  if \(!vediTutti\(\) \|\| ST\.tab === 'agenda'\) return false;\n  diPerche\('tutti'\);/);
+  assert.match(idx, /const soloLettura = \(\) => vediTutti\(\) && ST\.tab !== 'agenda';\nfunction soloGuardo\(\) \{\n  if \(!soloLettura\(\)\) return false;\n  diPerche\('tutti'\);/);   // L3: la domanda senza avviso è soloLettura
   assert.doesNotMatch(idx, /scegli un partner per modificare/);
 });
 prova('Pagine 071 (22/10): niente più frase dell\'abbonamento scaduto, da nessuna parte', () => {

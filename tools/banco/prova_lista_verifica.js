@@ -7,6 +7,7 @@ const { Nodo } = require('../design/mini_dom.js');
 const leggi = f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8');
 const PL = leggi('pagina-lista.js'), IDX = leggi('index.html');
 // una funzione intera di pagina-lista.js (dalla riga che la apre alla graffa a inizio riga)
+const NUMERO = (PL.match(/^const numeroDaChiamare = .*$/m) || [''])[0];   // L3: la regola del numero, usata da cardNome
 const pezzo = (src, inizio) => { const da = src.indexOf(inizio); assert.ok(da >= 0, inizio); return src.slice(da, src.indexOf('\n}\n', da) + 3); };
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const uguale = (a, b) => assert.equal(JSON.stringify(a), JSON.stringify(b));   // valori nati dentro vm (altro «mondo»): si confrontano scritti
@@ -54,7 +55,7 @@ prova('L1: sotto Archivia ed Elimina una riga piccola con la differenza; la riga
 prova('L1: sulla card solo la professione (l\'area resta nella scheda)', () => {
   const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: { esporta: null, targhe: {}, coppie: {} }, classeCat: () => 'cat',
     iniziali: () => 'PA', nuovoBadge: () => '', targheCard: () => '', coppiaCard: () => '', diChiCard: () => '', sceltoEsporta: () => false };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function cardNome') + ';this.card = cardNome;', ctx);
+  vm.createContext(ctx); vm.runInContext(NUMERO + pezzo(PL, 'function cardNome') + ';this.card = cardNome;', ctx);
   const h = ctx.card({ id: 'a', nome: 'Persona A', categoria: 'Prospect', area: 'Attività', ultima_area: 'Salute', professione: 'idraulico', telefono: '+393330000000' });
   assert.match(h, /<div class="prof">idraulico<\/div>/);
   assert.doesNotMatch(h, /Attività|Salute/);
@@ -147,7 +148,7 @@ prova('L2: in «Scarica nomi e numeri» una riga dice cosa fa il tocco; la corne
     document: { getElementById: id => pagina.querySelector('#' + id), createElement: () => new Nodo() } };
   const barra = new Nodo(); ctx.document.getElementById = id => (id === 'ls-esporta' ? barra : id === 'elenco' ? { after() {} } : null); barra.id = 'ls-esporta';
   vm.createContext(ctx);
-  vm.runInContext([PL.match(/^const sceltoEsporta = .*$/m)[0], pezzo(PL, 'function barraEsporta'), pezzo(PL, 'function cardNome'), 'this.barra = barraEsporta; this.card = cardNome;'].join('\n'), ctx);
+  vm.runInContext([NUMERO, PL.match(/^const sceltoEsporta = .*$/m)[0], pezzo(PL, 'function barraEsporta'), pezzo(PL, 'function cardNome'), 'this.barra = barraEsporta; this.card = cardNome;'].join('\n'), ctx);
   ctx.barra([{ id: 'a' }]);
   assert.match(barra.innerHTML, /^<div class="ls-esporta-aiuto">Tocca un nome per toglierlo<\/div>/);
   ctx.LS.esporta = { modo: 'nessuno', eccezioni: new Set() }; ctx.barra([{ id: 'a' }]);
@@ -183,6 +184,65 @@ prova('L2: nel file «Scarica la mia lista» il compleanno a parole, come nella 
   const f = E.fogliMiaLista({ contatti: [{ id: 'c1', nome: 'Persona A', compleanno: '1604-12-25' }, { id: 'c2', nome: 'Persona B', compleanno: '1985-04-12' }, { id: 'c3', nome: 'Persona C', compleanno: null }], azioni: [], note: [] });
   assert.deepEqual(f[0].righe.map(r => r.compleanno), ['25 dicembre', '12 aprile 1985', null]);
   assert.ok(f[0].colonne.includes('compleanno'));
+});
+
+prova('L3: la domanda «… è diventato Partner: vuoi invitarlo nell\'app MB21?» è spenta dall\'interruttore dell\'invito (una funzione sola per i tre punti)', async () => {
+  const domande = [];
+  const ctx = { INVITO_APP: false, chiediConferma: async t => { domande.push(t); return false; }, foglioLinkInvito() {}, visto: () => ({ id: 'io' }) };
+  vm.createContext(ctx); vm.runInContext(pezzo(IDX, 'async function domandaInvito') + ';this.domanda = domandaInvito;', ctx);
+  await ctx.domanda({ nome: 'Persona A', user_id: 'io' });
+  assert.equal(domande.length, 0);
+  ctx.INVITO_APP = true; await ctx.domanda({ nome: 'Persona A', user_id: 'io' });   // riacceso: torna come prima
+  uguale(domande, ['Persona A è diventato Partner']);
+  assert.match(PL, /\nconst INVITO_APP = false;\n/);
+  // i tre punti chiamano tutti questa funzione
+  assert.equal((PL + leggi('pagina-dashboard.js') + IDX).match(/domandaInvito\(/g).length, 4);   // 3 chiamate + la funzione
+});
+
+prova('L3: la targhetta dell\'app (📱 «3 gg») e la sua lettura spente con lo stesso interruttore; «app» in Cerca torna una parola come le altre', async () => {
+  let letture = 0;
+  const ctx = { INVITO_APP: false, LS: { righe: [{ id: 'a', nome: 'Persona A' }], usoApp: null, contatto: null }, dbq: async () => { letture++; return { data: [{ contatto_id: 'a', ultimo_uso: '2026-10-20', nomi: 3 }], error: null }; }, supa: { rpc: () => null } };
+  vm.createContext(ctx);
+  vm.runInContext([pezzo(PL, 'async function leggiUsoApp'), PL.match(/^function segnaApp\(\) .*$/m)[0], 'this.leggi = leggiUsoApp;'].join('\n'), ctx);
+  await ctx.leggi();
+  assert.equal(letture, 0); assert.equal(JSON.stringify(ctx.LS.usoApp), '{}'); assert.ok(!('app' in ctx.LS.righe[0]));
+  ctx.INVITO_APP = true; await ctx.leggi();
+  assert.equal(letture, 1); assert.equal(ctx.LS.righe[0].app.nomi, 3);   // riacceso: come prima
+  // la scheda: anche in testata niente 📱; aggiornaRiga non la rimette
+  assert.match(PL, /targaAppHtml\(INVITO_APP \? LS\.contatto\.app \|\| \(LS\.usoApp && LS\.usoApp\[SV\.id\]\) : null\)/);
+  assert.match(PL, /if \(LS\.usoApp && INVITO_APP\) data\.app = LS\.usoApp\[id\] \|\| null;/);
+  // Cerca: senza `app` nelle righe, «app» trova i nomi che la contengono; con le righe segnate resta la scorciatoia
+  const righe = [{ id: 'p', user_id: 'io', nome: 'Persona Pappalardo', categoria: 'Prospect' }, { id: 'q', user_id: 'io', nome: 'Persona Q', categoria: 'Prospect' }];
+  assert.deepEqual(L.filtraContatti(righe, { testo: 'app', utenteId: 'io', oggi: '2026-10-23' }).map(x => x.id), ['p']);
+  assert.deepEqual(L.filtraContatti(righe.map(r => ({ ...r, app: r.id === 'q' ? { nomi: 1 } : null })), { testo: 'app', utenteId: 'io', oggi: '2026-10-23' }).map(x => x.id), ['q']);
+});
+
+prova('L3: con «Tutti» nel menu della card una riga fissa al posto dell\'avviso a ogni apertura', async () => {
+  let sopra = null, voci = null, avvisi = 0;
+  const ctx = { esc, LS: { righe: [{ id: 'a', nome: 'Persona A', telefono: '+393330000001' }], esporta: null }, guardo: true, soloLettura: () => ctx.guardo, soloGuardo: () => { avvisi++; return ctx.guardo; },
+    MB21Perche: require('../../perche.js'), contattaHtml: () => '<div class="contatta"></div>', comandiContatto: () => [{ etichetta: 'Archivia' }], apriModulo() {}, apriScheda() {},
+    sceltaDa: async (t, v, s) => { voci = v.map(x => x.etichetta); sopra = s; return null; } };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function menuCard') + ';this.menu = menuCard;', ctx);
+  await ctx.menu('a');
+  assert.equal(avvisi, 0);   // nessun avviso
+  assert.equal(sopra, '<div class="contatta"></div><p class="scelta-nota">Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.</p>');
+  uguale(voci, []);
+  ctx.guardo = false; await ctx.menu('a');
+  assert.equal(sopra, '<div class="contatta"></div>'); uguale(voci, ['Modifica', 'Archivia']);
+});
+
+prova('L3: la cornetta prende il numero con la regola dei 4 tasti; spenta, un tocco dice «Manca un numero che inizia con «+».»', () => {
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: { esporta: null, targhe: {}, coppie: {} }, classeCat: () => 'cat',
+    iniziali: () => 'PA', nuovoBadge: () => '', targheCard: () => '', coppiaCard: () => '', diChiCard: () => '', sceltoEsporta: () => false };
+  vm.createContext(ctx); vm.runInContext(NUMERO + pezzo(PL, 'function cardNome') + ';this.card = cardNome; this.numero = numeroDaChiamare;', ctx);
+  assert.equal(ctx.numero('+39 333 000 0001'), '+393330000001'); assert.equal(ctx.numero('333 0000001'), null); assert.equal(ctx.numero(null), null);
+  assert.match(ctx.card({ id: 'a', nome: 'Persona A', telefono: '+39 333 000 0001' }), /<a class="chiama " href="tel:\+393330000001" aria-label="Chiama">/);
+  assert.match(ctx.card({ id: 'b', nome: 'Persona B', telefono: '333 0000001' }), /<button class="chiama spento" aria-label="Chiama: perché è spenta">\[contatto\]<\/button>/);
+  assert.match(PL, /function contattaHtml\(telefono\) \{\n  const tel = numeroDaChiamare\(telefono\);/);
+  assert.match(PL, /elenco\.querySelectorAll\('\.cn button\.chiama'\)\.forEach\(b => b\.onclick = \(\) => diPerche\('telefono'\)\);/);
+  assert.match(PL, /if \(!e\.target\.closest\('a, \.menu, \.chiama'\)\) apriScheda\(c\.dataset\.id\);/);   // il tocco sulla cornetta non apre la scheda
+  assert.equal(require('../../perche.js').perche('telefono'), 'Manca un numero che inizia con «+».');
+  assert.match(IDX, /\.cn button\.chiama\.spento \{ pointer-events: auto; \}/);
 });
 
 (async () => {
