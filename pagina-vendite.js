@@ -252,7 +252,7 @@ function moduloVendita(v, proposta) {
   $('v-sconto').addEventListener('input', () => { scontoAManoSi = $('v-sconto').value.trim() !== ''; calcolaSconto(); });
   $('v-prodotto').addEventListener('change', aiutoPrezzo); $('v-prodotto').addEventListener('change', () => proponi());
   if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
-  const conta = () => { $('v-conta').textContent = `${$('v-prodotto').value.length}/50`; };
+  const conta = () => contaLettere($('v-prodotto'), $('v-conta'));   // Lista Nomi L1: il conto solo nelle ultime 10 lettere, come negli altri moduli
   $('v-prodotto').oninput = conta; conta();
   // `proposta.salvata`: solo dopo un salvataggio riuscito (fino al 22/10 chiudeva l'attesa «Ordina da solo»); `poi` anche con Annulla
   const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata(); };   // anche le azioni: la vendita scrive in Agenda

@@ -180,7 +180,7 @@ function codaDelGiorno() {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>In coda ${esc(titoloGiorno(AG.giorno, MB21Coda.oggiRoma()).toLowerCase())}</h3><button id="cg-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="vn-aiuto">${lista.length === 1 ? 'Questa persona torna' : 'Queste persone tornano'} da contattare quel giorno, senza un orario fissato. Quel giorno ${lista.length === 1 ? 'la trovi' : 'le trovi'} nella Dashboard, tra le persone da contattare.</div>
-    <div class="cg-lista">${lista.map(c => `<button data-contatto="${esc(c.id)}"><span class="ts-pastiglia ${classeCat(c.categoria)}">${esc(iniziali(c.nome))}</span><span>${esc(c.nome)}<small>${esc(c.categoria || '')}</small></span>${ic('freccia')}</button>`).join('')}</div></div>`;
+    <div class="cg-lista">${lista.map(c => `<button data-contatto="${esc(c.id)}"><span class="ts-pastiglia ${classeCat(c.categoria)}">${esc(iniziali(c.nome))}</span><span>${esc(c.nome)}<small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : '')}</small></span>${ic('freccia')}</button>`).join('')}</div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };

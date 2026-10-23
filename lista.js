@@ -28,14 +28,15 @@
     ['onb_primo_pm', 'Primo PM', '1° PM personale'], ['onb_primo_abo', 'Primo ABO', '1° ABO personale'],
   ];
 
-  // Filtri: All (solo Admin) · Lista · Prospect · Partner · Clienti · Altri ▾ (Ex · Unlinked · Archiviati · Senza categoria)
+  // Filtri: All (solo Admin) · Tutti · Prospect · Partner · Clienti · Altri ▾ (Ex Partner/Cliente · Non collegato · Archiviati · Senza categoria).
+  // Lista Nomi L1 (Ignazio 23/10): la prima pillola si chiama «Tutti» (la chiave resta 'lista') e «Ex» ha le stesse parole del modulo.
   const FILTRI = {
     all:      { etichetta: 'All', soloAdmin: true, tutti: true, prova: r => r.categoria !== 'Archiviato' },
-    lista:    { etichetta: 'Lista', prova: r => r.categoria !== 'Archiviato' },
+    lista:    { etichetta: 'Tutti', prova: r => r.categoria !== 'Archiviato' },
     prospect: { etichetta: 'Prospect', prova: r => r.categoria === 'Prospect' },
     partner:  { etichetta: 'Partner', prova: r => r.categoria === 'Partner' },
     clienti:  { etichetta: 'Clienti', prova: r => r.categoria === 'Cliente' },
-    ex:       { etichetta: 'Ex', altri: true, prova: r => r.categoria === 'Ex Partner/Cliente' },
+    ex:       { etichetta: 'Ex Partner/Cliente', altri: true, prova: r => r.categoria === 'Ex Partner/Cliente' },
     unlinked: { etichetta: 'Non collegato', altri: true, prova: r => r.categoria === 'Unlinked' },
     archiviati: { etichetta: 'Archiviati', altri: true, prova: r => r.categoria === 'Archiviato' },
     senza:    { etichetta: 'Senza categoria', altri: true, prova: r => !r.categoria },

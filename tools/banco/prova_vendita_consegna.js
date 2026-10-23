@@ -8,6 +8,9 @@ const { Nodo } = require('../design/mini_dom.js');
 const src = fs.readFileSync(path.join(__dirname, '../../pagina-vendite.js'), 'utf8');
 const m = src.match(/^function moduloVendita\([\s\S]*?\n\}\n/m);
 assert.ok(m, 'moduloVendita');
+// il conto delle lettere (Lista Nomi L1): la funzione vera di index.html
+const contaVera = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8').match(/^const ULTIME_LETTERE = [\s\S]*?\nfunction contaLettere\([\s\S]*?\n\}\n/m);
+assert.ok(contaVera, 'contaLettere');
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 let ok = 0;
@@ -24,7 +27,7 @@ function apri(v, risposta, storico = null, account = null) {
     supa: { from: () => q }, dbq: (_, p) => Promise.resolve(p), disegnaScheda() {}, mostraToast: t => avvisi.push(t),
     chiediConferma: async (titolo, testo) => { domande.push([titolo, testo]); return risposta; } };
   vm.createContext(ctx);
-  vm.runInContext(m[0] + ';this.moduloVendita = moduloVendita', ctx);
+  vm.runInContext(contaVera[0] + m[0] + ';this.moduloVendita = moduloVendita', ctx);
   ctx.moduloVendita(v, {});
   const f = fogli[0], $ = id => f.querySelector('#' + id);
   return { f, $, scritte, domande, avvisi };

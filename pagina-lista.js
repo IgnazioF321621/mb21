@@ -158,7 +158,7 @@ function disegnaLista() {
         <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
       ${partnerSelect()}
       <div class="cerca">
-        <input id="cerca" type="search" placeholder="Cerca" value="${esc(LS.testo)}" autocomplete="off">
+        <input id="cerca" type="search" placeholder="Cerca un nome, una professione o un numero" value="${esc(LS.testo)}" autocomplete="off">
         <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">${ic('chiudi')}</button>
       </div>
       <div class="chips">
@@ -197,7 +197,10 @@ function disegnaElenco() {
     <span>${LS.esporta ? '' : `<button id="esporta">${ic('file')} Esporta</button> · `}<button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></span></div>`;
   elenco.innerHTML = trovati.length || LS.lettera
     ? ordina + (trovati.length ? '' : '<div class="vuoto">Nessun nome con questa lettera.</div>') + trovati.slice(0, LS.mostrate).map(cardNome).join('')
-    : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}</div>`;
+    : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}${LS.testo.trim() && !soloGuardo() ? `<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">${ic('piu')} Aggiungi «${esc(LS.testo.trim())}» alla Lista</button>` : ''}</div>`;
+  // Lista Nomi L1 (Ignazio 23/10): Cerca senza risultati → un tocco apre il modulo del nuovo contatto con il nome già scritto
+  const aggiungiCercato = document.getElementById('aggiungi-cercato');
+  if (aggiungiCercato) aggiungiCercato.onclick = () => apriModulo(null, { nome: LS.testo.trim() });
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => {
       if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
@@ -293,10 +296,11 @@ function diChiCard(r) {
 }
 
 // Card che parla (cantiere 30, lavoro 4; disegno approvato da Ignazio il 18/09): nome · frase («Fermo da 10 mesi · telefonata»,
-// 📅 se è in programma) · area e professione · cornetta per chiamare. Gli altri bottoni stanno nei tre puntini (`menuCard`).
+// 📅 se è in programma) · professione · cornetta per chiamare. Gli altri bottoni stanno nei tre puntini (`menuCard`).
+// Lista Nomi L1 (Ignazio 23/10): sulla card solo la professione; l'area si vede aprendo la scheda.
 function cardNome(r) {
   const frase = MB21Lista.fraseCard(r, MB21Coda.oggiRoma());
-  const sotto = [r.area || r.ultima_area, r.professione].filter(Boolean).join(' · ');
+  const sotto = r.professione || '';
   const tel = r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml
   // La prima riga è tutta del nome (Ignazio 19/09: con «nuovo» e le targhette accanto «si vede solo il nome e non si capisce»):
   // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
@@ -330,7 +334,7 @@ function sceltaDa(titolo, voci, sopra) {
     const velo = document.createElement('div');
     velo.className = 'velo centro';
     velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
-      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${esc(v.etichetta)}${v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : ''}</button>`).join('')}
+      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${v.nota && v.tono ? `<span class="voce-nota">${esc(v.etichetta)}<small class="nota-ramo">${esc(v.nota)}</small></span>` : esc(v.etichetta) + (v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : '')}</button>`).join('')}
       </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">
       ${voci.map((v, i) => v.lettera ? `<button data-i="${i}" class="${v.scelta ? 'scelto' : ''}" ${v.spenta ? 'disabled' : ''}>${esc(v.etichetta)}</button>` : '').join('')}</div>` : ''}<button class="link" id="scelta-no">Annulla</button></div>`;
     document.body.appendChild(velo);
@@ -344,7 +348,9 @@ function sceltaDa(titolo, voci, sopra) {
 
 async function scegliAltri() {
   const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
-  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati', 'senza'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k })));
+  // Lista Nomi L1 (Ignazio 23/10): sotto «Non collegato» la riga piccola che spiega, come nel modulo
+  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati', 'senza'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k,
+    nota: k === 'unlinked' ? MB21Lista.SPIEGA_CATEGORIA.Unlinked.toLowerCase() : null })));
   if (!v) return;
   LS.filtro = v.k; LS.mostrate = BLOCCO; disegnaLista();
 }
@@ -373,11 +379,11 @@ async function ricaricaERidisegna() {
 
 // «Archivia» ed «Elimina» sono due cose diverse e stanno tutte e due ovunque (cantiere 33, decisione 3): nei tre puntini
 // della card; dentro la scheda «Elimina» è in fondo a Modifica (e «Archivia» è la categoria Archiviato del modulo). Archivia = messo da parte, domani si ripristina;
-// Elimina = via dalla lista (archivio compreso), il lavoro fatto resta nei numeri.
+// Elimina = via dalla lista (archivio compreso), il lavoro fatto resta nei numeri. Lista Nomi L1 (Ignazio 23/10): sotto le due voci una riga piccola con la differenza.
 function comandiContatto(r) {
   return [r.categoria === 'Archiviato' ? { etichetta: 'Ripristina', icona: 'aggiorna', tono: 'verde', fai: () => ripristina(r) }
-    : { etichetta: 'Archivia', icona: 'archiviato', tono: 'ambra', fai: () => archivia(r) },
-    { etichetta: 'Elimina', icona: 'elimina', tono: 'rosso', pericolo: true, fai: () => elimina(r) }];
+    : { etichetta: 'Archivia', nota: 'lo metti da parte, si ripristina', icona: 'archiviato', tono: 'ambra', fai: () => archivia(r) },
+    { etichetta: 'Elimina', nota: 'sparisce dalla lista', icona: 'elimina', tono: 'rosso', pericolo: true, fai: () => elimina(r) }];
 }
 
 async function archivia(r) {
@@ -1170,7 +1176,7 @@ function scegliScheda(opz) {
       if (mio !== giro) return;
       if (error) { elenco.innerHTML = '<div class="sotto">Ricerca non riuscita: riprova.</div>'; return; }
       elenco.innerHTML = data.length
-        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc(r.categoria || 'Senza categoria')}</small></button>`).join('')
+        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc(r.categoria ? MB21Lista.nomeCategoria(r.categoria) : 'Senza categoria')}</small></button>`).join('')
         : '<div class="sotto">Nessun nome trovato</div>';
       elenco.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(data.find(r => r.id === b.dataset.id)));
     };
@@ -1362,7 +1368,7 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
 }
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
-function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»
+function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»; poi.nome (L1): il nome già scritto, da Cerca
   if (soloGuardo()) return;
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
@@ -1397,7 +1403,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
-    <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : '')}"><div id="f-arch" class="f-arch" hidden></div></div>
+    <div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>
     <div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>
@@ -1435,7 +1441,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
     $('invia').disabled = !$('f-nome').value.trim() || !$('f-cat').value;
-    velo.querySelectorAll('[data-conta]').forEach(d => { const el = $(d.dataset.conta); d.textContent = `${el.value.length}/${el.maxLength}`; });
+    velo.querySelectorAll('[data-conta]').forEach(d => contaLettere($(d.dataset.conta), d));   // L1: il conto solo nelle ultime 10 lettere
     avvisaArchiviati();
   };
   // Nuovo nome che c'è già tra gli archiviati (nota 012, Ignazio 05/10): mentre si scrive, sotto il nome «C'è già Carla Verdi tra gli archiviati»

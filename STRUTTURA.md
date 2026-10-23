@@ -635,6 +635,17 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - nel modulo il telefono ha un **prefisso a scelta** (+39 predefinito) e `lista.js → componiTelefono` salva sempre `+prefisso+numero`
 
 **Lista Nomi** (`lista.js`, funzioni pure; prove in `tools/banco/prova_lista.js`):
+- **Verifica Lista Nomi (Ignazio 23/10/2026, scelte sulla pagina con i disegni prima/dopo; a tappe L1…; prove in `tools/banco/prova_lista_verifica.js`):**
+  - **L1 · testi e ritocchi**:
+    - Casella «Cerca un nome, una professione o un numero» (scritta a 14 px e senza lo spazio del ✕ finché è vuota: entra in un telefono da 375; da 320 finisce con «…»).
+    - Pillola «Tutti» (`FILTRI.lista`, la chiave resta `lista`) e «Ex Partner/Cliente» (`FILTRI.ex`).
+    - In «Altri ▾» sotto «Non collegato» la riga piccola di `SPIEGA_CATEGORIA` (voce di `sceltaDa` con `nota`).
+    - Sulla card solo la professione (l'area nella scheda).
+    - «✓ Prospect · puoi chiamarlo ora» in «Da catalogare».
+    - `nomeCategoria` («Non collegato») anche in «Scegli dalla tua lista» (index.html), «Cerca nella lista» (`scegliScheda`) e «In coda» dell'Agenda.
+    - Sotto Archivia ed Elimina (`comandiContatto`) una riga piccola con la differenza. `sceltaDa` mette etichetta e `nota` in `.voce-nota` solo nelle voci colorate (`tono`); il Partner Select resta com'era.
+    - `contaLettere(campo, posto)` (index.html): il conto «n/max» si vede solo nelle ultime 10 lettere (`ULTIME_LETTERE`). Lo usano il modulo della Lista, la vendita e le note del Check.
+    - Cerca senza risultati: «+ Aggiungi «testo» alla Lista» (non con «Tutti») apre `apriModulo(null, { nome })` con il nome già scritto.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
