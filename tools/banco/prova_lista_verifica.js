@@ -436,7 +436,7 @@ prova('L7: una funzione sola legge tutta la Lista (nomi, targhette, coppie, codi
     leggiTuttoLista: async () => [[{ id: 'a', nome: 'Persona A' }, { id: 'b', nome: 'Persona B' }], { a: { bbs: true, wes: false, cep: true } }],
     supa: { from: () => { const q = { select: () => q, not: () => q, is: () => q, limit: () => q }; return q; } },
     dbq: async () => ({ data: [{ id: 'a', codice_amway: '1234567890' }, { id: 'b', codice_amway: '1234567890' }], error: null }) };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function leggiTuttaLaLista') + ';this.leggi = leggiTuttaLaLista;', ctx);
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function conCepPerCodice') + pezzo(PL, 'async function leggiTuttaLaLista') + ';this.leggi = leggiTuttaLaLista;', ctx);
   await ctx.leggi();
   assert.equal(ctx.LS.righe.length, 2); assert.ok(ctx.LS.letta > 0); assert.equal(segnate, 1);
   assert.equal(ctx.LS.targhe.b.cep, true);   // il CEP per codice anche sull'altra scheda (nota 069)
@@ -489,6 +489,40 @@ prova('L7: le altre pagine non buttano via tutta la Lista: rileggono solo la per
   assert.match(IDX, /else \{ contattiMiei = null; aggiornaRiga\(contattoId\); \}/);
   assert.match(IDX, /contattiMiei = null; aggiornaRiga\(v\.contatto_id\);/);
   assert.match(IDX, /contattiMiei = null; aggiornaRiga\(data\.id\);/);
+});
+
+prova('L8: le targhette leggono solo i biglietti dei BBS e WES in corso e i CEP non chiusi (poche righe: all\'Admin non ne manca più nessuna)', async () => {
+  const chiamate = [];
+  const tabella = { bbs: [{ data: '2026-09-01' }, { data: '2026-11-01' }], wes: [{ data: '2026-10-01' }],
+    biglietti: [{ contatto_id: 'a', tipo: 'BBS', evento: '2026-11-01', contatto: true }], cep: [{ contatto_id: 'b', dal: '2026-10-01', uscito_il: null }],
+    contatti: [{ id: 'a', compagno_id: 'c', compagno_nome: null }] };
+  const supa = { from: t => { const q = { filtri: [] }; for (const f of ['select', 'in', 'or', 'limit', 'not', 'is']) q[f] = (...x) => { q.filtri.push([f, ...x]); return q; };
+    q.then = ok => { chiamate.push([t, q.filtri.filter(x => x[0] === 'in' || x[0] === 'or')]); return Promise.resolve(ok({ data: tabella[t], error: null })); }; return q; } };
+  const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: {}, supa, dbq: (_, p) => Promise.resolve(p) };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function leggiTarghe') + ';this.leggi = leggiTarghe;', ctx);
+  const t = await ctx.leggi();
+  const di = n => JSON.stringify((chiamate.find(c => c[0] === n) || [])[1]);
+  assert.equal(di('biglietti'), JSON.stringify([['in', 'evento', ['2026-11-01', '2026-10-01']]]));   // solo il BBS e il WES in corso
+  assert.equal(di('cep'), JSON.stringify([['or', 'uscito_il.is.null,uscito_il.gte.2026-10-23']]));   // solo i CEP non chiusi
+  assert.equal(t.a.bbs, true); assert.equal(t.c.bbs, true); assert.equal(t.b.cep, true);   // la coppia prende i segni dell'altra, come prima
+  // senza eventi registrati: nessuna lettura di biglietti
+  chiamate.length = 0; tabella.bbs = []; tabella.wes = [];
+  await ctx.leggi(); assert.ok(!chiamate.some(c => c[0] === 'biglietti'));
+});
+
+prova('L8: dopo aver collegato una coppia le targhette si rileggono con il CEP per codice, la stessa funzione della lettura intera', () => {
+  assert.match(PL, /leggiTarghe\(\)\.then\(conCepPerCodice\)\.then\(t => \{ LS\.targhe = t; \}\)/);
+  assert.match(PL, /LS\.targhe = await conCepPerCodice\(LS\.targhe\);/);
+});
+
+prova('L8: la lettura dell\'Admin e la riga riletta prendono le colonne usate, una per una: via l\'icona della fase', () => {
+  const col = PL.match(/const COLONNE_LISTA = ([\s\S]*?);\n/)[1].split('+').map(x => x.trim().replace(/^'|'$/g, '')).join('').split(',').map(x => x.trim()).filter(Boolean);
+  // le colonne della vista contatti_lista (lette in sola lettura il 23/10) meno fase_icona
+  const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti'.split(', ');
+  assert.deepEqual(col, vista.filter(c => c !== 'fase_icona'));
+  assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.order\('id'\)/);
+  assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.eq\('id', id\)/);
+  assert.doesNotMatch(PL, /from\('contatti_lista'\)\.select\('\*'\)/);
 });
 
 (async () => {

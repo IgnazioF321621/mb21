@@ -690,6 +690,11 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - `apriModulo` rilegge sempre la riga salvata (`aggiornaRiga`), anche dai tre puntini. Il nome nuovo prende l'id dal salvataggio (`insert(...).select('id').single()`) ed entra subito. Con la scheda aperta la rilegge già `ricaricaERidisegna`.
     - Le altre pagine non svuotano più `LS.righe`: rileggono solo la persona toccata (`aggiornaRiga`). Vale per la Mappa (scheda nuova), il coach («Lo archivio» e Annulla), «diventa Cliente» nella vendita, la categoria cambiata nel modulo appuntamento e il nome nuovo da «Scegli dalla tua lista».
     - Svuotano ancora tutta la Lista solo: l'importazione dell'Admin, «Aggiorna i nomi», l'uscita dall'app e una lettura di riga non riuscita.
+  - **L8 · letture pesanti** (lo schermo non cambia):
+    - `leggiTarghe` (lettura dell'Admin e dopo una coppia) legge prima i due eventi in corso (`bbs`, `wes`), poi solo i biglietti di quegli eventi (`.in('evento', …)`) e i CEP non chiusi (`uscito_il` vuoto o da oggi in poi). Prima leggeva tutto, oltre le 1000 righe per richiesta, e all'Admin qualche targhetta mancava a caso.
+    - `conCepPerCodice(targhe)` è la funzione sola per il CEP per codice (nota 069), dopo la lettura intera e dopo aver collegato una coppia. Prima, dopo la coppia, il CEP delle altre schede si spegneva.
+    - `COLONNE_LISTA`: le colonne di `contatti_lista` scritte una per una al posto di `*`, senza `fase_icona` che nessuna pagina usa. Valgono per la lettura a pagine dell'Admin e per `aggiornaRiga`.
+    - Restano ferme, perché toccano il database: la lettura dei partner con `lista_nomi()` e «contatti fatti» calcolato nella vista.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi
