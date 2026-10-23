@@ -138,7 +138,8 @@ prova('Programma della settimana (nota 004): «Da chiudere» in alto, solo il fu
   try {
     P.AG.fattiAperti = false;
     let h = P.programmaSettimanaHtml();
-    assert.match(h, /Da chiudere · 1<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="c1">[\s\S]*?senza esito/);
+    // P3 (23/10): in «Da chiudere» anche il senza esito di una settimana prima (AG.passati del banco), il più vecchio in alto
+    assert.match(h, /Da chiudere · 2<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="s0">[\s\S]*?Gio 10 set[\s\S]*?data-prog-evento="c1">[\s\S]*?senza esito/);
     assert.match(h, /Piani Marketing: 1 da fare/);
     assert.match(h, /Incontro di Team: mar 22 alle 21:00/);
     assert.doesNotMatch(h, /lun 21 alle 11:00/);   // lo spazio di stamattina non si scrive più

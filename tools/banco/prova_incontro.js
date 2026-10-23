@@ -335,7 +335,7 @@ prova('Eliminare un\'azione (nota 010): una funzione del database, il rientro ri
   let annulla = null, testo = '';
   ctx.mostraToast = (t, a) => { testo = t; annulla = a; };
   vm.createContext(ctx);
-  vm.runInContext(pezzo('async function eliminaAppuntamento', '\nfunction scegliPassato') + ';this.eliminaAppuntamento = eliminaAppuntamento;' + pezzo('async function allineaRigaCoda', 'function spostaAppuntamento') + ';this.allineaRigaCoda = allineaRigaCoda', ctx);
+  vm.runInContext(pezzo('async function eliminaAppuntamento', '\n// (P3 Agenda') + ';this.eliminaAppuntamento = eliminaAppuntamento;' + pezzo('async function allineaRigaCoda', 'function spostaAppuntamento') + ';this.allineaRigaCoda = allineaRigaCoda', ctx);
   const e = { id: 'a9', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', esito: null };
   let ridisegnata = 0;
   await ctx.eliminaAppuntamento(e, async () => { ridisegnata++; });

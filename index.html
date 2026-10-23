@@ -1244,7 +1244,6 @@
   .ag-rich .telefonate { --richiamo: var(--az-contatto); --richiamo-tinta: var(--superficie-2); }
   .ag-rich .riordini { --richiamo: var(--proposta); --richiamo-tinta: var(--proposta-tinta); }
   .ag-rich .conferme { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
-  .ag-rich .passati { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
   /* il foglio del giorno (cantiere 41): le cose da fare, con la spunta tonda e il campo per aggiungere */
   .ag-cose { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 10px 12px 8px; margin-bottom: 12px; }
   .ag-cose-testa { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--testo-soft); margin-bottom: 4px; }
@@ -3517,26 +3516,7 @@ async function eliminaAppuntamento(e, dopo) {
     mostraToast('Azione ripristinata');
   });
 }
-
-function scegliPassato() {
-  const A = MB21Agenda, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
-  const velo = document.createElement('div');
-  velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('attenzione')} Senza esito</h3><button id="ps-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <p>Tocca un appuntamento per dargli l'esito.${AG.passati.length >= LIMITE_SENZA_ESITO ? ` Qui vedi i ${LIMITE_SENZA_ESITO} più recenti: man mano che li chiudi compaiono gli altri.` : ''}</p>
-    <div class="altri-voci">${AG.passati.map(e => { const r = A.riga(e, opz), p = A.partiRoma(e.inizio);
-      return `<button data-id="${esc(e.id)}"><b>${esc(p.giorno.split('-').reverse().join('/'))} ${esc(p.ora)}</b> · ${esc(r.titolo)}</button>`; }).join('')}</div></div>`;
-  document.body.appendChild(velo);
-  velo.querySelector('#ps-x').onclick = () => velo.remove();
-  velo.querySelectorAll('[data-id]').forEach(b => {
-    b.onclick = () => {
-      const e = AG.passati.find(x => x.id === b.dataset.id);
-      velo.remove();
-      AG.aperta = e.id;
-      apriAgenda(A.partiRoma(e.inizio).giorno);
-    };
-  });
-}
+// (P3 Agenda, 23/10: il foglio «Senza esito» della pastiglia non c'è più: gli appuntamenti senza esito sono in «Da chiudere» del Programma della settimana)
 
 let contattiMiei = null;   // per l'elenco del nuovo appuntamento: solo i nomi del partner scelto (Partner Select; «Tutti» = sé stesso)
 async function leggiContattiMiei() {

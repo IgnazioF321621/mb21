@@ -8,7 +8,7 @@
 // Giornata a linea del tempo (brief Fase 4): striscia di 7 giorni, appuntamenti del giorno in ordine d'ora,
 // telefonate del giorno, appuntamenti passati senza esito, [+] nuovo appuntamento. Logica pura in agenda.js.
 // Appuntamenti = righe di `azioni` con tipo ≠ Contatto (per data inizio) + Contatti con data scelta (dalla coda).
-const LIMITE_SENZA_ESITO = 50;   // quanti «senza esito» si leggono; se sono tanti la pastiglia dice «50+» (nota 021)
+const LIMITE_SENZA_ESITO = 50;   // quanti «senza esito» si leggono; se sono tanti «Da chiudere» dice «N+» (nota 021; P3: non più in una pastiglia)
 const AG = { giorno: null, settimana: [], azioni: [], passati: [], aperta: null, telefonate: null, vista: null, portato: null, cose: [], legame: null, filtro: '' };
 
 
@@ -167,7 +167,7 @@ function richiamiAgenda(oggi) {
     const n = e ? e.totale - e.fatti : null;
     if (n !== 0) voci.push(['ag-chi-sento', 'telefonate', 'telefonate', `Chi sento oggi?${n ? ` <b>${n}</b>` : ''}`]);
   } else if (t && t.inCoda && t.inCoda.length) voci.push(['ag-in-coda', 'telefonate', 'telefonate', `<b>${t.inCoda.length}</b> in coda`]);
-  if (AG.passati.length) voci.push(['ag-passati', 'passati', 'attenzione', `<b>${AG.passati.length >= LIMITE_SENZA_ESITO ? LIMITE_SENZA_ESITO + '+' : AG.passati.length}</b> senza esito`]);
+  // P3 (Ignazio 23/10): «N senza esito» non sta più qui: gli appuntamenti senza esito sono in «Da chiudere» del Programma della settimana
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
@@ -1158,6 +1158,11 @@ function menuAgendaHtml() {
 function programmaSettimanaHtml() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), lun = AG.settimana[0], dom = AG.settimana[6];
   const p = MB21Spazi.programma(AG.settimana, AG.azioni, AG.spazi, MB21Coda.adesso());
+  // P3 (Ignazio 23/10): «Da chiudere» è l'unico posto degli appuntamenti passati senza esito, anche delle settimane prima (AG.passati, i più
+  // recenti LIMITE_SENZA_ESITO): prima stavano anche nella pastiglia «N senza esito» della testata. I più vecchi in alto.
+  const giaQui = new Set(p.daChiudere.map(a => a.id));
+  const daChiudere = [...p.daChiudere, ...(AG.passati || []).filter(a => !a.esito && !giaQui.has(a.id))].sort((x, y) => (x.inizio < y.inizio ? -1 : x.inizio > y.inizio ? 1 : 0));
+  const quantiChiudere = (AG.passati || []).length >= LIMITE_SENZA_ESITO ? `${daChiudere.length}+` : daChiudere.length;
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const riga = (a, rossa) => { const g = A.partiRoma(a.inizio);
@@ -1166,7 +1171,7 @@ function programmaSettimanaHtml() {
     : 'Non ancora preparata: scegli quanti Piani Marketing e/o Consulenze prodotti vuoi fare, e quando. Anche gli incontri di Team e LdS.';
   const aperti = !!AG.fattiAperti;
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
-    ${p.daChiudere.length ? `<div class="mb-prog-chiudere"><div class="mb-prog-tit">Da chiudere · ${p.daChiudere.length}</div>${p.daChiudere.map(a => riga(a, true)).join('')}</div>` : ''}
+    ${daChiudere.length ? `<div class="mb-prog-chiudere"><div class="mb-prog-tit">Da chiudere · ${quantiChiudere}</div>${daChiudere.map(a => riga(a, true)).join('')}</div>` : ''}
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>` : `<p>${vuoto}</p>`}
     ${p.fatti.length ? `<button class="mb-prog-fatti" data-cmd="fatti" aria-expanded="${aperti}"><span>Fatti e passati<i>${p.fatti.length}</i></span><span>${aperti ? '⌄' : '›'}</span></button>
       <div class="mb-prog-elenco"${aperti ? '' : ' hidden'}>${p.fatti.map(a => riga(a, false)).join('')}</div>` : ''}
@@ -1199,7 +1204,7 @@ function collegaMenuAgenda(radice, chiudi) {
     const el = radice.querySelector('.mb-prog-elenco'); if (el) el.hidden = !AG.fattiAperti;
   };
   radice.querySelectorAll('[data-prog-evento]').forEach(b => { b.onclick = () => {
-    const e = (AG.azioni || []).find(x => x.id === b.dataset.progEvento);
+    const e = [...(AG.azioni || []), ...(AG.passati || [])].find(x => x.id === b.dataset.progEvento);   // P3: anche quelli delle settimane prima
     if (!e) return;
     chiudi();
     foglioEvento(MB21Agenda.eventiDelGiorno([e], MB21Agenda.partiRoma(e.inizio).giorno)[0] || e);
@@ -1982,7 +1987,6 @@ function collegaAgenda(eventi) {
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   su('ag-chi-sento', () => { ST.tab = 'oggi'; ST.vaiA = 'oggi'; mostraTab(); });   // P2: dritto all'elenco unico «Chi sento oggi?»
   su('ag-in-coda', codaDelGiorno);
-  su('ag-passati', scegliPassato);
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
   app.querySelectorAll('.ag-giorno').forEach(b => {
