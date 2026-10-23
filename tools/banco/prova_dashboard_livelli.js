@@ -345,22 +345,23 @@ prova('«Non ora» → «Salta»: la persona esce dalla coda di oggi e torna tra
   } finally { P.stub.supa = supaPrima; P.stub.dbq = dbqPrima; P.stub.sceltaDa = sceltaPrima; }
 });
 
-prova('«Da catalogare» è del partner visto (nota 019): manca o è di un altro → si rilegge; già suo e di oggi → niente', async () => {
+prova('«Da catalogare» è del partner visto (nota 019): manca o è di un altro → si rifà; già suo e di oggi → niente. Lista Nomi L5: i senza categoria dalla Lista già letta, nessuna seconda lettura', async () => {
   const supaPrima = P.stub.supa, dbqPrima = P.stub.dbq;
-  let letture = 0;
-  const righe = [{ id: 'z1', nome: 'Zeta Uno', categoria: null, user_id: 'io' }];
-  P.stub.supa = { rpc: () => Promise.resolve({ data: { contatti_al_giorno: 5, fatti_oggi: 0, catalogati_oggi: 1 }, error: null }),
-    from: () => { const q = { select: () => q, eq: () => q, is: () => q, order: () => q, range: () => { letture++; return Promise.resolve({ data: righe, error: null }); } }; return q; } };
+  let letture = 0, stati = 0;
+  const righe = [{ id: 'z1', nome: 'Zeta Uno', categoria: null, user_id: 'io' }, { id: 'z2', nome: 'Zeta Due', categoria: 'Prospect', user_id: 'io' }, { id: 'o1', nome: 'Di Ornella', categoria: null, user_id: 'ornella' }];
+  P.stub.supa = { rpc: () => { stati++; return Promise.resolve({ data: { contatti_al_giorno: 5, fatti_oggi: 0, catalogati_oggi: 1 }, error: null }); },
+    from: () => { letture++; const q = { select: () => q, eq: () => q, is: () => q, order: () => q, range: () => Promise.resolve({ data: [], error: null }) }; return q; } };
   P.stub.dbq = (_, p) => p;
   try {
     const { m } = P.vista('oggi');
+    m.LS.righe = righe;
     m.ST.catalogo = { righe: [{ id: 'altrui', nome: 'Di Ornella' }], totale: 1 }; m.ST.catalogoDi = 'ornella'; m.ST.catalogoGiorno = P.OGGI;
     await m.caricaCatalogo();
-    assert.equal(letture, 1);
-    assert.deepEqual(m.ST.catalogo.righe.map(x => x.nome), ['Zeta Uno']); assert.equal(m.ST.catalogoDi, 'io'); assert.equal(m.ST.stato.catalogati_oggi, 1);
+    assert.equal(stati, 1); assert.equal(letture, 0);   // solo lo stato di oggi: i nomi sono quelli della Lista
+    assert.deepEqual(m.ST.catalogo.righe.map(x => x.nome), ['Zeta Uno']); assert.equal(m.ST.catalogo.totale, 1); assert.equal(m.ST.catalogoDi, 'io'); assert.equal(m.ST.stato.catalogati_oggi, 1);
     await m.caricaCatalogo();   // già suo e di oggi
-    assert.equal(letture, 1);
-    m.ST.catalogo = null; await m.caricaCatalogo(); assert.equal(letture, 2);   // mancava
+    assert.equal(stati, 1);
+    m.ST.catalogo = null; await m.caricaCatalogo(); assert.equal(stati, 2); assert.equal(letture, 0);   // mancava
   } finally { P.stub.supa = supaPrima; P.stub.dbq = dbqPrima; }
 });
 

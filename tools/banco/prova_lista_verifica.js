@@ -31,7 +31,7 @@ prova('L1: in «Altri ▾» sotto «Non collegato» la riga piccola «conosciuto
     utentiLista: () => 'io', eAdmin: () => false, sceltaDa: async (t, v) => { voci = v; return null; }, disegnaLista() {}, BLOCCO: 40 };
   vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function scegliAltri') + ';this.altri = scegliAltri;', ctx);
   await ctx.altri();
-  uguale(voci.map(v => [v.etichetta, v.nota]), [['Ex Partner/Cliente · 1', null], ['Non collegato · 1', 'conosciuto/a, nessun recapito'], ['Archiviati · 0', null], ['Senza categoria · 0', null]]);
+  uguale(voci.map(v => [v.etichetta, v.nota]), [['Ex Partner/Cliente · 1', null], ['Non collegato · 1', 'conosciuto/a, nessun recapito'], ['Archiviati · 0', null]]);   // L5: via «Senza categoria»
 });
 
 prova('L1: sotto Archivia ed Elimina una riga piccola con la differenza; la riga piccola si vede anche nelle voci colorate, il Partner Select resta com\'era', async () => {
@@ -166,7 +166,7 @@ prova('L2: una funzione sola per scaricare e lo stesso foglio «Il file è pront
     LS: { filtro: 'prospect', testo: '', esporta: { modo: 'tutti', eccezioni: new Set() } }, disegnaElenco() {}, mostraToast: t => { throw new Error('avviso: ' + t); },
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(SL, 'function doveFinisceIlFile'), pezzo(SL, 'function foglioFilePronto'), pezzo(PL, 'function scaricaEsporta'),
+  vm.runInContext([pezzo(SL, 'function dispositivoDi'), pezzo(SL, 'function doveFinisceIlFile'), pezzo(SL, 'function foglioFilePronto'), pezzo(PL, 'function scaricaEsporta'),
     'function scaricaFile(bytes, nome) { scaricati.push([bytes.length > 0, nome]); }', 'this.scarica = scaricaEsporta;'].join('\n'), Object.assign(ctx, { scaricati }));
   ctx.scarica([{ nome: 'Persona A', telefono: '+393330000001' }, { nome: 'Persona B', telefono: null }]);
   uguale(scaricati, [[true, 'MB21 · Prospect · 23-10-2026.xlsx']]);
@@ -298,6 +298,104 @@ prova('L4: la domanda di conferma (chiediConferma, una per tutta l\'app) sta al 
   assert.equal(fogli[0].className, 'velo centro');
   fogli[0].querySelector('#cf-si').onclick();
   assert.equal(await p, true);
+});
+
+const PD = leggi('pagina-dashboard.js'), PR = leggi('pagina-rubrica.js'), SL5 = leggi('scarica-lista.js');
+// le funzioni di «Da catalogare» dalla copia in memoria (pagina-dashboard.js), vere
+function catalogoVero(LS) {
+  const ctx = { ST: {}, LS, MB21Coda: require('../../coda.js') };
+  vm.createContext(ctx);
+  vm.runInContext([PD.match(/^const catalogoOggi = .*$/m)[0], pezzo(PD, 'function catalogoSotto'), pezzo(PD, 'function togliDaCatalogo'), pezzo(PD, 'function rimettiInCatalogo'),
+    pezzo(PD, 'function altriDaCatalogare'), pezzo(PD, 'function allineaCatalogo'),
+    'this.f = { catalogoSotto, togliDaCatalogo, rimettiInCatalogo, altriDaCatalogare, allineaCatalogo };'].join('\n'), ctx);
+  return ctx;
+}
+const nomi = cat => cat.righe.map(x => x.nome).join(',');
+
+prova('L5: il telefono si riconosce da solo (la funzione di «Il file è pronto»): niente «Che telefono hai?» da iPhone e Android; dal computer la domanda resta', async () => {
+  const ctx = {}; vm.createContext(ctx); vm.runInContext(pezzo(SL5, 'function dispositivoDi') + ';this.d = dispositivoDi;', ctx);
+  assert.equal(ctx.d('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148'), 'iphone');
+  assert.equal(ctx.d('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/17.0 Mobile/15E148 Safari/604.1'), 'iphone');   // iPad
+  assert.equal(ctx.d('Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile Safari/537.36'), 'android');
+  assert.equal(ctx.d('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15'), 'mac');
+  assert.equal(ctx.d('Mozilla/5.0 (Windows NT 10.0) Chrome/120'), 'computer');
+  assert.match(SL5, /function doveFinisceIlFile\(ua\) \{\n  const d = dispositivoDi\(ua\);/);
+  for (const [ua, attesa, domande] of [['iPhone Mobile', 'iphone', 0], ['Linux; Android 14', 'android', 0], ['Macintosh Safari', 'android', 1]]) {
+    const chieste = [];
+    const c = { RB: {}, navigator: { userAgent: ua }, soloGuardo: () => false, aNome: () => '', apriModulo() {}, apriImportaRubrica() {},
+      sceltaDa: async (t, v) => { chieste.push(t); return t === 'Aggiungi nomi' ? v[1] : v[1]; } };
+    vm.createContext(c); vm.runInContext(pezzo(SL5, 'function dispositivoDi') + pezzo(PR, 'async function scegliAggiungi') + ';this.aggiungi = scegliAggiungi;', c);
+    await c.aggiungi();
+    assert.equal(c.RB.telefono, attesa, ua); assert.equal(chieste.filter(t => t === 'Che telefono hai?').length, domande, ua);
+  }
+});
+
+prova('L5: il compleanno della rubrica anche nelle schede già in Lista, solo dove manca (scheda giusta dal numero; la scrittura tocca solo compleanno vuoto)', () => {
+  const R = require('../../rubrica.js');
+  const vcf = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:Persona A', 'TEL;TYPE=CELL:+39 333 0000001', 'BDAY:1985-04-12', 'END:VCARD',
+    'BEGIN:VCARD', 'VERSION:3.0', 'FN:Persona B', 'TEL;TYPE=CELL:+39 333 0000002', 'END:VCARD',
+    'BEGIN:VCARD', 'VERSION:3.0', 'FN:Persona C', 'BDAY:--12-25', 'END:VCARD'].join('\r\n');
+  const righe = [{ id: 'a', user_id: 'io', nome: 'Persona A', telefono: '+393330000001' }, { id: 'b', user_id: 'io', nome: 'Persona B', telefono: '+393330000002' },
+    { id: 'c', user_id: 'io', nome: 'Persona C', telefono: null }];
+  const e = R.preparaImport(vcf, righe, { utenteId: 'io' });
+  assert.deepEqual(e.presenti.map(s => s.contattoId).sort(), ['a', 'b', 'c']);
+  assert.deepEqual(R.compleanniDaAggiungere(e), [{ id: 'a', compleanno: '1985-04-12' }, { id: 'c', compleanno: '1604-12-25' }]);
+  assert.match(PR, /\.update\(\{ compleanno: k\.compleanno, aggiornato_il: new Date\(\)\.toISOString\(\) \}\)\n\s*\.eq\('id', k\.id\)\.is\('compleanno', null\)\.select\('id'\)\);/);
+  assert.match(PR, /a \$\{n\(compleanni\.length\)\} aggiungo il compleanno della rubrica, solo dove manca/);
+  assert.match(PR, /Ho aggiunto il compleanno a <b>\$\{n\(conCompleanno\)\}<\/b> schede che erano già in Lista e non l'avevano\./);
+});
+
+prova('L5: «Vai a «Da catalogare»» apre la pagina nella Lista Nomi, rifatta con i nomi nuovi; anche «Aggiorna i nomi» la rifà', () => {
+  assert.match(PR, /ST\.catalogo = null; ST\.catalogoDi = null;   \/\/ L5/);
+  assert.match(PR, /getElementById\('rb-catalogare'\)\.onclick = async \(\) => \{ ST\.vistaCatalogo = true; window\.scrollTo\(0, 0\); await caricaCatalogo\(\); disegnaCatalogo\(\); \};/);
+  assert.doesNotMatch(PR, /ST\.tab = 'oggi'; mostraTab\(\)/);
+  assert.match(PL, /getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; apriLista\(\); \};/);
+});
+
+prova('L5: la riga e la pagina dicono «Senza categoria: 120 · oggi 5 da sistemare»; il conto viene dalla Lista già letta (la Dashboard non lo calcola più)', () => {
+  const { f } = catalogoVero({ righe: [] });
+  const r5 = Array.from({ length: 5 }, (_, i) => ({ id: 'n' + i, nome: 'Nome ' + i, categoria: null }));
+  assert.equal(f.catalogoSotto({ righe: r5, totale: 120 }), 'Senza categoria: 120 · oggi 5 da sistemare');
+  assert.equal(f.catalogoSotto({ righe: [{ ...r5[0], categoria: 'Prospect' }], totale: 119 }), 'Senza categoria: 119 · per oggi fatto');
+  assert.equal(f.catalogoSotto({ righe: [], totale: 12000 }), 'Senza categoria: 12.000 · per oggi fatto');   // il numero all'italiana
+  assert.equal(f.catalogoSotto({ righe: [], totale: 0 }), 'Tutti catalogati');
+  assert.doesNotMatch(PD, /leggiSenzaCategoria|ancora da catalogare/);
+  assert.match(PD, /ST\.catalogoTutti = LS\.righe\.filter\(r => r\.user_id === visto\(\)\.id && !r\.categoria\);/);
+});
+
+prova('L5: «Altri 5», Elimina e il ritorno dalla scheda lavorano sulla copia in memoria, senza ricaricare la Dashboard', () => {
+  const tutti = ['Anna', 'Bruno', 'Carla', 'Dario', 'Elsa', 'Fabio', 'Gino'].map((n, i) => ({ id: 'c' + i, nome: 'Persona ' + n, categoria: null }));
+  const LS = { righe: tutti.map(x => ({ ...x })) };
+  const ctx = catalogoVero(LS), f = ctx.f;
+  ctx.ST.catalogoTutti = tutti; ctx.ST.stato = { catalogati_oggi: 0 };
+  ctx.ST.catalogo = { righe: tutti.slice(0, 2), totale: 7 };
+  // «Altri 5»: i prossimi già letti, saltando chi ha già una categoria o è eliminato
+  tutti[3].categoria = 'Prospect'; tutti[4].eliminato = true;
+  f.altriDaCatalogare(5);
+  assert.equal(nomi(ctx.ST.catalogo), 'Persona Anna,Persona Bruno,Persona Carla,Persona Fabio,Persona Gino');
+  assert.match(PD, /if \(altri\) altri\.onclick = \(\) => \{ ST\.catalogoAltri = \(ST\.catalogoAltri \|\| 0\) \+ MB21Coda\.QUOTA_CATALOGO; altriDaCatalogare\(MB21Coda\.QUOTA_CATALOGO\); disegnaOggi\(\); \};/);
+  // Elimina: esce; con «Annulla» torna al suo posto
+  f.togliDaCatalogo(tutti[1]); assert.equal(nomi(ctx.ST.catalogo), 'Persona Anna,Persona Carla,Persona Fabio,Persona Gino'); assert.equal(ctx.ST.catalogo.totale, 6);
+  f.rimettiInCatalogo(tutti[1]); assert.equal(nomi(ctx.ST.catalogo), 'Persona Anna,Persona Bruno,Persona Carla,Persona Fabio,Persona Gino'); assert.equal(ctx.ST.catalogo.totale, 7);
+  assert.match(PD, /if \(c\) elimina\(c, eliminato => \{ c\.eliminato = eliminato; if \(eliminato\) togliDaCatalogo\(c\); else rimettiInCatalogo\(c\); disegnaOggi\(\); \}\);/);
+  assert.match(PL, /await \(dopo \|\| ricaricaERidisegna\)\(true\);/); assert.match(PL, /\(dopo \|\| ricaricaERidisegna\)\(false\);/);
+  // ritorno dalla scheda: eliminata → esce; diventata Prospect → resta «da chiamare»; diventata Non collegato → esce; il nome cambiato si vede
+  LS.righe = LS.righe.filter(r => r.id !== 'c0');
+  LS.righe.find(r => r.id === 'c1').categoria = 'Prospect';
+  LS.righe.find(r => r.id === 'c2').categoria = 'Unlinked';
+  LS.righe.find(r => r.id === 'c5').nome = 'Persona Fabio Rossi';
+  for (const id of ['c0', 'c1', 'c2', 'c5']) f.allineaCatalogo(id);
+  assert.equal(nomi(ctx.ST.catalogo), 'Persona Bruno,Persona Fabio Rossi,Persona Gino');
+  assert.equal(tutti[1].categoria, 'Prospect'); assert.equal(ctx.ST.stato.catalogati_oggi, 2); assert.equal(ctx.ST.catalogo.totale, 4);   // 7 − eliminata − Prospect − Non collegato
+  // senza la Lista in memoria non si tocca niente
+  const vuoto = catalogoVero({ righe: [] }); vuoto.ST.catalogo = { righe: [{ id: 'x', nome: 'X' }], totale: 1 }; vuoto.f.allineaCatalogo('x'); assert.equal(vuoto.ST.catalogo.righe.length, 1);
+  assert.match(PL, /if \(LS\.ritorno === 'catalogo'\) \{ LS\.ritorno = null; ST\.vistaCatalogo = true; allineaCatalogo\(daId\); window\.scrollTo\(0, 0\); return disegnaCatalogo\(\); \}/);
+});
+
+prova('L5: dopo una scelta in «Da catalogare» (e dopo Annulla) la Lista rilegge solo quella riga; in «Altri ▾» niente più «Senza categoria»', () => {
+  assert.match(PD, /const daChiamare = \['Prospect', 'Partner', 'Cliente'\]\.includes\(scelta\.categoria\);\n  aggiornaRiga\(id\);/);
+  assert.match(PD, /contatto\.categoria = null;\n  aggiornaRiga\(contatto\.id\);/);
+  assert.match(PL, /sceltaDa\('Altri', \['ex', 'unlinked', 'archiviati'\]\.map/);
 });
 
 (async () => {

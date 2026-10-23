@@ -664,6 +664,20 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - Nel nuovo contatto niente «Archiviato» tra le categorie (resta in Modifica).
     - Il bottone spento dice cosa manca: «Scrivi il nome», poi «Scegli la categoria», poi «Salva».
     - `chiediConferma` (una funzione per tutta l'app) apre il foglio al centro (`velo centro`), come `sceltaDa`.
+  - **L5 · rubrica e «Da catalogare»**:
+    - `dispositivoDi(ua)` (scarica-lista.js) è la funzione sola che riconosce il dispositivo: 'iphone' (anche iPad), 'android', 'mac' o 'computer'. La usano `doveFinisceIlFile` e `scegliAggiungi`: da iPhone o Android niente più «Che telefono hai?» (resta il link «Ho un Android / Ho un iPhone»); dal computer la domanda resta.
+    - `preparaImport` dà a ogni scheda «già nella Lista» il suo `contattoId`: la scheda con quel numero, o con quel nome se è una sola.
+    - `MB21Rubrica.compleanniDaAggiungere(esito)` dà il compleanno della rubrica per quelle schede. `salvaRubrica` lo scrive solo dove manca (`.is('compleanno', null).select('id')`) e la pagina finale dice a quante schede.
+    - «Vai a «Da catalogare»» apre la pagina nella Lista Nomi (prima portava alla Dashboard, dove non c'è più), rifatta con i nomi nuovi: dopo il salvataggio e con «Aggiorna i nomi» `ST.catalogo` si azzera.
+    - `caricaCatalogo` prende i senza categoria dalla Lista già letta (`ST.catalogoTutti`, `contatti_lista` ha le stesse colonne) più il piccolo `stato_oggi`. Tolta `leggiSenzaCategoria`. `caricaOggi` non calcola più «Da catalogare», che dal 01/10 non sta in Dashboard.
+    - Resta in attesa dell'ok di Ignazio, perché è una modifica al database: togliere `senza_categoria` da `apri_oggi`.
+    - Riga e pagina con le stesse parole (`catalogoSotto`): «Senza categoria: 120 · oggi 5 da sistemare» (o «per oggi fatto», «Tutti catalogati»). La pastiglia è `catalogoOggi`.
+    - Dalla copia in memoria, senza ricaricare la Dashboard:
+      - «Altri 5» → `altriDaCatalogare`;
+      - Elimina → `togliDaCatalogo` / `rimettiInCatalogo`, con `elimina(r, dopo)` che chiama `dopo(true)` e, con Annulla, `dopo(false)`;
+      - il ritorno dalla scheda → `allineaCatalogo(id)`, che guarda quella persona com'è nella Lista.
+    - Dopo una scelta e dopo Annulla, `aggiornaRiga` della persona: la Lista si aggiorna subito.
+    - Via «Senza categoria» da «Altri ▾»: la strada è una sola, «Da catalogare».
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi

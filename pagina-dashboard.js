@@ -37,20 +37,6 @@ async function leggiCandidati(oggi) {
   }
 }
 
-// Senza categoria del partner visto (cantiere 16 · Da catalogare)
-async function leggiSenzaCategoria() {
-  if (PRE.dati && Array.isArray(PRE.dati.senza_categoria)) return PRE.dati.senza_categoria.slice();
-  const righe = [];
-  for (let da = 0; ; da += 1000) {
-    const { data, error } = await dbq('lettura da catalogare',
-      supa.from('contatti').select('id,nome,professione,fascia_eta,citta,telefono,note,referral_di,categoria,user_id,creato_il,glide_id')
-        .eq('user_id', visto().id).is('categoria', null).order('id').range(da, da + 999));
-    if (error) throw error;
-    righe.push(...data);
-    if (data.length < 1000) return righe;
-  }
-}
-
 // Riaprire la Dashboard entro 15 minuti (Ignazio 05/10: «portiamo a 15»), per la stessa persona e lo stesso giorno, senza nessuna scrittura nel frattempo (esito, azione, conferma…),
 // riusa quello che ha già letto: prima ogni tocco sul tab, o ogni ritorno da una scheda, rifaceva 25-30 richieste (nota 017).
 const DASH_FRESCA_MS = 15 * 60000;
@@ -103,11 +89,7 @@ async function caricaOggi() {
   }
   ST.oggi = oggi; ST.risultato = risultato; ST.stato = stato; ST.offline = offline;
   if (!offline && !altro) salvaCache();
-  ST.catalogo = null; ST.catalogoDi = null;   // offline o errore: il riquadro Da catalogare non si mostra
-  if (!offline) {
-    if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }   // «Altri 5» valgono per oggi
-    try { ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri); ST.catalogoDi = visto().id; } catch (e) {}
-  }
+  // Lista Nomi L5 (23/10): «Da catalogare» non sta più qui (è nella Lista dal 01/10) e la Dashboard non lo calcola: lo fa la Lista con i nomi già letti
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
@@ -120,7 +102,9 @@ async function caricaOggi() {
 
 // «Da catalogare» per la Lista Nomi (nota Pagine 019, 06/10/2026): la Lista lo disegna da `ST.catalogo`, che prima si riempiva solo dalla Dashboard;
 // al cambio del Partner Select restava quello del partner di prima (Ignazio: «mi propone i nomi degli altri utenti»). Ora la Lista, se `ST.catalogo`
-// manca o è di un altro partner (`ST.catalogoDi`), lo legge da sé: lo stato di oggi (per «ne hai catalogati N») e i senza categoria del partner visto.
+// manca o è di un altro partner (`ST.catalogoDi`), lo fa da sé: lo stato di oggi (per i 5 del giorno) e i senza categoria del partner visto.
+// Lista Nomi L5 (Ignazio 23/10): i senza categoria si prendono dalla Lista già letta (`contatti_lista` ha le stesse colonne), senza la seconda lettura.
+// `ST.catalogoTutti` = tutti i senza categoria (gli stessi oggetti della Lista): «Altri 5», Elimina e il ritorno dalla scheda lavorano lì, senza rileggere.
 async function caricaCatalogo() {
   const oggi = MB21Coda.oggiRoma();
   if (ST.catalogo && ST.catalogoDi === visto().id && ST.catalogoGiorno === oggi) return;
@@ -132,7 +116,8 @@ async function caricaCatalogo() {
     if (error) throw error;
     ST.stato = stato;
     if (ST.catalogoGiorno !== oggi) { ST.catalogoGiorno = oggi; ST.catalogoAltri = 0; }
-    ST.catalogo = MB21Coda.daCatalogare(await leggiSenzaCategoria(), stato.catalogati_oggi, ST.catalogoAltri);
+    ST.catalogoTutti = LS.righe.filter(r => r.user_id === visto().id && !r.categoria);
+    ST.catalogo = MB21Coda.daCatalogare(ST.catalogoTutti, stato.catalogati_oggi, ST.catalogoAltri);
     ST.catalogoDi = visto().id;
   } catch (e) { ST.catalogo = null; ST.catalogoDi = null; }
 }
@@ -632,15 +617,17 @@ function collegaCarteCoda() {
   app.querySelectorAll('.bottoni button[data-cataloga]').forEach(btn => {
     btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
   });
+  // L5 (Ignazio 23/10): «Altri 5» allarga l'elenco già letto e ridisegna, senza ricaricare la Dashboard
   const altri = document.getElementById('altri-catalogo');
-  if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; ST.dashLetta = 0; caricaOggi(); };
+  if (altri) altri.onclick = () => { ST.catalogoAltri = (ST.catalogoAltri || 0) + MB21Coda.QUOTA_CATALOGO; altriDaCatalogare(MB21Coda.QUOTA_CATALOGO); disegnaOggi(); };
   app.querySelectorAll('button[data-scheda]').forEach(btn => {   // scheda contatto dalla coda e da Da catalogare (15/09)
     btn.onclick = () => apriContattoDa(btn.dataset.scheda, ST.vistaCatalogo ? 'catalogo' : 'oggi');
   });
   app.querySelectorAll('button[data-elimina-cat]').forEach(btn => {   // Elimina dentro «Da catalogare» (Ignazio 24/09): stessa funzione della Lista Nomi
     btn.onclick = () => {
       const c = (ST.catalogo && ST.catalogo.righe.find(x => x.id === btn.dataset.eliminaCat));
-      if (c) elimina(c, caricaOggi);
+      // L5: poi si ridisegna dalla copia in memoria (via il nome; con «Annulla» torna al suo posto), senza ricaricare la Dashboard
+      if (c) elimina(c, eliminato => { c.eliminato = eliminato; if (eliminato) togliDaCatalogo(c); else rimettiInCatalogo(c); disegnaOggi(); });
     };
   });
 }
@@ -660,16 +647,20 @@ function catalogoRigaHtml() {
   if (!cat || !ST.stato) return '';
   const fatti = ST.stato.catalogati_oggi || 0;
   if (!cat.totale && !fatti) return '';
-  // Ignazio 24/09: «fatti 20 di 20» sembrava un traguardo raggiunto: si dice quanti ne restano e quanti ne ha già fatti oggi (i 5 al giorno sono il ritmo, non un tetto)
-  const ne = guardoAltri() ? 'ne ha catalogati' : 'ne hai catalogati';
-  const sotto = cat.totale ? `${cat.totale} ancora da catalogare · oggi ${ne} ${fatti}` : `Tutti catalogati · oggi ${ne} ${fatti}`;
-  return `<div class="ls-catalogo">${rigaApribile('lista-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare', sotto, false, cat.righe.length)}</div>`;
+  return `<div class="ls-catalogo">${rigaApribile('lista-catalogo', 'catalogare' + (cat.totale ? '' : ' fatta'), cat.totale ? 'catalogare' : 'fatto', 'Da catalogare', catalogoSotto(cat), false, catalogoOggi(cat))}</div>`;
+}
+// Ignazio 24/09: «fatti 20 di 20» sembrava un traguardo raggiunto. Lista Nomi L5 (Ignazio 23/10): parole più chiare, le stesse nella riga e nella pagina:
+// «Senza categoria: 120 · oggi 5 da sistemare» (i 5 = quelli di oggi ancora senza categoria)
+const catalogoOggi = cat => cat.righe.filter(r => !r.categoria).length;
+function catalogoSotto(cat) {
+  if (!cat.totale) return 'Tutti catalogati';
+  const n = catalogoOggi(cat);
+  return `Senza categoria: ${cat.totale.toLocaleString('it-IT')} · ${n ? `oggi ${n} da sistemare` : 'per oggi fatto'}`;
 }
 function disegnaCatalogo() {
   const cat = ST.catalogo, altro = guardoAltri();
   if (!cat || !ST.stato) { ST.vistaCatalogo = false; return disegnaLista(); }
-  const fatti = ST.stato.catalogati_oggi || 0, ne = altro ? 'ne ha catalogati' : 'ne hai catalogati';
-  const sotto = cat.totale ? `${cat.totale} ancora da catalogare · oggi ${ne} ${fatti}` : `Tutti catalogati · oggi ${ne} ${fatti}`;
+  const fatti = ST.stato.catalogati_oggi || 0, sotto = catalogoSotto(cat);
   const corpo = cat.righe.length ? cat.righe.map(cardCatalogo).join('')
     : `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
       + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
@@ -678,6 +669,43 @@ function disegnaCatalogo() {
     ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}`;
   document.getElementById('indietro').onclick = () => { ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
   collegaCarteCoda();
+}
+// ── «Da catalogare» dalla copia in memoria (Lista Nomi L5): niente riletture per «Altri 5», Elimina e il ritorno dalla scheda ──
+// un nome esce dai 5 di oggi (catalogato non da chiamare, eliminato)
+function togliDaCatalogo(c) {
+  const i = ST.catalogo ? ST.catalogo.righe.indexOf(c) : -1;
+  if (i >= 0) ST.catalogo.righe.splice(i, 1);
+  if (ST.catalogo) ST.catalogo.totale--;
+}
+// e ci torna, al suo posto in ordine alfabetico (Annulla)
+function rimettiInCatalogo(c) {
+  if (!ST.catalogo) return;
+  const righe = ST.catalogo.righe;
+  if (!righe.includes(c)) {
+    const i = righe.findIndex(x => !x.categoria && (x.nome || '').localeCompare(c.nome || '', 'it', { sensitivity: 'base' }) > 0);
+    righe.splice(i < 0 ? righe.length : i, 0, c);
+  }
+  ST.catalogo.totale++;
+}
+// «Altri 5»: i prossimi dei senza categoria già letti
+function altriDaCatalogare(n) {
+  if (!ST.catalogo) return;
+  const tutti = ST.catalogoTutti || [];
+  ST.catalogo.righe.push(...tutti.filter(x => !x.categoria && !x.eliminato && !ST.catalogo.righe.includes(x)).slice(0, n));
+}
+// Tornando dalla scheda: quella persona come la Lista la sa adesso (la scheda rilegge la sua riga dopo ogni modifica): eliminata o catalogata
+// esce; se ha preso una categoria da chiamare resta con «puoi chiamarlo ora»; nome, professione e telefono aggiornati
+function allineaCatalogo(id) {
+  const c = ST.catalogo && ST.catalogo.righe.find(x => x.id === id);
+  if (!c || !LS.righe.length) return;
+  const r = LS.righe.find(x => x.id === id);
+  if (!r) { c.eliminato = true; return togliDaCatalogo(c); }
+  Object.assign(c, { nome: r.nome, professione: r.professione, telefono: r.telefono, citta: r.citta, fascia_eta: r.fascia_eta, note: r.note, referral_di: r.referral_di });
+  if (r.categoria && !c.categoria) {
+    c.categoria = r.categoria;
+    ST.stato.catalogati_oggi = (ST.stato.catalogati_oggi || 0) + 1;
+    if (['Prospect', 'Partner', 'Cliente'].includes(r.categoria)) ST.catalogo.totale--; else togliDaCatalogo(c);
+  }
 }
 function cardCatalogo(r) {
   const aperta = ST.aperta === r.id || !!r.categoria;   // catalogato da chiamare: resta aperto
@@ -726,9 +754,12 @@ async function toccaCategoria(id, indice) {
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   const daChiamare = ['Prospect', 'Partner', 'Cliente'].includes(scelta.categoria);
+  aggiornaRiga(id);   // L5: la Lista prende subito la categoria nuova (solo quella riga)
   const dopo = () => {
-    // da chiamare: la card resta con i bottoni esito (se non lo chiami, domani entra in coda); gli altri escono
-    if (daChiamare) { contatto.categoria = scelta.categoria; contatto.user_id = contatto.user_id || visto().id; }
+    // da chiamare: la card resta con i bottoni esito (se non lo chiami, domani entra in coda); gli altri escono.
+    // L5: la categoria si segna sempre: «Altri 5» prende solo chi è ancora senza
+    contatto.categoria = scelta.categoria;
+    if (daChiamare) contatto.user_id = contatto.user_id || visto().id;
     else ST.catalogo.righe.splice(ST.catalogo.righe.indexOf(contatto), 1);
     ST.catalogo.totale--;
     ST.stato.catalogati_oggi = (ST.stato.catalogati_oggi || 0) + 1;
@@ -746,12 +777,8 @@ async function annullaCatalogo(contatto, prima, daChiamare, indice) {
     { p_contatto: contatto.id, p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec }));
   if (error) return mostraToast('Annullamento non riuscito: riprova.');
   contatto.categoria = null;
-  if (!daChiamare) {   // rimetti il nome in ordine alfabetico
-    const righe = ST.catalogo.righe;
-    const i = righe.findIndex(x => !x.categoria && (x.nome || '').localeCompare(contatto.nome || '', 'it', { sensitivity: 'base' }) > 0);
-    righe.splice(i < 0 ? righe.length : i, 0, contatto);
-  }
-  ST.catalogo.totale++;
+  aggiornaRiga(contatto.id);   // L5: anche la Lista torna com'era
+  rimettiInCatalogo(contatto);   // il nome in ordine alfabetico (se era uscito) e il conto
   ST.stato.catalogati_oggi--;
   disegnaOggi();
   mostraToast('Annullato');

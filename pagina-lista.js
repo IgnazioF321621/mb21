@@ -176,7 +176,7 @@ function disegnaLista() {
     <div id="fondo"></div>
     <button class="link" id="ls-aggiorna">Aggiorna i nomi</button>
     ${versione()}`;
-  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; apriLista(); };
+  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; ST.catalogo = null; apriLista(); };   // L5: anche «Da catalogare» si rifà
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
@@ -348,8 +348,9 @@ function sceltaDa(titolo, voci, sopra) {
 
 async function scegliAltri() {
   const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
-  // Lista Nomi L1 (Ignazio 23/10): sotto «Non collegato» la riga piccola che spiega, come nel modulo
-  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati', 'senza'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k,
+  // Lista Nomi L1 (Ignazio 23/10): sotto «Non collegato» la riga piccola che spiega, come nel modulo.
+  // L5: via «Senza categoria»: per i nomi senza categoria la strada è una sola, «Da catalogare» in cima alla Lista
+  const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k,
     nota: k === 'unlinked' ? MB21Lista.SPIEGA_CATEGORIA.Unlinked.toLowerCase() : null })));
   if (!v) return;
   LS.filtro = v.k; LS.mostrate = BLOCCO; disegnaLista();
@@ -429,12 +430,12 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
   // nota Pagine 068 (feedback del 20/10, «non mi fa eliminare i doppioni»): il nome eliminato esce subito dai nomi in memoria; prima restava
   // a video finché la Lista non si rileggeva, e un secondo «Elimina» sullo stesso nome diceva «Non eliminato: riprova»
   await aggiornaRiga(r.id);
-  await (dopo || ricaricaERidisegna)();
+  await (dopo || ricaricaERidisegna)(true);   // `dopo(true)`: eliminato (L5: «Da catalogare» lo toglie dalla sua copia)
   mostraToast(`${r.nome} eliminato`, async () => {
     const { error } = await dbq('annulla elimina', supa.rpc('annulla_elimina_contatto', { p_contatto: r.id }));
     if (error) return mostraToast('Non annullato: riprova.');
     await aggiornaRiga(r.id);   // e con «Annulla» torna subito
-    (dopo || ricaricaERidisegna)();
+    (dopo || ricaricaERidisegna)(false);   // `dopo(false)`: di nuovo in lista
   });
 }
 
@@ -558,11 +559,13 @@ function disegnaScheda() {
     <div id="sezione"></div>
     ${versione()}`;
   document.getElementById('indietro').onclick = () => {
-    eseguiDopoScheda(LS.contatto && LS.contatto.id);   // il processo lasciato a metà (dopo lo Sharing del Piano Marketing) riprende
+    const daId = LS.contatto && LS.contatto.id;
+    eseguiDopoScheda(daId);   // il processo lasciato a metà (dopo lo Sharing del Piano Marketing) riprende
     LS.contatto = null;
     if (!LS.ritorno) { disegnaLista(); return window.scrollTo(0, LS.scrollLista || 0); }
     if (LS.ritorno === 'mappa') { LS.ritorno = null; ST.tab = 'mappa'; return mostraTab(); }
-    if (LS.ritorno === 'catalogo') { LS.ritorno = null; ST.vistaCatalogo = true; return caricaOggi(); }   // torna a «Da catalogare», ricaricato (caricaOggi lo ridisegna da sé)
+    // torna a «Da catalogare» dalla copia in memoria, con quella persona com'è adesso (L5: prima si ricaricava tutta la Dashboard)
+    if (LS.ritorno === 'catalogo') { LS.ritorno = null; ST.vistaCatalogo = true; allineaCatalogo(daId); window.scrollTo(0, 0); return disegnaCatalogo(); }
     if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
     if (LS.ritorno === 'agenda') { LS.ritorno = null; ST.tab = 'agenda'; return mostraTab(); }   // dallo Sharing dopo un Piano Marketing fissato da MB Plan (01/10)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)

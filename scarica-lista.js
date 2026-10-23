@@ -44,12 +44,20 @@ function bannerScaricaLista() {
   return `<button class="banner-grande messaggi" id="ds-scarica-lista"><span class="ico">${ic('file')}</span>
     <span><b>MB21 torna personale dal ${esc(giornoChiusura())}</b><small>Tocca qui per scaricare la tua lista completa: schede, azioni e note, in un file Excel (anche per Google Fogli)</small></span></button>`;
 }
+// Che dispositivo è, dal suo userAgent: 'iphone' (anche iPad) · 'android' · 'mac' · 'computer'. Una funzione sola per «Il file è pronto»
+// e per l'importazione dalla rubrica (Lista Nomi L5, Ignazio 23/10: il telefono si riconosce da solo, niente domanda «Che telefono hai?»)
+function dispositivoDi(ua) {
+  const u = String(ua || '');
+  if (/iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && /Mobile/.test(u))) return 'iphone';
+  if (/Android/.test(u)) return 'android';
+  return /Macintosh/.test(u) ? 'mac' : 'computer';
+}
 // Dove finisce il file, a parole, secondo il dispositivo (nota Admin 017: una partner non capiva dove trovarlo)
 function doveFinisceIlFile(ua) {
-  const u = String(ua || '');
-  if (/iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && /Mobile/.test(u))) return ['Sul telefono si apre il foglio di condivisione: tocca «Salva su File» e scegli dove tenerlo.', 'Lo ritrovi nell\'app File. Per Google Fogli: dall\'app File toccalo e scegli «Apri con» Fogli Google.'];
-  if (/Android/.test(u)) return ['Il file è nella cartella «Download» del telefono (anche nelle notifiche, appena scaricato).', 'Toccalo per aprirlo con Fogli Google o con Excel.'];
-  if (/Macintosh/.test(u)) return ['Il file è nella cartella «Download» del Mac (in Safari anche con la freccia in alto a destra).', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
+  const d = dispositivoDi(ua);
+  if (d === 'iphone') return ['Sul telefono si apre il foglio di condivisione: tocca «Salva su File» e scegli dove tenerlo.', 'Lo ritrovi nell\'app File. Per Google Fogli: dall\'app File toccalo e scegli «Apri con» Fogli Google.'];
+  if (d === 'android') return ['Il file è nella cartella «Download» del telefono (anche nelle notifiche, appena scaricato).', 'Toccalo per aprirlo con Fogli Google o con Excel.'];
+  if (d === 'mac') return ['Il file è nella cartella «Download» del Mac (in Safari anche con la freccia in alto a destra).', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
   return ['Il file è nella cartella «Download» del computer.', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
 }
 // Il foglio dopo ogni download (Lista Nomi L2: lo stesso per «Scarica la mia lista» e per la Lista): il nome del file, cosa c'è dentro, dove trovarlo
