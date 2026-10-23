@@ -12,10 +12,15 @@ async function scegliAggiungi() {
     { etichetta: 'Importa dalla rubrica del telefono', icona: 'rubrica', k: 'rubrica' }]);
   if (!v) return;
   if (v.k === 'uno') return apriModulo(null);
-  // Ignazio 18/09: prima si chiede che telefono è, poi si danno solo le istruzioni di quello
-  const t = await sceltaDa('Che telefono hai?', [{ etichetta: 'iPhone', k: 'iphone' }, { etichetta: 'Android (Samsung, Huawei, Xiaomi…)', k: 'android' }]);
-  if (!t) return;
-  RB.telefono = t.k;
+  // Ignazio 18/09: solo le istruzioni del proprio telefono. Lista Nomi L5 (23/10): il telefono si riconosce da solo (dispositivoDi, la stessa funzione
+  // di «Il file è pronto»); resta il link «Ho un Android / Ho un iPhone». La domanda resta solo dal computer, dove il telefono non si vede.
+  const d = dispositivoDi(navigator.userAgent);
+  if (d === 'iphone' || d === 'android') RB.telefono = d;
+  else {
+    const t = await sceltaDa('Che telefono hai?', [{ etichetta: 'iPhone', k: 'iphone' }, { etichetta: 'Android (Samsung, Huawei, Xiaomi…)', k: 'android' }]);
+    if (!t) return;
+    RB.telefono = t.k;
+  }
   apriImportaRubrica();
 }
 
@@ -73,7 +78,7 @@ const RB_MOTIVI = {
 };
 
 function disegnaRiepilogoRubrica() {
-  const e = RB.esito;
+  const e = RB.esito, compleanni = MB21Rubrica.compleanniDaAggiungere(e);   // L5
   window.scrollTo(0, 0);
   const n = x => x.toLocaleString('it-IT');
   // stesso nome, altro numero: i due numeri e la scelta a tre voci (la prima, già scelta, non perde niente)
@@ -92,7 +97,7 @@ function disegnaRiepilogoRubrica() {
     <button class="indietro" id="rb-indietro">‹ Scegli un altro file</button>
     <h1>${n(e.letti)} contatti letti</h1>
     <div class="riquadro rb-conti">
-      <div><b>${n(e.presenti.length)}</b> già nella Lista · saltati</div>
+      <div><b>${n(e.presenti.length)}</b> già nella Lista · saltati${compleanni.length ? ` <small style="display:block;margin:2px 0 0">a ${n(compleanni.length)} aggiungo il compleanno della rubrica, solo dove manca</small>` : ''}</div>
       <div><b>${n(e.nuovi.length)}</b> nuovi · entrano tutti</div>
       ${e.numeri.length ? `<div><b>${n(e.numeri.length)}</b> già in Lista senza numero · aggiungo il numero alla scheda che c'è già</div>` : ''}
     </div>
@@ -106,8 +111,8 @@ function disegnaRiepilogoRubrica() {
   const daCambiare = () => e.controllare.filter(s => s.inLista && s.scelta !== 'nuova');
   const aggiorna = () => {
     const quanti = daSalvare().length + e.numeri.length;
-    bottone.textContent = quanti ? `Salva ${n(quanti)} nomi` : daCambiare().length ? 'Salva le modifiche' : 'Niente da salvare';
-    bottone.disabled = !quanti && !daCambiare().length;
+    bottone.textContent = quanti ? `Salva ${n(quanti)} nomi` : daCambiare().length || compleanni.length ? 'Salva le modifiche' : 'Niente da salvare';
+    bottone.disabled = !quanti && !daCambiare().length && !compleanni.length;
   };
   app.querySelectorAll('.rb-scelta').forEach(sel => sel.onchange = () => { e.controllare[sel.dataset.i].scelta = sel.value; aggiorna(); });
   app.querySelectorAll('.rb-riga input[type=checkbox]').forEach(c => c.onchange = () => {
@@ -116,17 +121,17 @@ function disegnaRiepilogoRubrica() {
     s.spunta = c.checked; aggiorna();
   });
   app.querySelectorAll('.rb-nome').forEach(t => t.oninput = () => { e[t.dataset.g][t.dataset.i].nome = t.value; aggiorna(); });
-  bottone.onclick = () => salvaRubrica(daSalvare(), daCambiare());
+  bottone.onclick = () => salvaRubrica(daSalvare(), daCambiare(), compleanni);
   aggiorna();
 }
 
 // A blocchi da 200: un file grosso non va in un colpo solo. Se un blocco non passa ci si ferma e si dice quanti sono entrati:
 // rifare l'importazione non crea doppioni, chi è già entrato viene riconosciuto dal numero.
-async function salvaRubrica(schede, omonimi) {
+async function salvaRubrica(schede, omonimi, compleanni = []) {
   const bottone = document.getElementById('rb-salva');
   bottone.disabled = true;
   const righe = schede.map(s => MB21Rubrica.rigaContatto(s, RB.proprietario));
-  let salvati = 0, numeri = 0, errore = false;
+  let salvati = 0, numeri = 0, errore = false, conCompleanno = 0;
   const cambiati = { note: 0, rubrica: 0 };
   for (let i = 0; i < righe.length && !errore; i += 200) {
     bottone.textContent = `Salvo… ${salvati.toLocaleString('it-IT')} di ${righe.length.toLocaleString('it-IT')}`;
@@ -145,11 +150,19 @@ async function salvaRubrica(schede, omonimi) {
     if (error) { errore = true; break; }
     cambiati[s.scelta]++;
   }
+  // L5: il compleanno della rubrica nelle schede già in Lista, solo dove manca (la scrittura tocca solo `compleanno is null`)
+  for (const k of errore ? [] : compleanni) {
+    const { data, error } = await dbq('compleanno dalla rubrica', supa.from('contatti').update({ compleanno: k.compleanno, aggiornato_il: new Date().toISOString() })
+      .eq('id', k.id).is('compleanno', null).select('id'));
+    if (error) { errore = true; break; }
+    conCompleanno += (data || []).length;
+  }
   try { LS.righe = await leggiLista(); segnaApp(); } catch (err) {}
-  disegnaFattoRubrica({ salvati, numeri, errore, cambiati, conAltri: schede.filter(s => s.altriNumeri.length).length });
+  ST.catalogo = null; ST.catalogoDi = null;   // L5: «Da catalogare» si rifà con i nomi nuovi
+  disegnaFattoRubrica({ salvati, numeri, errore, cambiati, conCompleanno, conAltri: schede.filter(s => s.altriNumeri.length).length });
 }
 
-function disegnaFattoRubrica({ salvati, numeri, errore, conAltri, cambiati = { note: 0, rubrica: 0 } }) {
+function disegnaFattoRubrica({ salvati, numeri, errore, conAltri, cambiati = { note: 0, rubrica: 0 }, conCompleanno = 0 }) {
   window.scrollTo(0, 0);
   const n = x => x.toLocaleString('it-IT');
   app.innerHTML = `
@@ -159,11 +172,13 @@ function disegnaFattoRubrica({ salvati, numeri, errore, conAltri, cambiati = { n
     ${numeri ? `<div class="riquadro">Ho aggiunto il numero a <b>${n(numeri)}</b> schede che erano già in Lista senza telefono.</div>` : ''}
     ${cambiati.note ? `<div class="riquadro">Stesso nome con un altro numero: a <b>${n(cambiati.note)}</b> schede ho messo il numero della rubrica nelle note. Quando le chiami scopri qual è quello giusto.</div>` : ''}
     ${cambiati.rubrica ? `<div class="riquadro">A <b>${n(cambiati.rubrica)}</b> schede ho messo il numero della rubrica; quello di prima è nelle note.</div>` : ''}
+    ${conCompleanno ? `<div class="riquadro">Ho aggiunto il compleanno a <b>${n(conCompleanno)}</b> schede che erano già in Lista e non l'avevano.</div>` : ''}
     ${conAltri ? '<div class="riquadro">Chi aveva più numeri: ho tenuto il cellulare, gli altri sono nelle note della scheda.</div>' : ''}
     <div class="riquadro">Puoi rifarlo quando vuoi: chi è già in Lista viene saltato.</div>
     <button class="primario" id="rb-catalogare">Vai a «Da catalogare»</button>
     <button class="link" id="rb-lista">Torna alla Lista Nomi</button>
     ${versione()}`;
-  document.getElementById('rb-catalogare').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
+  // L5 (Ignazio 23/10): «Da catalogare» sta nella Lista Nomi (dal 01/10): il bottone apre lì la pagina, riletta con i nomi nuovi
+  document.getElementById('rb-catalogare').onclick = async () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); await caricaCatalogo(); disegnaCatalogo(); };
   document.getElementById('rb-lista').onclick = disegnaLista;
 }

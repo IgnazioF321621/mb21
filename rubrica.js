@@ -129,9 +129,12 @@
   //   numeri: stesso nome di UNA scheda della Lista che non ha il numero → non si crea un doppione, si aggiunge il numero a `contattoId`
   function preparaImport(testo, righe, { utenteId } = {}) {
     const mie = (righe || []).filter(r => r.user_id === utenteId);
-    const numeriLista = new Set(mie.map(r => soloCifre(r.telefono)).filter(c => c.length >= 6));
+    // numero → la scheda che lo ha (Lista Nomi L5: per dare il compleanno della rubrica alla scheda giusta)
+    const schedaDelNumero = new Map();
+    mie.forEach(r => { const c = soloCifre(r.telefono); if (c.length >= 6 && !schedaDelNumero.has(c)) schedaDelNumero.set(c, r.id); });
     // anche i numeri già messi nelle note da un'importazione precedente: rifarla non ripropone gli stessi casi
-    mie.forEach(r => (String(r.note || '').match(/\+\d{8,}/g) || []).forEach(n => numeriLista.add(soloCifre(n))));
+    mie.forEach(r => (String(r.note || '').match(/\+\d{8,}/g) || []).forEach(n => { if (!schedaDelNumero.has(soloCifre(n))) schedaDelNumero.set(soloCifre(n), r.id); }));
+    const numeriLista = schedaDelNumero;
     const perNomeLista = new Map();
     mie.forEach(r => { const k = L.piega(r.nome); if (k) perNomeLista.set(k, [...(perNomeLista.get(k) || []), r]); });
     const nomiLista = perNomeLista;
@@ -140,8 +143,12 @@
     esito.letti = schede.length;
     for (const s of schede) {
       const numeri = [s.telefono, ...s.altriNumeri].filter(Boolean);
-      if (numeri.some(n => numeriLista.has(soloCifre(n)))) { esito.presenti.push(s); continue; }
-      if (!s.telefono && s.nome && nomiLista.has(L.piega(s.nome))) { esito.presenti.push(s); continue; }
+      const doppio = numeri.find(n => numeriLista.has(soloCifre(n)));
+      if (doppio) { esito.presenti.push({ ...s, contattoId: numeriLista.get(soloCifre(doppio)) }); continue; }
+      if (!s.telefono && s.nome && nomiLista.has(L.piega(s.nome))) {
+        const uguali = nomiLista.get(L.piega(s.nome));
+        esito.presenti.push({ ...s, contattoId: uguali.length === 1 ? uguali[0].id : null }); continue;   // con più schede uguali non si sa quale
+      }
       const motivi = motiviNome(s);
       if (!s.nome.trim()) esito.incompleti.push({ ...s, motivi: ['senza-nome'], spunta: false });
       else if (!s.telefono) esito.incompleti.push({ ...s, motivi: ['senza-telefono', ...motivi], spunta: false });
@@ -165,6 +172,13 @@
   const ANNO_IGNOTO = 1604;
   const due = n => String(n).padStart(2, '0');
   const dataCompleanno = c => (c ? `${c.anno || ANNO_IGNOTO}-${due(c.mese)}-${due(c.giorno)}` : null);
+  // Lista Nomi L5 (Ignazio 23/10): il compleanno della rubrica va anche nelle schede già in Lista, solo dove manca (il «dove manca» lo controlla
+  // la scrittura: `compleanno is null`). → [{ id, compleanno }], una per scheda
+  function compleanniDaAggiungere(esito) {
+    const visti = new Set();
+    return ((esito && esito.presenti) || []).filter(s => s.contattoId && s.compleanno && !visti.has(s.contattoId) && visti.add(s.contattoId))
+      .map(s => ({ id: s.contattoId, compleanno: dataCompleanno(s.compleanno) }));
+  }
   // Dal modulo «Modifica contatto» (giorno · mese · anno facoltativo) → { giorno, mese, anno } · null se vuoto · 'errore' se la data non esiste
   function compleannoDalModulo(giorno, mese, anno) {
     const g = Number(giorno) || 0, m = Number(mese) || 0, a = String(anno || '').trim();
@@ -210,7 +224,7 @@
     };
   }
 
-  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleannoScritto, compleannoDalModulo, compleannoDaData, MESI };
+  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleanniDaAggiungere, compleannoScritto, compleannoDalModulo, compleannoDaData, MESI };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Rubrica = api;
 })(this);
