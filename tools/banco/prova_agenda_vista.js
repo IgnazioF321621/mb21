@@ -176,6 +176,28 @@ prova('Le parti invisibili che si toccano hanno una dimensione (se no non succed
   assert.equal((sett.match(/class="ag-colonna ag-libero/g) || []).length, 7);
 });
 
+prova('P4 (Ignazio 23/10): la data una volta sola — prima riga uguale in tutte le viste (testaScala), nel Giorno il titolo «Oggi, lun 21 set ▾» apre la scelta del giorno', () => {
+  const g = V.vista('giorno');
+  const testa = g.slice(g.indexOf('<div class="ag-testa np">'), g.indexOf('<div class="ag-settimana">'));
+  assert.doesNotMatch(testa, /Settembre 2026|ag-scegli/);   // niente mese nella prima riga
+  assert.match(testa, /<span class="ag-menu-posto" style="flex:1"><\/span>[\s\S]*id="ag-nuovo"/);
+  assert.doesNotMatch(testa, /id="ag-oggi"/);   // si guarda oggi: niente «Oggi»
+  assert.match(g, /<h1 class="ag-titolo sc-giorno sc-titolo">[\s\S]*?<button class="ag-mese ag-titolo-giorno">Oggi, lun 21 set ▾<input type="date" id="ag-scegli" value="2026-09-21"><\/button><\/h1>/);
+  assert.equal((g.match(/id="ag-scegli"/g) || []).length, 1);
+  // la stessa prima riga in Settimana e Mese
+  for (const vista of ['settimana', 'mese']) assert.match(V.vista(vista), /<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"><\/span>/, vista);
+  // un giorno di un altro anno: l'anno nel titolo, e «Oggi» per tornare
+  const prima = AG.giorno;
+  try {
+    AG.giorno = '2027-01-14';
+    const h = V.vista('giorno');
+    assert.match(h, /<button class="ag-mese ag-titolo-giorno">[^<]*2027 ▾/); assert.match(h, /id="ag-oggi"/);
+  } finally { AG.giorno = prima; }
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  assert.match(src, /\nfunction testaScala\(mostraOggi\) \{/); assert.doesNotMatch(src, /su\('ag-menu'/);
+  assert.match(src, /scegli\.addEventListener\('click', \(\) => \{ try \{ if \(scegli\.showPicker\) scegli\.showPicker\(\); \} catch \(e\) \{\} \}\);/);   // il calendario sul computer
+});
+
 prova('I richiami stanno SOPRA la giornata, in pastiglie corte; P2 (23/10): oggi una pastiglia sola «Chi sento oggi?»', () => {
   const g = V.vista('giorno');
   // sopra: dopo il titolo del giorno, prima della card degli impegni (cantiere 41). P2: il titolo è <h1 class="ag-titolo …» (prima la prova
