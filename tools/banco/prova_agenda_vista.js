@@ -38,10 +38,9 @@ prova('Le viste si disegnano e ognuna dice quello che deve (cantiere 41: la grig
   assert.match(f, /lg-pastiglia lg-N21[^>]*>Network 21</);           // ogni cosa dice per chi è
   assert.match(f, /lg-pastiglia lg-persona[^>]*>.*Laura Bianchi</);
   assert.match(f, /lg-pastiglia lg-Team[^>]*>Team</);
-  assert.match(f, /lg-pastiglia lg-no">Da collegare</);              // una vecchia senza legame lo dice
-  assert.match(f, /class="ag-cosa-nuova" data-scala="giorno"><div class="lg-nuova"><b>Per chi è\?<\/b>/);   // il campo chiede prima per chi è
-  for (const k of ['Team', 'LdS', 'N21', 'Amway', 'persona']) assert.match(f, new RegExp(`data-lg="${k}"`));
-  assert.match(f, /class="lg-filtro"/);                              // con 4 cose di legami diversi c'è il filtro
+  assert.doesNotMatch(f, /Da collegare/);                             // P8: una vecchia senza tipo non ha pastiglia
+  assert.match(f, /class="ag-cosa-nuova" data-scala="giorno">[\s\S]*?data-tipo-cosa/);   // P8: il campo con «Tipo ▾» accanto
+  assert.doesNotMatch(f, /data-lg=|lg-filtro/);                      // via la fila di pastiglie e il filtro
   assert.equal((f.match(/data-chiudi-sez=/g) || []).length, 1);      // solo la settimana ripiegata in cima si apre
   assert.match(f, /class="ag-sopra sc-settimana/);                   // la settimana sempre in cima al Giorno, come NotePlan (23/09)
   assert.ok(f.indexOf('ag-sopra') < f.indexOf('Da fare oggi'));

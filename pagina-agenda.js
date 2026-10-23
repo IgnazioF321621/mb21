@@ -190,8 +190,9 @@ function codaDelGiorno() {
 }
 
 // ── Le cose da fare del giorno (cantiere 41): «Da fare», una lista sola, ognuna legata a chi o a cosa serve ──
-// Dal 05/10/2026 (Ignazio) MB Plan ha solo «Da fare»: via i Modelli personali e i Progetti. Ogni cosa è legata a una persona della
-// lista o al Team, al LdS, a Network 21, ad Amway (pastiglia colorata sulla riga) e si scrive scegliendo prima «Per chi è».
+// Dal 05/10/2026 (Ignazio) MB Plan ha solo «Da fare»: via i Modelli personali e i Progetti. Agenda P8 (Ignazio 23/10): il tipo (una persona
+// della lista, Team, LdS, Network 21, Amway) è FACOLTATIVO, si sceglie dalla pastiglia «Tipo ▾» accanto al campo ed è solo un'etichetta (non
+// manda niente a nessuno); sulla riga c'è la sua pastiglia colorata, senza tipo niente. Via la fila di pastiglie e il filtro in cima.
 // Chi decide cosa si vede in che giorno è MB21Agenda.coseDelGiorno: una cosa non fatta ieri si vede oggi con «da <giorno>».
 // Una riga: la spunta tonda, il testo e sotto la pastiglia del legame con, se ci sono, l'ora e «da GG/MM».
 function rigaCosaHtml(c, attr, riportata) {
@@ -201,35 +202,23 @@ function rigaCosaHtml(c, attr, riportata) {
       <button class="testo"><span>${esc(c.testo)}</span><small class="cosa-sotto">${legamePastiglia(c)}${sotto ? `<em>${esc(sotto)}</em>` : ''}</small></button>
     </div>`;
 }
-// Il campo per aggiungere: prima «Per chi è?» (obbligatorio; resta quello dell'ultima cosa scritta, per averne di seguito dello stesso tipo), poi il testo.
-const legamiNuovaHtml = () => `<b>Per chi è?</b>${legamiHtml(AG.legame)}`;
+// Il campo per aggiungere (P8, uguale in Giorno, Settimana, Mese, Periodo, Anno e nella scala sopra): il testo e, accanto, «Tipo ▾» (facoltativo;
+// resta quello dell'ultima cosa scritta, per averne di seguito dello stesso tipo). Invio o «+» salvano, con o senza tipo.
 function nuovaCosaHtml(scala, segnaposto) {
-  return `<form class="ag-cosa-nuova" data-scala="${scala}"><div class="lg-nuova">${legamiNuovaHtml()}</div>
-    <div class="ag-cosa-riga"><input type="text" placeholder="${esc(segnaposto)}" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></div></form>`;
+  return `<form class="ag-cosa-nuova" data-scala="${scala}">
+    <div class="ag-cosa-riga"><input type="text" placeholder="${esc(segnaposto)}" autocomplete="off">${tipoPastigliaHtml(AG.legame)}<button type="submit" aria-label="Aggiungi">${ic('piu')}</button></div></form>`;
 }
-// Il filtro sopra la lista: solo i legami che hanno almeno una cosa (con una sola cosa o un solo legame non serve)
-function filtroLegamiHtml(cose) {
-  const A = MB21Agenda, quante = {};   // quante ancora da fare per ogni legame (il conto sta sulla pastiglia)
-  for (const c of cose) { const l = A.legameDi(c), k = l ? l.tipo : 'no'; quante[k] = (quante[k] || 0) + (c.fatto_il ? 0 : 1); }
-  if (cose.length < 3 || Object.keys(quante).length < 2) return '';
-  const voci = [...A.LEGAMI.map(([k, n]) => [k, n]), ['persona', 'Persone'], ['no', 'Da collegare']].filter(([k]) => k in quante);
-  return `<div class="lg-filtro" role="group" aria-label="Mostra solo">${[['', 'Tutte'], ...voci].map(([k, n]) => `<button type="button" class="${(AG.filtro || '') === k ? 'scelto' : ''}" data-filtro="${k}">${esc(n)}${k ? ` <b>${quante[k]}</b>` : ''}</button>`).join('')}</div>`;
-}
-const passaFiltro = c => { const f = AG.filtro; if (!f) return true; const l = MB21Agenda.legameDi(c); return f === 'no' ? !l : !!l && l.tipo === f; };
 
 function foglioHtml(oggi) {
   const A = MB21Agenda;
-  const tutte = A.coseDelGiorno(AG.cose, AG.giorno, oggi);
-  if (AG.filtro && !tutte.some(passaFiltro)) AG.filtro = '';   // non resta un filtro su qualcosa che non c'è più
-  const cose = tutte.filter(passaFiltro);
+  const tutte = A.coseDelGiorno(AG.cose, AG.giorno, oggi), cose = tutte;   // P8: niente più filtro
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
   const nomeGiorno = AG.giorno === oggi ? 'oggi' : AG.giorno === A.spostaGiorno(oggi, 1) ? 'domani' : titoloGiorno(AG.giorno, oggi).toLowerCase();
   const restano = tutte.filter(c => !c.fatto_il).length;
   let h = '<div class="ag-foglio">' + scalaSopraHtml('settimana', oggi);
   h += `<section class="ag-sezione ag-dafare"><h2 class="ag-sez"><span>Da fare ${esc(nomeGiorno)}</span><small class="ag-sez-conto">${restano ? `${restano} da fare` : tutte.length ? 'tutto fatto' : ''}</small></h2>
-    ${filtroLegamiHtml(tutte)}
     <div class="ag-sezione-dentro">${cose.map(c => rigaCosaHtml(c, 'data-cosa', c.riportata ? `da ${gg(c.riportata)}` : '')).join('')
-      || `<p class="ag-dafare-vuoto">${tutte.length ? 'Niente con questo filtro.' : 'Niente da fare. Scrivi qui sotto la prima: scegli per chi è, poi cosa c\'è da fare.'}</p>`}
+      || '<p class="ag-dafare-vuoto">Niente da fare. Scrivi qui sotto la prima.</p>'}
       ${nuovaCosaHtml('giorno', 'Cosa c\'è da fare…')}</div></section>`;
   if (AG.cosePiuVecchie && !AG.tutteLeCose) h += '<button class="link" id="ag-vedi-tutto">Ci sono cose da fare più vecchie di un anno · Vedi tutto</button>';
   h += '</div>';
@@ -290,15 +279,12 @@ function titoloGiorno(giorno, oggi) {
   return breve.charAt(0).toUpperCase() + breve.slice(1);
 }
 
-// Le pastiglie «Per chi è?» dei campi «Aggiungi…»: lo scelto vale per tutti i campi della pagina e resta per la cosa dopo
+// La pastiglia «Tipo ▾» dei campi «Cosa c'è da fare…» (P8): lo scelto vale per tutti i campi della pagina e resta per la cosa dopo
 function collegaLegamiNuova(radice) {
-  radice.querySelectorAll('.ag-cosa-nuova .lg-nuova').forEach(box => {
-    box.querySelectorAll('[data-lg]').forEach(b => { b.onclick = async () => {
-      AG.legame = await sceglieLegame(b.dataset.lg, AG.legame);
-      radice.querySelectorAll('.ag-cosa-nuova .lg-nuova').forEach(x => { x.innerHTML = legamiNuovaHtml(); });
-      collegaLegamiNuova(radice);
-    }; });
-  });
+  radice.querySelectorAll('.ag-cosa-nuova [data-tipo-cosa]').forEach(b => { b.onclick = async () => {
+    AG.legame = await scegliTipo(AG.legame);
+    radice.querySelectorAll('.ag-cosa-nuova [data-tipo-cosa]').forEach(x => segnaTipo(x, AG.legame));
+  }; });
 }
 
 function collegaCose(oggi) {
@@ -310,8 +296,7 @@ function collegaCose(oggi) {
       ev.preventDefault();
       const testo = A.testoCosa(campo.value);
       if (!testo) return;
-      const campi = A.campiLegame(AG.legame);   // senza «Per chi è?» non si salva (Ignazio 05/10)
-      if (!campi) { form.querySelector('.lg-nuova').classList.add('manca'); return mostraToast('Scegli prima per chi è: una persona, Team, LdS, Network 21 o Amway'); }
+      const campi = A.campiLegame(AG.legame) || { contatto_id: null, legato_a: null };   // P8 (23/10): il tipo è facoltativo (prima obbligatorio, 05/10)
       avvisaSeLungo(campo.value);
       const scala = form.dataset.scala || 'giorno';
       const ordine = AG.cose.reduce((m, c) => Math.max(m, c.ordine || 0), 0) + 1;
@@ -329,7 +314,6 @@ function collegaCose(oggi) {
   app.querySelectorAll('.ag-foglio .cosa[data-cosa] .testo').forEach(b => { const c = dellaRiga(b); if (c) b.onclick = () => foglioCosa(c, oggi); });
   app.querySelectorAll('[data-chiudi-sez]').forEach(b => { b.onclick = () => cambiaSezione(b.dataset.chiudiSez); });
   app.querySelectorAll('[data-apri-scala]').forEach(b => { b.onclick = () => cambiaVista(b.dataset.apriScala); });
-  app.querySelectorAll('.lg-filtro [data-filtro]').forEach(b => { b.onclick = () => { AG.filtro = b.dataset.filtro; disegnaAgenda(); }; });
 }
 
 // La riga piccola sotto una cosa da fare nelle liste di Settimana, Mese, Periodo, Anno e della scala sopra: le parti non
@@ -378,14 +362,8 @@ async function creaProssima(c, p) {
   return { ...data, giorno: p.giorno };
 }
 
-// ── «Per chi è» (Ignazio 05/10/2026): ogni cosa da fare di MB Plan è legata a una persona della lista o al Team, al LdS, a Network 21,
-// ad Amway; senza legame non si salva. Le pastiglie sono le stesse nel campo «Aggiungi…», nel foglio della cosa e nel Cerca.
+// ── Il tipo di una cosa (Ignazio 05/10/2026, «Per chi è»; Agenda P8 23/10: facoltativo, una pastiglia «Tipo ▾» con l'elenco) ──
 // `l` = { tipo, nome, contatto_id? } (tipo: 'persona' o una chiave di MB21Agenda.LEGAMI) o null.
-function legamiHtml(l) {
-  const A = MB21Agenda, per = l && l.tipo === 'persona';
-  return `<div class="lg-scelte" role="group" aria-label="Per chi è">${A.LEGAMI.map(([k, n]) => `<button type="button" class="lg lg-${k}${l && l.tipo === k ? ' scelto' : ''}" data-lg="${k}" aria-pressed="${!!(l && l.tipo === k)}">${esc(n)}</button>`).join('')}`
-    + `<button type="button" class="lg lg-persona${per ? ' scelto' : ''}" data-lg="persona" aria-pressed="${!!per}">${ic('persona')} ${per ? esc(l.nome) : 'Una persona'}</button></div>`;
-}
 // Il tocco su una pastiglia: Team, LdS, Network 21, Amway danno subito il legame; «Una persona» apre la lista (solo Prospect, Partner, Cliente).
 // Rende il legame nuovo, oppure quello di prima se si rinuncia.
 async function sceglieLegame(chiave, prima) {
@@ -395,10 +373,24 @@ async function sceglieLegame(chiave, prima) {
   if (!['Prospect', 'Partner', 'Cliente'].includes(x.categoria)) { mostraToast('Si collega solo a un Prospect, Partner o Cliente'); return prima; }
   return { tipo: 'persona', nome: x.nome, contatto_id: x.id, categoria: x.categoria };
 }
-// La pastiglia piccola sulla riga di una cosa: il nome della persona o Team / LdS / Network 21 / Amway; «Da collegare» per le vecchie senza legame
+// La pastiglia piccola sulla riga di una cosa: il nome della persona o Team / LdS / Network 21 / Amway; senza tipo niente (P8: prima «Da collegare»)
 function legamePastiglia(c) {
   const l = MB21Agenda.legameDi(c);
-  return l ? `<span class="lg-pastiglia lg-${esc(l.tipo)}">${l.tipo === 'persona' ? ic('persona') + ' ' : ''}${esc(l.nome)}</span>` : '<span class="lg-pastiglia lg-no">Da collegare</span>';
+  return l ? `<span class="lg-pastiglia lg-${esc(l.tipo)}">${l.tipo === 'persona' ? ic('persona') + ' ' : ''}${esc(l.nome)}</span>` : '';
+}
+// La pastiglia «Tipo ▾» (P8, Ignazio 23/10): una sola, con il tipo scelto o «Tipo». Il tocco apre l'elenco (scegliTipo). Uguale nel campo e nel foglio.
+const classeTipo = l => `lg-tipo${l ? ' scelto lg-' + esc(l.tipo) : ''}`;
+const testoTipo = l => `${l ? (l.tipo === 'persona' ? ic('persona') + ' ' : '') + esc(l.nome) : 'Tipo'} ▾`;
+const tipoPastigliaHtml = l => `<button type="button" class="${classeTipo(l)}" data-tipo-cosa aria-label="Tipo">${testoTipo(l)}</button>`;
+const segnaTipo = (b, l) => { b.className = classeTipo(l); b.innerHTML = testoTipo(l); };   // si cambia la pastiglia sul posto: il testo scritto nel campo resta
+// L'elenco del tipo: Team, LdS, Network 21, Amway, «Una persona…» (apre la scelta dai contatti come prima) e, se un tipo c'è, «Nessun tipo».
+// Rende il tipo nuovo (null = nessuno), oppure quello di prima se si rinuncia.
+async function scegliTipo(prima) {
+  const voci = [...MB21Agenda.LEGAMI.map(([k, n]) => ({ k, etichetta: n })), { k: 'persona', etichetta: 'Una persona…', icona: 'persona' }, ...(prima ? [{ k: 'nessuno', etichetta: 'Nessun tipo' }] : [])];
+  const v = await sceltaDa('Che tipo è?', voci);
+  if (!v) return prima;
+  if (v.k === 'nessuno') return null;
+  return sceglieLegame(v.k, prima);
 }
 
 // Il foglio di una cosa da fare: si corregge il testo, si cambia per chi è, si manda a domani, si elimina. È un `foglio alto` (revisione 25/09): più alto
@@ -448,7 +440,7 @@ function foglioCosa(c, oggi, opz = {}) {
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><h3>Cosa da fare${esc(aNome())}</h3>
     <div class="campo"><textarea id="fc-testo" rows="3">${esc(c.testo)}</textarea></div>
-    ${opz.dallaScheda ? '' : `<div class="campo"><label>Per chi è <small>obbligatorio</small></label><div id="fc-legame">${legamiHtml(lg)}</div>
+    ${opz.dallaScheda ? '' : `<div class="campo"><label>Tipo <small>facoltativo</small></label><div id="fc-legame">${tipoPastigliaHtml(lg)}</div>
       ${c.contatto_id ? `<button type="button" class="link" id="fc-apri-contatto">${ic('persona')} Apri la scheda di ${esc((c.contatti && c.contatti.nome) || 'questa persona')} ›</button>` : ''}</div>`}
     <p class="fc-quando">${!c.giorno ? '' : sposta ? esc(sposta.quando()) : rip ? `Da fare dal ${esc(dataLunga(rip))}, ancora aperta` : c.fatto_il ? `Fatta ${esc(dataLunga(c.giorno))}` : `Da fare ${esc(dataLunga(c.giorno))}`}</p>
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
@@ -473,7 +465,7 @@ function foglioCosa(c, oggi, opz = {}) {
   const postoLegame = velo.querySelector('#fc-legame');
   const collegaLegame = () => {
     if (!postoLegame) return;
-    postoLegame.querySelectorAll('[data-lg]').forEach(b => { b.onclick = async () => { lg = await sceglieLegame(b.dataset.lg, lg); postoLegame.innerHTML = legamiHtml(lg); collegaLegame(); }; });
+    postoLegame.querySelectorAll('[data-tipo-cosa]').forEach(b => { b.onclick = async () => { lg = await scegliTipo(lg); segnaTipo(b, lg); }; });
   };
   collegaLegame();
   if (sposta) {
@@ -516,8 +508,7 @@ function foglioCosa(c, oggi, opz = {}) {
     const dopo = { testo };
     if (ripetizioni.length && !c.fatto_il && ripetiScelta !== (c.ripeti || '')) dopo.ripeti = ripetiScelta || null;
     if (!opz.dallaScheda) {
-      const campi = A.campiLegame(lg);
-      if (!campi) return mostraToast('Scegli per chi è: una persona, Team, LdS, Network 21 o Amway');
+      const campi = A.campiLegame(lg) || { contatto_id: null, legato_a: null };   // P8: si può anche togliere il tipo
       if (campi.contatto_id !== (c.contatto_id || null) || campi.legato_a !== (c.legato_a || null)) {
         Object.assign(dopo, campi);
         dopo.contatti = campi.contatto_id ? { nome: lg.nome, categoria: lg.categoria || (c.contatti && c.contatti.categoria) } : null;

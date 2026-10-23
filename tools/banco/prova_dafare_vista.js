@@ -1,4 +1,4 @@
-// Prova di MB Plan «Da fare» (Ignazio 05/10/2026): ogni cosa è legata a una persona o a Team · LdS · Network 21 · Amway, e senza «Per chi è?» non si salva.
+// Prova di «Da fare» dell'Agenda (Ignazio 05/10/2026; P8 23/10): il tipo (una persona o Team · LdS · Network 21 · Amway) è facoltativo e si sceglie dalla pastiglia «Tipo ▾».
 // Codice vero di pagina-agenda.js, finto DOM e finto database (tools/design/anteprima_agenda.js), tocchi veri.
 // Uso: node tools/banco/prova_dafare_vista.js
 const assert = require('node:assert/strict');
@@ -7,61 +7,72 @@ const P = require('../design/anteprima_agenda.js');
 let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
-const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.AG.legame = null; P.AG.filtro = ''; P.scelta.persona = null; };
+const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.AG.legame = null; P.scelta.persona = null; P.scelta.tipo = null; };
 const aggiunte = () => P.scritture.filter(x => x.tabella === 'cose_da_fare' && x.op === 'insert');
 const modifiche = () => P.scritture.filter(x => x.tabella === 'cose_da_fare' && x.op === 'update');
 const scrivi = (testo) => { const campo = P.app.querySelector('.ag-cosa-nuova input'); campo.value = testo; return P.app.querySelector('.ag-cosa-nuova'); };
 const invia = form => form.onsubmit({ preventDefault() {} });
 
-prova('Aggiungere: senza «Per chi è?» non si salva e lo dice; con Team sì, e resta scelto per la cosa dopo', async () => {
+prova('P8: il campo è il testo e, accanto, «Tipo ▾»; senza tipo si salva (Invio o +), niente errore; con Team resta scelto per la cosa dopo', async () => {
   pulisci(); P.vista('giorno');
-  assert.match(P.app.innerHTML, /<b>Per chi è\?<\/b>/);
-  assert.doesNotMatch(P.app.innerHTML, /lg scelto|class="lg lg-[A-Za-z0-9]+ scelto"/);   // all'inizio nessuna pastiglia è scelta
-  let form = scrivi('Chiamare il responsabile');
-  await invia(form);
-  assert.equal(aggiunte().length, 0);
-  assert.match(P.avvisi.at(-1).t, /Scegli prima per chi è/);
-  await P.app.clic('.ag-cosa-nuova [data-lg="Team"]');
-  assert.equal(P.AG.legame.tipo, 'Team');   // la pastiglia diventa «scelta» (la riscrive il campo stesso)
-  form = scrivi('Chiamare il responsabile');
-  await invia(form);
-  const ins = aggiunte();
-  assert.equal(ins.length, 1);
-  assert.equal(ins[0].args[0].legato_a, 'Team');
-  assert.equal(ins[0].args[0].contatto_id, null);
-  assert.equal(ins[0].args[0].testo, 'Chiamare il responsabile');
+  assert.match(P.app.innerHTML, /<form class="ag-cosa-nuova" data-scala="giorno">\s*<div class="ag-cosa-riga"><input type="text" placeholder="Cosa c&#39;è da fare…"[^>]*><button type="button" class="lg-tipo" data-tipo-cosa aria-label="Tipo">Tipo ▾<\/button>/);
+  assert.doesNotMatch(P.app.innerHTML, /Per chi è|data-lg=|lg-filtro|data-filtro|Da collegare/);   // via la fila di pastiglie, il filtro e «Da collegare»
+  await invia(scrivi('Chiamare il responsabile'));
+  let ins = aggiunte();
+  assert.equal(ins.length, 1); assert.equal(ins[0].args[0].legato_a, null); assert.equal(ins[0].args[0].contatto_id, null);
+  assert.equal(P.avvisi.length, 0);   // niente errore
+  P.scelta.tipo = 'Team';
+  await P.app.clic('.ag-cosa-nuova [data-tipo-cosa]');
+  assert.equal(P.scelta.elenco.titolo, 'Che tipo è?');
+  assert.deepEqual(P.scelta.elenco.voci.map(v => v.etichetta), ['Team', 'LdS', 'Network 21', 'Amway', 'Una persona…']);   // senza tipo scelto niente «Nessun tipo»
+  assert.equal(P.AG.legame.tipo, 'Team');
+  const pastiglia = P.app.querySelector('.ag-cosa-nuova [data-tipo-cosa]');   // la pastiglia cambia sul posto (il testo nel campo resta)
+  assert.equal(pastiglia.className, 'lg-tipo scelto lg-Team'); assert.equal(pastiglia.innerHTML, 'Team ▾');
+  await invia(scrivi('Serata da organizzare'));
+  ins = aggiunte();
+  assert.equal(ins[1].args[0].legato_a, 'Team'); assert.equal(ins[1].args[0].contatto_id, null);
   assert.equal(P.AG.legame.tipo, 'Team');   // resta per la prossima
+  // «Nessun tipo» lo toglie
+  P.scelta.tipo = 'nessuno';
+  await P.app.clic('.ag-cosa-nuova [data-tipo-cosa]');
+  assert.ok(P.scelta.elenco.voci.some(v => v.etichetta === 'Nessun tipo'));
+  assert.equal(P.AG.legame, null);
 });
 
-prova('Aggiungere con «Una persona»: si sceglie dalla lista (solo Prospect, Partner, Cliente) e la cosa porta contatto_id, non legato_a', async () => {
+prova('P8: «Una persona…» apre la lista dei contatti (solo Prospect, Partner, Cliente) e la cosa porta contatto_id; rinunciando resta quello di prima', async () => {
   pulisci(); P.vista('giorno');
   P.scelta.persona = { id: 'c-laura', nome: 'Laura Bianchi', categoria: 'Prospect' };   // come la restituisce la lista dei contatti
-  await P.app.clic('.ag-cosa-nuova [data-lg="persona"]');
+  P.scelta.tipo = 'persona';
+  await P.app.clic('.ag-cosa-nuova [data-tipo-cosa]');
   assert.equal(P.AG.legame.contatto_id, 'c-laura');
   await invia(scrivi('Mandare il PDF'));
   const r = aggiunte()[0].args[0];
   assert.equal(r.contatto_id, 'c-laura'); assert.equal(r.legato_a, null);
-  // se si rinuncia alla lista, resta quello che c'era
-  P.scelta.persona = null;
-  P.AG.legame = { tipo: 'Amway', nome: 'Amway' };
-  await P.app.clic('.ag-cosa-nuova [data-lg="persona"]');
+  P.scelta.persona = null; P.AG.legame = { tipo: 'Amway', nome: 'Amway' };
+  await P.app.clic('.ag-cosa-nuova [data-tipo-cosa]');
   assert.equal(P.AG.legame.tipo, 'Amway');   // rinunciando alla lista, resta quello di prima
+  P.scelta.tipo = null;
+  await P.app.clic('.ag-cosa-nuova [data-tipo-cosa]');   // chiudendo l'elenco, resta quello di prima
+  assert.equal(P.AG.legame.tipo, 'Amway');
 });
 
-prova('Il foglio di una cosa: una vecchia senza legame non si salva finché non si sceglie; poi scrive i due campi (l\'uno esclude l\'altro)', async () => {
+prova('P8, il foglio di una cosa: «Tipo · facoltativo» con la stessa pastiglia; una vecchia senza tipo si salva così; poi si sceglie LdS', async () => {
   pulisci(); P.vista('giorno');
   const vecchia = P.AG.cose.find(c => c.id === 'k4');
   P.foglioCosa(vecchia, P.OGGI);
   const v = P.fogli[0];
-  v.querySelector('#fc-testo').value = vecchia.testo;   // nella pagina il campo è già pieno
-  assert.match(v.innerHTML, /Per chi è <small>obbligatorio<\/small>/);
-  assert.match(v.innerHTML, /data-lg="Team"/); assert.match(v.innerHTML, /data-lg="persona"/);
+  v.querySelector('#fc-testo').value = vecchia.testo;
+  assert.match(v.innerHTML, /<label>Tipo <small>facoltativo<\/small><\/label><div id="fc-legame"><button type="button" class="lg-tipo" data-tipo-cosa/);
   await v.clic('#fc-salva');
-  assert.equal(modifiche().length, 0);
-  assert.match(P.avvisi.at(-1).t, /Scegli per chi è/);
-  await v.clic('[data-lg="LdS"]');
-  assert.match(v.querySelector('#fc-legame').innerHTML, /lg lg-LdS scelto/);
-  await v.clic('#fc-salva');
+  assert.equal(modifiche().length, 1); assert.equal('legato_a' in modifiche()[0].args[0], false); assert.equal(P.avvisi.length, 0);   // senza tipo si salva, niente errore
+  pulisci(); P.vista('giorno');
+  P.foglioCosa(vecchia, P.OGGI);
+  const v2 = P.fogli[0];
+  v2.querySelector('#fc-testo').value = vecchia.testo;
+  P.scelta.tipo = 'LdS';
+  await v2.clic('[data-tipo-cosa]');
+  assert.equal(v2.querySelector('[data-tipo-cosa]').className, 'lg-tipo scelto lg-LdS');
+  await v2.clic('#fc-salva');
   const m = modifiche()[0];
   assert.equal(m.args[0].legato_a, 'LdS'); assert.equal(m.args[0].contatto_id, null);
   assert.equal('contatti' in m.args[0], false);   // `contatti` è solo per lo schermo, non va nel database
@@ -76,33 +87,28 @@ prova('Il foglio di una cosa con una persona: si può cambiare in Amway (contatt
   const v = P.fogli[0];
   v.querySelector('#fc-testo').value = c.testo;
   assert.match(v.innerHTML, /Apri la scheda di Laura Bianchi/);
-  await v.clic('[data-lg="Amway"]');
+  P.scelta.tipo = 'Amway';
+  await v.clic('[data-tipo-cosa]');
   await v.clic('#fc-salva');
   const m = modifiche()[0].args[0];
   assert.equal(m.legato_a, 'Amway'); assert.equal(m.contatto_id, null);
   assert.equal(c.contatti, null);
+  P.AG.cose = P.AG.cose.filter(x => x.id !== 'k2b');
 });
 
-prova('Il foglio aperto dalla scheda del contatto non chiede «Per chi è?» (la persona è quella della scheda)', () => {
+prova('Il foglio aperto dalla scheda del contatto non chiede il tipo (la persona è quella della scheda)', () => {
   pulisci();
   P.foglioCosa({ id: 'z', testo: 'Dalla scheda', giorno: P.OGGI, contatto_id: 'c1', fatto_il: null }, P.OGGI, { dallaScheda: true });
-  assert.doesNotMatch(P.fogli[0].innerHTML, /Per chi è/);
+  assert.doesNotMatch(P.fogli[0].innerHTML, /data-tipo-cosa|Per chi è/);
 });
 
-prova('Il filtro sopra la lista mostra solo i legami presenti e nasconde le altre cose; «Tutte» le rimette', async () => {
+prova('P8: lo stesso campo con «Tipo ▾» in tutte le viste (Settimana, Mese, Anno) e nella scala sopra; una cosa senza tipo non ha pastiglia', () => {
   pulisci();
-  delete P.AG.cose.find(c => c.id === 'k4').legato_a;   // la vecchia senza legame (le prove di prima l'avevano collegata)
-  P.AG.cose = P.AG.cose.filter(c => c.id !== 'k2b');
-  P.vista('giorno');
-  assert.match(P.app.innerHTML, /data-filtro="Team"/); assert.match(P.app.innerHTML, /data-filtro="persona"/); assert.match(P.app.innerHTML, /data-filtro="no"/);
-  assert.doesNotMatch(P.app.innerHTML, /data-filtro="Amway"/);    // di Amway non c'è nessuna cosa oggi
-  assert.match(P.app.innerHTML, /data-filtro="Team">Team <b>1<\/b>/);   // il conto delle ancora da fare sulla pastiglia
-  await P.app.clic('[data-filtro="Team"]');
-  assert.equal(P.AG.filtro, 'Team');
-  const h = P.app.innerHTML.slice(P.app.innerHTML.indexOf('Da fare oggi'));
-  assert.match(h, /Serata di Team da organizzare/);
-  assert.doesNotMatch(h, /Preparare il PM di giovedì/);
-  P.AG.filtro = '';
+  delete P.AG.cose.find(c => c.id === 'k4').legato_a;
+  for (const vista of ['settimana', 'mese']) assert.match(P.vista(vista), /class="ag-cosa-nuova"[\s\S]*?data-tipo-cosa/, vista);
+  const g = P.vista('giorno');
+  const riga = g.slice(g.indexOf('data-cosa="k4"'), g.indexOf('</div>', g.indexOf('data-cosa="k4"')));
+  assert.doesNotMatch(riga, /lg-pastiglia/);
 });
 
 prova('Ripetizione: nel foglio si sceglie «Ogni settimana»; spuntando nasce la copia della settimana dopo (stesso legame e ripetizione); se c\'è già non se ne fa un\'altra', async () => {
