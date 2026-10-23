@@ -129,7 +129,10 @@ const stub = {
   // per il modulo «+» vero: i contatti della lista, niente spazi liberi, niente domande dopo il salvataggio
   foglioLinkInvito: c => { avvisi.push({ t: 'invito:' + c.nome, poi: c.poi, telefono: c.telefono }); },
   leggiContattiMiei: async () => finto.contatti, spaziLiberi: async () => [], legaInizioFine() {}, domandaInvito() {}, tracciaDiApertura() {}, contattiMiei: null, LS: { righe: [] },
-  aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona, scelteMultiple: async () => scelta.passi, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
+  aNome: () => '', chiediConferma: async () => true, sceltaContatto: async () => scelta.persona,
+  // P8: l'elenco «Tipo ▾» (`scelta.tipo` = la k scelta)
+  sceltaDa: async (titolo, voci) => { scelta.elenco = { titolo, voci }; return scelta.tipo == null ? null : voci.find(v => v.k === scelta.tipo) || null; },
+  scelteMultiple: async () => scelta.passi, apriContattoDa: () => {}, scegliPassato: () => {}, apriAgenda: async () => {}, apriCheck: () => {},
   document: documento,
   letta: (chiave, cosa, richiesta) => stub.dbq(cosa, richiesta()),   // la lettura che dalla Dashboard arriva con apri_oggi() (c2d4a23): qui come una dbq
   pilloleDurata: () => '<div class="ag-scelte"><button>1 ora</button></div>', collegaPilloleDurata() {}, segnaSenzaOpen: async () => true, dbqAvvisa: async (_, p) => (scritture.length, { error: null }),
