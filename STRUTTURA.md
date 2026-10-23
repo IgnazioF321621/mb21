@@ -683,6 +683,13 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - «Sentito» solo se l'ultimo esito non è tra `SENZA_PARLARE` (No Risposta · Telefono spento · Rimandato · No Show) e c'è un esito; altrimenti «Ultima azione».
     - In fondo l'esito (`ultima_fase`), se c'è: «Sentito 3 giorni fa · telefonata · Relazione», «Ultima azione ieri · telefonata · No Risposta», «Fermo da 2 mesi · telefonata · No Risposta». «In programma» e «Mai contattato» restano com'erano.
     - La frase va a capo invece di perdere la fine (l'esito): `.cn .frase` e la riga della coda (`.lv-persona[data-lv-persona^="coda|"]`) con `white-space: normal`.
+  - **L7 · letture della Lista**:
+    - Se i nomi non si caricano, sotto l'avviso c'è «Riprova» (`#ls-riprova`), che rifà `apriLista`.
+    - «Aggiorna i nomi» sta in alto, accanto al conto «N nomi» (e nell'elenco vuoto), non più in fondo.
+    - `leggiTuttaLaLista()` è la funzione sola per nomi, targhette, coppie e codici (CEP per codice). La usano `apriLista` e `apriContattoDa` (pagina-agenda.js): una scheda aperta da Agenda, Dashboard, Report o Mappa prima della Lista ha subito targhette e «Coppia con …».
+    - `apriModulo` rilegge sempre la riga salvata (`aggiornaRiga`), anche dai tre puntini. Il nome nuovo prende l'id dal salvataggio (`insert(...).select('id').single()`) ed entra subito. Con la scheda aperta la rilegge già `ricaricaERidisegna`.
+    - Le altre pagine non svuotano più `LS.righe`: rileggono solo la persona toccata (`aggiornaRiga`). Vale per la Mappa (scheda nuova), il coach («Lo archivio» e Annulla), «diventa Cliente» nella vendita, la categoria cambiata nel modulo appuntamento e il nome nuovo da «Scegli dalla tua lista».
+    - Svuotano ancora tutta la Lista solo: l'importazione dell'Admin, «Aggiorna i nomi», l'uscita dall'app e una lettura di riga non riuscita.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi

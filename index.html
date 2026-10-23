@@ -259,7 +259,9 @@
   .cn button.chiama { border: 0; padding: 0; cursor: pointer; }
   .cn button.chiama.spento { pointer-events: auto; }
   .foglio .scelta-nota { font-size: 13px; color: var(--testo-tenue); margin: 2px 4px 10px; }
-  .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; }
+  .ls-ordina { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--grigio); margin: 0 4px 8px; flex-wrap: wrap; gap: 2px 10px; }
+  .ls-ordina button.ls-aggiorna, .vuoto button.ls-aggiorna { border: 0; background: none; padding: 4px 0; font-size: 13px; color: var(--blu); font-weight: 600; }   /* Lista Nomi L7 */
+  .vuoto button.ls-aggiorna { display: block; margin: 8px auto 0; }
   .cn-spunta { flex: none; width: 26px; height: 26px; margin: 0 8px; border-radius: 50%; border: 2px solid var(--bordo); color: transparent; display: grid; place-items: center; }
   .cn-spunta .ic { width: 16px; height: 16px; }
   .cn.spuntata .cn-spunta { background: var(--testo); border-color: var(--testo); color: #fff; }
@@ -3154,7 +3156,7 @@ async function registraVenditaDa(contattoId, nome, categoria, brand, poi) {
   if (categoria !== 'Cliente' && await chiediConferma(`${nome} diventa Cliente?`, `Oggi è «${categoria ? MB21Lista.nomeCategoria(categoria) : 'senza categoria'}». Chi è Cliente ha la sezione Vendite nella scheda.`, 'Sì, è Cliente')) {
     const { error: ec } = await dbq('diventa cliente', supa.from('contatti').update({ categoria: 'Cliente' }).eq('id', contattoId));
     if (ec) mostraToast('Categoria non cambiata: riprova dalla scheda.');
-    else { contattiMiei = null; LS.righe = []; }
+    else { contattiMiei = null; aggiornaRiga(contattoId); }   // Lista Nomi L7: solo la riga di quella persona
   }
   await apriContattoDa(contattoId);
   if (LS.contatto && LS.contatto.id === contattoId) { LS.sezione = 'vendite'; disegnaScheda(); moduloVendita(null, { brand, poi }); }
@@ -3846,7 +3848,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.categoriaToccata && st.contatto.categoria !== v.categoria) {   // come in Glide la categoria scelta vale per il contatto
         const { error: ec } = await dbq('categoria contatto', supa.from('contatti').update({ categoria: v.categoria }).eq('id', v.contatto_id));
         if (ec) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: riprova.'; return; }
-        contattiMiei = null; LS.righe = [];
+        contattiMiei = null; aggiornaRiga(v.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
         if (v.categoria === 'Partner') setTimeout(() => domandaInvito({ ...st.contatto, user_id: riga.user_id }), 400);
       }
       const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
@@ -4113,7 +4115,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
         n.disabled = true;
         const { data, error } = await dbq('nuovo contatto', supa.from('contatti').insert({ nome: t, categoria: 'Prospect', user_id: visto().id }).select('id, nome, categoria').single());
         if (error) { n.disabled = false; return mostraToast('Non salvato: riprova.'); }
-        contattiMiei = null; LS.righe = [];
+        contattiMiei = null; aggiornaRiga(data.id);   // Lista Nomi L7: entra solo il nome nuovo
         mostraToast(`${t} aggiunto alla Lista`);
         chiudi(data);
       };

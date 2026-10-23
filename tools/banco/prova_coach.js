@@ -357,7 +357,7 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
     esc: x => x, ic: () => '', console,
     mostraToast: t => chiamate.push(['toast', t]),
     nuovoAppuntamento: async o => { chiamate.push(['appuntamento', o.titolo, o.modalita, o.tipo, o.giorno, o.contatto.id, o.userId]); return { id: 'n' }; },
-    chiediRientro: async (...a) => { chiamate.push(['rientro', ...a]); return '2026-10-20'; }, contattiMiei: 'x', LS: { righe: ['x'] } };
+    chiediRientro: async (...a) => { chiamate.push(['rientro', ...a]); return '2026-10-20'; }, contattiMiei: 'x', LS: { righe: ['x'] }, aggiornaRiga: id => chiamate.push(['riga', id]) };   // Lista Nomi L7: solo la riga della persona
   let esiti = [];
   ctx.supa = { rpc: (n, p) => { chiamate.push(['rpc', n, p.p_contatto]); return { error: null }; }, from: t => { const q = { t, _ins: null,
     select() { return q; }, eq() { return q; }, not() { return q; }, limit() { return q; },
@@ -383,7 +383,7 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
   scelta = 'Chiedo a chi me l’ha dato'; await ctx.chiediRiflessione(e, 'Telefono spento');
   assert.deepEqual(JSON.parse(JSON.stringify(chiamate.splice(0))), [['insert', 'cose_da_fare', { user_id: 'u1', contatto_id: 'c1', testo: 'Chiedere di Mario a chi ti ha dato il nome', giorno: '2026-09-30+1', scala: 'giorno', ordine: 8 }], ['toast', 'Te la trovi in Agenda, domani']]);
   chiamate.length = 0; scelta = 'Lo archivio'; await ctx.chiediRiflessione(e, 'Telefono spento');
-  assert.deepEqual(chiamate, [['rpc', 'archivia_contatto', 'c1'], ['toast', 'Mario Rossi spostato in Archiviati']]);        // niente «Quando risentirlo?»: esce dalla coda
+  assert.deepEqual(chiamate, [['rpc', 'archivia_contatto', 'c1'], ['riga', 'c1'], ['toast', 'Mario Rossi spostato in Archiviati']]);        // niente «Quando risentirlo?»: esce dalla coda; la Lista rilegge solo la sua riga (L7)
   // chiusa senza scegliere: non succede altro
   scelta = undefined; ctx.recitaCoach = async () => null; chiamate.length = 0;
   assert.equal(await ctx.chiediRiflessione(e, 'Telefono spento'), null);

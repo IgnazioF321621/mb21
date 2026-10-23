@@ -112,7 +112,7 @@ prova('L1: Cerca senza risultati → «+ Aggiungi «testo» alla Lista» apre il
   ctx.guardo = true; ctx.disegna();
   assert.doesNotMatch(pagina.querySelector('#elenco').innerHTML, /aggiungi-cercato/);
   ctx.guardo = false; ctx.LS.testo = ''; ctx.LS.filtro = 'clienti'; ctx.disegna();
-  assert.equal(pagina.querySelector('#elenco').innerHTML, '<div class="vuoto">Nessun nome qui.</div>');
+  assert.equal(pagina.querySelector('#elenco').innerHTML, '<div class="vuoto">Nessun nome qui.<button class="link ls-aggiorna" id="ls-aggiorna">Aggiorna i nomi</button></div>');   // L7: «Aggiorna i nomi» anche qui
   // il modulo prende il nome già scritto
   assert.match(PL, /<input id="f-nome" placeholder="Nome Cognome" value="\$\{esc\(c \? c\.nome : poi\.nome \|\| ''\)\}">/);
 });
@@ -131,7 +131,7 @@ prova('L2: via le lettere A-Z — «Ordina» ha solo gli ordini, niente pastigli
   vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function disegnaElenco') + ';this.disegna = disegnaElenco;', ctx);
   ctx.disegna();
   let h = pagina.querySelector('#elenco').innerHTML;
-  assert.match(h, /<span>1 nome<\/span>\s*<span><button id="ordina">Ordina: A-Z ▾<\/button><\/span>/);   // un partner: niente «Scarica nomi e numeri»
+  assert.match(h, /<span>1 nome · <button class="link ls-aggiorna" id="ls-aggiorna">Aggiorna i nomi<\/button><\/span>\s*<span><button id="ordina">Ordina: A-Z ▾<\/button><\/span>/);   // un partner: niente «Scarica nomi e numeri» (L7: «Aggiorna i nomi» accanto al conto)
   await pagina.querySelector('#ordina').onclick();
   uguale(voci.map(v => v.etichetta), ['✓ A-Z', ...Object.keys(L.ORDINI).slice(1).map(k => L.ORDINI[k])]);
   assert.equal(ctx.LS.ordine, 'mai');
@@ -416,6 +416,79 @@ prova('L6: una frase sola per l\'ultimo contatto, in Lista e in coda: «Sentito�
   assert.doesNotMatch(PD6 + leggi('coda.js'), /MB21Coda\.ultimaVolta|function ultimaVolta|function quandoFa/);
   // la frase va a capo invece di perdere l'esito (card della Lista e riga della coda)
   assert.match(IDX, /\.cn \.frase \{ white-space: normal; \}/); assert.match(IDX, /\.lv-persona\[data-lv-persona\^="coda\|"\] \.lv-pt small \{ white-space: normal; \}/);
+});
+
+prova('L7: se i nomi non si caricano, sotto l\'avviso il bottone «Riprova» che rifà la lettura', async () => {
+  const app = new Nodo();
+  let prove = 0;
+  const ctx = { app, LS: { righe: [], contatto: null }, versione: () => '', listaFresca: () => false, segnaApp() {}, caricaCatalogo: async () => {},
+    leggiTuttaLaLista: async () => { prove++; throw new Error('rete'); }, document: { getElementById: id => app.querySelector('#' + id) } };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function apriLista') + ';this.apri = apriLista;', ctx);
+  await ctx.apri();
+  assert.match(app.innerHTML, /Non riesco a caricare i nomi\. Controlla la connessione e riprova\.<\/div>\s*<button class="primario" id="ls-riprova">Riprova<\/button>/);
+  await app.querySelector('#ls-riprova').onclick();
+  assert.equal(prove, 2);
+});
+
+prova('L7: una funzione sola legge tutta la Lista (nomi, targhette, coppie, codici) — la usano la Lista e la scheda aperta da Agenda, Dashboard, Report o Mappa', async () => {
+  let segnate = 0;
+  const ctx = { MB21Lista: L, LS: { righe: [], targhe: {} }, segnaApp: () => { segnate++; },
+    leggiTuttoLista: async () => [[{ id: 'a', nome: 'Persona A' }, { id: 'b', nome: 'Persona B' }], { a: { bbs: true, wes: false, cep: true } }],
+    supa: { from: () => { const q = { select: () => q, not: () => q, is: () => q, limit: () => q }; return q; } },
+    dbq: async () => ({ data: [{ id: 'a', codice_amway: '1234567890' }, { id: 'b', codice_amway: '1234567890' }], error: null }) };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function leggiTuttaLaLista') + ';this.leggi = leggiTuttaLaLista;', ctx);
+  await ctx.leggi();
+  assert.equal(ctx.LS.righe.length, 2); assert.ok(ctx.LS.letta > 0); assert.equal(segnate, 1);
+  assert.equal(ctx.LS.targhe.b.cep, true);   // il CEP per codice anche sull'altra scheda (nota 069)
+  assert.match(leggi('pagina-agenda.js'), /try \{ await leggiTuttaLaLista\(\); \}/);
+  assert.match(PL, /if \(!listaFresca\(\)\) await leggiTuttaLaLista\(\);/);
+});
+
+prova('L7: «Aggiorna i nomi» sta in alto, accanto al conto (anche con l\'elenco vuoto); in fondo non c\'è più', () => {
+  assert.doesNotMatch(PL, /<button class="link" id="ls-aggiorna">Aggiorna i nomi<\/button>\n    \$\{versione\(\)\}/);
+  assert.match(PL, /document\.getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; apriLista\(\); \};/);
+  assert.match(IDX, /\.ls-ordina \{[^}]*flex-wrap: wrap;/);
+});
+
+prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo la riga di quella persona (il nome nuovo compare subito)', async () => {
+  const letture = [];
+  const fogli = [];
+  const q = { insert: () => q, update: () => q, eq: () => q, select: () => q, maybeSingle: () => q, single: () => Promise.resolve({ data: { id: 'nuovo1' }, error: null }),
+    then: (ok) => Promise.resolve(ok({ data: null, error: null })) };
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: { righe: [{ id: 'z', user_id: 'io', nome: 'Persona Z' }], account: null, contatto: null },
+    ST: { utente: { id: 'io' } }, soloGuardo: () => false, visto: () => ({ id: 'io' }), aNome: () => '', classeCat: () => 'cat', iniziali: () => 'PA', Event: class {},
+    dbq: (n, p) => (n === 'compleanno' ? new Promise(() => {}) : Promise.resolve(p)), supa: { from: () => q, rpc: () => Promise.resolve({ error: null }) }, leggiAccountCliente: () => new Promise(() => {}),
+    aggiornaRiga: async id => { letture.push(id); }, ricaricaERidisegna: () => Promise.resolve(), mostraToast() {}, chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
+    document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx); vm.runInContext(CONTA[0] + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  // nuovo
+  ctx.apri(null, {}); let f = fogli.pop(), $ = id => f.querySelector('#' + id);
+  $('f-nome').value = 'Persona Nuova'; $('f-cat').value = 'Prospect'; $('f-cat').onchange();
+  await $('invia').onclick();
+  uguale(letture, ['nuovo1']);
+  // modifica dai tre puntini (scheda chiusa)
+  ctx.apri({ id: 'z', user_id: 'io', nome: 'Persona Z', categoria: 'Prospect' }); f = fogli.pop(); $ = id => f.querySelector('#' + id);
+  $('f-cat').value = 'Prospect'; $('f-cat').onchange();
+  await $('invia').onclick();
+  uguale(letture, ['nuovo1', 'z']);
+  // con la scheda aperta la rilegge già ricaricaERidisegna: non due volte
+  ctx.LS.contatto = { id: 'z' }; ctx.apri({ id: 'z', user_id: 'io', nome: 'Persona Z', categoria: 'Prospect' }); f = fogli.pop(); $ = id => f.querySelector('#' + id);
+  $('f-cat').value = 'Prospect'; $('f-cat').onchange();
+  await $('invia').onclick();
+  uguale(letture, ['nuovo1', 'z']);
+});
+
+prova('L7: le altre pagine non buttano via tutta la Lista: rileggono solo la persona toccata (tranne l\'importazione dell\'Admin e «Aggiorna i nomi»)', () => {
+  const tutti = ['index.html', 'pagina-mappa.js', 'pagina-coach.js', 'pagina-dashboard.js', 'pagina-agenda.js', 'pagina-rubrica.js', 'pagina-vendite.js', 'pagina-sharing.js', 'admin.js', 'pagina-lista.js']
+    .map(f => [f, leggi(f)]);
+  const svuotano = tutti.flatMap(([f, t]) => t.split('\n').map((riga, i) => [f, i + 1, riga]).filter(([, , riga]) => /LS\.righe = \[\]/.test(riga)).map(([f, , riga]) => f + ': ' + riga.trim().slice(0, 60)));
+  assert.deepEqual(svuotano.map(x => x.split(':')[0]), ['index.html', 'admin.js', 'pagina-lista.js', 'pagina-lista.js']);   // uscita dall'app · import dell'Admin · lettura non riuscita · «Aggiorna i nomi»
+  assert.match(IDX, /SIGNED_OUT'\) \{ togliCopiaOffline\(\); LS\.righe = \[\];/);
+  assert.match(leggi('pagina-mappa.js'), /await aggiornaRiga\(data\.id\);/);
+  assert.match(leggi('pagina-coach.js'), /contattiMiei = null; aggiornaRiga\(e\.contatto_id\);/);
+  assert.match(IDX, /else \{ contattiMiei = null; aggiornaRiga\(contattoId\); \}/);
+  assert.match(IDX, /contattiMiei = null; aggiornaRiga\(v\.contatto_id\);/);
+  assert.match(IDX, /contattiMiei = null; aggiornaRiga\(data\.id\);/);
 });
 
 (async () => {
