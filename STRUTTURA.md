@@ -705,6 +705,10 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
       - `scegliScheda` («Cerca nella lista»: coppia, Mappa) la usa sulla copia della Lista (`nomiDellaLista`), invece di un `ilike` sul nome a ogni tasto.
       - `sceltaContatto` la usa sui nomi di `leggiContattiMiei`, che ora vengono dalla copia della Lista (prima una lettura a parte, eliminati compresi). Tolta la copia `contattiMiei`.
     - `chiediConferma` sta sopra ogni foglio (`z-index` 30).
+  - **L10 · compleanni nell'Agenda di oggi**:
+    - Nel Giorno di oggi, sotto «Chi sento oggi?», `compleanniHtml(oggi)` mostra una card per chi compie gli anni: il nome apre la scheda (`apriContattoDa(…, 'agenda')`) e sotto ci sono i bottoni per scrivere, cioè `contattaHtml(telefono, true)` senza la cornetta (`.contatta.tre`).
+    - I dati vengono da `caricaCompleanni(oggi)`: una lettura leggera di `contatti` (id, nome, telefono, categoria, compleanno; solo chi ha il compleanno, non eliminati), una volta al giorno per persona del Partner Select (`AG.compleanni.chiave`). Con «Tutti» niente; se la lettura non riesce, l'Agenda si apre senza.
+    - `MB21Lista.compieOggi(righe, oggi)`: stesso giorno e mese; il 29 febbraio si festeggia il 28 negli anni non bisestili; ordine alfabetico.
 - l'app legge tutta `contatti_lista` (a pagine da 1000) e filtra sul telefono: ricerca istantanea e senza rete
 - **filtri**: `All` (solo Admin, tutti i partner; dal cantiere 15 il chip non si mostra, c'è Partner Select «Tutti») · `Lista` (i propri) · `Prospect` · `Partner` · `Clienti` · `Altri ▾` → `Ex` · `Unlinked` · `Archiviati` · `Senza categoria`. Tutti tranne All mostrano solo i nomi del partner loggato; All e Lista escludono gli archiviati
 - **ricerca**: nome + professione + telefono, in qualunque punto, senza maiuscole né accenti; le cifre si cercano anche con spazi

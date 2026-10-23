@@ -195,10 +195,11 @@ const ICONE_CONTATTA = {
 const ICONE_TRATTO = { call: 'contatto', sms: 'messaggio', whatsapp: 'whatsapp', telegram: 'telegram' };
 // Il numero da chiamare, una regola sola per i 4 tasti e la cornetta della card (Lista Nomi L3): solo un numero che inizia per «+», senza spazi; altrimenti null
 const numeroDaChiamare = telefono => (telefono && telefono.startsWith('+') ? telefono.replace(/[^0-9+]/g, '') : null);
-function contattaHtml(telefono) {
+// `soloScrivere` (L10, i compleanni dell'Agenda): solo SMS, WhatsApp e Telegram, senza la cornetta
+function contattaHtml(telefono, soloScrivere) {
   const tel = numeroDaChiamare(telefono);
   const link = (href, icona, testo) => `<a href="${esc(href)}" class="ct-${icona} ${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
-  return `<div class="contatta">${link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
+  return `<div class="contatta${soloScrivere ? ' tre' : ''}">${soloScrivere ? '' : link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
 }
 
 function disegnaLista() {

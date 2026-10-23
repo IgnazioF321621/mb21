@@ -108,7 +108,7 @@ async function caricaAgendaLetture() {
   const spazi = vediSpazi() ? letta('spazi', 'spazi', () => supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null;
   // gli impegni ricevuti da altri (nota 027): mai con «Tutti»; se la funzione non c'è ancora o non risponde, l'Agenda si apre senza di loro
   const ricevuti = vediTutti() ? null : letta('ricevuti', 'impegni ricevuti', () => supa.rpc('impegni_ricevuti', { p_da: da, p_a: a }));
-  const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali(), caricaCoachYes()]);   // nota 001: chi ha una nota Coach Yes, letto una volta ogni 15 minuti
+  const [cd, sp, vc, rc] = await Promise.all([cose, spazi, vecchie, ricevuti, caricaFrontali(), caricaCoachYes(), AG.giorno === oggi ? caricaCompleanni(oggi) : null]);   // nota 001: chi ha una nota Coach Yes, letto una volta ogni 15 minuti; L10: i compleanni di oggi, una volta al giorno
   AG.cosePiuVecchie = !!(vc && !vc.error && vc.count > 0);
   AG.spazi = sp && !sp.error ? sp.data : [];   // se la lettura non riesce, MB Plan si apre lo stesso, senza spazi
   AG.ricevuti = rc && !rc.error && Array.isArray(rc.data) ? rc.data : [];
@@ -170,6 +170,29 @@ function richiamiAgenda(oggi) {
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
+}
+
+// ── Compie gli anni (Lista Nomi L10, Ignazio 23/10): nell'Agenda di oggi, sotto «Chi sento oggi?», chi compie gli anni con i bottoni per scrivere
+// (SMS, WhatsApp, Telegram); il nome apre la scheda. Una lettura leggera al giorno per persona (i compleanni non stanno nella Lista): si tiene in
+// memoria per quel giorno e quella persona (Partner Select); con «Tutti» niente. Se la lettura non riesce, l'Agenda si apre lo stesso, senza.
+const chiaveCompleanni = oggi => `${visto().id}|${oggi}`;
+async function caricaCompleanni(oggi) {
+  if (vediTutti() || (AG.compleanni && AG.compleanni.chiave === chiaveCompleanni(oggi))) return;
+  const righe = [], id = visto().id;
+  for (let da = 0; da < 20000; da += 1000) {
+    const { data, error } = await dbq('compleanni', supa.from('contatti').select('id, nome, telefono, categoria, compleanno').eq('user_id', id)
+      .not('compleanno', 'is', null).is('eliminato_il', null).order('id').range(da, da + 999));
+    if (error || !data) return;
+    righe.push(...data);
+    if (data.length < 1000) break;
+  }
+  AG.compleanni = { chiave: chiaveCompleanni(oggi), righe: MB21Lista.compieOggi(righe, oggi) };
+}
+function compleanniHtml(oggi) {
+  const c = AG.giorno === oggi && !vediTutti() && AG.compleanni && AG.compleanni.chiave === chiaveCompleanni(oggi) ? AG.compleanni.righe : [];
+  if (!c.length) return '';
+  return `<div class="ag-compleanni">${c.map(r => `<div class="ag-compleanno"><button class="ag-comp-nome" data-compleanno="${esc(r.id)}"><span class="ts-pastiglia ${classeCat(r.categoria)}">${esc(iniziali(r.nome))}</span>
+    <span>${ic('compleanno')} Compie gli anni: <b>${esc(r.nome)}</b></span></button>${contattaHtml(r.telefono, true)}</div>`).join('')}</div>`;
 }
 
 // Chi torna in coda in un giorno che deve venire, senza un orario fissato (27/09): i nomi, e la scheda a un tocco.
@@ -578,7 +601,7 @@ function disegnaAgenda() {
     </div>
     <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}<button class="ag-mese ag-titolo-giorno">${esc(titoloG)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1>
     ${partnerSelect()}`;
-  html += richiamiAgenda(oggi);
+  html += richiamiAgenda(oggi) + compleanniHtml(oggi);   // L10: chi compie gli anni oggi
   const tre = largo();   // l'Agenda a tre colonne (schermo largo); la Settimana è già uscita sopra (disegnaSettimana)
   {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
@@ -1937,6 +1960,7 @@ function collegaAgenda(eventi) {
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   su('ag-chi-sento', () => { ST.tab = 'oggi'; ST.vaiA = 'oggi'; mostraTab(); });   // P2: dritto all'elenco unico «Chi sento oggi?»
+  app.querySelectorAll('[data-compleanno]').forEach(b => { b.onclick = () => apriContattoDa(b.dataset.compleanno, 'agenda'); });   // L10: il nome apre la scheda
   su('ag-in-coda', codaDelGiorno);
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };

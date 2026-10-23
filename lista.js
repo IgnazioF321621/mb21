@@ -92,6 +92,15 @@
 
   // Lista Nomi L2 (Ignazio 23/10): via le lettere A-Z da «Ordina» (le aveva volute il 18/09): per un nome solo c'è Cerca.
 
+  // Lista Nomi L10 (Ignazio 23/10): chi compie gli anni oggi, dai compleanni letti (`compleanno` AAAA-MM-GG; l'anno 1604 = non si sa). Il 29 febbraio,
+  // negli anni non bisestili, si festeggia il 28. In ordine alfabetico.
+  function compieOggi(righe, oggi) {
+    const md = String(oggi).slice(5), anno = Number(String(oggi).slice(0, 4));
+    const bisestile = (anno % 4 === 0 && anno % 100 !== 0) || anno % 400 === 0;
+    const giusto = c => { const x = String(c || '').slice(5, 10); return x === md || (md === '02-28' && !bisestile && x === '02-29'); };
+    return (righe || []).filter(r => r && r.compleanno && giusto(r.compleanno)).sort(ordinaPerNome);
+  }
+
   // Lista Nomi L9 (Ignazio 23/10): UNA ricerca per i fogli di scelta («Scegli dalla tua lista», «Cerca nella lista»), sulla copia della Lista già letta:
   // la regola di Cerca (nome, professione, telefono; senza maiuscole né accenti), solo i nomi di `utenteId`, in ordine alfabetico con gli archiviati in fondo.
   // Gli eliminati non ci sono (la Lista non li ha). Niente letture a ogni lettera.
@@ -540,7 +549,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
