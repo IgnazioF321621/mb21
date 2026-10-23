@@ -105,7 +105,11 @@
     confermato_il: 'Confermato il', promemoria_il: 'Promemoria il', riflessione: 'Riflessione', su_cosa: 'Su cosa', senza_ora: 'Senza ora', punti: 'Punti', link: 'Link', punti_condivisi: 'Punti condivisi',
     luogo: 'Luogo', attesa_dal: 'In attesa dal', attesa_chiedi_il: 'Da richiedere il', attesa_chiusa_il: 'Attesa chiusa il', esito_il: 'Esito dato il', spostato_il: 'Spostato il', testo: 'Testo', scritta_il: 'Scritta il' };
   const etichetta = c => ETICHETTE[c] || (c.charAt(0).toUpperCase() + c.slice(1).replace(/_/g, ' '));
-  function fogliMiaLista({ contatti, azioni, note }) {
+  // Lista Nomi L2 (Ignazio 23/10): il compleanno a parole, come nella scheda («25 dicembre», «12 aprile 1985»), con la stessa funzione
+  // (MB21Rubrica.compleannoScritto; rubrica.js si carica dopo questo file: la si prende quando serve)
+  const rubrica = () => (typeof module !== 'undefined' && module.exports ? require('./rubrica.js') : radice.MB21Rubrica);
+  function fogliMiaLista({ contatti: schede, azioni, note }) {
+    const contatti = (schede || []).map(c => (c.compleanno ? { ...c, compleanno: rubrica().compleannoScritto(c.compleanno) } : c));
     const nomi = new Map((contatti || []).map(c => [c.id, c.nome]));
     const colonneDi = (righe, prime = []) => [...new Set([...prime, ...(righe || []).flatMap(r => Object.keys(r))])].filter(c => !NASCOSTE.has(c));
     const conNome = righe => (righe || []).map(r => ({ persona: nomi.get(r.contatto_id) || '', ...r }));

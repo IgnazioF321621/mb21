@@ -8,7 +8,7 @@
 // Copia della tab Lista Nomi di Glide (docs/MB21_v3_Lista_come_e.md) con le decisioni di Ignazio del 14/09.
 // La logica pura sta in lista.js; qui lettura/scrittura e disegno.
 const BLOCCO = 40;                                    // card disegnate per volta, scorrendo se ne aggiungono
-const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', lettera: null, esporta: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
+const LS = { righe: [], targhe: {}, coppie: null, filtro: 'lista', ordine: 'az', esporta: null, testo: '', mostrate: BLOCCO, contatto: null, sezione: 'dati', utenteMb21: {}, usoApp: null };
 const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 
 // La prima pagina da sola (chi ha pochi nomi finisce lì); se è piena, le altre cinque alla volta: l'Admin ha oltre 6.000 nomi (6 MB) e le richieste
@@ -190,13 +190,14 @@ function disegnaLista() {
 }
 
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine, lettera: LS.lettera });
+  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
-  const ordina = `<div class="ls-ordina"><span>${LS.lettera ? `<button id="via-lettera" aria-label="Togli la lettera"><b>${esc(LS.lettera)}</b>${ic('chiudi')}</button> · ` : ''}${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
-    <span>${LS.esporta ? '' : `<button id="esporta">${ic('file')} Esporta</button> · `}<button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></span></div>`;
-  elenco.innerHTML = trovati.length || LS.lettera
-    ? ordina + (trovati.length ? '' : '<div class="vuoto">Nessun nome con questa lettera.</div>') + trovati.slice(0, LS.mostrate).map(cardNome).join('')
+  // Lista Nomi L2 (Ignazio 23/10): niente più lettere A-Z (per un nome c'è Cerca); il file per l'altro programma, «Scarica nomi e numeri», solo per l'Admin
+  const ordina = `<div class="ls-ordina"><span>${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
+    <span>${LS.esporta || !eAdmin() ? '' : `<button id="esporta">${ic('file')} Scarica nomi e numeri</button> · `}<button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></span></div>`;
+  elenco.innerHTML = trovati.length
+    ? ordina + trovati.slice(0, LS.mostrate).map(cardNome).join('')
     : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}${LS.testo.trim() && !soloGuardo() ? `<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">${ic('piu')} Aggiungi «${esc(LS.testo.trim())}» alla Lista</button>` : ''}</div>`;
   // Lista Nomi L1 (Ignazio 23/10): Cerca senza risultati → un tocco apre il modulo del nuovo contatto con il nome già scritto
   const aggiungiCercato = document.getElementById('aggiungi-cercato');
@@ -213,17 +214,11 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn .menu').forEach(b => b.onclick = () => menuCard(b.dataset.id));
   const ordinaB = document.getElementById('ordina');
   if (ordinaB) ordinaB.onclick = async () => {
-    // sotto le scelte, le lettere: accese solo quelle che hanno nomi nel filtro scelto; toccarne una filtra (non salta: la lista si carica a blocchi)
-    const accese = MB21Lista.lettereConNomi(LS.righe, { filtro: LS.filtro, utenteId: utentiLista(), admin: eAdmin() });
-    const voci = [...Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })),
-      ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').map(l => ({ etichetta: l, lettera: l, scelta: LS.lettera === l, spenta: !accese.includes(l) }))];
-    const v = await sceltaDa('Ordina i nomi', voci);
+    const v = await sceltaDa('Ordina i nomi', Object.keys(MB21Lista.ORDINI).map(k => ({ etichetta: (LS.ordine === k ? '✓ ' : '') + MB21Lista.ORDINI[k], k })));
     if (!v) return;
-    if (v.lettera) LS.lettera = LS.lettera === v.lettera ? null : v.lettera; else LS.ordine = v.k;
+    LS.ordine = v.k;
     LS.mostrate = BLOCCO; window.scrollTo(0, 0); disegnaElenco();
   };
-  const viaLettera = document.getElementById('via-lettera');
-  if (viaLettera) viaLettera.onclick = () => { LS.lettera = null; LS.mostrate = BLOCCO; disegnaElenco(); };
   // caricamento a blocchi: quando il fondo entra nello schermo, altre card
   const fondo = document.getElementById('fondo');
   if (LS.osservatore) LS.osservatore.disconnect();
@@ -236,7 +231,9 @@ function disegnaElenco() {
 }
 
 // ── Esporta (MB Project → Lista Nomi, Ignazio 25/09): un file Excel nel modello dell'altro programma con i nomi che si vedono
-// (pillola, Cerca, lettera, ordine) MA scelti uno a uno: partono tutti spuntati, si toglie chi non serve; «Nessuno» per partire da zero.
+// (pillola, Cerca, ordine) MA scelti uno a uno: partono tutti spuntati, si toglie chi non serve; «Nessuno» per partire da zero.
+// Lista Nomi L2 (Ignazio 23/10): si chiama «Scarica nomi e numeri» e lo vede solo l'Admin; nella barra una riga dice cosa fa il tocco;
+// la cornetta della card è spenta (il tocco spunta, non chiama); dopo il download lo stesso foglio «Il file è pronto» di «Scarica la mia lista».
 // LS.esporta = { modo: 'tutti' | 'nessuno', eccezioni: Set di id } → scelto = (modo tutti) diverso da (è un'eccezione)
 const sceltoEsporta = id => !!LS.esporta && ((LS.esporta.modo === 'tutti') !== LS.esporta.eccezioni.has(id));
 function spuntaEsporta(id) { const e = LS.esporta.eccezioni; if (e.has(id)) e.delete(id); else e.add(id); }
@@ -247,7 +244,7 @@ function barraEsporta(trovati) {
   const scelti = trovati.filter(r => sceltoEsporta(r.id));
   if (!barra) { barra = document.createElement('div'); barra.id = 'ls-esporta'; barra.className = 'ls-esporta'; document.getElementById('elenco').after(barra); }
   const n = scelti.length.toLocaleString('it-IT');
-  barra.innerHTML = `<div class="ls-esporta-riga"><button class="link" id="esp-tutti">Tutti</button><button class="link" id="esp-nessuno">Nessuno</button><button class="link" id="esp-annulla">Annulla</button></div>
+  barra.innerHTML = `<div class="ls-esporta-aiuto">${LS.esporta.modo === 'tutti' ? 'Tocca un nome per toglierlo' : 'Tocca un nome per sceglierlo'}</div><div class="ls-esporta-riga"><button class="link" id="esp-tutti">Tutti</button><button class="link" id="esp-nessuno">Nessuno</button><button class="link" id="esp-annulla">Annulla</button></div>
     <button class="primario" id="esp-scarica" ${scelti.length ? '' : 'disabled'}>${scelti.length ? `Scarica ${n} ${scelti.length === 1 ? 'nome' : 'nomi'}` : 'Scegli almeno un nome'}</button>`;
   barra.querySelector('#esp-tutti').onclick = () => { LS.esporta = { modo: 'tutti', eccezioni: new Set() }; disegnaElenco(); };
   barra.querySelector('#esp-nessuno').onclick = () => { LS.esporta = { modo: 'nessuno', eccezioni: new Set() }; disegnaElenco(); };
@@ -255,15 +252,12 @@ function barraEsporta(trovati) {
   barra.querySelector('#esp-scarica').onclick = () => scaricaEsporta(scelti);
 }
 
-// Il file si prepara sul telefono e si «scarica»: su iPhone si apre il foglio per salvarlo in File o passarlo a un'altra app
+// Il file si prepara sul telefono e si scarica con la funzione di «Scarica la mia lista» (scarica-lista.js), poi il foglio «Il file è pronto»
 function scaricaEsporta(scelti) {
-  const etichetta = [MB21Lista.FILTRI[LS.filtro].etichetta, LS.lettera, LS.testo.trim()].filter(Boolean).join(' ');
-  const bytes = MB21Esporta.xlsxBytes(MB21Esporta.righeEsporta(scelti));
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: MB21Esporta.nomeFile(etichetta, MB21Coda.oggiRoma()) });
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-  mostraToast(`File pronto con ${scelti.length.toLocaleString('it-IT')} nomi`);
+  const etichetta = [MB21Lista.FILTRI[LS.filtro].etichetta, LS.testo.trim()].filter(Boolean).join(' ');
+  const nome = MB21Esporta.nomeFile(etichetta, MB21Coda.oggiRoma());
+  scaricaFile(MB21Esporta.xlsxBytes(MB21Esporta.righeEsporta(scelti)), nome);
+  foglioFilePronto(nome, `${scelti.length.toLocaleString('it-IT')} ${scelti.length === 1 ? 'nome' : 'nomi'}.`);
   LS.esporta = null; disegnaElenco();
 }
 
@@ -301,7 +295,7 @@ function diChiCard(r) {
 function cardNome(r) {
   const frase = MB21Lista.fraseCard(r, MB21Coda.oggiRoma());
   const sotto = r.professione || '';
-  const tel = r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml
+  const tel = !LS.esporta && r.telefono && r.telefono.startsWith('+') ? r.telefono.replace(/[^0-9+]/g, '') : null;   // stessa regola di contattaHtml; in Esporta spenta (L2)
   // La prima riga è tutta del nome (Ignazio 19/09: con «nuovo» e le targhette accanto «si vede solo il nome e non si capisce»):
   // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
   // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
@@ -325,7 +319,7 @@ function cardNome(r) {
 // Foglio con un elenco di voci; restituisce la voce scelta (o null)
 // `sopra`: un pezzo di pagina da mostrare sopra le voci (es. i bottoni per contattare); toccare un suo link chiude il foglio
 // Con tante voci il foglio scorre (`alto`, 25/09: i titoli di un progetto in «Sposta sotto un altro titolo» di MB Plan)
-// voci: { etichetta, icona?, tono?, pericolo?, lettera? } e, per gli elenchi ad albero (Partner Select, «Gli ultimi
+// voci: { etichetta, icona?, tono?, pericolo? } e, per gli elenchi ad albero (Partner Select, «Gli ultimi
 // 12 mesi»), `rientro` (livelli sotto la radice: sposta la voce a destra con ↳) e `nota` (una riga piccola sotto il nome)
 // Scheda contatto S7 (Ignazio 22/10): le scelte compaiono AL CENTRO della pagina, in tutti i punti (una funzione sola: «+ Nuova azione», menu della
 // card, «Non ora», rubrica…), con la forma centrata del riquadro «È iniziato [mese]» (.velo.centro); se sono tante scorrono dentro il foglio.
@@ -334,9 +328,8 @@ function sceltaDa(titolo, voci, sopra) {
     const velo = document.createElement('div');
     velo.className = 'velo centro';
     velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
-      ${voci.map((v, i) => v.lettera ? '' : `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${v.nota && v.tono ? `<span class="voce-nota">${esc(v.etichetta)}<small class="nota-ramo">${esc(v.nota)}</small></span>` : esc(v.etichetta) + (v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : '')}</button>`).join('')}
-      </div>${voci.some(v => v.lettera) ? `<small class="lettere-titolo">Solo i nomi che iniziano per…</small><div class="lettere">
-      ${voci.map((v, i) => v.lettera ? `<button data-i="${i}" class="${v.scelta ? 'scelto' : ''}" ${v.spenta ? 'disabled' : ''}>${esc(v.etichetta)}</button>` : '').join('')}</div>` : ''}<button class="link" id="scelta-no">Annulla</button></div>`;
+      ${voci.map((v, i) => `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${v.nota && v.tono ? `<span class="voce-nota">${esc(v.etichetta)}<small class="nota-ramo">${esc(v.nota)}</small></span>` : esc(v.etichetta) + (v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : '')}</button>`).join('')}
+      </div><button class="link" id="scelta-no">Annulla</button></div>`;
     document.body.appendChild(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
     velo.onclick = e => { if (e.target === velo) chiudi(null); };

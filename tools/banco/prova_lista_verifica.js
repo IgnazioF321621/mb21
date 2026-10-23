@@ -116,6 +116,75 @@ prova('L1: Cerca senza risultati → «+ Aggiungi «testo» alla Lista» apre il
   assert.match(PL, /<input id="f-nome" placeholder="Nome Cognome" value="\$\{esc\(c \? c\.nome : poi\.nome \|\| ''\)\}">/);
 });
 
+prova('L2: via le lettere A-Z — «Ordina» ha solo gli ordini, niente pastiglia «A ✕» né «Nessun nome con questa lettera»', async () => {
+  assert.equal(L.iniziale, undefined); assert.equal(L.lettereConNomi, undefined);
+  assert.doesNotMatch(PL, /lettera|lettere-titolo|via-lettera|Nessun nome con questa lettera/);
+  assert.doesNotMatch(IDX, /\.lettere \{|\.lettere-titolo/);
+  const pagina = new Nodo(); pagina.innerHTML = '<div id="elenco"></div><div id="fondo"></div>';
+  let voci = null;
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-23' }, BLOCCO: 40, admin: false, window: { scrollTo() {} },
+    LS: { righe: [{ id: 'a', user_id: 'io', nome: 'Persona A', categoria: 'Prospect' }], filtro: 'lista', ordine: 'az', esporta: null, testo: '', mostrate: 40 },
+    utentiLista: () => 'io', eAdmin: () => ctx.admin, soloGuardo: () => false, barraEsporta() {}, cardNome: r => `<div class="cn" data-id="${r.id}"></div>`,
+    sceltaDa: async (t, v) => { voci = v; return v.find(x => x.k === 'mai') || null; }, IntersectionObserver: class { observe() {} disconnect() {} },
+    document: { getElementById: id => pagina.querySelector('#' + id) } };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function disegnaElenco') + ';this.disegna = disegnaElenco;', ctx);
+  ctx.disegna();
+  let h = pagina.querySelector('#elenco').innerHTML;
+  assert.match(h, /<span>1 nome<\/span>\s*<span><button id="ordina">Ordina: A-Z ▾<\/button><\/span>/);   // un partner: niente «Scarica nomi e numeri»
+  await pagina.querySelector('#ordina').onclick();
+  uguale(voci.map(v => v.etichetta), ['✓ A-Z', ...Object.keys(L.ORDINI).slice(1).map(k => L.ORDINI[k])]);
+  assert.equal(ctx.LS.ordine, 'mai');
+  // l'Admin: «Scarica nomi e numeri»
+  ctx.admin = true; ctx.disegna(); h = pagina.querySelector('#elenco').innerHTML;
+  assert.match(h, /<button id="esporta">\[file\] Scarica nomi e numeri<\/button> · <button id="ordina">/);
+  assert.doesNotMatch(h, /Esporta</);
+});
+
+prova('L2: in «Scarica nomi e numeri» una riga dice cosa fa il tocco; la cornetta della card è spenta (il tocco spunta, non chiama)', () => {
+  const pagina = new Nodo(); pagina.innerHTML = '<div id="elenco"></div>';
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-23' }, LS: { esporta: { modo: 'tutti', eccezioni: new Set() }, targhe: {}, coppie: {} },
+    classeCat: () => 'cat', iniziali: () => 'PA', nuovoBadge: () => '', targheCard: () => '', coppiaCard: () => '', diChiCard: () => '',
+    document: { getElementById: id => pagina.querySelector('#' + id), createElement: () => new Nodo() } };
+  const barra = new Nodo(); ctx.document.getElementById = id => (id === 'ls-esporta' ? barra : id === 'elenco' ? { after() {} } : null); barra.id = 'ls-esporta';
+  vm.createContext(ctx);
+  vm.runInContext([PL.match(/^const sceltoEsporta = .*$/m)[0], pezzo(PL, 'function barraEsporta'), pezzo(PL, 'function cardNome'), 'this.barra = barraEsporta; this.card = cardNome;'].join('\n'), ctx);
+  ctx.barra([{ id: 'a' }]);
+  assert.match(barra.innerHTML, /^<div class="ls-esporta-aiuto">Tocca un nome per toglierlo<\/div>/);
+  ctx.LS.esporta = { modo: 'nessuno', eccezioni: new Set() }; ctx.barra([{ id: 'a' }]);
+  assert.match(barra.innerHTML, /^<div class="ls-esporta-aiuto">Tocca un nome per sceglierlo<\/div>/);
+  const r = { id: 'a', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001' };
+  assert.match(ctx.card(r), /<a class="chiama spento" href="tel:" aria-label="Chiama">/);
+  ctx.LS.esporta = null;
+  assert.match(ctx.card(r), /<a class="chiama " href="tel:\+393330000001" aria-label="Chiama">/);   // fuori da Esporta, come prima
+});
+
+prova('L2: una funzione sola per scaricare e lo stesso foglio «Il file è pronto» (nome del file, quanti nomi, dove trovarlo); niente più avviso che sparisce', () => {
+  const SL = leggi('scarica-lista.js');
+  const fogli = [], scaricati = [];
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Esporta: require('../../esporta.js'), MB21Coda: { oggiRoma: () => '2026-10-23' }, navigator: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148' },
+    LS: { filtro: 'prospect', testo: '', esporta: { modo: 'tutti', eccezioni: new Set() } }, disegnaElenco() {}, mostraToast: t => { throw new Error('avviso: ' + t); },
+    document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx);
+  vm.runInContext([pezzo(SL, 'function doveFinisceIlFile'), pezzo(SL, 'function foglioFilePronto'), pezzo(PL, 'function scaricaEsporta'),
+    'function scaricaFile(bytes, nome) { scaricati.push([bytes.length > 0, nome]); }', 'this.scarica = scaricaEsporta;'].join('\n'), Object.assign(ctx, { scaricati }));
+  ctx.scarica([{ nome: 'Persona A', telefono: '+393330000001' }, { nome: 'Persona B', telefono: null }]);
+  uguale(scaricati, [[true, 'MB21 · Prospect · 23-10-2026.xlsx']]);
+  const f = fogli[0].innerHTML;
+  assert.match(f, /Il file è pronto/); assert.match(f, /<b>MB21 · Prospect · 23-10-2026\.xlsx<\/b>/); assert.match(f, /2 nomi\./); assert.match(f, /Salva su File/);
+  assert.equal(ctx.LS.esporta, null);
+  // «Scarica la mia lista» usa le stesse due funzioni
+  assert.match(SL, /\n    scaricaFile\(MB21Esporta\.xlsxBytesMulti\(MB21Esporta\.fogliMiaLista\(\{ contatti, azioni, note \}\)\), nome\);/);
+  assert.match(SL, /foglioFilePronto\(r\.nome, `\$\{r\.schede/);
+  assert.doesNotMatch(PL, /File pronto con|URL\.createObjectURL/);
+});
+
+prova('L2: nel file «Scarica la mia lista» il compleanno a parole, come nella scheda', () => {
+  const E = require('../../esporta.js');
+  const f = E.fogliMiaLista({ contatti: [{ id: 'c1', nome: 'Persona A', compleanno: '1604-12-25' }, { id: 'c2', nome: 'Persona B', compleanno: '1985-04-12' }, { id: 'c3', nome: 'Persona C', compleanno: null }], azioni: [], note: [] });
+  assert.deepEqual(f[0].righe.map(r => r.compleanno), ['25 dicembre', '12 aprile 1985', null]);
+  assert.ok(f[0].colonne.includes('compleanno'));
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

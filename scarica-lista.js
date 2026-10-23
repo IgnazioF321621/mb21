@@ -12,17 +12,22 @@ async function leggiTuttoMio(tabella, ordine) {
     if (data.length < 1000) return righe;
   }
 }
-// Dà { ok: true, schede, azioni, note } oppure { ok: false }: nessun file a metà
+// Un file .xlsx preparato sul telefono si «scarica»: su iPhone si apre il foglio per salvarlo in File o passarlo a un'altra app.
+// Lista Nomi L2 (Ignazio 23/10): una funzione sola per «Scarica la mia lista» e «Scarica nomi e numeri» della Lista
+function scaricaFile(bytes, nome) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: nome });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+// Dà { ok: true, nome, schede, azioni, note } oppure { ok: false }: nessun file a metà
 async function scaricaMiaLista() {
   if (!ST.utente || !ST.utente.id) return { ok: false };
   try {
     const [contatti, azioni, note] = await Promise.all([leggiTuttoMio('contatti', 'nome'), leggiTuttoMio('azioni', 'creato_il'), leggiTuttoMio('coach_note', 'scritta_il')]);
-    const bytes = MB21Esporta.xlsxBytesMulti(MB21Esporta.fogliMiaLista({ contatti, azioni, note }));
-    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: MB21Esporta.nomeFileMiaLista(MB21Coda.oggiRoma()) });
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);   // su iPhone si apre il foglio per salvarlo in File o passarlo a un'altra app
-    return { ok: true, schede: contatti.length, azioni: azioni.length, note: note.length };
+    const nome = MB21Esporta.nomeFileMiaLista(MB21Coda.oggiRoma());
+    scaricaFile(MB21Esporta.xlsxBytesMulti(MB21Esporta.fogliMiaLista({ contatti, azioni, note })), nome);
+    return { ok: true, nome, schede: contatti.length, azioni: azioni.length, note: note.length };
   } catch (e) { return { ok: false }; }
 }
 
@@ -47,13 +52,14 @@ function doveFinisceIlFile(ua) {
   if (/Macintosh/.test(u)) return ['Il file è nella cartella «Download» del Mac (in Safari anche con la freccia in alto a destra).', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
   return ['Il file è nella cartella «Download» del computer.', 'Per Google Fogli: apri fogli.google.com, tocca File › Importa › Carica e scegli il file.'];
 }
-function foglioFilePronto(r) {
-  const [dove, poi] = doveFinisceIlFile(navigator.userAgent), nome = MB21Esporta.nomeFileMiaLista(MB21Coda.oggiRoma());
+// Il foglio dopo ogni download (Lista Nomi L2: lo stesso per «Scarica la mia lista» e per la Lista): il nome del file, cosa c'è dentro, dove trovarlo
+function foglioFilePronto(nome, dentro) {
+  const [dove, poi] = doveFinisceIlFile(navigator.userAgent);
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('fatto')} Il file è pronto</h3></div>
     <div class="riquadro" style="margin-bottom:12px"><p style="margin:0 0 8px"><b>${esc(nome)}</b></p>
-      <p style="margin:0 0 8px">${r.schede.toLocaleString('it-IT')} schede, ${r.azioni.toLocaleString('it-IT')} azioni, ${r.note.toLocaleString('it-IT')} note.</p>
+      <p style="margin:0 0 8px">${esc(dentro)}</p>
       <p style="margin:0 0 8px">${esc(dove)}</p><p style="margin:0">${esc(poi)}</p></div>
     <button class="primario" id="fp-ok">Ho capito</button></div>`;
   document.body.appendChild(velo);
@@ -65,7 +71,7 @@ async function toccoScaricaLista(b) {
   mostraToast('Preparo il file…');
   const r = await scaricaMiaLista();
   b.disabled = false;
-  if (r.ok) { ricordaScaricata(); foglioFilePronto(r); }
+  if (r.ok) { ricordaScaricata(); foglioFilePronto(r.nome, `${r.schede.toLocaleString('it-IT')} schede, ${r.azioni.toLocaleString('it-IT')} azioni, ${r.note.toLocaleString('it-IT')} note.`); }
   else mostraToast('Non riesco a preparare il file: controlla la connessione e riprova');
   return r;
 }

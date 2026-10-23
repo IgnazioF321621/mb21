@@ -79,25 +79,17 @@
   // Con un testo in «Cerca», «Lista» e «All» trovano anche gli archiviati, in fondo (nota Pagine 012, Ignazio 05/10/2026: chi non trovava
   // un nome messo da parte lo inseriva di nuovo). Senza testo gli archiviati restano fuori, come prima.
   const eArchiviato = r => r.categoria === 'Archiviato';
-  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az', lettera = null } = {}) {
+  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az' } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     const ancheArchiviati = !!piega(testo) && (f === FILTRI.lista || f === FILTRI.all);
     const dopo = confrontoPer(ordine, oggi);
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo, oggi) && (!lettera || iniziale(r) === lettera))
+      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo, oggi))
       .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || dopo(a, b));
   }
 
-  // Lettera con cui inizia il nome così com'è scritto (di solito il nome di battesimo; Ignazio 18/09): A-Z senza accenti, il resto «#»
-  function iniziale(r) {
-    const c = piega(r && r.nome).trim().charAt(0).toUpperCase();
-    return c >= 'A' && c <= 'Z' ? c : '#';
-  }
-  // Lettere che hanno almeno un nome nel filtro scelto (le altre nel foglio restano spente)
-  function lettereConNomi(righe, { filtro, utenteId, admin } = {}) {
-    return [...new Set(filtraContatti(righe, { filtro, utenteId, admin }).map(iniziale))].sort();
-  }
+  // Lista Nomi L2 (Ignazio 23/10): via le lettere A-Z da «Ordina» (le aveva volute il 18/09): per un nome solo c'è Cerca.
 
   // ── Card che parla e «Ordina» (cantiere 30, lavoro 4) ──
   // `ultima_il` è l'azione con la data più avanti (vista `contatti_lista`): può essere un appuntamento futuro.
@@ -532,7 +524,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, fraseCard, ORDINI, iniziale, lettereConNomi, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
