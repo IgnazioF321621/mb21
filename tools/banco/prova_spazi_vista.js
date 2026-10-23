@@ -10,79 +10,74 @@ function prova(nome, fn) { coda.push([nome, fn]); }
 const iso = (g, o) => P.A.isoDaRoma(g, o);
 const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; };
 
-prova('Prepara la settimana: accanto all\'ora di un incontro LdS c\'è «+ nome»; si apre il campo, si scrive, e il nome viaggia con l\'incontro', async () => {
+// ── Agenda P6 (Ignazio 23/10/2026): «Programmare la settimana» in una schermata sola, niente «quanti» né limite di 4 ──
+prova('P6: una schermata sola — «Cosa metti in settimana?» con Piano Marketing già acceso; tocco sul giorno → ore libere; tocco sull\'ora → «Piano Marketing 18:00 ×»', async () => {
   pulisci(); P.AG.spazi = [];
   await P.preparaSettimana();
   const v = P.fogli[0];
-  v.clic('[data-quanti="LOS"] [data-n="1"]');   // LdS: 1 (nota 005: tutte le righe, i numeri partono spenti)
-  v.clic('#sp-si');                             // Avanti → il giorno e l'ora
-  v.clic('[data-g="2026-09-23"]');              // mercoledì
-  v.clic('[data-ora]', 0);                      // la prima ora libera
-  assert.match(v.innerHTML, /class="sp-nome" data-nome-apri="0"[^>]*>＋ nome<\/button>/);   // il tocco per dare il nome, accanto all'ora
-  assert.doesNotMatch(v.innerHTML, /data-nome-serata/);                                         // il campo si apre solo al tocco
-  v.clic('[data-nome-apri]');
-  const campo = v.querySelector('[data-nome-serata]');
-  assert.ok(campo, 'il campo si apre sotto il giorno');
-  campo.value = '  Serata  Rubino ';
-  campo.oninput();
-  v.clic('[data-nome-ok]');
-  assert.match(v.innerHTML, /data-nome-apri="0"[^>]*>Serata Rubino<\/button>/);                // il chip dice il nome
-  await v.clic('#sp-si');                       // Crea gli spazi
-  const ins = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert');
-  const righe = ins.args[0];
-  assert.equal(righe.find(r => r.tipo === 'LOS').nome, 'Serata Rubino');
-  assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);   // nota 047: un partner non aggiunge più la SdS/OPEN (è quella del Team)
+  assert.match(v.innerHTML, /<small>Programmare la settimana<\/small>/);
+  assert.match(v.innerHTML, /<p class="sp-domanda">Cosa metti in settimana\?<\/p>/);
+  assert.equal([...v.innerHTML.matchAll(/data-tipo-scelto="([^"]+)"( class="scelto")?/g)].map(m => m[1] + (m[2] ? '*' : '')).join(), 'Piano Marketing*,Consulenza PRD,Team,LOS');
+  assert.doesNotMatch(v.innerHTML, /data-quanti|Avanti|Messi \d|sp-solo-sds|data-nome-apri/);   // niente numeri, passi, conti né nome qui
+  assert.match(v.innerHTML, /id="sp-si" disabled>Crea</); assert.match(v.innerHTML, /Tocca un giorno per mettere il primo/);
+  v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
+  assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>Piano Marketing \d\d:\d\d<button type="button" data-togli="0"/);
+  v.clic('[data-tipo-scelto="Team"]'); v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);   // un altro tipo, stesso giorno, senza contare
+  v.clic('[data-tipo-scelto]', 0);   // di nuovo Piano Marketing (il primo)
+  for (let k = 0; k < 5; k++) { v.clic('[data-g="2026-09-24"]'); v.clic('[data-ora]', 0); }   // niente limite di 4
+  assert.match(v.innerHTML, /Nuovi: 6 Piani Marketing e 1 incontro di Team/);
+  await v.clic('#sp-si');
+  const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+  assert.equal(righe.filter(r => r.tipo === 'Piano Marketing').length, 6); assert.equal(righe.filter(r => r.tipo === 'Team').length, 1);
+  assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);   // nota 047: un partner non aggiunge la SdS/OPEN (è quella del Team)
+  assert.equal('nome' in righe.find(r => r.tipo === 'Team'), false);   // il nome della serata si mette dopo, dal foglio dell'incontro
+  assert.match(P.avvisi.at(-1).t, /^Settimana pronta: 6 Piani Marketing e 1 incontro di Team/);
 });
 
-prova('Nota 047: l\'Admin, con «Crea gli spazi» o col tasto «solo la SdS/OPEN», la crea già condivisa con tutto il Team; il partner legge la frase di Ignazio', async () => {
-  pulisci(); P.AG.spazi = [];
-  await P.preparaSettimana();
-  assert.match(P.fogli[0].innerHTML, /Questa serata viene creata per tutto il team automaticamente/);
-  assert.doesNotMatch(P.fogli[0].innerHTML, /sp-solo-sds/);
-  pulisci(); P.modo.admin = true;
+prova('P6: in ogni giorno, in grigio, quello che c\'è già (spazi, Piani e Consulenze fissati); la × toglie una pastiglia nuova', async () => {
+  pulisci();
+  const primaAz = P.AG.azioni;
+  P.AG.spazi = [{ id: 'e1', user_id: 'io', tipo: 'Piano Marketing', inizio: iso('2026-09-23', '18:00'), durata: 60 }, { id: 'e2', user_id: 'io', tipo: 'LOS', inizio: iso('2026-09-23', '21:00'), durata: 60, nome: 'Serata Rubino' }];
   try {
     await P.preparaSettimana();
     const v = P.fogli[0];
-    assert.match(v.innerHTML, /id="sp-solo-sds"/);
-    await v.clic('#sp-solo-sds');
-    const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    const mer = v.innerHTML.slice(v.innerHTML.indexOf('data-g="2026-09-23"'), v.innerHTML.indexOf('data-g="2026-09-24"'));
+    assert.match(mer, /<span class="sp-gia">18:00 Piano Marketing · da riempire<\/span>[\s\S]*<span class="sp-gia">21:00 Serata Rubino<\/span>/);
+    const gio = v.innerHTML.slice(v.innerHTML.indexOf('data-g="2026-09-24"'), v.innerHTML.indexOf('data-g="2026-09-25"'));
+    assert.doesNotMatch(gio, /sp-gia/);   // un Follow Up non è un Piano Marketing né una Consulenza: non si scrive qui
+    const ven = v.innerHTML.slice(v.innerHTML.indexOf('data-g="2026-09-25"'), v.innerHTML.indexOf('data-g="2026-09-26"'));
+    assert.match(ven, /<span class="sp-gia">18:00 Piano Marketing · fissato<\/span>/);   // un PM già fissato con una persona (x5 del banco)
+    v.clic('[data-g="2026-09-22"]'); v.clic('[data-ora]', 0);
+    assert.match(v.innerHTML, /data-togli="0"/);
+    v.clic('[data-togli="0"]');
+    assert.doesNotMatch(v.innerHTML, /data-togli=/); assert.match(v.innerHTML, /id="sp-si" disabled>/);
+  } finally { P.AG.azioni = primaAz; P.AG.spazi = []; }
+});
+
+prova('P6 e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (con la ×), «Crea» la fa già condivisa; tolta con la ×, non si crea; il partner ha il «Perché?»', async () => {
+  pulisci(); P.AG.spazi = [];
+  await P.preparaSettimana();
+  assert.match(P.fogli[0].innerHTML, /<b>SdS\/OPEN<\/b> <details class="perche"><summary>Perché\?<\/summary>Questa serata viene creata per tutto il team automaticamente/);
+  assert.doesNotMatch(P.fogli[0].innerHTML, /data-sds-via/);
+  pulisci(); P.modo.admin = true;
+  try {
+    await P.preparaSettimana();
+    let v = P.fogli[0];
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30 · per tutto il Team<button type="button" data-sds-via/);
+    assert.match(v.innerHTML, /Nuovi: la SdS\/OPEN/); assert.doesNotMatch(v.innerHTML, /perche/);
+    await v.clic('#sp-si');   // solo la SdS: «Crea» mette solo lei
+    let righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
     assert.equal(righe.length, 1); assert.equal(righe[0].tipo, 'SdS/OPEN'); assert.equal(righe[0].condiviso_con, 'team');
+    pulisci();
+    await P.preparaSettimana();
+    v = P.fogli[0];
+    v.clic('[data-sds-via]');
+    assert.doesNotMatch(v.innerHTML, /data-sds-via/); assert.match(v.innerHTML, /id="sp-si" disabled>/);
+    v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
+    await v.clic('#sp-si');
+    righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);
   } finally { P.modo.admin = false; }
-});
-
-prova('Prepara la settimana: senza scrivere il nome l\'incontro si crea come sempre, senza il campo nome (la colonna può mancare)', async () => {
-  pulisci(); P.AG.spazi = [];
-  await P.preparaSettimana();
-  const v = P.fogli[0];
-  v.clic('[data-quanti="Team"] [data-n="1"]'); v.clic('#sp-si'); v.clic('[data-g="2026-09-24"]'); v.clic('[data-ora]', 0);
-  await v.clic('#sp-si');
-  const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
-  assert.equal('nome' in righe.find(r => r.tipo === 'Team'), false);
-});
-
-prova('Nota 005: «Programmare la settimana»: tutte le righe, numeri da 1 a 4 tutti spenti; di nuovo sullo stesso numero si spegne; senza numeri non si va avanti', async () => {
-  pulisci(); P.AG.spazi = [];
-  await P.preparaSettimana();
-  const v = P.fogli[0];
-  const accesi = () => [...v.innerHTML.matchAll(/data-quanti="([^"]+)">([\s\S]*?)<\/div>/g)].map(m => m[1] + ':' + ((m[2].match(/data-n="(\d)" class="scelto"/) || [])[1] || '-'));
-  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:-', 'LOS:-']);
-  assert.equal((v.innerHTML.match(/data-quanti="Team">[\s\S]*?<\/div>/)[0].match(/data-n=/g) || []).length, 4);
-  assert.match(v.innerHTML, /<small>Programmare la settimana<\/small>/);
-  await v.clic('#sp-si');
-  assert.match(v.innerHTML, /id="sp-errore">Tocca un numero accanto ad almeno un appuntamento o un incontro\.</);
-  v.clic('[data-quanti="Team"] [data-n="2"]');
-  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:2', 'LOS:-']);
-  v.clic('[data-quanti="Team"] [data-n="2"]');
-  assert.deepEqual(accesi(), ['Piano Marketing:-', 'Consulenza PRD:-', 'Team:-', 'LOS:-']);
-});
-
-prova('Per un Piano Marketing non c\'è il nome della serata (ha il nome della persona, come sempre)', async () => {
-  pulisci(); P.AG.spazi = [];
-  await P.preparaSettimana();
-  const v = P.fogli[0];
-  v.clic('[data-n="1"]', 0);   // la prima riga è il Piano Marketing
-  v.clic('#sp-si'); v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
-  assert.doesNotMatch(v.innerHTML, /data-nome-apri/);
 });
 
 prova('Il foglio di un incontro LdS/Team: il bottone grande «Metti il nome della serata» (o «Cambia il nome»), come «Metti un nome» dei PM; la SdS/OPEN non ce l\'ha', () => {

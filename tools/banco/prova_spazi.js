@@ -35,14 +35,17 @@ prova('Le righe da creare: gli scelti e la SdS/OPEN del lunedì alle 21:30, una 
   assert.equal(S.riassunto(S.righeNuove('io', SETT, [scelti[0], scelti[0]], [], '2026-09-29')), '2 Piani Marketing');
 });
 
-prova('Le parole dei passi (nei panni di un nuovo): domanda, conto, cosa manca', () => {
-  assert.equal(S.domandaGiorni('Piano Marketing', 3), 'In che giorni fai i 3 Piani Marketing?');
-  assert.equal(S.domandaGiorni('Piano Marketing', 1), 'In che giorno fai il Piano Marketing?');
-  assert.equal(S.domandaGiorni('Consulenza PRD', 2), 'In che giorni fai le 2 Consulenze prodotti?');
-  assert.equal(S.conto('Piano Marketing', 2, 3), 'Messi 2 su 3');
-  assert.equal(S.conto('Consulenza PRD', 1, 1), 'Messe 1 su 1 ✓');
-  assert.match(S.manca('Piano Marketing', 1), /^Ne manca uno/);
-  assert.match(S.manca('Consulenza PRD', 2), /^Ne mancano 2/);
+prova('Agenda P6 (23/10): quello che c\'è già in un giorno, con le parole della card — spazi, Piani e Consulenze fissati, serate ricevute, in ordine d\'ora', () => {
+  const g = '2026-09-30';
+  const spazi = [sp('Piano Marketing', g, '18:00'), { ...sp('LOS', g, '21:00'), nome: 'Serata Rubino' }, sp('Team', '2026-10-01', '21:00')];
+  const azioni = [{ tipo_azione: 'Consulenza PRD', inizio: A.isoDaRoma(g, '10:00') }, { tipo_azione: 'Follow Up', inizio: A.isoDaRoma(g, '11:00') }, { tipo_azione: 'Piano Marketing', inizio: A.isoDaRoma('2026-10-02', '18:00') }];
+  const ricevuti = [{ inizio: A.isoDaRoma(g, '21:30'), _ricevuto: { titolo: 'SdS/OPEN', da_nome: 'Partner A' } }];
+  assert.deepEqual(S.giaNelGiorno(g, spazi, azioni, ricevuti).map(x => `${x.ora} ${x.testo}`),
+    ['10:00 Consulenza prodotti · fissato', '18:00 Piano Marketing · da riempire', '21:00 Serata Rubino', '21:30 SdS/OPEN · da Partner A']);
+  assert.deepEqual(S.giaNelGiorno('2026-09-29', spazi, azioni, ricevuti), []);
+  // le parole dei vecchi passi a numeri non ci sono più (niente «quanti», niente limite di 4)
+  assert.equal(S.domandaGiorni, undefined); assert.equal(S.conto, undefined); assert.equal(S.manca, undefined);
+  assert.ok(S.DA_PREPARARE.every(t => S.TIPI[t].max === undefined && S.TIPI[t].domanda === undefined));
 });
 
 prova('Gli spazi del giorno in ordine, e il loro orario', () => {
@@ -76,10 +79,6 @@ prova('Team e LdS (27/09): incontri di gruppo, senza nome, nel selettore dopo Pi
   assert.equal(S.daRiempire('Piano Marketing'), true);
   assert.equal(S.daRiempire('Team'), false);
   assert.equal(S.daRiempire('SdS/OPEN'), false);
-  assert.deepEqual(S.DA_PREPARARE.map(t => S.TIPI[t].max), [4, 4, 4, 4]);   // nota 005: fino a 4 per tipo (Ignazio 06/10)
-  assert.equal(S.domandaGiorni('Team', 1), 'In che giorno fai l\'incontro di Team?');
-  assert.equal(S.domandaGiorni('LOS', 2), 'In che giorni fai i 2 incontri LdS?');
-  assert.equal(S.conto('LOS', 1, 1), 'Messi 1 su 1 ✓');
   const r = S.righeNuove('io', SETT, [{ tipo: 'Team', giorno: '2026-09-30', ora: '21:00' }, { tipo: 'Team', giorno: '2026-10-02', ora: '21:00' }, { tipo: 'LOS', giorno: '2026-10-01', ora: '20:00' }], [], '2026-09-27');
   assert.equal(S.riassunto(r), '2 incontri di Team, 1 incontro LdS e la SdS/OPEN');
   const p = S.programma(SETT, [], r.map((x, k) => ({ ...x, id: 'r' + k })));
@@ -132,15 +131,14 @@ prova('Nota 004: nella card solo quello che deve venire; i passati senza esito �
   assert.deepEqual([fine.righe.length, fine.daChiudere.map(a => a.id), fine.fatti.length], [0, ['p2', 'p3'], 2]);
 });
 
-prova('Nota Pagine 046: «Aggiungi solo la SdS/OPEN» scrive solo lei, una volta sola, mai per un lunedì passato', () => {
+prova('Nota Pagine 046 e P6: con solo la SdS/OPEN «Crea» scrive solo lei, una volta sola, mai per un lunedì passato', () => {
   const r = S.righeNuove('io', SETT, [], [], '2026-09-27');
   assert.equal(r.length, 1); assert.equal(r[0].tipo, 'SdS/OPEN'); assert.equal(r[0].inizio, A.isoDaRoma('2026-09-28', '21:30')); assert.equal(r[0].durata, 60);
   assert.equal(S.righeNuove('io', SETT, [], [sp('SdS/OPEN', '2026-09-28', '21:30')], '2026-09-27').length, 0);   // secondo tocco: niente doppione
   assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-29').length, 0);   // lunedì passato
   const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
-  assert.match(pag, /id="sp-solo-sds">\$\{ic\('piu'\)\} Aggiungi solo la SdS\/OPEN di lunedì alle 21:30/);
-  assert.doesNotMatch(pag, /si aggiunge da sola\. Se cambia/);
-  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, \[\], esistenti, oggi, \{ sds: sdsMia, team: true \}\)/);
+  assert.doesNotMatch(pag, /sp-solo-sds|si aggiunge da sola\. Se cambia/);   // P6: il tasto a parte non serve più, la SdS è già messa nel lunedì
+  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, st\.scelti, esistenti, oggi, \{ sds: sdsMia && !st\.sdsVia, team: true \}\)/);
 });
 
 prova('Nota Pagine 047: i partner non aggiungono più la SdS/OPEN; l\'Admin la crea già condivisa con il Team', () => {
@@ -152,7 +150,7 @@ prova('Nota Pagine 047: i partner non aggiungono più la SdS/OPEN; l\'Admin la c
   assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-27')[0].condiviso_con, undefined);   // senza opz come prima
   const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
   assert.match(pag, /const sdsMia = eAdmin\(\) && visto\(\)\.id === ST\.utente\.id;/);
-  assert.match(pag, /esc\(A\.SDS_DEL_TEAM\)/);
+  assert.match(pag, /percheHtml\('sds_team'\)/);   // P6 (23/10): la frase di Ignazio per i partner, nel «Perché?» chiuso
 });
 
 console.log(`\n${ok} prove superate`);
