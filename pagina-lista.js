@@ -98,20 +98,29 @@ async function leggiTuttoLista() {
   return [data.righe, targhe];
 }
 
+// Lista Nomi L7 (Ignazio 23/10): una funzione sola per leggere TUTTA la Lista — nomi, targhette BBS · WES · CEP, coppie, codici — usata dalla Lista
+// e da `apriContattoDa` (una scheda aperta da Agenda, Dashboard, Report o Mappa prima della Lista): prima lì si leggevano solo i nomi, e per 10 minuti
+// le targhette restavano spente e «Coppia con …» mancava. Per un partner è anche una richiesta in meno (`lista_nomi()` invece di pagine + utenti dell'app).
+async function leggiTuttaLaLista() {
+  [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now();
+  // nota 069: il CEP va per codice: la targhetta CEP anche sulle altre schede con lo stesso codice Amway (una lettura leggera, solo i codici)
+  const cd = await dbq('codici delle schede', supa.from('contatti').select('id, codice_amway').not('codice_amway', 'is', null).is('eliminato_il', null).limit(5000));
+  if (!cd.error && Array.isArray(cd.data)) LS.targhe = MB21Lista.cepPerCodice(LS.targhe, cd.data);
+  segnaApp();
+}
+
 async function apriLista() {
   LS.contatto = null;
   app.innerHTML = `<h1>Lista Nomi</h1><div class="vuoto">Carico i nomi…</div>`;
   try {
-    if (!listaFresca()) {
-      [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now();
-      // nota 069: il CEP va per codice: la targhetta CEP anche sulle altre schede con lo stesso codice Amway (una lettura leggera, solo i codici)
-      const cd = await dbq('codici delle schede', supa.from('contatti').select('id, codice_amway').not('codice_amway', 'is', null).is('eliminato_il', null).limit(5000));
-      if (!cd.error && Array.isArray(cd.data)) LS.targhe = MB21Lista.cepPerCodice(LS.targhe, cd.data);
-    }
+    if (!listaFresca()) await leggiTuttaLaLista();
     segnaApp();
     await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
   } catch (e) {
-    app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>${versione()}`;
+    // L7 (Ignazio 23/10): sotto l'avviso il bottone «Riprova», che rifà la lettura (prima si toccava di nuovo il tab)
+    app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>
+      <button class="primario" id="ls-riprova">Riprova</button>${versione()}`;
+    document.getElementById('ls-riprova').onclick = apriLista;
     return;
   }
   if (LS.apriContatto) {   // da un avviso «…?apri=lista&contatto=<id>&sezione=sharing» (cantiere 40): la scheda già aperta
@@ -174,9 +183,7 @@ function disegnaLista() {
     ${catalogoRigaHtml()}
     <div id="elenco"></div>
     <div id="fondo"></div>
-    <button class="link" id="ls-aggiorna">Aggiorna i nomi</button>
     ${versione()}`;
-  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; ST.catalogo = null; apriLista(); };   // L5: anche «Da catalogare» si rifà
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
@@ -199,11 +206,15 @@ function disegnaElenco() {
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
   // Lista Nomi L2 (Ignazio 23/10): niente più lettere A-Z (per un nome c'è Cerca); il file per l'altro programma, «Scarica nomi e numeri», solo per l'Admin
-  const ordina = `<div class="ls-ordina"><span>${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'}</span>
+  // L7 (Ignazio 23/10): «Aggiorna i nomi» in alto, accanto al conto (prima in fondo all'elenco: con tanti nomi non ci si arrivava)
+  const aggiorna = '<button class="link ls-aggiorna" id="ls-aggiorna">Aggiorna i nomi</button>';
+  const ordina = `<div class="ls-ordina"><span>${trovati.length.toLocaleString('it-IT')} ${trovati.length === 1 ? 'nome' : 'nomi'} · ${aggiorna}</span>
     <span>${LS.esporta || !eAdmin() ? '' : `<button id="esporta">${ic('file')} Scarica nomi e numeri</button> · `}<button id="ordina">Ordina: ${MB21Lista.ORDINI[LS.ordine]} ▾</button></span></div>`;
   elenco.innerHTML = trovati.length
     ? ordina + trovati.slice(0, LS.mostrate).map(cardNome).join('')
-    : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}${LS.testo.trim() && !soloGuardo() ? `<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">${ic('piu')} Aggiungi «${esc(LS.testo.trim())}» alla Lista</button>` : ''}</div>`;
+    : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}${LS.testo.trim() && !soloGuardo() ? `<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">${ic('piu')} Aggiungi «${esc(LS.testo.trim())}» alla Lista</button>` : ''}${aggiorna}</div>`;
+  // «Aggiorna i nomi»: rilegge tutta la Lista (e «Da catalogare», L5)
+  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; ST.catalogo = null; apriLista(); };
   // Lista Nomi L1 (Ignazio 23/10): Cerca senza risultati → un tocco apre il modulo del nuovo contatto con il nome già scritto
   const aggiungiCercato = document.getElementById('aggiungi-cercato');
   if (aggiungiCercato) aggiungiCercato.onclick = () => apriModulo(null, { nome: LS.testo.trim() });
@@ -1530,7 +1541,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     const archiviare = !nuovo && !catalogo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
     const q = nuovo ? supa.from('contatti').insert(riga)
       : supa.from('contatti').update({ ...riga, categoria: catalogo ? null : archiviare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id);
-    let { error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', q);
+    let { data: salvato, error } = await dbq(nuovo ? 'nuovo contatto' : 'modifica contatto', nuovo ? q.select('id').single() : q);
     if (!error && catalogo) ({ error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
     // stesso percorso di «Archivia» dal menu: categoria di prima in `categoria_prec`, fuori coda
     else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
@@ -1539,6 +1550,10 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     chiudi();
     mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
       archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
+    // L7 (Ignazio 23/10): la riga della persona si rilegge sempre, anche dalla Lista (tre puntini · Modifica) e per un nome nuovo, che compare subito
+    // (prima un nome nuovo si vedeva solo dopo 10 minuti o con «Aggiorna i nomi»); con la scheda aperta la rilegge già ricaricaERidisegna
+    const idSalvato = nuovo ? salvato && salvato.id : c.id;
+    if (idSalvato && (!LS.contatto || LS.contatto.id !== idSalvato)) await aggiornaRiga(idSalvato);
     const ridisegnato = ricaricaERidisegna();
     if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });

@@ -2280,7 +2280,7 @@ async function spaziLiberi() {
 async function apriContattoDa(id, ritorno) {
   if (!LS.righe.find(x => x.id === id)) {   // lista mai letta o senza questo contatto
     mostraToast('Apro la scheda…');
-    try { [LS.righe] = await Promise.all([leggiLista(), LS.usoApp ? null : leggiUsoApp()]); segnaApp(); }
+    try { await leggiTuttaLaLista(); }   // Lista Nomi L7: tutta la Lista (targhette, coppie, codici), la stessa funzione della pagina Lista
     catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
     if (!LS.righe.find(x => x.id === id)) return mostraToast('Questa persona non è più nella lista: qui resta il lavoro fatto');
   }

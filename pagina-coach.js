@@ -172,10 +172,10 @@ async function tentativiAVuoto(e, esito) {
     const { error: e3 } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: e.contatto_id }));
     if (e3) mostraToast('Non archiviato: riprova dalla scheda.');
     else {
-      contattiMiei = null; LS.righe = [];
+      contattiMiei = null; aggiornaRiga(e.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
       mostraToast(`${nome} spostato in Archiviati`, async () => {
         const { error: e4 } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: e.contatto_id }));
-        contattiMiei = null; LS.righe = [];
+        contattiMiei = null; aggiornaRiga(e.contatto_id);
         mostraToast(e4 ? 'Non ripristinato: riprova dalla scheda.' : 'Ripristinato');
       });
     }

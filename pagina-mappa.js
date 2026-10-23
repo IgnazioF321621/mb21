@@ -426,7 +426,7 @@ function collegaMappa() {
         .insert({ user_id: visto().id, nome: r.nome, categoria: 'Partner', codice_amway: r.id }).select('id').single());
       if (error) return mostraToast('Scheda non creata: riprova.');
       mostraToast(`Scheda di ${r.nome} creata`);
-      LS.righe = [];   // la Lista si rilegge con la scheda nuova
+      await aggiornaRiga(data.id);   // Lista Nomi L7: entra solo la scheda nuova (prima si buttava via tutta la Lista)
       return apriContattoDa(data.id, 'mappa');
     }
     const { error } = await dbq('collega codice Amway', supa.from('contatti').update({ codice_amway: r.id }).eq('id', scelta.id));
