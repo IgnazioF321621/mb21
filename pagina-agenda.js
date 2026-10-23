@@ -2083,11 +2083,10 @@ function spaziComeBlocchi(g) {
     fine: new Date(Date.parse(s.inizio) + (s.durata || 60) * 60000).toISOString(), testo: MB21Spazi.titolo(s), _spazio: s }));
 }
 
-// ── Un solo ingresso per aggiungere (nota Pagine 005, Ignazio 06/10/2026; provata nella pagina interattiva docs/prototipi/prova_aggiungi_mbplan.html) ──
-// Il «+» in alto e «Aggiungi» nella card «Programma della settimana» aprono lo stesso foglio, a livelli:
-//   1. «Cosa vuoi aggiungere?» → «Programmare la settimana» (preparaSettimana) · «Appuntamento singolo»
-//   2. «Appuntamento singolo» (solo l'Admin ha Team e Linea) → Con una persona · Con il Team · Con una Linea: il modulo «+» di sempre (nuovoAppuntamento),
-//      con «Condividi con» già scelto. Per chi non è Admin «Appuntamento singolo» apre subito il modulo.
+// ── Un solo ingresso per aggiungere (nota Pagine 005, Ignazio 06/10/2026; Agenda P5, Ignazio 23/10/2026: un foglio solo, via «Con chi?») ──
+// Il «+» in alto e «Aggiungi» nella card «Programma della settimana» aprono lo stesso foglio «Cosa vuoi aggiungere?», con tre voci che aprono
+// subito il loro modulo: «Programmare la settimana» (preparaSettimana) · «Appuntamento con una persona» (nuovoAppuntamento) · «Serata con il Team
+// o una Linea» (il modulo con «Tutto il Team» già scelto; la Linea si sceglie lì). La terza la vede solo chi può (puoSerataTeam, index.html).
 // `voci`: { k, icona, titolo, sotto, tinta }; risolve la `k` scelta, 'indietro' o null
 function foglioStrade(titolo, sotto, voci, conIndietro) {
   return new Promise(risolvi => {
@@ -2107,22 +2106,13 @@ function foglioStrade(titolo, sotto, voci, conIndietro) {
 async function foglioAggiungi() {
   if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
   const A = MB21Agenda, lun = AG.settimana[0], dom = AG.settimana[6], mese = g => A.titoloMese(g).toLowerCase();
-  const admin = eAdmin();
-  for (;;) {
-    const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
-      { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Quanti Piani Marketing e Consulenze, e quando; incontri di Team, LdS, SdS/OPEN' },
-      { k: 'singolo', icona: 'piu', tinta: 'var(--cat-partner)', titolo: 'Appuntamento singolo', sotto: admin ? 'Con una persona, con il Team o con una Linea' : 'Con una persona della tua lista' }]);
-    if (!k) return;
-    if (k === 'settimana') return preparaSettimana();
-    if (!admin) return nuovoAppuntamento({ giorno: AG.giorno });
-    const chi = await foglioStrade('Appuntamento singolo', 'Con chi?', [
-      { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
-      { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Con il Team', sotto: 'Una serata per tutto il Team: la trovano nella loro Agenda' },
-      { k: 'linea', icona: 'mappa', tinta: 'var(--ok)', titolo: 'Con una Linea', sotto: 'Una Prima Linea, o una persona dentro la Linea e la sua downline' }], 'Cosa vuoi aggiungere?');
-    if (chi === 'indietro') continue;
-    if (!chi) return;
-    return nuovoAppuntamento({ giorno: AG.giorno, ...(chi === 'persona' ? {} : { condividi: chi }) });
-  }
+  const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
+    { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Quanti Piani Marketing e Consulenze, e in che giorni; anche gli incontri di gruppo' },
+    { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
+    ...(puoSerataTeam() ? [{ k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }] : [])]);
+  if (!k) return;
+  if (k === 'settimana') return preparaSettimana();
+  return nuovoAppuntamento({ giorno: AG.giorno, ...(k === 'team' ? { condividi: 'team' } : {}) });
 }
 
 async function preparaSettimana() {

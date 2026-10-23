@@ -245,36 +245,38 @@ prova('Nota 005, il foglio della serata già salvata: la Linea è quella del fro
   } finally { P.AG.frontali = fr; P.AG.spazi = sp; P.AG.ramo = undefined; }
 });
 
-prova('Nota 005: un solo ingresso a livelli: «Cosa vuoi aggiungere?» → Programmare la settimana · Appuntamento singolo → (Admin) persona · Team · Linea, con «Condividi con» già scelto', async () => {
+prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiungere?» con tre voci che aprono subito il modulo; via «Con chi?»', async () => {
   pulisci(); P.modo.admin = true;
   const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"[\s\S]*?<b>([^<]+)<\/b>/g)].map(m => m[1] + ':' + m[2]);
   P.foglioAggiungi(); await attendi();
   let f = P.fogli.at(-1);
   assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
-  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'singolo:Appuntamento singolo']);
-  await f.clic('[data-strada="singolo"]'); await attendi();
-  f = P.fogli.at(-1);
-  assert.deepEqual(strade(f), ['persona:Con una persona', 'team:Con il Team', 'linea:Con una Linea']);
-  assert.match(f.innerHTML, /id="st-indietro">‹ Cosa vuoi aggiungere\?/);
-  await f.clic('#st-indietro'); await attendi();                         // indietro: di nuovo il primo livello
-  f = P.fogli.at(-1); assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
-  await f.clic('[data-strada="singolo"]'); await attendi();
-  await P.fogli.at(-1).clic('[data-strada="linea"]'); await attendi(); await attendi();
-  const m = P.fogli.at(-1);
-  assert.match(m.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="linea" class="scelto"/);   // il modulo «+» con la Linea già scelta
-  assert.match(m.innerHTML, /Quale Linea\? <small>una delle tue Prime Linee<\/small>/);
-  // chi non è Admin: «Appuntamento singolo» apre subito il modulo, senza Team e Linea
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento con una persona', 'team:Serata con il Team o una Linea']);
+  assert.doesNotMatch(f.innerHTML, /st-indietro|LdS|SdS|Appuntamento singolo/);   // niente secondo foglio, niente sigle
+  await f.clic('[data-strada="team"]'); await attendi(); await attendi();
+  let m = P.fogli.at(-1);
+  assert.match(m.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="team" class="scelto"/);   // la serata con «Tutto il Team» già scelto
+  await m.clic('[data-scelta="condividi"] [data-v="linea"]'); await attendi();   // la Linea si sceglie nello stesso modulo
+  assert.match(P.fogli.at(-1).innerHTML, /Quale Linea\? <small>una delle tue Prime Linee<\/small>/);
+  // l'Admin con una persona: un tocco e il modulo
+  pulisci(); P.modo.admin = true;
+  P.foglioAggiungi(); await attendi();
+  await P.fogli.at(-1).clic('[data-strada="persona"]'); await attendi(); await attendi();
+  assert.match(P.fogli.at(-1).innerHTML, /id="na-contatto"/);
+  // chi non è Admin: due voci, la serata no
   pulisci();
   P.foglioAggiungi(); await attendi();
   f = P.fogli.at(-1);
-  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'singolo:Appuntamento singolo']);
-  await f.clic('[data-strada="singolo"]'); await attendi(); await attendi();
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento con una persona']);
+  await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /id="na-contatto"/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada=/);
   // «Programmare la settimana» apre il foglio della settimana
   pulisci(); P.AG.spazi = [];
   P.foglioAggiungi(); await attendi();
   await P.fogli.at(-1).clic('[data-strada="settimana"]'); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /<small>Programmare la settimana<\/small>/);
+  const idx = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /const puoTeam = \(\) => puoSerataTeam\(\) && !opz\.contatto && !opz\.spazio;/);   // una regola sola, foglio e modulo
 });
 
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
