@@ -567,6 +567,20 @@ prova('Vendite V2 (Ignazio 22/10): «Quando lo risento?» — riordinoFra, mesiF
   assert.equal(L.propostaRiordino(st, 'Altro', 'Nutrilite'), null); assert.equal(L.propostaRiordino(null, 'x', 'y'), null);
 });
 
+prova('Agenda P2 (Ignazio 23/10): «Chi sento oggi? N» con lo stesso conto della Dashboard (elencoDiOggi); 0 = niente pastiglia; il tocco apre l\'elenco unico', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const ag = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8'), dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
+  const da = ag.indexOf('function richiamiAgenda'), a = ag.indexOf('\n}\n', da) + 3;
+  let e = { totale: 9, fatti: 2 };
+  const ctx = { AG: { giorno: '2026-10-23', telefonate: null, passati: [] }, ST: { risultato: {}, oggi: '2026-10-23' }, elencoDiOggi: () => e, esc: x => String(x), ic: n => `[${n}]`, LIMITE_SENZA_ESITO: 20 };
+  vm.createContext(ctx); vm.runInContext(ag.slice(da, a) + ';this.r = richiamiAgenda;', ctx);
+  assert.match(ctx.r('2026-10-23'), /<button id="ag-chi-sento" class="telefonate">\[telefonate\]<span>Chi sento oggi\? <b>7<\/b><\/span><\/button>/);
+  e = { totale: 3, fatti: 3 }; assert.equal(ctx.r('2026-10-23'), '');   // tutto fatto: niente pastiglia
+  ctx.ST.risultato = null; assert.match(ctx.r('2026-10-23'), /<span>Chi sento oggi\?<\/span>/);   // Dashboard non letta: senza numero
+  assert.match(ag, /su\('ag-chi-sento', \(\) => \{ ST\.tab = 'oggi'; ST\.vaiA = 'oggi'; mostraTab\(\); \}\);/);
+  assert.match(dash, /if \(vai === 'oggi'\) LV\.vista = 'oggi';/);
+});
+
 prova('MB Plan P1 (Ignazio 23/10, «ok agenda»): nei testi che il partner legge la pagina si chiama «Agenda», mai «MB Plan» (i commenti possono restare)', () => {
   const fs = require('node:fs'), path = require('node:path');
   const radice = path.join(__dirname, '../..');
