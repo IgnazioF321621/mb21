@@ -51,7 +51,7 @@ const AZIONI = [
   // con i punti da trattare e il link della chiamata (nota 026, 05/10): uno già trattato
   az('p1', OGGI, '11:00', 60, 'Piano Marketing', 'PM 1a1', 'Laura Ferri', 'Prospect', { link: 'https://meet.google.com/abc-defg-hij', punti: [{ t: 'Raccontare la mia storia', fatto: true }, { t: 'Il piano in 20 minuti', fatto: false }, { t: 'Fissare il Follow Up', fatto: false }] }),
   az('c1', OGGI, '15:00', 60, 'Appuntamento', 'Counseling', 'Fiammetta Rossi', 'Partner', { confermato_il: q(OGGI, '08:00') }),
-  az('p2', OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Pino Manolo', 'Prospect'),
+  az('p2', OGGI, '18:30', 60, 'Piano Marketing', 'PM 1a1', 'Tito Rovere', 'Prospect'),
   az('v1', OGGI, '18:30', 30, 'Consulenza PRD', 'Riordino', 'Anna Villa', 'Cliente'),
   az('f1', OGGI, '20:00', 45, 'Follow Up', 'Personale', 'Gino Pace', 'Prospect', { ospite: 'la moglie' }),
   az('x1', '2026-09-22', '10:00', 60, 'Piano Marketing', 'PM 1a1', 'Rita Neri', 'Prospect'),
@@ -95,7 +95,7 @@ const finto = { ricevuti: [{ origine: 'azione', id: 'a-ric', inizio: q(OGGI, '17
     link: 'https://zoom.us/j/555', punti: [{ t: 'Il perché', fatto: false }], punti_condivisi: true, visto_il: null, risposta: null }],
   risposte: [{ utente_id: 'u-isa', nome: 'Fiammetta Rossi', risposta: 'ci_sono', risposto_il: q(OGGI, '08:00'), visto_il: q(OGGI, '08:00') }],
   condividi: { esito: 'ok', nome: 'Fiammetta Rossi', utente: 'u-isa' },
-  contatti: [{ id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner' }, { id: 'c-pino', nome: 'Pino Manolo', categoria: 'Prospect' }],
+  contatti: [{ id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner' }, { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' }],
   avvio: null,   // cosa risponde «avvio per i passi» (nota 055): le prove mettono la riga di Fiammetta (Avvio in corso, in pausa, concluso)
   // il Team per «Senza l'app» (05/10 sera): IO1 → FR1 (Carla, con l'app) → SOTTO1 (Dario, senza); FR2 (Luca, senza)
   squadra: [{ partner_id: 'IO1', sponsor_id: null, nome: 'FIORITO, IGNAZIO', telefono: '' }, { partner_id: 'FR1', sponsor_id: 'IO1', nome: 'ROSSI, CARLA', telefono: '+393331112222' },
@@ -160,10 +160,10 @@ if (require.main !== module) return;
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
 const sola = process.argv[2], dove = process.argv[3];
 const telefono = (titolo, dentro) => `<div class="pv-tel"><div class="pv-t">${titolo}</div>${dentro}</div>`;
-// il modulo mentre avvisa: si sta fissando un PM alle 18:30, dove c'è già Pino Manolo
+// il modulo mentre avvisa: si sta fissando un PM alle 18:30, dove c'è già Tito Rovere
 const pastiglie = (voci, scelta) => `<div class="ag-scelte">${voci.map(v => `<button class="${v === scelta ? 'scelto' : ''}">${v}</button>`).join('')}</div>`;
 const modulo = () => `<div class="foglio mc" style="border-radius:22px;box-shadow:var(--ombra-card)">
-  <div class="mc-testa cat-prospect"><span class="ts-pastiglia">PM</span><div><small>Nuovo appuntamento</small><b>Pino Manolo</b></div></div>
+  <div class="mc-testa cat-prospect"><span class="ts-pastiglia">TR</span><div><small>Nuovo appuntamento</small><b>Tito Rovere</b></div></div>
   <div class="riquadro mc-g" style="margin-top:14px">
     <div class="campo"><label>Giorno e ora <small>Obbligatorio</small></label><div class="ag-due-campi">
       <input type="date" value="2026-09-21"><input type="time" value="18:30"></div></div>
