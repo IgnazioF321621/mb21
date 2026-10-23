@@ -2304,7 +2304,9 @@ async function spaziLiberi() {
 async function apriContattoDa(id, ritorno) {
   if (!LS.righe.find(x => x.id === id)) {   // lista mai letta o senza questo contatto
     mostraToast('Apro la scheda…');
-    try { await leggiTuttaLaLista(); }   // Lista Nomi L7: tutta la Lista (targhette, coppie, codici), la stessa funzione della pagina Lista
+    // Lista Nomi L7: tutta la Lista (targhette, coppie, codici), la stessa funzione della pagina Lista; L8b: se non è tra i nomi letti (l'Admin legge
+    // solo quelli che guarda: la scheda di un altro partner) si rilegge quella riga sola
+    try { if (!LS.righe.length) await leggiTuttaLaLista(); if (!LS.righe.find(x => x.id === id)) await aggiornaRiga(id); }
     catch (e) { return mostraToast('Contatto non caricato: riprova.'); }
     if (!LS.righe.find(x => x.id === id)) return mostraToast('Questa persona non è più nella lista: qui resta il lavoro fatto');
   }

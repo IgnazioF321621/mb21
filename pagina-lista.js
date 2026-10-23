@@ -14,17 +14,28 @@ const eAdmin = () => ST.utente && ST.utente.ruolo === 'Admin';
 // La prima pagina da sola (chi ha pochi nomi finisce lì); se è piena, le altre cinque alla volta: l'Admin ha oltre 6.000 nomi (6 MB) e le richieste
 // una dopo l'altra erano il tempo più lungo (Ignazio 02/10: «tutto molto lento nel registrare azioni e nell'aprire il nome»)
 async function leggiLista() {
-  const righe = await leggiListaPagine();
-  LS.letta = Date.now();   // ogni lettura intera rinfresca la copia in memoria (listaFresca)
+  const righe = await leggiListaPagine(eAdmin() ? await utentiLettura() : null);
+  LS.letta = Date.now(); LS.chiave = chiaveLettura();   // ogni lettura intera rinfresca la copia in memoria (listaFresca), per la persona guardata
   return righe;
+}
+// Lista Nomi L8b (Ignazio 23/10): l'Admin legge solo i nomi che guarda, non più tutte le ~8.300 schede. Con una persona scelta nel Partner Select
+// (o nessuna: sé stesso) solo i suoi; con «Tutti» i suoi più quelli delle persone che usano l'app con lui: gli utenti con accesso attivo e non
+// eliminati, letti dai dati (mai scritti nel codice). Cambiando persona la copia si rilegge (`LS.chiave`). Una scheda di un altro partner aperta
+// da Agenda, Report o Mappa si rilegge a parte, una riga sola (apriContattoDa → aggiornaRiga). Nessuna modifica al database: è il filtro della lettura.
+const chiaveLettura = () => (eAdmin() ? (vediTutti() ? 'tutti' : visto().id) : '');
+async function utentiLettura() {
+  if (!vediTutti()) return [visto().id];
+  const { data, error } = await dbq('chi usa l\'app', supa.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null));
+  if (error) throw error;
+  return [...new Set([ST.utente.id, ...(data || []).map(u => u.id)])];
 }
 // Lista Nomi L8 (Ignazio 23/10): le colonne di `contatti_lista` che l'app usa, scritte una per una al posto di `*`: via l'icona della fase (fase_icona),
 // che nessuna pagina usa. Valgono per la lettura a pagine (l'Admin) e per la riga riletta; i partner leggono con `lista_nomi()` (nel database, com'è).
 const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, '
   + 'onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, '
   + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, contatti_fatti';
-async function leggiListaPagine() {
-  const pagina = k => dbq('lettura lista', supa.from('contatti_lista').select(COLONNE_LISTA).order('id').range(k * 1000, k * 1000 + 999));
+async function leggiListaPagine(utenti) {   // `utenti` (L8b, solo per l'Admin): di chi leggere i nomi
+  const pagina = k => { const q = supa.from('contatti_lista').select(COLONNE_LISTA); return dbq('lettura lista', (utenti ? q.in('user_id', utenti) : q).order('id').range(k * 1000, k * 1000 + 999)); };
   const prima = await pagina(0);
   if (prima.error) throw prima.error;
   const righe = [...prima.data];
@@ -39,7 +50,7 @@ async function leggiListaPagine() {
 // non rilegge più tutto. Si rilegge intera se: sono passati 10 minuti, `LS.righe` è stata svuotata (nuovo contatto, import, collegamento: segnale già usato
 // da tutta l'app), si esce dall'app o si tocca «Aggiorna i nomi». Dopo un'azione cambia solo la riga (`aggiornaRiga`).
 const LISTA_FRESCA_MS = 10 * 60000;
-const listaFresca = () => LS.righe.length > 0 && !!LS.letta && Date.now() - LS.letta < LISTA_FRESCA_MS && !!LS.usoApp;
+const listaFresca = () => LS.righe.length > 0 && !!LS.letta && Date.now() - LS.letta < LISTA_FRESCA_MS && !!LS.usoApp && LS.chiave === chiaveLettura();   // L8b: della persona guardata
 // Dopo un'azione cambia solo quella persona (fase, coda): si rilegge la sua riga e non tutta la Lista. Con la Lista non ancora letta non fa niente
 // (la leggerà chi la apre); se qualcosa non va la si svuota, e si rilegge intera come prima.
 async function aggiornaRiga(id) {
@@ -117,7 +128,7 @@ async function leggiTuttoLista() {
 // e da `apriContattoDa` (una scheda aperta da Agenda, Dashboard, Report o Mappa prima della Lista): prima lì si leggevano solo i nomi, e per 10 minuti
 // le targhette restavano spente e «Coppia con …» mancava. Per un partner è anche una richiesta in meno (`lista_nomi()` invece di pagine + utenti dell'app).
 async function leggiTuttaLaLista() {
-  [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now();
+  [LS.righe, LS.targhe] = await leggiTuttoLista(); LS.letta = Date.now(); LS.chiave = chiaveLettura();
   LS.targhe = await conCepPerCodice(LS.targhe);   // nota 069: il CEP va per codice (una lettura leggera, solo i codici)
   segnaApp();
 }

@@ -436,11 +436,11 @@ prova('L7: una funzione sola legge tutta la Lista (nomi, targhette, coppie, codi
     leggiTuttoLista: async () => [[{ id: 'a', nome: 'Persona A' }, { id: 'b', nome: 'Persona B' }], { a: { bbs: true, wes: false, cep: true } }],
     supa: { from: () => { const q = { select: () => q, not: () => q, is: () => q, limit: () => q }; return q; } },
     dbq: async () => ({ data: [{ id: 'a', codice_amway: '1234567890' }, { id: 'b', codice_amway: '1234567890' }], error: null }) };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function conCepPerCodice') + pezzo(PL, 'async function leggiTuttaLaLista') + ';this.leggi = leggiTuttaLaLista;', ctx);
+  vm.createContext(ctx); vm.runInContext("const chiaveLettura = () => '';" + pezzo(PL, 'async function conCepPerCodice') + pezzo(PL, 'async function leggiTuttaLaLista') + ';this.leggi = leggiTuttaLaLista;', ctx);
   await ctx.leggi();
   assert.equal(ctx.LS.righe.length, 2); assert.ok(ctx.LS.letta > 0); assert.equal(segnate, 1);
   assert.equal(ctx.LS.targhe.b.cep, true);   // il CEP per codice anche sull'altra scheda (nota 069)
-  assert.match(leggi('pagina-agenda.js'), /try \{ await leggiTuttaLaLista\(\); \}/);
+  assert.match(leggi('pagina-agenda.js'), /try \{ if \(!LS\.righe\.length\) await leggiTuttaLaLista\(\);/);   // L8b: poi, se serve, la riga sola
   assert.match(PL, /if \(!listaFresca\(\)\) await leggiTuttaLaLista\(\);/);
 });
 
@@ -520,7 +520,7 @@ prova('L8: la lettura dell\'Admin e la riga riletta prendono le colonne usate, u
   // le colonne della vista contatti_lista (lette in sola lettura il 23/10) meno fase_icona
   const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti'.split(', ');
   assert.deepEqual(col, vista.filter(c => c !== 'fase_icona'));
-  assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.order\('id'\)/);
+  assert.match(PL, /const q = supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\);/);   // L8b: con il filtro di chi, per l'Admin
   assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.eq\('id', id\)/);
   assert.doesNotMatch(PL, /from\('contatti_lista'\)\.select\('\*'\)/);
 });
@@ -648,6 +648,44 @@ prova('L1b: Cerca senza parole nascoste — «nuovo», «new» e «app» si cerc
   for (const t of ['nuovo', 'new', 'app']) assert.equal(L.filtraContatti([r], { testo: t, utenteId: 'io', oggi }).length, 0, t);
   assert.equal(L.filtraContatti([{ ...r, nome: 'Persona Nuovo' }], { testo: 'nuovo', utenteId: 'io', oggi }).length, 1);
   assert.doesNotMatch(leggi('lista.js'), /t === 'nuovo'|t === 'app'/);
+});
+
+prova('L8b (Ignazio 23/10): l\'Admin legge solo i nomi che guarda — una persona scelta: i suoi; «Tutti»: i suoi più chi usa l\'app con lui (dai dati)', async () => {
+  const letture = [];
+  // nel database: 4 utenti, 2 con l'accesso attivo (oltre all'Admin), uno eliminato
+  const utenti = [{ id: 'adm', accesso_attivo: true, eliminato_il: null }, { id: 'u1', accesso_attivo: true, eliminato_il: null }, { id: 'u2', accesso_attivo: false, eliminato_il: null }, { id: 'u3', accesso_attivo: true, eliminato_il: '2026-10-01' }];
+  const contatti = [{ id: 'c-adm', user_id: 'adm' }, { id: 'c-u1', user_id: 'u1' }, { id: 'c-u2', user_id: 'u2' }, { id: 'c-u3', user_id: 'u3' }, { id: 'c-x', user_id: 'altro' }];
+  const supa = { from: t => { const f = []; const q = { select: () => q, eq: (c, v) => (f.push(r => r[c] === v), q), is: (c, v) => (f.push(r => r[c] === v), q), in: (c, v) => (f.push(r => v.includes(r[c])), q), order: () => q,
+    range: () => q, then: ok => { const righe = (t === 'utenti' ? utenti : contatti).filter(r => f.every(g => g(r))); letture.push([t, righe.map(r => r.id)]); return Promise.resolve(ok({ data: righe, error: null })); } }; return q; } };
+  const ctx = { supa, dbq: (_, p) => Promise.resolve(p), ST: { utente: { id: 'adm' } }, LS: {}, COLONNE_LISTA: '*', admin: true, tutti: false, scelto: 'adm',
+    eAdmin: () => ctx.admin, vediTutti: () => ctx.tutti, visto: () => ({ id: ctx.scelto }) };
+  vm.createContext(ctx);
+  vm.runInContext([pezzo(PL, 'async function leggiLista()'), PL.match(/^const chiaveLettura = .*$/m)[0], pezzo(PL, 'async function utentiLettura'), pezzo(PL, 'async function leggiListaPagine'),
+    'this.leggi = leggiLista; this.chiave = chiaveLettura;'].join('\n'), ctx);
+  const ids = async () => (await ctx.leggi()).map(r => r.id).join();
+  assert.equal(await ids(), 'c-adm'); assert.equal(ctx.LS.chiave, 'adm');                        // sé stesso: solo i suoi
+  ctx.scelto = 'u1'; assert.equal(await ids(), 'c-u1'); assert.equal(ctx.LS.chiave, 'u1');        // una persona scelta: solo i suoi
+  ctx.tutti = true; assert.equal(await ids(), 'c-adm,c-u1'); assert.equal(ctx.LS.chiave, 'tutti'); // «Tutti»: lui + chi ha l'accesso attivo, non gli eliminati né gli altri
+  assert.ok(letture.some(([t]) => t === 'utenti'));
+  // un partner: nessun filtro (le regole di accesso gli danno già solo i suoi)
+  ctx.admin = false; ctx.tutti = false; assert.equal(await ids(), 'c-adm,c-u1,c-u2,c-u3,c-x'); assert.equal(ctx.LS.chiave, '');
+  // cambiando persona la copia non è più «fresca»
+  assert.match(PL, /&& !!LS\.usoApp && LS\.chiave === chiaveLettura\(\);/);
+  assert.match(PL, /LS\.letta = Date\.now\(\); LS\.chiave = chiaveLettura\(\);/);
+});
+
+prova('L8b: la scheda di un altro partner, aperta da Agenda, Report o Mappa, si rilegge a parte: una riga sola', async () => {
+  const PA = leggi('pagina-agenda.js');
+  let interi = 0; const righe = [], aperte = [], avvisi = [];
+  const ctx = { LS: { righe: [{ id: 'mio' }] }, ST: {}, mostraToast: t => avvisi.push(t), leggiTuttaLaLista: async () => { interi++; },
+    aggiornaRiga: async id => { righe.push(id); if (id === 'altrui') ctx.LS.righe.push({ id }); }, apriScheda: id => aperte.push(id), document: { querySelectorAll: () => [] } };
+  vm.createContext(ctx); vm.runInContext(pezzo(PA, 'async function apriContattoDa') + ';this.apri = apriContattoDa;', ctx);
+  await ctx.apri('altrui', 'agenda');
+  assert.equal(interi, 0); uguale(righe, ['altrui']); uguale(aperte, ['altrui']);   // la Lista c'era: solo quella riga
+  await ctx.apri('sparito', 'agenda');
+  assert.match(avvisi.at(-1), /non è più nella lista/);
+  ctx.LS.righe = []; await ctx.apri('mio2', 'oggi');
+  assert.equal(interi, 1);   // Lista mai letta: prima la lettura intera (la sua), poi la riga se serve
 });
 
 (async () => {
