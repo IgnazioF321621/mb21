@@ -39,8 +39,10 @@ const giornoChiusura = () => new Date(CHIUSURA.data + 'T12:00:00').toLocaleDateS
 // Chi è interessato dalla chiusura: ci deve essere la data, e non l'Admin, non la persona di fiducia, né chi guarda un altro partner
 const chiusuraPerMe = () => !!CHIUSURA.data && !eAdmin() && !guardoAltri() && !!ST.utente && !CHIUSURA.esenti.includes(ST.utente.id);
 const giornoCancellazione = () => new Date(CHIUSURA.cancellazione + 'T12:00:00').toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long' });
+// Lista Nomi L11 (Ignazio 23/10): dopo la chiusura (CHIUSURA.data alle CHIUSURA.ora) il riquadro, il messaggio all'apertura e «Avvisa della chiusura»
+// dell'Admin non servono più e spariscono da soli (chiusuraAvvenuta); restano «Scarica la mia lista» nel Profilo e la schermata di chiusura.
 function bannerScaricaLista() {
-  if (!chiusuraPerMe()) return '';
+  if (!chiusuraPerMe() || chiusuraAvvenuta()) return '';
   return `<button class="banner-grande messaggi" id="ds-scarica-lista"><span class="ico">${ic('file')}</span>
     <span><b>MB21 torna personale dal ${esc(giornoChiusura())}</b><small>Tocca qui per scaricare la tua lista completa: schede, azioni e note, in un file Excel (anche per Google Fogli)</small></span></button>`;
 }
@@ -94,7 +96,7 @@ const ricordaScaricata = () => { try { localStorage.setItem(CHIAVE_SCARICATA, CH
 const giornoPrima = () => new Date(Date.parse(CHIUSURA.data + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10);
 const eVigilia = () => !!CHIUSURA.data && MB21Coda.oggiRoma() === giornoPrima();
 async function annuncioChiusura(aprire) {
-  if (!aprire || !chiusuraPerMe() || giaScaricata() || document.querySelector('.velo')) return false;
+  if (!aprire || !chiusuraPerMe() || chiusuraAvvenuta() || giaScaricata() || document.querySelector('.velo')) return false;   // L11: dopo la chiusura, niente
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio alto"><div class="testa-foglio"><h3>${ic('file')} ${eVigilia() ? `Domani l'accesso a MB21 viene chiuso` : `MB21 torna personale dal ${esc(giornoChiusura())}`}</h3></div>
