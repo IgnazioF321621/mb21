@@ -101,6 +101,11 @@
     return Math.round((Date.parse(oggi + 'T12:00:00Z') - Date.parse(giornoRoma(r.ultima_il) + 'T12:00:00Z')) / 86400000);
   }
   // Frase della card al posto della riga blu: { testo, futuro }. Niente colori: il colore resta alla categoria (Ignazio 18/09).
+  // Lista Nomi L6 (Ignazio 23/10): una frase sola per l'ultimo contatto, in Lista e nella coda della Dashboard (al posto di MB21Coda.ultimaVolta).
+  // «Sentito» solo se l'ultimo esito dice che ci si è parlati; altrimenti «Ultima azione». In fondo l'esito, se c'è:
+  // «Sentito 3 giorni fa · telefonata · Relazione» · «Ultima azione ieri · telefonata · No Risposta» · «Fermo da 2 mesi · telefonata · No Risposta».
+  // Esiti senza parlarsi: la telefonata senza risposta o col telefono spento, l'incontro rimandato o non avvenuto (agenda.js: ESITI_NON_ANDATI, AVVENUTO).
+  const SENZA_PARLARE = ['No Risposta', 'Telefono spento', 'Rimandato', 'No Show'];
   function fraseCard(r, oggi) {
     const g = giorniFermo(r, oggi);
     if (g === null) return { testo: 'Mai contattato', futuro: false };
@@ -110,10 +115,11 @@
         ...(g < -300 ? { year: 'numeric' } : {}) }).format(new Date(r.ultima_il));
       return { testo: cosa.charAt(0).toUpperCase() + cosa.slice(1) + ' in programma ' + quando, futuro: true };
     }
-    const quanto = g === 0 ? 'Sentito oggi' : g === 1 ? 'Sentito ieri' : g < 30 ? `Sentito ${g} giorni fa`
+    const prima = r.ultima_fase && !SENZA_PARLARE.includes(r.ultima_fase) ? 'Sentito' : 'Ultima azione';
+    const quanto = g === 0 ? `${prima} oggi` : g === 1 ? `${prima} ieri` : g < 30 ? `${prima} ${g} giorni fa`
       : g < 365 ? `Fermo da ${Math.floor(g / 30) === 1 ? '1 mese' : Math.floor(g / 30) + ' mesi'}`
       : `Fermo da ${Math.floor(g / 365) === 1 ? '1 anno' : Math.floor(g / 365) + ' anni'}`;
-    return { testo: `${quanto} · ${cosa}`, futuro: false };
+    return { testo: `${quanto} · ${cosa}${r.ultima_fase ? ' · ' + r.ultima_fase : ''}`, futuro: false };
   }
   // Ordini della Lista: a parità si torna sempre all'ordine alfabetico
   const ORDINI = { az: 'A-Z', fermi: 'fermi da più tempo', mai: 'mai contattati', nuovi: 'nuovi' };
@@ -525,7 +531,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

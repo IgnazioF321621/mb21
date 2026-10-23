@@ -334,12 +334,12 @@ function rigaPersona(tipo, id, nome, sotto, contatto) {
     <span class="lv-pt"><b>${esc(nome)}${contatto ? segnoCoach(contatto, nome) : ''}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
 }
 const rigaFatta = nome => `<div class="lv-persona fatta"><span class="rc-pastiglia">${ic('fatto')}</span><span class="lv-pt"><b>${esc(nome)}</b><small>fatto</small></span></div>`;
-// La riga di un contatto del giorno: sotto il nome cosa è successo l'ultima volta e quando (nota 016, MB21Coda.ultimaVolta) e, sulla propria coda,
+// La riga di un contatto del giorno: sotto il nome cosa è successo l'ultima volta e quando (nota 016; dal 23/10 MB21Lista.fraseCard, come in Lista) e, sulla propria coda,
 // «Non ora» per saltarlo senza aprire la scheda (nota 018: poi «Salta», tra GIORNI_SALTA giorni, o «Scegli la data»). Offline: solo la riga.
 // Nota Pagine 003 (Ignazio 06/10, urgente): c'è anche guardando un altro partner col Partner Select (solo l'Admin: la regola `contatti_own`
 // gli lascia scrivere `rientro_il` dei contatti di tutti, provato sul database in una prova annullata); con «Tutti» la coda non c'è.
 function rigaCoda(x, sotto) {
-  const riga = rigaPersona('coda', x.id, x.nome, sotto || MB21Coda.ultimaVolta(x, ST.oggi), x.id);
+  const riga = rigaPersona('coda', x.id, x.nome, sotto || MB21Lista.fraseCard(x, ST.oggi).testo, x.id);
   if (vediTutti() || ST.offline) return riga;
   return `<div class="lv-riga">${riga}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>`;
 }
@@ -378,7 +378,7 @@ function sottoOggi(x) {
   if (x.motivo === 'conf') return MB21Agenda.testoConferma(d, new Date().toISOString());
   if (x.motivo === 'rio') return [d.brand, d.prodotto].filter(Boolean).join(' · ');
   if (x.motivo === 'ds') return [d.ultima_fase === 'Dare Seguito' ? '' : d.ultima_fase || 'Senza esito', `scaduto da ${d.scadutoDa} ${d.scadutoDa === 1 ? 'giorno' : 'giorni'}`].filter(Boolean).join(' · ');   // mai «Dare Seguito · Dare Seguito»
-  if (x.motivo === 'coda') return MB21Coda.ultimaVolta(d, ST.oggi);
+  if (x.motivo === 'coda') return MB21Lista.fraseCard(d, ST.oggi).testo;   // L6: la stessa frase della Lista Nomi
   return sottoScelta(d);
 }
 function disegnaOggiLV() {

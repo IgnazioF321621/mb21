@@ -398,6 +398,26 @@ prova('L5: dopo una scelta in «Da catalogare» (e dopo Annulla) la Lista rilegg
   assert.match(PL, /sceltaDa\('Altri', \['ex', 'unlinked', 'archiviati'\]\.map/);
 });
 
+prova('L6: una frase sola per l\'ultimo contatto, in Lista e in coda: «Sentito» solo se ci si è parlati, altrimenti «Ultima azione»; in fondo l\'esito', () => {
+  const f = r => L.fraseCard(r, '2026-10-23').testo, il = g => g + 'T15:00:00+02:00';
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-10-20'), ultima_fase: 'Relazione' }), 'Sentito 3 giorni fa · telefonata · Relazione');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-10-20'), ultima_fase: 'No Risposta' }), 'Ultima azione 3 giorni fa · telefonata · No Risposta');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-10-22'), ultima_fase: 'Telefono spento' }), 'Ultima azione ieri · telefonata · Telefono spento');
+  assert.equal(f({ ultimo_tipo: 'Piano Marketing', ultima_il: il('2026-10-23'), ultima_fase: 'Rimandato' }), 'Ultima azione oggi · piano marketing · Rimandato');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-10-20') }), 'Ultima azione 3 giorni fa · telefonata');   // senza esito non si sa
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-08-20'), ultima_fase: 'No Risposta' }), 'Fermo da 2 mesi · telefonata · No Risposta');
+  assert.equal(f({ ultima_modalita: 'Telefonata', ultima_il: il('2026-10-24') }), 'Telefonata in programma domani');
+  assert.equal(f({}), 'Mai contattato');
+  assert.deepEqual(L.SENZA_PARLARE, ['No Risposta', 'Telefono spento', 'Rimandato', 'No Show']);
+  // la coda della Dashboard usa la stessa funzione; ultimaVolta non c'è più
+  const PD6 = leggi('pagina-dashboard.js');
+  assert.match(PD6, /rigaPersona\('coda', x\.id, x\.nome, sotto \|\| MB21Lista\.fraseCard\(x, ST\.oggi\)\.testo, x\.id\)/);
+  assert.match(PD6, /if \(x\.motivo === 'coda'\) return MB21Lista\.fraseCard\(d, ST\.oggi\)\.testo;/);
+  assert.doesNotMatch(PD6 + leggi('coda.js'), /MB21Coda\.ultimaVolta|function ultimaVolta|function quandoFa/);
+  // la frase va a capo invece di perdere l'esito (card della Lista e riga della coda)
+  assert.match(IDX, /\.cn \.frase \{ white-space: normal; \}/); assert.match(IDX, /\.lv-persona\[data-lv-persona\^="coda\|"\] \.lv-pt small \{ white-space: normal; \}/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

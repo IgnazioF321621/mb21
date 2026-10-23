@@ -249,6 +249,9 @@
   .cn-segni { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
   .cn-segni .sv-targhe, .cn-segni .badge { margin-left: 0; }
   .cn .frase { font-size: 14px; color: var(--testo-soft); margin-top: 1px; }   /* niente colori: il colore resta alla categoria (Ignazio 18/09) */
+  /* Lista Nomi L6: la frase con l'esito va a capo invece di perdere la fine (l'esito), sulla card e nella riga della coda */
+  .cn .frase { white-space: normal; }
+  .lv-persona[data-lv-persona^="coda|"] .lv-pt small { white-space: normal; }
   .cn .chiama { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--sfondo); color: var(--cat, var(--testo)); display: flex; align-items: center; justify-content: center; }
   .cn .chiama svg.ic { width: 19px; height: 19px; }
   .cn .chiama.spento { opacity: .3; pointer-events: none; }

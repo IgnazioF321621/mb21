@@ -79,7 +79,7 @@ prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cam
   assert.match(h, /class="contatta"/);
   assert.match(h, /data-bottone=/);   // gli esiti della telefonata
   // un cliente che si richiama: un altro motivo
-  assert.match(P.vista('persona', { persona: 'coda|c2' }).html, /<span class="lv-chip">Telefonata<\/span>[\s\S]*?<div class="sotto">Ultima telefonata: Richiamare · 3 giorni fa<\/div>/);
+  assert.match(P.vista('persona', { persona: 'coda|c2' }).html, /<span class="lv-chip">Telefonata<\/span>[\s\S]*?<div class="sotto">Sentito 3 giorni fa · telefonata · Richiamare<\/div>/);
   // la conferma: Confermato · Sposta · Annullato (nuovo) · Non risponde
   h = P.vista('persona', { persona: 'conf|k1' }).html;
   assert.match(h, /<span class="lv-chip">Conferma<\/span>[\s\S]*?<div class="sotto">Da confermare · /);
@@ -302,11 +302,11 @@ prova('La telefonata scelta a mano: la stessa scheda, gli esiti della telefonata
 });
 
 // ── Note Pagine 016 · 018 · 019 (segnalazioni di Ignazio, 06/10/2026) ──
-prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 016); «Non ora» online, anche guardando un altro partner (nota 003)', () => {
+prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 016; dal 23/10 la frase della Lista, L6); «Non ora» online, anche guardando un altro partner (nota 003)', () => {
   const h = P.vista('oggi', { apri: ['coda', 'dareseguito'] }).html;
   assert.match(h, /<b>Laura Ferri<\/b><small>Telefonata · Mai contattato<\/small>/);
-  assert.match(h, /<b>Marco Neri<\/b><small>Telefonata · Ultima telefonata: Richiamare · 3 giorni fa<\/small>/);
-  assert.match(h, /<b>Anna Villa<\/b><small>Telefonata · Ultimo appuntamento: Relazione · ieri<\/small>/);
+  assert.match(h, /<b>Marco Neri<\/b><small>Telefonata · Sentito 3 giorni fa · telefonata · Richiamare<\/small>/);
+  assert.match(h, /<b>Anna Villa<\/b><small>Telefonata · Sentito ieri · appuntamento · Relazione<\/small>/);
   assert.deepEqual([...h.matchAll(/data-non-ora="([^"]+)"/g)].map(m => m[1]), ['c1', 'c2', 'c3']);   // non sui Dare Seguito
   assert.match(h, /<div class="lv-riga"><button class="lv-persona" data-lv-persona="coda\|c1"[\s\S]*?<\/button><button class="lv-nonora" data-non-ora="c1" title="Non ora">Non ora<\/button><\/div>/);
   // nota 003: guardando un altro partner (Partner Select, solo l'Admin) «Non ora» c'è lo stesso
@@ -315,7 +315,7 @@ prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 01
   // offline: niente «Non ora»
   const m = P.avvia(); P.carica(m); m.ST.offline = true; m.LV.vista = 'oggi'; m.disegnaOggi();
   assert.doesNotMatch(P.app.innerHTML, /data-non-ora=/);
-  assert.match(P.app.innerHTML, /Ultima telefonata: Richiamare · 3 giorni fa/);
+  assert.match(P.app.innerHTML, /Sentito 3 giorni fa · telefonata · Richiamare/);
 });
 
 prova('«Non ora» → «Salta»: la persona esce dalla coda di oggi e torna tra GIORNI_SALTA giorni (non domani), non conta come fatta; «Annulla» la rimette', async () => {
