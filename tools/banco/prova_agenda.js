@@ -645,6 +645,9 @@ prova('Impegni ricevuti: quelli del giorno (ora di Roma), i nuovi (non visti e n
   assert.deepEqual(A.ricevutiDelGiorno(lista, '2026-10-07').map(x => x.id), ['b']);
   assert.deepEqual(A.ricevutiNuovi(lista, '2026-10-06T00:00:00Z').map(x => x.id), ['a', 'b']);
   assert.deepEqual(A.ricevutiNuovi(lista, '2026-10-06T17:00:00Z').map(x => x.id), ['b']);   // «a» è passato
+  // Agenda P7 (23/10): «nuovo» = senza risposta: già aperto (visto) ma senza risposta torna; con la risposta no
+  const p7 = [r('v', '2026-10-08T16:30:00Z', { visto_il: '2026-10-05T10:00:00Z' }), r('s', '2026-10-08T16:30:00Z', { visto_il: 'x', risposta: 'non_ci_sono' })];
+  assert.deepEqual(A.ricevutiNuovi(p7, '2026-10-06T00:00:00Z').map(x => x.id), ['v']);
   assert.equal(A.titoloRicevuto(lista[0]), 'PM 1a1 · da Ignazio');
   assert.equal(A.chiaveRicevuto(lista[0]), 'azione:a');
   assert.equal(A.nomeRisposta('ci_sono'), 'Partecipo'); assert.equal(A.nomeRisposta(null), 'Senza risposta'); assert.equal(A.nomeRispostaDiLui('non_ci_sono'), 'Non può');

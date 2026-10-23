@@ -269,8 +269,9 @@
   // 11/10/2026): una SdS/OPEN o una serata Team/LdS ricevuta occupa quell'ora come un impegno proprio. Chi ha risposto «Non posso» è libero.
   const ricevutiComeEventi = (ricevuti, g, utenteId) => ricevutiDelGiorno(ricevuti, g).filter(r => r.risposta !== 'non_ci_sono')
     .map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, user_id: utenteId, tipo_azione: 'Ricevuto', inizio: r.inizio, quando: r.inizio, fine: r.fine, _ricevuto: r }));
-  // quelli ancora da vedere (per il pop-up «Hai un nuovo appuntamento»): non visti e non ancora passati
-  const ricevutiNuovi = (ricevuti, adesso) => (ricevuti || []).filter(r => !r.visto_il && Date.parse(r.fine || r.inizio) >= Date.parse(adesso));
+  // quelli ancora «nuovi» (per «Hai un nuovo appuntamento» all'apertura): senza risposta e non ancora passati. Agenda P7 (Ignazio 23/10): «nuovo» vuol dire
+  // «senza risposta», non «già aperto» (prima `!visto_il`: aprirlo in Agenda e chiuderlo senza rispondere lo faceva sparire per sempre)
+  const ricevutiNuovi = (ricevuti, adesso) => (ricevuti || []).filter(r => !r.risposta && Date.parse(r.fine || r.inizio) >= Date.parse(adesso));
   // il conto delle risposte, a parole: «Partecipano 6 · Non possono 2 · Senza risposta 4»
   function contoRisposte(risposte) {
     const q = { ci_sono: 0, non_ci_sono: 0, senza: 0 };

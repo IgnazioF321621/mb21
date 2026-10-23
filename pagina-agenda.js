@@ -1628,7 +1628,7 @@ const giornoOraRicevuto = r => `${dataLunga(MB21Agenda.partiRoma(r.inizio).giorn
 // la riga nella card degli impegni e nell'elenco della settimana: pallino pieno grigio-blu, «da Ignazio» sotto, la risposta se c'è
 function rigaRicevutoHtml(r) {
   const A = MB21Agenda;
-  return `<button class="ag-imp ric-imp${r.risposta === 'non_ci_sono' ? ' noci' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(r))}"><i></i><span>${esc(r.titolo)}<small>da ${esc(r.da_nome || '—')}${r.risposta ? ' · ' + esc(A.nomeRisposta(r.risposta)) : !r.visto_il ? ' · nuovo' : ''}</small></span><b>${esc(A.orario(r))}</b></button>`;
+  return `<button class="ag-imp ric-imp${r.risposta === 'non_ci_sono' ? ' noci' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(r))}"><i></i><span>${esc(r.titolo)}<small>da ${esc(r.da_nome || '—')}${r.risposta ? ' · ' + esc(A.nomeRisposta(r.risposta)) : ' · nuovo'}</small></span><b>${esc(A.orario(r))}</b></button>`;
 }
 // i blocchi della Timeline, come gli spazi ma pieni e senza trascinamento
 function ricevutiComeBlocchi(g) {
@@ -1652,16 +1652,22 @@ const puntiSolaLetturaHtml = r => {
 };
 // le due risposte; nel pop-up anche «Decido dopo» accanto (Ignazio 05/10): toglie la riga dal pop-up senza salvare niente, l'impegno resta «nuovo»
 const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}${conDopo ? `<button type="button" ${attr}="dopo" class="dopo">Decido dopo</button>` : ''}</div>`;
-// Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Partecipi? Partecipo / Non posso». Aprirlo lo segna visto.
-function foglioRicevuto(r) {
+// Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Partecipi? Partecipo / Non posso».
+// Agenda P7 (Ignazio 23/10): è l'UNICO foglio dell'impegno ricevuto, dall'Agenda e all'apertura dell'app. `serie` (all'apertura): { pos, tot, poi }:
+// in cima «Hai un nuovo appuntamento · 1 di 2», accanto alle risposte anche «Decido dopo»; «Decido dopo», la X o un tocco fuori non salvano niente
+// e passano al prossimo (`poi`, chiamato mentre questo si chiude, così la fila dell'apertura aspetta la fine della serie); dopo la risposta non si
+// ridisegna l'Agenda (la pagina sotto resta quella che era). Aprirlo lo segna visto, come prima: «nuovo» ora vuol dire «senza risposta».
+function foglioRicevuto(r, serie) {
   const A = MB21Agenda;
   const velo = document.createElement('div');
   velo.className = 'velo';
   document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
+  let chiuso = false;
+  const chiudi = () => { if (chiuso) return; chiuso = true; velo.remove(); if (serie) serie.poi(); };
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
   const disegna = () => {
     velo.innerHTML = `<div class="foglio alto ric-foglio">
+      ${serie ? `<p class="ric-serie">Hai un nuovo appuntamento${serie.tot > 1 ? ` · ${serie.pos} di ${serie.tot}` : ''}</p>` : ''}
       <div class="testa-foglio"><h3>${esc(r.titolo)}</h3><button id="ri-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <p>${esc(giornoOraRicevuto(r))}</p>
       <div class="vn-aiuto">Te lo ha mandato <b>${esc(r.da_nome || '—')}</b>: sta nella tua Agenda e nel tuo calendario.</div>
@@ -1669,19 +1675,22 @@ function foglioRicevuto(r) {
       ${r.link ? `<a class="pt-link" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('chiamata')} Entra nella chiamata</a>`
         : r.luogo ? `<a class="pt-link pt-luogo" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}
       ${puntiSolaLetturaHtml(r)}
-      <div class="campo"><label>${A.conOspiti(r) ? 'Conferma della presenza' : 'Partecipi?'}</label>${rispostaBottoniHtml(r, 'data-ri-risposta')}</div>
+      <div class="campo"><label>${A.conOspiti(r) ? 'Conferma della presenza' : 'Partecipi?'}</label>${rispostaBottoniHtml(r, 'data-ri-risposta', !!serie)}</div>
       ${ospitiHtml(r)}</div>`;
     velo.querySelector('#ri-x').onclick = chiudi;
     velo.querySelectorAll('[data-ri-risposta]').forEach(b => { b.onclick = async () => {
-      if (!(await rispondiImpegno(r, b.dataset.riRisposta))) return;
-      // la SdS/OPEN (nota 047): con «Partecipo» il foglio resta aperto, per scrivere subito gli ospiti
-      if (A.conOspiti(r) && b.dataset.riRisposta === 'ci_sono') { mostraToast('Segnato: partecipi'); return disegna(); }
-      chiudi(); await apriAgenda(AG.giorno); mostraToast(b.dataset.riRisposta === 'ci_sono' ? 'Segnato: partecipi' : 'Segnato: non puoi');
+      const k = b.dataset.riRisposta;
+      if (k === 'dopo') return chiudi();
+      if (!(await rispondiImpegno(r, k))) return;
+      // la SdS/OPEN (nota 047): con «Partecipo» il foglio resta aperto, per scrivere subito gli ospiti (nella serie la X porta al prossimo)
+      if (A.conOspiti(r) && k === 'ci_sono') { if (r.ospiti === undefined) await leggiOspiti(r); if (!serie) mostraToast('Segnato: partecipi'); return disegna(); }
+      if (serie) return chiudi();   // il messaggio è uno solo, alla fine della serie
+      chiudi(); await apriAgenda(AG.giorno); mostraToast(k === 'ci_sono' ? 'Segnato: partecipi' : 'Segnato: non puoi');
     }; });
     collegaOspiti(velo, r, disegna);
   };
   disegna();
-  if (!r.visto_il) rispondiImpegno(r, null);   // visto: il pop-up non lo ripropone
+  if (!r.visto_il) rispondiImpegno(r, null);
   if (A.conOspiti(r)) leggiOspiti(r).then(() => { if (velo.isConnected) disegna(); });
 }
 // ── Gli ospiti della SdS/OPEN (nota Pagine 047, Ignazio 11/10/2026): chi partecipa scrive i nomi di chi porta, anche più tardi riaprendo
@@ -1719,48 +1728,24 @@ function collegaOspiti(el, r, ridisegna) {
   if (campo) campo.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); aggiungi(); } };
   el.querySelectorAll('[data-osp-togli]').forEach(b => { b.onclick = () => salva((r.ospiti || []).filter((_, i) => i !== Number(b.dataset.ospTogli))); });
 }
-// All'apertura dell'app (index.html, dopoAccesso): gli impegni ricevuti non ancora visti, da oggi in avanti. Chiamato da index.html, mai con «Tutti».
+// All'apertura dell'app (index.html, codaApertura): gli impegni ricevuti ancora senza risposta, da oggi in avanti, uno alla volta nello stesso
+// foglio dell'Agenda (P7: prima un foglio a righe a parte). Alla fine un messaggio solo; se si è in Agenda, la si ridisegna. Mai con «Tutti».
 async function controllaImpegniNuovi() {
   if (!ST.utente || !ST.utente.id || vediTutti()) return;
   const A = MB21Agenda, adesso = new Date();
   const { data, error } = await dbq('impegni nuovi', supa.rpc('impegni_ricevuti', { p_da: new Date(adesso.getTime() - 86400000).toISOString(), p_a: new Date(adesso.getTime() + 366 * 86400000).toISOString() }));
   if (error || !Array.isArray(data)) return;
   const nuovi = A.ricevutiNuovi(data, adesso.toISOString());
-  if (nuovi.length) foglioImpegniNuovi(nuovi);
-}
-// Il pop-up «Hai un nuovo appuntamento»: una riga per impegno con «Partecipo / Non posso / Decido dopo»; «Decido dopo» lo lascia nuovo finché non si risponde.
-function foglioImpegniNuovi(nuovi) {
-  const A = MB21Agenda;
-  const velo = document.createElement('div');
-  velo.className = 'velo';
-  document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
-  const disegna = () => {
-    if (!nuovi.length) return chiudi();
-    velo.innerHTML = `<div class="foglio alto ric-foglio">
-      <div class="testa-foglio"><h3>${nuovi.length === 1 ? 'Hai un nuovo appuntamento' : `Hai ${nuovi.length} nuovi appuntamenti`}</h3><button id="rn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-      ${nuovi.map(r => `<div class="ric-nuovo" data-rn="${esc(A.chiaveRicevuto(r))}"><b>${esc(r.titolo)}</b><span>da ${esc(r.da_nome || '—')} · ${esc(giornoOraRicevuto(r))}</span>
-        ${r.link ? `<a class="link" href="${esc(r.link)}" target="_blank" rel="noopener">Link della chiamata</a>` : r.luogo ? `<a class="link" href="${esc(A.linkMappa(r.luogo))}" target="_blank" rel="noopener">${ic('mappa')} ${esc(r.luogo)}</a>` : ''}${
-          A.conOspiti(r) ? '<small class="ric-conferma">Conferma della presenza</small>' : ''}${rispostaBottoniHtml(r, 'data-rn-risposta', true)}${
-          A.conOspiti(r) && r.risposta === 'ci_sono' ? ospitiHtml(r) + '<button type="button" class="link" data-rn-fatto>Fatto</button>' : ''}</div>`).join('')}</div>`;
-    velo.querySelector('#rn-x').onclick = chiudi;
-    velo.querySelectorAll('.ric-nuovo').forEach(riga => {
-      const r = nuovi.find(x => A.chiaveRicevuto(x) === riga.dataset.rn);
-      riga.querySelectorAll('[data-rn-risposta]').forEach(b => { b.onclick = async () => {
-        const risposta = b.dataset.rnRisposta;
-        if (risposta !== 'dopo' && !(await rispondiImpegno(r, risposta))) return;
-        // la SdS/OPEN (nota 047): con «Partecipo» la riga resta, con gli ospiti da scrivere e «Fatto»
-        if (A.conOspiti(r) && risposta === 'ci_sono') { await leggiOspiti(r); return disegna(); }
-        nuovi = nuovi.filter(x => x !== r);
-        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: partecipi. Lo trovi in Agenda' : 'Segnato: non puoi');
-        disegna();
-      }; });
-      collegaOspiti(riga, r, disegna);
-      const fatto = riga.querySelector('[data-rn-fatto]');
-      if (fatto) fatto.onclick = () => { nuovi = nuovi.filter(x => x !== r); if (!nuovi.length) mostraToast('Segnato: partecipi. Lo trovi in Agenda'); disegna(); };
-    });
-  };
-  disegna();
+  let i = 0;
+  const apri = () => foglioRicevuto(nuovi[i], { pos: i + 1, tot: nuovi.length, poi: () => {
+    i++;
+    if (i < nuovi.length) return apri();   // il prossimo si apre mentre si chiude questo
+    const risposte = nuovi.map(r => r.risposta).filter(Boolean);
+    if (risposte.length) mostraToast(risposte.every(x => x === 'ci_sono') ? 'Segnato: partecipi. Lo trovi in Agenda'
+      : risposte.every(x => x === 'non_ci_sono') ? 'Segnato: non puoi' : 'Risposte segnate: le trovi in Agenda');
+    if (risposte.length && ST.tab === 'agenda') apriAgenda(AG.giorno);
+  } });
+  if (nuovi.length) apri();
 }
 // ── chi organizza: il riquadro «Condividi» ──
 const nomePersona = e => (e.contatti && e.contatti.nome) || 'la persona';
