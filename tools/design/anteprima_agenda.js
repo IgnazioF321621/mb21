@@ -66,7 +66,9 @@ const AZIONI = [
 const modo = { admin: false, tutti: false };
 const { Nodo } = require('./mini_dom.js');
 const app = new Nodo();   // dal 05/10 un piccolo DOM: la prova può toccare le pastiglie «Per chi è?» e il campo «Aggiungi…»
-const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, passati: [{}], aperta: null,
+const AG = { giorno: OGGI, settimana: A.settimana(OGGI), azioni: AZIONI, aperta: null,
+  // un appuntamento senza esito di una settimana prima (P3, 23/10: sta in «Da chiudere» del Programma, non più in una pastiglia)
+  passati: [az('s0', '2026-09-10', '18:00', 60, 'Piano Marketing', 'PM 1a1', 'Ugo Sala', 'Prospect')],
   telefonate: { oggi: true, fatti_oggi: 4, contatti_al_giorno: 10 }, vista: 'giorno', portato: 'fatto',
   // MB Plan «Da fare» (05/10): ogni cosa è legata a una persona o a Team · LdS · Network 21 · Amway; una vecchia non ha il legame
   cose: [{ id: 'k1', testo: 'Comprare i biglietti BBS', giorno: '2026-09-19', ordine: 0, fatto_il: null, legato_a: 'N21' },

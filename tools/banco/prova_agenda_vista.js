@@ -186,7 +186,7 @@ prova('I richiami stanno SOPRA la giornata, in pastiglie corte; P2 (23/10): oggi
   assert.doesNotMatch(g, /ag-blocco/);                       // niente più righe grandi in fondo
   assert.match(g, /<button id="ag-chi-sento" class="telefonate">[\s\S]*?<span>Chi sento oggi\?<\/span><\/button>/);   // senza la Dashboard letta, senza numero
   for (const id of ['ag-telefonate', 'ag-riordini', 'ag-conferme']) assert.doesNotMatch(g, new RegExp(`id="${id}"`));
-  assert.match(g, /<b>1<\/b> senza esito/);
+  assert.doesNotMatch(g, /senza esito|id="ag-passati"/);   // P3 (23/10): i senza esito stanno in «Da chiudere» del Programma della settimana
   // le stesse pastiglie in tutte e tre le viste
   assert.match(V.vista('settimana'), /class="ag-rich"/);
   assert.match(V.vista('elenco'), /class="ag-rich"/);
@@ -229,7 +229,7 @@ prova('Gli spazi da riempire (27/09, per tutti dal 28/09): nella card, nella Tim
   assert.doesNotMatch(m, /data-cmd="core"/);                                  // il Modulo Core resta dal Check
   assert.match(m, /<b>Programma della settimana<\/b><small>Settimana 39 · 21 set – 27 set/);
   // nota 004: «adesso» del banco è lunedì a mezzogiorno: il PM delle 11 senza esito va in «Da chiudere», gli altri 4 sono da fare
-  assert.match(m, /Da chiudere · 1<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="p1">/);
+  assert.match(m, /Da chiudere · 2<\/div><button class="mb-prog-app da-chiudere" data-prog-evento="s0">[\s\S]*?data-prog-evento="p1">/);   // P3: anche il senza esito della settimana prima
   assert.match(m, /Piani Marketing: 4 da fare · 1 da riempire/);
   assert.match(m, /Consulenze prodotti: 2 da fare · 1 da riempire/);
   assert.match(m, /Fatti e passati<i>1<\/i>/);

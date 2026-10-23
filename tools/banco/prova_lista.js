@@ -581,6 +581,14 @@ prova('Agenda P2 (Ignazio 23/10): «Chi sento oggi? N» con lo stesso conto dell
   assert.match(dash, /if \(vai === 'oggi'\) LV\.vista = 'oggi';/);
 });
 
+prova('Agenda P3 (Ignazio 23/10): «N senza esito» non è più in testata; i senza esito (anche delle settimane prima) stanno in «Da chiudere» e si aprono da lì', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ag = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8'), idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.doesNotMatch(ag + idx, /ag-passati|function scegliPassato/);
+  assert.match(ag, /const daChiudere = \[\.\.\.p\.daChiudere, \.\.\.\(AG\.passati \|\| \[\]\)\.filter\(a => !a\.esito && !giaQui\.has\(a\.id\)\)\]/);
+  assert.match(ag, /const e = \[\.\.\.\(AG\.azioni \|\| \[\]\), \.\.\.\(AG\.passati \|\| \[\]\)\]\.find\(x => x\.id === b\.dataset\.progEvento\);/);
+});
+
 prova('MB Plan P1 (Ignazio 23/10, «ok agenda»): nei testi che il partner legge la pagina si chiama «Agenda», mai «MB Plan» (i commenti possono restare)', () => {
   const fs = require('node:fs'), path = require('node:path');
   const radice = path.join(__dirname, '../..');
