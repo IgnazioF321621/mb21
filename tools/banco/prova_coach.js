@@ -381,7 +381,7 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
   scelta = 'Di persona'; await ctx.chiediRiflessione(e, 'Telefono spento');
   assert.deepEqual(chiamate.pop().slice(0, 4), ['appuntamento', 'Di persona · Mario Rossi', 'Presenza', 'Contatto']);
   scelta = 'Chiedo a chi me l’ha dato'; await ctx.chiediRiflessione(e, 'Telefono spento');
-  assert.deepEqual(JSON.parse(JSON.stringify(chiamate.splice(0))), [['insert', 'cose_da_fare', { user_id: 'u1', contatto_id: 'c1', testo: 'Chiedere di Mario a chi ti ha dato il nome', giorno: '2026-09-30+1', scala: 'giorno', ordine: 8 }], ['toast', 'Te la trovi in MB Plan, domani']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(chiamate.splice(0))), [['insert', 'cose_da_fare', { user_id: 'u1', contatto_id: 'c1', testo: 'Chiedere di Mario a chi ti ha dato il nome', giorno: '2026-09-30+1', scala: 'giorno', ordine: 8 }], ['toast', 'Te la trovi in Agenda, domani']]);
   chiamate.length = 0; scelta = 'Lo archivio'; await ctx.chiediRiflessione(e, 'Telefono spento');
   assert.deepEqual(chiamate, [['rpc', 'archivia_contatto', 'c1'], ['toast', 'Mario Rossi spostato in Archiviati']]);        // niente «Quando risentirlo?»: esce dalla coda
   // chiusa senza scegliere: non succede altro

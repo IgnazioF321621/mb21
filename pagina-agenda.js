@@ -17,11 +17,11 @@ async function apriAgenda(giorno) {
   AG.oggiVisto = MB21Coda.oggiRoma();   // il giorno di Roma in cui è stata disegnata: serve a capire se al ritorno nell'app è passata la notte
   const mia = AG.richiesta = (AG.richiesta || 0) + 1;   // due aperture ravvicinate: disegna solo l'ultima (nota 021)
   if (!AG.vista) AG.vista = vistaSalvata();   // cantiere 37: si riapre come l'hai lasciata
-  if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>MB Plan</h1><div class="vuoto">Carico MB Plan…</div>`;
+  if (!document.querySelector('.ag-settimana')) app.innerHTML = `<h1>Agenda</h1><div class="vuoto">Carico l'Agenda…</div>`;
   try { await caricaAgenda(); }
   catch (e) {
     console.error('[MB21] MB Plan', e);
-    app.innerHTML = `<h1>MB Plan</h1><div class="avviso">Non riesco a caricare MB Plan. Controlla la connessione e riprova.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
+    app.innerHTML = `<h1>Agenda</h1><div class="avviso">Non riesco a caricare l'Agenda. Controlla la connessione e riprova.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
     return;
   }
   if (mia !== AG.richiesta) return;
@@ -29,7 +29,7 @@ async function apriAgenda(giorno) {
   try { disegnaAgenda(); }
   catch (e) {
     console.error('[MB21] MB Plan disegno', e);
-    app.innerHTML = `<h1>MB Plan</h1><div class="avviso">MB Plan non riesce a disegnare la pagina.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
+    app.innerHTML = `<h1>Agenda</h1><div class="avviso">L'Agenda non riesce a disegnare la pagina.<br><small>${esc(String(e && e.message || e))}</small></div>${versione()}`;
   }
 }
 
@@ -79,7 +79,7 @@ async function caricaAgendaLetture() {
   const coseDa = griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0], coseA = griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6];
   PRE.dati = null;
   if (!vediTutti()) try {
-    const { data, error } = await dbq('MB Plan in una lettura', supa.rpc('apri_agenda', { p_utente: visto().id, p_giorno: AG.giorno, p_da: da, p_a: a,
+    const { data, error } = await dbq('Agenda in una lettura', supa.rpc('apri_agenda', { p_utente: visto().id, p_giorno: AG.giorno, p_da: da, p_a: a,
       p_cose_da: coseDa, p_cose_a: coseA, p_limite: limite, p_spazi: vediSpazi(), p_oggi: oggi }));
     if (!error && data && typeof data === 'object' && Array.isArray(data.appuntamenti)) PRE.dati = data;
   } catch (e) { PRE.dati = null; }
@@ -601,7 +601,7 @@ function disegnaAgenda() {
   }
   // Telefono e iPad in verticale (Ignazio 22/09): due linguette a metà dei bordi, come la freccetta di NotePlan —
   // a sinistra il menu, a destra il mese e la Timeline; si aprono anche trascinando il dito dal bordo.
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`
+  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`
     + (AG.vista === 'giorno' ? `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri il mese e la Timeline">${ic('freccia')}</button>` : '');
   if (tre) html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section>
     <aside class="mb-destra">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Timeline</div>${grigliaGiorno(eventi, opz)}</div></aside></div>`;
@@ -652,7 +652,7 @@ function disegnaMese() {
       }).join('')}</div>
     <div class="ag-foglio">${elencoDaFareHtml('Da fare questo mese', cose, 'mese', g => `da ${nomeMese(g)}`)}
     </div>`;
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`;
+  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -746,7 +746,7 @@ function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, t
 }
 function montaScala(html, prima, dopo) {
   const tre = largo();
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button>`;
+  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -842,7 +842,7 @@ function disegnaSettimana() {
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml('Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu di MB Plan">${ic('freccia')}</button><button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
+  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button><button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section><aside class="mb-destra">${griglia}</aside></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -1141,8 +1141,8 @@ async function cercaMB(testo, box, chiudi) {
 
 // Il menu è lo stesso nel cassetto ☰ (telefono) e nella colonna sinistra fissa (schermo largo, «MB Plan» a tre colonne).
 function menuAgendaHtml() {
-  return `<div class="ag-lato-titolo">MB Plan</div>
-    <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca in MB Plan"></form>
+  return `<div class="ag-lato-titolo">Agenda</div>
+    <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca nell'Agenda"></form>
     <div class="mb-risultati"></div>
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="sc-${k}${(AG.vista || 'giorno') === k ? ' si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
     ${vediSpazi() ? programmaSettimanaHtml() : ''}
@@ -1747,12 +1747,12 @@ function foglioImpegniNuovi(nuovi) {
         // la SdS/OPEN (nota 047): con «Partecipo» la riga resta, con gli ospiti da scrivere e «Fatto»
         if (A.conOspiti(r) && risposta === 'ci_sono') { await leggiOspiti(r); return disegna(); }
         nuovi = nuovi.filter(x => x !== r);
-        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: partecipi. Lo trovi in MB Plan' : 'Segnato: non puoi');
+        if (!nuovi.length && risposta !== 'dopo') mostraToast(risposta === 'ci_sono' ? 'Segnato: partecipi. Lo trovi in Agenda' : 'Segnato: non puoi');
         disegna();
       }; });
       collegaOspiti(riga, r, disegna);
       const fatto = riga.querySelector('[data-rn-fatto]');
-      if (fatto) fatto.onclick = () => { nuovi = nuovi.filter(x => x !== r); if (!nuovi.length) mostraToast('Segnato: partecipi. Lo trovi in MB Plan'); disegna(); };
+      if (fatto) fatto.onclick = () => { nuovi = nuovi.filter(x => x !== r); if (!nuovi.length) mostraToast('Segnato: partecipi. Lo trovi in Agenda'); disegna(); };
     });
   };
   disegna();
