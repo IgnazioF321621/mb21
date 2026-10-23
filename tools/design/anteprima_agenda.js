@@ -32,7 +32,7 @@ const codice = [
   funzione('esc'), riga('function percheHtml'), riga('function diPerche'),   // «Perché?» (nota 048)
   funzione('bottoniEsiti'), funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   fra('const CY = {', '\nfunction doveSono'),   // nota 001: il segnale Coach Yes, vero
-  funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
+  funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
   'return { CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, foglioImpegniNuovi, controllaImpegniNuovi, nuovoAppuntamento };',
 ].join('\n');

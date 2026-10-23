@@ -3533,6 +3533,9 @@ async function leggiContattiMiei() {
   return (contattiMiei = righe);
 }
 
+// Chi può creare una serata con il Team o con una Linea (Agenda P5, Ignazio 23/10): una regola sola, usata dal foglio «Cosa vuoi aggiungere?»
+// (pagina-agenda.js) e dal modulo («Condividi con»). Oggi solo l'Admin; quando Team e Linea si apriranno a tutti si cambia qui.
+function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin(); }
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
 // opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
 // `spazio`: la riga di `spazi` che si sta riempiendo (MB Plan, 27/09): salvando, lo spazio diventa questo appuntamento e si toglie.
@@ -3561,7 +3564,7 @@ async function nuovoAppuntamento(opz = {}) {
     condividi: ['team', 'linea'].includes(opz.condividi) ? opz.condividi : '', linea: null, parte: null, puntiCond: false, serataTipo: 'Team',   // nota 005: «Con il Team» / «Con una Linea» dal foglio a livelli
   };
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
-  const puoTeam = () => typeof eAdmin === 'function' && eAdmin() && !opz.contatto && !opz.spazio;
+  const puoTeam = () => puoSerataTeam() && !opz.contatto && !opz.spazio;
   const puoPersona = () => !!st.contatto && st.categoria === 'Partner' && st.tipo !== 'Contatto';
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
   if (st.condividi === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id;   // una sola Prima Linea: già scelta
