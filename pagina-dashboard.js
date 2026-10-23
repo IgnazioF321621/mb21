@@ -684,7 +684,7 @@ function cardCatalogo(r) {
   const testa = `
     <button class="riga-coda" data-apri="${esc(r.id)}" aria-expanded="${aperta}">
       <span class="rc-pastiglia">${esc(iniziali(r.nome))}</span><span class="rc-alto"><span class="nome">${esc(r.nome)}${nuovoBadge(r)}</span></span>
-      <span class="rc-glide">${esc(r.categoria ? `✓ ${MB21Lista.nomeCategoria(r.categoria)} · chiamalo ora` : (r.professione || 'Senza categoria'))}</span>
+      <span class="rc-glide">${esc(r.categoria ? `✓ ${MB21Lista.nomeCategoria(r.categoria)} · puoi chiamarlo ora` : (r.professione || 'Senza categoria'))}</span>
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
   if (!aperta) return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
@@ -2184,7 +2184,7 @@ function apriCheck() {
     <div class="ckr core" id="ck-campo-pagine"><b class="ck-n">8</b><div class="ck-corpo"><label for="ck-pagine">📖 Libro e pagine<span class="ck-tag">Core</span></label>
       <select id="ck-libro"><option value="">— Libro —</option>${MB21Dashboard.LIBRI.filter(l => l !== 'Libro no N21').map(l => `<option>${esc(l)}</option>`).join('')}<option value="__altro__">Libro non da sistema…</option></select>
       <input id="ck-pagine" inputmode="numeric" placeholder="${esc(CK.pagine.suggerimento)}">
-      <input id="ck-note" maxlength="150" placeholder="Note del libro"><div class="conta" id="ck-conta">0/150</div>
+      <input id="ck-note" maxlength="150" placeholder="Note del libro"><div class="conta" id="ck-conta"></div>
       <div class="vn-aiuto">A mano: libro, pagine (10 al giorno) e note → sezione 5 del foglio Core e diario dei libri. Con «Libro non da sistema…» scrivi titolo e autore una volta sola.</div></div></div>
     </div><h4 class="mc-t">Squadra</h4><div class="riquadro mc-g">
     <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
@@ -2224,7 +2224,7 @@ function apriCheck() {
     if (![...libroSel.options].some(o => o.value === titolo)) libroSel.insertBefore(new Option(titolo, titolo), vocealtro);
     libroSel.value = titolo;
   });
-  note.oninput = () => { velo.querySelector('#ck-conta').textContent = `${note.value.length}/150`; };
+  note.oninput = () => contaLettere(note, velo.querySelector('#ck-conta'));   // Lista Nomi L1: il conto solo nelle ultime 10 lettere
   // Check già salvato nel giorno scelto: si carica nei campi (esistente = riga più recente, null = Check nuovo)
   let esistente = null, giro = 0;
   const campoData = velo.querySelector('#ck-data');

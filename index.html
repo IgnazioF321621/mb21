@@ -225,6 +225,9 @@
   .ls-testa .ag-testa { margin: 0 0 8px; }
   .ls-testa .partner-select { margin: 0 0 8px; }
   .ls-testa .cerca { margin: 0 0 8px; }
+  /* Lista Nomi L1: la scritta lunga della casella («Cerca un nome, una professione o un numero») entra in un telefono da 375 */
+  .ls-testa .cerca input::placeholder { font-size: 14px; }
+  .ls-testa .cerca input:placeholder-shown { padding-right: 12px; text-overflow: ellipsis; }
   .chips button span { font-weight: 500; opacity: .6; margin-left: 2px; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
@@ -309,6 +312,10 @@
   .altri-voci button.rientrata { padding-left: calc(4px + var(--rientro, 0) * 18px); }
   .altri-voci button i.ramo { font-style: normal; color: var(--testo-tenue); margin-right: 6px; }
   .altri-voci button small.nota-ramo { display: block; font-size: 13px; color: var(--testo-tenue); margin-top: 2px; }
+  /* Lista Nomi L1: la riga piccola anche sotto le voci colorate (Archivia, Elimina) */
+  .altri-voci button[class*="tono-"] .voce-nota { display: flex; flex-direction: column; }
+  .altri-voci button[class*="tono-"] small.nota-ramo { font-weight: 400; margin-top: 1px; }
+  .vuoto .ls-aggiungi-cercato { display: block; margin: 10px auto 0; font-weight: 600; }
   .altri-voci button.rientrata small.nota-ramo { padding-left: 20px; }
   .altri-voci button:not([class*="tono-"]) svg.ic { margin-right: 8px; }
   /* voci con un tono (i comandi dei tre puntini: Modifica · Archivia · Ripristina · Elimina): icona, grassetto e un colore per ognuna (Ignazio 19/09) */
@@ -2450,6 +2457,14 @@ const ST = { email: '', utente: null, tab: 'oggi' };
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+// Il conto delle lettere sotto un campo (Lista Nomi L1, Ignazio 23/10): si vede solo nelle ultime 10 lettere, uguale in tutti i moduli
+// (Lista Nomi, vendita, Check). `campo` ha il suo maxlength; `posto` è il <div class="conta"> sotto.
+const ULTIME_LETTERE = 10;
+function contaLettere(campo, posto) {
+  if (!campo || !posto) return;
+  const max = campo.maxLength, n = campo.value.length;
+  posto.textContent = max > 0 && max - n <= ULTIME_LETTERE ? `${n}/${max}` : '';
+}
 function dataEstesa(iso) {
   return new Date(iso + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
@@ -4078,7 +4093,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
       const uguale = trovati.some(c => MB21Lista.piega(c.nome) === MB21Lista.piega(t));
       velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => escludi.includes(c.id)
           ? `<button disabled>${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(motivo)}</small></button>`
-          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria || 'Senza categoria')}</small></button>`).join('')
+          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></button>`).join('')
         + (t && !uguale ? `<button data-nuovo="1">${ic('piu')} Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
       velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
       const n = velo.querySelector('[data-nuovo]');
