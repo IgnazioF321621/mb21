@@ -573,12 +573,11 @@ function disegnaAgenda() {
   if (AG.vista === 'settimana') return disegnaSettimana();
   if (AG.vista === 'periodo') return disegnaPeriodo();
   if (AG.vista === 'anno') return disegnaAnno();
+  // P4 (Ignazio 23/10): la data si scrive una volta sola. La prima riga è quella di tutte le viste (testaScala: «Oggi» se serve, «+»);
+  // la scelta del giorno sta sul titolo «Oggi, ven 23 ott ▾» (stesso id ag-scegli, stessa ruota delle date). L'anno solo se non è quello di oggi.
+  const titoloG = titoloGiorno(AG.giorno, oggi) + (AG.giorno.slice(0, 4) !== oggi.slice(0, 4) ? ' ' + AG.giorno.slice(0, 4) : '');
   let html = `
-    <div class="ag-testa np">
-      <span class="ag-menu-posto"></span>
-      <button class="ag-mese">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button>
-      ${AG.giorno !== oggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
-      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+    ${testaScala(AG.giorno !== oggi)}
     <div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
       ${AG.settimana.map((g, i) => {
@@ -590,12 +589,11 @@ function disegnaAgenda() {
       }).join('')}
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
     </div>
-    <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}${esc(AG.vista === 'settimana' ? `Settimana ${Number(AG.settimana[0].slice(8))} – ${Number(AG.settimana[6].slice(8))} ${A.titoloMese(AG.settimana[6]).slice(0, 3).toLowerCase()}` : titoloGiorno(AG.giorno, oggi))}</h1>
+    <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}<button class="ag-mese ag-titolo-giorno">${esc(titoloG)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1>
     ${partnerSelect()}`;
   html += richiamiAgenda(oggi);
-  const tre = largo() && AG.vista !== 'settimana';   // MB Plan a tre colonne (schermo largo)
-  if (AG.vista === 'settimana') html += grigliaSettimana(opz);
-  else {
+  const tre = largo();   // l'Agenda a tre colonne (schermo largo); la Settimana è già uscita sopra (disegnaSettimana)
+  {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
@@ -637,9 +635,7 @@ function disegnaMese() {
   const nomeMese = g => A.titoloMese(g).split(' ')[0].toLowerCase();
   const tre = largo();
   // il mese si scrive una volta sola (Ignazio 22/09): il titolo grande con ‹ › e, toccandolo, la scelta della data
-  let html = `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
-      ${mese0 !== oggi.slice(0, 8) + '01' ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
-      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+  let html = `${testaScala(mese0 !== oggi.slice(0, 8) + '01')}
     <div class="mm-testa sc-mese"><button class="freccia" id="mm-prima" aria-label="Mese prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-mese')}<button class="ag-mese mm-titolo">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="mm-dopo" aria-label="Mese dopo">›</button></div>
     ${partnerSelect()}
     <div class="mm-griglia">${A.GIORNI_SETTIMANA.map(g => `<b>${g}</b>`).join('')}
@@ -760,9 +756,13 @@ function montaScala(html, prima, dopo) {
   if (d && dopo) d.onclick = () => apriAgenda(dopo);
   collegaMesiMini();
 }
-const testaScala = mostraOggi => `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
+// La prima riga di TUTTE le viste (P4, Ignazio 23/10: una funzione sola al posto di quattro copie): lo spazio invisibile che spinge a destra
+// «Oggi» (solo se non si guarda oggi, questa settimana, questo mese…) e il «+». Scritta come function (LEZIONI: la «pagina bianca»).
+function testaScala(mostraOggi) {
+  return `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
     ${mostraOggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
     <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>`;
+}
 
 // ── Il PERIODO WES (Ignazio 22/09): un'agenda di 4 mesi da WES a WES, con la barra dei giorni che mancano al WES
 async function caricaPeriodo() {
@@ -834,9 +834,7 @@ function disegnaSettimana() {
   const periodo = lun.slice(5, 7) === dom.slice(5, 7) ? `${Number(lun.slice(8))}–${Number(dom.slice(8))} ${nomeMese(dom)}` : `${Number(lun.slice(8))} ${nomeMese(lun)} – ${Number(dom.slice(8))} ${nomeMese(dom)}`;
   const cose = A.coseDellaScala(AG.cose, 'settimana', lun, A.inizioScala('settimana', oggi));
   const tre = largo();
-  let html = `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
-      ${!AG.settimana.includes(oggi) ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
-      <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+  let html = `${testaScala(!AG.settimana.includes(oggi))}
     <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelect()}
     ${richiamiAgenda(oggi)}
@@ -1989,6 +1987,8 @@ function collegaAgenda(eventi) {
   su('ag-in-coda', codaDelGiorno);
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
+  // P4: sul computer (Arc, Chrome) il clic sul campo data invisibile non apre il calendario: lo si apre a mano; sul telefono la ruota si apre da sé
+  if (scegli && typeof window !== 'undefined' && !('ontouchstart' in window)) scegli.addEventListener('click', () => { try { if (scegli.showPicker) scegli.showPicker(); } catch (e) {} });
   app.querySelectorAll('.ag-giorno').forEach(b => {
     b.onclick = () => { AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); };
   });
@@ -2029,7 +2029,6 @@ function collegaAgenda(eventi) {
     }, { passive: false });
   }
   su('ag-vai-ora', () => { AG.portato = null; portaInVista(true); });
-  su('ag-menu', menuAgenda);
   su('ag-cronologia', () => foglioCronologia(eventi, { mioId: vediTutti() ? null : visto().id, admin: eAdmin() }));
   // la card degli impegni: una riga apre il foglio dell'impegno
   app.querySelectorAll('.ag-imp').forEach(b => {
