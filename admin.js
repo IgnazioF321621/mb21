@@ -312,7 +312,7 @@ function disegnaAdmin() {
         <input type="month" id="rp-data-wes" aria-label="Mese del WES">
         <label class="ad-wes-giorno">Primo giorno del WES (facoltativo) <input type="date" id="rp-giorno-wes"></label>
         <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
-        <div class="sotto">Mese e anno contano per segni vitali, biglietti e Report. Il primo giorno serve solo a MB Plan per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
+        <div class="sotto">Mese e anno contano per segni vitali, biglietti e Report. Il primo giorno serve solo all'Agenda per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
   } else if (AD.sezione === 'fc') {
     // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione = (VP × FC) × 0,20, con l'FC valido il giorno in cui la vendita conta.
     // Il primo valore copre tutto lo storico: si corregge ma non si elimina.

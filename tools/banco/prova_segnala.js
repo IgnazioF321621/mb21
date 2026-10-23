@@ -17,7 +17,7 @@ prova('dove: solo i pezzi pieni, i titoli dei fogli puliti, al massimo 5', () =>
   assert.equal(S.doveDa({ fogli: ['1', '2', '3', '4', '5', '6', '7'] }).fogli.length, 5);
 });
 prova('la descrizione per chi legge: pagina › vista › sezione › fogli', () => {
-  assert.equal(S.descrizioneDove({ pagina: 'agenda', vista: 'settimana', fogli: ['Nuovo appuntamento'] }), 'MB Plan › settimana › Nuovo appuntamento');
+  assert.equal(S.descrizioneDove({ pagina: 'agenda', vista: 'settimana', fogli: ['Nuovo appuntamento'] }), 'Agenda › settimana › Nuovo appuntamento');
   assert.equal(S.descrizioneDove({ pagina: 'lista', sezione: 'Scheda contatto · Dati' }), 'Lista Nomi › Scheda contatto · Dati');
   assert.equal(S.descrizioneDove({ pagina: 'boh' }), 'boh'); assert.equal(S.descrizioneDove(null), '');
 });

@@ -167,7 +167,7 @@ async function tentativiAVuoto(e, esito) {
     const { data: ultimo } = await dbq('ordine', supa.from('cose_da_fare').select('ordine').eq('user_id', e.user_id || ST.utente.id).order('ordine', { ascending: false }).limit(1));
     const { error: e2 } = await dbq('cosa da fare', supa.from('cose_da_fare').insert({ user_id: e.user_id || ST.utente.id, contatto_id: e.contatto_id,
       testo: `Chiedere di ${primoNome(nome)} a chi ti ha dato il nome`, giorno: domani, scala: 'giorno', ordine: ((ultimo && ultimo[0] && ultimo[0].ordine) || 0) + 1 }));
-    mostraToast(e2 ? 'Cosa da fare non salvata: riprova da MB Plan.' : 'Te la trovi in MB Plan, domani');
+    mostraToast(e2 ? 'Cosa da fare non salvata: riprova dall\'Agenda.' : 'Te la trovi in Agenda, domani');
   } else {   // «Lo archivio»: la stessa funzione di «Archivia» della Lista (`archivia_contatto`: esce dalla coda); con Annulla lo ripristini
     const { error: e3 } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: e.contatto_id }));
     if (e3) mostraToast('Non archiviato: riprova dalla scheda.');

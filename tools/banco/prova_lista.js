@@ -567,6 +567,19 @@ prova('Vendite V2 (Ignazio 22/10): «Quando lo risento?» — riordinoFra, mesiF
   assert.equal(L.propostaRiordino(st, 'Altro', 'Nutrilite'), null); assert.equal(L.propostaRiordino(null, 'x', 'y'), null);
 });
 
+prova('MB Plan P1 (Ignazio 23/10, «ok agenda»): nei testi che il partner legge la pagina si chiama «Agenda», mai «MB Plan» (i commenti possono restare)', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const radice = path.join(__dirname, '../..');
+  const file = fs.readdirSync(radice).filter(f => f.endsWith('.js') && f !== 'novita.js').concat('index.html');   // novita.js: niente novità senza Ignazio
+  const visibili = [];
+  for (const f of file) fs.readFileSync(path.join(radice, f), 'utf8').split('\n').forEach((l, i) => {
+    let k = l.indexOf('MB Plan');
+    while (k >= 0) { const prima = l.slice(0, k); if (!/(^|\s)\/\/|\/\*|<!--/.test(prima) && !/console\.error/.test(prima)) visibili.push(`${f}:${i + 1}`); k = l.indexOf('MB Plan', k + 1); }
+  });
+  assert.deepEqual(visibili, []);
+  assert.match(fs.readFileSync(path.join(radice, 'index.html'), 'utf8'), /<use href="#ic-agenda"\/><\/svg>Agenda<\/button>/);   // la linguetta in basso
+});
+
 prova('S7 (Ignazio 22/10): le scelte (sceltaDa, una funzione per tutta l\'app) compaiono al centro; toccare fuori chiude come prima; se lunghe scorrono dentro', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');

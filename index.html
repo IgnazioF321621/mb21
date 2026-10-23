@@ -178,7 +178,7 @@
     background: var(--accento); color: var(--accento-su); border-radius: var(--raggio-riga); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   /* «Segnala» (nota Pagine 009): il piccolo insetto, sempre nello stesso angolo di ogni schermata e foglio (sopra i veli, sotto il toast) */
   /* Nota Pagine 008 (Ignazio 06/10, scelta A): in basso a destra sopra la barra dei tab, su tutte le pagine (in alto a destra copriva la foto del profilo
-     e il «+» di MB Plan). Con un foglio aperto (`.in-foglio`, messa da `seguiFogli`) sale in alto a destra, sull'ombra scura: lì non c'è nessun bottone. */
+     e il «+» dell'Agenda). Con un foglio aperto (`.in-foglio`, messa da `seguiFogli`) sale in alto a destra, sull'ombra scura: lì non c'è nessun bottone. */
   .segnala-bottone { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 66px); right: 8px; z-index: 25; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea);
     background: var(--superficie); color: var(--testo-soft); display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 8px rgba(16,21,31,.14); opacity: .88; }
   .segnala-bottone.in-foglio { bottom: auto; top: calc(env(safe-area-inset-top) + 8px); }
@@ -2345,7 +2345,7 @@
 <main id="app"></main>
 <nav id="tab" hidden>
   <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Dashboard</button>
-  <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>MB Plan</button>
+  <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Agenda</button>   <!-- P1 (Ignazio 23/10): «MB Plan» si chiama «Agenda» in tutto ciò che il partner legge -->
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
   <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
   <button data-tab="training" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg>Training</button>   <!-- cantiere 45: per tutti dal 24/09 sera (TRAINING_VISIBILE) -->

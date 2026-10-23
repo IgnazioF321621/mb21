@@ -15,7 +15,8 @@ prova('aperta prima della risolta; testo protetto; tasti giusti nella aperta (co
   const h = ctx.html();
   assert.ok(h.indexOf('data-sg-apri="s1"') < h.indexOf('data-sg-apri="s2"'));
   assert.match(h, /data-sg-wa="s1"/); assert.match(h, /data-sg-foto="s1"/); assert.match(h, /data-sg-risolta="s1"/); assert.match(h, /data-sg-letta="s1"/);
-  assert.match(h, /Era in: MB Plan/); assert.doesNotMatch(h, /<b>idea<\/b>/);
+  assert.match(h, /Era in: Agenda/);   // P1 (23/10): «MB Plan» si chiama «Agenda»
+  assert.doesNotMatch(h, /<b>idea<\/b>/);
 });
 prova('senza telefono niente tasto WhatsApp; la risolta si può rimettere aperta', () => {
   ctx.AD.segnalazioneAperta = 's2';

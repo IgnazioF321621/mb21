@@ -8,7 +8,7 @@
   const MOTIVI = [['non_funziona', 'Non funziona'], ['non_capisco', 'Non capisco'], ['idea', 'Un’idea']];
   const MAX_TESTO = 1000;
   const MAX_LATO = 1200, QUALITA = 0.7, BUCKET = 'segnalazioni';
-  const NOMI_PAGINE = { oggi: 'Dashboard', lista: 'Lista Nomi', agenda: 'MB Plan', report: 'Report', mappa: 'Mappa', check: 'Check', admin: 'Admin', profilo: 'Profilo', training: 'Training' };
+  const NOMI_PAGINE = { oggi: 'Dashboard', lista: 'Lista Nomi', agenda: 'Agenda', report: 'Report', mappa: 'Mappa', check: 'Check', admin: 'Admin', profilo: 'Profilo', training: 'Training' };
   const nomeMotivo = k => (MOTIVI.find(m => m[0] === k) || [])[1] || '';
   const nomePagina = p => NOMI_PAGINE[p] || String(p || '');
   const pulisci = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 80);
