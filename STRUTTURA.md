@@ -699,6 +699,13 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - `conCepPerCodice(targhe)` è la funzione sola per il CEP per codice (nota 069), dopo la lettura intera e dopo aver collegato una coppia. Prima, dopo la coppia, il CEP delle altre schede si spegneva.
     - `COLONNE_LISTA`: le colonne di `contatti_lista` scritte una per una al posto di `*`, senza `fase_icona` che nessuna pagina usa. Valgono per la lettura a pagine dell'Admin e per `aggiornaRiga`.
     - Restano ferme, perché toccano il database: la lettura dei partner con `lista_nomi()` e «contatti fatti» calcolato nella vista.
+  - **L8b · l'Admin legge solo i nomi che guarda** (Ignazio 23/10; nessun database, solo il filtro della lettura):
+    - `leggiLista` per l'Admin passa a `leggiListaPagine(utenti)` gli utenti di `utentiLettura()`.
+      - Con una persona scelta nel Partner Select (o nessuna: sé stesso) legge solo i suoi nomi.
+      - Con «Tutti» legge i suoi più quelli degli utenti con `accesso_attivo` e non eliminati, letti da `utenti` (mai scritti nel codice). Così «Tutti» mostra solo i nomi di quegli utenti.
+      - Prima scaricava tutte le schede (~8.300).
+    - `LS.chiave` (`chiaveLettura()`: 'tutti' o l'id della persona guardata; '' per i partner) fa rileggere la copia quando cambia il Partner Select: `listaFresca` la confronta.
+    - `apriContattoDa`: se la scheda non è tra i nomi letti (un altro partner, da Agenda, Report o Mappa) rilegge solo quella riga (`aggiornaRiga`); la lettura intera solo se la Lista non c'è ancora.
   - **L9 · una funzione sola per un nome nuovo, una ricerca sola**:
     - `salvaNomeNuovo(riga)` (pagina-lista.js) è la funzione sola per i nomi nuovi. La usano il «+» della Lista (`apriModulo`), «Scegli dalla tua lista» (`sceltaContatto`, «Non c'è: aggiungi … come Prospect») e la Cerchia del Benvenuto (`aggiungiNomeVeloce`).
       - Guarda i doppioni con `doppioniDi`, archiviati compresi: dalla Lista già letta oppure, se non c'è, con due letture piccole.

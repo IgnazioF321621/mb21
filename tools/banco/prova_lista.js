@@ -450,7 +450,7 @@ prova('Lettura della Lista veloce (02/10): prima pagina da sola, poi cinque alla
   const quante = n => Array.from({ length: n }, (_, i) => ({ id: String(i).padStart(5, '0') }));
   const prova1 = async totale => {
     const richieste = [], tutte = quante(totale);
-    const ctx = { LS: { righe: [], usoApp: null }, console, dbq: (_, p) => p };
+    const ctx = { LS: { righe: [], usoApp: null }, console, dbq: (_, p) => p, eAdmin: () => false };   // L8b: un partner legge senza filtro
     ctx.supa = { from: () => { const q = { select() { return q; }, order() { return q; }, eq() { return q; }, range(a, b) { richieste.push([a, b]); q._r = [a, b]; return q; },
       maybeSingle() { q._one = true; return q; }, then(res) { res(q._one ? { data: { id: 'x', n: 'nuova' }, error: null } : { data: tutte.slice(q._r[0], q._r[1] + 1), error: null }); } }; return q; } };
     vm.createContext(ctx); vm.runInContext(pezzo + ';this.leggiLista = leggiLista; this.aggiornaRiga = aggiornaRiga', ctx);
