@@ -59,35 +59,40 @@ prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in so
   assert.match(P.fogli.at(-1).innerHTML, /data-ri-risposta="ci_sono" class="scelto"/);
 });
 
-prova('Il pop-up all\'apertura: solo per gli impegni non visti e non passati; rispondendo la riga sparisce e alla fine si chiude; «Decido dopo» toglie la riga senza segnare niente', async () => {
+prova('Agenda P7 (Ignazio 23/10): all\'apertura lo STESSO foglio dell\'Agenda, un impegno per volta («1 di 2»); «Decido dopo» e la X passano al prossimo; nuovo = senza risposta', async () => {
   pulisci();
-  const futuro = { inizio: '2027-01-10T17:00:00Z', fine: '2027-01-10T18:00:00Z' };   // il pop-up guarda l'oggi vero: gli impegni devono venire
-  P.finto.ricevuti = [ricevuto({ id: 'n1', visto_il: null, ...futuro }), ricevuto({ id: 'n2', titolo: 'Serata Linea Rossi', origine: 'spazio', visto_il: null, ...futuro }),
-    ricevuto({ id: 'v1', visto_il: '2026-09-20T10:00:00Z', ...futuro }), ricevuto({ id: 'p1', visto_il: null })];   // p1: passato, non si propone
-  await P.controllaImpegniNuovi();
-  assert.equal(chiamate('impegni_ricevuti').length, 1);
-  const v = P.fogli.at(-1);
-  assert.match(v.innerHTML, /Hai 2 nuovi appuntamenti/);
-  assert.match(v.innerHTML, /data-rn="azione:n1"/); assert.match(v.innerHTML, /data-rn="spazio:n2"/); assert.doesNotMatch(v.innerHTML, /data-rn="azione:v1"/); assert.doesNotMatch(v.innerHTML, /data-rn="azione:p1"/);
-  assert.match(v.innerHTML, /Link della chiamata/);
-  assert.equal((v.innerHTML.match(/data-rn-risposta="dopo"/g) || []).length, 2);   // «Decido dopo» accanto alle due risposte, in ogni riga
-  assert.doesNotMatch(v.innerHTML, /Lo guardo dopo/);
-  await v.clic('[data-rn="spazio:n2"] [data-rn-risposta="non_ci_sono"]');
-  const up = scritte('impegni_risposte', 'upsert');
-  assert.equal(up.length, 1); assert.equal(up[0].args[0].origine, 'spazio'); assert.equal(up[0].args[0].risposta, 'non_ci_sono');
-  assert.match(v.innerHTML, /Hai un nuovo appuntamento/); assert.doesNotMatch(v.innerHTML, /data-rn="spazio:n2"/);
-  await v.clic('[data-rn="azione:n1"] [data-rn-risposta="ci_sono"]');
-  assert.equal(scritte('impegni_risposte', 'upsert').length, 2);
-  assert.match(P.avvisi.at(-1).t, /partecipi/);
-  // «Decido dopo»: la riga va via, niente scritto, l'impegno resta nuovo
+  const futuro = { inizio: '2027-01-10T17:00:00Z', fine: '2027-01-10T18:00:00Z' };   // l'apertura guarda l'oggi vero: gli impegni devono venire
+  P.finto.ricevuti = [ricevuto({ id: 'n1', visto_il: null, ...futuro }), ricevuto({ id: 'n2', titolo: 'Serata Linea Rossi', origine: 'spazio', visto_il: '2026-09-20T10:00:00Z', ...futuro }),
+    ricevuto({ id: 'r1', risposta: 'ci_sono', ...futuro }), ricevuto({ id: 'p1', visto_il: null })];   // n2: aperto ma mai risposto, torna; r1: risposto; p1: passato
+  {
+    await P.controllaImpegniNuovi();
+    assert.equal(chiamate('impegni_ricevuti').length, 1);
+    let v = P.fogli.at(-1);
+    assert.match(v.innerHTML, /<p class="ric-serie">Hai un nuovo appuntamento · 1 di 2<\/p>/);
+    assert.match(v.innerHTML, /class="foglio alto ric-foglio"/); assert.match(v.innerHTML, /Entra nella chiamata/);   // il foglio dell'Agenda, non più quello a righe
+    assert.match(v.innerHTML, /data-ri-risposta="dopo"/); assert.doesNotMatch(v.innerHTML, /data-rn=/);
+    await v.clic('[data-ri-risposta="dopo"]');   // niente scritto (tranne il «visto» di quando si apre), si passa al secondo
+    assert.equal(scritte('impegni_risposte', 'upsert').filter(x => x.args[0].risposta).length, 0);
+    v = P.fogli.at(-1);
+    assert.match(v.innerHTML, /Hai un nuovo appuntamento · 2 di 2/); assert.match(v.innerHTML, /<h3>Serata Linea Rossi<\/h3>/);
+    await v.clic('[data-ri-risposta="non_ci_sono"]');
+    const up = scritte('impegni_risposte', 'upsert').filter(x => x.args[0].risposta);
+    assert.equal(up.length, 1); assert.equal(up[0].args[0].origine, 'spazio'); assert.equal(up[0].args[0].risposta, 'non_ci_sono');
+    assert.equal(P.avvisi.at(-1).t, 'Segnato: non puoi');   // un messaggio solo, alla fine
+  }
+  // la X: niente scritto, alla prossima apertura torna
   pulisci();
   P.finto.ricevuti = [ricevuto({ id: 'd1', visto_il: null, ...futuro })];
   await P.controllaImpegniNuovi();
-  await P.fogli.at(-1).clic('[data-rn="azione:d1"] [data-rn-risposta="dopo"]');
-  assert.equal(scritte('impegni_risposte').length, 0); assert.equal(P.avvisi.length, 0);
-  // tutti visti: nessun pop-up
+  await P.fogli.at(-1).clic('#ri-x');
+  assert.equal(scritte('impegni_risposte', 'upsert').filter(x => x.args[0].risposta).length, 0); assert.equal(P.avvisi.length, 0);
+  // in Agenda la riga dice «nuovo» finché non c'è una risposta, anche se è già stata aperta
+  const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  assert.match(pag, /\$\{r\.risposta \? ' · ' \+ esc\(A\.nomeRisposta\(r\.risposta\)\) : ' · nuovo'\}/);
+  assert.doesNotMatch(pag, /function foglioImpegniNuovi/);   // il foglio a righe non c'è più
+  // tutti con una risposta: nessun foglio
   pulisci();
-  P.finto.ricevuti = [ricevuto({ visto_il: '2026-09-20T10:00:00Z' })];
+  P.finto.ricevuti = [ricevuto({ risposta: 'non_ci_sono', ...futuro })];
   await P.controllaImpegniNuovi();
   assert.equal(P.fogli.length, 0);
   P.finto.ricevuti = [ricevuto()];
