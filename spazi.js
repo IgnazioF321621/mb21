@@ -82,7 +82,9 @@
     const righe = scelti.map(s => ({ user_id: userId, tipo: s.tipo, inizio: A.isoDaRoma(s.giorno, s.ora), durata: s.durata || DURATA, ...(puoAvereNome(s.tipo) && pulisciNome(s.nome) ? { nome: pulisciNome(s.nome) } : {}) }));
     const lun = settimana[SDS.giorno];
     const giaSds = (esistenti || []).some(s => s.tipo === 'SdS/OPEN' && settimana.includes(giornoDi(s.inizio)));
-    if (opz.sds !== false && !giaSds && lun >= oggi) righe.unshift({ user_id: userId, tipo: 'SdS/OPEN', inizio: A.isoDaRoma(lun, SDS.ora), durata: SDS.durata, ...(opz.team ? { condiviso_con: 'team' } : {}) });
+    // P5b (23/10): `opz.a` = il codice della persona che la riceve (condiviso_con 'linea'); `opz.team` resta per le prove di prima, l'app non lo usa più
+    const manda = opz.a ? { condiviso_con: 'linea', linea_codice: opz.a } : opz.team ? { condiviso_con: 'team' } : {};
+    if (opz.sds !== false && !giaSds && lun >= oggi) righe.unshift({ user_id: userId, tipo: 'SdS/OPEN', inizio: A.isoDaRoma(lun, SDS.ora), durata: SDS.durata, ...manda });
     return righe;
   }
 

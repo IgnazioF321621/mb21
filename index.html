@@ -3516,7 +3516,11 @@ async function leggiContattiMiei() {
 
 // Chi può creare una serata con il Team o con una Linea (Agenda P5, Ignazio 23/10): una regola sola, usata dal foglio «Cosa vuoi aggiungere?»
 // (pagina-agenda.js) e dal modulo («Condividi con»). Oggi solo l'Admin; quando Team e Linea si apriranno a tutti si cambia qui.
-function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin(); }
+// Agenda P5b (Ignazio 23/10/2026): Team, LdS, Network 21 e Amway sono solo etichette; si manda soltanto alle persone del gruppo che usano l'app
+// (personeAppDelGruppo, nomi dai dati). L'interruttore spegne «Tutto il Team / Una Linea», «Quale Linea?», «Solo una parte?», «Senza l'app» e la
+// lettura dei frontali; il codice resta. Con true torna com'era (nota 005).
+const CONDIVISIONE_LINEE = false;
+function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin() && (CONDIVISIONE_LINEE || (typeof personeAppDelGruppo === 'function' && personeAppDelGruppo().length > 0)); }
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
 // opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
 // `spazio`: la riga di `spazi` che si sta riempiendo (MB Plan, 27/09): salvando, lo spazio diventa questo appuntamento e si toglie.
@@ -3549,6 +3553,8 @@ async function nuovoAppuntamento(opz = {}) {
   const puoPersona = () => !!st.contatto && st.categoria === 'Partner' && st.tipo !== 'Contatto';
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
   if (st.condividi === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id;   // una sola Prima Linea: già scelta
+  const persone = () => (typeof personeAppDelGruppo === 'function' ? personeAppDelGruppo() : []);   // P5b: a chi si può mandare (dai dati)
+  if (!CONDIVISIONE_LINEE && st.condividi === 'linea' && !st.linea && persone().length === 1) st.linea = persone()[0].partner_id;
   const puoInCoda = () => st.tipo === 'Contatto' && st.modalita === 'Telefonata' && !st.spazio;
   // I passi suggeriti guardano la persona (nota Azioni 055): con un Partner e un Appuntamento si legge una volta la sua riga dell'Avvio
   // (concluso / in pausa / passi spuntati); finché non arriva, i passi del tipo. Letta, si ridisegna.
@@ -3608,14 +3614,18 @@ async function nuovoAppuntamento(opz = {}) {
             <datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
       // «Condividi con» (nota 027, come il Calendario Apple): Nessuno · la persona (un Partner con l'app) · Tutto il Team · Una Linea (solo l'Admin);
       // scegliendo Team o Linea il modulo diventa quello della serata. Sotto, «Vedono anche i punti?». Nel foglio dell'impegno si può cambiare dopo.
-      if (puoTeam() || puoPersona()) {
-        const voci = [['', 'Nessuno'], ...(puoPersona() ? [['persona', st.contatto.nome]] : []), ...(puoTeam() ? [['team', 'Tutto il Team'], ['linea', 'Una Linea']] : [])];
-        h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', voci.map(x => x[0]), st.condividi, voci.map(x => x[1]))}</div>`;
-        if (st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label>${frontali().length
+      // P5b (23/10, CONDIVISIONE_LINEE spento): in un appuntamento con una persona solo «Nessuno · [la persona]» (il nome non sparisce più);
+      // nella serata da mandare «Nessuno» e una pastiglia per ognuna delle persone che usano l'app (valore «p:codice» → condiviso_con 'linea').
+      if (!CONDIVISIONE_LINEE ? serata() || puoPersona() : puoTeam() || puoPersona()) {
+        const voci = !CONDIVISIONE_LINEE ? (serata() ? [['', 'Nessuno'], ...persone().map(p => ['p:' + p.partner_id, p.nome])] : [['', 'Nessuno'], ...(puoPersona() ? [['persona', st.contatto.nome]] : [])])
+          : [['', 'Nessuno'], ...(puoPersona() ? [['persona', st.contatto.nome]] : []), ...(puoTeam() ? [['team', 'Tutto il Team'], ['linea', 'Una Linea']] : [])];
+        const valore = !CONDIVISIONE_LINEE && st.condividi === 'linea' ? 'p:' + (st.linea || '') : st.condividi;
+        h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', voci.map(x => x[0]), valore, voci.map(x => x[1]))}</div>`;
+        if (CONDIVISIONE_LINEE && st.condividi === 'linea') h += `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label>${frontali().length
           ? scelte('linea', frontali().map(f => f.partner_id), st.linea, frontali().map(f => f.nome)) : '<div class="errore">Nessuna Prima Linea nella Mappa.</div>'}</div>`;
-        if (st.condividi === 'linea' && st.linea && typeof AG !== 'undefined' && AG.ramo) h += parteLineaHtml(st.linea, st.parte, AG.ramo.squadra);   // nota 005
+        if (CONDIVISIONE_LINEE && st.condividi === 'linea' && st.linea && typeof AG !== 'undefined' && AG.ramo) h += parteLineaHtml(st.linea, st.parte, AG.ramo.squadra);   // nota 005
         // Chi del Team (o della Linea scelta) non usa ancora MB21 (Ignazio 05/10 sera): lo si vede subito, con «Invita» che apre il link di registrazione
-        if (serata() && (st.condividi === 'team' || st.linea)) {
+        if (CONDIVISIONE_LINEE && serata() && (st.condividi === 'team' || st.linea)) {
           const r = typeof AG !== 'undefined' ? AG.ramo : undefined;
           if (r === undefined && typeof caricaRamoApp === 'function') caricaRamoApp().then(() => disegna());   // letto: si ridisegna con i nomi
           const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
@@ -3625,7 +3635,7 @@ async function nuovoAppuntamento(opz = {}) {
           if (fuori.length) h += `<div class="campo na-senza-app"><label>Senza l'app <small>${fuori.length === 1 ? 'non la troverà nella sua Agenda: puoi invitarlo adesso' : `${fuori.length} non la troveranno nella loro Agenda: puoi invitarli adesso`}</small></label>
             ${fuori.slice(0, 30).map(f => `<div class="na-fuori"><span>${esc(f.nome)}</span><button type="button" class="link" data-invita="${esc(f.partner_id)}">Invita</button></div>`).join('')}</div>`;
         }
-        if (st.condividi) h += `<div class="campo"><label>${st.condividi === 'persona' ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+        if (st.condividi) h += `<div class="campo"><label>${st.condividi === 'persona' || !CONDIVISIONE_LINEE ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
       }
       if (st.contatto && !serata()) {
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
@@ -3763,6 +3773,7 @@ async function nuovoAppuntamento(opz = {}) {
             else { st.altra = false; st.durata = Number(v); }
           } else if (nome === 'quando') st.senzaOra = v === 'coda';
           else if (nome === 'puntiCond') st.puntiCond = v === '1';
+          else if (nome === 'condividi' && v.startsWith('p:')) { st.condividi = 'linea'; st.linea = v.slice(2); st.condivisoAMano = true; st.parte = null; st.durataToccata = false; }   // P5b: una persona con l'app
           else if (nome === 'condividi') { st.condividi = v; st.condivisoAMano = true; st.parte = null; if (v === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id; if (v === 'team' || v === 'linea') st.durataToccata = false; }
           else st[nome] = v;
           if (nome === 'linea') st.parte = null;   // un'altra Linea: di nuovo tutta
@@ -3780,7 +3791,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (!campi.giorno || !campi.ora) { errore.textContent = 'Scegli il giorno e l\'ora.'; return; }
       const durata = durataScelta();
       if (!(durata > 0)) { errore.textContent = 'L\'ora di fine deve venire dopo quella di inizio.'; return; }
-      if (st.condividi === 'linea' && !st.linea) { errore.textContent = 'Scegli la Linea.'; return; }
+      if (st.condividi === 'linea' && !st.linea) { errore.textContent = CONDIVISIONE_LINEE ? 'Scegli la Linea.' : 'Scegli a chi mandarla.'; return; }
       const inizio = A.isoDaRoma(campi.giorno, campi.ora);
       const riga = { user_id: opz.userId || visto().id, tipo: st.serataTipo, inizio, durata, nome: MB21Spazi.pulisciNome(campi.serata),
         ...A.doveDa(campi.dove), punti: A.puntiDaRighe(campi.punti), condiviso_con: st.condividi, linea_codice: st.condividi === 'linea' ? st.parte || st.linea : null, punti_condivisi: st.puntiCond };
@@ -3791,10 +3802,10 @@ async function nuovoAppuntamento(opz = {}) {
       if (AG.spazi && data) AG.spazi.push(data);
       chiudi({ id: data && data.id, inizio, spazio: true });
       const nomeParte = st.parte && AG.ramo ? MB21Mappa.nomeLeggibile((AG.ramo.squadra.find(x => x.partner_id === st.parte) || {}).nome || '') : '';
-      const conChi = st.condividi === 'team' ? 'tutto il Team' : nomeParte ? `${nomeParte} e la sua downline` : `la Linea ${(frontali().find(f => f.partner_id === st.linea) || {}).nome || ''}`.trim();
+      const conChi = !CONDIVISIONE_LINEE && st.condividi === 'linea' ? (persone().find(p => p.partner_id === st.linea) || {}).nome || 'la persona' : st.condividi === 'team' ? 'tutto il Team' : nomeParte ? `${nomeParte} e la sua downline` : `la Linea ${(frontali().find(f => f.partner_id === st.linea) || {}).nome || ''}`.trim();
       if (!opz.salta && !opz.resta) {
         await apriAgenda(campi.giorno);
-        mostraToast(`${riga.nome || MB21Spazi.nome(riga.tipo)}: condivisa con ${conChi}`, async () => {
+        mostraToast(`${riga.nome || MB21Spazi.nome(riga.tipo)}: ${CONDIVISIONE_LINEE ? 'condivisa con' : 'mandata a'} ${conChi}`, async () => {
           await dbqAvvisa('annulla serata', supa.from('spazi').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
           if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== data.id);
           await apriAgenda();

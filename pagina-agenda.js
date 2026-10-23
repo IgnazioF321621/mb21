@@ -1806,6 +1806,17 @@ function condivisioneSpazioHtml(s) {
   const A = MB21Agenda;
   if (!A.puoCondividereSpazio(s, eAdmin())) return '';
   const con = s.condiviso_con || '';
+  if (!CONDIVISIONE_LINEE) {
+    // P5b (Ignazio 23/10): «Nessuno» e una pastiglia per ognuna delle persone del gruppo che usano l'app; le serate già mandate si leggono con le
+    // parole nuove: «la riceve: [nome]» (il nome dal codice salvato) o, per una mandata a tutto il Team, i nomi di chi usa l'app
+    const persone = personeAppDelGruppo();
+    const nomeDi = c => (persone.find(p => p.partner_id === c) || {}).nome
+      || (AG.ramo && typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile((AG.ramo.squadra.find(x => x.partner_id === c) || {}).nome || '') : '') || 'una persona';
+    const chi = con === 'team' ? persone.map(p => p.nome).join(', ') || 'chi usa l\'app' : con === 'linea' ? nomeDi(s.linea_codice) : '';
+    return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>la riceve: ${esc(chi)}${s.punti_condivisi ? ' · vede i punti' : ''}</small>` : ''}</div>
+    <div class="ag-scelte"><button type="button" data-cd-con="" class="${con ? '' : 'scelto'}">Nessuno</button>${persone.map(p => `<button type="button" data-cd-persona="${esc(p.partner_id)}" class="${con === 'linea' && s.linea_codice === p.partner_id ? 'scelto' : ''}">${esc(p.nome)}</button>`).join('')}</div>
+    ${con ? `<div class="campo"><label>Vede anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
+  }
   const frontali = AG.frontali || [];
   // nota 005: il codice salvato può essere di una persona dentro la Linea: la Linea è il suo frontale
   const frontale = !s.linea_codice || frontali.some(f => f.partner_id === s.linea_codice) || !AG.ramo ? s.linea_codice
@@ -1828,18 +1839,19 @@ function collegaCondivisioneSpazio(el, s, ridisegna) {
   const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
   su('[data-cd-con]', b => { const k = b.dataset.cdCon || null; if (k !== (s.condiviso_con || null)) salva({ condiviso_con: k, linea_codice: k === 'linea' ? s.linea_codice || null : null, punti_condivisi: k ? !!s.punti_condivisi : false }); });
   su('[data-cd-linea]', b => salva({ linea_codice: b.dataset.cdLinea }));
+  su('[data-cd-persona]', b => salva({ condiviso_con: 'linea', linea_codice: b.dataset.cdPersona, punti_condivisi: !!s.punti_condivisi }));   // P5b: a una persona con l'app
   // nota 005: una persona dentro la Linea (lei e chi sta sotto); di nuovo, o il frontale, per tutta la Linea
   su('[data-parte]', b => {
     const frontale = (AG.frontali || []).some(f => f.partner_id === s.linea_codice) ? s.linea_codice : MB21Agenda.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
     salva({ linea_codice: parteDopoTocco(frontale, s.linea_codice, b.dataset.parte) || frontale });
   });
-  if (s.condiviso_con === 'linea' && AG.ramo === undefined) caricaRamoApp().then(() => { if (AG.ramo) ridisegna(); });   // la Mappa per l'albero, letta una volta
+  if ((s.condiviso_con === 'linea' || !CONDIVISIONE_LINEE) && AG.ramo === undefined) caricaRamoApp().then(() => { if (AG.ramo) ridisegna(); });   // la Mappa (e chi ha l'app), letta una volta
   su('[data-cd-punti]', b => salva({ punti_condivisi: b.dataset.cdPunti === '1' }));
   if (s.condiviso_con) mostraRisposte(blocco, 'spazio', s.id);
 }
 // i frontali dell'Admin (per «Una Linea»): si leggono una volta, dalla Mappa (`squadra`, chi ha come sponsor il suo codice)
 async function caricaFrontali() {
-  if (AG.frontali !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;
+  if (!CONDIVISIONE_LINEE || AG.frontali !== undefined || !eAdmin() || !ST.utente || !ST.utente.partner_id) return;   // P5b: con l'interruttore spento non serve
   const { data, error } = await letta('frontali', 'frontali', () => supa.from('squadra').select('partner_id, nome').eq('sponsor_id', ST.utente.partner_id).order('nome'));   // da MB Plan arriva con apri_agenda()
   // i nomi come nella Mappa, «Ignazio Fiorito» (il file Amway li ha «FIORITO, IGNAZIO», a volte in minuscolo; Ignazio 05/10)
   const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n);
@@ -1853,10 +1865,16 @@ async function caricaRamoApp() {
   AG.ramo = null;   // in lettura: non si rilegge se il modulo ridisegna
   const [sq, ut] = await Promise.all([
     dbq('squadra per l\'invito', supa.from('squadra').select('partner_id, sponsor_id, nome, telefono')),
-    dbq('utenti con l\'app', supa.from('utenti').select('partner_id').not('partner_id', 'is', null).is('eliminato_il', null).eq('accesso_attivo', true)),
+    dbq('utenti con l\'app', supa.from('utenti').select('partner_id, nome_cognome').not('partner_id', 'is', null).is('eliminato_il', null).eq('accesso_attivo', true)),
   ]);
   AG.ramo = sq.error || ut.error || !Array.isArray(sq.data) || !Array.isArray(ut.data) ? undefined
-    : { squadra: sq.data, conApp: ut.data.map(u => u.partner_id) };
+    : { squadra: sq.data, conApp: ut.data.map(u => u.partner_id), utenti: ut.data };   // P5b: anche i nomi, per «Condividi con»
+}
+// P5b (Ignazio 23/10): a chi si può mandare una serata: le persone del gruppo che usano l'app (MB21Agenda.personeConApp, nomi dai dati). Vuoto finché
+// caricaRamoApp non ha letto (si legge al primo bisogno, solo l'Admin).
+function personeAppDelGruppo() {
+  const r = AG.ramo;
+  return r && r.utenti && ST.utente ? MB21Agenda.personeConApp(r.squadra, r.utenti, ST.utente.partner_id) : [];
 }
 // Il dentro di un impegno (ospite, note, come contattarlo, esiti, comandi): lo stesso nell'elenco, quando la riga
 // si apre, e nel foglio che sale dal basso toccando un blocco nella griglia (cantiere 37: un posto solo).
@@ -2091,12 +2109,16 @@ function foglioStrade(titolo, sotto, voci, conIndietro) {
 async function foglioAggiungi() {
   if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
   const A = MB21Agenda, lun = AG.settimana[0], dom = AG.settimana[6], mese = g => A.titoloMese(g).toLowerCase();
+  if (eAdmin() && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();   // P5b: per sapere a chi si può mandare (una lettura)
+  const persone = personeAppDelGruppo(), nomi = persone.map(p => p.nome).join(', ');
   const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
-    ...(puoSerataTeam() ? [{ k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }] : [])]);
+    ...(puoSerataTeam() ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
+      : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);
   if (!k) return;
   if (k === 'settimana') return preparaSettimana();
+  if (k === 'manda') return nuovoAppuntamento({ giorno: AG.giorno, condividi: 'linea' });   // P5b: la persona è già scelta se è una sola
   return nuovoAppuntamento({ giorno: AG.giorno, ...(k === 'team' ? { condividi: 'team' } : {}) });
 }
 
@@ -2112,6 +2134,10 @@ async function preparaSettimana() {
   const esistenti = (AG.spazi || []).filter(s => settimana.includes(S.orario(s).giorno));
   // la SdS/OPEN è una sola, quella del Team (nota 047, Ignazio 11/10): la crea l'Admin per sé, già condivisa; i partner la ricevono
   const sdsMia = eAdmin() && visto().id === ST.utente.id;
+  // P5b (23/10): la SdS/OPEN la riceve la persona del gruppo che usa l'app (se è una sola); prima andava a «tutto il Team»
+  if (sdsMia && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();
+  const riceve = sdsMia && !CONDIVISIONE_LINEE ? personeAppDelGruppo() : [];
+  const sdsA = riceve.length === 1 ? riceve[0] : null;
   const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, sdsVia: false };
   const lun = settimana[S.SDS.giorno];
   const sds = () => (sdsMia && !st.sdsVia && S.sdsDaMettere(settimana, esistenti, oggi) ? [{ tipo: 'SdS/OPEN', giorno: lun, ora: S.SDS.ora, durata: S.SDS.durata }] : []);
@@ -2140,7 +2166,7 @@ async function preparaSettimana() {
         return `<div class="sp-giorno${st.aperto === g ? ' aperto' : ''}"><button type="button" class="sp-g" data-g="${g}"><b>${esc(giornoBreve(g))}</b>${
           gia.length || miei.length || sdsQui.length ? '' : '<small>tocca per aggiungere</small>'}</button>
           ${gia.map(x => `<span class="sp-gia">${esc(x.ora)} ${esc(x.testo)}</span>`).join('')}
-          ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora} · per tutto il Team`, 'data-sds-via')).join('')}
+          ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora}${CONDIVISIONE_LINEE ? ' · per tutto il Team' : sdsA ? ` · la riceve: ${sdsA.nome}` : ''}`, 'data-sds-via')).join('')}
           ${miei.map(x => pastiglia(x.tipo, `${S.TIPI[x.tipo].nome} ${x.ora}`, `data-togli="${x.i}"`)).join('')}</div>
           ${ore ? `<div class="sp-ore">${ore.length ? ore.map(o => `<button type="button" data-ora="${o}">${o}</button>`).join('') : '<small>Nessuna ora libera in questo giorno.</small>'}</div>` : ''}`;
       }).join('')}
@@ -2158,7 +2184,7 @@ async function preparaSettimana() {
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
     velo.querySelectorAll('[data-sds-via]').forEach(b => { b.onclick = () => { st.sdsVia = true; disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {
-      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi, { sds: sdsMia && !st.sdsVia, team: true });
+      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi, { sds: sdsMia && !st.sdsVia, ...(CONDIVISIONE_LINEE ? { team: true } : sdsA ? { a: sdsA.partner_id } : {}) });
       if (!righe.length) return disegna('Tocca un giorno per mettere il primo.');
       const btn = velo.querySelector('#sp-si');
       btn.disabled = true; btn.textContent = 'Salvo…';

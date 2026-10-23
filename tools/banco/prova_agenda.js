@@ -791,4 +791,12 @@ prova('Nota Pagine 066 (Ignazio 19/10): le risposte nuove a chi ha fissato: part
   azioni[0].r = { ...azioni[0].r, risposta: 'non_ci_sono', risposto_il: 't3' };
   assert.match(A.risposteNuove({ azioni, serate: [], viste, adessoIso: adesso }).righe[0].testo, /^Valentina non può · Avvio, domani alle 17:15 · da spostare$/);
 });
+prova('Agenda P5b (23/10): personeConApp — le persone del gruppo che usano l\'app, dai dati: nel ramo, mai il codice di chi manda, una per codice', () => {
+  const squadra = [{ partner_id: 'A1', sponsor_id: 'ME' }, { partner_id: 'B1', sponsor_id: 'A1' }, { partner_id: 'Z9', sponsor_id: 'ALTRO' }];
+  const utenti = [{ partner_id: 'B1', nome_cognome: 'Persona B' }, { partner_id: 'ME', nome_cognome: 'Io' }, { partner_id: 'A1', nome_cognome: 'Persona A' },
+    { partner_id: 'A1', nome_cognome: 'Persona A bis' }, { partner_id: 'Z9', nome_cognome: 'Fuori' }, { partner_id: null, nome_cognome: 'Senza codice' }];
+  assert.deepEqual(A.personeConApp(squadra, utenti, 'ME').map(p => p.partner_id + ':' + p.nome), ['A1:Persona A', 'B1:Persona B']);
+  assert.deepEqual(A.personeConApp([], utenti, 'ME'), []); assert.deepEqual(A.personeConApp(squadra, null, 'ME'), []);
+});
+
 console.log(`\n${ok} prove superate`);

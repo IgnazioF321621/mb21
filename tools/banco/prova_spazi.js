@@ -138,7 +138,11 @@ prova('Nota Pagine 046 e P6: con solo la SdS/OPEN «Crea» scrive solo lei, una 
   assert.equal(S.righeNuove('io', SETT, [], [], '2026-09-29').length, 0);   // lunedì passato
   const pag = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
   assert.doesNotMatch(pag, /sp-solo-sds|si aggiunge da sola\. Se cambia/);   // P6: il tasto a parte non serve più, la SdS è già messa nel lunedì
-  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, st\.scelti, esistenti, oggi, \{ sds: sdsMia && !st\.sdsVia, team: true \}\)/);
+  assert.match(pag, /S\.righeNuove\(visto\(\)\.id, settimana, st\.scelti, esistenti, oggi, \{ sds: sdsMia && !st\.sdsVia, \.\.\.\(CONDIVISIONE_LINEE \? \{ team: true \} : sdsA \? \{ a: sdsA\.partner_id \} : \{\}\) \}\)/);
+  // P5b: la SdS/OPEN a una persona = condiviso_con 'linea' con il suo codice; senza nessuno non si manda
+  const r5 = S.righeNuove('io', SETT, [], [], '2026-09-27', { sds: true, a: 'X1' });
+  assert.equal(r5[0].condiviso_con, 'linea'); assert.equal(r5[0].linea_codice, 'X1');
+  assert.equal('condiviso_con' in S.righeNuove('io', SETT, [], [], '2026-09-27', { sds: true })[0], false);
 });
 
 prova('Nota Pagine 047: i partner non aggiungono più la SdS/OPEN; l\'Admin la crea già condivisa con il Team', () => {

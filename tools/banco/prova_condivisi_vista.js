@@ -9,6 +9,8 @@ const P = require('../design/anteprima_agenda.js');
 let ok = 0;
 const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
+// P5b (23/10): le prove del funzionamento con Team e Linea girano con l'interruttore CONDIVISIONE_LINEE acceso (il codice resta, spento nell'app)
+const conLinee = fn => async () => { P.impostaLinee(true); try { return await fn(); } finally { P.impostaLinee(false); } };
 const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.modo.admin = false; P.modo.tutti = false; };
 const scritte = (tab, op) => P.scritture.filter(x => x.tabella === tab && (!op || x.op === op));
 const chiamate = nome => P.scritture.filter(x => x.tabella === 'rpc:' + nome);
@@ -135,7 +137,25 @@ prova('Chi organizza, appuntamento con un Partner: «Condividi con Isabella Ross
   assert.doesNotMatch(v.innerHTML, /data-cd=/);
 });
 
-prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea», i frontali per la Linea, «Vedono anche i punti?», le risposte con i nomi e il conto', async () => {
+prova('P5b (23/10): il foglio della serata — «Condividi con» = «Nessuno · [persona con l\'app]»; una mandata a «tutto il Team» si legge «la riceve: [nome]»', async () => {
+  pulisci(); P.modo.admin = true; const ramo = P.AG.ramo;
+  P.AG.ramo = { squadra: [{ partner_id: 'X1', sponsor_id: 'IO1', nome: 'PROVA, PERSONA' }], conApp: ['X1'], utenti: [{ partner_id: 'X1', nome_cognome: 'Persona Prova' }] };
+  try {
+    P.AG.spazi.push({ id: 's9', user_id: 'io', tipo: 'Team', inizio: P.A.isoDaRoma(P.OGGI, '20:30'), durata: 90, nome: 'Serata prova', condiviso_con: 'team' });
+    P.foglioSpazio('s9');
+    let v = P.fogli.at(-1);
+    assert.match(v.innerHTML, /<b>Condividi con<\/b><small>la riceve: Persona Prova<\/small>/);
+    assert.match(v.innerHTML, /data-cd-con="" class="">Nessuno<\/button><button type="button" data-cd-persona="X1" class="">Persona Prova<\/button>/);
+    assert.doesNotMatch(v.innerHTML, /Tutto il Team|Una Linea|data-cd-linea/);
+    await v.clic('[data-cd-persona="X1"]');
+    const up = scritte('spazi', 'update').at(-1).args[0];
+    assert.equal(up.condiviso_con, 'linea'); assert.equal(up.linea_codice, 'X1');
+    v = P.fogli.at(-1);
+    assert.match(v.innerHTML, /data-cd-persona="X1" class="scelto"/);
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; P.AG.spazi = P.AG.spazi.filter(x => x.id !== 's9'); }
+});
+
+prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea», i frontali per la Linea, «Vedono anche i punti?», le risposte con i nomi e il conto', conLinee(async () => {
   pulisci();
   P.AG.spazi.push({ id: 's5', user_id: 'io', tipo: 'Team', inizio: P.A.isoDaRoma(P.OGGI, '20:30'), durata: 90, nome: 'Serata di Team' });
   P.foglioSpazio('s5');
@@ -164,7 +184,7 @@ prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea»
   await P.fogli.at(-1).clic('[data-cd-con=""]');
   assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { condiviso_con: null, linea_codice: null, punti_condivisi: false });
   P.modo.admin = false;
-});
+}));
 
 prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partecipo» il foglio resta aperto con la frase sugli ospiti; un nome si salva nella propria riga', async () => {
   pulisci();

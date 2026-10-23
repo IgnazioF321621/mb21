@@ -55,20 +55,23 @@ prova('P6: in ogni giorno, in grigio, quello che c\'è già (spazi, Piani e Cons
   } finally { P.AG.azioni = primaAz; P.AG.spazi = []; }
 });
 
-prova('P6 e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (con la ×), «Crea» la fa già condivisa; tolta con la ×, non si crea; il partner ha il «Perché?»', async () => {
+prova('P6, P5b e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (con la ×); la riceve la persona del gruppo che usa l\'app (nome dai dati); tolta con la ×, non si crea; il partner ha il «Perché?»', async () => {
   pulisci(); P.AG.spazi = [];
   await P.preparaSettimana();
   assert.match(P.fogli[0].innerHTML, /<b>SdS\/OPEN<\/b> <details class="perche"><summary>Perché\?<\/summary>Questa serata viene creata per tutto il team automaticamente/);
   assert.doesNotMatch(P.fogli[0].innerHTML, /data-sds-via/);
   pulisci(); P.modo.admin = true;
+  const ramo = P.AG.ramo;
+  P.AG.ramo = { squadra: [{ partner_id: 'X1', sponsor_id: 'IO1', nome: 'PROVA, PERSONA' }], conApp: ['X1'], utenti: [{ partner_id: 'X1', nome_cognome: 'Persona Prova' }] };
   try {
     await P.preparaSettimana();
     let v = P.fogli[0];
-    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30 · per tutto il Team<button type="button" data-sds-via/);
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30 · la riceve: Persona Prova<button type="button" data-sds-via/);
     assert.match(v.innerHTML, /Nuovi: la SdS\/OPEN/); assert.doesNotMatch(v.innerHTML, /perche/);
     await v.clic('#sp-si');   // solo la SdS: «Crea» mette solo lei
     let righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
-    assert.equal(righe.length, 1); assert.equal(righe[0].tipo, 'SdS/OPEN'); assert.equal(righe[0].condiviso_con, 'team');
+    assert.equal(righe.length, 1); assert.equal(righe[0].tipo, 'SdS/OPEN');
+    assert.equal(righe[0].condiviso_con, 'linea'); assert.equal(righe[0].linea_codice, 'X1');   // P5b: alla persona, mai più a «tutto il Team»
     pulisci();
     await P.preparaSettimana();
     v = P.fogli[0];
@@ -78,7 +81,15 @@ prova('P6 e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (con la 
     await v.clic('#sp-si');
     righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
     assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);
-  } finally { P.modo.admin = false; }
+    // nessuna persona con l'app: la SdS/OPEN c'è, ma non si manda a nessuno
+    pulisci(); P.AG.ramo = { squadra: [], conApp: [], utenti: [] };
+    await P.preparaSettimana();
+    v = P.fogli[0];
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30<button type="button" data-sds-via/);
+    await v.clic('#sp-si');
+    righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    assert.equal(righe[0].tipo, 'SdS/OPEN'); assert.equal('condiviso_con' in righe[0], false);
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; }
 });
 
 prova('Il foglio di un incontro LdS/Team: il bottone grande «Metti il nome della serata» (o «Cambia il nome»), come «Metti un nome» dei PM; la SdS/OPEN non ce l\'ha', () => {
