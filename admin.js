@@ -633,7 +633,7 @@ function collegaAdmin() {
     apriAdmin();
   });
   // Fattore di conversione: aggiungi · cambia · elimina. Dopo ogni modifica le vendite già lette si rileggono (la provvigione cambia).
-  const dopoFattore = messaggio => { LS.vendite = null; mostraToast(messaggio); apriAdmin(); };
+  const dopoFattore = messaggio => { LS.vendite = null; if (typeof azzeraFattori === 'function') azzeraFattori(); mostraToast(messaggio); apriAdmin(); };   // nota Pagine 078: anche la provvigione stimata del modulo vendita
   su('fc-piu', async () => {
     const esito = MB21Lista.rigaFattore(document.getElementById('fc-dal').value, document.getElementById('fc-valore').value);
     if (esito.errore) return mostraToast(esito.errore);

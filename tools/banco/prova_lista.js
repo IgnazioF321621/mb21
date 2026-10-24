@@ -771,7 +771,7 @@ prova('V4 Vendite (Ignazio 22/10, strada B; L1b «Cliente con account»): in tes
     dbq: (_, p) => p, supa: { from: () => q }, mostraToast: (t, annulla) => { toast = { t, annulla }; },
     document: { getElementById: id => (id === 'account-posto' ? posto : id === 'account-togli' && /account-togli/.test(posto.innerHTML) ? togli : null) } };
   vm.createContext(ctx);
-  vm.runInContext(pezzo('async function leggiAccountCliente') + pezzo('async function mostraAccountCliente') + ';this.mostra = mostraAccountCliente;', ctx);
+  vm.runInContext(pezzo('async function leggiAccountCliente') + pezzo('function accountDi') + pezzo('async function mostraAccountCliente') + ';this.mostra = mostraAccountCliente;', ctx);   // 078: la lettura condivisa
   await ctx.mostra(c);
   assert.equal(letture, 1);
   assert.match(posto.innerHTML, /<b>Cliente con account · dal 22\/10\/2026<\/b><small>nessuna telefonata di riordino<\/small>/);
@@ -840,7 +840,7 @@ prova('Nota 052: gli importi scritti a mano (prezzo al pubblico, incassato): vuo
   assert.ok(Number.isNaN(L.importo('-3'))); assert.ok(Number.isNaN(L.importo('abc')));
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   assert.match(ven, /<label>Prezzo al pubblico \(€\)<\/label>/);
-  assert.match(ven, /<h4 class="mc-t">I soldi<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
+  assert.match(ven, /<h4 class="mc-t">Importi<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
   assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /select\('[^']*wallet|riga\.wallet/);   // i dati di Wallet non compaiono
 });
 
@@ -857,9 +857,9 @@ prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sot
 prova('Nota 053 e V3 (Ignazio 14/10 e 22/10): il modulo vendita — che cosa (con la data) · i soldi · consegna e riordino chiusi, con i campi al loro posto', () => {
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   const pos = t => { const i = ven.indexOf(t); assert.ok(i > 0, t); return i; };
-  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>I soldi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
+  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>Importi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
     'data-apri="consegna"', 'data-quando="subito"', 'id="v-consegna"', 'data-apri="riordino"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
-  assert.ok(pos('id="v-data"') > pos('id="v-prodotto"') && pos('id="v-data"') < pos('>I soldi<'));   // V3: la data con «Che cosa hai venduto»
+  assert.ok(pos('id="v-data"') > pos('id="v-prodotto"') && pos('id="v-data"') < pos('>Importi<'));   // V3: la data con «Che cosa hai venduto»
   assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
   assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>|>I tempi<\/h4>/);
 });
