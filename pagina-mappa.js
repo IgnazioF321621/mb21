@@ -60,10 +60,10 @@ async function leggiSegniGrezzi() {
   // l'Admin tutto): un partner non legge le schede delle altre liste, ma i segni del suo ramo sì
   // Dalla Dashboard i quattro pezzi arrivano già con `apri_oggi()` (`letta`, pagina-dashboard.js: una lettura per schermata); altrove si leggono come prima
   const [sq, segni, bbs, wes] = await Promise.all([
-    MP.squadra ? { data: MP.squadra } : letta('squadra', 'squadra per i segni', () => supa.from('squadra').select('partner_id, sponsor_id, nome')),
+    MP.squadra ? { data: MP.squadra } : lettaComune('squadra'),   // nota 081: squadra, BBS e WES una lettura sola con Check e Modulo Core
     letta('segni_ramo', 'segni del ramo', () => supa.rpc('segni_del_ramo')),
-    letta('bbs', 'BBS per i segni', () => supa.from('bbs').select('data, creato_il')),
-    letta('wes', 'WES per i segni', () => supa.from('wes').select('data, creato_il')),
+    lettaComune('bbs'),
+    lettaComune('wes'),
   ]);
   const errore = [sq, segni, bbs, wes].find(r => r.error);
   if (errore) throw errore.error;

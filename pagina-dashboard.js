@@ -23,6 +23,23 @@ function letta(chiave, cosa, richiesta) {
   if (PRE.dati && PRE.dati[chiave] !== undefined) return Promise.resolve({ data: PRE.dati[chiave], error: null });
   return dbq(cosa, richiesta());
 }
+// Nota Pagine 081, punto 3 (Ignazio 24/10): BBS, WES e squadra li chiedevano il Check (caricaDatiCheck), i segni vitali (leggiSegniGrezzi) e il
+// Modulo Core (datiCoreDelMese), ognuno per conto suo: a ogni apertura dell'app BBS e WES tre volte, la squadra due. Ora una lettura sola, condivisa,
+// con tutti i campi che servono a tutti e tre; BBS e squadra arrivano da apri_oggi quando c'è (il suo WES no: non ha `giorno`, che serve al Modulo Core).
+// Come il Check, vale 5 minuti e finché non c'è una scrittura; se non riesce non resta in memoria e la volta dopo si riprova.
+const COMUNI = {};
+const CAMPI_COMUNI = { bbs: 'data, creato_il', wes: 'data, giorno, creato_il', squadra: 'partner_id, sponsor_id, nome, data_ingresso' };
+function lettaComune(chiave) {
+  const c = COMUNI[chiave];
+  if (c && SCRITTURE.ultima < c.letta && Date.now() - c.letta < CK_FRESCO_MS) return c.promessa;
+  const pre = chiave !== 'wes' && PRE.dati && Array.isArray(PRE.dati[chiave]) ? PRE.dati[chiave] : null;
+  const q = supa.from(chiave).select(CAMPI_COMUNI[chiave]);
+  const promessa = pre ? Promise.resolve({ data: pre, error: null }) : dbq(`${chiave} (lettura comune)`, chiave === 'squadra' ? q : q.order('data'));
+  const voce = COMUNI[chiave] = { promessa, letta: Date.now() };
+  const via = () => { if (COMUNI[chiave] === voce) delete COMUNI[chiave]; };
+  promessa.then(r => { if (!r || r.error) via(); }, via);
+  return promessa;
+}
 
 // ── OGGI ─────────────────────────────────────────────────
 async function leggiCandidati(oggi) {
@@ -316,7 +333,7 @@ function disegnaHome() {
   } else if (sera && !fattoGiorno && !altro) tessere.push(giorno, chi, mese, traguardo);
   else tessere.push(chi, mese, traguardo, giorno);
   html += `<div class="lv-dom">Da dove vuoi partire?</div>${tessere.join('')}`;
-  if (!vediTutti()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} Griglia PM</button></div>`;
+  if (!vediTutti()) html += `<div class="lv-pic"><button id="ds-altro">${ic('report')} Report</button><button id="ds-griglia">${ic('pianomarketing')} ${esc(testoGriglia(DS.griglia))}</button></div>`;   // nota 081, punto 9: la scritta del Report
   html += daSeguireHtml();   // «Da seguire» (tappa 3: tracce condivise e il mio percorso in una riga sola)
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => {
@@ -487,7 +504,7 @@ function disegnaMeseDashboard(vai) {
     <p class="sotto lv-frase-area">${esc(D.riassuntoScheda(x))}</p>
     <button class="mese-riga" id="lv-12mesi">${ic('report')}<span><b>Vedi i 12 mesi nel Check</b><small>l'andamento mese per mese</small></span><em>›</em></button>` + versione();
   attaccaIndietroLV();
-  document.getElementById('lv-12mesi').onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };
+  document.getElementById('lv-12mesi').onclick = () => apriCheckDa(x.etichetta, 'oggi');   // nota 081, punto 2: la freccia del Check dice «‹ Volume» e torna qui
 }
 
 // ── Qual è il mio prossimo traguardo? (secondo livello): Leader 1° livello, Core, Pacesetter e i livelli; il più vicino è segnato ──
@@ -1576,13 +1593,17 @@ async function caricaDashboard(oggi) {
   await caricaRichiamoGriglia(oggi);
 }
 
-// Richiamo della Griglia PM in Dashboard (decisione 8 del Report): «PM fatti di obiettivo», apre la griglia
+// Richiamo della Griglia PM in Dashboard (decisione 8 del Report): «PM fatti di obiettivo», apre la griglia.
+// Nota Pagine 081, punto 9 (Ignazio 24/10): la scritta del tasto è la stessa del Report, «Griglia PM · 2 di 8» o «· da impostare» (`testoGriglia`);
+// `DS.griglia`: il conto · null = griglia non impostata · undefined = non lo so (lettura non riuscita), allora solo «Griglia PM»
+const testoGriglia = g => 'Griglia PM' + (g ? ` · ${g.fatti} di ${g.obiettivo}` : g === null ? ' · da impostare' : '');
 async function caricaRichiamoGriglia(oggi) {
-  DS.griglia = null;
+  DS.griglia = undefined;
   if (vediTutti()) return;   // la griglia è di un partner
   try {
     const { data: imp, error } = await letta('griglia', 'griglia PM', () => supa.from('griglia_pm').select('obiettivo, inizio, mesi').eq('user_id', visto().id).maybeSingle());
-    if (error || !imp) return;
+    if (error) return;
+    if (!imp) { DS.griglia = null; return; }
     const { data: pm, error: e2 } = await letta('griglia_pm', 'PM della griglia', () => supa.from('azioni').select('id, inizio, esito')   // esito: la Griglia conta solo i PM avvenuti
       .eq('user_id', visto().id).eq('tipo_azione', 'Piano Marketing').gte('inizio', MB21Agenda.isoDaRoma(imp.inizio, '00:00')));
     if (e2) return;
@@ -1735,9 +1756,9 @@ function dashboardBasso() {
   if (!d) return '';
   // Dal 28/09 il riquadro nero dei Segni Vitali non c'è più: erano gli stessi numeri della linguetta
   // «Segni Vitali N21» qui sopra, e i 12 mesi si aprono dal Check. In fondo resta solo la consultazione.
+  // Nota 081, punto 9: il tasto della Griglia PM che c'era qui non si vedeva mai (questa parte c'è solo con «Tutti», senza griglia): tolto
   return `<div class="zona-oggi">Approfondisci</div>
     <div class="ds-azioni">
-      ${DS.griglia ? `<button class="ds-azione griglia" id="ds-griglia">${ic('pianomarketing')}<span><b>Griglia PM</b><small>${DS.griglia.fatti} di ${DS.griglia.obiettivo}</small></span></button>` : ''}
       <button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Report</b><small>I tuoi numeri, giorno per giorno</small></span></button></div>`;
 }
 
@@ -1752,8 +1773,8 @@ function collegaDashboard() {
   if (typeof foglioMessaggi === 'function') su('ds-messaggi', foglioMessaggi);
   su('ds-obiettivi-mod', apriObiettivi);
   caricaCardCheck();   // i dati del percorso dopo la Dashboard, che non aspetta (27/09)
-  su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; mostraTab(); window.scrollTo(0, 0); });
-  su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; mostraTab(); window.scrollTo(0, 0); });
+  su('ds-altro', () => { ST.tab = 'report'; RP.vista = 'report'; RP.da = null; mostraTab(); window.scrollTo(0, 0); });   // nota 074: dalla Dashboard la freccia torna qui
+  su('ds-griglia', () => { ST.tab = 'report'; RP.vista = 'griglia'; RP.cella = null; RP.grigliaDa = 'oggi'; RP.da = null; mostraTab(); window.scrollTo(0, 0); });   // nota 081, punto 8: «‹ Dashboard»
   su('ds-confronto', () => { window.scrollTo(0, 0); disegnaConfronto(); });
 }
 

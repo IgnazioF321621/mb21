@@ -40,6 +40,7 @@ const ctx = {
 };
 vm.createContext(ctx);
 vm.runInContext(pezzo('const CK = {', 'const CAMPI_CK'), ctx);
+vm.runInContext(pezzo('const indietroCheck = ', '\nasync function apriPaginaCheck'), ctx);   // nota 081: la freccia del Check (da dove si arriva)
 vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);   // porta con sé lc1Html e caricaCoreCheck
 const esegui = codice => vm.runInContext(codice, ctx);
 
@@ -67,7 +68,7 @@ prova('Tutti e quattro i gruppi hanno la testata da toccare, e all\'inizio sono 
   assert.equal((h.match(/<span class="apri">⌄<\/span>/g) || []).length, 4);
 });
 
-prova('Un gruppo chiuso: niente voci né intestazione delle colonne, ma il riassunto resta', () => {
+prova('Un gruppo chiuso: niente voci (l\'intestazione delle colonne sta sopra i gruppi, nota 081), ma il riassunto resta', () => {
   esegui(`CK.chiusi.add('Volume')`);
   const h = disegna();
   const v = gruppo(h, 'Volume');
@@ -82,6 +83,52 @@ prova('Un gruppo chiuso: niente voci né intestazione delle colonne, ma il riass
   esegui(`CK.chiusi.add('Crescita')`);
   assert.match(gruppo(disegna(), 'Crescita'), /<small>1 in crescita · 1 ferma<\/small>/);   // …e da chiuso
   esegui(`CK.chiusi.clear()`);
+});
+
+// ── Nota Pagine 081 (Ignazio 24/10): punti 2, 4, 5 e 6 ──
+prova('081 (4, 6): sopra i gruppi, una volta sola, «Tocca una voce per i suoi 12 mesi» e la testata «Oggi · Prima · Come va»; ogni voce ha la sua ›', () => {
+  const h = disegna();
+  assert.equal((h.match(/class="ck-testa[ "]/g) || []).length, 1);   // non più ripetuta in ogni gruppo
+  assert.match(h, /<p class="ck-tocca">Tocca una voce per i suoi 12 mesi<\/p>\s*<div class="ck-testa sopra"><span><\/span>\s*<span>Oggi<small>al [^<]+<\/small><\/span>\s*<span>Prima<small>al [^<]+<\/small><\/span>\s*<span>Come va<\/span><span><\/span><\/div>/);
+  assert.doesNotMatch(h, /▲▼/);
+  assert.ok(h.indexOf('ck-testa sopra') < h.indexOf('data-ckgruppo="Volume"'));
+  assert.equal((h.match(/<span class="vai">›<\/span>/g) || []).length, (h.match(/data-voce=/g) || []).length);
+  esegui(`CK.aperta = 'contatti'`);
+  assert.match(disegna(), /data-voce="contatti" aria-expanded="true">[\s\S]*?<span class="vai">⌄<\/span>/);
+  esegui(`CK.aperta = null`);
+  assert.match(SORGENTE, /\.ck-testa, \.ck-riga \{ display: grid; grid-template-columns: 1fr 66px 66px 66px 12px;/);   // la colonna della › anche nella testata
+});
+
+prova('081 (5): le voci nell\'ordine della Dashboard: VPG · VPP · VP Clienti; «Iscritti personali» dopo «Nuovi Iscritti»', () => {
+  const D = require('../../dashboard.js');
+  const ordine = [...disegna().matchAll(/data-voce="(\w+)"/g)].map(m => m[1]);
+  assert.deepEqual(ordine, ['vpg', 'vpp', 'vp_clienti', 'contatti', 'pm', 'sponsor_gruppo', 'sponsor_personali', 'bbs', 'wes', 'cep', 'tracce', 'pagine']);
+  for (const [g, s] of [['Volume', 'volume'], ['Azione', 'azione']]) {
+    const check = C.GRUPPI.find(x => x.etichetta === g).voci.map(v => v.titolo), dash = D.SCHEDE.find(x => x.chiave === s).riquadri.map(r => r.titolo);
+    assert.deepEqual(check.filter(t => dash.includes(t)), dash, g);   // le voci in comune nello stesso ordine
+  }
+});
+
+prova('081 (2): la freccia del Check dice da dove si arriva («‹ Volume» dalla card dell\'area) e ci riporta; senza, «‹ Dashboard»', () => {
+  assert.match(disegna(), /^<button class="indietro" id="ck-indietro">‹ Dashboard<\/button><h1>Check<\/h1>/);
+  Object.assign(ctx, { mostraTab: () => {}, window: { scrollTo() {} } });
+  esegui(`apriCheckDa('Volume', 'oggi')`);
+  assert.equal(ctx.ST.tab, 'check');
+  assert.match(disegna(), /^<button class="indietro" id="ck-indietro">‹ Volume<\/button>/);
+  esegui('tornaDalCheck()');
+  assert.equal(ctx.ST.tab, 'oggi');
+  assert.equal(esegui('CK.da'), null);
+  delete ctx.ST.tab;   // la pagina resta il Check per le prove dopo (con «oggi» il Modulo Core letto ridisegnerebbe la Dashboard)
+  assert.match(disegna(), /‹ Dashboard</);
+  // la stessa freccia anche mentre carica e se non si carica
+  assert.equal((SORGENTE.match(/\$\{indietroCheck\(\)\}<h1>Check<\/h1>/g) || []).length, 3);
+  assert.doesNotMatch(SORGENTE, /id="ck-indietro">‹ Dashboard/);
+});
+
+prova('081 (1): «Vedi i 12 mesi ›» del Profilo apre subito il foglio «Gli ultimi 12 mesi»', () => {
+  const PR = fs.readFileSync(path.join(__dirname, '..', '..', 'pagina-profilo.js'), 'utf8');
+  assert.match(PR, /if \(mesi\) mesi\.onclick = foglioStorico;/);
+  assert.doesNotMatch(PR, /ST\.tab = 'check'/);
 });
 
 prova('La scelta si ricorda sul telefono, e se la memoria non risponde la pagina parte lo stesso', () => {

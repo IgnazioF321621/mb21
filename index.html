@@ -1064,7 +1064,6 @@
   .ds-azione.obiettivi { --richiamo: var(--pericolo); --richiamo-tinta: var(--pericolo-tinta); }
   .ds-azione.visione-completa { --richiamo: var(--gr-volume); --richiamo-tinta: var(--gr-volume-tinta); }   /* i numeri, non i Clienti (Ignazio 20/09) */
   .ds-azione.report { --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
-  .ds-azione.griglia { --richiamo: var(--gr-azione); --richiamo-tinta: var(--gr-azione-tinta); }   /* i Piani Marketing stanno nel gruppo Azione, non sono i Partner */
   /* «Scala dei bonus»: il titolo al centro e i bonus sempre in vista (01/10); le altre scelte stanno sotto, «Oppure si parte da» */
   .ob-scala-testa { text-align: center; margin: 0 0 10px; }
   .ob-scala-testa b { display: block; font-size: 18px; }
@@ -1962,6 +1961,17 @@
   .rp-riga.esito .n { justify-self: end; min-width: 32px; padding: 3px 9px; border-radius: var(--raggio-pill); background: var(--sfondo); font-size: 14px; font-weight: 700; text-align: center; }
   .rp-riga.esito.verde { color: var(--ok); } .rp-riga.esito.verde .n { color: var(--ok); background: var(--ok-tinta); }
   .rp-riga.esito.zero, .rp-riga.esito.zero .n { color: var(--grigio-chiaro); }
+  .rp-riga.tipo.vuoto, .rp-riga.tipo.vuoto .n { color: var(--grigio-chiaro); }   /* nota 081, punto 10: gruppo senza azioni nel periodo */
+  /* nota 074: linguetta «Provvigioni» del Report: dodici mesi (VP e provvigione) e le vendite del mese, con le righe della scheda › Vendite */
+  .rp-linguette { margin-bottom: 4px; }
+  .rp-riga.pv-mese { grid-template-columns: 1fr auto auto 18px; gap: 10px; }
+  .rp-riga.pv-mese .p { font-size: 13px; white-space: nowrap; }
+  .rp-riga.pv-mese .n { font-size: 15px; white-space: nowrap; }
+  .rp-riga.pv-mese.zero, .rp-riga.pv-mese.zero .n, .rp-riga.pv-mese:disabled, .rp-riga.pv-mese:disabled .n { color: var(--grigio-chiaro); }
+  .pv-info { font-weight: 500; color: var(--testo-soft); }
+  .pv-vendita .pv-nome, .pv-vendita .vn-sotto, .pv-vendita .vn-attesa { display: block; }
+  .pv-vendita .pv-nome { font-weight: 600; }
+  .vn-vai { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; font-family: inherit; color: var(--testo); text-align: left; cursor: pointer; }
   .rp-riga.nome { background: var(--superficie-2); padding: 8px 14px 8px 28px; font-size: 15px; font-weight: 600; grid-template-columns: 1fr auto 18px; border-top-color: var(--superficie); }
   .rp-riga.nome small { color: var(--testo-soft); font-size: 12px; font-weight: 400; }
   .rp-chi { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -2069,8 +2079,12 @@
     display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
   .ck-testa-g h3 { margin: 0; font-size: 16px; }
   .ck-testa-g small { display: block; font-size: 12.5px; color: var(--testo-soft); margin-top: 1px; }
-  .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px; align-items: center; gap: 4px; }
+  .ck-testa, .ck-riga { display: grid; grid-template-columns: 1fr 66px 66px 66px 12px; align-items: center; gap: 4px; }
   .ck-testa { padding: 0 10px 6px 10px; font-size: 11px; font-weight: 700; color: var(--grigio-chiaro); text-align: right; text-transform: uppercase; }
+  /* nota 081 (punti 4 e 6): la testata delle colonne una volta sola, sopra i gruppi, allineata alle righe (6 del gruppo + 10 della riga) */
+  .ck-testa.sopra { padding: 0 16px 6px; }
+  .ck-tocca { margin: 2px 4px 6px; font-size: 13px; color: var(--testo-soft); }
+  .ck-riga .vai { text-align: right; font-size: 16px; line-height: 1; color: var(--testo-tenue); }
   .ck-riga { width: 100%; text-align: left; border: 0; background: none; border-radius: var(--raggio-bottone); padding: 10px;
     font-family: inherit; color: var(--testo); font-size: 15px; }
   .ck-riga .n { text-align: right; font-weight: 800; font-size: 15px; white-space: nowrap; color: var(--g); }
@@ -4285,14 +4299,14 @@ async function caricaDatiCheck() {
     }
     const [ob, wes, bbs, segniAl, biglietti, cep, sq, vol, nonOra, pm, lcl] = await Promise.all([
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
-      dbq('date dei WES', supa.from('wes').select('data, creato_il').order('data')),
-      dbq('date dei BBS', supa.from('bbs').select('data, creato_il').order('data')),
+      lettaComune('wes'),   // nota 081: BBS, WES e squadra una lettura sola, con i segni vitali e il Modulo Core (pagina-dashboard.js)
+      lettaComune('bbs'),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       // LC1 (26/09): i biglietti e il CEP della propria scheda, ovunque sia; con «Tutti» non serve (LC1 è di una persona)
       vediTutti() ? null : bigliettiDiChiGuardo(visto(), null),
       vediTutti() ? null : cepDiChiGuardo(visto()),
       // i livelli (27/09): le prime linee e il bonus dal file Amway, dal nuovo anno di performance
-      vediTutti() ? null : dbq('squadra per i livelli', supa.from('squadra').select('partner_id, sponsor_id, nome, data_ingresso')),
+      vediTutti() ? null : lettaComune('squadra'),
       vediTutti() ? null : dbq('volumi per i livelli', supa.from('volumi_mese').select('partner_id, mese, vpp, bonus, al_livello_successivo, dimensioni_gruppo').gte('mese', 202609)),
       vediTutti() ? null : dbq('«Non ora» dei passi', supa.from('passi_non_ora').select('partner_id, mese').eq('user_id', visto().id)),
       vediTutti() ? null : dbq('Piani Marketing del ramo', supa.rpc('pm_del_ramo', { da: 202609 })),   // «15 Planner» (27/09)
@@ -4315,16 +4329,23 @@ async function caricaDatiCheck() {
   }
 }
 
+// Nota Pagine 081, punto 2 (Ignazio 24/10): la freccia in alto del Check riporta da dove si arriva. `CK.da` = { etichetta, tab } lo mette chi apre
+// il Check con `apriCheckDa` (la card di un'area della Dashboard: «‹ Volume» torna lì); senza, «‹ Dashboard». Dalla scheda o dal Modulo Core si torna
+// al Check e la freccia resta quella di prima.
+const indietroCheck = () => `<button class="indietro" id="ck-indietro">‹ ${esc((CK.da && CK.da.etichetta) || 'Dashboard')}</button>`;
+function tornaDalCheck() { const da = CK.da; CK.da = null; ST.tab = (da && da.tab) || 'oggi'; mostraTab(); window.scrollTo(0, 0); }
+function apriCheckDa(etichetta, tab) { CK.da = { etichetta, tab }; ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); }
+
 async function apriPaginaCheck() {
-  if (!CK.giorni) app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1><div class="vuoto">Carico i numeri…</div>`;
+  if (!CK.giorni) app.innerHTML = `${indietroCheck()}<h1>Check</h1><div class="vuoto">Carico i numeri…</div>`;
   const indietro = document.getElementById('ck-indietro');
-  if (indietro) indietro.onclick = () => { ST.tab = 'oggi'; mostraTab(); };
+  if (indietro) indietro.onclick = tornaDalCheck;
   try {
     await caricaDatiCheck();
   } catch (e) {
-    app.innerHTML = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>
+    app.innerHTML = `${indietroCheck()}<h1>Check</h1>
       <div class="avviso">Non riesco a caricare il Check. Controlla la connessione e riprova.</div>${versione()}`;
-    document.getElementById('ck-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
+    document.getElementById('ck-indietro').onclick = tornaDalCheck;
     return;
   }
   if (!CK.periodo) CK.periodo = MB21Report.periodoIniziale(CK.tipo, MB21Coda.oggiRoma(), CK.wes);
@@ -4336,7 +4357,7 @@ function disegnaCheck() {
   const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi, segniAl: CK.segniAl };
   // due domande, due comandi (Ignazio 27/09: «se cambio, mica mi cambia il percorso?»): in cima la card del percorso col suo mese ‹ ›,
   // sotto «I numeri del periodo» con Mese · WES · Anno, che cambiano solo i numeri
-  let html = `<button class="indietro" id="ck-indietro">‹ Dashboard</button><h1>Check</h1>${partnerSelect()}${lc1Html(oggi)}
+  let html = `${indietroCheck()}<h1>Check</h1>${partnerSelect()}${lc1Html(oggi)}
     <h2 class="ck-sezione">I numeri del periodo</h2>
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
@@ -4356,19 +4377,22 @@ function disegnaCheck() {
       <button class="rp-apri scura" id="ck-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
     // Due domande, una sopra l'altra (Ignazio 27/09, stella cometa): in cima «dove sono» (la card del percorso, da sola),
     // sotto «i miei numeri» (titoletto «I numeri del periodo»: Confronta con, la riga del confronto, Gli ultimi 12 mesi, i gruppi)
-    // ogni gruppo si apre e si chiude toccando la testata (Ignazio 25/09); da chiuso resta il riassunto
+    // ogni gruppo si apre e si chiude toccando la testata (Ignazio 25/09); da chiuso resta il riassunto.
+    // Nota Pagine 081, punti 4 e 6 (Ignazio 24/10): sopra i gruppi, una volta sola, la scritta «Tocca una voce per i suoi 12 mesi» e la testata
+    // delle colonne con «Come va» al posto di ▲▼ (prima era ripetuta dentro ogni gruppo); ogni voce ha la sua › (⌄ quando è aperta)
+    html += `<p class="ck-tocca">Tocca una voce per i suoi 12 mesi</p>
+      <div class="ck-testa sopra"><span></span>
+        <span>${r.inCorso ? 'Oggi' : 'Totale'}<small>al ${esc(r.alGiorno)}</small></span>
+        <span>Prima${r.alGiornoPrima ? `<small>al ${esc(r.alGiornoPrima)}</small>` : ''}</span>
+        <span>Come va</span><span></span></div>`;
     html += r.gruppi.map(g => { const chiuso = CK.chiusi.has(g.etichetta); return `<div class="ck-gruppo ${chiuso ? 'chiuso' : ''}" style="--g:${g.colore}; --g-tinta:${g.colore.replace(')', '-tinta)')}">
       <button class="ck-testa-g" data-ckgruppo="${esc(g.etichetta)}" aria-expanded="${chiuso ? 'false' : 'true'}"><span class="tondo">${esc(g.etichetta[0])}</span>
         <span><h3>${esc(g.etichetta)}</h3>${g.riassunto ? `<small>${esc(g.riassunto)}</small>` : ''}</span><span class="apri">${chiuso ? '›' : '⌄'}</span></button>
-      ${chiuso ? '' : `<div class="ck-testa"><span></span>
-        <span>${r.inCorso ? 'Oggi' : 'Totale'}<small>al ${esc(r.alGiorno)}</small></span>
-        <span>Prima${r.alGiornoPrima ? `<small>al ${esc(r.alGiornoPrima)}</small>` : ''}</span>
-        <span>▲▼</span></div>
-      ${g.voci.map(v => {
+      ${chiuso ? '' : `${g.voci.map(v => {
         const aperta = CK.aperta === v.chiave;
-        let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}"><span>${esc(v.titolo)}</span>
+        let h = `<button class="ck-riga ${aperta ? 'aperta' : ''}" data-voce="${v.chiave}" aria-expanded="${aperta}"><span>${esc(v.titolo)}</span>
           <span class="n">${esc(v.adesso)}</span><span class="pr ${v.primaNota ? 'nota' : ''}">${esc(v.prima)}</span><span class="an ${v.andamento.segno}">${esc(v.andamento.testo)}</span>
-          ${v.riga ? `<small>${esc(v.riga)}</small>` : ''}</button>`;
+          <span class="vai">${aperta ? '⌄' : '›'}</span>${v.riga ? `<small>${esc(v.riga)}</small>` : ''}</button>`;
         if (!aperta) return h;
         const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
         const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });
@@ -4550,7 +4574,7 @@ async function caricaCardCheck() {
 function collegaCheck() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
-  su('ck-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
+  su('ck-indietro', tornaDalCheck);
   su('ck-storico', foglioStorico);
   app.querySelectorAll('[data-gradino]').forEach(b => b.onclick = () => {   // un gradino del percorso si apre e si chiude (Ignazio 26/09)
     const k = b.dataset.gradino;
@@ -4579,8 +4603,16 @@ function collegaCheck() {
   su('ck-mese-prima', () => meseCard(-1));
   collegaPercorso(disegnaCheck);
   su('ck-mese-dopo', () => meseCard(1));
-  // le linee a Leaders Club, a mano dell'Admin (30/09): il tocco apre l'elenco, ogni nome si spunta e si toglie
-  app.querySelectorAll('[data-lcapri]').forEach(b => b.onclick = () => { CK.lcAperto = !CK.lcAperto; disegnaCheck(); });
+  app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
+}
+
+// I legami di «Per te: …», dei passi, di «Non ora» e di «di cui Leaders Club»: gli stessi nel Check e nei livelli della Dashboard (`ridisegna` = chi li ha aperti)
+function collegaPercorso(ridisegna) {
+  app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
+  // le linee a Leaders Club, a mano dell'Admin (30/09): il tocco apre l'elenco, ogni nome si spunta e si toglie.
+  // Nota Pagine 081, punto 7 (Ignazio 24/10: «i Leaders Club vanno segnati da qualche parte»): prima si collegava solo nel Check e in Dashboard
+  // il tasto si vedeva ma non rispondeva; ora è la stessa funzione in tutti e due
+  app.querySelectorAll('[data-lcapri]').forEach(b => b.onclick = () => { CK.lcAperto = !CK.lcAperto; ridisegna(); });
   app.querySelectorAll('[data-lc]').forEach(b => b.onclick = async () => {
     const pid = b.dataset.lc, mese = Number(b.dataset.mese), uid = visto().id, c = CK.lcLinee.some(x => x.partner_id === pid && x.mese === mese);
     b.disabled = true;
@@ -4589,14 +4621,8 @@ function collegaCheck() {
       : await dbq('segna Leaders Club', supa.from('linee_leaders_club').insert({ user_id: uid, partner_id: pid, mese }));
     if (error) { b.disabled = false; mostraToast('Non riesco a salvare: riprova'); return; }
     CK.lcLinee = c ? CK.lcLinee.filter(x => !(x.partner_id === pid && x.mese === mese)) : [...CK.lcLinee, { partner_id: pid, mese }];
-    disegnaCheck();
+    ridisegna();
   });
-  app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
-}
-
-// I legami di «Per te: …», dei passi e di «Non ora»: gli stessi nel Check e nei livelli della Dashboard (`ridisegna` = chi li ha aperti)
-function collegaPercorso(ridisegna) {
-  app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
   // «Non ora» su un passo e ↺ per riprenderlo (Ignazio 27/09): una riga in passi_non_ora per il mese della card, a nome di chi si guarda
   app.querySelectorAll('[data-nonora], [data-riprendi]').forEach(b => b.onclick = async () => {
     const pid = b.dataset.nonora || b.dataset.riprendi, mese = Number(b.dataset.mese), uid = visto().id;
@@ -4638,7 +4664,8 @@ async function schedaDalCheck(pid) {
 // Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi
 // (tocco su un nome = scheda contatto), grafico dell'anno, Griglia PM in una pagina sua, date dei Wes (solo Admin).
 // Numeri del partner loggato (anche l'Admin vede i suoi, come la Dashboard). Calcoli in report.js.
-const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null };
+const RP = { tipo: 'mese', periodo: null, azioni: null, wes: [], griglia: null, aperto: null, esito: null, vista: 'report', cella: null,
+  linguetta: 'azioni', da: null, grigliaDa: null };   // nota 074: la linguetta («azioni» · «provvigioni») e la scheda da cui si arriva · nota 081: da dove si apre la Griglia PM
 const CAMPI_REPORT = 'id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, inizio, esito_il, ospite, contatti(nome, categoria)';   // categoria e completata: servono a `contaAzione`; esito_il: il giorno in cui conta un Contatto (nota Azioni 030, `giornoAzione`)
 
 async function leggiAzioniMie() {
@@ -4653,15 +4680,22 @@ async function leggiAzioniMie() {
 }
 
 // Dal 28/09 il Report non è più nella barra in basso (si apre dalla Dashboard, zona «Approfondisci»):
-// come il Check, ha in cima il ritorno alla Dashboard.
-function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ Dashboard</button>`; }
+// come il Check, ha in cima il ritorno alla Dashboard. Nota 074: aperto dalla scheda › Vendite («Le tue provvigioni, mese per mese ›», `RP.da`)
+// la freccia ha il nome della persona e torna alla sua scheda, sulla linguetta Vendite.
+function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Dashboard')}</button>`; }
 function collegaTornaInDashboard() {
   const b = document.getElementById('rp-indietro');
-  if (b) b.onclick = () => { ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0); };
+  if (b) b.onclick = () => {
+    const da = RP.da;
+    RP.da = null;
+    if (da) { LS.apriSezione = 'vendite'; return apriContattoDa(da.contattoId, da.ritorno); }
+    ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0);
+  };
 }
 
 async function apriReport(vista) {
   RP.vista = vista || RP.vista;
+  if (RP.vista === 'report' && RP.linguetta === 'provvigioni') return disegnaProvvigioni();   // nota 074: legge solo le vendite, non le azioni
   // Come il Check (nota 017): le azioni di tutta la storia si rileggono solo dopo 5 minuti, se si guarda un'altra persona o dopo una scrittura
   const chiaveRp = vediTutti() ? 'tutti' : visto().id;
   const fresco = !!RP.azioni && RP.chiave === chiaveRp && !!RP.letta && SCRITTURE.ultima < RP.letta && Date.now() - RP.letta < 5 * 60000;
@@ -4675,7 +4709,9 @@ async function apriReport(vista) {
     if (wes.error || gr.error) throw wes.error || gr.error;
     RP.azioni = await aggiungiPortatoDa(azioni); RP.wes = wes.data; RP.griglia = gr.data; RP.chiave = chiaveRp; RP.letta = Date.now();
   } catch (e) {
-    app.innerHTML = `<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
+    // nota Pagine 081, punto 12 (Ignazio 24/10): anche se il Report non si carica, in cima resta «‹ Dashboard» (come il Check)
+    app.innerHTML = `${tornaInDashboard()}<h1>Report</h1><div class="avviso">Non riesco a caricare il Report. Controlla la connessione e riprova.</div>${versione()}`;
+    collegaTornaInDashboard();
     return;
   }
   const oggi = MB21Coda.oggiRoma();
@@ -4684,10 +4720,11 @@ async function apriReport(vista) {
 }
 
 function disegnaReport() {
+  if (RP.linguetta === 'provvigioni') return disegnaProvvigioni();   // nota 074: la seconda linguetta
   const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data), p = RP.periodo;
   const riga = (classe, attr, testo, n, perc, freccia) =>
     `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
-  let html = `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}
+  let html = `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}${linguetteReport()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
@@ -4699,6 +4736,8 @@ function disegnaReport() {
       <button id="rp-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, date) ? '' : 'disabled'}>›</button></div>`;
     const gruppi = R.numeri(RP.azioni, p, oggi);
     html += `<div class="rp-lista">${gruppi.map(g => {
+      // nota Pagine 081, punto 10 (Ignazio 24/10): un gruppo senza azioni nel periodo è grigio e senza freccia (non c'è niente da aprire)
+      if (!g.totale && !g.nonContano) return riga('tipo vuoto', 'disabled', esc(g.etichetta), 0, '', '');
       const aperto = RP.aperto === g.chiave;
       let h = riga(`tipo ${aperto ? 'aperto' : ''}`, `data-gruppo="${g.chiave}"`, esc(g.etichetta), g.totale, '', aperto ? '⌄' : '›');
       if (!aperto) return h;
@@ -4712,7 +4751,7 @@ function disegnaReport() {
         if (!scelto) continue;
         h += e.persone.map(x => `<button class="rp-riga nome ${classeCat(x.categoria)}" data-azione="${esc(x.id)}">
           <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(x.nome))}</i><span>${esc(x.nome)}<br><small>${esc(R.dataBreve(x.giorno))}${x.modalita ? ' · ' + esc(x.modalita) : ''}${x.portato ? ' · ' + rigaPortato(x.portato) : ''}</small></span></span><span></span><span class="f">›</span></button>`).join('');
-        if (e.altre) h += `<div class="rp-altre">e altri ${e.altre}: scegli un periodo più corto</div>`;
+        if (e.altre) h += `<div class="rp-altre">e altri ${e.altre}: con un periodo più corto si vedono tutti</div>`;   // nota 081, punto 11: un consiglio, non un ordine
       }
       return h;
     }).join('')}</div>`;
@@ -4725,7 +4764,7 @@ function disegnaReport() {
       <div class="rp-mesi">${mesi.map(m => `<span class="${m.futuro ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div></div>`;
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
-  if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>${ic('pianomarketing')} Griglia PM${gp ? ` · ${gp.fatti} di ${gp.obiettivo}` : ' · da impostare'}</span><span>›</span></button>`;
+  if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>${ic('pianomarketing')} ${esc(testoGriglia(gp))}</span><span>›</span></button>`;   // la scritta della Dashboard (nota 081, punto 9)
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -4746,7 +4785,133 @@ function collegaReport() {
   });
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
-  su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; window.scrollTo(0, 0); disegnaGriglia(); });
+  su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; RP.grigliaDa = null; window.scrollTo(0, 0); disegnaGriglia(); });
+  collegaLinguetteReport();
+}
+
+// ── Linguetta «Provvigioni» del Report (nota Pagine 074, Ignazio 22-24/10) ── il Report ha due linguette: «Azioni» (com'è, anno settembre-agosto) e
+// «Provvigioni». La vedono tutti, ognuno le sue; l'Admin col Partner Select quelle della persona scelta. Mese con ‹ ›: i tre totali della scheda › Vendite
+// (MB21Lista.totaliVendite), la riga «Incassato · Sconti · N pagate sul sito», poi «Le vendite del mese» (un tocco apre la scheda › Vendite).
+// Anno solare (gennaio-dicembre), in cima «2026»: i totali e dodici righe, una per mese (un tocco apre il mese). I conti in lista.js (provvigioniMese,
+// provvigioniAnno). Dati: vendite_conti (la provvigione si calcola solo lì) più incasso e cliente da vendite, letti per anno solo quando la linguetta
+// si apre (costo zero), tenuti 5 minuti come il Report e riletti dopo una scrittura. Niente database nuovo.
+const PV = { vista: 'mese', mese: null, anno: null, anni: {}, primo: {}, giro: 0 };
+const linguetteReport = () => `<div class="sezioni rp-linguette">${[['azioni', 'Azioni'], ['provvigioni', 'Provvigioni']].map(([k, t]) =>
+  `<button data-rplinguetta="${k}" class="${(RP.linguetta || 'azioni') === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
+function collegaLinguetteReport() {
+  app.querySelectorAll('[data-rplinguetta]').forEach(b => b.onclick = () => {
+    if ((RP.linguetta || 'azioni') === b.dataset.rplinguetta) return;
+    RP.linguetta = b.dataset.rplinguetta;
+    if (RP.linguetta === 'azioni' && !RP.azioni) return apriReport('report');   // aperto dalla scheda › Vendite: le azioni non sono ancora lette
+    disegnaReport();
+  });
+}
+// tutte le righe di una richiesta, a pagine da 1000 (PostgREST non ne dà di più); `fai` costruisce la richiesta ogni volta
+async function tutteLeRighe(cosa, fai) {
+  const righe = [];
+  for (let da = 0; ; da += 1000) {
+    const { data, error } = await dbq(cosa, fai().order('id').range(da, da + 999));
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < 1000) return righe;
+  }
+}
+// Le vendite di un anno di chi si guarda: quelle che contano nell'anno (conta_il: la data della vendita o, per la consegna differita, quella
+// dell'«Ordine fatto») e quelle ancora da consegnare vendute nell'anno. In più il giorno della prima vendita, per sapere fin dove si torna indietro.
+async function venditeAnno(anno) {
+  const chi = idVisti(), chiave = chi.join(',') + '|' + anno;
+  const c = PV.anni[chiave];
+  if (c && SCRITTURE.ultima < c.letta && Date.now() - c.letta < 5 * 60000) return c.righe;
+  const da = `${anno}-01-01`, a = `${anno + 1}-01-01`;
+  const filtro = `and(consegna.is.null,data.gte.${da},data.lt.${a}),and(ordinata_il.gte.${da},ordinata_il.lt.${a}),and(consegna.not.is.null,ordinata_il.is.null,data.gte.${da},data.lt.${a})`;
+  const [conti, incassi, primo] = await Promise.all([
+    tutteLeRighe('provvigioni dell\'anno', () => supa.from('vendite_conti').select('id, contatto_id, data, brand, prodotto, vp, sconto, consegna, ordinata_il, conta_il, provvigione, guadagno_netto')
+      .in('user_id', chi).or(filtro)),
+    tutteLeRighe('incassi dell\'anno', () => supa.from('vendite').select('id, incassato, prezzo_pubblico, pagato_con, contatti(nome, categoria, account_cliente_dal)').in('user_id', chi).or(filtro)),
+    PV.primo[chi.join(',')] !== undefined ? null : dbq('la prima vendita', supa.from('vendite').select('data').in('user_id', chi).order('data').limit(1)),
+  ]);
+  if (primo) { if (primo.error) throw primo.error; PV.primo[chi.join(',')] = (primo.data && primo.data[0] && primo.data[0].data) || null; }
+  const di = new Map(incassi.map(x => [x.id, x]));
+  const righe = conti.map(v => {
+    const x = di.get(v.id) || {}, p = x.contatti || {};
+    const r = { ...v, incassato: x.incassato, prezzo_pubblico: x.prezzo_pubblico, pagato_con: x.pagato_con, nome: p.nome || '—', categoria: p.categoria || null };
+    r.sulSito = MB21Lista.pagataSulSito(p.account_cliente_dal, r);   // la regola del modulo vendita
+    return r;
+  });
+  PV.anni[chiave] = { righe, letta: Date.now() };
+  return righe;
+}
+
+async function disegnaProvvigioni() {
+  const L = MB21Lista, R = MB21Report, oggi = MB21Coda.oggiRoma(), meseOggi = oggi.slice(0, 8) + '01', annoOggi = Number(oggi.slice(0, 4));
+  if (!PV.mese) PV.mese = meseOggi;
+  if (!PV.anno) PV.anno = annoOggi;
+  const anno = PV.vista === 'anno' ? PV.anno : Number(PV.mese.slice(0, 4)), giro = ++PV.giro;
+  const testa = `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}${linguetteReport()}
+    <div class="rp-periodi">${[['mese', 'Mese'], ['anno', 'Anno']].map(([k, t]) => `<button data-pvvista="${k}" class="${PV.vista === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
+  const collega = () => {
+    collegaPartnerSelect(); collegaTornaInDashboard(); collegaLinguetteReport();
+    app.querySelectorAll('[data-pvvista]').forEach(b => b.onclick = () => {
+      PV.vista = b.dataset.pvvista;
+      if (PV.vista === 'anno') PV.anno = Number(PV.mese.slice(0, 4));   // l'anno del mese che si guardava
+      disegnaProvvigioni();
+    });
+  };
+  const chiave = idVisti().join(',') + '|' + anno, c = PV.anni[chiave];
+  if (!c || SCRITTURE.ultima >= c.letta || Date.now() - c.letta >= 5 * 60000) { app.innerHTML = testa + '<div class="vuoto">Carico le vendite…</div>'; collega(); }
+  let righe;
+  try { righe = await venditeAnno(anno); } catch (e) {
+    if (giro !== PV.giro) return;
+    app.innerHTML = testa + `<div class="avviso">Non riesco a caricare le vendite. Controlla la connessione e riprova.</div>${versione()}`;
+    return collega();
+  }
+  if (giro !== PV.giro || ST.tab !== 'report' || RP.vista !== 'report' || RP.linguetta !== 'provvigioni') return;   // nel frattempo si è cambiato
+  const primo = PV.primo[idVisti().join(',')], n = L.numero;
+  const totali = t => `<div class="vn-totali">
+      <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
+      <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
+      <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div></div>`;
+  let html = testa;
+  if (PV.vista === 'anno') {
+    const y = L.provvigioniAnno(righe, anno, oggi);
+    html += `<div class="rp-naviga"><button id="pv-prima" aria-label="Anno prima" ${primo && Number(primo.slice(0, 4)) < anno ? '' : 'disabled'}>‹</button>
+      <b>${anno}</b><button id="pv-dopo" aria-label="Anno dopo" ${anno < annoOggi ? '' : 'disabled'}>›</button></div>
+      ${totali(y.totali)}<h2 class="ck-sezione">Mese per mese</h2>
+      <div class="rp-lista">${y.mesi.map(m => `<button class="rp-riga pv-mese ${m.vendite ? '' : 'zero'}" data-pvmese="${m.mese}" ${m.futuro ? 'disabled' : ''}>
+        <span>${esc(m.nome)}</span><span class="p">${m.futuro ? '' : `${n(m.vp)} VP`}</span><span class="n">${m.futuro ? '—' : n(m.provvigione, true)}</span><span class="f">${m.futuro ? '' : '›'}</span></button>`).join('')}</div>`;
+  } else {
+    const m = L.provvigioniMese(righe, PV.mese), t = m.totali;
+    const info = [`Incassato ${n(m.incassato, true)}`, `Sconti ${n(m.sconti, true)}`, ...(m.sulSito ? [`${m.sulSito} ${m.sulSito === 1 ? 'pagata' : 'pagate'} sul sito`] : [])].join(' · ');
+    html += `<div class="rp-naviga"><button id="pv-prima" aria-label="Mese prima" ${primo && primo.slice(0, 8) + '01' < PV.mese ? '' : 'disabled'}>‹</button>
+      <b>${esc(R.testoPeriodo(R.periodoMese(PV.mese)))}</b><button id="pv-dopo" aria-label="Mese dopo" ${PV.mese < meseOggi ? '' : 'disabled'}>›</button></div>
+      ${totali(t)}<div class="vn-riga-info pv-info">${esc(info)}</div>
+      ${t.attesaVp ? `<div class="vn-riga-info">${ic('consegna')} Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
+      <h2 class="ck-sezione">Le vendite del mese</h2>
+      ${m.vendite.length ? `<div class="riquadro vn-elenco">${m.vendite.map(v => `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
+        <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${esc(v.nome)}${v.sulSito ? ' <span class="sv-targa account">sul sito</span>' : ''}</span>
+          <span class="vn-sotto"><span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(L.data(v.data))}${v.ordinata_il ? ' · ordine del ' + esc(L.data(v.ordinata_il)) : ''}</span>
+          ${L.daConsegnare(v) ? `<span class="vn-attesa ${L.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''}</span>` : ''}</span></span>
+        <span class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></span></button>`).join('')}</div>`
+      : `<div class="vuoto">Nessuna vendita in ${esc(R.testoPeriodo(R.periodoMese(PV.mese)).toLowerCase())}.</div>`}`;
+  }
+  app.innerHTML = html + versione();
+  collega();
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  const sposta = k => {
+    if (PV.vista === 'anno') PV.anno += k; else PV.mese = R.spostaMese(PV.mese, k);
+    disegnaProvvigioni();
+  };
+  su('pv-prima', () => sposta(-1));
+  su('pv-dopo', () => sposta(1));
+  app.querySelectorAll('[data-pvmese]').forEach(b => b.onclick = () => { PV.vista = 'mese'; PV.mese = b.dataset.pvmese; window.scrollTo(0, 0); disegnaProvvigioni(); });
+  // un tocco su una vendita apre la scheda della persona sulla linguetta Vendite; la sua freccia («‹ Report») torna qui
+  app.querySelectorAll('[data-pvcontatto]').forEach(b => b.onclick = () => { LS.apriSezione = 'vendite'; apriContattoDa(b.dataset.pvcontatto, 'provvigioni'); });
+}
+// Dalla scheda › Vendite (nota 074): «Le tue provvigioni, mese per mese ›» apre la linguetta sul mese di oggi; la freccia del Report torna alla scheda
+function apriProvvigioniDa(c) {
+  RP.da = { contattoId: c.id, nome: c.nome, ritorno: LS.ritorno };
+  RP.linguetta = 'provvigioni'; RP.vista = 'report'; PV.vista = 'mese'; PV.mese = MB21Coda.oggiRoma().slice(0, 8) + '01';
+  ST.tab = 'report'; mostraTab(); window.scrollTo(0, 0);
 }
 
 // ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Invia il tuo feedback» (nota 006, prima «Cosa non va, o cosa proponi?»), tre scelte e un testo.
@@ -5083,12 +5248,20 @@ async function domandaInvito(c) {
 function disegnaGriglia() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma();
   const imp = RP.griglia;
-  let html = `<button class="indietro" id="gp-indietro">‹ Report</button><h1>Griglia PM</h1>`;
+  // nota Pagine 081, punto 8 (Ignazio 24/10): aperta dalla Dashboard (`RP.grigliaDa = 'oggi'`) la freccia torna alla Dashboard; dal Report resta «‹ Report»
+  const daDashboard = RP.grigliaDa === 'oggi';
+  const indietro = () => {
+    RP.vista = 'report';
+    if (!daDashboard) return disegnaReport();
+    RP.grigliaDa = null; ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0);
+  };
+  let html = `<button class="indietro" id="gp-indietro">‹ ${daDashboard ? 'Dashboard' : 'Report'}</button><h1>Griglia PM</h1>`;
   if (!imp) {
-    html += `<div class="riquadro"><p style="margin:0 0 12px">Scegli quanti Piani Marketing vuoi fare e in quanto tempo.</p>
+    // nota 081, punto 11: una domanda, non un ordine
+    html += `<div class="riquadro"><p style="margin:0 0 12px"><b>Quanti Piani Marketing vuoi fare, e in quanto tempo?</b></p>
       <button class="primario" id="gp-imposta">Imposta la griglia</button></div>`;
     app.innerHTML = html + versione();
-    document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
+    document.getElementById('gp-indietro').onclick = indietro;
     document.getElementById('gp-imposta').onclick = impostaGriglia;
     return;
   }
@@ -5113,7 +5286,7 @@ function disegnaGriglia() {
       <div class="gp-legenda">${Object.entries(R.COLORI_GRIGLIA).map(([e, c]) => `<span><i style="background:${c}"></i>${esc(e)}</span>`).join('')}</div>
     </div>`;
   app.innerHTML = html + versione();
-  document.getElementById('gp-indietro').onclick = () => { RP.vista = 'report'; disegnaReport(); };
+  document.getElementById('gp-indietro').onclick = indietro;
   document.getElementById('gp-cambia').onclick = impostaGriglia;
   app.querySelectorAll('[data-cella]').forEach(b => b.onclick = () => foglioAzione(g.celle.find(c => c.numero === Number(b.dataset.cella)).id, { ritorno: 'griglia', dopo: () => apriReport('griglia') }));
 }

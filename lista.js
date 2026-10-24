@@ -437,6 +437,36 @@
       attesaVp: somma((vendite || []).filter(daConsegnare), 'vp') };
   }
 
+  // La vendita «pagata sul sito» (cliente con account: paga l'azienda, nota Pagine 078 decisione 7). Una regola sola per il modulo vendita e per la
+  // linguetta «Provvigioni» del Report (nota 074). `dal` = account_cliente_dal del cliente; `v` = la vendita con data, incassato, prezzo_pubblico e
+  // pagato_con, null per una vendita nuova, undefined se l'incasso non si è letto. Nuova: sempre, se il cliente ha l'account. Già salvata: se è del
+  // giorno dell'account o dopo e non ha incassato, prezzo al pubblico né modo di pagamento (le vendite vecchie di chi ha preso l'account dopo restano normali).
+  const pagataSulSito = (dal, v) => !!dal && (v === null || (!!v && dal <= v.data && v.incassato == null && v.prezzo_pubblico == null && !v.pagato_con));
+
+  // Linguetta «Provvigioni» del Report (nota Pagine 074, Ignazio 24/10): `righe` = le vendite lette per l'anno (righe di vendite_conti con, in più,
+  // incassato e `sulSito`). Il mese: le vendite che CONTANO nel mese (conta_il) e quelle ancora da consegnare vendute nel mese, che stanno nell'elenco
+  // ma fuori dai totali, come nella scheda (stessa `totaliVendite`); incassato, sconti e «pagate sul sito» sulle vendite che contano.
+  // `mese` = 'AAAA-MM-01'. Torna { vendite (dalla più nuova), totali, incassato, sconti, sulSito }.
+  function provvigioniMese(righe, mese) {
+    const ym = mese.slice(0, 7);
+    const vendite = (righe || []).filter(v => (v.conta_il ? v.conta_il.slice(0, 7) === ym : daConsegnare(v) && String(v.data || '').slice(0, 7) === ym))
+      .sort((a, b) => ((b.conta_il || b.data || '') < (a.conta_il || a.data || '') ? -1 : 1));
+    const contate = vendite.filter(v => !daConsegnare(v));
+    const somma = k => contate.reduce((t, v) => t + Number(v[k] || 0), 0);
+    return { vendite, totali: totaliVendite(vendite), incassato: somma('incassato'), sconti: somma('sconto'), sulSito: contate.filter(v => v.sulSito).length };
+  }
+  // L'anno SOLARE (gennaio-dicembre: sono soldi, si confrontano con il conto e la dichiarazione): i totali delle vendite che contano nell'anno e dodici
+  // righe, una per mese, con VP e provvigione; `futuro` = il mese non è ancora cominciato. `oggi` = 'AAAA-MM-GG'.
+  const MESI_ANNO = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+  function provvigioniAnno(righe, anno, oggi) {
+    const contate = (righe || []).filter(v => v.conta_il && v.conta_il.slice(0, 4) === String(anno));
+    const mesi = MESI_ANNO.map((nome, i) => {
+      const mese = `${anno}-${String(i + 1).padStart(2, '0')}-01`, delMese = contate.filter(v => v.conta_il.slice(0, 7) === mese.slice(0, 7)), t = totaliVendite(delMese);
+      return { mese, nome, vp: t.vp, provvigione: t.provvigione, vendite: delMese.length, futuro: mese.slice(0, 7) > String(oggi).slice(0, 7) };
+    });
+    return { totali: totaliVendite(contate), mesi };
+  }
+
   // Il prossimo riordino del cliente (da oggi in poi), per la riga «🔁 Prossimo riordino».
   // Nota Pagine 051 (Ignazio 11-12/10/2026): per ogni brand conta solo la vendita più recente: una vendita nuova dello stesso brand
   // sostituisce il riordino della vecchia, anche con la consegna lontana (promo pagata in anticipo). A parità di giorno vale la prima
@@ -558,7 +588,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, provvigioneStimata, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

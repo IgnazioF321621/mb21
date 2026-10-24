@@ -88,6 +88,7 @@ const pezzi = [
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),
   fra('const vociHtml = ', '\n// «I prossimi passi» del livello'), funzione('passiHtml'), funzione('collegaPercorso'), funzione('aggiornaCardCheck'),
   fra('const CK = {', 'const CAMPI_CK'),
+  fra('const indietroCheck = ', '\nasync function apriPaginaCheck'),   // nota 081: «Vedi i 12 mesi nel Check» con la freccia che torna all'area
   fra('const CY = {', '\nfunction doveSono'),   // nota 001: il segnale Coach Yes, vero
 ].join('\n');
 const nomi = Object.keys(stub);

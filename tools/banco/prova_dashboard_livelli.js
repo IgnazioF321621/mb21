@@ -24,7 +24,7 @@ prova('Il primo livello: quattro idee in fila, una domanda ciascuna, con Report 
   assert.doesNotMatch(tessere(html)[1], /lv-tile blu/);
   assert.match(tessere(html)[1], /ottobre · restano 28 giorni · VPG 48 al giorno/);
   assert.match(tessere(html)[3], /Il tuo giorno: da scrivere stasera/);
-  assert.match(html, /id="ds-altro">[\s\S]*? Report<\/button><button id="ds-griglia">[\s\S]*? Griglia PM<\/button>/);
+  assert.match(html, /id="ds-altro">[\s\S]*? Report<\/button><button id="ds-griglia">[\s\S]*? Griglia PM · da impostare<\/button>/);   // nota 081, punto 9: la scritta del Report
 });
 
 prova('La sera «Com\'è andata oggi?» sale in cima, in blu, finché il giorno non è scritto (dalle 20)', () => {
@@ -165,6 +165,23 @@ prova('Qual è il mio prossimo traguardo?: Leader 1° livello, Core, Pacesetter 
   assert.match(h, /Core<\/b>[\s\S]*?Mancano: [^<]* e altre \d/);
 });
 
+prova('081 (7): in Dashboard «di cui Leaders Club» risponde come nel Check, con la stessa funzione: l\'Admin apre l\'elenco e spunta una linea', async () => {
+  const scritte = [], dbqPrima = P.stub.dbq;
+  P.stub.dbq = async cosa => { scritte.push(cosa); return { data: null, error: null }; };
+  const { m } = P.vista('gradino', { gradino: 'elc' });
+  m.ST.utente.ruolo = 'Admin'; m.disegnaOggi();
+  assert.match(P.app.innerHTML, /<button class="lc-apri" data-lcapri aria-expanded="false">di cui Leaders Club ›<\/button>/);
+  P.clic('[data-lcapri]');
+  assert.equal(m.CK.lcAperto, true);
+  assert.match(P.app.innerHTML, /data-lc="A" data-mese="202610" aria-pressed="false">Alberto Bellini</);
+  await P.clic('[data-lc="A"]');
+  assert.deepEqual(scritte, ['segna Leaders Club']);
+  assert.deepEqual(m.CK.lcLinee.map(x => [x.partner_id, x.mese]), [['A', 202610]]);
+  assert.equal(m.LV.vista, 'gradino');   // si resta sulla pagina del livello, ridisegnata con la spunta
+  assert.match(P.app.innerHTML, /data-lc="A" data-mese="202610" aria-pressed="true">✓ Alberto Bellini</);
+  P.stub.dbq = dbqPrima;
+});
+
 prova('Il gradino e il livello: Leaders Club senza Core; Executive con le due righe sotto «Linee riceventi Bonus»', () => {
   let h = P.vista('gradino', { gradino: 'lc' }).html;
   assert.match(h, /<h1>Leaders Club<\/h1>/);
@@ -245,6 +262,7 @@ prova('Il mese: la card apre l\'area, l\'area porta al Check; il traguardo apre 
   assert.deepEqual([m.LV.vista, m.LV.area], ['area', 'azione']);
   P.clic('#lv-12mesi');
   assert.equal(m.ST.tab, 'check');
+  assert.deepEqual({ ...m.CK.da }, { etichetta: 'Azione', tab: 'oggi' });   // nota 081, punto 2: la freccia del Check dice «‹ Azione» e torna qui
   m.ST.tab = 'oggi';
   m.LV.vista = 'traguardo'; m.disegnaOggi();
   P.clic('[data-lv-grad="core"]');

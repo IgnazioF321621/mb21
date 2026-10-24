@@ -195,8 +195,8 @@ async function datiCoreDelMese(io, mese) {
     dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
-    dbq('date dei BBS', supa.from('bbs').select('data')),   // per «prossimo: …» sotto i biglietti (23/09)
-    dbq('date dei WES', supa.from('wes').select('data, giorno')),
+    lettaComune('bbs'),   // per «prossimo: …» sotto i biglietti (23/09); nota 081: una lettura sola con Check e segni vitali
+    lettaComune('wes'),
   ]);
   const errore = [az, ve, ck, cm].find(r => r.error);   // anche core_mese: se non si legge, il modulo non si apre vuoto (il primo salvataggio cancellerebbe i campi a mano, nota 019)
   if (errore) throw errore.error;

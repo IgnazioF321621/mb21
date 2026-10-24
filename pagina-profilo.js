@@ -261,7 +261,7 @@ function mieiSegniHtml() {
 function collegaMieiSegni() {
   app.querySelectorAll('[data-mia-targa]').forEach(b => { b.onclick = () => (b.dataset.miaTarga === 'cep' ? toccaMioCep() : foglioMioBiglietto(b.dataset.miaTarga === 'bbs' ? 'BBS' : 'WES')); });
   const mesi = document.getElementById('pf-12mesi');
-  if (mesi) mesi.onclick = () => { ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); };
+  if (mesi) mesi.onclick = foglioStorico;   // nota Pagine 081, punto 1 (Ignazio 24/10): subito il foglio «Gli ultimi 12 mesi», come nel Check
 }
 // CEP (lavoro 3, Ignazio 19/09: «lo clicca l'utente se si abbona, e lo tolgo io se finisce l'abbonamento»): da spenta la conferma
 // «Ti sei abbonato al CEP?» → `segna_mio_cep` (periodo dal 1° del mese in corso); da accesa il riepilogo (`MB21Lista.descrizioneCep`,

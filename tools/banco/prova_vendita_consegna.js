@@ -295,7 +295,8 @@ prova('078: nella linguetta Vendite il tasto sta subito sotto «Nuova vendita»,
   const aperti = [];
   const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
   const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-24' }, esc, ic: n => `[${n}]`, LS: { contatto: c, sezione: 'vendite', stessoOrdine: { contattoId: 'c1', data: '2026-10-15' } },
-    venditeDellaScheda: async () => [], moduloVendita: (v, p) => aperti.push([v, p]), ordineFatto() {}, document: { getElementById: id => box.querySelector('#' + id) } };
+    venditeDellaScheda: async () => [], moduloVendita: (v, p) => aperti.push([v, p]), ordineFatto() {}, document: { getElementById: id => box.querySelector('#' + id) },
+    guardoAltri: () => false, vediTutti: () => false, nomeVisto: () => 'Partner B', apriProvvigioniDa: x => aperti.push(['provvigioni', x.id]) };   // nota 074
   vm.createContext(ctx);
   const da = src.indexOf('async function sezioneVendite'); vm.runInContext(src.slice(da, src.indexOf('\n}\n', da) + 3) + ';this.sez = sezioneVendite;', ctx);
   await ctx.sez();

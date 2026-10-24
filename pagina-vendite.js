@@ -54,6 +54,7 @@ async function sezioneVendite() {
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
       <div class="vn-tot verde"><span>Guadagno netto</span><b>${n(t.netto, true)}</b></div>
     </div>
+    <button class="vn-riga-info vn-vai" id="vendita-provvigioni"><span>${guardoAltri() && !vediTutti() ? `Le provvigioni di ${esc(nomeVisto())}` : 'Le tue provvigioni'}, mese per mese</span><span>›</span></button>
     ${t.attesaVp ? `<div class="vn-riga-info">${ic('consegna')} Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
     ${prossimo ? `<div class="vn-riga-info">${ic('riordini')} Prossimo riordino · ${esc(prossimo.brand)} · ${esc(MB21Lista.data(prossimo.riordino))}</div>` : ''}` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
       <button class="vn-riga" data-vendita="${v.id}">
@@ -67,6 +68,9 @@ async function sezioneVendite() {
       </button>${MB21Lista.daConsegnare(v) ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
   const p = document.getElementById('vendita-piu');
   if (p) p.onclick = () => moduloVendita(null);
+  // nota 074 (Ignazio 24/10): sotto i tre totali del cliente la riga che apre la linguetta «Provvigioni» del Report, sul mese di oggi
+  const pv = document.getElementById('vendita-provvigioni');
+  if (pv) pv.onclick = () => apriProvvigioniDa(c);
   const st = document.getElementById('vendita-stesso');
   if (st) st.onclick = () => moduloVendita(null, { data: stesso.data, stessoOrdine: true });
   box.querySelectorAll('[data-vendita]').forEach(b => b.onclick = () => moduloVendita(vendite.find(v => v.id === b.dataset.vendita)));
@@ -113,7 +117,8 @@ async function moduloVendita(v, proposta) {
   ]);
   // Decisione 7: «Ordine pagato sul sito» per un cliente con account: in una vendita nuova sempre; in Modifica solo se la vendita è del giorno
   // dell'account o dopo e non ha incassato, prezzo né modo di pagamento (le vendite vecchie da Glide di chi ha preso l'account dopo restano normali).
-  const sulSito = !!dalAccount && (!v || (dalAccount <= v.data && !!incasso && incasso.incassato == null && incasso.prezzo_pubblico == null && !incasso.pagato_con));
+  // Nota 074: la regola è una sola (MB21Lista.pagataSulSito), la stessa della linguetta «Provvigioni» del Report; senza l'incasso letto: no
+  const sulSito = MB21Lista.pagataSulSito(dalAccount, !v ? null : incasso ? { ...incasso, data: v.data } : undefined);
   let brand = v ? v.brand : (proposta && MB21Lista.BRAND.some(b => b[0] === proposta.brand) ? proposta.brand : '');
   const velo = document.createElement('div');
   velo.className = 'velo';
