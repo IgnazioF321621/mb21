@@ -1,17 +1,17 @@
 // MB21 · ADMIN › SEGNALAZIONI (nota Admin 005, Ignazio 19/10/2026): l'Admin legge le segnalazioni dei partner (tasto «Invia feedback»),
-// le segna «Letta» / «Risolta», scrive la risposta e la manda su WhatsApp (testo già scritto, lo invia lui). La risposta resta in
+// le segna «Letta» / «Risolta», scrive la risposta e la manda su Telegram (nota Pagine 086, prima WhatsApp: il testo si copia e si incolla). La risposta resta in
 // segnalazioni.risposta: il partner la vede in «Le tue segnalazioni». Le regole pure stanno in segnala.js (prova_segnala.js).
 // Usa le funzioni di index.html (supa, dbq, esc, ic, app, mostraToast) e di admin.js (AD, nomeDi, telefonoInvito). Solo definizioni.
 async function caricaSegnalazioniAdmin() {
   const S = MB21Segnala;
   const r = await dbq('segnalazioni', supa.from('segnalazioni').select(S.COLONNE_ADMIN).order('creata_il', { ascending: false }).limit(S.QUANTE_ADMIN));
   AD.segnalazioni = r.error ? { errore: 'Non riesco a leggere le segnalazioni: riprova.' } : { elenco: S.ordinaSegnalazioni(r.data) };
-  if (!r.error) AD.segnAperte = S.quanteAperte(r.data);
+  if (!r.error) AD.segnAperte = S.quanteAperte(r.data.filter(x => x.user_id !== ST.utente.id));   // nota 086: il numero conta solo quelle dei partner
   if (AD.sezione === 'segnalazioni') disegnaAdmin();
 }
-// Solo il numero delle aperte, per il menu (una lettura leggera, senza righe)
+// Solo il numero delle aperte, per il menu (una lettura leggera, senza righe); nota Pagine 086 (Ignazio 24/10): solo quelle dei partner, non le proprie
 async function contaSegnalazioniAperte() {
-  const r = await supa.from('segnalazioni').select('id', { count: 'exact', head: true }).is('risolta_il', null);
+  const r = await supa.from('segnalazioni').select('id', { count: 'exact', head: true }).is('risolta_il', null).neq('user_id', ST.utente.id);
   if (r.error) return;
   AD.segnAperte = r.count || 0;
   if (!AD.sezione) disegnaAdmin();
@@ -37,7 +37,7 @@ function segnalazioniAdminHtml() {
         <textarea id="sg-risposta" rows="4" maxlength="1000" placeholder="Scrivi la risposta…">${esc(s.risposta || '')}</textarea>
         <div class="ad-invita"><button data-sg-frase="${esc(s.id)}">Questa funzione già c'è</button>
           <button class="primario" data-sg-salva="${esc(s.id)}">Salva la risposta</button>
-          ${tel ? `<button class="ct-whatsapp" data-sg-wa="${esc(s.id)}">${ic('whatsapp')} Rispondi su WhatsApp</button>` : ''}</div>
+          ${tel ? `<button class="ct-telegram" data-sg-tg="${esc(s.id)}">${ic('telegram')} Rispondi su Telegram</button>` : ''}</div>
         ${tel ? '' : '<small>Manca il telefono di questa persona: salva la risposta e mandala come vuoi.</small>'}
         <div class="ad-invita">${s.letta_il ? '' : `<button data-sg-letta="${esc(s.id)}">Letta</button>`}
           ${s.risolta_il ? `<button data-sg-riapri="${esc(s.id)}">Rimetti aperta</button>` : `<button data-sg-risolta="${esc(s.id)}">Risolta</button>`}</div>
@@ -59,11 +59,12 @@ function collegaSegnalazioniAdmin() {
   su('[data-sg-apri]', b => { AD.segnalazioneAperta = AD.segnalazioneAperta === b.dataset.sgApri ? null : b.dataset.sgApri; disegnaAdmin(); });
   su('[data-sg-frase]', b => { const t = app.querySelector('#sg-risposta'); if (t && !t.value.trim()) { t.value = S.FRASE_GIA_C_E; t.focus(); } });
   su('[data-sg-salva]', b => { const s = dai(b.dataset.sgSalva); const t = scritta(); if (!t) return mostraToast('Scrivi prima la risposta'); scrivi(s, { risposta: t, letta_il: s.letta_il || adesso() }, 'Risposta salvata'); });
-  su('[data-sg-wa]', b => {
-    const s = dai(b.dataset.sgWa), t = scritta(), link = S.linkWhatsApp(telefonoInvito(utenteDiSegnalazione(s)), t);
+  // nota Pagine 086 (Ignazio 24/10: «rispondi su Telegram»): la risposta si copia e si apre la chat Telegram della persona, dove si incolla (apriTelegramCon, admin.js)
+  su('[data-sg-tg]', async b => {
+    const s = dai(b.dataset.sgTg), t = scritta();
     if (!t) return mostraToast('Scrivi prima la risposta');
-    if (link) window.open(link, '_blank', 'noopener');   // subito, nel tocco: WhatsApp si apre col testo, lo manda Ignazio
-    scrivi(s, { risposta: t, letta_il: s.letta_il || adesso() }, 'Risposta salvata');
+    const avviso = await apriTelegramCon(telefonoInvito(utenteDiSegnalazione(s)), t);
+    scrivi(s, { risposta: t, letta_il: s.letta_il || adesso() }, 'Risposta salvata · ' + avviso);
   });
   su('[data-sg-letta]', b => scrivi(dai(b.dataset.sgLetta), { letta_il: adesso() }, 'Segnata come letta'));
   su('[data-sg-risolta]', b => { const s = dai(b.dataset.sgRisolta), t = scritta(); scrivi(s, { risolta_il: adesso(), letta_il: s.letta_il || adesso(), ...(t && t !== (s.risposta || '') ? { risposta: t } : {}) }, 'Segnata come risolta'); });

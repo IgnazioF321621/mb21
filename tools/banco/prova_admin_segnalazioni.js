@@ -14,14 +14,24 @@ ctx.AD.segnalazioni = { elenco: S.ordinaSegnalazioni([
 prova('aperta prima della risolta; testo protetto; tasti giusti nella aperta (con numero)', () => {
   const h = ctx.html();
   assert.ok(h.indexOf('data-sg-apri="s1"') < h.indexOf('data-sg-apri="s2"'));
-  assert.match(h, /data-sg-wa="s1"/); assert.match(h, /data-sg-foto="s1"/); assert.match(h, /data-sg-risolta="s1"/); assert.match(h, /data-sg-letta="s1"/);
+  assert.match(h, /<button class="ct-telegram" data-sg-tg="s1">\[telegram\] Rispondi su Telegram<\/button>/); assert.doesNotMatch(h, /WhatsApp|data-sg-wa/);   // nota Pagine 086
+  assert.match(h, /data-sg-foto="s1"/); assert.match(h, /data-sg-risolta="s1"/); assert.match(h, /data-sg-letta="s1"/);
   assert.match(h, /Era in: Agenda/);   // P1 (23/10): «MB Plan» si chiama «Agenda»
   assert.doesNotMatch(h, /<b>idea<\/b>/);
 });
-prova('senza telefono niente tasto WhatsApp; la risolta si può rimettere aperta', () => {
+prova('senza telefono niente tasto Telegram; la risolta si può rimettere aperta', () => {
   ctx.AD.segnalazioneAperta = 's2';
   const h = ctx.html();
-  assert.doesNotMatch(h, /data-sg-wa=/); assert.match(h, /Manca il telefono/); assert.match(h, /data-sg-riapri="s2"/); assert.doesNotMatch(h, /data-sg-risolta=/);
+  assert.doesNotMatch(h, /data-sg-tg=/); assert.match(h, /Manca il telefono/); assert.match(h, /data-sg-riapri="s2"/); assert.doesNotMatch(h, /data-sg-risolta=/);
+});
+prova('nota Pagine 086: il numero arancione del menu conta solo le segnalazioni dei partner, non quelle dell\'Admin', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-segnalazioni.js'), 'utf8');
+  assert.match(src, /select\('id', \{ count: 'exact', head: true \}\)\.is\('risolta_il', null\)\.neq\('user_id', ST\.utente\.id\);/);
+  assert.match(src, /AD\.segnAperte = S\.quanteAperte\(r\.data\.filter\(x => x\.user_id !== ST\.utente\.id\)\);/);
+  const righe = [{ user_id: 'admin', risolta_il: null }, { user_id: 'u1', risolta_il: null }, { user_id: 'u1', risolta_il: '2026-10-20T10:00:00Z' }];
+  assert.equal(S.quanteAperte(righe.filter(x => x.user_id !== 'admin')), 1);
+  const A = fs.readFileSync(path.join(__dirname, '../../admin.js'), 'utf8');
+  assert.match(A, /rispondi anche su Telegram/); assert.doesNotMatch(A, /rispondi anche su WhatsApp/);
 });
 prova('stati: caricamento, errore, vuoto', () => {
   ctx.AD.segnalazioni = null; assert.match(ctx.html(), /Carico/);

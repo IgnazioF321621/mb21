@@ -242,7 +242,7 @@
   }
 
   // Tutto quello che serve alla Dashboard per il mese di `oggi`
-  function calcola({ checkMesi, obiettivi, oggi, scadenza, segniAl, squadraAl }) {
+  function calcola({ checkMesi, obiettivi, oggi, segniAl, squadraAl }) {
     const mese = primoDelMese(oggi);
     const giorni = giorniRimasti(oggi);
     const c = checkMesi.find(x => x.mese === mese) || {};
@@ -257,9 +257,6 @@
     const ultimo = checkMesi.reduce((m, x) => (x.ultimo_check && (!m || x.ultimo_check > m) ? x.ultimo_check : m), null);
     return {
       mese, giorni, schede,
-      abbonamentoAttivo: !!scadenza && scadenza >= oggi,
-      abbonamento: statoAbbonamento(scadenza, oggi),   // attivo · in_scadenza · scaduto
-      scadenza,
       obiettiviMancanti: !haObiettivi(o),
       ultimoCheck: ultimo,
       segniVitali: segniVitali(checkMesi, tot, mese),
@@ -534,30 +531,7 @@
     return null;
   }
 
-  // ── Abbonamento (cantiere 19, decisioni di Ignazio 16/09) ──
-  // Stato: 'scaduto' (manca o passata) · 'in_scadenza' (mancano 7 giorni o meno, come il preavviso di Glide) · 'attivo'
-  const GIORNI_PREAVVISO = 7;
-  function statoAbbonamento(scadenza, oggi) {
-    if (!scadenza || scadenza < oggi) return 'scaduto';
-    const giorni = Math.round((Date.parse(scadenza + 'T00:00:00Z') - Date.parse(oggi + 'T00:00:00Z')) / 86400000);
-    return giorni <= GIORNI_PREAVVISO ? 'in_scadenza' : 'attivo';
-  }
-  // Pagamento ricevuto: scadenza al 5 del mese dopo oggi (vale dal 5 del mese corrente, anche se paga in ritardo);
-  // se aveva già pagato più avanti, un mese in più sulla sua scadenza.
-  function scadenzaDopoPagamento(scadenza, oggi) {
-    const [a, m] = oggi.split('-').map(Number);
-    const base = `${m === 12 ? a + 1 : a}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}-05`;
-    if (!scadenza || scadenza < base) return base;
-    const [sa, sm, sg] = scadenza.split('-').map(Number);
-    const na = sm === 12 ? sa + 1 : sa, nm = sm === 12 ? 1 : sm + 1;
-    const ultimo = new Date(Date.UTC(na, nm, 0)).getUTCDate();
-    return `${na}-${String(nm).padStart(2, '0')}-${String(Math.min(sg, ultimo)).padStart(2, '0')}`;
-  }
-  // Scadenza che conta: quella di chi paga (abbonamento in comune) o la propria
-  function scadenzaDi(utente, utenti) {
-    const chiPaga = utente && utente.abbonamento_con && (utenti || []).find(u => u.id === utente.abbonamento_con);
-    return chiPaga ? chiPaga.abbonamento_scadenza : (utente && utente.abbonamento_scadenza) || null;
-  }
+  // L'abbonamento (cantiere 19) non c'è più: tolte le sue regole (stato, pagamento, abbonamento in comune; nota Pagine 086, Ignazio 24/10).
 
   // L'elenco unico di «Oggi» (verifica Dashboard T5, ordine deciso da Ignazio 22/10): prima ciò che è aperto da chiudere
   // (Conferme, Riordini, Dare Seguito), poi «Poi si contatta»: i nomi in coda e le telefonate scelte a mano insieme, queste con la
@@ -590,7 +564,7 @@
     return [n('chiudere') ? `${n('chiudere')} da chiudere` : '', n('contattare') ? `${n('contattare')} da chiamare` : '', e.fatti ? e.conto : ''].filter(Boolean).join(' · ');
   }
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, GIORNI_PREAVVISO, statoAbbonamento, scadenzaDopoPagamento, scadenzaDi, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni, GRUPPI_OGGI, elencoOggi, fraseElencoOggi };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni, GRUPPI_OGGI, elencoOggi, fraseElencoOggi };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);
