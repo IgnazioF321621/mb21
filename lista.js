@@ -353,6 +353,22 @@
     return fine < dal ? dal : fine;
   }
 
+  // Nota Pagine 070 (Ignazio 24/10/2026): il CEP dalla targhetta, per l'Admin (Mappa e testata della scheda).
+  // «Togli»: il periodo di oggi si chiude come «Non ha rinnovato» (dataUscitaCep: i mesi passati restano contati); se è cominciato in questo
+  // mese si toglie del tutto, perché non è mai partito. { id, uscito_il } · { id, elimina: true } · null se oggi non è abbonato
+  function cepDaTogliere(periodi, oggi) {
+    const p = (periodi || []).find(x => x.dal <= oggi && (!x.uscito_il || x.uscito_il >= oggi));
+    if (!p) return null;
+    return p.dal >= String(oggi).slice(0, 8) + '01' ? { id: p.id, elimina: true } : { id: p.id, uscito_il: dataUscitaCep(p.dal, oggi) };
+  }
+  // «È abbonato al CEP?» Sì: se l'ultimo periodo si è chiuso alla fine del mese scorso o dopo (un «Togli» di troppo, un rinnovo saputo tardi) si riapre
+  // lui e l'abbonamento resta uno solo; altrimenti un periodo nuovo dal 1° del mese, come `segna_mio_cep` del Profilo. { id, dal, uscito_il: null } · { dal, uscito_il: null }
+  function cepDaAccendere(periodi, oggi) {
+    const ultimo = [...(periodi || [])].sort((a, b) => String(b.dal).localeCompare(String(a.dal)))[0];
+    if (ultimo && ultimo.uscito_il && ultimo.dal <= oggi && ultimo.uscito_il >= fineMesePrecedente(oggi)) return { id: ultimo.id, dal: ultimo.dal, uscito_il: null };
+    return { dal: String(oggi).slice(0, 8) + '01', uscito_il: null };
+  }
+
   // Riga sotto «CEP» nella scheda (cantiere 20 lavoro 3, Ignazio 17/09): con un periodo aperto oggi
   // «dal 01/06/2026 · abbonato fino al 30/09/2026» (fine del mese in corso, si sposta da sola ogni mese finché
   // l'Admin non chiude il periodo), fino al 20 del mese con «· rinnovo del 1° da verificare»;
@@ -603,7 +619,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

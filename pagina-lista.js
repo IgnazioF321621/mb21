@@ -334,14 +334,15 @@ function scaricaEsporta(scelti) {
   LS.esporta = null; disegnaElenco();
 }
 
-// BBS · WES · CEP accanto al nome, stessa regola sulla card e nella testata della scheda (Ignazio 18/09: al Cliente in alto
-// servono i Brand, non i segni vitali): per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa.
+// BBS · WES · CEP accanto al nome nella testata della scheda (Ignazio 18/09: al Cliente in alto servono i Brand, non i segni vitali):
+// per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa.
 const segniInAlto = (categoria, t) => categoria === 'Partner' || !!(t && (t.bbs || t.wes || t.cep));
 
-// Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP secondo `segniInAlto`
+// Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP solo quelle accese, per tutte le categorie (nota Pagine 070, Ignazio 24/10: le grigie
+// sulle card spariscono; cambia la regola del 18/09 «una sola regola per card e testata». In testata e in Mappa restano tutte e tre, e per l'Admin si toccano)
 function targheCard(r) {
   const t = LS.targhe && LS.targhe[r.id];
-  const segni = segniInAlto(r.categoria, t) ? targheHtml(t) : '', acc = targaAccountHtml(r.categoria, r.account_cliente_dal);
+  const segni = targheHtml(t, null, { accese: true }), acc = targaAccountHtml(r.categoria, r.account_cliente_dal);
   return r.app || segni || acc ? `<span class="sv-targhe">${targaAppHtml(r.app)}${acc}${segni}</span>` : '';
 }
 // Nota Pagine 080, punto 2 (Ignazio 24/10, «C»): la targhetta «Account» di un Cliente con account, uguale sulla card della Lista (scheda chiusa, dal dato
@@ -1224,18 +1225,37 @@ function targaAppHtml(uso) {
   return uso ? `<span class="sv-targa app" title="Ultimo uso dell'app">${ic('app')} ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())}</span>` : '';
 }
 // t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
-function targheHtml(t, numeri) {
-  return ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}${
-    numeri && numeri[k] ? ' ' + numeri[k] : ''}</span>`).join('');
+// opz (nota Pagine 070): accese = solo quelle accese (le card della Lista) · tasto = per l'Admin si toccano (`toccaTarga`), chi = codice della riga della Mappa
+function targheHtml(t, numeri, opz = {}) {
+  return ['bbs', 'wes', 'cep'].filter(k => !opz.accese || (t && t[k])).map(k => {
+    const testo = `${k.toUpperCase()}${numeri && numeri[k] ? ' ' + numeri[k] : ''}`, on = t && t[k] ? 'on' : '';
+    return opz.tasto
+      ? `<button class="sv-targa tasto ${k} ${on}" data-targa="${k}"${opz.chi ? ` data-chi="${esc(opz.chi)}"` : ''} aria-label="${k.toUpperCase()}: ${on ? 'chi ce l\'ha' : k === 'cep' ? 'è abbonato?' : 'ha il biglietto?'}">${testo}</button>`
+      : `<span class="sv-targa ${k} ${on}">${testo}</span>`;
+  }).join('');
+}
+// Le targhette si toccano solo dove l'Admin può scrivere (con Partner Select «Tutti» si guarda soltanto)
+const targheDaToccare = () => eAdmin() && !soloLettura();
+// Acceso/spento dai segni letti della scheda; vale anche per la card del compagno/a collegato, che li condivide
+function ricordaTarghe(SV) {
+  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
+  LS.targhe = LS.targhe || {};
+  for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
+  return t;
 }
 function mostraTarghe(SV) {
   const el = document.getElementById('sv-targhe');
   if (!SV || !LS.contatto || SV.id !== LS.contatto.id) return;
-  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
-  LS.targhe = LS.targhe || {};
-  for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
-  if (el) el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + targaAccountHtml(LS.contatto.categoria, accountDellaScheda(LS.contatto))
-    + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
+  const t = ricordaTarghe(SV);
+  if (!el) return;
+  el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + targaAccountHtml(LS.contatto.categoria, accountDellaScheda(LS.contatto))
+    + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t, null, { tasto: targheDaToccare() }) : '');
+  // nota 070: dalla testata lo stesso foglio della Mappa; dopo, testata e linguetta «Segni vitali» (se aperta) si ridisegnano con i segni nuovi
+  el.querySelectorAll('[data-targa]').forEach(b => { b.onclick = () => toccaTarga(LS.contatto, b.dataset.targa, S => {
+    if (!LS.contatto || LS.contatto.id !== S.id) return;
+    mostraTarghe(S);
+    if (LS.sezione === 'segni') sezioneSegni();
+  }); });
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);
@@ -1244,6 +1264,111 @@ function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sez
     .finally(() => { if (LS.svLettura && LS.svLettura.promessa === promessa) LS.svLettura = null; });
   LS.svLettura = { id: c.id, promessa };
   return promessa;
+}
+
+// ── Nota Pagine 070 (Ignazio 24/10/2026: biglietti BBS · WES · CEP senza una squadra che li segna) ──
+// Per l'Admin le targhette della Mappa e della testata della scheda sono tasti, con questa sola funzione. Grigia → il foglio «Ha il biglietto?»
+// (lo stesso della Dashboard e del Profilo: lui, compagno/a, ospiti) o, per il CEP, «È abbonato al CEP?»; accesa → chi ce l'ha e «Togli».
+// Acceso o spento lo dice la lettura fresca della scheda (caricaSegni, la stessa della linguetta «Segni vitali», che resta per i mesi passati), non il colore
+// sullo schermo. c = { id, nome, user_id } della scheda · k = 'bbs' | 'wes' | 'cep' · dopo(SV) ridisegna chi ha chiamato (Lista e Check si allineano da soli).
+async function toccaTarga(c, k, dopo) {
+  if (!c || !eAdmin() || soloGuardo()) return;
+  let SV;
+  try { SV = LS.contatto && LS.contatto.id === c.id ? await segniDellaScheda(c) : await caricaSegni(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
+  if (SV.ufficiale) {   // la regola del 16/09: i segni di un partner si scrivono su una scheda sola, quella col codice Amway nella lista dell'Admin
+    if (await chiediConferma('I segni vitali si scrivono su una scheda sola', `Quella di ${c.nome} collegata al codice Amway, nella lista di ${SV.ufficiale.lista || 'un altro partner'}.`, 'Apri quella scheda')) {
+      await apriContattoDa(SV.ufficiale.id, LS.contatto && LS.contatto.id === c.id ? LS.ritorno : 'mappa');
+    }
+    return;
+  }
+  const L = MB21Lista, oggi = MB21Coda.oggiRoma(), t = L.targheSegni(SV.biglietti, SV.cep, oggi, SV.attivi);
+  const fatto = testo => {
+    if (testo) mostraToast(testo);   // dopo «Ha il biglietto?» il «Biglietto segnato» lo dice già rispondiBiglietto
+    if (LS.sv && LS.sv.id === SV.id && LS.sv !== SV) LS.sv = null;   // la scheda, se si riapre, rilegge
+    ricordaTarghe(SV);   // la card nella Lista Nomi
+    dopo(SV);
+  };
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const chiudi = () => velo.remove();
+  const apri = html => { velo.innerHTML = `<div class="foglio">${html}</div>`; document.body.appendChild(velo); velo.onclick = e => { if (e.target === velo) chiudi(); }; };
+
+  if (k === 'cep') {
+    if (!t.cep) {
+      const mese = new Date(oggi + 'T12:00:00Z').toLocaleDateString('it-IT', { month: 'long', timeZone: 'UTC' });
+      if (!await chiediConferma('È abbonato al CEP?', `${c.nome}: la targhetta si accende dal 1° di ${mese}. Quando l'abbonamento finisce, la tocchi di nuovo e «Togli il CEP».`, 'Sì, accendi il CEP')) return;
+      const p = L.cepDaAccendere(SV.cep, oggi), errore = L.controllaPeriodoCep(SV.cep, { id: p.id || null, dal: p.dal, uscito_il: null });
+      if (errore) return mostraToast(errore + ': guarda in «Segni vitali» nella scheda');
+      const riga = { uscito_il: null, aggiornato_il: new Date().toISOString() };
+      const { data, error } = await dbq('accendo il CEP dalla targhetta', p.id ? supa.from('cep').update(riga).eq('id', p.id).select().single()
+        : supa.from('cep').insert({ ...riga, contatto_id: c.id, dal: p.dal }).select().single());
+      if (error) return mostraToast('Non salvato: riprova.');
+      SV.cep = [data, ...SV.cep.filter(x => x.id !== data.id)].sort((a, b) => b.dal.localeCompare(a.dal));
+      return fatto('CEP acceso');
+    }
+    const via = L.cepDaTogliere(SV.cep, oggi);
+    apri(`<h3>${ic('fatto')} CEP · ${esc(c.nome)}</h3>
+      <p>Abbonato ${esc(L.descrizioneCep(SV.cep, oggi).replace(' · abbonato fino', ', fino'))}.</p>
+      <p class="sotto" style="margin:0">${via.elimina ? 'Il periodo è cominciato questo mese: «Togli» lo cancella.' : `«Togli» lo chiude al ${esc(L.data(via.uscito_il))}, come «Non ha rinnovato»: i mesi passati restano.`}</p>
+      <div class="due"><button class="link" id="tg-via" style="color:var(--rosso)">Togli il CEP</button><button class="link" id="tg-no">Chiudi</button></div>`);
+    velo.querySelector('#tg-no').onclick = chiudi;
+    velo.querySelector('#tg-via').onclick = async e => {
+      e.target.disabled = true;
+      const { error } = await dbq('tolgo il CEP dalla targhetta', via.elimina ? supa.from('cep').delete().eq('id', via.id)
+        : supa.from('cep').update({ uscito_il: via.uscito_il, aggiornato_il: new Date().toISOString() }).eq('id', via.id));
+      if (error) { e.target.disabled = false; return mostraToast('Non tolto: riprova.'); }
+      SV.cep = via.elimina ? SV.cep.filter(x => x.id !== via.id) : SV.cep.map(x => (x.id === via.id ? { ...x, uscito_il: via.uscito_il } : x));
+      chiudi(); fatto('CEP tolto');
+    };
+    return;
+  }
+
+  const tipo = k.toUpperCase(), evento = SV.attivi[k];
+  if (!evento) return mostraToast(`Nessun ${tipo} in vendita: le date si aggiungono nella pagina Admin`);
+  const etichetta = `${tipo} ${L.etichettaEvento(evento)}`;
+  const suoi = SV.biglietti.filter(b => b.tipo === tipo && b.evento === evento);
+  if (!t[k]) {
+    const salva = async x => {
+      if (!await bigliettoNonDoppio(c, SV, tipo, evento)) return null;
+      const gia = suoi.find(b => b.contatto_id === c.id), riga = { contatto: x.contatto, compagno: x.compagno, ospiti: x.ospiti };
+      const r = await dbq('biglietto dalla targhetta', gia ? supa.from('biglietti').update(riga).eq('id', gia.id).select().single()
+        : supa.from('biglietti').insert({ contatto_id: c.id, tipo, evento, ...riga }).select().single());
+      if (r.error) return { error: { message: r.error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.' } };
+      SV.biglietti = [...SV.biglietti.filter(b => b.id !== r.data.id), r.data];
+      return { error: null };
+    };
+    apri(domandaBigliettoHtml({ tipo, evento, chi: c.nome, compagno: SV.compagno ? SV.compagno.nome : SV.ana.compagno_nome }, 'pf-domanda'));
+    collegaDomandaBiglietto(velo, ok => { chiudi(); if (ok !== false) fatto(''); }, salva);
+    return;
+  }
+  apri(`<h3>${ic('biglietto')} ${esc(etichetta)} · ${esc(c.nome)}</h3>
+    ${suoi.filter(b => L.postiBiglietto(b)).map(b => `<p>Biglietto segnato: <b>${esc(personeDelBiglietto(c, SV, b))}</b>.</p>`).join('')}
+    <p class="sotto" style="margin:0">Per cambiare chi va o gli ospiti: toglilo e segnalo di nuovo.</p>
+    <div class="due"><button class="link" id="tg-via" style="color:var(--rosso)">Togli il biglietto</button><button class="link" id="tg-no">Chiudi</button></div>`);
+  velo.querySelector('#tg-no').onclick = chiudi;
+  velo.querySelector('#tg-via').onclick = async e => {
+    e.target.disabled = true;
+    const { error } = await dbq('tolgo il biglietto dalla targhetta', supa.from('biglietti').delete().in('id', suoi.map(b => b.id)));
+    if (error) { e.target.disabled = false; return mostraToast('Non tolto: riprova.'); }
+    SV.biglietti = SV.biglietti.filter(b => !suoi.includes(b));
+    chiudi(); fatto('Biglietto tolto');
+  };
+}
+// Chi c'è su un biglietto, a parole: «Persona A · Persona C · 2 ospiti» (la coppia collegata, o il compagno/a scritto a mano)
+function personeDelBiglietto(c, SV, b) {
+  const suo = b.contatto_id === c.id ? c.nome : SV.compagno && SV.compagno.id === b.contatto_id ? SV.compagno.nome : '';
+  const altro = SV.compagno ? (b.contatto_id === c.id ? SV.compagno.nome : c.nome) : SV.ana.compagno_nome || 'compagno/a';
+  return [b.contatto ? suo : '', b.compagno ? altro : '', b.ospiti ? `${b.ospiti} ospit${b.ospiti === 1 ? 'e' : 'i'}` : ''].filter(Boolean).join(' · ');
+}
+// Stessa persona (stesso nome) con un biglietto per questo evento in un'altra scheda: si avvisa (Ignazio 16/09). true = si va avanti.
+// La usano «+ Biglietto» della linguetta «Segni vitali» e le targhette (nota 070).
+async function bigliettoNonDoppio(c, SV, tipo, evento) {
+  const doppi = await dbq('biglietti con lo stesso nome', supa.from('biglietti').select('contatto_id, contatti!inner(nome, utenti(nome))')
+    .eq('tipo', tipo).eq('evento', evento).ilike('contatti.nome', nomeEsatto(c.nome)).limit(5));
+  const altrove = (doppi.data || []).filter(x => !SV.biglietti.some(b => b.contatto_id === x.contatto_id));
+  if (!altrove.length) return true;
+  const liste = [...new Set(altrove.map(x => (x.contatti && x.contatti.utenti ? x.contatti.utenti.nome : 'un altro partner')))].join(', ');
+  return chiediConferma('Lo aggiungo lo stesso?', `${c.nome} ha già un biglietto ${tipo} ${MB21Lista.etichettaEvento(evento)} nella lista di ${liste}.`, 'Aggiungi');
 }
 
 // Foglio per scegliere una scheda della lista di `userId` (compagno/a, partner della Mappa).
@@ -1362,14 +1487,7 @@ async function sezioneSegni() {
       const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
       if (!v) return;
       const evento = liberi[etichette.indexOf(v.evento)];
-      // stessa persona (stesso nome) con un biglietto per questo evento in un'altra scheda: si avvisa (Ignazio 16/09)
-      const doppi = await dbq('biglietti con lo stesso nome', supa.from('biglietti').select('contatto_id, contatti!inner(nome, utenti(nome))')
-        .eq('tipo', tipo).eq('evento', evento).ilike('contatti.nome', nomeEsatto(c.nome)).limit(5));
-      const altrove = (doppi.data || []).filter(x => !SV.biglietti.some(b => b.contatto_id === x.contatto_id));
-      if (altrove.length) {
-        const liste = [...new Set(altrove.map(x => (x.contatti && x.contatti.utenti ? x.contatti.utenti.nome : 'un altro partner')))].join(', ');
-        if (!await chiediConferma('Lo aggiungo lo stesso?', `${c.nome} ha già un biglietto ${tipo} ${MB21Lista.etichettaEvento(evento)} nella lista di ${liste}.`, 'Aggiungi')) return;
-      }
+      if (!await bigliettoNonDoppio(c, SV, tipo, evento)) return;   // stessa persona con un biglietto in un'altra scheda: si avvisa (Ignazio 16/09)
       const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
         .insert({ contatto_id: c.id, tipo, evento, contatto: true }).select().single());
       if (error) return mostraToast(error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.');

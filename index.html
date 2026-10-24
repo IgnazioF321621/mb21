@@ -2326,6 +2326,9 @@
   .sv-targa.bbs.on { background: var(--bbs); border-color: var(--bbs); color: #fff; } .sv-targa.wes.on { background: var(--wes); border-color: var(--wes); color: #fff; } .sv-targa.cep.on { background: var(--cep); border-color: var(--cep); color: #fff; }
   .sv-targa.app { background: var(--sfondo); color: var(--testo-soft); border-color: transparent; font-weight: 600; letter-spacing: 0; }
   .sv-targa.account { background: var(--superficie); color: var(--testo); }   /* nota 080: «Account», lo stile delle altre targhette */
+  /* nota 070: per l'Admin in Mappa e nella testata della scheda le targhette si toccano: stesso aspetto, zona di tocco più grande (invisibile) */
+  .sv-targa.tasto { font-family: inherit; line-height: inherit; cursor: pointer; position: relative; }
+  .sv-targa.tasto::after { content: ''; position: absolute; inset: -5px -2px; }   /* non più di 5px: sopra, in Mappa, c'è il nome che apre la scheda */
   .sv-ev { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 0; border-top: 1px solid var(--linea); }
   .sv-testa + .sv-ev { border-top: 0; }
   .sv-ev .quando { font-weight: 600; font-size: 14px; min-width: 68px; }
@@ -2360,6 +2363,8 @@
   .mp-tabella td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--bordo); font-weight: 700; }
   .mp-tabella td:first-child { font-weight: 400; }
   .mp-testa { display: flex; justify-content: space-between; align-items: center; color: var(--grigio); font-size: 12px; margin-bottom: 6px; }
+  .mp-conti { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--testo-soft); font-size: 13px; margin: -2px 0 8px; }   /* nota 070: «BBS 11-2026: segnati 4 su 35» */
+  .mp-conti b { color: var(--testo); }
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; padding: 8px 0; cursor: pointer; }
   .versione.nuova { color: var(--blu); font-size: 14px; font-weight: 600; }
 </style>

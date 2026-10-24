@@ -1655,38 +1655,42 @@ const dataBreve = giorno => (giorno ? MB21Report.dataLunga(giorno) : '—');   /
 // (io · compagno/a · ospiti insieme); dopo, correzioni e aggiunte le fa l'Admin dalla scheda
 // La domanda è una sola (`domandaBigliettoHtml`), usata qui e nel foglio del Profilo (cantiere 25 bis: stessa schermata, stesso codice).
 // Dal 25 bis il biglietto si spegne e si rifà dal Profilo toccando la targhetta (prima: una risposta sola, correzioni dall'Admin).
+// Nota Pagine 070 (Ignazio 24/10): lo stesso foglio per l'Admin dalle targhette di Mappa e scheda (`toccaTarga`, pagina-lista.js): con `x.chi`
+// (il nome della persona) la domanda è «Persona B ha il biglietto?» e il primo tasto è il suo nome invece di «Io».
 function domandaBigliettoHtml(x, classe) {
   const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'WES';
   return `<div class="${classe} ${k}" data-seg="${esc(x.tipo)}|${esc(x.evento)}">
-      <b>${ic('biglietto')} ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · Hai il biglietto?</b>
-      <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">Io</button>
+      <b>${ic('biglietto')} ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · ${x.chi ? `${esc(x.chi)} ha il biglietto?` : 'Hai il biglietto?'}</b>
+      <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">${x.chi ? esc(x.chi) : 'Io'}</button>
         ${x.compagno ? `<button class="sv-chip ${k}" data-campo="compagno">${esc(x.compagno)}</button>` : ''}
         <label class="sv-osp">+<input type="number" min="0" max="50" value="0" data-campo="ospiti">ospiti</label></div>
       <div class="riga"><button class="primario" data-si>Sì, segna il biglietto</button><button class="link" data-no>No, niente biglietto</button></div>
-      <small>Per correggere o aggiungere ospiti: nel tuo Profilo, tocca la targhetta ${nome.toUpperCase()}</small></div>`;
+      ${x.chi ? '' : `<small>Per correggere o aggiungere ospiti: nel tuo Profilo, tocca la targhetta ${nome.toUpperCase()}</small>`}</div>`;
 }
 function riquadriBiglietto() {
   return (DS.daSegnare || []).map(x => domandaBigliettoHtml(x, 'banner-big')).join('');
 }
 // Collega chip e bottoni della domanda dentro `radice`; `dopo` = cosa ridisegnare a risposta salvata
-function collegaDomandaBiglietto(radice, dopo) {
+// `salva` (nota 070, solo l'Admin per un'altra persona): scrive lui il biglietto e risponde { error } (null = annullato); «No» allora chiude soltanto, `dopo(false)`
+function collegaDomandaBiglietto(radice, dopo, salva) {
   radice.querySelectorAll('[data-seg]').forEach(box => {
     box.querySelectorAll('.sv-chip').forEach(ch => { ch.onclick = () => ch.classList.toggle('on'); });
-    box.querySelector('[data-si]').onclick = () => rispondiBiglietto(box, true, dopo);
-    box.querySelector('[data-no]').onclick = () => rispondiBiglietto(box, false, dopo);
+    box.querySelector('[data-si]').onclick = () => rispondiBiglietto(box, true, dopo, salva);
+    box.querySelector('[data-no]').onclick = () => (salva ? dopo(false) : rispondiBiglietto(box, false, dopo));
   });
 }
 
-async function rispondiBiglietto(box, si, dopo) {
+async function rispondiBiglietto(box, si, dopo, salva) {
   const [tipo, evento] = box.dataset.seg.split('|');
   const on = campo => { const el = box.querySelector(`[data-campo="${campo}"]`); return !!el && el.classList.contains('on'); };
   const ospiti = Math.max(0, Number(box.querySelector('[data-campo="ospiti"]').value) || 0);
   const contatto = si && on('contatto'), compagno = si && on('compagno'), osp = si ? ospiti : 0;
   if (si && !contatto && !compagno && !osp) return mostraToast('Scegli almeno un biglietto, oppure premi «No»');
   box.querySelectorAll('button').forEach(b => { b.disabled = true; });
-  const { error } = await dbq('segna il mio biglietto', supa.rpc('segna_mio_biglietto',
+  const r = salva ? await salva({ tipo, evento, contatto, compagno, ospiti: osp }) : await dbq('segna il mio biglietto', supa.rpc('segna_mio_biglietto',
     { p_tipo: tipo, p_evento: evento, p_contatto: contatto, p_compagno: compagno, p_ospiti: osp }));
-  if (error) { box.querySelectorAll('button').forEach(b => { b.disabled = false; }); return mostraToast(error.message || 'Non salvato: riprova.'); }
+  const error = r ? r.error : null;
+  if (!r || error) { box.querySelectorAll('button').forEach(b => { b.disabled = false; }); return error ? mostraToast(error.message || 'Non salvato: riprova.') : undefined; }
   DS.daSegnare = (DS.daSegnare || []).filter(x => !(x.tipo === tipo && x.evento === evento));
   mostraToast(si ? 'Biglietto segnato' : 'Va bene, non te lo chiedo più');
   dopo();

@@ -92,12 +92,26 @@ async function caricaSchedeMappa() {
   const L = MB21Lista, attivi = { bbs: L.eventoAttivo(g.bbs), wes: L.eventoAttivo(g.wes) };
   MP.attivi = attivi;
   MP.schede = g.schede;
-  MP.targhe = L.targhePerContatto(g.biglietti, g.cep, g.coppie, g.oggi, attivi);
+  MP.targhe = L.cepPerCodice(L.targhePerContatto(g.biglietti, g.cep, g.coppie, g.oggi, attivi), g.schede);   // nota 069: il CEP va per codice, come in Lista e scheda
   MP.usoApp = MB21Mappa.usoApp(g.utenti);   // targhetta 📱: chi ha l'app e da quanto non la apre
   MP.segni = MB21Mappa.segniGruppo({ squadra: MP.squadra || g.squadra, schede: g.schede, preferito: visto().id, coppie: g.coppie,
     utenti: g.utenti, biglietti: g.biglietti, cep: g.cep, attivoBbs: attivi.bbs, attivoWes: attivi.wes, oggi: g.oggi });
 }
 const schedaMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, visto().id) : null);
+// Nota Pagine 070 (Ignazio 24/10): la scheda delle targhette BBS · WES · CEP di una riga. Per l'Admin quella della sua lista, dove i segni si scrivono
+// (scelta A del 16/09, anche con il Partner Select su un altro partner): così la targhetta che tocca è quella che si accende. Per gli altri come prima.
+const schedaSegniMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, eAdmin() ? ST.utente.id : visto().id) : null);
+const targheRiga = r => { const sc = schedaSegniMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] || null : null; };
+// In cima, per l'Admin, il conto a parole su tutto il gruppo che guarda (filtri e ricerca a parte): «BBS 11-2026: segnati 4 su 35». Nessuna lettura in più
+function contoSegniHtml(cime) {
+  if (!eAdmin() || !MP.attivi || !MP.targhe || !MP.schede) return '';
+  const M = MB21Mappa, tutti = M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }), quanti = tutti.length;
+  if (!quanti) return '';
+  const accese = k => tutti.filter(r => { const t = targheRiga(r); return t && t[k]; }).length;
+  const evento = k => esc(MB21Lista.etichettaEvento(MP.attivi[k]));
+  return `<div class="mp-conti">${['bbs', 'wes'].filter(k => MP.attivi[k]).map(k => `<span>${k.toUpperCase()} ${evento(k)}: segnati <b>${accese(k)}</b> su ${quanti}</span>`).join('')}
+    <span>CEP oggi: abbonati <b>${accese('cep')}</b> su ${quanti}</span></div>`;
+}
 
 function mesePulito(m) {
   return m ? `${String(m).slice(4, 6)}/${String(m).slice(0, 4)}` : '—';
@@ -111,11 +125,12 @@ function disegnaMappa() {
   const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
   const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
+  const tocca = targheDaToccare() && !!MP.schede;   // nota 070: per l'Admin le targhette sono tasti (appena le schede sono lette)
 
   let html = `<h1>Mappa</h1>${partnerSelect()}
     ${righeTeamHtml()}${statisticheHtml()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
-    ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}
+    ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
@@ -147,8 +162,8 @@ function disegnaMappa() {
         <div class="mp-corpo">
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
-          <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml((() => { const sc = schedaMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] : null; })(),
-            MP.segni && MP.segni.gruppo[r.id])}</span>
+          <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml(targheRiga(r),
+            MP.segni && MP.segni.gruppo[r.id], { tasto: tocca, chi: r.id })}</span>
           <div class="mp-codice">Codice ${esc(r.id)}</div>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
@@ -407,6 +422,15 @@ function collegaMappa() {
     if (nuovo) { nuovo.focus(); nuovo.setSelectionRange(dove, dove); }
   };
   app.querySelectorAll('[data-mpcompleta]').forEach(b => b.onclick = () => apriCompleta(b.dataset.mpcompleta));
+  // Nota Pagine 070: la targhetta BBS · WES · CEP di una riga apre lo stesso foglio della testata della scheda (toccaTarga, pagina-lista.js); dopo, la Mappa rilegge i segni
+  app.querySelectorAll('.mp-elenco [data-targa]').forEach(b => b.onclick = () => {
+    const partner = (MP.squadra || []).find(x => x.partner_id === b.dataset.chi);
+    if (!partner) return;
+    const r = { id: partner.partner_id, nome: MB21Mappa.nomeLeggibile(partner.nome) }, sc = schedaSegniMappa(r);
+    if (!sc) return mostraToast(`${r.nome} non ha una scheda collegata nella lista: tocca il nome per collegarla`);
+    toccaTarga({ id: sc.id, nome: sc.nome, user_id: sc.user_id }, b.dataset.targa, () =>
+      caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {}));
+  });
   app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
     const partner = (MP.squadra || []).find(x => x.partner_id === b.dataset.mpnome);
     if (!partner) return;
