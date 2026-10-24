@@ -688,6 +688,42 @@ prova('L8b: la scheda di un altro partner, aperta da Agenda, Report o Mappa, si 
   assert.equal(interi, 1);   // Lista mai letta: prima la lettura intera (la sua), poi la riga se serve
 });
 
+prova('Nota 080 (Ignazio 24/10): «Cliente con account» — con «Sì» la data «dal» si vede e si cambia (la salvata, o oggi se è nuovo); si salva solo se cambia, mai nel futuro', async () => {
+  const fogli = [], salvate = [], avvisi = [];
+  const q = { update: r => { salvate.push(r); return q; }, insert: () => q, eq: () => q, select: () => q, maybeSingle: () => q, single: () => q, then: ok => Promise.resolve(ok({ data: null, error: null })) };
+  const c = { id: 'c1', user_id: 'io', nome: 'Cliente A', categoria: 'Cliente', telefono: '+393330000001' };
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-24' }, ST: { utente: { id: 'io' } },
+    LS: { righe: [c], account: { id: 'c1', dal: '2024-03-01' }, contatto: c }, soloGuardo: () => false, visto: () => ({ id: 'io' }), aNome: () => '', classeCat: () => 'cat', iniziali: () => 'CA', Event: class {},
+    dbq: (n, p) => (n === 'compleanno' ? new Promise(() => {}) : Promise.resolve(p)), supa: { from: () => q, rpc: () => Promise.resolve({ error: null }) }, leggiAccountCliente: () => new Promise(() => {}),
+    aggiornaRiga: async () => {}, ricaricaERidisegna: () => Promise.resolve(), mostraToast: t => avvisi.push(t), chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
+    document: { createElement: () => { const n = new Nodo(); n.isConnected = true; fogli.push(n); return n; }, body: { appendChild() {} } } };
+  vm.createContext(ctx);
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);
+  // (nel finto DOM il menu della categoria non prende l'opzione «selected»: si mette a mano, come la vede il telefono)
+  const apri = () => { ctx.apri(c); const f = fogli.pop(); f.querySelector('#f-cat').value = 'Cliente'; return { f, $: id => f.querySelector('#' + id) }; };
+  // cliente da anni: la data salvata, che si cambia
+  let m = apri();
+  assert.equal(m.$('f-account-dal').value, '2024-03-01'); assert.equal(m.$('f-account-dal-posto').style.display, ''); assert.equal(m.$('f-account-dal').attr.max, '2026-10-24');
+  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, undefined);   // non cambiata: non si scrive
+  m = apri(); m.$('f-account-dal').value = '2021-05-10'; await m.$('invia').onclick();
+  assert.equal(salvate.at(-1).account_cliente_dal, '2021-05-10');
+  // nel futuro: no (dopo il salvataggio la scheda rilegge il dato: qui lo si rimette a mano)
+  ctx.LS.account = { id: 'c1', dal: '2021-05-10' };
+  const prima = salvate.length;
+  m = apri(); m.$('f-account-dal').value = '2026-11-01'; await m.$('invia').onclick();
+  assert.equal(salvate.length, prima); assert.match(avvisi.at(-1), /non può essere nel futuro/);
+  // «No»: la data sparisce e si toglie l'account; «Sì» su un cliente senza account: oggi, già scritto
+  ctx.LS.account = { id: 'c1', dal: '2021-05-10' };
+  m = apri(); m.f.querySelectorAll('[data-account]').find(b => b.dataset.account === 'no').onclick();
+  assert.equal(m.$('f-account-dal-posto').style.display, 'none');
+  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, null);
+  ctx.LS.account = { id: 'c1', dal: null };
+  m = apri(); assert.equal(m.$('f-account-dal-posto').style.display, 'none');
+  m.f.querySelectorAll('[data-account]').find(b => b.dataset.account === 'si').onclick();
+  assert.equal(m.$('f-account-dal').value, '2026-10-24');
+  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, '2026-10-24');
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
