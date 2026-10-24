@@ -822,7 +822,7 @@ prova('V4 Vendite: «Cliente con account» (L1b) in Modifica (solo Clienti, solo
   const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
   assert.match(src, /<label>Cliente con account<\/label>\s*<div class="vn-quando"><button type="button" data-account="si">Sì<\/button><button type="button" data-account="no">No<\/button><\/div>/);
   assert.match(src, /\$\('f-account-campo'\)\.style\.display = \$\('f-cat'\)\.value === 'Cliente' && account\.letto \? '' : 'none';/);
-  assert.match(src, /if \(account\.letto && riga\.categoria === 'Cliente'\) \{[\s\S]*?const dal = account\.si \? account\.prima \|\| MB21Coda\.oggiRoma\(\) : null;\s*if \(dal !== account\.prima\) riga\.account_cliente_dal = dal;/);
+  assert.match(src, /if \(account\.letto && riga\.categoria === 'Cliente'\) \{[\s\S]*?const dal = account\.si \? \$\('f-account-dal'\)\.value \|\| account\.prima \|\| MB21Coda\.oggiRoma\(\) : null;[\s\S]*?if \(dal !== account\.prima\) riga\.account_cliente_dal = dal;/);
   assert.match(src, /\$\{c\.categoria === 'Cliente' \? '<div id="account-posto"><\/div>' : ''\}/);
   // l'attesa «Ordina da solo» non si vede più da nessuna parte: né riga, né domanda dei 7 giorni, né riquadro in Dashboard
   assert.doesNotMatch(src + ven + dash, /attesaOrdineHtml|collegaAttesaOrdine|mostraAttesaOrdine|leggiAttesaOrdini|attesaHaOrdinato|attesaNonAncora|attesaNonOrdinaPiu|caricaAttese|atteseHtml|attesa-posto/);

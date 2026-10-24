@@ -180,6 +180,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
     - Corregge il difetto per cui, dato dalla coda (`registra_esito` → `applica_rientro`), l'esito senza giorni lasciava il cliente fuori dalla coda per sempre. La regola dei 7 giorni resta.
     - `tools/banco/prova_attesa_ordine_025.sql` ora controlla 90 giorni.
   - Nessuna modifica alle viste `contatti_lista` e `contatti_coda`.
+- **La data di «Cliente con account» (nota Pagine 080, punto 1, Ignazio 24/10: «non è un cliente da oggi, è un cliente da anni»):** in Modifica, con «Sì» compare «Dal» (`#f-account-dal`, `max` = oggi): è la data salvata, oppure oggi se l'account è nuovo, e si cambia. Il salvataggio scrive `account_cliente_dal` solo se è cambiata, e mai nel futuro (avviso). Con «No» la data sparisce e si toglie l'account. Dopo il Salva la riga in testata si rilegge come prima (`LS.account = null`). Nessuna modifica al database.
 - **Account cliente (Verifica Vendite V4, Ignazio 22/10/2026, strada B)** al posto della parte che si vede di «Ordina da solo»:
   - Migrazione **solo aggiunta** `20261022225101_contatti_account_cliente.sql`: `contatti.account_cliente_dal date` (vuoto = no). Va **applicata al rilascio prima del codice**, poi la prova di lettura vera.
   - **Modifica** (solo Clienti): «Ha un account cliente: ordina da solo» Sì/No (`#f-account-campo`, `account` in `apriModulo`). Si legge a parte o dalla scheda aperta. Il salvataggio la tocca solo se è stata letta e se è cambiata: «Sì» tiene la data di prima o mette oggi.

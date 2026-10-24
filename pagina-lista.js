@@ -1497,8 +1497,10 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
       <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>`;
+  // Nota Pagine 080 (Ignazio 24/10: «non è un cliente da oggi, è un cliente da anni»): con «Sì» la data «dal» si vede e si cambia (mai nel futuro)
   const campoAccount = `<div class="campo" id="f-account-campo"><label>Cliente con account</label>
       <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
+      <div id="f-account-dal-posto" style="margin-top:8px"><label>Dal</label><input id="f-account-dal" type="date" max="${MB21Coda.oggiRoma()}"></div>
       <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>`;
   const datiPersona = `<h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
@@ -1573,8 +1575,10 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   const segnaAccount = () => {
     $('f-account-campo').style.display = $('f-cat').value === 'Cliente' && account.letto ? '' : 'none';
     velo.querySelectorAll('[data-account]').forEach(b => b.classList.toggle('scelto', (b.dataset.account === 'si') === account.si));
+    $('f-account-dal-posto').style.display = account.si ? '' : 'none';   // 080: la data solo con «Sì»
+    if (account.si && !$('f-account-dal').value) $('f-account-dal').value = account.prima || MB21Coda.oggiRoma();   // la data salvata, o oggi se è nuovo
   };
-  const accountLetto = dal => { if (dal === undefined || !velo.isConnected) return; Object.assign(account, { letto: true, prima: dal, si: !!dal }); segnaAccount(); };
+  const accountLetto = dal => { if (dal === undefined || !velo.isConnected) return; Object.assign(account, { letto: true, prima: dal, si: !!dal }); $('f-account-dal').value = dal || ''; segnaAccount(); };
   velo.querySelectorAll('[data-account]').forEach(b => b.onclick = () => { account.si = b.dataset.account === 'si'; segnaAccount(); });
   $('f-cat').addEventListener('change', segnaAccount);
   if (!nuovo && LS.account && LS.account.id === c.id) accountLetto(LS.account.dal);
@@ -1601,7 +1605,9 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
     if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
     if (account.letto && riga.categoria === 'Cliente') {   // V4: solo se letto e cambiato (prima della migrazione la colonna non si tocca)
-      const dal = account.si ? account.prima || MB21Coda.oggiRoma() : null;
+      // 080: con «Sì» la data scritta (vuota: quella di prima, o oggi), mai nel futuro; si salva solo se cambia
+      const dal = account.si ? $('f-account-dal').value || account.prima || MB21Coda.oggiRoma() : null;
+      if (dal && dal > MB21Coda.oggiRoma()) return mostraToast('Cliente con account: la data «dal» non può essere nel futuro');
       if (dal !== account.prima) riga.account_cliente_dal = dal;
     }
     if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; riga.lavoro = $('f-lavoro').value || null; }
