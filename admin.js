@@ -314,10 +314,11 @@ function disegnaAdmin() {
         <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
         <div class="sotto">Mese e anno contano per segni vitali, biglietti e Report. Il primo giorno serve solo all'Agenda per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
   } else if (AD.sezione === 'fc') {
-    // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione = (VP × FC) × 0,20, con l'FC valido il giorno in cui la vendita conta.
+    // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione con l'FC valido il giorno in cui la vendita conta. Nota Pagine 082 (24/10): due conti,
+    // come la vista vendite_conti e MB21Lista.contiVendita: sul sito (VP × FC) × 0,20; se paga il partner (VP × FC × 1,22, il suo costo con IVA) × 0,20.
     // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
     html = `${indietro}<h1>Fattore di conversione</h1>
-      <div class="sotto">Provvigione = (VP × fattore) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
+      <div class="sotto">Provvigione: ordine pagato sul sito (VP × fattore) × 0,20; se il cliente paga te, il 20% del tuo costo con IVA, (VP × fattore × 1,22) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
       <div class="ad-elenco fc">${[...AD.fc].reverse().map((f, i, tutti) => `<div class="ad-el">${ic('aggiorna')}
         <span class="q"><b>${esc(MB21Lista.numeroFattore(f.valore))}</b><small>${i === tutti.length - 1 ? 'vale dall\'inizio' : 'vale dal ' + esc(MB21Lista.data(f.dal))}</small></span>
         <button class="cambia" data-fc-cambia="${esc(f.dal)}">Cambia</button>${i === tutti.length - 1 ? '' : `<button class="via" data-fc-togli="${esc(f.dal)}">Elimina</button>`}</div>`).join('')}</div>

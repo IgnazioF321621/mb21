@@ -174,15 +174,40 @@ prova('la regola: oltre 60 giorni da oggi', () => {
 });
 
 // ── Nota Pagine 078 (Ignazio 24/10): il modulo vendita ──
-prova('078: provvigione stimata = VP × il fattore del giorno in cui la vendita conta × 0,20 (gli stessi numeri della vista vendite_conti)', () => {
-  const f = FATTORI_FINTI, n = x => L.numero(x, true);
-  assert.equal(L.QUOTA_PROVVIGIONE, 0.20);
-  assert.equal(n(L.provvigioneStimata(50, { data: '2026-10-24' }, f)), '22,62 €');                          // 50 × 2,26194 × 0,20 (l'esempio del disegno)
-  assert.equal(n(L.provvigioneStimata(50, { data: '2026-05-31' }, f)), '22,18 €');                          // prima del 01/06: 2,21759
-  assert.equal(n(L.provvigioneStimata(50, { data: '2026-05-20', consegna: '2026-06-05' }, f)), '22,62 €');  // conta la consegna prevista…
-  assert.equal(n(L.provvigioneStimata(50, { data: '2026-05-20', consegna: '2026-06-05', ordinata_il: '2026-05-28' }, f)), '22,18 €');   // …e prima ancora l'ordine fatto
-  assert.equal(L.provvigioneStimata(null, { data: '2026-10-24' }, f), null); assert.equal(L.provvigioneStimata(0, { data: '2026-10-24' }, f), null);
-  assert.equal(L.provvigioneStimata(50, { data: '2026-10-24' }, null), null); assert.equal(L.provvigioneStimata(50, { data: '1999-01-01' }, f), null);
+prova('078 e 082: provvigione stimata = il fattore del giorno in cui la vendita conta, con la regola della vista (paga te: 20% del costo con IVA; sul sito: 20% senza IVA)', () => {
+  const f = FATTORI_FINTI, n = x => L.numero(x, true), p = (vp, d, soldi) => { const k = L.contiStimati(vp, d, f, soldi); return k && n(k.provvigione); };
+  assert.equal(L.QUOTA_PROVVIGIONE, 0.20); assert.equal(L.IVA, 1.22);
+  assert.equal(p(50, { data: '2026-10-24' }), '27,60 €');                                                  // paga te: 50 × 2,26194 × 1,22 × 0,20
+  assert.equal(p(50, { data: '2026-10-24' }, { sulSito: true }), '22,62 €');                               // sul sito: 50 × 2,26194 × 0,20
+  assert.equal(p(50, { data: '2026-05-31' }, { sulSito: true }), '22,18 €');                               // prima del 01/06: 2,21759
+  assert.equal(p(50, { data: '2026-05-20', consegna: '2026-06-05' }, { sulSito: true }), '22,62 €');       // conta la consegna prevista…
+  assert.equal(p(50, { data: '2026-05-20', consegna: '2026-06-05', ordinata_il: '2026-05-28' }, { sulSito: true }), '22,18 €');   // …e prima ancora l'ordine fatto
+  assert.equal(L.contiStimati(null, { data: '2026-10-24' }, f), null); assert.equal(L.contiStimati(0, { data: '2026-10-24' }, f), null);
+  assert.equal(L.contiStimati(50, { data: '2026-10-24' }, null), null); assert.equal(L.contiStimati(50, { data: '1999-01-01' }, f), null);
+});
+
+// ── Nota Pagine 082 (Ignazio 24/10): la provvigione giusta, due conti a seconda di chi paga ──
+prova('082: i due casi veri — filtro pagato al partner (250 € incassati) in guadagno di 5,86 €; ordine sul sito 92,90 VP = 42,03 € come Amway', () => {
+  const n = x => L.numero(x, true), c = x => { const k = L.contiVendita(x); return [k.costo == null ? null : n(k.costo), n(k.provvigione), n(k.netto)]; };
+  assert.deepEqual(c({ vp: 88.47, fc: 2.26194, incassato: 250, sconto: 42.97 }), ['244,14 €', '48,83 €', '5,86 €']);   // prima −2,95: lo sconto con IVA tolto da un numero senza IVA
+  assert.deepEqual(c({ vp: 92.90, fc: 2.26194, sulSito: true }), [null, '42,03 €', '42,03 €']);                       // la foto di Amway: 210,13 VV × 20%
+  assert.deepEqual(c({ vp: 88.47, fc: 2.26194, incassato: null, sconto: 22.97 }), ['244,14 €', '48,83 €', '25,86 €']);   // vendita vecchia di Glide senza soldi: provvigione − sconto
+  assert.deepEqual(c({ vp: 50, fc: 2.26194, incassato: 0 }), ['137,98 €', '27,60 €', '-137,98 €']);                  // incassato 0 è un incassato (come nella vista)
+  assert.equal(L.contiVendita({ vp: 50, fc: null }), null); assert.equal(L.contiVendita({ vp: '', fc: 2.2 }), null);
+});
+
+prova('082: la vista vendite_conti ha la stessa regola (migrazione con la definizione di prima nel commento, colonne uguali, security_invoker)', () => {
+  const M = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261024164000_vendite_conti_chi_paga.sql'), 'utf8');
+  const crea = M.slice(M.indexOf('\ncreate or replace view public.vendite_conti'));
+  assert.match(crea, /^\ncreate or replace view public\.vendite_conti with \(security_invoker = true\) as/);
+  assert.match(crea, /WHEN s\.sul_sito THEN v\.vp \* f\.valore \* 0\.20 [^\n]*\n\s*ELSE v\.vp \* f\.valore \* 1\.22 \* 0\.20 [^\n]*\n\s*END AS provvigione,/);
+  assert.match(crea, /WHEN v\.incassato IS NOT NULL THEN v\.incassato - v\.vp \* f\.valore \* 1\.22[^\n]*\n\s*ELSE v\.vp \* f\.valore \* 1\.22 \* 0\.20 - v\.sconto [^\n]*\n\s*END AS guadagno_netto/);
+  assert.match(crea, /c\.account_cliente_dal IS NOT NULL AND c\.account_cliente_dal <= v\.data\)\)\s*AND v\.incassato IS NULL AND v\.prezzo_pubblico IS NULL AND COALESCE\(v\.pagato_con, ''\) = '' AS sul_sito/);   // = pagataSulSito
+  const colonne = t => [...t.slice(0, t.search(/\n\s+FROM /)).matchAll(/^\s+(?:SELECT )?v\.(\w+),$|AS (\w+),?$/gm)].map(m => m[1] || m[2]);   // l'elenco prima del FROM
+  const prima = M.slice(M.indexOf('-- create or replace view'), M.indexOf('\ncreate or replace view')).replace(/^--   ?/gm, '');
+  assert.deepEqual(colonne(crea), colonne(prima));   // le stesse 19 colonne, nello stesso ordine
+  assert.equal(colonne(crea).length, 19);
+  assert.doesNotMatch(crea, /drop |grant |revoke /i);
 });
 
 prova('078: «Importi», campi affiancati, niente «Obbligatorio» né spiegazioni lunghe, la riga grigia dei brand, la riga del riordino è la domanda', async () => {
@@ -199,22 +224,24 @@ prova('078: sotto il VP «Provvigione stimata», mentre si scrive; senza VP o se
   let s = await apri(null, true);
   assert.equal(s.$('v-provv').hidden, true);
   s.$('v-vp').value = '50,00'; s.$('v-vp').oninput();
-  assert.equal(s.$('v-provv').hidden, false); assert.equal(s.$('v-provv').textContent, 'Provvigione stimata: 22,62 €');
+  assert.equal(s.$('v-provv').hidden, false); assert.equal(s.$('v-provv').textContent, 'Provvigione stimata: 27,60 €');   // 082: paga il cliente al partner, 20% del costo con IVA
   s = await apri(null, true, null, null, null, null);   // fattori non letti
   s.$('v-vp').value = '50,00'; s.$('v-vp').oninput();
   assert.equal(s.$('v-provv').hidden, true);
 });
 
-prova('078: nel riquadro della riga prezzo «Guadagno netto stimato» = provvigione − sconto; negativo col segno meno', async () => {
+prova('078 e 082: nel riquadro della riga prezzo «Guadagno netto stimato» = incassato − il tuo costo con IVA (senza incassato: provvigione − sconto); negativo col segno meno', async () => {
   const v = { id: 'v1', brand: L.BRAND[0][0], prodotto: 'Prodotto finto', vp: 50, sconto: 10, data: '2026-10-20', consegna: null, ordinata_il: null, riordino: null };
   let s = await apri(v, true, null, null, { pagato_con: 'Contanti', incassato: 140, prezzo_pubblico: 150 });
   let h = s.$('v-riga-prezzo').innerHTML;
   assert.equal(s.$('v-riga-prezzo').hidden, false);
-  assert.match(h, /^Sconto 10,00 € \(7%\) · il cliente paga 140,00 €<div class="vn-netto">Guadagno netto stimato: 12,62 €<small>provvigione 22,62 € − sconto 10,00 €<\/small><\/div>$/);
+  assert.match(h, /^Sconto 10,00 € \(7%\) · il cliente paga 140,00 €<div class="vn-netto">Guadagno netto stimato: 2,02 €<small>incassato 140,00 € − tuo costo 137,98 €<\/small><\/div>$/);
   s = await apri({ ...v, sconto: 30 }, true, null, null, { pagato_con: 'Bonifico', incassato: 120, prezzo_pubblico: 150 });
-  assert.match(s.$('v-riga-prezzo').innerHTML, /Guadagno netto stimato: -7,38 €/);   // 22,62 − 30
+  assert.match(s.$('v-riga-prezzo').innerHTML, /Guadagno netto stimato: -17,98 €/);   // 120 − 137,98
   s = await apri({ ...v, sconto: 0 }, true, null, null, { pagato_con: null, incassato: 150, prezzo_pubblico: 150 });
-  assert.doesNotMatch(s.$('v-riga-prezzo').innerHTML, /Guadagno netto/);   // senza sconto è la provvigione stessa: niente riga in più
+  assert.match(s.$('v-riga-prezzo').innerHTML, /Guadagno netto stimato: 12,02 €<small>incassato 150,00 € − tuo costo 137,98 €/);   // con l'incassato il conto si vede sempre
+  s = await apri(v, true, null, null, { pagato_con: null, incassato: null, prezzo_pubblico: 150 });   // senza incassato: provvigione − sconto
+  assert.match(s.$('v-riga-prezzo').innerHTML, /Guadagno netto stimato: 17,60 €<small>provvigione 27,60 € − sconto 10,00 €/);
 });
 
 prova('078: cliente con account — al posto dei soldi «Ordine pagato sul sito»; si salvano prezzo, incassato e modo di pagamento vuoti, sconto 0', async () => {

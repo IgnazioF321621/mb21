@@ -4,7 +4,7 @@
 // la scheda (pagina-lista.js → disegnaScheda) la chiama con `sezioneVendite`, `venditeDellaScheda` e `mostraBrand`;
 // index.html → chiudiAppuntamento apre `moduloVendita` dopo l'esito «Vendita» di una Consulenza PRD.
 // I calcoli sono in lista.js (MB21Lista: totaliVendite, rigaVendita, daConsegnare, brandComprati…), provati in tools/banco/prova_lista.js;
-// la provvigione si calcola solo nel database (vista `vendite_conti`); nel modulo c'è solo una sua STIMA mentre si scrive (nota Pagine 078, MB21Lista.provvigioneStimata).
+// la provvigione si calcola solo nel database (vista `vendite_conti`); nel modulo c'è solo una sua STIMA mentre si scrive (note Pagine 078 e 082, MB21Lista.contiStimati).
 // Usa ciò che definisce index.html (supa, dbq, esc, mostraToast, chiediConferma, soloGuardo, CK…) e pagina-lista.js (LS, disegnaScheda, moduloSemplice).
 // Si carica prima dello script della pagina: solo definizioni.
 
@@ -269,21 +269,26 @@ async function moduloVendita(v, proposta) {
     box.innerHTML = `<button type="button" class="link" id="v-prezzo-usa">L'ultima volta ${esc(MB21Lista.numero(u.prezzo_pubblico, true))} (${esc(MB21Lista.data(u.data))}) · usa questo</button>`;
     $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; calcolaSconto(); };
   };
-  // Nota 078 (Ignazio 24/10): la provvigione stimata sotto il VP, con gli stessi numeri della vista (MB21Lista.provvigioneStimata: il fattore del giorno in cui
-  // la vendita conta); senza VP o senza fattori la riga non c'è
-  const provv = () => MB21Lista.provvigioneStimata(MB21Lista.importo($('v-vp').value),
-    { data: $('v-data').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '' }, fattori);
+  // Nota 078 (Ignazio 24/10): la provvigione stimata sotto il VP, con gli stessi numeri della vista; senza VP o senza fattori la riga non c'è.
+  // Nota 082 (Ignazio 24/10): i conti sono due, a seconda di chi paga (MB21Lista.contiStimati, la regola della vista): «Ordine pagato sul sito» = il 20%
+  // senza IVA; paga il partner = il 20% del suo costo con IVA, e il guadagno netto = incassato − costo (senza incassato: provvigione − sconto)
+  const incassatoScritto = () => { const x = sulSito ? null : MB21Lista.importo($('v-incassato').value); return x != null && isFinite(x) ? x : null; };
+  const conti = () => MB21Lista.contiStimati(MB21Lista.importo($('v-vp').value),
+    { data: $('v-data').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '' }, fattori,
+    { sulSito, incassato: incassatoScritto(), sconto: sulSito ? 0 : MB21Lista.importo($('v-sconto').value) });
   // la riga «Sconto … · il cliente paga …» (nota 052) si aggiorna mentre si scrivono prezzo e sconto; nel suo riquadro (078) il guadagno netto stimato,
-  // provvigione − sconto, solo se c'è uno sconto (senza è la provvigione stessa); negativo col segno meno, senza colori nuovi
+  // con il conto scritto sotto: «incassato − tuo costo» se l'incassato c'è (082), se no «provvigione − sconto» solo se c'è uno sconto (senza è la
+  // provvigione stessa); negativo col segno meno, senza colori nuovi
   const rigaPrezzo = () => {
-    const sconto = MB21Lista.importo($('v-sconto').value), s0 = sconto > 0 ? sconto : 0, p = provv();
+    const sconto = MB21Lista.importo($('v-sconto').value), s0 = sconto > 0 ? sconto : 0, k = conti(), inc = incassatoScritto(), n = x => esc(MB21Lista.numero(x, true));
     const t = MB21Lista.rigaPrezzo(MB21Lista.importo($('v-prezzo').value), sconto);
-    const netto = p != null && s0 > 0 ? `<div class="vn-netto">Guadagno netto stimato: ${esc(MB21Lista.numero(p - s0, true))}<small>provvigione ${esc(MB21Lista.numero(p, true))} − sconto ${esc(MB21Lista.numero(s0, true))}</small></div>` : '';
+    const come = !k || sulSito ? '' : inc != null ? `incassato ${n(inc)} − tuo costo ${n(k.costo)}` : s0 > 0 ? `provvigione ${n(k.provvigione)} − sconto ${n(s0)}` : '';
+    const netto = come ? `<div class="vn-netto">Guadagno netto stimato: ${n(k.netto)}<small>${come}</small></div>` : '';
     $('v-riga-prezzo').innerHTML = esc(t) + netto; $('v-riga-prezzo').hidden = !t && !netto;
   };
   const segnaProvv = () => {
-    const p = provv();
-    $('v-provv').textContent = p != null ? `Provvigione stimata: ${MB21Lista.numero(p, true)}` : ''; $('v-provv').hidden = p == null;
+    const k = conti(), p = k && k.provvigione;
+    $('v-provv').textContent = k ? `Provvigione stimata: ${MB21Lista.numero(p, true)}` : ''; $('v-provv').hidden = !k;
     rigaPrezzo();
   };
   // lo sconto da solo (nota 065, Ignazio 19/10, «A»): con prezzo e incassato scritti, sconto = prezzo − incassato, finché non lo scrivi tu;
