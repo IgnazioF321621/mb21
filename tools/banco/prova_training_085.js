@@ -64,6 +64,28 @@ prova('085: la migrazione aggiunge le due regole (le proprie prove; mandare le p
   assert.match(M, /--   training_prove_rp   · policy training_prove_rp_admin/);   // la copia di prima
 });
 
+prova('085 bis: nella scala la telefonata sta SUBITO SOPRA il suo percorso, a metà strada sul cammino a zig-zag', async () => {
+  // tre percorsi del Nuovo, ognuno con la sua telefonata
+  const archivio = T.LIVELLI[0].percorsi.slice(0, 3).map((p, i) => {
+    const m = mazzo('carte_' + i, p.id, 8);
+    m.conversazioni = [{ id: 'conv-' + i, ingresso: 'Telefonata del percorso ' + (i + 1), scambi: [] }];
+    return { situazione: 'carte_' + i, aggiornata_il: '2026-10-20T10:00:00+00:00', batteria: m };
+  }).concat([{ situazione: 'training', aggiornata_il: '2026-10-20T10:00:00+00:00', batteria: { settori: [{ nome: 'Contattare', bsm: [] }], manuale: [], appunti: [], libri: [] } }]);
+  const W = mondo({ archivio });
+  await W.m.apriTraining();
+  const h = W.app.innerHTML, primo = T.LIVELLI[0].percorsi[0].id;
+  const rp = h.indexOf(`data-rp="${primo}"`), percorso = h.indexOf(`data-percorso="${primo}"`);
+  assert.ok(rp > 0 && percorso > rp, 'la telefonata del primo percorso viene prima (sopra) del percorso');
+  // il tondo piccolo a metà strada tra il suo percorso (x 0) e quello sopra (x 56), centrato: 28 + 10 = 38 px
+  assert.match(h, new RegExp(`data-rp="${primo}" style="--x:38px"><span class="trn-tondo-n">\\[chiamata\\]</span>\\s*<div><b>Telefonata del percorso 1</b>`));
+  assert.match(h, new RegExp(`data-percorso="${primo}" style="--x:0px"`));
+  // in tutta la scala ogni telefonata viene subito prima (cioè sopra) del suo percorso
+  const seq = [...h.matchAll(/data-(rp|percorso)="([^"]+)"/g)].map(m => m[1] + ':' + m[2]);
+  const telefonate = seq.map((x, k) => [x, k]).filter(([x]) => x.startsWith('rp:'));
+  assert.ok(telefonate.length >= 2, seq.join(' '));   // i percorsi aperti hanno la loro (il terzo è ancora chiuso)
+  for (const [x, k] of telefonate) assert.equal(seq[k + 1], 'percorso:' + x.slice(3));
+});
+
 prova('085: nessun «Per ora lo vedi solo tu» rimasto nel Training; anche «Prova la telefonata» dell\'avvio è per tutti', () => {
   const resti = PT.split('\n').filter(r => SPENTO.test(r));
   assert.equal(resti.length, 1, resti.join('\n'));   // solo il commento in cima, che lo racconta

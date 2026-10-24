@@ -81,6 +81,7 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
     - «Le prove del role play»: un partner legge le sue (`.eq('user_id', …)` e le regole del database), l'Admin tutte;
     - il salvataggio di ogni prova (`registra`) e «Correggi questa carta», anche nel foglio della fonte.
   - Resta spenta per tutti «Dove sei, dove vuoi andare» (`DOVE_SEI_VISIBILE`). La scorciatoia di prova `#chiacchierata` resta dell'Admin.
+  - **085 bis** (Ignazio 24/10, dalla foto del telefono della partner; disegno `docs/prototipi/schizzo_training_085bis.png`): nella scala, che sale, la telefonata sta **subito sopra** il suo percorso (`trnScala`: `trnNodoConversazione` prima di `trnNodo`). Il suo tondo (44 px) sta a metà strada tra il suo percorso e quello sopra, centrato sul cammino: `(TRN_ZIGZAG[i] + TRN_ZIGZAG[i+1]) / 2 + 10`, così lo zig-zag resta regolare.
   - **Migrazione `20261024192500_training_prove_e_correzioni_dei_partner.sql`** (MODIFICA approvata da Ignazio: aggiunge due regole, quelle dell'Admin restano; da applicare **prima del codice**):
     - `training_prove_rp_mie`: ognuno salva e legge le sue prove;
     - `training_correzioni_mie`: ognuno può solo mandare le sue correzioni (leggerle e risolverle resta all'Admin).
