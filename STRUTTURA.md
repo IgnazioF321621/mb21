@@ -81,7 +81,10 @@ Database: progetto Supabase `mb21` (ref `exwgjlhbhlgebkgxtanq`, Francoforte). Sc
     - «Le prove del role play»: un partner legge le sue (`.eq('user_id', …)` e le regole del database), l'Admin tutte;
     - il salvataggio di ogni prova (`registra`) e «Correggi questa carta», anche nel foglio della fonte.
   - Resta spenta per tutti «Dove sei, dove vuoi andare» (`DOVE_SEI_VISIBILE`). La scorciatoia di prova `#chiacchierata` resta dell'Admin.
-  - **085 bis** (Ignazio 24/10, dalla foto del telefono della partner; disegno `docs/prototipi/schizzo_training_085bis.png`): nella scala, che sale, la telefonata sta **subito sopra** il suo percorso (`trnScala`: `trnNodoConversazione` prima di `trnNodo`). Il suo tondo (44 px) sta a metà strada tra il suo percorso e quello sopra, centrato sul cammino: `(TRN_ZIGZAG[i] + TRN_ZIGZAG[i+1]) / 2 + 10`, così lo zig-zag resta regolare.
+  - **085 bis e ter** (Ignazio 24/10, dalle foto del telefono della partner: «così sembra che faccia parte del percorso sopra… attaccarlo all'argomento a cui si riferisce, tipo una pallina più piccola di sopra»; disegno `docs/prototipi/schizzo_training_085ter.png`):
+    - la telefonata del percorso è una **pallina piccola** (`.trn-pallina`, 30 px, col telefono) attaccata in alto, in diagonale, al tondo grande del suo percorso, con la scritta corta accanto, più piccola del titolo (`.trn-satellite`, `trnNodoConversazione`);
+    - nella pagina sta subito prima del suo percorso, alla stessa x dello zig-zag (`TRN_ZIGZAG`); il margine sotto negativo la fa toccare il bordo del tondo. Così sta dentro il blocco del suo percorso e lo spazio fra i percorsi resta quello di prima;
+    - la pallina e la scritta (un tasto solo, `data-rp`) aprono la conversazione; il tondo grande apre il percorso.
   - **Migrazione `20261024192500_training_prove_e_correzioni_dei_partner.sql`** (MODIFICA approvata da Ignazio: aggiunge due regole, quelle dell'Admin restano; da applicare **prima del codice**):
     - `training_prove_rp_mie`: ognuno salva e legge le sue prove;
     - `training_correzioni_mie`: ognuno può solo mandare le sue correzioni (leggerle e risolverle resta all'Admin).

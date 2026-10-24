@@ -251,7 +251,7 @@ function trnScala(sc) {
         <small>${sopraQui ? `Si apre quando superi i test del livello ${esc(sc.qui.nome)}` : esc(l.sotto)}</small></div></div>`;
     }
     // un livello appena aperto i cui percorsi non sono ancora scritti: lo dice, invece di restare vuoto
-    // nota 085 bis (Ignazio 24/10): la scala sale, quindi la telefonata del percorso sta SUBITO SOPRA il suo percorso (prima il percorso, poi la telefonata)
+    // nota 085 bis e ter (Ignazio 24/10): la telefonata è una pallina piccola attaccata in alto al tondo del suo percorso, con la sua scritta accanto
     const nodi = l.percorsi.length ? [...l.percorsi].reverse().map(p => trnNodoConversazione(p, l.percorsi.indexOf(p)) + trnNodo(p, l.percorsi.indexOf(p), l === sc.qui && p.id === sc.percorso)).join('')
       : `<div class="trn-nodo presto" style="--x:0px"><span class="trn-tondo-n">${ic('crescita', 26)}</span><div><b>I percorsi del livello ${esc(l.nome)}</b><small>In preparazione</small></div></div>`;
     return `${nodi}<div class="trn-gradino ${l.superato ? 'fatto' : 'qui'}">${l.superato ? ic('fatto') : ''}<div><b>${esc(l.nome)}</b>
@@ -274,8 +274,11 @@ function trnNodo(p, i, qui) {
   return `<button class="trn-nodo ${stato}" data-percorso="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic(s.superato ? 'medaglia' : p.icona, 26)}</span>
     <div><b>${esc(p.titolo)}${qui ? '<span class="trn-qui">Sei qui</span>' : ''}</b><small>${sotto}</small></div></button>`;
 }
-// il role play accanto al suo percorso (prima solo Admin, dal 24/10 per tutti: nota 085; Ignazio 29/09: «percorso parallelo e visibile, con icona propria, adeguato al livello»): un tondo piccolo
-// subito sopra il suo percorso (dal 24/10, nota 085 bis: la scala sale, prima il percorso e poi la telefonata)
+// il role play accanto al suo percorso (prima solo Admin, dal 24/10 per tutti: nota 085; Ignazio 29/09: «percorso parallelo e visibile, con icona propria, adeguato al livello»).
+// Nota 085 ter (Ignazio 24/10: «così sembra che faccia parte del percorso sopra… attaccarlo all'argomento a cui si riferisce, tipo una pallina più piccola di sopra»):
+// una pallina piccola col telefono attaccata in alto, in diagonale, al tondo grande del suo percorso (come un satellite), con la scritta corta accanto, più
+// piccola del titolo; sta dentro il blocco del percorso (lo spazio fra i percorsi resta quello di prima). La pallina e la scritta aprono la conversazione,
+// il tondo grande il percorso.
 // ── Allenamento a coppia e «Allenati a voce» (Ignazio 30/09; dal 24/10 per tutti, nota 085) ──
 // A coppia («come chiede il manuale per i contatti: uno fa la parte del contatto, l'altro presenta, e alla fine si scambiano»): due persone, un telefono; chi ascolta
 // legge ad alta voce quello che dice il contatto (una conversazione del percorso, o le scene delle carte), l'altro risponde con parole sue; poi chi ascolta tocca
@@ -505,10 +508,8 @@ async function trnProvaTelefonata() {
 function trnNodoConversazione(p, i) {
   const m = p.pronto && p.aperto && (TRN.mazzi || []).find(x => x.percorso.id === p.id), convs = m ? trnConversazioniQui(m) : [];
   if (!convs.length) return '';
-  // nota 085 bis: a metà strada tra il suo percorso e quello sopra, centrato sul cammino (il tondo è 44 px, quello del percorso 64: +10), così lo zig-zag resta regolare
-  const x = (TRN_ZIGZAG[i % 4] + TRN_ZIGZAG[(i + 1) % 4]) / 2 + 10;
-  return `<button class="trn-nodo trn-nodo-rp" data-rp="${esc(p.id)}" style="--x:${x}px"><span class="trn-tondo-n">${ic('chiamata', 22)}</span>
-    <div><b>${esc(convs[0].ingresso || 'Conversazione')}</b></div></button>`;
+  const testo = convs[0].ingresso || 'Conversazione';
+  return `<button class="trn-satellite" data-rp="${esc(p.id)}" style="--x:${TRN_ZIGZAG[i % 4]}px"><span class="trn-pallina">${ic('chiamata', 16)}</span><span class="trn-sat-testo">${esc(testo)}</span></button>`;
 }
 const trnStelle = n => `<span class="trn-stelle">${[0, 1, 2].map(i => `<i class="${i < n ? 'presa' : ''}">${ic('stella', 14)}</i>`).join('')}</span>`;
 

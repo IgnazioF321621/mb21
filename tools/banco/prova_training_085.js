@@ -37,7 +37,7 @@ prova('085: una partner vede in cima Conversazione di prova, Allenamento a coppi
 prova('085: nella scala, sopra il percorso, il tondo della conversazione c\'è anche per la partner; i percorsi in prova li vede anche lei', async () => {
   const W = mondo({ archivio: conMazzi() });
   await W.m.apriTraining();
-  assert.match(W.app.innerHTML, /data-rp="[^"]+"[^>]*><span class="trn-tondo-n">\[chiamata\]<\/span>\s*<div><b>Telefona a una persona<\/b><\/div><\/button>/);
+  assert.match(W.app.innerHTML, /<button class="trn-satellite" data-rp="[^"]+" style="--x:0px"><span class="trn-pallina">\[chiamata\]<\/span><span class="trn-sat-testo">Telefona a una persona<\/span><\/button>/);
   const visibili = T.livelliVisibili().flatMap(l => l.percorsi).map(p => p.id);
   assert.ok(visibili.includes('area_nutrizione') && visibili.includes('area_casa'));   // i percorsi in prova (solo_admin)
   assert.match(PT, /MB21Training\.inProva\(true\);/);
@@ -64,7 +64,7 @@ prova('085: la migrazione aggiunge le due regole (le proprie prove; mandare le p
   assert.match(M, /--   training_prove_rp   · policy training_prove_rp_admin/);   // la copia di prima
 });
 
-prova('085 bis: nella scala la telefonata sta SUBITO SOPRA il suo percorso, a metà strada sul cammino a zig-zag', async () => {
+prova('085 bis e ter: la telefonata è una pallina attaccata in alto al tondo del SUO percorso (subito prima nella pagina, stessa x), con la scritta accanto', async () => {
   // tre percorsi del Nuovo, ognuno con la sua telefonata
   const archivio = T.LIVELLI[0].percorsi.slice(0, 3).map((p, i) => {
     const m = mazzo('carte_' + i, p.id, 8);
@@ -76,9 +76,11 @@ prova('085 bis: nella scala la telefonata sta SUBITO SOPRA il suo percorso, a me
   const h = W.app.innerHTML, primo = T.LIVELLI[0].percorsi[0].id;
   const rp = h.indexOf(`data-rp="${primo}"`), percorso = h.indexOf(`data-percorso="${primo}"`);
   assert.ok(rp > 0 && percorso > rp, 'la telefonata del primo percorso viene prima (sopra) del percorso');
-  // il tondo piccolo a metà strada tra il suo percorso (x 0) e quello sopra (x 56), centrato: 28 + 10 = 38 px
-  assert.match(h, new RegExp(`data-rp="${primo}" style="--x:38px"><span class="trn-tondo-n">\\[chiamata\\]</span>\\s*<div><b>Telefonata del percorso 1</b>`));
+  // la pallina sta con il suo percorso (stessa x dello zig-zag: 0 il primo, 56 il secondo), non a metà strada come un nodo a sé (085 ter)
+  assert.match(h, new RegExp(`<button class="trn-satellite" data-rp="${primo}" style="--x:0px"><span class="trn-pallina">\\[chiamata\\]</span><span class="trn-sat-testo">Telefonata del percorso 1</span></button>`));
   assert.match(h, new RegExp(`data-percorso="${primo}" style="--x:0px"`));
+  assert.match(h, new RegExp(`data-rp="${T.LIVELLI[0].percorsi[1].id}" style="--x:56px"`));
+  assert.doesNotMatch(h, /trn-nodo-rp/);
   // in tutta la scala ogni telefonata viene subito prima (cioè sopra) del suo percorso
   const seq = [...h.matchAll(/data-(rp|percorso)="([^"]+)"/g)].map(m => m[1] + ':' + m[2]);
   const telefonate = seq.map((x, k) => [x, k]).filter(([x]) => x.startsWith('rp:'));

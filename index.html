@@ -807,7 +807,14 @@
   .trn-rp-b p { margin: 0; } .trn-rp-b p + p { margin-top: 10px; }   /* più frasi della stessa persona: un fumetto solo, con le frasi staccate */
   .trn-rp-b.io { justify-self: end; background: var(--gr-crescita-tinta); }
   .trn-rp-fondo { margin-top: 16px; display: grid; gap: 10px; }
-  .trn-nodo-rp { padding: 0 0 6px; } .trn-nodo-rp .trn-tondo-n { width: 44px; height: 44px; } .trn-nodo-rp b { font-size: 14px; } .trn-nodo-rp > div { flex: 1 1 auto; }
+  /* nota 085 ter: la telefonata del percorso è una pallina piccola attaccata in alto, in diagonale, al tondo del percorso (64 px), con la scritta accanto;
+     il margine sotto negativo la fa toccare il bordo del tondo, così si vede a chi appartiene */
+  .trn-satellite { display: flex; align-items: center; gap: 6px; margin: 0 0 -16px calc(var(--x) + 38px); position: relative; z-index: 1; border: 0; background: none; padding: 0;
+    font-family: inherit; text-align: left; color: var(--testo-soft); cursor: pointer; max-width: calc(100% - var(--x) - 38px); }
+  .trn-pallina { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--superficie); color: var(--gr-crescita);
+    border: 2px solid var(--gr-crescita); box-shadow: 0 2px 0 color-mix(in srgb, var(--gr-crescita) 45%, #000); }
+  .trn-pallina > svg.ic { width: 16px; height: 16px; }
+  .trn-sat-testo { font-size: 12.5px; font-weight: 600; line-height: 1.25; }
   .trn-risposte button[data-c] small, .trn-risposte button[data-m] small { display: block; font-size: 12px; font-weight: 500; opacity: .7; margin-top: 2px; }
   .trn-rp-presto { opacity: .55; } .trn-rp-presto small { display: block; font-size: 12px; font-weight: 600; }
   .trn-rp-nomi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
