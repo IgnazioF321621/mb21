@@ -46,17 +46,20 @@ async function apriAdmin() {
       const { data: tel } = await dbq('telefoni delle schede', supa.from('contatti').select('codice_amway, telefono').in('codice_amway', codiciSenza).is('eliminato_il', null).like('telefono', '+%'));
       (tel || []).forEach(c => { AD.telSchede[c.codice_amway] = c.telefono; });
     }
-    // «Senza obiettivi del mese» (nota 040, 02/10): chi li ha già scritti, chi ha toccato «Non questo mese», e quando è stato mandato l'ultimo invito (la funzione, per i 3 giorni di pausa)
+    // «Senza obiettivi del mese» (nota 040, 02/10): chi li ha già scritti, chi ha toccato «Non questo mese», e quando è stato mandato l'ultimo invito (la funzione, per i 3 giorni di pausa).
+    // Nota Pagine 083, punto 5: con l'interruttore spento (INVITO_OB_ADMIN) niente di tutto questo, nemmeno la chiamata alla funzione `avvisi` a ogni apertura di Admin
     const mese = oggi.slice(0, 8) + '01';
     AD.meseOb = mese;
-    const [ob, salto, stato] = await Promise.all([
-      dbq('obiettivi del mese di tutti', supa.from('obiettivi_mese').select('*').eq('mese', mese)),
-      dbq('obiettivi saltati', supa.from('obiettivi_salto').select('user_id').eq('mese', mese)),
-      supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'stato' } }).catch(() => ({ data: null })),
-    ]);
-    AD.conObiettivi = new Set((ob.error ? [] : ob.data).filter(o => MB21Dashboard.haObiettivi(o)).map(o => o.user_id));
-    AD.obSaltati = new Set((salto.error ? [] : salto.data).map(x => x.user_id));
-    AD.obUltimi = (stato && stato.data && stato.data.ultimi) || {};
+    if (INVITO_OB_ADMIN) {
+      const [ob, salto, stato] = await Promise.all([
+        dbq('obiettivi del mese di tutti', supa.from('obiettivi_mese').select('*').eq('mese', mese)),
+        dbq('obiettivi saltati', supa.from('obiettivi_salto').select('user_id').eq('mese', mese)),
+        supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'stato' } }).catch(() => ({ data: null })),
+      ]);
+      AD.conObiettivi = new Set((ob.error ? [] : ob.data).filter(o => MB21Dashboard.haObiettivi(o)).map(o => o.user_id));
+      AD.obSaltati = new Set((salto.error ? [] : salto.data).map(x => x.user_id));
+      AD.obUltimi = (stato && stato.data && stato.data.ultimi) || {};
+    }
   } catch (e) {
     app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
     return;
@@ -68,11 +71,15 @@ async function apriAdmin() {
 // ── SENZA OBIETTIVI DEL MESE (lista «Avvisi», nota 040, Ignazio 02/10) ── chi entra nell'app e gli obiettivi del mese non li ha ancora scritti:
 // un invito per persona, con calma (mai «a tutti»). Non insistente: l'invito è lo stesso avviso della sera, parte solo se ha gli avvisi accesi,
 // non se ha toccato «Non questo mese», e dopo l'invio il bottone si ferma 3 giorni (lo ferma anche la funzione `avvisi`, non solo la schermata).
+// Nota Pagine 083, punto 5 (Ignazio 24/10, «Spegnere»): il riquadro con «Manda l'avviso» è spento con questo interruttore (il codice resta):
+// l'invito agli obiettivi arriva da solo, la sera del 1° e del 3° del mese (funzione `avvisi`, regole.ts → avvisoObiettivi).
+const INVITO_OB_ADMIN = false;
 const PAUSA_INVITO_OB = 3 * 86400000;
 const senzaObiettivi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.conObiettivi || new Set()).has(u.id))
   .sort((a, b) => Number((AD.obSaltati || new Set()).has(a.id)) - Number((AD.obSaltati || new Set()).has(b.id)));   // chi ha detto «non questo mese» in fondo
 const quandoInvitoOb = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(', ', ' alle ');
 function senzaObiettiviHtml() {
+  if (!INVITO_OB_ADMIN) return '';
   const senza = senzaObiettivi();
   if (!senza.length) return '';
   const mese = MESI_LUNGHI[Number(AD.meseOb.slice(5, 7)) - 1];

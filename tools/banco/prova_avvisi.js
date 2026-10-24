@@ -60,6 +60,11 @@ const assert = require('node:assert/strict');
     assert.equal(R.avvisoObiettivi('2026-10-04', { vpg: 1000 }), null);                     // il «rifalli» è solo dei primi tre giorni
     assert.equal(R.avvisoObiettivi('2026-11-01', { vpg: 1000 }), null);                     // a novembre chi li ha già non riceve niente
     assert.deepEqual(R.invitoObiettivi('2026-10-17'), R.avvisoObiettivi('2026-10-01', null)); // l'invio a mano dell'Admin è lo stesso testo, in qualunque giorno
+    // nota Pagine 083, punto 2 (Ignazio 24/10, «B»): niente più «foglio nuovo»; il mese cambia da solo
+    assert.deepEqual(R.invitoObiettivi('2026-11-01'), { titolo: '🎯 Gli obiettivi di novembre', testo: 'È iniziato novembre: è il momento di impostare i tuoi obiettivi del mese.', rifai: false,
+      riga: 'È iniziato novembre: è il momento di impostare i tuoi obiettivi del mese.', corta: 'È iniziato novembre: è il momento di impostare i tuoi obiettivi del mese.' });
+    assert.equal(R.invitoObiettivi('2026-12-03').testo, 'È iniziato dicembre: è il momento di impostare i tuoi obiettivi del mese.');
+    assert.doesNotMatch(JSON.stringify(R.invitoObiettivi('2026-11-01')), /foglio nuovo|Tocca/);
   });
 
   prova('complimenti: anche il Training fatto oggi', () => {
@@ -86,7 +91,7 @@ const assert = require('node:assert/strict');
     assert.match(siSera({ ...base, training: 'da_fare', daRipassare: 4 }).testo, /oggi 4 carte da ripassare\.$/);
     // obiettivi: una riga dentro lo stesso avviso, niente avviso a parte
     m = siSera({ ...base, obiettivi: ob });
-    assert.match(m.testo, /\n🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo\.$/); assert.equal(m.url, './?apri=check');
+    assert.match(m.testo, /\n🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese\.$/); assert.equal(m.url, './?apri=check');
     assert.match(siSera({ ...base, obiettivi: obRifai }).testo, /\n🎯 Gli obiettivi di ottobre sono nel foglio nuovo: chi li aveva già scritti può rifarli, riportando i dati\.$/);
     // tutto insieme, nell'ordine: riepilogo, domani, traguardo, Training, obiettivi
     m = siSera({ ...base, bravo: '3 contatti', domani, training: 'da_fare', obiettivi: ob, traguardo: 'Verso il Leaders Club: x (3 su 5).' });
@@ -109,8 +114,8 @@ const assert = require('node:assert/strict');
 
   prova('le tre voci (Training · obiettivi · traguardo): obiettivi e traguardo una volta al giorno, il Training anche la sera se non è stato fatto', () => {
     const c = { training: 'da_fare', daRipassare: 0, obiettivi: R.avvisoObiettivi('2026-10-03', null), traguardo: 'Verso il Leaders Club: x.' };
-    assert.deepEqual(R.righeConsigli(c), { training: '🏋️ Se ti va, restano 5 minuti di Training.', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '🚩 Verso il Leaders Club: x.' });
-    assert.deepEqual(R.righeConsigli(c, { training: true, traguardo: true }), { training: '', obiettivi: '🎯 Gli obiettivi di ottobre ti aspettano nel foglio nuovo.', traguardo: '' });
+    assert.deepEqual(R.righeConsigli(c), { training: '🏋️ Se ti va, restano 5 minuti di Training.', obiettivi: '🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese.', traguardo: '🚩 Verso il Leaders Club: x.' });
+    assert.deepEqual(R.righeConsigli(c, { training: true, traguardo: true }), { training: '', obiettivi: '🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese.', traguardo: '' });
     assert.deepEqual(R.righeConsigli({ training: 'fatto', daRipassare: 0, obiettivi: null }), { training: '', obiettivi: '', traguardo: '' });
     // la sera: voci già dette la mattina spariscono; se non resta niente e Check fatto, silenzio
     const sera = { ...c, bravo: null, checkFatto: true, domani: null, ilGiornoDopo: '2026-10-04' };
@@ -158,18 +163,18 @@ const assert = require('node:assert/strict');
     assert.equal(trCorto, 'Verso il Leaders Club: mancano 2 cose.'); assert.match(tr, /Un iscritto in più \(3 su 5\) · Una prima linea/);
     const uno = { ...lc, mancano: ['il biglietto BBS'], nome: 'Leader 1° livello' };
     assert.equal(R.rigaTraguardo(uno, '2026-10-05', ora, 'corto'), R.rigaTraguardo(uno, '2026-10-05', ora));   // una voce sola: già corta
-    assert.equal(ob.corta, 'Gli obiettivi di ottobre ti aspettano.'); assert.equal(obRifai.corta, 'Gli obiettivi di ottobre: puoi rifarli nel foglio nuovo.');
+    assert.equal(ob.corta, 'È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese.');   // nota 083: la stessa frase anche nella riga corta assert.equal(obRifai.corta, 'Gli obiettivi di ottobre: puoi rifarli nel foglio nuovo.');
     const domani = { titolo: '2 appuntamenti', ora: '09:30', primo: 'PM · Pino' };
     const base = { bravo: '5 contatti e 1 vendita', checkFatto: false, domani, ilGiornoDopo: '2026-10-06', training: 'da_fare', daRipassare: 3, obiettivi: ob, traguardo: tr, traguardoCorto: trCorto };
     // sera, Check non fatto
     let m = R.messaggioSera(base);
-    assert.equal(m.testo, '📝 Oggi 5 contatti e 1 vendita.\n📅 Domani: 2 appuntamenti, dalle 09:30.\n🚩 Verso il Leaders Club: mancano 2 cose.\n🏋️ 5 minuti di Training? 3 carte da ripassare.\n🎯 Gli obiettivi di ottobre ti aspettano.');
+    assert.equal(m.testo, '📝 Oggi 5 contatti e 1 vendita.\n📅 Domani: 2 appuntamenti, dalle 09:30.\n🚩 Verso il Leaders Club: mancano 2 cose.\n🏋️ 5 minuti di Training? 3 carte da ripassare.\n🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese.');
     assert.match(m.completo, /Bastano due minuti per chiuderlo: tocca per aprire «Il mio giorno»\./); assert.match(m.completo, /\(PM · Pino\)/); assert.match(m.completo, /Un iscritto in più \(3 su 5\)/);
     assert.ok(m.testo.length < m.completo.length); assert.equal(m.testo.split('\n').length, m.completo.split('\n').length);   // stesse righe, più corte
     assert.equal(R.messaggioSera({ ...base, bravo: null }).testo.split('\n')[0], '📝 Due minuti per chiudere la giornata.');
     // sera, Check fatto e domani
     m = R.messaggioSera({ ...base, checkFatto: true, training: 'mai' });
-    assert.equal(m.testo, '📝 Oggi 5 contatti e 1 vendita, bel lavoro.\n📅 Si comincia alle 09:30.\n🚩 Verso il Leaders Club: mancano 2 cose.\n🏋️ 5 minuti per provare il Training?\n🎯 Gli obiettivi di ottobre ti aspettano.');
+    assert.equal(m.testo, '📝 Oggi 5 contatti e 1 vendita, bel lavoro.\n📅 Si comincia alle 09:30.\n🚩 Verso il Leaders Club: mancano 2 cose.\n🏋️ 5 minuti per provare il Training?\n🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese.');
     assert.match(m.completo, /Si comincia alle 09:30: PM · Pino\. Tocca per vedere la giornata\./);
     // titolo, indirizzo ed etichetta sono uguali nei due testi (è un solo avviso)
     assert.equal(m.titolo, '📅 Domani hai 2 appuntamenti'); assert.equal(m.tag, 'domani');

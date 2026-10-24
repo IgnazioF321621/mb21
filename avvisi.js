@@ -100,6 +100,7 @@ function mostraAvvisoRicevuto(titolo, testo) {
 // (migrazione 20260923143237_avvisi_quando.sql) e, dal lavoro 3, nella funzione Edge `avvisi`: se cambia uno, cambiano tutti.
 // 03/10 (Ignazio): niente più avvisi «Prima di» per appuntamenti, telefonate, cose da fare e modelli: li fa il calendario di ognuno (link nel Profilo).
 // Restano «Com'è andata?» (serve per avere gli esiti), il Buongiorno e la sera.
+// Nota Pagine 083, punto 3 (Ignazio 24/10): nel Profilo niente più titoletti «Dopo un appuntamento» e «Ogni giorno» (i gruppi restano qui, non si scrivono)
 const AVVISI_QUANDO = [
   { gruppo: 'Dopo un appuntamento', tipi: [
     { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: 'se manca l\'esito', scelte: [[30, '30′ dopo'], [60, '1 ora dopo'], [120, '2 ore dopo']], gia: 60 } ] },
@@ -110,7 +111,7 @@ const AVVISI_QUANDO = [
 const sceltaAvviso = (u, k) => { const t = AVVISI_QUANDO.flatMap(g => g.tipi).find(t => t.k === k); const v = (u.avvisi_quando || {})[k]; return v == null ? t.gia : v; };
 
 function avvisiQuandoHtml(u) {
-  return AVVISI_QUANDO.map(g => `<div class="pf-quando-titolo">${g.gruppo}</div>` + g.tipi.map(t => {
+  return AVVISI_QUANDO.map(g => g.tipi.map(t => {
     const scelto = sceltaAvviso(u, t.k);
     return `<div class="pf-tipo"><b>${t.titolo}</b>${t.sotto ? `<span>${t.sotto}</span>` : ''}<div class="pf-scelte">${t.scelte.map(([v, testo]) =>
       `<button class="${v === scelto ? 'scelto' : ''}" data-quando="${t.k}:${v}">${testo}</button>`).join('')}</div></div>`;

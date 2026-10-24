@@ -3,7 +3,7 @@
 // il suo, da guardare e basta (`apriProfiloDiAltro`, nota 070, Ignazio 04/10: «A»); con «Tutti» è il proprio.
 // Dal cantiere 25 bis è «il mio quadro»: ogni voce è chiusa e si apre al tocco; la foto si cambia dal cerchio in alto a destra.
 // Contiene: dati della persona (nome, email e codice Amway in lettura; telefono modificabile), Contatti al giorno,
-// avvisi sul telefono (da qui, non più in Dashboard), «✨ Novità dell'app» (cantiere 28), Cambia password, Esci. Foto (passo 2, Ignazio 17/09: «una foto piccola
+// avvisi sul telefono (da qui, non più in Dashboard), Cambia password, Esci («✨ Novità dell'app», cantiere 28: dal 24/10, nota 083, da «Novità · Versione» in fondo). Foto (passo 2, Ignazio 17/09: «una foto piccola
 // nel database»): rimpicciolita dall'app a 200×200 JPEG e salvata come testo in `utenti.foto` con `imposta_foto`.
 // Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, foglioPassword…), pagina-novita.js (foglioNovita, versione),
 // pagina-dashboard.js (scegliNumero, domandaBigliettoHtml, collegaDomandaBiglietto) e avvisi.js (leggiStatoAvvisi, attivaAvvisi, spegniAvvisi, mandaAvvisoDiProva).
@@ -101,6 +101,9 @@ function mioTrainingHtml() {
     `${esc(t.livello)} · ${n(t.totale, 'medaglia', 'medaglie')} · ${n(t.stelle, 'stella', 'stelle')} · ${n(t.fila, 'giorno', 'giorni')} di fila`);
 }
 
+// Nota Pagine 083, punto 6 (Ignazio 24/10, «Spegnere»): «Il mio avvio» e «Rivedi il benvenuto» servono ai nuovi; per ora nel Profilo sono spenti,
+// si riaccendono qui con un partner nuovo (il codice resta). «Perché ho iniziato» resta. Nella Dashboard «Il mio avvio» del nuovo c'è come prima.
+const AVVIO_NEL_PROFILO = false;
 function mioProfiloHtml() {
   const m = AVV.mio, L = MB21Lista;
   if (!m) return '';
@@ -109,18 +112,18 @@ function mioProfiloHtml() {
     : prossimo ? `${ic('prossimo')} Prossimo passo: ${esc(prossimo.nome)}` : ic('complimenti') + ' Tutti i passi fatti';
   return voceProfilo('perche', ic('perche') + ' Perché ho iniziato', { sotto: righe.length ? '' : 'Non l\'hai ancora scelto: bastano due tocchi',
       corpo: `${righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : ''}<button class="link" id="pf-perche">${righe.length ? 'Cambia' : 'Scegli adesso'}</button>` })
-    + voceProfilo('avvio', ic('avvio') + ' Il mio avvio', { classe: 'pf-avvio', sotto: stato, destra: `${fatti}/${totale}`,
-      sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) });
+    + (!AVVIO_NEL_PROFILO ? '' : voceProfilo('avvio', ic('avvio') + ' Il mio avvio', { classe: 'pf-avvio', sotto: stato, destra: `${fatti}/${totale}`,
+      sempre: `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>`, corpo: mioPassiHtml(m) }));
 }
 
 // «Avvisi» con lo schema del QUANDO (cantiere 43, schizzo approvato da Ignazio il 23/09; per tutti dal lavoro 4, stesso giorno):
 // ognuno sceglie quando, per tipo (avvisiQuandoHtml in avvisi.js; dal 03/10 senza i «Prima di…»: li fa il calendario). «Spegni» vale per il dispositivo; «Prova un avviso» in fondo.
+// Nota Pagine 083, punto 3 (Ignazio 24/10): più corto, una frase sola in cima; via la riga sulle tracce («ti avvisano sempre, appena arrivano»: non è vero)
 function avvisiNuoviHtml(statoDispositivo, destra) {
   return voceProfilo('avvisi', ic('avvisi') + ' Avvisi', { destra, corpo: `
-      <small style="margin-top:0">Il buongiorno, il riepilogo della sera e il «Com'è andata?» ti arrivano anche con l'app chiusa. Scegli tu <b>quando</b>: vale su telefono e iPad insieme. Gli avvisi prima di un appuntamento li fa il tuo calendario: più sotto lo puoi collegare a MB21.</small>
+      <small style="margin-top:0">Arrivano anche con l'app chiusa. L'ora la scegli tu: vale su tutti i tuoi dispositivi.</small>
       <div class="pf-avvisi">${statoDispositivo}</div>
       ${avvisiQuandoHtml(ST.utente)}
-      <small>Le tracce condivise da controllare ti avvisano sempre, appena arrivano.</small>
       <button class="primario pf-prova" id="av-prova">${ic('avvisi')} Prova un avviso</button>` });
 }
 
@@ -156,8 +159,7 @@ function disegnaProfilo() {
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
     ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
     ${typeof toccoScaricaLista === 'function' ? rigaProfilo('pf-scarica-lista', ic('file') + ' Scarica la mia lista', '', 'Schede, azioni e note in un file Excel') : ''}
-    ${rigaProfilo('pf-novita', ic('novita') + ' Novità dell\'app')}
-    ${rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto')}
+    ${AVVIO_NEL_PROFILO ? rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto') : ''}
     ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
     ${rigaProfilo('pf-privacy', ic('lucchetto') + ' Privacy', '', 'Come sono trattati i tuoi dati')}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
@@ -173,7 +175,7 @@ function disegnaProfilo() {
   su('pf-libri', () => apriLibri('profilo'));   // cantiere 40 lavoro 7: il diario di lettura (pagina-libri.js)
   if (typeof foglioMessaggi === 'function') su('pf-messaggi', foglioMessaggi);   // nota Admin 014 (pagina-messaggi.js)
   if (typeof toccoScaricaLista === 'function') su('pf-scarica-lista', () => toccoScaricaLista(document.getElementById('pf-scarica-lista')));   // nota Admin 017: per tutti, anche per chi è esente dalla chiusura (scarica-lista.js)
-  su('pf-novita', () => foglioNovita());   // elenco completo (cantiere 28)
+  // nota 083, punto 7: la riga «Novità dell'app» non c'è più: le novità si aprono da «Novità · Versione …» in fondo (versione())
   su('pf-perche', () => apriBenvenuto({ solo: 'perche', ritorno: 'profilo' }));
   collegaMioAvvio(disegnaProfilo, 'profilo');
   su('pf-benvenuto', () => apriBenvenuto());   // cantiere 32: le cinque schermate da capo, con quello che aveva già scelto

@@ -4,13 +4,16 @@
 // «solo da N21» dove serve), «Il mio diario» (un blocco per libro, dentro le note dei Check giorno per giorno).
 // I dati sono i Check del Giorno di chi è scelto (Partner Select compreso) e i libri della biblioteca. La logica è in libri.js.
 
-const LB = { aperto: null, ritorno: 'profilo' };   // un libro aperto alla volta (Ignazio 22/09: «altrimenti diventa tutto molto lungo»)
+const LB = { aperto: null, ritorno: 'profilo', dati: null };   // un libro aperto alla volta (Ignazio 22/09: «altrimenti diventa tutto molto lungo»)
 
+// Nota Pagine 083, punto 8 (Ignazio 24/10): `apriLibri` legge (all'apertura e dopo un «già letto») e disegna in cima; aprire e chiudere un libro del
+// diario ridisegna dai dati già letti (`LB.dati`), sul posto: niente «Carico…», nessuna lettura in più, la pagina non torna in cima.
+const indietroLibri = () => (LB.ritorno === 'oggi' ? '‹ Dashboard' : '‹ Profilo');
+const tornaDaiLibri = () => { if (LB.ritorno === 'oggi') { ST.tab = 'oggi'; mostraTab(); } else apriProfilo(); };
 async function apriLibri(ritorno) {
   if (ritorno) LB.ritorno = ritorno;
-  const indietro = LB.ritorno === 'oggi' ? '‹ Dashboard' : '‹ Profilo';
+  const indietro = indietroLibri(), torna = tornaDaiLibri;
   app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} I miei libri</h1><div class="vuoto">Carico…</div>`;
-  const torna = () => { if (LB.ritorno === 'oggi') { ST.tab = 'oggi'; mostraTab(); } else apriProfilo(); };
   document.getElementById('lb-indietro').onclick = torna;
   const [check, libri, gia, personali] = await Promise.all([
     dbq('check con libro', supa.from('check_giorno').select('data, libro, pagine, note_libro').eq('user_id', visto().id).order('data')),
@@ -19,11 +22,16 @@ async function apriLibri(ritorno) {
     dbq('libri personali', supa.from('libri_personali').select('titolo, autore').eq('user_id', visto().id)),
   ]);
   if (check.error || libri.error) { app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} I miei libri</h1><div class="avviso">Non riesco a caricare i libri: riprova.</div>${versione()}`; document.getElementById('lb-indietro').onclick = torna; return; }
-  const oggi = MB21Coda.oggiRoma();
   // i libri personali («Altro libro…») entrano nell'elenco come libri fuori percorso, così hanno autore nel diario
   const tuttiLibri = [...(libri.data || []), ...(personali.data || []).map(x => ({ tipo: 'libro', titolo: x.titolo, autore: x.autore, ordine_libro: null, solo_n21: false, personale: true }))];
-  const giaLetti = gia.data || [];
-  const r = MB21Libri.riepilogo(check.data || [], tuttiLibri, oggi, giaLetti);
+  LB.dati = { check: check.data || [], tuttiLibri, giaLetti: gia.data || [] };
+  disegnaLibri(true);
+}
+
+function disegnaLibri(inCima) {
+  const indietro = indietroLibri(), torna = tornaDaiLibri, { tuttiLibri, giaLetti } = LB.dati;
+  const oggi = MB21Coda.oggiRoma();
+  const r = MB21Libri.riepilogo(LB.dati.check, tuttiLibri, oggi, giaLetti);
   const mio = !guardoAltri();
   const nomeMese = m => MB21Rubrica.MESI[Number(m.slice(5, 7)) - 1];
   const data = MB21Lista.data;
@@ -56,9 +64,9 @@ async function apriLibri(ritorno) {
 
   app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} ${guardoAltri() ? 'I libri di ' + esc(MB21Sharing.nomeCorto(nomeDi(visto()))) : 'I miei libri'}</h1>
     <div class="sotto">Da «Il mio giorno»${chi}: il libro, le pagine, le note.</div>${inCorso}${percorso}${diario}${versione()}`;
-  window.scrollTo(0, 0);
+  if (inCima) window.scrollTo(0, 0);
   document.getElementById('lb-indietro').onclick = torna;
-  app.querySelectorAll('[data-libro]').forEach(b => b.onclick = () => { LB.aperto = LB.aperto === b.dataset.libro ? null : b.dataset.libro; apriLibri(); });
+  app.querySelectorAll('[data-libro]').forEach(b => b.onclick = () => { LB.aperto = LB.aperto === b.dataset.libro ? null : b.dataset.libro; disegnaLibri(); });   // sul posto (nota 083)
   // «L'ho già letto» (Ignazio 22/09: «come si fa con quei libri che uno ha già letto anche prima di Glide?»): un tocco sul libro
   // del percorso non spuntato lo segna (con il periodo, facoltativo); un tocco su un «già letto» lo toglie
   app.querySelectorAll('[data-gia]').forEach(b => b.onclick = async () => {

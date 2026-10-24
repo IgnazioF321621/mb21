@@ -62,10 +62,11 @@ const NOMI_MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
 export const FOGLIO_NUOVO = { dal: '2026-10-01', al: '2026-10-03' };
 export const GIORNI_INVITO_OBIETTIVI = [1, 3];   // le sere in cui parte l'invito automatico
 export type AvvisoObiettivi = { titolo: string; testo: string; rifai: boolean; riga: string; corta: string };   // `riga` = la frase che entra nell'avviso della sera (02/10: un avviso solo); `corta` = la stessa, per il testo breve dell'avviso (04/10)
-// L'invito (anche quello mandato a mano dall'Admin: stesso testo)
+// L'invito (anche quello mandato a mano dall'Admin: stesso testo). Nota Pagine 083, punto 2 (Ignazio 24/10, risposta «B»): via «nel foglio nuovo»
+// (il foglio non è più nuovo); la stessa frase nel testo intero, nella riga dell'avviso e in quella corta; il nome del mese cambia da solo.
 export function invitoObiettivi(giorno: string): AvvisoObiettivi {
-  const mese = NOMI_MESI[Number(giorno.slice(5, 7)) - 1];
-  return { titolo: `🎯 Gli obiettivi di ${mese}`, testo: `È iniziato ${mese}: nel foglio nuovo si scelgono i traguardi del mese, con il consiglio e le linee. Tocca per aprirlo.`, rifai: false, riga: `Gli obiettivi di ${mese} ti aspettano nel foglio nuovo.`, corta: `Gli obiettivi di ${mese} ti aspettano.` };
+  const mese = NOMI_MESI[Number(giorno.slice(5, 7)) - 1], frase = `È iniziato ${mese}: è il momento di impostare i tuoi obiettivi del mese.`;
+  return { titolo: `🎯 Gli obiettivi di ${mese}`, testo: frase, rifai: false, riga: frase, corta: frase };
 }
 export function avvisoObiettivi(giorno: string, obiettivi: Record<string, unknown> | null | undefined, saltato = false): AvvisoObiettivi | null {
   if (saltato) return null;

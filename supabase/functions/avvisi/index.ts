@@ -96,7 +96,14 @@ async function spedisci(d: Dispositivo, avviso: Avviso) {
   }
 }
 
+// Nota Pagine 083, punto 1 (Ignazio 24/10, chiusura del 25/10): gli avvisi partono SOLO verso chi può ancora entrare nell'app: accesso attivo,
+// non eliminato, abbonamento non scaduto (nota 033). Un controllo in un punto solo, qui dentro, per tutti gli avvisi (sera, Buongiorno, «Com'è andata?»,
+// tracce, prova, invito dell'Admin): prima «Com'è andata?» e le tracce non lo guardavano. Si legge una volta per chiamata della funzione (`perChiamata`,
+// svuotato a ogni richiesta). Se la lettura non riesce non parte niente: l'orologio riprova al giro dopo (gli impegni non vengono segnati come avvisati).
 async function spedisciA(utenti: string[], avviso: Avviso) {
+  if (!utenti.length) return { dispositivi: 0 };
+  const entrano = await chiPuoEntrare();
+  utenti = utenti.filter(id => entrano.has(id));
   if (!utenti.length) return { dispositivi: 0 };
   const { data, error } = await db.from('avvisi_dispositivi').select('id, endpoint, p256dh, auth').in('user_id', utenti);
   if (error) throw error;
@@ -107,10 +114,21 @@ async function spedisciA(utenti: string[], avviso: Avviso) {
 // Nota Fondamenta 033 (08/10): chi ha l'abbonamento scaduto non riceve la sera né il mattino. Stessa scadenza dell'app
 // (scadenza_abbonamento: con l'abbonamento in comune conta chi paga; l'Admin mai scaduto), letta con utenti_abbonamento_scaduto().
 // Se la funzione non è ancora applicata (errore) si va avanti come prima: meglio un avviso in più che nessun avviso a tutti.
-async function utentiScaduti(): Promise<Set<string>> {
-  const { data, error } = await db.rpc('utenti_abbonamento_scaduto');
-  if (error) return new Set();
-  return new Set(((data ?? []) as { id: string }[]).map(x => x.id));
+function utentiScaduti(): Promise<Set<string>> {
+  return perChiamata.scaduti ??= (async () => {
+    const { data, error } = await db.rpc('utenti_abbonamento_scaduto');
+    if (error) return new Set<string>();
+    return new Set(((data ?? []) as { id: string }[]).map(x => x.id));
+  })();
+}
+// Chi può ancora entrare (nota 083): letto una volta per chiamata, insieme agli abbonamenti scaduti
+let perChiamata: { scaduti?: Promise<Set<string>>; entrano?: Promise<Set<string>> } = {};
+function chiPuoEntrare(): Promise<Set<string>> {
+  return perChiamata.entrano ??= (async () => {
+    const [{ data, error }, scaduti] = await Promise.all([db.from('utenti').select('id').eq('accesso_attivo', true).is('eliminato_il', null), utentiScaduti()]);
+    if (error) throw error;
+    return new Set(((data ?? []) as { id: string }[]).map(u => u.id).filter(id => !scaduti.has(id)));
+  })();
 }
 
 // Le scelte del QUANDO di tutti gli utenti (cantiere 43): (utente, chiave) → la sua scelta o il «già impostato»
@@ -165,6 +183,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey' } });
   const corpo = await req.json().catch(() => ({}));
   const tipo = corpo.tipo as string;
+  perChiamata = {};   // nota 083: chi può entrare si rilegge a ogni chiamata
 
   // Avviso di prova: chi lo chiede deve essere entrato nell'app
   if (tipo === 'prova') {
