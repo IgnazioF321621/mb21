@@ -4,7 +4,7 @@
 // la scheda (pagina-lista.js → disegnaScheda) la chiama con `sezioneVendite`, `venditeDellaScheda` e `mostraBrand`;
 // index.html → chiudiAppuntamento apre `moduloVendita` dopo l'esito «Vendita» di una Consulenza PRD.
 // I calcoli sono in lista.js (MB21Lista: totaliVendite, rigaVendita, daConsegnare, brandComprati…), provati in tools/banco/prova_lista.js;
-// la provvigione si calcola solo nel database (vista `vendite_conti`).
+// la provvigione si calcola solo nel database (vista `vendite_conti`); nel modulo c'è solo una sua STIMA mentre si scrive (nota Pagine 078, MB21Lista.provvigioneStimata).
 // Usa ciò che definisce index.html (supa, dbq, esc, mostraToast, chiediConferma, soloGuardo, CK…) e pagina-lista.js (LS, disegnaScheda, moduloSemplice).
 // Si carica prima dello script della pagina: solo definizioni.
 
@@ -82,11 +82,31 @@ async function segnaOrdineFatto(v, dopo) {
   if (dopo) await dopo();
 }
 
+// Nota Pagine 078 (Ignazio 24/10): i fattori di conversione (tabella `fattori_conversione`, poche righe; i partner la leggono già) per la provvigione
+// stimata: una lettura per sessione, tenuta in memoria; se non riesce, null e la riga «Provvigione stimata» non compare. L'Admin che cambia il fattore la svuota.
+let FATTORI = null;
+function fattoriConversione() {
+  if (!FATTORI) FATTORI = Promise.resolve(dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore')))
+    .then(({ data, error }) => { if (error || !Array.isArray(data)) { FATTORI = null; return null; } return data; }, () => { FATTORI = null; return null; });
+  return FATTORI;
+}
+function azzeraFattori() { FATTORI = null; }
+
 // «Vendita +» e, toccando una riga, la stessa vendita da cambiare o eliminare: un modulo solo (campi di Glide).
 // `proposta.brand`: brand già scelto quando la vendita nasce dall'esito «Vendita» di una Consulenza PRD.
-function moduloVendita(v, proposta) {
+async function moduloVendita(v, proposta) {
   if (soloGuardo()) return;
   const c = LS.contatto;
+  // Nota Pagine 078 (Ignazio 24/10): prima di disegnare, insieme, il dato «Cliente con account» (accountDi aspetta la lettura della testata: era il
+  // difetto per cui da «Vendita! La registri adesso?» il modulo trovava LS.account vuoto), i fattori di conversione e, in Modifica, l'incasso.
+  const [dalAccount, fattori, incasso] = await Promise.all([
+    c && c.categoria === 'Cliente' ? accountDi(c) : null,
+    fattoriConversione(),
+    v ? dbq('incasso vendita', supa.from('vendite').select('pagato_con, incassato, prezzo_pubblico').eq('id', v.id).single()).then(r => (r && r.data) || null) : null,
+  ]);
+  // Decisione 7: «Ordine pagato sul sito» per un cliente con account: in una vendita nuova sempre; in Modifica solo se la vendita è del giorno
+  // dell'account o dopo e non ha incassato, prezzo né modo di pagamento (le vendite vecchie da Glide di chi ha preso l'account dopo restano normali).
+  const sulSito = !!dalAccount && (!v || (dalAccount <= v.data && !!incasso && incasso.incassato == null && incasso.prezzo_pubblico == null && !incasso.pagato_con));
   let brand = v ? v.brand : (proposta && MB21Lista.BRAND.some(b => b[0] === proposta.brand) ? proposta.brand : '');
   const velo = document.createElement('div');
   velo.className = 'velo';
@@ -95,28 +115,36 @@ function moduloVendita(v, proposta) {
   // Nota Pagine 053 (Ignazio 14/10/2026): tre gruppi, «Che cosa hai venduto» · «I soldi» · «I tempi» (prima soldi e tempi erano mescolati).
   // V3 (Verifica Vendite, Ignazio 22/10): sempre in vista brand, prodotti, data, VP, prezzo al pubblico, incassato e sconto («voci fondamentali per farsi un
   // calcolo»); consegna (Subito già scelto) e riordino (la domanda della V2) in due righe chiuse con la scelta già messa, che si aprono al tocco.
+  // Nota Pagine 078 (Ignazio 24/10): i gruppi restano; «I soldi» si chiama «Importi»; Prodotto e Data affiancati, Prezzo e Incassato affiancati
+  // (l'ordine dei soldi del 20/10 resta); via «Obbligatorio» e le due spiegazioni lunghe (se manca qualcosa lo dice Salva); l'avviso dei brand è una riga
+  // grigia sotto i brand; sotto il VP «Provvigione stimata»; nel riquadro della riga prezzo «Guadagno netto stimato»; la riga del riordino è la domanda.
+  // Cliente con account: al posto di prezzo, incassato, sconto e «Come ha pagato» la riga «Ordine pagato sul sito» (i campi restano, nascosti).
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('vendite')}</span>
-      <div><small>${v ? 'Modifica vendita' : 'Nuova vendita'}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
+      <div><small>${v ? 'Modifica vendita' : 'Nuova vendita'}${sulSito ? ' · Cliente con account' : ''}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
       <button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    ${v ? '' : '<div class="vn-avviso">Una vendita per ogni brand: Nutrilite + Artistry = 2 vendite separate</div>'}
 
     <h4 class="mc-t">Che cosa hai venduto</h4><div class="riquadro mc-g">
-      <div class="campo"><label>Brand <small>Obbligatorio</small></label>
-        <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div></div>
-      <div class="campo"><label>Prodotto/i <small>Obbligatorio</small></label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
-      <div class="campo"><label>Data di vendita <small>Obbligatorio</small></label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
+      <div class="campo"><label>Brand</label>
+        <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div>
+        ${v ? '' : '<div class="vn-aiuto">Un brand per vendita: Nutrilite + Artistry = 2 vendite</div>'}</div>
+      <div class="vn-due"><div class="campo"><label>Prodotto/i</label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
+        <div class="campo"><label>Data</label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div></div>
     </div>
 
-    <h4 class="mc-t">I soldi</h4><div class="riquadro mc-g">
-      <div class="campo"><label>VP di vendita <small>Obbligatorio</small></label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"></div>
-      <div class="campo"><label>Prezzo al pubblico (€)</label><div class="vn-aiuto">Quanto costava al pubblico quel giorno: resta così anche se i prezzi cambiano.</div><input id="v-prezzo" inputmode="decimal" placeholder="0,00"><div id="v-prezzo-aiuto"></div></div>
-      <div class="campo"><label>Incassato (€)</label><div class="vn-aiuto">Quanto ha pagato il cliente.</div><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div>
+    <h4 class="mc-t">Importi</h4><div class="riquadro mc-g">
+      <div class="campo"><label>VP di vendita</label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"><div class="vn-aiuto vn-provv" id="v-provv" hidden></div></div>
+      <div id="v-soldi"${sulSito ? ' hidden' : ''}>
+      <div class="vn-due meta"><div class="campo"><label>Prezzo al pubblico (€)</label><input id="v-prezzo" inputmode="decimal" placeholder="0,00"></div>
+        <div class="campo"><label>Incassato (€)</label><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div></div>
+      <div id="v-prezzo-aiuto"></div>
       <div class="campo"><label>Sconto applicato (€)</label><input id="v-sconto" inputmode="decimal" placeholder="0,00" value="${v && Number(v.sconto) ? MB21Lista.numero(v.sconto).replace(/\./g, '') : ''}"></div>
       <div class="vn-aiuto" id="v-sconto-come"></div>
       <div class="vn-prezzo" id="v-riga-prezzo" hidden></div>
       <div class="campo"><label>Come ha pagato</label>
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
+      </div>
+      <div class="vn-sito" id="v-sito"${sulSito ? '' : ' hidden'}><b>Ordine pagato sul sito</b><small>Il cliente paga dal suo account: a te va la provvigione.</small></div>
     </div>
 
     <!-- V3 (Verifica Vendite, Ignazio 22/10): consegna e riordino chiusi, con la scelta già messa in vista; si aprono al tocco -->
@@ -125,12 +153,12 @@ function moduloVendita(v, proposta) {
       <div id="v-dentro-consegna">
       <div class="campo"><label>Quando consegni?</label>
         <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
-      <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni? <small>Obbligatorio</small></label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
+      <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni?</label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
       </div>
-      <button type="button" class="vn-apri" data-apri="riordino"><span>Riordino</span><b id="v-sunto-riordino"></b><em id="v-freccia-riordino">›</em></button>
+      <button type="button" class="vn-apri" data-apri="riordino"><span>Quando lo risento?</span><b id="v-sunto-riordino"></b><em id="v-freccia-riordino">›</em></button>
       <div id="v-dentro-riordino">
-      <div class="campo" id="v-riordino-campo"><label>Quando lo risento? <small>Facoltativo</small></label>
+      <div class="campo" id="v-riordino-campo">
         <div class="vn-quando tre"><button type="button" data-riordino="fra" id="v-fra-tasto">Fra … mesi</button><button type="button" data-riordino="data">Scegli la data</button><button type="button" data-riordino="nessuno">Nessun riordino</button></div>
         <div id="v-fra"><div class="vn-mesi">${MB21Lista.MESI_RIORDINO.map(m => `<button type="button" data-mesi="${m}">${m}</button>`).join('')}</div></div>
         <div class="vn-aiuto" id="v-riordino-aiuto"></div></div>
@@ -163,7 +191,7 @@ function moduloVendita(v, proposta) {
   // Nel database gli stessi campi: «Fra N mesi» scrive riordino = consegna (o vendita) + N mesi e durata_mesi = N.
   const prima = MB21Lista.modoRiordino(v);
   // V4 (Ignazio 22/10): un cliente con l'account cliente ordina da solo: la vendita nuova parte su «Nessun riordino» (si può cambiare)
-  const conAccount = !v && !!(c && LS.account && LS.account.id === c.id && LS.account.dal);
+  const conAccount = !v && !!dalAccount;
   let modoR = conAccount ? 'nessuno' : prima.modo, mesiR = prima.mesi, toccatoR = !!v || conAccount;
   const aperti = { consegna: false, riordino: !modoR, aMano: false };   // in una vendita nuova senza proposta il riordino parte aperto
   const segnaGruppi = () => {
@@ -217,19 +245,11 @@ function moduloVendita(v, proposta) {
   const segnaPagato = () => velo.querySelectorAll('[data-pagato]').forEach(b => b.classList.toggle('scelto', b.dataset.pagato === pagato));
   velo.querySelectorAll('[data-pagato]').forEach(b => b.onclick = () => { pagato = pagato === b.dataset.pagato ? null : b.dataset.pagato; segnaPagato(); });
   const euro = x => (x == null ? '' : MB21Lista.numero(x).replace(/\./g, ''));
-  if (v) dbq('incasso vendita', supa.from('vendite').select('pagato_con, incassato, prezzo_pubblico').eq('id', v.id).single()).then(({ data }) => {
-    if (!data) return;
-    pagato = data.pagato_con; segnaPagato();
-    $('v-incassato').value = euro(data.incassato);
-    $('v-prezzo').value = euro(data.prezzo_pubblico);
-    scontoAManoSi = MB21Lista.scontoAMano(v.sconto, data.prezzo_pubblico, data.incassato);
-    calcolaSconto();
-  });
   // l'aiuto del prezzo (nota 052): l'ultimo prezzo al pubblico usato per lo stesso prodotto (stesso nome, maiuscole a parte), a un tocco
   const aiutoPrezzo = async () => {
     const box = $('v-prezzo-aiuto'), nome = $('v-prodotto').value.trim();
     box.innerHTML = '';
-    if (!nome || $('v-prezzo').value.trim() || !c) return;
+    if (sulSito || !nome || $('v-prezzo').value.trim() || !c) return;   // 078: con l'ordine pagato sul sito il prezzo non c'è
     const { data } = await dbq('ultimo prezzo', supa.from('vendite').select('prezzo_pubblico, data').eq('user_id', c.user_id).ilike('prodotto', nomeEsatto(nome))
       .not('prezzo_pubblico', 'is', null).order('data', { ascending: false }).limit(1));
     const u = Array.isArray(data) && data[0];
@@ -237,8 +257,23 @@ function moduloVendita(v, proposta) {
     box.innerHTML = `<button type="button" class="link" id="v-prezzo-usa">L'ultima volta ${esc(MB21Lista.numero(u.prezzo_pubblico, true))} (${esc(MB21Lista.data(u.data))}) · usa questo</button>`;
     $('v-prezzo-usa').onclick = () => { $('v-prezzo').value = euro(u.prezzo_pubblico); box.innerHTML = ''; calcolaSconto(); };
   };
-  // la riga «Sconto … · il cliente paga …» (nota 052) si aggiorna mentre si scrivono prezzo e sconto
-  const rigaPrezzo = () => { const t = MB21Lista.rigaPrezzo(MB21Lista.importo($('v-prezzo').value), MB21Lista.importo($('v-sconto').value)); $('v-riga-prezzo').textContent = t; $('v-riga-prezzo').hidden = !t; };
+  // Nota 078 (Ignazio 24/10): la provvigione stimata sotto il VP, con gli stessi numeri della vista (MB21Lista.provvigioneStimata: il fattore del giorno in cui
+  // la vendita conta); senza VP o senza fattori la riga non c'è
+  const provv = () => MB21Lista.provvigioneStimata(MB21Lista.importo($('v-vp').value),
+    { data: $('v-data').value, consegna: dopo ? $('v-consegna').value : '', ordinata_il: dopo && $('v-ordinata') ? $('v-ordinata').value : '' }, fattori);
+  // la riga «Sconto … · il cliente paga …» (nota 052) si aggiorna mentre si scrivono prezzo e sconto; nel suo riquadro (078) il guadagno netto stimato,
+  // provvigione − sconto, solo se c'è uno sconto (senza è la provvigione stessa); negativo col segno meno, senza colori nuovi
+  const rigaPrezzo = () => {
+    const sconto = MB21Lista.importo($('v-sconto').value), s0 = sconto > 0 ? sconto : 0, p = provv();
+    const t = MB21Lista.rigaPrezzo(MB21Lista.importo($('v-prezzo').value), sconto);
+    const netto = p != null && s0 > 0 ? `<div class="vn-netto">Guadagno netto stimato: ${esc(MB21Lista.numero(p - s0, true))}<small>provvigione ${esc(MB21Lista.numero(p, true))} − sconto ${esc(MB21Lista.numero(s0, true))}</small></div>` : '';
+    $('v-riga-prezzo').innerHTML = esc(t) + netto; $('v-riga-prezzo').hidden = !t && !netto;
+  };
+  const segnaProvv = () => {
+    const p = provv();
+    $('v-provv').textContent = p != null ? `Provvigione stimata: ${MB21Lista.numero(p, true)}` : ''; $('v-provv').hidden = p == null;
+    rigaPrezzo();
+  };
   // lo sconto da solo (nota 065, Ignazio 19/10, «A»): con prezzo e incassato scritti, sconto = prezzo − incassato, finché non lo scrivi tu;
   // scritto a mano resta il tuo («scritto da te»); cancellato, torna quello calcolato
   let scontoAManoSi = !!(v && Number(v.sconto));
@@ -250,6 +285,19 @@ function moduloVendita(v, proposta) {
   };
   $('v-prezzo').addEventListener('input', calcolaSconto); $('v-incassato').addEventListener('input', calcolaSconto);
   $('v-sconto').addEventListener('input', () => { scontoAManoSi = $('v-sconto').value.trim() !== ''; calcolaSconto(); });
+  // la vendita da cambiare: l'incasso letto prima di disegnare (078) va nei campi
+  if (incasso) {
+    pagato = incasso.pagato_con; segnaPagato();
+    $('v-incassato').value = euro(incasso.incassato);
+    $('v-prezzo').value = euro(incasso.prezzo_pubblico);
+    scontoAManoSi = MB21Lista.scontoAMano(v.sconto, incasso.prezzo_pubblico, incasso.incassato);
+    calcolaSconto();
+  }
+  // la provvigione stimata cambia con il VP e con il giorno in cui la vendita conta (data, consegna, ordine fatto)
+  $('v-vp').oninput = segnaProvv;
+  ['v-data', 'v-consegna', 'v-ordinata'].forEach(id => { if ($(id)) $(id).addEventListener('change', segnaProvv); });
+  velo.querySelectorAll('[data-quando]').forEach(b => b.addEventListener('click', segnaProvv));
+  segnaProvv();
   $('v-prodotto').addEventListener('change', aiutoPrezzo); $('v-prodotto').addEventListener('change', () => proponi());
   if (!v) $('v-prezzo').addEventListener('focus', aiutoPrezzo);
   const conta = () => contaLettere($('v-prodotto'), $('v-conta'));   // Lista Nomi L1: il conto solo nelle ultime 10 lettere, come negli altri moduli
@@ -272,10 +320,14 @@ function moduloVendita(v, proposta) {
       $('v-consegna').focus();
       return;
     }
-    const inc = MB21Lista.importo($('v-incassato').value), prezzo = MB21Lista.importo($('v-prezzo').value);
-    if (Number.isNaN(prezzo)) return mostraToast('Il prezzo al pubblico non è un numero');
-    if (Number.isNaN(inc)) return mostraToast('L\'incassato non è un numero');
-    esito.riga.pagato_con = pagato; esito.riga.incassato = inc; esito.riga.prezzo_pubblico = prezzo;
+    if (sulSito) {   // 078: ordine pagato sul sito: niente prezzo, incasso né modo di pagamento, sconto 0 (guadagno netto = provvigione); non va in Wallet
+      Object.assign(esito.riga, { pagato_con: null, incassato: null, prezzo_pubblico: null, sconto: 0 });
+    } else {
+      const inc = MB21Lista.importo($('v-incassato').value), prezzo = MB21Lista.importo($('v-prezzo').value);
+      if (Number.isNaN(prezzo)) return mostraToast('Il prezzo al pubblico non è un numero');
+      if (Number.isNaN(inc)) return mostraToast('L\'incassato non è un numero');
+      esito.riga.pagato_con = pagato; esito.riga.incassato = inc; esito.riga.prezzo_pubblico = prezzo;
+    }
     $('invia').disabled = true;
     const q = v ? supa.from('vendite').update(esito.riga).eq('id', v.id)
       : supa.from('vendite').insert({ ...esito.riga, contatto_id: c.id, user_id: c.user_id });

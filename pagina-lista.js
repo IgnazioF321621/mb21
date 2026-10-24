@@ -511,7 +511,7 @@ function apriScheda(id) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null;
+  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null;
   LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
@@ -535,10 +535,24 @@ async function leggiAccountCliente(id) {
   const { data, error } = await dbq('account cliente', supa.from('contatti').select('account_cliente_dal').eq('id', id).maybeSingle());
   return error ? undefined : (data && data.account_cliente_dal) || null;   // undefined = non letto (senza rete, o prima della migrazione)
 }
+// Nota Pagine 078 (difetto corretto, 24/10): il dato «Cliente con account» di una scheda, con UNA lettura condivisa. La testata (mostraAccountCliente) e il
+// modulo vendita aspettano la stessa: prima, da «Vendita! La registri adesso?», il modulo partiva subito dopo apriScheda e trovava LS.account vuoto.
+// Se la testata non l'ha fatta partire (la riga non c'è), la fa il modulo. → la data (o null) · undefined se non si è potuta leggere.
+function accountDi(c) {
+  if (LS.account && LS.account.id === c.id) return Promise.resolve(LS.account.dal);
+  if (LS.accountLettura && LS.accountLettura.id === c.id) return LS.accountLettura.promessa;
+  const promessa = leggiAccountCliente(c.id).then(dal => {
+    if (dal !== undefined && LS.contatto && LS.contatto.id === c.id) LS.account = { id: c.id, dal };
+    if (LS.accountLettura && LS.accountLettura.promessa === promessa) LS.accountLettura = null;
+    return dal;
+  });
+  LS.accountLettura = { id: c.id, promessa };
+  return promessa;
+}
 async function mostraAccountCliente(c) {
   if (!document.getElementById('account-posto')) return;
   if (!LS.account || LS.account.id !== c.id) {
-    const dal = await leggiAccountCliente(c.id);
+    const dal = await accountDi(c);
     if (dal === undefined || LS.contatto !== c) return;
     LS.account = { id: c.id, dal };
   }

@@ -538,6 +538,17 @@
     if (prezzo == null || prezzo === '' || !isFinite(p) || p <= 0 || !isFinite(s) || s < 0) return '';
     return `Sconto ${numero(s, true)}${s ? ` (${Math.round(s / p * 100)}%)` : ''} · il cliente paga ${numero(Math.max(0, p - s), true)}`;
   }
+  // Nota Pagine 078 (Ignazio 24/10): la provvigione STIMATA del modulo vendita, mentre si scrive. La provvigione vera si calcola solo nel database
+  // (vista `vendite_conti`, linguetta Vendite): questa è una copia da leggere, mai salvata, con gli stessi numeri: VP × il fattore di conversione
+  // valido il giorno in cui la vendita conta (ordine fatto, se no consegna prevista, se no data di vendita: COALESCE(ordinata_il, consegna, data))
+  // × QUOTA_PROVVIGIONE (0,20, confermato da Ignazio). `fattori` = righe di `fattori_conversione` { dal, valore }. null se manca qualcosa (niente riga).
+  const QUOTA_PROVVIGIONE = 0.20;
+  function provvigioneStimata(vp, { data, consegna, ordinata_il } = {}, fattori) {
+    const giorno = ordinata_il || consegna || data, v = Number(vp);
+    if (vp == null || vp === '' || !giorno || !isFinite(v) || v <= 0 || !Array.isArray(fattori)) return null;
+    const f = fattori.filter(x => x && x.dal && x.dal <= giorno).sort((a, b) => (a.dal < b.dal ? 1 : -1))[0];
+    return f && isFinite(Number(f.valore)) ? v * Number(f.valore) * QUOTA_PROVVIGIONE : null;
+  }
   // «1.234,56» (due decimali, all'italiana); con euro «1.234,56 €»
   const numero = (v, euro) => Number(v || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (euro ? ' €' : '');
 
@@ -546,7 +557,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { cepPerCodice, importo, rigaPrezzo, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, provvigioneStimata, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
