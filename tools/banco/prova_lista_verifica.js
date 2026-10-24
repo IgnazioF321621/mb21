@@ -639,7 +639,7 @@ prova('L1b: «Cliente con account» al posto di «Ha un account cliente: ordina 
   const tutto = PL + leggi('pagina-vendite.js') + IDX + leggi('pagina-dashboard.js');
   assert.doesNotMatch(tutto.split('\n').filter(x => !/^\s*\/\//.test(x)).join('\n').replace(/\/\/.*$/gm, ''), /Ha un account cliente|Ordina dal suo account cliente|niente più account cliente|l\\'account cliente/);
   assert.match(PL, /<label>Cliente con account<\/label>/);
-  assert.match(PL, /<b>Cliente con account · dal \$\{esc\(MB21Lista\.data\(LS\.account\.dal\)\)\}<\/b><small>nessuna telefonata di riordino<\/small>/);
+  assert.match(PL, /<b>Cliente con account · dal \$\{esc\(MB21Lista\.data\(LS\.account\.dal\)\)\}<\/b>/);   // nota 079: sotto, l'ultimo ordine e il rientro
 });
 
 prova('L1b: Cerca senza parole nascoste — «nuovo», «new» e «app» si cercano come le altre parole (nome, professione, numero)', () => {

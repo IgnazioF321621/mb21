@@ -147,7 +147,7 @@ const COSA_FA_ESITO = {
   'Telefono spento': { rientro: true },
   'Relazione': { rientro: true },                            // «Quando risentirlo?» con 20 giorni proposti (Ignazio 25/09)
   'Ordine': { classe: 'ordine', vendita: true },              // propone di registrare la vendita (cantiere 27)
-  'Ordina da solo': { account: true },                       // segna il cliente «Ha un account cliente» (V4 Vendite, 22/10; prima l'attesa): niente vendita, niente rientro
+  'Ordina da solo': { account: true },                       // segna il cliente «Cliente con account» (V4 Vendite, 22/10; prima l'attesa): niente vendita; dal 24/10 (nota 079) rientro a 90 giorni come «Ordine», dal database
   'No Interesse': { classe: 'no', rientro: true },           // poi «Quando risentirlo?» (17/09)
 };
 function bottoniPer(categoria) {

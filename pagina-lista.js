@@ -558,22 +558,25 @@ async function mostraAccountCliente(c) {
   }
   const qui = document.getElementById('account-posto');
   if (!qui) return;
+  // Nota Pagine 079 (Ignazio 24/10): via «Togli» (accanto all'ordine confondeva: «Cliente con account» si cambia solo da Modifica, Sì/No). Sotto, la riga
+  // «Ultimo ordine gg/mm · brand · lo risenti il gg/mm/aaaa» (l'ultima vendita già letta dalla scheda e `rientro_il`; ognuna solo se c'è) e il tasto
+  // «+ Ha ordinato sul sito», che apre il modulo vendita di sempre già pronto con l'ultima vendita (haOrdinatoSulSito). account_cliente_dal non si sposta.
+  const u = (LS.vendite || [])[0];
+  const sotto = [u ? `Ultimo ordine ${MB21Lista.data(u.data).slice(0, 5)} · ${u.brand}` : '', c.rientro_il ? `lo risenti il ${MB21Lista.data(c.rientro_il)}` : ''].filter(Boolean).join(' · ');
   qui.innerHTML = LS.account.dal ? `<div class="ao-riga"><div class="ao-testo"><span class="ao-ic">${ic('vendite')}</span>
-    <span><b>Cliente con account · dal ${esc(MB21Lista.data(LS.account.dal))}</b><small>nessuna telefonata di riordino</small></span></div>
-    ${vediTutti() || ST.offline ? '' : '<button class="link" id="account-togli">Togli</button>'}</div>` : '';
-  const togli = document.getElementById('account-togli');
-  if (togli) togli.onclick = async () => {
-    if (soloGuardo() || ST.offline) return;
-    const prima = LS.account.dal;
-    const { error } = await dbq('togli account cliente', supa.from('contatti').update({ account_cliente_dal: null }).eq('id', c.id));
-    if (error) return mostraToast('Non salvato: riprova.');
-    LS.account = { id: c.id, dal: null }; mostraAccountCliente(c);
-    mostraToast(`${c.nome}: non più «Cliente con account»`, async () => {
-      const { error: e2 } = await dbq('annulla account cliente', supa.from('contatti').update({ account_cliente_dal: prima }).eq('id', c.id));
-      if (e2) return mostraToast('Annullamento non riuscito: riprova.');
-      LS.account = { id: c.id, dal: prima }; mostraAccountCliente(c);
-    });
-  };
+    <span><b>Cliente con account · dal ${esc(MB21Lista.data(LS.account.dal))}</b>${sotto ? `<small>${esc(sotto.charAt(0).toUpperCase() + sotto.slice(1))}</small>` : ''}</span></div>
+    ${vediTutti() || ST.offline ? '' : `<div class="ao-tasti"><button type="button" id="account-ordinato">${ic('piu')} Ha ordinato sul sito</button></div>`}</div>` : '';
+  const ordinato = document.getElementById('account-ordinato');
+  if (ordinato) ordinato.onclick = () => haOrdinatoSulSito(c);
+}
+// «+ Ha ordinato sul sito» (nota Pagine 079): il modulo vendita di sempre, già pronto con brand, prodotto e VP dell'ultima vendita (con accanto «come l'ordine
+// del …»: si correggono) e la data di oggi (si sceglie); per il cliente con account è «Ordine pagato sul sito». Si apre sulla linguetta Vendite.
+async function haOrdinatoSulSito(c) {
+  if (soloGuardo()) return;
+  const u = ((await venditeDellaScheda(c)) || [])[0];
+  if (LS.contatto !== c) return;
+  LS.sezione = 'vendite'; disegnaScheda();
+  moduloVendita(null, u ? { brand: u.brand, prodotto: u.prodotto, vp: u.vp, vpDi: u.data } : {});
 }
 // Avvio del Partner (cantiere 31). «Avvio concluso» e la data di ingresso (file Amway → `squadra`) non sono nella vista della Lista:
 // si leggono all'apertura della scheda di un Partner. LS.avvio = { id, concluso (giorno o null), ingresso (giorno o null) }
@@ -673,6 +676,7 @@ function disegnaScheda() {
     if (!v || LS.contatto !== c) return;
     if (senzaSezione && v.length) return disegnaScheda();
     mostraBrand(c, v);
+    if (LS.account && LS.account.id === c.id && LS.account.dal) mostraAccountCliente(c);   // 079: «Ultimo ordine …» appena le vendite ci sono
   }).catch(() => {});
   // Avvio del Partner: appena letto si disegna la riga in testata; con i passi aperti si ridisegna (giorni dall'ingresso e tasto)
   if (c.categoria === 'Partner') avvioDellaScheda(c).then(a => {

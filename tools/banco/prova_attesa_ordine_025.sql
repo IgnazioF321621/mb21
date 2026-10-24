@@ -93,9 +93,9 @@ begin
   insert into public.contatti (user_id, nome, categoria) values (v_utente.id, 'ZZ Prova Attesa 025', 'Cliente') returning id into v_c;
   insert into public.azioni (user_id, contatto_id, categoria, tipo_azione, modalita, inizio, fine, esito, completata)
     values (v_utente.id, v_c, 'Cliente', 'Contatto', 'Telefonata', now() - interval '1 hour', now() - interval '55 minutes', 'Ordina da solo', true) returning id into v_a;
-  -- la riga in sequenze c'è, senza rientro
-  if not exists (select 1 from public.sequenze where chiave = 'Cliente-Contatto-Ordina da solo' and giorni_rientro is null) then raise exception 'manca la fase'; end if;
-  v_prova := array_append(v_prova, 'fase in sequenze senza rientro');
+  -- la riga in sequenze c'è; dal 24/10 (nota Pagine 079, migrazione 20261024121719) rientra a 90 giorni come «Ordine»
+  if not exists (select 1 from public.sequenze where chiave = 'Cliente-Contatto-Ordina da solo' and giorni_rientro = 90) then raise exception 'manca la fase a 90 giorni'; end if;
+  v_prova := array_append(v_prova, 'fase in sequenze a 90 giorni');
   -- apri: dal = oggi, chiedi = oggi + 7
   v_r := public.attesa_ordine(v_a, 'apri');
   if (v_r->>'attesa_dal')::date <> v_oggi or (v_r->>'attesa_chiedi_il')::date <> v_oggi + 7 or v_r->>'attesa_chiusa_il' is not null then raise exception 'apri sbagliato: %', v_r; end if;

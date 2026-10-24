@@ -307,6 +307,41 @@ prova('078: nella linguetta Vendite il tasto sta subito sotto «Nuova vendita»,
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), /LS\.accountLettura = null; LS\.stessoOrdine = null;/);   // apriScheda lo chiude
 });
 
+// ── Nota Pagine 079 (Ignazio 24/10): il cliente che ordina da solo dal suo account ──
+prova('079: «+ Ha ordinato sul sito» apre il modulo di sempre con brand, prodotto e VP dell\'ultima vendita («come l\'ordine del …»), la data di oggi, «Ordine pagato sul sito»', async () => {
+  // il tasto della testata: legge (o prende) le vendite della scheda, passa alla linguetta Vendite e apre il modulo
+  const PL = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const da = PL.indexOf('async function haOrdinatoSulSito');
+  const aperti = [], c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
+  const ctx = { LS: { contatto: c, sezione: 'azioni' }, soloGuardo: () => false, disegnaScheda() {}, moduloVendita: (v, p) => aperti.push([v, p]),
+    venditeDellaScheda: async () => [{ data: '2026-09-12', brand: 'Nutrilite/XS', prodotto: 'Prodotto finto', vp: 50 }, { data: '2026-06-01', brand: 'Artistry', prodotto: 'Altro', vp: 20 }] };
+  vm.createContext(ctx); vm.runInContext(PL.slice(da, PL.indexOf('\n}\n', da) + 3) + ';this.ordinato = haOrdinatoSulSito;', ctx);
+  await ctx.ordinato(c);
+  assert.equal(ctx.LS.sezione, 'vendite');
+  assert.equal(JSON.stringify(aperti[0]), '[null,{"brand":"Nutrilite/XS","prodotto":"Prodotto finto","vp":50,"vpDi":"2026-09-12"}]');
+  ctx.venditeDellaScheda = async () => []; await ctx.ordinato(c);
+  assert.equal(JSON.stringify(aperti[1]), '[null,{}]');   // nessuna vendita prima: il modulo vuoto
+  // il modulo: tutto già scritto e da correggere, la data di oggi
+  const s = await apri(null, true, null, { id: 'c1', dal: '2026-10-01' }, null, FATTORI_FINTI, { brand: 'Nutrilite/XS', prodotto: 'Prodotto finto', vp: 50, vpDi: '2026-09-12' });
+  assert.equal(s.$('v-prodotto').value, 'Prodotto finto'); assert.equal(s.$('v-vp').value, '50,00'); assert.equal(s.$('v-data').value, '2026-10-22');
+  assert.match(s.f.innerHTML, /<label>VP di vendita <small>come l'ordine del 12\/09\/2026<\/small><\/label>/);
+  assert.equal(s.$('v-sito').hidden, false); assert.equal(s.$('v-provv').textContent, 'Provvigione stimata: 22,62 €');
+  assert.ok(s.f.querySelectorAll('[data-brand]').find(b => b.dataset.brand === 'Nutrilite/XS'));
+  await s.$('invia').onclick();
+  assert.equal(s.scritte.length, 1); assert.equal(s.scritte[0][0], 'insert');   // una vendita nuova; account_cliente_dal non si sposta
+  const r = s.scritte[0][1]; assert.equal(r.brand, 'Nutrilite/XS'); assert.equal(r.vp, 50); assert.equal(r.data, '2026-10-22'); assert.equal(r.incassato, null);
+});
+
+prova('079: «Ordina da solo» rientra a 90 giorni come «Ordine», con un consiglio del coach vero (migrazione che cambia la riga di sequenze, con la copia di prima)', () => {
+  const mig = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261024121719_ordina_da_solo_rientro_90.sql'), 'utf8');
+  assert.match(mig, /update public\.sequenze\s+set giorni_rientro = 90,\s+coach = 'Ha l''account e ordina quando vuole: un saluto e come va con i prodotti'\s+where chiave = 'Cliente-Contatto-Ordina da solo';/);
+  assert.match(mig, /--\s+coach 'Ordina da solo dal suo account: tra 7 giorni l''app ti chiede se ha ordinato' · giorni_rientro null/);   // la copia di com'era
+  const coach = mig.match(/\n\s+coach = '([^\n]*)'\n\s+where/)[1];   // quella che si scrive, non la copia nel commento
+  assert.doesNotMatch(coach, /7 giorni|ti chiede|\b(chiama|fai|compra)\b/i);
+  assert.match(fs.readFileSync(path.join(__dirname, 'prova_attesa_ordine_025.sql'), 'utf8'), /chiave = 'Cliente-Contatto-Ordina da solo' and giorni_rientro = 90/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8'), /dal 24\/10 \(nota 079\) rientro a 90 giorni come «Ordine»/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
