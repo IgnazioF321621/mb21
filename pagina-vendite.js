@@ -99,7 +99,8 @@ function fattoriConversione() {
 function azzeraFattori() { FATTORI = null; }
 
 // «Vendita +» e, toccando una riga, la stessa vendita da cambiare o eliminare: un modulo solo (campi di Glide).
-// `proposta.brand`: brand già scelto quando la vendita nasce dall'esito «Vendita» di una Consulenza PRD.
+// `proposta.brand`: brand già scelto quando la vendita nasce dall'esito «Vendita» di una Consulenza PRD. Nota 079: `prodotto`, `vp` e `vpDi` (il giorno
+// dell'ordine da cui vengono i VP, scritto accanto) quando la vendita nasce da «+ Ha ordinato sul sito»: tutto si vede e si corregge prima di salvare.
 async function moduloVendita(v, proposta) {
   if (soloGuardo()) return;
   const c = LS.contatto;
@@ -134,12 +135,12 @@ async function moduloVendita(v, proposta) {
       <div class="campo"><label>Brand</label>
         <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div>
         ${v ? '' : '<div class="vn-aiuto">Un brand per vendita: Nutrilite + Artistry = 2 vendite</div>'}</div>
-      <div class="vn-due"><div class="campo"><label>Prodotto/i</label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : '')}"><div class="conta" id="v-conta"></div></div>
+      <div class="vn-due"><div class="campo"><label>Prodotto/i</label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : (proposta && proposta.prodotto) || '')}"><div class="conta" id="v-conta"></div></div>
         <div class="campo"><label>Data</label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div></div>
     </div>
 
     <h4 class="mc-t">Importi</h4><div class="riquadro mc-g">
-      <div class="campo"><label>VP di vendita</label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : ''}"><div class="vn-aiuto vn-provv" id="v-provv" hidden></div></div>
+      <div class="campo"><label>VP di vendita${!v && proposta && proposta.vpDi ? ` <small>come l'ordine del ${esc(MB21Lista.data(proposta.vpDi))}</small>` : ''}</label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : proposta && proposta.vp != null ? MB21Lista.numero(proposta.vp).replace(/\./g, '') : ''}"><div class="vn-aiuto vn-provv" id="v-provv" hidden></div></div>
       <div id="v-soldi"${sulSito ? ' hidden' : ''}>
       <div class="vn-due meta"><div class="campo"><label>Prezzo al pubblico (€)</label><input id="v-prezzo" inputmode="decimal" placeholder="0,00"></div>
         <div class="campo"><label>Incassato (€)</label><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div></div>

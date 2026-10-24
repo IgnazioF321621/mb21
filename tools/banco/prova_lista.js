@@ -758,29 +758,34 @@ prova('Pagine 071 (Ignazio 22/10): niente più abbonamento nella Lista Nomi — 
   for (const f of ['pagina-lista.js', 'pagina-rubrica.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), /limitato\(|fermoScaduto|SOLO_GUARDARE|abbonamento attivo/, f);
 });
 
-prova('V4 Vendite (Ignazio 22/10, strada B; L1b «Cliente con account»): in testata «Cliente con account · dal …» con «Togli» (e Annulla); niente riga senza account', async () => {
+prova('V4 Vendite e nota 079 (Ignazio 24/10): in testata «Cliente con account · dal …», sotto «Ultimo ordine … · lo risenti il …» e «+ Ha ordinato sul sito»; niente più «Togli»', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
   const pezzo = (inizio) => { const da = src.indexOf(inizio), a = src.indexOf('\n}\n', da) + 3; return src.slice(da, a); };
-  const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
-  let dalDb = '2026-10-22', letture = 0, toast = null;
-  const scritte = [], posto = { innerHTML: '' }, togli = { onclick: null };
+  const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente', rientro_il: '2027-01-22' };
+  let dalDb = '2026-10-22', letture = 0;
+  const scritte = [], posto = { innerHTML: '' }, ordinato = { onclick: null }, aperti = [];
   const q = { select() { return q; }, eq() { return q; }, maybeSingle() { letture++; return Promise.resolve({ data: { account_cliente_dal: dalDb }, error: null }); },
     update(v) { scritte.push(v); return { eq: () => Promise.resolve({ error: null }) }; } };
-  const ctx = { LS: { contatto: c, account: null }, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`, MB21Lista: L, soloGuardo: () => false, vediTutti: () => false,
-    dbq: (_, p) => p, supa: { from: () => q }, mostraToast: (t, annulla) => { toast = { t, annulla }; },
-    document: { getElementById: id => (id === 'account-posto' ? posto : id === 'account-togli' && /account-togli/.test(posto.innerHTML) ? togli : null) } };
+  const ctx = { LS: { contatto: c, account: null, vendite: null }, ST: { offline: null }, esc: x => String(x), ic: n => `[${n}]`, MB21Lista: L, soloGuardo: () => false, vediTutti: () => false,
+    dbq: (_, p) => p, supa: { from: () => q }, haOrdinatoSulSito: x => aperti.push(x.id),
+    // il tasto si collega solo se c'è (per gli id sconosciuti il banco dà null)
+    document: { getElementById: id => (id === 'account-posto' ? posto : id === 'account-ordinato' && /account-ordinato/.test(posto.innerHTML) ? ordinato : null) } };
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function leggiAccountCliente') + pezzo('function accountDi') + pezzo('async function mostraAccountCliente') + ';this.mostra = mostraAccountCliente;', ctx);   // 078: la lettura condivisa
   await ctx.mostra(c);
   assert.equal(letture, 1);
-  assert.match(posto.innerHTML, /<b>Cliente con account · dal 22\/10\/2026<\/b><small>nessuna telefonata di riordino<\/small>/);
-  assert.match(posto.innerHTML, /id="account-togli">Togli</);
+  assert.match(posto.innerHTML, /<b>Cliente con account · dal 22\/10\/2026<\/b><small>Lo risenti il 22\/01\/2027<\/small>/);   // vendite non ancora lette: solo il rientro
+  assert.doesNotMatch(posto.innerHTML, /Togli|account-togli|nessuna telefonata di riordino/);
+  assert.match(posto.innerHTML, /<div class="ao-tasti"><button type="button" id="account-ordinato">\[piu\] Ha ordinato sul sito<\/button><\/div>/);
+  ordinato.onclick(); assert.deepEqual(aperti, ['c1']);
+  ctx.LS.vendite = [{ data: '2026-09-12', brand: 'Nutrilite/XS' }, { data: '2026-06-01', brand: 'Artistry' }];
   await ctx.mostra(c); assert.equal(letture, 1);   // una lettura sola per scheda
-  await togli.onclick();
-  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":null}'); assert.equal(posto.innerHTML, ''); assert.match(toast.t, /non più «Cliente con account»/);
-  await toast.annulla();
-  assert.equal(JSON.stringify(scritte.at(-1)), '{"account_cliente_dal":"2026-10-22"}'); assert.match(posto.innerHTML, /Cliente con account/);
+  assert.match(posto.innerHTML, /<small>Ultimo ordine 12\/09 · Nutrilite\/XS · lo risenti il 22\/01\/2027<\/small>/);
+  c.rientro_il = null; await ctx.mostra(c);
+  assert.match(posto.innerHTML, /<small>Ultimo ordine 12\/09 · Nutrilite\/XS<\/small>/);
+  ctx.LS.vendite = []; await ctx.mostra(c); assert.doesNotMatch(posto.innerHTML, /<small>/);   // niente da dire: niente riga piccola
+  assert.equal(scritte.length, 0);   // account_cliente_dal non si tocca da qui
   // senza account: nessuna riga; lettura non riuscita (es. prima della migrazione): la scheda resta com'era
   ctx.LS.account = null; dalDb = null; await ctx.mostra(c); assert.equal(posto.innerHTML, '');
   ctx.LS.account = null; posto.innerHTML = 'prima'; q.maybeSingle = () => Promise.resolve({ data: null, error: { message: 'column does not exist' } });
