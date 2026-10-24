@@ -511,7 +511,7 @@ function apriScheda(id) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null;
+  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null; LS.stessoOrdine = null;
   LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
   window.scrollTo(0, 0);
   disegnaScheda();
