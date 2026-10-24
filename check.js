@@ -278,11 +278,11 @@
     if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5, vai: 'core' });
     if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo, vai: 'agenda' });
     if (!m.abitudini[3]) out.push(m.s4.aTotale   // settembre 2026: conta il totale delle tracce (core.js)
-      ? { cosa: `una traccia ogni giorno (${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''})`, peso: (m.s4.obiettivo - m.s4.totale) / m.s4.obiettivo, vai: 'training' }
-      : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n, vai: 'training' });
+      ? { cosa: `una traccia ogni giorno (${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''})`, peso: (m.s4.obiettivo - m.s4.totale) / m.s4.obiettivo, vai: 'studia' }
+      : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n, vai: 'studia' });   // nota 084: Training › Studia, le tracce del BSM
     if (!m.abitudini[4]) out.push(m.s5.aTotale   // settembre 2026: conta il totale delle pagine (core.js)
-      ? { cosa: `10 pagine ogni giorno (${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''})`, peso: (m.s5.obiettivo - m.s5.pagine) / m.s5.obiettivo, vai: 'training' }
-      : { cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n, vai: 'training' });
+      ? { cosa: `10 pagine ogni giorno (${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''})`, peso: (m.s5.obiettivo - m.s5.pagine) / m.s5.obiettivo, vai: 'libri' }
+      : { cosa: `10 pagine ogni giorno (${su(m.s5.quanti)})`, peso: (n - m.s5.quanti) / n, vai: 'libri' });   // nota 084: I miei libri
     if (!m.abitudini[5]) {
       const pezzi = [];
       if (m.s6.open < m.s6.valide) pezzi.push(`gli OPEN (${m.s6.open} su ${m.s6.valide})`);

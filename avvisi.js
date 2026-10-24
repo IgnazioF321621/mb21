@@ -133,9 +133,13 @@ async function impostaAvviso(k, v) {
 // su quel dispositivo (localStorage). Mai se l'app si apre da un avviso, mai sopra un altro foglio.
 // `forza` (indirizzo «?annuncio=training») lo mostra comunque: per vederlo anche da chi il Training l'ha già usato.
 const RIMANDO_ANNUNCIO = 3 * 86400000;
+// Nota Pagine 084, punto 4 (Ignazio 24/10, «Spegnere»): l'annuncio è spento con questo interruttore, e con lui la lettura di training_carte a ogni
+// apertura dell'app; si riaccende con un partner nuovo. Il Training resta nella barra in basso; «?annuncio=training» lo mostra comunque.
+const ANNUNCIO_TRAINING = false;
 const chiaveAnnuncio = () => 'mb21_annuncio_training_' + ST.utente.id;
 async function annuncioTraining(forza) {
   if (typeof TRAINING_VISIBILE === 'undefined' || !TRAINING_VISIBILE || !ST.utente || !ST.utente.id) return;
+  if (!ANNUNCIO_TRAINING && !forza) return;
   if (!forza) {
     try { if (Date.now() - Number(localStorage.getItem(chiaveAnnuncio()) || 0) < RIMANDO_ANNUNCIO) return; } catch (e) { return; }
     const { count, error } = await supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', ST.utente.id);

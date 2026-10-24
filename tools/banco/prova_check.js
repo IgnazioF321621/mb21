@@ -427,10 +427,10 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
   assert.deepEqual([0, 100, 1900, 2399, 3700, 6500, 16000, '', null, 'x'].map(C.gradinoDaVpg), [null, null, null, null, null, null, null, null, null, null]);
 });
 
-prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce e pagine → Training, squadra → Modulo Core', () => {
+prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce → Training › Studia e pagine → I miei libri (nota 084), squadra → Modulo Core', () => {
   const p = C.percorso({ lc1: lc1Di(40, false), modulo: moduloVuoto, sponsor: 0 });
   const dove = Object.fromEntries(p.gradini[1].mancano.map(x => [x.cosa.split(' (')[0], x.vai]));
-  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '10 clienti in più': 'agenda', 'una traccia ogni giorno': 'training', '10 pagine ogni giorno': 'training',
+  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '10 clienti in più': 'agenda', 'una traccia ogni giorno': 'studia', '10 pagine ogni giorno': 'libri',   /* nota 084: Training › Studia e I miei libri */
     'gli OPEN': 'segni', "il counseling, l'edificazione e il no-crossline": 'core' });
   assert.equal(p.gradini[0].consiglio.vai, 'segni');   // il biglietto WES
   assert.equal(C.percorso({ lc1: lc1Di(40, true), modulo: moduloVuoto }).gradini[0].consiglio.vai, undefined);   // 100 VP: nessun posto nell'app dove si fa

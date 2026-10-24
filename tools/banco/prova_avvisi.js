@@ -89,6 +89,7 @@ const assert = require('node:assert/strict');
     assert.match(siSera({ ...base, training: 'mai' }).testo, /\n🏋️ Se ti va, 5 minuti per provare il Training\.$/);
     assert.match(siSera({ ...base, training: 'da_fare', daRipassare: 1 }).testo, /oggi 1 carta da ripassare\.$/);
     assert.match(siSera({ ...base, training: 'da_fare', daRipassare: 4 }).testo, /oggi 4 carte da ripassare\.$/);
+    assert.match(siSera({ ...base, training: 'da_fare', daRipassare: 203 }).testo, /oggi 15 carte da ripassare\.$/);   // nota 084: 15 per volta, non l'arretrato
     // obiettivi: una riga dentro lo stesso avviso, niente avviso a parte
     m = siSera({ ...base, obiettivi: ob });
     assert.match(m.testo, /\n🎯 È iniziato ottobre: è il momento di impostare i tuoi obiettivi del mese\.$/); assert.equal(m.url, './?apri=check');

@@ -95,11 +95,15 @@ const blocchi = (...b: string[]) => b.filter(Boolean).join('\n');
 // nell'avviso; `completo` = quello intero, che l'app mostra in un piccolo pop-up di 3 secondi appena si entra toccando l'avviso (viaggia dentro l'avviso
 // stesso: nessuna lettura da Supabase). Brevi: una riga per voce, senza «Tocca per…», le cose importanti in alto.
 export type Modo = 'corto' | 'completo';
+// Nota Pagine 084, punto 1 (Ignazio 24/10): il ripasso è di 15 carte per volta, non tutto l'arretrato: l'avviso dice al massimo 15.
+// STESSO numero di MB21Training.RIPASSO (training.js): se cambia uno, cambiano tutti e due (lo controlla prova_avvisi.js).
+export const RIPASSO = 15;
 export function righeConsigli(c: Consigli, dette: Partial<Record<VoceConsiglio, boolean>> = {}, modo: Modo = 'completo'): RigheConsigli {
+  const rip = Math.min(c.daRipassare, RIPASSO);
   const training = c.training === 'fatto' ? ''
-    : modo === 'corto' ? (c.training === 'mai' ? '5 minuti per provare il Training?' : c.daRipassare > 0 ? `5 minuti di Training? ${quanti(c.daRipassare, 'carta', 'carte')} da ripassare.` : '5 minuti di Training?')
+    : modo === 'corto' ? (c.training === 'mai' ? '5 minuti per provare il Training?' : rip > 0 ? `5 minuti di Training? ${quanti(rip, 'carta', 'carte')} da ripassare.` : '5 minuti di Training?')
     : c.training === 'mai' ? 'Se ti va, 5 minuti per provare il Training.'
-    : c.daRipassare > 0 ? `Se ti va, 5 minuti di Training: oggi ${quanti(c.daRipassare, 'carta', 'carte')} da ripassare.` : 'Se ti va, restano 5 minuti di Training.';
+    : rip > 0 ? `Se ti va, 5 minuti di Training: oggi ${quanti(rip, 'carta', 'carte')} da ripassare.` : 'Se ti va, restano 5 minuti di Training.';
   return {
     training: dette.training ? '' : riga('🏋️', training),
     obiettivi: dette.obiettivi ? '' : riga('🎯', (modo === 'corto' ? c.obiettivi?.corta : c.obiettivi?.riga) ?? ''),

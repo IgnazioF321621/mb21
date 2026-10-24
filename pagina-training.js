@@ -23,14 +23,57 @@ const TRN_ORDINE = ['manuale', 'traccia', 'libro'];   // in «Per approfondire»
 const TRN_LIBRI = 'var(--cat-ex)';   // il colore di «Libri»
 const trnOggi = () => MB21Coda.oggiRoma();
 
+// ── Carte e catalogo nel telefono (nota Pagine 084, punto 5, Ignazio 24/10) ──
+// I mazzi (coach_batterie «carte_…», 33 righe) e il catalogo («training») pesano circa 1,3 MB e si riscaricavano a ogni riapertura dell'app. Ora stanno
+// nel telefono (Cache Storage «mb21-training»; la svuota anche ogni versione nuova dell'app, sw.js) e all'apertura del Training si legge solo la data
+// dell'ultimo cambio di ogni riga (`aggiornata_il`): si riscaricano soltanto le righe nuove o cambiate. Ogni 7 giorni comunque tutto da capo (se una
+// correzione non avesse toccato la data). Dopo «Correggi questa carta» (Admin) la copia si svuota: la volta dopo si rilegge tutto. Senza Cache Storage
+// (o se non risponde) si legge tutto, come prima. ⚠️ Chi corregge un mazzo nel database mette `aggiornata_il = now()`.
+const TRN_COPIA = { nome: 'mb21-training', chiave: './__mb21_training_archivio.json', durata: 7 * 86400000 };
+async function trnLeggiCopia() {
+  try {
+    if (typeof caches === 'undefined') return null;
+    const r = await (await caches.open(TRN_COPIA.nome)).match(TRN_COPIA.chiave);
+    return r ? await r.json() : null;
+  } catch (e) { return null; }
+}
+async function trnSalvaCopia(copia) {
+  try {
+    if (typeof caches === 'undefined') return;
+    await (await caches.open(TRN_COPIA.nome)).put(TRN_COPIA.chiave, new Response(JSON.stringify(copia), { headers: { 'Content-Type': 'application/json' } }));
+  } catch (e) { /* niente copia: la prossima volta si legge dalla rete */ }
+}
+async function trnSvuotaCopia() {
+  try { if (typeof caches !== 'undefined') await caches.delete(TRN_COPIA.nome); } catch (e) { /* si riprova con la durata */ }
+}
+// { mazzi, catalogo }: dalla copia, con le righe nuove o cambiate prese dalla rete; null se la rete non risponde. I mazzi restano nell'ordine
+// in cui li dà il database, come prima
+async function trnArchivio() {
+  const indice = await dbq('training: date dell\'archivio', supa.from('coach_batterie').select('situazione, aggiornata_il').or('situazione.like.carte_*,situazione.eq.training'));
+  if (indice.error) return null;
+  const copia = await trnLeggiCopia();
+  const valida = !!(copia && copia.righe && Date.now() - (copia.salvata || 0) < TRN_COPIA.durata), vecchie = valida ? copia.righe : {};
+  const elenco = indice.data || [];
+  const daScaricare = elenco.filter(x => !vecchie[x.situazione] || vecchie[x.situazione].aggiornata_il !== x.aggiornata_il).map(x => x.situazione);
+  const righe = {};
+  if (daScaricare.length) {
+    const r = await dbq('training: archivio cambiato', supa.from('coach_batterie').select('situazione, batteria, aggiornata_il').in('situazione', daScaricare));
+    if (r.error) return null;
+    for (const x of r.data || []) righe[x.situazione] = { aggiornata_il: x.aggiornata_il, batteria: x.batteria };
+  }
+  for (const x of elenco) if (!righe[x.situazione] && vecchie[x.situazione]) righe[x.situazione] = vecchie[x.situazione];
+  if (daScaricare.length || Object.keys(vecchie).length !== Object.keys(righe).length) await trnSalvaCopia({ salvata: valida ? copia.salvata : Date.now(), righe });
+  return { mazzi: elenco.filter(x => x.situazione.startsWith('carte_') && righe[x.situazione]).map(x => righe[x.situazione].batteria),
+    catalogo: righe.training ? righe.training.batteria : null };
+}
+
 async function apriTraining() {
   app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="vuoto">Carico…</div>`;
   const io = ST.utente && ST.utente.id, oggi = trnOggi();
   MB21Training.inProva(eAdmin());   // 28/09: i percorsi in prova (solo_admin) li vede solo Ignazio, anche nei conti dei livelli
-  const [mat, cat, mazzi, carte, giorni, test, azioni] = await Promise.all([
+  const [mat, archivio, carte, giorni, test, azioni] = await Promise.all([
     TRN.voci ? null : dbq('biblioteca', supa.from('materiali').select('id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave, link, pack_id, solo_n21, fuori_catalogo')),
-    TRN.cat || batteriaCoach('training'),
-    TRN.mazzi ? null : dbq('carte del training', supa.from('coach_batterie').select('situazione, batteria').like('situazione', 'carte_%')),
+    TRN.cat && TRN.mazzi ? { catalogo: TRN.cat, mazzi: TRN.mazzi } : trnArchivio(),   // nota 084: carte e catalogo dal telefono, se non sono cambiati
     dbq('training: carte', supa.from('training_carte').select('carta, scatola, prossima, giuste, sbagliate, risposta_il').eq('user_id', io)),
     dbq('training: giorni', supa.from('training_giorni').select('giorno, carte').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
     dbq('training: test', supa.from('training_test').select('percorso, giuste, totale, fatto_il').eq('user_id', io).order('fatto_il')),
@@ -38,13 +81,14 @@ async function apriTraining() {
     dbq('training: obiezioni', supa.from('azioni').select('tipo_azione, modalita, esito, riflessione, inizio, creato_il, contatti(categoria)')
       .eq('user_id', io).not('riflessione', 'is', null).order('creato_il', { ascending: false }).limit(300)),
   ]);
-  if ((mat && mat.error) || !cat || (mazzi && mazzi.error) || carte.error || giorni.error || test.error) {
+  const cat = archivio && archivio.catalogo;
+  if ((mat && mat.error) || !cat || carte.error || giorni.error || test.error) {
     app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="avviso">Non riesco a caricare il Training: controlla la connessione e riprova.</div>${versione()}`;
     return;
   }
   if (mat) TRN.voci = MB21Training.carte(mat.data || [], cat);
   TRN.cat = cat;
-  if (mazzi) TRN.mazzi = (mazzi.data || []).map(r => r.batteria).filter(m => m && m.percorso && Array.isArray(m.carte));
+  TRN.mazzi = archivio.mazzi.filter(m => m && m.percorso && Array.isArray(m.carte));
   TRN.stati = Object.fromEntries((carte.data || []).map(r => [r.carta, r]));
   TRN.giorni = giorni.data || [];
   TRN.test = test.data || [];
@@ -58,16 +102,17 @@ function disegnaTraining() {
   const oggi = trnOggi();
   const fila = MB21Training.giorniDiFila(TRN.giorni.map(g => g.giorno), oggi);
   const sc = MB21Training.scala(TRN.mazzi, TRN.stati, TRN.test, oggi);
-  const stelle = sc.livelli.flatMap(l => l.percorsi).reduce((n, p) => n + (p.stato ? p.stato.stelle : 0), 0);
   const rip = MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali);
   const med = MB21Training.medaglie(TRN.test, TRN.giorni.map(g => g.giorno));
   const nome = primoNome(ST.utente && (ST.utente.nome || ST.utente.nome_cognome));
-  const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${rip.length}</span>` : '')], ['studia', 'Studia']];
+  // nota Pagine 084, punto 6 (Ignazio 24/10, «sì»): in testata via il numero delle stelle (stanno già in «Le tue medaglie», con medaglie e record);
+  // i giorni di fila aprono «Le tue medaglie», come la medaglia; «Come funziona» resta nel suo link
+  // nota Pagine 084, punto 1 (Ignazio 24/10): il ripasso è di 15 carte per volta (RIPASSO), non tutto l'arretrato: anche il numero della scheda dice al massimo 15
+  const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${Math.min(rip.length, MB21Training.RIPASSO)}</span>` : '')], ['studia', 'Studia']];
   const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
   app.innerHTML = `<h1>${ic('crescita')} Training</h1>
     <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
-      <button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-come title="Giorni di allenamento di fila">${ic('fiamma')} ${fila.n}</button>
-      <button class="trn-conto stelle" data-come title="Stelle dei test">${ic('stella')} ${stelle}</button>
+      <button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-medaglie title="Giorni di allenamento di fila: le tue medaglie">${ic('fiamma')} ${fila.n}</button>
       <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('chiamata', 20)}</span>
@@ -82,10 +127,14 @@ function disegnaTraining() {
       <div><b>Test d'ingresso</b><small>⚠️ Per ora lo vedi solo tu · Sei già avanti? Supera i test dei livelli che conosci e parti dal tuo, senza rifare tutte le carte.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${eAdmin() && DOVE_SEI_VISIBILE ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
       <div><b>Dove sei, dove vuoi andare</b><small>⚠️ Per ora lo vedi solo tu · Scegli quanto vuoi guadagnare: vedi i tuoi numeri, cosa manca e cosa studiare.</small></div><span class="trn-freccia">›</span></button>` : ''}
-    ${fila.n && !fila.oggi ? `<div class="trn-fila-oggi">${ic('fiamma')} ${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</div>` : ''}
+    ${fila.n && !fila.oggi ? `<button class="trn-fila-oggi" id="trn-fila-via">${ic('fiamma')}<span>${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</span><span class="trn-freccia">›</span></button>` : ''}
     <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
     <div id="trn-corpo">${corpo}</div>${versione()}`;
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
+  // nota Pagine 084, punto 2 (Ignazio 24/10): «N giorni di fila: bastano 5 minuti oggi…» è il tasto che avvia il ripasso delle 15 carte (lo stesso di
+  // «Inizia il ripasso»); senza carte da ripassare porta a Impara, dove ci sono quelle nuove
+  const fila5 = document.getElementById('trn-fila-via');
+  if (fila5) fila5.onclick = () => (rip.length ? trnRipassoDiOggi() : (TRN.vista = 'impara', disegnaTraining()));
   app.querySelectorAll('[data-come]').forEach(b => b.onclick = trnComeFunziona);
   app.querySelectorAll('[data-medaglie]').forEach(b => b.onclick = trnMedaglie);
   app.querySelectorAll('[data-telefonata]').forEach(b => b.onclick = trnScegliConversazione);
@@ -107,8 +156,13 @@ function disegnaTraining() {
     if (qui) qui.scrollIntoView({ block: 'center' });
   } else if (TRN.vista === 'ripassa') {
     const via = document.getElementById('trn-via-ripasso');
-    if (via) via.onclick = () => trnSessione(MB21Training.daRipassare(TRN.mazzi, TRN.stati, trnOggi(), TRN.segnali, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', 'Ripasso di oggi');
+    if (via) via.onclick = trnRipassoDiOggi;
   } else trnCollegaStudia();
+}
+
+// Il ripasso di oggi: le prime 15 carte da ripassare (RIPASSO); finite queste, se ce ne sono altre, la scheda Ripassa propone le 15 dopo
+function trnRipassoDiOggi() {
+  trnSessione(MB21Training.daRipassare(TRN.mazzi, TRN.stati, trnOggi(), TRN.segnali, MB21Training.RIPASSO).map(x => x.carta), 'ripassa', 'Ripasso di oggi');
 }
 
 // «Come funziona» (Ignazio 25/09, il testo è suo): le regole del Training in poche righe. Si apre dal bottone in alto, dalla fiammella e
@@ -125,7 +179,7 @@ function trnComeFunziona() {
       + 'la relativa carta torna il giorno dopo. Bastano 5 minuti al giorno.'],
     ['obiettivi', 'Il test', `Si apre quando sai ${Math.round(T.PER_IL_TEST * 10)} carte su 10 del percorso. Sono ${T.TEST} domande, almeno ${T.TRABOCCHETTI} a trabocchetto, senza aiuti. `
       + 'Dal 70% il percorso è superato. Le stelle: una dal 70%, due dall\'80%, tre con 10 su 10. Puoi rifarlo per migliorare.'],
-    ['stella', 'I premi', 'Le stelle dei test e la fiammella dei giorni di fila sono in alto, accanto al tuo nome. Un percorso diventa verde quando superi il test, un livello quando superi tutti i suoi percorsi. '
+    ['stella', 'I premi', 'La fiammella dei giorni di fila è in alto, accanto al tuo nome; le stelle dei test le trovi in «Le tue medaglie». Un percorso diventa verde quando superi il test, un livello quando superi tutti i suoi percorsi. '
       + `Ogni percorso superato ti dà la sua medaglia, e così ogni livello e i giorni di fila (${T.TRAGUARDI.slice(0, -1).join(', ')} e ${T.TRAGUARDI[T.TRAGUARDI.length - 1]}): le trovi toccando la medaglia in alto, e nel Profilo.`],
     ['libro', 'Studia', 'Il Manuale di Avvio, le tracce del BSM e i libri. Ogni carta dice da dove viene: tocca la fonte e la ritrovi.'],
   ];
@@ -531,12 +585,13 @@ function trnRipassa(rip, oggi) {
       <p>${dopo ? `Le prossime carte tornano ${quando}: ${dopo[1]} ${dopo[1] === 1 ? 'carta' : 'carte'}.` : 'Le carte torneranno quando sarà il momento.'} Intanto, in Impara ci sono carte nuove.</p>
       <button class="trn-secondo" data-vista="impara">Vai a Impara</button></div>`;
   }
-  const n = Math.min(rip.length, MB21Training.RIPASSO), capitate = rip.filter(x => x.capitata).length;
+  // nota Pagine 084, punto 1 (Ignazio 24/10): si dicono le 15 di adesso, non tutto l'arretrato; finite queste, se ce ne sono altre, ne arrivano altre 15
+  const n = Math.min(rip.length, MB21Training.RIPASSO), capitate = rip.slice(0, n).filter(x => x.capitata).length, poi = Math.min(rip.length - n, MB21Training.RIPASSO);
   const minuti = Math.max(1, Math.round(n * 20 / 60));
-  return `<div class="riquadro trn-ripassa"><div class="trn-rip-n">${rip.length}</div>
-    <b>${rip.length === 1 ? 'carta da ripassare oggi' : 'carte da ripassare oggi'}</b>
-    <p>${rip.length > n ? `Si parte dalle prime ${n}: circa` : 'Circa'} ${minuti} ${minuti === 1 ? 'minuto' : 'minuti'}, tutti i temi insieme.${capitate
-      ? ` ${capitate === 1 ? 'Una viene' : capitate + ' vengono'} dalle obiezioni che ti sono capitate davvero nelle telefonate.` : ''}</p>
+  return `<div class="riquadro trn-ripassa"><div class="trn-rip-n">${n}</div>
+    <b>${n === 1 ? 'carta da ripassare' : 'carte da ripassare'}</b>
+    <p>Circa ${minuti} ${minuti === 1 ? 'minuto' : 'minuti'}, tutti i temi insieme.${capitate
+      ? ` ${capitate === 1 ? 'Una viene' : capitate + ' vengono'} dalle obiezioni che ti sono capitate davvero nelle telefonate.` : ''}${poi ? ` Finite queste, se ti va, ne arrivano altre ${poi}.` : ''}</p>
     <button class="primario" id="trn-via-ripasso">Inizia il ripasso</button></div>`;
 }
 
@@ -711,6 +766,7 @@ function trnFoglioCorreggi(carta, visto, bottone) {
     if (r.error) { pronto(); return mostraToast('Correzione non salvata: riprova.'); }
     chiudi();
     if (bottone) { bottone.disabled = true; bottone.innerHTML = `${ic('fatto', 16)} Segnata`; }
+    trnSvuotaCopia();   // nota 084: la prossima apertura rilegge carte e catalogo, così la carta corretta si vede subito
     mostraToast('Carta segnata per la correzione.');
   };
 }

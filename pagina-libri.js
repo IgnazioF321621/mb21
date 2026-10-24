@@ -8,8 +8,9 @@ const LB = { aperto: null, ritorno: 'profilo', dati: null };   // un libro apert
 
 // Nota Pagine 083, punto 8 (Ignazio 24/10): `apriLibri` legge (all'apertura e dopo un «già letto») e disegna in cima; aprire e chiudere un libro del
 // diario ridisegna dai dati già letti (`LB.dati`), sul posto: niente «Carico…», nessuna lettura in più, la pagina non torna in cima.
-const indietroLibri = () => (LB.ritorno === 'oggi' ? '‹ Dashboard' : '‹ Profilo');
-const tornaDaiLibri = () => { if (LB.ritorno === 'oggi') { ST.tab = 'oggi'; mostraTab(); } else apriProfilo(); };
+// nota 084: anche dal Check («10 pagine ogni giorno»): «‹ Check» torna al Check
+const indietroLibri = () => (LB.ritorno === 'oggi' ? '‹ Dashboard' : LB.ritorno === 'check' ? '‹ Check' : '‹ Profilo');
+const tornaDaiLibri = () => { if (LB.ritorno === 'oggi' || LB.ritorno === 'check') { ST.tab = LB.ritorno; mostraTab(); } else apriProfilo(); };
 async function apriLibri(ritorno) {
   if (ritorno) LB.ritorno = ritorno;
   const indietro = indietroLibri(), torna = tornaDaiLibri;

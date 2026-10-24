@@ -705,7 +705,7 @@
   .trn-conto { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 700; color: var(--testo-soft); background: var(--superficie);
     border-radius: var(--raggio-pill); padding: 6px 12px; box-shadow: var(--ombra-card); }
   .trn-conto > svg.ic { width: 18px; height: 18px; }
-  .trn-conto.fila.acceso { color: var(--cat-prospect); } .trn-conto.stelle > svg.ic { color: var(--proposta); fill: currentColor; }
+  .trn-conto.fila.acceso { color: var(--cat-prospect); }   /* nota 084: via il conto delle stelle in testata (sono in «Le tue medaglie») */
   button.trn-conto { border: 0; font-family: inherit; min-height: 0; width: auto; cursor: pointer; }
   /* «Come funziona» (25/09): sotto il saluto, a destra; il foglio con le regole del Training */
   button.trn-come { display: flex; align-items: center; gap: 6px; margin: -6px 2px 12px auto; width: auto; min-height: 0; padding: 4px 2px; border: 0; background: none;
@@ -735,6 +735,10 @@
   .trn-med-foglio h4 .trn-badge { margin: 0 0 0 6px; vertical-align: 2px; }
   .trn-fila-oggi { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--cat-prospect); background: var(--cat-prospect-tinta);
     border-radius: var(--raggio-riga); padding: 9px 12px; margin: 0 0 12px; }
+  /* nota 084: la riga dei giorni di fila è un tasto che avvia il ripasso */
+  button.trn-fila-oggi { width: 100%; border: 0; font-family: inherit; text-align: left; cursor: pointer; }
+  button.trn-fila-oggi > span:first-of-type { flex: 1; }
+  button.trn-fila-oggi .trn-freccia { color: inherit; }
   .trn-schede { display: flex; gap: 2px; background: var(--tab-attiva); border-radius: var(--raggio-pill); padding: 4px; margin: 0 0 16px; }   /* 13/10 (Ignazio, nota Training 018): pista grigia scura, così la voce accesa si vede subito (disegno B) */
   .trn-schede button { flex: 1; border: 0; background: none; border-radius: var(--raggio-pill); min-height: 40px; font-size: 15px; font-weight: 600; color: var(--testo-soft); font-family: inherit; }
   .trn-schede button.scelta { background: var(--gr-crescita); color: #fff; font-weight: 700; box-shadow: 0 2px 6px color-mix(in srgb, var(--gr-crescita) 35%, transparent); }
@@ -4643,6 +4647,10 @@ async function vaiDalCheck(vai, pid) {
   if (vai === 'segni' && !io) return schedaDalCheck(visto().partner_id);
   if (vai === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); vai = 'profilo'; }
   if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7), ST.tab === 'oggi' ? 'oggi' : 'check');   // «‹ Check» (o «‹ Dashboard») per tornare
+  // nota Pagine 084, punto 3 (Ignazio 24/10): «una traccia ogni giorno» apre Training › Studia (le tracce del BSM); «10 pagine ogni giorno» I miei libri,
+  // con la freccia che torna al Check (o alla Dashboard)
+  if (vai === 'libri') return apriLibri(ST.tab === 'oggi' ? 'oggi' : 'check');
+  if (vai === 'studia') { TRN.vista = 'studia'; TRN.cerca = ''; vai = 'training'; }
   ST.tab = vai; mostraTab(); window.scrollTo(0, 0);
 }
 // la scheda contatto di una linea (codice Amway), con lo stesso aggancio della Mappa; la freccia della scheda torna al Check
