@@ -295,7 +295,7 @@ prova('L4: la domanda di conferma (chiediConferma, una per tutta l\'app) sta al 
   const ctx = { esc, document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx); vm.runInContext(pezzo(IDX, 'function chiediConferma') + ';this.chiedi = chiediConferma;', ctx);
   const p = ctx.chiedi('Eliminare Persona A dalla lista?', 'Sparisce dalla lista.', 'Elimina', true);
-  assert.equal(fogli[0].className, 'velo centro');
+  assert.equal(fogli[0].className, 'velo');   // nota 088: al centro come ogni foglio (prima .velo.centro)
   fogli[0].querySelector('#cf-si').onclick();
   assert.equal(await p, true);
 });
@@ -574,7 +574,7 @@ prova('L9: un nome nuovo da ogni strada passa da salvaNomeNuovo: «Salvo lo stes
   assert.match(IDX, /return \(await nomiDellaLista\(\)\)\.filter\(r => r\.user_id === id\)/);
   assert.match(IDX, /const trovati = MB21Lista\.cercaNomi\(elenco, \{ testo: t, utenteId: visto\(\)\.id \}\);/);
   assert.doesNotMatch(IDX + PL + leggi('admin.js') + leggi('pagina-coach.js'), /contattiMiei/);
-  assert.match(IDX, /velo\.className = 'velo centro';\n    velo\.style\.zIndex = 30;/);   // la domanda sopra «Scegli dalla tua lista»
+  assert.match(IDX, /velo\.className = 'velo';   \/\/ al centro come ogni foglio \(nota 088; prima \.velo\.centro, L4\)\n    velo\.style\.zIndex = 30;/);   // la domanda sopra «Scegli dalla tua lista»
 });
 
 prova('L10: nell\'Agenda di oggi chi compie gli anni, con i bottoni per scrivere (SMS, WhatsApp, Telegram); una lettura leggera al giorno per persona', async () => {

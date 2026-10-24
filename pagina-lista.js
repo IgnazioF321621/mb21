@@ -401,11 +401,11 @@ function cardNome(r) {
 // voci: { etichetta, icona?, tono?, pericolo? } e, per gli elenchi ad albero (Partner Select, «Gli ultimi
 // 12 mesi»), `rientro` (livelli sotto la radice: sposta la voce a destra con ↳) e `nota` (una riga piccola sotto il nome)
 // Scheda contatto S7 (Ignazio 22/10): le scelte compaiono AL CENTRO della pagina, in tutti i punti (una funzione sola: «+ Nuova azione», menu della
-// card, «Non ora», rubrica…), con la forma centrata del riquadro «È iniziato [mese]» (.velo.centro); se sono tante scorrono dentro il foglio.
+// card, «Non ora», rubrica…); se sono tante scorrono dentro il foglio. Dalla nota 088 al centro ci sono tutti i fogli, con la regola di .velo.
 function sceltaDa(titolo, voci, sopra) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
-    velo.className = 'velo centro';
+    velo.className = 'velo';
     velo.innerHTML = `<div class="foglio alto"><h3>${esc(titolo)}</h3>${sopra || ''}<div class="altri-voci">
       ${voci.map((v, i) => `<button data-i="${i}" class="${v.pericolo ? 'pericolo' : ''} ${v.tono ? 'tono-' + v.tono : ''} ${v.rientro ? 'rientrata' : ''}" ${v.rientro ? `style="--rientro:${Math.min(v.rientro, 5)}"` : ''}>${v.icona ? ic(v.icona) : ''}${v.rientro ? '<i class="ramo">↳</i>' : ''}${v.nota && v.tono ? `<span class="voce-nota">${esc(v.etichetta)}<small class="nota-ramo">${esc(v.nota)}</small></span>` : esc(v.etichetta) + (v.nota ? `<small class="nota-ramo">${esc(v.nota)}</small>` : '')}</button>`).join('')}
       </div><button class="link" id="scelta-no">Annulla</button></div>`;

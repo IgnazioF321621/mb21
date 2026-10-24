@@ -613,6 +613,16 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - È la stessa forma del riquadro «È iniziato [mese]» (`.velo.centro`).
 - In `index.html` `.velo.centro .foglio` è tutto arrotondato, senza maniglia, largo al massimo 440 px e alto al massimo lo schermo meno 32 px; se è lungo scorre dentro.
 - Toccare fuori chiude come prima. Prova in `prova_lista.js`; disegno con il codice vero in `docs/prototipi/schizzo_scelte_al_centro_S7.png` (anche 320×480).
+- **Dalla nota Pagine 088 (24/10) la forma al centro è di TUTTI i fogli**, con una regola sola nello stile di base: `.velo.centro` non c'è più (vedi sotto, «Tutti i fogli al centro»).
+
+**Tutti i fogli al centro, con una regola sola (nota Pagine 088, Ignazio 24/10/2026: «i pop-up continuano ad alzarsi dal basso e non compaiono al centro»).** Prima erano al centro solo le scelte (S7), la conferma (L4) e il riquadro «È iniziato [mese]»; gli altri ~64 fogli salivano dal basso.
+- Lo stile di base in `index.html`: `.velo` centra (`align-items: center; justify-content: center`), con `padding` = sopra 50 px (+ zona sicura): lì sta «Invia Feedback» con un foglio aperto; sotto e ai lati 16 px. `.foglio` è tutto arrotondato (`--raggio-foglio`), senza maniglia (tolto `.foglio::before`), largo al massimo 440 px, alto al massimo lo spazio libero (`max-height: 100%`), scorre dentro (`overflow-y: auto; overscroll-behavior: contain`). Ogni foglio nuovo nasce già così.
+- Restano di lato, com'erano, solo `.velo.lato` (con `padding: 0`): il menu ☰ dell'Agenda (`menuAgenda`) e il pannello del mese con la Timeline (`pannelloDestro`, e lo stesso pannello da `disegnaSettimana`).
+- Una regola sola: niente più `.velo.centro` (né stile né classe in `sceltaDa`, `chiediConferma`, riquadro degli obiettivi); `.foglio.alto` (era 92vh) e `.foglio.nu` (90vh) non hanno più un'altezza loro; tolta la zona sicura del bordo in basso da `.foglio`, `.mc-fondo`, `.trn-ses-fondo`, `.foglio.strade`.
+- I tasti fermi in fondo (`.mc-fondo` dei moduli, `.trn-ses-fondo` del Training) sono `sticky` dentro il foglio che scorre: restano in fondo al riquadro.
+- Tastiera (nota 044): sul telefono (`pointer: coarse`), con la classe `tastiera` sul body il riquadro sale in cima (`align-items: flex-start`): i campi restano sopra la tastiera.
+- «Invia Feedback» (`seguiFogli`): con QUALSIASI foglio aperto, anche il suo, sale in alto a destra (`.in-foglio`), nella striscia libera sopra il riquadro.
+- Prova `tools/banco/prova_fogli_088.js`; disegno con il codice vero e dati finti (modulo contatto nuovo, appuntamento dell'Agenda, «Ha il biglietto?», una carta del Training, «Invia Feedback», a 390×844 e 320×480) in `docs/prototipi/schizzo_fogli_088.png`.
 
 **Scheda contatto, tappa S6 (Ignazio 22/10/2026, disegno approvato «Azioni e Coach nella scheda»):** nella linguetta Azioni.
 - **Azione chiusa aperta al tocco:** non c'è più la riga del titolo sopra. La ⌃ per richiuderla sta dentro la card, accanto alla data (`.az-su`, sempre `data-az-apri`).
@@ -745,7 +755,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
     - In Modifica i tre gruppi restano com'erano. I campi e i loro id sono gli stessi in tutti e due i casi (pezzi `campoNome`, `campoTel`, `campoCat`, `campoAccount`, `datiPersona`, `altriAttivita`): il salvataggio non cambia.
     - Nel nuovo contatto niente «Archiviato» tra le categorie (resta in Modifica).
     - Il bottone spento dice cosa manca: «Scrivi il nome», poi «Scegli la categoria», poi «Salva».
-    - `chiediConferma` (una funzione per tutta l'app) apre il foglio al centro (`velo centro`), come `sceltaDa`.
+    - `chiediConferma` (una funzione per tutta l'app) apre il foglio al centro, come `sceltaDa` (dalla nota 088 con la regola di tutti i fogli; prima `velo centro`).
   - **L5 · rubrica e «Da catalogare»**:
     - `dispositivoDi(ua)` (scarica-lista.js) è la funzione sola che riconosce il dispositivo: 'iphone' (anche iPad), 'android', 'mac' o 'computer'. La usano `doveFinisceIlFile` e `scegliAggiungi`: da iPhone o Android niente più «Che telefono hai?» (resta il link «Ho un Android / Ho un iPhone»); dal computer la domanda resta.
     - `preparaImport` dà a ogni scheda «già nella Lista» il suo `contattoId`: la scheda con quel numero, o con quel nome se è una sola.

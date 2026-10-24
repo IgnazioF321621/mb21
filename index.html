@@ -159,10 +159,16 @@
   .numeri button { font-size: 20px; font-weight: 700; padding: 14px 0; border-radius: var(--raggio-bottone); border: 0; background: var(--sfondo); color: var(--testo); }
   .numeri button.scelto { background: var(--testo); color: #fff; }
 
-  .velo { position: fixed; inset: 0; background: rgba(16,21,31,.4); display: flex; align-items: flex-end; z-index: 20; }
-  .foglio { background: var(--superficie); width: 100%; max-width: 520px; margin: 0 auto; border-radius: var(--raggio-foglio) var(--raggio-foglio) 0 0;
-    padding: 26px 16px calc(env(safe-area-inset-bottom) + 20px); box-shadow: var(--ombra-foglio); position: relative; }
-  .foglio::before { content: ''; position: absolute; top: 9px; left: 50%; width: 44px; height: 5px; margin-left: -22px; border-radius: 99px; background: var(--spento); }   /* la maniglia */
+  /* Nota Pagine 088 (Ignazio 24/10/2026): OGNI foglio compare al centro, con questa regola sola (prima solo scelte e conferme, con .velo.centro
+     della S7 e della L4): tutto arrotondato, senza maniglia, largo al massimo 440 px, alto al massimo lo spazio libero; se è lungo scorre dentro
+     (i tasti fermi in fondo, .mc-fondo e .trn-ses-fondo, restano in fondo al riquadro). Di lato restano solo il menu dell'Agenda e il pannello del
+     mese (.velo.lato). In alto 50 px liberi: lì sale «Invia Feedback» con un foglio aperto (nota 008), così non copre il riquadro. */
+  .velo { position: fixed; inset: 0; background: rgba(16,21,31,.4); display: flex; align-items: center; justify-content: center; z-index: 20;
+    padding: calc(env(safe-area-inset-top) + 50px) 16px calc(env(safe-area-inset-bottom) + 16px); }
+  .foglio { background: var(--superficie); width: 100%; max-width: 440px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; margin: 0 auto;
+    border-radius: var(--raggio-foglio); padding: 22px 16px 16px; box-shadow: var(--ombra-foglio); position: relative; }
+  /* con la tastiera aperta sul telefono (nota 044, classe `tastiera`) il riquadro sale in cima: i campi restano sopra la tastiera */
+  @media (pointer: coarse) { body.tastiera .velo:not(.lato) { align-items: flex-start; } }
   .foglio h3 { margin: 0 0 4px; font-size: 20px; }
   .foglio p { margin: 0 0 12px; color: var(--grigio); font-size: 14px; }
   .cf-spunta { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; font-size: 15px; }
@@ -630,7 +636,7 @@
   .nota { background: var(--proposta-tinta); border: 1px solid var(--proposta); border-radius: var(--raggio-bottone); padding: 12px 14px; margin-bottom: 8px; width: 100%; text-align: left; font-size: 15px; color: var(--testo); }
   .testo-nota { white-space: pre-wrap; font-size: 15px; line-height: 1.45; max-height: 60vh; overflow-y: auto; }
 
-  .foglio.alto { max-height: 92vh; overflow-y: auto; }
+  /* .foglio.alto (prima 92vh, che scorre): dalla nota 088 ogni foglio sta nello spazio libero e scorre dentro (regola di .foglio); la classe non fa più niente */
   /* Il modulo Nuovo contatto / Modifica (cantiere 34): fondo perla, gruppi in card bianche, categoria a pastiglie, «Annulla · Salva» fermi in fondo */
   .foglio.mc { background: var(--sfondo); padding-bottom: 0; }
   .mc-testa { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
@@ -646,7 +652,7 @@
   .mc-cat.on { background: var(--cat); border-color: var(--cat); color: #fff; }
   .foglio.mc .elimina-qui { margin: 14px 0; }
   .mc-fondo { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; background: var(--superficie); margin: 0 -16px;
-    padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }
+    padding: 12px 16px 14px; border-radius: 22px 22px 0 0; box-shadow: var(--ombra-foglio); }   /* nota 088: il riquadro al centro non tocca il bordo del telefono */
   /* Dopo l'esito (cantiere 42): il foglio della chat prende il colore del tipo di appuntamento (--tipo, come in Agenda) */
   .foglio.mc.rifl { border-top: 6px solid var(--tipo); background: var(--sfondo); background: color-mix(in srgb, var(--tipo) 7%, var(--sfondo)); }
   .rifl .mc-testa .ts-pastiglia { background: var(--tipo); }
@@ -851,7 +857,7 @@
   .trn-sapevo button { min-height: var(--bottone-h); border-radius: var(--raggio-bottone); font-size: 16px; font-weight: 700; font-family: inherit; border: 2px solid; border-bottom-width: 4px; }
   .trn-sapevo .no { border-color: var(--pericolo); color: var(--pericolo); background: var(--pericolo-tinta); }
   .trn-sapevo .si { border-color: var(--ok); color: var(--ok); background: var(--ok-tinta); }
-  .trn-ses-fondo { position: sticky; bottom: 0; background: var(--superficie); padding: 12px 0 calc(env(safe-area-inset-bottom) + 4px); }
+  .trn-ses-fondo { position: sticky; bottom: 0; background: var(--superficie); padding: 12px 0 4px; }
   .trn-ses-fondo[hidden] { display: none; }
   .trn-ses-fondo button.primario { background: var(--gr-crescita); }
   .trn-fine { text-align: center; padding: 20px 0 8px; }
@@ -1024,7 +1030,6 @@
   .banner-grande.check { background: var(--accento); color: var(--accento-su); }
   .banner-grande.check small { color: rgba(255,255,255,.8); }
   .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
-  .velo.centro { align-items: center; padding: 16px; }
   /* Lista Nomi L4: nel nuovo contatto «Altri dati (facoltativi)» è una riga chiusa; dentro, i gruppi di sempre */
   .mc-altri { margin-top: 12px; }
   .mc-altri > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--superficie); border-radius: 14px; padding: 13px 14px; font-weight: 600; box-shadow: var(--ombra-card); }
@@ -1032,9 +1037,6 @@
   .mc-altri > summary small { font-weight: 400; color: var(--testo-tenue); }
   .mc-altri > summary::after { content: '▸'; margin-left: auto; color: var(--grigio); }
   .mc-altri[open] > summary::after { content: '▾'; }
-  /* S7 (Ignazio 22/10): il foglio delle scelte al centro, tutto arrotondato, senza maniglia; se è lungo scorre dentro e non esce dallo schermo */
-  .velo.centro .foglio { max-width: 440px; border-radius: var(--raggio-foglio); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 22px 16px 16px; }
-  .velo.centro .foglio::before { display: none; }
   .cent { font-size: .72em; font-weight: 700; }   /* i centesimi dei punti: piccoli, dopo una virgola grande e ben visibile */
   .cent i { font-style: normal; font-size: 1.5em; font-weight: 900; line-height: 0; margin: 0 .06em 0 .04em; }
   .solo-tu { display: block; font-weight: 600; font-size: 13px; color: var(--pericolo); margin: 0 0 10px; text-align: center; }   /* «Per ora lo vedi solo tu» (Admin) */
@@ -1692,7 +1694,7 @@
   .ad-wes-giorno { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--testo-soft); margin-top: 6px; }
   .ad-wes-giorno input { font-family: inherit; font-size: 16px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */
-  .velo.lato { align-items: stretch; justify-content: flex-start; }
+  .velo.lato { align-items: stretch; justify-content: flex-start; padding: 0; }   /* nota 088: di lato, a tutta altezza, senza il margine dei fogli al centro */
   .ag-lato { background: var(--superficie); width: 78%; max-width: 340px; height: 100%; padding: 24px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
   .ag-lato-titolo { font-size: 12px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .04em; padding: 14px 10px 6px; }
   .ag-lato button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: none; font-family: inherit; font-size: 16px; font-weight: 600; color: var(--testo); padding: 11px 10px; border-radius: 12px; text-align: left; }
@@ -1921,7 +1923,7 @@
   .ag-lato .mb-programma button.mb-prog-bottone span { flex: 0 1 auto; }
   .sp-domanda { font-size: 17px; font-weight: 700; margin: 4px 0 6px; }
   /* nota Pagine 005: il foglio a livelli «Cosa vuoi aggiungere?» */
-  .foglio.strade { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
+  .foglio.strade { padding-bottom: 14px; }
   .foglio.strade .st-indietro { display: block; padding: 0; margin: 0 0 6px; min-height: 0; color: var(--testo-soft); font-size: 14px; font-weight: 600; text-align: left; width: auto; }
   .strada { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); border-radius: 16px; padding: 13px 12px; margin: 0 0 9px; font: inherit; }
   .strada .st-tondo { width: 42px; height: 42px; border-radius: 50%; background: var(--tinta); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
@@ -2217,7 +2219,7 @@
   .pv-foglio ul { margin: 4px 0 4px; padding-left: 18px; }
   .pv-fondo { margin-top: 14px; }
   .accesso .acc-nota { font-size: 13px; margin-top: 14px; text-align: center; }
-  .foglio.nu { max-height: 90vh; overflow-y: auto; font-size: 14px; }
+  .foglio.nu { font-size: 14px; }   /* nota 088: alto e scorrevole come ogni foglio */
   .foglio.nu select { display: block; width: 100%; font-size: 16px; padding: 12px; border-radius: var(--raggio-bottone); border: 1px solid var(--linea); background: var(--superficie); margin: 6px 0 12px; }
   .ad-voce small { display: block; color: var(--grigio); font-size: 12px; font-weight: 400; margin-top: 2px; }
   .ad-utente { border-top: 1px solid var(--linea); }
@@ -4994,13 +4996,14 @@ function doveSono() {
   const sezione = scheda ? 'Scheda contatto · ' + (LS.sezione || '') : ST.tab === 'admin' && typeof AD !== 'undefined' ? AD.sezione : ST.tab === 'report' && typeof RP !== 'undefined' ? RP.vista : '';
   return MB21Segnala.doveDa({ pagina: ST.tab, sezione, fogli, contatto: scheda ? LS.contatto.id : null, vista: ST.tab === 'agenda' && typeof AG !== 'undefined' ? AG.vista : null });
 }
-// Nota 008: con un foglio aperto (un `.velo` qualsiasi, tranne quello di Segnala) l'insetto sale in alto a destra, sull'ombra scura, così non copre
-// «Salva», «Invia» e le scelte in fondo al foglio. Si guarda il corpo della pagina: i fogli si aggiungono e si tolgono lì.
+// Nota 008: con un foglio aperto l'insetto sale in alto a destra, sull'ombra scura, così non copre «Salva», «Invia» e le scelte del foglio.
+// Dalla nota 088 i fogli stanno al centro e lasciano libera la striscia in alto (.velo): vale per ogni foglio, anche quello di Segnala.
+// Si guarda il corpo della pagina: i fogli si aggiungono e si tolgono lì.
 let osservaFogli = null;
 function seguiFogli() {
   const sg = document.getElementById('segnala');
   if (!sg || osservaFogli || typeof MutationObserver === 'undefined') return;
-  const aggiorna = () => sg.classList.toggle('in-foglio', !![...document.querySelectorAll('.velo')].find(v => v.id !== 'sg-velo'));
+  const aggiorna = () => sg.classList.toggle('in-foglio', !!document.querySelector('.velo'));   // nota 088: anche con il suo foglio, che ora sta al centro
   osservaFogli = new MutationObserver(aggiorna);
   osservaFogli.observe(document.body, { childList: true, subtree: true });
   aggiorna();
@@ -5175,7 +5178,7 @@ function scelteMultiple(titolo, voci, scelte = []) {
 function chiediConferma(titolo, testo, si = 'Conferma', pericolo = false, spunta = '', no = 'Annulla') {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
-    velo.className = 'velo centro';
+    velo.className = 'velo';   // al centro come ogni foglio (nota 088; prima .velo.centro, L4)
     velo.style.zIndex = 30;   // L9: la domanda sta sopra ogni foglio (anche «Scegli dalla tua lista», che è a 25)
     velo.innerHTML = `<div class="foglio"><h3>${esc(titolo)}</h3>${testo ? `<p>${esc(testo)}</p>` : ''}
       ${spunta ? `<label class="cf-spunta"><input type="checkbox" id="cf-spunta"> <span>${esc(spunta)}</span></label>` : ''}

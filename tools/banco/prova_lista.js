@@ -603,13 +603,15 @@ prova('S7 (Ignazio 22/10): le scelte (sceltaDa, una funzione per tutta l\'app) c
     querySelector: () => ({ onclick: null }), querySelectorAll: sel => (sel === 'button[data-i]' ? [0, 1].map(i => { const b = { dataset: { i: String(i) } }; bottoni.push(b); return b; }) : []) }) } };
   vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.scelta = sceltaDa;', ctx);
   let p = ctx.scelta('Nuova azione', [{ etichetta: 'Uno' }, { etichetta: 'Due' }]);
-  assert.equal(velo.className, 'velo centro');
+  assert.equal(velo.className, 'velo');   // nota 088: al centro con la regola di ogni foglio (prima .velo.centro)
   velo.onclick({ target: velo }); assert.equal(await p, null); assert.equal(tolto, 1);   // fuori: si chiude senza scelta
   p = ctx.scelta('Nuova azione', [{ etichetta: 'Uno' }, { etichetta: 'Due' }]);
   bottoni.at(-1).onclick(); assert.equal((await p).etichetta, 'Due');
   assert.equal((src.match(/\nfunction sceltaDa\(/g) || []).length, 1);   // una sola funzione: vale in Lista, Dashboard, rubrica, MB Plan
-  assert.match(idx, /\.velo\.centro \.foglio \{ max-width: 440px; border-radius: var\(--raggio-foglio\); max-height: calc\(100vh - 32px\); max-height: calc\(100dvh - 32px\); overflow-y: auto;/);
-  assert.match(idx, /\.velo\.centro \.foglio::before \{ display: none; \}/);   // al centro niente maniglia
+  // nota 088: la forma al centro è quella di ogni foglio (prova_fogli_088.js)
+  assert.match(idx, /  \.velo \{ position: fixed; inset: 0; background: rgba\(16,21,31,\.4\); display: flex; align-items: center; justify-content: center;/);
+  assert.match(idx, /  \.foglio \{ background: var\(--superficie\); width: 100%; max-width: 440px; max-height: 100%; overflow-y: auto;/);
+  assert.doesNotMatch(idx, /\.foglio::before/);   // niente maniglia
 });
 
 prova('Scheda contatto S5/S5c (nota Pagine 072, Ignazio 22/10): «Cose da fare» per tutti; senza categoria «Nuova azione» apre prima «Modifica», poi l\'azione', async () => {

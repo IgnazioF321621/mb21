@@ -2172,7 +2172,7 @@ async function mostraRiquadroObiettivi() {
   segnaOb(rifai ? chiaveRifaiOb(d.mese) : chiaveOggiOb(ST.oggi));
   const mese = MB21Dashboard.nomeMese(d.mese).toLowerCase();
   const velo = document.createElement('div');
-  velo.className = 'velo centro';
+  velo.className = 'velo';   // al centro come ogni foglio (nota 088)
   velo.innerHTML = `<div class="riquadro-ob" role="dialog" aria-label="Obiettivi di ${esc(mese)}">
     <span class="ico">${ic('obiettivi')}</span>
     <h2>${rifai ? `Gli obiettivi di ${esc(mese)}, nel foglio nuovo` : `È iniziato ${esc(mese)}`}</h2>
