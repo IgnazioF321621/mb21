@@ -19,7 +19,7 @@ function prova(nome, fn) { coda.push([nome, fn]); }
 
 // nota 078: il modulo aspetta il dato «Cliente con account» (accountDi) e i fattori di conversione prima di disegnare
 const FATTORI_FINTI = [{ dal: '2000-01-01', valore: '2.21759' }, { dal: '2026-06-01', valore: '2.26194' }];
-async function apri(v, risposta, storico = null, account = null, incasso = null, fattori = FATTORI_FINTI) {
+async function apri(v, risposta, storico = null, account = null, incasso = null, fattori = FATTORI_FINTI, proposta = { data: '2026-10-20' }) {
   const fogli = [], scritte = [], domande = [], avvisi = [];
   const q = { insert(r) { scritte.push(['insert', r]); return q; }, update(r) { scritte.push(['update', r]); return q; }, eq() { return q; }, select() { return q; }, single() { return q; },
     ilike() { return q; }, not() { return q; }, order() { return q; }, limit() { return q; }, then(ok) { return Promise.resolve(ok({ data: q._incasso ? incasso : storico, error: null })); } };
@@ -32,9 +32,9 @@ async function apri(v, risposta, storico = null, account = null, incasso = null,
     accountDi: async () => (account && account.dal) || null, fattoriConversione: async () => fattori };
   vm.createContext(ctx);
   vm.runInContext(contaVera[0] + m[0] + ';this.moduloVendita = moduloVendita', ctx);
-  await ctx.moduloVendita(v, { data: '2026-10-20' });   // la data delle prove fin dall'inizio: il modulo ora aspetta prima di disegnare e la proposta di riordino arriva subito
+  await ctx.moduloVendita(v, proposta);   // la data delle prove fin dall'inizio: il modulo ora aspetta prima di disegnare e la proposta di riordino arriva subito
   const f = fogli[0], $ = id => f.querySelector('#' + id);
-  return { f, $, scritte, domande, avvisi };
+  return { f, $, scritte, domande, avvisi, ctx };
 }
 function riempi({ f, $ }, consegna) {
   f.querySelectorAll('[data-brand]')[0].onclick();
@@ -268,6 +268,43 @@ prova('078: i fattori di conversione si leggono una volta per sessione; se la le
   assert.equal((await ctx.f()).length, 2); await ctx.f(); assert.equal(letture, 2);
   ctx.z(); await ctx.f(); assert.equal(letture, 3);
   assert.match(fs.readFileSync(path.join(__dirname, '../../admin.js'), 'utf8'), /const dopoFattore = messaggio => \{ LS\.vendite = null; if \(typeof azzeraFattori === 'function'\) azzeraFattori\(\);/);
+});
+
+prova('078: dopo il Salva di una vendita nuova, «Stesso ordine: aggiungi un altro brand» riapre il modulo con lo stesso cliente e la stessa data', async () => {
+  let s = await apri(null, true); base(s); s.$('v-data').value = '2026-10-15';
+  await s.$('invia').onclick();
+  assert.equal(JSON.stringify(s.ctx.LS.stessoOrdine), '{"contattoId":"c1","data":"2026-10-15"}');
+  // il secondo modulo: stesso cliente, stessa data, si scelgono brand, prodotti e VP
+  s = await apri(null, true, null, null, null, FATTORI_FINTI, { data: '2026-10-15', stessoOrdine: true });
+  assert.equal(s.$('v-data').value, '2026-10-15'); assert.match(s.f.innerHTML, /<small>Stesso ordine, un altro brand<\/small><b>Cliente A<\/b>/);
+  assert.equal(s.$('v-prodotto').value, ''); assert.equal(s.$('v-vp').value, '');
+  assert.match(s.f.innerHTML, /Un brand per vendita: Nutrilite \+ Artistry = 2 vendite/);   // la regola resta
+  // il cliente con account: già «Ordine pagato sul sito»
+  s = await apri(null, true, null, { id: 'c1', dal: '2026-10-01' }, null, FATTORI_FINTI, { data: '2026-10-15', stessoOrdine: true });
+  assert.equal(s.$('v-sito').hidden, false); assert.equal(s.$('v-soldi').hidden, true);
+  assert.match(s.f.innerHTML, /<small>Stesso ordine, un altro brand · Cliente con account<\/small>/);
+  // dopo una modifica non si offre
+  s = await apri({ id: 'v1', brand: L.BRAND[0][0], prodotto: 'Prodotto finto', vp: 50, sconto: 0, data: '2026-10-20', consegna: null, ordinata_il: null, riordino: null }, true);
+  s.ctx.LS.stessoOrdine = { contattoId: 'c1', data: '2026-10-01' };
+  await s.$('invia').onclick();
+  assert.equal(s.ctx.LS.stessoOrdine, null);
+});
+
+prova('078: nella linguetta Vendite il tasto sta subito sotto «Nuova vendita», solo per quel cliente; si chiude cambiando scheda', async () => {
+  const box = new Nodo(); box.innerHTML = '<div id="sezione"></div>';
+  const aperti = [];
+  const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
+  const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-24' }, esc, ic: n => `[${n}]`, LS: { contatto: c, sezione: 'vendite', stessoOrdine: { contattoId: 'c1', data: '2026-10-15' } },
+    venditeDellaScheda: async () => [], moduloVendita: (v, p) => aperti.push([v, p]), ordineFatto() {}, document: { getElementById: id => box.querySelector('#' + id) } };
+  vm.createContext(ctx);
+  const da = src.indexOf('async function sezioneVendite'); vm.runInContext(src.slice(da, src.indexOf('\n}\n', da) + 3) + ';this.sez = sezioneVendite;', ctx);
+  await ctx.sez();
+  assert.match(box.querySelector('#sezione').innerHTML, /id="vendita-piu">\[piu\] Nuova vendita<\/button><button class="link vn-stesso" id="vendita-stesso">\[piu\] Stesso ordine: aggiungi un altro brand<\/button>/);
+  box.querySelector('#vendita-stesso').onclick();
+  assert.equal(JSON.stringify(aperti[0]), '[null,{"data":"2026-10-15","stessoOrdine":true}]');
+  ctx.LS.stessoOrdine = { contattoId: 'altro', data: '2026-10-15' }; await ctx.sez();
+  assert.doesNotMatch(box.querySelector('#sezione').innerHTML, /vendita-stesso/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), /LS\.accountLettura = null; LS\.stessoOrdine = null;/);   // apriScheda lo chiude
 });
 
 (async () => {

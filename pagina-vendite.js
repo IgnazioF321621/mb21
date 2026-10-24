@@ -44,7 +44,11 @@ async function sezioneVendite() {
   const oggi = MB21Coda.oggiRoma();
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
   // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
-  box.innerHTML = '<button class="primario piu-sezione" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>' + `
+  // Nota Pagine 078 (Ignazio 24/10): dopo il «Salva» di una vendita nuova, subito sotto «Nuova vendita», «Stesso ordine: aggiungi un altro brand»:
+  // riapre il modulo con lo stesso cliente e la stessa data (per il cliente con account già «Ordine pagato sul sito»). La regola «un brand per vendita» resta.
+  const stesso = LS.stessoOrdine && LS.stessoOrdine.contattoId === c.id ? LS.stessoOrdine : null;
+  box.innerHTML = '<button class="primario piu-sezione" id="vendita-piu">' + ic('piu') + ' Nuova vendita</button>'
+    + (stesso ? `<button class="link vn-stesso" id="vendita-stesso">${ic('piu')} Stesso ordine: aggiungi un altro brand</button>` : '') + `
     <div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
       <div class="vn-tot viola"><span>Provvigione</span><b>${n(t.provvigione, true)}</b></div>
@@ -63,6 +67,8 @@ async function sezioneVendite() {
       </button>${MB21Lista.daConsegnare(v) ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
   const p = document.getElementById('vendita-piu');
   if (p) p.onclick = () => moduloVendita(null);
+  const st = document.getElementById('vendita-stesso');
+  if (st) st.onclick = () => moduloVendita(null, { data: stesso.data, stessoOrdine: true });
   box.querySelectorAll('[data-vendita]').forEach(b => b.onclick = () => moduloVendita(vendite.find(v => v.id === b.dataset.vendita)));
   box.querySelectorAll('[data-ordine]').forEach(b => b.onclick = () => ordineFatto(vendite.find(v => v.id === b.dataset.ordine)));
 }
@@ -121,7 +127,7 @@ async function moduloVendita(v, proposta) {
   // Cliente con account: al posto di prezzo, incassato, sconto e «Come ha pagato» la riga «Ordine pagato sul sito» (i campi restano, nascosti).
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c && c.categoria)}"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('vendite')}</span>
-      <div><small>${v ? 'Modifica vendita' : 'Nuova vendita'}${sulSito ? ' · Cliente con account' : ''}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
+      <div><small>${v ? 'Modifica vendita' : proposta && proposta.stessoOrdine ? 'Stesso ordine, un altro brand' : 'Nuova vendita'}${sulSito ? ' · Cliente con account' : ''}</small><b>${c ? esc(c.nome) : 'Vendita'}</b></div>
       <button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
 
     <h4 class="mc-t">Che cosa hai venduto</h4><div class="riquadro mc-g">
@@ -303,7 +309,11 @@ async function moduloVendita(v, proposta) {
   const conta = () => contaLettere($('v-prodotto'), $('v-conta'));   // Lista Nomi L1: il conto solo nelle ultime 10 lettere, come negli altri moduli
   $('v-prodotto').oninput = conta; conta();
   // `proposta.salvata`: solo dopo un salvataggio riuscito (fino al 22/10 chiudeva l'attesa «Ordina da solo»); `poi` anche con Annulla
-  const fatto = messaggio => { chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata(); };   // anche le azioni: la vendita scrive in Agenda
+  const fatto = (messaggio, nuova) => {
+    // 078: dopo una vendita nuova la scheda offre «Stesso ordine: aggiungi un altro brand» (stesso cliente, stessa data)
+    LS.stessoOrdine = nuova && c ? { contattoId: c.id, data: $('v-data').value } : null;
+    chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata();
+  };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
     if (dopo && !$('v-consegna').value) { apriGruppo('consegna'); return mostraToast('Scrivi quando consegni'); }
     if (modoR === 'fra' && !mesiR) { apriGruppo('riordino'); return mostraToast('Scegli fra quanti mesi lo risenti'); }
@@ -333,7 +343,7 @@ async function moduloVendita(v, proposta) {
       : supa.from('vendite').insert({ ...esito.riga, contatto_id: c.id, user_id: c.user_id });
     const { error } = await dbq('vendita', q);
     if (error) { $('invia').disabled = false; return mostraToast('Non salvata: riprova.'); }
-    fatto(v ? 'Vendita aggiornata' : 'Vendita registrata');
+    fatto(v ? 'Vendita aggiornata' : 'Vendita registrata', !v);
   };
   if (v) $('elimina').onclick = async () => {
     if (!await chiediConferma('Eliminare questa vendita?', `${v.prodotto} · ${MB21Lista.data(v.data)} · ${MB21Lista.numero(v.vp)} VP. Non si può annullare.`, 'Elimina', true)) return;
