@@ -31,9 +31,10 @@ async function utentiLettura() {
 }
 // Lista Nomi L8 (Ignazio 23/10): le colonne di `contatti_lista` che l'app usa, scritte una per una al posto di `*`: via l'icona della fase (fase_icona),
 // che nessuna pagina usa. Valgono per la lettura a pagine (l'Admin) e per la riga riletta; i partner leggono con `lista_nomi()` (nel database, com'è).
+// Nota 080: in fondo `account_cliente_dal`, dalla migrazione 20261024123812 (si applica PRIMA del codice: senza, questa lettura non riesce)
 const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, '
   + 'onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, '
-  + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, contatti_fatti';
+  + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, contatti_fatti, account_cliente_dal';
 async function leggiListaPagine(utenti) {   // `utenti` (L8b, solo per l'Admin): di chi leggere i nomi
   const pagina = k => { const q = supa.from('contatti_lista').select(COLONNE_LISTA); return dbq('lettura lista', (utenti ? q.in('user_id', utenti) : q).order('id').range(k * 1000, k * 1000 + 999)); };
   const prima = await pagina(0);
@@ -340,9 +341,13 @@ const segniInAlto = (categoria, t) => categoria === 'Partner' || !!(t && (t.bbs 
 // Targhette sulla card: 📱 se ha l'app; BBS · WES · CEP secondo `segniInAlto`
 function targheCard(r) {
   const t = LS.targhe && LS.targhe[r.id];
-  const segni = segniInAlto(r.categoria, t) ? targheHtml(t) : '';
-  return r.app || segni ? `<span class="sv-targhe">${targaAppHtml(r.app)}${segni}</span>` : '';
+  const segni = segniInAlto(r.categoria, t) ? targheHtml(t) : '', acc = targaAccountHtml(r.categoria, r.account_cliente_dal);
+  return r.app || segni || acc ? `<span class="sv-targhe">${targaAppHtml(r.app)}${acc}${segni}</span>` : '';
 }
+// Nota Pagine 080, punto 2 (Ignazio 24/10, «C»): la targhetta «Account» di un Cliente con account, uguale sulla card della Lista (scheda chiusa, dal dato
+// della Lista) e nella testata della scheda aperta (dal dato letto con accountDi, se c'è; se no da quello della Lista)
+const targaAccountHtml = (categoria, dal) => (categoria === 'Cliente' && dal ? '<span class="sv-targa account">Account</span>' : '');
+const accountDellaScheda = c => (LS.account && LS.account.id === c.id ? LS.account.dal : c.account_cliente_dal);
 
 // «Coppia con …» sulla card: nome della scheda collegata (se visibile) o scritto a mano
 function coppiaCard(r) {
@@ -568,6 +573,7 @@ async function mostraAccountCliente(c) {
     ${vediTutti() || ST.offline ? '' : `<div class="ao-tasti"><button type="button" id="account-ordinato">${ic('piu')} Ha ordinato sul sito</button></div>`}</div>` : '';
   const ordinato = document.getElementById('account-ordinato');
   if (ordinato) ordinato.onclick = () => haOrdinatoSulSito(c);
+  if (LS.sv && LS.sv.id === c.id) mostraTarghe(LS.sv);   // 080: la targhetta «Account» della testata con il dato appena letto
 }
 // «+ Ha ordinato sul sito» (nota Pagine 079): il modulo vendita di sempre, già pronto con brand, prodotto e VP dell'ultima vendita (con accanto «come l'ordine
 // del …»: si correggono) e la data di oggi (si sceglie); per il cliente con account è «Ordine pagato sul sito». Si apre sulla linguetta Vendite.
@@ -626,7 +632,7 @@ function disegnaScheda() {
           <span class="ts-pastiglia">${esc(iniziali(c.nome))}</span>
           <div class="ts-chi">
             <div class="cat">${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</div>
-            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
+            <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${targaAccountHtml(c.categoria, accountDellaScheda(c))}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
           <button class="modifica" id="modifica">Modifica</button>
@@ -1228,7 +1234,8 @@ function mostraTarghe(SV) {
   const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
   LS.targhe = LS.targhe || {};
   for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
-  if (el) el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
+  if (el) el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + targaAccountHtml(LS.contatto.categoria, accountDellaScheda(LS.contatto))
+    + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t) : '');
 }
 function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sezione la condividono
   if (LS.sv && LS.sv.id === c.id) return Promise.resolve(LS.sv);

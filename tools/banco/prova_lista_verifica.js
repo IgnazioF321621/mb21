@@ -518,7 +518,7 @@ prova('L8: dopo aver collegato una coppia le targhette si rileggono con il CEP p
 prova('L8: la lettura dell\'Admin e la riga riletta prendono le colonne usate, una per una: via l\'icona della fase', () => {
   const col = PL.match(/const COLONNE_LISTA = ([\s\S]*?);\n/)[1].split('+').map(x => x.trim().replace(/^'|'$/g, '')).join('').split(',').map(x => x.trim()).filter(Boolean);
   // le colonne della vista contatti_lista (lette in sola lettura il 23/10) meno fase_icona
-  const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti'.split(', ');
+  const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti, account_cliente_dal'.split(', ');   // 080: account_cliente_dal in fondo (migrazione 20261024123812)
   assert.deepEqual(col, vista.filter(c => c !== 'fase_icona'));
   assert.match(PL, /const q = supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\);/);   // L8b: con il filtro di chi, per l'Admin
   assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.eq\('id', id\)/);
@@ -722,6 +722,39 @@ prova('Nota 080 (Ignazio 24/10): «Cliente con account» — con «Sì» la data
   m.f.querySelectorAll('[data-account]').find(b => b.dataset.account === 'si').onclick();
   assert.equal(m.$('f-account-dal').value, '2026-10-24');
   await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, '2026-10-24');
+});
+
+prova('Nota 080, punto 2 (Ignazio 24/10, «C»): la targhetta «Account» uguale sulla card della Lista e nella testata della scheda; solo per i Clienti con la data', () => {
+  const ctx = { esc, ic: n => `[${n}]`, LS: { targhe: {}, account: null }, segniInAlto: () => false, targheHtml: () => '', targaAppHtml: () => '' };
+  vm.createContext(ctx);
+  vm.runInContext([pezzo(PL, 'function targheCard'), PL.match(/^const targaAccountHtml = .*$/m)[0], PL.match(/^const accountDellaScheda = .*$/m)[0],
+    'this.card = targheCard; this.targa = targaAccountHtml; this.dato = accountDellaScheda;'].join('\n'), ctx);
+  assert.equal(ctx.targa('Cliente', '2024-03-01'), '<span class="sv-targa account">Account</span>');
+  assert.equal(ctx.targa('Cliente', null), ''); assert.equal(ctx.targa('Prospect', '2024-03-01'), '');   // solo i Clienti con la data
+  assert.equal(ctx.card({ id: 'a', categoria: 'Cliente', account_cliente_dal: '2024-03-01' }), '<span class="sv-targhe"><span class="sv-targa account">Account</span></span>');
+  assert.equal(ctx.card({ id: 'b', categoria: 'Cliente', account_cliente_dal: null }), '');
+  // la scheda aperta: il dato letto (LS.account) vince su quello della Lista
+  const c = { id: 'c1', categoria: 'Cliente', account_cliente_dal: '2024-03-01' };
+  assert.equal(ctx.dato(c), '2024-03-01'); ctx.LS.account = { id: 'c1', dal: null }; assert.equal(ctx.dato(c), null);
+  assert.match(PL, /<span class="sv-targhe" id="sv-targhe">\$\{targaAppHtml\(c\.app\)\}\$\{targaAccountHtml\(c\.categoria, accountDellaScheda\(c\)\)\}/);
+  assert.match(PL, /\+ targaAccountHtml\(LS\.contatto\.categoria, accountDellaScheda\(LS\.contatto\)\)/);   // e quando arrivano i segni (mostraTarghe)
+  assert.match(PL, /if \(LS\.sv && LS\.sv\.id === c\.id\) mostraTarghe\(LS\.sv\);   \/\/ 080/);           // e quando arriva il dato letto
+  assert.match(PL, /contatti_fatti, account_cliente_dal';\n/);   // l'Admin la legge con COLONNE_LISTA
+  assert.match(IDX, /\.sv-targa\.account \{/);
+});
+
+prova('Nota 080, punto 2: la migrazione aggiunge account_cliente_dal IN FONDO a contatti_lista, il resto uguale, security_invoker ripetuto, la definizione di prima nel commento', () => {
+  const nome = require('node:fs').readdirSync(path.join(__dirname, '../../supabase/migrations')).find(f => /_contatti_lista_account_cliente\.sql$/.test(f));
+  assert.ok(nome, 'la migrazione');
+  const m = leggi('supabase/migrations/' + nome);
+  const da = m.indexOf('\ncreate or replace view public.contatti_lista') + 1, [commento, corpo] = [m.slice(0, da), m.slice(da)];
+  assert.match(corpo, /^create or replace view public\.contatti_lista with \(security_invoker = true\) as\n/);
+  assert.match(corpo, /\) AS contatti_fatti,\n    c\.account_cliente_dal\n   FROM contatti c/);
+  // la definizione di prima, riga per riga nel commento, è uguale al corpo nuovo senza la colonna in più
+  const prima = commento.split('\n').filter(l => l.startsWith('--   ')).map(l => l.slice(5)).join('\n').trim();
+  const nuovo = corpo.slice(corpo.indexOf('\n') + 1).trim().replace(') AS contatti_fatti,\n    c.account_cliente_dal\n', ') AS contatti_fatti\n');
+  assert.equal(nuovo, prima);
+  assert.doesNotMatch(corpo, /drop |grant |revoke /i);
 });
 
 (async () => {
