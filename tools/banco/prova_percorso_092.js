@@ -59,14 +59,22 @@ prova('092 (dalla card del Check): il Pacesetter e il Leader 1° livello con le 
   assert.match(IDX, /if \(vai === 'core'\) return apriCoreMese\(MB21Coda\.oggiRoma\(\)\.slice\(0, 7\), ST\.tab === 'oggi' \? 'oggi' : 'check'\);/);
 });
 
-prova('092: con il Partner Select su un altro partner la Dashboard mostra il SUO percorso, con i consigli «Per Fiammetta: …» (come la card del Check)', () => {
+prova('092: con il Partner Select su un altro partner la Dashboard mostra il SUO percorso e dice di chi è: «Il prossimo traguardo di Fiammetta», «mancano 2 passi», «Per Fiammetta: …»', () => {
   const m = P.avvia(); P.carica(m);
   m.ST.utente.id = 'admin'; m.PS.scelto = 'io';   // l'Admin guarda Fiammetta
   m.LV.vista = 'traguardo'; m.disegnaOggi();
   assert.match(P.app.innerHTML, /data-lv-grad="leader1"/);
+  // la pagina dice di chi è (Regia 25/10, la regola di Ignazio del 27/09: «Il percorso di Fiammetta»), con il primo nome e un testo neutro
+  assert.match(P.app.innerHTML, /<h1>Il prossimo traguardo di Fiammetta<\/h1><div class="sotto">Leader 1° livello: mancano 2 passi<\/div>/);
+  m.LV.vista = 'home'; m.disegnaOggi();
+  assert.match(P.app.innerHTML, /<b>Il prossimo traguardo di Fiammetta<\/b><small>Leader 1° livello: mancano 2 passi<\/small>/);   // anche la tessera
   m.LV.vista = 'gradino'; m.LV.gradino = 'leader1'; m.disegnaOggi();
   assert.match(P.app.innerHTML, /Per Fiammetta: il biglietto WES/);
   assert.doesNotMatch(P.app.innerHTML, /Per te:/);
+  assert.match(P.app.innerHTML, /<button class="indietro" id="lv-indietro">‹ Il prossimo traguardo di Fiammetta<\/button>/);
+  // per sé, come prima
+  m.ST.utente.id = 'io'; m.PS.scelto = null; m.LV.vista = 'traguardo'; m.disegnaOggi();
+  assert.match(P.app.innerHTML, /<h1>Qual è il mio prossimo traguardo\?<\/h1><div class="sotto">Leader 1° livello: ti mancano 2 passi<\/div>/);
 });
 
 (async () => {

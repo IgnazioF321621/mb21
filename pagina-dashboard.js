@@ -247,9 +247,14 @@ function vaiLV(vista, extra) {
   window.scrollTo(0, 0);
   disegnaOggi();
 }
-const indietroLV = () => `<button class="indietro" id="lv-indietro">‹ ${esc(NOMI_LV[PADRE_LV[LV.vista] || 'home'])}</button>`;
+const indietroLV = () => `<button class="indietro" id="lv-indietro">‹ ${esc(nomeLV(PADRE_LV[LV.vista] || 'home'))}</button>`;
 const attaccaIndietroLV = () => { const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(PADRE_LV[LV.vista] || 'home'); };
 const nomeProprio = () => String(nomeDi(visto()) || '').trim().split(/\s+/)[0];
+// Nota Pagine 092 (Regia 25/10, la regola di Ignazio del 27/09 per il Check: «Il percorso di Fiammetta»): guardando un altro partner il traguardo dice
+// di chi è, con il primo nome e un testo neutro («Il prossimo traguardo di Fiammetta» · «mancano 2 passi»); per sé, o senza un nome, come prima
+const guardoUnAltro = () => visto().id !== ST.utente.id && !!nomeProprio();
+const titoloTraguardo = () => (guardoUnAltro() ? `Il prossimo traguardo di ${nomeProprio()}` : NOMI_LV.traguardo);
+const nomeLV = k => (k === 'traguardo' ? titoloTraguardo() : NOMI_LV[k]);
 
 // Chi è nuovo e sta facendo il suo avvio (stessa regola del riquadro «Il mio avvio»)
 function nuovoInAvvio() {
@@ -283,7 +288,8 @@ const nomeGradino = g => (g.chiave === 'core' ? 'Core' : g.titolo);
 function fraseTraguardo(p) {
   if (!p) return 'Leggo il percorso…';
   const g = MB21Check.piuVicino(p.pc.gradini);
-  if (g) { const m = g.totale - g.fatti; return `${nomeGradino(g)}: ${m === 1 ? 'ti manca 1 passo' : `ti mancano ${m} passi`}`; }
+  const ti = guardoUnAltro() ? '' : 'ti ';   // nota 092: per un altro partner «mancano 2 passi», neutro
+  if (g) { const m = g.totale - g.fatti; return `${nomeGradino(g)}: ${m === 1 ? ti + 'manca 1 passo' : `${ti}mancano ${m} passi`}`; }
   const prossimo = p.lv && p.lv.righe.find(r => !r.fatto);   // nota 092: anche il Platino (prima solo nel Check)
   return prossimo ? `${prossimo.titolo}: ${prossimo.stato}` : 'Leader 1° livello, Core e Pacesetter: fatti';
 }
@@ -324,7 +330,7 @@ function disegnaHome() {
   const haNumeri = !!d && ((DS.checkMesi || []).some(x => Number(x.contatti) > 0) || (ST.stato && ST.stato.fatti_oggi > 0));
   const mese = tessera('mese', 'report', 'gr-volume', 'gr-volume-tinta', 'Come sto andando questo mese?', esc(nuovo && !haNumeri ? 'Si accende dopo le prime telefonate' : fraseMese()), 0, { spenta: nuovo && !haNumeri });
   const p = percorsoDash();
-  const traguardo = tessera('traguardo', 'traguardo', 'gr-crescita', 'gr-crescita-tinta', 'Qual è il mio prossimo traguardo?', esc(nuovo ? 'Si accende quando finisci l\'avvio' : fraseTraguardo(p)), 0, { spenta: nuovo });
+  const traguardo = tessera('traguardo', 'traguardo', 'gr-crescita', 'gr-crescita-tinta', esc(titoloTraguardo()), esc(nuovo ? 'Si accende quando finisci l\'avvio' : fraseTraguardo(p)), 0, { spenta: nuovo });
   const giorno = tessera('giorno', 'diario', 'proposta', 'proposta-tinta', 'Com\'è andata oggi?', esc(fattoGiorno ? 'Il tuo giorno è scritto · tocca per rivederlo' : sera ? 'È ora: scrivi cosa hai fatto oggi' : 'Il tuo giorno: da scrivere stasera'), 0, { blu: sera && !fattoGiorno });
   if (nuovo) {
     const m = AVV.mio, { fatti, totale: tot } = MB21Lista.contatoreOnboarding(m);
@@ -520,7 +526,7 @@ function rigaGradino(chiave, titolo, sotto, fatti, totale, vicino) {
 const conteggioVoci = voci => { const v = voci.filter(x => !x.sotto); return [v.filter(x => x.fatto).length, v.length]; };
 function disegnaTraguardoLV() {
   const p = percorsoDash();
-  let html = indietroLV() + '<h1>Qual è il mio prossimo traguardo?</h1>';
+  let html = indietroLV() + `<h1>${esc(titoloTraguardo())}</h1>`;
   if (!p) {
     app.innerHTML = html + `<div class="vuoto">Leggo il percorso…</div>` + versione();
     return attaccaIndietroLV();
