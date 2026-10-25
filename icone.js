@@ -82,8 +82,8 @@
     'benvenuto': '<path d="M8.6 12.4V5.6a1.6 1.6 0 0 1 3.2 0v5.2"/><path d="M11.8 10.8V4.8a1.6 1.6 0 0 1 3.2 0v5.8"/><path d="M15 10.8V6.8a1.6 1.6 0 0 1 3.2 0v7.8a7 7 0 0 1-7 7 5.6 5.6 0 0 1-4.4-2.2L4 16.2a1.7 1.7 0 0 1 2.6-2.2l2 2.2"/>',   // Benvenuto
     'complimenti': '<path d="M7.4 4.4h9.2v4.8a4.6 4.6 0 0 1-9.2 0z"/><path d="M7.4 6.2H5.2a2.4 2.4 0 0 0 2.2 3.4M16.6 6.2h2.2a2.4 2.4 0 0 1-2.2 3.4"/><path d="M12 13.8v3.4M8.6 20.4h6.8l-.8-3.2H9.4z"/>',   // Complimenti
     'liberta': '<path d="M20.2 12.2a6 6 0 0 0-8.5-8.5L5 10.5V19h8.5z"/><path d="M16 8 2.8 21.2"/><path d="M17.5 15H9"/>',   // Niente è vincolante
-    // Segni vitali e numeri
-    'segnivitali': '<path d="M2.8 12.4h4l2-4.8 3.4 9.2 2.6-6.2 1.6 1.8h4.8"/>',   // Segni vitali
+    // Segni Vitali e numeri
+    'segnivitali': '<path d="M2.8 12.4h4l2-4.8 3.4 9.2 2.6-6.2 1.6 1.8h4.8"/>',   // Segni Vitali
     'crescita': '<path d="m3.4 17.4 5.6-5.6 3.6 3.6 7.4-7.4"/><path d="M15.4 8h5v5"/>',   // Crescita
     'biglietto': '<path d="M3.4 8.2a2 2 0 0 1 2-2h13.2a2 2 0 0 1 2 2v1.6a2.2 2.2 0 0 0 0 4.4v1.6a2 2 0 0 1-2 2H5.4a2 2 0 0 1-2-2v-1.6a2.2 2.2 0 0 0 0-4.4z"/><path d="M14.4 6.2v11.6" stroke-dasharray="2 2.4"/>',   // Biglietto BBS / WES
     'volume': '<ellipse cx="12" cy="6.4" rx="7.2" ry="2.8"/><path d="M4.8 6.4v4.6c0 1.5 3.2 2.8 7.2 2.8s7.2-1.3 7.2-2.8V6.4"/><path d="M4.8 11v4.6c0 1.5 3.2 2.8 7.2 2.8s7.2-1.3 7.2-2.8V11"/>',   // Volume VP

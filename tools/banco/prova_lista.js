@@ -239,7 +239,7 @@ prova('nuovo: creato dentro l\'app negli ultimi 30 giorni; in Cerca «nuovo» e 
   assert.deepEqual(L.filtraContatti([nuovo, vecchio, daGlide], { testo: 'nuovo', utenteId: 'u', oggi: OGGI }).map(x => x.id), ['n']);   // solo per il nome
 });
 
-prova('segni vitali: posti del biglietto, eventi al mese, evento in vendita', () => {
+prova('Segni Vitali: posti del biglietto, eventi al mese, evento in vendita', () => {
   assert.equal(L.postiBiglietto({ contatto: true, compagno: true, ospiti: 1 }), 3);
   assert.equal(L.postiBiglietto({ contatto: false, compagno: false, ospiti: 2 }), 2);
   assert.equal(L.postiBiglietto({ contatto: true, ospiti: -1 }), 1);
@@ -439,7 +439,7 @@ prova('passoInCache: la scheda e l\'elenco già letti restano allineati dopo la 
   ctx.passoInCache('c1', 'onb_lista_start', false); assert.equal(ctx.LS.contatto.onb_lista_start, false);
 });
 
-prova('Segni vitali: accanto a BBS e WES l\'evento a cui si riferiscono i numeri, sempre successivo («11-2026», «in corso» se è questo mese)', () => {
+prova('Segni Vitali: accanto a BBS e WES l\'evento a cui si riferiscono i numeri, sempre successivo («11-2026», «in corso» se è questo mese)', () => {
   const bbs = [{ data: '2026-09-01', creato_il: '2026-09-16T11:58:00Z' }, { data: '2026-11-01', creato_il: '2026-09-20T13:06:00Z' }], wes = [{ data: '2026-10-01', creato_il: '2026-09-15T13:48:00Z' }];
   assert.deepEqual(L.eventoDaMostrare(bbs, '2026-10-01'), { data: '2026-11-01', etichetta: '11-2026', inCorso: false });   // novembre: l'evento in vendita
   assert.deepEqual(L.eventoDaMostrare(wes, '2026-10-01'), { data: '2026-10-01', etichetta: '10-2026', inCorso: true });    // ottobre: è questo mese

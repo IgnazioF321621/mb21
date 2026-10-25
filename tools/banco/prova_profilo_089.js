@@ -18,7 +18,7 @@ let ok = 0;
 const prove = [];
 function prova(nome, fn) { prove.push([nome, fn]); }
 
-// il Profilo vero, con le voci scelte aperte; tutte le righe che possono esserci (Segni vitali, Training, Scarica la mia lista)
+// il Profilo vero, con le voci scelte aperte; tutte le righe che possono esserci (Segni Vitali, Training, Scarica la mia lista)
 function profilo(aperte = []) {
   const app = new Nodo(), tocchi = [];
   const codice = [
@@ -32,7 +32,7 @@ function profilo(aperte = []) {
     PF: { aperte: new Set(aperte) }, AVV: { mio: { perche: ['libertà'], onb_sogno: true } },
     ST: { utente: { id: 'io', nome_cognome: 'Persona A', email: 'a@esempio.it', telefono: '+39 333 0000000', avvisi_quando: {} }, stato: { contatti_al_giorno: 5 } }, AV: { stato: 'acceso' },
     percheRigheHtml: p => p.map(x => `<span>${x}</span>`), mioPassiHtml: () => '', nomeDi: u => u.nome_cognome, dentroCerchio: () => 'PA',
-    mieiSegniHtml: () => '<div class="pf-box pf-voce" id="finto-segni">I miei Segni vitali</div>',
+    mieiSegniHtml: () => '<div class="pf-box pf-voce" id="finto-segni">I miei Segni Vitali</div>',
     mioTrainingHtml: () => '<div class="pf-box pf-voce" id="finto-training">Il mio Training</div>',
     calendarioHtml: () => '<div class="pf-box pf-voce" id="finto-calendario">MB21 nel tuo calendario</div>', versione: () => '',
     toccoScaricaLista() {}, collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab() {}, foglioFoto() {}, salvaTelefono() {},
@@ -44,7 +44,7 @@ function profilo(aperte = []) {
 }
 const dove = (h, x) => { const i = h.indexOf(x); assert.ok(i >= 0, 'manca ' + x); return i; };
 
-prova('089: due titoletti — «La mia crescita» (Perché ho iniziato, Segni vitali, Training, I miei libri) e sotto «Impostazioni» (dati, contatti al giorno, avvisi, calendario, lista, privacy)', () => {
+prova('089: due titoletti — «La mia crescita» (Perché ho iniziato, Segni Vitali, Training, I miei libri) e sotto «Impostazioni» (dati, contatti al giorno, avvisi, calendario, lista, privacy)', () => {
   const { h } = profilo();
   assert.equal((h.match(/<div class="zona-oggi">/g) || []).length, 2);   // il titoletto della Dashboard («Approfondisci»): stesso codice
   const seq = ['<div class="zona-oggi">La mia crescita</div>', 'Perché ho iniziato', 'id="finto-segni"', 'id="finto-training"', 'id="pf-libri"',

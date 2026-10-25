@@ -85,7 +85,7 @@ function moduloCoreHtml(m) {
       : `<button class="${w.senza ? 'senza' : ''}" data-senza-open="${w.da}" title="${w.da} – ${w.a}" aria-label="Settimana ${i + 1}: ${w.senza ? 'l\'OPEN non c\'era, tocca per annullare' : 'tocca se l\'OPEN non c\'era'}">${i + 1}${w.senza ? ' —' : ''}</button>`).join('')}</span></div>
     <div class="cm-riga"><span>Acquisto biglietto BBS${prossimo(m.s6.prossimoBbs)}</span><b class="cm-auto${m.s6.bbs ? ' si' : ''}">${m.s6.bbs ? 'SI' : 'NO'}</b></div>
     <div class="cm-riga"><span>Acquisto biglietto WES${prossimo(m.s6.prossimoWes)}</span><b class="cm-auto${m.s6.wes ? ' si' : ''}">${m.s6.wes ? 'SI' : 'NO'}</b></div>
-    <div class="vn-aiuto">L'OPEN da «Il mio giorno» («oggi sono stato all'OPEN»). Se in una settimana l'OPEN nella tua città non c'era, tocca il suo numero: diventa «—» e non conta. I biglietti dai Segni vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.abitudini[5]);
+    <div class="vn-aiuto">L'OPEN da «Il mio giorno» («oggi sono stato all'OPEN»). Se in una settimana l'OPEN nella tua città non c'era, tocca il suo numero: diventa «—» e non conta. I biglietti dai Segni Vitali della tua scheda (BBS e WES accesi = biglietto per te).</div>`, m.abitudini[5]);
 
   const s7 = sez(7, 'Lavorare di squadra', `
     <div class="cm-riga"><span>Sessione di COUNSELING in data</span>${m.s7.auto ? `<b class="cm-auto">${esc(m.s7.counseling)}</b>` : `<input class="cm-num larga" id="cm-counseling" value="${esc(m.s7.counseling)}" placeholder="gg/mm" maxlength="10">`}</div>
@@ -195,7 +195,7 @@ async function datiCoreDelMese(io, mese) {
     dbq('check del mese', supa.from('check_giorno').select('data, tracce, pagine, libro, open, counseling, edificazione, no_crossline').eq('user_id', io.id).gte('data', mese0).lt('data', mese1)),
     dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
     dbq('modulo core', supa.from('core_mese').select('*').eq('user_id', io.id).eq('mese', mese0).maybeSingle()),
-    lettaComune('bbs'),   // per «prossimo: …» sotto i biglietti (23/09); nota 081: una lettura sola con Check e segni vitali
+    lettaComune('bbs'),   // per «prossimo: …» sotto i biglietti (23/09); nota 081: una lettura sola con Check e Segni Vitali
     lettaComune('wes'),
   ]);
   const errore = [az, ve, ck, cm].find(r => r.error);   // anche core_mese: se non si legge, il modulo non si apre vuoto (il primo salvataggio cancellerebbe i campi a mano, nota 019)

@@ -264,7 +264,7 @@
       : g < 365 ? `entrato da ${quanti(Math.floor(g / 30), '1 mese', 'mesi')}` : `entrato da ${quanti(Math.floor(g / 365), '1 anno', 'anni')}`;
   }
 
-  // Segni vitali (cantiere 18): posti di un biglietto = contatto + compagno/a + ospiti senza nome
+  // Segni Vitali (cantiere 18): posti di un biglietto = contatto + compagno/a + ospiti senza nome
   function postiBiglietto(b) {
     if (!b) return 0;
     return (b.contatto ? 1 : 0) + (b.compagno ? 1 : 0) + Math.max(0, Number(b.ospiti) || 0);

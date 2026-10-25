@@ -311,7 +311,7 @@ function disegnaAdmin() {
         <input type="month" id="rp-data-wes" aria-label="Mese del WES">
         <label class="ad-wes-giorno">Primo giorno del WES (facoltativo) <input type="date" id="rp-giorno-wes"></label>
         <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
-        <div class="sotto">Mese e anno contano per segni vitali, biglietti e Report. Il primo giorno serve solo all'Agenda per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
+        <div class="sotto">Mese e anno contano per Segni Vitali, biglietti e Report. Il primo giorno serve solo all'Agenda per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
   } else if (AD.sezione === 'fc') {
     // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione con l'FC valido il giorno in cui la vendita conta. Nota Pagine 082 (24/10): due conti,
     // come la vista vendite_conti e MB21Lista.contiVendita: sul sito (VP × FC) × 0,20; se paga il partner (VP × FC × 1,22, il suo costo con IVA) × 0,20.

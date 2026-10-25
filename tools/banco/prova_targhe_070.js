@@ -80,7 +80,7 @@ prova('070 (1, 2): CEP dalla targhetta — «Togli» chiude come «Non ha rinnov
   uguale(L.cepDaTogliere([{ id: 'p1', dal: '2026-06-01', uscito_il: null }], OGGI), { id: 'p1', uscito_il: '2026-09-30' });
   uguale(L.cepDaTogliere([{ id: 'p2', dal: '2026-10-01', uscito_il: null }], OGGI), { id: 'p2', elimina: true });
   assert.equal(L.cepDaTogliere([{ id: 'p0', dal: '2025-01-01', uscito_il: '2025-06-30' }], OGGI), null);
-  // la stessa data di «Non ha rinnovato» nella linguetta «Segni vitali»
+  // la stessa data di «Non ha rinnovato» nella linguetta «Segni Vitali»
   assert.equal(L.cepDaTogliere([{ id: 'p1', dal: '2026-06-01', uscito_il: null }], OGGI).uscito_il, L.dataUscitaCep('2026-06-01', OGGI));
   uguale(L.cepDaAccendere([], OGGI), { dal: '2026-10-01', uscito_il: null });
   uguale(L.cepDaAccendere([{ id: 'p1', dal: '2026-06-01', uscito_il: '2026-09-30' }], OGGI), { id: 'p1', dal: '2026-06-01', uscito_il: null });   // un «Togli» di troppo: torna com'era
@@ -263,7 +263,7 @@ prova('070: la regola dei segni su una scheda sola (16/09) resta: se la scheda n
   const T = mondo({ tutti: true });
   await T.tocca('bbs');
   assert.equal(T.letture.length, 0); assert.deepEqual(T.toast, ['solo da guardare']);
-  // dalla scheda aperta la lettura è quella della scheda (una sola, condivisa con la linguetta «Segni vitali»); dalla Mappa una lettura fresca
+  // dalla scheda aperta la lettura è quella della scheda (una sola, condivisa con la linguetta «Segni Vitali»); dalla Mappa una lettura fresca
   const S = mondo();
   S.ctx.LS.contatto = { ...SCHEDA };
   await S.tocca('bbs');
@@ -320,7 +320,7 @@ prova('070 (1): in cima alla Mappa dell\'Admin il conto a parole su tutto il gru
   W.ctx.disegna();
   const h = W.app.innerHTML;
   assert.match(h, /<div class="mp-conti"><span>BBS 11-2026: segnati <b>1<\/b> su 3<\/span><span>WES 02-2027: segnati <b>0<\/b> su 3<\/span>\s*<span>CEP oggi: abbonati <b>1<\/b> su 3<\/span><\/div>/);
-  assert.ok(h.indexOf('Segni vitali del gruppo: BBS 11-2026 · WES 02-2027 · CEP oggi') < h.indexOf('mp-conti'));   // la riga di prima resta, il conto sotto
+  assert.ok(h.indexOf('Segni Vitali del gruppo: BBS 11-2026 · WES 02-2027 · CEP oggi') < h.indexOf('mp-conti'));   // la riga di prima resta, il conto sotto
   assert.match(h, /<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l'ha">BBS<\/button>/);   // 094 S4: solo «lui sì/no»
   assert.match(h, /<div class="mp-numeri">Nel gruppo: BBS <b>1<\/b><\/div>/);   // il numero del gruppo fuori, a parole
   assert.match(h, /<button class="sv-targa tasto cep on" data-targa="cep" data-chi="P002"/);   // Persona B: la scheda della lista dell'Admin (sB2), dove il CEP è segnato

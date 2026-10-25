@@ -1,4 +1,4 @@
-// Prova della nota Pagine 094 (Ignazio 25/10/2026): verifica della Scheda contatto, ultime parti — modulo «Modifica» (M1-M8) e Segni vitali (S1-S7).
+// Prova della nota Pagine 094 (Ignazio 25/10/2026): verifica della Scheda contatto, ultime parti — modulo «Modifica» (M1-M8) e Segni Vitali (S1-S7).
 // Codice vero (pagina-lista.js, pagina-mappa.js, pagina-dashboard.js, index.html, lista.js) in un finto mondo (tools/design/mini_dom.js) e la migrazione
 // M6 letta come testo (la prova nel database vero, annullata, è nel «Rilascia» della nota). Persone e codici inventati.
 // Uso: node tools/banco/prova_scheda_094.js
@@ -184,7 +184,7 @@ prova('M6: la migrazione — Prospect, Partner e Cliente nuovi in coda dal giorn
   assert.doesNotMatch(s, /\bdrop\b|\bupdate\b|\bdelete\b|trigger mb21/i);   // solo la funzione: il trigger resta, nessun dato toccato
 });
 
-// ── Segni vitali ──
+// ── Segni Vitali ──
 prova('S1 e S3: con la scheda ufficiale i segni si leggono da quella (le stesse luci della Mappa); date di BBS e WES dalla lettura comune', async () => {
   const letture = [];
   const tab = { contatti: { sA: { compagno_id: null, compagno_nome: null, codice_amway: null }, uff: { compagno_id: null, compagno_nome: null, codice_amway: 'P001' } } };

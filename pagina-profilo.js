@@ -52,7 +52,7 @@ async function apriProfiloDiAltro(p) {
       <div class="pf-riga"><span>Email</span><b>${esc(d.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(d.partner_id || '—')}</b></div>
       <div class="pf-riga"><span>Contatti al giorno</span><b>${n === 0 ? 'In pausa' : esc(String(n == null ? '—' : n))}</b></div></div></div>
-    <div class="pf-box"><div class="pf-corpo"><b>${ic('segnivitali')} Segni vitali</b>
+    <div class="pf-box"><div class="pf-corpo"><b>${ic('segnivitali')} Segni Vitali</b>
       ${scheda ? `<div class="pf-targhe">${targhe}</div>` : '<small>Non c\'è ancora una scheda col suo codice Amway nella tua lista.</small>'}</div></div>
     ${versione()}`;
   torna();
@@ -127,7 +127,7 @@ function avvisiNuoviHtml(statoDispositivo, destra) {
       <button class="primario pf-prova" id="av-prova">${ic('avvisi')} Prova un avviso</button>` });
 }
 
-// Nota Pagine 089 (Ignazio 25/10/2026): due titoletti, «La mia crescita» in alto (Perché ho iniziato, Segni vitali, Training, e vicino «I miei libri»)
+// Nota Pagine 089 (Ignazio 25/10/2026): due titoletti, «La mia crescita» in alto (Perché ho iniziato, Segni Vitali, Training, e vicino «I miei libri»)
 // e «Impostazioni» sotto; «Cambia password» sta dentro «I tuoi dati» (una riga in meno). Il titoletto è quello della Dashboard (.zona-oggi).
 function disegnaProfilo() {
   const u = ST.utente, s = AV.stato;
@@ -259,7 +259,7 @@ function mieiSegniHtml() {
   if (!g) return '';
   const t = mieTarghe(), L = MB21Lista;
   const targa = (k, scritta) => `<button class="sv-targa pf-targa ${k} ${t[k] ? 'on' : ''}" data-mia-targa="${k}">${scritta}</button>`;
-  return voceProfilo('segni', ic('segnivitali') + ' I miei Segni vitali', {
+  return voceProfilo('segni', ic('segnivitali') + ' I miei Segni Vitali', {
     sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
     corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
       <button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>` });

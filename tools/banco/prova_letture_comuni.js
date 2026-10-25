@@ -1,4 +1,4 @@
-// Prova delle letture condivise di BBS, WES e squadra (nota Pagine 081, punto 3, Ignazio 24/10): prima il Check, i segni vitali e il Modulo Core
+// Prova delle letture condivise di BBS, WES e squadra (nota Pagine 081, punto 3, Ignazio 24/10): prima il Check, i Segni Vitali e il Modulo Core
 // le chiedevano ognuno per conto suo (a ogni apertura dell'app BBS e WES tre volte, la squadra due); ora una lettura sola (`lettaComune`,
 // pagina-dashboard.js). Il codice è quello vero, con un finto database che conta le richieste.
 // Uso: node tools/banco/prova_letture_comuni.js
@@ -77,7 +77,7 @@ prova('081 (3): come il Check, valgono 5 minuti e finché non c\'è una scrittur
   assert.equal(R.richieste.length, 2);   // si riprova
 });
 
-prova('081 (3): il Check, i segni vitali e il Modulo Core usano la lettura comune e non chiedono più BBS, WES e squadra per conto loro', () => {
+prova('081 (3): il Check, i Segni Vitali e il Modulo Core usano la lettura comune e non chiedono più BBS, WES e squadra per conto loro', () => {
   const caricaDati = IDX.slice(IDX.indexOf('async function caricaDatiCheck'), IDX.indexOf('\nasync function apriPaginaCheck'));
   assert.match(caricaDati, /lettaComune\('wes'\),[^\n]*\n\s*lettaComune\('bbs'\),/);
   assert.match(caricaDati, /vediTutti\(\) \? null : lettaComune\('squadra'\),/);

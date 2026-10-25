@@ -23,7 +23,7 @@ function letta(chiave, cosa, richiesta) {
   if (PRE.dati && PRE.dati[chiave] !== undefined) return Promise.resolve({ data: PRE.dati[chiave], error: null });
   return dbq(cosa, richiesta());
 }
-// Nota Pagine 081, punto 3 (Ignazio 24/10): BBS, WES e squadra li chiedevano il Check (caricaDatiCheck), i segni vitali (leggiSegniGrezzi) e il
+// Nota Pagine 081, punto 3 (Ignazio 24/10): BBS, WES e squadra li chiedevano il Check (caricaDatiCheck), i Segni Vitali (leggiSegniGrezzi) e il
 // Modulo Core (datiCoreDelMese), ognuno per conto suo: a ogni apertura dell'app BBS e WES tre volte, la squadra due. Ora una lettura sola, condivisa,
 // con tutti i campi che servono a tutti e tre; BBS e squadra arrivano da apri_oggi quando c'è (il suo WES no: non ha `giorno`, che serve al Modulo Core).
 // Come il Check, vale 5 minuti e finché non c'è una scrittura; se non riesce non resta in memoria e la volta dopo si riprova.
@@ -2260,7 +2260,7 @@ function apriCheck() {
     <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-open"><span>oggi sono stato all'<b>OPEN</b></span></label>
       <div class="ck-badge-riga">Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b> Biglietto WES <b class="ck-badge" id="ck-wes">—</b></div>
-      <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
+      <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni Vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
     <div class="ckr core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-counseling"><span>oggi sessione di <b>counseling</b> con lo sponsor/upline</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-edificazione"><span>oggi ho praticato l'<b>edificazione</b> (ho parlato bene degli altri, non solo nell'attività)</span></label>
@@ -2363,7 +2363,7 @@ function apriCheck() {
     if (!ancoraValido() || error) return;
     aiuto.textContent = frase((righe || []).filter(r => r.giorno === data && r.user_id === ST.utente.id).length);
   };
-  // Lo stato del giorno sulle righe Core (Ignazio 22/09): consumo = VP Amway del mese − VP clienti; BBS/WES dai Segni vitali
+  // Lo stato del giorno sulle righe Core (Ignazio 22/09): consumo = VP Amway del mese − VP clienti; BBS/WES dai Segni Vitali
   // della propria scheda; sponsor gruppo dal file Amway (data di ingresso nella propria linea); le righe si segnano «fatte».
   const CK_CORE = { vp: null, percorso: 0, bbs: null, wes: null, gruppoOggi: null, gruppoMese: 0 };
   const num = k => Number(String(velo.querySelector('#ck-' + k).value).trim().replace(',', '.')) || 0;

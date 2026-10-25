@@ -1,4 +1,4 @@
-// MB21 · pagina Lista Nomi: elenco e filtri, scheda contatto (Dati · Azioni · Coach Yes · Onboarding · Segni vitali; le Vendite in pagina-vendite.js),
+// MB21 · pagina Lista Nomi: elenco e filtri, scheda contatto (Dati · Azioni · Coach Yes · Onboarding · Segni Vitali; le Vendite in pagina-vendite.js),
 // Nuovo Contatto / Modifica. Spostata da index.html il 17/09 (pausa di sistemazione, richiesta di Ignazio), come admin.js
 // e pagina-dashboard.js. Nessun cambiamento di funzionamento. La logica da provare con node resta in lista.js.
 // Usa ciò che definisce index.html (supa, dbq, ST, PS, esc, mostraToast, visto, vediTutti, idVisti, mostraTab…);
@@ -336,7 +336,7 @@ function scaricaEsporta(scelti) {
   LS.esporta = null; disegnaElenco();
 }
 
-// BBS · WES · CEP accanto al nome nella testata della scheda (Ignazio 18/09: al Cliente in alto servono i Brand, non i segni vitali):
+// BBS · WES · CEP accanto al nome nella testata della scheda (Ignazio 18/09: al Cliente in alto servono i Brand, non i Segni Vitali):
 // per i Partner sempre (grigie se spente), per gli altri solo se almeno una è accesa.
 const segniInAlto = (categoria, t) => categoria === 'Partner' || !!(t && (t.bbs || t.wes || t.cep));
 
@@ -483,7 +483,7 @@ async function ripristina(r) {
 
 // Elimina (cantiere 33): la scheda non si cancella, prende il segno `eliminato_il` (`elimina_contatto`): sparisce da lista,
 // archivio, ricerca e coda; se ne vanno solo appuntamenti e telefonate non ancora fatti; il lavoro fatto resta e conta.
-// Biglietti dal mese in corso e CEP attivo restano nei Segni vitali: li toglie solo l'Admin, con la spunta nella conferma.
+// Biglietti dal mese in corso e CEP attivo restano nei Segni Vitali: li toglie solo l'Admin, con la spunta nella conferma.
 // «Annulla» nell'avviso rimette tutto com'era (`annulla_elimina_contatto`); dopo, dall'app non si recupera più.
 async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla Dashboard: «Da catalogare», 24/09)
   const mese = MB21Lista.meseEvento(MB21Coda.oggiRoma());
@@ -494,7 +494,7 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
   if (big.error || cep.error) return mostraToast('Non riesco a controllare biglietti e CEP: riprova.');
   const segni = [...big.data.map(b => `biglietto ${b.tipo} ${MB21Lista.etichettaEvento(b.evento)}`), ...(cep.data.length ? ['CEP attivo'] : [])];
   const testo = 'Sparisce dalla lista e dall\'archivio. Il lavoro già fatto resta nei tuoi numeri.'
-    + (segni.length ? ` Ha ${segni.join(' · ')}: ${segni.length > 1 ? 'restano' : 'resta'} nei Segni vitali${cep.data.length ? ' (il CEP non scade da solo)' : ''}.` : '');
+    + (segni.length ? ` Ha ${segni.join(' · ')}: ${segni.length > 1 ? 'restano' : 'resta'} nei Segni Vitali${cep.data.length ? ' (il CEP non scade da solo)' : ''}.` : '');
   const si = await chiediConferma(`Eliminare ${r.nome} dalla lista?`, testo, 'Elimina', true,
     segni.length && eAdmin() ? `Togli anche ${segni.join(' e ')}` : '');
   if (!si) return;
@@ -530,7 +530,7 @@ function sezioniPer(c) {
   const base = [['dati', 'Dati'], ['azioni', 'Azioni'],
     ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []),
     // «Sharing» (cantiere 40): il percorso delle tracce è per candidati e partner (come in Glide), non per Ex e Archiviati
-    ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []), ['segni', 'Segni vitali']];
+    ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []), ['segni', 'Segni Vitali']];
   // La linguetta «Onboarding» dei Partner non c'è più (cantiere 31, Ignazio 18/09: «recuperiamo spazio»): i passi si aprono dalla riga «🚀 Avvio» in testata
   return base;
 }
@@ -859,7 +859,7 @@ async function datiPersonaExtra(c) {
 
 // Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
 // Scheda della lista collegata nei due sensi (`collega_compagno`) oppure nome e telefono a mano.
-// Con la scheda collegata i segni vitali della coppia valgono per tutte e due.
+// Con la scheda collegata i Segni Vitali della coppia valgono per tutte e due.
 async function riquadroCoppia(c) {
   let SV;
   try { SV = await segniDellaScheda(c); } catch (e) { return; }
@@ -1180,7 +1180,7 @@ function sezioneOnboarding() {
   disegna();
 }
 
-// Segni vitali sulla persona (cantiere 18): compagno/a, biglietti BBS e WES, CEP.
+// Segni Vitali sulla persona (cantiere 18): compagno/a, biglietti BBS e WES, CEP.
 // Compagno/a: una scheda della lista collegata nei due sensi (`collega_compagno`) oppure nome e telefono a mano.
 // Con la scheda collegata i biglietti e il CEP della coppia si vedono e si modificano da tutte e due le schede.
 // Biglietti, CEP e date dei BBS li scrive solo l'Admin; il compagno/a chi può modificare il contatto.
@@ -1194,11 +1194,11 @@ async function caricaSegni(c, giaUfficiale = false) {
   const { data: ana, error } = await dbq('compagno', supa.from('contatti')
     .select('compagno_id, compagno_nome, compagno_telefono, codice_amway').eq('id', c.id).maybeSingle());
   if (error || !ana) throw error || new Error('contatto');
-  // Regola di Ignazio (16/09): i segni vitali di una persona si scrivono su una scheda sola.
+  // Regola di Ignazio (16/09): i Segni Vitali di una persona si scrivono su una scheda sola.
   // Per un partner vale la scheda col codice Amway: se è un'altra (stesso nome, altra lista) questa rimanda lì
   let ufficiale = null;
   if (eAdmin() && c.user_id !== ST.utente.id) {
-    // Scelta A di Ignazio (16/09): con le schede a cascata i segni vitali di un partner si scrivono sulla scheda nella lista dell'Admin
+    // Scelta A di Ignazio (16/09): con le schede a cascata i Segni Vitali di un partner si scrivono sulla scheda nella lista dell'Admin
     let q = supa.from('contatti').select('id').eq('user_id', ST.utente.id).neq('id', c.id);
     q = ana.codice_amway ? q.eq('codice_amway', ana.codice_amway) : q.not('codice_amway', 'is', null).ilike('nome', nomeEsatto(c.nome));
     const r = await dbq('scheda dell\'Admin', q.limit(1));
@@ -1271,7 +1271,7 @@ function mostraTarghe(SV) {
   if (!el) return;
   el.innerHTML = targaAppHtml(INVITO_APP ? LS.contatto.app || (LS.usoApp && LS.usoApp[SV.id]) : null) + targaAccountHtml(LS.contatto.categoria, accountDellaScheda(LS.contatto))
     + (segniInAlto(LS.contatto.categoria, t) ? targheHtml(t, null, { tasto: targheDaToccare() }) : '');
-  // nota 070: dalla testata lo stesso foglio della Mappa; dopo, testata e linguetta «Segni vitali» (se aperta) si ridisegnano con i segni nuovi
+  // nota 070: dalla testata lo stesso foglio della Mappa; dopo, testata e linguetta «Segni Vitali» (se aperta) si ridisegnano con i segni nuovi
   el.querySelectorAll('[data-targa]').forEach(b => { b.onclick = () => toccaTarga(LS.contatto, b.dataset.targa, S => {
     if (!LS.contatto || LS.contatto.id !== S.id) return;
     mostraTarghe(S);
@@ -1290,15 +1290,15 @@ function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sez
 // ── Nota Pagine 070 (Ignazio 24/10/2026: biglietti BBS · WES · CEP senza una squadra che li segna) ──
 // Per l'Admin le targhette della Mappa e della testata della scheda sono tasti, con questa sola funzione. Grigia → il foglio «Ha il biglietto?»
 // (lo stesso della Dashboard e del Profilo: lui, compagno/a, ospiti) o, per il CEP, «È abbonato al CEP?»; accesa → chi ce l'ha e «Togli».
-// Acceso o spento lo dice la lettura fresca della scheda (caricaSegni, la stessa della linguetta «Segni vitali», che resta per i mesi passati), non il colore
+// Acceso o spento lo dice la lettura fresca della scheda (caricaSegni, la stessa della linguetta «Segni Vitali», che resta per i mesi passati), non il colore
 // sullo schermo. c = { id, nome, user_id } della scheda · k = 'bbs' | 'wes' | 'cep' · dopo(SV) ridisegna chi ha chiamato (Lista e Check si allineano da soli).
 // opz.fresca (nota 094 S3, dalla Mappa): la lettura sempre fresca, anche se la scheda è ancora in memoria
 async function toccaTarga(c, k, dopo, opz = {}) {
   if (!c || !eAdmin() || soloGuardo()) return;
   let SV;
-  try { SV = !opz.fresca && LS.contatto && LS.contatto.id === c.id ? await segniDellaScheda(c) : await caricaSegni(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
+  try { SV = !opz.fresca && LS.contatto && LS.contatto.id === c.id ? await segniDellaScheda(c) : await caricaSegni(c); } catch (e) { return mostraToast('Segni Vitali non caricati: riprova.'); }
   if (SV.ufficiale) {   // la regola del 16/09: i segni di un partner si scrivono su una scheda sola, quella col codice Amway nella lista dell'Admin
-    if (await chiediConferma('I segni vitali si scrivono su una scheda sola', `Quella di ${c.nome} collegata al codice Amway, nella lista di ${SV.ufficiale.lista || 'un altro partner'}.`, 'Apri quella scheda')) {
+    if (await chiediConferma('I Segni Vitali si scrivono su una scheda sola', `Quella di ${c.nome} collegata al codice Amway, nella lista di ${SV.ufficiale.lista || 'un altro partner'}.`, 'Apri quella scheda')) {
       await apriContattoDa(SV.ufficiale.id, LS.contatto && LS.contatto.id === c.id ? LS.ritorno : 'mappa');
     }
     return;
@@ -1320,7 +1320,7 @@ async function toccaTarga(c, k, dopo, opz = {}) {
       const mese = new Date(oggi + 'T12:00:00Z').toLocaleDateString('it-IT', { month: 'long', timeZone: 'UTC' });
       if (!await chiediConferma('È abbonato al CEP?', `L'abbonamento audio. ${c.nome}: la targhetta si accende dal 1° di ${mese}. Quando non rinnova, la tocchi di nuovo e «Non ha rinnovato».`, 'Sì, accendi il CEP')) return;
       const p = L.cepDaAccendere(SV.cep, oggi), errore = L.controllaPeriodoCep(SV.cep, { id: p.id || null, dal: p.dal, uscito_il: null });
-      if (errore) return mostraToast(errore + ': guarda in «Segni vitali» nella scheda');
+      if (errore) return mostraToast(errore + ': guarda in «Segni Vitali» nella scheda');
       const riga = { uscito_il: null, aggiornato_il: new Date().toISOString() };
       const { data, error } = await dbq('accendo il CEP dalla targhetta', p.id ? supa.from('cep').update(riga).eq('id', p.id).select().single()
         : supa.from('cep').insert({ ...riga, contatto_id: c.id, dal: p.dal }).select().single());
@@ -1411,7 +1411,7 @@ function personeDelBiglietto(c, SV, b) {
   return [b.contatto ? suo : '', b.compagno ? altro : '', b.ospiti ? `${b.ospiti} ospit${b.ospiti === 1 ? 'e' : 'i'}` : ''].filter(Boolean).join(' · ');
 }
 // Stessa persona (stesso nome) con un biglietto per questo evento in un'altra scheda: si avvisa (Ignazio 16/09). true = si va avanti.
-// La usano «+ Biglietto» della linguetta «Segni vitali» e le targhette (nota 070).
+// La usano «+ Biglietto» della linguetta «Segni Vitali» e le targhette (nota 070).
 async function bigliettoNonDoppio(c, SV, tipo, evento) {
   const doppi = await dbq('biglietti con lo stesso nome', supa.from('biglietti').select('contatto_id, contatti!inner(nome, utenti(nome))')
     .eq('tipo', tipo).eq('evento', evento).ilike('contatti.nome', nomeEsatto(c.nome)).limit(5));
@@ -1462,7 +1462,7 @@ async function sezioneSegni() {
   let SV;
   if (!(LS.sv && LS.sv.id === c.id)) box.innerHTML = '<div class="vuoto">Carico…</div>';
   try { SV = await segniDellaScheda(c); } catch (e) {
-    if (LS.contatto === c) box.innerHTML = '<div class="vuoto">Segni vitali non caricati: riprova.</div>';
+    if (LS.contatto === c) box.innerHTML = '<div class="vuoto">Segni Vitali non caricati: riprova.</div>';
     return;
   }
   if (LS.contatto !== c || LS.sezione !== 'segni') return;
@@ -1512,7 +1512,7 @@ async function sezioneSegni() {
   const disegna = () => {
     const a = SV.ana;
     if (SV.ufficiale) {   // partner con la scheda ufficiale in un'altra lista: qui non si scrive
-      box.innerHTML = `<div class="riquadro"><div class="sotto" style="margin:0 0 8px">I segni vitali di ${esc(c.nome)} si scrivono su una scheda sola, quella collegata al codice Amway.</div>
+      box.innerHTML = `<div class="riquadro"><div class="sotto" style="margin:0 0 8px">I Segni Vitali di ${esc(c.nome)} si scrivono su una scheda sola, quella collegata al codice Amway.</div>
         <button class="sv-link" id="sv-ufficiale">Scheda della lista di ${esc(SV.ufficiale.lista || 'un altro partner')} ›</button></div>`;
       document.getElementById('sv-ufficiale').onclick = async () => {
         await apriContattoDa(SV.ufficiale.id, LS.ritorno);

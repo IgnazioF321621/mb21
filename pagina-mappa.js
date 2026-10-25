@@ -1,12 +1,12 @@
 // MB21 · pagina Mappa: l'albero del gruppo Amway con stati, filtri, targhette BBS/WES/CEP e «visione completa».
 // Spostata da index.html il 17/09 (cantiere 20, richiesta di Ignazio). Nessun cambiamento di funzionamento.
 // Usa ciò che definisce index.html (supa, dbq, ST, esc, mostraToast, visto, vediTutti, eAdmin…); calcoli in mappa.js.
-// Alcune sue funzioni servono anche alle altre pagine: leggiSegniGrezzi e calcolatoreSegni (segni vitali di Dashboard e Check).
+// Alcune sue funzioni servono anche alle altre pagine: leggiSegniGrezzi e calcolatoreSegni (Segni Vitali di Dashboard e Check).
 // Si carica prima dello script della pagina: solo definizioni.
 // ── MAPPA (Fase 8) ───────────────────────────────────────
 // Brief docs/MB21_v4_Brief_F8_Mappa.md: l'albero del gruppo Amway che si apre e si chiude sul posto (come la LOS
 // ufficiale), stato dai VPP del mese (≥50 attivo · >0 warning · 0 inattivo), filtri per stato e ricerca,
-// pillole BBS/WES/CEP (grigie finché i segni vitali non stanno sulle persone). Calcoli in mappa.js.
+// pillole BBS/WES/CEP (grigie finché i Segni Vitali non stanno sulle persone). Calcoli in mappa.js.
 const MP = { squadra: null, volumi: null, mese: null, schede: null, targhe: null, aperti: new Set(), filtro: 'tutti', cerca: '', completa: null, storico: {} };
 
 // L'albero Amway e i volumi dell'ultimo mese, letti una volta sola: servono alla Mappa e all'ordine dei nomi nel
@@ -51,7 +51,7 @@ async function apriMappa() {
   if (!ST.offline) leggiEfficacia().then(() => { if (ST.tab === 'mappa' && !MP.completa && !eAdmin() && haStatistiche()) disegnaMappa(); }).catch(() => {});
 }
 
-// Segni vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway in tutte le liste che posso
+// Segni Vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway in tutte le liste che posso
 // leggere: l'Admin tutte, anche con il Partner Select su un altro partner, così non si crea una scheda che c'è già altrove),
 // biglietti e periodi CEP con il proprietario della lista, coppie, utenti, eventi BBS e Wes con la data di caricamento.
 // Servono alla Mappa (adesso) e a Dashboard e Check (fotografia a fine mese, `MB21Mappa.segniAl`).
@@ -152,7 +152,7 @@ function disegnaMappa() {
   let html = `<h1>Mappa</h1>${partnerSelect()}
     ${righeTeamHtml()}${statisticheHtml()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
-    ${MP.attivi ? `<div class="mp-testa"><span>Segni vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
+    ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
     <div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>

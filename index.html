@@ -20,7 +20,7 @@
     --cat-prospect: #DD5F0D; --cat-prospect-tinta: #FDEEE2; --cat-cliente: #0E7490; --cat-cliente-tinta: #DFF1F6;
     --cat-partner: #1D4ED8; --cat-partner-tinta: #E7EFFE; --cat-ex: #5A6475; --cat-ex-tinta: #EAECF1;
     --cat-unlinked: #7B8496; --cat-unlinked-tinta: #F2F4F7; --cat-archiviato: #374151; --cat-archiviato-tinta: #E4E7EC;
-    /* segni vitali e stati */
+    /* Segni Vitali e stati */
     --bbs: #1D4ED8; --bbs-tinta: #E7EFFE; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
     --ok: #15803D; --ok-tinta: #E4F3E8; --pericolo: #C02626; --pericolo-tinta: #FCEAEA; --proposta: #B45309; --proposta-tinta: #FEF3C8;
     /* i quattro gruppi dei numeri (Dashboard, Check, Obiettivi): colori loro, non delle categorie */
@@ -2135,7 +2135,7 @@
   .ad-aggiungi input { margin: 0 0 12px; }
   .ad-aggiungi .ad-lab { display: block; font-size: 12.5px; color: var(--testo-soft); margin: 0 2px 4px; }
   .ad-aggiungi .sotto { margin: 10px 0 0; }
-  /* Admin: un colore per ogni voce (Ignazio 20/09). BBS blu e WES rosso sono i colori già stabiliti per i segni vitali. */
+  /* Admin: un colore per ogni voce (Ignazio 20/09). BBS blu e WES rosso sono i colori già stabiliti per i Segni Vitali. */
   #ad-scegli { --richiamo: var(--cat-prospect); --richiamo-tinta: var(--cat-prospect-tinta); }
   #ad-vai-utenti { --richiamo: var(--cat-partner); --richiamo-tinta: var(--cat-partner-tinta); }
   #ad-vai-schede { --richiamo: var(--cat-archiviato); --richiamo-tinta: var(--cat-archiviato-tinta); }
@@ -4297,7 +4297,7 @@ async function caricaDatiCheck() {
     }
     const [ob, wes, bbs, segniAl, biglietti, cep, sq, vol, nonOra, pm, lcl] = await Promise.all([
       dbq('obiettivi del mese', supa.from('obiettivi_mese').select('*').in('user_id', idVisti())),
-      lettaComune('wes'),   // nota 081: BBS, WES e squadra una lettura sola, con i segni vitali e il Modulo Core (pagina-dashboard.js)
+      lettaComune('wes'),   // nota 081: BBS, WES e squadra una lettura sola, con i Segni Vitali e il Modulo Core (pagina-dashboard.js)
       lettaComune('bbs'),
       calcolatoreSegni(),   // BBS/WES/CEP dalle persone da settembre 2026
       // LC1 (26/09): i biglietti e il CEP della propria scheda, ovunque sia; con «Tutti» non serve (LC1 è di una persona)
@@ -4587,7 +4587,7 @@ function collegaPercorso(ridisegna) {
 }
 
 // Il tocco su un consiglio o su un passo del percorso porta dove si fa (Ignazio, stella cometa; MB21Check: `vai`).
-// segni: per sé il Profilo con «I miei Segni vitali» aperto; guardando un altro partner la sua scheda (le targhette sono lì)
+// segni: per sé il Profilo con «I miei Segni Vitali» aperto; guardando un altro partner la sua scheda (le targhette sono lì)
 async function vaiDalCheck(vai, pid) {
   const io = visto().id === ST.utente.id;
   if (vai === 'scheda') return schedaDalCheck(pid);
@@ -4612,7 +4612,7 @@ async function schedaDalCheck(pid) {
   apriContattoDa(sc.id, ST.tab === 'oggi' ? 'oggi' : 'check');
 }
 
-// ── MAPPA (Fase 8) ── la pagina è in pagina-mappa.js (albero, targhette, visione completa, lettura dei segni vitali)
+// ── MAPPA (Fase 8) ── la pagina è in pagina-mappa.js (albero, targhette, visione completa, lettura dei Segni Vitali)
 
 // ── REPORT (Fase 5) ──────────────────────────────────────
 // Brief docs/MB21_v4_Brief_F5_Report.md: periodo Mese · Wes · Anno con ‹ ›, numeri a scalini tipo → esito → nomi

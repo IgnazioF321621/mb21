@@ -137,7 +137,7 @@
     return (squadra || []).find(p => piegaNome(nomeLeggibile(p.nome)) === piegaNome(scheda.nome)) || null;
   }
 
-  // Segni vitali a cascata (cantiere 18). Ogni biglietto e ogni periodo CEP va a un partner della squadra:
+  // Segni Vitali a cascata (cantiere 18). Ogni biglietto e ogni periodo CEP va a un partner della squadra:
   //   la scheda del partner (codice Amway o nome) o quella del suo compagno/a collegato → quel partner;
   //   altrimenti (clienti, ospiti con scheda) → il partner che ha il nome in lista (utenti.partner_id).
   // Si contano i posti dei biglietti dell'evento in vendita (attivoBbs, attivoWes: mesi) e gli abbonati CEP del giorno `oggi`.
@@ -195,7 +195,7 @@
     return SCALA_BONUS.find(x => x > (Number(bonus) || 0)) || null;
   }
 
-  // Segni vitali del gruppo di `pid` alla fine del giorno `giorno` (vuoto = adesso). g: dati grezzi
+  // Segni Vitali del gruppo di `pid` alla fine del giorno `giorno` (vuoto = adesso). g: dati grezzi
   // { squadra, schede, coppie, utenti, biglietti (con creato_il e user_id), cep (con user_id), bbs, wes (data, creato_il), oggi }.
   // Fotografia: eventi e biglietti caricati entro quel giorno (fine giornata calcolata a +01:00, al massimo un'ora di scarto d'estate).
   // Con un giorno, se il suo mese ha un evento conta quello; senza giorno (Mappa) conta l'ultimo caricato
