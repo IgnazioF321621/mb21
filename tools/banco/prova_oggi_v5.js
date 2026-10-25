@@ -293,6 +293,21 @@ prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» 
   assert.match(IDX, /\.trn-ses-barra i \{[^}]*background: var\(--z-training\);/);
 });
 
+prova('095 Traguardo: il Mese, le aree, il traguardo e i gradini con la testata turchese del Check (ritorno corto, chip, feedback, titolo); senza la veste come prima', () => {
+  const W = mondo({ admin: true });
+  for (const [vista, torna] of [['mese', 'Oggi'], ['traguardo', 'Oggi'], ['area', 'Il mese'], ['gradino', 'Traguardo']]) {
+    W.ctx.LV.vista = vista;
+    const h = W.ctx.testaCheckV5('Titolo finto', 'riga sotto');
+    assert.match(h, new RegExp(`^<div class="v5-testa c5t" style="--zc:var\\(--z-check\\)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${torna}</button>`), vista);
+    assert.match(h, /<button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="o5-feedback"/);
+    assert.match(h, /<h1>Titolo finto<\/h1><span>riga sotto<\/span>/);
+  }
+  assert.match(DASH, /const testaLV = \(titolo, sotto = '', colore = ''\) => \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function'/);
+  for (const r of [/app\.innerHTML = testaLV\('Come sto andando questo mese\?'\) \+ `<div class="avviso">/, /let html = testaLV\('Come sto andando questo mese\?', /,
+    /app\.innerHTML = testaLV\(x\.etichetta, /, /let html = testaLV\(titoloTraguardo\(\)\);/, /app\.innerHTML = testaLV\(titolo, sotto\) \+ `<div class="riquadro lv-lista">/]) assert.match(DASH, r);
+  assert.match(DASH, /const fb = document\.getElementById\('o5-feedback'\); if \(fb && !fb\.onclick\) fb\.onclick = \(\) => foglioSegnala\(\);/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

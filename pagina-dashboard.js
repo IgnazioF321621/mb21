@@ -249,7 +249,15 @@ function vaiLV(vista, extra) {
   disegnaOggi();
 }
 const indietroLV = () => `<button class="indietro" id="lv-indietro">‹ ${esc(nomeLV(PADRE_LV[LV.vista] || 'home'))}</button>`;
-const attaccaIndietroLV = () => { const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(PADRE_LV[LV.vista] || 'home'); };
+// v5 (nota 095, Regia 25/10 sera): il Mese, l'area, il traguardo e il gradino con la testata del Check (testaCheckV5, pagina-oggi.js); senza la veste nuova come prima.
+// `sotto` è testo già pronto (escape qui); `colore` = il colore del titolo di prima (l'area), che nella testata non serve
+const testaLV = (titolo, sotto = '', colore = '') => (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function'
+  ? testaCheckV5(titolo, sotto)
+  : indietroLV() + `<h1${colore ? ` style="color:${colore}"` : ''}>${esc(titolo)}</h1>` + (sotto ? `<div class="sotto">${esc(sotto)}</div>` : ''));
+const attaccaIndietroLV = () => {
+  const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(PADRE_LV[LV.vista] || 'home');
+  const fb = document.getElementById('o5-feedback'); if (fb && !fb.onclick) fb.onclick = () => foglioSegnala();   // v5: il feedback nella testata
+};
 const nomeProprio = () => String(nomeDi(visto()) || '').trim().split(/\s+/)[0];
 // Nota Pagine 092 (Regia 25/10, la regola di Ignazio del 27/09 per il Check: «Il percorso di Fiammetta»): guardando un altro partner il traguardo dice
 // di chi è, con il primo nome e un testo neutro («Il prossimo traguardo di Fiammetta» · «mancano 2 passi»); per sé, o senza un nome, come prima
@@ -484,9 +492,9 @@ function cardArea(x) {
 const bottoneStorico = () => `<button class="rp-apri scura" id="ds-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
 function disegnaMeseLV() {
   const d = DS.dati, D = MB21Dashboard;
-  if (!d) { app.innerHTML = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
+  if (!d) { app.innerHTML = testaLV('Come sto andando questo mese?') + `<div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
   const mese = D.nomeMese(d.mese);
-  let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
+  let html = testaLV('Come sto andando questo mese?', `${mese} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}`) + `
     <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}
     ${bottoneStorico()}`;   // nota 092, voce 2 (Ignazio 25/10: «dopo Crescita e prima degli obiettivi del mese»; prima in cima al Check)
   const rigaOb = d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
@@ -510,7 +518,7 @@ function disegnaMeseDashboard(vai) {
       ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--ok)' : x.colore}"></div></div>`}
       ${cf ? `<small class="lv-prima">${esc(prima)}: ${esc(f(cf.fatto))} su ${esc(f(cf.obiettivo))} · <b class="lv-${cf.livello}">${esc(cf.parola)}</b></small>` : ''}</div>`;
   };
-  app.innerHTML = indietroLV() + `<h1 style="color:${x.colore}">${esc(x.etichetta)}</h1><div class="sotto">${esc(D.nomeMese(d.mese))}${prima ? `, con ${esc(prima.toLowerCase())} accanto` : ''}</div>
+  app.innerHTML = testaLV(x.etichetta, `${D.nomeMese(d.mese)}${prima ? `, con ${prima.toLowerCase()} accanto` : ''}`, x.colore) + `
     <div class="riquadro mese-card dm-corpo">${x.riquadri.map(voce).join('')}</div>
     <p class="sotto lv-frase-area">${esc(D.riassuntoScheda(x))}</p>
     <button class="mese-riga" id="lv-12mesi">${ic('report')}<span><b>Vedi i 12 mesi nel Check</b><small>l'andamento mese per mese</small></span><em>›</em></button>` + versione();
@@ -531,7 +539,7 @@ function rigaGradino(chiave, titolo, sotto, fatti, totale, vicino) {
 const conteggioVoci = voci => { const v = voci.filter(x => !x.sotto); return [v.filter(x => x.fatto).length, v.length]; };
 function disegnaTraguardoLV() {
   const p = percorsoDash();
-  let html = indietroLV() + `<h1>${esc(titoloTraguardo())}</h1>`;
+  let html = testaLV(titoloTraguardo());
   if (!p) {
     app.innerHTML = html + `<div class="vuoto">Leggo il percorso…</div>` + versione();
     return attaccaIndietroLV();
@@ -574,7 +582,7 @@ function disegnaGradinoLV() {
     titolo = r.titolo; sotto = r.fatto ? 'Raggiunto' : f === 0 ? `Ancora nessun passo su ${t}` : `${f === 1 ? 'Fatto 1 passo' : `Fatti ${f} passi`} su ${t}`;
     corpo = `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci, lv)}${passiHtml(r, lv.mese)}<p class="sotto">Il livello si accende quando tutta la lista è fatta.</p>`;
   }
-  app.innerHTML = indietroLV() + `<h1>${esc(titolo)}</h1><div class="sotto">${esc(sotto)}</div><div class="riquadro lv-lista"><div class="ck-lc1">${corpo}</div></div>` + versione();
+  app.innerHTML = testaLV(titolo, sotto) + `<div class="riquadro lv-lista"><div class="ck-lc1">${corpo}</div></div>` + versione();
   attaccaIndietroLV();
 }
 

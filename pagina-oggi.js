@@ -362,3 +362,13 @@ function collegaTestaTrainingV5() {
   su('o5-feedback', () => foglioSegnala());
   collegaPartnerSelect();
 }
+
+// ── v5, quinta pagina: il Traguardo, cioè le pagine del Check della Dashboard (il Mese e le sue aree, il traguardo e i gradini) (Regia 25/10 sera; solo la veste) ──
+// Testata turchese del Check con il ritorno (stesso #lv-indietro: attaccaIndietroLV), il chip del Partner Select, il feedback, il titolo e la riga di sotto.
+// Il ritorno ha un nome corto: dal Mese e dal traguardo «Oggi», da un'area «Il mese», da un gradino «Traguardo». Sotto, le pagine di adesso.
+function testaCheckV5(titolo, sotto) {
+  const torna = { area: 'Il mese', gradino: 'Traguardo' }[LV.vista] || 'Oggi';
+  return `<div class="v5-testa c5t" style="--zc:var(--z-check)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${esc(torna)}</button>
+      <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div></div>`;
+}
