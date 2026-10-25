@@ -109,6 +109,7 @@
     // ── Aggiunte a mano per MB Plan (cantiere 41, 22-23/09), fuori dal blocco importato da Claude Design (l'import non le cancella):
     // stesso tratto e stessa griglia delle altre. Se un giorno arrivano da Design, si tolgono da qui.
     'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',   // le tre linee del menu
+    'esplora': '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',   // v5: Esplora, tutte le zone a tessere
     'scala-giorno': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16"/><rect x="8" y="12.5" width="4" height="4" rx=".8"/>',   // Giorno: il foglio con il giorno segnato
     'scala-settimana': '<rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><path d="M9.2 4.5v15M14.8 4.5v15"/>',   // Settimana: le colonnine
     'scala-mese': '<rect x="4" y="5" width="16" height="15" rx="2.2"/><path d="M8 3v4M16 3v4M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01"/>',   // Mese: la griglia dei giorni

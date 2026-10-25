@@ -163,14 +163,14 @@ prova('081 (11, 12): le frasi sono consigli; se il Report non si carica in cima 
   assert.doesNotMatch(IDX, /scegli un periodo più corto|Scegli quanti Piani Marketing/);
   const P1 = P.avvia({ rotto: ['azioni'] });
   await P1.m.apriReport('report');
-  assert.match(P1.app.innerHTML, /^<button class="indietro" id="rp-indietro">‹ Dashboard<\/button><h1>Report<\/h1><div class="avviso">Non riesco a caricare il Report/);
+  assert.match(P1.app.innerHTML, /^<button class="indietro" id="rp-indietro">‹ Oggi<\/button><h1>Report<\/h1><div class="avviso">Non riesco a caricare il Report/);
   P1.clic('#rp-indietro');
   assert.equal(P1.stub.ST.tab, 'oggi');
 });
 
 prova('081 (8, 11): la Griglia PM aperta dalla Dashboard torna alla Dashboard, dal Report resta «‹ Report»; senza griglia una domanda', async () => {
   const D = await P.vista('griglia');
-  assert.match(D.app.innerHTML, /‹ Dashboard<\/button><h1>Griglia PM<\/h1>/);
+  assert.match(D.app.innerHTML, /‹ Oggi<\/button><h1>Griglia PM<\/h1>/);
   assert.match(D.app.innerHTML, /<b>Quanti Piani Marketing vuoi fare, e in quanto tempo\?<\/b>/);
   D.clic('#gp-indietro');
   uguale([D.stub.ST.tab, D.ritorni.length, D.m.RP.vista, D.m.RP.grigliaDa], ['oggi', 1, 'report', null]);

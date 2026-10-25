@@ -1,0 +1,216 @@
+// MB21 v5 · la pagina «Oggi» e la pagina «Esplora» (nota Pagine 095, decisioni di Ignazio del 25/10/2026; prototipo approvato sul simulatore iPhone).
+// L'app resta una e diventa v5 una pagina alla volta: «Oggi» prende il posto della prima schermata della Dashboard (LV.vista 'home', interruttore
+// OGGI_V5). Le pagine non ancora rifatte restano quelle di adesso: i riquadri aprono la pagina v4 che c'è già (Chi sento oggi?, Agenda, Check, Training,
+// il traguardo, i riordini, la Mappa). I dati sono quelli che la Dashboard legge già (caricaOggi: coda, stato, conferme, riordini, percorso, mappa del
+// mese); in più due letture piccole per i riquadri Agenda e Training (caricaOggiV5). Si carica prima dello script della pagina: solo definizioni.
+// Usa ciò che definiscono index.html e pagina-dashboard.js (ST, LV, DS, RIO, AVV, CK, esc, ic, dataEstesa, vaiLV, percorsoDash, ORA_CHECK…).
+
+// Per tornare alla Dashboard di prima (disegnaHome) basta false.
+const OGGI_V5 = true;
+// I dati in più dei riquadri: gli appuntamenti di oggi (o il prossimo) e il ripasso del Training. `di`/`giorno` dicono di chi e di quando sono.
+const O5 = { di: null, giorno: null, oggi: null, prossimo: null, training: null };
+
+// ── Le letture in più (nella stessa attesa della Dashboard: caricaOggi le chiama insieme alle sue) ──
+async function caricaOggiV5(oggi) {
+  if (!OGGI_V5 || vediTutti()) return;
+  const A = MB21Agenda, io = visto().id, da = A.isoDaRoma(oggi, '00:00'), domani = A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00');
+  const [app1, coda, trn] = await Promise.all([
+    // gli appuntamenti da oggi in poi non ancora chiusi: quelli di oggi e, se oggi non c'è niente, il primo dopo (limite basso: bastano pochi)
+    dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto').eq('completata', false)
+      .gte('inizio', da).order('inizio').limit(8)),
+    // e quelli fissati dalla coda (PM Fissato, Appuntamento: un Contatto con la data scelta), come in Agenda
+    dbq('Oggi: appuntamenti dalla coda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
+      .in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', da).order('data_scelta').limit(8)),
+    guardoAltri() ? null : caricaTrainingOggi(oggi),
+  ]);
+  const tutti = app1.error || coda.error ? null : A.senzaDoppioniCoda([...app1.data, ...coda.data])
+    .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio })).sort((x, y) => (x.quando < y.quando ? -1 : 1));
+  Object.assign(O5, { di: io, giorno: oggi, oggi: tutti && tutti.filter(a => a.quando < domani), prossimo: tutti && tutti.find(a => a.quando >= domani) || null, training: trn });
+}
+// Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
+async function caricaTrainingOggi(oggi) {
+  if (typeof TRAINING_VISIBILE !== 'undefined' && !TRAINING_VISIBILE) return null;
+  const io = ST.utente.id;
+  const [carte, giorni] = await Promise.all([
+    dbq('Oggi: carte da ripassare', supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', io).lte('prossima', oggi)),
+    dbq('Oggi: giorni di Training', supa.from('training_giorni').select('giorno').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
+  ]);
+  if (carte.error || giorni.error) return null;
+  const fila = MB21Training.giorniDiFila((giorni.data || []).map(g => g.giorno), oggi);
+  return { daRipassare: Number(carte.count) || 0, fila: fila.n, fattoOggi: fila.oggi };
+}
+
+// ── I pezzi ──
+const o5Nomi = nomi => (nomi.length <= 2 ? nomi.join(' e ') : `${nomi.slice(0, 2).join(', ')} e altri ${nomi.length - 2}`);
+const o5Primo = n => String(n || '').trim().split(/\s+/)[0];
+const o5Giorno = iso => { const d = MB21Agenda.partiRoma(iso); return `${new Date(d.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' })} alle ${d.ora}`; };
+// l'anello dei Contatti del giorno: `fatti` su `totale`
+function o5Anello(fatti, totale, px) {
+  const r = 30, giro = 2 * Math.PI * r, pieno = totale ? Math.min(1, fatti / totale) : 0;
+  return `<svg class="o5-anello" width="${px}" height="${px}" viewBox="0 0 74 74" aria-hidden="true"><circle cx="37" cy="37" r="${r}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="10"/>
+    <circle cx="37" cy="37" r="${r}" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(giro * pieno).toFixed(1)} ${giro.toFixed(1)}" transform="rotate(-90 37 37)"${pieno >= 1 ? ' class="o5-chiude"' : ''}/></svg>`;
+}
+// Contatti del giorno (in cima, il più grande): «3 su 5 · Mancano Persona A e Persona B»; a 5 su 5 l'anello si chiude, la spunta e «grande lavoro».
+function o5Contatti(sera) {
+  const st = ST.stato || {}, totale = st.contatti_al_giorno || 0, fatti = Math.min(st.fatti_oggi || 0, totale), r = ST.risultato || { coda: [] };
+  const finito = totale > 0 && fatti >= totale, px = sera ? 62 : 78;
+  const riga = totale === 0 ? (guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire')
+    : finito ? `Fatti tutti e ${totale} · grande lavoro`
+    : (r.coda || []).length ? `${(r.coda.length === 1 ? 'Manca ' : 'Mancano ')}${o5Nomi(r.coda.map(x => x.nome))}` : 'Per oggi la coda è finita';
+  const anello = finito ? `<span class="o5-fatto">${o5Anello(1, 1, px)}<span class="o5-spunta">${ic('fatto')}</span></span>` : o5Anello(fatti, totale, px);
+  return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
+    <span class="o5-col"><span class="o5-tit">Contatti del giorno</span><span class="o5-num">${fatti} <small>su ${totale}</small></span><span class="o5-riga">${esc(riga)}</span></span>${anello}</button>`;
+}
+// la sera (dalle ORA_CHECK, come la Dashboard), finché il giorno non è scritto: «Com'è andata oggi?» apre il Check del giorno
+function o5Sera() {
+  return `<button class="o5-r o5-sera" data-o5="sera"><span class="o5-tondo">${ic('diario')}</span><span class="o5-col"><b>Com'è andata oggi?</b><small>È ora: scrivi la tua giornata nel Check</small></span><em>›</em></button>`;
+}
+// Agenda: gli appuntamenti di oggi (ognuno apre l'Agenda su oggi, dove si segna l'esito); se oggi niente, il prossimo; se niente in vista, l'invito a fissarne uno
+function o5Agenda() {
+  const pronto = O5.di === visto().id && O5.giorno === ST.oggi && Array.isArray(O5.oggi);
+  const cosa = a => esc(a.modalita || (a.tipo_azione === 'Contatto' ? a.esito : a.tipo_azione) || 'Appuntamento');
+  const chi = a => esc(a.contatti && a.contatti.nome ? a.contatti.nome : a.luogo || '');
+  let sx, dx = '';
+  if (!pronto) sx = `<span class="o5-num">·</span><span class="o5-riga">Leggo l'Agenda…</span>`;
+  else if (O5.oggi.length) {
+    const n = O5.oggi.length;
+    sx = `<span class="o5-num">${n}</span><span class="o5-riga">${n === 1 ? 'appuntamento oggi' : 'appuntamenti oggi'}</span>`;
+    dx = `<span class="o5-app">${O5.oggi.slice(0, 2).map(a => `<span><b>${cosa(a)}</b><small>${esc(MB21Agenda.partiRoma(a.quando).ora)}${chi(a) ? ' · ' + chi(a) : ''}</small></span>`).join('')}</span>`;
+  } else if (O5.prossimo) sx = `<span class="o5-riga forte">Oggi niente</span><span class="o5-riga">il prossimo: ${cosa(O5.prossimo)}, ${esc(o5Giorno(O5.prossimo.quando))}</span>`;
+  else sx = `<span class="o5-riga forte">Nessun appuntamento in vista</span><span class="o5-riga">fissane uno</span>`;
+  const invito = pronto && !O5.oggi.length && !O5.prossimo;
+  return `<button class="o5-r o5-agenda${dx ? ' due' : ''}" data-o5="${invito ? 'contatti' : 'agenda'}"><span class="o5-col"><span class="o5-tit">${ic('agenda')} AGENDA</span>${sx}</span>${dx}</button>`;
+}
+// Training: cosa c'è da fare, con le parole del Training (mai l'ora del giorno)
+function o5Training() {
+  const t = O5.di === visto().id && O5.giorno === ST.oggi ? O5.training : null;
+  const minuti = n => Math.max(1, Math.round(Math.min(n, MB21Training.RIPASSO) * 20 / 60));
+  const piede = !t ? 'Apri il Training' : t.daRipassare ? `${Math.min(t.daRipassare, MB21Training.RIPASSO)} carte · ${minuti(t.daRipassare)} min` : t.fattoOggi ? 'Ripasso di oggi fatto' : 'Impara una carta nuova';
+  return `<button class="o5-r o5-mezzo o5-training" data-o5="training"><span class="o5-tit">${ic('crescita')} TRAINING</span>
+    <span><span class="o5-num">${t ? `${ic('fiamma')}${t.fila}` : ''}</span><span class="o5-riga">${t ? (t.fila === 1 ? 'giorno di fila' : 'giorni di fila') : ''}</span></span><span class="o5-pill">${esc(piede)}</span></button>`;
+}
+// Traguardo: il più vicino (piuVicino, come la Dashboard), cosa manca e le barrette; per chi è nuovo, «Il mio avvio»
+function o5Traguardo() {
+  let titolo, manca, fatti = 0, totale = 0, go = 'traguardo';
+  if (nuovoInAvvio()) {
+    const c = MB21Lista.contatoreOnboarding(AVV.mio);
+    titolo = 'Il mio avvio'; manca = `prossimo: ${MB21Lista.prossimoPasso(AVV.mio).nome}`; fatti = c.fatti; totale = c.totale; go = 'avvio';
+  } else {
+    const p = percorsoDash(), g = p && MB21Check.piuVicino(p.pc.gradini);
+    if (!p) { titolo = 'Il percorso'; manca = 'Leggo il percorso…'; }
+    else if (g) {
+      const mancano = g.chiave === 'leader1' ? (p.l.luci || []).filter(x => !x.ok).map(x => PUNTI_LC1[x.chiave] || x.titolo)
+        : (g.voci || []).filter(x => !x.fatto && !x.sotto).map(x => x.testo);
+      titolo = nomeGradino(g); manca = mancano.length ? `${mancano.length === 1 ? 'Manca' : 'Mancano'}: ${mancaCorto(mancano)}` : fraseTraguardo(p);
+      fatti = g.fatti; totale = g.totale; go = 'gradino:' + g.chiave;
+    } else {
+      const prossimo = p.lv && p.lv.righe.find(r => !r.fatto);
+      titolo = prossimo ? prossimo.titolo : 'Percorso fatto'; manca = prossimo ? prossimo.stato : 'Leader 1° livello, Core e Pacesetter: fatti';
+    }
+  }
+  const barre = totale ? `<span class="o5-barre"><span>${Array.from({ length: Math.min(totale, 8) }, (_, i) => `<i${i < Math.round(fatti / totale * Math.min(totale, 8)) ? ' class="si"' : ''}></i>`).join('')}</span><small>${fatti} su ${totale}</small></span>` : '';
+  return `<button class="o5-r o5-mezzo o5-traguardo" data-o5="${esc(go)}"><span class="o5-tit">${ic('traguardo')} ${go === 'avvio' ? 'AVVIO' : 'TRAGUARDO'}</span>
+    <span><span class="o5-nome">${esc(titolo)}</span><span class="o5-riga">${esc(manca)}</span></span>${barre}</button>`;
+}
+// Clienti: i riordini da sentire (fino a oggi); se non ce ne sono, il prossimo; se nessuno in vista, il riquadro non c'è
+function o5Clienti() {
+  const n = RIO.righe.length, nome = a => o5Primo(a.contatti ? a.contatti.nome : '');
+  if (!n && !RIO.prossimo) return '';
+  const sotto = n ? `da sentire · ${nome(RIO.righe[0])}` : `il prossimo: ${nome(RIO.prossimo)}, ${o5Giorno(RIO.prossimo.inizio).split(' alle ')[0]}`;
+  return `<button class="o5-r o5-mezzo o5-clienti" data-o5="clienti"><span class="o5-tit">${ic('vendite')} CLIENTI</span>
+    <span><span class="o5-num">${n || ''}</span><span class="o5-riga">${esc(sotto)}</span></span></button>`;
+}
+// Mappa: quanti sono nel gruppo (dal file Amway del mese, già letto dalla Dashboard) e «Apri la mappa»
+function o5Mappa() {
+  const n = O5.gruppo;
+  return `<button class="o5-r o5-mezzo o5-mappa" data-o5="mappa"><span class="o5-tit">${ic('mappa')} MAPPA</span>
+    <span><span class="o5-num">${n ? n : ''}</span><span class="o5-riga">${n ? 'nel tuo gruppo' : 'Apri la mappa'}</span></span></button>`;
+}
+// quanti sono sotto il partner guardato, dalla squadra del mese (leggiSquadraMese); si ridisegna quando arriva
+function o5ContaGruppo() {
+  const pid = visto().partner_id;
+  if (!pid || !DS.sqLettura) return;
+  const chiave = `${pid}|${ST.oggi}`;
+  if (O5.gruppoDi === chiave) return;
+  O5.gruppoDi = chiave;
+  DS.sqLettura.then(x => {
+    if (!x || !Array.isArray(x.sq)) return;
+    const figli = {};
+    for (const p of x.sq) if (p.sponsor_id) (figli[p.sponsor_id] = figli[p.sponsor_id] || []).push(p.partner_id);
+    let n = 0;
+    const visti = new Set([pid]), coda = [pid];
+    while (coda.length) for (const f of figli[coda.shift()] || []) if (!visti.has(f)) { visti.add(f); coda.push(f); n++; }
+    O5.gruppo = n;
+    if (ST.tab === 'oggi' && LV.vista === 'home' && document.querySelector('.o5')) disegnaOggi();
+  });
+}
+
+// ── La pagina ──
+function disegnaOggiV5() {
+  const altro = guardoAltri(), d = DS.dati, fattoGiorno = !!d && d.ultimoCheck === ST.oggi;
+  const sera = !altro && !ST.offline && oraRoma() >= ORA_CHECK && !fattoGiorno;
+  if (O5.gruppoDi && !O5.gruppoDi.startsWith(`${visto().partner_id}|`)) O5.gruppo = null;
+  o5ContaGruppo();
+  const ora = sera ? ` · ${new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date())}` : '';
+  const sg = document.getElementById('segnala'), risposta = !!(sg && sg.classList && sg.classList.contains('con-risposta'));
+  const clienti = o5Clienti();
+  let html = `<div class="o5${sera ? ' sera' : ''}">
+    <div class="o5-testa"><div><span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span><h1>Oggi</h1></div>
+      <div class="o5-dx"><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>${cerchiettoProfilo()}</div></div>
+    ${dashboardTesta()}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
+    <div class="o5-riquadri">${o5Contatti(sera)}${sera ? o5Sera() : ''}${o5Agenda()}
+      <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
+      <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div>
+    ${daSeguireHtml()}</div>`;
+  app.innerHTML = html + versione();
+  if (sg) sg.hidden = true;   // v5: il feedback sta in alto nella testata, non più il tondo in basso
+  document.getElementById('o5-feedback').onclick = () => foglioSegnala();
+  app.querySelectorAll('[data-o5]').forEach(b => b.onclick = () => o5Vai(b.dataset.o5));
+}
+function o5Vai(go) {
+  const tab = t => { ST.tab = t; LS.ritorno = null; mostraTab(); window.scrollTo(0, 0); };
+  if (go === 'contatti') {
+    if ((ST.stato || {}).contatti_al_giorno === 0 && !guardoAltri() && !ST.offline) return scegliNumero(caricaOggi);   // in pausa: si riparte scegliendo quanti
+    return vaiLV('oggi');
+  }
+  if (go === 'sera') return apriCheck();
+  if (go === 'agenda') { if (typeof AG !== 'undefined') AG.giorno = null; return tab('agenda'); }
+  if (go === 'training') { if (typeof TRN !== 'undefined' && O5.training && O5.training.daRipassare) TRN.dopo = 'ripasso'; return tab('training'); }
+  if (go === 'avvio') { AVV.mioAperto = true; return vaiLV('avvio'); }
+  if (go.startsWith('gradino:')) return vaiLV('gradino', { gradino: go.slice(8) });
+  if (go === 'traguardo') return vaiLV('traguardo');
+  if (go === 'clienti') return RIO.righe.length ? vaiLV('oggi', { vaiA: 'riordini' }) : vaiLV('oggi');
+  if (go === 'mappa') return tab('mappa');
+}
+
+// ── Esplora (nota 095, tela versione 22): tutte le zone a tessere, a due colonne, con il colore della zona, l'icona dell'app e solo il nome.
+// Ogni tessera apre la pagina che c'è già (v4); Vendite non c'è finché non ha la sua pagina; Admin per ultima, nera, solo per l'Admin.
+const ZONE_V5 = [
+  { k: 'contatti', nome: 'Contatti', icona: 'telefonate', colore: 'var(--z-contatti)' },
+  { k: 'agenda', nome: 'Agenda', icona: 'agenda', colore: 'var(--z-agenda)' },
+  { k: 'lista', nome: 'Lista Nomi', icona: 'lista', colore: 'var(--z-lista)' },
+  { k: 'mappa', nome: 'Mappa', icona: 'mappa', colore: 'var(--z-mappa)' },
+  { k: 'segni', nome: 'Segni Vitali', icona: 'segnivitali', colore: 'var(--z-segni)' },
+  { k: 'training', nome: 'Training', icona: 'crescita', colore: 'var(--z-training)' },
+  { k: 'check', nome: 'Check e traguardi', icona: 'traguardo', colore: 'var(--z-check)' },
+  { k: 'report', nome: 'Report', icona: 'report', colore: 'var(--z-report)' },
+  { k: 'admin', nome: 'Admin', icona: 'admin', colore: 'var(--testo)', soloAdmin: true },
+];
+function apriEsplora() {
+  const zone = ZONE_V5.filter(z => (!z.soloAdmin || eAdmin()) && (z.k !== 'training' || typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE));
+  app.innerHTML = `<div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx">${cerchiettoProfilo()}</div></div>
+    <div class="o5-tessere">${zone.map(z => `<button class="o5-tessera" data-zona="${z.k}" style="background:${z.colore}">${ic(z.icona)}<b>${esc(z.nome)}</b>${z.soloAdmin ? '<small>solo tu</small>' : ''}</button>`).join('')}</div>` + versione();
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });
+  app.querySelectorAll('[data-zona]').forEach(b => b.onclick = () => esploraVai(b.dataset.zona));
+}
+function esploraVai(k) {
+  const tab = t => { ST.tab = t; LS.ritorno = null; mostraTab(); window.scrollTo(0, 0); };
+  if (k === 'contatti') { vaiAlPrimoLivello(); ST.vaiA = 'oggi'; return tab('oggi'); }   // la pagina dei Contatti del giorno (oggi «Chi sento oggi?»)
+  if (k === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); return tab('profilo'); }   // «I miei Segni Vitali» del Profilo, aperti
+  if (k === 'check') { vaiAlPrimoLivello(); ST.vaiA = 'mese'; return tab('oggi'); }   // il Mese («Come sto andando questo mese?»): da lì le aree portano al Check
+  if (k === 'report') { RP.vista = 'report'; RP.da = null; }
+  if (k === 'admin') AD.sezione = null;
+  if (k === 'agenda' && typeof AG !== 'undefined') AG.giorno = null;
+  tab(k);
+}

@@ -2345,17 +2345,88 @@
   .mp-conti b { color: var(--testo); }
   .versione { text-align: center; color: var(--grigio-chiaro); font-size: 11px; margin-top: 28px; padding: 8px 0; cursor: pointer; }
   .versione.nuova { color: var(--blu); font-size: 14px; font-weight: 600; }
+  /* ── v5 (nota 095, Ignazio 25/10/2026): «Oggi» a riquadri pieni del colore della zona, ed «Esplora» a tessere (pagina-oggi.js) ── */
+  :root { --z-contatti: #F26B00; --z-agenda: #0866D6; --z-lista: #2E9E3E; --z-clienti: #D99A00; --z-training: #9333EA; --z-segni: #E11D48;
+    --z-check: #0098A3; --z-report: #3D4451; --z-mappa: #1E3A8A; }
+  /* una schermata sola: i riquadri si distribuiscono fino alla barra (altezza visibile del telefono, 100dvh); sotto restano la versione e «Da seguire» */
+  .o5 { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 170px); }
+  .o5-testa { display: flex; justify-content: space-between; align-items: flex-end; margin: 6px 0 10px; }
+  .o5-testa h1 { margin: 2px 0 0; font-size: 34px; font-weight: 800; line-height: 1.1; }
+  .o5-data { font-size: 13px; font-weight: 700; color: var(--z-contatti); letter-spacing: .03em; }
+  .o5-dx { display: flex; gap: 10px; align-items: center; }
+  .o5-feedback { position: relative; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo-soft);
+    display: flex; align-items: center; justify-content: center; }
+  .o5-feedback svg.ic { width: 19px; height: 19px; }
+  .o5-feedback.con-risposta::after { content: ''; position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--rosso); border: 2px solid var(--superficie); }
+  .o5-riquadri { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+  .o5-r { width: 100%; border: 0; font: inherit; color: #fff; text-align: left; cursor: pointer; border-radius: 22px; padding: 12px 14px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+  .o5-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .o5-tit { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .o5-tit svg.ic { width: 18px; height: 18px; }
+  .o5-num { font-size: 32px; font-weight: 800; line-height: 1.05; display: flex; align-items: center; gap: 4px; }
+  .o5-num small { font-size: 20px; font-weight: 700; }
+  .o5-num svg.ic { width: 26px; height: 26px; }
+  .o5-riga { display: block; font-size: 13px; font-weight: 700; }
+  .o5-riga.forte { font-size: 17px; font-weight: 800; }
+  .o5-nome { display: block; font-size: 18px; font-weight: 800; line-height: 1.1; }
+  .o5-contatti { background: var(--z-contatti); border-radius: 24px; padding: 18px; flex-direction: row; align-items: center; gap: 10px; }
+  .o5-contatti .o5-tit { font-size: 16px; }
+  .o5-contatti .o5-num { font-size: 46px; }
+  .o5-contatti .o5-riga { font-size: 14px; }
+  .o5-anello { flex: none; }
+  .o5-fatto { position: relative; flex: none; display: inline-flex; }
+  .o5-spunta { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; animation: o5-spunta 1.6s ease-out both; }
+  .o5-spunta svg.ic { width: 34px; height: 34px; stroke-width: 3.2; }
+  .o5-chiude { animation: o5-anello 1s ease-out both; }
+  .o5-contatti.festa { animation: o5-festa 1.6s ease-out both; }
+  @keyframes o5-anello { from { stroke-dasharray: 113 189; } to { stroke-dasharray: 189 189; } }
+  @keyframes o5-spunta { 0%, 55% { opacity: 0; transform: scale(.4); } 80% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes o5-festa { 0%, 60% { transform: scale(1); } 75% { transform: scale(1.03); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .o5-chiude, .o5-spunta, .o5-contatti.festa { animation: none; } }
+  .o5-sera { background: var(--z-check); flex-direction: row; align-items: center; gap: 12px; padding: 11px 14px; }
+  .o5-sera b { font-size: 17px; } .o5-sera small { display: block; font-size: 13px; font-weight: 600; }
+  .o5-sera em { font-style: normal; font-size: 24px; font-weight: 700; margin-left: auto; }
+  .o5-tondo { width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; flex: none; }
+  .o5-tondo svg.ic { width: 21px; height: 21px; }
+  .o5-agenda { background: var(--z-agenda); }
+  .o5-agenda.due { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; align-items: center; }
+  .o5-app { display: flex; flex-direction: column; gap: 5px; }
+  .o5-app > span { display: block; border-left: 4px solid #fff; background: rgba(255,255,255,.18); padding: 4px 8px; }
+  .o5-app b { display: block; font-size: 13px; } .o5-app small { display: block; font-size: 12px; }
+  .o5-coppia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .o5-coppia.uno { grid-template-columns: 1fr; }
+  .o5-mezzo { min-height: 108px; }
+  .o5-training { background: var(--z-training); } .o5-traguardo { background: var(--z-check); } .o5-clienti { background: var(--z-clienti); } .o5-mappa { background: var(--z-mappa); }
+  .o5-pill { font-size: 12px; font-weight: 700; background: rgba(255,255,255,.22); border-radius: 10px; padding: 4px 9px; align-self: flex-start; }
+  .o5-barre { display: flex; align-items: center; gap: 8px; }
+  .o5-barre > span { flex: 1; display: flex; gap: 4px; }
+  .o5-barre i { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,.35); }
+  .o5-barre i.si { background: #fff; }
+  .o5-barre small { font-size: 12px; font-weight: 700; }
+  /* la sera c'è un riquadro in più: tutto un po' più stretto, e resta dentro lo schermo */
+  .o5.sera .o5-testa { margin: 2px 0 6px; }
+  .o5.sera .o5-riquadri { gap: 8px; }
+  .o5.sera .o5-contatti { padding: 12px 18px; }
+  .o5.sera .o5-contatti .o5-num { font-size: 38px; }
+  .o5.sera .o5-mezzo { min-height: 92px; }
+  .o5.sera .o5-num { font-size: 28px; }
+  .o5-tessere { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
+  .o5-tessera { border: 0; font: inherit; color: #fff; cursor: pointer; border-radius: 22px; min-height: 104px; padding: 14px;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; }
+  .o5-tessera svg.ic { width: 26px; height: 26px; }
+  .o5-tessera b { font-size: 16px; font-weight: 800; }
+  .o5-tessera small { font-size: 12px; opacity: .75; margin-top: -6px; }
 </style>
 </head>
 <body>
 <main id="app"></main>
 <nav id="tab" hidden>
-  <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Dashboard</button>
+  <!-- v5 (nota 095, Ignazio 25/10): quattro voci, uguali per tutti; Mappa, Training, Check, Report e Admin (solo l'Admin) sono tessere di Esplora (pagina-oggi.js) -->
+  <button data-tab="oggi" class="attiva"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-casa"/></svg>Oggi</button>
   <button data-tab="agenda"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-agenda"/></svg>Agenda</button>   <!-- P1 (Ignazio 23/10): «MB Plan» si chiama «Agenda» in tutto ciò che il partner legge -->
   <button data-tab="lista"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lista"/></svg>Lista Nomi</button>
-  <button data-tab="mappa"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-mappa"/></svg>Mappa</button>
-  <button data-tab="training" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-crescita"/></svg>Training</button>   <!-- cantiere 45: per tutti dal 24/09 sera (TRAINING_VISIBILE) -->
-  <button data-tab="admin" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-admin"/></svg>Admin</button>
+  <button data-tab="esplora"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-esplora"/></svg>Esplora</button>
 </nav>
 <button id="segnala" class="segnala-bottone" hidden aria-label="Invia Feedback" title="Invia Feedback"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-segnala"/></svg></button>   <!-- «Segnala» (nota Pagine 009): si accende in mostraTab -->
 
@@ -2379,6 +2450,7 @@
 <script src="pagina-coach.js?v=202610251855"></script>   <!-- il coach dopo l'esito (cantiere 42): la chat e il promemoria «Ti eri detto…»: solo definizioni -->
 <script src="pagina-training.js?v=202610251855"></script>   <!-- la pagina Training (cantiere 42): per ora solo nell'anteprima; solo definizioni -->
 <script src="pagina-dashboard.js?v=202610251855"></script>   <!-- pagina Dashboard: solo definizioni -->
+<script src="pagina-oggi.js?v=202610251855"></script>   <!-- v5: le pagine «Oggi» ed «Esplora» (nota 095): solo definizioni -->
 <script src="pagina-lista.js?v=202610251855"></script>   <!-- pagina Lista Nomi: solo definizioni -->
 <script src="pagina-rubrica.js?v=202610251855"></script>   <!-- «Importa dalla rubrica» dal «+» della Lista (cantiere 30): solo definizioni -->
 <script src="pagina-vendite.js?v=202610251855"></script>   <!-- Vendite nella scheda contatto (cantiere 26): solo definizioni -->
@@ -2870,10 +2942,12 @@ function aggiornaTab() {
     b.hidden = (b.dataset.tab === 'admin' && !eAdmin()) || (b.dataset.tab === 'training' && !TRAINING_VISIBILE);
   });
 }
-// Il bottone acceso nella barra: quello della pagina in cui si è.
+// Il bottone acceso nella barra: quello della pagina in cui si è; v5 (nota 095): le pagine che non sono nella barra (Mappa, Training, Check, Report,
+// Admin, Profilo) accendono Esplora, da cui si aprono
+const VOCE_BARRA = t => (['oggi', 'agenda', 'lista'].includes(t) ? t : 'esplora');
 function accendiTab() {
   aggiornaTab();
-  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === ST.tab));
+  document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === VOCE_BARRA(ST.tab)));
   ricordaPagina(ST.tab);
 }
 
@@ -2881,7 +2955,7 @@ function accendiTab() {
 // più veloce): ricaricando (⌘R sul Mac, «Aggiorna ora») si riapre la stessa pagina invece della Dashboard.
 // Si ricorda solo in questa finestra (sessionStorage): aprendo l'app da capo si parte dalla Dashboard. La scrive accendiTab, la legge dopoAccesso.
 const CHIAVE_PAGINA = 'mb21-pagina-admin';
-const PAGINE = ['oggi', 'lista', 'agenda', 'report', 'mappa', 'check', 'admin', 'profilo', 'training'];
+const PAGINE = ['oggi', 'lista', 'agenda', 'report', 'mappa', 'check', 'admin', 'profilo', 'training', 'esplora'];
 function ricordaPagina(pagina) {
   if (eAdmin()) try { sessionStorage.setItem(CHIAVE_PAGINA, pagina); } catch (e) {}
 }
@@ -2951,6 +3025,7 @@ function mostraTab() {
   if (ST.tab === 'admin') return apriAdmin();
   if (ST.tab === 'profilo') return apriProfilo();   // cantiere 25: dal cerchietto in Dashboard
   if (ST.tab === 'training') return apriTraining();   // cantiere 42: pagina-training.js
+  if (ST.tab === 'esplora') return apriEsplora();   // v5: pagina-oggi.js
 }
 
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine
@@ -3694,7 +3769,7 @@ async function nuovoAppuntamento(opz = {}) {
           return `<button type="button" data-libero="${esc(x.id)}" class="${st.spazio && st.spazio.id === x.id ? 'scelto' : ''}">${esc(giornoBreve(o.giorno))} · ${o.ora}</button>`; }).join('')}</div></div>`;
         // Una telefonata scelta a mano (nota 012): «Senza orario» sta solo in coda, in Dashboard; con l'ora anche in Agenda. Il giorno serve sempre
         const soloGiorno = inCoda();
-        if (puoInCoda()) h += `<div class="campo"><label>Quando <small>entra in coda, in Dashboard, dal giorno scelto</small></label>${scelte('quando', ['coda', 'ora'], soloGiorno ? 'coda' : 'ora', ['Senza orario · solo in coda', 'A un\'ora · anche in Agenda'])}</div>`;
+        if (puoInCoda()) h += `<div class="campo"><label>Quando <small>entra nei Contatti del giorno, dal giorno scelto</small></label>${scelte('quando', ['coda', 'ora'], soloGiorno ? 'coda' : 'ora', ['Senza orario · solo in coda', 'A un\'ora · anche in Agenda'])}</div>`;
         h += `<div class="campo"><label>${soloGiorno ? 'Giorno' : 'Giorno e ora'} <small>Obbligatorio</small></label><div class="ag-due-campi">
           <input id="na-giorno" type="date" value="${esc(campi.giorno)}">${soloGiorno ? '' : `<input id="na-ora" type="time" value="${esc(campi.ora)}">`}</div></div>`;
         // la durata la propone il tipo (Contatto 15 minuti, gli altri un'ora; la serata un'ora) finché non la si tocca; «Altra…» apre l'ora di fine
@@ -3957,7 +4032,7 @@ async function foglioAzione(id, opz = {}) {
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">
     <div class="campo"><label>${dallaCoda ? 'Telefonata fatta il' : senzaOra ? 'Giorno' : 'Giorno e ora'}</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"${senzaOra ? ' hidden' : ''}></div>
-      ${senzaOra ? `<div class="sotto" style="margin:4px 0 0">Senza orario: sta in coda, in Dashboard. <button type="button" class="link" id="fa-metti-ora">Metti un orario</button></div>` : ''}</div>
+      ${senzaOra ? `<div class="sotto" style="margin:4px 0 0">Senza orario: sta nei Contatti del giorno. <button type="button" class="link" id="fa-metti-ora">Metti un orario</button></div>` : ''}</div>
     ${dallaCoda ? `<div class="campo"><label id="fa-scelta-titolo"></label><div class="ag-due-campi"><input type="date" id="fa-scelta-giorno" value="${scelta.giorno}"><input type="time" id="fa-scelta-ora" value="${scelta.ora}"></div><div class="sotto" style="margin:4px 0 0">È il giorno in cui lo vedi in Agenda.</div></div>` : ''}
     ${duraOra ? `<div class="campo"><label>Finisce alle</label><input type="time" id="fa-fine" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + duraOra))}"></div>` : ''}
     <div id="fa-avviso"></div>
@@ -4332,7 +4407,7 @@ async function caricaDatiCheck() {
 // Nota Pagine 081, punto 2 (Ignazio 24/10): la freccia in alto del Check riporta da dove si arriva. `CK.da` = { etichetta, tab } lo mette chi apre
 // il Check con `apriCheckDa` (la card di un'area della Dashboard: «‹ Volume» torna lì); senza, «‹ Dashboard». Dalla scheda o dal Modulo Core si torna
 // al Check e la freccia resta quella di prima.
-const indietroCheck = () => `<button class="indietro" id="ck-indietro">‹ ${esc((CK.da && CK.da.etichetta) || 'Dashboard')}</button>`;
+const indietroCheck = () => `<button class="indietro" id="ck-indietro">‹ ${esc((CK.da && CK.da.etichetta) || 'Oggi')}</button>`;
 function tornaDalCheck() { const da = CK.da; CK.da = null; ST.tab = (da && da.tab) || 'oggi'; mostraTab(); window.scrollTo(0, 0); }
 function apriCheckDa(etichetta, tab) { CK.da = { etichetta, tab }; ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); }
 
@@ -4420,7 +4495,7 @@ function disegnaCheck() {
 // è di una persona). I pezzi che servono anche alla Dashboard restano qui: vociHtml, passiHtml, statoPercorso, livelliCheck, collegaPercorso, vaiDalCheck.
 function rigaPercorsoCheck() {
   if (vediTutti()) return '';
-  return `<button class="mese-riga" id="ck-percorso">${ic('traguardo')}<span><b>Il percorso</b><small>Leader 1° livello, Core, Pacesetter e i livelli · nella Dashboard</small></span><em>›</em></button>`;
+  return `<button class="mese-riga" id="ck-percorso">${ic('traguardo')}<span><b>Il percorso</b><small>Leader 1° livello, Core, Pacesetter e i livelli · in Oggi</small></span><em>›</em></button>`;
 }
 const vociHtml = (voci, lv) => `<div class="voci">${voci.map(v => {
   const t = `${v.fatto ? '✓ ' : ''}${esc(v.testo)}`;
@@ -4638,7 +4713,7 @@ async function leggiAzioniMie() {
 // Dal 28/09 il Report non è più nella barra in basso (si apre dalla Dashboard, zona «Approfondisci»):
 // come il Check, ha in cima il ritorno alla Dashboard. Nota 074: aperto dalla scheda › Vendite («Le tue provvigioni, mese per mese ›», `RP.da`)
 // la freccia ha il nome della persona e torna alla sua scheda, sulla linguetta Vendite.
-function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Dashboard')}</button>`; }
+function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Oggi')}</button>`; }
 function collegaTornaInDashboard() {
   const b = document.getElementById('rp-indietro');
   if (b) b.onclick = () => {
@@ -5212,7 +5287,7 @@ function disegnaGriglia() {
     if (!daDashboard) return disegnaReport();
     RP.grigliaDa = null; ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0);
   };
-  let html = `<button class="indietro" id="gp-indietro">‹ ${daDashboard ? 'Dashboard' : 'Report'}</button><h1>Griglia PM</h1>`;
+  let html = `<button class="indietro" id="gp-indietro">‹ ${daDashboard ? 'Oggi' : 'Report'}</button><h1>Griglia PM</h1>`;
   if (!imp) {
     // nota 081, punto 11: una domanda, non un ordine
     html += `<div class="riquadro"><p style="margin:0 0 12px"><b>Quanti Piani Marketing vuoi fare, e in quanto tempo?</b></p>

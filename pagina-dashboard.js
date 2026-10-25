@@ -86,7 +86,7 @@ async function caricaOggi() {
     risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(candidati, SCE.righe), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
     if (!altro && risultato.nuoviInCoda.length) {
       await dbqAvvisa('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
-        .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri la Dashboard.');
+        .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri Oggi.');
     }
   } catch (e) {
     PRE.dati = null;
@@ -110,7 +110,8 @@ async function caricaOggi() {
   // il promemoria «Ti eri detto…» (cantiere 42) per chi è in coda e nei Dare Seguito; offline no
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
-  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes()]);
+  await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes(),
+    typeof caricaOggiV5 === 'function' ? caricaOggiV5(oggi).catch(() => {}) : null]);   // v5: gli appuntamenti di oggi e il ripasso per i riquadri di «Oggi»
   PRE.dati = null;   // da qui in poi ogni lettura torna alla rete (dopo un esito, una conferma, un ritorno sulla Dashboard scaduta)
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
@@ -594,8 +595,11 @@ function disegnaOggi() {
   if (vai === 'oggi') LV.vista = 'oggi';   // Agenda P2 (23/10): la pastiglia «Chi sento oggi? N» apre l'elenco unico
   if (vai === 'avvio') LV.vista = 'avvio';
   if (vai === 'traguardo') LV.vista = 'traguardo';   // nota 092: dal Check, «Il percorso ›»
+  if (vai === 'mese') LV.vista = 'mese';   // v5: dalla tessera «Check e traguardi» di Esplora, il mese (nota 095: «la tessera Check di Esplora apre il Mese»)
   if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
+  const sg = document.getElementById('segnala');
+  if (sg) sg.hidden = false;   // v5: in «Oggi» il feedback sta nella testata (disegnaOggiV5 lo nasconde); nelle altre pagine della Dashboard resta il tondo
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta()
       + `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>` + dashboardBasso() + versione();
@@ -609,7 +613,7 @@ function disegnaOggi() {
     case 'traguardo': disegnaTraguardoLV(); break;
     case 'gradino': disegnaGradinoLV(); break;
     case 'avvio': disegnaAvvioLV(); break;
-    default: LV.vista = 'home'; disegnaHome();
+    default: LV.vista = 'home'; if (typeof OGGI_V5 !== 'undefined' && OGGI_V5) disegnaOggiV5(); else disegnaHome();   // v5 (nota 095): «Oggi» a riquadri, pagina-oggi.js
   }
   // prima dei collegamenti: aperto il modulo, il riquadro degli obiettivi non si sovrappone (si apre solo senza fogli aperti)
   if (vai === 'giorno' && !ST.offline && !document.querySelector('.velo')) apriCheck();
@@ -1390,7 +1394,7 @@ function disegnaObiettiviTeam() {
       ${aperto ? `<div class="obt-corpo">${r.prima ? `<div class="obt-gruppo"><h4>${esc(D.nomeMese(r.prima.mese))}</h4><div><span>VPG: obiettivo ${f(r.prima.obiettivo)}</span><b>fatto ${f(Math.round(r.prima.fatto))} · ${Math.round(r.prima.fatto / r.prima.obiettivo * 100)}%</b></div></div>` : ''}${gruppi}${linee}</div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Dashboard'}</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
     <h1>${ic('obiettivi')} Obiettivi mensili dei partner</h1>
     <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner. Sono quelli che hanno già aperto l'app.</div>
     ${OBT.senza.length ? `<div class="obt-senza"><h4>Non ancora scritti · ${OBT.senza.length}</h4>${OBT.senza.map(r => `<div><span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}</span></div>`).join('')}</div>` : ''}
@@ -1433,7 +1437,7 @@ function disegnaAvvio() {
         </div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Dashboard'}</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
     <h1>${ic('avvio')} Partner da avviare</h1>
     <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
     <button class="ag-blocco avv-come" id="avv-come"><span>${ic('info')} Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
@@ -1486,7 +1490,7 @@ function disegnaAvvio() {
   });
 }
 
-const RIO = { righe: [], nonRisponde: new Set(), spento: new Set() };
+const RIO = { righe: [], prossimo: null, nonRisponde: new Set(), spento: new Set() };   // prossimo (v5, riquadro Clienti di «Oggi»): il primo riordino dopo oggi
 
 // «Ordina da solo» in Dashboard (nota 043): il riquadro «N clienti ordinano da solo» e la domanda dei 7 giorni non ci sono più (V4 Vendite, 22/10:
 // al loro posto il dato del cliente «Ha un account cliente», nella sua scheda).
@@ -1504,8 +1508,11 @@ async function caricaRiordini(oggi) {
     ]);
     if (v.error || g.error) throw v.error || g.error;
     RIO.righe = A.riordiniDaSentire(v.data, oggi, g.data);
+    // v5 (nota 095): senza riordini da sentire il riquadro Clienti di «Oggi» mostra il prossimo, dalle stesse vendite già lette (nessuna lettura in più)
+    RIO.prossimo = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi)
+      .map(x => ({ ...x.azione, riordino: x.riordino, prodotto: x.prodotto })).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio))[0] || null;
   } catch (e) {
-    RIO.righe = [];
+    RIO.righe = []; RIO.prossimo = null;
   }
 }
 
@@ -1714,14 +1721,14 @@ async function rispondiBiglietto(box, si, dopo, salva) {
 }
 
 // Testata con il cerchietto del Profilo (cantiere 25): sempre di chi è entrato, anche col Partner Select
-function testataDashboard() { return `<div class="testa-pagina"><h1>Dashboard</h1>${cerchiettoProfilo()}</div>`; }
+function testataDashboard() { return `<div class="testa-pagina"><h1>${typeof OGGI_V5 !== 'undefined' && OGGI_V5 ? 'Oggi' : 'Dashboard'}</h1>${cerchiettoProfilo()}</div>`; }
 
 // Dal 28/09 la testata (Partner Select, biglietti da segnare) resta in cima, mentre i numeri
 // del mese stanno nei livelli (`disegnaMeseLV`).
 function dashboardTesta() {
   const d = DS.dati;
   let html = partnerSelect();
-  if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri della Dashboard non disponibili: riprova più tardi.</div>`);
+  if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri di Oggi non disponibili: riprova più tardi.</div>`);
   // Verifica della Dashboard, tappa 2 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): in cima al massimo UN avviso, il più urgente; gli altri
   // in una riga «Altri avvisi (N) ›» che si apre sul posto. Ordine: messaggi dalla squadra (nota Admin 014) › obiettivi del mese mancanti ›
   // biglietti da segnare › «Scarica la mia lista» (nota Admin 008). Gli avvisi restano gli stessi, con gli stessi tasti.
@@ -2428,8 +2435,8 @@ function apriCheck() {
     if (!dalle) { auto('contatti', ''); auto('pm', ''); return; }
     const CARD = [
       // testi di Ignazio (22/09)
-      { k: 'contatti', pieno: 'Arrivano in automatico dall\'esito della coda in Dashboard, dall\'Agenda, dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Tocca una riga per aprire il contatto.',
-        vuoto: 'Nessun contatto registrato in questo giorno. Arrivano in automatico dall\'esito della coda in Dashboard, dall\'Agenda, dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Automatico dal 14/09.' },
+      { k: 'contatti', pieno: 'Arrivano in automatico dall\'esito dei Contatti del giorno, dall\'Agenda, dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Tocca una riga per aprire il contatto.',
+        vuoto: 'Nessun contatto registrato in questo giorno. Arrivano in automatico dall\'esito dei Contatti del giorno, dall\'Agenda, dalla scheda del contatto e dai Riordini. «No Risposta» e «Telefono spento» non contano. Automatico dal 14/09.' },
       { k: 'pm', pieno: 'Arrivano dall\'esito dei PM in Agenda. «No Show» e «Rimandato» non contano. Tocca una riga per aprire il contatto. Riempie la sezione 1 del foglio Core.',
         vuoto: 'Nessun Piano Marketing effettuato in questo giorno. Arrivano dall\'esito dei PM in Agenda. «No Show» e «Rimandato» non contano. Riempie la sezione 1 del foglio Core.' },
     ];

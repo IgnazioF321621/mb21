@@ -60,7 +60,7 @@ function disegnaBenvenuto() {
   const nome = String((ST.utente && (ST.utente.nome || ST.utente.nome_cognome)) || '').trim().split(/\s+/)[0];
   // In alto: i pallini del percorso e «Lo faccio dopo» (niente è vincolante); in una schermata sola, il ritorno alla Dashboard
   const testa = BV.solo
-    ? `<div class="bv-testa"><button class="indietro" id="bv-esci">‹ ${BV.ritorno === 'profilo' ? 'Profilo' : 'Dashboard'}</button></div>`
+    ? `<div class="bv-testa"><button class="indietro" id="bv-esci">‹ ${BV.ritorno === 'profilo' ? 'Profilo' : 'Oggi'}</button></div>`
     : `<div class="bv-testa"><span class="bv-pallini">${B.SCHERMATE.map((_, k) => `<i class="${k === BV.i ? 'qui' : k < BV.i ? 'fatto' : ''}"></i>`).join('')}</span>
         <button class="link" id="bv-esci">Lo faccio dopo</button></div>`;
   const indietro = !BV.solo && BV.i > 0 ? '<button class="link bv-indietro" id="bv-indietro">‹ Indietro</button>' : '';
@@ -103,8 +103,8 @@ function disegnaBenvenuto() {
         <button class="primario" id="bv-aggiungi">Aggiungi</button>
       </div>
       <div class="bv-conto" id="bv-conto">${BV.conto == null ? 'Conto i tuoi nomi…' : esc(B.contoCerchia(BV.conto))}</div>
-      <div class="sotto bv-nota">Li ritrovi tutti nella Lista Nomi, e da subito in Dashboard: l'app ti dice già chi chiamare oggi.</div>
-      <button class="primario bv-finito" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.ritorno === 'profilo' ? 'Torna al Profilo' : BV.solo ? 'Torna alla Dashboard' : 'Vai alla Dashboard') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}
+      <div class="sotto bv-nota">Li ritrovi tutti nella Lista Nomi, e da subito in Oggi: l'app ti dice già chi chiamare oggi.</div>
+      <button class="primario bv-finito" id="bv-finito" ${BV.conto ? '' : 'disabled'}>${fatto || chiuso ? (BV.ritorno === 'profilo' ? 'Torna al Profilo' : BV.solo ? 'Torna a Oggi' : 'Vai a Oggi') : 'Ho finito la mia cerchia ristretta'}</button>${indietro}
       ${BV.nomi.length ? `<div class="riquadro bv-nomi">${BV.nomi.map(n => `<div><b>${esc(n.nome)}</b><small>${esc(n.telefono || 'senza numero')}</small></div>`).join('')}</div>` : ''}`;   // il bottone sta SOPRA l'elenco: sempre a portata di dito (Ignazio 19/09, visto in foto)
     },
   }[quale]();

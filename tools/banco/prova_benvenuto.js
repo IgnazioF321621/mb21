@@ -9,7 +9,7 @@ function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
 prova('le voci sono le 7 del Piano Marketing, nell\'ordine della pagina; le pagine sono le 5 della barra in basso', () => {
   assert.deepEqual(B.VOCI, ['Sicurezza economica', 'Famiglia', 'Acquistare la casa', 'Lasciare il lavoro', 'Viaggiare', 'Tempo libero', 'Aiutare gli altri']);
   assert.equal(B.ALTRO, 'Un altro');
-  assert.deepEqual(B.PAGINE.map(p => p.nome), ['Dashboard', 'Agenda', 'Lista Nomi', 'Report', 'Mappa']);
+  assert.deepEqual(B.PAGINE.map(p => p.nome), ['Oggi', 'Agenda', 'Lista Nomi', 'Esplora']);   // v5 (nota 095): la barra a quattro voci; prima Dashboard, Agenda, Lista Nomi, Report, Mappa
   assert.ok(B.PAGINE.every(p => p.icona && p.testo));
   assert.deepEqual(B.SCHERMATE, ['benvenuto', 'perche_mb21', 'perche', 'pagine', 'cerchia']);
 });

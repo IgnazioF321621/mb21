@@ -692,7 +692,7 @@ async function foglioFileAmway(f) {
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio"><h3>${ic('file')} File Amway · ${esc(meseTesto)}</h3>
-    <p>${f.squadra.length} partner nel file. VPP e VPG aggiornati anche in Dashboard e Check per ${perUtenti.length} utenti dell'app.</p>
+    <p>${f.squadra.length} partner nel file. VPP e VPG aggiornati anche in Oggi e nel Check per ${perUtenti.length} utenti dell'app.</p>
     ${gia.count ? `<p>Questo mese è già caricato: i numeri di ${esc(meseTesto)} vengono <b>sostituiti</b> con quelli del file.</p>` : ''}
     ${c.nuovi.length ? `<p>Entrano nella Mappa (${c.nuovi.length}): ${nomi(c.nuovi)}</p>` : ''}
     ${c.usciti.length ? `<p>Non sono più nel file (${c.usciti.length}), restano nella Mappa: ${nomi(c.usciti)}</p>` : ''}

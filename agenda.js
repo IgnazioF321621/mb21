@@ -752,7 +752,7 @@
   const DURATA_NORMALE = 60;                 // tutto il resto, come il link a Google Calendar
   const durataPredefinita = tipo => (tipo === 'Contatto' ? DURATA_CONTATTO : DURATA_NORMALE);
   // L'avviso dopo il Salva di «Nuovo appuntamento» (Agenda e scheda, lo stesso): una telefonata scelta a mano (nota 012) va in coda, non «in Agenda»
-  const avvisoFissato = a => (a && a.scelta_a_mano ? (a.senza_ora ? 'Telefonata in coda: la trovi in Dashboard' : 'Telefonata fissata: in Agenda e in coda') : 'Appuntamento fissato');
+  const avvisoFissato = a => (a && a.scelta_a_mano ? (a.senza_ora ? 'Telefonata in coda: la trovi in Oggi, nei Contatti del giorno' : 'Telefonata fissata: in Agenda e in coda') : 'Appuntamento fissato');
 
   const inMinuti = hhmm => Number(String(hhmm).slice(0, 2)) * 60 + Number(String(hhmm).slice(3, 5));
   // 0 → «00:00», 1425 → «23:45», 1440 → «24:00» (si vede solo come etichetta della griglia)

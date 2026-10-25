@@ -100,6 +100,7 @@ async function apriTraining() {
   if (!TRN.settore) TRN.settore = TRN.cat.settori[0].nome;
   disegnaTraining();
   if (TRN.dopo === 'medaglie') { TRN.dopo = null; trnMedaglie(); }
+  if (TRN.dopo === 'ripasso') { TRN.dopo = null; if (MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali, 1).length) trnRipassoDiOggi(); }   // v5: dal riquadro di «Oggi», dritti nel ripasso
 }
 
 function disegnaTraining() {

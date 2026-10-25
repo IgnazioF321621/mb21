@@ -111,7 +111,7 @@ prova('081 (5): le voci nell\'ordine della Dashboard: VPG · VPP · VP Clienti; 
 });
 
 prova('081 (2): la freccia del Check dice da dove si arriva («‹ Volume» dalla card dell\'area) e ci riporta; senza, «‹ Dashboard»', () => {
-  assert.match(disegna(), /^<button class="indietro" id="ck-indietro">‹ Dashboard<\/button><h1>Check<\/h1>/);
+  assert.match(disegna(), /^<button class="indietro" id="ck-indietro">‹ Oggi<\/button><h1>Check<\/h1>/);
   Object.assign(ctx, { mostraTab: () => {}, window: { scrollTo() {} } });
   esegui(`apriCheckDa('Volume', 'oggi')`);
   assert.equal(ctx.ST.tab, 'check');
@@ -120,7 +120,7 @@ prova('081 (2): la freccia del Check dice da dove si arriva («‹ Volume» dall
   assert.equal(ctx.ST.tab, 'oggi');
   assert.equal(esegui('CK.da'), null);
   delete ctx.ST.tab;   // la pagina resta il Check per le prove dopo (con «oggi» il Modulo Core letto ridisegnerebbe la Dashboard)
-  assert.match(disegna(), /‹ Dashboard</);
+  assert.match(disegna(), /‹ Oggi</);   // v5: «Oggi» al posto della Dashboard
   // la stessa freccia anche mentre carica e se non si carica
   assert.equal((SORGENTE.match(/\$\{indietroCheck\(\)\}<h1>Check<\/h1>/g) || []).length, 3);
   assert.doesNotMatch(SORGENTE, /id="ck-indietro">‹ Dashboard/);

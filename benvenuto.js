@@ -11,11 +11,11 @@
   // Le pagine in basso, una riga l'una (testi approvati da Ignazio, decisione 7). Le icone stanno SOLO qui: il giorno in cui arriva
   // il set nuovo fatto con Design (cantiere 21) si cambiano in questo punto.
   const PAGINE = [
-    { icona: '🏠', nome: 'Dashboard', testo: 'cosa fare oggi: chi chiamare e i tuoi numeri' },
+    // v5 (nota 095, 25/10/2026): la barra ha quattro voci, Oggi · Agenda · Lista Nomi · Esplora; Report e Mappa stanno in Esplora
+    { icona: '🏠', nome: 'Oggi', testo: 'cosa fare oggi: chi chiamare e i tuoi numeri' },
     { icona: '📅', nome: 'Agenda', testo: 'i tuoi appuntamenti e le telefonate fissate' },
     { icona: '📋', nome: 'Lista Nomi', testo: 'tutte le tue persone, ognuna con la sua scheda' },
-    { icona: '📊', nome: 'Report', testo: 'quello che hai fatto, giorno per giorno' },
-    { icona: '🗺️', nome: 'Mappa', testo: 'la tua squadra' },
+    { icona: '🧭', nome: 'Esplora', testo: 'tutto il resto: la Mappa della squadra, il Training, il Check, il Report' },
   ];
 
   // Spunti per la memoria: «La tua cerchia ristretta», Manuale di Avvio N21 2026 pag. 6 (decisione 11)

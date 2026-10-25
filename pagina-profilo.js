@@ -29,7 +29,7 @@ function cerchiettoProfilo() {
 // BBS · WES · CEP. Password, calendario, avvisi e il resto restano del proprio Profilo: sono personali e non si cambiano per un altro.
 async function apriProfiloDiAltro(p) {
   const nome = nomeDi(p);
-  const testa = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>`;
+  const testa = `<button class="indietro" id="pf-indietro">‹ Oggi</button>`;
   app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="vuoto">Carico…</div>`;
   const torna = () => { document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); }; collegaPartnerSelect(); };
   torna();
@@ -61,7 +61,7 @@ async function apriProfiloDiAltro(p) {
 async function apriProfilo() {
   if (guardoAltri() && !vediTutti()) return apriProfiloDiAltro(visto());
   const u = ST.utente;
-  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button><h1>Profilo</h1><div class="vuoto">Carico…</div>`;
+  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Oggi</button><h1>Profilo</h1><div class="vuoto">Carico…</div>`;
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
   const [dati, stato, percorso] = await Promise.all([
@@ -142,7 +142,7 @@ function disegnaProfilo() {
   };
   const statoAvvisi = { acceso: 'accesi', spento: 'spenti', negato: 'bloccati', da_installare: 'da attivare', computer: 'dal telefono' }[s] || '';
   const numero = (ST.stato || {}).contatti_al_giorno;
-  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
+  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Oggi</button>
     <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button></div>
     <div class="sotto">Il tuo quadro personale</div>
     <div class="zona-oggi">La mia crescita</div>

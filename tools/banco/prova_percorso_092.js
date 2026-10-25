@@ -21,7 +21,7 @@ prova('092: nel Check niente più card del percorso (né il suo mese ‹ ›): i
   assert.doesNotMatch(IDX, /function lc1Html|lc1Html\(|ck-mese-prima|ck-mese-dopo|meseCard|CK\.aperti/);
   const riga = pezzo(IDX, 'function rigaPercorsoCheck()');
   assert.match(riga, /if \(vediTutti\(\)\) return '';/);
-  assert.match(riga, /<button class="mese-riga" id="ck-percorso">\$\{ic\('traguardo'\)\}<span><b>Il percorso<\/b><small>Leader 1° livello, Core, Pacesetter e i livelli · nella Dashboard<\/small><\/span><em>›<\/em><\/button>/);
+  assert.match(riga, /<button class="mese-riga" id="ck-percorso">\$\{ic\('traguardo'\)\}<span><b>Il percorso<\/b><small>Leader 1° livello, Core, Pacesetter e i livelli · in Oggi<\/small><\/span><em>›<\/em><\/button>/);
   // il tocco porta alla Dashboard, sulla pagina del traguardo
   assert.match(pezzo(IDX, 'function collegaCheck()'), /su\('ck-percorso', \(\) => \{ CK\.da = null; ST\.vaiA = 'traguardo'; ST\.tab = 'oggi'; mostraTab\(\); window\.scrollTo\(0, 0\); \}\);/);
   assert.doesNotMatch(pezzo(IDX, 'function collegaCheck()'), /collegaPercorso|data-gradino/);   // i legami del percorso restano solo nella Dashboard
