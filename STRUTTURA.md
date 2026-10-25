@@ -1234,6 +1234,7 @@ File: `index.html` (pagina unica, supabase-js da jsdelivr) · **`pagina-agenda.j
     - «Messaggi» nel menu (`messaggiAccesi()`: lo stesso `AVVISI_TEAM.messaggi` di pagina-dashboard.js);
     - «Link di registrazione» in Utenti (`linkRegistrazioneAcceso()`: lo stesso `INVITO_APP` di pagina-lista.js); «Richieste da approvare» resta;
     - «Schede dei partner» (`SCHEDE_PARTNER_ADMIN = false`): le schede si allineano già da sole dopo «Carica file Amway» (`allineaSchede`).
+    - «Utenti dell'app» (`UTENTI_ADMIN = false`, nota Pagine 087, Ignazio 24/10 «A», «sì, passala» 25/10): spenta dopo la chiusura del 25/10 alle 18:00, voce e pagina (se `AD.sezione` è 'utenti' si torna al menu); si riaccende con true (un utente nuovo, un rientro). Il Partner Select non ne ha bisogno: `caricaPersone` (index.html) legge da sé chi ha `nel_partner_select`. Gli utenti si leggono ancora all'apertura di Admin (li usano Messaggi e «Avvisa della chiusura»). Prova `tools/banco/prova_admin_087.js` (`prova_admin_086` prova la pagina riaccesa).
   - **Training in Admin:** le carte dalla copia nel telefono (`trnArchivio` di pagina-training.js, nota 084), o da quelle già lette (`TRN.mazzi`).
   - **Via i resti dell'abbonamento** (vedi la nota Pagine 071 più su). «Elimina» chiede: «… La sua lista, le azioni e i check restano salvati ma spenti: se rientra li ritrova.» (senza «tornerà a pagare per sé»). Spegnere davvero i dati di chi non entra è la nota Fondamenta 013 (con la chiusura).
   - **Segnalazioni:**

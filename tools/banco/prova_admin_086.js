@@ -24,7 +24,8 @@ function mondo(extra = {}) {
       from: t => { letture.push(t); const q = new Proxy({}, { get: (_, p) => (p === 'then' ? undefined : () => q) }); return q; } },
     dbq: async (_, p) => p, window: {}, document: {}, ...extra };
   vm.createContext(ctx);
-  vm.runInContext(ADMIN + '\nthis.__A = { AD, rigaUtenteAdmin, disegnaAdmin, caricaTrainingAdmin }; collegaAdmin = () => {};', ctx);
+  // nota 087: «Utenti dell'app» è spenta (UTENTI_ADMIN); qui si prova la pagina com'è quando si riaccende (la 087 ha la sua prova)
+  vm.runInContext(ADMIN.replace('const UTENTI_ADMIN = false;', 'const UTENTI_ADMIN = true;') + '\nthis.__A = { AD, rigaUtenteAdmin, disegnaAdmin, caricaTrainingAdmin }; collegaAdmin = () => {};', ctx);
   ctx.__A.AD.dispositivi = { u1: ['iPhone'] };
   return { A: ctx.__A, ctx, letture, archivi, app };
 }

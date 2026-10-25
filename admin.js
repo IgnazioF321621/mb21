@@ -12,6 +12,10 @@ const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediElimina
 // Gli interruttori della verifica Admin (nota 086): «Schede dei partner» spenta (le schede si allineano già dopo «Carica file Amway»);
 // «Messaggi» segue AVVISI_TEAM.messaggi (pagina-dashboard.js) e «Link di registrazione» INVITO_APP (pagina-lista.js), spenti tutti e due.
 const SCHEDE_PARTNER_ADMIN = false;
+// Nota Pagine 087 (Ignazio 24/10, «A»; «sì, passala» 25/10): dopo la chiusura del 25/10 alle 18:00 «Utenti dell'app» (la voce e la sua pagina) è spenta.
+// Si riaccende con true se serve (un utente nuovo, un rientro). Il Partner Select non ne ha bisogno: legge da sé chi ha «Nel Partner Select» (caricaPersone,
+// index.html). Gli utenti si leggono lo stesso all'apertura (pochi): li usano anche Messaggi e «Avvisa della chiusura».
+const UTENTI_ADMIN = false;
 const messaggiAccesi = () => typeof AVVISI_TEAM !== 'undefined' && !!AVVISI_TEAM.messaggi;
 const linkRegistrazioneAcceso = () => typeof INVITO_APP !== 'undefined' && !!INVITO_APP;
 const riquadro = (chiave, titolo, corpo, classe = '') => { const ap = AD.riquadri.has(chiave);
@@ -238,6 +242,7 @@ function rigaUtenteAdmin(u) {
 function disegnaAdmin() {
   const indietro = `<button class="indietro" id="ad-indietro">‹ Admin</button>`;
   let html;
+  if (AD.sezione === 'utenti' && !UTENTI_ADMIN) AD.sezione = null;   // 087: spenta, si torna al menu
   if (AD.sezione === 'utenti') {
     html = `${indietro}<h1>Utenti dell'app</h1>
       <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
@@ -343,7 +348,7 @@ function disegnaAdmin() {
     html = `<h1>Admin</h1>
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
-      ${voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}`)}
+      ${UTENTI_ADMIN ? voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}`) : ''}
       ${SCHEDE_PARTNER_ADMIN ? voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra') : ''}
       ${messaggiAccesi() ? voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto') : ''}
       ${typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta() ? voce('ad-vai-chiusura', ic('whatsapp') + ' Avvisa della chiusura', `manda il messaggio a ogni partner · mandati ${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
