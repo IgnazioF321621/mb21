@@ -339,7 +339,8 @@ function righeTracceHtml() {
 
 // La pagina «Tracce condivise» (dalla Dashboard): stessa tab, «‹ Dashboard» per tornare
 async function apriPaginaTracce() {
-  app.innerHTML = `<button class="indietro" id="tr-indietro">‹ Oggi</button><h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
+  const da = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && LV.vista === 'oggi' ? 'Contatti del giorno' : 'Oggi';   // v5: «Da seguire» sta in fondo a Contatti del giorno
+  app.innerHTML = `<button class="indietro" id="tr-indietro">‹ ${da}</button><h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
   window.scrollTo(0, 0);
   document.getElementById('tr-indietro').onclick = () => caricaOggi();
   collegaTracce(async () => { await caricaTracceDaControllare(ST.oggi); apriPaginaTracce(); });

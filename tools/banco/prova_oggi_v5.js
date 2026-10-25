@@ -25,7 +25,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
     visto: () => ({ id: 'io', partner_id: 'P1' }), guardoAltri: () => altro, vediTutti: () => false, eAdmin: () => admin, oraRoma: () => ora, dataEstesa: () => 'domenica 25 ottobre',
     nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
-    dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
+    dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '<div id="finto-seguire"></div>', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
     foglioSegnala: () => vai.push('feedback'), vaiLV: (v, x) => vai.push(['lv', v, x || null]), apriCheck: () => vai.push('check'), scegliNumero: () => vai.push('riparto'), caricaOggi() {},
     mostraTab: () => vai.push(['tab', ctx.ST.tab]), vaiAlPrimoLivello: () => vai.push('primo'), disegnaOggi: () => vai.push('ridisegna'), TRAINING_VISIBILE: true,
     window: { scrollTo() {} }, document: { getElementById: id => (id === 'segnala' ? sg : app.getElementById(id)), querySelector: s => app.querySelector(s) } };
@@ -46,7 +46,8 @@ prova('095: «Oggi» — testata con data, titolo, feedback e foto; Contatti del
   assert.equal(W.sg.hidden, true);
   assert.ok(h.indexOf('o5-contatti') < h.indexOf('o5-agenda') && h.indexOf('o5-agenda') < h.indexOf('o5-training') && h.indexOf('o5-traguardo') < h.indexOf('o5-mappa'));
   assert.match(testo(h), /Contatti del giorno 3 su 5 Mancano Persona A e Persona B/);
-  assert.ok(h.includes('<div id="finta-testa"></div>'));   // l'avviso più urgente resta (dashboardTesta), senza la fascia del Partner Select
+  assert.ok(h.includes('<div id="finta-testa"></div>'));
+  assert.doesNotMatch(h, /finto-seguire/);   // Ignazio 25/10: «Da seguire» non sta più in Oggi (è in fondo a Contatti del giorno)   // l'avviso più urgente resta (dashboardTesta), senza la fascia del Partner Select
   W.app.clic('#o5-feedback'); W.app.clic('[data-o5="contatti"]');
   assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), ['feedback', ['lv', 'oggi', null]]);   // l'elenco dei Contatti del giorno (oggi «Chi sento oggi?»)
 });
@@ -214,7 +215,8 @@ prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹
   assert.match(testo(h), /Prima si chiude ciò che è aperto · 1 .*Poi si contatta \(nomi in coda o scelte personali\) · 2 .*Già sentiti oggi · 1/);
   assert.match(h, /class="c5-pallino" style="background:var\(--z-clienti\)"/);   // la Conferma di un Cliente: oro
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
-  assert.equal((h.match(/data-non-ora=/g) || []).length, 2);   // «Non ora» sulle righe della coda, come adesso
+  assert.equal((h.match(/data-non-ora=/g) || []).length, 2);
+  assert.ok(h.indexOf('id="finto-seguire"') > h.indexOf('Già sentiti oggi'));   // «Da seguire» in fondo, uguale a prima (Ignazio 25/10, «A»)   // «Non ora» sulle righe della coda, come adesso
   assert.equal(W.sg.hidden, true);
   W.app.clic('[data-non-ora="c1"]'); W.app.clic('[data-lv-persona="coda|c2"]'); W.app.clic('#lv-indietro');
   assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['nonora', 'c1'], ['lv', 'persona', { persona: 'coda|c2' }], ['indietro']]);

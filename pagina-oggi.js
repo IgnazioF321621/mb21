@@ -168,8 +168,7 @@ function disegnaOggiV5() {
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
     <div class="o5-riquadri">${o5Contatti(sera)}${sera ? o5Sera() : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
-      <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div>
-    ${daSeguireHtml()}</div>`;
+      <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();
   if (sg) sg.hidden = true;   // v5: il feedback sta in alto nella testata, non più il tondo in basso
   document.getElementById('o5-feedback').onclick = () => foglioSegnala();
@@ -261,7 +260,8 @@ function disegnaContattiV5() {
     + `<div class="v5-titolo"><div><h1>Contatti del giorno</h1><span>${e.totale ? `Fatti ${e.fatti} su ${e.totale}${manca ? ` · ${manca === 1 ? 'ne manca 1' : `ne mancano ${manca}`}` : ''}` : esc(dataEstesa(ST.oggi))}</span></div>${e.totale ? o5Anello(e.fatti, e.totale, 62) : ''}</div>
       ${primo ? `<button class="v5-inizia" data-lv-persona="${primo.motivo}|${esc(primo.id)}">Inizia da ${esc(primo.nome)}</button>` : ''}</div>`
     + `<div class="c5-corpo">${ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${extra}${gruppi}${fatte}
-      ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}</div>` + versione();
+      ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}
+      ${daSeguireHtml()}</div>` + versione();   // Ignazio 25/10 («A»): «Da seguire» (tracce condivise e il mio percorso) esce da Oggi e sta qui in fondo, uguale a prima
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
   attaccaIndietroLV();
