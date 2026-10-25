@@ -100,10 +100,12 @@ function mostraAvvisoRicevuto(titolo, testo) {
 // (migrazione 20260923143237_avvisi_quando.sql) e, dal lavoro 3, nella funzione Edge `avvisi`: se cambia uno, cambiano tutti.
 // 03/10 (Ignazio): niente più avvisi «Prima di» per appuntamenti, telefonate, cose da fare e modelli: li fa il calendario di ognuno (link nel Profilo).
 // Restano «Com'è andata?» (serve per avere gli esiti), il Buongiorno e la sera.
+// Nota Pagine 089 (Ignazio 25/10/2026, «sì»): «Com'è andata?» senza i tre bottoni (30′ · 1 ora · 2 ore): arriva sempre 1 ora dopo (`gia`, come
+// GIA_IMPOSTATO nella funzione `avvisi`); nel Profilo resta scritto, senza scelta. Un tipo con `scelte` vuote si legge soltanto.
 // Nota Pagine 083, punto 3 (Ignazio 24/10): nel Profilo niente più titoletti «Dopo un appuntamento» e «Ogni giorno» (i gruppi restano qui, non si scrivono)
 const AVVISI_QUANDO = [
   { gruppo: 'Dopo un appuntamento', tipi: [
-    { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: 'se manca l\'esito', scelte: [[30, '30′ dopo'], [60, '1 ora dopo'], [120, '2 ore dopo']], gia: 60 } ] },
+    { k: 'com_e_andata', titolo: '«Com\'è andata?»', sotto: '1 ora dopo la fine, se manca l\'esito', scelte: [], gia: 60 } ] },
   { gruppo: 'Ogni giorno', tipi: [
     { k: 'buongiorno', titolo: 'Buongiorno', sotto: 'il programma di oggi', scelte: [7, 8, 9, 10].map(h => [h, h + ':00']), gia: 9 },
     { k: 'check', titolo: '«Il mio giorno», la sera', sotto: '', scelte: [20, 21, 22].map(h => [h, h + ':00']), gia: 22 } ] },   // 02/10: il Training non ha più l'avviso a parte, lo ricorda la sera
@@ -113,8 +115,8 @@ const sceltaAvviso = (u, k) => { const t = AVVISI_QUANDO.flatMap(g => g.tipi).fi
 function avvisiQuandoHtml(u) {
   return AVVISI_QUANDO.map(g => g.tipi.map(t => {
     const scelto = sceltaAvviso(u, t.k);
-    return `<div class="pf-tipo"><b>${t.titolo}</b>${t.sotto ? `<span>${t.sotto}</span>` : ''}<div class="pf-scelte">${t.scelte.map(([v, testo]) =>
-      `<button class="${v === scelto ? 'scelto' : ''}" data-quando="${t.k}:${v}">${testo}</button>`).join('')}</div></div>`;
+    return `<div class="pf-tipo"><b>${t.titolo}</b>${t.sotto ? `<span>${t.sotto}</span>` : ''}${t.scelte.length ? `<div class="pf-scelte">${t.scelte.map(([v, testo]) =>
+      `<button class="${v === scelto ? 'scelto' : ''}" data-quando="${t.k}:${v}">${testo}</button>`).join('')}</div>` : ''}</div>`;
   }).join('')).join('');
 }
 

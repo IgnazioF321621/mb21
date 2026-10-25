@@ -45,7 +45,8 @@ prova('083 (3): Profilo › Avvisi più corto — una frase sola in cima, niente
   const h = profilo();
   assert.match(h, /<small style="margin-top:0">Arrivano anche con l'app chiusa\. L'ora la scegli tu: vale su tutti i tuoi dispositivi\.<\/small>/);
   assert.doesNotMatch(h, /Dopo un appuntamento|Ogni giorno|pf-quando-titolo|tracce condivise da controllare|Il buongiorno, il riepilogo della sera/);
-  for (const k of ['com_e_andata:60', 'buongiorno:9', 'check:22']) assert.match(h, new RegExp(`class="scelto" data-quando="${k}"`));   // i «già impostato»
+  for (const k of ['buongiorno:9', 'check:22']) assert.match(h, new RegExp(`class="scelto" data-quando="${k}"`));   // i «già impostato»
+  assert.doesNotMatch(h, /data-quando="com_e_andata/);   // nota 089: «Com'è andata?» senza scelta, sempre 1 ora dopo (prova_profilo_089.js)
   assert.equal((h.match(/class="pf-tipo"/g) || []).length, 3);
   assert.match(h, /id="av-prova">\[avvisi\] Prova un avviso<\/button>/);
 });

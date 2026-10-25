@@ -127,6 +127,8 @@ function avvisiNuoviHtml(statoDispositivo, destra) {
       <button class="primario pf-prova" id="av-prova">${ic('avvisi')} Prova un avviso</button>` });
 }
 
+// Nota Pagine 089 (Ignazio 25/10/2026): due titoletti, «La mia crescita» in alto (Perché ho iniziato, Segni vitali, Training, e vicino «I miei libri»)
+// e «Impostazioni» sotto; «Cambia password» sta dentro «I tuoi dati» (una riga in meno). Il titoletto è quello della Dashboard (.zona-oggi).
 function disegnaProfilo() {
   const u = ST.utente, s = AV.stato;
   const b = (id, t, classe = 'link') => `<button class="${classe}" id="${id}">${t}</button>`;
@@ -143,24 +145,26 @@ function disegnaProfilo() {
   app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Dashboard</button>
     <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button></div>
     <div class="sotto">Il tuo quadro personale</div>
+    <div class="zona-oggi">La mia crescita</div>
     ${mioProfiloHtml()}
     ${mieiSegniHtml()}
     ${mioTrainingHtml()}
+    ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
+    ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
+    ${AVVIO_NEL_PROFILO ? rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto') : ''}
+    <div class="zona-oggi">Impostazioni</div>
     ${voceProfilo('dati', ic('persona') + ' I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(u.partner_id || '—')}</b></div>
       <label>Telefono<input id="pf-tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" value="${esc(u.telefono || '')}" placeholder="+39 …"></label>
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
-      <small>Nome, email e codice Amway li cambia l'Admin.</small>` })}
+      <small>Nome, email e codice Amway li cambia l'Admin.</small>
+      <button class="link" id="pf-password" style="display:block;margin-top:6px">${ic('password')} Cambia password ›</button>` })}
     ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—')))}
     ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
-    ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
-    ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
     ${typeof toccoScaricaLista === 'function' ? rigaProfilo('pf-scarica-lista', ic('file') + ' Scarica la mia lista', '', 'Schede, azioni e note in un file Excel') : ''}
-    ${AVVIO_NEL_PROFILO ? rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto') : ''}
-    ${rigaProfilo('pf-password', ic('password') + ' Cambia password')}
     ${rigaProfilo('pf-privacy', ic('lucchetto') + ' Privacy', '', 'Come sono trattati i tuoi dati')}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
