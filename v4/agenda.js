@@ -1,0 +1,914 @@
+// MB21 · logica dell'Agenda (Fase 4)
+// Funzioni pure: scelte categoria → tipo → sottotipo → fasi, settimana, righe, ora proposta.
+// Nessun accesso alla rete: la usano l'app e tools/banco/prova_agenda.js.
+// Scelte: docs/MB21_v4_Scelte_Agenda.md, decisioni di Ignazio del 14/09 (le fasi di Appuntamento sono da migliorare).
+(function (radice) {
+  const PERCHE = typeof module !== 'undefined' && module.exports ? require('./perche.js') : radice.MB21Perche;   // i motivi brevi (nota 048)
+  const SOTTOTIPI = {
+    'Contatto': ['Telefonata', 'Messaggio', 'Presenza'],
+    'Piano Marketing': ['PM 1a1', 'PM Upline', 'PM Casa/Pull', 'PM Open'],
+    // «Laboratorio» (nota Azioni 060, Ignazio 06/10): il percorso in più incontri che avvia i nuovi iscritti; ci va anche un Prospect che ha visto
+    // il piano ed è in fase decisionale, e per lui vale come un follow up. Ogni incontro è un appuntamento a sé
+    'Follow Up': ['Personale', 'Upline', 'Meeting/Evento', 'Laboratorio'],
+    'Appuntamento': ['Avvio', 'Laboratorio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine'],
+    'Consulenza PRD': ['Presentazione', 'Demo', 'Promo/Sconto', 'Riordino'],   // «Presentazione» al posto di «Assistenza» (Ignazio 29/09; cantiere 48)
+  };
+  // Nome del campo sottotipo per ogni tipo, stile Glide «Tipo di contatto» (decisione di Ignazio 15/09)
+  const ETICHETTE_SOTTOTIPO = {
+    'Contatto': 'Tipo di contatto', 'Piano Marketing': 'Tipo di piano', 'Follow Up': 'Tipo di follow up',
+    'Appuntamento': 'Tipo di appuntamento', 'Consulenza PRD': 'Tipo di consulenza',
+  };
+  const etichettaSottotipo = tipo => ETICHETTE_SOTTOTIPO[tipo] || (tipo ? `Tipo di ${tipo.toLowerCase()}` : 'Tipo');
+  const FASI_PM = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
+  const FASI_FU = ['Ulteriore Follow Up', 'Iscrizione', 'No BuonFine', 'Rimandato', 'No Show', 'Prodotti'];
+  const FASI_PRD = ['Vendita', 'No Vendita'];                                   // decisione 1
+  const FASI_CONTATTO_PC = ['Appuntamento', 'Richiamare'];                        // decisione 2
+  // Appuntamento: fasi per sottotipo (decisione 3; tolti i nomi vecchi non in Sequenze)
+  const FASI_APPUNTAMENTO = {
+    'Avvio': ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'],   // l'ordine dell'Avvio (Ignazio 30/09); i nomi non cambiano: danno le statistiche
+    'Laboratorio': ['Motivazione', 'ListaStart', 'OrdineStart', 'Lista nomi', 'RolePlay', 'Telefonate', 'Inaugurazione'],   // gli stessi passi dell'Avvio (nota 060): a ogni incontro si spuntano quelli fatti, il prossimo propone quelli che mancano (nota 055)
+    'Counseling': ['c/Downline', 'c/Upline', 'Motivazione'],
+    'Lista/Contatti': ['Lista nomi', 'Motivazione', 'Telefonate'],
+    'Meeting/Evento': ['Incontro N21'],
+    'Ordine': ['OrdineStart', 'VP Personali'],
+  };
+  // Tipi per categoria (Scelte.csv). Dal 17/09 (Ignazio: «l'azione in qualsiasi categoria, semplifichiamo; basta che ne abbia una»)
+  // Ex Partner/Cliente, Referral, Unlinked e Archiviato hanno gli stessi tipi ed esiti del Prospect (prima: nessun appuntamento, decisione 5).
+  const TIPI = {
+    'Prospect': {
+      // cantiere 39 (Ignazio 21/09): prima gli esiti buoni, poi quelli non andati (ESITI_NON_ANDATI: vanno su una riga loro).
+      // «Mai contattato o 2+ anni» non è un esito (è prima della telefonata): tolto. «Consult Prodotti» → «Consulenza Prodotti»,
+      // «Telefono OFF» → «Telefono spento», rinominati anche nel database (migrazione esiti_nomi_nuovi).
+      'Contatto': ['PM Fissato', 'Relazione', 'Richiamare', 'Consulenza Prodotti', 'Telefono spento', 'No Interesse', 'No Risposta'],
+      'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Consulenza PRD': FASI_PRD,
+    },
+    // Ignazio 25/09: «No Risposta» e «Telefono spento» anche per Partner e Clienti (in Glide c'erano; prima il Cliente li aveva solo in coda)
+    'Partner': { 'Contatto': [...FASI_CONTATTO_PC, 'Telefono spento', 'No Risposta'], 'Piano Marketing': FASI_PM, 'Follow Up': FASI_FU, 'Appuntamento': FASI_APPUNTAMENTO },
+    // «Ordina da solo» (nota Azioni 025, Ignazio 08/10): il cliente ordina dal suo account; non è un no e non è una vendita: dal 22/10 segna il cliente «Ha un account cliente» (V4 Vendite, index.html accountDaEsito)
+    'Cliente': { 'Contatto': ['Ordine', 'Ordina da solo', ...FASI_CONTATTO_PC, 'Telefono spento', 'No Interesse', 'No Risposta'], 'Consulenza PRD': FASI_PRD },   // Ignazio 18/09: «Ordine» = riordino andato bene, si registra la vendita; «No Interesse» = non riordina («Quando risentirlo?»)
+  };
+  for (const c of ['Ex Partner/Cliente', 'Referral', 'Unlinked', 'Archiviato']) TIPI[c] = TIPI['Prospect'];
+  const CATEGORIE = ['Prospect', 'Partner', 'Cliente'];   // le tre scelte del modulo; le altre restano com'erano sul contatto
+  const CON_OSPITE = ['Piano Marketing', 'Follow Up'];                          // decisione 8
+  // Ignazio 23/09: le stesse pillole ovunque (appuntamenti e cose da fare), oppure inizio e fine scritti a mano («Altra…»)
+  const DURATE = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 ora']];   // 45 aggiunto il 21/09 (Ignazio: «17:15–18:00»)
+  const COLORI = { 'Piano Marketing': 'var(--az-pm)', 'Follow Up': 'var(--az-followup)', 'Appuntamento': 'var(--az-appuntamento)', 'Consulenza PRD': 'var(--az-consulenza)', 'Contatto': 'var(--az-contatto)' };
+  const GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+  const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+  // Esiti di una telefonata non andata: a video stanno sotto quelli buoni, su una riga loro (index.html → bottoniEsiti).
+  // PM e Follow Up no (Ignazio 21/09): lì i risultati sono quattro, in fila dal migliore al peggiore, vedi RISULTATI.
+  const ESITI_NON_ANDATI = ['Telefono spento', 'No Interesse', 'No Risposta'];
+  const esitiInDueRighe = bottoni => [bottoni.filter(x => !ESITI_NON_ANDATI.includes(x)), bottoni.filter(x => ESITI_NON_ANDATI.includes(x))].filter(g => g.length);
+  // Esiti dati dalla coda che portano con sé un giorno scelto (`data_scelta`): con gli altri il giorno non serve più
+  const ESITI_CON_GIORNO = ['Richiamare', 'PM Fissato', 'Appuntamento'];
+  const tipiPer = categoria => Object.keys(TIPI[categoria] || {});
+  const sottotipiPer = tipo => SOTTOTIPI[tipo] || [];
+  // «Su cosa lavorate?» (cantiere 48): gli incontri con un Partner si fissano con i passi su cui si lavora, anche più d'uno: le fasi di quel tipo
+  // di appuntamento (Avvio: Motivazione · ListaStart · OrdineStart · Lista nomi · RolePlay · Telefonate · Inaugurazione). Per gli altri, niente.
+  // Solo i passi del tipo scelto (nota Pagine 011, Ignazio 05/10: «Counseling mi deve mostrare solo le voci inerenti al Counseling»; per un'ora,
+  // versione 17:24, c'erano tutti e 11). Si scelgono da un selettore che si apre, non da pillole.
+  const suCosaPer = (categoria, tipo, sottotipo) => (categoria === 'Partner' && tipo === 'Appuntamento' ? fasiPer(categoria, tipo, sottotipo) : []);
+  // Tutti i passi degli incontri con un Partner, in un ordine solo (prima l'Avvio, poi gli altri tipi): serve a mettere in fila i passi
+  // quando vengono da più tipi (nota Azioni 055)
+  const TUTTI_I_PASSI = [...new Set(Object.values(FASI_APPUNTAMENTO).flat())];
+  // I passi suggeriti guardano la persona (nota Azioni 055, Ignazio 05/10): `persona` = { nuovo, fermo, fatti } (da MB21Lista.situazioneAvvio).
+  // Partner in Avvio («nuovo»): i passi del tipo più i passi dell'Avvio che non ha ancora spuntato in «Il mio avvio», senza quelli già fatti.
+  // Partner fermo (in pausa): i passi del tipo più «Il perché · Lista nomi · Telefonate» (riparte dalla base, scelta di Ignazio 05/10).
+  // Avvio concluso, o persona non conosciuta: i passi del tipo, come prima. Per gli altri (non Partner/Appuntamento): niente.
+  const PASSI_RIPRESA = ['Motivazione', 'Lista nomi', 'Telefonate'];
+  const PASSI_AVVIO_SPUNTABILI = ['Motivazione', 'ListaStart', 'OrdineStart', 'RolePlay', 'Telefonate'];   // quelli con una riga in «Il mio avvio»
+  function passiSuggeriti(categoria, tipo, sottotipo, persona) {
+    const base = suCosaPer(categoria, tipo, sottotipo);
+    if (!base.length || !persona) return base;
+    const fatti = Array.isArray(persona.fatti) ? persona.fatti : [];
+    if (persona.fermo) return TUTTI_I_PASSI.filter(x => base.includes(x) || PASSI_RIPRESA.includes(x));
+    if (persona.nuovo) return TUTTI_I_PASSI.filter(x => (base.includes(x) || PASSI_AVVIO_SPUNTABILI.includes(x)) && !fatti.includes(x));
+    return base;
+  }
+  // I passi ammessi quando si chiude l'incontro: quelli del tipo più quelli già scelti fissandolo (possono venire dall'Avvio, nota 055), in ordine
+  const passiAmmessi = (a, categoria) => {
+    const base = suCosaPer(a.categoria || categoria, a.tipo_azione, a.modalita), scelti = Array.isArray(a.su_cosa) ? a.su_cosa : [];
+    return base.length ? TUTTI_I_PASSI.filter(x => base.includes(x) || scelti.includes(x)) : [];
+  };
+  // Il nome che si legge: Il perché (lo stesso passo di «Il mio avvio»), Lista Start, Ordine Start, Lista Nomi, Role Play; i nomi salvati non cambiano (il Report)
+  // come li scrive Ignazio (30/09); «c/Downline» e «c/Upline» si leggono per intero dal 04/10 (nota Azioni 070): i nomi salvati restano, le statistiche non cambiano
+  const NOMI_PASSO = { Motivazione: 'Il perché', ListaStart: 'Lista Start', OrdineStart: 'Ordine Start', 'Lista nomi': 'Lista Nomi', RolePlay: 'Role Play',
+    'c/Downline': 'Counseling a un partner', 'c/Upline': 'Counseling con l’upline' };
+  const nomePasso = f => NOMI_PASSO[f] || f;
+  function fasiPer(categoria, tipo, sottotipo) {
+    const f = (TIPI[categoria] || {})[tipo];
+    if (!f) return [];
+    return Array.isArray(f) ? f : (f[sottotipo] || []);
+  }
+  const conOspite = tipo => CON_OSPITE.includes(tipo);
+  // Scelte del foglio unico «Modifica azione» (15/09): sottotipi ed esiti dagli stessi elenchi dell'Agenda,
+  // così un tipo nuovo (es. Laboratorio) aggiunto qui compare ovunque. Se la categoria non ha quel tipo
+  // (Referral, senza categoria, tipi di Glide) si prendono gli esiti del tipo in tutte le categorie.
+  // I valori già salvati restano sempre sceglibili, anche se fuori elenco.
+  function sceltePerModifica(azione) {
+    const tipo = azione.tipo_azione, sottotipo = azione.modalita;
+    let esiti = fasiPer(azione.categoria, tipo, sottotipo);
+    if (!esiti.length) esiti = CATEGORIE.flatMap(c => fasiPer(c, tipo, sottotipo));
+    if (!esiti.length) esiti = CATEGORIE.flatMap(c => { const f = (TIPI[c] || {})[tipo]; return f && !Array.isArray(f) ? Object.values(f).flat() : []; });
+    const sottotipi = [...sottotipiPer(tipo)];
+    if (sottotipo && !sottotipi.includes(sottotipo)) sottotipi.push(sottotipo);
+    const unici = [...new Set(esiti)];
+    if (azione.esito && !unici.includes(azione.esito)) unici.push(azione.esito);
+    return { sottotipi, esiti: unici, ospite: conOspite(tipo) || !!azione.ospite };
+  }
+
+  // ── Date (Europe/Rome) ──
+  const FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function partiRoma(iso) {
+    const p = Object.fromEntries(FMT.formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+    return { giorno: `${p.year}-${p.month}-${p.day}`, ora: `${p.hour}:${p.minute}` };
+  }
+  // «2026-09-10» + «18:30» (ora di Roma) → ISO in UTC
+  function isoDaRoma(giorno, ora) {
+    const guess = new Date(`${giorno}T${ora}:00Z`);
+    const { giorno: g, ora: o } = partiRoma(guess.toISOString());
+    const scarto = (Date.parse(`${g}T${o}:00Z`) - guess.getTime());
+    return new Date(guess.getTime() - scarto).toISOString();
+  }
+  function spostaGiorno(giorno, n) {
+    const d = new Date(giorno + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+  // I 7 giorni (lunedì → domenica) della settimana che contiene `giorno`
+  function settimana(giorno) {
+    const dow = (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7;
+    const lun = spostaGiorno(giorno, -dow);
+    return Array.from({ length: 7 }, (_, i) => spostaGiorno(lun, i));
+  }
+  const titoloMese = giorno => `${MESI[Number(giorno.slice(5, 7)) - 1]} ${giorno.slice(0, 4)}`;
+
+  // Righe dell'agenda di un giorno, in ordine d'ora. `azioni`: righe di azioni (con contatti/utenti incorporati).
+  function eventiDelGiorno(azioni, giorno) {
+    return azioni
+      .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
+      .filter(a => a.quando && partiRoma(a.quando).giorno === giorno)
+      .sort((x, y) => (x.quando < y.quando ? -1 : 1));
+  }
+
+  // ── Cose da fare del giorno (cantiere 41, lavoro 1) ──────────────────────────
+  // Le cose da fare del foglio del giorno, ognuna legata a una persona o al Team, al LdS, a Network 21, ad Amway (legameDi). Il riporto a
+  // domani è una regola di lettura: una cosa non fatta con giorno passato si vede OGGI (con «da <giorno>»), finché non la spunti; nel suo
+  // giorno di origine non si vede più. Le cose fatte stanno nel giorno in cui le hai spuntate (`giorno`).
+  // Ordine: prima le da fare, poi le fatte; a parità `ordine` (il trascinamento), poi le riportate (le più vecchie per prime), poi creazione.
+  // Restano fuori le righe dei vecchi modelli, progetti e Core (`modello_id`, `progetto_id`, `core`): dal 05/10/2026 non fanno parte di MB Plan;
+  // e qui contano solo le cose sulla scala del giorno (`scala` vuota = giorno).
+  const daMBPlan = c => !c.modello_id && !c.progetto_id && !c.core;
+  function coseDelGiorno(cose, giorno, oggi) {
+    const mie = (cose || []).filter(c => daMBPlan(c) && (!c.scala || c.scala === 'giorno')).filter(c => {
+      if (!c.fatto_il && c.giorno < oggi) return giorno === oggi;   // non fatta e passata: sta in oggi, non nel giorno vecchio
+      return c.giorno === giorno;
+    }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < giorno ? c.giorno : null }));
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
+      || (x.ordine || 0) - (y.ordine || 0)   // l'ordine scelto trascinando (Ignazio 23/09: vince lui)
+      || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1)
+      || (x.riportata && y.riportata && x.riportata !== y.riportata ? (x.riportata < y.riportata ? -1 : 1) : 0)
+      || ((x.creato_il || '') < (y.creato_il || '') ? -1 : (x.creato_il || '') > (y.creato_il || '') ? 1 : 0));
+  }
+  // Le cose da fare del MESE (cantiere 41, vista Mese): `scala = 'mese'`, `giorno` = primo del mese. Come per i giorni,
+  // una non fatta di un mese passato si vede nel mese di oggi con «riportata» = il suo mese; le fatte restano nel loro.
+  // La stessa regola vale per la SETTIMANA (`scala = 'settimana'`, `giorno` = il lunedì): coseDellaScala.
+  function coseDellaScala(cose, scala, inizio, inizioOggi) {
+    const mie = (cose || []).filter(c => c.scala === scala && daMBPlan(c)).filter(c => {
+      if (!c.fatto_il && c.giorno < inizioOggi) return inizio === inizioOggi;
+      return c.giorno === inizio;
+    }).map(c => ({ ...c, riportata: !c.fatto_il && c.giorno < inizio ? c.giorno : null }));
+    return mie.sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0)
+      || (x.ordine || 0) - (y.ordine || 0)
+      || (x.riportata ? 0 : 1) - (y.riportata ? 0 : 1) || ((x.creato_il || '') < (y.creato_il || '') ? -1 : 1));
+  }
+  const coseDelMese = (cose, mese0, meseOggi0) => coseDellaScala(cose, 'mese', mese0, meseOggi0);
+  // Agenda P9 (Ignazio 23/10): le viste sono quattro, Giorno · Settimana · Mese · Anno; il Periodo WES non c'è più. Una cosa salvata
+  // prima con la scala 'periodo' si legge come una cosa del Mese che contiene il suo giorno: solo sullo schermo, nel database resta com'è.
+  const senzaPeriodo = c => (c && c.scala === 'periodo' ? { ...c, scala: 'mese', giorno: c.giorno ? c.giorno.slice(0, 8) + '01' : c.giorno } : c);
+  // Il numero della settimana (ISO: la settimana 1 è quella con il primo giovedì dell'anno)
+  function numeroSettimana(giorno) {
+    const d = new Date(giorno + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7));
+    const primo = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+    return 1 + Math.round(((d - primo) / 86400000 - 3 + ((primo.getUTCDay() + 6) % 7)) / 7);
+  }
+  // I mesi (primo giorno) da `da` compreso ad `a` escluso
+  function mesiTra(da, a) { const out = []; for (let m = da; a && m < a && out.length < 24; m = meseAccanto(m, 1)) out.push(m); return out; }
+  // Giorni interi tra due date (b − a)
+  const giorniTra = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000);
+
+  // Il primo giorno del mese dopo (o prima, con n = -1)
+  function meseAccanto(mese0, n) { const d = new Date(mese0 + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n, 1); return d.toISOString().slice(0, 10); }
+  const MAX_COSA = 1000, MAX_VOCE = 200;
+  const pulisciTesto = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  function testoCosa(s, max = MAX_COSA) { const t = pulisciTesto(s).slice(0, max); return t || null; }
+  function testoTroppoLungo(s, max = MAX_COSA) { return pulisciTesto(s).length > max; }
+
+  // ── Punti da trattare e link della chiamata (nota Pagine 026, Ignazio 05/10/2026) ──
+  // Un appuntamento (tabella `azioni`) o una serata Team/LdS/OPEN (`spazi`) ha `punti`: righe spuntabili [{ t, fatto }], e `link`: l'indirizzo
+  // della chiamata online. Qui solo le regole; il disegno è in pagina-agenda.js (puntiHtml). Un punto non trattato può passare al «Da fare».
+  const MAX_PUNTO = 200, MAX_PUNTI = 30, MAX_LINK = 500;
+  const puntiDi = x => (Array.isArray(x && x.punti) ? x.punti : []).filter(r => r && typeof r.t === 'string' && r.t.trim()).map(r => ({ t: r.t, fatto: !!r.fatto }));
+  function aggiungiPunto(punti, testo) { const t = testoCosa(testo, MAX_PUNTO); if (!t || punti.length >= MAX_PUNTI) return null; return [...punti, { t, fatto: false }]; }
+  // dal modulo «nuovo appuntamento»: una riga per punto, senza quelle vuote; null se non c'è niente da salvare
+  function puntiDaRighe(testo) { const p = String(testo || '').split(/\r?\n/).reduce((acc, r) => aggiungiPunto(acc, r) || acc, []); return p.length ? p : null; }
+  const spuntaPunto = (punti, i) => punti.map((r, j) => (j === i ? { ...r, fatto: !r.fatto } : r));
+  const togliPunto = (punti, i) => punti.filter((r, j) => j !== i);
+  // il conto scritto a parole, come «Messi 3 su 3» (stella cometa)
+  function contoPunti(punti) { const fatti = punti.filter(r => r.fatto).length; return punti.length ? `Trattati ${fatti} su ${punti.length}` : ''; }
+  // l'indirizzo della chiamata: con https:// davanti se manca; vuoto o senza senso → null (niente da salvare)
+  function linkChiamata(s) {
+    const t = pulisciTesto(s).replace(/\s/g, '').slice(0, MAX_LINK);
+    if (!t) return null;
+    const url = /^https?:\/\//i.test(t) ? t : 'https://' + t;
+    return /^https?:\/\/[^\s/.]+\.[^\s]+$/i.test(url) ? url : null;
+  }
+  // «Dove» (Ignazio 05/10): un campo solo per il link se è online e per il posto se è dal vivo (hotel, indirizzo). Quello che inizia come
+  // un indirizzo web è il link (`link`), il resto è il posto (`luogo`); vuoto = niente. Il posto si apre nelle Mappe.
+  const MAX_LUOGO = 200;
+  function doveDa(testo) {
+    const t = pulisciTesto(testo);
+    if (!t) return { link: null, luogo: null };
+    const link = linkChiamata(t);
+    return link ? { link, luogo: null } : { link: null, luogo: t.slice(0, MAX_LUOGO) };
+  }
+  const testoDove = ogg => (ogg && (ogg.link || ogg.luogo)) || '';
+  const linkMappa = luogo => 'https://maps.apple.com/?q=' + encodeURIComponent(String(luogo || '').trim());
+  // a cosa si lega il punto che passa al «Da fare»: l'appuntamento alla sua persona, la serata al suo gruppo (Team, LdS, OPEN = Network 21)
+  const LEGAME_SPAZIO = { 'Team': 'Team', 'LOS': 'LdS', 'SdS/OPEN': 'N21' };
+  const legamePunti = (ogg, tabella) => (tabella === 'spazi' ? (LEGAME_SPAZIO[ogg.tipo] ? { tipo: LEGAME_SPAZIO[ogg.tipo] } : null) : ogg.contatto_id ? { tipo: 'persona', contatto_id: ogg.contatto_id } : null);
+  const conPunti = (ogg, tabella) => tabella !== 'spazi' || ogg.tipo in LEGAME_SPAZIO;   // le serate di gruppo sì, gli spazi da riempire no
+
+  // ── Impegni condivisi (nota Pagine 027, Ignazio 05/10/2026) ──
+  // Un appuntamento lo condivide ogni partner con la persona dell'appuntamento (se usa l'app); una serata Team/LdS/OPEN la condivide solo
+  // l'Admin con tutto il Team o con una Linea (il ramo di un suo frontale). Chi riceve lo vede nella sua Agenda («da Ignazio»), con il link
+  // e, se condivisi, i punti in sola lettura; risponde «Partecipo / Non posso». Qui le regole; la funzione `impegni_ricevuti` del database
+  // dà le righe { origine, id, inizio, fine, titolo, tipo, da_nome, link, punti, punti_condivisi, visto_il, risposta }.
+  const RISPOSTE = [['ci_sono', 'Partecipo'], ['non_ci_sono', 'Non posso']];   // le chiavi restano nel database; le parole sono di Ignazio (05/10: «Partecipi?»)
+  const RISPOSTA_DI_LUI = { ci_sono: 'Partecipa', non_ci_sono: 'Non può' };   // la stessa risposta letta da chi organizza
+  const nomeRispostaDiLui = r => RISPOSTA_DI_LUI[r] || 'Senza risposta';
+  const nomeRisposta = r => (RISPOSTE.find(x => x[0] === r) || [])[1] || 'Senza risposta';
+  const CONDIVISIONI_SPAZIO = [['', 'Nessuno'], ['team', 'Tutto il Team'], ['linea', 'Una Linea']];
+  const chiaveRicevuto = r => `${r.origine}:${r.id}`;
+  // gli impegni ricevuti di un giorno (ora di Roma), in ordine d'ora
+  const ricevutiDelGiorno = (ricevuti, g) => (ricevuti || []).filter(r => partiRoma(r.inizio).giorno === g).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
+  const titoloRicevuto = r => `${r.titolo} · da ${r.da_nome || '—'}`;
+  // Gli impegni ricevuti di un giorno come impegni dell'agenda, per l'avviso «A quest'ora hai già…» e le ore libere (nota Pagine 049,
+  // 11/10/2026): una SdS/OPEN o una serata Team/LdS ricevuta occupa quell'ora come un impegno proprio. Chi ha risposto «Non posso» è libero.
+  const ricevutiComeEventi = (ricevuti, g, utenteId) => ricevutiDelGiorno(ricevuti, g).filter(r => r.risposta !== 'non_ci_sono')
+    .map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, user_id: utenteId, tipo_azione: 'Ricevuto', inizio: r.inizio, quando: r.inizio, fine: r.fine, _ricevuto: r }));
+  // quelli ancora «nuovi» (per «Hai un nuovo appuntamento» all'apertura): senza risposta e non ancora passati. Agenda P7 (Ignazio 23/10): «nuovo» vuol dire
+  // «senza risposta», non «già aperto» (prima `!visto_il`: aprirlo in Agenda e chiuderlo senza rispondere lo faceva sparire per sempre)
+  const ricevutiNuovi = (ricevuti, adesso) => (ricevuti || []).filter(r => !r.risposta && Date.parse(r.fine || r.inizio) >= Date.parse(adesso));
+  // il conto delle risposte, a parole: «Partecipano 6 · Non possono 2 · Senza risposta 4»
+  function contoRisposte(risposte) {
+    const q = { ci_sono: 0, non_ci_sono: 0, senza: 0 };
+    for (const r of risposte || []) q[r.risposta === 'ci_sono' ? 'ci_sono' : r.risposta === 'non_ci_sono' ? 'non_ci_sono' : 'senza']++;
+    return { ...q, testo: [`Partecipano ${q.ci_sono}`, `Non possono ${q.non_ci_sono}`, `Senza risposta ${q.senza}`].join(' · ') };
+  }
+  // i nomi per gruppo di risposta (chi c'è, chi non c'è, chi non ha risposto), per la lista di chi organizza
+  const nomiPerRisposta = risposte => ({
+    ci_sono: (risposte || []).filter(r => r.risposta === 'ci_sono').map(r => r.nome),
+    non_ci_sono: (risposte || []).filter(r => r.risposta === 'non_ci_sono').map(r => r.nome),
+    senza: (risposte || []).filter(r => !r.risposta).map(r => r.nome) });
+  // cosa si può condividere: un appuntamento con un Partner (gli altri non hanno l'app); una serata Team o LdS solo l'Admin.
+  // La SdS/OPEN dall'11/10 sì (nota Pagine 047, Ignazio): la crea l'Admin, già condivisa con tutto il Team; i partner non ne hanno più una loro.
+  const puoCondividereAzione = e => !!e && !!e.contatto_id && ((e.contatti && e.contatti.categoria) || e.categoria) === 'Partner' && e.tipo_azione !== 'Contatto';
+  const puoCondividereSpazio = (s, admin) => !!admin && !!s && (s.tipo === 'Team' || s.tipo === 'LOS' || s.tipo === 'SdS/OPEN');
+  // ── La SdS/OPEN del Team (nota Pagine 047, Ignazio 11/10/2026): chi la riceve conferma la presenza e scrive gli ospiti con il nome,
+  // anche dopo (riaprendo la serata). Gli ospiti stanno nella propria riga di `impegni_risposte` (campo `ospiti`, un elenco di nomi).
+  const SDS_DEL_TEAM = PERCHE.perche('sds_team');   // parole di Ignazio, nell'elenco unico dei motivi (perche.js, nota 048)
+  const FRASE_OSPITI = 'Hai ospiti? Scrivi i loro nomi qui. Puoi aggiungerli anche più tardi: riapri questa serata e li trovi ancora qui.';
+  const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
+  // La carta «Consegna» (nota Pagine 051, Ignazio 12/10/2026): il promemoria che la vendita «Più avanti» scrive in Agenda (trigger
+  // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andata la telefonata?»,
+  // solo «Ordine fatto» (lo stesso tasto della vendita, V1 22/10; prima «Consegnato») e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
+  const eConsegna = a => !!a && a.tipo_azione === 'Contatto' && a.modalita === 'Presenza' && /^Consegna · /.test(a.note || '');
+  const OSPITE_MAX = 60, OSPITI_MAX = 30;
+  // un nome in più nell'elenco: spazi puliti, niente vuoti né doppioni (maiuscole a parte), al massimo 30
+  function aggiungiOspite(ospiti, nome) {
+    const n = String(nome == null ? '' : nome).replace(/\s+/g, ' ').trim().slice(0, OSPITE_MAX).trim();
+    const lista = Array.isArray(ospiti) ? ospiti.slice() : [];
+    if (!n || lista.length >= OSPITI_MAX || lista.some(x => x.toLowerCase() === n.toLowerCase())) return lista;
+    return [...lista, n];
+  }
+  // per chi organizza: quanti ospiti in tutto e, per ognuno che partecipa, chi porta («Carolina (+ Anna, Luca)»)
+  function ospitiPerChiOrganizza(risposte, ospitiDi) {
+    const di = ospitiDi || {};
+    const nomi = (risposte || []).filter(r => r.risposta === 'ci_sono').map(r => (di[r.utente_id] || []).length ? `${r.nome} (+ ${di[r.utente_id].join(', ')})` : r.nome);
+    const totale = (risposte || []).filter(r => r.risposta === 'ci_sono').reduce((n, r) => n + (di[r.utente_id] || []).length, 0);
+    return { nomi, totale };
+  }
+
+  const SCALE = ['giorno', 'settimana', 'mese', 'periodo', 'anno'];
+  // Il primo giorno della scala che contiene `giorno` (la spunta a mano di una voce vive lì)
+  function inizioScala(scala, giorno) {
+    if (scala === 'settimana') return settimana(giorno)[0];
+    if (scala === 'mese') return giorno.slice(0, 8) + '01';
+    if (scala === 'anno') return giorno.slice(0, 4) + '-01-01';
+    return giorno;   // giorno (e, finché non c'è la tabella dei periodi, anche periodo)
+  }
+  const GIORNI_SETTIMANA = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];   // 1 = lunedì … 7 = domenica
+  // Il numero del giorno della settimana di una data (1 = lunedì … 7 = domenica)
+  function giornoSettimana(giorno) { return (new Date(giorno + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1; }
+  // ── La ripetizione (Ignazio 05/10/2026): una cosa da fare con `ripeti` = 'settimana' o 'mese' ricompare da sola quando la spunti.
+  // `ripeti` ha senso per le cose del Giorno (ogni settimana: lo stesso giorno della settimana dopo; ogni mese: lo stesso numero del
+  // mese dopo, o l'ultimo giorno se il mese è più corto), della Settimana (ogni settimana) e del Mese (ogni mese). Le altre scale no.
+  const RIPETIZIONI = [['settimana', 'Ogni settimana'], ['mese', 'Ogni mese']];
+  const ripetizioniPer = scala => RIPETIZIONI.filter(([k]) => (scala || 'giorno') === 'giorno' || (scala === 'settimana' && k === 'settimana') || (scala === 'mese' && k === 'mese'));
+  // Il giorno (e la scala) della prossima volta. Parte sempre dal giorno in cui era fissata e va avanti finché è dopo `fatta` (il giorno in
+  // cui si spunta): fatta in anticipo → quella dopo; fatta in ritardo → la prima che non è già passata. Senza ripetizione, null.
+  function prossimaRipetizione(c, fatta) {
+    const r = c && c.ripeti, sc = (c && c.scala) || 'giorno';
+    if (!r || !c.giorno || !ripetizioniPer(sc).some(x => x[0] === r)) return null;
+    const dopo = n => {
+      if (r === 'settimana') return spostaGiorno(c.giorno, 7 * n);
+      const m = meseAccanto(c.giorno.slice(0, 8) + '01', n);
+      if (sc === 'mese') return m;
+      const ultimo = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).getUTCDate();
+      return m.slice(0, 8) + String(Math.min(Number(c.giorno.slice(8)), ultimo)).padStart(2, '0');
+    };
+    for (let n = 1; n <= 120; n++) { const g = dopo(n); if (g > fatta) return { giorno: g, scala: sc }; }
+    return null;
+  }
+  // A chi o a cosa si riferisce una cosa da fare (Ignazio 05/10/2026: ogni cosa di MB Plan è legata a una persona della lista o al
+  // Team, al LdS, a Network 21, ad Amway). `contatto_id` = la persona; `legato_a` = uno di LEGAMI. Rende { tipo, nome } oppure null.
+  const LEGAMI = [['Team', 'Team'], ['LdS', 'LdS'], ['N21', 'Network 21'], ['Amway', 'Amway']];
+  function legameDi(c) {
+    if (!c) return null;
+    if (c.contatto_id) return { tipo: 'persona', nome: (c.contatti && c.contatti.nome) || 'Persona' };
+    const l = LEGAMI.find(x => x[0] === c.legato_a);
+    return l ? { tipo: l[0], nome: l[1] } : null;
+  }
+  // I due campi da scrivere nel database per un legame: l'uno esclude l'altro. `l` = { tipo, contatto_id? } (tipo 'persona' o uno di LEGAMI)
+  function campiLegame(l) {
+    if (!l) return null;
+    if (l.tipo === 'persona') return l.contatto_id ? { contatto_id: l.contatto_id, legato_a: null } : null;
+    return LEGAMI.some(x => x[0] === l.tipo) ? { contatto_id: null, legato_a: l.tipo } : null;
+  }
+  // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
+  function riga(a, { mioId, admin }) {
+    const nome = (a.contatti && a.contatti.nome) || '—';
+    // [Partner] all'inizio (decisione di Ignazio 15/09, Partner Select «Tutti»): solo Admin, appuntamenti non di mioId
+    const partner = admin && a.user_id !== mioId && a.utenti ? `[${a.utenti.nome || a.utenti.nome_cognome}] ` : '';
+    const titolo = `${partner}${a.modalita || a.tipo_azione || ''} · ${nome}`;
+    const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;   // Richiamare / PM Fissato dati dalla coda
+    const stato = (dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare') + (a.confermato_il && !a.completata ? ' · 👍 confermato' : '');
+    const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito ? nomePasso(a.esito) : null].filter(Boolean).join(' | ');   // i passi col loro nome leggibile (nota 070)
+    return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
+  }
+  function orario(a) {
+    const inizio = partiRoma(a.quando || a.inizio).ora;
+    return a.fine ? `${inizio}–${partiRoma(a.fine).ora}` : inizio;
+  }
+
+  // Ora proposta per un nuovo appuntamento: sul giorno scelto, dopo l'ultimo impegno che finisce più tardi
+  // (arrotondata alla mezz'ora successiva); oggi mai prima di adesso; se niente, le 18:30.
+  function oraProposta(eventi, giorno, adessoIso) {
+    let minimo = 18 * 60 + 30;
+    const adesso = partiRoma(adessoIso);
+    const inMinuti = hhmm => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+    let base = null;
+    for (const e of eventi) {
+      const fine = e.fine ? partiRoma(e.fine) : partiRoma(e.quando || e.inizio);
+      if (fine.giorno === giorno) base = Math.max(base ?? 0, inMinuti(fine.ora));
+    }
+    if (base != null) minimo = Math.ceil(base / 30) * 30;
+    if (adesso.giorno === giorno) minimo = Math.max(minimo, Math.ceil((inMinuti(adesso.ora) + 1) / 30) * 30);
+    minimo = Math.min(minimo, 23 * 60 + 30);
+    return `${String(Math.floor(minimo / 60)).padStart(2, '0')}:${String(minimo % 60).padStart(2, '0')}`;
+  }
+
+  // Tipo proposto quando l'appuntamento nasce dal bottone «Appuntamento» della coda (esito PM Fissato / Appuntamento)
+  function tipoDaCoda(categoria) {
+    if (categoria === 'Partner') return { categoria: 'Partner', tipo: 'Appuntamento', modalita: null };
+    if (categoria === 'Cliente') return { categoria: 'Cliente', tipo: 'Consulenza PRD', modalita: null };
+    return { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' };   // Prospect, Referral, senza categoria
+  }
+
+  // Un esito «dalla coda» con data (PM Fissato, Appuntamento) non si mostra se c'è già l'appuntamento vero
+  // dello stesso contatto alla stessa ora (lo crea il bottone «Appuntamento» dal 15/09)
+  function senzaDoppioniCoda(azioni) {
+    const veri = new Set(azioni.filter(a => a.tipo_azione !== 'Contatto' && a.inizio).map(a => `${a.contatto_id}|${Date.parse(a.inizio)}`));
+    return azioni.filter(a => !(a.tipo_azione === 'Contatto' && a.data_scelta && veri.has(`${a.contatto_id}|${Date.parse(a.data_scelta)}`)));
+  }
+
+  // ── Conferme (decisione di Ignazio 15/09): compaiono 12 ore prima dell'appuntamento, fino all'inizio ──
+  const ORE_CONFERMA = 12;
+  const FASI_DA_CONFERMARE = ['PM Fissato', 'Appuntamento'];   // esiti dalla coda senza appuntamento vero (vecchi)
+  // `azioni`: appuntamenti e esiti dalla coda del partner (già senza doppioni). Ordine d'ora.
+  function confermeDaFare(azioni, adessoIso) {
+    const adesso = Date.parse(adessoIso), limite = adesso + ORE_CONFERMA * 3600000;
+    return azioni
+      .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
+      .filter(a => {
+        if (a.confermato_il || !a.quando) return false;
+        const t = Date.parse(a.quando);
+        if (t <= adesso || t > limite) return false;
+        if (a.tipo_azione === 'Contatto') return !!a.data_scelta && FASI_DA_CONFERMARE.includes(a.esito);
+        return !a.completata;
+      })
+      .sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
+  }
+  // Riquadro «Riordini da sentire» della Dashboard (cantiere 27 lavoro 1): le telefonate di riordino nate dalle vendite,
+  // ancora senza esito, dal loro giorno in poi (restano finché non si dà l'esito). `vendite`: righe con la loro `azione` dentro.
+  // Più quelle importate da Glide (`glide`): lì «Riordino» è l'etichetta scritta al posto dell'esito, non dice che è fatta;
+  // entrano le non completate dal 1° settembre 2026 (Ignazio 18/09: le 37 più vecchie restano solo in Agenda).
+  const INIZIO_RIORDINI_GLIDE = '2026-09-01';
+  function riordiniDaSentire(vendite, oggi, glide = []) {
+    const fin = a => partiRoma(a.inizio).giorno <= oggi;
+    return [
+      ...vendite.filter(v => v.azione && !v.azione.completata && !v.azione.esito && fin(v.azione))
+        .map(v => ({ ...v.azione, riordino: v.riordino, prodotto: v.prodotto })),
+      ...glide.filter(a => a.glide_id && a.esito === 'Riordino' && !a.completata && fin(a) && partiRoma(a.inizio).giorno >= INIZIO_RIORDINI_GLIDE),
+    ].sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
+  }
+  // L'esito «Ordina da solo» (nota Azioni 025): dal 22/10 (V4 Vendite) segna il cliente «Ha un account cliente» invece di aprire l'attesa «ha ordinato?»
+  const ESITO_ATTESA_ORDINE = 'Ordina da solo';
+  // «Da confermare · PM 1a1 · oggi ore 18:30» (o «domani»); fino al 04/10 «Conferma appuntamento · …» (era un ordine: nota Azioni 027, CLAUDE.md § 1)
+  function testoConferma(a, adessoIso) {
+    const quando = partiRoma(a.quando || a.inizio), oggi = partiRoma(adessoIso).giorno;
+    const giorno = quando.giorno === oggi ? 'oggi' : quando.giorno === spostaGiorno(oggi, 1) ? 'domani' : quando.giorno.split('-').reverse().join('/');
+    const cosa = a.tipo_azione === 'Contatto' ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione);
+    return `${a.nonPuo ? 'Non può · da spostare' : 'Da confermare'} · ${cosa} · ${giorno} ore ${quando.ora}`;
+  }
+  // ── Nota Pagine 061 (Ignazio 19/10/2026): la risposta del Partner a un appuntamento condiviso entra nelle Conferme di chi lo ha fissato ──
+  // «Partecipa» = già confermato dalla persona: esce dalle Conferme. «Non può» = subito, qualunque giorno, una riga «Non può · da spostare».
+  // Conta la risposta di adesso (se cambia idea, cambia la riga). Dopo un «Sposta» (`spostato_il`): nota Pagine 077 (Ignazio 25/10: «Fiammetta deve vedere
+  // "Partecipo"»), «Partecipa» resta valida da tutte e due le parti (chi organizza non la vede più «Da confermare»); «Non può» data prima dello
+  // spostamento non vale più: con l'ora nuova la risposta va ridata e chi organizza resta su «Da confermare» (prima valeva per tutte e due).
+  // risposta: { risposta, risposto_il } (da `risposte_impegno`) o null.
+  const rispostaValida = (r, a) => (!r || !r.risposta ? null
+    : r.risposta === 'non_ci_sono' && a.spostato_il && !(r.risposto_il && r.risposto_il > a.spostato_il) ? null : r.risposta);
+  // ── Nota Pagine 066 (Ignazio 19/10/2026): all'apertura, a chi ha fissato, le risposte nuove («Valentina partecipa», «Mario non può · da spostare»);
+  // le serate con tanti invitati in una riga sola. Cosa è già stato visto lo ricorda il telefono (`viste`: le chiavi delle risposte).
+  // azioni: [{ a, r }] (appuntamento e risposta valida della persona) · serate: [{ s, titolo, risposte: [{ utente_id, nome, risposta, risposto_il }] }]
+  function quandoBreve(iso, adessoIso) {
+    const q = partiRoma(iso), oggi = partiRoma(adessoIso).giorno;
+    const g = q.giorno === oggi ? 'oggi' : q.giorno === spostaGiorno(oggi, 1) ? 'domani'
+      : `${GIORNI_SETTIMANA[giornoSettimana(q.giorno) - 1].toLowerCase()} ${Number(q.giorno.slice(8))}/${Number(q.giorno.slice(5, 7))}`;
+    return `${g} alle ${q.ora}`;
+  }
+  const nomeCorto = n => String(n || '').trim().split(/\s+/)[0] || 'Qualcuno';
+  const elencoNomi = nomi => (nomi.length < 2 ? nomi.join('') : `${nomi.slice(0, -1).join(', ')} e ${nomi[nomi.length - 1]}`);
+  const chiaveRisposta = (origine, id, x) => `${origine}:${id}:${x.utente_id || ''}:${x.risposta}:${x.risposto_il || ''}`;
+  function risposteNuove({ azioni, serate, viste, adessoIso }) {
+    const visto = k => viste && viste.has(k), righe = [], chiavi = [];
+    for (const { a, r } of azioni || []) {
+      if (!r || !['ci_sono', 'non_ci_sono'].includes(r.risposta)) continue;
+      const k = chiaveRisposta('azione', a.id, r);
+      if (visto(k)) continue;
+      const cosa = `${a.modalita || a.tipo_azione}, ${quandoBreve(a.inizio, adessoIso)}`;
+      righe.push({ quando: a.inizio, nonPuo: r.risposta === 'non_ci_sono',
+        testo: r.risposta === 'ci_sono' ? `${nomeCorto(r.nome)} partecipa · ${cosa}` : `${nomeCorto(r.nome)} non può · ${cosa} · da spostare` });
+      chiavi.push(k);
+    }
+    for (const { s, titolo, risposte } of serate || []) {
+      const nuove = (risposte || []).filter(x => ['ci_sono', 'non_ci_sono'].includes(x.risposta) && !visto(chiaveRisposta('spazio', s.id, x)));
+      if (!nuove.length) continue;
+      const si = nuove.filter(x => x.risposta === 'ci_sono').map(x => nomeCorto(x.nome)), no = nuove.filter(x => x.risposta === 'non_ci_sono').map(x => nomeCorto(x.nome));
+      const parti = [si.length ? `${si.length === 1 ? 'partecipa' : 'partecipano'} ${elencoNomi(si)}` : '', no.length ? `${no.length === 1 ? 'non può' : 'non possono'} ${elencoNomi(no)}` : ''].filter(Boolean);
+      righe.push({ quando: s.inizio, nonPuo: false, testo: `${titolo} di ${quandoBreve(s.inizio, adessoIso)}: ${nuove.length === 1 ? '1 nuova risposta' : nuove.length + ' nuove risposte'} · ${parti.join(', ')}` });
+      nuove.forEach(x => chiavi.push(chiaveRisposta('spazio', s.id, x)));
+    }
+    righe.sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
+    return { righe, chiavi };
+  }
+  // conferme: le righe di confermeDaFare; condivise: gli appuntamenti futuri non completati condivisi con una persona; risposte: { [id azione]: risposta }
+  function confermeConRisposte(conferme, condivise, risposte, adessoIso) {
+    const adesso = Date.parse(adessoIso), fuori = new Set(), nonPuo = [];
+    for (const a of condivise || []) {
+      const r = rispostaValida((risposte || {})[a.id], a);
+      if (r === 'ci_sono') fuori.add(a.id);
+      if (r === 'non_ci_sono' && !a.completata && Date.parse(a.inizio) > adesso) { fuori.add(a.id); nonPuo.push({ ...a, quando: a.inizio, nonPuo: true }); }
+    }
+    return [...(conferme || []).filter(c => !fuori.has(c.id)), ...nonPuo].sort((x, y) => Date.parse(x.quando) - Date.parse(y.quando));
+  }
+
+  // Appuntamenti passati senza esito: non completati, tipo ≠ Contatto, iniziati prima di adesso
+  const passatiSenzaEsito = (azioni, adessoIso) =>
+    azioni.filter(a => a.tipo_azione !== 'Contatto' && !a.completata && a.inizio && a.inizio < adessoIso);
+
+  // Passi per chiudere un'azione (Ignazio 17/09: «la presentazione ci può essere oppure no; se c'è stata, gli esiti»).
+  // Piano Marketing e Follow Up in due passi: «È avvenuto?» Fatto · Rimandato · No Show → se Fatto «Com'è andata?» con i risultati.
+  // Per il PM «Fatto» si salva come fase «Presentazione» (conta nel Report e nella Griglia PM); il Follow Up non ha una fase «fatto»,
+  // quindi Fatto apre solo il secondo passo (fattoAperto). Gli altri tipi: un passo solo. Azione già chiusa: «cambia» tra tutte le fasi.
+  const AVVENUTO = ['Fatto', 'Rimandato', 'No Show'];
+  const RISULTATI = {
+    // l'ordine è di Ignazio (21/09, cantiere 39): «prima vanno le cose buone e poi quelle meno», tutti in una riga
+    'Piano Marketing': { fatto: 'Presentazione', esiti: ['Iscrizione', 'Dare Seguito', 'Prodotti', 'No BuonFine'] },
+    // «Ulteriore Follow Up» (Ignazio 21/09): era «DS Fissato» di Glide, che detto così sembrava il Follow Up stesso («come Presentazione nel PM»);
+    // è il «ci rivediamo», come «Richiamare» per le telefonate. Rinominato anche nel database (migrazione ulteriore_follow_up).
+    'Follow Up': { fatto: null, esiti: ['Iscrizione', 'Ulteriore Follow Up', 'Prodotti', 'No BuonFine'] },
+  };
+  const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
+  // La domanda sopra i bottoni dice di cosa parla (Ignazio 29/09, cantiere 48: con l'incontro ancora da fissare «Com'è andata?» non ha senso)
+  const DOMANDA_ESITO = { 'Contatto': 'Com\'è andata la telefonata?', 'Piano Marketing': 'Com\'è andato il piano?', 'Follow Up': 'Com\'è andato il follow up?',
+    'Appuntamento': 'Com\'è andato l\'incontro?', 'Consulenza PRD': 'Com\'è andata la consulenza?' };
+  const domandaEsito = tipo => DOMANDA_ESITO[tipo] || 'Com\'è andata?';
+  // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.
+  // passo: avvenuto (azione aperta) · risultato (dopo Fatto) · unico (un passo solo) · cambia (chiusa: cambia il risultato) · cambia-avvenuto (chiusa: cambia se è avvenuto)
+  function passiEsito(a, categoria, fattoAperto) {
+    if (a.tipo_azione === 'Contatto' && a.data_scelta) return null;   // richiamo dalla coda: si guarda, non si chiude qui
+    const fasi = fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    if (!fasi.length) return null;
+    const due = RISULTATI[a.tipo_azione];
+    const g = (passo, titolo, bottoni, attuale) => ({ passo, titolo, bottoni, attuale: attuale || null });
+    if (daChiudere(a)) {
+      if (!due) return [g('unico', domandaEsito(a.tipo_azione), fasi)];
+      if (fattoAperto) return [g('avvenuto', 'È avvenuto?', AVVENUTO, 'Fatto'), g('risultato', domandaEsito(a.tipo_azione), due.esiti)];
+      return [g('avvenuto', 'È avvenuto?', AVVENUTO)];
+    }
+    if (!due) return [g('cambia', 'Esito', a.esito === ESITO_ALTRO && !fasi.includes(a.esito) ? [...fasi, a.esito] : fasi, a.esito)];   // chiuso con «Altro» (nota 031): resta acceso
+    const nonAvvenuto = AVVENUTO.includes(a.esito) ? a.esito : null;   // Rimandato / No Show
+    const gruppi = [g('cambia-avvenuto', 'È avvenuto?', AVVENUTO, nonAvvenuto || 'Fatto')];
+    if (!nonAvvenuto) gruppi.push(a.esito === due.fatto ? g('risultato', domandaEsito(a.tipo_azione), due.esiti) : g('cambia', domandaEsito(a.tipo_azione), due.esiti, a.esito));
+    return gruppi;
+  }
+  // «Com'è andato l'incontro?» con un Partner che ha «Su cosa lavorate?» (cantiere 48): i passi scelti quando si è fissato, da toccare se fatti,
+  // e «anche altro» con gli altri passi del tipo. Tutto in ordine delle fasi. null = il blocco di sempre (un esito solo).
+  function passiIncontro(a, categoria) {
+    if (!a || a.tipo_azione !== 'Appuntamento' || !daChiudere(a)) return null;
+    const tutti = passiAmmessi(a, categoria);
+    const scelti = tutti.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
+    return scelti.length ? { titolo: domandaEsito(a.tipo_azione), scelti, altri: tutti.filter(x => !scelti.includes(x)), tutti } : null;
+  }
+  // «Com'è andato l'incontro?» a elenco (nota Azioni 031, Ignazio 19/10/2026): ogni appuntamento da chiudere mostra le cose del SUO tipo
+  // («vanno per quello per cui sono impostati») in un elenco che si apre verso il basso, da spuntare anche più d'una, e in fondo «Altro»
+  // con una frase scritta a mano (finisce nelle note dell'appuntamento). Prima: le pillole fisse, e senza un passo fatto non si chiudeva.
+  // `voci`: quelle scelte quando si è fissato («previsti») per prime, poi le altre; `ordine`: l'ordine delle fasi, che decide l'esito.
+  // null = non è un appuntamento da chiudere, o il suo tipo non ha voci: il blocco di sempre.
+  const ESITO_ALTRO = 'Altro';
+  // `aperto`: un appuntamento già chiuso con «Cambia esito ›» toccato (nota Azioni 032, Ignazio 19/10: «la lista come abbiamo fatto prima»):
+  // lo stesso elenco, con `fatti` = l'esito già dato (le altre voci dello stesso incontro le aggiunge chi disegna, dopo averle lette).
+  function vociIncontro(a, categoria, aperto) {
+    const chiuso = !!a && !daChiudere(a);
+    if (!a || a.tipo_azione !== 'Appuntamento' || (chiuso && !aperto)) return null;
+    const ammessi = passiAmmessi(a, categoria);
+    const ordine = ammessi.length ? ammessi : fasiPer(a.categoria || categoria, a.tipo_azione, a.modalita);
+    if (!ordine.length) return null;
+    const previsti = ordine.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
+    return { titolo: chiuso ? 'Esito' : domandaEsito(a.tipo_azione), voci: [...previsti, ...ordine.filter(x => !previsti.includes(x))], previsti, ordine,
+      chiuso, fatti: chiuso && a.esito ? [a.esito] : [] };
+  }
+  // Dalle voci spuntate all'esito: il primo nell'ordine delle fasi è l'esito, gli altri una riga ciascuno (come prima, `chiudi_azione`).
+  // Solo «Altro» (con la frase) → esito «Altro», che non spunta passi dell'Avvio e non entra nei conti di contatti e PM.
+  function esitoDaVoci(ordine, fatti, altro) {
+    const scelti = (ordine || []).filter(x => (fatti || []).includes(x));
+    if (scelti.length) return { esito: scelti[0], extra: scelti.slice(1) };
+    return altro ? { esito: ESITO_ALTRO, extra: [] } : { esito: null, extra: [] };
+  }
+  // Chi del Team (o di una Linea) non usa ancora MB21 (Ignazio 05/10 sera: «quando scelgo la Linea, se c'è qualcuno che non ha l'app, è il momento
+  // di mandargli il link»). `squadra` = righe {partner_id, sponsor_id, nome, telefono}; `conApp` = i codici Amway degli utenti attivi dell'app;
+  // `radice` = il codice di chi condivide (il Team è tutto il suo ramo), `linea` = il codice del frontale (solo il suo ramo). Chi condivide non conta.
+  function senzaApp(squadra, conApp, radice, linea) {
+    const partenza = linea || radice;
+    if (!partenza || !Array.isArray(squadra)) return [];
+    const figli = {};
+    for (const s of squadra) if (s.sponsor_id) (figli[s.sponsor_id] = figli[s.sponsor_id] || []).push(s);
+    const ha = new Set(conApp || []), ramo = [], visti = new Set([partenza]);
+    const coda = [partenza];
+    for (let giro = 0; coda.length && giro < 5000; giro++) {
+      const c = coda.shift();
+      for (const f of figli[c] || []) if (!visti.has(f.partner_id)) { visti.add(f.partner_id); ramo.push(f); coda.push(f.partner_id); }
+    }
+    const dentro = linea ? [squadra.find(s => s.partner_id === linea), ...ramo].filter(Boolean) : ramo;
+    return dentro.filter(s => s.partner_id !== radice && !ha.has(s.partner_id)).sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
+  }
+  // ── Dentro una Linea, una persona (nota Pagine 005, Ignazio 06/10/2026: «si attivano solo le persone collegate a quella persona nella Mappa», lei compresa) ──
+  // `ramoDellaLinea`: la Linea di un frontale come nella Mappa, dall'alto in basso (ogni persona seguita da chi sta sotto di lei, in ordine di nome):
+  // [{ partner_id, nome, livello (0 = il frontale), sotto (quanti ha sotto, tutti i livelli) }]. Al massimo `max` righe.
+  function ramoDellaLinea(squadra, radice, max = 500) {
+    if (!radice || !Array.isArray(squadra)) return [];
+    const figli = {}, chi = {};
+    for (const s of squadra) { chi[s.partner_id] = s; if (s.sponsor_id) (figli[s.sponsor_id] = figli[s.sponsor_id] || []).push(s); }
+    for (const k of Object.keys(figli)) figli[k].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
+    const conta = {}, visti = new Set();
+    const quanti = c => { if (conta[c] != null) return conta[c]; if (visti.has(c)) return 0; visti.add(c); let n = 0; for (const f of figli[c] || []) n += 1 + quanti(f.partner_id); return (conta[c] = n); };
+    const fuori = [], gia = new Set();
+    const giu = (s, livello) => {
+      if (fuori.length >= max || gia.has(s.partner_id)) return;
+      gia.add(s.partner_id);
+      fuori.push({ partner_id: s.partner_id, nome: s.nome, livello, sotto: quanti(s.partner_id) });
+      for (const f of figli[s.partner_id] || []) giu(f, livello + 1);
+    };
+    giu(chi[radice] || { partner_id: radice, nome: radice }, 0);
+    return fuori;
+  }
+  // I codici della parte di Linea di una persona: lei e chi sta sotto di lei (come `sotto_il_codice` nel database)
+  function parteDi(righe, codice) {
+    const i = (righe || []).findIndex(r => r.partner_id === codice);
+    if (i < 0) return new Set();
+    const fine = i + 1 + righe[i].sotto;   // nell'ordine dall'alto in basso, chi sta sotto viene subito dopo
+    return new Set(righe.slice(i, fine).map(r => r.partner_id));
+  }
+  // Il frontale (chi ha `me` come sponsor) sopra un codice: per ritrovare la Linea di un impegno condiviso con una parte. null se non è sotto `me`.
+  // Agenda P5b (Ignazio 23/10/2026: «si manda solo alla persona che usa l'app con me»): le persone del gruppo che usano l'app. `utenti` = gli utenti
+  // attivi { partner_id, nome_cognome }; si tengono quelli nel ramo di `me` (il codice di chi manda, in `squadra`), mai chi ha il codice di `me`
+  // (i collaboratori hanno il codice del titolare), uno per codice. Il nome si legge dai dati, mai scritto nel codice. In ordine di nome.
+  function personeConApp(squadra, utenti, me) {
+    const visti = new Set(), fuori = [];
+    for (const u of utenti || []) {
+      const c = u && u.partner_id;
+      if (!c || c === me || visti.has(c) || !frontaleDi(squadra, c, me)) continue;
+      visti.add(c); fuori.push({ partner_id: c, nome: u.nome_cognome || u.nome || '' });
+    }
+    return fuori.sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+  }
+  function frontaleDi(squadra, codice, me) {
+    const sponsor = {};
+    for (const s of squadra || []) sponsor[s.partner_id] = s.sponsor_id;
+    let c = codice;
+    for (let giro = 0; c && giro < 50; giro++) { if (sponsor[c] === me) return c; c = sponsor[c]; }
+    return null;
+  }
+  // I passi fatti, nell'ordine delle fasi: il primo è l'esito dell'appuntamento, gli altri diventano una riga di azione ciascuno
+  const passiFatti = (tutti, fatti) => tutti.filter(x => (fatti || []).includes(x));
+  // L'esito dell'incontro è il primo passo fatto (nell'ordine delle fasi), gli altri diventano righe di azione in più; senza passi: null
+  function esitoDaiPassi(a, categoria, fatti) {
+    const ordinati = passiFatti(passiAmmessi(a, categoria), fatti);
+    return { esito: ordinati[0] || null, extra: ordinati.slice(1) };
+  }
+  const fattoDi = tipo => (RISULTATI[tipo] || {}).fatto || null;
+  // Esiti che chiudono la relazione (Ignazio 17/09, come deciso il 14/09: rientro a 365 giorni): niente «prossimo appuntamento»,
+  // si chiede invece «Quando risentirlo?» con la data già a un anno, cambiabile a mano (7-8 mesi…)
+  const ESITI_CHIUSURA = ['No Interesse', 'No BuonFine'];
+  const GIORNI_CHIUSURA = 365;
+  const chiudeRelazione = esito => ESITI_CHIUSURA.includes(esito);
+  // Esito «Relazione» (Ignazio 25/09: «non presuppone altri esiti a parte richiamare più in là»): niente «prossimo appuntamento»
+  // (proponeva un altro messaggio per domani: due azioni in un giorno), si chiede «Quando risentirlo?» con la data già a 20 giorni,
+  // gli stessi del rientro in coda (sequenze `Prospect-Contatto-Relazione`: se cambia uno, cambia l'altro)
+  const GIORNI_RELAZIONE = 20;
+  // Esiti dopo i quali si chiede solo quando risentire la persona: i giorni proposti, altrimenti null
+  // No Risposta e Telefono spento (Ignazio 01/10: «lo dobbiamo mettere in coda fra due giorni o a una data che possiamo comunque scegliere»): lo stesso
+  // foglio, con i giorni del rientro automatico (sequenze `…-Contatto-No Risposta` 2, `…-Telefono spento` 7: se cambia uno, cambia l'altro)
+  const GIORNI_NO_RISPOSTA = 2, GIORNI_TELEFONO_SPENTO = 7;
+  const giorniRisentire = esito => chiudeRelazione(esito) ? GIORNI_CHIUSURA : esito === 'Relazione' ? GIORNI_RELAZIONE
+    : esito === 'No Risposta' ? GIORNI_NO_RISPOSTA : esito === 'Telefono spento' ? GIORNI_TELEFONO_SPENTO : null;
+  // Azione già avvenuta da tempo (Ignazio 02/10, importa lo storico: «un modo semplice di registrare nel passato senza domande da coach»): se l'azione
+  // è di più di 7 giorni fa, dando l'esito non si chiede più niente da coach: né «Hai condiviso la traccia di apertura?», né la chat, né «Quando risentirlo?».
+  // Restano i fogli che servono ai dati (il giorno del Piano Marketing fissato, la vendita).
+  const GIORNI_STORICO = 7;
+  const nelPassato = (inizio, oggi) => !!inizio && !!oggi && giorniTra(partiRoma(inizio).giorno, oggi) > GIORNI_STORICO;
+  // Cosa si apre dopo l'esito di una TELEFONATA, uguale da coda, scheda e MB Plan (Ignazio 29/09, cantiere 48; prima dalla scheda si apriva
+  // «Fissa il prossimo appuntamento» che proponeva un'altra telefonata): si fissa quello che l'esito dice.
+  //   { cosa: 'appuntamento', proposta } → «Nuovo appuntamento» già compilato: PM Fissato → il piano; Appuntamento → Partner: Appuntamento, Cliente: Consulenza PRD;
+  //                                        Consulenza Prodotti → la consulenza (e il contatto esce dalla coda: lo segue l'appuntamento)
+  //   { cosa: 'giorno' }                 → «Richiamare»: il giorno del richiamo
+  //   { cosa: 'risentire', giorni }      → «Quando risentirlo?» (Relazione, No Interesse)
+  //   { cosa: 'niente' }                 → No Risposta, Telefono spento, Ordine (la vendita la chiede proponeVendita) e tutto il resto
+  function dopoTelefonata(categoria, esito) {
+    if (esito === 'PM Fissato') return { cosa: 'appuntamento', proposta: { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' } };
+    if (esito === 'Appuntamento') return { cosa: 'appuntamento', proposta: tipoDaCoda(categoria) };
+    if (esito === 'Consulenza Prodotti') return { cosa: 'appuntamento', proposta: { categoria: categoria === 'Cliente' ? 'Cliente' : 'Prospect', tipo: 'Consulenza PRD', modalita: null } };
+    if (esito === 'Richiamare') return { cosa: 'giorno' };
+    const giorni = giorniRisentire(esito);
+    if (giorni) return { cosa: 'risentire', giorni };
+    return { cosa: 'niente' };
+  }
+  // Esito «Vendita» di una Consulenza PRD: si propone di registrare la vendita nella scheda del cliente (cantiere 26 lavoro 5 bis).
+  // I VP Clienti nascono solo dalle vendite registrate: senza questo passo la vendita fatta resterebbe fuori dai conti.
+  const proponeVendita = (tipoAzione, esito) => (tipoAzione === 'Consulenza PRD' && esito === 'Vendita') || (tipoAzione === 'Contatto' && esito === 'Ordine');
+
+  // Icona di ogni tipo di azione (la testata della chat del coach dopo l'esito, cantiere 42)
+  const ICONE_TIPO = { 'Piano Marketing': 'pianomarketing', 'Follow Up': 'followup', 'Appuntamento': 'appuntamento', 'Consulenza PRD': 'consulenza', 'Contatto': 'contatto' };
+
+  // Anno scritto con due cifre («23» → anno 0023, Ignazio 17/09): il campo data lo accetta e il salvataggio fallisce senza dirlo
+  function controllaGiorno(giorno) {
+    if (!giorno) return 'Scegli il giorno.';
+    const anno = Number(String(giorno).slice(0, 4));
+    if (!(anno >= 2000 && anno <= 2100)) return `Controlla l'anno (${String(giorno).slice(0, 4)}): scrivilo con 4 cifre, es. 2023.`;
+    return null;
+  }
+
+  function validaAppuntamento(v) {
+    if (!v.contatto_id) return 'Scegli il contatto dall\'elenco.';
+    if (!TIPI[v.categoria]) return 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.';
+    if (!v.area) return 'Scegli l\'area.';
+    if (!tipiPer(v.categoria).includes(v.tipo_azione)) return 'Scegli il tipo di azione.';
+    if (!sottotipiPer(v.tipo_azione).includes(v.modalita)) return `Scegli il ${etichettaSottotipo(v.tipo_azione).toLowerCase()}.`;   // «Scegli il tipo di piano.»
+    if (!v.giorno || !/^\d\d:\d\d$/.test(v.ora || '')) return 'Scegli giorno e ora.';
+    if (controllaGiorno(v.giorno)) return controllaGiorno(v.giorno);
+    if ((v.ospite || '').length > 50) return 'Ospite: massimo 50 caratteri.';
+    if ((v.note || '').length > 100) return 'Note: massimo 100 caratteri.';
+    return null;
+  }
+
+  // Quanti impegni per tipo di lavoro in questi giorni (cantiere 37): il riassunto della settimana
+  // («4 Piano Marketing · 2 Follow Up»). Ordine degli elenchi dell'app, non del caso; i vuoti non compaiono.
+  const ORDINE_TIPI = ['Piano Marketing', 'Follow Up', 'Appuntamento', 'Consulenza PRD', 'Contatto'];
+  // come si dicono nel riassunto: uno e più d'uno (parole di tutti i giorni, «PM» come lo dice Ignazio)
+  const NOMI_CONTO = {
+    'Piano Marketing': ['PM', 'PM'], 'Follow Up': ['Follow Up', 'Follow Up'], 'Appuntamento': ['Appuntamento', 'Appuntamenti'],
+    'Consulenza PRD': ['Consulenza', 'Consulenze'], 'Contatto': ['Contatto', 'Contatti'],
+  };
+  function contaPerTipo(azioni, giorni) {
+    const dentro = new Set(giorni || []);
+    const conto = {};
+    for (const a of azioni || []) {
+      const q = quandoDi(a);
+      if (!q || !dentro.has(partiRoma(q).giorno)) continue;
+      const t = a.tipo_azione || 'Contatto';
+      conto[t] = (conto[t] || 0) + 1;
+    }
+    const tipi = [...ORDINE_TIPI, ...Object.keys(conto).filter(t => !ORDINE_TIPI.includes(t))];
+    return tipi.filter(t => conto[t]).map(t => ({
+      tipo: t, quanti: conto[t], colore: COLORI[t] || COLORI.Contatto,
+      nome: (NOMI_CONTO[t] || [t, t])[conto[t] === 1 ? 0 : 1],
+    }));
+  }
+
+  // Pallini della striscia dei giorni (cantiere 37): uno per impegno, col colore della categoria della persona
+  // (Ignazio 20/09). Oltre `max` l'ultimo diventa una barretta: «ce n'è ancora».
+  function puntiGiorni(azioni, giorni, max = 4) {
+    const fuori = {};
+    for (const g of giorni || []) fuori[g] = { punti: [], tanti: false };
+    for (const a of azioni || []) {
+      const q = quandoDi(a);
+      if (!q) continue;
+      const g = partiRoma(q).giorno;
+      if (!fuori[g]) continue;
+      fuori[g].punti.push({ categoria: (a.contatti && a.contatti.categoria) || a.categoria || null, quando: q });
+    }
+    for (const g of Object.keys(fuori)) {
+      const v = fuori[g];
+      v.punti.sort((x, y) => (x.quando < y.quando ? -1 : 1));
+      v.quanti = v.punti.length;
+      if (v.punti.length > max) { v.punti = v.punti.slice(0, max - 1); v.tanti = true; }
+      v.punti = v.punti.map(p => p.categoria);
+    }
+    return fuori;
+  }
+
+  // ── Vista a orario del giorno (cantiere 37) ────────────────────────────────
+  // Tutto in minuti dalla mezzanotte di Roma: le funzioni non toccano il DOM, così il banco le prova e
+  // la stessa disposizione serve alla vista Giorno e alla vista Settimana.
+  const ORA_DA = 8, ORA_A = 22;              // la Timeline va dalle 8 alle 22 e si allarga se serve (Ignazio 23/09; prima fino a mezzanotte)
+  const PASSO_MIN = 15;                      // il tocco sul vuoto arrotonda al quarto d'ora
+  const MINIMO_VISTA = 20;                   // un blocco non si disegna mai più basso di 20 minuti, o non si leggerebbe
+  const DURATA_CONTATTO = 15;                // telefonata/messaggio/presenza: 15 minuti (Ignazio 23/09; prima 5)
+  const DURATA_NORMALE = 60;                 // tutto il resto, come il link a Google Calendar
+  const durataPredefinita = tipo => (tipo === 'Contatto' ? DURATA_CONTATTO : DURATA_NORMALE);
+  // L'avviso dopo il Salva di «Nuovo appuntamento» (Agenda e scheda, lo stesso): una telefonata scelta a mano (nota 012) va in coda, non «in Agenda»
+  const avvisoFissato = a => (a && a.scelta_a_mano ? (a.senza_ora ? 'Telefonata in coda: la trovi in Dashboard' : 'Telefonata fissata: in Agenda e in coda') : 'Appuntamento fissato');
+
+  const inMinuti = hhmm => Number(String(hhmm).slice(0, 2)) * 60 + Number(String(hhmm).slice(3, 5));
+  // 0 → «00:00», 1425 → «23:45», 1440 → «24:00» (si vede solo come etichetta della griglia)
+  const daMinuti = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(Math.round(m) % 60).padStart(2, '0')}`;
+  // Spostando l'ora d'inizio la fine slitta da sola e la durata resta quella (cantiere 39). null = niente da cambiare
+  function fineSlittata(oraPrima, oraDopo, fine) {
+    const ok = x => /^\d\d:\d\d$/.test(x || '');
+    if (!ok(oraPrima) || !ok(oraDopo) || !ok(fine)) return null;
+    const durata = inMinuti(fine) - inMinuti(oraPrima);
+    return durata > 0 ? daMinuti(Math.min(1440, inMinuti(oraDopo) + durata)) : null;
+  }
+  const alQuarto = m => Math.max(0, Math.min(1440 - PASSO_MIN, Math.round(m / PASSO_MIN) * PASSO_MIN));
+  const quandoDi = a => (a.quando || (a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio));
+
+  // Inizio e fine di un impegno, in minuti dalla mezzanotte del suo giorno. Senza ora di fine vale la durata
+  // predefinita del tipo; una fine sbagliata (prima dell'inizio) si tratta come se non ci fosse.
+  function fascia(a) {
+    const q = quandoDi(a);
+    const da = inMinuti(partiRoma(q).ora);
+    let durata = a.fine ? Math.round((Date.parse(a.fine) - Date.parse(q)) / 60000) : 0;
+    if (!(durata > 0)) durata = durataPredefinita(a.tipo_azione);
+    return { da, a: Math.min(1440, da + durata), durata };
+  }
+
+  // Disposizione degli impegni di un giorno: per ognuno la sua fascia e la colonna in cui disegnarlo.
+  // Chi si sovrappone finisce in colonne affiancate (come il Calendario di iPhone), così un doppio
+  // appuntamento alla stessa ora si vede subito invece di nascondersi.
+  // Restituisce { da, a, blocchi: [{ ev, da, fine, cima, alta, col, colonne, sovrapposto }], sovrapposti }.
+  function disposizioneGiorno(eventi, opz = {}) {
+    const minimo = opz.minimoMinuti == null ? MINIMO_VISTA : opz.minimoMinuti;
+    const blocchi = (eventi || []).map(ev => {
+      const f = fascia(ev);
+      return { ev, da: f.da, fine: f.a, durata: f.durata, cima: f.da, alta: Math.max(minimo, f.a - f.da), col: 0, colonne: 1, sovrapposto: false, doppio: false, gruppo: 0 };
+    }).sort((x, y) => (x.da - y.da) || (x.fine - y.fine));
+    // gruppi di blocchi che si toccano (il gruppo si chiude quando nessuno arriva fin lì).
+    // `gruppo` serve anche alla settimana: lì, invece di tagliare i nomi in «G.» e «N.», un gruppo di
+    // accavallati si disegna come un blocco solo che dice quanti sono.
+    let gruppo = [], finePiuLontana = -1, nGruppo = 0;
+    const chiudi = () => {
+      if (!gruppo.length) return;
+      const colonne = Math.max(...gruppo.map(b => b.col)) + 1;
+      for (const b of gruppo) { b.colonne = colonne; b.sovrapposto = colonne > 1; b.gruppo = nGruppo; }
+      gruppo = [];
+      nGruppo++;
+    };
+    const codaColonne = [];   // per ogni colonna, la fine dell'ultimo blocco che ci sta dentro
+    for (const b of blocchi) {
+      if (b.cima >= finePiuLontana) { chiudi(); codaColonne.length = 0; }
+      let c = codaColonne.findIndex(fine => fine <= b.cima);
+      if (c === -1) { c = codaColonne.length; }
+      codaColonne[c] = b.cima + b.alta;
+      b.col = c;
+      gruppo.push(b);
+      finePiuLontana = Math.max(finePiuLontana, b.cima + b.alta);
+    }
+    chiudi();
+    // Due impegni alla stessa ora si disegnano sempre affiancati (se no si coprirebbero), ma «si accavallano»
+    // si dice solo quando sono **della stessa persona**: con «Tutti» l'Admin vede più agende insieme e
+    // Fiammetta alle 18:30 non è un doppione di Ignazio alle 18:30 (visto sui dati veri il 21/09).
+    for (const b of blocchi) {
+      b.doppio = blocchi.some(x => x !== b && (x.ev.user_id || null) === (b.ev.user_id || null)
+        && x.da < b.fine && x.fine > b.da);
+    }
+    const estremi = estremiGriglia(blocchi, opz);
+    return { ...estremi, blocchi, sovrapposti: blocchi.filter(b => b.doppio).length };
+  }
+
+  // La griglia va dalle 8 a mezzanotte, ma si allarga se quel giorno c'è qualcosa prima o dopo:
+  // nessun impegno deve restare fuori dalla vista.
+  function estremiGriglia(blocchi, opz = {}) {
+    let da = (opz.oraDa == null ? ORA_DA : opz.oraDa) * 60;
+    let a = (opz.oraA == null ? ORA_A : opz.oraA) * 60;
+    for (const b of blocchi || []) {
+      da = Math.min(da, Math.floor(b.cima / 60) * 60);
+      a = Math.max(a, Math.ceil((b.cima + b.alta) / 60) * 60);
+    }
+    return { da: Math.max(0, da), a: Math.min(1440, Math.max(a, da + 60)) };
+  }
+
+  // Le ore da mostrare nella vista Settimana: dalla prima all'ultima cosa, con mezz'ora di margine e
+  // almeno `minimo` ore; se non c'è niente, la giornata di lavoro (8 → 20). Serve a non disegnare
+  // un lenzuolo vuoto quando gli appuntamenti sono pochi (Ignazio 21/09).
+  function oreUtili(blocchi, minimo = 8) {
+    if (!blocchi || !blocchi.length) return { da: 8 * 60, a: 20 * 60 };
+    let da = Math.floor((Math.min(...blocchi.map(b => b.cima)) - 30) / 60) * 60;
+    let a = Math.ceil((Math.max(...blocchi.map(b => b.cima + b.alta)) + 30) / 60) * 60;
+    da = Math.max(0, da); a = Math.min(1440, a);
+    if (a - da < minimo * 60) {                      // troppo strette: si allargano, prima in giù poi in su
+      a = Math.min(1440, da + minimo * 60);
+      da = Math.max(0, a - minimo * 60);
+    }
+    return { da, a };
+  }
+
+  // Impegni che si accavallano con la fascia scelta (un minuto in comune basta). `salta`: l'id di quello
+  // che si sta spostando, che non fa conflitto con sé stesso. Serve all'avviso «a quest'ora hai già…».
+  // `soloDi`: guarda solo gli impegni di quel partner (con «Tutti» l'Admin ha in mano più agende)
+  function sovrapposti(eventi, inizioIso, durataMin, salta, soloDi) {
+    const da = Date.parse(inizioIso), a = da + (durataMin || DURATA_NORMALE) * 60000;
+    return (eventi || []).filter(e => {
+      if (salta && e.id === salta) return false;
+      if (soloDi && e.user_id && e.user_id !== soloDi) return false;
+      const q = quandoDi(e);
+      if (!q) return false;
+      const eDa = Date.parse(q);
+      const dur = e.fine && Date.parse(e.fine) > eDa ? Date.parse(e.fine) - eDa : durataPredefinita(e.tipo_azione) * 60000;
+      return eDa < a && (eDa + dur) > da;
+    }).sort((x, y) => Date.parse(quandoDi(x)) - Date.parse(quandoDi(y)));
+  }
+
+  // Le fasce libere di un giorno, lunghe almeno `durata`, dentro le ore in cui si lavora.
+  // Su oggi non propone ore già passate. Restituisce [{ da, a }] in minuti.
+  function fasceLibere(eventi, durata, opz = {}) {
+    const passo = opz.passo || PASSO_MIN;
+    if (opz.soloDi) eventi = (eventi || []).filter(e => !e.user_id || e.user_id === opz.soloDi);
+    let da = (opz.oraDa == null ? 8 : opz.oraDa) * 60, a = (opz.oraA == null ? 22 : opz.oraA) * 60;
+    if (opz.daMinuti != null) da = Math.max(da, Math.ceil(opz.daMinuti / passo) * passo);
+    const presi = (eventi || []).map(e => fascia(e)).sort((x, y) => x.da - y.da);
+    const libere = [];
+    let punto = da;
+    for (const p of presi) {
+      if (p.a <= punto) continue;
+      if (p.da - punto >= durata) libere.push({ da: punto, a: Math.min(p.da, a) });
+      punto = Math.max(punto, p.a);
+      if (punto >= a) break;
+    }
+    if (a - punto >= durata) libere.push({ da: punto, a });
+    return libere.filter(f => f.a - f.da >= durata && f.da < a).map(f => ({ da: f.da, a: Math.min(f.a, a) }));
+  }
+
+  // Le ore libere da proporre quando si fissa un appuntamento. Con `vicinoA` (minuti) si prendono quelle
+  // più vicine all'ora che si stava provando — chi cerca la sera non se le vede proporre la mattina.
+  function oreProposte(eventi, durata, opz = {}) {
+    const passo = opz.passo || 30;
+    const quante = opz.quante || 3;
+    const tutte = [];
+    for (const f of fasceLibere(eventi, durata, opz)) {
+      for (let m = Math.ceil(f.da / passo) * passo; m + durata <= f.a; m += passo) tutte.push(m);
+    }
+    if (opz.vicinoA == null) return tutte.slice(0, quante).map(daMinuti);
+    return tutte
+      .map(m => ({ m, via: Math.abs(m - opz.vicinoA) }))
+      .sort((x, y) => x.via - y.via || x.m - y.m)
+      .slice(0, quante)
+      .sort((x, y) => x.m - y.m)
+      .map(x => daMinuti(x.m));
+  }
+
+  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
+    partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
+    oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
+    ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
+    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else radice.MB21Agenda = api;
+})(this);

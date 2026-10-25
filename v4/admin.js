@@ -1,0 +1,720 @@
+// MB21 · pagina Admin (cantiere 19). Solo per l'Admin: menu a sottopagine (Carica file Amway · Utenti · Schede dei partner · Wes · BBS · Fattore di conversione).
+// Spostata da index.html il 16/09 (pausa di sistemazione, la pagina unica era ~3.900 righe). Nessun cambiamento di funzionamento.
+// Usa ciò che definisce index.html (supa, dbq, ST, PS, MP, LS, esc, mostraToast, chiediConferma, foglioLinkInvito, caricaPersone…):
+// si carica prima dello script della pagina (solo definizioni): le sue funzioni partono quando l'Admin apre la tab.
+// ── Admin ─────────────────────────────────────────────────
+// Pagina solo per l'Admin (richiesta di Ignazio 16/09): date dei Wes e dei BBS (prima nel Report), poi «Carica file Amway».
+// Le regole del database lasciano scrivere queste tabelle solo all'Admin: la tab nascosta è solo comodità.
+const AD = { wes: [], bbs: [], utenti: [], tutti: [], eliminati: [], vediEliminati: false, richieste: [], doppioni: [], aperti: new Set(), riquadri: new Set(), sezione: null };   // aperti: righe utente aperte (all'inizio tutte chiuse) · riquadri: gruppi della pagina Utenti aperti (all'inizio tutti chiusi)
+// Un gruppo della pagina Utenti: chiuso mostra titolo, numero di persone e freccia; al tocco si apre l'elenco (Ignazio 07/10, nota Admin 009)
+// Nota Pagine 086 (Ignazio 24/10): l'abbonamento non c'è più (Pagine 071: «un abbonamento vero non ci sarà mai»): via da Admin anche i resti
+// (pallino, scadenza, pagamento, «in comune con», prova gratuita). Nel database i campi restano, l'app non li legge né li scrive.
+// Gli interruttori della verifica Admin (nota 086): «Schede dei partner» spenta (le schede si allineano già dopo «Carica file Amway»);
+// «Messaggi» segue AVVISI_TEAM.messaggi (pagina-dashboard.js) e «Link di registrazione» INVITO_APP (pagina-lista.js), spenti tutti e due.
+const SCHEDE_PARTNER_ADMIN = false;
+// Nota Pagine 087 (Ignazio 24/10, «A»; «sì, passala» 25/10): dopo la chiusura del 25/10 alle 18:00 «Utenti dell'app» (la voce e la sua pagina) è spenta.
+// Si riaccende con true se serve (un utente nuovo, un rientro). Il Partner Select non ne ha bisogno: legge da sé chi ha «Nel Partner Select» (caricaPersone,
+// index.html). Gli utenti si leggono lo stesso all'apertura (pochi): li usano anche Messaggi e «Avvisa della chiusura».
+const UTENTI_ADMIN = false;
+const messaggiAccesi = () => typeof AVVISI_TEAM !== 'undefined' && !!AVVISI_TEAM.messaggi;
+const linkRegistrazioneAcceso = () => typeof INVITO_APP !== 'undefined' && !!INVITO_APP;
+const riquadro = (chiave, titolo, corpo, classe = '') => { const ap = AD.riquadri.has(chiave);
+  return `<button class="rp-apri ad-voce${ap ? ' aperto' : ''}" data-riq="${chiave}" aria-expanded="${ap}" style="margin-top:10px"><span>${titolo}</span><span>${ap ? '⌄' : '›'}</span></button>${ap ? `<div class="rp-wes ${classe}">${corpo}</div>` : ''}`; };
+
+async function apriAdmin() {
+  if (!eAdmin()) { ST.tab = 'oggi'; return mostraTab(); }
+  app.innerHTML = `<h1>Admin</h1><div class="vuoto">Carico…</div>`;
+  try {
+    const [wes, bbs, fc, ut, rich, sq, disp] = await Promise.all([
+      dbq('date dei WES', supa.from('wes').select('id, data, giorno').order('data')),
+      dbq('date dei BBS', supa.from('bbs').select('id, data').order('data')),
+      dbq('fattori di conversione', supa.from('fattori_conversione').select('dal, valore').order('dal')),   // cantiere 26: l'FC di Amway nel tempo
+      dbq('utenti dell\'app', supa.from('utenti').select('id, nome, nome_cognome, email, telefono, foto, partner_id, ruolo, accesso_attivo, nel_partner_select, auth_id, eliminato_il, ultimo_uso, creato_il')),
+      // dal 03/10 (Fondamenta 035) anche i doppioni degli ultimi 30 giorni: richieste con l'email di un utente che c'è già (a chi chiede l'app ha risposto «ok»)
+      dbq('richieste di registrazione', supa.from('richieste_accesso').select('*').or(`stato.eq.in_attesa,and(stato.eq.gia_utente,creato_il.gte.${new Date(Date.now() - 30 * 86400000).toISOString()})`).order('creato_il')),
+      dbq('codici della Mappa', supa.from('squadra').select('partner_id')),
+      dbq('dispositivi con gli avvisi', supa.from('avvisi_dispositivi').select('user_id, dispositivo')),   // cantiere 24: chi ha gli avvisi accesi
+    ]);
+    if (wes.error || bbs.error || ut.error || rich.error || sq.error) throw wes.error || bbs.error || ut.error || rich.error || sq.error;
+    AD.codiciMappa = new Set(sq.data.map(x => x.partner_id));
+    AD.dispositivi = {};   // utente → dispositivi con gli avvisi accesi («iPhone · Safari · app»)
+    (disp.error ? [] : disp.data).forEach(d => { (AD.dispositivi[d.user_id] = AD.dispositivi[d.user_id] || []).push(d.dispositivo || 'dispositivo'); });
+    AD.richieste = rich.data.filter(r => r.stato === 'in_attesa'); AD.doppioni = rich.data.filter(r => r.stato === 'gia_utente'); AD.tutti = ut.data;   // AD.tutti: anche l'Admin, per «invitato da»
+    AD.wes = wes.data; AD.bbs = bbs.data; AD.fc = fc.error ? [] : fc.data;
+    // Ignazio 11/10 (nota Admin 012): in alto chi ha usato l'app da poco, in fondo chi non l'ha mai usata; a parità il nome (prima: per abbonamento, 16/09)
+    const oggi = MB21Coda.oggiRoma();
+    const uso = u => (u.ultimo_uso ? Date.parse(u.ultimo_uso) : 0) || 0;
+    // l'Admin non è nell'elenco e non ha scadenza (Ignazio 16/09)
+    AD.eliminati = ut.data.filter(u => u.eliminato_il).sort((a, b) => nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    AD.utenti = ut.data.filter(u => u.ruolo !== 'Admin' && !u.eliminato_il).sort((a, b) => uso(b) - uso(a) || nomeDi(a).localeCompare(nomeDi(b), 'it'));
+    // «Senza avvisi» (25/09): il telefono per l'invito si prende dalla scheda della persona in Lista Nomi (codice Amway = partner_id), che ha il +39
+    const codiciSenza = senzaAvvisi().map(u => u.partner_id).filter(Boolean);
+    AD.telSchede = {};
+    if (codiciSenza.length) {
+      const { data: tel } = await dbq('telefoni delle schede', supa.from('contatti').select('codice_amway, telefono').in('codice_amway', codiciSenza).is('eliminato_il', null).like('telefono', '+%'));
+      (tel || []).forEach(c => { AD.telSchede[c.codice_amway] = c.telefono; });
+    }
+    // «Senza obiettivi del mese» (nota 040, 02/10): chi li ha già scritti, chi ha toccato «Non questo mese», e quando è stato mandato l'ultimo invito (la funzione, per i 3 giorni di pausa).
+    // Nota Pagine 083, punto 5: con l'interruttore spento (INVITO_OB_ADMIN) niente di tutto questo, nemmeno la chiamata alla funzione `avvisi` a ogni apertura di Admin
+    const mese = oggi.slice(0, 8) + '01';
+    AD.meseOb = mese;
+    if (INVITO_OB_ADMIN) {
+      const [ob, salto, stato] = await Promise.all([
+        dbq('obiettivi del mese di tutti', supa.from('obiettivi_mese').select('*').eq('mese', mese)),
+        dbq('obiettivi saltati', supa.from('obiettivi_salto').select('user_id').eq('mese', mese)),
+        supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'stato' } }).catch(() => ({ data: null })),
+      ]);
+      AD.conObiettivi = new Set((ob.error ? [] : ob.data).filter(o => MB21Dashboard.haObiettivi(o)).map(o => o.user_id));
+      AD.obSaltati = new Set((salto.error ? [] : salto.data).map(x => x.user_id));
+      AD.obUltimi = (stato && stato.data && stato.data.ultimi) || {};
+    }
+  } catch (e) {
+    app.innerHTML = `<h1>Admin</h1><div class="avviso">Non riesco a caricare la pagina. Controlla la connessione e riprova.</div>${versione()}`;
+    return;
+  }
+  disegnaAdmin();
+  if (typeof contaSegnalazioniAperte === 'function') contaSegnalazioniAperte().catch(() => {});   // il numero sul menu (nota Admin 005)
+}
+
+// ── SENZA OBIETTIVI DEL MESE (lista «Avvisi», nota 040, Ignazio 02/10) ── chi entra nell'app e gli obiettivi del mese non li ha ancora scritti:
+// un invito per persona, con calma (mai «a tutti»). Non insistente: l'invito è lo stesso avviso della sera, parte solo se ha gli avvisi accesi,
+// non se ha toccato «Non questo mese», e dopo l'invio il bottone si ferma 3 giorni (lo ferma anche la funzione `avvisi`, non solo la schermata).
+// Nota Pagine 083, punto 5 (Ignazio 24/10, «Spegnere»): il riquadro con «Manda l'avviso» è spento con questo interruttore (il codice resta):
+// l'invito agli obiettivi arriva da solo, la sera del 1° e del 3° del mese (funzione `avvisi`, regole.ts → avvisoObiettivi).
+const INVITO_OB_ADMIN = false;
+const PAUSA_INVITO_OB = 3 * 86400000;
+const senzaObiettivi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.conObiettivi || new Set()).has(u.id))
+  .sort((a, b) => Number((AD.obSaltati || new Set()).has(a.id)) - Number((AD.obSaltati || new Set()).has(b.id)));   // chi ha detto «non questo mese» in fondo
+const quandoInvitoOb = iso => new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(', ', ' alle ');
+function senzaObiettiviHtml() {
+  if (!INVITO_OB_ADMIN) return '';
+  const senza = senzaObiettivi();
+  if (!senza.length) return '';
+  const mese = MESI_LUNGHI[Number(AD.meseOb.slice(5, 7)) - 1];
+  return riquadro('senza-ob', `${ic('obiettivi')} Senza obiettivi di ${mese} (${senza.length})`, `${senza.map(u => {
+    const ultimo = (AD.obUltimi || {})[u.id], inPausa = ultimo && Date.now() - Date.parse(ultimo) < PAUSA_INVITO_OB;
+    const acceso = (AD.dispositivi[u.id] || []).length > 0, saltato = (AD.obSaltati || new Set()).has(u.id);
+    const nota = saltato ? 'Ha scelto di non farli questo mese' : !acceso ? 'Avvisi spenti: l\'invito non può arrivare' : inPausa ? `Invito mandato il ${quandoInvitoOb(ultimo)}` : ultimo ? `Ultimo invito il ${quandoInvitoOb(ultimo)}` : 'Nessun invito mandato';
+    return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(nota)}</small>
+      ${saltato || !acceso ? '' : `<div class="ad-invita"><button data-ob-invito="${esc(u.id)}" ${inPausa ? 'disabled' : ''}>${ic('avvisi')} ${inPausa ? 'Mandato' : 'Manda l\'avviso'}</button></div>`}</div>`;
+  }).join('')}<small>Un invito per persona, senza fretta: dopo l'invio il bottone si ferma per 3 giorni.</small>`, 'ad-senza-ob');
+}
+function collegaSenzaObiettivi() {
+  app.querySelectorAll('[data-ob-invito]').forEach(b => b.onclick = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.obInvito);
+    if (!u) return;
+    b.disabled = true;
+    const { data, error } = await supa.functions.invoke('avvisi', { body: { tipo: 'obiettivi_admin', azione: 'manda', utente: u.id } });
+    const nome = nomeDi(u).split(' ')[0];
+    if (error || !data) { b.disabled = false; return mostraToast('Non riesco a mandarlo: riprova.'); }
+    if (data.ultimo) AD.obUltimi = { ...(AD.obUltimi || {}), [u.id]: data.ultimo };
+    if (data.esito === 'non_questo_mese') AD.obSaltati.add(u.id);
+    if (data.esito === 'ha_gli_obiettivi') AD.conObiettivi.add(u.id);
+    mostraToast({ mandato: `Avviso mandato a ${nome}`, gia_mandato: `A ${nome} l'invito è già arrivato da poco`, non_questo_mese: `${nome} ha scelto di non farli questo mese`,
+      ha_gli_obiettivi: `${nome} ha già scritto gli obiettivi`, avvisi_spenti: `${nome} ha gli avvisi spenti: l'invito non può arrivare` }[data.esito] || 'Fatto');
+    disegnaAdmin();
+  });
+}
+
+// ── SENZA AVVISI (lista «Avvisi» di MB App, Ignazio 25/09) ── chi entra nell'app ma non ha gli avvisi accesi su nessun dispositivo:
+// in cima a «Utenti dell'app», con l'invito già scritto da mandare con un tocco su WhatsApp o Telegram. Se sono tutti accesi, niente.
+// Telegram non accetta un testo già scritto verso una persona: il messaggio si copia e si incolla nella chat che si apre.
+const senzaAvvisi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.dispositivi[u.id] || []).length);
+// Telegram con un messaggio già scritto: si copia il testo e si apre la chat della persona (t.me/<numero>), dove si incolla. Lo stesso per l'invito
+// agli avvisi e, dal 24/10 (nota Pagine 086), per la risposta alle segnalazioni. Dà la frase dell'avviso (chi la chiama può aggiungerla alla sua).
+async function apriTelegramCon(tel, testo) {
+  let copiato = false;
+  try { await navigator.clipboard.writeText(testo); copiato = true; } catch (e) { /* si scrive a mano */ }
+  window.open('https://t.me/' + tel, '_blank', 'noopener');
+  const avviso = copiato ? 'Messaggio copiato: nella chat di Telegram tieni premuto e scegli «Incolla»' : 'Telegram aperto: scrivi tu il messaggio';
+  mostraToast(avviso);
+  return avviso;
+}
+// Il numero: prima quello della sua scheda (ha il +39), se no quello del Profilo (a volte scritto senza +39: «338…» → «+39338…»)
+function telefonoInvito(u) {
+  const n = ((AD.telSchede || {})[u.partner_id] || u.telefono || '').replace(/[^0-9+]/g, '');
+  return n.startsWith('+') ? n : /^3\d{8,9}$/.test(n) ? '+39' + n : null;
+}
+// Il messaggio dipende dal telefono (Ignazio 25/09: «per Android il messaggio parla di Safari, non è consono»): l'Admin sceglie
+// iPhone o Android sulla riga (`AD.telefonoDi`, già scelto iPhone). Su Android gli avvisi si accendono anche da Chrome, senza installare.
+const INDIRIZZO_APP = () => indirizzoApp();   // in index.html: dall'anteprima dà l'indirizzo vero
+function invitoAvvisi(u) {
+  const nome = (u.nome || nomeDi(u)).split(' ')[0], android = (AD.telefonoDi || {})[u.id] === 'android';
+  const passo1 = android
+    ? `1. Apri MB21 con Chrome: ${INDIRIZZO_APP()} (meglio ancora dall'icona sulla schermata Home: in Chrome tocca il menu ⋮ → «Aggiungi a schermata Home» o «Installa app»).`
+    : `1. Apri MB21 dall'icona sulla schermata Home. Se non c'è ancora: apri ${INDIRIZZO_APP()} con Safari, tocca Condividi (il quadrato con la freccia) → «Aggiungi alla schermata Home», poi aprila da lì.`;
+  return `Ciao ${nome}! Per ricevere gli avvisi di MB21 (appuntamenti, telefonate, il Check della sera):\n${passo1}\n2. Tocca il cerchietto in alto a destra (il tuo Profilo) → «Avvisi» → «Attiva gli avvisi».\n3. Quando il telefono chiede il permesso, tocca «Consenti».`;
+}
+function senzaAvvisiHtml() {
+  const senza = senzaAvvisi();
+  if (!senza.length) return '';
+  return riquadro('senza-avvisi', `${ic('avvisi-spenti')} Senza avvisi (${senza.length})`, `${senza.map(u => {
+    const tel = telefonoInvito(u), android = (AD.telefonoDi || {})[u.id] === 'android';
+    return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(usoBreve(u))}</small>
+      <div class="pf-scelte"><button class="${android ? '' : 'scelto'}" data-invito-tel="${esc(u.id)}:iphone">iPhone</button><button class="${android ? 'scelto' : ''}" data-invito-tel="${esc(u.id)}:android">Android</button></div>
+      <div class="ad-invita">${tel ? `<a class="ct-whatsapp" href="${esc('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(invitoAvvisi(u)))}" target="_blank" rel="noopener">${ic('whatsapp')} WhatsApp</a>
+        <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button>` : ''}
+        <button data-invito-copia="${esc(u.id)}">${ic('copia')} Copia</button></div>
+      ${tel ? '' : '<small>Manca il telefono: copia il messaggio e mandalo come vuoi</small>'}</div>`;
+  }).join('')}<small>Scegli il suo telefono, poi mandale l'invito già scritto: WhatsApp, Telegram, o Copia e incollalo dove vuoi.</small>`, 'ad-senza-avvisi');
+}
+function collegaSenzaAvvisi() {
+  const di = id => AD.utenti.find(x => x.id === id);
+  const copia = async u => { try { await navigator.clipboard.writeText(invitoAvvisi(u)); return true; } catch (e) { return false; } };
+  app.querySelectorAll('[data-invito-tel]').forEach(b => b.onclick = () => {
+    const [id, tipo] = b.dataset.invitoTel.split(':');
+    AD.telefonoDi = { ...(AD.telefonoDi || {}), [id]: tipo };
+    disegnaAdmin();
+  });
+  app.querySelectorAll('[data-invito-copia]').forEach(b => b.onclick = async () => {
+    const u = di(b.dataset.invitoCopia);
+    if (u) mostraToast(await copia(u) ? 'Messaggio copiato: incollalo dove vuoi' : 'Non riesco a copiare: riprova');
+  });
+  app.querySelectorAll('[data-invito-tg]').forEach(b => b.onclick = () => {
+    const u = di(b.dataset.invitoTg);
+    if (u) apriTelegramCon(telefonoInvito(u), invitoAvvisi(u));
+  });
+}
+
+// «16/09/2026 · 20:51» nell'ora di Roma
+const dataOra = t => new Date(MB21Lista.momento(t)).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(', ', ' · ');
+
+// Una riga per utente, chiusa: nome, se non entra, gli avvisi, l'ultimo uso. Tocco → si apre sul posto.
+const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+const meseLungo = d => { const [m, a] = MB21Lista.etichettaEvento(d).split('-'); return `${MESI_LUNGHI[Number(m) - 1]} ${a}`; };
+
+// Ultimo utilizzo in breve, per la riga chiusa (Ignazio 25/09): «usata oggi 14:03» · «ieri 09:20» · «3 giorni fa» · «il 12/09/2026»
+function usoBreve(u) {
+  if (!u.ultimo_uso) return u.auth_id ? 'utilizzo non registrato' : 'mai entrato';
+  return 'usata ' + quandoBreve(u.ultimo_uso);
+}
+// «oggi 14:03» · «ieri 09:20» · «3 giorni fa» · «il 12/09/2026»
+function quandoBreve(quando) {
+  const t = MB21Lista.momento(quando);
+  const giorno = new Date(t).toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });   // AAAA-MM-GG
+  const ora = new Date(t).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  const oggi = MB21Coda.oggiRoma();
+  const giorni = Math.round((Date.parse(oggi + 'T00:00:00Z') - Date.parse(giorno + 'T00:00:00Z')) / 86400000);
+  if (giorni <= 0) return `oggi ${ora}`;
+  if (giorni === 1) return `ieri ${ora}`;
+  if (giorni < 7) return `${giorni} giorni fa`;
+  return `il ${giorno.split('-').reverse().join('/')}`;
+}
+
+// Messaggio per entrare, uno solo per tutti i casi (Ignazio 30/09: «qualcosa di omnicomprensivo»): chi entra la prima volta (link
+// all'email, poi sceglie la sua password) e chi la password ce l'ha già; dice anche che la password è personale, coppie comprese.
+// Usato dopo «Approva» e dal tasto «Manda il messaggio per entrare» di ogni utente che può entrare.
+function messaggioPerEntrare(nomeCognome, email) {
+  const nome = String(nomeCognome || '').trim().split(/\s+/)[0];
+  const indirizzo = INDIRIZZO_APP();
+  return `${nome ? 'Ciao ' + nome + ', ' : ''}MB21 è pronta per te. Apri dal telefono ${indirizzo} e scrivi la tua email${email ? ' (' + email + ')' : ''}.
+• Se è la prima volta che entri: tocca «Mandami il link», apri l'email su questo telefono e scegli la tua password.
+• Se la password ce l'hai già: scrivila e tocca «Entra».
+La password è personale: ognuno ha la sua, anche in coppia con lo stesso codice Amway.`;
+}
+function foglioPerEntrare(nomeCognome, email, telefono, titolo) {
+  foglioLinkInvito({ link: INDIRIZZO_APP(), nome: nomeCognome, telefono: MB21Lista.componiTelefono('+39', telefono || ''),
+    titolo: titolo || `${ic('collega')} Messaggio per entrare · ${nomeCognome}`,
+    spiega: 'Può entrare. Mandagli il messaggio (puoi cambiarlo): vale sia se entra per la prima volta sia se ha già la sua password.',
+    messaggio: messaggioPerEntrare(nomeCognome, email) });
+}
+
+function rigaUtenteAdmin(u) {
+  const io = u.id === ST.utente.id, aperto = AD.aperti.has(u.id);
+  // cantiere 25 (Ignazio 17/09): la foto del Profilo anche qui, letta da `utenti.foto` (stesso cerchietto della Dashboard)
+  let h = `<button class="ad-riga" data-apri-ut="${esc(u.id)}"><span class="cerchio piccolo">${dentroCerchio(u)}</span><b>${esc(nomeDi(u))}${io ? ' (tu)' : ''}</b>
+    <small>${[!u.accesso_attivo && 'non entra', (AD.dispositivi[u.id] || []).length && ic('avvisi'), esc(usoBreve(u))].filter(Boolean).join(' · ')}</small><span class="f">${aperto ? '⌄' : '›'}</span></button>`;
+  if (!aperto) return h;
+  h += `<div class="ad-dettaglio">
+    <small>${esc(u.email || 'senza email')}${u.telefono ? ' · ' + esc(u.telefono) : ''} · codice ${esc(u.partner_id || '—')}</small>
+    <small>${u.ultimo_uso ? `Ultimo utilizzo: ${esc(dataOra(u.ultimo_uso))}` : (u.auth_id ? 'Entrato, ultimo utilizzo non registrato' : 'Mai entrato')}</small>
+    <small>${(AD.dispositivi[u.id] || []).length ? `${ic('avvisi')} Avvisi accesi su ${esc(AD.dispositivi[u.id].join(', '))}` : ic('avvisi-spenti') + ' Avvisi spenti (non ha ancora toccato «Attiva gli avvisi»)'}</small>
+    ${u.accesso_attivo && !io ? `<button class="primario" data-entra-ut="${esc(u.id)}" style="margin:8px 0">${ic('collega')} Manda il messaggio per entrare</button>` : ''}
+    <button class="link" data-modifica-ut="${esc(u.id)}">${ic('modifica')} Modifica</button>
+    <button class="link" data-elimina-ut="${esc(u.id)}" style="color:var(--rosso);margin-left:16px">${ic('elimina')} Elimina</button>
+    <label class="interruttore"><span>Può entrare</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="accesso_attivo" ${u.accesso_attivo ? 'checked' : ''} ${io ? 'disabled' : ''}></label>
+    <label class="interruttore"><span>Nel Partner Select</span><input type="checkbox" data-ut="${esc(u.id)}" data-campo="nel_partner_select" ${u.nel_partner_select ? 'checked' : ''} ${io ? 'disabled' : ''}></label>`;
+  return h + `</div>`;
+}
+
+// Sottopagine (richiesta di Ignazio 16/09: sul telefono una pagina sola diventa caotica):
+// AD.sezione null = menu · 'utenti' · 'wes' · 'bbs'. «Carica file Amway» apre subito la scelta del file.
+function disegnaAdmin() {
+  const indietro = `<button class="indietro" id="ad-indietro">‹ Admin</button>`;
+  let html;
+  if (AD.sezione === 'utenti' && !UTENTI_ADMIN) AD.sezione = null;   // 087: spenta, si torna al menu
+  if (AD.sezione === 'utenti') {
+    html = `${indietro}<h1>Utenti dell'app</h1>
+      <div class="sotto" style="margin:0 0 8px">Entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length} · ${ic('avvisi')} avvisi accesi sul telefono. Tocca un nome per aprirlo.</div>
+      ${AD.richieste.length ? riquadro('richieste', `${ic('invito')} Richieste da approvare (${AD.richieste.length})`, `${AD.richieste.map(r => {
+        const da = AD.tutti.find(u => u.id === r.invitato_da), gia = AD.tutti.filter(u => u.partner_id === r.codice_amway);
+        return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
+          <small>${esc(r.email)}${r.telefono ? ' · ' + esc(r.telefono) : ''} · codice ${esc(r.codice_amway)}</small>
+          <small>${da ? 'invitato da ' + esc(nomeDi(da)) : 'senza invito'} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${gia.length ? ` · ${ic('attenzione')} codice già di ${gia.map(u => esc(nomeDi(u))).join(', ')}` : ''}</small>
+          ${AD.codiciMappa.has(r.codice_amway) ? '' : '<small>' + ic('attenzione') + ' codice non ancora nella Mappa: carica il file Amway aggiornato</small>'}
+          <div class="bottoni"><button class="link" data-rifiuta="${esc(r.id)}">Rifiuta</button><button class="primario" data-approva="${esc(r.id)}">Approva</button></div></div>`; }).join('')}`, 'ad-richieste') : ''}
+      ${AD.doppioni.length ? riquadro('doppioni', `${ic('invito')} Richieste con l'email di chi è già utente (${AD.doppioni.length})`, `<small>L'app ha risposto «richiesta inviata» senza dire che l'email è già registrata. Se è la stessa persona, le si può dire di entrare con la sua email.</small>${AD.doppioni.map(r => {
+        const u = AD.tutti.find(x => x.id === r.utente_id);
+        return `<div class="ad-richiesta"><b>${esc(r.nome_cognome)}</b>
+          <small>${esc(r.email)} · codice ${esc(r.codice_amway)} · ${esc(r.creato_il.slice(8, 10) + '/' + r.creato_il.slice(5, 7))}${u ? ` · l'email è di ${esc(nomeDi(u))}` : ''}</small></div>`; }).join('')}`, 'ad-richieste') : ''}
+      ${senzaAvvisiHtml()}
+      ${senzaObiettiviHtml()}
+      ${riquadro('utenti', `${ic('squadra')} Utenti generali (${AD.utenti.length})`, `${AD.utenti.map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}
+        ${AD.aperti.size ? `<button class="link" id="ad-chiudi-tutte">⌃ Chiudi le schede aperte</button>` : ''}`)}
+      <hr class="ad-linea">
+      <button class="primario" id="ad-nuovo-utente">${ic('piu')} Nuovo utente</button>
+      ${linkRegistrazioneAcceso() ? `<button class="rp-apri ad-voce" id="ad-copia-link" style="margin-top:10px"><span>${ic('collega')} Link di registrazione<small>da mandare a chi si deve registrare: la richiesta arriva qui</small></span><span>›</span></button>` : ''}
+      <hr class="ad-linea">
+      ${AD.eliminati.length ? `<button class="rp-apri ad-voce${AD.vediEliminati ? ' aperto' : ''}" id="ad-vedi-eliminati" style="margin-top:10px"><span>${ic('catalogare')} Utenti eliminati (${AD.eliminati.length})<small>fuori dall'app, con lista e azioni conservate</small></span><span>${AD.vediEliminati ? '⌄' : '›'}</span></button>
+        ${AD.vediEliminati ? `<div class="rp-wes ad-eliminati">${AD.eliminati.map(u => `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b>
+          <small>${esc(u.email || '')} · eliminato il ${esc(dataOra(u.eliminato_il))}</small>
+          <button class="link ripristina" data-ripristina="${esc(u.id)}">${ic('aggiorna')}︎ Ripristina</button></div>`).join('')}</div>` : ''}` : ''}`;
+  } else if (AD.sezione === 'schede') {
+    const p = AD.schede;
+    html = `${indietro}<h1>Schede dei partner</h1>
+      <div class="sotto" style="margin:0 0 8px">Regola di Ignazio (16/09): ogni partner della Mappa ha una scheda Partner, collegata al codice, nella lista di <b>ogni utente che gli sta sopra</b> (tutti i livelli), mai fuori dal ramo. Fuori coda. Non si cancella niente. Si fa da sola dopo «Carica file Amway».</div>`;
+    if (!p) html += `<div class="vuoto">Controllo le liste…</div>`;
+    else if (p.errore) html += `<div class="avviso">${esc(p.errore)}</div>`;
+    else if (!p.righe.length) html += `<div class="riquadro">${ic('fatto')} Tutto allineato: ogni partner è già nelle liste giuste.</div>`;
+    else {
+      const perUtente = {};
+      for (const r of p.righe) (perUtente[r.utente] = perUtente[r.utente] || []).push(r);
+      html += `<div class="riquadro" style="margin-bottom:10px">Da fare: <b>${p.create} schede nuove</b> · <b>${p.collegate} schede già in lista da collegare al codice</b></div>
+        ${Object.entries(perUtente).map(([ut, righe]) => `<div class="rp-wes"><h3>Lista di ${esc(ut)}</h3>${righe.map(r => `<div class="ad-richiesta">
+          <b>${esc(r.partner)}</b><small>${r.azione === 'collegata' ? `collega la scheda «${esc(r.scheda)}»${r.categoria && r.categoria !== 'Partner' ? ' (' + esc(MB21Lista.nomeCategoria(r.categoria)) + ')' : ''}` : 'scheda nuova'}</small></div>`).join('')}</div>`).join('')}
+        <button class="primario" id="ad-allinea">${ic('fatto')} Allinea adesso</button>`;
+    }
+  } else if (AD.sezione === 'messaggi') {
+    html = indietro + (typeof messaggiAdminHtml === 'function' ? messaggiAdminHtml() : '<div class="avviso">Messaggi non disponibili: riapri l\'app.</div>');   // pagina-messaggi.js (nota Admin 014)
+  } else if (AD.sezione === 'chiusura') {
+    html = indietro + (typeof chiusuraAdminHtml === 'function' ? chiusuraAdminHtml() : '<div class="avviso">Non disponibile: riapri l\'app.</div>');   // scarica-lista.js (nota Admin 009)
+  } else if (AD.sezione === 'segnalazioni') {
+    html = indietro + (typeof segnalazioniAdminHtml === 'function' ? segnalazioniAdminHtml() : '<div class="avviso">Segnalazioni non disponibili: riapri l\'app.</div>');   // pagina-segnalazioni.js (nota Admin 005)
+  } else if (AD.sezione === 'training') {
+    const t = AD.training;
+    html = `${indietro}<h1>${ic('medaglia')} Training</h1>
+      <div class="sotto" style="margin:0 0 8px">Chi si allena e dove è arrivato. Solo il riassunto: le risposte date restano private (Ignazio 25/09).</div>`;
+    if (!t) html += `<div class="vuoto">Carico…</div>`;
+    else if (t.errore) html += `<div class="avviso">${esc(t.errore)}</div>`;
+    else {
+      html += t.persone.length ? `<div class="rp-wes">${t.persone.map(x => `<div class="ad-richiesta">
+          <b>${esc(x.nome)}</b>
+          <small>Livello ${x.numero} di ${MB21Training.LIVELLI.length} · <b>${esc(x.livello)}</b>${x.percorso ? ` · percorso <b>${esc(x.percorso)}</b>` : ''}</small>
+          <small>${x.viste} carte viste · ${x.sapute} sapute · ${x.superati ? `${x.superati} ${x.superati === 1 ? 'test superato' : 'test superati'} · ${ic('stella')} ${x.stelle}` : 'nessun test superato'}</small>
+          <small>ultimo allenamento ${esc(x.ultima)}${x.fila ? ` · ${ic('fiamma')} ${x.fila} ${x.fila === 1 ? 'giorno' : 'giorni'} di fila` : ''}</small></div>`).join('')}</div>`
+        : `<div class="vuoto">Nessuno si è ancora allenato.</div>`;
+      if (t.mai.length) html += `<div class="rp-wes"><h3>Non hanno ancora aperto il Training (${t.mai.length})</h3><div class="sotto" style="margin:0">${t.mai.map(esc).join(' · ')}</div></div>`;
+    }
+  } else if (AD.sezione === 'wes') {
+    html = `${indietro}<h1>WES</h1>
+      <div class="ad-elenco wes">${[...AD.wes].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
+        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}
+          <label class="ad-wes-giorno">Primo giorno <input type="date" data-wes-giorno="${esc(w.id)}" value="${esc(w.giorno || '')}" min="${esc(w.data)}" max="${esc(MB21Agenda.spostaGiorno(MB21Agenda.meseAccanto(w.data, 1), -1))}"></label></span>
+        <button class="via" data-togli="${esc(w.id)}">Elimina</button></div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un WES</h4>
+        <input type="month" id="rp-data-wes" aria-label="Mese del WES">
+        <label class="ad-wes-giorno">Primo giorno del WES (facoltativo) <input type="date" id="rp-giorno-wes"></label>
+        <button class="primario" id="rp-piu-wes">\uFF0B Aggiungi</button>
+        <div class="sotto">Mese e anno contano per Segni Vitali, biglietti e Report. Il primo giorno serve solo all'Agenda per dire quanti giorni mancano al WES: si può scrivere anche dopo.</div></div>`;
+  } else if (AD.sezione === 'fc') {
+    // Fattore di conversione (cantiere 26 lavoro 1 bis): provvigione con l'FC valido il giorno in cui la vendita conta. Nota Pagine 082 (24/10): due conti,
+    // come la vista vendite_conti e MB21Lista.contiVendita: sul sito (VP × FC) × 0,20; se paga il partner (VP × FC × 1,22, il suo costo con IVA) × 0,20.
+    // Il primo valore copre tutto lo storico: si corregge ma non si elimina.
+    html = `${indietro}<h1>Fattore di conversione</h1>
+      <div class="sotto">Provvigione: ordine pagato sul sito (VP × fattore) × 0,20; se il cliente paga te, il 20% del tuo costo con IVA, (VP × fattore × 1,22) × 0,20. Ogni vendita usa il fattore valido nel giorno in cui conta: quando Amway lo cambia, aggiungi il nuovo con la sua data. Le vendite di prima restano col vecchio.</div>
+      <div class="ad-elenco fc">${[...AD.fc].reverse().map((f, i, tutti) => `<div class="ad-el">${ic('aggiorna')}
+        <span class="q"><b>${esc(MB21Lista.numeroFattore(f.valore))}</b><small>${i === tutti.length - 1 ? 'vale dall\'inizio' : 'vale dal ' + esc(MB21Lista.data(f.dal))}</small></span>
+        <button class="cambia" data-fc-cambia="${esc(f.dal)}">Cambia</button>${i === tutti.length - 1 ? '' : `<button class="via" data-fc-togli="${esc(f.dal)}">Elimina</button>`}</div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un fattore</h4>
+        <label class="ad-lab" for="fc-dal">Da che giorno vale</label><input type="date" id="fc-dal">
+        <label class="ad-lab" for="fc-valore">Il nuovo fattore</label><input id="fc-valore" inputmode="decimal" placeholder="es. 2,26194">
+        <button class="primario" id="fc-piu">\uFF0B Aggiungi</button>
+        <div class="sotto">Le vendite di prima restano col fattore vecchio.</div></div>`;
+  } else if (AD.sezione === 'bbs') {
+    html = `${indietro}<h1>BBS</h1>
+      <div class="ad-elenco bbs">${[...AD.bbs].reverse().map((w, i) => `<div class="ad-el">${ic('biglietto')}
+        <span class="q"><b>${esc(meseLungo(w.data))}</b>${i === 0 ? "<small>l'ultimo caricato: \u00e8 quello che conta</small>" : ''}</span>
+        <button class="via" data-togli-bbs="${esc(w.id)}">Elimina</button></div>`).join('')}</div>
+      <div class="riquadro ad-aggiungi">
+        <h4 class="mc-t">Aggiungi un BBS</h4>
+        <input type="month" id="rp-data-bbs" aria-label="Mese del BBS">
+        <button class="primario" id="rp-piu-bbs">\uFF0B Aggiungi</button>
+        <div class="sotto">Solo mese e anno: conta l'ultimo BBS caricato.</div></div>`;
+  } else {
+    const ultimo = l => (l.length ? MB21Lista.etichettaEvento(l[l.length - 1].data) : 'nessuno');
+    const voce = (id, titolo, sotto) => `<button class="rp-apri ad-voce" id="${id}"><span>${titolo}<small>${sotto}</small></span><span>›</span></button>`;
+    html = `<h1>Admin</h1>
+      <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
+      ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
+      ${UTENTI_ADMIN ? voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}`) : ''}
+      ${SCHEDE_PARTNER_ADMIN ? voce('ad-vai-schede', ic('collega') + ' Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra') : ''}
+      ${messaggiAccesi() ? voce('ad-vai-messaggi', ic('messaggio') + ' Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto') : ''}
+      ${typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta() ? voce('ad-vai-chiusura', ic('whatsapp') + ' Avvisa della chiusura', `manda il messaggio a ogni partner · mandati ${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
+      ${voce('ad-vai-segnalazioni', ic('segnala') + ' Segnalazioni', AD.segnAperte ? `<b class="ad-scad">${AD.segnAperte} aperte</b> · feedback dei partner, rispondi anche su Telegram` : 'feedback dei partner, rispondi anche su Telegram')}
+      ${voce('ad-vai-training', ic('medaglia') + ' Training', 'chi si allena e dove è arrivato')}
+      ${voce('ad-vai-wes', ic('biglietto') + ' WES', `ultimo ${ultimo(AD.wes)}`)}
+      ${voce('ad-vai-bbs', ic('biglietto') + ' BBS', `ultimo ${ultimo(AD.bbs)}`)}
+      ${voce('ad-vai-fc', ic('vendite') + ' Fattore di conversione', AD.fc && AD.fc.length ? `oggi ${MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore)} · per la provvigione delle vendite` : 'per la provvigione delle vendite')}`;
+  }
+  app.innerHTML = html + versione();
+  collegaAdmin();
+}
+
+// Admin → Training (Ignazio 25/09): per ognuno che si è allenato livello, percorso, carte, test, ultimo allenamento e giorni di fila.
+// I progressi arrivano da `training_admin()` (solo Admin, solo il riassunto: niente risposte); livello e percorso li calcola
+// MB21Training.scala come nella pagina Training di ognuno, con le carte dell'archivio privato. Nota Pagine 086: le carte dalla copia nel telefono,
+// come la pagina Training (trnArchivio, pagina-training.js: si legge solo la data dell'ultimo cambio), o da quelle già lette.
+async function caricaTrainingAdmin() {
+  const [r, a] = await Promise.all([
+    dbq('training di tutti', supa.rpc('training_admin')),
+    TRN.mazzi ? { mazzi: TRN.mazzi } : trnArchivio(),
+  ]);
+  if (r.error || !a) { AD.training = { errore: 'Non riesco a leggere il Training: riprova.' }; return AD.sezione === 'training' && disegnaAdmin(); }
+  const mazzi = a.mazzi.filter(z => z && z.percorso && Array.isArray(z.carte));
+  const T = MB21Training, oggi = MB21Coda.oggiRoma();
+  const persone = (r.data || []).map(p => {
+    const stati = Object.fromEntries((p.carte || []).map(c => [c.carta, c]));
+    const sc = T.scala(mazzi, stati, p.test || [], oggi), med = T.medaglie(p.test || [], p.giorni || []);
+    const perc = sc.percorso ? sc.qui.percorsi.find(x => x.id === sc.percorso) : null;
+    const u = AD.tutti.find(x => x.id === p.user_id);
+    return { nome: u ? nomeDi(u) : '?', livello: sc.qui.nome, numero: sc.qui.numero, percorso: perc ? perc.titolo : null,
+      viste: (p.carte || []).length, sapute: (p.carte || []).filter(c => c.scatola >= 3).length,
+      superati: med.percorsi.length, stelle: med.stelle, fila: T.giorniDiFila(p.giorni || [], oggi).n,
+      ultima: p.ultima ? quandoBreve(p.ultima) : (p.giorni && p.giorni.length ? 'il ' + p.giorni[p.giorni.length - 1].split('-').reverse().join('/') : '—'),
+      quando: p.ultima ? MB21Lista.momento(p.ultima) : 0 };
+  }).sort((a, b) => b.quando - a.quando);
+  const dentro = new Set((r.data || []).map(p => p.user_id));
+  const mai = AD.tutti.filter(u => !u.eliminato_il && u.accesso_attivo && !dentro.has(u.id)).map(nomeDi).sort((a, b) => a.localeCompare(b, 'it'));
+  AD.training = { persone, mai };
+  if (AD.sezione === 'training') disegnaAdmin();
+}
+
+// Schede dei partner a cascata (cantiere 19, Ignazio 16/09): anteprima (senza scrivere) e allineamento, nel database.
+async function allineaSchede(prova = false) {
+  const { data, error } = await dbq('schede dei partner', supa.rpc('allinea_schede_partner', { p_prova: prova }));
+  if (error) { mostraToast('Schede dei partner non allineate: riprova da Admin.'); return null; }
+  if (!prova && (data.create || data.collegate)) { LS.righe = []; MP.schede = null; }
+  return data;
+}
+async function anteprimaSchede() {
+  const d = await allineaSchede(true);
+  if (!d) { AD.schede = { errore: 'Non riesco a controllare le liste: riprova.' }; return AD.sezione === 'schede' && disegnaAdmin(); }
+  const codici = [...new Set(d.dettaglio.map(x => x.codice))], schede = d.dettaglio.map(x => x.scheda).filter(Boolean);
+  const [sq, sc] = await Promise.all([
+    codici.length ? dbq('nomi della Mappa', supa.from('squadra').select('partner_id, nome').in('partner_id', codici)) : { data: [] },
+    schede.length ? dbq('schede trovate', supa.from('contatti').select('id, nome, categoria').in('id', schede)) : { data: [] },
+  ]);
+  const nomeP = id => { const x = (sq.data || []).find(y => y.partner_id === id); return x ? MB21Mappa.nomeLeggibile(x.nome) : id; };
+  const utente = id => { const u = AD.tutti.find(y => y.id === id); return u ? nomeDi(u) : '?'; };
+  AD.schede = { create: d.create, collegate: d.collegate, righe: d.dettaglio.map(x => {
+    const s = (sc.data || []).find(y => y.id === x.scheda);
+    return { utente: utente(x.utente), partner: nomeP(x.codice), azione: x.azione, scheda: s ? s.nome : '', categoria: s ? s.categoria : '' };
+  }).sort((a, b) => a.utente.localeCompare(b.utente, 'it') || a.partner.localeCompare(b.partner, 'it')) };
+  if (AD.sezione === 'schede') disegnaAdmin();
+}
+
+// Nuovo utente (Ignazio 16/09): si cerca il nome nella Lista Nomi di tutti (nome e codice Amway dalla scheda) o si scrive a mano;
+// email obbligatoria (è quella con cui entrerà); nasce con «Può entrare» spento. Il codice può essere uguale a un altro (coppia).
+// Stesso foglio per ✏️ Modifica (u = utente): nome, codice, email (solo se non è mai entrato: il suo accesso è legato all'email).
+function foglioNuovoUtente(u) {
+  const bloccaEmail = u && u.auth_id;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto mc nu">
+    <div class="mc-testa"><span class="ts-pastiglia">${u ? esc(iniziali(nomeDi(u))) : ic('squadra')}</span>
+      <div><small>${u ? 'Modifica utente' : 'Nuovo utente'}</small><b>${u ? esc(nomeDi(u)) : "Chi entra nell'app"}</b></div>
+      <button id="nu-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">
+    <label>Cerca nella Lista Nomi<input id="nu-cerca" placeholder="es. Partner G" autocomplete="off"></label>
+    <div id="nu-trovati"></div>
+    <label>Nome e cognome<input id="nu-nome" autocomplete="off" value="${esc(u ? nomeDi(u) : '')}"></label>
+    <label>Codice Amway <small style="color:var(--grigio)">(obbligatorio, solo numeri, anche uguale a quello del compagno/a)</small><input id="nu-codice" inputmode="numeric" autocomplete="off" value="${esc(u ? u.partner_id || '' : '')}"></label>
+    <label>Email con cui entrerà${bloccaEmail ? ' <small style="color:var(--grigio)">(è già entrato: non si cambia)</small>' : ''}<input id="nu-email" type="email" autocomplete="off" autocapitalize="off" value="${esc(u ? u.email || '' : '')}" ${bloccaEmail ? 'disabled' : ''}></label>
+    </div>
+    <div class="errore" id="nu-errore"></div>
+    <div class="mc-fondo"><button class="link" id="nu-annulla">Annulla</button><button class="primario" id="nu-crea">${u ? 'Salva' : 'Crea'}</button></div></div>`;
+  document.body.appendChild(velo);
+  const $ = id => velo.querySelector('#' + id);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  $('nu-annulla').onclick = chiudi;
+  $('nu-x').onclick = chiudi;   // la × in testa chiude come Annulla
+  let giro = 0;
+  $('nu-cerca').oninput = async () => {
+    const q = $('nu-cerca').value.trim(), mio = ++giro;
+    if (q.length < 2) { $('nu-trovati').innerHTML = ''; return; }
+    // più parole («Partner G», «G Partner»): si cerca la più lunga e si tengono i nomi che le hanno tutte
+    const parole = q.toLowerCase().replace(/[%_,]/g, ' ').split(/\s+/).filter(Boolean);
+    const lunga = [...parole].sort((a, b) => b.length - a.length)[0] || '';
+    const r = await dbq('cerca nella Lista', supa.from('contatti').select('id, nome, codice_amway, user_id, categoria')
+      .ilike('nome', `%${lunga}%`).neq('categoria', 'Archiviato').order('nome').limit(200));
+    if (mio !== giro || r.error) return;
+    const data = r.data.filter(c => parole.every(w => String(c.nome || '').toLowerCase().includes(w))).slice(0, 10);
+    const di = id => { const u = AD.utenti.find(x => x.id === id); return u ? nomeDi(u) : ''; };
+    $('nu-trovati').innerHTML = data.length ? data.map(c => `<button class="rp-riga nome" data-c="${esc(c.id)}"><span>${esc(c.nome)}<br>
+      <small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'senza categoria')}${c.codice_amway ? ' · codice ' + esc(c.codice_amway) : ''} · lista di ${esc(di(c.user_id))}</small></span><span></span><span class="f">›</span></button>`).join('')
+      : '<div class="sotto">Nessun nome trovato: scrivilo qui sotto.</div>';
+    $('nu-trovati').querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
+      const c = data.find(x => x.id === b.dataset.c);
+      $('nu-nome').value = c.nome; if (c.codice_amway) $('nu-codice').value = c.codice_amway;
+      $('nu-trovati').innerHTML = ''; $('nu-cerca').value = '';
+      $('nu-email').focus();
+    });
+  };
+  $('nu-crea').onclick = async () => {
+    const nome = $('nu-nome').value.trim().replace(/\s+/g, ' '), codice = $('nu-codice').value.replace(/\s/g, ''), email = $('nu-email').value.trim().toLowerCase();
+    if (!nome) return ($('nu-errore').textContent = 'Scrivi nome e cognome');
+    if (!/^\d+$/.test(codice)) return ($('nu-errore').textContent = codice ? 'Il codice Amway è fatto solo di numeri' : 'Il codice Amway è obbligatorio');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ($('nu-errore').textContent = "Scrivi un'email valida");
+    if (AD.eliminati.some(x => (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è di un utente eliminato: ripristinalo da «Utenti eliminati», ritrova i suoi dati');
+    if (AD.tutti.some(x => x !== u && x.id !== (u && u.id) && (x.email || '').toLowerCase() === email)) return ($('nu-errore').textContent = 'Questa email è già di un utente');
+    const testo = u ? 'Salva' : 'Crea';
+    $('nu-crea').disabled = true; $('nu-crea').textContent = u ? 'Salvo…' : 'Creo…';
+    const campi = { nome_cognome: nome, nome: nome.split(' ')[0], partner_id: codice || null };
+    if (!bloccaEmail) campi.email = email;
+    const { data, error } = u
+      ? await dbq('modifica utente', supa.from('utenti').update(campi).eq('id', u.id).select('id').single())
+      : await dbq('nuovo utente', supa.from('utenti').insert({ ...campi, accesso_attivo: false }).select('id').single());
+    if (error) { $('nu-crea').disabled = false; $('nu-crea').textContent = testo; $('nu-errore').textContent = error.code === '23505' ? 'Questa email è già di un utente' : 'Non salvato: riprova.'; return; }
+    chiudi();
+    mostraToast(u ? `${nome}: salvato` : `${nome} aggiunto: accendi «Può entrare» quando è pronto`);
+    if (u && u.id === ST.utente.id) Object.assign(ST.utente, campi);
+    AD.aperti.add(data.id); AD.riquadri.add('utenti');
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;   // nel Partner Select
+  };
+}
+
+function collegaAdmin() {
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
+  [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
+  su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaMessaggiAdmin === 'function') caricaMessaggiAdmin(); });
+  if (AD.sezione === 'messaggi' && typeof collegaMessaggiAdmin === 'function') collegaMessaggiAdmin();
+  su('ad-vai-chiusura', () => { AD.sezione = 'chiusura'; AD.chiusuraPronta = false; disegnaAdmin(); window.scrollTo(0, 0); caricaChiusuraAdmin(); });
+  if (AD.sezione === 'chiusura' && typeof collegaChiusuraAdmin === 'function') collegaChiusuraAdmin();
+  su('ad-vai-segnalazioni', () => { AD.sezione = 'segnalazioni'; AD.segnalazioni = null; AD.segnalazioneAperta = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaSegnalazioniAdmin === 'function') caricaSegnalazioniAdmin(); });
+  if (AD.sezione === 'segnalazioni' && typeof collegaSegnalazioniAdmin === 'function') collegaSegnalazioniAdmin();
+  su('ad-vai-training', () => { AD.sezione = 'training'; AD.training = null; disegnaAdmin(); window.scrollTo(0, 0); caricaTrainingAdmin(); });
+  su('ad-vai-schede', () => { AD.sezione = 'schede'; AD.schede = null; disegnaAdmin(); window.scrollTo(0, 0); anteprimaSchede(); });
+  su('ad-allinea', async () => {
+    if (!await chiediConferma('Allineo le liste?', `Crea ${AD.schede.create} schede Partner (fuori coda) e collega ${AD.schede.collegate} schede al codice. Non cancella niente.`, 'Allinea')) return;
+    const r = await allineaSchede();
+    if (r) mostraToast(`Fatto: ${r.create} schede create, ${r.collegate} collegate`);
+    anteprimaSchede();
+  });
+  su('ad-nuovo-utente', () => foglioNuovoUtente());
+  collegaSenzaAvvisi();
+  collegaSenzaObiettivi();
+  su('ad-copia-link', foglioLinkInvito);
+  app.querySelectorAll('[data-approva]').forEach(b => b.onclick = async () => {
+    const r = AD.richieste.find(x => x.id === b.dataset.approva);
+    if (!await chiediConferma(`Approvo ${r.nome_cognome}?`, `Potrà entrare con ${r.email}.`, 'Approva')) return;
+    b.disabled = true;
+    const { data, error } = await dbq('approva richiesta', supa.rpc('approva_richiesta', { p_id: r.id }));
+    if (error) { b.disabled = false; return mostraToast(error.code === '23505' ? 'Questa email è già di un utente' : 'Non approvata: riprova.'); }
+    AD.aperti.add(data); AD.riquadri.add('utenti');
+    await apriAdmin();
+    // Avviso già pronto (Ignazio 17/09: dopo «Approva» il passaggio successivo non c'era): numero del modulo con +39 se scritto senza prefisso
+    foglioPerEntrare(r.nome_cognome, r.email, r.telefono, `${ic('fatto')} Avvisa ${r.nome_cognome}`);
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
+  });
+  app.querySelectorAll('[data-rifiuta]').forEach(b => b.onclick = async () => {
+    const r = AD.richieste.find(x => x.id === b.dataset.rifiuta);
+    if (!await chiediConferma(`Rifiuto la richiesta di ${r.nome_cognome}?`, '', 'Rifiuta', true)) return;
+    const { error } = await dbq('rifiuta richiesta', supa.from('richieste_accesso').update({ stato: 'rifiutata', gestita_il: new Date().toISOString() }).eq('id', r.id));
+    if (error) return mostraToast('Non salvato: riprova.');
+    mostraToast('Richiesta rifiutata');
+    apriAdmin();
+  });
+  // Elimina (Ignazio 16/09): toglie dall'app ma NON cancella lista, azioni e check; se rientra ritrova tutto. Nota 086 (Ignazio 24/10): «restano salvati ma spenti»
+  app.querySelectorAll('[data-elimina-ut]').forEach(b => b.onclick = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.eliminaUt);
+    if (!await chiediConferma(`Elimino ${nomeDi(u)} dall'app?`, `Non potrà più entrare e sparisce dal Partner Select. La sua lista, le azioni e i check restano salvati ma spenti: se rientra li ritrova.`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina utente', supa.from('utenti').update({ eliminato_il: new Date().toISOString(), accesso_attivo: false, nel_partner_select: false }).eq('id', u.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast(`${nomeDi(u)} eliminato: i suoi dati restano`);
+    AD.aperti.delete(u.id);
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
+  });
+  su('ad-vedi-eliminati', () => { AD.vediEliminati = !AD.vediEliminati; disegnaAdmin(); });
+  app.querySelectorAll('[data-ripristina]').forEach(b => b.onclick = async () => {
+    const u = AD.eliminati.find(x => x.id === b.dataset.ripristina);
+    if (!await chiediConferma(`Ripristino ${nomeDi(u)}?`, 'Torna tra gli utenti con la sua lista e le sue azioni, e può entrare di nuovo.', 'Ripristina')) return;
+    const { error } = await dbq('ripristina utente', supa.from('utenti').update({ eliminato_il: null, accesso_attivo: true, nel_partner_select: true }).eq('id', u.id));
+    if (error) return mostraToast('Non ripristinato: riprova.');
+    mostraToast(`${nomeDi(u)} ripristinato`);
+    AD.aperti.add(u.id); AD.riquadri.add('utenti');
+    await apriAdmin();
+    const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto;
+  });
+  app.querySelectorAll('[data-entra-ut]').forEach(b => b.onclick = () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.entraUt);
+    if (u) foglioPerEntrare(nomeDi(u), u.email, u.telefono);
+  });
+  app.querySelectorAll('[data-modifica-ut]').forEach(b => b.onclick = () => foglioNuovoUtente(AD.utenti.find(x => x.id === b.dataset.modificaUt)));
+  su('ad-scegli', () => document.getElementById('ad-file').click());
+  app.querySelectorAll('[data-ut]').forEach(b => b.onchange = async () => {
+    const u = AD.utenti.find(x => x.id === b.dataset.ut), campo = b.dataset.campo, valore = b.checked;
+    if (campo === 'accesso_attivo' && valore && !u.email) { b.checked = false; return mostraToast('Manca l\'email: senza non può entrare'); }
+    b.disabled = true;
+    const { error } = await dbq('cambia utente', supa.from('utenti').update({ [campo]: valore }).eq('id', u.id));
+    b.disabled = false;
+    if (error) { b.checked = !valore; return mostraToast('Non salvato: riprova.'); }
+    u[campo] = valore;
+    if (campo === 'nel_partner_select') { const scelto = PS.scelto; await caricaPersone(); if (scelto === 'tutti' || PS.persone.some(p => p.id === scelto)) PS.scelto = scelto; }   // il menu si aggiorna subito, la scelta resta
+    mostraToast(`${nomeDi(u)}: ${campo === 'accesso_attivo' ? (valore ? 'può entrare' : 'non può più entrare') : (valore ? 'nel Partner Select' : 'fuori dal Partner Select')}`);
+    if (campo === 'accesso_attivo') disegnaAdmin();   // aggiorna il conteggio
+  });
+  app.querySelectorAll('[data-apri-ut]').forEach(b => b.onclick = () => {
+    const id = b.dataset.apriUt;
+    const era = AD.aperti.has(id);
+    AD.aperti.clear();   // una scheda per volta: la pagina resta corta
+    if (!era) AD.aperti.add(id);
+    disegnaAdmin();
+    if (!era) { const r = app.querySelector(`[data-apri-ut="${CSS.escape(id)}"]`); if (r) r.scrollIntoView({ block: 'start' }); }
+  });
+  app.querySelectorAll('[data-riq]').forEach(b => b.onclick = () => {
+    const k = b.dataset.riq;
+    AD.riquadri.has(k) ? AD.riquadri.delete(k) : AD.riquadri.add(k);
+    disegnaAdmin();
+  });
+  const chiudiTutte = app.querySelector('#ad-chiudi-tutte');
+  if (chiudiTutte) chiudiTutte.onclick = () => { AD.aperti.clear(); disegnaAdmin(); };
+  const inputFile = document.getElementById('ad-file');
+  if (inputFile) inputFile.onchange = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) foglioFileAmway(MB21Mappa.leggiFileAmway(await file.text()));
+  };
+  su('rp-piu-wes', async () => {
+    const mese = document.getElementById('rp-data-wes').value;   // «2026-10»
+    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del WES');
+    const data = mese + '-01';
+    const giorno = document.getElementById('rp-giorno-wes').value || null;
+    if (giorno && giorno.slice(0, 7) !== mese) return mostraToast('Il primo giorno deve stare nel mese del WES');
+    const { error } = await dbq('nuovo WES', supa.from('wes').insert({ data, giorno }));
+    if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
+    mostraToast(`WES ${MB21Lista.etichettaEvento(data)} aggiunto`);
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
+    apriAdmin();
+  });
+  // Fattore di conversione: aggiungi · cambia · elimina. Dopo ogni modifica le vendite già lette si rileggono (la provvigione cambia).
+  const dopoFattore = messaggio => { LS.vendite = null; if (typeof azzeraFattori === 'function') azzeraFattori(); mostraToast(messaggio); apriAdmin(); };   // nota Pagine 078: anche la provvigione stimata del modulo vendita
+  su('fc-piu', async () => {
+    const esito = MB21Lista.rigaFattore(document.getElementById('fc-dal').value, document.getElementById('fc-valore').value);
+    if (esito.errore) return mostraToast(esito.errore);
+    if (MB21Agenda.controllaGiorno(esito.riga.dal)) return mostraToast(MB21Agenda.controllaGiorno(esito.riga.dal));
+    const { error } = await dbq('nuovo fattore', supa.from('fattori_conversione').insert(esito.riga));
+    if (error) return mostraToast(error.code === '23505' ? 'Per questo giorno c\'è già un fattore: usa «Cambia»' : 'Non salvato: riprova.');
+    dopoFattore(`Fattore ${MB21Lista.numeroFattore(esito.riga.valore)} dal ${MB21Lista.data(esito.riga.dal)}`);
+  });
+  app.querySelectorAll('[data-fc-cambia]').forEach(b => b.onclick = async () => {
+    const f = AD.fc.find(x => x.dal === b.dataset.fcCambia);
+    const valori = await moduloSemplice('Cambia il fattore', [{ k: 'valore', etichetta: `Fattore valido dal ${MB21Lista.data(f.dal)}`, tipo: 'text', valore: MB21Lista.numeroFattore(f.valore), obbligatorio: true, manca: 'Scrivi il fattore' }]);
+    if (!valori) return;
+    const esito = MB21Lista.rigaFattore(f.dal, valori.valore);
+    if (esito.errore) return mostraToast(esito.errore);
+    const { error } = await dbq('cambia fattore', supa.from('fattori_conversione').update({ valore: esito.riga.valore }).eq('dal', f.dal));
+    if (error) return mostraToast('Non salvato: riprova.');
+    dopoFattore('Fattore cambiato: le provvigioni si sono ricalcolate');
+  });
+  app.querySelectorAll('[data-fc-togli]').forEach(b => b.onclick = async () => {
+    const f = AD.fc.find(x => x.dal === b.dataset.fcTogli);
+    if (!await chiediConferma(`Elimino il fattore ${MB21Lista.numeroFattore(f.valore)}?`, `Le vendite dal ${MB21Lista.data(f.dal)} useranno il fattore di prima.`, 'Elimina', true)) return;
+    const { error } = await dbq('elimina fattore', supa.from('fattori_conversione').delete().eq('dal', f.dal));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    dopoFattore('Fattore eliminato');
+  });
+  su('rp-piu-bbs', async () => {
+    const mese = document.getElementById('rp-data-bbs').value;   // «2026-10»
+    if (!/^\d{4}-\d{2}$/.test(mese)) return mostraToast('Scegli mese e anno del BBS');
+    const data = mese + '-01';
+    const { error } = await dbq('nuovo BBS', supa.from('bbs').insert({ data }));
+    if (error) return mostraToast(error.code === '23505' ? 'Questo mese c\'è già' : 'Non salvato: riprova.');
+    mostraToast(`BBS ${MB21Lista.etichettaEvento(data)} aggiunto`);
+    apriAdmin();
+  });
+  app.querySelectorAll('[data-togli-bbs]').forEach(b => b.onclick = async () => {
+    const w = AD.bbs.find(x => x.id === b.dataset.togliBbs);
+    const { count } = await dbq('biglietti del BBS', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'BBS').eq('evento', w.data));
+    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo BBS`);
+    if (!await chiediConferma(`Elimino il BBS ${MB21Lista.etichettaEvento(w.data)}?`, '', 'Elimina', true)) return;
+    const { error } = await dbq('elimina BBS', supa.from('bbs').delete().eq('id', w.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast('BBS eliminato');
+    apriAdmin();
+  });
+  // il primo giorno del WES (cantiere 41): si scrive o si cambia sul posto, si salva da solo
+  app.querySelectorAll('[data-wes-giorno]').forEach(i => i.onchange = async () => {
+    const w = AD.wes.find(x => x.id === i.dataset.wesGiorno);
+    const giorno = i.value || null;
+    // scrivendo l'anno a mano il campo passa da date come «0002-10-…» finché l'anno non è intero: si aspetta, senza cancellare
+    // (Ignazio 23/09: «l'ho scritta diverse volte ma poi si cancella»)
+    if (giorno && !/^(19|20)\d\d-/.test(giorno)) return;
+    if (giorno && giorno.slice(0, 7) !== w.data.slice(0, 7)) return mostraToast(`Il primo giorno deve stare in ${meseLungo(w.data)}`);
+    const { error } = await dbq('giorno del WES', supa.from('wes').update({ giorno }).eq('id', w.id));
+    if (error) { i.value = w.giorno || ''; return mostraToast('Non salvato: riprova.'); }
+    w.giorno = giorno;
+    mostraToast(giorno ? 'Primo giorno del WES salvato' : 'Primo giorno tolto');
+  });
+  app.querySelectorAll('[data-togli]').forEach(b => b.onclick = async () => {
+    const w = AD.wes.find(x => x.id === b.dataset.togli);
+    const { count } = await dbq('biglietti del WES', supa.from('biglietti').select('id', { count: 'exact', head: true }).eq('tipo', 'WES').eq('evento', MB21Lista.meseEvento(w.data)));
+    if (count) return mostraToast(`Non si elimina: ci sono ${count} biglietti per questo WES`);
+    if (!await chiediConferma(`Elimino il WES ${MB21Lista.etichettaEvento(w.data)}?`, '', 'Elimina', true)) return;
+    const { error } = await dbq('elimina WES', supa.from('wes').delete().eq('id', w.id));
+    if (error) return mostraToast('Non eliminato: riprova.');
+    mostraToast('WES eliminato');
+    RP.periodo = RP.tipo === 'wes' ? null : RP.periodo; CK.periodo = null;
+    apriAdmin();
+  });
+}
+
+// Carica file Amway (cantiere 19 lavoro 2): prima il riepilogo (mese, partner, chi entra e chi non c'è più), poi Carica.
+// Riscrive albero e volumi di quel mese come scripts/import_mappa.py; non cancella nessuno.
+// Poi VPP/VPG del mese in obiettivi_mese per ogni utente col suo codice (Ignazio 16/09: «si aggiornano in automatico dove sono richiesti»).
+async function foglioFileAmway(f) {
+  if (f.errore) return mostraToast(f.errore);
+  const [sq, gia, ut] = await Promise.all([
+    dbq('squadra di prima', supa.from('squadra').select('partner_id, nome')),
+    dbq('codici degli utenti', supa.from('utenti').select('id, partner_id')),
+    dbq('mese già caricato', supa.from('volumi_mese').select('partner_id', { count: 'exact', head: true }).eq('mese', f.mese)),
+  ]);
+  if (sq.error || gia.error || ut.error) return mostraToast('Non riesco a leggere i dati di adesso: riprova.');
+  const c = MB21Mappa.confrontoSquadra(sq.data, f.squadra);
+  const perUtenti = MB21Mappa.amwayPerUtenti(ut.data, f.volumi, f.mese);   // VPP/VPG di Dashboard e Check
+  const meseTesto = `${MB21Mappa.MESI_BREVI[f.mese % 100 - 1]} ${Math.floor(f.mese / 100)}`;
+  const nomi = l => l.map(p => esc(MB21Mappa.nomeLeggibile(p.nome))).join(', ');
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio"><h3>${ic('file')} File Amway · ${esc(meseTesto)}</h3>
+    <p>${f.squadra.length} partner nel file. VPP e VPG aggiornati anche in Dashboard e Check per ${perUtenti.length} utenti dell'app.</p>
+    ${gia.count ? `<p>Questo mese è già caricato: i numeri di ${esc(meseTesto)} vengono <b>sostituiti</b> con quelli del file.</p>` : ''}
+    ${c.nuovi.length ? `<p>Entrano nella Mappa (${c.nuovi.length}): ${nomi(c.nuovi)}</p>` : ''}
+    ${c.usciti.length ? `<p>Non sono più nel file (${c.usciti.length}), restano nella Mappa: ${nomi(c.usciti)}</p>` : ''}
+    <button class="primario" id="fa-carica">Carica</button>
+    <button class="link" id="fa-annulla">Annulla</button></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  velo.querySelector('#fa-annulla').onclick = chiudi;
+  velo.querySelector('#fa-carica').onclick = async () => {
+    const bottone = velo.querySelector('#fa-carica');
+    bottone.disabled = true; bottone.textContent = 'Carico…';
+    const ora = new Date().toISOString();
+    const r1 = await dbq('carica squadra', supa.from('squadra').upsert(f.squadra.map(p => ({ ...p, aggiornato_il: ora })), { onConflict: 'partner_id' }));
+    const r2 = r1.error ? r1 : await dbq('carica volumi', supa.from('volumi_mese').upsert(f.volumi.map(v => ({ ...v, aggiornato_il: ora })), { onConflict: 'partner_id,mese' }));
+    const r3 = r1.error || r2.error || !perUtenti.length ? { error: r1.error || r2.error }
+      : await dbq('VPP e VPG del mese', supa.from('obiettivi_mese').upsert(perUtenti, { onConflict: 'user_id,mese' }));   // tocca solo i dati Amway
+    if (r1.error || r2.error || r3.error) { bottone.disabled = false; bottone.textContent = 'Carica'; return mostraToast('Non caricato: riprova.'); }
+    chiudi();
+    MP.squadra = null; MP.volumi = null; MP.storico = {};   // la Mappa si rilegge alla prossima apertura
+    const al = await allineaSchede();   // schede dei partner a cascata per chi è entrato nella squadra
+    if (al && (al.create || al.collegate)) setTimeout(() => mostraToast(`Schede dei partner: ${al.create} create, ${al.collegate} collegate`), 2500);
+    mostraToast(`File Amway di ${meseTesto} caricato: ${f.squadra.length} partner`);
+  };
+}
