@@ -2003,17 +2003,8 @@
   .rp-mesi .futuro { color: var(--linea); }
   .ck-confronto { font-size: 12.5px; color: var(--testo-tenue); text-align: center; margin: 0 0 12px; }
   .ck-sezione { font-size: 13px; font-weight: 700; color: var(--testo-tenue); text-transform: uppercase; letter-spacing: .5px; margin: 20px 4px 8px; }
-  /* LC1 (26/09): il traguardo del mese, quattro luci (100 VP · BBS · WES · CEP) e cosa manca */
+  /* Il riquadro delle liste del percorso (26/09; dalla nota 092 solo nella Dashboard, nel gradino e nel livello): le voci, il consiglio, il Modulo del mese */
   .ck-lc1 { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra-card); padding: 12px 12px 10px; margin: 0 0 12px; border-left: 4px solid var(--grigio-chiaro); }
-  .ck-lc1.fatto { border-left-color: var(--ok); }
-  .ck-lc1 .sez { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0 2px; width: 100%; border: 0; background: none; text-align: left; font: inherit; color: var(--testo); }
-  .ck-lc1 .sez b { font-size: 16px; color: var(--gr-volume); }
-  .ck-lc1 .sez b small { display: block; font-size: 12px; font-weight: 500; color: var(--testo-soft); margin-top: 1px; }
-  .ck-lc1 .sez.ok b { color: var(--ok); }
-  .ck-lc1 .sez .st { font-weight: 800; font-size: 15px; color: var(--grigio); white-space: nowrap; }
-  .ck-lc1 .sez.ok .st { color: var(--ok); }
-  .ck-lc1 .sez .apri { font-size: 20px; line-height: 1; color: var(--testo-tenue); margin-left: 8px; }
-  .ck-lc1 .sez.core { border-top: 1px solid var(--linea); margin-top: 10px; padding-top: 10px; }
   .ck-lc1 .voci { padding: 0 0 4px; }
   .ck-lc1 .voci div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px dashed var(--linea); color: var(--testo); }
   .ck-lc1 .voci div.ok { color: var(--ok); }
@@ -2023,21 +2014,8 @@
   .ck-lc1 .voci .lc-scelta small { display: block; color: var(--testo-soft); font-size: 12px; margin-bottom: 4px; }
   .ck-lc1 .voci .lc-scelta button { border: 1px solid var(--bordo); background: none; color: var(--testo); border-radius: var(--raggio-pill); padding: 4px 12px; margin: 0 6px 6px 0; font: inherit; font-size: 13px; }
   .ck-lc1 .voci .lc-scelta button.su { border-color: var(--ok); color: var(--ok); font-weight: 600; }
-  .ck-lc1 .luci { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0 4px; }
-  .ck-lc1 .luce { --luce: var(--grigio); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 8px 4px 6px; min-width: 0;
-    border-radius: var(--raggio-bottone); background: var(--superficie-2); color: var(--grigio); font-size: 13px; font-weight: 700; }
-  .ck-lc1 .luce i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--luce); font-style: normal; font-size: 13px; line-height: 18px; color: #fff; }
-  .ck-lc1 .luce.on { color: var(--luce); }
-  .ck-lc1 .luce.on i { background: var(--luce); }
-  .ck-lc1 .luce.ignoto i { color: var(--grigio); }
-  .ck-lc1 .luce.vp { --luce: var(--proposta); }   /* ambra: il blu era uguale al BBS (Ignazio 26/09) */ .ck-lc1 .luce.bbs { --luce: var(--bbs); } .ck-lc1 .luce.wes { --luce: var(--pericolo); } .ck-lc1 .luce.cep { --luce: var(--gr-segni); }
-  .ck-lc1 .luce small { font-weight: 500; font-size: 11px; color: var(--testo-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .ck-lc1 .nota-lc1 { display: block; font-size: 13px; color: var(--testo-soft); }
   .ck-lc1 .prossimo { margin-top: 8px; background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 8px 10px; font-size: 13px; font-weight: 600; }
   .ck-lc1 .prossimo.fatto { background: var(--ok-tinta); color: var(--ok); }
-  .ck-lc1 .livelli-t { margin: 14px 0 0; padding-top: 10px; border-top: 2px solid var(--linea); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-soft); }
-  .ck-lc1 .livelli-t + .livello > .sez.core { border-top: 0; margin-top: 0; }
-  /* il livello aperto in un riquadro grigio chiaro (Ignazio 27/09: «tutto questo bianco… staccare un livello da un altro») */
   /* la porta del Modulo Core dalla riga CORE (Ignazio 27/09): la stessa pagina che si apre da MB Plan */
   .ck-lc1 .ck-modulo { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 9px 12px; border: 1px solid var(--bordo); border-radius: var(--raggio-bottone);
     background: var(--superficie-2); color: var(--blu); font: inherit; font-size: 14px; font-weight: 700; text-align: left; }
@@ -2059,11 +2037,6 @@
   .mese-riga b { display: block; font-size: 14px; } .mese-riga small { display: block; font-size: 12px; font-weight: 400; color: var(--testo-soft); margin-top: 2px; }
   .mese-riga em { margin-left: auto; font-style: normal; color: var(--testo-tenue); }
   .mese-riga > svg.ic { flex: none; width: 34px; height: 34px; padding: 8px; border-radius: 50%; box-sizing: border-box; color: var(--proposta); background: var(--proposta-tinta); }
-  .ck-lc1 .livello.aperto { background: var(--superficie-2); border: 1px solid var(--bordo); border-left: 3px solid var(--bordo); border-radius: var(--raggio-riga); padding: 2px 10px 10px; margin: 8px -4px 0; }
-  .ck-lc1 .livello.aperto.ok { border-left-color: var(--ok); }
-  .ck-lc1 .livello.aperto > .sez.core { border-top: 0; margin-top: 0; }
-  .ck-lc1 .livello.aperto + .livello > .sez.core { border-top: 0; }
-  .ck-lc1 .livello.aperto .voci div { border-top-color: var(--bordo); }
   .ck-lc1 .sv-t { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--testo-soft); margin: 8px 0 0; }
   .ck-lc1 .passi { margin-top: 8px; background: var(--proposta-tinta); color: var(--proposta); border-radius: var(--raggio-bottone); padding: 8px 10px; font-size: 13px; }
   .ck-lc1 .passi > b { display: block; font-size: 12px; margin-bottom: 2px; }
@@ -4293,7 +4266,7 @@ function disegnaStorico(velo, dati) {
   velo.querySelectorAll('[data-slchi]').forEach(x => x.onclick = () => { SL.chi = x.dataset.slchi; disegnaStorico(velo, dati); velo.querySelector('.foglio').scrollTop = 0; });
 }
 
-const CK = { tipo: 'mese', periodo: null, meseCard: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperti: new Set(), aperta: null, lcLinee: [], lcAperto: false, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
+const CK = { tipo: 'mese', periodo: null, giorni: null, obiettivi: [], wes: [], eventi: null, lc1: null, core: {}, aperta: null, lcLinee: [], lcAperto: false, indietro: 1, chiusi: leggiGruppiChiusi() };   // indietro: con quanti periodi fa si confronta (Ignazio 20/09)
 // I gruppi del Check chiusi (Volume, Azione, Segni Vitali N21, Crescita) si ricordano sul telefono: è una comodità
 // di chi guarda, quindi solo qui; se la memoria del telefono non risponde, si parte tutti aperti
 function leggiGruppiChiusi() {
@@ -4381,7 +4354,7 @@ function disegnaCheck() {
   const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi, segniAl: CK.segniAl };
   // due domande, due comandi (Ignazio 27/09: «se cambio, mica mi cambia il percorso?»): in cima la card del percorso col suo mese ‹ ›,
   // sotto «I numeri del periodo» con Mese · WES · Anno, che cambiano solo i numeri
-  let html = `${indietroCheck()}<h1>Check</h1>${partnerSelect()}${lc1Html(oggi)}
+  let html = `${indietroCheck()}<h1>Check</h1>${partnerSelect()}${rigaPercorsoCheck()}
     <h2 class="ck-sezione">I numeri del periodo</h2>
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-ckperiodo="${k}" class="${CK.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
@@ -4435,55 +4408,12 @@ function disegnaCheck() {
   collegaCheck();
 }
 
-// «Leader 1° livello» nel Check (Ignazio 26/09; nel codice resta `lc1`, il nome di squadra di prima): «i primi 4 punti Core»
-// del mese, quattro luci e cosa manca (MB21Check.lc1). Con tutte e sette le abitudini Core si diventa «Leader Core» (la scala, dopo).
-// Il mese è suo (CK.meseCard, di partenza il mese in corso) con le sue frecce ‹ ›: Mese · WES · Anno non lo cambiano (Ignazio 27/09). Con «Tutti» la card non c'è: LC1 è di una
-// persona (il conto per l'Admin, chi ce l'ha e chi no, viene dopo).
-function lc1Html(oggi) {
-  if (!CK.lc1) return '';
-  const R = MB21Report, C = MB21Check;
-  const mese = CK.meseCard || oggi.slice(0, 8) + '01';
-  const l = C.lc1({ mese, oggi, obiettivi: CK.obiettivi, biglietti: CK.lc1.biglietti, cep: CK.lc1.cep, eventi: CK.eventi });
-  const io = visto().id === ST.utente.id;
-  const nome = String(visto().nome || visto().nome_cognome || '').trim().split(/\s+/)[0];
-  // sopra la card, come «I numeri del periodo» (Ignazio 27/09); il mese lo dicono le frecce, non il titolo;
-  // guardando un altro partner dice di chi è (Ignazio 27/09: «Il percorso di Fiammetta»)
-  const titoletto = `<h2 class="ck-sezione">${io || !nome ? 'Il tuo percorso' : `Il percorso di ${esc(nome)}`}</h2>
-    <div class="rp-naviga"><button id="ck-mese-prima" aria-label="Mese prima" ${mese > C.LC1_INIZIO ? '' : 'disabled'}>‹</button>
-      <b>${esc(R.testoPeriodo(R.periodoMese(mese)))}</b>
-      <button id="ck-mese-dopo" aria-label="Mese dopo" ${R.spostaMese(mese, 1) <= oggi ? '' : 'disabled'}>›</button></div>`;
-  if (l.prima) return titoletto + `<div class="ck-lc1"><div class="sez"><b>Leader 1° livello</b></div>
-    <small class="nota-lc1">Il percorso si conta da settembre 2026, il nuovo anno di performance</small></div>`;
-  const { core, pc } = statoPercorso(l);
-  const [g1, g2, g3] = pc.gradini;
-  const avvisi = [];
-  if (!l.fatto && !l.inCorso) avvisi.push('mese chiuso');
-  if (l.luci.some(x => x.ignoto && x.chiave !== 'vp')) avvisi.push(io ? 'non trovo la scheda col tuo codice Amway: chiedi all\'Admin' : 'nessuna scheda col suo codice Amway');
-  // un consiglio sotto ogni gradino, in parallelo (Ignazio 27/09); per un altro partner la direzione da dargli, con testo neutro
-  const consiglio = c => {
-    if (!c) return '';
-    const t = esc(`Per ${io || !nome ? 'te' : nome}: ${c.cosa}`);
-    // con un posto dove andare il consiglio è un bottone: un tocco e si è lì (stella cometa, 27/09)
-    return c.vai ? `<button class="prossimo vai" data-vai="${c.vai}"><span>${t}</span><span>›</span></button>` : `<div class="prossimo">${t}</div>`;
-  };
-  const prossimo = pc.tuttiFatti ? (io ? 'Tutti i gradini di questo mese sono tuoi' : 'Tutti i gradini di questo mese sono fatti') : '';
-  const aperto = CK.aperti.has('core'), apertoPace = CK.aperti.has('pace');
-  const lv = statoPercorso(l).lv;
-  return titoletto + `<div class="ck-lc1 ${l.fatto ? 'fatto' : ''}">
-    <div class="sez ${g1.fatto ? 'ok' : ''}"><b>${g1.fatto ? '✓ ' : ''}Leader 1° livello</b><span class="st">${esc(g1.stato)}</span></div>
-    <div class="luci">${l.luci.map(x => `<span class="luce ${x.chiave} ${x.ok ? 'on' : ''} ${x.ignoto ? 'ignoto' : ''}"><i>${x.ok ? '✓' : x.ignoto ? '?' : ''}</i>${esc(x.titolo)}<small>${esc(x.testo)}</small></span>`).join('')}</div>
-    ${avvisi.length ? `<small class="nota-lc1">${esc(avvisi.join(' · '))}</small>` : ''}
-    ${consiglio(g1.consiglio)}
-    <button class="sez core ${g2.fatto ? 'ok' : ''}" data-gradino="core" aria-expanded="${aperto ? 'true' : 'false'}"><b>${g2.fatto ? '✓ ' : ''}CORE${aperto ? '' : '<small>tocca per vedere le 7 abitudini</small>'}</b><span><span class="st">${esc(g2.stato)}</span><span class="apri">${aperto ? '⌄' : '›'}</span></span></button>
-    ${aperto ? `<div class="voci">${g2.voci.length ? g2.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')
-      : `<div><span>${core && core.errore ? 'Non riesco a leggere il Modulo Core: riprova' : 'Leggo il Modulo Core…'}</span><span></span></div>`}</div>${consiglio(g2.consiglio)}
-    <button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : ''}
-    <button class="sez core ${g3.fatto ? 'ok' : ''}" data-gradino="pace" aria-expanded="${apertoPace ? 'true' : 'false'}"><b>${g3.fatto ? '✓ ' : ''}Pacesetter${apertoPace ? '' : '<small>2 iscritti personali, 100 VP e CEP</small>'}</b><span><span class="st">${esc(g3.stato)}</span><span class="apri">${apertoPace ? '⌄' : '›'}</span></span></button>
-    ${apertoPace ? `<div class="voci">${g3.voci.map(v => `<div class="${v.fatto ? 'ok' : ''}"><span>${v.fatto ? '✓ ' : ''}${esc(v.testo)}</span><span>${esc(v.stato)}</span></div>`).join('')}</div>${consiglio(g3.consiglio)}` : ''}
-    ${prossimo ? `<div class="prossimo ${pc.tuttiFatti ? 'fatto' : ''}">${esc(prossimo)}</div>` : ''}
-    ${lv ? `<div class="livelli-t">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ''}</div>${lv.righe.map(r => { const ap = CK.aperti.has(r.chiave); return `
-    <div class="livello ${ap ? 'aperto' : ''} ${r.fatto ? 'ok' : ''}"><button class="sez core ${r.fatto ? 'ok' : ''}" data-gradino="${r.chiave}" aria-expanded="${ap ? 'true' : 'false'}"><b>${r.fatto ? '✓ ' : ''}${esc(r.titolo)}${ap ? '' : `<small>${esc(r.sotto)}</small>`}</b><span><span class="st">${esc(r.stato)}</span><span class="apri">${ap ? '⌄' : '›'}</span></span></button>
-    ${ap ? `<div class="sv-t">Segni Vitali</div>${vociHtml(r.voci, lv)}${passiHtml(r, lv.mese)}` : ''}</div>`; }).join('')}` : ''}</div>`;
+// Nota Pagine 092, voce 1 (Ignazio 25/10/2026, «A»): «Il tuo percorso» stava due volte, in cima al Check (lc1Html, con il suo mese ‹ ›) e nella
+// Dashboard («Qual è il mio prossimo traguardo?»). Resta solo nella Dashboard; qui, al suo posto, una riga che porta lì. Con «Tutti» non c'è (il percorso
+// è di una persona). I pezzi che servono anche alla Dashboard restano qui: vociHtml, passiHtml, statoPercorso, livelliCheck, collegaPercorso, vaiDalCheck.
+function rigaPercorsoCheck() {
+  if (vediTutti()) return '';
+  return `<button class="mese-riga" id="ck-percorso">${ic('traguardo')}<span><b>Il percorso</b><small>Leader 1° livello, Core, Pacesetter e i livelli · nella Dashboard</small></span><em>›</em></button>`;
 }
 const vociHtml = (voci, lv) => `<div class="voci">${voci.map(v => {
   const t = `${v.fatto ? '✓ ' : ''}${esc(v.testo)}`;
@@ -4501,7 +4431,7 @@ function passiHtml(r, mese) {
     ${r.nonOra.length ? `<small class="nonora">Non ora, questo mese: ${r.nonOra.map(x => `<button data-riprendi="${esc(x.partner_id)}" data-mese="${mese}">${esc(x.nome)} ↺</button>`).join(' ')}</small>` : ''}</div>`;
 }
 
-// Il percorso di un mese, calcolato una volta sola per la card del Check e per quella della Dashboard (27/09): il Modulo Core
+// Il percorso di un mese (dalla nota 092 solo per la Dashboard, «Qual è il mio prossimo traguardo?»; prima anche per la card del Check): il Modulo Core
 // (letto al bisogno), i gradini del mese (MB21Check.percorso, con gli iscritti personali scritti nel Check) e i livelli
 function statoPercorso(l) {
   const core = CK.core[l.mese];
@@ -4576,8 +4506,7 @@ async function caricaCoreCheck(mese) {
   } catch (e) {
     CK.core[mese] = { modulo: null, errore: true };
   }
-  if (ST.tab === 'check' && CK.giorni && visto().id === chi) disegnaCheck();
-  if (ST.tab === 'oggi' && visto().id === chi) aggiornaCardCheck();   // la card «Il tuo Check» della Dashboard (27/09)
+  if (ST.tab === 'oggi' && visto().id === chi) aggiornaCardCheck();   // il traguardo della Dashboard (dalla nota 092 il Check non mostra più il Core)   // la card «Il tuo Check» della Dashboard (27/09)
 }
 
 // ── I dati del percorso per i livelli della Dashboard (Pagine 040): gli stessi del Check, letti dopo la Dashboard così non la fanno aspettare.
@@ -4600,11 +4529,8 @@ function collegaCheck() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', tornaDalCheck);
   su('ck-storico', foglioStorico);
-  app.querySelectorAll('[data-gradino]').forEach(b => b.onclick = () => {   // un gradino del percorso si apre e si chiude (Ignazio 26/09)
-    const k = b.dataset.gradino;
-    if (CK.aperti.has(k)) CK.aperti.delete(k); else CK.aperti.add(k);
-    disegnaCheck();
-  });
+  // nota 092: «Il percorso ›» porta alla Dashboard, su «Qual è il mio prossimo traguardo?» (la freccia lì torna alla Dashboard)
+  su('ck-percorso', () => { CK.da = null; ST.vaiA = 'traguardo'; ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0); });
   app.querySelectorAll('[data-ckgruppo]').forEach(b => b.onclick = () => {
     const k = b.dataset.ckgruppo;
     if (CK.chiusi.has(k)) CK.chiusi.delete(k); else CK.chiusi.add(k);
@@ -4623,14 +4549,10 @@ function collegaCheck() {
   const sposta = n => { const q = R.spostaPeriodo(CK.periodo, n, oggi, CK.wes); if (q) { CK.periodo = q; disegnaCheck(); } };
   su('ck-prima', () => sposta(-1));
   su('ck-dopo', () => sposta(1));
-  const meseCard = n => { CK.meseCard = R.spostaMese(CK.meseCard || oggi.slice(0, 8) + '01', n); disegnaCheck(); };   // il mese della card, da solo (Ignazio 27/09)
-  su('ck-mese-prima', () => meseCard(-1));
-  collegaPercorso(disegnaCheck);
-  su('ck-mese-dopo', () => meseCard(1));
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
 }
 
-// I legami di «Per te: …», dei passi, di «Non ora» e di «di cui Leaders Club»: gli stessi nel Check e nei livelli della Dashboard (`ridisegna` = chi li ha aperti)
+// I legami di «Per te: …», dei passi, di «Non ora» e di «di cui Leaders Club» nei livelli della Dashboard (`ridisegna` = chi li ha aperti; fino alla nota 092 anche nel Check)
 function collegaPercorso(ridisegna) {
   app.querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiDalCheck(b.dataset.vai, b.dataset.pid));
   // le linee a Leaders Club, a mano dell'Admin (30/09): il tocco apre l'elenco, ogni nome si spunta e si toglie.
@@ -4667,7 +4589,7 @@ async function vaiDalCheck(vai, pid) {
   if (vai === 'scheda') return schedaDalCheck(pid);
   if (vai === 'segni' && !io) return schedaDalCheck(visto().partner_id);
   if (vai === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); vai = 'profilo'; }
-  if (vai === 'core') return apriCoreMese((CK.meseCard || MB21Coda.oggiRoma()).slice(0, 7), ST.tab === 'oggi' ? 'oggi' : 'check');   // «‹ Check» (o «‹ Dashboard») per tornare
+  if (vai === 'core') return apriCoreMese(MB21Coda.oggiRoma().slice(0, 7), ST.tab === 'oggi' ? 'oggi' : 'check');   // «‹ Check» (o «‹ Dashboard») per tornare
   // nota Pagine 084, punto 3 (Ignazio 24/10): «una traccia ogni giorno» apre Training › Studia (le tracce del BSM); «10 pagine ogni giorno» I miei libri,
   // con la freccia che torna al Check (o alla Dashboard)
   if (vai === 'libri') return apriLibri(ST.tab === 'oggi' ? 'oggi' : 'check');

@@ -41,7 +41,7 @@ const ctx = {
 vm.createContext(ctx);
 vm.runInContext(pezzo('const CK = {', 'const CAMPI_CK'), ctx);
 vm.runInContext(pezzo('const indietroCheck = ', '\nasync function apriPaginaCheck'), ctx);   // nota 081: la freccia del Check (da dove si arriva)
-vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);   // porta con sé lc1Html e caricaCoreCheck
+vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);   // porta con sé rigaPercorsoCheck (nota 092) e caricaCoreCheck
 const esegui = codice => vm.runInContext(codice, ctx);
 
 const g = (data, v = {}) => ({ data, contatti: 0, pm: 0, sponsor_personali: 0, sponsor_gruppo: 0, vp_clienti: 0, cep: 0, bbs: 0, wes: 0, tracce: 0, pagine: 0, ...v });
@@ -147,73 +147,9 @@ prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la gri
   assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
   // due domande (Ignazio 27/09): sopra la card, sotto «I numeri del periodo» con Confronta con → Gli ultimi 12 mesi → i gruppi
   // Mese · WES · Anno sotto «I numeri del periodo»: cambiano solo i numeri (Ignazio 27/09)
-  const posti = ['<h2 class="ck-sezione">Il tuo percorso</h2>', 'id="ck-mese-prima"', 'class="ck-lc1', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="rp-periodi"', 'id="ck-prima"', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
+  const posti = ['id="ck-percorso"', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="rp-periodi"', 'id="ck-prima"', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
   assert.ok(posti.every((x, i) => x > 0 && (i === 0 || x > posti[i - 1])), posti.join(' '));
   assert.doesNotMatch(h, /class="sv"/);
-});
-
-prova('La card del percorso in cima al Check: titolo «Leader 1° livello» con le quattro luci sotto, senza il mese; con «Tutti» non c\'è', () => {
-  let h = disegna();
-  const card = h.slice(h.indexOf('class="ck-lc1'), h.indexOf('<h2 class="ck-sezione">I numeri'));
-  assert.ok(card.length > 0);
-  assert.match(card, /<div class="sez "><b>Leader 1° livello<\/b><span class="st">2 su 4<\/span><\/div>/);
-  assert.doesNotMatch(card, /settembre/);                                    // il mese lo dicono le frecce sopra la card
-  assert.match(card, /class="luce bbs on /);
-  assert.match(card, /class="luce cep on /);
-  assert.match(card, /class="luce vp {2}"/);
-  assert.doesNotMatch(card, /Ti manca/);
-  assert.match(card, /class="luce wes  "><i><\/i>WES<small>manca<\/small>/);   // solo «manca», niente mese tagliato (Ignazio 27/09)
-  assert.match(card, /<button class="sez core " data-gradino="core" aria-expanded="false"><b>CORE<small>tocca per vedere le 7 abitudini<\/small><\/b><span><span class="st">0 su 7<\/span><span class="apri">›<\/span><\/span><\/button>/);
-  assert.doesNotMatch(card, /mese-card/);   // con «Mese» la card non ripete il mese
-  assert.doesNotMatch(card, /class="voci"/);                                  // chiuso: le 7 abitudini non si vedono
-  assert.match(card, /<\/div>\s*<button class="prossimo vai" data-vai="segni"><span>Per te: il biglietto WES<\/span><span>›<\/span><\/button>\s*<button class="sez core/);   // un tocco porta ai biglietti (27/09)   // il consiglio del 1° livello, sotto le luci (Ignazio 27/09)
-  assert.equal((card.match(/class="prossimo[ "]/g) || []).length, 1);   // Core chiuso: il suo consiglio non si vede
-  esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-10-01', contatto: true });`);
-  h = disegna();
-  assert.match(h, /class="ck-lc1 fatto"/);
-  assert.match(h, /<div class="sez ok"><b>✓ Leader 1° livello<\/b><span class="st">fatto<\/span><\/div>/);
-  esegui(`CK.lc1 = null`);
-  assert.doesNotMatch(disegna(), /ck-lc1/);
-  esegui(`CK.lc1 = { biglietti: null, cep: null }; CK.meseCard = '2026-08-01';`);
-  assert.match(disegna(), /Il percorso si conta da settembre 2026/);
-  esegui(`CK.meseCard = null;`);
-  assert.match(disegna(), /<small class="nota-lc1">non trovo la scheda col tuo codice Amway: chiedi all'Admin<\/small>/);
-});
-
-prova('«Leader Core» si apre col tocco: le 7 abitudini con la spunta e lo stato; il mese non letto dice «…»; tutto fatto = verde', () => {
-  esegui(`CK.lc1 = { biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }], cep: [{ dal: '2026-01-01', uscito_il: null }] }; CK.obiettivi[1].vpp_amway = 0; CK.aperti.add('core');`);
-  const h = disegna();
-  assert.match(h, /data-gradino="core" aria-expanded="true"/);
-  assert.match(h, /<span class="apri">⌄<\/span>/);
-  assert.doesNotMatch(h, /tocca per vedere/);   // da aperta la scritta sparisce
-  const voci = h.slice(h.indexOf('class="voci"'), h.indexOf('class="prossimo', h.indexOf('class="voci"')));
-  // da aperto, sotto le 7 abitudini, il consiglio del Core (senza il WES, che consiglia già il 1° livello)
-  assert.match(h, /<\/div><\/div><button class="prossimo vai" data-vai="core"><span>Per te: il counseling, l'edificazione e il no-crossline<\/span>/);
-  assert.match(voci, /<div class=""><span>8 Piani Marketing<\/span><span>mancano 8<\/span><\/div>/);
-  assert.match(voci, /<div class=""><span>Consumo personale<\/span><span>0 VP<\/span><\/div>/);
-  assert.match(voci, /<div class=""><span>Una traccia ogni giorno<\/span><span>0 tracce su 15 finora<\/span><\/div>/);   // settembre 2026: il totale delle tracce (Ignazio 27/09)
-  assert.match(voci, /<span>10 pagine ogni giorno<\/span><span>0 pagine su 150 finora<\/span>/);   // anche le pagine sul totale, a settembre
-  assert.match(voci, /<span>OPEN · BBS · WES<\/span><span>OPEN 0 su 5 · BBS · WES<\/span>/);
-  assert.match(voci, /<span>Squadra<\/span><span>counseling · edificazione · no-crossline<\/span>/);
-  assert.match(h, /<button class="ck-modulo" data-vai="core"><svg class="ic crescita"><\/svg> Modulo del mese<span>›<\/span><\/button>/);   // la porta del Modulo Core (27/09)
-  assert.equal((voci.match(/<div class="/g) || []).length, 7);
-  // un mese di cui il Modulo Core non è ancora letto: «…» e «Leggo il Modulo Core…»; la lettura parte (qui, senza database, si ferma da sola)
-  esegui(`CK.meseCard = '2026-10-01'; CK.eventi.wes.push({ data: '2026-11-01', creato_il: '2026-09-01T10:00:00+00:00' });`);
-  const h2 = disegna();
-  assert.ok(esegui(`!!CK.core['2026-10-01']`));
-  assert.match(h2, /<span class="st">…<\/span>/);
-  assert.match(h2, /Leggo il Modulo Core…/);
-  esegui(`CK.meseCard = null;`);
-  // tutto fatto: titoli verdi, riga verde
-  esegui(`CK.obiettivi[1].vpp_amway = 120; CK.lc1.biglietti.push({ tipo: 'WES', evento: '2026-11-01', contatto: true });   // a settembre in vendita c'è il WES di novembre
-    CK.core['2026-09-01'].modulo.fatte = 7; CK.core['2026-09-01'].modulo.abitudini = [true, true, true, true, true, true, true];
-    CK.giorni.push({ data: '2026-09-10', sponsor_personali: 2 });   // Pacesetter: 2 iscritti personali scritti nel Check`);
-  const h3 = disegna();
-  assert.match(h3, /<button class="sez core ok" data-gradino="pace" aria-expanded="false"><b>✓ Pacesetter<small>2 iscritti personali, 100 VP e CEP<\/small><\/b><span><span class="st">fatto<\/span>/);
-  assert.match(h3, /<button class="sez core ok" data-gradino="core"[^>]*><b>✓ CORE<\/b><span><span class="st">7 su 7<\/span>/);
-  assert.equal((h3.match(/<div class="ok"><span>✓ /g) || []).length, 7);
-  assert.match(h3, /<div class="prossimo fatto">Tutti i gradini di questo mese sono tuoi<\/div>/);
-  esegui(`CK.aperti.clear()`);
 });
 
 prova('Confronta con: col Mese tre bottoni (fino a «tre mesi fa»), con WES e Anno due (qui Anno; Ignazio 27/09)', () => {
@@ -222,106 +158,6 @@ prova('Confronta con: col Mese tre bottoni (fino a «tre mesi fa»), con WES e A
   esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
   assert.equal((quando(disegna()).match(/data-ckindietro/g) || []).length, 2);
   esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-09-15');`);
-});
-
-prova('Guardando un altro partner (Ignazio 27/09): «Il percorso di Fiammetta» e «Per Fiammetta: …», testo neutro', () => {
-  ctx.visto = () => ({ id: 'isa', nome: 'Fiammetta Moretti' });
-  assert.match(disegna(), /<div class="prossimo fatto">Tutti i gradini di questo mese sono fatti<\/div>/);   // non «tuoi»
-  esegui(`CK.obiettivi[1].vpp_amway = 47.46`);   // come Fiammetta il 27/09: manca solo 100 VP
-  const h = disegna();
-  esegui(`CK.obiettivi[1].vpp_amway = 120`);
-  assert.match(h, /<h2 class="ck-sezione">Il percorso di Fiammetta<\/h2>/);
-  assert.match(h, /<div class="prossimo">Per Fiammetta: arrivare a 100 VP<\/div>/);
-  assert.doesNotMatch(h, /Il tuo percorso|Per te:/);
-  ctx.visto = () => ({ id: 'io' });
-  assert.match(disegna(), /<h2 class="ck-sezione">Il tuo percorso<\/h2>/);
-});
-
-prova('La card ha il suo mese con ‹ ›; Mese · WES · Anno e le frecce del periodo non la cambiano (Ignazio 27/09)', () => {
-  const card = h => h.slice(h.indexOf('<h2 class="ck-sezione">Il tuo percorso'), h.indexOf('<h2 class="ck-sezione">I numeri'));
-  const settembre = card(disegna());
-  assert.match(settembre, /<button id="ck-mese-prima" aria-label="Mese prima" disabled>‹<\/button>\s*<b>Settembre 2026<\/b>\s*<button id="ck-mese-dopo" aria-label="Mese dopo" disabled>›<\/button>/);   // prima di settembre non si conta, dopo è futuro
-  esegui(`CK.tipo = 'anno'; CK.periodo = MB21Report.periodoAnno('2026-09-15');`);
-  assert.equal(card(disegna()), settembre);
-  esegui(`CK.tipo = 'mese'; CK.periodo = MB21Report.periodoMese('2026-08-15');`);
-  assert.equal(card(disegna()), settembre);
-  esegui(`CK.periodo = MB21Report.periodoMese('2026-09-15'); CK.meseCard = '2026-08-01';`);
-  assert.match(card(disegna()), /aria-label="Mese dopo" >›/);
-  esegui(`CK.meseCard = null;`);
-});
-
-prova('Pacesetter, terza riga (Ignazio 26/09): 2 iscritti personali scritti nel Check · 100 VP · CEP, si apre come Leader Core', () => {
-  const sp = esegui(`CK.giorni.findIndex(g => g.sponsor_personali === 2 && g.data === '2026-09-10')`);
-  esegui(`CK.giorni.splice(${sp}, 1); CK.giorni.push({ data: '2026-09-04', sponsor_personali: 1 }, { data: '2026-08-20', sponsor_personali: 5 }); CK.aperti.add('pace');`);   // agosto non conta
-  const h = disegna();
-  assert.match(h, /data-gradino="pace" aria-expanded="true"><b>Pacesetter<\/b><span><span class="st">2 su 3<\/span><span class="apri">⌄<\/span>/);
-  const voci = h.slice(h.indexOf('data-gradino="pace"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
-  assert.match(voci, /<div class=""><span>2 iscritti personali<\/span><span>1 su 2<\/span><\/div>/);
-  assert.match(voci, /<div class="ok"><span>✓ 100 VP<\/span><span>fatto<\/span><\/div>/);
-  assert.match(voci, /<div class="ok"><span>✓ CEP<\/span><span>fatto<\/span><\/div>/);
-  assert.match(voci, /<button class="prossimo vai" data-vai="lista"><span>Per te: sponsorizzare ancora una persona<\/span>/);
-  assert.doesNotMatch(h, /Tutti i gradini/);
-  esegui(`CK.aperti.clear()`);
-});
-
-prova('I livelli nella card (Ignazio 27/09): sotto le cose del mese, dal file Amway del mese della card; senza codice Amway non ci sono', () => {
-  assert.doesNotMatch(disegna(), /livelli-t/);   // nessun codice Amway (visto senza partner_id)
-  ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
-  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'FERRARA, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'BELLINI, ALBERTO' }, { partner_id: 'D', sponsor_id: 'P1', nome: 'Galli, Luca' }, { partner_id: 'C', sponsor_id: 'X', nome: 'ALTRO, UNO' },
-      ...['N1', 'N2', 'N3', 'N4', 'N5'].map(x => ({ partner_id: x, sponsor_id: 'B', nome: x, data_ingresso: '2026-09-10' }))],   // 5 iscritti del mese sotto Bellini
-    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6, al_livello_successivo: 193.86 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 },
-      { partner_id: 'B', mese: 202609, vpp: 116.36, bonus: 0, al_livello_successivo: 83.64 }, { partner_id: 'D', mese: 202609, vpp: 78.27, bonus: 0, al_livello_successivo: 121.73 },
-      { partner_id: 'P1', mese: 202608, vpp: 1, bonus: 21 }] };
-    CK.nonOra = [];
-    CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('lc');`);
-  const h = disegna();
-  const card = h.slice(h.indexOf('class="livelli-t"'), h.indexOf('<h2 class="ck-sezione">I numeri'));
-  assert.match(card, /^class="livelli-t">I livelli<\/div>/);
-  assert.match(card, /data-gradino="lc" aria-expanded="true"><b>Leaders Club<\/b>/);
-  assert.match(card, /<div class="sv-t">Segni Vitali<\/div><div class="voci"><div class=""><span>Bonus attività<\/span><span>6% su 9%<\/span>/);   // una lista sola, come il Manuale
-  assert.match(card, /<span>Prime linee<\/span><span>3 su 5<\/span>/);   // C è di un altro
-  assert.match(card, /<div class="ok"><span>✓ Iscritti al mese gruppo<\/span><span>fatto<\/span>/);
-  assert.match(card, /<span>Iscritti CEP<\/span><span>3 su 5<\/span>/);
-  assert.doesNotMatch(card, /Per essere|I Segni Vitali ·/);
-  // «I prossimi passi» (27/09): 2, coi nomi, prima le cause; il 9% è una riga sotto
-  assert.match(card, /<b>Dove puoi crescere verso Leaders Club<\/b>/);
-  assert.match(card, /<div class="passo"><button class="vai" data-vai="lista">1\. 2 prime linee attive in più \(3 su 5\)&nbsp;›<\/button><\/div>/);
-  assert.match(card, /<div class="passo"><button class="vai" data-vai="scheda" data-pid="B">2\. Alberto Bellini: 84 VP e arriva al 3%&nbsp;›<\/button><button data-nonora="B" data-mese="202609">Non ora<\/button><\/div>/);   // il nome apre la sua scheda
-  assert.doesNotMatch(card, /iscritti al CEP in più/);   // al massimo 2 passi
-  assert.match(card, /<small>Al 9% mancano 194 VP: arrivano con i passi sopra<\/small>/);
-  // «Non ora» su Bellini: il passo passa a Galli, e Bellini si può riprendere
-  esegui(`CK.nonOra = [{ partner_id: 'B', mese: 202609 }, { partner_id: 'D', mese: 202608 }]`);   // quello di agosto non conta
-  const h2 = disegna();
-  assert.match(h2, /2\. Luca Galli: 122 VP e arriva al 3%/);
-  assert.match(h2, /<small class="nonora">Non ora, questo mese: <button data-riprendi="B" data-mese="202609">Alberto Bellini ↺<\/button><\/small>/);
-  esegui(`CK.nonOra = []`);
-  assert.match(card, /data-gradino="elc" aria-expanded="false"><b>Executive Leader Club<small>Segni Vitali: 15% · 10 prime linee · 15 CEP · 50 nel gruppo<\/small>/);
-  assert.match(card, /data-gradino="arg" aria-expanded="false"><b>Produttore Argento<small>Segni Vitali: 21% · 20 prime linee · 30 CEP · 150 nel gruppo<\/small><\/b><span><span class="st">0 su 9/);   // il 21% di agosto non conta
-  esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear();`);
-  ctx.visto = () => ({ id: 'io' });
-});
-
-prova('Executive, «di cui Leaders Club» (Ignazio 30/09; sotto «Linee riceventi Bonus» dal 04/10): l\'Admin apre l\'elenco e spunta le linee, gli altri leggono solo il conto', () => {
-  ctx.visto = () => ({ id: 'io', partner_id: 'P1' });
-  esegui(`CK.amway = { squadra: [{ partner_id: 'A', sponsor_id: 'P1', nome: 'FERRARA, SIMONE' }, { partner_id: 'B', sponsor_id: 'P1', nome: 'BELLINI, ALBERTO' }],
-    volumi: [{ partner_id: 'P1', mese: 202609, vpp: 253, bonus: 6 }, { partner_id: 'A', mese: 202609, vpp: 107, bonus: 3 }, { partner_id: 'B', mese: 202609, vpp: 116, bonus: 0 }] };
-    CK.nonOra = []; CK.segniAl = () => ({ cep: 3 }); CK.aperti.add('elc'); CK.lcLinee = [{ partner_id: 'A', mese: 202609 }, { partner_id: 'B', mese: 202608 }];`);
-  const voci = () => { const h = disegna(); return h.slice(h.indexOf('data-gradino="elc"'), h.indexOf('data-gradino="arg"')); };
-  // una persona qualsiasi: solo il conto (una segnata a settembre; quella di agosto non conta)
-  assert.match(voci(), /<div class=" sottovoce"><span>di cui Leaders Club<\/span><span>1 su 2<\/span><\/div>/);
-  assert.doesNotMatch(voci(), /data-lcapri/);
-  // l'Admin: la voce è un tocco che apre l'elenco delle linee attive, con la spunta su chi è già segnato
-  ctx.ST.utente.ruolo = 'Admin';
-  assert.match(voci(), /<button class="lc-apri" data-lcapri aria-expanded="false">di cui Leaders Club ›<\/button><span>1 su 2<\/span>/);
-  assert.doesNotMatch(voci(), /data-lc="A"/);
-  esegui(`CK.lcAperto = true;`);
-  assert.match(voci(), /<button class="su" data-lc="A" data-mese="202609" aria-pressed="true">✓ Simone Ferrara<\/button><button class="" data-lc="B" data-mese="202609" aria-pressed="false">Alberto Bellini<\/button>/);
-  // con 2 linee segnate la voce si accende
-  esegui(`CK.lcLinee.push({ partner_id: 'B', mese: 202609 });`);
-  assert.match(voci(), /<div class="ok sottovoce"><button class="lc-apri" data-lcapri aria-expanded="true">✓ di cui Leaders Club ⌄<\/button><span>fatto<\/span>/);
-  delete ctx.ST.utente.ruolo;
-  esegui(`CK.amway = null; CK.segniAl = null; CK.aperti.clear(); CK.lcLinee = []; CK.lcAperto = false;`);
-  ctx.visto = () => ({ id: 'io' });
 });
 
 console.log(`\n${ok} prove superate`);

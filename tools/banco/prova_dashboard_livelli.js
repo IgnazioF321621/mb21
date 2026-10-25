@@ -153,14 +153,14 @@ prova('L\'area: le stesse voci con il mese scorso accanto, a parole; mai «manca
   assert.doesNotMatch(h, /mancat/i);
 });
 
-prova('Qual è il mio prossimo traguardo?: Leader 1° livello, Core, Pacesetter e i livelli; il più vicino è segnato; il Platino non c\'è', () => {
+prova('Qual è il mio prossimo traguardo?: Leader 1° livello, Core, Pacesetter e i livelli; il più vicino è segnato; dalla nota 092 anche il Platino', () => {
   const h = P.vista('traguardo', { vp: 150, sponsor: 2, cep: false }).html;
-  assert.deepEqual([...h.matchAll(/data-lv-grad="(\w+)"/g)].map(m => m[1]), ['leader1', 'core', 'pace', 'lc', 'elc', 'arg']);
+  assert.deepEqual([...h.matchAll(/data-lv-grad="(\w+)"/g)].map(m => m[1]), ['leader1', 'core', 'pace', 'lc', 'elc', 'arg', 'plat']);
   assert.equal((h.match(/Il più vicino/g) || []).length, 1);
   assert.match(h.slice(h.indexOf('data-lv-grad="pace"')), /^data-lv-grad="pace"[\s\S]*?Il più vicino/);   // qui è il Pacesetter
   assert.match(h, /I livelli · ancora nessuno raggiunto/);
   assert.match(h, /Segni Vitali: 9% · 5 prime linee · 5 CEP · 15 nel gruppo/);
-  assert.doesNotMatch(h, /Platino/);
+  assert.match(h, /<b>Platino<\/b>/);   // nota 092: prima c'era solo nel Check
   // la riga dice cosa manca, corto
   assert.match(h, /Core<\/b>[\s\S]*?Mancano: [^<]* e altre \d/);
 });

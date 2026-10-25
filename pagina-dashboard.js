@@ -284,7 +284,7 @@ function fraseTraguardo(p) {
   if (!p) return 'Leggo il percorso…';
   const g = MB21Check.piuVicino(p.pc.gradini);
   if (g) { const m = g.totale - g.fatti; return `${nomeGradino(g)}: ${m === 1 ? 'ti manca 1 passo' : `ti mancano ${m} passi`}`; }
-  const prossimo = p.lv && p.lv.righe.find(r => !r.fatto && r.chiave !== 'plat');
+  const prossimo = p.lv && p.lv.righe.find(r => !r.fatto);   // nota 092: anche il Platino (prima solo nel Check)
   return prossimo ? `${prossimo.titolo}: ${prossimo.stato}` : 'Leader 1° livello, Core e Pacesetter: fatti';
 }
 
@@ -535,7 +535,7 @@ function disegnaTraguardoLV() {
   }
   if (lv) {
     html += `<div class="zona-oggi">I livelli${lv.doveSei ? ` · ${esc(lv.doveSei)}` : ' · ancora nessuno raggiunto'}</div>`;
-    for (const r of lv.righe.filter(x => x.chiave !== 'plat')) { const [f, t] = conteggioVoci(r.voci); html += rigaGradino(r.chiave, r.titolo, r.sotto, f, t, false); }
+    for (const r of lv.righe) { const [f, t] = conteggioVoci(r.voci); html += rigaGradino(r.chiave, r.titolo, r.sotto, f, t, false); }   // nota 092: con il Platino (prima solo nel Check)
   } else html += `<div class="zona-oggi">I livelli</div><div class="sotto">Leggo il file Amway…</div>`;
   app.innerHTML = html + versione();
   attaccaIndietroLV();
@@ -583,6 +583,7 @@ function disegnaOggi() {
   if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; }
   if (vai === 'oggi') LV.vista = 'oggi';   // Agenda P2 (23/10): la pastiglia «Chi sento oggi? N» apre l'elenco unico
   if (vai === 'avvio') LV.vista = 'avvio';
+  if (vai === 'traguardo') LV.vista = 'traguardo';   // nota 092: dal Check, «Il percorso ›»
   if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
