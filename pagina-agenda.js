@@ -1734,13 +1734,14 @@ function condivisioneAzioneHtml(e) {
     <div class="pt-comandi"><button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button><button type="button" class="link" data-cd-togli>Non condividere più</button></div></div>`;
 }
 // le risposte di chi riceve, scritte a parole con i nomi (si leggono dopo, senza fermare il disegno)
-async function mostraRisposte(el, origine, id) {
+// `azione` (nota 077): l'appuntamento, per la stessa regola delle Conferme (rispostaValida): «Non può» data prima dell'ultimo «Sposta» è da ridare
+async function mostraRisposte(el, origine, id, azione) {
   const A = MB21Agenda, dove = el.querySelector('[data-cd-risposte]');
   if (!dove) return;
   const { data, error } = await dbq('risposte impegno', supa.rpc('risposte_impegno', { p_origine: origine, p_id: id }));
   if (error || !Array.isArray(data)) { dove.innerHTML = ''; return; }
   const n = A.nomiPerRisposta(data), c = A.contoRisposte(data);
-  if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRispostaDiLui(data[0].risposta))}</b>` : ''; return; }
+  if (origine === 'azione') { dove.innerHTML = data.length ? `${esc(data[0].nome)}: <b>${esc(A.nomeRispostaDiLui(azione ? A.rispostaValida(data[0], azione) : data[0].risposta))}</b>` : ''; return; }
   // due liste con i nomi (Ignazio 05/10): chi partecipa e chi non può; sotto, piccolo, chi non ha risposto
   const gruppo = (titolo, nomi, cl) => `<div class="${cl}"><b>${esc(titolo)} ${nomi.length}</b>${nomi.length ? ': ' + esc(nomi.join(', ')) : ''}</div>`;
   // gli ospiti (nota 047): chi organizza legge le righe di tutti (regola di accesso dell'Admin); se non si leggono, i nomi restano senza
@@ -1772,7 +1773,7 @@ function collegaCondivisioneAzione(el, e, ridisegna) {
   su('[data-cd-togli]', () => chiama(false, false, 'Non più condiviso'));
   // il link per registrarsi (lo stesso della scheda: foglioLinkInvito, cantiere 32)
   su('[data-cd-invita]', () => foglioLinkInvito({ da: visto().id, nome: nomePersona(e), telefono: e.contatti && e.contatti.telefono }));
-  if (e.condiviso_con) mostraRisposte(blocco, 'azione', e.id);
+  if (e.condiviso_con) mostraRisposte(blocco, 'azione', e.id, e);
 }
 // la serata di gruppo (solo l'Admin): con chi, la Linea (uno dei suoi frontali, da `squadra`), i punti sì/no, le risposte con i nomi
 function condivisioneSpazioHtml(s) {

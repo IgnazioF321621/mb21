@@ -1219,7 +1219,8 @@ async function caricaAvvio() {
 function percheRigheHtml(perche) {
   return MB21Benvenuto.pulisciPerche(perche).map(p => `<span><b>${esc(p.voce)}</b>${p.testo ? ': ' + esc(p.testo) : ''}</span>`);
 }
-function percheHtml(perche) {
+// Nota Pagine 076 (25/10): si chiamava percheHtml come il «Perché?» di index.html (nota 048), che, caricato dopo, la sostituiva: le voci non si vedevano
+function percheIniziareHtml(perche) {
   const righe = percheRigheHtml(perche);
   return righe.length ? `<small class="avv-perche">${righe.join('')}</small>` : '';
 }
@@ -1249,7 +1250,7 @@ function mioAvvioHtml() {
 function mioPassiHtml(m) {
   const L = MB21Lista, chiuso = !!(m.avvio_concluso_il || m.avvio_in_pausa_dal);
   return `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
-      const voci = col === 'onb_sogno' ? percheHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
+      const voci = col === 'onb_sogno' ? percheIniziareHtml(m.perche) : '';   // «Perché iniziare»: sotto, in piccolo, quello che ha scelto
       const classe = `${m[col] ? 'fatto' : ''}${voci ? ' largo' : ''}`, dentro = `${m[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}`;
       return chiuso && col !== 'onb_sogno' ? `<span class="${classe}">${dentro}</span>`
         : `<button class="${classe}" data-mio-passo="${col}">${dentro}${PASSI_CON_SCHERMATA[col] ? ' ›' : ''}${voci}</button>`; }).join('')}</div>
@@ -1404,7 +1405,7 @@ function disegnaAvvio() {
         <span class="avv-conta">${fatti}/${totale}</span></button>
       <div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
       ${aperto ? `<div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nome]) => {
-          const voci = col === 'onb_sogno' ? percheHtml(AVV.perche[r.partner_id]) : '';   // cantiere 32: il perché lo vede anche chi lo segue
+          const voci = col === 'onb_sogno' ? percheIniziareHtml(AVV.perche[r.partner_id]) : '';   // cantiere 32: il perché lo vede anche chi lo segue
           return mia
           ? `<button class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}" data-spunta="${col}" data-di="${esc(r.partner_id)}">${r[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}${voci}</button>`
           : `<span class="${r[col] ? 'fatto' : ''}${voci ? ' largo' : ''}">${r[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nome)}${voci}</span>`; }).join('')}</div>

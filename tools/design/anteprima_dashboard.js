@@ -74,7 +74,7 @@ const stub = {
   eAdmin: () => false, soloGuardo: () => false, idVisti: () => ['io'], codiciDi: () => [], nomeVisto: () => 'Fiammetta',
   datiCoreDelMese: async () => ({}), aggiornaTab() {}, leggiSquadraMese: async () => null, setTimeout: () => 0,
   visto: () => ({ id: 'io', partner_id: 'P1', nome_cognome: 'Fiammetta Moretti', ruolo: 'Partner' }),
-  Intl, Date: DataFinta, JSON, Math, console,
+  Intl, Date: DataFinta, JSON, Math, console, MB21Perche: require(path.join(BASE, 'perche.js')),
 };
 const stato = {
   ST: { utente: { id: 'io', ruolo: 'Partner' }, oggi: OGGI, tab: 'oggi', offline: false, aperta: null },
@@ -84,6 +84,7 @@ const stato = {
 const pezzi = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'),
   riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'),
+  riga('function percheHtml(codice, valori)'),   // il «Perché?» della nota 048 (dalla nota 076 il solo percheHtml: i «Perché iniziare» sono percheIniziareHtml)
  
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),
   fra('const vociHtml = ', '\n// «I prossimi passi» del livello'), funzione('passiHtml'), funzione('collegaPercorso'), funzione('aggiornaCardCheck'),

@@ -436,9 +436,12 @@
   }
   // ── Nota Pagine 061 (Ignazio 19/10/2026): la risposta del Partner a un appuntamento condiviso entra nelle Conferme di chi lo ha fissato ──
   // «Partecipa» = già confermato dalla persona: esce dalle Conferme. «Non può» = subito, qualunque giorno, una riga «Non può · da spostare».
-  // Conta la risposta di adesso (se cambia idea, cambia la riga) e solo se data dopo l'ultimo «Sposta» (`spostato_il`): spostato, si aspetta la nuova.
+  // Conta la risposta di adesso (se cambia idea, cambia la riga). Dopo un «Sposta» (`spostato_il`): nota Pagine 077 (Ignazio 25/10: «Fiammetta deve vedere
+  // "Partecipo"»), «Partecipa» resta valida da tutte e due le parti (chi organizza non la vede più «Da confermare»); «Non può» data prima dello
+  // spostamento non vale più: con l'ora nuova la risposta va ridata e chi organizza resta su «Da confermare» (prima valeva per tutte e due).
   // risposta: { risposta, risposto_il } (da `risposte_impegno`) o null.
-  const rispostaValida = (r, a) => (!r || !r.risposta || (a.spostato_il && !(r.risposto_il && r.risposto_il > a.spostato_il)) ? null : r.risposta);
+  const rispostaValida = (r, a) => (!r || !r.risposta ? null
+    : r.risposta === 'non_ci_sono' && a.spostato_il && !(r.risposto_il && r.risposto_il > a.spostato_il) ? null : r.risposta);
   // ── Nota Pagine 066 (Ignazio 19/10/2026): all'apertura, a chi ha fissato, le risposte nuove («Valentina partecipa», «Mario non può · da spostare»);
   // le serate con tanti invitati in una riga sola. Cosa è già stato visto lo ricorda il telefono (`viste`: le chiavi delle risposte).
   // azioni: [{ a, r }] (appuntamento e risposta valida della persona) · serate: [{ s, titolo, risposte: [{ utente_id, nome, risposta, risposto_il }] }]

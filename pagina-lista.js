@@ -1096,7 +1096,7 @@ function sezioneOnboarding() {
       ${a && a.altra ? `<div class="avviso">Per «Partner da avviare» vale la scheda nella lista di <b>${esc(a.altra.lista || 'un upline')}</b> (lo sponsor, seguendo la mappa Amway): i passi segnati qui lì non si vedono.
         ${a.altra.mia ? '<button class="link" id="avvio-altra" style="display:block;padding:6px 0 0">Apri quella scheda ›</button>' : ''}</div>` : ''}
       <div class="riquadro">${MB21Lista.PASSI_ONBOARDING.map(([col, nome, descr]) => `
-        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${col === 'onb_sogno' && a ? percheHtml(a.perche) : ''}${perche[col] ? `<small class="avvio-proposta">${ic('propone')} L'app propone: ${esc(perche[col])}</small>` : ''}</span>
+        <label class="interruttore"><span><b>${esc(nome)}</b><small>${esc(descr)}</small>${col === 'onb_sogno' && a ? percheIniziareHtml(a.perche) : ''}${perche[col] ? `<small class="avvio-proposta">${ic('propone')} L'app propone: ${esc(perche[col])}</small>` : ''}</span>
           <input type="checkbox" data-passo="${col}" ${c[col] ? 'checked' : ''} ${fermo ? 'disabled' : ''}></label>`).join('')}
       </div>
       ${fermo || !a ? '' : a.concluso
