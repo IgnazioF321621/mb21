@@ -1725,9 +1725,9 @@ function testataDashboard() { return `<div class="testa-pagina"><h1>${typeof OGG
 
 // Dal 28/09 la testata (Partner Select, biglietti da segnare) resta in cima, mentre i numeri
 // del mese stanno nei livelli (`disegnaMeseLV`).
-function dashboardTesta() {
+function dashboardTesta(senzaPS) {   // senzaPS (v5, «Oggi»): il Partner Select è il chip piccolo nella testata (chipPartnerSelect, pagina-oggi.js)
   const d = DS.dati;
-  let html = partnerSelect();
+  let html = senzaPS ? '' : partnerSelect();
   if (!d) return html + (ST.offline ? '' : `<div class="avviso">Numeri di Oggi non disponibili: riprova più tardi.</div>`);
   // Verifica della Dashboard, tappa 2 (Ignazio 22/10/2026, «semplice, intuitivo e veloce»): in cima al massimo UN avviso, il più urgente; gli altri
   // in una riga «Altri avvisi (N) ›» che si apre sul posto. Ordine: messaggi dalla squadra (nota Admin 014) › obiettivi del mese mancanti ›

@@ -25,7 +25,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
     visto: () => ({ id: 'io', partner_id: 'P1' }), guardoAltri: () => altro, vediTutti: () => false, eAdmin: () => admin, oraRoma: () => ora, dataEstesa: () => 'domenica 25 ottobre',
     nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
-    dashboardTesta: () => '<div id="finta-testa"></div>', rigaTelefonoHtml: () => '', daSeguireHtml: () => '', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
+    dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
     foglioSegnala: () => vai.push('feedback'), vaiLV: (v, x) => vai.push(['lv', v, x || null]), apriCheck: () => vai.push('check'), scegliNumero: () => vai.push('riparto'), caricaOggi() {},
     mostraTab: () => vai.push(['tab', ctx.ST.tab]), vaiAlPrimoLivello: () => vai.push('primo'), disegnaOggi: () => vai.push('ridisegna'), TRAINING_VISIBILE: true,
     window: { scrollTo() {} }, document: { getElementById: id => (id === 'segnala' ? sg : app.getElementById(id)), querySelector: s => app.querySelector(s) } };
@@ -46,7 +46,7 @@ prova('095: «Oggi» — testata con data, titolo, feedback e foto; Contatti del
   assert.equal(W.sg.hidden, true);
   assert.ok(h.indexOf('o5-contatti') < h.indexOf('o5-agenda') && h.indexOf('o5-agenda') < h.indexOf('o5-training') && h.indexOf('o5-traguardo') < h.indexOf('o5-mappa'));
   assert.match(testo(h), /Contatti del giorno 3 su 5 Mancano Persona A e Persona B/);
-  assert.ok(h.includes('id="finta-testa"'));   // Partner Select e l'avviso più urgente restano (dashboardTesta)
+  assert.ok(h.includes('<div id="finta-testa"></div>'));   // l'avviso più urgente resta (dashboardTesta), senza la fascia del Partner Select
   W.app.clic('#o5-feedback'); W.app.clic('[data-o5="contatti"]');
   assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), ['feedback', ['lv', 'oggi', null]]);   // l'elenco dei Contatti del giorno (oggi «Chi sento oggi?»)
 });
@@ -168,6 +168,18 @@ prova('095: la barra in basso ha quattro voci (Oggi, Agenda, Lista Nomi, Esplora
   assert.match(DASH, /default: LV\.vista = 'home'; if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5\) disegnaOggiV5\(\); else disegnaHome\(\);/);
   assert.match(PO, /^const OGGI_V5 = true;/m);
   assert.match(leggi('icone.js'), /'esplora': '<rect/);
+});
+
+prova('095 (correzione 25/10, «tasto piccolo»): il Partner Select è un chip nella testata, prima del feedback e della foto: «Tu ▾», il nome corto, «Tutti»; solo per l\'Admin', () => {
+  const W = mondo({ admin: true }); W.ctx.disegna();
+  assert.match(W.app.innerHTML, /<div class="o5-dx"><button class="o5-ps" id="ps-scegli" aria-label="Chi stai guardando: Tu">Tu ▾<\/button><button class="o5-feedback/);
+  const A = mondo({ admin: true, altro: true }); A.ctx.disegna();
+  assert.match(A.app.innerHTML, /<button class="o5-ps altro" id="ps-scegli" aria-label="Chi stai guardando: Persona">Persona ▾<\/button>/);
+  const T = mondo({ admin: true, altro: true }); T.ctx.vediTutti = () => true; T.ctx.disegna();
+  assert.match(T.app.innerHTML, />Tutti ▾<\/button>/);
+  const P = mondo(); P.ctx.disegna();
+  assert.doesNotMatch(P.app.innerHTML, /ps-scegli/);
+  assert.match(DASH, /function dashboardTesta\(senzaPS\) \{[^\n]*\n  const d = DS\.dati;\n  let html = senzaPS \? '' : partnerSelect\(\);/);
 });
 
 (async () => {
