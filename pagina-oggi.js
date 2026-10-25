@@ -61,9 +61,11 @@ function o5Contatti(sera) {
   return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
     <span class="o5-col"><span class="o5-tit">Contatti del giorno</span><span class="o5-num">${fatti} <small>su ${totale}</small></span><span class="o5-riga">${esc(riga)}</span></span>${anello}</button>`;
 }
-// la sera (dalle ORA_CHECK, come la Dashboard), finché il giorno non è scritto: «Com'è andata oggi?» apre il Check del giorno
-function o5Sera() {
-  return `<button class="o5-r o5-sera" data-o5="sera"><span class="o5-tondo">${ic('diario')}</span><span class="o5-col"><b>Com'è andata oggi?</b><small>È ora: scrivi la tua giornata nel Check</small></span><em>›</em></button>`;
+// la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
+// resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
+function o5Sera(fatto) {
+  return `<button class="o5-r o5-sera${fatto ? ' fatto' : ''}" data-o5="sera"><span class="o5-tondo">${ic(fatto ? 'fatto' : 'diario')}</span><span class="o5-col">${fatto
+    ? '<b>Check di oggi ✓</b><small>Rivedi o correggi la tua giornata</small>' : '<b>Com\'è andata oggi?</b><small>È ora: scrivi la tua giornata nel Check</small>'}</span><em>›</em></button>`;
 }
 // Agenda: gli appuntamenti di oggi (ognuno apre l'Agenda su oggi, dove si segna l'esito); se oggi niente, il prossimo; se niente in vista, l'invito a fissarne uno
 function o5Agenda() {
@@ -156,7 +158,7 @@ function chipPartnerSelect() {
 // ── La pagina ──
 function disegnaOggiV5() {
   const altro = guardoAltri(), d = DS.dati, fattoGiorno = !!d && d.ultimoCheck === ST.oggi;
-  const sera = !altro && !ST.offline && oraRoma() >= ORA_CHECK && !fattoGiorno;
+  const sera = !altro && !ST.offline && oraRoma() >= ORA_CHECK;   // nota 096: resta anche a giorno scritto (fattoGiorno → «rivedi o correggi»)
   if (O5.gruppoDi && !O5.gruppoDi.startsWith(`${visto().partner_id}|`)) O5.gruppo = null;
   o5ContaGruppo();
   const ora = sera ? ` · ${new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date())}` : '';
@@ -166,7 +168,7 @@ function disegnaOggiV5() {
     <div class="o5-testa"><div><span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span><h1>Oggi</h1></div>
       <div class="o5-dx">${chipPartnerSelect()}<button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>${cerchiettoProfilo()}</div></div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${o5Contatti(sera)}${sera ? o5Sera() : ''}${o5Agenda()}
+    <div class="o5-riquadri">${o5Contatti(sera)}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();

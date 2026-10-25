@@ -71,7 +71,12 @@ prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto Contatti, finché 
   assert.ok(W.app.innerHTML.indexOf('o5-sera') > W.app.innerHTML.indexOf('o5-contatti') && W.app.innerHTML.indexOf('o5-sera') < W.app.innerHTML.indexOf('o5-agenda'));
   assert.match(testo(W.app.innerHTML), /Com'è andata oggi\? È ora: scrivi la tua giornata nel Check/);
   W.app.clic('[data-o5="sera"]'); assert.deepEqual(W.vai, ['check']);
-  for (const X of [mondo({ ora: 19 }), mondo({ ora: 21, fattoGiorno: true }), mondo({ ora: 21, altro: true })]) { X.ctx.disegna(); assert.doesNotMatch(X.app.innerHTML, /o5-sera/); }
+  for (const X of [mondo({ ora: 19 }), mondo({ ora: 21, altro: true })]) { X.ctx.disegna(); assert.doesNotMatch(X.app.innerHTML, /o5-sera/); }
+  // nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro resta e porta allo stesso Check del giorno, per rivederlo o correggerlo
+  const F = mondo({ ora: 21, fattoGiorno: true }); F.ctx.disegna();
+  assert.match(F.app.innerHTML, /class="o5-r o5-sera fatto" data-o5="sera"><span class="o5-tondo">\[fatto\]<\/span>/);
+  assert.match(testo(F.app.innerHTML), /Check di oggi ✓ Rivedi o correggi la tua giornata/);
+  F.app.clic('[data-o5="sera"]'); assert.deepEqual(F.vai, ['check']);
 });
 
 prova('095: Agenda — gli appuntamenti di oggi (tipo, ora, persona); senza, il prossimo; senza niente in vista l\'invito, che apre i Contatti del giorno', () => {
