@@ -3524,7 +3524,7 @@ function spostaAppuntamento(e, dopo) {
     }
     const nuovo = { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata * 60000).toISOString() : null, confermato_il: null };
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
-    // nota 061: spostato un appuntamento condiviso, la vecchia risposta del Partner non conta più (si aspetta quella alla data nuova)
+    // nota 061: spostato un appuntamento condiviso si segna quando (spostato_il); dalla nota 077 (25/10) conta per «Non può» (va ridata), «Partecipa» resta (rispostaValida)
     if (e.condiviso_con) { nuovo.spostato_il = new Date().toISOString(); prima.spostato_il = e.spostato_il || null; }
     const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
