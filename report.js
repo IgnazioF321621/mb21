@@ -58,13 +58,21 @@
       etichetta: `WES ${MESI_BREVI[Number(da.slice(5, 7)) - 1]} ${da.slice(0, 4)}`,
     }));
   }
-  // Periodo spostato di n passi (‹ ›); null se si esce (futuro o Wes inesistente)
+  // Periodo spostato di n passi; null se si esce (futuro o Wes inesistente). Lo usa anche il confronto del Check («Confronta con…», che va anche prima)
   function spostaPeriodo(p, n, oggi, dateWes) {
     if (p.tipo === 'mese') { const q = periodoMese(spostaMese(p.da, n)); return q.da > oggi ? null : q; }
     if (p.tipo === 'anno') { const q = periodoAnno(`${Number(p.da.slice(0, 4)) + n}-09-01`); return q.da > oggi ? null : q; }
     const tutti = periodiWes(dateWes, oggi);
     const i = tutti.findIndex(w => w.da === p.da);
     return tutti[i + n] || null;
+  }
+  // Nota Pagine 092, voce 4 (Ignazio 25/10/2026, «Sì, come proposto»): Report e Check si contano da settembre 2026, il nuovo anno di performance,
+  // come il percorso (check.js, LC1_INIZIO = questo giorno). Le frecce ‹ › dei periodi non portano prima: Mese, WES e Anno non vanno più indietro (per il WES
+  // il primo è quello che parte da settembre in poi). Il confronto («Confronta con») resta com'è (voce 3). I dati di prima restano nel database.
+  const INIZIO_CONTI = '2026-09-01';
+  function spostaPeriodoVisibile(p, n, oggi, dateWes) {
+    const q = spostaPeriodo(p, n, oggi, dateWes);
+    return q && q.da >= INIZIO_CONTI ? q : null;
   }
   function periodoIniziale(tipo, oggi, dateWes) {
     if (tipo === 'mese') return periodoMese(oggi);
@@ -172,8 +180,8 @@
     return null;
   }
 
-  const api = { GRUPPI, SENZA_ESITO, CONTATTO_PARLATO, PM_AVVENUTO, VERSO_PARTNER, contaAzione, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
-    spostaPeriodo, periodoIniziale, testoPeriodo, numeri, grafico, abbrevia, griglia, coloreCella, COLORI_GRIGLIA, validaGriglia };
+  const api = { INIZIO_CONTI, GRUPPI, SENZA_ESITO, CONTATTO_PARLATO, PM_AVVENUTO, VERSO_PARTNER, contaAzione, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
+    spostaPeriodo, spostaPeriodoVisibile, periodoIniziale, testoPeriodo, numeri, grafico, abbrevia, griglia, coloreCella, COLORI_GRIGLIA, validaGriglia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Report = api;
 })(this);

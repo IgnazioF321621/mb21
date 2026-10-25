@@ -479,18 +479,22 @@ function cardArea(x) {
   return `<button class="lv-area" data-lv-area="${x.chiave}"><span class="lv-area-t"><b style="color:${x.colore}">${esc(x.etichetta)}</b><span class="lv-pill">Dettaglio ›</span></span>${voci}
     <small class="lv-frase">${esc(D.riassuntoScheda(x))}</small></button>`;
 }
+// «Gli ultimi 12 mesi» (nota 092, voce 2): lo stesso bottone scuro che stava in cima al Check, qui e, con «Tutti», in «Approfondisci»; apre foglioStorico
+const bottoneStorico = () => `<button class="rp-apri scura" id="ds-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
 function disegnaMeseLV() {
   const d = DS.dati, D = MB21Dashboard;
   if (!d) { app.innerHTML = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
   const mese = D.nomeMese(d.mese);
   let html = indietroLV() + `<h1>Come sto andando questo mese?</h1><div class="sotto">${esc(mese)} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}</div>
-    <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}`;
+    <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}
+    ${bottoneStorico()}`;   // nota 092, voce 2 (Ignazio 25/10: «dopo Crescita e prima degli obiettivi del mese»; prima in cima al Check)
   const rigaOb = d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
   // tappa 3 (22/10): «Com'è andato [mese scorso]» ha una strada sola, il confronto dentro le card del mese (qui sopra): la riga doppia del pannello va via
   if (rigaOb) html += `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}</div>`;
   app.innerHTML = html + versione();
   attaccaIndietroLV();
   app.querySelectorAll('[data-lv-area]').forEach(b => b.onclick = () => vaiLV('area', { area: b.dataset.lvArea }));
+  document.getElementById('ds-storico').onclick = foglioStorico;   // lo stesso foglio del Profilo; legge i suoi dati al tocco
 }
 // L'area (terzo livello): le stesse voci con il mese scorso accanto, con le parole (Raggiunto · Quasi · A metà strada · Lontano) e il collegamento al Check
 function disegnaMeseDashboard(vai) {
@@ -1767,9 +1771,9 @@ function dashboardBasso() {
   const d = DS.dati;
   if (!d) return '';
   // Dal 28/09 il riquadro nero dei Segni Vitali non c'è più: erano gli stessi numeri della linguetta
-  // «Segni Vitali N21» qui sopra, e i 12 mesi si aprono dal Check. In fondo resta solo la consultazione.
+  // «Segni Vitali N21» qui sopra, e i 12 mesi si aprono da qui (nota 092: «Gli ultimi 12 mesi»). In fondo resta solo la consultazione.
   // Nota 081, punto 9: il tasto della Griglia PM che c'era qui non si vedeva mai (questa parte c'è solo con «Tutti», senza griglia): tolto
-  return `<div class="zona-oggi">Approfondisci</div>
+  return `<div class="zona-oggi">Approfondisci</div>${bottoneStorico()}
     <div class="ds-azioni">
       <button class="ds-azione report" id="ds-altro">${ic('report')}<span><b>Report</b><small>I tuoi numeri, giorno per giorno</small></span></button></div>`;
 }
@@ -1777,6 +1781,7 @@ function dashboardBasso() {
 function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
+  su('ds-storico', foglioStorico);   // nota 092: «Gli ultimi 12 mesi» con «Tutti»
   su('ds-riparto', () => scegliNumero(caricaOggi));   // 02/10: dalla pausa si riparte scegliendo quanti
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano

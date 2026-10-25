@@ -1,5 +1,5 @@
 // Prova del DISEGNO della pagina Check (index.html): i quattro gruppi si aprono e si chiudono toccando la testata,
-// da chiusi resta il riassunto, la scelta si ricorda sul telefono, e la riga «Gli ultimi 12 mesi» è quella scura in cima.
+// da chiusi resta il riassunto, la scelta si ricorda sul telefono. (Dalla nota 092 «Gli ultimi 12 mesi» e il percorso stanno nella Dashboard.)
 // Il codice è quello vero, preso da index.html con un finto DOM (niente copie da tenere allineate).
 // Uso: node tools/banco/prova_check_vista.js
 const assert = require('node:assert/strict');
@@ -41,6 +41,7 @@ const ctx = {
 vm.createContext(ctx);
 vm.runInContext(pezzo('const CK = {', 'const CAMPI_CK'), ctx);
 vm.runInContext(pezzo('const indietroCheck = ', '\nasync function apriPaginaCheck'), ctx);   // nota 081: la freccia del Check (da dove si arriva)
+vm.runInContext(pezzo('const inizioConti = ', '\nfunction disegnaCheck() {'), ctx);   // nota 092: la riga «Il Check si conta da settembre 2026…»
 vm.runInContext(pezzo('function disegnaCheck() {', '\nfunction collegaCheck() {'), ctx);   // porta con sé rigaPercorsoCheck (nota 092) e caricaCoreCheck
 const esegui = codice => vm.runInContext(codice, ctx);
 
@@ -142,12 +143,11 @@ prova('La scelta si ricorda sul telefono, e se la memoria non risponde la pagina
   esegui(`CK.chiusi.clear()`);
 });
 
-prova('«Gli ultimi 12 mesi» è la riga scura in cima, prima dei gruppi; la griglia in fondo non c\'è più', () => {
+prova('Nota 092: nel Check niente più «Gli ultimi 12 mesi» (voce 2: è nella Dashboard) né la card del percorso (voce 1): in cima «Il percorso ›», poi i numeri del periodo; la griglia in fondo non c\'è più', () => {
   const h = disegna();
-  assert.match(h, /<button class="rp-apri scura" id="ck-storico">/);
-  // due domande (Ignazio 27/09): sopra la card, sotto «I numeri del periodo» con Confronta con → Gli ultimi 12 mesi → i gruppi
-  // Mese · WES · Anno sotto «I numeri del periodo»: cambiano solo i numeri (Ignazio 27/09)
-  const posti = ['id="ck-percorso"', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="rp-periodi"', 'id="ck-prima"', 'class="ck-quando"', 'id="ck-storico"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
+  assert.doesNotMatch(h, /ck-storico|Gli ultimi 12 mesi/);
+  // Mese · WES · Anno sotto «I numeri del periodo»: cambiano solo i numeri (Ignazio 27/09); a settembre 2026 la riga «si conta da settembre» (voce 4)
+  const posti = ['id="ck-percorso"', '<h2 class="ck-sezione">I numeri del periodo</h2>', 'class="rp-periodi"', 'id="ck-prima"', 'class="rp-inizio"', 'class="ck-quando"', 'data-ckgruppo="Volume"'].map(x => h.indexOf(x));
   assert.ok(posti.every((x, i) => x > 0 && (i === 0 || x > posti[i - 1])), posti.join(' '));
   assert.doesNotMatch(h, /class="sv"/);
 });

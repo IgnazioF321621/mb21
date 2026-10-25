@@ -1957,6 +1957,7 @@
   .rp-naviga b { font-size: 16px; text-align: center; flex: 1; }
   .rp-naviga button { border: 0; background: none; font-size: 24px; color: var(--blu); padding: 4px 16px; }
   .rp-naviga button:disabled { color: var(--linea); }
+  .rp-inizio { margin: -6px 4px 12px; font-size: 12.5px; color: var(--testo-tenue); text-align: center; }   /* nota 092: «Il Report si conta da settembre 2026…» */
   .rp-lista { background: var(--superficie); border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra-card); margin-bottom: 12px; }
   .rp-riga { display: grid; grid-template-columns: 1fr 52px 48px 18px; align-items: center; gap: 4px; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--linea);
     background: none; padding: 13px 12px 13px 14px; font-family: inherit; color: var(--testo); font-size: 16px; }
@@ -4152,8 +4153,9 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // adesso · prima (a pari giorni) · andamento, riga grigia col periodo prima intero (B), grafico dei 12 mesi, Segni Vitali a 12 mesi (C).
 // Numeri del partner loggato. Calcoli in check.js.
 // ── Gli ultimi 12 mesi (Ignazio 25/09: «alla fine di una lunga lista… la griglia nera è dispersa in fondo»,
-// «sempre la possibilità di selezionare gli utenti»): un posto solo per lo storico dei Segni Vitali, con due
-// porte — la striscia in Dashboard e la riga in cima al Check. Dentro: chi guardi, la griglia dei 12 mesi e,
+// «sempre la possibilità di selezionare gli utenti»): un posto solo per lo storico dei Segni Vitali, con due porte: dalla nota 092 (Ignazio 25/10)
+// la riga scura nella Dashboard, «Come sto andando questo mese?», dopo Crescita (prima era in cima al Check), e «Vedi i 12 mesi» del Profilo.
+// Legge i suoi dati da sé, al tocco (caricaStorico, tenuti in SL). Dentro: chi guardi, la griglia dei 12 mesi e,
 // per l'Admin, tutte le linee con il flusso a barrette e il cambiamento sul mese prima.
 const SL = { dati: null, tipo: 'bbs', chi: null, segniAl: undefined };
 const TIPI_SL = [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
@@ -4349,6 +4351,10 @@ async function apriPaginaCheck() {
   disegnaCheck();
 }
 
+// Nota Pagine 092, voce 4 (Ignazio 25/10/2026): sotto le frecce del periodo, quando la ‹ è spenta perché prima non si conta, una riga piccola che lo dice.
+// La stessa per Report e Check («Il Report si conta…» · «Il Check si conta…»); il giorno è MB21Report.INIZIO_CONTI (settembre 2026, come il percorso).
+const inizioConti = (p, oggi, dateWes, chi) => (MB21Report.spostaPeriodoVisibile(p, -1, oggi, dateWes) ? ''
+  : `<p class="rp-inizio">${chi} si conta da settembre 2026, il nuovo anno di performance</p>`);
 function disegnaCheck() {
   const R = MB21Report, C = MB21Check, oggi = MB21Coda.oggiRoma(), p = CK.periodo;
   const dati = { giorni: CK.giorni, obiettivi: CK.obiettivi, oggi, segniAl: CK.segniAl };
@@ -4363,15 +4369,14 @@ function disegnaCheck() {
   } else {
     const r = C.calcola({ ...dati, dateWes: CK.wes, periodo: p, indietro: CK.indietro });
     html += `<div class="rp-naviga">
-      <button id="ck-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, CK.wes) ? '' : 'disabled'}>‹</button>
+      <button id="ck-prima" aria-label="Periodo prima" ${R.spostaPeriodoVisibile(p, -1, oggi, CK.wes) ? '' : 'disabled'}>‹</button>
       <b>${esc(R.testoPeriodo(p))}</b>
-      <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>
+      <button id="ck-dopo" aria-label="Periodo dopo" ${R.spostaPeriodoVisibile(p, 1, oggi, CK.wes) ? '' : 'disabled'}>›</button></div>${inizioConti(p, oggi, CK.wes, 'Il Check')}
       <div class="ck-quando">Confronta con${(CK.tipo === 'mese' ? [1, 2, 3] : [1, 2]).map(n => {   // col Mese anche «tre mesi fa»: il quadrimestre da WES a WES (Ignazio 27/09)
         const parole = { mese: ['il mese scorso', 'due mesi fa', 'tre mesi fa'], wes: ['il WES prima', 'due WES fa'], anno: ["l'anno prima", 'due anni fa'] }[CK.tipo];
         return `<button data-ckindietro="${n}" class="${CK.indietro === n ? 'scelto' : ''}">${parole[n - 1]}</button>`;
       }).join('')}</div>
-      <div class="ck-confronto">${esc(r.confronto)}</div>
-      <button class="rp-apri scura" id="ck-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
+      <div class="ck-confronto">${esc(r.confronto)}</div>`;   // nota 092, voce 2: «Gli ultimi 12 mesi» è andato nella Dashboard («Come sto andando questo mese?»)
     // Due domande, una sopra l'altra (Ignazio 27/09, stella cometa): in cima «dove sono» (la card del percorso, da sola),
     // sotto «i miei numeri» (titoletto «I numeri del periodo»: Confronta con, la riga del confronto, Gli ultimi 12 mesi, i gruppi)
     // ogni gruppo si apre e si chiude toccando la testata (Ignazio 25/09); da chiuso resta il riassunto.
@@ -4393,13 +4398,14 @@ function disegnaCheck() {
         if (!aperta) return h;
         const gr = C.grafico(dati, v.chiave, p.a && p.a <= oggi ? R.spostaGiorno(p.a, -1) : oggi);
         const fmt = x => x == null ? '—' : Number(x).toLocaleString('it-IT', { maximumFractionDigits: gr.decimali });
+        const conPrima = gr.mesi.some(m => m.prima != null);   // nota 092: prima di settembre 2026 i mesi sono vuoti
         h += `<div class="ck-grafico">
-          <div class="legenda"><i style="background:${g.colore};margin-left:0"></i>${esc(gr.anno)}<i style="background:var(--spento)"></i>${esc(gr.annoPrima)}</div>
+          <div class="legenda"><i style="background:${g.colore};margin-left:0"></i>${esc(gr.anno)}${conPrima ? `<i style="background:var(--spento)"></i>${esc(gr.annoPrima)}` : ''}</div>
           <div class="ck-barre">${gr.mesi.map(m => `<div>
             <span class="prima" style="height:${(m.prima || 0) / gr.max * 100}%"></span>
             <span style="height:${(m.valore || 0) / gr.max * 100}%;background:${g.colore}"></span></div>`).join('')}</div>
           <div class="rp-mesi">${gr.mesi.map(m => `<span class="${m.valore == null ? 'futuro' : ''}">${m.etichetta}</span>`).join('')}</div>
-          <div class="ck-valori">${gr.mesi.filter(m => m.valore != null).map(m => `${m.etichetta} ${fmt(m.valore)} <span style="color:var(--grigio-chiaro)">(${fmt(m.prima)})</span>`).join(' · ')}</div>
+          <div class="ck-valori">${gr.mesi.filter(m => m.valore != null).map(m => `${m.etichetta} ${fmt(m.valore)}${m.prima == null ? '' : ` <span style="color:var(--grigio-chiaro)">(${fmt(m.prima)})</span>`}`).join(' · ')}</div>
         </div>`;
         return h;
       }).join('')}`}</div>`; }).join('');
@@ -4528,7 +4534,6 @@ function collegaCheck() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ck-indietro', tornaDalCheck);
-  su('ck-storico', foglioStorico);
   // nota 092: «Il percorso ›» porta alla Dashboard, su «Qual è il mio prossimo traguardo?» (la freccia lì torna alla Dashboard)
   su('ck-percorso', () => { CK.da = null; ST.vaiA = 'traguardo'; ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0); });
   app.querySelectorAll('[data-ckgruppo]').forEach(b => b.onclick = () => {
@@ -4546,7 +4551,7 @@ function collegaCheck() {
     if (CK.tipo !== 'mese' && CK.indietro > 2) CK.indietro = 2;   // «tre fa» c'è solo col Mese
     disegnaCheck();
   });
-  const sposta = n => { const q = R.spostaPeriodo(CK.periodo, n, oggi, CK.wes); if (q) { CK.periodo = q; disegnaCheck(); } };
+  const sposta = n => { const q = R.spostaPeriodoVisibile(CK.periodo, n, oggi, CK.wes); if (q) { CK.periodo = q; disegnaCheck(); } };
   su('ck-prima', () => sposta(-1));
   su('ck-dopo', () => sposta(1));
   app.querySelectorAll('[data-voce]').forEach(b => b.onclick = () => { CK.aperta = CK.aperta === b.dataset.voce ? null : b.dataset.voce; disegnaCheck(); });
@@ -4681,9 +4686,9 @@ function disegnaReport() {
     html += `<div class="vuoto">Nessun WES ancora. ${eAdmin() ? 'Aggiungi la data nella pagina Admin.' : "L'Admin aggiunge le date dei WES."}</div>`;
   } else {
     html += `<div class="rp-naviga">
-      <button id="rp-prima" aria-label="Periodo prima" ${R.spostaPeriodo(p, -1, oggi, date) ? '' : 'disabled'}>‹</button>
+      <button id="rp-prima" aria-label="Periodo prima" ${R.spostaPeriodoVisibile(p, -1, oggi, date) ? '' : 'disabled'}>‹</button>
       <b>${esc(R.testoPeriodo(p))}</b>
-      <button id="rp-dopo" aria-label="Periodo dopo" ${R.spostaPeriodo(p, 1, oggi, date) ? '' : 'disabled'}>›</button></div>`;
+      <button id="rp-dopo" aria-label="Periodo dopo" ${R.spostaPeriodoVisibile(p, 1, oggi, date) ? '' : 'disabled'}>›</button></div>${inizioConti(p, oggi, date, 'Il Report')}`;
     const gruppi = R.numeri(RP.azioni, p, oggi);
     html += `<div class="rp-lista">${gruppi.map(g => {
       // nota Pagine 081, punto 10 (Ignazio 24/10): un gruppo senza azioni nel periodo è grigio e senza freccia (non c'è niente da aprire)
@@ -4727,7 +4732,7 @@ function collegaReport() {
   app.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => {
     RP.tipo = b.dataset.periodo; RP.periodo = R.periodoIniziale(RP.tipo, oggi, date); RP.esito = null; disegnaReport();
   });
-  const sposta = n => { const q = R.spostaPeriodo(RP.periodo, n, oggi, date); if (q) { RP.periodo = q; RP.esito = null; disegnaReport(); } };
+  const sposta = n => { const q = R.spostaPeriodoVisibile(RP.periodo, n, oggi, date); if (q) { RP.periodo = q; RP.esito = null; disegnaReport(); } };
   su('rp-prima', () => sposta(-1));
   su('rp-dopo', () => sposta(1));
   app.querySelectorAll('[data-gruppo]').forEach(b => b.onclick = () => {

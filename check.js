@@ -156,7 +156,7 @@
     const anno = R.periodoAnno(annoDi);
     const mese = m => {
       const fine = R.spostaGiorno(R.spostaMese(m, 1), -1);
-      if (m > oggi || fine < dati.inizio) return null;   // mese futuro o prima del primo dato
+      if (m > oggi || fine < dati.inizio || m < R.INIZIO_CONTI) return null;   // mese futuro, prima del primo dato o prima di settembre 2026 (nota 092: vuoto)
       return valore(dati, v, m, fine < oggi ? fine : oggi);
     };
     const mesi = [];
@@ -227,7 +227,7 @@
   // biglietti: [{ tipo, evento, contatto }] · null = non lo so (nessuna scheda col codice) · cep: [{ dal, uscito_il }] · null = non lo so
   // eventi: { bbs, wes } le righe delle tabelle (data, creato_il) · obiettivi: le righe di obiettivi_mese di questa persona
   const LC1_VP = 100;
-  const LC1_INIZIO = '2026-09-01';
+  const LC1_INIZIO = R.INIZIO_CONTI;   // '2026-09-01': lo stesso giorno da cui si contano Report e Check (nota 092, voce 4)
   function lc1({ mese, obiettivi, biglietti, cep, eventi, oggi }) {
     const m = mese.slice(0, 8) + '01';
     const [a, mm] = m.split('-');

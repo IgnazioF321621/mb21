@@ -87,6 +87,7 @@ function avvia(opz = {}) {
   const codice = [
     fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'), riga('function iniziali('),
     dashboard.split('\n').find(x => x.startsWith('const testoGriglia = ')),
+    fra('const inizioConti = ', '\nfunction disegnaCheck()'),   // nota 092: la riga «Il Report si conta da settembre 2026…»
     fra('// ── REPORT (Fase 5)', '\n// ── «Segnala»'), funzione('disegnaGriglia'),
     'return { RP, PV, apriReport, disegnaReport, disegnaProvvigioni, disegnaGriglia, apriProvvigioniDa, tornaInDashboard };',
   ].join('\n');

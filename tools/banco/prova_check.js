@@ -120,13 +120,13 @@ prova('Anno in corso con l\'anno prima iniziato senza dati: niente pari giorni, 
   assert.deepEqual([voce(r, 'Contatti').prima, voce(r, 'Contatti').riga], ['—', '2025-2026 intero: 6 · mancano 1']);
 });
 
-prova('Grafico: 12 mesi da settembre, mesi futuri vuoti, stesso mese dell\'anno prima', () => {
+prova('Grafico: 12 mesi da settembre, mesi futuri vuoti; dalla nota 092 (voce 4) vuoti anche i mesi prima di settembre 2026, quindi l\'anno prima', () => {
   const gr = C.grafico({ giorni, obiettivi, oggi }, 'pagine', '2026-08-10');
   assert.equal(gr.anno, '2025-2026');
   assert.equal(gr.mesi.length, 12);
-  assert.deepEqual(gr.mesi.slice(10).map(m => [m.etichetta, m.valore]), [['Lug', 129], ['Ago', 272]]);
+  assert.deepEqual(gr.mesi.slice(10).map(m => [m.etichetta, m.valore]), [['Lug', null], ['Ago', null]]);   // prima: 129 e 272
   const ora = C.grafico({ giorni, obiettivi, oggi }, 'wes', oggi);
-  assert.deepEqual([ora.mesi[0].valore, ora.mesi[0].prima, ora.mesi[1].valore], [10, 0, null]);
+  assert.deepEqual([ora.mesi[0].valore, ora.mesi[0].prima, ora.mesi[1].valore], [10, null, null]);   // settembre 2026 sì, settembre 2025 (l'anno prima) no
 });
 
 prova('Segni Vitali a 12 mesi: settembre come in Glide (BBS 5 · WES 10 · CEP 6)', () => {
