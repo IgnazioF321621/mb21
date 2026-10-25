@@ -1668,15 +1668,20 @@ const dataBreve = giorno => (giorno ? MB21Report.dataLunga(giorno) : '—');   /
 // La domanda è una sola (`domandaBigliettoHtml`), usata qui e nel foglio del Profilo (cantiere 25 bis: stessa schermata, stesso codice).
 // Dal 25 bis il biglietto si spegne e si rifà dal Profilo toccando la targhetta (prima: una risposta sola, correzioni dall'Admin).
 // Nota Pagine 070 (Ignazio 24/10): lo stesso foglio per l'Admin dalle targhette di Mappa e scheda (`toccaTarga`, pagina-lista.js): con `x.chi`
-// (il nome della persona) la domanda è «Persona B ha il biglietto?» e il primo tasto è il suo nome invece di «Io».
+// (il nome della persona) la domanda è «Persona B ha il biglietto?».
+// Nota 094 S6 (Ignazio 25/10: «invece di lui o lei mettere personale e compagno/a»): i tasti si chiamano «Personale» e «Compagno/a» (più gli ospiti),
+// ognuno si accende da solo. Dalla scheda (segnaBiglietto, pagina-lista.js) il foglio arriva già impostato: x.personale, x.conCompagno, x.ospiti;
+// con x.modifica (biglietto già segnato) «Salva», «Togli il biglietto» e «Chiudi».
 function domandaBigliettoHtml(x, classe) {
   const k = x.tipo === 'BBS' ? 'bbs' : 'wes', nome = x.tipo === 'BBS' ? 'BBS' : 'WES';
   return `<div class="${classe} ${k}" data-seg="${esc(x.tipo)}|${esc(x.evento)}">
       <b>${ic('biglietto')} ${classe === 'banner-big' ? 'Nuovo ' : ''}${nome} ${esc(MB21Lista.etichettaEvento(x.evento))} · ${x.chi ? `${esc(x.chi)} ha il biglietto?` : 'Hai il biglietto?'}</b>
-      <div class="riga"><button class="sv-chip ${k} on" data-campo="contatto">${x.chi ? esc(x.chi) : 'Io'}</button>
-        ${x.compagno ? `<button class="sv-chip ${k}" data-campo="compagno">${esc(x.compagno)}</button>` : ''}
-        <label class="sv-osp">+<input type="number" min="0" max="50" value="0" data-campo="ospiti">ospiti</label></div>
-      <div class="riga"><button class="primario" data-si>Sì, segna il biglietto</button><button class="link" data-no>No, niente biglietto</button></div>
+      <div class="riga"><button class="sv-chip ${k} ${x.personale === false ? '' : 'on'}" data-campo="contatto">Personale</button>
+        ${x.compagno ? `<button class="sv-chip ${k} ${x.conCompagno ? 'on' : ''}" data-campo="compagno">Compagno/a</button>` : ''}
+        <label class="sv-osp">+<input type="number" min="0" max="50" value="${Number(x.ospiti) || 0}" data-campo="ospiti">ospiti</label></div>
+      ${x.modifica ? `<div class="riga"><button class="primario" data-si>Salva</button><button class="link" data-no>Chiudi</button></div>
+      <button class="link" data-togli style="color:var(--rosso)">Togli il biglietto</button>`
+      : '<div class="riga"><button class="primario" data-si>Sì, segna il biglietto</button><button class="link" data-no>No, niente biglietto</button></div>'}
       ${x.chi ? '' : `<small>Per correggere o aggiungere ospiti: nel tuo Profilo, tocca la targhetta ${nome.toUpperCase()}</small>`}</div>`;
 }
 function riquadriBiglietto() {
@@ -1697,7 +1702,7 @@ async function rispondiBiglietto(box, si, dopo, salva) {
   const on = campo => { const el = box.querySelector(`[data-campo="${campo}"]`); return !!el && el.classList.contains('on'); };
   const ospiti = Math.max(0, Number(box.querySelector('[data-campo="ospiti"]').value) || 0);
   const contatto = si && on('contatto'), compagno = si && on('compagno'), osp = si ? ospiti : 0;
-  if (si && !contatto && !compagno && !osp) return mostraToast('Scegli almeno un biglietto, oppure premi «No»');
+  if (si && !contatto && !compagno && !osp) return mostraToast(box.querySelector('[data-togli]') ? 'Scegli almeno un posto, oppure «Togli il biglietto»' : 'Scegli almeno un biglietto, oppure premi «No»');
   box.querySelectorAll('button').forEach(b => { b.disabled = true; });
   const r = salva ? await salva({ tipo, evento, contatto, compagno, ospiti: osp }) : await dbq('segna il mio biglietto', supa.rpc('segna_mio_biglietto',
     { p_tipo: tipo, p_evento: evento, p_contatto: contatto, p_compagno: compagno, p_ospiti: osp }));
@@ -2280,7 +2285,7 @@ function apriCheck() {
   libroSel.addEventListener('change', async () => {
     if (libroSel.value !== '__altro__') return;
     const v = await moduloSemplice('Libro non da sistema', [
-      { k: 'titolo', etichetta: 'Titolo', tipo: 'text', valore: '', obbligatorio: true },
+      { k: 'titolo', etichetta: 'Titolo', tipo: 'text', valore: '', obbligatorio: true, manca: 'Scrivi il titolo' },
       { k: 'autore', etichetta: 'Autore', tipo: 'text', valore: '' }]);
     const titolo = v && String(v.titolo || '').trim().slice(0, 120);
     if (!titolo) { libroSel.value = libroPrima; return; }

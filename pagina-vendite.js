@@ -78,11 +78,11 @@ async function sezioneVendite() {
 }
 
 // «📦 Ordine fatto»: la promo differita conta da QUESTO giorno (quello vero, non quello previsto). Si propone oggi, si può correggere.
-async function ordineFatto(v) { return segnaOrdineFatto(v, disegnaScheda); }
+async function ordineFatto(v) { return segnaOrdineFatto(v, disegnaScheda, LS.contatto); }
 // «Ordine fatto» dalla riga della vendita o dalla carta «Consegna» in Azioni (nota 051; V1 22/10: lo stesso nome in tutti e due): un modulo solo; `dopo` ridisegna chi l'ha aperto
-async function segnaOrdineFatto(v, dopo) {
+async function segnaOrdineFatto(v, dopo, persona) {   // persona: chi ha comprato, in testa al modulo (nota 094 M3)
   if (soloGuardo()) return;
-  const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true }]);
+  const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true, manca: 'Scegli il giorno' }], { persona });
   if (!valori) return;
   if (valori.giorno < v.data) return mostraToast('L\'ordine è prima della vendita');
   const { error } = await dbq('ordine fatto', supa.from('vendite').update({ ordinata_il: valori.giorno }).eq('id', v.id));

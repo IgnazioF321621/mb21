@@ -40,7 +40,7 @@ async function apriProfiloDiAltro(p) {
   if (dati.error || !dati.data) { app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="avviso">Non riesco a caricare il profilo. Controlla la connessione e riprova.</div>${versione()}`; return torna(); }
   const d = dati.data, scheda = sc.data && sc.data[0];
   const SV = scheda ? await segniDellaScheda(scheda).catch(() => null) : null;
-  const targhe = SV ? targheHtml(MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi)) : '';
+  const targhe = SV ? targheHtml(targheDi(SV)) : '';   // nota 094 S6: con il suo posto sul biglietto, come la scheda
   const n = d.contatti_al_giorno;
   app.innerHTML = `${testa}
     <div class="testa-pagina"><h1>Profilo di ${esc(nomeDi(d))}</h1><span class="cerchio grande">${dentroCerchio(d)}</span></div>
@@ -252,7 +252,7 @@ async function leggiMieiSegni() {
 }
 function mieTarghe() {
   const g = PF.segni, L = MB21Lista;
-  return L.targheSegni(g.biglietti, g.cep, MB21Coda.oggiRoma(), { bbs: g.bbs && L.meseEvento(g.bbs), wes: g.wes && L.meseEvento(g.wes) });
+  return L.targheSegni(g.biglietti, g.cep, MB21Coda.oggiRoma(), { bbs: g.bbs && L.meseEvento(g.bbs), wes: g.wes && L.meseEvento(g.wes) }, b => b.mio);   // 094 S6: il suo posto
 }
 function mieiSegniHtml() {
   const g = PF.segni;

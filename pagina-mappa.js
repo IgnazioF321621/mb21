@@ -88,7 +88,11 @@ async function calcolatoreSegni() {
 
 // Mappa: schede, targhette e segni del gruppo per l'evento in vendita
 async function caricaSchedeMappa() {
-  const g = await leggiSegniGrezzi();
+  contaSegniMappa(await leggiSegniGrezzi());
+}
+// i conti dai dati già letti (MP.grezzi): dopo il tocco di una targhetta si rifanno in memoria, senza rileggere il ramo (nota 094 S3)
+function contaSegniMappa(g) {
+  MP.grezzi = g;
   const L = MB21Lista, attivi = { bbs: L.eventoAttivo(g.bbs), wes: L.eventoAttivo(g.wes) };
   MP.attivi = attivi;
   MP.schede = g.schede;
@@ -97,12 +101,30 @@ async function caricaSchedeMappa() {
   MP.segni = MB21Mappa.segniGruppo({ squadra: MP.squadra || g.squadra, schede: g.schede, preferito: visto().id, coppie: g.coppie,
     utenti: g.utenti, biglietti: g.biglietti, cep: g.cep, attivoBbs: attivi.bbs, attivoWes: attivi.wes, oggi: g.oggi });
 }
+// Nota 094 S3: la targhetta toccata dalla Mappa. Biglietti e CEP delle schede appena lette (SV.idsBig, SV.idsCep: la persona, il compagno/a, le schede
+// con lo stesso codice) prendono il posto dei loro nei dati della Mappa; poi si rifanno i conti e si ridisegna, senza rileggere tutto il ramo.
+function aggiornaSegniMappa(SV, userId) {
+  const g = MP.grezzi;
+  if (!g || !SV.idsBig) return false;
+  const chi = {};   // il partner della lista di ogni scheda (serve ai conti del gruppo): quello dei dati di prima, se no chi ha la scheda
+  for (const x of [...g.biglietti, ...g.cep]) if (x.user_id) chi[x.contatto_id] = x.user_id;
+  const con = x => ({ ...x, user_id: chi[x.contatto_id] || userId });
+  contaSegniMappa({ ...g,
+    biglietti: [...g.biglietti.filter(b => !SV.idsBig.includes(b.contatto_id)), ...SV.biglietti.map(con)],
+    cep: [...g.cep.filter(p => !SV.idsCep.includes(p.contatto_id)), ...SV.cep.map(con)] });
+  return true;
+}
 const schedaMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, visto().id) : null);
 // Nota Pagine 070 (Ignazio 24/10): la scheda delle targhette BBS · WES · CEP di una riga. Per l'Admin quella della sua lista, dove i segni si scrivono
 // (scelta A del 16/09, anche con il Partner Select su un altro partner): così la targhetta che tocca è quella che si accende. Per gli altri come prima.
 const schedaSegniMappa = r => (MP.schede ? MB21Mappa.schedaDelPartner(r, MP.schede, eAdmin() ? ST.utente.id : visto().id) : null);
 const targheRiga = r => { const sc = schedaSegniMappa(r); return sc && MP.targhe ? MP.targhe[sc.id] || null : null; };
 // In cima, per l'Admin, il conto a parole su tutto il gruppo che guarda (filtri e ricerca a parte): «BBS 11-2026: segnati 4 su 35». Nessuna lettura in più
+// Nota 094 S4: la targhetta dice solo «lui sì/no»; i numeri del gruppo (lui e chi è sotto: posti dei biglietti, abbonati CEP) stanno fuori, a parole
+function segniGruppoHtml(n) {
+  const voci = n ? ['bbs', 'wes', 'cep'].filter(k => n[k]).map(k => `${k.toUpperCase()} <b>${n[k]}</b>`) : [];
+  return voci.length ? `<div class="mp-numeri">Nel gruppo: ${voci.join(' · ')}</div>` : '';
+}
 function contoSegniHtml(cime) {
   if (!eAdmin() || !MP.attivi || !MP.targhe || !MP.schede) return '';
   const M = MB21Mappa, tutti = M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }), quanti = tutti.length;
@@ -163,10 +185,11 @@ function disegnaMappa() {
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
           <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml(targheRiga(r),
-            MP.segni && MP.segni.gruppo[r.id], { tasto: tocca, chi: r.id })}</span>
+            null, { tasto: tocca, chi: r.id })}</span>
           <div class="mp-codice">Codice ${esc(r.id)}</div>
           <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
+          ${segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
@@ -428,8 +451,10 @@ function collegaMappa() {
     if (!partner) return;
     const r = { id: partner.partner_id, nome: MB21Mappa.nomeLeggibile(partner.nome) }, sc = schedaSegniMappa(r);
     if (!sc) return mostraToast(`${r.nome} non ha una scheda collegata nella lista: tocca il nome per collegarla`);
-    toccaTarga({ id: sc.id, nome: sc.nome, user_id: sc.user_id }, b.dataset.targa, () =>
-      caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {}));
+    // nota 094 S3: lettura fresca al tocco; dopo, i conti si rifanno con quello che il foglio ha appena letto e scritto (se non si può, si rilegge come prima)
+    const ridisegna = () => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); };
+    toccaTarga({ id: sc.id, nome: sc.nome, user_id: sc.user_id }, b.dataset.targa, SV =>
+      (aggiornaSegniMappa(SV, sc.user_id) ? ridisegna() : caricaSchedeMappa().then(ridisegna).catch(() => {})), { fresca: true });
   });
   app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
     const partner = (MP.squadra || []).find(x => x.partner_id === b.dataset.mpnome);

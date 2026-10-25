@@ -138,11 +138,11 @@ async function condivisioneAMano(c, materiali) {
     g.voci.push(voce(m));
   }
   const valori = await moduloSemplice('Condivisione a mano', [
-    { k: 'traccia', etichetta: 'Traccia', tipo: 'select', opzioni: ['Scegli la traccia', ...gruppi], valore: 'Scegli la traccia', obbligatorio: true },
-    { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true },
+    { k: 'traccia', etichetta: 'Traccia', tipo: 'select', opzioni: ['Scegli la traccia', ...gruppi], valore: 'Scegli la traccia', obbligatorio: true, vuoto: 'Scegli la traccia', manca: 'Scegli la traccia' },
+    { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true, manca: 'Scegli il giorno' },
     { k: 'ascoltata', etichetta: 'L\'ha già ascoltata?', tipo: 'select', opzioni: ['No', 'Sì'], valore: 'No' },
     { k: 'note', etichetta: 'Note', tipo: 'textarea', valore: '', righe: 2 },
-  ]);
+  ], { persona: c });
   if (!valori) return;
   const t = tracce.find(m => voce(m) === valori.traccia);
   if (!t) return mostraToast('Scegli la traccia');
@@ -201,10 +201,10 @@ async function modificaCondivisione(c, k, materiali) {
   if (!k || soloGuardo()) return;
   const m = materiali.find(x => x.id === k.materiale_id);
   const valori = await moduloSemplice(`Condivisione · ${m ? m.titolo : 'traccia'}`, [
-    { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: k.condivisa_il, obbligatorio: true },
+    { k: 'giorno', etichetta: 'Condivisa il', tipo: 'date', valore: k.condivisa_il, obbligatorio: true, manca: 'Scegli il giorno' },
     { k: 'ascoltata', etichetta: 'L\'ha ascoltata?', tipo: 'select', opzioni: ['Non ancora', 'Sì', NON_ASCOLTATA], valore: k.ascoltata ? 'Sì' : k.non_ascoltata_il ? NON_ASCOLTATA : 'Non ancora' },
     { k: 'note', etichetta: 'Note', tipo: 'textarea', valore: k.note || '', righe: 2 },
-  ], { elimina: 'Elimina questa condivisione' });
+  ], { persona: c, elimina: 'Elimina questa condivisione' });
   if (!valori) return;
   if (valori === 'elimina') {
     if (!await chiediConferma('Elimino la condivisione?', `${m ? m.titolo : 'La traccia'} sparisce dal registro di ${MB21Sharing.nomeCorto(c.nome)}.`, 'Elimina', true)) return;

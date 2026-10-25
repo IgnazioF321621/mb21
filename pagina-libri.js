@@ -85,13 +85,13 @@ function disegnaLibri(inCima) {
   if (altro) altro.onclick = async () => {
     const scelte = tuttiLibri.filter(l => l.tipo === 'libro' && !r.diario.some(b => b.titolo === l.titolo)).map(l => l.titolo).sort((a, b) => a.localeCompare(b, 'it'));
     const v = await moduloSemplice('Un libro già letto', [
-      { k: 'titolo', etichetta: 'Libro', tipo: 'select', opzioni: ['Scegli il libro', ...scelte, 'Libro non da sistema…'], valore: 'Scegli il libro', obbligatorio: true },
+      { k: 'titolo', etichetta: 'Libro', tipo: 'select', opzioni: ['Scegli il libro', ...scelte, 'Libro non da sistema…'], valore: 'Scegli il libro', obbligatorio: true, vuoto: 'Scegli il libro', manca: 'Scegli il libro' },
       { k: 'quando', etichetta: 'Quando (se lo ricordi)', tipo: 'text', valore: '' }]);
     if (!v || v.titolo === 'Scegli il libro') return;
     if (v.titolo !== 'Libro non da sistema…') return salvaGiaLetto(v.titolo, v.quando);
     // un titolo nuovo (Ignazio 22/09): si scrive una volta, entra tra i libri personali e si segna già letto
     const a = await moduloSemplice('Libro non da sistema', [
-      { k: 'titolo', etichetta: 'Titolo', tipo: 'text', valore: '', obbligatorio: true },
+      { k: 'titolo', etichetta: 'Titolo', tipo: 'text', valore: '', obbligatorio: true, manca: 'Scrivi il titolo' },
       { k: 'autore', etichetta: 'Autore', tipo: 'text', valore: '' }]);
     const titolo = a && String(a.titolo || '').trim().slice(0, 120);
     if (!titolo) return;

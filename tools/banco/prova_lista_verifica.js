@@ -504,7 +504,8 @@ prova('L8: le targhette leggono solo i biglietti dei BBS e WES in corso e i CEP 
   const di = n => JSON.stringify((chiamate.find(c => c[0] === n) || [])[1]);
   assert.equal(di('biglietti'), JSON.stringify([['in', 'evento', ['2026-11-01', '2026-10-01']]]));   // solo il BBS e il WES in corso
   assert.equal(di('cep'), JSON.stringify([['or', 'uscito_il.is.null,uscito_il.gte.2026-10-23']]));   // solo i CEP non chiusi
-  assert.equal(t.a.bbs, true); assert.equal(t.c.bbs, true); assert.equal(t.b.cep, true);   // la coppia prende i segni dell'altra, come prima
+  assert.equal(t.a.bbs, true); assert.equal(t.b.cep, true);
+  assert.equal(t.c.bbs, false);   // nota 094 S6: il biglietto è solo «Personale» di a: il compagno/a c non si accende (prima sì)
   // senza eventi registrati: nessuna lettura di biglietti
   chiamate.length = 0; tabella.bbs = []; tabella.wes = [];
   await ctx.leggi(); assert.ok(!chiamate.some(c => c[0] === 'biglietti'));
@@ -566,8 +567,9 @@ prova('L9: un nome nuovo da ogni strada passa da salvaNomeNuovo: «Salvo lo stes
   assert.equal(e.annullato, true); uguale(domande[0], ['Salvo lo stesso?', 'Attenzione: tra i tuoi nomi c\'è già Persona Doppia · +393330000009.', 'Salva lo stesso']);
   assert.equal(inseriti.length, 1);
   // le strade: il «+» della Lista, «Scegli dalla tua lista», la Cerchia del Benvenuto
-  assert.match(PL, /const esito = await salvaNomeNuovo\(riga\);/);
-  assert.match(IDX, /const esito = await salvaNomeNuovo\(\{ nome: t, categoria: 'Prospect', user_id: visto\(\)\.id \}\);/);
+  assert.match(PL, /esito = await salvaNomeNuovo\(riga\);/);
+  // nota 094 M7: dall'Agenda lo stesso modulo «Nuovo contatto» (che salva con salvaNomeNuovo), con il nome e Prospect già scelti
+  assert.match(IDX, /apriModulo\(null, \{ nome: t, categoria: 'Prospect', salvato: riga => chiudi\(riga\), chiuso: \(\) => \{ n\.disabled = false; \} \}\);/);
   assert.match(leggi('pagina-benvenuto.js'), /const esito = await salvaNomeNuovo\(\{ user_id: ST\.utente\.id, nome, telefono, categoria: 'Prospect' \}\);/);
   assert.doesNotMatch(leggi('pagina-benvenuto.js'), /supa\.from\('contatti'\)\.insert/);
   // «Scegli dalla tua lista» e il nuovo appuntamento prendono i nomi dalla copia della Lista, con la ricerca sola

@@ -825,7 +825,7 @@ function disegnaDati(c, extra) {
   }).filter(Boolean);
   // «Contatti fatti» (nota 091 b): arriva con la seconda passata, contato solo per questa persona; finché non c'è la riga non si vede (niente «0» di passaggio)
   const fatti = valore('contatti_fatti');
-  const resto = [['Area', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
+  const resto = [['Interesse', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
     .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
   // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
   const codice = valore('codice_amway');
@@ -888,7 +888,7 @@ async function riquadroCoppia(c) {
       const v = await moduloSemplice('Coppia con (non in lista)', [
         { k: 'nome', etichetta: 'Nome e cognome (vuoto = nessuno)', tipo: 'text', valore: a.compagno_nome || '' },
         { k: 'telefono', etichetta: 'Telefono', tipo: 'tel', valore: a.compagno_telefono || '' },
-      ]);
+      ], { persona: c });
       if (!v) return;
       if (SV.compagno) {
         const { error } = await dbq('scollega compagno', supa.rpc('collega_compagno', { p_contatto: c.id, p_compagno: null }));
@@ -1075,8 +1075,8 @@ async function notaCoach(n) {
   if (soloGuardo()) return;
   const valori = await moduloSemplice(n ? 'Modifica nota' : 'Nuova nota Coach', [
     { k: 'tipo', etichetta: 'Tipo di azione', tipo: 'select', opzioni: TIPI_COACH, valore: n ? n.tipo_azione : 'Contatto' },
-    { k: 'testo', etichetta: 'Testo', tipo: 'textarea', valore: n ? n.testo : '', obbligatorio: true, righe: 10 },
-  ], n ? { elimina: 'Elimina nota' } : {});
+    { k: 'testo', etichetta: 'Testo', tipo: 'textarea', valore: n ? n.testo : '', obbligatorio: true, manca: 'Scrivi la nota', righe: 10 },
+  ], { persona: LS.contatto, ...(n ? { elimina: 'Elimina nota' } : {}) });
   if (!valori) return;
   if (valori === 'elimina') return eliminaNota(n);
   const riga = { tipo_azione: valori.tipo, testo: valori.testo.trim() };
@@ -1187,7 +1187,10 @@ function sezioneOnboarding() {
 // Nome per un confronto esatto senza maiuscole (ilike senza caratteri jolly)
 const nomeEsatto = nome => String(nome || '').trim().replace(/[\\%_]/g, x => '\\' + x);
 
-async function caricaSegni(c) {
+// Nota 094 S1: con la scheda ufficiale (un'altra, quella del codice Amway) biglietti e CEP si leggono da quella, così scheda e Mappa accendono le stesse luci;
+// per scrivere resta il rimando (SV.ufficiale). SV.persona = la scheda dei segni (questa, o l'ufficiale); SV.idsBig / SV.idsCep = le schede lette.
+// S3: le date di BBS e WES dalla lettura comune (nota 081), non più a ogni scheda.
+async function caricaSegni(c, giaUfficiale = false) {
   const { data: ana, error } = await dbq('compagno', supa.from('contatti')
     .select('compagno_id, compagno_nome, compagno_telefono, codice_amway').eq('id', c.id).maybeSingle());
   if (error || !ana) throw error || new Error('contatto');
@@ -1199,11 +1202,15 @@ async function caricaSegni(c) {
     let q = supa.from('contatti').select('id').eq('user_id', ST.utente.id).neq('id', c.id);
     q = ana.codice_amway ? q.eq('codice_amway', ana.codice_amway) : q.not('codice_amway', 'is', null).ilike('nome', nomeEsatto(c.nome));
     const r = await dbq('scheda dell\'Admin', q.limit(1));
-    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, lista: ST.utente.nome };
+    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, user_id: ST.utente.id, lista: ST.utente.nome };
   } else if (!ana.codice_amway) {
     const r = await dbq('scheda col codice', supa.from('contatti').select('id, user_id, utenti(nome)')
       .not('codice_amway', 'is', null).neq('id', c.id).ilike('nome', nomeEsatto(c.nome)).limit(1));
-    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, lista: r.data[0].utenti ? r.data[0].utenti.nome : '' };
+    if (r.data && r.data.length) ufficiale = { id: r.data[0].id, user_id: r.data[0].user_id, lista: r.data[0].utenti ? r.data[0].utenti.nome : '' };
+  }
+  if (ufficiale && !giaUfficiale) {   // S1: i segni sono quelli della scheda ufficiale (una volta sola: quella ha il codice)
+    const U = await caricaSegni({ id: ufficiale.id, nome: c.nome, user_id: ufficiale.user_id }, true);
+    return { ...U, id: c.id, ufficiale };
   }
   let compagno = null;
   if (ana.compagno_id) {
@@ -1221,11 +1228,11 @@ async function caricaSegni(c) {
   const [big, cep, bbs, wes] = await Promise.all([
     dbq('biglietti', supa.from('biglietti').select('*').in('contatto_id', ids)),
     dbq('cep', supa.from('cep').select('*').in('contatto_id', idsCep).order('dal', { ascending: false })),
-    dbq('date dei BBS', supa.from('bbs').select('data').order('data')),
-    dbq('date dei Wes', supa.from('wes').select('data').order('data')),
+    lettaComune('bbs'),
+    lettaComune('wes'),
   ]);
   if (big.error || cep.error || bbs.error || wes.error) throw big.error || cep.error || bbs.error || wes.error;
-  return { id: c.id, ana, compagno, ufficiale, biglietti: big.data, cep: cep.data, cepNuovo: false,
+  return { id: c.id, persona: c.id, idsBig: ids, idsCep, ana, compagno, ufficiale, biglietti: big.data, cep: cep.data, cepNuovo: false,
     date: { BBS: bbs.data.map(x => x.data), WES: wes.data.map(x => x.data) },
     attivi: { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) } };
 }
@@ -1235,7 +1242,7 @@ async function caricaSegni(c) {
 function targaAppHtml(uso) {
   return uso ? `<span class="sv-targa app" title="Ultimo uso dell'app">${ic('app')} ${MB21Mappa.etichettaUso(uso.ultimo_uso, MB21Coda.oggiRoma())}</span>` : '';
 }
-// t: accese sì/no · numeri (facoltativo, Mappa): totale del gruppo scritto dentro la targhetta se sopra zero
+// t: accese sì/no · numeri (facoltativo): un numero scritto dentro la targhetta se sopra zero (nota 094 S4: la Mappa non lo usa più, lo scrive fuori)
 // opz (nota Pagine 070): accese = solo quelle accese (le card della Lista) · tasto = per l'Admin si toccano (`toccaTarga`), chi = codice della riga della Mappa
 function targheHtml(t, numeri, opz = {}) {
   return ['bbs', 'wes', 'cep'].filter(k => !opz.accese || (t && t[k])).map(k => {
@@ -1247,11 +1254,14 @@ function targheHtml(t, numeri, opz = {}) {
 }
 // Le targhette si toccano solo dove l'Admin può scrivere (con Partner Select «Tutti» si guarda soltanto)
 const targheDaToccare = () => eAdmin() && !soloLettura();
-// Acceso/spento dai segni letti della scheda; vale anche per la card del compagno/a collegato, che li condivide
+// Acceso/spento dai segni letti della scheda (S6: ognuno con il SUO posto sul biglietto); anche la card del compagno/a collegato, con il suo
+const targheDellaPersona = (SV, id) => MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi, b => b.contatto_id === id);
+const targheDi = SV => targheDellaPersona(SV, SV.persona);
 function ricordaTarghe(SV) {
-  const t = MB21Lista.targheSegni(SV.biglietti, SV.cep, MB21Coda.oggiRoma(), SV.attivi);
+  const t = targheDi(SV);
   LS.targhe = LS.targhe || {};
-  for (const id of [SV.id, SV.compagno && SV.compagno.id]) if (id) LS.targhe[id] = t;
+  LS.targhe[SV.id] = t;
+  if (SV.compagno) LS.targhe[SV.compagno.id] = targheDellaPersona(SV, SV.compagno.id);
   return t;
 }
 function mostraTarghe(SV) {
@@ -1282,17 +1292,18 @@ function segniDellaScheda(c) {   // una lettura sola per scheda: targhette e sez
 // (lo stesso della Dashboard e del Profilo: lui, compagno/a, ospiti) o, per il CEP, «È abbonato al CEP?»; accesa → chi ce l'ha e «Togli».
 // Acceso o spento lo dice la lettura fresca della scheda (caricaSegni, la stessa della linguetta «Segni vitali», che resta per i mesi passati), non il colore
 // sullo schermo. c = { id, nome, user_id } della scheda · k = 'bbs' | 'wes' | 'cep' · dopo(SV) ridisegna chi ha chiamato (Lista e Check si allineano da soli).
-async function toccaTarga(c, k, dopo) {
+// opz.fresca (nota 094 S3, dalla Mappa): la lettura sempre fresca, anche se la scheda è ancora in memoria
+async function toccaTarga(c, k, dopo, opz = {}) {
   if (!c || !eAdmin() || soloGuardo()) return;
   let SV;
-  try { SV = LS.contatto && LS.contatto.id === c.id ? await segniDellaScheda(c) : await caricaSegni(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
+  try { SV = !opz.fresca && LS.contatto && LS.contatto.id === c.id ? await segniDellaScheda(c) : await caricaSegni(c); } catch (e) { return mostraToast('Segni vitali non caricati: riprova.'); }
   if (SV.ufficiale) {   // la regola del 16/09: i segni di un partner si scrivono su una scheda sola, quella col codice Amway nella lista dell'Admin
     if (await chiediConferma('I segni vitali si scrivono su una scheda sola', `Quella di ${c.nome} collegata al codice Amway, nella lista di ${SV.ufficiale.lista || 'un altro partner'}.`, 'Apri quella scheda')) {
       await apriContattoDa(SV.ufficiale.id, LS.contatto && LS.contatto.id === c.id ? LS.ritorno : 'mappa');
     }
     return;
   }
-  const L = MB21Lista, oggi = MB21Coda.oggiRoma(), t = L.targheSegni(SV.biglietti, SV.cep, oggi, SV.attivi);
+  const L = MB21Lista, oggi = MB21Coda.oggiRoma(), t = targheDi(SV);
   const fatto = testo => {
     if (testo) mostraToast(testo);   // dopo «Ha il biglietto?» il «Biglietto segnato» lo dice già rispondiBiglietto
     if (LS.sv && LS.sv.id === SV.id && LS.sv !== SV) LS.sv = null;   // la scheda, se si riapre, rilegge
@@ -1307,7 +1318,7 @@ async function toccaTarga(c, k, dopo) {
   if (k === 'cep') {
     if (!t.cep) {
       const mese = new Date(oggi + 'T12:00:00Z').toLocaleDateString('it-IT', { month: 'long', timeZone: 'UTC' });
-      if (!await chiediConferma('È abbonato al CEP?', `${c.nome}: la targhetta si accende dal 1° di ${mese}. Quando l'abbonamento finisce, la tocchi di nuovo e «Togli il CEP».`, 'Sì, accendi il CEP')) return;
+      if (!await chiediConferma('È abbonato al CEP?', `L'abbonamento audio. ${c.nome}: la targhetta si accende dal 1° di ${mese}. Quando non rinnova, la tocchi di nuovo e «Non ha rinnovato».`, 'Sì, accendi il CEP')) return;
       const p = L.cepDaAccendere(SV.cep, oggi), errore = L.controllaPeriodoCep(SV.cep, { id: p.id || null, dal: p.dal, uscito_il: null });
       if (errore) return mostraToast(errore + ': guarda in «Segni vitali» nella scheda');
       const riga = { uscito_il: null, aggiornato_il: new Date().toISOString() };
@@ -1320,8 +1331,8 @@ async function toccaTarga(c, k, dopo) {
     const via = L.cepDaTogliere(SV.cep, oggi);
     apri(`<h3>${ic('fatto')} CEP · ${esc(c.nome)}</h3>
       <p>Abbonato ${esc(L.descrizioneCep(SV.cep, oggi).replace(' · abbonato fino', ', fino'))}.</p>
-      <p class="sotto" style="margin:0">${via.elimina ? 'Il periodo è cominciato questo mese: «Togli» lo cancella.' : `«Togli» lo chiude al ${esc(L.data(via.uscito_il))}, come «Non ha rinnovato»: i mesi passati restano.`}</p>
-      <div class="due"><button class="link" id="tg-via" style="color:var(--rosso)">Togli il CEP</button><button class="link" id="tg-no">Chiudi</button></div>`);
+      <p class="sotto" style="margin:0">${via.elimina ? 'Il periodo è cominciato questo mese: «Non ha rinnovato» lo cancella.' : `«Non ha rinnovato» lo chiude al ${esc(L.data(via.uscito_il))}: i mesi passati restano.`}</p>
+      <div class="due"><button class="link" id="tg-via" style="color:var(--rosso)">Non ha rinnovato</button><button class="link" id="tg-no">Chiudi</button></div>`);
     velo.querySelector('#tg-no').onclick = chiudi;
     velo.querySelector('#tg-via').onclick = async e => {
       e.target.disabled = true;
@@ -1329,39 +1340,67 @@ async function toccaTarga(c, k, dopo) {
         : supa.from('cep').update({ uscito_il: via.uscito_il, aggiornato_il: new Date().toISOString() }).eq('id', via.id));
       if (error) { e.target.disabled = false; return mostraToast('Non tolto: riprova.'); }
       SV.cep = via.elimina ? SV.cep.filter(x => x.id !== via.id) : SV.cep.map(x => (x.id === via.id ? { ...x, uscito_il: via.uscito_il } : x));
-      chiudi(); fatto('CEP tolto');
+      chiudi(); fatto('CEP chiuso');
     };
     return;
   }
 
   const tipo = k.toUpperCase(), evento = SV.attivi[k];
   if (!evento) return mostraToast(`Nessun ${tipo} in vendita: le date si aggiungono nella pagina Admin`);
-  const etichetta = `${tipo} ${L.etichettaEvento(evento)}`;
-  const suoi = SV.biglietti.filter(b => b.tipo === tipo && b.evento === evento);
-  if (!t[k]) {
-    const salva = async x => {
-      if (!await bigliettoNonDoppio(c, SV, tipo, evento)) return null;
-      const gia = suoi.find(b => b.contatto_id === c.id), riga = { contatto: x.contatto, compagno: x.compagno, ospiti: x.ospiti };
-      const r = await dbq('biglietto dalla targhetta', gia ? supa.from('biglietti').update(riga).eq('id', gia.id).select().single()
-        : supa.from('biglietti').insert({ contatto_id: c.id, tipo, evento, ...riga }).select().single());
-      if (r.error) return { error: { message: r.error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.' } };
-      SV.biglietti = [...SV.biglietti.filter(b => b.id !== r.data.id), r.data];
-      return { error: null };
-    };
-    apri(domandaBigliettoHtml({ tipo, evento, chi: c.nome, compagno: SV.compagno ? SV.compagno.nome : SV.ana.compagno_nome }, 'pf-domanda'));
-    collegaDomandaBiglietto(velo, ok => { chiudi(); if (ok !== false) fatto(''); }, salva);
-    return;
-  }
-  apri(`<h3>${ic('biglietto')} ${esc(etichetta)} · ${esc(c.nome)}</h3>
-    ${suoi.filter(b => L.postiBiglietto(b)).map(b => `<p>Biglietto segnato: <b>${esc(personeDelBiglietto(c, SV, b))}</b>.</p>`).join('')}
-    <p class="sotto" style="margin:0">Per cambiare chi va o gli ospiti: toglilo e segnalo di nuovo.</p>
-    <div class="due"><button class="link" id="tg-via" style="color:var(--rosso)">Togli il biglietto</button><button class="link" id="tg-no">Chiudi</button></div>`);
-  velo.querySelector('#tg-no').onclick = chiudi;
-  velo.querySelector('#tg-via').onclick = async e => {
-    e.target.disabled = true;
-    const { error } = await dbq('tolgo il biglietto dalla targhetta', supa.from('biglietti').delete().in('id', suoi.map(b => b.id)));
-    if (error) { e.target.disabled = false; return mostraToast('Non tolto: riprova.'); }
-    SV.biglietti = SV.biglietti.filter(b => !suoi.includes(b));
+  segnaBiglietto(c, SV, tipo, evento, fatto);
+}
+
+// Nota 094 S2 e S6: il biglietto di una persona per un evento, un foglio solo (la domanda della Dashboard e del Profilo, domandaBigliettoHtml) dalla
+// targhetta e da «+ Biglietto» della linguetta. I tasti «Personale» e «Compagno/a» (più gli ospiti) si accendono ognuno da solo; con il biglietto già
+// segnato si vedono come sono e si corregge con «Salva» (prima: «toglilo e segnalo di nuovo»); «Togli il biglietto» toglie solo il posto di questa persona.
+// Il biglietto della coppia è uno per evento: sta sulla scheda di chi lo aveva già (questa o quella del compagno/a collegato), se no su questa.
+// fatto(testo) ridisegna chi ha aperto il foglio.
+async function segnaBiglietto(c, SV, tipo, evento, fatto) {
+  const L = MB21Lista, altro = SV.compagno ? SV.compagno.id : null;
+  const suoi = SV.biglietti.filter(b => b.tipo === tipo && b.evento === evento && (b.contatto_id === c.id || (altro && b.contatto_id === altro)));
+  const mio = suoi.find(b => b.contatto_id === c.id), suo = altro ? suoi.find(b => b.contatto_id === altro) : null;
+  const personale = suoi.some(b => L.postoSuo(b, b.contatto_id === c.id));
+  const delCompagno = suoi.some(b => (altro ? L.postoSuo(b, b.contatto_id === altro) : b.compagno));
+  const giaSegnato = suoi.some(b => L.postiBiglietto(b));
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  const chiudi = () => velo.remove();
+  velo.innerHTML = `<div class="foglio">${domandaBigliettoHtml({ tipo, evento, chi: c.nome, compagno: SV.compagno ? SV.compagno.nome : SV.ana.compagno_nome,
+    personale: giaSegnato ? personale : true, conCompagno: delCompagno, ospiti: suoi.reduce((n, b) => n + (Number(b.ospiti) || 0), 0), modifica: giaSegnato }, 'pf-domanda')}</div>`;
+  document.body.appendChild(velo);
+  velo.onclick = e => { if (e.target === velo) chiudi(); };
+  const aggiorna = righe => { SV.biglietti = [...SV.biglietti.filter(b => !suoi.includes(b)), ...righe]; };
+  const salva = async x => {
+    if (x.contatto && !personale && !await bigliettoNonDoppio(c, SV, tipo, evento)) return null;
+    const riga = { contatto: x.contatto, compagno: x.compagno, ospiti: x.ospiti };
+    // sulla scheda del compagno/a i due posti si leggono al contrario (il suo «Personale» è il «Compagno/a» di questa persona)
+    const r = await dbq('biglietto', mio ? supa.from('biglietti').update(riga).eq('id', mio.id).select().single()
+      : suo ? supa.from('biglietti').update({ contatto: x.compagno, compagno: x.contatto, ospiti: x.ospiti }).eq('id', suo.id).select().single()
+      : supa.from('biglietti').insert({ contatto_id: c.id, tipo, evento, ...riga }).select().single());
+    if (r.error) return { error: { message: r.error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.' } };
+    if (mio && suo) {   // due biglietti della coppia per lo stesso evento (di prima): resta quello di questa scheda, con tutto
+      const via = await dbq('biglietto doppio della coppia', supa.from('biglietti').delete().eq('id', suo.id));
+      if (via.error) { aggiorna([r.data, suo]); return { error: { message: 'Non salvato del tutto: riprova.' } }; }
+    }
+    aggiorna([r.data]);
+    return { error: null };
+  };
+  collegaDomandaBiglietto(velo, ok => { chiudi(); if (ok !== false) fatto(''); }, salva);
+  const togli = velo.querySelector('[data-togli]');
+  if (togli) togli.onclick = async () => {
+    togli.disabled = true;
+    const restano = [];
+    for (const b of suoi) {
+      const campo = b.contatto_id === c.id ? 'contatto' : altro ? 'compagno' : null;
+      if (!campo || !b[campo]) { restano.push(b); continue; }
+      const dopo = { ...b, [campo]: false };
+      const r = dopo.contatto || dopo.compagno
+        ? await dbq('tolgo un posto dal biglietto', supa.from('biglietti').update({ [campo]: false }).eq('id', b.id).select().single())
+        : await dbq('tolgo il biglietto', supa.from('biglietti').delete().eq('id', b.id));   // nessuno dei due: via anche gli ospiti
+      if (r.error) { togli.disabled = false; aggiorna([...restano, ...suoi.slice(suoi.indexOf(b))]); return mostraToast('Non tolto: riprova.'); }
+      if (r.data) restano.push(r.data);
+    }
+    aggiorna(restano);
     chiudi(); fatto('Biglietto tolto');
   };
 }
@@ -1427,8 +1466,9 @@ async function sezioneSegni() {
     return;
   }
   if (LS.contatto !== c || LS.sezione !== 'segni') return;
-  const admin = eAdmin();
-  const dis = admin ? '' : 'disabled';
+  // Nota 094 S7: chi non può segnare (un partner, o l'Admin con «Tutti» nel Partner Select: come le targhette) vede i tasti spenti e una riga sola
+  const puoSegnare = targheDaToccare();
+  const dis = puoSegnare ? '' : 'disabled';
   const primo = n => String(n || '').trim().split(/\s+/)[0] || '';
   const breve = d => MB21Lista.etichettaEvento(d);
   const nomeDi = id => (id === c.id ? c.nome : SV.compagno && SV.compagno.id === id ? SV.compagno.nome : '');
@@ -1466,7 +1506,7 @@ async function sezioneSegni() {
         <small class="sotto" style="margin:0">${esc(MB21Lista.descrizioneCep(SV.cep, MB21Coda.oggiRoma()))}</small>
         ${dis || SV.cepNuovo ? '' : '<button class="sv-piu" id="sv-cep-nuovo">+ Periodo</button>'}</div>
       ${SV.cepNuovo ? bloccoCep({}) : ''}${SV.cep.map(bloccoCep).join('')}
-      ${!SV.cep.length && !SV.cepNuovo ? '<div class="sotto" style="margin:0">Nessun abbonamento</div>' : ''}</div>`;
+</div>`;   // senza periodi la riga in testa dice «Mai abbonato» (S5)
   };
 
   const disegna = () => {
@@ -1481,28 +1521,33 @@ async function sezioneSegni() {
       return;
     }
     const conCep = c.categoria === 'Partner' || (SV.compagno && SV.compagno.categoria === 'Partner') || SV.cep.length;
-    box.innerHTML = `
-      ${SV.compagno || a.compagno_nome ? '' : '<div class="sotto" style="margin:0 0 8px">Per i biglietti della coppia collega il compagno/a in Dati.</div>'}
+    // S5 (Ignazio 25/10: «come CEP mettiamo abbonamento audio»): in cima cosa vuol dire ogni segno; S7: la frase sul compagno/a solo a chi segna
+    box.innerHTML = `<div class="sotto" style="margin:0 0 8px">BBS e WES: i biglietti degli eventi · CEP: l'abbonamento audio</div>
+      ${!puoSegnare ? '<div class="sotto" style="margin:0 0 8px">I biglietti e il CEP li segna l\'Admin</div>'
+        : SV.compagno || a.compagno_nome ? '' : '<div class="sotto" style="margin:0 0 8px">Per i biglietti della coppia collega il compagno/a in Dati.</div>'}
       ${riquadroEventi('BBS')}${riquadroEventi('WES')}${conCep ? riquadroCep() : ''}`;
     mostraTarghe(SV);
     collega();
   };
 
   const collega = () => {
+    // S2: «+ Biglietto» apre la stessa domanda della targhetta (segnaBiglietto) e propone solo l'evento in vendita e quelli dopo (prima anche i passati)
     box.querySelectorAll('[data-piu]').forEach(b => b.onclick = async () => {
       if (soloGuardo()) return;
-      const tipo = b.dataset.piu, nome = tipo === 'BBS' ? 'BBS' : 'WES';
-      const liberi = MB21Lista.eventiLiberi(SV.date[tipo], SV.biglietti, tipo);
-      if (!liberi.length) return mostraToast(SV.date[tipo].length ? `C'è già un biglietto per tutti i ${nome}` : `Prima aggiungi le date dei ${nome} nella pagina Admin`);
-      const etichette = liberi.map(d => MB21Lista.etichettaEvento(d));
-      const v = await moduloSemplice(`Biglietto ${tipo}`, [{ k: 'evento', etichetta: `Quale ${nome}`, tipo: 'select', opzioni: etichette, valore: etichette[0] }]);
-      if (!v) return;
-      const evento = liberi[etichette.indexOf(v.evento)];
-      if (!await bigliettoNonDoppio(c, SV, tipo, evento)) return;   // stessa persona con un biglietto in un'altra scheda: si avvisa (Ignazio 16/09)
-      const { data, error } = await dbq('nuovo biglietto', supa.from('biglietti')
-        .insert({ contatto_id: c.id, tipo, evento, contatto: true }).select().single());
-      if (error) return mostraToast(error.code === '23505' ? 'Questo biglietto c\'è già' : 'Non salvato: riprova.');
-      SV.biglietti.push(data); disegna();
+      const tipo = b.dataset.piu, inVendita = SV.attivi[tipo.toLowerCase()];
+      const eventi = inVendita ? [...new Set(SV.date[tipo].map(MB21Lista.meseEvento))].filter(d => d >= inVendita).sort() : [];
+      if (!eventi.length) return mostraToast(`Nessun ${tipo} in vendita: le date si aggiungono nella pagina Admin`);
+      let evento = eventi[0];
+      if (eventi.length > 1) {
+        const v = await sceltaDa(`Biglietto ${tipo} · quale?`, eventi.map(d => ({ etichetta: `${tipo} ${MB21Lista.etichettaEvento(d)}`, k: d })));
+        if (!v) return;
+        evento = v.k;
+      }
+      segnaBiglietto(c, SV, tipo, evento, testo => {
+        if (testo) mostraToast(testo);
+        ricordaTarghe(SV);
+        if (LS.contatto === c) { mostraTarghe(SV); if (LS.sezione === 'segni') disegna(); }
+      });
     });
 
     const salvaBiglietto = async (el, campo, valore) => {
@@ -1559,12 +1604,15 @@ async function sezioneSegni() {
 }
 
 // Foglio con pochi campi (azione, nota). Restituisce {k: valore} o null.
-function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del bottone «Elimina» in fondo (risolve con 'elimina')
+// opz.elimina = testo del bottone «Elimina» in fondo (risolve con 'elimina'); opz.persona = { nome, categoria } di chi riguarda (nota 094 M3:
+// in testa solo se chi apre il modulo la passa, non più l'ultima scheda aperta). Un campo obbligatorio dice cosa manca sul «Salva» spento
+// (f.manca, M4, come nel modulo contatto); f.vuoto = la voce «Scegli …» di un menu, che vale come vuota.
+function moduloSemplice(titolo, campi, opz = {}) {
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
     // forma `mc` come gli altri moduli (cantiere 34): testa con la persona, campi in un riquadro, «Annulla · Salva» fermi in fondo
-    const p = LS.contatto;
+    const p = opz.persona || null;
     velo.innerHTML = `<div class="foglio alto mc">
       <div class="mc-testa ${classeCat(p && p.categoria)}"><span class="ts-pastiglia">${p ? esc(iniziali(p.nome)) : ic('modifica')}</span>
         <div><small>${esc(titolo)}</small><b>${p ? esc(p.nome) : ''}</b></div>
@@ -1584,18 +1632,25 @@ function moduloSemplice(titolo, campi, opz = {}) {   // opz.elimina = testo del 
     if (opz.elimina) velo.querySelector('#elimina').onclick = () => chiudi('elimina');
     velo.querySelector('#chiudi').onclick = () => chiudi(null);
     velo.querySelector('#no').onclick = () => chiudi(null);
-    velo.querySelector('#si').onclick = () => {
-      const v = {};
-      velo.querySelectorAll('[data-k]').forEach(el => { v[el.dataset.k] = el.value; });
-      if (campi.some(f => f.obbligatorio && !String(v[f.k] || '').trim())) return;
+    const valori = () => { const v = {}; velo.querySelectorAll('[data-k]').forEach(el => { v[el.dataset.k] = el.value; }); return v; };
+    const manca = v => { const f = campi.find(f => f.obbligatorio && (!String(v[f.k] || '').trim() || v[f.k] === f.vuoto)); return f ? f.manca || `Manca: ${f.etichetta}` : ''; };
+    const si = velo.querySelector('#si');
+    const controlla = () => { const m = manca(valori()); si.disabled = !!m; si.textContent = m || 'Salva'; };
+    velo.querySelectorAll('[data-k]').forEach(el => { el.addEventListener('input', controlla); el.addEventListener('change', controlla); });
+    controlla();
+    si.onclick = () => {
+      const v = valori();
+      if (manca(v)) return;
       chiudi(v);
     };
   });
 }
 
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
-function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»; poi.nome (L1): il nome già scritto, da Cerca
-  if (soloGuardo()) return;
+// poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»; poi.nome (L1): il nome già scritto, da Cerca; poi.categoria: quella già scelta;
+// poi.salvato(riga) / poi.chiuso(): per chi apre il modulo da fuori la Lista (nota 094 M7, l'appuntamento dell'Agenda) e ci torna
+function apriModulo(c, poi = {}) {
+  if (soloGuardo()) { if (poi.chiuso) poi.chiuso(); return; }
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
   // «Contatto e/o Incaricato di»: nomi della lista del partner proprietario (nuovo contatto = partner scelto nel Partner Select)
@@ -1609,9 +1664,10 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   const max = (base, v) => Math.max(base, (v || '').length);
   // i dati personali, uno per chiave: l'ORDINE lo dà MB21Lista.DATI_PERSONA (lo stesso della sezione Dati)
   const campiPersona = {
-    fascia_eta: `<div class="campo"><label>Fascia Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>`,
+    // nota 094 M8: nomi a parole semplici (Età, Dipendente o autonomo?, Interesse); i campi e i valori salvati sono gli stessi
+    fascia_eta: `<div class="campo"><label>Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>`,
     sesso: `<div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option>${MB21Lista.SESSI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
-    lavoro: `<div class="campo"><label>Lavoro <small class="sotto" style="margin:0">(per la prima traccia dopo il PM)</small></label><select id="f-lavoro"><option value="">—</option>${MB21Lista.LAVORI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
+    lavoro: `<div class="campo"><label>Dipendente o autonomo? <small class="sotto" style="margin:0">(serve per la traccia dopo il Piano Marketing)</small></label><select id="f-lavoro"><option value="">—</option>${MB21Lista.LAVORI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
     compleanno: `<div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
       <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
       <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
@@ -1621,6 +1677,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   };
   const velo = document.createElement('div');
   velo.className = 'velo';
+  if (poi.salvato) velo.style.zIndex = 30;   // M7: sopra la scelta del contatto dell'Agenda (25)
   // Il modulo (cantiere 34, prova approvata da Ignazio il 19/09: tools/design/confronto_modulo.html): in testa chi è, tre gruppi con un titoletto
   // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
   // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
@@ -1630,8 +1687,8 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   const campoTel = `<div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>`;
-  const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Prima la categoria: salvata, si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c && c.categoria, 'Scegli qualcosa')}</select>
-      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${c && c.categoria === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
+  const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c ? c.categoria : poi.categoria, 'Scegli qualcosa')}</select>
+      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${(c ? c.categoria : poi.categoria) === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
       ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>`;
   // Nota Pagine 080 (Ignazio 24/10: «non è un cliente da oggi, è un cliente da anni»): con «Sì» la data «dal» si vede e si cambia (mai nel futuro)
   const campoAccount = `<div class="campo" id="f-account-campo"><label>Cliente con account</label>
@@ -1639,11 +1696,12 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
       <div id="f-account-dal-posto" style="margin-top:8px"><label>Dal</label><input id="f-account-dal" type="date" max="${MB21Coda.oggiRoma()}"></div>
       <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>`;
   const datiPersona = `<h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
+    ${nuovo ? '' : '<small class="sotto" id="f-letti" style="margin:0">Carico compleanno, sesso e lavoro…</small>'}
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div>`;
   const altriAttivita = `<div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
-    <div class="campo"><label>Area</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
+    <div class="campo"><label>Interesse</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>`;
   // Lista Nomi L4 (Ignazio 23/10): un contatto NUOVO mostra subito nome, telefono e categoria (con «Ha un account cliente», che si vede solo per un Cliente);
   // il resto sta nella riga chiusa «Altri dati (facoltativi)». In Modifica i tre gruppi restano com'erano. Campi e id sono gli stessi: il salvataggio non cambia.
@@ -1653,7 +1711,7 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
     : `<h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">${campoNome}${campoTel}</div>${datiPersona}
     <h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${campoCat}${campoAccount}${altriAttivita}</div>`;
   velo.innerHTML = `<div class="foglio alto mc">
-    <div class="mc-testa ${classeCat(c && c.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
+    <div class="mc-testa ${classeCat(c ? c.categoria : poi.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     ${corpo}
     ${c ? `<button class="link elimina-qui" id="elimina-qui">${ic('elimina')} Elimina dalla lista</button>` : ''}
@@ -1662,8 +1720,9 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   document.body.appendChild(velo);
   const $ = id => velo.querySelector('#' + id);
   const chiudi = () => velo.remove();
-  $('chiudi').onclick = chiudi;
-  $('annulla').onclick = chiudi;
+  const lascia = () => { chiudi(); if (poi.chiuso) poi.chiuso(); };
+  $('chiudi').onclick = lascia;
+  $('annulla').onclick = lascia;
   if (poi.poiAzione && $('f-cat-prima') && $('f-cat-prima').scrollIntoView) $('f-cat-prima').scrollIntoView({ block: 'center' });   // S5c: la categoria in evidenza
   // le pastiglie della categoria scrivono nel menu nascosto e avvisano il modulo, come se si fosse scelto dal menu
   velo.querySelectorAll('.mc-cat').forEach(b => b.onclick = () => {
@@ -1697,14 +1756,23 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
   // Compleanno (cantiere 30): la Lista non ce l'ha, si legge da `contatti` all'apertura del modulo. Finché non è stato letto
   // (o se la lettura non riesce) il salvataggio NON lo tocca: meglio non poterlo cambiare che cancellarlo per sbaglio.
   // Il sesso (cantiere 40) segue la stessa regola: si legge da `contatti` e si salva solo se è stato letto
+  // Nota 094 M2: finché la lettura non arriva i tre campi sono spenti con «Carico…» (prima si potevano toccare e la lettura ci scriveva sopra);
+  // se non arriva restano spenti con «Non caricati: riapri per cambiarli».
   let compleannoLetto = nuovo;
-  if (!nuovo) dbq('compleanno', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
-    if (error || !data || !velo.isConnected) return;
-    const k = MB21Rubrica.compleannoDaData(data.compleanno);
-    if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
-    $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
-    compleannoLetto = true;
-  });
+  const DA_LEGGERE = ['f-cg', 'f-cm', 'f-ca', 'f-sesso', 'f-lavoro'];
+  if (!nuovo) {
+    DA_LEGGERE.forEach(id => { $(id).disabled = true; });
+    dbq('compleanno', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
+      if (!velo.isConnected) return;
+      if (error || !data) { $('f-letti').textContent = 'Compleanno, sesso e lavoro non caricati: riapri per cambiarli.'; return; }
+      const k = MB21Rubrica.compleannoDaData(data.compleanno);
+      if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
+      $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
+      DA_LEGGERE.forEach(id => { $(id).disabled = false; });
+      $('f-letti').hidden = true;
+      compleannoLetto = true;
+    });
+  }
   // V4 Vendite (Ignazio 22/10): «Ha un account cliente: ordina da solo», solo per i Clienti (contatti.account_cliente_dal). Come il compleanno:
   // si legge a parte (o dalla scheda aperta) e il salvataggio lo tocca solo se è stato letto e se è cambiato; «Sì» tiene la data di prima o mette oggi.
   const account = { letto: nuovo, prima: null, si: false };
@@ -1753,32 +1821,51 @@ function apriModulo(c, poi = {}) {   // poi.poiAzione (S5c): salvato con una cat
       if (doppi.length && !await chiediConferma('Salvo lo stesso?', testoDoppioni(doppi, proprietario), 'Salva lo stesso')) return;
     }
     $('invia').disabled = true;
-    // da senza categoria a una categoria: la sceglie `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani)
-    const catalogo = !nuovo && !c.categoria && riga.categoria;
-    // Archiviato scelto nel modulo (17/09): la categoria la scrive `archivia_contatto`, che tiene quella di prima per il Ripristina
-    const archiviare = !nuovo && !catalogo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
-    let error = null;
+    // Nota 094 M1: la categoria cambiata da qui fa le stesse cose del menu «…». Archiviato scelto = la funzione di «Archivia» (`archivia_contatto`:
+    // tiene la categoria di prima per il Ripristina, le azioni da fare escono), anche per un contatto senza categoria. Da Archiviato a un'altra =
+    // la funzione di «Ripristina» (`ripristina_contatto`: tornano le azioni e il giorno di rientro), poi la categoria scelta se è un'altra.
+    // Da senza categoria a una categoria: `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani).
+    const archiviare = !nuovo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
+    const ripristinare = !nuovo && c.categoria === 'Archiviato' && riga.categoria !== 'Archiviato';
+    const catalogo = !nuovo && !archiviare && !ripristinare && !c.categoria && riga.categoria;
+    let error = null, esito = null;
     if (nuovo) {
-      const esito = await salvaNomeNuovo(riga);   // L9: doppioni, salvataggio, riga nuova nella Lista
+      esito = await salvaNomeNuovo(riga);   // L9: doppioni, salvataggio, riga nuova nella Lista
       if (esito.annullato) { $('invia').disabled = false; return; }
       error = esito.errore || null;
     } else {
+      // i dati prima, con la categoria di adesso: la cambia dopo la funzione giusta
       ({ error } = await dbq('modifica contatto', supa.from('contatti')
-        .update({ ...riga, categoria: catalogo ? null : archiviare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)));
+        .update({ ...riga, categoria: catalogo ? null : archiviare || ripristinare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)));
     }
-    if (!error && catalogo) ({ error } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
-    // stesso percorso di «Archivia» dal menu: categoria di prima in `categoria_prec`, fuori coda
-    else if (!error && archiviare) ({ error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
     if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
+    let errCat = null;
+    if (catalogo) ({ error: errCat } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
+    else if (archiviare) ({ error: errCat } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
+    else if (ripristinare) {
+      ({ error: errCat } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: c.id })));
+      // tornato com'era: se si è scelta un'altra categoria, si cambia (senza categoria di prima: `cataloga_contatto`, rientro domani)
+      if (!errCat && riga.categoria !== c.categoria_prec) ({ error: errCat } = await dbq('categoria dopo il ripristino', c.categoria_prec
+        ? supa.from('contatti').update({ categoria: riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)
+        : supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
+    }
+    // M4: i dati sono salvati, la categoria no: si dice, il modulo resta aperto e «Salva» riprova
+    if (errCat) { $('invia').disabled = false; await aggiornaRiga(c.id); return mostraToast('Dati salvati, la categoria no: riprova.'); }
     if ('account_cliente_dal' in riga) LS.account = null;   // V4: la riga in testata si rilegge
     chiudi();
-    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda` : 'Modifiche salvate',
+    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`
+      : ripristinare ? `${riga.nome} ripristinato` : 'Modifiche salvate',
       archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
+    if (nuovo && poi.salvato) return poi.salvato(esito.riga);   // M7: si torna a chi ha aperto il modulo (l'appuntamento)
     // L7 (Ignazio 23/10): la riga della persona si rilegge sempre, anche dalla Lista (tre puntini · Modifica); un nome nuovo l'ha già messa salvaNomeNuovo
     // (prima si vedeva solo dopo 10 minuti o con «Aggiorna i nomi»); con la scheda aperta la rilegge già ricaricaERidisegna
     if (!nuovo && (!LS.contatto || LS.contatto.id !== c.id)) await aggiornaRiga(c.id);
-    const ridisegnato = ricaricaERidisegna();
-    if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
+    // M5: salvato un nome nuovo, si apre subito la sua scheda (se la riga non c'è, la Lista si rilegge come prima)
+    if (nuovo && LS.righe.some(x => x.id === esito.riga.id)) { LS.ritorno = null; apriScheda(esito.riga.id); }
+    else {
+      const ridisegnato = ricaricaERidisegna();
+      if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
+    }
     if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
   };
 }

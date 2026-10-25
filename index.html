@@ -3141,9 +3141,10 @@ async function consegnaDaCarta(a, cosa, dopo) {
   if (soloGuardo()) return;
   const { data: v, error } = await dbq('vendita della consegna', supa.from('vendite').select('id, data, prodotto, consegna, ordinata_il').eq('azione_consegna_id', a.id).maybeSingle());
   if (error || !v) return mostraToast('Vendita non trovata: si cambia dalla scheda, in Vendite.');
-  if (cosa === 'fatta') return segnaOrdineFatto(v, dopo);
+  const persona = a.contatti ? { nome: a.contatti.nome, categoria: a.contatti.categoria } : null;   // nota 094 M3: chi, in testa al modulo
+  if (cosa === 'fatta') return segnaOrdineFatto(v, dopo, persona);
   const domani = MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1);
-  const valori = await moduloSemplice('Sposta la consegna', [{ k: 'giorno', etichetta: `${v.prodotto} · la nuova data della consegna`, tipo: 'date', valore: v.consegna && v.consegna >= domani ? v.consegna : domani, obbligatorio: true }]);
+  const valori = await moduloSemplice('Sposta la consegna', [{ k: 'giorno', etichetta: `${v.prodotto} · la nuova data della consegna`, tipo: 'date', valore: v.consegna && v.consegna >= domani ? v.consegna : domani, obbligatorio: true, manca: 'Scegli il giorno' }], { persona });
   if (!valori) return;
   if (valori.giorno < domani) return mostraToast('La consegna nuova va da domani in poi; se è già fatta, tocca «Ordine fatto»');
   if (valori.giorno < v.data) return mostraToast('La consegna è prima della vendita');
@@ -4133,13 +4134,11 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
         + (t && !uguale ? `<button data-nuovo="1">${ic('piu')} Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
       velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
       const n = velo.querySelector('[data-nuovo]');
-      if (n) n.onclick = async () => {
+      // Nota 094 M7: lo stesso modulo «Nuovo contatto» della Lista, con il nome già scritto e Prospect già scelto (telefono e il resto si possono
+      // aggiungere subito); salvato (salvaNomeNuovo, L9: doppioni, archiviati, la riga nuova nella Lista) si torna all'appuntamento con la persona scelta
+      if (n) n.onclick = () => {
         n.disabled = true;
-        // Lista Nomi L9: la funzione sola per i nomi nuovi (doppioni con «Salvo lo stesso?», archiviati compresi; la riga nuova nella Lista)
-        const esito = await salvaNomeNuovo({ nome: t, categoria: 'Prospect', user_id: visto().id });
-        if (!esito.riga) { n.disabled = false; return esito.errore ? mostraToast('Non salvato: riprova.') : null; }
-        mostraToast(`${t} aggiunto alla Lista`);
-        chiudi(esito.riga);
+        apriModulo(null, { nome: t, categoria: 'Prospect', salvato: riga => chiudi(riga), chiuso: () => { n.disabled = false; } });
       };
     };
     inp.oninput = disegna;

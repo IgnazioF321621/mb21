@@ -278,9 +278,11 @@ prova('CEP a periodi: date, un solo periodo aperto, niente sovrapposizioni', () 
 prova('targhette BBS · WES · CEP: biglietto per l\'evento in vendita, CEP abbonato oggi', () => {
   const OGGI = '2026-09-16', ATTIVI = { bbs: '2026-10-01', wes: '2026-10-01' };
   const big = [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-06-01', contatto: true }];
-  assert.deepEqual(L.targheSegni(big, [], OGGI, ATTIVI), { bbs: true, wes: false, cep: false });
-  assert.deepEqual(L.targheSegni(big, [], OGGI, { bbs: '2026-11-01' }), { bbs: false, wes: false, cep: false });   // è arrivato l'evento dopo
-  assert.deepEqual(L.targheSegni([{ tipo: 'WES', evento: '2026-10-01', ospiti: 1 }], [{ dal: '2024-01-01' }], OGGI, ATTIVI), { bbs: false, wes: true, cep: true });
+  const suo = () => true;
+  assert.deepEqual(L.targheSegni(big, [], OGGI, ATTIVI, suo), { bbs: true, wes: false, cep: false });
+  assert.deepEqual(L.targheSegni(big, [], OGGI, { bbs: '2026-11-01' }, suo), { bbs: false, wes: false, cep: false });   // è arrivato l'evento dopo
+  // nota 094 S6: gli ospiti da soli non accendono nessuno (prima sì)
+  assert.deepEqual(L.targheSegni([{ tipo: 'WES', evento: '2026-10-01', ospiti: 1 }], [{ dal: '2024-01-01' }], OGGI, ATTIVI, suo), { bbs: false, wes: false, cep: true });
   assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }], OGGI, ATTIVI).cep, false);
   assert.equal(L.targheSegni([], [{ dal: '2024-01-01', uscito_il: '2025-01-01' }, { dal: '2026-02-01' }], OGGI, ATTIVI).cep, true);
   assert.deepEqual(L.targheSegni(null, null, OGGI), { bbs: false, wes: false, cep: false });
@@ -296,6 +298,10 @@ prova('targhette della Lista: la coppia collegata condivide i segni', () => {
   assert.deepEqual(t.filippo, { bbs: false, wes: true, cep: true });
   assert.deepEqual(t.altro, { bbs: false, wes: false, cep: false });
   assert.equal(t.nessuno, undefined);
+  // nota 094 S6: il biglietto della coppia accende solo chi ha il suo posto («Personale» sulla sua scheda, «Compagno/a» su quella dell'altro)
+  const solo = L.targhePerContatto([{ contatto_id: 'tonya', tipo: 'WES', evento: '2026-10-01', contatto: false, compagno: true }], [],
+    [{ id: 'tonya', compagno_id: 'filippo' }, { id: 'filippo', compagno_id: 'tonya' }], OGGI, { wes: '2026-10-01' });
+  assert.equal(solo.tonya.wes, false); assert.equal(solo.filippo.wes, true);
 });
 
 prova('CEP: «abbonato fino a» fine del mese in corso', () => {
@@ -306,7 +312,7 @@ prova('CEP: «abbonato fino a» fine del mese in corso', () => {
   assert.equal(L.descrizioneCep([{ dal: '2026-06-01' }], '2026-09-21'), 'dal 01/06/2026 · abbonato fino al 30/09/2026');
   assert.equal(L.descrizioneCep([{ dal: '2026-10-01' }], '2026-10-05'), 'dal 01/10/2026 · abbonato fino al 31/10/2026');   // appena entrato: niente da verificare
   assert.equal(L.descrizioneCep([{ dal: '2026-06-01', uscito_il: '2026-08-31' }], '2026-09-17'), 'Non abbonato ora');
-  assert.equal(L.descrizioneCep([], '2026-09-17'), 'dal → uscito il');
+  assert.equal(L.descrizioneCep([], '2026-09-17'), 'Mai abbonato');   // nota 094 S5
 });
 
 prova('CEP: «Non ha rinnovato» chiude alla fine del mese prima', () => {

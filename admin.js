@@ -609,7 +609,7 @@ function collegaAdmin() {
   });
   app.querySelectorAll('[data-fc-cambia]').forEach(b => b.onclick = async () => {
     const f = AD.fc.find(x => x.dal === b.dataset.fcCambia);
-    const valori = await moduloSemplice('Cambia il fattore', [{ k: 'valore', etichetta: `Fattore valido dal ${MB21Lista.data(f.dal)}`, tipo: 'text', valore: MB21Lista.numeroFattore(f.valore), obbligatorio: true }]);
+    const valori = await moduloSemplice('Cambia il fattore', [{ k: 'valore', etichetta: `Fattore valido dal ${MB21Lista.data(f.dal)}`, tipo: 'text', valore: MB21Lista.numeroFattore(f.valore), obbligatorio: true, manca: 'Scrivi il fattore' }]);
     if (!valori) return;
     const esito = MB21Lista.rigaFattore(f.dal, valori.valore);
     if (esito.errore) return mostraToast(esito.errore);

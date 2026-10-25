@@ -316,11 +316,16 @@
     return '';
   }
 
-  // Targhette BBS · WES · CEP accanto al nome: BBS/WES accese se c'è un biglietto per l'evento in vendita
-  // (attivi = { bbs, wes }, mesi da eventoAttivo), CEP accesa se oggi è dentro un periodo di abbonamento
-  function targheSegni(biglietti, periodiCep, oggi, attivi) {
+  // Nota Pagine 094 S6 (Ignazio 25/10: «potrebbe avere il ticket solo 1 dei 2»): il posto di una persona su un biglietto. Il biglietto sta su una scheda:
+  // se è la sua (`mio`) il suo posto è «Personale» (contatto), se è quella del compagno/a collegato è «Compagno/a» (compagno). Gli ospiti non accendono nessuno.
+  const postoSuo = (b, mio) => !!(mio ? b.contatto : b.compagno);
+
+  // Targhette BBS · WES · CEP accanto al nome: BBS/WES accese se la persona ha il SUO posto su un biglietto per l'evento in vendita (S6: prima bastava
+  // un biglietto della coppia, anche solo con il compagno/a o gli ospiti) (attivi = { bbs, wes }, mesi da eventoAttivo); CEP accesa se oggi è dentro un
+  // periodo di abbonamento. eMio(b) = il biglietto sta sulla scheda della persona (la scheda: b.contatto_id === id; il Profilo: b.mio)
+  function targheSegni(biglietti, periodiCep, oggi, attivi, eMio) {
     const b = biglietti || [], a = attivi || {};
-    const conPosti = tipo => { const m = a[tipo.toLowerCase()]; return !!m && b.some(x => x.tipo === tipo && x.evento === m && postiBiglietto(x) > 0); };
+    const conPosti = tipo => { const m = a[tipo.toLowerCase()]; return !!m && b.some(x => x.tipo === tipo && x.evento === m && postoSuo(x, eMio(x))); };
     return {
       bbs: conPosti('BBS'),
       wes: conPosti('WES'),
@@ -372,11 +377,11 @@
   // Riga sotto «CEP» nella scheda (cantiere 20 lavoro 3, Ignazio 17/09): con un periodo aperto oggi
   // «dal 01/06/2026 · abbonato fino al 30/09/2026» (fine del mese in corso, si sposta da sola ogni mese finché
   // l'Admin non chiude il periodo), fino al 20 del mese con «· rinnovo del 1° da verificare»;
-  // altrimenti «Non abbonato ora»; senza periodi «dal → uscito il»
+  // altrimenti «Non abbonato ora»; senza periodi «Mai abbonato» (nota 094 S5, prima «dal → uscito il»)
   function descrizioneCep(periodiCep, oggi) {
     const p = (periodiCep || []).find(x => x.dal <= oggi && (!x.uscito_il || x.uscito_il >= oggi));
     if (p) return `dal ${data(p.dal)} · abbonato fino al ${data(fineMese(oggi))}${rinnovoDaVerificare(oggi) && p.dal < oggi.slice(0, 8) + '01' ? ' · rinnovo del 1° da verificare' : ''}`;
-    return (periodiCep || []).length ? 'Non abbonato ora' : 'dal → uscito il';
+    return (periodiCep || []).length ? 'Non abbonato ora' : 'Mai abbonato';
   }
 
   // Targhette per tutta la Lista Nomi: { id contatto: {bbs, wes, cep} }. Le coppie collegate (id, compagno_id)
@@ -388,7 +393,7 @@
     for (const b of biglietti || []) aggiungi(b.contatto_id, 'b', b);
     for (const p of periodiCep || []) aggiungi(p.contatto_id, 'p', p);
     const esito = {};
-    for (const id of Object.keys(perId)) esito[id] = targheSegni(perId[id].b, perId[id].p, oggi, attivi);
+    for (const id of Object.keys(perId)) esito[id] = targheSegni(perId[id].b, perId[id].p, oggi, attivi, b => b.contatto_id === id);
     return esito;
   }
 
@@ -619,7 +624,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

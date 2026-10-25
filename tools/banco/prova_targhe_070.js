@@ -31,7 +31,7 @@ const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 
 // ── Un finto mondo per toccaTarga: la scheda di Persona A (lista dell'Admin), la compagna Persona C collegata, BBS 11-2026 e WES 02-2027 in vendita ──
-const segni = (extra = {}) => ({ id: 'sA', ana: { compagno_nome: null }, compagno: { id: 'sC', nome: 'Persona C', categoria: 'Partner' }, ufficiale: null,
+const segni = (extra = {}) => ({ id: 'sA', persona: 'sA', ana: { compagno_nome: null }, compagno: { id: 'sC', nome: 'Persona C', categoria: 'Partner' }, ufficiale: null,
   biglietti: [], cep: [], cepNuovo: false, attivi: { bbs: '2026-11-01', wes: '2027-02-01' }, date: { BBS: ['2026-11-15'], WES: ['2027-02-20'] }, ...extra });
 const SCHEDA = { id: 'sA', nome: 'Persona A', user_id: 'admin', categoria: 'Partner' };
 
@@ -68,6 +68,7 @@ function mondo({ SV = segni(), admin = true, conferma = true, doppi = [], tutti 
     document: { createElement: () => { const v = new Nodo(); v.remove = () => { v.rimosso = true; }; fogli.push(v); return v; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
   vm.runInContext([riga(PL, 'const nomeEsatto = '), pezzo(PL, 'async function toccaTarga'), pezzo(PL, 'function personeDelBiglietto'), pezzo(PL, 'async function bigliettoNonDoppio'),
+    riga(PL, 'const targheDellaPersona = '), riga(PL, 'const targheDi = '), pezzo(PL, 'async function segnaBiglietto'),
     pezzo(PL, 'function ricordaTarghe'), pezzo(DASH, 'function domandaBigliettoHtml'), pezzo(DASH, 'function collegaDomandaBiglietto'), pezzo(DASH, 'async function rispondiBiglietto'),
     'this.tocca = (c, k) => toccaTarga(c, k, S => dopoChiamato.push(S));'].join('\n'), Object.assign(ctx, { dopoChiamato: dopo }));
   const foglio = () => fogli.find(v => !v.rimosso && v.innerHTML);
@@ -115,7 +116,8 @@ prova('070 (2): nella testata della scheda le targhette sono tasti solo per l\'A
       document: { getElementById: id => app.getElementById(id) }, eAdmin: () => admin, soloLettura: () => soloLett, targaAppHtml: () => '', targaAccountHtml: () => '', accountDellaScheda: () => null,
       toccaTarga: (c, k, dopo) => chiamate.push([c.id, k, typeof dopo]), sezioneSegni: () => {} };
     vm.createContext(ctx);
-    vm.runInContext([riga(PL, 'const segniInAlto = '), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'), pezzo(PL, 'function ricordaTarghe'), pezzo(PL, 'function mostraTarghe'),
+    vm.runInContext([riga(PL, 'const segniInAlto = '), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'),
+      riga(PL, 'const targheDellaPersona = '), riga(PL, 'const targheDi = '), pezzo(PL, 'function ricordaTarghe'), pezzo(PL, 'function mostraTarghe'),
       'this.mostra = mostraTarghe;'].join('\n'), ctx);
     ctx.mostra(segni({ biglietti: [{ id: 'b1', contatto_id: 'sA', tipo: 'BBS', evento: '2026-11-01', contatto: true, compagno: false, ospiti: 0 }] }));
     return { app, ctx, chiamate };
@@ -125,21 +127,21 @@ prova('070 (2): nella testata della scheda le targhette sono tasti solo per l\'A
   assert.match(A.app.innerHTML, /<button class="sv-targa tasto cep " data-targa="cep"/);
   A.app.clic('[data-targa="wes"]');
   uguale(A.chiamate, [['sA', 'wes', 'function']]);
-  assert.equal(A.ctx.LS.targhe.sA.bbs, true); assert.equal(A.ctx.LS.targhe.sC.bbs, true);   // la card della coppia nella Lista
+  assert.equal(A.ctx.LS.targhe.sA.bbs, true); assert.equal(A.ctx.LS.targhe.sC.bbs, false);   // nota 094 S6: il biglietto è solo «Personale» di A
   for (const P of [crea(false, false), crea(true, true)]) {   // un partner, o l'Admin con «Tutti»: si guardano soltanto, come prima
     assert.match(P.app.innerHTML, /<span class="sv-targa bbs on">BBS<\/span><span class="sv-targa wes ">WES<\/span>/);
     assert.doesNotMatch(P.app.innerHTML, /data-targa/);
   }
 });
 
-prova('070 (1, 2): BBS grigia → il foglio «Persona A ha il biglietto?» (lei, la compagna, ospiti); «Sì» scrive il biglietto sulla sua scheda e accende la targhetta anche alla coppia', async () => {
+prova('070 (1, 2): BBS grigia → il foglio «Persona A ha il biglietto?» (Personale, Compagno/a, ospiti: 094 S6); «Sì» scrive il biglietto sulla sua scheda e accende chi ha il posto', async () => {
   const W = mondo();
   await W.tocca('bbs');
   const v = W.foglio(), h = v.innerHTML;
   assert.match(h, /<b>\[biglietto\] BBS 11-2026 · Persona A ha il biglietto\?<\/b>/);
-  assert.match(h, /<button class="sv-chip bbs on" data-campo="contatto">Persona A<\/button>/);
-  assert.match(h, /<button class="sv-chip bbs" data-campo="compagno">Persona C<\/button>/);
-  assert.doesNotMatch(h, />Io<|nel tuo Profilo/);   // è la domanda per un altro, non per sé
+  assert.match(h, /<button class="sv-chip bbs on" data-campo="contatto">Personale<\/button>/);
+  assert.match(h, /<button class="sv-chip bbs " data-campo="compagno">Compagno\/a<\/button>/);
+  assert.doesNotMatch(h, />Io<|nel tuo Profilo|data-togli/);   // è la domanda per un altro, non per sé; niente da togliere
   v.clic('[data-campo="compagno"]');   // anche la compagna
   v.querySelector('[data-campo="ospiti"]').value = '2';
   await v.clic('[data-si]'); await aspetta();
@@ -170,29 +172,58 @@ prova('070: «No» chiude soltanto (nessuna scrittura); se la stessa persona ha 
   assert.ok(!D.foglio().querySelector('[data-si]').disabled);   // il foglio resta, si può ancora scegliere
 });
 
-prova('070 (1, 2): BBS accesa → chi ce l\'ha e «Togli»: si toglie il biglietto della coppia per quell\'evento, la targhetta si spegne', async () => {
+prova('094 S6: BBS accesa → lo stesso foglio con i tasti come sono; «Togli il biglietto» toglie solo il posto di questa persona, la compagna resta', async () => {
   const W = mondo({ SV: segni({ biglietti: [{ id: 'b1', contatto_id: 'sA', tipo: 'BBS', evento: '2026-11-01', contatto: true, compagno: true, ospiti: 2 },
     { id: 'b0', contatto_id: 'sA', tipo: 'BBS', evento: '2026-06-01', contatto: true, compagno: false, ospiti: 0 }] }) });
   await W.tocca('bbs');
-  const v = W.foglio();
-  assert.match(v.innerHTML, /<h3>\[biglietto\] BBS 11-2026 · Persona A<\/h3>/);
-  assert.match(v.innerHTML, /<p>Biglietto segnato: <b>Persona A · Persona C · 2 ospiti<\/b>\.<\/p>/);
-  await v.clic('#tg-via'); await aspetta();
-  uguale(W.scritte.map(x => [x.t, x.op, x.filtri]), [['biglietti', 'delete', [['in', 'id', ['b1']]]]]);   // solo l'evento in vendita: i mesi passati restano
+  const v = W.foglio(), h = v.innerHTML;
+  assert.match(h, /BBS 11-2026 · Persona A ha il biglietto\?/);
+  assert.match(h, /<button class="sv-chip bbs on" data-campo="contatto">Personale<\/button>/);
+  assert.match(h, /<button class="sv-chip bbs on" data-campo="compagno">Compagno\/a<\/button>/);
+  assert.match(h, /value="2" data-campo="ospiti"/);
+  assert.match(h, /<button class="primario" data-si>Salva<\/button><button class="link" data-no>Chiudi<\/button>/);
+  assert.doesNotMatch(h, /toglilo e segnalo di nuovo/);
+  await v.clic('[data-togli]'); await aspetta();
+  uguale(W.scritte.map(x => [x.t, x.op, x.valori, x.filtri]), [['biglietti', 'update', { contatto: false }, [['eq', 'id', 'b1']]]]);   // solo il suo posto; i mesi passati restano
   assert.deepEqual(W.toast, ['Biglietto tolto']);
-  assert.equal(W.ctx.LS.targhe.sA.bbs, false);
-  uguale(W.SV.biglietti.map(b => b.id), ['b0']);
-  // la targhetta accesa per il biglietto della compagna sulla SUA scheda (coppia collegata): si vede chi c'è
+  assert.equal(W.ctx.LS.targhe.sA.bbs, false); assert.equal(W.ctx.LS.targhe.sC.bbs, true);
+  uguale(W.SV.biglietti.map(b => [b.id, b.contatto, b.compagno]), [['b0', true, false], ['b1', false, true]]);
+  // nessuno dei due resta: il biglietto si toglie del tutto (anche gli ospiti)
+  const S = mondo({ SV: segni({ biglietti: [{ id: 'b3', contatto_id: 'sA', tipo: 'BBS', evento: '2026-11-01', contatto: true, compagno: false, ospiti: 1 }] }) });
+  await S.tocca('bbs'); await S.foglio().clic('[data-togli]'); await aspetta();
+  uguale(S.scritte.map(x => [x.op, x.filtri]), [['delete', [['eq', 'id', 'b3']]]]);
+});
+
+prova('094 S6: correggere con «Salva»; il biglietto della coppia resta uno, sulla scheda dove già c\'era (sulla scheda della compagna i posti si leggono al contrario)', async () => {
+  const W = mondo({ SV: segni({ biglietti: [{ id: 'b1', contatto_id: 'sA', tipo: 'BBS', evento: '2026-11-01', contatto: true, compagno: true, ospiti: 2 }] }) });
+  await W.tocca('bbs');
+  const v = W.foglio();
+  v.clic('[data-campo="compagno"]');   // la compagna non viene più
+  await v.clic('[data-si]'); await aspetta();
+  uguale(W.scritte.map(x => [x.op, x.valori, x.filtri]), [['update', { contatto: true, compagno: false, ospiti: 2 }, [['eq', 'id', 'b1']]]]);
+  assert.equal(W.ctx.LS.targhe.sA.bbs, true); assert.equal(W.ctx.LS.targhe.sC.bbs, false);
+  // il biglietto è sulla scheda della compagna, solo suo: A grigia; il foglio lo mostra già segnato (Compagno/a acceso) e «Personale» aggiunge A sullo stesso biglietto
   const C = mondo({ SV: segni({ biglietti: [{ id: 'b2', contatto_id: 'sC', tipo: 'BBS', evento: '2026-11-01', contatto: true, compagno: false, ospiti: 1 }] }) });
   await C.tocca('bbs');
-  assert.match(C.foglio().innerHTML, /Biglietto segnato: <b>Persona C · 1 ospite<\/b>/);
+  const f = C.foglio();
+  assert.match(f.innerHTML, /<button class="sv-chip bbs " data-campo="contatto">Personale<\/button>/);
+  assert.match(f.innerHTML, /<button class="sv-chip bbs on" data-campo="compagno">Compagno\/a<\/button>/);
+  f.clic('[data-campo="contatto"]');
+  await f.clic('[data-si]'); await aspetta();
+  uguale(C.scritte.filter(x => x.op !== 'select').map(x => [x.op, x.valori, x.filtri]), [['update', { contatto: true, compagno: true, ospiti: 1 }, [['eq', 'id', 'b2']]]]);
+  assert.equal(C.ctx.LS.targhe.sA.bbs, true); assert.equal(C.ctx.LS.targhe.sC.bbs, true);
+  // due biglietti della coppia per lo stesso evento (di prima): resta quello di questa scheda, l'altro si toglie
+  const D = mondo({ SV: segni({ biglietti: [{ id: 'b4', contatto_id: 'sA', tipo: 'WES', evento: '2027-02-01', contatto: true, compagno: false, ospiti: 0 },
+    { id: 'b5', contatto_id: 'sC', tipo: 'WES', evento: '2027-02-01', contatto: true, compagno: false, ospiti: 0 }] }) });
+  await D.tocca('wes'); await D.foglio().clic('[data-si]'); await aspetta();
+  uguale(D.scritte.map(x => [x.op, x.valori, x.filtri]), [['update', { contatto: true, compagno: true, ospiti: 0 }, [['eq', 'id', 'b4']]], ['delete', undefined, [['eq', 'id', 'b5']]]]);
 });
 
 prova('070 (1, 2): CEP grigia → «È abbonato al CEP?» e un periodo dal 1° del mese (o si riapre quello chiuso per sbaglio); accesa → «Togli» lo chiude o lo cancella', async () => {
   const A = mondo();
   await A.tocca('cep'); await aspetta();
   assert.equal(A.domande[0].titolo, 'È abbonato al CEP?');
-  assert.match(A.domande[0].testo, /^Persona A: la targhetta si accende dal 1° di ottobre\./);
+  assert.match(A.domande[0].testo, /^L'abbonamento audio\. Persona A: la targhetta si accende dal 1° di ottobre\. Quando non rinnova, la tocchi di nuovo e «Non ha rinnovato»\./);
   uguale(A.scritte.map(x => [x.t, x.op, x.valori.contatto_id, x.valori.dal, x.valori.uscito_il]), [['cep', 'insert', 'sA', '2026-10-01', null]]);
   assert.deepEqual(A.toast, ['CEP acceso']); assert.equal(A.ctx.LS.targhe.sA.cep, true);
   const R = mondo({ SV: segni({ cep: [{ id: 'p1', contatto_id: 'sA', dal: '2026-06-01', uscito_il: '2026-09-30' }] }) });
@@ -206,14 +237,15 @@ prova('070 (1, 2): CEP grigia → «È abbonato al CEP?» e un periodo dal 1° d
   const v = T.foglio();
   assert.match(v.innerHTML, /<h3>\[fatto\] CEP · Persona A<\/h3>/);
   assert.match(v.innerHTML, /<p>Abbonato dal 01\/06\/2026, fino al 31\/10\/2026\.<\/p>/);
-  assert.match(v.innerHTML, /«Togli» lo chiude al 30\/09\/2026, come «Non ha rinnovato»: i mesi passati restano\./);
+  assert.match(v.innerHTML, /«Non ha rinnovato» lo chiude al 30\/09\/2026: i mesi passati restano\./);   // 094 S5
+  assert.match(v.innerHTML, /<button class="link" id="tg-via" style="color:var\(--rosso\)">Non ha rinnovato<\/button>/);
   await v.clic('#tg-via'); await aspetta();
   uguale(T.scritte.map(x => [x.op, x.filtri, x.valori.uscito_il]), [['update', [['eq', 'id', 'p1']], '2026-09-30']]);
-  assert.equal(T.ctx.LS.targhe.sA.cep, false); assert.deepEqual(T.toast, ['CEP tolto']);
+  assert.equal(T.ctx.LS.targhe.sA.cep, false); assert.deepEqual(T.toast, ['CEP chiuso']);
   // accesa da questo mese: «Togli» la cancella
   const Q = mondo({ SV: segni({ cep: [{ id: 'p2', contatto_id: 'sA', dal: '2026-10-01', uscito_il: null }] }) });
   await Q.tocca('cep');
-  assert.match(Q.foglio().innerHTML, /Il periodo è cominciato questo mese: «Togli» lo cancella\./);
+  assert.match(Q.foglio().innerHTML, /Il periodo è cominciato questo mese: «Non ha rinnovato» lo cancella\./);
   await Q.foglio().clic('#tg-via'); await aspetta();
   uguale(Q.scritte.map(x => [x.op, x.filtri]), [['delete', [['eq', 'id', 'p2']]]]);
 });
@@ -241,12 +273,13 @@ prova('070: la regola dei segni su una scheda sola (16/09) resta: se la scheda n
   assert.deepEqual(F.letture, ['caricaSegni:sA']);
 });
 
-prova('070: il foglio del partner per sé (Dashboard e Profilo) è quello di prima: «Hai il biglietto?», «Io», segna_mio_biglietto, anche per «No»', async () => {
+prova('070: il foglio del partner per sé (Dashboard e Profilo) è quello di prima: «Hai il biglietto?», «Personale» (094 S6, prima «Io»), segna_mio_biglietto, anche per «No»', async () => {
   const W = mondo();
   const v = new Nodo();
   v.innerHTML = `<div class="foglio">${W.ctx.domandaBigliettoHtml({ tipo: 'BBS', evento: '2026-11-01', compagno: 'Persona C' }, 'pf-domanda')}</div>`;
   assert.match(v.innerHTML, /<b>\[biglietto\] BBS 11-2026 · Hai il biglietto\?<\/b>/);
-  assert.match(v.innerHTML, /data-campo="contatto">Io<\/button>/);
+  assert.match(v.innerHTML, /data-campo="contatto">Personale<\/button>/);
+  assert.match(v.innerHTML, /data-campo="compagno">Compagno\/a<\/button>/);
   assert.match(v.innerHTML, /<small>Per correggere o aggiungere ospiti: nel tuo Profilo, tocca la targhetta BBS<\/small>/);
   let fatti = 0;
   W.ctx.collegaDomandaBiglietto(v, () => { fatti++; });
@@ -288,7 +321,8 @@ prova('070 (1): in cima alla Mappa dell\'Admin il conto a parole su tutto il gru
   const h = W.app.innerHTML;
   assert.match(h, /<div class="mp-conti"><span>BBS 11-2026: segnati <b>1<\/b> su 3<\/span><span>WES 02-2027: segnati <b>0<\/b> su 3<\/span>\s*<span>CEP oggi: abbonati <b>1<\/b> su 3<\/span><\/div>/);
   assert.ok(h.indexOf('Segni vitali del gruppo: BBS 11-2026 · WES 02-2027 · CEP oggi') < h.indexOf('mp-conti'));   // la riga di prima resta, il conto sotto
-  assert.match(h, /<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l'ha">BBS 1<\/button>/);
+  assert.match(h, /<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l'ha">BBS<\/button>/);   // 094 S4: solo «lui sì/no»
+  assert.match(h, /<div class="mp-numeri">Nel gruppo: BBS <b>1<\/b><\/div>/);   // il numero del gruppo fuori, a parole
   assert.match(h, /<button class="sv-targa tasto cep on" data-targa="cep" data-chi="P002"/);   // Persona B: la scheda della lista dell'Admin (sB2), dove il CEP è segnato
   // con un filtro il conto resta sul gruppo intero
   W.ctx.MP.filtro = 'attivo'; W.ctx.disegna();
@@ -308,7 +342,7 @@ prova('070 (1): il tocco sulla targhetta apre il foglio sulla scheda della lista
   const P = mondoMappa({ admin: false });
   P.ctx.disegna();
   assert.doesNotMatch(P.app.innerHTML, /mp-conti|data-targa/);
-  assert.match(P.app.innerHTML, /<span class="sv-targa bbs on">BBS 1<\/span>/);
+  assert.match(P.app.innerHTML, /<span class="sv-targa bbs on">BBS<\/span>/);
   // le schede non ancora lette: niente tasti (il tocco non saprebbe dove scrivere)
   const N = mondoMappa(); N.ctx.MP.schede = null; N.ctx.MP.targhe = null; N.ctx.disegna();
   assert.doesNotMatch(N.app.innerHTML, /data-targa|mp-conti/);
@@ -328,7 +362,7 @@ prova('070: lo stile delle targhette-tasto (stesso aspetto, zona di tocco più g
   assert.match(IDX, /\.sv-targa\.tasto \{ font-family: inherit; line-height: inherit; cursor: pointer; position: relative; \}/);
   assert.match(IDX, /\.sv-targa\.tasto::after \{ content: ''; position: absolute; inset: -5px -2px; \}/);
   assert.match(IDX, /\.mp-conti \{ display: flex;/);
-  assert.match(PL, /if \(!await bigliettoNonDoppio\(c, SV, tipo, evento\)\) return;   \/\/ stessa persona/);
+  assert.match(PL, /if \(x\.contatto && !personale && !await bigliettoNonDoppio\(c, SV, tipo, evento\)\) return null;/);   // 094 S2: «+ Biglietto» apre lo stesso foglio
   assert.equal((PL.match(/biglietti con lo stesso nome/g) || []).length, 1);   // una sola copia del controllo
 });
 
