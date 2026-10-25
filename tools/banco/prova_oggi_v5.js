@@ -276,6 +276,23 @@ prova('095 Agenda: testata blu con «‹ Oggi», il mese, «Agenda», il chip, i
   assert.match(IDX, /body:has\(\.v5-testa\) #segnala \{ display: none; \}/);
 });
 
+prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» con l\'icona, giorni di fila e medaglie, Impara · Ripassa · Studia (gli stessi tasti); sotto il Training di adesso', async () => {
+  const pezzo = n => { const i = PO.indexOf('function ' + n); return PO.slice(i, PO.indexOf('\n}\n', i) + 3); };
+  const extra = ['const OGGI_V5 = true; const collegaPartnerSelect = () => {}; const PS = { persone: [] }; const vediTutti = () => false; const guardoAltri = () => false; const foglioSegnala = () => {};',
+    pezzo('chipPartnerSelect'), pezzo('testaTrainingV5'), pezzo('collegaTestaTrainingV5')].join('\n');
+  const { mondo: mondoTrn } = require('../design/anteprima_training.js');
+  const W = mondoTrn({ sostituisci: [['function disegnaTraining() {', extra + '\nfunction disegnaTraining() {']] });
+  await W.m.apriTraining();
+  const h = W.app.innerHTML;
+  assert.match(h, /^<div class="v5-testa t5" style="--zc:var\(--z-training\)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
+  assert.match(h, /<span class="v5-sopra">Ciao Persona<\/span><h1>\[crescita\] Training<\/h1><\/div><div class="t5-conti"><button class="trn-conto fila" data-medaglie/);
+  assert.match(h, /<div class="trn-schede"><button data-vista="impara" class="scelta">Impara<\/button><button data-vista="ripassa" class="">Ripassa<span class="trn-num">15<\/span><\/button><button data-vista="studia" class="">Studia<\/button><\/div><\/div>/);
+  assert.equal((h.match(/class="trn-schede"/g) || []).length, 1);   // una volta sola, nella testata
+  assert.match(h, /data-come/);   // «Come funziona» e il resto come prima
+  assert.match(leggi('pagina-training.js'), /velo\.querySelector\('\.trn-ses-n'\)\.textContent = `\$\{Math\.min\(i \+ 1, tot\)\} di \$\{tot\}`;/);   // il ripasso: «3 di 15»
+  assert.match(IDX, /\.trn-ses-barra i \{[^}]*background: var\(--z-training\);/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

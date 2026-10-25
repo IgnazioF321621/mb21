@@ -347,3 +347,18 @@ function testaAgendaV5(mostraOggi, dentro) {
     <div class="v5-titolo"><div><span class="v5-sopra">${esc(mese)}</span><h1>Agenda</h1></div></div>
     <div class="v5-scale">${scale.map(([k, t]) => `<button data-v5-scala="${k}"${k === vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>${dentro || ''}</div>`;
 }
+
+// ── v5, quarta pagina: la testata del Training (Regia 25/10 sera; solo la veste: carte, livelli, percorso, test, ripasso e salvataggi di adesso) ──
+// Viola Training, «‹ Oggi», il chip del Partner Select e il feedback; «Ciao <nome>», «Training» con le icone, i giorni di fila e le medaglie (gli stessi
+// tasti, data-medaglie), e Impara · Ripassa · Studia (gli stessi data-vista). I collegamenti di quei tasti li fa disegnaTraining, come prima.
+function testaTrainingV5(ciao, conti, schede) {
+  return `<div class="v5-testa t5" style="--zc:var(--z-training)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
+      <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="v5-titolo"><div><span class="v5-sopra">${esc(ciao)}</span><h1>${ic('crescita')} Training</h1></div><div class="t5-conti">${conti}</div></div>${schede}</div>`;
+}
+function collegaTestaTrainingV5() {
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });
+  su('o5-feedback', () => foglioSegnala());
+  collegaPartnerSelect();
+}

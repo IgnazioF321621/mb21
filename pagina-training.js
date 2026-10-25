@@ -115,10 +115,14 @@ function disegnaTraining() {
   // nota Pagine 084, punto 1 (Ignazio 24/10): il ripasso è di 15 carte per volta (RIPASSO), non tutto l'arretrato: anche il numero della scheda dice al massimo 15
   const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${Math.min(rip.length, MB21Training.RIPASSO)}</span>` : '')], ['studia', 'Studia']];
   const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
-  app.innerHTML = `<h1>${ic('crescita')} Training</h1>
+  const conti = `<button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-medaglie title="Giorni di allenamento di fila: le tue medaglie">${ic('fiamma')} ${fila.n}</button>
+      <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button>`;
+  const tabSchede = `<div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>`;
+  // v5 (nota 095, Regia 25/10 sera): la testata viola (testaTrainingV5, pagina-oggi.js) con dentro gli stessi tasti (giorni di fila e medaglie, Impara · Ripassa · Studia)
+  const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaTrainingV5 === 'function';
+  app.innerHTML = (v5 ? testaTrainingV5(nome ? 'Ciao ' + nome : 'Allenati', conti, tabSchede) : `<h1>${ic('crescita')} Training</h1>
     <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
-      <button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-medaglie title="Giorni di allenamento di fila: le tue medaglie">${ic('fiamma')} ${fila.n}</button>
-      <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button></div>
+      ${conti}</div>`) + `
     <button class="trn-come" data-come>${ic('info', 18)} Come funziona</button>
     ${trnTutteLeConversazioni().length ? `<button class="trn-riga" data-telefonata style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('chiamata', 20)}</span>
       <div><b>Conversazione di prova</b><small>Telefonata o incontro: scegli chi hai davanti e rispondi; se sbagli troppo, si irrigidisce e chiude.</small></div><span class="trn-freccia">›</span></button>` : ''}
@@ -133,8 +137,9 @@ function disegnaTraining() {
     ${DOVE_SEI_VISIBILE ? `<button class="trn-riga" data-dovesei style="--col:var(--gr-crescita)"><span class="trn-tondo">${ic('obiettivi', 20)}</span>
       <div><b>Dove sei, dove vuoi andare</b><small>Scegli quanto vuoi guadagnare: vedi i tuoi numeri, cosa manca e cosa studiare.</small></div><span class="trn-freccia">›</span></button>` : ''}
     ${fila.n && !fila.oggi ? `<button class="trn-fila-oggi" id="trn-fila-via">${ic('fiamma')}<span>${fila.n === 1 ? 'Ieri hai fatto allenamento' : `${fila.n} giorni di fila`}: bastano 5 minuti oggi per non fermarti.</span><span class="trn-freccia">›</span></button>` : ''}
-    <div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>
+    ${v5 ? '' : tabSchede}
     <div id="trn-corpo">${corpo}</div>${versione()}`;
+  if (v5) collegaTestaTrainingV5();
   app.querySelectorAll('[data-vista]').forEach(b => b.onclick = () => { TRN.vista = b.dataset.vista; disegnaTraining(); window.scrollTo({ top: 0 }); });
   // nota Pagine 084, punto 2 (Ignazio 24/10): «N giorni di fila: bastano 5 minuti oggi…» è il tasto che avvia il ripasso delle 15 carte (lo stesso di
   // «Inizia il ripasso»); senza carte da ripassare porta a Impara, dove ci sono quelle nuove
@@ -635,7 +640,7 @@ function trnSessione(carte, modo, titolo, dopo) {
   const barra = () => {
     const tot = coda.length;
     velo.querySelector('.trn-ses-barra i').style.width = Math.round(Math.min(i, tot) / tot * 100) + '%';
-    velo.querySelector('.trn-ses-n').textContent = `${Math.min(i + 1, tot)}/${tot}`;
+    velo.querySelector('.trn-ses-n').textContent = `${Math.min(i + 1, tot)} di ${tot}`;   // v5 (nota 095): «3 di 15», il conto delle carte a parole
   };
   const risposto = (giusta, extra) => {
     const x = coda[i];
