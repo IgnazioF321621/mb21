@@ -280,7 +280,7 @@ prova('Percorso: un consiglio per ogni gradino, in parallelo (Ignazio 27/09); il
   assert.equal(p.doveSei, null);
   assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2, vai: 'segni' });   // il tocco porta ai biglietti
   assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3, vai: 'core' });
-  assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', '10 clienti in più']);
+  assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', '100 VP dai clienti o 10 clienti in più']);   // nota 097: tutte e due, basta la prima
   const incontri = p.gradini[1].mancano.map(x => x.cosa).join(' | ');
   assert.match(incontri, /gli OPEN \(0 su 5\) e il biglietto BBS/);   // il BBS è acceso nelle luci: il Core lo dice ancora (qui il modulo finto è senza biglietti)
   assert.doesNotMatch(incontri, /biglietto WES/);                         // il WES manca nelle luci: lo consiglia il 1° livello
@@ -430,7 +430,7 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
 prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce → Training › Studia e pagine → I miei libri (nota 084), squadra → Modulo Core', () => {
   const p = C.percorso({ lc1: lc1Di(40, false), modulo: moduloVuoto, sponsor: 0 });
   const dove = Object.fromEntries(p.gradini[1].mancano.map(x => [x.cosa.split(' (')[0], x.vai]));
-  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '10 clienti in più': 'agenda', 'una traccia ogni giorno': 'studia', '10 pagine ogni giorno': 'libri',   /* nota 084: Training › Studia e I miei libri */
+  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '100 VP dai clienti o 10 clienti in più': 'agenda', 'una traccia ogni giorno': 'studia', '10 pagine ogni giorno': 'libri',   /* nota 084: Training › Studia e I miei libri */
     'gli OPEN': 'segni', "il counseling, l'edificazione e il no-crossline": 'core' });
   assert.equal(p.gradini[0].consiglio.vai, 'segni');   // il biglietto WES
   assert.equal(C.percorso({ lc1: lc1Di(40, true), modulo: moduloVuoto }).gradini[0].consiglio.vai, undefined);   // 100 VP: nessun posto nell'app dove si fa

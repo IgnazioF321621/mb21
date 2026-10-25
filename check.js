@@ -276,7 +276,9 @@
     const pm = m.s1.obiettivo - m.s1.quanti, cl = m.s3.obiettivo - m.s3.quanti;
     if (!m.abitudini[0]) out.push({ cosa: pm === 1 ? 'un Piano Marketing in più' : `${pm} Piani Marketing in più`, peso: pm / m.s1.obiettivo, vai: 'agenda' });
     if (!m.abitudini[1]) out.push({ cosa: 'il consumo personale', peso: 0.5, vai: 'core' });
-    if (!m.abitudini[2]) out.push({ cosa: cl === 1 ? 'un cliente in più' : `${cl} clienti in più`, peso: cl / m.s3.obiettivo, vai: 'agenda' });
+    // nota 097: basta la prima delle due, quindi il consiglio dice tutte e due e pesa quella più vicina
+    const mv = Math.max(0, Math.ceil(m.s3.obiettivoVp - m.s3.vp));
+    if (!m.abitudini[2]) out.push({ cosa: `${formato(mv, 0)} VP dai clienti o ${cl === 1 ? 'un cliente in più' : `${cl} clienti in più`}`, peso: Math.min(cl / m.s3.obiettivo, mv / m.s3.obiettivoVp), vai: 'agenda' });
     if (!m.abitudini[3]) out.push(m.s4.aTotale   // settembre 2026: conta il totale delle tracce (core.js)
       ? { cosa: `una traccia ogni giorno (${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''})`, peso: (m.s4.obiettivo - m.s4.totale) / m.s4.obiettivo, vai: 'studia' }
       : { cosa: `una traccia ogni giorno (${su(m.s4.quanti)})`, peso: (n - m.s4.quanti) / n, vai: 'studia' });   // nota 084: Training › Studia, le tracce del BSM
@@ -307,7 +309,7 @@
     return [
       { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? FATTO : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
       { testo: 'Consumo personale', fatto: f[1], stato: f[1] ? FATTO : vp },
-      { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? FATTO : `mancano ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10
+      { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? FATTO : `mancano ${formato(Math.max(0, Math.ceil(m.s3.obiettivoVp - m.s3.vp)), 0)} VP o ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10; nota 097: la prima delle due
       { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : m.s4.aTotale ? `${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : m.s5.aTotale ? `${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''}` : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },

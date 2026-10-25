@@ -56,7 +56,13 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   assert.equal(C.modulo({ mese }).s2.vp, null);
   // 3 · clienti: uno per riga, VP sommati, i più alti prima
   assert.deepEqual(m.s3.righe.map(r => [r.nome, r.vp]), [['Gino Pace', 50], ['Anna Villa', 42.5], ['Consegna a settembre', 8]]);   // la promo che conta a marzo 2027 non c'è
-  assert.equal(m.s3.quanti, 3); assert.equal(m.s3.vp, 100.5); assert.equal(m.s3.raggiunto, false);
+  assert.equal(m.s3.quanti, 3); assert.equal(m.s3.vp, 100.5);
+  // nota 097 (Ignazio 25/10, «sì»): fatta con la PRIMA delle due, 100 VP dai clienti o 10 clienti (prima: solo i 10 clienti, qui era «non fatta»)
+  assert.equal(m.s3.raggiunto, true); assert.equal(m.s3.obiettivoVp, 100);
+  const pochi = (n, vp) => Array.from({ length: n }, (_, i) => ({ contatto_id: 'k' + i, data: '2026-09-05', vp }));
+  assert.equal(C.modulo({ mese, vendite: pochi(3, 100) }).s3.raggiunto, true);   // 3 clienti, 300 VP → fatta
+  assert.equal(C.modulo({ mese, vendite: pochi(3, 30) }).s3.raggiunto, false);   // 3 clienti, 90 VP → non ancora
+  assert.equal(C.modulo({ mese, vendite: pochi(10, 1) }).s3.raggiunto, true);    // 10 clienti, 10 VP → fatta
   assert.deepEqual(C.modulo({ mese: '2027-03', vendite }).s3.righe.map(r => r.nome), ['Promo: conta a marzo']);
   assert.equal(C.modulo({ mese, vendite: [{ contatto_id: 'x', data: '2026-09-01', vp: 0.1 }, { contatto_id: 'x', data: '2026-09-02', vp: 0.2 }] }).s3.vp, 0.3);   // niente 0,30000000000000004
   // 4 · CD: 30 giorni; le tracce del Check e quelle del percorso si sommano, i titoli del percorso si leggono
@@ -83,7 +89,7 @@ prova('Il modulo si riempie da solo dove MB21 sa, e a mano dove non sa', () => {
   // obiettivi del mese
   assert.equal(m.obiettivi.vpp, 300); assert.equal(m.obiettivi.wes, 3);
   assert.equal(m.note, 'ok');
-  assert.equal(m.fatte, 1);   // solo «consumare i prodotti» (VP > 0): la squadra vuole tutte e tre (no-crossline non risposto)
+  assert.equal(m.fatte, 2);   // «consumare i prodotti» (VP > 0) e, dalla nota 097, i clienti (100,5 VP); la squadra vuole tutte e tre (no-crossline non risposto)
   assert.equal(C.modulo({ mese, check: [{ data: '2026-09-03', counseling: true, edificazione: true, no_crossline: true }] }).abitudini[6], true);
 });
 

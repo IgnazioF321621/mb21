@@ -3,7 +3,7 @@
 // (`dati` di core_mese) costruiscono il modulo del mese, sezione per sezione, con le caselle già riempite dove si può.
 // Prove in tools/banco/prova_core.js. Il disegno è in pagina-core.js.
 (function (radice) {
-  const OBIETTIVI = { pm: 8, clienti: 10, pagine: 10, cd: 1 };
+  const OBIETTIVI = { pm: 8, clienti: 10, vpClienti: 100, pagine: 10, cd: 1 };   // vpClienti: nota Pagine 097 («100 VP o 10 clienti»)
   const MESE_A_TOTALE = '2026-09';   // tracce e pagine: il mese del passaggio all'app nuova, contato sul totale (vedi s4, s5)
   const RIGHE = { pm: 15, clienti: 20 };   // le righe del modulo di carta: almeno queste; se ce ne sono di più si vedono tutte (Ignazio 23/09)
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
@@ -85,8 +85,11 @@
       perCliente.set(k, r);
     }
     const clienti = [...perCliente.values()].sort((x, y) => y.vp - x.vp);
-    const s3 = { righe: clienti, quanti: clienti.length, obiettivo: OBIETTIVI.clienti, raggiunto: clienti.length >= OBIETTIVI.clienti,
-      vp: Math.round(clienti.reduce((t, r) => t + r.vp, 0) * 100) / 100 };   // arrotondato: la somma dei decimali dava «29,560000000000002» (Fiammetta, 22/09)
+    // Nota Pagine 097 (Ignazio 25/10, «sì»): «Sviluppa 100 VP o 10 clienti» è fatta appena arriva la PRIMA delle due: 100 VP dai clienti nel mese
+    // oppure 10 clienti diversi (prima contavano solo i 10 clienti: con 3 clienti e 300 VP risultava non fatta)
+    const vpClienti = Math.round(clienti.reduce((t, r) => t + r.vp, 0) * 100) / 100;   // arrotondato: la somma dei decimali dava «29,560000000000002» (Fiammetta, 22/09)
+    const s3 = { righe: clienti, quanti: clienti.length, obiettivo: OBIETTIVI.clienti, obiettivoVp: OBIETTIVI.vpClienti,
+      raggiunto: clienti.length >= OBIETTIVI.clienti || vpClienti >= OBIETTIVI.vpClienti, vp: vpClienti };
 
     // 2 · Consumare i prodotti Amway (Ignazio 22/09): il consumo personale = i VP personali Amway del mese MENO i VP venduti
     // ai clienti (chi compra solo per vendere non consuma). Senza dati Amway vale quello scritto a mano.
