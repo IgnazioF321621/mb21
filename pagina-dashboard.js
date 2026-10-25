@@ -606,8 +606,8 @@ function disegnaOggi() {
     return collegaDashboard();
   }
   switch (LV.vista) {
-    case 'oggi': disegnaOggiLV(); break;
-    case 'persona': disegnaPersonaLV(); break;
+    case 'oggi': if (typeof OGGI_V5 !== 'undefined' && OGGI_V5) disegnaContattiV5(); else disegnaOggiLV(); break;   // v5: «Contatti del giorno» (pagina-oggi.js)
+    case 'persona': if (typeof OGGI_V5 !== 'undefined' && OGGI_V5) disegnaPersonaV5(); else disegnaPersonaLV(); break;
     case 'mese': disegnaMeseLV(); break;
     case 'area': disegnaMeseDashboard(LV.area); break;
     case 'traguardo': disegnaTraguardoLV(); break;

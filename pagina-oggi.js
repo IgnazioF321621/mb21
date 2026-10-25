@@ -222,3 +222,112 @@ function esploraVai(k) {
   if (k === 'agenda' && typeof AG !== 'undefined') AG.giorno = null;
   tab(k);
 }
+
+// ── v5, seconda pagina: «Contatti del giorno» e la scheda della persona (nota 095; Regia 25/10 sera) ──
+// Regola di Ignazio (25/10): cambia solo la veste; elenco, tasti, fogli e salvataggi restano quelli di adesso. L'elenco è lo stesso di «Chi sento oggi?»
+// (elencoDiOggi: prima ciò che è aperto da chiudere, poi chi contattare, con «Non ora»); la scheda è la stessa (disegnaPersonaLV): per una telefonata della
+// coda o un Dare Seguito l'esito si sceglie nel modulo al centro e poi parte toccaBottone, con i suoi fogli di adesso (data, appuntamento, rientro…);
+// conferme, riordini e telefonate scelte tengono la loro card di adesso, dentro la veste nuova.
+const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--z-clienti)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : 'var(--cat-ex)');
+const catDi = x => (x && (x.categoria || (x.contatti && x.contatti.categoria))) || '';
+const testaV5 = (colore, sinistra, destra = '') => `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su">${sinistra}<div class="o5-dx">${destra}${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>`;
+function collegaTestaV5() {
+  const sg = document.getElementById('segnala');
+  if (sg) sg.hidden = true;   // il feedback sta nella testata
+  const fb = document.getElementById('o5-feedback');
+  if (fb) fb.onclick = () => foglioSegnala();
+  collegaPartnerSelect();
+}
+
+function disegnaContattiV5() {
+  const st = ST.stato || {}, altro = guardoAltri(), inPausa = st.contatti_al_giorno === 0, e = elencoDiOggi();
+  const righe = e.gruppi.flatMap(g => g.righe.map(x => ({ ...x, titoloGruppo: g.titolo })));
+  const manca = e.totale - e.fatti, primo = righe[0];
+  const riga = x => {
+    const sotto = [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
+    const dentro = `<button class="c5-riga" data-lv-persona="${x.motivo}|${esc(x.id)}"><span class="c5-pallino" style="background:${COLORE_CAT_V5(catDi(x.dato))}"></span>
+      <span class="c5-testo"><b>${esc(x.nome)}${x.motivo === 'conf' ? '' : segnoCoach(x.contatto_id, x.nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
+    return x.motivo === 'coda' && !vediTutti() && !ST.offline ? `<div class="c5-con">${dentro}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>` : dentro;
+  };
+  const gruppi = e.gruppi.map(g => `<div class="c5-gruppo">${esc(g.titolo)} · ${g.righe.length}</div><div class="c5-elenco">${g.righe.map(riga).join('')}</div>`).join('');
+  const fatte = LV.fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${LV.fatte.length}</div><div class="c5-elenco">${LV.fatte.map(x =>
+    `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : '';
+  let extra = '';
+  if (inPausa) extra = altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
+    : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`;
+  else if (altro && (ST.risultato || {}).coda && ST.risultato.coda.length) extra = `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
+  const finito = !righe.length && !inPausa;
+  app.innerHTML = testaV5('var(--z-contatti)', `<button class="v5-indietro" id="lv-indietro">‹ Oggi</button>`)
+    + `<div class="v5-titolo"><div><h1>Contatti del giorno</h1><span>${e.totale ? `Fatti ${e.fatti} su ${e.totale}${manca ? ` · ${manca === 1 ? 'ne manca 1' : `ne mancano ${manca}`}` : ''}` : esc(dataEstesa(ST.oggi))}</span></div>${e.totale ? o5Anello(e.fatti, e.totale, 62) : ''}</div>
+      ${primo ? `<button class="v5-inizia" data-lv-persona="${primo.motivo}|${esc(primo.id)}">Inizia da ${esc(primo.nome)}</button>` : ''}</div>`
+    + `<div class="c5-corpo">${ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${extra}${gruppi}${fatte}
+      ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}</div>` + versione();
+  app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
+  app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
+  attaccaIndietroLV();
+  collegaTestaV5();
+  const vai = LV.vaiA; LV.vaiA = null;   // da «Clienti» di Oggi (o dall'Agenda): si scende al primo riordino
+  const primoVai = vai && app.querySelector(`[data-lv-persona^="${vai === 'riordini' ? 'rio' : vai}|"]`);
+  if (primoVai && primoVai.scrollIntoView) primoVai.scrollIntoView({ block: 'start' });
+}
+
+// Il modulo al centro per l'esito (nota 088: ogni foglio al centro): l'esito a discesa, «Andato bene» e «Non andato», con gli esiti veri della categoria
+// (bottoniPer, gli stessi tasti di adesso). Restituisce la posizione dell'esito in bottoniPer (quella che legge toccaBottone) o null.
+function moduloEsito(nome, categoria, colore) {
+  const tutti = bottoniPer(categoria), [buoni, no] = MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).concat([[]]);
+  const opz = l => l.map(f => `<option value="${tutti.findIndex(b => b.etichetta === f)}">${esc(f)}</option>`).join('');
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio e5"><h3>Com'è andata?</h3><p class="sotto">Telefonata · ${esc(nome)}</p>
+      <label class="e5-campo"><span>Esito</span><select id="e5-esito"><option value="" selected disabled>Scegli l'esito</option>
+        <optgroup label="Andato bene">${opz(buoni)}</optgroup>${no.length ? `<optgroup label="Non andato">${opz(no)}</optgroup>` : ''}</select></label>
+      <div class="e5-tasti"><button class="link" id="e5-no">Annulla</button><button class="primario" id="e5-si" style="background:${colore}" disabled>Scegli l'esito</button></div></div>`;
+    document.body.appendChild(velo);
+    const chiudi = v => { velo.remove(); risolvi(v); };
+    const sel = velo.querySelector('#e5-esito'), si = velo.querySelector('#e5-si');
+    sel.onchange = () => { si.disabled = sel.value === ''; si.textContent = sel.value === '' ? 'Scegli l\'esito' : 'Salva'; };
+    velo.onclick = ev => { if (ev.target === velo) chiudi(null); };
+    velo.querySelector('#e5-no').onclick = () => chiudi(null);
+    si.onclick = () => { if (sel.value !== '') chiudi(Number(sel.value)); };
+  });
+}
+
+function disegnaPersonaV5() {
+  const [tipo, id] = String(LV.persona).split('|');
+  const r = ST.risultato || { coda: [], dareSeguito: [] };
+  let dato = null, corpo = '';
+  if (tipo === 'coda' || tipo === 'ds') dato = (tipo === 'ds' ? r.dareSeguito : r.coda).find(y => y.id === id);
+  else if (tipo === 'conf') { dato = CONF.righe.find(y => y.id === id); if (dato) corpo = confermeHtml(id); }
+  else if (tipo === 'rio') { dato = RIO.righe.find(y => y.id === id); if (dato) { ST.aperta = id; corpo = riordiniHtml(id); } }
+  else if (tipo === 'scelta') { dato = SCE.righe.find(y => y.id === id); if (dato) { ST.aperta = id; corpo = sceltaHtml(dato); } }
+  if (!dato) return disegnaPersonaLV();   // l'esito è stato dato o la persona non c'è più: la strada di adesso (spunta e ritorno all'elenco)
+  const nome = (dato.contatti && dato.contatti.nome) || dato.nome || '', cat = catDi(dato), colore = COLORE_CAT_V5(cat);
+  LV.nomePersona = nome;
+  const e = elencoDiOggi(), conto = e.totale ? `${Math.min(e.fatti + 1, e.totale)} di ${e.totale}` : '';   // «3 di 5»: la freccia accanto dice già «Contatti del giorno»
+  const chiContatto = tipo === 'coda' || tipo === 'ds' ? id : dato.contatto_id || null;
+  const telefonata = tipo === 'coda' || tipo === 'ds';
+  if (telefonata) {
+    ST.aperta = id;
+    const luogo = [dato.citta, dato.fascia_eta].filter(Boolean).join(' · ');
+    const spento = ST.offline || guardoAltri();
+    corpo = `<div class="card compatta aperta p5-card ${classeCat(cat)}" id="card-${esc(id)}"><div class="corpo">
+      <div class="p5-blocco"><b>Com'è andata?</b><button class="p5-esito" id="p5-esito" ${spento ? 'disabled' : ''}><span>Scegli l'esito della telefonata</span><span>⌄</span></button></div>
+      ${ricordoHtml(id, nome)}${preparaChiamataHtml(id)}
+      ${dato.professione ? `<div class="prof">${esc(dato.professione)}</div>` : ''}${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
+      <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
+  }
+  const sotto = [cat || 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
+  app.innerHTML = `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Contatti del giorno</button>
+      <div class="o5-dx">${conto ? `<span class="v5-conto">${esc(conto)}</span>` : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>
+    ${telefonata ? contattaHtml(dato.telefono) : ''}</div>
+    <div class="c5-corpo lv-scheda">${corpo}</div>` + versione();
+  attaccaIndietroLV();
+  collegaTestaV5();
+  const b = document.getElementById('p5-esito');
+  if (b) b.onclick = async () => {
+    const i = await moduloEsito(nome, cat, colore);
+    if (i !== null) toccaBottone(id, i);   // da qui tutto come adesso: i fogli della data o dell'appuntamento, il salvataggio, «Annulla»
+  };
+}

@@ -2413,6 +2413,51 @@
   .o5.sera .o5-contatti .o5-num { font-size: 38px; }
   .o5.sera .o5-mezzo { min-height: 92px; }
   .o5.sera .o5-num { font-size: 28px; }
+  /* v5: testata colorata delle pagine (Contatti del giorno nel colore della zona, la scheda nel colore della categoria della persona) */
+  .v5-testa { background: var(--zc); color: #fff; margin: calc(-1 * (env(safe-area-inset-top) + 16px)) -16px 0; padding: calc(env(safe-area-inset-top) + 6px) 16px 18px;
+    border-radius: 0 0 26px 26px; display: flex; flex-direction: column; gap: 12px; }
+  .v5-su { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .v5-indietro { background: none; border: 0; color: #fff; font: inherit; font-size: 16px; font-weight: 700; padding: 6px 0; white-space: nowrap; }
+  .v5-fb { width: 34px; height: 34px; border-radius: 17px; border: 0; background: rgba(255,255,255,.22); color: #fff; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
+  .v5-fb svg.ic { width: 18px; height: 18px; }
+  .v5-testa .o5-ps { background: rgba(255,255,255,.22); border: 0; color: #fff; }
+  .v5-conto { font-size: 13px; font-weight: 800; background: rgba(255,255,255,.22); border-radius: 12px; padding: 5px 10px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .v5-su .o5-dx { min-width: 0; }
+  .v5-titolo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .v5-titolo h1 { margin: 0; font-size: 30px; font-weight: 800; color: #fff; }
+  .v5-titolo span { font-size: 15px; font-weight: 700; }
+  .v5-inizia { background: #fff; color: #B34F00; border: 0; border-radius: 16px; padding: 13px; font: inherit; font-size: 17px; font-weight: 800; }
+  .c5-corpo { padding-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .c5-gruppo { font-size: 13px; font-weight: 800; color: var(--testo-soft); letter-spacing: .04em; text-transform: uppercase; padding: 8px 0 0 4px; }
+  .c5-elenco { background: var(--superficie); border-radius: 18px; overflow: hidden; }
+  .c5-riga { width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 16px; border: 0; border-bottom: 1px solid var(--linea); background: none; font: inherit; color: var(--testo); text-align: left; }
+  .c5-elenco > :last-child, .c5-elenco > :last-child .c5-riga { border-bottom: 0; }
+  .c5-con { display: flex; align-items: center; border-bottom: 1px solid var(--linea); }
+  .c5-con .c5-riga { border-bottom: 0; flex: 1; min-width: 0; }
+  .c5-con .lv-nonora { margin-right: 12px; }
+  .c5-pallino { width: 10px; height: 10px; border-radius: 5px; flex: none; }
+  .c5-testo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .c5-testo b { font-size: 17px; } .c5-testo small { font-size: 13px; color: var(--testo-soft); }
+  .c5-riga em { font-style: normal; font-size: 22px; color: var(--grigio-chiaro); }
+  .c5-riga.fatta b { font-size: 16px; font-weight: 600; color: var(--testo-soft); }
+  .c5-spunta { width: 22px; height: 22px; border-radius: 11px; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .c5-spunta svg.ic { width: 14px; height: 14px; stroke-width: 3; }
+  .p5-chi { display: flex; align-items: center; gap: 14px; }
+  .p5-sigla { width: 60px; height: 60px; border-radius: 30px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; flex: none; }
+  .p5-chi b { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; } .p5-chi small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .v5-testa .contatta a { background: rgba(255,255,255,.22); color: #fff; }
+  .v5-testa .contatta a.ct-call { background: #fff; color: var(--zc); }
+  .v5-testa .contatta svg { color: inherit; } .v5-testa .contatta { margin-top: 0; }
+  .p5-card { background: var(--superficie); margin-top: 4px; }
+  .p5-blocco { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+  .p5-blocco b { font-size: 18px; }
+  .p5-esito { display: flex; justify-content: space-between; align-items: center; width: 100%; background: var(--sfondo); border: 0; border-radius: 14px; padding: 13px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--testo); }
+  .e5 h3 { margin: 0; } .e5 .sotto { margin: 2px 0 14px; }
+  .e5-campo { display: flex; flex-direction: column; gap: 6px; }
+  .e5-campo span { font-size: 13px; font-weight: 800; color: var(--testo-soft); letter-spacing: .04em; text-transform: uppercase; }
+  .e5-campo select { font: inherit; font-size: 17px; font-weight: 600; padding: 13px 14px; border: 1.5px solid var(--linea); border-radius: 14px; background: var(--superficie); color: var(--testo); min-height: 50px; }
+  .e5-tasti { display: flex; gap: 10px; margin-top: 16px; }
+  .e5-tasti .link { flex: 1; } .e5-tasti .primario { flex: 2; }
   .o5-tessere { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
   .o5-tessera { border: 0; font: inherit; color: #fff; cursor: pointer; border-radius: 22px; min-height: 104px; padding: 14px;
     display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; }

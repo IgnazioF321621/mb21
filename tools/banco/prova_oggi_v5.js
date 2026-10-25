@@ -182,6 +182,73 @@ prova('095 (correzione 25/10, «tasto piccolo»): il Partner Select è un chip n
   assert.match(DASH, /function dashboardTesta\(senzaPS\) \{[^\n]*\n  const d = DS\.dati;\n  let html = senzaPS \? '' : partnerSelect\(\);/);
 });
 
+// ── Seconda pagina: «Contatti del giorno» e la scheda della persona (solo la veste: elenco, tasti e salvataggi di adesso) ──
+function mondoContatti({ fatte = [], admin = false, persona = null } = {}) {
+  const W = mondo({ admin });
+  const fogli = [], chiamate = [];
+  const coda = [{ id: 'c1', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001', professione: 'Impiegata', citta: 'Città' }, { id: 'c2', nome: 'Persona B', categoria: 'Partner' }];
+  const gruppi = [{ chiave: 'chiudere', titolo: 'Prima si chiude ciò che è aperto', righe: [{ motivo: 'conf', id: 'a1', nome: 'Persona C', targhetta: 'Conferma', dato: { id: 'a1', contatti: { nome: 'Persona C', categoria: 'Cliente' } } }] },
+    { chiave: 'contattare', titolo: 'Poi si contatta (nomi in coda o scelte personali)', righe: coda.map(x => ({ motivo: 'coda', id: x.id, contatto_id: x.id, nome: x.nome, targhetta: 'Telefonata', dato: x })) }];
+  Object.assign(W.ctx, { LV: { vista: 'oggi', fatte, persona }, ST: { ...W.ctx.ST, risultato: { coda, dareSeguito: [] } },
+    elencoDiOggi: () => ({ gruppi, fatti: 2, totale: 5 }), sottoOggi: x => (x.motivo === 'conf' ? 'Da confermare · PM · oggi ore 18:30' : 'da richiamare'), segnoCoach: () => '',
+    nonOra: id => chiamate.push(['nonora', id]), attaccaIndietroLV: () => { const b = W.app.getElementById('lv-indietro'); if (b) b.onclick = () => chiamate.push(['indietro']); },
+    collegaPartnerSelect() {}, iniziali: n => n.split(' ').map(x => x[0]).join(''), nomeDi: u => u.nome, contattaHtml: t => `<div class="contatta">${t}</div>`,
+    ricordoHtml: () => '', preparaChiamataHtml: () => '', classeCat: c => 'cat-' + c, CONF: { righe: [gruppi[0].righe[0].dato] }, SCE: { righe: [] }, RIO: { righe: [] },
+    confermeHtml: id => `<div class="card conferma" id="conf-${id}">card della conferma di adesso</div>`, riordiniHtml: () => '', sceltaHtml: () => '', disegnaPersonaLV: () => chiamate.push(['personaLV']),
+    bottoniPer: () => ['PM Fissato', 'Relazione', 'Richiamare', 'No Risposta', 'Telefono spento', 'No Interesse'].map(etichetta => ({ etichetta })),
+    toccaBottone: (id, i) => chiamate.push(['esito', id, i]), vaiLV: (v, x) => chiamate.push(['lv', v, x || null]),
+    document: { getElementById: id => (id === 'segnala' ? W.sg : W.app.getElementById(id)), querySelector: s => W.app.querySelector(s),
+      createElement: () => { const n = new Nodo(); n.remove = () => { n.rimosso = true; }; fogli.push(n); return n; }, body: { appendChild() {} } } });
+  vm.runInContext('this.contatti = disegnaContattiV5; this.persona = disegnaPersonaV5; this.modulo = moduloEsito;', W.ctx);   // pagina-oggi.js è già caricato da mondo()
+  return { ...W, fogli, chiamate };
+}
+
+prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹ Oggi», «Fatti 2 su 5 · ne mancano 3», l\'anello e «Inizia da …»; gli stessi gruppi e righe di adesso, con «Non ora»', () => {
+  const W = mondoContatti({ fatte: [{ tipo: 'coda', id: 'c9', nome: 'Persona E' }] });
+  W.ctx.contatti();
+  const h = W.app.innerHTML;
+  assert.match(h, /<div class="v5-testa" style="--zc:var\(--z-contatti\)">/);
+  assert.match(h, /<button class="v5-indietro" id="lv-indietro">‹ Oggi<\/button>/);
+  assert.match(testo(h), /Contatti del giorno Fatti 2 su 5 · ne mancano 3/);
+  assert.match(h, /<button class="v5-inizia" data-lv-persona="conf\|a1">Inizia da Persona C<\/button>/);
+  assert.match(testo(h), /Prima si chiude ciò che è aperto · 1 .*Poi si contatta \(nomi in coda o scelte personali\) · 2 .*Già sentiti oggi · 1/);
+  assert.match(h, /class="c5-pallino" style="background:var\(--z-clienti\)"/);   // la Conferma di un Cliente: oro
+  assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
+  assert.equal((h.match(/data-non-ora=/g) || []).length, 2);   // «Non ora» sulle righe della coda, come adesso
+  assert.equal(W.sg.hidden, true);
+  W.app.clic('[data-non-ora="c1"]'); W.app.clic('[data-lv-persona="coda|c2"]'); W.app.clic('#lv-indietro');
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['nonora', 'c1'], ['lv', 'persona', { persona: 'coda|c2' }], ['indietro']]);
+});
+
+prova('095 seconda pagina: la scheda nel colore della categoria; «Scegli l\'esito» apre il modulo al centro (Andato bene / Non andato) e poi toccaBottone, come adesso', async () => {
+  const W = mondoContatti({ persona: 'coda|c1' });
+  W.ctx.LV.vista = 'persona';
+  W.ctx.persona();
+  const h = W.app.innerHTML;
+  assert.match(h, /<div class="v5-testa" style="--zc:var\(--cat-prospect\)">/);
+  assert.match(h, /‹ Contatti del giorno<\/button>/); assert.match(h, /<span class="v5-conto">3 di 5<\/span>/);
+  assert.match(testo(h), /PA Persona A Prospect · da richiamare/);
+  assert.match(h, /<div class="contatta">\+393330000001<\/div>/);   // i tasti per sentirla, quelli di adesso
+  assert.match(h, /<div class="card compatta aperta p5-card cat-Prospect" id="card-c1">/);   // la card che toccaBottone usa
+  W.app.clic('#p5-esito');
+  const f = W.fogli.at(-1);
+  assert.match(f.innerHTML, /<optgroup label="Andato bene"><option value="0">PM Fissato<\/option><option value="1">Relazione<\/option><option value="2">Richiamare<\/option><\/optgroup><optgroup label="Non andato"><option value="3">No Risposta<\/option>/);
+  assert.match(f.innerHTML, /id="e5-si" style="background:var\(--cat-prospect\)" disabled>Scegli l'esito<\/button>/);   // spento finché non si sceglie
+  f.querySelector('#e5-esito').value = '2'; f.querySelector('#e5-esito').onchange();
+  assert.equal(f.querySelector('#e5-si').textContent, 'Salva');
+  f.querySelector('#e5-si').onclick();
+  await new Promise(r => setImmediate(r));
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['esito', 'c1', 2]]);
+  // una conferma tiene la sua card di adesso, dentro la veste nuova (colore Cliente oro)
+  const C = mondoContatti({ persona: 'conf|a1' }); C.ctx.persona();
+  assert.match(C.app.innerHTML, /--zc:var\(--z-clienti\)/); assert.match(C.app.innerHTML, /card della conferma di adesso/); assert.doesNotMatch(C.app.innerHTML, /p5-esito/);
+  // esito già dato: la strada di adesso (spunta e ritorno all'elenco)
+  const X = mondoContatti({ persona: 'coda|zz' }); X.ctx.persona();
+  assert.deepEqual(JSON.parse(JSON.stringify(X.chiamate)), [['personaLV']]);
+  assert.match(DASH, /case 'oggi': if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5\) disegnaContattiV5\(\); else disegnaOggiLV\(\); break;/);
+  assert.match(DASH, /case 'persona': if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5\) disegnaPersonaV5\(\); else disegnaPersonaLV\(\); break;/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
