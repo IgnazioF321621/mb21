@@ -221,6 +221,7 @@
       user_id: utenteId, nome: s.nome.trim(), telefono: s.telefono || null,
       note: s.altriNumeri.length ? 'Altri numeri: ' + s.altriNumeri.join(' · ') : null,
       compleanno: dataCompleanno(s.compleanno),
+      da_rubrica: true,   // nota Pagine 091 (d): preso dalla rubrica, niente targhetta «nuovo» (campo della migrazione 20261025063200)
     };
   }
 

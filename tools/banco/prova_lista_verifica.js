@@ -518,8 +518,8 @@ prova('L8: dopo aver collegato una coppia le targhette si rileggono con il CEP p
 prova('L8: la lettura dell\'Admin e la riga riletta prendono le colonne usate, una per una: via l\'icona della fase', () => {
   const col = PL.match(/const COLONNE_LISTA = ([\s\S]*?);\n/)[1].split('+').map(x => x.trim().replace(/^'|'$/g, '')).join('').split(',').map(x => x.trim()).filter(Boolean);
   // le colonne della vista contatti_lista (lette in sola lettura il 23/10) meno fase_icona
-  const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti, account_cliente_dal'.split(', ');   // 080: account_cliente_dal in fondo (migrazione 20261024123812)
-  assert.deepEqual(col, vista.filter(c => c !== 'fase_icona'));
+  const vista = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, fase_icona, contatti_fatti, account_cliente_dal, da_rubrica'.split(', ');   // 080: account_cliente_dal in fondo (migrazione 20261024123812); 091: da_rubrica (20261025063200)
+  assert.deepEqual(col, vista.filter(c => c !== 'fase_icona' && c !== 'contatti_fatti'));   // nota 091 (b): «Contatti fatti» si conta aprendo la scheda
   assert.match(PL, /const q = supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\);/);   // L8b: con il filtro di chi, per l'Admin
   assert.match(PL, /supa\.from\('contatti_lista'\)\.select\(COLONNE_LISTA\)\.eq\('id', id\)/);
   assert.doesNotMatch(PL, /from\('contatti_lista'\)\.select\('\*'\)/);
@@ -739,7 +739,7 @@ prova('Nota 080, punto 2 (Ignazio 24/10, «C»): la targhetta «Account» uguale
   assert.match(PL, /<span class="sv-targhe" id="sv-targhe">\$\{targaAppHtml\(c\.app\)\}\$\{targaAccountHtml\(c\.categoria, accountDellaScheda\(c\)\)\}/);
   assert.match(PL, /\+ targaAccountHtml\(LS\.contatto\.categoria, accountDellaScheda\(LS\.contatto\)\)/);   // e quando arrivano i segni (mostraTarghe)
   assert.match(PL, /if \(LS\.sv && LS\.sv\.id === c\.id\) mostraTarghe\(LS\.sv\);   \/\/ 080/);           // e quando arriva il dato letto
-  assert.match(PL, /contatti_fatti, account_cliente_dal';\n/);   // l'Admin la legge con COLONNE_LISTA
+  assert.match(PL, /ultima_il, account_cliente_dal, da_rubrica';\n/);   // l'Admin la legge con COLONNE_LISTA (nota 091: via contatti_fatti, in fondo da_rubrica)
   assert.match(IDX, /\.sv-targa\.account \{/);
 });
 

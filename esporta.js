@@ -92,7 +92,7 @@
   // Le tre parti della lista di un partner (schede, azioni, note), con il nome della persona accanto a ogni azione e nota
   // e senza le chiavi interne (user_id, id di collegamento): solo ciò che serve a chi legge il file.
   // Nascoste: gli id interni dell'app e i campi di servizio, che a chi legge il file non dicono nulla
-  const NASCOSTE = new Set(['user_id', 'glide_id', 'portato_da', 'condiviso_con', 'compagno_id', 'utente_id', 'archiviato_prima', 'eliminato_prima', 'categoria_prec', 'senza_esito_avvisato_il', 'da_coda', 'scelta_a_mano']);
+  const NASCOSTE = new Set(['user_id', 'glide_id', 'portato_da', 'condiviso_con', 'compagno_id', 'utente_id', 'archiviato_prima', 'eliminato_prima', 'categoria_prec', 'senza_esito_avvisato_il', 'da_coda', 'scelta_a_mano', 'da_rubrica']);
   // Le intestazioni in italiano normale (Ignazio 21/10/2026); una colonna nuova senza nome qui prende il suo nome con gli spazi e la maiuscola
   const ETICHETTE = {
     persona: 'Persona', nome: 'Nome e cognome', professione: 'Professione', fascia_eta: 'Fascia di età', citta: 'Città', telefono: 'Telefono', categoria: 'Categoria', area: 'Area', brand: 'Brand',

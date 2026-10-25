@@ -42,11 +42,11 @@
     senza:    { etichetta: 'Senza categoria', altri: true, prova: r => !r.categoria },
   };
 
-  // Targhetta «nuovo» (richiesta di Ignazio 16/09): contatti creati dentro l'app (non importati da Glide)
-  // nei primi GIORNI_NEW giorni. `oggi` in AAAA-MM-GG. (Lista Nomi L1b, Ignazio 23/10: «nuovo» e «new» in Cerca non sono più parole nascoste; c'è «Ordina: nuovi».)
+  // Targhetta «nuovo» (richiesta di Ignazio 16/09): contatti creati dentro l'app (non importati da Glide e, nota Pagine 091 (d), non presi dalla rubrica:
+  // `da_rubrica`) nei primi GIORNI_NEW giorni. `oggi` in AAAA-MM-GG. (Lista Nomi L1b, Ignazio 23/10: «nuovo» e «new» in Cerca non sono più parole nascoste; c'è «Ordina: nuovi».)
   const GIORNI_NEW = 30;
   function eNuovo(r, oggi) {
-    if (!r || !r.creato_il || r.glide_id) return false;
+    if (!r || !r.creato_il || r.glide_id || r.da_rubrica) return false;
     const giorni = (Date.parse(oggi + 'T23:59:59Z') - Date.parse(r.creato_il)) / 86400000;
     return giorni >= 0 && giorni < GIORNI_NEW;
   }

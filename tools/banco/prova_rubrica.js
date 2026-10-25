@@ -144,7 +144,7 @@ prova('compleanno scritto a mano nel modulo: anno facoltativo, date che non esis
 prova('riga da salvare: senza categoria, altri numeri nelle note', () => {
   const [anna] = R.unisciDoppioni(R.leggiVcard(ANDROID)).slice(1);
   assert.deepEqual(R.rigaContatto(anna, 'u-io'), { user_id: 'u-io', nome: 'Anna Bianchi', telefono: '+393479876543',
-    note: 'Altri numeri: +390951112233 · +390955556677', compleanno: null });
+    note: 'Altri numeri: +390951112233 · +390955556677', compleanno: null, da_rubrica: true });   // nota 091 (d): niente targhetta «nuovo»
 });
 
 console.log(`\n${ok} prove superate`);

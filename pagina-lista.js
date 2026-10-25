@@ -32,9 +32,11 @@ async function utentiLettura() {
 // Lista Nomi L8 (Ignazio 23/10): le colonne di `contatti_lista` che l'app usa, scritte una per una al posto di `*`: via l'icona della fase (fase_icona),
 // che nessuna pagina usa. Valgono per la lettura a pagine (l'Admin) e per la riga riletta; i partner leggono con `lista_nomi()` (nel database, com'è).
 // Nota 080: in fondo `account_cliente_dal`, dalla migrazione 20261024123812 (si applica PRIMA del codice: senza, questa lettura non riesce)
+// Nota Pagine 091 (Ignazio 25/10): via `contatti_fatti` (si conta aprendo la scheda, `datiPersonaExtra`); in fondo `da_rubrica` (migrazione 20261025063200,
+// anche lei PRIMA del codice). Le stesse colonne le dà `lista_nomi()` ai partner (migrazione 20261025063300).
 const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, '
   + 'onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, '
-  + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, contatti_fatti, account_cliente_dal';
+  + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, account_cliente_dal, da_rubrica';
 async function leggiListaPagine(utenti) {   // `utenti` (L8b, solo per l'Admin): di chi leggere i nomi
   const pagina = k => { const q = supa.from('contatti_lista').select(COLONNE_LISTA); return dbq('lettura lista', (utenti ? q.in('user_id', utenti) : q).order('id').range(k * 1000, k * 1000 + 999)); };
   const prima = await pagina(0);
@@ -821,7 +823,9 @@ function disegnaDati(c, extra) {
     if (k === 'compleanno') return [etichetta, ic('compleanno') + ' ' + esc(MB21Rubrica.compleannoScritto(v))];
     return [etichetta, esc(k === 'sesso' ? L.nomeScelta(L.SESSI, v) : k === 'lavoro' ? L.nomeScelta(L.LAVORI, v) : v)];
   }).filter(Boolean);
-  const resto = [['Area', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', String(c.contatti_fatti ?? 0)]]
+  // «Contatti fatti» (nota 091 b): arriva con la seconda passata, contato solo per questa persona; finché non c'è la riga non si vede (niente «0» di passaggio)
+  const fatti = valore('contatti_fatti');
+  const resto = [['Area', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
     .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
   // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
   const codice = valore('codice_amway');
@@ -840,10 +844,17 @@ async function copiaCodice(codice) {
 
 // Compleanno (cantiere 30, Ignazio 18/09: «domani potremmo mandare messaggi di auguri»), sesso e lavoro (cantiere 40): la vista della Lista
 // non li ha, si leggono da `contatti` quando si apre «Dati», come la coppia. Senza rete restano fuori.
+// Nota Pagine 091 (b), Ignazio 25/10: anche «Contatti fatti» (prima la vista lo contava per ogni nome a ogni lettura della Lista: per l'Admin ~8.300 conti);
+// la stessa regola della vista di prima e di Report e Griglia: telefonate con un esito in cui si è parlato (No Risposta e Telefono spento no, Riordino solo se fatto).
+const contaContattiFatti = id => dbq('contatti fatti', supa.from('azioni').select('id', { count: 'exact', head: true }).eq('contatto_id', id).eq('tipo_azione', 'Contatto')
+  .not('esito', 'is', null).not('esito', 'in', '("No Risposta","Telefono spento")').or('esito.neq.Riordino,completata.is.true'));
 async function datiPersonaExtra(c) {
-  const { data, error } = await dbq('dati personali', supa.from('contatti').select('compleanno, sesso, lavoro, codice_amway').eq('id', c.id).maybeSingle());   // + il codice Amway (nota 031)
+  const [{ data, error }, fatti] = await Promise.all([
+    dbq('dati personali', supa.from('contatti').select('compleanno, sesso, lavoro, codice_amway').eq('id', c.id).maybeSingle()),   // + il codice Amway (nota 031)
+    contaContattiFatti(c.id),
+  ]);
   if (error || !data || LS.contatto !== c || LS.sezione !== 'dati') return;
-  disegnaDati(c, data);
+  disegnaDati(c, { ...data, ...(fatti.error || fatti.count == null ? {} : { contatti_fatti: fatti.count }) });
 }
 
 // Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
