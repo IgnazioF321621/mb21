@@ -331,3 +331,17 @@ function disegnaPersonaV5() {
     if (i !== null) toccaBottone(id, i);   // da qui tutto come adesso: i fogli della data o dell'appuntamento, il salvataggio, «Annulla»
   };
 }
+
+// ── v5, terza pagina: la testata dell'Agenda (Regia 25/10 sera; solo la veste: sotto, l'Agenda è quella di adesso) ──
+// Blu Agenda, «‹ Oggi», il mese, «Agenda», «Oggi» (se non si guarda oggi) e «+» con gli stessi id di prima (#ag-oggi, #ag-nuovo: foglioAggiungi),
+// il chip del Partner Select e il feedback; Giorno · Settimana · Mese · Anno chiamano cambiaVista (la stessa del menu); nel Giorno, dentro, la striscia
+// della settimana (stessi tasti). I collegamenti nuovi li fa collegaAgenda (pagina-agenda.js).
+function testaAgendaV5(mostraOggi, dentro) {
+  const mese = MB21Agenda.titoloMese(AG.giorno).toUpperCase(), vista = AG.vista || 'giorno';
+  const scale = [['giorno', 'Giorno'], ['settimana', 'Settimana'], ['mese', 'Mese'], ['anno', 'Anno']];
+  return `<div class="v5-testa a5" style="--zc:var(--z-agenda)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
+      <div class="o5-dx">${mostraOggi ? '<button class="v5-pillola" id="ag-oggi">Oggi</button>' : ''}${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>
+        <button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button></div></div>
+    <div class="v5-titolo"><div><span class="v5-sopra">${esc(mese)}</span><h1>Agenda</h1></div></div>
+    <div class="v5-scale">${scale.map(([k, t]) => `<button data-v5-scala="${k}"${k === vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>${dentro || ''}</div>`;
+}

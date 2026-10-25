@@ -251,6 +251,26 @@ prova('095 seconda pagina: la scheda nel colore della categoria; «Scegli l\'esi
   assert.match(DASH, /case 'persona': if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5\) disegnaPersonaV5\(\); else disegnaPersonaLV\(\); break;/);
 });
 
+prova('095 Agenda: testata blu con «‹ Oggi», il mese, «Agenda», il chip, il feedback, «+» (stesso #ag-nuovo), Giorno · Settimana · Mese · Anno e, nel Giorno, la striscia di adesso', () => {
+  const W = mondo({ admin: true });
+  W.ctx.AG = { giorno: '2026-10-25', vista: 'settimana' };
+  const h = W.ctx.testaAgendaV5(true, '<div class="ag-settimana">striscia di adesso</div>');
+  assert.match(h, /^<div class="v5-testa a5" style="--zc:var\(--z-agenda\)">/);
+  assert.match(h, /<button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
+  assert.match(h, /<button class="v5-pillola" id="ag-oggi">Oggi<\/button><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="o5-feedback"/);
+  assert.match(h, /<button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">/);
+  assert.match(h, /<span class="v5-sopra">OTTOBRE 2026<\/span><h1>Agenda<\/h1>/);
+  assert.match(h, /<button data-v5-scala="giorno">Giorno<\/button><button data-v5-scala="settimana" class="scelta">Settimana<\/button><button data-v5-scala="mese">Mese<\/button><button data-v5-scala="anno">Anno<\/button><\/div><div class="ag-settimana">striscia di adesso<\/div><\/div>$/);
+  assert.doesNotMatch(W.ctx.testaAgendaV5(false, ''), /id="ag-oggi"/);
+  const PA = leggi('pagina-agenda.js');
+  assert.match(PA, /if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && !largo\(\)\) return testaAgendaV5\(mostraOggi, dentro\);/);   // sul computer l'Agenda resta com'è
+  assert.match(PA, /\$\{testaScala\(AG\.giorno !== oggi, striscia\)\}/);
+  assert.equal((PA.match(/\$\{partnerSelect\(\)\}/g) || []).length, 0); assert.equal((PA.match(/\$\{partnerSelectAgenda\(\)\}/g) || []).length, 4);
+  assert.match(PA, /su\('v5-indietro', \(\) => \{ ST\.tab = 'oggi';/); assert.match(PA, /su\('o5-feedback', \(\) => foglioSegnala\(\)\);/);
+  assert.match(PA, /querySelectorAll\('\[data-v5-scala\]'\)\.forEach\(b => \{ b\.onclick = \(\) => \{ if \(b\.dataset\.v5Scala !== AG\.vista\) cambiaVista\(b\.dataset\.v5Scala\); \}; \}\);/);
+  assert.match(IDX, /body:has\(\.v5-testa\) #segnala \{ display: none; \}/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

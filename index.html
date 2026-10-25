@@ -2421,6 +2421,26 @@
   .v5-fb { width: 34px; height: 34px; border-radius: 17px; border: 0; background: rgba(255,255,255,.22); color: #fff; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
   .v5-fb svg.ic { width: 18px; height: 18px; }
   .v5-testa .o5-ps { background: rgba(255,255,255,.22); border: 0; color: #fff; }
+  body:has(.v5-testa) #segnala { display: none; }   /* v5: il feedback sta nella testata delle pagine nuove */
+  .v5-sopra { font-size: 13px; font-weight: 700; opacity: .9; letter-spacing: .03em; }
+  .v5-titolo h1 + * { margin-top: 0; }
+  .v5-pillola { height: 34px; padding: 0 12px; border-radius: 17px; border: 0; background: rgba(255,255,255,.22); color: #fff; font: inherit; font-size: 14px; font-weight: 800; }
+  .v5-piu { width: 42px; height: 42px; border-radius: 21px; border: 0; background: #fff; color: var(--zc); display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
+  .v5-piu svg.ic { width: 24px; height: 24px; stroke-width: 2.6; }
+  .v5-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: rgba(255,255,255,.2); border-radius: 12px; padding: 3px; }
+  .v5-scale button { border: 0; background: none; color: #fff; font: inherit; font-size: 14px; font-weight: 700; padding: 6px 0; border-radius: 9px; }
+  .v5-scale button.scelta { background: #fff; color: var(--zc); }
+  .a5 .ag-settimana { margin: 0; background: none; box-shadow: none; padding: 0; }
+  .a5 .ag-settimana .freccia { color: #fff; background: none; }
+  .a5 .ag-giorno { color: #fff; background: none; border-radius: 14px; }
+  .a5 .ag-giorno small { color: rgba(255,255,255,.85); }
+  .a5 .ag-giorno.scelto, .a5 .ag-giorno.oggi.scelto { background: #fff; color: var(--zc); }
+  .a5 .ag-giorno.scelto small, .a5 .ag-giorno.scelto b { color: var(--zc); }
+  .a5 .ag-giorno b { color: #fff; }
+  .a5 .ag-giorno.scelto .ag-punti i { filter: none; }
+  .a5 .ag-giorno.oggi:not(.scelto) { box-shadow: inset 0 0 0 2px rgba(255,255,255,.6); }
+  .a5 .ag-punti i { box-shadow: 0 0 0 1px rgba(255,255,255,.7); }
+  .a5 + * { margin-top: 14px; }
   .v5-conto { font-size: 13px; font-weight: 800; background: rgba(255,255,255,.22); border-radius: 12px; padding: 5px 10px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .v5-su .o5-dx { min-width: 0; }
   .v5-titolo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }

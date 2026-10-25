@@ -193,7 +193,7 @@ prova('P4 (Ignazio 23/10): la data una volta sola — prima riga uguale in tutte
     assert.match(h, /<button class="ag-mese ag-titolo-giorno">[^<]*2027 ▾/); assert.match(h, /id="ag-oggi"/);
   } finally { AG.giorno = prima; }
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
-  assert.match(src, /\nfunction testaScala\(mostraOggi\) \{/); assert.doesNotMatch(src, /su\('ag-menu'/);
+  assert.match(src, /\nfunction testaScala\(mostraOggi, dentro = ''\) \{/); assert.doesNotMatch(src, /su\('ag-menu'/);
   assert.match(src, /scegli\.addEventListener\('click', \(\) => \{ try \{ if \(scegli\.showPicker\) scegli\.showPicker\(\); \} catch \(e\) \{\} \}\);/);   // il calendario sul computer
 });
 

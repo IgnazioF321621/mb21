@@ -586,9 +586,7 @@ function disegnaAgenda() {
   // P4 (Ignazio 23/10): la data si scrive una volta sola. La prima riga è quella di tutte le viste (testaScala: «Oggi» se serve, «+»);
   // la scelta del giorno sta sul titolo «Oggi, ven 23 ott ▾» (stesso id ag-scegli, stessa ruota delle date). L'anno solo se non è quello di oggi.
   const titoloG = titoloGiorno(AG.giorno, oggi) + (AG.giorno.slice(0, 4) !== oggi.slice(0, 4) ? ' ' + AG.giorno.slice(0, 4) : '');
-  let html = `
-    ${testaScala(AG.giorno !== oggi)}
-    <div class="ag-settimana">
+  const striscia = `<div class="ag-settimana">
       <button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button>
       ${AG.settimana.map((g, i) => {
         const p = punti[g] || { punti: [], tanti: false, quanti: 0 };
@@ -598,9 +596,11 @@ function disegnaAgenda() {
           <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span></button>`;
       }).join('')}
       <button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button>
-    </div>
+    </div>`;
+  let html = `
+    ${testaScala(AG.giorno !== oggi, striscia)}
     <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}<button class="ag-mese ag-titolo-giorno">${esc(titoloG)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1>
-    ${partnerSelect()}`;
+    ${partnerSelectAgenda()}`;
   html += richiamiAgenda(oggi) + compleanniHtml(oggi);   // L10: chi compie gli anni oggi
   const tre = largo();   // l'Agenda a tre colonne (schermo largo); la Settimana è già uscita sopra (disegnaSettimana)
   {
@@ -647,7 +647,7 @@ function disegnaMese() {
   // il mese si scrive una volta sola (Ignazio 22/09): il titolo grande con ‹ › e, toccandolo, la scelta della data
   let html = `${testaScala(mese0 !== oggi.slice(0, 8) + '01')}
     <div class="mm-testa sc-mese"><button class="freccia" id="mm-prima" aria-label="Mese prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-mese')}<button class="ag-mese mm-titolo">${esc(A.titoloMese(AG.giorno))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="mm-dopo" aria-label="Mese dopo">›</button></div>
-    ${partnerSelect()}
+    ${partnerSelectAgenda()}
     <div class="mm-griglia">${A.GIORNI_SETTIMANA.map(g => `<b>${g}</b>`).join('')}
       ${giorni.map(g => {
         const p = punti[g] || { punti: [], tanti: false };
@@ -747,7 +747,7 @@ function elencoDaFareHtml(titolo, cose, scala, riportataDi) {
 // Il foglio con titolo e frecce, mesi piccoli e le cose da fare della scala: quello dell'Anno
 function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, titoloCose, cose, riportataDi, oggi }) {
   return `${testaHtml}<div class="mm-testa sc-${scala}"><button class="freccia" id="sc-prima" aria-label="Prima"${prima ? '' : ' disabled'}>‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-anno')}<button class="ag-mese mm-titolo">${esc(titolo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="Dopo"${dopo ? '' : ' disabled'}>›</button></div>
-    ${partnerSelect()}${sopra || ''}${mesiMiniHtml(mesi, oggi)}
+    ${partnerSelectAgenda()}${sopra || ''}${mesiMiniHtml(mesi, oggi)}
     <div class="ag-foglio">${elencoDaFareHtml(titoloCose, cose, scala, riportataDi)}
     </div>`;
 }
@@ -767,11 +767,16 @@ function montaScala(html, prima, dopo) {
 }
 // La prima riga di TUTTE le viste (P4, Ignazio 23/10: una funzione sola al posto di quattro copie): lo spazio invisibile che spinge a destra
 // «Oggi» (solo se non si guarda oggi, questa settimana, questo mese…) e il «+». Scritta come function (LEZIONI: la «pagina bianca»).
-function testaScala(mostraOggi) {
+// v5 (nota 095, Regia 25/10 sera): sul telefono la prima riga diventa la testata blu dell'Agenda (testaAgendaV5, pagina-oggi.js), con dentro gli stessi
+// tasti «Oggi» e «+» (stessi id) e, nel Giorno, la striscia della settimana (`dentro`); sotto, l'Agenda resta quella di adesso. Solo la veste.
+function testaScala(mostraOggi, dentro = '') {
+  if (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && !largo()) return testaAgendaV5(mostraOggi, dentro);
   return `<div class="ag-testa np"><span class="ag-menu-posto" style="flex:1"></span>
     ${mostraOggi ? '<button class="ag-oggi" id="ag-oggi">Oggi</button>' : ''}
-    <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>`;
+    <button class="ag-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">+</button></div>${dentro}`;
 }
+// v5: il Partner Select sta nella testata (chip «Tu ▾»); la fascia grande resta solo senza la veste nuova (computer, o OGGI_V5 spento)
+const partnerSelectAgenda = () => (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && !largo() ? '' : partnerSelect());
 
 // ── L'ANNO (Ignazio 22/09): un calendario classico, gennaio → dicembre, i 12 mesi piccoli, i WES e gli obiettivi dell'anno
 function disegnaAnno() {
@@ -809,7 +814,7 @@ function disegnaSettimana() {
   const tre = largo();
   let html = `${testaScala(!AG.settimana.includes(oggi))}
     <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
-    ${partnerSelect()}
+    ${partnerSelectAgenda()}
     ${richiamiAgenda(oggi)}
     ${giorniSettimanaHtml(opz, oggi)}
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml('Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
@@ -1958,6 +1963,10 @@ function collegaAgenda(eventi) {
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
   collegaPartnerSelect();
   su('ag-nuovo', foglioAggiungi);   // nota 005: un solo ingresso, a livelli
+  // v5 (testaAgendaV5): «‹ Oggi», il feedback, Giorno · Settimana · Mese · Anno (cambiaVista, come dal menu)
+  su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });
+  su('o5-feedback', () => foglioSegnala());
+  app.querySelectorAll('[data-v5-scala]').forEach(b => { b.onclick = () => { if (b.dataset.v5Scala !== AG.vista) cambiaVista(b.dataset.v5Scala); }; });
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });
   su('ag-chi-sento', () => { ST.tab = 'oggi'; ST.vaiA = 'oggi'; mostraTab(); });   // P2: dritto all'elenco unico «Chi sento oggi?»
