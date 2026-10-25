@@ -1,6 +1,7 @@
 // MB21 · funzione Edge «avvisi» (cantiere 24): spedisce gli avvisi push ai dispositivi registrati.
 // Chiamata in due modi:
 //  - dall'app, con l'accesso dell'utente: { tipo: 'prova' } → avviso di prova ai suoi dispositivi
+//    { tipo: 'spostato', azione: <id> } (nota Pagine 077, 25/10) → a chi riceve l'appuntamento condiviso: «… ha spostato l'appuntamento: ora è …»
 //  - dall'orologio di Supabase (pg_cron → chiama_avvisi), con il segreto: { tipo: 'check_sera' }
 //    → alle 22 di Roma, «Hai fatto il Check di oggi?» a chi non ha ancora salvato il Check del giorno
 //    { tipo: 'mattino' } → alle 9 di Roma (dal 03/10 parte sempre che ci sia qualcosa da dire): «Buongiorno, Nome!» con gli appuntamenti di oggi, se ci sono,
@@ -29,7 +30,7 @@
 //   ha già detto: segno `voce:<cosa>:<giorno>:<utente>` in avvisi_mandati); il Training anche la sera, se durante il giorno non è stato fatto.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
+import { avvisoSpostato, MINUTI_SPOSTATO, scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -229,6 +230,32 @@ Deno.serve(async (req) => {
     const adesso = new Date().toISOString();
     await db.from('avvisi_mandati').upsert({ chiave: prefisso + corpo.utente, user_id: corpo.utente, mandato_il: adesso }, { onConflict: 'chiave' });
     return risposta({ esito: 'mandato', ultimo: adesso, ...spedito });
+  }
+
+  // Nota Pagine 077 (Ignazio 25/10/2026, «A»): chi organizza sposta un appuntamento condiviso → subito l'avviso a chi lo riceve. Lo chiede l'app di chi
+  // sposta, quando il messaggio con «Annulla» è sparito (con «Annulla» non chiede niente). Qui si controlla tutto di nuovo: è chi chiama ad averlo fissato,
+  // è condiviso, lo spostamento è di pochi minuti fa; una volta sola per spostamento (`spostato:<id>:<spostato_il>` in avvisi_mandati). spedisciA lo manda
+  // solo se chi riceve può entrare e ha gli avvisi accesi. Con { prova: true } dice cosa manderebbe, senza mandare e senza segnare.
+  if (tipo === 'spostato') {
+    const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const { data: { user } } = await db.auth.getUser(token);
+    if (!user) return risposta({ errore: 'non autorizzato' }, 401);
+    const { data: io } = await db.from('utenti').select('id, nome, nome_cognome').eq('auth_id', user.id).is('eliminato_il', null).maybeSingle();
+    if (!io) return risposta({ errore: 'utente non trovato' }, 403);
+    if (!corpo.azione) return risposta({ errore: 'richiesta non valida' }, 400);
+    const { data: az } = await db.from('azioni').select('id, user_id, condiviso_con, spostato_il, inizio').eq('id', corpo.azione).maybeSingle();
+    if (!az || az.user_id !== io.id) return risposta({ errore: 'non è un tuo appuntamento' }, 403);
+    if (!az.condiviso_con || !az.spostato_il) return risposta({ esito: 'non_condiviso' });
+    const adesso = corpo.prova && corpo.adesso ? Date.parse(corpo.adesso) : Date.now();
+    if (adesso - Date.parse(az.spostato_il) > MINUTI_SPOSTATO * 60000) return risposta({ esito: 'troppo_tardi' });
+    const chiave = `spostato:${az.id}:${az.spostato_il}`;
+    const { data: gia } = await db.from('avvisi_mandati').select('chiave').eq('chiave', chiave).maybeSingle();
+    if (gia) return risposta({ esito: 'gia_mandato' });
+    const avviso = avvisoSpostato(io.nome || io.nome_cognome || '', az.inizio, az.id);
+    if (corpo.prova) return risposta({ esito: 'prova', a: az.condiviso_con, ...avviso });
+    const spedito = await spedisciA([az.condiviso_con], avviso);
+    await db.from('avvisi_mandati').upsert({ chiave, user_id: az.condiviso_con, mandato_il: new Date().toISOString() }, { onConflict: 'chiave' });
+    return risposta({ esito: 'mandato', ...spedito });
   }
 
   // Avvisi dell'orologio: solo con il segreto condiviso

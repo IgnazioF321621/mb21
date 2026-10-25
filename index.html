@@ -3530,9 +3530,16 @@ function spostaAppuntamento(e, dopo) {
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
     await allineaRigaCoda(e, e.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
     await dopo(g);
+    // Nota Pagine 077 (Ignazio 25/10/2026, «A»): spostato un appuntamento condiviso, a chi lo riceve arriva subito un avviso sul telefono. La richiesta
+    // parte quando «Annulla» non si può più toccare (DURATA_ANNULLA): con «Annulla» non arriva niente. Il resto lo controlla la funzione `avvisi` ('spostato').
+    let annullato = false;
+    const avvisaChiRiceve = () => supa.functions.invoke('avvisi', { body: { tipo: 'spostato', azione: e.id } }).catch(() => {});
+    if (e.condiviso_con) setTimeout(() => { if (!annullato) avvisaChiRiceve(); }, DURATA_ANNULLA + 500);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
+      annullato = true;
       const { error: eAnnulla } = await dbqAvvisa('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
       if (!eAnnulla) await allineaRigaCoda(e, nuovaData, e.inizio);
+      else if (e.condiviso_con) avvisaChiRiceve();   // l'annullamento non è riuscito: lo spostamento resta, e chi lo riceve lo sa
       await dopo(giorno);
     });
   };

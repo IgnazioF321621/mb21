@@ -24,6 +24,18 @@ export const oraDi = (iso: string | number) => Number(new Intl.DateTimeFormat('e
 export type Impegno = { inizio: number; testo: string; telefonata: boolean };
 const quanti = (n: number, uno: string, tanti: string) => `${n} ${n === 1 ? uno : tanti}`;
 export const oraMinuti = (t: number) => new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date(t));
+
+// ── Nota Pagine 077 (Ignazio 25/10/2026, «A»): chi organizza sposta un appuntamento condiviso → subito un avviso a chi lo riceve ──
+// «Persona A ha spostato l'appuntamento: ora è giovedì 30/10 alle 18:00»; il tocco apre l'Agenda su quel giorno. Il giorno come in Agenda
+// (agenda.js, quandoBreve: «giovedì 30/10», senza zeri davanti), l'ora di Roma. Se chi riceve aveva detto «Partecipo», la risposta resta (rispostaValida).
+export const MINUTI_SPOSTATO = 10;   // l'avviso parte solo se lo spostamento è di pochi minuti fa (l'app lo chiede appena sparisce «Annulla»)
+export function avvisoSpostato(nome: string, inizio: string, id: string): { titolo: string; testo: string; url: string; tag: string } {
+  const t = Date.parse(inizio), g = giornoDi(t);
+  const giorno = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'long' }).format(new Date(t)).toLowerCase();
+  const quando = `${giorno} ${Number(g.slice(8, 10))}/${Number(g.slice(5, 7))} alle ${oraMinuti(t)}`;
+  return { titolo: '📅 Appuntamento spostato', testo: `${(nome || '').trim() || 'Chi lo ha fissato'} ha spostato l'appuntamento: ora è ${quando}`,
+    url: `./?apri=agenda&giorno=${g}`, tag: `spostato-${id}` };
+}
 export function riepilogoDomani(impegni: Impegno[]): { titolo: string; ora: string; primo: string } | null {
   if (!impegni.length) return null;
   const app = impegni.filter(x => !x.telefonata).length, tel = impegni.length - app;
