@@ -162,7 +162,8 @@ prova('095: Esplora — tessere a due colonne con colore, icona e nome, nell\'or
 prova('095: la barra in basso ha quattro voci (Oggi, Agenda, Lista Nomi, Esplora); le pagine fuori dalla barra accendono Esplora; i colori delle zone', () => {
   const nav = IDX.slice(IDX.indexOf('<nav id="tab"'), IDX.indexOf('</nav>'));
   assert.deepEqual([...nav.matchAll(/data-tab="(\w+)"/g)].map(m => m[1]), ['oggi', 'agenda', 'lista', 'esplora']);
-  assert.match(nav, /<use href="#ic-esplora"\/><\/svg>Esplora<\/button>/);
+  // Ignazio 26/10: i quattro quadratini di Esplora nei colori delle zone dentro (Mappa, Segni Vitali, Training, Check)
+  assert.match(nav, /<svg class="ic esplora-colori" viewBox="0 0 24 24" aria-hidden="true"><rect [^>]*stroke="#1E3A8A"\/><rect [^>]*stroke="#E11D48"\/><rect [^>]*stroke="#9333EA"\/><rect [^>]*stroke="#0098A3"\/><\/svg>Esplora<\/button>/);
   assert.match(nav, /<use href="#ic-casa"\/><\/svg>Oggi<\/button>/);
   const ctx = {}; vm.createContext(ctx); vm.runInContext(IDX.match(/^const VOCE_BARRA = .*$/m)[0] + ';this.v = VOCE_BARRA;', ctx);
   assert.deepEqual(['oggi', 'agenda', 'lista', 'mappa', 'training', 'check', 'report', 'admin', 'profilo', 'esplora'].map(ctx.v),
