@@ -155,10 +155,13 @@ function riquadriMappaV5(conta, cime) {
 // «WES 02-2027», «BBS 11-2026», «CEP»; per l'Admin accanto quante persone hanno il segno su quante («1 su 3», il conto di prima, senza le parole)
 function segniVitaliV5(cime) {
   if (!MP.attivi) return '';
-  const M = MB21Mappa, conto = eAdmin() && MP.targhe && MP.schede;
-  const tutti = conto ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }) : [], quanti = tutti.length;
-  const accese = k => tutti.filter(r => { const t = targheRiga(r); return t && t[k]; }).length;
-  // poi (Ignazio 26/10): uno sotto l'altro, e a destra la percentuale (arrotondata all'intero; «—» se non c'è nessuno); conto e percentuale solo per l'Admin
+  const M = MB21Mappa, tutti = M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }), quanti = tutti.length;
+  // poi (Ignazio 26/10): uno sotto l'altro, e a destra la percentuale (arrotondata all'intero; «—» se non c'è nessuno). L'Admin, per sé, conta con le targhette
+  // delle sue liste (targheRiga); il partner (e l'Admin che lo guarda con il Partner Select, «come li vedrebbe lui») conta chi ha il segno nel suo ramo
+  // (MP.segni.proprio: Ignazio 26/10, «sì» alla proposta). Nessuna lettura in più.
+  const liste = eAdmin() && !(typeof guardoAltri === 'function' && guardoAltri());
+  const conto = liste ? !!(MP.targhe && MP.schede) : !!MP.segni;
+  const accese = k => tutti.filter(r => { if (liste) { const t = targheRiga(r); return t && t[k]; } const p = MP.segni.proprio[r.id]; return !!(p && p[k] > 0); }).length;
   const voce = (k, nome, quando) => { const n = conto ? accese(k) : 0;
     return `<div class="m5-sv ${k}"><span><b>${nome}</b>${quando ? ' ' + esc(quando) : ''}${conto ? ` <em>${n} su ${quanti}</em>` : ''}</span>${conto ? `<strong>${quanti ? Math.round(n / quanti * 100) + '%' : '—'}</strong>` : ''}</div>`; };
   return `<div class="m5-segni"><b class="m5-segni-t">Segni Vitali</b>${voce('wes', 'WES', MP.attivi.wes ? MB21Lista.etichettaEvento(MP.attivi.wes) : '—')}${voce('bbs', 'BBS', MP.attivi.bbs ? MB21Lista.etichettaEvento(MP.attivi.bbs) : '—')}${voce('cep', 'CEP', '')}</div>`;

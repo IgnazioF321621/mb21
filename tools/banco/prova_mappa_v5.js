@@ -17,7 +17,7 @@ function mondo({ admin = true } = {}) {
   const app = new Nodo(), chiamate = [];
   const ctx = { console, Promise, Date, Set, Map, JSON, Math, Number, String, Array, Object, app, esc, escIcone: s => s, ic: n => `[${n}]`, iniziali: n => String(n).slice(0, 2), centesimi: s => s,
     MB21Mappa: M, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-26' }, ST: { utente: { id: 'admin', partner_id: 'P000' }, tab: 'mappa' },
-    eAdmin: () => admin, vediTutti: () => false, soloLettura: () => false, visto: () => ({ id: 'admin', partner_id: 'P000' }), nomeVisto: () => 'Finto Admin',
+    eAdmin: () => admin, guardoAltri: () => false, vediTutti: () => false, soloLettura: () => false, visto: () => ({ id: 'admin', partner_id: 'P000' }), nomeVisto: () => 'Finto Admin',
     partnerSelect: () => '', righeTeamHtml: () => '<div id="riga-avvio-di-prima"></div>', obiettiviTeamHtml: () => '<div id="riga-obiettivi-di-prima"></div>',
     AVV: { righe: [{ partner_id: 'P003', nome: 'C, PERSONA', onb_sogno: true }], aperto: null }, disegnaAvvio: () => chiamate.push(['avvio', ctx.AVV.aperto, ctx.ST.tornaA]), apriContattoDa: id => chiamate.push(['scheda', id]), rigaApribile: () => '', versione: () => '', collegaPartnerSelect() {}, collegaRigheTeam() {}, targaAppHtml: () => '',
     chipPartnerSelect: () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>', OGGI_V5: true, window: { scrollTo() {} },
@@ -84,8 +84,16 @@ prova('Sotto la testata niente più «Gruppo di …» e il mese; un titolo «Seg
   assert.doesNotMatch(h, />Gruppo di |mese 10\/2026|segnati|abbonati|Segni Vitali del gruppo/);
   // poi (Ignazio 26/10): uno sotto l'altro, con la percentuale a destra (arrotondata; per l'Admin, come «N su M»)
   assert.match(h, /<div class="m5-segni"><b class="m5-segni-t">Segni Vitali<\/b><div class="m5-sv wes"><span><b>WES<\/b> 02-2027 <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><div class="m5-sv bbs"><span><b>BBS<\/b> 11-2026 <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><div class="m5-sv cep"><span><b>CEP<\/b> <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><\/div>/);
+  // un partner (Ignazio 26/10, «sì»): anche lui «N su M» e la percentuale, sul suo ramo (chi ha il segno, MP.segni.proprio)
   const P = mondo({ admin: false }); P.ctx.disegna();
-  assert.match(P.app.innerHTML, /<div class="m5-sv wes"><span><b>WES<\/b> 02-2027<\/span><\/div>/);   // un partner: senza conti né percentuale
+  assert.match(P.app.innerHTML, /<div class="m5-sv wes"><span><b>WES<\/b> 02-2027 <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><div class="m5-sv bbs"><span><b>BBS<\/b> 11-2026 <em>2 su 4<\/em><\/span><strong>50%<\/strong><\/div><div class="m5-sv cep"><span><b>CEP<\/b> <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div>/);
+  // l'Admin con il Partner Select su Persona A: i numeri del ramo di A, come li vedrebbe lei (A e C: WES 1 su 2, BBS 2 su 2, CEP 0 su 2)
+  const G = mondo(); G.ctx.visto = () => ({ id: 'u1', partner_id: 'P001' }); G.ctx.guardoAltri = () => true; vm.runInContext('visto = this.visto; guardoAltri = this.guardoAltri', G.ctx);
+  G.ctx.disegna();
+  assert.match(G.app.innerHTML, /<b>WES<\/b> 02-2027 <em>1 su 2<\/em><\/span><strong>50%<\/strong>[\s\S]*<b>BBS<\/b> 11-2026 <em>2 su 2<\/em><\/span><strong>100%<\/strong>[\s\S]*<b>CEP<\/b> <em>0 su 2<\/em><\/span><strong>0%<\/strong>/);
+  // nessuno nel gruppo: «—»
+  const V = mondo({ admin: false }); V.ctx.MP.squadra = []; V.ctx.disegna();
+  assert.match(V.app.innerHTML, /<b>WES<\/b> 02-2027 <em>0 su 0<\/em><\/span><strong>—<\/strong>/);
   assert.match(PM, /<strong>\$\{quanti \? Math\.round\(n \/ quanti \* 100\) \+ '%' : '—'\}<\/strong>/);   // con nessuno «—»
 });
 
