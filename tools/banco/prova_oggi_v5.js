@@ -79,7 +79,7 @@ prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto Contatti, finché 
   F.app.clic('[data-o5="sera"]'); assert.deepEqual(F.vai, ['check']);
 });
 
-prova('095: Agenda — gli appuntamenti di oggi (tipo, ora, persona); senza, il prossimo; senza niente in vista l\'invito, che apre i Contatti del giorno', () => {
+prova('095: Agenda — gli appuntamenti di oggi (tipo, ora, persona); senza, il prossimo; senza niente in vista l\'invito; il tocco apre sempre l\'Agenda', () => {
   const app1 = { tipo_azione: 'Appuntamento', modalita: 'Piano Marketing', quando: '2026-10-25T15:30:00Z', contatti: { nome: 'Persona C' } };
   const W = mondo({ agenda: [app1, { tipo_azione: 'Incontro', quando: '2026-10-25T17:00:00Z', luogo: 'online' }] }); W.ctx.disegna();
   assert.match(testo(W.app.innerHTML), /AGENDA 2 appuntamenti oggi Piano Marketing 16:30 · Persona C Incontro 18:00 · online/);
@@ -88,7 +88,7 @@ prova('095: Agenda — gli appuntamenti di oggi (tipo, ora, persona); senza, il 
   assert.match(testo(P.app.innerHTML), /Oggi niente il prossimo: Piano Marketing, mar 27\/10 alle 18:00/);
   const N = mondo(); N.ctx.disegna();
   assert.match(testo(N.app.innerHTML), /Nessun appuntamento in vista fissane uno/);
-  N.app.clic('.o5-agenda'); assert.deepEqual(JSON.parse(JSON.stringify(N.vai)), [['lv', 'oggi', null]]);
+  N.app.clic('.o5-agenda'); assert.deepEqual(JSON.parse(JSON.stringify(N.vai)), [['tab', 'agenda']]);   // Ignazio 26/10: anche con l'invito apre l'Agenda
 });
 
 prova('095: Training — giorni di fila e «15 carte · 5 min» (dritti nel ripasso), «Ripasso di oggi fatto», «Impara una carta nuova»; guardando un altro niente numeri', () => {

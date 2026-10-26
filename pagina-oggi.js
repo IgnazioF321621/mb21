@@ -67,7 +67,7 @@ function o5Sera(fatto) {
   return `<button class="o5-r o5-sera${fatto ? ' fatto' : ''}" data-o5="sera"><span class="o5-tondo">${ic(fatto ? 'fatto' : 'diario')}</span><span class="o5-col">${fatto
     ? '<b>Check di oggi ✓</b><small>Rivedi o correggi la tua giornata</small>' : '<b>Com\'è andata oggi?</b><small>È ora: scrivi la tua giornata nel Check</small>'}</span><em>›</em></button>`;
 }
-// Agenda: gli appuntamenti di oggi (ognuno apre l'Agenda su oggi, dove si segna l'esito); se oggi niente, il prossimo; se niente in vista, l'invito a fissarne uno
+// Agenda: gli appuntamenti di oggi; se oggi niente, il prossimo; se niente in vista, l'invito a fissarne uno. Il tocco apre sempre l'Agenda su oggi
 function o5Agenda() {
   const pronto = O5.di === visto().id && O5.giorno === ST.oggi && Array.isArray(O5.oggi);
   const cosa = a => esc(a.modalita || (a.tipo_azione === 'Contatto' ? a.esito : a.tipo_azione) || 'Appuntamento');
@@ -80,8 +80,8 @@ function o5Agenda() {
     dx = `<span class="o5-app">${O5.oggi.slice(0, 2).map(a => `<span><b>${cosa(a)}</b><small>${esc(MB21Agenda.partiRoma(a.quando).ora)}${chi(a) ? ' · ' + chi(a) : ''}</small></span>`).join('')}</span>`;
   } else if (O5.prossimo) sx = `<span class="o5-riga forte">Oggi niente</span><span class="o5-riga">il prossimo: ${cosa(O5.prossimo)}, ${esc(o5Giorno(O5.prossimo.quando))}</span>`;
   else sx = `<span class="o5-riga forte">Nessun appuntamento in vista</span><span class="o5-riga">fissane uno</span>`;
-  const invito = pronto && !O5.oggi.length && !O5.prossimo;
-  return `<button class="o5-r o5-agenda${dx ? ' due' : ''}" data-o5="${invito ? 'contatti' : 'agenda'}"><span class="o5-col"><span class="o5-tit">${ic('agenda')} AGENDA</span>${sx}</span>${dx}</button>`;
+  // Ignazio 26/10: il riquadro apre SEMPRE l'Agenda, anche con l'invito «fissane uno» (prima con l'invito apriva i Contatti del giorno)
+  return `<button class="o5-r o5-agenda${dx ? ' due' : ''}" data-o5="agenda"><span class="o5-col"><span class="o5-tit">${ic('agenda')} AGENDA</span>${sx}</span>${dx}</button>`;
 }
 // Training: cosa c'è da fare, con le parole del Training (mai l'ora del giorno)
 function o5Training() {
