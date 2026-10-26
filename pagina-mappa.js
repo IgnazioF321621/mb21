@@ -149,7 +149,9 @@ function disegnaMappa() {
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
   const tocca = targheDaToccare() && !!MP.schede;   // nota 070: per l'Admin le targhette sono tasti (appena le schede sono lette)
 
-  let html = `<h1>Mappa</h1>${partnerSelect()}
+  // v5 (nota 095, Regia 26/10): la testata blu notte (testaMappaV5, pagina-oggi.js) al posto del titolo e della fascia del Partner Select; sotto la Mappa di adesso
+  const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaMappaV5 === 'function';
+  let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese)) : `<h1>Mappa</h1>${partnerSelect()}`}
     ${righeTeamHtml()}${statisticheHtml()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
@@ -420,6 +422,9 @@ function radiceVista(cime) {
 
 function collegaMappa() {
   collegaPartnerSelect();
+  const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };   // v5: «‹ Oggi» e il feedback della testata
+  su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });
+  su('o5-feedback', () => foglioSegnala());
   collegaRigheTeam();
   const stat = document.getElementById('mp-stat');
   if (stat) stat.onclick = apriStatistiche;

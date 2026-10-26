@@ -335,6 +335,17 @@ prova('095 Clienti da sentire: testata oro, «‹ Oggi», i riordini da sentire 
   assert.match(IDX, /--cat-cliente: #D99A00; --cat-cliente-tinta: #FFF3D1;/);
 });
 
+prova('095 Mappa: testata blu notte con «‹ Oggi», chip, feedback, «N nel gruppo · mese» e «Mappa»; sotto la Mappa di adesso; i collegamenti in collegaMappa', () => {
+  const W = mondo({ admin: true });
+  const h = W.ctx.testaMappaV5(24, '10/2026');
+  assert.match(h, /^<div class="v5-testa m5" style="--zc:var\(--z-mappa\)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
+  assert.match(h, /<button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="o5-feedback"/);
+  assert.match(h, /<span class="v5-sopra">24 nel gruppo · 10\/2026<\/span><h1>Mappa<\/h1>/);
+  const PM = leggi('pagina-mappa.js');
+  assert.match(PM, /let html = `\$\{v5 \? testaMappaV5\(conta\.tutti, mesePulito\(MP\.mese\)\) : `<h1>Mappa<\/h1>\$\{partnerSelect\(\)\}`\}/);
+  assert.match(PM, /su\('v5-indietro', \(\) => \{ ST\.tab = 'oggi';/); assert.match(PM, /su\('o5-feedback', \(\) => foglioSegnala\(\)\);/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

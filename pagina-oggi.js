@@ -396,3 +396,11 @@ function disegnaClientiV5() {
   attaccaIndietroLV();
   collegaTestaV5();
 }
+
+// ── v5, settima pagina: la testata della Mappa (Regia 26/10; solo la veste: albero, targhette, Segni Vitali, filtri, conti e letture di adesso) ──
+// Blu notte Mappa, «‹ Oggi», il chip del Partner Select, il feedback, «N nel tuo gruppo · mese» (il conto e il mese che la Mappa ha già) e «Mappa».
+function testaMappaV5(quanti, mese) {
+  return `<div class="v5-testa m5" style="--zc:var(--z-mappa)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
+      <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="v5-titolo"><div><span class="v5-sopra">${esc(`${quanti} nel gruppo · ${mese}`)}</span><h1>Mappa</h1></div></div></div>`;
+}
