@@ -145,7 +145,9 @@ function riquadriMappaV5(conta, cime) {
   const tot = { wes: 0, bbs: 0, cep: 0 };
   if (MP.segni) for (const c of cime) { const g = MP.segni.gruppo[c.id]; if (g) for (const [k] of SEGNI_V5) tot[k] += g[k] || 0; }
   const b = (k, n, t) => `<button class="m5-box ${k}${MP.filtro === k ? ' scelto' : ''}" data-mpfiltro="${k}" aria-pressed="${MP.filtro === k}"><b>${n}</b><small>${t}</small></button>`;
-  return `<div class="m5-riquadri stati">${b('attivo', conta.attivo, 'attivi')}${b('warning', conta.warning, 'sotto 50 VP')}${b('inattivo', conta.inattivo, 'fermi')}</div>
+  // nota 098 (Ignazio 26/10, «perfetto»): «da avviare» è un riquadro come gli altri (i partner con l'avvio aperto, AVV.righe, nell'albero che si guarda)
+  const avvio = avviiNellaMappa(cime).size;
+  return `<div class="m5-riquadri stati quattro">${b('attivo', conta.attivo, 'attivi')}${b('warning', conta.warning, 'sotto 50')}${b('inattivo', conta.inattivo, 'fermi')}${b('avvio', avvio, '🚀 da avviare')}</div>
     <div class="m5-riquadri segni">${SEGNI_V5.map(([k, t]) => b(k, MP.segni ? tot[k] : '…', t)).join('')}</div>`;
 }
 // Nota 098 (Ignazio 26/10: «lo sappiamo in quale mese siamo e chi sta guardando»; via «Segnati» e «Abbonati»): un titolo solo «Segni Vitali» e sotto
@@ -165,9 +167,22 @@ function livelloVisto(livello, cime) {
   const base = cime && cime.length === 1 && cime[0].livello != null ? cime[0].livello : null;
   return base != null && livello >= base ? livello - base + 1 : livello;
 }
-// chi passa il filtro di un riquadro: lo stato dei VP, o il segno suo (non del gruppo)
+// i partner da avviare (AVV.righe, letti con la Dashboard o all'apertura della Mappa) che stanno nell'albero che si guarda: codice → riga dell'avvio
+function avviiNellaMappa(cime) {
+  const ids = new Set(MB21Mappa.tuttiGliId(cime || [])), m = new Map();
+  for (const a of (typeof AVV !== 'undefined' && AVV.righe) || []) if (a.partner_id && ids.has(a.partner_id)) m.set(a.partner_id, a);
+  return m;
+}
+// sotto il nome, con il filtro «da avviare»: il prossimo passo e i passi fatti su 14, con la barretta (MB21Lista, le regole dell'avvio)
+function avvioRigaV5(a) {
+  if (!a) return '';
+  const L = MB21Lista, { fatti, totale } = L.contatoreOnboarding(a), p = L.prossimoPasso(a);
+  return `<div class="m5-avvio">🚀 ${p ? 'prossimo: ' + esc(p.nome) + ' · ' : ''}${fatti}/${totale}<i><b style="width:${totale ? Math.round(fatti / totale * 100) : 0}%"></b></i></div>`;
+}
+// chi passa il filtro di un riquadro: lo stato dei VP, il segno suo (non del gruppo), o l'avvio aperto
 function passaFiltroV5(r, f) {
   if (f === 'attivo' || f === 'warning' || f === 'inattivo') return r.stato === f;
+  if (f === 'avvio') return ((typeof AVV !== 'undefined' && AVV.righe) || []).some(a => a.partner_id === r.id);
   const p = MP.segni && MP.segni.proprio[r.id];
   return !!(p && p[f] > 0);
 }
@@ -197,6 +212,7 @@ function disegnaMappa() {
   // WES · BBS · CEP: chi ha il segno, MP.segni.proprio). Poi (Ignazio: «manteniamo la struttura della mappa»): l'albero resta, tutto aperto, con le persone
   // della lista al loro posto e i rami che servono per arrivarci attenuati (`spento`, come i filtri di prima)
   const soloLista = v5 && MP.filtro !== 'tutti';
+  const avvii = v5 ? avviiNellaMappa(cime) : new Map();
   const righe = soloLista ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)), cerca: MP.cerca, passaFiltro: r => passaFiltroV5(r, MP.filtro) })
     : M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
   const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
@@ -205,7 +221,7 @@ function disegnaMappa() {
 
   // v5 (nota 095, Regia 26/10): la testata blu notte (testaMappaV5, pagina-oggi.js) al posto del titolo e della fascia del Partner Select; sotto la Mappa di adesso
   let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese), riquadriMappaV5(conta, cime)) : `<h1>Mappa</h1>${partnerSelect()}`}
-    ${righeTeamHtml()}${statisticheHtml()}
+    ${v5 ? obiettiviTeamHtml() : righeTeamHtml()}${statisticheHtml()}
     ${v5 ? segniVitaliV5(cime) : `<div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}`}
     ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
@@ -246,6 +262,7 @@ function disegnaMappa() {
           <div class="mp-numeri">${v5 ? '' : `VPP <b>${num(r.vpp)}</b> · `}VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
           ${v5 ? segniGruppoV5(MP.segni && MP.segni.gruppo[r.id], r) : segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
+          ${v5 && MP.filtro === 'avvio' && !r.spento ? avvioRigaV5(avvii.get(r.id)) : ''}
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
@@ -519,6 +536,10 @@ function collegaMappa() {
   app.querySelectorAll('[data-mpnome]').forEach(b => b.onclick = async () => {
     const partner = (MP.squadra || []).find(x => x.partner_id === b.dataset.mpnome);
     if (!partner) return;
+    // nota 098: con il filtro «da avviare» il nome apre i suoi 14 passi (la pagina dell'avvio di sempre), con «‹ Mappa»
+    if (mappaV5() && MP.filtro === 'avvio' && typeof AVV !== 'undefined' && AVV.righe.some(a => a.partner_id === partner.partner_id)) {
+      ST.tornaA = 'mappa'; AVV.aperto = partner.partner_id; window.scrollTo(0, 0); return disegnaAvvio();
+    }
     const r = { id: partner.partner_id, nome: MB21Mappa.nomeLeggibile(partner.nome) };
     if (!MP.schede) {
       try { await caricaSchedeMappa(); } catch (e) { return mostraToast('Schede non caricate: riprova.'); }

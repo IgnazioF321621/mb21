@@ -1525,8 +1525,10 @@ function disegnaAvvio() {
         </div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
-    <h1>${ic('avvio')} Partner da avviare</h1>
+  // v5 (nota 098): dalla Mappa la testata blu notte con «‹ Mappa»; il resto della pagina come prima
+  app.innerHTML = `${typeof testaZonaV5 === 'function' && typeof OGGI_V5 !== 'undefined' && OGGI_V5 ? testaZonaV5({ colore: 'var(--z-mappa)', torna: ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi', tornaId: 'indietro', titolo: 'Partner da avviare', ps: false })
+      : `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
+    <h1>${ic('avvio')} Partner da avviare</h1>`}
     <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
     <button class="ag-blocco avv-come" id="avv-come"><span>${ic('info')} Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>
     ${AVV.comeAperto ? `<div class="riquadro avv-come-testo"><ul>
@@ -1543,6 +1545,7 @@ function disegnaAvvio() {
     ${AVV.pausa.length ? `<button class="ag-blocco avv-pausa" id="avv-pausa"><span>${ic('pausa')} In pausa · ${AVV.pausa.length}</span><span>${AVV.pausaAperta ? '⌄' : '›'}</span></button>
       ${AVV.pausaAperta ? AVV.pausa.map(card).join('') : ''}` : ''}${versione()}`;
   document.getElementById('indietro').onclick = tornaDaTeam;
+  const fb5 = document.getElementById('o5-feedback'); if (fb5) fb5.onclick = () => foglioSegnala();   // v5: il feedback della testata
   const come = document.getElementById('avv-come');
   if (come) come.onclick = () => { AVV.comeAperto = !AVV.comeAperto; disegnaAvvio(); };
   const pausa = document.getElementById('avv-pausa');

@@ -2536,6 +2536,11 @@
   .m5-box { border: 0; border-radius: 14px; padding: 7px 4px; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 52px; }
   .m5-box b { font-size: 22px; font-weight: 800; line-height: 1.1; } .m5-box small { font-size: 12px; font-weight: 700; }
   .m5-box.scelto { box-shadow: 0 0 0 3px #FFD54A; }
+  .m5-riquadri.quattro { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .m5-box.avvio { background: #EDE7FE; color: #5B21B6; }
+  .m5-riquadri.stati .m5-box.avvio small::before { display: none; }
+  .m5-avvio { font-size: 12px; font-weight: 700; color: #5B21B6; margin-top: 3px; }
+  .m5-avvio i { display: block; height: 5px; width: 180px; max-width: 100%; background: #E5E5EA; border-radius: 3px; margin-top: 4px; } .m5-avvio i b { display: block; height: 5px; background: #5B21B6; border-radius: 3px; }
   .m5-riquadri.stati .m5-box small::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; background: currentColor; }
   .m5-box.attivo { background: #EAF8EE; color: #1F7A30; } .m5-box.warning { background: #FFF4D6; color: #8A6200; } .m5-box.inattivo { background: #E9EAEE; color: #555B66; }
   .m5-box.wes, .m5-box.bbs, .m5-box.cep { background: #fff; } .m5-box.wes { color: var(--wes); } .m5-box.bbs { color: var(--bbs); } .m5-box.cep { color: var(--cep); }

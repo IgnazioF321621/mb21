@@ -18,8 +18,9 @@ function mondo({ admin = true } = {}) {
   const ctx = { console, Promise, Date, Set, Map, JSON, Math, Number, String, Array, Object, app, esc, escIcone: s => s, ic: n => `[${n}]`, iniziali: n => String(n).slice(0, 2), centesimi: s => s,
     MB21Mappa: M, MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-26' }, ST: { utente: { id: 'admin', partner_id: 'P000' }, tab: 'mappa' },
     eAdmin: () => admin, vediTutti: () => false, soloLettura: () => false, visto: () => ({ id: 'admin', partner_id: 'P000' }), nomeVisto: () => 'Finto Admin',
-    partnerSelect: () => '', righeTeamHtml: () => '', rigaApribile: () => '', versione: () => '', collegaPartnerSelect() {}, collegaRigheTeam() {}, targaAppHtml: () => '',
-    chipPartnerSelect: () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>', OGGI_V5: true,
+    partnerSelect: () => '', righeTeamHtml: () => '<div id="riga-avvio-di-prima"></div>', obiettiviTeamHtml: () => '',
+    AVV: { righe: [{ partner_id: 'P003', nome: 'C, PERSONA', onb_sogno: true }], aperto: null }, disegnaAvvio: () => chiamate.push(['avvio', ctx.AVV.aperto, ctx.ST.tornaA]), apriContattoDa: id => chiamate.push(['scheda', id]), rigaApribile: () => '', versione: () => '', collegaPartnerSelect() {}, collegaRigheTeam() {}, targaAppHtml: () => '',
+    chipPartnerSelect: () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>', OGGI_V5: true, window: { scrollTo() {} },
     supa: new Proxy({}, { get: () => { throw new Error('nessuna lettura nel disegno della Mappa'); } }),
     document: { getElementById: id => app.getElementById(id) }, mostraToast: t => chiamate.push(['toast', t]),
     toccaTarga: (c, k) => chiamate.push(['tocca', c.id, k]) };
@@ -42,7 +43,8 @@ function mondo({ admin = true } = {}) {
 prova('La testata: attivi · sotto 50 VP · fermi (con il loro colore) e sotto WES · BBS · CEP del gruppo intero, in quest\'ordine', () => {
   const W = mondo(); W.ctx.disegna();
   const h = W.app.innerHTML;
-  assert.match(h, /<div class="m5-riquadri stati"><button class="m5-box attivo" data-mpfiltro="attivo" aria-pressed="false"><b>2<\/b><small>attivi<\/small><\/button><button class="m5-box warning" data-mpfiltro="warning" aria-pressed="false"><b>1<\/b><small>sotto 50 VP<\/small><\/button><button class="m5-box inattivo" data-mpfiltro="inattivo" aria-pressed="false"><b>1<\/b><small>fermi<\/small><\/button><\/div>/);
+  assert.match(h, /<div class="m5-riquadri stati quattro"><button class="m5-box attivo" data-mpfiltro="attivo" aria-pressed="false"><b>2<\/b><small>attivi<\/small><\/button><button class="m5-box warning" data-mpfiltro="warning" aria-pressed="false"><b>1<\/b><small>sotto 50<\/small><\/button><button class="m5-box inattivo" data-mpfiltro="inattivo" aria-pressed="false"><b>1<\/b><small>fermi<\/small><\/button><button class="m5-box avvio" data-mpfiltro="avvio" aria-pressed="false"><b>1<\/b><small>🚀 da avviare<\/small><\/button><\/div>/);
+  assert.doesNotMatch(h, /riga-avvio-di-prima/);   // la riga grigia «Partner da avviare» non c'è più: è il riquadro
   assert.match(h, /<div class="m5-riquadri segni"><button class="m5-box wes"[^>]*><b>1<\/b><small>WES<\/small><\/button><button class="m5-box bbs"[^>]*><b>3<\/b><small>BBS<\/small><\/button><button class="m5-box cep"[^>]*><b>1<\/b><small>CEP<\/small><\/button><\/div>/);
   assert.doesNotMatch(h, /data-mpfiltro="warning" class=|🔴Warning|⚪Inattivi/);   // niente più la fila di filtri di prima: i filtri sono i riquadri
 });
@@ -95,6 +97,22 @@ prova('Il livello parte da chi si guarda: con il Partner Select su Persona A, le
   const h = W.app.innerHTML;
   assert.match(h, /data-mpnome="P001">[^<]*<\/button>\s*<span class="mp-liv">Liv\. 1</);
   assert.match(h, /data-mpnome="P003">[^<]*<\/button>\s*<span class="mp-liv">Liv\. 2</);
+});
+
+prova('«Da avviare» (Ignazio 26/10, «perfetto»): il riquadro con il numero; toccandolo l\'albero con solo loro, il prossimo passo e i passi su 14; il nome apre i suoi passi', () => {
+  const W = mondo(); W.ctx.disegna();
+  W.ctx.MB21Lista = { ...L, contatoreOnboarding: () => ({ fatti: 5, totale: 14 }), prossimoPasso: () => ({ nome: 'Il primo PM' }) };
+  vm.runInContext('MB21Lista = this.MB21Lista', W.ctx);
+  W.app.clic('[data-mpfiltro="avvio"]');
+  const h = W.app.innerHTML;
+  const righe = [...h.matchAll(/<div class="mp-riga ([^"]*)"[\s\S]*?data-mpnome="(P\d+)"/g)].map(x => [x[2], /spento/.test(x[1])]);
+  assert.deepEqual(righe, [['P000', true], ['P001', true], ['P003', false]]);   // Persona C al suo posto, i rami attenuati
+  assert.match(h, /<div class="m5-avvio">🚀 prossimo: Il primo PM · 5\/14<i><b style="width:36%"><\/b><\/i><\/div>/);
+  W.app.clic('[data-mpnome="P003"]');
+  assert.equal(JSON.stringify(W.chiamate.at(-1)), JSON.stringify(['avvio', 'P003', 'mappa']));
+  // fuori dal filtro il nome apre la scheda, come prima
+  W.app.clic('[data-mpfiltro="avvio"]'); W.ctx.MP.aperti = new Set(['P000', 'P001']); W.ctx.disegna();
+  assert.equal(W.ctx.MP.filtro, 'tutti');
 });
 
 prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', () => {
