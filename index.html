@@ -2504,6 +2504,15 @@
   .v5-testa .contatta a.ct-call { background: #fff; color: var(--zc); }
   .v5-testa .contatta svg { color: inherit; } .v5-testa .contatta { margin-top: 0; }
   .p5-card { background: var(--superficie); margin-top: 4px; }
+  /* nota 098: nella scheda Segni Vitali (solo Partner), Prossimo e Le ultime volte */
+  .p5-coppia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+  .p5-coppia.uno { grid-template-columns: 1fr; }
+  .p5-box { background: var(--superficie); border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .p5-box b { font-size: 15px; font-weight: 800; } .p5-box small { font-size: 12px; font-weight: 600; color: var(--testo-soft); }
+  .p5-tit { font-size: 13px; font-weight: 800; color: var(--testo-soft); letter-spacing: .02em; }
+  .p5-ultime { margin-top: 12px; gap: 8px; }
+  .p5-ultime > div { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .p5-ultime > div small { font-size: 14px; }
   .p5-blocco { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
   .p5-blocco b { font-size: 18px; }
   .p5-esito { display: flex; justify-content: space-between; align-items: center; width: 100%; background: var(--sfondo); border: 0; border-radius: 14px; padding: 13px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--testo); }

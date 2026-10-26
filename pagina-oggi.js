@@ -254,8 +254,12 @@ function disegnaContattiV5() {
   const manca = e.totale - e.fatti, primo = righe[0];
   const riga = rigaElencoV5;
   const gruppi = e.gruppi.map(g => `<div class="c5-gruppo">${esc(g.titolo)} · ${g.righe.length}</div><div class="c5-elenco">${g.righe.map(riga).join('')}</div>`).join('');
-  const fatte = LV.fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${LV.fatte.length}</div><div class="c5-elenco">${LV.fatte.map(x =>
-    `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : '';
+  // nota 098: tutti i sentiti di oggi con la categoria e l'esito (sentitiOggiV5); finché non arrivano, quelli chiusi da qui con «fatto», come prima
+  const sentiti = sentitiOggiV5(), visti = new Set();
+  const righeFatte = sentiti ? sentiti.filter(x => !visti.has(x.contatto_id) && visti.add(x.contatto_id)).map(x => ({ nome: x.contatti ? x.contatti.nome : '', sotto: [x.contatti && x.contatti.categoria, x.esito].filter(Boolean).join(' · ') }))
+    : LV.fatte.map(x => ({ nome: x.nome, sotto: 'fatto' }));
+  const fatte = righeFatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${righeFatte.length}</div><div class="c5-elenco">${righeFatte.map(x =>
+    `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>${esc(x.sotto)}</small></span></div>`).join('')}</div>` : '';
   let extra = '';
   if (inPausa) extra = altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
     : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`;
@@ -327,7 +331,7 @@ function disegnaPersonaV5() {
       <div class="o5-dx">${conto && !LV.daClienti ? `<span class="v5-conto">${esc(conto)}</span>` : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
     <div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>
     ${telefonata ? contattaHtml(dato.telefono) : ''}</div>
-    <div class="c5-corpo lv-scheda">${corpo}</div>` + versione();
+    <div class="c5-corpo lv-scheda">${corpo}${chiContatto ? schedaInPiuV5(chiContatto, cat, dato) : ''}</div>` + versione();
   attaccaIndietroLV();
   collegaTestaV5();
   const b = document.getElementById('p5-esito');
@@ -414,3 +418,59 @@ function testaZonaV5({ colore, torna, tornaId, titolo, sotto = '', ps = true, de
     <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div>${destra}</div></div>`;
 }
 const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
+
+// ── v5, secondo giro (nota 098, pacchetto approvato da Ignazio il 26/10, «sì»): nella scheda della persona Segni Vitali (solo per i Partner: «un Prospect non ha
+// bisogno di Segni Vitali»), «Prossimo» e «Le ultime volte»; in Contatti del giorno «Già sentiti oggi» con la categoria e l'esito. Si guarda e basta: i tasti,
+// i fogli e i salvataggi restano quelli di adesso. Letture piccole, tenute in memoria finché non c'è una scrittura (SCRITTURE.ultima):
+// i Segni Vitali con la stessa lettura della linguetta (caricaSegni, solo per un Partner); le ultime 5 azioni della persona (prossimo e ultime volte);
+// gli esiti di oggi (una richiesta quando si apre la pagina).
+const P5 = { segni: {}, azioni: {}, fatti: null };
+const fresco5 = x => x && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < x.letta);
+const giornoBreve5 = iso => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' });
+const ridisegna5 = vista => { if (ST.tab === 'oggi' && LV.vista === vista) disegnaOggi(); };
+function schedaInPiuV5(contattoId, cat, dato) {
+  const persona = dato.contatti ? { id: contattoId, nome: dato.contatti.nome, user_id: dato.user_id } : { id: contattoId, nome: dato.nome, user_id: dato.user_id };
+  // Segni Vitali: solo per i Partner
+  let segni = '';
+  if (cat === 'Partner') {
+    const s = P5.segni[contattoId];
+    if (!fresco5(s)) {
+      P5.segni[contattoId] = { letta: Date.now(), SV: null };
+      caricaSegni(persona).then(SV => { P5.segni[contattoId] = { letta: Date.now(), SV }; ridisegna5('persona'); }, () => { P5.segni[contattoId] = { letta: Date.now(), errore: true }; ridisegna5('persona'); });
+    }
+    const x = P5.segni[contattoId], SV = x && x.SV;
+    const t = SV ? targheDi(SV) : null, oggi = MB21Coda.oggiRoma();
+    const testo = !SV ? (x && x.errore ? 'Non letti ora' : 'Leggo…') : `BBS ${t.bbs ? 'sì' : 'no'} · WES ${t.wes ? 'sì' : 'no'}`;
+    const cep = !SV ? '' : `CEP: ${t.cep ? 'abbonato' : MB21Lista.descrizioneCep(SV.cep, oggi).toLowerCase()}`;
+    segni = `<div class="p5-box"><span class="p5-tit" style="color:var(--z-segni)">SEGNI VITALI</span><b>${esc(testo)}</b>${cep ? `<small>${esc(cep)}</small>` : ''}</div>`;
+  }
+  // le ultime azioni della persona: il prossimo appuntamento e le ultime volte
+  const a = P5.azioni[contattoId];
+  if (!fresco5(a)) {
+    P5.azioni[contattoId] = { letta: Date.now(), righe: null };
+    dbq('scheda: le ultime azioni', supa.from('azioni').select('tipo_azione, modalita, esito, inizio, data_scelta, completata').eq('contatto_id', contattoId).order('inizio', { ascending: false }).limit(5))
+      .then(({ data, error }) => { P5.azioni[contattoId] = { letta: Date.now(), righe: error ? null : data || [], errore: !!error }; ridisegna5('persona'); });
+  }
+  const y = P5.azioni[contattoId], righe = y && y.righe, adesso = new Date().toISOString();
+  const quando = r => (r.tipo_azione === 'Contatto' && r.data_scelta ? r.data_scelta : r.inizio);
+  const cosa = r => [r.modalita || r.tipo_azione, r.esito].filter(Boolean).join(' · ');
+  const prossimo = righe ? righe.filter(r => !r.completata && quando(r) >= adesso && (r.tipo_azione !== 'Contatto' || r.data_scelta)).sort((p, q) => (quando(p) < quando(q) ? -1 : 1))[0] : null;
+  const ultime = righe ? righe.filter(r => r.inizio < adesso && (r.completata || r.esito)).slice(0, 2) : [];
+  const boxProssimo = `<div class="p5-box"><span class="p5-tit" style="color:var(--z-agenda)">PROSSIMO</span>${!righe ? `<b>${y && y.errore ? 'Non letto ora' : 'Leggo…'}</b>`
+    : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)}</b><small>${esc(o5Giorno(quando(prossimo)))}</small>` : '<b>Niente in agenda</b><small>si fissa dall\'esito</small>'}</div>`;
+  const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(giornoBreve5(r.inizio))}</small></div>`).join('')}</div>` : '';
+  return `<div class="p5-coppia${segni ? '' : ' uno'}">${segni}${boxProssimo}</div>${boxUltime}`;
+}
+// «Già sentiti oggi» in Contatti del giorno: gli esiti delle telefonate di oggi (nome, categoria, esito); null finché non arrivano (allora resta l'elenco di prima)
+function sentitiOggiV5() {
+  if (vediTutti() || ST.offline) return null;
+  const chiave = `${visto().id}|${ST.oggi}`, f = P5.fatti;
+  if (!(f && f.chiave === chiave && fresco5(f))) {
+    P5.fatti = { chiave, letta: Date.now(), righe: f && f.chiave === chiave ? f.righe : null };
+    const da = MB21Agenda.isoDaRoma(ST.oggi, '00:00');
+    dbq('contatti del giorno: sentiti oggi', supa.from('azioni').select('contatto_id, esito, creato_il, contatti(nome, categoria)').eq('user_id', visto().id)
+      .eq('tipo_azione', 'Contatto').not('esito', 'is', null).gte('creato_il', da).order('creato_il', { ascending: false }).limit(50))
+      .then(({ data, error }) => { if (P5.fatti && P5.fatti.chiave === chiave) { P5.fatti.righe = error ? null : data || []; P5.fatti.letta = Date.now(); ridisegna5('oggi'); } });
+  }
+  return P5.fatti.righe;
+}

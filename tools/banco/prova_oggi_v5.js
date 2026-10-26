@@ -209,6 +209,11 @@ function mondoContatti({ fatte = [], admin = false, persona = null } = {}) {
     confermeHtml: id => `<div class="card conferma" id="conf-${id}">card della conferma di adesso</div>`, riordiniHtml: () => '', sceltaHtml: () => '', disegnaPersonaLV: () => chiamate.push(['personaLV']),
     bottoniPer: () => ['PM Fissato', 'Relazione', 'Richiamare', 'No Risposta', 'Telefono spento', 'No Interesse'].map(etichetta => ({ etichetta })),
     toccaBottone: (id, i) => chiamate.push(['esito', id, i]), vaiLV: (v, x) => chiamate.push(['lv', v, x || null]),
+    // nota 098: il finto database delle letture nuove (registra le richieste; `dati[tabella]` è quello che risponde)
+    letture: [], dati: { azioni: [] }, SCRITTURE: { ultima: 0 }, disegnaOggi: () => chiamate.push(['ridisegna']),
+    supa: { from: t => { const q = { t, passi: [] }; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { W.ctx.letture.push(q); return Promise.resolve({ data: W.ctx.dati[t] || [], error: null }).then(si); })
+      : (...a) => { q.passi.push([p, ...a]); return c; }) }); return c; } }, dbq: (_, p) => p,
+    caricaSegni: async c => { W.ctx.letture.push({ t: 'caricaSegni', id: c.id }); return W.ctx.segniFinti; }, targheDi: SV => SV.t,
     document: { getElementById: id => (id === 'segnala' ? W.sg : W.app.getElementById(id)), querySelector: s => W.app.querySelector(s),
       createElement: () => { const n = new Nodo(); n.remove = () => { n.rimosso = true; }; fogli.push(n); return n; }, body: { appendChild() {} } } });
   vm.runInContext('this.contatti = disegnaContattiV5; this.persona = disegnaPersonaV5; this.modulo = moduloEsito;', W.ctx);   // pagina-oggi.js è già caricato da mondo()
@@ -251,7 +256,7 @@ prova('095 seconda pagina: la scheda nel colore della categoria; «Scegli l\'esi
   assert.equal(f.querySelector('#e5-si').textContent, 'Salva');
   f.querySelector('#e5-si').onclick();
   await new Promise(r => setImmediate(r));
-  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['esito', 'c1', 2]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.filter(c => c[0] !== 'ridisegna'))), [['esito', 'c1', 2]]);   // (il ridisegno è quello delle letture della nota 098)
   // una conferma tiene la sua card di adesso, dentro la veste nuova (colore Cliente oro)
   const C = mondoContatti({ persona: 'conf|a1' }); C.ctx.persona();
   assert.match(C.app.innerHTML, /--zc:var\(--cat-cliente\)/);   // Cliente oro (--cat-cliente #D99A00) assert.match(C.app.innerHTML, /card della conferma di adesso/); assert.doesNotMatch(C.app.innerHTML, /p5-esito/);
@@ -379,6 +384,44 @@ prova('095 tessere di Esplora: Report grigio scuro («‹ Esplora»), Profilo sc
   const AD = leggi('admin.js');
   assert.match(AD, /testaZonaV5\(\{ colore: '#111114', torna: 'Esplora', tornaId: 'v5-indietro', titolo: 'Admin', sotto: 'lo vedi solo tu' \}\)/);
   assert.match(AD, /su\('v5-indietro', \(\) => \{ ST\.tab = 'esplora';/);
+});
+
+prova('098 (Ignazio 26/10, «sì»): nella scheda Segni Vitali solo per un Partner, «Prossimo» e «Le ultime volte» (una lettura di 5 azioni); senza toccare tasti e fogli', async () => {
+  const azioni = [{ tipo_azione: 'Appuntamento', modalita: 'Piano Marketing', inizio: '2099-10-29T17:00:00Z', completata: false },
+    { tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Richiamare', inizio: '2026-10-12T09:00:00Z', completata: true },
+    { tipo_azione: 'Contatto', modalita: 'Messaggio', esito: 'Relazione', inizio: '2026-09-28T09:00:00Z', completata: true }];
+  // un Prospect: niente Segni Vitali, niente loro lettura
+  const W = mondoContatti({ persona: 'coda|c1' }); W.ctx.LV.vista = 'persona'; W.ctx.dati.azioni = azioni;
+  W.ctx.persona();
+  assert.doesNotMatch(W.app.innerHTML, /SEGNI VITALI/); assert.ok(!W.ctx.letture.some(q => q.t === 'caricaSegni'));
+  assert.match(W.app.innerHTML, /<div class="p5-coppia uno"><div class="p5-box"><span class="p5-tit" style="color:var\(--z-agenda\)">PROSSIMO<\/span><b>Leggo…<\/b>/);
+  const q = W.ctx.letture.find(x => x.t === 'azioni');
+  assert.equal(JSON.stringify(q.passi), JSON.stringify([['select', 'tipo_azione, modalita, esito, inizio, data_scelta, completata'], ['eq', 'contatto_id', 'c1'], ['order', 'inizio', { ascending: false }], ['limit', 5]]));
+  await new Promise(r => setImmediate(r));
+  W.ctx.persona();   // arrivata la lettura (ridisegno), una sola richiesta
+  assert.equal(W.ctx.letture.filter(x => x.t === 'azioni').length, 1);
+  assert.match(testo(W.app.innerHTML), /PROSSIMO Piano Marketing gio 29\/10 alle 18:00 Le ultime volte Telefonata · Richiamare 12 ott Messaggio · Relazione 28 set/);
+  assert.match(W.app.innerHTML, /id="card-c1"/);   // la card con l'esito di adesso resta
+  // un Partner: i Segni Vitali con la lettura della linguetta
+  const P = mondoContatti({ persona: 'coda|c2' }); P.ctx.LV.vista = 'persona';
+  P.ctx.segniFinti = { t: { bbs: true, wes: false, cep: false }, cep: [] };
+  P.ctx.persona(); await new Promise(r => setImmediate(r)); P.ctx.persona();
+  assert.match(testo(P.app.innerHTML), /SEGNI VITALI BBS sì · WES no CEP: mai abbonato PROSSIMO Niente in agenda si fissa dall'esito/);
+  assert.equal(P.ctx.letture.filter(x => x.t === 'caricaSegni').length, 1);
+});
+
+prova('098: in Contatti del giorno «Già sentiti oggi» con tutti gli esiti di oggi (nome, categoria, esito; una richiesta), finché non arrivano come prima', async () => {
+  const W = mondoContatti({ fatte: [{ tipo: 'coda', id: 'c9', nome: 'Persona E' }] });
+  W.ctx.dati.azioni = [{ contatto_id: 'k1', esito: 'PM Fissato', contatti: { nome: 'Persona C', categoria: 'Prospect' } }, { contatto_id: 'k2', esito: 'No Risposta', contatti: { nome: 'Persona D', categoria: 'Cliente' } },
+    { contatto_id: 'k1', esito: 'Richiamare', contatti: { nome: 'Persona C', categoria: 'Prospect' } }];
+  W.ctx.contatti();
+  assert.match(testo(W.app.innerHTML), /Già sentiti oggi · 1 \[fatto\] Persona E fatto/);   // prima che arrivi: come prima
+  const q = W.ctx.letture.find(x => x.t === 'azioni');
+  assert.deepEqual(q.passi.map(p => p[0]), ['select', 'eq', 'eq', 'not', 'gte', 'order', 'limit']);
+  await new Promise(r => setImmediate(r));
+  W.ctx.contatti();
+  assert.match(testo(W.app.innerHTML), /Già sentiti oggi · 2 \[fatto\] Persona C Prospect · PM Fissato \[fatto\] Persona D Cliente · No Risposta/);   // una riga per persona, l'esito più recente
+  assert.equal(W.ctx.letture.filter(x => x.t === 'azioni').length, 1);   // tenuta in memoria finché non c'è una scrittura
 });
 
 (async () => {
