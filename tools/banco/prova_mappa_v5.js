@@ -116,6 +116,18 @@ prova('«Da avviare» (Ignazio 26/10, «perfetto»): il riquadro con il numero; 
   assert.equal(W.ctx.MP.filtro, 'tutti');
 });
 
+prova('«Quanto rende il lavoro» (Ignazio 26/10, «A»): con la v5 non sta più nella Mappa ma nel Report, con «‹ Report»; la lettura si fa lì', () => {
+  const W = mondo(); W.ctx.disegna();
+  assert.doesNotMatch(W.app.innerHTML, /mp-stat|Quanto rende/);
+  const IDX = leggi('index.html'), PD = leggi('pagina-dashboard.js');
+  assert.match(IDX, /if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof statisticheHtml === 'function'\) html \+= statisticheHtml\(\);/);
+  assert.match(IDX, /su\('mp-stat', \(\) => apriStatistiche\('report'\)\);/);
+  assert.match(IDX, /leggiEfficacia\(\)\.then\(\(\) => \{ if \(ST\.tab === 'report'/);
+  assert.match(PM, /if \(!ST\.offline && !mappaV5\(\)\) leggiEfficacia\(\)/);   // la Mappa v5 non la legge più
+  assert.match(PM, /ST\.tornaA = da === 'report' \? 'report' : 'mappa';/);
+  assert.match(PD, /if \(ST\.tornaA === 'report'\) \{ ST\.tornaA = null; ST\.tab = 'report'; return mostraTab\(\); \}/);
+});
+
 prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', () => {
   assert.match(PM, /if \(!MP\.squadra\) app\.innerHTML = `\$\{mappaV5\(\) \? testaMappaV5\('…', ''\) : '<h1>Mappa<\/h1>'\}<div class="vuoto">Carico il gruppo…<\/div>`;/);
   const W = mondo();

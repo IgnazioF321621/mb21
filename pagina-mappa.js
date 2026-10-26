@@ -50,7 +50,8 @@ async function apriMappa() {
   // schede e targhette si rileggono a ogni apertura (possono essere cambiate nella scheda contatto)
   caricaSchedeMappa().then(() => { if (ST.tab === 'mappa' && !MP.completa) disegnaMappa(); }).catch(() => {});
   // le statistiche del ramo: la card compare per un upline solo se sotto di lui c'è qualcuno con uno storico (offline no)
-  if (!ST.offline) leggiEfficacia().then(() => { if (ST.tab === 'mappa' && !MP.completa && !eAdmin() && haStatistiche()) disegnaMappa(); }).catch(() => {});
+  // nota 098: con la veste v5 «Quanto rende il lavoro» sta nel Report e si legge lì
+  if (!ST.offline && !mappaV5()) leggiEfficacia().then(() => { if (ST.tab === 'mappa' && !MP.completa && !eAdmin() && haStatistiche()) disegnaMappa(); }).catch(() => {});
 }
 
 // Segni Vitali grezzi (cantiere 18): squadra, schede dei partner (contatti Partner o con codice Amway in tutte le liste che posso
@@ -223,7 +224,7 @@ function disegnaMappa() {
   // nota 098 (Ignazio 26/10): con la v5 niente righe del Team in cima: «da avviare» è un riquadro, «Obiettivi mensili dei partner» non c'è più (gli obiettivi
   // del mese li chiede Oggi a inizio mese, a ognuno per sé: l'avviso «Imposta gli obiettivi del mese!» e il riquadro dei primi giorni)
   let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese), riquadriMappaV5(conta, cime)) : `<h1>Mappa</h1>${partnerSelect()}`}
-    ${v5 ? '' : righeTeamHtml()}${statisticheHtml()}
+    ${v5 ? '' : righeTeamHtml() + statisticheHtml()}
     ${v5 ? segniVitaliV5(cime) : `<div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}`}
     ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
@@ -317,9 +318,11 @@ const soloLei = () => !eAdmin() && MP.efficacia && !MP.efficacia.errore && stati
 const TITOLO_STAT = 'Quanto rende il lavoro';   // Ignazio 01/10: «un titolo più specifico» di «Statistiche»; «Dai contatti agli iscritti» non gli piaceva
 const statisticheHtml = () => (haStatistiche()
   ? rigaApribile('mp-stat', 'catalogare', 'crescita', TITOLO_STAT, `quanti contatti per un PM e quanti PM per un iscritto ${eAdmin() ? 'di ognuno' : soloLei() ? 'tuoi' : 'tuoi e di chi ti sta sotto'}`, false, 0) : '');
-async function apriStatistiche() {
-  ST.tornaA = 'mappa'; MP.statPid = null; window.scrollTo(0, 0);
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button><h1>${ic('crescita')} ${TITOLO_STAT}</h1><div class="vuoto">Carico il Check…</div>`;
+// `da` (nota 098): 'report' quando si apre dal Report (v5), se no dalla Mappa come prima; il «‹» torna lì
+const tornaStat = () => (ST.tornaA === 'report' ? 'Report' : 'Mappa');
+async function apriStatistiche(da) {
+  ST.tornaA = da === 'report' ? 'report' : 'mappa'; MP.statPid = null; window.scrollTo(0, 0);
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${tornaStat()}</button><h1>${ic('crescita')} ${TITOLO_STAT}</h1><div class="vuoto">Carico il Check…</div>`;
   document.getElementById('indietro').onclick = tornaDaTeam;
   await leggiEfficacia();
   if (soloLei()) MP.statPid = ST.utente.partner_id;   // solo il suo storico: apre direttamente la sua scheda
@@ -391,7 +394,7 @@ function disegnaSchedaStat(pid) {
   const canvas = immagineStat(r, MB21Dashboard.efficaciaDi(E.righe, E.mese), periodoStat(E.mese), dataOggi, soloLei() ? null : eAdmin() ? 'media di tutti' : 'media del gruppo');
   canvas.style.cssText = 'width:100%;height:auto;border-radius:16px;display:block';
   const sola = soloLei();
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${sola ? 'Mappa' : TITOLO_STAT}</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${sola ? tornaStat() : TITOLO_STAT}</button>
     <div id="stat-img"></div>
     <button class="primario" id="stat-invia" style="margin-top:12px">${ic('condividi')} Invia l'immagine</button>
     <div class="sotto">${sola ? 'Questa è la tua scheda: puoi tenerla o mandarla a chi vuoi.' : `L'immagine è pulita, pronta da mandare a ${esc(r.nome)}.`} Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
@@ -427,7 +430,7 @@ function disegnaStatistiche() {
           <span style="text-align:right"><b>${unoStat(r.contattiPerPm)}</b> contatti per PM<small style="display:block;color:var(--grigio-chiaro)"><b>${unoStat(r.pmPerIscritto)}</b> PM per iscritto ›</small></span></button>`).join('')}
       <div class="sotto">Ultimi 6 mesi dal Check. Le righe più chiare hanno meno di 10 Piani Marketing: i numeri sono ancora indicativi. Tocca un nome per vedere la scheda da inviargli.</div>`;
   }
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Mappa</button>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ ${tornaStat()}</button>
     <h1>${ic('crescita')} ${TITOLO_STAT}</h1>
     <div class="sotto" style="margin-bottom:8px">Quanti contatti servono per un Piano Marketing e quanti Piani Marketing per un iscritto personale, ${eAdmin() ? 'persona per persona' : 'tuoi e di chi ti sta sotto nella tua linea'}: aiutano a capire dove una mano serve di più. Qui si legge soltanto.</div>
     ${corpo}${versione()}`;

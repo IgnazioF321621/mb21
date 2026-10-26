@@ -4972,6 +4972,9 @@ async function apriReport(vista) {
   const oggi = MB21Coda.oggiRoma();
   if (!RP.periodo) RP.periodo = MB21Report.periodoIniziale(RP.tipo, oggi, RP.wes.map(w => w.data));
   RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
+  // nota 098: «Quanto rende il lavoro» si legge qui (prima all'apertura della Mappa): per un upline la riga c'è solo se sotto di lui c'è qualcuno con uno storico
+  if (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof leggiEfficacia === 'function' && !ST.offline && !eAdmin() && !(typeof MP !== 'undefined' && MP.efficacia))
+    leggiEfficacia().then(() => { if (ST.tab === 'report' && RP.vista === 'report' && RP.linguetta !== 'provvigioni' && haStatistiche()) disegnaReport(); }).catch(() => {});
 }
 
 function disegnaReport() {
@@ -5020,6 +5023,8 @@ function disegnaReport() {
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
   if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>${ic('pianomarketing')} ${esc(testoGriglia(gp))}</span><span>›</span></button>`;   // la scritta della Dashboard (nota 081, punto 9)
+  // nota Pagine 098 (Ignazio 26/10, «A»): con la veste v5 «Quanto rende il lavoro» sta qui, non più in cima alla Mappa (le stesse pagine, «‹ Report»)
+  if (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof statisticheHtml === 'function') html += statisticheHtml();
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -5041,6 +5046,7 @@ function collegaReport() {
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; RP.grigliaDa = null; window.scrollTo(0, 0); disegnaGriglia(); });
+  su('mp-stat', () => apriStatistiche('report'));   // nota 098: «Quanto rende il lavoro», ora nel Report
   collegaLinguetteReport();
 }
 

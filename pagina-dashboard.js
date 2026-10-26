@@ -1426,6 +1426,7 @@ function collegaRigheTeam() {
 function tornaDaTeam() {
   window.scrollTo(0, 0);
   if (ST.tornaA === 'mappa') { ST.tornaA = null; ST.tab = 'mappa'; return mostraTab(); }
+  if (ST.tornaA === 'report') { ST.tornaA = null; ST.tab = 'report'; return mostraTab(); }   // nota 098: «Quanto rende il lavoro» dal Report
   disegnaOggi();
 }
 const OBT = { righe: [], senza: [], mese: null, aperto: null };   // righe: chi ha scritto · senza: chi ha l'app e non ha ancora scritto
