@@ -598,6 +598,16 @@ const giornoV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 const senzaLinguette = () => giornoV5() && !largo();
 const CHIAVE_MODO_PROGRAMMA = 'mb21-agenda-programma';   // l'ultima scelta Elenco · Timeline, sul dispositivo
 function modoProgramma() { try { return localStorage.getItem(CHIAVE_MODO_PROGRAMMA) === 'timeline' ? 'timeline' : 'elenco'; } catch (e) { return 'elenco'; } }
+// L'interruttore Elenco · Timeline: lo stesso nel Giorno (in «In programma») e in testa alla Settimana; una scelta sola, ricordata sul dispositivo
+function interruttoreProgramma(modo) {
+  return `<div class="a5-modo" role="group" aria-label="Come vedere gli impegni">${[['elenco', 'Elenco'], ['timeline', 'Timeline']].map(([k, t]) => `<button data-a5-modo="${k}"${k === modo ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${t}</button>`).join('')}</div>`;
+}
+// La Timeline dentro la pagina (Giorno e Settimana v5): una scatola che scorre, portata all'ora di adesso o al primo impegno; il tasto «Ora» non serve
+function portaCronoV5() {
+  app.querySelectorAll('.a5-crono #ag-vai-ora').forEach(v => { v.hidden = true; });
+  const crono = app.querySelector('.a5-crono'), rif = crono && (crono.querySelector('.ag-adesso') || crono.querySelector('.ag-ev') || crono.querySelector('.ag-sev'));
+  if (rif) crono.scrollTop = Math.max(0, rif.offsetTop - 120);
+}
 function gruppoV5(chiave, colore, titolo, n, dentro, destra = '') {
   const chiuso = sezioniChiuse().includes('g5-' + chiave);
   return `<section class="a5-gr a5-${chiave}${chiuso ? ' chiuso' : ''}" style="--gc:${colore}"><div class="a5-gr-testa">
@@ -626,7 +636,7 @@ function giornoV5Html(eventi, opz, oggi) {
   const gia = new Set(chiudere.map(a => a.id)), elenco = eventi.filter(e => !gia.has(e.id));
   const quanti = elenco.length + spaziDelGiorno(AG.giorno).length + ricevutiDelGiornoMB(AG.giorno).length;
   const modo = tre ? 'elenco' : modoProgramma();   // sul computer la Timeline sta già nella colonna destra
-  const interruttore = tre ? '' : `<div class="a5-modo" role="group" aria-label="Come vedere gli impegni">${[['elenco', 'Elenco'], ['timeline', 'Timeline']].map(([k, t]) => `<button data-a5-modo="${k}"${k === modo ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${t}</button>`).join('')}</div>`;
+  const interruttore = tre ? '' : interruttoreProgramma(modo);
   h += gruppoV5('programma', 'var(--z-agenda)', 'In programma', quanti, modo === 'timeline' ? `<div class="a5-crono">${grigliaGiorno(eventi, opz)}</div>` : impegniHtml(elenco, opz), interruttore);
   // Da fare: solo le cose del giorno (MB21Agenda.coseDelGiorno, come prima) e «+ Una cosa da fare» che apre il campo di sempre. Niente settimana
   // ripiegata in cima (Ignazio 26/10: «dove c'è il giorno compaiono i da fare del giorno»): quelle della settimana stanno nella Settimana
@@ -645,15 +655,9 @@ function collegaGiornoV5(eventi) {
     const e = (AG.passati || []).find(x => x.id === b.dataset.chiudere);
     if (e) foglioEvento(MB21Agenda.eventiDelGiorno([e], MB21Agenda.partiRoma(e.inizio).giorno)[0] || e);   // lo stesso foglio di «Da chiudere» del Programma
   }; });
-  app.querySelectorAll('[data-a5-modo]').forEach(b => { b.onclick = () => {
-    try { localStorage.setItem(CHIAVE_MODO_PROGRAMMA, b.dataset.a5Modo); } catch (e) {}
-    AG.portato = null; disegnaAgenda();
-  }; });
   const piu = app.querySelector('#a5-cosa-piu');
   if (piu) piu.onclick = () => { AG.cosaAperta = AG.giorno; disegnaAgenda(); const c = app.querySelector('.ag-cosa-nuova[data-scala="giorno"] input'); if (c) c.focus(); };
-  const vai = app.querySelector('.a5-crono #ag-vai-ora'); if (vai) vai.hidden = true;   // come nel cassetto: nella scatola che scorre il tasto «Ora» non serve
-  const crono = app.querySelector('.a5-crono'), rif = crono && (crono.querySelector('.ag-adesso') || crono.querySelector('.ag-ev'));
-  if (rif) crono.scrollTop = Math.max(0, rif.offsetTop - 120);
+  portaCronoV5();
 }
 
 function disegnaAgenda() {
@@ -904,18 +908,20 @@ function disegnaSettimana() {
   let html = `${testaScala(!AG.settimana.includes(oggi))}
     <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelectAgenda()}
+    ${senzaLinguette() ? `<div class="a5-modo-riga">${interruttoreProgramma(modoProgramma())}</div>` : ''}
     ${richiamiAgenda(oggi)}
-    ${giorniSettimanaHtml(opz, oggi)}
+    ${senzaLinguette() && modoProgramma() === 'timeline' ? `<div class="a5-crono s5">${grigliaSettimana(opz)}</div>` : giorniSettimanaHtml(opz, oggi)}
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml('Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
-  // v5: via la linguetta del menu; resta, per ora, quella della settimana a orario (solo lì si vede: la Regia lo chiede a Ignazio)
-  if (!tre) html += (senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`) + `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
+  // v5 (Ignazio 26/10): niente linguette; la settimana a orario è la Timeline dell'interruttore in testa (Elenco = la Settimana di sempre)
+  if (!tre) html += senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button><button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section><aside class="mb-destra">${griglia}</aside></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
   collegaCose(oggi);
   if (tre) { collegaMenuAgenda(app, () => {}); collegaGrigliaSettimana(app, () => {}); }
+  if (app.querySelector('.a5-crono')) { collegaGrigliaSettimana(app, () => {}); portaCronoV5(); }   // v5: la Timeline della settimana nella pagina, stessi tocchi
   const sx = document.getElementById('mb-ling-sx'); if (sx) sx.onclick = menuAgenda;
   const dx = document.getElementById('mb-ling-dx');
   if (dx) dx.onclick = () => {
@@ -1593,6 +1599,7 @@ window.addEventListener('resize', aggiornaVaiOra, { passive: true });
 // Si fa una volta sola per giorno e vista, se no la pagina saltellerebbe a ogni tocco.
 function portaInVista(morbido) {
   if (AG.vista !== 'settimana') return;   // nel foglio del giorno la griglia sta nel cassetto: la pagina non si sposta
+  if (app.querySelector('.a5-crono')) return;   // v5: la griglia sta in una scatola che scorre da sé (portaCronoV5): la pagina non salta
   const segno = AG.vista + '|' + AG.giorno;
   if (AG.portato === segno) return;
   AG.portato = segno;
@@ -2070,6 +2077,10 @@ function collegaAgenda(eventi) {
   // v5 (testaAgendaV5): «‹ Oggi», il feedback, Giorno · Settimana · Mese · Anno (cambiaVista, come dal menu)
   su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });
   su('o5-feedback', () => foglioSegnala());
+  app.querySelectorAll('[data-a5-modo]').forEach(b => { b.onclick = () => {   // v5: Elenco · Timeline (Giorno e Settimana)
+    try { localStorage.setItem(CHIAVE_MODO_PROGRAMMA, b.dataset.a5Modo); } catch (e) {}
+    AG.portato = null; disegnaAgenda();
+  }; });
   app.querySelectorAll('[data-v5-scala]').forEach(b => { b.onclick = () => { if (b.dataset.v5Scala !== AG.vista) cambiaVista(b.dataset.v5Scala); }; });
   app.querySelectorAll('.ag-impegni [data-spazio], .mb-crono [data-spazio]').forEach(b => { b.onclick = () => foglioSpazio(b.dataset.spazio); });
   app.querySelectorAll('.ag-impegni [data-ricevuto], .mb-crono [data-ricevuto]').forEach(b => { b.onclick = () => { const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) foglioRicevuto(r); }; });

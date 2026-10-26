@@ -87,7 +87,7 @@ prova('Tocchi veri: Timeline si ricorda, «+ Una cosa da fare» apre il campo, l
   mem.clear(); AG.cosaAperta = null;
 });
 
-prova('Niente frecce ai lati (Ignazio 26/10): via le linguette in Giorno, Mese, Anno; nella Settimana resta solo quella della settimana a orario', () => {
+prova('Niente frecce ai lati (Ignazio 26/10): via le linguette in Giorno, Settimana, Mese, Anno', () => {
   const g = giorno();
   assert.doesNotMatch(g, /mb-ling-sx|mb-ling-dx/);
   const prima = AG.vista;
@@ -95,7 +95,7 @@ prova('Niente frecce ai lati (Ignazio 26/10): via le linguette in Giorno, Mese, 
   AG.vista = prima;
   const s = V.vista('settimana');
   assert.doesNotMatch(s, /mb-ling-sx/);
-  assert.match(s, /id="mb-ling-dx" aria-label="Apri la settimana a orario"/);
+  assert.doesNotMatch(s, /mb-ling-dx/);
 });
 
 prova('La lente nella testata apre la ricerca di sempre in un foglio; il «+» offre «Una cosa da fare»', () => {
@@ -112,6 +112,24 @@ prova('La lente nella testata apre la ricerca di sempre in un foglio; il «+» o
   assert.equal(AG.cosaAperta, AG.giorno);
   assert.match(V.app.innerHTML, /class="ag-cosa-nuova" data-scala="giorno"/);
   AG.cosaAperta = null;
+});
+
+prova('Settimana: in testa lo stesso interruttore Elenco · Timeline; Elenco = la Settimana di sempre, Timeline = le 7 colonne con le ore; tocchi veri', () => {
+  mem.clear(); AG.vista = 'settimana'; V.disegnaAgenda();
+  let h = V.app.innerHTML;
+  assert.match(h, /class="a5-modo-riga"><div class="a5-modo"[\s\S]*?data-a5-modo="elenco" class="scelto"/);
+  assert.match(h, /class="ss-giorni"/);
+  assert.doesNotMatch(h, /class="ag-griglia sett"/);
+  assert.match(h, /Da fare questa settimana/);
+  V.app.querySelector('[data-a5-modo="timeline"]').onclick();
+  assert.equal(mem.get('mb21-agenda-programma'), 'timeline');   // la stessa scelta del Giorno
+  h = V.app.innerHTML;
+  assert.match(h, /class="a5-crono s5">[\s\S]*?class="ag-griglia sett"/);
+  assert.doesNotMatch(h, /class="ss-giorni"/);
+  assert.match(h, /Da fare questa settimana/);   // le cose della settimana restano sotto
+  V.app.querySelector('[data-a5-modo="elenco"]').onclick();
+  assert.match(V.app.innerHTML, /class="ss-giorni"/);
+  mem.clear(); AG.vista = 'giorno';
 });
 
 console.log(`\n${ok} prove superate`);
