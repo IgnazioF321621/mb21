@@ -42,11 +42,11 @@ prova('In programma: Elenco con le righe di sempre; Timeline = la griglia di sem
   mem.clear();
 });
 
-prova('Da fare: le cose del giorno con la spunta, la settimana in cima, «+ Una cosa da fare» che apre il campo di sempre', () => {
+prova('Da fare: solo le cose del giorno con la spunta (niente settimana in cima, Ignazio 26/10), «+ Una cosa da fare» che apre il campo di sempre', () => {
   let h = giorno();
   assert.match(h, /Da fare · 4/);
   assert.equal((h.match(/class="cosa[ "]/g) || []).length, 4);
-  assert.match(h, /class="ag-sopra sc-settimana/);
+  assert.doesNotMatch(h, /class="ag-sopra sc-settimana/);
   assert.match(h, /id="a5-cosa-piu">\+ Una cosa da fare</);
   assert.doesNotMatch(h, /class="ag-cosa-nuova" data-scala="giorno"/);
   AG.cosaAperta = AG.giorno;

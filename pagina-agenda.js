@@ -624,12 +624,12 @@ function giornoV5Html(eventi, opz, oggi) {
   const modo = tre ? 'elenco' : modoProgramma();   // sul computer la Timeline sta già nella colonna destra
   const interruttore = tre ? '' : `<div class="a5-modo" role="group" aria-label="Come vedere gli impegni">${[['elenco', 'Elenco'], ['timeline', 'Timeline']].map(([k, t]) => `<button data-a5-modo="${k}"${k === modo ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${t}</button>`).join('')}</div>`;
   h += gruppoV5('programma', 'var(--z-agenda)', 'In programma', quanti, modo === 'timeline' ? `<div class="a5-crono">${grigliaGiorno(eventi, opz)}</div>` : impegniHtml(elenco, opz), interruttore);
-  // Da fare: le cose del giorno (MB21Agenda.coseDelGiorno, come prima), la settimana ripiegata in cima e «+ Una cosa da fare» che apre il campo di sempre
+  // Da fare: solo le cose del giorno (MB21Agenda.coseDelGiorno, come prima) e «+ Una cosa da fare» che apre il campo di sempre. Niente settimana
+  // ripiegata in cima (Ignazio 26/10: «dove c'è il giorno compaiono i da fare del giorno»): quelle della settimana stanno nella Settimana
   const cose = A.coseDelGiorno(AG.cose, AG.giorno, oggi), restano = cose.filter(c => !c.fatto_il).length;
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
   const piu = AG.cosaAperta === AG.giorno ? nuovaCosaHtml('giorno', 'Cosa c\'è da fare…') : '<button class="link a5-cosa-piu" id="a5-cosa-piu">+ Una cosa da fare</button>';
-  h += gruppoV5('fare', '#1F7A30', 'Da fare', restano, `<div class="ag-foglio">${scalaSopraHtml('settimana', oggi)}
-    ${cose.map(c => rigaCosaHtml(c, 'data-cosa', c.riportata ? `da ${gg(c.riportata)}` : '')).join('')}${piu}
+  h += gruppoV5('fare', '#1F7A30', 'Da fare', restano, `<div class="ag-foglio">${cose.map(c => rigaCosaHtml(c, 'data-cosa', c.riportata ? `da ${gg(c.riportata)}` : '')).join('')}${piu}
     ${AG.cosePiuVecchie && !AG.tutteLeCose ? '<button class="link" id="ag-vedi-tutto">Ci sono cose da fare più vecchie di un anno · Vedi tutto</button>' : ''}</div>`);
   // Da seguire (oggi): le tracce condivise e il mio percorso, gli stessi pezzi e tasti di prima (pagina-sharing.js)
   const tracce = AG.giorno === oggi && typeof tracceHtml === 'function' ? tracceHtml() : '', percorso = AG.giorno === oggi && typeof mioPercorsoHtml === 'function' ? mioPercorsoHtml() : '';
