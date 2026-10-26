@@ -158,7 +158,9 @@ function segniVitaliV5(cime) {
   const M = MB21Mappa, conto = eAdmin() && MP.targhe && MP.schede;
   const tutti = conto ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }) : [], quanti = tutti.length;
   const accese = k => tutti.filter(r => { const t = targheRiga(r); return t && t[k]; }).length;
-  const voce = (k, nome, quando) => `<span class="${k}"><b>${nome}</b>${quando ? ' ' + esc(quando) : ''}${conto && quanti ? ` <em>${accese(k)} su ${quanti}</em>` : ''}</span>`;
+  // poi (Ignazio 26/10): uno sotto l'altro, e a destra la percentuale (arrotondata all'intero; «—» se non c'è nessuno); conto e percentuale solo per l'Admin
+  const voce = (k, nome, quando) => { const n = conto ? accese(k) : 0;
+    return `<div class="m5-sv ${k}"><span><b>${nome}</b>${quando ? ' ' + esc(quando) : ''}${conto ? ` <em>${n} su ${quanti}</em>` : ''}</span>${conto ? `<strong>${quanti ? Math.round(n / quanti * 100) + '%' : '—'}</strong>` : ''}</div>`; };
   return `<div class="m5-segni"><b class="m5-segni-t">Segni Vitali</b>${voce('wes', 'WES', MP.attivi.wes ? MB21Lista.etichettaEvento(MP.attivi.wes) : '—')}${voce('bbs', 'BBS', MP.attivi.bbs ? MB21Lista.etichettaEvento(MP.attivi.bbs) : '—')}${voce('cep', 'CEP', '')}</div>`;
 }
 // Nota 098 (Ignazio 26/10: «Fiammetta deve vedere come livello suo 1»): con il Partner Select su un partner i livelli partono da lui = 1 (il livello del file

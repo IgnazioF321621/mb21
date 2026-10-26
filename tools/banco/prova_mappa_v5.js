@@ -78,13 +78,15 @@ prova('Toccando un riquadro l\'albero resta: le persone della lista al loro post
   assert.equal(W.ctx.MP.filtro, 'tutti');
 });
 
-prova('Sotto la testata niente più «Gruppo di …» e il mese; un titolo «Segni Vitali» con WES · BBS · CEP, senza «segnati» né «abbonati» (per l\'Admin «1 su 4»)', () => {
+prova('Sotto la testata niente più «Gruppo di …» e il mese; un titolo «Segni Vitali» con WES · BBS · CEP uno sotto l\'altro, senza «segnati» né «abbonati» (per l\'Admin «1 su 4» e «25%»)', () => {
   const W = mondo(); W.ctx.disegna();
   const h = W.app.innerHTML;
   assert.doesNotMatch(h, />Gruppo di |mese 10\/2026|segnati|abbonati|Segni Vitali del gruppo/);
-  assert.match(h, /<div class="m5-segni"><b class="m5-segni-t">Segni Vitali<\/b><span class="wes"><b>WES<\/b> 02-2027 <em>1 su 4<\/em><\/span><span class="bbs"><b>BBS<\/b> 11-2026 <em>1 su 4<\/em><\/span><span class="cep"><b>CEP<\/b> <em>1 su 4<\/em><\/span><\/div>/);
+  // poi (Ignazio 26/10): uno sotto l'altro, con la percentuale a destra (arrotondata; per l'Admin, come «N su M»)
+  assert.match(h, /<div class="m5-segni"><b class="m5-segni-t">Segni Vitali<\/b><div class="m5-sv wes"><span><b>WES<\/b> 02-2027 <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><div class="m5-sv bbs"><span><b>BBS<\/b> 11-2026 <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><div class="m5-sv cep"><span><b>CEP<\/b> <em>1 su 4<\/em><\/span><strong>25%<\/strong><\/div><\/div>/);
   const P = mondo({ admin: false }); P.ctx.disegna();
-  assert.match(P.app.innerHTML, /<span class="wes"><b>WES<\/b> 02-2027<\/span>/);   // un partner: senza i conti
+  assert.match(P.app.innerHTML, /<div class="m5-sv wes"><span><b>WES<\/b> 02-2027<\/span><\/div>/);   // un partner: senza conti né percentuale
+  assert.match(PM, /<strong>\$\{quanti \? Math\.round\(n \/ quanti \* 100\) \+ '%' : '—'\}<\/strong>/);   // con nessuno «—»
 });
 
 prova('Il livello parte da chi si guarda: con il Partner Select su Persona A, lei è Liv. 1 e chi ha sotto Liv. 2', () => {
