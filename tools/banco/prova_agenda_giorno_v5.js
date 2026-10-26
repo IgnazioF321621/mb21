@@ -120,16 +120,28 @@ prova('Settimana: in testa lo stesso interruttore Elenco · Timeline; Elenco = l
   assert.match(h, /class="a5-modo-riga"><div class="a5-modo"[\s\S]*?data-a5-modo="elenco" class="scelto"/);
   assert.match(h, /class="ss-giorni"/);
   assert.doesNotMatch(h, /class="ag-griglia sett"/);
-  assert.match(h, /Da fare questa settimana/);
+  assert.match(h, /<span>Da fare<\/span>/);
   V.app.querySelector('[data-a5-modo="timeline"]').onclick();
   assert.equal(mem.get('mb21-agenda-programma'), 'timeline');   // la stessa scelta del Giorno
   h = V.app.innerHTML;
   assert.match(h, /class="a5-crono s5">[\s\S]*?class="ag-griglia sett"/);
   assert.doesNotMatch(h, /class="ss-giorni"/);
-  assert.match(h, /Da fare questa settimana/);   // le cose della settimana restano sotto
+  assert.match(h, /<span>Da fare<\/span>/);   // le cose della settimana restano sotto
   V.app.querySelector('[data-a5-modo="elenco"]').onclick();
   assert.match(V.app.innerHTML, /class="ss-giorni"/);
   mem.clear(); AG.vista = 'giorno';
+});
+
+prova('Settimana e Mese v5: il titolo è inizio e fine, senza il numero della settimana; «Da fare» scritto una volta sola', () => {
+  mem.clear(); AG.vista = 'settimana'; V.disegnaAgenda();
+  const h = V.app.innerHTML;
+  assert.match(h, /class="ag-mese mm-titolo">21–27 set ▾/);
+  assert.doesNotMatch(h, /Settimana 39|Da fare questa settimana/);
+  AG.vista = 'mese'; V.disegnaAgenda();
+  assert.match(V.app.innerHTML, /<span>Da fare<\/span>/);
+  assert.doesNotMatch(V.app.innerHTML, /Da fare questo mese/);
+  AG.vista = 'giorno';
+  assert.match(PA, /return lun\.slice\(5, 7\) === dom\.slice\(5, 7\) \? `\$\{n\(lun\)\}–\$\{n\(dom\)\} \$\{m\(dom\)\}` : `\$\{n\(lun\)\} \$\{m\(lun\)\} – \$\{n\(dom\)\} \$\{m\(dom\)\}`;/);
 });
 
 console.log(`\n${ok} prove superate`);

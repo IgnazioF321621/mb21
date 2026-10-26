@@ -751,7 +751,7 @@ function disegnaMese() {
           ${ev.slice(0, 2).map(e => `<span class="mm-e">${esc(A.orario(e).split('–')[0])} ${esc(A.riga(e, opz).titolo.split(' · ').pop())}</span>`).join('')}${ev.length > 2 ? `<span class="mm-e">+${ev.length - 2}</span>` : ''}
         </button>`;
       }).join('')}</div>
-    <div class="ag-foglio">${elencoDaFareHtml('Da fare questo mese', cose, 'mese', g => `da ${nomeMese(g)}`)}
+    <div class="ag-foglio">${elencoDaFareHtml(senzaLinguette() ? 'Da fare' : 'Da fare questo mese', cose, 'mese', g => `da ${nomeMese(g)}`)}
     </div>`;
   if (!tre) html += senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
@@ -897,6 +897,13 @@ function giorniSettimanaHtml(opz, oggi) {
         return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`; }).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
   }).join('')}</div>`;
 }
+// v5 (Ignazio 26/10: «nel titolo evitiamo il numero della settimana, mettiamo soltanto inizio e fine»): «21–27 set», «26 ott – 1 nov»,
+// con anni diversi «29 dic 2026 – 4 gen 2027»
+function periodoBreve(lun, dom) {
+  const m = g => MB21Agenda.titoloMese(g).slice(0, 3).toLowerCase(), n = g => Number(g.slice(8));
+  if (lun.slice(0, 4) !== dom.slice(0, 4)) return `${n(lun)} ${m(lun)} ${lun.slice(0, 4)} – ${n(dom)} ${m(dom)} ${dom.slice(0, 4)}`;
+  return lun.slice(5, 7) === dom.slice(5, 7) ? `${n(lun)}–${n(dom)} ${m(dom)}` : `${n(lun)} ${m(lun)} – ${n(dom)} ${m(dom)}`;
+}
 function disegnaSettimana() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
@@ -906,12 +913,12 @@ function disegnaSettimana() {
   const cose = A.coseDellaScala(AG.cose, 'settimana', lun, A.inizioScala('settimana', oggi));
   const tre = largo();
   let html = `${testaScala(!AG.settimana.includes(oggi))}
-    <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
+    <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">${senzaLinguette() ? esc(periodoBreve(lun, dom)) : `Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)}`} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelectAgenda()}
     ${senzaLinguette() ? `<div class="a5-modo-riga">${interruttoreProgramma(modoProgramma())}</div>` : ''}
     ${richiamiAgenda(oggi)}
     ${senzaLinguette() && modoProgramma() === 'timeline' ? `<div class="a5-crono s5">${grigliaSettimana(opz)}</div>` : giorniSettimanaHtml(opz, oggi)}
-    <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml('Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
+    <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml(senzaLinguette() ? 'Da fare' : 'Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
   // v5 (Ignazio 26/10): niente linguette; la settimana a orario è la Timeline dell'interruttore in testa (Elenco = la Settimana di sempre)
