@@ -220,8 +220,10 @@ function disegnaMappa() {
   const tocca = targheDaToccare() && !!MP.schede;   // nota 070: per l'Admin le targhette sono tasti (appena le schede sono lette)
 
   // v5 (nota 095, Regia 26/10): la testata blu notte (testaMappaV5, pagina-oggi.js) al posto del titolo e della fascia del Partner Select; sotto la Mappa di adesso
+  // nota 098 (Ignazio 26/10): con la v5 niente righe del Team in cima: «da avviare» è un riquadro, «Obiettivi mensili dei partner» non c'è più (gli obiettivi
+  // del mese li chiede Oggi a inizio mese, a ognuno per sé: l'avviso «Imposta gli obiettivi del mese!» e il riquadro dei primi giorni)
   let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese), riquadriMappaV5(conta, cime)) : `<h1>Mappa</h1>${partnerSelect()}`}
-    ${v5 ? obiettiviTeamHtml() : righeTeamHtml()}${statisticheHtml()}
+    ${v5 ? '' : righeTeamHtml()}${statisticheHtml()}
     ${v5 ? segniVitaliV5(cime) : `<div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
     ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}`}
     ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
