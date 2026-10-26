@@ -132,7 +132,8 @@ prova('095: Clienti e Mappa a metà — riordini da sentire (o il prossimo; senz
   W.app.clic('.o5-clienti'); W.app.clic('.o5-mappa');
   assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'clienti', null], ['tab', 'mappa']]);
   const P = mondo({ prossimo: { contatti: { nome: 'Persona E' }, inizio: '2026-10-29T08:00:00Z' } }); P.ctx.disegna();
-  assert.match(testo(P.app.innerHTML), /il prossimo: Persona, gio 29\/10/);
+  assert.match(testo(P.app.innerHTML), /CLIENTI Nessun cliente da sentire oggi/);   // nota 098: via «il prossimo: Nome, giorno»
+  assert.doesNotMatch(P.app.innerHTML, /il prossimo/);
   const N = mondo(); N.ctx.disegna();
   assert.doesNotMatch(N.app.innerHTML, /o5-clienti/); assert.match(N.app.innerHTML, /<div class="o5-coppia uno">/);
 });
@@ -406,20 +407,22 @@ prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» 
   assert.match(IDX, /\.trn-ses-barra i \{[^}]*background: var\(--z-training\);/);
 });
 
-prova('098 Clienti (Ignazio 26/10, «sì, senza 4»): «Questa settimana» e «Più avanti» dai riordini già letti, «Nome · Marca», «prodotto · ogni N mesi», data in oro; il tocco apre il contatto', () => {
+prova('098 Clienti (Ignazio 26/10, correzione «sì»): «Prossimi riordini», i prossimi 5 senza limite di giorni (il caso del 26/10: niente oggi, il primo fra 55 giorni), nome e cognome, marca · prodotto · ogni N mesi, data con l\'anno; il tocco apre il contatto', () => {
   const W = mondoContatti(); const aperti = [];
   W.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 0, totale: 0 }); W.ctx.apriContattoDa = (id, da) => aperti.push([id, da]);
-  const q = A.isoDaRoma;
-  W.ctx.RIO.futuri = [{ id: 'f1', contatto_id: 'kD', inizio: q('2026-10-27', '10:00'), brand: 'eSpring', prodotto: 'filtro', ogni: 'ogni 12 mesi', contatti: { nome: 'Persona D' } },
-    { id: 'f2', contatto_id: 'kL', inizio: q('2026-11-05', '10:00'), brand: 'Artistry', prodotto: 'crema viso', ogni: 'ogni 2 mesi', contatti: { nome: 'Persona L' } }];
-  W.ctx.ST.oggi = '2026-10-26';   // lunedì: la settimana va fino a domenica 1 novembre
+  const q = A.isoDaRoma, f = (id, nome, giorno, brand, prodotto, ogni) => ({ id, contatto_id: 'k' + id, inizio: q(giorno, '10:00'), brand, prodotto, ogni, contatti: { nome } });
+  W.ctx.RIO.futuri = [f('1', 'Persona Diego Finta', '2026-12-20', 'eSpring', 'filtro', 'ogni 12 mesi'), f('2', 'Persona H Finta', '2027-02-03', 'Nutrilite', 'Double X', ''),
+    f('3', 'Persona I', '2027-02-10', 'Artistry', 'crema', 'ogni 2 mesi'), f('4', 'Persona J', '2027-03-01', 'Home', 'SA8', ''), f('5', 'Persona K', '2027-03-02', 'Persona', 'rossetto', ''), f('6', 'Persona L', '2027-04-01', 'eSpring', 'filtro', '')];
+  W.ctx.ST.oggi = '2026-10-26';
   vm.runInContext('this.clienti = disegnaClientiV5;', W.ctx); W.ctx.clienti();
   const t = testo(W.app.innerHTML);
-  assert.match(t, /Questa settimana · 1 Persona D · eSpring filtro · ogni 12 mesi mar 27 ott ›/);
-  assert.match(t, /Più avanti · 1 Persona L · Artistry crema viso · ogni 2 mesi gio 5 nov ›/);
-  assert.match(W.app.innerHTML, /<span class="cl5-data">/);
-  W.app.clic('[data-cliente-futuro="kL"]');
-  assert.deepEqual(aperti, [['kL', 'oggi']]);
+  assert.match(t, /Clienti da sentire Nessun cliente da sentire oggi Prossimi riordini Persona Diego Finta eSpring · filtro · ogni 12 mesi 20\/12\/2026 › Persona H Finta Nutrilite · Double X 03\/02\/2027 ›/);
+  assert.equal((W.app.innerHTML.match(/data-cliente-futuro=/g) || []).length, 5);   // i prossimi 5
+  assert.doesNotMatch(t, /Persona L|Questa settimana|Più avanti|il prossimo/);
+  W.app.clic('[data-cliente-futuro="k2"]');
+  assert.deepEqual(aperti, [['k2', 'oggi']]);
+  // senza limite di giorni: tutti quelli dopo oggi, dal più vicino
+  assert.match(DASH, /RIO\.futuri = v\.data\.filter\(x => x\.azione && !x\.azione\.completata && !x\.azione\.esito && A\.partiRoma\(x\.azione\.inizio\)\.giorno > oggi\)/);
   // «ogni quanto» dalla vendita: i mesi scelti, se no quelli fra vendita (o consegna) e riordino; niente se a rottura
   const og = vm.createContext({ MB21Lista: L }); vm.runInContext(DASH.slice(DASH.indexOf('function ogniQuantoRiordino'), DASH.indexOf('\n}\n', DASH.indexOf('function ogniQuantoRiordino')) + 3) + ';this.f = ogniQuantoRiordino;', og);
   assert.equal(og.f({ riordino: '2027-10-01', durata_mesi: 12, data: '2026-10-01' }), 'ogni 12 mesi');
@@ -436,7 +439,7 @@ prova('098 nella scheda del Cliente «Prossimo riordino · … · eSpring» (dai
   W.ctx.P5 = { segni: {}, azioni: { kD: { letta: Date.now(), righe: [] } } }; W.ctx.fresco5 = () => true;
   vm.runInContext('this.inPiu = schedaInPiuV5;', W.ctx);
   const h = W.ctx.inPiu('kD', 'Cliente', { nome: 'Persona D' });
-  assert.match(testo(h), /PROSSIMO RIORDINO martedì 27 · eSpring filtro · ogni 12 mesi/);
+  assert.match(testo(h), /PROSSIMO RIORDINO 27\/10\/2026 · eSpring filtro · ogni 12 mesi/);   // la data con l'anno
   assert.doesNotMatch(h, /SEGNI VITALI/);
   assert.doesNotMatch(W.ctx.inPiu('kX', 'Prospect', { nome: 'X' }), /PROSSIMO RIORDINO/);
   assert.match(leggi('pagina-lista.js'), /\.\.\.\(c\.categoria === 'Cliente' \? \[\] : \[\['segni', 'Segni Vitali'\]\]\)\]/);
@@ -477,7 +480,8 @@ prova('095 Clienti da sentire: testata oro, «‹ Oggi», i riordini da sentire 
   // nessun riordino da sentire: il prossimo
   const P = mondoContatti(); P.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 0, totale: 0 }); P.ctx.RIO.prossimo = { contatti: { nome: 'Persona G Finta' }, inizio: '2026-10-29T08:00:00Z' };
   vm.runInContext('this.clienti = disegnaClientiV5;', P.ctx); P.ctx.clienti();
-  assert.match(testo(P.app.innerHTML), /Nessuno da sentire oggi · il prossimo: Persona, gio 29\/10 .*Per oggi nessun cliente da sentire per il riordino\./);
+  assert.match(testo(P.app.innerHTML), /Clienti da sentire Nessun cliente da sentire oggi /);   // nota 098: solo questo
+  assert.doesNotMatch(P.app.innerHTML, /il prossimo|Per oggi nessun cliente/);
   assert.match(DASH, /const padreLV = \(\) => \(LV\.vista === 'persona' && LV\.daClienti \? 'clienti' : PADRE_LV\[LV\.vista\] \|\| 'home'\);/);
   assert.match(DASH, /return vaiLV\(LV\.daClienti \? 'clienti' : 'oggi'\);/);
   assert.match(DASH, /case 'clienti': if \(typeof disegnaClientiV5 === 'function'\) disegnaClientiV5\(\);/);

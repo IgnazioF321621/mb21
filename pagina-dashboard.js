@@ -1578,7 +1578,7 @@ function disegnaAvvio() {
   });
 }
 
-const RIO = { righe: [], prossimo: null, futuri: [], nonRisponde: new Set(), spento: new Set() };   // futuri (v5, nota 098): i riordini dei prossimi 30 giorni, per «Clienti da sentire»   // prossimo (v5, riquadro Clienti di «Oggi»): il primo riordino dopo oggi
+const RIO = { righe: [], prossimo: null, futuri: [], nonRisponde: new Set(), spento: new Set() };   // futuri (v5, nota 098): i riordini dopo oggi, dal più vicino, per «Prossimi riordini» e la scheda   // prossimo (v5, riquadro Clienti di «Oggi»): il primo riordino dopo oggi
 
 // «Ordina da solo» in Dashboard (nota 043): il riquadro «N clienti ordinano da solo» e la domanda dei 7 giorni non ci sono più (V4 Vendite, 22/10:
 // al loro posto il dato del cliente «Ha un account cliente», nella sua scheda).
@@ -1597,11 +1597,11 @@ async function caricaRiordini(oggi) {
     ]);
     if (v.error || g.error) throw v.error || g.error;
     RIO.righe = A.riordiniDaSentire(v.data, oggi, g.data);
-    // nota 098 (Ignazio 26/10, «sì»): su ogni riga «ogni quanto» (dalla vendita) e la marca se la telefonata non l'ha; i riordini dei prossimi 30 giorni
+    // nota 098 (Ignazio 26/10, «sì»): su ogni riga «ogni quanto» (dalla vendita) e la marca se la telefonata non l'ha; i riordini dopo oggi, tutti (senza il limite
+    // di 30 giorni: il 26/10 il primo era fra 55 giorni e i gruppi restavano vuoti), dal più vicino
     const perAzione = new Map(v.data.filter(x => x.azione).map(x => [x.azione.id, x]));
     for (const r of RIO.righe) { const x = perAzione.get(r.id); if (x) Object.assign(r, { brand: r.brand || x.brand, ogni: ogniQuantoRiordino(x) }); }
-    const fino = A.spostaGiorno(oggi, 30);
-    RIO.futuri = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi && A.partiRoma(x.azione.inizio).giorno <= fino)
+    RIO.futuri = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi)
       .map(x => ({ ...x.azione, riordino: x.riordino, prodotto: x.prodotto, brand: x.azione.brand || x.brand, ogni: ogniQuantoRiordino(x) })).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
     // v5 (nota 095): senza riordini da sentire il riquadro Clienti di «Oggi» mostra il prossimo, dalle stesse vendite già lette (nessuna lettura in più)
     RIO.prossimo = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi)

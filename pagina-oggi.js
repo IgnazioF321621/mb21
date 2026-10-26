@@ -148,7 +148,7 @@ function o5Traguardo() {
 function o5Clienti() {
   const n = RIO.righe.length, nome = a => o5Primo(a.contatti ? a.contatti.nome : '');
   if (!n && !RIO.prossimo) return '';
-  const sotto = n ? `da sentire · ${nome(RIO.righe[0])}` : `il prossimo: ${nome(RIO.prossimo)}, ${o5Giorno(RIO.prossimo.inizio).split(' alle ')[0]}`;
+  const sotto = n ? `da sentire · ${nome(RIO.righe[0])}` : 'Nessun cliente da sentire oggi';   // nota 098 (Ignazio 26/10): via «il prossimo: Nome, giorno»
   return `<button class="o5-r o5-mezzo o5-clienti" data-o5="clienti"><span class="o5-tit">${ic('vendite')} CLIENTI</span>
     <span><span class="o5-num">${n || ''}</span><span class="o5-riga">${esc(sotto)}</span></span></button>`;
 }
@@ -427,37 +427,33 @@ function testaCheckV5(titolo, sotto) {
     <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div>${schede}</div>`;
 }
 
-// Nota 098 (Ignazio 26/10, «sì, senza 4»): sotto quelli di oggi, i riordini dei prossimi 30 giorni (RIO.futuri, dalle vendite già lette) in «Questa settimana»
-// e «Più avanti»: «Nome · Marca», sotto «prodotto · ogni N mesi», a destra la data in oro; il tocco apre il contatto (le telefonate di quei giorni si fanno quel giorno)
+// Nota 098 (Ignazio 26/10, «sì, senza 4», poi «sì» alla correzione): sotto quelli di oggi, «Prossimi riordini», i prossimi 5 dopo oggi (RIO.futuri, dalle vendite già
+// lette, senza limite di giorni, i più vicini prima): nome e cognome, sotto «marca · prodotto · ogni N mesi», a destra la data con l'anno in oro; il tocco apre il contatto
 function clientiFuturiV5() {
-  const f = (typeof RIO !== 'undefined' && RIO.futuri) || [];
+  const f = ((typeof RIO !== 'undefined' && RIO.futuri) || []).slice(0, 5);
   if (!f.length) return '';
-  const A = MB21Agenda, dom = A.settimana(ST.oggi)[6], giorno = a => A.partiRoma(a.inizio).giorno;
-  const data = g => new Date(g + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).replace(/\.$/, '');
   const riga = a => `<button class="c5-riga" data-cliente-futuro="${esc(a.contatto_id)}"><span class="c5-pallino" style="background:var(--cat-cliente)"></span>
-      <span class="c5-testo"><b>${esc([a.contatti ? a.contatti.nome : '', a.brand].filter(Boolean).join(' · '))}</b><small>${esc([a.prodotto, a.ogni].filter(Boolean).join(' · '))}</small></span>
-      <span class="cl5-data">${esc(data(giorno(a)))}</span><em>›</em></button>`;
-  const sett = f.filter(a => giorno(a) <= dom), poi = f.filter(a => giorno(a) > dom);
-  return (sett.length ? `<div class="c5-gruppo">Questa settimana · ${sett.length}</div><div class="c5-elenco">${sett.map(riga).join('')}</div>` : '')
-    + (poi.length ? `<div class="c5-gruppo">Più avanti · ${poi.length}</div><div class="c5-elenco">${poi.map(riga).join('')}</div>` : '');
+      <span class="c5-testo"><b>${esc(a.contatti ? a.contatti.nome : '')}</b><small>${esc([a.brand, a.prodotto, a.ogni].filter(Boolean).join(' · '))}</small></span>
+      <span class="cl5-data">${esc(MB21Lista.data(a.inizio))}</span><em>›</em></button>`;
+  return `<div class="c5-gruppo">Prossimi riordini</div><div class="c5-elenco">${f.map(riga).join('')}</div>`;
 }
 
 // ── v5, sesta pagina: «Clienti da sentire» (Regia 26/10; Ignazio: «Clienti» al posto di «Riordini»; solo la veste) ──
 // I riordini da sentire di adesso (RIO.righe, le stesse righe di «Contatti del giorno»: elencoDiOggi, motivo 'rio'), con la testata oro dei Clienti.
 // Il tocco apre la scheda di adesso (la card del riordino con i suoi esiti, collegaRiordini); dopo l'esito, e con «‹ Clienti», si torna qui (LV.daClienti).
-// Senza riordini da sentire la riga sotto il titolo dice il prossimo (RIO.prossimo, dalle vendite già lette). Nessuna lettura nuova.
+// Senza riordini da sentire la riga sotto il titolo dice «Nessun cliente da sentire oggi» (nota 098); i prossimi stanno in «Prossimi riordini». Nessuna lettura nuova.
 function disegnaClientiV5() {
   const e = elencoDiOggi(), rio = e.gruppi.flatMap(g => g.righe).filter(x => x.motivo === 'rio'), fatte = LV.fatte.filter(x => x.tipo === 'rio');
-  const n = rio.length, prossimo = RIO.prossimo;
+  const n = rio.length;
   const sotto = n ? `${n === 1 ? '1 da sentire' : `${n} da sentire`} per il riordino`
-    : prossimo ? `Nessuno da sentire oggi · il prossimo: ${o5Primo(prossimo.contatti ? prossimo.contatti.nome : '')}, ${o5Giorno(prossimo.inizio).split(' alle ')[0]}` : 'Nessun riordino in vista';
+    : 'Nessun cliente da sentire oggi';   // nota 098 (Ignazio 26/10): solo questo, via «il prossimo: Nome, giorno»
   app.innerHTML = `<div class="v5-testa" style="--zc:var(--z-clienti)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Oggi</button>
       <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
     <div class="v5-titolo"><div><h1>Clienti da sentire</h1><span>${esc(sotto)}</span></div></div></div>
     <div class="c5-corpo">${n ? `<div class="c5-gruppo">Da sentire oggi · ${n}</div><div class="c5-elenco">${rio.map(rigaElencoV5).join('')}</div>` : ''}
       ${fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${fatte.length}</div><div class="c5-elenco">${fatte.map(x =>
         `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : ''}
-      ${!n && !fatte.length ? `<div class="vuoto">Per oggi nessun cliente da sentire per il riordino.</div>` : ''}${clientiFuturiV5()}</div>` + versione();
+      ${clientiFuturiV5()}</div>` + versione();   // nota 098: senza clienti oggi lo dice già la testata
   app.querySelectorAll('[data-cliente-futuro]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.clienteFuturo, 'oggi'));   // nota 098: il contatto
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona, daClienti: true }); });
   attaccaIndietroLV();
@@ -527,18 +523,11 @@ function schedaInPiuV5(contattoId, cat, dato) {
     : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)} · ${esc(o5Giorno(quando(prossimo)))}</b>` : '<b>Niente in agenda</b>'}${pm ? tracciaAperturaV5(contattoId) : ''}<div id="p5-cose"></div></div>`;
   // Ignazio 26/10: in «Le ultime volte» la data sempre con l'anno («14/10/2026»: «è importante sapere quando ho chiamato l'ultima volta»)
   const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(MB21Lista.data(r.inizio))}</small></div>`).join('')}</div>` : '';
-  // nota 098 (Ignazio 26/10, «sì»): per un Cliente «Prossimo riordino · martedì 27 · eSpring», dai riordini già letti (RIO: quelli di oggi e dei prossimi 30 giorni)
+  // nota 098 (Ignazio 26/10, «sì»): per un Cliente «Prossimo riordino · 20/12/2026 · eSpring» (la data con l'anno), dai riordini già letti (RIO: quelli di oggi e dopo)
   const rio = cat === 'Cliente' && typeof RIO !== 'undefined' ? [...(RIO.righe || []), ...(RIO.futuri || [])].filter(r => r.contatto_id === contattoId && r.inizio)
     .sort((p, q) => Date.parse(p.inizio) - Date.parse(q.inizio))[0] : null;
-  const boxRiordino = rio ? `<div class="p5-box p5-riordino"><span class="p5-tit">PROSSIMO RIORDINO</span><b>${esc([o5GiornoLungo(MB21Agenda.partiRoma(rio.inizio).giorno), rio.brand].filter(Boolean).join(' · '))}</b>${rio.ogni || rio.prodotto ? `<small>${esc([rio.prodotto, rio.ogni].filter(Boolean).join(' · '))}</small>` : ''}</div>` : '';
+  const boxRiordino = rio ? `<div class="p5-box p5-riordino"><span class="p5-tit">PROSSIMO RIORDINO</span><b>${esc([MB21Lista.data(rio.inizio), rio.brand].filter(Boolean).join(' · '))}</b>${rio.ogni || rio.prodotto ? `<small>${esc([rio.prodotto, rio.ogni].filter(Boolean).join(' · '))}</small>` : ''}</div>` : '';
   return `${boxRiordino}<div class="p5-pila">${segni}${boxProssimo}</div>${boxUltime}`;
-}
-// «oggi» · «domani» · «martedì 27»
-function o5GiornoLungo(g) {
-  const oggi = MB21Coda.oggiRoma();
-  if (g === oggi) return 'oggi';
-  if (g === MB21Agenda.spostaGiorno(oggi, 1)) return 'domani';
-  return new Date(g + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', timeZone: 'UTC' });
 }
 // «Già sentiti oggi» in Contatti del giorno: gli esiti delle telefonate di oggi (nome, categoria, esito); null finché non arrivano (allora resta l'elenco di prima)
 function sentitiOggiV5() {
