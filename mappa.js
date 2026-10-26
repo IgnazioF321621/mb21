@@ -61,9 +61,10 @@
   // Righe da disegnare, nell'ordine dell'albero (decisione B del 16/09: la struttura non si scombina).
   // aperti: insieme di id aperti · filtro: 'tutti' | 'attivo' | 'warning' | 'inattivo' · cerca: testo sul nome.
   // Chi non passa il filtro sparisce, ma **chi sta sopra a uno che passa resta** (senza l'albero non si capirebbe chi è chi).
-  function righe(cime, { aperti = new Set(), filtro = 'tutti', cerca = '' } = {}) {
+  // `passaFiltro` (nota 098, Mappa v5): una regola propria al posto di `filtro` (per esempio «chi ha il WES»), con lo stesso albero.
+  function righe(cime, { aperti = new Set(), filtro = 'tutti', cerca = '', passaFiltro = null } = {}) {
     const testo = String(cerca || '').trim().toLowerCase();
-    const passa = n => (filtro === 'tutti' || n.stato === filtro)
+    const passa = n => (passaFiltro ? passaFiltro(n) : filtro === 'tutti' || n.stato === filtro)
       && (!testo || n.nome.toLowerCase().includes(testo) || String(n.id).includes(testo));
     const tieni = n => passa(n) || n.figli.some(tieni);
 

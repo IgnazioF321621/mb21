@@ -148,6 +148,23 @@ function riquadriMappaV5(conta, cime) {
   return `<div class="m5-riquadri stati">${b('attivo', conta.attivo, 'attivi')}${b('warning', conta.warning, 'sotto 50 VP')}${b('inattivo', conta.inattivo, 'fermi')}</div>
     <div class="m5-riquadri segni">${SEGNI_V5.map(([k, t]) => b(k, MP.segni ? tot[k] : '…', t)).join('')}</div>`;
 }
+// Nota 098 (Ignazio 26/10: «lo sappiamo in quale mese siamo e chi sta guardando»; via «Segnati» e «Abbonati»): un titolo solo «Segni Vitali» e sotto
+// «WES 02-2027», «BBS 11-2026», «CEP»; per l'Admin accanto quante persone hanno il segno su quante («1 su 3», il conto di prima, senza le parole)
+function segniVitaliV5(cime) {
+  if (!MP.attivi) return '';
+  const M = MB21Mappa, conto = eAdmin() && MP.targhe && MP.schede;
+  const tutti = conto ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)) }) : [], quanti = tutti.length;
+  const accese = k => tutti.filter(r => { const t = targheRiga(r); return t && t[k]; }).length;
+  const voce = (k, nome, quando) => `<span class="${k}"><b>${nome}</b>${quando ? ' ' + esc(quando) : ''}${conto && quanti ? ` <em>${accese(k)} su ${quanti}</em>` : ''}</span>`;
+  return `<div class="m5-segni"><b class="m5-segni-t">Segni Vitali</b>${voce('wes', 'WES', MP.attivi.wes ? MB21Lista.etichettaEvento(MP.attivi.wes) : '—')}${voce('bbs', 'BBS', MP.attivi.bbs ? MB21Lista.etichettaEvento(MP.attivi.bbs) : '—')}${voce('cep', 'CEP', '')}</div>`;
+}
+// Nota 098 (Ignazio 26/10: «Fiammetta deve vedere come livello suo 1»): con il Partner Select su un partner i livelli partono da lui = 1 (il livello del file
+// Amway meno quello della persona in cima alla Mappa che si guarda); con «Tutti», o per sé, come nel file
+function livelloVisto(livello, cime) {
+  if (livello == null) return null;
+  const base = cime && cime.length === 1 && cime[0].livello != null ? cime[0].livello : null;
+  return base != null && livello >= base ? livello - base + 1 : livello;
+}
 // chi passa il filtro di un riquadro: lo stato dei VP, o il segno suo (non del gruppo)
 function passaFiltroV5(r, f) {
   if (f === 'attivo' || f === 'warning' || f === 'inattivo') return r.stato === f;
@@ -176,11 +193,11 @@ function disegnaMappa() {
   const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
   const conta = M.conta(cime);
   const v5 = mappaV5();
-  // nota 098 (Ignazio 26/10): con la veste v5 i riquadri della testata sono i filtri; toccandone uno si vedono solo i nomi di quella lista, senza l'albero
-  // (attivi · sotto 50 VP · fermi: la regola di sempre, MB21Mappa.stato; WES · BBS · CEP: chi ha il segno, MP.segni.proprio)
+  // nota 098 (Ignazio 26/10): con la veste v5 i riquadri della testata sono i filtri (attivi · sotto 50 VP · fermi: la regola di sempre, MB21Mappa.stato;
+  // WES · BBS · CEP: chi ha il segno, MP.segni.proprio). Poi (Ignazio: «manteniamo la struttura della mappa»): l'albero resta, tutto aperto, con le persone
+  // della lista al loro posto e i rami che servono per arrivarci attenuati (`spento`, come i filtri di prima)
   const soloLista = v5 && MP.filtro !== 'tutti';
-  const righe = soloLista ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)), cerca: MP.cerca }).filter(r => passaFiltroV5(r, MP.filtro))
-      .map(r => ({ ...r, profondita: 0, haFigli: false, spento: false }))
+  const righe = soloLista ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)), cerca: MP.cerca, passaFiltro: r => passaFiltroV5(r, MP.filtro) })
     : M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
   const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
@@ -189,8 +206,8 @@ function disegnaMappa() {
   // v5 (nota 095, Regia 26/10): la testata blu notte (testaMappaV5, pagina-oggi.js) al posto del titolo e della fascia del Partner Select; sotto la Mappa di adesso
   let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese), riquadriMappaV5(conta, cime)) : `<h1>Mappa</h1>${partnerSelect()}`}
     ${righeTeamHtml()}${statisticheHtml()}
-    <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
-    ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
+    ${v5 ? segniVitaliV5(cime) : `<div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
+    ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}`}
     ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>`}
@@ -221,7 +238,7 @@ function disegnaMappa() {
         <span class="mp-tondo" style="background:${s.colore}" title="${esc(s.titolo)}">${esc(iniziali(r.nome))}</span>
         <div class="mp-corpo">
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
-          <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
+          <span class="mp-liv">Liv. ${livelloVisto(r.livello, cime) ?? '—'}</span>
           ${v5 ? `<span class="m5-dx">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${puntiniV5(targheRiga(r), tocca, r.id)}<span class="m5-vp ${r.stato}">${num(r.vpp, 0)} VP</span></span>`
             : `<span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml(targheRiga(r),
             null, { tasto: tocca, chi: r.id })}</span>`}
@@ -414,7 +431,7 @@ function disegnaCompleta() {
 
   let html = `<button class="indietro" id="mp-indietro">‹ Mappa</button>
     <div class="mp-scheda-testa"><h1>${escIcone(s.pallino)}${esc(nome)}</h1><span style="color:var(--grigio-chiaro);font-size:12px">#${esc(id)}</span></div>
-    <div class="mp-testa"><span>${chi.livello ? 'Livello ' + chi.livello : ''}${chi.data_ingresso ? ' · dal ' + esc(chi.data_ingresso.split('-').reverse().join('/')) : ''}</span>
+    <div class="mp-testa"><span>${chi.livello ? 'Livello ' + livelloVisto(chi.livello, radiceVista(MB21Mappa.albero(MP.squadra || [], MP.volumi || []))) : ''}${chi.data_ingresso ? ' · dal ' + esc(chi.data_ingresso.split('-').reverse().join('/')) : ''}</span>
       <span>mese ${esc(mesePulito(ultimo.mese))}</span></div>
     <div class="mp-riquadro">
       <div class="tre"><div><small>VPP</small><b>${num(ultimo.vpp)}</b></div>

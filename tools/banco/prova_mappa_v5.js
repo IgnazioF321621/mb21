@@ -60,19 +60,41 @@ prova('Su ogni persona i puntini WES · BBS · CEP (tasti per l\'Admin, gli stes
   assert.match(P.app.innerHTML, /<span class="m5-punto wes on" title="WES"><i><\/i><\/span>/);
 });
 
-prova('Toccando un riquadro compaiono solo i nomi di quella lista, senza l\'albero; ritoccandolo si torna a tutti', () => {
+prova('Toccando un riquadro l\'albero resta: le persone della lista al loro posto, i rami per arrivarci attenuati; ritoccandolo si torna a tutti', () => {
   const W = mondo(); W.ctx.disegna();
   W.app.clic('[data-mpfiltro="bbs"]');
   let h = W.app.innerHTML;
   assert.equal(W.ctx.MP.filtro, 'bbs');
-  const nomi = [...h.matchAll(/data-mpnome="(P\d+)"/g)].map(x => x[1]);
-  assert.deepEqual(nomi, ['P001', 'P003']);   // chi ha il BBS lui stesso, anche chi stava chiuso nell'albero
+  const righe = [...h.matchAll(/<div class="mp-riga ([^"]*)"[\s\S]*?data-mpnome="(P\d+)"/g)].map(x => [x[2], /spento/.test(x[1])]);
+  assert.deepEqual(righe, [['P000', true], ['P001', false], ['P003', false]]);   // la cima attenuata (il ramo), A e C (sotto A) al loro posto; B no
+  assert.match(h, /class="mp-riga  figlio[^"]*"[\s\S]*?data-mpnome="P001"/);   // A resta figlio: l'albero c'è
   assert.match(h, /m5-box bbs scelto/);
-  assert.doesNotMatch(h, /class="mp-riga [^"]*figlio/);   // niente albero
   W.app.clic('[data-mpfiltro="warning"]');
-  assert.deepEqual([...W.app.innerHTML.matchAll(/data-mpnome="(P\d+)"/g)].map(x => x[1]), ['P001']);
+  assert.deepEqual([...W.app.innerHTML.matchAll(/data-mpnome="(P\d+)"/g)].map(x => x[1]), ['P000', 'P001']);
   W.app.clic('[data-mpfiltro="warning"]');
   assert.equal(W.ctx.MP.filtro, 'tutti');
+});
+
+prova('Sotto la testata niente più «Gruppo di …» e il mese; un titolo «Segni Vitali» con WES · BBS · CEP, senza «segnati» né «abbonati» (per l\'Admin «1 su 4»)', () => {
+  const W = mondo(); W.ctx.disegna();
+  const h = W.app.innerHTML;
+  assert.doesNotMatch(h, />Gruppo di |mese 10\/2026|segnati|abbonati|Segni Vitali del gruppo/);
+  assert.match(h, /<div class="m5-segni"><b class="m5-segni-t">Segni Vitali<\/b><span class="wes"><b>WES<\/b> 02-2027 <em>1 su 4<\/em><\/span><span class="bbs"><b>BBS<\/b> 11-2026 <em>1 su 4<\/em><\/span><span class="cep"><b>CEP<\/b> <em>1 su 4<\/em><\/span><\/div>/);
+  const P = mondo({ admin: false }); P.ctx.disegna();
+  assert.match(P.app.innerHTML, /<span class="wes"><b>WES<\/b> 02-2027<\/span>/);   // un partner: senza i conti
+});
+
+prova('Il livello parte da chi si guarda: con il Partner Select su Persona A, lei è Liv. 1 e chi ha sotto Liv. 2', () => {
+  const W = mondo();
+  W.ctx.MP.squadra.forEach(p => { p.livello = { P000: 1, P001: 2, P002: 2, P003: 3 }[p.partner_id]; });
+  W.ctx.disegna();
+  assert.match(W.app.innerHTML, /data-mpnome="P000">[^<]*<\/button>\s*<span class="mp-liv">Liv\. 1</);   // per sé come nel file
+  W.ctx.visto = () => ({ id: 'u1', partner_id: 'P001' });
+  vm.runInContext('visto = this.visto', W.ctx);
+  W.ctx.disegna();
+  const h = W.app.innerHTML;
+  assert.match(h, /data-mpnome="P001">[^<]*<\/button>\s*<span class="mp-liv">Liv\. 1</);
+  assert.match(h, /data-mpnome="P003">[^<]*<\/button>\s*<span class="mp-liv">Liv\. 2</);
 });
 
 prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', () => {
