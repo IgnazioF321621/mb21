@@ -403,7 +403,7 @@ prova('098 (Ignazio 26/10, «sì»): nella scheda Segni Vitali solo per un Partn
   await new Promise(r => setImmediate(r));
   W.ctx.persona();   // arrivata la lettura (ridisegno), una sola richiesta
   assert.equal(W.ctx.letture.filter(x => x.t === 'azioni').length, 1);
-  assert.match(testo(W.app.innerHTML), /PROSSIMO Piano Marketing · gio 29\/10 alle 18:00 Le ultime volte Telefonata · Richiamare 12 ott Messaggio · Relazione 28 set/);
+  assert.match(testo(W.app.innerHTML), /PROSSIMO Piano Marketing · gio 29\/10 alle 18:00 Le ultime volte Telefonata · Richiamare 12\/10\/2026 Messaggio · Relazione 28\/09\/2026/);   // Ignazio 26/10: sempre con l'anno
   // nota 098 (Ignazio 26/10): il «Da fare» della persona dentro «Prossimo», con la funzione della scheda della Lista (cosePersonaHtml), dentro, con user_id del proprietario
   const cose = W.ctx.cose5.at(-1);
   assert.equal(JSON.stringify(cose.c), JSON.stringify({ id: 'c1' })); assert.equal(cose.opz.dentro, true); assert.equal(cose.opz.posto, W.app.getElementById('p5-cose'));

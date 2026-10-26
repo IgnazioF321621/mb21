@@ -437,7 +437,6 @@ const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 // gli esiti di oggi (una richiesta quando si apre la pagina).
 const P5 = { segni: {}, azioni: {}, fatti: null, cose: {}, traccia: {} };
 const fresco5 = x => x && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < x.letta);
-const giornoBreve5 = iso => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' });
 const ridisegna5 = vista => { if (ST.tab === 'oggi' && LV.vista === vista) disegnaOggi(); };
 function schedaInPiuV5(contattoId, cat, dato) {
   const persona = dato.contatti ? { id: contattoId, nome: dato.contatti.nome, user_id: dato.user_id } : { id: contattoId, nome: dato.nome, user_id: dato.user_id };
@@ -474,7 +473,8 @@ function schedaInPiuV5(contattoId, cat, dato) {
   const pm = prossimo && (prossimo.tipo_azione === 'Piano Marketing' || prossimo.esito === 'PM Fissato') && MB21Sharing.perChiDi({ categoria: cat }) === 'ospite';
   const boxProssimo = `<div class="p5-box p5-prossimo"><span class="p5-tit" style="color:var(--z-agenda)">PROSSIMO</span>${!righe ? `<b>${y && y.errore ? 'Non letto ora' : 'Leggo…'}</b>`
     : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)} · ${esc(o5Giorno(quando(prossimo)))}</b>` : '<b>Niente in agenda</b>'}${pm ? tracciaAperturaV5(contattoId) : ''}<div id="p5-cose"></div></div>`;
-  const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(giornoBreve5(r.inizio))}</small></div>`).join('')}</div>` : '';
+  // Ignazio 26/10: in «Le ultime volte» la data sempre con l'anno («14/10/2026»: «è importante sapere quando ho chiamato l'ultima volta»)
+  const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(MB21Lista.data(r.inizio))}</small></div>`).join('')}</div>` : '';
   return `<div class="p5-pila">${segni}${boxProssimo}</div>${boxUltime}`;
 }
 // «Già sentiti oggi» in Contatti del giorno: gli esiti delle telefonate di oggi (nome, categoria, esito); null finché non arrivano (allora resta l'elenco di prima)
