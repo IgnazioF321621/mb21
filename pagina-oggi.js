@@ -7,42 +7,41 @@
 
 // Per tornare alla Dashboard di prima (disegnaHome) basta false.
 const OGGI_V5 = true;
-// I dati in più dei riquadri: gli appuntamenti di oggi (o il prossimo) e il ripasso del Training. `di`/`giorno` dicono di chi e di quando sono.
-const O5 = { di: null, giorno: null, oggi: null, prossimo: null, training: null };
+// I dati in più dei riquadri: gli impegni di oggi e di domani (`oggi`, `domani`: le voci di MB21Agenda.programmaDelGiorno) e il ripasso del Training.
+// `di`/`giorno` dicono di chi e di quando sono.
+const O5 = { di: null, giorno: null, oggi: null, domani: null, training: null };
 
 // ── Le letture in più (nella stessa attesa della Dashboard: caricaOggi le chiama insieme alle sue) ──
 async function caricaOggiV5(oggi) {
   if (!OGGI_V5 || vediTutti()) return;
-  const A = MB21Agenda, io = visto().id, da = A.isoDaRoma(oggi, '00:00'), domani = A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00');
+  const A = MB21Agenda, io = visto().id, gDomani = A.spostaGiorno(oggi, 1), da = A.isoDaRoma(oggi, '00:00'), a = A.isoDaRoma(A.spostaGiorno(oggi, 2), '00:00');
   // Nota 098 (Ignazio 26/10: «Nessun appuntamento in vista», ma in Agenda c'erano la serata di Team, la SdS/OPEN e un «Richiamare»): oggi si legge
   // come l'Agenda (appuntamenti, Contatti con la data scelta o programmati, spazi, impegni ricevuti) e si conta con la sua stessa regola
-  // (MB21Agenda.programmaDelGiorno: quello che il riquadro conta è «In programma» del Giorno di oggi). Letture piccole, solo di oggi.
-  const [app1, cont, coda, spazi, ricevuti, trn] = await Promise.all([
-    // gli appuntamenti da oggi in poi (anche quelli già chiusi di oggi, come in Agenda): quelli di oggi e il primo dopo, se oggi non c'è niente
+  // (MB21Agenda.programmaDelGiorno: quello che il riquadro conta è «In programma» del Giorno di oggi). Dal 26/10 sera (riquadro come il widget
+  // Calendario) anche domani, per «DOMANI»: letture piccole, solo di oggi e domani.
+  const [app1, cont, spazi, ricevuti, trn] = await Promise.all([
+    // gli appuntamenti di oggi e domani (anche quelli già chiusi di oggi, come in Agenda)
     dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto')
-      .gte('inizio', da).order('inizio').limit(20)),
-    // i Contatti di oggi, con la stessa regola dell'Agenda: la data scelta dalla coda (PM Fissato, Richiamare…) o la telefonata programmata
+      .gte('inizio', da).lt('inizio', a).order('inizio').limit(30)),
+    // i Contatti di oggi e domani, con la stessa regola dell'Agenda: la data scelta dalla coda (PM Fissato, Richiamare…) o la telefonata programmata
     dbq('Oggi: contatti in agenda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
-      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${domani}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${domani}")`).limit(20)),
-    // per «il prossimo» dei giorni dopo, come prima: quelli fissati dalla coda (PM Fissato, Appuntamento)
-    dbq('Oggi: appuntamenti dalla coda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
-      .in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani).order('data_scelta').limit(8)),
-    // gli spazi di oggi (Team, LdS, SdS/OPEN, da riempire) e gli impegni ricevuti di oggi: se la lettura non riesce, si conta senza (come in Agenda)
-    dbq('Oggi: spazi', supa.from('spazi').select('*').eq('user_id', io).gte('inizio', da).lt('inizio', domani).order('inizio')),
-    dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: domani })),
+      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`).limit(30)),
+    // gli spazi (Team, LdS, SdS/OPEN, da riempire) e gli impegni ricevuti di oggi e domani: se la lettura non riesce, si conta senza (come in Agenda)
+    dbq('Oggi: spazi', supa.from('spazi').select('*').eq('user_id', io).gte('inizio', da).lt('inizio', a).order('inizio')),
+    dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a })),
     guardoAltri() ? null : caricaTrainingOggi(oggi),
   ]);
-  let voci = null, prossimo = null;
-  if (!app1.error && !cont.error && !coda.error) {
-    const azioni = A.azioniAgenda([...app1.data, ...cont.data, ...coda.data]), adesso = new Date().toISOString();
-    const fuori = new Set(azioni.filter(a => A.passatoSenzaEsito(a, adesso)).map(a => a.id));   // quelli in «Da chiudere», come nel Giorno
-    const sp = (spazi.error ? [] : spazi.data || []).map(x => ({ inizio: x.inizio, titolo: MB21Spazi.titolo(x) }));
-    voci = A.programmaDelGiorno({ azioni, spazi: sp, ricevuti: ricevuti.error || !Array.isArray(ricevuti.data) ? [] : ricevuti.data, giorno: oggi, fuori, opz: { mioId: io, admin: false } }).voci;
-    prossimo = azioni.map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
-      .filter(a => a.quando >= domani && !a.completata && (a.tipo_azione !== 'Contatto' || ['PM Fissato', 'Appuntamento'].includes(a.esito)))
-      .sort((x, y) => (x.quando < y.quando ? -1 : 1))[0] || null;
+  let voci = null, vociDomani = null;
+  if (!app1.error && !cont.error) {
+    const azioni = A.azioniAgenda([...app1.data, ...cont.data]), adesso = new Date().toISOString();
+    const fuori = new Set(azioni.filter(x => A.passatoSenzaEsito(x, adesso)).map(x => x.id));   // quelli in «Da chiudere», come nel Giorno
+    const sp = (spazi.error ? [] : spazi.data || []).map(x => { const o = MB21Spazi.orario(x); return { inizio: x.inizio, fine: A.isoDaRoma(o.giorno, o.fine === '24:00' ? '23:59' : o.fine), titolo: MB21Spazi.titolo(x) }; });
+    const ric = ricevuti.error || !Array.isArray(ricevuti.data) ? [] : ricevuti.data, opz = { mioId: io, admin: false };
+    const spDi = g => sp.filter(x => A.partiRoma(x.inizio).giorno === g);
+    voci = A.programmaDelGiorno({ azioni, spazi: spDi(oggi), ricevuti: ric, giorno: oggi, fuori, opz }).voci;
+    vociDomani = A.programmaDelGiorno({ azioni, spazi: spDi(gDomani), ricevuti: ric, giorno: gDomani, opz }).voci;
   }
-  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, prossimo, training: trn });
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, training: trn });
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
@@ -58,7 +57,6 @@ async function caricaTrainingOggi(oggi) {
 }
 
 // ── I pezzi ──
-const o5Nomi = nomi => (nomi.length <= 2 ? nomi.join(' e ') : `${nomi.slice(0, 2).join(', ')} e altri ${nomi.length - 2}`);
 const o5Primo = n => String(n || '').trim().split(/\s+/)[0];
 const o5Giorno = iso => { const d = MB21Agenda.partiRoma(iso); return `${new Date(d.giorno + 'T12:00:00Z').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' })} alle ${d.ora}`; };
 // l'anello dei Contatti del giorno: `fatti` su `totale`
@@ -67,16 +65,20 @@ function o5Anello(fatti, totale, px) {
   return `<svg class="o5-anello" width="${px}" height="${px}" viewBox="0 0 74 74" aria-hidden="true"><circle cx="37" cy="37" r="${r}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="10"/>
     <circle cx="37" cy="37" r="${r}" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(giro * pieno).toFixed(1)} ${giro.toFixed(1)}" transform="rotate(-90 37 37)"${pieno >= 1 ? ' class="o5-chiude"' : ''}/></svg>`;
 }
-// Contatti del giorno (in cima, il più grande): «3 su 5 · Mancano Persona A e Persona B»; a 5 su 5 l'anello si chiude, la spunta e «grande lavoro».
-function o5Contatti(sera) {
+// Contatti del giorno (in cima, il più grande). Nota 098 (Ignazio 26/10, «sì», dai widget dell'iPhone): come il widget Promemoria. A sinistra il numero
+// grande di quanti restano da sentire con «DA SENTIRE», a destra i nomi, uno per riga col cerchietto vuoto (solo disegno: non spunta niente), al massimo 4.
+// Fatti tutti: al posto del numero la spunta con «5 su 5» e la festa di prima. Il tocco apre Contatti del giorno, come prima. Via l'anello e «Mancano…».
+function o5Contatti() {
   const st = ST.stato || {}, totale = st.contatti_al_giorno || 0, fatti = Math.min(st.fatti_oggi || 0, totale), r = ST.risultato || { coda: [] };
-  const finito = totale > 0 && fatti >= totale, px = sera ? 62 : 78;
-  const riga = totale === 0 ? (guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire')
-    : finito ? `Fatti tutti e ${totale} · grande lavoro`
-    : (r.coda || []).length ? `${(r.coda.length === 1 ? 'Manca ' : 'Mancano ')}${o5Nomi(r.coda.map(x => x.nome))}` : 'Per oggi la coda è finita';
-  const anello = finito ? `<span class="o5-fatto">${o5Anello(1, 1, px)}<span class="o5-spunta">${ic('fatto')}</span></span>` : o5Anello(fatti, totale, px);
+  const finito = totale > 0 && fatti >= totale, nomi = (r.coda || []).map(x => x.nome).filter(Boolean);
+  const sx = finito ? `<span class="o5-pw-n o5-tutti"><span class="o5-spunta">${ic('fatto')}</span><small>${fatti} SU ${totale}</small></span>`
+    : `<span class="o5-pw-n"><b>${totale - fatti}</b><small>DA SENTIRE</small></span>`;
+  const dx = totale === 0 ? `<span class="o5-pw-vuoto">${guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire'}</span>`
+    : finito ? `<span class="o5-pw-vuoto">Fatti tutti · grande lavoro</span>`
+    : nomi.length ? `<span class="o5-pw-el">${nomi.slice(0, 4).map(n => `<span class="o5-pw-r o5-pr"><i></i><span>${esc(n)}</span></span>`).join('')}</span>`
+    : `<span class="o5-pw-vuoto">Per oggi la coda è finita</span>`;
   return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
-    <span class="o5-col"><span class="o5-tit">Contatti del giorno</span><span class="o5-num">${fatti} <small>su ${totale}</small></span><span class="o5-riga">${esc(riga)}</span></span>${anello}</button>`;
+    <span class="o5-tit">Contatti del giorno</span><span class="o5-pw">${sx}${dx}</span></button>`;
 }
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
@@ -84,20 +86,28 @@ function o5Sera(fatto) {
   return `<button class="o5-r o5-sera${fatto ? ' fatto' : ''}" data-o5="sera"><span class="o5-tondo">${ic(fatto ? 'fatto' : 'diario')}</span><span class="o5-col">${fatto
     ? '<b>Check di oggi ✓</b><small>Rivedi o correggi la tua giornata</small>' : '<b>Com\'è andata oggi?</b><small>È ora: scrivi la tua giornata nel Check</small>'}</span><em>›</em></button>`;
 }
-// Agenda: gli appuntamenti di oggi; se oggi niente, il prossimo; se niente in vista, l'invito a fissarne uno. Il tocco apre sempre l'Agenda su oggi
+// Agenda. Nota 098 (Ignazio 26/10, «sì», dai widget dell'iPhone): come il widget Calendario. A sinistra il giorno («LUNEDÌ», «26» grande), a destra gli
+// impegni di oggi (le voci di MB21Agenda.programmaDelGiorno, la regola di «In programma»), un blocchetto ciascuno con la barretta, il titolo su una riga
+// e sotto «19:00 – 20:00» (o solo l'inizio); al massimo 3, poi «Altri N impegni». Se oggi è finito o vuoto e domani c'è qualcosa: «DOMANI» e il primo
+// di domani. Niente oggi né domani: «Niente in vista · fissane uno». Il tocco apre sempre l'Agenda su oggi.
+function o5Adesso() { return MB21Agenda.partiRoma(new Date().toISOString()).ora; }   // «13:05», ora di Roma (function: le prove la fermano)
 function o5Agenda() {
   const pronto = O5.di === visto().id && O5.giorno === ST.oggi && Array.isArray(O5.oggi);
-  const cosa = a => esc(a.modalita || (a.tipo_azione === 'Contatto' ? a.esito : a.tipo_azione) || 'Appuntamento');
-  // Nota 098 (Ignazio 26/10: «potremmo copiare… il promemoria»): come il widget Promemoria dell'iPhone. A sinistra il numero grande con «OGGI», a destra
-  // i primi 4 impegni, uno per riga, ora e titolo (tagliato con «…»). Con 0: il prossimo, oppure «Niente in vista · fissane uno».
-  const n = pronto ? O5.oggi.length : null;
-  const dx = !pronto ? `<span class="o5-pw-vuoto">Leggo l'Agenda…</span>`
-    : n ? `<span class="o5-pw-el">${O5.oggi.slice(0, 4).map(v => `<span class="o5-pw-r"><i></i><em>${esc(v.ora)}</em><span>${esc(v.titolo)}</span></span>`).join('')}</span>`
-    : O5.prossimo ? `<span class="o5-pw-vuoto">il prossimo: ${cosa(O5.prossimo)}, ${esc(o5Giorno(O5.prossimo.quando))}</span>`
-    : `<span class="o5-pw-vuoto">Niente in vista · fissane uno</span>`;
+  const d = new Date(ST.oggi + 'T12:00:00Z');
+  const giorno = `<span class="o5-cal-g"><small>${esc(d.toLocaleDateString('it-IT', { weekday: 'long', timeZone: 'UTC' }).toUpperCase())}</small><b>${d.getUTCDate()}</b></span>`;
+  const blocco = v => `<span class="o5-cal-b"><b>${esc(v.titolo)}</b><small>${esc(v.ora)}${v.fine ? ` – ${esc(v.fine)}` : ''}</small></span>`;
+  let dx;
+  if (!pronto) dx = `<span class="o5-pw-vuoto">Leggo l'Agenda…</span>`;
+  else {
+    const oggi = O5.oggi, domani = O5.domani || [], adesso = o5Adesso();
+    const finito = oggi.every(v => (v.fine || v.ora) <= adesso), conDomani = finito && domani.length > 0;
+    const quanti = conDomani ? 2 : 3, altri = oggi.length - Math.min(oggi.length, quanti);
+    dx = !oggi.length && !domani.length ? `<span class="o5-pw-vuoto">Niente in vista · fissane uno</span>`
+      : `<span class="o5-cal-el">${oggi.length ? oggi.slice(0, quanti).map(blocco).join('') : '<span class="o5-cal-niente">Niente oggi</span>'}${altri ? `<span class="o5-cal-altri">${altri === 1 ? 'Un altro impegno' : `Altri ${altri} impegni`}</span>` : ''}${
+        conDomani ? `<span class="o5-cal-dom">DOMANI</span>${blocco(domani[0])}` : ''}</span>`;
+  }
   // Ignazio 26/10: il riquadro apre SEMPRE l'Agenda, anche con l'invito «fissane uno» (prima con l'invito apriva i Contatti del giorno)
-  return `<button class="o5-r o5-agenda" data-o5="agenda" aria-label="Agenda: ${n == null ? 'in lettura' : `${n} oggi`}"><span class="o5-tit">${ic('agenda')} AGENDA</span>
-    <span class="o5-pw"><span class="o5-pw-n"><b>${n == null ? '·' : n}</b><small>OGGI</small></span>${dx}</span></button>`;
+  return `<button class="o5-r o5-agenda" data-o5="agenda" aria-label="Agenda di oggi"><span class="o5-tit">${ic('agenda')} AGENDA</span><span class="o5-pw">${giorno}${dx}</span></button>`;
 }
 // Training: cosa c'è da fare, con le parole del Training (mai l'ora del giorno)
 function o5Training() {
@@ -184,7 +194,7 @@ function disegnaOggiV5() {
     <div class="o5-testa"><div><span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span><h1>Oggi</h1></div>
       <div class="o5-dx">${chipPartnerSelect()}<button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>${cerchiettoProfilo()}</div></div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${o5Contatti(sera)}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
+    <div class="o5-riquadri">${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();

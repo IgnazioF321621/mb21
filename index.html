@@ -2380,7 +2380,9 @@
   .o5-riga { display: block; font-size: 13px; font-weight: 700; }
   .o5-riga.forte { font-size: 17px; font-weight: 800; }
   .o5-nome { display: block; font-size: 18px; font-weight: 800; line-height: 1.1; }
-  .o5-contatti { background: var(--z-contatti); border-radius: 24px; padding: 18px; flex-direction: row; align-items: center; gap: 10px; }
+  .o5-contatti { background: var(--z-contatti); border-radius: 24px; padding: 16px 18px; gap: 8px; }
+  .o5-contatti .o5-pw-n b { font-size: 52px; }
+  .o5-contatti .o5-pw-r { font-size: 15px; }
   .o5-contatti .o5-tit { font-size: 16px; }
   .o5-contatti .o5-num { font-size: 46px; }
   .o5-contatti .o5-riga { font-size: 14px; }
@@ -2411,6 +2413,20 @@
   .o5-pw-r em { font-style: normal; font-weight: 800; font-variant-numeric: tabular-nums; flex: none; }
   .o5-pw-r span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .o5-pw-vuoto { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
+  /* Contatti come il widget Promemoria: il cerchietto vuoto davanti al nome; fatti tutti, la spunta al posto del numero */
+  .o5-pr i { width: 13px; height: 13px; border-radius: 50%; background: none; border: 2px solid #fff; }
+  .o5-tutti .o5-spunta { position: static; display: flex; }
+  .o5-tutti .o5-spunta svg.ic { width: 44px; height: 44px; }
+  /* Agenda come il widget Calendario: il giorno a sinistra, i blocchetti degli impegni con la barretta, «Altri N», «DOMANI» */
+  .o5-cal-g { display: flex; flex-direction: column; flex: none; min-width: 64px; }
+  .o5-cal-g small { font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+  .o5-cal-g b { font-size: 44px; font-weight: 800; line-height: 1; }
+  .o5-cal-el { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .o5-cal-b { display: block; min-width: 0; border-left: 4px solid #fff; background: rgba(255,255,255,.18); border-radius: 4px; padding: 3px 8px; }
+  .o5-cal-b b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .o5-cal-b small { display: block; font-size: 12px; }
+  .o5-cal-altri, .o5-cal-niente { font-size: 12.5px; font-weight: 700; opacity: .9; }
+  .o5-cal-dom { font-size: 11.5px; font-weight: 800; letter-spacing: .06em; margin-top: 2px; }
   .o5-coppia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .o5-coppia.uno { grid-template-columns: 1fr; }
   .o5-mezzo { min-height: 108px; }
@@ -2425,7 +2441,7 @@
   .o5.sera .o5-testa { margin: 2px 0 6px; }
   .o5.sera .o5-riquadri { gap: 8px; }
   .o5.sera .o5-contatti { padding: 12px 18px; }
-  .o5.sera .o5-contatti .o5-num { font-size: 38px; }
+  .o5.sera .o5-contatti .o5-pw-n b { font-size: 40px; }
   .o5.sera .o5-mezzo { min-height: 92px; }
   .o5.sera .o5-num { font-size: 28px; }
   /* v5: testata colorata delle pagine (Contatti del giorno nel colore della zona, la scheda nel colore della categoria della persona) */

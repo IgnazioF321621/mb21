@@ -259,14 +259,17 @@
   // `azioniAgenda`: le azioni lette come in Agenda (appuntamenti + Contatti con la data scelta o programmati), senza i doppioni della coda e senza le
   // telefonate scelte a mano senza ora (stanno solo in coda). `passatoSenzaEsito`: un appuntamento già iniziato, non chiuso e senza esito, cioè quello
   // che l'Agenda mette in «Da chiudere» (la lettura `senza_esito`). `programmaDelGiorno`: gli impegni del giorno meno `fuori` (gli id già in «Da
-  // chiudere»), più gli spazi (`spazi`: quelli del giorno, già come { inizio, titolo }) e gli impegni ricevuti; `voci` = [{ t, ora, titolo }] in ordine d'ora.
+  // chiudere»), più gli spazi (`spazi`: quelli del giorno, già come { inizio, fine?, titolo }) e gli impegni ricevuti; `voci` = [{ t, ora, fine, titolo }] in
+  // ordine d'ora (`fine` = l'ora di fine «20:00», vuota se l'impegno non ce l'ha).
   const azioniAgenda = righe => senzaDoppioniCoda(righe).filter(a => !(a.senza_ora && !a.completata));
   const passatoSenzaEsito = (a, adesso) => a.tipo_azione !== 'Contatto' && !a.completata && !a.esito && !!a.inizio && a.inizio < adesso;
   function programmaDelGiorno({ azioni, spazi = [], ricevuti = [], giorno, fuori = null, opz = {} }) {
     const eventi = eventiDelGiorno(azioni || [], giorno).filter(e => !(fuori && fuori.has(e.id)));
     const ric = ricevutiDelGiorno(ricevuti, giorno);
-    const voci = [...eventi.map(e => ({ t: e.quando, titolo: riga(e, opz).titolo })), ...spazi.map(x => ({ t: x.inizio, titolo: x.titolo })), ...ric.map(x => ({ t: x.inizio, titolo: x.titolo }))]
-      .sort((x, y) => Date.parse(x.t) - Date.parse(y.t)).map(v => ({ ...v, ora: partiRoma(v.t).ora }));
+    const fineDi = (inizio, fine) => (fine && fine > inizio ? partiRoma(fine).ora : '');
+    const voci = [...eventi.map(e => ({ t: e.quando, f: e.tipo_azione === 'Contatto' && e.data_scelta ? null : e.fine, titolo: riga(e, opz).titolo })),
+      ...spazi.map(x => ({ t: x.inizio, f: x.fine, titolo: x.titolo })), ...ric.map(x => ({ t: x.inizio, f: x.fine, titolo: x.titolo }))]
+      .sort((x, y) => Date.parse(x.t) - Date.parse(y.t)).map(({ t, f, titolo }) => ({ t, titolo, ora: partiRoma(t).ora, fine: fineDi(t, f) }));
     return { eventi, ricevuti: ric, voci };
   }
   // Gli impegni ricevuti di un giorno come impegni dell'agenda, per l'avviso «A quest'ora hai già…» e le ore libere (nota Pagine 049,
