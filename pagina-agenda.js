@@ -114,7 +114,7 @@ async function caricaAgendaLetture() {
   AG.ricevuti = rc && !rc.error && Array.isArray(rc.data) ? rc.data : [];
   for (const r of [app1, ric, pas, tel, cd]) if (r && r.error) throw r.error;
   // una telefonata scelta a mano senza orario (nota 012) sta solo in coda, in Dashboard: in Agenda entra quando ha un'ora o quando è fatta (allora l'ora è quella)
-  AG.azioni = MB21Agenda.senzaDoppioniCoda([...app1.data, ...ric.data]).filter(a => !(a.senza_ora && !a.completata));
+  AG.azioni = MB21Agenda.azioniAgenda([...app1.data, ...ric.data]);   // la stessa regola del riquadro AGENDA di Oggi (nota 098)
   AG.passati = pas.data;
   // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
   const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
@@ -633,8 +633,11 @@ function giornoV5Html(eventi, opz, oggi) {
     h += gruppoV5('chiudere', '#C2410C', 'Da chiudere', n, chiudere.map(a => `<button class="ag-imp" data-chiudere="${esc(a.id)}"><i class="${classeCat((a.contatti && a.contatti.categoria) || a.categoria)}"></i><span>${esc(A.riga(a, opz).titolo)}</span><b>${esc(quandoChiudereV5(a, oggi))} ›</b></button>`).join(''));
   }
   // In programma: quello già in «Da chiudere» non si ripete nell'Elenco (nella Timeline sì: lì si guarda l'ora)
-  const gia = new Set(chiudere.map(a => a.id)), elenco = eventi.filter(e => !gia.has(e.id));
-  const quanti = elenco.length + spaziDelGiorno(AG.giorno).length + ricevutiDelGiornoMB(AG.giorno).length;
+  // il conto è quello di MB21Agenda.programmaDelGiorno, lo stesso del riquadro AGENDA di Oggi (nota 098)
+  const gia = new Set(chiudere.map(a => a.id));
+  const prog = A.programmaDelGiorno({ azioni: AG.azioni, spazi: spaziDelGiorno(AG.giorno).map(s => ({ inizio: s.inizio, titolo: MB21Spazi.titolo(s) })),
+    ricevuti: vediTutti() ? [] : AG.ricevuti, giorno: AG.giorno, fuori: gia, opz });
+  const elenco = prog.eventi, quanti = prog.voci.length;
   const modo = tre ? 'elenco' : modoProgramma();   // sul computer la Timeline sta già nella colonna destra
   const interruttore = tre ? '' : interruttoreProgramma(modo);
   h += gruppoV5('programma', 'var(--z-agenda)', 'In programma', quanti, modo === 'timeline' ? `<div class="a5-crono">${grigliaGiorno(eventi, opz)}</div>` : impegniHtml(elenco, opz), interruttore);

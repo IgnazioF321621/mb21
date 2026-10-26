@@ -3,7 +3,7 @@
 // mondo (tools/design/mini_dom.js); dati inventati. Uso: node tools/banco/prova_oggi_v5.js
 const assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
 const { Nodo } = require('../design/mini_dom.js');
-const L = require('../../lista.js'), A = require('../../agenda.js'), T = require('../../training.js');
+const L = require('../../lista.js'), A = require('../../agenda.js'), T = require('../../training.js'), S = require('../../spazi.js');
 const BASE = path.join(__dirname, '..', '..');
 const leggi = f => fs.readFileSync(path.join(BASE, f), 'utf8');
 const PO = leggi('pagina-oggi.js'), IDX = leggi('index.html'), DASH = leggi('pagina-dashboard.js');
@@ -18,7 +18,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
   const app = new Nodo(), sg = new Nodo(), vai = [];
   sg.hidden = false; sg.classList = { contains: c => c === 'con-risposta' && !!sg.risposta };
   const ctx = { console, Promise, Date, Intl, Math, JSON, Number, String, Array, Object, Set, app, esc, ic: n => `[${n}]`,
-    MB21Agenda: A, MB21Lista: L, MB21Training: T, MB21Coda: { oggiRoma: () => OGGI },
+    MB21Agenda: A, MB21Lista: L, MB21Training: T, MB21Spazi: S, MB21Coda: { oggiRoma: () => OGGI },
     MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null },
     ST: { tab: 'oggi', oggi: OGGI, stato, risultato: { coda: codaNomi.map((nome, i) => ({ id: 'c' + i, nome })) }, offline: false, utente: { id: 'io' } },
     LV: { vista: 'home' }, DS: { dati: { ultimoCheck: fattoGiorno ? OGGI : null }, sqLettura: Promise.resolve({ sq: [{ partner_id: 'P1' }, { partner_id: 'P2', sponsor_id: 'P1' }, { partner_id: 'P3', sponsor_id: 'P2' }, { partner_id: 'P9', sponsor_id: 'X' }] }) },
@@ -79,15 +79,18 @@ prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto Contatti, finché 
   F.app.clic('[data-o5="sera"]'); assert.deepEqual(F.vai, ['check']);
 });
 
-prova('095: Agenda — gli appuntamenti di oggi (tipo, ora, persona); senza, il prossimo; senza niente in vista l\'invito; il tocco apre sempre l\'Agenda', () => {
-  const app1 = { tipo_azione: 'Appuntamento', modalita: 'Piano Marketing', quando: '2026-10-25T15:30:00Z', contatti: { nome: 'Persona C' } };
-  const W = mondo({ agenda: [app1, { tipo_azione: 'Incontro', quando: '2026-10-25T17:00:00Z', luogo: 'online' }] }); W.ctx.disegna();
-  assert.match(testo(W.app.innerHTML), /AGENDA 2 appuntamenti oggi Piano Marketing 16:30 · Persona C Incontro 18:00 · online/);
+prova('098: Agenda come il widget Promemoria — il numero grande con «OGGI», i primi 4 impegni (ora e titolo); con 0 il prossimo o «Niente in vista»; il tocco apre sempre l\'Agenda', () => {
+  const voci = [['09:00', 'Telefonata · Persona C'], ['17:00', 'Richiamare · Persona D'], ['19:00', 'Incontro di Team'], ['21:30', 'SdS/OPEN'], ['22:00', 'Altro']].map(([ora, titolo]) => ({ ora, titolo, t: '' }));
+  const W = mondo({ agenda: voci }); W.ctx.disegna();
+  assert.match(W.app.innerHTML, /<span class="o5-pw-n"><b>5<\/b><small>OGGI<\/small><\/span>/);
+  assert.equal((W.app.innerHTML.match(/class="o5-pw-r"/g) || []).length, 4);
+  assert.match(testo(W.app.innerHTML), /AGENDA 5 OGGI 09:00 Telefonata · Persona C 17:00 Richiamare · Persona D 19:00 Incontro di Team 21:30 SdS\/OPEN/);
   W.app.clic('[data-o5="agenda"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['tab', 'agenda']]);
+  const app1 = { tipo_azione: 'Appuntamento', modalita: 'Piano Marketing', contatti: { nome: 'Persona C' } };
   const P = mondo(); P.ctx.O5.prossimo = { ...app1, quando: '2026-10-27T17:00:00Z' }; P.ctx.disegna();
-  assert.match(testo(P.app.innerHTML), /Oggi niente il prossimo: Piano Marketing, mar 27\/10 alle 18:00/);
+  assert.match(testo(P.app.innerHTML), /AGENDA 0 OGGI il prossimo: Piano Marketing, mar 27\/10 alle 18:00/);
   const N = mondo(); N.ctx.disegna();
-  assert.match(testo(N.app.innerHTML), /Nessun appuntamento in vista fissane uno/);
+  assert.match(testo(N.app.innerHTML), /0 OGGI Niente in vista · fissane uno/);
   N.app.clic('.o5-agenda'); assert.deepEqual(JSON.parse(JSON.stringify(N.vai)), [['tab', 'agenda']]);   // Ignazio 26/10: anche con l'invito apre l'Agenda
 });
 
@@ -126,20 +129,42 @@ prova('095: Clienti e Mappa a metà — riordini da sentire (o il prossimo; senz
   assert.doesNotMatch(N.app.innerHTML, /o5-clienti/); assert.match(N.app.innerHTML, /<div class="o5-coppia uno">/);
 });
 
-prova('095: le letture in più — appuntamenti di oggi e dalla coda (pochi), il ripasso senza scaricare i mazzi; con un altro partner niente Training', async () => {
+prova('095/098: le letture in più — gli impegni di oggi come l\'Agenda (pochi), il ripasso senza scaricare i mazzi; con un altro partner niente Training', async () => {
   const W = mondo(), chieste = [];
   const q = t => { const passi = []; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { chieste.push([t, passi]); return Promise.resolve(t === 'training_carte' ? { count: 22, error: null } : { data: t === 'training_giorni' ? [{ giorno: OGGI }, { giorno: '2026-10-24' }] : [], error: null }).then(si); })
     : (...a) => { passi.push([p, ...a]); return c; }) }); return c; };
-  Object.assign(W.ctx, { supa: { from: q }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
+  const rpc = (nome, args) => { chieste.push(['rpc:' + nome, [['args', args]]]); return Promise.resolve({ data: [], error: null }); };
+  Object.assign(W.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
   await W.ctx.carica(OGGI);
-  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'training_carte', 'training_giorni']);
-  assert.ok(chieste.every(([, p]) => !p.some(x => x[0] === 'limit') || p.find(x => x[0] === 'limit')[1] <= 8));
+  // nota 098: oggi come l'Agenda (appuntamenti, Contatti di oggi, spazi di oggi, impegni ricevuti di oggi) + i fissati dalla coda per «il prossimo»
+  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'azioni', 'rpc:impegni_ricevuti', 'spazi', 'training_carte', 'training_giorni']);
+  assert.ok(chieste.every(([, p]) => !p.some(x => x[0] === 'limit') || p.find(x => x[0] === 'limit')[1] <= 20));
+  assert.ok(chieste.find(x => x[0] === 'spazi')[1].some(x => x[0] === 'lt'));   // gli spazi solo di oggi
+  assert.deepEqual(W.ctx.O5.oggi, []);
   assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.training)), { daRipassare: 22, fila: 2, fattoOggi: true });
   const X = mondo({ altro: true }); chieste.length = 0;
-  Object.assign(X.ctx, { supa: { from: q }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
+  Object.assign(X.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
   await X.ctx.carica(OGGI);
   assert.ok(!chieste.some(x => x[0].startsWith('training')));
   assert.match(DASH, /typeof caricaOggiV5 === 'function' \? caricaOggiV5\(oggi\)\.catch\(\(\) => \{\}\) : null\]\);/);   // nella stessa attesa della Dashboard
+});
+
+prova('098: il difetto del 26/10 — con un «Richiamare» alle 17, la serata di Team (spazio) e la SdS/OPEN ricevuta, il riquadro conta 3 come «In programma»; il PM passato senza esito no (è in «Da chiudere»)', async () => {
+  const W = mondo(), q = A.isoDaRoma;
+  const righe = {
+    azioni_app: [{ id: 'pm', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: q(OGGI, '08:00'), completata: false, esito: null, contatti: { nome: 'Persona F' } }],
+    azioni_cont: [{ id: 'ric', tipo_azione: 'Contatto', modalita: 'Telefonata', esito: 'Richiamare', data_scelta: q(OGGI, '17:00'), inizio: q(OGGI, '09:00'), completata: true, contatti: { nome: 'Persona D' } }],
+    spazi: [{ id: 's1', tipo: 'Team', inizio: q(OGGI, '19:00'), durata: 60 }],
+  };
+  let n = 0;
+  const q2 = t => { const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => Promise.resolve({ data: t === 'spazi' ? righe.spazi : t === 'azioni' ? [righe.azioni_app, righe.azioni_cont, []][n++] : [], error: null, count: 0 }).then(si))
+    : () => c) }); return c; };
+  const rpc = () => Promise.resolve({ data: [{ origine: 'spazio', id: 'r1', inizio: q(OGGI, '21:30'), fine: q(OGGI, '22:30'), titolo: 'SdS/OPEN', da_nome: 'Persona G' }], error: null });
+  Object.assign(W.ctx, { supa: { from: q2, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
+  await W.ctx.carica(OGGI);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.oggi.map(v => [v.ora, v.titolo]))), [['17:00', 'Telefonata · Persona D'], ['19:00', 'Incontro di Team'], ['21:30', 'SdS/OPEN']]);
+  W.ctx.disegna();
+  assert.match(W.app.innerHTML, /<b>3<\/b><small>OGGI<\/small>/);
 });
 
 prova('095: Esplora — tessere a due colonne con colore, icona e nome, nell\'ordine deciso; Admin nera per ultima solo per l\'Admin; ogni tessera apre la sua pagina', () => {

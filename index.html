@@ -2400,10 +2400,17 @@
   .o5-tondo { width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; flex: none; }
   .o5-tondo svg.ic { width: 21px; height: 21px; }
   .o5-agenda { background: var(--z-agenda); }
-  .o5-agenda.due { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; align-items: center; }
-  .o5-app { display: flex; flex-direction: column; gap: 5px; }
-  .o5-app > span { display: block; border-left: 4px solid #fff; background: rgba(255,255,255,.18); padding: 4px 8px; }
-  .o5-app b { display: block; font-size: 13px; } .o5-app small { display: block; font-size: 12px; }
+  /* nota 098: il riquadro AGENDA come il widget Promemoria dell'iPhone, il numero grande con «OGGI» a sinistra, i primi impegni a destra */
+  .o5-pw { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .o5-pw-n { display: flex; flex-direction: column; align-items: center; flex: none; min-width: 52px; }
+  .o5-pw-n b { font-size: 44px; font-weight: 800; line-height: 1; }
+  .o5-pw-n small { font-size: 12px; font-weight: 800; letter-spacing: .08em; margin-top: 2px; }
+  .o5-pw-el { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .o5-pw-r { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 14px; }
+  .o5-pw-r i { width: 8px; height: 8px; border-radius: 4px; background: #fff; flex: none; }
+  .o5-pw-r em { font-style: normal; font-weight: 800; font-variant-numeric: tabular-nums; flex: none; }
+  .o5-pw-r span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .o5-pw-vuoto { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
   .o5-coppia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .o5-coppia.uno { grid-template-columns: 1fr; }
   .o5-mezzo { min-height: 108px; }

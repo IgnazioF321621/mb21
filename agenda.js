@@ -255,6 +255,20 @@
   // gli impegni ricevuti di un giorno (ora di Roma), in ordine d'ora
   const ricevutiDelGiorno = (ricevuti, g) => (ricevuti || []).filter(r => partiRoma(r.inizio).giorno === g).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
   const titoloRicevuto = r => `${r.titolo} · da ${r.da_nome || '—'}`;
+  // ── «In programma» di un giorno (nota Pagine 098, 26/10/2026): UNA regola per il Giorno dell'Agenda v5 e per il riquadro AGENDA di Oggi ──
+  // `azioniAgenda`: le azioni lette come in Agenda (appuntamenti + Contatti con la data scelta o programmati), senza i doppioni della coda e senza le
+  // telefonate scelte a mano senza ora (stanno solo in coda). `passatoSenzaEsito`: un appuntamento già iniziato, non chiuso e senza esito, cioè quello
+  // che l'Agenda mette in «Da chiudere» (la lettura `senza_esito`). `programmaDelGiorno`: gli impegni del giorno meno `fuori` (gli id già in «Da
+  // chiudere»), più gli spazi (`spazi`: quelli del giorno, già come { inizio, titolo }) e gli impegni ricevuti; `voci` = [{ t, ora, titolo }] in ordine d'ora.
+  const azioniAgenda = righe => senzaDoppioniCoda(righe).filter(a => !(a.senza_ora && !a.completata));
+  const passatoSenzaEsito = (a, adesso) => a.tipo_azione !== 'Contatto' && !a.completata && !a.esito && !!a.inizio && a.inizio < adesso;
+  function programmaDelGiorno({ azioni, spazi = [], ricevuti = [], giorno, fuori = null, opz = {} }) {
+    const eventi = eventiDelGiorno(azioni || [], giorno).filter(e => !(fuori && fuori.has(e.id)));
+    const ric = ricevutiDelGiorno(ricevuti, giorno);
+    const voci = [...eventi.map(e => ({ t: e.quando, titolo: riga(e, opz).titolo })), ...spazi.map(x => ({ t: x.inizio, titolo: x.titolo })), ...ric.map(x => ({ t: x.inizio, titolo: x.titolo }))]
+      .sort((x, y) => Date.parse(x.t) - Date.parse(y.t)).map(v => ({ ...v, ora: partiRoma(v.t).ora }));
+    return { eventi, ricevuti: ric, voci };
+  }
   // Gli impegni ricevuti di un giorno come impegni dell'agenda, per l'avviso «A quest'ora hai già…» e le ore libere (nota Pagine 049,
   // 11/10/2026): una SdS/OPEN o una serata Team/LdS ricevuta occupa quell'ora come un impegno proprio. Chi ha risposto «Non posso» è libero.
   const ricevutiComeEventi = (ricevuti, g, utenteId) => ricevutiDelGiorno(ricevuti, g).filter(r => r.risposta !== 'non_ci_sono')
@@ -908,7 +922,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
-    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

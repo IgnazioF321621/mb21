@@ -14,18 +14,35 @@ const O5 = { di: null, giorno: null, oggi: null, prossimo: null, training: null 
 async function caricaOggiV5(oggi) {
   if (!OGGI_V5 || vediTutti()) return;
   const A = MB21Agenda, io = visto().id, da = A.isoDaRoma(oggi, '00:00'), domani = A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00');
-  const [app1, coda, trn] = await Promise.all([
-    // gli appuntamenti da oggi in poi non ancora chiusi: quelli di oggi e, se oggi non c'è niente, il primo dopo (limite basso: bastano pochi)
-    dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto').eq('completata', false)
-      .gte('inizio', da).order('inizio').limit(8)),
-    // e quelli fissati dalla coda (PM Fissato, Appuntamento: un Contatto con la data scelta), come in Agenda
+  // Nota 098 (Ignazio 26/10: «Nessun appuntamento in vista», ma in Agenda c'erano la serata di Team, la SdS/OPEN e un «Richiamare»): oggi si legge
+  // come l'Agenda (appuntamenti, Contatti con la data scelta o programmati, spazi, impegni ricevuti) e si conta con la sua stessa regola
+  // (MB21Agenda.programmaDelGiorno: quello che il riquadro conta è «In programma» del Giorno di oggi). Letture piccole, solo di oggi.
+  const [app1, cont, coda, spazi, ricevuti, trn] = await Promise.all([
+    // gli appuntamenti da oggi in poi (anche quelli già chiusi di oggi, come in Agenda): quelli di oggi e il primo dopo, se oggi non c'è niente
+    dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto')
+      .gte('inizio', da).order('inizio').limit(20)),
+    // i Contatti di oggi, con la stessa regola dell'Agenda: la data scelta dalla coda (PM Fissato, Richiamare…) o la telefonata programmata
+    dbq('Oggi: contatti in agenda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
+      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${domani}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${domani}")`).limit(20)),
+    // per «il prossimo» dei giorni dopo, come prima: quelli fissati dalla coda (PM Fissato, Appuntamento)
     dbq('Oggi: appuntamenti dalla coda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
-      .in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', da).order('data_scelta').limit(8)),
+      .in('esito', ['PM Fissato', 'Appuntamento']).gte('data_scelta', domani).order('data_scelta').limit(8)),
+    // gli spazi di oggi (Team, LdS, SdS/OPEN, da riempire) e gli impegni ricevuti di oggi: se la lettura non riesce, si conta senza (come in Agenda)
+    dbq('Oggi: spazi', supa.from('spazi').select('*').eq('user_id', io).gte('inizio', da).lt('inizio', domani).order('inizio')),
+    dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: domani })),
     guardoAltri() ? null : caricaTrainingOggi(oggi),
   ]);
-  const tutti = app1.error || coda.error ? null : A.senzaDoppioniCoda([...app1.data, ...coda.data])
-    .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio })).sort((x, y) => (x.quando < y.quando ? -1 : 1));
-  Object.assign(O5, { di: io, giorno: oggi, oggi: tutti && tutti.filter(a => a.quando < domani), prossimo: tutti && tutti.find(a => a.quando >= domani) || null, training: trn });
+  let voci = null, prossimo = null;
+  if (!app1.error && !cont.error && !coda.error) {
+    const azioni = A.azioniAgenda([...app1.data, ...cont.data, ...coda.data]), adesso = new Date().toISOString();
+    const fuori = new Set(azioni.filter(a => A.passatoSenzaEsito(a, adesso)).map(a => a.id));   // quelli in «Da chiudere», come nel Giorno
+    const sp = (spazi.error ? [] : spazi.data || []).map(x => ({ inizio: x.inizio, titolo: MB21Spazi.titolo(x) }));
+    voci = A.programmaDelGiorno({ azioni, spazi: sp, ricevuti: ricevuti.error || !Array.isArray(ricevuti.data) ? [] : ricevuti.data, giorno: oggi, fuori, opz: { mioId: io, admin: false } }).voci;
+    prossimo = azioni.map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
+      .filter(a => a.quando >= domani && !a.completata && (a.tipo_azione !== 'Contatto' || ['PM Fissato', 'Appuntamento'].includes(a.esito)))
+      .sort((x, y) => (x.quando < y.quando ? -1 : 1))[0] || null;
+  }
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, prossimo, training: trn });
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
@@ -71,17 +88,16 @@ function o5Sera(fatto) {
 function o5Agenda() {
   const pronto = O5.di === visto().id && O5.giorno === ST.oggi && Array.isArray(O5.oggi);
   const cosa = a => esc(a.modalita || (a.tipo_azione === 'Contatto' ? a.esito : a.tipo_azione) || 'Appuntamento');
-  const chi = a => esc(a.contatti && a.contatti.nome ? a.contatti.nome : a.luogo || '');
-  let sx, dx = '';
-  if (!pronto) sx = `<span class="o5-num">·</span><span class="o5-riga">Leggo l'Agenda…</span>`;
-  else if (O5.oggi.length) {
-    const n = O5.oggi.length;
-    sx = `<span class="o5-num">${n}</span><span class="o5-riga">${n === 1 ? 'appuntamento oggi' : 'appuntamenti oggi'}</span>`;
-    dx = `<span class="o5-app">${O5.oggi.slice(0, 2).map(a => `<span><b>${cosa(a)}</b><small>${esc(MB21Agenda.partiRoma(a.quando).ora)}${chi(a) ? ' · ' + chi(a) : ''}</small></span>`).join('')}</span>`;
-  } else if (O5.prossimo) sx = `<span class="o5-riga forte">Oggi niente</span><span class="o5-riga">il prossimo: ${cosa(O5.prossimo)}, ${esc(o5Giorno(O5.prossimo.quando))}</span>`;
-  else sx = `<span class="o5-riga forte">Nessun appuntamento in vista</span><span class="o5-riga">fissane uno</span>`;
+  // Nota 098 (Ignazio 26/10: «potremmo copiare… il promemoria»): come il widget Promemoria dell'iPhone. A sinistra il numero grande con «OGGI», a destra
+  // i primi 4 impegni, uno per riga, ora e titolo (tagliato con «…»). Con 0: il prossimo, oppure «Niente in vista · fissane uno».
+  const n = pronto ? O5.oggi.length : null;
+  const dx = !pronto ? `<span class="o5-pw-vuoto">Leggo l'Agenda…</span>`
+    : n ? `<span class="o5-pw-el">${O5.oggi.slice(0, 4).map(v => `<span class="o5-pw-r"><i></i><em>${esc(v.ora)}</em><span>${esc(v.titolo)}</span></span>`).join('')}</span>`
+    : O5.prossimo ? `<span class="o5-pw-vuoto">il prossimo: ${cosa(O5.prossimo)}, ${esc(o5Giorno(O5.prossimo.quando))}</span>`
+    : `<span class="o5-pw-vuoto">Niente in vista · fissane uno</span>`;
   // Ignazio 26/10: il riquadro apre SEMPRE l'Agenda, anche con l'invito «fissane uno» (prima con l'invito apriva i Contatti del giorno)
-  return `<button class="o5-r o5-agenda${dx ? ' due' : ''}" data-o5="agenda"><span class="o5-col"><span class="o5-tit">${ic('agenda')} AGENDA</span>${sx}</span>${dx}</button>`;
+  return `<button class="o5-r o5-agenda" data-o5="agenda" aria-label="Agenda: ${n == null ? 'in lettura' : `${n} oggi`}"><span class="o5-tit">${ic('agenda')} AGENDA</span>
+    <span class="o5-pw"><span class="o5-pw-n"><b>${n == null ? '·' : n}</b><small>OGGI</small></span>${dx}</span></button>`;
 }
 // Training: cosa c'è da fare, con le parole del Training (mai l'ora del giorno)
 function o5Training() {
