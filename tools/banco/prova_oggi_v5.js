@@ -72,13 +72,13 @@ prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto Contatti, finché 
   assert.match(W.app.innerHTML, /<div class="o5 sera">/);
   assert.ok(W.app.innerHTML.indexOf('o5-sera') > W.app.innerHTML.indexOf('o5-contatti') && W.app.innerHTML.indexOf('o5-sera') < W.app.innerHTML.indexOf('o5-agenda'));
   assert.match(testo(W.app.innerHTML), /Com'è andata oggi\? È ora: scrivi la tua giornata nel Check/);
-  W.app.clic('[data-o5="sera"]'); assert.deepEqual(W.vai, ['check']);
+  W.app.clic('[data-o5="sera"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['lv', 'ckgiorno', { ckData: null }]]);   // nota 098: la scheda Giorno del Check
   for (const X of [mondo({ ora: 19 }), mondo({ ora: 21, altro: true })]) { X.ctx.disegna(); assert.doesNotMatch(X.app.innerHTML, /o5-sera/); }
   // nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro resta e porta allo stesso Check del giorno, per rivederlo o correggerlo
   const F = mondo({ ora: 21, fattoGiorno: true }); F.ctx.disegna();
   assert.match(F.app.innerHTML, /class="o5-r o5-sera fatto" data-o5="sera"><span class="o5-tondo">\[fatto\]<\/span>/);
   assert.match(testo(F.app.innerHTML), /Check di oggi ✓ Rivedi o correggi la tua giornata/);
-  F.app.clic('[data-o5="sera"]'); assert.deepEqual(F.vai, ['check']);
+  F.app.clic('[data-o5="sera"]'); assert.deepEqual(JSON.parse(JSON.stringify(F.vai)), [['lv', 'ckgiorno', { ckData: null }]]);
 });
 
 prova('098: Agenda come il widget Calendario — il giorno a sinistra, i blocchetti (titolo e «19:00 – 20:00»), al massimo 4 e «Altri N impegni» (uno: «Un altro impegno»); oggi finito o vuoto «DOMANI»; niente «Niente in vista»; il tocco apre l\'Agenda', () => {
@@ -416,8 +416,8 @@ prova('095 Traguardo: il Mese, le aree, il traguardo e i gradini con la testata 
     assert.match(h, /<h1>Titolo finto<\/h1><span>riga sotto<\/span>/);
   }
   assert.match(DASH, /const testaLV = \(titolo, sotto = '', colore = ''\) => \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function'/);
-  for (const r of [/app\.innerHTML = testaLV\('Come sto andando questo mese\?'\) \+ `<div class="avviso">/, /let html = testaLV\('Come sto andando questo mese\?', /,
-    /app\.innerHTML = testaLV\(x\.etichetta, /, /let html = testaLV\(titoloTraguardo\(\)\);/, /app\.innerHTML = testaLV\(titolo, sotto\) \+ `<div class="riquadro lv-lista">/]) assert.match(DASH, r);
+  for (const r of [/app\.innerHTML = testaLV\(checkV5\(\) \? 'Check' : 'Come sto andando questo mese\?'\) \+ `<div class="avviso">/, /let html = testaLV\('Come sto andando questo mese\?', /,
+    /app\.innerHTML = testaLV\(x\.etichetta, /, /: testaLV\(titoloTraguardo\(\)\);/, /app\.innerHTML = testaLV\(titolo, sotto\) \+ `<div class="riquadro lv-lista">/]) assert.match(DASH, r);
   assert.match(DASH, /const fb = document\.getElementById\('o5-feedback'\); if \(fb && !fb\.onclick\) fb\.onclick = \(\) => foglioSegnala\(\);/);
 });
 

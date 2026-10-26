@@ -256,7 +256,8 @@ function oraRoma() {
 // Le pagine sono fatte con i pezzi che c'erano già (coda, conferme, riordini, numeri del mese, percorso del Check, «Il mio giorno»): cambia dove
 // stanno e come si arriva, non cosa fanno. Con «Tutti» (Partner Select) la Dashboard resta quella dei soli numeri.
 const LV = { vista: 'home', area: null, persona: null, gradino: null, fatte: [], giorno: null };
-const NOMI_LV = { home: 'Oggi', oggi: 'Chi sento oggi?', mese: 'Come sto andando questo mese?', traguardo: 'Qual è il mio prossimo traguardo?', avvio: 'Il mio avvio' };
+const NOMI_LV = { home: 'Oggi', oggi: 'Chi sento oggi?', mese: 'Come sto andando questo mese?', traguardo: 'Qual è il mio prossimo traguardo?', avvio: 'Il mio avvio', ckgiorno: 'Il mio giorno' };
+const checkV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function';   // nota 098: il Check a schede Giorno · Mese · Percorso
 const PADRE_LV = { persona: 'oggi', area: 'mese', gradino: 'traguardo' };
 const padreLV = () => (LV.vista === 'persona' && LV.daClienti ? 'clienti' : PADRE_LV[LV.vista] || 'home');   // v5: la scheda aperta da «Clienti da sentire» torna lì
 function vaiLV(vista, extra) {
@@ -512,7 +513,8 @@ function cardArea(x) {
 const bottoneStorico = () => `<button class="rp-apri scura" id="ds-storico"><span>${ic('segnivitali')} Gli ultimi 12 mesi<small>il flusso dei Segni Vitali, linea per linea</small></span><span>›</span></button>`;
 function disegnaMeseLV() {
   const d = DS.dati, D = MB21Dashboard;
-  if (!d) { app.innerHTML = testaLV('Come sto andando questo mese?') + `<div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
+  if (!d) { app.innerHTML = testaLV(checkV5() ? 'Check' : 'Come sto andando questo mese?') + `<div class="avviso">I numeri non si leggono ora: riprova più tardi.</div>` + versione(); return attaccaIndietroLV(); }
+  if (checkV5()) return disegnaMeseV5(d);
   const mese = D.nomeMese(d.mese);
   let html = testaLV('Come sto andando questo mese?', `${mese} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}`) + `
     <div class="sotto" style="margin-bottom:10px">Tocca una card per il dettaglio${DS.confronto ? ` e il confronto con ${esc(D.nomeMese(DS.confronto.mese).toLowerCase())}` : ''}.</div>${d.schede.map(cardArea).join('')}
@@ -525,19 +527,51 @@ function disegnaMeseLV() {
   app.querySelectorAll('[data-lv-area]').forEach(b => b.onclick = () => vaiLV('area', { area: b.dataset.lvArea }));
   document.getElementById('ds-storico').onclick = foglioStorico;   // lo stesso foglio del Profilo; legge i suoi dati al tocco
 }
+// Nota 098 (Ignazio 26/10, «procedi»; prototipo check-mese): il Mese a gruppi, le voci di adesso (d.schede) una per riga con «su N», la barretta e
+// sotto il mese prima (la stessa riga dell'area, voceAreaHtml), nell'ordine Volumi · Attività · Segni Vitali · Crescita, e la Squadra (non si perde).
+// Il titolo di un gruppo apre il suo dettaglio di adesso. Poi la fila dei giorni del mese: un tocco apre la scheda Giorno su quella data. Nessuna lettura nuova.
+const GRUPPI_MESE_V5 = [['volume', 'Volumi'], ['azione', 'Attività'], ['segni', 'Segni Vitali'], ['crescita', 'Crescita'], ['squadra', 'Squadra']];
+function disegnaMeseV5(d) {
+  const D = MB21Dashboard, mese = D.nomeMese(d.mese), prima = DS.confronto ? D.nomeMese(DS.confronto.mese) : null;
+  const righeConf = DS.confronto ? DS.confronto.gruppi.flatMap(g => g.righe) : [];
+  const gruppi = GRUPPI_MESE_V5.map(([k, nome]) => [d.schede.find(s => s.chiave === k), nome]).filter(([x]) => x).map(([x, nome]) =>
+    `<button class="ck5-gruppo" data-lv-area="${x.chiave}">${esc(nome)} <span>›</span></button><div class="riquadro mese-card dm-corpo ck5-voci">${x.riquadri.map(r => voceAreaHtml(x, r, righeConf, prima)).join('')}</div>`).join('');
+  const oggi = ST.oggi || MB21Coda.oggiRoma(), primo = d.mese.slice(0, 8) + '01';
+  const giorni = [];
+  for (let g = primo; g <= oggi && g.slice(0, 7) === primo.slice(0, 7); g = MB21Agenda.spostaGiorno(g, 1)) giorni.push(g);
+  const fila = giorni.length ? `<div class="ck5-gruppo">Apri un giorno</div><div class="ck5-giorni">${giorni.map(g => `<button data-ck-giorno="${g}"${g === oggi ? ' class="oggi"' : ''}>${Number(g.slice(8))}</button>`).join('')}</div>` : '';
+  const rigaOb = d.obiettiviMancanti ? '' : `<button class="mese-riga" id="ds-obiettivi-mod" ${ST.offline ? 'disabled' : ''}>${ic('obiettivi')}<span><b>Obiettivi di ${esc(mese)}</b><small>i traguardi che ti sei dato</small></span><em>›</em></button>`;
+  app.innerHTML = testaLV('Check', `${mese.toLowerCase()} · ${d.giorni === 1 ? 'resta 1 giorno' : `restano ${d.giorni} giorni`}`) + `<div class="ck5-corpo">${gruppi}${fila}
+    ${bottoneStorico()}${rigaOb ? `<div class="zona-oggi">Obiettivi</div><div class="riquadro mese-card dm-liste">${rigaOb}</div>` : ''}</div>` + versione();
+  attaccaIndietroLV();
+  app.querySelectorAll('[data-lv-area]').forEach(b => b.onclick = () => vaiLV('area', { area: b.dataset.lvArea }));
+  app.querySelectorAll('[data-ck-giorno]').forEach(b => b.onclick = () => vaiLV('ckgiorno', { ckData: b.dataset.ckGiorno }));
+  document.getElementById('ds-storico').onclick = foglioStorico;
+}
+// Una voce dell'area con il mese prima sotto: la stessa nel dettaglio dell'area e nel Mese v5
+function voceAreaHtml(x, r, righeConf, prima) {
+  const D = MB21Dashboard, t = D.sintesiRiquadro(r), cf = righeConf.find(y => y.k === r.campo);
+  const f = n => Number(n).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+  return `<div class="dm-riga"><span class="n">${esc(r.titolo)}</span><span class="g" style="color:${t.stato === 'ok' ? 'var(--ok)' : x.colore}">${r.senzaObiettivo ? centesimi(r.numero) : `${centesimi(r.numero)} <small>su ${esc(r.obiettivoTxt)}</small>`}</span>
+      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--ok)' : x.colore}"></div></div>`}
+      ${cf ? `<small class="lv-prima">${esc(prima)}: ${esc(f(cf.fatto))} su ${esc(f(cf.obiettivo))} · <b class="lv-${cf.livello}">${esc(cf.parola)}</b></small>` : ''}</div>`;
+}
+// Nota 098: la scheda Giorno del Check, «Il mio giorno» dentro la pagina (lo stesso modulo di apriCheck: campi, conti e salvataggi di adesso)
+function disegnaCheckGiornoLV() {
+  app.innerHTML = testaLV('Il mio giorno', 'scrivi com\'è andata') + `<div id="ck-pagina" class="ck-pagina"></div>` + versione();
+  attaccaIndietroLV();
+  const posto = document.getElementById('ck-pagina');
+  if (soloGuardo() || ST.offline) { posto.innerHTML = `<div class="vuoto">${ST.offline ? 'Sei offline: «Il mio giorno» si scrive quando torna la rete.' : `«Il mio giorno» lo scrive ${esc(nomeProprio() || 'il partner')} dalla sua app.`}</div>`; return; }
+  apriCheck({ posto, data: LV.ckData });
+}
+
 // L'area (terzo livello): le stesse voci con il mese scorso accanto, con le parole (Raggiunto · Quasi · A metà strada · Lontano) e il collegamento al Check
 function disegnaMeseDashboard(vai) {
   const d = DS.dati, D = MB21Dashboard, x = d && d.schede.find(s => s.chiave === (vai || LV.area));
   if (!x) return vaiLV('mese');
   const prima = DS.confronto ? D.nomeMese(DS.confronto.mese) : null;
   const righeConf = DS.confronto ? DS.confronto.gruppi.flatMap(g => g.righe) : [];
-  const voce = r => {
-    const t = D.sintesiRiquadro(r), cf = righeConf.find(y => y.k === r.campo);
-    const f = n => Number(n).toLocaleString('it-IT', { maximumFractionDigits: 2 });
-    return `<div class="dm-riga"><span class="n">${esc(r.titolo)}</span><span class="g" style="color:${t.stato === 'ok' ? 'var(--ok)' : x.colore}">${r.senzaObiettivo ? centesimi(r.numero) : `${centesimi(r.numero)} <small>su ${esc(r.obiettivoTxt)}</small>`}</span>
-      ${r.senzaObiettivo ? '' : `<div class="dm-barra"><div style="width:${r.percentuale}%;background:${t.stato === 'ok' ? 'var(--ok)' : x.colore}"></div></div>`}
-      ${cf ? `<small class="lv-prima">${esc(prima)}: ${esc(f(cf.fatto))} su ${esc(f(cf.obiettivo))} · <b class="lv-${cf.livello}">${esc(cf.parola)}</b></small>` : ''}</div>`;
-  };
+  const voce = r => voceAreaHtml(x, r, righeConf, prima);
   app.innerHTML = testaLV(x.etichetta, `${D.nomeMese(d.mese)}${prima ? `, con ${prima.toLowerCase()} accanto` : ''}`, x.colore) + `
     <div class="riquadro mese-card dm-corpo">${x.riquadri.map(voce).join('')}</div>
     <p class="sotto lv-frase-area">${esc(D.riassuntoScheda(x))}</p>
@@ -559,14 +593,17 @@ function rigaGradino(chiave, titolo, sotto, fatti, totale, vicino) {
 const conteggioVoci = voci => { const v = voci.filter(x => !x.sotto); return [v.filter(x => x.fatto).length, v.length]; };
 function disegnaTraguardoLV() {
   const p = percorsoDash();
-  let html = testaLV(titoloTraguardo());
+  // v5 (nota 098): la scheda Percorso del Check, «Check · ottobre 2026 · i tuoi traguardi» (guardando un altro: «i traguardi di Fiammetta»)
+  const meseV5 = DS.dati ? MB21Dashboard.nomeMese(DS.dati.mese).toLowerCase() : '';
+  let html = checkV5() ? testaLV('Check', [meseV5, guardoUnAltro() ? `i traguardi di ${nomeProprio()}` : 'i tuoi traguardi'].filter(Boolean).join(' · ')) : testaLV(titoloTraguardo());
   if (!p) {
     app.innerHTML = html + `<div class="vuoto">Leggo il percorso…</div>` + versione();
     return attaccaIndietroLV();
   }
   const { l, pc, lv } = p, vicino = MB21Check.piuVicino(pc.gradini), io = visto().id === ST.utente.id;
   html += `<div class="sotto">${esc(fraseTraguardo(p))}</div>`;
-  for (const g of pc.gradini) {
+  if (checkV5()) html += percorsoV5Html(p, vicino);
+  else for (const g of pc.gradini) {
     const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok })) : (g.voci || []);
     const mancano = g.chiave === 'leader1' ? (l.luci || []).filter(x => !x.ok).map(x => PUNTI_LC1[x.chiave] || x.titolo) : lista.filter(x => !x.fatto).map(x => x.testo);
     const sotto = g.fatto ? 'Raggiunto' : !g.pronto ? 'Leggo il Modulo Core…' : `${mancano.length === 1 ? 'Manca' : 'Mancano'}: ${mancaCorto(mancano)}`;
@@ -579,6 +616,19 @@ function disegnaTraguardoLV() {
   app.innerHTML = html + versione();
   attaccaIndietroLV();
   app.querySelectorAll('[data-lv-grad]').forEach(b => b.onclick = () => vaiLV('gradino', { gradino: b.dataset.lvGrad }));
+}
+// Nota 098 (prototipo check-percorso): «Il più vicino» aperto in cima e «Gli altri» (Leader 1° livello, Core, Pacesetter), ognuno con i suoi passi a
+// parole (vociHtml, la stessa lista del gradino: «fatto» o cosa manca; il Core con le 7 abitudini). Il titolo apre il dettaglio di adesso. I livelli sotto, come prima.
+function percorsoV5Html(p, vicino) {
+  const { l, pc } = p;
+  const card = g => {
+    const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok, stato: x.ok ? 'fatto' : x.ignoto ? 'non lo so' : x.testo })) : (g.voci || []);
+    const barre = Array.from({ length: g.totale }, (_, i) => `<i${i < g.fatti ? ' class="si"' : ''}></i>`).join('');
+    return `<div class="riquadro ck5-trag${vicino && vicino.chiave === g.chiave ? ' vicino' : ''}"><button class="ck5-trag-t" data-lv-grad="${g.chiave}"><b>${esc(nomeGradino(g))}</b><span>${g.fatti} su ${g.totale} ›</span></button>
+      <span class="ck5-barre">${barre}</span>${g.pronto || g.chiave === 'leader1' ? `<div class="ck-lc1">${vociHtml(lista, null)}</div>` : '<small class="sotto">Leggo il Modulo Core…</small>'}</div>`;
+  };
+  const altri = pc.gradini.filter(g => !vicino || g.chiave !== vicino.chiave);
+  return (vicino ? `<div class="zona-oggi">Il più vicino</div>${card(vicino)}` : '') + (altri.length ? `<div class="zona-oggi">${vicino ? 'Gli altri' : 'I traguardi'}</div>${altri.map(card).join('')}` : '');
 }
 // Il gradino o il livello (terzo livello): la sua lista, voce per voce; per i livelli anche «Dove puoi crescere» con le persone da aiutare
 function disegnaGradinoLV() {
@@ -624,7 +674,7 @@ function disegnaOggi() {
   if (vai === 'avvio') LV.vista = 'avvio';
   if (vai === 'traguardo') LV.vista = 'traguardo';   // nota 092: dal Check, «Il percorso ›»
   if (vai === 'mese') LV.vista = 'mese';   // v5: dalla tessera «Check e traguardi» di Esplora, il mese (nota 095: «la tessera Check di Esplora apre il Mese»)
-  if (vai === 'giorno') LV.vista = 'home';   // dall'avviso della sera (nota 045): la Dashboard con «Il mio giorno» già aperto, qui sotto
+  if (vai === 'giorno') { LV.vista = checkV5() ? 'ckgiorno' : 'home'; LV.ckData = null; }   // dall'avviso della sera (nota 045): «Il mio giorno» (v5: la scheda Giorno del Check)
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
   const sg = document.getElementById('segnala');
   if (sg) sg.hidden = false;   // v5: in «Oggi» il feedback sta nella testata (disegnaOggiV5 lo nasconde); nelle altre pagine della Dashboard resta il tondo
@@ -640,17 +690,19 @@ function disegnaOggi() {
     case 'area': disegnaMeseDashboard(LV.area); break;
     case 'traguardo': disegnaTraguardoLV(); break;
     case 'gradino': disegnaGradinoLV(); break;
+    case 'ckgiorno': if (checkV5()) disegnaCheckGiornoLV(); else { LV.vista = 'home'; disegnaHome(); } break;   // nota 098
     case 'avvio': disegnaAvvioLV(); break;
     case 'clienti': if (typeof disegnaClientiV5 === 'function') disegnaClientiV5(); else { LV.vista = 'oggi'; disegnaOggiLV(); } break;   // v5: «Clienti da sentire»
     default: LV.vista = 'home'; if (typeof OGGI_V5 !== 'undefined' && OGGI_V5) disegnaOggiV5(); else disegnaHome();   // v5 (nota 095): «Oggi» a riquadri, pagina-oggi.js
   }
   // prima dei collegamenti: aperto il modulo, il riquadro degli obiettivi non si sovrappone (si apre solo senza fogli aperti)
-  if (vai === 'giorno' && !ST.offline && !document.querySelector('.velo')) apriCheck();
+  if (vai === 'giorno' && !checkV5() && !ST.offline && !document.querySelector('.velo')) apriCheck();
   collegaVistaLV();
 }
 // I collegamenti che servono a più pagine: le righe dell'avvio, i pulsanti dei numeri, i consigli del percorso, le card della coda
 function collegaVistaLV() {
   collegaDashboard();
+  app.querySelectorAll('[data-ck-scheda]').forEach(b => b.onclick = () => { if (b.dataset.ckScheda !== LV.vista) vaiLV(b.dataset.ckScheda, { ckData: null }); });   // nota 098
   collegaMioAvvio();
   const seguire = document.getElementById('dash-seguire');   // tappa 3: «Da seguire» si apre e si chiude sul posto
   if (seguire) seguire.onclick = () => { DSG.aperto = !DSG.aperto; disegnaOggi(); };
@@ -2265,10 +2317,12 @@ document.addEventListener('visibilitychange', () => {
 // «Il mio giorno» (fino al 28/09 «Check del Giorno»): 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato
 // e «Salva» lo corregge invece di aggiungerne un altro (prima si sommavano, decisione 9). I giorni di Glide con
 // più Check restano come sono: si modifica il più recente, con l'avviso.
-function apriCheck() {
+// Nota 098: con `opz.posto` il modulo si disegna dentro la pagina (la scheda Giorno del Check v5) invece che nel foglio che sale; `opz.data` = il giorno da
+// aprire (dalla fila dei giorni del Mese). Campi, conti, letture e salvataggi sono gli stessi; nella pagina «Annulla» rimette il giorno com'era.
+function apriCheck(opz = {}) {
   if (soloGuardo()) return;
-  const velo = document.createElement('div');
-  velo.className = 'velo';
+  const pagina = !!opz.posto, velo = opz.posto || document.createElement('div');
+  if (!pagina) velo.className = 'velo';
   // stessa forma degli altri moduli (cantiere 34): in testa il giorno, gruppi «Attività» e «Crescita», «Annulla · Salva» fermi in fondo
   // Ogni voce del Check è una riga numerata come nel modulo Core (Ignazio 22/09: «integrare sempre di più il Check nel Core»):
   // numero · titolo · targhetta «Core» se riempie il foglio Core del mese · come si riempie (automatico o a mano).
@@ -2278,11 +2332,11 @@ function apriCheck() {
       <input id="ck-${k}" inputmode="${CK[k].decimale ? 'decimal' : 'numeric'}" placeholder="0" aria-label="${esc(CK[k].suggerimento)}">
       <div class="ck-auto" id="ck-auto-${k}" style="display:none"></div>
       <div class="vn-aiuto">${opz.spiega || ''}</div></div></div>`;
-  velo.innerHTML = `<div class="foglio alto mc">
-    <div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('diario')}</span>
-      <div><small>Oggi${esc(aNome())}</small><b>Il mio giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+  velo.innerHTML = `<div class="${pagina ? 'mc ck-in-pagina' : 'foglio alto mc'}">
+    ${pagina ? '' : `<div class="mc-testa"><span class="ts-pastiglia" style="background:var(--accento)">${ic('diario')}</span>
+      <div><small>Oggi${esc(aNome())}</small><b>Il mio giorno</b></div><button id="ck-x" aria-label="Chiudi">${ic('chiudi')}</button></div>`}
     <div class="riquadro mc-g" style="margin-top:14px">
-    <div class="campo"><label>${ic('conferme')} Giorno <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
+    <div class="campo"><label>${ic('conferme')} Giorno <small>Obbligatorio</small></label><input id="ck-data" type="date" value="${opz.data || MB21Coda.oggiRoma()}" max="${MB21Coda.oggiRoma()}"></div>
     <div id="ck-modifica" style="display:none;background:var(--proposta-tinta);color:var(--proposta);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin:8px 0"></div></div>
     <h4 class="mc-t">Azione</h4><div class="riquadro mc-g">
     ${riga(1, 'contatti', { spiega: 'Automatico dal 14/09: dai contatti in cui hai parlato (coda, Riordini, Agenda, scheda).' })}
@@ -2313,10 +2367,10 @@ function apriCheck() {
     <div class="errore" id="ck-errore"></div>
     <div class="mc-fondo"><button class="link" id="ck-no">Annulla</button><button class="primario" id="ck-si">Salva</button></div>
   </div>`;
-  document.body.appendChild(velo);
-  const chiudi = () => velo.remove();
-  velo.querySelector('#ck-x').onclick = chiudi;
-  velo.querySelector('#ck-no').onclick = chiudi;
+  if (!pagina) document.body.appendChild(velo);
+  const chiudi = pagina ? () => {} : () => velo.remove();
+  if (!pagina) velo.querySelector('#ck-x').onclick = chiudi;
+  velo.querySelector('#ck-no').onclick = pagina ? () => caricaGiorno() : chiudi;   // nella pagina «Annulla» rimette il giorno com'era
   const note = velo.querySelector('#ck-note');
   // I libri personali di chi è scelto («Altro libro…», cantiere 40 lavoro 7): si aggiungono all'elenco prima di «Altro libro…»
   const libroSel = velo.querySelector('#ck-libro'), vocealtro = libroSel.querySelector('[value="__altro__"]');
@@ -2360,6 +2414,7 @@ function apriCheck() {
     if (esistente && esistente.libro && !vecchio && ![...libro.options].some(o => o.value === esistente.libro)) libro.insertBefore(new Option(esistente.libro, esistente.libro), libro.querySelector('[value="__altro__"]'));
     libro.value = esistente && !vecchio ? esistente.libro || '' : '';
     note.value = esistente ? esistente.note_libro || '' : ''; note.oninput();
+    if (!esistente && data) libroDiPrima(data, libro, () => mio === giro);   // nota 098: il libro resta quello dell'ultima volta, finché non lo cambi
     // Core N21 (cantiere 41): OPEN e counseling del giorno
     velo.querySelector('#ck-open').checked = !!(esistente && esistente.open);
     for (const k of ['counseling', 'edificazione', 'no_crossline']) velo.querySelector('#ck-' + k).checked = !!(esistente && esistente[k]);
@@ -2489,7 +2544,7 @@ function apriCheck() {
     }
     velo.querySelectorAll('[data-contatto-az]').forEach(b => b.onclick = () => { chiudi(); apriContattoDa(b.dataset.contattoAz, 'oggi'); });
   };
-  campoData.onchange = caricaGiorno;
+  campoData.onchange = () => { if (pagina) LV.ckData = campoData.value; caricaGiorno(); };   // nella pagina il giorno scelto resta anche dopo il salvataggio
   caricaGiorno();
   velo.querySelector('#ck-si').onclick = async () => {
     const v = { user_id: visto().id, data: velo.querySelector('#ck-data').value, libro: velo.querySelector('#ck-libro').value || null, note_libro: note.value.trim() || null,
@@ -2537,6 +2592,17 @@ function apriCheck() {
       mostraToast('Annullato');
     });
   };
+}
+
+// Nota 098 (Ignazio 26/10: «scelto un libro, rimanga quel libro fino a quando non lo cambiamo»): in un giorno ancora da scrivere il libro è quello
+// dell'ultimo Check scritto prima di quel giorno (una lettura piccola: una riga, una colonna; vale su telefono e computer, niente nel database da aggiungere)
+async function libroDiPrima(data, sel, ancoraValido) {
+  const { data: righe, error } = await dbq('ultimo libro', supa.from('check_giorno').select('libro').eq('user_id', visto().id).lt('data', data)
+    .not('libro', 'is', null).neq('libro', 'Libro no N21').order('data', { ascending: false }).limit(1));
+  if (error || !ancoraValido() || !righe || !righe[0] || sel.value) return;
+  const t = righe[0].libro;
+  if (![...sel.options].some(o => o.value === t)) sel.insertBefore(new Option(t, t), sel.querySelector('[value="__altro__"]'));
+  sel.value = t;
 }
 
 // Il tab «Oggi» della barra riporta al primo livello (Pagine 040)

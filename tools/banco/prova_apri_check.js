@@ -19,8 +19,9 @@ prova('gli altri indirizzi non cambiano (agenda, lista)', () => {
   assert.equal(ctx.preparaApertura(new URLSearchParams('apri=lista&contatto=c1')), true); assert.equal(ctx.ST.tab, 'lista');
 });
 prova('la Dashboard apre il modulo della sera quando arriva «giorno» (prima dei collegamenti, mai offline)', () => {
-  assert.match(dash, /if \(vai === 'giorno'\) LV\.vista = 'home';/);
-  assert.match(dash, /if \(vai === 'giorno' && !ST\.offline && !document\.querySelector\('\.velo'\)\) apriCheck\(\);\n  collegaVistaLV\(\);/);
+  // nota Pagine 098 (26/10): con la veste v5 «Il mio giorno» è la scheda Giorno del Check (LV 'ckgiorno'); senza, la Dashboard col modulo aperto come prima
+  assert.match(dash, /if \(vai === 'giorno'\) \{ LV\.vista = checkV5\(\) \? 'ckgiorno' : 'home'; LV\.ckData = null; \}/);
+  assert.match(dash, /if \(vai === 'giorno' && !checkV5\(\) && !ST\.offline && !document\.querySelector\('\.velo'\)\) apriCheck\(\);\n  collegaVistaLV\(\);/);
   assert.match(leggi('supabase/functions/avvisi/regole.ts'), /url: '\.\/\?apri=check', tag: 'check_sera'/);   // l'indirizzo dell'avviso resta quello di sempre
 });
 console.log(`\n${ok} prove superate`);

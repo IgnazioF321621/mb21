@@ -212,7 +212,7 @@ function o5Vai(go) {
     if ((ST.stato || {}).contatti_al_giorno === 0 && !guardoAltri() && !ST.offline) return scegliNumero(caricaOggi);   // in pausa: si riparte scegliendo quanti
     return vaiLV('oggi');
   }
-  if (go === 'sera') return apriCheck();
+  if (go === 'sera') return vaiLV('ckgiorno', { ckData: null });   // nota 098: «Il mio giorno» è la scheda Giorno del Check
   if (go === 'agenda') { if (typeof AG !== 'undefined') AG.giorno = null; return tab('agenda'); }
   if (go === 'training') { if (typeof TRN !== 'undefined' && O5.training && O5.training.daRipassare) TRN.dopo = 'ripasso'; return tab('training'); }
   if (go === 'avvio') { AVV.mioAperto = true; return vaiLV('avvio'); }
@@ -416,11 +416,15 @@ function collegaTestaTrainingV5() {
 // ── v5, quinta pagina: il Traguardo, cioè le pagine del Check della Dashboard (il Mese e le sue aree, il traguardo e i gradini) (Regia 25/10 sera; solo la veste) ──
 // Testata turchese del Check con il ritorno (stesso #lv-indietro: attaccaIndietroLV), il chip del Partner Select, il feedback, il titolo e la riga di sotto.
 // Il ritorno ha un nome corto: dal Mese e dal traguardo «Oggi», da un'area «Il mese», da un gradino «Traguardo». Sotto, le pagine di adesso.
+// Nota 098 (Ignazio 26/10, «procedi»): nel Giorno, nel Mese e nel Percorso le schede Giorno · Mese · Percorso (data-ck-scheda → vaiLV, collegaVistaLV)
+const SCHEDE_CHECK_V5 = [['ckgiorno', 'Giorno'], ['mese', 'Mese'], ['traguardo', 'Percorso']];
 function testaCheckV5(titolo, sotto) {
   const torna = { area: 'Il mese', gradino: 'Traguardo' }[LV.vista] || 'Oggi';
+  const schede = SCHEDE_CHECK_V5.some(([k]) => k === LV.vista)
+    ? `<div class="v5-scale ck5-schede">${SCHEDE_CHECK_V5.map(([k, t]) => `<button data-ck-scheda="${k}"${k === LV.vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>` : '';
   return `<div class="v5-testa c5t" style="--zc:var(--z-check)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${esc(torna)}</button>
       <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
-    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div></div>`;
+    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div>${schede}</div>`;
 }
 
 // ── v5, sesta pagina: «Clienti da sentire» (Regia 26/10; Ignazio: «Clienti» al posto di «Riordini»; solo la veste) ──
