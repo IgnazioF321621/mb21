@@ -495,7 +495,7 @@ prova('095 Mappa: testata blu notte con «‹ Oggi», chip, feedback, «N nel gr
   assert.match(h, /<button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="o5-feedback"/);
   assert.match(h, /<span class="v5-sopra">24 nel gruppo · 10\/2026<\/span><h1>Mappa<\/h1>/);
   const PM = leggi('pagina-mappa.js');
-  assert.match(PM, /let html = `\$\{v5 \? testaMappaV5\(conta\.tutti, mesePulito\(MP\.mese\)\) : `<h1>Mappa<\/h1>\$\{partnerSelect\(\)\}`\}/);
+  assert.match(PM, /let html = `\$\{v5 \? testaMappaV5\(conta\.tutti, mesePulito\(MP\.mese\), riquadriMappaV5\(conta, cime\)\) : `<h1>Mappa<\/h1>\$\{partnerSelect\(\)\}`\}/);   // nota 098: con i riquadri
   assert.match(PM, /su\('v5-indietro', \(\) => \{ ST\.tab = 'oggi';/); assert.match(PM, /su\('o5-feedback', \(\) => foglioSegnala\(\)\);/);
 });
 
@@ -552,7 +552,7 @@ prova('098 (Ignazio 26/10, «sì»): nella scheda Segni Vitali solo per un Partn
   const P = mondoContatti({ persona: 'coda|c2' }); P.ctx.LV.vista = 'persona';
   P.ctx.segniFinti = { t: { bbs: true, wes: false, cep: false }, cep: [] };
   P.ctx.persona(); await new Promise(r => setImmediate(r)); P.ctx.persona();
-  assert.match(testo(P.app.innerHTML), /SEGNI VITALI BBS sì · WES no CEP: mai abbonato PROSSIMO Niente in agenda/);
+  assert.match(testo(P.app.innerHTML), /SEGNI VITALI WES no · BBS sì CEP: mai abbonato PROSSIMO Niente in agenda/);
   assert.equal(P.ctx.letture.filter(x => x.t === 'caricaSegni').length, 1);
 });
 

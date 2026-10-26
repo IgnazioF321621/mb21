@@ -232,9 +232,9 @@ prova('LC1: tutte e quattro le luci accese = fatto', () => {
   const l = C.lc1({ mese: '2026-10-01', oggi: '2026-10-20', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }],
     biglietti: [{ tipo: 'BBS', evento: '2026-10-01', contatto: true }, { tipo: 'WES', evento: '2026-11-01', contatto: true }], cep: cepSempre, eventi: ev });
   assert.equal(l.nome, 'ottobre 2026');
-  assert.deepEqual(l.luci.map(x => [x.chiave, x.ok]), [['vp', true], ['bbs', true], ['wes', true], ['cep', true]]);
+  assert.deepEqual(l.luci.map(x => [x.chiave, x.ok]), [['vp', true], ['wes', true], ['bbs', true], ['cep', true]]);   // nota 098: WES · BBS · CEP
   assert.equal(l.luci[0].testo, '187,50');
-  assert.equal(l.luci[1].testo, '10-2026');
+  assert.equal(l.luci[2].testo, '10-2026');
   assert.ok(l.fatto && l.accese === 4 && l.inCorso);
   assert.deepEqual(l.mancano, []);
 });
@@ -245,7 +245,7 @@ prova('LC1: sotto i 100 VP e senza biglietto WES (o solo per il compagno) = 2 su
   assert.equal(l.accese, 2);
   assert.equal(l.fatto, false);
   assert.deepEqual(l.mancano, ['100 VP', 'WES']);
-  assert.equal(l.luci[2].testo, 'manca');   // solo «manca»: il mese usciva tagliato (Ignazio 27/09)
+  assert.equal(l.luci[1].testo, 'manca');   // solo «manca»: il mese usciva tagliato (Ignazio 27/09)
 });
 
 prova('LC1: fotografia a fine mese — il CEP uscito il 15 non vale a ottobre, il WES di gennaio caricato a novembre non conta a ottobre', () => {
@@ -254,7 +254,7 @@ prova('LC1: fotografia a fine mese — il CEP uscito il 15 non vale a ottobre, i
     cep: [{ dal: '2026-01-01', uscito_il: '2026-10-15' }], eventi: ev });
   assert.equal(l.al, '2026-10-31');
   assert.equal(l.inCorso, false);
-  assert.equal(l.luci[2].ok, false);          // a ottobre in vendita c'era il WES di novembre
+  assert.equal(l.luci[1].ok, false);          // a ottobre in vendita c'era il WES di novembre
   assert.equal(l.luci[3].ok, false);          // a fine ottobre non era più abbonato
   assert.deepEqual(l.mancano, ['WES', 'CEP']);
 });

@@ -229,7 +229,7 @@ prova('S5 e S7: in cima cosa vuol dire ogni segno; senza periodi «Mai abbonato�
     return ctx.s().then(() => box.innerHTML);
   };
   const admin = await disegna(true);
-  assert.match(admin, /^<div class="sotto" style="margin:0 0 8px">BBS e WES: i biglietti degli eventi · CEP: l'abbonamento audio<\/div>/);
+  assert.match(admin, /^<div class="sotto" style="margin:0 0 8px">WES e BBS: i biglietti degli eventi · CEP: l'abbonamento audio<\/div>/);
   assert.match(admin, /Per i biglietti della coppia collega il compagno\/a in Dati\./);
   assert.match(admin, /data-piu="BBS">\+ Biglietto/);
   assert.match(admin, /<small class="sotto" style="margin:0">Mai abbonato<\/small>/);

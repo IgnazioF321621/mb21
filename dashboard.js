@@ -23,8 +23,8 @@
       { titolo: 'Totale gruppo', da: 'sq:totale_gruppo', obiettivo: 'totale_gruppo' },
     ] },
     { chiave: 'segni', etichetta: 'Segni Vitali N21', pallino: '🟢', colore: 'var(--gr-segni)', senzaGiorno: true, riquadri: [
+      { titolo: 'WES', da: 'tot:wes', obiettivo: 'wes' },   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
       { titolo: 'BBS', da: 'tot:bbs', obiettivo: 'bbs' },
-      { titolo: 'WES', da: 'tot:wes', obiettivo: 'wes' },
       { titolo: 'CEP', da: 'tot:cep', obiettivo: 'cep' },
     ] },
     { chiave: 'crescita', etichetta: 'Crescita', pallino: '🟣', colore: 'var(--gr-crescita)', riquadri: [

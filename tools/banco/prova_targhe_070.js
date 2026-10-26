@@ -98,12 +98,12 @@ prova('070 (3): sulle card della Lista solo le targhette accese, per tutte le ca
   assert.equal(ctx.card({ id: 'c', categoria: 'Partner' }), '');   // un Partner senza niente acceso: niente targhette grigie
   assert.equal(ctx.card({ id: 'z', categoria: 'Partner' }), '');   // targhette non ancora lette
   // la targhetta di prima (scheda, Mappa dei partner, Profilo di un altro): identica
-  const prima = (t, numeri) => ['bbs', 'wes', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}${numeri && numeri[k] ? ' ' + numeri[k] : ''}</span>`).join('');
+  const prima = (t, numeri) => ['wes', 'bbs', 'cep'].map(k => `<span class="sv-targa ${k} ${t && t[k] ? 'on' : ''}">${k.toUpperCase()}${numeri && numeri[k] ? ' ' + numeri[k] : ''}</span>`).join('');
   for (const [t, nu] of [[null, null], [{ bbs: true }, null], [{ cep: true, wes: true }, { bbs: 4, wes: 0, cep: 7 }]]) assert.equal(ctx.targhe(t, nu), prima(t, nu));
   // per l'Admin: tasti, con il codice della riga in Mappa
   assert.equal(ctx.targhe({ bbs: true }, { bbs: 4 }, { tasto: true, chi: 'P001' }),
-    '<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l\'ha">BBS 4</button>'
-    + '<button class="sv-targa tasto wes " data-targa="wes" data-chi="P001" aria-label="WES: ha il biglietto?">WES</button>'
+    '<button class="sv-targa tasto wes " data-targa="wes" data-chi="P001" aria-label="WES: ha il biglietto?">WES</button>'   // nota 098: WES · BBS · CEP
+    + '<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l\'ha">BBS 4</button>'
     + '<button class="sv-targa tasto cep " data-targa="cep" data-chi="P001" aria-label="CEP: è abbonato?">CEP</button>');
   assert.match(PL, /\/\/ BBS · WES · CEP accanto al nome nella testata della scheda/);   // la regola del 18/09 resta solo per la testata
 });
@@ -129,7 +129,7 @@ prova('070 (2): nella testata della scheda le targhette sono tasti solo per l\'A
   uguale(A.chiamate, [['sA', 'wes', 'function']]);
   assert.equal(A.ctx.LS.targhe.sA.bbs, true); assert.equal(A.ctx.LS.targhe.sC.bbs, false);   // nota 094 S6: il biglietto è solo «Personale» di A
   for (const P of [crea(false, false), crea(true, true)]) {   // un partner, o l'Admin con «Tutti»: si guardano soltanto, come prima
-    assert.match(P.app.innerHTML, /<span class="sv-targa bbs on">BBS<\/span><span class="sv-targa wes ">WES<\/span>/);
+    assert.match(P.app.innerHTML, /<span class="sv-targa wes ">WES<\/span><span class="sv-targa bbs on">BBS<\/span>/);
     assert.doesNotMatch(P.app.innerHTML, /data-targa/);
   }
 });
@@ -319,8 +319,8 @@ prova('070 (1): in cima alla Mappa dell\'Admin il conto a parole su tutto il gru
   const W = mondoMappa();
   W.ctx.disegna();
   const h = W.app.innerHTML;
-  assert.match(h, /<div class="mp-conti"><span>BBS 11-2026: segnati <b>1<\/b> su 3<\/span><span>WES 02-2027: segnati <b>0<\/b> su 3<\/span>\s*<span>CEP oggi: abbonati <b>1<\/b> su 3<\/span><\/div>/);
-  assert.ok(h.indexOf('Segni Vitali del gruppo: BBS 11-2026 · WES 02-2027 · CEP oggi') < h.indexOf('mp-conti'));   // la riga di prima resta, il conto sotto
+  assert.match(h, /<div class="mp-conti"><span>WES 02-2027: segnati <b>0<\/b> su 3<\/span><span>BBS 11-2026: segnati <b>1<\/b> su 3<\/span>\s*<span>CEP oggi: abbonati <b>1<\/b> su 3<\/span><\/div>/);
+  assert.ok(h.indexOf('Segni Vitali del gruppo: WES 02-2027 · BBS 11-2026 · CEP oggi') < h.indexOf('mp-conti'));   // la riga di prima resta, il conto sotto
   assert.match(h, /<button class="sv-targa tasto bbs on" data-targa="bbs" data-chi="P001" aria-label="BBS: chi ce l'ha">BBS<\/button>/);   // 094 S4: solo «lui sì/no»
   assert.match(h, /<div class="mp-numeri">Nel gruppo: BBS <b>1<\/b><\/div>/);   // il numero del gruppo fuori, a parole
   assert.match(h, /<button class="sv-targa tasto cep on" data-targa="cep" data-chi="P002"/);   // Persona B: la scheda della lista dell'Admin (sB2), dove il CEP è segnato

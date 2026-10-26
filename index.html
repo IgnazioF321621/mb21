@@ -2531,6 +2531,24 @@
   .ck-in-pagina { padding-bottom: 8px; }
   .ck-in-pagina .mc-fondo { bottom: calc(env(safe-area-inset-bottom) + 72px); margin: 12px 0 0; border-radius: 18px; }
   .m5 + * { margin-top: 14px; }
+  /* nota 098: la Mappa v5, i riquadri della testata (filtri), i puntini WES · BBS · CEP e i VP in un bollino */
+  .m5-riquadri { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .m5-box { border: 0; border-radius: 14px; padding: 7px 4px; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 52px; }
+  .m5-box b { font-size: 22px; font-weight: 800; line-height: 1.1; } .m5-box small { font-size: 12px; font-weight: 700; }
+  .m5-box.scelto { box-shadow: 0 0 0 3px #FFD54A; }
+  .m5-riquadri.stati .m5-box small::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; background: currentColor; }
+  .m5-box.attivo { background: #EAF8EE; color: #1F7A30; } .m5-box.warning { background: #FFF4D6; color: #8A6200; } .m5-box.inattivo { background: #E9EAEE; color: #555B66; }
+  .m5-box.wes, .m5-box.bbs, .m5-box.cep { background: #fff; } .m5-box.wes { color: var(--wes); } .m5-box.bbs { color: var(--bbs); } .m5-box.cep { color: var(--cep); }
+  .m5-legenda { margin-left: auto; align-self: center; font-size: 12px; font-weight: 700; color: var(--testo-soft); white-space: nowrap; }
+  .m5-dx { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; vertical-align: middle; }
+  .m5-punti { display: inline-flex; gap: 0; }
+  .m5-punto { border: 0; background: none; padding: 6px 3px; display: inline-flex; }
+  .m5-punto i { width: 10px; height: 10px; border-radius: 50%; background: #E5E5EA; }
+  .m5-punto.wes.on i { background: var(--wes); } .m5-punto.bbs.on i { background: var(--bbs); } .m5-punto.cep.on i { background: var(--cep); }
+  .m5-vp { font-size: 12px; font-weight: 800; border-radius: 8px; padding: 3px 8px; white-space: nowrap; }
+  .m5-vp.attivo { color: #1F8A3A; background: #EAF8EE; } .m5-vp.warning { color: #8A6200; background: #FFF4D6; } .m5-vp.inattivo { color: #8E8E93; background: #F2F2F7; }
+  .m5-gruppo { display: flex; gap: 10px; font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .m5-gruppo .wes { color: var(--wes); } .m5-gruppo .bbs { color: var(--bbs); } .m5-gruppo .cep { color: var(--cep); }
   .z5 + * { margin-top: 14px; }
   .z5 .v5-titolo h1 { font-size: 34px; }
   .p5t .pf-cerchio { flex: none; }
@@ -4425,8 +4443,8 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
 // la riga scura nella Dashboard, «Come sto andando questo mese?», dopo Crescita (prima era in cima al Check), e «Vedi i 12 mesi» del Profilo.
 // Legge i suoi dati da sé, al tocco (caricaStorico, tenuti in SL). Dentro: chi guardi, la griglia dei 12 mesi e,
 // per l'Admin, tutte le linee con il flusso a barrette e il cambiamento sul mese prima.
-const SL = { dati: null, tipo: 'bbs', chi: null, segniAl: undefined };
-const TIPI_SL = [['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
+const SL = { dati: null, tipo: 'wes', chi: null, segniAl: undefined };
+const TIPI_SL = [['wes', 'WES'], ['bbs', 'BBS'], ['cep', 'CEP']];   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
 
 async function caricaStorico() {
   if (SL.dati) return SL.dati;

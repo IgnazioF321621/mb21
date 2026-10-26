@@ -265,8 +265,8 @@ function mieiSegniHtml() {
   const t = mieTarghe(), L = MB21Lista;
   const targa = (k, scritta) => `<button class="sv-targa pf-targa ${k} ${t[k] ? 'on' : ''}" data-mia-targa="${k}">${scritta}</button>`;
   return voceProfilo('segni', ic('segnivitali') + ' I miei Segni Vitali', { classe: 'pf-segni',   // v5: il rosa dei Segni Vitali nel titolo della voce
-    sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
-    corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
+    sempre: `<div class="pf-targhe">${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('cep', 'CEP')}</div>`,   // nota 098: WES · BBS · CEP
+    corpo: `<small style="margin-top:0">Colorata = accesa. <b>WES</b> e <b>BBS</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
       <button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>` });
 }
 function collegaMieiSegni() {

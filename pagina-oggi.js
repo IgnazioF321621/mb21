@@ -462,10 +462,11 @@ function disegnaClientiV5() {
 
 // ── v5, settima pagina: la testata della Mappa (Regia 26/10; solo la veste: albero, targhette, Segni Vitali, filtri, conti e letture di adesso) ──
 // Blu notte Mappa, «‹ Oggi», il chip del Partner Select, il feedback, «N nel tuo gruppo · mese» (il conto e il mese che la Mappa ha già) e «Mappa».
-function testaMappaV5(quanti, mese) {
+// Nota 098: `dentro` = i riquadri dei numeri (attivi · sotto 50 VP · fermi e WES · BBS · CEP, pagina-mappa.js); al caricamento «…» e niente riquadri
+function testaMappaV5(quanti, mese, dentro = '') {
   return `<div class="v5-testa m5" style="--zc:var(--z-mappa)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
       <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
-    <div class="v5-titolo"><div><span class="v5-sopra">${esc(`${quanti} nel gruppo · ${mese}`)}</span><h1>Mappa</h1></div></div></div>`;
+    <div class="v5-titolo"><div><span class="v5-sopra">${esc(mese ? `${quanti} nel gruppo · ${mese}` : quanti)}</span><h1>Mappa</h1></div></div>${dentro}</div>`;
 }
 
 // ── v5, le tessere di Esplora: Report, Profilo (con i Segni Vitali) e Admin (Regia 26/10; solo la veste) ──
@@ -498,7 +499,7 @@ function schedaInPiuV5(contattoId, cat, dato) {
     }
     const x = P5.segni[contattoId], SV = x && x.SV;
     const t = SV ? targheDi(SV) : null, oggi = MB21Coda.oggiRoma();
-    const testo = !SV ? (x && x.errore ? 'Non letti ora' : 'Leggo…') : `BBS ${t.bbs ? 'sì' : 'no'} · WES ${t.wes ? 'sì' : 'no'}`;
+    const testo = !SV ? (x && x.errore ? 'Non letti ora' : 'Leggo…') : `WES ${t.wes ? 'sì' : 'no'} · BBS ${t.bbs ? 'sì' : 'no'}`;   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
     const cep = !SV ? '' : `CEP: ${t.cep ? 'abbonato' : MB21Lista.descrizioneCep(SV.cep, oggi).toLowerCase()}`;
     segni = `<div class="p5-box"><span class="p5-tit" style="color:var(--z-segni)">SEGNI VITALI</span><b>${esc(testo)}</b>${cep ? `<small>${esc(cep)}</small>` : ''}</div>`;
   }

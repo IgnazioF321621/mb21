@@ -312,7 +312,7 @@ function percorsoDash() {
   return l.prima ? null : { l, ...statoPercorso(l) };
 }
 // i quattro punti del Leader 1° livello con le parole di Ignazio (04/10); nel Check, nelle caselline strette, restano 100 VP · BBS · WES · CEP
-const PUNTI_LC1 = { vp: '100 VPP', bbs: 'Ticket BBS', wes: 'Ticket WES', cep: 'Abbonamento CEP' };
+const PUNTI_LC1 = { vp: '100 VPP', wes: 'Ticket WES', bbs: 'Ticket BBS', cep: 'Abbonamento CEP' };
 const nomeGradino = g => (g.chiave === 'core' ? 'Core' : g.titolo);
 function fraseTraguardo(p) {
   if (!p) return 'Leggo il percorso…';
@@ -1863,7 +1863,7 @@ const COLORI_SV = { contatti: 'tenue', pm: 'gr-azione', bbs: 'bbs', wes: 'wes', 
 const coloreSv = k => `var(--${COLORI_SV[k] === 'tenue' ? 'testo-tenue' : COLORI_SV[k]})`;
 const tintaSv = (k, forza) => `rgba(var(--${COLORI_SV[k]}-rgb), ${forza})`;
 // Tabella dei Segni Vitali a 12 mesi: dal 15/09 sta nel Check (decisione C); in Dashboard solo il mese in corso
-const COLONNE_SV = [['contatti', 'Contatti'], ['pm', 'PM'], ['bbs', 'BBS'], ['wes', 'WES'], ['cep', 'CEP']];
+const COLONNE_SV = [['contatti', 'Contatti'], ['pm', 'PM'], ['wes', 'WES'], ['bbs', 'BBS'], ['cep', 'CEP']];   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
 function cellaSv(sv, k, v, tag) {
   if (!v) return `<${tag} class="zero">0</${tag}>`;
   const forza = 0.35 + 0.65 * v / (sv.massimi[k] || 1);   // più alto il numero, più acceso il colore
@@ -2367,9 +2367,9 @@ function apriCheck(opz = {}) {
       <input id="ck-note" maxlength="150" placeholder="Note del libro"><div class="conta" id="ck-conta"></div>
       <div class="vn-aiuto">A mano: libro, pagine (10 al giorno) e note → sezione 5 del foglio Core e diario dei libri. Con «Libro non da sistema…» scrivi titolo e autore una volta sola.</div></div></div>
     </div><h4 class="mc-t">Squadra</h4><div class="riquadro mc-g">
-    <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · BBS · WES<span class="ck-tag">Core</span></label>
+    <div class="ckr core" id="ck-campo-open"><b class="ck-n">9</b><div class="ck-corpo"><label>🎫 OPEN settimanale · WES · BBS<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-open"><span>oggi sono stato all'<b>OPEN</b></span></label>
-      <div class="ck-badge-riga">Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b> Biglietto WES <b class="ck-badge" id="ck-wes">—</b></div>
+      <div class="ck-badge-riga">Biglietto WES <b class="ck-badge" id="ck-wes">—</b> Biglietto BBS <b class="ck-badge" id="ck-bbs">—</b></div>
       <div class="vn-aiuto">L'OPEN lo spunti tu (la settimana conta); BBS e WES dai Segni Vitali della tua scheda → sezione 6 del foglio Core.</div></div></div>
     <div class="ckr core" id="ck-campo-squadra"><b class="ck-n">10</b><div class="ck-corpo"><label>🤝 Counseling · Edificazione · No-crossline<span class="ck-tag">Core</span></label>
       <label class="ck-sotto"><input type="checkbox" id="ck-counseling"><span>oggi sessione di <b>counseling</b> con lo sponsor/upline</span></label>

@@ -251,8 +251,8 @@
     const luci = [
       { chiave: 'vp', titolo: `${LC1_VP} VP`, ok: vp != null && vp >= LC1_VP, ignoto: vp == null,
         testo: vp == null ? 'dati Amway non arrivati' : formato(vp, 2) },
+      { chiave: 'wes', titolo: 'WES', ...biglietto('WES') },   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
       { chiave: 'bbs', titolo: 'BBS', ...biglietto('BBS') },
-      { chiave: 'wes', titolo: 'WES', ...biglietto('WES') },
       { chiave: 'cep', titolo: 'CEP', ok: !!cepOk, ignoto: cepOk == null, testo: cepOk == null ? 'non lo so' : cepOk ? 'abbonato' : 'manca' },
     ];
     const accese = luci.filter(l => l.ok).length;
@@ -312,7 +312,7 @@
       { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? FATTO : `mancano ${formato(Math.max(0, Math.ceil(m.s3.obiettivoVp - m.s3.vp)), 0)} VP o ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10; nota 097: la prima delle due
       { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : m.s4.aTotale ? `${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
       { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : m.s5.aTotale ? `${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''}` : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
-      { testo: 'OPEN · BBS · WES', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.bbs ? 'BBS' : '', !m.s6.wes ? 'WES' : ''].filter(Boolean).join(' · ') },
+      { testo: 'OPEN · WES · BBS', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.wes ? 'WES' : '', !m.s6.bbs ? 'BBS' : ''].filter(Boolean).join(' · ') },   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
       { testo: 'Squadra', fatto: f[6], stato: f[6] ? FATTO : [!m.s7.counseling ? 'counseling' : '', m.s7.edificazione !== true ? 'edificazione' : '', m.s7.no_crossline !== true ? 'no-crossline' : ''].filter(Boolean).join(' · ') },
     ];
   }

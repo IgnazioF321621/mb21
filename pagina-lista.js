@@ -1258,7 +1258,7 @@ function targaAppHtml(uso) {
 // t: accese sì/no · numeri (facoltativo): un numero scritto dentro la targhetta se sopra zero (nota 094 S4: la Mappa non lo usa più, lo scrive fuori)
 // opz (nota Pagine 070): accese = solo quelle accese (le card della Lista) · tasto = per l'Admin si toccano (`toccaTarga`), chi = codice della riga della Mappa
 function targheHtml(t, numeri, opz = {}) {
-  return ['bbs', 'wes', 'cep'].filter(k => !opz.accese || (t && t[k])).map(k => {
+  return ['wes', 'bbs', 'cep'].filter(k => !opz.accese || (t && t[k])).map(k => {   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
     const testo = `${k.toUpperCase()}${numeri && numeri[k] ? ' ' + numeri[k] : ''}`, on = t && t[k] ? 'on' : '';
     return opz.tasto
       ? `<button class="sv-targa tasto ${k} ${on}" data-targa="${k}"${opz.chi ? ` data-chi="${esc(opz.chi)}"` : ''} aria-label="${k.toUpperCase()}: ${on ? 'chi ce l\'ha' : k === 'cep' ? 'è abbonato?' : 'ha il biglietto?'}">${testo}</button>`
@@ -1535,10 +1535,10 @@ async function sezioneSegni() {
     }
     const conCep = c.categoria === 'Partner' || (SV.compagno && SV.compagno.categoria === 'Partner') || SV.cep.length;
     // S5 (Ignazio 25/10: «come CEP mettiamo abbonamento audio»): in cima cosa vuol dire ogni segno; S7: la frase sul compagno/a solo a chi segna
-    box.innerHTML = `<div class="sotto" style="margin:0 0 8px">BBS e WES: i biglietti degli eventi · CEP: l'abbonamento audio</div>
+    box.innerHTML = `<div class="sotto" style="margin:0 0 8px">WES e BBS: i biglietti degli eventi · CEP: l'abbonamento audio</div>
       ${!puoSegnare ? '<div class="sotto" style="margin:0 0 8px">I biglietti e il CEP li segna l\'Admin</div>'
         : SV.compagno || a.compagno_nome ? '' : '<div class="sotto" style="margin:0 0 8px">Per i biglietti della coppia collega il compagno/a in Dati.</div>'}
-      ${riquadroEventi('BBS')}${riquadroEventi('WES')}${conCep ? riquadroCep() : ''}`;
+      ${riquadroEventi('WES')}${riquadroEventi('BBS')}${conCep ? riquadroCep() : ''}`;   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
     mostraTarghe(SV);
     collega();
   };

@@ -27,8 +27,10 @@ async function caricaAlberoMappa() {
 
 // Per chi sono lette le righe del Team (Avvio e Obiettivi): il partner guardato, o «tutti»
 const chiaveTeam = () => (vediTutti() ? 'tutti' : visto().id);
+const mappaV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaMappaV5 === 'function';
 async function apriMappa() {
-  if (!MP.squadra) app.innerHTML = `<h1>Mappa</h1><div class="vuoto">Carico il gruppo…</div>`;
+  // nota 098: con la veste v5 subito la testata blu notte, con «…» al posto dei numeri (prima per un attimo il titolo vecchio)
+  if (!MP.squadra) app.innerHTML = `${mappaV5() ? testaMappaV5('…', '') : '<h1>Mappa</h1>'}<div class="vuoto">Carico il gruppo…</div>`;
   if (!MP.squadra) {
     try {
       await caricaAlberoMappa();
@@ -122,7 +124,7 @@ const targheRiga = r => { const sc = schedaSegniMappa(r); return sc && MP.targhe
 // In cima, per l'Admin, il conto a parole su tutto il gruppo che guarda (filtri e ricerca a parte): «BBS 11-2026: segnati 4 su 35». Nessuna lettura in più
 // Nota 094 S4: la targhetta dice solo «lui sì/no»; i numeri del gruppo (lui e chi è sotto: posti dei biglietti, abbonati CEP) stanno fuori, a parole
 function segniGruppoHtml(n) {
-  const voci = n ? ['bbs', 'wes', 'cep'].filter(k => n[k]).map(k => `${k.toUpperCase()} <b>${n[k]}</b>`) : [];
+  const voci = n ? ['wes', 'bbs', 'cep'].filter(k => n[k]).map(k => `${k.toUpperCase()} <b>${n[k]}</b>`) : [];
   return voci.length ? `<div class="mp-numeri">Nel gruppo: ${voci.join(' · ')}</div>` : '';
 }
 function contoSegniHtml(cime) {
@@ -131,8 +133,37 @@ function contoSegniHtml(cime) {
   if (!quanti) return '';
   const accese = k => tutti.filter(r => { const t = targheRiga(r); return t && t[k]; }).length;
   const evento = k => esc(MB21Lista.etichettaEvento(MP.attivi[k]));
-  return `<div class="mp-conti">${['bbs', 'wes'].filter(k => MP.attivi[k]).map(k => `<span>${k.toUpperCase()} ${evento(k)}: segnati <b>${accese(k)}</b> su ${quanti}</span>`).join('')}
+  return `<div class="mp-conti">${['wes', 'bbs'].filter(k => MP.attivi[k]).map(k => `<span>${k.toUpperCase()} ${evento(k)}: segnati <b>${accese(k)}</b> su ${quanti}</span>`).join('')}
     <span>CEP oggi: abbonati <b>${accese('cep')}</b> su ${quanti}</span></div>`;
+}
+
+// ── v5, secondo giro (nota 098, Ignazio 26/10: opzione A, poi «la prima riga di un altro colore», «WES, BBS, CEP ovunque», «cliccandoli solo i nomi») ──
+const SEGNI_V5 = [['wes', 'WES'], ['bbs', 'BBS'], ['cep', 'CEP']];
+// i riquadri della testata: attivi (verde) · sotto 50 VP (oro) · fermi (grigio), con la regola dei filtri di sempre; WES · BBS · CEP del gruppo intero (MP.segni:
+// la somma dei gruppi in cima, la stessa regola di «nel suo gruppo»). Ognuno è un filtro (data-mpfiltro): toccato di nuovo, si torna a tutti
+function riquadriMappaV5(conta, cime) {
+  const tot = { wes: 0, bbs: 0, cep: 0 };
+  if (MP.segni) for (const c of cime) { const g = MP.segni.gruppo[c.id]; if (g) for (const [k] of SEGNI_V5) tot[k] += g[k] || 0; }
+  const b = (k, n, t) => `<button class="m5-box ${k}${MP.filtro === k ? ' scelto' : ''}" data-mpfiltro="${k}" aria-pressed="${MP.filtro === k}"><b>${n}</b><small>${t}</small></button>`;
+  return `<div class="m5-riquadri stati">${b('attivo', conta.attivo, 'attivi')}${b('warning', conta.warning, 'sotto 50 VP')}${b('inattivo', conta.inattivo, 'fermi')}</div>
+    <div class="m5-riquadri segni">${SEGNI_V5.map(([k, t]) => b(k, MP.segni ? tot[k] : '…', t)).join('')}</div>`;
+}
+// chi passa il filtro di un riquadro: lo stato dei VP, o il segno suo (non del gruppo)
+function passaFiltroV5(r, f) {
+  if (f === 'attivo' || f === 'warning' || f === 'inattivo') return r.stato === f;
+  const p = MP.segni && MP.segni.proprio[r.id];
+  return !!(p && p[f] > 0);
+}
+// i puntini WES · BBS · CEP di una persona (accesi come le targhette di sempre); per l'Admin sono i tasti di sempre (data-targa, toccaTarga)
+function puntiniV5(t, tasto, chi) {
+  return `<span class="m5-punti">${SEGNI_V5.map(([k, n]) => tasto
+    ? `<button class="m5-punto ${k}${t && t[k] ? ' on' : ''}" data-targa="${k}" data-chi="${esc(chi)}" aria-label="${n}${t && t[k] ? ': sì' : ': no'}"><i></i></button>`
+    : `<span class="m5-punto ${k}${t && t[k] ? ' on' : ''}" title="${n}"><i></i></span>`).join('')}</span>`;
+}
+// «nel suo gruppo» con i numeri colorati, WES · BBS · CEP, per chi ha qualcuno sotto (o qualche segno)
+function segniGruppoV5(n, r) {
+  if (!n || (!r.haFigli && !n.wes && !n.bbs && !n.cep)) return '';
+  return `<div class="m5-gruppo">${SEGNI_V5.map(([k, t]) => `<span class="${k}">${t} <b>${n[k] || 0}</b></span>`).join('')}</div>`;
 }
 
 function mesePulito(m) {
@@ -144,20 +175,25 @@ function disegnaMappa() {
   if (MP.completa) return disegnaCompleta();
   const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
   const conta = M.conta(cime);
-  const righe = M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
+  const v5 = mappaV5();
+  // nota 098 (Ignazio 26/10): con la veste v5 i riquadri della testata sono i filtri; toccandone uno si vedono solo i nomi di quella lista, senza l'albero
+  // (attivi · sotto 50 VP · fermi: la regola di sempre, MB21Mappa.stato; WES · BBS · CEP: chi ha il segno, MP.segni.proprio)
+  const soloLista = v5 && MP.filtro !== 'tutti';
+  const righe = soloLista ? M.righe(cime, { aperti: new Set(M.tuttiGliId(cime)), cerca: MP.cerca }).filter(r => passaFiltroV5(r, MP.filtro))
+      .map(r => ({ ...r, profondita: 0, haFigli: false, spento: false }))
+    : M.righe(cime, { aperti: MP.aperti, filtro: MP.filtro, cerca: MP.cerca });
   const num = (v, d = 2) => (v == null ? '—' : centesimi(Number(v).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })));   // HTML: la virgola dei centesimi evidente
   const etichette = [['tutti', 'Tutti'], ['attivo', '🟢Attivi'], ['warning', '🔴Warning'], ['inattivo', '⚪Inattivi']];   // il pallino lo disegna escIcone
   const tocca = targheDaToccare() && !!MP.schede;   // nota 070: per l'Admin le targhette sono tasti (appena le schede sono lette)
 
   // v5 (nota 095, Regia 26/10): la testata blu notte (testaMappaV5, pagina-oggi.js) al posto del titolo e della fascia del Partner Select; sotto la Mappa di adesso
-  const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaMappaV5 === 'function';
-  let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese)) : `<h1>Mappa</h1>${partnerSelect()}`}
+  let html = `${v5 ? testaMappaV5(conta.tutti, mesePulito(MP.mese), riquadriMappaV5(conta, cime)) : `<h1>Mappa</h1>${partnerSelect()}`}
     ${righeTeamHtml()}${statisticheHtml()}
     <div class="mp-testa"><span>Gruppo di ${esc(nomeVisto())}</span><span>mese ${esc(mesePulito(MP.mese))}</span></div>
-    ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
-    <div class="mp-filtri">${etichette.map(([k, t]) =>
+    ${MP.attivi ? `<div class="mp-testa"><span>Segni Vitali del gruppo: WES ${MP.attivi.wes ? esc(MB21Lista.etichettaEvento(MP.attivi.wes)) : '—'} · BBS ${MP.attivi.bbs ? esc(MB21Lista.etichettaEvento(MP.attivi.bbs)) : '—'} · CEP oggi</span></div>` : ''}${contoSegniHtml(cime)}
+    ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
-      <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>
+      <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>`}
     <input class="mp-cerca" id="mp-cerca" type="search" placeholder="Cerca un nome o un codice" value="${esc(MP.cerca)}">`;
 
   if (!cime.length) {
@@ -186,12 +222,13 @@ function disegnaMappa() {
         <div class="mp-corpo">
           <button class="mp-nome" data-mpnome="${esc(r.id)}">${esc(r.nome)}</button>
           <span class="mp-liv">Liv. ${r.livello ?? '—'}</span>
-          <span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml(targheRiga(r),
-            null, { tasto: tocca, chi: r.id })}</span>
+          ${v5 ? `<span class="m5-dx">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${puntiniV5(targheRiga(r), tocca, r.id)}<span class="m5-vp ${r.stato}">${num(r.vpp, 0)} VP</span></span>`
+            : `<span class="sv-targhe" style="margin-left:6px">${targaAppHtml(MP.usoApp && MP.usoApp[r.id])}${targheHtml(targheRiga(r),
+            null, { tasto: tocca, chi: r.id })}</span>`}
           <div class="mp-codice">Codice ${esc(r.id)}</div>
-          <div class="mp-numeri">VPP <b>${num(r.vpp)}</b> · VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
+          <div class="mp-numeri">${v5 ? '' : `VPP <b>${num(r.vpp)}</b> · `}VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
-          ${segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
+          ${v5 ? segniGruppoV5(MP.segni && MP.segni.gruppo[r.id], r) : segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
@@ -428,7 +465,8 @@ function collegaMappa() {
   collegaRigheTeam();
   const stat = document.getElementById('mp-stat');
   if (stat) stat.onclick = apriStatistiche;
-  app.querySelectorAll('[data-mpfiltro]').forEach(b => b.onclick = () => { MP.filtro = b.dataset.mpfiltro; disegnaMappa(); });
+  // v5 (nota 098): un riquadro già scelto, toccato di nuovo, torna a tutti
+  app.querySelectorAll('[data-mpfiltro]').forEach(b => b.onclick = () => { const k = b.dataset.mpfiltro; MP.filtro = mappaV5() && MP.filtro === k ? 'tutti' : k; disegnaMappa(); });
   app.querySelectorAll('[data-mpapri]').forEach(b => b.onclick = () => {
     const id = b.dataset.mpapri;
     if (MP.aperti.has(id)) MP.aperti.delete(id); else MP.aperti.add(id);

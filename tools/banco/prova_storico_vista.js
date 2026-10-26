@@ -83,6 +83,9 @@ vm.runInContext(pezzo('function disegnaStorico(velo, dati) {', '\nconst CK = {')
 const disegna = () => { ctx.disegnaStorico(velo, dati); return velo.corpo.innerHTML; };
 // `SL` è una const di index.html: nel contesto vive nello scope, non come proprietà, e si tocca da dentro
 const imposta = (chiave, valore) => vm.runInContext(`SL.${chiave} = ${JSON.stringify(valore)}`, ctx);
+// nota 098 (26/10): il foglio si apre su WES (WES · BBS · CEP); queste prove guardano i BBS
+assert.match(vm.runInContext('SL.tipo + " " + TIPI_SL.map(t => t[0]).join(",")', ctx), /^wes wes,bbs,cep$/);
+imposta('tipo', 'bbs');
 
 prova('Il foglio disegna chi guardi, la griglia dei 12 mesi e tutte le linee', () => {
   const h = disegna();

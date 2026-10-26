@@ -196,7 +196,7 @@ prova('Il gradino e il livello: Leaders Club senza Core; Executive con le due ri
   assert.match(h, /Sviluppa 100 VP \(10 clienti\)/);
   assert.match(h, /data-vai="core"/);
   // Pacesetter e Leader 1° livello: le loro voci e il consiglio
-  assert.match(P.vista('gradino', { gradino: 'leader1' }).html, /100 VPP[\s\S]*Ticket BBS[\s\S]*Ticket WES[\s\S]*Abbonamento CEP/);
+  assert.match(P.vista('gradino', { gradino: 'leader1' }).html, /100 VPP[\s\S]*Ticket WES[\s\S]*Ticket BBS[\s\S]*Abbonamento CEP/);
 });
 
 prova('Il mio avvio è una sottopagina del nuovo: i passi aperti e il consiglio', () => {
