@@ -104,6 +104,14 @@
   body.tastiera nav { display: none; }   /* nota Pagine 044: mentre si scrive la barra non sale sopra la tastiera (vedi `tastieraAperta`) */
   /* La pagina in cui sei: pastiglia grigia sotto l'icona (Ignazio 28/09: «così so dove sono») */
   nav button.attiva { color: var(--accento); font-weight: var(--peso-forte); background: var(--tab-attiva); border-radius: 14px; }
+  /* v5 (nota 095, Ignazio 26/10, «A»): le voci restano grigie; quella della pagina aperta prende il colore della sua zona: l'icona nel colore pieno, la scritta
+     nella sua tinta scura (contrasto almeno 4.5:1 sul fondino) e il fondino nella tinta chiara. Oggi arancio, Agenda blu, Lista Nomi verde, Esplora scura */
+  #tab button.attiva { --voce: var(--testo); --voce-testo: var(--testo); background: var(--voce-fondo, var(--tab-attiva)); color: var(--voce-testo); }
+  #tab button.attiva svg.ic { color: var(--voce); }
+  #tab button.attiva[data-tab="oggi"] { --voce: var(--z-contatti); --voce-testo: #A84800; --voce-fondo: #FFF0E5; }
+  #tab button.attiva[data-tab="agenda"] { --voce: var(--z-agenda); --voce-testo: var(--z-agenda); --voce-fondo: #E6F0FB; }
+  #tab button.attiva[data-tab="lista"] { --voce: var(--z-lista); --voce-testo: #1F7A30; --voce-fondo: #E8F5EA; }
+  #tab button.attiva[data-tab="esplora"] { --voce: #111114; --voce-testo: #111114; --voce-fondo: #ECECEF; }
   /* Admin, solo per l'Admin (Ignazio 25/09): in fondo alla barra, su fondo scuro, «così subito risaltano e so che sono solo per l'admin» */
   #tab button[data-tab="admin"] { background: var(--testo); color: rgba(255,255,255,.7); border-radius: 12px; padding: 4px 5px; }
   #tab button.attiva[data-tab="admin"] { color: #fff; }

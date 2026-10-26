@@ -171,6 +171,11 @@ prova('095: la barra in basso ha quattro voci (Oggi, Agenda, Lista Nomi, Esplora
   assert.match(IDX, /<script src="pagina-oggi\.js\?v=\d{12}"><\/script>/);
   assert.match(IDX, /--z-contatti: #F26B00; --z-agenda: #0866D6; --z-lista: #2E9E3E; --z-clienti: #D99A00; --z-training: #9333EA; --z-segni: #E11D48;\s+--z-check: #0098A3; --z-report: #3D4451; --z-mappa: #1E3A8A;/);
   assert.match(IDX, /\.o5 \{ display: flex; flex-direction: column; min-height: calc\(100dvh/);
+  // Ignazio 26/10 («A»): la voce aperta prende il colore della sua zona (icona piena, scritta scura leggibile, fondino chiaro); le altre restano grigie
+  for (const [t, c] of [['oggi', '--voce: var\\(--z-contatti\\); --voce-testo: #A84800; --voce-fondo: #FFF0E5;'], ['agenda', '--voce: var\\(--z-agenda\\); --voce-testo: var\\(--z-agenda\\); --voce-fondo: #E6F0FB;'],
+    ['lista', '--voce: var\\(--z-lista\\); --voce-testo: #1F7A30; --voce-fondo: #E8F5EA;'], ['esplora', '--voce: #111114; --voce-testo: #111114; --voce-fondo: #ECECEF;']])
+    assert.match(IDX, new RegExp(`#tab button\\.attiva\\[data-tab="${t}"\\] \\{ ${c} \\}`), t);
+  assert.match(IDX, /#tab button\.attiva svg\.ic \{ color: var\(--voce\); \}/);
   assert.match(DASH, /default: LV\.vista = 'home'; if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5\) disegnaOggiV5\(\); else disegnaHome\(\);/);
   assert.match(PO, /^const OGGI_V5 = true;/m);
   assert.match(leggi('icone.js'), /'esplora': '<rect/);
