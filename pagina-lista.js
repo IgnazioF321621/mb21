@@ -224,11 +224,16 @@ function disegnaLista() {
   const chip = (k) => `<button data-filtro="${k}" class="${LS.filtro === k ? 'scelto' : ''}">${MB21Lista.FILTRI[k].etichetta} ${quanti(k)}</button>`;
   const altriScelto = f.altri ? `Altri: ${f.etichetta} ${quanti(LS.filtro)} ▾` : 'Altri ▾';
   // cantiere 30: parte alta compatta e ferma in alto (scorrono solo i nomi); «+» tondo come in Agenda
+  // v5 (nota 095, Regia 26/10): la parte alta ferma diventa la testata verde della Lista Nomi, con dentro gli stessi pezzi (stessi id): il conto dei nomi,
+  // il titolo, il chip del Partner Select al posto della fascia, il feedback, «+», la ricerca e i filtri. È una voce della barra: niente «‹ Oggi»
+  const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5;
   app.innerHTML = `
-    <div class="ls-testa">
-      <div class="ag-testa"><h1>Lista Nomi</h1>
+    <div class="ls-testa${v5 ? ' v5-testa l5' : ''}"${v5 ? ' style="--zc:var(--z-lista)"' : ''}>
+      ${v5 ? `<div class="v5-su"><span class="v5-sopra">${esc(conti.lista.toLocaleString('it-IT'))} NOMI</span><div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>
+        <button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">${ic('piu')}</button></div></div><div class="v5-titolo"><div><h1>Lista Nomi</h1></div></div>`
+        : `<div class="ag-testa"><h1>Lista Nomi</h1>
         <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
-      ${partnerSelect()}
+      ${partnerSelect()}`}
       <div class="cerca">
         <input id="cerca" type="search" placeholder="Cerca un nome, una professione o un numero" value="${esc(LS.testo)}" autocomplete="off">
         <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">${ic('chiudi')}</button>
@@ -245,6 +250,7 @@ function disegnaLista() {
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
+  const fb = document.getElementById('o5-feedback'); if (fb) fb.onclick = () => foglioSegnala();   // v5: il feedback nella testata
   const nuovo = document.getElementById('nuovo');
   if (nuovo) nuovo.onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });

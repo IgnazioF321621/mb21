@@ -2462,6 +2462,14 @@
   .c5t .v5-titolo h1 { font-size: 26px; line-height: 1.15; }
   .c5t + * { margin-top: 14px; }
   .m5 + * { margin-top: 14px; }
+  /* v5: la parte alta ferma della Lista Nomi diventa la testata verde (resta ferma in alto, come prima) */
+  .ls-testa.l5 { background: var(--zc); margin-bottom: 12px; padding-bottom: 14px; gap: 10px; border-bottom: 0; }
+  .l5 .v5-titolo h1 { font-size: 34px; }
+  .l5 .cerca { margin: 0; }
+  .l5 .cerca input { box-shadow: none; }
+  .l5 .chips button { background: rgba(255,255,255,.22); border-color: transparent; color: #fff; }
+  .l5 .chips button span { opacity: .85; }
+  .l5 .chips button.scelto { background: #fff; color: #1F7A30; border-color: #fff; }
   .v5-conto { font-size: 13px; font-weight: 800; background: rgba(255,255,255,.22); border-radius: 12px; padding: 5px 10px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .v5-su .o5-dx { min-width: 0; }
   .v5-titolo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
