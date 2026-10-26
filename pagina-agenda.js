@@ -592,6 +592,10 @@ function collegaDaSeguireAgenda() {
 // · Da fare (le cose del giorno, con «+ Una cosa da fare») · Da seguire (tracce e mio percorso). Ogni gruppo si apre e si chiude (chiave «g5-…»
 // in sezioniChiuse: qui vuol dire chiuso). Fogli, esiti, salvataggi e letture sono quelli di prima: cambia solo come sono messi. Solo con la veste v5.
 const giornoV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
+// v5 sul telefono (nota 098, Ignazio 26/10: «ancora lateralmente ci sono le due frecce»): niente linguette ai lati. Il menu di sinistra aveva la ricerca
+// (ora la lente nella testata, foglioCercaAgenda) e il Programma della settimana (nel «+», «Programmare la settimana» c'era già); il mese piccolo e la
+// Timeline della destra stanno nella vista Mese e nell'interruttore Elenco · Timeline. Sul computer (tre colonne) e senza la veste, tutto come prima.
+const senzaLinguette = () => giornoV5() && !largo();
 const CHIAVE_MODO_PROGRAMMA = 'mb21-agenda-programma';   // l'ultima scelta Elenco · Timeline, sul dispositivo
 function modoProgramma() { try { return localStorage.getItem(CHIAVE_MODO_PROGRAMMA) === 'timeline' ? 'timeline' : 'elenco'; } catch (e) { return 'elenco'; } }
 function gruppoV5(chiave, colore, titolo, n, dentro, destra = '') {
@@ -694,7 +698,7 @@ function disegnaAgenda() {
   }
   // Telefono e iPad in verticale (Ignazio 22/09): due linguette a metà dei bordi, come la freccetta di NotePlan —
   // a sinistra il menu, a destra il mese e la Timeline; si aprono anche trascinando il dito dal bordo.
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`
+  if (!tre && !senzaLinguette()) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`
     + (AG.vista === 'giorno' ? `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri il mese e la Timeline">${ic('freccia')}</button>` : '');
   if (tre) html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section>
     <aside class="mb-destra">${meseHtml(AG.giorno, oggi)}<div class="mb-crono"><div class="mb-crono-titolo">${ic('orario')} Timeline</div>${grigliaGiorno(eventi, opz)}</div></aside></div>`;
@@ -745,7 +749,7 @@ function disegnaMese() {
       }).join('')}</div>
     <div class="ag-foglio">${elencoDaFareHtml('Da fare questo mese', cose, 'mese', g => `da ${nomeMese(g)}`)}
     </div>`;
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
+  if (!tre) html += senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -838,7 +842,7 @@ function foglioScalaHtml({ testaHtml, titolo, prima, dopo, sopra, mesi, scala, t
 }
 function montaScala(html, prima, dopo) {
   const tre = largo();
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
+  if (!tre) html += senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col mese"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -905,7 +909,8 @@ function disegnaSettimana() {
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml('Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
-  if (!tre) html += `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button><button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
+  // v5: via la linguetta del menu; resta, per ora, quella della settimana a orario (solo lì si vede: la Regia lo chiede a Ignazio)
+  if (!tre) html += (senzaLinguette() ? '' : `<button class="mb-linguetta sx" id="mb-ling-sx" aria-label="Apri il menu dell'Agenda">${ic('freccia')}</button>`) + `<button class="mb-linguetta dx" id="mb-ling-dx" aria-label="Apri la settimana a orario">${ic('freccia')}</button>`;
   else html = `<div class="mb-3col"><aside class="mb-lato ag-lato">${menuAgendaHtml()}</aside><section class="mb-centro">${html}</section><aside class="mb-destra">${griglia}</aside></div>`;
   app.innerHTML = html + versione();
   collegaAgenda([]);
@@ -1202,11 +1207,24 @@ async function cercaMB(testo, box, chiudi) {
   }; });
 }
 
+// La ricerca dell'Agenda: la stessa nel menu e, nella v5 sul telefono, nel foglio della lente (foglioCercaAgenda); tocchi e risultati di cercaMB
+const cercaAgendaHtml = () => `<form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca nell'Agenda"></form>
+    <div class="mb-risultati"></div>`;
+function foglioCercaAgenda() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto ag-cerca-foglio"><div class="testa-foglio"><h3>Cerca nell'Agenda</h3><button id="cr-cerca-x" aria-label="Chiudi">${ic('chiudi')}</button></div>${cercaAgendaHtml()}</div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#cr-cerca-x').onclick = chiudi;
+  collegaMenuAgenda(velo, chiudi);   // solo la ricerca: gli altri tasti del menu qui non ci sono
+  const campo = velo.querySelector('.mb-cerca input'); if (campo) campo.focus();
+}
 // Il menu è lo stesso nel cassetto ☰ (telefono) e nella colonna sinistra fissa (schermo largo, «MB Plan» a tre colonne).
 function menuAgendaHtml() {
   return `<div class="ag-lato-titolo">Agenda</div>
-    <form class="mb-cerca" role="search"><input type="search" placeholder="Cerca un nome, un PM…" value="${esc(AG.cerca || '')}" autocomplete="off" aria-label="Cerca nell'Agenda"></form>
-    <div class="mb-risultati"></div>
+    ${cercaAgendaHtml()}
     ${SCALE_MENU.map(([k, nome, icona]) => { const c = VISTE.includes(k); return `<button data-scala="${k}" class="sc-${k}${(AG.vista || 'giorno') === k ? ' si' : ''}${c ? '' : ' presto'}">${ic(icona)}<span>${esc(nome)}</span><small>${c ? '' : 'presto'}</small></button>`; }).join('')}
     ${vediSpazi() ? programmaSettimanaHtml() : ''}
 `;
@@ -2048,6 +2066,7 @@ function collegaAgenda(eventi) {
   su('ag-dopo', () => apriAgenda(A.spostaGiorno(AG.giorno, 7)));
   collegaPartnerSelect();
   su('ag-nuovo', foglioAggiungi);   // nota 005: un solo ingresso, a livelli
+  su('ag-cerca', foglioCercaAgenda);   // v5: la lente della testata (nota 098)
   // v5 (testaAgendaV5): «‹ Oggi», il feedback, Giorno · Settimana · Mese · Anno (cambiaVista, come dal menu)
   su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });
   su('o5-feedback', () => foglioSegnala());
@@ -2183,14 +2202,22 @@ async function foglioAggiungi() {
   const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
+    ...(senzaLinguette() ? [{ k: 'cosa', icona: 'fatto', tinta: '#1F7A30', titolo: 'Una cosa da fare', sotto: 'Si scrive nel «Da fare» della pagina che stai guardando' }] : []),
     ...(puoSerataTeam() ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
       : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);
   if (!k) return;
   if (k === 'settimana') return preparaSettimana();
+  if (k === 'cosa') return apriCampoCosa();
   if (k === 'manda') return nuovoAppuntamento({ giorno: AG.giorno, condividi: 'linea' });   // P5b: la persona è già scelta se è una sola
   return nuovoAppuntamento({ giorno: AG.giorno, ...(k === 'team' ? { condividi: 'team' } : {}) });
 }
 
+// «Una cosa da fare» dal «+» (v5, nota 098): apre il campo di sempre del Da fare della vista che si guarda (nel Giorno «+ Una cosa da fare»)
+function apriCampoCosa() {
+  if (AG.vista === 'giorno') { AG.cosaAperta = AG.giorno; disegnaAgenda(); }
+  const campo = app.querySelector(`.ag-cosa-nuova[data-scala="${AG.vista || 'giorno'}"] input`);
+  if (campo) { if (campo.scrollIntoView) campo.scrollIntoView({ block: 'center' }); campo.focus(); }
+}
 // «Programmare la settimana» (Agenda P6, Ignazio 23/10/2026; prima nota 005 a numeri e passi, 046, 022): una schermata sola. In cima si sceglie
 // cosa mettere (Piano Marketing già acceso); sotto i giorni che restano: un tocco sul giorno apre le ore libere, un tocco sull'ora mette lo spazio
 // del tipo acceso, con scritto tipo e ora. In ogni giorno, in grigio, quello che c'è già (MB21Spazi.giaNelGiorno: spazi, Piani e Consulenze fissati,

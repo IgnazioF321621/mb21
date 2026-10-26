@@ -87,4 +87,31 @@ prova('Tocchi veri: Timeline si ricorda, «+ Una cosa da fare» apre il campo, l
   mem.clear(); AG.cosaAperta = null;
 });
 
+prova('Niente frecce ai lati (Ignazio 26/10): via le linguette in Giorno, Mese, Anno; nella Settimana resta solo quella della settimana a orario', () => {
+  const g = giorno();
+  assert.doesNotMatch(g, /mb-ling-sx|mb-ling-dx/);
+  const prima = AG.vista;
+  for (const v of ['mese', 'anno']) { AG.vista = v; V.disegnaAgenda(); assert.doesNotMatch(V.app.innerHTML, /mb-linguetta/, v); }
+  AG.vista = prima;
+  const s = V.vista('settimana');
+  assert.doesNotMatch(s, /mb-ling-sx/);
+  assert.match(s, /id="mb-ling-dx" aria-label="Apri la settimana a orario"/);
+});
+
+prova('La lente nella testata apre la ricerca di sempre in un foglio; il «+» offre «Una cosa da fare»', () => {
+  const g = giorno();
+  assert.match(g, /id="ag-cerca" aria-label="Cerca nell'Agenda">[\s\S]*?id="ag-nuovo"/);
+  assert.match(PA, /su\('ag-cerca', foglioCercaAgenda\);/);
+  const n = V.fogli.length;
+  V.foglioCercaAgenda();
+  const f = V.fogli[n];
+  assert.match(f.innerHTML, /Cerca nell'Agenda[\s\S]*class="mb-cerca"[\s\S]*class="mb-risultati"/);
+  assert.match(PA, /k: 'cosa', icona: 'fatto'[^\n]*titolo: 'Una cosa da fare'/);
+  assert.match(PA, /if \(k === 'cosa'\) return apriCampoCosa\(\);/);
+  V.apriCampoCosa();
+  assert.equal(AG.cosaAperta, AG.giorno);
+  assert.match(V.app.innerHTML, /class="ag-cosa-nuova" data-scala="giorno"/);
+  AG.cosaAperta = null;
+});
+
 console.log(`\n${ok} prove superate`);

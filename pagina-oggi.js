@@ -361,7 +361,7 @@ function testaAgendaV5(mostraOggi, dentro) {
   const scale = [['giorno', 'Giorno'], ['settimana', 'Settimana'], ['mese', 'Mese'], ['anno', 'Anno']];
   return `<div class="v5-testa a5" style="--zc:var(--z-agenda)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
       <div class="o5-dx">${mostraOggi ? '<button class="v5-pillola" id="ag-oggi">Oggi</button>' : ''}${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>
-        <button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button></div></div>
+        <button class="v5-fb" id="ag-cerca" aria-label="Cerca nell'Agenda">${ic('cerca')}</button><button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button></div></div>
     <div class="v5-titolo"><div><span class="v5-sopra">${esc(mese)}</span><h1>Agenda</h1></div></div>
     <div class="v5-scale">${scale.map(([k, t]) => `<button data-v5-scala="${k}"${k === vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>${dentro || ''}</div>`;
 }
