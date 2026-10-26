@@ -211,7 +211,11 @@ prova('098: il «Richiamare» di oggi in cima a «Da sentire», in più ai posti
   assert.equal(conta.f([...vecchi, lui], true).daSentire.length, 0);
   // nella pagina e nel riquadro: in cima, con l'ora
   const W = mondo({ codaNomi: [] }); W.ctx.ST.risultato = { coda }; W.ctx.disegna();
-  assert.match(testo(W.app.innerHTML), /Contatti del giorno 6 DA SENTIRE 17:00 Prospect Finto Vecchio/);   // l'ora anche nel riquadro (il difetto del 26/10: non c'era)
+  assert.match(testo(W.app.innerHTML), /Contatti del giorno 6 DA SENTIRE Prospect Finto 17:00 Vecchio/);   // l'ora anche nel riquadro (il difetto del 26/10: non c'era)
+  // Ignazio 26/10, «A»: cerchietto e nome allineati come gli altri, l'ora in fondo alla riga in un bollino
+  assert.match(W.app.innerHTML, /<span class="o5-pw-r o5-pr"><i><\/i><span>Prospect Finto<\/span><em class="o5-bollino">17:00<\/em><\/span>/);
+  assert.match(W.app.innerHTML, /<span class="o5-pw-r o5-pr"><i><\/i><span>Vecchio 0<\/span><\/span>/);
+  assert.match(IDX, /\.o5-pr \.o5-bollino \{ margin-left: auto;/);
   // la riga della pagina e la scheda: «Richiamare · alle 17:00» e l'ora a destra (sottoOggi vero di pagina-dashboard.js)
   const so = vm.createContext({ MB21Lista: { fraseCard: () => ({ testo: 'frase della Lista' }) }, ST: { oggi: OGGI } });
   vm.runInContext(DASH.slice(DASH.indexOf('function sottoOggi'), DASH.indexOf('function disegnaOggiLV')) + ';this.f = sottoOggi;', so);

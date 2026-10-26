@@ -79,7 +79,7 @@ function o5Contatti() {
     : `<span class="o5-pw-n"><b>${restano}</b><small>DA SENTIRE</small></span>`;
   const dx = totale === 0 ? `<span class="o5-pw-vuoto">${guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire'}</span>`
     : finito ? `<span class="o5-pw-vuoto">Fatti tutti · grande lavoro</span>`
-    : nomi.length ? `<span class="o5-pw-el">${(r.coda || []).filter(x => x.nome).slice(0, 4).map(x => `<span class="o5-pw-r o5-pr"><i></i>${x.richiamo ? `<em>${esc(x.richiamo)}</em>` : ''}<span>${esc(x.nome)}</span></span>`).join('')}</span>`
+    : nomi.length ? `<span class="o5-pw-el">${(r.coda || []).filter(x => x.nome).slice(0, 4).map(x => `<span class="o5-pw-r o5-pr"><i></i><span>${esc(x.nome)}</span>${x.richiamo ? `<em class="o5-bollino">${esc(x.richiamo)}</em>` : ''}</span>`).join('')}</span>`
     : `<span class="o5-pw-vuoto">Per oggi la coda è finita</span>`;
   return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
     <span class="o5-tit">Contatti del giorno</span><span class="o5-pw">${sx}${dx}</span></button>`;
