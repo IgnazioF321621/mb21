@@ -406,6 +406,42 @@ prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» 
   assert.match(IDX, /\.trn-ses-barra i \{[^}]*background: var\(--z-training\);/);
 });
 
+prova('098 Clienti (Ignazio 26/10, «sì, senza 4»): «Questa settimana» e «Più avanti» dai riordini già letti, «Nome · Marca», «prodotto · ogni N mesi», data in oro; il tocco apre il contatto', () => {
+  const W = mondoContatti(); const aperti = [];
+  W.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 0, totale: 0 }); W.ctx.apriContattoDa = (id, da) => aperti.push([id, da]);
+  const q = A.isoDaRoma;
+  W.ctx.RIO.futuri = [{ id: 'f1', contatto_id: 'kD', inizio: q('2026-10-27', '10:00'), brand: 'eSpring', prodotto: 'filtro', ogni: 'ogni 12 mesi', contatti: { nome: 'Persona D' } },
+    { id: 'f2', contatto_id: 'kL', inizio: q('2026-11-05', '10:00'), brand: 'Artistry', prodotto: 'crema viso', ogni: 'ogni 2 mesi', contatti: { nome: 'Persona L' } }];
+  W.ctx.ST.oggi = '2026-10-26';   // lunedì: la settimana va fino a domenica 1 novembre
+  vm.runInContext('this.clienti = disegnaClientiV5;', W.ctx); W.ctx.clienti();
+  const t = testo(W.app.innerHTML);
+  assert.match(t, /Questa settimana · 1 Persona D · eSpring filtro · ogni 12 mesi mar 27 ott ›/);
+  assert.match(t, /Più avanti · 1 Persona L · Artistry crema viso · ogni 2 mesi gio 5 nov ›/);
+  assert.match(W.app.innerHTML, /<span class="cl5-data">/);
+  W.app.clic('[data-cliente-futuro="kL"]');
+  assert.deepEqual(aperti, [['kL', 'oggi']]);
+  // «ogni quanto» dalla vendita: i mesi scelti, se no quelli fra vendita (o consegna) e riordino; niente se a rottura
+  const og = vm.createContext({ MB21Lista: L }); vm.runInContext(DASH.slice(DASH.indexOf('function ogniQuantoRiordino'), DASH.indexOf('\n}\n', DASH.indexOf('function ogniQuantoRiordino')) + 3) + ';this.f = ogniQuantoRiordino;', og);
+  assert.equal(og.f({ riordino: '2027-10-01', durata_mesi: 12, data: '2026-10-01' }), 'ogni 12 mesi');
+  assert.equal(og.f({ riordino: '2026-11-01', data: '2026-10-01' }), 'ogni mese');
+  assert.equal(og.f({ riordino: null, riordino_a_rottura: true, data: '2026-10-01' }), '');
+  assert.match(DASH, /select\(`riordino, prodotto, brand, data, consegna, durata_mesi, riordino_a_rottura, azione:azioni!azione_riordino_id/);   // la stessa richiesta, qualche colonna in più
+  assert.match(DASH, /if \(x\.motivo === 'rio'\) return \[d\.brand, d\.prodotto, d\.ogni\]/);
+});
+
+prova('098 nella scheda del Cliente «Prossimo riordino · … · eSpring» (dai riordini già letti); niente Segni Vitali per un Cliente, nemmeno nella scheda della Lista', () => {
+  const W = mondoContatti();
+  W.ctx.MB21Coda = { oggiRoma: () => OGGI };
+  W.ctx.RIO.futuri = [{ id: 'f1', contatto_id: 'kD', inizio: A.isoDaRoma('2026-10-27', '10:00'), brand: 'eSpring', prodotto: 'filtro', ogni: 'ogni 12 mesi' }];
+  W.ctx.P5 = { segni: {}, azioni: { kD: { letta: Date.now(), righe: [] } } }; W.ctx.fresco5 = () => true;
+  vm.runInContext('this.inPiu = schedaInPiuV5;', W.ctx);
+  const h = W.ctx.inPiu('kD', 'Cliente', { nome: 'Persona D' });
+  assert.match(testo(h), /PROSSIMO RIORDINO martedì 27 · eSpring filtro · ogni 12 mesi/);
+  assert.doesNotMatch(h, /SEGNI VITALI/);
+  assert.doesNotMatch(W.ctx.inPiu('kX', 'Prospect', { nome: 'X' }), /PROSSIMO RIORDINO/);
+  assert.match(leggi('pagina-lista.js'), /\.\.\.\(c\.categoria === 'Cliente' \? \[\] : \[\['segni', 'Segni Vitali'\]\]\)\]/);
+});
+
 prova('095 Traguardo: il Mese, le aree, il traguardo e i gradini con la testata turchese del Check (ritorno corto, chip, feedback, titolo); senza la veste come prima', () => {
   const W = mondo({ admin: true });
   for (const [vista, torna] of [['mese', 'Oggi'], ['traguardo', 'Oggi'], ['area', 'Il mese'], ['gradino', 'Traguardo']]) {
@@ -430,7 +466,7 @@ prova('095 Clienti da sentire: testata oro, «‹ Oggi», i riordini da sentire 
   W.ctx.clienti();
   const h = W.app.innerHTML;
   assert.match(h, /^<div class="v5-testa" style="--zc:var\(--z-clienti\)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Oggi<\/button>/);
-  assert.match(testo(h), /Clienti da sentire 1 da sentire per il riordino Da sentire · 1 Persona D Riordino · eSpring · Filtro .*Già sentiti oggi · 1 \[fatto\] Persona F fatto/);
+  assert.match(testo(h), /Clienti da sentire 1 da sentire per il riordino Da sentire oggi · 1 Persona D Riordino · eSpring · Filtro .*Già sentiti oggi · 1 \[fatto\] Persona F fatto/);
   assert.doesNotMatch(h, /Persona E/);   // solo i riordini
   W.app.clic('[data-lv-persona="rio|r1"]');
   assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.at(-1))), ['lv', 'persona', { persona: 'rio|r1', daClienti: true }]);

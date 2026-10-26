@@ -428,7 +428,7 @@ async function nonOra(id) {
 function sottoOggi(x) {
   const d = x.dato;
   if (x.motivo === 'conf') return MB21Agenda.testoConferma(d, new Date().toISOString());
-  if (x.motivo === 'rio') return [d.brand, d.prodotto].filter(Boolean).join(' · ');
+  if (x.motivo === 'rio') return [d.brand, d.prodotto, d.ogni].filter(Boolean).join(' · ');   // nota 098: e ogni quanto
   if (x.motivo === 'ds') return [d.ultima_fase === 'Dare Seguito' ? '' : d.ultima_fase || 'Senza esito', `scaduto da ${d.scadutoDa} ${d.scadutoDa === 1 ? 'giorno' : 'giorni'}`].filter(Boolean).join(' · ');   // mai «Dare Seguito · Dare Seguito»
   if (x.motivo === 'coda' && d.richiamo) return `Richiamare · alle ${d.richiamo}`;   // nota 098: il «Richiamare» di oggi dice l'ora (riga, scheda)
   if (x.motivo === 'coda') return MB21Lista.fraseCard(d, ST.oggi).testo;   // L6: la stessa frase della Lista Nomi
@@ -1578,7 +1578,7 @@ function disegnaAvvio() {
   });
 }
 
-const RIO = { righe: [], prossimo: null, nonRisponde: new Set(), spento: new Set() };   // prossimo (v5, riquadro Clienti di «Oggi»): il primo riordino dopo oggi
+const RIO = { righe: [], prossimo: null, futuri: [], nonRisponde: new Set(), spento: new Set() };   // futuri (v5, nota 098): i riordini dei prossimi 30 giorni, per «Clienti da sentire»   // prossimo (v5, riquadro Clienti di «Oggi»): il primo riordino dopo oggi
 
 // «Ordina da solo» in Dashboard (nota 043): il riquadro «N clienti ordinano da solo» e la domanda dei 7 giorni non ci sono più (V4 Vendite, 22/10:
 // al loro posto il dato del cliente «Ha un account cliente», nella sua scheda).
@@ -1587,8 +1587,9 @@ async function caricaRiordini(oggi) {
   try {
     const A = MB21Agenda;
     const [v, g] = await Promise.all([
+      // nota 098: con marca e durata della vendita, per «cosa riordina e ogni quanto» (stessa richiesta, qualche colonna in più)
       letta('riordini_vendite', 'riordini da sentire', () => supa.from('vendite')
-        .select(`riordino, prodotto, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null)),
+        .select(`riordino, prodotto, brand, data, consegna, durata_mesi, riordino_a_rottura, azione:azioni!azione_riordino_id(${CAMPI_AZIONE})`).in('user_id', idVisti()).not('azione_riordino_id', 'is', null)),
       // le telefonate di riordino importate da Glide, non ancora fatte, dal 1° settembre 2026 a oggi
       letta('riordini_glide', 'riordini di Glide', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti()).eq('tipo_azione', 'Contatto').eq('esito', 'Riordino')
         .not('glide_id', 'is', null).or('completata.is.null,completata.eq.false')
@@ -1596,12 +1597,24 @@ async function caricaRiordini(oggi) {
     ]);
     if (v.error || g.error) throw v.error || g.error;
     RIO.righe = A.riordiniDaSentire(v.data, oggi, g.data);
+    // nota 098 (Ignazio 26/10, «sì»): su ogni riga «ogni quanto» (dalla vendita) e la marca se la telefonata non l'ha; i riordini dei prossimi 30 giorni
+    const perAzione = new Map(v.data.filter(x => x.azione).map(x => [x.azione.id, x]));
+    for (const r of RIO.righe) { const x = perAzione.get(r.id); if (x) Object.assign(r, { brand: r.brand || x.brand, ogni: ogniQuantoRiordino(x) }); }
+    const fino = A.spostaGiorno(oggi, 30);
+    RIO.futuri = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi && A.partiRoma(x.azione.inizio).giorno <= fino)
+      .map(x => ({ ...x.azione, riordino: x.riordino, prodotto: x.prodotto, brand: x.azione.brand || x.brand, ogni: ogniQuantoRiordino(x) })).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio));
     // v5 (nota 095): senza riordini da sentire il riquadro Clienti di «Oggi» mostra il prossimo, dalle stesse vendite già lette (nessuna lettura in più)
     RIO.prossimo = v.data.filter(x => x.azione && !x.azione.completata && !x.azione.esito && A.partiRoma(x.azione.inizio).giorno > oggi)
       .map(x => ({ ...x.azione, riordino: x.riordino, prodotto: x.prodotto })).sort((x, y) => Date.parse(x.inizio) - Date.parse(y.inizio))[0] || null;
   } catch (e) {
-    RIO.righe = []; RIO.prossimo = null;
+    RIO.righe = []; RIO.prossimo = null; RIO.futuri = [];
   }
+}
+// «ogni 12 mesi» · «ogni mese» (nota 098): i mesi scelti nella vendita («Fra N mesi»), se no quelli fra vendita (o consegna) e riordino; niente se a rottura o senza riordino
+function ogniQuantoRiordino(x) {
+  if (!x || x.riordino_a_rottura || !x.riordino) return '';
+  const n = x.durata_mesi || MB21Lista.mesiFra(x.consegna || x.data, x.riordino);
+  return n >= 1 && n <= 120 ? (n === 1 ? 'ogni mese' : `ogni ${n} mesi`) : '';
 }
 
 // Righe chiuse come la coda (cantiere 29 lavoro 1 bis, Ignazio 18/09: «aperto si prende tre quarti di schermo»):

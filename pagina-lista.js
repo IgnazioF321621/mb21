@@ -536,7 +536,9 @@ function sezioniPer(c) {
   const base = [['dati', 'Dati'], ['azioni', 'Azioni'],
     ...(MB21Lista.haVendite(c, LS.vendite) ? [['vendite', 'Vendite']] : []),
     // «Sharing» (cantiere 40): il percorso delle tracce è per candidati e partner (come in Glide), non per Ex e Archiviati
-    ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []), ['segni', 'Segni Vitali']];
+    ...(MB21Sharing.perChiDi(c) ? [['sharing', 'Sharing']] : []),
+    // nota 098 (Ignazio 26/10: «i segni vitali che non servono a niente in un cliente»): un Cliente non ha la linguetta «Segni Vitali»
+    ...(c.categoria === 'Cliente' ? [] : [['segni', 'Segni Vitali']])];
   // La linguetta «Onboarding» dei Partner non c'è più (cantiere 31, Ignazio 18/09: «recuperiamo spazio»): i passi si aprono dalla riga «🚀 Avvio» in testata
   return base;
 }
