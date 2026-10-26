@@ -429,6 +429,7 @@ function sottoOggi(x) {
   if (x.motivo === 'conf') return MB21Agenda.testoConferma(d, new Date().toISOString());
   if (x.motivo === 'rio') return [d.brand, d.prodotto].filter(Boolean).join(' · ');
   if (x.motivo === 'ds') return [d.ultima_fase === 'Dare Seguito' ? '' : d.ultima_fase || 'Senza esito', `scaduto da ${d.scadutoDa} ${d.scadutoDa === 1 ? 'giorno' : 'giorni'}`].filter(Boolean).join(' · ');   // mai «Dare Seguito · Dare Seguito»
+  if (x.motivo === 'coda' && d.richiamo) return `Richiamare · alle ${d.richiamo}`;   // nota 098: il «Richiamare» di oggi dice l'ora (riga, scheda)
   if (x.motivo === 'coda') return MB21Lista.fraseCard(d, ST.oggi).testo;   // L6: la stessa frase della Lista Nomi
   return sottoScelta(d);
 }

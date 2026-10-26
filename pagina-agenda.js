@@ -792,14 +792,14 @@ async function caricaIntervallo(da, a) {
     }
     return righe;
   };
-  const campi = 'id, tipo_azione, inizio, data_scelta, completata, categoria, contatti(categoria)';
+  const campi = 'id, tipo_azione, esito, inizio, data_scelta, completata, categoria, contatti(categoria)';
   const [perInizio, perScelta] = await Promise.all([
     tutte('puntini', () => supa.from('azioni').select(campi).in('user_id', ids).gte('inizio', isoDa).lt('inizio', isoA)),
     tutte('puntini richiami', () => supa.from('azioni').select(campi).in('user_id', ids).eq('tipo_azione', 'Contatto').gte('data_scelta', isoDa).lt('data_scelta', isoA)),
   ]);
   const visti = new Map();
   for (const x of [...perInizio, ...perScelta]) visti.set(x.id, x);
-  AG.lunghe = [...visti.values()];
+  AG.lunghe = [...visti.values()].filter(x => !A.eRichiamo(x));   // nota 098: i «Richiamare» non sono impegni dell'Agenda (stanno nei Contatti del giorno)
   // le cose da fare aperte dell'intervallo, per il cerchietto verde dei mesi piccoli (23/09)
   AG.coseLunghe = [];
   if (!vediTutti()) {

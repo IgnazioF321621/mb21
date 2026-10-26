@@ -261,7 +261,10 @@
   // che l'Agenda mette in «Da chiudere» (la lettura `senza_esito`). `programmaDelGiorno`: gli impegni del giorno meno `fuori` (gli id già in «Da
   // chiudere»), più gli spazi (`spazi`: quelli del giorno, già come { inizio, fine?, titolo }) e gli impegni ricevuti; `voci` = [{ t, ora, fine, titolo }] in
   // ordine d'ora (`fine` = l'ora di fine «20:00», vuota se l'impegno non ce l'ha).
-  const azioniAgenda = righe => senzaDoppioniCoda(righe).filter(a => !(a.senza_ora && !a.completata));
+  // Nota 098 (Ignazio 26/10: «nei contatti dobbiamo mettere l'orario e toglierlo dall'agenda»): un «Richiamare» dato dalla coda (Contatto con la data
+  // scelta) non è un impegno dell'Agenda; si vede solo nei Contatti del giorno, nel giorno scelto, con l'ora. PM Fissato e Appuntamento restano.
+  const eRichiamo = a => a.tipo_azione === 'Contatto' && a.esito === 'Richiamare' && !!a.data_scelta;
+  const azioniAgenda = righe => senzaDoppioniCoda(righe).filter(a => !(a.senza_ora && !a.completata) && !eRichiamo(a));
   const passatoSenzaEsito = (a, adesso) => a.tipo_azione !== 'Contatto' && !a.completata && !a.esito && !!a.inizio && a.inizio < adesso;
   function programmaDelGiorno({ azioni, spazi = [], ricevuti = [], giorno, fuori = null, opz = {} }) {
     const eventi = eventiDelGiorno(azioni || [], giorno).filter(e => !(fuori && fuori.has(e.id)));
@@ -925,7 +928,7 @@
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
-    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+    RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

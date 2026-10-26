@@ -158,7 +158,7 @@ prova('095/098: le letture in più — gli impegni di oggi come l\'Agenda (pochi
   assert.match(DASH, /await Promise\.all\(\[leggiCandidati\(oggi\), caricaScelte\(oggi\), v5\]\);/);
 });
 
-prova('098: il difetto del 26/10 — con un «Richiamare» alle 17, la serata di Team (spazio) e la SdS/OPEN ricevuta, il riquadro conta 3 come «In programma»; il PM passato senza esito no (è in «Da chiudere»)', async () => {
+prova('098: il difetto del 26/10 — la serata di Team (spazio) e la SdS/OPEN ricevuta contano come «In programma»; il PM passato senza esito no (è in «Da chiudere»); il «Richiamare» delle 17 no (sta nei Contatti del giorno, Ignazio 26/10)', async () => {
   const W = mondo(), q = A.isoDaRoma;
   const righe = {
     azioni_app: [{ id: 'pm', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: q(OGGI, '08:00'), completata: false, esito: null, contatti: { nome: 'Persona F' } }],
@@ -171,10 +171,12 @@ prova('098: il difetto del 26/10 — con un «Richiamare» alle 17, la serata di
   const rpc = () => Promise.resolve({ data: [{ origine: 'spazio', id: 'r1', inizio: q(OGGI, '21:30'), fine: q(OGGI, '22:30'), titolo: 'SdS/OPEN', da_nome: 'Persona G' }], error: null });
   Object.assign(W.ctx, { supa: { from: q2, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
   await W.ctx.carica(OGGI);
-  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.oggi.map(v => [v.ora, v.titolo]))), [['17:00', 'Telefonata · Persona D'], ['19:00', 'Incontro di Team'], ['21:30', 'SdS/OPEN']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.oggi.map(v => [v.ora, v.titolo]))), [['19:00', 'Incontro di Team'], ['21:30', 'SdS/OPEN']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.richiami)), [{ ora: '17:00' }]);
   W.ctx.disegna();
-  assert.equal((W.app.innerHTML.match(/class="o5-cal-b"/g) || []).length, 3);
+  assert.equal((W.app.innerHTML.match(/class="o5-cal-b"/g) || []).length, 2);
   assert.match(testo(W.app.innerHTML), /Incontro di Team 19:00 – 20:00 SdS\/OPEN 21:30 – 22:30/);
+  assert.doesNotMatch(W.app.innerHTML, /Persona D/);
 });
 
 prova('098: il «Richiamare» di oggi (caso del 26/10 con dati finti) — dalla lettura dei Contatti di oggi in O5.richiami con l\'ora', async () => {
@@ -185,7 +187,7 @@ prova('098: il «Richiamare» di oggi (caso del 26/10 con dati finti) — dalla 
   Object.assign(W.ctx, { supa: { from: q2, rpc: () => Promise.resolve({ data: [], error: null }) }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
   await W.ctx.carica(OGGI);
   assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.richiami)), [{ contatto_id: 'pX', ora: '17:00' }]);
-  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.oggi.map(v => [v.ora, v.titolo]))), [['17:00', 'Telefonata · Prospect Finto']]);   // e in Agenda alle 17:00
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.oggi)), []);   // non è più un impegno dell'Agenda (Ignazio 26/10): sta solo nei Contatti del giorno
 });
 
 prova('098: il «Richiamare» di oggi in cima a «Da sentire», in più ai posti della coda («Richiamare · alle 17:00»); già sentito, il posto torna alla coda; in pausa niente', () => {
@@ -209,7 +211,17 @@ prova('098: il «Richiamare» di oggi in cima a «Da sentire», in più ai posti
   assert.equal(conta.f([...vecchi, lui], true).daSentire.length, 0);
   // nella pagina e nel riquadro: in cima, con l'ora
   const W = mondo({ codaNomi: [] }); W.ctx.ST.risultato = { coda }; W.ctx.disegna();
-  assert.match(testo(W.app.innerHTML), /Contatti del giorno 6 DA SENTIRE Prospect Finto Vecchio/);
+  assert.match(testo(W.app.innerHTML), /Contatti del giorno 6 DA SENTIRE 17:00 Prospect Finto Vecchio/);   // l'ora anche nel riquadro (il difetto del 26/10: non c'era)
+  // la riga della pagina e la scheda: «Richiamare · alle 17:00» e l'ora a destra (sottoOggi vero di pagina-dashboard.js)
+  const so = vm.createContext({ MB21Lista: { fraseCard: () => ({ testo: 'frase della Lista' }) }, ST: { oggi: OGGI } });
+  vm.runInContext(DASH.slice(DASH.indexOf('function sottoOggi'), DASH.indexOf('function disegnaOggiLV')) + ';this.f = sottoOggi;', so);
+  assert.equal(so.f({ motivo: 'coda', dato: coda[0] }), 'Richiamare · alle 17:00');
+  assert.equal(so.f({ motivo: 'coda', dato: coda[1] }), 'frase della Lista');
+  const R = mondoContatti(); R.ctx.sottoOggi = so.f;
+  R.ctx.elencoDiOggi = () => ({ gruppi: [{ chiave: 'chiudere', righe: [righe[0], righe[1]] }], fatti: 1, totale: 7 });
+  R.ctx.contatti();
+  assert.match(R.app.innerHTML, /<b>Prospect Finto<\/b><small>Richiamare · alle 17:00<\/small><\/span><span class="c5-ora">17:00<\/span><em>›<\/em>/);
+  assert.doesNotMatch(testo(R.app.innerHTML), /Richiamare · alle 17:00 · Richiamare/);
 });
 
 prova('095: Esplora — tessere a due colonne con colore, icona e nome, nell\'ordine deciso; Admin nera per ultima solo per l\'Admin; ogni tessera apre la sua pagina', () => {

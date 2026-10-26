@@ -79,7 +79,7 @@ function o5Contatti() {
     : `<span class="o5-pw-n"><b>${restano}</b><small>DA SENTIRE</small></span>`;
   const dx = totale === 0 ? `<span class="o5-pw-vuoto">${guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire'}</span>`
     : finito ? `<span class="o5-pw-vuoto">Fatti tutti · grande lavoro</span>`
-    : nomi.length ? `<span class="o5-pw-el">${nomi.slice(0, 4).map(n => `<span class="o5-pw-r o5-pr"><i></i><span>${esc(n)}</span></span>`).join('')}</span>`
+    : nomi.length ? `<span class="o5-pw-el">${(r.coda || []).filter(x => x.nome).slice(0, 4).map(x => `<span class="o5-pw-r o5-pr"><i></i>${x.richiamo ? `<em>${esc(x.richiamo)}</em>` : ''}<span>${esc(x.nome)}</span></span>`).join('')}</span>`
     : `<span class="o5-pw-vuoto">Per oggi la coda è finita</span>`;
   return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
     <span class="o5-tit">Contatti del giorno</span><span class="o5-pw">${sx}${dx}</span></button>`;
@@ -272,9 +272,11 @@ function collegaTestaV5() {
 
 // una riga dell'elenco (Contatti del giorno e Clienti da sentire): pallino della categoria, nome, la riga di adesso (sottoOggi), «Non ora» sulla coda
 function rigaElencoV5(x) {
-  const sotto = [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
+  // nota 098: il «Richiamare» di oggi dice «Richiamare · alle 17:00» (sottoOggi) e ha l'ora anche a destra, ben visibile
+  const ora = x.dato && x.dato.richiamo;
+  const sotto = ora ? sottoOggi(x) : [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
   const dentro = `<button class="c5-riga" data-lv-persona="${x.motivo}|${esc(x.id)}"><span class="c5-pallino" style="background:${COLORE_CAT_V5(catDi(x.dato))}"></span>
-      <span class="c5-testo"><b>${esc(x.nome)}${x.motivo === 'conf' ? '' : segnoCoach(x.contatto_id, x.nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
+      <span class="c5-testo"><b>${esc(x.nome)}${x.motivo === 'conf' ? '' : segnoCoach(x.contatto_id, x.nome)}</b><small>${esc(sotto)}</small></span>${ora ? `<span class="c5-ora">${esc(ora)}</span>` : ''}<em>›</em></button>`;
   return x.motivo === 'coda' && !vediTutti() && !ST.offline ? `<div class="c5-con">${dentro}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>` : dentro;
 }
 function disegnaContattiV5() {

@@ -144,4 +144,20 @@ prova('Settimana e Mese v5: il titolo è inizio e fine, senza il numero della se
   assert.match(PA, /return lun\.slice\(5, 7\) === dom\.slice\(5, 7\) \? `\$\{n\(lun\)\}–\$\{n\(dom\)\} \$\{m\(dom\)\}` : `\$\{n\(lun\)\} \$\{m\(lun\)\} – \$\{n\(dom\)\} \$\{m\(dom\)\}`;/);
 });
 
+prova('Il «Richiamare» non è un impegno dell\'Agenda (Ignazio 26/10): fuori da Giorno, Timeline, Settimana, Mese e Anno; PM Fissato e Appuntamento restano', () => {
+  const A = V.A, q = A.isoDaRoma, o = V.OGGI;
+  const ric = { id: 'r1', contatto_id: 'cR', tipo_azione: 'Contatto', esito: 'Richiamare', data_scelta: q(o, '17:00'), inizio: q('2026-09-18', '10:00'), completata: true, contatti: { nome: 'Persona R' } };
+  const pmf = { id: 'r2', contatto_id: 'cP', tipo_azione: 'Contatto', esito: 'PM Fissato', data_scelta: q(o, '16:00'), inizio: q('2026-09-18', '11:00'), completata: true, contatti: { nome: 'Persona P' } };
+  assert.deepEqual(A.azioniAgenda([ric, pmf]).map(x => x.id), ['r2']);
+  const prima = AG.azioni; AG.azioni = A.azioniAgenda([...prima, ric, pmf]);
+  for (const v of ['giorno', 'settimana']) assert.doesNotMatch(V.vista(v), /Persona R/, v);
+  mem.set('mb21-agenda-programma', 'timeline'); assert.doesNotMatch(V.vista('giorno'), /Persona R/); mem.clear();
+  AG.vista = 'mese'; V.disegnaAgenda(); assert.doesNotMatch(V.app.innerHTML, /Persona R/); AG.vista = 'giorno';
+  assert.match(V.vista('giorno'), /Persona P/);
+  AG.azioni = prima;
+  assert.match(PA, /AG\.azioni = MB21Agenda\.azioniAgenda\(/);
+  assert.match(PA, /AG\.lunghe = \[\.\.\.visti\.values\(\)\]\.filter\(x => !A\.eRichiamo\(x\)\);/);   // l'Anno (i puntini)
+  assert.match(PA, /const campi = 'id, tipo_azione, esito, inizio,/);
+});
+
 console.log(`\n${ok} prove superate`);
