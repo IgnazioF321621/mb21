@@ -727,7 +727,7 @@ prova('Scheda contatto S6: l\'interruttore COACH_YES in index.html spegne anche 
 prova('Scheda contatto S2 (Ignazio 22/10): «+ Una cosa da fare» che si apre al tocco; l\'elenco «Da fare» solo se ci sono cose', async () => {
   const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
-  const da = src.indexOf('async function coseDellaScheda'), a = src.indexOf('\n}\n', da) + 3;
+  const da = src.indexOf('async function coseDellaScheda'), a = src.indexOf('\n}\n', src.indexOf('async function cosePersonaHtml')) + 3;   // nota 098: la funzione condivisa con la scheda v5
   let cose = [], focus = 0;
   const posto = { innerHTML: '', isConnected: true, querySelectorAll: () => [] };
   const piu = { onclick: null }, form = { onsubmit: null, querySelector: () => ({ value: '' }) };

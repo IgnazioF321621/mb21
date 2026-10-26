@@ -2505,8 +2505,9 @@
   .v5-testa .contatta svg { color: inherit; } .v5-testa .contatta { margin-top: 0; }
   .p5-card { background: var(--superficie); margin-top: 4px; }
   /* nota 098: nella scheda Segni Vitali (solo Partner), Prossimo e Le ultime volte */
-  .p5-coppia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
-  .p5-coppia.uno { grid-template-columns: 1fr; }
+  .p5-pila { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .p5-prossimo .scheda-cose.dentro { margin: 4px 0 0; padding: 0; background: none; box-shadow: none; }
+  .p5-prossimo .scheda-cose.dentro .link { padding-left: 0; }
   .p5-box { background: var(--superficie); border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
   .p5-box b { font-size: 15px; font-weight: 800; } .p5-box small { font-size: 12px; font-weight: 600; color: var(--testo-soft); }
   .p5-tit { font-size: 13px; font-weight: 800; color: var(--testo-soft); letter-spacing: .02em; }

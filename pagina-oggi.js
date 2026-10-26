@@ -335,6 +335,10 @@ function disegnaPersonaV5() {
     <div class="c5-corpo lv-scheda">${corpo}${chiContatto ? schedaInPiuV5(chiContatto, cat, dato) : ''}</div>` + versione();
   attaccaIndietroLV();
   collegaTestaV5();
+  // il «Da fare» della persona dentro «Prossimo»: stessa funzione, stessa lettura, stessi fogli della scheda della Lista; la lettura si tiene finché non c'è una scrittura
+  const pc = document.getElementById('p5-cose'), chiave = LV.persona;
+  if (pc && chiContatto && typeof cosePersonaHtml === 'function') cosePersonaHtml({ id: chiContatto, user_id: dato.user_id }, { posto: pc, dentro: true,
+    ancora: () => ST.tab === 'oggi' && LV.vista === 'persona' && LV.persona === chiave, ridisegna: () => disegnaOggi(), leggi: () => leggiCose5(chiContatto) });
   const b = document.getElementById('p5-esito');
   if (b) b.onclick = async () => {
     const i = await moduloEsito(nome, cat, colore);
@@ -425,7 +429,7 @@ const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 // i fogli e i salvataggi restano quelli di adesso. Letture piccole, tenute in memoria finché non c'è una scrittura (SCRITTURE.ultima):
 // i Segni Vitali con la stessa lettura della linguetta (caricaSegni, solo per un Partner); le ultime 5 azioni della persona (prossimo e ultime volte);
 // gli esiti di oggi (una richiesta quando si apre la pagina).
-const P5 = { segni: {}, azioni: {}, fatti: null };
+const P5 = { segni: {}, azioni: {}, fatti: null, cose: {} };
 const fresco5 = x => x && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < x.letta);
 const giornoBreve5 = iso => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' });
 const ridisegna5 = vista => { if (ST.tab === 'oggi' && LV.vista === vista) disegnaOggi(); };
@@ -457,10 +461,11 @@ function schedaInPiuV5(contattoId, cat, dato) {
   const cosa = r => [r.modalita || r.tipo_azione, r.esito].filter(Boolean).join(' · ');
   const prossimo = righe ? righe.filter(r => !r.completata && quando(r) >= adesso && (r.tipo_azione !== 'Contatto' || r.data_scelta)).sort((p, q) => (quando(p) < quando(q) ? -1 : 1))[0] : null;
   const ultime = righe ? righe.filter(r => r.inizio < adesso && (r.completata || r.esito)).slice(0, 2) : [];
-  const boxProssimo = `<div class="p5-box"><span class="p5-tit" style="color:var(--z-agenda)">PROSSIMO</span>${!righe ? `<b>${y && y.errore ? 'Non letto ora' : 'Leggo…'}</b>`
-    : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)}</b><small>${esc(o5Giorno(quando(prossimo)))}</small>` : '<b>Niente in agenda</b><small>si fissa dall\'esito</small>'}</div>`;
+  // nota 098 (Ignazio 26/10, «sì»): dentro «Prossimo», sotto l'appuntamento, il «Da fare» della persona (lo stesso della scheda della Lista: cosePersonaHtml)
+  const boxProssimo = `<div class="p5-box p5-prossimo"><span class="p5-tit" style="color:var(--z-agenda)">PROSSIMO</span>${!righe ? `<b>${y && y.errore ? 'Non letto ora' : 'Leggo…'}</b>`
+    : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)} · ${esc(o5Giorno(quando(prossimo)))}</b>` : '<b>Niente in agenda</b>'}<div id="p5-cose"></div></div>`;
   const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(giornoBreve5(r.inizio))}</small></div>`).join('')}</div>` : '';
-  return `<div class="p5-coppia${segni ? '' : ' uno'}">${segni}${boxProssimo}</div>${boxUltime}`;
+  return `<div class="p5-pila">${segni}${boxProssimo}</div>${boxUltime}`;
 }
 // «Già sentiti oggi» in Contatti del giorno: gli esiti delle telefonate di oggi (nome, categoria, esito); null finché non arrivano (allora resta l'elenco di prima)
 function sentitiOggiV5() {
@@ -474,4 +479,16 @@ function sentitiOggiV5() {
       .then(({ data, error }) => { if (P5.fatti && P5.fatti.chiave === chiave) { P5.fatti.righe = error ? null : data || []; P5.fatti.letta = Date.now(); ridisegna5('oggi'); } });
   }
   return P5.fatti.righe;
+}
+
+// le cose da fare della persona (aperte e fatte oggi), la stessa lettura di cosePersonaHtml, tenuta in memoria finché non c'è una scrittura
+function leggiCose5(contattoId) {
+  const x = P5.cose[contattoId];
+  if (fresco5(x)) return x.promessa;
+  const oggi = MB21Coda.oggiRoma();
+  const promessa = dbq('scheda: cose da fare', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('contatto_id', contattoId)
+    .or(`fatto_il.is.null,giorno.gte.${oggi}`).order('giorno').order('ordine'));
+  P5.cose[contattoId] = { letta: Date.now(), promessa };
+  promessa.then(r => { if (r.error) P5.cose[contattoId] = null; });
+  return promessa;
 }

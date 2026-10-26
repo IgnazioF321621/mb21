@@ -214,6 +214,7 @@ function mondoContatti({ fatte = [], admin = false, persona = null } = {}) {
     supa: { from: t => { const q = { t, passi: [] }; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { W.ctx.letture.push(q); return Promise.resolve({ data: W.ctx.dati[t] || [], error: null }).then(si); })
       : (...a) => { q.passi.push([p, ...a]); return c; }) }); return c; } }, dbq: (_, p) => p,
     caricaSegni: async c => { W.ctx.letture.push({ t: 'caricaSegni', id: c.id }); return W.ctx.segniFinti; }, targheDi: SV => SV.t,
+    cose5: [], cosePersonaHtml: (c, opz) => { W.ctx.cose5.push({ c, opz }); },
     document: { getElementById: id => (id === 'segnala' ? W.sg : W.app.getElementById(id)), querySelector: s => W.app.querySelector(s),
       createElement: () => { const n = new Nodo(); n.remove = () => { n.rimosso = true; }; fogli.push(n); return n; }, body: { appendChild() {} } } });
   vm.runInContext('this.contatti = disegnaContattiV5; this.persona = disegnaPersonaV5; this.modulo = moduloEsito;', W.ctx);   // pagina-oggi.js è già caricato da mondo()
@@ -396,19 +397,23 @@ prova('098 (Ignazio 26/10, «sì»): nella scheda Segni Vitali solo per un Partn
   const W = mondoContatti({ persona: 'coda|c1' }); W.ctx.LV.vista = 'persona'; W.ctx.dati.azioni = azioni;
   W.ctx.persona();
   assert.doesNotMatch(W.app.innerHTML, /SEGNI VITALI/); assert.ok(!W.ctx.letture.some(q => q.t === 'caricaSegni'));
-  assert.match(W.app.innerHTML, /<div class="p5-coppia uno"><div class="p5-box"><span class="p5-tit" style="color:var\(--z-agenda\)">PROSSIMO<\/span><b>Leggo…<\/b>/);
+  assert.match(W.app.innerHTML, /<div class="p5-pila"><div class="p5-box p5-prossimo"><span class="p5-tit" style="color:var\(--z-agenda\)">PROSSIMO<\/span><b>Leggo…<\/b><div id="p5-cose"><\/div><\/div>/);
   const q = W.ctx.letture.find(x => x.t === 'azioni');
   assert.equal(JSON.stringify(q.passi), JSON.stringify([['select', 'tipo_azione, modalita, esito, inizio, data_scelta, completata'], ['eq', 'contatto_id', 'c1'], ['order', 'inizio', { ascending: false }], ['limit', 5]]));
   await new Promise(r => setImmediate(r));
   W.ctx.persona();   // arrivata la lettura (ridisegno), una sola richiesta
   assert.equal(W.ctx.letture.filter(x => x.t === 'azioni').length, 1);
-  assert.match(testo(W.app.innerHTML), /PROSSIMO Piano Marketing gio 29\/10 alle 18:00 Le ultime volte Telefonata · Richiamare 12 ott Messaggio · Relazione 28 set/);
+  assert.match(testo(W.app.innerHTML), /PROSSIMO Piano Marketing · gio 29\/10 alle 18:00 Le ultime volte Telefonata · Richiamare 12 ott Messaggio · Relazione 28 set/);
+  // nota 098 (Ignazio 26/10): il «Da fare» della persona dentro «Prossimo», con la funzione della scheda della Lista (cosePersonaHtml), dentro, con user_id del proprietario
+  const cose = W.ctx.cose5.at(-1);
+  assert.equal(JSON.stringify(cose.c), JSON.stringify({ id: 'c1' })); assert.equal(cose.opz.dentro, true); assert.equal(cose.opz.posto, W.app.getElementById('p5-cose'));
+  assert.equal(cose.opz.ancora(), true);   // vale finché questa scheda è aperta
   assert.match(W.app.innerHTML, /id="card-c1"/);   // la card con l'esito di adesso resta
   // un Partner: i Segni Vitali con la lettura della linguetta
   const P = mondoContatti({ persona: 'coda|c2' }); P.ctx.LV.vista = 'persona';
   P.ctx.segniFinti = { t: { bbs: true, wes: false, cep: false }, cep: [] };
   P.ctx.persona(); await new Promise(r => setImmediate(r)); P.ctx.persona();
-  assert.match(testo(P.app.innerHTML), /SEGNI VITALI BBS sì · WES no CEP: mai abbonato PROSSIMO Niente in agenda si fissa dall'esito/);
+  assert.match(testo(P.app.innerHTML), /SEGNI VITALI BBS sì · WES no CEP: mai abbonato PROSSIMO Niente in agenda/);
   assert.equal(P.ctx.letture.filter(x => x.t === 'caricaSegni').length, 1);
 });
 
@@ -424,6 +429,15 @@ prova('098: in Contatti del giorno «Già sentiti oggi» con tutti gli esiti di 
   W.ctx.contatti();
   assert.match(testo(W.app.innerHTML), /Già sentiti oggi · 2 \[fatto\] Persona C Prospect · PM Fissato \[fatto\] Persona D Cliente · No Risposta/);   // una riga per persona, l'esito più recente
   assert.equal(W.ctx.letture.filter(x => x.t === 'azioni').length, 1);   // tenuta in memoria finché non c'è una scrittura
+});
+
+prova('098 «Da fare» in «Prossimo»: una funzione sola per le due schede (cosePersonaHtml); la scheda della Lista si comporta come prima', () => {
+  const PL = leggi('pagina-lista.js');
+  assert.match(PL, /async function coseDellaScheda\(c\) \{\n  return cosePersonaHtml\(c, \{ posto: document\.getElementById\('scheda-cose'\), ancora: \(\) => LS\.contatto === c, ridisegna: \(\) => coseDellaScheda\(c\) \}\);\n\}/);
+  assert.match(PL, /posto\.innerHTML = dentro \? `<div class="ag-foglio scheda-cose dentro">\$\{elenco\}\$\{piu\}<\/div>`\n\s+: cose\.length \? `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare<\/h2>/);
+  assert.match(PL, /supa\.from\('cose_da_fare'\)\.insert\(\{ user_id: c\.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c\.id \}\)/);
+  assert.match(PO, /cosePersonaHtml\(\{ id: chiContatto, user_id: dato\.user_id \}, \{ posto: pc, dentro: true,/);
+  assert.match(PO, /function leggiCose5\(contattoId\) \{/);
 });
 
 (async () => {

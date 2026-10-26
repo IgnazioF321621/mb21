@@ -706,12 +706,17 @@ function disegnaScheda() {
 // Sotto la testata, prima delle linguette, per ogni categoria (S5, nota 072: anche archiviati e senza categoria): le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
 // (lo stesso di MB Plan), e «+ Una cosa da fare» per aggiungerne una già collegata, da fare oggi.
 async function coseDellaScheda(c) {
-  const posto = document.getElementById('scheda-cose');
+  return cosePersonaHtml(c, { posto: document.getElementById('scheda-cose'), ancora: () => LS.contatto === c, ridisegna: () => coseDellaScheda(c) });
+}
+// Le cose della persona: aperte e fatte oggi (stessa lettura). Il riquadro della scheda della Lista; con `dentro` (scheda v5, nota 098: dentro «Prossimo»)
+// solo l'elenco e «+ Una cosa da fare», senza riquadro né titolo. `ancora()`: la scheda è ancora quella (se no non si disegna); `ridisegna`: dopo una
+// spunta, un cambio o una cosa nuova; `leggi` (facoltativo): chi legge da sé le righe (la scheda v5 le tiene in memoria). La Lista si comporta come prima.
+async function cosePersonaHtml(c, { posto, ancora, ridisegna, dentro = false, leggi }) {
   if (!posto) return;
   const oggi = MB21Coda.oggiRoma();
-  const { data, error } = await dbq('cose da fare della scheda', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('contatto_id', c.id)
+  const { data, error } = leggi ? await leggi() : await dbq('cose da fare della scheda', supa.from('cose_da_fare').select('*, contatti(nome, categoria)').eq('contatto_id', c.id)
     .or(`fatto_il.is.null,giorno.gte.${oggi}`).order('giorno').order('ordine'));
-  if (error || LS.contatto !== c || !posto.isConnected) return;
+  if (error || !ancora() || !posto.isConnected) return;
   const cose = (data || []).filter(x => !x.fatto_il || x.giorno === oggi)
     .sort((x, y) => (x.fatto_il ? 1 : 0) - (y.fatto_il ? 1 : 0) || (x.giorno < y.giorno ? -1 : x.giorno > y.giorno ? 1 : 0));
   const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
@@ -726,7 +731,7 @@ async function coseDellaScheda(c) {
   // Verifica Scheda contatto S2 (Ignazio 22/10): niente riquadro sempre aperto; una riga «+ Una cosa da fare» che al tocco apre il campo,
   // e l'elenco solo se ci sono cose. Il campo resta aperto su questa scheda per scriverne un'altra (LS.coseAperto).
   const disegna = () => {
-    if (LS.contatto !== c || !posto.isConnected) return;
+    if (!ancora() || !posto.isConnected) return;
     const aperto = LS.coseAperto === c.id;
     const piu = aperto
       ? `<form class="ag-cosa-nuova" id="sc-cosa-nuova"><input type="text" placeholder="Aggiungi una cosa da fare…" autocomplete="off"><button type="submit" aria-label="Aggiungi">${ic('piu')}</button></form>`
@@ -734,9 +739,9 @@ async function coseDellaScheda(c) {
     const elenco = cose.map(x => `<div class="cosa${x.fatto_il ? ' fatta' : ''}" data-cosa="${esc(x.id)}">
       <button class="spunta" aria-label="${x.fatto_il ? 'Fatta: rimetti da fare' : 'Fatta'}">${x.fatto_il ? ic('fatto') : ''}</button>
       <button class="testo"><span>${esc(x.testo)}</span><small>${esc([quando(x), typeof nomeProgetto === 'function' ? nomeProgetto(x) : ''].filter(Boolean).join(' · '))}</small></button></div>`).join('');
-    posto.innerHTML = cose.length ? `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>${elenco}${piu}</div>`
+    posto.innerHTML = dentro ? `<div class="ag-foglio scheda-cose dentro">${elenco}${piu}</div>`
+      : cose.length ? `<div class="riquadro ag-foglio scheda-cose"><h2 class="ag-sez">Da fare</h2>${elenco}${piu}</div>`
       : aperto ? `<div class="riquadro ag-foglio scheda-cose">${piu}</div>` : piu;
-    const ridisegna = () => coseDellaScheda(c);
     posto.querySelectorAll('.cosa[data-cosa]').forEach(r => {
       const x = cose.find(y => y.id === r.dataset.cosa);
       r.querySelector('.spunta').onclick = () => { if (!soloGuardo()) spuntaCosa(x, { ridisegna, giorno: oggi }); };
@@ -753,7 +758,7 @@ async function coseDellaScheda(c) {
       // la cosa è del proprietario della scheda (l'Admin su una scheda di un partner la mette nel suo MB Plan)
       const { error } = await dbq('nuova cosa da fare', supa.from('cose_da_fare').insert({ user_id: c.user_id, testo, giorno: oggi, scala: 'giorno', contatto_id: c.id }));
       if (error) return mostraToast('Non salvato: riprova.');
-      await coseDellaScheda(c);
+      await ridisegna();
       const campo = document.querySelector('#sc-cosa-nuova input');
       if (campo) campo.focus();   // si continua a scrivere la prossima
     };
