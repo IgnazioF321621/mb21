@@ -245,6 +245,7 @@ const PADRE_LV = { persona: 'oggi', area: 'mese', gradino: 'traguardo' };
 const padreLV = () => (LV.vista === 'persona' && LV.daClienti ? 'clienti' : PADRE_LV[LV.vista] || 'home');   // v5: la scheda aperta da «Clienti da sentire» torna lì
 function vaiLV(vista, extra) {
   if (vista !== 'persona' && vista !== 'clienti') LV.daClienti = false;
+  LV.restaSu = null;   // nota 098: la scheda tenuta aperta dopo il PM vale finché non si cambia pagina
   LV.vista = vista; LV.area = null; LV.persona = null; LV.gradino = null;
   Object.assign(LV, extra || {});
   window.scrollTo(0, 0);
@@ -867,10 +868,16 @@ async function toccaBottone(id, indice) {
   // `registra_esito` con la regola unica del rientro (applica_rientro, nota 030); prima qui c'era una scrittura in più dal telefono
   const rientro = bottone.rientro ? await chiediRientro(id, pos.contatto.nome, bottone.etichetta, MB21Agenda.giorniRisentire(bottone.etichetta)) : null;   // Annulla rimette il rientro di prima
   card.classList.add('via');
+  // Nota 098 (Ignazio 26/10, «diamo un flow di direzione e visione ben definito»): dalla scheda v5, fissato un Piano Marketing a un candidato (gli stessi casi
+  // in cui si chiedeva «Hai condiviso la traccia di apertura?»), niente domanda: si resta sulla scheda, dove «Prossimo» mostra il PM e la traccia da condividere.
+  // Da tutti gli altri punti (scheda della Lista, Dashboard di prima, Agenda) la domanda resta com'è.
+  const restaV5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && LV.vista === 'persona' && !!appuntamento && appuntamento.tipo_azione === 'Piano Marketing'
+    && MB21Sharing.perChiDi({ categoria: appuntamento.categoria }) === 'ospite';
   setTimeout(() => {
     listaDi(pos.lista).splice(pos.i, 1);
     if (daCoda) ST.stato.fatti_oggi++;
     salvaCache();
+    if (restaV5) LV.restaSu = { ...pos.contatto, esito: bottone.etichetta };   // disegnaPersonaV5 tiene aperta la sua scheda
     disegnaOggi();
     mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
     // per ultimo il momento di riflessione (cantiere 42), sulla telefonata appena registrata; con «Ordine» alla chiusura del modulo Vendita
@@ -879,6 +886,7 @@ async function toccaBottone(id, indice) {
       contatti: { nome: pos.contatto.nome, categoria: pos.contatto.categoria } }, bottone.etichetta);
     if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria, undefined, riflessione)   // «Ordine»: «La registri adesso?»
       .then(registrata => { if (!registrata) riflessione(); });
+    else if (restaV5) riflessione();   // nota 098: la traccia di apertura è il passo dopo scritto nella scheda; la chat del coach resta com'è
     else tracciaDiApertura(appuntamento, pos.contatto, riflessione);   // un Piano Marketing fissato: prima «Hai condiviso la traccia di apertura?», poi la chat del coach
   }, 250);
 }

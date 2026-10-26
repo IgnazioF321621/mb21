@@ -311,10 +311,13 @@ function disegnaPersonaV5() {
   else if (tipo === 'conf') { dato = CONF.righe.find(y => y.id === id); if (dato) corpo = confermeHtml(id); }
   else if (tipo === 'rio') { dato = RIO.righe.find(y => y.id === id); if (dato) { ST.aperta = id; corpo = riordiniHtml(id); } }
   else if (tipo === 'scelta') { dato = SCE.righe.find(y => y.id === id); if (dato) { ST.aperta = id; corpo = sceltaHtml(dato); } }
+  // nota 098: dopo il PM fissato da questa scheda la persona è uscita dalla coda, ma la scheda resta aperta (LV.restaSu), con l'esito dato
+  const fatto = !dato && (tipo === 'coda' || tipo === 'ds') && LV.restaSu && LV.restaSu.id === id ? LV.restaSu : null;
+  if (fatto) dato = fatto;
   if (!dato) return disegnaPersonaLV();   // l'esito è stato dato o la persona non c'è più: la strada di adesso (spunta e ritorno all'elenco)
   const nome = (dato.contatti && dato.contatti.nome) || dato.nome || '', cat = catDi(dato), colore = COLORE_CAT_V5(cat);
   LV.nomePersona = nome;
-  const e = elencoDiOggi(), conto = e.totale ? `${Math.min(e.fatti + 1, e.totale)} di ${e.totale}` : '';   // «3 di 5»: la freccia accanto dice già «Contatti del giorno»
+  const e = elencoDiOggi(), conto = e.totale && !fatto ? `${Math.min(e.fatti + 1, e.totale)} di ${e.totale}` : '';   // «3 di 5»: la freccia accanto dice già «Contatti del giorno»
   const chiContatto = tipo === 'coda' || tipo === 'ds' ? id : dato.contatto_id || null;
   const telefonata = tipo === 'coda' || tipo === 'ds';
   if (telefonata) {
@@ -322,7 +325,8 @@ function disegnaPersonaV5() {
     const luogo = [dato.citta, dato.fascia_eta].filter(Boolean).join(' · ');
     const spento = ST.offline || guardoAltri();
     corpo = `<div class="card compatta aperta p5-card ${classeCat(cat)}" id="card-${esc(id)}"><div class="corpo">
-      <div class="p5-blocco"><b>Com'è andata?</b><button class="p5-esito" id="p5-esito" ${spento ? 'disabled' : ''}><span>Scegli l'esito della telefonata</span><span>⌄</span></button></div>
+      <div class="p5-blocco"><b>Com'è andata?</b>${fatto ? `<span class="p5-dato">${ic('fatto')} ${esc(fatto.esito)}</span>`
+        : `<button class="p5-esito" id="p5-esito" ${spento ? 'disabled' : ''}><span>Scegli l'esito della telefonata</span><span>⌄</span></button>`}</div>
       ${ricordoHtml(id, nome)}${preparaChiamataHtml(id)}
       ${dato.professione ? `<div class="prof">${esc(dato.professione)}</div>` : ''}${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
@@ -339,6 +343,8 @@ function disegnaPersonaV5() {
   const pc = document.getElementById('p5-cose'), chiave = LV.persona;
   if (pc && chiContatto && typeof cosePersonaHtml === 'function') cosePersonaHtml({ id: chiContatto, user_id: dato.user_id }, { posto: pc, dentro: true,
     ancora: () => ST.tab === 'oggi' && LV.vista === 'persona' && LV.persona === chiave, ridisegna: () => disegnaOggi(), leggi: () => leggiCose5(chiContatto) });
+  const tr = document.getElementById('p5-traccia-si');
+  if (tr) tr.onclick = () => condividiAperturaV5(chiContatto, tr);
   const b = document.getElementById('p5-esito');
   if (b) b.onclick = async () => {
     const i = await moduloEsito(nome, cat, colore);
@@ -429,7 +435,7 @@ const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 // i fogli e i salvataggi restano quelli di adesso. Letture piccole, tenute in memoria finché non c'è una scrittura (SCRITTURE.ultima):
 // i Segni Vitali con la stessa lettura della linguetta (caricaSegni, solo per un Partner); le ultime 5 azioni della persona (prossimo e ultime volte);
 // gli esiti di oggi (una richiesta quando si apre la pagina).
-const P5 = { segni: {}, azioni: {}, fatti: null, cose: {} };
+const P5 = { segni: {}, azioni: {}, fatti: null, cose: {}, traccia: {} };
 const fresco5 = x => x && (typeof SCRITTURE === 'undefined' || SCRITTURE.ultima < x.letta);
 const giornoBreve5 = iso => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' });
 const ridisegna5 = vista => { if (ST.tab === 'oggi' && LV.vista === vista) disegnaOggi(); };
@@ -459,11 +465,15 @@ function schedaInPiuV5(contattoId, cat, dato) {
   const y = P5.azioni[contattoId], righe = y && y.righe, adesso = new Date().toISOString();
   const quando = r => (r.tipo_azione === 'Contatto' && r.data_scelta ? r.data_scelta : r.inizio);
   const cosa = r => [r.modalita || r.tipo_azione, r.esito].filter(Boolean).join(' · ');
-  const prossimo = righe ? righe.filter(r => !r.completata && quando(r) >= adesso && (r.tipo_azione !== 'Contatto' || r.data_scelta)).sort((p, q) => (quando(p) < quando(q) ? -1 : 1))[0] : null;
+  // a parità d'ora prima l'appuntamento vero (il PM), poi la telefonata con la data scelta che l'ha fissato
+  const prossimo = righe ? righe.filter(r => !r.completata && quando(r) >= adesso && (r.tipo_azione !== 'Contatto' || r.data_scelta))
+    .sort((p, q) => (quando(p) < quando(q) ? -1 : quando(p) > quando(q) ? 1 : (p.tipo_azione === 'Contatto') - (q.tipo_azione === 'Contatto')))[0] : null;
   const ultime = righe ? righe.filter(r => r.inizio < adesso && (r.completata || r.esito)).slice(0, 2) : [];
   // nota 098 (Ignazio 26/10, «sì»): dentro «Prossimo», sotto l'appuntamento, il «Da fare» della persona (lo stesso della scheda della Lista: cosePersonaHtml)
+  // nota 098: sotto un Piano Marketing a un candidato, la traccia di apertura (da condividere / condivisa ✓): è il passo dopo, scritto qui
+  const pm = prossimo && (prossimo.tipo_azione === 'Piano Marketing' || prossimo.esito === 'PM Fissato') && MB21Sharing.perChiDi({ categoria: cat }) === 'ospite';
   const boxProssimo = `<div class="p5-box p5-prossimo"><span class="p5-tit" style="color:var(--z-agenda)">PROSSIMO</span>${!righe ? `<b>${y && y.errore ? 'Non letto ora' : 'Leggo…'}</b>`
-    : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)} · ${esc(o5Giorno(quando(prossimo)))}</b>` : '<b>Niente in agenda</b>'}<div id="p5-cose"></div></div>`;
+    : prossimo ? `<b>${esc(prossimo.modalita || prossimo.tipo_azione)} · ${esc(o5Giorno(quando(prossimo)))}</b>` : '<b>Niente in agenda</b>'}${pm ? tracciaAperturaV5(contattoId) : ''}<div id="p5-cose"></div></div>`;
   const boxUltime = righe && ultime.length ? `<div class="p5-box p5-ultime"><span class="p5-tit">Le ultime volte</span>${ultime.map(r => `<div><span>${esc(cosa(r))}</span><small>${esc(giornoBreve5(r.inizio))}</small></div>`).join('')}</div>` : '';
   return `<div class="p5-pila">${segni}${boxProssimo}</div>${boxUltime}`;
 }
@@ -491,4 +501,37 @@ function leggiCose5(contattoId) {
   P5.cose[contattoId] = { letta: Date.now(), promessa };
   promessa.then(r => { if (r.error) P5.cose[contattoId] = null; });
   return promessa;
+}
+
+// La traccia di apertura (la traccia «prima del PM» del Media Sharing: tipo traccia, per il candidato, ordine 0, a catalogo) e se è già condivisa con questa
+// persona. Biblioteca dalla lettura dello Sharing (leggiMateriali, una volta per sessione) + le condivisioni della persona (una lettura piccola, tenuta in memoria).
+function tracciaAperturaV5(contattoId) {
+  const x = P5.traccia[contattoId];
+  if (!fresco5(x)) {
+    P5.traccia[contattoId] = { letta: Date.now(), stato: x && x.stato };
+    Promise.all([leggiMateriali(), dbq('scheda: condivisioni', supa.from('condivisioni').select('materiale_id').eq('contatto_id', contattoId))]).then(([mat, cond]) => {
+      const t = (mat || []).find(m => m.tipo === 'traccia' && m.per_chi === 'ospite' && m.ordine === 0 && !m.fuori_catalogo);
+      P5.traccia[contattoId] = { letta: Date.now(), stato: !t || cond.error ? null : { id: t.id, titolo: t.titolo, condivisa: (cond.data || []).some(k => k.materiale_id === t.id) } };
+      ridisegna5('persona');
+    });
+  }
+  const st = P5.traccia[contattoId].stato;
+  if (!st) return '';
+  return `<div class="p5-traccia${st.condivisa ? ' fatta' : ''}"><span>${ic('audio')}<span><b>Traccia di apertura · ${st.condivisa ? 'condivisa ✓' : 'da condividere'}</b><small>${esc(st.titolo)}</small></span></span>
+    ${st.condivisa ? '' : '<button class="primario" id="p5-traccia-si">Condivisa</button>'}</div>`;
+}
+// Il tocco la segna con la stessa scrittura della linguetta Sharing (scriviCondivisione), quindi la si ritrova anche lì; «Annulla» la toglie
+async function condividiAperturaV5(contattoId, tasto) {
+  const st = P5.traccia[contattoId] && P5.traccia[contattoId].stato;
+  if (!st || soloGuardo()) return;
+  tasto.disabled = true;
+  const { data, error } = await scriviCondivisione(contattoId, st.id);
+  if (error) { tasto.disabled = false; return mostraToast('Non salvato: riprova.'); }
+  P5.traccia[contattoId] = { letta: Date.now(), stato: { ...st, condivisa: true } };
+  ridisegna5('persona');
+  mostraToast(`Condivisa: ${st.titolo}`, async () => {
+    await annullaCondivisione(data.id);
+    P5.traccia[contattoId] = null;
+    ridisegna5('persona');
+  });
 }

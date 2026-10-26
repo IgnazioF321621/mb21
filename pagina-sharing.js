@@ -97,17 +97,21 @@ async function sezioneSharing() {
 }
 
 // «Condivisa oggi»: una riga nel registro, con «Annulla» per il tocco sbagliato
+// La scrittura di «condivisa oggi», una sola per la linguetta Sharing e per la scheda v5 (nota 098: la traccia di apertura dentro «Prossimo»):
+// { data: { id }, error }; e il suo annullamento
+const scriviCondivisione = (contattoId, materialeId) => dbq('condivisa', supa.from('condivisioni')
+  .insert({ user_id: ST.utente.id, contatto_id: contattoId, materiale_id: materialeId, condivisa_il: MB21Coda.oggiRoma() }).select('id').single());
+const annullaCondivisione = id => dbqAvvisa('annulla condivisa', supa.from('condivisioni').delete().eq('id', id), 'Annullamento non riuscito: controlla la connessione e riprova.');
 async function registraCondivisione(c, materialeId, materiali) {
   if (soloGuardo()) return;
   const t = materiali.find(m => m.id === materialeId);
   const b = document.getElementById('sh-condivisa');
   if (b) b.disabled = true;
-  const { data, error } = await dbq('condivisa', supa.from('condivisioni')
-    .insert({ user_id: ST.utente.id, contatto_id: c.id, materiale_id: materialeId, condivisa_il: MB21Coda.oggiRoma() }).select('id').single());
+  const { data, error } = await scriviCondivisione(c.id, materialeId);
   if (error) { if (b) b.disabled = false; return mostraToast('Non salvato: riprova.'); }
   SH.saltate = [];
   mostraToast(`Condivisa: ${t ? t.titolo : 'traccia'}`, async () => {
-    await dbqAvvisa('annulla condivisa', supa.from('condivisioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+    await annullaCondivisione(data.id);
     if (LS.contatto === c && LS.sezione === 'sharing') sezioneSharing();
   });
   sezioneSharing();

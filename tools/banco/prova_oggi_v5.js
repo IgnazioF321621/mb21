@@ -440,6 +440,44 @@ prova('098 «Da fare» in «Prossimo»: una funzione sola per le due schede (cos
   assert.match(PO, /function leggiCose5\(contattoId\) \{/);
 });
 
+prova('098 traccia di apertura: sotto un PM a un candidato «da condividere» con «Condivisa» (stessa scrittura dello Sharing), poi «condivisa ✓»; già condivisa si vede subito', async () => {
+  const W = mondoContatti({ persona: 'coda|c1' }); W.ctx.LV.vista = 'persona';
+  const scritte = [];
+  Object.assign(W.ctx, { MB21Sharing: { perChiDi: c => (c.categoria === 'Partner' ? 'utente' : 'ospite') }, soloGuardo: () => false, mostraToast: (t, a) => scritte.push(['toast', t, typeof a]),
+    leggiMateriali: async () => [{ id: 'm9', tipo: 'traccia', per_chi: 'ospite', ordine: 3, titolo: 'Altra' }, { id: 'm0', tipo: 'traccia', per_chi: 'ospite', ordine: 0, titolo: 'Traccia finta di apertura' }],
+    scriviCondivisione: async (c, m) => { scritte.push(['condivisa', c, m]); return { data: { id: 'k1' }, error: null }; }, annullaCondivisione: async () => {} });
+  W.ctx.dati.azioni = [{ tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: '2099-10-28T17:30:00Z', completata: false }];
+  W.ctx.dati.condivisioni = [];
+  W.ctx.persona(); await new Promise(r => setImmediate(r)); W.ctx.persona(); await new Promise(r => setImmediate(r)); W.ctx.persona();
+  assert.match(testo(W.app.innerHTML), /PROSSIMO PM 1a1 · mer 28\/10 alle 18:30 \[audio\] Traccia di apertura · da condividere Traccia finta di apertura Condivisa/);
+  await W.app.clic('#p5-traccia-si');
+  assert.deepEqual(scritte.slice(0, 2), [['condivisa', 'c1', 'm0'], ['toast', 'Condivisa: Traccia finta di apertura', 'function']]);
+  W.ctx.persona();
+  assert.match(testo(W.app.innerHTML), /Traccia di apertura · condivisa ✓ Traccia finta di apertura/); assert.doesNotMatch(W.app.innerHTML, /p5-traccia-si/);
+  // già condivisa nello Sharing: subito «condivisa ✓»
+  const G = mondoContatti({ persona: 'coda|c1' }); G.ctx.LV.vista = 'persona';
+  Object.assign(G.ctx, { MB21Sharing: W.ctx.MB21Sharing, leggiMateriali: W.ctx.leggiMateriali });
+  G.ctx.dati.azioni = W.ctx.dati.azioni; G.ctx.dati.condivisioni = [{ materiale_id: 'm0' }];
+  G.ctx.persona(); await new Promise(r => setImmediate(r)); G.ctx.persona(); await new Promise(r => setImmediate(r)); G.ctx.persona();
+  assert.match(testo(G.app.innerHTML), /Traccia di apertura · condivisa ✓/);
+  // un Partner (non candidato): nessuna riga
+  assert.match(PO, /MB21Sharing\.perChiDi\(\{ categoria: cat \}\) === 'ospite'/);
+  assert.match(leggi('pagina-sharing.js'), /const \{ data, error \} = await scriviCondivisione\(c\.id, materialeId\);/);   // la linguetta Sharing usa la stessa scrittura
+});
+
+prova('098 flusso dopo «PM Fissato» dalla scheda v5: niente domanda sulla traccia, la scheda resta aperta con l\'esito dato; dagli altri punti la domanda resta', () => {
+  const W = mondoContatti({ persona: 'coda|c7' }); W.ctx.LV.vista = 'persona';
+  W.ctx.LV.restaSu = { id: 'c7', nome: 'Persona G', categoria: 'Prospect', esito: 'PM Fissato' };
+  W.ctx.persona();
+  assert.match(W.app.innerHTML, /<span class="p5-dato">\[fatto\] PM Fissato<\/span>/); assert.doesNotMatch(W.app.innerHTML, /p5-esito|v5-conto/);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.filter(c => c[0] === 'personaLV'))), []);
+  assert.match(DASH, /const restaV5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && LV\.vista === 'persona' && !!appuntamento && appuntamento\.tipo_azione === 'Piano Marketing'\n\s+&& MB21Sharing\.perChiDi\(\{ categoria: appuntamento\.categoria \}\) === 'ospite';/);
+  assert.match(DASH, /if \(restaV5\) LV\.restaSu = \{ \.\.\.pos\.contatto, esito: bottone\.etichetta \};/);
+  assert.match(DASH, /else if \(restaV5\) riflessione\(\);[^\n]*\n\s+else tracciaDiApertura\(appuntamento, pos\.contatto, riflessione\);/);
+  assert.match(DASH, /LV\.restaSu = null;/);   // cambiando pagina
+  for (const f of ['pagina-lista.js', 'index.html']) assert.match(leggi(f), /tracciaDiApertura\(/, f);   // gli altri punti chiedono come prima
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
