@@ -358,7 +358,7 @@ prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (conto dei n
   assert.match(PL, /<span class="v5-sopra">\$\{esc\(conti\.lista\.toLocaleString\('it-IT'\)\)\} NOMI<\/span><div class="o5-dx">\$\{chipPartnerSelect\(\)\}<button class="v5-fb" id="o5-feedback"/);
   assert.match(PL, /<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">/);
   assert.match(PL, /const fb = document\.getElementById\('o5-feedback'\); if \(fb\) fb\.onclick = \(\) => foglioSegnala\(\);/);
-  const testaLista = PL.slice(PL.indexOf('function disegnaLista'), PL.indexOf('function disegnaElenco'));
+  const testaLista = PL.slice(PL.indexOf('function disegnaLista'), PL.indexOf('function disegnaElenco')).split('\n').filter(r => !r.trim().startsWith('//')).join('\n');   // senza i commenti
   assert.doesNotMatch(testaLista, /v5-indietro|‹ Oggi/);   // è una voce della barra
   assert.match(IDX, /\.ls-testa\.l5 \{ background: var\(--zc\);/);
 });
