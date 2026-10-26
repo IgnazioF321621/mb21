@@ -9,7 +9,7 @@
 const OGGI_V5 = true;
 // I dati in più dei riquadri: gli impegni di oggi e di domani (`oggi`, `domani`: le voci di MB21Agenda.programmaDelGiorno) e il ripasso del Training.
 // `di`/`giorno` dicono di chi e di quando sono.
-const O5 = { di: null, giorno: null, oggi: null, domani: null, training: null };
+const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null };
 
 // ── Le letture in più (nella stessa attesa della Dashboard: caricaOggi le chiama insieme alle sue) ──
 async function caricaOggiV5(oggi) {
@@ -31,7 +31,7 @@ async function caricaOggiV5(oggi) {
     dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a })),
     guardoAltri() ? null : caricaTrainingOggi(oggi),
   ]);
-  let voci = null, vociDomani = null;
+  let voci = null, vociDomani = null, richiami = null;
   if (!app1.error && !cont.error) {
     const azioni = A.azioniAgenda([...app1.data, ...cont.data]), adesso = new Date().toISOString();
     const fuori = new Set(azioni.filter(x => A.passatoSenzaEsito(x, adesso)).map(x => x.id));   // quelli in «Da chiudere», come nel Giorno
@@ -40,8 +40,11 @@ async function caricaOggiV5(oggi) {
     const spDi = g => sp.filter(x => A.partiRoma(x.inizio).giorno === g);
     voci = A.programmaDelGiorno({ azioni, spazi: spDi(oggi), ricevuti: ric, giorno: oggi, fuori, opz }).voci;
     vociDomani = A.programmaDelGiorno({ azioni, spazi: spDi(gDomani), ricevuti: ric, giorno: gDomani, opz }).voci;
+    // nota 098: i «Richiamare» con il giorno di oggi (la data scelta dalla coda): vanno in cima ai Contatti del giorno (richiamiDiOggi, pagina-dashboard.js)
+    richiami = cont.data.filter(x => x.esito === 'Richiamare' && x.data_scelta && A.partiRoma(x.data_scelta).giorno === oggi)
+      .map(x => ({ contatto_id: x.contatto_id, ora: A.partiRoma(x.data_scelta).ora }));
   }
-  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, training: trn });
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn });
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
@@ -70,9 +73,10 @@ function o5Anello(fatti, totale, px) {
 // Fatti tutti: al posto del numero la spunta con «5 su 5» e la festa di prima. Il tocco apre Contatti del giorno, come prima. Via l'anello e «Mancano…».
 function o5Contatti() {
   const st = ST.stato || {}, totale = st.contatti_al_giorno || 0, fatti = Math.min(st.fatti_oggi || 0, totale), r = ST.risultato || { coda: [] };
-  const finito = totale > 0 && fatti >= totale, nomi = (r.coda || []).map(x => x.nome).filter(Boolean);
+  // il numero è quanti restano nella coda di oggi, compresi i «Richiamare» di oggi in cima (in più ai posti del giorno, nota 098)
+  const restano = (r.coda || []).length, finito = totale > 0 && fatti >= totale && !restano, nomi = (r.coda || []).map(x => x.nome).filter(Boolean);
   const sx = finito ? `<span class="o5-pw-n o5-tutti"><span class="o5-spunta">${ic('fatto')}</span><small>${fatti} SU ${totale}</small></span>`
-    : `<span class="o5-pw-n"><b>${totale - fatti}</b><small>DA SENTIRE</small></span>`;
+    : `<span class="o5-pw-n"><b>${restano}</b><small>DA SENTIRE</small></span>`;
   const dx = totale === 0 ? `<span class="o5-pw-vuoto">${guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa · tocca per ripartire'}</span>`
     : finito ? `<span class="o5-pw-vuoto">Fatti tutti · grande lavoro</span>`
     : nomi.length ? `<span class="o5-pw-el">${nomi.slice(0, 4).map(n => `<span class="o5-pw-r o5-pr"><i></i><span>${esc(n)}</span></span>`).join('')}</span>`
@@ -88,7 +92,7 @@ function o5Sera(fatto) {
 }
 // Agenda. Nota 098 (Ignazio 26/10, «sì», dai widget dell'iPhone): come il widget Calendario. A sinistra il giorno («LUNEDÌ», «26» grande), a destra gli
 // impegni di oggi (le voci di MB21Agenda.programmaDelGiorno, la regola di «In programma»), un blocchetto ciascuno con la barretta, il titolo su una riga
-// e sotto «19:00 – 20:00» (o solo l'inizio); al massimo 3, poi «Altri N impegni». Se oggi è finito o vuoto e domani c'è qualcosa: «DOMANI» e il primo
+// e sotto «19:00 – 20:00» (o solo l'inizio); al massimo 4 (Ignazio 26/10: «anche un quarto ci rientra»), poi «Altri N impegni». Se oggi è finito o vuoto e domani c'è qualcosa: «DOMANI» e il primo
 // di domani. Niente oggi né domani: «Niente in vista · fissane uno». Il tocco apre sempre l'Agenda su oggi.
 function o5Adesso() { return MB21Agenda.partiRoma(new Date().toISOString()).ora; }   // «13:05», ora di Roma (function: le prove la fermano)
 function o5Agenda() {
@@ -101,7 +105,7 @@ function o5Agenda() {
   else {
     const oggi = O5.oggi, domani = O5.domani || [], adesso = o5Adesso();
     const finito = oggi.every(v => (v.fine || v.ora) <= adesso), conDomani = finito && domani.length > 0;
-    const quanti = conDomani ? 2 : 3, altri = oggi.length - Math.min(oggi.length, quanti);
+    const quanti = conDomani ? 3 : 4, altri = oggi.length - Math.min(oggi.length, quanti);
     dx = !oggi.length && !domani.length ? `<span class="o5-pw-vuoto">Niente in vista · fissane uno</span>`
       : `<span class="o5-cal-el">${oggi.length ? oggi.slice(0, quanti).map(blocco).join('') : '<span class="o5-cal-niente">Niente oggi</span>'}${altri ? `<span class="o5-cal-altri">${altri === 1 ? 'Un altro impegno' : `Altri ${altri} impegni`}</span>` : ''}${
         conDomani ? `<span class="o5-cal-dom">DOMANI</span>${blocco(domani[0])}` : ''}</span>`;

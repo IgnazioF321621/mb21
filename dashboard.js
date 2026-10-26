@@ -544,11 +544,14 @@
   function elencoOggi(conf, rio, ds, coda, scelte, fatte) {
     const nome = x => (x.contatti && x.contatti.nome) || x.nome || '';
     const riga = (motivo, gruppo, targhetta) => x => ({ motivo, gruppo, dato: x, id: x.id, contatto_id: x.contatto_id || (motivo === 'ds' || motivo === 'coda' ? x.id : null), nome: nome(x), targhetta });
+    // nota Pagine 098 (Ignazio 26/10, «A»): chi ha un «Richiamare» per oggi (`richiamo` = l'ora, messo da caricaOggi) sta in cima, «Richiamare · alle 17:00»
+    const richiamo = x => riga('coda', 'chiudere', `Richiamare · alle ${x.richiamo}`)(x);
     const righe = [
+      ...(coda || []).filter(x => x.richiamo).map(richiamo),
       ...(conf || []).map(riga('conf', 'chiudere', 'Conferma')),
       ...(rio || []).map(riga('rio', 'chiudere', 'Riordino')),
       ...(ds || []).map(riga('ds', 'chiudere', 'Dare Seguito')),
-      ...(coda || []).map(riga('coda', 'contattare', 'Telefonata')),
+      ...(coda || []).filter(x => !x.richiamo).map(riga('coda', 'contattare', 'Telefonata')),
       ...(scelte || []).map(riga('scelta', 'contattare', 'Telefonata · scelta')),
     ];
     const fatti = (fatte || []).length, totale = fatti + righe.length;

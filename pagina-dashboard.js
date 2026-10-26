@@ -61,6 +61,16 @@ const dashFresca = (oggi) => ST.dashLetta && ST.dashChiave === `${visto().id}|${
   && SCRITTURE.ultima < ST.dashLetta && ST.oggi === oggi && !ST.offline && (vediTutti() || ST.risultato);
 const dashLetta = (oggi) => { ST.dashChiave = `${visto().id}|${vediTutti() ? 'tutti' : ''}|${oggi}`; ST.dashLetta = Date.now(); };
 
+// I «Richiamare» di oggi (nota Pagine 098): dai Contatti di oggi letti da caricaOggiV5 (O5.richiami: { contatto_id, ora }), chi è ancora tra i candidati
+// della coda (rientro arrivato) va in cima con `richiamo` = l'ora; chi non c'è più è già stato sentito: quel posto torna alla coda (`fatti`). In pausa niente.
+function richiamiDiOggi(candidati, inPausa) {
+  const r = typeof O5 !== 'undefined' && O5.di === visto().id && Array.isArray(O5.richiami) ? O5.richiami : [];
+  const ore = new Map(r.map(x => [x.contatto_id, x.ora]));
+  if (inPausa || !ore.size) return { daSentire: [], resto: candidati, fatti: 0 };
+  const daSentire = candidati.filter(c => ore.has(c.id)).map(c => ({ ...c, richiamo: ore.get(c.id) }));
+  const presi = new Set(daSentire.map(c => c.id));
+  return { daSentire, resto: candidati.filter(c => !presi.has(c.id)), fatti: ore.size - daSentire.length };
+}
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   if (dashFresca(oggi)) return disegnaOggi();
@@ -76,14 +86,20 @@ async function caricaOggi() {
   const altro = guardoAltri();
   let risultato, stato, offline = false;
   await preleggiOggi(oggi, altro);   // una richiesta sola per tutto quello che segue (se riesce)
+  // v5: gli impegni di oggi e domani e il ripasso (pagina-oggi.js); parte qui perché servono i «Richiamare» di oggi alla coda (nota 098)
+  const v5 = typeof caricaOggiV5 === 'function' ? caricaOggiV5(oggi).catch(() => {}) : null;
   try {
     const { data, error } = await letta('stato', 'stato di oggi', () => supa.rpc('stato_oggi', altro ? { p_utente: visto().id } : {}));
     if (error) throw error;
     stato = data;   // { contatti_al_giorno, fatti_oggi }
     const posti = stato.contatti_al_giorno - stato.fatti_oggi;   // `fatti_oggi` conta anche le telefonate scelte a mano fatte oggi (stato_oggi): chi ne ha fatte 5 ha fatto i suoi 5
     // le telefonate scelte a mano (nota 012) si leggono insieme ai candidati: chi ne ha una aperta non entra anche nella coda automatica (una scheda sola)
-    const [candidati] = await Promise.all([leggiCandidati(oggi), caricaScelte(oggi)]);
-    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(candidati, SCE.righe), oggi, posti, stato.contatti_al_giorno === 0);   // 0 = in pausa
+    const [candidati] = await Promise.all([leggiCandidati(oggi), caricaScelte(oggi), v5]);
+    // nota Pagine 098 (Ignazio 26/10, «A»): chi ha un «Richiamare» per oggi (la lettura dei Contatti di oggi di caricaOggiV5, la stessa dell'Agenda) ed è
+    // ancora da sentire entra in cima, IN PIÙ ai posti della coda; quello già sentito oggi (non è più tra i candidati) non toglie un posto alla coda
+    const rich = richiamiDiOggi(candidati, stato.contatti_al_giorno === 0);
+    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(rich.resto, SCE.righe), oggi, posti + rich.fatti, stato.contatti_al_giorno === 0);   // 0 = in pausa
+    risultato.coda = [...rich.daSentire, ...risultato.coda];
     if (!altro && risultato.nuoviInCoda.length) {
       await dbqAvvisa('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
         .in('id', risultato.nuoviInCoda).is('in_coda_dal', null), 'Non riesco ad aggiornare la coda: riapri Oggi.');
@@ -111,7 +127,7 @@ async function caricaOggi() {
   const perRicordi = offline ? [] : [...(risultato.coda || []), ...(risultato.dareSeguito || [])].map(r => r.id);
   DS.sqLettura = null; leggiSquadraMese(oggi, true);   // la mappa del mese, letta una volta per tutti
   await Promise.all([caricaDashboard(oggi), caricaConferme(), caricaRiordini(oggi), caricaAvvio(), caricaObiettiviTeam(oggi), caricaTracceDaControllare(oggi), caricaMioPercorso(), caricaRicordi(perRicordi), caricaCoachYes(),
-    typeof caricaOggiV5 === 'function' ? caricaOggiV5(oggi).catch(() => {}) : null]);   // v5: gli appuntamenti di oggi e il ripasso per i riquadri di «Oggi»
+    v5]);   // v5: gli appuntamenti di oggi e il ripasso per i riquadri di «Oggi» (partito sopra)
   PRE.dati = null;   // da qui in poi ogni lettura torna alla rete (dopo un esito, una conferma, un ritorno sulla Dashboard scaduta)
   ST.teamLetto = chiaveTeam();   // Avvio e Obiettivi del Team già letti: la Mappa non li rilegge
   if (!offline) dashLetta(oggi);
